@@ -100,7 +100,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isInterface_h,
 	print("package " javaPkg_h ";") >> outFile_h;
 	print("") >> outFile_h;
 	print("") >> outFile_h;
-	print("import " myParentPkgA ".AICallbackException;") >> outFile_h;
+	print("import " myParentPkgA ".CallbackAIException;") >> outFile_h;
 	print("import " myParentPkgA ".AIFloat3;") >> outFile_h;
 	if (isJniBound_h) {
 		print("import " myMainPkgA ".AICallback;") >> outFile_h;
@@ -795,9 +795,9 @@ outFile_m = outFile_jni_m;
 		errorRetValueOk_m = part_getErrorReturnValueOk(metaComment);
 
 		conversionCode_post = conversionCode_post "\t\t" "if (" retVar_out_m " != " errorRetValueOk_m ") {" "\n";
-		conversionCode_post = conversionCode_post "\t\t\t" "throw new AICallbackException(\"" memName_m "\", " retVar_out_m ");" "\n";
+		conversionCode_post = conversionCode_post "\t\t\t" "throw new CallbackAIException(\"" memName_m "\", " retVar_out_m ");" "\n";
 		conversionCode_post = conversionCode_post "\t\t" "}" "\n";
-		thrownExceptions = thrownExceptions ", AICallbackException" thrownExceptions;
+		thrownExceptions = thrownExceptions ", CallbackAIException" thrownExceptions;
 
 		retType = "void";
 	}
