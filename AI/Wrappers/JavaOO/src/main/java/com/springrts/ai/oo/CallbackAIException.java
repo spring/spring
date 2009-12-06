@@ -23,18 +23,18 @@ package com.springrts.ai.oo;
  * @author  hoijui
  * @version 0.1
  */
-public class AICallbackException extends Exception {
+public class CallbackAIException extends Exception implements AIException {
 
 	private String methodName;
 	private int    errorNumber;
 
-	public AICallbackException(String methodName, int errorNumber) {
+	public CallbackAIException(String methodName, int errorNumber) {
 		super("Error calling method \"" + methodName + "\": " + errorNumber);
 
 		this.methodName  = methodName;
 		this.errorNumber = errorNumber;
 	}
-	public AICallbackException(String methodName, int errorNumber, Throwable cause) {
+	public CallbackAIException(String methodName, int errorNumber, Throwable cause) {
 		super("Error calling method \"" + methodName + "\": " + errorNumber, cause);
 
 		this.methodName  = methodName;
@@ -51,7 +51,9 @@ public class AICallbackException extends Exception {
 	/**
 	 * Returns the error number that will be sent to the engine,
 	 * and consequently appear in the engines main log file.
+	 * @return should be != 0, as this value is reserved for the no-error state
 	 */
+	 @Override
 	public int getErrorNumber() {
 		return errorNumber;
 	}
