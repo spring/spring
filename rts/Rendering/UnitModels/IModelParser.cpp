@@ -9,6 +9,7 @@
 #include "3DOParser.h"
 #include "s3oParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "AssParser.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FartextureHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -28,9 +29,41 @@ C3DModelLoader::C3DModelLoader(void)
 {
 	C3DOParser* unit3doparser = new C3DOParser();
 	CS3OParser* units3oparser = new CS3OParser();
+	CAssParser* unitassparser = new CAssParser();
 
 	AddParser("3do", unit3doparser);
 	AddParser("s3o", units3oparser);
+
+	// assimp library
+	AddParser("3ds",unitassparser); // 3D Studio MAX
+	AddParser("ac",unitassparser); // AC3D
+	AddParser("ase",unitassparser); // 3D Studio MAX ASE
+	AddParser("bvh",unitassparser); // Biovision BVH
+	AddParser("dae",unitassparser); // Collada
+	AddParser("dxf",unitassparser); // Autocad
+	AddParser("hmp",unitassparser); // 3D GameStudio Terrain
+	AddParser("irr",unitassparser); // Irrlicht
+	AddParser("irrmesh",unitassparser); // Irrlicht Mesh
+	AddParser("lwo",unitassparser); // Lightwave
+	AddParser("lxo",unitassparser); // MODO
+	AddParser("mdl",unitassparser); // Quake I / 3D GameStudio
+	AddParser("md2",unitassparser); // Quake II
+	AddParser("md3",unitassparser); // Quake III
+	AddParser("md5",unitassparser); // Doom 3
+	AddParser("mdc",unitassparser); // Return to Castle Wolfenstein
+	AddParser("nff",unitassparser); // Neutral File Format / Sense8 WT
+	AddParser("obj",unitassparser); // Wavefront Object
+	AddParser("off",unitassparser); // Object File Format
+	AddParser("ply",unitassparser); // Stanford Polygon Library
+	AddParser("q3o",unitassparser); // Quick3D
+	AddParser("q3s",unitassparser); // Quick3D
+	AddParser("raw",unitassparser); // PovRAY Raw / Raw Triangles
+	AddParser("smd",unitassparser); // Valve Model
+	AddParser("stl",unitassparser); // Stereo Lithography
+	AddParser("ter",unitassparser); // Terragen Terrain
+	AddParser("vta",unitassparser); // Valve Model
+	AddParser("x",unitassparser); // DirectX X
+	AddParser("xml",unitassparser); // Collada / Irrlich
 }
 
 

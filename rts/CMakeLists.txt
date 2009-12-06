@@ -58,6 +58,9 @@ LIST(APPEND spring_libraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_L
 
 FIND_PACKAGE(Freetype REQUIRED)
 INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
+INCLUDE_DIRECTORIES("/home/cloud/assimp/include")
+LINK_DIRECTORIES("/home/cloud/assimp/lib")
+LIST(APPEND spring_libraries "assimp" )
 LIST(APPEND spring_libraries ${FREETYPE_LIBRARIES})
 
 ### Find include directories and add platform specific libraries
@@ -152,7 +155,7 @@ IF (NOT WIN32)
 ENDIF (NOT WIN32)
 
 ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj} ${headers})
-TARGET_LINK_LIBRARIES(spring ${spring_libraries})
+TARGET_LINK_LIBRARIES(spring ${spring_libraries} )
 
 IF (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
