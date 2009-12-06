@@ -23,51 +23,51 @@ package com.springrts.ai.oo;
  * @author  hoijui
  * @version 0.1
  */
-public class AIEventException extends Exception {
+public class EventAIException extends Exception implements AIException {
 
 	public static final int DEFAULT_ERROR_NUMBER = 10;
 
 	private int errorNumber;
 
-	public AIEventException() {
+	public EventAIException() {
 		super();
 
 		this.errorNumber = DEFAULT_ERROR_NUMBER;
 	}
-	public AIEventException(int errorNumber) {
+	public EventAIException(int errorNumber) {
 		super();
 
 		this.errorNumber = errorNumber;
 	}
 
-	public AIEventException(String message) {
+	public EventAIException(String message) {
 		super(message);
 
 		this.errorNumber = DEFAULT_ERROR_NUMBER;
 	}
-	public AIEventException(String message, int errorNumber) {
+	public EventAIException(String message, int errorNumber) {
 		super(message);
 
 		this.errorNumber = errorNumber;
 	}
 
-	public AIEventException(String message, Throwable cause) {
+	public EventAIException(String message, Throwable cause) {
 		super(message, cause);
 
 		this.errorNumber = DEFAULT_ERROR_NUMBER;
 	}
-	public AIEventException(String message, Throwable cause, int errorNumber) {
+	public EventAIException(String message, Throwable cause, int errorNumber) {
 		super(message, cause);
 
 		this.errorNumber = errorNumber;
 	}
 
-	public AIEventException(Throwable cause) {
+	public EventAIException(Throwable cause) {
 		super(cause);
 
 		this.errorNumber = DEFAULT_ERROR_NUMBER;
 	}
-	public AIEventException(Throwable cause, int errorNumber) {
+	public EventAIException(Throwable cause, int errorNumber) {
 		super(cause);
 
 		this.errorNumber = errorNumber;
@@ -76,7 +76,9 @@ public class AIEventException extends Exception {
 	/**
 	 * Returns the error number that will be sent to the engine,
 	 * and consequently appear in the engines main log file.
+	 * @return should be != 0, as this value is reserved for the no-error state
 	 */
+	 @Override
 	public int getErrorNumber() {
 		return errorNumber;
 	}
