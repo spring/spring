@@ -40,7 +40,7 @@ public:
 	bool Exists( const char* pFile) const;
 
 	// Get the path delimiter character we'd like to get
-	virtual char getOsSeparator() const;
+	char getOsSeparator() const;
 	bool ComparePaths (const std::string& one, const std::string& second) const;
 
 	// open a custom stream

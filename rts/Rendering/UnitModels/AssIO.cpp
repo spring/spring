@@ -31,16 +31,20 @@ size_t AssVFSStream::Write( const void* pvBuffer, size_t pSize, size_t pCount)
 
 aiReturn AssVFSStream::Seek( size_t pOffset, aiOrigin pOrigin)
 {
-	int pos;
 	switch(pOrigin){
 		case aiOrigin_SET: // from start of file
-			pos = (int)pOffset; break;
+			if ( pOffset >= file->FileSize() ) return AI_FAILURE;
+			file->Seek( pOffset, std::ios_base::beg );
+			break;
 		case aiOrigin_CUR: // from current position in file
-			pos = file->GetPos() + (int)pOffset; break;
+			if ( pOffset >= ( file->FileSize() + file->GetPos() ) ) return AI_FAILURE;
+			file->Seek( pOffset, std::ios_base::cur );
+			break;
 		case aiOrigin_END: // reverse from end of file
-			pos = file->FileSize() + (int)pOffset; break;
+			if ( pOffset >= file->FileSize() ) return AI_FAILURE;
+			file->Seek( pOffset, std::ios_base::end );
+			break;
 	}
-	file->Seek( pos );
 	return AI_SUCCESS;
 }
 
@@ -52,7 +56,9 @@ size_t AssVFSStream::Tell() const
 
 size_t AssVFSStream::FileSize() const
 {
-	return file->FileSize();
+	int filesize = file->FileSize();
+	if ( filesize < 0 ) filesize = 0;
+	return filesize;
 }
 
 void AssVFSStream::Flush () // FAKE
