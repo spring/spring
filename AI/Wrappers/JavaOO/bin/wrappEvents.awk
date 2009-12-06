@@ -378,6 +378,9 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 
 	outFile = JAVA_GENERATED_SOURCE_DIR "/" myPkgEvtD "/" evtName_ec ".java";
 
+	ooParamsList_size_ec = split(ooParams_ec, ooParamsList_ec, ", ");
+
+	# print comments header
 	printGeneratedWarningHeader(outFile);
 	print("") >> outFile;
 	printGPLHeader(outFile);
@@ -387,20 +390,40 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 	print("") >> outFile;
 	print("") >> outFile;
 
+	# print imports
 	print("import " myMainPkgA ".AIEvent;") >> outFile;
 	print("import " myMainPkgA ".AIFloat3;") >> outFile;
 	print("import " myPkgClbA ".*;") >> outFile;
-
 	print("") >> outFile;
-	printFunctionComment_Common(outFile, evts_docComment, ind_evt_ec, "");
 
+	# print class header
+	printFunctionComment_Common(outFile, evts_docComment, ind_evt_ec, "");
 	print("public class " evtName_ec " implements AIEvent {") >> outFile;
 	print("") >> outFile;
+
+	# print member vars
+	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
+		print("\t" "private " ooParamsList_ec[_p] ";") >> outFile;
+	}
+	print("") >> outFile;
+
 	print("\t" "public " evtName_ec "(" ooParams_ec ") {") >> outFile;
 	print("") >> outFile;
 	#print("\t\t" "AIEvent evt = new " evtName_ei "(" ooParamsNoTypes_ei ");") >> outFile;
 	print("\t" "}") >> outFile;
 	print("") >> outFile;
+
+	# print member getters
+	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
+		_type = extractParamType(ooParamsList_ec[_p]);
+		_name = extractParamName(ooParamsList_ec[_p]);
+
+		print("\t" "public " _type " get" capitalize(_name) "() {") >> outFile;
+		print("\t\t" "return this." _name ";") >> outFile;
+		print("\t" "}") >> outFile;
+	}
+	print("") >> outFile;
+
 	print("}") >> outFile;
 }
 
