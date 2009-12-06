@@ -47,6 +47,7 @@ BEGIN {
 
 	myParentPkgA  = "com.springrts.ai";
 	myMainPkgA    = myParentPkgA ".oo";
+	myPkgClbA     = myMainPkgA ".clb";
 	myPkgEvtA     = myMainPkgA ".evt";
 	myMainPkgD    = convertJavaNameFormAToD(myMainPkgA);
 	myPkgEvtD     = convertJavaNameFormAToD(myPkgEvtA);
@@ -127,7 +128,9 @@ function printOOEventAIHeader(outFile) {
 	print("") >> outFile;
 	print("") >> outFile;
 	print("import " myParentPkgA ".AI;") >> outFile;
-	print("import " myMainPkgA ".OOAI;") >> outFile;
+	print("import " myMainPkgA "." myOOAIClass ";") >> outFile;
+	print("import " myPkgEvtA ".*;") >> outFile;
+	print("import " myPkgClbA ".*;") >> outFile;
 	#print("import " myPkgA ".AICallback;") >> outFile;
 	#print("import java.util.Map;") >> outFile;
 	#print("import java.util.HashMap;") >> outFile;
@@ -147,7 +150,7 @@ function printOOEventAIHeader(outFile) {
 	print("\t" " * @param  event  the AI event to handle, sent by the engine") >> outFile;
 	print("\t" " * @throws AIException") >> outFile;
 	print("\t" " */") >> outFile;
-	print("\t" "public abstract void handleEvent(AIEvent event) throws AIEventException;") >> outFile;
+	print("\t" "public abstract void handleEvent(AIEvent event) throws EventAIException;") >> outFile;
 	print("") >> outFile;
 
 	if (1 == 0) {
@@ -261,6 +264,7 @@ function printEventOO(ind_evt_em) {
 	name_em    = evts_name[ind_evt_em];
 	params_em  = evts_params[ind_evt_em];
 	meta_em    = evts_meta[ind_evt_em];
+print("meta_em: " meta_em);
 
 	paramsList_size_em = split(params_em, paramsList_em, ", ");
 
@@ -344,13 +348,60 @@ function printEventOO(ind_evt_em) {
 	print("\t" "public " retType_em " " name_em "(" ooParamsCleaned_em ") {") >> myOOAIAbstractFile;
 	print("\t\t" "return 0; // signaling: OK") >> myOOAIAbstractFile;
 	print("\t" "}") >> myOOAIAbstractFile;
+
+	printOOEventWrapper(retType_em, name_em, ooParamsCleaned_em, meta_em, ind_evt_em);
 }
 
-function printEventOOEventAI(evtIndex) {
+function printOOEventWrapper(retType_ei, mthName_ei, ooParams_ei, meta_ei, ind_evt_ei) {
 
-	topicName  = evtsTopicName[evtIndex];
-	topicValue = evtsTopicNameValue[topicName];
-	eName      = evtsName[evtIndex];
+	outFile = myOOEventAIFile;
+	ooParamsNoTypes_ei = removeParamTypes(ooParams_ei);
+	evtName_ei = capitalize(mthName_ei) "AIEvent";
+
+	print("\t" "@Override") >> outFile;
+	print("\t" "public final " retType_ei " " mthName_ei "(" ooParams_ei ") {") >> outFile;
+	print("") >> outFile;
+	print("\t\t" "AIEvent evt = new " evtName_ei "(" ooParamsNoTypes_ei ");") >> outFile;
+	print("\t\t" "try {") >> outFile;
+	print("\t\t\t" "this.handleEvent(evt);") >> outFile;
+	print("\t\t\t" "return 0; // everything OK") >> outFile;
+	print("\t\t" "} catch (EventAIException ex) {") >> outFile;
+	print("\t\t\t" "return ex.getErrorNumber();") >> outFile;
+	print("\t\t" "}") >> outFile;
+	print("\t" "}") >> outFile;
+	print("") >> outFile;
+
+	printOOEventClass(retType_ei, evtName_ei, ooParams_ei, meta_ei, ind_evt_ei);
+}
+
+function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt_ec) {
+
+	outFile = JAVA_GENERATED_SOURCE_DIR "/" myPkgEvtD "/" evtName_ec ".java";
+
+	printGeneratedWarningHeader(outFile);
+	print("") >> outFile;
+	printGPLHeader(outFile);
+	print("") >> outFile;
+
+	print("package " myPkgEvtA ";") >> outFile;
+	print("") >> outFile;
+	print("") >> outFile;
+
+	print("import " myMainPkgA ".AIEvent;") >> outFile;
+	print("import " myMainPkgA ".AIFloat3;") >> outFile;
+	print("import " myPkgClbA ".*;") >> outFile;
+
+	print("") >> outFile;
+	printFunctionComment_Common(outFile, evts_docComment, ind_evt_ec, "");
+
+	print("public class " evtName_ec " implements AIEvent {") >> outFile;
+	print("") >> outFile;
+	print("\t" "public " evtName_ec "(" ooParams_ec ") {") >> outFile;
+	print("") >> outFile;
+	#print("\t\t" "AIEvent evt = new " evtName_ei "(" ooParamsNoTypes_ei ");") >> outFile;
+	print("\t" "}") >> outFile;
+	print("") >> outFile;
+	print("}") >> outFile;
 }
 
 

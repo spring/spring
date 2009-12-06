@@ -92,10 +92,11 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	set(mySources
-		"${mySourceDir}/${myPkg}/AICallbackException.java"
 		"${mySourceDir}/${myPkg}/AIEvent.java"
-		"${mySourceDir}/${myPkg}/AIEventException.java"
 		"${mySourceDir}/${myPkg}/AIFloat3.java"
+		"${mySourceDir}/${myPkg}/AIException.java"
+		"${mySourceDir}/${myPkg}/CallbackAIException.java"
+		"${mySourceDir}/${myPkg}/EventAIException.java"
 		)
 
 	set(myGeneratedCallbackSources
@@ -275,11 +276,30 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/AbstractOOAI.java"
 		"${myGeneratedSourceDir}/${myPkg}/OOAI.java"
 		"${myGeneratedSourceDir}/${myPkg}/OOEventAI.java"
-#		"${myGeneratedSourceDir}/${myPkg}/evt/AIEvent.java"
-#		"${myGeneratedSourceDir}/${myPkg}/evt/UnitAIEvent.java"
-#		"${myGeneratedSourceDir}/${myPkg}/evt/FriendlyUnitAIEvent.java"
-#		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyUnitAIEvent.java"
-#		...
+		"${myGeneratedSourceDir}/${myPkg}/evt/CommandFinishedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyDamagedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyDestroyedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyEnterLOSAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyEnterRadarAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyLeaveLOSAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyLeaveRadarAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/InitAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/LoadAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/MessageAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/PlayerCommandAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/ReleaseAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/SaveAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/SeismicPingAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitCapturedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitCreatedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitDamagedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitDestroyedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitFinishedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitGivenAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitIdleAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitMoveFailedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UpdateAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/WeaponFiredAIEvent.java"
 		)
 
 	set(myGeneratedSources
