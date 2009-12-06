@@ -23,12 +23,12 @@
 #define ASS_POSTPROCESS_OPTIONS \
 	aiProcess_CalcTangentSpace				|  \
 	aiProcess_GenSmoothNormals				|  \
-	aiProcess_JoinIdenticalVertices			|  \
-	aiProcess_ImproveCacheLocality			|  \
+	aiProcess_JoinIdenticalVertices		|  \
+	aiProcess_ImproveCacheLocality		|  \
 	aiProcess_LimitBoneWeights				|  \
-	aiProcess_RemoveRedundantMaterials      |  \
+	aiProcess_RemoveRedundantMaterials|  \
 	aiProcess_SplitLargeMeshes				|  \
-	aiProcess_Triangulate					|  \
+	aiProcess_Triangulate					    |  \
 	aiProcess_GenUVCoords
 
 S3DModel* CAssParser::Load(std::string name)
@@ -44,8 +44,7 @@ S3DModel* CAssParser::Load(std::string name)
  	Assimp::Importer importer;
 
 	// give the importer an IO class that handles Spring's VFS
-	Assimp::IOSystem* iohandler = new AssVFSSystem();
-	importer.SetIOHandler( iohandler );
+	importer.SetIOHandler( new AssVFSSystem() );
 
 	// read the model and texture files to build an assimp scene
 	logOutput.Print("Reading model file: %s\n", name.c_str() );
@@ -85,8 +84,7 @@ S3DModel* CAssParser::Load(std::string name)
 		model->maxy = 1.0f;
 		model->maxz = 1.0f;
 	} else {
-		//logOutput.Print ("Model Import Error: %s\n",  importer.GetErrorString());
-		handleerror(0,importer.GetErrorString(),"Model Import Error",0);
+		logOutput.Print ("Model Import Error: %s\n",  importer.GetErrorString());
 	}
 	return model;
 }
