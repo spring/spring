@@ -354,8 +354,28 @@ function printJavaEvent(evtIndex) {
 	topicName      = evtsTopicName[evtIndex];
 	topicValue     = evtsTopicNameValue[topicName];
 	eName          = evtsName[evtIndex];
+	eMetaComment   = evtsMetaComment[evtIndex];
 	eNameLowerized = lowerize(eName);
 	eCls           = eName "AIEvent";
+
+	# Add the member comments to the main comment as @param attributes
+	numEvtDocLines = evtsDocComment[evtIndex, "*"];
+	for (m=firstMember; m < evtsNumMembers[evtIndex]; m++) {
+		numLines = evtMbrsDocComments[evtIndex*1000 + m, "*"];
+		if (numLines > 0) {
+			evtsDocComment[evtIndex, numEvtDocLines] = "@param " evtsMembers_name[evtIndex, m];
+		}
+		for (l=0; l < numLines; l++) {
+			if (l == 0) {
+				_preDocLine = "@param " evtsMembers_name[evtIndex, m] "  ";
+			} else {
+				_preDocLine = "       " lengtAsSpaces(evtsMembers_name[evtIndex, m]) "  ";
+			}
+			evtsDocComment[evtIndex, numEvtDocLines] = _preDocLine evtMbrsDocComments[evtIndex*1000 + m, l];
+			numEvtDocLines++;
+		}
+	}
+	evtsDocComment[evtIndex, "*"] = numEvtDocLines;
 
 	paramsTypes = "";
 	for (m=0; m < evtsNumMembers[evtIndex]; m++) {
@@ -370,9 +390,14 @@ function printJavaEvent(evtIndex) {
 		paramsTypes = "int skirmishAIId, AICallback callback";
 	}
 
+	_condMetaComments = eMetaComment;
+	if (_condMetaComments != "") {
+		_condMetaComments = " // " _condMetaComments;
+	}
+
 	print("") >> outFile_i;
 	printFunctionComment_Common(outFile_i, evtsDocComment, evtIndex, "\t");
-	print("\t" "public int " eNameLowerized "(" paramsTypes ");") >> outFile_i;
+	print("\t" "public int " eNameLowerized "(" paramsTypes ");" _condMetaComments) >> outFile_i;
 
 	print("") >> outFile_a;
 	print("\t" "@Override") >> outFile_a;
@@ -438,7 +463,6 @@ function canDeleteDocumentation() {
 
 	evtsNumMembers[ind_evtStructs]  = ind_evtMember;
 	evtsTopicName[ind_evtStructs]   = $3;
-	storeDocLines(evtsDocComment, ind_evtStructs);
 	_metaComment = $0;
 	sub("^.*" evtsTopicName[ind_evtStructs], "", _metaComment);
 	evtsMetaComment[ind_evtStructs] = trim(_metaComment);
@@ -452,12 +476,18 @@ function canDeleteDocumentation() {
 {
 	if (isInsideEvtStruct == 1) {
 		size_tmpMembers = split($0, tmpMembers, ";");
+		# cause there is an empty part behind the ';'
+		size_tmpMembers--;
 		for (i=1; i<=size_tmpMembers; i++) {
 			tmpMembers[i] = trim(tmpMembers[i]);
 			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
 				break;
 			}
-			saveMember(ind_evtMember++, tmpMembers[i]);
+			# This would bork with more then 1000 members in an event,
+			# or more then 1000 events
+			storeDocLines(evtMbrsDocComments, ind_evtStructs*1000 + ind_evtMember);
+			saveMember(ind_evtMember, tmpMembers[i]);
+			ind_evtMember++;
 		}
 	}
 }
@@ -472,6 +502,7 @@ function canDeleteDocumentation() {
 	sub(/Event$/, "", eventName);
 
 	evtsName[ind_evtStructs] = eventName;
+	storeDocLines(evtsDocComment, ind_evtStructs);
 }
 
 ### END: parsing and saving the event structs
