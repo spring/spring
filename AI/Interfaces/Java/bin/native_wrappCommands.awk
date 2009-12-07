@@ -320,7 +320,7 @@ function canDeleteDocumentation() {
 	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
 	cmdsTopicName[ind_cmdStructs]  = $3;
 	cmdsMetaInfo[ind_cmdStructs]   = $0;
-	sub(/^}; \/\/ COMMAND_[^ \t]+[ \t]+/, "",  cmdsMetaInfo[ind_cmdStructs]);
+	sub(/^}; \/\/ COMMAND_[^ \t]+[ \t]+/, "", cmdsMetaInfo[ind_cmdStructs]);
 
 	if (doWrapp(ind_cmdStructs)) {
 		#printCommandJava(ind_cmdStructs);
