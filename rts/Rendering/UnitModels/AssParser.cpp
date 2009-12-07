@@ -20,16 +20,20 @@
 #include "aiScene.h"
 #include "aiPostProcess.h"
 
+// triangulate guarantees the most complex mesh is a triangle
+// sortbytype ensure only 1 type of primitive type per mesh is used
 #define ASS_POSTPROCESS_OPTIONS \
-	aiProcess_CalcTangentSpace				|  \
-	aiProcess_GenSmoothNormals				|  \
-	aiProcess_JoinIdenticalVertices		|  \
-	aiProcess_ImproveCacheLocality		|  \
-	aiProcess_LimitBoneWeights				|  \
-	aiProcess_RemoveRedundantMaterials|  \
-	aiProcess_SplitLargeMeshes				|  \
-	aiProcess_Triangulate					    |  \
-	aiProcess_GenUVCoords
+	aiProcess_CalcTangentSpace				| \
+	aiProcess_GenSmoothNormals				| \
+	aiProcess_JoinIdenticalVertices		| \
+	aiProcess_ImproveCacheLocality		| \
+	aiProcess_LimitBoneWeights				| \
+	aiProcess_RemoveRedundantMaterials| \
+	aiProcess_SplitLargeMeshes				| \
+	aiProcess_Triangulate					    | \
+	aiProcess_GenUVCoords             | \
+	aiProcess_SortByPType
+
 
 S3DModel* CAssParser::Load(std::string name)
 {
@@ -58,7 +62,7 @@ S3DModel* CAssParser::Load(std::string name)
 		model->type = MODELTYPE_OTHER;
 		model->scene = scene;
 		model->numobjects = scene->mNumMeshes;
-		model->rootobject = LoadPiece( scene->mRootNode );
+		model->rootobject = LoadPiece( scene->mRootNode, scene );
 
 		// Load size defaults from 'hitbox' object in model (if it exists).
 		// If it doesn't exist loop of all pieces
@@ -89,11 +93,12 @@ S3DModel* CAssParser::Load(std::string name)
 	return model;
 }
 
-SAssPiece* CAssParser::LoadPiece(aiNode* node)
+#define IS_QNAN(f) (f != f)
+
+SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 {
 	SAssPiece* piece = new SAssPiece;
 	piece->name = std::string(node->mName.data);
-	piece->pos = float3(); // FIXME:Implement GetVertexPos properly
 	piece->type = MODELTYPE_OTHER;
 	piece->node = node;
 	piece->isEmpty = node->mNumMeshes > 0;
@@ -107,6 +112,47 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node)
 	piece->offset.y = position.y;
 	piece->offset.z = position.z;
 
+	// for all meshes
+	for ( unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++ ) {
+		unsigned int meshIndex = node->mMeshes[meshListIndex];
+		aiMesh* mesh = scene->mMeshes[meshIndex];
+		// extract vertex data
+		for ( unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; vertexIndex++) {
+			SAssVertex vertex;
+			// vertex coordinates
+			aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
+			vertex.pos.x = aiVertex.x;
+			vertex.pos.y = aiVertex.y;
+			vertex.pos.z = aiVertex.z;
+			// vertex normal
+			aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
+			vertex.hasNormal = !IS_QNAN(aiNormal);
+			if ( vertex.hasNormal ) {
+				vertex.normal.x = aiNormal.x;
+				vertex.normal.y = aiNormal.y;
+				vertex.normal.z = aiNormal.z;
+			}
+			// vertex tangent, x is positive in texture axis
+			aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
+			vertex.hasTangent = !IS_QNAN(aiTangent);
+			if ( vertex.hasTangent ) {
+				float3 tangent;
+				tangent.x = aiTangent.x;
+				tangent.y = aiTangent.y;
+				tangent.z = aiTangent.z;
+				piece->sTangents.push_back(tangent);
+				// bitangent is cross product of tangent and normal
+				float3 bitangent;
+				if ( vertex.hasNormal ) {
+					bitangent = tangent.cross(vertex.normal);
+					piece->tTangents.push_back(bitangent);
+				}
+			}
+			piece->vertexDrawOrder.push_back(vertexIndex);
+			piece->vertices.push_back(vertex);
+		}
+	}
+
 	// collision volume for piece
 	const float3 cvScales(1.0f, 1.0f, 1.0f);
 	const float3 cvOffset(0.0f, 0.0f, 0.0f);
@@ -115,7 +161,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node)
 
 	// Recursively process all child pieces
 	for (unsigned int i = 0; i < node->mNumChildren;++i) {
-		SAssPiece* childPiece = LoadPiece(node->mChildren[i]);
+		SAssPiece* childPiece = LoadPiece(node->mChildren[i],scene);
 		piece->childs.push_back(childPiece);
 	}
 
@@ -156,14 +202,14 @@ void GetNodeVertices( aiNode node, Matrix4x4 accTransform)
 
 void CAssParser::Draw( const S3DModelPiece* o) const
 {
-	logOutput.Print("Drawing piece");
 	if (o->isEmpty) {
 		return;
 	}
+	logOutput.Print("Drawing piece %s", o->name.c_str());
 	// Add GL commands to the pieces displaylist
 
-	const SS3OPiece* so = static_cast<const SS3OPiece*>(o);
-	const SS3OVertex* s3ov = static_cast<const SS3OVertex*>(&so->vertices[0]);
+	const SAssPiece* so = static_cast<const SAssPiece*>(o);
+	const SAssVertex* sAssV = static_cast<const SAssVertex*>(&so->vertices[0]);
 
 
 	// pass the tangents as 3D texture coordinates
@@ -176,7 +222,8 @@ void CAssParser::Draw( const S3DModelPiece* o) const
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->sTangents[0].x);
-
+	}
+	if (!so->tTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
@@ -184,30 +231,22 @@ void CAssParser::Draw( const S3DModelPiece* o) const
 
 	glClientActiveTexture(GL_TEXTURE0);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SAssVertex), &sAssV->textureX);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &s3ov->pos.x);
+	glVertexPointer(3, GL_FLOAT, sizeof(SAssVertex), &sAssV->pos.x);
 
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
+	glNormalPointer(GL_FLOAT, sizeof(SAssVertex), &sAssV->normal.x);
 
-	switch (so->primitiveType) {
-		case S3O_PRIMTYPE_TRIANGLES:
-			glDrawElements(GL_TRIANGLES, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
-			break;
-		case S3O_PRIMTYPE_TRIANGLE_STRIP:
-			glDrawElements(GL_TRIANGLE_STRIP, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
-			break;
-		case S3O_PRIMTYPE_QUADS:
-			glDrawElements(GL_QUADS, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
-			break;
-	}
+	// since aiProcess_SortByPType is being used, we're sure we'll get only 1 type here, so combination check isn't needed, also anything more complex than triangles is being split thanks to aiProcess_Triangulate
+	glDrawElements(GL_TRIANGLES, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
 
 	if (!so->sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
+	}
+	if (!so->tTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE5);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
