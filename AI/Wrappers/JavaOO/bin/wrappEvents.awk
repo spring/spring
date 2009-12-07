@@ -552,8 +552,11 @@ function canDeleteDocumentation() {
 	_name = _head;
 	sub(/^\tpublic [^ ]+ /, "", _name); # remove pre
 
-	_meta = trim(_tail);
-	sub(/^\/\/[ \t]*/, "", _meta); # remove pre
+	_meta = $0;
+	_hasMeta = sub(/.*\);[ \t]*\/\/[ \t]*/, "", _meta); # remove pre
+	if (!_hasMeta) {
+		_meta = "";
+	}
 
 	evts_retType[ind_evt] = _retType;
 	evts_name[ind_evt]    = _name;
