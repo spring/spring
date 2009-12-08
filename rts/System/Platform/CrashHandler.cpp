@@ -46,13 +46,10 @@ namespace CrashHandler {
 #include <map>
 #include <signal.h>
 #include <execinfo.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstdio>
 #include <inttypes.h> // for uintptr_t
-#include <boost/static_assert.hpp> // for 
-//#if (sizeof(unsigned int long) != sizeof(uintptr_t))
-//	#warning The size of "unsigned int long" is different from the size of uintptr_t, this may lead to incorrectly translated stacktraces.
-//#endif
+#include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
 
 #include "LogOutput.h"
 #include "errorhandler.h"
@@ -336,10 +333,10 @@ namespace CrashHandler {
 			}
 			log << "Translated Stacktrace:\n";
 		}
+		logOutput.End(); // Stop writing to log.
 
 		findBaseMemoryAddresses(binPath_baseMemAddr);
 
-		logOutput.End(); // Stop writing to log.
 		std::string lastPath;
 		while (!paths.empty()) {
 			std::ostringstream buf;
