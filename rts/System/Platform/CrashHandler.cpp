@@ -47,6 +47,7 @@ namespace CrashHandler {
 #include <signal.h>
 #include <execinfo.h>
 #include <stdlib.h>
+#include <cstdio>
 #include <inttypes.h> // for uintptr_t
 #include <boost/static_assert.hpp> // for 
 //#if (sizeof(unsigned int long) != sizeof(uintptr_t))
