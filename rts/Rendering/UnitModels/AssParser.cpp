@@ -19,6 +19,7 @@
 #include "aiTypes.h"
 #include "aiScene.h"
 #include "aiPostProcess.h"
+#include "DefaultLogger.h"
 
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
@@ -33,6 +34,18 @@
 	aiProcess_Triangulate					    | \
 	aiProcess_GenUVCoords             | \
 	aiProcess_SortByPType
+
+class AssLogStream : public Assimp::LogStream
+{
+public:
+	AssLogStream() {}
+	~AssLogStream() {}
+	void write(const char* message)
+	{
+		logOutput.Print ("%s", message);
+	}
+};
+
 
 
 S3DModel* CAssParser::Load(std::string name)
@@ -49,6 +62,11 @@ S3DModel* CAssParser::Load(std::string name)
 
 	// give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler( new AssVFSSystem() );
+
+	// Select the kinds of messages you want to receive on this log stream
+	Assimp::DefaultLogger::create("",Assimp::Logger::VERBOSE);
+	const unsigned int severity = Assimp::Logger::DEBUGGING|Assimp::Logger::INFO|Assimp::Logger::ERR|Assimp::Logger::WARN;
+	Assimp::DefaultLogger::get()->attachStream( new AssLogStream(), severity );
 
 	// read the model and texture files to build an assimp scene
 	logOutput.Print("Reading model file: %s\n", name.c_str() );
@@ -115,6 +133,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 	// for all meshes
 	for ( unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++ ) {
 		unsigned int meshIndex = node->mMeshes[meshListIndex];
+		logOutput.Print("mesh %d:", meshIndex );
 		aiMesh* mesh = scene->mMeshes[meshIndex];
 		// extract vertex data
 		for ( unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; vertexIndex++) {
@@ -124,6 +143,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 			vertex.pos.x = aiVertex.x;
 			vertex.pos.y = aiVertex.y;
 			vertex.pos.z = aiVertex.z;
+			logOutput.Print("vertex %d: %f %f %f",vertexIndex, vertex.pos.x, vertex.pos.y,vertex.pos.z );
 			// vertex normal
 			aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 			vertex.hasNormal = !IS_QNAN(aiNormal);
@@ -131,6 +151,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 				vertex.normal.x = aiNormal.x;
 				vertex.normal.y = aiNormal.y;
 				vertex.normal.z = aiNormal.z;
+				logOutput.Print("vertex normal %d: %f %f %f",vertexIndex, vertex.normal.x, vertex.normal.y,vertex.normal.z );
 			}
 			// vertex tangent, x is positive in texture axis
 			aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
@@ -140,11 +161,13 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 				tangent.x = aiTangent.x;
 				tangent.y = aiTangent.y;
 				tangent.z = aiTangent.z;
+				logOutput.Print("vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z );
 				piece->sTangents.push_back(tangent);
 				// bitangent is cross product of tangent and normal
 				float3 bitangent;
 				if ( vertex.hasNormal ) {
 					bitangent = tangent.cross(vertex.normal);
+					logOutput.Print("vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z );
 					piece->tTangents.push_back(bitangent);
 				}
 			}
