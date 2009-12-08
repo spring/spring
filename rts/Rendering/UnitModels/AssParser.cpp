@@ -119,7 +119,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 	piece->name = std::string(node->mName.data);
 	piece->type = MODELTYPE_OTHER;
 	piece->node = node;
-	piece->isEmpty = node->mNumMeshes > 0;
+	piece->isEmpty = node->mNumMeshes == 0;
 
 	logOutput.Print("Positioning piece");
 	aiVector3D scale, position;
