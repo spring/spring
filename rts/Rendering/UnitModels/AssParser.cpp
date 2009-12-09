@@ -81,6 +81,10 @@ S3DModel* CAssParser::Load(std::string name)
 		model->scene = scene;
 		model->numobjects = scene->mNumMeshes;
 		model->rootobject = LoadPiece( scene->mRootNode, scene );
+		model->tex1 = "network_packet.tga";
+		model->tex2 = "";
+		model->textureType = 1;
+		texturehandlerS3O->LoadS3OTexture(model);
 
 		// Load size defaults from 'hitbox' object in model (if it exists).
 		// If it doesn't exist loop of all pieces
@@ -171,10 +175,10 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 					piece->tTangents.push_back(bitangent);
 				}
 			}
-			piece->vertexDrawOrder.push_back(vertexIndex);
 			piece->vertices.push_back(vertex);
 		}
 	}
+
 
 	// collision volume for piece
 	const float3 cvScales(1.0f, 1.0f, 1.0f);
