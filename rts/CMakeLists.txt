@@ -9,6 +9,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
+SET(ASSIMP_DIR "/home/dmytry/opensource/assimp" CACHE STRING "AssImp directory")
+
 ### Spring defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
@@ -58,8 +60,8 @@ LIST(APPEND spring_libraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_L
 
 FIND_PACKAGE(Freetype REQUIRED)
 INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-INCLUDE_DIRECTORIES("/home/cloud/assimp/include")
-LINK_DIRECTORIES("/home/cloud/assimp/lib")
+INCLUDE_DIRECTORIES(${ASSIMP_DIR}/include)
+LINK_DIRECTORIES(${ASSIMP_DIR}/lib)
 LIST(APPEND spring_libraries "assimp" )
 LIST(APPEND spring_libraries ${FREETYPE_LIBRARIES})
 
