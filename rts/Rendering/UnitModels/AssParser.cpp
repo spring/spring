@@ -140,6 +140,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 		unsigned int meshIndex = node->mMeshes[meshListIndex];
 		logOutput.Print("mesh %d:", meshIndex );
 		aiMesh* mesh = scene->mMeshes[meshIndex];
+		std::vector<unsigned> mesh_vertex_mapping;
 		// extract vertex data
 		for ( unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; vertexIndex++) {
 			SAssVertex vertex;
@@ -176,7 +177,20 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 					piece->tTangents.push_back(bitangent);
 				}
 			}
+			mesh_vertex_mapping.push_back(piece->vertices.size());
 			piece->vertices.push_back(vertex);
+		}
+		// extract face data
+		if ( mesh->HasFaces() ) {
+			for ( unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; faceIndex++ ) {
+					aiFace& face = mesh->mFaces[faceIndex];
+					// get the vertex belonging to the mesh
+					for ( unsigned vertexListID = 0; vertexListID < face.mNumIndices; vertexListID++ ) {
+						unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
+						logOutput.Print("face %d vertex %d", faceIndex, vertexID );
+						piece->vertexDrawOrder.push_back(vertexID);
+					}
+			}
 		}
 	}
 
