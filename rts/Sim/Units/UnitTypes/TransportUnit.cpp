@@ -155,7 +155,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 				mt->StartFlying();
 			}
 
-			u->stunned = (u->paralyzeDamage > u->maxHealth);
+			u->stunned = (u->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? u->maxHealth: u->health));
 			u->moveType->LeaveTransport();
 			u->speed = speed*(0.5f + 0.5f*gs->randFloat());
 
@@ -272,7 +272,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			}
 
 			// de-stun in case it isFirePlatform=0
-			unit->stunned = (unit->paralyzeDamage > unit->maxHealth);
+			unit->stunned = (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
 			loshandler->MoveUnit(unit, false);
 
 			transportCapacityUsed -= ti->size;
