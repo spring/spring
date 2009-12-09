@@ -84,9 +84,7 @@ S3DModel* CAssParser::Load(std::string name)
 		model->rootobject = LoadPiece( scene->mRootNode, scene );
 		model->tex1 = "network_packet.tga";
 		model->tex2 = "";
-		model->textureType = 1;
 		texturehandlerS3O->LoadS3OTexture(model);
-
 		// Load size defaults from 'hitbox' object in model (if it exists).
 		// If it doesn't exist loop of all pieces
 		// These values can be overridden in unitDef
@@ -197,7 +195,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 
 	// collision volume for piece
 	const float3 cvScales(1.0f, 1.0f, 1.0f);
-	const float3 cvOffset(0.0f, 0.0f, 0.0f);
+	const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
 	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
 	piece->colvol->Enable();
 
