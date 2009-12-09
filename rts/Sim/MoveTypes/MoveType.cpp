@@ -2,7 +2,7 @@
 #include "mmgr.h"
 
 #include "MoveType.h"
-#include "Map/Ground.h"
+#include "MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include <assert.h>
@@ -21,12 +21,6 @@ CR_REG_METADATA(AMoveType, (
 		CR_MEMBER(useHeading),
 		CR_ENUM_MEMBER(progressState),
 		CR_RESERVED(32)
-		));
-
-CR_BIND_DERIVED(CMoveType, AMoveType, (NULL));
-CR_REG_METADATA(CMoveType,
-		(
-		CR_RESERVED(63)
 		));
 
 AMoveType::AMoveType(CUnit* owner):
@@ -71,10 +65,8 @@ void AMoveType::ImpulseAdded(void)
 
 void AMoveType::SlowUpdate()
 {
-	owner->pos.y = ground->GetHeight2(owner->pos.x, owner->pos.z);
-	if (owner->floatOnWater && owner->pos.y < -owner->unitDef->waterline) {
-		owner->pos.y = -owner->unitDef->waterline;
-	}
+	//! note static buildings don't have any unitDef->moveData, that's why CStaticMoveType uses its own method
+	owner->pos.y = owner->unitDef->movedata->moveMath->yLevel(owner->pos.x, owner->pos.z);
 	owner->midPos.y = owner->pos.y + owner->relMidPos.y;
 };
 

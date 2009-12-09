@@ -228,7 +228,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 
 
 /* Converts a point-request into a square-positional request. */
-float CMoveMath::yLevel(const float3 pos) {
+float CMoveMath::yLevel(const float3& pos) {
 	int x = int(pos.x / SQUARE_SIZE);
 	int z = int(pos.z / SQUARE_SIZE);
 	return yLevel(x, z);
