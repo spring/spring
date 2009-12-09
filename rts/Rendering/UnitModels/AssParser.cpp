@@ -20,6 +20,7 @@
 #include "aiScene.h"
 #include "aiPostProcess.h"
 #include "DefaultLogger.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
