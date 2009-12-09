@@ -1161,26 +1161,23 @@ unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos,
 	return pathId;
 }
 
-#ifndef __GNUC__
-	#define _thread
-#else
-	#define _thread __thread
-#endif
 
 void CGroundMoveType::UpdateHeatMap()
 {
 	if (!pathId)
 		return;
 
-	static _thread std::vector<int2> points;
+#ifndef USE_GML
+	static std::vector<int2> points;
+#else
+	std::vector<int2> points;
+#endif
 
 	pathManager->GetDetailedPathSquares(pathId, points);
 	for (std::vector<int2>::iterator it = points.begin(); it != points.end(); ++it) {
 		pathManager->SetHeatOnSquare(it->x, it->y, owner->mobility->heatProduced, owner->id);
 	}
 }
-
-#undef _thread
 
 
 // Calculates an aproximation of the physical 2D-distance between given two objects.
