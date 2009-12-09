@@ -988,7 +988,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 				}
 				else if (key == "paralyze") {
 					unit->paralyzeDamage = max(0.0f, value);
-					if (unit->paralyzeDamage > unit->maxHealth) {
+					if (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health)) {
 						unit->stunned = true;
 					} else if (value < 0.0f) {
 						unit->stunned = false;

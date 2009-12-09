@@ -86,6 +86,10 @@ void CModInfo::Init(const char* modname)
 	const LuaTable captureTbl = root.SubTable("capture");
 	captureEnergyCostFactor = captureTbl.GetFloat("energyCostFactor", 0.0);
 
+	// paralyze
+	const LuaTable paralyzeTbl = root.SubTable("paralyze");
+	paralyzeOnMaxHealth = paralyzeTbl.GetBool("paralyzeOnMaxHealth", true);
+
 	// fire-at-dead-units
 	const LuaTable fireAtDeadTbl = root.SubTable("fireAtDead");
 	fireAtKilled   = fireAtDeadTbl.GetBool("fireAtKilled", false);
