@@ -148,6 +148,9 @@ CAirMoveType::~CAirMoveType(void)
 
 void CAirMoveType::Update(void)
 {
+	if (owner->beingBuilt)
+		return;
+
 	float3& pos = owner->pos;
 
 	// note: this is only set to false after
