@@ -34,7 +34,7 @@ public:
 	bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object);
 
 	// gives the y-coordinate the unit will "stand on"
-	float yLevel(float3 pos);
+	virtual float yLevel(const float3& pos);
 	virtual float yLevel(int xSquare, int Square) = 0;
 
 	// returns the block-status of a single quare
