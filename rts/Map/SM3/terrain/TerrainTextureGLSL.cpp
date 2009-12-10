@@ -816,6 +816,23 @@ bool GLSLShaderHandler::SetupShader(IShaderSetup* ps, NodeSetupParams& params)
 }
 
 
+void GLSLShaderHandler::BeginBuild()
+{
+	if (curShader) {
+		curShader->Cleanup();
+		curShader = 0;
+	}
+
+	delete buffer;
+	delete scShader;
+
+	buffer = 0;
+	scShader = 0;
+
+	renderSetups.clear();
+}
+
+
 void GLSLShaderHandler::EndBuild()
 {
 	bool multipass = false;

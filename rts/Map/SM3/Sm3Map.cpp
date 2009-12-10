@@ -140,10 +140,25 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		LoadFeatureData();
 
 		groundDrawer = new CSm3GroundDrawer (this);
+
+		configHandler->NotifyOnChange(this);
 	}
 	catch(content_error& e)
 	{
 		ErrorMessageBox(e.what(), "Error:", MBF_OK);
+	}
+}
+
+
+void CSm3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key == "Shadows") {
+		bool drawShadows = (std::atoi(value.c_str()) > 0);
+
+		if (renderer->config.useShadowMaps != drawShadows) {
+			renderer->config.useShadowMaps = drawShadows;
+			renderer->ReloadShaders();
+		}
 	}
 }
 
