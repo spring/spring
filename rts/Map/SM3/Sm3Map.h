@@ -19,6 +19,7 @@ public:
 	CSm3ReadMap();
 	~CSm3ReadMap();
 	void Initialize(const char* mapname); // throws std::runtime_exception on errors
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 	CBaseGroundDrawer* GetGroundDrawer();
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
