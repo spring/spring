@@ -3580,6 +3580,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					playerHandler->PlayerLeft(player, inbuf[2]);
+					eventHandler.PlayerRemoved(player, (int) inbuf[2]);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
