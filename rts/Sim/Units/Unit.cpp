@@ -816,9 +816,9 @@ void CUnit::SlowUpdate()
 
 	if (unitDef->canKamikaze) {
 		if (fireState >= 2) {
-			CUnit* u = helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->kamikazeDist, allyteam, false, true);
-			if (u && u->physicalState != CSolidObject::Flying && u->speed.dot(pos - u->pos) <= 0) {
-				// self destruct when unit start moving away from mine, should maximize damage
+			CUnit* u = helper->GetClosestEnemyUnit(pos, unitDef->kamikazeDist, allyteam);
+			if (u && u->speed.dot(pos - u->pos) <= 0) {
+				//! self destruct when we start moving away from the target, this should maximize the damage
 				KillUnit(true, false, NULL);
 			}
 		}
