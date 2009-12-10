@@ -49,7 +49,7 @@ class CEventHandler
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
 		void PlayerChanged(int playerID);
-		void PlayerRemoved(int playerID);
+		void PlayerRemoved(int playerID, int reason);
 
 		void UnitCreated(const CUnit* unit, const CUnit* builder);
 		void UnitFinished(const CUnit* unit);
@@ -196,6 +196,7 @@ class CEventHandler
 		EventClientList listTeamDied;
 		EventClientList listTeamChanged;
 		EventClientList listPlayerChanged;
+		EventClientList listPlayerRemoved;
 
 		EventClientList listUnitCreated;
 		EventClientList listUnitFinished;

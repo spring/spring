@@ -426,6 +426,29 @@ void CLuaHandle::PlayerChanged(int playerID)
 }
 
 
+void CLuaHandle::PlayerRemoved(int playerID, int reason)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+
+	int errfunc = SetupTraceback();
+
+	static const LuaHashString cmdStr("PlayerRemoved");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
+		return; // the call is not defined	}
+	}
+
+	lua_pushnumber(L, playerID);
+	lua_pushnumber(L, reason);
+
+	// call the routine
+	RunCallInTraceback(cmdStr, 2, 0, errfunc);
+	return;
+}
+
+
 /******************************************************************************/
 
 inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
