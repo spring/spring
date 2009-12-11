@@ -232,10 +232,12 @@ if (isIntNameDifferent) { print("isIntNameDifferent: " ancestorsPlusName_p " " m
 	return intName_p;
 }
 
-function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p) {
+function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p, parentImplClsId_p) {
 
 	indicesArg_p = "";
 
+#if (clsName_p == "OrderPreview") { print("\nOrderPreview params_p: " params_p); }
+#if (clsName_p == "MoveData") { print("\nMoveData params_p: " params_p); }
 #if (clsName_p == "Unit") { print("Unit params_p: " params_p); }
 #if (clsName_p == "Group") { print("Group params_p: " params_p); }
 	if (part_isFetcher(metaComment_p)) {
@@ -249,7 +251,7 @@ function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p) 
 #if (params_p != "") { print("params_p: " params_p); }
 		if (match(params_p, tmp_indArg_p)) {
 			indicesArg_p = tmp_indArg_p;
-#print("matched: #" tmp_indArg_p "#" params_p "#")
+#if (clsName_p == "MoveData") { print("matched: #" tmp_indArg_p "#" params_p "#"); }
 		} else {
 			tmp_indArg_p = _implClsName;
 			tmp_indArg_p = "int " lowerize(tmp_indArg_p) "Id";
@@ -259,15 +261,34 @@ function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p) 
 			}
 		}
 	}
+#if (clsName_p == "MoveData") { print("so far: #" tmp_indArg_p "#" params_p "#" indicesArg_p "#"); }
 
-	# include the params before the indices arg
-	indicesArgs_p = params_p;
-	_found = sub(indicesArg_p ".*", "", indicesArgs_p);
-	if (!_found) { print("indices arg \"" indicesArg_p "\" not found in params: " params_p); exit(1); }
-	indicesArgs_p = indicesArgs_p indicesArg_p;
+	if (indicesArg_p != "") {
+		# include the params before the indices arg
+		indicesArgs_p = params_p;
+		_found = sub(indicesArg_p ".*", "", indicesArgs_p);
+		if (!_found) {
+			print("indices arg \"" indicesArg_p "\" not found in params: " params_p);
+			exit(1);
+		}
+		indicesArgs_p = indicesArgs_p indicesArg_p;
+	} else if (parentImplClsId_p in cls_implId_indicesArgs) {
+		# get parent class indices args
+#if (clsName_p == "MoveData") { print("parentImplClsId_p: #" parentImplClsId_p "#" cls_implId_indicesArgs[parentImplClsId_p] "#"); }
+		indicesArgs_p = cls_implId_indicesArgs[parentImplClsId_p];
+	} else {
+		print("warning: possible problem with indices args of " implClsName_p);
+#print("XXX: " clsName_p " / " implClsName_p ": " params_p);
+		# This is very hacky! may very well breack in the future.
+		# use only first param, if there is one
+		indicesArgs_p = params_p;
+		sub(/,.*$/, "", indicesArgs_p);
+	}
 #print("ind args: #" implClsName_p "#" indicesArgs_p "#")
 #if (clsName_p == "Unit") { print( "Unit indicesArgs_p:  " indicesArgs_p); }
 #if (clsName_p == "Group") { print("Group indicesArgs_p: " indicesArgs_p); }
+#if (clsName_p == "MoveData") { print("end: #" tmp_indArg_p "#" params_p "#" indicesArgs_p "#\n\n"); }
+#if (clsName_p == "OrderPreview") { print("end: #" tmp_indArg_p "#" params_p "#" indicesArgs_p "#\n\n"); }
 
 	return indicesArgs_p;
 }
@@ -307,12 +328,13 @@ function extractAncestors(fullName_ea) {
 
 function store_cls(clsName_s) {
 
+#print("store_cls: " clsName_s);
 	# store only if not yet stored
 	if (!(clsName_s in cls_name_id)) {
 		_cls_size = cls_id_name["*"];
 		cls_name_id[clsName_s] = _cls_size;
 		cls_id_name[_cls_size] = clsName_s;
-#print("cls: " _cls_size " " clsName_s);
+#print("store_cls: " _cls_size " " clsName_s);
 		_cls_size++;
 		cls_id_name["*"] = _cls_size;
 	}
@@ -333,12 +355,14 @@ function store_anc(clsName_s, implClsName_s, ancestors_s, indicesArgs_s) {
 #print("_implId: " _implId " " implClsName_s);
 
 	if (!(_implId in cls_implId_indicesArgs)) {
-	# store only if not yet stored
+		# store only if not yet stored
 		cls_implId_indicesArgs[_implId] = indicesArgs_s;
 		cls_name_indicesArgs[clsName_s] = indicesArgs_s;
 		_cls_size = cls_name_implIds[clsName_s ",*"];
 		cls_name_implIds[clsName_s "," _cls_size] = _implId;
+#print("_elem: (" clsName_s "," _cls_size ") " _implId);
 		_cls_size++;
+#print("_size: (" clsName_s ",*" ") " _cls_size);
 		cls_name_implIds[clsName_s ",*"] = _cls_size;
 #print("anc: " _cls_size " " _implId " " indicesArgs_s);
 	} else if (length(indicesArgs_s) > length(cls_implId_indicesArgs[_implId])) {
@@ -366,7 +390,7 @@ function store_mem(clsName_s, memName_s, retType_s, params_s, isFetcher_s, metaC
 		cls_memberId_isFetcher[_memId]   = isFetcher_s;
 		cls_memberId_metaComment[_memId] = metaComment_s;
 if (clsName_s == "") {
-print("mem: " _cls_size " #" retType_s " " _memId "(" params_s ")# " isFetcher_s " // " metaComment_p);
+print("ERROR: mem: " _cls_size " #" retType_s " " _memId "(" params_s ")# " isFetcher_s " // " metaComment_p);
 }
 	}
 }
@@ -445,8 +469,10 @@ function store_classNamesAncestors() {
 		}
 
 		if (_implClsName != "") {
-			_indicesArgs = part_getIndicesArgs(_clsName, _implClsName, params, metaComment);
-			_ancestors   = extractAncestors(fullName);
+			_ancestors       = extractAncestors(fullName);
+			_parentImplClsId = myRootClass "," _ancestors;
+			sub(/,$/, "", _parentImplClsId);
+			_indicesArgs     = part_getIndicesArgs(_clsName, _implClsName, params, metaComment, _parentImplClsId);
 	
 			store_anc(_clsName, _implClsName, _ancestors, _indicesArgs);
 		}
@@ -568,6 +594,7 @@ function store_fullClassNames() {
 			sub(/^.*,/, "", _implClsName); # remove pre impl class name
 			cls_implId_fullClsName[_implId] = _implClsName;
 		}
+#print("_implId: (" _cn ": " _impls_size ") " _implId " -> " cls_implId_fullClsName[_implId]);
 	}
 
 #for (_ii in cls_implId_fullClsName) {
@@ -585,6 +612,9 @@ function store_everything() {
 	store_classNamesAncestors();
 	store_classMembers();
 	store_simpleFetchers();
+#for (_clsId in cls_id_name) {
+#	print("cls id name: " _clsId " -> " cls_id_name[_clsId]);
+#}
 	store_fullClassNames();
 
 

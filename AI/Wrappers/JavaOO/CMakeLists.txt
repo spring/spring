@@ -60,7 +60,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	SetGlobal(${myName}_AIWRAPPER_JAR_BIN "${myBuildDir}/${myBinJarFile}")
 	SetGlobal(${myName}_AIWRAPPER_JAR_SRC "${myBuildDir}/${mySrcJarFile}")
-	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${${myName}_AIWRAPPER_JAR_BIN}")
+	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}:${${myName}_AIWRAPPER_JAR_BIN}")
 
 	# Locate the manifest file
 	FindManifestFile("${myDir}" myManifestFile)
@@ -274,8 +274,15 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	set(myGeneratedEventSources
 		"${myGeneratedSourceDir}/${myPkg}/AbstractOOAI.java"
+		"${myGeneratedSourceDir}/${myPkg}/IOOAI.java"
 		"${myGeneratedSourceDir}/${myPkg}/OOAI.java"
+		"${myGeneratedSourceDir}/${myPkg}/IOOEventAI.java"
 		"${myGeneratedSourceDir}/${myPkg}/OOEventAI.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitLifeStateAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/UnitTeamChangeAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/LoadSaveAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/CommandFinishedAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyDamagedAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyDestroyedAIEvent.java"
