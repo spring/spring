@@ -165,6 +165,17 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 
 function printClasses() {
 
+	# look for AVAILABLE indicators
+	for (_memberId in cls_memberId_metaComment) {
+		if (match(cls_memberId_metaComment[_memberId], /AVAILABLE:/)) {
+			_availCls = cls_memberId_metaComment[_memberId];
+			sub(/^.*AVAILABLE:/, "", _availCls);
+			sub(/[ \t].*$/,      "", _availCls);
+			clsAvailInd_memberId_cls[_memberId] = _availCls;
+#print("clsAvailInd_memberId_cls: " _memberId " -> " _availCls);
+		}
+	}
+	
 	c_size_cs = cls_id_name["*"];
 	for (c=0; c < c_size_cs; c++) {
 		cls_cs      = cls_id_name[c];
@@ -299,8 +310,17 @@ outFile_c = outFile_jni_c;
 
 	# print static instance fetcher method
 	{
-		clsIsBuffered_c = isBufferedClass(clsNameExternal_c);
-		fullNameAvailable_c = ancestorsClass_available[clsId_c];
+		clsIsBuffered_c    = isBufferedClass(clsNameExternal_c);
+		_isAvailableMethod = "";
+		for (_memId in clsAvailInd_memberId_cls) {
+#print("AVAIL: " fullName_m);
+			if (clsAvailInd_memberId_cls[_memId] == clsName_c) {
+				_isAvailableMethod = _memId;
+				gsub(/,/, "_", _isAvailableMethod);
+#print("_isAvailableMethod: " _isAvailableMethod);
+#print("cls_implId_indicesArgs[ancestors_c]: " ancestors_c " " cls_implId_indicesArgs[ancestors_c]);
+			}
+		}
 
 		if (clsIsBuffered_c) {
 			print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
@@ -323,16 +343,16 @@ outFile_c = outFile_jni_c;
 			print("") >> outFile_c;
 		}
 		print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
-		if (fullNameAvailable_c == "") {
+		if (_isAvailableMethod == "") {
 			print("\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
 		} else {
-			print("\t\t" "boolean isAvailable = " myWrapVar ".getInnerCallback()." fullNameAvailable_c "(" addIndParsNoTypes_c ");") >> outFile_c;
+			print("\t\t" "boolean isAvailable = " myWrapVar "." _isAvailableMethod "(" addIndParsNoTypes_c ");") >> outFile_c;
 			print("\t\t" "if (isAvailable) {") >> outFile_c;
 			print("\t\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
 			print("\t\t" "}") >> outFile_c;
 		}
 		if (clsIsBuffered_c) {
-			if (fullNameAvailable_c == "") {
+			if (_isAvailableMethod == "") {
 				print("\t\t" "{") >> outFile_c;
 			} else {
 				print("\t\t" "if (_ret != null) {") >> outFile_c;
@@ -516,6 +536,7 @@ outFile_c = outFile_jni_c;
 	close(outFile_jni_c);
 }
 
+# UNUSED
 function printMemberClassFetchers(outFile_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc) {
 
 		memberClassId_mc = clsFull_mc "-" memberClsName_mc;
@@ -533,6 +554,7 @@ function printMemberClassFetchers(outFile_mc, clsFull_mc, clsId_mc, memberClsNam
 		}
 }
 # fullNameMultiSize_mf is 0 if it is no multi element
+# UNUSED
 function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName_mf, isInterface_mf, fullNameMultiSize_mf) {
 
 		memberClassId_mf = clsFull_mf "-" memberClsName_mf;
@@ -676,6 +698,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	addInds_size_m   = addInds_size_c;
 	for (ai=1; ai <= addInds_size_m; ai++) {
 		addInds_m[ai] = addInds_c[ai];
+#if (match(clsName_m, /OrderPreview/)) { print("OrderPreview - addInds_m[ai]: " addInds_m[ai]); }
 	}
 
 	indent_m            = "\t";
@@ -690,6 +713,11 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	sub(/^.*_/, "", memName);
 	functionName_m      = fullName_m;
 	sub(/^[^_]+_/, "", functionName_m);
+
+	if (memId_m in clsAvailInd_memberId_cls) {
+#print("AVAILABLE: " fullName_m);
+		return;
+	}
 
 	isVoid_int_m        = (retType_int == "void");
 
@@ -742,6 +770,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 outFile_m = outFile_jni_m;
 
+#if (match(clsName_m, /OrderPreview/)) { print("OrderPreview - fullParams: " params); }
 	# remove additional indices from the outter params
 	for (ai=1; ai <= addInds_size_m; ai++) {
 		_removed = sub(/[^,]+(, )?/, "", params);
@@ -750,6 +779,7 @@ outFile_m = outFile_jni_m;
 			print("ERROR: failed removing additional indices " addIndName " from method " memName_m " in class " clsName_int_m);
 		}
 	}
+#if (match(clsName_m, /OrderPreview/)) { print("OrderPreview - params minus indices: " params); }
 
 	innerParams         = removeParamTypes(params);
 
@@ -893,17 +923,36 @@ outFile_m = outFile_jni_m;
 
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = myWrapVar;
+			_hasRetInd = 0;
+			if (retType != "void") {
+				_hasRetInd = 1;
+			}
+			for (ai=1; ai <= (addInds_size_m-_hasRetInd); ai++) {
+#print("addInds_m[ai]: " addInds_m[ai]);
+				# Very hacky! too unmotivated for propper fix, sorry.
+				# propper fix would involve getting the parent of the wrapped
+				# class and using its additional indices
+				if (functionName_m != "UnitDef_WeaponMount_getWeaponDef") {
+					_wrappGetInst_params = _wrappGetInst_params ", " addInds_m[ai];
+				}
+			}
 			if (retType != "void") {
 				_wrappGetInst_params = _wrappGetInst_params ", " retVar_out_m;
 			} else {
 				ommitMainCall = 1;
 			}
+#print("");
+#print("");
+#for (ai=1; ai <= addInds_size_m; ai++) {
+#	print("addInds_m[ai]: " addInds_m[ai]);
+#}
+#print("wrapp params: _wrappGetInst_params: " _fullClsName " " _wrappGetInst_params);
 			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = Wrapp" _fullClsName ".getInstance(" _wrappGetInst_params ");" "\n";
 			declaredVarsCode = "\t\t" _refObj " " _retVar_out_new ";" "\n" declaredVarsCode;
 			retVar_out_m = _retVar_out_new;
 			retType = _refObj;
 		} else {
-print("WARNING: unsupported: REF:" _ref);
+			print("WARNING: unsupported: REF:" _ref);
 		}
 	}
 
@@ -1008,6 +1057,9 @@ print("WARNING: unsupported: REF:" _ref);
 				_fullClsName = cls_implId_fullClsName[_implId];
 			} else {
 				print("ERROR: failed to find the full class name for " _refObj " in " fullName_m);
+#for (_ii in cls_implId_fullClsName) {
+#	print("_ii: " _ii " -> " cls_implId_fullClsName[_ii]);
+#}
 				exit(1);
 			}
 #print("Special Array: #0:" fullName_m "#1:" _arrayPaNa "#2:" _refObj "#3:" _refObjInt "#4:" clsName_m "#5:" implCls_m "#6:" implId_m "#7:" _fullClsName "#");
@@ -1030,6 +1082,7 @@ print("WARNING: unsupported: REF:" _ref);
 		}
 
 		_arrayType = params;
+#if (match(clsName_m, /OrderPreview/)) { print("OrderPreview - _arrayType: " _arrayType); }
 		sub("\\[\\][ \t]" _arrayPaNa ".*$", "", _arrayType);
 		sub("^.*[ \t]", "", _arrayType);
 #if (match(params, / $/)) { print("params with space at end 1: " params); }

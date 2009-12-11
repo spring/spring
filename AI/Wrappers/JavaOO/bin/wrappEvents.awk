@@ -54,16 +54,22 @@ BEGIN {
 
 	aiFloat3Class       = "AIFloat3";
 
-	myOOAIClass         = "OOAI";
-	myOOAIAbstractClass = "AbstractOOAI";
-	myOOEventAIClass    = "OOEventAI";
-	myOOAIFile          = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOAIClass ".java";
-	myOOAIAbstractFile  = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOAIAbstractClass ".java";
-	myOOEventAIFile     = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOEventAIClass ".java";
+	myOOAIClass          = "OOAI";
+	myOOAIInterface      = "I" myOOAIClass;
+	myOOAIAbstractClass  = "AbstractOOAI";
+	myOOEventAIClass     = "OOEventAI";
+	myOOEventAIInterface = "I" myOOEventAIClass;
+	myOOAIFile               = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOAIClass ".java";
+	myOOAIInterfaceFile      = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOAIInterface ".java";
+	myOOAIAbstractFile       = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOAIAbstractClass ".java";
+	myOOEventAIFile          = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOEventAIClass ".java";
+	myOOEventAIInterfaceFile = JAVA_GENERATED_SOURCE_DIR "/" myMainPkgD "/" myOOEventAIInterface ".java";
 
 	printOOAIHeader(myOOAIFile, myOOAIClass);
+	printOOAIHeader(myOOAIInterfaceFile, myOOAIInterface);
 	printOOAIHeader(myOOAIAbstractFile, myOOAIAbstractClass);
 	printOOEventAIHeader(myOOEventAIFile);
+	printOOEventAIHeader(myOOEventAIInterfaceFile);
 
 	ind_evt = 0;
 }
@@ -80,7 +86,9 @@ function printOOAIHeader(outFile, clsName) {
 	print("") >> outFile;
 	print("") >> outFile;
 	#print("import java.util.Properties;") >> outFile;
-	print("import " myParentPkgA ".AI;") >> outFile;
+	if (clsName != myOOAIInterface) {
+		print("import " myParentPkgA ".AI;") >> outFile;
+	}
 	if (clsName == myOOAIClass) {
 		print("import " myParentPkgA ".AICallback;") >> outFile;
 		print("import " myMainPkgA ".clb.WrappOOAICallback;") >> outFile;
@@ -99,11 +107,17 @@ function printOOAIHeader(outFile, clsName) {
 	print(" * @version	GENERATED") >> outFile;
 	print(" */") >> outFile;
 
-	_extends = "";
+	_type       = "abstract class";
+	_extends    = "";
+	_implements = " implements " myOOAIInterface ", AI";
 	if (clsName == myOOAIAbstractClass) {
 		_extends = " extends " myOOAIClass;
 	}
-	print("public abstract class " clsName _extends " implements AI {") >> outFile;
+	if (clsName == myOOAIInterface) {
+		_type       = "interface";
+		_implements = "";
+	}
+	print("public " _type " " clsName _extends _implements " {") >> outFile;
 	print("") >> outFile;
 
 	if (clsName == myOOAIClass) {
@@ -142,15 +156,24 @@ function printOOEventAIHeader(outFile) {
 	print(" * @author	hoijui") >> outFile;
 	print(" * @version	GENERATED") >> outFile;
 	print(" */") >> outFile;
-	print("public abstract class " myOOEventAIClass " extends " myOOAIClass " implements AI {") >> outFile;
+	if (outFile == myOOEventAIFile) {
+		print("public abstract class " myOOEventAIClass " extends " myOOAIClass " implements " myOOEventAIInterface ", AI {") >> outFile;
+	} else {
+		print("public interface " myOOEventAIInterface " {") >> outFile;
+	}
 	print("") >> outFile;
+
 	print("\t" "/**") >> outFile;
 	print("\t" " * TODO: Add description here") >> outFile;
 	print("\t" " *") >> outFile;
 	print("\t" " * @param  event  the AI event to handle, sent by the engine") >> outFile;
 	print("\t" " * @throws AIException") >> outFile;
 	print("\t" " */") >> outFile;
-	print("\t" "public abstract void handleEvent(AIEvent event) throws EventAIException;") >> outFile;
+	_modifyer = "";
+	if (outFile == myOOEventAIFile) {
+		_modifyer = " abstract";
+	}
+	print("\t" "public" _modifyer " void handleEvent(AIEvent event) throws EventAIException;") >> outFile;
 	print("") >> outFile;
 
 	if (1 == 0) {
@@ -252,7 +275,40 @@ function convertJavaSimpleTypeToOO(paType_sto, paName_sto,
 
 function printEventsOO() {
 
-	c_size_cs = cls_id_name["*"];
+	# agarra te los event interfaces
+	for (e=0; e < evts_size; e++) {
+		meta_es    = evts_meta[e];
+print("meta_em: " meta_es);
+
+		interfList_size_es = 0;
+		if (match(meta_es, /INTERFACES:/)) {
+			interfMeta_es = meta_es;
+			sub(/^.*INTERFACES:/, "", interfMeta_es);
+			sub(/[ \t].*$/, "", interfMeta_es);
+			interfList_size_es = split(interfMeta_es, interfList_es, "),");
+
+			for (i=1; i <= interfList_size_es; i++) {
+				_intName = interfList_es[i];
+				sub(/\(.*$/, "", _intName);
+				_intParams = interfList_es[i];
+				sub(/^.*\(/, "", _intParams);
+
+				if (!(_intName in int_names)) {
+					int_names[_intName] = _intParams;
+				}
+				evts_intNames[e  "," (i-1)] = _intName;
+				evts_intParams[e "," (i-1)] = _intParams;
+			}
+		}
+		evts_intNames[e ",*"] = interfList_size_es;
+	}
+
+	# print the event interfaces
+	for (intName in int_names) {
+		printOOEventInterface(intName);
+	}
+
+	# print the event classes
 	for (e=0; e < evts_size; e++) {
 		printEventOO(e);
 	}
@@ -260,11 +316,10 @@ function printEventsOO() {
 
 function printEventOO(ind_evt_em) {
 
-	retType_em = evts_retType[ind_evt_em];
-	name_em    = evts_name[ind_evt_em];
-	params_em  = evts_params[ind_evt_em];
-	meta_em    = evts_meta[ind_evt_em];
-print("meta_em: " meta_em);
+	retType_em  = evts_retType[ind_evt_em];
+	name_em     = evts_name[ind_evt_em];
+	params_em   = evts_params[ind_evt_em];
+	meta_em     = evts_meta[ind_evt_em];
 
 	paramsList_size_em = split(params_em, paramsList_em, ", ");
 
@@ -335,16 +390,19 @@ print("meta_em: " meta_em);
 	}
 
 	printFunctionComment_Common(myOOAIFile, evts_docComment, ind_evt_em, "\t");
-	if (_equalMethod) {
-		print("\t" "@Override") >> myOOAIFile;
-	}
+	print("\t" "@Override") >> myOOAIFile;
 	print("\t" "public abstract " retType_em " " name_em "(" ooParams_em ");") >> myOOAIFile;
+
+	ooParamsCleaned_em = ooParams_em;
+	gsub(/ oo_/, " ", ooParamsCleaned_em);
+
+	print("") >> myOOAIInterfaceFile;
+	printFunctionComment_Common(myOOAIInterfaceFile, evts_docComment, ind_evt_em, "\t");
+	print("\t" "public " retType_em " " name_em "(" ooParamsCleaned_em ");") >> myOOAIInterfaceFile;
 
 	print("") >> myOOAIAbstractFile;
 	printFunctionComment_Common(myOOAIAbstractFile, evts_docComment, ind_evt_em, "\t");
 	print("\t" "@Override") >> myOOAIAbstractFile;
-	ooParamsCleaned_em = ooParams_em;
-	gsub(/ oo_/, " ", ooParamsCleaned_em);
 	print("\t" "public " retType_em " " name_em "(" ooParamsCleaned_em ") {") >> myOOAIAbstractFile;
 	print("\t\t" "return 0; // signaling: OK") >> myOOAIAbstractFile;
 	print("\t" "}") >> myOOAIAbstractFile;
@@ -379,6 +437,12 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 	outFile = JAVA_GENERATED_SOURCE_DIR "/" myPkgEvtD "/" evtName_ec ".java";
 
 	ooParamsList_size_ec = split(ooParams_ec, ooParamsList_ec, ", ");
+	int_size_ec = evts_intNames[ind_evt_ec ",*"];
+
+	_addIntLst = "";
+	for (i=0; i < int_size_ec; i++) {
+		_addIntLst = _addIntLst ", " evts_intNames[ind_evt_ec "," i] "AIEvent";
+	}
 
 	# print comments header
 	printGeneratedWarningHeader(outFile);
@@ -398,7 +462,7 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 
 	# print class header
 	printFunctionComment_Common(outFile, evts_docComment, ind_evt_ec, "");
-	print("public class " evtName_ec " implements AIEvent {") >> outFile;
+	print("public class " evtName_ec " implements AIEvent" _addIntLst " {") >> outFile;
 	print("") >> outFile;
 
 	# print member vars
@@ -423,6 +487,68 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 		print("\t" "}") >> outFile;
 	}
 	print("") >> outFile;
+
+	print("}") >> outFile;
+}
+
+function printOOEventInterface(int_name_ei) {
+	
+	outFile = JAVA_GENERATED_SOURCE_DIR "/" myPkgEvtD "/" int_name_ei "AIEvent.java";
+
+	int_params_ei = int_names[int_name_ei];
+
+	int_paramsList_size_ei = split(int_params_ei, int_paramsList_ei, ",");
+	int_size_ec = evts_intNames[ind_evt_ec ",*"];
+
+	_addIntLst = "";
+	for (i=0; i < int_size_ec; i++) {
+		_addIntLst = _addIntLst ", " evts_intNames[ind_evt_ec "," i] "AIEvent";
+	}
+
+	# print comments header
+	printGeneratedWarningHeader(outFile);
+	print("") >> outFile;
+	printGPLHeader(outFile);
+	print("") >> outFile;
+
+	print("package " myPkgEvtA ";") >> outFile;
+	print("") >> outFile;
+	print("") >> outFile;
+
+	# print imports
+	print("import " myMainPkgA ".AIEvent;") >> outFile;
+	print("import " myMainPkgA ".AIFloat3;") >> outFile;
+	print("import " myPkgClbA ".*;") >> outFile;
+	print("") >> outFile;
+
+	# print class header
+	print("public interface " int_name_ei "AIEvent extends AIEvent {") >> outFile;
+	print("") >> outFile;
+
+if (1 == 0) {
+	# print member vars
+	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
+		print("\t" "private " ooParamsList_ec[_p] ";") >> outFile;
+	}
+	print("") >> outFile;
+
+	print("\t" "public " evtName_ec "(" ooParams_ec ") {") >> outFile;
+	print("") >> outFile;
+	#print("\t\t" "AIEvent evt = new " evtName_ei "(" ooParamsNoTypes_ei ");") >> outFile;
+	print("\t" "}") >> outFile;
+	print("") >> outFile;
+
+	# print member getters
+	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
+		_type = extractParamType(ooParamsList_ec[_p]);
+		_name = extractParamName(ooParamsList_ec[_p]);
+
+		print("\t" "public " _type " get" capitalize(_name) "() {") >> outFile;
+		print("\t\t" "return this." _name ";") >> outFile;
+		print("\t" "}") >> outFile;
+	}
+	print("") >> outFile;
+}
 
 	print("}") >> outFile;
 }
@@ -581,10 +707,14 @@ END {
 	printEventsOO();
 
 	printOOAIEnd(myOOAIFile);
+	printOOAIEnd(myOOAIInterfaceFile);
 	printOOAIEnd(myOOAIAbstractFile);
 	printOOEventAIEnd(myOOEventAIFile);
+	printOOEventAIEnd(myOOEventAIInterfaceFile);
 
 	close(myOOAIFile);
+	close(myOOAIInterfaceFile);
 	close(myOOAIAbstractFile);
 	close(myOOEventAIFile);
+	close(myOOEventAIInterfaceFile);
 }
