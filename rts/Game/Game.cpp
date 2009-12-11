@@ -73,6 +73,7 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
+#include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
@@ -1817,37 +1818,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "screenshot") {
-		const char* ext = "png";
-		if (action.extra == "jpg") {
-			ext = "jpg";
-		}
-
-		if (filesystem.CreateDirectory("screenshots")) {
-			int x = gu->dualScreenMode? gu->viewSizeX << 1: gu->viewSizeX;
-
-			if (x % 4)
-				x += (4 - x % 4);
-
-			unsigned char* buf = new unsigned char[x * gu->viewSizeY * 4];
-			glReadPixels(0, 0, x, gu->viewSizeY, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-			CBitmap b(buf, x, gu->viewSizeY);
-			b.ReverseYAxis();
-
-			char t[50];
-			for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 9999; ++a) {
-				sprintf(t, "screenshots/screen%03i.%s", a, ext);
-				CFileHandler ifs(t);
-				if (!ifs.FileExists())
-				{
-					configHandler->Set("ScreenshotCounter", a < 9999 ? a+1 : 0);
-					break;
-				}
-			}
-			b.Save(t);
-			logOutput.Print("Saved: %s", t);
-			delete[] buf;
-		}
+		TakeScreenshot(action.extra);
 	}
 
 	else if (cmd == "grabinput") {
