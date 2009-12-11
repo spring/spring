@@ -223,7 +223,7 @@ struct SUnitGivenEvent {
 	int unitId;
 	int oldTeamId;
 	int newTeamId;
-}; // EVENT_UNIT_GIVEN INTERFACES:Unit(unitId),UnitLifeState(),UnitTeamChange(oldTeamId, newTeamId)
+}; // EVENT_UNIT_GIVEN INTERFACES:Unit(unitId),UnitLifeState(),UnitTeamChange(oldTeamId,newTeamId)
 
 /**
  * This AI event is sent when a unit changed from one team to an other through
@@ -233,7 +233,7 @@ struct SUnitCapturedEvent {
 	int unitId;
 	int oldTeamId;
 	int newTeamId;
-}; // EVENT_UNIT_CAPTURED INTERFACES:Unit(unitId),UnitLifeState(),UnitTeamChange(oldTeamId, newTeamId)
+}; // EVENT_UNIT_CAPTURED INTERFACES:Unit(unitId),UnitLifeState(),UnitTeamChange(oldTeamId,newTeamId)
 
 /**
  * This AI event is sent when an enemy unit entered the LOS of this team.
