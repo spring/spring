@@ -27,13 +27,13 @@ public:
 	~SaverThread()
 	{
 		myThread->join();
-		delete myThread();
+		delete myThread;
 	};
 	
 	void AddTask(FunctionArgs arg)
 	{
 		{
-			boost::mutex::scoped_lock(myMutex);
+			boost::mutex::scoped_lock mylock(myMutex);
 			tasks.push_back(arg);
 		}
 		
