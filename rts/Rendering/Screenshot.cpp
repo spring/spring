@@ -59,7 +59,7 @@ public:
 private:
 	bool GetTask(FunctionArgs& args)
 	{
-		boost::mutex::scoped_lock(myMutex);
+		boost::mutex::scoped_lock mylock(myMutex);
 		if (!tasks.empty())
 		{
 			args = tasks.front();
