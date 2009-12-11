@@ -24,6 +24,11 @@ class SaverThread
 {
 public:
 	SaverThread() : myThread(NULL), finished(false) {};
+	~SaverThread()
+	{
+		myThread->join();
+		delete myThread();
+	};
 	
 	void AddTask(FunctionArgs arg)
 	{
