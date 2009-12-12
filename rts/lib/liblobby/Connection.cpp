@@ -24,6 +24,7 @@ Connection::~Connection()
 {
 	sock.close();
 	netservice.poll();
+	netservice.reset();
 }
 
 void Connection::Connect(const std::string& server, int port)
