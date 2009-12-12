@@ -195,8 +195,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetGroupList);
 	REGISTER_LUA_CFUNC(GetSelectedGroup);
-	REGISTER_LUA_CFUNC(GetGroupAIName);
-	REGISTER_LUA_CFUNC(GetGroupAIList);
 
 	REGISTER_LUA_CFUNC(GetUnitGroup);
 
@@ -1952,28 +1950,6 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	lua_pushnumber(L, selectedUnits.selectedGroup);
 	return 1;
-}
-
-
-int LuaUnsyncedRead::GetGroupAIList(lua_State* L)
-{
-	GML_RECMUTEX_LOCK(group); // GetGroupAIList
-
-	int groupAIsDoNotExistAnymore = false;
-	assert(groupAIsDoNotExistAnymore);
-
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetGroupAIName(lua_State* L)
-{
-	GML_RECMUTEX_LOCK(group); // GetGroupAIName
-
-	int groupAIsDoNotExistAnymore = false;
-	assert(groupAIsDoNotExistAnymore);
-
-	return 0; // failure
 }
 
 

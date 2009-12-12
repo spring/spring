@@ -80,7 +80,6 @@
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -2354,18 +2353,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	else if (action.command == "nohelp") {
 		SetBoolArg(gs->noHelperAIs, action.extra);
 		selectedUnits.PossibleCommandChange(NULL);
-		if (gs->noHelperAIs) {
-			// remove any current GroupAIs
-			CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
-			CUnitSet::iterator it;
-			for(it = teamUnits.begin(); it != teamUnits.end(); ++it)
-			{
-				CUnit* unit = *it;
-				if (unit->group && (unit->group->id > 9)) {
-					unit->SetGroup(NULL);
-				}
-			}
-		}
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "nospecdraw") {
