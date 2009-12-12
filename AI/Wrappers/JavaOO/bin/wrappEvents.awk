@@ -278,7 +278,7 @@ function printEventsOO() {
 	# agarra te los event interfaces
 	for (e=0; e < evts_size; e++) {
 		meta_es    = evts_meta[e];
-print("meta_em: " meta_es);
+#print("meta_em: " meta_es);
 
 		interfList_size_es = 0;
 		if (match(meta_es, /INTERFACES:/)) {
@@ -292,25 +292,26 @@ print("meta_em: " meta_es);
 				sub(/\(.*$/, "", _intName);
 				_intParams = interfList_es[i];
 				sub(/^.*\(/, "", _intParams);
+				sub(/)$/,    "", _intParams);
 
 				if (!(_intName in int_names)) {
 					int_names[_intName] = _intParams;
 				}
-				evts_intNames[e  "," (i-1)] = _intName;
-				evts_intParams[e "," (i-1)] = _intParams;
+				evts_intNames[e      "," (i-1)] = _intName;
+				evts_intParams[e     "," (i-1)] = _intParams;
 			}
 		}
 		evts_intNames[e ",*"] = interfList_size_es;
 	}
 
-	# print the event interfaces
-	for (intName in int_names) {
-		printOOEventInterface(intName);
-	}
-
 	# print the event classes
 	for (e=0; e < evts_size; e++) {
 		printEventOO(e);
+	}
+
+	# print the event interfaces
+	for (intName in int_names) {
+		printOOEventInterface(intName);
 	}
 }
 
@@ -439,6 +440,33 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 	ooParamsList_size_ec = split(ooParams_ec, ooParamsList_ec, ", ");
 	int_size_ec = evts_intNames[ind_evt_ec ",*"];
 
+	# list up interface parameters
+	# clear arrays
+	#split("", myIntParams_toPrint_ec);
+	split("", intParams_toPrint_ec);
+	split("", myIntParams_intParams_ec);
+	split("", myIntParams_int_ec);
+	for (_ii=0; _ii < int_size_ec; _ii++) {
+		_name        = evts_intNames[ind_evt_ec "," _ii];
+		_myIntParams = evts_intParams[ind_evt_ec "," _ii];
+		_intParams   = int_names[_name];
+
+		_myIntParamsList_size = split(_myIntParams, _myIntParamsList, ",");
+		_intParamsList_size   = split(_intParams,   _intParamsList,   ",");
+
+		for (_p=1; _p <= _intParamsList_size; _p++) {
+			_myIntParam = _myIntParamsList[_p];
+			_intParam   = _intParamsList[_p];
+
+			#myIntParams_toPrint_ec[_myIntParam] = 1;
+			intParams_toPrint_ec[_intParam]     = 1;
+			myIntParams_int_ec[_myIntParam] = _name;
+			if (_myIntParam != _intParam) {
+				myIntParams_intParams_ec[_myIntParam] = _intParam;
+			}
+		}
+	}
+
 	_addIntLst = "";
 	for (i=0; i < int_size_ec; i++) {
 		_addIntLst = _addIntLst ", " evts_intNames[ind_evt_ec "," i] "AIEvent";
@@ -486,11 +514,44 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 		_type = extractParamType(ooParamsList_ec[_p]);
 		_name = extractParamName(ooParamsList_ec[_p]);
 
+		# save the type for later writing of interfaces,
+		# in case it is a ninterface param
+		if (_name in intParams_toPrint_ec) {
+			_intName = _name;
+			if (_name in myIntParams_intParams_ec) {
+				_intName = myIntParams_intParams_ec[_name];
+			}
+			_int     = myIntParams_int_ec[_name];
+
+			int_name_param_type[_int "," _intName] = _type;
+			# hacky
+			int_name_param_type[_int "," _name]    = _type;
+		}
+
+		# print out @Override if this is an interface member
+		if (_name in intParams_toPrint_ec && intParams_toPrint_ec[_name] == 1) {
+			print("\t" "@Override") >> outFile;
+			#myIntParams_toPrint_ec[_name] = 0;
+			intParams_toPrint_ec[_name]   = 0;
+		}
+
 		print("\t" "public " _type " get" capitalize(_name) "() {") >> outFile;
 		print("\t\t" "return this." _name ";") >> outFile;
 		print("\t" "}") >> outFile;
+
+		# print out an other getter if the interface param name is different
+		if (_name in myIntParams_intParams_ec) {
+			_intName = myIntParams_intParams_ec[_name];
+			intParams_toPrint_ec[_intName] = 0;
+
+			print("\t" "@Override") >> outFile;
+			print("\t" "public " _type " get" capitalize(_intName) "() {") >> outFile;
+			print("\t\t" "return this.get" capitalize(_name) "();") >> outFile;
+			print("\t" "}") >> outFile;
+		}
+
+		print("") >> outFile;
 	}
-	print("") >> outFile;
 
 	print("}") >> outFile;
 }
@@ -502,10 +563,10 @@ function printOOEventInterface(int_name_ei) {
 	int_params_ei = int_names[int_name_ei];
 
 	int_paramsList_size_ei = split(int_params_ei, int_paramsList_ei, ",");
-	int_size_ec = evts_intNames[ind_evt_ec ",*"];
+	int_size_ei = evts_intNames[ind_evt_ec ",*"];
 
 	_addIntLst = "";
-	for (i=0; i < int_size_ec; i++) {
+	for (i=0; i < int_size_ei; i++) {
 		_addIntLst = _addIntLst ", " evts_intNames[ind_evt_ec "," i] "AIEvent";
 	}
 
@@ -529,30 +590,14 @@ function printOOEventInterface(int_name_ei) {
 	print("public interface " int_name_ei "AIEvent extends AIEvent {") >> outFile;
 	print("") >> outFile;
 
-if (1 == 0) {
-	# print member vars
-	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
-		print("\t" "private " ooParamsList_ec[_p] ";") >> outFile;
+	# print getters
+	for (_p=1; _p <= int_paramsList_size_ei; _p++) {
+		_name = int_paramsList_ei[_p];
+		_type = int_name_param_type[int_name_ei "," _name];
+
+		print("\t" "public " _type " get" capitalize(_name) "();") >> outFile;
 	}
 	print("") >> outFile;
-
-	print("\t" "public " evtName_ec "(" ooParams_ec ") {") >> outFile;
-	print("") >> outFile;
-	#print("\t\t" "AIEvent evt = new " evtName_ei "(" ooParamsNoTypes_ei ");") >> outFile;
-	print("\t" "}") >> outFile;
-	print("") >> outFile;
-
-	# print member getters
-	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
-		_type = extractParamType(ooParamsList_ec[_p]);
-		_name = extractParamName(ooParamsList_ec[_p]);
-
-		print("\t" "public " _type " get" capitalize(_name) "() {") >> outFile;
-		print("\t\t" "return this." _name ";") >> outFile;
-		print("\t" "}") >> outFile;
-	}
-	print("") >> outFile;
-}
 
 	print("}") >> outFile;
 }
