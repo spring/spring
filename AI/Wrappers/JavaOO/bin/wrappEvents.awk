@@ -471,9 +471,13 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 	}
 	print("") >> outFile;
 
+	#print constructor
 	print("\t" "public " evtName_ec "(" ooParams_ec ") {") >> outFile;
 	print("") >> outFile;
-	#print("\t\t" "AIEvent evt = new " evtName_ei "(" ooParamsNoTypes_ei ");") >> outFile;
+	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
+		_name = extractParamName(ooParamsList_ec[_p]);
+		print("\t\t" "this." _name " = " _name ";") >> outFile;
+	}
 	print("\t" "}") >> outFile;
 	print("") >> outFile;
 
