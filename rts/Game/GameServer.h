@@ -153,11 +153,11 @@ private:
 	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
 	size_t ReserveNextAvailableSkirmishAIId();
-private:
+	
 	std::map<size_t, GameSkirmishAI> ais;
 	std::list<size_t> usedSkirmishAIIds;
 	void FreeSkirmishAIId(const size_t skirmishAIId);
-public:
+	
 	std::vector<GameTeam> teams;
 
 	float medianCpu;
