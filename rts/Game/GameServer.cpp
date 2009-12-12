@@ -384,6 +384,10 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 	{
 		players[p].SendData(packet);
 	}
+	if (allowAdditionalPlayers || !spring_istime(gameStartTime))
+	{
+		packetCache.push_back(packet);
+	}
 #ifdef DEDICATED
 	if (demoRecorder) {
 		demoRecorder->SaveToDemo(packet->data, packet->length, modGameTime);
@@ -1432,7 +1436,8 @@ void CGameServer::CheckForGameStart(bool forced)
 void CGameServer::StartGame()
 {
 	gameStartTime = spring_gettime();
-
+	if (!allowAdditionalPlayers)
+		packetCache.clear(); // free memory
 	if (UDPNet && !allowAdditionalPlayers)
 		UDPNet->Listen(false); // don't accept new connections
 
@@ -1815,10 +1820,10 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	newGuy.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 
-	for (size_t a = 0; a < players.size(); ++a) {
-		if (players[a].myState >= GameParticipant::INGAME) {
-			newGuy.SendData(CBaseNetProtocol::Get().SendPlayerName(a, players[a].name));
-		}
+	// after gamedata and playernum, the player can start loading
+	for (std::list< boost::shared_ptr<const netcode::RawPacket> >::const_iterator it = packetCache.begin(); it != packetCache.end(); ++it)
+	{
+		newGuy.SendData(*it); // throw at him all stuff he missed until now
 	}
 
 	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
@@ -1833,27 +1838,6 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 		if (!setup->playerStartingData[hisNewNumber].spectator)
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
-
-		std::vector<bool> teamStartPosSent(teams.size(), false);
-
-		// send start position for player controlled teams
-		for (size_t a = 0; a < players.size(); ++a)
-		{
-			if (!players[a].spectator)
-			{
-				const unsigned aTeam = players[a].team;
-				link->SendData(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
-				teamStartPosSent[aTeam] = true;
-			}
-		}
-
-		// send start position for all other teams
-		for (size_t a = 0; a < teams.size(); ++a) {
-			if (!teamStartPosSent[a]) {
-				// teams which aren't player controlled are always ready
-				link->SendData(CBaseNetProtocol::Get().SendStartPos(teams[a].leader, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
-			}
-		}
 	}
 
 	Message(str(format(" -> connection established (given id %i)") %hisNewNumber));
