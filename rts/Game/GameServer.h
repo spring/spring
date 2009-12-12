@@ -9,6 +9,7 @@
 #include <deque>
 #include <set>
 #include <vector>
+#include <list>
 
 #include "GameData.h"
 #include "Sim/Misc/TeamBase.h"
@@ -177,6 +178,7 @@ public:
 	bool noHelperAIs;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
+	std::list< boost::shared_ptr<const netcode::RawPacket> > packetCache; //waaa, the overhead
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
