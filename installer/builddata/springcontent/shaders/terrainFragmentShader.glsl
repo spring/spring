@@ -51,14 +51,9 @@ vec4 CalculateColor();
 
 #endif
 
+#ifdef UseBumpMapping
 
 /*  Lighting calculations with bumpmapping */
-
-#ifdef UseBumpMapping
-	vec3 reflect(vec3 N, vec3 L)
-	{
-		return 2.0*N*dot(N, L) - L;
-	}
 
 	vec4 Light(vec4 diffuse, vec4 bump)
 	{
@@ -66,7 +61,7 @@ vec4 CalculateColor();
 		float diffuseFactor = max(0.0, -dot(tsLightDir, normal));
 
 		vec3 R = reflect(normal, tsLightDir);
-		float specularFactor = clamp(pow(clamp(dot(R, tsEyeDir),0.0001,1.0), specularExponent), 0.0, 1.0);
+		float specularFactor = pow(max(0.0, dot(R, tsEyeDir)), specularExponent);
 
 	#ifdef UseShadowMapping
 		vec4 shadow = shadow2D(shadowMap, shadowTexCoord.xyz, shadowBias);
@@ -80,6 +75,7 @@ vec4 CalculateColor();
 
 		return r;
 	}
+
 #else
 
 /* Lighting calculations without bumpmapping */
@@ -88,7 +84,7 @@ vec4 CalculateColor();
 	{
 		float diffuseFactor = max(0.0, -dot(wsLightDir, normal));
 		vec3 R = reflect(normal, wsLightDir);
-		float specularFactor = clamp(pow(clamp(dot(R, wsEyeDir),0.0001,1.0), specularExponent), 0.0, 1.0);
+		float specularFactor = pow(max(0.0, dot(R, wsEyeDir)), specularExponent);
 
 	#ifdef UseShadowMapping
 		vec4 shadow = shadow2D(shadowMap, shadowTexCoord.xyz, shadowBias);
@@ -102,6 +98,7 @@ vec4 CalculateColor();
 
 		return r;
 	}
+
 #endif
 
 // Shader entry point
