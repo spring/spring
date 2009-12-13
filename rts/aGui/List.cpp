@@ -95,22 +95,21 @@ bool List::MousePress(int x, int y, int button)
 	return false;
 }
 
-int List::NumDisplay() {
+int List::NumDisplay()
+{
 	return std::max(1.0f, (size[1] - 2.0f * borderSpacing) / (itemHeight + itemSpacing));
 }
 
-void List::ScrollUpOne() {
+void List::ScrollUpOne()
+{
 	if(topIndex > 0)
 		--topIndex;
-	if(place >= topIndex + NumDisplay())
-		--place;
 }
 
-void List::ScrollDownOne() {
+void List::ScrollDownOne()
+{
 	if(topIndex + NumDisplay() < filteredItems->size())
 		++topIndex;
-	if(place < topIndex)
-		++place;
 }
 
 void List::MouseMove(int x, int y, int dx,int dy, int button)
@@ -128,15 +127,12 @@ float List::ScaleFactor() {
 	return (float)std::max(1, gu->winSizeY) * (size[1] - 2.0f * borderSpacing);
 }
 
-void List::UpdateTopIndex() {
+void List::UpdateTopIndex()
+{
 	itemHeight = 18.0f / ScaleFactor();
 	const int numDisplay = NumDisplay();
 	if(topIndex + numDisplay > filteredItems->size())
 		topIndex = std::max(0, (int)filteredItems->size() - numDisplay);
-	if(place >= topIndex + numDisplay)
-		topIndex = std::max(0, place - numDisplay + 1);
-	if(place < topIndex)
-		topIndex = std::max(0, place);
 }
 
 bool List::MouseUpdate(int x, int y)
@@ -179,10 +175,6 @@ bool List::MouseUpdate(int x, int y)
 void List::DrawSelf()
 {
 	const float opacity = Opacity();
-	glLoadIdentity();
-	glColor4f(0.2f,0.2f,0.2f,opacity);
-	DrawBox(GL_QUADS);
-
 	font->Begin();
 	float hf = font->GetSize() / ScaleFactor();
 
@@ -320,14 +312,14 @@ void List::DownOne()
 
 void List::UpPage()
 {
-	place -= 12;
+	place -= NumDisplay();
 	if(place<0)
 		place=0;
 }
 
 void List::DownPage()
 {
-	place += 12;
+	place += NumDisplay();
 	if(place>=(int)filteredItems->size())
 		place=filteredItems->size()-1;
 	if(place<0)
@@ -349,10 +341,16 @@ bool List::SetCurrentItem(const std::string& newCurrent)
 		if (newCurrent == items[i])
 		{
 			place = i;
+			CenterSelected();
 			return true;
 		}
 	}
 	return false;
+}
+
+void List::CenterSelected()
+{
+	topIndex = std::max(0, place - NumDisplay()/2);
 }
 
 bool List::KeyPressed(unsigned short k, bool isRepeat)
@@ -364,15 +362,19 @@ bool List::KeyPressed(unsigned short k, bool isRepeat)
 		}
 	} else if (k == SDLK_UP) {
 		UpOne();
+		CenterSelected();
 		return true;
 	} else if (k == SDLK_DOWN) {
 		DownOne();
+		CenterSelected();
 		return true;
 	} else if (k == SDLK_PAGEUP) {
 		UpPage();
+		CenterSelected();
 		return true;
 	} else if (k == SDLK_PAGEDOWN) {
 		DownPage();
+		CenterSelected();
 		return true;
 	} else if (k == SDLK_BACKSPACE) {
 		query = query.substr(0, query.length() - 1);

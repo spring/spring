@@ -39,7 +39,6 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Game/GameVersion
 	../../rts/Game/CommandMessage
 	../../rts/Game/ChatMessage
-	../../rts/Game/Console
 	../../rts/Game/Action
 	../../rts/Sim/Misc/TeamBase
 	../../rts/Sim/Misc/AllyTeam
