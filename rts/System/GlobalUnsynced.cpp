@@ -101,7 +101,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 		if (isATi) {
 			std::string renderer = std::string((char*)glGetString(GL_RENDERER));
 			StringToLowerInPlace(renderer);
-			supportNPOTs = (renderer.find(" x") == string::npos && renderer.find(" 9") == string::npos); //! x-series doesn't support NPOTs
+			supportNPOTs = (renderer.find(" x") == string::npos && renderer.find(" 9") == string::npos); //! x-series doesn't support NPOTs (but hd-series does)
 		}
 	}
 }

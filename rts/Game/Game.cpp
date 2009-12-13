@@ -73,17 +73,18 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
+#include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
@@ -441,6 +442,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	qf = new CQuadField();
 
 	featureHandler = new CFeatureHandler();
+	featureDrawer = new CFeatureDrawer();
 
 	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = new CLosHandler();
@@ -596,6 +598,7 @@ CGame::~CGame()
 	SafeDelete(resourceBar);
 
 	SafeDelete(featureHandler);
+	SafeDelete(featureDrawer);
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
 	SafeDelete(geometricObjects);
@@ -1347,13 +1350,7 @@ bool CGame::ActionPressed(const Action& action,
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
-				logOutput.Print("%d | %i | %s | %s | %s | %s",
-						ai->first,
-						ai->second.team,
-						(isLocal ? "yes" : "no "),
-						(ai->second.isLuaAI ? "yes" : "no "),
-						ai->second.name.c_str(),
-						lastPart.c_str());
+				LogObject() << ai->first << " | " <<  ai->second.team << " | " << (isLocal ? "yes" : "no ") << " | " << (ai->second.isLuaAI ? "yes" : "no ") << " | " << ai->second.name << " | " << lastPart;
 			}
 		} else {
 			logOutput.Print("<There are no active Skirmish AIs in this game>");
@@ -1493,9 +1490,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "showrezbars") {
 		if (action.extra.empty()) {
-			featureHandler->showRezBars = !featureHandler->showRezBars;
+			featureDrawer->showRezBars = !featureDrawer->showRezBars;
 		} else {
-			featureHandler->showRezBars = !!atoi(action.extra.c_str());
+			featureDrawer->showRezBars = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "pause") {
@@ -1820,37 +1817,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "screenshot") {
-		const char* ext = "png";
-		if (action.extra == "jpg") {
-			ext = "jpg";
-		}
-
-		if (filesystem.CreateDirectory("screenshots")) {
-			int x = gu->dualScreenMode? gu->viewSizeX << 1: gu->viewSizeX;
-
-			if (x % 4)
-				x += (4 - x % 4);
-
-			unsigned char* buf = new unsigned char[x * gu->viewSizeY * 4];
-			glReadPixels(0, 0, x, gu->viewSizeY, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-			CBitmap b(buf, x, gu->viewSizeY);
-			b.ReverseYAxis();
-
-			char t[50];
-			for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 9999; ++a) {
-				sprintf(t, "screenshots/screen%03i.%s", a, ext);
-				CFileHandler ifs(t);
-				if (!ifs.FileExists())
-				{
-					configHandler->Set("ScreenshotCounter", a < 9999 ? a+1 : 0);
-					break;
-				}
-			}
-			b.Save(t);
-			logOutput.Print("Saved: %s", t);
-			delete[] buf;
-		}
+		TakeScreenshot(action.extra);
 	}
 
 	else if (cmd == "grabinput") {
@@ -2386,18 +2353,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	else if (action.command == "nohelp") {
 		SetBoolArg(gs->noHelperAIs, action.extra);
 		selectedUnits.PossibleCommandChange(NULL);
-		if (gs->noHelperAIs) {
-			// remove any current GroupAIs
-			CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
-			CUnitSet::iterator it;
-			for(it = teamUnits.begin(); it != teamUnits.end(); ++it)
-			{
-				CUnit* unit = *it;
-				if (unit->group && (unit->group->id > 9)) {
-					unit->SetGroup(NULL);
-				}
-			}
-		}
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "nospecdraw") {
@@ -2865,7 +2820,7 @@ bool CGame::DrawWorld()
 	eventHandler.DrawWorldPreUnit();
 
 	unitDrawer->Draw(false);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 
 	if (drawGround) {
 		gd->DrawTrees();
@@ -2884,7 +2839,7 @@ bool CGame::DrawWorld()
 	//! draw cloaked part below surface
 	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(true,noAdvShading);
-	featureHandler->DrawFadeFeatures(true,noAdvShading);
+	featureDrawer->DrawFadeFeatures(true,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
 	if (drawWater && !mapInfo->map.voidWater) {
@@ -2901,7 +2856,7 @@ bool CGame::DrawWorld()
 	//! draw cloaked part above surface
 	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
-	featureHandler->DrawFadeFeatures(false,noAdvShading);
+	featureDrawer->DrawFadeFeatures(false,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
 	ph->Draw(false);
@@ -2985,7 +2940,7 @@ bool CGame::DrawWorld()
 
 void CGame::SwapTransparentObjects() {
 	unitDrawer->SwapCloakedUnits();
-	featureHandler->SwapFadeFeatures();
+	featureDrawer->SwapFadeFeatures();
 }
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
@@ -3089,7 +3044,7 @@ bool CGame::Draw() {
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
-	featureHandler->UpdateDraw();
+	featureDrawer->UpdateDraw();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
@@ -3583,6 +3538,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					playerHandler->PlayerLeft(player, inbuf[2]);
+					eventHandler.PlayerRemoved(player, (int) inbuf[2]);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;

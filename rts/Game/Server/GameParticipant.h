@@ -33,6 +33,7 @@ public:
 	
 	float cpuUsage;
 	int ping;
+	float speedWarning;
 	int lastKeyframeResponse;
 
 	bool isLocal;

@@ -99,7 +99,7 @@ void CSmfMapFile::ReadFeatureInfo(MapFeatureInfo* f)
 }
 
 
-const char* CSmfMapFile::GetFeatureType(int typeID) const
+const char* CSmfMapFile::GetFeatureTypeName(int typeID) const
 {
 	assert(typeID >= 0 && typeID < featureHeader.numFeatureType);
 	return featureTypes[typeID].c_str();

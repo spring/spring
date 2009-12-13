@@ -18,12 +18,12 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "FileSystem/FileHandler.h"
 #include "FastMath.h"
@@ -1272,9 +1272,9 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	readmap->GetGroundDrawer()->Draw();
 	unitDrawer->Draw(false,true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true);
-	featureHandler->DrawFadeFeatures(true);
+	featureDrawer->DrawFadeFeatures(true);
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
 
@@ -1316,9 +1316,9 @@ void CBumpWater::DrawReflection(CGame* game)
 
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(false,true);
-	featureHandler->DrawFadeFeatures(false,true);
+	featureDrawer->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 

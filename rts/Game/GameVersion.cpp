@@ -30,12 +30,6 @@ const char* const Additional = "" // Build-Bot will write in here before compili
 	#define GV_ADD_SPACE " "
 #endif
 
-#if defined REPLACE_SYSTEM_ALLOCATOR
-	GV_ADD_SPACE "nedmalloc"
-	#undef  GV_ADD_SPACE
-	#define GV_ADD_SPACE " "
-#endif
-
 #if defined USE_MMGR
 	GV_ADD_SPACE "mmgr"
 	#undef  GV_ADD_SPACE

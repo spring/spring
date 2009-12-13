@@ -79,6 +79,9 @@ const spring_duration gameStartDelay = spring_secs(4);
 /// The time intervall in msec for sending player statistics to each client
 const spring_duration playerInfoTime = spring_secs(2);
 
+/// The time interval in msec for broadcasting speed information
+const spring_duration speedInfoTime = spring_secs(30);
+
 /// msecs to wait until the timeout condition (na active clients) activates
 const spring_duration serverTimeout = spring_secs(30);
 
@@ -139,9 +142,13 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	spring_notime(gameEndTime);
 	spring_notime(readyTime);
 
-	medianCpu=0.0f;
-	medianPing=0;
-	enforceSpeed=!setup->hostDemo && configHandler->Get("EnforceGameSpeed", false);
+	medianCpu = 0.0f;
+	medianPing = 0;
+	// enforceSpeed - throttles speed based on:
+	// -1 : spectators and players (max cpu)
+	// 0 : players (max cpu)
+	// 1 : players (median cpu)
+	enforceSpeed = setup->hostDemo ? -1 : configHandler->Get("EnforceGameSpeed", 0);
 
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
@@ -213,6 +220,12 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	}
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
+
+	averageSpeed = 0;
+	averageWantedSpeed = 0;
+	numSpeedSamples = 0;
+	lastSpeedInfo  = serverStartTime;
+	speedWarningThreshold = configHandler->Get("SpeedWarningThreshold", 0.98f);
 
 #ifdef STREFLOP_H
 	// Something in CGameServer::CGameServer borks the FPU control word
@@ -397,6 +410,10 @@ void CGameServer::Message(const std::string& message, bool broadcast)
 #endif
 }
 
+void CGameServer::PrivateMessage(int playernum, const std::string& message) {
+	players[playernum].SendData(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
+}
+
 void CGameServer::CheckSync()
 {
 #ifdef SYNCCHECK
@@ -404,8 +421,10 @@ void CGameServer::CheckSync()
 	std::deque<int>::iterator f = outstandingSyncFrames.begin();
 	while (f != outstandingSyncFrames.end()) {
 		std::vector<int> noSyncResponse;
+		std::vector<int> noSyncSpecs;
 		// maps incorrect checksum to players with that checksum
 		std::map<unsigned, std::vector<int> > desyncGroups;
+		std::map<int, unsigned> desyncSpecs;
 		bool bComplete = true;
 		bool bGotCorrectChecksum = false;
 		unsigned correctChecksum = 0;
@@ -417,31 +436,44 @@ void CGameServer::CheckSync()
 			if (it == players[a].syncResponse.end()) {
 				if (*f >= serverframenum - static_cast<int>(SYNCCHECK_TIMEOUT))
 					bComplete = false;
-				else
-					noSyncResponse.push_back(a);
+				else {
+					if(enforceSpeed < 0 || !players[a].spectator)
+						noSyncResponse.push_back(a);
+					else
+						noSyncSpecs.push_back(a);
+				}
 			} else {
 				if (!bGotCorrectChecksum) {
 					bGotCorrectChecksum = true;
 					correctChecksum = it->second;
 				} else if (it->second != correctChecksum) {
-					desyncGroups[it->second].push_back(a);
+					if(enforceSpeed < 0 || !players[a].spectator)
+						desyncGroups[it->second].push_back(a);
+					else
+						desyncSpecs[a] = it->second;
 				}
 			}
 		}
 
-		if (!noSyncResponse.empty()) {
+		if (!noSyncResponse.empty() || !noSyncSpecs.empty()) {
 			if (!syncWarningFrame || (*f - syncWarningFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncWarningFrame = *f;
 
-				std::string players = GetPlayerNames(noSyncResponse);
-				Message(str(format(NoSyncResponse) %players %(*f)));
+				std::string playernames = GetPlayerNames(noSyncResponse);
+				Message(str(format(NoSyncResponse) %playernames %(*f)));
+
+				// send private no sync messages to spectators to reduce spam
+				for(std::vector<int>::const_iterator s = noSyncSpecs.begin(); s != noSyncSpecs.end(); ++s) {
+					int playernum = *s;
+					PrivateMessage(playernum, str(format(NoSyncResponse) %players[playernum].name %(*f)));
+				}
 			}
 		}
 
 		// If anything's in it, we have a desync.
 		// TODO take care of !bComplete case?
 		// Should we start resync then immediately or wait for the missing packets (while paused)?
-		if ( /*bComplete && */ !desyncGroups.empty()) {
+		if ( /*bComplete && */ (!desyncGroups.empty() || !desyncSpecs.empty())) {
 			if (!syncErrorFrame || (*f - syncErrorFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncErrorFrame = *f;
 
@@ -458,8 +490,14 @@ void CGameServer::CheckSync()
 				// the resync checksum request packets to multiple clients in the same group.
 				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
 				for (; g != desyncGroups.end(); ++g) {
-					std::string players = GetPlayerNames(g->second);
-					Message(str(format(SyncError) %players %(*f) %(g->first ^ correctChecksum)));
+					std::string playernames = GetPlayerNames(g->second);
+					Message(str(format(SyncError) %playernames %(*f) %(g->first ^ correctChecksum)));
+				}
+
+				// send spectator desyncs as private messages to reduce spam
+				for(std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
+					int playernum = s->first;
+					PrivateMessage(playernum, str(format(SyncError) %players[playernum].name %(*f) %(s->second ^ correctChecksum)));
 				}
 			}
 		}
@@ -500,13 +538,15 @@ void CGameServer::Update()
 			//send info about the players
 			std::vector<float> cpu;
 			std::vector<int> ping;
-			float refCpu=0.0f;
+			float refCpu = 0.0f;
+			int slowestPlayer = -1;
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
-					if(!enforceSpeed || !players[a].spectator) {
+					if(enforceSpeed < 0 || !players[a].spectator) {
 						if (players[a].cpuUsage > refCpu) {
 							refCpu = players[a].cpuUsage;
+							slowestPlayer = a;
 						}
 						cpu.push_back(players[a].cpuUsage);
 						ping.push_back(players[a].ping);
@@ -514,36 +554,66 @@ void CGameServer::Update()
 				}
 			}
 
-			medianCpu=0.0f;
-			medianPing=0;
-			if(enforceSpeed && cpu.size()>0) {
+			medianCpu = 0.0f;
+			medianPing = 0;
+			if(enforceSpeed > 0 && cpu.size() > 0) {
 				std::sort(cpu.begin(), cpu.end());
 				std::sort(ping.begin(), ping.end());
 
-				int midpos=cpu.size()/2;
-				medianCpu=cpu[midpos];
-				medianPing=ping[midpos];
-				if(midpos*2==cpu.size()) {
-					medianCpu=(medianCpu+cpu[midpos-1])/2.0f;
-					medianPing=(medianPing+ping[midpos-1])/2;
+				int midpos = cpu.size() / 2;
+				medianCpu = cpu[midpos];
+				medianPing = ping[midpos];
+				if(midpos * 2 == cpu.size()) {
+					medianCpu = (medianCpu + cpu[midpos - 1]) / 2.0f;
+					medianPing = (medianPing + ping[midpos - 1]) / 2;
 				}
-				refCpu=medianCpu;
+				refCpu = medianCpu;
 			}
 
 			if (refCpu > 0.0f) {
 				// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
-				float wantedCpu=enforceSpeed ? 0.6f+(1-internalSpeed/userSpeedFactor)*0.5f : 0.75f+(1-internalSpeed/userSpeedFactor)*0.5f;
-				float newSpeed=internalSpeed*wantedCpu/refCpu;
+				float wantedCpu = (enforceSpeed > 0) ? 0.6f + (1 - internalSpeed / userSpeedFactor) * 0.5f : 0.75f + (1 - internalSpeed / userSpeedFactor) * 0.5f;
+				float newSpeed = internalSpeed * wantedCpu / refCpu;
 //				float speedMod=1+wantedCpu-refCpu;
 //				logOutput.Print("Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f",refCpu,medianCpu,wantedCpu,speedMod,newSpeed);
-				newSpeed = (newSpeed+internalSpeed)*0.5f;
-				newSpeed = std::max(newSpeed, enforceSpeed ? userSpeedFactor*0.8f : userSpeedFactor*0.5f);
-				if(newSpeed>userSpeedFactor)
-					newSpeed=userSpeedFactor;
-				if(newSpeed<0.1f)
-					newSpeed=0.1f;
-				if(newSpeed!=internalSpeed)
+				newSpeed = (newSpeed + internalSpeed) * 0.5f;
+				newSpeed = std::max(newSpeed, (enforceSpeed > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
+				if(newSpeed > userSpeedFactor)
+					newSpeed = userSpeedFactor;
+				if(newSpeed < 0.1f)
+					newSpeed = 0.1f;
+				float speedReduction = internalSpeed - newSpeed;
+				if(newSpeed != internalSpeed)
 					InternalSpeedChange(newSpeed);
+
+				// broadcast optional warning about which player is currently limiting the game speed
+				if(speedWarningThreshold > 0) {
+					if(slowestPlayer >= 0 && speedReduction > 0.0f && internalSpeed < userSpeedFactor)
+						players[slowestPlayer].speedWarning += speedReduction * (userSpeedFactor - internalSpeed);
+					averageSpeed = (averageSpeed * numSpeedSamples + internalSpeed) / (float)(numSpeedSamples + 1);
+					averageWantedSpeed = (averageWantedSpeed * numSpeedSamples + userSpeedFactor) / (float)(numSpeedSamples + 1);
+					++numSpeedSamples;
+					if(lastSpeedInfo < (spring_gettime() - speedInfoTime)) {
+						lastSpeedInfo = spring_gettime();
+						slowestPlayer = -1;
+						float maxWarning = 0.0f;
+						for (size_t a = 0; a < players.size(); ++a) {
+							if (players[a].myState == GameParticipant::INGAME) {
+								if(players[a].speedWarning > maxWarning) {
+									maxWarning = players[a].speedWarning;
+									slowestPlayer = a;
+								}
+								players[a].speedWarning = 0.0f;
+							}
+						}
+						if(slowestPlayer >= 0 && !isPaused && numSpeedSamples > 1 && 
+							averageSpeed < averageWantedSpeed * speedWarningThreshold && 
+							averageSpeed < userSpeedFactor * speedWarningThreshold) {
+								Message(str(format(SpeedWarning) %averageSpeed %players[slowestPlayer].name));
+						}
+						numSpeedSamples = 0;
+					}
+				}
 			}
 		}
 		else {
@@ -677,11 +747,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed && !players[a].isLocal && !isPaused &&
-						(players[a].spectator ||
-						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
-						players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
-						GotChatMessage(ChatMessage(a, a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)"));
+					if(enforceSpeed >= 0 && !players[a].isLocal && !isPaused &&
+						(players[a].spectator || (enforceSpeed > 0 &&
+						(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
+						players[a].ping - medianPing > internalSpeed * GAME_SPEED / 2)))) {
+						PrivateMessage(a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)");
 						break; // disallow pausing by players who cannot keep up gamespeed
 					}
 					timeLeft=0;
@@ -848,7 +918,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
 			else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
 				delayedSyncResponseFrame = serverframenum;
-				Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
+				if(enforceSpeed < 0 || !players[a].spectator)
+					Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
+				else
+					PrivateMessage(a, str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
 			}
 			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 			players[a].ping = serverframenum - frameNum;
@@ -1401,7 +1474,6 @@ void CGameServer::SetGamePausable(const bool arg)
 
 void CGameServer::PushAction(const Action& action)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	if (action.command == "kickbynum")
 	{
 		if (!action.extra.empty())
@@ -1813,15 +1885,15 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if (enforceSpeed &&
+	if (enforceSpeed >= 0 &&
 		player >= 0 && static_cast<unsigned int>(player) != SERVER_PLAYER &&
 		!players[player].isLocal && !isPaused &&
-		(players[player].spectator ||
-		players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
-		players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
-		GotChatMessage(ChatMessage(player, player, players[player].spectator ?
+		(players[player].spectator || (enforceSpeed > 0 &&
+		(players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
+		players[player].ping - medianPing > internalSpeed * GAME_SPEED / 2)))) {
+		PrivateMessage(player, players[player].spectator ?
 		"Speed change rejected (spectators)" :
-		"Speed change rejected (cpu load or ping is too high)"));
+		"Speed change rejected (cpu load or ping is too high)");
 		return; // disallow speed change by players who cannot keep up gamespeed
 	}
 

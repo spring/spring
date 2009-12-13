@@ -143,13 +143,13 @@ void CLoadSaveHandler::SaveGame(const std::string& file)
 		eoh->Save(&ofs);
 		PrintSize("AIs",((int)ofs.tellp())-aistart);
 	} catch (content_error &e) {
-		logOutput.Print("Save faild(content error): %s",e.what());
+		logOutput.Print("Save failed(content error): %s",e.what());
 	} catch (std::exception &e) {
-		logOutput.Print("Save faild: %s",e.what());
+		logOutput.Print("Save failed: %s",e.what());
 	} catch (char* &e) {
-		logOutput.Print("Save faild: %s",e);
+		logOutput.Print("Save failed: %s",e);
 	} catch (...) {
-		logOutput.Print("Save faild(unknwon error)");
+		logOutput.Print("Save failed(unknwon error)");
 	}
 	UnloadStartPicture();
 }

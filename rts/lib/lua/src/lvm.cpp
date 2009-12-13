@@ -59,11 +59,11 @@ int luaV_tostring (lua_State *L, StkId obj) {
       lua_number2str(s, n);
     }
     else {
-      if (isnan(n)) {
+      if (math::isnan(n)) {
         strcpy(s, "nan");
       }
       else {
-        const int inf_type = isinf(n);
+        const int inf_type = math::isinf(n);
         if (inf_type == 1) {
           strcpy(s, "+inf");
         } else if (inf_type == -1) {

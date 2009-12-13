@@ -125,6 +125,7 @@ private:
 	void SkipTo(int targetframe);
 
 	void Message(const std::string& message, bool broadcast=true);
+	void PrivateMessage(int playernum, const std::string& message);
 
 	/////////////////// game status variables ///////////////////
 
@@ -204,6 +205,12 @@ public:
 	UnsyncedRNG rng;
 	boost::thread* thread;
 	mutable boost::recursive_mutex gameServerMutex;
+
+	float averageSpeed;
+	float averageWantedSpeed;
+	int numSpeedSamples;
+	spring_time lastSpeedInfo;
+	float speedWarningThreshold;
 };
 
 extern CGameServer* gameServer;

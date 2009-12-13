@@ -12,7 +12,6 @@
 #include "TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
-#include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
@@ -102,9 +101,9 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	// Load start position from gameSetup script
 	if (startPosType == StartPos_ChooseBeforeGame) {
 		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			char section[50];
-			sprintf(section, "GAME\\TEAM%i\\", a);
-			string s(section);
+			std::ostringstream buf;
+			buf << "GAME\\TEAM" << a << "\\";
+			string s(buf.str());
 			std::string xpos = file.SGetValueDef("", s + "StartPosX");
 			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
 			if (!xpos.empty())
@@ -257,7 +256,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		// Get default color from palette (based on "color" tag)
 		for (size_t num = 0; num < 3; ++num)
 		{
-			data.color[num] = palette.teamColor[a][num];
+			data.color[num] = TeamBase::teamDefaultColor[a][num];
 		}
 		data.color[3] = 255;
 
@@ -334,7 +333,9 @@ void CGameSetup::RemapPlayers()
 	// relocate Team.TeamLeader field
 	for (size_t a = 0; a < teamStartingData.size(); ++a) {
 		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
-			throw content_error("invalid Team.leader in GameSetup script");
+			std::ostringstream buf;
+			buf << "GameSetup: Team " << a << " has invalid leader: " << teamStartingData[a].leader;
+			throw content_error(buf.str());
 		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}

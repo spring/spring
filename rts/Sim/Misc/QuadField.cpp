@@ -63,7 +63,7 @@ CQuadField::CQuadField()
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
 
-	tempQuads = new int[1000];
+	tempQuads = new int[numQuadsX * numQuadsZ];
 }
 
 CQuadField::~CQuadField()

@@ -820,9 +820,11 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 							if (unit == lastTarget) {
 								value *= weapon->avoidTarget ? 10.0f : 0.4f;
 							}
-							if (paralyzer && unit->paralyzeDamage > unit->maxHealth) {
+
+							if (paralyzer && unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health)) {
 								value *= 4.0f;
 							}
+
 							if (weapon->hasTargetWeight) {
 								value *= weapon->TargetWeight(unit);
 							}
