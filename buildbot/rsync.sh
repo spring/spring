@@ -6,7 +6,7 @@ cd $(dirname $0)/..
 CONFIG=${1}
 BRANCH=${2}
 TMP_BASE=/tmp/sl
-REMOTE_HOST=lh
+REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www
 TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}
 REV=$(git describe --tags)
