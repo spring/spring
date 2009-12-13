@@ -11,9 +11,9 @@
 #include "bitops.h"
 #include "Map/BaseGroundDrawer.h"
 #include "BaseSky.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/GameHelper.h"
 #include "Rendering/ShadowHandler.h"
@@ -287,6 +287,7 @@ void CDynWater::Draw()
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_FOG);
 
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D, waveTex3);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -297,7 +298,7 @@ void CDynWater::Draw()
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glBindTexture(GL_TEXTURE_2D,refractTexture);
 	glActiveTextureARB(GL_TEXTURE4_ARB);
-	glBindTexture(GL_TEXTURE_2D,readmap->GetShadingTexture ());
+	glBindTexture(GL_TEXTURE_2D,readmap->GetShadingTexture());
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D,foamTex);
 	glActiveTextureARB(GL_TEXTURE6_ARB);
@@ -467,9 +468,9 @@ void CDynWater::DrawReflection(CGame* game)
 	shadowHandler->drawShadows=drawShadows;
 
 	unitDrawer->Draw(true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(false,true);
-	featureHandler->DrawFadeFeatures(false,true);
+	featureDrawer->DrawFadeFeatures(false,true);
 
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
@@ -523,9 +524,9 @@ void CDynWater::DrawRefraction(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true,true);
-	featureHandler->DrawFadeFeatures(true,true); // FIXME: Make it fade out correctly without "noAdvShading"
+	featureDrawer->DrawFadeFeatures(true,true); // FIXME: Make it fade out correctly without "noAdvShading"
 	drawReflection=false;
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
@@ -554,10 +555,11 @@ void CDynWater::DrawWaves(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D,waveTex3);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	/*glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -569,7 +571,7 @@ void CDynWater::DrawWaves(void)
 	glBindTexture(GL_TEXTURE_2D,0);
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTextureARB(GL_TEXTURE0_ARB);*/
 
 
 	GLenum status;

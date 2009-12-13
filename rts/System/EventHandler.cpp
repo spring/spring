@@ -40,6 +40,7 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(TeamDied,      MANAGED_BIT);
 	SETUP_EVENT(TeamChanged,   MANAGED_BIT);
 	SETUP_EVENT(PlayerChanged, MANAGED_BIT);
+	SETUP_EVENT(PlayerRemoved, MANAGED_BIT);
 
 	SETUP_EVENT(UnitCreated,     MANAGED_BIT);
 	SETUP_EVENT(UnitFinished,    MANAGED_BIT);
@@ -339,6 +340,16 @@ void CEventHandler::PlayerChanged(int playerID)
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listPlayerChanged[i];
 		ec->PlayerChanged(playerID);
+	}
+}
+
+
+void CEventHandler::PlayerRemoved(int playerID, int reason)
+{
+	const int count = listPlayerRemoved.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listPlayerRemoved[i];
+		ec->PlayerRemoved(playerID, reason);
 	}
 }
 

@@ -530,9 +530,6 @@ void CUnit::Update()
 	const bool oldInAir   = inAir;
 	const bool oldInWater = inWater;
 
-	moveType->Update();
-	GML_GET_TICKS(lastUnitUpdate);
-
 	inWater = (pos.y <= 0.0f);
 	inAir   = (!inWater) && ((pos.y - ground->GetHeight(pos.x,pos.z)) > 1.0f);
 
@@ -711,7 +708,8 @@ void CUnit::SlowUpdate()
 
 	if (stunned) {
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if (paralyzeDamage <= maxHealth && !(transporter && !transporter->unitDef->isFirePlatform) ) {
+		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
+			!(transporter && !transporter->unitDef->isFirePlatform)) {
 			stunned = false;
 		}
 
@@ -818,9 +816,9 @@ void CUnit::SlowUpdate()
 
 	if (unitDef->canKamikaze) {
 		if (fireState >= 2) {
-			CUnit* u = helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->kamikazeDist, allyteam, false, true);
-			if (u && u->physicalState != CSolidObject::Flying && u->speed.dot(pos - u->pos) <= 0) {
-				// self destruct when unit start moving away from mine, should maximize damage
+			CUnit* u = helper->GetClosestEnemyUnit(pos, unitDef->kamikazeDist, allyteam);
+			if (u && u->speed.dot(pos - u->pos) <= 0) {
+				//! self destruct when we start moving away from the target, this should maximize the damage
 				KillUnit(true, false, NULL);
 			}
 		}
@@ -979,6 +977,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			if (health > maxHealth) {
 				health = maxHealth;
 			}
+			if (health > paralyzeDamage && !modInfo.paralyzeOnMaxHealth) {
+				stunned = false;
+			}
 		}
 	}
 	else { // paralyzation
@@ -1002,13 +1003,17 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			if (paralyzeDamage > maxHealth) {
 				stunned = true;
 			}
+			if (paralyzeDamage > (modInfo.paralyzeOnMaxHealth? maxHealth: health)) {
+				stunned = true;
+			}
 		}
 		else { // paralyzation healing
 			if (paralyzeDamage <= 0.0f) {
 				experienceMod = 0.0f;
 			}
 			paralyzeDamage += damage;
-			if (paralyzeDamage < maxHealth) {
+
+			if (paralyzeDamage < (modInfo.paralyzeOnMaxHealth? maxHealth: health)) {
 				stunned = false;
 				if (paralyzeDamage < 0.0f) {
 					paralyzeDamage = 0.0f;

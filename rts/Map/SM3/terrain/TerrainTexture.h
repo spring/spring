@@ -138,6 +138,7 @@ namespace terrain {
 	struct RenderSetup
 	{
 		~RenderSetup ();
+		void Clear();
 		void DebugOutput();
 
 		std::vector <RenderPass> passes;
@@ -177,6 +178,7 @@ namespace terrain {
 
 		// Construction
 		virtual void BuildNodeSetup (ShaderDef* shaderDef, RenderSetup *rs) = 0;
+		virtual void BeginBuild() {}
 		virtual void EndBuild() {}
 	};
 
@@ -193,6 +195,7 @@ namespace terrain {
 		~TerrainTexture();
 
 		void Load (const TdfParser *parser, Heightmap *heightmap, TQuad *quadTree, const std::vector<QuadMap*>& qmaps, Config *cfg, ILoadCallback *cb, LightingInfo* li);
+		void ReloadShaders (TQuad *quadtree, Config *cfg);
 
 		int NumPasses ();
 
@@ -221,6 +224,7 @@ namespace terrain {
 
 		struct GenerateInfo;
 		void CreateTexProg (TQuad *node, GenerateInfo* gi);
+		void ReloadTexProg (TQuad *node, TerrainTexture::GenerateInfo *gi);
 
 		// Calculate sorting key based on current blendmap optimization state (Blendmap::curAreaResult)
 		uint CalcBlendmapSortKey (); 

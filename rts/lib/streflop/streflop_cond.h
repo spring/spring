@@ -41,10 +41,25 @@ namespace math {
 	using std::exp;
 	using std::frexp;
 	using std::ldexp;
+// the following are C99 functions -> not supported by VS C
+#if !defined(_MSC_VER) || _MSC_VER < 1500
 	using std::isnan;
-	using std::isinf; // C99
+	using std::isinf;
 	using std::isfinite;
+#elif __cplusplus
+	template<typename T> inline bool isnan(T value) {
+		return value != value;
+	}
+	// requires include <limits>
+	template<typename T> inline bool isinf(T value) {
+		return std::numeric_limits<T>::has_infinity && value == std::numeric_limits<T>::infinity();
+	}
+	// requires include <limits>
+	template<typename T> inline bool isfinite(T value) {
+		return !isinf<T>(value);
+	}
+#endif
 }
 #endif
 
-#endif
+#endif // STREFLOP_COND_H

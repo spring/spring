@@ -204,6 +204,8 @@ boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 
 void UDPConnection::Update()
 {
+	outgoing.UpdateTime(spring_gettime());
+	
 	if (!sharedSocket)
 	{
 		// duplicated code with UDPListener
@@ -521,7 +523,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak > 0 || lastSendTime + spring_msecs(200) < curTime)
 	{
 		bool todo = true;
-		while (todo)
+		while (todo && outgoing.GetAverage() < 64*1024)
 		{
 			Packet buf(lastInOrder, nak);
 			if (nak > 0)
@@ -564,6 +566,7 @@ void UDPConnection::SendPacket(Packet& pkt)
 	std::vector<uint8_t> data;
 	pkt.Serialize(data);
 
+	outgoing.DataSent(data.size());
 	lastSendTime = spring_gettime();
 	boost::asio::ip::udp::socket::message_flags flags = 0;
 	boost::system::error_code err;
@@ -608,6 +611,30 @@ void UDPConnection::RequestResend(ChunkPtr ptr)
 			return;
 	}
 	resendRequested.push_back(ptr);
+}
+
+UDPConnection::BandwidthUsage::BandwidthUsage() : lastTime(0), trafficSinceLastTime(1), average(0.0)
+{
+}
+
+void UDPConnection::BandwidthUsage::UpdateTime(unsigned newTime)
+{
+	if (newTime > lastTime+100)
+	{
+		average = (average*9 + float(trafficSinceLastTime)/float(newTime-lastTime)*1000.0f)/10.0f;
+		trafficSinceLastTime = 0;
+		lastTime = newTime;
+	}
+}
+
+void UDPConnection::BandwidthUsage::DataSent(unsigned amount)
+{
+	trafficSinceLastTime += amount;
+}
+
+float UDPConnection::BandwidthUsage::GetAverage() const
+{
+	return (average+trafficSinceLastTime); // not exactly accurate, but does job
 }
 
 } // namespace netcode

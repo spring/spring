@@ -140,7 +140,9 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 #else
 	if (d->path.find("..") != std::string::npos)
 #endif
-		throw content_error("specify data directories using absolute paths please");
+	{
+		throw content_error(std::string("Error: datadir specified with relative path: \"")+d->path+"\"");
+	}
 	// Figure out whether we have read/write permissions
 	// First check read access, if we got that check write access too
 	// (no support for write-only directories)

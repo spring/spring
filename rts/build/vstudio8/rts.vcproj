@@ -1912,6 +1912,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\Screenshot.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\Screenshot.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\ShadowHandler.cpp"
 				>
 			</File>
@@ -1944,6 +1952,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\UnitModels\3DOParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\UnitModels\FeatureDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\UnitModels\FeatureDrawer.h"
 					>
 				</File>
 				<File
@@ -3192,6 +3208,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\MoveTypes\ScriptMoveType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\StaticMoveType.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\StaticMoveType.h"
 					>
 				</File>
 				<File

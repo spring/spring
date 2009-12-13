@@ -602,11 +602,11 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 		tz2 = min(gs->mapy,tz1+b->unitDef->zsize);
 
 		b->terraformLeft = CalculateBuildTerraformCost(buildInfo);
-		b->groundLevelled=false;
+		b->groundLevelled= false;
 
-		terraforming=true;
-		terraformType=Terraform_Building;
-		terraformRadius=(tx2-tx1)*SQUARE_SIZE;
+		terraforming    = true;
+		terraformType   = Terraform_Building;
+		terraformRadius = (tx2-tx1)*SQUARE_SIZE;
 		terraformCenter = b->pos;
 	}
 
@@ -617,26 +617,16 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	b->lineage = this->lineage;
 	AddDeathDependence(b);
 	curBuild=b;
-	if (mapDamage->disabled && !(curBuild->floatOnWater)) {
-		/* The ground isn't going to be terraformed.
-		 * When the building is completed, it'll 'pop'
-		 * into the correct height for the (un-flattened)
-		 * terrain it's on.
-		 *
-		 * To prevent this visual artifact, put the building
-		 * at the 'right' height to begin with.
-		 *
-		 * Duplicated from CMoveType::SlowUpdate(), which
-		 * is why we use the regular code for floating things.
-		 */
-		curBuild->pos.y = groundheight;
-		curBuild->midPos.y = groundheight + curBuild->relMidPos.y;
-	}
-	else {
-		float d=buildInfo.pos.y-curBuild->pos.y;
-		curBuild->pos.y+=d;
-		curBuild->midPos.y+=d;
-	}
+
+	/* The ground isn't going to be terraformed.
+	 * When the building is completed, it'll 'pop'
+	 * into the correct height for the (un-flattened)
+	 * terrain it's on.
+	 *
+	 * To prevent this visual artifact, put the building
+	 * at the 'right' height to begin with.
+	 */
+	curBuild->moveType->SlowUpdate();
 
 	return true;
 }

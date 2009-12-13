@@ -446,7 +446,7 @@ void CBuilderCAI::SlowUpdate()
 								}
 
 								const float fpSqRadius = (ud->xsize * ud->xsize + ud->zsize * ud->zsize);
-								const float fpRadius = (streflop::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+								const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
 
 								// tell everything within the radius of the soon-to-be buildee
 								// to get out of the way; using the model radius is not correct
@@ -1023,7 +1023,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	}
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	if ((owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
-	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+fac->buildDistance-8, c.options, true, false)){
+	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+fac->buildDistance-8, c.options, true, (c.options & META_KEY))){
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC1 != gs->frameNum) {  //avoid infinite loops

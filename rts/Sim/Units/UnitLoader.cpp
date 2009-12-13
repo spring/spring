@@ -33,6 +33,7 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/StaticMoveType.h"
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/bombdropper.h"
 #include "Sim/Weapons/Cannon.h"
@@ -315,7 +316,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			unit->moveType = mt;
 		}
 	} else {
-		unit->moveType = new CMoveType(unit);
+		unit->moveType = new CStaticMoveType(unit);
 		unit->upright = true;
 	}
 

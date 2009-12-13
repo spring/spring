@@ -33,5 +33,6 @@ const std::string UnknownTeammsg = "Unknown action in NETMSG_TEAM (%d) from play
 const std::string UnknownNetmsg = "Unhandled net msg (%d) in server from %d";
 
 const std::string CommandNotAllowed = "Player %d is not allowed to execute command %s";
+const std::string SpeedWarning = "Warning: Speed limited to %.2f by %s";
 
 #endif /*SERVERMSGSTRINGS_H_*/

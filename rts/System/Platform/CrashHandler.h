@@ -10,4 +10,4 @@ namespace CrashHandler {
 	void ClearSimWDT(bool disable = false);
 };
 
-#endif
+#endif // CRASHHANDLER

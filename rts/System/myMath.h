@@ -5,6 +5,15 @@
 #include "Vec2.h"
 #include "float3.h"
 
+#ifndef __GNUC__
+	#define _const
+	#define _pure
+#else
+	#define _const __attribute__((const))
+	#define _pure __attribute__((pure))
+#endif
+
+
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
 static const float TWOPI = 2*PI;
@@ -23,6 +32,7 @@ static const float TWOPI = 2*PI;
 #  error "HEADING_CHECKSUM not set, invalid NUM_HEADINGS?"
 #endif
 
+
 class CMyMath {
 public:
 	static void Init();
@@ -31,7 +41,7 @@ public:
 
 
 
-inline short int GetHeadingFromFacing(int facing)
+inline short int _const GetHeadingFromFacing(int facing)
 {
 	switch (facing) {
 		case 0: return      0;	// south
@@ -42,7 +52,7 @@ inline short int GetHeadingFromFacing(int facing)
 	}
 }
 
-inline float GetHeadingFromVectorF(float dx, float dz)
+inline float _const GetHeadingFromVectorF(float dx, float dz)
 {
 	float h = 0.0f;
 
@@ -73,7 +83,7 @@ inline float GetHeadingFromVectorF(float dx, float dz)
 	return h;
 }
 
-inline short int GetHeadingFromVector(float dx, float dz)
+inline short int _const GetHeadingFromVector(float dx, float dz)
 {
 	float h = GetHeadingFromVectorF(dx, dz);
 
@@ -101,7 +111,7 @@ struct shortint2 {
 };
 
 // vec should be normalized
-inline shortint2 GetHAndPFromVector(const float3& vec)
+inline shortint2 _const GetHAndPFromVector(const float3& vec)
 {
 	shortint2 ret;
 
@@ -121,7 +131,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 }
 
 // vec should be normalized
-inline float2 GetHAndPFromVectorF(const float3& vec)
+inline float2 _const GetHAndPFromVectorF(const float3& vec)
 {
 	float2 ret;
 
@@ -134,7 +144,7 @@ inline float2 GetHAndPFromVectorF(const float3& vec)
 	return ret;
 }
 
-inline float3 GetVectorFromHeading(short int heading)
+inline float3 _pure GetVectorFromHeading(short int heading)
 {
 	float2 v = CMyMath::headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
 	return float3(v.x, 0.0f, v.y);
@@ -153,29 +163,30 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
-
-#ifndef __GNUC__
-float Square(const float x);
-#else
-float Square(const float x) __attribute__((const));
-#endif
-
-inline float Square(const float x) { return x * x; }
+inline float _const Square(const float x)
+{
+	return x * x;
+}
 
 float smoothstep(const float edge0, const float edge1, const float value);
 float3 smoothstep(const float edge0, const float edge1, float3 vec);
+
+
+inline float _const Clamp(const float& v, const float& min, const float& max)
+{
+	if (v>max) {
+		return max;
+	} else if (v<min) {
+		return min;
+	}
+	return v;
+}
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
-#ifndef __GNUC__
-float ClampRad(float f);
-#else
-float ClampRad(float f) __attribute__((const));
-#endif
-
-inline float ClampRad(float f)
+inline float _const ClampRad(float f)
 {
 	f = fmod(f, TWOPI);
 	if (f < 0.0f) f += TWOPI;
@@ -188,7 +199,7 @@ inline float ClampRad(float f)
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
-inline void ClampRad(float* f)
+inline void _const ClampRad(float* f)
 {
 	*f = fmod(*f, TWOPI);
 	if (*f < 0.0f) *f += TWOPI;
@@ -201,15 +212,12 @@ inline void ClampRad(float* f)
  * @param f1 float* first compare value
  * @param f2 float* second compare value
  */
-#ifndef __GNUC__
-bool RadsAreEqual(const float f1, const float f2);
-#else
-bool RadsAreEqual(const float f1, const float f2) __attribute__((const));
-#endif
-
-inline bool RadsAreEqual(const float f1, const float f2)
+inline bool _const RadsAreEqual(const float f1, const float f2)
 {
 	return (fmod(f1 - f2, TWOPI) == 0.0f);
 }
+
+#undef _const
+#undef _pure
 
 #endif // MYMATH_H

@@ -70,7 +70,7 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, co
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 flatNorm = readmap->facenormals[(xSquare + zSquare * gs->mapx) * 2];
+	float3 flatNorm = readmap->centernormals[xSquare + zSquare * gs->mapx];
 		flatNorm.y = 0;
 		flatNorm.SafeNormalize();
 
@@ -228,7 +228,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 
 
 /* Converts a point-request into a square-positional request. */
-float CMoveMath::yLevel(const float3 pos) {
+float CMoveMath::yLevel(const float3& pos) {
 	int x = int(pos.x / SQUARE_SIZE);
 	int z = int(pos.z / SQUARE_SIZE);
 	return yLevel(x, z);

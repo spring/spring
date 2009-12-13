@@ -114,6 +114,10 @@ void CLogOutput::Flush()
 	filelog->flush();
 }
 
+const char* CLogOutput::GetFilename() const
+{
+	return filename;
+}
 void CLogOutput::SetFilename(const char* fname)
 {
 	GML_STDMUTEX_LOCK(log); // SetFilename
