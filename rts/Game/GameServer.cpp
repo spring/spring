@@ -484,15 +484,16 @@ void CGameServer::CheckSync()
 				else if (*f < players[a].lastFrameResponse)
 					noSyncResponse.push_back(a);
 			} else {
-				if (!bGotCorrectChecksum) {
-					bGotCorrectChecksum = true;
-					correctChecksum = it->second;
-				} else if (it->second != correctChecksum) {
+				if (bGotCorrectChecksum && it->second != correctChecksum)
+				{
+					players[a].desynced = true;
 					if(enforceSpeed < 0 || !players[a].spectator)
 						desyncGroups[it->second].push_back(a);
 					else
 						desyncSpecs[a] = it->second;
 				}
+				else
+					players[a].desynced = false;
 			}
 		}
 
@@ -539,10 +540,9 @@ void CGameServer::CheckSync()
 
 		// Remove complete sets (for which all player's checksums have been received).
 		if (bComplete) {
-// 			if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
-// 				logOutput.Print("Succesfully purged outstanding sync frame %d from the deque", *f);
+			// Message(str ( boost::format("Succesfully purged outstanding sync frame %d from the deque") %(*f)));
 			for (size_t a = 0; a < players.size(); ++a) {
-				if (players[a].myState >= GameParticipant::DISCONNECTED)
+				if (players[a].myState < GameParticipant::DISCONNECTED)
 					players[a].syncResponse.erase(*f);
 			}
 			f = outstandingSyncFrames.erase(f);

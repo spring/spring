@@ -24,6 +24,7 @@ public:
 	bool spectator;
 	bool isFromDemo;
 	bool readyToStart;
+	bool desynced;
 	
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {
