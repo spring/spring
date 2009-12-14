@@ -415,7 +415,6 @@ void CGameServer::CheckSync()
 	std::deque<int>::iterator f = outstandingSyncFrames.begin();
 	while (f != outstandingSyncFrames.end()) {
 		std::vector<int> noSyncResponse;
-		std::vector<int> noSyncSpecs;
 		// maps incorrect checksum to players with that checksum
 		std::map<unsigned, std::vector<int> > desyncGroups;
 		std::map<int, unsigned> desyncSpecs;
@@ -430,12 +429,8 @@ void CGameServer::CheckSync()
 			if (it == players[a].syncResponse.end()) {
 				if (*f >= serverframenum - static_cast<int>(SYNCCHECK_TIMEOUT))
 					bComplete = false;
-				else {
-					if(enforceSpeed < 0 || !players[a].spectator)
-						noSyncResponse.push_back(a);
-					else
-						noSyncSpecs.push_back(a);
-				}
+				else if (*f < players[a].lastFrameResponse)
+					noSyncResponse.push_back(a);
 			} else {
 				if (!bGotCorrectChecksum) {
 					bGotCorrectChecksum = true;
@@ -449,18 +444,12 @@ void CGameServer::CheckSync()
 			}
 		}
 
-		if (!noSyncResponse.empty() || !noSyncSpecs.empty()) {
+		if (!noSyncResponse.empty()) {
 			if (!syncWarningFrame || (*f - syncWarningFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncWarningFrame = *f;
 
 				std::string playernames = GetPlayerNames(noSyncResponse);
 				Message(str(format(NoSyncResponse) %playernames %(*f)));
-
-				// send private no sync messages to spectators to reduce spam
-				for(std::vector<int>::const_iterator s = noSyncSpecs.begin(); s != noSyncSpecs.end(); ++s) {
-					int playernum = *s;
-					PrivateMessage(playernum, str(format(NoSyncResponse) %players[playernum].name %(*f)));
-				}
 			}
 		}
 
