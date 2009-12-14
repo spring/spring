@@ -431,7 +431,7 @@ void CFeatureDrawer::DrawRaw(int extraSize, vector<CFeature*>* farFeatures)
 void CFeatureDrawer::DrawFeatureStats(CFeature* feature)
 {
 	float3 interPos = feature->pos;
-	interPos.y += feature->model->height + 5.0f;
+	interPos.y += feature->height + 5.0f;
 
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);
