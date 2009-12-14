@@ -14,7 +14,6 @@ const std::string GameEnd = "Game has ended";
 const std::string NoClientsExit = "No clients connected, shutting down server";
 
 const std::string NoSyncResponse = "No sync response from %s for frame %d";
-const std::string DelayedSyncResponse = "Delayed response from %s for frame %d (current %d)";
 const std::string SyncError = "Sync error for %s in frame %d (%x)";
 const std::string NoSyncCheck = "Warning: Sync checking disabled!";
 

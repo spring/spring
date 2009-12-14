@@ -117,7 +117,6 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	serverStartTime = spring_gettime();
 	lastUpdate = serverStartTime;
 	lastPlayerInfo  = serverStartTime;
-	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
 	syncWarningFrame=0;
 	serverframenum=0;
@@ -881,13 +880,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			int frameNum = *(int*)&inbuf[1];
 			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
-			else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
-				delayedSyncResponseFrame = serverframenum;
-				if(enforceSpeed < 0 || !players[a].spectator)
-					Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
-				else
-					PrivateMessage(a, str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
-			}
 			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 			players[a].lastFrameResponse = frameNum;
 #endif

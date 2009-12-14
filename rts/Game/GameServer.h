@@ -186,7 +186,6 @@ private:
 #endif
 	int syncErrorFrame;
 	int syncWarningFrame;
-	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
 	void InternalSpeedChange(float newSpeed);
