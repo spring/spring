@@ -32,8 +32,7 @@ public:
 	State myState;
 	
 	float cpuUsage;
-	int ping;
-	int lastKeyframeResponse;
+	int lastFrameResponse;
 
 	bool isLocal;
 	boost::shared_ptr<netcode::CConnection> link;

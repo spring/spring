@@ -536,13 +536,13 @@ void CGameServer::Update()
 			float refCpu = 0.0f;
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
-					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
+					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, (serverframenum - players[a].lastFrameResponse)));
 					if(enforceSpeed < 0 || !players[a].spectator) {
 						if (players[a].cpuUsage > refCpu) {
 							refCpu = players[a].cpuUsage;
 						}
 						cpu.push_back(players[a].cpuUsage);
-						ping.push_back(players[a].ping);
+						ping.push_back(serverframenum - players[a].lastFrameResponse);
 					}
 				}
 			}
@@ -698,9 +698,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 	switch (inbuf[0]){
 		case NETMSG_KEYFRAME:
-			players[a].ping = serverframenum-*(int*)&inbuf[1];
-			players[a].lastKeyframeResponse = *(int*)&inbuf[1];
+		{
+			const int frameNum = *(int*)&inbuf[1];
+			players[a].lastFrameResponse = frameNum;
 			break;
+		}
 
 		case NETMSG_PAUSE:
 			if(inbuf[1]!=a){
@@ -713,7 +715,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					if(enforceSpeed >= 0 && !players[a].isLocal && !isPaused &&
 						(players[a].spectator || (enforceSpeed > 0 &&
 						(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
-						players[a].ping - medianPing > internalSpeed * GAME_SPEED / 2)))) {
+						(serverframenum - players[a].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
 						PrivateMessage(a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)");
 						break; // disallow pausing by players who cannot keep up gamespeed
 					}
@@ -887,7 +889,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					PrivateMessage(a, str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
 			}
 			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
-			players[a].ping = serverframenum - frameNum;
+			players[a].lastFrameResponse = frameNum;
 #endif
 		}
 			break;
@@ -1636,7 +1638,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			if (hasLocalClient)
 			{
 				// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
-				if (players[localClientNumber].lastKeyframeResponse + GAME_SPEED*2 <= serverframenum)
+				if (players[localClientNumber].lastFrameResponse + GAME_SPEED*2 <= serverframenum)
 					return;
 			}
 		}
@@ -1833,7 +1835,7 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 		!players[player].isLocal && !isPaused &&
 		(players[player].spectator || (enforceSpeed > 0 &&
 		(players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
-		players[player].ping - medianPing > internalSpeed * GAME_SPEED / 2)))) {
+		(serverframenum - players[player].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
 		PrivateMessage(player, players[player].spectator ?
 		"Speed change rejected (spectators)" :
 		"Speed change rejected (cpu load or ping is too high)");
