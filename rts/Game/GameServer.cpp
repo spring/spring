@@ -414,13 +414,65 @@ void CGameServer::CheckSync()
 	// Check sync
 	std::deque<int>::iterator f = outstandingSyncFrames.begin();
 	while (f != outstandingSyncFrames.end()) {
+		unsigned correctChecksum = 0;
+		bool bGotCorrectChecksum = false;
+		if (hasLocalClient)
+		{
+			// dictatorship
+			std::map<int, unsigned>::iterator it = players[localClientNumber].syncResponse.find(*f);
+			if (it != players[localClientNumber].syncResponse.end())
+			{
+				correctChecksum = it->second;
+				bGotCorrectChecksum = true;
+			}
+		}
+		else
+		{
+			// democracy
+			typedef std::vector< std::pair<unsigned, unsigned> > chkList;
+			chkList checksums;
+			unsigned checkMaxCount = 0;
+			for (size_t a = 0; a < players.size(); ++a)
+			{
+				if (!players[a].link)
+					continue;
+			
+				std::map<int, unsigned>::const_iterator it = players[a].syncResponse.find(*f);
+				if (it != players[a].syncResponse.end())
+				{
+					bool found = false;
+					for (chkList::iterator it2 = checksums.begin(); it2 != checksums.end(); ++it2)
+					{
+						if (it2->first == it->second)
+						{
+							found = true;
+							it2->second++;
+							if (checkMaxCount < it2->second)
+							{
+								checkMaxCount = it2->second;
+								correctChecksum = it2->first;
+							}
+						}
+					}
+					if (!found)
+					{
+						checksums.push_back(std::pair<unsigned, unsigned>(it->second, 1));
+						if (checkMaxCount == 0)
+						{
+							checkMaxCount = 1;
+							correctChecksum = it->second;
+						}
+					}
+				}
+			}
+			bGotCorrectChecksum = (checkMaxCount > 0);
+		}
+
 		std::vector<int> noSyncResponse;
 		// maps incorrect checksum to players with that checksum
 		std::map<unsigned, std::vector<int> > desyncGroups;
 		std::map<int, unsigned> desyncSpecs;
 		bool bComplete = true;
-		bool bGotCorrectChecksum = false;
-		unsigned correctChecksum = 0;
 		for (size_t a = 0; a < players.size(); ++a) {
 			if (!players[a].link) {
 				continue;
