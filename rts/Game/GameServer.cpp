@@ -79,9 +79,6 @@ const spring_duration gameStartDelay = spring_secs(4);
 /// The time intervall in msec for sending player statistics to each client
 const spring_duration playerInfoTime = spring_secs(2);
 
-/// The time interval in msec for broadcasting speed information
-const spring_duration speedInfoTime = spring_secs(30);
-
 /// msecs to wait until the timeout condition (na active clients) activates
 const spring_duration serverTimeout = spring_secs(30);
 
@@ -220,12 +217,6 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	}
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
-
-	averageSpeed = 0;
-	averageWantedSpeed = 0;
-	numSpeedSamples = 0;
-	lastSpeedInfo  = serverStartTime;
-	speedWarningThreshold = configHandler->Get("SpeedWarningThreshold", 0.98f);
 
 #ifdef STREFLOP_H
 	// Something in CGameServer::CGameServer borks the FPU control word
@@ -543,14 +534,12 @@ void CGameServer::Update()
 			std::vector<float> cpu;
 			std::vector<int> ping;
 			float refCpu = 0.0f;
-			int slowestPlayer = -1;
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
 					if(enforceSpeed < 0 || !players[a].spectator) {
 						if (players[a].cpuUsage > refCpu) {
 							refCpu = players[a].cpuUsage;
-							slowestPlayer = a;
 						}
 						cpu.push_back(players[a].cpuUsage);
 						ping.push_back(players[a].ping);
@@ -586,38 +575,8 @@ void CGameServer::Update()
 					newSpeed = userSpeedFactor;
 				if(newSpeed < 0.1f)
 					newSpeed = 0.1f;
-				float speedReduction = internalSpeed - newSpeed;
 				if(newSpeed != internalSpeed)
 					InternalSpeedChange(newSpeed);
-
-				// broadcast optional warning about which player is currently limiting the game speed
-				if(speedWarningThreshold > 0) {
-					if(slowestPlayer >= 0 && speedReduction > 0.0f && internalSpeed < userSpeedFactor)
-						players[slowestPlayer].speedWarning += speedReduction * (userSpeedFactor - internalSpeed);
-					averageSpeed = (averageSpeed * numSpeedSamples + internalSpeed) / (float)(numSpeedSamples + 1);
-					averageWantedSpeed = (averageWantedSpeed * numSpeedSamples + userSpeedFactor) / (float)(numSpeedSamples + 1);
-					++numSpeedSamples;
-					if(lastSpeedInfo < (spring_gettime() - speedInfoTime)) {
-						lastSpeedInfo = spring_gettime();
-						slowestPlayer = -1;
-						float maxWarning = 0.0f;
-						for (size_t a = 0; a < players.size(); ++a) {
-							if (players[a].myState == GameParticipant::INGAME) {
-								if(players[a].speedWarning > maxWarning) {
-									maxWarning = players[a].speedWarning;
-									slowestPlayer = a;
-								}
-								players[a].speedWarning = 0.0f;
-							}
-						}
-						if(slowestPlayer >= 0 && !isPaused && numSpeedSamples > 1 && 
-							averageSpeed < averageWantedSpeed * speedWarningThreshold && 
-							averageSpeed < userSpeedFactor * speedWarningThreshold) {
-								Message(str(format(SpeedWarning) %averageSpeed %players[slowestPlayer].name));
-						}
-						numSpeedSamples = 0;
-					}
-				}
 			}
 		}
 		else {
