@@ -1687,12 +1687,12 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const string script = luaL_checkstring(L, 2);
 
 	const std::string springFullName = (Platform::GetBinaryFile());
-	LogObject() << "Spring: " << springFullName;
-	LogObject() << "Args: " << arguments;
+	// LogObject() << "Spring: " << springFullName;
+	// LogObject() << "Args: " << arguments;
 	if (!script.empty())
 	{
-		const std::string scriptFullName = Quote(FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt");
-		LogObject() << "Script: " << scriptFullName;
+		const std::string scriptFullName = Quote(FileSystemHandler::GetInstance().GetWriteDir()+"script.txt");
+		// LogObject() << "Script: " << scriptFullName;
 		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;
 		scriptfile.close();
