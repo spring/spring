@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include <cstring>
+
 #include "bitops.h"
 #include "CommandColors.h"
 #include "FileSystem/FileHandler.h"
@@ -250,7 +252,7 @@ CBitmap* CMouseCursor::getAlignedBitmap(const CBitmap &orig)
 	const int ny = next_power_of_2(orig.ysize);
 
 	unsigned char* data = new unsigned char[nx * ny * 4];
-	memset(data, 0, nx * ny * 4);
+	std::memset(data, 0, nx * ny * 4);
 
 	for (int y = 0; y < orig.ysize; ++y) {
 		for (int x = 0; x < orig.xsize; ++x) {
