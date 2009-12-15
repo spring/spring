@@ -19,8 +19,10 @@ using namespace std;
 static CLogSubsystem LOG_MAPINFO("mapinfo");
 
 
-// before delete, the const is const_cast'ed away.
-// there are no (other) situations where mapInfo may be modified
+// Before delete, the const is const_cast'ed away. There are
+// no (other) situations where mapInfo may be modified, except
+//   LuaUnsyncedCtrl may change water
+//   LuaSyncedCtrl may change terrainTypes
 const CMapInfo* mapInfo;
 
 
@@ -28,14 +30,14 @@ CMapInfo::CMapInfo(const string& mapName)
 {
 	map.name = mapName;
 
-	MapParser mapParser(mapName);
-	if (!mapParser.IsValid()) {
-		throw content_error("MapInfo: " + mapParser.GetErrorLog());
+	parser = new MapParser(mapName);
+	if (!parser->IsValid()) {
+		throw content_error("MapInfo: " + parser->GetErrorLog());
 	}
+}
 
-	LuaTable mapTbl = mapParser.GetRoot();
-	mapRoot = &mapTbl;
-
+void CMapInfo::Load()
+{
 	LuaParser resParser("gamedata/resources.lua",
 	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resParser.Execute()) {
@@ -54,15 +56,20 @@ CMapInfo::CMapInfo(const string& mapName)
 	ReadTerrainTypes();
 }
 
-
 CMapInfo::~CMapInfo()
 {
+	delete parser;
 }
 
+std::string CMapInfo::GetStringValue(const std::string& key) const
+{
+	assert(parser->GetRoot().IsValid());
+	return parser->GetRoot().GetString(key, "");
+}
 
 void CMapInfo::ReadGlobal()
 {
-	const LuaTable topTable = *mapRoot;
+	const LuaTable topTable = parser->GetRoot();
 
 	map.humanName    = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
@@ -92,14 +99,14 @@ void CMapInfo::ReadGlobal()
 void CMapInfo::ReadGui()
 {
 	// GUI
-	gui.autoShowMetal = mapRoot->GetBool("autoShowMetal", true);
+	gui.autoShowMetal = parser->GetRoot().GetBool("autoShowMetal", true);
 }
 
 
 void CMapInfo::ReadAtmosphere()
 {
 	// MAP\ATMOSPHERE
-	const LuaTable atmoTable = mapRoot->SubTable("atmosphere");
+	const LuaTable atmoTable = parser->GetRoot().SubTable("atmosphere");
 	atmosphere_t& atmo = atmosphere;
 	atmo.cloudDensity = atmoTable.GetFloat("cloudDensity", 0.5f);
 	atmo.minWind      = atmoTable.GetFloat("minWind", 5.0f);
@@ -121,7 +128,7 @@ void CMapInfo::ReadAtmosphere()
 
 void CMapInfo::ReadLight()
 {
-	const LuaTable lightTable = mapRoot->SubTable("lighting");
+	const LuaTable lightTable = parser->GetRoot().SubTable("lighting");
 
 	light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
 	light.sunDir.ANormalize();
@@ -146,7 +153,7 @@ void CMapInfo::ReadLight()
 
 void CMapInfo::ReadWater()
 {
-	const LuaTable wt = mapRoot->SubTable("water");
+	const LuaTable wt = parser->GetRoot().SubTable("water");
 
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
 	water.repeatY = wt.GetFloat("repeatY", 0.0f);
@@ -249,7 +256,7 @@ void CMapInfo::ReadWater()
 void CMapInfo::ReadSmf()
 {
 	// SMF specific settings
-	const LuaTable mapResTable = mapRoot->SubTable("resources");
+	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
 	smf.detailTexName = mapResTable.GetString("detailTex", "");
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
@@ -261,7 +268,7 @@ void CMapInfo::ReadSmf()
 	}
 
 	// height overrides
-	const LuaTable smfTable = mapRoot->SubTable("smf");
+	const LuaTable smfTable = parser->GetRoot().SubTable("smf");
 
 	smf.minHeightOverride = smfTable.KeyExists("minHeight");
 	smf.maxHeightOverride = smfTable.KeyExists("maxHeight");
@@ -287,16 +294,16 @@ void CMapInfo::ReadSmf()
 void CMapInfo::ReadSm3()
 {
 	// SM3 specific settings
-	sm3.minimap = mapRoot->GetString("minimap", "");
+	sm3.minimap = parser->GetRoot().GetString("minimap", "");
 }
 
 
 void CMapInfo::ReadTerrainTypes()
 {
 	const LuaTable terrTypeTable =
-		mapRoot->SubTable("terrainTypes");
+		parser->GetRoot().SubTable("terrainTypes");
 
-	for (int tt = 0; tt < 256; tt++) {
+	for (int tt = 0; tt < NUM_TERRAIN_TYPES; tt++) {
 		TerrainType& terrType = terrainTypes[tt];
 		const LuaTable terrain = terrTypeTable.SubTable(tt);
 		terrType.name          = terrain.GetString("name", "Default");

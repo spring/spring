@@ -66,8 +66,6 @@ public:
 	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
 #endif
 
-	inline void DrawFar(CUnit* unit);
-
 	// note: make these static?
 	inline void DrawUnitDebug(CUnit*);                              // was CUnit::DrawDebug()
 	void DrawUnitBeingBuilt(CUnit*);                                // was CUnit::DrawBeingBuilt()
@@ -159,7 +157,7 @@ public:
 
 	bool showHealthBars;
 
-	float3 camNorm;		//used by drawfar
+	float3 camNorm; // used to draw far-textures
 
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
 	void UpdateReflectTex(void);

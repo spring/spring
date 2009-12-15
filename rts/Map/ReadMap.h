@@ -49,82 +49,85 @@ class CReadMap
 {
 public:
 	CR_DECLARE(CReadMap);
+	void Serialize(creg::ISerializer& s); //! creg serialize callback
 
 	virtual ~CReadMap();
-
-	void Serialize(creg::ISerializer& s); // creg serialize callback
-
-	static CReadMap* LoadMap (const std::string& mapname);
+	static CReadMap* LoadMap(const std::string& mapname);
 
 protected:
-	void Initialize(); // called by implementations of CReadMap
+	CReadMap(); //! uses LoadMap
+	void Initialize(); //! called by implementations of CReadMap
+
+	std::vector<HeightmapUpdate> heightmapUpdates;
+	virtual void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2) = 0;
+
+	//! calculates derived heightmap information such as normals, centerheightmap and slopemap
+	void UpdateHeightmapSynced(int x1, int y1, int x2, int y2);
+	void CalcHeightmapChecksum();
 public:
-	// calculates derived heightmap information such as normals, centerheightmap and slopemap
-	void CalcHeightfieldData();
+	virtual const float* GetHeightmap() const = 0; //! returns a float[(mapx+1)*(mapy+1)]
+	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
+	virtual GLuint GetGrassShadingTexture() const { return 0; }
+	virtual GLuint GetShadingTexture() const = 0; //! a texture with RGB for shading and A for height (0 := above water; 1-255 := under water = 255+height*10)
 
-	virtual const float* GetHeightmap() = 0;
-	// if you modify the heightmap, call HeightmapUpdated
-	virtual void SetHeight(int idx, float h) = 0;
-	virtual void AddHeight(int idx, float a) = 0;
+	//! if you modify the heightmap, call HeightmapUpdated
+	virtual void SetHeight(const int& idx, const float& h) = 0;
+	virtual void AddHeight(const int& idx, const float& a) = 0;
+	void HeightmapUpdated(const int& x1, const int& y1, const int& x2, const int& y2);
 
-	float* orgheightmap;
-	float* centerheightmap;
-	static const int numHeightMipMaps = 7;	//number of heightmap mipmaps, including full resolution
-	float* mipHeightmap[numHeightMipMaps];	//array of pointers to heightmap in different resolutions, mipHeightmap[0] is full resolution, mipHeightmap[n+1] is half resolution of mipHeightmap[n]
-	float* slopemap;
-	float3* facenormals;
+	float* orgheightmap;    //! size: (mapx+1)*(mapy+1) (per vertex)
+	float* centerheightmap; //! size: (mapx)*(mapy)     (per face)
+	static const int numHeightMipMaps = 7;	//! number of heightmap mipmaps, including full resolution
+	float* mipHeightmap[numHeightMipMaps];	//! array of pointers to heightmap in different resolutions, mipHeightmap[0] is full resolution, mipHeightmap[n+1] is half resolution of mipHeightmap[n]
+	float* slopemap;        //! size: (mapx/2)*(mapy/2) (1.0 - interpolate(centernomal[i]).y)
+	float3* facenormals;    //! size: 2*mapx*mapy (contains 2 normals per quad -> triangle strip)
+	float3* centernormals;  //! size: mapx*mapy (contains interpolated 1 normal per quad, same as (facenormal0+facenormal1).Normalize())
 	unsigned char* typemap;
 
-	CMetalMap *metalMap;					//Metal-density/height-map
+	CMetalMap *metalMap;   //! Metal-density/height-map
 
 	int width, height;
+	float minheight, maxheight;
+	float currMinHeight, currMaxHeight;
 
 	unsigned int mapChecksum;
-protected:
-	CReadMap(); // use LoadMap
+
 public:
-	virtual CBaseGroundDrawer *GetGroundDrawer () { return 0; }
-	std::vector<HeightmapUpdate> heightmapUpdates;
-	void HeightmapUpdated(int x1, int x2, int y1, int y2);
-	virtual void HeightmapUpdatedNow(int x1, int x2, int y1, int y2)=0;
 	void UpdateDraw();
 	virtual void Update(){};
 	virtual void Explosion(float x,float y,float strength){};
-	virtual GLuint GetShadingTexture () = 0; // a texture with RGB for shading and A for height
-	static inline unsigned char EncodeHeight(float h) { return std::max(0, (int)(255+10.0f*h)); }
 
-	virtual void DrawMinimap () = 0; // draw the minimap in a quad (with extends: (0,0)-(1,1))
+	static inline unsigned char EncodeHeight(const float h) { return std::max(0, 255+(int)(10.0f*h)); }
 
-	virtual GLuint GetGrassShadingTexture() { return 0; }
+	virtual void DrawMinimap() const = 0; //! draw the minimap in a quad (with extends: (0,0)-(1,1))
 
-	// Feature creation
-	virtual int GetNumFeatures () = 0;
-	virtual int GetNumFeatureTypes () = 0;
-	virtual void GetFeatureInfo (MapFeatureInfo* f) = 0; // returns MapFeatureInfo[GetNumFeatures()]
-	virtual const char *GetFeatureType (int typeID) = 0;
+	//! Feature creation
+	virtual int GetNumFeatures() = 0;
+	virtual int GetNumFeatureTypes() = 0;
+	virtual void GetFeatureInfo(MapFeatureInfo* f) = 0; //! returns MapFeatureInfo[GetNumFeatures()]
+	virtual const char *GetFeatureTypeName(int typeID) = 0;
 
-	// Infomaps (such as metal map, grass map, ...), handling them with a string as type seems flexible...
-	// Some map types:
-	//   "metal"  -  metalmap
-	//   "grass"  -  grassmap
-	virtual unsigned char* GetInfoMap (const std::string& name, MapBitmapInfo* bm) = 0;
-	virtual void FreeInfoMap (const std::string& name, unsigned char *data) = 0;
+	//! Infomaps (such as metal map, grass map, ...), handling them with a string as type seems flexible...
+	//! Some map types:
+	//!   "metal"  -  metalmap
+	//!   "grass"  -  grassmap
+	virtual unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) = 0;
+	virtual void FreeInfoMap(const std::string& name, unsigned char *data) = 0;
 
-	// Determine visibility for a rectangular grid
+	//! Determine visibility for a rectangular grid
 	struct IQuadDrawer
 	{
 		virtual ~IQuadDrawer();
 		virtual void DrawQuad (int x,int y) = 0;
 	};
 	virtual void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize=0) = 0;
-
-	float minheight, maxheight;
-	float currMinHeight, currMaxHeight;
 };
 
 extern CReadMap* readmap;
 
-//Converts a map-square into a float3-position.
-inline float3 SquareToFloat3(int xSquare, int zSquare) {return float3(((xSquare))*SQUARE_SIZE, readmap->centerheightmap[(xSquare) + (zSquare) * gs->mapx], ((zSquare))*SQUARE_SIZE);};
+//! Converts a map-square into a float3-position.
+inline float3 SquareToFloat3(int xSquare, int zSquare) {
+	return float3(((xSquare))*SQUARE_SIZE, readmap->centerheightmap[(xSquare) + (zSquare) * gs->mapx], ((zSquare))*SQUARE_SIZE);
+};
 
 #endif /* READMAP_H */

@@ -118,6 +118,9 @@ class LuaSyncedCtrl {
 		static int SetHeightMap(lua_State* L);
 		static int SetHeightMapFunc(lua_State* L);
 
+		static int SetMapSquareTerrainType(lua_State* L);
+		static int SetTerrainTypeData(lua_State* L);
+
 		static int SpawnCEG(lua_State* L);
 
 		// LuaRules  (fullCtrl)

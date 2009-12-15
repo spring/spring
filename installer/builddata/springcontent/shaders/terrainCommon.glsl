@@ -27,6 +27,10 @@
 ---------------------------------------------------------------------
 */
 
+#ifdef UseTextureRECT
+#extension GL_ARB_texture_rectangle : enable
+#endif
+
 #ifdef UseBumpMapping
 	varying vec3 tsLightDir;
 	varying vec3 tsEyeDir;

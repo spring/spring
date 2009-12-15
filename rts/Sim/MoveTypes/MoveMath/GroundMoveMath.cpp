@@ -55,3 +55,9 @@ float CGroundMoveMath::yLevel(int xSquare, int zSquare) {
 	return readmap->centerheightmap[xSquare + zSquare * gs->mapx];
 }
 
+float CGroundMoveMath::yLevel(const float3& pos)
+{
+	return ground->GetHeight2(pos.x, pos.z) + 10;
+}
+
+

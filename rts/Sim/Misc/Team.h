@@ -46,20 +46,22 @@ public:
 
 	void operator=(const TeamBase& base);
 
-	enum AddType{
+	std::string GetControllerName() const;
+
+	enum AddType {
 		AddBuilt,
 		AddCaptured,
 		AddGiven
 	};
 
-	enum RemoveType{
+	enum RemoveType {
 		RemoveDied,
 		RemoveCaptured,
 		RemoveGiven
 	};
 
-	void AddUnit(CUnit* unit,AddType type);
-	void RemoveUnit(CUnit* unit,RemoveType type);
+	void AddUnit(CUnit* unit, AddType type);
+	void RemoveUnit(CUnit* unit, RemoveType type);
 
 	int teamNum;
 	bool isDead;

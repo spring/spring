@@ -14,6 +14,7 @@ class CUnit;
 class CWeapon;
 class CSolidObject;
 class CFeature;
+class CMobileCAI;
 
 struct UnitDef;
 #include "Sim/Misc/DamageArray.h"
@@ -32,12 +33,14 @@ public:
 	bool TestTrajectoryAllyCone(const float3 &from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner);
 	bool TestTrajectoryNeutralCone(const float3 &from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner);
 
-	void GetEnemyUnits(const float3& pos,float radius,int searchAllyteam,std::vector<int>& found);
-	CUnit* GetClosestUnit(const float3& pos,float radius);
-	CUnit* GetClosestEnemyUnit(const float3& pos,float radius,int searchAllyteam);
-	CUnit* GetClosestEnemyUnitNoLosTest(const float3& pos,float radius,int searchAllyteam,bool sphere,bool canBeBlind);
-	CUnit* GetClosestFriendlyUnit(const float3& pos,float radius,int searchAllyteam);
-	CUnit* GetClosestEnemyAircraft(const float3& pos,float radius,int searchAllyteam);
+	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	CUnit* GetClosestUnit(const float3& pos, float searchRadius);
+	CUnit* GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam);
+	CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
+	CUnit* GetClosestEnemyUnitNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, bool sphere, bool canBeBlind);
+	CUnit* GetClosestFriendlyUnit(const float3& pos, float searchRadius, int searchAllyteam);
+	CUnit* GetClosestEnemyAircraft(const float3& pos, float searchRadius, int searchAllyteam);
+
 	void GenerateTargets(const CWeapon *attacker, CUnit* lastTarget,std::map<float,CUnit*> &targets);
 	float TraceRay(const float3& start,const float3& dir,float length,float power,const CUnit* owner,const CUnit*& hit,int collisionFlags=0);
 	float GuiTraceRay(const float3& start,const float3& dir,float length,const CUnit*& hit,bool useRadar,const CUnit* exclude=NULL);
@@ -51,6 +54,9 @@ public:
 	void BuggerOff(float3 pos, float radius, bool spherical = true, CUnit* exclude = 0);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo);
 	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud);
+	/**
+	 * @param minDist messured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
+	 */
 	float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 	void Update(void);
 

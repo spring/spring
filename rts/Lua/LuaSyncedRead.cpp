@@ -1336,22 +1336,20 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 	const bool isLocal           = skirmishAIHandler.IsLocalSkirmishAI(skirmishAIId);
 
-	// no ai info for synchronized scripts
-	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
-		HSTR_PUSH(L, "SYNCED_NONAME");
-		numVals++;
-	} else {
-		lua_pushnumber(L, skirmishAIId);
-		lua_pushstring(L, aiData->name.c_str());
-		lua_pushnumber(L, aiData->hostPlayer);
-		lua_pushnumber(L, isLocal);
-		numVals += 4;
-	}
+	// this is synced AI info
+	lua_pushnumber(L, skirmishAIId);
+	lua_pushstring(L, aiData->name.c_str());
+	lua_pushnumber(L, aiData->hostPlayer);
+	numVals += 3;
 
-	if (isLocal) {
+	// no unsynced Skirmish AI info for synchronized scripts
+	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
+		HSTR_PUSH(L, "SYNCED_NOSHORTNAME");
+		HSTR_PUSH(L, "SYNCED_NOVERSION");
+		lua_newtable(L);
+	} else if (isLocal) {
 		lua_pushstring(L, aiData->shortName.c_str());
 		lua_pushstring(L, aiData->version.c_str());
-		numVals += 2;
 
 		lua_newtable(L);
 		std::map<std::string, std::string>::const_iterator o;
@@ -1361,7 +1359,12 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 			lua_rawset(L, -3);
 		}
 		numVals++;
+	} else {
+		HSTR_PUSH(L, "UKNOWN");
+		HSTR_PUSH(L, "UKNOWN");
+		lua_newtable(L);
 	}
+	numVals += 3;
 
 	return numVals;
 }

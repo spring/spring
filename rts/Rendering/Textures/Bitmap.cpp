@@ -87,7 +87,7 @@ CBitmap::CBitmap(const CBitmap& old)
 }
 
 
-CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
+CBitmap::CBitmap(const unsigned char *data, int xsize, int ysize)
   : xsize(xsize), ysize(ysize), channels(4)
 {
 	type = BitmapTypeStandardRGBA;
@@ -152,6 +152,9 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 					break;
 				case nv_dds::TextureCubemap :
 					textype = GL_TEXTURE_CUBE_MAP;
+					break;
+				case nv_dds::TextureNone :
+				default :
 					break;
 			}
 		}
@@ -688,16 +691,16 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 	CBitmap bm;
 
 	delete[] bm.mem;
-	bm.xsize=newx;
-	bm.ysize=newy;
-	bm.mem=new unsigned char[bm.xsize*bm.ysize*4];
+	bm.xsize = newx;
+	bm.ysize = newy;
+	bm.mem   = new unsigned char[bm.xsize*bm.ysize*4];
 
-	float dx=float(xsize)/newx;
-	float dy=float(ysize)/newy;
+	const float dx = float(xsize)/newx;
+	const float dy = float(ysize)/newy;
 
 	float cy=0;
 	for(int y=0;y<newy;++y){
-		int sy=(int)cy;
+		const int sy = (int)cy;
 		cy+=dy;
 		int ey=(int)cy;
 		if(ey==sy)
@@ -705,7 +708,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 
 		float cx=0;
 		for(int x=0;x<newx;++x){
-			int sx=(int)cx;
+			const int sx=(int)cx;
 			cx+=dx;
 			int ex=(int)cx;
 			if(ex==sx)
@@ -726,6 +729,7 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 			bm.mem[(y*bm.xsize+x)*4+3]=a/((ex-sx)*(ey-sy));
 		}
 	}
+
 	return bm;
 }
 

@@ -327,3 +327,8 @@ void ConfigHandler::Write(FILE* file)
 	for(std::map<string,string>::iterator iter = data.begin(); iter != data.end(); ++iter)
 		fprintf(file, "%s=%s\n", iter->first.c_str(), iter->second.c_str());
 }
+
+
+const std::map<std::string, std::string> &ConfigHandler::GetData() {
+	return data;
+}

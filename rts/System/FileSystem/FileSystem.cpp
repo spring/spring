@@ -171,7 +171,8 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 
 	// if it's an absolute path, don't look for it in the data directories
 	if (FileSystemHandler::IsAbsolutePath(dir)) {
-		FindFilesSingleDir(matches, dir, pattern, flags);
+		// pass the directory as second directory argument, so the path gets included in the matches.
+		FindFilesSingleDir(matches, "", dir, pattern, flags);
 		return matches;
 	}
 
@@ -179,12 +180,12 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
-		FindFilesSingleDir(matches, d->path + dir2, pattern, flags);
+		FindFilesSingleDir(matches, d->path, dir2, pattern, flags);
 	}
 	return matches;
 }
 
-bool FileSystemHandler::IsReadableFile(const std::string& file) const
+bool FileSystemHandler::IsReadableFile(const std::string& file)
 {
 #ifdef WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
@@ -366,11 +367,11 @@ void FileSystemHandler::Chdir(const std::string& dir)
 		throw content_error("Could not chdir into SPRING_DATADIR");
 }
 
-static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
+static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const boost::regex &regexpattern, int flags)
 {
 #ifdef _WIN32
 	WIN32_FIND_DATA wfd;
-	HANDLE hFind = FindFirstFile((dir+"\\*").c_str(), &wfd);
+	HANDLE hFind = FindFirstFile((datadir + dir + "\\*").c_str(), &wfd);
 
 	if (hFind != INVALID_HANDLE_VALUE) {
 		do {
@@ -389,7 +390,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 						}
 					}
 					if (flags & FileSystem::RECURSE) {
-						FindFiles(matches, dir + wfd.cFileName + "\\", regexpattern, flags);
+						FindFiles(matches, datadir, dir + wfd.cFileName + "\\", regexpattern, flags);
 					}
 				}
 			}
@@ -400,7 +401,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 	DIR* dp;
 	struct dirent* ep;
 
-	if (!(dp = opendir(dir.c_str())))
+	if (!(dp = opendir((datadir + dir).c_str())))
 		return;
 
 	while ((ep = readdir(dp))) {
@@ -409,7 +410,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 			// is it a file? (we just treat sockets / pipes / fifos / character&block devices as files...)
 			// (need to stat because d_type is DT_UNKNOWN on linux :-/)
 			struct stat info;
-			if (stat((dir + ep->d_name).c_str(), &info) == 0) {
+			if (stat((datadir + dir + ep->d_name).c_str(), &info) == 0) {
 				if (!S_ISDIR(info.st_mode)) {
 					if ((flags & FileSystem::ONLY_DIRS) == 0) {
 						if (boost::regex_match(ep->d_name, regexpattern)) {
@@ -425,7 +426,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 						}
 					}
 					if (flags & FileSystem::RECURSE) {
-						FindFiles(matches, dir + ep->d_name + "/", regexpattern, flags);
+						FindFiles(matches, datadir, dir + ep->d_name + "/", regexpattern, flags);
 					}
 				}
 			}
@@ -436,13 +437,14 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 }
 
 
-void FileSystemHandler::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const
+void FileSystemHandler::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const std::string &pattern, int flags) const
 {
+	assert(datadir.empty() || datadir[datadir.length() - 1] == native_path_separator);
 	assert(!dir.empty() && dir[dir.length() - 1] == native_path_separator);
 
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
 
-	::FindFiles(matches, dir, regexpattern, flags);
+	::FindFiles(matches, datadir, dir, regexpattern, flags);
 }
 
 /**

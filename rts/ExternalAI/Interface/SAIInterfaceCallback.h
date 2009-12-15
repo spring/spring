@@ -28,7 +28,7 @@ extern "C" {
  * AI Interface -> engine callback.
  * Each AI Interface will receive an instance of this struct at initialization.
  * The interfaceId passed as the first parameter to each function in this struct
- * has to be the same as the one recieved by the interface,
+ * has to be the same as the one received by the interface,
  * when it received the instance of this struct.
  * @see SAIInterfaceLibrary
  */

@@ -28,7 +28,10 @@ static CVertexArray* vertexArray1 = NULL;
 static CVertexArray* vertexArray2 = NULL;
 static CVertexArray* currentVertexArray = NULL;
 
-static GLuint startupTexture = 0;
+static GLuint     startupTexture = 0;
+static float      startupTexture_aspectRatio = 1.0; // x/y
+// make this var configurable if we need streching load-screens
+static const bool startupTexture_keepAspectRatio = true;
 
 #ifdef USE_GML
 static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
@@ -210,8 +213,7 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 	return pics[gu->usRandInt() % pics.size()];
 }
 
-
-void LoadStartPicture(const std::string& sidePref)
+void RandomStartPicture(const std::string& sidePref)
 {
 	if (startupTexture)
 		return;
@@ -227,15 +229,37 @@ void LoadStartPicture(const std::string& sidePref)
 	if (name.empty()) {
 		return; // no valid pictures
 	}
+	LoadStartPicture(name);
+}
 
+void LoadStartPicture(const std::string& name)
+{
 	CBitmap bm;
 	if (!bm.Load(name)) {
 		throw content_error("Could not load startpicture from file " + name);
 	}
 
-	/* HACK Really big load pictures made a GLU choke. */
+	startupTexture_aspectRatio = (float) bm.xsize / bm.ysize;
+
+	// HACK Really big load pictures made GLU choke.
 	if ((bm.xsize > gu->viewSizeX) || (bm.ysize > gu->viewSizeY)) {
-		bm = bm.CreateRescaled(gu->viewSizeX, gu->viewSizeY);
+		float newX = gu->viewSizeX;
+		float newY = gu->viewSizeY;
+
+		if (startupTexture_keepAspectRatio) {
+			// Make smaller but preserve aspect ratio.
+			// The resulting resolution will make it fill one axis of the
+			// screen, and be smaller or equal to the screen on the other axis.
+			const float screen_aspectRatio = (float) gu->viewSizeX / gu->viewSizeY;
+			const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
+			if (ratioComp > 1.0f) {
+				newX = newX / ratioComp;
+			} else {
+				newY = newY * ratioComp;
+			}
+		}
+
+		bm = bm.CreateRescaled((int) newX, (int) newY);
 	}
 
 	startupTexture = bm.CreateTexture(false);
@@ -286,28 +310,49 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 
 	good_fpu_control_registers(text);
 
+	float xDiv = 0.0f;
+	float yDiv = 0.0f;
+	if (startupTexture_keepAspectRatio) {
+		const float screen_aspectRatio = (float) gu->viewSizeX / gu->viewSizeY;
+		const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
+		if ((ratioComp > 0.99f) && (ratioComp < 1.01f)) { // ~= 1
+			// show Load-Screen full screen
+			// nothing to do
+		} else if (ratioComp > 1.0f) {
+			// show Load-Screen on part of the screens X-Axis only
+			xDiv = (1 - (1 / ratioComp)) / 2;
+		} else {
+			// show Load-Screen on part of the screens Y-Axis only
+			yDiv = (1 - ratioComp) / 2;
+		}
+	}
+
 	// Draw loading screen & print load msg.
 	ClearScreen();
 	if (startupTexture) {
 		glBindTexture(GL_TEXTURE_2D,startupTexture);
 		glBegin(GL_QUADS);
-			glTexCoord2f(0,1);glVertex2f(0,0);
-			glTexCoord2f(0,0);glVertex2f(0,1);
-			glTexCoord2f(1,0);glVertex2f(1,1);
-			glTexCoord2f(1,1);glVertex2f(1,0);
+			glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f + xDiv, 0.0f + yDiv);
+			glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f + xDiv, 1.0f - yDiv);
+			glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f - xDiv, 1.0f - yDiv);
+			glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f - xDiv, 0.0f + yDiv);
 		glEnd();
 	}
 
 	font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
 	font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
 
-	font->glPrint(0.5f,0.5f,   gu->viewSizeY / 15.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, text);
+	font->glPrint(0.5f,0.5f,   gu->viewSizeY / 15.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+			text);
 #ifdef USE_GML
-	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "Spring %s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
+	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
 #else
-	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "Spring %s", SpringVersion::GetFull().c_str());
+	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+			"Spring %s", SpringVersion::GetFull().c_str());
 #endif
-	font->glFormat(0.5f,0.02f, gu->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "This program is distributed under the GNU General Public License, see license.html for more info");
+	font->glFormat(0.5f,0.02f, gu->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+			"This program is distributed under the GNU General Public License, see license.html for more info");
 
 	if (swapbuffers) {
 		SDL_GL_SwapBuffers();
@@ -448,3 +493,18 @@ void glClearErrors()
 
 
 /******************************************************************************/
+
+void SetTexGen(const float& scalex, const float& scaley, const float& offsetx, const float& offsety)
+{
+	GLfloat plan[]={scalex,0,0,offsetx};
+	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
+	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
+	glEnable(GL_TEXTURE_GEN_S);
+	GLfloat plan2[]={0,0,scaley,offsety};
+	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
+	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
+	glEnable(GL_TEXTURE_GEN_T);
+}
+
+/******************************************************************************/
+

@@ -11,8 +11,6 @@ public:
 	CLoadScript(const std::string& file);
 	~CLoadScript();
 	void Update();
-	std::string GetMapName();
-	std::string GetModName();
 	void ScriptSelected();
 
 private:

@@ -192,7 +192,7 @@ SectionGroup "Multiplayer battlerooms"
   !include "sections\springlobby.nsh"
   !undef INSTALL
   SectionEnd
-  
+
   Section "TASClient" SEC_TASCLIENT
   !define INSTALL
   !include "sections\tasclient.nsh"
@@ -227,19 +227,25 @@ SectionEnd
 SectionGroup "Skirmish AI plugins (Bots)"
 	Section "AAI" SEC_AAI
 	!define INSTALL
-	!include "sections\aai.nsh"
+	!include "sections\AIs\AAI.nsh"
 	!undef INSTALL
 	SectionEnd
 
 	Section "KAIK" SEC_KAIK
 	!define INSTALL
-	!include "sections\kaik.nsh"
+	!include "sections\AIs\KAIK.nsh"
 	!undef INSTALL
 	SectionEnd
 
 	Section "RAI" SEC_RAI
 	!define INSTALL
-	!include "sections\rai.nsh"
+	!include "sections\AIs\RAI.nsh"
+	!undef INSTALL
+	SectionEnd
+
+	Section "E323AI" SEC_E323AI
+	!define INSTALL
+	!include "sections\AIs\E323AI.nsh"
 	!undef INSTALL
 	SectionEnd
 SectionGroupEnd
@@ -282,9 +288,10 @@ Section Uninstall
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
   !include "sections\archivemover.nsh"
-  !include "sections\aai.nsh"
-  !include "sections\kaik.nsh"
-  !include "sections\rai.nsh"
+  !include "sections\AIs\AAI.nsh"
+  !include "sections\AIs\KAIK.nsh"
+  !include "sections\AIs\RAI.nsh"
+  !include "sections\AIs\E323AI.nsh"
   !include "sections\tasclient.nsh"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"

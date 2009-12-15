@@ -38,8 +38,7 @@ void CCommanderScript::GameStart()
 {
 	// setup the teams
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-
-		// don't spawn a commander for the gaia team
+		// don't spawn a commander for the Gaia team
 		if (gs->useLuaGaia && (a == teamHandler->GaiaTeamID())) {
 			continue;
 		}
@@ -64,20 +63,15 @@ void CCommanderScript::GameStart()
 		}
 
 		if (team->side.empty()) {
-			// not a GameSetup-type game, or the script
-			// didn't specify a side for this team (bad)
-			// NOTE: the gameSetup ptr now always exists
-			// even for local games, so we can't rely on
-			// its being NULL to identify ones without a
-			// script (which have only two teams)
-			team->side = sideParser.GetSideName((a % 2), "arm");
+			// startscript didn't specify a side for this team
+			team->side = sideParser.GetSideName(a % sideParser.GetCount());
 		}
 
 		// get the team startup info
 		const std::string& startUnit = sideParser.GetStartUnit(team->side);
 
 		if (startUnit.empty()) {
-			throw content_error( "Unable to load a commander for side: " + team->side);
+			throw content_error("[CommanderScript::GameStart] unable to load a start-unit for side \"" + team->side + "\"");
 		}
 
 		if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame
@@ -90,12 +84,12 @@ void CCommanderScript::GameStart()
 			const float zmin = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectTop;
 			const float xmax = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectRight;
 			const float zmax = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectBottom;
-			const float xcenter = (xmin+xmax)/2;
-			const float zcenter = (zmin+zmax)/2;
+			const float xcenter = (xmin + xmax) / 2;
+			const float zcenter = (zmin + zmax) / 2;
 			assert(xcenter >= 0 && xcenter < gs->mapx*SQUARE_SIZE);
 			assert(zcenter >= 0 && zcenter < gs->mapy*SQUARE_SIZE);
-			team->startPos.x = (a - teamHandler->ActiveTeams())*4*SQUARE_SIZE + xcenter;
-			team->startPos.z = (a - teamHandler->ActiveTeams())*4*SQUARE_SIZE + zcenter;
+			team->startPos.x = (a - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
+			team->startPos.z = (a - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
 		}
 
 		CUnit* unit =

@@ -30,3 +30,9 @@ float CShipMoveMath::yLevel(int xSquare, int zSquare) {
 	return 0.0f;
 }
 
+
+float CShipMoveMath::yLevel(const float3& pos)
+{
+	return 0.0f;
+}
+

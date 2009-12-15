@@ -94,7 +94,7 @@ namespace terrain {
 		float anisotropicFiltering; // level of anisotropic filtering - default is 0 (no anisotropy)
 
 		bool useStaticShadow;
-		bool forceFallbackTexturing; // only use GL_ARB_texture_env_combine even if shader GL extensions are avaiable
+		bool forceFallbackTexturing; // only use GL_ARB_texture_env_combine even if shader GL extensions are available
 		int maxLodLevel; // lower max lod usually requires less heavy texturing but more geometry
 	};
 
@@ -133,6 +133,7 @@ namespace terrain {
 		void SetActiveContext (RenderContext *ctx);   // set active rendering context / camera viewpoint
 
 		void Load (const TdfParser& tdf, LightingInfo* li, ILoadCallback *cb);
+		void ReloadShaders ();
 		void Draw ();
 		void DrawAll (); // draw all terrain nodes, regardless of visibility or lod
 		void Update (); // update lod+visibility, should be called when camera position has changed

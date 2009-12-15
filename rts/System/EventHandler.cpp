@@ -40,6 +40,7 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(TeamDied,      MANAGED_BIT);
 	SETUP_EVENT(TeamChanged,   MANAGED_BIT);
 	SETUP_EVENT(PlayerChanged, MANAGED_BIT);
+	SETUP_EVENT(PlayerRemoved, MANAGED_BIT);
 
 	SETUP_EVENT(UnitCreated,     MANAGED_BIT);
 	SETUP_EVENT(UnitFinished,    MANAGED_BIT);
@@ -343,6 +344,16 @@ void CEventHandler::PlayerChanged(int playerID)
 }
 
 
+void CEventHandler::PlayerRemoved(int playerID, int reason)
+{
+	const int count = listPlayerRemoved.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listPlayerRemoved[i];
+		ec->PlayerRemoved(playerID, reason);
+	}
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -354,6 +365,7 @@ void CEventHandler::Update()
 		return;
 
 	GML_RECMUTEX_LOCK(unit); // Update
+	GML_RECMUTEX_LOCK(feat); // Update
 	GML_RECMUTEX_LOCK(lua); // Update
 
 	for (int i = 0; i < count; i++) {
@@ -382,6 +394,7 @@ void CEventHandler::ViewResize()
     }                                             \
                                                   \
     GML_RECMUTEX_LOCK(unit); /* DRAW_CALLIN */    \
+    GML_RECMUTEX_LOCK(feat); /* DRAW_CALLIN */    \
     GML_RECMUTEX_LOCK(lua); /* DRAW_CALLIN */     \
                                                   \
     LuaOpenGL::EnableDraw ## name ();             \

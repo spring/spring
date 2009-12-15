@@ -1,0 +1,105 @@
+spring(6)
+=========
+:man source:  Spring package
+:man manual:  Games
+
+
+Name
+----
+spring - An open source RTS with similar gameplay to TA
+
+
+Synopsis
+--------
+*spring* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-n|--name 'STRING'] [-C|--config 'FILE']
+
+*spring* --list-ai-interfaces
+
+*spring* --list-skirmish-ais
+
+*spring* [-h|--help]
+
+*spring* [-V|--version]
+
+
+Description
+-----------
+Spring is a free Real Time Strategy (RTS) game engine originally designed to
+play Total Annihilation ((C) 1997 Cavedog) content which has evolved into a general RTS
+engine capable of running various kinds of games (mods).
+
+It is mainly designed around online multiplayer games but can be played in
+single-player mode against an AI.
+
+
+Options
+-------
+*-h, --help*::
+  Print the options help message and exit
+
+*-V, --version*::
+  Display program version and exit
+
+*-f, --fullscreen*::
+  Run in fullscreen mode
+
+*-w, --window*::
+  Run in windowed mode
+
+*-x, --xresolution*::'SIZE'
+  Set X resolution
+
+*-y, --yresolution*::'SIZE'
+  Set Y resolution
+
+*-m, --minimise*::
+  Start minimised
+
+*-s, --server*::
+  Run as a server
+
+*-c, --client*::
+  Run as a client
+
+*-p, --projectiledump*::
+  Dump projectile class info into projectiles.txt
+
+*-t, --textureatlas*::
+  Dump each finalised textureatlas into textureatlasN.tga
+
+*-n, --name*::'NAME'
+  Set your player name
+
+ *-C, --config*::'FILE'
+  Configuration file
+
+*--list-ai-interfaces*::
+  Dump a list of available AI Interfaces to STDOUT
+
+*--list-skirmish-ais*::
+  Dump a list of available Skirmish AIs to STDOUT
+
+Files
+-----
+
+  /etc/spring/datadir
+
+Contains the path used by spring and springlobby to save downloaded files and temporary data.
+
+See also
+--------
+
+spring-dedicated(6)
+
+Homepage
+--------
+
+More information about Spring can be found at
+link:http://springrts.com
+
+Author
+------
+Spring was written by the Spring developers.
+
+This manual page was written by Marco Amadori <marco.amadori@gmail.com>,
+for the Debian project (and may be used by others).

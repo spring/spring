@@ -56,7 +56,6 @@ CR_REG_METADATA(CMoveInfo, (
 	CR_MEMBER(moveData),
 	CR_MEMBER(name2moveData),
 	CR_MEMBER(moveInfoChecksum),
-	CR_MEMBER(terrainType2MoveFamilySpeed),
 	CR_RESERVED(16)
 ));
 
@@ -181,13 +180,6 @@ CMoveInfo::CMoveInfo()
 
 		moveData.push_back(md);
 		name2moveData[md->name] = md->pathType;
-	}
-
-	for (int a = 0; a < 256; ++a) {
-		terrainType2MoveFamilySpeed[a][0] = mapInfo->terrainTypes[a].tankSpeed;
-		terrainType2MoveFamilySpeed[a][1] = mapInfo->terrainTypes[a].kbotSpeed;
-		terrainType2MoveFamilySpeed[a][2] = mapInfo->terrainTypes[a].hoverSpeed;
-		terrainType2MoveFamilySpeed[a][3] = mapInfo->terrainTypes[a].shipSpeed;
 	}
 
 

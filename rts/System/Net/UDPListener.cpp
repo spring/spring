@@ -22,7 +22,6 @@
 #include "ProtocolDef.h"
 #include "UDPConnection.h"
 #include "Socket.h"
-#include "LogOutput.h"
 
 namespace netcode
 {
@@ -78,7 +77,6 @@ void UDPListener::Update()
 		if (CheckErrorCode(err))
 			break;
 
-		LogObject() << "Avail: " << bytes_avail << " Recv: " << bytesReceived;
 		if (bytesReceived < Packet::headerSize)
 			continue;
 

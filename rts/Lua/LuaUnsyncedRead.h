@@ -119,8 +119,6 @@ class LuaUnsyncedRead {
 
 		static int GetGroupList(lua_State* L);
 		static int GetSelectedGroup(lua_State* L);
-		static int GetGroupAIName(lua_State* L);
-		static int GetGroupAIList(lua_State* L);
 
 		static int GetMyAllyTeamID(lua_State* L);
 		static int GetMyTeamID(lua_State* L);

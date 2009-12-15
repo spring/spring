@@ -26,21 +26,21 @@ CBasicMapDamage::CBasicMapDamage(void)
 	const int numQuads = qf->GetNumQuadsX() * qf->GetNumQuadsZ();
 	inRelosQue = new bool[numQuads];
 	for (int a = 0; a < numQuads; ++a) {
-		inRelosQue[a]=false;
+		inRelosQue[a] = false;
 	}
-	relosSize=0;
-	neededLosUpdate=0;
+	relosSize = 0;
+	neededLosUpdate = 0;
 
-	for(int a=0;a<=200;++a){
-		float r=a/200.0f;
-		float d=cos((r-0.1f)*(PI+0.3f))*(1-r)*(0.5f+0.5f*cos(std::max(0.0f,r*3-2)*PI));
-		craterTable[a]=d;
+	for (int a = 0; a <= 200; ++a) {
+		float r = a / 200.0f;
+		float d = cos((r - 0.1f) * (PI + 0.3f)) * (1 - r) * (0.5f + 0.5f * cos(std::max(0.0f, r * 3 - 2) * PI));
+		craterTable[a] = d;
 	}
-	for(int a=201;a<10000;++a){
-		craterTable[a]=0;
+	for (int a = 201; a < 10000; ++a) {
+		craterTable[a] = 0;
 	}
-	for(int a=0;a<256;++a)
-		invHardness[a]=1.0f/mapInfo->terrainTypes[a].hardness;
+	for (int a = 0; a < CMapInfo::NUM_TERRAIN_TYPES; ++a)
+		invHardness[a] = 1.0f / mapInfo->terrainTypes[a].hardness;
 
 	mapHardness = mapInfo->map.hardness;
 
@@ -154,90 +154,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
-	const float* heightmap = readmap->GetHeightmap();
-	float* centerheightmap = readmap->centerheightmap;
-
-	// reads from heightmap, writes to centerheightmap
-	for (int y = y1; y < y2; y++) {
-		for (int x = x1; x < x2; x++) {
-			const float height = heightmap[((y)     * (gs->mapx + 1)) + (x)    ]
-			                   + heightmap[((y)     * (gs->mapx + 1)) + (x + 1)]
-			                   + heightmap[((y + 1) * (gs->mapx + 1)) + (x)    ]
-			                   + heightmap[((y + 1) * (gs->mapx + 1)) + (x + 1)];
-			centerheightmap[(y * gs->mapx) + x] = height * 0.25f;
-		}
-	}
-
-	float numHeightMipMaps = readmap->numHeightMipMaps - 1;
-	float** mipHeightmap = readmap->mipHeightmap;
-
-	// reads from mipHeightmap[i], writes to mipHeightmap[i + 1]
-	for (int i = 0; i < numHeightMipMaps; i++) {
-		int hmapx = gs->mapx >> i;
-		for (int y = ((y1 >> i) & (~1)); y < (y2 >> i); y += 2) {
-			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
-				float height = mipHeightmap[i][(x    ) + (y    ) * hmapx];
-				height +=      mipHeightmap[i][(x    ) + (y + 1) * hmapx];
-				height +=      mipHeightmap[i][(x + 1) + (y    ) * hmapx];
-				height +=      mipHeightmap[i][(x + 1) + (y + 1) * hmapx];
-				mipHeightmap[i + 1][(x + (y * hmapx) / 2) / 2] = height * 0.25f;
-			}
-		}
-	}
-
-	int decy = std::max(           0, y1 - 1);
-	int incy = std::min(gs->mapy - 1, y2 + 1);
-	int decx = std::max(           0, x1 - 1);
-	int incx = std::min(gs->mapx - 1, x2 + 1);
-
-	float3* facenormals = readmap->facenormals;
-
-	// update the normals
-	for (int y = decy; y <= incy; y++) {
-		for (int x = decx; x <= incx; x++) {
-			float3 e1(-SQUARE_SIZE, heightmap[y * (gs->mapx + 1) + x] - heightmap[ y      * (gs->mapx + 1) + x + 1],            0);
-			float3 e2(           0, heightmap[y * (gs->mapx + 1) + x] - heightmap[(y + 1) * (gs->mapx + 1) + x    ], -SQUARE_SIZE);
-
-			float3 n = e2.cross(e1);
-			n.Normalize();
-
-			facenormals[(y * gs->mapx + x) * 2] = n;
-
-			e1 = float3( SQUARE_SIZE, heightmap[(y + 1) * (gs->mapx + 1) + x + 1] - heightmap[(y + 1) * (gs->mapx + 1) + x    ],           0);
-			e2 = float3(           0, heightmap[(y + 1) * (gs->mapx + 1) + x + 1] - heightmap[(y    ) * (gs->mapx + 1) + x + 1], SQUARE_SIZE);
-
-			n = e2.cross(e1);
-			n.Normalize();
-
-			facenormals[(y * gs->mapx + x) * 2 + 1] = n;
-		}
-	}
-
-	// update the slopes
-	const int ss4 = SQUARE_SIZE * 4;
-	float* slopemap = readmap->slopemap;
-	for (int y = std::max(2, (y1 & 0xfffffe)); y <= std::min(gs->mapy - 3, y2); y += 2) {
-		for (int x = std::max(2, (x1 & 0xfffffe)); x <= std::min(gs->mapx - 3, x2); x += 2) {
-			float3 e1(-ss4, heightmap[(y - 1) * (gs->mapx + 1) + x - 1] - heightmap[(y - 1) * (gs->mapx + 1) + x + 3],    0);
-			float3 e2(   0, heightmap[(y - 1) * (gs->mapx + 1) + x - 1] - heightmap[(y + 3) * (gs->mapx + 1) + x - 1], -ss4);
-
-			float3 n = e2.cross(e1);
-			n.Normalize();
-
-			e1 = float3(ss4, heightmap[(y + 3) * (gs->mapx + 1) + x + 3] - heightmap[(y + 3) * (gs->mapx + 1) + x - 1],   0);
-			e2 = float3(  0, heightmap[(y + 3) * (gs->mapx + 1) + x + 3] - heightmap[(y - 1) * (gs->mapx + 1) + x + 3], ss4);
-
-			float3 n2 = e2.cross(e1);
-			n2.Normalize();
-
-			slopemap[(y / 2) * gs->hmapx + (x / 2)] = 1.0f - (n.y + n2.y) * 0.5f;
-		}
-	}
-
-	decy = std::max(                     0, (y1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	incy = std::min(qf->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	decx = std::max(                     0, (x1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
-	incx = std::min(qf->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int decy = std::max(                     0, (y1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int incy = std::min(qf->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int decx = std::max(                     0, (x1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	const int incx = std::min(qf->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
 
 	const int numQuadsX = qf->GetNumQuadsX();
 	const int frameNum  = gs->frameNum;
@@ -259,9 +179,9 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
+	readmap->HeightmapUpdated(x1, y1, x2, y2);
 	pathManager->TerrainChange(x1, y1, x2, y2);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
-	readmap->HeightmapUpdated(x1, x2, y1, y2);
 	water->HeightmapChanged(x1, y1, x2, y2);
 	heightMapTexture.UpdateArea(x1, y1, x2, y2);
 }
