@@ -1686,12 +1686,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const string arguments = luaL_checkstring(L, 1);
 	const string script = luaL_checkstring(L, 2);
 
-#ifndef __WIN32
-	const std::string springFullName = Platform::GetBinaryFile();
-#else // failure
-	const std::string springFullName = Quote(Platform::GetBinaryFile());
-#endif
-
+	const std::string springFullName = (Platform::GetBinaryFile());
 	// LogObject() << "Spring: " << springFullName;
 	// LogObject() << "Args: " << arguments;
 	if (!script.empty())
