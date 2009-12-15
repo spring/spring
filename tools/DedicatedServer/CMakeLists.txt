@@ -46,7 +46,7 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
 	../../rts/Map/MapParser)
-TARGET_LINK_LIBRARIES(springserver ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} hpiutil2 7zip minizip lua)
+TARGET_LINK_LIBRARIES(springserver ${SDL_LIBRARY_TEMP} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} hpiutil2 7zip minizip lua)
 if (MINGW)
 	TARGET_LINK_LIBRARIES (springserver ws2_32)
 else (MINGW)
