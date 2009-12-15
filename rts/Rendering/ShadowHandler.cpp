@@ -4,6 +4,7 @@
 #include "ShadowHandler.h"
 #include "ConfigHandler.h"
 #include "Game/Camera.h"
+#include "UnitModels/FeatureDrawer.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
@@ -14,7 +15,6 @@
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
 #include "Rendering/GL/FBO.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "EventHandler.h"
 
 CShadowHandler* shadowHandler=0;
@@ -148,7 +148,7 @@ void CShadowHandler::DrawShadowPasses(void)
 		readmap->GetGroundDrawer()->DrawShadowPass();
 		ph->DrawShadowPass();
 		unitDrawer->DrawShadowPass();
-		featureHandler->DrawShadowPass();
+		featureDrawer->DrawShadowPass();
 		treeDrawer->DrawShadowPass();
 		eventHandler.DrawWorldShadow();
 	glPopAttrib();
@@ -290,8 +290,8 @@ void CShadowHandler::CalcMinMaxView(void)
 	GetFrustumSide(cam2->leftside,false);
 
 	std::vector<fline>::iterator fli,fli2;
-  for(fli=left.begin();fli!=left.end();fli++){
-	  for(fli2=left.begin();fli2!=left.end();fli2++){
+	for(fli=left.begin();fli!=left.end();fli++){
+		for(fli2=left.begin();fli2!=left.end();fli2++){
 			if(fli==fli2)
 				continue;
 			float colz=0;

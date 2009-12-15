@@ -240,10 +240,10 @@ void CAirCAI::SlowUpdate()
 					return;
 				}
 			}
-			float testRad = 500 * owner->moveState;
-			CUnit* enemy = helper->GetClosestEnemyUnit(
-				owner->pos + (owner->speed * 20), testRad, owner->allyteam);
-			if(IsValidTarget(enemy)) {
+			const float searchRadius = 500 * owner->moveState;
+			CUnit* enemy = helper->GetClosestValidTarget(
+				owner->pos + (owner->speed * 20), searchRadius, owner->allyteam, this);
+			if (enemy != NULL) {
 				Command nc;
 				nc.id = CMD_ATTACK;
 				nc.params.push_back(enemy->id);
@@ -399,13 +399,12 @@ void CAirCAI::ExecuteFight(Command &c)
 	// CMD_FIGHT is pretty useless if !canAttack but we try to honour the modders wishes anyway...
 	if (owner->unitDef->canAttack && owner->fireState >= 2
 			&& owner->moveState != 0 && owner->maxRange > 0) {
-		float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2,
-				owner->pos + owner->speed*10);
-		float testRad = 1000 * owner->moveState;
 		CUnit* enemy = NULL;
 		if(myPlane->IsFighter()) {
-			enemy = helper->GetClosestEnemyAircraft(curPosOnLine,
-					testRad, owner->allyteam);
+			const float3 curPosOnLine = ClosestPointOnLine(
+					commandPos1, commandPos2, owner->pos + owner->speed*10);
+			const float searchRadius = 1000 * owner->moveState;
+			enemy = helper->GetClosestEnemyAircraft(curPosOnLine, searchRadius, owner->allyteam);
 		}
 		if(IsValidTarget(enemy) && (owner->moveState!=1
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
@@ -423,11 +422,11 @@ void CAirCAI::ExecuteFight(Command &c)
 			}
 			return;
 		} else {
-			float3 curPosOnLine = ClosestPointOnLine(
-				commandPos1, commandPos2, owner->pos + owner->speed * 20);
-			float testRad = 500 * owner->moveState;
-			enemy = helper->GetClosestEnemyUnit(curPosOnLine, testRad, owner->allyteam);
-			if(IsValidTarget(enemy)) {
+			const float3 curPosOnLine = ClosestPointOnLine(
+					commandPos1, commandPos2, owner->pos + owner->speed * 20);
+			const float searchRadius = 500 * owner->moveState;
+			enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
+			if (enemy != NULL) {
 				Command nc;
 				nc.id = CMD_ATTACK;
 				nc.params.push_back(enemy->id);

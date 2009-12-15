@@ -27,6 +27,7 @@
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
@@ -40,6 +41,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -212,6 +214,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMapFunc);
+
+	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
+	REGISTER_LUA_CFUNC(SetTerrainTypeData);
 
 	REGISTER_LUA_CFUNC(SpawnCEG);
 
@@ -983,7 +988,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 				}
 				else if (key == "paralyze") {
 					unit->paralyzeDamage = max(0.0f, value);
-					if (unit->paralyzeDamage > unit->maxHealth) {
+					if (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health)) {
 						unit->stunned = true;
 					} else if (value < 0.0f) {
 						unit->stunned = false;
@@ -1097,7 +1102,7 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		return 0;
 	}
 
-	const int weaponNum = luaL_checkint(L,2);
+	const int weaponNum = luaL_checkint(L, 2);
 	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
@@ -2821,6 +2826,72 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	}
 
 	lua_pushnumber(L, heightMapAmountChanged);
+	return 1;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
+{
+	const int hx = int(luaL_checkfloat(L, 1) / SQUARE_SIZE);
+	const int hz = int(luaL_checkfloat(L, 2) / SQUARE_SIZE);
+
+	if ((hx < 0) || (hx > gs->mapx) || (hz < 0) || (hz > gs->mapy)) {
+		return 0;
+	}
+
+	const int tx = hx >> 1;
+	const int tz = hz >> 1;
+
+	const int ott = readmap->typemap[tz * gs->hmapx + tx];
+	const int ntt = luaL_checkint(L, 3);
+
+	readmap->typemap[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
+	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1);
+
+	lua_pushnumber(L, ott);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
+{
+	const int args = lua_gettop(L);
+	const int tti = luaL_checkint(L, 1);
+
+	if (tti < 0 || tti >= CMapInfo::NUM_TERRAIN_TYPES) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	CMapInfo::TerrainType* tt = const_cast<CMapInfo::TerrainType*>(&mapInfo->terrainTypes[tti]);
+
+	if (args >= 2) { tt->tankSpeed  = luaL_checkfloat(L, 2); }
+	if (args >= 3) { tt->kbotSpeed  = luaL_checkfloat(L, 3); }
+	if (args >= 4) { tt->hoverSpeed = luaL_checkfloat(L, 4); }
+	if (args >= 5) { tt->shipSpeed  = luaL_checkfloat(L, 5); }
+
+	/*
+	if (!mapDamage->disabled) {
+		CBasicMapDamage* bmd = dynamic_cast<CBasicMapDamage*>(mapDamage);
+
+		if (bmd != NULL) {
+			tt->hardness = luaL_checkfloat(L, 6);
+			bmd->invHardness[tti] = 1.0f / tt->hardness;
+		}
+	}
+	*/
+
+	// update all map-squares set to this terrain-type (slow)
+	for (int tx = 0; tx < gs->hmapx; tx++) {
+		for (int tz = 0; tz < gs->hmapy; tz++) {
+			if (readmap->typemap[tz * gs->hmapx + tx] == tti) {
+				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1);
+			}
+		}
+	}
+
+	lua_pushboolean(L, true);
 	return 1;
 }
 

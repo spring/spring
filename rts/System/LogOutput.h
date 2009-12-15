@@ -118,6 +118,7 @@ public:
 	void AddSubscriber(ILogSubscriber* ls);
 	void RemoveSubscriber(ILogSubscriber* ls);
 
+	const char* GetFilename() const;
 	void SetFilename(const char* filename);
 	void Initialize();
 	void Flush();

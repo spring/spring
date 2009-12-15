@@ -439,7 +439,7 @@ void CMissileProjectile::DrawUnitPart(void)
 	CMatrix44f transMatrix(drawPos + dir * radius * 0.9f, -rightdir, updir, dir);
 
 	glPushMatrix();
-		glMultMatrixf(&transMatrix[0]);
+		glMultMatrixf(transMatrix);
 		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading (GML)
 	glPopMatrix();
 }

@@ -602,7 +602,7 @@ struct STimeWaitUnitCommand {
 	 */
 	int timeOut;
 
-	// the time in seconds to wait
+	/// the time in seconds to wait
 	int time;
 }; // COMMAND_UNIT_WAIT_TIME Unit_waitFor
 
@@ -877,7 +877,7 @@ struct SSetFireStateUnitCommand {
 	 */
 	int timeOut;
 
-	// can be: 0=hold fire, 1=return fire, 2=fire at will
+	/// can be: 0=hold fire, 1=return fire, 2=fire at will
 	int fireState;
 }; // COMMAND_UNIT_SET_FIRE_STATE Unit_setFireState
 

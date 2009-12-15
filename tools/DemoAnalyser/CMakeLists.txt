@@ -18,7 +18,6 @@ SET(build_files ${fsfiles}
 	../../rts/Sim/Misc/TeamBase
 	../../rts/Sim/Misc/AllyTeam
 	../../rts/Map/MapParser
-	../../rts/Rendering/Textures/TAPalette
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
 	../../rts/Lua/LuaIO)

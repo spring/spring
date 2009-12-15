@@ -10,12 +10,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Spring defines
-SET(USE_NEDMALLOC FALSE CACHE BOOL "Use nedmalloc memory allocator")
-if (USE_NEDMALLOC)
-	ADD_DEFINITIONS(-DREPLACE_SYSTEM_ALLOCATOR)
-	SET (nedmalloc_obj "../tools/nedmalloc/nedmalloc.c")
-endif (USE_NEDMALLOC)
-
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
@@ -29,6 +23,9 @@ endif (USE_GML)
 
 SET(USE_GML_SIM FALSE CACHE BOOL "Use independent Simulation thread?")
 if (USE_GML_SIM)
+	if (NOT USE_GML)
+		MESSAGE(SEND_ERROR "USE_GML_SIM requires USE_GML")
+	endif (NOT USE_GML)
 	ADD_DEFINITIONS(-DUSE_GML_SIM)
 endif (USE_GML_SIM)
 

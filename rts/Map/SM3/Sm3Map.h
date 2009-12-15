@@ -19,17 +19,18 @@ public:
 	CSm3ReadMap();
 	~CSm3ReadMap();
 	void Initialize(const char* mapname); // throws std::runtime_exception on errors
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 	CBaseGroundDrawer* GetGroundDrawer();
-	void HeightmapUpdatedNow(int x1, int x2, int y1, int y2);
-	const float* GetHeightmap() { return renderer->GetHeightmap(); }
+	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
+	inline const float* GetHeightmap() const { return renderer->GetHeightmap(); }
 
-	inline void SetHeight(int idx, float h) {
+	inline void SetHeight(const int& idx, const float& h) {
 		renderer->GetHeightmap()[idx] = h;
 		currMinHeight = std::min(h, currMinHeight);
 		currMaxHeight = std::max(h, currMaxHeight);
 	}
-	inline void AddHeight(int idx, float a) {
+	inline void AddHeight(const int& idx, const float& a) {
 		renderer->GetHeightmap()[idx] += a;
 		currMinHeight = std::min(renderer->GetHeightmap()[idx], currMinHeight);
 		currMaxHeight = std::max(renderer->GetHeightmap()[idx], currMaxHeight);
@@ -37,14 +38,14 @@ public:
 
 	void Update();
 	void Explosion(float x, float y, float strength);
-	GLuint GetShadingTexture(); // a texture with RGB for shading and A for height
-	void DrawMinimap(); // draw the minimap in a quad (with extends: (0,0)-(1,1))
+	GLuint GetShadingTexture() const; // a texture with RGB for shading and A for height
+	void DrawMinimap() const; // draw the minimap in a quad (with extends: (0,0)-(1,1))
 
 	// Feature creation
 	int GetNumFeatures();
 	int GetNumFeatureTypes();
 	void GetFeatureInfo(MapFeatureInfo* f); // returns MapFeatureInfo[GetNumFeatures()]
-	const char* GetFeatureType(int typeID);
+	const char* GetFeatureTypeName(int typeID);
 
 	// Bitmaps (such as metal map, grass map, ...), handling them with a string as type seems flexible...
 	// Some map types:

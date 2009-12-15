@@ -52,7 +52,10 @@ inline void glUniformf3(const GLint& location, const float3 &v)
 
 void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data);
 
-void LoadStartPicture(const std::string& sidePref);
+void SetTexGen(const float& scalex, const float& scaley, const float& offsetx, const float& offsety);
+
+void RandomStartPicture(const std::string& sidePref);
+void LoadStartPicture(const std::string& picture);
 void ClearScreen();
 void PrintLoadMsg(const char* text, bool swapbuffers = true);
 void UnloadStartPicture();

@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "MoveMath.h"
 #include "Map/ReadMap.h"
+#include "Map/MapInfo.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Units/Unit.h"
@@ -29,12 +30,22 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) {
 	}
 
 	// Extract data.
-	int square = xSquare / 2 + zSquare / 2 * gs->hmapx;
-	float height = readmap->mipHeightmap[1][square];
-	float slope = readmap->slopemap[square];
-	float typemod = moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
+	const int square         = xSquare / 2 + zSquare / 2 * gs->hmapx;
+	const int squareTerrType = readmap->typemap[square];
 
-	return (SpeedMod(moveData, height, slope) * typemod);
+	const float height  = readmap->mipHeightmap[1][square];
+	const float slope   = readmap->slopemap[square];
+
+	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
+
+	switch (moveData.moveFamily) {
+		case MoveData::Tank:  { return (SpeedMod(moveData, height, slope) * tt.tankSpeed ); } break;
+		case MoveData::KBot:  { return (SpeedMod(moveData, height, slope) * tt.kbotSpeed ); } break;
+		case MoveData::Hover: { return (SpeedMod(moveData, height, slope) * tt.hoverSpeed); } break;
+		case MoveData::Ship:  { return (SpeedMod(moveData, height, slope) * tt.shipSpeed ); } break;
+		default: {} break;
+	}
+	return 0.0f;
 }
 
 float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos, const float3& moveDir) {
@@ -51,17 +62,28 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, co
 	}
 
 	// Extract data.
-	int square = xSquare / 2 + zSquare / 2 * gs->hmapx;
-	float height = readmap->mipHeightmap[1][square];
-	float slope = readmap->slopemap[square];
+	const int square         = xSquare / 2 + zSquare / 2 * gs->hmapx;
+	const int squareTerrType = readmap->typemap[square];
 
-	float3 flatNorm = readmap->facenormals[(xSquare + zSquare * gs->mapx) * 2];
-	flatNorm.y = 0;
-	flatNorm.SafeNormalize();
-	float moveSlope = -moveDir.dot(flatNorm);
-	float typemod = moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
+	const float height  = readmap->mipHeightmap[1][square];
+	const float slope   = readmap->slopemap[square];
 
-	return (SpeedMod(moveData, height, slope, moveSlope) * typemod);
+	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
+
+	float3 flatNorm = readmap->centernormals[xSquare + zSquare * gs->mapx];
+		flatNorm.y = 0;
+		flatNorm.SafeNormalize();
+
+	const float moveSlope = -moveDir.dot(flatNorm);
+
+	switch (moveData.moveFamily) {
+		case MoveData::Tank:  { return (SpeedMod(moveData, height, slope, moveSlope) * tt.tankSpeed ); } break;
+		case MoveData::KBot:  { return (SpeedMod(moveData, height, slope, moveSlope) * tt.kbotSpeed ); } break;
+		case MoveData::Hover: { return (SpeedMod(moveData, height, slope, moveSlope) * tt.hoverSpeed); } break;
+		case MoveData::Ship:  { return (SpeedMod(moveData, height, slope, moveSlope) * tt.shipSpeed ); } break;
+		default: {} break;
+	}
+	return 0.0f;
 }
 
 
@@ -206,7 +228,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 
 
 /* Converts a point-request into a square-positional request. */
-float CMoveMath::yLevel(const float3 pos) {
+float CMoveMath::yLevel(const float3& pos) {
 	int x = int(pos.x / SQUARE_SIZE);
 	int z = int(pos.z / SQUARE_SIZE);
 	return yLevel(x, z);

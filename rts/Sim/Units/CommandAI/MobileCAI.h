@@ -64,6 +64,8 @@ public:
 
 	int GetCancelDistance() { return cancelDistance; }
 
+	virtual bool IsValidTarget(const CUnit* enemy) const;
+
 protected:
 	int cancelDistance;
 	int lastCloseInTry;
@@ -74,11 +76,7 @@ protected:
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
 
-	virtual bool IsValidTarget(const CUnit* enemy) const;
-
 	void CalculateCancelDistance();
 };
-
-#define MAX_CLOSE_IN_RETRY_TICKS 30
 
 #endif /* MOBILECAI_H */

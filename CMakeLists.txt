@@ -8,6 +8,7 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 if    (UNIX AND NOT MINGW)
 	set (BINDIR  "bin"                CACHE STRING "Where to install binaries")
 	set (LIBDIR  "lib"                CACHE STRING "Where to install libraries")
+	set (MANDIR  "share/man"          CACHE STRING "Where to install man pages")
 	set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
 
 	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
@@ -199,15 +200,74 @@ endif (WIN32)
 	
 Add_Subdirectory(tools/unitsync)
 
+# required for man pages (optional) and base files (mandatory)
+FIND_PACKAGE(7zip REQUIRED)
+
+### make and install the man pages
+if    (UNIX AND NOT MINGW)
+	set(AsciiDoc_FIND_QUIETLY TRUE)
+	FIND_PACKAGE(AsciiDoc)
+	set(CREATE_MAN_PAGES)
+	if    (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
+		execute_process(
+			COMMAND "${ASCIIDOC_BIN}"
+			RESULT_VARIABLE ASCIIDOC_RESULT
+			ERROR_QUIET
+			OUTPUT_QUIET
+			ERROR_STRIP_TRAILING_WHITESPACE)
+		if    (ASCIIDOC_RESULT EQUAL 0)
+			set(CREATE_MAN_PAGES TRUE)
+		else  (ASCIIDOC_RESULT EQUAL 0)
+			set(CREATE_MAN_PAGES FALSE)
+			message(STATUS "MAN pages will not be generated/installed (utility asciidoc is broken)")
+		endif (ASCIIDOC_RESULT EQUAL 0)
+	else  (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
+		set(MISSING_UTILS "")
+		if    (NOT ASCIIDOC_FOUND)
+			set(MISSING_UTILS "${MISSING_UTILS} asciidoc")
+		endif (NOT ASCIIDOC_FOUND)
+		if    (NOT XSLTPROC_FOUND)
+			set(MISSING_UTILS "${MISSING_UTILS} xsltproc")
+		endif (NOT XSLTPROC_FOUND)
+		if    (NOT DOCBOOK_FOUND)
+			set(MISSING_UTILS "${MISSING_UTILS} docbook-xsl")
+		endif (NOT DOCBOOK_FOUND)
+		message(STATUS "MAN pages will not be generated/installed; missing utilit(y|ies):${MISSING_UTILS}")
+	endif (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
+
+	if    (CREATE_MAN_PAGES)
+		set(MAN_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Documentation/manpages")
+		set(MAN_BUILD_DIR  "${CMAKE_BINARY_DIR}/manpages")
+		set(MAN_DEST_DIR   "${MANDIR}/man6")
+
+		add_custom_target(manpages ALL
+			COMMAND "${MAN_SOURCE_DIR}/make_manpages.sh"
+				"${MAN_BUILD_DIR}"
+				"${ASCIIDOC_BIN}"
+				"${XSLTPROC_BIN}"
+				"${DOCBOOK_XSL}"
+				"${7ZIP_BIN}"
+			WORKING_DIRECTORY "${MAN_SOURCE_DIR}")
+
+		install(DIRECTORY "${MAN_BUILD_DIR}/" DESTINATION "${MAN_DEST_DIR}" FILES_MATCHING PATTERN REGEX ".*\\.6\\.gz$")
+		message(STATUS "MAN pages will be installed to {INSTALL_PREFIX}/${MAN_DEST_DIR}")
+	endif (CREATE_MAN_PAGES)
+endif (UNIX AND NOT MINGW)
+
 ### make the basefiles (aka sdz's)
 file (TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/base" BASE_BUILD_DIR)
 if    (CMAKE_HOST_WIN32)
 	# As TO_NATIVE_PATH fails on windows, we need to do it manually
-	string (REPLACE "/" "\\" BASE_BUILD_DIR "${BASE_BUILD_DIR}")
-	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat ${BASE_BUILD_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+	string(REPLACE "/" "\\" BASE_BUILD_DIR "${BASE_BUILD_DIR}")
+	set(BASE_BUILD_COMMAND call make_gamedata_arch.bat)
 else  (CMAKE_HOST_WIN32)
-	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh ${BASE_BUILD_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+	set(BASE_BUILD_COMMAND sh make_gamedata_arch.sh)
 endif (CMAKE_HOST_WIN32)
+add_custom_target(gamedata ALL
+	COMMAND ${BASE_BUILD_COMMAND}
+		${BASE_BUILD_DIR}
+		${7ZIP_BIN}
+	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/installer")
 
 ### install base data files
 install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)

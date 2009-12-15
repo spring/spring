@@ -1,33 +1,65 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "FartextureHandler.h"
-#include "GlobalUnsynced.h"
-#include "UnitModels/UnitDrawer.h"
-#include "Textures/Bitmap.h"
+#include "Rendering/FartextureHandler.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Map/MapInfo.h"
+#include "Game/Camera.h"
+#include "System/GlobalUnsynced.h"
+#include "System/myMath.h"
+#include "System/LogOutput.h"
 
 CFartextureHandler* fartextureHandler = NULL;
 
 
-CFartextureHandler::CFartextureHandler(void)
+CFartextureHandler::CFartextureHandler()
 {
 	usedFarTextures = 0;
 
-	farTextureMem=new unsigned char[128*16*4];
+	farTexture = 0;
 
-	for(int a=0;a<128*16*4;++a)
-		farTextureMem[a]=0;
+	texSizeX = 1024;
+	texSizeY = 1024;
 
-	farTexture=0;
+	if (!fbo.IsValid()) {
+		logOutput.Print("framebuffer not valid!");
+		return;
+	}
+
+	glGenTextures(1,&farTexture);
+	glBindTexture(GL_TEXTURE_2D, farTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSizeX, texSizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	fbo.Bind();
+	fbo.AttachTexture(farTexture);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY); //TODO hmmm perhaps just create it on-demand to save gfx-ram?
+	bool status = fbo.CheckStatus("FARTEXTURE");
+	if (status) {
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+	fbo.Unbind();
+
+	fbo.reloadOnAltTab = true;
+
+	if (!status) {
+		//do something
+	}
 }
 
 
-CFartextureHandler::~CFartextureHandler(void)
+CFartextureHandler::~CFartextureHandler()
 {
-	delete[] farTextureMem;
-	glDeleteTextures (1, &farTexture);
+	glDeleteTextures(1, &farTexture);
 }
 
 
@@ -61,97 +93,134 @@ void CFartextureHandler::CreateFarTextures()
 
 
 /**
+ * @brief Returns the (row, column) pair of a FarTexture in the TextureAtlas.
+ */
+int2 CFartextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int& orientation)
+{
+	const int texnum = (farTextureNum * numOrientations) + orientation;
+
+	const int row = texnum / (texSizeX / iconSizeX);
+	const int col = texnum - row * (texSizeX / iconSizeX);
+	return int2(col, row);
+}
+
+
+/**
+ * @brief Returns the TexCoords of a FarTexture in the TextureAtlas.
+ */
+float2 CFartextureHandler::GetTextureCoords(const int& farTextureNum, const int& orientation)
+{
+	float2 texcoords;
+
+	const int texnum = (farTextureNum * numOrientations) + orientation;
+
+	const int row = texnum / (texSizeX / iconSizeX);
+	const int col = texnum - row * (texSizeX / iconSizeX);
+
+	texcoords.x = (float(iconSizeX) / texSizeX) * col;
+	texcoords.y = (float(iconSizeY) / texSizeY) * row;
+
+	return texcoords;
+}
+
+
+/**
  * @brief Really create the far texture for the given model.
  */
 void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 {
-	//UnitModelGeometry& geometry=*model.geometry;
+	model->farTextureNum = usedFarTextures;
 
-	model->farTextureNum=usedFarTextures;
-
-	if(usedFarTextures>=511){
-//		logOutput.Print("Out of fartextures");
+	const int maxSprites = (texSizeX / iconSizeX)*(texSizeY / iconSizeY) - 1;
+	if (usedFarTextures >= maxSprites) {
+		//TODO resize texture atlas if possible
+		//logOutput.Print("Out of fartextures");
 		return;
 	}
-	GLfloat LightDiffuseLand2[]=	{ 0.0f, 0.0f, 0.0f, 1.0f };
-	GLfloat LightAmbientLand2[]=	{ 0.6f, 0.6f, 0.6f, 1.0f };
-	for(int a=0;a<3;++a)
-		LightAmbientLand2[a] = std::min(1.f,unitDrawer->unitAmbientColor[a]+unitDrawer->unitSunColor[a]*0.2f);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbientLand2);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuseLand2);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, LightAmbientLand2);
 
-	glViewport(0,0,16,16);
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-model->radius,model->radius,-model->radius,model->radius,-model->radius*1.5f,model->radius*1.5f);
-	glMatrixMode(GL_MODELVIEW);
-	glClearColor(1.0f,0.0f,1.0f,0.0f); // image transparency key
+	if (!fbo.IsValid()) {
+		//logOutput.Print("framebuffer not valid!");
+		return;
+	}
+
+	fbo.Bind();
+
 	glDisable(GL_BLEND);
+	unitDrawer->SetupForUnitDrawing();
+	if (model->type == MODELTYPE_3DO) {
+		unitDrawer->SetupFor3DO();
+	} else {
+		//FIXME for some strange reason we need to invert the culling, why?
+		glCullFace(GL_FRONT);
+		texturehandlerS3O->SetS3oTexture(model->textureType);
+	}
+	unitDrawer->SetTeamColour(0);
 
-	glEnable(GL_LIGHTING);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-	glAlphaFunc(GL_GREATER,0.05f);
-	glEnable(GL_ALPHA_TEST);
-	float cols[]={1,1,1,1};
-	float cols2[]={1,1,1,1};
-	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,cols);
-	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,cols2);
-	glColor3f(1,1,1);
-	glRotatef(10,1,0,0);
-	glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir);
-	glEnable(GL_LIGHT1);
+	glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(-model->radius, model->radius, -model->radius, model->radius, -model->radius*1.5f, model->radius*1.5f);
+	glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glScalef(-1,1,1);
 
-	int baseX=0;
-	unsigned char buf[16*16*4];
-	for(int a=0;a<8;++a){
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		texturehandler3DO->Set3doAtlases();
+	glColor4f(1,1,1,1);
+	glRotatef(45, 1, 0, 0);
+
+	//! draw the model in 8 different orientations
+	for (size_t orient = 0; orient < numOrientations; ++orient) {
+		//! setup viewport
+		int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
+		glViewport(pos.x * iconSizeX, pos.y * iconSizeY, iconSizeX, iconSizeY);
+
 		glPushMatrix();
-		glTranslatef(0,-model->height*0.5f,0);
+		glTranslatef(0, -model->height * 0.5f, 0);
+
+		//! draw the model to a temporary buffer
 		model->DrawStatic();
+
 		glPopMatrix();
-		glReadPixels(0,0,16,16,GL_RGBA,GL_UNSIGNED_BYTE,buf);
-		for(int y=0;y<16;++y)
-			for(int x=0;x<16;++x){
-				farTextureMem[(baseX+x+(y)*128)*4]=buf[(x+y*16)*4];
-				farTextureMem[(baseX+x+(y)*128)*4+1]=buf[(x+y*16)*4+1];
-				farTextureMem[(baseX+x+(y)*128)*4+2]=buf[(x+y*16)*4+2];
-				if(buf[(x+y*16)*4]==255 && buf[(x+y*16)*4+1]==0 && buf[(x+y*16)*4+2]==255)
-					farTextureMem[(baseX+x+(y)*128)*4+3]=0;
-				else
-					farTextureMem[(baseX+x+(y)*128)*4+3]=255;
-			}
-		baseX+=16;
-		glRotatef(45,0,1,0);
-		glLightfv(GL_LIGHT1, GL_POSITION,mapInfo->light.sunDir);
+
+		//! rotate by 45 degrees for the next orientation
+		glRotatef(-360.0f / numOrientations, 0, 1, 0);
+		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 	}
 
-	glCullFace(GL_BACK);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
-
-	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],0);
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, mapInfo->light.unitAmbientColor);
-
-	if(farTexture==0){
-		glGenTextures(1, &farTexture);
-		glBindTexture(GL_TEXTURE_2D, farTexture);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, 1024, 1024,0,GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	if (model->type == MODELTYPE_3DO) {
+		unitDrawer->CleanUp3DO();
 	}
-	int bx=(usedFarTextures%8)*128;
-	int by=(usedFarTextures/8)*16;
-	glBindTexture(GL_TEXTURE_2D, farTexture);
-	glTexSubImage2D(GL_TEXTURE_2D,0, bx,by,128, 16,GL_RGBA, GL_UNSIGNED_BYTE, farTextureMem);
+	unitDrawer->CleanUpUnitDrawing();
+
+	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
 	usedFarTextures++;
+
+	fbo.Unbind();
+}
+
+
+
+void CFartextureHandler::DrawFarTexture(const CCamera* cam, const S3DModel* mdl, const float3& pos, float radius, short heading, CVertexArray* va) {
+	const float3 interPos = pos + UpVector * mdl->height * 0.5f;
+
+	//! indicates the orientation to draw
+	static const int USHRT_MAX_ = (1 << 16);
+	const int orient_step = USHRT_MAX_ / numOrientations;
+
+	int orient = GetHeadingFromVector(-cam->forward.x, -cam->forward.z) - heading;
+		orient += USHRT_MAX_;          //! make it positive only
+		orient += (orient_step >> 1);  //! we want that frontdir is from -orient_step/2 upto orient_step/2
+		orient %= USHRT_MAX_;          //! we have an angle so it's periodical
+		orient /= orient_step;         //! get the final direction index
+
+	const float iconSizeX = float(this->iconSizeX) / texSizeX;
+	const float iconSizeY = float(this->iconSizeY) / texSizeY;
+	const float2 texcoords = GetTextureCoords(mdl->farTextureNum, orient);
+
+	const float3 curad = camera->up *    radius;
+	const float3 crrad = camera->right * radius;
+
+	va->AddVertexQT(interPos - curad + crrad, texcoords.x, texcoords.y );
+	va->AddVertexQT(interPos + curad + crrad, texcoords.x, texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y );
 }

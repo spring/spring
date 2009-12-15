@@ -98,11 +98,17 @@ std::string GetOSDisplayString()
 
         // Test for the specific product.
 
-        if ( osvi.dwMajorVersion == 6 && osvi.dwMinorVersion == 0 )
+        if ( osvi.dwMajorVersion == 6)
         {
-            if ( osvi.wProductType == VER_NT_WORKSTATION )
-                oss << "Windows Vista ";
-            else oss << "Windows Server 2008 ";
+            if (osvi.dwMinorVersion == 0) {
+                if ( osvi.wProductType == VER_NT_WORKSTATION )
+                    oss << "Windows Vista ";
+                else oss << "Windows Server 2008 ";
+            } else if (osvi.dwMinorVersion == 1) {
+               if( osvi.wProductType == VER_NT_WORKSTATION )
+                   oss << "Windows 7 ";
+               else oss << "Windows Server 2008 R2 ";
+            }
 
             pGPI = (PGPI) GetProcAddress(
                        GetModuleHandle(TEXT("kernel32.dll")),

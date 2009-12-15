@@ -28,6 +28,7 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/LuaAIImplHandler.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
+#include "Option.h"
 
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"
@@ -70,8 +71,8 @@ CSkirmishAIHandler::~CSkirmishAIHandler()
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
 
 	for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
-		AddSkirmishAI(setup.GetSkirmishAIs()[a], a);
-		// TODO: complete the SkirmishAIData before adding
+		const SkirmishAIData& sai = setup.GetSkirmishAIs()[a];
+		AddSkirmishAI(sai, a);
 	}
 }
 
@@ -94,6 +95,11 @@ void CSkirmishAIHandler::LoadPreGame() {
 	}
 
 	gameInitialized = true;
+
+	// actualize the already added SkirmishAIData's
+	for (id_ai_t::iterator ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
+		CompleteSkirmishAI(ai->first);
+	}
 }
 
 bool CSkirmishAIHandler::IsActiveSkirmishAI(const size_t skirmishAIId) const {
@@ -163,6 +169,8 @@ void CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t 
 
 	id_ai[skirmishAIId] = data;
 	team_localAIsInCreation.erase(data.team);
+
+	CompleteSkirmishAI(skirmishAIId);
 }
 
 bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAIId) {
@@ -218,7 +226,9 @@ void CSkirmishAIHandler::SetLocalSkirmishAIDieing(const size_t skirmishAIId, con
 	assert(ai != id_ai.end()); // is valid id?
 	assert(CSkirmishAIHandler::IsLocalSkirmishAI(ai->second)); // is local AI?
 
-	eoh->SetSkirmishAIDieing(skirmishAIId);
+	if (!GetSkirmishAI(skirmishAIId)->isLuaAI) {
+		eoh->SetSkirmishAIDieing(skirmishAIId);
+	}
 	id_dieReason[skirmishAIId] = reason;
 
 	net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
@@ -280,4 +290,45 @@ const std::set<std::string>& CSkirmishAIHandler::GetLuaAIImplShortNames() const 
 bool CSkirmishAIHandler::IsLuaAI(const SkirmishAIData& aiData) const {
 	assert(gameInitialized);
 	return (luaAIShortNames.find(aiData.shortName) != luaAIShortNames.end());
+}
+
+void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAIId) {
+
+	if (gameInitialized) {
+		IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
+		//std::map<const SkirmishAIKey, CSkirmishAILibraryInfo*>
+		const IAILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
+		const SkirmishAIKey* aiKey = GetLocalSkirmishAILibraryKey(skirmishAIId);
+		if (aiKey != NULL) {
+			const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = aiInfos.find(*aiKey);
+			if (inf != aiInfos.end()) {
+				const CSkirmishAILibraryInfo* aiInfo = inf->second;
+				const std::vector<Option>& options = aiInfo->GetOptions();
+				id_ai_t::iterator ai = id_ai.find(skirmishAIId);
+				if (ai != id_ai.end()) {
+					SkirmishAIData& aiData = ai->second;
+					std::vector<Option>::const_iterator oi;
+					for (oi = options.begin(); oi != options.end(); ++oi) {
+						if ((oi->typeCode != opt_error) &&
+								(oi->typeCode != opt_section) &&
+								(aiData.options.find(oi->key) == aiData.options.end())) {
+							aiData.optionKeys.push_back(oi->key);
+							aiData.options[oi->key] = option_getDefString(*oi);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void CSkirmishAIHandler::CompleteSkirmishAI(const size_t skirmishAIId) {
+
+	if (gameInitialized) {
+		id_ai_t::iterator ai = id_ai.find(skirmishAIId);
+		if (ai != id_ai.end()) {
+			ai->second.isLuaAI = IsLuaAI(ai->second);
+			CompleteWithDefaultOptionValues(skirmishAIId);
+		}
+	}
 }

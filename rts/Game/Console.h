@@ -24,7 +24,7 @@ protected:
 	/**
 	@brief register a command
 
-	PushAction will be called if this command is recieved by the console
+	PushAction will be called if this command is received by the console
 	*/
 	void RegisterAction(const std::string& name);
 };

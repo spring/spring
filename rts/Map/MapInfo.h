@@ -7,12 +7,14 @@
 #include "float4.h"
 
 class LuaTable;
+class MapParser;
 
 class CMapInfo
 {
 public:
 
 	CMapInfo(const std::string& mapName);
+	void Load(); // fill in infos
 	~CMapInfo();
 
 	/* The settings are just public members because:
@@ -41,6 +43,8 @@ public:
 		};
 		A::A() {}
 	 */
+
+	std::string GetStringValue(const std::string& key) const; // can be used before Load()
 
 	/** Global settings, ie. from "MAP" section. */
 	struct map_t {
@@ -149,6 +153,7 @@ public:
 
 	/** Terrain type, there can be 256 of these:
 	    "MAP\TerrainType0" up to "MAP\TerrainType255" */
+	static const int NUM_TERRAIN_TYPES = 256;
 	struct TerrainType {
 		std::string name;
 		float hardness;
@@ -158,7 +163,7 @@ public:
 		float shipSpeed;   ///< "ShipMoveSpeed"
 		bool receiveTracks;
 	};
-	TerrainType terrainTypes[256];
+	TerrainType terrainTypes[NUM_TERRAIN_TYPES];
 
 private:
 	void ReadGlobal();
@@ -170,7 +175,7 @@ private:
 	void ReadSm3();
 	void ReadTerrainTypes();
 
-	LuaTable* mapRoot; // map       parser root table
+	MapParser* parser; // map       parser root table
 	LuaTable* resRoot; // resources parser root table
 };
 

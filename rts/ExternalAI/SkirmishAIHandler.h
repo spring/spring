@@ -191,6 +191,8 @@ public:
 private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
 	bool IsLuaAI(const SkirmishAIData& aiData) const;
+	void CompleteWithDefaultOptionValues(const size_t skirmishAIId);
+	void CompleteSkirmishAI(const size_t skirmishAIId);
 
 private:
 	/// Id -> AI instance

@@ -10,12 +10,19 @@ then
 	BUILD_DIR=${1}
 fi
 
+if [ $# -ge 2 ]
+then
+	EXEC_7Z=${2}
+else
+	EXEC_7Z=7z
+fi
+
 # Sanity check.
-if ! which 7z > /dev/null; then
+if ! which ${EXEC_7Z} > /dev/null; then
 	echo "Error: Could not find 7z."
 	exit 1
 fi
-CMD_7Z="7z u -tzip -r"
+CMD_7Z="${EXEC_7Z} u -tzip -r"
 
 ORIG_DIR=$(pwd)
 

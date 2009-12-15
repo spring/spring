@@ -286,7 +286,6 @@ static bool MultisampleVerify(void)
  */
 bool SpringApp::InitWindow(const char* title)
 {
-	ScopedOnceTimer timer("SpringApp::InitWindow()");
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
 	// the crash reporter should be catching the errors
@@ -1069,7 +1068,7 @@ void SpringApp::SaveWindowPosition()
 	return;
 #else
 	if (!fullscreen) {
-#if defined(_WIN32)
+  #if defined(_WIN32)
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 
@@ -1085,14 +1084,17 @@ void SpringApp::SaveWindowPosition()
 						windowState = 2;
 						break;
 					default:
+						configHandler->Set("WindowPosX", windowPosX);
+						configHandler->Set("WindowPosY", windowPosY);
 						windowState = 0;
 				}
 			}
 		}
 		configHandler->Set("WindowState", windowState);
-#endif
+  #else
 		configHandler->Set("WindowPosX", windowPosX);
 		configHandler->Set("WindowPosY", windowPosY);
+  #endif
 	}
 #endif
 }

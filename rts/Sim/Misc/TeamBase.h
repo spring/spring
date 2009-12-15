@@ -20,7 +20,7 @@ public:
 
 	/**
 	 * Player ID of the player in charge of this team.
-	 * The player either controlls this team directly,
+	 * The player either controls this team directly,
 	 * or an AI running on his computer does so.
 	 */
 	int leader;
@@ -36,6 +36,8 @@ public:
 
 	float startMetal;
 	float startEnergy;
+
+	static unsigned char teamDefaultColor[10][4];
 
 private:
 	customOpts customValues;

@@ -5,30 +5,32 @@
 struct AIClasses;
 
 class CThreatMap {
-	public:
-		CR_DECLARE(CThreatMap);
+public:
+	CR_DECLARE(CThreatMap);
 
-		CThreatMap(AIClasses* ai);
-		~CThreatMap();
+	CThreatMap(AIClasses* ai);
+	~CThreatMap() {}
 
-		void PostLoad();
+	void PostLoad();
+	void Update();
 
-		void Create();
-		void AddEnemyUnit(int unitid);
-		void RemoveEnemyUnit(int unitid);
-		void Clear();
+	float GetAverageThreat() const;
+	float ThreatAtThisPoint(const float3&) const;
 
-		float GetAverageThreat();
-		float ThreatAtThisPoint(float3 pos);
-		std::vector<float> ThreatArray;
-		int ThreatMapHeight;
-		int ThreatMapWidth;
-		int ThreatResolution;
+	std::vector<float> ThreatArray;
+	int ThreatMapHeight;
+	int ThreatMapWidth;
 
-	private:
-		float AverageThreat;
-		int TotalCells;
-		AIClasses* ai;
+private:
+	void AddEnemyUnit(int unitid);
+	// void RemoveEnemyUnit(int unitid);
+
+	float currAvgThreat;
+	float currMaxThreat;
+	float currSumThreat;
+	int TotalCells;
+
+	AIClasses* ai;
 };
 
 

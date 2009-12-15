@@ -63,6 +63,10 @@ public:
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
 
+	// Paralyze behaviour
+	/// paralyze unit depending on maxHealth? if not depending on current health, default true
+	bool paralyzeOnMaxHealth;
+
 	// Transportation behaviour
 	/// 0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.
 	int transportGround;

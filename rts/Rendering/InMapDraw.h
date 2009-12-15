@@ -2,6 +2,7 @@
 #define INMAPDRAW_H
 
 #include <string>
+#include <vector>
 #include <list>
 
 #include "GL/myGL.h"
@@ -30,8 +31,6 @@ public:
 	void ToggleAllVisible() { drawAll = !drawAll; }
 	void SetAllVisible(bool b) { drawAll = b; }
 
-	float3 GetMouseMapPos(void);
-
 	void LocalPoint(const float3& pos, const std::string& label, int playerID);
 	void LocalLine(const float3& pos1, const float3& pos2, int playerID);
 	void LocalErase(const float3& pos, int playerID);
@@ -40,7 +39,29 @@ public:
 	void SendLine(const float3& pos1, const float3& pos2, bool fromLua);
 	void SendErase(const float3& pos);
 
+	enum NetTypes {
+		NET_POINT,
+		NET_ERASE,
+		NET_LINE
+	};
+
 	bool keyPressed;
+	float lastLeftClickTime;
+	float lastLineTime;
+	float3 lastPos;
+	bool wantLabel;
+	float3 waitingPoint;
+
+	bool drawAll;
+
+	void PromptLabel(const float3& pos);
+	
+	void SetSpecMapDrawingAllowed(bool state);
+	void SetLuaMapDrawingAllowed(bool state);
+	bool GetSpecMapDrawingAllowed() const { return allowSpecMapDrawing; }
+	bool GetLuaMapDrawingAllowed() const { return allowLuaMapDrawing; }
+
+	float3 GetMouseMapPos(void);
 
 	struct MapPoint {
 		CR_DECLARE_STRUCT(MapPoint);
@@ -80,29 +101,11 @@ public:
 	int drawQuadsY;
 	size_t numQuads;
 
-	enum NetTypes {
-		NET_POINT,
-		NET_ERASE,
-		NET_LINE
-	};
-
+private:
 	GLuint texture;
-	float lastLeftClickTime;
-	float lastLineTime;
-	float3 lastPos;
-	bool wantLabel;
-	float3 waitingPoint;
 	int blippSound;
-	bool drawAll;
 
-	static void InMapDrawVisCallback(int x, int y, void* userData);
-
-	void PromptLabel(const float3& pos);
-	
-	void SetSpecMapDrawingAllowed(bool state);
-	void SetLuaMapDrawingAllowed(bool state);
-	bool GetSpecMapDrawingAllowed() const { return allowSpecMapDrawing; }
-	bool GetLuaMapDrawingAllowed() const { return allowLuaMapDrawing; }
+	std::vector<MapPoint*> visibleLabels;
 
 protected:
 	bool allowSpecMapDrawing; //! if true, spectators can send out MAPDRAW net-messages (synced)

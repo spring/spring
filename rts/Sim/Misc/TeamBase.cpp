@@ -5,6 +5,22 @@
 
 #include "Util.h"
 #include "LogOutput.h"
+
+
+unsigned char TeamBase::teamDefaultColor[10][4] =
+{
+	{ 90, 90, 255, 255}, //blue
+	{ 200, 0, 0, 255}, //red
+	{ 255, 255, 255, 255}, //white
+	{ 38, 155, 32, 255}, //green
+	{ 7, 31, 125, 255}, //blue
+	{ 150, 10, 180, 255}, //purple
+	{ 255, 255, 0, 255}, //yellow
+	{ 50, 50, 50, 255}, //black
+	{ 152, 200, 220, 255}, //ltblue
+	{ 171, 171, 131, 255} //tan
+};
+
 TeamBase::TeamBase() :
 leader(-1),
 handicap(1),

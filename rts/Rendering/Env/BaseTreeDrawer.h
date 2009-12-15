@@ -5,6 +5,9 @@
 #include "float3.h"
 
 #define TREE_SQUARE_SIZE 64
+static const float MID_TREE_DIST_FACTOR = 1.0f;
+static const float FADE_TREE_DIST_FACTOR = 1.5f;
+static const float FAR_TREE_DIST_FACTOR = 2.0f;
 
 class CBaseTreeDrawer
 {

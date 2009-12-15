@@ -28,7 +28,7 @@
 
 class CAICallback;
 struct SSkirmishAICallback;
-struct CSkirmishAI;
+class CSkirmishAI;
 struct Command;
 class float3;
 
@@ -91,6 +91,8 @@ public:
 	void Dieing();
 	/// @see SReleaseEvent in Interface/AISEvents.h
 	virtual void Release(int reason = 0 /* = unspecified */);
+
+	size_t GetSkirmishAIID() const { return skirmishAIId; }
 
 private:
 	size_t skirmishAIId;

@@ -78,6 +78,8 @@ struct Option {
 	std::vector<OptionListItem> list;
 };
 
+std::string option_getDefString(const Option& option);
+
 void parseOptions(
 		std::vector<Option>& options,
 		const std::string& fileName,

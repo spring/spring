@@ -64,16 +64,16 @@ vec4 CalculateColor();
 	{
 		vec3 normal = normalize(bump.xyz * vec3(2.0) - vec3(1.0));
 		float diffuseFactor = max(0.0, -dot(tsLightDir, normal));
-		
+
 		vec3 R = reflect(normal, tsLightDir);
-		float specularFactor = clamp(pow(dot(R, tsEyeDir), specularExponent), 0.0, 1.0);
-		
+		float specularFactor = clamp(pow(clamp(dot(R, tsEyeDir),0.0001,1.0), specularExponent), 0.0, 1.0);
+
 	#ifdef UseShadowMapping
 		vec4 shadow = shadow2D(shadowMap, shadowTexCoord.xyz, shadowBias);
 		diffuseFactor *= shadow.x;
 		specularFactor *= shadow.x;
 	#endif
-	
+
 		vec4 spec = gl_LightSource[0].specular * specularFactor * diffuse.a;
 		vec4 r = diffuse * (gl_LightSource[0].diffuse * diffuseFactor + gl_LightSource[0].ambient);
 		r += spec;
@@ -85,17 +85,17 @@ vec4 CalculateColor();
 /* Lighting calculations without bumpmapping */
 
 	vec4 Light(vec4 diffuse)
-	{	
+	{
 		float diffuseFactor = max(0.0, -dot(wsLightDir, normal));
 		vec3 R = reflect(normal, wsLightDir);
-		float specularFactor = clamp(pow(dot(R, wsEyeDir), specularExponent), 0.0, 1.0);
+		float specularFactor = clamp(pow(clamp(dot(R, wsEyeDir),0.0001,1.0), specularExponent), 0.0, 1.0);
 
 	#ifdef UseShadowMapping
 		vec4 shadow = shadow2D(shadowMap, shadowTexCoord.xyz, shadowBias);
 		diffuseFactor *= shadow.x;
 		specularFactor *= shadow.x;
 	#endif
-	
+
 		vec4 spec = gl_LightSource[0].specular * specularFactor * diffuse.a;
 		vec4 r = diffuse * (gl_LightSource[0].diffuse * diffuseFactor + gl_LightSource[0].ambient);
 		r += spec;

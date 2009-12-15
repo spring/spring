@@ -73,17 +73,18 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
+#include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
@@ -411,7 +412,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	PrintLoadMsg("Loading map informations");
 
-	mapInfo = new CMapInfo(mapname); // must go before readmap
+	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
@@ -441,6 +442,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	qf = new CQuadField();
 
 	featureHandler = new CFeatureHandler();
+	featureDrawer = new CFeatureDrawer();
 
 	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = new CLosHandler();
@@ -537,12 +539,11 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-#ifdef USE_GML
-	logOutput.Print("Spring %s MT (%d threads)",SpringVersion::GetFull().c_str(), gmlThreadCount);
-#else
-	logOutput.Print("Spring %s",SpringVersion::GetFull().c_str());
-#endif
+	logOutput.Print("Spring %s", SpringVersion::GetFull().c_str());
 	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
+#ifdef USE_GML
+	logOutput.Print("MT with %d threads.", gmlThreadCount);
+#endif
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
@@ -597,6 +598,7 @@ CGame::~CGame()
 	SafeDelete(resourceBar);
 
 	SafeDelete(featureHandler);
+	SafeDelete(featureDrawer);
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
 	SafeDelete(geometricObjects);
@@ -1348,13 +1350,7 @@ bool CGame::ActionPressed(const Action& action,
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
-				logOutput.Print("%d | %i | %s | %s | %s | %s",
-						ai->first,
-						ai->second.team,
-						(isLocal ? "yes" : "no "),
-						(ai->second.isLuaAI ? "yes" : "no "),
-						ai->second.name.c_str(),
-						lastPart.c_str());
+				LogObject() << ai->first << " | " <<  ai->second.team << " | " << (isLocal ? "yes" : "no ") << " | " << (ai->second.isLuaAI ? "yes" : "no ") << " | " << ai->second.name << " | " << lastPart;
 			}
 		} else {
 			logOutput.Print("<There are no active Skirmish AIs in this game>");
@@ -1494,9 +1490,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "showrezbars") {
 		if (action.extra.empty()) {
-			featureHandler->showRezBars = !featureHandler->showRezBars;
+			featureDrawer->showRezBars = !featureDrawer->showRezBars;
 		} else {
-			featureHandler->showRezBars = !!atoi(action.extra.c_str());
+			featureDrawer->showRezBars = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "pause") {
@@ -1821,37 +1817,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "screenshot") {
-		const char* ext = "png";
-		if (action.extra == "jpg") {
-			ext = "jpg";
-		}
-
-		if (filesystem.CreateDirectory("screenshots")) {
-			int x = gu->dualScreenMode? gu->viewSizeX << 1: gu->viewSizeX;
-
-			if (x % 4)
-				x += (4 - x % 4);
-
-			unsigned char* buf = new unsigned char[x * gu->viewSizeY * 4];
-			glReadPixels(0, 0, x, gu->viewSizeY, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-			CBitmap b(buf, x, gu->viewSizeY);
-			b.ReverseYAxis();
-
-			char t[50];
-			for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 9999; ++a) {
-				sprintf(t, "screenshots/screen%03i.%s", a, ext);
-				CFileHandler ifs(t);
-				if (!ifs.FileExists())
-				{
-					configHandler->Set("ScreenshotCounter", a < 9999 ? a+1 : 0);
-					break;
-				}
-			}
-			b.Save(t);
-			logOutput.Print("Saved: %s", t);
-			delete[] buf;
-		}
+		TakeScreenshot(action.extra);
 	}
 
 	else if (cmd == "grabinput") {
@@ -2387,18 +2353,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	else if (action.command == "nohelp") {
 		SetBoolArg(gs->noHelperAIs, action.extra);
 		selectedUnits.PossibleCommandChange(NULL);
-		if (gs->noHelperAIs) {
-			// remove any current GroupAIs
-			CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
-			CUnitSet::iterator it;
-			for(it = teamUnits.begin(); it != teamUnits.end(); ++it)
-			{
-				CUnit* unit = *it;
-				if (unit->group && (unit->group->id > 9)) {
-					unit->SetGroup(NULL);
-				}
-			}
-		}
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "nospecdraw") {
@@ -2729,13 +2683,14 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		teamHandler->Team(team)->AddEnergy(1000);
 	}
 	else if (action.command == "take" && (!playerHandler->Player(playernum)->spectator || gs->cheatEnabled)) {
-		int sendTeam = playerHandler->Player(playernum)->team;
+		const int sendTeam = playerHandler->Player(playernum)->team;
 		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 			if (teamHandler->AlliedTeams(a, sendTeam)) {
 				bool hasPlayer = false;
 				for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
 					if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
 						hasPlayer = true;
+						break;
 					}
 				}
 				if (!hasPlayer) {
@@ -2865,7 +2820,7 @@ bool CGame::DrawWorld()
 	eventHandler.DrawWorldPreUnit();
 
 	unitDrawer->Draw(false);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 
 	if (drawGround) {
 		gd->DrawTrees();
@@ -2880,19 +2835,17 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	bool clip = unitDrawer->advFade || !unitDrawer->advShading;
 	bool noAdvShading = shadowHandler->drawShadows;
-	if(clip) { // draw cloaked part below surface
-		glEnable(GL_CLIP_PLANE3);
-		unitDrawer->DrawCloakedUnits(true,noAdvShading);
-		featureHandler->DrawFadeFeatures(true,noAdvShading);
-		glDisable(GL_CLIP_PLANE3);
-	}
+	//! draw cloaked part below surface
+	glEnable(GL_CLIP_PLANE3);
+	unitDrawer->DrawCloakedUnits(true,noAdvShading);
+	featureDrawer->DrawFadeFeatures(true,noAdvShading);
+	glDisable(GL_CLIP_PLANE3);
 
 	if (drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
-			// Water rendering may overwrite cloaked objects, so save them
+			//! Water rendering may overwrite cloaked objects, so save them
 			SwapTransparentObjects();
 			water->UpdateWater(this);
 			water->Draw();
@@ -2901,12 +2854,10 @@ bool CGame::DrawWorld()
 	}
 
 	//! draw cloaked part above surface
-	if(clip)
-		glEnable(GL_CLIP_PLANE3);
+	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
-	featureHandler->DrawFadeFeatures(false,noAdvShading);
-	if(clip)
-		glDisable(GL_CLIP_PLANE3);
+	featureDrawer->DrawFadeFeatures(false,noAdvShading);
+	glDisable(GL_CLIP_PLANE3);
 
 	ph->Draw(false);
 
@@ -2989,7 +2940,7 @@ bool CGame::DrawWorld()
 
 void CGame::SwapTransparentObjects() {
 	unitDrawer->SwapCloakedUnits();
-	featureHandler->SwapFadeFeatures();
+	featureDrawer->SwapFadeFeatures();
 }
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
@@ -3093,7 +3044,7 @@ bool CGame::Draw() {
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
-	featureHandler->UpdateDraw();
+	featureDrawer->UpdateDraw();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
@@ -3571,7 +3522,8 @@ void CGame::ClientReadNet()
 
 		switch (packetCode) {
 			case NETMSG_QUIT: {
-				logOutput.Print("Server shutdown");
+				const std::string message = (char*)(&inbuf[3]);
+				logOutput.Print(message);
 				if (!gameOver)
 				{
 					GameEnd();
@@ -3586,6 +3538,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					playerHandler->PlayerLeft(player, inbuf[2]);
+					eventHandler.PlayerRemoved(player, (int) inbuf[2]);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3716,7 +3669,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SYSTEMMSG:{
-				string s=(char*)(&inbuf[3]);
+				string s=(char*)(&inbuf[4]);
 				logOutput.Print(s);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -4054,7 +4007,7 @@ void CGame::ClientReadNet()
 						const int numPlayersInTeam_g        = playerHandler->ActivePlayersInTeam(fromTeam_g).size();
 						const size_t numTotAIsInTeam_g      = skirmishAIHandler.GetSkirmishAIsInTeam(fromTeam_g).size();
 						const size_t numControllersInTeam_g = numPlayersInTeam_g + numTotAIsInTeam_g;
-						const bool isOwnTeam_g              = (fromTeam_g != fromTeam);
+						const bool isOwnTeam_g              = (fromTeam_g == fromTeam);
 
 						bool giveAwayOk = false;
 						if (isOwnTeam_g) {
@@ -4187,18 +4140,20 @@ void CGame::ClientReadNet()
 				SkirmishAIData* aiData           = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 				const ESkirmishAIStatus oldState = aiData->status;
 				const unsigned aiTeamId          = aiData->team;
+				const bool isLuaAI               = aiData->isLuaAI;
 				const unsigned isLocal           = (aiData->hostPlayer == gu->myPlayerNum);
 				const size_t numPlayersInAITeam  = playerHandler->ActivePlayersInTeam(aiTeamId).size();
 				const size_t numAIsInAITeam      = skirmishAIHandler.GetSkirmishAIsInTeam(aiTeamId).size();
 				CTeam* tai                       = teamHandler->Team(aiTeamId);
 
 				aiData->status = newState;
-				if (isLocal && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
+
+				if (isLocal && !isLuaAI && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
 					eoh->DestroySkirmishAI(skirmishAIId);
 				} else if (newState == SKIRMAISTATE_DEAD) {
 					if (oldState == SKIRMAISTATE_RELOADING) {
 						if (isLocal) {
-							logOutput.Print("Skirmish AI being reloaded for team %i ...", aiTeamId);
+							logOutput.Print("Skirmish AI \"%s\" being reloaded for team %i ...", aiData->name.c_str(), aiTeamId);
 							eoh->CreateSkirmishAI(skirmishAIId);
 						}
 					} else {
@@ -4214,7 +4169,7 @@ void CGame::ClientReadNet()
 						logOutput.Print("Skirmish AI %s (ID:%i), which controlled team %i is now dead", aiData->name.c_str(), skirmishAIId, aiTeamId);
 					}
 				} else if (newState == SKIRMAISTATE_ALIVE) {
-					logOutput.Print("Skirmish AI %s (ID:%i) took over controll of team %i", aiData->name.c_str(), skirmishAIId, aiTeamId);
+					logOutput.Print("Skirmish AI %s (ID:%i) took over control of team %i", aiData->name.c_str(), skirmishAIId, aiTeamId);
 				}
 				break;
 			}
@@ -4638,7 +4593,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
-			if (gu->spectating || !noSpectatorChat || !player->spectator) {
+			const bool specsOnly = noSpectatorChat && (player && player->spectator);
+			if (gu->spectating || !specsOnly) {
 				logOutput.Print(label + s);
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
