@@ -2305,9 +2305,6 @@ bool CGame::ActionReleased(const Action& action)
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-		if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
-			camHandler->ToggleState();
-		else
 			mouse->ToggleState();
 	}
 	else if (cmd == "gameinfoclose") {
