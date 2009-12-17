@@ -1,20 +1,15 @@
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include "SmoothHeightMesh.h"
 
 #include <vector>
 #include <cassert>
 
-
-using std::vector;
-
 #include "Rendering/GL/myGL.h"
-
 #include "float3.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "SmoothHeightMesh.h"
 #include "LogOutput.h"
 
+using std::vector;
 
 SmoothHeightMesh *smoothGround = 0;
 
