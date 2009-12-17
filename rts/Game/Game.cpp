@@ -152,6 +152,8 @@
 #include "UI/ProfileDrawer.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
+
 #include <boost/cstdint.hpp>
 
 #ifndef NO_AVI
@@ -416,6 +418,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
+
+	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE, SQUARE_SIZE*40);
+
 	moveinfo = new CMoveInfo();
 	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
@@ -607,6 +612,7 @@ CGame::~CGame()
 	SafeDelete(pathManager);
 	SafeDelete(groundDecals);
 	SafeDelete(ground);
+	SafeDelete(smoothGround);
 	SafeDelete(luaInputReceiver);
 	SafeDelete(inMapDrawer);
 	SafeDelete(net);
@@ -2136,6 +2142,13 @@ bool CGame::ActionPressed(const Action& action,
 			sky->wireframe = gd->wireframe;
 		}
 	}
+	else if (cmd == "airmesh") {
+		if (action.extra.empty()) {
+			smoothGround->drawEnabled = !smoothGround->drawEnabled;
+		} else {
+			smoothGround->drawEnabled = !!atoi(action.extra.c_str());
+		}
+	}
 	else if (cmd == "setgamma") {
 		float r, g, b;
 		const int count = sscanf(action.extra.c_str(), "%f %f %f", &r, &g, &b);
@@ -2801,6 +2814,8 @@ bool CGame::DrawWorld()
 
 	if (drawGround) {
 		gd->Draw();
+		if (smoothGround->drawEnabled)
+			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
 	}
 

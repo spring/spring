@@ -14,6 +14,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/UnitDef.h"
@@ -706,7 +707,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float elevator = 0.0f;
 	// do not check if the plane can be submerged here, since it'll cause
 	// ground collisions later on
-	float gHeight = ground->GetHeight(pos.x, pos.z);
+	float gHeight = smoothGround->GetHeight(pos.x, pos.z);
 
 	if (!((gs->frameNum + owner->id) & 3))
 		CheckForCollision();
