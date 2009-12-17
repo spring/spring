@@ -78,6 +78,7 @@ void CWordCompletion::Reset()
 	words["/viewtaflip "] = sl;
 	words["/vsync "] = sl;
 	words["/wiremap "] = sl;
+	words["/airmesh "] = sl;
 
 	// minimap sub-commands
 	WordProperties mm(false, false, true);

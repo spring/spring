@@ -127,7 +127,7 @@ inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, i
 	return -2;
 }
 
-float CGround::LineGroundCol(float3 from, float3 to)
+float CGround::LineGroundCol(float3 from, float3 to) const
 {
 	float savedLength = 0.0f;
 
@@ -253,7 +253,7 @@ float CGround::LineGroundCol(float3 from, float3 to)
 }
 
 
-float CGround::GetApproximateHeight(float x, float y)
+float CGround::GetApproximateHeight(float x, float y) const
 {
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
@@ -271,7 +271,7 @@ float CGround::GetApproximateHeight(float x, float y)
 }
 
 //rename to GetHeightAboveWater?
-float CGround::GetHeight(float x, float y)
+float CGround::GetHeight(float x, float y) const
 {
 	float r = GetHeight2(x, y);
 	return (r < 0.0f? 0.0f: r);
@@ -312,19 +312,19 @@ static inline float Interpolate(float x, float y, const float* heightmap)
 }
 
 
-float CGround::GetHeight2(float x, float y)
+float CGround::GetHeight2(float x, float y) const
 {
 	return Interpolate(x, y, readmap->GetHeightmap());
 }
 
 
-float CGround::GetOrigHeight(float x, float y)
+float CGround::GetOrigHeight(float x, float y) const
 {
 	return Interpolate(x, y, readmap->orgheightmap);
 }
 
 
-float3& CGround::GetNormal(float x, float y)
+float3& CGround::GetNormal(float x, float y) const
 {
 	if (x < 1.0f)
 		x = 1.0f;
@@ -340,7 +340,7 @@ float3& CGround::GetNormal(float x, float y)
 }
 
 
-float CGround::GetSlope(float x, float y)
+float CGround::GetSlope(float x, float y) const
 {
 	if (x < 1.0f)
 		x = 1.0f;
@@ -357,7 +357,7 @@ float CGround::GetSlope(float x, float y)
 }
 
 
-float3 CGround::GetSmoothNormal(float x, float y)
+float3 CGround::GetSmoothNormal(float x, float y) const
 {
 	int sx = (int) floor(x / SQUARE_SIZE);
 	int sy = (int) floor(y / SQUARE_SIZE);
@@ -411,7 +411,7 @@ float3 CGround::GetSmoothNormal(float x, float y)
 	return norm1;
 }
 
-float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic)
+float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic) const
 {
 	from.CheckInBounds();
 
