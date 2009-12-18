@@ -707,7 +707,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float elevator = 0.0f;
 	// do not check if the plane can be submerged here, since it'll cause
 	// ground collisions later on
-	float gHeight = smoothGround->GetHeight(pos.x, pos.z);
+	float gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z));
 
 	if (!((gs->frameNum + owner->id) & 3))
 		CheckForCollision();
