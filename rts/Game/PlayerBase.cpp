@@ -11,7 +11,8 @@ PlayerBase::PlayerBase() :
 	spectator(false),
 	isFromDemo(false),
 	readyToStart(false),
-	desynced(false)
+	desynced(false),
+	cpuUsage (0.0f)
 {
 }
 
