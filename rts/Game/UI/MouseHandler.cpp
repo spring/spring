@@ -446,7 +446,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 				if (buttons[button].lastRelease < (gu->gameTime - doubleClickTime)) {
 					CUnit* unitM = uh->units[unit->id];
-					if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit) != selectedUnits.selectedUnits.end()) {
+					if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find((CUnit*)unit) != selectedUnits.selectedUnits.end()) {
 						selectedUnits.RemoveUnit(unitM);
 					} else {
 						selectedUnits.AddUnit(unitM);

@@ -4,9 +4,8 @@
 #include <map>
 #include "MobileCAI.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitSet.h"
 #include "Sim/Objects/SolidObject.h"
-
-class CUnitSet;
 
 class CBuilderCAI :
 	public CMobileCAI
