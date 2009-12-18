@@ -31,7 +31,6 @@ public:
 	};
 	State myState;
 	
-	float cpuUsage;
 	int lastFrameResponse;
 
 	bool isLocal;

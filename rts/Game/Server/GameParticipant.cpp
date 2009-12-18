@@ -5,7 +5,6 @@
 
 GameParticipant::GameParticipant()
 : myState(UNCONNECTED)
-, cpuUsage (0.0f)
 , lastFrameResponse(0)
 , isLocal(false)
 {

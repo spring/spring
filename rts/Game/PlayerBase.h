@@ -25,6 +25,7 @@ public:
 	bool isFromDemo;
 	bool readyToStart;
 	bool desynced;
+	float cpuUsage;
 	
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {
