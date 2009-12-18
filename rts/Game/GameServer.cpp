@@ -155,7 +155,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 		AddAutohostInterface(settings->autohostip, settings->autohostport);
 	}
 	rng.Seed(newGameData->GetSetup().length());
-	Message(str( format(ServerStart) %settings->hostport));
+	Message(str( format(ServerStart) %settings->hostport), false);
 
 	lastTick = spring_gettime();
 
@@ -273,7 +273,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostip, const int 
 	{
 		hostif.reset(new AutohostInterface(autohostip, remotePort));
 		hostif->SendStart();
-		Message(str(format(ConnectAutohost) %remotePort));
+		Message(str(format(ConnectAutohost) %remotePort), false);
 	}
 }
 
@@ -399,7 +399,7 @@ void CGameServer::Message(const std::string& message, bool broadcast)
 	if (hostif) {
 		hostif->Message(message);
 	}
-#if defined DEDICATED || defined DEBUG
+#if defined DEDICATED
 	std::cout << message << std::endl;
 #endif
 }

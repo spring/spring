@@ -35,7 +35,6 @@
 #include "GameServer.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
-#include "GameVersion.h"
 #include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
@@ -544,11 +543,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-	logOutput.Print("Spring %s", SpringVersion::GetFull().c_str());
-	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
-#ifdef USE_GML
-	logOutput.Print("MT with %d threads.", gmlThreadCount);
-#endif
+	
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
