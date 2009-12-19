@@ -87,7 +87,7 @@ CBitmap::CBitmap(const CBitmap& old)
 }
 
 
-CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
+CBitmap::CBitmap(const unsigned char *data, int xsize, int ysize)
   : xsize(xsize), ysize(ysize), channels(4)
 {
 	type = BitmapTypeStandardRGBA;

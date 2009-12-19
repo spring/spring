@@ -32,6 +32,7 @@ public:
 
 	std::string GetCurrentItem() const;
 	bool SetCurrentItem(const std::string& item);
+	void CenterSelected();
 
 	// when attempting to cancel (by pressing escape, clicking outside a button)
 	// place is set to cancelPlace (if it's positive) and Select is called.

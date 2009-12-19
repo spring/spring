@@ -100,7 +100,6 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
 	s.SerializeObjectInstance(eoh, eoh->GetClass());
-	s.SerializeObjectInstance(&CBuilderCAI::reclaimers,CBuilderCAI::reclaimers.GetClass());
 //	s.Serialize()
 }
 

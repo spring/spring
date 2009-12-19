@@ -462,13 +462,11 @@ skirmishai_env.AppendUnique(CPPDEFINES = ['BUILDING_SKIRMISH_AI'])
 # Store shared ai-interface objects, so newer SCons versions do not choke with:
 # *** Two environments with different actions were specified for the same target
 aiinterfaceobjs_main = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_sources(env), '-aiinterface')
-aiinterfaceobjs_SharedLib = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_sources_SharedLib(env), '-aiinterface')
 aiinterfaceobjs_CUtils = create_shared_objects(aiinterface_env, filelist.get_shared_wrapper_source(ai_env, 'CUtils'), '-aiinterface')
 aiinterfaceobjs_CUtilsStreflopped = create_shared_objects(aiinterface_env, filelist.get_shared_wrapper_source(ai_env, 'CUtils'), '-aiinterface_withStreflop', ['USING_STREFLOP'])
 
 # Build
 aiinterfaces_exclude_list=['build']
-aiinterfaces_needSharedLib_list=['C']
 aiinterfaces_needStreflop_list=['Java']
 aiinterfaces_needCUtils_list=['C', 'Java']
 
@@ -489,7 +487,6 @@ javaAiInterfaceProj = None
 for baseName in aiinterfaces_toBuild:
 	aiInterfaceVersion = fetch_aiInterface_version(baseName)
 	print "Found AI Interface: " + baseName + " " + aiInterfaceVersion
-	needSharedLib = baseName in aiinterfaces_needSharedLib_list
 	needCUtils = baseName in aiinterfaces_needCUtils_list
 	needStreflop = baseName in aiinterfaces_needStreflop_list
 	myEnv = create_sub_interface(aiinterface_env, baseName)
@@ -497,9 +494,6 @@ for baseName in aiinterfaces_toBuild:
 	instList = []
 	objs = []
 	objs += aiinterfaceobjs_main
-
-	if needSharedLib:
-		objs += aiinterfaceobjs_SharedLib
 
 	if needCUtils:
 		myEnv.AppendUnique(CPPPATH = ['Wrappers'])

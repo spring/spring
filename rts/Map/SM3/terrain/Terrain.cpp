@@ -930,6 +930,11 @@ namespace terrain {
 		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize ());
 	}
 
+	void Terrain::ReloadShaders ()
+	{
+		texturing->ReloadShaders (quadtree, &config);
+	}
+
 	void FindRAWProps(int len, int& width, int& bytespp, ILoadCallback* cb)
 	{
 		// test for 16-bit

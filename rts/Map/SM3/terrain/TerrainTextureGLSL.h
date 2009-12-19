@@ -113,6 +113,7 @@ namespace terrain
 		void BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *renderSetup);
 		bool SetupShader (IShaderSetup *shadercfg, NodeSetupParams& params);
 
+		void BeginBuild();
 		void EndBuild();
 
 		int MaxTextureUnits ();

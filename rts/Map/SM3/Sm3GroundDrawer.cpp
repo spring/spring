@@ -25,10 +25,9 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 
 	tr->config.detailMod = configHandler->Get("SM3TerrainDetail", 200) / 100.0f;
 
-	if (shadowHandler->drawShadows) {
-		shadowrc = tr->AddRenderContext (&shadowCam,false);
-
-		groundShadowVP=LoadVertexProgram("groundshadow.vp");
+	if (shadowHandler->canUseShadows) {
+		shadowrc = tr->AddRenderContext(&shadowCam,false);
+		groundShadowVP = LoadVertexProgram("groundshadow.vp");
 	}
 	else  {
 		shadowrc = 0;

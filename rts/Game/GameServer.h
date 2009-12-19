@@ -9,6 +9,7 @@
 #include <deque>
 #include <set>
 #include <vector>
+#include <list>
 
 #include "GameData.h"
 #include "Sim/Misc/TeamBase.h"
@@ -152,11 +153,11 @@ private:
 	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
 	size_t ReserveNextAvailableSkirmishAIId();
-private:
+	
 	std::map<size_t, GameSkirmishAI> ais;
 	std::list<size_t> usedSkirmishAIIds;
 	void FreeSkirmishAIId(const size_t skirmishAIId);
-public:
+	
 	std::vector<GameTeam> teams;
 
 	float medianCpu;
@@ -177,6 +178,7 @@ public:
 	bool noHelperAIs;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
+	std::list< boost::shared_ptr<const netcode::RawPacket> > packetCache; //waaa, the overhead
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
@@ -184,7 +186,6 @@ public:
 #endif
 	int syncErrorFrame;
 	int syncWarningFrame;
-	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
 	void InternalSpeedChange(float newSpeed);
@@ -205,12 +206,6 @@ public:
 	UnsyncedRNG rng;
 	boost::thread* thread;
 	mutable boost::recursive_mutex gameServerMutex;
-
-	float averageSpeed;
-	float averageWantedSpeed;
-	int numSpeedSamples;
-	spring_time lastSpeedInfo;
-	float speedWarningThreshold;
 };
 
 extern CGameServer* gameServer;

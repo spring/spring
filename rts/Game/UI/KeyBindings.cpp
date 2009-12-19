@@ -48,7 +48,9 @@ defaultBindings[] = {
 	{ "Any+tab", "toggleoverview" },
 
 	{ "Any+j",         "mouse2" },
-	{ "Any+backspace", "mousestate" },
+	{ "backspace", "mousestate" },
+	{ "Shift+backspace", "togglecammode" },
+	{ "Ctrl+backspace", "togglecammode" },
 
 	{ "Any+i", "gameinfo" },
 

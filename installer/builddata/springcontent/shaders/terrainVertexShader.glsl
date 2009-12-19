@@ -69,9 +69,9 @@ void main (void)
 #endif
 
 #ifdef UseBumpMapping
-	tsLightDir = TangentSpaceMatrix * (-wsLightDir);
-	vec3 eyeDir = normalize(gl_Vertex.xyz - wsEyePos);
-	tsEyeDir = TangentSpaceMatrix * eyeDir;
+	tsLightDir = normalize(TangentSpaceMatrix * (-wsLightDir));
+	vec3 eyeDir = gl_Vertex.xyz - wsEyePos;
+	tsEyeDir = normalize(TangentSpaceMatrix * eyeDir);
 #else
 	normal = gl_NormalMatrix * gl_Normal;
 	wsEyeDir = normalize(gl_Vertex.xyz - wsEyePos);
