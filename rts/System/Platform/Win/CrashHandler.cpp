@@ -281,14 +281,14 @@ void HangDetector() {
 			unsigned cursimwdt = simwdt;
 			if(cursimwdt && (curwdt - cursimwdt) > hangTimeout * 1000) {
 				HangHandler();
-				simwdt = cursimwdt;
+				simwdt = curwdt;
 			}
 		}
 #endif
 		unsigned curdrawwdt = drawwdt;
 		if(curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * 1000) {
 			HangHandler();
-			drawwdt = curdrawwdt;
+			drawwdt = curwdt;
 		}
 		SDL_Delay(1000);
 	}
