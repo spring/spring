@@ -235,6 +235,7 @@ public:
 	float turnRadius;
 	float wantedHeight;
 	float verticalSpeed;
+	bool useSmoothMesh;
 	bool canCrash;
 	bool hoverAttack;
 	bool airStrafe;

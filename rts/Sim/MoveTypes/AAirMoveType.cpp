@@ -13,6 +13,7 @@ CR_REG_METADATA(AAirMoveType, (
 		CR_MEMBER(wantedHeight),
 
 		CR_MEMBER(collide),
+		CR_MEMBER(useSmoothMesh),
 		CR_MEMBER(lastColWarning),
 		CR_MEMBER(lastColWarningType),
 
@@ -29,6 +30,7 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	reservedLandingPos(-1,-1,-1),
 	wantedHeight(80),
 	collide(true),
+	useSmoothMesh(false),
 	lastColWarning(0),
 	lastColWarningType(0),
 	autoLand(true)

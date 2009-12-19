@@ -284,6 +284,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			mt->collide = ud->collide;
 			mt->altitudeRate = ud->verticalSpeed;
 			mt->bankingAllowed = ud->bankingAllowed;
+			mt->useSmoothMesh = ud->useSmoothMesh;
 
 			unit->moveType = mt;
 		}
@@ -312,6 +313,8 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			mt->maxAileron = ud->maxAileron;
 			mt->maxElevator = ud->maxElevator;
 			mt->maxRudder = ud->maxRudder;
+
+			mt->useSmoothMesh = ud->useSmoothMesh;
 
 			unit->moveType = mt;
 		}
