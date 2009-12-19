@@ -422,7 +422,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	LogObject() << "Using map " << gameSetup->mapName << "\n";
 
 	if (net && net->GetDemoRecorder()) {
-		net->GetDemoRecorder()->SetName(gameSetup->mapName);
+		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
 		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
 	LoadMap(gameSetup->mapName);
