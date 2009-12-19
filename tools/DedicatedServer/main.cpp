@@ -1,3 +1,12 @@
+#include <string>
+#include <iostream>
+#include <SDL.h>
+#include <stdlib.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "Game/ClientSetup.h"
@@ -9,14 +18,6 @@
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
-
-#include <string>
-#include <iostream>
-#include <SDL.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 int main(int argc, char *argv[])
 {

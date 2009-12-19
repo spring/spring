@@ -181,7 +181,9 @@
 //  bind          Any+pause  pause
 //
 //  bind              Any+j  mouse2
-//  bind      Any+backspace  mousestate
+//  bind          backspace  mousestate
+//  bind    Shift+backspace  togglecammode
+//  bind     Ctrl+backspace  togglecammode
 //
 //  bind              Any+i  gameinfo
 //

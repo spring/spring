@@ -97,25 +97,6 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 			teamStartingData[a].startPos.y = -500;
 		}
 	}
-
-	// Load start position from gameSetup script
-	if (startPosType == StartPos_ChooseBeforeGame) {
-		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			std::ostringstream buf;
-			buf << "GAME\\TEAM" << a << "\\";
-			string s(buf.str());
-			std::string xpos = file.SGetValueDef("", s + "StartPosX");
-			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
-			if (!xpos.empty())
-			{
-				teamStartingData[a].startPos.x = atoi(xpos.c_str());
-			}
-			if (!zpos.empty())
-			{
-				teamStartingData[a].startPos.z = atoi(zpos.c_str());
-			}
-		}
-	}
 }
 
 

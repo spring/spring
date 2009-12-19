@@ -10,7 +10,9 @@ PlayerBase::PlayerBase() :
 	rank(-1),
 	spectator(false),
 	isFromDemo(false),
-	readyToStart(false)
+	readyToStart(false),
+	desynced(false),
+	cpuUsage (0.0f)
 {
 }
 

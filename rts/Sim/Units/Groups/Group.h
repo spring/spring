@@ -4,10 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <string>
 #include <vector>
+
 #include "Sim/Units/CommandAI/Command.h"
-#include "Platform/SharedLib.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitSet.h"
 

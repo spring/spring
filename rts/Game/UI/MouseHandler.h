@@ -10,7 +10,7 @@
 
 #include "MouseCursor.h"
 
-#define NUM_BUTTONS 5
+static const int NUM_BUTTONS = 10;
 
 class CInputReceiver;
 class CCameraController;

@@ -64,6 +64,7 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "LogOutput.h"
+#include "Util.h"
 #include "NetProtocol.h"
 #include "Sound/Sound.h"
 #include "Sound/AudioChannel.h"
@@ -1685,23 +1686,28 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const string arguments = luaL_checkstring(L, 1);
 	const string script = luaL_checkstring(L, 2);
 
+	const std::string springFullName = (Platform::GetBinaryFile());
+	// LogObject() << "Spring: " << springFullName;
+	// LogObject() << "Args: " << arguments;
 	if (!script.empty())
 	{
-		std::ofstream scriptfile((FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str());
+		const std::string scriptFullName = Quote(FileSystemHandler::GetInstance().GetWriteDir()+"script.txt");
+		// LogObject() << "Script: " << scriptFullName;
+		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;
 		scriptfile.close();
 		//FIXME: ugly
 		if (arguments.empty())
-			EXECLP(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), (FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str(), NULL);
+			EXECLP(springFullName.c_str(), springFullName.c_str(), scriptFullName.c_str(), NULL);
 		else
-			EXECLP(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), arguments.c_str(), (FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str(), NULL);
+			EXECLP(springFullName.c_str(), springFullName.c_str(), arguments.c_str(), scriptFullName.c_str(), NULL);
 	}
 	else
 	{
 		if (arguments.empty())
-			EXECLP(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), NULL);
+			EXECLP(springFullName.c_str(), springFullName.c_str(), NULL);
 		else
-			EXECLP(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), arguments.c_str(), NULL);
+			EXECLP(springFullName.c_str(), springFullName.c_str(), arguments.c_str(), NULL);
 	}
 	LogObject() << "Error in Restart: " << strerror(errno);
 	lua_pushboolean(L, false);

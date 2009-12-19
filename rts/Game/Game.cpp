@@ -35,7 +35,6 @@
 #include "GameServer.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
-#include "GameVersion.h"
 #include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
@@ -73,13 +72,13 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
+#include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -152,6 +151,8 @@
 #include "UI/ProfileDrawer.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
+
 #include <boost/cstdint.hpp>
 
 #ifndef NO_AVI
@@ -416,6 +417,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
+
+	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE, SQUARE_SIZE*40);
+
 	moveinfo = new CMoveInfo();
 	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
@@ -539,11 +543,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-	logOutput.Print("Spring %s", SpringVersion::GetFull().c_str());
-	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
-#ifdef USE_GML
-	logOutput.Print("MT with %d threads.", gmlThreadCount);
-#endif
+	
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
@@ -607,6 +607,7 @@ CGame::~CGame()
 	SafeDelete(pathManager);
 	SafeDelete(groundDecals);
 	SafeDelete(ground);
+	SafeDelete(smoothGround);
 	SafeDelete(luaInputReceiver);
 	SafeDelete(inMapDrawer);
 	SafeDelete(net);
@@ -1817,37 +1818,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "screenshot") {
-		const char* ext = "png";
-		if (action.extra == "jpg") {
-			ext = "jpg";
-		}
-
-		if (filesystem.CreateDirectory("screenshots")) {
-			int x = gu->dualScreenMode? gu->viewSizeX << 1: gu->viewSizeX;
-
-			if (x % 4)
-				x += (4 - x % 4);
-
-			unsigned char* buf = new unsigned char[x * gu->viewSizeY * 4];
-			glReadPixels(0, 0, x, gu->viewSizeY, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-			CBitmap b(buf, x, gu->viewSizeY);
-			b.ReverseYAxis();
-
-			char t[50];
-			for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 9999; ++a) {
-				sprintf(t, "screenshots/screen%03i.%s", a, ext);
-				CFileHandler ifs(t);
-				if (!ifs.FileExists())
-				{
-					configHandler->Set("ScreenshotCounter", a < 9999 ? a+1 : 0);
-					break;
-				}
-			}
-			b.Save(t);
-			logOutput.Print("Saved: %s", t);
-			delete[] buf;
-		}
+		TakeScreenshot(action.extra);
 	}
 
 	else if (cmd == "grabinput") {
@@ -2166,6 +2137,13 @@ bool CGame::ActionPressed(const Action& action,
 			sky->wireframe = gd->wireframe;
 		}
 	}
+	else if (cmd == "airmesh") {
+		if (action.extra.empty()) {
+			smoothGround->drawEnabled = !smoothGround->drawEnabled;
+		} else {
+			smoothGround->drawEnabled = !!atoi(action.extra.c_str());
+		}
+	}
 	else if (cmd == "setgamma") {
 		float r, g, b;
 		const int count = sscanf(action.extra.c_str(), "%f %f %f", &r, &g, &b);
@@ -2335,9 +2313,6 @@ bool CGame::ActionReleased(const Action& action)
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-		if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
-			camHandler->ToggleState();
-		else
 			mouse->ToggleState();
 	}
 	else if (cmd == "gameinfoclose") {
@@ -2383,18 +2358,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	else if (action.command == "nohelp") {
 		SetBoolArg(gs->noHelperAIs, action.extra);
 		selectedUnits.PossibleCommandChange(NULL);
-		if (gs->noHelperAIs) {
-			// remove any current GroupAIs
-			CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
-			CUnitSet::iterator it;
-			for(it = teamUnits.begin(); it != teamUnits.end(); ++it)
-			{
-				CUnit* unit = *it;
-				if (unit->group && (unit->group->id > 9)) {
-					unit->SetGroup(NULL);
-				}
-			}
-		}
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "nospecdraw") {
@@ -2846,6 +2809,8 @@ bool CGame::DrawWorld()
 
 	if (drawGround) {
 		gd->Draw();
+		if (smoothGround->drawEnabled)
+			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
 	}
 
@@ -3580,6 +3545,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					playerHandler->PlayerLeft(player, inbuf[2]);
+					eventHandler.PlayerRemoved(player, (int) inbuf[2]);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
