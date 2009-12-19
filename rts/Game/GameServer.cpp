@@ -200,7 +200,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 
 #ifdef DEDICATED
 	demoRecorder.reset(new CDemoRecorder());
-	demoRecorder->SetName(setup->mapName);
+	demoRecorder->SetName(setup->mapName, setup->modName);
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
@@ -1114,6 +1114,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const unsigned team = inbuf[3];
 #ifndef DEDICATED
 						if (players[player].isLocal) // currently only host is allowed
+#else
+						if (!players[player].desynced)
 #endif
 						{
 							teams[team].active = false;

@@ -26,7 +26,7 @@ public:
 	map name / game time are visible. The demo file will be renamed by the
 	destructor. Otherwise the name "DATE_TIME_unnamed_VERSION.sdf" will be used.
 	*/
-	void SetName(const std::string& mapname);
+	void SetName(const std::string& mapname, const std::string& modname);
 	const std::string& GetName() { return wantedName; }
 
 	void SetGameID(const unsigned char* buf);
