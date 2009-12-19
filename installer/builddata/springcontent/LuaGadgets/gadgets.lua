@@ -66,7 +66,7 @@ gadgetHandler = {
   knownGadgets = {},
   knownCount = 0,
   knownChanged = true,
-  
+
   GG = {}, -- shared table for gadgets
 
   globals = {}, -- global vars/funcs
@@ -140,6 +140,7 @@ local callInLists = {
   'AllowUnitCreation',
   'AllowUnitTransfer',
   'AllowUnitBuildStep',
+  'AllowFeatureBuildStep',
   'AllowFeatureCreation',
   'AllowResourceLevel',
   'AllowResourceTransfer',
@@ -244,20 +245,20 @@ function gadgetHandler:Initialize()
   local gadgetFiles = VFS.DirList(GADGETS_DIR, "*.lua", VFSMODE)
 --  table.sort(gadgetFiles)
 
-  for k,gf in ipairs(gadgetFiles) do
-    Spring.Echo('gf1 = ' .. gf) -- FIXME
-  end
+--  for k,gf in ipairs(gadgetFiles) do
+--    Spring.Echo('gf1 = ' .. gf) -- FIXME
+--  end
 
   -- stuff the gadgets into unsortedGadgets
   for k,gf in ipairs(gadgetFiles) do
-    Spring.Echo('gf2 = ' .. gf) -- FIXME
+--    Spring.Echo('gf2 = ' .. gf) -- FIXME
     local gadget = self:LoadGadget(gf)
     if (gadget) then
       table.insert(unsortedGadgets, gadget)
     end
   end
 
-  -- sort the gadgets  
+  -- sort the gadgets
   table.sort(unsortedGadgets, function(g1, g2)
     local l1 = g1.ghInfo.layer
     local l2 = g2.ghInfo.layer
@@ -275,7 +276,7 @@ function gadgetHandler:Initialize()
     end
   end)
 
-  -- add the gadgets  
+  -- add the gadgets
   for _,g in ipairs(unsortedGadgets) do
     gadgetHandler:InsertGadget(g)
 
@@ -298,7 +299,7 @@ function gadgetHandler:LoadGadget(filename)
     Spring.Echo('Failed to load: ' .. basename .. '  (' .. err .. ')')
     return nil
   end
-  
+
   local gadget = gadgetHandler:NewGadget()
 
   setfenv(chunk, gadget)
@@ -1119,6 +1120,18 @@ function gadgetHandler:AllowUnitBuildStep(builderID, builderTeam,
   for _,g in ipairs(self.AllowUnitBuildStepList) do
     if (not g:AllowUnitBuildStep(builderID, builderTeam,
                                  unitID, unitDefID, part)) then
+      return false
+    end
+  end
+  return true
+end
+
+
+function gadgetHandler:AllowFeatureBuildStep(builderID, builderTeam,
+                                             featureID, featureDefID, part)
+  for _,g in ipairs(self.AllowFeatureBuildStepList) do
+    if (not g:AllowFeatureBuildStep(builderID, builderTeam,
+                                    featureID, featureDefID, part)) then
       return false
     end
   end
