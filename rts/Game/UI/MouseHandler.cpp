@@ -208,7 +208,6 @@ void CMouseHandler::MouseMove(int x, int y)
 	}
 }
 
-
 void CMouseHandler::MousePress(int x, int y, int button)
 {
 	if (button > NUM_BUTTONS)
@@ -220,16 +219,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	if (!game->gameOver)
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
-
-	if (button == 4) {
-		if (guihandler->buildSpacing > 0)
-			guihandler->buildSpacing--;
-		return;
-	}
-	if (button == 5) {
-		guihandler->buildSpacing++;
-		return;
-	}
 
  	buttons[button].chorded = buttons[SDL_BUTTON_LEFT].pressed ||
  	                          buttons[SDL_BUTTON_RIGHT].pressed;
