@@ -897,6 +897,8 @@ static inline float GetPenalty(const unsigned char& c, unsigned int strpos, unsi
 
 CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart) const
 {
+	//! returns two pieces 'L'eft and 'R'ight of the split word (returns L, *wi becomes R)
+
 	word w2;
 	w2.pos = w.pos;
 
@@ -1130,17 +1132,18 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 				if (splitAllWords || splitLastWord) {
 					//! last word W is larger than 0.5 * maxLineWidth, split it into
-					//! two pieces 'L' and 'R' (*wi becomes L, R becomes *(wi + 1))
+					//! get 'L'eft and 'R'ight parts of the split (wL becomes Left, *wi becomes R)
 
-					//! turns *wi into L
-					word wR = SplitWord(*wi, freeWordSpace);
+					//! turns *wi into R
+					word wL = SplitWord(*wi, freeWordSpace);
 
 					//! increase by the width of the L-part of *wi
-					currLine->width += wi->width;
+					currLine->width += wL.width;
 
-					//! insert the R-part right after L
+					//! insert the L-part right before R
+					wi = words.insert(wi, wL);
 					wi++;
-					wi = words.insert(wi, wR);
+
 				}
 
 				//! insert the forced linebreak (either after W or before R)
