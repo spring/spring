@@ -25,8 +25,4 @@ cd Springlobby
 unzip ../downloads/sl-installer-files.zip -d SLArchive
 
 mkdir SettingsDlls
-mv SLArchive/mingwm10.dll SettingsDlls
-mv SLArchive/wxbase28u_gcc_custom.dll SettingsDlls
-mv SLArchive/wxbase28u_net_gcc_custom.dll SettingsDlls
-mv SLArchive/wxmsw28u_adv_gcc_custom.dll SettingsDlls
-mv SLArchive/wxmsw28u_core_gcc_custom.dll SettingsDlls
+mv SLArchive/*.dll SettingsDlls
