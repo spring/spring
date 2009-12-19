@@ -2383,14 +2383,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\Units\UnitSet.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Units\UnitSet.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Sim\Units\UnitTracker.cpp"
 					>
 				</File>
@@ -3532,6 +3524,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\SideParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SmoothHeightMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SmoothHeightMesh.h"
 					>
 				</File>
 				<File
