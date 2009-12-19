@@ -129,6 +129,8 @@ class LuaSyncedRead {
 		static int GetUnitCollisionVolumeData(lua_State* L);
 		static int GetUnitPieceCollisionVolumeData(lua_State* L);
 
+		static int GetUnitMoveTypeData(lua_State* L);
+
 		static int GetUnitCommands(lua_State* L);
 		static int GetFactoryCounts(lua_State* L);
 		static int GetFactoryCommands(lua_State* L);
