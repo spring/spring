@@ -61,7 +61,6 @@ void CGroup::PostLoad()
 
 bool CGroup::AddUnit(CUnit *unit)
 {
-	GML_RECMUTEX_LOCK(sel); // AddUnit - anti deadlock
 	GML_RECMUTEX_LOCK(group); // AddUnit
 
 	eventHandler.GroupChanged(id);
@@ -72,7 +71,6 @@ bool CGroup::AddUnit(CUnit *unit)
 
 void CGroup::RemoveUnit(CUnit *unit)
 {
-	GML_RECMUTEX_LOCK(sel); // RemoveUnit - anti deadlock
 	GML_RECMUTEX_LOCK(group); // RemoveUnit
 
 	eventHandler.GroupChanged(id);
@@ -125,7 +123,6 @@ void CGroup::CommandFinished(int unitId, int commandTopicId)
 
 void CGroup::ClearUnits(void)
 {
-	GML_RECMUTEX_LOCK(sel); // ClearUnits - anti deadlock
 	GML_RECMUTEX_LOCK(group); // ClearUnits
 
 	eventHandler.GroupChanged(id);
