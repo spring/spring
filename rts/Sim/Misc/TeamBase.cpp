@@ -56,12 +56,12 @@ void TeamBase::SetValue(const std::string& key, const std::string& value)
 		}
 		color[3] = 255;
 	}
-	else if (key == "StartPosX")
+	else if (key == "startposx")
 	{
 		if (!value.empty())
 			startPos.x = atoi(value.c_str());
 	}
-	else if (key == "StartPosZ")
+	else if (key == "startposz")
 	{
 		if (!value.empty())
 			startPos.z = atoi(value.c_str());
