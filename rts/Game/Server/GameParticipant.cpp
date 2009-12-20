@@ -30,6 +30,8 @@ void GameParticipant::Kill(const std::string& reason)
 		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
 		link.reset();
 	}
+#ifdef SYNCCHECK
 	syncResponse.clear();
+#endif
 	myState = DISCONNECTED;
 }
