@@ -56,7 +56,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 	for(size_t a = 0; a < teamStartingData.size(); ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
-		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
+		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
 		teamStartingData[a].startPos = float3(pos.x, pos.y, pos.z);
 	}
@@ -64,8 +64,6 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 void CGameSetup::LoadStartPositions(bool withoutMap)
 {
-	TdfParser file(gameSetupText.c_str(), gameSetupText.length());
-
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
 		throw content_error("You need the map to use the map's startpositions");
 
@@ -88,7 +86,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 		}
 	}
 
-	if (!withoutMap)
+	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random)
 		LoadStartPositionsFromMap();
 
 	// Show that we havent selected start pos yet
