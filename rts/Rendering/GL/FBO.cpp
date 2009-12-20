@@ -118,6 +118,9 @@ void FBO::DownloadAttachment(const GLenum attachment)
 		}
 	}
 
+	if(bits < 32) /*FIXME*/
+		bits = 32;
+
 	switch (target) {
 		case GL_TEXTURE_3D:
 			tex->pixels = new unsigned char[tex->xsize*tex->ysize*tex->zsize*(bits/8)];
