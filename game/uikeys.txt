@@ -284,6 +284,7 @@
 //  bind            Shift+e  reclaim
 //  bind                  f  fight
 //  bind            Shift+f  fight
+//  bind              Alt+f  forcestart
 //  bind                  g  guard
 //  bind            Shift+g  guard
 //  bind                  k  cloak
