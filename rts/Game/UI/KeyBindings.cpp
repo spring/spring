@@ -36,7 +36,6 @@ defaultBindings[] = {
 	{        "esc", "quitmenu"    },
 	{ "Ctrl+Shift+esc", "quitforce"    },
 	{  "Any+pause", "pause"       },
-	{ "Ctrl+enter", "forcestart"  },
 
 	{ "Any+b", "debug"                },
 	{ "Any+o", "singlestep"           },
@@ -156,6 +155,7 @@ defaultBindings[] = {
 	{  "Alt+Shift+a", "areaattack"   },
 	{            "f", "fight"        },
 	{      "Shift+f", "fight"        },
+	{        "Alt+f", "forcestart"   },
 	{            "p", "patrol"       },
 	{      "Shift+p", "patrol"       },
 	{            "g", "guard"        },
