@@ -184,7 +184,8 @@ extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex &guimutex;
 extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
-extern boost::recursive_mutex groupmutex;
+extern boost::recursive_mutex &groupmutex;
+extern boost::recursive_mutex &grpselmutex;
 
 #if GML_MUTEX_PROFILER
 #	include "System/TimeProfiler.h"

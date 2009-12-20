@@ -37,7 +37,7 @@
 #include "gmlcls.h"
 #include "LogOutput.h"
 
-const char *gmlProfMutex = "piece";
+const char *gmlProfMutex = "lua";
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -241,7 +241,8 @@ boost::recursive_mutex grassmutex;
 boost::recursive_mutex &guimutex=selmutex;
 boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
-boost::recursive_mutex groupmutex;
+boost::recursive_mutex &groupmutex=selmutex;
+boost::recursive_mutex &grpselmutex=selmutex;
 #endif
 
 // GMLqueue implementation
