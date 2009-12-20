@@ -14,7 +14,7 @@
 
 struct FunctionArgs
 {
-	uint8_t* buf;
+	boost::uint8_t* buf;
 	std::string filename;
 	int x;
 	int y;
@@ -124,7 +124,7 @@ void TakeScreenshot(std::string type)
 			}
 		}
 
-		args.buf = new uint8_t[args.x * args.y * 4];
+		args.buf = new boost::uint8_t[args.x * args.y * 4];
 		glReadPixels(0, 0, args.x, args.y, GL_RGBA, GL_UNSIGNED_BYTE, args.buf);
 		screenshotThread.AddTask(args);
 	}
