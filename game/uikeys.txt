@@ -207,8 +207,8 @@
 //  bind        Any+numpad+  speedup
 //  bind        Any+numpad-  slowdown
 //
-//  bind              Any+b  debug
-//  bind              Any+o  singlestep
+//  bind              Alt+b  debug
+//  bind              Alt+o  singlestep
 //
 //  bind              Any+h  sharedialog
 //
