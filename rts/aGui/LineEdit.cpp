@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "LineEdit.h"
 
 #include "Rendering/GL/myGL.h"

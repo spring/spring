@@ -1,7 +1,6 @@
 #ifndef LINEEDIT_H
 #define LINEEDIT_H
 
-#include "StdAfx.h"
 #include <string>
 #include <boost/signal.hpp>
 

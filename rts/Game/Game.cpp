@@ -70,6 +70,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
@@ -3082,20 +3083,23 @@ bool CGame::Draw() {
 			gd->UpdateExtraTexture();
 		}
 
-		SCOPED_TIMER("Shadows/Reflect");
-		if (shadowHandler->drawShadows &&
-		    (gd->drawMode != CBaseGroundDrawer::drawLos)) {
-			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
-			SetDrawMode(shadowDraw);
-			shadowHandler->CreateShadows();
-			SetDrawMode(normalDraw);
+		{
+			SCOPED_TIMER("Shadows/Reflections");
+			if (shadowHandler->drawShadows &&
+				(gd->drawMode != CBaseGroundDrawer::drawLos)) {
+				// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+				SetDrawMode(shadowDraw);
+				shadowHandler->CreateShadows();
+				SetDrawMode(normalDraw);
+			}
+
+			cubeMapHandler->UpdateReflectionTexture();
+
+			if (FBO::IsSupported())
+				FBO::Unbind();
+
+			glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 		}
-		if (unitDrawer->advShading) {
-			unitDrawer->UpdateReflectTex();
-		}
-		if (FBO::IsSupported())
-			FBO::Unbind();
-		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	}
 
 	glDisable(GL_BLEND);

@@ -8,7 +8,6 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/FBO.h"
 
 class CVertexArray;
 struct S3DModel;
@@ -108,18 +107,10 @@ public:
 	float LODScaleReflection;
 	float LODScaleRefraction;
 
-	FBO unitReflectFBO;
-
 	unsigned int unitVP;             // vertex program
 	unsigned int unitFP;             // fragment program, shadows disabled
 	unsigned int unitShadowFP;       // fragment program, shadows enabled
 	unsigned int unitShadowGenVP;    // vertex program for shadow pass
-
-	GLuint boxtex;
-	unsigned int reflTexSize;
-
-	GLuint specularTex;
-	unsigned int specTexSize;
 
 	float unitDrawDist;
 	float unitDrawDistSqr;
@@ -127,8 +118,6 @@ public:
 	float iconLength;
 
 	GLuint whiteTex;
-
-	int updateFace;
 
 	float3 unitAmbientColor;
 	float3 unitSunColor;
@@ -160,8 +149,6 @@ public:
 	float3 camNorm; // used to draw far-textures
 
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
-	void UpdateReflectTex(void);
-	void CreateReflectionFace(unsigned int gltype, float3 camdir);
 	void QueS3ODraw(CWorldObject* object,int textureType);
 	void DrawQuedS3O(void);
 
