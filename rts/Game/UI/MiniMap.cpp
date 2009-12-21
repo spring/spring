@@ -271,7 +271,7 @@ void CMiniMap::SetMaximizedGeometry()
 	}
 	else {
 		const float mapRatio = (float)gs->mapx / (float)gs->mapy;
-		const float viewRatio = (float)gu->viewSizeX / (float)gu->viewSizeY;
+		const float viewRatio = gu->aspectRatio;
 		if (mapRatio > viewRatio) {
 			xpos = 0;
 			width = gu->viewSizeX;

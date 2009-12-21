@@ -250,7 +250,7 @@ void LoadStartPicture(const std::string& name)
 			// Make smaller but preserve aspect ratio.
 			// The resulting resolution will make it fill one axis of the
 			// screen, and be smaller or equal to the screen on the other axis.
-			const float screen_aspectRatio = (float) gu->viewSizeX / gu->viewSizeY;
+			const float screen_aspectRatio = gu->aspectRatio;
 			const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
 			if (ratioComp > 1.0f) {
 				newX = newX / ratioComp;
@@ -313,7 +313,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	float xDiv = 0.0f;
 	float yDiv = 0.0f;
 	if (startupTexture_keepAspectRatio) {
-		const float screen_aspectRatio = (float) gu->viewSizeX / gu->viewSizeY;
+		const float screen_aspectRatio = gu->aspectRatio;
 		const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
 		if ((ratioComp > 0.99f) && (ratioComp < 1.01f)) { // ~= 1
 			// show Load-Screen full screen
