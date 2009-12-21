@@ -164,6 +164,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+#undef CreateDirectory
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
