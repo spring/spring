@@ -1,11 +1,9 @@
 #ifndef __FPS_CONTROLLER_H__
 #define __FPS_CONTROLLER_H__
 
-#include <boost/signals/connection.hpp>
 
 #include "CameraController.h"
 
-union SDL_Event;
 
 class CFPSController : public CCameraController
 {
@@ -24,8 +22,6 @@ public:
 	float3 GetPos();
 	float3 GetDir();
 
-	virtual void Update();
-
 	void SetPos(const float3& newPos);
 	void SetDir(const float3& newDir);
 	float3 SwitchFrom() const;
@@ -34,16 +30,9 @@ public:
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
 
-	void JoyAxis(int axis, int state);
-
 private:
-	boost::signals::scoped_connection inputCon;
-	bool HandleEvent(const SDL_Event& ev);
 	float oldHeight;
 	float3 dir;
-	int moveSpeed;
-	int roll;
-	int pitch;
 };
 
 
