@@ -79,6 +79,24 @@ else (WIN32)
 	set(ABS_DIR_REGEX_T "^/")
 endif(WIN32)
 
+# Sets result_var to TRUE if the content of dir_var is an absolute path
+# on the target system; to FALSE otherwise.
+function    (IsAbsoluteDir dir_var result_var)
+	if    (${dir_var} MATCHES ${ABS_DIR_REGEX_T})
+		set(${result_var} TRUE)
+	else  (${dir_var} MATCHES ${ABS_DIR_REGEX_T})
+		set(${result_var} FALSE)
+	endif (${dir_var} MATCHES ${ABS_DIR_REGEX_T})
+endfunction (IsAbsoluteDir)
+
+# Prepends the install prefix if the given var does not contain an absolute path yet
+function    (MakeAbsoluteInstallDir dir_var)
+	IsAbsoluteDir(${dir_var} _IS_ABSOLUTE)
+	if    (NOT ${_IS_ABSOLUTE})
+		set(${dir_var} "${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${${dir_var}}")
+	endif (NOT ${_IS_ABSOLUTE})
+endfunction (MakeAbsoluteInstallDir)
+
 set(BUILTIN_DATADIRS "")
 if    (NOT MINGW)
 	set (SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
@@ -86,18 +104,24 @@ if    (NOT MINGW)
 	if    (SPRING_DATADIR)
 		set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR}${PATH_DELIM_T}")
 	endif (SPRING_DATADIR)
-	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}/${DATADIR}")
+	set (DD_ABS "${DATADIR}")
+	MakeAbsoluteInstallDir(DD_ABS)
+	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${DD_ABS}")
 	set(BUILTIN_DATADIRS "${SPRING_DATADIR_INTERNAL}")
 endif (NOT MINGW)
 if    (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
 	# If the AI library dir is not the same as the normal data dir,
 	# add it to the internal list of data dirs
-	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${AI_LIBS_DIR}")
+	set (ALD_ABS "${AI_LIBS_DIR}")
+	MakeAbsoluteInstallDir(ALD_ABS)
+	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${ALD_ABS}")
 endif (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
 if    (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
 	# If the AI data dir is not the same as the normal data dir
 	# nor the AI library dir, add it to the internal list of data dirs
-	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${AI_LIBS_DIR}")
+	set (ADD_ABS "${AI_DATA_DIR}")
+	MakeAbsoluteInstallDir(ADD_ABS)
+	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${ADD_ABS}")
 endif (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
 add_definitions(-DSPRING_DATADIR="${BUILTIN_DATADIRS}")
 
