@@ -11,6 +11,7 @@
 #include "GlobalUnsynced.h"
 #include "LogOutput.h"
 
+#undef CreateDirectory
 
 struct FunctionArgs
 {
