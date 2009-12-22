@@ -1258,11 +1258,9 @@ const FeatureDef* CAICallback::GetFeatureDef(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature* f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			featureDef = f->def;
@@ -1282,11 +1280,9 @@ float CAICallback::GetFeatureHealth(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature *f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			health = f->health;
@@ -1302,11 +1298,9 @@ float CAICallback::GetFeatureReclaimLeft(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature *f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			return f->reclaimLeft;
@@ -1322,11 +1316,9 @@ float3 CAICallback::GetFeaturePos(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature *f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			pos = f->pos;

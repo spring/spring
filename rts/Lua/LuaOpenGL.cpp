@@ -1844,16 +1844,15 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
 	const int featureID = lua_toint(L, index);
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator it = fset.find(featureID);
+	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (it == fset.end())
+	if (!feature)
 		return NULL;
 
-	if (!IsFeatureVisible(*it)) {
+	if (!IsFeatureVisible(feature)) {
 		return NULL;
 	}
-	return *it;
+	return feature;
 }
 
 

@@ -15,6 +15,7 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
+#include "creg/STL_Set.h"
 
 
 using std::list;
@@ -39,6 +40,7 @@ CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(freeIDs),
 	CR_MEMBER(toBeFreedIDs),
 	CR_MEMBER(activeFeatures),
+	CR_MEMBER(features),
 
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(updateFeatures),
@@ -85,6 +87,7 @@ CFeatureHandler::~CFeatureHandler()
 	}
 
 	activeFeatures.clear();
+	features.clear();
 
 	while (!featureDefs.empty()) {
 		map<string, const FeatureDef*>::iterator fi = featureDefs.begin();
@@ -322,6 +325,9 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 		freeIDs.pop_front();
 	}
 	activeFeatures.insert(feature);
+	if (feature->id >= features.size())
+		features.resize(feature->id+1, 0);
+	features[feature->id] = feature;
 	SetFeatureUpdateable(feature);
 
 	// FIXME -- sim shouldn't depend on rendering
@@ -340,6 +346,13 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 	eventHandler.FeatureDestroyed(feature);
 }
 
+CFeature* CFeatureHandler::GetFeature(int id)
+{
+	if (id >= 0 && id < features.size())
+		return features[id];
+	else
+		return 0;
+}
 
 CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const string& name,
 	float rot, int facing, int iter, int team, int allyteam, bool emitSmoke, string fromUnit,
@@ -397,12 +410,12 @@ void CFeatureHandler::Update()
 		GML_RECMUTEX_LOCK(quad); // Update
 
 		while (!toBeRemoved.empty()) {
-			CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
+			CFeature* feature = GetFeature(toBeRemoved.back());
 			toBeRemoved.pop_back();
-			if (it != activeFeatures.end()) {
-				CFeature* feature = *it;
+			if (feature) {
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
+				features[feature->id] = 0;
 
 				// FIXME -- sim shouldn't depend on rendering
 				featureDrawer->FeatureDestroyed(feature);
