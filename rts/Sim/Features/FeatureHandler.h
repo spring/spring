@@ -53,7 +53,6 @@ private:
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 
-	int nextFreeID;
 	std::list<int> freeIDs;
 	std::list<int> toBeFreedIDs;
 	CFeatureSet activeFeatures;

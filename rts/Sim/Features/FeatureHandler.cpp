@@ -36,7 +36,6 @@ CR_REG_METADATA(CFeatureHandler, (
 //	CR_MEMBER(featureDefs),
 //	CR_MEMBER(featureDefsVector),
 
-	CR_MEMBER(nextFreeID),
 	CR_MEMBER(freeIDs),
 	CR_MEMBER(toBeFreedIDs),
 	CR_MEMBER(activeFeatures),
@@ -50,7 +49,7 @@ CR_REG_METADATA(CFeatureHandler, (
 
 /******************************************************************************/
 
-CFeatureHandler::CFeatureHandler() : nextFreeID(0)
+CFeatureHandler::CFeatureHandler()
 {
 	PrintLoadMsg("Loading feature definitions");
 
@@ -316,17 +315,21 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-	// FIXME -- randomize me, pretty please
-	//          (could be done in blocks, if (empty) { add 5000 freeIDs } ?)
-	if (freeIDs.empty()) {
-		feature->id = nextFreeID++;
-	} else {
-		feature->id = freeIDs.front();
-		freeIDs.pop_front();
+	if (freeIDs.empty())
+	{ // alloc n new ids and randomly insert to freeIDs
+		const unsigned n = 100;
+		std::vector<int> newIds(n);
+		for (unsigned i = 0; i < n; ++i)
+			newIds[i] = i + features.size();
+		SyncedRNG rng;
+		std::random_shuffle(newIds.begin(), newIds.end(), rng); // synced
+		features.resize(features.size()+n, 0);
+		std::copy(newIds.begin(), newIds.end(), std::back_inserter(freeIDs));
 	}
+	
+	feature->id = freeIDs.front();
+	freeIDs.pop_front();
 	activeFeatures.insert(feature);
-	if (feature->id >= features.size())
-		features.resize(feature->id+1, 0);
 	features[feature->id] = feature;
 	SetFeatureUpdateable(feature);
 
