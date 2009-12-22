@@ -244,10 +244,9 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 	}
 	else {
 		// features don't move, but maybe the unit was transported?
-		const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-		CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
-		if (it != fset.end()) {
-			obj = *it;
+		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+		if (feature) {
+			obj = feature;
 		}
 	}
 	if (obj == NULL) {
@@ -805,10 +804,8 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		}
 		const unsigned int id = signedId;
 		if (id >= uh->MaxUnits()) { // reclaim feature
-			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-			CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
-			if (it != fset.end()) {
-				CFeature* feature = *it;
+		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+			if (feature) {
 				if(((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingResurrected(feature->id, owner)) ||
 					!ReclaimObject(feature)) {
 					StopMove();
@@ -904,9 +901,8 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 	if (c.params.size()==1) {
 		unsigned int id = (unsigned int) c.params[0];
 		if (id >= uh->MaxUnits()) { // resurrect feature
-			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - uh->MaxUnits());
-			if (it != featureHandler->GetActiveFeatures().end() && (*it)->createdFromUnit != "") {
-				CFeature* feature = *it;
+		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+			if (feature && feature->createdFromUnit != "") {
 				if(((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
 					!ResurrectObject(feature)) {
 					StopMove();
@@ -1716,10 +1712,9 @@ void CBuilderCAI::DrawCommands(void)
 
 						GML_RECMUTEX_LOCK(feat); // DrawCommands
 
-						const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-						CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
-						if (it != fset.end()) {
-							const float3 endPos = (*it)->midPos;
+						CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+						if (feature) {
+							const float3 endPos = feature->midPos;
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					} else {
