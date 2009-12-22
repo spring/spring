@@ -2083,6 +2083,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Env\CubeMapHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\CubeMapHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Env\DynWater.cpp"
 					>
 				</File>
@@ -3592,14 +3600,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Features\FeatureHandler.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Features\FeatureSet.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Features\FeatureSet.h"
 					>
 				</File>
 			</Filter>
