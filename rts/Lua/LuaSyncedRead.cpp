@@ -3335,9 +3335,16 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 				break;
 		}
 
+		HSTR_PUSH_NUMBER(L, "goalDistance", gunshipmt->goalDistance);
+
 		HSTR_PUSH_BOOL(L, "bankingAllowed", gunshipmt->bankingAllowed);
 		HSTR_PUSH_NUMBER(L, "currentBank", gunshipmt->currentBank);
 		HSTR_PUSH_NUMBER(L, "currentPitch", gunshipmt->currentPitch);
+
+		HSTR_PUSH_NUMBER(L, "turnRate", gunshipmt->turnRate);
+		HSTR_PUSH_NUMBER(L, "accRate", gunshipmt->accRate);
+		HSTR_PUSH_NUMBER(L, "decRate", gunshipmt->decRate);
+		HSTR_PUSH_NUMBER(L, "altitudeRate", gunshipmt->altitudeRate);
 
 		HSTR_PUSH_NUMBER(L, "breakDistance", gunshipmt->breakDistance);
 		HSTR_PUSH_BOOL(L, "dontLand", gunshipmt->dontLand);
