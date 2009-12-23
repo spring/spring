@@ -35,6 +35,7 @@ using namespace std;
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFS.h"
 #include "Lua/LuaIO.h"
+#include "Lua/LuaZip.h"
 #include "Game/Camera.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
@@ -178,6 +179,8 @@ CLuaUI::CLuaUI()
 	// load the spring libraries
 	if (!LoadCFunctions(L)                                                 ||
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
