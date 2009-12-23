@@ -1000,6 +1000,11 @@ void CTAAirMoveType::SetWantedAltitude(float altitude)
 	}
 }
 
+void CTAAirMoveType::SetDefaultAltitude(float altitude)
+{
+	wantedHeight = orgWantedHeight = altitude;
+}
+
 void CTAAirMoveType::CheckForCollision(void)
 {
 	if (!collide) return;

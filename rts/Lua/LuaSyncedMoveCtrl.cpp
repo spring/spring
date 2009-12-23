@@ -84,6 +84,7 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetAirMoveTypeData);
 	REGISTER_LUA_CFUNC(SetGroundMoveTypeData);
+	REGISTER_LUA_CFUNC(SetGunshipMoveTypeData);
 
 	lua_rawset(L, -3);
 
@@ -759,12 +760,12 @@ static inline void SetSingleGroundMoveTypeValue(lua_State *L, int keyidx, int va
 	if (lua_isnumber(L, validx)) {
 		const float value = float(lua_tonumber(L, validx));
 		if (!SetGroundMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to AirMoveType";
+			LogObject() << "can't assign key \"" << key << "\" to GroundMoveType";
 		}
 	} else if (lua_isboolean(L, validx)) {
 		bool value = lua_toboolean(L, validx);
 		if (!SetGroundMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to AirMoveType";
+			LogObject() << "can't assign key \"" << key << "\" to GroundMoveType";
 		}
 	}
 }
@@ -794,6 +795,99 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 	return 0;
 }
 
+
+
+/******************************************************************************/
+/* CTAAirMoveType handling */
+
+
+
+static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, float value)
+{
+	if (SetGenericMoveTypeValue(mt, key, value))
+		return true;
+
+	if (key == "wantedHeight") {
+		mt->SetDefaultAltitude(value); return true;
+	} else if (key == "turnRate") {
+		mt->turnRate = value; return true;
+	} else if (key == "accRate") {
+		mt->accRate = value; return true;
+	} else if (key == "decRate") {
+		mt->decRate = value; return true;
+	} else if (key == "altitudeRate") {
+		mt->altitudeRate = value; return true;
+	} else if (key == "currentBank") {
+		mt->currentBank = value; return true;
+	} else if (key == "currentPitch") {
+		mt->currentPitch = value; return true;
+	} else if (key == "breakDistance") {
+		mt->breakDistance = value; return true;
+	} else if (key == "maxDrift") {
+		mt->maxDrift = value; return true;
+	}
+
+	return false;
+}
+
+static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, bool value)
+{
+	if (SetGenericMoveTypeValue(mt, key, value))
+		return true;
+
+	if (key == "collide") {
+		mt->collide = value; return true;
+	} else if (key == "useSmoothMesh") {
+		mt->useSmoothMesh = value; return true;
+	} else if (key == "bankingAllowed") {
+		mt->bankingAllowed = value; return true;
+	} else if (key == "dontLand") {
+		mt->dontLand = value; return true;
+	}
+
+	return false;
+}
+
+static inline void SetSingleTAAirMoveTypeValue(lua_State *L, int keyidx, int validx, CTAAirMoveType *moveType)
+{
+	const string key = lua_tostring(L, keyidx);
+	if (lua_isnumber(L, validx)) {
+		const float value = float(lua_tonumber(L, validx));
+		if (!SetTAAirMoveTypeValue(moveType, key, value)) {
+			LogObject() << "can't assign key \"" << key << "\" to GunshipMoveType";
+		}
+	} else if (lua_isboolean(L, validx)) {
+		bool value = lua_toboolean(L, validx);
+		if (!SetTAAirMoveTypeValue(moveType, key, value)) {
+			LogObject() << "can't assign key \"" << key << "\" to GunshipMoveType";
+		}
+	}
+}
+
+int LuaSyncedMoveCtrl::SetGunshipMoveTypeData(lua_State *L)
+{
+	CTAAirMoveType* moveType = ParseMoveType<CTAAirMoveType>(L, __FUNCTION__, 1);
+	if (moveType == NULL) {
+		luaL_error(L, "Unit does not have a compatible MoveType");
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+
+	if (args == 3 && lua_isstring(L, 2)) {
+		// a single value
+		SetSingleTAAirMoveTypeValue(L, 2, 3, moveType);
+	} else if (args == 2 && lua_istable(L, 2)) {
+		// a table of values
+		const int table = 2;
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -2)) {
+				SetSingleTAAirMoveTypeValue(L, -2, -1, moveType);
+			}
+		}
+	}
+
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/
