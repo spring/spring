@@ -32,6 +32,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
 	#set(myTarget     "${myName}-AIWrapper")
+	set(myParentTarget     "${Java_AIINTERFACE_TARGET}")
 	set(mySourceDirRel     "src/main/java")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
@@ -40,7 +41,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	#SetGlobal(${myName}_AIWRAPPER_TARGET      ${myTarget})
 
 
-	# Build static library
+	# Build library
 	set(myPkgFirstPart               "com")
 	set(myParentPkg                  "${myPkgFirstPart}/springrts/ai")
 	set(myPkg                        "${myParentPkg}/oo")
@@ -317,15 +318,16 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 
 
-	add_custom_target(tutitu ALL
-		
-		)
-	add_dependencies(tutitu Java-AIInterface)
+	add_custom_target(JavaOO ALL)
+	add_dependencies(JavaOO ${myParentTarget})
 
 	# generate sources: callback
-	add_custom_command(TARGET tutitu
+	add_custom_command(
+		#TARGET ${myParentTarget}
+		TARGET JavaOO
 		#OUTPUT ${myGeneratedCallbackSources}
 		DEPENDS "${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
+		#	"${myParentTarget}"
 		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myBinDir}/wrappCallback.awk"
@@ -335,7 +337,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	# generate sources: events
-	add_custom_command(TARGET tutitu
+	add_custom_command(
+		#TARGET ${myParentTarget}
+		TARGET JavaOO
 		#OUTPUT ${myGeneratedEventSources}
 		DEPENDS "${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AI.java"
 		COMMAND "${AWK_BIN}"
@@ -351,7 +355,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 	# --------------
 
 	# compile
-	add_custom_command(TARGET tutitu
+	add_custom_command(
+		#TARGET ${myParentTarget}
+		TARGET JavaOO
 		#OUTPUT ${myClasses}
 		DEPENDS
 			${mySources}
@@ -367,7 +373,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	# pack library
-	add_custom_command(TARGET tutitu
+	add_custom_command(
+		#TARGET ${myParentTarget}
+		TARGET JavaOO
 		#OUTPUT "${myBuildDir}/${myBinJarFile}"
 		#DEPENDS "${myClasses}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
@@ -377,7 +385,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 		COMMENT "  Java OO AI Wrapper: Creating library ${myBinJarFile} ..." VERBATIM)
 
 	# pack sources
-	add_custom_command(TARGET tutitu
+	add_custom_command(
+		#TARGET ${myParentTarget}
+		TARGET JavaOO
 		#OUTPUT "${myBuildDir}/${mySrcJarFile}"
 		DEPENDS
 			${myJavaSources}
