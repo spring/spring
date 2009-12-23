@@ -98,6 +98,7 @@ public:
 	void ExecuteStop();
 	void ForceHeading(short h);
 	void SetWantedAltitude(float altitude);
+	void SetDefaultAltitude(float altitude);
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
 
