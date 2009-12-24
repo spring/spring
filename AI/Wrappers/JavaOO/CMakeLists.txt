@@ -59,9 +59,11 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(jAiIntJavaGeneratedSourceDir "${CMAKE_BINARY_DIR}/AI/Interfaces/Java/src-generated/main/java")
 	set(myClassPath                  "${myJLibs}:${jAiIntJavaSourceDir}:${jAiIntJavaGeneratedSourceDir}")
 
-	SetGlobal(${myName}_AIWRAPPER_JAR_BIN "${myBuildDir}/${myBinJarFile}")
-	SetGlobal(${myName}_AIWRAPPER_JAR_SRC "${myBuildDir}/${mySrcJarFile}")
+	SetGlobal(${myName}_AIWRAPPER_JAR_BIN       "${myBuildDir}/${myBinJarFile}")
+	SetGlobal(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
 	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}:${${myName}_AIWRAPPER_JAR_BIN}")
+	SetGlobal(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
+	SetGlobal(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Locate the manifest file
 	FindManifestFile("${myDir}" myManifestFile)
