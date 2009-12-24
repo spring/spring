@@ -113,7 +113,7 @@ void PrintSize(const char *txt, int size)
 
 void CLoadSaveHandler::SaveGame(const std::string& file)
 {
-	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
+	RandomStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
@@ -186,7 +186,7 @@ void CLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 /// this should be called on frame 0 when the game has started
 void CLoadSaveHandler::LoadGame()
 {
-	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
+	RandomStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Loading game");
 	creg::CInputStreamSerializer inputStream;
 	void *pGSC = 0;
