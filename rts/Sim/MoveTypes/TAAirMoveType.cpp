@@ -255,6 +255,11 @@ void CTAAirMoveType::ExecuteStop()
 		case AIRCRAFT_CRASHING:
 			break;
 		case AIRCRAFT_HOVERING:
+			if (!dontLand && autoLand) {
+				// land immediately
+				SetState(AIRCRAFT_LANDING);
+				waitCounter = 30;
+			}
 			break;
 	}
 }
