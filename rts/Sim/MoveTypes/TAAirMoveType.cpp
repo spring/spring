@@ -12,6 +12,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -363,9 +364,12 @@ void CTAAirMoveType::UpdateFlying()
 		}
 	}
 
+	float gHeight = useSmoothMesh
+			? std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z))
+			: ground->GetHeight(pos.x, pos.z);
 	// are we there yet?
 	bool closeToGoal = (dir.SqLength2D() < maxDrift * maxDrift)
-			&& (fabs(ground->GetHeight(pos.x, pos.z) - pos.y + wantedHeight) < maxDrift);
+			&& (fabs(gHeight - pos.y + wantedHeight) < maxDrift);
 
 	if (flyState == FLY_ATTACKING)
 		closeToGoal = (dir.SqLength2D() < 400);
@@ -648,9 +652,16 @@ void CTAAirMoveType::UpdateAirPhysics()
 	}
 
 	speed.y = yspeed;
-	float h = pos.y - std::max(
-		ground->GetHeight(pos.x, pos.z),
-		ground->GetHeight(pos.x + speed.x * 40.0f, pos.z + speed.z * 40.0f));
+	float h;
+	if (useSmoothMesh && aircraftState != AIRCRAFT_LANDING && aircraftState != AIRCRAFT_LANDED) {
+		h = pos.y - std::max(
+			smoothGround->GetHeight(pos.x, pos.z),
+			smoothGround->GetHeight(pos.x + speed.x * 20.0f, pos.z + speed.z * 20.0f));
+	} else {
+		h = pos.y - std::max(
+			ground->GetHeight(pos.x, pos.z),
+			ground->GetHeight(pos.x + speed.x * 40.0f, pos.z + speed.z * 40.0f));
+	}
 
 	if (h < 4.0f) {
 		speed.x *= 0.95f;
