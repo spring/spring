@@ -1302,6 +1302,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	// Note that this will kill the com too.
 	if (unitDef->isCommander) {
 		teamHandler->Team(oldteam)->CommanderDied(this);
+		// InstallChristmasHat(color4::red); // Ho-Ho-Ho merry christmas to all commiters
 	}
 
 	if (type == ChangeGiven) {
