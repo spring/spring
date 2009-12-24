@@ -144,6 +144,8 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
+		file(MAKE_DIRECTORY "${myBuildDir}/jlib")
+
 		IsMavenInstalled(isMavenInstalled)
 		IsMavenProject(${myDir} isMavenProject)
 		set(configureMavenProject FALSE)
@@ -170,6 +172,8 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 				"-P" "as-spring-subproject,!stand-alone" # disable default profile & enable special profile
 				"-Djava.ai.int.src.dir=${SOURCE_ROOT_Java_AIINTERFACE}"
 				"-Djava.ai.int.build.dir=${BUILD_ROOT_Java_AIINTERFACE}"
+				"-Djava.oo.wrp.src.dir=${SOURCE_ROOT_JavaOO_AIWRAPPER}"
+				"-Djava.oo.wrp.build.dir=${BUILD_ROOT_JavaOO_AIWRAPPER}"
 				"-Dmy.build.dir=${myBuildDirRel}"
 				"-Dmy.version=${myVersion}"
 				"--batch-mode" # Run in non-interactive (batch) mode
@@ -253,10 +257,8 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 		install(FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myInstDataDir})
 		# Install the sources archive (optional)
 		install(FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myInstDataDir}/jlib OPTIONAL)
-		if     (EXISTS "${myBuildDir}/jlib")
-			# Install libraries generated/downloaded during buildtime
-			install(DIRECTORY "${myBuildDir}/jlib/"      DESTINATION ${myInstDataDir}/jlib)
-		endif  (EXISTS "${myBuildDir}/jlib")
+		# Install libraries generated/downloaded during buildtime
+		install(DIRECTORY "${myBuildDir}/jlib/"          DESTINATION ${myInstDataDir}/jlib)
 		# Install jars of wrappers
 		foreach    (wrapperName ${wrapperNames})
 			install(FILES "${${wrapperName}_AIWRAPPER_JAR_BIN}" DESTINATION ${myInstDataDir}/jlib)
