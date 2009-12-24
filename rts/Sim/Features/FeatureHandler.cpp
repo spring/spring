@@ -474,6 +474,7 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 				wh = ground->GetHeight(fpos.x, fpos.z);
 			if (fpos.y > wh || fpos.y < gh) {
 				feature->finalHeight = wh;
+				feature->reachedFinalPos = false;
 				SetFeatureUpdateable(feature);
 			}
 		}
