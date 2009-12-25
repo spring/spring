@@ -286,6 +286,11 @@ void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 	//lastTick = boost::some_time; FIXME
 #endif
 	serverframenum = newserverframenum;
+
+	std::vector<GameParticipant>::iterator it;
+	for (it = players.begin(); it != players.end(); ++it) {
+		it->lastFrameResponse = newserverframenum;
+	}
 }
 
 void CGameServer::SkipTo(int targetframe)
