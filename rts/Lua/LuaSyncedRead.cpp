@@ -3252,8 +3252,8 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 	AMoveType* amt = unit->moveType;
 
 	lua_newtable(L);
-	HSTR_PUSH_NUMBER(L, "maxSpeed", amt->maxSpeed);
-	HSTR_PUSH_NUMBER(L, "maxWantedSpeed", amt->maxWantedSpeed);
+	HSTR_PUSH_NUMBER(L, "maxSpeed", amt->maxSpeed * GAME_SPEED);
+	HSTR_PUSH_NUMBER(L, "maxWantedSpeed", amt->maxWantedSpeed * GAME_SPEED);
 	HSTR_PUSH_NUMBER(L, "goalx", amt->goalPos.x);
 	HSTR_PUSH_NUMBER(L, "goaly", amt->goalPos.y);
 	HSTR_PUSH_NUMBER(L, "goalz", amt->goalPos.z);
@@ -3269,9 +3269,9 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		HSTR_PUSH_NUMBER(L, "accRate", groundmt->accRate);
 		HSTR_PUSH_NUMBER(L, "decRate", groundmt->decRate);
 
-		HSTR_PUSH_NUMBER(L, "maxReverseSpeed", groundmt->maxReverseSpeed);
-		HSTR_PUSH_NUMBER(L, "wantedSpeed", groundmt->wantedSpeed);
-		HSTR_PUSH_NUMBER(L, "currentSpeed", groundmt->currentSpeed);
+		HSTR_PUSH_NUMBER(L, "maxReverseSpeed", groundmt->maxReverseSpeed * GAME_SPEED);
+		HSTR_PUSH_NUMBER(L, "wantedSpeed", groundmt->wantedSpeed * GAME_SPEED);
+		HSTR_PUSH_NUMBER(L, "currentSpeed", groundmt->currentSpeed * GAME_SPEED);
 
 		HSTR_PUSH_NUMBER(L, "goalRadius", groundmt->goalRadius);
 
