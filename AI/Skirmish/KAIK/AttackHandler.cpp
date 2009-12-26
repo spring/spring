@@ -310,8 +310,8 @@ float3 CAttackHandler::FindSafeArea(float3 pos) {
 	if (this->DistanceToBase(pos) < SAFE_SPOT_DISTANCE)
 		return pos;
 
-	float min = 0.6;
-	float max = 0.95;
+	float min = 0.6f;
+	float max = 0.95f;
 	float3 safe = this->FindSafeSpot(pos, min, max);
 	// HACK
 	safe += pos;
@@ -321,14 +321,14 @@ float3 CAttackHandler::FindSafeArea(float3 pos) {
 }
 
 float3 CAttackHandler::FindVerySafeArea(float3 pos) {
-	float min = 0.9;
-	float max = 1.0;
+	float min = 0.9f;
+	float max = 1.0f;
 	return (this->FindSafeSpot(pos, min, max));
 }
 
 float3 CAttackHandler::FindUnsafeArea(float3 pos) {
-	float min = 0.1;
-	float max = 0.3;
+	float min = 0.1f;
+	float max = 0.3f;
 	return (this->FindSafeSpot(pos, min, max));
 }
 
@@ -842,7 +842,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 
 			// get all enemies surrounding endpoint of found path
 			int enemiesInArea = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], endPos, ATTACKED_AREA_RADIUS);
-			float powerOfEnemies = 0.000001;
+			float powerOfEnemies = 0.000001f;
 
 			// calculate combined "firepower" of armed enemies near endpoint
 			for (int i = 0; i < enemiesInArea; i++) {

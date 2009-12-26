@@ -13,8 +13,6 @@ CR_REG_METADATA(CThreatMap, (
 	CR_POSTLOAD(PostLoad)
 ));
 
-
-
 CThreatMap::CThreatMap(AIClasses* aic): ai(aic) {
 	if (ai) {
 		ThreatMapWidth  = ai->cb->GetMapWidth()  / THREATRES;

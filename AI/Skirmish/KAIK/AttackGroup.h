@@ -6,7 +6,7 @@
 
 #include "Defines.h"
 
-class AIClasses;
+struct AIClasses;
 
 class CAttackGroup {
 	public:
