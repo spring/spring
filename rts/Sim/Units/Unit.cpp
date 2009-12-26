@@ -2446,6 +2446,7 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 	CR_MEMBER(maxSpeed),
+	CR_MEMBER(maxReverseSpeed),
 //	CR_MEMBER(weaponHitMod),
 //	CR_MEMBER(lodCount),
 //	CR_MEMBER(currentLOD),
