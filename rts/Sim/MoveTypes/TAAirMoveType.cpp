@@ -48,7 +48,7 @@ CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(decRate),
 	CR_MEMBER(altitudeRate),
 
-	CR_MEMBER(breakDistance),
+	CR_MEMBER(brakeDistance),
 	CR_MEMBER(dontLand),
 	CR_MEMBER(lastMoveRate),
 
@@ -83,7 +83,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	accRate(1),
 	decRate(1),
 	altitudeRate(3.0f),
-	breakDistance(1),
+	brakeDistance(1),
 	dontLand(false),
 	lastMoveRate(0),
 	forceHeading(false),
@@ -189,7 +189,7 @@ void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 	}
 
 	SetGoal(pos, goalRadius);
-	breakDistance = ((maxSpeed * maxSpeed) / decRate);
+	brakeDistance = ((maxSpeed * maxSpeed) / decRate);
 }
 
 void CTAAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
@@ -467,7 +467,7 @@ void CTAAirMoveType::UpdateFlying()
 	// an intermediate waypoint, don't slow down (FIXME)
 
 	/// if (flyState != FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands()) {
-	if (flyState != FLY_ATTACKING && dist < breakDistance) {
+	if (flyState != FLY_ATTACKING && dist < brakeDistance) {
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
 	}
 

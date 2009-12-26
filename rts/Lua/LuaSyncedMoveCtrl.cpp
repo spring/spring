@@ -810,7 +810,7 @@ static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, 
 {
 	if (SetGenericMoveTypeValue(mt, key, value)) {
 		if (key == "maxSpeed") {
-			mt->breakDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+			mt->brakeDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
 		}
 		return true;
 	}
@@ -823,7 +823,7 @@ static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, 
 		mt->accRate = value; return true;
 	} else if (key == "decRate") {
 		mt->decRate = value;
-		mt->breakDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+		mt->brakeDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
 		return true;
 	} else if (key == "altitudeRate") {
 		mt->altitudeRate = value; return true;
@@ -831,8 +831,8 @@ static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, 
 		mt->currentBank = value; return true;
 	} else if (key == "currentPitch") {
 		mt->currentPitch = value; return true;
-	} else if (key == "breakDistance") {
-		mt->breakDistance = value; return true;
+	} else if (key == "brakeDistance") {
+		mt->brakeDistance = value; return true;
 	} else if (key == "maxDrift") {
 		mt->maxDrift = value; return true;
 	}
