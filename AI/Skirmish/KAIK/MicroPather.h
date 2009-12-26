@@ -55,6 +55,7 @@
 #define GRINNINGLIZARD_MICROPATHER_INCLUDED
 
 #include <vector>
+#include "Defines.h"
 
 #ifdef _DEBUG
 	#ifndef DEBUG
@@ -62,7 +63,7 @@
 	#endif
 #endif
 
-#define FLT_BIG (3.40282347e+38F / 2.0)
+#define FLT_BIG (MY_FLT_MAX / 2.0)
 
 struct AIClasses;
 
