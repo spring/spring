@@ -610,10 +610,10 @@ static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, flo
 	// FIXME should use setter methods here and in other Set*MoveTypeValue functoins, but they mostly don't exist
 	if (key == "maxSpeed") {
 		if (value > 0)
-			mt->owner->maxSpeed = value;
-		mt->SetMaxSpeed(value); return true;
+			mt->owner->maxSpeed = value / GAME_SPEED;
+		mt->SetMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "maxWantedSpeed") {
-		mt->SetWantedMaxSpeed(value); return true;
+		mt->SetWantedMaxSpeed(value / GAME_SPEED); return true;
 	} else if (key == "repairBelowHealth") {
 		mt->repairBelowHealth = value; return true;
 	}
@@ -731,12 +731,14 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 		mt->decRate = value; return true;
 	} else if (key == "maxReverseSpeed") {
 		// use setter?
-		mt->maxReverseSpeed = value; return true;
+		mt->maxReverseSpeed = value / GAME_SPEED;
+		mt->owner->maxReverseSpeed = value / GAME_SPEED;
+		return true;
 	} else if (key == "wantedSpeed") {
 		// use setter?
-		mt->wantedSpeed = value; return true;
+		mt->wantedSpeed = value / GAME_SPEED; return true;
 	} else if (key == "requestedSpeed") {
-		mt->requestedSpeed = value; return true;
+		mt->requestedSpeed = value / GAME_SPEED; return true;
 	} else if (key == "requestedTurnRate") {
 		mt->requestedTurnRate = value; return true;
 	}
