@@ -527,6 +527,9 @@ void CUnit::Update()
 		return;
 	}
 
+	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
+	residualImpulse *= 0.968f;
+
 	const bool oldInAir   = inAir;
 	const bool oldInWater = inWater;
 
@@ -809,8 +812,6 @@ void CUnit::SlowUpdate()
 			health = maxHealth;
 		}
 	}
-
-	residualImpulse *= 0.6f;
 
 	SlowUpdateCloak(false);
 
