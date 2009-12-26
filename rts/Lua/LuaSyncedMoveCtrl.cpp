@@ -806,8 +806,12 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State *L)
 
 static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, float value)
 {
-	if (SetGenericMoveTypeValue(mt, key, value))
+	if (SetGenericMoveTypeValue(mt, key, value)) {
+		if (key == "maxSpeed") {
+			mt->breakDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+		}
 		return true;
+	}
 
 	if (key == "wantedHeight") {
 		mt->SetDefaultAltitude(value); return true;
@@ -816,7 +820,9 @@ static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, 
 	} else if (key == "accRate") {
 		mt->accRate = value; return true;
 	} else if (key == "decRate") {
-		mt->decRate = value; return true;
+		mt->decRate = value;
+		mt->breakDistance = (mt->maxSpeed * mt->maxSpeed) / mt->decRate;
+		return true;
 	} else if (key == "altitudeRate") {
 		mt->altitudeRate = value; return true;
 	} else if (key == "currentBank") {
