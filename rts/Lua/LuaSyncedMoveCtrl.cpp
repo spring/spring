@@ -607,8 +607,10 @@ int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 static inline bool SetGenericMoveTypeValue(AMoveType* mt, const string& key, float value)
 {
 	// can't set goal here, need a different function that calls mt->SetGoal
-	// FIXME should use setter methods here, but they don't exist
+	// FIXME should use setter methods here and in other Set*MoveTypeValue functoins, but they mostly don't exist
 	if (key == "maxSpeed") {
+		if (value > 0)
+			mt->owner->maxSpeed = value;
 		mt->SetMaxSpeed(value); return true;
 	} else if (key == "maxWantedSpeed") {
 		mt->SetWantedMaxSpeed(value); return true;
