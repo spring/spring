@@ -858,7 +858,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			// stop units from reaching escape velocity
 			dif /= std::max(dist, 1.f);
 
-			if (u->mass == 100000 || !u->mobility) {
+			if (!u->mobility) {
 				float impactSpeed = -owner->speed.dot(dif);
 
 				if (impactSpeed > 0) {
