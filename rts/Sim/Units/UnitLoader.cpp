@@ -182,6 +182,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) ||
 		                                 (ud->movedata->moveType == MoveData::Ship_Move)));
 	unit->maxSpeed = ud->speed / GAME_SPEED;
+	unit->maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 	unit->decloakDistance = ud->decloakDistance;
 
 	unit->flankingBonusMode        = ud->flankingBonusMode;

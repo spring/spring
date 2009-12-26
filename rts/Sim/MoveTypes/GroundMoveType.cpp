@@ -2007,8 +2007,8 @@ void CGroundMoveType::SetMainHeading(){
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	maxSpeed        = std::min(speed, owner->unitDef->speed  / GAME_SPEED);
-	maxReverseSpeed = std::min(speed, owner->unitDef->rSpeed / GAME_SPEED);
+	maxSpeed        = std::min(speed, owner->maxSpeed);
+	maxReverseSpeed = std::min(speed, owner->maxReverseSpeed);
 
 	requestedSpeed = speed * 2.0f;
 }
