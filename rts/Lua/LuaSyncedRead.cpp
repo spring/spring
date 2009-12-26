@@ -3346,7 +3346,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		HSTR_PUSH_NUMBER(L, "decRate", gunshipmt->decRate);
 		HSTR_PUSH_NUMBER(L, "altitudeRate", gunshipmt->altitudeRate);
 
-		HSTR_PUSH_NUMBER(L, "breakDistance", gunshipmt->breakDistance);
+		HSTR_PUSH_NUMBER(L, "brakeDistance", gunshipmt->brakeDistance);
 		HSTR_PUSH_BOOL(L, "dontLand", gunshipmt->dontLand);
 		HSTR_PUSH_NUMBER(L, "maxDrift", gunshipmt->maxDrift);
 
