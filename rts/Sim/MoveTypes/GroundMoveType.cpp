@@ -879,8 +879,9 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					}
 				}
 			} else {
-				float part = owner->mass / (owner->mass + u->mass);
-				float impactSpeed = (u->speed - owner->speed).dot(dif);
+				// don't conserve momentum
+				float part = (owner->mass / (owner->mass + u->mass));
+				float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
 
 				if (impactSpeed > 0) {
 					midPos += dif * (impactSpeed * (1 - part) * 2);
@@ -913,6 +914,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 							0, dif * -impactSpeed * (u->mass * part));
 					}
 					owner->speed *= 0.9f;
+					u->speed *= 0.9f;
 				}
 			}
 		}
