@@ -160,7 +160,7 @@ void CEconomyTracker::frameUpdate(int frame) {
 	// update the units in activeEconomyUnitTrackers, add their production/usage to total
 	float energyProduction = 0.0f;
 	float metalProduction = 0.0f;
- 	// these are exclusive of what is used by builders
+	// these are exclusive of what is used by builders
 	float energyUsage = 0.0f;
 	float metalUsage = 0.0f;
 
@@ -265,7 +265,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 
 			// we guess it's on ATM
 			unitEnergy += eut->estimateEnergyChangeFromDefWhileOn;
-			unitMetal += eut->estimateMetalChangeFromDefWhileOn; 
+			unitMetal += eut->estimateMetalChangeFromDefWhileOn;
 		}
 
 		// do the EconomyUnitTrackers in newEconomyUnitTrackers, it needs to test the ETA first (metalmakers == bad,  nanostall == bad)
@@ -275,7 +275,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 			if (eut->createFrame +16 < preFrame) {
 				// we guess it's on ATM
 				unitEnergy += eut->estimateEnergyChangeFromDefWhileOn;
-				unitMetal += eut->estimateMetalChangeFromDefWhileOn; 
+				unitMetal += eut->estimateMetalChangeFromDefWhileOn;
 			}
 		}
 
@@ -596,7 +596,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 		// NOTE: the builder(s) might have been killed too...
 		bt->hpLastFrame = hp;
 	}
-	
+
 
 }
 
@@ -744,7 +744,7 @@ void CEconomyTracker::UnitFinished(int unit) {
 		return;
 
 	int frame = ai->cb->GetCurrentFrame();
-	
+
 	if (frame == 0) {
 		// add the commander to a EconomyUnitTracker
 		EconomyUnitTracker * economyUnitTracker = new EconomyUnitTracker;

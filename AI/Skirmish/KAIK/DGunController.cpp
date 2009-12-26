@@ -137,14 +137,14 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 			// can also fail if enemy is in front of allied structure and both
 			// are within the d-gun's range
 			haveClearShot = (ai->cb->GetUnitAllyTeam(rayData.hitUID) != ai->cb->GetMyAllyTeam());
-			
+
 			// TODO: get DGun weapon properties & check if it can pass through
 			// a unit, if yes then allow executing the code below
 			if(haveClearShot) {
 				// check if there is a unit next to hit unit on DGun path...
 				const float3 enemyPos = ai->cb->GetUnitPos(rayData.hitUID);
 				const float segmentLeft = maxRange - commanderPos.distance(enemyPos);
-				
+
 				if(segmentLeft > 0.0) {
 					AIHCTraceRay rayData2 = {
 						enemyPos,
@@ -160,17 +160,17 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 					if(rayData2.hitUID != -1) {
 						haveClearShot = (ai->cb->GetUnitAllyTeam(rayData2.hitUID) != ai->cb->GetMyAllyTeam());
 					}
-				}			
+				}
 			}
 		}
 
 		// multiply by 0.9 to ensure commander does not have to walk
 		if ((commanderPos - dgunPos).Length() < maxRange * 0.9f) {
-			bool canDGun = 
-				(ai->cb->GetEnergy() >= DGUN_MIN_ENERGY_LEVEL) 
-				&& haveClearShot 
+			bool canDGun =
+				(ai->cb->GetEnergy() >= DGUN_MIN_ENERGY_LEVEL)
+				&& haveClearShot
 				&& (udef != NULL && !udef->weapons.empty());
-			
+
 			if(canDGun) {
 				IssueOrder(dgunPos, orderType = CMD_DGUN, 0);
 			} else {

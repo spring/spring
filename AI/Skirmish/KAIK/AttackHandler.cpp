@@ -453,7 +453,7 @@ void CAttackHandler::UpdateKMeans(void) {
 				friendlyPositions.push_back(ai->cb->GetUnitPos(ai->unitIDs[0]));
 			}
 			else {
-			 	// when everything is dead
+				// when everything is dead
 				friendlyPositions.push_back(float3(RANDINT % (ai->cb->GetMapWidth() * 8), 1000, RANDINT % (ai->cb->GetMapHeight() * 8)));
 			}
 		}
@@ -463,7 +463,7 @@ void CAttackHandler::UpdateKMeans(void) {
 		// iterate k-means algo over these positions and move the means
 		this->kMeansBase = KMeansIteration(this->kMeansBase, friendlyPositions, this->kMeansK);
 	}
-	
+
 	// update enemy position k-means
 	// get positions of all enemy units and put them in a vector (completed buildings only)
 	std::vector<float3> enemyPositions;
