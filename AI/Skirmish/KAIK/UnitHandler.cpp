@@ -614,9 +614,6 @@ void CUnitHandler::BuildTaskCreate(int id) {
 
 		for (i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
 			if (pos.distance2D(i->pos) < 1.0f && newUnitDef == i->def) {
-				// there can not be more than one found TaskPlan
-				assert(bt.id == -1);
-
 				bt.category = category;
 				bt.id       = id;
 				bt.pos      = i->pos;
@@ -633,7 +630,8 @@ void CUnitHandler::BuildTaskCreate(int id) {
 					BuildTaskAddBuilder(&bt, *builder);
 				}
 
-				i = TaskPlans[category].begin();
+				// there can not be more than one found TaskPlan
+				break;
 			}
 		}
 
