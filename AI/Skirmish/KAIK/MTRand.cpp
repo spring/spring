@@ -4,7 +4,7 @@ unsigned int MTRand_int32::state[n] = {0x0UL};
 int MTRand_int32::p = 0;
 bool MTRand_int32::init = false;
 
-void MTRand_int32::gen_state() { 
+void MTRand_int32::gen_state() {
 	for (int i = 0; i < (n - m); ++i)
 		state[i] = state[i + m] ^ twiddle(state[i], state[i + 1]);
 	for (int i = n - m; i < (n - 1); ++i)

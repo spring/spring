@@ -11,7 +11,7 @@ CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width) {
 	// from 0-255, the minimum percentage of metal a spot needs to have from
 	// the maximum to be saved. Prevents crappier spots in between taken spaces.
 	// They are still perfectly valid and will generate metal mind you!
-	// MinMetalForSpot = 50;	
+	// MinMetalForSpot = 50;
 
 	// metal map has half resolution of normal map
 	MapHeight = height;
@@ -99,7 +99,7 @@ void CSpotFinder::SetRadius(int radius)
 			float floatsqrradius = SquareRadius;
 			xend[a] = int(sqrtf(floatsqrradius - z * z));
 		}
-		
+
 	}
 }
 
@@ -367,7 +367,7 @@ void CSpotFinder::UpdateSumMapArea(int cacheX, int cacheY)
 							TotalMetal -= MexArrayA[sy * MapWidth + remX];
 					}
 				}
-			} 
+			}
 			else if(y > 0){
 				// x == 0 here
 				TotalMetal = TempAverage[(y-1) * MapWidth];
@@ -438,7 +438,7 @@ void CSpotFinder::UpdateSumMap(int coordx, int coordy, int clearRadius) {
 							if (sy >= 0 && sy < MapHeight) {
 								for (int sx = x - xend[a]; sx <= x + xend[a]; sx++) {
 									if (sx >= 0 && sx < MapWidth) {
- 										//get the metal from all pixels around the extractor radius
+										//get the metal from all pixels around the extractor radius
 										TotalMetal += MexArrayA[sy * MapWidth + sx];
 									}
 								}
@@ -486,7 +486,7 @@ void CSpotFinder::UpdateSumMap(int coordx, int coordy, int clearRadius) {
 						}
 					}
 					TempAverage[y * MapWidth + x] = TotalMetal;
- 					//set that spot's metal amount
+					//set that spot's metal amount
 					//MexArrayB[y * MapWidth + x] = TotalMetal * 255 / MaxMetal;
 				}
 			}

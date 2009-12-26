@@ -45,7 +45,7 @@ CThreatMap::CThreatMap(AIClasses* aic): ai(aic) {
 			luaDataStream << "\t\tthreatMapArray[row * threatMapSizeX + col] = 0.0;\n";
 			luaDataStream << "\tend\n";
 			luaDataStream << "end\n";
- 		std::string luaDataStr = luaDataStream.str();
+		std::string luaDataStr = luaDataStream.str();
 
 		ai->cb->CallLuaRules("[AI::KAIK::ThreatMap::Init]", -1, NULL);
 		ai->cb->CallLuaRules(luaDataStr.c_str(), -1, NULL);

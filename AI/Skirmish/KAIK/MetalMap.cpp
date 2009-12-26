@@ -57,7 +57,7 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 				float myThreat = ai->tm->ThreatAtThisPoint(VectoredSpots[i]);
 				float spotScore = VectoredSpots[i].y / distance / (myThreat + 10);
 				int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], VectoredSpots[i], XtractorRadius * 2);
-				
+
 				bool bOccupied = false;	// flag: metal spot is occupied by allied unit
 				if(NumSpotsFound < 100)
 				{
@@ -160,7 +160,7 @@ void CMetalMap::GetMetalPoints() {
 								// get the metal from all pixels around the extractor radius
 								TotalMetal += MexArrayA[sy * MetalMapWidth + sx];
 							}
-						} 
+						}
 					}
 				}
 
@@ -371,7 +371,7 @@ void CMetalMap::GetMetalPoints() {
 			// plot TGA array (not necessary) for debug
 			MexArrayC[coordy * MetalMapWidth + coordx] = TempMetal;
 			NumSpotsFound += 1;
-			
+
 			// small speedup of "wipes the metal around the spot so its not counted twice"
 			for (int sy = coordy - XtractorRadius, a = 0;  sy <= coordy + XtractorRadius;  sy++, a++) {
 				if (sy >= 0 && sy < MetalMapHeight) {

@@ -797,7 +797,7 @@ void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {
 					assert(!found);
 					i->builderTrackers.erase(builder);
 					builderTracker->buildTaskId = 0;
- 					// give it time to change command
+					// give it time to change command
 					builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame();
 					found = true;
 					break;
