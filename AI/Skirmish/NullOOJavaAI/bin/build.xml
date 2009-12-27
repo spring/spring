@@ -27,15 +27,21 @@
 	<property name="jar.file.name"      value="SkirmishAI"/>
 	<property name="jar.file.name.bin"  value="${jar.file.name}.jar"/>
 	<property name="jar.file.name.src"  value="${jar.file.name}-src.jar"/>
-	<property name="independent.interface.libs.dir"  value="jlibs-interface"/>
+	<property name="independent.interface.libs.dir" value="Java-AIInterface"/>
+	<property name="independent.wrapper.oo.libs.dir"   value="JavaOO-AIWrapper"/>
 
-	<!-- If it is true, we are in a independent project. -->
-	<available file="${independent.interface.libs.dir}" property="independent"/>
-		<condition property="proj.dep.type"
-				value="independent"
-				else="dependent">
-			<istrue value="${independent}"/>
-		</condition>
+	<!-- If it is true, we are in an independent project. -->
+	<condition property="independent">
+		<and>
+			<available file="${independent.interface.libs.dir}"/>
+			<available file="${independent.wrapper.oo.libs.dir}"/>
+		</and>
+	</condition>
+	<condition property="proj.dep.type"
+			value="independent"
+			else="dependent">
+		<istrue value="${independent}"/>
+	</condition>
 
 
 	<path id="source.path.id">
@@ -70,19 +76,40 @@
 		<property name="doc.dir"                  location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}/doc/jdoc"/>
 		<property name="ai.interface.src.home"    location="${spring.home}/AI/Interfaces/Java"/>
 		<property name="ai.interface.build.home"  location="${build.home}/AI/Interfaces/Java"/>
-		<property name="ai.interface.jar"         location="${ai.interface.build.home}/AIInterface.jar"/>
+		<property name="ai.wrapper.oo.src.home"   location="${spring.home}/AI/Wrappers/JavaOO"/>
+		<property name="ai.wrapper.oo.build.home" location="${build.home}/AI/Wrappers/JavaOO"/>
 
-		<available file="${ai.interface.jar}" property="ai.interface.jar.exists"/>
-		<fail message="File not found: ${ai.interface.jar}" unless="ai.interface.jar.exists">.
-File not found: ${ai.interface.jar}
+		<available file="${ai.interface.build.home}/AIInterface.jar" property="ai.interface.jar.exists"/>
+		<fail message="File not found: ${ai.interface.build.home}/AIInterface.jar" unless="ai.interface.jar.exists">.
+File not found: ${ai.interface.build.home}/AIInterface.jar
 Please make sure to compile the Java AI Interface
 before trying to compile this AI, or request
 an independent version of this project from
 wherever you got this AI from.
 		</fail>
 
+		<available file="${ai.wrapper.oo.build.home}/JavaOO-AIWrapper.jar" property="ai.wrapper.oo.jar.exists"/>
+		<fail message="File not found: ${ai.wrapper.oo.build.home}/JavaOO-AIWrapper.jar" unless="ai.wrapper.oo.jar.exists">.
+File not found: ${ai.wrapper.oo.build.home}/JavaOO-AIWrapper.jar
+Please make sure to compile the Java OO AI Wrapper
+before trying to compile this AI, or request
+an independent version of this project from
+wherever you got this AI from.
+		</fail>
+
 		<path id="class.path.id">
+			<!-- AI classpath -->
 			<path refid="class.path.base"/>
+
+			<!-- AI Interface classpath -->
+			<fileset dir="${ai.wrapper.oo.src.home}">
+				<include name="jlib/**/*.jar"/>
+			</fileset>
+			<fileset dir="${ai.wrapper.oo.build.home}">
+				<include name="JavaOO-AIWrapper.jar"/>
+			</fileset>
+
+			<!-- AI Interface classpath -->
 			<fileset dir="${ai.interface.src.home}/data">
 				<include name="jlib/**/*.jar"/>
 			</fileset>
@@ -113,7 +140,15 @@ wherever you got this AI from.
 		<property name="dist.dir"                 location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}"/>
 
 		<path id="class.path.id">
+			<!-- AI classpath -->
 			<path refid="class.path.base"/>
+
+			<!-- AI Interface classpath -->
+			<fileset dir="${independent.wrapper.oo.libs.dir}">
+				<include name="**/*.jar"/>
+			</fileset>
+
+			<!-- AI Interface classpath -->
 			<fileset dir="${independent.interface.libs.dir}">
 				<include name="**/*.jar"/>
 			</fileset>
@@ -272,6 +307,15 @@ and the data/AIInto.lua file for the new project.
 			</fileset>
 			<fileset dir="${ai.interface.build.home}"
 					includes="AIInterface*.jar"/>
+		</copy>
+
+		<!-- copy the OO wrapper jars -->
+		<copy todir="${project.dir.new}/${independent.wrapper.oo.libs.dir}" overwrite="false">
+			<fileset dir="${ai.wrapper.oo.src.home}">
+				<include name="jlib/**/*.jar"/>
+			</fileset>
+			<fileset dir="${ai.interface.build.home}"
+					includes="JavaOO-AIWrapper*.jar"/>
 		</copy>
 
 	</target>
