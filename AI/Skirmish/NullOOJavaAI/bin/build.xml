@@ -27,8 +27,8 @@
 	<property name="jar.file.name"      value="SkirmishAI"/>
 	<property name="jar.file.name.bin"  value="${jar.file.name}.jar"/>
 	<property name="jar.file.name.src"  value="${jar.file.name}-src.jar"/>
-	<property name="independent.interface.libs.dir" value="Java-AIInterface"/>
-	<property name="independent.wrapper.oo.libs.dir"   value="JavaOO-AIWrapper"/>
+	<property name="independent.interface.libs.dir"  value="Java-AIInterface"/>
+	<property name="independent.wrapper.oo.libs.dir" value="JavaOO-AIWrapper"/>
 
 	<!-- If it is true, we are in an independent project. -->
 	<condition property="independent">
@@ -138,6 +138,8 @@ wherever you got this AI from.
 		<property name="build.classes.dir"        location="${build.dir}/classes"/>
 		<property name="dist.home"                location="dist"/>
 		<property name="dist.dir"                 location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}"/>
+		<property name="ai.wrapper.oo.src.home"   location="${independent.wrapper.oo.libs.dir}"/>
+		<property name="ai.wrapper.oo.build.home" location="${independent.wrapper.oo.libs.dir}"/>
 
 		<path id="class.path.id">
 			<!-- AI classpath -->
@@ -227,12 +229,24 @@ wherever you got this AI from.
 	<target name="dist" depends="pack"
 				description="install the built jars and the data files" >
 		<mkdir dir="${dist.dir}/jlib"/>
+
+		<!-- install the AI -->
 		<copy file="${build.dir}/${jar.file.name.bin}"
 				todir="${dist.dir}" overwrite="true"/>
 		<copy file="${build.dir}/${jar.file.name.src}"
 				todir="${dist.dir}/jlib" overwrite="true"/>
 		<copy todir="${dist.dir}" overwrite="true">
 			<fileset dir="data"/>
+		</copy>
+
+		<!-- install OO AI Wrapper -->
+		<copy todir="${dist.dir}/jlib" overwrite="true">
+			<fileset dir="${ai.wrapper.oo.src.home}/jlib">
+				<include name="**/*.jar"/>
+			</fileset>
+			<fileset dir="${ai.wrapper.oo.build.home}">
+				<include name="JavaOO-AIWrapper.jar"/>
+			</fileset>
 		</copy>
 	</target>
 	<target name="install" depends="dist"/>
@@ -314,7 +328,7 @@ and the data/AIInto.lua file for the new project.
 			<fileset dir="${ai.wrapper.oo.src.home}">
 				<include name="jlib/**/*.jar"/>
 			</fileset>
-			<fileset dir="${ai.interface.build.home}"
+			<fileset dir="${ai.wrapper.oo.build.home}"
 					includes="JavaOO-AIWrapper*.jar"/>
 		</copy>
 
