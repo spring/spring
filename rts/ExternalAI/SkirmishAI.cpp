@@ -23,17 +23,18 @@
 #include "Util.h"
 
 CSkirmishAI::CSkirmishAI(int skirmishAIId, int teamId, const SkirmishAIKey& key,
-		const SSkirmishAICallback* c_callback) :
+		const SSkirmishAICallback* callback) :
 		skirmishAIId(skirmishAIId),
 		key(key),
+		callback(callback),
 		timerName("AI t:" + IntToString(teamId) +
 		          " id:" + IntToString(skirmishAIId) +
 		          " " + key.GetShortName() + " " + key.GetVersion()),
+		initOk(false),
 		dieing(false)
 {
 	SCOPED_TIMER(timerName.c_str());
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
-	initOk  = library->Init(skirmishAIId, c_callback);
 }
 
 CSkirmishAI::~CSkirmishAI() {
@@ -43,6 +44,14 @@ CSkirmishAI::~CSkirmishAI() {
 		library->Release(skirmishAIId);
 	}
 	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
+}
+
+void CSkirmishAI::Init() {
+
+	if (callback != NULL) {
+		initOk  = library->Init(skirmishAIId, callback);
+		callback = NULL;
+	}
 }
 
 void CSkirmishAI::Dieing() {

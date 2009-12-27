@@ -43,6 +43,12 @@ public:
 	int HandleEvent(int topic, const void* data) const;
 
 	/**
+	 * Initialize the AI instance.
+	 * This calls the native init() method, the InitAIEvent is sent afterwards.
+	 */
+	void Init();
+
+	/**
 	 * No events are forwarded to the Skirmish AI plugin
 	 * after this method has been called.
 	 */
@@ -52,6 +58,7 @@ private:
 	int skirmishAIId;
 	const SkirmishAIKey key;
 	const CSkirmishAILibrary* library;
+	const SSkirmishAICallback* callback;
 	const std::string timerName;
 	bool initOk;
 	bool dieing;
