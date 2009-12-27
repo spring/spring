@@ -1398,7 +1398,7 @@ function canDeleteDocumentation() {
 	}
 }
 # 1st line of a function definition
-/\tpublic .*);/ {
+/\tpublic .*\);/ {
 
 	funcStartLine = $0;
 	# separate possible comment at end of line: // foo bar
