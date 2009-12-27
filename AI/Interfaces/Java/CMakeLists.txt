@@ -364,9 +364,11 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myClassPath                ".${PATH_DELIM}${myJavaLibs}${PATH_DELIM}${myJavaSourceDir}")
 
 	# Used by Java Skirmish AIs
-	SetGlobal(SOURCE_ROOT_${myName}_AIINTERFACE "${myDir}")
-	SetGlobal(BUILD_ROOT_${myName}_AIINTERFACE  "${myBuildDir}")
-	SetGlobal(CLASSPATH_${myName}_AIINTERFACE   "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}")
+	SetGlobal(SOURCE_ROOT_${myName}_AIINTERFACE      "${myDir}")
+	SetGlobal(BUILD_ROOT_${myName}_AIINTERFACE       "${myBuildDir}")
+	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}")
+	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
+	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
 
 
 	# Generate sources
