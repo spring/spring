@@ -285,14 +285,14 @@ function printEventsOO() {
 			interfMeta_es = meta_es;
 			sub(/^.*INTERFACES:/, "", interfMeta_es);
 			sub(/[ \t].*$/, "", interfMeta_es);
-			interfList_size_es = split(interfMeta_es, interfList_es, "),");
+			interfList_size_es = split(interfMeta_es, interfList_es, "\),");
 
 			for (i=1; i <= interfList_size_es; i++) {
 				_intName = interfList_es[i];
 				sub(/\(.*$/, "", _intName);
 				_intParams = interfList_es[i];
 				sub(/^.*\(/, "", _intParams);
-				sub(/)$/,    "", _intParams);
+				sub(/\)$/,    "", _intParams);
 
 				if (!(_intName in int_names)) {
 					int_names[_intName] = _intParams;
