@@ -122,6 +122,7 @@ void CSkirmishAIWrapper::PostLoad() {
 bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 	ai = new CSkirmishAI(skirmishAIId, teamId, key, GetCallback());
+	ai->Init();
 
 	// check if initialization went ok
 	if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId)) {
