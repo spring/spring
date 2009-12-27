@@ -91,7 +91,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"-v" "JAVA_GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
 		"-f" "${commonAwkScriptsDir}/common.awk"
 		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
-		"-f" "${commonAwkScriptsDir}/commonOOCallback.awk"
 		)
 
 	set(mySources
@@ -332,6 +331,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		#	"${myParentTarget}"
 		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
+			"-f" "${commonAwkScriptsDir}/commonOOCallback.awk"
 			"-f" "${myBinDir}/wrappCallback.awk"
 			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
 		WORKING_DIRECTORY "${myBinDir}"
