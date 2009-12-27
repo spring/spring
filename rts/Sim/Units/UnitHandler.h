@@ -38,10 +38,10 @@ public:
 	// 0 blocked
 	// 1 mobile unit in the way
 	// 2 free (or if feature is != 0 then with a blocking feature that can be reclaimed)
-	int TestUnitBuildSquare(const BuildInfo& buildInfo,CFeature *&feature, int allyteam); ///< test if a unit can be built at specified position
+	int TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature*& blockingFeature, int allyTeam); ///< test if a unit can be built at specified position
 	int ShowUnitBuildSquare(const BuildInfo& buildInfo); ///< test if a unit can be built at specified position and show on the ground where it's to rough
-	int ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command> &cv);
-	int TestBuildSquare(const float3& pos, const UnitDef *unitdef,CFeature *&feature, int allyteam); ///< test a single mapsquare for build possibility
+	int ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& cv);
+	int TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& blockingFeature, int allyTeam); ///< test a single mapsquare for build possibility
 
 	/// Returns true if a unit of type unitID can be built, false otherwise
 	bool CanBuildUnit(const UnitDef* unitdef, int team);
