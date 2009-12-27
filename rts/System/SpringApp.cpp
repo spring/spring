@@ -121,6 +121,18 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
+#if defined(_WIN32) && defined(__GNUC__)
+	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
+	{
+		// don't display a dialog box if gdb helpers aren't found
+		UINT olderrors = SetErrorMode(SEM_FAILCRITICALERRORS);
+		if(LoadLibrary("gdbmacros.dll")) {
+			LogObject() << "QT Creator's gdbmacros.dll loaded";
+		}
+		SetErrorMode(olderrors);
+	}
+#endif
+
 	// Initialize class system
 	creg::System::InitializeClasses();
 
