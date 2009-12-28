@@ -116,6 +116,31 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isInterface_h,
 }
 
 
+function getNullTypeValue(fRet_ntv) {
+
+	if (fRet_ntv == "void") {
+		return "";
+	} else if (fRet_ntv == "String") {
+		return "\"\"";
+	} else if (fRet_ntv == "AIFloat3") {
+		#return "new AIFloat3(0.0f, 0.0f, 0.0f);";
+		return "null";
+	} else if (fRet_ntv == "java.awt.Color") {
+		#return "java.awt.Color.BLACK";
+		return "null";
+	} else if (startsWithCapital(fRet_ntv)) {
+		# must be a class
+		return "null";
+	} else if (match(fRet_ntv, /^java.util.List/)) {
+		return "null";
+	} else if (match(fRet_ntv, /^java.util.Map/)) {
+		return "null";
+	} else if (fRet_ntv == "boolean") {
+		return "false";
+	} else {
+		return "0";
+	}
+}
 function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, outFile_int_tr, outFile_stb_tr, outFile_jni_tr, printIntAndStb_tr, noOverride_tr) {
 
 	_funcHdr_tr = "public " fRet_tr " " fName_tr "(" fParams_tr ")";
@@ -127,32 +152,38 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 		print("\t" _funcHdr_tr ";") >> outFile_int_tr;
 		print("") >> outFile_int_tr;
 
-		print("\t" "@Override") >> outFile_stb_c;
-		print("\t" _funcHdr_tr " {") >> outFile_stb_c;
-		if (fRet_tr == "void") {
-			# return nothing
-		} else if (fRet_tr == "String") {
-			print("\t\t" "return \"\";") >> outFile_stb_c;
-		} else if (fRet_tr == "AIFloat3") {
-			#print("\t\t" "return new AIFloat3(0.0f, 0.0f, 0.0f);") >> outFile_stb_c;
-			print("\t\t" "return null;") >> outFile_stb_c;
-		} else if (fRet_tr == "java.awt.Color") {
-			#print("\t\t" "return java.awt.Color.BLACK;") >> outFile_stb_c;
-			print("\t\t" "return null;") >> outFile_stb_c;
-		} else if (startsWithCapital(fRet_tr)) {
-			# must be a class
-			print("\t\t" "return null;") >> outFile_stb_c;
-		} else if (match(fRet_tr, /^java.util.List/)) {
-			print("\t\t" "return null;") >> outFile_stb_c;
-		} else if (match(fRet_tr, /^java.util.Map/)) {
-			print("\t\t" "return null;") >> outFile_stb_c;
-		} else if (fRet_tr == "boolean") {
-			print("\t\t" "return false;") >> outFile_stb_c;
-		} else {
-			print("\t\t" "return 0;") >> outFile_stb_c;
+		isSimpleGetter_tr = ((fRet_tr != "void") && (fParams_tr == "") && match(fName_tr, /^(get|is)/));
+		if ((fName_tr == "isEnabled") && match(outFile_int_tr, /Cheats\.java$/)) {
+			# an exception, because this has a setter anyway
+			isSimpleGetter_tr = 0;
 		}
-		print("\t" "}") >> outFile_stb_c;
-		print("") >> outFile_stb_c;
+		nullTypeValue_tr = getNullTypeValue(fRet_tr);
+		if (isSimpleGetter_tr) {
+			# create an additional private member and setter
+			propName_tr = fName_tr;
+			sub(/^get/, "", propName_tr);
+			propName_tr = lowerize(propName_tr);
+			fSetterName_tr = fName_tr;
+			sub(/^(get|is)/, "set", fSetterName_tr);
+			print("\t" "private " fRet_tr " " propName_tr " = "  nullTypeValue_tr ";") >> outFile_stb_tr;
+			print("\t" "public void " fSetterName_tr "(" fRet_tr " " propName_tr ")" " {") >> outFile_stb_tr;
+			print("\t\t" "this." propName_tr " = " propName_tr ";") >> outFile_stb_tr;
+			print("\t" "}") >> outFile_stb_tr;
+			print("\t" "@Override") >> outFile_stb_tr;
+			print("\t" _funcHdr_tr " {") >> outFile_stb_tr;
+			print("\t\t" "return " propName_tr ";") >> outFile_stb_tr;
+		} else {
+			print("\t" "@Override") >> outFile_stb_tr;
+			print("\t" _funcHdr_tr " {") >> outFile_stb_tr;
+			# simply return a null like value
+			if (fRet_tr == "void") {
+				# return nothing
+			} else {
+				print("\t\t" "return " nullTypeValue_tr ";") >> outFile_stb_tr;
+			}
+		}
+		print("\t" "}") >> outFile_stb_tr;
+		print("") >> outFile_stb_tr;
 	}
 
 	if (!noOverride_tr) {
