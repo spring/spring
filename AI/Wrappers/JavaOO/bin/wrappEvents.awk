@@ -85,7 +85,6 @@ function printOOAIHeader(outFile, clsName) {
 	print("package " myMainPkgA ";") >> outFile;
 	print("") >> outFile;
 	print("") >> outFile;
-	#print("import java.util.Properties;") >> outFile;
 	if (clsName != myOOAIInterface) {
 		print("import " myParentPkgA ".AI;") >> outFile;
 	}
@@ -145,10 +144,6 @@ function printOOEventAIHeader(outFile) {
 	print("import " myMainPkgA "." myOOAIClass ";") >> outFile;
 	print("import " myPkgEvtA ".*;") >> outFile;
 	print("import " myPkgClbA ".*;") >> outFile;
-	#print("import " myPkgA ".AICallback;") >> outFile;
-	#print("import java.util.Map;") >> outFile;
-	#print("import java.util.HashMap;") >> outFile;
-	#print("import java.util.Properties;") >> outFile;
 	print("") >> outFile;
 	print("/**") >> outFile;
 	print(" * TODO: Add description here") >> outFile;
@@ -175,34 +170,6 @@ function printOOEventAIHeader(outFile) {
 	}
 	print("\t" "public" _modifyer " void handleEvent(AIEvent event) throws EventAIException;") >> outFile;
 	print("") >> outFile;
-
-	if (1 == 0) {
-					print("") >> outFile;
-					print("	@Override") >> outFile;
-					print("	public int init(int teamId, AICallback callback) {") >> outFile;
-					print("") >> outFile;
-					print("		int ret = 0;") >> outFile;
-					print("") >> outFile;
-					print("		OOAICallback ooCallback = OOAICallback.getInstance(callback, teamId);") >> outFile;
-					print("		OOAI ai = null;") >> outFile;
-					print("		try {") >> outFile;
-					print("			ai = createAI(teamId, ooCallback);") >> outFile;
-					print("			if (ai == null) {") >> outFile;
-					print("				ret = 1;") >> outFile;
-					print("			}") >> outFile;
-					print("		} catch (Throwable t) {") >> outFile;
-					print("			ret = 2;") >> outFile;
-					print("			t.printStackTrace();") >> outFile;
-					print("		}") >> outFile;
-					print("") >> outFile;
-					print("		if (ret == 0) {") >> outFile;
-					print("			ais.put(teamId, ai);") >> outFile;
-					print("		}") >> outFile;
-					print("") >> outFile;
-					print("		return ret;") >> outFile;
-					print("	}") >> outFile;
-					print("") >> outFile;
-	}
 }
 function printOOEventAIEnd(outFile) {
 
@@ -217,10 +184,10 @@ function convertJavaSimpleTypeToOO(paType_sto, paName_sto,
 	_change = 1;
 
 	# uses this global vars:
-	#paramTypeNew
-	#paramNameNew
-	#conversionCode_pre
-	#conversionCode_post
+	# - paramTypeNew
+	# - paramNameNew
+	# - conversionCode_pre
+	# - conversionCode_post
 
 	paramTypeNew = paType_sto;
 	paramNameNew = paName_sto;
@@ -278,7 +245,6 @@ function printEventsOO() {
 	# agarra te los event interfaces
 	for (e=0; e < evts_size; e++) {
 		meta_es    = evts_meta[e];
-#print("meta_em: " meta_es);
 
 		interfList_size_es = 0;
 		if (match(meta_es, /INTERFACES:/)) {
@@ -344,14 +310,6 @@ function printEventOO(ind_evt_em) {
 		}
 	}
 	sub(/^\, /, "", ooParams_em);
-
-	if (1 == 0) {
-				if (eNameLowerized == "playerCommand") {
-					paramsTypes = "java.util.List<Unit> units, AICommand command, int playerId";
-					paramsEvt = "units, command, evt.playerId";
-				}
-	}
-
 
 	_equalMethod = (ooParams_em == params_em);
 	_isVoid      = (retType_em == "void");
@@ -442,7 +400,6 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 
 	# list up interface parameters
 	# clear arrays
-	#split("", myIntParams_toPrint_ec);
 	split("", intParams_toPrint_ec);
 	split("", myIntParams_intParams_ec);
 	split("", myIntParams_int_ec);
@@ -458,7 +415,6 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 			_myIntParam = _myIntParamsList[_p];
 			_intParam   = _intParamsList[_p];
 
-			#myIntParams_toPrint_ec[_myIntParam] = 1;
 			intParams_toPrint_ec[_intParam]     = 1;
 			myIntParams_int_ec[_myIntParam] = _name;
 			if (_myIntParam != _intParam) {
@@ -499,7 +455,7 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 	}
 	print("") >> outFile;
 
-	#print constructor
+	# print constructor
 	print("\t" "public " evtName_ec "(" ooParams_ec ") {") >> outFile;
 	print("") >> outFile;
 	for (_p=1; _p <= ooParamsList_size_ec; _p++) {
@@ -531,7 +487,6 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 		# print out @Override if this is an interface member
 		if (_name in intParams_toPrint_ec && intParams_toPrint_ec[_name] == 1) {
 			print("\t" "@Override") >> outFile;
-			#myIntParams_toPrint_ec[_name] = 0;
 			intParams_toPrint_ec[_name]   = 0;
 		}
 
@@ -600,102 +555,6 @@ function printOOEventInterface(int_name_ei) {
 	print("") >> outFile;
 
 	print("}") >> outFile;
-}
-
-
-function printJavaEventHeader(javaFile) {
-
-	printGeneratedWarningHeader(javaFile);
-	print("") >> javaFile;
-	printGPLHeader(javaFile);
-	print("") >> javaFile;
-	print("package " myPkgEvtA ";") >> javaFile;
-	print("") >> javaFile;
-	print("") >> javaFile;
-	print("import " myPkgA ".*;") >> javaFile;
-	print("") >> javaFile;
-}
-
-function printEventJava(evtIndex) {
-
-	topicName = evtsTopicName[evtIndex];
-	topicValue = evtsTopicNameValue[topicName];
-	eName = evtsName[evtIndex];
-
-	className = eName "AIEvent";
-	javaFile = JAVA_GENERATED_SOURCE_DIR "/" myPkgEvtD "/" className ".java";
-	evtInterface = "AIEvent";
-	clsMods = "public final ";
-	printJavaEventHeader(javaFile);
-
-	if (eName == "Init") {
-		printEventJavaCls(evtIndex);
-
-		className = "Default" eName "AIEvent";
-		javaFile = JAVA_GENERATED_SOURCE_DIR "/" myPkgEvtD "/" className ".java";
-		printJavaEventHeader(javaFile);
-		printEventJavaCls(evtIndex);
-	} else {
-		printEventJavaCls(evtIndex);
-	}
-	close(javaFile);
-}
-
-function printEventJavaCls(evtIndex) {
-
-	printFunctionComment_Common(javaFile, evtsDocComment, evtIndex, "");
-
-	print(clsMods "class " className " extends " evtInterface " {") >> javaFile;
-	print("") >> javaFile;
-	print("	public final static int TOPIC = " topicValue ";") >> javaFile;
-	print("	public int getTopic() {") >> javaFile;
-	print("		return " className ".TOPIC;") >> javaFile;
-	print("	}") >> javaFile;
-	print("") >> javaFile;
-
-	print("	public " className "(Pointer memory) {") >> javaFile;
-	print("") >> javaFile;
-	if (className == "InitAIEvent") {
-		print("		DefaultInitAIEvent initEvtImpl =  new DefaultInitAIEvent(memory);") >> javaFile;
-		for (m=0; m < evtsNumMembers[evtIndex]; m++) {
-			name = evtsMembers_name[evtIndex, m];
-			if (name == "callback") {
-				print("		this." name " = new DefaultAICallback();") >> javaFile;
-			} else {
-				print("		this." name " = initEvtImpl." name ";") >> javaFile;
-			}
-		}
-	} else {
-		if (evtsNumMembers[evtIndex] == 0) {
-			print("		// JNA thinks a 0 size struct is an error,") >> javaFile;
-			print("		// when it evaluates the size,") >> javaFile;
-			print("		// so we set it manually to 1,") >> javaFile;
-			print("		// because 0 would fail.") >> javaFile;
-			print("		// This workaround is no longer possible sinze JNA 3.2.") >> javaFile;
-			print("		// Therefore we require all structs to be non empty,") >> javaFile;
-			print("		throw new RuntimeException(\"" className " error:.AI event structs have to be of size > 0 (ie. no empty stucts/no structs with 0 members)\");") >> javaFile;
-		} else {
-			print("		super(memory);") >> javaFile;
-			print("		read();") >> javaFile;
-		}
-	}
-	print("	}") >> javaFile;
-	print("") >> javaFile;
-	for (m=0; m < evtsNumMembers[evtIndex]; m++) {
-		name = evtsMembers_name[evtIndex, m];
-		type_c = evtsMembers_type_c[evtIndex, m];
-		type_jna = convertCToJNAType(type_c);
-		memMods = "public ";
-		if ((name == "callback") && (className == "DefaultInitAIEvent")) {
-			type_jna = "Pointer";
-		}
-		if (type_jna == "int[]") {
-			type_jna = "Pointer";
-		}
-		print("	" memMods type_jna " " name ";") >> javaFile;
-	}
-	print("}") >> javaFile;
-	print("") >> javaFile;
 }
 
 

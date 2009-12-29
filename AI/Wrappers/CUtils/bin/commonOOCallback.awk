@@ -86,6 +86,8 @@ BEGIN {
 	#
 	#
 	#
+
+	size_funcs = 0;
 }
 
 function isBufferedFunc(funcFullName_b) {
