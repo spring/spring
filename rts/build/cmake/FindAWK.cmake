@@ -2,6 +2,7 @@
 # Find the native AWK executable
 #
 #  AWK_BIN         - AWK executable
+#  AWK_VERSION     - AWK version (first line of output of "${AWK_BIN} -W version")
 #  AWK_FOUND       - TRUE if AWK binary was found.
 
 
@@ -26,12 +27,34 @@ endif (CMAKE_HOST_WIN32)
 # if AWK_BIN is valid
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(AWK DEFAULT_MSG AWK_BIN)
 
-if    (NOT AWK_FOUND)
-	set(AWK_BIN) # clear
-endif (NOT AWK_FOUND)
+if    (AWK_FOUND)
+	# try to fetch AWK version
+	# We use "-W version" instead of "--version", cause the later is
+	# not supported by all AWK versions, for example mawk.
+	EXECUTE_PROCESS(COMMAND ${AWK_BIN} -W version
+		RESULT_VARIABLE RET_VAL
+		OUTPUT_VARIABLE AWK_VERSION
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	if    (${RET_VAL} EQUAL 0)
+		# reduce to first line
+		string(REPLACE "\\n.*" "" AWK_VERSION "${AWK_VERSION}")
+		if    (NOT AWK_FIND_QUIETLY)
+			message(STATUS "AWK version: ${AWK_VERSION}")
+		endif (NOT AWK_FIND_QUIETLY)
+	else  (${RET_VAL} EQUAL 0)
+		# clear
+		set(AWK_VERSION)
+	endif (${RET_VAL} EQUAL 0)
+else  (AWK_FOUND)
+	# clear
+	set(AWK_BIN)
+	set(AWK_VERSION)
+endif (AWK_FOUND)
 
 # Show these variables only in the advanced view in the GUI, and make them global
 MARK_AS_ADVANCED(
 	AWK_FOUND
 	AWK_BIN
+	AWK_VERSION
 	)
