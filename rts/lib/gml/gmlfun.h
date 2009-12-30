@@ -12,6 +12,7 @@
 #include <set>
 #include <map>
 #include "LogOutput.h"
+#include <string.h>
 
 #define GML_ENABLE_DEBUG 0
 
