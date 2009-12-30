@@ -18,6 +18,7 @@
 #include <boost/version.hpp>
 #include <map>
 #include <set>
+#include <string.h>
 
 #define GML_QUOTE(x) #x
 
