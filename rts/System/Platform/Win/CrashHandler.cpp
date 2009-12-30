@@ -118,6 +118,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 
 	char *printstrings = (char *)GlobalAlloc(GMEM_FIXED, 0); // use globalalloc to reduce risk for allocator related deadlock
 
+	bool containsAtiDll = false;
 	while(1) {
 		more = StackWalk(
 			IMAGE_FILE_MACHINE_I386, // TODO: fix this for 64 bit windows?
@@ -157,7 +158,15 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
 			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08X]", count, modname, sf.AddrPC.Offset);
 		}
+
+		const std::string str_modname = modname;
+		containsAtiDll = (containsAtiDll || (str_modname.find("atioglxx.dll") != std::string::npos));
+
 		++count;
+	}
+
+	if (containsAtiDll) {
+		PRINT("This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.");
 	}
 
 	if(suspended)
