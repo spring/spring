@@ -425,7 +425,7 @@ public:
 
 	void gmlClientAux() {
 #ifdef _WIN32
-		extern HANDLE simthread;
+		extern HANDLE simthread; // from System/Platform/Win/CrashHandler.cpp
 		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 						&simthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 #endif
