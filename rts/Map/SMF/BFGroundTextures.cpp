@@ -259,7 +259,6 @@ void CBFGroundTextures::DrawUpdate(void)
 
 		for (int x = 0; x < numBigTexX; ++x) {
 			GroundSquare* square = &squares[y * numBigTexX + x];
-			stretchFactors[y*numBigTexX+x]++;
 
 			if (!TexSquareInView(x, y)) {
 				if ((square->texLevel < 3) && (gu->drawFrame - square->lastUsed > 120)) {
