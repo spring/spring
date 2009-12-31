@@ -420,6 +420,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
 
+	PrintLoadMsg("Calculating smooth height mesh");
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE, SQUARE_SIZE*40);
 
 	moveinfo = new CMoveInfo();
