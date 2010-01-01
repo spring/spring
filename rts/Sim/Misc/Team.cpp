@@ -76,39 +76,15 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(metalReceived),
 				CR_MEMBER(energySent),
 				CR_MEMBER(energyReceived),
-				CR_MEMBER(currentStats),
+				//CR_MEMBER(currentStats),
 				CR_MEMBER(lastStatSave),
 				CR_MEMBER(numCommanders),
-				CR_MEMBER(statHistory),
+				//CR_MEMBER(statHistory),
 				CR_MEMBER(modParams),
 				CR_MEMBER(modParamsMap),
 				CR_RESERVED(64)
 				));
 
-CR_BIND(CTeam::Statistics,);
-
-CR_REG_METADATA_SUB(CTeam, Statistics, (
-					CR_MEMBER(metalUsed),
-					CR_MEMBER(energyUsed),
-					CR_MEMBER(metalProduced),
-					CR_MEMBER(energyProduced),
-					CR_MEMBER(metalExcess),
-					CR_MEMBER(energyExcess),
-					CR_MEMBER(metalReceived),
-					CR_MEMBER(energyReceived),
-					CR_MEMBER(metalSent),
-					CR_MEMBER(energySent),
-					CR_MEMBER(damageDealt),
-					CR_MEMBER(damageReceived),
-					CR_MEMBER(unitsProduced),
-					CR_MEMBER(unitsDied),
-					CR_MEMBER(unitsReceived),
-					CR_MEMBER(unitsSent),
-					CR_MEMBER(unitsCaptured),
-					CR_MEMBER(unitsOutCaptured),
-					CR_MEMBER(unitsKilled),
-					CR_RESERVED(16)
-					));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

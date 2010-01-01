@@ -42,6 +42,7 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Game/ChatMessage
 	../../rts/Game/Action
 	../../rts/Sim/Misc/TeamBase
+	../../rts/Sim/Misc/TeamStatistics
 	../../rts/Sim/Misc/AllyTeam
 	../../rts/Lua/LuaIO
 	../../rts/Lua/LuaParser

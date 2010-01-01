@@ -10,14 +10,13 @@
 #include <list>
 
 #include "TeamBase.h"
-#include "Platform/byteorder.h"
+#include "TeamStatistics.h"
 #include "Sim/Units/UnitSet.h"
 #include "ExternalAI/SkirmishAIKey.h"
 
 class CTeam : public TeamBase
 {
 	CR_DECLARE(CTeam);
-	CR_DECLARE_SUB(Statistics);
 public:
 	CTeam();
 	~CTeam();
@@ -96,51 +95,7 @@ public:
 	float energySent;
 	float energyReceived;
 
-
-	struct Statistics {
-		CR_DECLARE_STRUCT(Statistics);
-		float metalUsed,     energyUsed;
-		float metalProduced, energyProduced;
-		float metalExcess,   energyExcess;
-		float metalReceived, energyReceived; ///< received from allies
-		float metalSent,     energySent;     ///< sent to allies
-
-		float damageDealt,   damageReceived; ///< Damage taken and dealt to enemy units
-
-		int unitsProduced;
-		int unitsDied;
-		int unitsReceived;
-		int unitsSent;
-		/// units captured from enemy by us
-		int unitsCaptured;
-		/// units captured from us by enemy
-		int unitsOutCaptured;
-		/// how many enemy units have been killed by this teams units
-		int unitsKilled;
-
-		/// Change structure from host endian to little endian or vice versa.
-		void swab() {
-			metalUsed        = swabfloat(metalUsed);
-			energyUsed       = swabfloat(energyUsed);
-			metalProduced    = swabfloat(metalProduced);
-			energyProduced   = swabfloat(energyProduced);
-			metalExcess      = swabfloat(metalExcess);
-			energyExcess     = swabfloat(energyExcess);
-			metalReceived    = swabfloat(metalReceived);
-			energyReceived   = swabfloat(energyReceived);
-			metalSent        = swabfloat(metalSent);
-			energySent       = swabfloat(energySent);
-			damageDealt      = swabfloat(damageDealt);
-			damageReceived   = swabfloat(damageReceived);
-			unitsProduced    = swabdword(unitsProduced);
-			unitsDied        = swabdword(unitsDied);
-			unitsReceived    = swabdword(unitsReceived);
-			unitsSent        = swabdword(unitsSent);
-			unitsCaptured    = swabdword(unitsCaptured);
-			unitsOutCaptured = swabdword(unitsOutCaptured);
-			unitsKilled      = swabdword(unitsKilled);
-		}
-	};
+	typedef TeamStatistics Statistics;
 	Statistics currentStats;
 	/// in intervalls of this many seconds, statistics are updated
 	static const int statsPeriod = 15;
