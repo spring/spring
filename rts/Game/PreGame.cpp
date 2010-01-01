@@ -11,6 +11,7 @@
 #include "PreGame.h"
 #include "Game.h"
 #include "GameVersion.h"
+#include "Player.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "FPUCheck.h"
 #include "GameServer.h"

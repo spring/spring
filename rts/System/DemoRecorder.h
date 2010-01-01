@@ -3,10 +3,11 @@
 
 #include <vector>
 #include <fstream>
+#include <list>
 
 #include "Demo.h"
-#include "Game/Player.h"
-#include "Sim/Misc/Team.h"
+#include "Game/PlayerStatistics.h"
+#include "Sim/Misc/TeamStatistics.h"
 
 /**
 @brief Used to record demos
@@ -33,8 +34,8 @@ public:
 	void SetTime(int gameTime, int wallclockTime);
 
 	void InitializeStats(int numPlayers, int numTeams, int winningAllyTeam);
-	void SetPlayerStats(int playerNum, const CPlayer::Statistics& stats);
-	void SetTeamStats(int teamNum, const std::list< CTeam::Statistics >& stats);
+	void SetPlayerStats(int playerNum, const PlayerStatistics& stats);
+	void SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats);
 
 private:
 	void WriteFileHeader(bool updateStreamLength = true);
@@ -43,8 +44,8 @@ private:
 
 	std::ofstream recordDemo;
 	std::string wantedName;
-	std::vector< CPlayer::Statistics > playerStats;
-	std::vector< std::vector<CTeam::Statistics> > teamStats;
+	std::vector<PlayerStatistics> playerStats;
+	std::vector< std::vector<TeamStatistics> > teamStats;
 };
 
 

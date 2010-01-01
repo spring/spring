@@ -63,6 +63,7 @@ int main (int argc, char* argv[])
 	}
 	const bool printStats = vm.count("stats");
 	CDemoReader reader(filename, 0.0f);
+	reader.LoadStats();
 	if (vm.count("dump"))
 	{
 		TrafficDump(reader, true);
@@ -88,7 +89,6 @@ int main (int argc, char* argv[])
 	}
 	if (vm.count("playerstats") || printStats)
 	{
-		reader.LoadStats();
 		const std::vector<PlayerStatistics> statvec = reader.GetPlayerStats();
 		for (unsigned i = 0; i < statvec.size(); ++i)
 		{
@@ -100,7 +100,6 @@ int main (int argc, char* argv[])
 	}
 	if (vm.count("teamstats") || printStats)
 	{
-		reader.LoadStats();
 		const DemoFileHeader header = reader.GetFileHeader();
 		const std::vector< std::vector<TeamStatistics> > statvec = reader.GetTeamStats();
 		for (unsigned teamNum = 0; teamNum < statvec.size(); ++teamNum)
@@ -209,7 +208,6 @@ void PrintSep(std::ofstream& file, T value)
 
 void WriteTeamstatHistory(CDemoReader& reader, unsigned team, const std::string& file)
 {
-	reader.LoadStats();
 	const DemoFileHeader header = reader.GetFileHeader();
 	const std::vector< std::vector<TeamStatistics> >& statvec = reader.GetTeamStats();
 	if (team < statvec.size())
