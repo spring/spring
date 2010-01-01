@@ -3,9 +3,6 @@
 #include <limits>
 
 #include "DemoReader.h"
-#include "FileSystem/FileSystem.h"
-#include "ConfigHandler.h"
-#include "Game/GameSetup.h"
 #include "BaseNetProtocol.h"
 #include "Net/RawPacket.h"
 
@@ -30,10 +27,6 @@ int main (int argc, char* argv[])
 		cout << "Missing parameter (full path to demo file)\n";
 		return 0;
 	}
-
-	ConfigHandler::Instantiate("");
-	FileSystemHandler::Cleanup();
-	FileSystemHandler::Initialize(false);
 
 	CDemoReader reader(string(argv[1]), 0.0f);
 	DemoFileHeader header = reader.GetFileHeader();
@@ -108,7 +101,6 @@ int main (int argc, char* argv[])
 		}
 		delete packet;
 	}
-	FileSystemHandler::Cleanup();
 
 	for (unsigned i = 0; i != trafficCounter.size(); ++i)
 	{
