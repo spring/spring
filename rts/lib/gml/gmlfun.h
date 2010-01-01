@@ -343,11 +343,11 @@ public:
 #define GML_DUMMYRETVAL(rettype)\
 	rettype rdummy = (rettype)0;\
 	return rdummy;
-#define GML_DEBUG_RET(name)\
+#define GML_IF_SIM_THREAD_RET(name)\
 	if(gmlThreadNumber == gmlThreadCount) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRET())\
 	}
-#define GML_DEBUG_RETVAL(name, rettype)\
+#define GML_IF_SIM_THREAD_RETVAL(name, rettype)\
 	if(gmlThreadNumber == gmlThreadCount) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
@@ -355,35 +355,35 @@ public:
 #define GML_ITEMLOG_PRINT() logOutput.Print("GML error: Sim thread called %s",GML_FUNCTION);
 #define GML_DUMMYRET()
 #define GML_DUMMYRETVAL(rettype)
-#define GML_DEBUG_RET(name)
-#define GML_DEBUG_RETVAL(name, rettype)
+#define GML_IF_SIM_THREAD_RET(name)
+#define GML_IF_SIM_THREAD_RETVAL(name, rettype)
 #endif
 
 #define GML_COND(name,...)\
-	GML_DEBUG_RET(name)\
 	GML_IF_SERVER_THREAD() {\
 		gl##name(__VA_ARGS__);\
 		return;\
-	}
+	}\
+	GML_IF_SIM_THREAD_RET(name)
 
 #define GML_COND0(name)\
-	GML_DEBUG_RET(name)\
 	GML_IF_SERVER_THREAD() {\
 		gl##name();\
 		return;\
-	}
+	}\
+	GML_IF_SIM_THREAD_RET(name)
 
 #define GML_COND_RET(name,rettype,...)\
-	GML_DEBUG_RETVAL(name,rettype)\
 	GML_IF_SERVER_THREAD() {\
 		return gl##name(__VA_ARGS__);\
-	}
+	}\
+	GML_IF_SIM_THREAD_RETVAL(name,rettype)
 
 #define GML_COND_RET0(name,rettype)\
-	GML_DEBUG_RETVAL(name,rettype)\
 	GML_IF_SERVER_THREAD() {\
 		return gl##name();\
-	}
+	}\
+	GML_IF_SIM_THREAD_RETVAL(name,rettype)
 
 EXTERN inline void gmlSync(gmlQueue *qd) {
 	qd->SyncRequest();

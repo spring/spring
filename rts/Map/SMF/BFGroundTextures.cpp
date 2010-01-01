@@ -181,7 +181,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 								 1 * hdata[(y2-1) * mx + x2+1] +
 								 2 * hdata[(y2  ) * mx + x2+1] +
 								 1 * hdata[(y2+1) * mx + x2+1] ;
-					gx = std::fabs(gx);
+					gx = fabs(gx);
 
 					float gy =	-1 * hdata[(y2+1) * mx + x2-1] + //Gy sobel kernel
 								-2 * hdata[(y2+1) * mx + x2  ] +
@@ -189,7 +189,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 								 1 * hdata[(y2-1) * mx + x2-1] +
 								 2 * hdata[(y2-1) * mx + x2  ] +
 								 1 * hdata[(y2-1) * mx + x2+1] ;
-					gy = std::fabs(gy);
+					gy = fabs(gy);
 
 					float g = (gx+gy)/64; //linear sum, no need for fancy sqrt
 					g *= g;
