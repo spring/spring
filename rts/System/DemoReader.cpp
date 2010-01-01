@@ -102,7 +102,6 @@ void CDemoReader::LoadStats()
 	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
 
 	playerStats.clear();
-	// Loop through all players and read and output the statistics for each.
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum)
 	{
 		PlayerStatistics buf;
@@ -118,9 +117,6 @@ void CDemoReader::LoadStats()
 		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
 		playbackDemo.read((char*)(&numStatsPerTeam[0]), numStatsPerTeam.size());
 
-		// Loop through all team stats for each team and read and output them.
-		// We keep track of the gametime while reading the stats for a team so we
-		// can output it too.
 		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum)
 		{
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i)
