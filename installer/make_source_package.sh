@@ -74,6 +74,7 @@ include=" \
  $dir/tools/SelectionEditor/ \
  $dir/CMakeLists.txt \
  $dir/tools/unitsync/ \
+ $dir/tools/DemoTool/ \
  $dir/tools/DedicatedServer/"
 
 # On linux, win32 executables are useless.

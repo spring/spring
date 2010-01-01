@@ -297,7 +297,4 @@ else  (UNIX AND NOT MINGW)
 endif (UNIX AND NOT MINGW)
 
 # additional tools
-
-if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoTool)
-	Add_Subdirectory(tools/DemoTool)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoTool)
+Add_Subdirectory(tools/DemoTool)
