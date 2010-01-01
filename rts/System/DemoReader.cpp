@@ -46,41 +46,6 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		delete[] buf;
 	}
 
-	const int streamStartPos = playbackDemo.tellg();
-	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
-
-	// Loop through all players and read and output the statistics for each.
-	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum)
-	{
-		PlayerStatistics buf;
-		playbackDemo.read((char*)&buf, sizeof(buf));
-		buf.swab();
-		playerStats.push_back(buf);
-	}
-
-	{ // Team statistics follow player statistics.
-		teamStats.resize(fileHeader.numTeams);
-		// Read the array containing the number of team stats for each team.
-		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
-		playbackDemo.read((char*)(&numStatsPerTeam[0]), numStatsPerTeam.size());
-
-		// Loop through all team stats for each team and read and output them.
-		// We keep track of the gametime while reading the stats for a team so we
-		// can output it too.
-		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum)
-		{
-			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i)
-			{
-				TeamStatistics buf;
-				playbackDemo.read((char*)&buf, sizeof(buf));
-				buf.swab();
-				teamStats[teamNum].push_back(buf);
-			}
-		}
-	}
-
-	playbackDemo.seekg(streamStartPos);
-
 	playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
 	chunkHeader.swab();
 
@@ -129,5 +94,45 @@ const std::vector<PlayerStatistics>& CDemoReader::GetPlayerStats() const
 const std::vector< std::vector<TeamStatistics> >& CDemoReader::GetTeamStats() const
 {
 	return teamStats;
+}
+
+void CDemoReader::LoadStats()
+{
+	const int curPos = playbackDemo.tellg();
+	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
+
+	playerStats.clear();
+	// Loop through all players and read and output the statistics for each.
+	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum)
+	{
+		PlayerStatistics buf;
+		playbackDemo.read((char*)&buf, sizeof(buf));
+		buf.swab();
+		playerStats.push_back(buf);
+	}
+
+	{ // Team statistics follow player statistics.
+		teamStats.clear();
+		teamStats.resize(fileHeader.numTeams);
+		// Read the array containing the number of team stats for each team.
+		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
+		playbackDemo.read((char*)(&numStatsPerTeam[0]), numStatsPerTeam.size());
+
+		// Loop through all team stats for each team and read and output them.
+		// We keep track of the gametime while reading the stats for a team so we
+		// can output it too.
+		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum)
+		{
+			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i)
+			{
+				TeamStatistics buf;
+				playbackDemo.read((char*)&buf, sizeof(buf));
+				buf.swab();
+				teamStats[teamNum].push_back(buf);
+			}
+		}
+	}
+
+	playbackDemo.seekg(curPos);
 }
 

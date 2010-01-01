@@ -44,6 +44,9 @@ public:
 	const std::vector<PlayerStatistics>& GetPlayerStats() const;
 	const std::vector< std::vector<TeamStatistics> >& GetTeamStats() const;
 
+	/// Not needed for normal demo watching
+	void LoadStats();
+
 private:
 	std::ifstream playbackDemo;
 	float demoTimeOffset;
