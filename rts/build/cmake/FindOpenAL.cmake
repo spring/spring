@@ -48,6 +48,8 @@
 # OPENAL_LIBRARY to override this selection or set the CMake environment
 # CMAKE_INCLUDE_PATH to modify the search paths.
 
+INCLUDE(FindPackageHandleStandardArgs)
+
 if (OPENAL_INCLUDE_DIR AND OPENAL_LIBRARY)
 	# Already in cache, be silent
 	set(OpenAL_FIND_QUIETLY TRUE)

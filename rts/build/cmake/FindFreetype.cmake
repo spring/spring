@@ -18,6 +18,8 @@
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
+INCLUDE(FindPackageHandleStandardArgs)
+
 if    (FREETYPE_LIBRARIES AND FREETYPE_INCLUDE_DIR)
 	# Already in cache, be silent
 	set(Freetype_FIND_QUIETLY TRUE)

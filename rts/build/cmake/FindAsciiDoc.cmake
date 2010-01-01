@@ -8,6 +8,8 @@
 #  XSLTPROC_FOUND - TRUE if XSLTProc was found
 #  DOCBOOK_FOUND  - TRUE if DocBook was found
 
+INCLUDE(FindPackageHandleStandardArgs)
+
 # Already in cache, be silent
 IF    (ASCIIDOC_BIN)
 	SET(AsciiDoc_FIND_QUIETLY TRUE)
@@ -37,8 +39,6 @@ find_file(DOCBOOK_XSL
 	PATH_SUFFIXES xml/docbook/stylesheet/nwalsh/manpages
 	DOC "DocBook XSL Style-Sheet"
 	)
-
-INCLUDE(FindPackageHandleStandardArgs)
 
 # handle the QUIETLY and REQUIRED arguments and set ASCIIDOC_FOUND to TRUE if
 # all listed variables are TRUE

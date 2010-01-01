@@ -8,6 +8,7 @@
 #  GLEW_LIBRARIES     - Link these to use GLEW
 #
 
+INCLUDE(FindPackageHandleStandardArgs)
 
 IF    (GLEW_INCLUDE_DIR)
 	# Already in cache, be silent
