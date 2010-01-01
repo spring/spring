@@ -1,13 +1,15 @@
 #include <string>
 #include <iostream>
-#include <limits>
+#include <boost/program_options.hpp>
 
 #include "DemoReader.h"
 #include "BaseNetProtocol.h"
 #include "Net/RawPacket.h"
+#include "StringSerializer.h"
 
 using namespace std;
 using namespace netcode;
+namespace po = boost::program_options;
 
 /*
 Usage:
@@ -20,16 +22,90 @@ When compiling for windows with MinGW, make sure to use the
 no console output (you still could use this.exe > z.tzt though).
 */
 
+void TrafficDump(CDemoReader& reader, bool trafficStats);
+
 int main (int argc, char* argv[])
 {
-	if (argc <= 1)
+	string filename;
+	po::variables_map vm;
 	{
-		cout << "Missing parameter (full path to demo file)\n";
+		po::options_description all;
+		all.add_options()("demofile,f", po::value<std::string>(), "Path to demo file");
+		po::positional_options_description p;
+		p.add("demofile", 1);
+		all.add_options()("help,h", "This one");
+		all.add_options()("dump,d", "Only dump networc traffic saved in demo");
+		all.add_options()("stats,s", "Print all game, player and team stats");
+		all.add_options()("header,H", "Print demoheader content");
+		all.add_options()("playerstats,p", "Print playerstats");
+		all.add_options()("teamstats,t", "Print teamstats");
+
+		po::store(po::command_line_parser(argc, argv).options(all).positional(p).run(), vm);
+		po::notify(vm);
+		
+		if (vm.count("help"))
+		{
+			cout << "demotool Usage: " << endl;
+			all.print(cout);
+			return 0;
+		}
+		if (vm.count("demofile"))
+			filename = vm["demofile"].as<std::string>();
+		else
+		{
+			cout << "No demofile given" << endl;
+			all.print(cout);
+			return 1;
+		}
+	}
+	const bool printStats = vm.count("stats");
+	CDemoReader reader(filename, 0.0f);
+	if (vm.count("dump"))
+	{
+		TrafficDump(reader, true);
 		return 0;
 	}
+	
+	if (vm.count("header") || printStats)
+	{
+		wstringstream buf;
+		buf << reader.GetFileHeader();
+		wcout << buf.str();
+	}
+	if (vm.count("playerstats") || printStats)
+	{
+		const std::vector<PlayerStatistics> statvec = reader.GetPlayerStats();
+		for (unsigned i = 0; i < statvec.size(); ++i)
+		{
+			wcout << L"-- Player statistics for player " << i << L" --" << endl;
+			wstringstream buf;
+			buf << statvec[i];
+			wcout << buf.str();
+		}
+	}
+	if (vm.count("teamstats") || printStats)
+	{
+		const DemoFileHeader header = reader.GetFileHeader();
+		const std::vector< std::vector<TeamStatistics> > statvec = reader.GetTeamStats();
+		for (unsigned teamNum = 0; teamNum < statvec.size(); ++teamNum)
+		{
+			int time = 0;
+			for (unsigned i = 0; i < statvec[teamNum].size(); ++i)
+			{
+				wcout << L"-- Team statistics for player " << teamNum << L", game second " << time << L" --" << endl;
+				wstringstream buf;
+				buf << statvec[teamNum][i];
+				time += header.teamStatPeriod;
+				wcout << buf.str();
+			}
+		}
+	}
+	return 0;
+}
 
-	CDemoReader reader(string(argv[1]), 0.0f);
-	DemoFileHeader header = reader.GetFileHeader();
+
+void TrafficDump(CDemoReader& reader, bool trafficStats)
+{
 	std::vector<unsigned> trafficCounter(55, 0);
 	int frame = 0;
 	while (!reader.ReachedEnd())
@@ -104,8 +180,7 @@ int main (int argc, char* argv[])
 
 	for (unsigned i = 0; i != trafficCounter.size(); ++i)
 	{
-		if (trafficCounter[i] > 0)
+		if (trafficStats && trafficCounter[i] > 0)
 			cout << "Msg " << i << ": " << trafficCounter[i] << endl;
 	}
-	return 0;
-}
+};

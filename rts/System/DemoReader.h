@@ -40,6 +40,9 @@ public:
 	{
 		return setupScript;
 	};
+	
+	const std::vector<PlayerStatistics>& GetPlayerStats() const;
+	const std::vector< std::vector<TeamStatistics> >& GetTeamStats() const;
 
 private:
 	std::ifstream playbackDemo;
