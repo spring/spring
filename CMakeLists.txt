@@ -298,10 +298,6 @@ endif (UNIX AND NOT MINGW)
 
 # additional tools
 
-if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)
-	Add_Subdirectory(tools/DemoAnalyser)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)
-
-if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoDumper)
-	Add_Subdirectory(tools/DemoDumper)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoDumper)
+if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoTool)
+	Add_Subdirectory(tools/DemoTool)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoTool)
