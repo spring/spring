@@ -936,6 +936,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\PlayerStatistics.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerStatistics.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\PreGame.cpp"
 				>
 			</File>
@@ -3564,6 +3572,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\TeamHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamStatistics.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamStatistics.h"
 					>
 				</File>
 				<File
