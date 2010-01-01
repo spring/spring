@@ -4,7 +4,7 @@
 #include <boost/cstdint.hpp>
 #include "mmgr.h"
 
-#include "Game/PlayerBase.h"
+#include "Game/PlayerStatistics.h"
 #include "Sim/Misc/Team.h"
 #include "Net/RawPacket.h"
 #include "Rendering/InMapDraw.h"

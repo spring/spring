@@ -3,7 +3,6 @@
 
 #include <cstdlib>
 
-#include "Platform/byteorder.h"
 
 PlayerBase::PlayerBase() :
 	TeamController(),
@@ -32,13 +31,4 @@ void PlayerBase::SetValue(const std::string& key, const std::string& value)
 		isFromDemo = static_cast<bool>(std::atoi(value.c_str()));
 	else
 		customValues[key] = value;
-}
-
-void PlayerStatistics::swab()
-{
-	swabTC();
-
-	mousePixels = swabdword(mousePixels);
-	mouseClicks = swabdword(mouseClicks);
-	keyPresses = swabdword(keyPresses);
 }

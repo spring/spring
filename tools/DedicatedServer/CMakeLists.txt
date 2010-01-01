@@ -36,6 +36,7 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Game/GameSetup
 	../../rts/Game/GameData
 	../../rts/Game/PlayerBase
+	../../rts/Game/PlayerStatistics
 	../../rts/Game/GameVersion
 	../../rts/Game/CommandMessage
 	../../rts/Game/ChatMessage
