@@ -5,6 +5,7 @@
 #  AWK_VERSION     - AWK version (first line of output of "${AWK_BIN} -W version")
 #  AWK_FOUND       - TRUE if AWK binary was found.
 
+INCLUDE(FindPackageHandleStandardArgs)
 
 IF    (AWK_BIN)
 	# Already in cache, be silent
