@@ -7,10 +7,6 @@ SET(build_files
 	../../rts/System/Net/RawPacket
 	../../rts/System/DemoReader
 	../../rts/System/Demo)
-IF (WIN32)
-	SET(build_files ${build_files}
-		../../rts/System/Platform/Win/WinVersion)
-ENDIF (WIN32)
 
 ADD_EXECUTABLE(demotool EXCLUDE_FROM_ALL DemoTool ${build_files})
 IF (MINGW)
