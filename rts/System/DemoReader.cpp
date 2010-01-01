@@ -27,7 +27,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	if (memcmp(fileHeader.magic, DEMOFILE_MAGIC, sizeof(fileHeader.magic))
 		|| fileHeader.version != DEMOFILE_VERSION
 		|| fileHeader.headerSize != sizeof(fileHeader)
-		// || fileHeader.playerStatElemSize != sizeof(PlayerStatistics)
+		|| fileHeader.playerStatElemSize != sizeof(PlayerStatistics)
 		// || fileHeader.teamStatElemSize != sizeof(TeamStatistics)
 		// Don't compare spring version in debug mode: we don't want to make
 		// debugging SVN demos impossible (because VERSION_STRING is different
@@ -45,6 +45,35 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		setupScript = std::string(buf);
 		delete[] buf;
 	}
+
+	const int streamStartPos = playbackDemo.tellg();
+
+	// Loop through all players and read and output the statistics for each.
+	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum)
+	{
+		PlayerStatistics buf;
+		playbackDemo.read((char*)&buf, sizeof(buf));
+		playerStats.push_back(buf);
+	}
+/*
+	{ // Team statistics follow player statistics.
+		// Read the array containing the number of team stats for each team.
+		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
+		playbackDemo.read((char*)(numStatsPerTeam[0]), numStatsPerTeam.size());
+
+		// Loop through all team stats for each team and read and output them.
+		// We keep track of the gametime while reading the stats for a team so we
+		// can output it too.
+		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum)
+		{
+			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i)
+			{
+				file.read((char*)&teamStats, sizeof(teamStats));
+			}
+		}
+	}*/
+
+	playbackDemo.seekg(streamStartPos);
 
 	playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
 	chunkHeader.swab();

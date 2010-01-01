@@ -2,8 +2,11 @@
 #define DEMO_READER
 
 #include <fstream>
+#include <vector>
 
 #include "Demo.h"
+
+#include "Game/PlayerStatistics.h"
 
 namespace netcode { class RawPacket; }
 
@@ -43,6 +46,8 @@ private:
 	float nextDemoRead;
 	DemoStreamChunkHeader chunkHeader;
 	std::string setupScript;	// the original, unaltered version from script
+	
+	std::vector<PlayerStatistics> playerStats;
 };
 
 #endif

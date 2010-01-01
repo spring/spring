@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Game/PlayerBase.h"
+#include "Game/PlayerStatistics.h"
 
 namespace netcode
 {
