@@ -55,8 +55,9 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		playbackDemo.read((char*)&buf, sizeof(buf));
 		playerStats.push_back(buf);
 	}
-/*
+
 	{ // Team statistics follow player statistics.
+		teamStats.resize(fileHeader.numTeams);
 		// Read the array containing the number of team stats for each team.
 		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
 		playbackDemo.read((char*)(numStatsPerTeam[0]), numStatsPerTeam.size());
@@ -68,10 +69,12 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		{
 			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i)
 			{
-				file.read((char*)&teamStats, sizeof(teamStats));
+				TeamStatistics buf;
+				playbackDemo.read((char*)&buf, sizeof(buf));
+				teamStats[teamNum].push_back(buf);
 			}
 		}
-	}*/
+	}
 
 	playbackDemo.seekg(streamStartPos);
 

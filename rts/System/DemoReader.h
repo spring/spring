@@ -7,6 +7,7 @@
 #include "Demo.h"
 
 #include "Game/PlayerStatistics.h"
+#include "Sim/Misc/TeamStatistics.h"
 
 namespace netcode { class RawPacket; }
 
@@ -48,6 +49,7 @@ private:
 	std::string setupScript;	// the original, unaltered version from script
 	
 	std::vector<PlayerStatistics> playerStats;
+	std::vector< std::vector<TeamStatistics> > teamStats;
 };
 
 #endif
