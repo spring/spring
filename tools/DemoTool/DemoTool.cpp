@@ -23,6 +23,7 @@ no console output (you still could use this.exe > z.tzt though).
 */
 
 void TrafficDump(CDemoReader& reader, bool trafficStats);
+void WriteTeamstatHistory(CDemoReader& reader, unsigned team, const std::string& file);
 
 int main (int argc, char* argv[])
 {
@@ -39,6 +40,8 @@ int main (int argc, char* argv[])
 		all.add_options()("header,H", "Print demoheader content");
 		all.add_options()("playerstats,p", "Print playerstats");
 		all.add_options()("teamstats,t", "Print teamstats");
+		all.add_options()("team", po::value<unsigned>(), "Select team");
+		all.add_options()("teamsstatcsv", po::value<std::string>(), "Write teamstats in a csv file");
 
 		po::store(po::command_line_parser(argc, argv).options(all).positional(p).run(), vm);
 		po::notify(vm);
@@ -64,6 +67,17 @@ int main (int argc, char* argv[])
 	{
 		TrafficDump(reader, true);
 		return 0;
+	}
+	if (vm.count("teamsstatcsv"))
+	{
+		const std::string outfile = vm["teamsstatcsv"].as<std::string>();
+		if (!vm.count("team"))
+		{
+			cout << "teamsstatcsv requires a team to select" << endl;
+			exit(1);
+		}
+		unsigned team = vm["team"].as<unsigned>();
+		WriteTeamstatHistory(reader, team, outfile);
 	}
 	
 	if (vm.count("header") || printStats)
@@ -184,5 +198,58 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 	{
 		if (trafficStats && trafficCounter[i] > 0)
 			cout << "Msg " << i << ": " << trafficCounter[i] << endl;
+	}
+};
+
+template<typename T>
+void PrintSep(std::ofstream& file, T value)
+{
+	file << value << ";";
+}
+
+void WriteTeamstatHistory(CDemoReader& reader, unsigned team, const std::string& file)
+{
+	reader.LoadStats();
+	const DemoFileHeader header = reader.GetFileHeader();
+	const std::vector< std::vector<TeamStatistics> >& statvec = reader.GetTeamStats();
+	if (team < statvec.size())
+	{
+		int time = 0;
+		std::ofstream out(file.c_str());
+		out << "Team Statistics for " << team << endl;
+		out << "Time[sec];MetalUsed;EnergyUsed;MetalProduced;EnergyProduced;MetalExcess;EnergyExcess;"
+		    << "EnergyReceived;MetalSent;EnergySent;DamageDealt;DamageReceived;"
+		    << "UnitsProduced;UnitsDied;UnitsReceived;UnitsSent;nitsCaptured;"
+		    << "UnitsOutCaptured;UnitsKilled" << endl;
+		for (unsigned i = 0; i < statvec[team].size(); ++i)
+		{
+			PrintSep(out, time);
+			PrintSep(out, statvec[team][i].metalUsed);
+			PrintSep(out, statvec[team][i].energyUsed);
+			PrintSep(out, statvec[team][i].metalProduced);
+			PrintSep(out, statvec[team][i].energyProduced);
+			PrintSep(out, statvec[team][i].metalExcess);
+			PrintSep(out, statvec[team][i].energyExcess);
+			PrintSep(out, statvec[team][i].metalReceived);
+			PrintSep(out, statvec[team][i].energyReceived);
+			PrintSep(out, statvec[team][i].metalSent);
+			PrintSep(out, statvec[team][i].energySent);
+			PrintSep(out, statvec[team][i].damageDealt);
+			PrintSep(out, statvec[team][i].damageReceived);
+			PrintSep(out, statvec[team][i].unitsProduced);
+			PrintSep(out, statvec[team][i].unitsDied);
+			PrintSep(out, statvec[team][i].unitsReceived);
+			PrintSep(out, statvec[team][i].unitsSent);
+			PrintSep(out, statvec[team][i].unitsCaptured);
+			PrintSep(out, statvec[team][i].unitsOutCaptured);
+			PrintSep(out, statvec[team][i].unitsKilled);
+			out << endl;
+			time += header.teamStatPeriod;
+		}
+	}
+	else
+	{
+		wcout << L"Invalid teamnumber" << endl;
+		exit(1);
 	}
 };
