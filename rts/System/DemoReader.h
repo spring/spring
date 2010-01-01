@@ -1,9 +1,10 @@
 #ifndef DEMO_READER
 #define DEMO_READER
 
+#include <fstream>
+
 #include "Demo.h"
 
-class CFileHandler;
 namespace netcode { class RawPacket; }
 
 /**
@@ -37,10 +38,9 @@ public:
 	};
 
 private:
-	CFileHandler* playbackDemo;
+	std::ifstream playbackDemo;
 	float demoTimeOffset;
 	float nextDemoRead;
-	int bytesRemaining;
 	DemoStreamChunkHeader chunkHeader;
 	std::string setupScript;	// the original, unaltered version from script
 };
