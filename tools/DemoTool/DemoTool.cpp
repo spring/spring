@@ -74,6 +74,7 @@ int main (int argc, char* argv[])
 	}
 	if (vm.count("playerstats") || printStats)
 	{
+		reader.LoadStats();
 		const std::vector<PlayerStatistics> statvec = reader.GetPlayerStats();
 		for (unsigned i = 0; i < statvec.size(); ++i)
 		{
@@ -85,6 +86,7 @@ int main (int argc, char* argv[])
 	}
 	if (vm.count("teamstats") || printStats)
 	{
+		reader.LoadStats();
 		const DemoFileHeader header = reader.GetFileHeader();
 		const std::vector< std::vector<TeamStatistics> > statvec = reader.GetTeamStats();
 		for (unsigned teamNum = 0; teamNum < statvec.size(); ++teamNum)
