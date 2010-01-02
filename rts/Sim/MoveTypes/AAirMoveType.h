@@ -27,6 +27,7 @@ public:
 	AAirMoveType(CUnit* unit);
 	~AAirMoveType();
 
+	bool UseSmoothMesh() const;
 	/// goalpos to resume flying to after landing
 	float3 oldGoalPos;
 	float3 oldpos;
