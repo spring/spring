@@ -369,7 +369,7 @@ void CTAAirMoveType::UpdateFlying()
 		}
 	}
 
-	float gHeight = useSmoothMesh
+	float gHeight = UseSmoothMesh()
 			? std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z))
 			: ground->GetHeight(pos.x, pos.z);
 	// are we there yet?
@@ -658,7 +658,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 	speed.y = yspeed;
 	float h;
-	if (useSmoothMesh && aircraftState != AIRCRAFT_LANDING && aircraftState != AIRCRAFT_LANDED) {
+	if (UseSmoothMesh()) {
 		h = pos.y - std::max(
 			smoothGround->GetHeight(pos.x, pos.z),
 			smoothGround->GetHeight(pos.x + speed.x * 20.0f, pos.z + speed.z * 20.0f));

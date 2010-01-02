@@ -708,7 +708,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	// do not check if the plane can be submerged here, since it'll cause
 	// ground collisions later on
 	float gHeight;
-	if (useSmoothMesh)
+	if (UseSmoothMesh())
 		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z));
 	else
 		gHeight = ground->GetHeight(pos.x, pos.z);
