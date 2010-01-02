@@ -1095,11 +1095,9 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 	linebreak.isLineBreak = true;
 
 	bool addEllipsis = false;
+	bool currLineValid = false; //! true if there was added any data to the current line
 
 	std::list<word>::iterator wi = words.begin();
-
-
-
 
 	std::list<word> splitWords;
 	std::list<line> lines;
@@ -1108,16 +1106,17 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 		currLine->start = words.begin();
 
 	for (; ;) {
+		currLineValid = true;
 		if (wi->isLineBreak) {
 			currLine->forceLineBreak = true;
 			currLine->end = wi;
 
 			//! start a new line after the '\n'
 			lines.push_back(line());
-
-			currLine = &(lines.back());
-			currLine->start = wi;
-			currLine->start++;
+				currLineValid = false;
+				currLine = &(lines.back());
+				currLine->start = wi;
+				currLine->start++;
 		} else {
 			currLine->width += wi->width;
 			currLine->end = wi;
@@ -1154,33 +1153,34 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 					wi = words.erase(wi);
 
 				lines.push_back(line());
+					currLineValid = false;
 					currLine = &(lines.back());
 					currLine->start = wi;
-					wi--;
+					wi--; //! compensate the wi++ downwards
 			}
 		}
 
 		wi++;
 
+		if (wi == words.end()) {
+			break;
+		}
+
 		if (lines.size() >= maxLines) {
 			addEllipsis = true;
 			break;
 		}
-
-		if (wi == words.end()) {
-			break;
-		}
 	}
 
-
+	
 
 	//! empty row
-	if (currLine->start == words.end() && !currLine->forceLineBreak) {
+	if (!currLineValid || (currLine->start == words.end() && !currLine->forceLineBreak)) {
 		lines.pop_back();
 		currLine = &(lines.back());
 	}
 
-	//! if we cut the text cos of missing space add an ellipsis
+	//! if we had to cut the text because of missing space, add an ellipsis
 	if (addEllipsis)
 		AddEllipsis(lines, words, maxWidth);
 
