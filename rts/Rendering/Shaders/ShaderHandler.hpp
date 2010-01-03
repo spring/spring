@@ -10,17 +10,16 @@ class CShaderHandler {
 public:
 	static CShaderHandler* GetInstance();
 
-	void ReleaseProgramObjects();
-	Shader::IProgramObject* CreateProgramObject(const std::string&, bool);
-	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, const std::string&, bool);
+	void ReleaseProgramObjects(const std::string&);
+	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, bool);
+	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, const std::string&, const std::string&, bool);
 	Shader::IShaderObject* CreateShaderObject(const std::string&, int);
 
 private:
-	std::string GetShaderSourceText(const std::string&);
-	std::map<std::string, Shader::IProgramObject*> programObjMap;
-
 	typedef std::map<std::string, Shader::IProgramObject*> ProgramObjMap;
 	typedef std::map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
+
+	std::map<std::string, ProgramObjMap> programObjects;
 };
 
 #define shaderHandler (CShaderHandler::GetInstance())

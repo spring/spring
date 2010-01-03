@@ -120,7 +120,7 @@ CUnitDrawer::~CUnitDrawer(void)
 {
 	glDeleteTextures(1, &whiteTex);
 
-	shaderHandler->ReleaseProgramObjects();
+	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 	cubeMapHandler->Free();
 
 	std::list<GhostBuilding*>::iterator gbi;
@@ -147,11 +147,12 @@ CUnitDrawer::~CUnitDrawer(void)
 #endif
 }
 
-bool CUnitDrawer::LoadModelShaders() {
-	S3ODefShader = shaderHandler->CreateProgramObject("S3OShaderDefARB", true);
-	S3OAdvShader = shaderHandler->CreateProgramObject("S3OShaderAdvARB", true);
+bool CUnitDrawer::LoadModelShaders()
+{
+	S3ODefShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
+	S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
 	S3OCurShader = S3ODefShader;
-	MDLLSPShader = shaderHandler->CreateProgramObject("MDLLSPShaderARB", true);
+	MDLLSPShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "MDLLSPShaderARB", true);
 
 	if (!GLEW_ARB_fragment_program) {
 		// not possible to do (ARB) shader-based model rendering
