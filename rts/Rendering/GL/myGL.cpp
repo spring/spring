@@ -416,7 +416,7 @@ static bool CheckParseErrors(GLenum target, const char* filename, const char* pr
 	const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
 	logOutput.Print(
-		"[myGL::CheckParseErrors] Shader compilation error at index"
+		"[myGL::CheckParseErrors] Shader compilation error at index "
 		"%d (near \"%.30s\") when loading %s-program file %s:\n%s",
 		errorPos, program + errorPos,
 		(target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"),

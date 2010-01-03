@@ -8,7 +8,6 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Shaders/Shader.hpp"
 
 class CVertexArray;
 struct S3DModel;
@@ -18,13 +17,13 @@ class CUnit;
 class CFeature;
 struct BuildingGroundDecal;
 
+
 class CUnitDrawer
 {
 public:
 	CUnitDrawer(void);
 	~CUnitDrawer(void);
 
-	bool LoadModelShaders();
 	void Update(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
@@ -43,7 +42,7 @@ public:
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupFor3DO() const;
 	void CleanUp3DO() const;
-	void SetupForUnitDrawing(void);
+	void SetupForUnitDrawing(void) const;
 	void CleanUpUnitDrawing(void) const;
 	void SetupForGhostDrawing() const;
 	void CleanUpGhostDrawing() const;
@@ -108,10 +107,10 @@ public:
 	float LODScaleReflection;
 	float LODScaleRefraction;
 
-	Shader::IProgramObject* S3ODefShader;      // S3O model shader (V+F) without shadowing
-	Shader::IProgramObject* S3OAdvShader;      // S3O model shader (V+F) with shadowing
-	Shader::IProgramObject* S3OCurShader;      // current S3O shader (S3OShaderDef or S3OShaderAdv)
-	Shader::IProgramObject* mdlShaGenShader;   // projects 3DO/S3O model geometry into light-space
+	unsigned int unitVP;             // vertex program
+	unsigned int unitFP;             // fragment program, shadows disabled
+	unsigned int unitShadowFP;       // fragment program, shadows enabled
+	unsigned int unitShadowGenVP;    // vertex program for shadow pass
 
 	float unitDrawDist;
 	float unitDrawDistSqr;
