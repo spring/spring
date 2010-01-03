@@ -21,6 +21,7 @@ public:
 	void SetContent(const std::string& line, bool moveCursor = true);
 	
 	void SetFocus(bool focus);
+	void SetCrypt(bool focus);
 
 	boost::signal<void (void)> DefaultAction;
 
@@ -29,6 +30,7 @@ private:
 	virtual bool HandleEventSelf(const SDL_Event& ev);
 
 	bool hasFocus;
+	bool crypt;
 	std::string content;
 	unsigned cursorPos;
 };
