@@ -108,10 +108,10 @@ public:
 	float LODScaleReflection;
 	float LODScaleRefraction;
 
-	Shader::IProgramObject* S3ODefShader;      // S3O model shader (V+F) without shadowing
-	Shader::IProgramObject* S3OAdvShader;      // S3O model shader (V+F) with shadowing
-	Shader::IProgramObject* S3OCurShader;      // current S3O shader (S3OShaderDef or S3OShaderAdv)
-	Shader::IProgramObject* mdlShaGenShader;   // projects 3DO/S3O model geometry into light-space
+	Shader::IProgramObject* S3ODefShader;   // S3O model shader (V+F) without shadowing
+	Shader::IProgramObject* S3OAdvShader;   // S3O model shader (V+F) with shadowing
+	Shader::IProgramObject* S3OCurShader;   // current S3O shader (S3OShaderDef or S3OShaderAdv)
+	Shader::IProgramObject* MDLLSPShader;   // projects 3DO/S3O model geometry into light-space
 
 	float unitDrawDist;
 	float unitDrawDistSqr;

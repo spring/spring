@@ -602,14 +602,14 @@ void LuaOpenGL::EnableDrawWorldShadow()
 	glPolygonOffset(1.0f, 1.0f);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->mdlShaGenShader->Enable();
+	unitDrawer->MDLLSPShader->Enable();
 }
 
 
 void LuaOpenGL::DisableDrawWorldShadow()
 {
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->mdlShaGenShader->Disable();
+	unitDrawer->MDLLSPShader->Disable();
 
 	ResetWorldShadowMatrices();
 	DisableCommon(DRAW_WORLD_SHADOW);
