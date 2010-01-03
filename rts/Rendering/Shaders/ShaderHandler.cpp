@@ -12,20 +12,29 @@ CShaderHandler* CShaderHandler::GetInstance() {
 
 
 
-void CShaderHandler::ReleaseProgramObjects() {
-	for (ProgramObjMapIt it = programObjMap.begin(); it != programObjMap.end(); it++) {
+void CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
+	if (programObjects.find(poClass) == programObjects.end()) {
+		return;
+	}
+
+	for (ProgramObjMapIt it = programObjects[poClass].begin(); it != programObjects[poClass].end(); it++) {
 		(it->second)->Release();
 		delete (it->second);
 	}
 
-	programObjMap.clear();
+	programObjects[poClass].clear();
+	programObjects.erase(poClass);
 }
 
-Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poKey, bool arbProgram) {
+Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram) {
 	Shader::IProgramObject* po = NULL;
 
-	if (programObjMap.find(poKey) != programObjMap.end()) {
-		return (programObjMap[poKey]);
+	if (programObjects.find(poClass) != programObjects.end()) {
+		if (programObjects[poClass].find(poName) != programObjects[poClass].end()) {
+			return (programObjects[poClass][poName]);
+		}
+	} else {
+		programObjects[poClass] = ProgramObjMap();
 	}
 
 	if (arbProgram) {
@@ -34,12 +43,18 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 		po = new Shader::GLSLProgramObject();
 	}
 
-	programObjMap[poKey] = po;
+	programObjects[poClass][poName] = po;
 	return po;
 }
 
-Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poKey, const std::string& vsStr, const std::string& fsStr, bool arbProgram) {
-	Shader::IProgramObject* po = CreateProgramObject(poKey, arbProgram);
+Shader::IProgramObject* CShaderHandler::CreateProgramObject(
+	const std::string& poClass,
+	const std::string& poName,
+	const std::string& vsStr,
+	const std::string& fsStr,
+	bool arbProgram
+) {
+	Shader::IProgramObject* po = CreateProgramObject(poClass, poName, arbProgram);
 
 	if (po->IsValid()) {
 		return po;
@@ -55,51 +70,51 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 
 	if (!po->IsValid()) {
 		logOutput.Print("[CShaderHandler::CreateProgramObject]\n");
-		logOutput.Print("\tprogram-object key: %s, link-log:\n%s\n", poKey.c_str(), po->GetLog().c_str());
+		logOutput.Print("\tprogram-object name: %s, link-log:\n%s\n", poName.c_str(), po->GetLog().c_str());
 	}
 	return po;
 }
 
 
 
-Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& shaderName, int shaderType) {
-	assert(!shaderName.empty());
+Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, int soType) {
+	assert(!soName.empty());
 
 	bool arbShader = false;
 
-	std::string shaderSrc("");
-	CFileHandler shaderFile("shaders/" + shaderName);
+	std::string soSource("");
+	CFileHandler soFile("shaders/" + soName);
 
-	if (shaderFile.FileExists()) {
+	if (soFile.FileExists()) {
 		arbShader =
-			shaderName.find(".glsl") == std::string::npos &&
-			shaderName.find(".vert") == std::string::npos &&
-			shaderName.find(".frag") == std::string::npos;
+			soName.find(".glsl") == std::string::npos &&
+			soName.find(".vert") == std::string::npos &&
+			soName.find(".frag") == std::string::npos;
 
-		std::vector<char> shaderFileBuffer(shaderFile.FileSize() + 1, 0);
-		shaderFile.Read(&shaderFileBuffer[0], shaderFile.FileSize());
+		std::vector<char> soFileBuffer(soFile.FileSize() + 1, 0);
+		soFile.Read(&soFileBuffer[0], soFile.FileSize());
 
-		shaderSrc = std::string(&shaderFileBuffer[0]);
+		soSource = std::string(&soFileBuffer[0]);
 	} else {
 		arbShader =
-			(shaderName.find("!!ARBvp") != std::string::npos) ||
-			(shaderName.find("!!ARBfp") != std::string::npos);
-		shaderSrc = shaderName;
+			(soName.find("!!ARBvp") != std::string::npos) ||
+			(soName.find("!!ARBfp") != std::string::npos);
+		soSource = soName;
 	}
 
 	Shader::IShaderObject* so = NULL;
 
-	switch (shaderType) {
+	switch (soType) {
 		case GL_VERTEX_PROGRAM_ARB:
 		case GL_FRAGMENT_PROGRAM_ARB: {
 			assert(arbShader);
-			so = new Shader::ARBShaderObject(shaderType, shaderSrc);
+			so = new Shader::ARBShaderObject(soType, soSource);
 		} break;
 
 		case GL_VERTEX_SHADER:
 		case GL_FRAGMENT_SHADER: {
 			assert(!arbShader);
-			so = new Shader::GLSLShaderObject(shaderType, shaderSrc);
+			so = new Shader::GLSLShaderObject(soType, soSource);
 		} break;
 	}
 
@@ -108,7 +123,7 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& sha
 
 	if (!so->IsValid()) {
 		logOutput.Print("[CShaderHandler::CreateShaderObject]\n");
-		logOutput.Print("\tshader-object name: %s, compile-log:\n%s\n", shaderName.c_str(), (so->GetLog()).c_str());
+		logOutput.Print("\tshader-object name: %s, compile-log:\n%s\n", soName.c_str(), (so->GetLog()).c_str());
 	}
 	return so;
 }
