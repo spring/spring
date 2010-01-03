@@ -6,6 +6,7 @@
 #include <boost/bind.hpp>
 
 #include "Game/GameVersion.h"
+#include "ConfigHandler.h"
 #include "aGui/LineEdit.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -25,9 +26,12 @@ UpdaterWindow::UpdaterWindow() : agui::Window("Lobby connection")
 	agui::HorizontalLayout* usrLayout = new agui::HorizontalLayout(wndLayout);
 	new agui::TextElement(std::string("Username:"), usrLayout);
 	user = new agui::LineEdit(usrLayout);
+	user->SetContent(configHandler->GetString("name", "UnnamedPlayer"));
 	agui::HorizontalLayout* pwdLayout = new agui::HorizontalLayout(wndLayout);
 	new agui::TextElement(std::string("Password:"), pwdLayout);
 	passwd = new agui::LineEdit(pwdLayout);
+	passwd->SetCrypt(true);
+	passwd->SetFocus(true);
 	
 	agui::HorizontalLayout* bttnLayout = new agui::HorizontalLayout(wndLayout);
 	
@@ -87,9 +91,11 @@ void UpdaterWindow::RegisterAccept()
 void UpdaterWindow::Login()
 {
 	Connection::Login(user->GetContent(), passwd->GetContent());
+	configHandler->SetString("name", user->GetContent());
 }
 
 void UpdaterWindow::Register()
 {
 	Connection::Register(user->GetContent(), passwd->GetContent());
+	configHandler->SetString("name", user->GetContent());
 }
