@@ -148,10 +148,10 @@ CUnitDrawer::~CUnitDrawer(void)
 }
 
 bool CUnitDrawer::LoadModelShaders() {
-	S3ODefShader    = shaderHandler->CreateProgramObject("S3OShaderDefARB", true);
-	S3OAdvShader    = shaderHandler->CreateProgramObject("S3OShaderAdvARB", true);
-	S3OCurShader    = S3ODefShader;
-	mdlShaGenShader = shaderHandler->CreateProgramObject("MdlShadowShader", true);
+	S3ODefShader = shaderHandler->CreateProgramObject("S3OShaderDefARB", true);
+	S3OAdvShader = shaderHandler->CreateProgramObject("S3OShaderAdvARB", true);
+	S3OCurShader = S3ODefShader;
+	MDLLSPShader = shaderHandler->CreateProgramObject("MDLLSPShaderARB", true);
 
 	if (!GLEW_ARB_fragment_program) {
 		// not possible to do (ARB) shader-based model rendering
@@ -173,8 +173,8 @@ bool CUnitDrawer::LoadModelShaders() {
 		S3OAdvShader->Link();
 		S3OCurShader = S3OAdvShader;
 
-		mdlShaGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("unit_genshadow.vp", GL_VERTEX_PROGRAM_ARB));
-		mdlShaGenShader->Link();
+		MDLLSPShader->AttachShaderObject(shaderHandler->CreateShaderObject("unit_genshadow.vp", GL_VERTEX_PROGRAM_ARB));
+		MDLLSPShader->Link();
 	}
 
 	return true;
@@ -588,17 +588,17 @@ static void SetupShadowDrawing()
 
 	const CShadowHandler* sh = shadowHandler;
 
-	unitDrawer->mdlShaGenShader->Enable();
-	unitDrawer->mdlShaGenShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-	unitDrawer->mdlShaGenShader->SetUniform4f(16, sh->xmid, sh->ymid, 0.0f, 0.0f);
-	unitDrawer->mdlShaGenShader->SetUniform4f(17, sh->p17,  sh->p17,  0.0f, 0.0f);
-	unitDrawer->mdlShaGenShader->SetUniform4f(18, sh->p18,  sh->p18,  0.0f, 0.0f);
+	unitDrawer->MDLLSPShader->Enable();
+	unitDrawer->MDLLSPShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+	unitDrawer->MDLLSPShader->SetUniform4f(16, sh->xmid, sh->ymid, 0.0f, 0.0f);
+	unitDrawer->MDLLSPShader->SetUniform4f(17, sh->p17,  sh->p17,  0.0f, 0.0f);
+	unitDrawer->MDLLSPShader->SetUniform4f(18, sh->p18,  sh->p18,  0.0f, 0.0f);
 }
 
 
 static void CleanUpShadowDrawing()
 {
-	unitDrawer->mdlShaGenShader->Disable();
+	unitDrawer->MDLLSPShader->Disable();
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
@@ -705,7 +705,7 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	mdlShaGenShader->Enable();
+	MDLLSPShader->Enable();
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
@@ -726,7 +726,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	}
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	mdlShaGenShader->Disable();
+	MDLLSPShader->Disable();
 
 	DrawShadowShaderUnits();
 }
