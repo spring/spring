@@ -3,13 +3,12 @@
 
 #include "lib/liblobby/Connection.h"
 
-#include "Game/GameVersion.h"
 #include "aGui/Window.h"
 
 namespace agui
 {
 	class TextElement;
-	class Button;
+	class LineEdit;
 };
 
 class UpdaterWindow : public agui::Window, public Connection
@@ -18,11 +17,19 @@ public:
 	UpdaterWindow();
 
 	virtual void DoneConnecting(bool success, const std::string& err);
-	virtual void DataReceived(const std::string& command, const std::string& msg);
+	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode);
+	virtual void Denied(const std::string& reason);
+	virtual void RegisterDenied(const std::string& reason);
+	virtual void RegisterAccept();
 	
 private:
+	void Login();
+	void Register();
+	
+	agui::TextElement* serverLabel;
 	agui::TextElement* label;
-	agui::Button* close;
+	agui::LineEdit* user;
+	agui::LineEdit* passwd;
 };
 
 

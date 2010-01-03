@@ -31,6 +31,14 @@ public:
 		}
 	};
 	
+	int GetInt()
+	{
+		std::istringstream buf(GetWord());
+		int temp;
+		buf >> temp;
+		return temp;
+	};
+	
 private:
 	std::string message;
 	size_t pos;
@@ -46,8 +54,14 @@ public:
 	virtual void DoneConnecting(bool succes, const std::string& err) {};
 	virtual void Disconnected() {};
 
+	void Register(const std::string& name, const std::string& password);
+	void Login(const std::string& name, const std::string& password);
 	void SendData(const std::string& msg);
-	virtual void DataReceived(const std::string& command, const std::string& msg) {};
+
+    virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode) {};
+    virtual void Denied(const std::string& reason) {};
+    virtual void RegisterDenied(const std::string& reason) {};
+    virtual void RegisterAccept() {};
 
 	virtual void NetworkError(const std::string& msg) {};
 
@@ -55,6 +69,8 @@ public:
 	void Run();
 
 private:
+	void DataReceived(const std::string& command, const std::string& msg);
+
 	void ConnectCallback(const boost::system::error_code& error);
 	void ReceiveCallback(const boost::system::error_code& error, size_t bytes);
 	void SendCallback(const boost::system::error_code& error);
