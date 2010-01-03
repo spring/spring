@@ -7,6 +7,8 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
+#include "md5/md5.h"
+#include "md5/base64.h"
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;
@@ -52,6 +54,30 @@ void Connection::Connect(const std::string& server, int port)
 	sock.async_connect(serverep, boost::bind(&Connection::ConnectCallback, this, placeholders::error));
 }
 
+std::string MD5Base64(const std::string& plain)
+{
+	md5_state_t state;
+	md5_init(&state);
+	md5_append(&state, (md5_byte_t*)plain.c_str(), plain.size());
+	unsigned char digest[16];
+	md5_finish(&state, digest);
+	return base64_encode(digest, 16);
+}
+
+void Connection::Register(const std::string& name, const std::string& password)
+{
+	std::ostringstream out;
+	out << "REGISTER " << name << " " << MD5Base64(password) << "\n";
+	SendData(out.str());
+}
+
+void Connection::Login(const std::string& name, const std::string& password)
+{
+	std::ostringstream out;
+	out << "LOGIN " << name << " " << MD5Base64(password) << " 0 localhost SLobby v0.1\n";
+	SendData(out.str());
+}
+
 void Connection::SendData(const std::string& msg)
 {
 	sock.send(boost::asio::buffer(msg));
@@ -66,6 +92,38 @@ void Connection::Run()
 {
 	netservice.run();
 	netservice.reset();
+}
+
+void Connection::DataReceived(const std::string& command, const std::string& msg)
+{
+	if (command == "TASServer")
+	{
+		if (!msg.empty())
+		{
+			RawTextMessage buf(msg);
+			std::string serverVer = buf.GetWord();
+			std::string clientVer = buf.GetWord();
+			int udpport = buf.GetInt();
+			int mode = buf.GetInt();
+			ServerGreeting(serverVer, clientVer, udpport, mode);
+		}
+	}
+	else if (command == "DENIED")
+	{
+		Denied(msg);
+	}
+	else if (command == "REGISTRATIONDENIED")
+	{
+		RegisterDenied(msg);
+	}
+	else if (command == "REGISTRATIONACCEPTED")
+	{
+		RegisterAccept();
+	}
+	else
+	{
+		std::cout << "Unhandled command: " << command << " " << msg << std::endl;
+	}
 }
 
 void Connection::ConnectCallback(const boost::system::error_code& error)

@@ -214,7 +214,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Start the Lobby", menu);
 		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
-		Button* update = new Button("Check for updates", menu);
+		Button* update = new Button("Lobby connect (WIP)", menu);
 		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 
 		userSetting = configHandler->GetString("LastSelectedSetting", "");

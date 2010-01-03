@@ -5,23 +5,41 @@
 
 #include <boost/bind.hpp>
 
+#include "Game/GameVersion.h"
+#include "aGui/LineEdit.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
 #include "aGui/TextElement.h"
 #include "aGui/Button.h"
 #include "aGui/Gui.h"
 
-UpdaterWindow::UpdaterWindow() : agui::Window("Update checker")
+UpdaterWindow::UpdaterWindow() : agui::Window("Lobby connection")
 {
 	agui::gui->AddElement(this);
 	SetPos(0.5, 0.5);
-	SetSize(0.4, 0.2);
-	
+	SetSize(0.4, 0.3);
+
 	agui::VerticalLayout* wndLayout = new agui::VerticalLayout(this);
-	new agui::TextElement(std::string("Spring version: ")+SpringVersion::Get(), wndLayout);
-	label = new agui::TextElement("Connecting...", wndLayout);
-	close = new agui::Button("Close", wndLayout);
+	label = new agui::TextElement("", wndLayout);
+
+	agui::HorizontalLayout* usrLayout = new agui::HorizontalLayout(wndLayout);
+	new agui::TextElement(std::string("Username:"), usrLayout);
+	user = new agui::LineEdit(usrLayout);
+	agui::HorizontalLayout* pwdLayout = new agui::HorizontalLayout(wndLayout);
+	new agui::TextElement(std::string("Password:"), pwdLayout);
+	passwd = new agui::LineEdit(pwdLayout);
+	
+	agui::HorizontalLayout* bttnLayout = new agui::HorizontalLayout(wndLayout);
+	
+	agui::Button* login = new agui::Button("Login", bttnLayout);
+	login->Clicked.connect(boost::bind(&UpdaterWindow::Login, this));
+	agui::Button* registerb = new agui::Button("Register", bttnLayout);
+	registerb->Clicked.connect(boost::bind(&UpdaterWindow::Register, this));
+	agui::Button* close = new agui::Button("Close", bttnLayout);
 	close->Clicked.connect(WantClose);
+
+	serverLabel = new agui::TextElement(std::string("Connecting..."), wndLayout);
+
 	GeometryChange();
 	Connect("taspringmaster.clan-sy.com", 8200);
 }
@@ -30,36 +48,48 @@ void UpdaterWindow::DoneConnecting(bool success, const std::string& err)
 {
 	if (success)
 	{
-		label->SetText("Connected");
+		serverLabel->SetText("Connected to TASServer");
 	}
 	else
 	{
-		label->SetText(err);
+		serverLabel->SetText(err);
 	}
 }
 
-void UpdaterWindow::DataReceived(const std::string& command, const std::string& msg)
+void UpdaterWindow::ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode)
 {
-	if (command == "TASServer")
+	serverLabel->SetText(std::string("Connected to TASServer v")+serverVer);
+	if (springVer != SpringVersion::Get())
 	{
-		if (!msg.empty())
-		{
-			RawTextMessage buf(msg);
-			std::string serverver, clientver, udpport, mode;
-			serverver = buf.GetWord();
-			clientver = buf.GetWord();
-			udpport = buf.GetWord();
-			mode = buf.GetWord();
-			if (clientver != SpringVersion::Get())
-			{
-				label->SetText(std::string("Server has new version: ")+clientver);
-				close->Label("Damn!");
-			}
-			else
-			{
-				label->SetText("Your version is up-to-date");
-				close->Label("Good!");
-			}
-		}
+		label->SetText(std::string("Server has new version: ")+springVer + " (Yours: "+ SpringVersion::Get() + ")");
 	}
+	else
+	{
+		label->SetText("Your version is up-to-date");
+	}
+}
+
+void UpdaterWindow::Denied(const std::string& reason)
+{
+	serverLabel->SetText(reason);
+}
+
+void UpdaterWindow::RegisterDenied(const std::string& reason)
+{
+	serverLabel->SetText(reason);
+}
+
+void UpdaterWindow::RegisterAccept()
+{
+	serverLabel->SetText("Account registered successfully");
+}
+
+void UpdaterWindow::Login()
+{
+	Connection::Login(user->GetContent(), passwd->GetContent());
+}
+
+void UpdaterWindow::Register()
+{
+	Connection::Register(user->GetContent(), passwd->GetContent());
 }
