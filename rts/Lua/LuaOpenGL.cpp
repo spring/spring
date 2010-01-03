@@ -600,16 +600,17 @@ void LuaOpenGL::EnableDrawWorldShadow()
 	resetMatrixFunc = ResetWorldShadowMatrices;
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glPolygonOffset(1.0f, 1.0f);
+
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glEnable(GL_VERTEX_PROGRAM_ARB);
-	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowGenVP);
+	unitDrawer->mdlShaGenShader->Enable();
 }
 
 
 void LuaOpenGL::DisableDrawWorldShadow()
 {
-	glDisable(GL_VERTEX_PROGRAM_ARB);
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	unitDrawer->mdlShaGenShader->Disable();
+
 	ResetWorldShadowMatrices();
 	DisableCommon(DRAW_WORLD_SHADOW);
 }

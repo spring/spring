@@ -10,7 +10,7 @@ public:
 	void SetDraw(bool b) { draw = b; }
 	bool GetDraw() const { return draw; }
 
-	static HUDDrawer* Get();
+	static HUDDrawer* GetInstance();
 
 private:
 	void PushState();
@@ -25,6 +25,6 @@ private:
 	bool draw;
 };
 
-#define hudDrawer (HUDDrawer::Get())
+#define hudDrawer (HUDDrawer::GetInstance())
 
 #endif
