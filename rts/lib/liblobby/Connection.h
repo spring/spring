@@ -44,6 +44,8 @@ private:
 	size_t pos;
 };
 
+class UserCache;
+
 class Connection
 {
 public:
@@ -52,18 +54,24 @@ public:
 	
 	void Connect(const std::string& server, int port);
 	virtual void DoneConnecting(bool succes, const std::string& err) {};
-	virtual void Disconnected() {};
+	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode) {};
 
 	void Register(const std::string& name, const std::string& password);
+	virtual void RegisterDenied(const std::string& reason) {};
+	virtual void RegisterAccept() {};
+
 	void Login(const std::string& name, const std::string& password);
-	void SendData(const std::string& msg);
+	virtual void Denied(const std::string& reason) {};
+	virtual void LoginEnd() {};
 
-    virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode) {};
-    virtual void Denied(const std::string& reason) {};
-    virtual void RegisterDenied(const std::string& reason) {};
-    virtual void RegisterAccept() {};
+	void JoinChannel(const std::string& channame, const std::string& password = "");
+	virtual void Joined(const std::string& channame) {};
+	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
 
+	virtual void Disconnected() {};
 	virtual void NetworkError(const std::string& msg) {};
+
+	void SendData(const std::string& msg);
 
 	void Poll();
 	void Run();
@@ -77,6 +85,7 @@ private:
 	
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;
+	UserCache* users;
 };
 
 #endif

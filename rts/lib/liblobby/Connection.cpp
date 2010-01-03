@@ -4,11 +4,14 @@
 
 #include "Connection.h"
 
+#include <bitset>
+
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
 #include "md5/md5.h"
 #include "md5/base64.h"
+#include "UserCache.h"
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;
@@ -18,12 +21,13 @@ using namespace boost::system::errc;
 using namespace boost::asio;
 boost::asio::io_service netservice;
 
-Connection::Connection() : sock(netservice)
+Connection::Connection() : sock(netservice), users(new UserCache)
 {
 }
 
 Connection::~Connection()
 {
+	delete users;
 	sock.close();
 	netservice.poll();
 	netservice.reset();
@@ -74,7 +78,16 @@ void Connection::Register(const std::string& name, const std::string& password)
 void Connection::Login(const std::string& name, const std::string& password)
 {
 	std::ostringstream out;
-	out << "LOGIN " << name << " " << MD5Base64(password) << " 0 localhost SLobby v0.1\n";
+	out << "LOGIN " << name << " " << MD5Base64(password) << " 0 localhost libLobby v0.1\n";
+	SendData(out.str());
+}
+
+void Connection::JoinChannel(const std::string& channame, const std::string& password)
+{
+	std::ostringstream out;
+	out << "JOIN " << channame;
+	if (!password.empty())
+		out << " " << password;
 	SendData(out.str());
 }
 
@@ -112,6 +125,10 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	{
 		Denied(msg);
 	}
+	else if (command == "LOGININFOEND")
+	{
+		LoginEnd();
+	}
 	else if (command == "REGISTRATIONDENIED")
 	{
 		RegisterDenied(msg);
@@ -119,6 +136,63 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	else if (command == "REGISTRATIONACCEPTED")
 	{
 		RegisterAccept();
+	}
+	else if (command == "ADDUSER")
+	{
+		if (users)
+		{
+			RawTextMessage buf(msg);
+			std::string name = buf.GetWord();
+			UserInfo client = users->Get(name);
+			client.country = buf.GetWord();
+			client.cpu = buf.GetInt();
+			users->AddUser(client);
+		}
+	}
+	else if (command == "REMOVEUSER")
+	{
+		if (users)
+		{
+			RawTextMessage buf(msg);
+			std::string name = buf.GetWord();
+			UserInfo client = users->Get(name);
+			users->RemoveUser(client);
+		}
+	}
+	else if (command == "CLIENTSTATUS")
+	{
+		if (users)
+		{
+			RawTextMessage buf(msg);
+			std::string name = buf.GetWord();
+			UserInfo client = users->Get(name);
+			std::bitset<8> status(buf.GetInt());
+			client.ingame = status[0];
+			client.away = status[1];
+			client.rank = (status[2]? 1 : 0) + (status[3]? 2 : 0) + (status[4]? 4 : 0);
+			client.moderator = status[5];
+			client.bot = status[6];
+			users->Update(client);
+		}
+	}
+	else if (command == "JOIN")
+	{
+		if (users)
+		{
+			RawTextMessage buf(msg);
+			std::string channame = buf.GetWord();
+			Joined(channame);
+		}
+	}
+	else if (command == "JOINFAILED")
+	{
+		if (users)
+		{
+			RawTextMessage buf(msg);
+			std::string channame = buf.GetWord();
+			std::string reason = buf.GetWord();
+			JoinFailed(channame, reason);
+		}
 	}
 	else
 	{
