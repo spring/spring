@@ -1121,7 +1121,6 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 			currLine->width += wi->width;
 			currLine->end = wi;
 
-
 			if (currLine->width > maxWidth) {
 				currLine->width -= wi->width;
 
@@ -1136,13 +1135,19 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 					//! turns *wi into R
 					word wL = SplitWord(*wi, freeWordSpace);
 
+					if (splitLastWord && wL.width == 0.0f) {
+						//! With smart splitting it can happen that the word isn't splitted at all,
+						//! this can cause a race condition when the word is longer than maxWidth.
+						//! In this case we have to force an unaesthetic split.
+						wL = SplitWord(*wi, freeWordSpace, false);
+					}
+
 					//! increase by the width of the L-part of *wi
 					currLine->width += wL.width;
 
 					//! insert the L-part right before R
 					wi = words.insert(wi, wL);
 					wi++;
-
 				}
 
 				//! insert the forced linebreak (either after W or before R)
