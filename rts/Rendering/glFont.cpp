@@ -998,6 +998,25 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 	line* l = &(lines.back());
 
+	//! If the last line ends with a linebreak, remove it
+	std::list<word>::iterator wi_end = l->end;
+	if (wi_end->isLineBreak) {
+		if (l->start == l->end || l->end == words.begin()) {
+			//! there is just the linebreak in that line, so replace linebreak with just a null space
+			word w;
+			w.pos       = wi_end->pos;
+			w.isSpace   = true;
+			w.numSpaces = 0;
+			l->start = words.insert(wi_end,w);
+			l->end = l->start;
+
+			words.erase(wi_end);
+		} else {
+			wi_end = words.erase(wi_end);
+			l->end = --wi_end;
+		}
+	}
+
 	//! remove as many words until we have enough free space for the ellipsis
 	while (l->end != l->start) {
 		word& w = *l->end;
