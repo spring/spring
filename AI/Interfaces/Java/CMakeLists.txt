@@ -191,8 +191,9 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 					WORKING_DIRECTORY "${myDir}"
 					COMMENT "  Running ${MVN_PHASE} phase of ${myName} Maven Project" VERBATIM)
 		else  (configureMavenProject)
+			# find java source root
 			if     (EXISTS "${myDir}/src/main/java")
-				# default Maven java source dir path
+				# default Maven source dir
 				set(mySourceDir          "${myDir}/src/main/java")
 			elseif (EXISTS "${myDir}/src")
 				# simple java source dir path
@@ -200,6 +201,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			else   (EXISTS "${myDir}/src/main/java")
 				message(SEND_ERROR "No sources dir found for Skirmish AI: ${myName}")
 			endif  (EXISTS "${myDir}/src/main/java")
+
 			# If main Java package is "my.ai.pkg", this has to be set to "my".
 			GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
 			set(myJavaPkgFirstPart       "${firstSrcSubDir}")
@@ -257,8 +259,33 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 		install(FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myInstDataDir})
 		# Install the sources archive (optional)
 		install(FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myInstDataDir}/jlib OPTIONAL)
-		# Install libraries generated/downloaded during buildtime
+
+		# Install files generated/downloaded during buildtime
 		install(DIRECTORY "${myBuildDir}/jlib/"          DESTINATION ${myInstDataDir}/jlib)
+		if    (EXISTS "${myBuildDir}/resources")
+			install(DIRECTORY "${myBuildDir}/resources/"     DESTINATION ${myInstDataDir}/resources)
+		endif (EXISTS "${myBuildDir}/resources")
+		if    (EXISTS "${myBuildDir}/config")
+			install(DIRECTORY "${myBuildDir}/config/"        DESTINATION ${myInstDataDir}/config)
+		endif (EXISTS "${myBuildDir}/config")
+		if    (EXISTS "${myBuildDir}/script")
+			install(DIRECTORY "${myBuildDir}/script/"        DESTINATION ${myInstDataDir}/script)
+		endif (EXISTS "${myBuildDir}/script")
+
+		# Install special script and config files
+		if    (EXISTS "${myDir}/src/main/groovy")
+			install(DIRECTORY "${myDir}/src/main/groovy/" DESTINATION ${myInstDataDir}/script)
+		endif (EXISTS "${myDir}/src/main/groovy")
+		if    (EXISTS "${myDir}/src/main/ruby")
+			install(DIRECTORY "${myDir}/src/main/ruby/" DESTINATION ${myInstDataDir}/script)
+		endif (EXISTS "${myDir}/src/main/ruby")
+		if    (EXISTS "${myDir}/src/main/bsh")
+			install(DIRECTORY "${myDir}/src/main/bsh/" DESTINATION ${myInstDataDir}/script)
+		endif (EXISTS "${myDir}/src/main/bsh")
+		if    (EXISTS "${myDir}/src/main/config")
+			install(DIRECTORY "${myDir}/src/main/config/" DESTINATION ${myInstDataDir}/config)
+		endif (EXISTS "${myDir}/src/main/config")
+
 		# Install jars of wrappers
 		foreach    (wrapperName ${wrapperNames})
 			# Install the wrappers main jar
