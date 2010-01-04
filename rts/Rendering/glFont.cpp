@@ -1190,7 +1190,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 			break;
 		}
 
-		if (lines.size() >= maxLines) {
+		if (lines.size() > maxLines) {
 			addEllipsis = true;
 			break;
 		}
