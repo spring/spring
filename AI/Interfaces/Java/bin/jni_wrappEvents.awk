@@ -239,7 +239,18 @@ function printNativeHandleFuncHead() {
 #	print("\t" "jobject o_ai = skirmishAIId_aiObject[skirmishAIId];") >> outFile_nc;
 #	print("\t" "//assert(o_ai != NULL);") >> outFile_nc;
 #	print("") >> outFile_nc;
-	print("\t" "switch(topic) {") >> outFile_nc;
+
+	# only add this for debugging purposes
+#	print("\t" "// in case we missed handling an exception elsewhere") >> outFile_nc;
+#	print("\t" "// and it is therefore still pending, we handle it here") >> outFile_nc;
+#	print("\t" "if ((*env)->ExceptionCheck(env)) {") >> outFile_nc;
+#	print("\t\t" "(*env)->ExceptionDescribe(env);") >> outFile_nc;
+#	print("\t\t" "_ret = -6;") >> outFile_nc;
+#	print("\t\t" "return _ret;") >> outFile_nc;
+#	print("\t" "}") >> outFile_nc;
+#	print("") >> outFile_nc;
+
+	print("\t" "switch (topic) {") >> outFile_nc;
 }
 
 
@@ -291,14 +302,14 @@ function printNativeEnd() {
 	print("") >> outFile_nh;
 
 	print("\t\t" "default: {") >> outFile_nc;
-	print("\t\t\t" "_ret = -2;") >> outFile_nc;
+	print("\t\t\t" "_ret = -4;") >> outFile_nc;
 	print("\t\t\t" "break;") >> outFile_nc;
 	print("\t\t" "}") >> outFile_nc;
 	print("\t" "}") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("\t" "if ((*env)->ExceptionCheck(env)) {") >> outFile_nc;
 	print("\t\t" "(*env)->ExceptionDescribe(env);") >> outFile_nc;
-	print("\t\t" "_ret = -2;") >> outFile_nc;
+	print("\t\t" "_ret = -5;") >> outFile_nc;
 	print("\t" "}") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("\t" "return _ret;") >> outFile_nc;
