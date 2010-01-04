@@ -1,6 +1,4 @@
 #include <GL/glew.h>
-#include <GL/glx.h>
-#include <GL/glxext.h>
 
 #include "Rendering/Shaders/Shader.hpp"
 
