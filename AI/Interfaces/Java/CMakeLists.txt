@@ -186,10 +186,13 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			set(MVN_PHASE "package")
 			#set(MVN_PHASE "help:effective-pom") # use this for debug purposes
 			add_custom_target(${myTarget} ALL
-					DEPENDS ${Java_AIINTERFACE_TARGET}
 					COMMAND "mvn" "${MVN_PHASE}" ${MVN_ATTRIBUTES}
 					WORKING_DIRECTORY "${myDir}"
 					COMMENT "  Running ${MVN_PHASE} phase of ${myName} Maven Project" VERBATIM)
+			add_dependencies(${myTarget} ${Java_AIINTERFACE_TARGET})
+			foreach    (wrapperName ${wrapperNames})
+				add_dependencies(${myTarget} ${${wrapperName}_AIWRAPPER_TARGET})
+			endforeach (wrapperName)
 		else  (configureMavenProject)
 			# find java source root
 			if     (EXISTS "${myDir}/src/main/java")
@@ -232,7 +235,6 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			# needed by javac
 			file(MAKE_DIRECTORY "${myJavaBuildDir}")
 			add_custom_target(${myTarget} ALL
-				DEPENDS ${Java_AIINTERFACE_TARGET}
 				COMMAND "${JAVA_COMPILE}"
 					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 					"-cp" "${myClassPath}"
@@ -243,6 +245,10 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 					"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
 				WORKING_DIRECTORY "${mySourceDir}"
 				COMMENT "  Creating library ${myBinJarFile}" VERBATIM)
+			add_dependencies(${myTarget} ${Java_AIINTERFACE_TARGET})
+			foreach    (wrapperName ${wrapperNames})
+				add_dependencies(${myTarget} ${${wrapperName}_AIWRAPPER_TARGET})
+			endforeach (wrapperName)
 
 			# Pack the sources
 			add_custom_target(${mySourceTarget} ALL
