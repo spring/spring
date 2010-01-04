@@ -292,16 +292,18 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			install(DIRECTORY "${myDir}/src/main/config/" DESTINATION ${myInstDataDir}/config)
 		endif (EXISTS "${myDir}/src/main/config")
 
-		# Install jars of wrappers
-		foreach    (wrapperName ${wrapperNames})
-			# Install the wrappers main jar
-			install(FILES "${${wrapperName}_AIWRAPPER_JAR_BIN}" DESTINATION ${myInstDataDir}/jlib)
-			set(wrapperJLibDir "${CMAKE_SOURCE_DIR}/AI/Wrappers/${wrapperName}/jlib/")
-			# Install the wrappers java libs, if there are any
-			if    (EXISTS ${wrapperJLibDir})
-				install(DIRECTORY "${CMAKE_SOURCE_DIR}/AI/Wrappers/${wrapperName}/jlib/" DESTINATION ${myInstDataDir}/jlib)
-			endif (EXISTS ${wrapperJLibDir})
-		endforeach (wrapperName)
+		if    (NOT configureMavenProject)
+			# Install jars of wrappers
+			foreach    (wrapperName ${wrapperNames})
+				# Install the wrappers main jar
+				install(FILES "${${wrapperName}_AIWRAPPER_JAR_BIN}" DESTINATION ${myInstDataDir}/jlib)
+				set(wrapperJLibDir "${CMAKE_SOURCE_DIR}/AI/Wrappers/${wrapperName}/jlib")
+				# Install the wrappers java libs, if there are any
+				if    (EXISTS ${wrapperJLibDir})
+					install(DIRECTORY "${wrapperJLibDir}/" DESTINATION ${myInstDataDir}/jlib)
+				endif (EXISTS ${wrapperJLibDir})
+			endforeach (wrapperName)
+		endif (NOT configureMavenProject)
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureJavaSkirmishAI wrapperNames)
 
