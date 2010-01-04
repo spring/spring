@@ -627,6 +627,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	innerParams         = removeParamTypes(params);
 
 	# add additional indices fetcher calls to inner params
+	addInnerParams = "";
 	addInds_real_size_m = addInds_size_m;
 	if (part_isStatic(memName_m, metaComment)) {
 		addInds_real_size_m--;
@@ -634,11 +635,16 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	for (ai=1; ai <= addInds_real_size_m; ai++) {
 		addIndName = addInds_m[ai];
 		_condComma = "";
-		if (innerParams != "") {
+		if (addInnerParams != "") {
 			_condComma = ", ";
 		}
-		innerParams = "this.get" capitalize(addIndName) "()" _condComma innerParams;
+		addInnerParams = addInnerParams _condComma "this.get" capitalize(addIndName) "()";
 	}
+	_condComma = "";
+	if ((addInnerParams != "") && (innerParams != "")) {
+		_condComma = ", ";
+	}
+	innerParams = addInnerParams _condComma innerParams;
 
 
 	# convert param types
