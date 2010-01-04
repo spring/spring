@@ -122,10 +122,12 @@ static const char* java_getValueByKey(const struct Properties* props, const char
  *
  * It will consist of the following:
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/AIInterface.jar
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jconfig/
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jconfig/[*].jar
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jscript/
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jscript/[*].jar
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/(j)?config/
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/(j)?config/[*].jar
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/(j)?resources/
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/(j)?resources/[*].jar
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/(j)?script/
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/(j)?script/[*].jar
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/[*].jar
  * TODO: {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/jlib/
@@ -152,15 +154,23 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	char**              jarDirs = (char**) calloc(jarDirs_sizeMax, sizeof(char*));
 	size_t              jarDirs_size = 0;
 
-	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jconfig/
+	// add to classpath:
+	// {spring-data-dir}/Interfaces/Java/0.1/${x}/
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), JAVA_CONFIG_DIR);
-	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jscript/
+			callback->DataDirs_getConfigDir(interfaceId), "jconfig");
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), JAVA_SCRIPT_DIR);
-	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/
+			callback->DataDirs_getConfigDir(interfaceId), "config");
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), JAVA_LIBS_DIR);
+			callback->DataDirs_getConfigDir(interfaceId), "jresources");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
+			callback->DataDirs_getConfigDir(interfaceId), "resources");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
+			callback->DataDirs_getConfigDir(interfaceId), "jscript");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
+			callback->DataDirs_getConfigDir(interfaceId), "script");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
+			callback->DataDirs_getConfigDir(interfaceId), "jlib");
+	// "lib" is for native libs only
 
 	// add the jar dirs (for .class files) and all contained .jars recursively
 	size_t jd, jf;
@@ -212,8 +222,20 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
  *
  * It will consist of the following:
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/SkirmishAI.jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/(j)?config/
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/(j)?config/[*].jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/(j)?resources/
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/(j)?resources/[*].jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/(j)?script/
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/(j)?script/[*].jar
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/[*].jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/(j)?config/
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/(j)?config/[*].jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/(j)?resources/
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/(j)?resources/[*].jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/(j)?script/
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/(j)?script/[*].jar
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jlib/[*].jar
  */
@@ -247,30 +269,41 @@ static size_t java_createAIClassPath(const char* shortName, const char* version,
 	char**       jarDirs = (char**) calloc(jarDirs_sizeMax, sizeof(char*));
 	size_t       jarDirs_size = 0;
 
-	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/SkirmishAI/
+	// add to classpath ...
+
+	// {spring-data-dir}/Skirmish/MyJavaAI/0.1/SkirmishAI/
 	// this can be usefull for AI devs while testing,
 	// if they do not want to put everything into a jar all the time
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "SkirmishAI");
 
-	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jconfig/
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, JAVA_CONFIG_DIR);
-	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jscript/
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, JAVA_SCRIPT_DIR);
-	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, JAVA_LIBS_DIR);
+	// add to classpath:
+	// {spring-data-dir}/Skirmish/MyJavaAI/0.1/${x}/
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "jconfig");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "config");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "jresources");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "resources");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "jscript");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "script");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "jlib");
+	// "lib" is for native libs only
 
-	// add the common/jlib dir, if it is specified and exists
+	// add the dir common for all versions of the Skirmish AI,
+	// if it is specified and exists
 	const char* const skirmDDCommon =
 			callback->SkirmishAIs_Info_getValueByKey(interfaceId,
 			shortName, version,
 			SKIRMISH_AI_PROPERTY_DATA_DIR_COMMON);
 	if (skirmDDCommon != NULL) {
-		// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jconfig/
-		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, JAVA_CONFIG_DIR);
-		// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jscript/
-		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, JAVA_SCRIPT_DIR);
-		// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jlib/
-		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, JAVA_LIBS_DIR);
+		// add to classpath:
+		// {spring-data-dir}/Skirmish/MyJavaAI/common/${x}/
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, "jconfig");
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, "config");
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, "jresources");
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, "resources");
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, "jscript");
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, "script");
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, "jlib");
+		// "lib" is for native libs only
 	}
 
 	// add the directly specified .jar files

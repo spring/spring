@@ -26,9 +26,6 @@ extern "C" {
 
 #define MY_LOG_FILE       "interface-log.txt"
 #define JAVA_AI_INTERFACE_LIBRARY_FILE_NAME "AIInterface.jar"
-#define JAVA_CONFIG_DIR   "jconfig"
-#define JAVA_SCRIPT_DIR   "jscript"
-#define JAVA_LIBS_DIR     "jlib"
 #define NATIVE_LIBS_DIR   "lib"
 #define JRE_LOCATION_FILE "jre-location.txt"
 
