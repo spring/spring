@@ -31,7 +31,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myDir        "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
-	#set(myTarget     "${myName}-AIWrapper")
+	set(myTarget     "${myName}-AIWrapper")
 	set(myParentTarget     "${Java_AIINTERFACE_TARGET}")
 	set(mySourceDirRel     "src/main/java")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
@@ -62,6 +62,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	SetGlobal(${myName}_AIWRAPPER_JAR_BIN       "${myBuildDir}/${myBinJarFile}")
 	SetGlobal(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
 	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM}${${myName}_AIWRAPPER_JAR_BIN}")
+	SetGlobal(${myName}_AIWRAPPER_TARGET        "${myTarget}")
 	SetGlobal(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
 	SetGlobal(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -319,13 +320,13 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 
 
-	add_custom_target(JavaOO ALL)
-	add_dependencies(JavaOO ${myParentTarget})
+	add_custom_target(${myTarget} ALL)
+	add_dependencies(${myTarget} ${myParentTarget})
 
 	# generate sources: callback
 	add_custom_command(
 		#TARGET ${myParentTarget}
-		TARGET JavaOO
+		TARGET ${myTarget}
 		#OUTPUT ${myGeneratedCallbackSources}
 		DEPENDS "${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
 		#	"${myParentTarget}"
@@ -335,13 +336,13 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-f" "${myBinDir}/wrappCallback.awk"
 			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
 		WORKING_DIRECTORY "${myBinDir}"
-		COMMENT "  Java OO AI Wrapper: Generating callback sources" VERBATIM
+		COMMENT "  ${myTarget}: Generating callback sources" VERBATIM
 		)
 
 	# generate sources: events
 	add_custom_command(
 		#TARGET ${myParentTarget}
-		TARGET JavaOO
+		TARGET ${myTarget}
 		#OUTPUT ${myGeneratedEventSources}
 		DEPENDS "${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AI.java"
 		COMMAND "${AWK_BIN}"
@@ -349,7 +350,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-f" "${myBinDir}/wrappEvents.awk"
 			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AI.java"
 		WORKING_DIRECTORY "${myBinDir}"
-		COMMENT "  Java OO AI Wrapper: Generating event sources" VERBATIM
+		COMMENT "  ${myTarget}: Generating event sources" VERBATIM
 		)
 
 
@@ -359,7 +360,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	# compile
 	add_custom_command(
 		#TARGET ${myParentTarget}
-		TARGET JavaOO
+		TARGET ${myTarget}
 		#OUTPUT ${myClasses}
 		DEPENDS
 			${mySources}
@@ -371,25 +372,25 @@ if    (BUILD_${myName}_AIWRAPPER)
 			${mySources}
 			${myGeneratedSources}
 		WORKING_DIRECTORY "${myBinDir}"
-		COMMENT "  Java OO AI Wrapper: Compiling sources" VERBATIM
+		COMMENT "  ${myTarget}: Compiling sources" VERBATIM
 		)
 
 	# pack library
 	add_custom_command(
 		#TARGET ${myParentTarget}
-		TARGET JavaOO
+		TARGET ${myTarget}
 		#OUTPUT "${myBuildDir}/${myBinJarFile}"
 		#DEPENDS "${myClasses}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			${myBinJarArgs} "${${myName}_AIWRAPPER_JAR_BIN}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  Java OO AI Wrapper: Creating library ${myBinJarFile} ..." VERBATIM)
+		COMMENT "  ${myTarget}: Creating library ${myBinJarFile} ..." VERBATIM)
 
 	# pack sources
 	add_custom_command(
 		#TARGET ${myParentTarget}
-		TARGET JavaOO
+		TARGET ${myTarget}
 		#OUTPUT "${myBuildDir}/${mySrcJarFile}"
 		DEPENDS
 			${myJavaSources}
@@ -401,6 +402,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"uf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${myGeneratedSourceDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  Java OO AI Wrapper: Creating sources archive ${mySrcJarFile} ..." VERBATIM)
+		COMMENT "  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM)
 
 endif (BUILD_${myName}_AIWRAPPER)
