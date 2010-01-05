@@ -1,4 +1,7 @@
 #include "Util.h"
+#if defined(_MSC_VER) && (_MSC_VER >= 1310)
+#include <intrin.h>
+#endif
 
 std::string StringReplace(const std::string& text,
                           const std::string& from,
@@ -42,6 +45,16 @@ namespace proc {
 			: "0" (*a)
 		);
 	#endif
+	}
+	#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
+	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+	{
+		unsigned int features[4];
+		__cpuid(features, *a);
+		*a=features[0];
+		*b=features[1];
+		*c=features[2];
+		*d=features[3];
 	}
 	#else
 	// no-op on other compilers
