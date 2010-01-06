@@ -60,7 +60,7 @@ namespace proc {
 	#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
 	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
-		unsigned int features[4];
+		int features[4];
 		__cpuid(features, *a);
 		*a=features[0];
 		*b=features[1];
