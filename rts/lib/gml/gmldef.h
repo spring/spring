@@ -286,6 +286,13 @@
 #undef glMultiTexCoord2i
 #undef glGetQueryiv
 #undef glGetBooleanv
+#undef glValidateProgram
+#undef glUniform2iv
+#undef glUniform3iv
+#undef glUniform4iv
+#undef glUniform2fv
+#undef glUniform3fv
+#undef glUniform4fv
 
 // #####################################################################
 
@@ -569,3 +576,10 @@
 #define glMultiTexCoord2i gmlMultiTexCoord2i
 #define glGetQueryiv gmlGetQueryiv
 #define glGetBooleanv gmlGetBooleanv
+#define glValidateProgram gmlValidateProgram
+#define glUniform2iv gmlUniform2iv
+#define glUniform3iv gmlUniform3iv
+#define glUniform4iv gmlUniform4iv
+#define glUniform2fv gmlUniform2fv
+#define glUniform3fv gmlUniform3fv
+#define glUniform4fv gmlUniform4fv

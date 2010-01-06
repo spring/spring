@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include "Rendering/GL/myGL.h"
 #include <cassert>
 
 #include "Rendering/Shaders/ShaderHandler.hpp"

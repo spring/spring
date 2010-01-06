@@ -70,17 +70,19 @@ extern gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)>
 extern void gmlInit();
 
 #define GML_IF_NONCLIENT_THREAD(name,...)\
-	GML_IF_SERVER_THREAD() {\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
 		name(__VA_ARGS__);\
 		return;\
 	}\
-	GML_ITEMSERVER_CHECK();
+	GML_ITEMSERVER_CHECK(threadnum);
 
 #define GML_IF_NONCLIENT_THREAD_RET(ret,name,...)\
-	GML_IF_SERVER_THREAD() {\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
 		return name(__VA_ARGS__);\
 	}\
-	GML_ITEMSERVER_CHECK_RET(ret);
+	GML_ITEMSERVER_CHECK_RET(threadnum,ret);
 
 EXTERN inline GLhandleARB gmlCreateProgram() {
 	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateProgram);
