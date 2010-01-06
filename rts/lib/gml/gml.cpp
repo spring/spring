@@ -977,6 +977,13 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3(MultiTexCoord2i)
 		GML_MAKEHANDLER3(GetQueryiv)
 		GML_MAKEHANDLER2(GetBooleanv)
+		GML_MAKEHANDLER1(ValidateProgram)
+		GML_MAKEHANDLER3V(Uniform2iv)
+		GML_MAKEHANDLER3V(Uniform3iv)
+		GML_MAKEHANDLER3V(Uniform4iv)
+		GML_MAKEHANDLER3V(Uniform2fv)
+		GML_MAKEHANDLER3V(Uniform3fv)
+		GML_MAKEHANDLER3V(Uniform4fv)
 	}
 }
 

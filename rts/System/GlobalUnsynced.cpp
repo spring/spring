@@ -6,7 +6,7 @@
  * unsynced global stuff
  */
 #include "StdAfx.h"
-
+#include "Rendering/GL/myGL.h"
 #include "GlobalUnsynced.h"
 
 #include <cstring>
