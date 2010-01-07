@@ -110,6 +110,13 @@ void Connection::SendData(const std::string& msg)
 
 void Connection::Poll()
 {
+	const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+	const boost::posix_time::time_duration diff = now - lastPing;
+	if (diff.seconds() > 30)
+	{
+		SendData("PING\n");
+		lastPing = now;
+	}
 	netservice.poll();
 }
 
