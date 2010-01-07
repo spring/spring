@@ -3,6 +3,7 @@
 
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
 
 #include <iostream>
@@ -89,6 +90,7 @@ private:
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;
 	UserCache* users;
+	boost::posix_time::ptime lastPing;
 };
 
 #endif
