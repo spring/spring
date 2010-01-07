@@ -98,7 +98,14 @@ void Connection::JoinChannel(const std::string& channame, const std::string& pas
 
 void Connection::SendData(const std::string& msg)
 {
-	sock.send(boost::asio::buffer(msg));
+	if (sock.is_open())
+	{
+		sock.send(boost::asio::buffer(msg));
+	}
+	else
+	{
+		NetworkError("Already disconnected");
+	}
 }
 
 void Connection::Poll()
