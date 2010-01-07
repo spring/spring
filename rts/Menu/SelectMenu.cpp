@@ -18,9 +18,9 @@
 #include <boost/cstdint.hpp>
 
 #include "UpdaterWindow.h"
-#include "ClientSetup.h"
+#include "Game/ClientSetup.h"
 #include "SelectionWidget.h"
-#include "PreGame.h"
+#include "Game/PreGame.h"
 #include "Rendering/glFont.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
@@ -32,8 +32,8 @@
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
 #include "InputHandler.h"
-#include "StartScripts/ScriptHandler.h"
-#include "StartScripts/SkirmishAITestScript.h"
+#include "Game/StartScripts/ScriptHandler.h"
+#include "Game/StartScripts/SkirmishAITestScript.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"

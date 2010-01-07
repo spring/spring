@@ -19,7 +19,7 @@
 #include "Game/GameSetup.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameController.h"
-#include "Game/SelectMenu.h"
+#include "Menu/SelectMenu.h"
 #include "Game/PreGame.h"
 #include "Game/Game.h"
 #include "Sim/Misc/Team.h"

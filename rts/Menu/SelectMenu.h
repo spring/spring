@@ -2,7 +2,7 @@
 #define SELECT_MENU
 
 #include "aGui/GuiElement.h"
-#include "GameController.h"
+#include "Game/GameController.h"
 
 class ClientSetup;
 union SDL_Event;
