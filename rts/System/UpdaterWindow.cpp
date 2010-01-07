@@ -27,11 +27,13 @@ UpdaterWindow::UpdaterWindow() : agui::Window("Lobby connection")
 	new agui::TextElement(std::string("Username:"), usrLayout);
 	user = new agui::LineEdit(usrLayout);
 	user->SetContent(configHandler->GetString("name", "UnnamedPlayer"));
+	user->SetWeight(2);
 	agui::HorizontalLayout* pwdLayout = new agui::HorizontalLayout(wndLayout);
 	new agui::TextElement(std::string("Password:"), pwdLayout);
 	passwd = new agui::LineEdit(pwdLayout);
 	passwd->SetCrypt(true);
 	passwd->SetFocus(true);
+	passwd->SetWeight(2);
 	
 	agui::HorizontalLayout* bttnLayout = new agui::HorizontalLayout(wndLayout);
 	

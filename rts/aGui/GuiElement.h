@@ -34,6 +34,14 @@ public:
 	{
 		return size;
 	};
+	void SetWeight(unsigned newWeight)
+	{
+		weight = newWeight;
+	};
+	unsigned Weight() const
+	{
+		return weight;
+	};
 	
 	void GeometryChange();
 
@@ -80,6 +88,7 @@ protected:
 	bool fixedSize;
 	float pos[2];
 	float size[2];
+	unsigned weight;
 };
 
 }
