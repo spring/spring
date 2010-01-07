@@ -63,6 +63,8 @@ public:
 	void Login(const std::string& name, const std::string& password);
 	virtual void Denied(const std::string& reason) {};
 	virtual void LoginEnd() {};
+	virtual void Aggreement(const std::string text) {};
+	void ConfirmAggreement();
 
 	void JoinChannel(const std::string& channame, const std::string& password = "");
 	virtual void Joined(const std::string& channame) {};
@@ -83,6 +85,7 @@ private:
 	void ReceiveCallback(const boost::system::error_code& error, size_t bytes);
 	void SendCallback(const boost::system::error_code& error);
 	
+	std::string aggreementbuf;
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;
 	UserCache* users;

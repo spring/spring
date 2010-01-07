@@ -78,6 +78,11 @@ void UpdaterWindow::Denied(const std::string& reason)
 	serverLabel->SetText(reason);
 }
 
+void UpdaterWindow::LoginEnd()
+{
+	serverLabel->SetText("Logged in successfully");
+}
+
 void UpdaterWindow::RegisterDenied(const std::string& reason)
 {
 	serverLabel->SetText(reason);
