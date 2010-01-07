@@ -82,6 +82,11 @@ void Connection::Login(const std::string& name, const std::string& password)
 	SendData(out.str());
 }
 
+void Connection::ConfirmAggreement()
+{
+	SendData("CONFIRMAGREEMENT\n");
+}
+
 void Connection::JoinChannel(const std::string& channame, const std::string& password)
 {
 	std::ostringstream out;
@@ -194,9 +199,17 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 			JoinFailed(channame, reason);
 		}
 	}
+	else if (command == "AGREEMENT")
+	{
+		aggreementbuf += msg + "\n";
+	}
+	else if (command == "AGREEMENTEND")
+	{
+		Aggreement(aggreementbuf);
+	}
 	else
 	{
-		std::cout << "Unhandled command: " << command << " " << msg << std::endl;
+		// std::cout << "Unhandled command: " << command << " " << msg << std::endl;
 	}
 }
 
