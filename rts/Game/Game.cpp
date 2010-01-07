@@ -986,7 +986,7 @@ bool CGame::ActionPressed(const Action& action,
 				configHandler->Set("ShadowMapSize", mapsize);
 			}
 		} else {
-			next = (current == 0) ? 1 : 0;
+			next = (current+1)%3;
 		}
 		configHandler->Set("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);

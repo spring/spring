@@ -22,6 +22,7 @@ public:
 	bool drawShadows;
 	bool inShadowPass;
 	bool showShadowMap;
+	bool drawTerrainShadow;
 
 	float3 centerPos;
 	float3 cross1;
