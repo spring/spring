@@ -7,7 +7,7 @@ namespace agui
 
 int GuiElement::screensize[2];
 
-GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false)
+GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false), weight(1)
 {
 	if (parent)
 		parent->AddChild(this);
