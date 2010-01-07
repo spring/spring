@@ -57,6 +57,24 @@ namespace streflop {
 
 }
 
+#if defined(STREFLOP_SSE) && defined(_MSC_VER) 
+    // MSVC will not compile without the long double variants defined, so we either have to declare Extended:
+    //    typedef long double Extended;
+    //    #define Extended Extended
+    // or write some wrapper macros:
+    #define atan2l(a, b) atan2((double)a, (double)b)
+    #define cosl(a) cos((double)a)
+    #define expl(a) exp((double)a)
+    #define ldexpl(a, b) ldexp((double)a, (double)b)
+    #define logl(a) log((double)a)
+    #define powl(a,b) pow((double)a, (double)b)
+    #define sinl(a) sin((double)a)
+    #define sqrtl(a) sqrt((double)a)
+    #define tanl(a) tan((double)a)
+    #define frexpl(a, b) frexp((double)a, b)
+    // The wrappers are possibly the better choice for sync reasons.
+#endif
+
 // Include the FPU settings file, so the user can initialize the library
 #include "FPUSettings.h"
 
