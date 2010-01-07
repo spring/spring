@@ -88,6 +88,7 @@ AUX_SOURCE_DIRECTORY(Game/Camera gamefiles)
 AUX_SOURCE_DIRECTORY(Game/Server gamefiles)
 AUX_SOURCE_DIRECTORY(Game/StartScripts gamefiles)
 AUX_SOURCE_DIRECTORY(Game/UI gamefiles)
+AUX_SOURCE_DIRECTORY(Menu gamefiles)
 
 AUX_SOURCE_DIRECTORY(Lua luafiles)
 
