@@ -1,7 +1,6 @@
 #ifndef UPDATERWINDOW_H
 #define UPDATERWINDOW_H
 
-#include "lib/liblobby/Connection.h"
 
 #include "aGui/Window.h"
 
@@ -10,32 +9,31 @@ namespace agui
 	class TextElement;
 	class LineEdit;
 };
+class Connection;
 
-class UpdaterWindow : public agui::Window, public Connection
+class UpdaterWindow : public agui::Window
 {
 public:
-	UpdaterWindow();
+	UpdaterWindow(Connection* con);
+	~UpdaterWindow();
 
-	virtual void DoneConnecting(bool success, const std::string& err);
-	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode);
-	virtual void Denied(const std::string& reason);
-	virtual void Aggreement(const std::string text);
-	virtual void LoginEnd();
-	virtual void RegisterDenied(const std::string& reason);
-	virtual void RegisterAccept();
-	
-private:
 	void Login();
 	void Register();
 
+	void ShowAggreement(const std::string& text);
 	void AcceptAgreement();
 	void RejectAgreement();
+	
+	void ServerLabel(const std::string& text);
+	void Label(const std::string& text);
 
+private:
 	agui::TextElement* serverLabel;
 	agui::TextElement* label;
 	agui::LineEdit* user;
 	agui::LineEdit* passwd;
 	agui::Window* agreement;
+	Connection* con;
 };
 
 

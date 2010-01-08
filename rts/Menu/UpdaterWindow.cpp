@@ -5,8 +5,8 @@
 
 #include <boost/bind.hpp>
 
-#include "Game/GameVersion.h"
 #include "ConfigHandler.h"
+#include "lib/liblobby/Connection.h"
 #include "aGui/LineEdit.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -14,7 +14,7 @@
 #include "aGui/Button.h"
 #include "aGui/Gui.h"
 
-UpdaterWindow::UpdaterWindow() : agui::Window("Lobby connection"), agreement(NULL)
+UpdaterWindow::UpdaterWindow(Connection* _con) : agui::Window("Lobby connection"), agreement(NULL), con(_con)
 {
 	agui::gui->AddElement(this);
 	SetPos(0.5, 0.5);
@@ -47,40 +47,30 @@ UpdaterWindow::UpdaterWindow() : agui::Window("Lobby connection"), agreement(NUL
 	serverLabel = new agui::TextElement(std::string("Connecting..."), wndLayout);
 
 	GeometryChange();
-	Connect("taspringmaster.clan-sy.com", 8200);
 }
 
-void UpdaterWindow::DoneConnecting(bool success, const std::string& err)
+UpdaterWindow::~UpdaterWindow()
 {
-	if (success)
+	if (agreement)
 	{
-		serverLabel->SetText("Connected to TASServer");
-	}
-	else
-	{
-		serverLabel->SetText(err);
+		agui::gui->RmElement(agreement);
+		agreement = NULL;
 	}
 }
 
-void UpdaterWindow::ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode)
+void UpdaterWindow::Login()
 {
-	serverLabel->SetText(std::string("Connected to TASServer v")+serverVer);
-	if (springVer != SpringVersion::Get())
-	{
-		label->SetText(std::string("Server has new version: ")+springVer + " (Yours: "+ SpringVersion::Get() + ")");
-	}
-	else
-	{
-		label->SetText("Your version is up-to-date");
-	}
+	con->Login(user->GetContent(), passwd->GetContent());
+	configHandler->SetString("name", user->GetContent());
 }
 
-void UpdaterWindow::Denied(const std::string& reason)
+void UpdaterWindow::Register()
 {
-	serverLabel->SetText(reason);
+	con->Register(user->GetContent(), passwd->GetContent());
+	configHandler->SetString("name", user->GetContent());
 }
 
-void UpdaterWindow::Aggreement(const std::string text)
+void UpdaterWindow::ShowAggreement(const std::string& text)
 {
 	agreement = new agui::Window("Agreement");
 	agreement->SetSize(0.6, 0.7);
@@ -99,33 +89,6 @@ void UpdaterWindow::Aggreement(const std::string text)
 	agui::gui->AddElement(agreement);
 }
 
-void UpdaterWindow::LoginEnd()
-{
-	serverLabel->SetText("Logged in successfully");
-}
-
-void UpdaterWindow::RegisterDenied(const std::string& reason)
-{
-	serverLabel->SetText(reason);
-}
-
-void UpdaterWindow::RegisterAccept()
-{
-	serverLabel->SetText("Account registered successfully");
-}
-
-void UpdaterWindow::Login()
-{
-	Connection::Login(user->GetContent(), passwd->GetContent());
-	configHandler->SetString("name", user->GetContent());
-}
-
-void UpdaterWindow::Register()
-{
-	Connection::Register(user->GetContent(), passwd->GetContent());
-	configHandler->SetString("name", user->GetContent());
-}
-
 void UpdaterWindow::AcceptAgreement()
 {
 	agui::gui->RmElement(agreement);
@@ -137,4 +100,14 @@ void UpdaterWindow::RejectAgreement()
 {
 	agui::gui->RmElement(agreement);
 	agreement = NULL;
+}
+
+void UpdaterWindow::ServerLabel(const std::string& text)
+{
+	serverLabel->SetText(text);
+}
+
+void UpdaterWindow::Label(const std::string& text)
+{
+	label->SetText(text);
 }

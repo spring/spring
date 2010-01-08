@@ -17,7 +17,7 @@
 #include <stack>
 #include <boost/cstdint.hpp>
 
-#include "UpdaterWindow.h"
+#include "LobbyConnection.h"
 #include "Game/ClientSetup.h"
 #include "SelectionWidget.h"
 #include "Game/PreGame.h"
@@ -241,6 +241,7 @@ SelectMenu::~SelectMenu()
 {
 	ShowConnectWindow(false);
 	CleanWindow();
+	delete updWindow;
 }
 
 bool SelectMenu::Draw()
@@ -255,7 +256,15 @@ bool SelectMenu::Draw()
 bool SelectMenu::Update()
 {
 	if (updWindow)
+	{
 		updWindow->Poll();
+		if (updWindow->WantClose())
+		{
+			delete updWindow;
+			updWindow = NULL;
+		}
+	}
+	
 	return true;
 }
 
@@ -352,14 +361,15 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 
 void SelectMenu::ShowUpdateWindow(bool show)
 {
-	if (show && !updWindow)
+	if (show)
 	{
-		updWindow = new UpdaterWindow();
-		updWindow->WantClose.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, false));
+		if (!updWindow)
+			updWindow = new LobbyConnection();
+		updWindow->ConnectDialog(true);
 	}
 	else if (!show && updWindow)
 	{
-		agui::gui->RmElement(updWindow);
+		delete updWindow;
 		updWindow = NULL;
 	}
 }
