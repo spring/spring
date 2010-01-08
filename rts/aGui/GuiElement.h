@@ -18,7 +18,7 @@ public:
 	bool MouseOver(int x, int y) const;
 	bool MouseOver(float x, float y) const;
 	
-	static void UpdateDisplayGeo(int x, int y);
+	static void UpdateDisplayGeo(int x, int y, int offsetX, int offsetY);
 	static float PixelToGlX(int x);
 	static float PixelToGlY(int y);
 	
@@ -84,6 +84,7 @@ protected:
 	virtual void GeometryChangeSelf() {};
 	
 	static int screensize[2];
+	static int screenoffset[2];
 	
 	bool fixedSize;
 	float pos[2];

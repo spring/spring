@@ -21,7 +21,7 @@ public:
 	/// deletes the element on the next draw
 	void RmElement(GuiElement*);
 	
-	void UpdateScreenGeometry(int screenx, int screeny);
+	void UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int screenOffsetY);
 
 	bool MouseOverElement(const GuiElement*, int x, int y) const;
 
