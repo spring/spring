@@ -21,6 +21,39 @@ using namespace boost::system::errc;
 using namespace boost::asio;
 boost::asio::io_service netservice;
 
+std::string RTFToPlain(const std::string& rich)
+{
+	static const std::string screwTag = "\\pard";
+	static const std::string lineend = "\\par";
+	std::string out = rich.substr(rich.find_first_of('{')+1, (rich.find_last_of('}') - rich.find_first_of('{')) -2);
+
+	out = out.substr(out.find_last_of('}')+1);
+	size_t pos = 0;
+
+	while ((pos = out.find(screwTag)) != std::string::npos)
+	{
+		out.erase(pos, screwTag.size());
+	}
+	while ((pos = out.find(lineend)) != std::string::npos)
+	{
+		out.replace(pos, lineend.size(), "\n");
+	}
+	while ((pos = out.find('\\')) != std::string::npos)
+	{
+		size_t pos2 = out.find_first_of("\\ \t\n}", pos+1);
+		if (pos2 != std::string::npos)
+		{
+			out.erase(pos, pos2-pos);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return out;
+}
+
 Connection::Connection() : sock(netservice), users(new UserCache)
 {
 }
@@ -219,7 +252,8 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	}
 	else if (command == "AGREEMENTEND")
 	{
-		Aggreement(aggreementbuf);
+		
+		Aggreement(RTFToPlain(aggreementbuf));
 	}
 	else
 	{
