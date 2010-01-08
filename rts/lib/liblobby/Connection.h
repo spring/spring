@@ -67,6 +67,8 @@ public:
 	virtual void Aggreement(const std::string text) {};
 	void ConfirmAggreement();
 
+	virtual void Motd(const std::string text) {};
+
 	void JoinChannel(const std::string& channame, const std::string& password = "");
 	virtual void Joined(const std::string& channame) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
