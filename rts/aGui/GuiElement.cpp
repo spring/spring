@@ -72,6 +72,16 @@ float GuiElement::PixelToGlY(int y)
 	return 1.0f - float(y - screenoffset[1])/float(screensize[1]);
 }
 
+float GuiElement::GlToPixelX(float x)
+{
+	return x*float(screensize[0]) + float(screenoffset[0]);
+}
+
+float GuiElement::GlToPixelY(float y)
+{
+	return y*float(screensize[1]) + float(screenoffset[1]);
+}
+
 void GuiElement::AddChild(GuiElement* elem)
 {
 	children.push_back(elem);
