@@ -255,6 +255,10 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		
 		Aggreement(RTFToPlain(aggreementbuf));
 	}
+	else if (command == "MOTD")
+	{
+		Motd(msg);
+	}
 	else
 	{
 		// std::cout << "Unhandled command: " << command << " " << msg << std::endl;

@@ -3,13 +3,14 @@
 #include <boost/bind.hpp>
 
 #include "UpdaterWindow.h"
+#include "ConfigHandler.h"
 #include "Game/GameVersion.h"
 #include "aGui/Gui.h"
 
 
 LobbyConnection::LobbyConnection() : upwin(NULL)
 {
-	Connect("taspringmaster.clan-sy.com", 8200);
+	Connect(configHandler->GetString("LobbyServer", "taspringmaster.clan-sy.com"), 8200);
 }
 
 LobbyConnection::~LobbyConnection()
