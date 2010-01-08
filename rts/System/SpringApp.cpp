@@ -531,7 +531,11 @@ void SpringApp::SetupViewportGeometry()
 		}
 	}
 
-	agui::gui->UpdateScreenGeometry(gu->viewSizeX, gu->viewSizeY);
+	agui::gui->UpdateScreenGeometry(
+			gu->viewSizeX, 
+			gu->viewSizeY, 
+			gu->viewPosX, 
+			(gu->winSizeY - gu->viewSizeY - gu->viewPosY) );
 	gu->pixelX = 1.0f / (float)gu->viewSizeX;
 	gu->pixelY = 1.0f / (float)gu->viewSizeY;
 
