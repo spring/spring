@@ -21,6 +21,8 @@ public:
 	static void UpdateDisplayGeo(int x, int y, int offsetX, int offsetY);
 	static float PixelToGlX(int x);
 	static float PixelToGlY(int y);
+	static float GlToPixelX(float x);
+	static float GlToPixelY(float y);
 	
 	virtual void AddChild(GuiElement* elem);
 	

@@ -14,7 +14,7 @@
 #include "aGui/Button.h"
 #include "aGui/Gui.h"
 
-UpdaterWindow::UpdaterWindow() : agui::Window("Lobby connection")
+UpdaterWindow::UpdaterWindow() : agui::Window("Lobby connection"), agreement(NULL)
 {
 	agui::gui->AddElement(this);
 	SetPos(0.5, 0.5);
@@ -80,6 +80,25 @@ void UpdaterWindow::Denied(const std::string& reason)
 	serverLabel->SetText(reason);
 }
 
+void UpdaterWindow::Aggreement(const std::string text)
+{
+	agreement = new agui::Window("Agreement");
+	agreement->SetSize(0.6, 0.7);
+	agui::VerticalLayout* vLay = new agui::VerticalLayout(agreement);
+	agui::TextElement* textEl = new agui::TextElement(text, vLay);
+	
+	agui::HorizontalLayout* bttnLayout = new agui::HorizontalLayout(vLay);
+	bttnLayout->SetSize(0.0f, 0.04f, true);
+	agui::Button* accept = new agui::Button("I Accept", bttnLayout);
+	accept->Clicked.connect(boost::bind(&UpdaterWindow::AcceptAgreement, this));
+	agui::Button* noAccept = new agui::Button("I don't accept", bttnLayout);
+	noAccept->Clicked.connect(boost::bind(&UpdaterWindow::RejectAgreement, this));
+	agreement->WantClose.connect(boost::bind(&UpdaterWindow::RejectAgreement, this));
+	agreement->GeometryChange();
+
+	agui::gui->AddElement(agreement);
+}
+
 void UpdaterWindow::LoginEnd()
 {
 	serverLabel->SetText("Logged in successfully");
@@ -105,4 +124,17 @@ void UpdaterWindow::Register()
 {
 	Connection::Register(user->GetContent(), passwd->GetContent());
 	configHandler->SetString("name", user->GetContent());
+}
+
+void UpdaterWindow::AcceptAgreement()
+{
+	agui::gui->RmElement(agreement);
+	agreement = NULL;
+	AcceptAgreement();
+}
+
+void UpdaterWindow::RejectAgreement()
+{
+	agui::gui->RmElement(agreement);
+	agreement = NULL;
 }
