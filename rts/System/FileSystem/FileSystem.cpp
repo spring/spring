@@ -29,13 +29,6 @@
 
 FileSystem filesystem;
 
-std::string StripTrailingSlashes(std::string path)
-{
-	while (!path.empty() && (path.at(path.length()-1) == '\\' || path.at(path.length()-1) == '/'))
-		path = path.substr(0, path.length()-1);
-	return path;
-}
-
 ////////////////////////////////////////
 ////////// FileSystem
 

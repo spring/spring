@@ -6,8 +6,6 @@
 
 #include "DataDirLocater.h"
 
-std::string StripTrailingSlashes(std::string path);
-
 /**
  * @brief native file system handling abstraction
  */
