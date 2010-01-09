@@ -4571,6 +4571,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\FileSystemHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystemHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.cpp"
 					>
 					<FileConfiguration
@@ -13010,6 +13018,14 @@
 		<Filter
 			Name="Menu"
 			>
+			<File
+				RelativePath="..\..\Menu\LobbyConnection.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\LobbyConnection.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\Menu\SelectionWidget.cpp"
 				>

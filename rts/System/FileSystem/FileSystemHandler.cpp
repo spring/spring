@@ -22,6 +22,7 @@
 	#if defined(DeleteFile)
 		#undef DeleteFile
 	#endif
+	#include <fstream>
 #endif
 
 #include "Util.h"

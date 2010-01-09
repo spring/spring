@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "LobbyConnection.h"
 
 #include <boost/bind.hpp>
