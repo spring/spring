@@ -71,19 +71,10 @@ int main(int argc, char *argv[])
 		{
 			data->SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
 
-			CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
-			if (!f->FileExists()) {
-				std::vector<std::string> ars = archiveScanner->GetArchivesForMap(gameSetup->mapName);
-				if (ars.empty()) {
-					throw content_error("Couldn't find any archives for map '" + gameSetup->mapName + "'.");
-				}
-				for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-					if (!vfsHandler->AddArchive(*i, false)) {
-						throw content_error("Couldn't load archive '" + *i + "' for map '" + gameSetup->mapName + "'.");
-					}
-				}
+			CFileHandler f("maps/" + gameSetup->mapName);
+			if (!f.FileExists()) {
+				vfsHandler->AddMapArchiveWithDeps("maps/" + gameSetup->mapName, false);
 			}
-			delete f;
 			gameSetup->LoadStartPositions(); // full mode
 		}
 

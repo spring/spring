@@ -80,6 +80,7 @@ bool CVFSHandler::AddMapArchiveWithDeps(const std::string& mapName, bool overrid
 		if (!AddArchive(*it, override, type))
 			throw content_error("Couldn't load archive '" + *it + "' for map '" + mapName + "'.");
 	}
+	return true;
 }
 
 bool CVFSHandler::RemoveArchive(const std::string& arName)
