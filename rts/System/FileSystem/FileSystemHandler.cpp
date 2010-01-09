@@ -56,7 +56,8 @@ void FileSystemHandler::Initialize(bool verbose)
 		instance = new FileSystemHandler();
 		try {
 			instance->locater.LocateDataDirs();
-			instance->InitVFS();
+			archiveScanner = new CArchiveScanner();
+			vfsHandler = new CVFSHandler();
 		}
 		catch (...) {
 			FileSystemHandler* tmp = instance;
@@ -408,41 +409,4 @@ void FileSystemHandler::FindFilesSingleDir(std::vector<std::string>& matches, co
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
 
 	::FindFiles(matches, datadir, dir, regexpattern, flags);
-}
-
-/**
- * @brief Creates the archive scanner and vfs handler
- *
- * For the archiveScanner, it keeps cache data ("archivecache.txt") in the
- * writedir. Cache data in other directories is ignored.
- * It scans maps, base and mods subdirectories of all readable datadirs
- * for archives. Archives in higher priority datadirs override archives
- * in lower priority datadirs.
- *
- * Note that the archive namespace is global, ie. each archive basename may
- * only occur once in all data directories. If a name is found more then once,
- * then higher priority datadirs override lower priority datadirs and per
- * datadir the 'mods' subdir overrides 'base' which overrides 'maps'.
- */
-void FileSystemHandler::InitVFS() const
-{
-	const DataDir* writedir = locater.GetWriteDir();
-	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
-
-	archiveScanner = new CArchiveScanner();
-
-	archiveScanner->ReadCacheData(writedir->path + archiveScanner->GetFilename());
-
-	std::vector<std::string> scanDirs;
-	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
-		scanDirs.push_back(d->path + "maps");
-		scanDirs.push_back(d->path + "base");
-		scanDirs.push_back(d->path + "mods");
-		scanDirs.push_back(d->path + "packages");
-	}
-	archiveScanner->ScanDirs(scanDirs, true);
-
-	archiveScanner->WriteCacheData(writedir->path + archiveScanner->GetFilename());
-
-	vfsHandler = new CVFSHandler();
 }

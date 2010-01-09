@@ -18,6 +18,7 @@
 #include "FileFilter.h"
 #include "FileHandler.h"
 #include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Util.h"
 #include "Exceptions.h"
 
@@ -50,6 +51,20 @@ CArchiveScanner* archiveScanner = NULL;
 CArchiveScanner::CArchiveScanner(void)
 : isDirty(false)
 {
+	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
+	ReadCacheData(fsh.GetWriteDir() + GetFilename());
+
+	const std::vector<std::string>& datadirs = fsh.GetDataDirectories();
+	std::vector<std::string> scanDirs;
+	for (std::vector<std::string>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d)
+	{
+		scanDirs.push_back(*d + "maps");
+		scanDirs.push_back(*d + "base");
+		scanDirs.push_back(*d + "mods");
+		scanDirs.push_back(*d + "packages");
+	}
+	ScanDirs(scanDirs, true);
+	WriteCacheData(fsh.GetWriteDir() + GetFilename());
 }
 
 
