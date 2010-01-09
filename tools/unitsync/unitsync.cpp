@@ -140,12 +140,7 @@ class ScopedMapLoader {
 			}
 
 			vfsHandler = new CVFSHandler();
-
-			const vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-			vector<string>::const_iterator it;
-			for (it = ars.begin(); it != ars.end(); ++it) {
-				vfsHandler->AddArchive(*it, false);
-			}
+			vfsHandler->AddMapArchiveWithDeps(mapName, false);
 		}
 
 		~ScopedMapLoader()

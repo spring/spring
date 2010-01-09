@@ -355,19 +355,11 @@ void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 
 	if (!alreadyLoaded || forceReload)
 	{
-		CFileHandler* f = new CFileHandler("maps/" + mapName);
-		if (!f->FileExists()) {
-			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-			if (ars.empty()) {
-				throw content_error("Couldn't find any archives for map '" + mapName + "'.");
-			}
-			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-				if (!vfsHandler->AddArchive(*i, false)) {
-					throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
-				}
-			}
+		CFileHandler f("maps/" + mapName);
+		if (!f.FileExists())
+		{
+			vfsHandler->AddMapArchiveWithDeps(mapName, false);
 		}
-		delete f;
 		mapInfo = new CMapInfo(mapName);
 		alreadyLoaded = true;
 	}
