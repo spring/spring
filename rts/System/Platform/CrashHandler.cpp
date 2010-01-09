@@ -55,7 +55,7 @@ namespace CrashHandler {
 #include "errorhandler.h"
 #include "Game/GameVersion.h"
 #include "Platform/Misc.h"
-#include "FileSystem/FileSystem.h" // for FileSystemHandler::IsReadableFile(file)
+#include "FileSystem/FileSystemHandler.h"
 #include "maindefines.h" // for SNPRINTF
 
 /**

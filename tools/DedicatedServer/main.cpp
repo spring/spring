@@ -11,7 +11,7 @@
 #include "Game/GameSetup.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
-#include "System/FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -27,7 +27,6 @@ int main(int argc, char *argv[])
 	SDL_Init(SDL_INIT_TIMER);
 	std::cout << "If you find any errors, report them to mantis or the forums." << std::endl << std::endl;
 	ConfigHandler::Instantiate("");
-	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;

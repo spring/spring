@@ -1,6 +1,8 @@
 // Generalized callback interface - shared between global AI and group AI
 #include "StdAfx.h"
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -18,7 +20,6 @@
 #include "NetProtocol.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
-#include "FileSystem/FileSystem.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

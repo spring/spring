@@ -25,6 +25,7 @@
 #include "FileSystem/VFSHandler.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
+#include "FileSystemHandler.h"
 #include "FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"
