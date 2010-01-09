@@ -15,6 +15,7 @@
 	#include <windows.h>
 	#include <io.h>
 	#include <direct.h>
+	#include <fstream>
 	// winapi redifines these which breaks things
 	#if defined(CreateDirectory)
 		#undef CreateDirectory
