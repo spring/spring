@@ -535,6 +535,8 @@ void CProjectileHandler::Update()
 
 
 void CProjectileHandler::DrawProjectiles(const ProjectileContainer& pc, bool drawReflection, bool drawRefraction) {
+	unitDrawer->SetTeamColour(0); // reset the color and alpha so that the unit part projectiles draw correctly
+
 	for (ProjectileContainer::render_iterator pci = pc.render_begin(); pci != pc.render_end(); ++pci) {
 		CProjectile* pro = *pci;
 
