@@ -9,14 +9,6 @@ class CArchiveBase;
 
 class CVFSHandler
 {
-protected:
-	struct FileData {
-		CArchiveBase *ar;
-		int size;
-		bool dynamic;
-	};
-	std::map<std::string, FileData> files; 
-	std::map<std::string, CArchiveBase*> archives;
 public:
 	CVFSHandler();
 	virtual ~CVFSHandler();
@@ -39,6 +31,15 @@ public:
 	 * successfully.
 	 */
 	bool RemoveArchive(const std::string& arName);
+
+protected:
+	struct FileData {
+		CArchiveBase *ar;
+		int size;
+		bool dynamic;
+	};
+	std::map<std::string, FileData> files; 
+	std::map<std::string, CArchiveBase*> archives;
 };
 
 extern CVFSHandler* vfsHandler;

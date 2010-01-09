@@ -31,7 +31,7 @@
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Platform/CrashHandler.h"
-#include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "Rendering/glFont.h"

@@ -71,6 +71,7 @@
 #include "Sound/Music.h"
 
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
 

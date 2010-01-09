@@ -19,6 +19,7 @@
 #include "Map/SMF/SmfMapFile.h"
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
