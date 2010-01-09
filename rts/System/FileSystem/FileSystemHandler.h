@@ -67,7 +67,6 @@ private:
 	~FileSystemHandler();
 	FileSystemHandler();
 
-	void InitVFS() const;
 	/**
 	 * @brief internal find-files-in-a-single-datadir-function
 	 * @param absolute paths to the dirs found will be added to this
