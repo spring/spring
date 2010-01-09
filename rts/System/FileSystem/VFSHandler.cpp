@@ -8,7 +8,9 @@
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
 #include "LogOutput.h"
-#include "FileSystem/FileSystem.h"
+#include "FileSystem.h"
+#include "ArchiveScanner.h"
+#include "Exceptions.h"
 #include "Util.h"
 
 
@@ -65,6 +67,19 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std
 		files[name] = d;
 	}
 	return true;
+}
+
+bool CVFSHandler::AddMapArchiveWithDeps(const std::string& mapName, bool override, const std::string& type)
+{
+	const std::vector<std::string> ars = archiveScanner->GetArchivesForMap(mapName);
+	if (ars.empty())
+		throw content_error("Couldn't find any archives for map '" + mapName + "'.");
+	std::vector<std::string>::const_iterator it;
+	for (it = ars.begin(); it != ars.end(); ++it)
+	{
+		if (!AddArchive(*it, override, type))
+			throw content_error("Couldn't load archive '" + *it + "' for map '" + mapName + "'.");
+	}
 }
 
 bool CVFSHandler::RemoveArchive(const std::string& arName)
