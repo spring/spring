@@ -181,6 +181,8 @@ class LuaSyncedRead {
 		static int GetGroundBlocked(lua_State* L);
 		static int GetGroundExtremes(lua_State* L);
 
+		static int GetSmoothMeshHeight(lua_State* L);
+
 		static int TestBuildOrder(lua_State* L);
 		static int Pos2BuildPos(lua_State* L);
 

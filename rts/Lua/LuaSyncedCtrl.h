@@ -21,6 +21,7 @@ class LuaSyncedCtrl {
 		static bool inDestroyFeature;
 		static bool inGiveOrder;
 		static bool inHeightMap;
+		static bool inSmoothMesh;
 
 	private:
 		// all LuaHandleSynced
@@ -117,6 +118,14 @@ class LuaSyncedCtrl {
 		static int AddHeightMap(lua_State* L);
 		static int SetHeightMap(lua_State* L);
 		static int SetHeightMapFunc(lua_State* L);
+
+		static int LevelSmoothMesh(lua_State* L);
+		static int AdjustSmoothMesh(lua_State* L);
+		static int RevertSmoothMesh(lua_State* L);
+
+		static int AddSmoothMesh(lua_State* L);
+		static int SetSmoothMesh(lua_State* L);
+		static int SetSmoothMeshFunc(lua_State* L);
 
 		static int SetMapSquareTerrainType(lua_State* L);
 		static int SetTerrainTypeData(lua_State* L);
