@@ -38,6 +38,7 @@ private:
 	bool changeAltHeight;
 	float maxHeight;
 	float tiltSpeed;
+	bool useSmoothMesh;
 };
 
 #endif
