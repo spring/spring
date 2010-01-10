@@ -227,9 +227,13 @@ void CArchiveScanner::ScanDirs(const vector<string>& scanDirs, bool doChecksum)
 	//       better to use a tag in the source file
 
 	// add the archives
-	for (unsigned int d = 0; d < scanDirs.size(); d++) {
-		logOutput.Print("Scanning: %s\n", scanDirs[d].c_str());
-		Scan(scanDirs[d], doChecksum);
+	for (vector<string>::const_iterator it = scanDirs.begin(); it != scanDirs.end(); ++it)
+	{
+		if (FileSystemHandler::DirExists(*it))
+		{
+			logOutput.Print("Scanning: %s\n", it->c_str());
+			Scan(*it, doChecksum);
+		}
 	}
 }
 
