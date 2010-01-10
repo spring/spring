@@ -17,5 +17,5 @@ fi
 echo -n configuring ${DIR} with ${4} ...
 
 cd ${DIR}
-cmake .. -DCMAKE_TOOLCHAIN_FILE:STRING=${2} -DMINGWLIBS:PATH=${3}  ${4}
+cmake ..  ${4}
 
