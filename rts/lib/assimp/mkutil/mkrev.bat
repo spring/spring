@@ -15,13 +15,14 @@ set /p addtext= < tmpfile.txt
 del /q tmpfile.txt
 cd ..\mkutil
 
-echo #define SVNRevision > tmpfile.txt
+echo #define SVNRevision > revision.h
 
-if exist revision.h del /q revision.h
-for /f "delims=" %%l in (tmpfile.txt) Do (
-      echo %%l %addtext% >> revision.h
+if exist tmpfile.txt del /q tmpfile.txt
+for /f "delims=" %%l in (revision.h) Do (
+      echo %%l %addtext% >> tmpfile.txt
 )
-del /q tmpfile.txt
+del /q revision.h
+ren tmpfile.txt revision.h
 
 
 

@@ -128,9 +128,6 @@ protected:
 	/** Reads an effect entry into the given effect*/
 	void ReadEffect( Collada::Effect& pEffect);
 
-	/** Reads an COMMON effect profile */
-	void ReadEffectProfileCommon( Collada::Effect& pEffect);
-
 	/** Read sampler properties */
 	void ReadSamplerProperties( Collada::Sampler& pSampler);
 

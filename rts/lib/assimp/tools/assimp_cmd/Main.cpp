@@ -129,9 +129,9 @@ const aiScene* ImportModel(const ImportData& imp, const std::string& path)
 		
 		unsigned int flags = 0;
 		if (imp.logFile.length())
-			flags |= aiDefaultLogStream_FILE;
+			flags |= DLS_FILE;
 		if (imp.showLog)
-			flags |= aiDefaultLogStream_STDERR;
+			flags |= DLS_CERR;
 
 		DefaultLogger::create(imp.logFile.c_str(),imp.verbose ? Logger::VERBOSE : Logger::NORMAL,flags);
 	}
@@ -246,10 +246,10 @@ int ProcessStandardArguments(ImportData& fill, const char** params,
 			fill.ppFlags |= aiProcess_ConvertToLeftHanded;
 		}
 		else if (! ::strcmp(params[i], "-fuv") || ! ::strcmp(params[i], "--flip-uv")) {
-			fill.ppFlags |= aiProcess_FlipUVs;
+			fill.ppFlags |= aiProcess_ConvertToLeftHanded;
 		}
 		else if (! ::strcmp(params[i], "-fwo") || ! ::strcmp(params[i], "--flip-winding-order")) {
-			fill.ppFlags |= aiProcess_FlipWindingOrder;
+			fill.ppFlags |= aiProcess_ConvertToLeftHanded;
 		}
 		else if (! ::strcmp(params[i], "-tuv") || ! ::strcmp(params[i], "--transform-uv-coords")) {
 			fill.ppFlags |= aiProcess_TransformUVCoords;

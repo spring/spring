@@ -49,23 +49,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace Assimp
 {
 
-/**	@brief	Returns true, if the last entry of the buffer is reached.
- *	@param	it	Iterator of current position.
- *	@param	end	Iterator with end of buffer.
- *	@return	true, if the end of the buffer is reached.
- */
-template<class char_t>
-inline bool isEndOfBuffer(  char_t it, char_t end )
-{
-	end--;
-	return ( it == end );	
-}
-
 /** @brief	Returns true, if token is a space on any supported platform
 *	@param	token	Token to search in
 *	@return	true, if token is a space			
 */
-inline bool isSeparator( char token )
+inline bool isSpace( char token )
 {
 	return ( token == ' ' || 
 			token == '\n' || 
@@ -91,9 +79,9 @@ inline bool isNewLine( char token )
 template<class Char_T>
 inline Char_T getNextWord( Char_T pBuffer, Char_T pEnd )
 {
-	while ( !isEndOfBuffer( pBuffer, pEnd ) )
+	while (pBuffer != pEnd)
 	{
-		if ( !isSeparator( *pBuffer ) )
+		if (!isSpace(*pBuffer))
 			break;
 		pBuffer++;
 	}
@@ -108,9 +96,9 @@ inline Char_T getNextWord( Char_T pBuffer, Char_T pEnd )
 template<class Char_T>
 inline Char_T getNextToken( Char_T pBuffer, Char_T pEnd )
 {
-	while ( !isEndOfBuffer( pBuffer, pEnd ) )
+	while (pBuffer != pEnd)
 	{
-		if ( isSeparator( *pBuffer ) )
+		if ( isSpace( *pBuffer ) )
 			break;
 		pBuffer++;
 	}
@@ -126,14 +114,14 @@ inline Char_T getNextToken( Char_T pBuffer, Char_T pEnd )
 template<class char_t>
 inline char_t skipLine( char_t it, char_t end, unsigned int &uiLine )
 {
-	while ( !isEndOfBuffer( it, end ) && *it != '\n' )
+	while ( it != end && *it != '\n' )
 		++it;
 	if ( it != end )
 	{
 		++it;
 		++uiLine;
 	}
-	// fix .. from time to time there are spaces at the beginning of a material line
+	 /* fix .. from time to time there are spaces at the beginning of a material line */
 	while ( it != end && (*it == '\t' || *it == ' ') )
 		++it;
 	return it;
@@ -150,15 +138,15 @@ inline char_t getName( char_t it, char_t end, std::string &name )
 {
 	name = "";
 	it = getNextToken<char_t>( it, end );
-	if ( isEndOfBuffer( it, end ) )
+	if ( it == end )
 		return end;
 	
-	char *pStart = &( *it );
-	while ( !isEndOfBuffer( it, end ) && !isSeparator( *it ) )
+	char *pStart = &(*it);
+	while ( !isSpace(*it) && it != end )
 		++it;
 
 	// Get name
-	std::string strName( pStart, &(*it) );
+	std::string strName(pStart, &(*it));
 	if ( strName.empty() )
 		return it;
 	else
@@ -179,7 +167,7 @@ inline char_t CopyNextWord( char_t it, char_t end, char *pBuffer, size_t length 
 {
 	size_t index = 0;
 	it = getNextWord<char_t>( it, end );
-	while ( !isSeparator( *it ) && !isEndOfBuffer( it, end ) )
+	while (!isSpace( *it ) && it != end )
 	{
 		pBuffer[index] = *it ;
 		index++;
@@ -187,7 +175,7 @@ inline char_t CopyNextWord( char_t it, char_t end, char *pBuffer, size_t length 
 			break;
 		++it;
 	}
-	pBuffer[ index ] = '\0';
+	pBuffer[index] = '\0';
 	return it;
 }
 
@@ -202,6 +190,7 @@ inline char_t getFloat( char_t it, char_t end, float &value )
 {
 	static const size_t BUFFERSIZE = 1024;
 	char buffer[ BUFFERSIZE ];
+	//memset( buffer, '\0', BUFFERSIZE );
 	it = CopyNextWord<char_t>( it, end, buffer, BUFFERSIZE );
 	value = (float) fast_atof( buffer );
 

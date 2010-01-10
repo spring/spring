@@ -77,17 +77,10 @@ ObjFileImporter::~ObjFileImporter()
 
 // ------------------------------------------------------------------------------------------------
 //	Returns true, fi file is an obj file
-bool ObjFileImporter::CanRead( const std::string& pFile, IOSystem*  pIOHandler , bool checkSig ) const
+bool ObjFileImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool checkSig) const
 {
-	if(!checkSig) //Check File Extension
-	{
-		return SimpleExtensionCheck(pFile,"obj");
-	}
-	else //Check file Header
-	{
-		const char* tokens[] = {"mtllib","usemtl","vt ","vn ","o "};
-		return BaseImporter::SearchFileHeaderForToken(pIOHandler, pFile, tokens, 5);
-	}
+	// fixme: auto detection
+	return SimpleExtensionCheck(pFile,"obj");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -108,12 +101,16 @@ void ObjFileImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 		throw new ImportErrorException( "OBJ-file is too small.");
 
 	// Allocate buffer and read file into it
-	TextFileToBuffer(file.get(),m_Buffer);
+	m_Buffer.resize( fileSize );
+	const size_t readsize = file->Read(&m_Buffer.front(), sizeof(char), fileSize);
+	assert (readsize == fileSize);
 
 	//
-	std::string  strModelName;
-	std::string::size_type pos = pFile.find_last_of( "\\/" );
-	if ( pos != std::string::npos )	{
+	std::string strDirectory(1,io.getOsSeparator()), strModelName;
+	std::string::size_type pos = pFile.find_last_of(io.getOsSeparator());
+	if (pos != std::string::npos)
+	{
+		strDirectory = pFile.substr(0, pos);
 		strModelName = pFile.substr(pos+1, pFile.size() - pos - 1);
 	}
 	else
@@ -122,13 +119,10 @@ void ObjFileImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 	}
 	
 	// parse the file into a temporary representation
-	ObjFileParser parser(m_Buffer, strModelName, pIOHandler);
+	ObjFileParser parser(m_Buffer, strDirectory, strModelName, pIOHandler);
 
 	// And create the proper return structures out of it
 	CreateDataFromImport(parser.GetModel(), pScene);
-
-	// Clean up allocated storage for the next import 
-	m_Buffer.clear();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -155,7 +149,7 @@ void ObjFileImporter::CreateDataFromImport(const ObjFile::Model* pModel, aiScene
 	std::vector<aiMesh*> MeshArray;
 	for (size_t index = 0; index < pModel->m_Objects.size(); index++)
 	{
-		createNodes(pModel, pModel->m_Objects[ index ], index, pScene->mRootNode, pScene, MeshArray);
+		createNodes(pModel, pModel->m_Objects[ index ], pScene->mRootNode, pScene, MeshArray);
 	}
 
 	// Create mesh pointer buffer for this scene
@@ -178,7 +172,6 @@ void ObjFileImporter::CreateDataFromImport(const ObjFile::Model* pModel, aiScene
 // ------------------------------------------------------------------------------------------------
 //	Creates all nodes of the model
 aiNode *ObjFileImporter::createNodes(const ObjFile::Model* pModel, const ObjFile::Object* pData, 
-									 unsigned int uiMeshIndex,
 									 aiNode *pParent, aiScene* pScene, 
 									 std::vector<aiMesh*> &MeshArray)
 {
@@ -193,13 +186,11 @@ aiNode *ObjFileImporter::createNodes(const ObjFile::Model* pModel, const ObjFile
 		this->appendChildToParentNode(pParent, pNode);
 
 	aiMesh *pMesh = NULL;
-	//for (unsigned int meshIndex = 0; meshIndex < pModel->m_Meshes.size(); meshIndex++)
+	for (unsigned int meshIndex = 0; meshIndex < pModel->m_Meshes.size(); meshIndex++)
 	{
 		pMesh = new aiMesh();
-		createTopology( pModel, pData, uiMeshIndex, pMesh );	
-		if (pMesh->mNumVertices > 0) {
-			MeshArray.push_back( pMesh );
-		}
+		MeshArray.push_back( pMesh );
+		createTopology( pModel, pData, meshIndex, pMesh );	
 	}
 
 	// Create all nodes from the subobjects stored in the current object
@@ -309,7 +300,7 @@ void ObjFileImporter::createVertexArray(const ObjFile::Model* pModel,
 
 	// Get current mesh
 	ObjFile::Mesh *pObjMesh = pModel->m_Meshes[ uiMeshIndex ];
-	if ( NULL == pObjMesh || pObjMesh->m_uiNumIndices < 1)
+	if ( NULL == pObjMesh )
 		return;
 
 	// Copy vertices of this mesh instance
@@ -323,8 +314,16 @@ void ObjFileImporter::createVertexArray(const ObjFile::Model* pModel,
 	// Allocate buffer for texture coordinates
 	if ( !pModel->m_TextureCoord.empty() && pObjMesh->m_uiUVCoordinates[0] )
 	{
-		pMesh->mNumUVComponents[ 0 ] = 2;
-		pMesh->mTextureCoords[ 0 ]   = new aiVector3D[ pMesh->mNumVertices ];
+		// FIXME (@Kimmi): cleanup, I don't see the intention behind this
+		// for ( size_t i=0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++ )
+		// {
+		//	const unsigned int num_uv = pObjMesh->m_uiUVCoordinates[ i ];
+		//	if ( num_uv > 0 )
+		//	{
+				pMesh->mNumUVComponents[ 0 ] = 2;
+				pMesh->mTextureCoords[ 0 ]   = new aiVector3D[ pMesh->mNumVertices ];
+		//	}
+		// }
 	}
 	
 	// Copy vertices, normals and textures into aiMesh instance
@@ -398,7 +397,7 @@ void ObjFileImporter::countObjects(const std::vector<ObjFile::Object*> &rObjects
 }
 
 // ------------------------------------------------------------------------------------------------
-//	Creates the material 
+//	Creates tha material 
 void ObjFileImporter::createMaterial(const ObjFile::Model* pModel, const ObjFile::Object* pData, 
 									 aiScene* pScene)
 {
@@ -428,32 +427,27 @@ void ObjFileImporter::createMaterial(const ObjFile::Model* pModel, const ObjFile
 
 		// convert illumination model
 		int sm;
-		switch (pCurrentMaterial->illumination_model) 
-		{
-		case 0:
-			sm = aiShadingMode_NoShading;
-			break;
-		case 1:
-			sm = aiShadingMode_Gouraud;
-			break;
-		case 2:
-			sm = aiShadingMode_Phong;
-			break;
-		default:
-			sm = aiShadingMode_Gouraud;
-			DefaultLogger::get()->error("OBJ/MTL: Unexpected illumination model (0-2 recognized)");
+		switch (pCurrentMaterial->illumination_model) {
+			case 0:
+				sm = aiShadingMode_NoShading;
+				break;
+			case 1:
+				sm = aiShadingMode_Gouraud;
+				break;
+			case 2:
+				sm = aiShadingMode_Phong;
+				break;
+			default:
+				sm = aiShadingMode_Gouraud;
+				DefaultLogger::get()->error("OBJ/MTL: Unexpected illumination model (0-2 recognized)");
 		}
 		mat->AddProperty<int>( &sm, 1, AI_MATKEY_SHADING_MODEL);
-
-		// multiplying the specular exponent with 2 seems to yield better results
-		pCurrentMaterial->shineness *= 4.f;
 
 		// Adding material colors
 		mat->AddProperty( &pCurrentMaterial->ambient, 1, AI_MATKEY_COLOR_AMBIENT );
 		mat->AddProperty( &pCurrentMaterial->diffuse, 1, AI_MATKEY_COLOR_DIFFUSE );
 		mat->AddProperty( &pCurrentMaterial->specular, 1, AI_MATKEY_COLOR_SPECULAR );
 		mat->AddProperty( &pCurrentMaterial->shineness, 1, AI_MATKEY_SHININESS );
-		mat->AddProperty( &pCurrentMaterial->alpha, 1, AI_MATKEY_OPACITY );
 
 		// Adding refraction index
 		mat->AddProperty( &pCurrentMaterial->ior, 1, AI_MATKEY_REFRACTI );

@@ -85,7 +85,7 @@ IF %FIRSTUTNA% == nil (
 )
 
 IF %FIRSTUTFAILURE% == nil (
-   echo All tests have been successful. 
+   echo All tests have been successful. Everything is fine.
 ) ELSE (
    echo One or more tests failed.
 )

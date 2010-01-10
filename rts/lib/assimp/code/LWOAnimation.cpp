@@ -315,10 +315,10 @@ void AnimResolver::DoInterpolation2(std::vector<LWO::Key>::const_iterator beg,
 
 // ------------------------------------------------------------------------------------------------
 // Subsample animation track by given key values
-void AnimResolver::SubsampleAnimTrack(std::vector<aiVectorKey>& /*out*/,
-	double /*time*/ ,double /*sample_delta*/ )
+void AnimResolver::SubsampleAnimTrack(std::vector<aiVectorKey>& out,
+	double time,double sample_delta)
 {
-	//ai_assert(out.empty() && sample_delta);
+	ai_assert(out.empty() && sample_delta);
 
 	//const double time_start = out.back().mTime;
 //	for ()
@@ -507,11 +507,6 @@ void AnimResolver::ExtractAnimChannel(aiNodeAnim** out, unsigned int flags /*= 0
 {
 	*out = NULL;
 
-
-	//FIXME: crashes if more than one component is animated at different timings, to be resolved.
-	return;
-
-#if 0
 	// If we have no envelopes, return NULL
 	if (envelopes.empty()) {
 		return;
@@ -565,7 +560,6 @@ void AnimResolver::ExtractAnimChannel(aiNodeAnim** out, unsigned int flags /*= 0
 		anim->mScalingKeys = new aiVectorKey[ anim->mNumScalingKeys = keys.size() ];
 		std::copy(keys.begin(),keys.end(),anim->mScalingKeys);
 	}
-#endif
 }
 
 

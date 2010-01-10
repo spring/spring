@@ -96,10 +96,8 @@ void XFileImporter::InternReadFile( const std::string& pFile, aiScene* pScene, I
 	if( fileSize < 16)
 		throw new ImportErrorException( "XFile is too small.");
 
-	// in the hope that binary files will never start with a BOM ...
 	mBuffer.resize( fileSize);
 	file->Read( &mBuffer.front(), 1, fileSize);
-	ConvertToUTF8(mBuffer);
 
 	// parse the file into a temporary representation
 	XFileParser parser( mBuffer);
@@ -504,7 +502,6 @@ void XFileImporter::CreateAnimations( aiScene* pScene, const XFile::Scene* pData
 
 					nbone->mRotationKeys[c].mTime = bone->mRotKeys[c].mTime;
 					nbone->mRotationKeys[c].mValue = aiQuaternion( rotmat);
-					nbone->mRotationKeys[c].mValue.w *= -1.0f; // needs quat inversion
 				}
 
 				// scaling

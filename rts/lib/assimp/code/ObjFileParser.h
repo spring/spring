@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 #include <map>
+#include "../include/aiTypes.h"
 
 namespace Assimp
 {
@@ -58,7 +59,6 @@ struct Point3;
 struct Point2;
 }
 class ObjFileImporter;
-class IOSystem;
 
 ///	\class	ObjFileParser
 ///	\brief	Parser for a obj waveform file
@@ -72,7 +72,7 @@ public:
 
 public:
 	///	\brief	Constructor with data array.
-	ObjFileParser(std::vector<char> &Data,const std::string &strModelName, IOSystem* io);
+	ObjFileParser(std::vector<char> &Data, const std::string &strAbsPath, const std::string &strModelName, IOSystem* io);
 	///	\brief	Destructor
 	~ObjFileParser();
 	///	\brief	Model getter.
@@ -102,18 +102,20 @@ private:
 	void getGroupName();
 	/// Gets the group number from file.
 	void getGroupNumber();
-	/// Returns the index of the material. Is -1 if not material was found.
+	///
 	int getMaterialIndex( const std::string &strMaterialName );
-	/// Parse object name
+	///
 	void getObjectName();
-	/// Creates a new object.
+	///
 	void createObject(const std::string &strObjectName);
 	///	Error report in token
 	void reportErrorTokenInFace();
 
 private:
 	///	Default material name
-	static const std::string DEFAULT_MATERIAL;
+	static const std::string DEFAULT_MATERIAL;/* = "defaultmaterial";*/
+	//!	Absolute filepath to model
+	std::string m_strAbsPath;
 	//!	Iterator to current position in buffer
 	DataArrayIt m_DataIt;
 	//!	Iterator to end position of buffer
@@ -124,8 +126,8 @@ private:
 	unsigned int m_uiLine;
 	//!	Helper buffer
 	char m_buffer[BUFFERSIZE];
-	///	Pointer to IO system instance.
-	IOSystem *m_pIO;
+
+	IOSystem* io;
 };
 
 }	// Namespace Assimp

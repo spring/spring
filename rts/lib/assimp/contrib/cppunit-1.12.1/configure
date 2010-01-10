@@ -21602,7 +21602,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include "streflop_cond.h"
+#include <math.h>
 int
 main ()
 {

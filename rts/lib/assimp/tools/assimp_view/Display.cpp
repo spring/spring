@@ -170,15 +170,10 @@ int CDisplay::AddNodeToDisplayList(
 	}
 	else strcpy(chTemp,pcNode->mName.data);
 
-	TVITEMEXW tvi; 
-	TVINSERTSTRUCTW sNew;
-	
-	wchar_t tmp[512];
-	int t = MultiByteToWideChar(CP_UTF8,0,chTemp,-1,tmp,512);
-	
-	tvi.pszText = tmp;
-	tvi.cchTextMax = (int)t;
-
+	TVITEMEX tvi; 
+	TVINSERTSTRUCT sNew;
+	tvi.pszText = chTemp;
+	tvi.cchTextMax = (int)strlen(chTemp);
 	tvi.mask = TVIF_TEXT | TVIF_SELECTEDIMAGE | TVIF_IMAGE | TVIF_HANDLE | TVIF_PARAM;
 	tvi.iImage = this->m_aiImageList[AI_VIEW_IMGLIST_NODE];
 	tvi.iSelectedImage = this->m_aiImageList[AI_VIEW_IMGLIST_NODE];
@@ -190,7 +185,7 @@ int CDisplay::AddNodeToDisplayList(
 
 	// add the item to the list
 	HTREEITEM hTexture = (HTREEITEM)SendMessage(GetDlgItem(g_hDlg,IDC_TREE1), 
-		TVM_INSERTITEMW, 
+		TVM_INSERTITEM, 
 		0,
 		(LPARAM)(LPTVINSERTSTRUCT)&sNew);
 
@@ -285,7 +280,6 @@ int CDisplay::ReplaceCurrentTexture(const char* szPath)
 
 			// special handling here 
 			if (pcMesh->piNormalTexture && pcMesh->piNormalTexture != piTexture)	{
-				piTexture->AddRef();
 				pcMesh->piNormalTexture->Release();
 				pcMesh->piNormalTexture = piTexture;
 				CMaterialManager::Instance().HMtoNMIfNecessary(pcMesh->piNormalTexture,&pcMesh->piNormalTexture,true);
@@ -308,9 +302,9 @@ int CDisplay::ReplaceCurrentTexture(const char* szPath)
 			*tex = piTexture;
 			m_pcCurrentTexture->piTexture = tex;
 
-			//if (!pcMesh->bSharedFX){
+			if (!pcMesh->bSharedFX){
 				pcMesh->piEffect->SetTexture(tex_string,piTexture);
-			//}
+			}
 		}
 	}
 	// now update the material itself
@@ -516,14 +510,10 @@ int CDisplay::AddMaterialToDisplayList(HTREEITEM hRoot,
 	{
 		sprintf(chTemp,"%s (%i)",szOut.data,iIndex+1);
 	}
-	TVITEMEXW tvi; 
-	TVINSERTSTRUCTW sNew;
-
-	wchar_t tmp[512];
-	int t = MultiByteToWideChar(CP_UTF8,0,chTemp,-1,tmp,512);
-	
-	tvi.pszText = tmp;
-	tvi.cchTextMax = (int)t;
+	TVITEMEX tvi; 
+	TVINSERTSTRUCT sNew;
+	tvi.pszText = chTemp;
+	tvi.cchTextMax = (int)strlen(chTemp);
 	tvi.mask = TVIF_TEXT | TVIF_SELECTEDIMAGE | TVIF_IMAGE | TVIF_HANDLE | TVIF_PARAM ;
 	tvi.iImage = m_aiImageList[AI_VIEW_IMGLIST_MATERIAL];
 	tvi.iSelectedImage = m_aiImageList[AI_VIEW_IMGLIST_MATERIAL];
@@ -536,7 +526,7 @@ int CDisplay::AddMaterialToDisplayList(HTREEITEM hRoot,
 
 	// add the item to the list
 	HTREEITEM hTexture = (HTREEITEM)SendMessage(GetDlgItem(g_hDlg,IDC_TREE1), 
-		TVM_INSERTITEMW, 
+		TVM_INSERTITEM, 
 		0,
 		(LPARAM)(LPTVINSERTSTRUCT)&sNew);
 

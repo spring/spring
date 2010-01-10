@@ -202,13 +202,8 @@ void ColladaParser::ReadAssetInfo()
 			if( IsElement( "unit"))
 			{
 				// read unit data from the element's attributes
-				const int attrIndex = TestAttribute( "meter");
-				if (attrIndex == -1) {
-					mUnitSize = 1.f;
-				}
-				else {
-					mUnitSize = mReader->getAttributeValueAsFloat( attrIndex);
-				}
+				int attrIndex = GetAttribute( "meter");
+				mUnitSize = mReader->getAttributeValueAsFloat( attrIndex);
 
 				// consume the trailing stuff
 				if( !mReader->isEmptyElement())
@@ -275,9 +270,8 @@ void ColladaParser::ReadAnimationLibrary()
 void ColladaParser::ReadAnimation( Collada::Animation* pParent)
 {
 	// an <animation> element may be a container for grouping sub-elements or an animation channel
-	// this is the channel collection by ID, in case it has channels
-	typedef std::map<std::string, AnimationChannel> ChannelMap;
-	ChannelMap channels;
+	// this is the channel we're writing to, in case it's a channel
+	AnimationChannel channel;
 	// this is the anim container in case we're a container
 	Animation* anim = NULL;
 
@@ -317,13 +311,8 @@ void ColladaParser::ReadAnimation( Collada::Animation* pParent)
 			} 
 			else if( IsElement( "sampler"))
 			{
-				// read the ID to assign the corresponding collada channel afterwards.
-				int indexID = GetAttribute( "id");
-				std::string id = mReader->getAttributeValue( indexID);
-				ChannelMap::iterator newChannel = channels.insert( std::make_pair( id, AnimationChannel())).first;
-
-				// have it read into a channel
-				ReadAnimationSampler( newChannel->second);
+				// have it read into our channel
+				ReadAnimationSampler( channel);
 			} 
 			else if( IsElement( "channel"))
 			{
@@ -331,13 +320,7 @@ void ColladaParser::ReadAnimation( Collada::Animation* pParent)
 				// Thanks, Collada! A directly posted information would have been too simple, I guess.
 				// Better add another indirection to that! Can't have enough of those.
 				int indexTarget = GetAttribute( "target");
-				int indexSource = GetAttribute( "source");
-				const char* sourceId = mReader->getAttributeValue( indexSource);
-				if( sourceId[0] == '#')
-					sourceId++;
-				ChannelMap::iterator cit = channels.find( sourceId);
-				if( cit != channels.end())
-					cit->second.mTarget = mReader->getAttributeValue( indexTarget);
+				channel.mTarget = mReader->getAttributeValue( indexTarget);
 
 				if( !mReader->isEmptyElement())
 					SkipElement();
@@ -357,26 +340,9 @@ void ColladaParser::ReadAnimation( Collada::Animation* pParent)
 		}
 	}
 
-	// it turned out to have channels - add them
-	if( !channels.empty())
-	{
-		// special filtering for stupid exporters packing each channel into a separate animation
-		if( channels.size() == 1)
-		{
-			pParent->mChannels.push_back( channels.begin()->second);
-		} else
-		{
-			// else create the animation, if not done yet, and store the channels
-			if( !anim)
-			{
-				anim = new Animation;
-				anim->mName = animName;
-				pParent->mSubAnims.push_back( anim);
-			}
-			for( ChannelMap::const_iterator it = channels.begin(); it != channels.end(); ++it)
-				anim->mChannels.push_back( it->second);
-		}
-	}
+	// it turned out to be a channel - add it
+	if( !channel.mTarget.empty())
+		pParent->mChannels.push_back( channel);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -704,16 +670,10 @@ void ColladaParser::ReadImage( Collada::Image& pImage)
 			{
 				if (mFormat == FV_1_4_n) 
 				{
-					// FIX: C4D exporter writes empty <init_from/> tags
-					if (!mReader->isEmptyElement()) {
-						// element content is filename - hopefully
-						const char* sz = TestTextContent();
-						if (sz)pImage.mFileName = sz;
-						TestClosing( "init_from");
-					}
-					if (!pImage.mFileName.length()) {
-						pImage.mFileName = "unknown_texture";
-					}
+					// element content is filename - hopefully
+					const char* sz = TestTextContent();
+					if (sz)pImage.mFileName = sz;
+					TestClosing( "init_from");
 				}
 				else if (mFormat == FV_1_5_n) 
 				{
@@ -1069,29 +1029,9 @@ void ColladaParser::ReadEffectLibrary()
 void ColladaParser::ReadEffect( Collada::Effect& pEffect)
 {
 	// for the moment we don't support any other type of effect.
-	while( mReader->read())
-	{
-		if( mReader->getNodeType() == irr::io::EXN_ELEMENT)
-		{
-			if( IsElement( "profile_COMMON"))
-				ReadEffectProfileCommon( pEffect);
-			else
-				SkipElement();
-		}
-		else if( mReader->getNodeType() == irr::io::EXN_ELEMENT_END) 
-		{
-			if( strcmp( mReader->getNodeName(), "effect") != 0)
-				ThrowException( "Expected end of \"effect\" element.");
+	// TODO: (thom) Rewrite this so that it ignores the whole effect instead of bailing out
+	TestOpening( "profile_COMMON");
 
-			break;
-		}
-	}
-}
-
-// ------------------------------------------------------------------------------------------------
-// Reads an COMMON effect profile
-void ColladaParser::ReadEffectProfileCommon( Collada::Effect& pEffect)
-{
 	while( mReader->read())
 	{
 		if( mReader->getNodeType() == irr::io::EXN_ELEMENT) 
@@ -1135,8 +1075,6 @@ void ColladaParser::ReadEffectProfileCommon( Collada::Effect& pEffect)
 			}
 			else if( IsElement( "shininess"))
 				ReadEffectFloat( pEffect.mShininess);
-			else if( IsElement( "reflectivity"))
-				ReadEffectFloat( pEffect.mReflectivity);
 
 			/* Single scalar properties */
 			else if( IsElement( "transparency"))
@@ -1166,26 +1104,16 @@ void ColladaParser::ReadEffectProfileCommon( Collada::Effect& pEffect)
 				pEffect.mFaceted = ReadBoolFromTextContent();
 				TestClosing( "faceted");
 			}
-			else 
-			{
+#if 0
+			else {
 				// ignore the rest
 				SkipElement();
 			}
+#endif
 		}
-		else if( mReader->getNodeType() == irr::io::EXN_ELEMENT_END) 
-		{
-			if( strcmp( mReader->getNodeName(), "technique") == 0)
-			{
-				// ignore silently - just syntactic sugar
-			}
-			else if( strcmp( mReader->getNodeName(), "profile_COMMON") == 0)
-			{
+		else if( mReader->getNodeType() == irr::io::EXN_ELEMENT_END) {
+			if( strcmp( mReader->getNodeName(), "effect") == 0)
 				break;
-			} else
-			{
-				// might also be the end of "phong", "blinn", "constant" or "lambert"
-				// ThrowException( "Expected end of \"profile_COMMON\" element.");
-			}
 		}
 	}
 }
@@ -1546,7 +1474,7 @@ void ColladaParser::ReadSource()
 	{
 		if( mReader->getNodeType() == irr::io::EXN_ELEMENT)
 		{
-			if( IsElement( "float_array") || IsElement( "IDREF_array") || IsElement( "Name_array"))
+			if( IsElement( "float_array") || IsElement( "IDREF_array"))
 			{
 				ReadDataArray();
 			}
@@ -1587,7 +1515,7 @@ void ColladaParser::ReadSource()
 void ColladaParser::ReadDataArray()
 {
 	std::string elmName = mReader->getNodeName();
-	bool isStringArray = (elmName == "IDREF_array" || elmName == "Name_array");
+	bool isStringArray = (elmName == "IDREF_array");
 
 	// read attributes
 	int indexID = GetAttribute( "id");
@@ -2047,7 +1975,6 @@ void ColladaParser::ReadPrimitives( Mesh* pMesh, std::vector<InputChannel>& pPer
 		}
 	}
 
-
 	// if I ever get my hands on that guy who invented this steaming pile of indirection...
 	TestClosing( "p");
 }
@@ -2082,71 +2009,39 @@ void ColladaParser::ExtractDataObjectFromChannel( const InputChannel& pInput, si
 			else 
 				DefaultLogger::get()->error("Collada: just one vertex position stream supported");
 			break;
-		case IT_Normal: 
-      // pad to current vertex count if necessary
-      if( pMesh->mNormals.size() < pMesh->mPositions.size()-1)
-        pMesh->mNormals.insert( pMesh->mNormals.end(), pMesh->mPositions.size() - pMesh->mNormals.size() - 1, aiVector3D( 0, 1, 0));
-
-      // ignore all normal streams except 0 - there can be only one normal
-      if( pInput.mIndex == 0)
+		case IT_Normal: // ignore all normal streams except 0 - there can be only one normal
+			if( pInput.mIndex == 0)
 				pMesh->mNormals.push_back( aiVector3D( obj[0], obj[1], obj[2])); 
 			else 
 				DefaultLogger::get()->error("Collada: just one vertex normal stream supported");
 			break;
-		case IT_Tangent: 
-      // pad to current vertex count if necessary
-      if( pMesh->mTangents.size() < pMesh->mPositions.size()-1)
-        pMesh->mTangents.insert( pMesh->mTangents.end(), pMesh->mPositions.size() - pMesh->mTangents.size() - 1, aiVector3D( 1, 0, 0));
-
-      // ignore all tangent streams except 0 - there can be only one tangent
-      if( pInput.mIndex == 0)
+		case IT_Tangent: // ignore all tangent streams except 0 - there can be only one tangent
+			if( pInput.mIndex == 0)
 				pMesh->mTangents.push_back( aiVector3D( obj[0], obj[1], obj[2])); 
 			else 
 				DefaultLogger::get()->error("Collada: just one vertex tangent stream supported");
 			break;
-		case IT_Bitangent: 
-      // pad to current vertex count if necessary
-      if( pMesh->mBitangents.size() < pMesh->mPositions.size()-1)
-        pMesh->mBitangents.insert( pMesh->mBitangents.end(), pMesh->mPositions.size() - pMesh->mBitangents.size() - 1, aiVector3D( 0, 0, 1));
-
-      // ignore all bitangent streams except 0 - there can be only one bitangent
-      if( pInput.mIndex == 0)
+		case IT_Bitangent: // ignore all bitangent streams except 0 - there can be only one bitangent
+			if( pInput.mIndex == 0)
 				pMesh->mBitangents.push_back( aiVector3D( obj[0], obj[1], obj[2])); 
 			else 
 				DefaultLogger::get()->error("Collada: just one vertex bitangent stream supported");
 			break;
-		case IT_Texcoord: 
-      // up to 4 texture coord sets are fine, ignore the others
-			if( pInput.mIndex < AI_MAX_NUMBER_OF_TEXTURECOORDS) 
-      {
-        // pad to current vertex count if necessary
-        if( pMesh->mTexCoords[pInput.mIndex].size() < pMesh->mPositions.size()-1)
-          pMesh->mTexCoords[pInput.mIndex].insert( pMesh->mTexCoords[pInput.mIndex].end(), 
-            pMesh->mPositions.size() - pMesh->mTexCoords[pInput.mIndex].size() - 1, aiVector3D( 0, 0, 0));
+		case IT_Texcoord: // up to 4 texture coord sets are fine, ignore the others
+			if( pInput.mIndex < AI_MAX_NUMBER_OF_TEXTURECOORDS) {
 
 				pMesh->mTexCoords[pInput.mIndex].push_back( aiVector3D( obj[0], obj[1], obj[2]));
 				if (0 != acc.mSubOffset[2] || 0 != acc.mSubOffset[3]) /* hack ... consider cleaner solution */
 					pMesh->mNumUVComponents[pInput.mIndex]=3;
-			}	else 
-      {
+			}
+			else 
 				DefaultLogger::get()->error("Collada: too many texture coordinate sets. Skipping.");
-      }
 			break;
-		case IT_Color: 
-      // up to 4 color sets are fine, ignore the others
+		case IT_Color: // up to 4 color sets are fine, ignore the others
 			if( pInput.mIndex < AI_MAX_NUMBER_OF_COLOR_SETS)
-      {
-        // pad to current vertex count if necessary
-        if( pMesh->mColors[pInput.mIndex].size() < pMesh->mPositions.size()-1)
-          pMesh->mColors[pInput.mIndex].insert( pMesh->mColors[pInput.mIndex].end(), 
-            pMesh->mPositions.size() - pMesh->mColors[pInput.mIndex].size() - 1, aiColor4D( 0, 0, 0, 1));
-
 				pMesh->mColors[pInput.mIndex].push_back( aiColor4D( obj[0], obj[1], obj[2], obj[3])); 
-      } else 
-      {
+			else 
 				DefaultLogger::get()->error("Collada: too many vertex color sets. Skipping.");
-      }
-
 			break;
 	}
 }
@@ -2436,10 +2331,10 @@ void ColladaParser::ReadNodeGeometry( Node* pNode)
 					int attrMaterial = GetAttribute( "target");
 					const char* urlMat = mReader->getAttributeValue( attrMaterial);
 					Collada::SemanticMappingTable s;
-					if( urlMat[0] == '#')
-            urlMat++;
+					if( urlMat[0] != '#')
+						ThrowException( "Unknown reference format");
 
-					s.mMatName = urlMat;
+					s.mMatName = urlMat+1;
 
 					// resolve further material details + THIS UGLY AND NASTY semantic mapping stuff
 					if( !mReader->isEmptyElement())
@@ -2630,20 +2525,9 @@ aiMatrix4x4 ColladaParser::CalculateResultTransform( const std::vector<Transform
 		switch( tf.mType)
 		{
 			case TF_LOOKAT:
-      {
-        aiVector3D pos( tf.f[0], tf.f[1], tf.f[2]);
-        aiVector3D dstPos( tf.f[3], tf.f[4], tf.f[5]);
-        aiVector3D up = aiVector3D( tf.f[6], tf.f[7], tf.f[8]).Normalize();
-        aiVector3D dir = aiVector3D( dstPos - pos).Normalize();
-        aiVector3D right = (dir ^ up).Normalize();
-
-        res *= aiMatrix4x4( 
-          right.x, up.x, -dir.x, pos.x, 
-          right.y, up.y, -dir.y, pos.y,
-          right.z, up.z, -dir.z, pos.z,
-          0, 0, 0, 1);
+				// TODO: (thom)
+				assert( false);
 				break;
-      }
 			case TF_ROTATE:
 			{
 				aiMatrix4x4 rot;
@@ -2701,9 +2585,9 @@ Collada::InputType ColladaParser::GetTypeForSemantic( const std::string& pSemant
 		return IT_Color;
 	else if( pSemantic == "VERTEX")
 		return IT_Vertex;
-	else if( pSemantic == "BINORMAL" || pSemantic ==  "TEXBINORMAL")
+	else if( pSemantic == "BINORMAL")
 		return IT_Bitangent;
-	else if( pSemantic == "TANGENT" || pSemantic == "TEXTANGENT")
+	else if( pSemantic == "TANGENT")
 		return IT_Tangent;
 
 	DefaultLogger::get()->warn( boost::str( boost::format( "Unknown vertex input type \"%s\". Ignoring.") % pSemantic));

@@ -17,7 +17,7 @@ g_IncPath = Split("""
 	/usr/local/include/
 """)
 #------------------------------------------------------------------------------
-g_assimp_lib_Source =  Glob(r"../../code/*.cpp") +     Glob(r"../../contrib/irrXML/*.cpp") + Glob(r"../../contrib/zlib/*.c") + Glob(r"../../code/extra/*.cpp") + Glob(r"../../contrib/ConvertUTF/*.c")
+g_assimp_lib_Source =  Glob(r"../../code/*.cpp") +     Glob(r"../../contrib/irrXML/*.cpp") + Glob(r"../../contrib/zlib/*.c") + Glob(r"../../code/extra/*.cpp") 
 
 #------------------------------------------------------------------------------
 # don't reset CC/CXX-variable, other users might have set it to something special
@@ -29,9 +29,6 @@ if ARGUMENTS.get('debug', 0):
 	ccflags = ccflags + ' -g -pg -Wall -pedantic '
 else:
 	ccflags = ccflags + ' -Os -fno-strict-aliasing -msse -Wall -pedantic'
-    
-if ARGUMENTS.get('noboost', 0):
-	ccflags = ccflags + ' -DASSIMP_BUILD_BOOST_WORKAROUND '
 	
 env = Environment(CCFLAGS = ccflags, CPPPATH = g_IncPath, LIBPATH=g_LibPath)
 conf = Configure( env )
@@ -42,12 +39,6 @@ conf = Configure( env )
 env = conf.Finish()
 
 # Build library
-
-if ARGUMENTS.get("shared",0):
-	env.SharedLibrary(target = "assimp", source = g_assimp_lib_Source,
-		LIBPATH = g_LibPath)
-
-else:
-	env.StaticLibrary(target = "assimp", source = g_assimp_lib_Source, 
+env.StaticLibrary(target = "assimp", source = g_assimp_lib_Source, 
 		LIBPATH = g_LibPath)
 

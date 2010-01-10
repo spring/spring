@@ -54,8 +54,7 @@ using namespace Assimp;
 void LWOImporter::LoadLWOBFile()
 {
 	LE_NCONST uint8_t* const end = mFileBuffer + fileSize;
-	bool running = true;
-	while (running)
+	while (true)
 	{
 		if (mFileBuffer + sizeof(IFF::ChunkHeader) > end)break;
 		LE_NCONST IFF::ChunkHeader* const head = IFF::LoadChunk(mFileBuffer);
@@ -230,8 +229,7 @@ void LWOImporter::LoadLWOBSurface(unsigned int size)
 	LWO::Texture* pTex = NULL;
 
 	GetS0(surf.mName,size);
-	bool runnning = true;
-	while (runnning)	{
+	while (true)	{
 		if (mFileBuffer + 6 >= end)
 			break;
 
@@ -246,7 +244,7 @@ void LWOImporter::LoadLWOBSurface(unsigned int size)
 		 */
 		if (mFileBuffer + head->length > end) {
 			DefaultLogger::get()->error("LWOB: Invalid surface chunk length. Trying to continue.");
-			head->length = (uint16_t) (end - mFileBuffer);
+			head->length = end - mFileBuffer;
 		}
 
 		uint8_t* const next = mFileBuffer+head->length;
