@@ -12,6 +12,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include <boost/cstdint.hpp>
 
 extern boost::uint8_t *keys;
@@ -28,6 +29,7 @@ COverheadController::COverheadController()
 	tiltSpeed = configHandler->Get("OverheadTiltSpeed",1.0f);
 	enabled = !!configHandler->Get("OverheadEnabled",1);
 	fov = configHandler->Get("OverheadFOV", 45.0f);
+	useSmoothMesh = !!configHandler->Get("OverheadSmoothMesh", 1);
 }
 
 void COverheadController::KeyMove(float3 move)
@@ -135,7 +137,7 @@ float3 COverheadController::GetPos()
 		height = maxHeight;
 	}
 
-	pos.y = ground->GetHeight(pos.x,pos.z);
+	pos.y = useSmoothMesh ? smoothGround->GetHeight(pos.x, pos.z) : ground->GetHeight(pos.x,pos.z);
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 
 	float3 cpos = pos - dir * height;
@@ -172,6 +174,8 @@ void COverheadController::GetState(StateMap& sm) const
 	sm["height"]  = height;
 	sm["zscale"]  = zscale;
 	sm["flipped"] = flipped ? +1.0f : -1.0f;
+
+	sm["smoothmesh"] = useSmoothMesh;
 }
 
 bool COverheadController::SetState(const StateMap& sm)
@@ -187,6 +191,8 @@ bool COverheadController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "height", height);
 	SetStateFloat(sm, "zscale", zscale);
 	SetStateBool (sm, "flipped", flipped);
+
+	SetStateBool(sm, "smoothmesh", useSmoothMesh);
 
 	return true;
 }
