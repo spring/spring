@@ -57,8 +57,7 @@ class Importer;
 	(string[1] << 16) + (string[2] << 8) + string[3]))
 
 // ---------------------------------------------------------------------------
-/** FOR IMPORTER PLUGINS ONLY: Simple exception class to be thrown if an 
- *  error occurs while importing. */
+/** Simple exception class to be thrown if an error occurs while importing. */
 class ASSIMP_API ImportErrorException 
 {
 public:
@@ -77,14 +76,14 @@ private:
 	std::string mErrorText;
 };
 
-//! @cond never
 // ---------------------------------------------------------------------------
 /** @brief Internal PIMPL implementation for Assimp::Importer
  *
  *  Using this idiom here allows us to drop the dependency from
  *  std::vector and std::map in the public headers. Furthermore we are dropping
  *  any STL interface problems caused by mismatching STL settings. All
- *  size calculation are now done by us, not the app heap. */
+ *  size calculation are now done by us, not the app heap.
+ */
 class ASSIMP_API ImporterPimpl 
 {
 public:
@@ -132,11 +131,10 @@ public:
 	/** Used by post-process steps to share data */
 	SharedPostProcessInfo* mPPShared;
 };
-//! @endcond
 
 // ---------------------------------------------------------------------------
-/** FOR IMPORTER PLUGINS ONLY: The BaseImporter defines a common interface 
- *  for all importer worker classes.
+/** The BaseImporter defines a common interface for all importer worker 
+ *  classes.
  *
  * The interface defines two functions: CanRead() is used to check if the 
  * importer can handle the format of the given file. If an implementation of 
@@ -203,6 +201,7 @@ public:
 	 */
 	aiScene* ReadFile( const std::string& pFile, IOSystem* pIOHandler);
 
+
 	// -------------------------------------------------------------------
 	/** Returns the error description of the last error that occured. 
 	 * @return A description of the last error that occured. An empty
@@ -212,13 +211,18 @@ public:
 		return mErrorText;
 	}
 
+
 	// -------------------------------------------------------------------
 	/** Called prior to ReadFile().
 	 * The function is a request to the importer to update its configuration
 	 * basing on the Importer's configuration property list.
 	 * @param pImp Importer instance
+	 * @param ppFlags Post-processing steps to be executed on the data
+	 *  returned by the loaders. This value is provided to allow some
+	 * internal optimizations.
 	 */
-	virtual void SetupProperties(const Importer* pImp);
+	virtual void SetupProperties(const Importer* pImp /*,
+		unsigned int ppFlags*/);
 
 protected:
 
@@ -279,7 +283,6 @@ protected:
 	virtual void InternReadFile( const std::string& pFile, 
 		aiScene* pScene, IOSystem* pIOHandler) = 0;
 
-public: // static utilities
 
 	// -------------------------------------------------------------------
 	/** A utility for CanRead().
@@ -342,24 +345,20 @@ public: // static utilities
 		unsigned int offset = 0,
 		unsigned int size   = 4);
 
+#if 0 /** TODO **/
 	// -------------------------------------------------------------------
 	/** An utility for all text file loaders. It converts a file to our
-	 *   UTF8 character set. Errors are reported, but ignored.
-	 *
-	 *  @param data File buffer to be converted to UTF8 data. The buffer 
-	 *  is resized as appropriate. */
-	static void ConvertToUTF8(std::vector<char>& data);
-
-	// -------------------------------------------------------------------
-	/** Utility for text file loaders which copies the contents of the
-	 *  file into a memory buffer and converts it to our UTF8
-	 *  representation.
-	 *  @param stream Stream to read from. 
-	 *  @param data Output buffer to be resized and filled with the
-	 *   converted text file data. The buffer is terminated with
-	 *   a binary 0. */
-	static void TextFileToBuffer(IOStream* stream,
-		std::vector<char>& data);
+	*  ASCII/UTF8 character set. Special unicode characters are lost.
+	*
+	*  @param buffer Input buffer. Needn't be terminated with zero.
+	 *  @param length Length of the input buffer, in bytes. Receives the
+	 *    number of output characters, excluding the terminal char.
+	 *  @return true if the source format did not match our internal
+	 *    format so it was converted.
+	 */
+	static bool ConvertToUTF8(const char* buffer, 
+		unsigned int& length);
+#endif
 
 protected:
 
@@ -370,23 +369,25 @@ protected:
 struct BatchData;
 
 // ---------------------------------------------------------------------------
-/** FOR IMPORTER PLUGINS ONLY: A helper class for the pleasure of importers 
- *  which need to load many extern meshes recursively.
+/** A helper class that can be used by importers which need to load many
+ *  extern meshes recursively.
  *
  *  The class uses several threads to load these meshes (or at least it
  *  could, this has not yet been implemented at the moment).
  *
- *  @note The class may not be used by more than one thread*/
+ *  @note The class may not be used by more than one thread
+ */
 class ASSIMP_API BatchLoader
 {
 	// friend of Importer
 
 public:
 
-	//! @cond never
-	// -------------------------------------------------------------------
-	/** Wraps a full list of configuration properties for an importer.
-	 *  Properties can be set using SetGenericProperty */
+	/** Represents a full list of configuration properties
+	 *  for the importer.
+	 *
+	 *  Properties can be set using SetGenericProperty
+	 */
 	struct PropertyMap
 	{
 		ImporterPimpl::IntPropertyMap     ints;
@@ -402,40 +403,43 @@ public:
 			return ints.empty() && floats.empty() && strings.empty();
 		}
 	};
-	//! @endcond
 
 public:
 	
 
-	// -------------------------------------------------------------------
-	/** Construct a batch loader from a given IO system to be used to acess external files */
+	/** Construct a batch loader from a given IO system
+	 */
 	BatchLoader(IOSystem* pIO);
 	~BatchLoader();
 
-	// -------------------------------------------------------------------
+
 	/** Add a new file to the list of files to be loaded.
+	 *
 	 *  @param file File to be loaded
-	 *  @param steps Post-processing steps to be executed on the file
+	 *  @param steps Steps to be executed on the file
 	 *  @param map Optional configuration properties
 	 *  @return 'Load request channel' - an unique ID that can later
 	 *    be used to access the imported file data.
-	 *  @see GetImport */
+	 */
 	unsigned int AddLoadRequest	(const std::string& file,
 		unsigned int steps = 0, const PropertyMap* map = NULL);
 
-	// -------------------------------------------------------------------
+
 	/** Get an imported scene.
+	 *
 	 *  This polls the import from the internal request list.
 	 *  If an import is requested several times, this function
 	 *  can be called several times, too.
 	 *
 	 *  @param which LRWC returned by AddLoadRequest().
 	 *  @return NULL if there is no scene with this file name
-	 *  in the queue of the scene hasn't been loaded yet. */
-	aiScene* GetImport	(unsigned int which);
+	 *  in the queue of the scene hasn't been loaded yet.
+	 */
+	aiScene* GetImport		(unsigned int which);
 
-	// -------------------------------------------------------------------
-	/** Waits until all scenes have been loaded.  */
+
+	/** Waits until all scenes have been loaded.
+	 */
 	void LoadAll();
 
 private:

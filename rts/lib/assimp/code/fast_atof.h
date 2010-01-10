@@ -47,8 +47,7 @@ inline unsigned int strtol10( const char* in, const char** out=0)
 {
 	unsigned int value = 0;
 
-	bool running = true;
-	while ( running )
+	while ( 1 )
 	{
 		if ( *in < '0' || *in > '9' )
 			break;
@@ -67,8 +66,7 @@ inline unsigned int strtol8( const char* in, const char** out=0)
 {
 	unsigned int value = 0;
 
-	bool running = true;
-	while ( running )
+	while ( 1 )
 	{
 		if ( *in < '0' || *in > '7' )
 			break;
@@ -87,8 +85,7 @@ inline unsigned int strtol16( const char* in, const char** out=0)
 {
 	unsigned int value = 0;
 
-	bool running = true;
-	while ( running )
+	while ( 1 )
 	{
 		if ( *in >= '0' && *in <= '9' )
 		{
@@ -179,8 +176,7 @@ inline uint64_t strtol10_64( const char* in, const char** out=0, unsigned int* m
 	unsigned int cur = 0;
 	uint64_t value = 0;
 
-	bool running = true;
-	while ( running )
+	while ( 1 )
 	{
 		if ( *in < '0' || *in > '9' )
 			break;

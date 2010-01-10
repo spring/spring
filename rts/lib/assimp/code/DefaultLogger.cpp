@@ -88,14 +88,14 @@ struct LogStreamInfo
 
 // ----------------------------------------------------------------------------------
 // Construct a default log stream
-LogStream* LogStream::createDefaultStream(aiDefaultLogStream	streams,
+LogStream* LogStream::createDefaultStream(DefaultLogStreams	streams,
 	const char* name /*= "AssimpLog.txt"*/,
 	IOSystem* io		    /*= NULL*/)
 {
 	switch (streams)	
 	{
 		// This is a platform-specific feature
-	case aiDefaultLogStream_DEBUGGER:
+	case DLS_DEBUGGER:
 #ifdef WIN32
 		return new Win32DebugLogStream();
 #else
@@ -103,11 +103,11 @@ LogStream* LogStream::createDefaultStream(aiDefaultLogStream	streams,
 #endif
 
 		// Platform-independent default streams
-	case aiDefaultLogStream_STDERR:
+	case DLS_CERR:
 		return new StdOStreamLogStream(std::cerr);
-	case aiDefaultLogStream_STDOUT:
+	case DLS_COUT:
 		return new StdOStreamLogStream(std::cout);
-	case aiDefaultLogStream_FILE:
+	case DLS_FILE:
 		return (name && *name ? new FileLogStream(name,io) : NULL);
 	default:
 		// We don't know this default log stream, so raise an assertion
@@ -123,7 +123,7 @@ LogStream* LogStream::createDefaultStream(aiDefaultLogStream	streams,
 //	Creates the only singleton instance
 Logger *DefaultLogger::create(const char* name /*= "AssimpLog.txt"*/,
 	LogSeverity severity                       /*= NORMAL*/,
-	unsigned int defStreams                    /*= aiDefaultLogStream_DEBUGGER | aiDefaultLogStream_FILE*/,
+	unsigned int defStreams                    /*= DLS_DEBUGGER | DLS_FILE*/,
 	IOSystem* io		                       /*= NULL*/)
 {
 	// enter the mutex here to avoid concurrency problems
@@ -138,20 +138,20 @@ Logger *DefaultLogger::create(const char* name /*= "AssimpLog.txt"*/,
 
 	// Attach default log streams
 	// Stream the log to the MSVC debugger?
-	if (defStreams & aiDefaultLogStream_DEBUGGER)
-		m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_DEBUGGER));
+	if (defStreams & DLS_DEBUGGER)
+		m_pLogger->attachStream( LogStream::createDefaultStream(DLS_DEBUGGER));
 
 	// Stream the log to COUT?
-	if (defStreams & aiDefaultLogStream_STDOUT)
-		m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_STDOUT));
+	if (defStreams & DLS_COUT)
+		m_pLogger->attachStream( LogStream::createDefaultStream(DLS_COUT));
 
 	// Stream the log to CERR?
-	if (defStreams & aiDefaultLogStream_STDERR)
-		 m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_STDERR));
+	if (defStreams & DLS_CERR)
+		 m_pLogger->attachStream( LogStream::createDefaultStream(DLS_CERR));
 	
 	// Stream the log to a file
-	if (defStreams & aiDefaultLogStream_FILE && name && *name)
-		m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_FILE,name,io));
+	if (defStreams & DLS_FILE && name && *name)
+		m_pLogger->attachStream( LogStream::createDefaultStream(DLS_FILE,name,io));
 
 	return m_pLogger;
 }

@@ -84,14 +84,14 @@ bool MakeVerboseFormatProcess::MakeVerboseFormat(aiMesh* pcMesh)
 	unsigned int iOldNumVertices = pcMesh->mNumVertices;
 	const unsigned int iNumVerts = pcMesh->mNumFaces*3;
 
-	aiVector3D* pvPositions = new aiVector3D[ iNumVerts ];
+	aiVector3D* pvPositions = new aiVector3D[iNumVerts];
 
-	aiVector3D* pvNormals = NULL;
+	aiVector3D* pvNormals;
 	if (pcMesh->HasNormals()) 
 	{
 		pvNormals = new aiVector3D[iNumVerts];
 	}
-	aiVector3D* pvTangents = NULL, *pvBitangents = NULL;
+	aiVector3D* pvTangents, *pvBitangents;
 	if (pcMesh->HasTangentsAndBitangents()) 
 	{
 		pvTangents = new aiVector3D[iNumVerts];

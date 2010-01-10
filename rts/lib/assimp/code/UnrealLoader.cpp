@@ -217,8 +217,11 @@ void UnrealImporter::InternReadFile( const std::string& pFile,
 	boost::scoped_ptr<IOStream> pb (pIOHandler->Open(uc_path));
 	if (pb.get())	{
 
-		std::vector<char> _data;
-		TextFileToBuffer(pb.get(),_data);
+		size_t s = pb->FileSize();
+		std::vector<char> _data(s+1);
+		pb->Read(&_data[0],s,1);
+
+		_data[s] = 0;
 		const char* data = &_data[0];
 
 		std::vector< std::pair< std::string,std::string > > tempTextures;

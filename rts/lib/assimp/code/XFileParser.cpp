@@ -61,13 +61,13 @@ using namespace Assimp::XFile;
 
 // ------------------------------------------------------------------------------------------------
 // Dummy memory wrappers for use with zlib
-void* dummy_alloc (void* /*opaque*/, unsigned int items, unsigned int size)	{
+void* dummy_alloc (void* opaque, unsigned int items, unsigned int size)	{
 
 	// we're using calloc to make it easier to debug the whole stuff
 	return ::calloc(items,size);
 }
 
-void  dummy_free  (void* /*opaque*/, void* address)	{
+void  dummy_free  (void* opaque, void* address)	{
 	return ::free(address);
 }
 
@@ -249,9 +249,8 @@ XFileParser::XFileParser( const std::vector<char>& pBuffer)
 	ParseFile();
 
 	// filter the imported hierarchy for some degenerated cases
-	if( mScene->mRootNode) {
+	if( mScene->mRootNode)
 		FilterHierarchy( mScene->mRootNode);
-	}
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -265,8 +264,7 @@ XFileParser::~XFileParser()
 // ------------------------------------------------------------------------------------------------
 void XFileParser::ParseFile()
 {
-	bool running = true;
-	while( running )
+	while( 1)
 	{
 		// read name of next object
 		std::string objectName = GetNextToken();
@@ -324,8 +322,7 @@ void XFileParser::ParseDataObjectTemplate()
 	std::string guid = GetNextToken();
 
 	// read and ignore data members
-	bool running = true;
-	while ( running )
+	while(true)
 	{
 		std::string s = GetNextToken();
 
@@ -380,8 +377,7 @@ void XFileParser::ParseDataObjectFrame( Node* pParent)
 
 	// Now inside a frame.
 	// read tokens until closing brace is reached.
-	bool running = true;
-	while ( running )
+	while(true)
 	{
 		std::string objectName = GetNextToken();
 		if (objectName.size() == 0)
@@ -461,8 +457,7 @@ void XFileParser::ParseDataObjectMesh( Mesh* pMesh)
 	}
 
 	// here, other data objects may follow
-	bool running = true;
-	while ( running )
+	while(true)
 	{
 		std::string objectName = GetNextToken();
 
@@ -542,7 +537,7 @@ void XFileParser::ParseDataObjectSkinWeights( Mesh *pMesh)
 }
 
 // ------------------------------------------------------------------------------------------------
-void XFileParser::ParseDataObjectSkinMeshHeader( Mesh* /*pMesh*/ )
+void XFileParser::ParseDataObjectSkinMeshHeader( Mesh* pMesh)
 {
 	readHeadOfDataObject();
 
@@ -666,8 +661,7 @@ void XFileParser::ParseDataObjectMeshMaterialList( Mesh* pMesh)
 		pMesh->mFaceMaterials.push_back( pMesh->mFaceMaterials.front());
 
 	// read following data objects
-	bool running = true;
-	while ( running )
+	while(true)
 	{
 		std::string objectName = GetNextToken();
 		if( objectName.size() == 0)
@@ -718,8 +712,7 @@ void XFileParser::ParseDataObjectMaterial( Material* pMaterial)
 	pMaterial->mEmissive = ReadRGB(); 
 
 	// read other data objects
-	bool running = true;
-	while ( running )
+	while(true)
 	{
 		std::string objectName = GetNextToken();
 		if( objectName.size() == 0)
@@ -767,8 +760,7 @@ void XFileParser::ParseDataObjectAnimationSet()
 	mScene->mAnims.push_back( anim);
 	anim->mName = animName;
 
-	bool running = true;
-	while ( running )
+	while(true)
 	{
 		std::string objectName = GetNextToken();
 		if( objectName.length() == 0)
@@ -794,8 +786,7 @@ void XFileParser::ParseDataObjectAnimation( Animation* pAnim)
 	AnimBone* banim = new AnimBone;
 	pAnim->mAnims.push_back( banim);
 
-	bool running = true;
-	while( running )
+	while(true)
 	{
 		std::string objectName = GetNextToken();
 
@@ -938,8 +929,7 @@ void XFileParser::ParseDataObjectTextureFilename( std::string& pName)
 void XFileParser::ParseUnknownDataObject()
 {
 	// find opening delimiter
-	bool running = true;
-	while( running )
+	while( true)
 	{
 		std::string t = GetNextToken();
 		if( t.length() == 0)
@@ -1137,8 +1127,7 @@ void XFileParser::FindNextNoneWhiteSpace()
 	if( mIsBinaryFormat)
 		return;
 
-	bool running = true;
-	while( running )
+	while( true)
 	{
 		while( P < End && isspace( (unsigned char) *P))
 		{

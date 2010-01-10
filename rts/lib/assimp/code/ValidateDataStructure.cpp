@@ -209,8 +209,13 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 	// validate the node graph of the scene
 	Validate(pScene->mRootNode);
 	
+	// At least one of the mXXX arrays must be non-empty or we'll flag 
+	// the scene as invalid
+	bool has = false;
+
 	// validate all meshes
 	if (pScene->mNumMeshes) {
+		// has = true;
 		DoValidation(pScene->mMeshes,pScene->mNumMeshes,"mMeshes","mNumMeshes");
 	}
 	else if (!(mScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE))	{
@@ -222,6 +227,7 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 	
 	// validate all animations
 	if (pScene->mNumAnimations) {
+		// has = true;
 		DoValidation(pScene->mAnimations,pScene->mNumAnimations,
 			"mAnimations","mNumAnimations");
 	}
@@ -231,6 +237,7 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 
 	// validate all cameras
 	if (pScene->mNumCameras) {
+		// has = true;
 		DoValidationWithNameCheck(pScene->mCameras,pScene->mNumCameras,
 			"mCameras","mNumCameras");
 	}
@@ -240,6 +247,7 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 
 	// validate all lights
 	if (pScene->mNumLights) {
+		// has = true;
 		DoValidationWithNameCheck(pScene->mLights,pScene->mNumLights,
 			"mLights","mNumLights");
 	}
@@ -249,6 +257,7 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 	
 	// validate all materials
 	if (pScene->mNumMaterials) {
+		// has = true;
 		DoValidation(pScene->mMaterials,pScene->mNumMaterials,"mMaterials","mNumMaterials");
 	}
 #if 0

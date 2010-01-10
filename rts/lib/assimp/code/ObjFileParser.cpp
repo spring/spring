@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ObjTools.h"
 #include "ObjFileData.h"
 #include "fast_atof.h"
-#include "../include/aiTypes.h"
+
 #include "DefaultIOSystem.h"
 
 namespace Assimp	{
@@ -57,12 +57,15 @@ const std::string ObjFileParser::DEFAULT_MATERIAL = AI_DEFAULT_MATERIAL_NAME;
 
 // -------------------------------------------------------------------
 //	Constructor with loaded data and directories.
-ObjFileParser::ObjFileParser(std::vector<char> &Data,const std::string &strModelName, IOSystem *io ) :
+ObjFileParser::ObjFileParser(std::vector<char> &Data, 
+							 const std::string &strAbsPath, 
+							 const std::string &strModelName, IOSystem* _io) :
+	m_strAbsPath(strAbsPath),
 	m_DataIt(Data.begin()),
 	m_DataItEnd(Data.end()),
 	m_pModel(NULL),
 	m_uiLine(0),
-	m_pIO( io )
+	io(_io)
 {
 	// Create the model instance to store all the data
 	m_pModel = new ObjFile::Model();
@@ -183,7 +186,7 @@ void ObjFileParser::copyNextWord(char *pBuffer, size_t length)
 {
 	size_t index = 0;
 	m_DataIt = getNextWord<DataArrayIt>(m_DataIt, m_DataItEnd);
-	while ( !isSeparator(*m_DataIt) && m_DataIt != m_DataItEnd )
+	while (!isSpace(*m_DataIt) && m_DataIt != m_DataItEnd)
 	{
 		pBuffer[index] = *m_DataIt;
 		index++;
@@ -290,7 +293,7 @@ void ObjFileParser::getFace()
 			}
 			iPos++;
 		}
-		else if ( isSeparator(*pPtr) )
+		else if (isSpace(*pPtr))
 		{
 			iPos = 0;
 		}
@@ -299,10 +302,10 @@ void ObjFileParser::getFace()
 			//OBJ USES 1 Base ARRAYS!!!!
 			const int iVal = atoi( pPtr );
 			int tmp = iVal;
-			while ( ( tmp = tmp / 10 )!=0 )
+			while ((tmp = tmp / 10)!=0)
 				++iStep;
 
-			if ( iVal > 0 )
+			if ( 0 != iVal )
 			{
 				// Store parsed index
 				if ( 0 == iPos )
@@ -371,7 +374,7 @@ void ObjFileParser::getMaterialDesc()
 		return;
 
 	char *pStart = &(*m_DataIt);
-	while ( !isSeparator(*m_DataIt) && m_DataIt != m_DataItEnd )
+	while ( !isSpace(*m_DataIt) && m_DataIt != m_DataItEnd )
 		++m_DataIt;
 
 	// Get name
@@ -385,9 +388,9 @@ void ObjFileParser::getMaterialDesc()
 	{
 		// Not found, use default material
 		m_pModel->m_pCurrentMaterial = m_pModel->m_pDefaultMaterial;
-		//m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
-		//m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
-		//m_pModel->m_pCurrentMesh->m_uiMaterialIndex = getMaterialIndex( DEFAULT_MATERIAL );
+		m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
+		m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
+		m_pModel->m_pCurrentMesh->m_uiMaterialIndex = getMaterialIndex( DEFAULT_MATERIAL );
 	}
 	else
 	{
@@ -395,9 +398,9 @@ void ObjFileParser::getMaterialDesc()
 		m_pModel->m_pCurrentMaterial = (*it).second;
 
 		// Create a new mesh for a new material
-		//m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
-		//m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
-		//m_pModel->m_pCurrentMesh->m_uiMaterialIndex = getMaterialIndex( strName );
+		m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
+		m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
+		m_pModel->m_pCurrentMesh->m_uiMaterialIndex = getMaterialIndex( strName );
 	}
 
 	// Skip rest of line
@@ -408,10 +411,9 @@ void ObjFileParser::getMaterialDesc()
 //	Get a comment, values will be skipped
 void ObjFileParser::getComment()
 {
-	bool running = true;
-	while (running)
+	while (true)
 	{
-		if ( '\n' == (*m_DataIt) || m_DataIt == m_DataItEnd ) 
+		if ('\n' == (*m_DataIt) || m_DataIt == m_DataItEnd) 
 		{
 			++m_DataIt;
 			break;
@@ -437,23 +439,25 @@ void ObjFileParser::getMaterialLib()
 		m_DataIt++;
 
 	// Check for existence
-	const std::string strMatName(pStart, &(*m_DataIt));
-	IOStream *pFile = m_pIO->Open(strMatName);
+	std::string strMatName(pStart, &(*m_DataIt));
+	std::string absName = m_strAbsPath + io->getOsSeparator() + strMatName;
+	IOStream *pFile = io->Open(absName.c_str());
 
 	if (!pFile )
 	{
-		DefaultLogger::get()->error("OBJ: Unable to locate material file " + strMatName);
+		DefaultLogger::get()->error("OBJ: Unable to locate material file " + absName);
 		m_DataIt = skipLine<DataArrayIt>( m_DataIt, m_DataItEnd, m_uiLine );
 		return;
 	}
 
 	// Import material library data from file
-	std::vector<char> buffer;
-	BaseImporter::TextFileToBuffer(pFile,buffer);
-	m_pIO->Close( pFile );
+	size_t size = pFile->FileSize();
+	std::vector<char> buffer(size);
+	pFile->Read( &buffer[ 0 ], sizeof( char ), size );
+	io->Close( pFile );
 
 	// Importing the material library 
-	ObjFileMtlImporter mtlImporter( buffer, strMatName, m_pModel );			
+	ObjFileMtlImporter mtlImporter( buffer, absName, m_pModel );			
 }
 
 // -------------------------------------------------------------------
@@ -467,7 +471,7 @@ void ObjFileParser::getNewMaterial()
 
 	char *pStart = &(*m_DataIt);
 	std::string strMat(pStart, *m_DataIt);
-	while ( isSeparator( *m_DataIt ) )
+	while (isSpace(*m_DataIt))
 		m_DataIt++;
 	std::map<std::string, ObjFile::Material*>::iterator it = m_pModel->m_MaterialMap.find( strMat );
 	if (it == m_pModel->m_MaterialMap.end())
@@ -510,12 +514,12 @@ void ObjFileParser::getGroupName()
 	// Get next word from data buffer
 	m_DataIt = getNextToken<DataArrayIt>(m_DataIt, m_DataItEnd);
 	m_DataIt = getNextWord<DataArrayIt>(m_DataIt, m_DataItEnd);
-	if ( isEndOfBuffer( m_DataIt, m_DataItEnd ) )
+	if ( m_DataIt == m_DataItEnd )
 		return;
 
 	// Store groupname in group library 
 	char *pStart = &(*m_DataIt);
-	while ( !isSeparator(*m_DataIt) )
+	while (!isSpace(*m_DataIt))
 		m_DataIt++;
 	std::string strGroupName(pStart, &(*m_DataIt));
 
@@ -560,7 +564,7 @@ void ObjFileParser::getObjectName()
 	if (m_DataIt == m_DataItEnd)
 		return;
 	char *pStart = &(*m_DataIt);
-	while (!isSeparator(*m_DataIt))
+	while (!isSpace(*m_DataIt))
 		m_DataIt++;
 
 	std::string strObjectName(pStart, &(*m_DataIt));
@@ -582,8 +586,13 @@ void ObjFileParser::getObjectName()
 		}
 
 		// Allocate a new object, if current one wasn´t found before
-		if ( NULL == m_pModel->m_pCurrent )
+		if (m_pModel->m_pCurrent == NULL)
+		{
 			createObject(strObjectName);
+			/*m_pModel->m_pCurrent = new ObjFile::Object();
+			m_pModel->m_pCurrent->m_strObjName = strObjectName;
+			m_pModel->m_Objects.push_back(m_pModel->m_pCurrent);*/
+		}
 	}
 	m_DataIt = skipLine<DataArrayIt>( m_DataIt, m_DataItEnd, m_uiLine );
 }
@@ -597,16 +606,6 @@ void ObjFileParser::createObject(const std::string &strObjectName)
 	m_pModel->m_pCurrent = new ObjFile::Object();
 	m_pModel->m_pCurrent->m_strObjName = strObjectName;
 	m_pModel->m_Objects.push_back(m_pModel->m_pCurrent);
-	
-	m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
-	m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
-
-	if(m_pModel->m_pCurrentMaterial)
-	{
-		m_pModel->m_pCurrentMesh->m_uiMaterialIndex = 
-			getMaterialIndex( m_pModel->m_pCurrentMaterial->MaterialName.data );
-		m_pModel->m_pCurrentMesh->m_pMaterial = m_pModel->m_pCurrentMaterial;
-	}		
 }
 
 // -------------------------------------------------------------------

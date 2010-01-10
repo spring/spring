@@ -424,8 +424,7 @@ private:
 	bool SkipSpacesAndLineEnd( const char* in, const char** out)
 	{
 		bool bHad = false;
-		bool running = true;
-		while (running)	{
+		while (true)	{
 			if( *in == '\r' || *in == '\n')	{
 				 // we open files in binary mode, so there could be \r\n sequences ...
 				if (!bHad)	{

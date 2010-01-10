@@ -100,6 +100,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * the MSVC STL but it's necessary for proper build with STLport.
  */
 #include <ctype.h>
+#include <stdio.h>
 
 // Runtime/STL headers
 #include <vector>
@@ -116,7 +117,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <numeric>
 #include <new>
-#include <cstdio>
 
 // Public ASSIMP headers
 #include "../include/DefaultLogger.h"

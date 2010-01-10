@@ -2980,7 +2980,7 @@
 	prefix.
 
 	* configure.in: Add check for <cmath>.
-	* src/cppunit/TestAssert.cpp: Use "streflop_cond.h" if <cmath> not
+	* src/cppunit/TestAssert.cpp: Use <math.h> if <cmath> not
 	available.
 	* src/cppunit/TestCase.cpp: Do not include <cmath>.
 
@@ -3336,7 +3336,7 @@
 	* renamed VC++ configurations without RTTI from "Debug No
 	CU_USE_TYPEINFO" to "Debug Crossplatform".
 
-	* include/cppunit/TestAssert.h: added include "streflop_cond.h" for fabs().
+	* include/cppunit/TestAssert.h: added include <math.h> for fabs().
 
 2001-06-02  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 

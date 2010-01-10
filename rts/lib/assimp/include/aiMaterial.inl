@@ -62,12 +62,6 @@ inline aiReturn aiMaterial::GetTexture( aiTextureType type,
 }
 
 // ---------------------------------------------------------------------------
-inline unsigned int aiMaterial::GetTextureCount(aiTextureType type) const
-{
-	return ::aiGetMaterialTextureCount(this,type);
-}
-
-// ---------------------------------------------------------------------------
 template <typename Type>
 inline aiReturn aiMaterial::Get(const char* pKey,unsigned int type,
 	unsigned int idx, Type* pOut,
@@ -75,23 +69,19 @@ inline aiReturn aiMaterial::Get(const char* pKey,unsigned int type,
 {
 	unsigned int iNum = pMax ? *pMax : 1;
 
-	const aiMaterialProperty* prop;
-	const aiReturn ret = ::aiGetMaterialProperty(this,pKey,(aiTextureType)type,idx,
-		(const aiMaterialProperty**)&prop);
-	if ( AI_SUCCESS == ret )	{
-
-		if (prop->mDataLength < sizeof(Type)*iNum) {
+	aiMaterialProperty* prop;
+	aiReturn ret = ::aiGetMaterialProperty(this,pKey,type,idx,&prop);
+	if ( AI_SUCCESS == ret )
+	{
+		if (prop->mDataLength < sizeof(Type)*iNum)
 			return AI_FAILURE;
-		}
 
 	//	if (::strcmp(prop->mData,(char*)aiPTI_Buffer)!=0)
 	//		return AI_FAILURE;
 
 		iNum = std::min((size_t)iNum,prop->mDataLength / sizeof(Type));
-		memcpy(pOut,prop->mData,iNum * sizeof(Type));
-		if (pMax) {
-			*pMax = iNum;
-		}
+		::memcpy(pOut,prop->mData,iNum * sizeof(Type));
+		if (pMax)*pMax = iNum;
 	}
 	return ret;
 }
@@ -101,20 +91,17 @@ template <typename Type>
 inline aiReturn aiMaterial::Get(const char* pKey,unsigned int type,
 	unsigned int idx,Type& pOut) const
 {
-	const aiMaterialProperty* prop;
-	const aiReturn ret = ::aiGetMaterialProperty(this,pKey,(aiTextureType)type,idx,
-		(const aiMaterialProperty**)&prop);
-	if ( AI_SUCCESS == ret )	{
-
-		if (prop->mDataLength < sizeof(Type)) {
+	aiMaterialProperty* prop;
+	aiReturn ret = ::aiGetMaterialProperty(this,pKey,type,idx,&prop);
+	if ( AI_SUCCESS == ret )
+	{
+		if (prop->mDataLength < sizeof(Type))
 			return AI_FAILURE;
-		}
 
-		if (strcmp(prop->mData,(char*)aiPTI_Buffer)!=0) {
+		if (::strcmp(prop->mData,(char*)aiPTI_Buffer)!=0)
 			return AI_FAILURE;
-		}
 
-		memcpy(&pOut,prop->mData,sizeof(Type));
+		::memcpy(&pOut,prop->mData,sizeof(Type));
 	}
 	return ret;
 }
@@ -155,16 +142,6 @@ inline aiReturn aiMaterial::Get<aiColor4D>(const char* pKey,unsigned int type,
 	unsigned int idx,aiColor4D& pOut) const
 {
 	return aiGetMaterialColor(this,pKey,type,idx,&pOut);
-}
-// ---------------------------------------------------------------------------
-template <>
-inline aiReturn aiMaterial::Get<aiColor3D>(const char* pKey,unsigned int type,
-	unsigned int idx,aiColor3D& pOut) const
-{
-	aiColor4D c;
-	const aiReturn ret = aiGetMaterialColor(this,pKey,type,idx,&c);
-	pOut = aiColor3D(c.r,c.g,c.b);
-	return ret;
 }
 // ---------------------------------------------------------------------------
 template <>

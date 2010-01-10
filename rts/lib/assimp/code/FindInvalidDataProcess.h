@@ -48,16 +48,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct aiMesh;
 class FindInvalidDataProcessTest;
-namespace Assimp	{
+
+namespace Assimp
+{
 
 // ---------------------------------------------------------------------------
 /** The FindInvalidData postprocessing step. It searches the mesh data
  *  for parts that are obviously invalid and removes them.
  *
  *  Originally this was a workaround for some models written by Blender
- *  which have zero normal vectors. */
-class ASSIMP_API FindInvalidDataProcess 
-	: public BaseProcess
+ *  which have zero normal vectors.
+ */
+class ASSIMP_API FindInvalidDataProcess : public BaseProcess
 {
 	friend class Importer;
 	friend class ::FindInvalidDataProcessTest;
@@ -73,15 +75,13 @@ protected:
 public:
 
 	// -------------------------------------------------------------------
-	// 
+	/** 
+	*/
 	bool IsActive( unsigned int pFlags) const;
 
 	// -------------------------------------------------------------------
-	// Setup import settings
-	void SetupProperties(const Importer* pImp);
-
-	// -------------------------------------------------------------------
-	// Run the step
+	/** 
+	*/
 	void Execute( aiScene* pScene);
 
 protected:
@@ -89,21 +89,22 @@ protected:
 	// -------------------------------------------------------------------
 	/** Executes the postprocessing step on the given mesh
 	 * @param pMesh The mesh to process.
-	 * @return 0 - nothing, 1 - removed sth, 2 - please delete me  */
+	 * @return 0 - nothing, 1 - removed sth, 2 - please delete me
+	 */
 	int ProcessMesh( aiMesh* pMesh);
+
 
 	// -------------------------------------------------------------------
 	/** Executes the postprocessing step on the given animation
-	 * @param anim The animation to process.  */
+	 * @param anim The animation to process.
+	 */
 	void ProcessAnimation (aiAnimation* anim);
 
 	// -------------------------------------------------------------------
 	/** Executes the postprocessing step on the given anim channel
-	 * @param anim The animation channel to process.*/
+	 * @param anim The animation channel to process.
+	 */
 	void ProcessAnimationChannel (aiNodeAnim* anim);
-
-private:
-	float configEpsilon;
 };
 
 } // end of namespace Assimp

@@ -523,7 +523,7 @@ aiMesh* ColladaLoader::CreateMesh( const ColladaParser& pParser, const Collada::
 	// normals, if given. HACK: (thom) Due to the fucking Collada spec we never 
 	// know if we have the same number of normals as there are positions. So we 
 	// also ignore any vertex attribute if it has a different count
-	if( pSrcMesh->mNormals.size() >= pStartVertex + numVertices)
+	if( pSrcMesh->mNormals.size() == pSrcMesh->mPositions.size())
 	{
 		dstMesh->mNormals = new aiVector3D[numVertices];
 		std::copy( pSrcMesh->mNormals.begin() + pStartVertex, pSrcMesh->mNormals.begin() +
@@ -531,7 +531,7 @@ aiMesh* ColladaLoader::CreateMesh( const ColladaParser& pParser, const Collada::
 	}
 
 	// tangents, if given. 
-	if( pSrcMesh->mTangents.size() >= pStartVertex + numVertices)
+	if( pSrcMesh->mTangents.size() == pSrcMesh->mPositions.size())
 	{
 		dstMesh->mTangents = new aiVector3D[numVertices];
 		std::copy( pSrcMesh->mTangents.begin() + pStartVertex, pSrcMesh->mTangents.begin() + 
@@ -539,7 +539,7 @@ aiMesh* ColladaLoader::CreateMesh( const ColladaParser& pParser, const Collada::
 	}
 
 	// bitangents, if given. 
-	if( pSrcMesh->mBitangents.size() >= pStartVertex + numVertices)
+	if( pSrcMesh->mBitangents.size() == pSrcMesh->mPositions.size())
 	{
 		dstMesh->mBitangents = new aiVector3D[numVertices];
 		std::copy( pSrcMesh->mBitangents.begin() + pStartVertex, pSrcMesh->mBitangents.begin() + 
@@ -550,7 +550,7 @@ aiMesh* ColladaLoader::CreateMesh( const ColladaParser& pParser, const Collada::
 	// empty slots are not allowed, need to pack and adjust UV indexes accordingly
 	for( size_t a = 0, real = 0; a < AI_MAX_NUMBER_OF_TEXTURECOORDS; a++)
 	{
-		if( pSrcMesh->mTexCoords[a].size() >= pStartVertex + numVertices)
+		if( pSrcMesh->mTexCoords[a].size() == pSrcMesh->mPositions.size())
 		{
 			dstMesh->mTextureCoords[real] = new aiVector3D[numVertices];
 			for( size_t b = 0; b < numVertices; ++b)
@@ -564,7 +564,7 @@ aiMesh* ColladaLoader::CreateMesh( const ColladaParser& pParser, const Collada::
 	// same for vertex colors, as many as we have. again the same packing to avoid empty slots
 	for( size_t a = 0, real = 0; a < AI_MAX_NUMBER_OF_COLOR_SETS; a++)
 	{
-		if( pSrcMesh->mColors[a].size() >= pStartVertex + numVertices)
+		if( pSrcMesh->mColors[a].size() == pSrcMesh->mPositions.size())
 		{
 			dstMesh->mColors[real] = new aiColor4D[numVertices];
 			std::copy( pSrcMesh->mColors[a].begin() + pStartVertex, pSrcMesh->mColors[a].begin() + pStartVertex + numVertices,dstMesh->mColors[real]);
@@ -644,14 +644,10 @@ aiMesh* ColladaLoader::CreateMesh( const ColladaParser& pParser, const Collada::
 
 				float weight = ReadFloat( weightsAcc, weights, vertexIndex, 0);
 
-        // one day I gonna kill that XSI Collada exporter
-        if( weight > 0.0f)
-        {
-				  aiVertexWeight w;
-				  w.mVertexId = a - pStartVertex;
-				  w.mWeight = weight;
-				  dstBones[jointIndex].push_back( w);
-        }
+				aiVertexWeight w;
+				w.mVertexId = a - pStartVertex;
+				w.mWeight = weight;
+				dstBones[jointIndex].push_back( w);
 			}
 		}
 
@@ -796,6 +792,23 @@ void ColladaLoader::StoreAnimations( aiScene* pScene, const ColladaParser& pPars
 		CreateAnimation( pScene, pParser, pSrcAnim, animName);
 }
 
+/** Description of a collada animation channel which has been determined to affect the current node */
+struct ChannelEntry
+{
+	const Collada::AnimationChannel* mChannel; ///> the source channel
+	std::string mTransformId;   // the ID of the transformation step of the node which is influenced
+	size_t mTransformIndex; // Index into the node's transform chain to apply the channel to
+	size_t mSubElement; // starting index inside the transform data
+
+	// resolved data references
+	const Collada::Accessor* mTimeAccessor; ///> Collada accessor to the time values
+	const Collada::Data* mTimeData; ///> Source data array for the time values
+	const Collada::Accessor* mValueAccessor; ///> Collada accessor to the key value values
+	const Collada::Data* mValueData; ///> Source datat array for the key value values
+
+	ChannelEntry() { mChannel = NULL; mSubElement = 0; }
+};
+
 // ------------------------------------------------------------------------------------------------
 // Constructs the animation for the given source anim
 void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pParser, const Collada::Animation* pSrcAnim, const std::string& pName)
@@ -808,7 +821,7 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 	for( std::vector<const aiNode*>::const_iterator nit = nodes.begin(); nit != nodes.end(); ++nit)
 	{
 		// find all the collada anim channels which refer to the current node
-		std::vector<Collada::ChannelEntry> entries;
+		std::vector<ChannelEntry> entries;
 		std::string nodeName = (*nit)->mName.data;
 
 		// find the collada node corresponding to the aiNode
@@ -822,7 +835,7 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 			cit != pSrcAnim->mChannels.end(); ++cit)
 		{
 			const Collada::AnimationChannel& srcChannel = *cit;
-			Collada::ChannelEntry entry;
+			ChannelEntry entry;
 
 			// we except the animation target to be of type "nodeName/transformID.subElement". Ignore all others
 			// find the slash that separates the node name - there should be only one
@@ -831,8 +844,8 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 				continue;
 			if( srcChannel.mTarget.find( '/', slashPos+1) != std::string::npos)
 				continue;
-			std::string targetID = srcChannel.mTarget.substr( 0, slashPos);
-			if( targetID != srcNode->mID)
+			std::string targetName = srcChannel.mTarget.substr( 0, slashPos);
+			if( targetName != nodeName)
 				continue;
 
 			// find the dot that separates the transformID - there should be only one or zero
@@ -847,12 +860,6 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 				std::string subElement = srcChannel.mTarget.substr( dotPos+1);
 				if( subElement == "ANGLE")
 					entry.mSubElement = 3; // last number in an Axis-Angle-Transform is the angle
-				else if( subElement == "X")
-					entry.mSubElement = 0;
-				else if( subElement == "Y")
-					entry.mSubElement = 1;
-				else if( subElement == "Z")
-					entry.mSubElement = 2;
 				else 
 					DefaultLogger::get()->warn( boost::str( boost::format( "Unknown anim subelement \"%s\". Ignoring") % subElement));
 			} else
@@ -880,9 +887,9 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 
 		// resolve the data pointers for all anim channels. Find the minimum time while we're at it
 		float startTime = 1e20f, endTime = -1e20f;
-		for( std::vector<Collada::ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
+		for( std::vector<ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
 		{
-			Collada::ChannelEntry& e = *it;
+			ChannelEntry& e = *it;
 			e.mTimeAccessor = &pParser.ResolveLibraryReference( pParser.mAccessorLibrary, e.mChannel->mSourceTimes);
 			e.mTimeData = &pParser.ResolveLibraryReference( pParser.mDataLibrary, e.mTimeAccessor->mSource);
 			e.mValueAccessor = &pParser.ResolveLibraryReference( pParser.mAccessorLibrary, e.mChannel->mSourceValues);
@@ -906,9 +913,9 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 		std::vector<aiMatrix4x4> resultTrafos;
 		while( 1)
 		{
-			for( std::vector<Collada::ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
+			for( std::vector<ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
 			{
-				Collada::ChannelEntry& e = *it;
+				ChannelEntry& e = *it;
 
 				// find the keyframe behind the current point in time
 				size_t pos = 0;
@@ -956,9 +963,9 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 
 			// find next point in time to evaluate. That's the closest frame larger than the current in any channel
 			float nextTime = 1e20f;
-			for( std::vector<Collada::ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
+			for( std::vector<ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
 			{
-				Collada::ChannelEntry& e = *it;
+				ChannelEntry& e = *it;
 
 				// find the next time value larger than the current
 				size_t pos = 0;
@@ -1147,7 +1154,6 @@ void ColladaLoader::FillMaterials( const ColladaParser& pParser, aiScene* pScene
 
 		// scalar properties
 		mat.AddProperty( &effect.mShininess, 1, AI_MATKEY_SHININESS);
-		mat.AddProperty( &effect.mReflectivity, 1, AI_MATKEY_REFLECTIVITY);
 		mat.AddProperty( &effect.mRefractIndex, 1, AI_MATKEY_REFRACTI);
 
 		// transparency, a very hard one. seemingly not all files are following the
@@ -1271,16 +1277,15 @@ const aiString& ColladaLoader::FindFilenameForEffectTexture( const ColladaParser
 	// if this is an embedded texture image setup an aiTexture for it
 	if (imIt->second.mFileName.empty()) 
 	{
-		if (imIt->second.mImageData.empty())  {
+		if (imIt->second.mImageData.empty()) 
 			throw new ImportErrorException("Collada: Invalid texture, no data or file reference given");
-		}
 
 		aiTexture* tex = new aiTexture();
 
 		// setup format hint
-		if (imIt->second.mEmbeddedFormat.length() > 3) {
+		if (imIt->second.mEmbeddedFormat.length() > 3)
 			DefaultLogger::get()->warn("Collada: texture format hint is too long, truncating to 3 characters");
-		}
+
 		strncpy(tex->achFormatHint,imIt->second.mEmbeddedFormat.c_str(),3);
 
 		// and copy texture data
@@ -1353,7 +1358,7 @@ void ColladaLoader::CollectNodes( const aiNode* pNode, std::vector<const aiNode*
 // Finds a node in the collada scene by the given name
 const Collada::Node* ColladaLoader::FindNode( const Collada::Node* pNode, const std::string& pName)
 {
-	if( pNode->mName == pName || pNode->mID == pName)
+	if( pNode->mName == pName)
 		return pNode;
 
 	for( size_t a = 0; a < pNode->mChildren.size(); ++a)

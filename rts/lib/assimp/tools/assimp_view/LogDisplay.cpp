@@ -122,7 +122,7 @@ void CLogDisplay::OnRender()
 	// if no asset is loaded draw a "no asset loaded" text in the center
 	if (!g_pcAsset)
 		{
-			const char* szText = "Nothing to display ... \r\nTry [Viewer | Open asset] to load an asset";
+			const char* szText = "No asset loaded\r\nUse [Viewer | Open asset] to load one";
 
 		// shadow
 		RECT sCopy;

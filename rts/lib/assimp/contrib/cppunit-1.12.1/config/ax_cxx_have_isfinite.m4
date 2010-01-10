@@ -13,7 +13,7 @@ AC_DEFUN([AX_CXX_HAVE_ISFINITE],
      AC_LANG_CPLUSPLUS
      AC_LINK_IFELSE(
        [AC_LANG_PROGRAM(
-         [[#include "streflop_cond.h"]],
+         [[#include <math.h>]],
          [[int f = isfinite( 3 );]])],
        [ax_cv_cxx_have_isfinite=yes],
        [ax_cv_cxx_have_isfinite=no])

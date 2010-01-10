@@ -47,11 +47,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../include/aiTypes.h"
 
 struct aiMesh;
+class JoinVerticesTest;
 
 namespace Assimp
 {
-
-class JoinVerticesTest;
 
 // ---------------------------------------------------------------------------
 /** The JoinVerticesProcess unites identical vertices in all imported meshes. 
@@ -64,7 +63,7 @@ class JoinVerticesTest;
 class ASSIMP_API JoinVerticesProcess : public BaseProcess
 {
 	friend class Importer;
-	friend class JoinVerticesTest;
+	friend class ::JoinVerticesTest;
 
 protected:
 	/** Constructor to be privately used by Importer */

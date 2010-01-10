@@ -493,7 +493,7 @@ struct Effect
 		mTexTransparent, mTexBump, mTexReflective;
 
 	// Scalar factory
-	float mShininess, mRefractIndex, mReflectivity;
+	float mShininess, mRefractIndex;
 	float mTransparency;
 
 	// local params referring to each other by their SID
@@ -518,7 +518,6 @@ struct Effect
 		, mDoubleSided	(false)
 		, mWireframe    (false)
 		, mFaceted      (false)
-		, mReflectivity (1.f)
 	{ 
 	}
 };
@@ -571,23 +570,6 @@ struct Animation
 		for( std::vector<Animation*>::iterator it = mSubAnims.begin(); it != mSubAnims.end(); ++it)
 			delete *it;
 	}
-};
-
-/** Description of a collada animation channel which has been determined to affect the current node */
-struct ChannelEntry
-{
-	const Collada::AnimationChannel* mChannel; ///> the source channel
-	std::string mTransformId;   // the ID of the transformation step of the node which is influenced
-	size_t mTransformIndex; // Index into the node's transform chain to apply the channel to
-	size_t mSubElement; // starting index inside the transform data
-
-	// resolved data references
-	const Collada::Accessor* mTimeAccessor; ///> Collada accessor to the time values
-	const Collada::Data* mTimeData; ///> Source data array for the time values
-	const Collada::Accessor* mValueAccessor; ///> Collada accessor to the key value values
-	const Collada::Data* mValueData; ///> Source datat array for the key value values
-
-	ChannelEntry() { mChannel = NULL; mSubElement = 0; }
 };
 
 } // end of namespace Collada

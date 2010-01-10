@@ -56,12 +56,12 @@ using namespace Assimp::MD5;
 
 // ------------------------------------------------------------------------------------------------
 // Parse the segment structure fo a MD5 file
-MD5Parser::MD5Parser(char* _buffer, unsigned int _fileSize )
+MD5Parser::MD5Parser(char* _buffer, unsigned int _fileSize)
 {
 	ai_assert(NULL != _buffer && 0 != _fileSize);
 
 	buffer = _buffer;
-	fileSize = _fileSize;
+	fileSize = fileSize;
 	lineNumber = 0;
 
 	DefaultLogger::get()->debug("MD5Parser begin");
@@ -70,8 +70,7 @@ MD5Parser::MD5Parser(char* _buffer, unsigned int _fileSize )
 	ParseHeader();
 
 	// and read all sections until we're finished
-	bool running = true;
-	while (running)	{
+	while (1)	{
 		mSections.push_back(Section());
 		Section& sec = mSections.back();
 		if(!ParseSection(sec))	{
@@ -141,13 +140,11 @@ bool MD5Parser::ParseSection(Section& out)
 	out.mName = std::string(sz,(uintptr_t)(buffer-sz));
 	SkipSpaces();
 
-	bool running = true;
-	while (running)	{
+	while (1)	{
 		if ('{' == *buffer)	{
 			// it is a normal section so read all lines
 			buffer++;
-			bool run = true;
-			while (run)
+			while (true)
 			{
 				if (!SkipSpacesAndLineEnd()) {
 					return false; // seems this was the last section

@@ -2,7 +2,7 @@
 #define CPPUNIT_PORTABILITY_FLOATINGPOINT_H_INCLUDED
 
 #include <cppunit/Portability.h>
-#include "streflop_cond.h"
+#include <math.h>
 
 CPPUNIT_NS_BEGIN
 

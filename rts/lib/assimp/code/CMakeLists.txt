@@ -1,4 +1,3 @@
-#INCLUDE_DIRECTORIES( ../../streflop )
 
 SET( HEADER_PATH ../include/ )
 
@@ -193,11 +192,6 @@ SOURCE_GROUP( Obj FILES
 	ObjTools.h
 )
 
-SOURCE_GROUP( Ogre FILES
-	OgreImporter.h
-	OgreImporter.cpp
-)
-
 SOURCE_GROUP( Ply FILES
 	PlyLoader.cpp
 	PlyLoader.h
@@ -304,11 +298,6 @@ SOURCE_GROUP( IrrXML FILES
 	../contrib/irrXML/irrXML.h
 )
 
-SOURCE_GROUP( ConvertUTF FILES
-	../contrib/ConvertUTF/ConvertUTF.h
-	../contrib/ConvertUTF/ConvertUTF.c
-)
-
 SOURCE_GROUP( zlib FILES
 	../contrib/zlib/adler32.c
 	../contrib/zlib/compress.c
@@ -339,6 +328,7 @@ ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	${HEADER_PATH}/LogStream.h
 	${HEADER_PATH}/Logger.h
 	${HEADER_PATH}/NullLogger.h
+#	${HEADER_PATH}/TDepGraphNode.h
 	${HEADER_PATH}/aiAnim.h
 	${HEADER_PATH}/aiAssert.h
 	${HEADER_PATH}/aiCamera.h
@@ -478,8 +468,6 @@ ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	ObjFileParser.cpp
 	ObjFileParser.h
 	ObjTools.h
-	OgreImporter.h
-	OgreImporter.cpp
 	OptimizeGraph.cpp
 	OptimizeGraph.h
 	OptimizeMeshes.cpp
@@ -580,7 +568,6 @@ ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	../contrib/zlib/zlib.h
 	../contrib/zlib/zutil.c
 	../contrib/zlib/zutil.h
-	../contrib/ConvertUTF/ConvertUTF.c
 )
 ADD_DEFINITIONS(-DASSIMP_BUILD_DLL_EXPORT)
 

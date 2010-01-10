@@ -87,20 +87,27 @@ void PLYImporter::GetExtensionList(std::string& append)
 
 // ------------------------------------------------------------------------------------------------
 // Imports the given file into the given scene structure. 
-void PLYImporter::InternReadFile( const std::string& pFile, 
-	aiScene* pScene, IOSystem* pIOHandler)
+void PLYImporter::InternReadFile( 
+								 const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler)
 {
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL) {
+	if( file.get() == NULL)
 		throw new ImportErrorException( "Failed to open PLY file " + pFile + ".");
-	}
+
+	// check whether the ply file is large enough to contain
+	// at least the file header
+	size_t fileSize = file->FileSize();
+	if( fileSize < 10)
+		throw new ImportErrorException( "PLY File is too small.");
 
 	// allocate storage and copy the contents of the file to a memory buffer
-	std::vector<char> mBuffer2;
-	TextFileToBuffer(file.get(),mBuffer2);
-	mBuffer = (unsigned char*)&mBuffer2[0];
+	// (terminate it with zero)
+	std::vector<unsigned char> mBuffer2(fileSize+1);
+	file->Read( &mBuffer2[0], 1, fileSize);
+	mBuffer = &mBuffer2[0];
+	mBuffer[fileSize] = '\0';
 
 	// the beginning of the file must be PLY - magic, magic
 	if (mBuffer[0] != 'P' && mBuffer[0] != 'p' ||
@@ -787,39 +794,38 @@ void PLYImporter::LoadFaces(std::vector<PLY::Face>* pvOut)
 		{
 			// normally we have only one triangle strip instance where
 			// a value of -1 indicates a restart of the strip
-			bool flip = false;
-			for (std::vector<ElementInstance>::const_iterator i = pcList->alInstances.begin();i != pcList->alInstances.end();++i) {
+			for (std::vector<ElementInstance>::const_iterator i =  pcList->alInstances.begin();
+				i != pcList->alInstances.end();++i)
+			{
 				const std::vector<PLY::PropertyInstance::ValueUnion>& quak = (*i).alProperties[iProperty].avList;
 				pvOut->reserve(pvOut->size() + quak.size() + (quak.size()>>2u));
 
 				int aiTable[2] = {-1,-1};
 				for (std::vector<PLY::PropertyInstance::ValueUnion>::const_iterator a =  quak.begin();a != quak.end();++a)	{
 					const int p = PLY::PropertyInstance::ConvertTo<int>(*a,eType);
-
-					if (-1 == p)	{
+					if (-1 == p)
+					{
 						// restart the strip ...
 						aiTable[0] = aiTable[1] = -1;
-						flip = false;
 						continue;
 					}
-					if (-1 == aiTable[0]) {
+					if (-1 == aiTable[0])
+					{
 						aiTable[0] = p;
 						continue;
 					}
-					if (-1 == aiTable[1]) {
+					if (-1 == aiTable[1])
+					{
 						aiTable[1] = p;
 						continue;
 					}
 				
 					pvOut->push_back(PLY::Face());
 					PLY::Face& sFace = pvOut->back();
-					sFace.mIndices[0] = aiTable[0];
-					sFace.mIndices[1] = aiTable[1];
-					sFace.mIndices[2] = p;
-					if ((flip = !flip)) {
-						std::swap(sFace.mIndices[0],sFace.mIndices[1]);
-					}
-					
+					sFace.mIndices.push_back((unsigned int)aiTable[0]);
+					sFace.mIndices.push_back((unsigned int)aiTable[1]);
+					sFace.mIndices.push_back((unsigned int)p);
+		
 					aiTable[0] = aiTable[1];
 					aiTable[1] = p;
 				}

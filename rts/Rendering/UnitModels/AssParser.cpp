@@ -27,14 +27,15 @@
 #define ASS_POSTPROCESS_OPTIONS \
 	aiProcess_CalcTangentSpace				| \
 	aiProcess_GenSmoothNormals				| \
-	aiProcess_JoinIdenticalVertices		| \
-	aiProcess_ImproveCacheLocality		| \
 	aiProcess_LimitBoneWeights				| \
-	aiProcess_RemoveRedundantMaterials| \
+	aiProcess_RemoveRedundantMaterials		| \
 	aiProcess_SplitLargeMeshes				| \
-	aiProcess_Triangulate					    | \
-	aiProcess_GenUVCoords             | \
-	aiProcess_SortByPType
+	aiProcess_Triangulate					| \
+	aiProcess_GenUVCoords             		| \
+	aiProcess_SortByPType					| \
+	aiProcess_JoinIdenticalVertices
+
+//aiProcess_ImproveCacheLocality		| \
 
 class AssLogStream : public Assimp::LogStream
 {

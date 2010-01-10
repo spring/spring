@@ -49,11 +49,8 @@ that it has not yet been implemented, and some formats have not completely been 
 <b>Object File Format </b> ( <i>*.off</i> ). <br>	
 <b>Terragen Terrain </b> ( <i>*.ter</i> ) <br>
 <b>3D GameStudio Model </b> ( <i>*.mdl</i> ) <br>
-<b>3D GameStudio Terrain</b> ( <i>*.hmp</i> )<br>
-<b>Ogre</b> (<i>.mesh.xml, .skeleton.xml, .material</i>)<br><br>
+<b>3D GameStudio Terrain</b> ( <i>*.hmp</i> )<br><br><br>
 </tt>
-See the @link importer_notes Importer Notes Page @endlink for informations, what a specific importer can do and what not.<br>
-
 <sup>3</sup>: These formats support animations, but ASSIMP doesn't yet support them (or they're buggy)
 <br>
 <hr>
@@ -93,13 +90,6 @@ there are no bindings for any other language provided. Have a look at the @link 
 When the importer successfully completed its job, the imported data is returned in an aiScene structure. This is the root
 point from where you can access all the various data types that a scene/model file can possibly contain. The 
 @link data Data Structures page @endlink describes how to interpret this data.
-
-@section ext Extending the library
-
-There are many 3d file formats in the world, and we're happy to support as many as possible. If you need support for
-a particular file format, why not implement it yourself and add it to the library? Writing importer plugins for
-ASSIMP is considerably easy, as the whole postprocessing infrastructure is available and does much of the work for you.
-See the @link extend Extending the library @endlink page for more information.
 
 @section main_viewer The Viewer
 
@@ -223,21 +213,6 @@ If you're working with the provided solutions for Visual Studio use the <i>-nobo
 See the @link assimp_st next @endlink section
 for more details.
 
-
-@section assimp_make Build with MAKE
-
-To build Assimp with MAKE, navigate to the <tt>code</tt> directory and run 
-@code
-make
-@endcode
-respectively 
-@code
-make -fmakefile.mingw
-@endcode
-for mingw-make. For a <i>-noboost</i>-Build, append 
-@codeNOBOOST=1
-@endcode
-
 @section assimp_st Single-threaded build
 
 -- currently there is no difference between single-thread and normal builds --
@@ -276,8 +251,8 @@ worth a try if the library is too slow for you.
 @section access_cpp Access by C++ class interface
 
 The ASSIMP library can be accessed by both a class or flat function interface. The C++ class
-interface is the preferred way of interaction: you create an instance of class Assimp::Importer, 
-maybe adjust some settings of it and then call Assimp::Importer::ReadFile(). The class will
+interface is the preferred way of interaction: you create an instance of class ASSIMP::Importer, 
+maybe adjust some settings of it and then call ASSIMP::Importer::ReadFile(). The class will
 read the files and process its data, handing back the imported data as a pointer to an aiScene 
 to you. You can now extract the data you need from the file. The importer manages all the resources
 for itsself. If the importer is destroyed, all the data that was created/read by it will be 
@@ -287,13 +262,14 @@ results and then simply let it go out of scope.
 C++ example:
 @code
 #include <assimp.hpp>      // C++ importer interface
-#include <aiScene.h>       // Output data structure
+#include <aiScene.h>       // Outptu data structure
 #include <aiPostProcess.h> // Post processing flags
+
 
 bool DoTheImportThing( const std::string& pFile)
 {
   // Create an instance of the Importer class
-  Assimp::Importer importer;
+  ASSIMP::Importer importer;
 
   // And have it read the given file with some example postprocessing
   // Usually - if speed is not the most important aspect for you - you'll 
@@ -325,7 +301,7 @@ imported data are listed at #aiPostProcessSteps. See the @link pp Post proccessi
 
 Note that the aiScene data structure returned is declared 'const'. Yes, you can get rid of 
 these 5 letters with a simple cast. Yes, you may do that. No, it's not recommended (and it's 
-suicide in DLL builds if you try to use new or delete on any of the arrays in the scene). 
+suicide in DLL builds ...). 
 
 @section access_c Access by plain-c function interface
 
@@ -369,7 +345,7 @@ bool DoTheImportThing( const char* pFile)
 }
 @endcode
 
-@section custom_io Using custom IO logic with the C++ class interface
+@section custom_io Using custom IO logic
 
 The ASSIMP library needs to access files internally. This of course applies to the file you want
 to read, but also to additional files in the same folder for certain file formats. By default,
@@ -411,7 +387,7 @@ class MyIOSystem : public ASSIMP::IOSystem
     .. 
   }
 
-  // Get the path delimiter character we'd like to see
+  // Get the path delimiter character we'd like to get
   char GetOsSeparator() const { 
     return '/'; 
   }
@@ -426,12 +402,12 @@ class MyIOSystem : public ASSIMP::IOSystem
 @endcode
 
 Now that your IO system is implemented, supply an instance of it to the Importer object by calling 
-Assimp::Importer::SetIOHandler(). 
+ASSIMP::Importer::SetIOHandler(). 
 
 @code
 void DoTheImportThing( const std::string& pFile)
 {
-  Assimp::Importer importer;
+  ASSIMP::Importer importer;
   // put my custom IO handling in place
   importer.SetIOHandler( new MyIOSystem());
 
@@ -443,14 +419,7 @@ void DoTheImportThing( const std::string& pFile)
 
 @section custom_io_c Using custom IO logic with the plain-c function interface
 
-The C interface also provides a way to override the file system. Control is not as fine-grained as for C++ although
-surely enough for almost any purpose. The process is simple:
-
-<ul>
-<li> Include aiFileIO.h
-<li> Fill an aiFileIO structure with custom file system callbacks (they're self-explanatory as they work similar to the CRT's fXXX functions)
-<li> .. and pass it as last parameter to #aiImportFileEx
-</ul>
+// TODO
 
 @section threadsafety Thread-safety and internal multi-threading
 
@@ -463,13 +432,12 @@ following prerequisites are fulfilled:
    load as many models as you want).</li>
 <li> The C-API is threadsafe as long as AI_C_THREADSAFE is defined. That's the default. </li>
 <li> When supplying custom IO logic, make sure your underyling implementation is thead-safe.</li>
-<li> Custom log streams or logger replacements have to be thread-safe, too.</li>
 </ul>
 
 See the @link assimp_st Single-threaded build section @endlink to learn how to build a lightweight variant
 of ASSIMP which is not thread-safe and does not utilize multiple threads for loading.
 
-@section  logging Logging 
+@section  logging Logging in the AssetImporter
 
 The ASSIMP library provides an easy mechanism to log messages. For instance if you want to check the state of your 
 import and you just want to see, after which preprocessing step the import-process was aborted you can take a look 
@@ -478,16 +446,15 @@ Per default the ASSIMP-library provides a default log implementation, where you 
 by calling it as a singleton with the requested logging-type. To see how this works take a look to this:
 
 @code
-using namespace Assimp;
 
 // Create a logger instance 
-DefaultLogger::create("",Logger::VERBOSE);
+ASSIMP::DefaultLogger::create("",ASSIMP::Logger::VERBOSE);
 
 // Now I am ready for logging my stuff
-DefaultLogger::get()->info("this is my info-call");
+ASSIMP::DefaultLogger::get()->info("this is my info-call");
 
 // Kill it after the work is done
-DefaultLogger::kill();
+ASSIMP::DefaultLogger::kill();
 @endcode
 
 At first you have to create the default-logger-instance (create). Now you are ready to rock and can log a 
@@ -523,11 +490,15 @@ public:
 	}
 };
 
-// Select the kinds of messages you want to receive on this log stream
-const unsigned int severity = Logger::DEBUGGING|Logger::INFO|Logger::ERR|Logger::WARN;
+// Attaching it to the default logger instance:
+unsigned int severity = 0;
+severity |= Logger::DEBUGGING;
+severity |= Logger::INFO;
+severity |= Logger::WARN;
+severity |= Logger::ERR;
 
 // Attaching it to the default logger
-Assimp::DefaultLogger::get()->attachStream( new myStream(), severity );
+ASSIMP::DefaultLogger::get()->attachStream( new myStream(), severity );
 
 @endcode
 
@@ -543,25 +514,25 @@ unsigned int severity = 0;
 severity |= Logger::DEBUGGING;
 
 // Detach debug messages from you self defined stream
-Assimp::DefaultLogger::get()->attachStream( new myStream(), severity );
+ASSIMP::DefaultLogger::get()->attachStream( new myStream(), severity );
 
 @endcode
 
-If you want to implement your own logger just derive from the abstract base class 
-#Logger and overwrite the methods debug, info, warn and error. 
+If you want to implement your own logger just build a derivate from the abstract base class 
+Logger and overwrite the methods debug, info, warn and error. 
 
 If you want to see the debug-messages in a debug-configured build, the Logger-interface 
 provides a logging-severity. You can set it calling the following method:
 
 @code
 
-Assimp::DefaultLogger::get()->setLogSeverity( LogSeverity log_severity );
+Logger::setLogSeverity( LogSeverity log_severity );
 
 @endcode
 
 The normal logging severity supports just the basic stuff like, info, warnings and errors. 
-In the verbose level very fine-grained debug messages will be logged, too. Note that this
-kind kind of logging might decrease import performance.
+In the verbose level debug messages will be logged, too.
+
 */
 
 /** 
@@ -574,8 +545,8 @@ ASSIMP::Importer::ReadFile(), aiImportFile() or aiImportFileEx() - see the @link
 for further information on how to use the library.
 
 By default, all 3D data is provided in a right-handed coordinate system such as OpenGL uses. In
-this coordinate system, +X points to the right, -Z points away from the viewer into the screen and
-+Y points upwards. Several modeling packages such as 3D Studio Max use this coordinate system as well (or a rotated variant of it).
+this coordinate system, +X points to the right, +Y points away from the viewer into the screen and
++Z points upwards. Several modeling packages such as 3D Studio Max use this coordinate system as well.
 By contrast, some other environments use left-handed coordinate systems, a prominent example being
 DirectX. If you need the imported data to be in a left-handed coordinate system, supply the
 #aiProcess_MakeLeftHanded flag to the ReadFile() function call.
@@ -773,216 +744,23 @@ both Direct3D and OpenGL (swizzling the order of the color components might be n
 RGBA8888 has been chosen because it is well-known, easy to use and natively
 supported by nearly all graphics APIs.
 <br>
-<b>2)</b> This applies if aiTexture::mHeight == 0 is fullfilled. Then, texture is stored in a
+<b>2)</b> This is the case for aiTexture::mHeight == 0. The texture is stored in a
 "compressed" format such as DDS or PNG. The term "compressed" does not mean that the
-texture data must actually be compressed, however the texture was found in the
+texture data must actually be compressed, however the texture was stored in the
 model file as if it was stored in a separate file on the harddisk. Appropriate
 decoders (such as libjpeg, libpng, D3DX, DevIL) are required to load theses textures.
 aiTexture::mWidth specifies the size of the texture data in bytes, aiTexture::pcData is
 a pointer to the raw image data and aiTexture::achFormatHint is either zeroed or
-contains the most common file extension of the embedded texture's format. This value is only
+containing the file extension of the format of the embedded texture. This is only
 set if ASSIMP is able to determine the file format.
 */
-
-/**
-@page extend Extending the Library
-
-@section General
-
-Or - how to write your own loaders. It's easy. You just need to implement the #Assimp::BaseImporter class,
-which defines a few abstract methods, register your loader, test it carefully, and provide test models for it.
-
-OK, that sounds too easy :-). The whole procedure for a new loader merely looks like this:
-
-<ul>
-<li>Create a header (<tt><i>FormatName</i>Importer.h</tt>) and a unit (<tt><i>FormatName</i>Importer.cpp</tt>) in the <tt>&lt;root&gt;/code/</tt> directory</li>
-<li>Add them to the following workspaces: vc8 and vc9 (the files are in the workspaces directory), CMAKE (code/CMakeLists.txt, create a new
-source group for your importer and put them also to ADD_LIBRARY( assimp SHARED))</li>
-<li>Include <i>AssimpPCH.h</i> - this is the PCH file, and it includes already most Assimp-internal stuff. </li>
-<li>Open Importer.cpp and include your header just below the <i>(include_new_importers_here)</i> line, 
-guarded by a #define 
-@code
-#if (!defined ASSIMP_BUILD_NO_FormatName_IMPORTER)
-	...
-#endif
-@endcode
-Wrap the same guard around your .cpp!</li>
-
-<li>Now advance to the <i>(register_new_importers_here)</i> line in the Importer.cpp and register your importer there - just like all the others do.</li>
-<li>Setup a suitable test environment (i.e. use AssimpView or your own application), make sure to enable 
-the #aiProcess_ValidateDataStructure flag and enable verbose logging. That is, simply call before you import anything:
-@code
-DefaultLogger::create("AssimpLog.txt",Logger::VERBOSE)
-@endcode
-</li>
-<li>
-Implement the Assimp::BaseImporter::CanRead(), Assimp::BaseImporter::InternReadFile() and Assimp::BaseImporter::GetExtensionList(). 
-Just copy'n'paste the template from Appendix A and adapt it for your needs.
-</li>
-<li>For error handling, throw a dynamic allocated ImportErrorException (see Appendix A) for critical errors, and log errors, warnings, infos and debuginfos
-with DefaultLogger::get()->[error, warn, debug, info].
-</li>
-<li>
-Make sure the loader compiles against all build configurations on all supported platforms. This includes <i>-noboost</i>! To avoid problems,
-see the boost section on this page for a list of all 'allowed' boost classes (again, this grew historically when we had to accept that boost
-is not THAT widely spread that one could rely on it being available everywhere).
-</li>
-<li>
-Provide some _free_ test models in <tt>&lt;root&gt;/test/models/&lt;FormatName&gt;/</tt> and credit their authors.
-Test files for a file format shouldn't be too large (<i>~500 KiB in total</i>), and not too repetive. Try to cover all format features with test data.
-</li>
-<li>
-Done! Please, share your loader that everyone can profit from it!
-</li>
-</ul>
-
-@section properties Properties
-
-You can use properties to chance the behavior of you importer. In order to do so, you have to overide BaseImporter::SetupProperties, and specify
-you custom properties in aiConfig.h. Just have a look to the other AI_CONFIG_IMPORT_* defines and you will understand, how it works.
-
-The properties can be set with Importer::SetProperty***() and can be accessed in your SetupProperties function with Importer::GetProperty***(). You can
-store the properties as a member variable of your importer, they are thread safe.
-
-@section tnote Notes for text importers
-
-<ul>
-<li>Try to make your parser as flexible as possible. Don't rely on particular layout, whitespace/tab style,
-except if the file format has a strict definition.</li>
-<li>Call Assimp::BaseImporter::ConvertToUTF8() before you parse anything to convert foreign encodings to UTF-8. 
- That's not necessary for XML importers, which must use the provided IrrXML for reading. </li>
-</ul>
-
-@section bnote Notes for binary importers
-
-<ul>
-<li>
-Take care of endianess issues! Assimp importers mostly support big-endian platforms, which define the <tt>AI_BUILD_BIG_ENDIAN</tt> constant.
-See the next section for a list of utilities to simplify this task.
-</li>
-<li>
-Don't trust the input data! Check all offsets!
-</li>
-</ul>
-
-@section util Utilities
-
-Mixed stuff for internal use by loaders, mostly documented (most of them are already included by <i>AssimpPCH.h</i>):
-<ul>
-<li><b>ByteSwap</b> (<i>ByteSwap.h</i>) - manual byte swapping stuff for binary loaders.</li>
-<li><b>StreamReader</b> (<i>StreamReader.h</i>) - safe, endianess-correct, binary reading.</li>
-<li><b>IrrXML</b> (<i>irrXMLWrapper.h</i>)  - for XML-parsing (SAX.</li>
-<li><b>CommentRemover</b> (<i>RemoveComments.h</i>) - remove single-line and multi-line comments from a text file.</li>
-<li>fast_atof, strtol10, strtol16, SkipSpaceAndLineEnd, SkipToNextToken .. large family of low-level 
-parsing functions, mostly declared in <i>fast_atof.h</i>, <i>StringComparison.h</i> and <i>ParsingUtils.h</i> (a collection that grew
-historically, so don't expect perfect organization). </li>
-<li><b>ComputeNormalsWithSmoothingsGroups()</b> (<i>SmoothingGroups.h</i>) - Computes normal vectors from plain old smoothing groups. </li>
-<li><b>SkeletonMeshBuilder</b> (<i>SkeletonMeshBuilder.h</i>) - generate a dummy mesh from a given (animation) skeleton. </li>
-<li><b>StandardShapes</b> (<i>StandardShapes.h</i>) - generate meshes for standard solids, such as platonic primitives, cylinders or spheres. </li>
-<li><b>BatchLoader</b> (<i>BaseImporter.h</i>) - manage imports from external files. Useful for file formats
-which spread their data across multiple files. </li>
-<li><b>SceneCombiner</b> (<i>SceneCombiner.h</i>) - exhaustive toolset to merge multiple scenes. Useful for file formats
-which spread their data across multiple files. </li>
-</ul>
-
-@section mat Filling materials
-
-The required definitions zo set/remove/query keys in #aiMaterial structures are declared in <i>MaterialSystem.h</i>, in a
-#aiMaterial derivate called #Assimp::MaterialHelper. The header is included by AssimpPCH.h, so you don't need to bother.
-
-@code
-MaterialHelper* mat = new MaterialHelper();
-
-const float spec = 16.f;
-mat->AddProperty(&spec, 1, AI_MATKEY_SHININESS);
-
-//set the name of the material:
-NewMaterial->AddProperty(&aiString(MaterialName.c_str()), AI_MATKEY_NAME);//MaterialName is a std::string
-
-//set the first diffuse texture
-NewMaterial->AddProperty(&aiString(Texturename.c_str()), AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0));//again, Texturename is a std::string
-@endcode
-
-@section boost Boost
-
-The boost whitelist:
-<ul>
-<li><i>boost.scoped_ptr</i></li>
-<li><i>boost.scoped_array</i></li>
-<li><i>boost.format</i> </li>
-<li><i>boost.random</i> </li>
-<li><i>boost.common_factor</i> </li>
-<li><i>boost.foreach</i> </li>
-<li><i>boost.tuple</i></li>
-</ul>
-
-(if you happen to need something else, i.e. boost::thread, make this an optional feature.
-<tt>ASSIMP_BUILD_BOOST_WORKAROUND</tt> is defined for <i>-noboost</i> builds)
-
-@section appa Appendix A - Template for BaseImporter's abstract methods
-
-@code
-// -------------------------------------------------------------------------------
-// Returns whether the class can handle the format of the given file. 
-bool xxxxImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, 
-	bool checkSig) const
-{
-	const std::string extension = GetExtension(pFile);
-	if(extension == "xxxx") {
-		return true;
-	}
-	if (!extension.length() || checkSig) {
-		// no extension given, or we're called a second time because no 
-		// suitable loader was found yet. This means, we're trying to open 
-		// the file and look for and hints to identify the file format.
-		// #Assimp::BaseImporter provides some utilities:
-		//
-		// #Assimp::BaseImporter::SearchFileHeaderForToken - for text files.
-		// It reads the first lines of the file and does a substring check
-		// against a given list of 'magic' strings.
-		//
-		// #Assimp::BaseImporter::CheckMagicToken - for binary files. It goes
-		// to a particular offset in the file and and compares the next words 
-		// against a given list of 'magic' tokens.
-
-		// These checks MUST be done (even if !checkSig) if the file extension 
-		// is not exclusive to your format. For example, .xml is very common 
-		// and (co)used by many formats.
-	}
-	return false;
-}
-
-// -------------------------------------------------------------------------------
-// Get list of file extensions handled by this loader
-void xxxxImporter::GetExtensionList(std::string& append)
-{
-	append.append("*.xxx");
-}
-
-// -------------------------------------------------------------------------------
-void xxxxImporter::InternReadFile( const std::string& pFile, 
-	aiScene* pScene, IOSystem* pIOHandler)
-{
-	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile, "rb"));
-
-	// Check whether we can read from the file
-	if( file.get() == NULL) {
-		throw new ImportErrorException( "Failed to open xxxx file " + pFile + ".");
-	}
-	
-	// Your task: fill pScene
-	// Throw a ImportErrorException with a meaningful (!) error message if 
-	// something goes wrong.
-}
-
-@endcode
- */
 
 /**
 @page materials Material System
 
 @section General Overview
-All materials are stored in an array of aiMaterial inside the aiScene. 
+
+Warn, WIP. All materials are stored in an array of aiMaterial inside the aiScene. 
 
 Each aiMesh refers to one 
 material by its index in the array. Due to the vastly diverging definitions and usages of material
@@ -1426,41 +1204,3 @@ Build: alles von CustomBuild + DirectX + MFC?
 
 
 
-/**
-@page importer_notes Importer Notes
-
-@section ogre Ogre
-Ogre importer is WIP and optimized for the Blender Ogre exporter!
-
-XML Format: There is a binary and a XML mesh Format from Ogre. This loader can only
-Handle xml files, but don't panic, there is a command line converter, which you can use
-to create XML files from Binary Files. Just look on the Ogre page for it.
-
-Currently you can only load meshes. So you will need to import the *.mesh.xml file, the loader will
-try to find the appendant material and skeleton file.
-
-The skeleton file must have the same name as the mesh file, e.g. fish.mesh.xml and fish.skeleton.xml.
-
-The material file can have the same name as the mesh file, or you can use
-Importer::Importer::SetPropertyString(AI_CONFIG_IMPORT_OGRE_MATERIAL_FILE, "materiafile.material") to specify
-the name of the material file. This is especially usefull if multiply materials a stored in a single file.
-The importer will first try to load the material with the same name as the mesh and only if this can't be open try
-to load the alternate material file. The default material filename is "Scene.material".
-
-We suggest that you use custom materials, because they support multiple textures (like colormap and normalmap). First of all you
-should read the custom material sektion in the Ogre Blender exporter Help File, and than use the assimp.tlp template, which you
-can find in scripts/OgreImpoter/Assimp.tlp. If you don't set all values, don't worry, they will be ignored during import.
-
-If you want more propertiesin custom materials, you can easily expand the ogre material loader, it will be just a few lines for each property.
-
-What will be loaded?
-
-Mesh: Faces, Positions, Normals and one Uv pair. The Materialname will be used to load the material. No Bone-Assignments yet.
-
-Material: The right material in the file will be searched, the importer should work with materials who
-have 1 technique and 1 pass in this technique. From there, the texturename (for 1 color- and 1 normalmap) will be loaded. Also, the
-materialname will be set.
-
-Skeleton: Skeleton with Bone hierarchy (Position and Rotation, but no Scaling in the skeleton is supported), names and transformations,
-animations with rotation, translation and scaling keys.
-*/

@@ -41,28 +41,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /** @file Logger.h
  *  @brief Abstract base class 'Logger', base of the logging system. 
  */
+
 #ifndef INCLUDED_AI_LOGGER_H
 #define INCLUDED_AI_LOGGER_H
 
 #include "aiTypes.h"
 namespace Assimp	{
+
 class LogStream;
 
-// Maximum length of a log message. Longer messages are rejected.
+// maximum length of a log message. Longer messages are rejected.
 #define MAX_LOG_MESSAGE_LENGTH 1024u
 
 // ----------------------------------------------------------------------------------
-/**	@brief CPP-API: Abstract interface for logger implementations.
- *  Assimp provides a default implementation and uses it for almost all 
- *  logging stuff ('DefaultLogger'). This class defines just basic logging
- *  behaviour and is not of interest for you. Instead, take a look at #DefaultLogger. */
-class ASSIMP_API Logger 
-	: public Intern::AllocateFromAssimpHeap	{
+/**	@class	Logger
+ *	@brief	Abstract interface for logger implementations.
+ *  Assimp provides a default implementation ('DefaultLogger').
+ */
+class ASSIMP_API Logger : public Intern::AllocateFromAssimpHeap
+{
 public:
-
-	// ----------------------------------------------------------------------
 	/**	@enum	LogSeverity
 	 *	@brief	Log severity to describe the granularity of logging.
+	 *
+	 *  This is a general property of a Logger instance, NORMAL means
+	 *  that debug messages are rejected immediately.
 	 */
 	enum LogSeverity
 	{
@@ -70,7 +73,6 @@ public:
 		VERBOSE		//!< Debug infos will be logged, too
 	};
 
-	// ----------------------------------------------------------------------
 	/**	@enum	ErrorSeverity
 	 *	@brief	Description for severity of a log message.
 	 *
@@ -91,36 +93,35 @@ public:
 	/** @brief	Virtual destructor */
 	virtual ~Logger();
 
-	// ----------------------------------------------------------------------
 	/** @brief	Writes a debug message
-	 *	 @param	message	Debug message*/
+	 *	 @param	message		Debug message
+	 */
 	void debug(const std::string &message);
 
-	// ----------------------------------------------------------------------
 	/** @brief	Writes a info message
-	 *	@param	message Info message*/
+	 *	@param	message		Info message
+	 */
 	void info(const std::string &message);
 
-	// ----------------------------------------------------------------------
 	/** @brief	Writes a warning message
-	 *	@param	message Warn message*/
+	 *	@param	message		Warn message
+	 */
 	void warn(const std::string &message);
 
-	// ----------------------------------------------------------------------
 	/** @brief	Writes an error message
-	 *	@param	message	Error message*/
+	 *	@param	message		Error message
+	 */
 	void error(const std::string &message);
 
-	// ----------------------------------------------------------------------
 	/** @brief	Set a new log severity.
-	 *	@param	log_severity New severity for logging*/
+	 *	@param	log_severity	New severity for logging
+	 */
 	void setLogSeverity(LogSeverity log_severity);
 
-	// ----------------------------------------------------------------------
-	/** @brief Get the current log severity*/
+	/** @brief	Get the current log severity
+	 */
 	LogSeverity getLogSeverity() const;
 
-	// ----------------------------------------------------------------------
 	/** @brief	Attach a new logstream
 	 *
 	 *  The logger takes ownership of the stream and is responsible
@@ -131,11 +132,11 @@ public:
 	 *  @param severity  Message filter, specified which types of log
 	 *    messages are dispatched to the stream. Provide a bitwise
 	 *    combination of the ErrorSeverity flags.
-	 *  @return true if the stream has been attached, false otherwise.*/
+	 *  @return true if the stream has been attached, false otherwise.
+	 */
 	virtual bool attachStream(LogStream *pStream, 
 		unsigned int severity = DEBUGGING | ERR | WARN | INFO) = 0;
 
-	// ----------------------------------------------------------------------
 	/** @brief	Detach a still attached stream from the logger (or 
 	 *          modify the filter flags bits)
 	 *	 @param	pStream	Logstream instance for detaching
@@ -143,7 +144,8 @@ public:
 	 *    flags. This value is &~ed with the current flags of the stream,
 	 *    if the result is 0 the stream is detached from the Logger and
 	 *    the caller retakes the possession of the stream.
-	 *  @return true if the stream has been dettached, false otherwise.*/
+	 *  @return true if the stream has been dettached, false otherwise.
+	 */
 	virtual bool detatchStream(LogStream *pStream, 
 		unsigned int severity = DEBUGGING | ERR | WARN | INFO) = 0;
 
@@ -155,39 +157,35 @@ protected:
 	/** Construction with a given log severity */
 	Logger(LogSeverity severity);
 
-	// ----------------------------------------------------------------------
-	/** @brief Called as a request to write a specific debug message
-	 *	@param	message	Debug message. Never longer than
-	 *    MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
-	 *  @note  The message string is only valid until the scope of
-	 *    the function is left.
+	/**  @brief Called as a request to write a specific debug message
+	 *	 @param	message		Debug message. Never longer than
+	 *     MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
+	 *   @note  The message string is only valid until the scope of
+	 *     the function is left.
 	 */
 	virtual void OnDebug(const char* message)= 0;
 
-	// ----------------------------------------------------------------------
-	/** @brief Called as a request to write a specific info message
-	 *	@param	message	Info message. Never longer than
-	 *    MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
-	 *  @note  The message string is only valid until the scope of
-	 *    the function is left.
+	/**  @brief Called as a request to write a specific info message
+	 *	 @param	message		Info message. Never longer than
+	 *     MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
+	 *   @note  The message string is only valid until the scope of
+	 *     the function is left.
 	 */
 	virtual void OnInfo(const char* message) = 0;
 
-	// ----------------------------------------------------------------------
-	/** @brief Called as a request to write a specific warn message
-	 *	@param	message	Warn message. Never longer than
-	 *    MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
-	 *  @note  The message string is only valid until the scope of
-	 *    the function is left.
+	/**  @brief Called as a request to write a specific warn message
+	 *	 @param	message		Warn message. Never longer than
+	 *     MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
+	 *   @note  The message string is only valid until the scope of
+	 *     the function is left.
 	 */
 	virtual void OnWarn(const char* essage) = 0;
 
-	// ----------------------------------------------------------------------
-	/** @brief Called as a request to write a specific error message
-	 *	@param	message Error message. Never longer than
-	 *    MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
-	 *  @note  The message string is only valid until the scope of
-	 *    the function is left.
+	/**  @brief Called as a request to write a specific error message
+	 *	 @param	message		Error message. Never longer than
+	 *     MAX_LOG_MESSAGE_LENGTH characters (exluding the '0').
+	 *   @note  The message string is only valid until the scope of
+	 *     the function is left.
 	 */
 	virtual void OnError(const char* message) = 0;
 
