@@ -9,12 +9,14 @@
 #include "3DOParser.h"
 #include "s3oParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "AssParser.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FartextureHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
+#include "assimp.hpp"
 
 
 C3DModelLoader* modelParser = NULL;
@@ -28,9 +30,26 @@ C3DModelLoader::C3DModelLoader(void)
 {
 	C3DOParser* unit3doparser = new C3DOParser();
 	CS3OParser* units3oparser = new CS3OParser();
+	CAssParser* unitassparser = new CAssParser();
 
 	AddParser("3do", unit3doparser);
 	AddParser("s3o", units3oparser);
+
+	// assimp library
+	std::string extensionlist;
+	Assimp::Importer importer;
+	importer.GetExtensionList(extensionlist); // get a ";" separated list of wildcards
+	char* charextensionlist = new char[extensionlist.size() +1];
+	strcpy (charextensionlist, extensionlist.c_str());
+	char* extensionchar = strtok( charextensionlist, ";" );
+	while( extensionchar )
+	{
+		std::string extension = extensionchar;
+		extension = extension.substr( 2 ); // strip wildcard and dot
+		AddParser(extension,unitassparser); // register extension
+		extensionchar = strtok( NULL, ";" );
+	}
+	delete charextensionlist;
 }
 
 

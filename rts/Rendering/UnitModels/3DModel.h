@@ -7,16 +7,16 @@
 #include "Matrix44f.h"
 #include "Sim/Units/Unit.h"
 
-
 const int MODELTYPE_3DO   = 0;
 const int MODELTYPE_S3O   = 1;
-const int MODELTYPE_OTHER = 2;
+const int MODELTYPE_OTHER = 2; // Model loaded by Assimp library
 
 struct CollisionVolume;
 struct S3DModel;
 struct S3DModelPiece;
 struct LocalModel;
 struct LocalModelPiece;
+struct aiScene;
 
 
 struct S3DModelPiece {
@@ -56,6 +56,7 @@ struct S3DModel
 	float3 relMidPos;
 	int type;        //! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
 	int textureType; // FIXME MAKE S3O ONLY      //0=3do, otherwise s3o
+	const aiScene* scene; // For Assimp models. Contains imported data. NULL for s3o/3do.
 	std::string tex1;
 	std::string tex2;
 	inline void DrawStatic() const { rootobject->DrawStatic(); };

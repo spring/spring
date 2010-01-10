@@ -8,7 +8,6 @@
 #include "Sim/Units/Unit.h"
 #include "3DModel.h"
 
-
 class C3DOParser;
 class CS3OParser;
 class C3DModelLoader;
