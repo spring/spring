@@ -332,7 +332,7 @@ SOURCE_GROUP( zlib FILES
 	../contrib/zlib/zutil.h
 )
 
-ADD_LIBRARY( assimp SHARED
+ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	${HEADER_PATH}/DefaultLogger.h
 	${HEADER_PATH}/IOStream.h
 	${HEADER_PATH}/IOSystem.h

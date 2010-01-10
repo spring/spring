@@ -52,7 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
 #include <limits>
-#include "streflop_cond.h"
+#include <math.h>
 
 #include "aiAssert.h"
 #include "aiQuaternion.h"

@@ -15,7 +15,7 @@
 #ifndef __FAST_A_TO_F_H_INCLUDED__
 #define __FAST_A_TO_F_H_INCLUDED__
 
-#include "streflop_cond.h"
+#include <math.h>
 
 namespace Assimp
 {

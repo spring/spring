@@ -65,6 +65,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Undefine the min/max macros defined by some platform headers (namely Windows.h) to 
  * avoid obvious conflicts with std::min() and std::max(). 
  */
+#undef min
+#undef max
 
 /* Concatenate two tokens after evaluating them
  */
@@ -115,7 +117,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 #include <new>
 #include <cstdio>
-#include <algorithm>
 
 // Public ASSIMP headers
 #include "../include/DefaultLogger.h"

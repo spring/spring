@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "AssimpPCH.h"
 #include "ScenePreprocessor.h"
-#include "streflop_cond.h"
 
 using namespace Assimp;
 
