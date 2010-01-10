@@ -189,8 +189,6 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 				assert(ground->GetHeight(x*resolution, y1*resolution) <= maximums[x]);
 			}
 #endif
-			if (x == 62 && y == 251)
-				LogObject() << "break";
 			float curx = x * resolution;
 			if (rows[x] <= y-intrad) {
 				// find a new maximum if the old one left the window
