@@ -1,7 +1,9 @@
-#include "SmoothHeightMesh.h"
-
 #include <vector>
 #include <cassert>
+#include <cstring>
+
+
+#include "SmoothHeightMesh.h"
 
 #include "Rendering/GL/myGL.h"
 #include "float3.h"
@@ -69,10 +71,28 @@ float SmoothHeightMesh::GetHeight(float x, float y)
 }
 
 
+float SmoothHeightMesh::SetHeight(int index, float h)
+{
+	mesh[index] = h;
+	return mesh[index];
+}
+
+float SmoothHeightMesh::AddHeight(int index, float h)
+{
+	mesh[index] += h;
+	return mesh[index];
+}
+
+float SmoothHeightMesh::SetMaxHeight(int index, float h)
+{
+	mesh[index] = std::max(h, mesh[index]);
+	return mesh[index];
+}
+
 void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 {
 	if (!mesh) {
-		int size = (int)((this->maxx+1) * (this->maxy + 1));
+		size_t size = (size_t)((this->maxx+1) * (this->maxy + 1));
 		mesh = new float[size];
 	}
 
@@ -221,7 +241,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 
 
 	// actually smooth
-	const int smoothsize = (int)((this->maxx+1) * (this->maxy + 1));
+	const size_t smoothsize = (size_t)((this->maxx+1) * (this->maxy + 1));
 	const int smoothrad = 4;
 	float *smoothed = new float[smoothsize];
 	for (int y = 0; y <= maxy; ++y) {
@@ -241,6 +261,8 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 	}
 	delete [] mesh;
 	mesh = smoothed;
+	origMesh = new float[smoothsize];
+	memcpy(origMesh, mesh, smoothsize);
 }
 
 

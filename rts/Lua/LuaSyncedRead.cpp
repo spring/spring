@@ -39,6 +39,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
@@ -279,6 +280,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroundInfo);
 	REGISTER_LUA_CFUNC(GetGroundBlocked);
 	REGISTER_LUA_CFUNC(GetGroundExtremes);
+
+	REGISTER_LUA_CFUNC(GetSmoothMeshHeight);
 
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
@@ -4410,6 +4413,16 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 	return 2;
 }
 
+/******************************************************************************/
+
+int LuaSyncedRead::GetSmoothMeshHeight(lua_State *L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float z = luaL_checkfloat(L, 2);
+
+	lua_pushnumber(L, smoothGround->GetHeight(x, z));
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/

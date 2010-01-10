@@ -37,6 +37,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AirMoveType.h"
@@ -81,12 +82,15 @@ bool LuaSyncedCtrl::inCreateFeature = false;
 bool LuaSyncedCtrl::inDestroyFeature = false;
 bool LuaSyncedCtrl::inGiveOrder = false;
 bool LuaSyncedCtrl::inHeightMap = false;
+bool LuaSyncedCtrl::inSmoothMesh = false;
 
 static int heightMapx1;
 static int heightMapx2;
 static int heightMapz1;
 static int heightMapz2;
 static float heightMapAmountChanged;
+
+static float smoothMeshAmountChanged;
 
 
 /******************************************************************************/
@@ -214,6 +218,14 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMapFunc);
+
+	REGISTER_LUA_CFUNC(LevelSmoothMesh);
+	REGISTER_LUA_CFUNC(AdjustSmoothMesh);
+	REGISTER_LUA_CFUNC(RevertSmoothMesh);
+
+	REGISTER_LUA_CFUNC(AddSmoothMesh);
+	REGISTER_LUA_CFUNC(SetSmoothMesh);
+	REGISTER_LUA_CFUNC(SetSmoothMeshFunc);
 
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
@@ -2816,7 +2828,7 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 
 	if (error != 0) {
 		logOutput.Print("Spring.SetHeightMapFunc: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -2825,6 +2837,211 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	}
 
 	lua_pushnumber(L, heightMapAmountChanged);
+	return 1;
+}
+
+/******************************************************************************/
+/* smooth mesh manipulation                                                   */
+/******************************************************************************/
+
+static void ParseSmoothMeshParams(lua_State* L, const char* caller, float& factor,
+			   int& x1, int& z1, int& x2, int& z2)
+{
+	float fx1 = 0.0f;
+	float fz1 = 0.0f;
+	float fx2 = 0.0f;
+	float fz2 = 0.0f;
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args == 3) {
+		fx1 = fx2 = luaL_checkfloat(L, 1);
+		fz1 = fz2 = luaL_checkfloat(L, 2);
+		factor    = luaL_checkfloat(L, 3);
+	}
+	else if (args == 5) {
+		fx1    = luaL_checkfloat(L, 1);
+		fz1    = luaL_checkfloat(L, 2);
+		fx2    = luaL_checkfloat(L, 3);
+		fz2    = luaL_checkfloat(L, 4);
+		factor = luaL_checkfloat(L, 5);
+		if (fx1 > fx2) {
+			swap(fx1, fx2);
+		}
+		if (fz1 > fz2) {
+			swap(fz1, fz2);
+		}
+	}
+	else {
+		luaL_error(L, "Incorrect arguments to %s()", caller);
+	}
+
+	// quantize and clamp
+	x1 = (int)max(0 , min(smoothGround->GetMaxX(), (int)(fx1 / smoothGround->GetResolution())));
+	z1 = (int)max(0 , min(smoothGround->GetMaxY(), (int)(fz1 / smoothGround->GetResolution())));
+	x2 = (int)max(0 , min(smoothGround->GetMaxX(), (int)(fx2 / smoothGround->GetResolution())));
+	z2 = (int)max(0 , min(smoothGround->GetMaxY(), (int)(fz2 / smoothGround->GetResolution())));
+
+	return;
+}
+
+
+int LuaSyncedCtrl::LevelSmoothMesh(lua_State *L)
+{
+	float height;
+	int x1, x2, z1, z2;
+	ParseSmoothMeshParams(L, __FUNCTION__, height, x1, z1, x2, z2);
+
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
+			const int index = (z * smoothGround->GetMaxX()) + x;
+			smoothGround->SetHeight(index, height);
+		}
+	}
+	return 0;
+}
+
+int LuaSyncedCtrl::AdjustSmoothMesh(lua_State *L)
+{
+	float height;
+	int x1, x2, z1, z2;
+	ParseSmoothMeshParams(L, __FUNCTION__, height, x1, z1, x2, z2);
+
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
+			const int index = (z * smoothGround->GetMaxX()) + x;
+			smoothGround->AddHeight(index, height);
+		}
+	}
+
+	return 0;
+}
+
+int LuaSyncedCtrl::RevertSmoothMesh(lua_State *L)
+{
+	float origFactor;
+	int x1, x2, z1, z2;
+	ParseSmoothMeshParams(L, __FUNCTION__, origFactor, x1, z1, x2, z2);
+
+	const float* origMap = smoothGround->GetOriginalMeshData();
+	const float* currMap = smoothGround->GetMeshData();
+
+	if (origFactor == 1.0f) {
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
+				const int idx = (z * smoothGround->GetMaxX()) + x;
+				smoothGround->SetHeight(idx, origMap[idx]);
+			}
+		}
+	}
+	else {
+		const float currFactor = (1.0f - origFactor);
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
+				const int index = (z * smoothGround->GetMaxX()) + x;
+				const float ofh = origFactor * origMap[index];
+				const float cfh = currFactor * currMap[index];
+				smoothGround->SetHeight(index, ofh + cfh);
+			}
+		}
+	}
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
+{
+	if (!inSmoothMesh) {
+		luaL_error(L, "AddSmoothMesh() can only be called in SetSmoothMeshFunc()");
+	}
+
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+
+	// quantize
+	const int x = (int)(xl / smoothGround->GetResolution());
+	const int z = (int)(zl / smoothGround->GetResolution());
+
+	// discard invalid coordinates
+	if ((x < 0) || (x > smoothGround->GetMaxX()) ||
+	    (z < 0) || (z > smoothGround->GetMaxY())) {
+		return 0;
+	}
+
+	const int index = (z * smoothGround->GetMaxX()) + x;
+	const float oldHeight = smoothGround->GetMeshData()[index];
+	smoothMeshAmountChanged += streflop::fabsf(h);
+
+	smoothGround->AddHeight(index, h);
+	// push the new height
+	lua_pushnumber(L, oldHeight + h);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
+{
+	if (!inSmoothMesh) {
+		luaL_error(L, "SetSmoothMesh() can only be called in SetSmoothMeshFunc()");
+	}
+
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+
+	// quantize
+	const int x = (int)(xl / smoothGround->GetResolution());
+	const int z = (int)(zl / smoothGround->GetResolution());
+
+	// discard invalid coordinates
+	if ((x < 0) || (x > smoothGround->GetMaxX()) ||
+	    (z < 0) || (z > smoothGround->GetMaxY())) {
+		return 0;
+	}
+
+	const int index = (z * (smoothGround->GetMaxX())) + x;
+	const float oldHeight = smoothGround->GetMeshData()[index];
+	float height = oldHeight;
+
+	if (lua_israwnumber(L, 4)) {
+		const float t = lua_tofloat(L, 4);
+		height += (h - oldHeight) * t;
+	} else{
+		height = h;
+	}
+
+	const float heightDiff = (height - oldHeight);
+	smoothMeshAmountChanged += streflop::fabsf(heightDiff);
+
+	smoothGround->SetHeight(index, height);
+	lua_pushnumber(L, heightDiff);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State *L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isfunction(L, 1)) {
+		luaL_error(L, "Incorrect arguments to Spring.SetSmoothMeshFunc(func, ...)");
+	}
+
+	if (inSmoothMesh) {
+		luaL_error(L, "SetHeightMapFunc() recursion is not permitted");
+	}
+
+	heightMapAmountChanged = 0.0f;
+
+	inSmoothMesh = true;
+	const int error = lua_pcall(L, (args - 1), 0, 0);
+	inSmoothMesh = false;
+
+	if (error != 0) {
+		logOutput.Print("Spring.SetSmoothMeshFunc: error(%i) = %s",
+				error, lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	lua_pushnumber(L, smoothMeshAmountChanged);
 	return 1;
 }
 
