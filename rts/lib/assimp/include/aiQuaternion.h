@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AI_QUATERNION_H_INC
 #define AI_QUATERNION_H_INC
 
-#include "streflop_cond.h"
+#include <math.h>
 #include "aiTypes.h"
 
 #ifdef __cplusplus
