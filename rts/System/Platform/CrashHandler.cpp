@@ -281,6 +281,7 @@ namespace CrashHandler {
 			if (lines == NULL) {
 				log << "Unable to create stacktrace\n";
 			} else {
+				bool containsOglSo = false;
 				for (int l = 0; l < numLines; l++) {
 					const std::string line(lines[l]);
 					log << line;
@@ -320,6 +321,7 @@ namespace CrashHandler {
 							|| (addr == INVALID_LINE_INDICATOR)) {
 						log << " # NOTE: invalid stack-trace line -> not translating";
 					} else {
+						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
 						binPath_baseMemAddr[absPath] = 0;
 						paths.push(absPath);
@@ -330,7 +332,12 @@ namespace CrashHandler {
 				}
 				delete lines;
 				lines = NULL;
+
+				if (containsOglSo) {
+					log << "This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.\n";
+				}
 			}
+
 			log << "Translated Stacktrace:\n";
 		}
 		logOutput.End(); // Stop writing to log.
