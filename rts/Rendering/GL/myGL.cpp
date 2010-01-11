@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <string>
 #include <ostream>
 #include <fstream>
 #include <SDL.h>
@@ -79,7 +80,7 @@ void LoadExtensions()
 	logOutput.Print("GL:   %s\n", glGetString(GL_RENDERER));
 	logOutput.Print("GLEW: %s\n", glewGetString(GLEW_VERSION));
 
-	/** Get available fullscreen/hardware modes **/
+	// Get available fullscreen/hardware modes
 /*
 	SDL_Rect **modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL|SDL_RESIZABLE);
 
@@ -96,6 +97,33 @@ void LoadExtensions()
 		logOutput.Print("SDL_ListModes: %s\n",buffer);
 	}
 */
+
+#if       !defined DEBUG
+	// Print out warnings for really crappy graphic cards/drivers
+	{
+		const std::string gfxCard_vendor = (const char*) glGetString(GL_VENDOR);
+		const std::string gfxCard_model  = (const char*) glGetString(GL_RENDERER);
+		bool gfxCard_isWorthATry = true;
+		if (gfxCard_vendor == "SiS") {
+			gfxCard_isWorthATry = false;
+		}
+
+		if (!gfxCard_isWorthATry) {
+			logOutput.Print("o_O\n");
+			logOutput.Print("WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG  \n");
+			logOutput.Print(" WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG      \n");
+			logOutput.Print("  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG \n");
+			logOutput.Print("   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG  \n");
+			logOutput.Print("(warning)\n");
+			logOutput.Print("Your graphic card is ...\n");
+			logOutput.Print("well, you know ...\n");
+			logOutput.Print("insufficient\n");
+			logOutput.Print("(in case you are not using a horribly wrong driver).\n");
+			logOutput.Print("If the game crashes, looks ugly or runs slow, buy a better card!\n");
+			logOutput.Print(".\n");
+		}
+	}
+#endif // !defined DEBUG
 
 	std::string s = (char*)glGetString(GL_EXTENSIONS);
 	for (unsigned int i=0; i<s.length(); i++)
