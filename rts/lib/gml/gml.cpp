@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 // GML works by "patching" all OpenGL calls. It is injected via a #include "gml.h" statement located in myGL.h.
 // All files that need GL should therefore include myGL.h. INCLUDING gl.h, glu.h, glext.h ... IS FORBIDDEN.
