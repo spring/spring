@@ -106,6 +106,13 @@ void LoadExtensions()
 		bool gfxCard_isWorthATry = true;
 		if (gfxCard_vendor == "SiS") {
 			gfxCard_isWorthATry = false;
+		} else if (gfxCard_model.find("Intel") != std::string::npos) {
+			// the vendor does not have to be Intel
+			if (gfxCard_model.find(" 945G") != std::string::npos) {
+				gfxCard_isWorthATry = false;
+			} else if (gfxCard_model.find(" 915G") != std::string::npos) {
+				gfxCard_isWorthATry = false;
+			}
 		}
 
 		if (!gfxCard_isWorthATry) {
