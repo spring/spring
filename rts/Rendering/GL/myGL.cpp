@@ -98,6 +98,27 @@ void LoadExtensions()
 	}
 */
 
+	// Check if graphic card supported OpenGL version >= required minimum
+	{
+		const std::string glVersion = (const char*) glGetString(GL_VERSION);
+		bool glVersion_isOk = true;
+		// version may look like: "OpenGL ES-CM 1.0"
+		// or simply:             "1.0"
+		if ((glVersion.find("1.0") != std::string::npos) ||
+		    (glVersion.find("1.1") != std::string::npos) ||
+		    (glVersion.find("1.2") != std::string::npos) || // includes 1.2.1
+		    (glVersion.find("1.3") != std::string::npos)) {
+			glVersion_isOk = false;
+		}
+
+		if (!glVersion_isOk) {
+			logOutput.Print("Minimal required OpenGL version is 1.4\n");
+#if       !defined DEBUG
+			exit(0);
+#endif // !defined DEBUG
+		}
+	}
+
 #if       !defined DEBUG
 	// Print out warnings for really crappy graphic cards/drivers
 	{
