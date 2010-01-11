@@ -277,8 +277,7 @@ bool CBitmap::Save(string const& filename, bool opaque)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, NULL);
-	ilSetData(buf);
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf);
 
 	const string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
 	const bool success = ilSaveImage((char*)fullpath.c_str());
