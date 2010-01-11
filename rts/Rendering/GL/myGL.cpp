@@ -98,6 +98,13 @@ void LoadExtensions()
 	}
 */
 
+	if (!GLEW_VERSION_1_4) {
+		logOutput.Print("Minimal required OpenGL version is 1.4\n");
+#if       !defined DEBUG
+		exit(0);
+#endif // !defined DEBUG
+	}
+
 #if       !defined DEBUG
 	// Print out warnings for really crappy graphic cards/drivers
 	{
