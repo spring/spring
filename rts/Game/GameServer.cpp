@@ -141,10 +141,9 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	medianCpu = 0.0f;
 	medianPing = 0;
 	// enforceSpeed - throttles speed based on:
-	// -1 : spectators and players (max cpu)
 	// 0 : players (max cpu)
 	// 1 : players (median cpu)
-	enforceSpeed = setup->hostDemo ? -1 : configHandler->Get("EnforceGameSpeed", 0);
+	enforceSpeed = configHandler->Get("EnforceGameSpeed", 0);
 
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
@@ -492,7 +491,7 @@ void CGameServer::CheckSync()
 				if (bGotCorrectChecksum && it->second != correctChecksum)
 				{
 					players[a].desynced = true;
-					if(enforceSpeed < 0 || !players[a].spectator)
+					if(demoReader || !players[a].spectator)
 						desyncGroups[it->second].push_back(a);
 					else
 						desyncSpecs[a] = it->second;
@@ -582,7 +581,8 @@ void CGameServer::Update()
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, (serverframenum - players[a].lastFrameResponse)));
-					if(enforceSpeed < 0 || !players[a].spectator) {
+					if(demoReader ? !players[a].isFromDemo : !players[a].spectator)
+					{
 						if (players[a].cpuUsage > refCpu) {
 							refCpu = players[a].cpuUsage;
 						}
@@ -757,26 +757,38 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed >= 0 && !players[a].isLocal && !isPaused &&
+					if (!players[a].isLocal && players[a].spectator && !demoReader)
+					{
+						PrivateMessage(a, "Spectators cannot pause the game" );
+					}
+					else if (enforceSpeed > 0 && !isPaused &&
 						(players[a].spectator || (enforceSpeed > 0 &&
 						(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						(serverframenum - players[a].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
-						PrivateMessage(a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)");
-						break; // disallow pausing by players who cannot keep up gamespeed
+						PrivateMessage(a, "Pausing rejected (cpu load or ping is too high)");
 					}
-					timeLeft=0;
-					if (isPaused != !!inbuf[2]) {
-						isPaused = !isPaused;
+					else
+					{
+						timeLeft=0;
+						if (isPaused != !!inbuf[2]) {
+							isPaused = !isPaused;
+						}
+						Broadcast(CBaseNetProtocol::Get().SendPause(a, inbuf[2]));
 					}
-					Broadcast(CBaseNetProtocol::Get().SendPause(a, inbuf[2]));
 				}
 			}
 			break;
 
 		case NETMSG_USER_SPEED: {
-			//unsigned char playerNum = inbuf[1];
-			float speed = *((float*) &inbuf[2]);
-			UserSpeedChange(speed, a);
+			if (!players[a].isLocal && players[a].spectator && !demoReader)
+			{
+				PrivateMessage(a, "Spectators cannot change game speed");
+			}
+			else
+			{
+				float speed = *((float*) &inbuf[2]);
+				UserSpeedChange(speed, a);
+			}
 		} break;
 
 		case NETMSG_CPU_USAGE:
@@ -1568,7 +1580,7 @@ void CGameServer::PushAction(const Action& action)
 	else if (action.command == "singlestep")
 	{
 		if (isPaused && !demoReader)
-			gameServer->CreateNewFrame(true, true);
+			CreateNewFrame(true, true);
 	}
 #ifdef DEDICATED // we already have a quit command in the client
 	else if (action.command == "kill")
@@ -1870,15 +1882,13 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if (enforceSpeed >= 0 &&
+	if (enforceSpeed > 0 &&
 		player >= 0 && static_cast<unsigned int>(player) != SERVER_PLAYER &&
 		!players[player].isLocal && !isPaused &&
 		(players[player].spectator || (enforceSpeed > 0 &&
 		(players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 		(serverframenum - players[player].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
-		PrivateMessage(player, players[player].spectator ?
-		"Speed change rejected (spectators)" :
-		"Speed change rejected (cpu load or ping is too high)");
+		PrivateMessage(player, "Speed change rejected (cpu load or ping is too high)");
 		return; // disallow speed change by players who cannot keep up gamespeed
 	}
 
