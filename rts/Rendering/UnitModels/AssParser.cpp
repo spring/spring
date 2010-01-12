@@ -25,6 +25,7 @@
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
 #define ASS_POSTPROCESS_OPTIONS \
+	aiProcess_FindInvalidData				| \
 	aiProcess_CalcTangentSpace				| \
 	aiProcess_GenSmoothNormals				| \
 	aiProcess_LimitBoneWeights				| \
@@ -77,15 +78,19 @@ S3DModel* CAssParser::Load(std::string name)
 	// convert to Spring model format
 	S3DModel* model = new S3DModel;
 	if (scene != NULL) {
-		logOutput.Print("Processing scene for model: %s\n", name.c_str() );
+		logOutput.Print("Processing scene for model: %s (%d meshes / %d materials / %d textures)", name.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumTextures );
 		model->name = name;
 		model->type = MODELTYPE_OTHER;
 		model->scene = scene;
-		model->numobjects = scene->mNumMeshes;
-		model->rootobject = LoadPiece( scene->mRootNode, scene );
+		model->numobjects = 0;
 		model->tex1 = "network_packet.tga";
 		model->tex2 = "";
 		texturehandlerS3O->LoadS3OTexture(model);
+
+		logOutput.Print("Loading root node '%s'", scene->mRootNode->mName.data);
+		SAssPiece* rootPiece = LoadPiece( scene->mRootNode, model );
+		model->rootobject = rootPiece;
+
 		// Load size defaults from 'hitbox' object in model (if it exists).
 		// If it doesn't exist loop of all pieces
 		// These values can be overridden in unitDef
@@ -109,6 +114,8 @@ S3DModel* CAssParser::Load(std::string name)
 		model->maxx = 1.0f;
 		model->maxy = 1.0f;
 		model->maxz = 1.0f;
+
+		logOutput.Print ("Model Imported.\n");
 	} else {
 		logOutput.Print ("Model Import Error: %s\n",  importer.GetErrorString());
 	}
@@ -117,15 +124,18 @@ S3DModel* CAssParser::Load(std::string name)
 
 #define IS_QNAN(f) (f != f)
 
-SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
+SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 {
+	logOutput.Print("Converting node '%s' to a piece (%d meshes).", node->mName.data, node->mNumMeshes);
+
+	model->numobjects++;
+
 	SAssPiece* piece = new SAssPiece;
 	piece->name = std::string(node->mName.data);
 	piece->type = MODELTYPE_OTHER;
 	piece->node = node;
 	piece->isEmpty = node->mNumMeshes == 0;
 
-	logOutput.Print("Positioning piece");
 	aiVector3D scale, position;
  	aiQuaternion rotation;
 	node->mTransformation.Decompose(scale,rotation,position);
@@ -137,56 +147,71 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 	// for all meshes
 	for ( unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++ ) {
 		unsigned int meshIndex = node->mMeshes[meshListIndex];
-		logOutput.Print("mesh %d:", meshIndex );
-		aiMesh* mesh = scene->mMeshes[meshIndex];
+		logOutput.Print("Fetching mesh %d from scene", meshIndex );
+		aiMesh* mesh = model->scene->mMeshes[meshIndex];
 		std::vector<unsigned> mesh_vertex_mapping;
 		// extract vertex data
+		logOutput.Print("Processing vertices for mesh %d (%d vertices)", meshIndex, mesh->mNumVertices );
+		logOutput.Print("Normals: %s Tangents/Bitangents: %s TexCoords: %s",
+				(mesh->HasNormals())?"Y":"N",
+				(mesh->HasTangentsAndBitangents())?"Y":"N",
+				(mesh->HasTextureCoords(0)?"Y":"N")
+		);
 		for ( unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; vertexIndex++) {
 			SAssVertex vertex;
 			// vertex coordinates
+			//logOutput.Print("Fetching vertex %d from mesh", vertexIndex );
 			aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
 			vertex.pos.x = aiVertex.x;
 			vertex.pos.y = aiVertex.y;
 			vertex.pos.z = aiVertex.z;
-			logOutput.Print("vertex %d: %f %f %f",vertexIndex, vertex.pos.x, vertex.pos.y,vertex.pos.z );
+			//logOutput.Print("vertex %d: %f %f %f",vertexIndex, vertex.pos.x, vertex.pos.y,vertex.pos.z );
 			// vertex normal
+			//logOutput.Print("Fetching normal for vertex %d", vertexIndex );
 			aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 			vertex.hasNormal = !IS_QNAN(aiNormal);
 			if ( vertex.hasNormal ) {
 				vertex.normal.x = aiNormal.x;
 				vertex.normal.y = aiNormal.y;
 				vertex.normal.z = aiNormal.z;
-				logOutput.Print("vertex normal %d: %f %f %f",vertexIndex, vertex.normal.x, vertex.normal.y,vertex.normal.z );
+				//logOutput.Print("vertex normal %d: %f %f %f",vertexIndex, vertex.normal.x, vertex.normal.y,vertex.normal.z );
 			}
 			// vertex tangent, x is positive in texture axis
-			aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
-			vertex.hasTangent = !IS_QNAN(aiTangent);
-			if ( vertex.hasTangent ) {
-				float3 tangent;
-				tangent.x = aiTangent.x;
-				tangent.y = aiTangent.y;
-				tangent.z = aiTangent.z;
-				logOutput.Print("vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z );
-				piece->sTangents.push_back(tangent);
-				// bitangent is cross product of tangent and normal
-				float3 bitangent;
-				if ( vertex.hasNormal ) {
-					bitangent = tangent.cross(vertex.normal);
-					logOutput.Print("vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z );
-					piece->tTangents.push_back(bitangent);
+			if (mesh->HasTangentsAndBitangents()) {
+				//logOutput.Print("Fetching tangent for vertex %d", vertexIndex );
+				aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
+				vertex.hasTangent = !IS_QNAN(aiTangent);
+				if ( vertex.hasTangent ) {
+					float3 tangent;
+					tangent.x = aiTangent.x;
+					tangent.y = aiTangent.y;
+					tangent.z = aiTangent.z;
+					//logOutput.Print("vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z );
+					piece->sTangents.push_back(tangent);
+					// bitangent is cross product of tangent and normal
+					float3 bitangent;
+					if ( vertex.hasNormal ) {
+						bitangent = tangent.cross(vertex.normal);
+						//logOutput.Print("vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z );
+						piece->tTangents.push_back(bitangent);
+					}
 				}
+			} else {
+				vertex.hasTangent = false;
 			}
 			mesh_vertex_mapping.push_back(piece->vertices.size());
 			piece->vertices.push_back(vertex);
+			logOutput.Print("Finished vertex %d", vertexIndex );
 		}
 		// extract face data
+		logOutput.Print("Processing faces for mesh %d (%d faces)", meshIndex, mesh->mNumFaces);
 		if ( mesh->HasFaces() ) {
 			for ( unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; faceIndex++ ) {
 					aiFace& face = mesh->mFaces[faceIndex];
 					// get the vertex belonging to the mesh
 					for ( unsigned vertexListID = 0; vertexListID < face.mNumIndices; vertexListID++ ) {
 						unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
-						logOutput.Print("face %d vertex %d", faceIndex, vertexID );
+						//logOutput.Print("face %d vertex %d", faceIndex, vertexID );
 						piece->vertexDrawOrder.push_back(vertexID);
 					}
 			}
@@ -201,8 +226,8 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, const aiScene* scene)
 	piece->colvol->Enable();
 
 	// Recursively process all child pieces
-	for (unsigned int i = 0; i < node->mNumChildren;++i) {
-		SAssPiece* childPiece = LoadPiece(node->mChildren[i],scene);
+	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+		SAssPiece* childPiece = LoadPiece(node->mChildren[i], model);
 		piece->childs.push_back(childPiece);
 	}
 
@@ -246,7 +271,7 @@ void CAssParser::Draw( const S3DModelPiece* o) const
 	if (o->isEmpty) {
 		return;
 	}
-	logOutput.Print("Drawing piece %s", o->name.c_str());
+	logOutput.Print("Compiling piece %s", o->name.c_str());
 	// Add GL commands to the pieces displaylist
 
 	const SAssPiece* so = static_cast<const SAssPiece*>(o);
@@ -259,6 +284,7 @@ void CAssParser::Draw( const S3DModelPiece* o) const
 	// xyz triple)
 	// TODO: test if we have this many texunits
 	// (if not, could only send the s-tangents)?
+
 	if (!so->sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -297,4 +323,6 @@ void CAssParser::Draw( const S3DModelPiece* o) const
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+
+	logOutput.Print("Completed piece %s", o->name.c_str());
 }

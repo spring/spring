@@ -103,6 +103,7 @@ float3 LocalModel::GetRawPieceDirection(int piecenum) const
 
 static const float RADTOANG  = 180 / PI;
 
+// Called every frame to render display lists
 void LocalModelPiece::Draw() const
 {
 	if (!visible && childs.size()==0)
@@ -138,9 +139,9 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 	if (rot[0]) { glRotatef(rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
 	if (rot[2]) { glRotatef(rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
 
-	if (visible)
+	if (visible) {
 		glCallList(lodDispLists[lod]);
-
+	}
 	for (unsigned int i = 0; i < childs.size(); i++) {
 		childs[i]->DrawLOD(lod);
 	}

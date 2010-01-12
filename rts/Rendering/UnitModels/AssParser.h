@@ -39,7 +39,7 @@ public:
 	void Draw( const S3DModelPiece* o) const; ///< Build displaylist for loaded model
 
 private:
-	SAssPiece* LoadPiece(aiNode* node, const aiScene* scene);
+	SAssPiece* LoadPiece(aiNode* node, S3DModel* model);
 };
 
 #endif /* ASSPARSER_H */
