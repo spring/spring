@@ -64,11 +64,15 @@ C3DModelLoader::~C3DModelLoader(void)
 	cache.clear();
 
 	// delete parsers
+	std::set<IModelParser*> dedupe_parsers; // this is to avoid deleting the same parser twice, if it's assigned to multiple model formats
 	std::map<std::string, IModelParser*>::iterator pi;
 	for (pi = parsers.begin(); pi != parsers.end(); ++pi) {
+		if ( dedupe_parsers.count( pi->second ) != 0 ) continue;
+		dedupe_parsers.insert( pi->second );
 		delete pi->second;
 	}
 	parsers.clear();
+	dedupe_parsers.clear();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	createLists.clear();
