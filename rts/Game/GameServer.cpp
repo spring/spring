@@ -1464,12 +1464,25 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
+
+	std::vector<bool> teamStartPosSent(teams.size(), false);
+
+	// send start position for player controlled teams
 	for (size_t a = 0; a < players.size(); ++a)
 	{
 		if (!players[a].spectator)
 		{
 			const unsigned aTeam = players[a].team;
 			Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+			teamStartPosSent[aTeam] = true;
+		}
+	}
+
+	// send start position for all other teams
+	for (size_t a = 0; a < teams.size(); ++a) {
+		if (!teamStartPosSent[a]) {
+			// teams which aren't player controlled are always ready
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(teams[a].leader, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 		}
 	}
 
