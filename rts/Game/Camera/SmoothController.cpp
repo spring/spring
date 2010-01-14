@@ -14,7 +14,6 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
 #include <boost/cstdint.hpp>
 
 
@@ -33,7 +32,6 @@ SmoothController::SmoothController()
 	tiltSpeed = configHandler->Get("SmoothTiltSpeed",1.0f);
 	enabled = !!configHandler->Get("SmoothEnabled",1);
 	fov = configHandler->Get("SmoothFOV", 45.0f);
-	useSmoothMesh = !!configHandler->Get("SmoothSmoothMesh", 1); // unfortunate name...
 	lastSource = Noone;
 }
 
@@ -187,14 +185,11 @@ float3 SmoothController::GetPos()
 		height = maxHeight;
 	}
 
-	pos.y = useSmoothMesh ? smoothGround->GetHeight(pos.x, pos.z) : ground->GetHeight(pos.x,pos.z);
+	pos.y = ground->GetHeight(pos.x,pos.z);
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 
 	float3 cpos = pos - dir * height;
-	cpos.y = std::max(cpos.y, (useSmoothMesh
-				   ? smoothGround->GetHeight(cpos.x, cpos.z)
-				   : ground->GetHeight(cpos.x, cpos.z))
-			  + 5.0f);
+	cpos.y = std::max(cpos.y, ground->GetHeight(cpos.x,cpos.z)+5.0f);
 	return cpos;
 }
 
@@ -231,8 +226,6 @@ void SmoothController::GetState(StateMap& sm) const
 	sm["height"]  = height;
 	sm["zscale"]  = zscale;
 	sm["flipped"] = flipped ? +1.0f : -1.0f;
-
-	sm["smoothmesh"] = useSmoothMesh;
 }
 
 bool SmoothController::SetState(const StateMap& sm)
@@ -248,8 +241,6 @@ bool SmoothController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "height",  height);
 	SetStateFloat(sm, "zscale",  zscale);
 	SetStateBool (sm, "flipped", flipped);
-
-	SetStateBool (sm, "smoothmesh", useSmoothMesh);
 
 	return true;
 }

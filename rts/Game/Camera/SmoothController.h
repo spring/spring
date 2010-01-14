@@ -43,7 +43,6 @@ private:
 	float height;
 	float oldAltHeight;
 	bool changeAltHeight;
-	bool useSmoothMesh;
 	float maxHeight;
 	float tiltSpeed;
 	enum MoveSource {Key, ScreenEdge, Noone};
