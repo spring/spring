@@ -1393,8 +1393,7 @@ void CGameServer::GenerateAndSendGameID()
 	for (int i = 4; i < 12; ++i)
 		gameID.charArray[i] = rng();
 
-	// Third dword is CRC of setupText (if there is a setup)
-	// or pseudo random bytes (if there is no setup)
+	// Third dword is CRC of setupText.
 	CRC crc;
 	crc.Update(setup->gameSetupText.c_str(), setup->gameSetupText.length());
 	gameID.intArray[2] = crc.GetDigest();
