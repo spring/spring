@@ -300,7 +300,7 @@ void SelectMenu::Settings()
 #else
 	const std::string settingsProgram = "springsettings.exe";
 #endif
-	EXECLP(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
+	EXECLP(settingsProgram.c_str(), Quote(settingsProgram).c_str(), NULL);
 }
 
 void SelectMenu::Multi()
@@ -310,7 +310,7 @@ void SelectMenu::Multi()
 #else
 	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
 #endif
-	EXECLP(defLobby.c_str(), defLobby.c_str(), NULL);
+	EXECLP(defLobby.c_str(), Quote(defLobby).c_str(), NULL);
 }
 
 void SelectMenu::Quit()
