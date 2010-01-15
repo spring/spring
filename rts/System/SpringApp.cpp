@@ -781,6 +781,7 @@ void SpringApp::Startup()
 	}
 	else
 	{
+		LogObject() << "Loading startscript from: " << inputFile;
 		std::string startscript = inputFile;
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())

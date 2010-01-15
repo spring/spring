@@ -1688,27 +1688,26 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const string script = luaL_checkstring(L, 2);
 
 	const std::string springFullName = (Platform::GetBinaryFile());
-	// LogObject() << "Spring: " << springFullName;
 	// LogObject() << "Args: " << arguments;
 	if (!script.empty())
 	{
-		const std::string scriptFullName = Quote(FileSystemHandler::GetInstance().GetWriteDir()+"script.txt");
-		// LogObject() << "Script: " << scriptFullName;
+		const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir()+"script.txt";
+		// LogObject() << "Writing script to: " << scriptFullName;
 		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;
 		scriptfile.close();
 		//FIXME: ugly
 		if (arguments.empty())
-			EXECLP(springFullName.c_str(), springFullName.c_str(), scriptFullName.c_str(), NULL);
+			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), Quote(scriptFullName).c_str(), NULL);
 		else
-			EXECLP(springFullName.c_str(), springFullName.c_str(), arguments.c_str(), scriptFullName.c_str(), NULL);
+			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), arguments.c_str(), Quote(scriptFullName).c_str(), NULL);
 	}
 	else
 	{
 		if (arguments.empty())
-			EXECLP(springFullName.c_str(), springFullName.c_str(), NULL);
+			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), NULL);
 		else
-			EXECLP(springFullName.c_str(), springFullName.c_str(), arguments.c_str(), NULL);
+			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), arguments.c_str(), NULL);
 	}
 	LogObject() << "Error in Restart: " << strerror(errno);
 	lua_pushboolean(L, false);
