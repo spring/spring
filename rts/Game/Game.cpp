@@ -418,7 +418,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
-	wind.LoadWind();
+	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
 	PrintLoadMsg("Calculating smooth height mesh");
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE*2, SQUARE_SIZE*40);
