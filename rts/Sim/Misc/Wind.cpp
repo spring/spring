@@ -68,10 +68,11 @@ void CWind::Update()
 		status++;
 	} else if(status<=900) {
 		float mod=status/900.0f;
-		curWind=oldWind*(1.0-mod)+newWind*mod;
-		curStrength=curWind.Length();
+		curStrength = oldWind.Length()*(1.0-mod)+newWind.Length()*mod; // strength changes ~ mod
+		curWind=oldWind*(1.0-mod)+newWind*mod; // dir changes ~ arctan (mod)
+		curWind.SafeNormalize();
 		curDir=curWind;
-		curDir.SafeNormalize();
+		curWind *= curStrength;
 		status++;
 	} else if(status==901) {
 		status=0;
