@@ -355,6 +355,21 @@ PacketType CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTea
 	return PacketType(packet);
 }
 
+PacketType CBaseNetProtocol::SendRegisterNetMsg( uchar myPlayerNum, NETMSG msgID )
+{
+	PackPacket* packet = new PackPacket(3, NETMSG_REGISTER_NETMSG);
+	*packet << myPlayerNum << msgID;
+	return PacketType(packet);
+}
+
+PacketType CBaseNetProtocol::SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msgID )
+{
+	PackPacket* packet = new PackPacket(3, NETMSG_UNREGISTER_NETMSG);
+	*packet << myPlayerNum << msgID;
+	return PacketType(packet);
+}
+
+
 #ifdef SYNCDEBUG
 PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
 {
