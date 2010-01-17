@@ -40,7 +40,7 @@ private:
 	ISzAlloc allocTempImp;
 
 	bool isOpen;
-	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fName);
+	virtual FileBuffer* GetEntireFileImpl(const std::string& fName);
 };
 
 #endif
