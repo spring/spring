@@ -803,23 +803,22 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth) const
 	vector<string> ret;
 	string lcname = StringToLower(ModNameToModArchive(root));
 	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
-	if (aii == archiveInfo.end()) {
+	if (aii == archiveInfo.end())
+	{ // unresolved dep, add anyway so we get propper errorhandling
+		ret.push_back(lcname);
 		return ret;
 	}
 
 	// Check if this archive has been replaced
 	while (aii->second.replaced.length() > 0) {
 		aii = archiveInfo.find(aii->second.replaced);
-		if (aii == archiveInfo.end()) {
-			return ret;
+		if (aii == archiveInfo.end())
+		{
+			throw content_error("Unknown error parsing archive replacements");
 		}
 	}
 
 	ret.push_back(aii->second.path + aii->second.origName);
-
-	if (aii->second.modData.name == "") {
-		return ret;
-	}
 
 	// add depth-first
 	for (vector<string>::const_iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
