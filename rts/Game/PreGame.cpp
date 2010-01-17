@@ -349,17 +349,13 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	assert(gameServer);
 }
 
-void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
+void CPreGame::LoadMap(const std::string& mapName)
 {
 	static bool alreadyLoaded = false;
 
-	if (!alreadyLoaded || forceReload)
+	if (!alreadyLoaded)
 	{
-		CFileHandler f("maps/" + mapName);
-		if (!f.FileExists())
-		{
-			vfsHandler->AddMapArchiveWithDeps(mapName, false);
-		}
+		vfsHandler->AddMapArchiveWithDeps(mapName, false);
 		mapInfo = new CMapInfo(mapName);
 		alreadyLoaded = true;
 	}

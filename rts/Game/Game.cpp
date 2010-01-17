@@ -2771,7 +2771,7 @@ bool CGame::Update()
 
 	net->Update();
 
-	if(creatingVideo && playing && gameServer){
+	if (creatingVideo && playing && gameServer){
 		gameServer->CreateNewFrame(false, true);
 	}
 

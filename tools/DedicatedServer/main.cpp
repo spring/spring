@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
 			CFileHandler f("maps/" + gameSetup->mapName);
 			if (!f.FileExists()) {
-				vfsHandler->AddMapArchiveWithDeps("maps/" + gameSetup->mapName, false);
+				vfsHandler->AddMapArchiveWithDeps(gameSetup->mapName, false);
 			}
 			gameSetup->LoadStartPositions(); // full mode
 		}
