@@ -118,7 +118,7 @@ unsigned int CArchive7Zip::GetCrc32 (const std::string& fileName)
 	return fd.crc;
 }
 
-ABOpenFile_t* CArchive7Zip::GetEntireFileImpl(const std::string& fName)
+FileBuffer* CArchive7Zip::GetEntireFileImpl(const std::string& fName)
 {
 	if (!isOpen)
 		return NULL;
@@ -139,14 +139,11 @@ ABOpenFile_t* CArchive7Zip::GetEntireFileImpl(const std::string& fName)
 
 	res = SzAr_Extract(&db, &lookStream.s, fd.fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
 
-	ABOpenFile_t* of = NULL;
+	FileBuffer* of = NULL;
 	if (res == SZ_OK) {
-		of = new ABOpenFile_t;
-		of->pos = 0;
+		of = new FileBuffer;
 		of->size = outSizeProcessed;
-		of->data = (char*)malloc(of->size);
-
-		memcpy(of->data, outBuffer + offset, outSizeProcessed);
+		of->data = (char*)outBuffer + offset;
 	}
 
 	if (res != SZ_OK)
