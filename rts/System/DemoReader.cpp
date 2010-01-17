@@ -63,10 +63,16 @@ netcode::RawPacket* CDemoReader::GetData(float curTime)
 		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
 		playbackDemo.read((char*)(buf->data), chunkHeader.length);
 
-		playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
-		chunkHeader.swab();
-		nextDemoRead = chunkHeader.modGameTime + demoTimeOffset;
-
+		if (playbackDemo.tellg() >= sizeof(fileHeader) + fileHeader.scriptSize + fileHeader.demoStreamSize)
+		{
+			playbackDemo.seekg(0, std::ios::end); //seek to end, no more stuff to read
+		}
+		else
+		{ // read next chunk ehader
+			playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
+			chunkHeader.swab();
+			nextDemoRead = chunkHeader.modGameTime + demoTimeOffset;
+		}
 		return buf;
 	} else {
 		return 0;
