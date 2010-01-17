@@ -55,21 +55,21 @@ int main(int argc, char *argv[])
 
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
-		GameData* data = new GameData();
+		GameData data;
 		UnsyncedRNG rng;
 		rng.Seed(gameSetup->gameSetupText.length());
 		rng.Seed(script.length());
-		data->SetRandomSeed(rng.RandInt());
+		data.SetRandomSeed(rng.RandInt());
 
 		//  Use script provided hashes if they exist
 		if (gameSetup->mapHash != 0)
 		{
-			data->SetMapChecksum(gameSetup->mapHash);
+			data.SetMapChecksum(gameSetup->mapHash);
 			gameSetup->LoadStartPositions(false); // reduced mode
 		}
 		else
 		{
-			data->SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
+			data.SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
 
 			CFileHandler f("maps/" + gameSetup->mapName);
 			if (!f.FileExists()) {
@@ -79,14 +79,14 @@ int main(int argc, char *argv[])
 		}
 
 		if (gameSetup->modHash != 0) {
-			data->SetModChecksum(gameSetup->modHash);
+			data.SetModChecksum(gameSetup->modHash);
 		} else {
 			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
-			data->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
+			data.SetModChecksum(archiveScanner->GetModChecksum(modArchive));
 		}
 
-		data->SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(&settings, false, data, gameSetup);
+		data.SetSetup(gameSetup->gameSetupText);
+		server = new CGameServer(&settings, false, &data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
 #ifdef _WIN32
@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
 	}
 
 	FileSystemHandler::Cleanup();
+	ConfigHandler::Deallocate();
 
 #ifdef _WIN32
 	}
