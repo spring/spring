@@ -1297,6 +1297,45 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				hostif->Send(packet->data, packet->length);
 			break;
 		}
+
+		case NETMSG_REGISTER_NETMSG: {
+			const unsigned char player = inbuf[1];
+			const unsigned char msg = inbuf[2];
+			MsgToForwardMap::iterator itor = relayingMessagesMap.find( msg );
+			PlayersToForwardMsgvec toForward;
+			if ( itor != relayingMessagesMap.end() ) { // one entry already exists in the map
+				toForward = itor->second;
+			}
+			if ( toForward.find( player ) == toForward.end() ) {
+				break;
+			}
+			toForward.insert( player );
+			relayingMessagesMap[msg] = toForward; // overwrite eny existing entry
+			break;
+		}
+
+		case NETMSG_UNREGISTER_NETMSG: {
+			const unsigned char player = inbuf[1];
+			const unsigned char msg = inbuf[2];
+			MsgToForwardMap::iterator itor = relayingMessagesMap.find( msg );
+			PlayersToForwardMsgvec toForward;
+			if ( itor == relayingMessagesMap.end() ) { // no entry already exists in the map
+				break;
+			}
+			toForward = itor->second;
+			if ( toForward.find( player ) != toForward.end() ) {
+				break;
+			}
+			toForward.erase( player );
+			if ( toForward.size() > 0 ) {
+				relayingMessagesMap[msg] = toForward; // overwrite eny existing entry
+			}
+			else {
+				relayingMessagesMap.erase( itor );
+			}
+			break;
+		}
+
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:
@@ -1319,6 +1358,18 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
 		}
 		break;
+	}
+
+	// forward special messages to the players that request them
+	size_t playersSize = players.size();
+	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find( inbuf[0] );
+	if ( toRelay != relayingMessagesMap.end() ) {
+		PlayersToForwardMsgvec& toRelaySet = toRelay->second;
+		for ( PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); playerToRelay++ ) {
+			if ( *playerToRelay < playersSize ) {
+				players[*playerToRelay].SendData(packet);
+			}
+		}
 	}
 }
 
