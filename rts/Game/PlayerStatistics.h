@@ -9,6 +9,8 @@
 struct PlayerStatistics
 {
 public:
+	PlayerStatistics();
+
 	/// how many pixels the mouse has traversed in total
 	int mousePixels;
 	int mouseClicks;

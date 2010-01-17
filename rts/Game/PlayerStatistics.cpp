@@ -2,6 +2,17 @@
 
 #include "Platform/byteorder.h"
 
+PlayerStatistics::PlayerStatistics()
+{
+	mousePixels = 0;
+	mouseClicks = 0;
+	keyPresses = 0;
+	
+	numCommands = 0;
+	unitCommands = 0;
+}
+
+
 void PlayerStatistics::swab()
 {
 	mousePixels = swabdword(mousePixels);
