@@ -6,7 +6,8 @@
 
 #include "ArchiveBase.h"
 
-struct ABOpenFile_t {
+struct ABOpenFile_t
+{
 	int size;
 	int pos;
 	char* data;
@@ -14,9 +15,19 @@ struct ABOpenFile_t {
 
 // Provides a helper implementation for archive types that can only uncompress one file to
 // memory at a time
-class CArchiveBuffered :
-	public CArchiveBase
+class CArchiveBuffered : public CArchiveBase
 {
+public:
+	CArchiveBuffered(const std::string& name);
+	virtual ~CArchiveBuffered(void);
+	virtual int OpenFile(const std::string& fileName);
+	virtual int ReadFile(int handle, void* buffer, int numBytes);
+	virtual void CloseFile(int handle);
+	virtual void Seek(int handle, int pos);
+	virtual int Peek(int handle);
+	virtual bool Eof(int handle);
+	virtual int FileSize(int handle);
+
 protected:
 	boost::mutex archiveLock; // neither 7zip nor zlib are threadsafe
 	int curFileHandle;
@@ -29,16 +40,6 @@ protected:
 	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fileName) = 0;
 	ABOpenFile_t* GetOpenFile(int handle);
 
-public:
-	CArchiveBuffered(const std::string& name);
-	virtual ~CArchiveBuffered(void);
-	virtual int OpenFile(const std::string& fileName);
-	virtual int ReadFile(int handle, void* buffer, int numBytes);
-	virtual void CloseFile(int handle);
-	virtual void Seek(int handle, int pos);
-	virtual int Peek(int handle);
-	virtual bool Eof(int handle);
-	virtual int FileSize(int handle);
 };
 
 #endif
