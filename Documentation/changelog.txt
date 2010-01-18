@@ -40,7 +40,6 @@ Engine / Lua:
  - Add GetUnitMoveTypeData(unitID) call-in, returns a table
 
 Engine / System:
- - Fixed replay hosting
  - Fixed incorrect startpositions in skirmish games
  - Proper handling of mod dependencies
  - MAN pages support (Linux)
