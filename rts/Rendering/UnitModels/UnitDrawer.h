@@ -178,7 +178,7 @@ private:
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
 	bool distToGroundForIcons_useMethod;
-	bool distToGroundForIcons_areIcons;
+	float distToGroundForIcons_sqGroundCamDist;
 };
 
 extern CUnitDrawer* unitDrawer;
