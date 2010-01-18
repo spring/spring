@@ -9,12 +9,17 @@ Engine / Simulation:
 Engine / GUI, System:
  - proper handling of mod dependencies
  - win32 fixed when spaces in install path
+ - MAN pages support (Linux)
+ - support for external debug symbols (Linux)
  - added checks for insufficent gfx cards
+ - far-textures fixed
  - lots of drawing fixes
  - better mipmap handling
+ - load-screens presertve aspect ratio
  
 AIs:
- - lots of stuff
+ - E323AI: CPU performance improvements & bug fixes
+ - KAIK: better D-Gun handling
 
 
 0.80.5.2:
