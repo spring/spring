@@ -195,14 +195,9 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
  */
 std::string FileSystem::GetDirectory(const std::string& path) const
 {
-	size_t s = path.find_last_of('/');
-	size_t bs = path.find_last_of('\\');
-	if (s != std::string::npos && bs != std::string::npos)
-		return path.substr(0, std::max(s, bs) + 1);
+	size_t s = path.find_last_of("\\/");
 	if (s != std::string::npos)
 		return path.substr(0, s + 1);
-	if (bs != std::string::npos)
-		return path.substr(0, bs + 1);
 	return path;
 }
 
@@ -211,14 +206,9 @@ std::string FileSystem::GetDirectory(const std::string& path) const
  */
 std::string FileSystem::GetFilename(const std::string& path) const
 {
-	size_t s = path.find_last_of('/');
-	size_t bs = path.find_last_of('\\');
-	if (s != std::string::npos && bs != std::string::npos)
-		return path.substr(std::max(s, bs) + 1);
+	size_t s = path.find_last_of("\\/");
 	if (s != std::string::npos)
 		return path.substr(s + 1);
-	if (bs != std::string::npos)
-		return path.substr(bs + 1);
 	return path;
 }
 
