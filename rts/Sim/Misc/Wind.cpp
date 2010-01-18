@@ -4,7 +4,6 @@
 #include "Wind.h"
 #include "GlobalSynced.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Map/MapInfo.h"
 
 CR_BIND(CWind, );
 
@@ -34,9 +33,9 @@ CWind::CWind()
 	curWind=float3(0,0,0);
 	newWind=curWind;
 	oldWind=curWind;
-	maxWind=300;
-	minWind=50;
-	status=895; //make sure we can read in the correct wind before we try to set it
+	maxWind=100;
+	minWind=0;
+	status=0;
 }
 
 
@@ -45,11 +44,11 @@ CWind::~CWind()
 }
 
 
-void CWind::LoadWind()
+void CWind::LoadWind(float min, float max)
 {
-	// TODO: decouple
-	minWind = mapInfo->atmosphere.minWind;
-	maxWind = mapInfo->atmosphere.maxWind;
+	minWind = min;
+	maxWind = max;
+	curWind = float3(minWind,0,0);
 }
 
 
@@ -66,14 +65,15 @@ void CWind::Update()
 		uh->UpdateWind(newWind.x, newWind.z, newWind.Length());
 
 		status++;
-	} else if(status<=900) {
+	} else if(status <= 900) {
 		float mod=status/900.0f;
-		curWind=oldWind*(1.0-mod)+newWind*mod;
-		curStrength=curWind.Length();
+		curStrength = oldWind.Length()*(1.0-mod)+newWind.Length()*mod; // strength changes ~ mod
+		curWind=oldWind*(1.0-mod)+newWind*mod; // dir changes ~ arctan (mod)
+		curWind.SafeNormalize();
 		curDir=curWind;
-		curDir.SafeNormalize();
+		curWind *= curStrength;
 		status++;
-	} else if(status==901) {
+	} else if(status > 900) {
 		status=0;
 	} else {
 		status++;

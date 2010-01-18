@@ -23,6 +23,7 @@
 #include "LogOutput.h"
 #include "DemoRecorder.h"
 #include "GlobalUnsynced.h"
+#include "lib/gml/gml.h"
 
 
 CNetProtocol::CNetProtocol()

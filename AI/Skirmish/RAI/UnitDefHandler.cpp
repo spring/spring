@@ -1320,7 +1320,7 @@ for(map<int,sRAIUnitDef>::iterator iU=UDR.begin(); iU!=UDR.end(); iU++ )
 			case 30:
 				BL[BLSize]->Name="Anti-Weapon(Shields)";
 				if( UE[i][SHIELD] <= 0 ) break;
-			
+
 				fValue=UE[i][SHIELD];
 
 				BL[BLSize]->priority=1;

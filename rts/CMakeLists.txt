@@ -88,6 +88,7 @@ AUX_SOURCE_DIRECTORY(Game/Camera gamefiles)
 AUX_SOURCE_DIRECTORY(Game/Server gamefiles)
 AUX_SOURCE_DIRECTORY(Game/StartScripts gamefiles)
 AUX_SOURCE_DIRECTORY(Game/UI gamefiles)
+AUX_SOURCE_DIRECTORY(Menu gamefiles)
 
 AUX_SOURCE_DIRECTORY(Lua luafiles)
 
@@ -102,6 +103,7 @@ AUX_SOURCE_DIRECTORY(Map/SMF mapfiles)
 AUX_SOURCE_DIRECTORY(Rendering renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/Env renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/GL renderfiles)
+AUX_SOURCE_DIRECTORY(Rendering/Shaders renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/Textures renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/UnitModels renderfiles)
 

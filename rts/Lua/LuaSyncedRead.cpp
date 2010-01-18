@@ -39,12 +39,15 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/ScriptMoveType.h"
+#include "Sim/MoveTypes/StaticMoveType.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -232,6 +235,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(GetUnitPieceCollisionVolumeData);
 
+	REGISTER_LUA_CFUNC(GetUnitMoveTypeData);
+
 	REGISTER_LUA_CFUNC(GetUnitCommands);
 	REGISTER_LUA_CFUNC(GetFactoryCounts);
 	REGISTER_LUA_CFUNC(GetFactoryCommands);
@@ -275,6 +280,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroundInfo);
 	REGISTER_LUA_CFUNC(GetGroundBlocked);
 	REGISTER_LUA_CFUNC(GetGroundExtremes);
+
+	REGISTER_LUA_CFUNC(GetSmoothMeshHeight);
 
 	REGISTER_LUA_CFUNC(TestBuildOrder);
 	REGISTER_LUA_CFUNC(Pos2BuildPos);
@@ -3238,6 +3245,177 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
+{
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	AMoveType* amt = unit->moveType;
+
+	lua_newtable(L);
+	HSTR_PUSH_NUMBER(L, "maxSpeed", amt->maxSpeed * GAME_SPEED);
+	HSTR_PUSH_NUMBER(L, "maxWantedSpeed", amt->maxWantedSpeed * GAME_SPEED);
+	HSTR_PUSH_NUMBER(L, "goalx", amt->goalPos.x);
+	HSTR_PUSH_NUMBER(L, "goaly", amt->goalPos.y);
+	HSTR_PUSH_NUMBER(L, "goalz", amt->goalPos.z);
+	HSTR_PUSH_NUMBER(L, "padStatus", amt->padStatus);
+	HSTR_PUSH_NUMBER(L, "repairBelowHealth", amt->repairBelowHealth);
+
+	CGroundMoveType* groundmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
+	if (groundmt) {
+		HSTR_PUSH_STRING(L, "name", "ground");
+
+		HSTR_PUSH_NUMBER(L, "baseTurnRate", groundmt->baseTurnRate);
+		HSTR_PUSH_NUMBER(L, "turnRate", groundmt->turnRate);
+		HSTR_PUSH_NUMBER(L, "accRate", groundmt->accRate);
+		HSTR_PUSH_NUMBER(L, "decRate", groundmt->decRate);
+
+		HSTR_PUSH_NUMBER(L, "maxReverseSpeed", groundmt->maxReverseSpeed * GAME_SPEED);
+		HSTR_PUSH_NUMBER(L, "wantedSpeed", groundmt->wantedSpeed * GAME_SPEED);
+		HSTR_PUSH_NUMBER(L, "currentSpeed", groundmt->currentSpeed * GAME_SPEED);
+
+		HSTR_PUSH_NUMBER(L, "goalRadius", groundmt->goalRadius);
+
+		HSTR_PUSH_NUMBER(L, "waypointx", groundmt->waypoint.x);
+		HSTR_PUSH_NUMBER(L, "waypointy", groundmt->waypoint.y);
+		HSTR_PUSH_NUMBER(L, "waypointz", groundmt->waypoint.z);
+		HSTR_PUSH_NUMBER(L, "nextwaypointx", groundmt->nextWaypoint.x);
+		HSTR_PUSH_NUMBER(L, "nextwaypointy", groundmt->nextWaypoint.y);
+		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWaypoint.z);
+
+		HSTR_PUSH_NUMBER(L, "requestedSpeed", groundmt->requestedSpeed);
+		HSTR_PUSH_NUMBER(L, "requestedTurnRate", groundmt->requestedTurnRate);
+
+		HSTR_PUSH_NUMBER(L, "pathFailures", groundmt->pathFailures);
+		HSTR_PUSH_NUMBER(L, "floatOnWater", groundmt->floatOnWater);
+
+		return 1;
+	}
+
+	CTAAirMoveType* gunshipmt = dynamic_cast<CTAAirMoveType*>(unit->moveType);
+	if (gunshipmt) {
+		HSTR_PUSH_STRING(L, "name", "gunship");
+
+		HSTR_PUSH_NUMBER(L, "wantedHeight", gunshipmt->wantedHeight);
+		HSTR_PUSH_BOOL(L, "collide", gunshipmt->collide);
+		HSTR_PUSH_BOOL(L, "useSmoothMesh", gunshipmt->useSmoothMesh);
+
+		switch (gunshipmt->aircraftState) {
+			case AAirMoveType::AIRCRAFT_LANDED:
+				HSTR_PUSH_STRING(L, "aircraftState", "landed");
+				break;
+			case AAirMoveType::AIRCRAFT_FLYING:
+				HSTR_PUSH_STRING(L, "aircraftState", "flying");
+				break;
+			case AAirMoveType::AIRCRAFT_LANDING:
+				HSTR_PUSH_STRING(L, "aircraftState", "landing");
+				break;
+			case AAirMoveType::AIRCRAFT_CRASHING:
+				HSTR_PUSH_STRING(L, "aircraftState", "crashing");
+				break;
+			case AAirMoveType::AIRCRAFT_TAKEOFF:
+				HSTR_PUSH_STRING(L, "aircraftState", "takeoff");
+				break;
+			case AAirMoveType::AIRCRAFT_HOVERING:
+				HSTR_PUSH_STRING(L, "aircraftState", "hovering");
+				break;
+		};
+
+		switch (gunshipmt->flyState) {
+			case CTAAirMoveType::FLY_CRUISING:
+				HSTR_PUSH_STRING(L, "flyState", "cruising");
+				break;
+			case CTAAirMoveType::FLY_CIRCLING:
+				HSTR_PUSH_STRING(L, "flyState", "circling");
+				break;
+			case CTAAirMoveType::FLY_ATTACKING:
+				HSTR_PUSH_STRING(L, "flyState", "attacking");
+				break;
+			case CTAAirMoveType::FLY_LANDING:
+				HSTR_PUSH_STRING(L, "flyState", "landing");
+				break;
+		}
+
+		HSTR_PUSH_NUMBER(L, "goalDistance", gunshipmt->goalDistance);
+
+		HSTR_PUSH_BOOL(L, "bankingAllowed", gunshipmt->bankingAllowed);
+		HSTR_PUSH_NUMBER(L, "currentBank", gunshipmt->currentBank);
+		HSTR_PUSH_NUMBER(L, "currentPitch", gunshipmt->currentPitch);
+
+		HSTR_PUSH_NUMBER(L, "turnRate", gunshipmt->turnRate);
+		HSTR_PUSH_NUMBER(L, "accRate", gunshipmt->accRate);
+		HSTR_PUSH_NUMBER(L, "decRate", gunshipmt->decRate);
+		HSTR_PUSH_NUMBER(L, "altitudeRate", gunshipmt->altitudeRate);
+
+		HSTR_PUSH_NUMBER(L, "brakeDistance", gunshipmt->brakeDistance);
+		HSTR_PUSH_BOOL(L, "dontLand", gunshipmt->dontLand);
+		HSTR_PUSH_NUMBER(L, "maxDrift", gunshipmt->maxDrift);
+
+		return 1;
+	}
+
+	CAirMoveType* airmt = dynamic_cast<CAirMoveType*>(unit->moveType);
+	if (airmt) {
+		HSTR_PUSH_STRING(L, "name", "airplane");
+
+		switch (airmt->aircraftState) {
+			case AAirMoveType::AIRCRAFT_LANDED:
+				HSTR_PUSH_STRING(L, "aircraftState", "landed");
+				break;
+			case AAirMoveType::AIRCRAFT_FLYING:
+				HSTR_PUSH_STRING(L, "aircraftState", "flying");
+				break;
+			case AAirMoveType::AIRCRAFT_LANDING:
+				HSTR_PUSH_STRING(L, "aircraftState", "landing");
+				break;
+			case AAirMoveType::AIRCRAFT_CRASHING:
+				HSTR_PUSH_STRING(L, "aircraftState", "crashing");
+				break;
+			case AAirMoveType::AIRCRAFT_TAKEOFF:
+				HSTR_PUSH_STRING(L, "aircraftState", "takeoff");
+				break;
+			case AAirMoveType::AIRCRAFT_HOVERING:
+				HSTR_PUSH_STRING(L, "aircraftState", "hovering");
+				break;
+		};
+		HSTR_PUSH_NUMBER(L, "wantedHeight", airmt->wantedHeight);
+		HSTR_PUSH_BOOL(L, "collide", airmt->collide);
+		HSTR_PUSH_BOOL(L, "useSmoothMesh", airmt->useSmoothMesh);
+
+		HSTR_PUSH_NUMBER(L, "myGravity", airmt->myGravity);
+
+		HSTR_PUSH_NUMBER(L, "maxBank", airmt->maxBank);
+		HSTR_PUSH_NUMBER(L, "maxPitch", airmt->maxBank);
+		HSTR_PUSH_NUMBER(L, "turnRadius", airmt->turnRadius);
+
+		HSTR_PUSH_NUMBER(L, "maxAcc", airmt->maxAcc);
+		HSTR_PUSH_NUMBER(L, "maxAileron", airmt->maxAileron);
+		HSTR_PUSH_NUMBER(L, "maxElevator", airmt->maxElevator);
+		HSTR_PUSH_NUMBER(L, "maxRudder", airmt->maxRudder);
+
+		return 1;
+	}
+
+	CStaticMoveType* staticmt = dynamic_cast<CStaticMoveType*>(unit->moveType);
+	if (staticmt) {
+		HSTR_PUSH_STRING(L, "name", "static");
+		return 1;
+	}
+
+	CScriptMoveType* scriptmt = dynamic_cast<CScriptMoveType*>(unit->moveType);
+	if (scriptmt) {
+		HSTR_PUSH_STRING(L, "name", "script");
+		return 1;
+	}
+
+	HSTR_PUSH_STRING(L, "name", "unknown");
+	return 1;
+}
+
+
+
 /******************************************************************************/
 
 static void PackCommand(lua_State* L, const Command& cmd)
@@ -3717,17 +3895,16 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int featureID = lua_toint(L, index);
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator it = fset.find(featureID);
+	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (it == fset.end()) {
+	if (!feature) {
 		return NULL;
 	}
 
-	if (!IsFeatureVisible(*it)) {
+	if (!IsFeatureVisible(feature)) {
 		return NULL;
 	}
-	return *it;
+	return feature;
 }
 
 
@@ -4236,6 +4413,16 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 	return 2;
 }
 
+/******************************************************************************/
+
+int LuaSyncedRead::GetSmoothMeshHeight(lua_State *L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float z = luaL_checkfloat(L, 2);
+
+	lua_pushnumber(L, smoothGround->GetHeight(x, z));
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/

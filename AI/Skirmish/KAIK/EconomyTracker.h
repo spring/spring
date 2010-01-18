@@ -22,7 +22,7 @@ struct BuildingTracker {
 	float assignedTotalBuildPower;				// with the builders that are still moving (possible build power in the future)
 	float energyUsage;							// current usage (with nanostall), last 16 frames
 	float metalUsage;							// current usage (with nanostall), last 16 frames
-	
+
 	bool buildTask;								// buildTask, if it has one
 	int factory;								// factory, if it has one
 	EconomyUnitTracker* economyUnitTracker;		// pointer to the planed EconomyUnitTracker for this unit
@@ -63,12 +63,12 @@ struct UnitStateRequirement {
 	If this is true, and its not controllable, no more UnitStateRequirement's will be made for this unit
 	If controllableUsage is true, then it will be moved to a list that match its nature.
 	*/
-	bool unitEntersService; 
+	bool unitEntersService;
 
 	float energyChange;
 	float metalChange;
 
-	
+
 	// This is for units that are completed only
 	// and then only if they are controllable
 	bool controllableUsage;		// We can change the economy effects of the unit

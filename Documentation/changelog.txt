@@ -1,5 +1,27 @@
 Spring change log
 
+0.81.0:
+Engine / Simulation:
+ - smooth ground mesh for better aircraft behaviour
+ - wind fixed to stay in between map boundaries
+ - improved handling of spectators in case of sim slowdown and desync
+
+Engine / GUI, System:
+ - proper handling of mod dependencies
+ - win32 fixed when spaces in install path
+ - MAN pages support (Linux)
+ - support for external debug symbols (Linux)
+ - added checks for insufficent gfx cards
+ - far-textures fixed
+ - lots of drawing fixes
+ - better mipmap handling
+ - load-screens presertve aspect ratio
+ 
+AIs:
+ - E323AI: CPU performance improvements & bug fixes
+ - KAIK: better D-Gun handling
+
+
 0.80.5.2:
 Bugfixes:
  - AI: Properly fix Lua AI loading

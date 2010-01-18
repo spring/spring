@@ -10,7 +10,18 @@ extern "C" {
 
 class CArchive7Zip : public CArchiveBuffered
 {
-protected:
+public:
+	CArchive7Zip(const std::string& name);
+	virtual ~CArchive7Zip(void);
+	virtual bool IsOpen();
+	virtual int FindFiles(int cur, std::string* name, int* size);
+	virtual unsigned int GetCrc32 (const std::string& fileName);
+
+private:
+	UInt32 blockIndex;
+	Byte *outBuffer;
+	size_t outBufferSize;
+
 	struct FileData {
 		int fp;
 		int size;
@@ -29,18 +40,7 @@ protected:
 	ISzAlloc allocTempImp;
 
 	bool isOpen;
-	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fName);
-
-public:
-	CArchive7Zip(const std::string& name);
-	virtual ~CArchive7Zip(void);
-	virtual bool IsOpen();
-	virtual int FindFiles(int cur, std::string* name, int* size);
-	virtual unsigned int GetCrc32 (const std::string& fileName);
-
-	UInt32 blockIndex;
-	Byte *outBuffer;
-	size_t outBufferSize;
+	virtual FileBuffer* GetEntireFileImpl(const std::string& fName);
 };
 
 #endif

@@ -23,6 +23,8 @@
 #ifndef _MAINDEFINES_H
 #define _MAINDEFINES_H
 
+#include <stdio.h>
+
 #if       !defined __cplusplus && !defined bool
 // include the bool type (defines: bool, true, false)
 #if defined _MSC_VER

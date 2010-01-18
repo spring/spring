@@ -258,13 +258,18 @@ void CMapInfo::ReadSmf()
 	// SMF specific settings
 	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
 	smf.detailTexName = mapResTable.GetString("detailTex", "");
+	smf.specularTexName = mapResTable.GetString("specularTex", "");
+
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
-	}
-	else {
+	} else {
 		const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
 		smf.detailTexName = resGfxMaps.GetString("detailtex", "detailtex2.bmp");
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
+	}
+
+	if (!smf.specularTexName.empty()) {
+		smf.specularTexName = "maps/" + smf.specularTexName;
 	}
 
 	// height overrides

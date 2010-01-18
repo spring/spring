@@ -33,6 +33,7 @@ public:
 
 	int AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
+	CFeature* GetFeature(int id);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
 	const FeatureDef* GetFeatureDef(const std::string name, const bool showError = true);
@@ -52,10 +53,10 @@ private:
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 
-	int nextFreeID;
 	std::list<int> freeIDs;
 	std::list<int> toBeFreedIDs;
 	CFeatureSet activeFeatures;
+	std::vector<CFeature*> features;
 
 	std::list<int> toBeRemoved;
 	CFeatureSet updateFeatures;

@@ -500,6 +500,8 @@ public:
 
 	/// max speed of the unit
 	float maxSpeed;
+	/// max reverse speed (used only by ground units for now)
+	float maxReverseSpeed;
 
 	// unsynced calls
 	void SetLODCount(unsigned int count);

@@ -1,4 +1,4 @@
-### (New) C++ AI Wrapper
+### Java OO AI Wrapper
 #
 # Global variables set in this file:
 # * BUILD_JavaOO_AIWRAPPER
@@ -57,11 +57,11 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myJLibs                      "${myJLibDir}/vecmath.jar")
 	set(jAiIntJavaSourceDir          "${JAVA_SRC_DIR_Java_AIINTERFACE}")
 	set(jAiIntJavaGeneratedSourceDir "${JAVA_GEN_SRC_DIR_Java_AIINTERFACE}")
-	set(myClassPath                  "${myJLibs}${PATH_DELIM}${CLASSPATH_Java_AIINTERFACE}")
+	set(myClassPath                  "${myJLibs}${PATH_DELIM_H}${CLASSPATH_Java_AIINTERFACE}")
 
 	SetGlobal(${myName}_AIWRAPPER_JAR_BIN       "${myBuildDir}/${myBinJarFile}")
 	SetGlobal(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
-	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM}${${myName}_AIWRAPPER_JAR_BIN}")
+	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM_H}${${myName}_AIWRAPPER_JAR_BIN}")
 	SetGlobal(${myName}_AIWRAPPER_TARGET        "${myTarget}")
 	SetGlobal(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
 	SetGlobal(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")

@@ -13,7 +13,7 @@ public:
 	CWind();
 	~CWind();
 
-	void LoadWind();
+	void LoadWind(float min, float max);
 	void Update();
 
 	float GetMaxWind() const { return maxWind; }

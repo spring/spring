@@ -858,7 +858,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			// stop units from reaching escape velocity
 			dif /= std::max(dist, 1.f);
 
-			if (u->mass == 100000 || !u->mobility) {
+			if (!u->mobility) {
 				float impactSpeed = -owner->speed.dot(dif);
 
 				if (impactSpeed > 0) {
@@ -879,8 +879,9 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					}
 				}
 			} else {
-				float part = owner->mass / (owner->mass + u->mass);
-				float impactSpeed = (u->speed - owner->speed).dot(dif);
+				// don't conserve momentum
+				float part = (owner->mass / (owner->mass + u->mass));
+				float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
 
 				if (impactSpeed > 0) {
 					midPos += dif * (impactSpeed * (1 - part) * 2);
@@ -913,6 +914,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 							0, dif * -impactSpeed * (u->mass * part));
 					}
 					owner->speed *= 0.9f;
+					u->speed *= 0.9f;
 				}
 			}
 		}
@@ -2007,8 +2009,8 @@ void CGroundMoveType::SetMainHeading(){
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	maxSpeed        = std::min(speed, owner->unitDef->speed  / GAME_SPEED);
-	maxReverseSpeed = std::min(speed, owner->unitDef->rSpeed / GAME_SPEED);
+	maxSpeed        = std::min(speed, owner->maxSpeed);
+	maxReverseSpeed = std::min(speed, owner->maxReverseSpeed);
 
 	requestedSpeed = speed * 2.0f;
 }

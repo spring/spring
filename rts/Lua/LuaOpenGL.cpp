@@ -43,6 +43,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -599,16 +600,17 @@ void LuaOpenGL::EnableDrawWorldShadow()
 	resetMatrixFunc = ResetWorldShadowMatrices;
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glPolygonOffset(1.0f, 1.0f);
+
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glEnable(GL_VERTEX_PROGRAM_ARB);
-	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowGenVP);
+	unitDrawer->MDLLSPShader->Enable();
 }
 
 
 void LuaOpenGL::DisableDrawWorldShadow()
 {
-	glDisable(GL_VERTEX_PROGRAM_ARB);
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	unitDrawer->MDLLSPShader->Disable();
+
 	ResetWorldShadowMatrices();
 	DisableCommon(DRAW_WORLD_SHADOW);
 }
@@ -1227,7 +1229,7 @@ int LuaOpenGL::Text(lua_State* L)
 	float size = 12.0f;
 	int options = FONT_NEAREST;
 	bool outline = false;
-	bool lightOut;
+	bool lightOut = false;
 
 	if ((args >= 4) && lua_isnumber(L, 4)) {
 		size = lua_tonumber(L, 4);
@@ -1669,7 +1671,7 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 		useLOD = false;
 	}
 	else {
-		unsigned int lod;
+		unsigned int lod = 0;
 		if (!lua_isnumber(L, 3)) {
 			const LuaMatType matType =
 				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
@@ -1843,16 +1845,15 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 	}
 	const int featureID = lua_toint(L, index);
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator it = fset.find(featureID);
+	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (it == fset.end())
+	if (!feature)
 		return NULL;
 
-	if (!IsFeatureVisible(*it)) {
+	if (!IsFeatureVisible(feature)) {
 		return NULL;
 	}
-	return *it;
+	return feature;
 }
 
 
@@ -3759,11 +3760,11 @@ int LuaOpenGL::Texture(lua_State* L)
 			lua_pushboolean(L, true);
 		}
 		else if (texture == "$specular") {
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, unitDrawer->specularTex);
+			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
 			lua_pushboolean(L, true);
 		}
 		else if (texture == "$reflection") {
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, unitDrawer->boxtex);
+			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetReflectionTextureID());
 			lua_pushboolean(L, true);
 		}
 		else if (texture == "$heightmap") {
@@ -4021,13 +4022,13 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		}
 		else if (texture == "$reflection") {
 			lua_newtable(L);
-			HSTR_PUSH_NUMBER(L, "xsize", unitDrawer->reflTexSize);
-			HSTR_PUSH_NUMBER(L, "ysize", unitDrawer->reflTexSize);
+			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetReflectionTextureSize());
+			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetReflectionTextureSize());
 		}
 		else if (texture == "$specular") {
 			lua_newtable(L);
-			HSTR_PUSH_NUMBER(L, "xsize", unitDrawer->specTexSize);
-			HSTR_PUSH_NUMBER(L, "ysize", unitDrawer->specTexSize);
+			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetSpecularTextureSize());
+			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetSpecularTextureSize());
 		}
 		else if (texture == "$heightmap") {
 			if (!heightMapTexture.CheckTextureID()) {
@@ -4789,7 +4790,7 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 
 	if (luaType == LUA_TNUMBER) {
 		const GLenum type = (GLenum)lua_tonumber(L, 1);
-		GLenum pname;
+		GLenum pname = 0;
 		switch (type) {
 			case GL_PROJECTION: { pname = GL_PROJECTION_MATRIX; break; }
 			case GL_MODELVIEW:  { pname = GL_MODELVIEW_MATRIX;  break; }

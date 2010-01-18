@@ -53,11 +53,11 @@ public:
 
 	std::vector<ModData> GetPrimaryMods() const;
 	std::vector<ModData> GetAllMods() const;
-	std::vector<std::string> GetArchives(const std::string& root, int depth = 0);
+	std::vector<std::string> GetArchives(const std::string& root, int depth = 0) const;
 	std::vector<std::string> GetMaps();
-	std::vector<std::string> GetArchivesForMap(const std::string& mapName);
+	std::vector<std::string> GetArchivesForMap(const std::string& mapName) const;
 	unsigned int GetArchiveChecksum(const std::string& name);
-	std::string GetArchivePath(const std::string& name);
+	std::string GetArchivePath(const std::string& name) const;
 	unsigned int GetModChecksum(const std::string& root);
 	unsigned int GetMapChecksum(const std::string& mapName);
 	void CheckMod(const std::string& root, unsigned checksum); // these throw a content_error if checksum doesn't match
