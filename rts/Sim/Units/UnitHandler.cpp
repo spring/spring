@@ -418,6 +418,9 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		CFeature* f;
 		if ((f = dynamic_cast<CFeature*>(s))) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {
+				if (!f->def->reclaimable) {
+					return 0;
+				}
 				feature = f;
 			}
 		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
