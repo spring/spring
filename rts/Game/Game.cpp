@@ -2136,7 +2136,7 @@ bool CGame::ActionPressed(const Action& action,
 			gd->wireframe  = !gd->wireframe;
 			sky->wireframe = gd->wireframe;
 		} else {
-			gd->wireframe  = !atoi(action.extra.c_str());
+			gd->wireframe  = !!atoi(action.extra.c_str());
 			sky->wireframe = gd->wireframe;
 		}
 	}
