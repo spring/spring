@@ -440,7 +440,7 @@ void CGameServer::CheckSync()
 			{
 				if (!players[a].link)
 					continue;
-			
+
 				std::map<int, unsigned>::const_iterator it = players[a].syncResponse.find(*f);
 				if (it != players[a].syncResponse.end())
 				{
@@ -1302,15 +1302,18 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const unsigned char player = inbuf[1];
 			const unsigned char msg = inbuf[2];
 			MsgToForwardMap::iterator itor = relayingMessagesMap.find( msg );
-			PlayersToForwardMsgvec toForward;
+
 			if ( itor != relayingMessagesMap.end() ) { // one entry already exists in the map
-				toForward = itor->second;
+				PlayersToForwardMsgvec &toForward; = itor->second;
+				if ( toForward.find( player ) == toForward.end() ) {
+					toForward.insert( player );
+				}
 			}
-			if ( toForward.find( player ) == toForward.end() ) {
-				break;
+			else {
+				PlayersToForwardMsgvec toForward;
+				toForward.insert( player );
+				relayingMessagesMap[msg] = toForward;
 			}
-			toForward.insert( player );
-			relayingMessagesMap[msg] = toForward; // overwrite eny existing entry
 			break;
 		}
 
@@ -1318,20 +1321,15 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const unsigned char player = inbuf[1];
 			const unsigned char msg = inbuf[2];
 			MsgToForwardMap::iterator itor = relayingMessagesMap.find( msg );
-			PlayersToForwardMsgvec toForward;
 			if ( itor == relayingMessagesMap.end() ) { // no entry already exists in the map
 				break;
 			}
-			toForward = itor->second;
+			PlayersToForwardMsgvec& toForward = itor->second;
 			if ( toForward.find( player ) != toForward.end() ) {
-				break;
-			}
-			toForward.erase( player );
-			if ( toForward.size() > 0 ) {
-				relayingMessagesMap[msg] = toForward; // overwrite eny existing entry
-			}
-			else {
-				relayingMessagesMap.erase( itor );
+				toForward.erase( player );
+				if ( toForward.size() == 0 ) {
+					relayingMessagesMap.erase( itor );
+				}
 			}
 			break;
 		}
@@ -1987,4 +1985,3 @@ size_t CGameServer::ReserveNextAvailableSkirmishAIId() {
 void CGameServer::FreeSkirmishAIId(const size_t skirmishAIId) {
 	usedSkirmishAIIds.remove(skirmishAIId);
 }
-
