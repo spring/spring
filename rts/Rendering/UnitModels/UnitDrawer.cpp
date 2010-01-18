@@ -228,14 +228,13 @@ void CUnitDrawer::Update(void)
 
 	distToGroundForIcons_useMethod = camHandler->GetCurrentController().GetUseDistToGroundForIcons();
 	if (distToGroundForIcons_useMethod) {
-		const float3& camPos    = camHandler->GetCurrentController().GetPos();
+		const float3& camPos = camera->pos;
 		// use the height at the current camera position
 		//const float groundHeight = ground->GetHeight(camPos.x, camPos.z);
 		// use the middle between the highest and lowest position on the map as average
 		const float groundHeight = (readmap->currMinHeight + readmap->currMaxHeight) / 2;
 		const float overGround = camPos.y - groundHeight;
-		//distToGroundForIcons_areIcons = (overGround > unitIconDist * 30);
-		distToGroundForIcons_areIcons = (overGround*overGround > iconLength);
+		distToGroundForIcons_sqGroundCamDist = overGround * overGround;
 	}
 }
 
@@ -2002,13 +2001,13 @@ void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 
 bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const {
 
+	const float sqIconDistMult = unit.unitDef->iconType->GetDistanceSqr();
+	const float realIconLength = iconLength * sqIconDistMult;
 	bool asIcon = false;
 
 	if (distToGroundForIcons_useMethod) {
-		asIcon = distToGroundForIcons_areIcons;
+		asIcon = (distToGroundForIcons_sqGroundCamDist > realIconLength);
 	} else {
-		const float iconDistMult = unit.unitDef->iconType->GetDistance();
-		const float realIconLength = iconLength * (iconDistMult * iconDistMult);
 		asIcon = (sqUnitCamDist > realIconLength);
 	}
 
