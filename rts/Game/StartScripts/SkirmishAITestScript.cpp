@@ -42,15 +42,19 @@ void CSkirmishAITestScript::GameStart()
 	const size_t       player_side_index = 0;
 	const std::string& player_side_name  = sideParser.GetSideName(player_side_index);
 
+	teamHandler->Team(player_teamId)->leader = player_Id;
+	teamHandler->Team(player_teamId)->side   = player_side_name;
+	gameServer->teams[player_teamId].leader  = player_Id;
+	gameServer->teams[player_teamId].side    = player_side_name;
+	gameServer->teams[player_teamId].active  = true;
+
 	// make sure CSelectedUnits::AiOrder()
 	// still works without a setup script
 	teamHandler->Team(skirmishAI_teamId)->leader = player_Id;
-	teamHandler->Team(skirmishAI_teamId)->side = skirmishAI_side_name;
+	teamHandler->Team(skirmishAI_teamId)->side   = skirmishAI_side_name;
 	gameServer->teams[skirmishAI_teamId].leader  = player_Id;
+	gameServer->teams[skirmishAI_teamId].side    = skirmishAI_side_name;
 	gameServer->teams[skirmishAI_teamId].active  = true;
-	gameServer->teams[skirmishAI_teamId].side  = skirmishAI_side_name;
-	gameServer->teams[player_teamId].leader  = player_Id;
-	gameServer->teams[player_teamId].active  = true;
 
 	teamHandler->Team(player_teamId)->energy        = 1000;
 	teamHandler->Team(player_teamId)->energyStorage = 1000;
