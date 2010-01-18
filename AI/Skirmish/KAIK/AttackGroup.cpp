@@ -278,7 +278,7 @@ std::list<int> CAttackGroup::GetAssignedEnemies() {
 
 	if (!defending) {
 		int numTaken = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], attackPosition, attackRadius);
-	
+
 		for (int i = 0; i < numTaken; i++) {
 			takenEnemies.push_back(ai->unitIDs[i]);
 		}

@@ -17,6 +17,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
 
@@ -163,7 +164,7 @@ void CGameInfo::Draw()
 
 	if (gameSetup && gameSetup->hostDemo) {
 		labels.push_back("Playback:");
-		values.push_back(gameSetup->demoName);
+		values.push_back(filesystem.GetBasename(gameSetup->demoName));
 	}
 
 	labels.push_back("Game Version:");

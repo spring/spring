@@ -2,13 +2,13 @@
 #define SELECT_MENU
 
 #include "aGui/GuiElement.h"
-#include "GameController.h"
+#include "Game/GameController.h"
 
 class ClientSetup;
 union SDL_Event;
 class SelectionWidget;
 class ConnectWindow;
-class UpdaterWindow;
+class LobbyConnection;
 class SettingsWindow;
 class ListSelectWnd;
 
@@ -51,7 +51,7 @@ private:
 	ClientSetup* mySettings;
 
 	ConnectWindow* conWindow;
-	UpdaterWindow* updWindow;
+	LobbyConnection* updWindow;
 	SelectionWidget* selw;
 
 	SettingsWindow* settingsWindow;

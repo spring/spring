@@ -298,7 +298,7 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) ||
 	    ((args >= 2) && !lua_isstring(L, 2)) ||
-	    ((args >= 4) && !lua_isstring(L, 4))) {
+	    ((args >= 3) && !lua_isstring(L, 3))) {
 		luaL_error(L, "Incorrect arguments to DirList()");
 	}
 

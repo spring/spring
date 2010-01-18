@@ -50,8 +50,6 @@ void CKAIK::Serialize(creg::ISerializer* s) {
 	s->SerializeObjectInstance(ai, ai->GetClass());
 }
 
-
-
 void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 	ai = new AIClasses(callback);
 	ai->Init();
@@ -69,8 +67,6 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 void CKAIK::ReleaseAI() {
 	delete ai; ai = NULL;
 }
-
-
 
 void CKAIK::UnitCreated(int unitID, int builderID) {
 	ai->uh->UnitCreated(unitID);

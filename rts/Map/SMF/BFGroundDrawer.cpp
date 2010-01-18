@@ -14,6 +14,7 @@
 #include "ConfigHandler.h"
 #include "FastMath.h"
 #include "GlobalUnsynced.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "mmgr.h"
 
 #ifdef USE_GML
@@ -729,9 +730,9 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 			DoDrawGroundRow(bty);
 		}
 	}
-
 	ResetTextureUnits(drawWaterReflection);
 	glDisable(GL_CULL_FACE);
+
 
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

@@ -527,6 +527,9 @@ void CUnit::Update()
 		return;
 	}
 
+	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
+	residualImpulse *= 0.968f;
+
 	const bool oldInAir   = inAir;
 	const bool oldInWater = inWater;
 
@@ -809,8 +812,6 @@ void CUnit::SlowUpdate()
 			health = maxHealth;
 		}
 	}
-
-	residualImpulse *= 0.6f;
 
 	SlowUpdateCloak(false);
 
@@ -1302,6 +1303,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	// Note that this will kill the com too.
 	if (unitDef->isCommander) {
 		teamHandler->Team(oldteam)->CommanderDied(this);
+		// InstallChristmasHat(color4::red); // Ho-Ho-Ho merry christmas to all commiters
 	}
 
 	if (type == ChangeGiven) {
@@ -2445,6 +2447,7 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 	CR_MEMBER(maxSpeed),
+	CR_MEMBER(maxReverseSpeed),
 //	CR_MEMBER(weaponHitMod),
 //	CR_MEMBER(lodCount),
 //	CR_MEMBER(currentLOD),

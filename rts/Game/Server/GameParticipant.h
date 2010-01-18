@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Game/PlayerBase.h"
+#include "Game/PlayerStatistics.h"
 
 namespace netcode
 {
@@ -31,10 +32,7 @@ public:
 	};
 	State myState;
 	
-	float cpuUsage;
-	int ping;
-	float speedWarning;
-	int lastKeyframeResponse;
+	int lastFrameResponse;
 
 	bool isLocal;
 	boost::shared_ptr<netcode::CConnection> link;

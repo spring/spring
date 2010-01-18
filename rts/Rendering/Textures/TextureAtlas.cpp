@@ -1,5 +1,8 @@
 #include "StdAfx.h"
+
 #include <list>
+#include <cstring>
+
 #include "mmgr.h"
 
 #include "TextureAtlas.h"
@@ -64,7 +67,7 @@ int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, Texture
 	memtex->data = new char[xsize*ysize*gpp/8];
 	StringToLowerInPlace(name);
 	memtex->names.push_back(name);
-	memcpy(memtex->data, data, xsize*ysize*gpp/8);
+	std::memcpy(memtex->data, data, xsize*ysize*gpp/8);
 	memtextures.push_back(memtex);
 
 	return 1;
@@ -203,7 +206,7 @@ void CTextureAtlas::CreateTexture()
 {
 	unsigned char *data;
 	data = new unsigned char[xsize*ysize*4];
-	memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
+	std::memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
 
 	for(size_t i=0; i<memtextures.size(); i++)
 	{

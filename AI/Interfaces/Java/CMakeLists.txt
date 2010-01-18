@@ -22,15 +22,6 @@
 ### BEGINN: MACROS_AND_FUNCTIONS
 # Define macros and functions to be used in this file and by Java Skirmish AIs
 
-# Create empty files
-macro    (CreateEmptyFiles fileList)
-	foreach    (ftc ${fileList})
-		if    (NOT EXISTS "${ftc}")
-			file(WRITE "${ftc}" "")
-		endif (NOT EXISTS "${ftc}")
-	endforeach (ftc)
-endmacro (CreateEmptyFiles fileList)
-
 # Returns the name of the first sub-dir (in alphabetical descending order)
 # under dir.
 macro    (GetFirstSubDirName name_var dir)
@@ -49,7 +40,7 @@ endmacro (GetFirstSubDirName name_var dir)
 macro    (CreateClasspath classPath_var dir)
 	file(GLOB_RECURSE ${classPath_var} FOLLOW_SYMLINKS "${dir}/*.jar")
 	# Make sure we use the correct path delimitter for the compiling system
-	string(REPLACE ";" "${PATH_DELIM}" ${classPath_var} "${${classPath_var}}")
+	string(REPLACE ";" "${PATH_DELIM_H}" ${classPath_var} "${${classPath_var}}")
 endmacro (CreateClasspath classPath_var dir)
 
 
@@ -57,9 +48,9 @@ endmacro (CreateClasspath classPath_var dir)
 function    (ConcatClasspaths resultingCP_var)
 	set(${resultingCP_var} "")
 	foreach    (cpPart ${ARGN})
-		set(${resultingCP_var} "${${resultingCP_var}}${cpPart}${PATH_DELIM}")
+		set(${resultingCP_var} "${${resultingCP_var}}${cpPart}${PATH_DELIM_H}")
 	endforeach (cpPart)
-	string(REGEX REPLACE "${PATH_DELIM}\$" "" ${resultingCP_var} "${${resultingCP_var}}")
+	string(REGEX REPLACE "${PATH_DELIM_H}\$" "" ${resultingCP_var} "${${resultingCP_var}}")
 	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
 endfunction (ConcatClasspaths)
 
@@ -395,12 +386,12 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myNativeGeneratedSourceDir "${myGeneratedSourceDir}/native")
 	set(myJLibDir                  "${myDir}/data/jlib")
 	CreateClasspath(myJavaLibs ${myJLibDir})
-	set(myClassPath                ".${PATH_DELIM}${myJavaLibs}${PATH_DELIM}${myJavaSourceDir}")
+	set(myClassPath                ".${PATH_DELIM_H}${myJavaLibs}${PATH_DELIM_H}${myJavaSourceDir}")
 
 	# Used by Java Skirmish AIs
 	SetGlobal(SOURCE_ROOT_${myName}_AIINTERFACE      "${myDir}")
 	SetGlobal(BUILD_ROOT_${myName}_AIINTERFACE       "${myBuildDir}")
-	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}")
+	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
 	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
 	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
 

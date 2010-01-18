@@ -7,6 +7,7 @@
 #include "IncGlobalAI.h"
 
 #include "KAIK.h"
+
 extern CKAIK* KAIKStateExt;
 
 CR_BIND(CDGunController, (NULL));
@@ -122,7 +123,7 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 
 		AIHCTraceRay rayData = {
 			commanderPos,
-			targetDif / targetDist,
+			targetDif / targetDist, // direction
 			maxRange,
 			commanderID,
 			-1,
@@ -136,21 +137,52 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 			// can also fail if enemy is in front of allied structure and both
 			// are within the d-gun's range
 			haveClearShot = (ai->cb->GetUnitAllyTeam(rayData.hitUID) != ai->cb->GetMyAllyTeam());
+
+			// TODO: get DGun weapon properties & check if it can pass through
+			// a unit, if yes then allow executing the code below
+			if(haveClearShot) {
+				// check if there is a unit next to hit unit on DGun path...
+				const float3 enemyPos = ai->cb->GetUnitPos(rayData.hitUID);
+				const float segmentLeft = maxRange - commanderPos.distance(enemyPos);
+
+				if(segmentLeft > 0.0) {
+					AIHCTraceRay rayData2 = {
+						enemyPos,
+						targetDif / targetDist,
+						segmentLeft,
+						rayData.hitUID,
+						-1,
+						0
+					};
+
+					ai->cb->HandleCommand(AIHCTraceRayId, &rayData2);
+
+					if(rayData2.hitUID != -1) {
+						haveClearShot = (ai->cb->GetUnitAllyTeam(rayData2.hitUID) != ai->cb->GetMyAllyTeam());
+					}
+				}
+			}
 		}
 
+		// multiply by 0.9 to ensure commander does not have to walk
 		if ((commanderPos - dgunPos).Length() < maxRange * 0.9f) {
-			// multiply by 0.9 to ensure commander does not have to walk
-			if ((ai->cb->GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
-				if (udef != NULL && !udef->weapons.empty() && haveClearShot) {
-					IssueOrder(dgunPos, orderType = CMD_DGUN, 0);
-				} else {
-					IssueOrder(state.targetID, orderType = CMD_CAPTURE, 0);
-				}
+			bool canDGun =
+				(ai->cb->GetEnergy() >= DGUN_MIN_ENERGY_LEVEL)
+				&& haveClearShot
+				&& (udef != NULL && !udef->weapons.empty());
+
+			if(canDGun) {
+				IssueOrder(dgunPos, orderType = CMD_DGUN, 0);
 			} else {
-				if (ai->cb->GetUnitHealth(state.targetID) < ai->cb->GetUnitMaxHealth(state.targetID) * 0.5f) {
-					IssueOrder(state.targetID, orderType = CMD_RECLAIM, 0);
+				bool bDanger = ai->tm->ThreatAtThisPoint(commanderPos/*curTargetPos*/) > ai->tm->GetAverageThreat();
+				if(bDanger) {
+					state.Reset(currentFrame, true);
 				} else {
-					IssueOrder(state.targetID, orderType = CMD_CAPTURE, 0);
+					if (ai->cb->GetUnitHealth(state.targetID) < ai->cb->GetUnitMaxHealth(state.targetID) * 0.5f) {
+						IssueOrder(state.targetID, orderType = CMD_RECLAIM, 0);
+					} else {
+						IssueOrder(state.targetID, orderType = CMD_CAPTURE, 0);
+					}
 				}
 			}
 

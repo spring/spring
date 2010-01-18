@@ -17,10 +17,10 @@
 #include <stack>
 #include <boost/cstdint.hpp>
 
-#include "UpdaterWindow.h"
-#include "ClientSetup.h"
+#include "LobbyConnection.h"
+#include "Game/ClientSetup.h"
 #include "SelectionWidget.h"
-#include "PreGame.h"
+#include "Game/PreGame.h"
 #include "Rendering/glFont.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
@@ -32,8 +32,8 @@
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
 #include "InputHandler.h"
-#include "StartScripts/ScriptHandler.h"
-#include "StartScripts/SkirmishAITestScript.h"
+#include "Game/StartScripts/ScriptHandler.h"
+#include "Game/StartScripts/SkirmishAITestScript.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -214,7 +214,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Start the Lobby", menu);
 		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
-		Button* update = new Button("Check for updates", menu);
+		Button* update = new Button("Lobby connect (WIP)", menu);
 		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 
 		userSetting = configHandler->GetString("LastSelectedSetting", "");
@@ -241,6 +241,7 @@ SelectMenu::~SelectMenu()
 {
 	ShowConnectWindow(false);
 	CleanWindow();
+	delete updWindow;
 }
 
 bool SelectMenu::Draw()
@@ -255,7 +256,15 @@ bool SelectMenu::Draw()
 bool SelectMenu::Update()
 {
 	if (updWindow)
+	{
 		updWindow->Poll();
+		if (updWindow->WantClose())
+		{
+			delete updWindow;
+			updWindow = NULL;
+		}
+	}
+	
 	return true;
 }
 
@@ -291,7 +300,7 @@ void SelectMenu::Settings()
 #else
 	const std::string settingsProgram = "springsettings.exe";
 #endif
-	EXECLP(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
+	EXECLP(settingsProgram.c_str(), Quote(settingsProgram).c_str(), NULL);
 }
 
 void SelectMenu::Multi()
@@ -301,7 +310,7 @@ void SelectMenu::Multi()
 #else
 	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
 #endif
-	EXECLP(defLobby.c_str(), defLobby.c_str(), NULL);
+	EXECLP(defLobby.c_str(), Quote(defLobby).c_str(), NULL);
 }
 
 void SelectMenu::Quit()
@@ -352,14 +361,15 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 
 void SelectMenu::ShowUpdateWindow(bool show)
 {
-	if (show && !updWindow)
+	if (show)
 	{
-		updWindow = new UpdaterWindow();
-		updWindow->WantClose.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, false));
+		if (!updWindow)
+			updWindow = new LobbyConnection();
+		updWindow->ConnectDialog(true);
 	}
 	else if (!show && updWindow)
 	{
-		agui::gui->RmElement(updWindow);
+		delete updWindow;
 		updWindow = NULL;
 	}
 }

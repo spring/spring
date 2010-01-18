@@ -1,5 +1,8 @@
 #include "StdAfx.h"
+
 #include <sstream>
+#include <cstring>
+
 #include "mmgr.h"
 
 #include "ColorMap.h"
@@ -89,7 +92,7 @@ void CColorMap::LoadMap(const unsigned char *buf, int num)
 	delete [] map;
 
 	map = new unsigned char[num];
-	memcpy(map, buf, num);
+	std::memcpy(map, buf, num);
 }
 
 CColorMap* CColorMap::LoadFromBitmapFile(std::string filename)

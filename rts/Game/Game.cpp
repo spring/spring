@@ -35,7 +35,6 @@
 #include "GameServer.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
-#include "GameVersion.h"
 #include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
@@ -71,6 +70,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
@@ -152,6 +152,8 @@
 #include "UI/ProfileDrawer.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
+
 #include <boost/cstdint.hpp>
 
 #ifndef NO_AVI
@@ -163,6 +165,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+#undef CreateDirectory
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
@@ -415,7 +418,11 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
-	wind.LoadWind();
+	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
+
+	PrintLoadMsg("Calculating smooth height mesh");
+	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE*2, SQUARE_SIZE*40);
+
 	moveinfo = new CMoveInfo();
 	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
@@ -539,11 +546,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-	logOutput.Print("Spring %s", SpringVersion::GetFull().c_str());
-	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
-#ifdef USE_GML
-	logOutput.Print("MT with %d threads.", gmlThreadCount);
-#endif
+	
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
@@ -607,6 +610,7 @@ CGame::~CGame()
 	SafeDelete(pathManager);
 	SafeDelete(groundDecals);
 	SafeDelete(ground);
+	SafeDelete(smoothGround);
 	SafeDelete(luaInputReceiver);
 	SafeDelete(inMapDrawer);
 	SafeDelete(net);
@@ -982,7 +986,7 @@ bool CGame::ActionPressed(const Action& action,
 				configHandler->Set("ShadowMapSize", mapsize);
 			}
 		} else {
-			next = (current == 0) ? 1 : 0;
+			next = (current+1)%3;
 		}
 		configHandler->Set("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);
@@ -2132,8 +2136,15 @@ bool CGame::ActionPressed(const Action& action,
 			gd->wireframe  = !gd->wireframe;
 			sky->wireframe = gd->wireframe;
 		} else {
-			gd->wireframe  = !atoi(action.extra.c_str());
+			gd->wireframe  = !!atoi(action.extra.c_str());
 			sky->wireframe = gd->wireframe;
+		}
+	}
+	else if (cmd == "airmesh") {
+		if (action.extra.empty()) {
+			smoothGround->drawEnabled = !smoothGround->drawEnabled;
+		} else {
+			smoothGround->drawEnabled = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "setgamma") {
@@ -2305,9 +2316,6 @@ bool CGame::ActionReleased(const Action& action)
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-		if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
-			camHandler->ToggleState();
-		else
 			mouse->ToggleState();
 	}
 	else if (cmd == "gameinfoclose") {
@@ -2763,7 +2771,7 @@ bool CGame::Update()
 
 	net->Update();
 
-	if(creatingVideo && playing && gameServer){
+	if (creatingVideo && playing && gameServer){
 		gameServer->CreateNewFrame(false, true);
 	}
 
@@ -2804,6 +2812,8 @@ bool CGame::DrawWorld()
 
 	if (drawGround) {
 		gd->Draw();
+		if (smoothGround->drawEnabled)
+			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
 	}
 
@@ -3074,20 +3084,23 @@ bool CGame::Draw() {
 			gd->UpdateExtraTexture();
 		}
 
-		SCOPED_TIMER("Shadows/Reflect");
-		if (shadowHandler->drawShadows &&
-		    (gd->drawMode != CBaseGroundDrawer::drawLos)) {
-			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
-			SetDrawMode(shadowDraw);
-			shadowHandler->CreateShadows();
-			SetDrawMode(normalDraw);
+		{
+			SCOPED_TIMER("Shadows/Reflections");
+			if (shadowHandler->drawShadows &&
+				(gd->drawMode != CBaseGroundDrawer::drawLos)) {
+				// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+				SetDrawMode(shadowDraw);
+				shadowHandler->CreateShadows();
+				SetDrawMode(normalDraw);
+			}
+
+			cubeMapHandler->UpdateReflectionTexture();
+
+			if (FBO::IsSupported())
+				FBO::Unbind();
+
+			glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 		}
-		if (unitDrawer->advShading) {
-			unitDrawer->UpdateReflectTex();
-		}
-		if (FBO::IsSupported())
-			FBO::Unbind();
-		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	}
 
 	glDisable(GL_BLEND);

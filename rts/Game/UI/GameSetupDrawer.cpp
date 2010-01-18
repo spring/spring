@@ -21,6 +21,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "StartPosSelecter.h"
 #include "Rendering/glFont.h"
+#include "KeyBindings.h"
 #include "EventHandler.h"
 
 extern boost::uint8_t *keys;
@@ -45,7 +46,6 @@ void GameSetupDrawer::Disable()
 		instance = NULL;
 	}
 }
-
 
 void GameSetupDrawer::StartCountdown(unsigned time)
 {
@@ -96,7 +96,11 @@ void GameSetupDrawer::Draw()
 	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->readyToStart) {
 		state = "Choose start pos";
 	} else if (gameServer) {
-		state = "Waiting for players, Ctrl+Return to force start";
+		CKeyBindings::HotkeyList list = keyBindings->GetHotkeys("forcestart");
+		std::string primary = "<none>";
+		if (!list.empty())
+			primary = list.front();
+		state = std::string("Waiting for players, press ")+primary + " to force start";
 	} else {
 		state = "Waiting for players";
 	}

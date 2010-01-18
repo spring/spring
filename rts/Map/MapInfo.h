@@ -136,6 +136,8 @@ public:
 	/** SMF specific settings */
 	struct smf_t {
 		std::string detailTexName; ///< "MAP\DetailTex"
+		std::string specularTexName; ///< "MAP\SpecularTex"
+
 		float minHeight;
 		bool  minHeightOverride;
 		float maxHeight;

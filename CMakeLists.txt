@@ -31,13 +31,13 @@ else  (UNIX AND NOT MINGW)
 	add_definitions(-D_WIN32_WINNT=0x500) ## win2k is minimum
 	# some cross-compile fixes
 	set (CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
-	#set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 	set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 	set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 	set (STABS_DEBUG_SYMBOLS FALSE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
 endif (UNIX AND NOT MINGW)
 
 # In theory, it should be possible to set this to LIBDIR instead
+# (next two are relative to CMAKE_INSTALL_PREFIX)
 set (AI_LIBS_DIR "${DATADIR}"     CACHE STRING "Where to install Skirmish AI libraries")
 set (AI_DATA_DIR "${AI_LIBS_DIR}" CACHE STRING "Where to install Skirmish AI additional files (eg. configuration)")
 set (AI_TYPES    "ALL"            CACHE STRING "Which AI Interfaces (and Skirmish AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
@@ -61,30 +61,43 @@ else  (WIN32)
 endif (WIN32)
 
 if (CMAKE_HOST_WIN32)
-	set(PATH_DELIM ";")
+	set(PATH_SEP_H      "\\")
+	set(PATH_DELIM_H    ";")
+	set(ABS_DIR_REGEX_H "^[a-zA-Z]:\\")
 else (CMAKE_HOST_WIN32)
-	set(PATH_DELIM ":")
+	set(PATH_SEP_H      "/")
+	set(PATH_DELIM_H    ":")
+	set(ABS_DIR_REGEX_H "^/")
 endif(CMAKE_HOST_WIN32)
+if (WIN32)
+	set(PATH_SEP_T      "\\")
+	set(PATH_DELIM_T    ";")
+	set(ABS_DIR_REGEX_T "^[a-zA-Z]:\\")
+else (WIN32)
+	set(PATH_SEP_T      "/")
+	set(PATH_DELIM_T    ":")
+	set(ABS_DIR_REGEX_T "^/")
+endif(WIN32)
 
 set(BUILTIN_DATADIRS "")
 if    (NOT MINGW)
 	set (SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
 	set (SPRING_DATADIR_INTERNAL "")
 	if    (SPRING_DATADIR)
-		set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR}${PATH_DELIM}")
+		set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR}${PATH_DELIM_T}")
 	endif (SPRING_DATADIR)
-	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}/${DATADIR}")
+	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${DATADIR}")
 	set(BUILTIN_DATADIRS "${SPRING_DATADIR_INTERNAL}")
 endif (NOT MINGW)
 if    (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
 	# If the AI library dir is not the same as the normal data dir,
 	# add it to the internal list of data dirs
-	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM}${AI_LIBS_DIR}")
+	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${AI_LIBS_DIR}")
 endif (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
 if    (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
 	# If the AI data dir is not the same as the normal data dir
 	# nor the AI library dir, add it to the internal list of data dirs
-	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM}${AI_LIBS_DIR}")
+	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM_T}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${AI_DATA_DIR}")
 endif (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
 add_definitions(-DSPRING_DATADIR="${BUILTIN_DATADIRS}")
 
@@ -117,7 +130,7 @@ else   (UNIX)
 endif  (MINGW)
 
 ### Compiler flags and defines based on build type
-INCLUDE(TestCXXAcceptsVisibilityFlag)
+INCLUDE(TestCXXFlags)
 if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message (STATUS "Building Spring for 64bit environment")
 	set (MARCH_FLAG CACHE STRING "CPU optimization (use i686 for generic optimization)")
@@ -135,7 +148,7 @@ else  ($ENV{CXX} MATCHES "icpc")
 	if    (MARCH_FLAG)
 		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
 	endif (MARCH_FLAG)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -mfpmath=sse") # SSE1
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 	if    (MINGW)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
 	endif (MINGW)
@@ -153,7 +166,7 @@ endif(SIGNAL_NANS)
 # This should produce a sane ammount of warnings
 set(DEBUG_WARNINGS "-Wall -Wno-sign-compare")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IEEE_FP_FLAG} -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 if (UNIX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -283,11 +296,4 @@ else  (UNIX AND NOT MINGW)
 endif (UNIX AND NOT MINGW)
 
 # additional tools
-
-if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)
-	Add_Subdirectory(tools/DemoAnalyser)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)
-
-if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoDumper)
-	Add_Subdirectory(tools/DemoDumper)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoDumper)
+Add_Subdirectory(tools/DemoTool)

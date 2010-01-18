@@ -439,6 +439,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.wantedHeight  = udTable.GetFloat("cruiseAlt", 0.0f);
 	ud.dlHoverFactor = udTable.GetFloat("airHoverFactor", -1.0f);
 	ud.bankingAllowed = udTable.GetBool("bankingAllowed", true);
+	ud.useSmoothMesh = udTable.GetBool("useSmoothMesh", true);
 
 	ud.transportSize     = udTable.GetInt("transportSize",      0);
 	ud.minTransportSize  = udTable.GetInt("minTransportSize",   0);

@@ -18,6 +18,7 @@
 #include "FileFilter.h"
 #include "FileHandler.h"
 #include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Util.h"
 #include "Exceptions.h"
 
@@ -50,6 +51,20 @@ CArchiveScanner* archiveScanner = NULL;
 CArchiveScanner::CArchiveScanner(void)
 : isDirty(false)
 {
+	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
+	ReadCacheData(fsh.GetWriteDir() + GetFilename());
+
+	const std::vector<std::string>& datadirs = fsh.GetDataDirectories();
+	std::vector<std::string> scanDirs;
+	for (std::vector<std::string>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d)
+	{
+		scanDirs.push_back(*d + "maps");
+		scanDirs.push_back(*d + "base");
+		scanDirs.push_back(*d + "mods");
+		scanDirs.push_back(*d + "packages");
+	}
+	ScanDirs(scanDirs, true);
+	WriteCacheData(fsh.GetWriteDir() + GetFilename());
 }
 
 
@@ -212,9 +227,13 @@ void CArchiveScanner::ScanDirs(const vector<string>& scanDirs, bool doChecksum)
 	//       better to use a tag in the source file
 
 	// add the archives
-	for (unsigned int d = 0; d < scanDirs.size(); d++) {
-		logOutput.Print("Scanning: %s\n", scanDirs[d].c_str());
-		Scan(scanDirs[d], doChecksum);
+	for (vector<string>::const_iterator it = scanDirs.begin(); it != scanDirs.end(); ++it)
+	{
+		if (FileSystemHandler::DirExists(*it))
+		{
+			logOutput.Print("Scanning: %s\n", it->c_str());
+			Scan(*it, doChecksum);
+		}
 	}
 }
 
@@ -772,7 +791,7 @@ vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
 }
 
 
-vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
+vector<string> CArchiveScanner::GetArchives(const string& root, int depth) const
 {
 	logOutput.Print(LOG_ARCHIVESCANNER, "GetArchives: %s (depth %u)\n", root.c_str(), depth);
 	// Protect against circular dependencies
@@ -783,30 +802,29 @@ vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 
 	vector<string> ret;
 	string lcname = StringToLower(ModNameToModArchive(root));
-	std::map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
-	if (aii == archiveInfo.end()) {
+	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
+	if (aii == archiveInfo.end())
+	{ // unresolved dep, add anyway so we get propper errorhandling
+		ret.push_back(lcname);
 		return ret;
 	}
 
 	// Check if this archive has been replaced
 	while (aii->second.replaced.length() > 0) {
 		aii = archiveInfo.find(aii->second.replaced);
-		if (aii == archiveInfo.end()) {
-			return ret;
+		if (aii == archiveInfo.end())
+		{
+			throw content_error("Unknown error parsing archive replacements");
 		}
 	}
 
 	ret.push_back(aii->second.path + aii->second.origName);
 
-	if (aii->second.modData.name == "") {
-		return ret;
-	}
-
 	// add depth-first
-	for (vector<string>::iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
+	for (vector<string>::const_iterator i = aii->second.modData.dependencies.begin(); i != aii->second.modData.dependencies.end(); ++i) {
 		vector<string> dep = GetArchives(*i, depth + 1);
 
-		for (vector<string>::iterator j = dep.begin(); j != dep.end(); ++j) {
+		for (vector<string>::const_iterator j = dep.begin(); j != dep.end(); ++j) {
 			if (std::find(ret.begin(), ret.end(), *j) == ret.end()) {
 				// add only if this dependency is not already somewhere
 				// in the chain (which can happen if ArchiveCacheV* has
@@ -835,12 +853,12 @@ vector<string> CArchiveScanner::GetMaps()
 }
 
 
-vector<string> CArchiveScanner::GetArchivesForMap(const string& mapName)
+vector<string> CArchiveScanner::GetArchivesForMap(const string& mapName) const
 {
 	vector<string> ret;
 
-	for (std::map<string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
-		for (vector<MapData>::iterator i = aii->second.mapData.begin(); i != aii->second.mapData.end(); ++i) {
+	for (std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
+		for (vector<MapData>::const_iterator i = aii->second.mapData.begin(); i != aii->second.mapData.end(); ++i) {
 			if (mapName == (*i).name) {
 				ret = GetArchives(aii->first);
 				const string mapHelperPath = GetArchivePath("maphelper.sdz");
@@ -872,7 +890,7 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 
 	StringToLowerInPlace(lcname);
 
-	std::map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
+	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
 		logOutput.Print(LOG_ARCHIVESCANNER, "%s checksum: not found (0)\n", name.c_str());
 		return 0;
@@ -883,7 +901,7 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 }
 
 
-string CArchiveScanner::GetArchivePath(const string& name)
+string CArchiveScanner::GetArchivePath(const string& name) const
 {
 	string lcname = name;
 
@@ -897,7 +915,7 @@ string CArchiveScanner::GetArchivePath(const string& name)
 
 	StringToLowerInPlace(lcname);
 
-	std::map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
+	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
 		return "";
 	}

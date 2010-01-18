@@ -6,7 +6,6 @@
 #include <vector>
 #include <set>
 
-#include "float3.h"
 #include "PlayerBase.h"
 #include "Sim/Misc/TeamBase.h"
 #include "Sim/Misc/AllyTeam.h"
