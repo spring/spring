@@ -153,7 +153,7 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
 	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
-	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f);
+	fd->reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f));
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
