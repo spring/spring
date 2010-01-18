@@ -13,6 +13,9 @@ Engine / Simulation:
  - Wind fixed to stay in between map boundaries
  - Momentum isn't conserved anymore in unit-unit collisions
  - Impulses decay every frame instead of every slow update
+ - Kamikaze units now do a visibility and 3d distance check
+ - Fixed ships were able to 'climb' cliffs
+ - Fixed multiple issues with pathmap updates after terraforms
 
 Engine / Rendering, UI:
  - Changed default binds of forcestart, singlestep, debug to Alt+f, Alt+o, Alt+b
@@ -30,7 +33,10 @@ Engine / Rendering, UI:
  - Added checks for insufficent gfx cards
  - Added new shadow rendering option ("/shadows 2"): it disables terrain rendering
    in the shadow pass, which gives a huge performance increase
+ - Changed BumpWaterReflection values:
+   0 = disable; 1 = enable (no terrain); 2 = enable (with terrain - was '1' before)
  - Fixed occasional hang when word wrapping text
+ - S3O transparency is now supported even with AdvUnitShading disabled
 
 Engine / Lua:
  - Added AllowFeatureBuildStep call-in to included gadget handler
@@ -38,6 +44,7 @@ Engine / Lua:
  - Spring.Rehost fixed on Win32 when spaces in install path
  - Added support for modifying CTAAirMoveType (gunships)
  - Add GetUnitMoveTypeData(unitID) call-in, returns a table
+ - Fixed Spring.SetFeatureDirection
 
 Engine / System:
  - Fixed incorrect startpositions in skirmish games
