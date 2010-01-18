@@ -34,7 +34,9 @@ find_program(XSLTPROC_BIN
 find_file(DOCBOOK_XSL
 	NAMES docbook.xsl
 	PATHS /usr /usr/share /usr/local /usr/local/share
-	PATH_SUFFIXES xml/docbook/stylesheet/nwalsh/manpages
+	PATH_SUFFIXES
+		xml/docbook/stylesheet/nwalsh/manpages
+		sgml/docbook/xsl-stylesheets/manpages
 	DOC "DocBook XSL Style-Sheet"
 	)
 
