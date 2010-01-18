@@ -428,12 +428,18 @@ void CBuilderCAI::SlowUpdate()
 						}
 						else if (uh->MaxUnitsPerTeam() > (int) teamHandler->Team(owner->team)->units.size()) {
 							// unit-limit not yet reached
+							CFeature* f = NULL;
 							buildRetries++;
 							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
 
-							if (fac->StartBuild(build) || (buildRetries > 20)) {
+							if (fac->StartBuild(build, f) || (buildRetries > 20)) {
 								building = true;
-							} else {
+							}
+							else if (f) {
+								inCommand = false;
+								ReclaimFeature(f);
+							}
+							else {
 								if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
 									logOutput.Print(
 										"%s: build-position <%.2f, %.2f, %.2f> blocked after %d attempts",
@@ -480,19 +486,7 @@ void CBuilderCAI::SlowUpdate()
 			uh->TestUnitBuildSquare(bi, f, owner->allyteam);
 
 			if (f) {
-				if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
-					// FIXME user shouldn't be able to queue buildings on top of features
-					// in the first place (in this case).
-					StopMove();
-					FinishCommand();
-				} else {
-					Command c2;
-					c2.id=CMD_RECLAIM;
-					c2.options=0;
-					c2.params.push_back(f->id + uh->MaxUnits());
-					commandQue.push_front(c2);
-					SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
-				}
+				ReclaimFeature(f);
 			} else {
 				inCommand=true;
 				SlowUpdate();
@@ -515,6 +509,25 @@ void CBuilderCAI::SlowUpdate()
 			CMobileCAI::SlowUpdate();
 			return;
 		}
+	}
+}
+
+
+/// add a command to reclaim a feature that is blocking our buildsite
+void CBuilderCAI::ReclaimFeature(CFeature* f)
+{
+	if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
+		// FIXME user shouldn't be able to queue buildings on top of features
+		// in the first place (in this case).
+		StopMove();
+		FinishCommand();
+	} else {
+		Command c2;
+		c2.id=CMD_RECLAIM;
+		c2.options=0;
+		c2.params.push_back(f->id + uh->MaxUnits());
+		commandQue.push_front(c2);
+		SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
 	}
 }
 
