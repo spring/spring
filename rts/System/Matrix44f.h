@@ -10,6 +10,7 @@ public:
 
 	CMatrix44f();
 	CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
+	CMatrix44f(const float& rotX, const float& rotY, const float& rotZ);
 	explicit CMatrix44f(const float3& pos);
 
 	CMatrix44f(const CMatrix44f& n);
@@ -36,8 +37,12 @@ public:
 	void SetUpVector(float3& up);
 	void Translate(const float3& pos);
 
-	// OpenGL ordered (ie. column-major)
+	/// OpenGL ordered (ie. column-major)
 	float m[16];
+
+	/// Allows implicit conversion to float* (for passing to gl functions)
+	operator const float* () const { return m; }
+	operator float* () { return m; }
 };
 
 

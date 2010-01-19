@@ -76,8 +76,6 @@ void EconomyUnitTracker::PostLoad() {
 	unitDef = KAIKStateExt->GetAi()->cb->GetUnitDef(economyUnitId);
 }
 
-
-
 CEconomyTracker::CEconomyTracker(AIClasses* aic) {
 	ai = aic;
 	allTheBuildingTrackers.resize(CAT_LAST);
@@ -114,8 +112,6 @@ CEconomyTracker::~CEconomyTracker() {
 	}
 }
 
-
-
 void CEconomyTracker::frameUpdate(int frame) {
 	if (trackerOff) {
 		return;
@@ -141,8 +137,6 @@ void CEconomyTracker::frameUpdate(int frame) {
 	constructionEnergySum += constructionEnergy;
 	constructionMetalSum += constructionMetal;
 
-
-
 	// move the new EconomyUnitTrackers
 	std::list<EconomyUnitTracker*> removeList;
 
@@ -166,7 +160,7 @@ void CEconomyTracker::frameUpdate(int frame) {
 	// update the units in activeEconomyUnitTrackers, add their production/usage to total
 	float energyProduction = 0.0f;
 	float metalProduction = 0.0f;
- 	// these are exclusive of what is used by builders
+	// these are exclusive of what is used by builders
 	float energyUsage = 0.0f;
 	float metalUsage = 0.0f;
 
@@ -271,7 +265,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 
 			// we guess it's on ATM
 			unitEnergy += eut->estimateEnergyChangeFromDefWhileOn;
-			unitMetal += eut->estimateMetalChangeFromDefWhileOn; 
+			unitMetal += eut->estimateMetalChangeFromDefWhileOn;
 		}
 
 		// do the EconomyUnitTrackers in newEconomyUnitTrackers, it needs to test the ETA first (metalmakers == bad,  nanostall == bad)
@@ -281,7 +275,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 			if (eut->createFrame +16 < preFrame) {
 				// we guess it's on ATM
 				unitEnergy += eut->estimateEnergyChangeFromDefWhileOn;
-				unitMetal += eut->estimateMetalChangeFromDefWhileOn; 
+				unitMetal += eut->estimateMetalChangeFromDefWhileOn;
 			}
 		}
 
@@ -423,7 +417,6 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 	return state;
 }
 
-
 void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 	// find out how much resources have been used on this unit
 	// just using its HP wont work (it might be damaged), so must
@@ -541,14 +534,14 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 		float deltaHP = hp - oldHP;
 
 		if (hp == endHp)
-			deltaHP += 0.1;
+			deltaHP += 0.1f;
 
 		if (deltaHP <= 0.0f) {
 			// nanostalling
-			deltaHP = 0.0001;
+			deltaHP = 0.0001f;
 		}
 		if (bt->etaFrame == -1 && !bt->buildTask)
-			deltaHP -= 0.1;
+			deltaHP -= 0.1f;
 
 		assert(deltaHP > 0);
 		float eta2 = endHp * (1.0 - builtRatio) / deltaHP;
@@ -584,7 +577,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 
 			if (longDeltaHP <= 0) {
 				// builder must have been pushed away and Spring says it still builds
-				longDeltaHP = 0.000001;
+				longDeltaHP = 0.000001f;
 			}
 
 			// assert(longDeltaHP > 0);
@@ -603,7 +596,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 		// NOTE: the builder(s) might have been killed too...
 		bt->hpLastFrame = hp;
 	}
-	
+
 
 }
 
@@ -751,7 +744,7 @@ void CEconomyTracker::UnitFinished(int unit) {
 		return;
 
 	int frame = ai->cb->GetCurrentFrame();
-	
+
 	if (frame == 0) {
 		// add the commander to a EconomyUnitTracker
 		EconomyUnitTracker * economyUnitTracker = new EconomyUnitTracker;

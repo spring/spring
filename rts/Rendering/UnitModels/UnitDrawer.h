@@ -8,7 +8,7 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/FBO.h"
+#include "Rendering/Shaders/Shader.hpp"
 
 class CVertexArray;
 struct S3DModel;
@@ -18,13 +18,13 @@ class CUnit;
 class CFeature;
 struct BuildingGroundDecal;
 
-
 class CUnitDrawer
 {
 public:
 	CUnitDrawer(void);
 	~CUnitDrawer(void);
 
+	bool LoadModelShaders();
 	void Update(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
@@ -43,7 +43,7 @@ public:
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupFor3DO() const;
 	void CleanUp3DO() const;
-	void SetupForUnitDrawing(void) const;
+	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void) const;
 	void SetupForGhostDrawing() const;
 	void CleanUpGhostDrawing() const;
@@ -65,8 +65,6 @@ public:
 
 	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
 #endif
-
-	inline void DrawFar(CUnit* unit);
 
 	// note: make these static?
 	inline void DrawUnitDebug(CUnit*);                              // was CUnit::DrawDebug()
@@ -110,18 +108,10 @@ public:
 	float LODScaleReflection;
 	float LODScaleRefraction;
 
-	FBO unitReflectFBO;
-
-	unsigned int unitVP;             // vertex program
-	unsigned int unitFP;             // fragment program, shadows disabled
-	unsigned int unitShadowFP;       // fragment program, shadows enabled
-	unsigned int unitShadowGenVP;    // vertex program for shadow pass
-
-	GLuint boxtex;
-	unsigned int reflTexSize;
-
-	GLuint specularTex;
-	unsigned int specTexSize;
+	Shader::IProgramObject* S3ODefShader;   // S3O model shader (V+F) without shadowing
+	Shader::IProgramObject* S3OAdvShader;   // S3O model shader (V+F) with shadowing
+	Shader::IProgramObject* S3OCurShader;   // current S3O shader (S3OShaderDef or S3OShaderAdv)
+	Shader::IProgramObject* MDLLSPShader;   // projects 3DO/S3O model geometry into light-space
 
 	float unitDrawDist;
 	float unitDrawDistSqr;
@@ -129,8 +119,6 @@ public:
 	float iconLength;
 
 	GLuint whiteTex;
-
-	int updateFace;
 
 	float3 unitAmbientColor;
 	float3 unitSunColor;
@@ -159,11 +147,9 @@ public:
 
 	bool showHealthBars;
 
-	float3 camNorm;		//used by drawfar
+	float3 camNorm; // used to draw far-textures
 
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
-	void UpdateReflectTex(void);
-	void CreateReflectionFace(unsigned int gltype, float3 camdir);
 	void QueS3ODraw(CWorldObject* object,int textureType);
 	void DrawQuedS3O(void);
 
@@ -192,7 +178,7 @@ private:
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
 	bool distToGroundForIcons_useMethod;
-	bool distToGroundForIcons_areIcons;
+	float distToGroundForIcons_sqGroundCamDist;
 };
 
 extern CUnitDrawer* unitDrawer;

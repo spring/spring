@@ -40,18 +40,20 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 	const float3* fn = readmap->facenormals;
 	const int hmIdx = (y * gs->mapx + x);
 	const float xt = x * SQUARE_SIZE;
-	const float yt0 = hm[ y      * (gs->mapx + 1) + x    ];
-	const float yt1 = hm[(y + 1) * (gs->mapx + 1) + x + 1];
+	const float& yt0 = hm[ y      * (gs->mapx + 1) + x    ];
+	const float& yt1 = hm[(y + 1) * (gs->mapx + 1) + x + 1];
 	const float zt = y * SQUARE_SIZE;
 
-	const float dx0 = (xp -  xt     ), fnx0 = fn[hmIdx * 2    ].x;
-	const float dy0 = (yp -  yt0    ), fny0 = fn[hmIdx * 2    ].y;
-	const float dz0 = (zp -  zt     ), fnz0 = fn[hmIdx * 2    ].z;
-	const float dx1 = (xp - (xt + 2)), fnx1 = fn[hmIdx * 2 + 1].x;
-	const float dy1 = (yp -  yt1    ), fny1 = fn[hmIdx * 2 + 1].y;
-	const float dz1 = (zp - (zt + 2)), fnz1 = fn[hmIdx * 2 + 1].z;
-	const float d0 = dx0 * fnx0 + dy0 * fny0 + dz0 * fnz0;
-	const float d1 = dx1 * fnx1 + dy1 * fny1 + dz1 * fnz1;
+	const float3& fn0 = fn[hmIdx * 2    ];
+	const float3& fn1 = fn[hmIdx * 2 + 1];
+	const float dx0 = (xp -  xt     );
+	const float dy0 = (yp -  yt0    );
+	const float dz0 = (zp -  zt     );
+	const float dx1 = (xp - (xt + 2));
+	const float dy1 = (yp -  yt1    );
+	const float dz1 = (zp - (zt + 2));
+	const float d0 = dx0 * fn0.x + dy0 * fn0.y + dz0 * fn0.z;
+	const float d1 = dx1 * fn1.x + dy1 * fn1.y + dz1 * fn1.z;
 	const float s0 = xp + zp - xt - zt - p->radius;
 	const float s1 = xp + zp - xt - zt - SQUARE_SIZE * 2 + p->radius;
 
@@ -73,12 +75,16 @@ inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, i
 	float3 tri;
 	const float* heightmap = readmap->GetHeightmap();
 
-	// triangle 1
+	//! Info:
+	//! The terrain grid is constructed by a triangle strip
+	//! so we have to check 2 triangles foreach quad
+
+	//! triangle 1
 	tri.x = xs * SQUARE_SIZE;
 	tri.z = ys * SQUARE_SIZE;
 	tri.y = heightmap[ys * (gs->mapx + 1) + xs];
 
-	float3 norm = readmap->facenormals[(ys * gs->mapx + xs) * 2];
+	const float3& norm = readmap->facenormals[(ys * gs->mapx + xs) * 2];
 	float side1 = (to - tri).dot(norm);
 
 	if (side1 <= 0) {
@@ -96,17 +102,17 @@ inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, i
 		}
 	}
 
-	// triangle 2
+	//! triangle 2
 	tri.x += SQUARE_SIZE;
 	tri.z += SQUARE_SIZE;
 	tri.y = heightmap[(ys + 1) * (gs->mapx + 1) + xs + 1];
 
-	norm = readmap->facenormals[(ys * gs->mapx + xs) * 2 + 1];
-	side1 = (to - tri).dot(norm);
+	const float3& norm2 = readmap->facenormals[(ys * gs->mapx + xs) * 2 + 1];
+	side1 = (to - tri).dot(norm2);
 
 	if (side1 <= 0) {
 		// linjen passerar triangelns plan?
-		float side2 = (from - tri).dot(norm);
+		float side2 = (from - tri).dot(norm2);
 		float dif = side2 - side1;
 		if (dif != 0) {
 			float frontpart = side2 / dif;
@@ -121,7 +127,7 @@ inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, i
 	return -2;
 }
 
-float CGround::LineGroundCol(float3 from, float3 to)
+float CGround::LineGroundCol(float3 from, float3 to) const
 {
 	float savedLength = 0.0f;
 
@@ -246,7 +252,8 @@ float CGround::LineGroundCol(float3 from, float3 to)
 	return -1;
 }
 
-float CGround::GetApproximateHeight(float x, float y)
+
+float CGround::GetApproximateHeight(float x, float y) const
 {
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
@@ -263,7 +270,8 @@ float CGround::GetApproximateHeight(float x, float y)
 	return readmap->centerheightmap[xsquare + ysquare * gs->mapx];
 }
 
-float CGround::GetHeight(float x, float y)
+//rename to GetHeightAboveWater?
+float CGround::GetHeight(float x, float y) const
 {
 	float r = GetHeight2(x, y);
 	return (r < 0.0f? 0.0f: r);
@@ -304,19 +312,19 @@ static inline float Interpolate(float x, float y, const float* heightmap)
 }
 
 
-float CGround::GetHeight2(float x, float y)
+float CGround::GetHeight2(float x, float y) const
 {
 	return Interpolate(x, y, readmap->GetHeightmap());
 }
 
 
-float CGround::GetOrigHeight(float x, float y)
+float CGround::GetOrigHeight(float x, float y) const
 {
 	return Interpolate(x, y, readmap->orgheightmap);
 }
 
 
-float3& CGround::GetNormal(float x, float y)
+float3& CGround::GetNormal(float x, float y) const
 {
 	if (x < 1.0f)
 		x = 1.0f;
@@ -328,17 +336,11 @@ float3& CGround::GetNormal(float x, float y)
 	else if (y > float3::maxzpos)
 		y = float3::maxzpos;
 
-	return readmap->facenormals[(int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx) * 2];
+	return readmap->centernormals[int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx];
 }
-/*
-float CGround::GetApproximateHeight(float x, float y)
-{
-	if((x<0) || (y<0) || (x>gs->mapx*SQUARE_SIZE) || (y>gs->mapy*SQUARE_SIZE))
-		return 0;
-	return readmap->centerheightmap[int(x)/SQUARE_SIZE+int(y)/SQUARE_SIZE*(gs->mapx)];
-}
-*/
-float CGround::GetSlope(float x, float y)
+
+
+float CGround::GetSlope(float x, float y) const
 {
 	if (x < 1.0f)
 		x = 1.0f;
@@ -350,11 +352,12 @@ float CGround::GetSlope(float x, float y)
 	else if (y > float3::maxzpos)
 		y = float3::maxzpos;
 
-	return (1.0f - readmap->facenormals[(int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx) * 2].y);
+	//return (1.0f - readmap->centernormals[int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx].y);
+	return readmap->slopemap[(int(x) / SQUARE_SIZE) / 2 + (int(y) / SQUARE_SIZE) / 2 * gs->hmapx];
 }
 
 
-float3 CGround::GetSmoothNormal(float x, float y)
+float3 CGround::GetSmoothNormal(float x, float y) const
 {
 	int sx = (int) floor(x / SQUARE_SIZE);
 	int sy = (int) floor(y / SQUARE_SIZE);
@@ -396,10 +399,11 @@ float3 CGround::GetSmoothNormal(float x, float y)
 	float ify = 1.0f - fy;
 	float ifx = 1.0f - fx;
 
-	float3 n1 = (readmap->facenormals[ (sy   * gs->mapx + sx ) * 2] + readmap->facenormals[( sy   * gs->mapx + sx ) * 2 + 1]) * ifx * ify;
-	float3 n2 = (readmap->facenormals[ (sy   * gs->mapx + sx2) * 2] + readmap->facenormals[( sy   * gs->mapx + sx2) * 2 + 1]) *  fx * ify;
-	float3 n3 = (readmap->facenormals[((sy2) * gs->mapx + sx ) * 2] + readmap->facenormals[((sy2) * gs->mapx + sx ) * 2 + 1]) * ifx * fy;
-	float3 n4 = (readmap->facenormals[((sy2) * gs->mapx + sx2) * 2] + readmap->facenormals[((sy2) * gs->mapx + sx2) * 2 + 1]) *  fx * fy;
+	const float3* normals = readmap->centernormals;
+	const float3& n1 = normals[sy  * gs->mapx + sx ] * ifx * ify;
+	const float3& n2 = normals[sy  * gs->mapx + sx2] *  fx * ify;
+	const float3& n3 = normals[sy2 * gs->mapx + sx ] * ifx * fy;
+	const float3& n4 = normals[sy2 * gs->mapx + sx2] *  fx * fy;
 
 	float3 norm1 = n1 + n2 + n3 + n4;
 	norm1.Normalize();
@@ -407,14 +411,14 @@ float3 CGround::GetSmoothNormal(float x, float y)
 	return norm1;
 }
 
-float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic)
+float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic) const
 {
 	from.CheckInBounds();
 
 	float3 dir(flatdir.x, linear, flatdir.z);
 
 	for (float l = 0.0f; l < length; l += 8.0f) {
-		float3 pos(from + dir * l);
+		float3 pos(from + dir*l);
 		pos.y += quadratic * l * l;
 
 		if (GetApproximateHeight(pos.x, pos.z) > pos.y) {

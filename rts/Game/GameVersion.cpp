@@ -14,7 +14,7 @@
 namespace SpringVersion
 {
 
-const char* const Major = "0.80+";
+const char* const Major = "0.81";
 const char* const Minor = "0";
 const char* const Patchset = "0";
 const char* const Additional = "" // Build-Bot will write in here before compiling
@@ -26,12 +26,6 @@ const char* const Additional = "" // Build-Bot will write in here before compili
 
 #if defined DEBUG
 	GV_ADD_SPACE "Debug"
-	#undef  GV_ADD_SPACE
-	#define GV_ADD_SPACE " "
-#endif
-
-#if defined REPLACE_SYSTEM_ALLOCATOR
-	GV_ADD_SPACE "nedmalloc"
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif

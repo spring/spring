@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 #ifndef GMLSRV_H
 #define GMLSRV_H
@@ -425,7 +426,7 @@ public:
 
 	void gmlClientAux() {
 #ifdef _WIN32
-		extern HANDLE simthread;
+		extern HANDLE simthread; // from System/Platform/Win/CrashHandler.cpp
 		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 						&simthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 #endif

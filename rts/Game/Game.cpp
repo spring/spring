@@ -35,7 +35,6 @@
 #include "GameServer.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
-#include "GameVersion.h"
 #include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
@@ -71,19 +70,21 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
+#include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
@@ -151,6 +152,8 @@
 #include "UI/ProfileDrawer.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
+
 #include <boost/cstdint.hpp>
 
 #ifndef NO_AVI
@@ -162,6 +165,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 
+#undef CreateDirectory
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
@@ -414,7 +418,11 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
-	wind.LoadWind();
+	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
+
+	PrintLoadMsg("Calculating smooth height mesh");
+	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE*2, SQUARE_SIZE*40);
+
 	moveinfo = new CMoveInfo();
 	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
@@ -441,6 +449,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	qf = new CQuadField();
 
 	featureHandler = new CFeatureHandler();
+	featureDrawer = new CFeatureDrawer();
 
 	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = new CLosHandler();
@@ -537,11 +546,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-	logOutput.Print("Spring %s", SpringVersion::GetFull().c_str());
-	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
-#ifdef USE_GML
-	logOutput.Print("MT with %d threads.", gmlThreadCount);
-#endif
+	
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
@@ -596,6 +601,7 @@ CGame::~CGame()
 	SafeDelete(resourceBar);
 
 	SafeDelete(featureHandler);
+	SafeDelete(featureDrawer);
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
 	SafeDelete(geometricObjects);
@@ -604,6 +610,7 @@ CGame::~CGame()
 	SafeDelete(pathManager);
 	SafeDelete(groundDecals);
 	SafeDelete(ground);
+	SafeDelete(smoothGround);
 	SafeDelete(luaInputReceiver);
 	SafeDelete(inMapDrawer);
 	SafeDelete(net);
@@ -979,7 +986,7 @@ bool CGame::ActionPressed(const Action& action,
 				configHandler->Set("ShadowMapSize", mapsize);
 			}
 		} else {
-			next = (current == 0) ? 1 : 0;
+			next = (current+1)%3;
 		}
 		configHandler->Set("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);
@@ -1347,13 +1354,7 @@ bool CGame::ActionPressed(const Action& action,
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
-				logOutput.Print("%d | %i | %s | %s | %s | %s",
-						ai->first,
-						ai->second.team,
-						(isLocal ? "yes" : "no "),
-						(ai->second.isLuaAI ? "yes" : "no "),
-						ai->second.name.c_str(),
-						lastPart.c_str());
+				LogObject() << ai->first << " | " <<  ai->second.team << " | " << (isLocal ? "yes" : "no ") << " | " << (ai->second.isLuaAI ? "yes" : "no ") << " | " << ai->second.name << " | " << lastPart;
 			}
 		} else {
 			logOutput.Print("<There are no active Skirmish AIs in this game>");
@@ -1493,9 +1494,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "showrezbars") {
 		if (action.extra.empty()) {
-			featureHandler->showRezBars = !featureHandler->showRezBars;
+			featureDrawer->showRezBars = !featureDrawer->showRezBars;
 		} else {
-			featureHandler->showRezBars = !!atoi(action.extra.c_str());
+			featureDrawer->showRezBars = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "pause") {
@@ -1820,37 +1821,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "screenshot") {
-		const char* ext = "png";
-		if (action.extra == "jpg") {
-			ext = "jpg";
-		}
-
-		if (filesystem.CreateDirectory("screenshots")) {
-			int x = gu->dualScreenMode? gu->viewSizeX << 1: gu->viewSizeX;
-
-			if (x % 4)
-				x += (4 - x % 4);
-
-			unsigned char* buf = new unsigned char[x * gu->viewSizeY * 4];
-			glReadPixels(0, 0, x, gu->viewSizeY, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-			CBitmap b(buf, x, gu->viewSizeY);
-			b.ReverseYAxis();
-
-			char t[50];
-			for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 9999; ++a) {
-				sprintf(t, "screenshots/screen%03i.%s", a, ext);
-				CFileHandler ifs(t);
-				if (!ifs.FileExists())
-				{
-					configHandler->Set("ScreenshotCounter", a < 9999 ? a+1 : 0);
-					break;
-				}
-			}
-			b.Save(t);
-			logOutput.Print("Saved: %s", t);
-			delete[] buf;
-		}
+		TakeScreenshot(action.extra);
 	}
 
 	else if (cmd == "grabinput") {
@@ -2165,8 +2136,15 @@ bool CGame::ActionPressed(const Action& action,
 			gd->wireframe  = !gd->wireframe;
 			sky->wireframe = gd->wireframe;
 		} else {
-			gd->wireframe  = !atoi(action.extra.c_str());
+			gd->wireframe  = !!atoi(action.extra.c_str());
 			sky->wireframe = gd->wireframe;
+		}
+	}
+	else if (cmd == "airmesh") {
+		if (action.extra.empty()) {
+			smoothGround->drawEnabled = !smoothGround->drawEnabled;
+		} else {
+			smoothGround->drawEnabled = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "setgamma") {
@@ -2338,9 +2316,6 @@ bool CGame::ActionReleased(const Action& action)
 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-		if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL])
-			camHandler->ToggleState();
-		else
 			mouse->ToggleState();
 	}
 	else if (cmd == "gameinfoclose") {
@@ -2386,18 +2361,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	else if (action.command == "nohelp") {
 		SetBoolArg(gs->noHelperAIs, action.extra);
 		selectedUnits.PossibleCommandChange(NULL);
-		if (gs->noHelperAIs) {
-			// remove any current GroupAIs
-			CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
-			CUnitSet::iterator it;
-			for(it = teamUnits.begin(); it != teamUnits.end(); ++it)
-			{
-				CUnit* unit = *it;
-				if (unit->group && (unit->group->id > 9)) {
-					unit->SetGroup(NULL);
-				}
-			}
-		}
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "nospecdraw") {
@@ -2728,13 +2691,14 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		teamHandler->Team(team)->AddEnergy(1000);
 	}
 	else if (action.command == "take" && (!playerHandler->Player(playernum)->spectator || gs->cheatEnabled)) {
-		int sendTeam = playerHandler->Player(playernum)->team;
+		const int sendTeam = playerHandler->Player(playernum)->team;
 		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 			if (teamHandler->AlliedTeams(a, sendTeam)) {
 				bool hasPlayer = false;
 				for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
 					if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
 						hasPlayer = true;
+						break;
 					}
 				}
 				if (!hasPlayer) {
@@ -2807,7 +2771,7 @@ bool CGame::Update()
 
 	net->Update();
 
-	if(creatingVideo && playing && gameServer){
+	if (creatingVideo && playing && gameServer){
 		gameServer->CreateNewFrame(false, true);
 	}
 
@@ -2848,6 +2812,8 @@ bool CGame::DrawWorld()
 
 	if (drawGround) {
 		gd->Draw();
+		if (smoothGround->drawEnabled)
+			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
 	}
 
@@ -2864,7 +2830,7 @@ bool CGame::DrawWorld()
 	eventHandler.DrawWorldPreUnit();
 
 	unitDrawer->Draw(false);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 
 	if (drawGround) {
 		gd->DrawTrees();
@@ -2883,7 +2849,7 @@ bool CGame::DrawWorld()
 	//! draw cloaked part below surface
 	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(true,noAdvShading);
-	featureHandler->DrawFadeFeatures(true,noAdvShading);
+	featureDrawer->DrawFadeFeatures(true,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
 	if (drawWater && !mapInfo->map.voidWater) {
@@ -2900,7 +2866,7 @@ bool CGame::DrawWorld()
 	//! draw cloaked part above surface
 	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
-	featureHandler->DrawFadeFeatures(false,noAdvShading);
+	featureDrawer->DrawFadeFeatures(false,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
 	ph->Draw(false);
@@ -2984,7 +2950,7 @@ bool CGame::DrawWorld()
 
 void CGame::SwapTransparentObjects() {
 	unitDrawer->SwapCloakedUnits();
-	featureHandler->SwapFadeFeatures();
+	featureDrawer->SwapFadeFeatures();
 }
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
@@ -3088,7 +3054,7 @@ bool CGame::Draw() {
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
-	featureHandler->UpdateDraw();
+	featureDrawer->UpdateDraw();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
@@ -3118,20 +3084,23 @@ bool CGame::Draw() {
 			gd->UpdateExtraTexture();
 		}
 
-		SCOPED_TIMER("Shadows/Reflect");
-		if (shadowHandler->drawShadows &&
-		    (gd->drawMode != CBaseGroundDrawer::drawLos)) {
-			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
-			SetDrawMode(shadowDraw);
-			shadowHandler->CreateShadows();
-			SetDrawMode(normalDraw);
+		{
+			SCOPED_TIMER("Shadows/Reflections");
+			if (shadowHandler->drawShadows &&
+				(gd->drawMode != CBaseGroundDrawer::drawLos)) {
+				// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+				SetDrawMode(shadowDraw);
+				shadowHandler->CreateShadows();
+				SetDrawMode(normalDraw);
+			}
+
+			cubeMapHandler->UpdateReflectionTexture();
+
+			if (FBO::IsSupported())
+				FBO::Unbind();
+
+			glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 		}
-		if (unitDrawer->advShading) {
-			unitDrawer->UpdateReflectTex();
-		}
-		if (FBO::IsSupported())
-			FBO::Unbind();
-		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	}
 
 	glDisable(GL_BLEND);
@@ -3582,6 +3551,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					playerHandler->PlayerLeft(player, inbuf[2]);
+					eventHandler.PlayerRemoved(player, (int) inbuf[2]);
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3712,7 +3682,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SYSTEMMSG:{
-				string s=(char*)(&inbuf[3]);
+				string s=(char*)(&inbuf[4]);
 				logOutput.Print(s);
 				AddTraffic(-1, packetCode, dataLength);
 				break;

@@ -33,6 +33,7 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/StaticMoveType.h"
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/bombdropper.h"
 #include "Sim/Weapons/Cannon.h"
@@ -181,6 +182,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) ||
 		                                 (ud->movedata->moveType == MoveData::Ship_Move)));
 	unit->maxSpeed = ud->speed / GAME_SPEED;
+	unit->maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 	unit->decloakDistance = ud->decloakDistance;
 
 	unit->flankingBonusMode        = ud->flankingBonusMode;
@@ -283,6 +285,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			mt->collide = ud->collide;
 			mt->altitudeRate = ud->verticalSpeed;
 			mt->bankingAllowed = ud->bankingAllowed;
+			mt->useSmoothMesh = ud->useSmoothMesh;
 
 			unit->moveType = mt;
 		}
@@ -312,10 +315,12 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			mt->maxElevator = ud->maxElevator;
 			mt->maxRudder = ud->maxRudder;
 
+			mt->useSmoothMesh = ud->useSmoothMesh;
+
 			unit->moveType = mt;
 		}
 	} else {
-		unit->moveType = new CMoveType(unit);
+		unit->moveType = new CStaticMoveType(unit);
 		unit->upright = true;
 	}
 

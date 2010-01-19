@@ -24,6 +24,8 @@ public:
 	bool spectator;
 	bool isFromDemo;
 	bool readyToStart;
+	bool desynced;
+	float cpuUsage;
 	
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {
@@ -38,21 +40,6 @@ public:
 
 private:
 	customOpts customValues;
-};
-
-/**
- * @brief Contains statistical data about a player concerning a single game.
- */
-class PlayerStatistics : public TeamControllerStatistics
-{
-public:
-	/// how many pixels the mouse has traversed in total
-	int mousePixels;
-	int mouseClicks;
-	int keyPresses;
-
-	/// Change structure from host endian to little endian or vice versa.
-	void swab();
 };
 
 #endif // __PLAYER_BASE_H

@@ -1,6 +1,8 @@
 // Generalized callback interface - shared between global AI and group AI
 #include "StdAfx.h"
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -18,7 +20,6 @@
 #include "NetProtocol.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
-#include "FileSystem/FileSystem.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
@@ -1223,11 +1224,9 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax)
 		const CFeature* f = *it;
 		assert(f);
 
-		if (!f->IsInLosForAllyTeam(allyteam)) {
-			continue;
+		if (f->IsInLosForAllyTeam(allyteam)) {
+			featureIds[featureIds_size++] = f->id;
 		}
-
-		featureIds[featureIds_size++] = f->id;
 	}
 
 	return featureIds_size;
@@ -1246,11 +1245,9 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 		const CFeature* f = *it;
 		assert(f);
 
-		if (!f->IsInLosForAllyTeam(allyteam)) {
-			continue;
+		if (f->IsInLosForAllyTeam(allyteam)) {
+			featureIds[featureIds_size++] = f->id;
 		}
-
-		featureIds[featureIds_size++] = f->id;
 	}
 
 	return featureIds_size;
@@ -1262,11 +1259,9 @@ const FeatureDef* CAICallback::GetFeatureDef(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature* f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			featureDef = f->def;
@@ -1286,11 +1281,9 @@ float CAICallback::GetFeatureHealth(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature *f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			health = f->health;
@@ -1306,11 +1299,9 @@ float CAICallback::GetFeatureReclaimLeft(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature *f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			return f->reclaimLeft;
@@ -1326,11 +1317,9 @@ float3 CAICallback::GetFeaturePos(int featureId)
 
 	verify();
 
-	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	const CFeatureSet::const_iterator it = fset.find(featureId);
+	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (it != fset.end()) {
-		const CFeature *f = *it;
+	if (f) {
 		const int allyteam = teamHandler->AllyTeam(team);
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			pos = f->pos;
@@ -1384,7 +1373,7 @@ bool CAICallback::GetValue(int id, void *data)
 			std::string f((char*) data);
 			f = filesystem.LocateFile(f);
 			strcpy((char*) data, f.c_str());
-			return true;
+			return FileSystemHandler::IsReadableFile(f);
 		}case AIVAL_LOCATE_FILE_W:{
 			std::string f((char*) data);
 			std::string f_abs = filesystem.LocateFile(f, FileSystem::WRITE | FileSystem::CREATE_DIRS);

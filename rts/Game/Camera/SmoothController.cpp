@@ -189,7 +189,7 @@ float3 SmoothController::GetPos()
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 
 	float3 cpos = pos - dir * height;
-
+	cpos.y = std::max(cpos.y, ground->GetHeight(cpos.x,cpos.z)+5.0f);
 	return cpos;
 }
 

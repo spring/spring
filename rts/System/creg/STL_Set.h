@@ -58,11 +58,11 @@ namespace creg
 
 
 	// Set type
-	template<typename T>
-	struct DeduceType < std::set<T> > {
+	template<typename T, typename C>
+	struct DeduceType < std::set<T, C> > {
 		boost::shared_ptr<IType> Get () {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new SetType < std::set <T> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType < std::set <T, C> > (elemtype.Get()));
 		}
 	};
 	// Multiset

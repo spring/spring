@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include <string>
 #include <ostream>
 #include <fstream>
 #include <SDL.h>
@@ -79,7 +80,7 @@ void LoadExtensions()
 	logOutput.Print("GL:   %s\n", glGetString(GL_RENDERER));
 	logOutput.Print("GLEW: %s\n", glewGetString(GLEW_VERSION));
 
-	/** Get available fullscreen/hardware modes **/
+	// Get available fullscreen/hardware modes
 /*
 	SDL_Rect **modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL|SDL_RESIZABLE);
 
@@ -96,6 +97,47 @@ void LoadExtensions()
 		logOutput.Print("SDL_ListModes: %s\n",buffer);
 	}
 */
+
+	if (!GLEW_VERSION_1_4) {
+		logOutput.Print("Minimal required OpenGL version is 1.4\n");
+#if       !defined DEBUG
+		exit(0);
+#endif // !defined DEBUG
+	}
+
+#if       !defined DEBUG
+	// Print out warnings for really crappy graphic cards/drivers
+	{
+		const std::string gfxCard_vendor = (const char*) glGetString(GL_VENDOR);
+		const std::string gfxCard_model  = (const char*) glGetString(GL_RENDERER);
+		bool gfxCard_isWorthATry = true;
+		if (gfxCard_vendor == "SiS") {
+			gfxCard_isWorthATry = false;
+		} else if (gfxCard_model.find("Intel") != std::string::npos) {
+			// the vendor does not have to be Intel
+			if (gfxCard_model.find(" 945G") != std::string::npos) {
+				gfxCard_isWorthATry = false;
+			} else if (gfxCard_model.find(" 915G") != std::string::npos) {
+				gfxCard_isWorthATry = false;
+			}
+		}
+
+		if (!gfxCard_isWorthATry) {
+			logOutput.Print("o_O\n");
+			logOutput.Print("WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG  \n");
+			logOutput.Print(" WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG      \n");
+			logOutput.Print("  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG \n");
+			logOutput.Print("   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG  \n");
+			logOutput.Print("(warning)\n");
+			logOutput.Print("Your graphic card is ...\n");
+			logOutput.Print("well, you know ...\n");
+			logOutput.Print("insufficient\n");
+			logOutput.Print("(in case you are not using a horribly wrong driver).\n");
+			logOutput.Print("If the game crashes, looks ugly or runs slow, buy a better card!\n");
+			logOutput.Print(".\n");
+		}
+	}
+#endif // !defined DEBUG
 
 	std::string s = (char*)glGetString(GL_EXTENSIONS);
 	for (unsigned int i=0; i<s.length(); i++)
@@ -250,7 +292,7 @@ void LoadStartPicture(const std::string& name)
 			// Make smaller but preserve aspect ratio.
 			// The resulting resolution will make it fill one axis of the
 			// screen, and be smaller or equal to the screen on the other axis.
-			const float screen_aspectRatio = (float) gu->viewSizeX / gu->viewSizeY;
+			const float screen_aspectRatio = gu->aspectRatio;
 			const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
 			if (ratioComp > 1.0f) {
 				newX = newX / ratioComp;
@@ -313,7 +355,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	float xDiv = 0.0f;
 	float yDiv = 0.0f;
 	if (startupTexture_keepAspectRatio) {
-		const float screen_aspectRatio = (float) gu->viewSizeX / gu->viewSizeY;
+		const float screen_aspectRatio = gu->aspectRatio;
 		const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
 		if ((ratioComp > 0.99f) && (ratioComp < 1.01f)) { // ~= 1
 			// show Load-Screen full screen
@@ -416,7 +458,7 @@ static bool CheckParseErrors(GLenum target, const char* filename, const char* pr
 	const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
 	logOutput.Print(
-		"[myGL::CheckParseErrors] Shader compilation error at index"
+		"[myGL::CheckParseErrors] Shader compilation error at index "
 		"%d (near \"%.30s\") when loading %s-program file %s:\n%s",
 		errorPos, program + errorPos,
 		(target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"),
@@ -493,3 +535,18 @@ void glClearErrors()
 
 
 /******************************************************************************/
+
+void SetTexGen(const float& scalex, const float& scaley, const float& offsetx, const float& offsety)
+{
+	GLfloat plan[]={scalex,0,0,offsetx};
+	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
+	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
+	glEnable(GL_TEXTURE_GEN_S);
+	GLfloat plan2[]={0,0,scaley,offsety};
+	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
+	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
+	glEnable(GL_TEXTURE_GEN_T);
+}
+
+/******************************************************************************/
+

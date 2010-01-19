@@ -25,10 +25,9 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 
 	tr->config.detailMod = configHandler->Get("SM3TerrainDetail", 200) / 100.0f;
 
-	if (shadowHandler->drawShadows) {
-		shadowrc = tr->AddRenderContext (&shadowCam,false);
-
-		groundShadowVP=LoadVertexProgram("groundshadow.vp");
+	if (shadowHandler->canUseShadows) {
+		shadowrc = tr->AddRenderContext(&shadowCam,false);
+		groundShadowVP = LoadVertexProgram("groundshadow.vp");
 	}
 	else  {
 		shadowrc = 0;
@@ -51,7 +50,7 @@ static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 	tc.right = sc.right;
 	tc.up = sc.up;
 	tc.pos = sc.pos;
-	tc.aspect = gu->viewSizeX / (float)gu->viewSizeY;
+	tc.aspect = gu->aspectRatio;
 
 	tc.right = tc.front.cross(tc.up);
 	tc.right.ANormalize();

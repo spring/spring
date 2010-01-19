@@ -13,6 +13,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"
@@ -426,7 +427,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	pos = newPos;
 
-	featureHandler->UpdateDrawPos(this);
+	featureDrawer->UpdateDrawPos(this);
 
 	// setup finalHeight
 	if (snapToGround) {
@@ -474,14 +475,16 @@ void CFeature::ForcedSpin(const float3& newDir)
 	}
 */
 
-	transMatrix.LoadIdentity();
-	transMatrix.Translate(pos);
-	transMatrix.RotateZ(newDir.z);
-	transMatrix.RotateX(newDir.x);
-	transMatrix.RotateY(newDir.y);
-
-	// const float clamped = fmod(newDir.y, PI * 2.0);
-	// heading = (short int)(clamped * 65536);
+	float3 updir = UpVector;
+	if (updir == newDir) {
+		//FIXME perhaps save the old right,up,front directions, so we can
+		// reconstruct the old upvector and generate a better assumption for updir
+		updir -= GetVectorFromHeading(heading);
+	}
+	float3 rightdir = newDir.cross(updir).Normalize();
+	updir = rightdir.cross(newDir);
+	transMatrix = CMatrix44f(pos, -rightdir, updir, newDir);
+	heading = GetHeadingFromVector(newDir.x, newDir.z);
 }
 
 
@@ -553,7 +556,7 @@ bool CFeature::UpdatePosition()
 				deathSpeed = ZeroVector;
 			}
 
-			featureHandler->UpdateDrawPos(this);
+			featureDrawer->UpdateDrawPos(this);
 
 			CalculateTransform();
 		}

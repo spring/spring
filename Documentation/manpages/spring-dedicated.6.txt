@@ -1,0 +1,52 @@
+spring-dedicated(6)
+===================
+:man source:  Spring package
+:man manual:  Games
+
+
+Name
+----
+spring-dedicated - GUI-less dedicated server for playing spring(6) games
+
+
+Synopsis
+--------
+*spring* SCRIPT
+
+
+Description
+-----------
+Spring is a free Real Time Strategy (RTS) game engine originally designed to
+play Total Annihilation ((C) 1997 Cavedog) content which has evolved into a general RTS
+engine capable of running various kinds of games (mods).
+
+It is mainly designed around online multiplayer games but can be played in
+single-player mode against an AI.
+
+This is the dedicated GUI-less server for hosting multiplayer games. You need to
+feed it a properly formatted script in order to have it host a game.
+
+Files
+-----
+
+  /etc/spring/datadir
+
+Contains the path used by spring and springlobby to save downloaded files and temporary data.
+
+See also
+--------
+
+spring(6)
+
+Homepage
+--------
+
+More information about Spring can be found at
+link:http://springrts.com
+
+Author
+------
+Spring was written by the Spring developers.
+
+This manual page was written by Marco Amadori <marco.amadori@gmail.com>,
+for the Debian project (and may be used by others).

@@ -4,12 +4,15 @@
 #include <boost/cstdint.hpp>
 #include "mmgr.h"
 
-#include "Game/PlayerBase.h"
+#include "Game/PlayerStatistics.h"
 #include "Sim/Misc/Team.h"
 #include "Net/RawPacket.h"
 #include "Rendering/InMapDraw.h"
 #include "Net/PackPacket.h"
 #include "Net/ProtocolDef.h"
+#if defined(_MSC_VER)
+#include "System.h" // for uint16_t (and possibly other types)
+#endif
 
 using netcode::PackPacket;
 typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
@@ -37,7 +40,7 @@ PacketType CBaseNetProtocol::SendQuit(const std::string& reason)
 {
 	unsigned size = 3 + reason.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_QUIT);
-	*packet << static_cast<uint16_t>(size) << reason;
+	*packet << static_cast<boost::uint16_t>(size) << reason;
 	return PacketType(packet);
 }
 
@@ -247,11 +250,16 @@ PacketType CBaseNetProtocol::SendSyncResponse(int frameNum, uint checksum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
+PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, std::string message)
 {
-	unsigned size = 3 + message.size() + 1;
+	if (message.size() > 65000)
+	{
+		message.resize(65000);
+		message += "...";
+	}
+	unsigned size = 1 + 2 + 1 + message.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_SYSTEMMSG);
-	*packet << static_cast<uchar>(size) << myPlayerNum << message;
+	*packet << static_cast<boost::uint16_t>(size) << myPlayerNum << message;
 	return PacketType(packet);
 }
 
@@ -355,7 +363,7 @@ PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, uint64_t flop, std::vector<unsigned> checksums)
+PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, boost::uint64_t flop, std::vector<unsigned> checksums)
 {
 	unsigned size = 1 + 2 + 1 + 8 + checksums.size() * 4;
 	PackPacket* packet = new PackPacket(size, NETMSG_SD_CHKRESPONSE);
@@ -429,7 +437,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEOVER, 1);
 	proto->AddType(NETMSG_MAPDRAW, -1);
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
-	proto->AddType(NETMSG_SYSTEMMSG, -1);
+	proto->AddType(NETMSG_SYSTEMMSG, -2);
 	proto->AddType(NETMSG_STARTPOS, 16);
 	proto->AddType(NETMSG_PLAYERINFO, 8);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);

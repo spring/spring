@@ -17,6 +17,8 @@ public:
 	CSmfMapFile(const std::string& mapname);
 
 	void ReadMinimap(void* data);
+	/// @return mipsize
+	int ReadMinimap(std::vector<uint8_t>& data, unsigned miplevel);
 	void ReadHeightmap(unsigned short* heightmap);
 	void ReadHeightmap(float* heightmap, float base, float mod);
 	void ReadFeatureInfo();
@@ -27,7 +29,7 @@ public:
 	int GetNumFeatures()     const { return featureHeader.numFeatures; }
 	int GetNumFeatureTypes() const { return featureHeader.numFeatureType; }
 
-	const char* GetFeatureType(int typeID) const;
+	const char* GetFeatureTypeName(int typeID) const;
 
 	const SMFHeader& GetHeader() const { return header; }
 

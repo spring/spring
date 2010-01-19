@@ -1,5 +1,7 @@
 /* Copyright (C) 2009 Tobi Vollebregt */
 
+#include "streflopC.h"
+
 #include "streflop_cond.h"
 
 #ifdef __cplusplus

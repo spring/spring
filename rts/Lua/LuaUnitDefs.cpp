@@ -826,6 +826,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("hoverAttack",   ud.hoverAttack);
 	ADD_BOOL("airStrafe",     ud.airStrafe);
 	ADD_BOOL("bankingAllowed",ud.bankingAllowed);
+	ADD_BOOL("useSmoothMesh", ud.useSmoothMesh);
 
 	// < 0 means it can land,
 	// >= 0 indicates how much the unit will move during hovering on the spot

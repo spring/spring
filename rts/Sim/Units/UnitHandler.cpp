@@ -257,8 +257,6 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 void CUnitHandler::Update()
 {
-	SCOPED_TIMER("Unit handler");
-
 	if(!toBeRemoved.empty()) {
 
 		GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
@@ -276,9 +274,21 @@ void CUnitHandler::Update()
 
 	GML_UPDATE_TICKS();
 
-	std::list<CUnit*>::iterator usi;
-	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-		(*usi)->Update();
+	{
+		SCOPED_TIMER("Unit Movetype update");
+		std::list<CUnit*>::iterator usi;
+		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+			(*usi)->moveType->Update();
+			GML_GET_TICKS((*usi)->lastUnitUpdate);
+		}
+	}
+
+	{
+		SCOPED_TIMER("Unit update");
+		std::list<CUnit*>::iterator usi;
+		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+			(*usi)->Update();
+		}
 	}
 
 	{
@@ -405,8 +415,14 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 	CSolidObject* s;
 
 	if ((s = groundBlockingObjectMap->GroundBlocked(yardypos * gs->mapx + yardxpos))) {
-		if (dynamic_cast<CFeature*>(s)) {
-			feature = (CFeature*) s;
+		CFeature* f;
+		if ((f = dynamic_cast<CFeature*>(s))) {
+			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {
+				if (!f->def->reclaimable) {
+					return 0;
+				}
+				feature = f;
+			}
 		} else if (!dynamic_cast<CUnit*>(s) || (allyteam < 0) ||
 			(((CUnit*) s)->losStatus[allyteam] & LOS_INLOS)) {
 			if (s->immobile) {

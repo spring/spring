@@ -100,7 +100,6 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
 	s.SerializeObjectInstance(eoh, eoh->GetClass());
-	s.SerializeObjectInstance(&CBuilderCAI::reclaimers,CBuilderCAI::reclaimers.GetClass());
 //	s.Serialize()
 }
 
@@ -114,7 +113,7 @@ void PrintSize(const char *txt, int size)
 
 void CLoadSaveHandler::SaveGame(const std::string& file)
 {
-	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
+	RandomStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
@@ -143,13 +142,13 @@ void CLoadSaveHandler::SaveGame(const std::string& file)
 		eoh->Save(&ofs);
 		PrintSize("AIs",((int)ofs.tellp())-aistart);
 	} catch (content_error &e) {
-		logOutput.Print("Save faild(content error): %s",e.what());
+		logOutput.Print("Save failed(content error): %s",e.what());
 	} catch (std::exception &e) {
-		logOutput.Print("Save faild: %s",e.what());
+		logOutput.Print("Save failed: %s",e.what());
 	} catch (char* &e) {
-		logOutput.Print("Save faild: %s",e);
+		logOutput.Print("Save failed: %s",e);
 	} catch (...) {
-		logOutput.Print("Save faild(unknwon error)");
+		logOutput.Print("Save failed(unknwon error)");
 	}
 	UnloadStartPicture();
 }
@@ -187,7 +186,7 @@ void CLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 /// this should be called on frame 0 when the game has started
 void CLoadSaveHandler::LoadGame()
 {
-	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
+	RandomStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Loading game");
 	creg::CInputStreamSerializer inputStream;
 	void *pGSC = 0;

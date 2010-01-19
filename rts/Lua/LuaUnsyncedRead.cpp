@@ -195,8 +195,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetGroupList);
 	REGISTER_LUA_CFUNC(GetSelectedGroup);
-	REGISTER_LUA_CFUNC(GetGroupAIName);
-	REGISTER_LUA_CFUNC(GetGroupAIList);
 
 	REGISTER_LUA_CFUNC(GetUnitGroup);
 
@@ -510,7 +508,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // IsUnitSelected
+//	GML_RECMUTEX_LOCK(sel); // IsUnitSelected - this mutex is already locked (lua)
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
@@ -696,50 +694,54 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	//! arg 3 - noIcons
 	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
 
-
 	vector<const CUnitSet*> unitSets;
 	static CUnitSet visQuadUnits;
 
 	CUnitQuads quadIter;
-	readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter);
-
 	int count = 0;
-	lua_createtable(L, quadIter.count, 0);
 
-	//! setup the list of unit sets
-	if (quadIter.count > uh->activeUnits.size()/3) {
-		//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
-		if (teamID >= 0) {
-			unitSets.push_back(&teamHandler->Team(teamID)->units);
-		}
-		else {
-			for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
-				if ((teamID == AllUnits) ||
-				    ((teamID == AllyUnits)  && (allyTeamID == teamHandler->AllyTeam(t))) ||
-				    ((teamID == EnemyUnits) && (allyTeamID != teamHandler->AllyTeam(t))))
-				{
-					unitSets.push_back(&teamHandler->Team(t)->units);
+	{
+		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
+
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter);
+
+		lua_createtable(L, quadIter.count, 0);
+
+		//! setup the list of unit sets
+		if (quadIter.count > uh->activeUnits.size()/3) {
+			//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
+			if (teamID >= 0) {
+				unitSets.push_back(&teamHandler->Team(teamID)->units);
+			}
+			else {
+				for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
+					if ((teamID == AllUnits) ||
+						((teamID == AllyUnits)  && (allyTeamID == teamHandler->AllyTeam(t))) ||
+						((teamID == EnemyUnits) && (allyTeamID != teamHandler->AllyTeam(t))))
+					{
+						unitSets.push_back(&teamHandler->Team(t)->units);
+					}
 				}
 			}
-		}
-	} else {
-		//! features can exist in multiple quads, so we need to do a duplication check
-		visQuadUnits.clear();
-		std::vector<const std::list<CUnit*>*>::iterator sit;
-		for (sit = quadIter.visunits.begin(); sit != quadIter.visunits.end(); ++sit) {
-			std::list<CUnit*>::const_iterator unitIt;
-			for (unitIt = (*sit)->begin(); unitIt != (*sit)->end(); ++unitIt) {
-				CUnit* unit = *unitIt;
-				if ((teamID == AllUnits) ||
-				    ((teamID >= 0) && (teamID == unit->team)) ||
-				    ((teamID == AllyUnits)  && (allyTeamID == unit->allyteam)) ||
-				    ((teamID == EnemyUnits) && (allyTeamID != unit->allyteam)))
-				{
-					visQuadUnits.insert(unit);
+		} else {
+			//! features can exist in multiple quads, so we need to do a duplication check
+			visQuadUnits.clear();
+			std::vector<const std::list<CUnit*>*>::iterator sit;
+			for (sit = quadIter.visunits.begin(); sit != quadIter.visunits.end(); ++sit) {
+				std::list<CUnit*>::const_iterator unitIt;
+				for (unitIt = (*sit)->begin(); unitIt != (*sit)->end(); ++unitIt) {
+					CUnit* unit = *unitIt;
+					if ((teamID == AllUnits) ||
+						((teamID >= 0) && (teamID == unit->team)) ||
+						((teamID == AllyUnits)  && (allyTeamID == unit->allyteam)) ||
+						((teamID == EnemyUnits) && (allyTeamID != unit->allyteam)))
+					{
+						visQuadUnits.insert(unit);
+					}
 				}
 			}
+			unitSets.push_back(&visQuadUnits);
 		}
-		unitSets.push_back(&visQuadUnits);
 	}
 
 	const float iconLength = unitDrawer->iconLength;
@@ -819,33 +821,38 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	// arg 4 - noGeos
 	const bool noGeos = lua_isboolean(L, 4) && !lua_toboolean(L, 4);
 
-
 	const float maxDist = 6000.0f; //from FeatureHandler.cpp
 
-	CFeatureQuads quadIter;
-	readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, maxDist, &quadIter);
-
-	int count = 0;
-	lua_createtable(L, quadIter.count, 0);
-
-	static CFeatureSet visQuadFeatures;
 	bool scanAll = false;
+	static CFeatureSet visQuadFeatures;
 
-	//! setup the list of features
-	if (quadIter.count > featureHandler->GetActiveFeatures().size()/3) {
-		//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
-		scanAll = true;
-	} else {
-		//! features can exist in multiple quads, so we need to do a duplication check
-		visQuadFeatures.clear();
-		std::vector<const std::list<CFeature*>*>::iterator it;
-		for (it = quadIter.visfeatures.begin(); it != quadIter.visfeatures.end(); ++it) {
-			std::list<CFeature*>::const_iterator featureIt;
-			for (featureIt = (*it)->begin(); featureIt != (*it)->end(); ++featureIt) {
-				visQuadFeatures.insert(*featureIt);
+	CFeatureQuads quadIter;
+	int count = 0;
+
+	{
+		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
+
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, maxDist, &quadIter);
+
+		lua_createtable(L, quadIter.count, 0);
+
+		//! setup the list of features
+		if (quadIter.count > featureHandler->GetActiveFeatures().size()/3) {
+			//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
+			scanAll = true;
+		} else {
+			//! features can exist in multiple quads, so we need to do a duplication check
+			visQuadFeatures.clear();
+			std::vector<const std::list<CFeature*>*>::iterator it;
+			for (it = quadIter.visfeatures.begin(); it != quadIter.visfeatures.end(); ++it) {
+				std::list<CFeature*>::const_iterator featureIt;
+				for (featureIt = (*it)->begin(); featureIt != (*it)->end(); ++featureIt) {
+					visQuadFeatures.insert(*featureIt);
+				}
 			}
 		}
 	}
+
 	const CFeatureSet& featureSet = (scanAll) ? featureHandler->GetActiveFeatures() : visQuadFeatures;
 
 	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
@@ -927,7 +934,7 @@ int LuaUnsyncedRead::GetSpectatingState(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits
+//	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits - this mutex is already locked (lua)
 
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
@@ -947,7 +954,7 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsSorted
+//	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsSorted - this mutex is already locked (lua)
 
 	CheckNoArgs(L, __FUNCTION__);
 
@@ -982,7 +989,7 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsCounts
+//	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsCounts - this mutex is already locked (lua)
 
 	CheckNoArgs(L, __FUNCTION__);
 
@@ -1450,7 +1457,7 @@ int LuaUnsyncedRead::GetFPS(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetActiveCommand
+//	GML_RECMUTEX_LOCK(gui); // GetActiveCommand - this mutex is already locked (lua)
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1474,7 +1481,7 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
+//	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand - this mutex is already locked (lua)
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1528,7 +1535,7 @@ static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs
+//	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs - this mutex is already locked (lua)
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1549,7 +1556,7 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDesc
+//	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDesc - this mutex is already locked (lua)
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1572,7 +1579,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 
 int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetCmdDescIndex
+//	GML_RECMUTEX_LOCK(gui); // GetCmdDescIndex - this mutex is already locked (lua)
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1914,7 +1921,7 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupList(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupList
+//	GML_RECMUTEX_LOCK(group); // GetGroupList - this mutex is already locked (lua)
 
 	CheckNoArgs(L, __FUNCTION__);
 	if (grouphandlers[gu->myTeam] == NULL) {
@@ -1946,28 +1953,6 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 }
 
 
-int LuaUnsyncedRead::GetGroupAIList(lua_State* L)
-{
-	GML_RECMUTEX_LOCK(group); // GetGroupAIList
-
-	int groupAIsDoNotExistAnymore = false;
-	assert(groupAIsDoNotExistAnymore);
-
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetGroupAIName(lua_State* L)
-{
-	GML_RECMUTEX_LOCK(group); // GetGroupAIName
-
-	int groupAIsDoNotExistAnymore = false;
-	assert(groupAIsDoNotExistAnymore);
-
-	return 0; // failure
-}
-
-
 int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1986,7 +1971,7 @@ int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnits
+//	GML_RECMUTEX_LOCK(group); // GetGroupUnits - this mutex is already locked (lua)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
@@ -2013,7 +1998,7 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnitsSorted
+//	GML_RECMUTEX_LOCK(group); // GetGroupUnitsSorted - this mutex is already locked (lua)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
@@ -2054,7 +2039,7 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCounts
+//	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCounts - this mutex is already locked (lua)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
@@ -2092,7 +2077,7 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCount
+//	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCount - this mutex is already locked (lua)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;

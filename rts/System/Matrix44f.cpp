@@ -22,6 +22,14 @@ CMatrix44f::CMatrix44f(const float3& pos,const float3& x,const float3& y,const f
 	m[12] = pos.x; m[13] = pos.y; m[14] = pos.z; m[15] = 1.0f;
 }
 
+CMatrix44f::CMatrix44f(const float& rotX, const float& rotY, const float& rotZ)
+{
+	LoadIdentity();
+	RotateX(rotX);
+	RotateY(rotY);
+	RotateZ(rotZ);
+}
+
 
 CMatrix44f::CMatrix44f(const CMatrix44f& n)
 {

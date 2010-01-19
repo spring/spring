@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Picture.h"
 
 #include "Rendering/Textures/Bitmap.h"

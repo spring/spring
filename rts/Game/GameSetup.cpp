@@ -12,7 +12,6 @@
 #include "TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
-#include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
@@ -57,7 +56,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 	for(size_t a = 0; a < teamStartingData.size(); ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
-		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
+		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
 		teamStartingData[a].startPos = float3(pos.x, pos.y, pos.z);
 	}
@@ -65,8 +64,6 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 void CGameSetup::LoadStartPositions(bool withoutMap)
 {
-	TdfParser file(gameSetupText.c_str(), gameSetupText.length());
-
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
 		throw content_error("You need the map to use the map's startpositions");
 
@@ -89,32 +86,13 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 		}
 	}
 
-	if (!withoutMap)
+	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random)
 		LoadStartPositionsFromMap();
 
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
 		for (size_t a = 0; a < teamStartingData.size(); ++a) {
 			teamStartingData[a].startPos.y = -500;
-		}
-	}
-
-	// Load start position from gameSetup script
-	if (startPosType == StartPos_ChooseBeforeGame) {
-		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			char section[50];
-			sprintf(section, "GAME\\TEAM%i\\", a);
-			string s(section);
-			std::string xpos = file.SGetValueDef("", s + "StartPosX");
-			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
-			if (!xpos.empty())
-			{
-				teamStartingData[a].startPos.x = atoi(xpos.c_str());
-			}
-			if (!zpos.empty())
-			{
-				teamStartingData[a].startPos.z = atoi(zpos.c_str());
-			}
 		}
 	}
 }
@@ -257,7 +235,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		// Get default color from palette (based on "color" tag)
 		for (size_t num = 0; num < 3; ++num)
 		{
-			data.color[num] = palette.teamColor[a][num];
+			data.color[num] = TeamBase::teamDefaultColor[a][num];
 		}
 		data.color[3] = 255;
 
@@ -334,7 +312,9 @@ void CGameSetup::RemapPlayers()
 	// relocate Team.TeamLeader field
 	for (size_t a = 0; a < teamStartingData.size(); ++a) {
 		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
-			throw content_error("invalid Team.leader in GameSetup script");
+			std::ostringstream buf;
+			buf << "GameSetup: Team " << a << " has invalid leader: " << teamStartingData[a].leader;
+			throw content_error(buf.str());
 		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}

@@ -13,7 +13,6 @@
 #include "creg/creg_cond.h"
 
 class CGroup;
-class CUnitSet;
 
 /**
  * Handles All Groups of a single team.

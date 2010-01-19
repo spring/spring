@@ -27,43 +27,38 @@ CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
 //CR_REG_METADATA(CSmfReadMap, (
 //				))
 
-CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer ()
-{
-	return groundDrawer;
-}
-
 
 CSmfReadMap::CSmfReadMap(std::string mapname)
 	: file(mapname)
 {
-	PrintLoadMsg("Opening map file");
+	PrintLoadMsg("Loading map");
 
 	ConfigureAnisotropy();
 	usePBO = !!configHandler->Get("UsePBO", 1);
 
 	for(int a=0;a<1024;++a){
 		for(int b=0;b<3;++b){
-			float c=max(mapInfo->water.minColor[b],mapInfo->water.baseColor[b]-mapInfo->water.absorb[b]*a);
-			waterHeightColors[a*4+b]=(unsigned char)(c*210);
+			float c = max(mapInfo->water.minColor[b], mapInfo->water.baseColor[b] - mapInfo->water.absorb[b] * a);
+			waterHeightColors[a * 4 + b]=(unsigned char)(c * 210);
 		}
 		waterHeightColors[a*4+3]=1;
 	}
 
 	const SMFHeader& header = file.GetHeader();
 
-	width=header.mapx;
-	height=header.mapy;
-	gs->mapx=header.mapx;
-	gs->mapy=header.mapy;
+	width  = header.mapx;
+	height = header.mapy;
+	gs->mapx = header.mapx;
+	gs->mapy = header.mapy;
 	gs->mapSquares = gs->mapx*gs->mapy;
-	gs->hmapx=gs->mapx/2;
-	gs->hmapy=gs->mapy/2;
-	gs->pwr2mapx=next_power_of_2(gs->mapx);
-	gs->pwr2mapy=next_power_of_2(gs->mapy);
+	gs->hmapx = gs->mapx/2;
+	gs->hmapy = gs->mapy/2;
+	gs->pwr2mapx = next_power_of_2(gs->mapx);
+	gs->pwr2mapy = next_power_of_2(gs->mapy);
 
-//	logOutput.Print("%i %i",gs->mapx,gs->mapy);
-	float3::maxxpos=gs->mapx*SQUARE_SIZE-1;
-	float3::maxzpos=gs->mapy*SQUARE_SIZE-1;
+	//logOutput.Print("MapSizes: %i %i %i %i",gs->mapx,gs->mapy,gs->pwr2mapx,gs->pwr2mapy);
+	float3::maxxpos = gs->mapx * SQUARE_SIZE - 1;
+	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
 
 	heightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
 
@@ -83,8 +78,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 		mapChecksum *= mapname[a];
 	}
 
-	PrintLoadMsg("Loading detail textures");
-
 	detailTexName = mapInfo->smf.detailTexName;
 
 	CBitmap bm;
@@ -95,12 +88,10 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glBindTexture(GL_TEXTURE_2D, detailTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
-
-	PrintLoadMsg("Creating overhead texture");
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
 
 	unsigned char* buf=new unsigned char[MINIMAP_SIZE];
 	file.ReadMinimap(buf);
@@ -109,43 +100,34 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP-1);
 	int offset=0;
 	for (unsigned int i = 0; i < MINIMAP_NUM_MIPMAP; i++) {
 		int mipsize = 1024>>i;
-
 		int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
-
 		glCompressedTexImage2DARB(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipsize, mipsize, 0, size, buf + offset);
-
 		offset += size;
 	}
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP-1 );
-
 	delete[] buf;
-
-	PrintLoadMsg("Creating ground shading");
 
 	unsigned char* bufZero = new unsigned char[gs->pwr2mapx * gs->pwr2mapy * 4];
 	memset(bufZero, 0, gs->pwr2mapx * gs->pwr2mapy * 4);
 
 	glGenTextures(1, &shadowTex);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, bufZero);
-
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, bufZero);
 
 	delete[] bufZero;
 
-	HeightmapUpdated(0, gs->mapx, 0, gs->mapy);
-
-	groundDrawer=new CBFGroundDrawer(this);
+	groundDrawer = new CBFGroundDrawer(this);
 
 	file.ReadFeatureInfo ();
 }
@@ -161,7 +143,7 @@ CSmfReadMap::~CSmfReadMap()
 }
 
 
-void CSmfReadMap::HeightmapUpdatedNow(int x1, int x2, int y1, int y2)
+void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 {
 	x1-=x1&3;
 	x2+=(20004-x2)&3;
@@ -172,62 +154,58 @@ void CSmfReadMap::HeightmapUpdatedNow(int x1, int x2, int y1, int y2)
 	int xsize=x2-x1;
 	int ysize=y2-y1;
 
-	//logOutput.Print("%i %i %i %i",x1,x2,y1,y2);
 	unsigned char* tempMem=new unsigned char[xsize*ysize*4];
+
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
-			float height = centerheightmap[(x+x1)+(y+y1)*gs->mapx];
+			int xi=x+x1, yi=y+y1;
+			const float& height = centerheightmap[(xi)+(yi)*gs->mapx];
 
 			if(height<0){
-				int h=(int)-height;
+				int h=(int)-height & 1023; //! waterHeightColors array just holds 1024 colors
+				float light = std::min((DiffuseSunCoeff(x+x1,y+y1) + 0.2f) * 2.0f, 1.0f);
 
 				if(height>-10){
-					float3 light = GetLightValue(x+x1,y+y1)*210.0f;
-					float wc=-height*0.1f;
-					tempMem[(y*xsize+x)*4+0] = (unsigned char)(waterHeightColors[h*4+0]*wc+light.x*(1-wc));
-					tempMem[(y*xsize+x)*4+1] = (unsigned char)(waterHeightColors[h*4+1]*wc+light.y*(1-wc));
-					tempMem[(y*xsize+x)*4+2] = (unsigned char)(waterHeightColors[h*4+2]*wc+light.z*(1-wc));
-				} else if(h<1024){
-					tempMem[(y*xsize+x)*4+0] = waterHeightColors[h*4+0];
-					tempMem[(y*xsize+x)*4+1] = waterHeightColors[h*4+1];
-					tempMem[(y*xsize+x)*4+2] = waterHeightColors[h*4+2];
+					float wc = -height*0.1f;
+					float3 light3 = GetLightValue(x+x1,y+y1) * (1.0f - wc) * 210.0f;
+					light *= wc;
+					tempMem[(y*xsize+x)*4+0] = (unsigned char)(waterHeightColors[h*4+0]*light+light3.x);
+					tempMem[(y*xsize+x)*4+1] = (unsigned char)(waterHeightColors[h*4+1]*light+light3.y);
+					tempMem[(y*xsize+x)*4+2] = (unsigned char)(waterHeightColors[h*4+2]*light+light3.z);
 				} else {
-					tempMem[(y*xsize+x)*4+0] = waterHeightColors[1023*4+0];
-					tempMem[(y*xsize+x)*4+1] = waterHeightColors[1023*4+1];
-					tempMem[(y*xsize+x)*4+2] = waterHeightColors[1023*4+2];
+					tempMem[(y*xsize+x)*4+0] = (unsigned char)(waterHeightColors[h*4+0] * light);
+					tempMem[(y*xsize+x)*4+1] = (unsigned char)(waterHeightColors[h*4+1] * light);
+					tempMem[(y*xsize+x)*4+2] = (unsigned char)(waterHeightColors[h*4+2] * light);
 				}
 				tempMem[(y*xsize+x)*4+3] = EncodeHeight(height);
 			} else {
 				float3 light = GetLightValue(x+x1,y+y1)*210.0f;
-				tempMem[(y*xsize+x)*4] = (unsigned char)light.x;
+				tempMem[(y*xsize+x)*4+0] = (unsigned char)light.x;
 				tempMem[(y*xsize+x)*4+1] = (unsigned char)light.y;
 				tempMem[(y*xsize+x)*4+2] = (unsigned char)light.z;
 				tempMem[(y*xsize+x)*4+3] = 255;
 			}
 		}
 	}
+
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
 	glTexSubImage2D(GL_TEXTURE_2D,0,x1,y1,xsize,ysize,GL_RGBA,GL_UNSIGNED_BYTE,tempMem);
 
 	delete[] tempMem;
-
 }
 
 
-float3 CSmfReadMap::GetLightValue(int x, int y)
+float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
-	float3 n1 = facenormals[((y * gs->mapx) + x) * 2] +
-	            facenormals[((y * gs->mapx) + x) * 2 + 1];
-	n1.ANormalize();
+	float3& n = centernormals[(y * gs->mapx) + x];
+	return Clamp(mapInfo->light.sunDir.dot(n), 0.0f, 1.0f);
+}
 
-	float3 light = mapInfo->light.groundSunColor * mapInfo->light.sunDir.dot(n1);
-	for (int a = 0; a < 3; ++a) {
-		if (light[a] < 0.0f) {
-			light[a] = 0.0f;
-		}
-	}
 
-	light+=mapInfo->light.groundAmbientColor;
+float3 CSmfReadMap::GetLightValue(const int& x, const int& y) const
+{
+	float3 light = mapInfo->light.groundSunColor * DiffuseSunCoeff(x, y);
+	light += mapInfo->light.groundAmbientColor;
 	for (int a = 0; a < 3; ++a) {
 		if (light[a] > 1.0f){
 			light[a] = 1.0f;
@@ -238,23 +216,23 @@ float3 CSmfReadMap::GetLightValue(int x, int y)
 }
 
 
-void CSmfReadMap::DrawMinimap ()
+void CSmfReadMap::DrawMinimap() const
 {
 	glDisable(GL_ALPHA_TEST);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_MODULATE);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,2);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 
 	if(groundDrawer->DrawExtraTex()){
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -268,6 +246,7 @@ void CSmfReadMap::DrawMinimap ()
 	static float isx=gs->mapx/float(gs->pwr2mapx);
 	static float isy=gs->mapy/float(gs->pwr2mapy);
 
+	glColor4f(1,1,1,1);
 	glBegin(GL_QUADS);
 		glTexCoord2f(0,isy);
 		glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,1);
@@ -295,8 +274,8 @@ void CSmfReadMap::DrawMinimap ()
 	glDisable(GL_TEXTURE_2D);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_RGB_SCALE_ARB,1);
+	//glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glDisable(GL_TEXTURE_2D);
 }
 
@@ -381,9 +360,9 @@ void CSmfReadMap::GetFeatureInfo (MapFeatureInfo* f)
 }
 
 
-const char *CSmfReadMap::GetFeatureType (int typeID)
+const char *CSmfReadMap::GetFeatureTypeName (int typeID)
 {
-	return file.GetFeatureType(typeID);
+	return file.GetFeatureTypeName(typeID);
 }
 
 

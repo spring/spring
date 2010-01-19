@@ -43,7 +43,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
+				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -132,7 +132,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
@@ -227,7 +227,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
@@ -325,7 +325,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="SYNCDEBUG;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
+				PreprocessorDefinitions="SYNCDEBUG;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
@@ -419,7 +419,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK;USE_GML;USE_GML_SIM;NO_AVI"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;USE_GML;USE_GML_SIM;NO_AVI"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
@@ -514,7 +514,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;USE_GML;USE_GML_SIM"
+				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -936,6 +936,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\PlayerStatistics.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerStatistics.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\PreGame.cpp"
 				>
 			</File>
@@ -957,22 +965,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\SelectedUnitsAI.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\SelectionWidget.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\SelectionWidget.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\SelectMenu.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\SelectMenu.h"
 				>
 			</File>
 			<File
@@ -1912,6 +1904,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\Screenshot.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\Screenshot.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\ShadowHandler.cpp"
 				>
 			</File>
@@ -1944,6 +1944,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\UnitModels\3DOParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\UnitModels\FeatureDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\UnitModels\FeatureDrawer.h"
 					>
 				</File>
 				<File
@@ -2064,6 +2072,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Env\BumpWater.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\CubeMapHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\CubeMapHandler.h"
 					>
 				</File>
 				<File
@@ -2319,6 +2335,26 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Shaders"
+				>
+				<File
+					RelativePath="..\..\Rendering\Shaders\Shader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Shaders\Shader.hpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Shaders\ShaderHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Shaders\ShaderHandler.hpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Sim"
@@ -2364,14 +2400,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Units\UnitLoader.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Units\UnitSet.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Units\UnitSet.h"
 					>
 				</File>
 				<File
@@ -3195,6 +3223,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\MoveTypes\StaticMoveType.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\StaticMoveType.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.cpp"
 					>
 				</File>
@@ -3511,6 +3547,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\SmoothHeightMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\SmoothHeightMesh.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\Team.cpp"
 					>
 				</File>
@@ -3532,6 +3576,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Misc\TeamHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamStatistics.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamStatistics.h"
 					>
 				</File>
 				<File
@@ -3568,14 +3620,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Features\FeatureHandler.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Features\FeatureSet.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Features\FeatureSet.h"
 					>
 				</File>
 			</Filter>
@@ -4208,14 +4252,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\UpdaterWindow.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\UpdaterWindow.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\Util.cpp"
 				>
 			</File>
@@ -4532,6 +4568,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\FileSystem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystemHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystemHandler.h"
 					>
 				</File>
 				<File
@@ -12853,6 +12897,34 @@
 					RelativePath="..\..\lib\liblobby\Connection.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\lib\liblobby\UserCache.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\liblobby\UserCache.h"
+					>
+				</File>
+				<Filter
+					Name="md5"
+					>
+					<File
+						RelativePath="..\..\lib\liblobby\md5\base64.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\liblobby\md5\base64.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\liblobby\md5\md5.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\lib\liblobby\md5\md5.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -12940,6 +13012,42 @@
 			</File>
 			<File
 				RelativePath="..\..\aGui\Window.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Menu"
+			>
+			<File
+				RelativePath="..\..\Menu\LobbyConnection.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\LobbyConnection.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\SelectionWidget.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\SelectionWidget.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\SelectMenu.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\SelectMenu.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\UpdaterWindow.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\UpdaterWindow.h"
 				>
 			</File>
 		</Filter>

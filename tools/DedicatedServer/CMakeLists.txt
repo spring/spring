@@ -36,19 +36,19 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Game/GameSetup
 	../../rts/Game/GameData
 	../../rts/Game/PlayerBase
+	../../rts/Game/PlayerStatistics
 	../../rts/Game/GameVersion
 	../../rts/Game/CommandMessage
 	../../rts/Game/ChatMessage
-	../../rts/Game/Console
 	../../rts/Game/Action
 	../../rts/Sim/Misc/TeamBase
+	../../rts/Sim/Misc/TeamStatistics
 	../../rts/Sim/Misc/AllyTeam
 	../../rts/Lua/LuaIO
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
-	../../rts/Map/MapParser
-	../../rts/Rendering/Textures/TAPalette)
-TARGET_LINK_LIBRARIES(springserver ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} hpiutil2 7zip minizip lua)
+	../../rts/Map/MapParser)
+TARGET_LINK_LIBRARIES(springserver ${SDL_LIBRARY_TEMP} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} hpiutil2 7zip minizip lua)
 if (MINGW)
 	TARGET_LINK_LIBRARIES (springserver ws2_32)
 else (MINGW)

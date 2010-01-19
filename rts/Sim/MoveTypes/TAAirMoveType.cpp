@@ -12,6 +12,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -47,7 +48,7 @@ CR_REG_METADATA(CTAAirMoveType, (
 	CR_MEMBER(decRate),
 	CR_MEMBER(altitudeRate),
 
-	CR_MEMBER(breakDistance),
+	CR_MEMBER(brakeDistance),
 	CR_MEMBER(dontLand),
 	CR_MEMBER(lastMoveRate),
 
@@ -82,7 +83,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	accRate(1),
 	decRate(1),
 	altitudeRate(3.0f),
-	breakDistance(1),
+	brakeDistance(1),
 	dontLand(false),
 	lastMoveRate(0),
 	forceHeading(false),
@@ -188,7 +189,7 @@ void CTAAirMoveType::StartMoving(float3 pos, float goalRadius)
 	}
 
 	SetGoal(pos, goalRadius);
-	breakDistance = ((maxSpeed * maxSpeed) / decRate);
+	brakeDistance = ((maxSpeed * maxSpeed) / decRate);
 }
 
 void CTAAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
@@ -254,6 +255,11 @@ void CTAAirMoveType::ExecuteStop()
 		case AIRCRAFT_CRASHING:
 			break;
 		case AIRCRAFT_HOVERING:
+			if (!dontLand && autoLand) {
+				// land immediately
+				SetState(AIRCRAFT_LANDING);
+				waitCounter = 30;
+			}
 			break;
 	}
 }
@@ -363,9 +369,12 @@ void CTAAirMoveType::UpdateFlying()
 		}
 	}
 
+	float gHeight = UseSmoothMesh()
+			? std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z))
+			: ground->GetHeight(pos.x, pos.z);
 	// are we there yet?
 	bool closeToGoal = (dir.SqLength2D() < maxDrift * maxDrift)
-			&& (fabs(ground->GetHeight(pos.x, pos.z) - pos.y + wantedHeight) < maxDrift);
+			&& (fabs(gHeight - pos.y + wantedHeight) < maxDrift);
 
 	if (flyState == FLY_ATTACKING)
 		closeToGoal = (dir.SqLength2D() < 400);
@@ -410,12 +419,11 @@ void CTAAirMoveType::UpdateFlying()
 							relPos.x = 0.0001f;
 						relPos.y = 0;
 						relPos.Normalize();
-						CMatrix44f rot;
-						rot.RotateY(1.0f);
+						static CMatrix44f rot(0.0f,fastmath::PI/4.0f,0.0f);
 						float3 newPos = rot.Mul(relPos);
 
 						// Make sure the point is on the circle
-						newPos = newPos.Normalize() * goalDistance;
+						newPos = newPos * goalDistance;
 
 						//Go there in a straight line
 						goalPos = circlingPos + newPos;
@@ -429,14 +437,14 @@ void CTAAirMoveType::UpdateFlying()
 					if (relPos.x < 0.0001f && relPos.x > -0.0001f)
 						relPos.x = 0.0001f;
 					relPos.y = 0;
-					relPos.ANormalize();
+					relPos.Normalize();
 					CMatrix44f rot;
 					if (gs->randFloat() > 0.5f)
 						rot.RotateY(0.6f + gs->randFloat() * 0.6f);
 					else
 						rot.RotateY(-(0.6f + gs->randFloat() * 0.6f));
 					float3 newPos = rot.Mul(relPos);
-					newPos = newPos.Normalize() * goalDistance;
+					newPos = newPos * goalDistance;
 
 					// Go there in a straight line
 					goalPos = circlingPos + newPos;
@@ -459,7 +467,7 @@ void CTAAirMoveType::UpdateFlying()
 	// an intermediate waypoint, don't slow down (FIXME)
 
 	/// if (flyState != FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands()) {
-	if (flyState != FLY_ATTACKING && dist < breakDistance) {
+	if (flyState != FLY_ATTACKING && dist < brakeDistance) {
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
 	}
 
@@ -596,9 +604,9 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 
 	float limit = std::min(1.0f,goalPos.SqDistance2D(owner->pos)*Square(0.15f));
 	if(Square(wantedBank)>limit)
-		wantedBank =  streflop::sqrt(limit);
+		wantedBank =  math::sqrt(limit);
 	else if(Square(wantedBank)<-limit)
-		wantedBank = -streflop::sqrt(limit);
+		wantedBank = -math::sqrt(limit);
 
 	//Adjust our banking to the desired value
 	if (currentBank > wantedBank)
@@ -636,7 +644,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 		if (sqdl < Square(accRate)) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / streflop::sqrt(sqdl) * accRate;
+			speed += delta / math::sqrt(sqdl) * accRate;
 		}
 	} else {
 		// break
@@ -644,14 +652,21 @@ void CTAAirMoveType::UpdateAirPhysics()
 		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / streflop::sqrt(sqdl) * decRate;
+			speed += delta / math::sqrt(sqdl) * decRate;
 		}
 	}
 
 	speed.y = yspeed;
-	float h = pos.y - std::max(
-		ground->GetHeight(pos.x, pos.z),
-		ground->GetHeight(pos.x + speed.x * 40.0f, pos.z + speed.z * 40.0f));
+	float h;
+	if (UseSmoothMesh()) {
+		h = pos.y - std::max(
+			smoothGround->GetHeight(pos.x, pos.z),
+			smoothGround->GetHeight(pos.x + speed.x * 20.0f, pos.z + speed.z * 20.0f));
+	} else {
+		h = pos.y - std::max(
+			ground->GetHeight(pos.x, pos.z),
+			ground->GetHeight(pos.x + speed.x * 40.0f, pos.z + speed.z * 40.0f));
+	}
 
 	if (h < 4.0f) {
 		speed.x *= 0.95f;
@@ -999,6 +1014,11 @@ void CTAAirMoveType::SetWantedAltitude(float altitude)
 	} else {
 		wantedHeight = altitude;
 	}
+}
+
+void CTAAirMoveType::SetDefaultAltitude(float altitude)
+{
+	wantedHeight = orgWantedHeight = altitude;
 }
 
 void CTAAirMoveType::CheckForCollision(void)

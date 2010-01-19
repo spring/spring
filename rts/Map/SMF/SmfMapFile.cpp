@@ -33,6 +33,24 @@ void CSmfMapFile::ReadMinimap(void* data)
 	ifs.Read(data, MINIMAP_SIZE);
 }
 
+int CSmfMapFile::ReadMinimap(std::vector<uint8_t>& data, unsigned miplevel)
+{
+	int offset=0;
+	int mipsize = 1024;
+	for (unsigned i = 0; i < std::min((unsigned)MINIMAP_NUM_MIPMAP, miplevel); i++)
+	{
+		const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+		offset += size;
+		mipsize >>= 1;
+	}
+
+	const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+	data.resize(size);
+	
+	ifs.Seek(header.minimapPtr + offset);
+	ifs.Read(&data[0], size);
+	return mipsize;
+}
 
 void CSmfMapFile::ReadHeightmap(unsigned short* heightmap)
 {
@@ -99,7 +117,7 @@ void CSmfMapFile::ReadFeatureInfo(MapFeatureInfo* f)
 }
 
 
-const char* CSmfMapFile::GetFeatureType(int typeID) const
+const char* CSmfMapFile::GetFeatureTypeName(int typeID) const
 {
 	assert(typeID >= 0 && typeID < featureHeader.numFeatureType);
 	return featureTypes[typeID].c_str();

@@ -35,8 +35,14 @@ namespace terrain {
 
 	RenderSetup::~RenderSetup()
 	{
+		Clear();
+	}
+
+	void RenderSetup::Clear()
+	{
 		for (size_t a=0;a<passes.size();a++)
 			delete passes[a].shaderSetup;
+		passes.clear();
 	}
 
 	void RenderSetup::DebugOutput()
@@ -294,6 +300,7 @@ namespace terrain {
 
 		if (cb) { cb->PrintMsg ("  initializing terrain node shaders..."); }
 
+		shaderHandler->BeginBuild();
 		CreateTexProg (quadtree, &gi);
 		shaderHandler->EndBuild();
 
@@ -321,8 +328,47 @@ namespace terrain {
 
 		delete[] bmMipmaps;
 
-		if (cfg->useShadowMaps) {
-			shadowMapParams = new ShadowMapParams;
+		shadowMapParams = new ShadowMapParams;
+	}
+
+	void TerrainTexture::ReloadShaders(TQuad *quadtree, Config *cfg)
+	{
+		GenerateInfo gi;
+
+		// This are the configuration keys that are re-read on shader reload.
+		// Changes of any other configuration keys are ignored.
+		shaderDef.useShadowMapping = cfg->useShadowMaps;
+
+		shaderHandler->BeginBuild();
+		ReloadTexProg (quadtree, &gi);
+		shaderHandler->EndBuild();
+
+		// FIXME: count passes again?
+	}
+
+	void TerrainTexture::ReloadTexProg (TQuad *node, TerrainTexture::GenerateInfo *gi)
+	{
+		RenderSetupCollection *tns = node->textureSetup;
+
+		if (gi->nodesetup.find (tns->sortkey) == gi->nodesetup.end()) {
+			gi->nodesetup[tns->sortkey] = tns;
+
+			for (size_t a = 0; a < shaders.size(); a++) {
+				RenderSetup* rs = tns->renderSetup [a];
+
+				// see ReloadShaders
+				rs->shaderDef.useShadowMapping = shaderDef.useShadowMapping;
+
+				rs->Clear();
+				shaderHandler->BuildNodeSetup(&rs->shaderDef, rs);
+
+				// FIXME: check whether vertex data requirements remain the same?
+			}
+		}
+
+		if (!node->isLeaf()) {
+			for (int a=0;a<4;a++)
+				ReloadTexProg (node->childs[a], gi);
 		}
 	}
 
@@ -615,7 +661,6 @@ namespace terrain {
 
 		int numStages = atoi(tdf.SGetValueDef("0", path + "NumTextureStages").c_str());
 		bool autoBumpMap = !!atoi(tdf.SGetValueDef("1", path + "AutoBumpmapStages").c_str());
-		bool autoSpecular = !!atoi(tdf.SGetValueDef("1", path + "AutoSpecularStages").c_str());
 		specularExponent = atof(tdf.SGetValueDef("8", path  + "SpecularExponent").c_str());
 
 		LoadStages(numStages, "texstage", tdf, stages);

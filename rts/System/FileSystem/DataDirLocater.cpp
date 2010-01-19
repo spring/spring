@@ -12,8 +12,8 @@
 #include <cstdlib>
 #ifdef WIN32
 	#include <io.h>
-  #include <direct.h>
-  #include <windows.h>
+	#include <direct.h>
+	#include <windows.h>
 	#include <shlobj.h>
 	#include <shlwapi.h>
 	#ifndef SHGFP_TYPE_CURRENT
@@ -25,6 +25,7 @@
 #include "FileSystem/VFSHandler.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
+#include "FileSystemHandler.h"
 #include "FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"
@@ -140,7 +141,9 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 #else
 	if (d->path.find("..") != std::string::npos)
 #endif
-		throw content_error("specify data directories using absolute paths please");
+	{
+		throw content_error(std::string("Error: datadir specified with relative path: \"")+d->path+"\"");
+	}
 	// Figure out whether we have read/write permissions
 	// First check read access, if we got that check write access too
 	// (no support for write-only directories)
@@ -310,24 +313,20 @@ void DataDirLocater::LocateDataDirs()
 
 	if (!writedir) {
 		// bail out
-#ifdef WIN32
 		const std::string errstr = "Not a single writable data directory found!\n\n"
 				"Configure a writable data directory using either:\n"
 				"- the SPRING_DATADIR environment variable,\n"
+#ifdef WIN32
 				"- a SpringData=C:/path/to/data declaration in spring's registry entry or\n"
 				"- by giving you write access to the installation directory";
 #else
-		const std::string errstr = "Not a single writable data directory found!\n\n"
-				"Configure a writable data directory using either:\n"
-				"- the SPRING_DATADIR environment variable,\n"
 				"- a SpringData=/path/to/data declaration in ~/.springrc or\n"
 				"- the configuration file /etc/spring/datadir";
 #endif
 		throw content_error(errstr);
 	}
 
-	// for now, chdir to the datadirectory as a safety measure:
-	// all AIs still just assume it's ok to put their stuff in the current directory after all
+	// for now, chdir to the data directory as a safety measure:
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writedir == current working directory
 	FileSystemHandler::GetInstance().Chdir(GetWriteDir()->path.c_str());

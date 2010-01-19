@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 #ifndef GMLCLASSES_H
 #define GMLCLASSES_H
@@ -18,6 +19,7 @@
 #include <boost/version.hpp>
 #include <map>
 #include <set>
+#include <string.h>
 
 #define GML_QUOTE(x) #x
 
@@ -34,9 +36,9 @@
 #endif
 
 #ifdef USE_GML_DEBUG
-#	define GML_CALL_DEBUG (GML_ENABLE && GML_ENABLE_SIM && 1) // checks for calls made from the wrong thread
+#	define GML_CALL_DEBUG 0  // manually force enable call debugging here
 #else
-#	define GML_CALL_DEBUG 0  // manually enable call debug here
+#	define GML_CALL_DEBUG (GML_ENABLE && GML_ENABLE_SIM && 1) // checks for calls made from the wrong thread (enabled by default)
 #endif
 
 #define GML_ENABLE_DRAW (GML_ENABLE && 0) // draws everything in a separate thread (for testing only, will degrade performance)
@@ -198,7 +200,7 @@ extern unsigned gmlCPUCount();
 #	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : gmlCPUCount() )
 #endif
 #define GML_MAX_NUM_THREADS (32+1) // one extra for the aux (Sim) thread
-#define GML_IF_SERVER_THREAD() if(GML_SERVER_GLCALL && (!GML_ENABLE || gmlThreadNumber==0))
+#define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || thread == 0)
 extern int gmlItemsConsumed;
 
 typedef unsigned char BYTE;
@@ -852,9 +854,6 @@ public:
 	}
 	
 	inline T GetItems(S n) {
-		GML_IF_SERVER_THREAD() {
-			return (*genfun)(n);
-		}
 		++gmlItemsConsumed;
 		if(n==1) {
 			long num=++req;
@@ -929,9 +928,6 @@ public:
 	}
 	
 	inline T GetItems() {
-		GML_IF_SERVER_THREAD() {
-			return (*genfun)();
-		}
 		++gmlItemsConsumed;
 		long num=++req;
 		while(avail<num) // waiting
@@ -984,10 +980,6 @@ public:
 	}
 	
 	inline void GetItems(S n, T *data) {
-		GML_IF_SERVER_THREAD() {
-			(*genfun)(n,data);
-			return;
-		}
 		gmlItemsConsumed+=n;
 		for(int i=0; i<n; ++i) {
 			long num=++req;

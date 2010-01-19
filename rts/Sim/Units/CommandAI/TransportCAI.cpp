@@ -114,8 +114,10 @@ void CTransportCAI::SlowUpdate(void)
 
 void CTransportCAI::ExecuteLoadUnits(Command &c)
 {
-	CTransportUnit* transport=(CTransportUnit*)owner;
-	if(c.params.size()==1){		//load single unit
+	CTransportUnit* transport = (CTransportUnit*) owner;
+
+	if (c.params.size() == 1) {
+		// load single unit
 		CUnit* unit=uh->units[(int)c.params[0]];
 		if (!unit) {
 			FinishCommand();
@@ -168,7 +170,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 						am->dontLand=true;
 						owner->script->BeginTransport(unit);
 						const int piece = owner->script->QueryTransport(unit);
-						((CTransportUnit*)owner)->AttachUnit(unit, piece);
+						transport->AttachUnit(unit, piece);
 						am->SetWantedAltitude(0);
 						FinishCommand();
 						return;
@@ -218,22 +220,20 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 
 void CTransportCAI::ExecuteUnloadUnits(Command &c)
 {
-	//new Methods
-	CTransportUnit* transport=(CTransportUnit*)owner;
+	CTransportUnit* transport = (CTransportUnit*) owner;
 
-	switch(unloadType) {
-			case UNLOAD_LAND: UnloadUnits_Land(c,transport); break;
+	switch (unloadType) {
+		case UNLOAD_LAND: { UnloadUnits_Land(c,transport); } break;
+		case UNLOAD_DROP: {
+			if (owner->unitDef->canfly) {
+				UnloadUnits_Drop(c, transport);
+			} else {
+				UnloadUnits_Land(c, transport);
+			}
+		} break;
 
-			case UNLOAD_DROP:
-							if (owner->unitDef->canfly)
-								UnloadUnits_Drop(c,transport);
-							else
-								UnloadUnits_Land(c,transport);
-							break;
-
-			case UNLOAD_LANDFLOOD: UnloadUnits_LandFlood(c,transport); break;
-
-			default:UnloadUnits_Land(c,transport); break;
+		case UNLOAD_LANDFLOOD: { UnloadUnits_LandFlood(c,transport); } break;
+		default: { UnloadUnits_Land(c, transport); } break;
 	}
 }
 
@@ -1001,19 +1001,21 @@ void CTransportCAI::FinishCommand(void)
 
 bool CTransportCAI::LoadStillValid(CUnit* unit)
 {
-	if(commandQue.size() < 2){
+	if (commandQue.size() < 2)
 		return false;
-	}
-	Command cmd = commandQue[1];
-	return !(cmd.id == CMD_LOAD_UNITS && cmd.params.size() == 4
-		&& unit->pos.SqDistance2D(
-		float3(cmd.params[0], cmd.params[1], cmd.params[2])) > Square(cmd.params[3]*2));
+
+	const Command& cmd = commandQue[1];
+	const float3 cmdPos(cmd.params[0], cmd.params[1], cmd.params[2]);
+
+	return
+		!(cmd.id == CMD_LOAD_UNITS && cmd.params.size() == 4 &&
+		unit->pos.SqDistance2D(cmdPos) > Square(cmd.params[3] * 2));
 }
 
 
 bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 {
-	if(!CMobileCAI::AllowedCommand(c, fromSynced))
+	if (!CMobileCAI::AllowedCommand(c, fromSynced))
 		return false;
 
 	switch (c.id) {
@@ -1024,12 +1026,16 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 			// allow unloading empty transports for easier setup of transport bridges
 			if (!transport->GetTransportedUnits().empty()) {
 				CUnit* u = transport->GetTransportedUnits().front().unit;
-				float3 pos(c.params[0],c.params[1],c.params[2]);
-				float radius = c.params[3];
-				float spread = u->radius * transport->unitDef->unloadSpread;
+
+				const float3 pos(c.params[0], c.params[1], c.params[2]);
+				const float radius = (c.id == CMD_UNLOAD_UNITS)? c.params[3]: 0.0f;
+				const float spread = u->radius * transport->unitDef->unloadSpread;
 				float3 found;
-				bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u);
-				if(!canUnload) return false;
+
+				if (!FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u)) {
+					// cannot unload
+					return false;
+				}
 			}
 			break;
 		}

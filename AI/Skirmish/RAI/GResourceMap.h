@@ -79,7 +79,7 @@ private:
 	// only used during initialization
 	struct sMetalMapSquare
 	{
-		bool assessing;		// 
+		bool assessing;		//
 		float metal;		// unused metal at this square
 		float totalMetal;	// (this * ud->extractsMetal = the predicted income)
 		float inaccuracy;	// a high value means the totalMetal is not near the center of the x,z position
@@ -105,8 +105,10 @@ private:
 	int MMXSize;
 	int MMExtractorRadiusI;
 
+	IAICallback* cb;
+
 	// needed to save the file
-	string resourceFileName;
+	string relResourceFileName;
 	bool saveResourceFile;
 	vector<int> saveUD;
 	vector<int> saveF;

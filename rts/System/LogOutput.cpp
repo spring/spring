@@ -114,6 +114,10 @@ void CLogOutput::Flush()
 	filelog->flush();
 }
 
+const char* CLogOutput::GetFilename() const
+{
+	return filename;
+}
 void CLogOutput::SetFilename(const char* fname)
 {
 	GML_STDMUTEX_LOCK(log); // SetFilename
@@ -141,6 +145,7 @@ void CLogOutput::Initialize()
 	initialized = true;
 	Print("LogOutput initialized.\n");
 	Print("Spring %s", SpringVersion::GetFull().c_str());
+	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
 
 	InitializeSubsystems();
 

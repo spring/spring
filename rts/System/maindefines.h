@@ -23,10 +23,16 @@
 #ifndef _MAINDEFINES_H
 #define _MAINDEFINES_H
 
-// include the bool type
-#if !defined __cplusplus && !defined bool && !defined _MSC_VER
-#include <stdbool.h> // defines: bool, true, false
-#endif // !defined __cplusplus && !defined bool && !defined _MSC_VER
+#include <stdio.h>
+
+#if       !defined __cplusplus && !defined bool
+// include the bool type (defines: bool, true, false)
+#if defined _MSC_VER
+#include "booldefines.h"
+#else
+#include <stdbool.h>
+#endif
+#endif // !defined __cplusplus && !defined bool
 
 // define a common indicator for 32bit or 64bit-ness
 #if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
