@@ -163,29 +163,14 @@ void CPreGame::StartServer(const std::string& setupscript)
 	setup->Init(setupscript);
 
 	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
-	if (!setup->mapName.empty())
-	{
-		// would be better to use MapInfo here, but this doesn't work
-		LoadMap(setup->mapName); // map into VFS
-		const std::string mapWantedScript(mapInfo->GetStringValue("script"));
 
-		if (!mapWantedScript.empty()) {
-			setup->scriptName = mapWantedScript;
-		}
-	}
-	else
-	{
+	if (setup->mapName.empty()) {
 		throw content_error("No map selected in startscript");
 	}
 
-	CScriptHandler::SelectScript(setup->scriptName);
-	LoadMod(setup->modName);
-
 	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
 	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
-
 	startupData->SetMapChecksum(archiveScanner->GetMapChecksum(setup->mapName));
-	setup->LoadStartPositions();
 
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
@@ -400,7 +385,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
 			setupTextFile.close();
 		}
-		gameSetup = const_cast<const CGameSetup*>(temp);
+		gameSetup = temp;
 		gs->LoadFromSetup(gameSetup);
 		CPlayer::UpdateControlledTeams();
 	} else {
@@ -416,6 +401,12 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	}
 	LoadMap(gameSetup->mapName);
 	archiveScanner->CheckMap(gameSetup->mapName, gameData->GetMapChecksum());
+
+	// would be better to use MapInfo here, but this doesn't work
+	const std::string mapWantedScript(mapInfo->GetStringValue("script"));
+	if (!mapWantedScript.empty()) {
+		temp->scriptName = mapWantedScript;
+	}
 
 	LogObject() << "Using script " << gameSetup->scriptName << "\n";
 	CScriptHandler::SelectScript(gameSetup->scriptName);
