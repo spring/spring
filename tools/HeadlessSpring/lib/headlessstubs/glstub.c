@@ -21,6 +21,17 @@
 
 #include "GL/gl.h"
 
+// We need this because newer versions of GL/gl.h
+// undefine GLAPI in the end
+#ifndef GLAPI
+# ifdef _WIN32
+#  define GLAPI __stdcall
+# else
+#  define GLAPI
+# endif
+# define __DEFINED_GLAPI
+#endif
+
 //#include <stdio.h>
 
 GLAPI void APIENTRY glClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {}
@@ -47,7 +58,7 @@ GLAPI void APIENTRY glDrawElements( GLenum mode, GLsizei count,
                                       GLenum type, const GLvoid *indices ) {}
 GLAPI void APIENTRY glEdgeFlag( GLboolean flag ) {}
 GLAPI void APIENTRY glEvalCoord1f( GLfloat u ) {}
-GLAPI void APIENTRY  glEvalCoord2f( GLfloat u, GLfloat v ) {}
+GLAPI void APIENTRY glEvalCoord2f( GLfloat u, GLfloat v ) {}
 GLAPI void APIENTRY glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) {}
 GLAPI void APIENTRY glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) {}
 GLAPI void APIENTRY glEvalPoint1( GLint i ) {}
@@ -170,7 +181,7 @@ GLAPI void APIENTRY glMultMatrixf( const GLfloat *m ) {}
 GLAPI void APIENTRY glTexGeni( GLenum coord, GLenum pname, GLint param ) {}
 GLAPI void APIENTRY glTexGenfv( GLenum coord, GLenum pname, const GLfloat *params ) {}
 GLAPI void APIENTRY glLightModeli( GLenum pname, GLint param ) {}
-GLAPI void APIENTRY  glMaterialfv( GLenum face, GLenum pname, const GLfloat *params ) {}
+GLAPI void APIENTRY glMaterialfv( GLenum face, GLenum pname, const GLfloat *params ) {}
 GLAPI void APIENTRY glMaterialf( GLenum face, GLenum pname, GLfloat param ) {}
 GLAPI void APIENTRY glPointSize( GLfloat size ) {}
 GLAPI void APIENTRY glCullFace( GLenum mode ) {}
