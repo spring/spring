@@ -207,6 +207,7 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(fullscreenEdgeMove),
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
+	CR_MEMBER(showSpeed),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawMapMarks),
 	CR_MEMBER(crossSize),
@@ -296,6 +297,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	showFPS   = !!configHandler->Get("ShowFPS",   0);
 	showClock = !!configHandler->Get("ShowClock", 1);
+	showSpeed   = !!configHandler->Get("ShowSpeed", 0);
 
 	crossSize = configHandler->Get("CrossSize", 10.0f);
 
@@ -1872,6 +1874,14 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		configHandler->Set("ShowFPS", showFPS ? 1 : 0);
 	}
+	else if (cmd == "speed") {
+		if (action.extra.empty()) {
+			showSpeed = !showSpeed;
+		} else {
+			showSpeed = !!atoi(action.extra.c_str());
+		}
+		configHandler->Set("ShowSpeed", showSpeed ? 1 : 0);
+	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {
 			if (playerRoster.GetSortType() == PlayerRoster::Disabled) {
@@ -3214,7 +3224,6 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.94f, 1.0f, font_options, buf);
 		}
 
-
 		if (showFPS) {
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "%i", fps);
@@ -3224,6 +3233,14 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.92f, 1.0f, font_options, buf);
 		}
 
+		if (showSpeed) {
+			char buf[32];
+			SNPRINTF(buf, sizeof(buf), "%2.2f", gs->speedFactor);
+
+			const float4 speedcol(1.0f, gs->speedFactor < gs->userSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
+			smallFont->SetColors(&speedcol, NULL);
+			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
+		}
 
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
 			static std::string chart; chart = "";
@@ -3251,14 +3268,23 @@ bool CGame::Draw() {
 						else
 							prefix = "E|";	//no alliance at all
 					}
-					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
+					float4 cpucolor(p->cpuUsage > 0.75f && gs->speedFactor < gs->userSpeedFactor * 0.99f && 
+						(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)), 
+							std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
+					int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
+					float4 pingcolor(std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
+							std::min(1.0f, std::max(0.01f, (1000 - ping) / 375.0f)), 0.01f, 1.0f);
+					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s  \xff%c%c%c%3.0f%%  \xff%c%c%c%dms",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-							p->team, prefix.c_str(), p->name.c_str(), p->cpuUsage * 100.0f,
-							(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
+							p->team, prefix.c_str(), p->name.c_str(), 
+							(unsigned char)(cpucolor[0] * 255.0f), (unsigned char)(cpucolor[1] * 255.0f), (unsigned char)(cpucolor[2] * 255.0f),
+							p->cpuUsage * 100.0f,
+							(unsigned char)(pingcolor[0] * 255.0f), (unsigned char)(pingcolor[1] * 255.0f), (unsigned char)(pingcolor[2] * 255.0f),
+							ping);
 				}
 				else {
 					prefix = " |";
-					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %s-%d Pathing: %d",
+					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s   %s-%d  %d",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
