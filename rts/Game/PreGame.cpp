@@ -168,6 +168,15 @@ void CPreGame::StartServer(const std::string& setupscript)
 		throw content_error("No map selected in startscript");
 	}
 
+	// We must map the map into VFS this early, because server needs the start positions.
+	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
+	LoadMap(setup->mapName);
+
+	// Loading the start positions executes the map's Lua.
+	// This means start positions can NOT be influenced by map options.
+	// (Which is OK, since unitsync does not have map options available either.)
+	setup->LoadStartPositions();
+
 	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
 	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
 	startupData->SetMapChecksum(archiveScanner->GetMapChecksum(setup->mapName));
@@ -341,7 +350,6 @@ void CPreGame::LoadMap(const std::string& mapName)
 	if (!alreadyLoaded)
 	{
 		vfsHandler->AddMapArchiveWithDeps(mapName, false);
-		mapInfo = new CMapInfo(mapName);
 		alreadyLoaded = true;
 	}
 }
@@ -402,7 +410,12 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	LoadMap(gameSetup->mapName);
 	archiveScanner->CheckMap(gameSetup->mapName, gameData->GetMapChecksum());
 
-	// would be better to use MapInfo here, but this doesn't work
+	// This MUST be loaded this late, since this executes map Lua code which
+	// may call Spring.GetMapOptions(), which NEEDS gameSetup to be set!
+	if (!mapInfo) {
+		mapInfo = new CMapInfo(gameSetup->mapName);
+	}
+
 	const std::string mapWantedScript(mapInfo->GetStringValue("script"));
 	if (!mapWantedScript.empty()) {
 		temp->scriptName = mapWantedScript;
