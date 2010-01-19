@@ -44,6 +44,8 @@ GLboolean glewIsSupported (const char* name) {
 // if not linking to glew after this:
 // #define EXTERN
 
+EXTERN GLboolean __GLEW_VERSION_1_4 = GL_TRUE;
+
 EXTERN GLboolean __GLEW_ARB_vertex_program = GL_FALSE;
 EXTERN GLboolean __GLEW_ARB_texture_non_power_of_two = GL_FALSE;
 EXTERN GLboolean __GLEW_ARB_shadow = GL_FALSE;
@@ -198,6 +200,8 @@ GLenum glewInit(){
    __glewCompressedTexImage2D = &_glewCompressedTexImage2D;
    __glewMultiTexCoord2fARB = &_glewMultiTexCoord2fARB;
    __glewMultiTexCoord4fARB = &_glewMultiTexCoord4fARB;
+
+__GLEW_VERSION_1_4 = GL_TRUE;
 
 __GLEW_ARB_multitexture = GL_TRUE;
 __GLEW_ARB_texture_env_combine = GL_TRUE;
