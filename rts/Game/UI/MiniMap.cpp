@@ -36,16 +36,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/Projectiles/PieceProjectile.h"
-#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/GeoThermSmokeProjectile.h"
-#include "Sim/Projectiles/Unsynced/GfxProjectile.h"
-#include "Sim/Projectiles/Unsynced/WreckProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/BeamLaserProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/LargeBeamLaserProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
-#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Unit.h"
@@ -271,7 +262,7 @@ void CMiniMap::SetMaximizedGeometry()
 	}
 	else {
 		const float mapRatio = (float)gs->mapx / (float)gs->mapy;
-		const float viewRatio = (float)gu->viewSizeX / (float)gu->viewSizeY;
+		const float viewRatio = gu->aspectRatio;
 		if (mapRatio > viewRatio) {
 			xpos = 0;
 			width = gu->viewSizeX;

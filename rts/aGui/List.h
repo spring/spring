@@ -32,6 +32,7 @@ public:
 
 	std::string GetCurrentItem() const;
 	bool SetCurrentItem(const std::string& item);
+	void CenterSelected();
 
 	// when attempting to cancel (by pressing escape, clicking outside a button)
 	// place is set to cancelPlace (if it's positive) and Select is called.
@@ -49,6 +50,11 @@ private:
 	void UpPage();
 	void DownPage();
 	bool MouseUpdate(int x, int y);
+	void UpdateTopIndex();
+	void ScrollUpOne();
+	void ScrollDownOne();
+	int NumDisplay();
+	float ScaleFactor();
 
 	unsigned clickedTime;
 	int place;
@@ -61,6 +67,7 @@ private:
 	float itemSpacing;
 	float itemHeight;
 	bool hasFocus;
+	int topIndex;
 
 	// for filtering
 	std::string query;

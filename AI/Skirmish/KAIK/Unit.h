@@ -5,7 +5,7 @@
 
 struct Command;
 struct UnitDef;
-class AIClasses;
+struct AIClasses;
 
 class CUNIT {
 	public:

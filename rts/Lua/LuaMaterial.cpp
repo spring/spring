@@ -20,7 +20,7 @@ using std::vector;
 
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/Env/CubeMapHandler.h"
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "Util.h"
@@ -262,13 +262,13 @@ void LuaMatTexture::Bind(const LuaMatTexture& prev) const
 		}
 	}
 	else if (type == LUATEX_REFLECTION) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, unitDrawer->boxtex);
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetReflectionTextureID());
 		if (enable) {
 			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		}
 	}
 	else if (type == LUATEX_SPECULAR) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, unitDrawer->specularTex);
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
 		if (enable) {
 			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		}

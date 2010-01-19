@@ -41,7 +41,7 @@ public:
 	void SlowUpdate(void);
 	void DependentDied(CObject* o);
 
-	bool StartBuild(BuildInfo& buildInfo);
+	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
 	void StopBuild(bool callScript=true);
 	void SetRepairTarget(CUnit* target);

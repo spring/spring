@@ -19,6 +19,7 @@
 #include "Map/SMF/SmfMapFile.h"
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
@@ -139,12 +140,7 @@ class ScopedMapLoader {
 			}
 
 			vfsHandler = new CVFSHandler();
-
-			const vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-			vector<string>::const_iterator it;
-			for (it = ars.begin(); it != ars.end(); ++it) {
-				vfsHandler->AddArchive(*it, false);
-			}
+			vfsHandler->AddMapArchiveWithDeps(mapName, false);
 		}
 
 		~ScopedMapLoader()
@@ -950,41 +946,17 @@ static void* GetMinimapSM3(string mapName, int miplevel)
 
 static void* GetMinimapSMF(string mapName, int miplevel)
 {
-	// Calculate stuff
-
-	int mipsize = 1024;
-	int offset = 0;
-
-	for ( int i = 0; i < miplevel; i++ ) {
-		int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
-		offset += size;
-		mipsize >>= 1;
-	}
-
-	int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
-	int numblocks = size/8;
-
-	// Read the map data
-	CFileHandler in("maps/" + mapName);
-
-	if (!in.FileExists()) {
-		throw content_error("File '" + mapName + "' does not exist");
-	}
-
-	unsigned char* buffer = (unsigned char*)malloc(size);
-
-	SMFHeader mh;
-	in.Read(&mh, sizeof(mh));
-	in.Seek(mh.minimapPtr + offset);
-	in.Read(buffer, size);
+	CSmfMapFile in(mapName);
+	std::vector<uint8_t> buffer;
+	const int mipsize = in.ReadMinimap(buffer, miplevel);
 
 	// Do stuff
-
 	void* ret = (void*)imgbuf;
 	unsigned short* colors = (unsigned short*)ret;
 
-	unsigned char* temp = buffer;
+	unsigned char* temp = &buffer[0];
 
+	const int numblocks = buffer.size()/8;
 	for ( int i = 0; i < numblocks; i++ ) {
 		unsigned short color0 = (*(unsigned short*)&temp[0]);
 		unsigned short color1 = (*(unsigned short*)&temp[2]);
@@ -1029,7 +1001,6 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 		}
 		temp += 8;
 	}
-	free(buffer);
 	return (void*)ret;
 }
 

@@ -3,23 +3,23 @@
  *
  * Grinning Lizard Utilities.
  *
- * This software is provided 'as-is', without any express or implied 
- * warranty. In no event will the authors be held liable for any 
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any
  * damages arising from the use of this software.
  *
- * Permission is granted to anyone to use this software for any 
- * purpose, including commercial applications, and to alter it and 
+ * Permission is granted to anyone to use this software for any
+ * purpose, including commercial applications, and to alter it and
  * redistribute it freely, subject to the following restrictions:
  *
- * 1. The origin of this software must not be misrepresented; you must 
- * not claim that you wrote the original software. If you use this 
- * software in a product, an acknowledgment in the product documentation 
+ * 1. The origin of this software must not be misrepresented; you must
+ * not claim that you wrote the original software. If you use this
+ * software in a product, an acknowledgment in the product documentation
  * would be appreciated but is not required.
  *
- * 2. Altered source versions must be plainly marked as such, and 
+ * 2. Altered source versions must be plainly marked as such, and
  * must not be misrepresented as being the original software.
  *
- * 3. This notice may not be removed or altered from any source 
+ * 3. This notice may not be removed or altered from any source
  * distribution.
  */
 
@@ -58,7 +58,7 @@ using namespace NSMicroPather;
 
 class OpenQueueBH {
 	public:
-	
+
 	OpenQueueBH(AIClasses* ai, PathNode** heapArray): ai(ai), size(0) {
 		this->heapArray = heapArray;
 	}
@@ -173,7 +173,7 @@ class OpenQueueBH {
 	bool Empty() {
 		return (size == 0);
 	}
-	
+
 	private:
 		PathNode** heapArray;
 		AIClasses* ai;
@@ -332,7 +332,7 @@ void MicroPather::FixStartEndNode(void** startNode, void** endNode) {
 	size_t index = (size_t) *startNode;
 	int y = index / mapSizeX;
 	int x = index - y * mapSizeX;
-	
+
 	// no node can be at the edge!
 	if (x == 0)
 		x = 1;
@@ -449,7 +449,7 @@ int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path,
 			#ifdef USE_ASSERTIONS
 			int ystart = indexStart / mapSizeX;
 			int xstart = indexStart - ystart * mapSizeX;
-			
+
 			// no node can be at the edge!
 			assert(xstart != 0 && xstart != mapSizeX);
 			assert(ystart != 0 && ystart != mapSizeY);
@@ -459,7 +459,7 @@ int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path,
 
 			for (int i = 0; i < 8; ++i) {
 				int indexEnd = offsets[i] + indexStart;
-				
+
 				if (!canMoveArray[indexEnd]) {
 					continue;
 				}
@@ -524,7 +524,7 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*>
 	assert(!hasStartedARun);
 	hasStartedARun = true;
 	*cost = 0.0f;
-	
+
 	for (unsigned i = 0; i < ALLOCATE; i++) {
 		PathNode* theNode = &pathNodeMem[i];
 
@@ -714,7 +714,7 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, std
 		tempStartNode->totalCost = estToGoal;
 		open.Push(tempStartNode);
 	}
-	
+
 	// make the radius
 	size_t indexEnd = (size_t) endNode;
 	int y = indexEnd / mapSizeX;

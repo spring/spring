@@ -657,7 +657,7 @@ std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 	} else {
 		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer2);
 	}
-	
+
 	return std::string(buffer2);
 }
 
@@ -677,7 +677,7 @@ std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
 	} else {
 		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer2);
 	}
-	
+
 	return std::string(buffer2);
 }
 

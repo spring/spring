@@ -37,6 +37,8 @@ public:
 	float startMetal;
 	float startEnergy;
 
+	static unsigned char teamDefaultColor[10][4];
+
 private:
 	customOpts customValues;
 };

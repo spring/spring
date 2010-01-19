@@ -527,11 +527,11 @@ void CUnit::Update()
 		return;
 	}
 
+	// 0.968 ** 16 is slightly less than 0.6, which was the old value used in SlowUpdate
+	residualImpulse *= 0.968f;
+
 	const bool oldInAir   = inAir;
 	const bool oldInWater = inWater;
-
-	moveType->Update();
-	GML_GET_TICKS(lastUnitUpdate);
 
 	inWater = (pos.y <= 0.0f);
 	inAir   = (!inWater) && ((pos.y - ground->GetHeight(pos.x,pos.z)) > 1.0f);
@@ -711,7 +711,8 @@ void CUnit::SlowUpdate()
 
 	if (stunned) {
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if (paralyzeDamage <= maxHealth && !(transporter && !transporter->unitDef->isFirePlatform) ) {
+		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
+			!(transporter && !transporter->unitDef->isFirePlatform)) {
 			stunned = false;
 		}
 
@@ -812,15 +813,13 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	residualImpulse *= 0.6f;
-
 	SlowUpdateCloak(false);
 
 	if (unitDef->canKamikaze) {
 		if (fireState >= 2) {
-			CUnit* u = helper->GetClosestEnemyUnitNoLosTest(pos, unitDef->kamikazeDist, allyteam, false, true);
-			if (u && u->physicalState != CSolidObject::Flying && u->speed.dot(pos - u->pos) <= 0) {
-				// self destruct when unit start moving away from mine, should maximize damage
+			CUnit* u = helper->GetClosestEnemyUnit(pos, unitDef->kamikazeDist, allyteam);
+			if (u && u->speed.dot(pos - u->pos) <= 0) {
+				//! self destruct when we start moving away from the target, this should maximize the damage
 				KillUnit(true, false, NULL);
 			}
 		}
@@ -979,6 +978,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			if (health > maxHealth) {
 				health = maxHealth;
 			}
+			if (health > paralyzeDamage && !modInfo.paralyzeOnMaxHealth) {
+				stunned = false;
+			}
 		}
 	}
 	else { // paralyzation
@@ -1002,13 +1004,17 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			if (paralyzeDamage > maxHealth) {
 				stunned = true;
 			}
+			if (paralyzeDamage > (modInfo.paralyzeOnMaxHealth? maxHealth: health)) {
+				stunned = true;
+			}
 		}
 		else { // paralyzation healing
 			if (paralyzeDamage <= 0.0f) {
 				experienceMod = 0.0f;
 			}
 			paralyzeDamage += damage;
-			if (paralyzeDamage < maxHealth) {
+
+			if (paralyzeDamage < (modInfo.paralyzeOnMaxHealth? maxHealth: health)) {
 				stunned = false;
 				if (paralyzeDamage < 0.0f) {
 					paralyzeDamage = 0.0f;
@@ -1297,6 +1303,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	// Note that this will kill the com too.
 	if (unitDef->isCommander) {
 		teamHandler->Team(oldteam)->CommanderDied(this);
+		// InstallChristmasHat(color4::red); // Ho-Ho-Ho merry christmas to all commiters
 	}
 
 	if (type == ChangeGiven) {
@@ -2440,6 +2447,7 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 	CR_MEMBER(maxSpeed),
+	CR_MEMBER(maxReverseSpeed),
 //	CR_MEMBER(weaponHitMod),
 //	CR_MEMBER(lodCount),
 //	CR_MEMBER(currentLOD),

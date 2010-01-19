@@ -9,6 +9,7 @@
 #include <deque>
 #include <set>
 #include <vector>
+#include <list>
 
 #include "GameData.h"
 #include "Sim/Misc/TeamBase.h"
@@ -125,6 +126,7 @@ private:
 	void SkipTo(int targetframe);
 
 	void Message(const std::string& message, bool broadcast=true);
+	void PrivateMessage(int playernum, const std::string& message);
 
 	/////////////////// game status variables ///////////////////
 
@@ -151,11 +153,11 @@ private:
 	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
 	size_t ReserveNextAvailableSkirmishAIId();
-private:
+	
 	std::map<size_t, GameSkirmishAI> ais;
 	std::list<size_t> usedSkirmishAIIds;
 	void FreeSkirmishAIId(const size_t skirmishAIId);
-public:
+	
 	std::vector<GameTeam> teams;
 
 	float medianCpu;
@@ -176,6 +178,7 @@ public:
 	bool noHelperAIs;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
+	std::list< boost::shared_ptr<const netcode::RawPacket> > packetCache; //waaa, the overhead
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
@@ -183,7 +186,6 @@ public:
 #endif
 	int syncErrorFrame;
 	int syncWarningFrame;
-	int delayedSyncResponseFrame;
 
 	///////////////// internal stuff //////////////////
 	void InternalSpeedChange(float newSpeed);

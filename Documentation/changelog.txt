@@ -1,5 +1,65 @@
 Spring change log
 
+0.81.0:
+Engine / Simulation:
+ - Builders are now smart enough to to reclaim features that block their
+   buildsite, which weren't there when they started moving to it
+ - Fixed issues with features with 0 metal and 0 energy
+ - Fixed crashes / desyncs when using area orders with a large radius 
+ - Hold position doesn't imply "don't turn" anymore, and units with small
+   firing arcs in general behave a lot better in this case.
+ - Units on hold position now don't get confused by nearby invalid targets 
+ - Smooth ground mesh for better aircraft behaviour (unit tag: useSmoothMesh)
+ - Wind fixed to stay in between map boundaries
+ - Momentum isn't conserved anymore in unit-unit collisions
+ - Impulses decay every frame instead of every slow update
+ - Kamikaze units now do a visibility and 3d distance check
+ - Fixed ships were able to 'climb' cliffs
+ - Fixed multiple issues with pathmap updates after terraforms
+
+Engine / Rendering, UI:
+ - Changed default binds of forcestart, singlestep, debug to Alt+f, Alt+o, Alt+b
+ - Non-reclaimable features show up as red squares now when placing a building
+ - Out-of-LOS features don't show up anymore when placing a building
+ - Fixed icons not rendering properly when distance-to-ground method was used 
+ - Better mipmap handling on SMF maps
+ - Fixed specular lighting calculation on SM3 maps 
+ - Fixed "/shadows" command on SM3 maps
+ - Fixed SM3 map holes
+ - Fixed "/wiremap 0|1" (argument was inversed)
+ - Lots of other drawing fixes
+ - Far-textures fixed
+ - Load-screens preserve aspect ratio
+ - Added checks for insufficent gfx cards
+ - Added new shadow rendering option ("/shadows 2"): it disables terrain rendering
+   in the shadow pass, which gives a huge performance increase
+ - Changed BumpWaterReflection values:
+   0 = disable; 1 = enable (no terrain); 2 = enable (with terrain - was '1' before)
+ - Fixed occasional hang when word wrapping text
+ - S3O transparency is now supported even with AdvUnitShading disabled
+
+Engine / Lua:
+ - Added AllowFeatureBuildStep call-in to included gadget handler
+ - Fixed typos in certain featuredefs.lua, weapondefs.lua that mutilated error messages
+ - Spring.Rehost fixed on Win32 when spaces in install path
+ - Added support for modifying CTAAirMoveType (gunships)
+ - Add GetUnitMoveTypeData(unitID) call-in, returns a table
+ - Fixed Spring.SetFeatureDirection
+
+Engine / System:
+ - Fixed incorrect startpositions in skirmish games
+ - Proper handling of mod dependencies
+ - MAN pages support (Linux)
+ - Support for external debug symbols (Linux)
+ - Fixed an issue with using the root of a drive as data directory
+ - Use less memory when reading from 7z archives
+ - Improved handling of spectators in case of sim slowdown and desync
+
+AIs:
+ - E323AI: CPU performance improvements & bug fixes
+ - KAIK: better D-Gun handling
+
+
 0.80.5.2:
 Bugfixes:
  - AI: Properly fix Lua AI loading

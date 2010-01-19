@@ -118,7 +118,7 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos) {
 			}
 
 			float3 bestPosibleSpotpos = float3(bestX * f3multiplier, 0, bestY * f3multiplier);
- 			// this must be guessed, set it to the best possible (slow)
+			// this must be guessed, set it to the best possible (slow)
 			float bestThreatAtThisPoint = 0.01 + ai->tm->GetAverageThreat() - 1;
 			float bestDistance = builderpos.distance2D(bestPosibleSpotpos);
 			float bestHeight = ai->pather->HeightMap[cachePoint->y * ai->pather->PathMapXSize + cachePoint->x] + 200;

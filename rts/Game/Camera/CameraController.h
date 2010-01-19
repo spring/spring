@@ -31,6 +31,7 @@ public:
 	virtual float3 GetPos() = 0;
 	virtual float3 GetDir() = 0;
 
+	/// In degree!
 	float GetFOV() const { return fov; };
 
 	virtual void SetPos(const float3& newPos) { pos = newPos; };

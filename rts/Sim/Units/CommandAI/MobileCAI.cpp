@@ -200,17 +200,13 @@ CMobileCAI::~CMobileCAI()
 
 /** helper function for CMobileCAI::GiveCommandReal */
 template <typename T>
-static T* getAirMoveType(CUnit *owner)
+static T* GetAirMoveType(CUnit *owner)
 {
 	T* airMT;
 	if (owner->usingScriptMoveType) {
-		if (!dynamic_cast<T*>(owner->prevMoveType))
-			return 0;
-		airMT = (T*)owner->prevMoveType;
+		airMT = dynamic_cast<T*>(owner->prevMoveType);
 	} else {
-		if (!dynamic_cast<T*>(owner->moveType))
-			return 0;
-		airMT = (T*) owner->moveType;
+		airMT = dynamic_cast<T*>(owner->moveType);
 	}
 
 	return airMT;
@@ -226,7 +222,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 			return;
 		}
 
-		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
 		if (!airMT)
 			return;
 
@@ -254,7 +250,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		if (c.params.empty()) {
 			return;
 		}
-		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
 		if (!airMT)
 			return;
 
@@ -715,7 +711,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
-			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
+			if (legalTarget && targetUnit != NULL && targetUnit != owner) {
 				float3 fix = targetUnit->pos + owner->posErrorVector * 128;
 				float3 diff = float3(fix - owner->pos).Normalize();
 

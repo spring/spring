@@ -14,7 +14,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 
-HUDDrawer* HUDDrawer::Get()
+HUDDrawer* HUDDrawer::GetInstance()
 {
 	static HUDDrawer hud;
 	return &hud;

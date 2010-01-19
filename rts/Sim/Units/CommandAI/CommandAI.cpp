@@ -416,9 +416,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 				return false;
 			if (unit && !unit->AllowedReclaim(owner)) return false;
 		} else {
-			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-			CFeatureSet::const_iterator f = fset.find(unitID - uh->MaxUnits());
-			if (f != fset.end() && !(*f)->def->reclaimable)
+			const CFeature* feature = featureHandler->GetFeature(unitID - uh->MaxUnits());
+			if (feature && !feature->def->reclaimable)
 				return false;
 		}
 	}

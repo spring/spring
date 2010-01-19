@@ -9,7 +9,7 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
-#include "Game/GameSetup.h"
+#include "Sim/Misc/Team.h"
 #include "Util.h"
 #include "TimeUtil.h"
 
@@ -21,7 +21,7 @@ CDemoRecorder::CDemoRecorder()
 	if (!filesystem.CreateDirectory("demos"))
 		return;
 
-	SetName("unnamed");
+	SetName("unnamed", "");
 	demoName = GetName();
 
 	std::string filename = filesystem.LocateFile(demoName, FileSystem::WRITE);
@@ -38,8 +38,8 @@ CDemoRecorder::CDemoRecorder()
 
 	recordDemo.write((char*)&fileHeader, sizeof(fileHeader));
 
-	fileHeader.playerStatElemSize = sizeof(CPlayer::Statistics);
-	fileHeader.teamStatElemSize = sizeof(CTeam::Statistics);
+	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
+	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
 	fileHeader.teamStatPeriod = CTeam::statsPeriod;
 	fileHeader.winningAllyTeam = -1;
 
@@ -92,38 +92,31 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	recordDemo.flush();
 }
 
-void CDemoRecorder::SetName(const std::string& mapname)
+void CDemoRecorder::SetName(const std::string& mapname, const std::string& modname)
 {
 	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
 	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
 
-	std::string name =
-		curTime +
-		"_" +
-		mapname.substr(0, mapname.find_first_of(".")) +
-		"_" +
-		SpringVersion::Get();
+	std::ostringstream demoName;
+	demoName << "demos/" << curTime << "_";
+	//if (!modname.empty())
+	//	demoName << modname << "_";
+	demoName << mapname.substr(0, mapname.find_first_of(".")) << "_" << SpringVersion::Get();
 
-	// games without gameSetup should have different names
-	// note: the gameSetup pointer is non-0 when CPreGame
-	// wants to rename us even in non-scripted games now
-	if (!gameSetup || wantedName.find("local_") != std::string::npos) {
-		name = "local_" + name;
-	}
-
-	char buf[1024];
-	SNPRINTF(buf, sizeof(buf), "demos/%s.sdf", name.c_str());
-	CFileHandler ifs(buf);
+	std::ostringstream buf;
+	buf << demoName.str() << ".sdf";
+	CFileHandler ifs(buf.str());
 	if (ifs.FileExists()) {
-		for (int a = 0; a < 9999; ++a) {
-			SNPRINTF(buf, sizeof(buf), "demos/%s_(%i).sdf", name.c_str(), a);
-			CFileHandler ifs(buf);
+		for (int a = 0; a < 9; ++a) {
+			buf.clear();
+			buf << demoName.str() << "_" << a << ".sdf";
+			CFileHandler ifs(buf.str());
 			if (!ifs.FileExists())
 				break;
 		}
 	}
 
-	wantedName = buf;
+	wantedName = buf.str();
 }
 
 void CDemoRecorder::SetGameID(const unsigned char* buf)
@@ -149,7 +142,7 @@ void CDemoRecorder::InitializeStats(int numPlayers, int numTeams, int winningAll
 }
 
 /** @brief Set (overwrite) the CPlayer::Statistics for player playerNum */
-void CDemoRecorder::SetPlayerStats(int playerNum, const CPlayer::Statistics& stats)
+void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 {
 	assert((unsigned)playerNum < playerStats.size());
 
@@ -194,10 +187,10 @@ void CDemoRecorder::WritePlayerStats()
 
 	int pos = recordDemo.tellp();
 
-	for (std::vector< CPlayer::Statistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
-		CPlayer::Statistics& stats = *it;
+	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
+		PlayerStatistics& stats = *it;
 		stats.swab();
-		recordDemo.write((char*)&stats, sizeof(CPlayer::Statistics));
+		recordDemo.write((char*)&stats, sizeof(PlayerStatistics));
 	}
 	playerStats.clear();
 
@@ -219,11 +212,11 @@ void CDemoRecorder::WriteTeamStats()
 	}
 
 	// Write big array of CTeam::Statistics.
-	for (std::vector< std::vector< CTeam::Statistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
+	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		for (std::vector< CTeam::Statistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
 			CTeam::Statistics& stats = *it2;
 			stats.swab();
-			recordDemo.write((char*)&stats, sizeof(CTeam::Statistics));
+			recordDemo.write((char*)&stats, sizeof(TeamStatistics));
 		}
 	}
 	teamStats.clear();

@@ -1,5 +1,6 @@
 #include "LogFile.h"
 
+#include "RAI.h"
 #include "ExternalAI/IAICallback.h"
 
 #include <string>
@@ -12,13 +13,18 @@ using std::string;
 
 cLogFile::cLogFile(IAICallback* cb, string sFilename, bool bAppend)
 {
-	logFileName = cLogFile::GetDir(cb) + sFilename;
+	string sFilename_w;
+	const bool located = cRAI::LocateFile(cb, sFilename, sFilename_w, true);
+	if (!located) {
+		throw 11;
+	}
+
 	if( bAppend )
-		logFile = fopen(logFileName.c_str(),"a");
+		logFile = fopen(sFilename_w.c_str(), "a");
 //		logFile = new ofstream();
 //		logFile->open( logFileName.c_str(), ios::app );
 	else
-		logFile = fopen(logFileName.c_str(),"w");
+		logFile = fopen(sFilename_w.c_str(), "w");
 //		ofstream oLog( logFileName.c_str() );
 //		oLog.close();
 
@@ -86,28 +92,3 @@ void cLogFile::Write(int message)
 //	logFile->flush();
 }
 */
-
-std::string cLogFile::GetDir(IAICallback* cb, bool writeableAndCreate, std::string relPath) {
-
-	std::string returnedPath = "";
-
-	AIHCGetDataDir cmdData = {
-		relPath.c_str(),
-		writeableAndCreate,
-		writeableAndCreate,
-		true,
-		false,
-		NULL
-	};
-
-	int ret = cb->HandleCommand(AIHCGetDataDirId, &cmdData);
-
-	if (ret == 1 && cmdData.ret_path != NULL) {
-		// nothing failed
-		std::string returnedPath = std::string(cmdData.ret_path);
-		free(cmdData.ret_path);
-		cmdData.ret_path = NULL;
-	}
-
-	return returnedPath;
-}

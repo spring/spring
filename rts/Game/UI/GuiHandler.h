@@ -219,6 +219,7 @@ class CGuiHandler : public CInputReceiver {
 		std::map<std::string, unsigned int> textureMap; // filename, glTextureID
 
 		std::set<int> changedGroups;
+		int failedSound;
 };
 
 

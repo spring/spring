@@ -4,6 +4,7 @@
 #include "ShadowHandler.h"
 #include "ConfigHandler.h"
 #include "Game/Camera.h"
+#include "UnitModels/FeatureDrawer.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
@@ -14,7 +15,6 @@
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
 #include "Rendering/GL/FBO.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "EventHandler.h"
 
 CShadowHandler* shadowHandler=0;
@@ -37,6 +37,7 @@ CShadowHandler::CShadowHandler(void)
 	showShadowMap = false;
 	firstDraw     = true;
 	shadowTexture = 0;
+	drawTerrainShadow = true;
 
 	if (!tmpFirstInstance && !canUseShadows) {
 		return;
@@ -47,7 +48,15 @@ CShadowHandler::CShadowHandler(void)
 		GLEW_ARB_shadow &&
 		GLEW_ARB_depth_texture &&
 		GLEW_ARB_texture_env_combine;
+	//! Shadows possible values:
+	//! -1 : disable and don't try to initialize
+	//!  0 : disable, but still check if the hardware is able to run them
+	//!  1 : enable (full detail)
+	//!  2 : enable (no terrain)
 	const int configValue = configHandler->Get("Shadows", 0);
+
+	if (configValue >= 2)
+		drawTerrainShadow = false;
 
 	if (configValue < 0 || !haveShadowExts) {
 		logOutput.Print("shadows disabled or required OpenGL extension missing");
@@ -145,12 +154,14 @@ void CShadowHandler::DrawShadowPasses(void)
 		glEnable(GL_CULL_FACE);
 	//	glCullFace(GL_FRONT);
 
-		readmap->GetGroundDrawer()->DrawShadowPass();
-		ph->DrawShadowPass();
+		if (drawTerrainShadow)
+			readmap->GetGroundDrawer()->DrawShadowPass();
+
 		unitDrawer->DrawShadowPass();
-		featureHandler->DrawShadowPass();
+		featureDrawer->DrawShadowPass();
 		treeDrawer->DrawShadowPass();
 		eventHandler.DrawWorldShadow();
+		ph->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;
@@ -290,8 +301,8 @@ void CShadowHandler::CalcMinMaxView(void)
 	GetFrustumSide(cam2->leftside,false);
 
 	std::vector<fline>::iterator fli,fli2;
-  for(fli=left.begin();fli!=left.end();fli++){
-	  for(fli2=left.begin();fli2!=left.end();fli2++){
+	for(fli=left.begin();fli!=left.end();fli++){
+		for(fli2=left.begin();fli2!=left.end();fli2++){
 			if(fli==fli2)
 				continue;
 			float colz=0;

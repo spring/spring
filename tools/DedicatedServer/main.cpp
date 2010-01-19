@@ -1,22 +1,23 @@
+#include <string>
+#include <iostream>
+#include <SDL.h>
+#include <stdlib.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
-#include "System/FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
-
-#include <string>
-#include <iostream>
-#include <SDL.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -26,7 +27,6 @@ int main(int argc, char *argv[])
 	SDL_Init(SDL_INIT_TIMER);
 	std::cout << "If you find any errors, report them to mantis or the forums." << std::endl << std::endl;
 	ConfigHandler::Instantiate("");
-	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;
@@ -55,47 +55,38 @@ int main(int argc, char *argv[])
 
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
-		GameData* data = new GameData();
+		GameData data;
 		UnsyncedRNG rng;
 		rng.Seed(gameSetup->gameSetupText.length());
 		rng.Seed(script.length());
-		data->SetRandomSeed(rng.RandInt());
+		data.SetRandomSeed(rng.RandInt());
 
 		//  Use script provided hashes if they exist
 		if (gameSetup->mapHash != 0)
 		{
-			data->SetMapChecksum(gameSetup->mapHash);
+			data.SetMapChecksum(gameSetup->mapHash);
 			gameSetup->LoadStartPositions(false); // reduced mode
 		}
 		else
 		{
-			data->SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
+			data.SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
 
-			CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
-			if (!f->FileExists()) {
-				std::vector<std::string> ars = archiveScanner->GetArchivesForMap(gameSetup->mapName);
-				if (ars.empty()) {
-					throw content_error("Couldn't find any archives for map '" + gameSetup->mapName + "'.");
-				}
-				for (std::vector<std::string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-					if (!vfsHandler->AddArchive(*i, false)) {
-						throw content_error("Couldn't load archive '" + *i + "' for map '" + gameSetup->mapName + "'.");
-					}
-				}
+			CFileHandler f("maps/" + gameSetup->mapName);
+			if (!f.FileExists()) {
+				vfsHandler->AddMapArchiveWithDeps(gameSetup->mapName, false);
 			}
-			delete f;
 			gameSetup->LoadStartPositions(); // full mode
 		}
 
 		if (gameSetup->modHash != 0) {
-			data->SetModChecksum(gameSetup->modHash);
+			data.SetModChecksum(gameSetup->modHash);
 		} else {
 			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
-			data->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
+			data.SetModChecksum(archiveScanner->GetModChecksum(modArchive));
 		}
 
-		data->SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(&settings, false, data, gameSetup);
+		data.SetSetup(gameSetup->gameSetupText);
+		server = new CGameServer(&settings, false, &data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
 #ifdef _WIN32
@@ -111,6 +102,7 @@ int main(int argc, char *argv[])
 	}
 
 	FileSystemHandler::Cleanup();
+	ConfigHandler::Deallocate();
 
 #ifdef _WIN32
 	}

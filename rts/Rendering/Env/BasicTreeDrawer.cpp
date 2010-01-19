@@ -302,7 +302,7 @@ inline void DrawTreeVertexMid2(float3 pos, bool enlarge=true) {
 	SetArrayQ(1,0.25f,base);
 }
 
-void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
+void CBasicTreeSquareDrawer::DrawQuad(int x,int y)
 {
 	int treesX = td->treesX;
 	CBasicTreeDrawer::TreeSquareStruct* tss=&td->trees[y*treesX+x];
@@ -314,44 +314,9 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 	float dist=dif.Length();
 	dif/=dist;
 
-	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2 && dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance)){//far trees
-		tss->lastSeenFar=gs->frameNum;
-		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
-			va=GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
-			tss->viewVector=dif;
-			if(!tss->farDisplist)
-				tss->farDisplist=glGenLists(1);
-			float3 up(0,1,0);
-			float3 side=up.cross(dif);
+	float distfactor = dist / treeDistance;
 
-			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
-				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
-				if(ts->type<8){
-					DrawTreeVertexFar1(ts->pos, side*MAX_TREE_HEIGHT_3, false);
-				} else {
-					DrawTreeVertexFar2(ts->pos, side*MAX_TREE_HEIGHT_3, false);
-				}
-			}
-			glNewList(tss->farDisplist,GL_COMPILE);
-			va->DrawArrayT(GL_QUADS);
-			glEndList();
-		}
-		if(dist>SQUARE_SIZE*TREE_SQUARE_SIZE*(treeDistance*2-1)){
-			float trans=(SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2-dist)/(SQUARE_SIZE*TREE_SQUARE_SIZE);
-			glEnable(GL_BLEND);
-			glColor4f(1,1,1,trans);
-			glAlphaFunc(GL_GREATER,(SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance*2-dist)/(SQUARE_SIZE*TREE_SQUARE_SIZE*2));
-		} else {
-			glColor4f(1,1,1,1);
-			glDisable(GL_BLEND);
-			glAlphaFunc(GL_GREATER,0.5f);
-		}
-		glCallList(tss->farDisplist);
-	}
-
-	if(dist<SQUARE_SIZE*TREE_SQUARE_SIZE*treeDistance){	//middle distance trees
+	if(distfactor < MID_TREE_DIST_FACTOR){ // midle distance trees
 		tss->lastSeen=gs->frameNum;
 		if(!tss->displist){
 			va=GetVertexArray();
@@ -375,17 +340,55 @@ void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
 		glAlphaFunc(GL_GREATER,0.5f);
 		glCallList(tss->displist);
 	}
+	else if(distfactor < FAR_TREE_DIST_FACTOR){ // far trees
+		tss->lastSeenFar=gs->frameNum;
+		if(!tss->farDisplist || dif.dot(tss->viewVector)<0.97f){
+			va=GetVertexArray();
+			va->Initialize();
+			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
+			tss->viewVector=dif;
+			if(!tss->farDisplist)
+				tss->farDisplist=glGenLists(1);
+			float3 up(0,1,0);
+			float3 side=up.cross(dif);
+
+			for(std::map<int,CBasicTreeDrawer::TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
+				CBasicTreeDrawer::TreeStruct* ts=&ti->second;
+				if(ts->type<8){
+					DrawTreeVertexFar1(ts->pos, side*MAX_TREE_HEIGHT_3, false);
+				} else {
+					DrawTreeVertexFar2(ts->pos, side*MAX_TREE_HEIGHT_3, false);
+				}
+			}
+			glNewList(tss->farDisplist,GL_COMPILE);
+			va->DrawArrayT(GL_QUADS);
+			glEndList();
+		}
+		if(distfactor > FADE_TREE_DIST_FACTOR){ // faded far trees
+			float trans = 1.0f - (distfactor - FADE_TREE_DIST_FACTOR) / (FAR_TREE_DIST_FACTOR - FADE_TREE_DIST_FACTOR);
+			glEnable(GL_BLEND);
+			glColor4f(1,1,1,trans);
+			glAlphaFunc(GL_GREATER, trans / 2.0f);
+		} else {
+			glColor4f(1,1,1,1);
+			glDisable(GL_BLEND);
+			glAlphaFunc(GL_GREATER,0.5f);
+		}
+		glCallList(tss->farDisplist);
+	}
 }
 
 void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 {
 	glBindTexture(GL_TEXTURE_2D, treetex);
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 
 	if(gu->drawFog) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}
+	glColor4f(1,1,1,1);
 
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 	int cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
@@ -394,11 +397,11 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	drawer.td = this;
 	drawer.cx = cx;
 	drawer.cy = cy;
-	drawer.treeDistance = treeDistance;
+	drawer.treeDistance = treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE;
 
 	GML_STDMUTEX_LOCK(tree); // Draw
 
-	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, treeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE, &drawer);
+	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
 
 	int startClean=lastListClean*20%nTrees;
 	lastListClean=gs->frameNum;

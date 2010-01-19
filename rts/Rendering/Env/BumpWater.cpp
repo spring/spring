@@ -18,12 +18,12 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "FileSystem/FileHandler.h"
 #include "FastMath.h"
@@ -193,7 +193,7 @@ CBumpWater::CBumpWater()
 {
 	/** LOAD USER CONFIGS **/
 	reflTexSize  = next_power_of_2(configHandler->Get("BumpWaterTexSizeReflection", 512));
-	reflection   = !!configHandler->Get("BumpWaterReflection", 1);
+	reflection   = configHandler->Get("BumpWaterReflection", 1);
 	refraction   = configHandler->Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
 	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy", "0.0").c_str());
 	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
@@ -327,7 +327,7 @@ CBumpWater::CBumpWater()
 		glTexImage2D(target, 0, GL_RGBA8, screenTextureX, screenTextureY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	}
 
-	if (reflection) {
+	if (reflection>0) {
 		//! CREATE REFLECTION TEXTURE
 		glGenTextures(1, &reflectTexture);
 		glBindTexture(GL_TEXTURE_2D, reflectTexture);
@@ -387,7 +387,7 @@ CBumpWater::CBumpWater()
 			case 32: depthRBOFormat = GL_DEPTH_COMPONENT32; break;
 		}
 
-		if (reflection) {
+		if (reflection>0) {
 			reflectFBO.Bind();
 			reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, reflTexSize, reflTexSize);
 			reflectFBO.AttachTexture(reflectTexture);
@@ -400,7 +400,7 @@ CBumpWater::CBumpWater()
 		}
 
 		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
-			reflection = false;
+			reflection = 0;
 		}
 		if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
 			refraction = 0;
@@ -420,7 +420,7 @@ CBumpWater::CBumpWater()
 
 	/** DEFINE SOME SHADER RUNTIME CONSTANTS (I don't use Uniforms for that, because the glsl compiler can't optimize those!) **/
 	string definitions;
-	if (reflection)   definitions += "#define opt_reflection\n";
+	if (reflection>0) definitions += "#define opt_reflection\n";
 	if (refraction>0) definitions += "#define opt_refraction\n";
 	if (shoreWaves)   definitions += "#define opt_shorewaves\n";
 	if (depthCopy)    definitions += "#define opt_depth\n";
@@ -724,7 +724,7 @@ void CBumpWater::UpdateWater(CGame* game)
 
 	glPushAttrib(GL_FOG_BIT);
 	if (refraction>1) DrawRefraction(game);
-	if (reflection)   DrawReflection(game);
+	if (reflection>0) DrawReflection(game);
 	if (reflection || refraction) {
 		FBO::Unbind();
 		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
@@ -1272,9 +1272,9 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	readmap->GetGroundDrawer()->Draw();
 	unitDrawer->Draw(false,true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true);
-	featureHandler->DrawFadeFeatures(true);
+	featureDrawer->DrawFadeFeatures(true);
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
 
@@ -1314,11 +1314,12 @@ void CBumpWater::DrawReflection(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 
-	readmap->GetGroundDrawer()->Draw(true);
+	if (reflection>1)
+		readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(false,true);
-	featureHandler->DrawFadeFeatures(false,true);
+	featureDrawer->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 

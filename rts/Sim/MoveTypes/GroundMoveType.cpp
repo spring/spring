@@ -858,7 +858,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			// stop units from reaching escape velocity
 			dif /= std::max(dist, 1.f);
 
-			if (u->mass == 100000 || !u->mobility) {
+			if (!u->mobility) {
 				float impactSpeed = -owner->speed.dot(dif);
 
 				if (impactSpeed > 0) {
@@ -879,8 +879,9 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					}
 				}
 			} else {
-				float part = owner->mass / (owner->mass + u->mass);
-				float impactSpeed = (u->speed - owner->speed).dot(dif);
+				// don't conserve momentum
+				float part = (owner->mass / (owner->mass + u->mass));
+				float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
 
 				if (impactSpeed > 0) {
 					midPos += dif * (impactSpeed * (1 - part) * 2);
@@ -913,6 +914,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 							0, dif * -impactSpeed * (u->mass * part));
 					}
 					owner->speed *= 0.9f;
+					u->speed *= 0.9f;
 				}
 			}
 		}
@@ -1167,13 +1169,17 @@ void CGroundMoveType::UpdateHeatMap()
 	if (!pathId)
 		return;
 
+#ifndef USE_GML
+	static std::vector<int2> points;
+#else
 	std::vector<int2> points;
+#endif
+
 	pathManager->GetDetailedPathSquares(pathId, points);
 	for (std::vector<int2>::iterator it = points.begin(); it != points.end(); ++it) {
 		pathManager->SetHeatOnSquare(it->x, it->y, owner->mobility->heatProduced, owner->id);
 	}
 }
-
 
 
 // Calculates an aproximation of the physical 2D-distance between given two objects.
@@ -1293,7 +1299,7 @@ float CGroundMoveType::BreakingDistance(float speed)
 	if (!owner->mobility->maxBreaking) {
 		return 0.0f;
 	}
-	return fabs(speed * speed / owner->mobility->maxBreaking);
+	return fabs(speed*speed / owner->mobility->maxBreaking);
 }
 
 /*
@@ -1846,10 +1852,10 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
 					int x = (moveSquareX + li->x) * 2;
 					int y = (moveSquareY + li->y) * 2;
-					int blockMask =
+					CMoveMath* mmath = owner->unitDef->movedata->moveMath;
+					static int blockMask =
 						(CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN |
 						CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY);
-					CMoveMath* mmath = owner->unitDef->movedata->moveMath;
 
 					if ((mmath->IsBlocked(*owner->unitDef->movedata, x, y) & blockMask) ||
 						mmath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
@@ -1940,7 +1946,7 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 		if (dir2 != ZeroVector) {
 			short heading =
 				GetHeadingFromVector(dir2.x, dir2.z) -
-				GetHeadingFromVector(dir1.x,dir1.z);
+				GetHeadingFromVector(dir1.x, dir1.z);
 			if (owner->heading != heading
 					&& !(owner->weapons.front()->TryTarget(
 					mainHeadingPos, true, 0))) {
@@ -1951,33 +1957,8 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 }
 
 void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive){
-	mainHeadingPos = unit->pos;
-	useMainHeading = aggressive;
-
-	if (useMainHeading
-			&& !owner->weapons.empty()
-			&& (this-owner->weapons[0]->weaponDef->waterweapon
-			|| mainHeadingPos.y >= 0)) {
-
-		float3 dir1 = owner->weapons.front()->mainDir;
-		dir1.y = 0;
-		dir1.Normalize();
-		float3 dir2 = mainHeadingPos - owner->pos;
-		dir2.y = 0;
-		dir2.Normalize();
-
-		if (dir2 != ZeroVector) {
-			short heading =
-				GetHeadingFromVector(dir2.x, dir2.z) -
-				GetHeadingFromVector(dir1.x, dir1.z);
-
-			if (owner->heading != heading
-					&& !(owner->weapons.front()->TryTarget(
-					mainHeadingPos, true, 0))) {
-				progressState = Active;
-			}
-		}
-	}
+	//! wrapper
+	KeepPointingTo(unit->pos, distance, aggressive);
 }
 
 /**
@@ -2028,8 +2009,8 @@ void CGroundMoveType::SetMainHeading(){
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	maxSpeed        = std::min(speed, owner->unitDef->speed  / GAME_SPEED);
-	maxReverseSpeed = std::min(speed, owner->unitDef->rSpeed / GAME_SPEED);
+	maxSpeed        = std::min(speed, owner->maxSpeed);
+	maxReverseSpeed = std::min(speed, owner->maxReverseSpeed);
 
 	requestedSpeed = speed * 2.0f;
 }

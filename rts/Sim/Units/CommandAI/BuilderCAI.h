@@ -4,9 +4,8 @@
 #include <map>
 #include "MobileCAI.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitSet.h"
 #include "Sim/Objects/SolidObject.h"
-
-class CUnitSet;
 
 class CBuilderCAI :
 	public CMobileCAI
@@ -95,6 +94,7 @@ private:
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool ObjInBuildRange(const CWorldObject* obj) const;
 	bool OutOfImmobileRange(const Command& cmd) const;
+	void ReclaimFeature(CFeature* f);
 
 	// fix for patrolling cons repairing/resurrecting stuff that's being reclaimed
 	static void AddUnitToReclaimers(CUnit*);

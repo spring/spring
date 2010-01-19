@@ -17,12 +17,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 set(SPRINGRTSDIR "${CMAKE_SOURCE_DIR}/rts")
 
 ### Spring defines
-SET(USE_NEDMALLOC FALSE CACHE BOOL "Use nedmalloc memory allocator")
-if (USE_NEDMALLOC)
-	ADD_DEFINITIONS(-DREPLACE_SYSTEM_ALLOCATOR)
-	SET (nedmalloc_obj "../tools/nedmalloc/nedmalloc.c")
-endif (USE_NEDMALLOC)
-
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)

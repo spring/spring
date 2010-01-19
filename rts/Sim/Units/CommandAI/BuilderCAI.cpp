@@ -244,10 +244,9 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 	}
 	else {
 		// features don't move, but maybe the unit was transported?
-		const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-		CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
-		if (it != fset.end()) {
-			obj = *it;
+		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+		if (feature) {
+			obj = feature;
 		}
 	}
 	if (obj == NULL) {
@@ -429,12 +428,18 @@ void CBuilderCAI::SlowUpdate()
 						}
 						else if (uh->MaxUnitsPerTeam() > (int) teamHandler->Team(owner->team)->units.size()) {
 							// unit-limit not yet reached
+							CFeature* f = NULL;
 							buildRetries++;
 							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
 
-							if (fac->StartBuild(build) || (buildRetries > 20)) {
+							if (fac->StartBuild(build, f) || (buildRetries > 20)) {
 								building = true;
-							} else {
+							}
+							else if (f) {
+								inCommand = false;
+								ReclaimFeature(f);
+							}
+							else {
 								if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
 									logOutput.Print(
 										"%s: build-position <%.2f, %.2f, %.2f> blocked after %d attempts",
@@ -446,7 +451,7 @@ void CBuilderCAI::SlowUpdate()
 								}
 
 								const float fpSqRadius = (ud->xsize * ud->xsize + ud->zsize * ud->zsize);
-								const float fpRadius = (streflop::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+								const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
 
 								// tell everything within the radius of the soon-to-be buildee
 								// to get out of the way; using the model radius is not correct
@@ -481,19 +486,7 @@ void CBuilderCAI::SlowUpdate()
 			uh->TestUnitBuildSquare(bi, f, owner->allyteam);
 
 			if (f) {
-				if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
-					// FIXME user shouldn't be able to queue buildings on top of features
-					// in the first place (in this case).
-					StopMove();
-					FinishCommand();
-				} else {
-					Command c2;
-					c2.id=CMD_RECLAIM;
-					c2.options=0;
-					c2.params.push_back(f->id + uh->MaxUnits());
-					commandQue.push_front(c2);
-					SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
-				}
+				ReclaimFeature(f);
 			} else {
 				inCommand=true;
 				SlowUpdate();
@@ -516,6 +509,25 @@ void CBuilderCAI::SlowUpdate()
 			CMobileCAI::SlowUpdate();
 			return;
 		}
+	}
+}
+
+
+/// add a command to reclaim a feature that is blocking our buildsite
+void CBuilderCAI::ReclaimFeature(CFeature* f)
+{
+	if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
+		// FIXME user shouldn't be able to queue buildings on top of features
+		// in the first place (in this case).
+		StopMove();
+		FinishCommand();
+	} else {
+		Command c2;
+		c2.id=CMD_RECLAIM;
+		c2.options=0;
+		c2.params.push_back(f->id + uh->MaxUnits());
+		commandQue.push_front(c2);
+		SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
 	}
 }
 
@@ -805,10 +817,8 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		}
 		const unsigned int id = signedId;
 		if (id >= uh->MaxUnits()) { // reclaim feature
-			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-			CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
-			if (it != fset.end()) {
-				CFeature* feature = *it;
+		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+			if (feature) {
 				if(((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingResurrected(feature->id, owner)) ||
 					!ReclaimObject(feature)) {
 					StopMove();
@@ -904,9 +914,8 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 	if (c.params.size()==1) {
 		unsigned int id = (unsigned int) c.params[0];
 		if (id >= uh->MaxUnits()) { // resurrect feature
-			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - uh->MaxUnits());
-			if (it != featureHandler->GetActiveFeatures().end() && (*it)->createdFromUnit != "") {
-				CFeature* feature = *it;
+		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+			if (feature && feature->createdFromUnit != "") {
 				if(((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
 					!ResurrectObject(feature)) {
 					StopMove();
@@ -1023,7 +1032,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	}
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	if ((owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
-	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+fac->buildDistance-8, c.options, true, false)){
+	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+fac->buildDistance-8, c.options, true, (c.options & META_KEY))){
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC1 != gs->frameNum) {  //avoid infinite loops
@@ -1716,10 +1725,9 @@ void CBuilderCAI::DrawCommands(void)
 
 						GML_RECMUTEX_LOCK(feat); // DrawCommands
 
-						const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-						CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
-						if (it != fset.end()) {
-							const float3 endPos = (*it)->midPos;
+						CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
+						if (feature) {
+							const float3 endPos = feature->midPos;
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					} else {

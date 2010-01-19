@@ -41,6 +41,10 @@ protected:
 	int tileMapXSize;
 	int tileMapYSize;
 
+	float* heightMaxes;
+	float* heightMins;
+	float* stretchFactors;
+
 	//! use Pixel Buffer Objects for async. uploading (DMA)
 	bool usePBO;
 	GLuint pboIDs[10];
