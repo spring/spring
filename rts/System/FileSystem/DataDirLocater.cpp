@@ -212,8 +212,8 @@ void DataDirLocater::DeterminePermissions()
  * - 'prefix=/install/path' option passed to scons configure. The datadir is
  *   assumed to be at '$prefix/games/spring' in this case.
  * - the default datadirs in the default prefix, ie. '/usr/local/games/spring'
- *   (This is set by the build system, ie. SPRING_DATADIR and SPRING_DATADIR_2
- *   preprocessor definitions.)
+ *   (This is set by the build system, ie. SPRING_DATADIR
+ *   preprocessor definition.)
  *
  * In Windows, its:
  * - SPRING_DATADIR env-variable
@@ -221,7 +221,7 @@ void DataDirLocater::DeterminePermissions()
  * - location of the binary dir (like it has been until 0.76b1)
  * - the Users 'Documents'-directory (in subdirectory Spring), unless spring is configured to use another
  * - all users app-data (in subdirectory Spring)
- * - compiler flags SPRING_DATADIR and SPRING_DATADIR_2
+ * - compiler flags SPRING_DATADIR
  *
  * All of the above methods support environment variable substitution, eg.
  * '$HOME/myspringdatadir' will be converted by spring to something like
@@ -279,7 +279,7 @@ void DataDirLocater::LocateDataDirs()
 #ifdef UNITSYNC
 	AddDirs(Platform::GetBinaryPath());
 #endif
-	// libs and data are are supposed to be located in subdirectories of spring executable, so they
+	// libs and data are supposed to be located in subdirectories of spring executable, so they
 	// sould be added instead of SPRING_DATADIR definition.
 	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(DATADIR));
 	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(LIBDIR));
