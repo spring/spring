@@ -75,7 +75,7 @@ static std::string createAbsolutePath(const std::string& relativePath) {
 			// remove initial "./"
 			absolutePath = absolutePath.substr(2);
 		}
-		absolutePath = Platform::GetBinaryPath() + '/' + absolutePath;
+		absolutePath = Platform::GetModulePath() + '/' + absolutePath;
 	}
 
 	return absolutePath;
@@ -354,7 +354,7 @@ namespace CrashHandler {
 			// add addresses as long as the path stays the same
 			while (!paths.empty() && (lastPath == paths.front())) {
 				uintptr_t addr_num = addresses.front();
-				if (paths.front() != Platform::GetBinaryFile() && (addr_num > baseAddress)) {
+				if (paths.front() != Platform::GetModuleFile() && (addr_num > baseAddress)) {
 					// shift the stack trace address by the value of
 					// the libraries base address in process memory
 					// for all binaries that are not the processes main binary
