@@ -5,30 +5,82 @@
 
 namespace Platform
 {
+
 /**
- * Returns the path to this binary, excluding the file name.
+ * Returns the path to the main binary of the running process,
+ * including the file name.
  * examples:
- * /usr/games/
- * C:\Program Files\Spring\
+ * examples when calling from the engine:
+ * - "/usr/games/bin/spring"
+ * - "/home/user/spring/spring"
+ * - "C:\Program Files\Spring\spring.exe"
+ * examples when calling from the synchronization library:
+ * - "/usr/games/bin/springlobby"
+ * - "/home/user/springlobby/springlobby"
+ * - "C:\Program Files\SpringLobby\springlobby.exe"
+ * @return path to the main binary of the running process file or ""
  */
-std::string GetBinaryPath();
+std::string GetProcessExecutableFile();
+
+/**
+ * Returns the path to the main binary of the running process,
+ * excluding the file name.
+ * @see GetProcessExecutableFile()
+ * @return path to the main binary of the running process dir or ""
+ */
+std::string GetProcessExecutablePath();
+
+/**
+ * Returns the path to the module containing this code,
+ * including the file name.
+ * examples when calling from the engine:
+ * - "/usr/games/bin/spring"
+ * - "/home/user/spring/spring"
+ * - "C:\Program Files\Spring\spring.exe"
+ * examples when calling from the synchronization library:
+ * - "/usr/lib/libunitsync.so"
+ * - "/home/user/spring/libunitsync.so"
+ * - "C:\Program Files\Spring\unitsync.dll"
+ * NOTE: Only works under windows, returns "" on other systems!
+ * @return path to the current module file or ""
+ */
+std::string GetModuleFile();
+
+/**
+ * Returns the path to the module containing this code,
+ * excluding the file name.
+ * @see GetModuleFile()
+ * NOTE: Only works under windows, returns "" on other systems!
+ * @return path to the current module dir or ""
+ */
+std::string GetModulePath();
+
+/**
+ * Returns the path to the spring synchronization library (unitsync),
+ * including the file name.
+ * examples:
+ * - "/usr/lib/libunitsync.so"
+ * - "/home/user/spring/libunitsync.so"
+ * - "C:\Program Files\Spring\unitsync.dll"
+ * NOTE: Only works under windows, returns "" on other systems!
+ * @return path to the spring synchronization library file or ""
+ */
+std::string GetSyncLibraryFile();
 
 /**
  * Returns the path to the spring synchronization library (unitsync),
  * excluding the file name.
- * examples:
- * /usr/lib/
- * C:\Program Files\Spring\
+ * @see GetSyncLibraryFile()
+ * NOTE: Only works under windows, returns "" on other systems!
+ * @return path to the spring synchronization library dir or ""
  */
-std::string GetLibraryPath();
+std::string GetSyncLibraryPath();
 
-/**
- * Returns the path to to this binary, filename inclusive.
- * examples:
- * /usr/games/spring
- * C:\Program Files\Spring\spring.exe
- */
+// TODO: get rid of these three
+// legacy support functions
 std::string GetBinaryFile();
+std::string GetBinaryPath();
+std::string GetLibraryPath();
 
 std::string GetOS();
 bool Is64Bit();
