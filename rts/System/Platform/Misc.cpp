@@ -16,103 +16,178 @@
 
 #endif
 
+#include "System/LogOutput.h"
+
+/**
+ * Utility function for cutting off the file name form a path
+ * @param  path "/path/to/my/file.ext"
+ * @return "/path/to/my/" or "" if (path == "")
+ */
+static std::string GetParentPath(const std::string& path)
+{
+	std::string parentPath = "";
+
+	if (!path.empty()) {
+#if defined linux || defined MACOSX_BUNDLE
+		const size_t parentPath_length = path.find_last_of('/');
+		if (parentPath_length != std::string::npos) {
+			parentPath = path.substr(0, parentPath_length);
+		}
+#elif defined WIN32
+		char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH], parentPathC[MAX_PATH];
+		_splitpath(path.c_str(), drive, dir, file, ext);
+		_makepath(parentPathC, drive, dir, NULL, NULL);
+		parentPath = std::string(parentPathC);
+#else
+		#error implement this
+#endif // linux, WIN32, MACOSX_BUNDLE, else
+	}
+
+	return parentPath;
+}
+
+
 namespace Platform
 {
 
-std::string GetBinaryPath()
+std::string GetProcessExecutableFile()
 {
+	std::string procExeFilePath = "";
+
 #ifdef linux
-	std::string path(GetBinaryFile());
-	size_t pathlength = path.find_last_of('/');
-	if (pathlength != std::string::npos)
-		return path.substr(0, pathlength);
-	else
-		return path;
-
+#ifdef DEBUG
+	logOutput.Print("Note: Using the file path of the process executable is bad practise on Linux!");
+#endif
+	char file[512];
+	const int ret = readlink("/proc/self/exe", file, sizeof(file)-1);
+	if (ret >= 0) {
+		file[ret] = '\0';
+		procExeFilePath = std::string(file);
+	}
 #elif WIN32
-	TCHAR currentDir[MAX_PATH+1];
-	int ret = ::GetModuleFileName(0, currentDir, sizeof(currentDir));
-	if (ret == 0 || ret == sizeof(currentDir))
-		return "";
-	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
-	_splitpath(currentDir, drive, dir, file, ext);
-	_makepath(currentDir, drive, dir, NULL, NULL);
-	return std::string(currentDir);
+	const HANDLE hProcess = ::GetCurrentProcess();
 
+	// fetch
+	TCHAR procExeFile[MAX_PATH+1];
+	const int ret = ::GetProcessImageFileName(hProcess, procExeFile, sizeof(procExeFile));
+
+	if ((ret != 0) && (ret != sizeof(procExeFile))) {
+		procExeFilePath = std::string(procExeFile);
+	}
 #elif MACOSX_BUNDLE
 	char cPath[1024];
 	CFBundleRef mainBundle = CFBundleGetMainBundle();
 
 	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-	CFURLRef binaryPathURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault , mainBundleURL);
 
-	CFStringRef cfStringRef = CFURLCopyFileSystemPath(binaryPathURL, kCFURLPOSIXPathStyle);
+	CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
 
-	CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
+	CFStringGetCString(cfStringRef, cPath, sizeof(cPath), kCFStringEncodingASCII);
 
 	CFRelease(mainBundleURL);
-	CFRelease(binaryPathURL);
 	CFRelease(cfStringRef);
 
-	return std::string(cPath);
-
+	procExeFilePath = std::string(cPath);
 #else
-	return "";
-
+	#error implement this
 #endif
-}
-
-std::string GetLibraryPath()
-{
-#ifdef linux
-	//TODO
-	return "";
-#elif WIN32
-	TCHAR currentDir[MAX_PATH+1];
-	int ret = ::GetModuleFileName(GetModuleHandle("unitsync.dll"), currentDir, sizeof(currentDir));
-	if (ret == 0 || ret == sizeof(currentDir))
-		return "";
-	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
-	_splitpath(currentDir, drive, dir, file, ext);
-	_makepath(currentDir, drive, dir, NULL, NULL);
-	return std::string(currentDir);
-#elif MACOSX_BUNDLE
-	//TODO
-	return "";
-#else
-	return "";
-
-#endif
-}
-
-std::string GetBinaryFile()
-{
-#ifdef linux
-	char file[256];
-	const int ret = readlink("/proc/self/exe", file, 255);
-	if (ret >= 0)
-	{
-		file[ret] = '\0';
-		return std::string(file);
+	if (procExeFilePath.empty()) {
+		logOutput.Print("WARNING: Failed to get file path of the process executable");
 	}
-	else
-		return "";
 
-#elif WIN32
-	TCHAR currentDir[MAX_PATH+1];
-	int ret = ::GetModuleFileName(0, currentDir, sizeof(currentDir));
-	if (ret == 0 || ret == sizeof(currentDir))
-		return "";
-	return std::string(currentDir);
-
-#elif MACOSX_BUNDLE
-	//TODO
-	return "";
-#else
-	return "";
-
-#endif
+	return procExeFilePath;
 }
+std::string GetProcessExecutablePath() {
+	return GetParentPath(GetProcessExecutableFile());
+}
+
+std::string GetModuleFile()
+{
+	std::string moduleFilePath = "";
+
+#ifdef linux
+	logOutput.Print("WARNING: Using the file path of the module is bad practise on Linux,\n"
+		"and in addition to that, also technically non portable.\n"
+		"Therefore, we do not support it at all!");
+#elif WIN32
+	// The NULL handle means: falls back to the current module
+	//const HANDLE hModule = GetModuleHandle("unitsync.dll");
+	const HANDLE hModule = NULL;
+
+	// fetch
+	TCHAR moduleFile[MAX_PATH+1];
+	const int ret = ::GetModuleFileName(hModule, moduleFile, sizeof(moduleFile));
+
+	if (ret == 0 || ret == sizeof(moduleFile)) {
+		logOutput.Print("WARNING: Failed to get file path of the module");
+	} else {
+		moduleFilePath = std::string(moduleFile);
+	}
+#elif MACOSX_BUNDLE
+	// TODO
+	#warning implement this (or use linux version)
+#else
+	#warning implement this
+#endif
+
+	return moduleFilePath;
+}
+std::string GetModulePath() {
+	return GetParentPath(GetModuleFile());
+}
+
+std::string GetSyncLibraryFile()
+{
+	std::string syncLibFilePath = "";
+
+#if       defined UNITSYNC
+	syncLibFilePath = GetModuleFile();
+#else  // defined UNITSYNC
+#ifdef linux
+	logOutput.Print("WARNING: Using the file path of the synchronisation library is bad practise on Linux,\n"
+		"and in addition to that, also technically not possible.\n"
+		"Therefore, we do not support it at all!");
+#elif WIN32
+	// we assume the synchronization lib to be in the same path
+	// as the engine launcher executable
+	std::string syncLibFilePath = GetProcessExecutablePath();
+	if (!syncLibFilePath.empty()) {
+		syncLibFilePath = syncLibFilePath + "\\unitsync.dll";
+	}
+#elif MACOSX_BUNDLE
+	// TODO
+	#warning implement this (or use linux version)
+#else
+	#warning implement this
+#endif // linux, WIN32, MACOSX_BUNDLE, else
+#endif // defined UNITSYNC
+
+	return syncLibFilePath;
+}
+std::string GetSyncLibraryPath() {
+	return GetParentPath(GetSyncLibraryFile());
+}
+
+
+// legacy support (next three functions)
+std::string GetBinaryFile() {
+
+#ifdef WIN32
+	// this is wrong, but that is how it worked before
+	return GetModuleFile();
+#else
+	return GetProcessExecutableFile();
+#endif // linux, WIN32, MACOSX_BUNDLE, else
+}
+std::string GetBinaryPath() {
+	return GetParentPath(GetBinaryFile());
+}
+
+std::string GetLibraryPath() {
+	return GetSyncLibraryPath();
+}
+
+
 
 std::string GetOS()
 {
@@ -127,6 +202,7 @@ std::string GetOS()
 #elif defined(__APPLE__)
 	return "Mac OS X";
 #else
+	#warning improve this
 	return "unknown OS";
 #endif
 }
