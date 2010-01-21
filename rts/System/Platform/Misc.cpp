@@ -295,20 +295,6 @@ std::string GetSyncLibraryPath() {
 }
 
 
-// legacy support (next three functions)
-std::string GetBinaryFile() {
-	return GetProcessExecutableFile();
-}
-std::string GetBinaryPath() {
-	return GetParentPath(GetBinaryFile());
-}
-
-std::string GetLibraryPath() {
-	return GetSyncLibraryPath();
-}
-
-
-
 std::string GetOS()
 {
 #if defined(WIN32)

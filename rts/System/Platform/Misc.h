@@ -76,12 +76,6 @@ std::string GetSyncLibraryFile();
  */
 std::string GetSyncLibraryPath();
 
-// TODO: get rid of these three
-// legacy support functions
-std::string GetBinaryFile();
-std::string GetBinaryPath();
-std::string GetLibraryPath();
-
 std::string GetOS();
 bool Is64Bit();
 bool Is32BitEmulation();
