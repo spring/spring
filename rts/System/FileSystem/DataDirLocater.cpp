@@ -212,7 +212,8 @@ void DataDirLocater::DeterminePermissions()
  * Windows:
  * - SPRING_DATADIR env-variable (semi-colon separated list, like PATH)
  * - ./springsettings.cfg:SpringData=C:\data (semi-colon separated list)
- * - path to the current work-dir/module (either spring.exe or unitsync.dll)
+ * - in portable mode only (usually: on): path to the current work-dir/module
+ *   (either spring.exe or unitsync.dll)
  * - "C:/.../My Documents/My Games/Spring/"
  * - "C:/.../My Documents/Spring/"
  * - "C:/.../All Users/Applications/Spring/"
@@ -229,10 +230,8 @@ void DataDirLocater::DeterminePermissions()
  * Unixes:
  * - SPRING_DATADIR env-variable (colon separated list, like PATH)
  * - ~/.springrc:SpringData=/path/to/data (colon separated list)
- * - for DEBUG and PORTABLE builds only: path to the current work-dir/module
+ * - in portable mode only (usually: off): path to the current work-dir/module
  *   (either spring binary or libunitsync.so)
- *   using this in release builds would be unclean, because spring and unitsync
- *   would end up with different sets of data-dirs
  * - "$HOME/.spring"
  * - from file '/etc/spring/datadir', preserving order (new-line separated list)
  * - SPRING_DATADIR compiler flag (colon separated list)
@@ -248,6 +247,7 @@ void DataDirLocater::DeterminePermissions()
  *
  * If we end up with no data-dir that points to an existing path,
  * we asume the current working directory is the data directory.
+ * @see IsPortableMode()
  */
 void DataDirLocater::LocateDataDirs()
 {
@@ -337,13 +337,15 @@ void DataDirLocater::LocateDataDirs()
 #ifdef WIN32
 	// All MS Windows variants
 
-	AddDirs(dd_env);           // from ENV{SPRING_DATADIR}
-	AddDirs(dd_config);        // from ./springsettings.cfg:SpringData=...
-	AddDirs(dd_curWorkDir);    // "./"
-	AddDirs(dd_myDocsMyGames); // "C:/.../My Documents/My Games/Spring/"
-	AddDirs(dd_myDocs);        // "C:/.../My Documents/Spring/"
-	AddDirs(dd_appData);       // "C:/.../All Users/Applications/Spring/"
-	AddDirs(dd_compilerFlag);  // from -DSPRING_DATADIR
+	AddDirs(dd_env);            // from ENV{SPRING_DATADIR}
+	AddDirs(dd_config);         // from ./springsettings.cfg:SpringData=...
+	if (IsPortableMode()) {
+		AddDirs(dd_curWorkDir); // "./"
+	}
+	AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
+	AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
+	AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
+	AddDirs(dd_compilerFlag);   // from -DSPRING_DATADIR
 
 #elif defined(MACOSX_BUNDLE)
 	// Mac OS X
@@ -362,19 +364,21 @@ void DataDirLocater::LocateDataDirs()
 	// sould be added instead of SPRING_DATADIR definition.
 	AddDirs(dd_curWorkDirData); // "./data/"
 	AddDirs(dd_curWorkDirLib);  // "./lib/"
-	AddDirs(dd_compilerFlag);  // from -DSPRING_DATADIR
+	AddDirs(dd_compilerFlag);   // from -DSPRING_DATADIR
 
 #else
 	// Linux, FreeBSD, Solaris
 
-	AddDirs(dd_env);          // ENV{SPRING_DATADIR}
-	AddDirs(dd_config);       // ~/springrc:SpringData=...
-#if defined(DEBUG) || defined(PORTABLE)
-	AddDirs(dd_curWorkDir);   // "./"
-#endif
-	AddDirs(dd_home);         // "~/.spring/"
-	AddDirs(dd_etc);          // from /etc/spring/datadir
-	AddDirs(dd_compilerFlag); // from -DSPRING_DATADIR
+	AddDirs(dd_env);            // ENV{SPRING_DATADIR}
+	AddDirs(dd_config);         // ~/springrc:SpringData=...
+	if (IsPortableMode()) {
+		// always using this would be unclean, because spring and unitsync
+		// would end up with different sets of data-dirs
+		AddDirs(dd_curWorkDir); // "./"
+	}
+	AddDirs(dd_home);           // "~/.spring/"
+	AddDirs(dd_etc);            // from /etc/spring/datadir
+	AddDirs(dd_compilerFlag);   // from -DSPRING_DATADIR
 #endif
 
 
@@ -414,4 +418,38 @@ void DataDirLocater::LocateDataDirs()
 			logOutput.Print("Using read-only data directory: %s",  d->path.c_str());
 		}
 	}
+}
+
+bool DataDirLocater::IsPortableMode() {
+
+	bool portableMode = false;
+
+#if       defined(UNITSYNC)
+	const std::string dirUnitsync = Platform::GetModulePath();
+
+#if       defined(WIN32)
+	std::string fileExe = dirUnitsync + "\\spring.exe";
+#else
+	std::string fileExe = dirUnitsync + "/spring";
+#endif // defined(WIN32)
+	if (FileSystemHandler::FileExists(fileExe)) {
+		portableMode = true;
+	}
+
+#else  // !defined(UNITSYNC)
+	const std::string dirExe = Platform::GetProcessExecutablePath();
+
+#if       defined(WIN32)
+	std::string fileUnitsync = dirExe + "\\unitsync.dll";
+#elif     defined(MACOSX_BUNDLE)
+	std::string fileUnitsync = dirExe + "/libunitsync.dylib";
+#else
+	std::string fileUnitsync = dirExe + "/libunitsync.so";
+#endif // defined(WIN32)
+	if (FileSystemHandler::FileExists(fileUnitsync)) {
+		portableMode = true;
+	}
+#endif // defined(UNITSYNC)
+
+	return portableMode;
 }
