@@ -88,31 +88,14 @@ std::string GetProcessExecutableFile()
 	const char* error = "Fetch not implemented";
 
 #ifdef linux
-	// Method 1
-	/*char file[512];
+	char file[512];
 	const int ret = readlink("/proc/self/exe", file, sizeof(file)-1);
 	if (ret >= 0) {
 		file[ret] = '\0';
 		procExeFilePath = std::string(file);
 	} else {
 		error = "Failed to read /proc/self/exe";
-	}*/
-
-	// Method 2
-	// We use this for now, cause we have to rely on dlopen()
-	// in GetModuleFile() anyway.
-	const void* processExeAddress = dlopen(NULL, RTLD_LAZY | RTLD_NOLOAD);
-	Dl_info processExeInfo;
-	const int ret = dladdr(processExeAddress, &processExeInfo);
-	if ((ret != 0) && (processExeInfo.dli_fname != NULL)) {
-		procExeFilePath = processExeInfo.dli_fname;
-	} else {
-		error = dlerror();
-		if (error == NULL) {
-			error = "Unknown";
-		}
 	}
-
 #elif WIN32
 	// with NULL, it will return the handle
 	// for the main executable of the process
@@ -153,10 +136,11 @@ std::string GetProcessExecutableFile()
 
 	return procExeFilePath;
 }
-std::string GetProcessExecutablePath() {
+
+std::string GetProcessExecutablePath()
+{
 	return GetParentPath(GetProcessExecutableFile());
 }
-
 
 std::string GetModuleFile(std::string moduleName)
 {
@@ -165,8 +149,6 @@ std::string GetModuleFile(std::string moduleName)
 	const char* error = "Fetch not implemented";
 
 #if defined(linux) || defined(MACOSX_BUNDLE)
-	// TODO: when rts/lib/cutil are merged into master,
-	//       use SharedLibrary.h instead of this define
 #ifdef MACOSX_BUNDLE
 	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else
@@ -250,50 +232,10 @@ std::string GetModuleFile(std::string moduleName)
 
 	return moduleFilePath;
 }
-std::string GetModulePath(const std::string& moduleName) {
+std::string GetModulePath(const std::string& moduleName)
+{
 	return GetParentPath(GetModuleFile(moduleName));
 }
-
-
-std::string GetSyncLibraryFile()
-{
-	std::string syncLibFilePath = "";
-
-#ifdef linux
-	logOutput.Print("WARNING: Do not rely on the file path of the synchronisation library under Linux,\n"
-		"because we can not reliably guess unitsync location from withing the engine, for example.");
-	return syncLibFilePath;
-#endif
-
-#if       defined UNITSYNC
-	syncLibFilePath = GetModuleFile();
-#else  // defined UNITSYNC
-#ifdef linux
-	// we will never get here, but this is needed
-	// for the final else not to kick in on linux
-#elif WIN32
-	// we assume the synchronization lib to be in the same path
-	// as the engine launcher executable
-	syncLibFilePath = GetProcessExecutablePath();
-	if (!syncLibFilePath.empty()) {
-		syncLibFilePath = syncLibFilePath + "\\unitsync.dll";
-	}
-
-#elif MACOSX_BUNDLE
-	// TODO
-	#warning implement this, or use linux version
-
-#else
-	#warning implement this, or use linux version
-#endif // WIN32, MACOSX_BUNDLE, else
-#endif // defined UNITSYNC
-
-	return syncLibFilePath;
-}
-std::string GetSyncLibraryPath() {
-	return GetParentPath(GetSyncLibraryFile());
-}
-
 
 std::string GetOS()
 {
