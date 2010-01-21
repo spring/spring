@@ -229,7 +229,10 @@ void DataDirLocater::DeterminePermissions()
  * Unixes:
  * - SPRING_DATADIR env-variable (colon separated list, like PATH)
  * - ~/.springrc:SpringData=/path/to/data (colon separated list)
- * - path to the current work-dir/module (either spring.exe or unitsync.dll)
+ * - for DEBUG and PORTABLE builds only: path to the current work-dir/module
+ *   (either spring binary or libunitsync.so)
+ *   using this in release builds would be unclean, because spring and unitsync
+ *   would end up with different sets of data-dirs
  * - "$HOME/.spring"
  * - from file '/etc/spring/datadir', preserving order (new-line separated list)
  * - SPRING_DATADIR compiler flag (colon separated list)
@@ -349,7 +352,7 @@ void DataDirLocater::LocateDataDirs()
 	AddDirs(dd_config); // ~/springrc:SpringData=...
 
 	// Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
-	// cannot find them since it does not know spring binary path. I have no idea but to force users 
+	// cannot find them since it does not know spring binary path. I have no idea but to force users
 	// to locate lobby executables in the same as spring's dir and add its location to search dirs.
 	#ifdef UNITSYNC
 	AddDirs(dd_curWorkDir);     // "./"
@@ -366,7 +369,9 @@ void DataDirLocater::LocateDataDirs()
 
 	AddDirs(dd_env);          // ENV{SPRING_DATADIR}
 	AddDirs(dd_config);       // ~/springrc:SpringData=...
-	AddDirs(dd_curWorkDir);
+#if defined(DEBUG) || defined(PORTABLE)
+	AddDirs(dd_curWorkDir);   // "./"
+#endif
 	AddDirs(dd_home);         // "~/.spring/"
 	AddDirs(dd_etc);          // from /etc/spring/datadir
 	AddDirs(dd_compilerFlag); // from -DSPRING_DATADIR
