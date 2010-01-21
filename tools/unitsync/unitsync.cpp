@@ -259,19 +259,19 @@ EXPORT(void) UnInit()
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
+		logOutput.SetFilename("unitsync.log");
+		if (!configHandler)
+			ConfigHandler::Instantiate("");
+		FileSystemHandler::Initialize(false);
+
 		if (!logOutputInitialised)
 		{
-			logOutput.SetFilename("unitsync.log");
 			logOutput.Initialize();
 			logOutputInitialised = true;
 		}
 		logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
 
 		_UnInit();
-
-		if (!configHandler)
-			ConfigHandler::Instantiate("");
-		FileSystemHandler::Initialize(false);
 
 		std::vector<string> filesToCheck;
 		filesToCheck.push_back("base/springcontent.sdz");
