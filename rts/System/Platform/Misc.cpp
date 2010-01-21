@@ -104,7 +104,7 @@ std::string GetProcessExecutableFile()
 	const void* processExeAddress = dlopen(NULL, RTLD_LAZY | RTLD_NOLOAD);
 	Dl_info processExeInfo;
 	const int ret = dladdr(processExeAddress, &processExeInfo);
-	if ((ret == 0) && (processExeInfo.dli_fname != NULL)) {
+	if ((ret != 0) && (processExeInfo.dli_fname != NULL)) {
 		procExeFilePath = processExeInfo.dli_fname;
 	} else {
 		error = dlerror();
@@ -203,7 +203,7 @@ std::string GetModuleFile(std::string moduleName)
 		// fetch info about the module containing the address we just evaluated
 		Dl_info moduleInfo;
 		const int ret = dladdr(moduleAddress, &moduleInfo);
-		if ((ret == 0) && (moduleInfo.dli_fname != NULL)) {
+		if ((ret != 0) && (moduleInfo.dli_fname != NULL)) {
 			moduleFilePath = moduleInfo.dli_fname;
 		} else {
 			error = dlerror();
