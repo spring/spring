@@ -55,27 +55,6 @@ std::string GetModuleFile(std::string moduleName = "");
  */
 std::string GetModulePath(const std::string& moduleName = "");
 
-/**
- * Returns the path to the spring synchronization library (unitsync),
- * including the file name.
- * examples:
- * - "/usr/lib/libunitsync.so"
- * - "/home/user/spring/libunitsync.so"
- * - "C:\Program Files\Spring\unitsync.dll"
- * NOTE: Only works under windows, returns "" on other systems!
- * @return path to the spring synchronization library file or ""
- */
-std::string GetSyncLibraryFile();
-
-/**
- * Returns the path to the spring synchronization library (unitsync),
- * excluding the file name.
- * @see GetSyncLibraryFile()
- * NOTE: Only works under windows, returns "" on other systems!
- * @return path to the spring synchronization library dir or ""
- */
-std::string GetSyncLibraryPath();
-
 std::string GetOS();
 bool Is64Bit();
 bool Is32BitEmulation();
