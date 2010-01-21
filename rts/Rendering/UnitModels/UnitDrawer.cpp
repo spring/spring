@@ -1302,25 +1302,24 @@ void CUnitDrawer::UnitDrawingTexturesOff(S3DModel* model)
 	if (advShading && !water->drawReflection) {
 		S3OCurShader->Disable();
 
-		/* TEXTURE0: Colour texture. */
+		glActiveTextureARB(GL_TEXTURE1_ARB); //! 'Shiny' texture.
 		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE1_ARB); // 'Shiny' texture.
-		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE2_ARB); // Shadows.
+		glActiveTextureARB(GL_TEXTURE2_ARB); //! Shadows.
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE3_ARB); // reflectionTex
+		glActiveTextureARB(GL_TEXTURE3_ARB); //! reflectionTex
 		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-		glActiveTextureARB(GL_TEXTURE4_ARB); // specularTex
+		glActiveTextureARB(GL_TEXTURE4_ARB); //! specularTex
 		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glDisable(GL_TEXTURE_2D); //! albedo + teamcolor
 	} else {
 		glDisable(GL_LIGHTING);
-		/* TEXTURE0: Colour texture. */
 		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE1_ARB); // GL lighting, I think.
+		glActiveTextureARB(GL_TEXTURE1_ARB); //! GL lighting, I think.
 		glDisable(GL_TEXTURE_2D);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glDisable(GL_TEXTURE_2D); //! albedo + teamcolor
 	}
 }
 
@@ -1701,7 +1700,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		return;
 	}
 
-	const float start  = unit->model->miny;
+	const float start  = std::max(unit->model->miny, -unit->model->height);
 	const float height = unit->model->height;
 
 	glEnable(GL_CLIP_PLANE0);
