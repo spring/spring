@@ -33,6 +33,16 @@ private:
 	bool DeterminePermissions(DataDir* d);
 	void DeterminePermissions();
 
+	/**
+	 * Determines whether we are in portable mode.
+	 * It defines portable mode as:
+	 * The spring binary (spring binary) and the synchronization
+	 * library (unitsync) are in the same directory.
+	 * This definition of portable mode is only valid for the data-dirs,
+	 * and can not be used spring wide.
+	 */
+	static bool IsPortableMode();
+
 	std::vector<DataDir> datadirs;
 	const DataDir* writedir;
 };
