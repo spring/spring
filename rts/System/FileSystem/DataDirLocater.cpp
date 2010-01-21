@@ -229,6 +229,7 @@ void DataDirLocater::DeterminePermissions()
  * Unixes:
  * - SPRING_DATADIR env-variable (colon separated list, like PATH)
  * - ~/.springrc:SpringData=/path/to/data (colon separated list)
+ * - path to the current work-dir/module (either spring.exe or unitsync.dll)
  * - "$HOME/.spring"
  * - from file '/etc/spring/datadir', preserving order (new-line separated list)
  * - SPRING_DATADIR compiler flag (colon separated list)
@@ -268,15 +269,11 @@ void DataDirLocater::LocateDataDirs()
 	dd_compilerFlag = SubstEnvVars(SPRING_DATADIR);
 #endif
 
-
-
-#if       defined(WIN32) || defined(MACOSX_BUNDLE)
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
 #else  // defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
 #endif // defined(UNITSYNC)
-#endif // defined(WIN32) || defined(MACOSX_BUNDLE)
 
 #if    defined(WIN32)
 	// fetch my documents path
@@ -369,6 +366,7 @@ void DataDirLocater::LocateDataDirs()
 
 	AddDirs(dd_env);          // ENV{SPRING_DATADIR}
 	AddDirs(dd_config);       // ~/springrc:SpringData=...
+	AddDirs(dd_curWorkDir);
 	AddDirs(dd_home);         // "~/.spring/"
 	AddDirs(dd_etc);          // from /etc/spring/datadir
 	AddDirs(dd_compilerFlag); // from -DSPRING_DATADIR
