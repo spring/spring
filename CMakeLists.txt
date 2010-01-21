@@ -27,7 +27,7 @@ else  (UNIX AND NOT MINGW)
 	include_directories(${MINGWLIBS}/include)
 	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
 	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
-	
+
 	add_definitions(-D_WIN32_WINNT=0x500) ## win2k is minimum
 	# some cross-compile fixes
 	set (CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
@@ -86,7 +86,9 @@ if    (NOT MINGW)
 	if    (SPRING_DATADIR)
 		set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR}${PATH_DELIM_T}")
 	endif (SPRING_DATADIR)
-	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${DATADIR}")
+	if    (CMAKE_INSTALL_PREFIX)
+		set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}${PATH_SEP_T}${DATADIR}")
+	endif (CMAKE_INSTALL_PREFIX)
 	set(BUILTIN_DATADIRS "${SPRING_DATADIR_INTERNAL}")
 endif (NOT MINGW)
 if    (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
@@ -210,7 +212,7 @@ endif (SDL_FOUND)
 if (WIN32)
 	Add_Subdirectory(tools/ArchiveMover)
 endif (WIN32)
-	
+
 Add_Subdirectory(tools/unitsync)
 
 # required for man pages (optional) and base files (mandatory)
