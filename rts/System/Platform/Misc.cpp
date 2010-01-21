@@ -2,6 +2,7 @@
 
 #ifdef linux
 #include <unistd.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
 
 #elif WIN32
 #include <io.h>
@@ -11,6 +12,7 @@
 
 #elif MACOSX_BUNDLE
 #include <CoreFoundation/CoreFoundation.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
 
 #else
 
@@ -46,6 +48,35 @@ static std::string GetParentPath(const std::string& path)
 	return parentPath;
 }
 
+#if       defined WIN32
+/**
+ * Returns a handle to the currently loaded module.
+ * Note: requires at least Windows 2000
+ * @return handle to the currently loaded module, or NULL if an error occures
+ */
+static HMODULE GetCurrentModule() {
+
+	HMODULE hModule = NULL;
+
+	// both solutions use the address of this function
+	// both found at:
+	// http://stackoverflow.com/questions/557081/how-do-i-get-the-hmodule-for-the-currently-executing-code/557774
+
+	// Win 2000+ solution
+	MEMORY_BASIC_INFORMATION mbi = {0};
+	::VirtualQuery((void*)GetCurrentModule, &mbi, sizeof(mbi));
+	hModule = reinterpret_cast<HMODULE>(mbi.AllocationBase);
+
+	// Win XP+ solution (cleaner)
+	//::GetModuleHandleEx(
+	//		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+	//		(LPCTSTR)GetCurrentModule,
+	//		&hModule);
+
+	return hModule;
+}
+#endif // defined WIN32
+
 
 namespace Platform
 {
@@ -53,27 +84,50 @@ namespace Platform
 std::string GetProcessExecutableFile()
 {
 	std::string procExeFilePath = "";
+	// will only be used if procExeFilePath stays empty
+	const char* error = "Fetch not implemented";
 
 #ifdef linux
-#ifdef DEBUG
-	logOutput.Print("Note: Using the file path of the process executable is bad practise on Linux!");
-#endif
-	char file[512];
+	// Method 1
+	/*char file[512];
 	const int ret = readlink("/proc/self/exe", file, sizeof(file)-1);
 	if (ret >= 0) {
 		file[ret] = '\0';
 		procExeFilePath = std::string(file);
+	} else {
+		error = "Failed to read /proc/self/exe";
+	}*/
+
+	// Method 2
+	// We use this for now, cause we have to rely on dlopen()
+	// in GetModuleFile() anyway.
+	const void* processExeAddress = dlopen(NULL, RTLD_LAZY | RTLD_NOLOAD);
+	Dl_info processExeInfo;
+	const int ret = dladdr(processExeAddress, &processExeInfo);
+	if ((ret == 0) && (processExeInfo.dli_fname != NULL)) {
+		procExeFilePath = processExeInfo.dli_fname;
+	} else {
+		error = dlerror();
+		if (error == NULL) {
+			error = "Unknown";
+		}
 	}
+
 #elif WIN32
-	const HANDLE hProcess = ::GetCurrentProcess();
+	// with NULL, it will return the handle
+	// for the main executable of the process
+	const HMODULE hModule = GetModuleHandle(NULL);
 
 	// fetch
 	TCHAR procExeFile[MAX_PATH+1];
-	const int ret = ::GetProcessImageFileName(hProcess, procExeFile, sizeof(procExeFile));
+	const int ret = ::GetModuleFileName(hModule, procExeFile, sizeof(procExeFile));
 
 	if ((ret != 0) && (ret != sizeof(procExeFile))) {
 		procExeFilePath = std::string(procExeFile);
+	} else {
+		error = "Unknown";
 	}
+
 #elif MACOSX_BUNDLE
 	char cPath[1024];
 	CFBundleRef mainBundle = CFBundleGetMainBundle();
@@ -88,11 +142,13 @@ std::string GetProcessExecutableFile()
 	CFRelease(cfStringRef);
 
 	procExeFilePath = std::string(cPath);
+
 #else
 	#error implement this
 #endif
+
 	if (procExeFilePath.empty()) {
-		logOutput.Print("WARNING: Failed to get file path of the process executable");
+		logOutput.Print("WARNING: Failed to get file path of the process executable, reason: %s", error);
 	}
 
 	return procExeFilePath;
@@ -101,65 +157,135 @@ std::string GetProcessExecutablePath() {
 	return GetParentPath(GetProcessExecutableFile());
 }
 
-std::string GetModuleFile()
+
+std::string GetModuleFile(std::string moduleName)
 {
 	std::string moduleFilePath = "";
+	// will only be used if moduleFilePath stays empty
+	const char* error = "Fetch not implemented";
 
-#ifdef linux
-	logOutput.Print("WARNING: Using the file path of the module is bad practise on Linux,\n"
-		"and in addition to that, also technically non portable.\n"
-		"Therefore, we do not support it at all!");
-#elif WIN32
-	// The NULL handle means: falls back to the current module
-	//const HANDLE hModule = GetModuleHandle("unitsync.dll");
-	const HANDLE hModule = NULL;
-
-	// fetch
-	TCHAR moduleFile[MAX_PATH+1];
-	const int ret = ::GetModuleFileName(hModule, moduleFile, sizeof(moduleFile));
-
-	if (ret == 0 || ret == sizeof(moduleFile)) {
-		logOutput.Print("WARNING: Failed to get file path of the module");
-	} else {
-		moduleFilePath = std::string(moduleFile);
-	}
-#elif MACOSX_BUNDLE
-	// TODO
-	#warning implement this (or use linux version)
+#if defined(linux) || defined(MACOSX_BUNDLE)
+	// TODO: when rts/lib/cutil are merged into master,
+	//       use SharedLibrary.h instead of this define
+#ifdef MACOSX_BUNDLE
+	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else
-	#warning implement this
+	#define SHARED_LIBRARY_EXTENSION "so"
 #endif
+	void* moduleAddress = NULL;
+
+	// find an address in the module we are looking for
+	if (moduleName.empty()) {
+		// look for current module
+		moduleAddress = (void*) GetModuleFile;
+	} else {
+		// look for specified module
+
+		// add extension if it is not in the file name
+		// it could also be "libXZY.so-1.2.3"
+		// -> does not have to be the end, my friend
+		if (moduleName.find("."SHARED_LIBRARY_EXTENSION) == std::string::npos) {
+			moduleName = moduleName + "."SHARED_LIBRARY_EXTENSION;
+		}
+
+		// will not not try to load, but return the libs address
+		// if it is already loaded, NULL otherwise
+		moduleAddress = dlopen(moduleName.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+
+		if (moduleAddress == NULL) {
+			// if not found, try with "lib" prefix
+			moduleName = "lib" + moduleName;
+			moduleAddress = dlopen(moduleName.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+		}
+	}
+
+	if (moduleAddress != NULL) {
+		// fetch info about the module containing the address we just evaluated
+		Dl_info moduleInfo;
+		const int ret = dladdr(moduleAddress, &moduleInfo);
+		if ((ret == 0) && (moduleInfo.dli_fname != NULL)) {
+			moduleFilePath = moduleInfo.dli_fname;
+		} else {
+			error = dlerror();
+			if (error == NULL) {
+				error = "Unknown";
+			}
+		}
+	} else {
+		error = "Not loaded";
+	}
+
+#elif WIN32
+	HMODULE hModule = NULL;
+	if (moduleName.empty()) {
+		hModule = GetCurrentModule();
+	} else {
+		// If this fails, we get a NULL handle
+		hModule = GetModuleHandle(moduleName.c_str());
+	}
+
+	if (hModule != NULL) {
+		// fetch module file name
+		TCHAR moduleFile[MAX_PATH+1];
+		const int ret = ::GetModuleFileName(hModule, moduleFile, sizeof(moduleFile));
+
+		if ((ret != 0) && (ret != sizeof(moduleFile))) {
+			moduleFilePath = std::string(moduleFile);
+		} else {
+			error = + "Unknown";
+		}
+	} else {
+		error = "Not found";
+	}
+#else
+	#warning implement this (or use linux version)
+#endif
+
+	if (moduleFilePath.empty()) {
+		if (moduleName.empty()) {
+			moduleName = "<current>";
+		}
+		logOutput.Print("WARNING: Failed to get file path of the module \"%s\", reason: %s", moduleName.c_str(), error);
+	}
 
 	return moduleFilePath;
 }
-std::string GetModulePath() {
-	return GetParentPath(GetModuleFile());
+std::string GetModulePath(const std::string& moduleName) {
+	return GetParentPath(GetModuleFile(moduleName));
 }
+
 
 std::string GetSyncLibraryFile()
 {
 	std::string syncLibFilePath = "";
 
+#ifdef linux
+	logOutput.Print("WARNING: Do not rely on the file path of the synchronisation library under Linux,\n"
+		"because we can not reliably guess unitsync location from withing the engine, for example.");
+	return syncLibFilePath;
+#endif
+
 #if       defined UNITSYNC
 	syncLibFilePath = GetModuleFile();
 #else  // defined UNITSYNC
 #ifdef linux
-	logOutput.Print("WARNING: Using the file path of the synchronisation library is bad practise on Linux,\n"
-		"and in addition to that, also technically not possible.\n"
-		"Therefore, we do not support it at all!");
+	// we will never get here, but this is needed
+	// for the final else not to kick in on linux
 #elif WIN32
 	// we assume the synchronization lib to be in the same path
 	// as the engine launcher executable
-	std::string syncLibFilePath = GetProcessExecutablePath();
+	syncLibFilePath = GetProcessExecutablePath();
 	if (!syncLibFilePath.empty()) {
 		syncLibFilePath = syncLibFilePath + "\\unitsync.dll";
 	}
+
 #elif MACOSX_BUNDLE
 	// TODO
-	#warning implement this (or use linux version)
+	#warning implement this, or use linux version
+
 #else
-	#warning implement this
-#endif // linux, WIN32, MACOSX_BUNDLE, else
+	#warning implement this, or use linux version
+#endif // WIN32, MACOSX_BUNDLE, else
 #endif // defined UNITSYNC
 
 	return syncLibFilePath;
@@ -171,13 +297,7 @@ std::string GetSyncLibraryPath() {
 
 // legacy support (next three functions)
 std::string GetBinaryFile() {
-
-#ifdef WIN32
-	// this is wrong, but that is how it worked before
-	return GetModuleFile();
-#else
 	return GetProcessExecutableFile();
-#endif // linux, WIN32, MACOSX_BUNDLE, else
 }
 std::string GetBinaryPath() {
 	return GetParentPath(GetBinaryFile());

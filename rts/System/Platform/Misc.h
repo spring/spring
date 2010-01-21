@@ -31,8 +31,8 @@ std::string GetProcessExecutableFile();
 std::string GetProcessExecutablePath();
 
 /**
- * Returns the path to the module containing this code,
- * including the file name.
+ * Returns the path to the module/shared library, including the file name.
+ * If moduleName is "", the path to the current library is returned.
  * examples when calling from the engine:
  * - "/usr/games/bin/spring"
  * - "/home/user/spring/spring"
@@ -41,19 +41,19 @@ std::string GetProcessExecutablePath();
  * - "/usr/lib/libunitsync.so"
  * - "/home/user/spring/libunitsync.so"
  * - "C:\Program Files\Spring\unitsync.dll"
- * NOTE: Only works under windows, returns "" on other systems!
+ * @param  moduleName eg. "spring" or "unitsync", "" for current
  * @return path to the current module file or ""
  */
-std::string GetModuleFile();
+std::string GetModuleFile(std::string moduleName = "");
 
 /**
- * Returns the path to the module containing this code,
- * excluding the file name.
+ * Returns the path to a module/shared library, excluding the file name.
+ * If moduleName is "", the path to the current library is returned.
  * @see GetModuleFile()
- * NOTE: Only works under windows, returns "" on other systems!
+ * @param  moduleName eg. "spring" or "unitsync", "" for current
  * @return path to the current module dir or ""
  */
-std::string GetModulePath();
+std::string GetModulePath(const std::string& moduleName = "");
 
 /**
  * Returns the path to the spring synchronization library (unitsync),
