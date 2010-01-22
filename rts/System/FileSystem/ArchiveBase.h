@@ -8,8 +8,9 @@
 class CArchiveBase
 {
 public:
-	CArchiveBase(const std::string& archiveName) {};
+	CArchiveBase(const std::string& archiveName);
 	virtual ~CArchiveBase();
+
 	virtual bool IsOpen() = 0;
 	virtual int OpenFile(const std::string& fileName) = 0;
 	virtual int ReadFile(int handle, void* buffer, int numBytes) = 0;
@@ -19,7 +20,12 @@ public:
 	virtual bool Eof(int handle) = 0;
 	virtual int FileSize(int handle) = 0;
 	virtual int FindFiles(int cur, std::string* name, int* size) = 0;
+
 	virtual unsigned int GetCrc32 (const std::string& fileName);
+	std::string GetArchivName();
+
+private:
+	const std::string archiveFile;
 };
 
 #endif
