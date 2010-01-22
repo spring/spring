@@ -31,11 +31,6 @@
 #include "Exceptions.h"
 #include "Platform/Misc.h"
 
-/**
- * @brief construct a data directory object
- *
- * Appends a slash to the end of the path if there isn't one already.
- */
 DataDir::DataDir(const std::string& p) : path(p), writable(false)
 {
 #ifndef _WIN32
@@ -51,18 +46,10 @@ DataDir::DataDir(const std::string& p) : path(p), writable(false)
 #endif
 }
 
-/**
- * @brief construct a data directory locater
- *
- * Does not locate data directories, use LocateDataDirs() for that.
- */
 DataDirLocater::DataDirLocater() : writedir(NULL)
 {
 }
 
-/**
- * @brief substitute environment variables with their values
- */
 std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 {
 	bool escape = false;
@@ -99,9 +86,6 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 	return out.str();
 }
 
-/**
- * @brief Adds the directories in the colon separated string to the datadir handler.
- */
 void DataDirLocater::AddDirs(const std::string& in)
 {
 	size_t prev_colon = 0, colon;
@@ -130,10 +114,6 @@ void DataDirLocater::AddDirs(const std::string& in)
 	}
 }
 
-/**
- * @brief Figure out permissions we have for a single data directory d.
- * @returns whether we have permissions to read the data directory.
- */
 bool DataDirLocater::DeterminePermissions(DataDir* d)
 {
 #ifndef _WIN32
@@ -173,9 +153,6 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 	return false;
 }
 
-/**
- * @brief Figure out permissions we have for the data directories.
- */
 void DataDirLocater::DeterminePermissions()
 {
 	std::vector<DataDir> newDatadirs;
@@ -195,60 +172,6 @@ void DataDirLocater::DeterminePermissions()
 	datadirs = newDatadirs;
 }
 
-/**
- * @brief locate spring data directories
- *
- * Attempts to locate a writeable data dir, and then tries to
- * chdir to it.
- * As the writeable data dir will usually be the current dir already under windows,
- * the chdir will have no effect.
- *
- * The first dir added will be the writeable data dir.
- *
- * How the dirs get assembled
- * --------------------------
- * (descending priority -> first entry is searched first)
- *
- * Windows:
- * - SPRING_DATADIR env-variable (semi-colon separated list, like PATH)
- * - ./springsettings.cfg:SpringData=C:\data (semi-colon separated list)
- * - in portable mode only (usually: on): path to the current work-dir/module
- *   (either spring.exe or unitsync.dll)
- * - "C:/.../My Documents/My Games/Spring/"
- * - "C:/.../My Documents/Spring/"
- * - "C:/.../All Users/Applications/Spring/"
- * - SPRING_DATADIR compiler flag (semi-colon separated list)
- *
- * Max OS X:
- * - SPRING_DATADIR env-variable (colon separated list, like PATH)
- * - ~/.springrc:SpringData=/path/to/data (colon separated list)
- * - path to the current work-dir/module (either spring(binary) or libunitsync.dylib)
- * - {module-path}/data/
- * - {module-path}/lib/
- * - SPRING_DATADIR compiler flag (colon separated list)
- *
- * Unixes:
- * - SPRING_DATADIR env-variable (colon separated list, like PATH)
- * - ~/.springrc:SpringData=/path/to/data (colon separated list)
- * - in portable mode only (usually: off): path to the current work-dir/module
- *   (either spring binary or libunitsync.so)
- * - "$HOME/.spring"
- * - from file '/etc/spring/datadir', preserving order (new-line separated list)
- * - SPRING_DATADIR compiler flag (colon separated list)
- *   This is set by the build system, and will usually contain dirs like:
- *   * /usr/share/games/spring/
- *   * /usr/lib/
- *   * /usr/lib64/
- *   * /usr/share/lib/
- *
- * All of the above methods support environment variable substitution, eg.
- * '$HOME/myspringdatadir' will be converted by spring to something like
- * '/home/username/myspringdatadir'.
- *
- * If we end up with no data-dir that points to an existing path,
- * we asume the current working directory is the data directory.
- * @see IsPortableMode()
- */
 void DataDirLocater::LocateDataDirs()
 {
 	// Prepare the data-dirs defined in different places
