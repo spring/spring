@@ -104,6 +104,13 @@ private:
 	 */
 	void AddDirs(const std::string& in);
 	/**
+	 * @brief Adds a single directory to the datadir handler.
+	 * Will only add the directory if it was not already added,
+	 * as lower index in the list of dirs means higher prefference,
+	 * adding it again would be pointless.
+	 */
+	void AddDir(const std::string& dir);
+	/**
 	 * @brief Figure out permissions we have for a single data directory d.
 	 * @returns whether we have permissions to read the data directory.
 	 */

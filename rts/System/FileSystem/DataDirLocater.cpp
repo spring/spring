@@ -88,23 +88,36 @@ void DataDirLocater::AddDirs(const std::string& in)
 {
 	size_t prev_colon = 0, colon;
 	while ((colon = in.find(cPD, prev_colon)) != std::string::npos) { // cPD (depending on OS): ';' or ':'
-		const std::string newPath = in.substr(prev_colon, colon - prev_colon);
-		if (!newPath.empty())
-		{
-			datadirs.push_back(newPath);
-#ifdef DEBUG
-			logOutput.Print("Adding %s to directories" , newPath.c_str());
-#endif
-		}
+		AddDir(in.substr(prev_colon, colon - prev_colon));
 		prev_colon = colon + 1;
 	}
-	const std::string newPath = in.substr(prev_colon);
-	if (!newPath.empty())
-	{
-		datadirs.push_back(newPath);
+	AddDir(in.substr(prev_colon));
+}
+
+void DataDirLocater::AddDir(const std::string& dir)
+{
+	if (!dir.empty()) {
+		// to make use of ensure-slash-at-end,
+		// we create a DataDir here already
+		const DataDir newDataDir(dir);
+		bool alreadyAdded = false;
+
+		std::vector<DataDir>::const_iterator ddi;
+		for (ddi = datadirs.begin(); ddi != datadirs.end(); ++ddi) {
+			if (newDataDir.path == ddi->path) {
+				alreadyAdded = true;
+				break;
+			}
+		}
+
+		if (!alreadyAdded) {
+			datadirs.push_back(newDataDir);
 #ifdef DEBUG
-		logOutput.Print("Adding %s to directories" , newPath.c_str());
+			logOutput.Print("Adding %s to directories", newDataDir.path.c_str());
+		} else {
+			logOutput.Print("Skipping already added directory %s", newDataDir.path.c_str());
 #endif
+		}
 	}
 }
 
