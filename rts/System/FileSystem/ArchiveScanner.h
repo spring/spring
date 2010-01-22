@@ -25,7 +25,10 @@ class CArchiveScanner
 public:
 	struct MapData {
 		std::string name;
-		std::string virtualPath;					// Where in the archive the map can be found
+		std::string mapfile;
+		std::string version;
+		std::string description;
+		std::vector<std::string> dependencies;
 	};
 
 	struct ModData {
@@ -54,8 +57,9 @@ public:
 	std::vector<ModData> GetPrimaryMods() const;
 	std::vector<ModData> GetAllMods() const;
 	std::vector<std::string> GetArchives(const std::string& root, int depth = 0) const;
-	std::vector<std::string> GetMaps();
+	std::vector<std::string> GetMaps() const;
 	std::vector<std::string> GetArchivesForMap(const std::string& mapName) const;
+	std::string MapNameToMapFile(const std::string& s) const;
 	unsigned int GetArchiveChecksum(const std::string& name);
 	std::string GetArchivePath(const std::string& name) const;
 	unsigned int GetModChecksum(const std::string& root);
@@ -67,29 +71,29 @@ public:
 	ModData ModNameToModData(const std::string& s) const;
 	ModData ModArchiveToModData(const std::string& s) const;
 
-protected:
+private:
 	struct ArchiveInfo {
 		std::string path;
 		std::string origName;					// Could be useful to have the non-lowercased name around
 		unsigned int modified;
-		std::vector<MapData> mapData;
+		MapData mapData;
 		ModData modData;
 		unsigned int checksum;
 		bool updated;
 		std::string replaced;					// If not empty, use that archive instead
 	};
 
-protected:
 	void PreScan(const std::string& curPath);
 	void Scan(const std::string& curPath, bool checksum = false);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	bool ScanMap(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	bool ScanMapLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
 	bool ScanModLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
 	bool ScanModTdf(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
 
-protected:
 	std::map<std::string, ArchiveInfo> archiveInfo;
 	ModData GetModData(const LuaTable& modTable);
+	MapData GetMapData(const LuaTable& modTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;

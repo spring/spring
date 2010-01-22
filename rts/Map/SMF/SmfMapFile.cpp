@@ -11,7 +11,7 @@ using std::string;
 
 
 CSmfMapFile::CSmfMapFile(const string& mapname)
-	: ifs(string("maps/") + mapname), featureFileOffset(0)
+	: ifs(mapname), featureFileOffset(0)
 {
 	memset(&header, 0, sizeof(header));
 	memset(&featureHeader, 0, sizeof(featureHeader));

@@ -27,7 +27,7 @@
 // FIXME - temporary, until the LuaParser change is done
 static const TdfParser& GetMapDefParser()
 {
-	static TdfParser tdf(MapParser::GetMapConfigName(gameSetup->mapName));
+	static TdfParser tdf(MapParser::GetMapConfigName(gameSetup->MapFile()));
 	return tdf;
 }
 

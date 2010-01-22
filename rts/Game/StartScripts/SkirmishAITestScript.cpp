@@ -89,7 +89,7 @@ void CSkirmishAITestScript::GameStart()
 		throw content_error ("Unable to load a commander for side " + player_side_name);
 	}
 
-	MapParser mapParser(gameSetup->mapName);
+	MapParser mapParser(gameSetup->MapFile());
 	if (!mapParser.IsValid()) {
 		throw content_error("MapParser: " + mapParser.GetErrorLog());
 	}
