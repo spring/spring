@@ -29,21 +29,19 @@
 #include "FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"
+#include "maindefines.h" // for sPS, cPS, cPD
 #include "Platform/Misc.h"
 
 DataDir::DataDir(const std::string& p) : path(p), writable(false)
 {
-#ifndef _WIN32
-	if (path.empty())
-		path = "./";
-	if (path[path.size() - 1] != '/')
-		path += '/';
-#else
-	if (path.empty())
-		path = ".\\";
-	if (path[path.size() - 1] != '\\')
-		path += '\\';
-#endif
+	// sPS/cPS (depending on OS): "\\" & '\\' or "/" & '/'
+
+	// make sure the path ends with a (back-)slash
+	if (path.empty()) {
+		path = "."sPS;
+	} else if (path[path.size() - 1] != cPS) {
+		path += cPS;
+	}
 }
 
 DataDirLocater::DataDirLocater() : writedir(NULL)
@@ -89,11 +87,7 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 void DataDirLocater::AddDirs(const std::string& in)
 {
 	size_t prev_colon = 0, colon;
-#ifndef _WIN32
-	while ((colon = in.find(':', prev_colon)) != std::string::npos) {
-#else
-	while ((colon = in.find(';', prev_colon)) != std::string::npos) {
-#endif
+	while ((colon = in.find(cPD, prev_colon)) != std::string::npos) { // cPD (depending on OS): ';' or ':'
 		const std::string newPath = in.substr(prev_colon, colon - prev_colon);
 		if (!newPath.empty())
 		{
