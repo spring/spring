@@ -283,7 +283,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		switch(drawMode) {
 			case drawPath: {
 				const int pwr2mapx_half = gs->pwr2mapx / 2;
-				const MoveData* md = NULL;
 				if (guihandler->inCommand > 0 &&
 				    static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
 				    guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING)
@@ -319,30 +318,46 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							infoTexMem[a+2] = 0;
 						}
 					}
-				} else if (!selectedUnits.selectedUnits.empty() &&
-				            ((md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata) != NULL)) {
-					// use the first selected unit
-
-					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
-
-					for (int y = starty; y < endy; ++y) {
-						const int y_pwr2mapx_half = y*pwr2mapx_half;
-						const int y_2             = y*2;
-						for (int x = 0; x < gs->hmapx; ++x) {
-							float m = md->moveMath->SpeedMod(*md, x*2, y_2);
-							if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
-								m = 0.0f;
-							}
-							m = std::min(1.0f, (float)fastmath::apxsqrt(m));
-							m = (int) (m*255.0f);
-							const int a = (y_pwr2mapx_half + x) * 4;
-							infoTexMem[a+0] = 255 - m;
-							infoTexMem[a+1] = m;
-							infoTexMem[a+2] = 0;
+				} else {
+					const MoveData* md = NULL;
+					{
+						GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
+						if (!selectedUnits.selectedUnits.empty()) {
+							md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
 						}
 					}
-				} else {
-					return true;
+
+					if (md != NULL) {
+						// use the first selected unit, if it has the ability to move
+						for (int y = starty; y < endy; ++y) {
+							const int y_pwr2mapx_half = y*pwr2mapx_half;
+							const int y_2             = y*2;
+							for (int x = 0; x < gs->hmapx; ++x) {
+								float m = md->moveMath->SpeedMod(*md, x*2, y_2);
+								if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
+									m = 0.0f;
+								}
+								m = std::min(1.0f, (float)fastmath::apxsqrt(m));
+								m = (int) (m*255.0f);
+								const int a = (y_pwr2mapx_half + x) * 4;
+								infoTexMem[a+0] = 255 - m;
+								infoTexMem[a+1] = m;
+								infoTexMem[a+2] = 0;
+							}
+						}
+					} else {
+						// we have nothing to show
+						// -> draw a dark red overlay
+						for (int y = starty; y < endy; ++y) {
+							const int y_pwr2mapx_half = y*pwr2mapx_half;
+							for (int x = 0; x < gs->hmapx; ++x) {
+								const int a = (y_pwr2mapx_half + x) * 4;
+								infoTexMem[a+0] = 100;
+								infoTexMem[a+1] = 0;
+								infoTexMem[a+2] = 0;
+							}
+						}
+					}
 				}
 				break;
 			}
