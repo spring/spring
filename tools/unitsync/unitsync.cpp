@@ -1028,17 +1028,17 @@ EXPORT(void*) GetMinimap(const char* filename, int miplevel)
 		if (miplevel < 0 || miplevel > 8)
 			throw std::out_of_range("Miplevel must be between 0 and 8 (inclusive) in GetMinimap.");
 
-		const string mapName = filename;
-		ScopedMapLoader mapLoader(mapName);
+		ScopedMapLoader mapLoader(filename);
+		const string mapName = archiveScanner->MapNameToMapFile(filename);
 
 		const string extension = mapName.substr(mapName.length() - 3);
 
 		void* ret = NULL;
 
 		if (extension == "smf") {
-			ret = GetMinimapSMF(archiveScanner->MapNameToMapFile(filename), miplevel);
+			ret = GetMinimapSMF(mapName, miplevel);
 		} else if (extension == "sm3") {
-			ret = GetMinimapSM3(archiveScanner->MapNameToMapFile(filename), miplevel);
+			ret = GetMinimapSM3(mapName, miplevel);
 		}
 
 		return ret;
