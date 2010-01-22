@@ -39,10 +39,6 @@ BEGIN {
 	nativeBridge = "CallbackFunctionPointerBridge";
 	bridgePrefix = "bridged__";
 
-	retParamName  = "__retVal";
-	retParamCTypes["struct SAIFloat3"] = 1;
-	retParamCTypes["*"] = 1;
-
 	fi = 0;
 }
 
@@ -97,7 +93,6 @@ function printNativeFP2F() {
 	print("#define __CALLBACK_FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
 	print("") >> outFile_nh;
 	print("#include \"ExternalAI/Interface/aidefines.h\"") >> outFile_nh;
-	#print("#include \"ExternalAI/Interface/SAIFloat3.h\"") >> outFile_nh;
 	print("") >> outFile_nh;
 	print("#include <stdlib.h>  // size_t") >> outFile_nh;
 	print("#include <stdbool.h> // bool, true, false") >> outFile_nh;
@@ -140,31 +135,6 @@ function printNativeFP2F() {
 		sub(/int skirmishAIId/, "int _skirmishAIId", paramList);
 		paramListNoTypes = removeParamTypes(paramList);
 		commentEol       = funcCommentEol[i];
-
-		# TODO: remove cause unused (though it could be adapted to do: return float[3] -> out-param float[3])
-		# Move some return values to an output parameter form,
-		# for example, convert the first to the second:
-		# struct SAIFloat3 Unit_getPos(int unitId);
-		#             void Unit_getPos(int unitId, struct SAIFloat __retVal);
-		hasRetParam = 0;
-		sAIFloat3ParamNames = "";
-		if (retParamCTypes[retType] == 1) {
-			hasRetParam = 1;
-			paramList        = paramList ", " retType " " retParamName;
-			retNameTmp = "__ret_tmp";
-			retParamType = retType;
-			if (retType == "struct SAIFloat3") {
-				#funcRetType[i]   = "float[]";
-				funcParamList[i] = funcParamList[i] ", float[] " retParamName;
-				retParamConversion = "\t" retParamName "[0] = " retNameTmp ".x;\n";
-				retParamConversion = retParamConversion "\t" retParamName "[1] = " retNameTmp ".y;\n";
-				retParamConversion = retParamConversion "\t" retParamName "[2] = " retNameTmp ".z;";
-				#sAIFloat3ParamNames = sAIFloat3ParamNames " " retParamName;
-			}
-			retType = "void";
-			# for the JNA/Java part to reflect the changes
-			funcRetType[i]    = "void";
-		}
 
 		if (doWrapp(i)) {
 			# print function declaration to *.h

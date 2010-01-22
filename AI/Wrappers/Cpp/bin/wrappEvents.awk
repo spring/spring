@@ -79,7 +79,6 @@ function printAIHeader(outFile, clsName) {
 		print("#include \"WeaponDef.h\"") >> outFile;
 		print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile;
 		print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile;
-		print("#include \"ExternalAI/Interface/SAIFloat3.h\"") >> outFile;
 		print("") >> outFile;
 		print("#include <string>") >> outFile;
 		print("#include <vector>") >> outFile;
@@ -120,7 +119,6 @@ function printAIFactoryHeader(outFile) {
 	printGPLHeader(outFile);
 	print("") >> outFile;
 	print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile;
-	print("#include \"ExternalAI/Interface/SAIFloat3.h\"") >> outFile;
 	print("") >> outFile;
 	print("#include <string>") >> outFile;
 	print("#include <map>") >> outFile;
