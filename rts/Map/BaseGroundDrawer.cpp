@@ -183,13 +183,13 @@ void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,uns
 
 void CBaseGroundDrawer::SetPathMapTexture()
 {
-	if (drawMode==drawPath)
+	if (drawMode == drawPath) {
 		DisableExtraTexture();
-	else {
+	} else {
 		SetDrawMode(drawPath);
-		extraTex=0;
-		highResInfoTexWanted=false;
-		updateTextureState=0;
+		extraTex = 0;
+		highResInfoTexWanted = false;
+		updateTextureState = 0;
 		while(!UpdateExtraTexture());
 	}
 }
@@ -282,8 +282,11 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 		switch(drawMode) {
 			case drawPath: {
-				if (guihandler->inCommand > 0 && static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
-						guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING) {
+				const MoveData* md = NULL;
+				if (guihandler->inCommand > 0 &&
+				    static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
+				    guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING)
+				{
 					// use the current build order
 					for (int y = starty; y < endy; ++y) {
 						for (int x = 0; x < gs->hmapx; ++x) {
@@ -312,19 +315,12 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							infoTexMem[a*4+2]=0;
 						}
 					}
-				}
-				else {
+				} else if (!selectedUnits.selectedUnits.empty() &&
+				            ((md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata) != NULL)) {
 					// use the first selected unit
 
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
 
-					if (selectedUnits.selectedUnits.empty()) {
-						return true;
-					}
-					const MoveData* md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
-					if (md == NULL) {
-						return true;
-					}
 					for (int y = starty; y < endy; ++y) {
 						for (int x = 0; x < gs->hmapx; ++x) {
 							float m = md->moveMath->SpeedMod(*md, x*2, y*2);
@@ -338,6 +334,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							infoTexMem[a*4+2]=0;
 						}
 					}
+				} else {
+					return true;
 				}
 				break;
 			}
