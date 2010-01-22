@@ -44,7 +44,7 @@ void CSpawnScript::Update()
 			throw content_error ("Unable to load a startUnit for the first side");
 		}
 
-		MapParser mapParser(gameSetup->mapName);
+		MapParser mapParser(gameSetup->MapFile());
 		if (!mapParser.IsValid()) {
 			throw content_error("MapParser: " + mapParser.GetErrorLog());
 		}

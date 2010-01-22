@@ -52,7 +52,7 @@ void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 
 void CGameSetup::LoadStartPositionsFromMap()
 {
-	MapParser mapParser(mapName);
+	MapParser mapParser(MapFile());
 
 	for(size_t a = 0; a < teamStartingData.size(); ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
@@ -97,6 +97,10 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	}
 }
 
+std::string CGameSetup::MapFile() const
+{
+	return archiveScanner->MapNameToMapFile(mapName);
+}
 
 void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
 {

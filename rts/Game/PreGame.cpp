@@ -230,7 +230,7 @@ void CPreGame::UpdateClientNet()
 				if (!mapStartMusic.empty())
 					Channels::BGMusic.Play(mapStartMusic);
 
-				game = new CGame(gameSetup->mapName, modArchive, savefile);
+				game = new CGame(gameSetup->MapFile(), modArchive, savefile);
 
 				if (savefile) {
 					savefile->LoadGame();
@@ -413,7 +413,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	// This MUST be loaded this late, since this executes map Lua code which
 	// may call Spring.GetMapOptions(), which NEEDS gameSetup to be set!
 	if (!mapInfo) {
-		mapInfo = new CMapInfo(gameSetup->mapName);
+		mapInfo = new CMapInfo(gameSetup->MapFile());
 	}
 
 	const std::string mapWantedScript(mapInfo->GetStringValue("script"));
