@@ -259,7 +259,8 @@ EXPORT(void) UnInit()
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
-		logOutput.SetFilename("unitsync.log");
+		if (!logOutputInitialised)
+			logOutput.SetFilename("unitsync.log");
 		if (!configHandler)
 			ConfigHandler::Instantiate("");
 		FileSystemHandler::Initialize(false);
