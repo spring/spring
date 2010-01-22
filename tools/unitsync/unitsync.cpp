@@ -600,8 +600,8 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 
 	logOutput.Print(LOG_UNITSYNC, "get map info: %s", name);
 
-	const string mapName = name;
-	ScopedMapLoader mapLoader(mapName);
+	ScopedMapLoader mapLoader(name);
+	const string mapName = archiveScanner->MapNameToMapFile(name);
 
 	string err("");
 
@@ -616,7 +616,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 		const string extension = mapName.substr(mapName.length() - 3);
 		if (extension == "smf") {
 			try {
-				CSmfMapFile file(name);
+				CSmfMapFile file(mapName);
 				const SMFHeader& mh = file.GetHeader();
 
 				outInfo->width  = mh.mapx * SQUARE_SIZE;
@@ -1036,9 +1036,9 @@ EXPORT(void*) GetMinimap(const char* filename, int miplevel)
 		void* ret = NULL;
 
 		if (extension == "smf") {
-			ret = GetMinimapSMF(mapName, miplevel);
+			ret = GetMinimapSMF(archiveScanner->MapNameToMapFile(filename), miplevel);
 		} else if (extension == "sm3") {
-			ret = GetMinimapSM3(mapName, miplevel);
+			ret = GetMinimapSM3(archiveScanner->MapNameToMapFile(filename), miplevel);
 		}
 
 		return ret;
@@ -1067,7 +1067,7 @@ EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, i
 		CheckNull(height);
 
 		ScopedMapLoader mapLoader(filename);
-		CSmfMapFile file(filename);
+		CSmfMapFile file(archiveScanner->MapNameToMapFile(filename));
 		MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
 
 		*width = bmInfo.width;
@@ -1110,7 +1110,7 @@ EXPORT(int) GetInfoMap(const char* filename, const char* name, void* data, int t
 
 		string n = name;
 		ScopedMapLoader mapLoader(filename);
-		CSmfMapFile file(filename);
+		CSmfMapFile file(archiveScanner->MapNameToMapFile(filename));
 		int actualType = (n == "height" ? bm_grayscale_16 : bm_grayscale_8);
 
 		if (actualType == typeHint) {
