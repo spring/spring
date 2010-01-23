@@ -303,10 +303,11 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 				else if (hasModinfo) // backwards-compat for modinfo.lua in maps
 				{
 					ScanArchiveLua(ar, "modinfo.lua", ai);
-					ai.archiveData.mapfile = mapfile;
 				}
 				if (ai.archiveData.name.empty())
 					ai.archiveData.name = filesystem.GetFilename(mapfile);
+				if (ai.archiveData.mapfile.empty())
+					ai.archiveData.mapfile = mapfile;
 				AddDependency(ai.archiveData.dependencies, "maphelper.sdz");
 				ai.archiveData.modType = modtype::map;
 				
@@ -709,6 +710,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 			return aii->second.archiveData.mapfile;
 		}
 	}
+	logOutput.Print(LOG_ARCHIVESCANNER, "mapfile of %s not found\n", s.c_str());
 	return "";
 }
 
