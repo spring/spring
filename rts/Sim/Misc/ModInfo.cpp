@@ -24,7 +24,7 @@ void CModInfo::Init(const char* modname)
 
 	humanName = archiveScanner->ModArchiveToModName(modname);
 
-	const CArchiveScanner::ModData md = archiveScanner->ModArchiveToModData(modname);
+	const CArchiveScanner::ArchiveData md = archiveScanner->ModArchiveToModData(modname);
 
 	shortName   = md.shortName;
 	version     = md.version;
