@@ -3250,11 +3250,15 @@ bool CGame::Draw() {
 			int count;
 			const std::vector<int>& indices = playerRoster.GetIndices(&count, true);
 
+			SNPRINTF(buf, sizeof(buf), "\xff%c%c%c \tNu\tm   \tUser name   \tCPU  \tPing", 255, 255, 63);
+			chart += buf;
+			if (count > 0) chart += "\n";
+
 			for (int a = 0; a < count; ++a) {
 				const CPlayer* p = playerHandler->Player(indices[a]);
 				float4 color(1.0f,1.0f,1.0f,1.0f);
 				if(p->ping != PATHING_FLAG || gs->frameNum != 0) {
-					prefix = "S|";
+					prefix = "S";
 					if (!p->spectator) {
 						const unsigned char* bColor = teamHandler->Team(p->team)->color;
 						color[0] = (float)bColor[0] / 255.0f;
@@ -3262,11 +3266,11 @@ bool CGame::Draw() {
 						color[2] = (float)bColor[2] / 255.0f;
 						color[3] = (float)bColor[3] / 255.0f;
 						if (gu->myAllyTeam == teamHandler->AllyTeam(p->team))
-							prefix = "A|";	// same AllyTeam
+							prefix = "A";	// same AllyTeam
 						else if (teamHandler->AlliedTeams(gu->myTeam, p->team))
-							prefix = "E+|";	// different AllyTeams, but are allied
+							prefix = "E+";	// different AllyTeams, but are allied
 						else
-							prefix = "E|";	//no alliance at all
+							prefix = "E";	//no alliance at all
 					}
 					float4 cpucolor(p->cpuUsage > 0.75f && gs->speedFactor < gs->userSpeedFactor * 0.99f && 
 						(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)), 
@@ -3274,7 +3278,7 @@ bool CGame::Draw() {
 					int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
 					float4 pingcolor(std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
 							std::min(1.0f, std::max(0.01f, (1000 - ping) / 375.0f)), 0.01f, 1.0f);
-					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s  \xff%c%c%c%3.0f%%  \xff%c%c%c%dms",
+					SNPRINTF(buf, sizeof(buf), "%c \t%i \t%s   \t%s   \t\xff%c%c%c%.0f%%  \t\xff%c%c%c%dms",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), 
 							(unsigned char)(cpucolor[0] * 255.0f), (unsigned char)(cpucolor[1] * 255.0f), (unsigned char)(cpucolor[2] * 255.0f),
@@ -3283,8 +3287,8 @@ bool CGame::Draw() {
 							ping);
 				}
 				else {
-					prefix = " |";
-					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s   %s-%d  %d",
+					prefix = "";
+					SNPRINTF(buf, sizeof(buf), "%c \t%i \t%s   \t%s   \t%s-%d  \t%d",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
@@ -3299,7 +3303,7 @@ bool CGame::Draw() {
 
 			font_options |= FONT_BOTTOM;
 			smallFont->SetColors();
-			smallFont->glPrint(1.0f - 5 * gu->pixelX, 0.00f + 5 * gu->pixelY, 1.0f, font_options, chart);
+			smallFont->glPrintTable(1.0f - 5 * gu->pixelX, 0.00f + 5 * gu->pixelY, 1.0f, font_options, chart);
 		}
 
 		smallFont->End();
