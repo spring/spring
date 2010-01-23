@@ -163,10 +163,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	char buf[64];
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetMapChecksum(mapInfo->map.name));
+	         archiveScanner->GetArchiveCompleteChecksum(mapInfo->map.name));
 	LuaPushNamedString(L, "mapChecksum", buf);
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetModChecksum(modInfo.filename));
+	         archiveScanner->GetArchiveCompleteChecksum(modInfo.filename));
 	LuaPushNamedString(L, "modChecksum", buf);
 
 	const vector<string> cats =

@@ -441,7 +441,7 @@ bool CGameSetup::Init(const std::string& buf)
 	LoadUnitRestrictions(file);
 
 	// Postprocessing
-	modName = archiveScanner->ModArchiveToModName(modName);
+	modName = archiveScanner->NameFromArchive(modName);
 
 	return true;
 }

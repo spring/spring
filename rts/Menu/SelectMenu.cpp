@@ -198,7 +198,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
 		{
-			std::string archive = archiveScanner->ModNameToModArchive("Spring Bitmaps");
+			std::string archive = archiveScanner->ArchiveFromName("Spring Bitmaps");
 			std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
 			vfsHandler->AddArchive(archivePath, false);
 			background->Load("bitmaps/ui/background.jpg");
