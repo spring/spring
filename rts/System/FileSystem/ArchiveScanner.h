@@ -30,7 +30,8 @@ namespace modtype
 class CArchiveScanner
 {
 public:
-	struct ArchiveData {
+	struct ArchiveData
+	{
 		std::string name;							// ex:  Original Total Annihilation v2.3
 		std::string shortName;						// ex:  OTA
 		std::string version;						// ex:  v2.3
@@ -49,31 +50,28 @@ public:
 
 	std::string GetFilename();
 
-	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
-
-	void ReadCacheData(const std::string& filename);
-	void WriteCacheData(const std::string& filename);
-
 	std::vector<ArchiveData> GetPrimaryMods() const;
 	std::vector<ArchiveData> GetAllMods() const;
 	std::vector<std::string> GetArchives(const std::string& root, int depth = 0) const;
 	std::vector<std::string> GetMaps() const;
-	std::vector<std::string> GetArchivesForMap(const std::string& mapName) const;
-	std::string MapNameToMapFile(const std::string& s) const;
-	unsigned int GetArchiveChecksum(const std::string& name);
-	std::string GetArchivePath(const std::string& name) const;
-	unsigned int GetModChecksum(const std::string& root);
-	unsigned int GetMapChecksum(const std::string& mapName);
-	void CheckMod(const std::string& root, unsigned checksum); // these throw a content_error if checksum doesn't match
-	void CheckMap(const std::string& mapName, unsigned checksum);
+
+	/// checksum of the given archive (without dependencies)
+	unsigned int GetSingleArchiveChecksum(const std::string& name) const;
+	/// Calculate checksum of the given archive and all its dependencies
+	unsigned int GetArchiveCompleteChecksum(const std::string& name) const;
+	/// like GetArchiveCompleteChecksum, throws exception if mismatch
+	void CheckArchive(const std::string& name, unsigned checksum) const;
+
 	std::string ArchiveFromName(const std::string& s) const;
-	std::string ModNameToModArchive(const std::string& s) const;
-	std::string ModArchiveToModName(const std::string& s) const;
-	ArchiveData ModNameToModData(const std::string& s) const;
-	ArchiveData ModArchiveToModData(const std::string& s) const;
+	std::string NameFromArchive(const std::string& s) const;
+	std::string GetArchivePath(const std::string& name) const;
+	std::string MapNameToMapFile(const std::string& name) const;
+	ArchiveData GetArchiveData(const std::string& name) const;
+	ArchiveData GetArchiveDataByArchive(const std::string& archive) const;
 
 private:
-	struct ArchiveInfo {
+	struct ArchiveInfo
+	{
 		std::string path;
 		std::string origName;					// Could be useful to have the non-lowercased name around
 		unsigned int modified;
@@ -83,11 +81,15 @@ private:
 		std::string replaced;					// If not empty, use that archive instead
 	};
 
+	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
 	void Scan(const std::string& curPath, bool doChecksum);
 
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	/// scan mapinfo / modinfo lua files
 	bool ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+
+	void ReadCacheData(const std::string& filename);
+	void WriteCacheData(const std::string& filename);
 
 	std::map<std::string, ArchiveInfo> archiveInfo;
 	ArchiveData GetArchiveData(const LuaTable& archiveTable);

@@ -177,9 +177,10 @@ void CPreGame::StartServer(const std::string& setupscript)
 	// (Which is OK, since unitsync does not have map options available either.)
 	setup->LoadStartPositions();
 
-	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
-	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
-	startupData->SetMapChecksum(archiveScanner->GetMapChecksum(setup->mapName));
+	const std::string modArchive = archiveScanner->ArchiveFromName(setup->modName);
+	startupData->SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
+	const std::string mapArchive = archiveScanner->ArchiveFromName(setup->mapName);
+	startupData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
 
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
@@ -361,7 +362,7 @@ void CPreGame::LoadMod(const std::string& modName)
 
 	if (!alreadyLoaded) {
 		// Map all required archives depending on selected mod(s)
-		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
+		std::string modArchive = archiveScanner->ArchiveFromName(modName);
 		vector<string> ars = archiveScanner->GetArchives(modArchive);
 		if (ars.empty()) {
 			throw content_error("Couldn't find any archives for mod '" + modName + "'");
@@ -408,7 +409,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
 	LoadMap(gameSetup->mapName);
-	archiveScanner->CheckMap(gameSetup->mapName, gameData->GetMapChecksum());
+	archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 
 	// This MUST be loaded this late, since this executes map Lua code which
 	// may call Spring.GetMapOptions(), which NEEDS gameSetup to be set!
@@ -426,7 +427,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 
 	LogObject() << "Using mod " << gameSetup->modName << "\n";
 	LoadMod(gameSetup->modName);
-	modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
+	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
 	LogObject() << "Using mod archive " << modArchive << "\n";
-	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
+	archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 }

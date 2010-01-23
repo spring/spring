@@ -699,23 +699,6 @@ vector<string> CArchiveScanner::GetMaps() const
 	return ret;
 }
 
-
-vector<string> CArchiveScanner::GetArchivesForMap(const string& mapName) const
-{
-	vector<string> ret;
-
-	for (std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii)
-	{
-		if (mapName == aii->second.archiveData.name)
-		{
-			ret = GetArchives(aii->first);
-			break;
-		}
-	}
-
-	return ret;
-}
-
 std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 {
 	// Convert map name to map archive
@@ -729,18 +712,9 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 	return "";
 }
 
-unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
+unsigned int CArchiveScanner::GetSingleArchiveChecksum(const string& name) const
 {
-	string lcname = name;
-
-	// Strip path-info if present
-	if (lcname.find_last_of('\\') != string::npos) {
-		lcname = lcname.substr(lcname.find_last_of('\\') + 1);
-	}
-	if (lcname.find_last_of('/') != string::npos) {
-		lcname = lcname.substr(lcname.find_last_of('/') + 1);
-	}
-
+	string lcname = filesystem.GetFilename(name);
 	StringToLowerInPlace(lcname);
 
 	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
@@ -753,148 +727,79 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 	return aii->second.checksum;
 }
 
+unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name) const
+{
+	const vector<string> ars = GetArchives(name);
+	unsigned int checksum = 0;
+
+	for (unsigned int a = 0; a < ars.size(); a++) {
+		checksum ^= GetSingleArchiveChecksum(ars[a]);
+	}
+	logOutput.Print(LOG_ARCHIVESCANNER, "archive checksum %s: %d/%u\n", name.c_str(), checksum, checksum);
+	return checksum;
+}
+
+void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum) const
+{
+	unsigned localChecksum = GetArchiveCompleteChecksum(name);
+
+	if (localChecksum != checksum)
+	{
+		char msg[1024];
+		sprintf(
+			msg,
+			"Checksum of %s (checksum 0x%x) differs from the host's copy (checksum 0x%x). "
+			"This may be caused by a corrupted download or there may even "
+			"be 2 different versions in circulation. Make sure you and the host have installed "
+			"the chosen archive and its dependencies and consider redownloading it.",
+			name.c_str(), localChecksum, checksum);
+
+		throw content_error(msg);
+	}
+}
 
 string CArchiveScanner::GetArchivePath(const string& name) const
 {
-	string lcname = name;
-
-	// Strip path-info if present
-	if (lcname.find_last_of('\\') != string::npos) {
-		lcname = lcname.substr(lcname.find_last_of('\\') + 1);
-	}
-	if (lcname.find_last_of('/') != string::npos) {
-		lcname = lcname.substr(lcname.find_last_of('/') + 1);
-	}
-
+	string lcname = filesystem.GetFilename(name);
 	StringToLowerInPlace(lcname);
 
 	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
-	if (aii == archiveInfo.end()) {
+	if (aii == archiveInfo.end())
+	{
 		return "";
 	}
 
 	return aii->second.path;
 }
 
-
-/** Get checksum of all required archives depending on selected mod. */
-unsigned int CArchiveScanner::GetModChecksum(const string& root)
-{
-	const vector<string> ars = GetArchives(root);
-	unsigned int checksum = 0;
-
-	for (unsigned int a = 0; a < ars.size(); a++) {
-		checksum ^= GetArchiveChecksum(ars[a]);
-	}
-	logOutput.Print(LOG_ARCHIVESCANNER, "mod checksum %s: %d/%u\n", root.c_str(), checksum, checksum);
-	return checksum;
-}
-
-
-/** Get checksum of all required archives depending on selected map. */
-unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
-{
-	const vector<string> ars = GetArchivesForMap(mapName);
-	unsigned int checksum = 0;
-	for (unsigned int a = 0; a < ars.size(); a++) {
-		checksum ^= GetArchiveChecksum(ars[a]);
-	}
-	logOutput.Print(LOG_ARCHIVESCANNER, "map checksum %s: %d/%u\n", mapName.c_str(), checksum, checksum);
-	return checksum;
-}
-
-
-/** Check if calculated mod checksum equals given checksum. Throws content_error if not equal. */
-void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
-{
-	unsigned localChecksum = GetModChecksum(root);
-
-	if (localChecksum != checksum) {
-		char msg[1024];
-		sprintf(
-			msg,
-			"Your mod (checksum 0x%x) differs from the host's mod (checksum 0x%x). "
-			"This may be caused by a missing archive, a corrupted download, or there may even "
-			"be 2 different versions in circulation. Make sure you and the host have installed "
-			"the chosen mod and its dependencies and consider redownloading the mod.",
-			localChecksum, checksum);
-
-		throw content_error(msg);
-	}
-}
-
-
-/** Check if calculated map checksum equals given checksum. Throws content_error if not equal. */
-void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
-{
-	unsigned localChecksum = GetMapChecksum(mapName);
-	if (localChecksum != checksum) {
-		char msg[1024];
-		sprintf(
-			msg,
-			"Your map (checksum 0x%x) differs from the host's map (checksum 0x%x). "
-			"This may be caused by a missing archive, a corrupted download, or there may even "
-			"be 2 different versions in circulation. Make sure you and the host have installed "
-			"the chosen map and its dependencies and consider redownloading the mod.\n",
-			localChecksum, checksum);
-
-		throw content_error(msg);
-	}
-}
-
-std::string CArchiveScanner::ArchiveFromName(const std::string& s) const
+std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 {
 	for (std::map<string, ArchiveInfo>::const_iterator it = archiveInfo.begin(); it != archiveInfo.end(); ++it)
 	{
-		if (it->second.archiveData.name == s)
+		if (it->second.archiveData.name == name)
 		{
 			return it->first;
 		}
 	}
-	return s;
+	return name;
 }
 
-/** Convert mod name to mod primary archive, e.g. ModNameToModArchive("XTA v8.1") returns "xtape.sd7". */
-string CArchiveScanner::ModNameToModArchive(const string& s) const
+string CArchiveScanner::NameFromArchive(const string& s) const
 {
-	// Convert mod name to mod archive
-	vector<ArchiveData> found = GetAllMods();
-	for (vector<ArchiveData>::iterator it = found.begin(); it != found.end(); ++it)
+	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(s);
+	if (aii != archiveInfo.end())
 	{
-		if (it->name == s)
-		{
-			return it->dependencies.front();
-		}
+		return aii->second.archiveData.name;
 	}
 	return s;
 }
 
-
-/** The reverse of ModNameToModArchive() */
-string CArchiveScanner::ModArchiveToModName(const string& s) const
+CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& name) const
 {
-	// Convert mod archive to mod name
-	vector<ArchiveData> found = GetAllMods();
-	for (vector<ArchiveData>::iterator it = found.begin(); it != found.end(); ++it)
+	for (std::map<string, ArchiveInfo>::const_iterator it = archiveInfo.begin(); it != archiveInfo.end(); ++it)
 	{
-		if (it->dependencies.front() == s)
-		{
-			return it->name;
-		}
-	}
-	return s;
-}
-
-
-/** Convert mod name to mod data struct, can return empty ModData */
-CArchiveScanner::ArchiveData CArchiveScanner::ModNameToModData(const string& s) const
-{
-	// Convert mod name to mod archive
-	vector<ArchiveData> found = GetAllMods();
-	for (vector<ArchiveData>::iterator it = found.begin(); it != found.end(); ++it)
-	{
-		const ArchiveData& md = *it;
-		if (md.name == s)
+		const ArchiveData& md = it->second.archiveData;
+		if (md.name == name)
 		{
 			return md;
 		}
@@ -902,19 +807,8 @@ CArchiveScanner::ArchiveData CArchiveScanner::ModNameToModData(const string& s) 
 	return ArchiveData();
 }
 
-
-/** Convert mod archive to mod data struct, can return empty ModData */
-CArchiveScanner::ArchiveData CArchiveScanner::ModArchiveToModData(const string& s) const
+CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveDataByArchive(const std::string& archive) const
 {
-	// Convert mod archive to mod name
-	vector<ArchiveData> found = GetAllMods();
-	for (vector<ArchiveData>::iterator it = found.begin(); it != found.end(); ++it)
-	{
-		const ArchiveData& md = *it;
-		if (md.dependencies.front() == s)
-		{
-			return md;
-		}
-	}
-	return ArchiveData();
+	return GetArchiveData(NameFromArchive(archive));
 }
+

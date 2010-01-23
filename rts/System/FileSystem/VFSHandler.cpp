@@ -71,7 +71,7 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std
 
 bool CVFSHandler::AddMapArchiveWithDeps(const std::string& mapName, bool override, const std::string& type)
 {
-	const std::vector<std::string> ars = archiveScanner->GetArchivesForMap(mapName);
+	const std::vector<std::string> ars = archiveScanner->GetArchives(mapName);
 	if (ars.empty())
 		throw content_error("Couldn't find any archives for map '" + mapName + "'.");
 	std::vector<std::string>::const_iterator it;
