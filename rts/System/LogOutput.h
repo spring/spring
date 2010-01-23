@@ -120,11 +120,42 @@ public:
 
 	const char* GetFilename() const;
 	void SetFilename(const char* filename);
+
+	/**
+	 * @brief initialize logOutput
+	 *
+	 * Only after calling this method, logOutput starts writing to disk.
+	 * The log file is written in the current directory so this may only be called
+	 * after the engine chdir'ed to the correct directory.
+	 */
 	void Initialize();
 	void Flush();
 
 protected:
+	/**
+	 * @brief initialize the log subsystems
+	 *
+	 * This writes list of all available and all enabled subsystems to the log.
+	 *
+	 * Log subsystems can be enabled using the configuration key "LogSubsystems",
+	 * or the environment variable "SPRING_LOG_SUBSYSTEMS".
+	 *
+	 * Both specify a comma separated list of subsystems that should be enabled.
+	 * The lists from both sources are combined, there is no overriding.
+	 *
+	 * A subsystem that is by default enabled, can not be disabled.
+	 */
 	void InitializeSubsystems();
+	/**
+	 * @brief core log output method, used by all others
+	 *
+	 * Note that, when logOutput isn't initialized yet, the logging is done to the
+	 * global std::vector preInitLog(), and is only written to disk in the call to
+	 * Initialize().
+	 *
+	 * This method notifies all registered ILogSubscribers, calls OutputDebugString
+	 * (for MSVC builds) and prints the message to stdout and the file log.
+	 */
 	void Output(const CLogSubsystem& subsystem, const std::string& str);
 
 	void ToStdout(const CLogSubsystem& subsystem, const std::string message);
