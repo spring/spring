@@ -1149,7 +1149,7 @@ EXPORT(int) GetInfoMap(const char* filename, const char* name, void* data, int t
 //////////////////////////
 //////////////////////////
 
-vector<CArchiveScanner::ModData> modData;
+vector<CArchiveScanner::ArchiveData> modData;
 
 
 /**
