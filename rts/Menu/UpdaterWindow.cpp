@@ -93,7 +93,7 @@ void UpdaterWindow::AcceptAgreement()
 {
 	agui::gui->RmElement(agreement);
 	agreement = NULL;
-	AcceptAgreement();
+	con->ConfirmAggreement();
 }
 
 void UpdaterWindow::RejectAgreement()
