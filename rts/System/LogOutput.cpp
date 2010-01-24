@@ -18,6 +18,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "ConfigHandler.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "mmgr.h"
 
 #include <string>
@@ -65,7 +66,8 @@ static vector<PreInitLogEntry>& preInitLog()
 }
 
 static vector<ILogSubscriber*> subscribers;
-static std::string filename = "";
+static std::string fileName = "";
+static std::string filePath = "";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
 
@@ -92,7 +94,7 @@ CLogOutput::CLogOutput()
 	assert(this == &logOutput);
 	assert(!filelog);
 
-	SetFilename("infolog.txt");
+	SetFileName("infolog.txt");
 }
 
 
@@ -116,23 +118,35 @@ void CLogOutput::Flush()
 	filelog->flush();
 }
 
-const std::string& CLogOutput::GetFilename() const
+const std::string& CLogOutput::GetFileName() const
 {
-	return filename;
+	return fileName;
 }
-void CLogOutput::SetFilename(std::string fname)
+const std::string& CLogOutput::GetFilePath() const
 {
-	GML_STDMUTEX_LOCK(log); // SetFilename
+	assert(initialized);
+	return filePath;
+}
+void CLogOutput::SetFileName(std::string fname)
+{
+	GML_STDMUTEX_LOCK(log); // SetFileName
 
 	assert(!initialized);
-	filename = fname;
+	fileName = fname;
+}
+
+std::string CLogOutput::CreateFilePath(const std::string& fileName)
+{
+	return FileSystemHandler::GetCwd() + (char)FileSystemHandler::GetNativePathSeparator() + fileName;
 }
 
 void CLogOutput::Initialize()
 {
 	if (initialized) return;
 
-	filelog = new std::ofstream(filename.c_str());
+	filePath = CreateFilePath(fileName);
+
+	filelog = new std::ofstream(filePath.c_str());
 	if (filelog->bad())
 		SafeDelete(filelog);
 
