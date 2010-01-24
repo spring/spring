@@ -11,6 +11,7 @@
 	#include <dirent.h>
 	#include <sstream>
 	#include <unistd.h>
+	#include <time.h>
 #else
 	#include <windows.h>
 	#include <io.h>
@@ -163,6 +164,72 @@ bool FileSystemHandler::IsReadableFile(const std::string& file)
 #else
 	return (access(file.c_str(), R_OK | F_OK) == 0);
 #endif
+}
+
+std::string FileSystemHandler::GetFileModificationDate(const std::string& file)
+{
+	std::string time = "";
+
+#if       defined(WIN32)
+	HANDLE hFile = CreateFile(file.c_str(), // file to open
+			GENERIC_READ,                   // open for reading
+			FILE_SHARE_READ,                // share for reading
+			NULL,                           // default security
+			OPEN_EXISTING,                  // existing file only
+			FILE_ATTRIBUTE_NORMAL,          // normal file
+			NULL);                          // no attr. template
+
+	if (hFile == INVALID_HANDLE_VALUE) {
+		logOutput.Print("WARNING: Failed opening file for retreiving last modification time: %s", file.c_str());
+	} else {
+		FILETIME /*ftCreate, ftAccess,*/ ftWrite;
+
+		// Retrieve the file times for the file.
+		if (GetFileTime(hFile, NULL, NULL, &ftWrite) != 0) {
+			logOutput.Print("WARNING: Failed fetching last modification time from file: %s", file.c_str());
+		} else {
+			// Convert the last-write time to local time.
+			SYSTEMTIME stUTC, stLocal;
+			FileTimeToSystemTime(&ftWrite, &stUTC);
+			SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
+
+			// Build a string showing the date and time.
+			const DWORD dwRet = StringCchPrintf(lpszString, dwSize,
+					TEXT("%d%02d%02d%02d%02d%02d"),
+					stLocal.wYear, stLocal.wMonth, stLocal.wDay,
+					stLocal.wHour, stLocal.wMinute, stLocal.wSecond);
+
+			if (dwRet != S_OK) {
+				logOutput.Print("WARNING: Failed converting last modification time to a string");
+			} else {
+				time = dwRet;
+			}
+		}
+		CloseHandle(hFile);
+	}
+
+#else  // defined(WIN32)
+	struct tm* clock;
+	struct stat attrib;
+	const size_t cTime_size = 20;
+	char cTime[cTime_size];
+
+	const int fetchOk = stat(file.c_str(), &attrib); // get the attributes of file
+	if (fetchOk != 0) {
+		logOutput.Print("WARNING: Failed opening file for retreiving last modification time: %s", file.c_str());
+	} else {
+		// Get the last modified time and put it into the time structure
+		clock = gmtime(&(attrib.st_mtime));
+		if (clock == NULL) {
+			logOutput.Print("WARNING: Failed fetching last modification time from file: %s", file.c_str());
+		} else {
+			SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
+			time = cTime;
+		}
+	}
+#endif // defined(WIN32)
+
+	return time;
 }
 
 std::string FileSystemHandler::LocateFile(const std::string& file) const
