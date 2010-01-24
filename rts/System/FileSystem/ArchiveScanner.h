@@ -48,7 +48,7 @@ public:
 	CArchiveScanner(void);
 	~CArchiveScanner(void);
 
-	std::string GetFilename();
+	const std::string& GetFilename() const;
 
 	std::vector<ArchiveData> GetPrimaryMods() const;
 	std::vector<ArchiveData> GetAllMods() const;
@@ -96,6 +96,7 @@ private:
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;
+	std::string cachefile;
 };
 
 extern CArchiveScanner* archiveScanner;

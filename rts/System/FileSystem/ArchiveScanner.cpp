@@ -42,7 +42,7 @@ CLogSubsystem LOG_ARCHIVESCANNER("ArchiveScanner");
  * is not slow, but mapping them all every time to make the list is)
  */
 
-#define INTERNAL_VER	9
+const int INTERNAL_VER = 9;
 
 
 CArchiveScanner* archiveScanner = NULL;
@@ -51,6 +51,9 @@ CArchiveScanner* archiveScanner = NULL;
 CArchiveScanner::CArchiveScanner(void)
 : isDirty(false)
 {
+	std::ostringstream file;
+	file << "ArchiveCacheV" << INTERNAL_VER << ".lua";
+	cachefile = file.str();
 	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
 	ReadCacheData(fsh.GetWriteDir() + GetFilename());
 
@@ -76,11 +79,9 @@ CArchiveScanner::~CArchiveScanner(void)
 }
 
 
-string CArchiveScanner::GetFilename()
+const string& CArchiveScanner::GetFilename() const
 {
-	char buf[32];
-	sprintf(buf, "ArchiveCacheV%i.lua", INTERNAL_VER);
-	return string(buf);
+	return cachefile;
 }
 
 
