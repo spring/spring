@@ -26,7 +26,7 @@ unsigned int CArchiveBase::GetCrc32(const std::string& fileName)
 	return crc.GetDigest();
 };
 
-std::string CArchiveBase::GetArchivName()
+std::string CArchiveBase::GetArchiveName()
 {
 	return archiveFile;
 }
