@@ -67,7 +67,3 @@ CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName,
 	delete ret;
 	return NULL;
 }
-
-
-CArchiveBase::~CArchiveBase() {
-}

@@ -5,6 +5,10 @@ CArchiveBase::CArchiveBase(const std::string& archiveName) : archiveFile(archive
 {
 }
 
+CArchiveBase::~CArchiveBase()
+{
+}
+
 unsigned int CArchiveBase::GetCrc32(const std::string& fileName)
 {
 	CRC crc;
