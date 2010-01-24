@@ -95,6 +95,24 @@ CLogOutput::CLogOutput()
 	assert(!filelog);
 
 	SetFileName("infolog.txt");
+
+	bool doRotateLogFiles = false;
+	std::string rotatePolicy = "auto";
+	if (configHandler != NULL) {
+		rotatePolicy = configHandler->GetString("RotateLogFiles", "auto");
+	}
+	if (rotatePolicy == "always") {
+		doRotateLogFiles = true;
+	} else if (rotatePolicy == "never") {
+		doRotateLogFiles = false;
+	} else { // auto
+#ifdef DEBUG
+		doRotateLogFiles = true;
+#else
+		doRotateLogFiles = false;
+#endif
+	}
+	SetLogFileRotating(doRotateLogFiles);
 }
 
 
@@ -140,11 +158,49 @@ std::string CLogOutput::CreateFilePath(const std::string& fileName)
 	return FileSystemHandler::GetCwd() + (char)FileSystemHandler::GetNativePathSeparator() + fileName;
 }
 
+
+void CLogOutput::SetLogFileRotating(bool enabled)
+{
+	assert(!initialized);
+	rotateLogFiles = enabled;
+}
+bool CLogOutput::IsLogFileRotating() const
+{
+	return rotateLogFiles;
+}
+
+void CLogOutput::RotateLogFile() const
+{
+
+	if (IsLogFileRotating()) {
+		if (FileSystemHandler::FileExists(filePath)) {
+			// logArchiveDir: /absolute/writeable/data/dir/log/
+			std::string logArchiveDir = filePath.substr(0, fileName.find_last_of("/\\"));
+			logArchiveDir = logArchiveDir + "log" + (char)FileSystemHandler::GetNativePathSeparator();
+
+			const std::string archivedLogFile = logArchiveDir + FileSystemHandler::GetFileModificationDate(filePath) + "_" + fileName;
+
+			// create the log archive dir if it does nto exist yet
+			if (!FileSystemHandler::DirExists(logArchiveDir)) {
+				FileSystemHandler::mkdir(logArchiveDir);
+			}
+
+			// move the old log to the archive dir
+			const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
+			if (moveError != 0) {
+				// no log here yet
+				std::cout << "Failed rotating the log file" << std::endl;
+			}
+		}
+	}
+}
+
 void CLogOutput::Initialize()
 {
 	if (initialized) return;
 
 	filePath = CreateFilePath(fileName);
+	RotateLogFile();
 
 	filelog = new std::ofstream(filePath.c_str());
 	if (filelog->bad())
