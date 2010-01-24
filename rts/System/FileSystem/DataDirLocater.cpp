@@ -22,7 +22,7 @@
 #endif
 #include <sstream>
 #include <string.h>
-#include "FileSystem/VFSHandler.h"
+
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 #include "FileSystemHandler.h"

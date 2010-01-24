@@ -13,10 +13,8 @@
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"
 #include "ArchiveFactory.h"
-#include "ArchiveBuffered.h"
 #include "CRC.h"
 #include "FileFilter.h"
-#include "FileHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileSystemHandler.h"
 #include "Util.h"
@@ -73,7 +71,8 @@ CArchiveScanner::CArchiveScanner(void)
 
 CArchiveScanner::~CArchiveScanner(void)
 {
-	if (isDirty) {
+	if (isDirty)
+	{
 		WriteCacheData(filesystem.LocateFile(GetFilename(), FileSystem::WRITE));
 	}
 }
@@ -712,7 +711,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 		}
 	}
 	logOutput.Print(LOG_ARCHIVESCANNER, "mapfile of %s not found\n", s.c_str());
-	return "";
+	return s;
 }
 
 unsigned int CArchiveScanner::GetSingleArchiveChecksum(const string& name) const
