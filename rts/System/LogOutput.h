@@ -190,6 +190,30 @@ private:
 	 * absoluteification.
 	 */
 	static std::string CreateFilePath(const std::string& fileName);
+
+	/**
+	 * @brief enable/disable log file rotation
+	 *
+	 * The default is determined by the config setting RotateLogFiles and
+	 * whether this is a DEBUG build or not.
+	 * RotateLogFiles defaults to "auto", and could be set to "never"
+	 * or "always". On "auto", it will rotate logs only for debug builds.
+	 * You may only call this as long as the logger did not yet get initialized.
+	 */
+	void SetLogFileRotating(bool enabled);
+	bool IsLogFileRotating() const;
+	/**
+	 * @brief ff enabled, moves the log file of the last run
+	 *
+	 * Moves the log file of the last run, to preserve it,
+	 * if log file rotation is enabled.
+	 *
+	 * By default, this is enabled only for DEBUG builds;
+	 * ... (describe config file value here)
+	 */
+	void RotateLogFile() const;
+
+	bool rotateLogFiles;
 };
 
 
