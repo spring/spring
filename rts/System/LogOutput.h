@@ -118,8 +118,16 @@ public:
 	void AddSubscriber(ILogSubscriber* ls);
 	void RemoveSubscriber(ILogSubscriber* ls);
 
-	const char* GetFilename() const;
-	void SetFilename(const char* filename);
+	const std::string& GetFilename() const;
+	/**
+	 * @brief set the log file
+	 *
+	 * Relative paths are relative to the writeable data-dir.
+	 * This method may only be caled as long as the logger is not yet
+	 * initialized.
+	 * @see Initialize()
+	 */
+	void SetFilename(std::string filename);
 
 	/**
 	 * @brief initialize logOutput
