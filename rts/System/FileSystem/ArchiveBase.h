@@ -22,7 +22,7 @@ public:
 	virtual int FindFiles(int cur, std::string* name, int* size) = 0;
 
 	virtual unsigned int GetCrc32 (const std::string& fileName);
-	std::string GetArchivName();
+	std::string GetArchiveName();
 
 private:
 	const std::string archiveFile;
