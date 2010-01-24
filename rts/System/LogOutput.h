@@ -118,16 +118,29 @@ public:
 	void AddSubscriber(ILogSubscriber* ls);
 	void RemoveSubscriber(ILogSubscriber* ls);
 
-	const std::string& GetFilename() const;
 	/**
 	 * @brief set the log file
 	 *
 	 * Relative paths are relative to the writeable data-dir.
-	 * This method may only be caled as long as the logger is not yet
+	 * This method may only be called as long as the logger is not yet
 	 * initialized.
 	 * @see Initialize()
 	 */
-	void SetFilename(std::string filename);
+	void SetFileName(std::string fileName);
+	/**
+	 * @brief returns the log file name (without path)
+	 *
+	 * Relative paths are relative to the writeable data-dir.
+	 */
+	const std::string& GetFileName() const;
+	/**
+	 * @brief returns the absolute path to the log file
+	 *
+	 * Relative paths are relative to the writeable data-dir.
+	 * This method may only be called after the logger got initialzized.
+	 * @see Initialize()
+	 */
+	const std::string& GetFilePath() const;
 
 	/**
 	 * @brief initialize logOutput
@@ -168,6 +181,15 @@ protected:
 
 	void ToStdout(const CLogSubsystem& subsystem, const std::string message);
 	void ToFile(const CLogSubsystem& subsystem, const std::string message);
+
+private:
+	/**
+	 * @brief creates an absolute file path from a file name
+	 *
+	 * Will use the CWD, whihc should be the writeable data-dir format
+	 * absoluteification.
+	 */
+	static std::string CreateFilePath(const std::string& fileName);
 };
 
 
