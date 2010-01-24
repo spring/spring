@@ -219,7 +219,7 @@ bool FileSystemHandler::IsAbsolutePath(const std::string& path)
  * data directory, ie. all subdirectories the same perms, all files the same
  * perms.
  */
-bool FileSystemHandler::mkdir(const std::string& dir) const
+bool FileSystemHandler::mkdir(const std::string& dir)
 {
 	// First check if directory exists. We'll return success if it does.
 	if (DirExists(dir)) {
