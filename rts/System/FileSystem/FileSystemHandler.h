@@ -19,14 +19,14 @@ public:
 	void Initialize();
 
 	// almost direct wrappers to system calls
-	bool mkdir(const std::string& dir) const;
+	static bool mkdir(const std::string& dir);
 	static bool DeleteFile(const std::string& file);
 	static bool FileExists(const std::string& file);
 	static bool DirExists(const std::string& dir);
 	/// oddly, this is non-trivial on Windows
 	static bool DirIsWritable(const std::string& dir);
 
-	void Chdir(const std::string& dir);
+	static void Chdir(const std::string& dir);
 	/**
 	 * Returns true if path matches regex ...
 	 * on windows:          ^[a-zA-Z]\:[\\/]?$
