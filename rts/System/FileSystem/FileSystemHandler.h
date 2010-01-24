@@ -26,6 +26,7 @@ public:
 	/// oddly, this is non-trivial on Windows
 	static bool DirIsWritable(const std::string& dir);
 
+	static std::string GetCwd();
 	static void Chdir(const std::string& dir);
 	/**
 	 * Returns true if path matches regex ...
