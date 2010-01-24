@@ -15,14 +15,10 @@
 #include <string.h>
 #include <stdexcept>
 #ifndef WIN32
-#include <unistd.h>
-#endif
-
-#ifdef __APPLE__
-#include <sys/stat.h>
-#endif
-
-#ifdef WIN32
+	#include <unistd.h>
+	#include <sys/stat.h>
+	#include <sys/types.h>
+#else
 	#include <io.h>
 	#include <direct.h>
 	#include <windows.h>
