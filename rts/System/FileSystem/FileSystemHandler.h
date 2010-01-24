@@ -48,6 +48,15 @@ public:
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
 	static bool IsReadableFile(const std::string& file);
 	/**
+	 * Returns the last file modification time formatted in a sort friendly
+	 * way, with second resolution.
+	 * 23:58:59 30 January 1999 -> "19990130235859"
+	 *
+	 * @return  the last file modification time as described above,
+	 *          or "" on error
+	 */
+	static std::string GetFileModificationDate(const std::string& file);
+	/**
 	 * Returns an absolute path if the file was found in one of the data-dirs,
 	 * or the argument (relative path) if it was not found.
 	 *
