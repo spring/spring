@@ -18,7 +18,7 @@ public:
 
 	void ReadMinimap(void* data);
 	/// @return mipsize
-	int ReadMinimap(std::vector<uint8_t>& data, unsigned miplevel);
+	int ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel);
 	void ReadHeightmap(unsigned short* heightmap);
 	void ReadHeightmap(float* heightmap, float base, float mod);
 	void ReadFeatureInfo();
