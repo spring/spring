@@ -406,6 +406,25 @@ bool FileSystemHandler::DirIsWritable(const std::string& dir)
 #endif
 }
 
+std::string FileSystemHandler::GetCwd()
+{
+	std::string cwd = "";
+
+#ifndef _WIN32
+	#define GETCWD getcwd
+#else
+	#define GETCWD _getcwd
+#endif
+
+	const size_t path_maxSize = 1024;
+	char path[path_maxSize];
+	if (GETCWD(path, path_maxSize) != NULL) {
+		cwd = path;
+	}
+
+	return cwd;
+}
+
 void FileSystemHandler::Chdir(const std::string& dir)
 {
 #ifndef _WIN32
