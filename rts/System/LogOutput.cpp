@@ -65,7 +65,7 @@ static vector<PreInitLogEntry>& preInitLog()
 }
 
 static vector<ILogSubscriber*> subscribers;
-static const char* filename = "infolog.txt";
+static std::string filename = "";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
 
@@ -91,6 +91,8 @@ CLogOutput::CLogOutput()
 	// multiple infologs can't exist together!
 	assert(this == &logOutput);
 	assert(!filelog);
+
+	SetFilename("infolog.txt");
 }
 
 
@@ -114,11 +116,11 @@ void CLogOutput::Flush()
 	filelog->flush();
 }
 
-const char* CLogOutput::GetFilename() const
+const std::string& CLogOutput::GetFilename() const
 {
 	return filename;
 }
-void CLogOutput::SetFilename(const char* fname)
+void CLogOutput::SetFilename(std::string fname)
 {
 	GML_STDMUTEX_LOCK(log); // SetFilename
 
@@ -130,7 +132,7 @@ void CLogOutput::Initialize()
 {
 	if (initialized) return;
 
-	filelog = new std::ofstream(filename);
+	filelog = new std::ofstream(filename.c_str());
 	if (filelog->bad())
 		SafeDelete(filelog);
 
