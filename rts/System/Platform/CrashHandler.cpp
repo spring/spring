@@ -197,7 +197,7 @@ static void findBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 		paths_notFound.insert(bpbmai->first);
 	}
 
-	FILE* mapsFile = NULL; 
+	FILE* mapsFile = NULL;
 	// /proc/self/maps contains the base addresses for all loaded dynamic
 	// libaries of the current process + other stuff (which we are not interested in)
 	mapsFile = fopen("/proc/self/maps", "rb");
@@ -249,7 +249,7 @@ namespace CrashHandler {
 	void HandleSignal(int signal)
 	{
 		static const std::string INVALID_LINE_INDICATOR = "#####";
-		const std::string logFileName = logOutput.GetFilename();
+		const std::string logFile = logOutput.GetFilePath();
 
 		std::string error;
 		std::queue<std::string> paths;
@@ -366,13 +366,13 @@ namespace CrashHandler {
 				paths.pop();
 				addresses.pop();
 			}
-			buf << " >> " << logFileName; // pipe to infolog (which will be in CWD)
+			buf << " >> " << logFile;
 			system(buf.str().c_str());
 		}
 
 		ErrorMessageBox(error, "Spring crashed", 0);
 	}
-	
+
 	void Install() {
 		signal(SIGSEGV, HandleSignal); // segmentation fault
 		signal(SIGILL,  HandleSignal); // illegal instruction
