@@ -73,7 +73,6 @@ void CMapInfo::ReadGlobal()
 
 	map.humanName    = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
-	map.wantedScript = topTable.GetString("script", "");
 
 	map.hardness      = topTable.GetFloat("maphardness", 100.0f);
 	map.notDeformable = topTable.GetBool("notDeformable", false);
