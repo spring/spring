@@ -36,7 +36,6 @@
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/glFont.h"
-#include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "aGui/Gui.h"
 #include "Exceptions.h"
@@ -273,7 +272,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			TdfParser script(data->GetSetup().c_str(), data->GetSetup().size());
 			TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
-			tgame->AddPair("ScriptName", demoScript->scriptName);
 			tgame->AddPair("MapName", demoScript->mapName);
 			tgame->AddPair("Gametype", demoScript->modName);
 			tgame->AddPair("Demofile", demoName);
@@ -416,14 +414,6 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	if (!mapInfo) {
 		mapInfo = new CMapInfo(gameSetup->MapFile());
 	}
-
-	const std::string mapWantedScript(mapInfo->GetStringValue("script"));
-	if (!mapWantedScript.empty()) {
-		temp->scriptName = mapWantedScript;
-	}
-
-	LogObject() << "Using script " << gameSetup->scriptName << "\n";
-	CScriptHandler::SelectScript(gameSetup->scriptName);
 
 	LogObject() << "Using mod " << gameSetup->modName << "\n";
 	LoadMod(gameSetup->modName);

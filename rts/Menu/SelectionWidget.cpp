@@ -6,8 +6,8 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileSystem.h"
 #include "Exceptions.h"
-#include "Game/StartScripts/ScriptHandler.h"
 #include "ConfigHandler.h"
+#include "ScriptHandler.h"
 
 
 
@@ -98,12 +98,12 @@ void SelectionWidget::ShowScriptList()
 	curSelect = new ListSelectWnd("Select script");
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
-	
-	std::list<std::string> scriptList = CScriptHandler::Instance().ScriptList();
-	for (std::list<std::string>::iterator it = scriptList.begin(); it != scriptList.end(); ++it)
-	{
+
+	CScriptHandler::ScriptList scriptList = CScriptHandler::Instance().GetScriptList();
+	for (CScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
 		curSelect->list->AddItem(*it, "");
 	}
+
 	curSelect->list->SetCurrentItem(userScript);
 }
 

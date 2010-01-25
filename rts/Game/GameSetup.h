@@ -53,7 +53,6 @@ public:
 	std::string MapFile() const;
 	std::string mapName;
 	std::string modName;
-	std::string scriptName;
 	bool useLuaGaia;
 	std::string luaGaiaStr;
 	std::string luaRulesStr;

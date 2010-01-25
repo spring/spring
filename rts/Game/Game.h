@@ -15,7 +15,6 @@
 
 #include "lib/gml/gml.h"
 
-class CScript;
 class CBaseWater;
 class CAVIGenerator;
 class CConsoleHistory;
@@ -114,8 +113,6 @@ public:
 	bool moveWarnings;
 
 	unsigned char gameID[16];
-
-	CScript* script;
 
 	CInfoConsole *infoConsole;
 
