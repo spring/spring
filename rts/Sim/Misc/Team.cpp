@@ -38,8 +38,6 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(startPos),
 				CR_MEMBER(teamStartNum),
 				CR_MEMBER(teamAllyteam),
-				CR_MEMBER(startMetal),
-				CR_MEMBER(startEnergy),
 //				CR_MEMBER(customValues),
 // from CTeam
 				CR_MEMBER(teamNum),
@@ -265,11 +263,8 @@ void CTeam::StartposMessage(const float3& pos)
 void CTeam::operator=(const TeamBase& base)
 {
 	TeamBase::operator=(base);
-	energy = base.startEnergy;
-	energyIncome = base.startEnergy; // should that count as income?
-	metal = base.startMetal;
-	metalIncome = base.startMetal;
 }
+
 void CTeam::ResetFrameVariables()
 {
 	prevMetalPull     = metalPull;

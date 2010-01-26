@@ -92,9 +92,6 @@ public:
 
 	std::string saveName;
 
-	int startMetal;
-	int startEnergy;
-
 	int gameMode;
 	int noHelperAIs;
 

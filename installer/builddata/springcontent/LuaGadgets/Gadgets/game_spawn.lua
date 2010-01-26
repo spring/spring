@@ -26,9 +26,12 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local modOptions = Spring.GetModOptions()
+
+
 local function GetStartUnit(teamID)
 	-- get the team startup info
-	local _,_,_,_,side = Spring.GetTeamInfo(teamID)
+	local side = select(5, Spring.GetTeamInfo(teamID))
 	local startUnit
 	if (side == "") then
 		-- startscript didn't specify a side for this team
@@ -59,6 +62,22 @@ local function SpawnStartUnit(teamID)
 		local ud = UnitDefs[UnitDefNames[startUnit].id]
 		Spring.SetTeamResource(teamID, "ms", ud.metalStorage)
 		Spring.SetTeamResource(teamID, "es", ud.energyStorage)
+	end
+
+	-- set start resources, either from mod options or custom team keys
+	local teamOptions = select(7, Spring.GetTeamInfo(teamID))
+	local m = teamOptions.startmetal  or modOptions.startmetal
+	local e = teamOptions.startenergy or modOptions.startenergy
+
+	-- using SetTeamResource to get rid of any existing resource without affecting stats
+	-- using AddTeamResource to add starting resource and counting it as income
+	if (m and tonumber(m) ~= 0) then
+		Spring.SetTeamResource(teamID, "m", 0)
+		Spring.AddTeamResource(teamID, "m", tonumber(m))
+	end
+	if (e and tonumber(e) ~= 0) then
+		Spring.SetTeamResource(teamID, "e", 0)
+		Spring.AddTeamResource(teamID, "e", tonumber(e))
 	end
 end
 
