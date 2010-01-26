@@ -17,6 +17,7 @@
 	#include <io.h>
 	#include <direct.h>
 	#include <fstream>
+	#include <strsafe.h>
 	// winapi redifines these which breaks things
 	#if defined(CreateDirectory)
 		#undef CreateDirectory
@@ -189,12 +190,15 @@ std::string FileSystemHandler::GetFileModificationDate(const std::string& file)
 			logOutput.Print("WARNING: Failed fetching last modification time from file: %s", file.c_str());
 		} else {
 			// Convert the last-write time to local time.
+			const size_t cTime_size = 20;
+			TCHAR cTime[cTime_size];
+
 			SYSTEMTIME stUTC, stLocal;
 			FileTimeToSystemTime(&ftWrite, &stUTC);
 			SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
 
 			// Build a string showing the date and time.
-			const DWORD dwRet = StringCchPrintf(lpszString, dwSize,
+			const DWORD dwRet = StringCchPrintf(cTime, cTime_size,
 					TEXT("%d%02d%02d%02d%02d%02d"),
 					stLocal.wYear, stLocal.wMonth, stLocal.wDay,
 					stLocal.wHour, stLocal.wMinute, stLocal.wSecond);
@@ -202,7 +206,7 @@ std::string FileSystemHandler::GetFileModificationDate(const std::string& file)
 			if (dwRet != S_OK) {
 				logOutput.Print("WARNING: Failed converting last modification time to a string");
 			} else {
-				time = dwRet;
+				time = cTime;
 			}
 		}
 		CloseHandle(hFile);
