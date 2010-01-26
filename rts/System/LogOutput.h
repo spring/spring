@@ -8,6 +8,7 @@ LogOutput - global object to write log info to.
 
 #include <stdarg.h>
 #include <string>
+#include <vector>
 #include <sstream>
 
 // format string error checking
@@ -213,6 +214,10 @@ private:
 	 */
 	void RotateLogFile() const;
 
+
+	std::vector<ILogSubscriber*> subscribers;
+	std::string fileName;
+	std::string filePath;
 	bool rotateLogFiles;
 };
 
