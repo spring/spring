@@ -65,9 +65,6 @@ static vector<PreInitLogEntry>& preInitLog()
 	return preInitLog;
 }
 
-static vector<ILogSubscriber*> subscribers;
-static std::string fileName = "";
-static std::string filePath = "";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
 
@@ -89,6 +86,8 @@ LogObject::~LogObject()
 }
 
 CLogOutput::CLogOutput()
+	: fileName("")
+	, filePath("")
 {
 	// multiple infologs can't exist together!
 	assert(this == &logOutput);
@@ -175,7 +174,7 @@ void CLogOutput::RotateLogFile() const
 	if (IsLogFileRotating()) {
 		if (FileSystemHandler::FileExists(filePath)) {
 			// logArchiveDir: /absolute/writeable/data/dir/log/
-			std::string logArchiveDir = filePath.substr(0, fileName.find_last_of("/\\"));
+			std::string logArchiveDir = filePath.substr(0, filePath.find_last_of("/\\") + 1);
 			logArchiveDir = logArchiveDir + "log" + (char)FileSystemHandler::GetNativePathSeparator();
 
 			const std::string archivedLogFile = logArchiveDir + FileSystemHandler::GetFileModificationDate(filePath) + "_" + fileName;
