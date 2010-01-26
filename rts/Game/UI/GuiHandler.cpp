@@ -1762,7 +1762,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 		SetShowingMetal(false);
 		return true;
 	}
-	if (key == SDLK_ESCAPE && inCommand > 0) {
+	if (key == SDLK_ESCAPE && inCommand >= 0) {
 		inCommand=-1;
 		SetShowingMetal(false);
 		return true;
