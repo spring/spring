@@ -233,8 +233,6 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		}
 
 		TeamBase data;
-		data.startMetal = startMetal;
-		data.startEnergy = startEnergy;
 
 		// Get default color from palette (based on "color" tag)
 		for (size_t num = 0; num < 3; ++num)
@@ -247,11 +245,6 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
 			data.SetValue(it->first, it->second);
 
-		if (data.startMetal == -1.0)
-			data.startMetal = startMetal;
-		
-		if (data.startEnergy == -1.0)
-			data.startEnergy = startEnergy;
 		teamStartingData.push_back(data);
 
 		teamRemap[a] = i;
@@ -402,8 +395,6 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(diminishingMMs,   "0", "GAME\\ModOptions\\DiminishingMMs");
 	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");
 	file.GetDef(ghostedBuildings, "1", "GAME\\ModOptions\\GhostedBuildings");
-	file.GetDef(startMetal,    "1000", "GAME\\ModOptions\\StartMetal");
-	file.GetDef(startEnergy,   "1000", "GAME\\ModOptions\\StartEnergy");
 
 	file.GetDef(maxSpeed, "3.0", "GAME\\ModOptions\\MaxSpeed");
 	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");

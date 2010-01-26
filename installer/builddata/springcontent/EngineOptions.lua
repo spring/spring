@@ -59,64 +59,6 @@ local options =
   },
 
   {
-    key    = 'StartingResources',
-    name   = 'Starting Resources',
-    desc   = 'Sets storage and amount of resources that players will start with',
-    type   = 'section',
-  },
-
-  {
-    key    = 'StartMetal',
-    name   = 'Starting metal',
-    desc   = 'Determines amount of metal and metal storage that each player will start with',
-    type   = 'number',
-    section= 'StartingResources',
-    def    = 1000,
-    min    = 0,
-    max    = 10000,
-    step   = 1,  -- quantization is aligned to the def value
-                    -- (step <= 0) means that there is no quantization
-  },
-  {
-   key    = 'StartMetal',
-   scope  = 'team',
-   name   = 'Team Starting metal',
-   desc   = 'Determines amount of metal and metal storage this team will start with',
-   type   = 'number',
-   section= 'StartingResources',
-   def    = 1000,
-   min    = 0,
-   max    = 10000,
-   step   = 1,  -- quantization is aligned to the def value
-   -- (step <= 0) means that there is no quantization
-  },
-  {
-    key    = 'StartEnergy',
-    name   = 'Starting energy',
-    desc   = 'Determines amount of energy and energy storage that each player will start with',
-    type   = 'number',
-    section= 'StartingResources',
-    def    = 1000,
-    min    = 0,
-    max    = 10000,
-    step   = 1,  -- quantization is aligned to the def value
-                    -- (step <= 0) means that there is no quantization
-  },
-  {
-   key    = 'StartEnergy',
-   scope  = 'team',
-   name   = 'Team Starting energy',
-   desc   = 'Determines amount of energy and energy storage that this team will start with',
-   type   = 'number',
-   section= 'StartingResources',
-   def    = 1000,
-   min    = 0,
-   max    = 10000,
-   step   = 1,  -- quantization is aligned to the def value
-   -- (step <= 0) means that there is no quantization
-  },
-
-  {
     key    = 'MaxUnits',
     name   = 'Max units',
     desc   = 'Maximum number of units (including buildings) for each team allowed at the same time',
