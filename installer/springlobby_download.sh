@@ -25,3 +25,4 @@ unzip ../downloads/latest.zip -d SLArchive
 
 mkdir SettingsDlls
 mv SLArchive/*.dll SettingsDlls
+mv SLArchive/springsettings.exe SettingsDlls
