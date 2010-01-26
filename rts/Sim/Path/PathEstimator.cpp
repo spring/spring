@@ -788,7 +788,6 @@ void CPathEstimator::WriteFile(std::string name) {
 		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
 
 		// Write hash.
-		unsigned int hash = Hash();
 		zipWriteInFileInZip(file, (void*) &hash, 4);
 
 		// Write block-center-offsets.
