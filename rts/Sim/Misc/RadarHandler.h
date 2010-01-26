@@ -72,7 +72,7 @@ public:
 			const bool radarVisible =
 				radarMaps[allyTeam][square] &&
 				(!unit->stealth || unit->beingBuilt) &&
-				&& !commonJammerMap[square];
+				!commonJammerMap[square];
 			const bool sonarVisible = 
 				(unit->pos.y <= 1.0f) &&
 				sonarMaps[allyTeam][square] &&
