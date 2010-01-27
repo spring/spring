@@ -84,9 +84,9 @@ void Gui::RmElement(GuiElement* elem)
 	}
 }
 
-void Gui::UpdateScreenGeometry(int screenx, int screeny)
+void Gui::UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int screenOffsetY)
 {
-	GuiElement::UpdateDisplayGeo(screenx, screeny);
+	GuiElement::UpdateDisplayGeo(screenx, screeny, screenOffsetX, screenOffsetY);
 }
 
 bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const

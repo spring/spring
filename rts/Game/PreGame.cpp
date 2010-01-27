@@ -11,6 +11,7 @@
 #include "PreGame.h"
 #include "Game.h"
 #include "GameVersion.h"
+#include "Player.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "FPUCheck.h"
 #include "GameServer.h"
@@ -35,7 +36,6 @@
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/glFont.h"
-#include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "aGui/Gui.h"
 #include "Exceptions.h"
@@ -162,29 +162,24 @@ void CPreGame::StartServer(const std::string& setupscript)
 	setup->Init(setupscript);
 
 	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
-	if (!setup->mapName.empty())
-	{
-		// would be better to use MapInfo here, but this doesn't work
-		LoadMap(setup->mapName); // map into VFS
-		const std::string mapWantedScript(mapInfo->GetStringValue("script"));
 
-		if (!mapWantedScript.empty()) {
-			setup->scriptName = mapWantedScript;
-		}
-	}
-	else
-	{
+	if (setup->mapName.empty()) {
 		throw content_error("No map selected in startscript");
 	}
 
-	CScriptHandler::SelectScript(setup->scriptName);
-	LoadMod(setup->modName);
+	// We must map the map into VFS this early, because server needs the start positions.
+	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
+	LoadMap(setup->mapName);
 
-	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
-	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
-
-	startupData->SetMapChecksum(archiveScanner->GetMapChecksum(setup->mapName));
+	// Loading the start positions executes the map's Lua.
+	// This means start positions can NOT be influenced by map options.
+	// (Which is OK, since unitsync does not have map options available either.)
 	setup->LoadStartPositions();
+
+	const std::string modArchive = archiveScanner->ArchiveFromName(setup->modName);
+	startupData->SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
+	const std::string mapArchive = archiveScanner->ArchiveFromName(setup->mapName);
+	startupData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
 
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
@@ -235,7 +230,7 @@ void CPreGame::UpdateClientNet()
 				if (!mapStartMusic.empty())
 					Channels::BGMusic.Play(mapStartMusic);
 
-				game = new CGame(gameSetup->mapName, modArchive, savefile);
+				game = new CGame(gameSetup->MapFile(), modArchive, savefile);
 
 				if (savefile) {
 					savefile->LoadGame();
@@ -277,7 +272,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			TdfParser script(data->GetSetup().c_str(), data->GetSetup().size());
 			TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
-			tgame->AddPair("ScriptName", demoScript->scriptName);
 			tgame->AddPair("MapName", demoScript->mapName);
 			tgame->AddPair("Gametype", demoScript->modName);
 			tgame->AddPair("Demofile", demoName);
@@ -348,26 +342,13 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	assert(gameServer);
 }
 
-void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
+void CPreGame::LoadMap(const std::string& mapName)
 {
 	static bool alreadyLoaded = false;
 
-	if (!alreadyLoaded || forceReload)
+	if (!alreadyLoaded)
 	{
-		CFileHandler* f = new CFileHandler("maps/" + mapName);
-		if (!f->FileExists()) {
-			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
-			if (ars.empty()) {
-				throw content_error("Couldn't find any archives for map '" + mapName + "'.");
-			}
-			for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-				if (!vfsHandler->AddArchive(*i, false)) {
-					throw content_error("Couldn't load archive '" + *i + "' for map '" + mapName + "'.");
-				}
-			}
-		}
-		delete f;
-		mapInfo = new CMapInfo(mapName);
+		vfsHandler->AddMapArchiveWithDeps(mapName, false);
 		alreadyLoaded = true;
 	}
 }
@@ -379,7 +360,7 @@ void CPreGame::LoadMod(const std::string& modName)
 
 	if (!alreadyLoaded) {
 		// Map all required archives depending on selected mod(s)
-		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
+		std::string modArchive = archiveScanner->ArchiveFromName(modName);
 		vector<string> ars = archiveScanner->GetArchives(modArchive);
 		if (ars.empty()) {
 			throw content_error("Couldn't find any archives for mod '" + modName + "'");
@@ -411,7 +392,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
 			setupTextFile.close();
 		}
-		gameSetup = const_cast<const CGameSetup*>(temp);
+		gameSetup = temp;
 		gs->LoadFromSetup(gameSetup);
 		CPlayer::UpdateControlledTeams();
 	} else {
@@ -422,18 +403,21 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	LogObject() << "Using map " << gameSetup->mapName << "\n";
 
 	if (net && net->GetDemoRecorder()) {
-		net->GetDemoRecorder()->SetName(gameSetup->mapName);
+		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
 		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
 	LoadMap(gameSetup->mapName);
-	archiveScanner->CheckMap(gameSetup->mapName, gameData->GetMapChecksum());
+	archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 
-	LogObject() << "Using script " << gameSetup->scriptName << "\n";
-	CScriptHandler::SelectScript(gameSetup->scriptName);
+	// This MUST be loaded this late, since this executes map Lua code which
+	// may call Spring.GetMapOptions(), which NEEDS gameSetup to be set!
+	if (!mapInfo) {
+		mapInfo = new CMapInfo(gameSetup->MapFile());
+	}
 
 	LogObject() << "Using mod " << gameSetup->modName << "\n";
 	LoadMod(gameSetup->modName);
-	modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
+	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
 	LogObject() << "Using mod archive " << modArchive << "\n";
-	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
+	archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 }

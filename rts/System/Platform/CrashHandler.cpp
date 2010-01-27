@@ -55,7 +55,7 @@ namespace CrashHandler {
 #include "errorhandler.h"
 #include "Game/GameVersion.h"
 #include "Platform/Misc.h"
-#include "FileSystem/FileSystem.h" // for FileSystemHandler::IsReadableFile(file)
+#include "FileSystem/FileSystemHandler.h"
 #include "maindefines.h" // for SNPRINTF
 
 /**
@@ -75,7 +75,7 @@ static std::string createAbsolutePath(const std::string& relativePath) {
 			// remove initial "./"
 			absolutePath = absolutePath.substr(2);
 		}
-		absolutePath = Platform::GetBinaryPath() + '/' + absolutePath;
+		absolutePath = Platform::GetModulePath() + '/' + absolutePath;
 	}
 
 	return absolutePath;
@@ -197,7 +197,7 @@ static void findBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 		paths_notFound.insert(bpbmai->first);
 	}
 
-	FILE* mapsFile = NULL; 
+	FILE* mapsFile = NULL;
 	// /proc/self/maps contains the base addresses for all loaded dynamic
 	// libaries of the current process + other stuff (which we are not interested in)
 	mapsFile = fopen("/proc/self/maps", "rb");
@@ -249,7 +249,7 @@ namespace CrashHandler {
 	void HandleSignal(int signal)
 	{
 		static const std::string INVALID_LINE_INDICATOR = "#####";
-		const std::string logFileName = logOutput.GetFilename();
+		const std::string logFile = logOutput.GetFilePath();
 
 		std::string error;
 		std::queue<std::string> paths;
@@ -281,6 +281,7 @@ namespace CrashHandler {
 			if (lines == NULL) {
 				log << "Unable to create stacktrace\n";
 			} else {
+				bool containsOglSo = false;
 				for (int l = 0; l < numLines; l++) {
 					const std::string line(lines[l]);
 					log << line;
@@ -320,6 +321,7 @@ namespace CrashHandler {
 							|| (addr == INVALID_LINE_INDICATOR)) {
 						log << " # NOTE: invalid stack-trace line -> not translating";
 					} else {
+						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
 						binPath_baseMemAddr[absPath] = 0;
 						paths.push(absPath);
@@ -330,7 +332,12 @@ namespace CrashHandler {
 				}
 				delete lines;
 				lines = NULL;
+
+				if (containsOglSo) {
+					log << "This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.\n";
+				}
 			}
+
 			log << "Translated Stacktrace:\n";
 		}
 		logOutput.End(); // Stop writing to log.
@@ -347,7 +354,7 @@ namespace CrashHandler {
 			// add addresses as long as the path stays the same
 			while (!paths.empty() && (lastPath == paths.front())) {
 				uintptr_t addr_num = addresses.front();
-				if (paths.front() != Platform::GetBinaryFile() && (addr_num > baseAddress)) {
+				if (paths.front() != Platform::GetModuleFile() && (addr_num > baseAddress)) {
 					// shift the stack trace address by the value of
 					// the libraries base address in process memory
 					// for all binaries that are not the processes main binary
@@ -359,13 +366,13 @@ namespace CrashHandler {
 				paths.pop();
 				addresses.pop();
 			}
-			buf << " >> " << logFileName; // pipe to infolog (which will be in CWD)
+			buf << " >> " << logFile;
 			system(buf.str().c_str());
 		}
 
 		ErrorMessageBox(error, "Spring crashed", 0);
 	}
-	
+
 	void Install() {
 		signal(SIGSEGV, HandleSignal); // segmentation fault
 		signal(SIGILL,  HandleSignal); // illegal instruction

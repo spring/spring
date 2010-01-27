@@ -71,7 +71,7 @@ inline unsigned int MTRand_int32::rand_int32() {
 
 	// gen_state() is split off to be non-inline, because it is only called once
 	// in every 624 calls and otherwise irand() would become too big to get inlined
-  	unsigned int x = state[p++];
+ 	unsigned int x = state[p++];
 	x ^= (x >> 11);
 	x ^= (x << 7) & 0x9D2C5680UL;
 	x ^= (x << 15) & 0xEFC60000UL;

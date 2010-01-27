@@ -2,6 +2,7 @@
 
 #ifdef linux
 #include <unistd.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
 
 #elif WIN32
 #include <io.h>
@@ -11,107 +12,229 @@
 
 #elif MACOSX_BUNDLE
 #include <CoreFoundation/CoreFoundation.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
 
 #else
 
 #endif
 
+#include "System/LogOutput.h"
+
+/**
+ * Utility function for cutting off the file name form a path
+ * @param  path "/path/to/my/file.ext"
+ * @return "/path/to/my/" or "" if (path == "")
+ */
+static std::string GetParentPath(const std::string& path)
+{
+	std::string parentPath = "";
+
+	if (!path.empty()) {
+#if defined linux || defined MACOSX_BUNDLE
+		const size_t parentPath_length = path.find_last_of('/');
+		if (parentPath_length != std::string::npos) {
+			parentPath = path.substr(0, parentPath_length);
+		}
+#elif defined WIN32
+		char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH], parentPathC[MAX_PATH];
+		_splitpath(path.c_str(), drive, dir, file, ext);
+		_makepath(parentPathC, drive, dir, NULL, NULL);
+		parentPath = std::string(parentPathC);
+#else
+		#error implement this
+#endif // linux, WIN32, MACOSX_BUNDLE, else
+	}
+
+	return parentPath;
+}
+
+#if       defined WIN32
+/**
+ * Returns a handle to the currently loaded module.
+ * Note: requires at least Windows 2000
+ * @return handle to the currently loaded module, or NULL if an error occures
+ */
+static HMODULE GetCurrentModule() {
+
+	HMODULE hModule = NULL;
+
+	// both solutions use the address of this function
+	// both found at:
+	// http://stackoverflow.com/questions/557081/how-do-i-get-the-hmodule-for-the-currently-executing-code/557774
+
+	// Win 2000+ solution
+	MEMORY_BASIC_INFORMATION mbi = {0};
+	::VirtualQuery((void*)GetCurrentModule, &mbi, sizeof(mbi));
+	hModule = reinterpret_cast<HMODULE>(mbi.AllocationBase);
+
+	// Win XP+ solution (cleaner)
+	//::GetModuleHandleEx(
+	//		GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+	//		(LPCTSTR)GetCurrentModule,
+	//		&hModule);
+
+	return hModule;
+}
+#endif // defined WIN32
+
+
 namespace Platform
 {
 
-std::string GetBinaryPath()
+std::string GetProcessExecutableFile()
 {
-#ifdef linux
-	std::string path(GetBinaryFile());
-	size_t pathlength = path.find_last_of('/');
-	if (pathlength != std::string::npos)
-		return path.substr(0, pathlength);
-	else
-		return path;
+	std::string procExeFilePath = "";
+	// will only be used if procExeFilePath stays empty
+	const char* error = "Fetch not implemented";
 
+#ifdef linux
+	char file[512];
+	const int ret = readlink("/proc/self/exe", file, sizeof(file)-1);
+	if (ret >= 0) {
+		file[ret] = '\0';
+		procExeFilePath = std::string(file);
+	} else {
+		error = "Failed to read /proc/self/exe";
+	}
 #elif WIN32
-	TCHAR currentDir[MAX_PATH+1];
-	int ret = ::GetModuleFileName(0, currentDir, sizeof(currentDir));
-	if (ret == 0 || ret == sizeof(currentDir))
-		return "";
-	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
-	_splitpath(currentDir, drive, dir, file, ext);
-	_makepath(currentDir, drive, dir, NULL, NULL);
-	return std::string(currentDir);
+	// with NULL, it will return the handle
+	// for the main executable of the process
+	const HMODULE hModule = GetModuleHandle(NULL);
+
+	// fetch
+	TCHAR procExeFile[MAX_PATH+1];
+	const int ret = ::GetModuleFileName(hModule, procExeFile, sizeof(procExeFile));
+
+	if ((ret != 0) && (ret != sizeof(procExeFile))) {
+		procExeFilePath = std::string(procExeFile);
+	} else {
+		error = "Unknown";
+	}
 
 #elif MACOSX_BUNDLE
 	char cPath[1024];
 	CFBundleRef mainBundle = CFBundleGetMainBundle();
 
 	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-	CFURLRef binaryPathURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault , mainBundleURL);
 
-	CFStringRef cfStringRef = CFURLCopyFileSystemPath(binaryPathURL, kCFURLPOSIXPathStyle);
+	CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
 
-	CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
+	CFStringGetCString(cfStringRef, cPath, sizeof(cPath), kCFStringEncodingASCII);
 
 	CFRelease(mainBundleURL);
-	CFRelease(binaryPathURL);
 	CFRelease(cfStringRef);
 
-	return std::string(cPath);
+	procExeFilePath = std::string(cPath);
 
 #else
-	return "";
-
+	#error implement this
 #endif
-}
 
-std::string GetLibraryPath()
-{
-#ifdef linux
-	//TODO
-	return "";
-#elif WIN32
-	TCHAR currentDir[MAX_PATH+1];
-	int ret = ::GetModuleFileName(GetModuleHandle("unitsync.dll"), currentDir, sizeof(currentDir));
-	if (ret == 0 || ret == sizeof(currentDir))
-		return "";
-	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
-	_splitpath(currentDir, drive, dir, file, ext);
-	_makepath(currentDir, drive, dir, NULL, NULL);
-	return std::string(currentDir);
-#elif MACOSX_BUNDLE
-	//TODO
-	return "";
-#else
-	return "";
-
-#endif
-}
-
-std::string GetBinaryFile()
-{
-#ifdef linux
-	char file[256];
-	const int ret = readlink("/proc/self/exe", file, 255);
-	if (ret >= 0)
-	{
-		file[ret] = '\0';
-		return std::string(file);
+	if (procExeFilePath.empty()) {
+		logOutput.Print("WARNING: Failed to get file path of the process executable, reason: %s", error);
 	}
-	else
-		return "";
+
+	return procExeFilePath;
+}
+
+std::string GetProcessExecutablePath()
+{
+	return GetParentPath(GetProcessExecutableFile());
+}
+
+std::string GetModuleFile(std::string moduleName)
+{
+	std::string moduleFilePath = "";
+	// will only be used if moduleFilePath stays empty
+	const char* error = "Fetch not implemented";
+
+#if defined(linux) || defined(MACOSX_BUNDLE)
+#ifdef MACOSX_BUNDLE
+	#define SHARED_LIBRARY_EXTENSION "dylib"
+#else
+	#define SHARED_LIBRARY_EXTENSION "so"
+#endif
+	void* moduleAddress = NULL;
+
+	// find an address in the module we are looking for
+	if (moduleName.empty()) {
+		// look for current module
+		moduleAddress = (void*) GetModuleFile;
+	} else {
+		// look for specified module
+
+		// add extension if it is not in the file name
+		// it could also be "libXZY.so-1.2.3"
+		// -> does not have to be the end, my friend
+		if (moduleName.find("."SHARED_LIBRARY_EXTENSION) == std::string::npos) {
+			moduleName = moduleName + "."SHARED_LIBRARY_EXTENSION;
+		}
+
+		// will not not try to load, but return the libs address
+		// if it is already loaded, NULL otherwise
+		moduleAddress = dlopen(moduleName.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+
+		if (moduleAddress == NULL) {
+			// if not found, try with "lib" prefix
+			moduleName = "lib" + moduleName;
+			moduleAddress = dlopen(moduleName.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+		}
+	}
+
+	if (moduleAddress != NULL) {
+		// fetch info about the module containing the address we just evaluated
+		Dl_info moduleInfo;
+		const int ret = dladdr(moduleAddress, &moduleInfo);
+		if ((ret != 0) && (moduleInfo.dli_fname != NULL)) {
+			moduleFilePath = moduleInfo.dli_fname;
+		} else {
+			error = dlerror();
+			if (error == NULL) {
+				error = "Unknown";
+			}
+		}
+	} else {
+		error = "Not loaded";
+	}
 
 #elif WIN32
-	TCHAR currentDir[MAX_PATH+1];
-	int ret = ::GetModuleFileName(0, currentDir, sizeof(currentDir));
-	if (ret == 0 || ret == sizeof(currentDir))
-		return "";
-	return std::string(currentDir);
+	HMODULE hModule = NULL;
+	if (moduleName.empty()) {
+		hModule = GetCurrentModule();
+	} else {
+		// If this fails, we get a NULL handle
+		hModule = GetModuleHandle(moduleName.c_str());
+	}
 
-#elif MACOSX_BUNDLE
-	//TODO
-	return "";
+	if (hModule != NULL) {
+		// fetch module file name
+		TCHAR moduleFile[MAX_PATH+1];
+		const int ret = ::GetModuleFileName(hModule, moduleFile, sizeof(moduleFile));
+
+		if ((ret != 0) && (ret != sizeof(moduleFile))) {
+			moduleFilePath = std::string(moduleFile);
+		} else {
+			error = + "Unknown";
+		}
+	} else {
+		error = "Not found";
+	}
 #else
-	return "";
-
+	#warning implement this (or use linux version)
 #endif
+
+	if (moduleFilePath.empty()) {
+		if (moduleName.empty()) {
+			moduleName = "<current>";
+		}
+		logOutput.Print("WARNING: Failed to get file path of the module \"%s\", reason: %s", moduleName.c_str(), error);
+	}
+
+	return moduleFilePath;
+}
+std::string GetModulePath(const std::string& moduleName)
+{
+	return GetParentPath(GetModuleFile(moduleName));
 }
 
 std::string GetOS()
@@ -127,6 +250,7 @@ std::string GetOS()
 #elif defined(__APPLE__)
 	return "Mac OS X";
 #else
+	#warning improve this
 	return "unknown OS";
 #endif
 }

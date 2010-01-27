@@ -15,6 +15,7 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
+#include "creg/STL_Set.h"
 
 
 using std::list;
@@ -35,10 +36,10 @@ CR_REG_METADATA(CFeatureHandler, (
 //	CR_MEMBER(featureDefs),
 //	CR_MEMBER(featureDefsVector),
 
-	CR_MEMBER(nextFreeID),
 	CR_MEMBER(freeIDs),
 	CR_MEMBER(toBeFreedIDs),
 	CR_MEMBER(activeFeatures),
+	CR_MEMBER(features),
 
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(updateFeatures),
@@ -48,7 +49,7 @@ CR_REG_METADATA(CFeatureHandler, (
 
 /******************************************************************************/
 
-CFeatureHandler::CFeatureHandler() : nextFreeID(0)
+CFeatureHandler::CFeatureHandler()
 {
 	PrintLoadMsg("Loading feature definitions");
 
@@ -85,6 +86,7 @@ CFeatureHandler::~CFeatureHandler()
 	}
 
 	activeFeatures.clear();
+	features.clear();
 
 	while (!featureDefs.empty()) {
 		map<string, const FeatureDef*>::iterator fi = featureDefs.begin();
@@ -151,7 +153,7 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
 	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
-	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f);
+	fd->reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f));
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
@@ -313,15 +315,22 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-	// FIXME -- randomize me, pretty please
-	//          (could be done in blocks, if (empty) { add 5000 freeIDs } ?)
-	if (freeIDs.empty()) {
-		feature->id = nextFreeID++;
-	} else {
-		feature->id = freeIDs.front();
-		freeIDs.pop_front();
+	if (freeIDs.empty())
+	{ // alloc n new ids and randomly insert to freeIDs
+		const unsigned n = 100;
+		std::vector<int> newIds(n);
+		for (unsigned i = 0; i < n; ++i)
+			newIds[i] = i + features.size();
+		SyncedRNG rng;
+		std::random_shuffle(newIds.begin(), newIds.end(), rng); // synced
+		features.resize(features.size()+n, 0);
+		std::copy(newIds.begin(), newIds.end(), std::back_inserter(freeIDs));
 	}
+	
+	feature->id = freeIDs.front();
+	freeIDs.pop_front();
 	activeFeatures.insert(feature);
+	features[feature->id] = feature;
 	SetFeatureUpdateable(feature);
 
 	// FIXME -- sim shouldn't depend on rendering
@@ -340,6 +349,13 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 	eventHandler.FeatureDestroyed(feature);
 }
 
+CFeature* CFeatureHandler::GetFeature(int id)
+{
+	if (id >= 0 && id < features.size())
+		return features[id];
+	else
+		return 0;
+}
 
 CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const string& name,
 	float rot, int facing, int iter, int team, int allyteam, bool emitSmoke, string fromUnit,
@@ -397,12 +413,12 @@ void CFeatureHandler::Update()
 		GML_RECMUTEX_LOCK(quad); // Update
 
 		while (!toBeRemoved.empty()) {
-			CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
+			CFeature* feature = GetFeature(toBeRemoved.back());
 			toBeRemoved.pop_back();
-			if (it != activeFeatures.end()) {
-				CFeature* feature = *it;
+			if (feature) {
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
+				features[feature->id] = 0;
 
 				// FIXME -- sim shouldn't depend on rendering
 				featureDrawer->FeatureDestroyed(feature);
@@ -458,6 +474,7 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 				wh = ground->GetHeight(fpos.x, fpos.z);
 			if (fpos.y > wh || fpos.y < gh) {
 				feature->finalHeight = wh;
+				feature->reachedFinalPos = false;
 				SetFeatureUpdateable(feature);
 			}
 		}

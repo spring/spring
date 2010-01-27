@@ -110,7 +110,7 @@ private:
 		float3 position;
 		float x;
 		float z;
-		int type; // 
+		int type;
 		ResourceSiteExt *RS;
 		set<int> units;
 	};

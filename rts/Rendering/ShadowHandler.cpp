@@ -37,6 +37,7 @@ CShadowHandler::CShadowHandler(void)
 	showShadowMap = false;
 	firstDraw     = true;
 	shadowTexture = 0;
+	drawTerrainShadow = true;
 
 	if (!tmpFirstInstance && !canUseShadows) {
 		return;
@@ -47,7 +48,15 @@ CShadowHandler::CShadowHandler(void)
 		GLEW_ARB_shadow &&
 		GLEW_ARB_depth_texture &&
 		GLEW_ARB_texture_env_combine;
+	//! Shadows possible values:
+	//! -1 : disable and don't try to initialize
+	//!  0 : disable, but still check if the hardware is able to run them
+	//!  1 : enable (full detail)
+	//!  2 : enable (no terrain)
 	const int configValue = configHandler->Get("Shadows", 0);
+
+	if (configValue >= 2)
+		drawTerrainShadow = false;
 
 	if (configValue < 0 || !haveShadowExts) {
 		logOutput.Print("shadows disabled or required OpenGL extension missing");
@@ -145,12 +154,14 @@ void CShadowHandler::DrawShadowPasses(void)
 		glEnable(GL_CULL_FACE);
 	//	glCullFace(GL_FRONT);
 
-		readmap->GetGroundDrawer()->DrawShadowPass();
-		ph->DrawShadowPass();
+		if (drawTerrainShadow)
+			readmap->GetGroundDrawer()->DrawShadowPass();
+
 		unitDrawer->DrawShadowPass();
 		featureDrawer->DrawShadowPass();
 		treeDrawer->DrawShadowPass();
 		eventHandler.DrawWorldShadow();
+		ph->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;

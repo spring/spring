@@ -1,18 +1,11 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <string>
+#include <sstream>
+#include <algorithm>
 
 #include "maindefines.h"
-
-
-
-#ifdef __cplusplus
-
-#include <string>
-#include <algorithm>
 
 static inline void StringToLowerInPlace(std::string &s)
 {
@@ -23,6 +16,13 @@ static inline std::string StringToLower(std::string s)
 {
 	StringToLowerInPlace(s);
 	return s;
+}
+
+static inline std::string Quote(std::string s)
+{
+	std::ostringstream buf;
+	buf << "\"" << s << "\"";
+	return buf.str();
 }
 
 //! replace all characters matching 'c' in a string by 'd'
@@ -81,7 +81,5 @@ namespace proc {
 	unsigned int GetProcMaxExtendedLevel();
 	unsigned int GetProcSSEBits();
 }
-
-#endif // __cplusplus
 
 #endif // UTIL_H

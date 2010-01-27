@@ -9,14 +9,6 @@ class CArchiveBase;
 
 class CVFSHandler
 {
-protected:
-	struct FileData {
-		CArchiveBase *ar;
-		int size;
-		bool dynamic;
-	};
-	std::map<std::string, FileData> files; 
-	std::map<std::string, CArchiveBase*> archives;
 public:
 	CVFSHandler();
 	virtual ~CVFSHandler();
@@ -33,12 +25,22 @@ public:
 	 */
 	bool AddArchive(const std::string& arName, bool override,
 	                const std::string& type = "");
+	bool AddMapArchiveWithDeps(const std::string& mapName, bool override, const std::string& type = "");
 	/**
 	 * Returns true if the archive is not loaded,
 	 * so it may was not loaded in the first place or was unloaded
 	 * successfully.
 	 */
 	bool RemoveArchive(const std::string& arName);
+
+protected:
+	struct FileData {
+		CArchiveBase *ar;
+		int size;
+		bool dynamic;
+	};
+	std::map<std::string, FileData> files; 
+	std::map<std::string, CArchiveBase*> archives;
 };
 
 extern CVFSHandler* vfsHandler;

@@ -95,7 +95,7 @@ void cCombatManager::UnitDamaged(const int& unitID, UnitInfo* U, const int& atta
 				UnitIdle(unitID,U);
 			else if( cb->GetCurrentUnitCommands(unitID)->front().id != CMD_MOVE )
 			{
-				if( cb->GetUnitHealth(unitID)/U->ud->health <= 0.66 || 
+				if( cb->GetUnitHealth(unitID)/U->ud->health <= 0.66 ||
 					(cb->GetUnitHealth(unitID)/U->ud->health <= 0.9 && cb->GetCurrentUnitCommands(unitID)->front().id == CMD_CAPTURE) )
 					UnitIdle(unitID,U);
 			}

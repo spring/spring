@@ -181,7 +181,9 @@
 //  bind          Any+pause  pause
 //
 //  bind              Any+j  mouse2
-//  bind      Any+backspace  mousestate
+//  bind          backspace  mousestate
+//  bind    Shift+backspace  togglecammode
+//  bind     Ctrl+backspace  togglecammode
 //
 //  bind              Any+i  gameinfo
 //
@@ -205,8 +207,8 @@
 //  bind        Any+numpad+  speedup
 //  bind        Any+numpad-  slowdown
 //
-//  bind              Any+b  debug
-//  bind              Any+o  singlestep
+//  bind              Alt+b  debug
+//  bind              Alt+o  singlestep
 //
 //  bind              Any+h  sharedialog
 //
@@ -282,6 +284,7 @@
 //  bind            Shift+e  reclaim
 //  bind                  f  fight
 //  bind            Shift+f  fight
+//  bind              Alt+f  forcestart
 //  bind                  g  guard
 //  bind            Shift+g  guard
 //  bind                  k  cloak

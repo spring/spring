@@ -18,9 +18,11 @@ public:
 	bool MouseOver(int x, int y) const;
 	bool MouseOver(float x, float y) const;
 	
-	static void UpdateDisplayGeo(int x, int y);
+	static void UpdateDisplayGeo(int x, int y, int offsetX, int offsetY);
 	static float PixelToGlX(int x);
 	static float PixelToGlY(int y);
+	static float GlToPixelX(float x);
+	static float GlToPixelY(float y);
 	
 	virtual void AddChild(GuiElement* elem);
 	
@@ -33,6 +35,14 @@ public:
 	float* GetSize()
 	{
 		return size;
+	};
+	void SetWeight(unsigned newWeight)
+	{
+		weight = newWeight;
+	};
+	unsigned Weight() const
+	{
+		return weight;
 	};
 	
 	void GeometryChange();
@@ -76,10 +86,12 @@ protected:
 	virtual void GeometryChangeSelf() {};
 	
 	static int screensize[2];
+	static int screenoffset[2];
 	
 	bool fixedSize;
 	float pos[2];
 	float size[2];
+	unsigned weight;
 };
 
 }

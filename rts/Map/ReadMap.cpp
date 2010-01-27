@@ -286,11 +286,14 @@ void CReadMap::UpdateDraw() {
 void CReadMap::HeightmapUpdated(const int& x1, const int& y1, const int& x2, const int& y2) {
 	GML_STDMUTEX_LOCK(map); // HeightmapUpdated
 
-	//! synced
-	UpdateHeightmapSynced(x1, y1, x2, y2);
+	// only update the heightmap if the affected area has a size > 0
+	if ((x1 < x2) && (y1 < y2)) {
+		//! synced
+		UpdateHeightmapSynced(x1, y1, x2, y2);
 
-	//! unsynced
-	heightmapUpdates.push_back(HeightmapUpdate(x1, x2, y1, y2));
+		//! unsynced
+		heightmapUpdates.push_back(HeightmapUpdate(x1, x2, y1, y2));
+	}
 }
 
 CReadMap::IQuadDrawer::~IQuadDrawer() {

@@ -95,7 +95,7 @@ private:
 	int ConMetalLost;
 	int ConEnergyDrain;		// How much Energy will be drained when all constructions have started, positive value, does not include contructions that have already begun
 	int ConMetalDrain;		// How much Metal will be drained when all constructions have started, positive value, does not include contructions that have already begun
-	int ConEnergyRate;		// How much extra Energy will be produced when all constructions have completed 
+	int ConEnergyRate;		// How much extra Energy will be produced when all constructions have completed
 	int ConMetalRate;		// How much extra Metal will be produced when all constructions have completed
 	int ConEnergyStorage;	// How much extra Energy Storage will there be when all constructions have completed
 	int ConMetalStorage;	// How much extra Metal Storage will there be when all constructions have completed
