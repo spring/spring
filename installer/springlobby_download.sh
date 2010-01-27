@@ -26,3 +26,6 @@ unzip ../downloads/latest.zip -d SLArchive
 mkdir SettingsDlls
 mv SLArchive/*.dll SettingsDlls
 mv SLArchive/springsettings.exe SettingsDlls
+
+### This version of OpenAL breaks Spring ...
+rm SettingsDlls/OpenAL32.dll
