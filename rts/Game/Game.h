@@ -100,6 +100,7 @@ public:
 	bool fullscreenEdgeMove;
 	bool showFPS;
 	bool showClock;
+	bool showSpeed;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 	bool drawMapMarks;

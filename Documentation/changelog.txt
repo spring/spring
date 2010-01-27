@@ -1,5 +1,28 @@
 Spring change log
 
+0.81.1:
+Engine / Simulation:
+ - Terrain types and water damage are now taken into account for pathing checksum
+   (Fixes desyncs on maps with map options which modify terrain types or water damage)
+ - Changed builder patrol/fight behaviour for Hold Pos and Maneuver movestates
+ - Being-built units are now visible on radar by default
+
+Engine / Rendering, UI:
+ - Added speed display
+ - Improved basic player list
+ - If OpenGL 1.4 is not available, an error is shown
+ - Fixed being-built unit rendering
+ - Placing buildings close together works again
+ - Fixed canceling of first build item when buildiconsfirst is toggled
+
+Engine / Lua:
+ - Less strict type checking in VFS.DirList (fixes FBI2Lua converter)
+
+Engine / System:
+ - Map options fixed
+ - Menu doesn't crash anymore if no mods/maps found
+
+
 0.81.0:
 Engine / Simulation:
  - Builders are now smart enough to to reclaim features that block their

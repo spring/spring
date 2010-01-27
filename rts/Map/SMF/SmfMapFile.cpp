@@ -33,7 +33,7 @@ void CSmfMapFile::ReadMinimap(void* data)
 	ifs.Read(data, MINIMAP_SIZE);
 }
 
-int CSmfMapFile::ReadMinimap(std::vector<uint8_t>& data, unsigned miplevel)
+int CSmfMapFile::ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel)
 {
 	int offset=0;
 	int mipsize = 1024;
