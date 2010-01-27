@@ -1502,8 +1502,12 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		CUnit* unit = *ui;
 		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
-				// dont help factories produce units unless set on roam
-				if (unit->beingBuilt && unit->mobility && (owner->moveState < 2)) {
+				// don't help allies build unless set on roam
+				if (unit->beingBuilt && owner->team != unit->team && (owner->moveState != 2)) {
+					continue;
+				}                
+				// don't help factories produce units when set on hold pos                
+				if (unit->beingBuilt && unit->mobility && (owner->moveState == 0)) {
 					continue;
 				}
 				// don't repair stuff that can't be repaired

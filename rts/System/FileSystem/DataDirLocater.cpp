@@ -29,6 +29,7 @@
 #include "FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"
+#include "maindefines.h" // for sPS, cPS, cPD
 #include "Platform/Misc.h"
 
 /**
@@ -38,17 +39,14 @@
  */
 DataDir::DataDir(const std::string& p) : path(p), writable(false)
 {
-#ifndef _WIN32
-	if (path.empty())
-		path = "./";
-	if (path[path.size() - 1] != '/')
-		path += '/';
-#else
-	if (path.empty())
-		path = ".\\";
-	if (path[path.size() - 1] != '\\')
-		path += '\\';
-#endif
+	// sPS/cPS (depending on OS): "\\" & '\\' or "/" & '/'
+
+	// make sure the path ends with a (back-)slash
+	if (path.empty()) {
+		path = "."sPS;
+	} else if (path[path.size() - 1] != cPS) {
+		path += cPS;
+	}
 }
 
 /**
@@ -105,11 +103,7 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 void DataDirLocater::AddDirs(const std::string& in)
 {
 	size_t prev_colon = 0, colon;
-#ifndef _WIN32
-	while ((colon = in.find(':', prev_colon)) != std::string::npos) {
-#else
-	while ((colon = in.find(';', prev_colon)) != std::string::npos) {
-#endif
+	while ((colon = in.find(cPD, prev_colon)) != std::string::npos) { // cPD (depending on OS): ';' or ':'
 		const std::string newPath = in.substr(prev_colon, colon - prev_colon);
 		if (!newPath.empty())
 		{
@@ -212,8 +206,8 @@ void DataDirLocater::DeterminePermissions()
  * - 'prefix=/install/path' option passed to scons configure. The datadir is
  *   assumed to be at '$prefix/games/spring' in this case.
  * - the default datadirs in the default prefix, ie. '/usr/local/games/spring'
- *   (This is set by the build system, ie. SPRING_DATADIR and SPRING_DATADIR_2
- *   preprocessor definitions.)
+ *   (This is set by the build system, ie. SPRING_DATADIR
+ *   preprocessor definition.)
  *
  * In Windows, its:
  * - SPRING_DATADIR env-variable
@@ -221,7 +215,7 @@ void DataDirLocater::DeterminePermissions()
  * - location of the binary dir (like it has been until 0.76b1)
  * - the Users 'Documents'-directory (in subdirectory Spring), unless spring is configured to use another
  * - all users app-data (in subdirectory Spring)
- * - compiler flags SPRING_DATADIR and SPRING_DATADIR_2
+ * - compiler flags SPRING_DATADIR
  *
  * All of the above methods support environment variable substitution, eg.
  * '$HOME/myspringdatadir' will be converted by spring to something like
@@ -279,7 +273,7 @@ void DataDirLocater::LocateDataDirs()
 #ifdef UNITSYNC
 	AddDirs(Platform::GetBinaryPath());
 #endif
-	// libs and data are are supposed to be located in subdirectories of spring executable, so they
+	// libs and data are supposed to be located in subdirectories of spring executable, so they
 	// sould be added instead of SPRING_DATADIR definition.
 	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(DATADIR));
 	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(LIBDIR));
