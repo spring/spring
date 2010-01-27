@@ -10,7 +10,7 @@
 #include "s3oParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "Rendering/FartextureHandler.h"
+#include "Rendering/FarTextureHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
 #include "LogOutput.h"
@@ -87,7 +87,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 		model->relMidPos += centerOffset;
 
 		CreateLists(p, model->rootobject);
-		fartextureHandler->CreateFarTexture(model);
+		farTextureHandler->CreateFarTexture(model);
 
 		cache[name] = model; // cache model
 		return model;
