@@ -791,7 +791,7 @@ function wrappFunction(retType, fullName, params) {
 function wrappFunctionPlusMeta(retType, fullName, params, metaComment) {
 
 	# This function has to be defined in an other script
-	doWrapp_wf = doWrapp(simpleFullName, params, metaComment);
+	doWrapp_wf = doWrappOO(simpleFullName, params, metaComment);
 
 	if (doWrapp_wf) {
 		params      = trim(params);
