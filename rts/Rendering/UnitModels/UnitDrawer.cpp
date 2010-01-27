@@ -19,7 +19,7 @@
 
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "Rendering/FartextureHandler.h"
+#include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
@@ -475,7 +475,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		glAlphaFunc(GL_GREATER, 0.5f);
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
+		glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
 		glColor4f(1, 1, 1, 1);
 		glNormal3fv((const GLfloat*) &camNorm.x);
 
@@ -488,7 +488,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		va->Initialize();
 		va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
 		for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); it++) {
-			fartextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
+			farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
 		}
 
 		va->DrawArrayT(GL_QUADS);

@@ -71,7 +71,7 @@
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "Rendering/FartextureHandler.h"
+#include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
@@ -455,7 +455,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	uh = new CUnitHandler();
 	unitDrawer = new CUnitDrawer();
-	fartextureHandler = new CFartextureHandler();
+	farTextureHandler = new CFarTextureHandler();
 	modelParser = new C3DModelLoader();
 
 	featureHandler->LoadFeaturesFromMap(saveFile);
@@ -630,7 +630,7 @@ CGame::~CGame()
 	SafeDelete(archiveScanner);
 	SafeDelete(modelParser);
 	SafeDelete(iconHandler);
-	SafeDelete(fartextureHandler);
+	SafeDelete(farTextureHandler);
 	SafeDelete(texturehandler3DO);
 	SafeDelete(texturehandlerS3O);
 	SafeDelete(camera);
@@ -3063,7 +3063,7 @@ bool CGame::Draw() {
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
 	lineDrawer.UpdateLineStipple();
-	fartextureHandler->CreateFarTextures();
+	farTextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
