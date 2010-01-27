@@ -26,6 +26,14 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+-- synced only
+if (not gadgetHandler:IsSyncedCode()) then
+	return false
+end
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local modOptions = Spring.GetModOptions()
 
 
@@ -83,6 +91,12 @@ end
 
 
 function gadget:GameStart()
+	-- only activate if engine didn't already spawn units (compatibility)
+	if (#Spring.GetAllUnits() > 0) then
+		return
+	end
+
+	-- spawn start units
 	local gaiaTeamID = Spring.GetGaiaTeamID()
 	local teams = Spring.GetTeamList()
 	for i = 1,#teams do
