@@ -15,7 +15,6 @@
 
 #include "lib/gml/gml.h"
 
-class CScript;
 class CBaseWater;
 class CAVIGenerator;
 class CConsoleHistory;
@@ -100,6 +99,7 @@ public:
 	bool fullscreenEdgeMove;
 	bool showFPS;
 	bool showClock;
+	bool showSpeed;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 	bool drawMapMarks;
@@ -113,8 +113,6 @@ public:
 	bool moveWarnings;
 
 	unsigned char gameID[16];
-
-	CScript* script;
 
 	CInfoConsole *infoConsole;
 

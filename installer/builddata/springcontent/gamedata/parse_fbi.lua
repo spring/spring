@@ -42,9 +42,6 @@ local buildOptions = {}
 
 
 local buildOptions, err = TDF.Parse('gamedata/sidedata.tdf')
-if (buildOptions == nil) then
-  Spring.Echo('could not load buildOption data: ' .. err)
-end
 buildOptions = buildOptions or {}
 buildOptions = buildOptions['canbuild']
 buildOptions = buildOptions or {}

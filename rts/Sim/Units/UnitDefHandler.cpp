@@ -247,14 +247,8 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	ud.isCommander = udTable.GetBool("commander", false);
 
-	if (ud.isCommander) {
-		ud.metalStorage  = udTable.GetFloat("metalStorage",  gameSetup->startMetal);
-		ud.energyStorage = udTable.GetFloat("energyStorage", gameSetup->startEnergy);
-	}
-	else {
-		ud.metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
-		ud.energyStorage = udTable.GetFloat("energyStorage", 0.0f);
- 	}
+	ud.metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
+	ud.energyStorage = udTable.GetFloat("energyStorage", 0.0f);
 
 	ud.extractsMetal  = udTable.GetFloat("extractsMetal",  0.0f);
 	ud.windGenerator  = udTable.GetFloat("windGenerator",  0.0f);
@@ -439,6 +433,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.wantedHeight  = udTable.GetFloat("cruiseAlt", 0.0f);
 	ud.dlHoverFactor = udTable.GetFloat("airHoverFactor", -1.0f);
 	ud.bankingAllowed = udTable.GetBool("bankingAllowed", true);
+	ud.useSmoothMesh = udTable.GetBool("useSmoothMesh", true);
 
 	ud.transportSize     = udTable.GetInt("transportSize",      0);
 	ud.minTransportSize  = udTable.GetInt("minTransportSize",   0);

@@ -55,6 +55,7 @@
 #define GRINNINGLIZARD_MICROPATHER_INCLUDED
 
 #include <vector>
+#include "Defines.h"
 
 #ifdef _DEBUG
 	#ifndef DEBUG
@@ -62,7 +63,7 @@
 	#endif
 #endif
 
-#define FLT_BIG (3.40282347e+38F / 2.0)
+#define FLT_BIG (MY_FLT_MAX / 2.0)
 
 struct AIClasses;
 
@@ -78,7 +79,7 @@ struct AIClasses;
 namespace NSMicroPather {
 	/*
 	 * A pure abstract class used to define a set of callbacks.
-	 * The client application inherits from 
+	 * The client application inherits from
 	 * this class, and the methods will be called when MicroPather::Solve() is invoked.
 	 *
 	 * The notion of a "state" is very important. It must have the following properties:
@@ -101,7 +102,7 @@ namespace NSMicroPather {
 			virtual ~Graph() {}
 
 			/*
-			 * This function is only used in DEBUG mode - it dumps output to stdout. Since void* 
+			 * This function is only used in DEBUG mode - it dumps output to stdout. Since void*
 			 * aren't really human readable, normally you print out some concise info (like "(1,2)")
 			 * without an ending newline.
 			 * @note If you are using other grinning lizard utilities, you should use GLOUTPUT for output.

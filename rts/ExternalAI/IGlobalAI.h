@@ -32,7 +32,7 @@ public:
 	struct PlayerCommandEvent {
 		std::vector<int> units;
 		Command command;
- 		int player;
+		int player;
 	};
 	struct SeismicPingEvent{
 		float3 pos;

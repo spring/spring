@@ -8,10 +8,10 @@
 #include <set>
 
 #include "creg/creg_cond.h"
-
 #include "PlayerBase.h"
-
+#include "PlayerStatistics.h"
 #include "float3.h"
+
 class CPlayer;
 class CUnit;
 struct DirectControlStruct {
@@ -71,7 +71,6 @@ public:
 
 	int playerNum;
 
-	float cpuUsage;
 	int ping;
 
 	typedef PlayerStatistics Statistics;

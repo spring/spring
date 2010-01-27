@@ -27,15 +27,12 @@
 // FIXME - temporary, until the LuaParser change is done
 static const TdfParser& GetMapDefParser()
 {
-	static TdfParser tdf(MapParser::GetMapConfigName(gameSetup->mapName));
+	static TdfParser tdf(MapParser::GetMapConfigName(gameSetup->MapFile()));
 	return tdf;
 }
 
 
 CR_BIND_DERIVED(CSm3ReadMap, CReadMap, ())
-
-//CR_REG_METADATA(CSmfReadMap, (
-//				))
 
 CSm3ReadMap::CSm3ReadMap()
 {

@@ -22,9 +22,9 @@ void CModInfo::Init(const char* modname)
 {
 	filename = modname;
 
-	humanName = archiveScanner->ModArchiveToModName(modname);
+	humanName = archiveScanner->NameFromArchive(modname);
 
-	const CArchiveScanner::ModData md = archiveScanner->ModArchiveToModData(modname);
+	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
 
 	shortName   = md.shortName;
 	version     = md.version;

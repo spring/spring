@@ -5,11 +5,8 @@
 
 GameParticipant::GameParticipant()
 : myState(UNCONNECTED)
-, cpuUsage (0.0f)
-, ping (0)
-, lastKeyframeResponse(0)
-, isLocal(false),
-speedWarning(0.0f)
+, lastFrameResponse(0)
+, isLocal(false)
 {
 }
 
@@ -33,5 +30,8 @@ void GameParticipant::Kill(const std::string& reason)
 		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
 		link.reset();
 	}
+#ifdef SYNCCHECK
+	syncResponse.clear();
+#endif
 	myState = DISCONNECTED;
 }

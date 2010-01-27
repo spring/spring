@@ -61,7 +61,7 @@ local options = {
 				name = 'Deffensive',
 				desc = 'The AI will hardly ever attack.',
 			},
-			{ 
+			{
 				key  = 'normal',
 				name = 'Normal',
 				desc = 'The AI will try to keep a balance between defensive and aggressive play styles.',

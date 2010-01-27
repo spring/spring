@@ -9,6 +9,7 @@ using namespace std;
 #include "MapParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/ArchiveScanner.h"
 
 
 string MapParser::GetMapConfigName(const string& mapName)
@@ -20,11 +21,10 @@ string MapParser::GetMapConfigName(const string& mapName)
 	const string extension = mapName.substr(mapName.length() - 3);
 
 	if (extension == "sm3") {
-		return string("maps/") + mapName;
+		return mapName;
 	}
 	else if (extension == "smf") {
-		return string("maps/") +
-		       mapName.substr(0, mapName.find_last_of('.')) + ".smd";
+		return mapName.substr(0, mapName.find_last_of('.')) + ".smd";
 	}
 	else {
 		return "";

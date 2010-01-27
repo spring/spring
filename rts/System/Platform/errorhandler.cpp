@@ -46,13 +46,12 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 	MessageBox (GetActiveWindow(), msg, caption, winFlags);
 
 // TODO: write Mac OS X specific message box
- #elif defined(__APPLE__)
+#elif defined(__APPLE__)
 	MacMessageBox(msg, caption, flags);
 #else
 	// X implementation
 
 	X_MessageBox(msg, caption, flags);
-
 #endif
 
 	exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash

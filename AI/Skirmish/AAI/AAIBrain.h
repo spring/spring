@@ -126,7 +126,7 @@ public:
 
 	// current estimations of game situation , values ranging from 0 (min) to 1 max
 
-	float enemy_pressure_estimation; 	// how much pressure done to the ai by enemy units
+	float enemy_pressure_estimation;	// how much pressure done to the ai by enemy units
 
 	// pos where com spawned
 	float3 start_pos;

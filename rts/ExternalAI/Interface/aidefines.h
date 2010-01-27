@@ -76,6 +76,7 @@
 	+ sizeof(size_t) \
 	+ sizeof(float) \
 	+ sizeof(short) \
+	+ sizeof(bool) \
 	)
 
 /**

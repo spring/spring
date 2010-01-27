@@ -283,7 +283,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool submerged, bool noAdvShading)
 
 	glPopAttrib();
 
-	if(unitDrawer->advShading)
+	if (unitDrawer->advShading)
 		unitDrawer->CleanUpUnitDrawing();
 	else
 		unitDrawer->CleanUpGhostDrawing();
@@ -294,17 +294,16 @@ void CFeatureDrawer::DrawFadeFeatures(bool submerged, bool noAdvShading)
 
 void CFeatureDrawer::DrawShadowPass()
 {
-	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowGenVP );
-	glEnable( GL_VERTEX_PROGRAM_ARB );
-	glPolygonOffset(1,1);
+	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
+	unitDrawer->MDLLSPShader->Enable();
 
 	{
 		GML_RECMUTEX_LOCK(feat); // DrawShadowPass
 
 		DrawRaw(1, NULL);
 
-		if(!gu->atiHacks) { // FIXME: Why does texture alpha not work with shadows on ATI?
+		if (!gu->atiHacks) { // FIXME: Why does texture alpha not work with shadows on ATI?
 			glEnable(GL_TEXTURE_2D); // Need the alpha mask for transparent features
 			glPushAttrib(GL_COLOR_BUFFER_BIT);
 			glEnable(GL_ALPHA_TEST);
@@ -314,13 +313,13 @@ void CFeatureDrawer::DrawShadowPass()
 		unitDrawer->DrawQuedS3O();
 	}
 
-	if(!gu->atiHacks) {
+	if (!gu->atiHacks) {
 		glPopAttrib();
 		glDisable(GL_TEXTURE_2D);
 	}
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_VERTEX_PROGRAM_ARB);
+	unitDrawer->MDLLSPShader->Disable();
 }
 
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer
@@ -431,7 +430,7 @@ void CFeatureDrawer::DrawRaw(int extraSize, vector<CFeature*>* farFeatures)
 void CFeatureDrawer::DrawFeatureStats(CFeature* feature)
 {
 	float3 interPos = feature->pos;
-	interPos.y += feature->model->height + 5.0f;
+	interPos.y += feature->height + 5.0f;
 
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);

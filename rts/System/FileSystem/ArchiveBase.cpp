@@ -1,6 +1,14 @@
 #include "ArchiveBase.h"
 #include "CRC.h"
 
+CArchiveBase::CArchiveBase(const std::string& archiveName) : archiveFile(archiveName)
+{
+}
+
+CArchiveBase::~CArchiveBase()
+{
+}
+
 unsigned int CArchiveBase::GetCrc32(const std::string& fileName)
 {
 	CRC crc;
@@ -21,3 +29,8 @@ unsigned int CArchiveBase::GetCrc32(const std::string& fileName)
 	this->CloseFile(handle);
 	return crc.GetDigest();
 };
+
+std::string CArchiveBase::GetArchiveName()
+{
+	return archiveFile;
+}

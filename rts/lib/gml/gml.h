@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 #ifndef GML_H
 #define GML_H
@@ -69,16 +70,31 @@ extern gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)>
 
 extern void gmlInit();
 
+#define GML_IF_NONCLIENT_THREAD(name,...)\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
+		name(__VA_ARGS__);\
+		return;\
+	}\
+	GML_ITEMSERVER_CHECK(threadnum);
+
+#define GML_IF_NONCLIENT_THREAD_RET(ret,name,...)\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
+		return name(__VA_ARGS__);\
+	}\
+	GML_ITEMSERVER_CHECK_RET(threadnum,ret);
+
 EXTERN inline GLhandleARB gmlCreateProgram() {
-	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
+	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateProgram);
 	return gmlProgramServer.GetItems();
 }
 EXTERN inline GLhandleARB gmlCreateProgramObjectARB() {
-	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
+	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateProgramObjectARB);
 	return gmlProgramObjectARBServer.GetItems();
 }
 EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
-	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
+	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateShader,type);
 	if(type==GL_VERTEX_SHADER)
 		return gmlShaderServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER)
@@ -88,7 +104,7 @@ EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
 	return 0;
 }
 EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
-	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
+	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateShaderObjectARB,type);
 	if(type==GL_VERTEX_SHADER_ARB)
 		return gmlShaderObjectARBServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER_ARB)
@@ -98,46 +114,45 @@ EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
 	return 0;
 }
 EXTERN inline GLUquadric *gmluNewQuadric() {
-	GML_ITEMSERVER_CHECK_RET(GLUquadric *);
+	GML_IF_NONCLIENT_THREAD_RET(GLUquadric *,gluNewQuadric);
 	return gmlQuadricServer.GetItems();
 }
 
-
 EXTERN inline void gmlGenTextures(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenTextures,n,items);
 	gmlTextureServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenBuffersARB(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenBuffersARB,n,items);
 	gmlBufferARBServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenFencesNV(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenFencesNV,n,items);
 	gmlFencesNVServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenProgramsARB(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenProgramsARB,n,items);
 	gmlProgramsARBServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenRenderbuffersEXT(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenRenderbuffersEXT,n,items);
 	gmlRenderbuffersEXTServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenFramebuffersEXT(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenFramebuffersEXT,n,items);
 	gmlFramebuffersEXTServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenQueries(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenQueries,n,items);
 	gmlQueryServer.GetItems(n, items);
 }
 EXTERN inline void gmlGenBuffers(GLsizei n, GLuint *items) {
-	GML_ITEMSERVER_CHECK();
+	GML_IF_NONCLIENT_THREAD(glGenBuffers,n,items);
 	gmlBufferServer.GetItems(n, items);
 }
 
 EXTERN inline GLuint gmlGenLists(GLsizei items) {
-	GML_ITEMSERVER_CHECK_RET(GLuint);
+	GML_IF_NONCLIENT_THREAD_RET(GLuint,glGenLists,items);
 	return gmlListServer.GetItems(items);
 }
 
@@ -184,7 +199,8 @@ extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex &guimutex;
 extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
-extern boost::recursive_mutex groupmutex;
+extern boost::recursive_mutex &groupmutex;
+extern boost::recursive_mutex &grpselmutex;
 
 #if GML_MUTEX_PROFILER
 #	include "System/TimeProfiler.h"

@@ -37,10 +37,7 @@
   Delete "$INSTDIR\settingstemplate.xml"
 
 ;New Settings Program
-
-  File "downloads\springsettings.exe"
-
-; Dlls neede for it
+  File "..\installer\Springlobby\SettingsDlls\springsettings.exe"
   File /r "..\installer\Springlobby\SettingsDlls\*.dll"
 
   ; DLLs

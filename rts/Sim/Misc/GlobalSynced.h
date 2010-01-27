@@ -186,4 +186,14 @@ private:
 
 extern CGlobalSyncedStuff* gs;
 
+
+class SyncedRNG
+{
+public:
+	int operator()(unsigned N)
+	{
+		return gs->randInt()%N;
+	};
+};
+
 #endif //GLOBAL_UNSYNCED_H

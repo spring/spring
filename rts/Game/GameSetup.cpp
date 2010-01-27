@@ -52,11 +52,11 @@ void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 
 void CGameSetup::LoadStartPositionsFromMap()
 {
-	MapParser mapParser(mapName);
+	MapParser mapParser(MapFile());
 
 	for(size_t a = 0; a < teamStartingData.size(); ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
-		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
+		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
 		teamStartingData[a].startPos = float3(pos.x, pos.y, pos.z);
 	}
@@ -64,8 +64,6 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 void CGameSetup::LoadStartPositions(bool withoutMap)
 {
-	TdfParser file(gameSetupText.c_str(), gameSetupText.length());
-
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
 		throw content_error("You need the map to use the map's startpositions");
 
@@ -88,7 +86,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 		}
 	}
 
-	if (!withoutMap)
+	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random)
 		LoadStartPositionsFromMap();
 
 	// Show that we havent selected start pos yet
@@ -97,27 +95,12 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 			teamStartingData[a].startPos.y = -500;
 		}
 	}
-
-	// Load start position from gameSetup script
-	if (startPosType == StartPos_ChooseBeforeGame) {
-		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			std::ostringstream buf;
-			buf << "GAME\\TEAM" << a << "\\";
-			string s(buf.str());
-			std::string xpos = file.SGetValueDef("", s + "StartPosX");
-			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
-			if (!xpos.empty())
-			{
-				teamStartingData[a].startPos.x = atoi(xpos.c_str());
-			}
-			if (!zpos.empty())
-			{
-				teamStartingData[a].startPos.z = atoi(zpos.c_str());
-			}
-		}
-	}
 }
 
+std::string CGameSetup::MapFile() const
+{
+	return archiveScanner->MapNameToMapFile(mapName);
+}
 
 void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
 {
@@ -250,8 +233,6 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		}
 
 		TeamBase data;
-		data.startMetal = startMetal;
-		data.startEnergy = startEnergy;
 
 		// Get default color from palette (based on "color" tag)
 		for (size_t num = 0; num < 3; ++num)
@@ -264,11 +245,6 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
 			data.SetValue(it->first, it->second);
 
-		if (data.startMetal == -1.0)
-			data.startMetal = startMetal;
-		
-		if (data.startEnergy == -1.0)
-			data.startEnergy = startEnergy;
 		teamStartingData.push_back(data);
 
 		teamRemap[a] = i;
@@ -395,7 +371,6 @@ bool CGameSetup::Init(const std::string& buf)
 		return false;
 
 	// Game parameters
-	scriptName  = file.SGetValueDef("Commanders", "GAME\\ModOptions\\ScriptName");
 
 	// Used by dedicated server only
 	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
@@ -420,8 +395,6 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(diminishingMMs,   "0", "GAME\\ModOptions\\DiminishingMMs");
 	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");
 	file.GetDef(ghostedBuildings, "1", "GAME\\ModOptions\\GhostedBuildings");
-	file.GetDef(startMetal,    "1000", "GAME\\ModOptions\\StartMetal");
-	file.GetDef(startEnergy,   "1000", "GAME\\ModOptions\\StartEnergy");
 
 	file.GetDef(maxSpeed, "3.0", "GAME\\ModOptions\\MaxSpeed");
 	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");
@@ -458,7 +431,7 @@ bool CGameSetup::Init(const std::string& buf)
 	LoadUnitRestrictions(file);
 
 	// Postprocessing
-	modName = archiveScanner->ModArchiveToModName(modName);
+	modName = archiveScanner->NameFromArchive(modName);
 
 	return true;
 }

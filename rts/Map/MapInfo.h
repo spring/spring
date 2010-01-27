@@ -49,7 +49,6 @@ public:
 	/** Global settings, ie. from "MAP" section. */
 	struct map_t {
 		std::string name;      ///< The filename as passed to the constructor.
-		std::string wantedScript;
 		std::string humanName; ///< "MAP\\Description"
 		std::string author;
 		float hardness;        ///< "MAP\\MapHardness"
@@ -136,6 +135,8 @@ public:
 	/** SMF specific settings */
 	struct smf_t {
 		std::string detailTexName; ///< "MAP\DetailTex"
+		std::string specularTexName; ///< "MAP\SpecularTex"
+
 		float minHeight;
 		bool  minHeightOverride;
 		float maxHeight;

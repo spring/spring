@@ -24,7 +24,7 @@ using std::sprintf;
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
 #include "FileSystem/FileSystem.h"
-//#include "FileSystem/DataDirectories.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for MAX_TEAMS
 #include "Sim/Misc/TeamHandler.h" // ActiveTeams()
 #include "ExternalAI/IAILibraryManager.h"

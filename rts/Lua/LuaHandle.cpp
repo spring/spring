@@ -218,6 +218,9 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
+	//! limit gc just to the time the correct ActiveHandle is bound,
+	//! because some object could use __gc and try to access the ActiveHandle
+	//! outside of SetActiveHandle this can be an incorrect enviroment or even null -> crash
 	lua_gc(L,LUA_GCRESTART,0);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
 	lua_gc(L,LUA_GCSTOP,0);

@@ -1,7 +1,6 @@
 #ifndef LINEEDIT_H
 #define LINEEDIT_H
 
-#include "StdAfx.h"
 #include <string>
 #include <boost/signal.hpp>
 
@@ -22,6 +21,7 @@ public:
 	void SetContent(const std::string& line, bool moveCursor = true);
 	
 	void SetFocus(bool focus);
+	void SetCrypt(bool focus);
 
 	boost::signal<void (void)> DefaultAction;
 
@@ -30,6 +30,7 @@ private:
 	virtual bool HandleEventSelf(const SDL_Event& ev);
 
 	bool hasFocus;
+	bool crypt;
 	std::string content;
 	unsigned cursorPos;
 };

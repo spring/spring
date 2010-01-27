@@ -897,6 +897,8 @@ static inline float GetPenalty(const unsigned char& c, unsigned int strpos, unsi
 
 CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart) const
 {
+	//! returns two pieces 'L'eft and 'R'ight of the split word (returns L, *wi becomes R)
+
 	word w2;
 	w2.pos = w.pos;
 
@@ -996,6 +998,25 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 	line* l = &(lines.back());
 
+	//! If the last line ends with a linebreak, remove it
+	std::list<word>::iterator wi_end = l->end;
+	if (wi_end->isLineBreak) {
+		if (l->start == l->end || l->end == words.begin()) {
+			//! there is just the linebreak in that line, so replace linebreak with just a null space
+			word w;
+			w.pos       = wi_end->pos;
+			w.isSpace   = true;
+			w.numSpaces = 0;
+			l->start = words.insert(wi_end,w);
+			l->end = l->start;
+
+			words.erase(wi_end);
+		} else {
+			wi_end = words.erase(wi_end);
+			l->end = --wi_end;
+		}
+	}
+
 	//! remove as many words until we have enough free space for the ellipsis
 	while (l->end != l->start) {
 		word& w = *l->end;
@@ -1093,11 +1114,9 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 	linebreak.isLineBreak = true;
 
 	bool addEllipsis = false;
+	bool currLineValid = false; //! true if there was added any data to the current line
 
 	std::list<word>::iterator wi = words.begin();
-
-
-
 
 	std::list<word> splitWords;
 	std::list<line> lines;
@@ -1106,20 +1125,20 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 		currLine->start = words.begin();
 
 	for (; ;) {
+		currLineValid = true;
 		if (wi->isLineBreak) {
 			currLine->forceLineBreak = true;
 			currLine->end = wi;
 
 			//! start a new line after the '\n'
 			lines.push_back(line());
-
-			currLine = &(lines.back());
-			currLine->start = wi;
-			currLine->start++;
+				currLineValid = false;
+				currLine = &(lines.back());
+				currLine->start = wi;
+				currLine->start++;
 		} else {
 			currLine->width += wi->width;
 			currLine->end = wi;
-
 
 			if (currLine->width > maxWidth) {
 				currLine->width -= wi->width;
@@ -1130,17 +1149,24 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 				if (splitAllWords || splitLastWord) {
 					//! last word W is larger than 0.5 * maxLineWidth, split it into
-					//! two pieces 'L' and 'R' (*wi becomes L, R becomes *(wi + 1))
+					//! get 'L'eft and 'R'ight parts of the split (wL becomes Left, *wi becomes R)
 
-					//! turns *wi into L
-					word wR = SplitWord(*wi, freeWordSpace);
+					//! turns *wi into R
+					word wL = SplitWord(*wi, freeWordSpace);
+
+					if (splitLastWord && wL.width == 0.0f) {
+						//! With smart splitting it can happen that the word isn't splitted at all,
+						//! this can cause a race condition when the word is longer than maxWidth.
+						//! In this case we have to force an unaesthetic split.
+						wL = SplitWord(*wi, freeWordSpace, false);
+					}
 
 					//! increase by the width of the L-part of *wi
-					currLine->width += wi->width;
+					currLine->width += wL.width;
 
-					//! insert the R-part right after L
+					//! insert the L-part right before R
+					wi = words.insert(wi, wL);
 					wi++;
-					wi = words.insert(wi, wR);
 				}
 
 				//! insert the forced linebreak (either after W or before R)
@@ -1151,33 +1177,34 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 					wi = words.erase(wi);
 
 				lines.push_back(line());
+					currLineValid = false;
 					currLine = &(lines.back());
 					currLine->start = wi;
-					wi--;
+					wi--; //! compensate the wi++ downwards
 			}
 		}
 
 		wi++;
 
-		if (lines.size() >= maxLines) {
-			addEllipsis = true;
+		if (wi == words.end()) {
 			break;
 		}
 
-		if (wi == words.end()) {
+		if (lines.size() > maxLines) {
+			addEllipsis = true;
 			break;
 		}
 	}
 
-
+	
 
 	//! empty row
-	if (currLine->start == words.end() && !currLine->forceLineBreak) {
+	if (!currLineValid || (currLine->start == words.end() && !currLine->forceLineBreak)) {
 		lines.pop_back();
 		currLine = &(lines.back());
 	}
 
-	//! if we cut the text cos of missing space add an ellipsis
+	//! if we had to cut the text because of missing space, add an ellipsis
 	if (addEllipsis)
 		AddEllipsis(lines, words, maxWidth);
 
@@ -1832,6 +1859,122 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 		SetTextColor(&oldTextColor);
 	if (stripOutlineColors.size() > sos)
 		SetOutlineColor(&oldOultineColor);
+}
+
+void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, const std::string& text) {
+	int col = 0;
+	int row = 0;
+	std::vector<std::string> coltext;
+	std::vector<int> colcurcolor;
+	coltext.push_back("");
+	unsigned char curcolor[4];
+	unsigned char defaultcolor[4];
+	defaultcolor[0] = '\xff';
+	for(int i = 0; i < 3; ++i)
+		defaultcolor[i+1] = (unsigned char)(textColor[i]*255.0f);
+	colcurcolor.push_back(*(int *)&defaultcolor);
+	for(int i = 0; i < 4; ++i)
+		curcolor[i] = defaultcolor[i];
+
+	for (int pos = 0; pos < text.length(); pos++) {
+		const char& c = text[pos];
+		switch(c) {
+			case ColorCodeIndicator:
+				for(int i = 0; i < 4 && pos < text.length(); ++i, ++pos) {
+					coltext[col] += text[pos];
+					((unsigned char *)curcolor)[i] = text[pos];
+				}
+				colcurcolor[col] = *(int *)curcolor;
+				--pos;
+				break;
+			case '\x09':
+				++col;
+				if(col >= coltext.size()) {
+					coltext.push_back("");
+					for(int i = 0; i < row; ++i)
+						coltext[col] += '\x0a';
+					colcurcolor.push_back(*(int *)&defaultcolor);
+				}
+				if(colcurcolor[col] != *(int *)curcolor) {
+					for(int i = 0; i < 4; ++i)
+						coltext[col] += curcolor[i];
+					colcurcolor[col] = *(int *)curcolor;
+				}
+				break;
+			case '\x0d':
+				if (pos+1 < text.length() && text[pos + 1] == '\x0a')
+					pos++;
+			case '\x0a':
+				for(int i = 0; i < coltext.size(); ++i)
+					coltext[i] += '\x0a';
+				if(colcurcolor[0] != *(int *)curcolor) {
+					for(int i = 0; i < 4; ++i)
+						coltext[0] += curcolor[i];
+					colcurcolor[0] = *(int *)curcolor;
+				}
+				col = 0;
+				++row;
+				break;
+			default:
+				coltext[col] += c;
+		}
+	}
+
+	float totalWidth = 0.0f;
+	float maxHeight = 0.0f;
+	float minDescender = 0.0f;
+	for(int i = 0; i < coltext.size(); ++i) {
+		totalWidth += GetTextWidth(coltext[i]);
+		float textDescender;
+		float textHeight = GetTextHeight(coltext[i], &textDescender);
+		if(textHeight > maxHeight)
+			maxHeight = textHeight;
+		if(textDescender < minDescender)
+			minDescender = textDescender;
+	}
+
+	//! s := scale or absolute size?
+	float ss = s;
+	if (options & FONT_SCALE) {
+		ss *= fontSize;
+	}
+
+	float sizeX = ss, sizeY = ss;
+
+	//! render in normalized coords (0..1) instead of screencoords (0..~1024)
+	if (options & FONT_NORM) {
+		sizeX *= gu->pixelX;
+		sizeY *= gu->pixelY;
+	}
+
+	//! horizontal alignment (FONT_LEFT is default)
+	if (options & FONT_CENTER) {
+		x -= sizeX * 0.5f * totalWidth;
+	} else if (options & FONT_RIGHT) {
+		x -= sizeX * totalWidth;
+	}
+
+	//! vertical alignment
+	if (options & FONT_BASELINE) {
+		//! nothing
+	} else if (options & FONT_DESCENDER) {
+		y -= sizeY * fontDescender;
+	} else if (options & FONT_VCENTER) {
+		y -= sizeY * 0.5f * maxHeight;
+		y -= sizeY * 0.5f * minDescender;
+	} else if (options & FONT_TOP) {
+		y -= sizeY * maxHeight;
+	} else if (options & FONT_ASCENDER) {
+		y -= sizeY * fontDescender;
+		y -= sizeY;
+	} else if (options & FONT_BOTTOM) {
+		y -= sizeY * minDescender;
+	}
+
+	for(int i = 0; i < coltext.size(); ++i) {
+		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_RIGHT | FONT_CENTER), coltext[i]);
+		x += sizeX * GetTextWidth(coltext[i]);
+	}
 }
 
 

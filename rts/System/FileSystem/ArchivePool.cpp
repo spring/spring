@@ -9,6 +9,7 @@
 
 #include <sstream>
 #include <string>
+#include <cstring>
 #include <iostream>
 
 
@@ -66,7 +67,7 @@ CArchivePool::CArchivePool(const std::string& name):
 
 		FileData *f = new FileData;
 		f->name = std::string(c_name, length);
-		memcpy(&f->md5, &c_md5, 16);
+		std::memcpy(&f->md5, &c_md5, 16);
 		f->crc32 = parse_int32(c_crc32);
 		f->size = parse_int32(c_size);
 
