@@ -1083,7 +1083,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 
 # Used by the common OO AWK script
-function doWrapp(funcFullName_dw, params_dw, metaComment_dw) {
+function doWrappOO(funcFullName_dw, params_dw, metaComment_dw) {
 
 	doWrapp_dw = 1;
 
