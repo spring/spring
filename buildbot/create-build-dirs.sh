@@ -4,7 +4,7 @@ set -e
 cd $(dirname ${0})/..
 
 DIR=build-${1}
-
+shift
 echo -n creating ${DIR} ...
 
 if [ ! -d ${DIR} ] ; then
@@ -14,8 +14,8 @@ else
 	echo skipped
 fi
 
-echo -n configuring ${DIR} with ${4} ...
+echo -n configuring ${DIR} with $@ ...
 
 cd ${DIR}
-cmake ..  ${4}
+cmake ..  $@
 
