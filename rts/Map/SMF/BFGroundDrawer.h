@@ -54,7 +54,6 @@ protected:
 	friend class CSmfReadMap;
 
 	unsigned int groundVP;
-	unsigned int groundShadowVP;
 	unsigned int groundFPShadow;
 	unsigned int overrideVP;
 	bool waterDrawn;

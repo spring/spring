@@ -30,6 +30,8 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/FartextureHandler.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -296,7 +298,7 @@ void CFeatureDrawer::DrawShadowPass()
 {
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Enable();
+	shadowHandler->GetMdlShadowGenShader()->Enable();
 
 	{
 		GML_RECMUTEX_LOCK(feat); // DrawShadowPass
@@ -319,7 +321,7 @@ void CFeatureDrawer::DrawShadowPass()
 	}
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Disable();
+	shadowHandler->GetMdlShadowGenShader()->Disable();
 }
 
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer

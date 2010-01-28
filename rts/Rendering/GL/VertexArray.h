@@ -28,6 +28,7 @@ public:
 
 	inline void AddVertex0(const float3& pos);
 	inline void AddVertex0(const float x, const float y, const float z);
+	inline void AddVertexN(const float3& pos, const float3& normal);
 	inline void AddVertexT(const float3& pos,const float tx,const float ty);
 	inline void AddVertexC(const float3& pos,const unsigned char* color);
 	inline void AddVertexTC(const float3 &pos,const float tx,const float ty,const unsigned char* color);
@@ -35,17 +36,19 @@ public:
 	inline void AddVertexT2(const float3& pos,const float t1x,const float t1y,const float t2x,const float t2y);
 	inline void AddVertex2dT(const float x,const float y,const float tx,const float ty);
 
-	void DrawArray0(const int drawType, unsigned int stride=12);
-	void DrawArrayT(const int drawType, unsigned int stride=20);
-	void DrawArrayC(const int drawType, unsigned int stride=16);
-	void DrawArrayTC(const int drawType, unsigned int stride=24);
-	void DrawArrayTN(const int drawType, unsigned int stride=32);
-	void DrawArrayT2(const int drawType, unsigned int stride=28);
-	void DrawArray2dT(const int drawType, unsigned int stride=16);
+	void DrawArray0(const int drawType, unsigned int stride = 12);
+	void DrawArrayN(const int drawType, unsigned int stride = 24);
+	void DrawArrayT(const int drawType, unsigned int stride = 20);
+	void DrawArrayC(const int drawType, unsigned int stride = 16);
+	void DrawArrayTC(const int drawType, unsigned int stride = 24);
+	void DrawArrayTN(const int drawType, unsigned int stride = 32);
+	void DrawArrayT2(const int drawType, unsigned int stride = 28);
+	void DrawArray2dT(const int drawType, unsigned int stride = 16);
 	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride=16);
 
 	//! same as the AddVertex... functions just without automated CheckEnlargeDrawArray
 	inline void AddVertexQ0(const float x, const float y, const float z);
+	inline void AddVertexQN(const float3& pos, const float3& normal);
 	inline void AddVertexQC(const float3& pos,const unsigned char* color);
 	inline void AddVertexQT(const float3& pos,const float tx,const float ty);
 	inline void AddVertex2dQT(const float x,const float y,const float tx,const float ty);

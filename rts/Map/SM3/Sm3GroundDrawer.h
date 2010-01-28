@@ -29,7 +29,5 @@ protected:
 	terrain::Camera cam, shadowCam, reflectCam;
 	Frustum frustum;
 
-	unsigned int groundShadowVP;
 	friend class CSm3ReadMap;
 };
-
