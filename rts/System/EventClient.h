@@ -19,7 +19,8 @@ class CFeature;
 class CProjectile;
 struct Command;
 class CLogSubsystem;
-
+typedef void* zipFile;
+class CArchiveBase;
 
 class CEventClient
 {
@@ -57,6 +58,8 @@ class CEventClient
 
 	public:
 		// Synced events
+		virtual void Load(CArchiveBase* archive);
+
 		virtual void GamePreload();
 		virtual void GameStart();
 		virtual void GameOver();
@@ -112,6 +115,8 @@ class CEventClient
 		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
 
 		// Unsynced events
+		virtual void Save(zipFile archive);
+
 		virtual void Update();
 
 		virtual bool KeyPress(unsigned short key, bool isRepeat);

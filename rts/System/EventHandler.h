@@ -41,6 +41,8 @@ class CEventHandler
 
 	public:
 		// Synced events
+		void Load(CArchiveBase* archive);
+
 		void GamePreload();
 		void GameStart();
 		void GameOver();
@@ -98,6 +100,8 @@ class CEventHandler
 
 	public:
 		// Unsynced events
+		void Save(zipFile archive);
+
 		void Update();
 
 		bool KeyPress(unsigned short key, bool isRepeat);
@@ -189,6 +193,8 @@ class CEventHandler
 		EventClientList handles;
 
 		// synced
+		EventClientList listLoad;
+
 		EventClientList listGamePreload;
 		EventClientList listGameStart;
 		EventClientList listGameOver;
@@ -240,6 +246,8 @@ class CEventHandler
 		EventClientList listStockpileChanged;
 
 		// unsynced
+		EventClientList listSave;
+
 		EventClientList listUpdate;
 
 		EventClientList listKeyPress;

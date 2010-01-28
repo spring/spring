@@ -32,6 +32,8 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	// synced call-ins
+	SETUP_EVENT(Load, MANAGED_BIT);
+
 	SETUP_EVENT(GamePreload,   MANAGED_BIT);
 	SETUP_EVENT(GameStart,     MANAGED_BIT);
 	SETUP_EVENT(GameOver,      MANAGED_BIT);
@@ -82,6 +84,8 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(StockpileChanged, MANAGED_BIT);
 
 	// unsynced call-ins
+	SETUP_EVENT(Save,           MANAGED_BIT | UNSYNCED_BIT);
+
 	SETUP_EVENT(Update,         MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
@@ -284,6 +288,16 @@ void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 /******************************************************************************/
 /******************************************************************************/
 
+void CEventHandler::Save(zipFile archive)
+{
+	const int count = listSave.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listSave[i];
+		ec->Save(archive);
+	}
+}
+
+
 void CEventHandler::GamePreload()
 {
 	const int count = listGamePreload.size();
@@ -293,6 +307,7 @@ void CEventHandler::GamePreload()
 	}
 }
 
+
 void CEventHandler::GameStart()
 {
 	const int count = listGameStart.size();
@@ -301,6 +316,7 @@ void CEventHandler::GameStart()
 		ec->GameStart();
 	}
 }
+
 
 void CEventHandler::GameOver()
 {
@@ -354,6 +370,20 @@ void CEventHandler::PlayerRemoved(int playerID, int reason)
 
 /******************************************************************************/
 /******************************************************************************/
+
+void CEventHandler::Load(CArchiveBase* archive)
+{
+	const int count = listLoad.size();
+
+	if (count <= 0)
+		return;
+
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listLoad[i];
+		ec->Load(archive);
+	}
+}
+
 
 void CEventHandler::Update()
 {
