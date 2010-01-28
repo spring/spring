@@ -3,6 +3,31 @@
  * @author: Tobi Vollebregt
  */
 
+/**
+ * @class LuaZipFileWriter
+ *
+ * @brief A Lua userdatum to write zip files
+ *
+ * This class defines functions for a Lua userdatum to write to zip files.
+ * Such a userdatum supports the following methods:
+ *  - close()    : close the zipFile, after this open and write raise an error
+ *  - open(name) : opens a new file within the zipFile (for writing)
+ *  - write(...) : writes data to the open file within the zipFile (similar to io.write)
+ */
+
+/**
+ * @class LuaZipFileReader
+ *
+ * @brief A Lua userdatum to read zip files
+ *
+ * This class defines functions for a Lua userdatum to read archive files.
+ * Any VFS-supported archive is supported, e.g. zip, 7-zip.
+ * Such a userdatum supports the following methods:
+ *  - close()    : close the archive, after this open and read raise an error
+ *  - open(name) : opens a new file within the archive (for reading)
+ *  - read(...)  : reads data from the open file within the archive (similar to io.read)
+ */
+
 #include "LuaZip.h"
 #include "LuaInclude.h"
 #include "LuaHashString.h"
@@ -84,6 +109,16 @@ static bool FileExists(string filename)
 }
 
 
+/**
+ * @brief Pushes a new ZipFileWriter userdatum on the Lua stack.
+ *
+ * If zip != NULL:
+ *  - the userdatum is made to point to the zipFile,
+ *  - the zipFile will never be closed by Lua (close()->no-op, GC->no-op)
+ * Otherwise:
+ *  - a new zipFile is opened (without overwrite, with directory creation)
+ *  - this zipFile may be closed by Lua (close() or GC)
+ */
 bool LuaZipFileWriter::PushNew(lua_State* L, const string& filename, zipFile zip)
 {
 	lua_checkstack(L, 2);
@@ -225,6 +260,16 @@ struct ZipFileReaderUserdata {
 };
 
 
+/**
+ * @brief Pushes a new ZipFileReader userdatum on the Lua stack.
+ *
+ * If archive != NULL:
+ *  - the userdatum is made to point to the archive,
+ *  - the archive will never be closed by Lua (close()->no-op, GC->no-op)
+ * Otherwise:
+ *  - a new archive is opened (full VFS support)
+ *  - this archive may be closed by Lua (close() or GC)
+ */
 bool LuaZipFileReader::PushNew(lua_State* L, const string& filename, CArchiveBase* archive)
 {
 	lua_checkstack(L, 2);
