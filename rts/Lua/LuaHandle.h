@@ -93,6 +93,8 @@ class CLuaHandle : public CEventClient
 
 		void Shutdown();
 
+		void Load(CArchiveBase* archive);
+
 		void GamePreload();
 		void GameStart();
 		void GameOver();
@@ -149,6 +151,8 @@ class CLuaHandle : public CEventClient
 
 		// LuaHandleSynced wraps this to set allowChanges
 		virtual bool RecvLuaMsg(const string& msg, int playerID);
+
+		void Save(zipFile archive);
 
 		void Update();
 
