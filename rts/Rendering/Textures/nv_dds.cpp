@@ -1163,6 +1163,8 @@ void CDDSImage::flip_dxt5_alpha(DXT5AlphaBlock *block)
     bits >>= 3;
     gBits[3][3] = (unsigned char)(bits & mask);
 
+    memset(block->row, 0, sizeof(unsigned char) * 6);
+
     unsigned int *pBits = ((unsigned int*) &(block->row[0]));
 
     *pBits = *pBits | (gBits[3][0] << 0);
