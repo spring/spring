@@ -88,48 +88,6 @@ void CKAIK::UnitFinished(int unit) {
 		}
 
 		ai->uh->BuildTaskRemove(unit);
-
-		// SLOGIC: BEGIN
-
-		// NOTE: this is just funny stuff we should remove when implement 
-		// whishlist system & task plan stacks per unit to insert task to 
-		// reclaim enemy MEX detected by best spot algo BEFORE building our
-		// own MEX
-
-		// if we have built a new MEX check if there is enemy MEX around & 
-		// reclaim it with any idle builder around to really start sucking metal...
-		if (GCAT(unit) == CAT_MEX)
-		{
-			const float3 mexPos = ai->cb->GetUnitPos(unit);
-
-			int numFound, enemyMexID = 0;
-			
-			numFound = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], mexPos, ai->cb->GetExtractorRadius() * 1.5f);
-			for (unsigned int i = 0; i < numFound; i++) {
-				if (GCAT(ai->unitIDs[i]) == CAT_MEX) {
-					enemyMexID = ai->unitIDs[i];
-					break;
-				}
-			}
-
-			if (enemyMexID > 0 && !ai->ccb->IsUnitCloaked(enemyMexID)) {
-				// TODO: tweak search radius if required
-				numFound = ai->cb->GetFriendlyUnits(&ai->unitIDs[0], ai->ccb->GetUnitPos(unit), 200.0f);
-				for (unsigned int i = 0; i < numFound; i++) {
-					int builderID = ai->unitIDs[i];
-					if (GCAT(builderID) == CAT_BUILDER && ai->cb->GetUnitTeam(builderID) == ai->cb->GetMyTeam()) {
-						const BuilderTracker *bt = ai->uh->GetBuilderTracker(builderID);
-						if( bt->buildTaskId == 0 && bt->taskPlanId == 0 && bt->factoryId == 0 )
-						{
-							ai->MyUnits[builderID]->Reclaim(enemyMexID);
-							break;
-						}
-					}
-				}
-			}
-		}
-		
-		// SLOGIC: END
 	}
 }
 
@@ -176,6 +134,8 @@ void CKAIK::UnitMoveFailed(int unit) {
 	unit = unit;
 }
 
+
+
 void CKAIK::EnemyEnterLOS(int enemy) {
 	enemy = enemy;
 }
@@ -203,10 +163,13 @@ void CKAIK::EnemyDamaged(int damaged, int attacker, float damage, float3 dir) {
 	dir = dir;
 }
 
+
+
 void CKAIK::GotChatMsg(const char* msg, int player) {
 	msg = msg;
 	player = player;
 }
+
 
 int CKAIK::HandleEvent(int msg, const void* data) {
 	switch (msg) {
@@ -236,6 +199,8 @@ int CKAIK::HandleEvent(int msg, const void* data) {
 
 	return 0;
 }
+
+
 
 
 void CKAIK::Update() {
