@@ -38,8 +38,9 @@ class CMetalMap {
 		int coordy;
 		int Minradius;
 		int MinMetalForSpot;
-		int XtractorRadius;
-		int DoubleRadius;
+		int XtractorRadius; // in metal map units
+		int DoubleRadius; // in metal map units
+		float XtractorRadiusOrg; // in heightmap units
 		unsigned char* MexArrayA;
 		unsigned char* MexArrayB;
 		unsigned char* MexArrayC;
