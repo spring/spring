@@ -42,7 +42,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	if (fileHeader.scriptSize != 0) {
 		char* buf = new char[fileHeader.scriptSize];
 		playbackDemo.read(buf, fileHeader.scriptSize);
-		setupScript = std::string(buf);
+		setupScript = std::string(buf, fileHeader.scriptSize);
 		delete[] buf;
 	}
 
