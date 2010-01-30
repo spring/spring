@@ -86,6 +86,7 @@ void GameSetupDrawer::Draw()
 	}
 	else if (readyCountdown < 0) {
 		GameSetupDrawer::Disable();
+		return; // *this is deleted!
 	}
 
 	std::string state = "Unknown state.";
