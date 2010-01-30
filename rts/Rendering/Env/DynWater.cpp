@@ -101,26 +101,24 @@ CDynWater::CDynWater(void)
 
 	delete[] scrap;
 
-	if(ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB,"waterDyn.vp"))
-		waterVP=LoadVertexProgram("waterDyn.vp");
+	if (ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB, "waterDyn.vp"))
+		waterVP = LoadVertexProgram("waterDyn.vp");
 	else
-		waterVP=LoadVertexProgram("waterDynNT.vp");
+		waterVP = LoadVertexProgram("waterDynNT.vp");
 
-	waterFP=LoadFragmentProgram("waterDyn.fp");
-	waveFP=LoadFragmentProgram("waterDynWave.fp");
-	waveVP=LoadVertexProgram("waterDynWave.vp");
-	waveFP2=LoadFragmentProgram("waterDynWave2.fp");
-	waveVP2=LoadVertexProgram("waterDynWave2.vp");
-	waveNormalFP=LoadFragmentProgram("waterDynNormal.fp");
-	waveNormalVP=LoadVertexProgram("waterDynNormal.vp");
-	waveCopyHeightFP=LoadFragmentProgram("waterDynWave3.fp");
-	waveCopyHeightVP=LoadVertexProgram("waterDynWave3.vp");
-	dwGroundRefractVP=LoadVertexProgram("dwgroundrefract.vp");
-	dwGroundReflectIVP=LoadVertexProgram("dwgroundreflectinverted.vp");
-	dwDetailNormalFP=LoadFragmentProgram("dwDetailNormal.fp");
-	dwDetailNormalVP=LoadVertexProgram("dwDetailNormal.vp");
-	dwAddSplashFP=LoadFragmentProgram("dwAddSplash.fp");
-	dwAddSplashVP=LoadVertexProgram("dwAddSplash.vp");
+	waterFP          = LoadFragmentProgram("waterDyn.fp");
+	waveFP           = LoadFragmentProgram("waterDynWave.fp");
+	waveVP           = LoadVertexProgram("waterDynWave.vp");
+	waveFP2          = LoadFragmentProgram("waterDynWave2.fp");
+	waveVP2          = LoadVertexProgram("waterDynWave2.vp");
+	waveNormalFP     = LoadFragmentProgram("waterDynNormal.fp");
+	waveNormalVP     = LoadVertexProgram("waterDynNormal.vp");
+	waveCopyHeightFP = LoadFragmentProgram("waterDynWave3.fp");
+	waveCopyHeightVP = LoadVertexProgram("waterDynWave3.vp");
+	dwDetailNormalFP = LoadFragmentProgram("dwDetailNormal.fp");
+	dwDetailNormalVP = LoadVertexProgram("dwDetailNormal.vp");
+	dwAddSplashFP    = LoadFragmentProgram("dwAddSplash.fp");
+	dwAddSplashVP    = LoadVertexProgram("dwAddSplash.vp");
 
 	waterSurfaceColor = mapInfo->water.surfaceColor;
 
@@ -269,8 +267,6 @@ CDynWater::~CDynWater(void)
 	glSafeDeleteProgram( waveNormalVP );
 	glSafeDeleteProgram( waveCopyHeightFP );
 	glSafeDeleteProgram( waveCopyHeightVP );
-	glSafeDeleteProgram( dwGroundReflectIVP );
-	glSafeDeleteProgram( dwGroundRefractVP );
 	glSafeDeleteProgram( dwDetailNormalVP );
 	glSafeDeleteProgram( dwDetailNormalFP );
 	glSafeDeleteProgram( dwAddSplashVP );
@@ -446,7 +442,7 @@ void CDynWater::DrawReflection(CGame* game)
 	glClearColor(0.5f,0.6f,0.8f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 
 	sky->Draw();
 
@@ -457,8 +453,10 @@ void CDynWater::DrawReflection(CGame* game)
 	bool drawShadows=shadowHandler->drawShadows;
 	shadowHandler->drawShadows=false;
 
-	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
-	gd->Draw(true,false,dwGroundReflectIVP);
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		gd->SetupReflDrawPass();
+		gd->Draw(true, false);
+		gd->SetupBaseDrawPass();
 
 	double plane[4]={0,1,0,1.0f};
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
@@ -477,7 +475,7 @@ void CDynWater::DrawReflection(CGame* game)
 
 	sky->DrawSun();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
@@ -514,10 +512,12 @@ void CDynWater::DrawRefraction(CGame* game)
 	unitDrawer->unitSunColor*=float3(0.5f,0.7f,0.9f);
 	unitDrawer->unitAmbientColor*=float3(0.6f,0.8f,1.0f);
 
-	game->SetDrawMode(CGame::refractionDraw);
+	game->SetDrawMode(CGame::gameRefractionDraw);
 
-	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
-	gd->Draw(false,false,dwGroundRefractVP);
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		gd->SetupRefrDrawPass();
+		gd->Draw(false, false);
+		gd->SetupBaseDrawPass();
 
 	glEnable(GL_CLIP_PLANE2);
 	double plane[4]={0,-1,0,2};
@@ -532,7 +532,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	eventHandler.DrawWorldRefraction();
 	glDisable(GL_CLIP_PLANE2);
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	drawRefraction=false;
 

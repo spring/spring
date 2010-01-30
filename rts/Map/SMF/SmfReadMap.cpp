@@ -106,57 +106,72 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 
 
-	glGenTextures(1, &detailTex);
-	glBindTexture(GL_TEXTURE_2D, detailTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	if (anisotropy != 0.0f) {
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+	{
+		glGenTextures(1, &detailTex);
+		glBindTexture(GL_TEXTURE_2D, detailTex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		if (anisotropy != 0.0f) {
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+		}
+		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, detailTexBM.xsize, detailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, detailTexBM.mem);
 	}
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, detailTexBM.xsize, detailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, detailTexBM.mem);
 
 
+	{
+		// the minimap is a static texture
+		std::vector<unsigned char> minimapTexBuf(MINIMAP_SIZE, 0);
+		file.ReadMinimap(&minimapTexBuf[0]);
 
-	// the minimap is a static texture
-	unsigned char* buf = new unsigned char[MINIMAP_SIZE];
-	file.ReadMinimap(buf);
-
-	glGenTextures(1, &minimapTex);
-	glBindTexture(GL_TEXTURE_2D, minimapTex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP-1);
-	int offset = 0;
-	for (unsigned int i = 0; i < MINIMAP_NUM_MIPMAP; i++) {
-		const int mipsize = 1024 >> i;
-		const int size = ((mipsize + 3) / 4) * ((mipsize + 3) / 4) * 8;
-		glCompressedTexImage2DARB(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipsize, mipsize, 0, size, buf + offset);
-		offset += size;
+		glGenTextures(1, &minimapTex);
+		glBindTexture(GL_TEXTURE_2D, minimapTex);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP - 1);
+		int offset = 0;
+		for (unsigned int i = 0; i < MINIMAP_NUM_MIPMAP; i++) {
+			const int mipsize = 1024 >> i;
+			const int size = ((mipsize + 3) / 4) * ((mipsize + 3) / 4) * 8;
+			glCompressedTexImage2DARB(GL_TEXTURE_2D, i, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, mipsize, mipsize, 0, size, &minimapTexBuf[0] + offset);
+			offset += size;
+		}
 	}
-	delete[] buf;
 
 
 
-	unsigned char* bufZero = new unsigned char[gs->pwr2mapx * gs->pwr2mapy * 4];
-	memset(bufZero, 0, gs->pwr2mapx * gs->pwr2mapy * 4);
+	{
+		// the shading/normal texture buffers must have PO2 dimensions
+		// (excess elements that no vertices map into are left unused)
+		std::vector<unsigned char> shadingTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0);
 
-	glGenTextures(1, &shadingTex);
-	glBindTexture(GL_TEXTURE_2D, shadingTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	if (anisotropy != 0.0f) {
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+		glGenTextures(1, &shadingTex);
+		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		if (anisotropy != 0.0f) {
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+		}
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuf[0]);
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, bufZero);
 
-	delete[] bufZero;
+	{
+		std::vector<float> normalsTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0.0f);
+
+		glGenTextures(1, &normalsTex);
+		glBindTexture(GL_TEXTURE_2D, normalsTex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_FLOAT, &normalsTexBuf[0]);
+	}
+
 
 	groundDrawer = new CBFGroundDrawer(this);
-
-	file.ReadFeatureInfo ();
+	file.ReadFeatureInfo();
 }
 
 
@@ -165,65 +180,71 @@ CSmfReadMap::~CSmfReadMap()
 	delete groundDrawer;
 	delete[] heightmap;
 
-	if (detailTex) glDeleteTextures(1, &detailTex);
-	if (specularTex) glDeleteTextures(1, &specularTex);
-	if (minimapTex) glDeleteTextures(1, &minimapTex);
-	if (shadingTex) glDeleteTextures(1, &shadingTex);
+	if (detailTex  ) { glDeleteTextures(1, &detailTex  ); }
+	if (specularTex) { glDeleteTextures(1, &specularTex); }
+	if (minimapTex ) { glDeleteTextures(1, &minimapTex ); }
+	if (shadingTex ) { glDeleteTextures(1, &shadingTex ); }
+	if (normalsTex ) { glDeleteTextures(1, &normalsTex ); }
 }
 
 
 void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 {
 	{
-		// update the shading texture (even if the map has specular
-		// lighting, we still need it to module the minimap image)
-		x1 -= x1 & 3;
-		x2 += (20004 - x2) & 3;
-
-		y1 -= y1 & 3;
-		y2 += (20004 - y2) & 3;
+		// discretize x1 and y1 to step-sizes of 4
+		//   for x1 and y1, [0, 1, 2, 3, 4, 5, 6, 7, 8, ...] maps to [0, 0, 0, 0, 4, 4, 4, 4, 8, ...]
+		//   for x2 and y2, [0, 1, 2, 3, 4, 5, 6, 7, 8, ...] maps to [0, 4, 4, 4, 4, 8, 8, 8, 8, ...]
+		x1 -= (x1 & 3);
+		y1 -= (y1 & 3);
+		x2 += ((20004 - x2) & 3);
+		y2 += ((20004 - y2) & 3);
 
 		const int xsize = x2 - x1;
 		const int ysize = y2 - y1;
 
-		unsigned char* tempMem = new unsigned char[xsize * ysize * 4];
+		// update the shading texture (even if the map has specular
+		// lighting, we still need it to modulate the minimap image)
+		// this can be done for diffuse lighting only
+		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
 		for (int y = 0; y < ysize; ++y) {
 			for (int x = 0; x < xsize; ++x) {
-				const int xi = x + x1, yi = y + y1;
+				const int xi = x1 + x, yi = y1 + y;
 				const float& height = centerheightmap[(xi) + (yi) * gs->mapx];
 
-				if (height < 0) {
+				if (height < 0.0f) {
 					const int h = (int) - height & 1023; //! waterHeightColors array just holds 1024 colors
 					float light = std::min((DiffuseSunCoeff(x + x1, y + y1) + 0.2f) * 2.0f, 1.0f);
 
 					if (height > -10.0f) {
 						const float wc = -height * 0.1f;
-						float3 light3 = GetLightValue(x + x1, y + y1) * (1.0f - wc) * 210.0f;
+						const float3 light3 = GetLightValue(x + x1, y + y1) * (1.0f - wc) * 210.0f;
 						light *= wc;
-						tempMem[(y * xsize + x) * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
-						tempMem[(y * xsize + x) * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
-						tempMem[(y * xsize + x) * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
+
+						pixels[(y * xsize + x) * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
+						pixels[(y * xsize + x) * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
+						pixels[(y * xsize + x) * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
 					} else {
-						tempMem[(y * xsize + x) * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
-						tempMem[(y * xsize + x) * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
-						tempMem[(y * xsize + x) * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
+						pixels[(y * xsize + x) * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
+						pixels[(y * xsize + x) * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
+						pixels[(y * xsize + x) * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
 					}
-					tempMem[(y * xsize + x) * 4 + 3] = EncodeHeight(height);
+					pixels[(y * xsize + x) * 4 + 3] = EncodeHeight(height);
 				} else {
 					const float3 light = GetLightValue(x + x1, y + y1) * 210.0f;
-					tempMem[(y * xsize + x) * 4 + 0] = (unsigned char) light.x;
-					tempMem[(y * xsize + x) * 4 + 1] = (unsigned char) light.y;
-					tempMem[(y * xsize + x) * 4 + 2] = (unsigned char) light.z;
-					tempMem[(y * xsize + x) * 4 + 3] = 255;
+
+					pixels[(y * xsize + x) * 4 + 0] = (unsigned char) light.x;
+					pixels[(y * xsize + x) * 4 + 1] = (unsigned char) light.y;
+					pixels[(y * xsize + x) * 4 + 2] = (unsigned char) light.z;
+					pixels[(y * xsize + x) * 4 + 3] = 255;
 				}
 			}
 		}
 
+		// redefine the texture subregion
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, x1, y1, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, tempMem);
-
-		delete[] tempMem;
+		glTexSubImage2D(GL_TEXTURE_2D, 0, x1, y1, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 
@@ -241,7 +262,11 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		const int maxx = std::min((x2 + 1), W - 1);
 		const int maxz = std::min((y2 + 1), H - 1);
 
-		// note: upper bounds are inclusive
+		const int xsize = maxx - minx;
+		const int zsize = maxz - minz;
+
+		std::vector<float> pixels(xsize * zsize * 4, 0.0f);
+
 		for (int x = minx; x <= maxx; x++) {
 			for (int z = minz; z <= maxz; z++) {
 				const int vIdx = (z * (gs->mapx + 1)) + x;
@@ -291,8 +316,19 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 					tn = (vml - vmm).cross((vtl - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 
 				vertexNormals[vIdx] = vn.ANormalize();
+
+				// compress the range [-1, 1] to [0, 1] to prevent clamping
+				// (ideally, should use an FBO with FP32 texture attachment)
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vn.x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vn.y + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vn.z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
 			}
 		}
+
+		glBindTexture(GL_TEXTURE_2D, normalsTex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
 
@@ -308,6 +344,7 @@ float3 CSmfReadMap::GetLightValue(const int& x, const int& y) const
 {
 	float3 light = mapInfo->light.groundSunColor * DiffuseSunCoeff(x, y);
 	light += mapInfo->light.groundAmbientColor;
+
 	for (int a = 0; a < 3; ++a) {
 		if (light[a] > 1.0f){
 			light[a] = 1.0f;

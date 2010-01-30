@@ -9,6 +9,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
@@ -37,18 +38,38 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	bigTexH = (gs->mapy << 3) / numBigTexY;
 
 	map = rm;
-
 	heightData = map->heightmap;
 
-	if (shadowHandler->canUseShadows) {
-		if (!rm->haveSpecularLighting) {
-			groundVP = LoadVertexProgram("ground.vp");
+	{
+		CShaderHandler* sh = shaderHandler;
 
-			if (shadowHandler->useFPShadows) {
-				groundFPShadow = LoadFragmentProgram("groundFPshadow.fp");
+		smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "smfShaderBaseARB", true);
+		smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
+		smfShaderRefrARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderRefrARB", true);
+		smfShaderCurrARB = smfShaderBaseARB;
+
+		if (shadowHandler->canUseShadows) {
+			if (!map->haveSpecularLighting) {
+				// always use FP shadows (shadowHandler->useFPShadows is short
+				// for "this graphics card supports ARB_FRAGMENT_PROGRAM", and
+				// canUseShadows can not be true while useFPShadows is false)
+				smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("ground.vp", GL_VERTEX_PROGRAM_ARB));
+				smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", GL_FRAGMENT_PROGRAM_ARB));
+				smfShaderBaseARB->Link();
+
+				smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("dwgroundreflectinverted.vp", GL_VERTEX_PROGRAM_ARB));
+				smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", GL_FRAGMENT_PROGRAM_ARB));
+				smfShaderReflARB->Link();
+
+				smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("dwgroundrefract.vp", GL_VERTEX_PROGRAM_ARB));
+				smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", GL_FRAGMENT_PROGRAM_ARB));
+				smfShaderRefrARB->Link();
+			} else {
+				smfShaderGLSL = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
+				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFVertProg.glsl", GL_VERTEX_SHADER));
+				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFFragProg.glsl", GL_FRAGMENT_SHADER));
+				smfShaderGLSL->Link();
 			}
-		} else {
-			// TODO
 		}
 	}
 
@@ -85,11 +106,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 	delete textures;
 
 	if (shadowHandler->canUseShadows) {
-		glSafeDeleteProgram(groundVP);
-
-		if (shadowHandler->useFPShadows) {
-			glSafeDeleteProgram(groundFPShadow);
-		}
+		shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 	}
 
 	configHandler->Set("GroundDetail", viewRadius);
@@ -683,9 +700,9 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 	}
 }
 
-void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int VP)
+void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 {
-	if (mapInfo->map.voidWater && map->currMaxHeight<0) {
+	if (mapInfo->map.voidWater && map->currMaxHeight < 0.0f) {
 		return;
 	}
 
@@ -693,10 +710,10 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
-	//! DynWater sets this to dwGroundRefractVP during its refraction pass
-	//! (essentially the same as groundVP, but adds per-vertex distortion)
-	overrideVP = VP;
+
 	waterDrawn = drawWaterReflection;
+
+
 	const int baseViewRadius = max(4, viewRadius);
 
 	if (drawUnitReflection) {
@@ -721,7 +738,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	glEnable(GL_TEXTURE_2D); //FIXME needed?
 	glCullFace(GL_BACK);
 
-	if (!overrideVP)
+	if (smfShaderCurrARB == smfShaderBaseARB)
 		glEnable(GL_CULL_FACE);
 
 	SetupTextureUnits(drawWaterReflection);
@@ -776,7 +793,6 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 //	sky->SetCloudShadow(1);
 
 	viewRadius = baseViewRadius;
-	overrideVP = NULL;
 }
 
 
@@ -1123,14 +1139,13 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 void CBFGroundDrawer::DrawShadowPass(void)
 {
-	if (mapInfo->map.voidWater && map->currMaxHeight<0) {
+	if (mapInfo->map.voidWater && map->currMaxHeight < 0.0f) {
 		return;
 	}
 
 	const int NUM_LODS = 4;
 
-	CShadowHandler* sh = shadowHandler;
-	Shader::IProgramObject* po = sh->GetMapShadowGenShader();
+	Shader::IProgramObject* po = shadowHandler->GetMapShadowGenShader();
 
 	// glEnable(GL_CULL_FACE);
 	glPolygonOffset(1, 1);
@@ -1159,19 +1174,20 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
+	textures->SetTexture(bigSquareX, bigSquareY);
+
 	//! must be in drawLos mode or shadows must be off
 	if (DrawExtraTex() || !shadowHandler->drawShadows) {
-		textures->SetTexture(bigSquareX, bigSquareY);
 		SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
-
-		if (overrideVP) {
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -bigSquareX, -bigSquareY, 0, 0);
-		}
-	} else {
-		textures->SetTexture(bigSquareX, bigSquareY);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -bigSquareX, -bigSquareY, 0, 0);
 	}
+
+	smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+	smfShaderCurrARB->SetUniform4f(11, -bigSquareX, -bigSquareY, 0, 0);
 }
+
+
+
+
 
 
 void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
@@ -1215,7 +1231,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		/*
 		//! this is just used by DynamicWater to distort the underwater rendering, but it's hard to maintain a vertex shader when working with opengl combiners,
 		//! so it's better to limit this to full-shader-driven systems (-> e.g. when shadows are enabled)
-		if (overrideVP) {
+		if (overrideVP != 0) {
 			glEnable(GL_VERTEX_PROGRAM_ARB);
 			glBindProgramARB(GL_VERTEX_PROGRAM_ARB, overrideVP);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
@@ -1231,11 +1247,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 	}
 
 	else if (shadowHandler->drawShadows) {
-		glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, groundFPShadow);
-		glEnable(GL_FRAGMENT_PROGRAM_ARB);
-		float3 ac = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, ac.x, ac.y, ac.z, 1);
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, 0, 0, 0, mapInfo->light.groundShadowDensity);
+		const float3 ac = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -1262,17 +1274,16 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glAlphaFunc(GL_GREATER, 0.8f);
 			glEnable(GL_ALPHA_TEST);
 		}
-		if (overrideVP) {
-			glBindProgramARB(GL_VERTEX_PROGRAM_ARB, overrideVP);
-		} else {
-			glBindProgramARB(GL_VERTEX_PROGRAM_ARB, groundVP);
-		}
 
-		glEnable(GL_VERTEX_PROGRAM_ARB);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 1.0f / 1024, 1.0f / 1024, 0, 1);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f), 0, 0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 0.02f, 0.02f, 0, 1);
+		smfShaderCurrARB->Enable();
+		smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+		smfShaderCurrARB->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
+		smfShaderCurrARB->SetUniform4f(12, 1.0f / 1024, 1.0f / 1024, 0, 1);
+		smfShaderCurrARB->SetUniform4f(13, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f), 0, 0);
+		smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
+		smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+		smfShaderCurrARB->SetUniform4f(10, ac.x, ac.y, ac.z, 1);
+		smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, mapInfo->light.groundShadowDensity);
 
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -1331,9 +1342,9 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		/*
 		//! this is just used by DynamicWater to distort the underwater rendering, but it's hard to maintain a vertex shader when working with opengl combiners,
 		//! so it's better to limit this to full-shader-driven systems  (-> e.g. when shadows are enabled)
-		if (overrideVP) {
+		if (overrideVP != 0) {
 			glEnable(GL_VERTEX_PROGRAM_ARB);
-			glBindProgramARB(GL_VERTEX_PROGRAM_ARB, overrideVP);
+			glBindProgramARB(GL_VERTEX_PROGRAM_ARB, overrideVP != 0);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 1.0f / 1024, 1.0f / 1024, 0, 1);
 			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, -floor(camera->pos.x * 0.02f),-floor(camera->pos.z * 0.02f), 0, 0);
@@ -1378,17 +1389,10 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
-		if (overrideVP) {
-			glDisable(GL_VERTEX_PROGRAM_ARB);
-
-			if (drawReflection) {
-				glDisable(GL_ALPHA_TEST);
-			}
+		if (drawReflection) {
+			glDisable(GL_ALPHA_TEST);
 		}
 	} else {
-		glDisable(GL_VERTEX_PROGRAM_ARB);
-		glDisable(GL_FRAGMENT_PROGRAM_ARB);
-
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -1396,8 +1400,13 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 		if (drawReflection) {
 			glDisable(GL_ALPHA_TEST);
 		}
+
+		smfShaderCurrARB->Disable();
 	}
 }
+
+
+
 
 
 
@@ -1477,7 +1486,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 void CBFGroundDrawer::Update()
 {
-	if (mapInfo->map.voidWater && map->currMaxHeight<0) {
+	if (mapInfo->map.voidWater && map->currMaxHeight < 0.0f) {
 		return;
 	}
 

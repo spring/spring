@@ -14,11 +14,14 @@ public:
 	~CSmfReadMap();
 
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
+
 	inline GLuint GetShadingTexture() const { return shadingTex; }
+	inline GLuint GetNormalsTexture() const { return normalsTex; }
 	inline GLuint GetGrassShadingTexture() const { return minimapTex; }
+
 	void DrawMinimap() const;
-	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize);
-	inline CBaseGroundDrawer* GetGroundDrawer() { return (CBaseGroundDrawer*)groundDrawer; }
+	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
+	inline CBaseGroundDrawer* GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 	const float* GetHeightmap() const { return heightmap; }
 
 	inline void SetHeight(const int& idx, const float& h) {
@@ -32,13 +35,13 @@ public:
 		currMaxHeight = std::max(heightmap[idx], currMaxHeight);
 	}
 
-	int GetNumFeatureTypes ();
-	int GetNumFeatures ();
+	int GetNumFeatureTypes();
+	int GetNumFeatures();
 	void GetFeatureInfo (MapFeatureInfo* f); // returns all feature info in MapFeatureInfo[NumFeatures]
-	const char *GetFeatureTypeName (int typeID);
+	const char* GetFeatureTypeName(int typeID);
 
-	unsigned char *GetInfoMap (const std::string& name, MapBitmapInfo* bm);
-	void FreeInfoMap(const std::string& name, unsigned char *data);
+	unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm);
+	void FreeInfoMap(const std::string& name, unsigned char* data);
 
 	// todo: do not use, just here for backward compatibility with BFGroundTextures.cpp
 	CSmfMapFile& GetFile() { return file; }
@@ -51,10 +54,12 @@ protected:
 
 	CSmfMapFile file;
 
-	GLuint detailTex;
-	GLuint specularTex;
-	GLuint shadingTex;
-	GLuint minimapTex;
+	GLuint detailTex;   // supplied by the map
+	GLuint specularTex; // supplied by the map, moderates specular contribution
+	GLuint shadingTex;  // holds precomputed dot(lightDir, faceNormal) values
+	GLuint normalsTex;  // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	GLuint minimapTex;  // supplied by the map
+
 	bool haveSpecularLighting;
 
 	unsigned char waterHeightColors[1024 * 4];

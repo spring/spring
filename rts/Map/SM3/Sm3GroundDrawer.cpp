@@ -65,7 +65,7 @@ void CSm3GroundDrawer::Update()
 	tr->CacheTextures();
 }
 
-void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
+void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 {
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

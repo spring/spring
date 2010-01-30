@@ -240,7 +240,7 @@ CR_REG_METADATA(CGame,(
 
 
 CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile):
-	drawMode(notDrawing),
+	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	oldframenum(0),
 	fps(0),
@@ -3032,7 +3032,7 @@ bool CGame::Draw() {
 	if(!skipping)
 		UpdateUI(true);
 
-	SetDrawMode(normalDraw);
+	SetDrawMode(gameNormalDraw);
 
  	if (luaUI)    { luaUI->CheckStack(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
@@ -3089,9 +3089,9 @@ bool CGame::Draw() {
 			if (shadowHandler->drawShadows &&
 				(gd->drawMode != CBaseGroundDrawer::drawLos)) {
 				// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
-				SetDrawMode(shadowDraw);
+				SetDrawMode(gameShadowDraw);
 				shadowHandler->CreateShadows();
-				SetDrawMode(normalDraw);
+				SetDrawMode(gameNormalDraw);
 			}
 
 			cubeMapHandler->UpdateReflectionTexture();
@@ -3329,7 +3329,7 @@ bool CGame::Draw() {
 	}
 #endif
 
-	SetDrawMode(notDrawing);
+	SetDrawMode(gameNotDrawing);
 
 	return true;
 }
