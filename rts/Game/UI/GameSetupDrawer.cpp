@@ -83,10 +83,11 @@ void GameSetupDrawer::Draw()
 	if (readyCountdown > 0) {
 		readyCountdown -= (SDL_GetTicks() - lastTick);
 		lastTick = SDL_GetTicks();
-	}
-	else if (readyCountdown < 0) {
-		GameSetupDrawer::Disable();
-		return; // *this is deleted!
+
+		if (readyCountdown <= 0) {
+			GameSetupDrawer::Disable();
+			return; // *this is deleted!
+		}
 	}
 
 	std::string state = "Unknown state.";
