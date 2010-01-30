@@ -47,6 +47,7 @@ void CCobThread::SetCallback(CBCobThreadFinish cb, void *p1, void *p2)
 //it is expected that the starter is responsible for ticking it.
 void CCobThread::Start(int functionId, const vector<int> &args, bool schedule)
 {
+	wakeTime = 0;
 	state = Run;
 	PC = script.scriptOffsets[functionId];
 
