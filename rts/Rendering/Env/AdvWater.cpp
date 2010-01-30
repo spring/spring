@@ -306,7 +306,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glViewport(0, 0, 512, 512);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 
 	sky->Draw();
 
@@ -323,7 +323,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);

@@ -128,7 +128,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 
 	camera->SetFov(90.0f);
 	camera->forward = camDir;
@@ -150,7 +150,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	// glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	glPopAttrib();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera*) realCam);

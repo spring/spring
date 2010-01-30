@@ -129,11 +129,6 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 }
 
 
-void CBaseGroundDrawer::SetDrawMode (DrawMode dm)
-{
-	drawMode = dm;
-}
-
 
 //todo: this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()

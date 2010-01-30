@@ -56,16 +56,17 @@ public:
 	
 	bool HasLag() const;
 
-	enum DrawMode {
-		notDrawing     = 0,
-		normalDraw     = 1,
-		shadowDraw     = 2,
-		reflectionDraw = 3,
-		refractionDraw = 4
+	enum GameDrawMode {
+		gameNotDrawing     = 0,
+		gameNormalDraw     = 1,
+		gameShadowDraw     = 2,
+		gameReflectionDraw = 3,
+		gameRefractionDraw = 4
 	};
-	DrawMode drawMode;
-	inline void     SetDrawMode(DrawMode mode) { drawMode = mode; }
-	inline DrawMode GetDrawMode() const { return drawMode; }
+	GameDrawMode gameDrawMode;
+
+	inline void         SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
+	inline GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 	LuaParser* defsParser;
 

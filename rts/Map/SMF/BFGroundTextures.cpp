@@ -230,7 +230,8 @@ void CBFGroundTextures::SetTexture(int x, int y)
 {
 	GroundSquare* square = &squares[y * numBigTexX + x];
 	glBindTexture(GL_TEXTURE_2D, square->texture);
-	if (game->GetDrawMode() == CGame::normalDraw) {
+
+	if (game->GetDrawMode() == CGame::gameNormalDraw) {
 		square->lastUsed = gu->drawFrame;
 	}
 }
