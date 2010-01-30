@@ -46,6 +46,7 @@
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -602,14 +603,14 @@ void LuaOpenGL::EnableDrawWorldShadow()
 	glPolygonOffset(1.0f, 1.0f);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Enable();
+	shadowHandler->GetMdlShadowGenShader()->Enable();
 }
 
 
 void LuaOpenGL::DisableDrawWorldShadow()
 {
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Disable();
+	shadowHandler->GetMdlShadowGenShader()->Disable();
 
 	ResetWorldShadowMatrices();
 	DisableCommon(DRAW_WORLD_SHADOW);
