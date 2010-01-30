@@ -1,7 +1,11 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
 
-  File "..\game\ArchiveMover.exe"
+	!ifdef OUTOFSOURCEBUILD 
+		File "${BUILDDIR_PATH}\tools\ArchiveMover\ArchiveMover.exe"
+	!else
+		File "..\game\ArchiveMover.exe"
+	!endif
 
   ; Archive file associations
   !insertmacro APP_ASSOCIATE "sd7" "spring.sd7_archive" "Spring content package" "$INSTDIR\ArchiveMover.exe,0" "Open with Spring" "$\"$INSTDIR\ArchiveMover.exe$\" $\"%1$\""

@@ -47,8 +47,6 @@ SetCompressor lzma
 
 ; Finish page
 
-!define BUILDDIR "..\build"
-
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\main.html"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\springsettings.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
@@ -91,6 +89,16 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 ;!else
 !define SP_OUTSUFFIX1 ""
 ;!endif
+
+; if present this should hold define with custom mingwlibs location, etc.
+!include /NONFATAL "custom_defines.nsi"
+
+; this allows us to easily use build products from an out of source build
+!ifndef BUILDDIR_PATH
+	!define BUILDDIR_PATH "..\game"
+!else
+	!define OUTOFSOURCEBUILD
+!endif
 
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
