@@ -1879,11 +1879,11 @@
 			Name="Rendering"
 			>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.cpp"
+				RelativePath="..\..\Rendering\FarTextureHandler.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.h"
+				RelativePath="..\..\Rendering\FarTextureHandler.h"
 				>
 			</File>
 			<File

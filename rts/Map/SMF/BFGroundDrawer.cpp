@@ -1,21 +1,22 @@
 #include "StdAfx.h"
+#include "SmfReadMap.h"
 #include "BFGroundDrawer.h"
 #include "BFGroundTextures.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "LogOutput.h"
-#include "SmfReadMap.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "ConfigHandler.h"
-#include "FastMath.h"
-#include "GlobalUnsynced.h"
+#include "Rendering/Shaders/Shader.hpp"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
-#include "mmgr.h"
+#include "System/ConfigHandler.h"
+#include "System/FastMath.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/mmgr.h"
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
@@ -25,7 +26,7 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 using std::min;
 using std::max;
 
-CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
+CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	bigSquareSize(128),
 	numBigTexX(gs->mapx / bigSquareSize),
 	numBigTexY(gs->mapy / bigSquareSize),
@@ -40,11 +41,14 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	heightData = map->heightmap;
 
 	if (shadowHandler->canUseShadows) {
-		groundVP = LoadVertexProgram("ground.vp");
-		groundShadowVP = LoadVertexProgram("groundshadow.vp");
+		if (!rm->haveSpecularLighting) {
+			groundVP = LoadVertexProgram("ground.vp");
 
-		if (shadowHandler->useFPShadows) {
-			groundFPShadow = LoadFragmentProgram("groundFPshadow.fp");
+			if (shadowHandler->useFPShadows) {
+				groundFPShadow = LoadFragmentProgram("groundFPshadow.fp");
+			}
+		} else {
+			// TODO
 		}
 	}
 
@@ -82,18 +86,17 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 
 	if (shadowHandler->canUseShadows) {
 		glSafeDeleteProgram(groundVP);
-		glSafeDeleteProgram(groundShadowVP);
 
 		if (shadowHandler->useFPShadows) {
-			glSafeDeleteProgram( groundFPShadow);
+			glSafeDeleteProgram(groundFPShadow);
 		}
 	}
 
 	configHandler->Set("GroundDetail", viewRadius);
 
 	if (waterPlaneCamInDispList) {
-		glDeleteLists(waterPlaneCamInDispList,1);
-		glDeleteLists(waterPlaneCamOutDispList,1);
+		glDeleteLists(waterPlaneCamInDispList, 1);
+		glDeleteLists(waterPlaneCamOutDispList, 1);
 	}
 
 #ifdef USE_GML
@@ -132,7 +135,7 @@ void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 	const float size = std::min(xsize,ysize);
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
 
-		if ((n==1) && !camOufOfMap) {
+		if ((n == 1) && !camOufOfMap) {
 			//! don't render vertices under the map
 			r1 = 2 * size;
 		}else{
@@ -167,28 +170,38 @@ inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 }
 
 
-inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray *ma, int x, int y)
+
+inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
 	float height = heightData[y * heightDataX + x];
 	if (waterDrawn && height < 0) {
 		height *= 2;
 	}
 
-	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
+	const float3 p = float3(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
+	const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
+
+	//! we don't need texcoors, just the position and normal
+	ma->AddVertexQN(p, n);
 }
 
-inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray *ma, int x, int y, float height)
+inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
 {
 	if (waterDrawn && height < 0) {
 		height *= 2;
 	}
-	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
+
+	const float3 p = float3(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
+	const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
+
+	ma->AddVertexQN(p, n);
 }
 
-inline void CBFGroundDrawer::EndStripQ(CVertexArray *ma)
+inline void CBFGroundDrawer::EndStripQ(CVertexArray* ma)
 {
 	ma->EndStripQ();
 }
+
 
 
 inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
@@ -208,7 +221,7 @@ inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 
 inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 {
-	ma->DrawArray0(GL_TRIANGLE_STRIP);
+	ma->DrawArrayN(GL_TRIANGLE_STRIP);
 	ma = GetVertexArray();
 }
 
@@ -369,9 +382,9 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 				int ylod = y + lod;
 				int yhlod = y + hlod;
+				int nloop = (xe - xs) / lod + 1;
 
-				int nloop=(xe-xs)/lod+1;
-				ma->EnlargeArrays(52*nloop, 14*nloop+1); //! includes one extra for final endstrip
+				ma->EnlargeArrays((52 * nloop), 14 * nloop + 1);
 
 				int yhdx = y * heightDataX;
 				int ylhdx = yhdx + lod * heightDataX;
@@ -527,12 +540,12 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				}
 			} //for (y = ystart; y < yend; y += lod)
 
-			int yst=max(ystart - lod, minty);
-			int yed=min(yend + lod, maxty);
-			int nloop=(yed-yst)/lod+1;
+			int yst = max(ystart - lod, minty);
+			int yed = min(yend + lod, maxty);
+			int nloop = (yed - yst) / lod + 1;
 
 			if (nloop > 0)
-				ma->EnlargeArrays(8*nloop, 2*nloop);
+				ma->EnlargeArrays((8 * nloop), 2 * nloop);
 
 			//! rita yttre begr?snings yta mot n?ta lod
 			if (maxlx < maxtx && maxlx >= mintx) {
@@ -595,9 +608,11 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				if (xs < xe) {
 					x = xs;
 					int ylod = y + lod;
-					int nloop=(xe-xs)/lod+2; //! one extra for if statment
-					ma->EnlargeArrays(2*nloop, 1);
-					int ylhdx=(y + lod) * heightDataX;
+					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
+					int ylhdx = (y + lod) * heightDataX;
+
+					ma->EnlargeArrays((2 * nloop), 1);
+
 					if (x % dlod) {
 						int idx2 = CLAMP(ylhdx + x), idx2PLOD = CLAMP(idx2 + lod), idx2MLOD = CLAMP(idx2 - lod);
 						float h = (heightData[idx2MLOD] + heightData[idx2PLOD]) * hmcyp + heightData[idx2] * camypart;
@@ -631,9 +646,11 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				if (xs < xe) {
 					x = xs;
 					int ylod = y + lod;
-					int nloop=(xe-xs)/lod+2; //! one extra for if statment
-					ma->EnlargeArrays(2*nloop, 1);
-					int yhdx=y * heightDataX;
+					int yhdx = y * heightDataX;
+					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
+
+					ma->EnlargeArrays((2 * nloop), 1);
+
 					if (x % dlod) {
 						int idx1 = CLAMP(yhdx + x), idx1PLOD = CLAMP(idx1 + lod), idx1MLOD = CLAMP(idx1 - lod);
 						float h = (heightData[idx1MLOD] + heightData[idx1PLOD]) * hcyp + heightData[idx1] * mcyp;
@@ -676,9 +693,11 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
+	//! DynWater sets this to dwGroundRefractVP during its refraction pass
+	//! (essentially the same as groundVP, but adds per-vertex distortion)
 	overrideVP = VP;
 	waterDrawn = drawWaterReflection;
-	int baseViewRadius = max(4, viewRadius);
+	const int baseViewRadius = max(4, viewRadius);
 
 	if (drawUnitReflection) {
 		viewRadius = ((int)(viewRadius * LODScaleUnitReflection)) & 0xfffffe;
@@ -765,9 +784,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	CVertexArray *ma = GetVertexArray();
 	ma->Initialize();
 
-	bool inStrip=false;
+	bool inStrip = false;
 	int x,y;
-	int lod=1<<nlod;
+	int lod = 1 << nlod;
 
 	float cx2 = camera->pos.x / SQUARE_SIZE;
 	float cy2 = camera->pos.z / SQUARE_SIZE;
@@ -780,7 +799,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 	int cx = (int)cx2;
 	int cy = (int)cy2;
-	if(lod>1) {
+	if (lod > 1) {
 		int cxo = (cx / hlod) * hlod;
 		int cyo = (cy / hlod) * hlod;
 		float cx2o = (cxo / lod) * lod;
@@ -842,10 +861,13 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 		int ylod = y + lod;
 		int yhlod = y + hlod;
+		int ydx = y * heightDataX;
+		int nloop = (xe - xs) / lod + 1;
 
-		int nloop=(xe-xs)/lod+1;
-		ma->EnlargeArrays(52*nloop, 14*nloop+1); //! includes one extra for final endstrip
-		int ydx=y*heightDataX;
+		//! EnlargeArrays(nVertices, nStrips [, stripSize])
+		//! includes one extra for final endstrip
+		ma->EnlargeArrays((52 * nloop), 14 * nloop + 1);
+
 		for (x = xs; x < xe; x += lod) {
 			int xlod = x + lod;
 			int xhlod = x + hlod;
@@ -949,9 +971,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 					float h3=(heightData[ylhdx    ] + heightData[yhdx+lod ]) * hocyp + heightData[yhhdx+hlod] * mocyp;
 					float h4=(heightData[ylhdx+lod] + heightData[yhdx+lod ]) * hocyp + heightData[yhhdx+lod ] * mocyp;
 
-					if(inStrip){
+					if (inStrip) {
 						EndStripQ(ma);
-						inStrip=false;
+						inStrip = false;
 					}
 					DrawVertexAQ(ma, x,yhlod,h2);
 					DrawVertexAQ(ma, x,ylod);
@@ -980,20 +1002,22 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	int nloop=(yed-yst)/lod+1;
 
 	if (nloop > 0)
-		ma->EnlargeArrays(8*nloop, 2*nloop);
+		ma->EnlargeArrays((8 * nloop), 2 * nloop);
 
 	//!rita yttre begr?snings yta mot n?ta lod
-	if(maxlx<maxtx && maxlx>=mintx){
-		x=maxlx;
-		int xlod = x + lod;
-		for(y=yst;y<yed;y+=lod){
-			DrawVertexAQ(ma, x,y);
-			DrawVertexAQ(ma, x,y+lod);
-			int yhdx=y*heightDataX+x;
-			if(y%dlod){
-				float h=(heightData[yhdx-lhdx+lod]+heightData[yhdx+lhdx+lod]) * hmcxp + heightData[yhdx+lod] * camxpart;
-				DrawVertexAQ(ma, xlod,y,h);
-				DrawVertexAQ(ma, xlod,y+lod);
+	if (maxlx < maxtx && maxlx >= mintx) {
+		x = maxlx;
+		const int xlod = x + lod;
+
+		for (y = yst; y < yed; y += lod) {
+			DrawVertexAQ(ma, x, y      );
+			DrawVertexAQ(ma, x, y + lod);
+			const int yhdx = y * heightDataX + x;
+
+			if (y % dlod) {
+				float h = (heightData[yhdx - lhdx + lod] + heightData[yhdx + lhdx + lod]) * hmcxp + heightData[yhdx+lod] * camxpart;
+				DrawVertexAQ(ma, xlod, y, h);
+				DrawVertexAQ(ma, xlod, y + lod);
 			} else {
 				float h=(heightData[yhdx+lod]+heightData[yhdx+dhdx+lod]) * hmcxp + heightData[yhdx+lhdx+lod] * camxpart;
 				DrawVertexAQ(ma, xlod,y);
@@ -1002,10 +1026,12 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 			EndStripQ(ma);
 		}
 	}
-	if(minlx>mintx && minlx<maxtx){
-		x=minlx-lod;
-		int xlod = x + lod;
-		for(y=yst;y<yed;y+=lod){
+
+	if (minlx > mintx && minlx < maxtx) {
+		x = minlx-lod;
+		const int xlod = x + lod;
+
+		for(y = yst; y < yed; y += lod) {
 			int yhdx=y*heightDataX+x;
 			if(y%dlod){
 				float h=(heightData[yhdx-lhdx]+heightData[yhdx+lhdx]) * hcxp + heightData[yhdx] * mcxp;
@@ -1025,13 +1051,15 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		y=maxly;
 		int xs=max(xstart-lod,mintx);
 		int xe=min(xend+lod,maxtx);
-		if(xs<xe){
-			x=xs;
+		if (xs < xe) {
+			x = xs;
 			int ylod = y + lod;
-			int nloop=(xe-xs)/lod+2; //! two extra for if statment
-			ma->EnlargeArrays(2*nloop, 1);
-			int ydx=y*heightDataX;
-			if(x%dlod){
+			int ydx = y * heightDataX;
+			int nloop = (xe - xs) / lod + 2; //! two extra for if statment
+
+			ma->EnlargeArrays((2 * nloop), 1);
+
+			if (x % dlod) {
 				int ylhdx=ydx+x+lhdx;
 				float h=(heightData[ylhdx-lod]+heightData[ylhdx+lod]) * hmcyp + heightData[ylhdx] * camypart;
 				DrawVertexAQ(ma, x,y);
@@ -1061,10 +1089,12 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		if(xs<xe){
 			x=xs;
 			int ylod = y + lod;
-			int nloop=(xe-xs)/lod+2; //! two extra for if statment
-			ma->EnlargeArrays(2*nloop, 1);
-			int ydx=y*heightDataX;
-			if(x%dlod){
+			int ydx = y * heightDataX;
+			int nloop = (xe - xs) / lod + 2; //! two extra for if statment
+
+			ma->EnlargeArrays((2 * nloop), 1);
+
+			if (x % dlod) {
 				int yhdx=ydx+x;
 				float h=(heightData[yhdx-lod]+heightData[yhdx+lod]) * hcyp + heightData[yhdx] * mcyp;
 				DrawVertexAQ(ma, x,y,h);
@@ -1097,30 +1127,33 @@ void CBFGroundDrawer::DrawShadowPass(void)
 		return;
 	}
 
-//	glEnable(GL_CULL_FACE);
 	const int NUM_LODS = 4;
 
+	CShadowHandler* sh = shadowHandler;
+	Shader::IProgramObject* po = sh->GetMapShadowGenShader();
+
+	// glEnable(GL_CULL_FACE);
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, groundShadowVP);
-	glEnable(GL_VERTEX_PROGRAM_ARB);
+	po->Enable();
 
 #ifdef USE_GML
-	if(multiThreadDrawGroundShadow) {
-		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
+	if (multiThreadDrawGroundShadow) {
+		gmlProcessor->Work(NULL, &CBFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
 	}
 	else
 #endif
 	{
-		for (int nlod = 0; nlod < NUM_LODS+1; ++nlod) {
+		for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
 			DoDrawGroundShadowLOD(nlod);
 		}
 	}
 
+	po->Disable();
+
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_CULL_FACE);
-	glDisable(GL_VERTEX_PROGRAM_ARB);
 }
 
 
@@ -1196,6 +1229,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			}
 		}*/
 	}
+
 	else if (shadowHandler->drawShadows) {
 		glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, groundFPShadow);
 		glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -1243,7 +1277,9 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_MODELVIEW);
-	} else {
+	}
+
+	else {
 		if (map->detailTex) {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
@@ -1321,21 +1357,25 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 		glDisable(GL_TEXTURE_2D);
+
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 		if (overrideVP) {

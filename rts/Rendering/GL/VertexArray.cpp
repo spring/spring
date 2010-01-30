@@ -200,6 +200,18 @@ void CVertexArray::DrawArray0(const int drawType,unsigned int stride)
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
+void CVertexArray::DrawArrayN(const int drawType, unsigned int stride)
+{
+	CheckEndStrip();
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
+	glNormalPointer(GL_FLOAT, stride, drawArray + 3);
+	DrawArrays(drawType, stride);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
 
 void CVertexArray::DrawArrayC(const int drawType,unsigned int stride)
 {

@@ -14,7 +14,7 @@ public:
 	~CSmfReadMap();
 
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
-	inline GLuint GetShadingTexture() const { return shadowTex; }
+	inline GLuint GetShadingTexture() const { return shadingTex; }
 	inline GLuint GetGrassShadingTexture() const { return minimapTex; }
 	void DrawMinimap() const;
 	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize);
@@ -51,24 +51,21 @@ protected:
 
 	CSmfMapFile file;
 
-	std::string detailTexName;
 	GLuint detailTex;
-
-	unsigned char waterHeightColors[1024*4];
-
-	GLuint shadowTex;
+	GLuint specularTex;
+	GLuint shadingTex;
 	GLuint minimapTex;
+	bool haveSpecularLighting;
 
+	unsigned char waterHeightColors[1024 * 4];
 	float* heightmap;
-
-	CBFGroundDrawer* groundDrawer;
-
 
 	float DiffuseSunCoeff(const int& x, const int& y) const;
 	float3 GetLightValue(const int& x, const int& y) const;
 	void ParseSMD(std::string filename);
 
 	friend class CBFGroundDrawer;
+	CBFGroundDrawer* groundDrawer;
 };
 
 #endif
