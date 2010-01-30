@@ -330,7 +330,7 @@ namespace CrashHandler {
 					}
 					log << "\n";
 				}
-				delete lines;
+				free(lines);
 				lines = NULL;
 
 				if (containsOglSo) {
