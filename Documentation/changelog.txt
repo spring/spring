@@ -22,6 +22,14 @@ Engine / System:
  - Map options fixed
  - Menu doesn't crash anymore if no mods/maps found
 
+AIs:
+- E323AI 3.14.5:
+  * support for: partial watermaps (plays land only), group merging,
+    auto kbot/vehicle lab selection, template configs
+  * XTA & BA config improvements
+  * Better lab assisting
+- KAIK: do not build MExes on spots used by allies
+
 
 0.81.0:
 Engine / Simulation:
