@@ -2,30 +2,30 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
   SetOverWrite on
-
+	
   ; Main stuff
-  File "..\game\spring.exe"
-  File "..\game\unitsync.dll"
+  File "${BUILDDIR_PATH}\spring.exe"
+  File "${BUILDDIR_PATH}\unitsync.dll"
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
 
   File "downloads\TASServer.jar"
 
+	!ifndef MINGWLIBS_PATH
+		!define MINGWLIBS_PATH "${MINGWLIBS_PATH}"
+	!endif
+	
   ; DLLs (updated in mingwlibs-v8)
-  File "..\mingwlibs\dll\glew32.dll"
-  File "..\mingwlibs\dll\python25.dll"
-  File "..\mingwlibs\dll\zlib1.dll"
-  File "..\mingwlibs\dll\OpenAL32.dll"
-  File "..\mingwlibs\dll\wrap_oal.dll"
-  File "..\mingwlibs\dll\vorbisfile.dll"
-  File "..\mingwlibs\dll\vorbis.dll"
-  File "..\mingwlibs\dll\ogg.dll"
-
-  ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
-  File "..\external\SDL.dll"
-
-  ; shared libgcc compiled with dwarf2 exception support
-  File "..\external\libgcc_s_dw2-1.dll"
+  File "${MINGWLIBS_PATH}\dll\glew32.dll"
+  File "${MINGWLIBS_PATH}\dll\python25.dll"
+  File "${MINGWLIBS_PATH}\dll\zlib1.dll"
+  File "${MINGWLIBS_PATH}\dll\OpenAL32.dll"
+  File "${MINGWLIBS_PATH}\dll\wrap_oal.dll"
+  File "${MINGWLIBS_PATH}\dll\vorbisfile.dll"
+  File "${MINGWLIBS_PATH}\dll\vorbis.dll"
+  File "${MINGWLIBS_PATH}\dll\ogg.dll"
+  File "${MINGWLIBS_PATH}\dll\libgcc_s_dw2-1.dll"
+  File "${MINGWLIBS_PATH}\dll\SDL.dll"
 
   ; Old DLLs, not needed anymore
   ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
@@ -33,7 +33,6 @@
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
 
-  File "..\external\SelectionEditor.exe"
   Delete "$INSTDIR\settingstemplate.xml"
 
 ;New Settings Program
@@ -41,12 +40,9 @@
   File /r "..\installer\Springlobby\SettingsDlls\*.dll"
 
   ; DLLs
-  File "..\external\MSVCR71.dll"
-  File "..\external\MSVCP71.dll"
-  File "..\mingwlibs\dll\DevIL.dll"
-  File "..\mingwlibs\dll\freetype6.dll"
-  File "..\mingwlibs\dll\ILU.dll"
-  File "..\external\zlibwapi.dll"
+  File "${MINGWLIBS_PATH}\dll\DevIL.dll"
+  File "${MINGWLIBS_PATH}\dll\freetype6.dll"
+  File "${MINGWLIBS_PATH}\dll\ILU.dll"
 
   File "..\game\PALETTE.PAL"
 
@@ -85,7 +81,11 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  !ifdef OUTOFSOURCEBUILD
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILDDIR_PATH}/AI/Interfaces/${aiIntName}/*.*"
+  !else
+	File /r /x *.a /x *.def /x *.7z /x *.dbg "../game/AI/Interfaces/${aiIntName}/${AI_INT_VERS}/*.*"
+  !endif
   ;buildbot creates 7z, and those get included in installer, fix here until buildserv got fixed
   ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !undef AI_INT_VERS
@@ -102,7 +102,11 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  !ifdef OUTOFSOURCEBUILD
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILDDIR_PATH}\AI\Skirmish\${skirAiName}\*.*"
+  !else
+	File /r /x *.a /x *.def /x *.7z /x *.dbg "${BUILDDIR_PATH}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  !endif
   ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
   !undef SKIRM_AI_VERS
 !endif
@@ -115,11 +119,11 @@ ${EndIf}
   SetOverWrite on
   SetOutPath "$INSTDIR\base"
 
-  File "..\game\base\springcontent.sdz"
-  File "..\game\base\maphelper.sdz"
-  File "..\game\base\cursors.sdz"
+  File "${BUILDDIR_PATH}\base\springcontent.sdz"
+  File "${BUILDDIR_PATH}\base\maphelper.sdz"
+  File "${BUILDDIR_PATH}\base\cursors.sdz"
   SetOutPath "$INSTDIR\base\spring"
-  File "..\game\base\spring\bitmaps.sdz"
+  File "${BUILDDIR_PATH}\base\spring\bitmaps.sdz"
 
 ;!ifndef SP_UPDATE
 ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
