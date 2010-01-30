@@ -62,7 +62,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		// (if this had still used CFileHandler that would have been easier ;-))
 		long curPos = playbackDemo.tellg();
 		playbackDemo.seekg(0, std::ios::end);
- 		bytesRemaining = playbackDemo.tellg() - curPos;
+ 		bytesRemaining = (long) playbackDemo.tellg() - curPos;
  		playbackDemo.seekg(curPos);
 	}
 }
