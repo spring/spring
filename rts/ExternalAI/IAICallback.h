@@ -2,6 +2,7 @@
 #define IAICALLBACK_H
 
 #include <vector>
+#include <map>
 #include <deque>
 #include "float3.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -454,6 +455,9 @@ public:
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
 	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL) = 0;
+
+	virtual std::map<std::string, std::string> GetMyInfo() = 0;
+	virtual std::map<std::string, std::string> GetMyOptionValues() = 0;
 
 	// use virtual instead of pure virtual,
 	// because pure virtual is not well supported
