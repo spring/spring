@@ -1304,7 +1304,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			MsgToForwardMap::iterator itor = relayingMessagesMap.find( msg );
 
 			if ( itor != relayingMessagesMap.end() ) { // one entry already exists in the map
-				PlayersToForwardMsgvec &toForward; = itor->second;
+				PlayersToForwardMsgvec &toForward = itor->second;
 				if ( toForward.find( player ) == toForward.end() ) {
 					toForward.insert( player );
 				}
