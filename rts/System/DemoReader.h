@@ -51,9 +51,10 @@ private:
 	std::ifstream playbackDemo;
 	float demoTimeOffset;
 	float nextDemoRead;
+	int bytesRemaining;
 	DemoStreamChunkHeader chunkHeader;
 	std::string setupScript;	// the original, unaltered version from script
-	
+
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 };
