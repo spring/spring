@@ -1597,4 +1597,34 @@ const char* CAIAICallback::CallLuaRules(const char* data, int inSize, int* outSi
 		SCallLuaRulesCommand cmd = {data, inSize, outSize}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_RULES, &cmd); return cmd.ret_outData;
 }
 
+std::map<std::string, std::string> CAIAICallback::GetMyInfo()
+{
+	std::map<std::string, std::string> info;
 
+	const int info_size = sAICallback->Clb_SkirmishAI_Info_getSize(teamId);
+	for (int ii = 0; ii < info_size; ++ii) {
+		const char* key   = sAICallback->Clb_SkirmishAI_Info_getKey(teamId, ii);
+		const char* value = sAICallback->Clb_SkirmishAI_Info_getValue(teamId, ii);
+		if ((key != NULL) && (value != NULL)) {
+			info[key] = value;
+		}
+	}
+
+	return info;
+}
+
+std::map<std::string, std::string> CAIAICallback::GetMyOptionValues()
+{
+	std::map<std::string, std::string> optionVals;
+
+	const int optionVals_size = sAICallback->Clb_SkirmishAI_OptionValues_getSize(teamId);
+	for (int ovi = 0; ovi < optionVals_size; ++ovi) {
+		const char* key   = sAICallback->Clb_SkirmishAI_OptionValues_getKey(teamId, ovi);
+		const char* value = sAICallback->Clb_SkirmishAI_OptionValues_getValue(teamId, ovi);
+		if ((key != NULL) && (value != NULL)) {
+			optionVals[key] = value;
+		}
+	}
+
+	return optionVals;
+}

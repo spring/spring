@@ -1771,3 +1771,21 @@ const char* CAICallback::CallLuaRules(const char* data, int inSize, int* outSize
 	}
 	return luaRules->AICallIn(data, inSize, outSize);
 }
+
+std::map<std::string, std::string> CAICallback::GetMyInfo()
+{
+	// do nothing
+	// this function will never be called,
+	// as it is handled in the C layer directly
+	// see eg. Clb_SkirmishAI_Info_getSize in rts/ExternalAI/Interface/SSkirmishAICallback.h
+	return std::map<std::string, std::string>();
+}
+
+std::map<std::string, std::string> CAICallback::GetMyOptionValues()
+{
+	// do nothing
+	// this function will never be called,
+	// as it is handled in the C layer directly
+	// see eg. Clb_SkirmishAI_OptionValues_getSize in rts/ExternalAI/Interface/SSkirmishAICallback.h
+	return std::map<std::string, std::string>();
+}
