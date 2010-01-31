@@ -26,10 +26,6 @@ using std::vector;
 
 CLogSubsystem LOG_ARCHIVESCANNER("ArchiveScanner");
 
-// fix for windows
-#ifndef S_ISDIR
-#define S_ISDIR(x) (((x) & 0170000) == 0040000) /* directory */
-#endif
 
 /*
  * The archive scanner is used to find stuff in archives that are needed before building the virtual
@@ -158,9 +154,7 @@ void CArchiveScanner::Scan(const string& curPath, bool doChecksum)
 			fullName = fullName.substr(0, fullName.size() - 1);
 		}
 
-		const string fn    = filesystem.GetFilename(fullName);
 		const string fpath = filesystem.GetDirectory(fullName);
-		const string lcfn    = StringToLower(fn);
 		const string lcfpath = StringToLower(fpath);
 
 		// Exclude archivefiles found inside directory archives (.sdd)
@@ -224,13 +218,11 @@ void AddDependency(vector<string>& deps, const std::string& dependency)
 void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 {
 	struct stat info;
-
 	stat(fullName.c_str(), &info);
 
 	const string fn    = filesystem.GetFilename(fullName);
 	const string fpath = filesystem.GetDirectory(fullName);
 	const string lcfn    = StringToLower(fn);
-	const string lcfpath = StringToLower(fpath);
 
 	// Determine whether to rely on the cached info or not
 	bool cached = false;
@@ -278,7 +270,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 			for (int cur = 0; (cur = ar->FindFiles(cur, &name, &size)); /* no-op */)
 			{
 				const string lowerName = StringToLower(name);
-				const string ext = lowerName.substr(lowerName.find_last_of('.') + 1);
+				const string ext = filesystem.GetExtension(lowerName);
 
 				if ((ext == "smf") || (ext == "sm3"))
 				{

@@ -7,7 +7,6 @@
 
 class CArchiveBase;
 class IFileFilter;
-class LuaParser;
 class LuaTable;
 
 /*
