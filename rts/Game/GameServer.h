@@ -149,8 +149,6 @@ private:
 	float internalSpeed;
 	bool cheating;
 
-	// Ugly hax for letting the script define initial team->isAI and team->leader for AI teams
-	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
 	size_t ReserveNextAvailableSkirmishAIId();
 	
