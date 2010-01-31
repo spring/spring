@@ -1660,7 +1660,7 @@ int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllie
 		return pm_size;
 	}*/
 
-	std::list<unsigned char*> includeColors;
+	std::list<const unsigned char*> includeColors;
 	// include out team color
 	includeColors.push_back(teamHandler->Team(team)->color);
 	// include the team colors of all our allies
@@ -1672,7 +1672,7 @@ int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllie
 
 	std::list<CInMapDraw::MapPoint>* points = NULL;
 	std::list<CInMapDraw::MapPoint>::const_iterator point;
-	std::list<unsigned char*>::const_iterator ic;
+	std::list<const unsigned char*>::const_iterator ic;
 	for (size_t i=0; i < inMapDrawer->numQuads && pm_size < pm_sizeMax; i++) {
 		points = &(inMapDrawer->drawQuads[i].points);
 		for (point = points->begin(); point != points->end()
@@ -1705,7 +1705,7 @@ int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
 		return lm_size;
 	}*/
 
-	std::list<unsigned char*> includeColors;
+	std::list<const unsigned char*> includeColors;
 	// include out team color
 	includeColors.push_back(teamHandler->Team(team)->color);
 	// include the team colors of all our allies
@@ -1717,7 +1717,7 @@ int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
 
 	std::list<CInMapDraw::MapLine>* lines = NULL;
 	std::list<CInMapDraw::MapLine>::const_iterator line;
-	std::list<unsigned char*>::const_iterator ic;
+	std::list<const unsigned char*>::const_iterator ic;
 	for (size_t i=0; i < inMapDrawer->numQuads && lm_size < lm_sizeMax; i++) {
 		lines = &(inMapDrawer->drawQuads[i].lines);
 		for (line = lines->begin(); line != lines->end()
