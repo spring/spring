@@ -6,9 +6,10 @@
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_ARCHIVEMOVER} "The tool and the necessary file associations (for sd7 and sdz files) to ease installation of new content."
 
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_AAI}  "Supports BA, some *A and other Games; Note: requires manual config file management (author: submarine)"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_KAIK} "Supports BA and some other *A Games (authors: (current:) Kloot, (former:) Krogothe & Tournesol)"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_RAI}  "Supports BA, some *A and other Games (author: Reth)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_AAI}    "Supports BA, some *A and other Games; Note: requires manual config file management (author: submarine)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_KAIK}   "Supports BA and some other *A Games (authors: (current:) Kloot, (former:) Krogothe & Tournesol)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_RAI}    "Supports BA, some *A and other Games (author: Reth)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_E323AI} "Supports BA and XTA, uses guerilla tactics (author: Error323)"
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_START} "This creates shortcuts on the start menu to all the applications provided."
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "This creates a shortcut on the desktop to the multiplayer battleroom for quick access to multiplayer games."
