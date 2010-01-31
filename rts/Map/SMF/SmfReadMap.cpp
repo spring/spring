@@ -265,7 +265,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		const int xsize = maxx - minx;
 		const int zsize = maxz - minz;
 
-		std::vector<float> pixels(xsize * zsize * 4, 0.0f);
+		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
 
 		for (int x = minx; x <= maxx; x++) {
 			for (int z = minz; z <= maxz; z++) {
