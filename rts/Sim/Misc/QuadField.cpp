@@ -63,7 +63,7 @@ CQuadField::CQuadField()
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
 
-	tempQuads = new int[numQuadsX * numQuadsZ];
+	tempQuads = new int[std::max(1000, numQuadsX * numQuadsZ)];
 }
 
 CQuadField::~CQuadField()
