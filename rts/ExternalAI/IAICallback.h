@@ -50,7 +50,7 @@ struct UnitResourceInfo
 struct PointMarker
 {
 	float3 pos;
-	unsigned char* color;
+	const unsigned char* color;
 	// don't store this pointer anywhere, it may become
 	// invalid at any time after GetMapPoints()
 	const char* label;
@@ -59,7 +59,7 @@ struct PointMarker
 struct LineMarker {
 	float3 pos;
 	float3 pos2;
-	unsigned char* color;
+	const unsigned char* color;
 };
 
 // HandleCommand structs:
