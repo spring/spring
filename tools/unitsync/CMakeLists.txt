@@ -43,7 +43,7 @@ if (WIN32)
 		../../rts/System/Platform/Win/WinVersion)
 endif (WIN32)
 
-ADD_LIBRARY(unitsync SHARED ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
+ADD_LIBRARY(unitsync MODULE ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
