@@ -47,6 +47,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 		smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
 		smfShaderRefrARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderRefrARB", true);
 		smfShaderCurrARB = smfShaderBaseARB;
+		smfShaderGLSL    = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
 
 		if (shadowHandler->canUseShadows) {
 			if (!map->haveSpecularLighting) {
@@ -65,7 +66,6 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 				smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", GL_FRAGMENT_PROGRAM_ARB));
 				smfShaderRefrARB->Link();
 			} else {
-				smfShaderGLSL = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
 				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFVertProg.glsl", GL_VERTEX_SHADER));
 				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFFragProg.glsl", GL_FRAGMENT_SHADER));
 				smfShaderGLSL->Link();
@@ -195,11 +195,12 @@ inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 		height *= 2;
 	}
 
+	//! don't send the normals as vertex attributes
+	//! (DLOD'ed triangles mess with interpolation)
+	//! const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
 	const float3 p = float3(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
-	const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
 
-	//! we don't need texcoors, just the position and normal
-	ma->AddVertexQN(p, n);
+	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
 }
 
 inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
@@ -208,15 +209,18 @@ inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float 
 		height *= 2;
 	}
 
-	const float3 p = float3(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
-	const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
-
-	ma->AddVertexQN(p, n);
+	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
 }
 
 inline void CBFGroundDrawer::EndStripQ(CVertexArray* ma)
 {
 	ma->EndStripQ();
+}
+
+inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
+{
+	ma->DrawArray0(GL_TRIANGLE_STRIP);
+	ma = GetVertexArray();
 }
 
 
@@ -235,12 +239,6 @@ inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 	return (cam2->InView(mins, maxs));
 }
 
-
-inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
-{
-	ma->DrawArrayN(GL_TRIANGLE_STRIP);
-	ma = GetVertexArray();
-}
 
 
 inline void CBFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline> &left, const std::vector<fline> &right, int y, int lod) {
@@ -1275,15 +1273,19 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glEnable(GL_ALPHA_TEST);
 		}
 
-		smfShaderCurrARB->Enable();
-		smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-		smfShaderCurrARB->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
-		smfShaderCurrARB->SetUniform4f(12, 1.0f / 1024, 1.0f / 1024, 0, 1);
-		smfShaderCurrARB->SetUniform4f(13, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f), 0, 0);
-		smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
-		smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-		smfShaderCurrARB->SetUniform4f(10, ac.x, ac.y, ac.z, 1);
-		smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, mapInfo->light.groundShadowDensity);
+		if (!map->haveSpecularLighting) {
+			smfShaderCurrARB->Enable();
+			smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+			smfShaderCurrARB->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
+			smfShaderCurrARB->SetUniform4f(12, 1.0f / 1024, 1.0f / 1024, 0, 1);
+			smfShaderCurrARB->SetUniform4f(13, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f), 0, 0);
+			smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
+			smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+			smfShaderCurrARB->SetUniform4f(10, ac.x, ac.y, ac.z, 1);
+			smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, mapInfo->light.groundShadowDensity);
+		} else {
+			smfShaderGLSL->Enable();
+		}
 
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -1401,7 +1403,11 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 			glDisable(GL_ALPHA_TEST);
 		}
 
-		smfShaderCurrARB->Disable();
+		if (!map->haveSpecularLighting) {
+			smfShaderCurrARB->Disable();
+		} else {
+			smfShaderGLSL->Disable();
+		}
 	}
 }
 
