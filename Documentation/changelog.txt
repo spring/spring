@@ -1,5 +1,24 @@
 Spring change log
 
+0.81.1.3:
+Engine:
+ - Fixed automatically assigning start position if none is chosen
+ - Fixed bug in DXT5 loading (caused artifacts with teamcolors)
+ - Fixed F1 heightmap view
+ - Fixed playing of demos created in a game in which Spring crashed
+ - Made spectator drawings white instead of random team color
+ - Disable recording demos from demos (default, DemoFromDemo in springrc to enable)
+ - Added a mechanism to register/unregister for messages that are normally not broadcasted to game server
+
+AIs:
+- E323AI 3.14.5:
+  * support for: partial watermaps (plays land only), group merging,
+    auto kbot/vehicle lab selection, template configs
+  * XTA & BA config improvements
+  * Better lab assisting
+- KAIK: do not build MExes on spots used by allies
+
+
 0.81.1:
 Engine / Simulation:
  - Terrain types and water damage are now taken into account for pathing checksum
@@ -21,14 +40,6 @@ Engine / Lua:
 Engine / System:
  - Map options fixed
  - Menu doesn't crash anymore if no mods/maps found
-
-AIs:
-- E323AI 3.14.5:
-  * support for: partial watermaps (plays land only), group merging,
-    auto kbot/vehicle lab selection, template configs
-  * XTA & BA config improvements
-  * Better lab assisting
-- KAIK: do not build MExes on spots used by allies
 
 
 0.81.0:
