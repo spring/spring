@@ -943,10 +943,11 @@ int CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAll
 	for (int p=0; p < numPoints; ++p) {
 		pm[p].pos = float3(sAICallback->Clb_Map_Point_getPosition(teamId, p));
 		SAIFloat3 tmpColor = sAICallback->Clb_Map_Point_getColor(teamId, p);
-		pm[p].color = (unsigned char*) calloc(3, sizeof(unsigned char));
-		pm[p].color[0] = (unsigned char) tmpColor.x;
-		pm[p].color[1] = (unsigned char) tmpColor.y;
-		pm[p].color[2] = (unsigned char) tmpColor.z;
+		unsigned char* pColor = (unsigned char*) calloc(3, sizeof(unsigned char));
+		pColor[0] = (unsigned char) tmpColor.x;
+		pColor[1] = (unsigned char) tmpColor.y;
+		pColor[2] = (unsigned char) tmpColor.z;
+		pm[p].color = pColor;
 		pm[p].label = sAICallback->Clb_Map_Point_getLabel(teamId, p);
 	}
 
@@ -960,10 +961,11 @@ int CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllie
 		lm[l].pos = float3(sAICallback->Clb_Map_Line_getFirstPosition(teamId, l));
 		lm[l].pos2 = float3(sAICallback->Clb_Map_Line_getSecondPosition(teamId, l));
 		SAIFloat3 tmpColor = sAICallback->Clb_Map_Line_getColor(teamId, l);
-		lm[l].color = (unsigned char*) calloc(3, sizeof(unsigned char));
-		lm[l].color[0] = (unsigned char) tmpColor.x;
-		lm[l].color[1] = (unsigned char) tmpColor.y;
-		lm[l].color[2] = (unsigned char) tmpColor.z;
+		unsigned char* lColor = (unsigned char*) calloc(3, sizeof(unsigned char));
+		lColor[0] = (unsigned char) tmpColor.x;
+		lColor[1] = (unsigned char) tmpColor.y;
+		lColor[2] = (unsigned char) tmpColor.z;
+		lm[l].color = lColor;
 	}
 
 	return numLines;
