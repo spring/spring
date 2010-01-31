@@ -26,7 +26,7 @@
 #include "lib/gml/gml.h"
 
 
-CNetProtocol::CNetProtocol()
+CNetProtocol::CNetProtocol() : disableDemo(false)
 {
 }
 
@@ -89,7 +89,7 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 		if (record) {
 			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
 		}
-		else if (ret->data[0] == NETMSG_GAMEDATA) {
+		else if (ret->data[0] == NETMSG_GAMEDATA && !disableDemo) {
 			logOutput.Print("Starting demo recording");
 			GameData gd(ret);
 			record.reset(new CDemoRecorder());
@@ -129,6 +129,11 @@ void CNetProtocol::Update()
 	GML_STDMUTEX_LOCK(net); // Update
 
 	serverConn->Update();
+}
+
+void CNetProtocol::DisableDemoRecording()
+{
+	disableDemo = true;
 }
 
 CNetProtocol* net=0;

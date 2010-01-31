@@ -83,6 +83,8 @@ void CPreGame::LoadSetupscript(const std::string& script)
 void CPreGame::LoadDemo(const std::string& demo)
 {
 	assert(settings->isHost);
+	if (!configHandler->Get("DemoFromDemo", false))
+		net->DisableDemoRecording();
 	ReadDataFromDemo(demo);
 }
 
@@ -283,7 +285,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 					it->second->AddPair("isfromdemo", 1);
 				}
 			}
-
 
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			int myPlayerNum;
