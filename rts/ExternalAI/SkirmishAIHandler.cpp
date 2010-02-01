@@ -328,7 +328,9 @@ void CSkirmishAIHandler::CompleteSkirmishAI(const size_t skirmishAIId) {
 		id_ai_t::iterator ai = id_ai.find(skirmishAIId);
 		if (ai != id_ai.end()) {
 			ai->second.isLuaAI = IsLuaAI(ai->second);
-			CompleteWithDefaultOptionValues(skirmishAIId);
+			if (!ai->second.isLuaAI) {
+				CompleteWithDefaultOptionValues(skirmishAIId);
+			}
 		}
 	}
 }
