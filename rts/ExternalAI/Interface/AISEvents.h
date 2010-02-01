@@ -296,7 +296,10 @@ struct SEnemyDestroyedEvent {
 }; // EVENT_ENEMY_DESTROYED
 
 /**
- * This AI event is sent when a weapon is fired.
+ * This AI event is sent when certain weapons are fired.
+ * For performance reasons, it is not possible to send this event
+ * for all weapons. Therefore, it is currently only sent for manuall-fire
+ * weapons like for example the TA Commanders D-Gun or the Nuke.
  */
 struct SWeaponFiredEvent {
 	int unitId;
