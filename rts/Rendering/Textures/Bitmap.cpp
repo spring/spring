@@ -9,6 +9,7 @@
 #include <string.h>
 #include <IL/il.h>
 #include <IL/ilu.h>
+#include <boost/thread.hpp>
 #include "mmgr.h"
 
 #include "Rendering/GL/myGL.h"
@@ -18,7 +19,7 @@
 #include "Bitmap.h"
 #include "bitops.h"
 
-
+boost::mutex devilMutex; // devil functions, whilst expensive, aren'T thread-save
 
 static const float blurkernel[9] = {
 	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f,
@@ -159,6 +160,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	unsigned char *buffer = new unsigned char[file.FileSize()+2];
 	file.Read(buffer, file.FileSize());
 
+	boost::mutex::scoped_lock lck(devilMutex);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -181,8 +183,6 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		mem[3] = 255; // Non Transparent
 		return false;
 	}
-
-
 
 	noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
 	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
@@ -216,11 +216,12 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	if(!file.FileExists())
 		return false;
 
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
-	ilEnable(IL_ORIGIN_SET);
-
 	unsigned char *buffer = new unsigned char[file.FileSize()+1];
 	file.Read(buffer, file.FileSize());
+
+	boost::mutex::scoped_lock lck(devilMutex);
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
 
 	ILuint ImageName = 0;
 	ilGenImages(1, &ImageName);
@@ -251,8 +252,6 @@ bool CBitmap::Save(string const& filename, bool opaque)
 	if (type == BitmapTypeDDS) {
 		return ddsimage->save(filename);
 	}
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
-	ilEnable(IL_ORIGIN_SET);
 
 	unsigned char* buf = new unsigned char[xsize * ysize * 4];
 	const int ymax = (ysize - 1);
@@ -269,6 +268,10 @@ bool CBitmap::Save(string const& filename, bool opaque)
 			buf[bi + 3] = opaque ? 0xff : mem[mi + 3];
 		}
 	}
+
+	boost::mutex::scoped_lock lck(devilMutex);
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
 
 	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
 	ilSetInteger(IL_JPG_QUALITY, 80);
