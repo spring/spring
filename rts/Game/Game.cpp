@@ -3729,7 +3729,8 @@ void CGame::ClientReadNet()
 					           *(float*)&inbuf[12]);
 					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
 						teamHandler->Team(team)->StartposMessage(pos);
-						if (inbuf[3] != 2) {
+						if (inbuf[3] != 2 && player != SERVER_PLAYER)
+						{
 							playerHandler->Player(player)->readyToStart = !!inbuf[3];
 						}
 						if (pos.y != -500) // no marker marker when no pos set yet
