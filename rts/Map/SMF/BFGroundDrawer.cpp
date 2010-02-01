@@ -80,13 +80,14 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 				smfShaderGLSL->SetUniformLocation("texSquareX");          // idx  7
 				smfShaderGLSL->SetUniformLocation("texSquareZ");          // idx  8
 				smfShaderGLSL->SetUniformLocation("lightDir");            // idx  9
-				smfShaderGLSL->SetUniformLocation("cameraMatInv");        // idx 10
-				smfShaderGLSL->SetUniformLocation("shadowMat");           // idx 11
-				smfShaderGLSL->SetUniformLocation("shadowParams");        // idx 12
-				smfShaderGLSL->SetUniformLocation("groundAmbientColor");  // idx 13
-				smfShaderGLSL->SetUniformLocation("groundDiffuseColor");  // idx 14
-				smfShaderGLSL->SetUniformLocation("groundSpecularColor"); // idx 15
-				smfShaderGLSL->SetUniformLocation("groundShadowDensity"); // idx 16
+				smfShaderGLSL->SetUniformLocation("cameraPos");           // idx 10
+				smfShaderGLSL->SetUniformLocation("cameraMatInv");        // idx 11
+				smfShaderGLSL->SetUniformLocation("shadowMat");           // idx 12
+				smfShaderGLSL->SetUniformLocation("shadowParams");        // idx 13
+				smfShaderGLSL->SetUniformLocation("groundAmbientColor");  // idx 14
+				smfShaderGLSL->SetUniformLocation("groundDiffuseColor");  // idx 15
+				smfShaderGLSL->SetUniformLocation("groundSpecularColor"); // idx 16
+				smfShaderGLSL->SetUniformLocation("groundShadowDensity"); // idx 17
 			}
 		}
 	}
@@ -1267,7 +1268,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 	else if (shadowHandler->drawShadows) {
 		const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
-		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17,  shadowHandler->p18);
+		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
@@ -1317,13 +1318,14 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniform1f(5, (gs->pwr2mapx * SQUARE_SIZE));
 			smfShaderGLSL->SetUniform1f(6, (gs->pwr2mapy * SQUARE_SIZE));
 			smfShaderGLSL->SetUniform3fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
-			smfShaderGLSL->SetUniform4fv(10, (float*) camera->modelviewInverse);
-			smfShaderGLSL->SetUniform4fv(11, &shadowHandler->shadowMatrix.m[0]);
-			smfShaderGLSL->SetUniform4fv(12, const_cast<float*>(&shadowParams[0]));
-			smfShaderGLSL->SetUniform3fv(13, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
-			smfShaderGLSL->SetUniform3fv(14, const_cast<float*>(&mapInfo->light.groundSunColor[0]));
-			smfShaderGLSL->SetUniform3fv(15, const_cast<float*>(&mapInfo->light.groundSpecularColor[0]));
-			smfShaderGLSL->SetUniform1f(16, mapInfo->light.groundShadowDensity);
+			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
+			smfShaderGLSL->SetUniform4fv(11, (float*) camera->modelviewInverse);
+			smfShaderGLSL->SetUniform4fv(12, &shadowHandler->shadowMatrix.m[0]);
+			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
+			smfShaderGLSL->SetUniform3fv(14, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
+			smfShaderGLSL->SetUniform3fv(15, const_cast<float*>(&mapInfo->light.groundSunColor[0]));
+			smfShaderGLSL->SetUniform3fv(16, const_cast<float*>(&mapInfo->light.groundSpecularColor[0]));
+			smfShaderGLSL->SetUniform1f(17, mapInfo->light.groundShadowDensity);
 
 			glActiveTexture(GL_TEXTURE5);
 			glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());

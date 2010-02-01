@@ -22,18 +22,19 @@ void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
 	vec2 tc1 = gl_TexCoord[1].st;
 	vec4 tc2 = gl_TexCoord[2];
+	vec2 tc3 = gl_TexCoord[3].st;
 
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
 
 	float cosAngleDiffuse = min(max(dot(normalize(lightDir), normal), 0.0), 1.0);
 	float cosAngleSpecular = min(max(dot(normalize(halfDir), normal), 0.0), 1.0);
 	float specularExp = texture2D(specularTex, tc1).a * 16.0;
-	float specularPower = pow(cosAngleSpecular, specularExp);
+	float specularPow = pow(cosAngleSpecular, specularExp);
 
 
 	vec4 diffuseCol = texture2D(diffuseTex, tc0);
 	vec3 specularCol = texture2D(specularTex, tc1).rgb;
-	vec4 detailCol = normalize((texture2D(detailTex, tc0) * 2.0) - 1.0) * 0.1; // FIXME
+	vec4 detailCol = normalize((texture2D(detailTex, tc3) * 2.0) - 1.0);
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);
 	vec4 diffuseInt =
 		vec4(groundAmbientColor, 1.0) +
@@ -42,17 +43,16 @@ void main() {
 		shadowInt = 1.0 - shadowInt;
 		shadowInt.x *= (groundShadowDensity * diffuseInt.a);
 		shadowInt.x = 1.0 - shadowInt.x;
-	vec4 shadeColor =
+	vec4 shadeCol =
 		(shadowInt.x * diffuseInt) +
 		((1.0 - shadowInt.x) * vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL);
 
-	gl_FragColor = (diffuseCol + detailCol) * shadeColor;
+	gl_FragColor = (diffuseCol + detailCol) * shadeCol;
 	gl_FragColor.a = (gl_TexCoord[0].q * 0.1) + 1.0;
 
 	#if (SMF_ARB_LIGHTING == 0)
 	gl_FragColor +=
 		/* groundSpecularColor * */
-		(vec4(specularCol, 1.0) * specularPower);
+		(vec4(specularCol, 1.0) * specularPow);
 	#endif
 }
-

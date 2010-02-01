@@ -7,12 +7,14 @@ uniform mat4 cameraMatInv;
 uniform mat4 shadowMat;
 uniform vec4 shadowParams;
 
+uniform vec3 cameraPos;
 uniform vec3 lightDir;      // mapInfo->light.sunDir
 varying vec3 viewDir;
 varying vec3 halfDir;
 
 #define SMF_TEXSQR_SIZE_INT 1024
 #define SMF_TEXSQR_SIZE_FLT 1024.0
+#define SMF_DETAILTEX_RES 0.02
 
 void main() {
 	mat4 modelMatrix = cameraMatInv * gl_ModelViewMatrix;
@@ -38,4 +40,8 @@ void main() {
 	gl_TexCoord[2] = shadowMat * (modelMatrix * gl_Vertex);
 	gl_TexCoord[2].st *= (inversesqrt(abs(gl_TexCoord[2].st) + shadowParams.z) + shadowParams.w);
 	gl_TexCoord[2].st += shadowParams.xy;
+
+	gl_TexCoord[3].st = gl_Vertex.xz * vec2(SMF_DETAILTEX_RES, SMF_DETAILTEX_RES);
+	gl_TexCoord[3].s += -floor(cameraPos.x * SMF_DETAILTEX_RES);
+	gl_TexCoord[3].t += -floor(cameraPos.z * SMF_DETAILTEX_RES);
 }
