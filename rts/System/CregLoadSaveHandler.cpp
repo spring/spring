@@ -182,8 +182,6 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 /// this should be called on frame 0 when the game has started
 void CCregLoadSaveHandler::LoadGame()
 {
-	RandomStartPicture(teamHandler->Team(gu->myTeam)->side);
-	PrintLoadMsg("Loading game");
 	creg::CInputStreamSerializer inputStream;
 	void *pGSC = 0;
 	creg::Class* gsccls = 0;
@@ -205,5 +203,4 @@ void CCregLoadSaveHandler::LoadGame()
 		gameServer->isPaused = false;
 		gameServer->syncErrorFrame = 0;
 	}
-	UnloadStartPicture();
 }

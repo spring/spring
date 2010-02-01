@@ -526,10 +526,6 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 
 	activeController = this;
 
-	if (!saveFile) {
-		UnloadStartPicture();
-	}
-
 	net->loading = false;
 	thread.join();
 	
