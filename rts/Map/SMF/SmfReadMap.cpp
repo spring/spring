@@ -93,16 +93,11 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 			specularTexBM.mem[2] = 255;
 			specularTexBM.mem[3] = 255;
 		}
-	} else {
-		// map does not want any specular lighting contribution
-		specularTexBM.Alloc(1, 1);
-		specularTexBM.mem[0] = 0;
-		specularTexBM.mem[1] = 0;
-		specularTexBM.mem[2] = 0;
-		specularTexBM.mem[3] = 255;
-	}
 
-	specularTex = specularTexBM.CreateTexture(false);
+		specularTex = specularTexBM.CreateTexture(false);
+	} else {
+		specularTex = 0;
+	}
 
 
 

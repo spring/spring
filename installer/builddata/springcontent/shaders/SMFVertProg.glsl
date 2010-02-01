@@ -1,5 +1,5 @@
-uniform float mapSizeX;     // programmatically #define this
-uniform float mapSizeZ;     // programmatically #define this
+uniform float mapSizeX;     // pwr2mapx (programmatically #define this)
+uniform float mapSizeZ;     // pwr2mapy (programmatically #define this)
 uniform int texSquareX;
 uniform int texSquareZ;
 
@@ -23,10 +23,11 @@ void main() {
 	// diffuse-map texture coors
 	gl_TexCoord[0].s = float(int(gl_Vertex.x) - (texSquareX * SMF_TEXSQR_SIZE_INT)) / SMF_TEXSQR_SIZE_FLT;
 	gl_TexCoord[0].t = float(int(gl_Vertex.z) - (texSquareZ * SMF_TEXSQR_SIZE_INT)) / SMF_TEXSQR_SIZE_FLT;
+	gl_TexCoord[0].q = gl_Vertex.y;
 
-	// normal-and specular-map texture coors
-	gl_TexCoord[1].s = gl_Vertex.x / mapSizeX;
-	gl_TexCoord[1].t = gl_Vertex.z / mapSizeZ;
+	// detail-, normal-,and specular-map texture coors
+	gl_TexCoord[1].s = gl_Vertex.x / mapSizeX; // (x / mapx) * (mapx / pwr2mapx);
+	gl_TexCoord[1].t = gl_Vertex.z / mapSizeZ; // (z / mapz) * (mapz / pwr2mapz);
 
 	// shadow-map texture coors
 	gl_TexCoord[2] = shadowMat * gl_Vertex;
