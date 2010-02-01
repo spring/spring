@@ -294,7 +294,7 @@ bool CSkirmishAIHandler::IsLuaAI(const SkirmishAIData& aiData) const {
 
 void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAIId) {
 
-	if (gameInitialized) {
+	if (gameInitialized && IsLocalSkirmishAI(skirmishAIId)) {
 		IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
 		//std::map<const SkirmishAIKey, CSkirmishAILibraryInfo*>
 		const IAILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
