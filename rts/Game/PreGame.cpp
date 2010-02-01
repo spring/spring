@@ -93,8 +93,8 @@ void CPreGame::LoadDemo(const std::string& demo)
 void CPreGame::LoadSavefile(const std::string& save)
 {
 	assert(settings->isHost);
-	savefile = new CLoadSaveHandler();
-	savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
+	savefile = ILoadSaveHandler::Create();
+	savefile->LoadGameStartInfo(save.c_str());
 	StartServer(savefile->scriptText);
 }
 

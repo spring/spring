@@ -21,7 +21,7 @@ class CKeySet;
 class CInfoConsole;
 class LuaParser;
 class LuaInputReceiver;
-class CLoadSaveHandler;
+class ILoadSaveHandler;
 class Action;
 class ChatMessage;
 class SkirmishAIData;
@@ -35,7 +35,7 @@ private:
 	void PostLoad();
 
 public:
-	CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile);
+	CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile);
 
 	bool Draw();
 	bool DrawMT();

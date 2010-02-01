@@ -59,7 +59,7 @@ public:
  */
 class CGameServer
 {
-	friend class CLoadSaveHandler;     //For initialize server state after load
+	friend class CCregLoadSaveHandler;     //For initialize server state after load
 public:
 	CGameServer(int hostport, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
 	~CGameServer();

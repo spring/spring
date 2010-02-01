@@ -10,7 +10,7 @@
 #include "GameController.h"
 
 class CInfoConsole;
-class CLoadSaveHandler;
+class ILoadSaveHandler;
 class GameData;
 class ClientSetup;
 namespace netcode {
@@ -65,7 +65,7 @@ private:
 	boost::scoped_ptr<const GameData> gameData;
 	boost::scoped_ptr<const ClientSetup> settings;
 	std::string modArchive;
-	CLoadSaveHandler *savefile;
+	ILoadSaveHandler *savefile;
 	
 	unsigned timer;
 };

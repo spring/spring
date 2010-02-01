@@ -4,26 +4,27 @@
 #define LOADSAVEHANDLER_H
 
 #include <string>
-#include <fstream>
 
-class CLoadInterface;
 
-class CLoadSaveHandler
+class ILoadSaveHandler
 {
 public:
-	CLoadSaveHandler();
-	~CLoadSaveHandler();
-	void SaveGame(const std::string& file);
+	static ILoadSaveHandler* Create();
+
+protected:
+	std::string FindSaveFile(const std::string& file);
+
+public:
+	virtual ~ILoadSaveHandler();
+
+	virtual void SaveGame(const std::string& file) = 0;
 	/// load things such as map and mod, needed to fire up the engine
-	void LoadGameStartInfo(const std::string& file);
-	void LoadGame(); 
-	std::string FindSaveFile(const char* name);
+	virtual void LoadGameStartInfo(const std::string& file) = 0;
+	virtual void LoadGame() = 0;
 
 	std::string scriptText;
 	std::string mapName;
 	std::string modName;
-protected:
-	std::ifstream *ifs;
 };
 
 #endif // LOADSAVEHANDLER_H
