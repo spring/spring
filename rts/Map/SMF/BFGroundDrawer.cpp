@@ -1311,8 +1311,8 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniform1i(2, 4); // shadowTex   (idx 2, texunit 4)
 			smfShaderGLSL->SetUniform1i(3, 2); // detailTex   (idx 3, texunit 2)
 			smfShaderGLSL->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
-			smfShaderGLSL->SetUniform1f(5, mapWidth);
-			smfShaderGLSL->SetUniform1f(6, mapHeight);
+			smfShaderGLSL->SetUniform1f(5, (gs->pwr2mapx * SQUARE_SIZE));
+			smfShaderGLSL->SetUniform1f(6, (gs->pwr2mapy * SQUARE_SIZE));
 			smfShaderGLSL->SetUniform3fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
 			smfShaderGLSL->SetUniform4fv(10, &shadowHandler->shadowMatrix.m[0]);
 			// smfShaderGLSL->SetUniform4fv(11, &shadowHandler->shadowParams[0]);
@@ -1322,6 +1322,8 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 			glActiveTexture(GL_TEXTURE5);
 			glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
+			glActiveTexture(GL_TEXTURE6);
+			glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
 			glActiveTexture(GL_TEXTURE0);
 		}
 	}

@@ -17,6 +17,7 @@ public:
 
 	inline GLuint GetShadingTexture() const { return shadingTex; }
 	inline GLuint GetNormalsTexture() const { return normalsTex; }
+	inline GLuint GetSpecularTexture() const { return specularTex; }
 	inline GLuint GetGrassShadingTexture() const { return minimapTex; }
 
 	void DrawMinimap() const;
