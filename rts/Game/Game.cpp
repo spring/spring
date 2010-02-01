@@ -234,7 +234,7 @@ CR_REG_METADATA(CGame,(
 ));
 
 
-CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile):
+CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile):
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	oldframenum(0),
@@ -1549,10 +1549,11 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "savegame"){
 		if (filesystem.CreateDirectory("Saves")) {
-			CLoadSaveHandler ls;
-			ls.mapName = gameSetup->mapName;
-			ls.modName = modInfo.filename;
-			ls.SaveGame("Saves/QuickSave.ssf");
+			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
+			ls->mapName = gameSetup->mapName;
+			ls->modName = modInfo.filename;
+			ls->SaveGame("Saves/QuickSave.ssf");
+			delete ls;
 		}
 	}
 
@@ -2238,10 +2239,11 @@ bool CGame::ActionPressed(const Action& action,
 			savename="Saves/"+savename+".ssf";
 			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
 				logOutput.Print("Saving game to %s\n",savename.c_str());
-				CLoadSaveHandler ls;
-				ls.mapName = gameSetup->mapName;
-				ls.modName = modInfo.filename;
-				ls.SaveGame(savename);
+				ILoadSaveHandler* ls = ILoadSaveHandler::Create();
+				ls->mapName = gameSetup->mapName;
+				ls->modName = modInfo.filename;
+				ls->SaveGame(savename);
+				delete ls;
 			} else {
 				logOutput.Print("File %s already exists(use /save -y to override)\n",savename.c_str());
 			}

@@ -259,10 +259,11 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 				saveFileName = "Saves/" + saveFileName + ".ssf";
 				if (filesystem.GetFilesize(saveFileName) == 0) {
 					logOutput.Print("Saving game to %s\n", saveFileName.c_str());
-					CLoadSaveHandler ls;
-					ls.mapName = gameSetup->mapName;
-					ls.modName = modInfo.filename;
-					ls.SaveGame(saveFileName);
+					ILoadSaveHandler* ls = ILoadSaveHandler::Create();
+					ls->mapName = gameSetup->mapName;
+					ls->modName = modInfo.filename;
+					ls->SaveGame(saveFileName);
+					delete ls;
 				} else {
 					logOutput.Print("Error: File %s already exists, game NOT saved!\n", saveFileName.c_str());
 				}
