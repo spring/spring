@@ -1531,7 +1531,7 @@ void CGameServer::StartGame()
 	for (size_t a = 0; a < teams.size(); ++a) {
 		if (!teamStartPosSent[a]) {
 			// teams which aren't player controlled are always ready
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(teams[a].leader, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 		}
 	}
 
