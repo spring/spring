@@ -30,16 +30,12 @@ public:
 //	static CGroupHandler* GetInstance(int teamId);
 //	static void Destroy(int teamId);
 
-	void PostLoad();
-
 	void Update();
 	void DrawCommands();
 	void GroupCommand(int num);
 	void GroupCommand(int num, const std::string& cmd);
 	CGroup* CreateNewGroup();
 	void RemoveGroup(CGroup* group);
-	void Load(std::istream *s);
-	void Save(std::ostream *s);
 
 	std::vector<CGroup*> groups;
 

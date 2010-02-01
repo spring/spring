@@ -50,18 +50,6 @@ CGroupHandler::~CGroupHandler()
 	}
 }
 
-void CGroupHandler::PostLoad()
-{
-}
-
-void CGroupHandler::Load(std::istream *s)
-{
-}
-
-void CGroupHandler::Save(std::ostream *s)
-{
-}
-
 void CGroupHandler::Update()
 {
 	for (std::vector<CGroup*>::iterator g=groups.begin(); g!=groups.end(); ++g) {

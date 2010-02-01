@@ -134,8 +134,6 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 		os.SavePackage(&ofs, gsc, gsc->GetClass());
 		PrintSize("Game",ofs.tellp());
 		int aistart = ofs.tellp();
-		for (int a=0; a < teamHandler->ActiveTeams();a++)
-			grouphandlers[a]->Save(&ofs);
 		eoh->Save(&ofs);
 		PrintSize("AIs",((int)ofs.tellp())-aistart);
 	} catch (content_error &e) {
@@ -195,8 +193,6 @@ void CCregLoadSaveHandler::LoadGame()
 
 	CGameStateCollector *gsc = (CGameStateCollector *)pGSC;
 	delete gsc; // the only job of gsc is to collect gamestate data
-	for (int a=0; a < teamHandler->ActiveTeams();a++)
-		grouphandlers[a]->Load(ifs);
 	eoh->Load(ifs);
 	delete ifs;
 	//for (int a=0; a < teamHandler->ActiveTeams(); a++) { // For old savegames
