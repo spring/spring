@@ -10,6 +10,9 @@
 #include "DataDirLocater.h"
 
 #include <cstdlib>
+#include <sys/param.h>
+#include <unistd.h>
+
 #ifdef WIN32
 	#include <io.h>
 	#include <direct.h>
@@ -81,7 +84,12 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 			}
 		}
 	}
-	return out.str();
+	char buf[MAXPATHLEN];
+	char* outp = realpath(out.str().c_str(), buf);
+	if (outp)
+		return std::string(outp);
+	else
+		return "";
 }
 
 void DataDirLocater::AddDirs(const std::string& in)
