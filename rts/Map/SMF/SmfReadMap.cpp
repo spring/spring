@@ -335,7 +335,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 
 float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
-	float3& n = centernormals[(y * gs->mapx) + x];
+	const float3& n = centernormals[(y * gs->mapx) + x];
 	return Clamp(mapInfo->light.sunDir.dot(n), 0.0f, 1.0f);
 }
 
@@ -346,7 +346,7 @@ float3 CSmfReadMap::GetLightValue(const int& x, const int& y) const
 	light += mapInfo->light.groundAmbientColor;
 
 	for (int a = 0; a < 3; ++a) {
-		if (light[a] > 1.0f){
+		if (light[a] > 1.0f) {
 			light[a] = 1.0f;
 		}
 	}

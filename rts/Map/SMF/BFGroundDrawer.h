@@ -46,6 +46,7 @@ protected:
 	const int maxIdx;
 
 	int mapWidth;
+	int mapHeight;
 	int bigTexH;
 
 	int neededLod;

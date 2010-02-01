@@ -34,8 +34,9 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	maxIdx(((gs->mapx + 1) * (gs->mapy + 1)) - 1),
 	heightDataX(gs->mapx + 1)
 {
-	mapWidth = (gs->mapx << 3);
-	bigTexH = (gs->mapy << 3) / numBigTexY;
+	mapWidth = (gs->mapx * SQUARE_SIZE);
+	mapHeight = (gs->mapy * SQUARE_SIZE);
+	bigTexH = mapHeight / numBigTexY;
 
 	map = rm;
 	heightData = map->heightmap;
@@ -69,6 +70,21 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFVertProg.glsl", GL_VERTEX_SHADER));
 				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFFragProg.glsl", GL_FRAGMENT_SHADER));
 				smfShaderGLSL->Link();
+				smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
+				smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1
+				smfShaderGLSL->SetUniformLocation("shadowTex");           // idx  2
+				smfShaderGLSL->SetUniformLocation("detailTex");           // idx  3
+				smfShaderGLSL->SetUniformLocation("specularTex");         // idx  4
+				smfShaderGLSL->SetUniformLocation("mapSizeX");            // idx  5
+				smfShaderGLSL->SetUniformLocation("mapSizeZ");            // idx  6
+				smfShaderGLSL->SetUniformLocation("texSquareX");          // idx  7
+				smfShaderGLSL->SetUniformLocation("texSquareZ");          // idx  8
+				smfShaderGLSL->SetUniformLocation("lightDir");            // idx  9
+				smfShaderGLSL->SetUniformLocation("shadowMat");           // idx 10
+				smfShaderGLSL->SetUniformLocation("shadowParams");        // idx 11
+				smfShaderGLSL->SetUniformLocation("groundAmbientColor");  // idx 12
+				smfShaderGLSL->SetUniformLocation("groundDiffuseColor");  // idx 13
+				smfShaderGLSL->SetUniformLocation("groundSpecularColor"); // idx 14
 			}
 		}
 	}
@@ -126,8 +142,8 @@ void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(GL_FALSE);
 
-	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
-	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
+	const float xsize = (mapWidth) >> 2;
+	const float ysize = (mapHeight) >> 2;
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
@@ -191,21 +207,19 @@ inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
 	float height = heightData[y * heightDataX + x];
-	if (waterDrawn && height < 0) {
+	if (waterDrawn && height < 0.0f) {
 		height *= 2;
 	}
 
 	//! don't send the normals as vertex attributes
 	//! (DLOD'ed triangles mess with interpolation)
 	//! const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
-	const float3 p = float3(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
-
 	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
 }
 
 inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
 {
-	if (waterDrawn && height < 0) {
+	if (waterDrawn && height < 0.0f) {
 		height *= 2;
 	}
 
@@ -1179,8 +1193,13 @@ inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigS
 		SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
 	}
 
-	smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-	smfShaderCurrARB->SetUniform4f(11, -bigSquareX, -bigSquareY, 0, 0);
+	if (map->haveSpecularLighting) {
+		smfShaderGLSL->SetUniform1i(7, bigSquareX);
+		smfShaderGLSL->SetUniform1i(8, bigSquareY);
+	} else {
+		smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+		smfShaderCurrARB->SetUniform4f(11, -bigSquareX, -bigSquareY, 0, 0);
+	}
 }
 
 
@@ -1247,7 +1266,6 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 	else if (shadowHandler->drawShadows) {
 		const float3 ac = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
 
-		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -1258,7 +1276,6 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
-		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
@@ -1283,13 +1300,30 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			smfShaderCurrARB->SetUniform4f(10, ac.x, ac.y, ac.z, 1);
 			smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, mapInfo->light.groundShadowDensity);
+
+			glMatrixMode(GL_MATRIX0_ARB);
+			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+			glMatrixMode(GL_MODELVIEW);
 		} else {
 			smfShaderGLSL->Enable();
-		}
+			smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
+			smfShaderGLSL->SetUniform1i(1, 5); // normalsTex  (idx 1, texunit 5)
+			smfShaderGLSL->SetUniform1i(2, 4); // shadowTex   (idx 2, texunit 4)
+			smfShaderGLSL->SetUniform1i(3, 2); // detailTex   (idx 3, texunit 2)
+			smfShaderGLSL->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
+			smfShaderGLSL->SetUniform1f(5, mapWidth);
+			smfShaderGLSL->SetUniform1f(6, mapHeight);
+			smfShaderGLSL->SetUniform3fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			smfShaderGLSL->SetUniform4fv(10, &shadowHandler->shadowMatrix.m[0]);
+			// smfShaderGLSL->SetUniform4fv(11, &shadowHandler->shadowParams[0]);
+			smfShaderGLSL->SetUniform3fv(12, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
+			smfShaderGLSL->SetUniform3fv(13, const_cast<float*>(&mapInfo->light.groundSunColor[0]));
+			smfShaderGLSL->SetUniform3fv(14, const_cast<float*>(&mapInfo->light.groundSpecularColor[0]));
 
-		glMatrixMode(GL_MATRIX0_ARB);
-		glLoadMatrixf(shadowHandler->shadowMatrix.m);
-		glMatrixMode(GL_MODELVIEW);
+			glActiveTexture(GL_TEXTURE5);
+			glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
+			glActiveTexture(GL_TEXTURE0);
+		}
 	}
 
 	else {
