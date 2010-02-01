@@ -11,49 +11,48 @@ uniform sampler2D       specularTex;
 uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
 uniform vec3 groundSpecularColor;
+uniform float groundShadowDensity;
 
-// these need to be uniforms
-#define GROUND_SHADOW_DENSITY 0.5
-#define SPECULAR_EXPONENT 16.0
 // ARB shader receives dimmed groundAmbientColor
 #define GROUND_AMBIENT_COLOR_MUL (210 / 255.0)
+
+#define SMF_ARB_LIGHTING 0
 
 void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
 	vec2 tc1 = gl_TexCoord[1].st;
 	vec4 tc2 = gl_TexCoord[2];
 
-	vec3 diffuse = texture2D(diffuseTex, tc0).rgb;
-	vec3 specular = texture2D(specularTex, tc1).rgb;
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
-	vec3 detail = vec3(0.0, 0.0, 0.0);
-	// vec3 detail = normalize((texture2D(detailTex, tc1) * 2.0).rgb - 1.0);
 
-	/*
-	vec4 unitAmbient  = gl_LightSource[1].ambient;  // needs to be groundAmbientColor
-	vec4 unitDiffuse  = gl_LightSource[1].diffuse;  // needs to be groundSunColor
-	vec4 unitSpecular = gl_LightSource[1].specular; // also unitAmbient, needs to be groundSpecularColor
-	*/
+	float cosAngleDiffuse = min(max(dot(normalize(lightDir), normal), 0.0), 1.0);
+	float cosAngleSpecular = min(max(dot(normalize(halfDir), normal), 0.0), 1.0);
+	float specularExp = texture2D(specularTex, tc1).a * 16.0;
+	float specularPower = pow(cosAngleSpecular, specularExp);
 
-	float fragDepth = shadow2DProj(shadowTex, tc2).r;
-	float fragShade = 1.0 - ((1.0 - fragDepth) * GROUND_SHADOW_DENSITY);
 
-	float cosAngleDiffuse = max(dot(normalize(lightDir), normal), 0.0);
-	float cosAngleSpecular = max(dot(normalize(halfDir), normal), 0.0);
-	float specularPower = pow(cosAngleSpecular, SPECULAR_EXPONENT);
+	vec4 diffuseCol = texture2D(diffuseTex, tc0);
+	vec3 specularCol = texture2D(specularTex, tc1).rgb;
+	vec4 detailCol = normalize((texture2D(detailTex, tc0) * 2.0) - 1.0) * 0.1; // FIXME
+	// vec4 diffuseInt = texture2D(shadingTex, tc0);
+	vec4 diffuseInt =
+		vec4(groundAmbientColor, 1.0) +
+		vec4(groundDiffuseColor, 1.0) * cosAngleDiffuse;
+	vec4 shadowInt = shadow2DProj(shadowTex, tc2);
+		shadowInt = 1.0 - shadowInt;
+		shadowInt.x *= (groundShadowDensity * diffuseInt.a);
+		shadowInt.x = 1.0 - shadowInt.x;
+	vec4 shadeColor =
+		(shadowInt.x * diffuseInt) +
+		((1.0 - shadowInt.x) * vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL);
 
-	#ifdef SMF_ARB_LIGHTING
-	gl_FragColor.rgb =
-		groundAmbientColor * GROUND_AMBIENT_COLOR_MUL +
-		groundDiffuseColor * (diffuse + detail) * cosAngleDiffuse * fragShade;
-	#else
-	gl_FragColor.rgb =
-		groundAmbientColor * GROUND_AMBIENT_COLOR_MUL * 0.25 +
-		groundDiffuseColor * (diffuse + detail) * cosAngleDiffuse * fragShade +
-		/* groundSpecularColor * */ specular * specularPower;
+	gl_FragColor = (diffuseCol + detailCol) * shadeColor;
+	gl_FragColor.a = (gl_TexCoord[0].q * 0.1) + 1.0;
+
+	#if (SMF_ARB_LIGHTING == 0)
+	gl_FragColor +=
+		/* groundSpecularColor * */
+		(vec4(specularCol, 1.0) * specularPower);
 	#endif
-
-	// MOV result.texcoord[2].z, pos.y;
-	// MAD result.color.w, fragment.texcoord[2].z, 0.1, 1;
-	gl_FragColor.a = 1.0;
 }
+
