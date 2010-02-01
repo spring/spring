@@ -241,8 +241,11 @@ void CPreGame::UpdateClientNet()
 				game = new CGame(gameSetup->MapFile(), modArchive, savefile);
 
 				if (savefile) {
+					PrintLoadMsg("Loading game");
 					savefile->LoadGame();
 				}
+
+				UnloadStartPicture();
 
 				pregame=0;
 				delete this;
