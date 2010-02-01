@@ -120,6 +120,8 @@ public:
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
 private:
+	/// Save the game state to file.
+	void SaveGame(const std::string& filename, bool overwrite);
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")

@@ -1547,15 +1547,6 @@ bool CGame::ActionPressed(const Action& action,
 		else if (channel == "Music")
 			Channels::BGMusic.Enable(enable);
 	}
-	else if (cmd == "savegame"){
-		if (filesystem.CreateDirectory("Saves")) {
-			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
-			ls->mapName = gameSetup->mapName;
-			ls->modName = modInfo.filename;
-			ls->SaveGame("Saves/QuickSave.ssf");
-			delete ls;
-		}
-	}
 
 #ifndef NO_AVI
 	else if (cmd == "createvideo") {
@@ -2232,22 +2223,14 @@ bool CGame::ActionPressed(const Action& action,
 		CommandMessage pckt(Action(action.extra), gu->myPlayerNum);
 		net->Send(pckt.Pack());
 	}
+	else if (cmd == "savegame"){
+		SaveGame("Saves/QuickSave.ssf", true);
+	}
 	else if (cmd == "save") {// /save [-y ]<savename>
-		if (filesystem.CreateDirectory("Saves")) {
-			bool saveoverride = action.extra.find("-y ") == 0;
-			std::string savename(action.extra.c_str()+(saveoverride?3:0));
-			savename="Saves/"+savename+".ssf";
-			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
-				logOutput.Print("Saving game to %s\n",savename.c_str());
-				ILoadSaveHandler* ls = ILoadSaveHandler::Create();
-				ls->mapName = gameSetup->mapName;
-				ls->modName = modInfo.filename;
-				ls->SaveGame(savename);
-				delete ls;
-			} else {
-				logOutput.Print("File %s already exists(use /save -y to override)\n",savename.c_str());
-			}
-		}
+		bool saveoverride = action.extra.find("-y ") == 0;
+		std::string savename(action.extra.c_str() + (saveoverride ? 3 : 0));
+		savename = "Saves/" + savename + ".ssf";
+		SaveGame(savename, saveoverride);
 	}
 	else if (cmd == "debuginfo") {
 		if (action.extra == "sound") {
@@ -5045,5 +5028,22 @@ bool CGame::HasLag() const
 		return true;
 	} else {
 		return false;
+	}
+}
+
+void CGame::SaveGame(const std::string& filename, bool overwrite)
+{
+	if (filesystem.CreateDirectory("Saves")) {
+		if (overwrite || filesystem.GetFilesize(filename) == 0) {
+			logOutput.Print("Saving game to %s\n", filename.c_str());
+			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
+			ls->mapName = gameSetup->mapName;
+			ls->modName = modInfo.filename;
+			ls->SaveGame(filename);
+			delete ls;
+		}
+		else {
+			logOutput.Print("File %s already exists(use /save -y to override)\n", filename.c_str());
+		}
 	}
 }
