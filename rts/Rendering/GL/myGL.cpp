@@ -98,18 +98,6 @@ void LoadExtensions()
 	}
 */
 
-	if (!GLEW_VERSION_1_4) {
-		logOutput.Print("Minimal required OpenGL version is 1.4\n");
-#if       defined DEBUG
-		logOutput.Print("WARNING: A non-debug build would exit here!\n");
-#else  // defined DEBUG
-		ErrorMessageBox(
-			"The Spring engine requires at least OpenGL 1.4 support, \n"
-			"which your graphic card and/or driver do not support.",
-			"Insufficient Graphics Support", MBF_OK);
-#endif // defined DEBUG
-	}
-
 #if       !defined DEBUG
 	// Print out warnings for really crappy graphic cards/drivers
 	{
