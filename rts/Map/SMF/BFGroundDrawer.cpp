@@ -1280,14 +1280,6 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
-		glActiveTextureARB(GL_TEXTURE4_ARB);
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-
 		if (drawReflection) {
 			//FIXME Why doing this?
 			glAlphaFunc(GL_GREATER, 0.8f);
@@ -1308,6 +1300,13 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
 			glMatrixMode(GL_MODELVIEW);
+
+			glActiveTextureARB(GL_TEXTURE4_ARB);
+			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
 		} else {
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -1331,6 +1330,13 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
 			glActiveTexture(GL_TEXTURE6);
 			glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
+
+			// setup for shadow2DProj
+			glActiveTexture(GL_TEXTURE4);
+			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 			glActiveTexture(GL_TEXTURE0);
 		}
 	}

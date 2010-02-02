@@ -35,6 +35,7 @@ void main() {
 	vec4 diffuseCol = texture2D(diffuseTex, tc0);
 	vec3 specularCol = texture2D(specularTex, tc1).rgb;
 	vec4 detailCol = normalize((texture2D(detailTex, tc3) * 2.0) - 1.0);
+
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);
 	vec4 diffuseInt =
 		vec4(groundAmbientColor, 1.0) +
@@ -43,9 +44,13 @@ void main() {
 		shadowInt = 1.0 - shadowInt;
 		shadowInt.x *= (groundShadowDensity * diffuseInt.a);
 		shadowInt.x = 1.0 - shadowInt.x;
+
+	/*
 	vec4 shadeCol =
 		(shadowInt.x * diffuseInt) +
 		((1.0 - shadowInt.x) * vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL);
+	*/
+	vec4 shadeCol = mix((vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL), diffuseInt, shadowInt.x);
 
 	gl_FragColor = (diffuseCol + detailCol) * shadeCol;
 	gl_FragColor.a = (gl_TexCoord[0].q * 0.1) + 1.0;
