@@ -158,6 +158,22 @@ namespace Shader {
 	private:
 		std::vector<int> uniformLocs;
 	};
+
+	/*
+	struct GLSLARBProgramObject: public Shader::IProgramObject {
+		glCreateProgramObjectARB <==> glCreateProgram
+		glCreateShaderObjectARB  <==> glCreateShader
+		glDeleteObjectARB        <==> glDelete{Shader,Program}
+		glCompileShaderARB       <==> glCompileShader
+		glShaderSourceARB        <==> glShaderSource
+		glAttachObjectARB        <==> glAttachShader
+		glDetachObjectARB        <==> glDetachShader
+		glLinkProgramARB         <==> glLinkProgram
+		glUseProgramObjectARB    <==> glUseProgram
+		glUniform*ARB            <==> glUniform*
+		glGetUniformLocationARB  <==> glGetUniformLocation
+	};
+	*/
 }
 
 #endif

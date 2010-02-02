@@ -75,7 +75,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 
 
-	haveSpecularLighting = !(mapInfo->smf.specularTexName.empty());
+	haveSpecularLighting = (!(mapInfo->smf.specularTexName.empty()) && !!GLEW_VERSION_2_0);
 
 	CBitmap detailTexBM;
 	CBitmap specularTexBM;
