@@ -3,11 +3,12 @@
 #include "mmgr.h"
 #include "LoadSaveHandler.h"
 #include "CregLoadSaveHandler.h"
+#include "LuaLoadSaveHandler.h"
 
 
 ILoadSaveHandler* ILoadSaveHandler::Create()
 {
-	return new CCregLoadSaveHandler();
+	return new CLuaLoadSaveHandler();
 }
 
 
