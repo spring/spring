@@ -3805,6 +3805,7 @@ void CGame::ClientReadNet()
 					// error
 					LogObject() << "Error: Keyframe difference: " << gs->frameNum - (serverframenum - 1);
 				}
+				/* Fall through */
 			}
 			case NETMSG_NEWFRAME: {
 				timeLeft -= 1.0f;
