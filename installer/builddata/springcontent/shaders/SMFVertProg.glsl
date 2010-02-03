@@ -17,8 +17,6 @@ varying vec3 halfDir;
 #define SMF_DETAILTEX_RES 0.02
 
 void main() {
-	mat4 glModelMatrix = cameraMatInv * gl_ModelViewMatrix;
-
 	viewDir = vec3(gl_ModelViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0));
 	viewDir = normalize(viewDir - gl_Vertex.xyz);
 	halfDir = normalize(lightDir + viewDir);
@@ -37,7 +35,8 @@ void main() {
 
 	// shadow-tex coors; shadowParams stores
 	// {x=xmid, y=ymid, z=sizeFactorA, w=sizeFactorB}
-	gl_TexCoord[2] = shadowMat * (glModelMatrix * gl_Vertex);
+	// note: map vertices are already in world-space
+	gl_TexCoord[2] = shadowMat * gl_Vertex;
 	gl_TexCoord[2].st *= (inversesqrt(abs(gl_TexCoord[2].st) + shadowParams.z) + shadowParams.w);
 	gl_TexCoord[2].st += shadowParams.xy;
 
