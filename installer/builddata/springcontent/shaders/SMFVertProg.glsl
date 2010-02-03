@@ -3,10 +3,6 @@ uniform float mapSizeZ;     // pwr2mapy * SQUARE_SIZE (programmatically #define 
 uniform int texSquareX;
 uniform int texSquareZ;
 
-uniform mat4 cameraMatInv;
-uniform mat4 shadowMat;
-uniform vec4 shadowParams;
-
 uniform vec3 cameraPos;
 uniform vec3 lightDir;      // mapInfo->light.sunDir
 varying vec3 viewDir;
@@ -36,9 +32,7 @@ void main() {
 	// shadow-tex coors; shadowParams stores
 	// {x=xmid, y=ymid, z=sizeFactorA, w=sizeFactorB}
 	// note: map vertices are already in world-space
-	gl_TexCoord[2] = shadowMat * gl_Vertex;
-	gl_TexCoord[2].st *= (inversesqrt(abs(gl_TexCoord[2].st) + shadowParams.z) + shadowParams.w);
-	gl_TexCoord[2].st += shadowParams.xy;
+	gl_TexCoord[2] = gl_Vertex;
 
 	// detail-tex coors
 	gl_TexCoord[3].st = gl_Vertex.xz * vec2(SMF_DETAILTEX_RES, SMF_DETAILTEX_RES);
