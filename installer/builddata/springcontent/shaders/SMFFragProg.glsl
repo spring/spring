@@ -41,24 +41,21 @@ void main() {
 		vec4(groundAmbientColor, 1.0) +
 		vec4(groundDiffuseColor, 1.0) * cosAngleDiffuse;
 	vec4 ambientInt = vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL;
+	vec4 specularInt = vec4(specularCol, 1.0) * specularPow;
 	vec4 shadowInt = shadow2DProj(shadowTex, tc2);
-		shadowInt = 1.0 - shadowInt;
-		shadowInt.x *= (groundShadowDensity * diffuseInt.a);
+		shadowInt.x = 1.0 - shadowInt.x;
+		shadowInt.x *= groundShadowDensity;
+		// shadowInt.x *= diffuseInt.w;
 		shadowInt.x = 1.0 - shadowInt.x;
 
-	/*
-	vec4 shadeCol =
-		(        shadowInt.x * diffuseInt) +
-		((1.0 - shadowInt.x) * ambientInt);
-	*/
+	// vec4 shadeCol = (shadowInt.x * diffuseInt) + ((1.0 - shadowInt.x) * ambientInt);
 	vec4 shadeCol = mix(ambientInt, diffuseInt, shadowInt.x);
 
 	gl_FragColor = (diffuseCol + detailCol) * shadeCol;
 	gl_FragColor.a = (gl_TexCoord[0].q * 0.1) + 1.0;
 
 	#if (SMF_ARB_LIGHTING == 0)
-	gl_FragColor +=
-		/* groundSpecularColor * */
-		(vec4(specularCol, 1.0) * specularPow);
+	// no need to multiply by groundSpecularColor anymore
+	gl_FragColor += specularInt;
 	#endif
 }
