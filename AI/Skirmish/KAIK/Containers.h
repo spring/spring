@@ -58,6 +58,8 @@ struct AIClasses {
 
 	std::vector<CUNIT*>     MyUnits;
 	std::vector<int>        unitIDs;
+	/// The frame the AI instances InitAI() function was called in.
+	int                     initFrame;
 };
 
 // NOTE: CUNIT does not know about this structure
