@@ -526,12 +526,15 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 
 	// First delete all outdated information
 	for (std::map<string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ) {
-		std::map<string, ArchiveInfo>::iterator next = i;
-		next++;
 		if (!i->second.updated) {
-			archiveInfo.erase(i);
+#ifdef _MSC_VER
+			i = archiveInfo.erase(i);
+#else
+			archiveInfo.erase(i++);
+#endif
 		}
-		i = next;
+		else
+			++i;
 	}
 
 	fprintf(out, "local archiveCache = {\n\n");
