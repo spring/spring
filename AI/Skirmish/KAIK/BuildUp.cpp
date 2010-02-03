@@ -43,13 +43,13 @@ void CBuildUp::Update(int frame) {
 		// multiplier <m> must not be a constant
 		// (more or less assumes starting storage
 		// capacity of 1000)
-		float m = 900.0f / (ai->cb->GetMetalStorage());
-		bool b1 = (ai->cb->GetMetal()) > (ai->cb->GetMetalStorage() * m);
-		bool b2 = (ai->cb->GetEnergyIncome()) > (ai->cb->GetEnergyUsage() * 1.3f);
-		bool b3 = (ai->cb->GetMetalIncome()) > (ai->cb->GetMetalUsage() * 1.3f);
+		const float m = 900.0f / (ai->cb->GetMetalStorage());
+		const bool b1 = (ai->cb->GetMetal()) > (ai->cb->GetMetalStorage() * m);
+		const bool b2 = (ai->cb->GetEnergyIncome()) > (ai->cb->GetEnergyUsage() * 1.3f);
+		const bool b3 = (ai->cb->GetMetalIncome()) > (ai->cb->GetMetalUsage() * 1.3f);
 
 		if ((b1 && b2 && b3) && builderTimer > 0 && !(rand() % 3) && frame > 3600) {
-			// decrease builderTime iif we have more metal
+			// decrease builderTime if we have more metal
 			// than 90% of our metal storage capacity and
 			// we are generating more than 130% the amount
 			// of M and E used (meaning we have excess M
