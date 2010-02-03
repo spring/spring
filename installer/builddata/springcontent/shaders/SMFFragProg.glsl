@@ -8,6 +8,9 @@ uniform sampler2DShadow shadowTex;
 uniform sampler2D       detailTex;
 uniform sampler2D       specularTex;
 
+uniform mat4 shadowMat;
+uniform vec4 shadowParams;
+
 uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
 uniform vec3 groundSpecularColor;
@@ -21,8 +24,11 @@ uniform float groundShadowDensity;
 void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
 	vec2 tc1 = gl_TexCoord[1].st;
-	vec4 tc2 = gl_TexCoord[2];
 	vec2 tc3 = gl_TexCoord[3].st;
+
+	vec4 vertexShadowPos = shadowMat * gl_TexCoord[2];
+		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + shadowParams.z) + shadowParams.w);
+		vertexShadowPos.st += shadowParams.xy;
 
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
 
@@ -42,7 +48,7 @@ void main() {
 		vec4(groundDiffuseColor, 1.0) * cosAngleDiffuse;
 	vec4 ambientInt = vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL;
 	vec4 specularInt = vec4(specularCol, 1.0) * specularPow;
-	vec4 shadowInt = shadow2DProj(shadowTex, tc2);
+	vec4 shadowInt = shadow2DProj(shadowTex, vertexShadowPos);
 		shadowInt.x = 1.0 - shadowInt.x;
 		shadowInt.x *= groundShadowDensity;
 		// shadowInt.x *= diffuseInt.w;
