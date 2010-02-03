@@ -1319,7 +1319,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniform3fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
 			smfShaderGLSL->SetUniform4fv(11, (float*) camera->modelviewInverse);
-			smfShaderGLSL->SetUniform4fv(12, &shadowHandler->shadowMatrix.m[0]);
+			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
 			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
 			smfShaderGLSL->SetUniform3fv(14, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
 			smfShaderGLSL->SetUniform3fv(15, const_cast<float*>(&mapInfo->light.groundSunColor[0]));
