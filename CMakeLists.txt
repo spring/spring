@@ -122,15 +122,13 @@ FIND_PACKAGE(Devil REQUIRED)
 ### mingwlibs
 if     (MINGW)
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
-	set(CMAKE_SHARED_MODULE_PREFIX  "")
+	set(CMAKE_SHARED_MODULE_PREFIX "")
 elseif (UNIX)
 	# unix specifics
 else   (UNIX)
 	# mac
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
 	INCLUDE_DIRECTORIES("${COREFOUNDATION_LIBRARY}/Headers")
-	set(CMAKE_SHARED_LIBRARY_SUFFIX ".dylib")
-	set(CMAKE_SHARED_MODULE_SUFFIX  ".dylib")
 endif  (MINGW)
 
 ### Compiler flags and defines based on build type
