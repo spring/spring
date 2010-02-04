@@ -11,44 +11,17 @@
 #include "System/Platform/Win/WinVersion.h"
 
 #elif MACOSX_BUNDLE
-#include <CoreFoundation/CoreFoundation.h>
-#include <dlfcn.h> // for dladdr(), dlopen()
 #include <mach-o/dyld.h>
 #include <stdlib.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
 
 #else
 
 #endif
 
 #include "System/LogOutput.h"
+#include "FileSystem/FileSystem.h"
 
-/**
- * Utility function for cutting off the file name form a path
- * @param  path "/path/to/my/file.ext"
- * @return "/path/to/my/" or "" if (path == "")
- */
-static std::string GetParentPath(const std::string& path)
-{
-	std::string parentPath = "";
-
-	if (!path.empty()) {
-#if defined linux || defined MACOSX_BUNDLE
-		const size_t parentPath_length = path.find_last_of('/');
-		if (parentPath_length != std::string::npos) {
-			parentPath = path.substr(0, parentPath_length);
-		}
-#elif defined WIN32
-		char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH], parentPathC[MAX_PATH];
-		_splitpath(path.c_str(), drive, dir, file, ext);
-		_makepath(parentPathC, drive, dir, NULL, NULL);
-		parentPath = std::string(parentPathC);
-#else
-		#error implement this
-#endif // linux, WIN32, MACOSX_BUNDLE, else
-	}
-
-	return parentPath;
-}
 
 #if       defined WIN32
 /**
@@ -136,7 +109,7 @@ std::string GetProcessExecutableFile()
 
 std::string GetProcessExecutablePath()
 {
-	return GetParentPath(GetProcessExecutableFile());
+	return filesystem.GetDirectory(GetProcessExecutableFile());
 }
 
 std::string GetModuleFile(std::string moduleName)
@@ -231,7 +204,7 @@ std::string GetModuleFile(std::string moduleName)
 }
 std::string GetModulePath(const std::string& moduleName)
 {
-	return GetParentPath(GetModuleFile(moduleName));
+	return filesystem.GetDirectory(GetModuleFile(moduleName));
 }
 
 std::string GetOS()
