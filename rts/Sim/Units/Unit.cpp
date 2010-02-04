@@ -815,15 +815,15 @@ void CUnit::SlowUpdate()
 
 	SlowUpdateCloak(false);
 
-	if (unitDef->canKamikaze) {
-		if (fireState >= 2) {
+	if (unitDef->canKamikaze && (fireState >= 2 || userTarget || userAttackGround)) {
+		if (fireState >= 2)
+		{
 			std::vector<int> nearbyUnits;
 			helper->GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
 			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it)
 			{
-				const float unitPosY = uh->units[*it]->pos.y;
-				const bool heightOk = (unitPosY <= (pos.y + unitDef->kamikazeDist) && unitPosY >= (pos.y - unitDef->kamikazeDist));
-				if (uh->units[*it]->speed.dot(pos - uh->units[*it]->pos) <= 0 && heightOk) {
+				if ((pos - uh->units[*it]->pos).SqLength() < unitDef->kamikazeDist*unitDef->kamikazeDist)
+				{
 					//! self destruct when we start moving away from the target, this should maximize the damage
 					KillUnit(true, false, NULL);
 				}
