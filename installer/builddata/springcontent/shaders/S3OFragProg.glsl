@@ -10,7 +10,7 @@ uniform vec4 shadowParams;
 uniform vec4 unitTeamColor;
 uniform vec4 unitAmbientColor;
 uniform vec4 unitDiffuseColor;
-uniform vec4 unitShadowDensity;
+uniform float unitShadowDensity;
 
 void main() {
 	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
