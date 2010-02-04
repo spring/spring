@@ -192,16 +192,6 @@ void DataDirLocater::LocateDataDirs()
 		}
 	}
 
-	// user defined in spring config handler
-	// (Linux: ~/.springrc, Windows: .\springsettings.cfg)
-	const std::string dd_config = SubstEnvVars(configHandler->GetString("SpringData", ""));
-
-	// compiler flag
-	std::string dd_compilerFlag = "";
-#ifdef SPRING_DATADIR
-	dd_compilerFlag = SubstEnvVars(SPRING_DATADIR);
-#endif
-
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
 #else  // defined(UNITSYNC)
@@ -233,8 +223,6 @@ void DataDirLocater::LocateDataDirs()
 	const std::string dd_curWorkDirData = dd_curWorkDir + "/" + SubstEnvVars(DATADIR));
 	const std::string dd_curWorkDirLib  = dd_curWorkDir + "/" + SubstEnvVars(LIBDIR));
 #else // *nix (-OSX)
-	const std::string dd_home = SubstEnvVars("$HOME/.spring");
-
 	// settings in /etc
 	std::string dd_etc = "";
 	{
@@ -258,30 +246,26 @@ void DataDirLocater::LocateDataDirs()
 	}
 #endif // defined(WIN32), defined(MACOSX_BUNDLE), else
 
-
-
 	// Construct the list of datadirs from various sources.
 	datadirs.clear();
 	// The first dir added will be the writeable data dir.
 
+	// same on all platforms
+	AddDirs(dd_env);
+	AddDirs(SubstEnvVars(configHandler->GetString("SpringData", "")));
+
 #ifdef WIN32
 	// All MS Windows variants
 
-	AddDirs(dd_env);            // from ENV{SPRING_DATADIR}
-	AddDirs(dd_config);         // from ./springsettings.cfg:SpringData=...
 	if (IsPortableMode()) {
 		AddDirs(dd_curWorkDir); // "./"
 	}
 	AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
 	AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
 	AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
-	AddDirs(dd_compilerFlag);   // from -DSPRING_DATADIR
 
 #elif defined(MACOSX_BUNDLE)
 	// Mac OS X
-
-	AddDirs(dd_env);    // ENV{SPRING_DATADIR}
-	AddDirs(dd_config); // ~/springrc:SpringData=...
 
 	// Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
 	// cannot find them since it does not know spring binary path. I have no idea but to force users
@@ -294,24 +278,20 @@ void DataDirLocater::LocateDataDirs()
 	// sould be added instead of SPRING_DATADIR definition.
 	AddDirs(dd_curWorkDirData); // "./data/"
 	AddDirs(dd_curWorkDirLib);  // "./lib/"
-	AddDirs(dd_compilerFlag);   // from -DSPRING_DATADIR
 
 #else
-	// Linux, FreeBSD, Solaris
-
-	AddDirs(dd_env);            // ENV{SPRING_DATADIR}
-	AddDirs(dd_config);         // ~/springrc:SpringData=...
 	if (IsPortableMode()) {
 		// always using this would be unclean, because spring and unitsync
 		// would end up with different sets of data-dirs
 		AddDirs(dd_curWorkDir); // "./"
 	}
-	AddDirs(dd_home);           // "~/.spring/"
+	AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
 	AddDirs(dd_etc);            // from /etc/spring/datadir
-	AddDirs(dd_compilerFlag);   // from -DSPRING_DATADIR
 #endif
 
-
+#ifdef SPRING_DATADIR
+	AddDirs(SubstEnvVars(SPRING_DATADIR));
+#endif
 
 	// Figure out permissions of all datadirs
 	DeterminePermissions();
