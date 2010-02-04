@@ -11,6 +11,9 @@
 
 #elif MACOSX_BUNDLE
 #include <CoreFoundation/CoreFoundation.h>
+#include <dlfcn.h> // for dladdr(), dlopen()
+#include <mach-o/dyld.h>
+#include <stdlib.h>
 
 #else
 
@@ -39,23 +42,16 @@ std::string GetBinaryPath()
 	_makepath(currentDir, drive, dir, NULL, NULL);
 	return std::string(currentDir);
 
-#elif MACOSX_BUNDLE
-	char cPath[1024];
-	CFBundleRef mainBundle = CFBundleGetMainBundle();
-
-	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-	CFURLRef binaryPathURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault , mainBundleURL);
-
-	CFStringRef cfStringRef = CFURLCopyFileSystemPath(binaryPathURL, kCFURLPOSIXPathStyle);
-
-	CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
-
-	CFRelease(mainBundleURL);
-	CFRelease(binaryPathURL);
-	CFRelease(cfStringRef);
-
-	return std::string(cPath);
-
+#elif __APPLE__
+	uint32_t pathlen = MAXPATHLEN;
+	char path[MAXPATHLEN];
+	int err = _NSGetExecutablePath(path, &pathlen);
+	if (err == 0)
+	{
+		char pathReal[PATH_MAX];
+		realpath(path, pathReal);
+		procExeFilePath = std::string(pathReal);
+	}
 #else
 	return "";
 
