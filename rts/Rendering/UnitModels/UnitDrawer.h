@@ -162,8 +162,8 @@ public:
 	void DrawUnitDef(const UnitDef* unitDef, int team);
 
 	/** CUnit::Draw **/
-	void UnitDrawingTexturesOff(S3DModel *model);
-	void UnitDrawingTexturesOn(S3DModel *model);
+	void UnitDrawingTexturesOff();
+	void UnitDrawingTexturesOn();
 
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit * unit);

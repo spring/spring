@@ -71,7 +71,7 @@ CShadowHandler::CShadowHandler(void)
 
 	if (tmpFirstInstance) {
 		// this already checks for GLEW_ARB_fragment_program
-		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "unit.fp")) {
+		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "units3o.fp")) {
 			logOutput.Print("Your GFX card does not support the fragment programs needed for shadows");
 			return;
 		}
