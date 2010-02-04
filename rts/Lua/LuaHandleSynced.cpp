@@ -31,6 +31,7 @@
 #include "LuaScream.h"
 #include "LuaOpenGL.h"
 #include "LuaVFS.h"
+#include "LuaZip.h"
 
 #include "Game/Game.h"
 #include "Game/WordCompletion.h"
@@ -202,6 +203,8 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 
 	// load our libraries  (LuaSyncedCtrl overrides some LuaUnsyncedCtrl entries)
 	if (!AddEntriesToTable(L, "VFS",         LuaVFS::PushSynced)           ||
+		!AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushSynced) ||
+		!AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushSynced) ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
@@ -269,6 +272,8 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	// load our libraries
 	if (!LuaSyncedTable::PushEntries(L)                                    ||
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
