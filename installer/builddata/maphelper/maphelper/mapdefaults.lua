@@ -82,6 +82,7 @@ local mapDefaults = {
 
   resources = {
     detailTex = '',
+    specularTex = '',
   },
 
   defaultTerrainType = {
