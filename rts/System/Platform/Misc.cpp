@@ -13,6 +13,8 @@
 #elif MACOSX_BUNDLE
 #include <CoreFoundation/CoreFoundation.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
+#include <mach-o/dyld.h>
+#include <stdlib.h>
 
 #else
 
@@ -111,21 +113,16 @@ std::string GetProcessExecutableFile()
 		error = "Unknown";
 	}
 
-#elif MACOSX_BUNDLE
-	char cPath[1024];
-	CFBundleRef mainBundle = CFBundleGetMainBundle();
-
-	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-
-	CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
-
-	CFStringGetCString(cfStringRef, cPath, sizeof(cPath), kCFStringEncodingASCII);
-
-	CFRelease(mainBundleURL);
-	CFRelease(cfStringRef);
-
-	procExeFilePath = std::string(cPath);
-
+#elif __APPLE__
+	uint32_t pathlen = MAXPATHLEN;
+	char path[MAXPATHLEN];
+	int err = _NSGetExecutablePath(path, &pathlen);
+	if (err == 0)
+	{
+		char pathReal[PATH_MAX];
+		realpath(path, pathReal);
+		procExeFilePath = std::string(pathReal);
+	}
 #else
 	#error implement this
 #endif
