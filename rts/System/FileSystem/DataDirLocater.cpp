@@ -251,7 +251,9 @@ void DataDirLocater::LocateDataDirs()
 	// The first dir added will be the writeable data dir.
 
 	// same on all platforms
-	AddDirs(dd_env);
+	AddDirs(dd_env);    // ENV{SPRING_DATADIR}
+	// user defined in spring config handler
+	// (Linux: ~/.springrc, Windows: .\springsettings.cfg)
 	AddDirs(SubstEnvVars(configHandler->GetString("SpringData", "")));
 
 #ifdef WIN32
@@ -280,6 +282,8 @@ void DataDirLocater::LocateDataDirs()
 	AddDirs(dd_curWorkDirLib);  // "./lib/"
 
 #else
+	// Linux, FreeBSD, Solaris, Apple non-bundle
+
 	if (IsPortableMode()) {
 		// always using this would be unclean, because spring and unitsync
 		// would end up with different sets of data-dirs
@@ -290,7 +294,7 @@ void DataDirLocater::LocateDataDirs()
 #endif
 
 #ifdef SPRING_DATADIR
-	AddDirs(SubstEnvVars(SPRING_DATADIR));
+	AddDirs(SubstEnvVars(SPRING_DATADIR)); // from -DSPRING_DATADIR
 #endif
 
 	// Figure out permissions of all datadirs
@@ -351,7 +355,7 @@ bool DataDirLocater::IsPortableMode() {
 
 #if       defined(WIN32)
 	std::string fileUnitsync = dirExe + "\\unitsync.dll";
-#elif     defined(MACOSX_BUNDLE)
+#elif     defined(__APPLE__)
 	std::string fileUnitsync = dirExe + "/libunitsync.dylib";
 #else
 	std::string fileUnitsync = dirExe + "/libunitsync.so";
