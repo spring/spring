@@ -819,20 +819,32 @@ void CUnit::SlowUpdate()
 		if (fireState >= 2)
 		{
 			std::vector<int> nearbyUnits;
-			helper->GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
+			if (unitDef->kamikazeUseLOS) {
+				helper->GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
+			} else {
+				helper->GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
+			}
+
 			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it)
 			{
-				if ((pos - uh->units[*it]->pos).SqLength() < unitDef->kamikazeDist*unitDef->kamikazeDist)
-				{
-					//! self destruct when we start moving away from the target, this should maximize the damage
-					KillUnit(true, false, NULL);
+				float3 dif = pos - uh->units[*it]->pos;
+				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
+					if (uh->units[*it]->speed.dot(dif) <= 0) {
+						//! self destruct when we start moving away from the target, this should maximize the damage
+						KillUnit(true, false, NULL);
+						return;
+					}
 				}
 			}
 		}
-		if (userTarget && (userTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
+
+		if (
+			   (userTarget       && (userTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
+			|| (userAttackGround && (userAttackPos.SqDistance(pos))  < Square(unitDef->kamikazeDist))
+		) {
 			KillUnit(true, false, NULL);
-		if (userAttackGround && (userAttackPos.distance(pos)) < Square(unitDef->kamikazeDist))
-			KillUnit(true, false, NULL);
+			return;
+		}
 	}
 
 	if(!weapons.empty()){
