@@ -946,6 +946,8 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
 	DrawCloakedShaderUnits();
 
 	advShading = oldAdvShading;
+
+	glColor4f(1, 1, 1, 1);
 }
 
 
@@ -1850,6 +1852,8 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		}
 	}
 	glDisable(GL_CLIP_PLANE0);
+
+	glColor4f(1,1,1,1);
 }
 
 
@@ -2029,8 +2033,8 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
 	}
 
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	if (unit->group) {
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
 	}
 
