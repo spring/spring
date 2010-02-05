@@ -10,7 +10,7 @@
 #include <shlwapi.h>
 #include "System/Platform/Win/WinVersion.h"
 
-#elif MACOSX_BUNDLE
+#elif __APPLE__
 #include <mach-o/dyld.h>
 #include <stdlib.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
@@ -56,6 +56,12 @@ static HMODULE GetCurrentModule() {
 namespace Platform
 {
 
+// Mac OS X:        _NSGetExecutablePath() (man 3 dyld)
+// Linux:           readlink /proc/self/exe
+// Solaris:         getexecname()
+// FreeBSD:         sysctl CTL_KERN KERN_PROC KERN_PROC_PATHNAME -1
+// BSD with procfs: readlink /proc/curproc/file
+// Windows:         GetModuleFileName() with hModule = NULL
 std::string GetProcessExecutableFile()
 {
 	std::string procExeFilePath = "";
@@ -118,8 +124,8 @@ std::string GetModuleFile(std::string moduleName)
 	// will only be used if moduleFilePath stays empty
 	const char* error = "Fetch not implemented";
 
-#if defined(linux) || defined(MACOSX_BUNDLE)
-#ifdef MACOSX_BUNDLE
+#if defined(linux) || defined(__APPLE__)
+#ifdef __APPLE__
 	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else
 	#define SHARED_LIBRARY_EXTENSION "so"
