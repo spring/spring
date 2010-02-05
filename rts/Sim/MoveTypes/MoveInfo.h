@@ -8,6 +8,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 class CMoveMath;
+class CSolidObject;
 
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
@@ -35,6 +36,8 @@ struct MoveData {
 		heatMapping     = udefMD? udefMD->heatMapping:             true;
 		heatMod	        = udefMD? udefMD->heatMod:                 0.05f;
 		heatProduced    = udefMD? udefMD->heatProduced:            30;
+
+		tempOwner       = NULL;
 	}
 
 	enum MoveType {
@@ -95,6 +98,8 @@ struct MoveData {
 	float heatMod;
 	/// heat produced by a path
 	int heatProduced;
+
+	CSolidObject* tempOwner;
 };
 
 

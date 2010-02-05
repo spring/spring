@@ -1052,13 +1052,15 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			float avoidRight = 0.0f;
 
 
+			MoveData* moveData = owner->mobility;
+			moveData->tempOwner = owner;
+
 			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
 			vector<CSolidObject*>::iterator oi;
 
 			for (oi = nearbyObjects.begin(); oi != nearbyObjects.end(); oi++) {
 				CSolidObject* o = *oi;
-				MoveData* moveData = owner->mobility;
 				CMoveMath* moveMath = moveData->moveMath;
 
 				if (moveMath->IsNonBlocking(*moveData, o)) {
@@ -1116,6 +1118,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				}
 			}
 
+			moveData->tempOwner = NULL;
 
 
 			// Sum up avoidance.
@@ -1515,7 +1518,10 @@ void CGroundMoveType::CheckCollision(void)
 
 bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
 {
-	const MoveData* m = owner->mobility;
+	MoveData* m = owner->mobility;
+	m->tempOwner = owner;
+
+	bool ret = false;
 
 	for (int y = y1; y <= y2; ++y) {
 		bool blocked = false;
@@ -1591,16 +1597,21 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 			owner->pos += posDelta;
 			owner->pos.x = xmove;
 			currentSpeed *= 0.97f;
-			return true;
+			ret = true;
+			break;
 		}
 	}
 
-	return false;
+	m->tempOwner = NULL;
+	return ret;
 }
 
 bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
 {
-	const MoveData* m = owner->mobility;
+	MoveData* m = owner->mobility;
+	m->tempOwner = owner;
+
+	bool ret = false;
 
 	for (int x = x1; x <= x2; ++x) {
 		bool blocked = false;
@@ -1676,11 +1687,13 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 			owner->pos += posDelta;
 			owner->pos.z = zmove;
 			currentSpeed *= 0.97f;
-			return true;
+			ret = true;
+			break;
 		}
 	}
 
-	return false;
+	m->tempOwner = NULL;
+	return ret;
 }
 
 
