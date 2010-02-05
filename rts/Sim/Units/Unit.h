@@ -561,6 +561,8 @@ private:
 	static float expReloadScale;
 	static float expGrade;
 
+	static const float empDecline = (32.0f / GAME_SPEED) / 40.0f; //! info: SlowUpdate runs twice all 32 gameframe
+
 public:
 	void LogMessage(const char*, ...);
 };
