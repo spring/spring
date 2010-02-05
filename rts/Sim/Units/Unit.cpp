@@ -915,7 +915,7 @@ void CUnit::DoWaterDamage()
 			const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
 
 			if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
-				DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
+				DoDamage(DamageArray(uh->waterDamage), 0, ZeroVector, -1);
 			}
 		}
 	}
@@ -1094,8 +1094,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 
 void CUnit::Kill(float3& impulse) {
-	DamageArray da;
-	DoDamage(da * (health / da[armorType]), 0, impulse, -1);
+	DamageArray da(health / da[armorType]);
+	DoDamage(da, NULL, impulse, -1);
 }
 
 

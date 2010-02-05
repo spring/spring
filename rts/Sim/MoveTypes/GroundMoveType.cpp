@@ -725,7 +725,7 @@ void CGroundMoveType::UpdateSkid(void)
 			if(impactSpeed > owner->unitDef->minCollisionSpeed
 				&& owner->unitDef->minCollisionSpeed >= 0)
 			{
-				owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
 					0, ZeroVector);
 			}
 		}
@@ -871,11 +871,11 @@ void CGroundMoveType::CheckCollisionSkid(void)
 
 					if (impactSpeed > owner->unitDef->minCollisionSpeed
 						&& owner->unitDef->minCollisionSpeed >= 0) {
-						owner->DoDamage(DamageArray() * impactSpeed * owner->mass * 0.2f, 0, ZeroVector);
+						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 					}
 					if (impactSpeed > u->unitDef->minCollisionSpeed
 						&& u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(DamageArray() * impactSpeed * owner->mass * 0.2f, 0, ZeroVector);
+						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 					}
 				}
 			} else {
@@ -903,14 +903,14 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					if (impactSpeed > owner->unitDef->minCollisionSpeed
 						&& owner->unitDef->minCollisionSpeed >= 0) {
 						owner->DoDamage(
-							DamageArray() * impactSpeed * owner->mass * 0.2f * (1 - part),
+							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
 							0, dif * impactSpeed * (owner->mass * (1 - part)));
 					}
 
 					if (impactSpeed > u->unitDef->minCollisionSpeed
 						&& u->unitDef->minCollisionSpeed >= 0) {
 						u->DoDamage(
-							DamageArray() * impactSpeed * owner->mass * 0.2f * part,
+							DamageArray(impactSpeed * owner->mass * 0.2f * part),
 							0, dif * -impactSpeed * (u->mass * part));
 					}
 					owner->speed *= 0.9f;
@@ -942,10 +942,10 @@ void CGroundMoveType::CheckCollisionSkid(void)
 				if(impactSpeed > owner->unitDef->minCollisionSpeed
 					&& owner->unitDef->minCollisionSpeed >= 0)
 				{
-					owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
 						0, ZeroVector);
 				}
-				u->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
 					0, -dif*impactSpeed);
 			}
 		}
