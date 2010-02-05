@@ -197,7 +197,8 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 		cat = UNKNOWN;
 
 	// assault grups may be ordered to retreat
-	if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT)
+	// (range check prevents a NaN)
+	if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT && bt->units_static[def->id].range > 0.0f)
 			execute->CheckFallBack(damaged, def->id);
 
 	// known attacker
