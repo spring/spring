@@ -291,7 +291,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.losRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.losMul / (SQUARE_SIZE * (1 << modInfo.losMipLevel));
 	ud.airLosRadius = udTable.GetFloat("airSightDistance", -1.0f);
 	if (ud.airLosRadius == -1.0f) {
-		ud.airLosRadius=udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
+		ud.airLosRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	} else {
 		ud.airLosRadius = ud.airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	}
@@ -414,6 +414,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	ud.canKamikaze = udTable.GetBool("kamikaze", false);
 	ud.kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
+	ud.kamikazeUseLOS = udTable.GetBool("kamikazeUseLOS", false);
 
 	ud.showNanoFrame = udTable.GetBool("showNanoFrame", true);
 	ud.showNanoSpray = udTable.GetBool("showNanoSpray", true);
