@@ -1140,7 +1140,7 @@ int (CALLING_CONV *Clb_Map_getHeight)(int teamId);
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 8*8 in size
- * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the value for the full resolution position (x, z) is at index ((x * width + z) / 8)
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
  *
  * @see getCornersHeightMap()
@@ -1156,7 +1156,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - 4 points mark the edges of an area of 8*8 in size
- * - the value for upper left corner of the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the value for upper left corner of the full resolution position (x, z) is at index ((x * width + z) / 8)
  * - the last value, bottom right, is at index ((width/8+1) * (height/8+1) - 1)
  *
  * @see getHeightMap()
@@ -1173,7 +1173,7 @@ float (CALLING_CONV *Clb_Map_getMaxHeight)(int teamId);
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 2*2 in size
- * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+ * - the value for the full resolution position (x, z) is at index ((x * width + z) / 2)
  * - the last value, bottom right, is at index (width/2 * height/2 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getSlopeMap)(int teamId);
@@ -1193,7 +1193,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getSlopeMap)(int teamId, float slopes[],
  *   	+ losMipLevel(2) -> res(4)
  *   	+ losMipLevel(3) -> res(8)
  * - each data position is res*res in size
- * - the value for the full resolution position (x, z) is at index (x/res * width + z/res)
+ * - the value for the full resolution position (x, z) is at index ((x * width + z) / res)
  * - the last value, bottom right, is at index (width/res * height/res - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getLosMap)(int teamId);
@@ -1206,7 +1206,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getLosMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 8*8 in size
- * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the value for the full resolution position (x, z) is at index ((x * width + z) / 8)
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getRadarMap)(int teamId);
@@ -1219,7 +1219,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getRadarMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 8*8 in size
- * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the value for the full resolution position (x, z) is at index ((x * width + z) / 8)
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getJammerMap)(int teamId);
@@ -1232,7 +1232,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getJammerMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 2*2 in size
- * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+ * - the value for the full resolution position (x, z) is at index ((x * width + z) / 2)
  * - the last value, bottom right, is at index (width/2 * height/2 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw)(
