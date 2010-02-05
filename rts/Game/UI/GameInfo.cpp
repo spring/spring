@@ -204,10 +204,10 @@ void CGameInfo::Draw()
 	values.push_back(buf);
 	
 	labels.push_back("Map Name:");
-	values.push_back(mapInfo->map.name.c_str());
+	values.push_back(gameSetup->mapName);
 
 	labels.push_back("Mod Name:");
-	values.push_back(modInfo.filename.c_str());
+	values.push_back(gameSetup->modName);
 
 	if (gs->cheatEnabled) {
 		labels.push_back("CHEATS:");
