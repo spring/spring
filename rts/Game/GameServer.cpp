@@ -935,7 +935,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			int frameNum = *(int*)&inbuf[1];
+			const int frameNum = *(int*)&inbuf[1];
 			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
 			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
