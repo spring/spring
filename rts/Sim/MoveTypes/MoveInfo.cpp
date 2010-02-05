@@ -49,6 +49,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(maxBreaking),
 
 	CR_MEMBER(subMarine),
+	CR_MEMBER(tempOwner),
 
 	CR_RESERVED(16)
 ));
