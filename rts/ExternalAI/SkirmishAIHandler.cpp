@@ -296,7 +296,6 @@ void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAI
 
 	if (gameInitialized && IsLocalSkirmishAI(skirmishAIId)) {
 		IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
-		//std::map<const SkirmishAIKey, CSkirmishAILibraryInfo*>
 		const IAILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
 		const SkirmishAIKey* aiKey = GetLocalSkirmishAILibraryKey(skirmishAIId);
 		if (aiKey != NULL) {
