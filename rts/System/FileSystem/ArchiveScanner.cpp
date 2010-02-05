@@ -297,7 +297,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 					ScanArchiveLua(ar, "modinfo.lua", ai);
 				}
 				if (ai.archiveData.name.empty())
-					ai.archiveData.name = filesystem.GetFilename(mapfile);
+					ai.archiveData.name = filesystem.GetBasename(mapfile);
 				if (ai.archiveData.mapfile.empty())
 					ai.archiveData.mapfile = mapfile;
 				AddDependency(ai.archiveData.dependencies, "maphelper.sdz");
