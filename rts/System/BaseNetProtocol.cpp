@@ -118,7 +118,7 @@ PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int 
 
 PacketType CBaseNetProtocol::SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs)
 {
-	short totalNumBytes = (1 + sizeof(short)) + (3 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short)));
+	uint16_t totalNumBytes = (1 + sizeof(uint16_t)) + (3 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short)));
 
 	PackPacket* packet = new PackPacket(totalNumBytes, NETMSG_AISHARE);
 	*packet << totalNumBytes << myPlayerNum << sourceTeam << destTeam << metal << energy << unitIDs;
