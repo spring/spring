@@ -9,13 +9,15 @@ void main() {
 	// model matrix, view matrix is on the projection stack
 	//
 	// todo: clip gl_Position against gl_ClipPlane[3] if advFade
-	cameraDir = ((gl_ModelViewMatrix * gl_Vertex).xyz - cameraPos);
+	vec4 vertexPos = gl_ModelViewMatrix * gl_Vertex;
+
+	cameraDir = vertexPos.xyz - cameraPos;
 	vertexNormal = gl_Normal;
 
 	// diffuse- and shading-tex coors, shadow-tex coors
 	gl_TexCoord[0].st = gl_MultiTexCoord0.st;
-	gl_TexCoord[1] = gl_ModelViewMatrix * gl_Vertex;
+	gl_TexCoord[1] = vertexPos;
 
-	gl_FogFragCoord = gl_ModelViewMatrix * gl_Vertex;
+	gl_FogFragCoord = vertexPos;
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }
