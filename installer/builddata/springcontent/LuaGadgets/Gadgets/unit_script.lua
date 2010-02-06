@@ -513,13 +513,13 @@ local StartThread = Spring.UnitScript.StartThread
 
 
 local function Wrap_AimWeapon(unitID, callins)
-	local fun = callins["AimWeapon"]
-	if (not fun) then return end
+	local AimWeapon = callins["AimWeapon"]
+	if (not AimWeapon) then return end
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
 	local function AimWeaponThread(weaponNum, heading, pitch)
-		if fun(weaponNum, heading, pitch) then
+		if AimWeapon(weaponNum, heading, pitch) then
 			-- SetUnitWeaponState counts weapons from 0
 			return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", 1)
 		end
@@ -532,13 +532,13 @@ end
 
 
 local function Wrap_AimShield(unitID, callins)
-	local fun = callins["AimShield"]
-	if (not fun) then return end
+	local AimShield = callins["AimShield"]
+	if (not AimShield) then return end
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
 	local function AimShieldThread(weaponNum)
-		local enabled = fun(weaponNum) and true or false
+		local enabled = AimShield(weaponNum) and true or false
 		-- SetUnitShieldState counts weapons from 0
 		return sp_SetUnitShieldState(unitID, weaponNum - 1, enabled)
 	end
@@ -550,13 +550,13 @@ end
 
 
 local function Wrap_Killed(unitID, callins)
-	local fun = callins["Killed"]
-	if (not fun) then return end
+	local Killed = callins["Killed"]
+	if (not Killed) then return end
 
 	local function KilledThread(recentDamage, maxHealth)
 		-- It is *very* important the sp_SetDeathScriptFinished is executed, even on error.
 		SetOnError(sp_SetDeathScriptFinished)
-		local wreckLevel = fun(recentDamage, maxHealth)
+		local wreckLevel = Killed(recentDamage, maxHealth)
 		sp_SetDeathScriptFinished(wreckLevel)
 	end
 
