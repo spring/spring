@@ -26,7 +26,6 @@ void main() {
 		shadowInt.x *= unitShadowDensity;
 		shadowInt.x = 1.0 - shadowInt.x;
 
-	// vec3 vertexNormES = gl_NormalMatrix * normalize(gl_TexCoord[3].stp);
 	vec3 vertexNormES = gl_NormalMatrix * normalize(vertexNormal);
 	vec3 cameraDirES = gl_NormalMatrix * normalize(cameraDir);
 	vec3 reflectDirES = normalize(reflect(cameraDirES, vertexNormES));
