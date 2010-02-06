@@ -266,25 +266,27 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 			for (int z = minz; z <= maxz; z++) {
 				const int vIdx = (z * (gs->mapx + 1)) + x;
 
-				// don't bother with the edge vertices
-				if (x == 0 || x == W - 1) { vertexNormals[vIdx] = UpVector; continue; }
-				if (z == 0 || z == H - 1) { vertexNormals[vIdx] = UpVector; continue; }
+				int xoff = 0;
+				int zoff = 0;
+
+				if (x == 0 || x == W - 1) { xoff = (x == 0)? 1: -1; }
+				if (z == 0 || z == H - 1) { zoff = (z == 0)? 1: -1; }
 
 				// pretend there are 8 incident triangle faces per vertex
 				// for each these triangles, calculate the surface normal,
 				// then average the 8 normals (this stays closest to the
 				// heightmap data)
-				const float htl = hm[((z - 1) * W) + (x - 1)]; // vertex to the top-left
-				const float htm = hm[((z - 1) * W) + (x    )]; // vertex to the top-middle
-				const float htr = hm[((z - 1) * W) + (x + 1)]; // vertex to the top-right
+				const float htl = hm[((z - 1 + zoff) * W) + (x - 1 + xoff)]; // vertex to the top-left
+				const float htm = hm[((z - 1 + zoff) * W) + (x           )]; // vertex to the top-middle
+				const float htr = hm[((z - 1 + zoff) * W) + (x + 1 + xoff)]; // vertex to the top-right
 
-				const float hml = hm[((z    ) * W) + (x - 1)]; // vertex to the middle-left
-				const float hmm = hm[((z    ) * W) + (x    )]; // the center vertex
-				const float hmr = hm[((z    ) * W) + (x + 1)]; // vertex to the middle-right
+				const float hml = hm[((z           ) * W) + (x - 1 + xoff)]; // vertex to the middle-left
+				const float hmm = hm[((z           ) * W) + (x           )]; // the center vertex
+				const float hmr = hm[((z           ) * W) + (x + 1 + xoff)]; // vertex to the middle-right
 
-				const float hbl = hm[((z + 1) * W) + (x - 1)]; // vertex to the bottom-left
-				const float hbm = hm[((z + 1) * W) + (x    )]; // vertex to the bottom-middle
-				const float hbr = hm[((z + 1) * W) + (x + 1)]; // vertex to the bottom-right
+				const float hbl = hm[((z + 1 + zoff) * W) + (x - 1 + xoff)]; // vertex to the bottom-left
+				const float hbm = hm[((z + 1 + zoff) * W) + (x           )]; // vertex to the bottom-middle
+				const float hbr = hm[((z + 1 + zoff) * W) + (x + 1 + xoff)]; // vertex to the bottom-right
 
 
 				const float3 vtl((x - 1) * SQUARE_SIZE, htl, (z - 1) * SQUARE_SIZE);
