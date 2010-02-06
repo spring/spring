@@ -45,6 +45,6 @@ void main() {
 	diffuseInt += shadingCol.r;
 	diffuseCol = mix(diffuseCol, unitTeamColor, diffuseCol.a);
 
-	gl_FragColor.rgb = diffuseCol * diffuseInt + specularCol;
+	gl_FragColor.rgb = diffuseCol.rgb * diffuseInt + specularCol.rgb;
 	gl_FragColor.a = 1.0;
 }
