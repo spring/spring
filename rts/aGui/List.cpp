@@ -35,6 +35,7 @@ List::List(GuiElement* parent) :
 	itemHeight = 0.04f;
 	hasFocus = true;
 	topIndex = 0;
+	mx = my = 0;
 }
 
 List::~List()
