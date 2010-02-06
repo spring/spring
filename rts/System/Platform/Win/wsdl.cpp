@@ -200,8 +200,9 @@ static bool GetCoords(int screen_x, int screen_y, int& x, int& y)
 			return false;
 	}
 
+	/* causes bigslowdown
 	if(WindowFromPoint(screen_pt) != g_hWnd)
-		return false;
+		return false;*/
 
 	x = client_pt.x;
 	y = client_pt.y;
