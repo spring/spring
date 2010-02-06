@@ -205,7 +205,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 			float curx = x * resolution;
 			if (rows[x] <= y-intrad) {
 				// find a new maximum if the old one left the window
-				maximums[x] = -1.f;
+				maximums[x] = -1e20f;
 				for (int y1 = std::max(0, y-intrad+1); y1<=std::min(maxy, nextrow); ++y1) {
 					float h = ground->GetHeight2(curx, y1*resolution);
 					if (maximums[x] < h) {
