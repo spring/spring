@@ -47,7 +47,7 @@ void main() {
 		vec4(groundAmbientColor, 1.0) +
 		vec4(groundDiffuseColor, 1.0) * cosAngleDiffuse;
 	vec4 ambientInt = vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL;
-	vec4 specularInt = vec4(specularCol, 1.0) * specularPow;
+	vec3 specularInt = specularCol * specularPow;
 	vec4 shadowInt = shadow2DProj(shadowTex, vertexShadowPos);
 		shadowInt.x = 1.0 - shadowInt.x;
 		shadowInt.x *= groundShadowDensity;
@@ -62,6 +62,6 @@ void main() {
 
 	#if (SMF_ARB_LIGHTING == 0)
 	// no need to multiply by groundSpecularColor anymore
-	gl_FragColor += specularInt;
+	gl_FragColor.rgb += specularInt;
 	#endif
 }
