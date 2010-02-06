@@ -54,16 +54,20 @@ std::string RTFToPlain(const std::string& rich)
 	return out;
 }
 
-Connection::Connection() : sock(netservice), users(new UserCache)
+Connection::Connection() : sock(netservice), users(NULL), timer(netservice)
 {
 }
 
 Connection::~Connection()
 {
-	delete users;
 	sock.close();
 	netservice.poll();
 	netservice.reset();
+}
+
+void Connection::AddUserCache(UserCache* newcache)
+{
+	users = newcache;
 }
 
 void Connection::Connect(const std::string& server, int port)
@@ -126,7 +130,33 @@ void Connection::JoinChannel(const std::string& channame, const std::string& pas
 	out << "JOIN " << channame;
 	if (!password.empty())
 		out << " " << password;
+	out << std::endl;
 	SendData(out.str());
+}
+
+void Connection::LeaveChannel(const std::string& channame)
+{
+	std::ostringstream out;
+	out << "LEAVE " << channame << std::endl;
+	SendData(out.str());
+}
+
+void Connection::Say(const std::string& channel, const std::string& text)
+{
+	std::ostringstream out;
+	out << "SAY " << channel << " " << text << std::endl;
+	SendData(out.str());
+}
+
+void Connection::Ping()
+{
+	if (sock.is_open())
+	{
+		SendData("PING\n");
+	
+		timer.expires_from_now(boost::posix_time::seconds(10));
+		timer.async_wait(boost::bind(&Connection::Ping, this));
+	}
 }
 
 void Connection::SendData(const std::string& msg)
@@ -143,13 +173,6 @@ void Connection::SendData(const std::string& msg)
 
 void Connection::Poll()
 {
-	const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-	const boost::posix_time::time_duration diff = now - lastPing;
-	if (diff.seconds() > 30)
-	{
-		SendData("PING\n");
-		lastPing = now;
-	}
 	netservice.poll();
 }
 
@@ -172,6 +195,7 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 			int mode = buf.GetInt();
 			ServerGreeting(serverVer, clientVer, udpport, mode);
 		}
+		Ping();
 	}
 	else if (command == "DENIED")
 	{
@@ -229,22 +253,16 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	}
 	else if (command == "JOIN")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string channame = buf.GetWord();
-			Joined(channame);
-		}
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		Joined(channame);
 	}
 	else if (command == "JOINFAILED")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string channame = buf.GetWord();
-			std::string reason = buf.GetWord();
-			JoinFailed(channame, reason);
-		}
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string reason = buf.GetWord();
+		JoinFailed(channame, reason);
 	}
 	else if (command == "AGREEMENT")
 	{
@@ -259,9 +277,35 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	{
 		Motd(msg);
 	}
+	else if (command == "SAID")
+	{
+		
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string user = buf.GetWord();
+		std::string text = buf.GetSentence();
+		Said(channame, user, text);
+	}
+	else if (command == "SAIDEX")
+	{
+		
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string user = buf.GetWord();
+		std::string text = buf.GetSentence();
+		SaidEx(channame, user, text);
+	}
+	else if (command == "SAIDPRIVATE")
+	{
+		
+		RawTextMessage buf(msg);
+		std::string user = buf.GetWord();
+		std::string text = buf.GetSentence();
+		SaidPrivate(user, text);
+	}
 	else
 	{
-		// std::cout << "Unhandled command: " << command << " " << msg << std::endl;
+		 // std::cout << "Unhandled command: " << command << " " << msg << std::endl;
 	}
 }
 

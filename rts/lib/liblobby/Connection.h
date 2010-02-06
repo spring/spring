@@ -3,7 +3,7 @@
 
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/asio/deadline_timer.hpp>
 #include <string>
 
 #include <iostream>
@@ -18,6 +18,24 @@ public:
 	{
 		size_t oldpos = pos;
 		pos = message.find_first_of(std::string("\t \n"), oldpos);
+		if (pos != std::string::npos)
+		{
+			return message.substr(oldpos, pos++ - oldpos);
+		}
+		else if (oldpos != std::string::npos)
+		{
+			return message.substr(oldpos);
+		}
+		else
+		{
+			return "";
+		}
+	};
+	
+	std::string GetSentence()
+	{
+		size_t oldpos = pos;
+		pos = message.find_first_of(std::string("\t\n"), oldpos);
 		if (pos != std::string::npos)
 		{
 			return message.substr(oldpos, pos++ - oldpos);
@@ -53,6 +71,8 @@ public:
 	Connection();
 	~Connection();
 	
+	void AddUserCache(UserCache*);
+
 	void Connect(const std::string& server, int port);
 	virtual void DoneConnecting(bool succes, const std::string& err) {};
 	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode) {};
@@ -72,10 +92,17 @@ public:
 	void JoinChannel(const std::string& channame, const std::string& password = "");
 	virtual void Joined(const std::string& channame) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
+	void LeaveChannel(const std::string& channame);
+
+	void Say(const std::string& channel, const std::string& text);
+	virtual void Said(const std::string& channel, const std::string& user, const std::string& text) {};
+	virtual void SaidEx(const std::string& channel, const std::string& user, const std::string& text) {};
+	virtual void SaidPrivate(const std::string& user, const std::string& text) {};
 
 	virtual void Disconnected() {};
 	virtual void NetworkError(const std::string& msg) {};
 
+	void Ping();
 	void SendData(const std::string& msg);
 
 	void Poll();
@@ -92,7 +119,7 @@ private:
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;
 	UserCache* users;
-	boost::posix_time::ptime lastPing;
+	boost::asio::deadline_timer timer;
 };
 
 #endif
