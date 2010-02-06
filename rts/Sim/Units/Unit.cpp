@@ -1096,7 +1096,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 
 void CUnit::Kill(float3& impulse) {
-	DamageArray da(health / da[armorType]);
+	DamageArray da(health);
 	DoDamage(da, NULL, impulse, -1);
 }
 
