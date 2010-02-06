@@ -1,4 +1,4 @@
-uniform vec3 lightDir;
+uniform vec4 lightDir;
 varying vec3 viewDir;
 varying vec3 halfDir;
 
@@ -32,7 +32,7 @@ void main() {
 
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
 
-	float cosAngleDiffuse = min(max(dot(normalize(lightDir), normal), 0.0), 1.0);
+	float cosAngleDiffuse = min(max(dot(normalize(lightDir.xyz), normal), 0.0), 1.0);
 	float cosAngleSpecular = min(max(dot(normalize(halfDir), normal), 0.0), 1.0);
 	float specularExp = texture2D(specularTex, tc1).a * 16.0;
 	float specularPow = pow(cosAngleSpecular, specularExp);
