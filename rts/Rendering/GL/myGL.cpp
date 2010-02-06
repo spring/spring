@@ -136,11 +136,6 @@ void LoadExtensions()
 	for (unsigned int i=0; i<s.length(); i++)
 		if (s[i]==' ') s[i]='\n';
 
-	std::ofstream ofs("ext.txt");
-
-	if (!ofs.bad() && ofs.is_open())
-		ofs.write(s.c_str(), s.length());
-
 	std::string missingExts = "";
 	if(!GLEW_ARB_multitexture) {
 		missingExts += " GL_ARB_multitexture";
