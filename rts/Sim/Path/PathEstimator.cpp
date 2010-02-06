@@ -47,7 +47,7 @@ const unsigned int PATHESTIMATOR_VERSION = 44;
 const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
 
-
+const std::string pathDir = "pathcache/";
 /*
  * constructor, loads precalculated data if it exists
  */
@@ -727,7 +727,7 @@ bool CPathEstimator::ReadFile(std::string name)
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string("maps/paths/") + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string(pathDir) + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
 	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
@@ -771,14 +771,14 @@ bool CPathEstimator::ReadFile(std::string name)
  */
 void CPathEstimator::WriteFile(std::string name) {
 	// We need this directory to exist
-	if (!filesystem.CreateDirectory("maps/paths"))
+	if (!filesystem.CreateDirectory(pathDir))
 		return;
 
 	unsigned int hash = Hash();
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
-	std::string filename = std::string("maps/paths/") + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string(pathDir) + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location
