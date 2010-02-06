@@ -193,12 +193,13 @@ bool CUnitDrawer::LoadModelShaders()
 			S3OAdvShader->SetUniformLocation("specularTex");       // idx  4 (cube)
 			S3OAdvShader->SetUniformLocation("lightDir");          // idx  5
 			S3OAdvShader->SetUniformLocation("cameraPos");         // idx  6
-			S3OAdvShader->SetUniformLocation("unitTeamColor");     // idx  7
-			S3OAdvShader->SetUniformLocation("unitAmbientColor");  // idx  8
-			S3OAdvShader->SetUniformLocation("unitDiffuseColor");  // idx  9
-			S3OAdvShader->SetUniformLocation("unitShadowDensity"); // idx 10
-			S3OAdvShader->SetUniformLocation("shadowMat");         // idx 11
-			S3OAdvShader->SetUniformLocation("shadowParams");      // idx 12
+			S3OAdvShader->SetUniformLocation("cameraMatInv");      // idx  7
+			S3OAdvShader->SetUniformLocation("unitTeamColor");     // idx  8
+			S3OAdvShader->SetUniformLocation("unitAmbientColor");  // idx  9
+			S3OAdvShader->SetUniformLocation("unitDiffuseColor");  // idx 10
+			S3OAdvShader->SetUniformLocation("unitShadowDensity"); // idx 11
+			S3OAdvShader->SetUniformLocation("shadowMat");         // idx 12
+			S3OAdvShader->SetUniformLocation("shadowParams");      // idx 13
 		}
 
 		S3OCurShader = S3OAdvShader;
@@ -1048,6 +1049,8 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 	}
 
 	if (advShading && !water->drawReflection) {
+		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
+
 		// ARB standard does not seem to support
 		// vertex program + clipplanes (used for
 		// reflective pass) at once ==> not true,
@@ -1062,12 +1065,14 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 			S3OCurShader->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 			S3OCurShader->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 			S3OCurShader->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
-			S3OCurShader->SetUniform4fv(6, &camera->pos[0]);
-			S3OCurShader->SetUniform4fv(8, &unitAmbientColor[0]);
-			S3OCurShader->SetUniform4fv(9, &unitSunColor[0]);
-			S3OCurShader->SetUniform1f(10, unitShadowDensity);
-			S3OCurShader->SetUniformMatrix4fv(11, false, &shadowHandler->shadowMatrix.m[0]);
-			S3OCurShader->SetUniform4f(12, shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
+			S3OCurShader->SetUniform3fv(6, &camera->pos[0]);
+			S3OCurShader->SetUniformMatrix4fv(7, false, (float*) &camera->modelviewInverse[0]);
+
+			S3OCurShader->SetUniform3fv(9, &unitAmbientColor[0]);
+			S3OCurShader->SetUniform3fv(10, &unitSunColor[0]);
+			S3OCurShader->SetUniform1f(11, unitShadowDensity);
+			S3OCurShader->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
+			S3OCurShader->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
 		} else {
 			S3OCurShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			S3OCurShader->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
@@ -1181,7 +1186,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
 		if (haveGLSL && shadowHandler->drawShadows) {
-			S3OCurShader->SetUniform4fv(7, &c[0]);
+			S3OCurShader->SetUniform4fv(8, &c[0]);
 		} else {
 			S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			S3OCurShader->SetUniform4fv(14, &c[0]);

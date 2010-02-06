@@ -1316,7 +1316,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
 			smfShaderGLSL->SetUniform1f(5, (gs->pwr2mapx * SQUARE_SIZE));
 			smfShaderGLSL->SetUniform1f(6, (gs->pwr2mapy * SQUARE_SIZE));
-			smfShaderGLSL->SetUniform3fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			smfShaderGLSL->SetUniform4fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
 			smfShaderGLSL->SetUniform4fv(11, (float*) camera->modelviewInverse);
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
