@@ -165,7 +165,6 @@ Format: {
 		threads = { [thread] = { thread = thread, signal_mask = number, unitID = number }, ... },
 	},
 }
-where ~ refers to the unit table again (allows finding the unit given a thread)
 --]]
 local units = {}
 
@@ -512,14 +511,14 @@ local function Wrap_AimShield(unitID, callins)
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
-	local function AimWeaponThread(weaponNum)
+	local function AimShieldThread(weaponNum)
 		local enabled = fun(weaponNum) and true or false
 		-- SetUnitShieldState counts weapons from 0
-		return sp_SetUnitShieldState(unitID, weaponNum, enabled)
+		return sp_SetUnitShieldState(unitID, weaponNum - 1, enabled)
 	end
 
 	callins["AimShield"] = function(weaponNum)
-		return StartThread(AimWeaponThread, weaponNum)
+		return StartThread(AimShieldThread, weaponNum)
 	end
 end
 
