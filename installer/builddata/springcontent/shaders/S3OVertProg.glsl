@@ -18,6 +18,6 @@ void main() {
 	gl_TexCoord[0].st = gl_MultiTexCoord0.st;
 	gl_TexCoord[1] = vertexPos;
 
-	gl_FogFragCoord = vertexPos;
+	gl_FogFragCoord = length(vertexPos);
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }
