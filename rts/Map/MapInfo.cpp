@@ -1,22 +1,18 @@
 #include "StdAfx.h"
-#include <assert.h>
-#include <cstdio>
 #include "mmgr.h"
 
 #include "MapInfo.h"
+
+#include <assert.h>
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
 #include "Exceptions.h"
 
 
 using namespace std;
-
-
-static CLogSubsystem LOG_MAPINFO("mapinfo");
 
 
 // Before delete, the const is const_cast'ed away. There are
@@ -26,11 +22,11 @@ static CLogSubsystem LOG_MAPINFO("mapinfo");
 const CMapInfo* mapInfo;
 
 
-CMapInfo::CMapInfo(const string& mapName)
+CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : mapInfoFile(_mapInfoFile)
 {
 	map.name = mapName;
 
-	parser = new MapParser(mapName);
+	parser = new MapParser(mapInfoFile);
 	if (!parser->IsValid()) {
 		throw content_error("MapInfo: " + parser->GetErrorLog());
 	}

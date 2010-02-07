@@ -415,7 +415,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	// This MUST be loaded this late, since this executes map Lua code which
 	// may call Spring.GetMapOptions(), which NEEDS gameSetup to be set!
 	if (!mapInfo) {
-		mapInfo = new CMapInfo(gameSetup->MapFile());
+		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
 	LogObject() << "Using mod " << gameSetup->modName << "\n";
