@@ -404,6 +404,15 @@ namespace CrashHandler {
 			}
 		}
 
+		// only try to keep on running for these signals
+		if (keepRunning &&
+		    (signal != SIGSEGV) &&
+		    (signal != SIGILL) &&
+		    (signal != SIGPIPE) &&
+		    (signal != SIGABRT)) {
+			keepRunning = false;
+		}
+
 		// try to clean up
 		if (keepRunning) {
 			bool cleanupOk = false;
