@@ -275,6 +275,7 @@ namespace CrashHandler {
 			}
 			log << error << " in spring " << SpringVersion::GetFull() << "\nStacktrace:\n";
 
+			// process and analyse the raw stack trace
 			std::vector<void*> buffer(128);
 			const int numLines = backtrace(&buffer[0], buffer.size());    // stack pointers
 			char** lines       = backtrace_symbols(&buffer[0], numLines); // give them meaningfull names
@@ -342,8 +343,8 @@ namespace CrashHandler {
 		}
 		logOutput.End(); // Stop writing to log.
 
+		// translate the stack trace, and write it to the log file
 		findBaseMemoryAddresses(binPath_baseMemAddr);
-
 		std::string lastPath;
 		while (!paths.empty()) {
 			std::ostringstream buf;
