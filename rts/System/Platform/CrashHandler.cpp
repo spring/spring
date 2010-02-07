@@ -263,7 +263,6 @@ namespace CrashHandler {
 
 		logOutput.SetSubscribersEnabled(false);
 		{
-			LogObject log;
 			if (signal == SIGSEGV) {
 				error = "Segmentation fault (SIGSEGV)";
 			} else if (signal == SIGILL) {
@@ -278,18 +277,20 @@ namespace CrashHandler {
 				// we should never get here
 				error = "Unknown signal";
 			}
-			log << error << " in spring " << SpringVersion::GetFull() << "\nStacktrace:\n";
+			logOutput.Print("%s in spring %s\n", error.c_str(), SpringVersion::GetFull().c_str());
+			logOutput.Print("Stacktrace:\n");
 
 			// process and analyse the raw stack trace
 			std::vector<void*> buffer(128);
 			const int numLines = backtrace(&buffer[0], buffer.size());    // stack pointers
 			char** lines       = backtrace_symbols(&buffer[0], numLines); // give them meaningfull names
 			if (lines == NULL) {
-				log << "Unable to create stacktrace\n";
+				logOutput.Print("Unable to create stacktrace\n");
 			} else {
 				for (int l = 0; l < numLines; l++) {
 					const std::string line(lines[l]);
-					log << line;
+					logOutput.Print("%s\n", line.c_str());
+					logOutput.Flush();
 
 					// example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
 					std::string path;
@@ -321,10 +322,10 @@ namespace CrashHandler {
 					}
 
 					if (path == "") {
-						log << " # NOTE: no path -> not translating";
+						logOutput.Print("# NOTE: above line shows no path -> not translating\n");
 					} else if ((path == INVALID_LINE_INDICATOR)
 							|| (addr == INVALID_LINE_INDICATOR)) {
-						log << " # NOTE: invalid stack-trace line -> not translating";
+						logOutput.Print("# NOTE: above line is invalid -> not translating\n");
 					} else {
 						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
@@ -339,7 +340,6 @@ namespace CrashHandler {
 						const uintptr_t addr_num = hexToInt(addr.c_str());
 						addresses.push(addr_num);
 					}
-					log << "\n";
 				}
 				free(lines);
 				lines = NULL;
@@ -351,23 +351,26 @@ namespace CrashHandler {
 				}
 
 				if (containsOglSo) {
-					log << "This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.\n";
+					logOutput.Print("This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.\n");
+					logOutput.Flush();
 				}
 				if (!containedAIInterfaceSo.empty()) {
-					log << "This stack trace indicates a problem with an AI Interface library.\n";
+					logOutput.Print("This stack trace indicates a problem with an AI Interface library.\n");
+					logOutput.Flush();
 					keepRunning = true;
 				}
 				if (!containedSkirmishAISo.empty()) {
-					log << "This stack trace indicates a problem with a Skirmish AI library.\n";
+					logOutput.Print("This stack trace indicates a problem with a Skirmish AI library.\n");
+					logOutput.Flush();
 					keepRunning = true;
 				}
 			}
-
-			log << "Translated Stacktrace:\n";
+			logOutput.Flush();
 		}
-		logOutput.Flush();
 
 		// translate the stack trace, and write it to the log file
+		logOutput.Print("Translated Stacktrace:\n");
+		logOutput.Flush();
 		findBaseMemoryAddresses(binPath_baseMemAddr);
 		std::string lastPath;
 		const size_t line_sizeMax = 2048;
