@@ -256,6 +256,11 @@ namespace CrashHandler {
 		std::queue<uintptr_t> addresses;
 		std::map<std::string,uintptr_t> binPath_baseMemAddr;
 
+		bool keepRunning   = false;
+		bool containsOglSo = false; // OpenGL lib -> graphic problem
+		std::string containedAIInterfaceSo = "";
+		std::string containedSkirmishAISo  = "";
+
 		logOutput.SetSubscribersEnabled(false);
 		{
 			LogObject log;
@@ -282,7 +287,6 @@ namespace CrashHandler {
 			if (lines == NULL) {
 				log << "Unable to create stacktrace\n";
 			} else {
-				bool containsOglSo = false;
 				for (int l = 0; l < numLines; l++) {
 					const std::string line(lines[l]);
 					log << line;
@@ -324,6 +328,12 @@ namespace CrashHandler {
 					} else {
 						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
+						if (containedAIInterfaceSo.empty() && (absPath.find("Interfaces") != std::string::npos)) {
+							containedAIInterfaceSo = absPath;
+						}
+						if (containedSkirmishAISo.empty() && (absPath.find("Skirmish") != std::string::npos)) {
+							containedSkirmishAISo = absPath;
+						}
 						binPath_baseMemAddr[absPath] = 0;
 						paths.push(absPath);
 						const uintptr_t addr_num = hexToInt(addr.c_str());
@@ -334,18 +344,34 @@ namespace CrashHandler {
 				free(lines);
 				lines = NULL;
 
+				// if stack trace contains AI and AI Interface frames,
+				// it is very likely that the problem lies in the AI only
+				if (!containedSkirmishAISo.empty()) {
+					containedAIInterfaceSo = "";
+				}
+
 				if (containsOglSo) {
 					log << "This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.\n";
+				}
+				if (!containedAIInterfaceSo.empty()) {
+					log << "This stack trace indicates a problem with an AI Interface library.\n";
+					keepRunning = true;
+				}
+				if (!containedSkirmishAISo.empty()) {
+					log << "This stack trace indicates a problem with a Skirmish AI library.\n";
+					keepRunning = true;
 				}
 			}
 
 			log << "Translated Stacktrace:\n";
 		}
-		logOutput.End(); // Stop writing to log.
+		logOutput.Flush();
 
 		// translate the stack trace, and write it to the log file
 		findBaseMemoryAddresses(binPath_baseMemAddr);
 		std::string lastPath;
+		const size_t line_sizeMax = 2048;
+		char line[line_sizeMax];
 		while (!paths.empty()) {
 			std::ostringstream buf;
 			lastPath = paths.front();
@@ -367,11 +393,45 @@ namespace CrashHandler {
 				paths.pop();
 				addresses.pop();
 			}
-			buf << " >> " << logFile;
-			system(buf.str().c_str());
+
+			// execute command addr2line, read stdout and write to log-file
+			FILE* cmdOut = popen(buf.str().c_str(), "r");
+			if (cmdOut != NULL) {
+				while (fgets(line, line_sizeMax, cmdOut) != NULL) {
+					logOutput.Print("%s", line);
+				}
+				pclose(cmdOut);
+			}
 		}
 
-		ErrorMessageBox(error, "Spring crashed", 0);
+		// try to clean up
+		if (keepRunning) {
+			bool cleanupOk = false;
+			{
+				// try to cleanup
+				if (!containedAIInterfaceSo.empty()) {
+					//logOutput.Print("Trying to kill AI Interface library only ...\n");
+					// TODO
+					//cleanupOk = true;
+				} else if (!containedSkirmishAISo.empty()) {
+					//logOutput.Print("Trying to kill Skirmish AI library only ...\n");
+					// TODO
+					//cleanupOk = true;
+				}
+			}
+
+			if (cleanupOk) {
+				logOutput.SetSubscribersEnabled(true);
+			} else {
+				keepRunning = false;
+			}
+		}
+
+		if (!keepRunning) {
+			logOutput.End();
+			// this also calls exit()
+			ErrorMessageBox(error, "Spring crashed", 0);
+		}
 	}
 
 	void Install() {
