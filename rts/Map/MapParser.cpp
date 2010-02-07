@@ -1,24 +1,23 @@
 #include "StdAfx.h"
-
-#include <string>
-#include <ctype.h>
-using namespace std;
-
 #include "mmgr.h"
 
 #include "MapParser.h"
+
+#include <string>
+#include <ctype.h>
+
 #include "Lua/LuaSyncedRead.h"
-#include "FileSystem/FileHandler.h"
+#include "FileSystem/FileSystem.h"
 #include "FileSystem/ArchiveScanner.h"
 
+using namespace std;
 
 string MapParser::GetMapConfigName(const string& mapName)
 {
-	if (mapName.length() < 3) {
+	if (mapName.length() < 3)
 		return "";
-	}
 
-	const string extension = mapName.substr(mapName.length() - 3);
+	const string extension = filesystem.GetExtension(mapName);
 
 	if (extension == "sm3") {
 		return mapName;
@@ -38,8 +37,8 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 
 	parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	parser->GetTable("Map");
-	parser->AddString("fileName", mapName);
-	parser->AddString("fullName", "maps/" + mapName);
+	parser->AddString("fileName", filesystem.GetFilename(mapName));
+	parser->AddString("fullName", mapName);
 	parser->AddString("configFile", mapConfig);
 	parser->EndTable();
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
