@@ -545,7 +545,7 @@ struct SBuildUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toBuildUnitDefId;
@@ -559,7 +559,7 @@ struct SStopUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_STOP
 
@@ -582,7 +582,7 @@ struct SWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_WAIT
 
@@ -591,7 +591,7 @@ struct STimeWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// the time in seconds to wait
@@ -603,7 +603,7 @@ struct SDeathWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// wait until this unit is dead
@@ -615,7 +615,7 @@ struct SSquadWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int numUnits;
@@ -626,7 +626,7 @@ struct SGatherWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_WAIT_GATHER
 
@@ -635,7 +635,7 @@ struct SMoveUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -646,7 +646,7 @@ struct SPatrolUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -657,7 +657,7 @@ struct SFightUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -668,7 +668,7 @@ struct SAttackUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toAttackUnitId;
@@ -680,7 +680,7 @@ struct SAttackAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toAttackPos;
@@ -692,7 +692,7 @@ struct SAttackAreaUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -701,7 +701,7 @@ struct SGuardUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toGuardUnitId;
@@ -712,7 +712,7 @@ struct SAiSelectUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_AI_SELECT
 
@@ -721,7 +721,7 @@ struct SAiSelectUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -730,7 +730,7 @@ struct SGroupAddUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toGroupId;
@@ -741,7 +741,7 @@ struct SGroupClearUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_GROUP_CLEAR
 
@@ -750,7 +750,7 @@ struct SRepairUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toRepairUnitId;
@@ -761,7 +761,7 @@ struct SSetFireStateUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// can be: 0=hold fire, 1=return fire, 2=fire at will
@@ -773,7 +773,7 @@ struct SSetMoveStateUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// 0=hold pos, 1=maneuvre, 2=roam
@@ -785,7 +785,7 @@ struct SSetBaseUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 basePos;
@@ -796,7 +796,7 @@ struct SSetBaseUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -805,7 +805,7 @@ struct SSelfDestroyUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_SELF_DESTROY
 
@@ -814,7 +814,7 @@ struct SSetWantedMaxSpeedUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	float wantedMaxSpeed;
@@ -836,7 +836,7 @@ struct SLoadUnitsAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -848,7 +848,7 @@ struct SLoadOntoUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int transporterUnitId;
@@ -859,7 +859,7 @@ struct SUnloadUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -871,7 +871,7 @@ struct SUnloadUnitsAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -883,7 +883,7 @@ struct SSetOnOffUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	bool on;
@@ -894,7 +894,7 @@ struct SReclaimUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toReclaimUnitIdOrFeatureId;
@@ -905,7 +905,7 @@ struct SReclaimAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -917,7 +917,7 @@ struct SCloakUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	bool cloak;
@@ -928,7 +928,7 @@ struct SStockpileUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_STOCKPILE
 
@@ -937,7 +937,7 @@ struct SDGunUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toAttackUnitId;
@@ -948,7 +948,7 @@ struct SDGunPosUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -959,7 +959,7 @@ struct SRestoreAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -971,7 +971,7 @@ struct SSetRepeatUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	bool repeat;
@@ -982,7 +982,7 @@ struct SSetTrajectoryUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int trajectory;
@@ -993,7 +993,7 @@ struct SResurrectUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toResurrectFeatureId;
@@ -1004,7 +1004,7 @@ struct SResurrectAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -1016,7 +1016,7 @@ struct SCaptureUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toCaptureUnitId;
@@ -1027,7 +1027,7 @@ struct SCaptureAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -1039,7 +1039,7 @@ struct SSetAutoRepairLevelUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int autoRepairLevel;
@@ -1050,7 +1050,7 @@ struct SSetAutoRepairLevelUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -1059,7 +1059,7 @@ struct SSetIdleModeUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int idleMode;
@@ -1070,7 +1070,7 @@ struct SCustomUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int cmdId;
