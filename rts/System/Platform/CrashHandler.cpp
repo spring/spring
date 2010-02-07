@@ -256,7 +256,7 @@ namespace CrashHandler {
 		std::queue<uintptr_t> addresses;
 		std::map<std::string,uintptr_t> binPath_baseMemAddr;
 
-		logOutput.RemoveAllSubscribers();
+		logOutput.SetSubscribersEnabled(false);
 		{
 			LogObject log;
 			if (signal == SIGSEGV) {
