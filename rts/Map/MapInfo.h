@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+
 #include "float3.h"
 #include "float4.h"
 
@@ -12,8 +13,11 @@ class MapParser;
 class CMapInfo
 {
 public:
-
-	CMapInfo(const std::string& mapName);
+	/**
+	@param mapInfoFile mapinfo file, aka sm3 / smf (full path)
+	@param mapName human readable mapname e.g. DeltaSiegeDry
+	*/
+	CMapInfo(const std::string& mapInfoFile, const std::string& mapName);
 	void Load(); // fill in infos
 	~CMapInfo();
 
@@ -176,6 +180,7 @@ private:
 	void ReadSm3();
 	void ReadTerrainTypes();
 
+	std::string mapInfoFile;
 	MapParser* parser; // map       parser root table
 	LuaTable* resRoot; // resources parser root table
 };

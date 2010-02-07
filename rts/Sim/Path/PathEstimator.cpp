@@ -1,27 +1,21 @@
 #include "StdAfx.h"
 #include "PathEstimator.h"
+
 #include <fstream>
 #include <boost/bind.hpp>
 #include <boost/version.hpp>
-#include "lib/minizip/zip.h"
-#include "mmgr.h"
-
 #include <boost/version.hpp>
 
-#include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
-#include "FileSystem/FileHandler.h"
-#include "ConfigHandler.h"
-
+#include "lib/minizip/zip.h"
+#include "mmgr.h"
 #include "Map/Ground.h"
 #include "Game/SelectedUnits.h"
-#include "Game/GameSetup.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-
 #include "FileSystem/ArchiveZip.h"
 #include "FileSystem/FileSystem.h"
-
+#include "LogOutput.h"
+#include "ConfigHandler.h"
 #include "NetProtocol.h"
 
 #define PATHDEBUG false
@@ -51,7 +45,7 @@ const std::string pathDir = "cache/paths/";
 /*
  * constructor, loads precalculated data if it exists
  */
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, std::string name):
+CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, std::string name, const std::string& map):
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
@@ -91,7 +85,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	vertex = new float[nbrOfVertices];
 	openBlockBufferPointer = openBlockBuffer;
 
-	InitEstimator(name);
+	InitEstimator(name, map);
 
 	// As all vertexes are bidirectional and have equal values
 	// in both directions, only one value needs to be stored.
@@ -113,7 +107,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 /*
  * free all used memory
  */
-CPathEstimator::~CPathEstimator() {
+CPathEstimator::~CPathEstimator()
+{
 	for (int i = 0; i < nbrOfBlocks; i++)
 		delete[] blockState[i].sqrCenter;
 
@@ -123,7 +118,8 @@ CPathEstimator::~CPathEstimator() {
 }
 
 
-void CPathEstimator::InitEstimator(const std::string& name) {
+void CPathEstimator::InitEstimator(const std::string& name, const std::string& map)
+{
 	int numThreads_tmp = configHandler->Get("HardwareThreadCount", 0);
 	size_t numThreads = ((numThreads_tmp < 0) ? 0 : numThreads_tmp);
 
@@ -149,7 +145,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 
 	PrintLoadMsg("Reading estimate path costs");
 
-	if (!ReadFile(name)) {
+	if (!ReadFile(name, map)) {
 		char calcMsg[512];
 		sprintf(calcMsg, "Analyzing map accessibility [%d]", BLOCK_SIZE);
 		PrintLoadMsg(calcMsg);
@@ -174,7 +170,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		delete pathBarrier;
 
 		PrintLoadMsg("Writing path data file...");
-		WriteFile(name);
+		WriteFile(name, map);
 	}
 }
 
@@ -217,7 +213,8 @@ void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 }
 
 
-void CPathEstimator::CalculateBlockOffsets(int idx, int thread) {
+void CPathEstimator::CalculateBlockOffsets(int idx, int thread)
+{
 	int x = idx % nbrOfBlocksX;
 	int z = idx / nbrOfBlocksX;
 
@@ -721,13 +718,13 @@ void CPathEstimator::ResetSearch() {
  * try to read offset and vertices data from file, return false on failure
  * TODO: Read-error-check.
  */
-bool CPathEstimator::ReadFile(std::string name)
+bool CPathEstimator::ReadFile(std::string name, const std::string& map)
 {
 	unsigned int hash = Hash();
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string(pathDir) + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string(pathDir) + map + hashString + "." + name + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
 	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
@@ -769,7 +766,8 @@ bool CPathEstimator::ReadFile(std::string name)
 /*
  * try to write offset and vertex data to file
  */
-void CPathEstimator::WriteFile(std::string name) {
+void CPathEstimator::WriteFile(std::string name, const std::string& map)
+{
 	// We need this directory to exist
 	if (!filesystem.CreateDirectory(pathDir))
 		return;
@@ -778,7 +776,7 @@ void CPathEstimator::WriteFile(std::string name) {
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
-	std::string filename = std::string(pathDir) + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string(pathDir) + map + hashString + "." + name + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location
