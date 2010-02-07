@@ -54,7 +54,6 @@ void main() {
 		// shadowInt.x *= diffuseInt.w;
 		shadowInt.x = 1.0 - shadowInt.x;
 
-	// vec4 shadeCol = (shadowInt.x * diffuseInt) + ((1.0 - shadowInt.x) * ambientInt);
 	vec4 shadeCol = mix(ambientInt, diffuseInt, shadowInt.x);
 
 	gl_FragColor = (diffuseCol + detailCol) * shadeCol;
