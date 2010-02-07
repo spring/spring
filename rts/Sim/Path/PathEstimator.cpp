@@ -47,7 +47,7 @@ const unsigned int PATHESTIMATOR_VERSION = 44;
 const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
 
-const std::string pathDir = "cache/pathes/";
+const std::string pathDir = "cache/paths/";
 /*
  * constructor, loads precalculated data if it exists
  */
