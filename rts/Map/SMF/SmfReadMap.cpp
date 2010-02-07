@@ -247,8 +247,9 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		// update the vertex normals
 		const float* hm = heightmap;
 
-		const int W = gs->mapx + 1;
-		const int H = gs->mapy + 1;
+		static const int W = gs->mapx + 1;
+		static const int H = gs->mapy + 1;
+		static const int SS = SQUARE_SIZE;
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
 		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
@@ -262,55 +263,42 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 
 		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
 
-		for (int x = minx; x <= maxx; x++) {
-			for (int z = minz; z <= maxz; z++) {
-				const int vIdx = (z * (gs->mapx + 1)) + x;
+		for (int z = minz; z <= maxz; z++) {
+			for (int x = minx; x <= maxx; x++) {
+				const int vIdx = (z * W) + x;
 
-				int xoff = 0;
-				int zoff = 0;
-
-				if (x == 0 || x == W - 1) { xoff = (x == 0)? 1: -1; }
-				if (z == 0 || z == H - 1) { zoff = (z == 0)? 1: -1; }
+				const bool hasNgbL = (x >     0); const int xOffL = hasNgbL? 1: 0;
+				const bool hasNgbR = (x < W - 1); const int xOffR = hasNgbR? 1: 0;
+				const bool hasNgbT = (z >     0); const int zOffT = hasNgbT? 1: 0;
+				const bool hasNgbB = (z < H - 1); const int zOffB = hasNgbB? 1: 0;
 
 				// pretend there are 8 incident triangle faces per vertex
 				// for each these triangles, calculate the surface normal,
 				// then average the 8 normals (this stays closest to the
 				// heightmap data)
-				const float htl = hm[((z - 1 + zoff) * W) + (x - 1 + xoff)]; // vertex to the top-left
-				const float htm = hm[((z - 1 + zoff) * W) + (x           )]; // vertex to the top-middle
-				const float htr = hm[((z - 1 + zoff) * W) + (x + 1 + xoff)]; // vertex to the top-right
+				// if edge vertex, don't add virtual neighbor normals to vn
+				const float3 vtl = float3((x - 1) * SS,  hm[((z - zOffT) * W) + (x - xOffL)],  (z - 1) * SS);
+				const float3 vtm = float3((x    ) * SS,  hm[((z - zOffT) * W) + (x        )],  (z - 1) * SS);
+				const float3 vtr = float3((x + 1) * SS,  hm[((z - zOffT) * W) + (x + xOffR)],  (z - 1) * SS);
 
-				const float hml = hm[((z           ) * W) + (x - 1 + xoff)]; // vertex to the middle-left
-				const float hmm = hm[((z           ) * W) + (x           )]; // the center vertex
-				const float hmr = hm[((z           ) * W) + (x + 1 + xoff)]; // vertex to the middle-right
+				const float3 vml = float3((x - 1) * SS,  hm[((z        ) * W) + (x - xOffL)],  (z    ) * SS);
+				const float3 vmm = float3((x    ) * SS,  hm[((z        ) * W) + (x        )],  (z    ) * SS);
+				const float3 vmr = float3((x + 1) * SS,  hm[((z        ) * W) + (x + xOffR)],  (z    ) * SS);
 
-				const float hbl = hm[((z + 1 + zoff) * W) + (x - 1 + xoff)]; // vertex to the bottom-left
-				const float hbm = hm[((z + 1 + zoff) * W) + (x           )]; // vertex to the bottom-middle
-				const float hbr = hm[((z + 1 + zoff) * W) + (x + 1 + xoff)]; // vertex to the bottom-right
-
-
-				const float3 vtl((x - 1) * SQUARE_SIZE, htl, (z - 1) * SQUARE_SIZE);
-				const float3 vtm((x    ) * SQUARE_SIZE, htm, (z - 1) * SQUARE_SIZE);
-				const float3 vtr((x + 1) * SQUARE_SIZE, htr, (z - 1) * SQUARE_SIZE);
-
-				const float3 vml((x - 1) * SQUARE_SIZE, hml, (z    ) * SQUARE_SIZE);
-				const float3 vmm((x    ) * SQUARE_SIZE, hmm, (z    ) * SQUARE_SIZE);
-				const float3 vmr((x + 1) * SQUARE_SIZE, hmr, (z    ) * SQUARE_SIZE);
-
-				const float3 vbl((x - 1) * SQUARE_SIZE, hbl, (z + 1) * SQUARE_SIZE);
-				const float3 vbm((x    ) * SQUARE_SIZE, hbm, (z + 1) * SQUARE_SIZE);
-				const float3 vbr((x + 1) * SQUARE_SIZE, hbr, (z + 1) * SQUARE_SIZE);
+				const float3 vbl = float3((x - 1) * SS,  hm[((z + zOffB) * W) + (x - xOffL)],  (z + 1) * SS);
+				const float3 vbm = float3((x    ) * SS,  hm[((z + zOffB) * W) + (x        )],  (z + 1) * SS);
+				const float3 vbr = float3((x + 1) * SS,  hm[((z + zOffB) * W) + (x + xOffR)],  (z + 1) * SS);
 
 				float3 vn = ZeroVector;
-				float3 tn;
-					tn = (vtl - vmm).cross((vtm - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (vtm - vmm).cross((vtr - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (vtr - vmm).cross((vmr - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (vmr - vmm).cross((vbr - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (vbr - vmm).cross((vbm - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (vbm - vmm).cross((vbl - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (vbl - vmm).cross((vml - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-					tn = (vml - vmm).cross((vtl - vmm)); if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+				float3 tn = ZeroVector;
+					tn = (hasNgbT && hasNgbL)? (vtl - vmm).cross((vtm - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+					tn = (hasNgbT           )? (vtm - vmm).cross((vtr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+					tn = (hasNgbT && hasNgbR)? (vtr - vmm).cross((vmr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+					tn = (hasNgbR           )? (vmr - vmm).cross((vbr - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+					tn = (hasNgbB && hasNgbR)? (vbr - vmm).cross((vbm - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+					tn = (hasNgbB           )? (vbm - vmm).cross((vbl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+					tn = (hasNgbB && hasNgbL)? (vbl - vmm).cross((vml - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 
 				vertexNormals[vIdx] = vn.ANormalize();
 
