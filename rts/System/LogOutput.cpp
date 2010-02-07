@@ -88,6 +88,7 @@ LogObject::~LogObject()
 CLogOutput::CLogOutput()
 	: fileName("")
 	, filePath("")
+	, subscribersEnabled(true)
 {
 	// multiple infologs can't exist together!
 	assert(this == &logOutput);
@@ -217,10 +218,14 @@ void CLogOutput::Initialize()
 		if (!it->subsystem->enabled) return;
 
 		// Output to subscribers
-		for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-			(*lsi)->NotifyLogMsg(*(it->subsystem), it->text);
-		if (filelog)
+		if (subscribersEnabled) {
+			for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
+				(*lsi)->NotifyLogMsg(*(it->subsystem), it->text);
+			}
+		}
+		if (filelog) {
 			ToFile(*it->subsystem, it->text);
+		}
 	}
 	preInitLog().clear();
 }
@@ -297,15 +302,19 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	if (!subsystem.enabled) return;
 
 	// Output to subscribers
-	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-		(*lsi)->NotifyLogMsg(subsystem, str);
+	if (subscribersEnabled) {
+		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
+			(*lsi)->NotifyLogMsg(subsystem, str);
+		}
+	}
 
 #ifdef _MSC_VER
 	int index = strlen(str.c_str()) - 1;
 	bool newline = ((index < 0) || (str[index] != '\n'));
 	OutputDebugString(str.c_str());
-	if (newline)
+	if (newline) {
 		OutputDebugString("\n");
+	}
 #endif // _MSC_VER
 
 
@@ -321,8 +330,11 @@ void CLogOutput::SetLastMsgPos(const float3& pos)
 {
 	GML_STDMUTEX_LOCK(log); // SetLastMsgPos
 
-	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-		(*lsi)->SetLastMsgPos(pos);
+	if (subscribersEnabled) {
+		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
+			(*lsi)->SetLastMsgPos(pos);
+		}
+	}
 }
 
 
@@ -334,14 +346,6 @@ void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 }
 
 
-void CLogOutput::RemoveAllSubscribers()
-{
-	GML_STDMUTEX_LOCK(log); // RemoveAllSubscribers
-
-	subscribers.clear();
-}
-
-
 void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 {
 	GML_STDMUTEX_LOCK(log); // RemoveSubscriber
@@ -349,6 +353,13 @@ void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 	subscribers.erase(std::find(subscribers.begin(), subscribers.end(), ls));
 }
 
+void CLogOutput::SetSubscribersEnabled(bool enabled) {
+	subscribersEnabled = enabled;
+}
+
+bool CLogOutput::IsSubscribersEnabled() const {
+	return subscribersEnabled;
+}
 
 // ----------------------------------------------------------------------
 // Printing functions
