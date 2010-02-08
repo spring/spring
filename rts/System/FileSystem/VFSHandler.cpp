@@ -1,9 +1,12 @@
 #include "StdAfx.h"
-#include <algorithm>
-#include <set>
 #include "mmgr.h"
 
 #include "VFSHandler.h"
+
+#include <algorithm>
+#include <set>
+#include <cstring>
+
 #include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
@@ -42,11 +45,11 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std
 		archives[arName] = ar;
 	}
 
-	int cur;
-	std::string name;
-	int size;
-
-	for (cur = ar->FindFiles(0, &name, &size); cur != 0; cur = ar->FindFiles(cur, &name, &size)) {
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid)
+	{
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
 		StringToLowerInPlace(name);
 
 		if (!override) {
@@ -136,17 +139,14 @@ int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
 	}
 	FileData& fd = fi->second;
 
-	int fh = fd.ar->OpenFile(name);
-	if (!fh) {
+	std::vector<uint8_t> vecBuf;
+	if (!fd.ar->GetFile(name, vecBuf))
+	{
 		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", rawName.c_str());
 		return -1;
 	}
-	const int fsize = fd.dynamic ? fd.ar->FileSize(fh) : fd.size;
-
-	fd.ar->ReadFile(fh, buffer, fsize);
-	fd.ar->CloseFile(fh);
-
-	return fsize;
+	std::memcpy(buffer, &vecBuf[0], vecBuf.size());
+	return vecBuf.size();
 }
 
 
@@ -165,18 +165,24 @@ int CVFSHandler::GetFileSize(const std::string& rawName)
 
 	FileData& fd = fi->second;
 
-	if (!fd.dynamic) {
+	if (!fd.dynamic)
+	{
 		return fd.size;
 	}
-	else {
-		const int fh = fd.ar->OpenFile(name);
-		if (fh == 0) {
+	else
+	{
+		const unsigned fid = fd.ar->FindFile(name);
+		if (fid >= fd.ar->NumFiles())
+		{
 			logOutput.Print(LOG_VFS, "GetFileSize: File '%s' does not exist in archive.", rawName.c_str());
 			return -1;
-		} else {
-			const int fsize = fd.ar->FileSize(fh);
-			fd.ar->CloseFile(fh);
-			return fsize;
+		}
+		else
+		{
+			std::string waste;
+			int size;
+			fd.ar->FileInfo(fid, waste, size);
+			return size;
 		}
 	}
 }

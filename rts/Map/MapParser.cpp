@@ -8,7 +8,6 @@
 
 #include "Lua/LuaSyncedRead.h"
 #include "FileSystem/FileSystem.h"
-#include "FileSystem/ArchiveScanner.h"
 
 using namespace std;
 
@@ -49,7 +48,8 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	parser->EndTable();
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
-	if (!parser->Execute()) {
+	if (!parser->Execute())
+	{
 		// do nothing
 	}
 }
