@@ -351,7 +351,9 @@ namespace CrashHandler {
 				}
 
 				if (containsOglSo) {
-					logOutput.Print("This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.\n");
+					logOutput.Print("This stack trace indicates a problem with your graphic card driver. "
+					                "Please try upgrading or downgrading it. "
+					                "Specifically recommended is the latest driver, and one that is as old as your graphic card.\n");
 					logOutput.Flush();
 				}
 				if (!containedAIInterfaceSo.empty()) {
