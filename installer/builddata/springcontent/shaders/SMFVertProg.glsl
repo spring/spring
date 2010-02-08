@@ -1,5 +1,5 @@
-uniform float mapSizeX;     // pwr2mapx * SQUARE_SIZE (programmatically #define this)
-uniform float mapSizeZ;     // pwr2mapy * SQUARE_SIZE (programmatically #define this)
+uniform vec2 mapSizePO2;    // pwr2map{x,z} * SQUARE_SIZE (programmatically #define this)
+uniform vec2 mapSize;       //     map{x,z} * SQUARE_SIZE (programmatically #define this)
 uniform int texSquareX;
 uniform int texSquareZ;
 
@@ -24,18 +24,21 @@ void main() {
 	gl_TexCoord[0].t = float(int(gl_Vertex.z) - (texSquareZ * SMF_TEXSQR_SIZE_INT)) / SMF_TEXSQR_SIZE_FLT;
 	gl_TexCoord[0].q = gl_Vertex.y;
 
-	// normal- and specular-tex coors; this is equal to
-	// (D / mapD) * (mapD / pwr2mapD) for D in {x, z}
-	gl_TexCoord[1].s = gl_Vertex.x / mapSizeX;
-	gl_TexCoord[1].t = gl_Vertex.z / mapSizeZ;
+	// normal-tex coors
+	gl_TexCoord[1].s = gl_Vertex.x / mapSizePO2.x;
+	gl_TexCoord[1].t = gl_Vertex.z / mapSizePO2.y;
+
+	// specular-tex coors
+	gl_TexCoord[2].s = gl_Vertex.x / mapSize.x;
+	gl_TexCoord[2].t = gl_Vertex.z / mapSize.y;
 
 	// shadow-tex coors; shadowParams stores
 	// {x=xmid, y=ymid, z=sizeFactorA, w=sizeFactorB}
 	// note: map vertices are already in world-space
-	gl_TexCoord[2] = gl_Vertex;
+	gl_TexCoord[3] = gl_Vertex;
 
 	// detail-tex coors
-	gl_TexCoord[3].st = gl_Vertex.xz * vec2(SMF_DETAILTEX_RES, SMF_DETAILTEX_RES);
-	gl_TexCoord[3].s += -floor(cameraPos.x * SMF_DETAILTEX_RES);
-	gl_TexCoord[3].t += -floor(cameraPos.z * SMF_DETAILTEX_RES);
+	gl_TexCoord[4].st = gl_Vertex.xz * vec2(SMF_DETAILTEX_RES, SMF_DETAILTEX_RES);
+	gl_TexCoord[4].s += -floor(cameraPos.x * SMF_DETAILTEX_RES);
+	gl_TexCoord[4].t += -floor(cameraPos.z * SMF_DETAILTEX_RES);
 }
