@@ -58,7 +58,6 @@ if($?) {
   print "Creating installer for release $tag\n";
 }
 
-system("sh", "installer/tasclient_download.sh");
 system("sh", "installer/springlobby_download.sh");
 chdir("$installerDir/downloads");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
