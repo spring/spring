@@ -2248,7 +2248,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	                 lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3));
 	const string text = luaL_optstring(L, 4, "");
-	const bool onlyLocal = bool(luaL_optnumber(L, 5, 0));
+	const bool onlyLocal = bool(luaL_optnumber(L, 5, 1));
 
 	if (onlyLocal) {
 		inMapDrawer->LocalPoint(pos, text, gu->myPlayerNum);
