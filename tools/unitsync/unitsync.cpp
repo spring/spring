@@ -2671,7 +2671,6 @@ EXPORT(void) CloseArchive(int archive)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-
 EXPORT(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 {
 	try {
@@ -2683,13 +2682,16 @@ EXPORT(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
 
 		logOutput.Print(LOG_UNITSYNC, "findfilesarchive: %d\n", archive);
 
-		string name;
-		int s;
-
-		int ret = a->FindFiles(cur, &name, &s);
-		strcpy(nameBuf, name.c_str()); // FIXME: oops, buffer overflow
-		*size = s;
-		return ret;
+		if (cur < a->NumFiles())
+		{
+			string name;
+			int s;
+			a->FileInfo(cur, name, s);
+			strcpy(nameBuf, name.c_str()); // FIXME: oops, buffer overflow
+			*size = s;
+			return ++cur;
+		}
+		return 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
@@ -2712,7 +2714,7 @@ EXPORT(int) OpenArchiveFile(int archive, const char* name)
 		CheckNullOrEmpty(name);
 
 		CArchiveBase* a = openArchives[archive];
-		return a->OpenFile(name);
+		return a->FindFile(name);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
@@ -2736,7 +2738,11 @@ EXPORT(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 		CheckPositive(numBytes);
 
 		CArchiveBase* a = openArchives[archive];
-		return a->ReadFile(handle, buffer, numBytes);
+		std::vector<uint8_t> buf;
+		if (!a->GetFile(handle, buf))
+			return -1;
+		std::memcpy(buffer, &buf[0], std::min(buf.size(), (size_t)numBytes));
+		return std::min(buf.size(), (size_t)numBytes);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return -1;
@@ -2751,10 +2757,7 @@ EXPORT(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
 EXPORT(void) CloseArchiveFile(int archive, int handle)
 {
 	try {
-		CheckArchiveHandle(archive);
-
-		CArchiveBase* a = openArchives[archive];
-		a->CloseFile(handle);
+		// nuting
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -2772,7 +2775,10 @@ EXPORT(int) SizeArchiveFile(int archive, int handle)
 		CheckArchiveHandle(archive);
 
 		CArchiveBase* a = openArchives[archive];
-		return a->FileSize(handle);
+		string name;
+		int s;
+		a->FileInfo(handle, name, s);
+		return s;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return -1;

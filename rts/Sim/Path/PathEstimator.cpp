@@ -737,23 +737,37 @@ bool CPathEstimator::ReadFile(std::string name, const std::string& map)
 	std::auto_ptr<CArchiveZip> auto_pfile(pfile);
 	CArchiveZip& file(*pfile);
 
-	int fh = file.OpenFile("pathinfo");
+	const unsigned fid = file.FindFile("pathinfo");
+	if (fid < file.NumFiles())
+	{
+		pathChecksum = file.GetCrc32(fid);
 
-	if (fh) {
-		pathChecksum = file.GetCrc32("pathinfo");
+		std::vector<uint8_t> buffer;
+		file.GetFile(fid, buffer);
 
-		unsigned int filehash = 0;
- 		// Check hash.
-		file.ReadFile(fh, &filehash, 4);
+		if (buffer.size() < 4)
+			return false;
+
+		unsigned filehash = *((unsigned*)&buffer[0]);
 		if (filehash != hash)
 			return false;
 
+		unsigned pos = sizeof(unsigned);
+
 		// Read block-center-offset data.
+		const unsigned blockSize = moveinfo->moveData.size() * sizeof(int2);
+		if (buffer.size() < pos + blockSize*nbrOfBlocks)
+			return false;
 		for (int blocknr = 0; blocknr < nbrOfBlocks; blocknr++)
-			file.ReadFile(fh, blockState[blocknr].sqrCenter, moveinfo->moveData.size() * sizeof(int2));
+		{
+			std::memcpy(blockState[blocknr].sqrCenter, &buffer[pos], blockSize);
+			pos += blockSize;
+		}
 
 		// Read vertices data.
-		file.ReadFile(fh, vertex, nbrOfVertices * sizeof(float));
+		if (buffer.size() < pos + nbrOfVertices * sizeof(float))
+			return false;
+		std::memcpy(vertex, &buffer[pos], nbrOfVertices * sizeof(float));
 
 		// File read successful.
 		return true;
@@ -809,7 +823,10 @@ void CPathEstimator::WriteFile(std::string name, const std::string& map)
 
 		std::auto_ptr<CArchiveZip> auto_pfile(pfile);
 		CArchiveZip& file(*pfile);
-		pathChecksum = file.GetCrc32("pathinfo");
+		
+		const unsigned fid = file.FindFile("pathinfo");
+		assert(fid < file.NumFiles());
+		pathChecksum = file.GetCrc32(fid);
 	}
 }
 

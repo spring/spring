@@ -1,15 +1,16 @@
 #include "StdAfx.h"
+
 #include "ArchiveZip.h"
+
 #include <algorithm>
 #include <stdexcept>
+
 #include "Util.h"
 #include "mmgr.h"
 #include "LogOutput.h"
 
 
-CArchiveZip::CArchiveZip(const std::string& name):
-	CArchiveBuffered(name),
-	curSearchHandle(1)
+CArchiveZip::CArchiveZip(const std::string& name) : CArchiveBuffered(name)
 {
 #ifdef USEWIN32IOAPI
 	zlib_filefunc_def ffunc;
@@ -18,13 +19,15 @@ CArchiveZip::CArchiveZip(const std::string& name):
 #else
 	zip = unzOpen(name.c_str());
 #endif
-	if (!zip) {
+	if (!zip)
+	{
 		LogObject() << "Error opening " << name;
 		return;
 	}
 
 	// We need to map file positions to speed up opening later
-	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip)) {
+	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip))
+	{
 		unz_file_info info;
 		char fname[512];
 
@@ -35,7 +38,8 @@ CArchiveZip::CArchiveZip(const std::string& name):
 			continue;
 		}
 		const char last = name[name.length() - 1];
-		if ((last == '/') || (last == '\\')) {
+		if ((last == '/') || (last == '\\'))
+		{
 			continue; // exclude directory names
 		}
 
@@ -44,7 +48,8 @@ CArchiveZip::CArchiveZip(const std::string& name):
 		fd.size = info.uncompressed_size;
 		fd.origName = fname;
 		fd.crc = info.crc;
-		fileData[name] = fd;
+		fileData.push_back(fd);
+		lcNameIndex[name] = fileData.size()-1;
 	}
 }
 
@@ -54,100 +59,53 @@ CArchiveZip::~CArchiveZip(void)
 		unzClose(zip);
 }
 
-unsigned int CArchiveZip::GetCrc32 (const std::string& fileName)
-{
-	std::string lower = StringToLower(fileName);
-	FileData fd = fileData[lower];
-	return fd.crc;
-}
-
 bool CArchiveZip::IsOpen()
 {
 	return (zip != NULL);
 }
 
-class zip_exception: public std::exception {};
+unsigned CArchiveZip::NumFiles() const
+{
+	return fileData.size();
+}
+
+void CArchiveZip::FileInfo(unsigned fid, std::string& name, int& size) const
+{
+	assert(fid >= 0 && fid < NumFiles());
+
+	name = fileData[fid].origName;
+	size = fileData[fid].size;
+}
+
+unsigned CArchiveZip::GetCrc32(unsigned fid)
+{
+	assert(fid >= 0 && fid < NumFiles());
+
+	return fileData[fid].crc;
+}
 
 // To simplify things, files are always read completely into memory from the zipfile, since zlib does not
 // provide any way of reading more than one file at a time
-ABOpenFile_t* CArchiveZip::GetEntireFileImpl(const std::string& fName)
+bool CArchiveZip::GetFileImpl(unsigned fid, std::vector<uint8_t>& buffer)
 {
 	// Don't allow opening files on missing/invalid archives
 	if (!zip)
-		return NULL;
+		return false;
+	assert(fid >= 0 && fid < NumFiles());
 
-	std::string fileName = StringToLower(fName);
-
-	//if (unzLocateFile(zip, fileName.c_str(), 2) != UNZ_OK)
-	//	return 0;
-
-	if (fileData.find(fileName) == fileData.end())
-		return NULL;
-
-	FileData fd = fileData[fileName];
-	unzGoToFilePos(zip, &fileData[fileName].fp);
+	unzGoToFilePos(zip, &fileData[fid].fp);
 
 	unz_file_info fi;
 	unzGetCurrentFileInfo(zip, &fi, NULL, 0, NULL, 0, NULL, 0);
 
-	ABOpenFile_t* of = new ABOpenFile_t;
-	of->pos = 0;
-	of->size = fi.uncompressed_size;
-	of->data = (char*)malloc(of->size);
+	if (unzOpenCurrentFile(zip) != UNZ_OK)
+		return false;
 
-	// If anything fails, we abort
-	try {
-		if (unzOpenCurrentFile(zip) != UNZ_OK)
-			throw zip_exception();
-		if (unzReadCurrentFile(zip, of->data, of->size) < 0)
-			throw zip_exception();
-		if (unzCloseCurrentFile(zip) == UNZ_CRCERROR)
-			throw zip_exception();
+	buffer.resize(fi.uncompressed_size);
+	if (unzReadCurrentFile(zip, &buffer[0], buffer.size()) < 0 || unzCloseCurrentFile(zip) == UNZ_CRCERROR)
+	{
+		buffer.clear();
+		return false;
 	}
-	catch (zip_exception) {
-		free(of->data);
-		delete of;
-		return NULL;
-	}
-
-	return of;
-}
-
-int CArchiveZip::FindFiles(int cur, std::string* name, int* size)
-{
-	if (cur == 0) {
-		curSearchHandle++;
-		cur = curSearchHandle;
-		searchHandles[cur] = fileData.begin();
-	}
-
-	if (searchHandles.find(cur) == searchHandles.end())
-		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchiveZip::FindFiles.");
-
-	if (searchHandles[cur] == fileData.end()) {
-		searchHandles.erase(cur);
-		return 0;
-	}
-
-	*name = searchHandles[cur]->second.origName;
-	*size = searchHandles[cur]->second.size;
-
-	searchHandles[cur]++;
-	return cur;
-}
-
-void CArchiveZip::SetSlashesForwardToBack(std::string& name)
-{
-	for (unsigned int i = 0; i < name.length(); ++i) {
-		if (name[i] == '/')
-			name[i] = '\\';
-	}
-}
-
-void CArchiveZip::SetSlashesBackToForward(std::string& name)
-{
-	for (unsigned int i = 0; i < name.length(); ++i) {
-		if (name[i] == '\\')
-			name[i] = '/';
-	}
+	return true;
 }

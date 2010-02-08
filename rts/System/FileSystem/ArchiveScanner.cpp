@@ -257,18 +257,19 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 	else
 	{
 		CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
-		if (ar)
+		if (ar && ar->IsOpen())
 		{
 			ArchiveInfo ai;
-
-			string name;
-			int size;
 
 			std::string mapfile;
 			bool hasModinfo = false;
 			bool hasMapinfo = false;
-			for (int cur = 0; (cur = ar->FindFiles(cur, &name, &size)); /* no-op */)
+			for (unsigned fid = 0; fid != ar->NumFiles(); ++fid)
 			{
+				std::string name;
+				int size;
+				ar->FileInfo(fid, name, size);
+
 				const string lowerName = StringToLower(name);
 				const string ext = filesystem.GetExtension(lowerName);
 
@@ -312,7 +313,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 			}
 			else
 			{ // error
-			LogObject() << "Failed to read archive, files missing: " << fullName;
+				LogObject() << "Failed to read archive, files missing: " << fullName;
 				delete ar;
 				return;
 			}
@@ -336,23 +337,20 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 
 			archiveInfo[lcfn] = ai;
 		}
+		else
+		{
+			LogObject() << "Unable to open archive: " << fullName;
+		}
 	}
 }
 
 bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai)
 {
-	const int fh = ar->OpenFile(fileName);
-	if (fh == 0) {
+	std::vector<uint8_t> buf;
+	if (!ar->GetFile(fileName, buf))
 		return false;
-	}
-	const int fsize = ar->FileSize(fh);
 
-	char* buf = new char[fsize];
-	ar->ReadFile(fh, buf, fsize);
-	ar->CloseFile(fh);
-
-	const string cleanbuf(buf, fsize);
-	delete [] buf;
+	const string cleanbuf((char*)(&buf[0]), buf.size());
 	LuaParser p(cleanbuf, SPRING_VFS_MOD);
 	if (!p.Execute()) {
 		logOutput.Print("ERROR in " + fileName + ": " + p.GetErrorLog());
@@ -366,21 +364,15 @@ bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileNa
 IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
-	int fh = ar->OpenFile("springignore.txt");
-
-	if (fh) {
-		const int fsize = ar->FileSize(fh);
-		char* buf = new char[fsize];
-
-		const int read = ar->ReadFile(fh, buf, fsize);
-		ar->CloseFile(fh);
-
+	std::vector<uint8_t> buf;
+	if (ar->GetFile("springignore.txt", buf))
+	{
 		// this automatically splits lines
-		if (read > 0)
-			ignore->AddRule(string(buf, read));
-		//TODO: figure out why read != fsize sometimes
-
-		delete[] buf;
+		if (!buf.empty())
+		{
+			const string cleanbuf((char*)(&buf[0]), buf.size());
+			ignore->AddRule(cleanbuf);
+		}
 	}
 	return ignore;
 }
@@ -403,22 +395,27 @@ unsigned int CArchiveScanner::GetCRC(const string& arcName)
 	// Load ignore list.
 	IFileFilter* ignore = CreateIgnoreFilter(ar);
 
-	string name;
-	int size;
-	// Sort all file paths for deterministic behaviour
-	for (int cur = 0; (cur = ar->FindFiles(cur, &name, &size)); /* no-op */) {
-		if (ignore->Match(name)) {
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid)
+	{
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
+
+		if (ignore->Match(name))
 			continue;
-		}
+
 		const string lower = StringToLower(name); // case insensitive hash
 		files.push_back(lower);
 	}
+
 	files.sort();
 
 	// Add all files in sorted order
-	for (std::list<string>::iterator i = files.begin(); i != files.end(); i++ ) {
+	for (std::list<string>::iterator i = files.begin(); i != files.end(); i++ )
+	{
 		const unsigned int nameCRC = CRC().Update(i->data(), i->size()).GetDigest();
-		const unsigned int dataCRC = ar->GetCrc32(*i);
+		const unsigned fid = ar->FindFile(*i);
+		const unsigned int dataCRC = ar->GetCrc32(fid);
 		crc.Update(nameCRC);
 		crc.Update(dataCRC);
 	}
