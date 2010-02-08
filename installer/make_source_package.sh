@@ -78,7 +78,6 @@ include=" \
  $dir/tools/DedicatedServer/"
 
 # On linux, win32 executables are useless.
-# TASClient is windows only.
 exclude_from_all=""
 linux_exclude="${exclude_from_all}
 	${dir}/installer/include/
@@ -91,7 +90,6 @@ linux_exclude="${exclude_from_all}
 	${dir}/installer/*.nsh
 	${dir}/installer/make_installer.pl
 	${dir}/installer/make_luaui_nsh.py
-	${dir}/installer/tasclient_download.sh
 	${dir}/installer/springlobby_download.sh"
 linux_include=""
 windows_exclude="${exclude_from_all}"
