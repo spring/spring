@@ -75,8 +75,8 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 				smfShaderGLSL->SetUniformLocation("shadowTex");           // idx  2
 				smfShaderGLSL->SetUniformLocation("detailTex");           // idx  3
 				smfShaderGLSL->SetUniformLocation("specularTex");         // idx  4
-				smfShaderGLSL->SetUniformLocation("mapSizeX");            // idx  5
-				smfShaderGLSL->SetUniformLocation("mapSizeZ");            // idx  6
+				smfShaderGLSL->SetUniformLocation("mapSizePO2");          // idx  5
+				smfShaderGLSL->SetUniformLocation("mapSize");             // idx  6
 				smfShaderGLSL->SetUniformLocation("texSquareX");          // idx  7
 				smfShaderGLSL->SetUniformLocation("texSquareZ");          // idx  8
 				smfShaderGLSL->SetUniformLocation("lightDir");            // idx  9
@@ -1314,8 +1314,8 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniform1i(2, 4); // shadowTex   (idx 2, texunit 4)
 			smfShaderGLSL->SetUniform1i(3, 2); // detailTex   (idx 3, texunit 2)
 			smfShaderGLSL->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
-			smfShaderGLSL->SetUniform1f(5, (gs->pwr2mapx * SQUARE_SIZE));
-			smfShaderGLSL->SetUniform1f(6, (gs->pwr2mapy * SQUARE_SIZE));
+			smfShaderGLSL->SetUniform2f(5, (gs->pwr2mapx * SQUARE_SIZE), (gs->pwr2mapy * SQUARE_SIZE));
+			smfShaderGLSL->SetUniform2f(6, (gs->mapx * SQUARE_SIZE), (gs->mapy * SQUARE_SIZE));
 			smfShaderGLSL->SetUniform4fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
 			smfShaderGLSL->SetUniform4fv(11, (float*) camera->modelviewInverse);

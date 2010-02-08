@@ -327,8 +327,9 @@ float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 
 float3 CSmfReadMap::GetLightValue(const int& x, const int& y) const
 {
-	float3 light = mapInfo->light.groundSunColor * DiffuseSunCoeff(x, y);
-	light += mapInfo->light.groundAmbientColor;
+	float3 light =
+		mapInfo->light.groundAmbientColor +
+		mapInfo->light.groundSunColor * DiffuseSunCoeff(x, y);
 
 	for (int a = 0; a < 3; ++a) {
 		if (light[a] > 1.0f) {

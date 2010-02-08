@@ -24,9 +24,9 @@ uniform float groundShadowDensity;
 void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
 	vec2 tc1 = gl_TexCoord[1].st;
-	vec2 tc3 = gl_TexCoord[3].st;
+	vec2 tc2 = gl_TexCoord[2].st;
 
-	vec4 vertexShadowPos = shadowMat * gl_TexCoord[2];
+	vec4 vertexShadowPos = shadowMat * gl_TexCoord[3];
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + shadowParams.z) + shadowParams.w);
 		vertexShadowPos.st += shadowParams.xy;
 
@@ -34,13 +34,13 @@ void main() {
 
 	float cosAngleDiffuse = min(max(dot(normalize(lightDir.xyz), normal), 0.0), 1.0);
 	float cosAngleSpecular = min(max(dot(normalize(halfDir), normal), 0.0), 1.0);
-	float specularExp = texture2D(specularTex, tc1).a * 16.0;
+	float specularExp = texture2D(specularTex, tc2).a * 16.0;
 	float specularPow = pow(cosAngleSpecular, specularExp);
 
 
 	vec4 diffuseCol = texture2D(diffuseTex, tc0);
-	vec3 specularCol = texture2D(specularTex, tc1).rgb;
-	vec4 detailCol = normalize((texture2D(detailTex, tc3) * 2.0) - 1.0);
+	vec3 specularCol = texture2D(specularTex, tc2).rgb;
+	vec4 detailCol = normalize((texture2D(detailTex, gl_TexCoord[4].st) * 2.0) - 1.0);
 
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);
 	vec4 diffuseInt =
