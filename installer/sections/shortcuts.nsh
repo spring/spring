@@ -11,9 +11,9 @@
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 
   WriteIniStr "$INSTDIR\Spring.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
-  WriteIniStr "$INSTDIR\jobjol.url" "InternetShortcut" "URL" "http://spring.jobjol.nl"
+  WriteIniStr "$INSTDIR\springfiles.url" "InternetShortcut" "URL" "http://www.springfiles.com"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk" "$INSTDIR\Spring.url"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\$$INSTDIR\jobjol.url"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\$$INSTDIR\springfiles.url"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 !else
   ; Shortcuts
@@ -35,7 +35,7 @@
 
   ; delete the .url files
   Delete "$INSTDIR\Spring.url"
-  Delete "$INSTDIR\jobjol.url"
+  Delete "$INSTDIR\springfiles.url"
 
   ; delete the folders
   RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
