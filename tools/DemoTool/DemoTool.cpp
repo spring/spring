@@ -152,7 +152,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				cout << "STARTPOS: Playernum: " << (unsigned)buffer[1] << " Team: " << (unsigned)buffer[2] << " Readyness: " << (unsigned)buffer[3] << endl;
 				break;
 			case NETMSG_SYSTEMMSG:
-				cout << "SYSTEMMSG: Player: " << (unsigned)buffer[2] << " Msg: " << (char*)(buffer+3) << endl;
+				cout << "SYSTEMMSG: Player: " << (unsigned)buffer[3] << " Msg: " << (char*)(buffer+4) << endl;
 				break;
 			case NETMSG_CHAT:
 				cout << "CHAT: Player: " << (unsigned)buffer[2] << " Msg: " << (char*)(buffer+4) << endl;
@@ -167,6 +167,9 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_NEWFRAME:
 				cout << "NEWFRAME" << endl;
 				++frame;
+				break;
+			case NETMSG_PLAYERINFO:
+				cout << "NETMSG_PLAYERINFO: Player:" << (int)buffer[1] << " Ping: " << *(uint16_t*)&buffer[6] << endl;
 				break;
 			case NETMSG_LUAMSG:
 				cout << "LUAMSG length:" << packet->length << endl;
