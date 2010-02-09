@@ -273,16 +273,45 @@ function printNativeEventCase(evtIndex) {
 	print("\t\t" "case " topicName ": {") >> outFile_nc;
 	print("\t\t\t" "const struct " eStruct "* evt = (const struct "eStruct"*) data;") >> outFile_nc;
 
-	paramsEvt = "";
+	paramsEvt       = "";
+	conversion_pre  = "";
 	for (m=0; m < evtsNumMembers[evtIndex]; m++) {
+		type_c   = evtsMembers_type_c[evtIndex, m];
 		name_c   = evtsMembers_name[evtIndex, m];
-		paramsEvt = paramsEvt ", evt->" name_c;
+		value_c  = "evt->" name_c;
+		name_jni = value_c;
+
+		type_jni = convertCToJNIType(type_c);
+		if (type_jni == "jstring") {
+			name_jni = name_c "_jni";
+			conversion_pre  = conversion_pre  "\n\t\t\t" type_jni " " name_jni " = (*env)->NewStringUTF(env, " value_c ");";
+		} else if (type_jni == "jfloatArray") {
+			name_jni = name_c "_jni";
+
+			array_size = "sizeof(" value_c ")";
+			if (match(name_c, /_posF3$/)) {
+				array_size = "3";
+			}
+
+			conversion_pre  = conversion_pre  "\n\t\t\t" type_jni " " name_jni " = (*env)->NewFloatArray(env, " array_size ");";
+			conversion_pre  = conversion_pre  "\n\t\t\t" "(*env)->SetFloatArrayRegion(env, " name_jni ", 0, " array_size ", " value_c ");";
+		} else if (type_jni == "jintArray") {
+			name_jni = name_c "_jni";
+
+			array_size = "sizeof(" value_c ")";
+
+			conversion_pre  = conversion_pre  "\n\t\t\t" type_jni " " name_jni " = (*env)->NewIntArray(env, " array_size ");";
+			conversion_pre  = conversion_pre  "\n\t\t\t" "(*env)->SetIntArrayRegion(env, " name_jni ", 0, " array_size ", " value_c ");";
+		}
+
+		paramsEvt = paramsEvt ", " name_jni;
 	}
 	sub(/^\, /, "", paramsEvt);
 	if (eNameLowerized == "init") {
 		sub(/evt->callback/, "skirmishAIId_callback[evt->skirmishAIId]", paramsEvt);
 	}
 
+	print(conversion_pre) >> outFile_nc;
 	print("\t\t\t" "_ret = (*env)->CallIntMethod(env, aiInstance, m_ai_" eNameLowerized ", " paramsEvt ");") >> outFile_nc;
 
 	print("\t\t\t" "break;") >> outFile_nc;
