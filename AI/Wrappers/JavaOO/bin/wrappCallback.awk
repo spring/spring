@@ -504,8 +504,10 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 		memName_c  = cls_name_members[clsName_int_c "," m];
 		fullName_c = implId_c "," memName_c;
 		gsub(/,/, "_", fullName_c);
-		if (doWrapp(fullName_c)) {
+		if (doWrappMember(fullName_c)) {
 			printMember(fullName_c, memName_c, addInds_size_c);
+		} else {
+			print("JavaOO: NOTE: intentionally not wrapped: " fullName_c);
 		}
 	}
 
@@ -1081,6 +1083,13 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	}
 }
 
+
+function doWrappMember(fullName_dwm) {
+
+	doWrapp_dwm = 1;
+
+	return doWrapp_dwm;
+}
 
 # Used by the common OO AWK script
 function doWrappOO(funcFullName_dw, params_dw, metaComment_dw) {
