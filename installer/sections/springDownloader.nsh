@@ -1,7 +1,7 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
 
-  inetc::get "http://files.caspring.org/caupdater/SpringDownloader.exe" "$INSTDIR\SpringDownloader.exe"
+  File /r "..\installer\downloads\SpringDownloader.exe"
 
   Call GetDotNETVersion
   Pop $0
