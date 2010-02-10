@@ -238,8 +238,8 @@ void DataDirLocater::LocateDataDirs()
 				}
 				// ignore lines consisting of only whitespaces
 				if ((strlen(lineBuf) > 0) && strspn(lineBuf, whiteSpaces) != strlen(lineBuf)) {
-					// append, separated by cPD (depending on OS): ';' or ':'
-					dd_etc = dd_etc + (dd_etc.empty() ? "" : cPD) + SubstEnvVars(lineBuf);
+					// append, separated by sPD (depending on OS): ';' or ':'
+					dd_etc = dd_etc + (dd_etc.empty() ? "" : sPD) + SubstEnvVars(lineBuf);
 				}
 			}
 			fclose(fileH);
