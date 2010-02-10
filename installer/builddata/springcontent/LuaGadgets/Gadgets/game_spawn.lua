@@ -63,27 +63,28 @@ local function SpawnStartUnit(teamID)
 
 		-- set the *team's* lineage root
 		Spring.SetUnitLineage(unitID, teamID, true)
-
-		-- remove the pre-existing storage
-		--   must be done after the start unit is spawned,
-		--   otherwise the starting resources are lost!
-		local ud = UnitDefs[UnitDefNames[startUnit].id]
-		Spring.SetTeamResource(teamID, "ms", ud.metalStorage)
-		Spring.SetTeamResource(teamID, "es", ud.energyStorage)
 	end
 
 	-- set start resources, either from mod options or custom team keys
 	local teamOptions = select(7, Spring.GetTeamInfo(teamID))
-	local m = teamOptions.startmetal  or modOptions.startmetal
-	local e = teamOptions.startenergy or modOptions.startenergy
+	local m = teamOptions.startmetal  or modOptions.startmetal  or 1000
+	local e = teamOptions.startenergy or modOptions.startenergy or 1000
 
 	-- using SetTeamResource to get rid of any existing resource without affecting stats
 	-- using AddTeamResource to add starting resource and counting it as income
 	if (m and tonumber(m) ~= 0) then
+		-- remove the pre-existing storage
+		--   must be done after the start unit is spawned,
+		--   otherwise the starting resources are lost!
+		Spring.SetTeamResource(teamID, "ms", tonumber(m))
 		Spring.SetTeamResource(teamID, "m", 0)
 		Spring.AddTeamResource(teamID, "m", tonumber(m))
 	end
 	if (e and tonumber(e) ~= 0) then
+		-- remove the pre-existing storage
+		--   must be done after the start unit is spawned,
+		--   otherwise the starting resources are lost!
+		Spring.SetTeamResource(teamID, "es", tonumber(e))
 		Spring.SetTeamResource(teamID, "e", 0)
 		Spring.AddTeamResource(teamID, "e", tonumber(e))
 	end
@@ -107,4 +108,3 @@ function gadget:GameStart()
 		end
 	end
 end
-
