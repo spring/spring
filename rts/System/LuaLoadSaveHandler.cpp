@@ -143,15 +143,9 @@ void CLuaLoadSaveHandler::LoadGame()
 
 std::string CLuaLoadSaveHandler::LoadEntireFile(const std::string& file)
 {
-	const int handle = loadfile->OpenFile(file);
-	if (handle == 0) {
-		return "";
+	std::vector<uint8_t> buf;
+	if (loadfile->GetFile(file, buf)) {
+		return std::string((char*) &*buf.begin(), buf.size());
 	}
-
-	const int size = loadfile->FileSize(handle);
-	char* data = new char[size];
-	loadfile->ReadFile(handle, data, size);
-	loadfile->CloseFile(handle);
-
-	return std::string(data, size);
+	return "";
 }

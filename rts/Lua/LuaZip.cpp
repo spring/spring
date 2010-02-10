@@ -38,6 +38,7 @@
 #include "System/Util.h"
 #include "lib/minizip/zip.h"
 #include <cstring>
+#include <sstream>
 #include <string>
 #include "mmgr.h"
 
@@ -255,7 +256,7 @@ bool LuaZipFileReader::CreateMetatable(lua_State* L)
 
 struct ZipFileReaderUserdata {
 	CArchiveBase* archive;
-	int file;
+	std::stringstream* stream;
 	bool dontClose;
 };
 
@@ -316,6 +317,10 @@ int LuaZipFileReader::meta_gc(lua_State* L)
 {
 	ZipFileReaderUserdata* f = toreader(L);
 
+	if (f->stream) {
+		SafeDelete(f->stream);
+	}
+
 	if (f->archive && !f->dontClose) {
 		SafeDelete(f->archive);
 		lua_pushboolean(L, 1);
@@ -334,21 +339,20 @@ int LuaZipFileReader::meta_open(lua_State* L)
 	if (!f->archive) {
 		luaL_error(L, "zip not open");
 	}
-	if (f->file) {
-		f->archive->CloseFile(f->file);
-		f->file = 0;
-	}
 
-	f->file = f->archive->OpenFile(name.c_str());
+	std::vector<uint8_t> buf;
+	const bool result = f->archive->GetFile(name, buf);
 
-	return pushresult(L, f->file != 0, "open failed");
+	f->stream = new std::stringstream(std::string((char*) &*buf.begin(), buf.size()), std::ios_base::in);
+
+	return pushresult(L, result, "open failed");
 }
 
 
 static int test_eof (lua_State *L, ZipFileReaderUserdata* f)
 {
 	// based on liolib.cpp test_eof
-	int c = f->archive->Peek(f->file);
+	int c = f->stream->peek();
 	lua_pushlstring(L, NULL, 0);
 	return (c != EOF);
 }
@@ -366,7 +370,7 @@ static int read_chars(lua_State *L, ZipFileReaderUserdata* f, size_t n)
 		char *p = luaL_prepbuffer(&b);
 		if (rlen > n)
 			rlen = n; /* cannot read more than asked */
-		nr = f->archive->ReadFile(f->file, p, rlen);
+		nr = f->stream->read(p, rlen).gcount();
 		luaL_addsize(&b, nr);
 		n -= nr; /* still have to read `n' chars */
 	} while (n > 0 && nr == rlen); /* until end of count or eof */
@@ -391,7 +395,7 @@ int LuaZipFileReader::meta_read(lua_State* L)
 	if (!f->archive) {
 		luaL_error(L, "zip not open");
 	}
-	if (!f->file) {
+	if (!f->stream) {
 		luaL_error(L, "file in zip not open");
 	}
 
