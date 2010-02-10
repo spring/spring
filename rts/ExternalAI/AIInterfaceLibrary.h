@@ -90,6 +90,14 @@ public:
 	 */
 	int ReleaseAllSkirmishAILibraries();
 
+	/**
+	 * @brief	path to the library file
+	 * Returns the path to the shared library file wrapped by this class.
+	 */
+	const std::string& GetLibraryFilePath() const {
+		return libFilePath;
+	}
+
 private:
 	int interfaceId;
 	struct SAIInterfaceCallback callback;
