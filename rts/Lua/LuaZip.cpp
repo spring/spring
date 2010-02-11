@@ -21,7 +21,7 @@
  * @brief A Lua userdatum to read zip files
  *
  * This class defines functions for a Lua userdatum to read archive files.
- * Any VFS-supported archive is supported, e.g. zip, 7-zip.
+ * The type is currently forced to a zip-file, while allowing any file extension.
  * Such a userdatum supports the following methods:
  *  - close()    : close the archive, after this open and read raise an error
  *  - open(name) : opens a new file within the archive (for reading)
@@ -31,7 +31,7 @@
 #include "LuaZip.h"
 #include "LuaInclude.h"
 #include "LuaHashString.h"
-#include "System/FileSystem/ArchiveFactory.h"
+#include "System/FileSystem/ArchiveZip.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LogOutput.h"
@@ -268,7 +268,8 @@ struct ZipFileReaderUserdata {
  *  - the userdatum is made to point to the archive,
  *  - the archive will never be closed by Lua (close()->no-op, GC->no-op)
  * Otherwise:
- *  - a new archive is opened (full VFS support)
+ *  - a new archive is opened
+ *  - the type is currently forced to a zip-file, while allowing any file extension
  *  - this archive may be closed by Lua (close() or GC)
  */
 bool LuaZipFileReader::PushNew(lua_State* L, const string& filename, CArchiveBase* archive)
@@ -287,7 +288,7 @@ bool LuaZipFileReader::PushNew(lua_State* L, const string& filename, CArchiveBas
 	else {
 		string realname = filesystem.LocateFile(filename);
 		if (!realname.empty()) {
-			udata->archive = CArchiveFactory::OpenArchive(realname);
+			udata->archive = new CArchiveZip(realname);
 		}
 	}
 
