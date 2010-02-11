@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+
 #include "float3.h"
 #include "float4.h"
 
@@ -12,8 +13,11 @@ class MapParser;
 class CMapInfo
 {
 public:
-
-	CMapInfo(const std::string& mapName);
+	/**
+	@param mapInfoFile mapinfo file, aka sm3 / smf (full path)
+	@param mapName human readable mapname e.g. DeltaSiegeDry
+	*/
+	CMapInfo(const std::string& mapInfoFile, const std::string& mapName);
 	void Load(); // fill in infos
 	~CMapInfo();
 
@@ -49,7 +53,6 @@ public:
 	/** Global settings, ie. from "MAP" section. */
 	struct map_t {
 		std::string name;      ///< The filename as passed to the constructor.
-		std::string wantedScript;
 		std::string humanName; ///< "MAP\\Description"
 		std::string author;
 		float hardness;        ///< "MAP\\MapHardness"
@@ -92,7 +95,7 @@ public:
 		float4 unitAmbientColor;
 		float4 unitSunColor;
 		float  unitShadowDensity;
-		float3 specularSunColor;
+		float3 unitSpecularColor;
 	} light;
 
 	/** settings read from "MAP\WATER" section
@@ -177,6 +180,7 @@ private:
 	void ReadSm3();
 	void ReadTerrainTypes();
 
+	std::string mapInfoFile;
 	MapParser* parser; // map       parser root table
 	LuaTable* resRoot; // resources parser root table
 };

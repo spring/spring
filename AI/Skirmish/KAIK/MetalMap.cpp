@@ -19,6 +19,7 @@ CMetalMap::CMetalMap(AIClasses* ai) {
 	MetalMapWidth = ai->cb->GetMapWidth() / 2;
 
 	TotalCells = MetalMapHeight * MetalMapWidth;
+	XtractorRadiusOrg = ai->cb->GetExtractorRadius();
 	XtractorRadius = int(ai->cb->GetExtractorRadius() / 16.0f);
 	DoubleRadius = XtractorRadius * 2;
 	SquareRadius = XtractorRadius * XtractorRadius;
@@ -54,14 +55,27 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 
 			if (spotCoords.x >= 0.0f) {
 				float distance = spotCoords.distance2D(ai->cb->GetUnitPos(builderid)) + 150;
-				float myThreat = ai->tm->ThreatAtThisPoint(VectoredSpots[i]);
+				float myThreat = ai->tm->ThreatAtThisPoint(spotCoords);
 				float spotScore = VectoredSpots[i].y / distance / (myThreat + 10);
-				int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], VectoredSpots[i], XtractorRadius * 2);
+
+				// along with threatmap try to search for enemy armed units around cause
+				// there could be armored MEX nearby which gives the highest threat anyway...
+				int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], spotCoords, XtractorRadiusOrg * 1.5f);
+				while(numEnemies > 0)
+				{
+					numEnemies--;
+					const UnitDef* ud = ai->ccb->GetUnitDef(ai->unitIDs[numEnemies]);
+					if(ud && !ud->weapons.empty())
+					{
+						numEnemies++;
+						break;
+					}
+				}
 
 				bool bOccupied = false;	// flag: metal spot is occupied by allied unit
 				if(NumSpotsFound < 100)
 				{
-					int numAllies = ai->cb->GetFriendlyUnits(&ai->unitIDs[0], VectoredSpots[i], XtractorRadius * 2);
+					int numAllies = ai->cb->GetFriendlyUnits(&ai->unitIDs[0], spotCoords, XtractorRadiusOrg * 1.5f);
 					for(unsigned int j = 0; j < numAllies; j++)
 					{
 						if(ai->ut->GetCategory(ai->unitIDs[j]) == CAT_MEX)
@@ -72,7 +86,7 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 					}
 				}
 
-				// NOTE: threat at VectoredSpots[i] is determined
+				// NOTE: threat at spotCoords is determined
 				// by presence of ARMED enemy units or buildings
 				bool b1 = (TempScore < spotScore);
 				bool b2 = (numEnemies == 0);
@@ -107,8 +121,6 @@ void CMetalMap::Init() {
 		// mapname.resize(mapname.size() - 4);
 		// ai->debug->MakeBWTGA(MexArrayC, MetalMapWidth, MetalMapHeight, mapname);
 	}
-
-	// "Metal Spots Found: %i", NumSpotsFound);
 
 	std::stringstream msg;
 	msg << "[CMetalMap::Init()] frame " << frame << "\n";
@@ -210,7 +222,7 @@ void CMetalMap::GetMetalPoints() {
 				TotalMetal = TotalMetal;
 			}
 
-			//set that spot's metal making ability (divide by cells to values are small)
+			// set that spot's metal making ability (divide by cells to values are small)
 			TempAverage[y * MetalMapWidth + x] = TotalMetal;
 
 			if (MaxMetal < TotalMetal) {

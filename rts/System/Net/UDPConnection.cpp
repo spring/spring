@@ -316,7 +316,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 						}
 						else if (length_t == -2)
 						{
-							msglength = *(short*)(&buf[pos+1]);
+							msglength = *(uint16_t*)(&buf[pos+1]);
 						}
 					}
 					else

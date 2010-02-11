@@ -440,7 +440,7 @@ void CGameServer::CheckSync()
 			{
 				if (!players[a].link)
 					continue;
-			
+
 				std::map<int, unsigned>::const_iterator it = players[a].syncResponse.find(*f);
 				if (it != players[a].syncResponse.end())
 				{
@@ -935,7 +935,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			int frameNum = *(int*)&inbuf[1];
+			const int frameNum = *(int*)&inbuf[1];
 			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
 			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
@@ -1297,6 +1297,43 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				hostif->Send(packet->data, packet->length);
 			break;
 		}
+
+		case NETMSG_REGISTER_NETMSG: {
+			const unsigned char player = inbuf[1];
+			const unsigned char msg = inbuf[2];
+			MsgToForwardMap::iterator itor = relayingMessagesMap.find( msg );
+
+			if ( itor != relayingMessagesMap.end() ) { // one entry already exists in the map
+				PlayersToForwardMsgvec &toForward = itor->second;
+				if ( toForward.find( player ) == toForward.end() ) {
+					toForward.insert( player );
+				}
+			}
+			else {
+				PlayersToForwardMsgvec toForward;
+				toForward.insert( player );
+				relayingMessagesMap[msg] = toForward;
+			}
+			break;
+		}
+
+		case NETMSG_UNREGISTER_NETMSG: {
+			const unsigned char player = inbuf[1];
+			const unsigned char msg = inbuf[2];
+			MsgToForwardMap::iterator itor = relayingMessagesMap.find( msg );
+			if ( itor == relayingMessagesMap.end() ) { // no entry already exists in the map
+				break;
+			}
+			PlayersToForwardMsgvec& toForward = itor->second;
+			if ( toForward.find( player ) != toForward.end() ) {
+				toForward.erase( player );
+				if ( toForward.size() == 0 ) {
+					relayingMessagesMap.erase( itor );
+				}
+			}
+			break;
+		}
+
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:
@@ -1319,6 +1356,18 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
 		}
 		break;
+	}
+
+	// forward special messages to the players that request them
+	size_t playersSize = players.size();
+	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find( inbuf[0] );
+	if ( toRelay != relayingMessagesMap.end() ) {
+		PlayersToForwardMsgvec& toRelaySet = toRelay->second;
+		for ( PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); playerToRelay++ ) {
+			if ( *playerToRelay < playersSize ) {
+				players[*playerToRelay].SendData(packet);
+			}
+		}
 	}
 }
 
@@ -1482,7 +1531,7 @@ void CGameServer::StartGame()
 	for (size_t a = 0; a < teams.size(); ++a) {
 		if (!teamStartPosSent[a]) {
 			// teams which aren't player controlled are always ready
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(teams[a].leader, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 		}
 	}
 
@@ -1936,4 +1985,3 @@ size_t CGameServer::ReserveNextAvailableSkirmishAIId() {
 void CGameServer::FreeSkirmishAIId(const size_t skirmishAIId) {
 	usedSkirmishAIIds.remove(skirmishAIId);
 }
-

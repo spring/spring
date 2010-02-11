@@ -118,7 +118,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	// use globalalloc to reduce risk for allocator related deadlock
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
-	bool containsAtiDll = false;
+	bool containsOglDll = false;
 	while (true) {
 		more = StackWalk(
 			IMAGE_FILE_MACHINE_I386, // TODO: fix this for 64 bit windows?
@@ -160,13 +160,17 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		}
 
 		const std::string str_modname = modname;
-		containsAtiDll = (containsAtiDll || (str_modname.find("atioglxx.dll") != std::string::npos));
+		containsOglDll = (containsOglDll || (str_modname.find("atioglxx.dll") != std::string::npos));
+		containsOglDll = (containsOglDll || (str_modname.find("nvoglv32.dll") != std::string::npos));
+		containsOglDll = (containsOglDll || (str_modname.find("nvoglv64.dll") != std::string::npos)); // guessed
 
 		++count;
 	}
 
-	if (containsAtiDll) {
-		PRINT("This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.");
+	if (containsOglDll) {
+		PRINT("This stack trace indicates a problem with your graphic card driver. "
+		      "Please try upgrading or downgrading it. "
+		      "Specifically recommended is the latest driver, and one that is as old as your graphic card.");
 	}
 
 	if (suspended) {
@@ -201,7 +205,7 @@ static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userCo
 static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
-	logOutput.RemoveAllSubscribers();
+	logOutput.SetSubscribersEnabled(false);
 	PRINT("Spring %s has crashed.", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);

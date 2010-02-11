@@ -198,6 +198,9 @@ public:
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
 	const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL);
+
+	std::map<std::string, std::string> GetMyInfo();
+	std::map<std::string, std::string> GetMyOptionValues();
 };
 
 #endif /* AICALLBACK_H */

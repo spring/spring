@@ -19,7 +19,7 @@
 
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "Rendering/FartextureHandler.h"
+#include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
@@ -27,6 +27,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -56,7 +57,9 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 CUnitDrawer* unitDrawer;
+
 static bool luaDrawing = false; // FIXME
+static bool haveGLSL = false;
 
 static float GetLODFloat(const string& name, float def)
 {
@@ -115,7 +118,6 @@ CUnitDrawer::CUnitDrawer(void)
 #endif
 }
 
-
 CUnitDrawer::~CUnitDrawer(void)
 {
 	glDeleteTextures(1, &whiteTex);
@@ -147,12 +149,14 @@ CUnitDrawer::~CUnitDrawer(void)
 #endif
 }
 
+
 bool CUnitDrawer::LoadModelShaders()
 {
+	haveGLSL = !!GLEW_VERSION_2_0;
+
 	S3ODefShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
-	S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
+	S3OAdvShader = S3ODefShader;
 	S3OCurShader = S3ODefShader;
-	MDLLSPShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "MDLLSPShaderARB", true);
 
 	if (!GLEW_ARB_fragment_program) {
 		// not possible to do (ARB) shader-based model rendering
@@ -160,22 +164,45 @@ bool CUnitDrawer::LoadModelShaders()
 		return false;
 	}
 	if (!(!!configHandler->Get("AdvUnitShading", 1))) {
-		// not allowed to do (ARB) shader-based model rendering
+		// not allowed to do shader-based model rendering
 		return false;
 	}
 
-	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject(advFade? "units3o2.vp": "units3o.vp", GL_VERTEX_PROGRAM_ARB));
+	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
+	const char* vertexProgNameARB = (advFade)? "units3o2.vp": "units3o.vp";
+
+	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexProgNameARB, GL_VERTEX_PROGRAM_ARB));
 	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject("units3o.fp", GL_FRAGMENT_PROGRAM_ARB));
 	S3ODefShader->Link();
 
 	if (shadowHandler->canUseShadows) {
-		S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject(advFade? "units3o2.vp": "units3o.vp", GL_VERTEX_PROGRAM_ARB));
-		S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("units3o_shadow.fp", GL_FRAGMENT_PROGRAM_ARB));
-		S3OAdvShader->Link();
-		S3OCurShader = S3OAdvShader;
+		if (!haveGLSL) {
+			S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
+			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexProgNameARB, GL_VERTEX_PROGRAM_ARB));
+			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("units3o_shadow.fp", GL_FRAGMENT_PROGRAM_ARB));
+			S3OAdvShader->Link();
+		} else {
+			S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
+			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("S3OVertProg.glsl", GL_VERTEX_SHADER));
+			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("S3OFragProg.glsl", GL_FRAGMENT_SHADER));
+			S3OAdvShader->Link();
+			S3OAdvShader->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
+			S3OAdvShader->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
+			S3OAdvShader->SetUniformLocation("shadowTex");         // idx  2
+			S3OAdvShader->SetUniformLocation("reflectTex");        // idx  3 (cube)
+			S3OAdvShader->SetUniformLocation("specularTex");       // idx  4 (cube)
+			S3OAdvShader->SetUniformLocation("lightDir");          // idx  5
+			S3OAdvShader->SetUniformLocation("cameraPos");         // idx  6
+			S3OAdvShader->SetUniformLocation("cameraMatInv");      // idx  7
+			S3OAdvShader->SetUniformLocation("unitTeamColor");     // idx  8
+			S3OAdvShader->SetUniformLocation("unitAmbientColor");  // idx  9
+			S3OAdvShader->SetUniformLocation("unitDiffuseColor");  // idx 10
+			S3OAdvShader->SetUniformLocation("unitShadowDensity"); // idx 11
+			S3OAdvShader->SetUniformLocation("shadowMat");         // idx 12
+			S3OAdvShader->SetUniformLocation("shadowParams");      // idx 13
+		}
 
-		MDLLSPShader->AttachShaderObject(shaderHandler->CreateShaderObject("unit_genshadow.vp", GL_VERTEX_PROGRAM_ARB));
-		MDLLSPShader->Link();
+		S3OCurShader = S3OAdvShader;
 	}
 
 	return true;
@@ -478,7 +505,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		glAlphaFunc(GL_GREATER, 0.5f);
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
+		glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
 		glColor4f(1, 1, 1, 1);
 		glNormal3fv((const GLfloat*) &camNorm.x);
 
@@ -491,7 +518,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		va->Initialize();
 		va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
 		for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); it++) {
-			fartextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
+			farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
 		}
 
 		va->DrawArrayT(GL_QUADS);
@@ -586,19 +613,21 @@ static void SetupShadowDrawing()
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	const CShadowHandler* sh = shadowHandler;
+	CShadowHandler* sh = shadowHandler;
+	Shader::IProgramObject* po = sh->GetMdlShadowGenShader();
 
-	unitDrawer->MDLLSPShader->Enable();
-	unitDrawer->MDLLSPShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-	unitDrawer->MDLLSPShader->SetUniform4f(16, sh->xmid, sh->ymid, 0.0f, 0.0f);
-	unitDrawer->MDLLSPShader->SetUniform4f(17, sh->p17,  sh->p17,  0.0f, 0.0f);
-	unitDrawer->MDLLSPShader->SetUniform4f(18, sh->p18,  sh->p18,  0.0f, 0.0f);
+	// note: env is shared by ARB S3O*Shader programs
+	po->Enable();
+	po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+	po->SetUniform4f(16, sh->xmid, sh->ymid, 0.0f, 0.0f);
+	po->SetUniform4f(17, sh->p17,  sh->p17,  0.0f, 0.0f);
+	po->SetUniform4f(18, sh->p18,  sh->p18,  0.0f, 0.0f);
 }
 
 
 static void CleanUpShadowDrawing()
 {
-	unitDrawer->MDLLSPShader->Disable();
+	shadowHandler->GetMdlShadowGenShader()->Disable();
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
@@ -705,8 +734,8 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	MDLLSPShader->Enable();
 
+	shadowHandler->GetMdlShadowGenShader()->Enable();
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
 	GML_RECMUTEX_LOCK(unit); // DrawShadowPass
@@ -726,7 +755,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	}
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	MDLLSPShader->Disable();
+	shadowHandler->GetMdlShadowGenShader()->Disable();
 
 	DrawShadowShaderUnits();
 }
@@ -918,6 +947,8 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
 	DrawCloakedShaderUnits();
 
 	advShading = oldAdvShading;
+
+	glColor4f(1, 1, 1, 1);
 }
 
 
@@ -1010,8 +1041,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 	// When rendering shadows, we just want to take extraColor.alpha (tex2) into account,
 	// so textures with masked texels create correct shadows.
-	if (shadowHandler->inShadowPass)
-	{
+	if (shadowHandler->inShadowPass) {
 		// Instead of enabling GL_TEXTURE1_ARB i have modified CTextureHandler.SetS3oTexture()
 		// to set texture 0 if shadowHandler->inShadowPass is true.
 		glEnable(GL_TEXTURE_2D);
@@ -1019,17 +1049,43 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 	}
 
 	if (advShading && !water->drawReflection) {
-		// ARB standard does not seem to support vertex program + clipplanes at once
+		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
+
+		// ARB standard does not seem to support
+		// vertex program + clipplanes (used for
+		// reflective pass) at once ==> not true,
+		// but needs option ARB_position_invariant
 		S3OCurShader = (shadowHandler->drawShadows)? S3OAdvShader: S3ODefShader;
 		S3OCurShader->Enable();
-		S3OCurShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-		S3OCurShader->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
-		S3OCurShader->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
-		S3OCurShader->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
-		S3OCurShader->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
-		S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-		S3OCurShader->SetUniform4f(10, 0.0f, 0.0f, 0.0f, unitShadowDensity);
-		S3OCurShader->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
+
+		if (haveGLSL && shadowHandler->drawShadows) {
+			S3OCurShader->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
+			S3OCurShader->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
+			S3OCurShader->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
+			S3OCurShader->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
+			S3OCurShader->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
+			S3OCurShader->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			S3OCurShader->SetUniform3fv(6, &camera->pos[0]);
+			S3OCurShader->SetUniformMatrix4fv(7, false, (float*) &camera->modelviewInverse[0]);
+
+			S3OCurShader->SetUniform3fv(9, &unitAmbientColor[0]);
+			S3OCurShader->SetUniform3fv(10, &unitSunColor[0]);
+			S3OCurShader->SetUniform1f(11, unitShadowDensity);
+			S3OCurShader->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
+			S3OCurShader->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
+		} else {
+			S3OCurShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+			S3OCurShader->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
+			S3OCurShader->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
+			S3OCurShader->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f); //!
+			S3OCurShader->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
+			S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+			S3OCurShader->SetUniform4f(10, 0.0f, 0.0f, 0.0f, unitShadowDensity);
+			S3OCurShader->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
+
+			glMatrixMode(GL_MATRIX0_ARB);
+			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+		}
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glEnable(GL_TEXTURE_2D);
@@ -1058,8 +1114,6 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glMatrixMode(GL_MATRIX0_ARB);
-		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glMultMatrixd(camera->GetModelview());
@@ -1076,11 +1130,10 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		// Set material color
 		const float cols[] = {1.0f, 1.0f, 1.0, 1.0f};
-		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE, cols);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
 		glColor4fv(cols);
 	}
 }
-
 
 void CUnitDrawer::CleanUpUnitDrawing(void) const
 {
@@ -1125,16 +1178,23 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 }
 
 
+
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
 	if (advShading) {
-		const unsigned char* col = teamHandler->Team(team)->color;
+		CTeam* t = teamHandler->Team(team);
+		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-		S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-		S3OCurShader->SetUniform4f(14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, alpha);
+		if (haveGLSL && shadowHandler->drawShadows) {
+			S3OCurShader->SetUniform4fv(8, &c[0]);
+		} else {
+			S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+			S3OCurShader->SetUniform4fv(14, &c[0]);
+		}
 
-		if (luaDrawing) // FIXME?
+		if (luaDrawing) {// FIXME?
 			SetBasicTeamColour(team, alpha);
+		}
 	} else {
 		SetBasicTeamColour(team, alpha);
 	}
@@ -1258,14 +1318,12 @@ void CUnitDrawer::CleanupBasicS3OTexture0(void) const
  *
  * Does *not* restore the texture bindings.
  */
-void CUnitDrawer::UnitDrawingTexturesOn(S3DModel* model)
+void CUnitDrawer::UnitDrawingTexturesOn()
 {
 	// XXX FIXME GL_VERTEX_PROGRAM_ARB is very slow on ATIs here for some reason
 	// if clip planes are enabled
 	// check later after driver updates
 	if (advShading && !water->drawReflection) {
-		S3OCurShader->Enable();
-
 		glEnable(GL_TEXTURE_2D);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
@@ -1296,31 +1354,28 @@ void CUnitDrawer::UnitDrawingTexturesOn(S3DModel* model)
  * Unfortunately, it doesn't work! With advanced shading on, the green
  * is darker than usual; with shadows as well, it's almost black. -- krudat
  */
-void CUnitDrawer::UnitDrawingTexturesOff(S3DModel* model)
+void CUnitDrawer::UnitDrawingTexturesOff()
 {
 	/* If SetupForUnitDrawing is changed, this may need tweaking too. */
 	if (advShading && !water->drawReflection) {
-		S3OCurShader->Disable();
-
-		/* TEXTURE0: Colour texture. */
+		glActiveTextureARB(GL_TEXTURE1_ARB); //! 'Shiny' texture.
 		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE1_ARB); // 'Shiny' texture.
-		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE2_ARB); // Shadows.
+		glActiveTextureARB(GL_TEXTURE2_ARB); //! Shadows.
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE3_ARB); // reflectionTex
+		glActiveTextureARB(GL_TEXTURE3_ARB); //! reflectionTex
 		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-		glActiveTextureARB(GL_TEXTURE4_ARB); // specularTex
+		glActiveTextureARB(GL_TEXTURE4_ARB); //! specularTex
 		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glDisable(GL_TEXTURE_2D); //! albedo + teamcolor
 	} else {
 		glDisable(GL_LIGHTING);
-		/* TEXTURE0: Colour texture. */
 		glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE1_ARB); // GL lighting, I think.
+		glActiveTextureARB(GL_TEXTURE1_ARB); //! GL lighting, I think.
 		glDisable(GL_TEXTURE_2D);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glDisable(GL_TEXTURE_2D); //! albedo + teamcolor
 	}
 }
 
@@ -1628,6 +1683,10 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	if (gu->drawdebug) {
+		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+			S3OCurShader->Disable();
+		}
+
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 			glDisable(GL_LIGHTING);
 			glDisable(GL_LIGHT0);
@@ -1640,7 +1699,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			glDisable(GL_CLIP_PLANE0);
 			glDisable(GL_CLIP_PLANE1);
 
-			UnitDrawingTexturesOff(NULL);
+			UnitDrawingTexturesOff();
 
 			const int  deltaTime  = gs->frameNum - unit->lastAttack;
 			const bool markVolume = (unit->lastAttack > 0 && deltaTime < 150);
@@ -1685,8 +1744,12 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 				gluDeleteQuadric(q);
 			glPopMatrix();
 
-			UnitDrawingTexturesOn(NULL);
+			UnitDrawingTexturesOn();
 		glPopAttrib();
+
+		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+			S3OCurShader->Enable();
+		}
 	}
 }
 
@@ -1701,7 +1764,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		return;
 	}
 
-	const float start  = unit->model->miny;
+	const float start  = std::max(unit->model->miny, -unit->model->height);
 	const float height = unit->model->height;
 
 	glEnable(GL_CLIP_PLANE0);
@@ -1720,7 +1783,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	}
 	glColorf3(fc * col);
 
-	unitDrawer->UnitDrawingTexturesOff(unit->model);
+	unitDrawer->UnitDrawingTexturesOff();
 
 	// Wireframe model
 
@@ -1764,7 +1827,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	}
 
 	glDisable(GL_CLIP_PLANE1);
-	unitDrawer->UnitDrawingTexturesOn(unit->model);
+	unitDrawer->UnitDrawingTexturesOn();
 
 	// Texturemapped model
 
@@ -1794,6 +1857,8 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		}
 	}
 	glDisable(GL_CLIP_PLANE0);
+
+	glColor4f(1,1,1,1);
 }
 
 
@@ -1973,8 +2038,8 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
 	}
 
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	if (unit->group) {
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
 	}
 

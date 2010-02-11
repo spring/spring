@@ -1762,7 +1762,7 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 		SetShowingMetal(false);
 		return true;
 	}
-	if (key == SDLK_ESCAPE && inCommand > 0) {
+	if (key == SDLK_ESCAPE && inCommand >= 0) {
 		inCommand=-1;
 		SetShowingMetal(false);
 		return true;
@@ -2141,7 +2141,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 			if(buildPos.size()==1) {
 				CFeature* feature; // TODO: Maybe also check out-of-range for immobile builder?
-				if(!uh->TestUnitBuildSquare(bi,feature,gu->myAllyTeam)) {
+				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam)) {
 					Command failedRet;
 					failedRet.id = CMD_FAILED;
 					return failedRet;

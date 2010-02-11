@@ -116,13 +116,30 @@
 #else // _WIN32
 #define sPS "/"
 #endif // _WIN32
-#endif
+#endif // sPS
 #ifndef cPS
 #ifdef _WIN32
 #define cPS '\\'
 #else // _WIN32
 #define cPS '/'
 #endif // _WIN32
-#endif
+#endif // cPS
+
+// define a platform independent path delimitter C-string and char
+#ifndef sPD
+#ifdef _WIN32
+#define sPD ";"
+#else // _WIN32
+#define sPD ":"
+#endif // _WIN32
+#endif // sPD
+#ifndef cPD
+#ifdef _WIN32
+#define cPD ';'
+#else // _WIN32
+#define cPD ':'
+#endif // _WIN32
+#endif // cPD
+
 
 #endif // _MAINDEFINES_H

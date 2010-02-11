@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Rendering/FartextureHandler.h"
+#include "Rendering/FarTextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -14,10 +14,10 @@
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 
-CFartextureHandler* fartextureHandler = NULL;
+CFarTextureHandler* farTextureHandler = NULL;
 
 
-CFartextureHandler::CFartextureHandler()
+CFarTextureHandler::CFarTextureHandler()
 {
 	usedFarTextures = 0;
 
@@ -57,18 +57,18 @@ CFartextureHandler::CFartextureHandler()
 }
 
 
-CFartextureHandler::~CFartextureHandler()
+CFarTextureHandler::~CFarTextureHandler()
 {
 	glDeleteTextures(1, &farTexture);
 }
 
 
 /**
- * @brief Add the model to the queue of units waiting for their fartexture.
- * On the next CreateFarTextures() call the fartexture for this model will be
+ * @brief Add the model to the queue of units waiting for their farTexture.
+ * On the next CreateFarTextures() call the farTexture for this model will be
  * created.
  */
-void CFartextureHandler::CreateFarTexture(S3DModel* model)
+void CFarTextureHandler::CreateFarTexture(S3DModel* model)
 {
 	GML_STDMUTEX_LOCK(tex); // CreateFarTexture
 
@@ -77,11 +77,11 @@ void CFartextureHandler::CreateFarTexture(S3DModel* model)
 
 
 /**
- * @brief Process the queue of pending fartexture creation requests.
+ * @brief Process the queue of pending farTexture creation requests.
  * This loops through the queue calling ReallyCreateFarTexture() on each entry,
  * and empties the queue afterwards.
  */
-void CFartextureHandler::CreateFarTextures()
+void CFarTextureHandler::CreateFarTextures()
 {
 	GML_STDMUTEX_LOCK(tex); // CreateFarTextures
 
@@ -95,7 +95,7 @@ void CFartextureHandler::CreateFarTextures()
 /**
  * @brief Returns the (row, column) pair of a FarTexture in the TextureAtlas.
  */
-int2 CFartextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int& orientation)
+int2 CFarTextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int& orientation)
 {
 	const int texnum = (farTextureNum * numOrientations) + orientation;
 
@@ -108,7 +108,7 @@ int2 CFartextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int
 /**
  * @brief Returns the TexCoords of a FarTexture in the TextureAtlas.
  */
-float2 CFartextureHandler::GetTextureCoords(const int& farTextureNum, const int& orientation)
+float2 CFarTextureHandler::GetTextureCoords(const int& farTextureNum, const int& orientation)
 {
 	float2 texcoords;
 
@@ -127,14 +127,14 @@ float2 CFartextureHandler::GetTextureCoords(const int& farTextureNum, const int&
 /**
  * @brief Really create the far texture for the given model.
  */
-void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
+void CFarTextureHandler::ReallyCreateFarTexture(S3DModel* model)
 {
 	model->farTextureNum = usedFarTextures;
 
 	const int maxSprites = (texSizeX / iconSizeX)*(texSizeY / iconSizeY) - 1;
 	if (usedFarTextures >= maxSprites) {
 		//TODO resize texture atlas if possible
-		//logOutput.Print("Out of fartextures");
+		//logOutput.Print("Out of farTextures");
 		return;
 	}
 
@@ -199,7 +199,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 
 
 
-void CFartextureHandler::DrawFarTexture(const CCamera* cam, const S3DModel* mdl, const float3& pos, float radius, short heading, CVertexArray* va) {
+void CFarTextureHandler::DrawFarTexture(const CCamera* cam, const S3DModel* mdl, const float3& pos, float radius, short heading, CVertexArray* va) {
 	const float3 interPos = pos + UpVector * mdl->height * 0.5f;
 
 	//! indicates the orientation to draw

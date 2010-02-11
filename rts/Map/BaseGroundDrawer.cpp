@@ -129,11 +129,6 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 }
 
 
-void CBaseGroundDrawer::SetDrawMode (DrawMode dm)
-{
-	drawMode = dm;
-}
-
 
 //todo: this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
@@ -183,13 +178,13 @@ void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,uns
 
 void CBaseGroundDrawer::SetPathMapTexture()
 {
-	if (drawMode==drawPath)
+	if (drawMode == drawPath) {
 		DisableExtraTexture();
-	else {
+	} else {
 		SetDrawMode(drawPath);
-		extraTex=0;
-		highResInfoTexWanted=false;
-		updateTextureState=0;
+		extraTex = 0;
+		highResInfoTexWanted = false;
+		updateTextureState = 0;
 		while(!UpdateExtraTexture());
 	}
 }
@@ -282,13 +277,18 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 		switch(drawMode) {
 			case drawPath: {
-				if (guihandler->inCommand > 0 && static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
-						guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING) {
+				const int pwr2mapx_half = gs->pwr2mapx / 2;
+				if (guihandler->inCommand > 0 &&
+				    static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
+				    guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING)
+				{
 					// use the current build order
 					for (int y = starty; y < endy; ++y) {
+						const int y_pwr2mapx_half = y*pwr2mapx_half;
+						const int y_16            = y*16;
 						for (int x = 0; x < gs->hmapx; ++x) {
 							float m;
-							if (!loshandler->InLos(float3(x*16+8, 0, y*16+8), gu->myAllyTeam)) {
+							if (!loshandler->InLos(float3(x*16+8, 0, y_16+8), gu->myAllyTeam)) {
 								m = 0.25f;
 							} else {
 								const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
@@ -296,7 +296,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 								GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield
 
-								if(uh->TestUnitBuildSquare(BuildInfo(unitdef, float3(x*16+8, 0, y*16+8), guihandler->buildFacing), f, gu->myAllyTeam)) {
+								if (uh->TestUnitBuildSquare(BuildInfo(unitdef, float3(x*16+8, 0, y_16+8), guihandler->buildFacing), f, gu->myAllyTeam)) {
 									if (f) {
 										m = 0.5f;
 									} else {
@@ -306,56 +306,75 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 									m = 0.0f;
 								}
 							}
-							const int a=y*gs->pwr2mapx/2+x;
-							infoTexMem[a*4+0]=255-int(m*255.0f);
-							infoTexMem[a*4+1]=int(m*255.0f);
-							infoTexMem[a*4+2]=0;
+							m = (int) (m*255.0f);
+							const int a = (y_pwr2mapx_half + x) * 4;
+							infoTexMem[a+0] = 255 - m;
+							infoTexMem[a+1] = m;
+							infoTexMem[a+2] = 0;
 						}
 					}
-				}
-				else {
-					// use the first selected unit
-
-					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
-
-					if (selectedUnits.selectedUnits.empty()) {
-						return true;
+				} else {
+					const MoveData* md = NULL;
+					{
+						GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
+						if (!selectedUnits.selectedUnits.empty()) {
+							md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+						}
 					}
-					const MoveData* md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
-					if (md == NULL) {
-						return true;
-					}
-					for (int y = starty; y < endy; ++y) {
-						for (int x = 0; x < gs->hmapx; ++x) {
-							float m = md->moveMath->SpeedMod(*md, x*2, y*2);
-							if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y*2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
-								m = 0.0f;
+
+					if (md != NULL) {
+						// use the first selected unit, if it has the ability to move
+						for (int y = starty; y < endy; ++y) {
+							const int y_pwr2mapx_half = y*pwr2mapx_half;
+							const int y_2             = y*2;
+							for (int x = 0; x < gs->hmapx; ++x) {
+								float m = md->moveMath->SpeedMod(*md, x*2, y_2);
+								if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
+									m = 0.0f;
+								}
+								m = std::min(1.0f, (float)fastmath::apxsqrt(m));
+								m = (int) (m*255.0f);
+								const int a = (y_pwr2mapx_half + x) * 4;
+								infoTexMem[a+0] = 255 - m;
+								infoTexMem[a+1] = m;
+								infoTexMem[a+2] = 0;
 							}
-							m = std::min(1.0f, (float)fastmath::apxsqrt(m));
-							const int a=y*gs->pwr2mapx/2+x;
-							infoTexMem[a*4+0]=255-int(m*255.0f);
-							infoTexMem[a*4+1]=int(m*255.0f);
-							infoTexMem[a*4+2]=0;
+						}
+					} else {
+						// we have nothing to show
+						// -> draw a dark red overlay
+						for (int y = starty; y < endy; ++y) {
+							const int y_pwr2mapx_half = y*pwr2mapx_half;
+							for (int x = 0; x < gs->hmapx; ++x) {
+								const int a = (y_pwr2mapx_half + x) * 4;
+								infoTexMem[a+0] = 100;
+								infoTexMem[a+1] = 0;
+								infoTexMem[a+2] = 0;
+							}
 						}
 					}
 				}
 				break;
 			}
 			case drawMetal: {
+				const int pwr2mapx_half = gs->pwr2mapx / 2;
 				for (int y = starty; y < endy; ++y) {
+					const int y_pwr2mapx_half = y*pwr2mapx_half;
+					const int y_2 = y*2;
+					const int y_hmapx = y * gs->hmapx;
 					for (int x = 0; x < gs->hmapx; ++x) {
-						int a = (y * gs->pwr2mapx) / 2 + x;
-						const int alx = ((x * 2) >> loshandler->airMipLevel);
-						const int aly = ((y * 2) >> loshandler->airMipLevel);
+						const int a   = (y_pwr2mapx_half + x) * 4;
+						const int alx = ((x*2) >> loshandler->airMipLevel);
+						const int aly = ((y_2) >> loshandler->airMipLevel);
 						if (myAirLos[alx + (aly * loshandler->airSizeX)]) {
-							float extractDepth = extractDepthMap[(y * gs->hmapx) + x];
+							float extractDepth = extractDepthMap[y_hmapx + x];
 							// a single pow(x, 0.25) call would be faster?
-							infoTexMem[a*4]=(unsigned char)std::min(255.0f,(float)fastmath::apxsqrt(fastmath::apxsqrt(extractDepth))*900);
+							infoTexMem[a] = (unsigned char)std::min(255.0f, (float)fastmath::apxsqrt(fastmath::apxsqrt(extractDepth))*900);
 						} else {
-							infoTexMem[a*4]=0;
+							infoTexMem[a] = 0;
 						}
-						infoTexMem[a*4+1]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+1]);
-						infoTexMem[a*4+2]=(extraTexPal[extraTex[y*gs->hmapx+x]*3+2]);
+						infoTexMem[a+1] = (extraTexPal[extraTex[y_hmapx + x]*3 + 1]);
+						infoTexMem[a+2] = (extraTexPal[extraTex[y_hmapx + x]*3 + 2]);
 					}
 				}
 				break;
@@ -363,13 +382,15 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			case drawHeight: {
 				extraTexPal = heightLinePal->GetData();
 				for (int y = starty; y < endy; ++y) {
-					for (int x = 0; x  < gs->mapx; ++x){
-						const float height = readmap->centerheightmap[(y * gs->mapx) + x];
-						const unsigned char value = (unsigned char)(height * 8);
-						const int i = 4 * ((y * gs->pwr2mapx) + x);
-						infoTexMem[i]     = 64 + (extraTexPal[value * 3]     >> 1);
-						infoTexMem[i + 1] = 64 + (extraTexPal[value * 3 + 1] >> 1);
-						infoTexMem[i + 2] = 64 + (extraTexPal[value * 3 + 2] >> 1);
+					const int y_pwr2mapx = y * gs->pwr2mapx;
+					const int y_mapx     = y * gs->mapx;
+					for (int x = 0; x  < gs->mapx; ++x) {
+						const float height = readmap->centerheightmap[y_mapx + x];
+						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
+						const int i = (y_pwr2mapx + x) * 4;
+						infoTexMem[i]     = 64 + (extraTexPal[value]     >> 1);
+						infoTexMem[i + 1] = 64 + (extraTexPal[value + 1] >> 1);
+						infoTexMem[i + 2] = 64 + (extraTexPal[value + 2] >> 1);
 					}
 				}
 				break;
@@ -426,8 +447,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				}
 				else {
 					for (int y = starty; y < endy; ++y) {
+						const int y_pwr2mapx = y * pwr2mapx;
 						for (int x = 0; x < endx; ++x) {
-							int a = (y * pwr2mapx) + x;
+							int a = y_pwr2mapx + x;
 							const int inLos = InterpolateLos(myLos,    losSizeX, losSizeY, losMipLevel + lowRes, 64, x, y);
 							const int inAir = InterpolateLos(myAirLos, airSizeX, airSizeY, airMipLevel + lowRes, 64, x, y);
 							const int totalLos = (inLos + inAir) / 2;

@@ -55,11 +55,10 @@ public:
 	 * @return string value
 	 */
 	std::string GetString(std::string name, std::string def);
-	
+
 	template<typename T>
 	void Set(const std::string& name, const T& value)
 	{
-		
 		std::ostringstream buffer;
 		buffer << value;
 		SetString(name, buffer.str());
@@ -88,9 +87,11 @@ public:
 
 	/**
 	 * @brief instantiate global configHandler
+	 * @param configSource the config file to be used, using the default one if empty
 	 * @return name of the configfile used
+	 * @see GetDefaultConfig()
 	 */
-	static std::string Instantiate(std::string configSource);
+	static std::string Instantiate(std::string configSource = "");
 
 	std::string GetConfigFile() const
 	{
@@ -105,7 +106,7 @@ public:
 private:
 	ConfigHandler(const std::string& configFile);
 	~ConfigHandler();
-	
+
 	/**
 	 * @brief config file name
 	 */
@@ -123,13 +124,13 @@ private:
 	 * @brief Get the name of the default configuration file
 	 */
 	static std::string GetDefaultConfig();
-	
+
 	// helper functions
 	void Read(FILE* file);
 	void Write(FILE* file);
 	char* Strip(char* begin, char* end);
 	void AppendLine(char* buf);
-	
+
 	std::list<ConfigNotifyCallback> observers;
 };
 

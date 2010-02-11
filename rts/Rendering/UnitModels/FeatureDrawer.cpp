@@ -29,7 +29,9 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/FartextureHandler.h"
+#include "Rendering/FarTextureHandler.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -192,7 +194,7 @@ void CFeatureDrawer::Draw()
 	if (drawFar.size()>0) {
 		glAlphaFunc(GL_GREATER, 0.5f);
 		glEnable(GL_ALPHA_TEST);
-		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
+		glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
 		glColor3f(1.0f, 1.0f, 1.0f);
 		glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
 
@@ -200,7 +202,7 @@ void CFeatureDrawer::Draw()
 		va->Initialize();
 		va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
 		for (vector<CFeature*>::iterator it = drawFar.begin(); it != drawFar.end(); ++it) {
-			fartextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->pos, (*it)->radius, (*it)->heading, va);
+			farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->pos, (*it)->radius, (*it)->heading, va);
 		}
 		va->DrawArrayT(GL_QUADS);
 
@@ -296,7 +298,7 @@ void CFeatureDrawer::DrawShadowPass()
 {
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Enable();
+	shadowHandler->GetMdlShadowGenShader()->Enable();
 
 	{
 		GML_RECMUTEX_LOCK(feat); // DrawShadowPass
@@ -319,7 +321,7 @@ void CFeatureDrawer::DrawShadowPass()
 	}
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Disable();
+	shadowHandler->GetMdlShadowGenShader()->Disable();
 }
 
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer

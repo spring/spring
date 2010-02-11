@@ -11,6 +11,7 @@ struct DamageArray
 public:
 
 	DamageArray();
+	DamageArray(const float mul);
 	/**
 	 * This constructor is currently only used by C++ AIs
 	 * which use the legacy C++ wrapper around the C AI interface.

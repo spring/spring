@@ -770,8 +770,11 @@ void CUnitTable::Init() {
 		unitTypes[i].category = CAT_LAST;
 
 		// GetUnitDefList() filled our unitDefs
-		// partially with null UnitDef*'s (bad,
-		// nothing much to do if this happens)
+		// partially with NULL UnitDef*'s
+		// This means that there are inconsistencies
+		// in the mod/game archive.
+		// Please inform the mod authors;
+		// they should fix the warnings in the infolog.
 		assert(unitTypes[i].def != 0x0);
 
 		if ((unitTypes[i].def)->movedata != NULL) {

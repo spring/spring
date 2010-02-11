@@ -73,10 +73,13 @@ public:
 	/// Must be called to send / recieve packets
 	void Update();
 	volatile bool loading;
+	
+	void DisableDemoRecording();
 
 private:
 	boost::scoped_ptr<netcode::CConnection> serverConn;
 	boost::scoped_ptr<CDemoRecorder> record;
+	bool disableDemo;
 };
 
 extern CNetProtocol* net;

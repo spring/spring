@@ -17,7 +17,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/FartextureHandler.h"
+#include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"

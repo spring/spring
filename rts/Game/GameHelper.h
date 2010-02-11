@@ -34,6 +34,7 @@ public:
 	bool TestTrajectoryNeutralCone(const float3 &from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner);
 
 	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos, float searchRadius);
 	CUnit* GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam);
 	CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);

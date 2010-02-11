@@ -11,6 +11,7 @@
 	#include <dirent.h>
 	#include <sstream>
 	#include <unistd.h>
+	#include <time.h>
 #else
 	#include <windows.h>
 	#include <io.h>
@@ -165,6 +166,73 @@ bool FileSystemHandler::IsReadableFile(const std::string& file)
 #endif
 }
 
+std::string FileSystemHandler::GetFileModificationDate(const std::string& file)
+{
+	std::string time = "";
+
+#if       defined(WIN32)
+	HANDLE hFile = CreateFile(file.c_str(), // file to open
+			GENERIC_READ,                   // open for reading
+			FILE_SHARE_READ,                // share for reading
+			NULL,                           // default security
+			OPEN_EXISTING,                  // existing file only
+			FILE_ATTRIBUTE_NORMAL,          // normal file
+			NULL);                          // no attr. template
+
+	if (hFile == INVALID_HANDLE_VALUE) {
+		logOutput.Print("WARNING: Failed opening file for retreiving last modification time: %s", file.c_str());
+	} else {
+		FILETIME /*ftCreate, ftAccess,*/ ftWrite;
+
+		// Retrieve the file times for the file.
+		if (GetFileTime(hFile, NULL, NULL, &ftWrite) != 0) {
+			logOutput.Print("WARNING: Failed fetching last modification time from file: %s", file.c_str());
+		} else {
+			// Convert the last-write time to local time.
+			const size_t cTime_size = 20;
+			char cTime[cTime_size];
+
+			SYSTEMTIME stUTC, stLocal;
+			if ((FileTimeToSystemTime(&ftWrite, &stUTC) != 0) &&
+				SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal))
+			{
+				// Build a string showing the date and time.
+				SNPRINTF(cTime, cTime_size,
+						"%d%02d%02d%02d%02d%02d",
+						stLocal.wYear, stLocal.wMonth, stLocal.wDay,
+						stLocal.wHour, stLocal.wMinute, stLocal.wSecond);
+				time = cTime;
+			} else {
+				logOutput.Print("WARNING: Failed converting last modification time to a string");
+			}
+		}
+		CloseHandle(hFile);
+	}
+
+#else  // defined(WIN32)
+	struct tm* clock;
+	struct stat attrib;
+	const size_t cTime_size = 20;
+	char cTime[cTime_size];
+
+	const int fetchOk = stat(file.c_str(), &attrib); // get the attributes of file
+	if (fetchOk != 0) {
+		logOutput.Print("WARNING: Failed opening file for retreiving last modification time: %s", file.c_str());
+	} else {
+		// Get the last modified time and put it into the time structure
+		clock = gmtime(&(attrib.st_mtime));
+		if (clock == NULL) {
+			logOutput.Print("WARNING: Failed fetching last modification time from file: %s", file.c_str());
+		} else {
+			SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
+			time = cTime;
+		}
+	}
+#endif // defined(WIN32)
+
+	return time;
+}
+
 std::string FileSystemHandler::LocateFile(const std::string& file) const
 {
 	// if it's an absolute path, don't look for it in the data directories
@@ -219,7 +287,7 @@ bool FileSystemHandler::IsAbsolutePath(const std::string& path)
  * data directory, ie. all subdirectories the same perms, all files the same
  * perms.
  */
-bool FileSystemHandler::mkdir(const std::string& dir) const
+bool FileSystemHandler::mkdir(const std::string& dir)
 {
 	// First check if directory exists. We'll return success if it does.
 	if (DirExists(dir)) {
@@ -337,6 +405,25 @@ bool FileSystemHandler::DirIsWritable(const std::string& dir)
 #else
 	return (access(dir.c_str(), W_OK) == 0);
 #endif
+}
+
+std::string FileSystemHandler::GetCwd()
+{
+	std::string cwd = "";
+
+#ifndef _WIN32
+	#define GETCWD getcwd
+#else
+	#define GETCWD _getcwd
+#endif
+
+	const size_t path_maxSize = 1024;
+	char path[path_maxSize];
+	if (GETCWD(path, path_maxSize) != NULL) {
+		cwd = path;
+	}
+
+	return cwd;
 }
 
 void FileSystemHandler::Chdir(const std::string& dir)

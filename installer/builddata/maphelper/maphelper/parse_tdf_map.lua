@@ -164,7 +164,7 @@ return function(sourceText)
     error('Error parsing ' .. mapConfig .. ': missing MAP section')
   end
 
-  map.resources = {detailTex = map.detailtex}
+  map.resources = {detailTex = map.detailtex, specularTex = map.speculartex}
 
   ConvertTerrainTypes(map)
 

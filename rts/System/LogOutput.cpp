@@ -18,6 +18,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "ConfigHandler.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "mmgr.h"
 
 #include <string>
@@ -64,8 +65,6 @@ static vector<PreInitLogEntry>& preInitLog()
 	return preInitLog;
 }
 
-static vector<ILogSubscriber*> subscribers;
-static const char* filename = "infolog.txt";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
 
@@ -87,10 +86,33 @@ LogObject::~LogObject()
 }
 
 CLogOutput::CLogOutput()
+	: fileName("")
+	, filePath("")
+	, subscribersEnabled(true)
 {
 	// multiple infologs can't exist together!
 	assert(this == &logOutput);
 	assert(!filelog);
+
+	SetFileName("infolog.txt");
+
+	bool doRotateLogFiles = false;
+	std::string rotatePolicy = "auto";
+	if (configHandler != NULL) {
+		rotatePolicy = configHandler->GetString("RotateLogFiles", "auto");
+	}
+	if (rotatePolicy == "always") {
+		doRotateLogFiles = true;
+	} else if (rotatePolicy == "never") {
+		doRotateLogFiles = false;
+	} else { // auto
+#ifdef DEBUG
+		doRotateLogFiles = true;
+#else
+		doRotateLogFiles = false;
+#endif
+	}
+	SetLogFileRotating(doRotateLogFiles);
 }
 
 
@@ -114,31 +136,73 @@ void CLogOutput::Flush()
 	filelog->flush();
 }
 
-const char* CLogOutput::GetFilename() const
+const std::string& CLogOutput::GetFileName() const
 {
-	return filename;
+	return fileName;
 }
-void CLogOutput::SetFilename(const char* fname)
+const std::string& CLogOutput::GetFilePath() const
 {
-	GML_STDMUTEX_LOCK(log); // SetFilename
+	assert(initialized);
+	return filePath;
+}
+void CLogOutput::SetFileName(std::string fname)
+{
+	GML_STDMUTEX_LOCK(log); // SetFileName
 
 	assert(!initialized);
-	filename = fname;
+	fileName = fname;
+}
+
+std::string CLogOutput::CreateFilePath(const std::string& fileName)
+{
+	return FileSystemHandler::GetCwd() + (char)FileSystemHandler::GetNativePathSeparator() + fileName;
 }
 
 
-/**
- * @brief initialize logOutput
- *
- * Only after calling this method, logOutput starts writing to disk.
- * The log file is written in the current directory so this may only be called
- * after the engine chdir'ed to the correct directory.
- */
+void CLogOutput::SetLogFileRotating(bool enabled)
+{
+	assert(!initialized);
+	rotateLogFiles = enabled;
+}
+bool CLogOutput::IsLogFileRotating() const
+{
+	return rotateLogFiles;
+}
+
+void CLogOutput::RotateLogFile() const
+{
+
+	if (IsLogFileRotating()) {
+		if (FileSystemHandler::FileExists(filePath)) {
+			// logArchiveDir: /absolute/writeable/data/dir/log/
+			std::string logArchiveDir = filePath.substr(0, filePath.find_last_of("/\\") + 1);
+			logArchiveDir = logArchiveDir + "log" + (char)FileSystemHandler::GetNativePathSeparator();
+
+			const std::string archivedLogFile = logArchiveDir + FileSystemHandler::GetFileModificationDate(filePath) + "_" + fileName;
+
+			// create the log archive dir if it does nto exist yet
+			if (!FileSystemHandler::DirExists(logArchiveDir)) {
+				FileSystemHandler::mkdir(logArchiveDir);
+			}
+
+			// move the old log to the archive dir
+			const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
+			if (moveError != 0) {
+				// no log here yet
+				std::cout << "Failed rotating the log file" << std::endl;
+			}
+		}
+	}
+}
+
 void CLogOutput::Initialize()
 {
 	if (initialized) return;
 
-	filelog = new std::ofstream(filename);
+	filePath = CreateFilePath(fileName);
+	RotateLogFile();
+
+	filelog = new std::ofstream(filePath.c_str());
 	if (filelog->bad())
 		SafeDelete(filelog);
 
@@ -154,28 +218,18 @@ void CLogOutput::Initialize()
 		if (!it->subsystem->enabled) return;
 
 		// Output to subscribers
-		for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-			(*lsi)->NotifyLogMsg(*(it->subsystem), it->text);
-		if (filelog)
+		if (subscribersEnabled) {
+			for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
+				(*lsi)->NotifyLogMsg(*(it->subsystem), it->text);
+			}
+		}
+		if (filelog) {
 			ToFile(*it->subsystem, it->text);
+		}
 	}
 	preInitLog().clear();
 }
 
-
-/**
- * @brief initialize the log subsystems
- *
- * This writes list of all available and all enabled subsystems to the log.
- *
- * Log subsystems can be enabled using the configuration key "LogSubsystems",
- * or the environment variable "SPRING_LOG_SUBSYSTEMS".
- *
- * Both specify a comma separated list of subsystems that should be enabled.
- * The lists from both sources are combined, there is no overriding.
- *
- * A subsystem that is by default enabled, can not be disabled.
- */
 void CLogOutput::InitializeSubsystems()
 {
 	{
@@ -235,16 +289,6 @@ void CLogOutput::InitializeSubsystems()
 }
 
 
-/**
- * @brief core log output method, used by all others
- *
- * Note that, when logOutput isn't initialized yet, the logging is done to the
- * global std::vector preInitLog(), and is only written to disk in the call to
- * Initialize().
- *
- * This method notifies all registered ILogSubscribers, calls OutputDebugString
- * (for MSVC builds) and prints the message to stdout and the file log.
- */
 void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 {
 	GML_STDMUTEX_LOCK(log); // Output
@@ -258,15 +302,19 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	if (!subsystem.enabled) return;
 
 	// Output to subscribers
-	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-		(*lsi)->NotifyLogMsg(subsystem, str);
+	if (subscribersEnabled) {
+		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
+			(*lsi)->NotifyLogMsg(subsystem, str);
+		}
+	}
 
 #ifdef _MSC_VER
 	int index = strlen(str.c_str()) - 1;
 	bool newline = ((index < 0) || (str[index] != '\n'));
 	OutputDebugString(str.c_str());
-	if (newline)
+	if (newline) {
 		OutputDebugString("\n");
+	}
 #endif // _MSC_VER
 
 
@@ -282,8 +330,11 @@ void CLogOutput::SetLastMsgPos(const float3& pos)
 {
 	GML_STDMUTEX_LOCK(log); // SetLastMsgPos
 
-	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-		(*lsi)->SetLastMsgPos(pos);
+	if (subscribersEnabled) {
+		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
+			(*lsi)->SetLastMsgPos(pos);
+		}
+	}
 }
 
 
@@ -295,14 +346,6 @@ void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 }
 
 
-void CLogOutput::RemoveAllSubscribers()
-{
-	GML_STDMUTEX_LOCK(log); // RemoveAllSubscribers
-
-	subscribers.clear();
-}
-
-
 void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 {
 	GML_STDMUTEX_LOCK(log); // RemoveSubscriber
@@ -310,6 +353,13 @@ void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 	subscribers.erase(std::find(subscribers.begin(), subscribers.end(), ls));
 }
 
+void CLogOutput::SetSubscribersEnabled(bool enabled) {
+	subscribersEnabled = enabled;
+}
+
+bool CLogOutput::IsSubscribersEnabled() const {
+	return subscribersEnabled;
+}
 
 // ----------------------------------------------------------------------
 // Printing functions

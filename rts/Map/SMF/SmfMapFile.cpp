@@ -11,7 +11,7 @@ using std::string;
 
 
 CSmfMapFile::CSmfMapFile(const string& mapname)
-	: ifs(string("maps/") + mapname), featureFileOffset(0)
+	: ifs(mapname), featureFileOffset(0)
 {
 	memset(&header, 0, sizeof(header));
 	memset(&featureHeader, 0, sizeof(featureHeader));
@@ -33,7 +33,7 @@ void CSmfMapFile::ReadMinimap(void* data)
 	ifs.Read(data, MINIMAP_SIZE);
 }
 
-int CSmfMapFile::ReadMinimap(std::vector<uint8_t>& data, unsigned miplevel)
+int CSmfMapFile::ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel)
 {
 	int offset=0;
 	int mipsize = 1024;

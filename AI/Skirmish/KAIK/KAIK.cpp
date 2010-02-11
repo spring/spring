@@ -210,12 +210,12 @@ void CKAIK::Update() {
 	ai->econTracker->frameUpdate(frame);
 	ai->dgunConHandler->Update(frame);
 
-	if (frame == 1) {
+	if ((frame - ai->initFrame) == 1) {
 		// init defense matrix
 		ai->dm->Init();
 	}
 
-	if (frame > 60) {
+	if ((frame - ai->initFrame) > 60) {
 		// call buildup manager and unit handler (idle) update routine
 		ai->bu->Update(frame);
 		ai->uh->IdleUnitUpdate(frame);

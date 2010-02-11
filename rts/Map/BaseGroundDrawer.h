@@ -17,20 +17,24 @@ public:
 	CBaseGroundDrawer(void);
 	virtual ~CBaseGroundDrawer(void);
 
-	virtual void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0)=0;
+	virtual void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false) = 0;
 	virtual void DrawShadowPass(void);
-	virtual void Update()=0;
 
-	virtual void IncreaseDetail()=0;
-	virtual void DecreaseDetail()=0;
+	virtual void SetupBaseDrawPass(void) {}
+	virtual void SetupReflDrawPass(void) {}
+	virtual void SetupRefrDrawPass(void) {}
+
+	virtual void Update() = 0;
+
+	virtual void IncreaseDetail() = 0;
+	virtual void DecreaseDetail() = 0;
 
 #ifdef USE_GML
 	int multiThreadDrawGround;
 	int multiThreadDrawGroundShadow;
 #endif
 
-	enum DrawMode
-	{
+	enum BaseGroundDrawMode {
 		drawNormal,
 		drawLos,
 		drawMetal,
@@ -39,7 +43,8 @@ public:
 	};
 
 protected:
-	virtual void SetDrawMode(DrawMode dm);
+	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
+
 public:
 	void DrawTrees(bool drawReflection=false) const;
 
@@ -76,7 +81,7 @@ public:
 
 	int updateTextureState;
 
-	DrawMode drawMode;
+	BaseGroundDrawMode drawMode;
 
 	float infoTexAlpha;
 

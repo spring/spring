@@ -6,8 +6,8 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileSystem.h"
 #include "Exceptions.h"
-#include "Game/StartScripts/ScriptHandler.h"
 #include "ConfigHandler.h"
+#include "ScriptHandler.h"
 
 
 
@@ -56,14 +56,10 @@ void SelectionWidget::ShowModList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMod, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 	
-	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
-	if (found.empty()) {
-		throw content_error("PreGame couldn't find any mod files");
-		return;
-	}
+	std::vector<CArchiveScanner::ArchiveData> found = archiveScanner->GetPrimaryMods();
 
 	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
-	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+	for (std::vector<CArchiveScanner::ArchiveData>::iterator it = found.begin(); it != found.end(); ++it) {
 		modMap[it->name] = it->description;
 	}
 
@@ -82,18 +78,9 @@ void SelectionWidget::ShowMapList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMap, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
-	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
-	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
-		throw content_error("PreGame couldn't find any map files");
-		return;
-	}
 
 	std::set<std::string> mapSet; // use a set to sort them
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
-		std::string fn(filesystem.GetFilename(*it));
-		mapSet.insert(fn.c_str());
-	}
 	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++) {
 		mapSet.insert((*it).c_str());
 	}
@@ -111,12 +98,12 @@ void SelectionWidget::ShowScriptList()
 	curSelect = new ListSelectWnd("Select script");
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
-	
-	std::list<std::string> scriptList = CScriptHandler::Instance().ScriptList();
-	for (std::list<std::string>::iterator it = scriptList.begin(); it != scriptList.end(); ++it)
-	{
+
+	CScriptHandler::ScriptList scriptList = CScriptHandler::Instance().GetScriptList();
+	for (CScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
 		curSelect->list->AddItem(*it, "");
 	}
+
 	curSelect->list->SetCurrentItem(userScript);
 }
 

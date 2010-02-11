@@ -1861,6 +1861,125 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 		SetOutlineColor(&oldOultineColor);
 }
 
+void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, const std::string& text) {
+	int col = 0;
+	int row = 0;
+	std::vector<std::string> coltext;
+	std::vector<int> coldata;
+	coltext.push_back("");
+	unsigned char curcolor[4];
+	unsigned char defaultcolor[4];
+	defaultcolor[0] = '\xff';
+	for(int i = 0; i < 3; ++i)
+		defaultcolor[i+1] = (unsigned char)(textColor[i]*255.0f);
+	coldata.push_back(*(int *)&defaultcolor);
+	for(int i = 0; i < 4; ++i)
+		curcolor[i] = defaultcolor[i];
+
+	for (int pos = 0; pos < text.length(); pos++) {
+		const char& c = text[pos];
+		switch(c) {
+			case ColorCodeIndicator:
+				for(int i = 0; i < 4 && pos < text.length(); ++i, ++pos) {
+					coltext[col] += text[pos];
+					((unsigned char *)curcolor)[i] = text[pos];
+				}
+				coldata[col] = *(int *)curcolor;
+				--pos;
+				break;
+			case '\x09':
+				++col;
+				if(col >= coltext.size()) {
+					coltext.push_back("");
+					for(int i = 0; i < row; ++i)
+						coltext[col] += '\x0a';
+					coldata.push_back(*(int *)&defaultcolor);
+				}
+				if(coldata[col] != *(int *)curcolor) {
+					for(int i = 0; i < 4; ++i)
+						coltext[col] += curcolor[i];
+					coldata[col] = *(int *)curcolor;
+				}
+				break;
+			case '\x0d':
+				if (pos+1 < text.length() && text[pos + 1] == '\x0a')
+					pos++;
+			case '\x0a':
+				for(int i = 0; i < coltext.size(); ++i)
+					coltext[i] += '\x0a';
+				if(coldata[0] != *(int *)curcolor) {
+					for(int i = 0; i < 4; ++i)
+						coltext[0] += curcolor[i];
+					coldata[0] = *(int *)curcolor;
+				}
+				col = 0;
+				++row;
+				break;
+			default:
+				coltext[col] += c;
+		}
+	}
+
+	float totalWidth = 0.0f;
+	float maxHeight = 0.0f;
+	float minDescender = 0.0f;
+	for(int i = 0; i < coltext.size(); ++i) {
+		float colwidth = GetTextWidth(coltext[i]);
+		coldata[i] = *(int *)&colwidth;
+		totalWidth += colwidth;
+		float textDescender;
+		float textHeight = GetTextHeight(coltext[i], &textDescender);
+		if(textHeight > maxHeight)
+			maxHeight = textHeight;
+		if(textDescender < minDescender)
+			minDescender = textDescender;
+	}
+
+	//! s := scale or absolute size?
+	float ss = s;
+	if (options & FONT_SCALE) {
+		ss *= fontSize;
+	}
+
+	float sizeX = ss, sizeY = ss;
+
+	//! render in normalized coords (0..1) instead of screencoords (0..~1024)
+	if (options & FONT_NORM) {
+		sizeX *= gu->pixelX;
+		sizeY *= gu->pixelY;
+	}
+
+	//! horizontal alignment (FONT_LEFT is default)
+	if (options & FONT_CENTER) {
+		x -= sizeX * 0.5f * totalWidth;
+	} else if (options & FONT_RIGHT) {
+		x -= sizeX * totalWidth;
+	}
+
+	//! vertical alignment
+	if (options & FONT_BASELINE) {
+		//! nothing
+	} else if (options & FONT_DESCENDER) {
+		y -= sizeY * fontDescender;
+	} else if (options & FONT_VCENTER) {
+		y -= sizeY * 0.5f * maxHeight;
+		y -= sizeY * 0.5f * minDescender;
+	} else if (options & FONT_TOP) {
+		y -= sizeY * maxHeight;
+	} else if (options & FONT_ASCENDER) {
+		y -= sizeY * fontDescender;
+		y -= sizeY;
+	} else if (options & FONT_BOTTOM) {
+		y -= sizeY * minDescender;
+	}
+
+	for(int i = 0; i < coltext.size(); ++i) {
+		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_RIGHT | FONT_CENTER), coltext[i]);
+		int colwidth = coldata[i];
+		x += sizeX * *(float *)&colwidth;
+	}
+}
+
 
 //! macro for formatting printf-style
 #define FORMAT_STRING(lastarg,fmt,out)                         \

@@ -38,6 +38,7 @@ public:
 	void MakeSmoothMesh(const CGround* ground);
 
 	float GetHeight(float x, float y);
+	float GetHeight2(float x, float y);
 	float SetHeight(int index, float h);
 	float AddHeight(int index, float h);
 	float SetMaxHeight(int index, float h);

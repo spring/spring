@@ -147,7 +147,7 @@ struct UnitTypeStatic
 	list<int> builtByList;
 	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
 									// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
-	float range;
+	float range;              // max weapon range (0 for unarmed units)
 	float cost;
 	float builder_cost;
 	UnitCategory category;

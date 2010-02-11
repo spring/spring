@@ -532,9 +532,9 @@ void SpringApp::SetupViewportGeometry()
 	}
 
 	agui::gui->UpdateScreenGeometry(
-			gu->viewSizeX, 
-			gu->viewSizeY, 
-			gu->viewPosX, 
+			gu->viewSizeX,
+			gu->viewSizeY,
+			gu->viewPosX,
 			(gu->winSizeY - gu->viewSizeY - gu->viewPosY) );
 	gu->pixelX = 1.0f / (float)gu->viewSizeX;
 	gu->pixelY = 1.0f / (float)gu->viewSizeY;
@@ -670,7 +670,7 @@ void SpringApp::ParseCmdLine()
 		string configSource = cmdline->GetString("config");
 		logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
 	} else {
-		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate("") + "\"");
+		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate() + "\"");
 	}
 
 	// mutually exclusive options that cause spring to quit immediately
