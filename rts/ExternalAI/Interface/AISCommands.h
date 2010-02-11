@@ -530,7 +530,8 @@ struct SBuildUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -550,7 +551,8 @@ struct SStopUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -579,7 +581,8 @@ struct SWaitUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -594,7 +597,8 @@ struct STimeWaitUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -618,7 +622,8 @@ struct SDeathWaitUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -645,7 +650,8 @@ struct SSquadWaitUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -669,7 +675,8 @@ struct SGatherWaitUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -684,7 +691,8 @@ struct SMoveUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -701,7 +709,8 @@ struct SPatrolUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -718,7 +727,8 @@ struct SFightUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -735,7 +745,8 @@ struct SAttackUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -753,7 +764,8 @@ struct SAttackAreaUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -779,7 +791,8 @@ struct SGuardUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -797,7 +810,8 @@ struct SAiSelectUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -820,7 +834,8 @@ struct SGroupAddUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -837,7 +852,8 @@ struct SGroupClearUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -852,7 +868,8 @@ struct SRepairUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -869,7 +886,8 @@ struct SSetFireStateUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -887,7 +905,8 @@ struct SSetMoveStateUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -905,7 +924,8 @@ struct SSetBaseUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -930,7 +950,8 @@ struct SSelfDestroyUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -945,7 +966,8 @@ struct SSetWantedMaxSpeedUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -973,7 +995,8 @@ struct SLoadUnitsAreaUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -991,7 +1014,8 @@ struct SLoadOntoUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1008,7 +1032,8 @@ struct SUnloadUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1026,7 +1051,8 @@ struct SUnloadUnitsAreaUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1044,7 +1070,8 @@ struct SSetOnOffUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1061,7 +1088,8 @@ struct SReclaimUnitUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1078,7 +1106,8 @@ struct SReclaimFeatureUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1095,7 +1124,8 @@ struct SReclaimAreaUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1113,7 +1143,8 @@ struct SCloakUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1130,7 +1161,8 @@ struct SStockpileUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1145,7 +1177,8 @@ struct SDGunUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1162,7 +1195,8 @@ struct SDGunPosUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1179,7 +1213,8 @@ struct SRestoreAreaUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1197,7 +1232,8 @@ struct SSetRepeatUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1215,7 +1251,8 @@ struct SSetTrajectoryUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1233,7 +1270,8 @@ struct SResurrectUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1250,7 +1288,8 @@ struct SResurrectAreaUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1268,7 +1307,8 @@ struct SCaptureUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1285,7 +1325,8 @@ struct SCaptureAreaUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1307,7 +1348,8 @@ struct SSetAutoRepairLevelUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1337,7 +1379,8 @@ struct SSetIdleModeUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
@@ -1355,7 +1398,8 @@ struct SCustomUnitCommand {
 	/// see enum UnitCommandOptions
 	short options;
 	/**
-	 * At which frame the command will time-out and consequently be removed.
+	 * At which frame the command will time-out and consequently be removed,
+	 * if execution of it has not yet begun.
 	 * Can only be set locally, is not sent over the network, and is used
 	 * for temporary orders.
 	 * default: MAX_INT (-> do not time-out)
