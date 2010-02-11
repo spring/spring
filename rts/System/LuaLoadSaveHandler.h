@@ -22,8 +22,11 @@ protected:
 	void SaveEventClients(); // Lua
 	void SaveGameStartInfo();
 	void SaveAIData();
+	void SaveHeightmap();
+	void SaveEntireFile(const char* file, const char* what, const void* data, int size, bool throwOnError = false);
 	void LoadEventClients();
 	void LoadAIData();
+	void LoadHeightmap();
 	std::string LoadEntireFile(const std::string& file);
 
 	std::string filename;

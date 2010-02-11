@@ -8,8 +8,11 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaZip.h"
+#include "Map/MapDamage.h"
+#include "Map/ReadMap.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/ArchiveZip.h"
+#include "System/Platform/byteorder.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
@@ -26,6 +29,7 @@
 // in the respective file format, please increment its version number.
 static const char* FILE_STARTSCRIPT  = PREFIX"startscript.0";
 static const char* FILE_AIDATA       = PREFIX"aidata.0";
+static const char* FILE_HEIGHTMAP    = PREFIX"heightmap.0";
 
 #undef PREFIX
 
@@ -62,6 +66,7 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 		SaveEventClients();
 		SaveGameStartInfo();
 		SaveAIData();
+		SaveHeightmap();
 
 		// Close zip file.
 		if (Z_OK != zipClose(savefile, "Spring save file, visit http://springrts.com/ for details.")) {
@@ -102,12 +107,7 @@ void CLuaLoadSaveHandler::SaveEventClients()
 void CLuaLoadSaveHandler::SaveGameStartInfo()
 {
 	const std::string scriptText = gameSetup->gameSetupText;
-	if (Z_OK != zipOpenNewFileInZip(savefile, FILE_STARTSCRIPT, NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION)) {
-		throw content_error("Unable to open game setup file in save file \"" + filename + "\"");
-	}
-	else if (Z_OK != zipWriteInFileInZip(savefile, scriptText.data(), scriptText.size())) {
-		throw content_error("Unable to write game setup file in save file \"" + filename + "\"");
-	}
+	SaveEntireFile(FILE_STARTSCRIPT, "game setup", scriptText.data(), scriptText.size());
 }
 
 
@@ -118,13 +118,50 @@ void CLuaLoadSaveHandler::SaveAIData()
 	//        (e.g. one file in the zip per AI?)
 	std::stringstream aidata;
 	eoh->Save(&aidata);
+	SaveEntireFile(FILE_AIDATA, "AI data", aidata.str().data(), aidata.tellp());
+}
 
-	// Save aidata (stringstream => file, errors are not fatal)
-	if (Z_OK != zipOpenNewFileInZip(savefile, FILE_AIDATA, NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION)) {
-		logOutput.Print("Unable to open AI data file in save file \"" + filename + "\"");
+
+void CLuaLoadSaveHandler::SaveHeightmap()
+{
+	// This implements a trivial compression algorithm (relying on zip):
+	// For every heightmap pixel the bits are XOR'ed with the orig bits,
+	// so that unmodified terrain comes out as 0.
+	// Big chunks of 0s are then very well compressed by zip.
+	const int* currHeightmap = (const int*) (const char*) readmap->GetHeightmap();
+	const int* origHeightmap = (const int*) (const char*) readmap->orgheightmap;
+	const int size = (gs->mapx + 1) * (gs->mapy + 1);
+	int* temp = new int[size];
+	for (int i = 0; i < size; ++i) {
+		temp[i] = swabdword(currHeightmap[i] ^ origHeightmap[i]);
 	}
-	else if (Z_OK != zipWriteInFileInZip(savefile, aidata.str().data(), aidata.tellp())) {
-		logOutput.Print("Unable to write AI data to save file \"" + filename + "\"");
+	SaveEntireFile(FILE_HEIGHTMAP, "heightmap", temp, size * sizeof(int));
+	delete[] temp;
+}
+
+
+void CLuaLoadSaveHandler::SaveEntireFile(const char* file, const char* what, const void* data, int size, bool throwOnError)
+{
+	std::string err;
+
+	if (Z_OK != zipOpenNewFileInZip(savefile, file, NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION)) {
+		err = "open";
+	}
+	else if (Z_OK != zipWriteInFileInZip(savefile, data, size)) {
+		err = "write";
+	}
+	else if (Z_OK != zipCloseFileInZip(savefile)) {
+		err = "close";
+	}
+
+	if (!err.empty()) {
+		err = "Unable to " + err + " " + what + " file in save file \"" + filename + "\"";
+		if (throwOnError) {
+			throw content_error(err);
+		}
+		else {
+			logOutput.Print(err);
+		}
 	}
 }
 
@@ -149,6 +186,7 @@ void CLuaLoadSaveHandler::LoadGame()
 {
 	LoadEventClients();
 	LoadAIData();
+	LoadHeightmap();
 }
 
 
@@ -163,6 +201,28 @@ void CLuaLoadSaveHandler::LoadAIData()
 {
 	std::stringstream aidata(LoadEntireFile(FILE_AIDATA));
 	eoh->Load(&aidata);
+}
+
+
+void CLuaLoadSaveHandler::LoadHeightmap()
+{
+	std::vector<uint8_t> buf;
+
+	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
+		const int size = (gs->mapx + 1) * (gs->mapy + 1);
+		const int* temp = (const int*) (const char*) &*buf.begin();
+		const int* origHeightmap = (const int*) (const char*) readmap->orgheightmap;
+
+		for (int i = 0; i < size; ++i) {
+			const int newHeightBits = swabdword(temp[i]) ^ origHeightmap[i];
+			const float newHeight = *(const float*) (const char*) &newHeightBits;
+			readmap->SetHeight(i, newHeight);
+		}
+		mapDamage->RecalcArea(0, gs->mapx, 0, gs->mapy);
+	}
+	else {
+		logOutput.Print("Unable to load heightmap from save file \"" + filename + "\"");
+	}
 }
 
 
