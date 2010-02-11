@@ -31,7 +31,7 @@ static const char* FILE_AIDATA       = PREFIX"aidata.0";
 
 
 CLuaLoadSaveHandler::CLuaLoadSaveHandler()
-: loadfile(NULL)
+: savefile(NULL), loadfile(NULL)
 {
 }
 
@@ -44,11 +44,10 @@ CLuaLoadSaveHandler::~CLuaLoadSaveHandler()
 
 void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 {
-	const int z_method = Z_DEFLATED;
-	const int z_level = Z_BEST_COMPRESSION;
-
 	const std::string realname = filesystem.LocateFile(file, FileSystem::WRITE).c_str();
-	zipFile zip = NULL;
+
+	filename = file;
+	savefile = NULL;
 
 	try {
 		// Remove any existing file
@@ -56,41 +55,17 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 
 		// Open the zip
 		if (realname.empty() ||
-				(zip = zipOpen(realname.c_str(), APPEND_STATUS_CREATE)) == NULL) {
-			throw content_error("Unable to open save file \"" + file + "\"");
+				(savefile = zipOpen(realname.c_str(), APPEND_STATUS_CREATE)) == NULL) {
+			throw content_error("Unable to open save file \"" + filename + "\"");
 		}
 
-		// Save game setup
-		const std::string scriptText = gameSetup->gameSetupText;
-		if (Z_OK != zipOpenNewFileInZip(zip, FILE_STARTSCRIPT, NULL, NULL, 0, NULL, 0, NULL, z_method, z_level)) {
-			throw content_error("Unable to open game setup file in save file \"" + file + "\"");
-		}
-		else if (Z_OK != zipWriteInFileInZip(zip, scriptText.data(), scriptText.size())) {
-			throw content_error("Unable to write game setup file in save file \"" + file + "\"");
-		}
-
-		// Allow all event clients to save
-		// FIXME: need some way to 'chroot' them into a single directory?
-		//        (maybe abstract zipFile void* after all...)
-		eventHandler.Save(zip);
-
-		// Save AI data (first to a stringstream, to be able to use current interface)
-		// FIXME: maybe expose richer stream to AI interface?
-		//        (e.g. one file in the zip per AI?)
-		std::stringstream aidata;
-		eoh->Save(&aidata);
-
-		// Save AI data (stringstream => file, errors are not fatal)
-		if (Z_OK != zipOpenNewFileInZip(zip, FILE_AIDATA, NULL, NULL, 0, NULL, 0, NULL, z_method, z_level)) {
-			logOutput.Print("Unable to open AI data file in save file \"" + file + "\"");
-		}
-		else if (Z_OK != zipWriteInFileInZip(zip, aidata.str().data(), aidata.tellp())) {
-			logOutput.Print("Unable to write AI data to save file \"" + file + "\"");
-		}
+		SaveEventClients();
+		SaveGameStartInfo();
+		SaveAIData();
 
 		// Close zip file.
-		if (Z_OK != zipClose(zip, "Spring save file, visit http://springrts.com/ for details.")) {
-			logOutput.Print("Unable to close save file \"" + file + "\"");
+		if (Z_OK != zipClose(savefile, "Spring save file, visit http://springrts.com/ for details.")) {
+			logOutput.Print("Unable to close save file \"" + filename + "\"");
 		}
 		return; // Success
 	}
@@ -108,9 +83,48 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 	}
 
 	// Failure => cleanup
-	if (zip != NULL) {
-		zipClose(zip, NULL);
+	if (savefile != NULL) {
+		zipClose(savefile, NULL);
+		savefile = NULL;
 		filesystem.Remove(realname);
+	}
+}
+
+
+void CLuaLoadSaveHandler::SaveEventClients()
+{
+	// FIXME: need some way to 'chroot' them into a single directory?
+	//        (maybe abstract zipFile void* after all...)
+	eventHandler.Save(savefile);
+}
+
+
+void CLuaLoadSaveHandler::SaveGameStartInfo()
+{
+	const std::string scriptText = gameSetup->gameSetupText;
+	if (Z_OK != zipOpenNewFileInZip(savefile, FILE_STARTSCRIPT, NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION)) {
+		throw content_error("Unable to open game setup file in save file \"" + filename + "\"");
+	}
+	else if (Z_OK != zipWriteInFileInZip(savefile, scriptText.data(), scriptText.size())) {
+		throw content_error("Unable to write game setup file in save file \"" + filename + "\"");
+	}
+}
+
+
+void CLuaLoadSaveHandler::SaveAIData()
+{
+	// Save to a stringstream first, to be able to use current interface.
+	// FIXME: maybe expose richer stream to AI interface?
+	//        (e.g. one file in the zip per AI?)
+	std::stringstream aidata;
+	eoh->Save(&aidata);
+
+	// Save aidata (stringstream => file, errors are not fatal)
+	if (Z_OK != zipOpenNewFileInZip(savefile, FILE_AIDATA, NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION)) {
+		logOutput.Print("Unable to open AI data file in save file \"" + filename + "\"");
+	}
+	else if (Z_OK != zipWriteInFileInZip(savefile, aidata.str().data(), aidata.tellp())) {
+		logOutput.Print("Unable to write AI data to save file \"" + filename + "\"");
 	}
 }
 
@@ -119,10 +133,11 @@ void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
 	const std::string realfile = filesystem.LocateFile(FindSaveFile(file)).c_str();
 
+	filename = file;
 	loadfile = new CArchiveZip(realfile);
 
 	if (!loadfile->IsOpen()) {
-		logOutput.Print("Unable to open save file \"" + file + "\"");
+		logOutput.Print("Unable to open save file \"" + filename + "\"");
 		return;
 	}
 
@@ -132,10 +147,20 @@ void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 
 void CLuaLoadSaveHandler::LoadGame()
 {
-	// Allow event clients to load
-	eventHandler.Load(loadfile);
+	LoadEventClients();
+	LoadAIData();
+}
 
-	// Load AI data
+
+void CLuaLoadSaveHandler::LoadEventClients()
+{
+	// FIXME: need some way to 'chroot' them into a single directory?
+	eventHandler.Load(loadfile);
+}
+
+
+void CLuaLoadSaveHandler::LoadAIData()
+{
 	std::stringstream aidata(LoadEntireFile(FILE_AIDATA));
 	eoh->Load(&aidata);
 }
