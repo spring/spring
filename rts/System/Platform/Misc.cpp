@@ -93,8 +93,8 @@ std::string GetProcessExecutableFile()
 	}
 
 #elif __APPLE__
-	uint32_t pathlen = MAXPATHLEN;
-	char path[MAXPATHLEN];
+	uint32_t pathlen = PATH_MAX;
+	char path[PATH_MAX];
 	int err = _NSGetExecutablePath(path, &pathlen);
 	if (err == 0)
 	{
