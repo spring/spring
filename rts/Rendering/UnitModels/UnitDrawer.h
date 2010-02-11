@@ -8,7 +8,6 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Shaders/Shader.hpp"
 
 class CVertexArray;
 struct S3DModel;
@@ -17,6 +16,10 @@ class CWorldObject;
 class CUnit;
 class CFeature;
 struct BuildingGroundDecal;
+
+namespace Shader {
+	struct IProgramObject;
+}
 
 class CUnitDrawer
 {
@@ -111,7 +114,6 @@ public:
 	Shader::IProgramObject* S3ODefShader;   // S3O model shader (V+F) without shadowing
 	Shader::IProgramObject* S3OAdvShader;   // S3O model shader (V+F) with shadowing
 	Shader::IProgramObject* S3OCurShader;   // current S3O shader (S3OShaderDef or S3OShaderAdv)
-	Shader::IProgramObject* MDLLSPShader;   // projects 3DO/S3O model geometry into light-space
 
 	float unitDrawDist;
 	float unitDrawDistSqr;
@@ -160,8 +162,8 @@ public:
 	void DrawUnitDef(const UnitDef* unitDef, int team);
 
 	/** CUnit::Draw **/
-	void UnitDrawingTexturesOff(S3DModel *model);
-	void UnitDrawingTexturesOn(S3DModel *model);
+	void UnitDrawingTexturesOff();
+	void UnitDrawingTexturesOn();
 
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit * unit);

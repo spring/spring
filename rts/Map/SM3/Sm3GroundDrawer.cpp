@@ -1,17 +1,19 @@
 
 #include "StdAfx.h"
 
-#include "Game/Camera.h"
 #include "Sm3GroundDrawer.h"
 #include "Sm3Map.h"
 #include "terrain/TerrainNode.h"
+
+#include "Game/Camera.h"
+#include "Map/MapInfo.h"
 #include "Rendering/ShadowHandler.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "Map/MapInfo.h"
-#include "GlobalUnsynced.h"
-#include "ConfigHandler.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/GlobalUnsynced.h"
+#include "System/ConfigHandler.h"
 
 #include <SDL_keysym.h>
 extern unsigned char *keys;
@@ -27,18 +29,14 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 
 	if (shadowHandler->canUseShadows) {
 		shadowrc = tr->AddRenderContext(&shadowCam,false);
-		groundShadowVP = LoadVertexProgram("groundshadow.vp");
-	}
-	else  {
+	} else  {
 		shadowrc = 0;
-		groundShadowVP = 0;
 	}
 	reflectrc = 0;
 }
 
 CSm3GroundDrawer::~CSm3GroundDrawer()
 {
-	glSafeDeleteProgram( groundShadowVP );
 	configHandler->Set("SM3TerrainDetail", int(tr->config.detailMod * 100));
 }
 
@@ -67,7 +65,7 @@ void CSm3GroundDrawer::Update()
 	tr->CacheTextures();
 }
 
-void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
+void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 {
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -185,25 +183,28 @@ void CSm3GroundDrawer::DrawShadowPass()
 	shadowCam.up = camera->up;
 	shadowCam.pos = camera->pos;
 	shadowCam.aspect = 1.0f;
-	
+
+	CShadowHandler* sh = shadowHandler;
+	Shader::IProgramObject* po = sh->GetMapShadowGenShader();
+
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	glBindProgramARB (GL_VERTEX_PROGRAM_ARB, groundShadowVP);
-	glEnable (GL_VERTEX_PROGRAM_ARB);
+	po->Enable();
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
-	tr->SetActiveContext (shadowrc);
-	tr->DrawSimple ();
+	tr->SetActiveContext(shadowrc);
+	tr->DrawSimple();
 	tr->SetActiveContext(rc);
 
 	glCullFace(GL_BACK);
 	glDisable(GL_CULL_FACE);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_VERTEX_PROGRAM_ARB);
+
+	po->Disable();
 }
 
 void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflection)

@@ -1263,7 +1263,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	unitDrawer->unitSunColor*=float3(0.5f,0.7f,0.9f);
 	unitDrawer->unitAmbientColor*=float3(0.6f,0.8f,1.0f);
 
-	game->SetDrawMode(CGame::refractionDraw);
+	game->SetDrawMode(CGame::gameRefractionDraw);
 	drawRefraction=true;
 
 	glEnable(GL_CLIP_PLANE2);
@@ -1279,7 +1279,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	eventHandler.DrawWorldRefraction();
 
 	glDisable(GL_CLIP_PLANE2);
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 	drawRefraction=false;
 
 	glEnable(GL_FOG);
@@ -1306,7 +1306,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	glViewport(0,0,reflTexSize,reflTexSize);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 	sky->Draw();
 
 	glEnable(GL_CLIP_PLANE2);
@@ -1323,7 +1323,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
 

@@ -6,6 +6,10 @@
 #include <vector>
 #include "Rendering/GL/FBO.h"
 
+namespace Shader {
+	struct IProgramObject;
+};
+
 class CShadowHandler
 {
 public:
@@ -38,12 +42,14 @@ public:
 
 	void GetShadowMapSizeFactors(float &param17, float &param18);
 
+	Shader::IProgramObject* GetMdlShadowGenShader() { return mdlShadowGenShader; }
+	Shader::IProgramObject* GetMapShadowGenShader() { return mapShadowGenShader; }
+
 protected:
 	void GetFrustumSide(float3& side,bool upside);
 	bool InitDepthTarget();
 	void DrawShadowPasses();
 
-protected:
 	struct fline {
 		float base;
 		float dir;
@@ -56,6 +62,12 @@ protected:
 
 	bool firstDraw;
 	static bool firstInstance;
+
+	//! these project 3DO+S3O model / SMF+SM3 map geometry
+	//! into light-space to write the depth-buffer texture
+	//! note: 99% identical code, maybe merge?
+	Shader::IProgramObject* mdlShadowGenShader;
+	Shader::IProgramObject* mapShadowGenShader;
 };
 
 extern CShadowHandler* shadowHandler;

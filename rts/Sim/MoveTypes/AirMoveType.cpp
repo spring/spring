@@ -338,8 +338,8 @@ EndNormalControl:
 						owner->UpdateMidPos();
 						owner->speed *= 0.99f;
 						float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
-						owner->DoDamage(DamageArray() * damage, 0, ZeroVector);
-						(*ui)->DoDamage(DamageArray() * damage, 0, ZeroVector);
+						owner->DoDamage(DamageArray(damage), 0, ZeroVector);
+						(*ui)->DoDamage(DamageArray(damage), 0, ZeroVector);
 						hitBuilding = true;
 					} else {
 						float part = owner->mass / (owner->mass + (*ui)->mass);
@@ -349,8 +349,8 @@ EndNormalControl:
 						u->pos += dif * (dist - totRad) * (part);
 						u->UpdateMidPos();
 						float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
-						owner->DoDamage(DamageArray() * damage, 0, ZeroVector);
-						(*ui)->DoDamage(DamageArray() * damage, 0, ZeroVector);
+						owner->DoDamage(DamageArray(damage), 0, ZeroVector);
+						(*ui)->DoDamage(DamageArray(damage), 0, ZeroVector);
 						owner->speed *= 0.99f;
 					}
 				}
@@ -1064,7 +1064,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 					damage += (1 - (updir.dot(gNormal))) * 1000;
 				if (damage > 0) {
 					// only do damage while stunned for now
-					owner->DoDamage(DamageArray() * (damage * 0.4f), 0, ZeroVector);
+					owner->DoDamage(DamageArray(damage * 0.4f), 0, ZeroVector);
 				}
 			}
 			pos.y = gHeight + owner->model->radius * 0.2f + 0.01f;

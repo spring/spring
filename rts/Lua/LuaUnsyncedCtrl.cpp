@@ -1687,7 +1687,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const string arguments = luaL_checkstring(L, 1);
 	const string script = luaL_checkstring(L, 2);
 
-	const std::string springFullName = (Platform::GetBinaryFile());
+	const std::string springFullName = (Platform::GetProcessExecutableFile());
 	// LogObject() << "Args: " << arguments;
 	if (!script.empty())
 	{
@@ -2248,7 +2248,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	                 lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3));
 	const string text = luaL_optstring(L, 4, "");
-	const bool onlyLocal = bool(luaL_optnumber(L, 5, 0));
+	const bool onlyLocal = bool(luaL_optnumber(L, 5, 1));
 
 	if (onlyLocal) {
 		inMapDrawer->LocalPoint(pos, text, gu->myPlayerNum);

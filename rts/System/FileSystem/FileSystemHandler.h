@@ -19,14 +19,15 @@ public:
 	void Initialize();
 
 	// almost direct wrappers to system calls
-	bool mkdir(const std::string& dir) const;
+	static bool mkdir(const std::string& dir);
 	static bool DeleteFile(const std::string& file);
 	static bool FileExists(const std::string& file);
 	static bool DirExists(const std::string& dir);
 	/// oddly, this is non-trivial on Windows
 	static bool DirIsWritable(const std::string& dir);
 
-	void Chdir(const std::string& dir);
+	static std::string GetCwd();
+	static void Chdir(const std::string& dir);
 	/**
 	 * Returns true if path matches regex ...
 	 * on windows:          ^[a-zA-Z]\:[\\/]?$
@@ -47,6 +48,15 @@ public:
 	 */
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
 	static bool IsReadableFile(const std::string& file);
+	/**
+	 * Returns the last file modification time formatted in a sort friendly
+	 * way, with second resolution.
+	 * 23:58:59 30 January 1999 -> "19990130235859"
+	 *
+	 * @return  the last file modification time as described above,
+	 *          or "" on error
+	 */
+	static std::string GetFileModificationDate(const std::string& file);
 	/**
 	 * Returns an absolute path if the file was found in one of the data-dirs,
 	 * or the argument (relative path) if it was not found.

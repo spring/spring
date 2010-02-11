@@ -199,4 +199,8 @@ namespace Shader {
 	void GLSLProgramObject::SetUniform2fv(int idx, float* v) { glUniform2fv(uniformLocs[idx], 1, v); }
 	void GLSLProgramObject::SetUniform3fv(int idx, float* v) { glUniform3fv(uniformLocs[idx], 1, v); }
 	void GLSLProgramObject::SetUniform4fv(int idx, float* v) { glUniform4fv(uniformLocs[idx], 1, v); }
+
+	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, float* v) { glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, float* v) { glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, float* v) { glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
 }

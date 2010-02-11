@@ -7,7 +7,6 @@
 
 class CArchiveBase;
 class IFileFilter;
-class LuaParser;
 class LuaTable;
 
 /*
@@ -20,15 +19,18 @@ class LuaTable;
  * than one folder.
  */
 
+namespace modtype
+{
+	static const int primary = 1;
+	static const int hidden = 0;
+	static const int map = 3;
+};
+
 class CArchiveScanner
 {
 public:
-	struct MapData {
-		std::string name;
-		std::string virtualPath;					// Where in the archive the map can be found
-	};
-
-	struct ModData {
+	struct ArchiveData
+	{
 		std::string name;							// ex:  Original Total Annihilation v2.3
 		std::string shortName;						// ex:  OTA
 		std::string version;						// ex:  v2.3
@@ -36,67 +38,64 @@ public:
 		std::string game;							// ex:  Total Annihilation
 		std::string shortGame;						// ex:  TA
 		std::string description;					// ex:  Little units blowing up other little units
+		std::string mapfile;						// in case its a map, store location of smf/sm3 file
 		int modType;
 		std::vector<std::string> dependencies;		// Archives it depends on
 		std::vector<std::string> replaces;			// This archive obsoletes these ones
 	};
 
 	CArchiveScanner(void);
-	virtual ~CArchiveScanner(void);
+	~CArchiveScanner(void);
 
-	std::string GetFilename();
+	const std::string& GetFilename() const;
 
-	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
-
-	void ReadCacheData(const std::string& filename);
-	void WriteCacheData(const std::string& filename);
-
-	std::vector<ModData> GetPrimaryMods() const;
-	std::vector<ModData> GetAllMods() const;
+	std::vector<ArchiveData> GetPrimaryMods() const;
+	std::vector<ArchiveData> GetAllMods() const;
 	std::vector<std::string> GetArchives(const std::string& root, int depth = 0) const;
-	std::vector<std::string> GetMaps();
-	std::vector<std::string> GetArchivesForMap(const std::string& mapName) const;
-	unsigned int GetArchiveChecksum(const std::string& name);
-	std::string GetArchivePath(const std::string& name) const;
-	unsigned int GetModChecksum(const std::string& root);
-	unsigned int GetMapChecksum(const std::string& mapName);
-	void CheckMod(const std::string& root, unsigned checksum); // these throw a content_error if checksum doesn't match
-	void CheckMap(const std::string& mapName, unsigned checksum);
-	std::string ModNameToModArchive(const std::string& s) const;
-	std::string ModArchiveToModName(const std::string& s) const;
-	ModData ModNameToModData(const std::string& s) const;
-	ModData ModArchiveToModData(const std::string& s) const;
+	std::vector<std::string> GetMaps() const;
 
-protected:
-	struct ArchiveInfo {
+	/// checksum of the given archive (without dependencies)
+	unsigned int GetSingleArchiveChecksum(const std::string& name) const;
+	/// Calculate checksum of the given archive and all its dependencies
+	unsigned int GetArchiveCompleteChecksum(const std::string& name) const;
+	/// like GetArchiveCompleteChecksum, throws exception if mismatch
+	void CheckArchive(const std::string& name, unsigned checksum) const;
+
+	std::string ArchiveFromName(const std::string& s) const;
+	std::string NameFromArchive(const std::string& s) const;
+	std::string GetArchivePath(const std::string& name) const;
+	std::string MapNameToMapFile(const std::string& name) const;
+	ArchiveData GetArchiveData(const std::string& name) const;
+	ArchiveData GetArchiveDataByArchive(const std::string& archive) const;
+
+private:
+	struct ArchiveInfo
+	{
 		std::string path;
 		std::string origName;					// Could be useful to have the non-lowercased name around
 		unsigned int modified;
-		std::vector<MapData> mapData;
-		ModData modData;
+		ArchiveData archiveData;
 		unsigned int checksum;
 		bool updated;
 		std::string replaced;					// If not empty, use that archive instead
 	};
 
-protected:
-	void PreScan(const std::string& curPath);
-	void Scan(const std::string& curPath, bool checksum = false);
-	void ScanArchive(const std::string& fullName, bool checksum = false);
-	bool ScanMap(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
-	bool ScanModLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
-	bool ScanModTdf(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
+	void Scan(const std::string& curPath, bool doChecksum);
 
-protected:
+	void ScanArchive(const std::string& fullName, bool checksum = false);
+	/// scan mapinfo / modinfo lua files
+	bool ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+
+	void ReadCacheData(const std::string& filename);
+	void WriteCacheData(const std::string& filename);
+
 	std::map<std::string, ArchiveInfo> archiveInfo;
-	ModData GetModData(const LuaTable& modTable);
+	ArchiveData GetArchiveData(const LuaTable& archiveTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;
-	std::string parse_tdf_path;
-	std::string parse_tdf_code;
-	std::string scanutils_path;
-	std::string scanutils_code;
+	std::string cachefile;
 };
 
 extern CArchiveScanner* archiveScanner;

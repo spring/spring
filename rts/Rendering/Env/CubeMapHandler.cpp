@@ -128,7 +128,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 
 	camera->SetFov(90.0f);
 	camera->forward = camDir;
@@ -150,7 +150,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	// glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	glPopAttrib();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera*) realCam);
@@ -179,9 +179,9 @@ void CubeMapHandler::CreateSpecularFace(
 
 			const float spec = std::min(1.f, pow(dot, specExponent) + pow(dot, 3) * 0.25f);
 
-			buf[(y * size + x) * 4 + 0] = (unsigned char) (mapInfo->light.specularSunColor.x * spec * 255);
-			buf[(y * size + x) * 4 + 1] = (unsigned char) (mapInfo->light.specularSunColor.y * spec * 255);
-			buf[(y * size + x) * 4 + 2] = (unsigned char) (mapInfo->light.specularSunColor.z * spec * 255);
+			buf[(y * size + x) * 4 + 0] = (unsigned char) (mapInfo->light.unitSpecularColor.x * spec * 255);
+			buf[(y * size + x) * 4 + 1] = (unsigned char) (mapInfo->light.unitSpecularColor.y * spec * 255);
+			buf[(y * size + x) * 4 + 2] = (unsigned char) (mapInfo->light.unitSpecularColor.z * spec * 255);
 			buf[(y * size + x) * 4 + 3] = 255;
 		}
 	}

@@ -12,7 +12,7 @@ public:
 	CSm3GroundDrawer(CSm3ReadMap *map);
 	~CSm3GroundDrawer();
 
-	void Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP);
+	void Draw(bool drawWaterReflection,bool drawUnitReflection);
 	void DrawShadowPass(void);
 	void Update();
 
@@ -29,7 +29,5 @@ protected:
 	terrain::Camera cam, shadowCam, reflectCam;
 	Frustum frustum;
 
-	unsigned int groundShadowVP;
 	friend class CSm3ReadMap;
 };
-

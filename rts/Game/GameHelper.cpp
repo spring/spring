@@ -918,6 +918,12 @@ void CGameHelper::GetEnemyUnits(const float3 &pos, float searchRadius, int searc
 	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
 }
 
+void CGameHelper::GetEnemyUnitsNoLosTest(const float3 &pos, float searchRadius, int searchAllyteam, vector<int> &found)
+{
+	Query::AllUnitsById q(pos, searchRadius, found);
+	QueryUnits(Filter::Enemy(searchAllyteam), q);
+}
+
 //////////////////////////////////////////////////////////////////////
 // Miscellaneous (i.e. not yet categorized)
 //////////////////////////////////////////////////////////////////////
@@ -1172,7 +1178,7 @@ void CGameHelper::Update(void)
 		WaitingDamage* w = wd->back();
 		wd->pop_back();
 		if (uh->units[w->target])
-			uh->units[w->target]->DoDamage(w->damage, w->attacker == -1? 0: uh->units[w->attacker], w->impulse, w->weaponId);
+			uh->units[w->target]->DoDamage(w->damage, w->attacker == -1? NULL: uh->units[w->attacker], w->impulse, w->weaponId);
 		delete w;
 	}
 }

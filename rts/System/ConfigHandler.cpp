@@ -15,14 +15,10 @@
 #include <string.h>
 #include <stdexcept>
 #ifndef WIN32
-#include <unistd.h>
-#endif
-
-#ifdef __APPLE__
-#include <sys/stat.h>
-#endif
-
-#ifdef WIN32
+	#include <unistd.h>
+	#include <sys/stat.h>
+	#include <sys/types.h>
+#else
 	#include <io.h>
 	#include <direct.h>
 	#include <windows.h>
@@ -187,14 +183,13 @@ string ConfigHandler::GetString(const string name, const string def)
  * 4) Write file (so we keep the settings in the event of a crash or error)
  * 5) Unlock file.
  *
- * Pretty hackish, but Windows registry changes
- * save immediately, while with DotfileHandler the
- * data is stored in an internal data structure for
- * fast access.  So we want to keep the settings in
- * the event of a crash, but at the same time we don't
- * want conflicts when multiple instances are running
- * at the same time (which would cause data loss)
- * (e.g. unitsync and spring).
+ * Data is stored in an internal data structure for
+ * fast access.
+ * Currently, settings are lost in the event of a crash.
+ * We do not want conflicts when multiple instances are running
+ * at the same time (which would cause data loss).
+ * This would happen if e.g. unitsync and spring would access
+ * the config file at the same time, if we would not lock.
  */
 void ConfigHandler::SetString(const string name, const string value)
 {
@@ -228,7 +223,7 @@ void ConfigHandler::SetString(const string name, const string value)
  */
 string ConfigHandler::GetDefaultConfig()
 {
-	string binaryPath = Platform::GetBinaryPath() + "/";
+	string binaryPath = Platform::GetProcessExecutablePath() + "/";
 	std::string portableConfPath = binaryPath + "springsettings.cfg";
 	if (access(portableConfPath.c_str(), 6) != -1) {
 		return portableConfPath;
@@ -244,7 +239,7 @@ string ConfigHandler::GetDefaultConfig()
 	const string verCfg = defCfg + "-" + SpringVersion::Get();
 
 	struct stat st;
-	if (stat(verCfg.c_str(), &st) == 0) {
+	if (stat(verCfg.c_str(), &st) == 0) { // check if file exists
 		cfg = verCfg; // use the versionned config file
 	} else {
 		cfg = defCfg; // use the default config file
@@ -256,9 +251,9 @@ string ConfigHandler::GetDefaultConfig()
 	// doesn't work on directories (precisely, mode is always 0)
 	TCHAR strPath[MAX_PATH+1];
 	SHGetFolderPath( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
-	std::string userDir = strPath;
-	std::string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
-	if (_access(verConfigPath.c_str(), 6) != -1) {
+	const std::string userDir = strPath;
+	const std::string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
+	if (_access(verConfigPath.c_str(), 6) != -1) { // check for read & write access
 		cfg = verConfigPath;
 	} else {
 		cfg = strPath;

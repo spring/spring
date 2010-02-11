@@ -561,6 +561,8 @@ private:
 	static float expReloadScale;
 	static float expGrade;
 
+	static float empDecline;
+
 public:
 	void LogMessage(const char*, ...);
 };

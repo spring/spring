@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 #endif
 	SDL_Init(SDL_INIT_TIMER);
 	std::cout << "If you find any errors, report them to mantis or the forums." << std::endl << std::endl;
-	ConfigHandler::Instantiate("");
+	ConfigHandler::Instantiate(); // use the default config file
 	FileSystemHandler::Initialize(false);
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			data.SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
+			data.SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName));
 
 			CFileHandler f("maps/" + gameSetup->mapName);
 			if (!f.FileExists()) {
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 		if (gameSetup->modHash != 0) {
 			data.SetModChecksum(gameSetup->modHash);
 		} else {
-			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
-			data.SetModChecksum(archiveScanner->GetModChecksum(modArchive));
+			const std::string modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
+			data.SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
 		}
 
 		data.SetSetup(gameSetup->gameSetupText);

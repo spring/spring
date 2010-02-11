@@ -103,7 +103,7 @@ public:
 
 	// returns a position for the unit to withdraw from close quarters combat (but try to keep enemies in weapons range)
 	// returns ZeroVector if no suitable pos found (or no enemies close enough)
-	void GetFallBackPos(float3 *pos, int unit_id, float range);
+	void GetFallBackPos(float3 *pos, int unit_id, float max_weapon_range) const;
 
 	void CheckFallBack(int unit_id, int def_id);
 

@@ -1,10 +1,11 @@
 #include "StdAfx.h"
-#include "SDL_timer.h"
-#include <vector>
-#include <boost/cstdint.hpp>
 #include "mmgr.h"
 
 #include "PathManager.h"
+
+#include <vector>
+#include <boost/cstdint.hpp>
+
 #include "LogOutput.h"
 #include "myMath.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -23,17 +24,19 @@ const unsigned int CPathManager::PATH_RESOLUTION = CPathFinder::PATH_RESOLUTION;
 
 CPathManager* pathManager=0;
 
-CPathManager::CPathManager() {
+CPathManager::CPathManager()
+{
 	// Create pathfinder and estimators.
 	pf  = new CPathFinder();
-	pe  = new CPathEstimator(pf,  8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe");
-	pe2 = new CPathEstimator(pf, 32, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2");
+	pe  = new CPathEstimator(pf,  8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe", mapInfo->map.name);
+	pe2 = new CPathEstimator(pf, 32, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2", mapInfo->map.name);
 
 	// Reset id-counter.
 	nextPathId = 0;
 }
 
-CPathManager::~CPathManager() {
+CPathManager::~CPathManager()
+{
 	delete pe2;
 	delete pe;
 	delete pf;
@@ -75,9 +78,12 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 /*
 Request a new multipath, store the result and return a handle-id to it.
 */
-unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos,
+unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 		CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller) {
 	SCOPED_TIMER("PFS");
+
+	MoveData* moveData = moveinfo->moveData[md->pathType];
+	moveData->tempOwner = caller;
 
 	// Creates a new multipath.
 	MultiPath* newPath = new MultiPath(startPos, peDef, moveData);
@@ -170,9 +176,12 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 			}
 		}
 	}
+
 	if (caller) {
 		caller->Block();
 	}
+
+	moveData->tempOwner = NULL;
 	return retValue;
 }
 

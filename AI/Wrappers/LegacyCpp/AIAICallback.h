@@ -205,6 +205,9 @@ public:
 	virtual const char* CallLuaRules(const char* data, int inSize = -1,
 			int* outSize = NULL);
 
+	virtual std::map<std::string, std::string> GetMyInfo();
+	virtual std::map<std::string, std::string> GetMyOptionValues();
+
 private:
 	int skirmishAIId;
 	const SSkirmishAICallback* sAICallback;

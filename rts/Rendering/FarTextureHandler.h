@@ -14,11 +14,11 @@ class CVertexArray;
 /**
  * @brief Cheap unit lodding using imposters.
  */
-class CFartextureHandler
+class CFarTextureHandler
 {
 public:
-	CFartextureHandler();
-	~CFartextureHandler();
+	CFarTextureHandler();
+	~CFarTextureHandler();
 	void CreateFarTexture(S3DModel* model);
 	void CreateFarTextures();
 	GLuint GetTextureID() const { return farTexture; }
@@ -42,6 +42,6 @@ private:
 	std::vector<S3DModel*> pending;
 };
 
-extern CFartextureHandler* fartextureHandler;
+extern CFarTextureHandler* farTextureHandler;
 
 #endif // __FARTEXTURE_HANDLER_H__

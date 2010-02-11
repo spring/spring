@@ -15,8 +15,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SKIRMISHAILIBRARY_H
-#define	_SKIRMISHAILIBRARY_H
+#ifndef _SKIRMISH_AI_LIBRARY_H
+#define _SKIRMISH_AI_LIBRARY_H
 
 #include "SkirmishAIKey.h"
 #include "Interface/SSkirmishAILibrary.h"
@@ -33,25 +33,25 @@ struct SSkirmishAICallback;
 class CSkirmishAILibrary {
 public:
 	CSkirmishAILibrary(const SSkirmishAILibrary& ai, const SkirmishAIKey& key);
-	virtual ~CSkirmishAILibrary();
+	~CSkirmishAILibrary();
 
-	virtual SkirmishAIKey GetKey() const;
+	SkirmishAIKey GetKey() const;
 
 	/**
 	 * Level of Support for a specific engine version and ai interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
-	virtual LevelOfSupport GetLevelOfSupportFor(
+	LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber,
 			const AIInterfaceKey& interfaceKey) const;
 
-	virtual bool Init(int skirmishAIId, const SSkirmishAICallback* c_callback) const;
-	virtual bool Release(int skirmishAIId) const;
-	virtual int HandleEvent(int skirmishAIId, int topic, const void* data) const;
+	bool Init(int skirmishAIId, const SSkirmishAICallback* c_callback) const;
+	bool Release(int skirmishAIId) const;
+	int HandleEvent(int skirmishAIId, int topic, const void* data) const;
 
 private:
 	SSkirmishAILibrary sSAI;
 	SkirmishAIKey key;
 };
 
-#endif // _SKIRMISHAILIBRARY_H
+#endif // _SKIRMISH_AI_LIBRARY_H

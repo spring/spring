@@ -2,22 +2,23 @@
 #include "mmgr.h"
 
 #include "ShadowHandler.h"
-#include "ConfigHandler.h"
 #include "Game/Camera.h"
+#include "Game/UI/MiniMap.h"
 #include "UnitModels/FeatureDrawer.h"
 #include "UnitModels/UnitDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Matrix44f.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Game/UI/MiniMap.h"
-#include "LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/Matrix44f.h"
+#include "System/LogOutput.h"
 #include "Rendering/GL/FBO.h"
-#include "EventHandler.h"
+#include "Rendering/Shaders/ShaderHandler.hpp"
 
-CShadowHandler* shadowHandler=0;
+CShadowHandler* shadowHandler = 0;
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 
@@ -38,6 +39,9 @@ CShadowHandler::CShadowHandler(void)
 	firstDraw     = true;
 	shadowTexture = 0;
 	drawTerrainShadow = true;
+
+	mdlShadowGenShader = shaderHandler->CreateProgramObject("[ShadowHandler]", "MdlShadowGenShaderARB", true);
+	mapShadowGenShader = shaderHandler->CreateProgramObject("[ShadowHandler]", "MapShadowGenShaderARB", true);
 
 	if (!tmpFirstInstance && !canUseShadows) {
 		return;
@@ -67,7 +71,7 @@ CShadowHandler::CShadowHandler(void)
 
 	if (tmpFirstInstance) {
 		// this already checks for GLEW_ARB_fragment_program
-		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "unit.fp")) {
+		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "units3o.fp")) {
 			logOutput.Print("Your GFX card does not support the fragment programs needed for shadows");
 			return;
 		}
@@ -102,6 +106,11 @@ CShadowHandler::CShadowHandler(void)
 	}
 
 	drawShadows = true;
+
+	mdlShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("unit_genshadow.vp", GL_VERTEX_PROGRAM_ARB));
+	mdlShadowGenShader->Link();
+	mapShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("groundshadow.vp", GL_VERTEX_PROGRAM_ARB));
+	mapShadowGenShader->Link();
 }
 
 
@@ -142,8 +151,13 @@ bool CShadowHandler::InitDepthTarget()
 
 CShadowHandler::~CShadowHandler(void)
 {
-	if (drawShadows)
+	if (drawShadows) {
 		glDeleteTextures(1, &shadowTexture);
+	}
+
+	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
+	mdlShadowGenShader = NULL;
+	mapShadowGenShader = NULL;
 }
 
 void CShadowHandler::DrawShadowPasses(void)

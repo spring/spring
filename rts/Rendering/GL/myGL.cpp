@@ -98,13 +98,6 @@ void LoadExtensions()
 	}
 */
 
-	if (!GLEW_VERSION_1_4) {
-		logOutput.Print("Minimal required OpenGL version is 1.4\n");
-#if       !defined DEBUG
-		exit(0);
-#endif // !defined DEBUG
-	}
-
 #if       !defined DEBUG
 	// Print out warnings for really crappy graphic cards/drivers
 	{
@@ -142,11 +135,6 @@ void LoadExtensions()
 	std::string s = (char*)glGetString(GL_EXTENSIONS);
 	for (unsigned int i=0; i<s.length(); i++)
 		if (s[i]==' ') s[i]='\n';
-
-	std::ofstream ofs("ext.txt");
-
-	if (!ofs.bad() && ofs.is_open())
-		ofs.write(s.c_str(), s.length());
 
 	std::string missingExts = "";
 	if(!GLEW_ARB_multitexture) {

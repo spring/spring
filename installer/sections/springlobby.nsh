@@ -2,7 +2,6 @@
   SetOutPath "$INSTDIR"
 
   File /r "..\installer\Springlobby\SLArchive\*.*"
-  File "..\installer\downloads\springlobby.exe"
 !else
 
   Delete "$INSTDIR\springlobby.exe"

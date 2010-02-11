@@ -297,8 +297,7 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) ||
-	    ((args >= 2) && !lua_isstring(L, 2)) ||
-	    ((args >= 3) && !lua_isstring(L, 3))) {
+	    ((args >= 2) && !lua_isstring(L, 2))) {
 		luaL_error(L, "Incorrect arguments to DirList()");
 	}
 
@@ -412,7 +411,7 @@ int LuaVFS::MapArchive(lua_State* L)
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	const string filename = archiveScanner->ModNameToModArchive(luaL_checkstring(L, 1));
+	const string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
 	if (!LuaIO::IsSimplePath(filename))
 	{
 		//FIXME		return 0;
@@ -434,7 +433,7 @@ int LuaVFS::MapArchive(lua_State* L)
 		int checksum = 0;
 		std::istringstream buf(checksumBuf);
 		buf >> checksum;
-		const int realchecksum = archiveScanner->GetArchiveChecksum(filename);
+		const int realchecksum = archiveScanner->GetSingleArchiveChecksum(filename);
 		if (checksum != realchecksum)
 		{
 			std::ostringstream buf;

@@ -1751,92 +1751,16 @@
 					>
 				</File>
 			</Filter>
-			<Filter
-				Name="Start Scripts"
-				>
-				<File
-					RelativePath="..\..\Game\StartScripts\AirScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\AirScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\EmptyScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\EmptyScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\LoadScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\LoadScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\Script.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\Script.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\ScriptHandler.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\ScriptHandler.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\SkirmishAITestScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\SkirmishAITestScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\SpawnScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\SpawnScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\TestScript.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\TestScript.h"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Rendering"
 			>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.cpp"
+				RelativePath="..\..\Rendering\FarTextureHandler.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.h"
+				RelativePath="..\..\Rendering\FarTextureHandler.h"
 				>
 			</File>
 			<File
@@ -13024,6 +12948,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Menu\LobbyConnection.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\ScriptHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Menu\ScriptHandler.h"
 				>
 			</File>
 			<File

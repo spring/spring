@@ -3255,16 +3255,16 @@ void AAIExecute::ChooseDifferentStartingSector(int x, int y)
 
 void AAIExecute::CheckFallBack(int unit_id, int def_id)
 {
-	float range = bt->units_static[def_id].range;
+	float max_weapon_range = bt->units_static[def_id].range;
 
-	if(range > cfg->MIN_FALLBACK_RANGE && bt->unitList[def_id-1]->turnRate >= cfg->MIN_FALLBACK_TURNRATE)
+	if(max_weapon_range > cfg->MIN_FALLBACK_RANGE && bt->unitList[def_id-1]->turnRate >= cfg->MIN_FALLBACK_TURNRATE)
 	{
-		if(range > cfg->MAX_FALLBACK_RANGE)
-			range = cfg->MAX_FALLBACK_RANGE;
+		if(max_weapon_range > cfg->MAX_FALLBACK_RANGE)
+			max_weapon_range = cfg->MAX_FALLBACK_RANGE;
 
 		float3 pos;
 
-		GetFallBackPos(&pos, unit_id, range);
+		GetFallBackPos(&pos, unit_id, max_weapon_range);
 
 		if(pos.x > 0)
 		{
@@ -3283,38 +3283,45 @@ void AAIExecute::CheckFallBack(int unit_id, int def_id)
 }
 
 
-void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float range)
+void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float max_weapon_range) const
 {
-	float3 unit_pos = cb->GetUnitPos(unit_id), temp_pos;
-
 	*pos = ZeroVector;
 
+	const float3 unit_pos = cb->GetUnitPos(unit_id);
+
+	// units without range should not end up here; this is for attacking units only
+	// prevents a NaN
+	assert(max_weapon_range != 0.0f);
+
 	// get list of enemies within weapons range
-	int number_of_enemies = cb->GetEnemyUnits(&(map->units_in_los.front()), unit_pos, range * cfg->FALLBACK_DIST_RATIO);
+	const int number_of_enemies = cb->GetEnemyUnits(&(map->units_in_los.front()), unit_pos, max_weapon_range * cfg->FALLBACK_DIST_RATIO);
 
 	if(number_of_enemies > 0)
 	{
+		float3 temp_pos;
 		float dist;
 
 		for(int k = 0; k < number_of_enemies; ++k)
 		{
 			// get distance to enemy
 			temp_pos = cb->GetUnitPos(map->units_in_los[k]);
-
 			dist = fastmath::apxsqrt( (temp_pos.x - unit_pos.x) * (temp_pos.x - unit_pos.x) - (temp_pos.z - unit_pos.z) * (temp_pos.z - unit_pos.z) );
 
 			// get dir from unit to enemy
 			temp_pos.x -= unit_pos.x;
 			temp_pos.z -= unit_pos.z;
 
-			//
-			pos->x += (dist / range - 1) * temp_pos.x;
-			pos->z += (dist / range - 1) * temp_pos.z;
+			// move closer to enemy if we are out of range,
+			// and away if we are closer then our max range
+			pos->x += (dist / max_weapon_range - 1) * temp_pos.x;
+			pos->z += (dist / max_weapon_range - 1) * temp_pos.z;
 		}
 
+		// move less if lots of enemies are close
 		pos->x /= (float)number_of_enemies;
 		pos->z /= (float)number_of_enemies;
 
+		// make move relative to curretn position
 		pos->x += unit_pos.x;
 		pos->z += unit_pos.z;
 	}

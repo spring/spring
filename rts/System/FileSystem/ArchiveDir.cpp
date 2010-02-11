@@ -1,41 +1,17 @@
-/* Author: Tobi Vollebregt */
-
 #include "StdAfx.h"
+
 #include "ArchiveDir.h"
+
 #include <assert.h>
-#include <stdexcept>
+#include <fstream>
+
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
 #include "mmgr.h"
 
-
-inline CFileHandler* CArchiveDir::GetFileHandler(int handle)
-{
-	std::map<int, CFileHandler*>::iterator it = fileHandles.find(handle);
-
-	if (it == fileHandles.end())
-		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchiveDir::OpenFile.");
-
-	return it->second;
-}
-
-
-inline std::vector<std::string>::iterator& CArchiveDir::GetSearchHandle(int handle)
-{
-	std::map<int, std::vector<std::string>::iterator>::iterator it = searchHandles.find(handle);
-
-	if (it == searchHandles.end())
-		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchiveDir::FindFiles.");
-
-	return it->second;
-}
-
-
 CArchiveDir::CArchiveDir(const std::string& archivename) :
 		CArchiveBase(archivename),
-		archiveName(archivename + '/'),
-		curFileHandle(0),
-		curSearchHandle(0)
+		archiveName(archivename + '/')
 {
 	std::vector<std::string> found = filesystem.FindFiles(archiveName, "*", FileSystem::RECURSE);
 
@@ -48,87 +24,55 @@ CArchiveDir::CArchiveDir(const std::string& archivename) :
 		filesystem.ForwardSlashes(origName);
 		// convert to lowercase and store
 		searchFiles.push_back(origName);
-		lcNameToOrigName[StringToLower(origName)] = origName;
+		lcNameIndex[StringToLower(origName)] = searchFiles.size()-1;
 	}
 }
-
 
 CArchiveDir::~CArchiveDir(void)
 {
 }
-
 
 bool CArchiveDir::IsOpen()
 {
 	return true;
 }
 
-
-int CArchiveDir::OpenFile(const std::string& fileName)
+unsigned CArchiveDir::NumFiles() const
 {
-	CFileHandler* f = new CFileHandler(archiveName + lcNameToOrigName[StringToLower(fileName)]);
-
-	if (!f || !f->FileExists())
-		return 0;
-
-	++curFileHandle;
-	fileHandles[curFileHandle] = f;
-	return curFileHandle;
+	return searchFiles.size();
 }
 
-
-int CArchiveDir::ReadFile(int handle, void* buffer, int numBytes)
+bool CArchiveDir::GetFile(unsigned fid, std::vector<uint8_t>& buffer)
 {
-	CFileHandler* f = GetFileHandler(handle);
-	return f->Read(buffer, numBytes);
-}
+	assert(fid >= 0 && fid < NumFiles());
 
-
-void CArchiveDir::CloseFile(int handle)
-{
-	delete GetFileHandler(handle);
-	fileHandles.erase(handle);
-}
-
-
-void CArchiveDir::Seek(int handle, int pos)
-{
-	GetFileHandler(handle)->Seek(pos);
-}
-
-
-int CArchiveDir::Peek(int handle)
-{
-	return GetFileHandler(handle)->Peek();
-}
-
-
-bool CArchiveDir::Eof(int handle)
-{
-	return GetFileHandler(handle)->Eof();
-}
-
-
-int CArchiveDir::FileSize(int handle)
-{
-	return GetFileHandler(handle)->FileSize();
-}
-
-
-int CArchiveDir::FindFiles(int cur, std::string* name, int* size)
-{
-	if (cur == 0) {
-		cur = ++curSearchHandle;
-		searchHandles[cur] = searchFiles.begin();
+	const std::string rawpath = filesystem.LocateFile(archiveName+searchFiles[fid]);
+	std::ifstream ifs(rawpath.c_str(), std::ios::in | std::ios::binary);
+	if (!ifs.bad() && ifs.is_open())
+	{
+		ifs.seekg(0, std::ios_base::end);
+		buffer.resize(ifs.tellg());
+		ifs.seekg(0, std::ios_base::beg);
+		ifs.clear();
+		ifs.read((char*)&buffer[0], buffer.size());
+		return true;
 	}
-	if (searchHandles[cur] == searchFiles.end()) {
-		searchHandles.erase(cur);
-		return 0;
+	else
+		return false;
+}
+
+void CArchiveDir::FileInfo(unsigned fid, std::string& name, int& size) const
+{
+	assert(fid >= 0 && fid < NumFiles());
+
+	name = searchFiles[fid];
+	const std::string rawpath = filesystem.LocateFile(archiveName+name);
+	std::ifstream ifs(rawpath.c_str(), std::ios::in | std::ios::binary);
+	if (!ifs.bad() && ifs.is_open())
+	{
+		ifs.seekg(0, std::ios_base::end);
+		size = ifs.tellg();
 	}
-
-	*name = *searchHandles[cur];
-	*size = filesystem.GetFilesize(archiveName + *name);
-
-	++searchHandles[cur];
-	return cur;
+	else
+		size = 0;
 }

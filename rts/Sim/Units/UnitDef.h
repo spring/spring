@@ -294,6 +294,7 @@ public:
 
 	bool canKamikaze;								///< self destructs if enemy come to close
 	float kamikazeDist;
+	bool kamikazeUseLOS;
 
 	bool targfac;
 	bool canDGun;

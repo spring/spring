@@ -16,6 +16,7 @@
 #include "glFont.h"
 #include "GL/VertexArray.h"
 #include "EventHandler.h"
+#include "Colors.h"
 #include "NetProtocol.h"
 #include "LogOutput.h"
 #include "Sound/Sound.h"
@@ -41,8 +42,7 @@ CR_REG_METADATA_SUB(CInMapDraw, MapPoint, (
 	CR_MEMBER(label),
 	CR_MEMBER(senderAllyTeam),
 	CR_MEMBER(senderSpectator),
-	CR_RESERVED(4),
-	CR_SERIALIZER(Serialize)
+	CR_RESERVED(4)
 ));
 
 CR_BIND(CInMapDraw::MapLine, );
@@ -52,8 +52,7 @@ CR_REG_METADATA_SUB(CInMapDraw, MapLine, (
 	CR_MEMBER(pos2),
 	CR_MEMBER(senderAllyTeam),
 	CR_MEMBER(senderSpectator),
-	CR_RESERVED(4),
-	CR_SERIALIZER(Serialize)
+	CR_RESERVED(4)
 ));
 
 CR_BIND(CInMapDraw::DrawQuad, );
@@ -211,17 +210,6 @@ void SerializeColor(creg::ISerializer &s, unsigned char **color)
 		}
 	}
 }
-
-void CInMapDraw::MapPoint::Serialize(creg::ISerializer &s)
-{
-	SerializeColor(s,&color);
-}
-
-void CInMapDraw::MapLine::Serialize(creg::ISerializer &s)
-{
-	SerializeColor(s,&color);
-}
-
 
 bool CInMapDraw::MapPoint::MaySee(CInMapDraw* imd) const
 {
@@ -521,7 +509,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 	// rendering the quads)
 	MapPoint point;
 	point.pos = pos;
-	point.color = teamHandler->Team(sender->team)->color;
+	point.color = sender->spectator ? color4::white : teamHandler->Team(sender->team)->color;
 	point.label = label;
 	point.senderAllyTeam = teamHandler->AllyTeam(sender->team);
 	point.senderSpectator = sender->spectator;
@@ -564,7 +552,7 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 	MapLine line;
 	line.pos  = pos1;
 	line.pos2 = pos2;
-	line.color = teamHandler->Team(sender->team)->color;
+	line.color = sender->spectator ? color4::white : teamHandler->Team(sender->team)->color;
 	line.senderAllyTeam = teamHandler->AllyTeam(sender->team);
 	line.senderSpectator = sender->spectator;
 

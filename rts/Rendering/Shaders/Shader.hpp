@@ -76,6 +76,10 @@ namespace Shader {
 		virtual void SetUniform3fv(int, float*) {}
 		virtual void SetUniform4fv(int, float*) {}
 
+		virtual void SetUniformMatrix2fv(int, bool, float*) {}
+		virtual void SetUniformMatrix3fv(int, bool, float*) {}
+		virtual void SetUniformMatrix4fv(int, bool, float*) {}
+
 		typedef std::vector<const IShaderObject*> SOVec;
 		typedef std::vector<const IShaderObject*>::const_iterator SOVecIt;
 
@@ -153,11 +157,31 @@ namespace Shader {
 		void SetUniform3fv(int, float*);
 		void SetUniform4fv(int, float*);
 
+		void SetUniformMatrix2fv(int, bool, float*);
+		void SetUniformMatrix3fv(int, bool, float*);
+		void SetUniformMatrix4fv(int, bool, float*);
+
 		void AttachShaderObject(const IShaderObject*);
 
 	private:
 		std::vector<int> uniformLocs;
 	};
+
+	/*
+	struct GLSLARBProgramObject: public Shader::IProgramObject {
+		glCreateProgramObjectARB <==> glCreateProgram
+		glCreateShaderObjectARB  <==> glCreateShader
+		glDeleteObjectARB        <==> glDelete{Shader,Program}
+		glCompileShaderARB       <==> glCompileShader
+		glShaderSourceARB        <==> glShaderSource
+		glAttachObjectARB        <==> glAttachShader
+		glDetachObjectARB        <==> glDetachShader
+		glLinkProgramARB         <==> glLinkProgram
+		glUseProgramObjectARB    <==> glUseProgram
+		glUniform*ARB            <==> glUniform*
+		glGetUniformLocationARB  <==> glGetUniformLocation
+	};
+	*/
 }
 
 #endif

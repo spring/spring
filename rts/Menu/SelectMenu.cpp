@@ -32,8 +32,7 @@
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
 #include "InputHandler.h"
-#include "Game/StartScripts/ScriptHandler.h"
-#include "Game/StartScripts/SkirmishAITestScript.h"
+#include "ScriptHandler.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -136,7 +135,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	TdfParser::TdfSection* modopts = game->construct_subsection("MODOPTIONS");
 	modopts->AddPair("GameMode", 3);
 	modopts->AddPair("MaxSpeed", 20);
-	modopts->add_name_value("Scriptname", script);
 
 	game->AddPair("IsHost", 1);
 	game->add_name_value("MyPlayerName", playername);
@@ -147,10 +145,16 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	player0->add_name_value("Name", playername);
 	player0->AddPair("Team", 0);
 
-	const bool isSkirmishAITestScript =
-			(script.substr(0, CSkirmishAITestScript::SCRIPT_NAME_PRELUDE.size())
-			== CSkirmishAITestScript::SCRIPT_NAME_PRELUDE);
-	if (!isSkirmishAITestScript) {
+	const bool isSkirmishAITestScript = CScriptHandler::Instance().IsSkirmishAITestScript(script);
+	if (isSkirmishAITestScript) {
+		SkirmishAIData aiData = CScriptHandler::Instance().GetSkirmishAIData(script);
+		TdfParser::TdfSection* ai = game->construct_subsection("AI0");
+		ai->add_name_value("Name", "Enemy");
+		ai->add_name_value("ShortName", aiData.shortName);
+		ai->add_name_value("Version", aiData.version);
+		ai->AddPair("Host", 0);
+		ai->AddPair("Team", 1);
+	} else {
 		TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
 		player1->add_name_value("Name", "Enemy");
 		player1->AddPair("Team", 1);
@@ -198,7 +202,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
 		{
-			std::string archive = archiveScanner->ModNameToModArchive("Spring Bitmaps");
+			std::string archive = archiveScanner->ArchiveFromName("Spring Bitmaps");
 			std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
 			vfsHandler->AddArchive(archivePath, false);
 			background->Load("bitmaps/ui/background.jpg");

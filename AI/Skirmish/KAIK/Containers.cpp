@@ -139,6 +139,7 @@ AIClasses::AIClasses(IGlobalAICallback* gcb):
 {
 	cb  = gcb->GetAICallback();
 	ccb = gcb->GetCheatInterface();
+	initFrame = cb->GetCurrentFrame();
 }
 
 AIClasses::~AIClasses() {

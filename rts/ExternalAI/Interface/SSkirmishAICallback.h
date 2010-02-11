@@ -1039,7 +1039,7 @@ struct SSkirmishAICallback {
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - each data position is 8*8 in size
-	 * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 *
 	 * @see getCornersHeightMap()
@@ -1053,7 +1053,7 @@ struct SSkirmishAICallback {
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - 4 points mark the edges of an area of 8*8 in size
-	 * - the value for upper left corner of the full resolution position (x, z) is at index (x/8 * width + z/8)
+	 * - the value for upper left corner of the full resolution position (x, z) is at index ((z * width + x) / 8)
 	 * - the last value, bottom right, is at index ((width/8+1) * (height/8+1) - 1)
 	 *
 	 * @see getHeightMap()
@@ -1068,7 +1068,7 @@ struct SSkirmishAICallback {
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - each data position is 2*2 in size
-	 * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
 	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
 	 */
 	int               (CALLING_CONV *Map_getSlopeMap)(int skirmishAIId, float* slopes, int slopes_sizeMax); // ARRAY:slopes
@@ -1086,7 +1086,7 @@ struct SSkirmishAICallback {
 	 *   	+ losMipLevel(2) -> res(4)
 	 *   	+ losMipLevel(3) -> res(8)
 	 * - each data position is res*res in size
-	 * - the value for the full resolution position (x, z) is at index (x/res * width + z/res)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / res)
 	 * - the last value, bottom right, is at index (width/res * height/res - 1)
 	 */
 	int               (CALLING_CONV *Map_getLosMap)(int skirmishAIId, int* losValues, int losValues_sizeMax); // ARRAY:losValues
@@ -1097,7 +1097,7 @@ struct SSkirmishAICallback {
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - each data position is 8*8 in size
-	 * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
 	int               (CALLING_CONV *Map_getRadarMap)(int skirmishAIId, int* radarValues, int radarValues_sizeMax); // ARRAY:radarValues
@@ -1108,7 +1108,7 @@ struct SSkirmishAICallback {
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - each data position is 8*8 in size
-	 * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
 	int               (CALLING_CONV *Map_getJammerMap)(int skirmishAIId, int* jammerValues, int jammerValues_sizeMax); // ARRAY:jammerValues
@@ -1119,7 +1119,7 @@ struct SSkirmishAICallback {
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - each data position is 2*2 in size
-	 * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
 	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
 	 */
 	int               (CALLING_CONV *Map_getResourceMapRaw)(int skirmishAIId, int resourceId, short* resources, int resources_sizeMax); // REF:resourceId->Resource ARRAY:resources

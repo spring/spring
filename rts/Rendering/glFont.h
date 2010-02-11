@@ -49,6 +49,7 @@ public:
 	 *                 FONT_NEAREST | FONT_OUTLINE | FONT_SHADOW
 	 */
 	void glPrint(GLfloat x, GLfloat y, float s, const int& options, const std::string& str);
+	void glPrintTable(GLfloat x, GLfloat y, float s, const int& options, const std::string& str);
 	void glFormat(GLfloat x, GLfloat y, float s, const int& options, const std::string& fmt, ...);
 	void glFormat(GLfloat x, GLfloat y, float s, const int& options, const char* fmt, ...);
 

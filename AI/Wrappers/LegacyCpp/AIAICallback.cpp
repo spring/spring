@@ -1025,12 +1025,13 @@ int CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAll
 	short color_cache[3];
 	for (int p=0; p < numPoints; ++p) {
 		sAICallback->Map_Point_getPosition(skirmishAIId, p, pos_cache);
-		pm[p].pos = pos_cache;
+		pm[p].pos = pos_cache; // float[3] -> float3
 		sAICallback->Map_Point_getColor(skirmishAIId, p, color_cache);
-		pm[p].color = (unsigned char*) calloc(3, sizeof(unsigned char));
-		pm[p].color[0] = (unsigned char) color_cache[0];
-		pm[p].color[1] = (unsigned char) color_cache[1];
-		pm[p].color[2] = (unsigned char) color_cache[2];
+		unsigned char* color = (unsigned char*) calloc(3, sizeof(unsigned char));
+		color[0] = (unsigned char) color_cache[0];
+		color[1] = (unsigned char) color_cache[1];
+		color[2] = (unsigned char) color_cache[2];
+		pm[p].color = color;
 		pm[p].label = sAICallback->Map_Point_getLabel(skirmishAIId, p);
 	}
 
@@ -1044,14 +1045,15 @@ int CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllie
 	short color_cache[3];
 	for (int l=0; l < numLines; ++l) {
 		sAICallback->Map_Line_getFirstPosition(skirmishAIId, l, pos_cache);
-		lm[l].pos = pos_cache;
+		lm[l].pos = pos_cache; // float[3] -> float3
 		sAICallback->Map_Line_getSecondPosition(skirmishAIId, l, pos_cache);
-		lm[l].pos2 = pos_cache;
+		lm[l].pos2 = pos_cache; // float[3] -> float3
 		sAICallback->Map_Line_getColor(skirmishAIId, l, color_cache);
-		lm[l].color = (unsigned char*) calloc(3, sizeof(unsigned char));
-		lm[l].color[0] = (unsigned char) color_cache[0];
-		lm[l].color[1] = (unsigned char) color_cache[1];
-		lm[l].color[2] = (unsigned char) color_cache[2];
+		unsigned char* color = (unsigned char*) calloc(3, sizeof(unsigned char));
+		color[0] = (unsigned char) color_cache[0];
+		color[1] = (unsigned char) color_cache[1];
+		color[2] = (unsigned char) color_cache[2];
+		lm[l].color = color;
 	}
 
 	return numLines;
@@ -1828,4 +1830,34 @@ const char* CAIAICallback::CallLuaRules(const char* data, int inSize, int* outSi
 	return cmd.ret_outData;
 }
 
+std::map<std::string, std::string> CAIAICallback::GetMyInfo()
+{
+	std::map<std::string, std::string> info;
 
+	const int info_size = sAICallback->SkirmishAI_Info_getSize(skirmishAIId);
+	for (int ii = 0; ii < info_size; ++ii) {
+		const char* key   = sAICallback->SkirmishAI_Info_getKey(skirmishAIId, ii);
+		const char* value = sAICallback->SkirmishAI_Info_getValue(skirmishAIId, ii);
+		if ((key != NULL) && (value != NULL)) {
+			info[key] = value;
+		}
+	}
+
+	return info;
+}
+
+std::map<std::string, std::string> CAIAICallback::GetMyOptionValues()
+{
+	std::map<std::string, std::string> optionVals;
+
+	const int optionVals_size = sAICallback->SkirmishAI_OptionValues_getSize(skirmishAIId);
+	for (int ovi = 0; ovi < optionVals_size; ++ovi) {
+		const char* key   = sAICallback->SkirmishAI_OptionValues_getKey(skirmishAIId, ovi);
+		const char* value = sAICallback->SkirmishAI_OptionValues_getValue(skirmishAIId, ovi);
+		if ((key != NULL) && (value != NULL)) {
+			optionVals[key] = value;
+		}
+	}
+
+	return optionVals;
+}

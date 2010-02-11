@@ -8,6 +8,7 @@ LogOutput - global object to write log info to.
 
 #include <stdarg.h>
 #include <string>
+#include <vector>
 #include <sstream>
 
 // format string error checking
@@ -109,26 +110,128 @@ public:
 
 	void SetLastMsgPos(const float3& pos);
 
-	// In case the InfoConsole and other in game subscribers
-	// should not be used anymore (SDL shutdown)
-	void RemoveAllSubscribers();
-	// Close the output file, so the crash reporter can copy it
-	void End();
-
 	void AddSubscriber(ILogSubscriber* ls);
 	void RemoveSubscriber(ILogSubscriber* ls);
+	/**
+	 * @brief Enables/Disables notifying of subscribers
+	 *
+	 * The list of subscribers does not get altered when calling this function,
+	 * just its use is enabled or disabled.
+	 * Used, for example, in case the info console and other in game subscribers
+	 * should not be notified anymore (eg. SDL shutdown).
+	 */
+	void SetSubscribersEnabled(bool enabled);
+	/**
+	 * @brief Indicates whether notifying of subscribers is enabled
+	 *
+	 * The initial value is true.
+	 */
+	bool IsSubscribersEnabled() const;
 
-	const char* GetFilename() const;
-	void SetFilename(const char* filename);
+	/// Close the output file, so the crash reporter can copy it
+	void End();
+
+	/**
+	 * @brief set the log file
+	 *
+	 * Relative paths are relative to the writeable data-dir.
+	 * This method may only be called as long as the logger is not yet
+	 * initialized.
+	 * @see Initialize()
+	 */
+	void SetFileName(std::string fileName);
+	/**
+	 * @brief returns the log file name (without path)
+	 *
+	 * Relative paths are relative to the writeable data-dir.
+	 */
+	const std::string& GetFileName() const;
+	/**
+	 * @brief returns the absolute path to the log file
+	 *
+	 * Relative paths are relative to the writeable data-dir.
+	 * This method may only be called after the logger got initialzized.
+	 * @see Initialize()
+	 */
+	const std::string& GetFilePath() const;
+
+	/**
+	 * @brief initialize logOutput
+	 *
+	 * Only after calling this method, logOutput starts writing to disk.
+	 * The log file is written in the current directory so this may only be called
+	 * after the engine chdir'ed to the correct directory.
+	 */
 	void Initialize();
 	void Flush();
 
 protected:
+	/**
+	 * @brief initialize the log subsystems
+	 *
+	 * This writes list of all available and all enabled subsystems to the log.
+	 *
+	 * Log subsystems can be enabled using the configuration key "LogSubsystems",
+	 * or the environment variable "SPRING_LOG_SUBSYSTEMS".
+	 *
+	 * Both specify a comma separated list of subsystems that should be enabled.
+	 * The lists from both sources are combined, there is no overriding.
+	 *
+	 * A subsystem that is by default enabled, can not be disabled.
+	 */
 	void InitializeSubsystems();
+	/**
+	 * @brief core log output method, used by all others
+	 *
+	 * Note that, when logOutput isn't initialized yet, the logging is done to the
+	 * global std::vector preInitLog(), and is only written to disk in the call to
+	 * Initialize().
+	 *
+	 * This method notifies all registered ILogSubscribers, calls OutputDebugString
+	 * (for MSVC builds) and prints the message to stdout and the file log.
+	 */
 	void Output(const CLogSubsystem& subsystem, const std::string& str);
 
 	void ToStdout(const CLogSubsystem& subsystem, const std::string message);
 	void ToFile(const CLogSubsystem& subsystem, const std::string message);
+
+private:
+	/**
+	 * @brief creates an absolute file path from a file name
+	 *
+	 * Will use the CWD, whihc should be the writeable data-dir format
+	 * absoluteification.
+	 */
+	static std::string CreateFilePath(const std::string& fileName);
+
+	/**
+	 * @brief enable/disable log file rotation
+	 *
+	 * The default is determined by the config setting RotateLogFiles and
+	 * whether this is a DEBUG build or not.
+	 * RotateLogFiles defaults to "auto", and could be set to "never"
+	 * or "always". On "auto", it will rotate logs only for debug builds.
+	 * You may only call this as long as the logger did not yet get initialized.
+	 */
+	void SetLogFileRotating(bool enabled);
+	bool IsLogFileRotating() const;
+	/**
+	 * @brief ff enabled, moves the log file of the last run
+	 *
+	 * Moves the log file of the last run, to preserve it,
+	 * if log file rotation is enabled.
+	 *
+	 * By default, this is enabled only for DEBUG builds;
+	 * ... (describe config file value here)
+	 */
+	void RotateLogFile() const;
+
+
+	std::vector<ILogSubscriber*> subscribers;
+	std::string fileName;
+	std::string filePath;
+	bool rotateLogFiles;
+	bool subscribersEnabled;
 };
 
 

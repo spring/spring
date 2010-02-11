@@ -112,22 +112,10 @@ Function .onInit
   call CheckSpringSettingsRunning
 !endif
 
-  ;Push $0 ; Create variable $0
-
   ; The core cannot be deselected
-  ;SectionGetFlags 0 $0 ; Get the current selection of the first component and store in variable $0
-  ;IntOp $0 $0 | 16 ; Change the selection flag in variable $0 to read only (16)
-  ;SectionSetFlags 0 $0 ; Set the selection flag of the first component to the contents of variable $0
-
-  ;Pop $0 ; Delete variable $0
   ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro SetSectionFlag 0 16 ; make the core section read only
   ${EndIf}
-  !insertmacro UnselectSection 3 ; unselect TASClient section (3) by default
-  ${If} ${FileExists} "$INSTDIR\spring.exe"
-    !insertmacro UnselectSection 6 ; unselect default section (6) by default
-  ${EndIf}
-  ;!insertmacro SetSectionFlag 10 32 ; expand (32) mods section (10)
 FunctionEnd
 
 
@@ -192,12 +180,6 @@ SectionGroup "Multiplayer battlerooms"
   !include "sections\springlobby.nsh"
   !undef INSTALL
   SectionEnd
-
-  Section "TASClient" SEC_TASCLIENT
-  !define INSTALL
-  !include "sections\tasclient.nsh"
-  !undef INSTALL
-  SectionEnd
 SectionGroupEnd
 
 
@@ -208,21 +190,25 @@ Section "Start menu shortcuts" SEC_START
 SectionEnd
 
 Section "Desktop shortcut" SEC_DESKTOP
-  ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
-  SetOutPath "$INSTDIR"
-    !ifdef TEST_BUILD
-      CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe" "-server taspringmaster.servegame.com:8300"
-    !else
-      CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
-    !endif
+  ${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
+    SetOutPath "$INSTDIR"
+    CreateShortCut "$DESKTOP\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
   ${EndIf}
 SectionEnd
 
-Section "Easy content installation" SEC_ARCHIVEMOVER
-  !define INSTALL
-  !include "sections\archivemover.nsh"
-  !undef INSTALL
-SectionEnd
+SectionGroup "Tools"
+  Section "Easy content installation" SEC_ARCHIVEMOVER
+    !define INSTALL
+    !include "sections\archivemover.nsh"
+    !undef INSTALL
+  SectionEnd
+
+  Section "Content downloader" SEC_SPRINGDOWNLOADER
+    !define INSTALL
+    !include "sections\springDownloader.nsh"
+    !undef INSTALL
+  SectionEnd
+SectionGroupEnd
 
 SectionGroup "Skirmish AI plugins (Bots)"
 	Section "AAI" SEC_AAI
@@ -288,15 +274,15 @@ Section Uninstall
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
   !include "sections\archivemover.nsh"
+  !include "sections\springDownloader.nsh"
   !include "sections\AIs\AAI.nsh"
   !include "sections\AIs\KAIK.nsh"
   !include "sections\AIs\RAI.nsh"
 ;  !include "sections\AIs\E323AI.nsh"
-  !include "sections\tasclient.nsh"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
 
-  Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
+  Delete "$DESKTOP\SpringLobby.lnk"
 
   ; All done
   RMDir "$INSTDIR"
