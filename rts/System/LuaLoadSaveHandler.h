@@ -6,7 +6,7 @@
 #include "LoadSaveHandler.h"
 
 class CArchiveBase;
-
+typedef void* zipFile;
 
 class CLuaLoadSaveHandler : public ILoadSaveHandler
 {
@@ -19,8 +19,15 @@ public:
 	void LoadGame();
 
 protected:
+	void SaveEventClients(); // Lua
+	void SaveGameStartInfo();
+	void SaveAIData();
+	void LoadEventClients();
+	void LoadAIData();
 	std::string LoadEntireFile(const std::string& file);
 
+	std::string filename;
+	zipFile savefile;
 	CArchiveBase* loadfile;
 };
 
