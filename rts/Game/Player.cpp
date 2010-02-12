@@ -121,6 +121,10 @@ void CPlayer::UpdateControlledTeams()
 
 void CPlayer::StartSpectating()
 {
+	if (spectator) {
+		return;
+	}
+
 	spectator = true;
 	if (dccs.playerControlledUnit)
 		StopControllingUnit();
