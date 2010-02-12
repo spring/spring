@@ -465,70 +465,77 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 void CProjectileHandler::Update()
 {
-	SCOPED_TIMER("Projectile Update");
-
-	GML_UPDATE_TICKS();
-
-	UpdateProjectileContainer(syncedProjectiles, true);
-	UpdateProjectileContainer(unsyncedProjectiles, false);
-
+	{
+		SCOPED_TIMER("Projectile Collisions");
+		CheckCollisions();
+	}
 
 	{
-		GML_STDMUTEX_LOCK(rproj); // Update
+		SCOPED_TIMER("Projectile Update");
 
-		if (syncedProjectiles.can_delete_synced()) {
-			GML_STDMUTEX_LOCK(proj); // Update
+		GML_UPDATE_TICKS();
 
-			//! delete all projectiles that were
-			//! queued (push_back'ed) for deletion
-			syncedProjectiles.delete_erased_synced();
+		UpdateProjectileContainer(syncedProjectiles, true);
+		UpdateProjectileContainer(unsyncedProjectiles, false);
+
+
+		{
+			GML_STDMUTEX_LOCK(rproj); // Update
+
+			if (syncedProjectiles.can_delete_synced()) {
+				GML_STDMUTEX_LOCK(proj); // Update
+
+				//! delete all projectiles that were
+				//! queued (push_back'ed) for deletion
+				syncedProjectiles.delete_erased_synced();
+			}
+
+			//! prepare projectile batches for
+			//! addition into the render queue
+			syncedProjectiles.delay_add();
+
+			unsyncedProjectiles.delay_delete();
+			unsyncedProjectiles.delay_add();
 		}
 
-		//! prepare projectile batches for
-		//! addition into the render queue
-		syncedProjectiles.delay_add();
 
-		unsyncedProjectiles.delay_delete();
-		unsyncedProjectiles.delay_add();
-	}
+		GroundFlashContainer::iterator gfi = groundFlashes.begin();
+		while (gfi != groundFlashes.end()) {
+			CGroundFlash* gf = *gfi;
 
+			if (!gf->Update())
+				gfi = groundFlashes.erase_delete(gfi);
+			else
+				++gfi;
+		}
 
-	GroundFlashContainer::iterator gfi = groundFlashes.begin();
-	while (gfi != groundFlashes.end()) {
-		CGroundFlash* gf = *gfi;
+		{
+			GML_STDMUTEX_LOCK(rflash); // Update
 
-		if (!gf->Update())
-			gfi = groundFlashes.erase_delete(gfi);
-		else
-			++gfi;
-	}
+			groundFlashes.delay_delete();
+			groundFlashes.delay_add();
+		}
 
-	{
-		GML_STDMUTEX_LOCK(rflash); // Update
+		FlyingPieceContainer::iterator pti = flyingPieces.begin();
+		while (pti != flyingPieces.end()) {
+			FlyingPiece* p = *pti;
+			p->pos     += p->speed;
+			p->speed   *= 0.996f;
+			p->speed.y += mapInfo->map.gravity; //! fp's are not projectiles
+			p->rot     += p->rotSpeed;
 
-		groundFlashes.delay_delete();
-		groundFlashes.delay_add();
-	}
+			if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10))
+				pti = flyingPieces.erase_delete_set(pti);
+			else
+				++pti;
+		}
 
-	FlyingPieceContainer::iterator pti = flyingPieces.begin();
-	while (pti != flyingPieces.end()) {
-		FlyingPiece* p = *pti;
-		p->pos     += p->speed;
-		p->speed   *= 0.996f;
-		p->speed.y += mapInfo->map.gravity; //! fp's are not projectiles
-		p->rot     += p->rotSpeed;
+		{
+			GML_STDMUTEX_LOCK(rpiece); // Update
 
-		if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10))
-			pti = flyingPieces.erase_delete_set(pti);
-		else
-			++pti;
-	}
-
-	{
-		GML_STDMUTEX_LOCK(rpiece); // Update
-
-		flyingPieces.delay_delete();
-		flyingPieces.delay_add();
+			flyingPieces.delay_delete();
+			flyingPieces.delay_add();
+		}
 	}
 }
 
