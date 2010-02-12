@@ -42,7 +42,7 @@ unsigned CArchiveDir::NumFiles() const
 	return searchFiles.size();
 }
 
-bool CArchiveDir::GetFile(unsigned fid, std::vector<uint8_t>& buffer)
+bool CArchiveDir::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(fid >= 0 && fid < NumFiles());
 

@@ -11,7 +11,7 @@ CArchiveBuffered::~CArchiveBuffered(void)
 {
 }
 
-bool CArchiveBuffered::GetFile(unsigned fid, std::vector<uint8_t>& buffer)
+bool CArchiveBuffered::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
 	assert(fid >= 0 && fid < NumFiles());

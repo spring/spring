@@ -139,7 +139,7 @@ int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
 	}
 	FileData& fd = fi->second;
 
-	std::vector<uint8_t> vecBuf;
+	std::vector<boost::uint8_t> vecBuf;
 	if (!fd.ar->GetFile(name, vecBuf))
 	{
 		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", rawName.c_str());

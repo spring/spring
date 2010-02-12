@@ -34,7 +34,7 @@ protected:
 	};
 	std::vector<FileData> fileData;
 	
-	virtual bool GetFileImpl(unsigned fid, std::vector<uint8_t>& buffer);
+	virtual bool GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer);
 };
 
 #endif

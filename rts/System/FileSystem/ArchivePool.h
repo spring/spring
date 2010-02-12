@@ -18,7 +18,7 @@ public:
 	virtual unsigned GetCrc32(unsigned fid);
 	
 protected:
-	virtual bool GetFileImpl(unsigned fid, std::vector<uint8_t>& buffer);
+	virtual bool GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer);
 
 	struct FileData {
 		std::string name;
