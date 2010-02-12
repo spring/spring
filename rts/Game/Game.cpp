@@ -3508,12 +3508,6 @@ void CGame::SimFrame() {
 	pathManager->Update();
 	uh->Update();
 	groundDecals->Update();
-
-	{
-		SCOPED_TIMER("Projectile Collisions");
-		ph->CheckCollisions();
-	}
-
 	ph->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
