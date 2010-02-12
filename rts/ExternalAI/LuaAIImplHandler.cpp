@@ -102,7 +102,7 @@ std::vector< std::vector<InfoItem> > CLuaAIImplHandler::LoadInfos() {
 		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_VERSION;
-		ii.value = "<not versioned>";
+		ii.value = "<not-versioned>";
 		ii.desc = "Lua Skirmish AIs do not have a version, "
 				"because they are fully defined by the mods version already.";
 		aiInfo.push_back(ii);
