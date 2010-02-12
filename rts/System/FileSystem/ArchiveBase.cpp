@@ -29,14 +29,14 @@ unsigned CArchiveBase::FindFile(const std::string& name) const
 unsigned CArchiveBase::GetCrc32(unsigned fid)
 {
 	CRC crc;
-	std::vector<uint8_t> buffer;
+	std::vector<boost::uint8_t> buffer;
 	if (GetFile(fid, buffer))
 		crc.Update(&buffer[0], buffer.size());
 
 	return crc.GetDigest();
 }
 
-bool CArchiveBase::GetFile(const std::string& name, std::vector<uint8_t>& buffer)
+bool CArchiveBase::GetFile(const std::string& name, std::vector<boost::uint8_t>& buffer)
 {
 	unsigned fid = FindFile(name);
 	if (fid < NumFiles())

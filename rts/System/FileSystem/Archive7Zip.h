@@ -18,7 +18,7 @@ public:
 	virtual bool IsOpen();
 	
 	virtual unsigned NumFiles() const;
-	virtual bool GetFile(unsigned fid, std::vector<uint8_t>& buffer);
+	virtual bool GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer);
 	virtual void FileInfo(unsigned fid, std::string& name, int& size) const;
 	virtual unsigned GetCrc32(unsigned fid);
 

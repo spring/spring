@@ -108,7 +108,7 @@ unsigned CArchivePool::GetCrc32(unsigned fid)
 }
 
 
-bool CArchivePool::GetFileImpl(unsigned fid, std::vector<uint8_t>& buffer)
+bool CArchivePool::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(fid >= 0 && fid < NumFiles());
 

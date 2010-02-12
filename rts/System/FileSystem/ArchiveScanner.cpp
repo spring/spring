@@ -346,7 +346,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 
 bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai)
 {
-	std::vector<uint8_t> buf;
+	std::vector<boost::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf))
 		return false;
 
@@ -364,7 +364,7 @@ bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileNa
 IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
-	std::vector<uint8_t> buf;
+	std::vector<boost::uint8_t> buf;
 	if (ar->GetFile("springignore.txt", buf))
 	{
 		// this automatically splits lines
