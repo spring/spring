@@ -143,7 +143,7 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 	{
 		ClearLogFiles();
 		*l<<"Loading Global RAI...";
-		*l<<"\n Mod = "<<cb->GetModName();
+		*l<<"\n Mod = "<<cb->GetModHumanName();
 		*l<<"\n Map = "<<cb->GetMapName();
 		int seed = time(NULL);
 		srand(seed);
@@ -1104,6 +1104,33 @@ bool cRAI::LocateFile(IAICallback* cb, const string& relFileName, string& absFil
 	}
 
 	return located;
+}
+
+static bool IsFSGoodChar(const char c) {
+
+	if ((c >= '0') && (c <= '9')) {
+		return true;
+	} else if ((c >= 'a') && (c <= 'z')) {
+		return true;
+	} else if ((c >= 'A') && (c <= 'Z')) {
+		return true;
+	} else if ((c == '.') || (c == '_') || (c == '-')) {
+		return true;
+	}
+
+	return false;
+}
+std::string cRAI::MakeFileSystemCompatible(const std::string& str) {
+
+	std::string cleaned = str;
+
+	for (std::string::size_type i=0; i < cleaned.size(); i++) {
+		if (!IsFSGoodChar(cleaned[i])) {
+			cleaned[i] = '_';
+		}
+	}
+
+	return cleaned;
 }
 
 void cRAI::RemoveLogFile(string relFileName) const {
