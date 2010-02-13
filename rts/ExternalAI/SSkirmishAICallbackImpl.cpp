@@ -46,10 +46,10 @@
 #include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
+#include "Map/MapInfo.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
 #include "Game/GameVersion.h"
-#include "Game/GameSetup.h"
 #include "GlobalUnsynced.h" // for myTeam
 #include "LogOutput.h"
 
@@ -1356,7 +1356,11 @@ EXPORT(struct SAIFloat3) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourc
 }
 
 EXPORT(const char*) skirmishAiCallback_Map_getName(int teamId) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetMapName();
+	return mapInfo->map.name.c_str();
+}
+
+EXPORT(const char*) skirmishAiCallback_Map_getHumanName(int teamId) {
+	return mapInfo->map.humanName.c_str();
 }
 
 EXPORT(float) skirmishAiCallback_Map_getElevationAt(int teamId, float x, float z) {
@@ -3698,6 +3702,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome;
 	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest;
 	callback->Clb_Map_getName = &skirmishAiCallback_Map_getName;
+	callback->Clb_Map_getHumanName = &skirmishAiCallback_Map_getHumanName;
 	callback->Clb_Map_getElevationAt = &skirmishAiCallback_Map_getElevationAt;
 	callback->Clb_Map_0REF1Resource2resourceId0getMaxResource = &skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource;
 	callback->Clb_Map_0REF1Resource2resourceId0getExtractorRadius = &skirmishAiCallback_Map_0REF1Resource2resourceId0getExtractorRadius;
