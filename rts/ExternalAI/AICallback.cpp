@@ -958,6 +958,12 @@ const char* CAICallback::GetModName()
 	return modInfo.filename.c_str();
 }
 
+const char* CAICallback::GetModHumanName()
+{
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return modInfo.humanName.c_str();
+}
+
 
 float CAICallback::GetMaxMetal() const { return mapInfo->map.maxMetal; }
 float CAICallback::GetExtractorRadius() const { return mapInfo->map.extractorRadius; }

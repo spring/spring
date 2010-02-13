@@ -122,6 +122,7 @@ public:
 	virtual const unsigned char* GetMetalMap();
 	virtual const char* GetMapName();
 	virtual const char* GetModName();
+	virtual const char* GetModHumanName();
 
 	virtual float GetElevation(float x, float z);
 
