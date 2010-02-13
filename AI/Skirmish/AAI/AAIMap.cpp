@@ -406,7 +406,7 @@ void AAIMap::ReadMapCacheFile()
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CFG_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	STRCAT(buffer, MakeFileSystemCompatible(cb->GetMapName()));
 	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
@@ -455,7 +455,7 @@ void AAIMap::ReadMapCacheFile()
 		// save results to cfg file
 		STRCPY(buffer, MAIN_PATH);
 		STRCAT(buffer, MAP_CFG_PATH);
-		STRCAT(buffer, cb->GetMapName());
+		STRCAT(buffer, MakeFileSystemCompatible(cb->GetMapName()));
 		ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".cfg");
 
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, map_filename);
@@ -531,11 +531,14 @@ void AAIMap::ReadContinentFile()
 	char buffer[buffer_sizeMax];
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "_");
-	STRCAT(buffer, cb->GetModName());
+	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, ".dat");
 	char filename[buffer_sizeMax];
-	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	STRCPY(filename, buffer);
 
 	// as we will have to write to the file later on anyway,
 	// we want it writeable
@@ -604,10 +607,11 @@ void AAIMap::ReadContinentFile()
 	// save movement maps
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "_");
-	STRCAT(buffer, cb->GetModName());
-	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, ".dat");
+	STRCPY(filename, buffer);
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
@@ -646,11 +650,14 @@ std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_LEARN_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	ReplaceExtension(buffer, buffer2, buffer_sizeMax, "_");
-	STRCPY(buffer, buffer2);
-	STRCAT(buffer, cb->GetModName());
-	ReplaceExtension(buffer, buffer2, buffer_sizeMax, ".dat");
+	STRCAT(buffer, "_");
+	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, ".dat");
+	STRCPY(buffer2, buffer);
 
 	if (forWriting) {
 		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer2);
@@ -669,7 +676,8 @@ std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	ReplaceExtension(buffer, buffer2, buffer_sizeMax, ".dat");
 
 	if (forWriting) {

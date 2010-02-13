@@ -2494,8 +2494,10 @@ bool AAIBuildTable::LoadBuildTable()
 		char buffer[500];
 		STRCPY(buffer, MAIN_PATH);
 		STRCAT(buffer, MOD_LEARN_PATH);
-		STRCAT(buffer, cb->GetModName());
-		ReplaceExtension (buffer, buildtable_filename, sizeof(buildtable_filename), ".dat");
+		const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+		STRCAT(buffer, modHumanName.c_str());
+		STRCAT(buffer, ".dat");
+		STRCPY(buildtable_filename, buffer);
 
 		char buildtable_filename_r[500];
 		STRCPY(buildtable_filename_r, buildtable_filename);
@@ -2745,8 +2747,10 @@ void AAIBuildTable::DebugPrint()
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, AILOG_PATH);
 	STRCAT(buffer, "BuildTable_");
-	STRCAT(buffer, cb->GetModName());
-	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
+	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, ".txt");
+	STRCPY(filename, buffer);
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
@@ -2898,6 +2902,7 @@ float AAIBuildTable::GetMaxDamage(int unit_id)
 	return max_damage;
 }
 
+// declaration is in aidef.h
 void ReplaceExtension(const char *n, char *dst, int s, const char *ext)
 {
 	unsigned int l = strlen (n);
@@ -2912,6 +2917,34 @@ void ReplaceExtension(const char *n, char *dst, int s, const char *ext)
 	dst[a+sizeof("")]=0;
 
 	strncat (dst, ext, s);
+}
+
+static bool IsFSGoodChar(const char c) {
+
+	if ((c >= '0') && (c <= '9')) {
+		return true;
+	} else if ((c >= 'a') && (c <= 'z')) {
+		return true;
+	} else if ((c >= 'A') && (c <= 'Z')) {
+		return true;
+	} else if ((c == '.') || (c == '_') || (c == '-')) {
+		return true;
+	}
+
+	return false;
+}
+// declaration is in aidef.h
+std::string MakeFileSystemCompatible(const std::string& str) {
+
+	std::string cleaned = str;
+
+	for (std::string::size_type i=0; i < cleaned.size(); i++) {
+		if (!IsFSGoodChar(cleaned[i])) {
+			cleaned[i] = '_';
+		}
+	}
+
+	return cleaned;
 }
 
 float AAIBuildTable::GetFactoryRating(int def_id)
