@@ -316,8 +316,6 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 				avg += mesh[x + y * maxx];
 			for (int y = 0; y <= maxy; ++y) {
 				int idx = x + y * maxx;
-				if (x == 130 && y == 150)
-					LogObject() << "x = 200";
 				if (y <= smoothrad) {
 					smoothed[idx] = 0.;
 					for (int y1 = 0; y1 <= y + smoothrad; ++y1)
