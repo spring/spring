@@ -1796,47 +1796,122 @@ void CBuilderCAI::DrawCommands(void)
 }
 
 
+
+// XXX move away from this class
 void CBuilderCAI::DrawQuedBuildingSquares(void)
 {
 	CCommandQueue::const_iterator ci;
+	// worst case - 2 squares per building (when underwater) - 8 vertices * 3 floats
+	GLfloat vertices_quads[commandQue.size() * 12];
+	GLfloat vertices_quads_uw[commandQue.size() * 12]; // underwater
+	// 4 vertical lines
+	GLfloat vertices_lines[commandQue.size() * 24];
+	// colors for lines
+	GLfloat colors_lines[commandQue.size() * 48];
+
+	int quadcounter = 0;
+	int uwqcounter = 0;
+	int linecounter = 0;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		if (buildOptions.find(ci->id) != buildOptions.end()) {
 			BuildInfo bi(*ci);
 			bi.pos = helper->Pos2BuildPos(bi);
 			const float xsize = bi.GetXSize()*4;
 			const float zsize = bi.GetZSize()*4;
-			glBegin(GL_LINE_LOOP);
-			glVertexf3(bi.pos + float3(+xsize, 1, +zsize));
-			glVertexf3(bi.pos + float3(-xsize, 1, +zsize));
-			glVertexf3(bi.pos + float3(-xsize, 1, -zsize));
-			glVertexf3(bi.pos + float3(+xsize, 1, -zsize));
-			glEnd();
+
+			const float h = bi.pos.y;
+			const float x1 = bi.pos.x - xsize;
+			const float z1 = bi.pos.z - zsize;
+			const float x2 = bi.pos.x + xsize;
+			const float z2 = bi.pos.z + zsize;
+
+			vertices_quads[quadcounter + 0] = x1;
+			vertices_quads[quadcounter + 1] = h + 1;
+			vertices_quads[quadcounter + 2] = z1;
+			vertices_quads[quadcounter + 3] = x1;
+			vertices_quads[quadcounter + 4] = h + 1;
+			vertices_quads[quadcounter + 5] = z2;
+			vertices_quads[quadcounter + 6] = x2;
+			vertices_quads[quadcounter + 7] = h + 1;
+			vertices_quads[quadcounter + 8] = z2;
+			vertices_quads[quadcounter + 9] = x2;
+			vertices_quads[quadcounter +10] = h + 1;
+			vertices_quads[quadcounter +11] = z1;
+
+			quadcounter += 12;
+
 			if (bi.pos.y < 0.0f) {
-				const float s[4] = { 0.0f, 0.0f, 1.0f, 0.5f }; // start color
-				const float e[4] = { 0.0f, 0.5f, 1.0f, 1.0f }; // end color
+				const float col[8] = { 0.0f, 0.0f, 1.0f, 0.5f, // start color
+						       0.0f, 0.5f, 1.0f, 1.0f }; // end color
 
-				const float h = bi.pos.y;
-				const float x1 = bi.pos.x - xsize;
-				const float z1 = bi.pos.z - zsize;
-				const float x2 = bi.pos.x + xsize;
-				const float z2 = bi.pos.z + zsize;
+				vertices_quads_uw[uwqcounter + 0] = x1;
+				vertices_quads_uw[uwqcounter + 1] = 0.f;
+				vertices_quads_uw[uwqcounter + 2] = z1;
+				vertices_quads_uw[uwqcounter + 3] = x1;
+				vertices_quads_uw[uwqcounter + 4] = 0.f;
+				vertices_quads_uw[uwqcounter + 5] = z2;
+				vertices_quads_uw[uwqcounter + 6] = x2;
+				vertices_quads_uw[uwqcounter + 7] = 0.f;
+				vertices_quads_uw[uwqcounter + 8] = z2;
+				vertices_quads_uw[uwqcounter + 9] = x2;
+				vertices_quads_uw[uwqcounter +10] = 0.f;
+				vertices_quads_uw[uwqcounter +11] = z1;
 
-				glPushAttrib(GL_CURRENT_BIT);
-				glBegin(GL_LINES);
-				glColor4fv(s); glVertex3f(x1, h, z1); glColor4fv(e); glVertex3f(x1, 0.0f, z1);
-				glColor4fv(s); glVertex3f(x2, h, z1); glColor4fv(e); glVertex3f(x2, 0.0f, z1);
-				glColor4fv(s); glVertex3f(x1, h, z2); glColor4fv(e); glVertex3f(x1, 0.0f, z2);
-				glColor4fv(s); glVertex3f(x2, h, z2); glColor4fv(e); glVertex3f(x2, 0.0f, z2);
-				glEnd();
-				// using the last end color
-				glBegin(GL_LINE_LOOP);
-				glVertex3f(x1, 0.0f, z1);
-				glVertex3f(x1, 0.0f, z2);
-				glVertex3f(x2, 0.0f, z2);
-				glVertex3f(x2, 0.0f, z1);
-				glEnd();
-				glPopAttrib();
+				uwqcounter += 12;
+
+				for (int i = 0; i<4; ++i) {
+					memcpy(colors_lines + linecounter * 2 + 0, col, sizeof(float)*8);
+				}
+
+				vertices_lines[linecounter + 0] = x1;
+				vertices_lines[linecounter + 1] = h;
+				vertices_lines[linecounter + 2] = z1;
+				vertices_lines[linecounter + 3] = x1;
+				vertices_lines[linecounter + 4] = 0;
+				vertices_lines[linecounter + 5] = z1;
+
+				vertices_lines[linecounter + 6] = x2;
+				vertices_lines[linecounter + 7] = h;
+				vertices_lines[linecounter + 8] = z1;
+				vertices_lines[linecounter + 9] = x2;
+				vertices_lines[linecounter +10] = 0;
+				vertices_lines[linecounter +11] = z1;
+
+				vertices_lines[linecounter +12] = x2;
+				vertices_lines[linecounter +13] = h;
+				vertices_lines[linecounter +14] = z2;
+				vertices_lines[linecounter +15] = x2;
+				vertices_lines[linecounter +16] = 0;
+				vertices_lines[linecounter +17] = z2;
+
+				vertices_lines[linecounter +18] = x1;
+				vertices_lines[linecounter +19] = h;
+				vertices_lines[linecounter +20] = z2;
+				vertices_lines[linecounter +21] = x1;
+				vertices_lines[linecounter +22] = 0;
+				vertices_lines[linecounter +23] = z2;
+
+				linecounter += 24;
 			}
+		}
+	}
+	if (quadcounter) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+		glVertexPointer(3, GL_FLOAT, 0, vertices_quads);
+		glDrawArrays(GL_QUADS, 0, quadcounter/3);
+
+		if (linecounter) {
+			glPushAttrib(GL_CURRENT_BIT);
+			glColor4f(0.0f, 0.5f, 1.0f, 1.0f); // same as end color of lines
+			glVertexPointer(3, GL_FLOAT, 0, vertices_quads_uw);
+			glDrawArrays(GL_QUADS, 0, uwqcounter/3);
+			glPopAttrib();
+
+			glEnableClientState(GL_COLOR_ARRAY);
+			glColorPointer(4, GL_FLOAT, 0, colors_lines);
+			glVertexPointer(3, GL_FLOAT, 0, vertices_lines);
+			glDrawArrays(GL_LINES, 0, linecounter/3);
+			glDisableClientState(GL_COLOR_ARRAY);
 		}
 	}
 }
