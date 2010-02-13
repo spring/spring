@@ -344,6 +344,8 @@ public:
 	virtual const unsigned char* GetMetalMap() = 0;
 	virtual const char* GetMapName() = 0;
 	virtual const char* GetModName() = 0;
+	/// Use this one for reference (eg. in config-file names)
+	virtual const char* GetModHumanName() = 0;
 
 	/// Gets the elevation of the map at position (x, z)
 	virtual float GetElevation(float x, float z) = 0;
