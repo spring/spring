@@ -39,7 +39,26 @@ void CBaseWater::DeleteOldWater(CBaseWater *water) {
 CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 {
 	CBaseWater* water = NULL;
-	const int configValue = configHandler->Get("ReflectiveWater",1);
+	int configValue = configHandler->Get("ReflectiveWater",1);
+
+	// ATI drivers since early 2009 leak memory in /water 1 and /water 3
+	// add some safeguards for people who can't be bothered to change their settings
+	std::string vendor = std::string((char*)glGetString(GL_VENDOR));
+	std::transform(vendor.begin(), vendor.end(), vendor.begin(), (int (*)(int))tolower);
+	bool isATI = (vendor.find("ati ") != std::string::npos);
+	bool isATIoverride = configHandler->Get("ATIWaterOverride", 0);
+
+	if (isATI) {
+		if (isATIoverride) {
+			LogObject() << "ATI water safeguard override enabled!";
+		} else if (configValue == 1) {
+			LogObject() << "ATI reflective water disabled for stability reasons.";
+			configValue = 0;
+		} else if (configValue == 3) {
+			LogObject() << "ATI reflective&refractive water disabled for stability reasons.";
+			configValue = 0;
+		}
+	}
 	
 	if(water==NULL && configValue==2 && GLEW_ARB_fragment_program && GLEW_ARB_texture_float &&
 	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterDyn.fp")) {
