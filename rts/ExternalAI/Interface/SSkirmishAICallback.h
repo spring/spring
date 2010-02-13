@@ -1262,6 +1262,7 @@ struct SAIFloat3 (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0init
 		int teamId, int resourceId, struct SAIFloat3 pos);
 
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
+const char* (CALLING_CONV *Clb_Map_getHumanName)(int teamId);
 /// Gets the elevation of the map at position (x, z)
 float (CALLING_CONV *Clb_Map_getElevationAt)(int teamId, float x, float z);
 

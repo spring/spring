@@ -654,6 +654,7 @@ EXPORT(float            ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resour
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
 		int teamId, int resourceId, struct SAIFloat3 pos);
 EXPORT(const char*      ) skirmishAiCallback_Map_getName(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Map_getHumanName(int teamId);
 EXPORT(float            ) skirmishAiCallback_Map_getElevationAt(int teamId, float x, float z);
 EXPORT(float            ) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(
 		int teamId, int resourceId);

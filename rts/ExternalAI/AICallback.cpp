@@ -948,11 +948,13 @@ int CAICallback::GetMapHeight()
 
 const char* CAICallback::GetMapName ()
 {
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
 	return gameSetup->mapName.c_str();
 }
 
 const char* CAICallback::GetModName()
 {
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
 	return modInfo.filename.c_str();
 }
 
