@@ -1007,7 +1007,7 @@ std::string CUnitTable::GetDbgLogName() const {
 std::string CUnitTable::GetModCfgName() const {
 	std::string relFile =
 		std::string(CFGFOLDER) +
-		(ai->cb->GetModName()) +
+		AIUtil::MakeFileSystemCompatible(ai->cb->GetModHumanName()) +
 		".cfg";
 	std::string absFile = AIUtil::GetAbsFileName(ai->cb, relFile);
 

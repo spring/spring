@@ -17,9 +17,9 @@ std::string CLogger::GetLogName() const {
 
 	std::stringstream ss;
 		ss << std::string(LOGFOLDER);
-		ss << icb->GetMapName();
+		ss << AIUtil::MakeFileSystemCompatible(icb->GetMapName());
 		ss << "_";
-		ss << icb->GetModName();
+		ss << AIUtil::MakeFileSystemCompatible(icb->GetModHumanName());
 		ss << "_";
 		ss << now2->tm_mon + 1;
 		ss << "-";
