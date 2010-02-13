@@ -222,7 +222,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 
 	const string fn    = filesystem.GetFilename(fullName);
 	const string fpath = filesystem.GetDirectory(fullName);
-	const string lcfn    = StringToLower(fn);
+	const string lcfn  = StringToLower(fn);
 
 	// Determine whether to rely on the cached info or not
 	bool cached = false;
@@ -772,7 +772,7 @@ std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 	{
 		if (it->second.archiveData.name == name)
 		{
-			return it->first;
+			return it->second.origName;
 		}
 	}
 	return name;
