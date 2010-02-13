@@ -34,7 +34,11 @@
 #pragma warning(disable: 4244 4018) // signed/unsigned and loss of precision...
 #endif
 
-void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
+// The following two helper functions implementations are in AAIBuildTable.cpp
+
+void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
+/// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
+std::string MakeFileSystemCompatible(const std::string& str);
 
 #ifndef AIDEF_H
 #define AIDEF_H
