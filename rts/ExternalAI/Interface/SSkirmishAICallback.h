@@ -991,14 +991,36 @@ bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
 // BEGINN OBJECT Mod
 
 /**
- * archive filename
+ * Returns the mod archive file name.
+ * CAUTION:
+ * Never use this as reference in eg. cache- or config-file names,
+ * as one and the same mod can be packaged in different ways.
+ * Use the human name instead.
+ * @see getHumanName()
  */
 const char*       (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
-
 /**
- * archive filename
+ * Returns the human readable name of the mod, which includes the version.
+ * Use this for reference to the mod (including version), eg. in cache- or
+ * config-file names which are mod related.
+ * Be aware though, that this may contain special characters and spaces,
+ * and may not be used as a file name without checks and replaces.
+ * Alternatively, you may use the short name only, or the short name plus
+ * version. You should generally never use the file name.
+ * @see getShortName()
+ * @see getFileName()
+ * @see getVersion()
  */
 const char*       (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
+/**
+ * Returns the short name of the mod, which does not include the version.
+ * Use this for reference to the mod in general, eg. as version independent
+ * reference.
+ * Be aware though, that this still contain special characters and spaces,
+ * and may not be used as a file name without checks and replaces.
+ * @see getVersion()
+ * @see getHumanName()
+ */
 const char*       (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
 const char*       (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
 const char*       (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
@@ -1261,7 +1283,19 @@ float (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMap
 struct SAIFloat3 (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(
 		int teamId, int resourceId, struct SAIFloat3 pos);
 
+/**
+ * Returns the name of the map.
+ * Use this for reference to the map, eg. in cache- or config-file names
+ * which are map related.
+ * Be aware though, that this may contain special characters and spaces,
+ * and may not be used as a file name without checks and replaces.
+ * @see getHumanName()
+ */
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
+/**
+ * Returns the human readbale name of the map.
+ * @see getName()
+ */
 const char* (CALLING_CONV *Clb_Map_getHumanName)(int teamId);
 /// Gets the elevation of the map at position (x, z)
 float (CALLING_CONV *Clb_Map_getElevationAt)(int teamId, float x, float z);
