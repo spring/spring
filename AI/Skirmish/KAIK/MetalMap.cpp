@@ -529,7 +529,7 @@ bool CMetalMap::LoadMetalMap() {
 std::string CMetalMap::GetCacheName() const {
 	std::string relFile =
 		std::string(METALFOLDER) +
-		std::string(ai->cb->GetMapName()) +
+		AIUtil::MakeFileSystemCompatible(ai->cb->GetMapName()) +
 		"Metal";
 	std::string absFile = AIUtil::GetAbsFileName(ai->cb, relFile);
 
