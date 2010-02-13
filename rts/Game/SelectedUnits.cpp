@@ -363,6 +363,7 @@ void CSelectedUnits::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
+	glEnableClientState(GL_VERTEX_ARRAY);
 
 	GML_RECMUTEX_LOCK(grpsel); // Draw
 
@@ -376,20 +377,34 @@ void CSelectedUnits::Draw()
 			unitSet = &selectedUnits;
 		}
 
-		glBegin(GL_QUADS);
+		GLfloat vertices[unitSet->size() * 12];
+
+		int count;
 		CUnitSet::const_iterator ui;
-		for (ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
+		for (count = 0, ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
 			if (unit->isIcon) {
 				continue;
 			}
 
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0,  unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0,  unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0, -unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0, -unit->zsize * 4));
+			vertices[count + 0] = unit->drawPos.x + unit->xsize * 4;
+			vertices[count + 1] = unit->drawPos.y;
+			vertices[count + 2] = unit->drawPos.z + unit->zsize * 4;
+			vertices[count + 3] = unit->drawPos.x - unit->xsize * 4;
+			vertices[count + 4] = unit->drawPos.y;
+			vertices[count + 5] = unit->drawPos.z + unit->zsize * 4;
+			vertices[count + 6] = unit->drawPos.x - unit->xsize * 4;
+			vertices[count + 7] = unit->drawPos.y;
+			vertices[count + 8] = unit->drawPos.z - unit->zsize * 4;
+			vertices[count + 9] = unit->drawPos.x + unit->xsize * 4;
+			vertices[count +10] = unit->drawPos.y;
+			vertices[count +11] = unit->drawPos.z - unit->zsize * 4;
+
+			count += 12;
 		}
-		glEnd();
+		glVertexPointer(3, GL_FLOAT, 0, vertices);
+
+		glDrawArrays(GL_QUADS, 0, count/3);
 	}
 
 	// highlight queued build sites if we are about to build something
@@ -426,6 +441,7 @@ void CSelectedUnits::Draw()
 		}
 	}
 
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glLineWidth(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_BLEND);
