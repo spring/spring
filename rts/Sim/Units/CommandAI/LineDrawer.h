@@ -2,6 +2,7 @@
 #define __LINE_DRAWER_H__
 
 #include "Rendering/GL/myGL.h"
+#include "GlobalUnsynced.h"
 #include "Game/UI/CursorIcons.h"
 
 class CLineDrawer {
@@ -79,7 +80,8 @@ inline void CLineDrawer::Break(const float3& endPos, const float* color)
 
 inline void CLineDrawer::Restart()
 {
-	if (lineStipple) {
+	// GL_LINE_STIPPLE apparently leaks memory in ATI drivers
+	if (lineStipple && !gu->atiHacks) {
 		glEnable(GL_LINE_STIPPLE);
 	}
 	if (!useColorRestarts) {
@@ -94,7 +96,7 @@ inline void CLineDrawer::Restart()
 
 inline void CLineDrawer::RestartSameColor()
 {
-	if (lineStipple) {
+	if (lineStipple && !gu->atiHacks) {
 		glEnable(GL_LINE_STIPPLE);
 	}
 	if (!useColorRestarts) {
