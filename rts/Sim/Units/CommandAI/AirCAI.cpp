@@ -672,8 +672,9 @@ void CAirCAI::DrawCommands(void)
 				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				lineDrawer.Break(endPos, cmdColors.attack);
+				glColor4fv(cmdColors.attack);
 				glSurfaceCircle(endPos, ci->params[3], 20);
-				lineDrawer.RestartSameColor();
+				lineDrawer.RestartWithColor(cmdColors.attack);
 				break;
 			}
 			case CMD_GUARD:{

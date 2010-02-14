@@ -1687,8 +1687,9 @@ void CBuilderCAI::DrawCommands(void)
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
+				glColor4fv(cmdColors.restore);
 				glSurfaceCircle(endPos, ci->params[3], 20);
-				lineDrawer.RestartSameColor();
+				lineDrawer.RestartWithColor(cmdColors.restore);
 				break;
 			}
 			case CMD_ATTACK:
@@ -1714,8 +1715,9 @@ void CBuilderCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 					lineDrawer.Break(endPos, color);
+					glColor4fv(color);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(color);
 				} else {
 					const int signedId = (int)ci->params[0];
 					if (signedId < 0) {
@@ -1753,8 +1755,9 @@ void CBuilderCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 					lineDrawer.Break(endPos, color);
+					glColor4fv(color);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(color);
 				} else {
 					if (ci->params.size() >= 1) {
 						const unsigned int uid = (unsigned int) ci->params[0];
