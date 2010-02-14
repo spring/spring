@@ -941,8 +941,9 @@ void CTransportCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.load);
 					lineDrawer.Break(endPos, cmdColors.load);
+					glColor4fv(cmdColors.load);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
 					const CUnit* unit = uh->units[int(ci->params[0])];
 					if((unit != NULL) && isTrackable(unit)) {
@@ -958,8 +959,9 @@ void CTransportCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
+					glColor4fv(cmdColors.unload);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(cmdColors.unload);
 				}
 				break;
 			}
