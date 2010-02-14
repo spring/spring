@@ -965,12 +965,17 @@ void CMiniMap::DrawCircle(const float3& pos, float radius)
 
 void CMiniMap::DrawSquare(const float3& pos, float xsize, float zsize)
 {
-	glBegin(GL_LINE_LOOP);
-		glVertex3f(pos.x + xsize, 0.0f, pos.z + zsize);
-		glVertex3f(pos.x - xsize, 0.0f, pos.z + zsize);
-		glVertex3f(pos.x - xsize, 0.0f, pos.z - zsize);
-		glVertex3f(pos.x + xsize, 0.0f, pos.z - zsize);
-	glEnd();
+	float verts[] = {
+		pos.x + xsize, 0.0f, pos.z + zsize,
+		pos.x - xsize, 0.0f, pos.z + zsize,
+		pos.x - xsize, 0.0f, pos.z - zsize,
+		pos.x + xsize, 0.0f, pos.z - zsize
+
+	};
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, verts);
+	glDrawArrays(GL_LINE_LOOP, 0, 4);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 
@@ -1081,14 +1086,22 @@ void CMiniMap::DrawForReal()
 			}
 		}
 		glColor4f(1,1,1,0.5f);
-		glBegin(GL_LINES);
+		GLfloat verts[left.size()];
+		int vertcnt = 0;
 		for(fli = left.begin(); fli != left.end(); fli++) {
 			if(fli->minz < fli->maxz) {
-				DrawInMap2D(fli->base + (fli->dir * fli->minz), fli->minz);
-				DrawInMap2D(fli->base + (fli->dir * fli->maxz), fli->maxz);
+				verts[vertcnt + 0] = fli->base + (fli->dir * fli->minz);
+				verts[vertcnt + 1] = fli->minz;
+				verts[vertcnt + 2] = fli->base + (fli->dir * fli->maxz);
+				verts[vertcnt + 3] = fli->maxz;
+				vertcnt += 4;
 			}
 		}
-		glEnd();
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_FLOAT, 0, verts);
+		glDrawArrays(GL_LINES, 0, vertcnt/2);
+		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
@@ -1169,12 +1182,18 @@ void CMiniMap::DrawForReal()
 		glBlendFunc((GLenum)cmdColors.MouseBoxBlendSrc(),
 		            (GLenum)cmdColors.MouseBoxBlendDst());
 		glLineWidth(cmdColors.MouseBoxLineWidth());
-		glBegin(GL_LINE_LOOP);
-			DrawInMap2D(oldPos.x, oldPos.z);
-			DrawInMap2D(newPos.x, oldPos.z);
-			DrawInMap2D(newPos.x, newPos.z);
-			DrawInMap2D(oldPos.x, newPos.z);
-		glEnd();
+
+		float verts[] = {
+			oldPos.x, oldPos.z,
+			newPos.x, oldPos.z,
+			newPos.x, newPos.z,
+			oldPos.x, newPos.z,
+		};
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_FLOAT, 0, verts);
+		glDrawArrays(GL_LINE_LOOP, 0, 4);
+		glDisableClientState(GL_VERTEX_ARRAY);
+
 		glLineWidth(1.0f);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
