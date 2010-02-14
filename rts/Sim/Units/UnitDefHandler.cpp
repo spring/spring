@@ -267,8 +267,6 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	ud.buildangle = udTable.GetInt("buildAngle", 0);
 
-	ud.isMetalMaker = (ud.makesMetal >= 1 && ud.energyUpkeep > ud.makesMetal * 40);
-
 	ud.controlRadius = 32;
 	ud.losHeight = 20;
 	ud.metalCost = udTable.GetFloat("buildCostMetal", 0.0f);

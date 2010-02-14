@@ -80,7 +80,6 @@ public:
 
 	bool ghostedBuildings;
 	bool limitDgun;
-	bool diminishingMMs;
 	bool disableMapDamage;
 
 	float maxSpeed;

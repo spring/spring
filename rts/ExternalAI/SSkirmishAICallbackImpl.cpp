@@ -2082,16 +2082,6 @@ EXPORT(int) skirmishAiCallback_UnitDef_getFlareSalvoDelay(int teamId, int unitDe
 	return getUnitDefById(teamId, unitDefId)->flareSalvoDelay;
 }
 //EXPORT(bool) skirmishAiCallback_UnitDef_isSmoothAnim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->smoothAnim;}
-EXPORT(bool) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isResourceMaker(int teamId,
-		int unitDefId, int resourceId) {
-
-	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == resourceHandler->GetMetalId()) {
-		return ud->isMetalMaker;
-	} else {
-		return false;
-	}
-}
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToLoopbackAttack(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->canLoopbackAttack;
 }
@@ -3339,7 +3329,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_UnitDef_0REF1Resource2resourceId0getTidalResourceGenerator = &skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getTidalResourceGenerator;
 	callback->Clb_UnitDef_0REF1Resource2resourceId0getStorage = &skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getStorage;
 	callback->Clb_UnitDef_0REF1Resource2resourceId0isSquareResourceExtractor = &skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isSquareResourceExtractor;
-	callback->Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker = &skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isResourceMaker;
 	callback->Clb_UnitDef_getBuildTime = &skirmishAiCallback_UnitDef_getBuildTime;
 	callback->Clb_UnitDef_getAutoHeal = &skirmishAiCallback_UnitDef_getAutoHeal;
 	callback->Clb_UnitDef_getIdleAutoHeal = &skirmishAiCallback_UnitDef_getIdleAutoHeal;
