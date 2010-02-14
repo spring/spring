@@ -292,16 +292,21 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 					smoothed[idx] = 0.;
 					for (int x1 = 0; x1 <= x + smoothrad; ++x1)
 						smoothed[idx] += mesh[x1 + y * maxx];
-					smoothed[idx] = std::max(ground->GetHeight(x*resolution, y*resolution), smoothed[idx]/(x + smoothrad + 1));
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(x + smoothrad + 1)));
 				} else if (x > maxx-smoothrad) {
 					smoothed[idx] = 0.;
 					for (int x1 = x-smoothrad; x1 <= maxx; ++x1)
 						smoothed[idx] += mesh[x1 + y * maxx];
-					smoothed[idx] = std::max(ground->GetHeight(x*resolution, y*resolution), smoothed[idx]/(maxx - (x - smoothrad) + 1));
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(maxx - (x - smoothrad) + 1)));
 				} else {
 					avg += mesh[idx + smoothrad] - mesh[idx - smoothrad - 1];
 					smoothed[idx] = std::min(readmap->currMaxHeight,
-								 std::max(ground->GetHeight(x*resolution, y*resolution), recipn * avg));
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  recipn * avg));
 				}
 				assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.f));
 				assert(smoothed[idx] >= readmap->currMinHeight);
@@ -320,16 +325,21 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 					smoothed[idx] = 0.;
 					for (int y1 = 0; y1 <= y + smoothrad; ++y1)
 						smoothed[idx] += mesh[x + y1 * maxx];
-					smoothed[idx] = std::max(ground->GetHeight(x*resolution, y*resolution), smoothed[idx]/(y + smoothrad + 1));
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(y + smoothrad + 1)));
 				} else if (y > maxy-smoothrad) {
 					smoothed[idx] = 0.;
 					for (int y1 = y - smoothrad; y1 <= maxy; ++y1)
 						smoothed[idx] += mesh[x + y1 * maxx];
-					smoothed[idx] = std::max(ground->GetHeight(x*resolution, y*resolution), smoothed[idx]/(maxy - (y - smoothrad) + 1));
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(maxy - (y - smoothrad) + 1)));
 				} else {
 					avg += mesh[x + (y+smoothrad)*maxx] - mesh[x + (y-smoothrad-1)*maxx];
 					smoothed[idx] = std::min(readmap->currMaxHeight,
-								 std::max(ground->GetHeight(x*resolution, y*resolution), recipn * avg));
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  recipn * avg));
 				}
 				assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.f));
 				assert(smoothed[idx] >= readmap->currMinHeight);
