@@ -11,6 +11,7 @@
 #include "DynWater.h"
 #include "RefractWater.h"
 #include "Exceptions.h"
+#include "GlobalUnsynced.h"
 
 CBaseWater* water=0;
 
