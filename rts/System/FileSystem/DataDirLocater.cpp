@@ -34,14 +34,7 @@
 
 DataDir::DataDir(const std::string& p) : path(p), writable(false)
 {
-	// sPS/cPS (depending on OS): "\\" & '\\' or "/" & '/'
-
-	// make sure the path ends with a (back-)slash
-	if (path.empty()) {
-		path = "."sPS;
-	} else if (path[path.size() - 1] != cPS) {
-		path += cPS;
-	}
+	FileSystemHandler::EnsurePathSepAtEnd(path);
 }
 
 DataDirLocater::DataDirLocater() : writedir(NULL)
