@@ -333,10 +333,8 @@ void CEndGameBox::Draw()
 				glVertex3f(box.x1+0.55f,box.y1+0.66f,0);
 		glEnd();
 
-		if (!gu->atiHacks) {
-			glLineStipple(3,0x5555);
-			glEnable(GL_LINE_STIPPLE);
-		}
+		glLineStipple(3,0x5555);
+		glEnable(GL_LINE_STIPPLE);
 		glBegin(GL_LINES);
 				glVertex3f(box.x1+0.50f,box.y1+0.64f,0);
 				glVertex3f(box.x1+0.55f,box.y1+0.64f,0);
