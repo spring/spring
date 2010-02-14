@@ -27,6 +27,7 @@
 #include "ConfigHandler.h"
 #include "FileSystemHandler.h"
 #include "FileSystem.h"
+#include "CacheDir.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 #include "maindefines.h" // for sPS, cPS, cPD
@@ -322,6 +323,12 @@ void DataDirLocater::LocateDataDirs()
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->writable) {
 			logOutput.Print("Using read-write data directory: %s", d->path.c_str());
+
+			// tag the cache dir
+			const std::string cacheDir = d->path + "cache";
+			if (filesystem.CreateDirectory(cacheDir)) {
+				CacheDir::SetCacheDir(cacheDir, true);
+			}
 		} else {
 			logOutput.Print("Using read-only data directory: %s",  d->path.c_str());
 		}
