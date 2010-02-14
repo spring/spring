@@ -1114,6 +1114,7 @@ void CMiniMap::DrawForReal()
 		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
 			selectedUnits.DrawCommands();
 		}
+		lineDrawer.DrawAll();
 	}
 
 	glDisable(GL_DEPTH_TEST);
