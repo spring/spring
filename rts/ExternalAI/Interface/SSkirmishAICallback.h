@@ -349,8 +349,6 @@ float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getStorage)(
 		int teamId, int unitDefId, int resourceId);
 bool (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0isSquareResourceExtractor)(
 		int teamId, int unitDefId, int resourceId);
-bool (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker)(
-		int teamId, int unitDefId, int resourceId);
 float (CALLING_CONV *Clb_UnitDef_getBuildTime)(int teamId, int unitDefId);
 /** This amount of auto-heal will always be applied. */
 float (CALLING_CONV *Clb_UnitDef_getAutoHeal)(int teamId, int unitDefId);
