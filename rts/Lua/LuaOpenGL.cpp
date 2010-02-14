@@ -3447,23 +3447,15 @@ int LuaOpenGL::LineStipple(lua_State* L)
 		if (lua_isstring(L, 1)) { // we're ignoring the string value
 			const unsigned int stipPat = (0xffff & cmdColors.StipplePattern());
 			if ((stipPat != 0x0000) && (stipPat != 0xffff)) {
-				if (gu->atiHacks) {
-					LogObject() << "LuaOpenGL: Ignoring LineStipple due to AtiHacks";
-				} else {
-					glEnable(GL_LINE_STIPPLE);
-					lineDrawer.SetupLineStipple();
-				}
+				glEnable(GL_LINE_STIPPLE);
+				lineDrawer.SetupLineStipple();
 			} else {
 				glDisable(GL_LINE_STIPPLE);
 			}
 		}
 		else if (lua_isboolean(L, 1)) {
 			if (lua_toboolean(L, 1)) {
-				if (gu->atiHacks) {
-					LogObject() << "LuaOpenGL: Ignoring LineStipple due to AtiHacks";
-				} else {
-					glEnable(GL_LINE_STIPPLE);
-				}
+				glEnable(GL_LINE_STIPPLE);
 			} else {
 				glDisable(GL_LINE_STIPPLE);
 			}
