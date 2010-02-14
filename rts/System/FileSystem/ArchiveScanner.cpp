@@ -754,8 +754,7 @@ void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum) c
 
 string CArchiveScanner::GetArchivePath(const string& name) const
 {
-	string lcname = filesystem.GetFilename(name);
-	StringToLowerInPlace(lcname);
+	const string lcname = StringToLower(filesystem.GetFilename(name));
 
 	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())
@@ -778,14 +777,15 @@ std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 	return name;
 }
 
-string CArchiveScanner::NameFromArchive(const string& s) const
+string CArchiveScanner::NameFromArchive(const string& archiveName) const
 {
-	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(s);
+	const std::string lcArchiveName = StringToLower(archiveName);
+	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcArchiveName);
 	if (aii != archiveInfo.end())
 	{
 		return aii->second.archiveData.name;
 	}
-	return s;
+	return archiveName;
 }
 
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& name) const
