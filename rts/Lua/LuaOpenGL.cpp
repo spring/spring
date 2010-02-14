@@ -2311,9 +2311,11 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 
 	// warn against GL_LINES and immediate mode
 	static int lastWarning = -1;
-	if (lastWarning < gs->frameNum) {
-		lastWarning = gs->frameNum + 120*GAME_SPEED;
-		LogObject() << "Warning: GL_LINES and immediate mode leaks memory on ATI cards!";
+	if (primMode == GL_LINES || primMode == GL_LINE_STRIP) {
+		if (lastWarning < gs->frameNum) {
+			lastWarning = gs->frameNum + 120*GAME_SPEED;
+			LogObject() << "Warning: GL_LINES and immediate mode leaks memory on ATI cards!";
+		}
 	}
 
 	// call the function
