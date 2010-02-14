@@ -108,12 +108,12 @@ Uint8 SDL_GetAppState()
 	return app_state;
 }
 
-static void queue_quit_event()
+/*static void queue_quit_event()
 {
 	SDL_Event ev;
 	ev.type = SDL_QUIT;
 	queue_event(ev);
-}
+}*/
 
 
 //----------------------------------------------------------------------------
