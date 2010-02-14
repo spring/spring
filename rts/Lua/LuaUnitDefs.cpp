@@ -700,7 +700,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("energyStorage",  ud.energyStorage);
 
 	ADD_BOOL("extractSquare", ud.extractSquare);
-	ADD_BOOL("isMetalMaker",  ud.isMetalMaker);
 
 	ADD_FLOAT("power", ud.power);
 

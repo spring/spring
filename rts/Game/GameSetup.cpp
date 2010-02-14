@@ -392,7 +392,6 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
 	file.GetDef(limitDgun,        "0", "GAME\\ModOptions\\LimitDgun");
-	file.GetDef(diminishingMMs,   "0", "GAME\\ModOptions\\DiminishingMMs");
 	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");
 	file.GetDef(ghostedBuildings, "1", "GAME\\ModOptions\\GhostedBuildings");
 

@@ -163,8 +163,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0ge
 		int teamId, int unitDefId, int resourceId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isSquareResourceExtractor(
 		int teamId, int unitDefId, int resourceId);
-EXPORT(bool             ) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isResourceMaker(
-		int teamId, int unitDefId, int resourceId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getBuildTime(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getAutoHeal(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getIdleAutoHeal(int teamId, int unitDefId);

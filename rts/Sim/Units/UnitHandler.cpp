@@ -63,9 +63,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(lastCmdDamageWarning),
 	CR_MEMBER(limitDgun),
 	CR_MEMBER(dgunRadius),
-	CR_MEMBER(diminishingMetalMakers),
-	CR_MEMBER(metalMakerIncome),
-	CR_MEMBER(metalMakerEfficiency),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
 //	CR_MEMBER(toBeRemoved),
@@ -96,9 +93,6 @@ CUnitHandler::CUnitHandler(bool serializing)
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
 	limitDgun(false),
-	diminishingMetalMakers(false),
-	metalMakerIncome(0),
-	metalMakerEfficiency(1),
 	morphUnitToFeature(true)
 {
 	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
@@ -120,10 +114,6 @@ CUnitHandler::CUnitHandler(bool serializing)
 		limitDgun = true;
 		dgunRadius = gs->mapx * 3;
 	}
-	if (gameSetup->diminishingMMs) {
-		diminishingMetalMakers = true;
-	}
-
 	if (!serializing) {
 		airBaseHandler = new CAirBaseHandler;
 
@@ -303,12 +293,6 @@ void CUnitHandler::Update()
 			numToUpdate--;
 		}
 	} // for timer destruction
-
-	if (!(gs->frameNum & 15)) {
-		if (diminishingMetalMakers)
-			metalMakerEfficiency = 8.0f / (8.0f + max(0.0f, sqrt(metalMakerIncome / teamHandler->ActiveTeams()) - 4));
-		metalMakerIncome = 0;
-	}
 }
 
 

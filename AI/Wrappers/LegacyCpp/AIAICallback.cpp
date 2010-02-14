@@ -546,7 +546,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->flareSalvoDelay = sAICallback->Clb_UnitDef_getFlareSalvoDelay(teamId, unitDefId);
 		//unitDef->smoothAnim = sAICallback->Clb_UnitDef_isSmoothAnim(teamId, unitDefId);
 		unitDef->smoothAnim = false;
-		unitDef->isMetalMaker = sAICallback->Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker(teamId, unitDefId, m);
 		unitDef->canLoopbackAttack = sAICallback->Clb_UnitDef_isAbleToLoopbackAttack(teamId, unitDefId);
 		unitDef->levelGround = sAICallback->Clb_UnitDef_isLevelGround(teamId, unitDefId);
 		unitDef->useBuildingGroundDecal = sAICallback->Clb_UnitDef_isUseBuildingGroundDecal(teamId, unitDefId);

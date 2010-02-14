@@ -42,12 +42,10 @@ static void LuaPushNamedColor(lua_State* L,
 
 bool LuaConstGame::PushEntries(lua_State* L)
 {
-
 	// FIXME  --  this is getting silly, convert to userdata?
 
 	const float gravity = -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
 	const bool limitDGun        = gameSetup ? gameSetup->limitDgun        : false;
-	const bool diminishingMMs   = gameSetup ? gameSetup->diminishingMMs   : false;
 	const bool ghostedBuildings = gameSetup ? gameSetup->ghostedBuildings : false;
 	const int  startPosType     = gameSetup ? gameSetup->startPosType     : 0;
 
@@ -69,7 +67,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedBool(L,   "commEnds",         (gameSetup->gameMode >= 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
-	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
 	const CMapInfo* mi = mapInfo;
