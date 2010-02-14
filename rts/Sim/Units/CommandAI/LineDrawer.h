@@ -47,7 +47,6 @@ class CLineDrawer {
 		// queue all lines and draw them in one go later
 		struct LinePair {
 			GLenum type;
-			bool stipple;
 			std::vector<GLfloat> verts;
 			std::vector<GLfloat> colors;
 		};
