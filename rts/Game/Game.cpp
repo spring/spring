@@ -2891,6 +2891,8 @@ bool CGame::DrawWorld()
 	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
 		selectedUnits.DrawCommands();
 	}
+
+	lineDrawer.DrawAll();
 	cursorIcons.Draw();
 	cursorIcons.Clear();
 
