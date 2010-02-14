@@ -2308,6 +2308,13 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	}
 	const GLuint primMode = (GLuint)lua_tonumber(L, 1);
 
+	// warn against GL_LINES and immediate mode
+	static int lastWarning = -1;
+	if (lastWarning < gs->frameNum) {
+		lastWarning = gs->frameNum + 120*GAME_SPEED;
+		LogObject() << "Warning: GL_LINES and immediate mode leaks memory on ATI cards!";
+	}
+
 	// call the function
 	glBegin(primMode);
 	const int error = lua_pcall(L, (args - 2), 0, 0);
