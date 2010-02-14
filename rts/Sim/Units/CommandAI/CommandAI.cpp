@@ -1354,7 +1354,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
 		lineDrawer.Break(endPos, dd->color);
 		glSurfaceCircle(endPos, radius, 20);
-		lineDrawer.RestartSameColor();
+		lineDrawer.RestartWithColor(dd->color);
 	}
 }
 
