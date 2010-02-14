@@ -11,6 +11,8 @@ CLineDrawer lineDrawer;
 CLineDrawer::CLineDrawer()
 {
 	stippleTimer = 0.0f;
+	lines.reserve(32);
+	stippled.reserve(32);
 }
 
 
