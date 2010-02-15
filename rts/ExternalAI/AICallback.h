@@ -110,7 +110,9 @@ public:
 	const unsigned short* GetRadarMap();
 	const unsigned short* GetJammerMap();
 	const unsigned char* GetMetalMap();
+	int GetMapHash();
 	const char* GetMapName();
+	int GetModHash();
 	const char* GetModName();
 	const char* GetModHumanName();
 

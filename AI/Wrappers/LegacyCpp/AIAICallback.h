@@ -120,7 +120,9 @@ public:
 	virtual const unsigned short* GetRadarMap();
 	virtual const unsigned short* GetJammerMap();
 	virtual const unsigned char* GetMetalMap();
+	virtual int GetMapHash();
 	virtual const char* GetMapName();
+	virtual int GetModHash();
 	virtual const char* GetModName();
 	virtual const char* GetModHumanName();
 

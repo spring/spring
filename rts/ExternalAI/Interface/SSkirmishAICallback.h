@@ -995,16 +995,29 @@ bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
  * as one and the same mod can be packaged in different ways.
  * Use the human name instead.
  * @see getHumanName()
+ * @deprecated
  */
 const char*       (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
 /**
+ * Returns the archive hash of the mod.
+ * Use this for reference to the mod, eg. in a cache-file, wherever human
+ * readability does not matter.
+ * This value will never be the same for two mods not having equal content.
+ * Tip: convert to 64 Hex chars for use in file names.
+ * @see getHumanName()
+ */
+int (CALLING_CONV *Clb_Mod_getHash)(int teamId);
+/**
  * Returns the human readable name of the mod, which includes the version.
  * Use this for reference to the mod (including version), eg. in cache- or
- * config-file names which are mod related.
+ * config-file names which are mod related, and wherever humans may come
+ * in contact with the reference.
  * Be aware though, that this may contain special characters and spaces,
  * and may not be used as a file name without checks and replaces.
  * Alternatively, you may use the short name only, or the short name plus
  * version. You should generally never use the file name.
+ * Tip: replace every char matching [^0-9a-zA-Z_-.] with '_'
+ * @see getHash()
  * @see getShortName()
  * @see getFileName()
  * @see getVersion()
@@ -1016,6 +1029,7 @@ const char*       (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
  * reference.
  * Be aware though, that this still contain special characters and spaces,
  * and may not be used as a file name without checks and replaces.
+ * Tip: replace every char matching [^0-9a-zA-Z_-.] with '_'
  * @see getVersion()
  * @see getHumanName()
  */
@@ -1282,11 +1296,23 @@ struct SAIFloat3 (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0init
 		int teamId, int resourceId, struct SAIFloat3 pos);
 
 /**
+ * Returns the archive hash of the map.
+ * Use this for reference to the map, eg. in a cache-file, wherever human
+ * readability does not matter.
+ * This value will never be the same for two maps not having equal content.
+ * Tip: convert to 64 Hex chars for use in file names.
+ * @see getName()
+ */
+int (CALLING_CONV *Clb_Map_getHash)(int teamId);
+
+/**
  * Returns the name of the map.
  * Use this for reference to the map, eg. in cache- or config-file names
- * which are map related.
+ * which are map related, wherever humans may come in contact with the reference.
  * Be aware though, that this may contain special characters and spaces,
  * and may not be used as a file name without checks and replaces.
+ * Tip: replace every char matching [^0-9a-zA-Z_-.] with '_'
+ * @see getHash()
  * @see getHumanName()
  */
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
