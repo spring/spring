@@ -5,6 +5,7 @@
 #include "Defines.h"
 #include "Util.h"
 #include "IncExternAI.h"
+#include "System/Util.h"
 
 std::string CLogger::GetLogName() const {
 	if (name.size() > 0) {
@@ -18,8 +19,10 @@ std::string CLogger::GetLogName() const {
 	std::stringstream ss;
 		ss << std::string(LOGFOLDER);
 		ss << AIUtil::MakeFileSystemCompatible(icb->GetMapName());
+		ss << "-" << IntToString(icb->GetMapHash(), "%x");
 		ss << "_";
 		ss << AIUtil::MakeFileSystemCompatible(icb->GetModHumanName());
+		ss << "-" << IntToString(icb->GetModHash(), "%x");
 		ss << "_";
 		ss << now2->tm_mon + 1;
 		ss << "-";

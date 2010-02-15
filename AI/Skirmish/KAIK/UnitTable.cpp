@@ -1005,9 +1005,13 @@ std::string CUnitTable::GetDbgLogName() const {
 }
 
 std::string CUnitTable::GetModCfgName() const {
+	// name is used for human readability,
+	// while hash is used for uniqueness
+	// (in case the modder forgets changing the name inbetween versions)
 	std::string relFile =
 		std::string(CFGFOLDER) +
 		AIUtil::MakeFileSystemCompatible(ai->cb->GetModHumanName()) +
+		"-" + IntToString(ai->cb->GetModHash(), "%x") +
 		".cfg";
 	std::string absFile = AIUtil::GetAbsFileName(ai->cb, relFile);
 
