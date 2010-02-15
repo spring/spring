@@ -514,12 +514,12 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		// debug purposes:
 		if(sectorType == LAND_SECTOR)
 		{
-			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i", best_sector->x, best_sector->y, sectors[0].size());
+			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 		else
 		{
-			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i", best_sector->x, best_sector->y, sectors[0].size());
+			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 
