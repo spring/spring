@@ -19,6 +19,7 @@
 #include "Map/MapDamage.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaRules.h"
@@ -1805,12 +1806,24 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 {
 	CCommandQueue::const_iterator ci;
 	// worst case - 2 squares per building (when underwater) - 8 vertices * 3 floats
-	GLfloat vertices_quads[commandQue.size() * 12];
-	GLfloat vertices_quads_uw[commandQue.size() * 12]; // underwater
+
+	int buildCommands = 0;
+	int underwaterCommands = 0;
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		if (buildOptions.find(ci->id) != buildOptions.end()) {
+			++buildCommands;
+			BuildInfo bi(*ci);
+			bi.pos = helper->Pos2BuildPos(bi);
+			if (bi.pos.y < 0.f)
+				++underwaterCommands;
+		}
+	}
+	std::vector<GLfloat> vertices_quads(buildCommands * 12);
+	std::vector<GLfloat> vertices_quads_uw(buildCommands * 12); // underwater
 	// 4 vertical lines
-	GLfloat vertices_lines[commandQue.size() * 24];
+	std::vector<GLfloat> vertices_lines(underwaterCommands * 24);
 	// colors for lines
-	GLfloat colors_lines[commandQue.size() * 48];
+	std::vector<GLfloat> colors_lines(underwaterCommands * 48);
 
 	int quadcounter = 0;
 	int uwqcounter = 0;
@@ -1863,7 +1876,7 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 				uwqcounter += 12;
 
 				for (int i = 0; i<4; ++i) {
-					memcpy(colors_lines + linecounter * 2 + 0, col, sizeof(float)*8);
+					std::copy(col, col + 8, colors_lines.begin() + linecounter * 2 + i * 8);
 				}
 
 				vertices_lines[linecounter + 0] = x1;
@@ -1899,23 +1912,25 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 		}
 	}
 	if (quadcounter) {
+		glEnableClientState(GL_VERTEX_ARRAY);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
-		glVertexPointer(3, GL_FLOAT, 0, vertices_quads);
+		glVertexPointer(3, GL_FLOAT, 0, &vertices_quads[0]);
 		glDrawArrays(GL_QUADS, 0, quadcounter/3);
 
 		if (linecounter) {
 			glPushAttrib(GL_CURRENT_BIT);
 			glColor4f(0.0f, 0.5f, 1.0f, 1.0f); // same as end color of lines
-			glVertexPointer(3, GL_FLOAT, 0, vertices_quads_uw);
+			glVertexPointer(3, GL_FLOAT, 0, &vertices_quads_uw[0]);
 			glDrawArrays(GL_QUADS, 0, uwqcounter/3);
 			glPopAttrib();
 
 			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(4, GL_FLOAT, 0, colors_lines);
-			glVertexPointer(3, GL_FLOAT, 0, vertices_lines);
+			glColorPointer(4, GL_FLOAT, 0, &colors_lines[0]);
+			glVertexPointer(3, GL_FLOAT, 0, &vertices_lines[0]);
 			glDrawArrays(GL_LINES, 0, linecounter/3);
 			glDisableClientState(GL_COLOR_ARRAY);
 		}
+		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 }
 
