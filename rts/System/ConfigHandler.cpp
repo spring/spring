@@ -164,7 +164,11 @@ ConfigHandler::~ConfigHandler()
  */
 string ConfigHandler::GetString(const string name, const string def)
 {
-	std::map<string,string>::iterator pos = data.find(name);
+	std::map<string,string>::iterator pos = overlay.find(name);
+	if (pos != overlay.end())
+		return pos->second;
+
+	pos = data.find(name);
 	if (pos == data.end()) {
 		SetString(name, def);
 		return def;
@@ -216,6 +220,16 @@ void ConfigHandler::SetString(const string name, const string value)
 	// must be outside above 'if (file)' block because of the lock.
 	if (file)
 		fclose(file);
+}
+
+/// set configure option for this instance only
+void ConfigHandler::SetOverlay(std::string name, std::string value)
+{
+	std::map<string,string>::iterator pos = overlay.find(name);
+	if (pos != overlay.end() && pos->second == value)
+		return;
+	else
+		overlay[name] = value;
 }
 
 /**
