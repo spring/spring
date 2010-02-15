@@ -3,6 +3,7 @@
 #include "TdfParser.h"
 #include "Exceptions.h"
 #include "LogOutput.h"
+#include "ConfigHandler.h"
 #include "Util.h"
 
 ClientSetup::ClientSetup() :
@@ -37,5 +38,12 @@ void ClientSetup::Init(const std::string& setup)
 
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
 		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
+	}
+
+	if (file.SectionExist("OPTIONS"))
+	{
+		TdfParser::MapRef options = file.GetAllValues("OPTIONS");
+		for (std::map<std::string,std::string>::const_iterator it = options.begin(); it != options.end(); ++it)
+			configHandler->SetOverlay(it->first, it->second);
 	}
 }

@@ -1051,6 +1051,13 @@ bool CGame::ActionPressed(const Action& action,
 			configHandler->SetString(varName, action.extra.substr(pos+1));
 		}
 	}
+	else if (cmd == "tset") {
+		const std::string::size_type pos = action.extra.find_first_of(" ");
+		if (pos != std::string::npos) {
+			const std::string varName = action.extra.substr(0, pos);
+			configHandler->SetOverlay(varName, action.extra.substr(pos+1));
+		}
+	}
 	else if (cmd == "drawinmap") {
 		inMapDrawer->keyPressed = true;
 	}

@@ -48,6 +48,9 @@ public:
 	 */
 	void SetString(std::string name, std::string value);
 
+	/// set configure option for this instance only
+	void SetOverlay(std::string name, std::string valu);
+
 	/**
 	 * @brief get string
 	 * @param name name of key to get
@@ -119,6 +122,13 @@ private:
 	 * instead of constantly rereading from the file
 	 */
 	std::map<std::string, std::string> data;
+
+	/**
+	 * @brief config overlay
+	 *
+	 * Won't be written to file, and will thus be discarded
+	 */
+	std::map<std::string, std::string> overlay;
 
 	/**
 	 * @brief Get the name of the default configuration file
