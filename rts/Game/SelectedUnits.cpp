@@ -23,6 +23,7 @@
 #include "UI/TooltipConsole.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/GL/VertexArray.h"
 #include "SelectedUnitsAI.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
@@ -363,7 +364,6 @@ void CSelectedUnits::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
-	glEnableClientState(GL_VERTEX_ARRAY);
 
 	GML_RECMUTEX_LOCK(grpsel); // Draw
 
@@ -377,34 +377,22 @@ void CSelectedUnits::Draw()
 			unitSet = &selectedUnits;
 		}
 
-		GLfloat vertices[unitSet->size() * 12];
-
-		int count;
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(unitSet->size()*4, 0, VA_SIZE_0);
 		CUnitSet::const_iterator ui;
-		for (count = 0, ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
+		for (ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
 			if (unit->isIcon) {
 				continue;
 			}
 
-			vertices[count + 0] = unit->drawPos.x + unit->xsize * 4;
-			vertices[count + 1] = unit->drawPos.y;
-			vertices[count + 2] = unit->drawPos.z + unit->zsize * 4;
-			vertices[count + 3] = unit->drawPos.x - unit->xsize * 4;
-			vertices[count + 4] = unit->drawPos.y;
-			vertices[count + 5] = unit->drawPos.z + unit->zsize * 4;
-			vertices[count + 6] = unit->drawPos.x - unit->xsize * 4;
-			vertices[count + 7] = unit->drawPos.y;
-			vertices[count + 8] = unit->drawPos.z - unit->zsize * 4;
-			vertices[count + 9] = unit->drawPos.x + unit->xsize * 4;
-			vertices[count +10] = unit->drawPos.y;
-			vertices[count +11] = unit->drawPos.z - unit->zsize * 4;
-
-			count += 12;
+			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
 		}
-		glVertexPointer(3, GL_FLOAT, 0, vertices);
-
-		glDrawArrays(GL_QUADS, 0, count/3);
+		va->DrawArray0(GL_QUADS);
 	}
 
 	// highlight queued build sites if we are about to build something
@@ -441,7 +429,6 @@ void CSelectedUnits::Draw()
 		}
 	}
 
-	glDisableClientState(GL_VERTEX_ARRAY);
 	glLineWidth(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_BLEND);

@@ -476,7 +476,6 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glEnableClientState(GL_VERTEX_ARRAY);
 
 	int xsize=buildInfo.GetXSize();
 	int zsize=buildInfo.GetZSize();
@@ -541,46 +540,47 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	else
 		glColor4f(0.5f,0.5f,0,1.0f);
 
-	float3 canbuildverts[canbuildpos.size()*4];
+	CVertexArray *va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(canbuildpos.size()*4, 0, VA_SIZE_0);
 	for(unsigned int i=0; i<canbuildpos.size(); i++)
 	{
-		canbuildverts[i*4 + 0] = canbuildpos[i];
-		canbuildverts[i*4 + 1] = canbuildpos[i]+float3(SQUARE_SIZE,0,0);
-		canbuildverts[i*4 + 2] = canbuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE);
-		canbuildverts[i*4 + 3] = canbuildpos[i]+float3(0,0,SQUARE_SIZE);
+		va->AddVertexQ0(canbuildpos[i]);
+		va->AddVertexQ0(canbuildpos[i]+float3(SQUARE_SIZE,0,0));
+		va->AddVertexQ0(canbuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
+		va->AddVertexQ0(canbuildpos[i]+float3(0,0,SQUARE_SIZE));
 	}
-	glVertexPointer(3, GL_FLOAT, 0, canbuildverts);
-	glDrawArrays(GL_QUADS, 0, canbuildpos.size()*4);
+	va->DrawArray0(GL_QUADS);
 
 	glColor4f(0.5f,0.5f,0,1.0f);
-	float3 featureverts[featurepos.size()*4];
+	va->Initialize();
+	va->EnlargeArrays(featurepos.size()*4, 0, VA_SIZE_0);
 	for(unsigned int i=0; i<featurepos.size(); i++)
 	{
-		featureverts[i*4 + 0] = featurepos[i];
-		featureverts[i*4 + 1] = featurepos[i]+float3(SQUARE_SIZE,0,0);
-		featureverts[i*4 + 2] = featurepos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE);
-		featureverts[i*4 + 3] = featurepos[i]+float3(0,0,SQUARE_SIZE);
+		va->AddVertexQ0(featurepos[i]);
+		va->AddVertexQ0(featurepos[i]+float3(SQUARE_SIZE,0,0));
+		va->AddVertexQ0(featurepos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
+		va->AddVertexQ0(featurepos[i]+float3(0,0,SQUARE_SIZE));
 	}
-	glVertexPointer(3, GL_FLOAT, 0, featureverts);
-	glDrawArrays(GL_QUADS, 0, featurepos.size()*4);
+	va->DrawArray0(GL_QUADS);
 
 	glColor4f(0.8f,0.0f,0,1.0f);
-	float3 nobuildverts[nobuildpos.size()*4];
+	va->Initialize();
+	va->EnlargeArrays(nobuildpos.size(), 0, VA_SIZE_0);
 	for(unsigned int i=0; i<nobuildpos.size(); i++)
 	{
-		nobuildverts[i*4 + 0] = nobuildpos[i];
-		nobuildverts[i*4 + 1] = nobuildpos[i]+float3(SQUARE_SIZE,0,0);
-		nobuildverts[i*4 + 2] = nobuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE);
-		nobuildverts[i*4 + 3] = nobuildpos[i]+float3(0,0,SQUARE_SIZE);
+		va->AddVertexQ0(nobuildpos[i]);
+		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE,0,0));
+		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
+		va->AddVertexQ0(nobuildpos[i]+float3(0,0,SQUARE_SIZE));
 	}
-	glVertexPointer(3, GL_FLOAT, 0, nobuildverts);
-	glDrawArrays(GL_QUADS, 0, nobuildpos.size()*4);
+	va->DrawArray0(GL_QUADS);
 
 	if (h < 0.0f) {
 		const unsigned char s[4] = { 0, 0, 255, 128 }; // start color
 		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
-		CVertexArray *va = GetVertexArray();
+		va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(8, 0, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
@@ -589,9 +589,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
 		va->DrawArrayC(GL_LINES);
 
-		va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(4, 0, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, 0.0f, z1), e);
 		va->AddVertexQC(float3(x1, 0.0f, z2), e);
 		va->AddVertexQC(float3(x2, 0.0f, z2), e);
@@ -599,7 +597,6 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		va->DrawArrayC(GL_LINE_LOOP);
 	}
 
-	glDisableClientState(GL_VERTEX_ARRAY);
 	glEnable(GL_DEPTH_TEST );
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//glDisable(GL_BLEND);
