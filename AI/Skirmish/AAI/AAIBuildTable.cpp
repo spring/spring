@@ -2505,7 +2505,8 @@ bool AAIBuildTable::LoadBuildTable()
 
 		FILE *load_file;
 
-		int tmp = 0, bo = 0, bb = 0, cat = 0;
+		int tmp = 0, cat = 0;
+		size_t bo = 0, bb = 0;
 
 		// load units if file exists
 		if((load_file = fopen(buildtable_filename_r, "r")))
@@ -2543,7 +2544,7 @@ bool AAIBuildTable::LoadBuildTable()
 
 			for(int i = 1; i <= numOfUnits; ++i)
 			{
-				fscanf(load_file, "%i %i %u %u %f %f %f %i %i %i ",&units_static[i].def_id, &units_static[i].side,
+				fscanf(load_file, "%i %i %u %u %f %f %f %i "_STPF_" "_STPF_" ",&units_static[i].def_id, &units_static[i].side,
 									&units_static[i].unit_type, &units_static[i].movement_type,
 									&units_static[i].range, &units_static[i].cost, &units_static[i].builder_cost,
 									&cat, &bo, &bb);
@@ -2566,14 +2567,14 @@ bool AAIBuildTable::LoadBuildTable()
 				units_dynamic[i].constructorsRequested = 0;
 
 				// load buildoptions
-				for(int j = 0; j < bo; j++)
+				for(size_t j = 0; j < bo; j++)
 				{
 					fscanf(load_file, "%i ", &tmp);
 					units_static[i].canBuildList.push_back(tmp);
 				}
 
 				// load builtby-list
-				for(int k = 0; k < bb; ++k)
+				for(size_t k = 0; k < bb; ++k)
 				{
 					fscanf(load_file, "%i ", &tmp);
 					units_static[i].builtByList.push_back(tmp);
@@ -2586,9 +2587,9 @@ bool AAIBuildTable::LoadBuildTable()
 				for(int cat = 0; cat <= MOBILE_CONSTRUCTOR; ++cat)
 				{
 					// load number of buildoptions
-					fscanf(load_file, "%i ", &bo);
+					fscanf(load_file, _STPF_" ", &bo);
 
-					for(int i = 0; i < bo; ++i)
+					for(size_t i = 0; i < bo; ++i)
 					{
 						fscanf(load_file, "%i ", &tmp);
 						units_of_category[cat][s].push_back(tmp);
@@ -2681,7 +2682,7 @@ void AAIBuildTable::SaveBuildTable(int game_period, MapType map_type)
 	{
 		tmp = units_static[i].canBuildList.size();
 
-		fprintf(save_file, "%i %i %u %u %f %f %f %i %i %i ", units_static[i].def_id, units_static[i].side,
+		fprintf(save_file, "%i %i %u %u %f %f %f %i "_STPF_" "_STPF_" ", units_static[i].def_id, units_static[i].side,
 								units_static[i].unit_type, units_static[i].movement_type, units_static[i].range,
 								units_static[i].cost, units_static[i].builder_cost, (int) units_static[i].category,
 								units_static[i].canBuildList.size(), units_static[i].builtByList.size());
@@ -2707,7 +2708,7 @@ void AAIBuildTable::SaveBuildTable(int game_period, MapType map_type)
 		for(int cat = 0; cat <= MOBILE_CONSTRUCTOR; ++cat)
 		{
 			// save number of units
-			fprintf(save_file, "%i ", units_of_category[cat][s].size());
+			fprintf(save_file, _STPF_" ", units_of_category[cat][s].size());
 
 			for(list<int>::iterator unit = units_of_category[cat][s].begin(); unit != units_of_category[cat][s].end(); ++unit)
 				fprintf(save_file, "%i ", *unit);

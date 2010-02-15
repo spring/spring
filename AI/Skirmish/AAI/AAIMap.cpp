@@ -229,8 +229,8 @@ void AAIMap::Init()
 	fprintf(ai->file, "%i sectors in y direction\n", ySectors);
 	fprintf(ai->file, "x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
 	fprintf(ai->file, "y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
-	fprintf(ai->file, "%i metal spots found (%i are on land, %i under water) \n \n",metal_spots.size(), land_metal_spots, water_metal_spots);
-	fprintf(ai->file, "%i continents found on map\n", continents.size());
+	fprintf(ai->file, _STPF_" metal spots found (%i are on land, %i under water) \n \n", metal_spots.size(), land_metal_spots, water_metal_spots);
+	fprintf(ai->file, _STPF_" continents found on map\n", continents.size());
 	fprintf(ai->file, "%i land and %i water continents\n", land_continents, water_continents);
 	fprintf(ai->file, "Average land continent size is %i\n", avg_land_continent_size);
 	fprintf(ai->file, "Average water continent size is %i\n", avg_water_continent_size);
@@ -382,7 +382,7 @@ void AAIMap::ReadMapCacheFile()
 		land_metal_spots = 0;
 		water_metal_spots = 0;
 
-		fprintf(file, "\n%i \n", metal_spots.size());
+		fprintf(file, "\n"_STPF_" \n", metal_spots.size());
 
 		for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); ++spot)
 		{
@@ -629,7 +629,7 @@ void AAIMap::ReadContinentFile()
 	}
 
 	// save continents
-	fprintf(file, "\n%i \n", continents.size());
+	fprintf(file, "\n"_STPF_" \n", continents.size());
 
 	for(size_t c = 0; c < continents.size(); ++c)
 		fprintf(file, "%i %i \n", continents[c].size, (int)continents[c].water);
