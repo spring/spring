@@ -1086,22 +1086,16 @@ void CMiniMap::DrawForReal()
 			}
 		}
 		glColor4f(1,1,1,0.5f);
-		GLfloat verts[left.size()*4];
-		int vertcnt = 0;
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(left.size()*2, 0, VA_SIZE_2D0);
 		for(fli = left.begin(); fli != left.end(); fli++) {
 			if(fli->minz < fli->maxz) {
-				verts[vertcnt + 0] = fli->base + (fli->dir * fli->minz);
-				verts[vertcnt + 1] = fli->minz;
-				verts[vertcnt + 2] = fli->base + (fli->dir * fli->maxz);
-				verts[vertcnt + 3] = fli->maxz;
-				vertcnt += 4;
+				va->AddVertex2dQ0(fli->base + (fli->dir * fli->minz), fli->minz);
+				va->AddVertex2dQ0(fli->base + (fli->dir * fli->maxz), fli->maxz);
 			}
 		}
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(2, GL_FLOAT, 0, verts);
-		glDrawArrays(GL_LINES, 0, vertcnt/2);
-		glDisableClientState(GL_VERTEX_ARRAY);
+		va->DrawArray2d0(GL_LINES);
 	}
 
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
