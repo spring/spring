@@ -32,6 +32,13 @@ void CVertexArray::AddVertexQ0(const float x, const float y, const float z) {
 	*drawArrayPos++ = z;
 }
 
+void CVertexArray::AddVertex2dQ0(const float x, const float z) {
+	ASSERT_SIZE(VA_SIZE_2D0)
+	*drawArrayPos++ = x;
+	*drawArrayPos++ = z;
+}
+
+
 void CVertexArray::AddVertexQN(const float3& pos, const float3& normal) {
 	ASSERT_SIZE(VA_SIZE_0)
 	*drawArrayPos++ = pos.x;
@@ -100,6 +107,12 @@ void CVertexArray::AddVertex0(const float x, const float y, const float z) {
 	CheckEnlargeDrawArray();
 	*drawArrayPos++=x;
 	*drawArrayPos++=y;
+	*drawArrayPos++=z;
+}
+
+void CVertexArray::AddVertex2d0(const float x, const float z) {
+	CheckEnlargeDrawArray();
+	*drawArrayPos++=x;
 	*drawArrayPos++=z;
 }
 
