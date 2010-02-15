@@ -946,7 +946,8 @@ int CAICallback::GetMapHeight()
 	return gs->mapy;
 }
 
-int CAICallback::GetMapHash() {
+int CAICallback::GetMapHash()
+{
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
 	return 0;
 }
@@ -954,10 +955,17 @@ int CAICallback::GetMapHash() {
 const char* CAICallback::GetMapName ()
 {
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return gameSetup->mapName.c_str();
+	return NULL;
 }
 
-int CAICallback::GetModHash() {
+const char* CAICallback::GetMapHumanName ()
+{
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
+}
+
+int CAICallback::GetModHash()
+{
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
 	return 0;
 }
@@ -965,13 +973,13 @@ int CAICallback::GetModHash() {
 const char* CAICallback::GetModName()
 {
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return modInfo.filename.c_str();
+	return NULL;
 }
 
 const char* CAICallback::GetModHumanName()
 {
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return modInfo.humanName.c_str();
+	return NULL;
 }
 
 

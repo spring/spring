@@ -112,6 +112,7 @@ public:
 	const unsigned char* GetMetalMap();
 	int GetMapHash();
 	const char* GetMapName();
+	const char* GetMapHumanName();
 	int GetModHash();
 	const char* GetModName();
 	const char* GetModHumanName();

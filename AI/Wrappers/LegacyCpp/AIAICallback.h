@@ -122,6 +122,7 @@ public:
 	virtual const unsigned char* GetMetalMap();
 	virtual int GetMapHash();
 	virtual const char* GetMapName();
+	virtual const char* GetMapHumanName();
 	virtual int GetModHash();
 	virtual const char* GetModName();
 	virtual const char* GetModHumanName();

@@ -346,8 +346,10 @@ public:
 	virtual int GetMapHash() = 0;
 	/// Use this one for reference (eg. in config-file names)
 	virtual const char* GetMapName() = 0;
+	virtual const char* GetMapHumanName() = 0;
 	/// Use this one for reference (eg. in cache-file names)
 	virtual int GetModHash() = 0;
+	/// archive name @deprecated
 	virtual const char* GetModName() = 0;
 	/// Use this one for reference (eg. in config-file names)
 	virtual const char* GetModHumanName() = 0;
