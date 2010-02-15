@@ -48,6 +48,7 @@ public:
 
 	//! same as the AddVertex... functions just without automated CheckEnlargeDrawArray
 	inline void AddVertexQ0(const float x, const float y, const float z);
+	inline void AddVertexQ0(const float3& f3) { AddVertexQ0(f3.x, f3.y, f3.z); }
 	inline void AddVertexQN(const float3& pos, const float3& normal);
 	inline void AddVertexQC(const float3& pos,const unsigned char* color);
 	inline void AddVertexQT(const float3& pos,const float tx,const float ty);
