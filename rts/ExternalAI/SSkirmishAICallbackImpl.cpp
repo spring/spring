@@ -24,7 +24,6 @@
 #include "ExternalAI/SkirmishAILibraryInfo.h"
 #include "ExternalAI/SAIInterfaceCallbackImpl.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-//#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Sim/Units/UnitDef.h"
@@ -51,6 +50,7 @@
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
+#include "FileSystem/ArchiveScanner.h"
 #include "GlobalUnsynced.h" // for myTeam
 #include "LogOutput.h"
 
@@ -1049,7 +1049,7 @@ EXPORT(const char*) skirmishAiCallback_Mod_getFileName(int teamId) {
 }
 
 EXPORT(int) skirmishAiCallback_Mod_getHash(int teamId) {
-	return gameSetup->modHash;
+	return archiveScanner->GetArchiveCompleteChecksum(modInfo.humanName);
 }
 EXPORT(const char*) skirmishAiCallback_Mod_getHumanName(int teamId) {
 	return modInfo.humanName.c_str();
@@ -1360,7 +1360,7 @@ EXPORT(struct SAIFloat3) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourc
 }
 
 EXPORT(int) skirmishAiCallback_Map_getHash(int teamId) {
-	return gameSetup->mapHash;
+	return archiveScanner->GetArchiveCompleteChecksum(mapInfo->map.name);
 }
 
 EXPORT(const char*) skirmishAiCallback_Map_getName(int teamId) {
