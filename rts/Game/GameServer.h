@@ -59,7 +59,7 @@ class CGameServer
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(const ClientSetup* settings, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
+	CGameServer(int hostport, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
 	~CGameServer();
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
