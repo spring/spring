@@ -3251,35 +3251,41 @@ bool CGame::Draw() {
 
 			SNPRINTF(buf, sizeof(buf), "\xff%c%c%c \tNu\tm   \tUser name   \tCPU  \tPing", 255, 255, 63);
 			chart += buf;
-			if (count > 0) chart += "\n";
 
 			for (int a = 0; a < count; ++a) {
 				const CPlayer* p = playerHandler->Player(indices[a]);
-				float4 color(1.0f,1.0f,1.0f,1.0f);
+				unsigned char color[3] = {255, 255, 255};
+				unsigned char allycolor[3] = {255, 255, 255};
 				if(p->ping != PATHING_FLAG || gs->frameNum != 0) {
-					prefix = "S";
-					if (!p->spectator) {
+					if (p->spectator)
+						prefix = "S";
+					else {
 						const unsigned char* bColor = teamHandler->Team(p->team)->color;
-						color[0] = (float)bColor[0] / 255.0f;
-						color[1] = (float)bColor[1] / 255.0f;
-						color[2] = (float)bColor[2] / 255.0f;
-						color[3] = (float)bColor[3] / 255.0f;
-						if (gu->myAllyTeam == teamHandler->AllyTeam(p->team))
+						color[0] = std::max((unsigned char)1, bColor[0]);
+						color[1] = std::max((unsigned char)1, bColor[1]);
+						color[2] = std::max((unsigned char)1, bColor[2]);
+						if (gu->myAllyTeam == teamHandler->AllyTeam(p->team)) {
+							allycolor[0] = allycolor[2] = 1;
 							prefix = "A";	// same AllyTeam
-						else if (teamHandler->AlliedTeams(gu->myTeam, p->team))
+						}
+						else if (teamHandler->AlliedTeams(gu->myTeam, p->team)) {
+							allycolor[0] = allycolor[1] = 1;
 							prefix = "E+";	// different AllyTeams, but are allied
-						else
+						}
+						else {
+							allycolor[1] = allycolor[2] = 1;
 							prefix = "E";	//no alliance at all
+						}
 					}
-					float4 cpucolor(p->cpuUsage > 0.75f && gs->speedFactor < gs->userSpeedFactor * 0.99f && 
+					float4 cpucolor(!p->spectator && p->cpuUsage > 0.75f && gs->speedFactor < gs->userSpeedFactor * 0.99f && 
 						(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)), 
 							std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
 					int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
 					float4 pingcolor(std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
 							std::min(1.0f, std::max(0.01f, (1000 - ping) / 375.0f)), 0.01f, 1.0f);
-					SNPRINTF(buf, sizeof(buf), "%c \t%i \t%s   \t%s   \t\xff%c%c%c%.0f%%  \t\xff%c%c%c%dms",
-							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-							p->team, prefix.c_str(), p->name.c_str(), 
+					SNPRINTF(buf, sizeof(buf), "\xff%c%c%c%c \t%i \t%s   \t\xff%c%c%c%s   \t\xff%c%c%c%.0f%%  \t\xff%c%c%c%dms",
+							allycolor[0], allycolor[1], allycolor[2], (gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
+							p->team, prefix.c_str(), color[0], color[1], color[2], p->name.c_str(), 
 							(unsigned char)(cpucolor[0] * 255.0f), (unsigned char)(cpucolor[1] * 255.0f), (unsigned char)(cpucolor[2] * 255.0f),
 							p->cpuUsage * 100.0f,
 							(unsigned char)(pingcolor[0] * 255.0f), (unsigned char)(pingcolor[1] * 255.0f), (unsigned char)(pingcolor[2] * 255.0f),
@@ -3287,17 +3293,13 @@ bool CGame::Draw() {
 				}
 				else {
 					prefix = "";
-					SNPRINTF(buf, sizeof(buf), "%c \t%i \t%s   \t%s   \t%s-%d  \t%d",
-							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
+					SNPRINTF(buf, sizeof(buf), "\xff%c%c%c%c \t%i \t%s   \t\xff%c%c%c%s   \t%s-%d  \t%d",
+							allycolor[0], allycolor[1], allycolor[2], (gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
+							p->team, prefix.c_str(), color[0], color[1], color[2], p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
 				}
-				chart += '\xff';
-				chart += (unsigned char)(color[0] * 255.0f);
-				chart += (unsigned char)(color[1] * 255.0f);
-				chart += (unsigned char)(color[2] * 255.0f);
+				chart += "\n";
 				chart += buf;
-				if (a + 1 < count) chart += "\n";
 			}
 
 			font_options |= FONT_BOTTOM;
