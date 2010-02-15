@@ -787,6 +787,10 @@ const char* CAIAICallback::GetMapName() {
 	return sAICallback->Clb_Map_getName(teamId);
 }
 
+const char* CAIAICallback::GetMapHumanName() {
+	return sAICallback->Clb_Map_getHumanName(teamId);
+}
+
 int CAIAICallback::GetModHash() {
 	return sAICallback->Clb_Mod_getHash(teamId);
 }
