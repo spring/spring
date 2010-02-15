@@ -177,7 +177,8 @@ void CGameHelper::Explosion(
 	bool damageGround, float gfxMod,
 	bool ignoreOwner, bool impactOnly,
 	CExplosionGenerator* explosionGraphics, CUnit* hit,
-	const float3& impactDir, int weaponId
+	const float3& impactDir, int weaponId,
+	CFeature* hitfeature
 ) {
 	if (luaUI) {
 		if ((weaponId >= 0) && (weaponId <= weaponDefHandler->numWeaponDefs)) {
@@ -203,6 +204,8 @@ void CGameHelper::Explosion(
 	if (impactOnly) {
 		if (hit) {
 			DoExplosionDamage(hit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+		} else if (hitfeature) {
+			DoExplosionDamage(hitfeature, expPos, expRad, owner, damages);
 		}
 	} else {
 		float height = std::max(expPos.y - h2, 0.0f);
@@ -233,11 +236,19 @@ void CGameHelper::Explosion(
 		// damage all features within the explosion radius
 		vector<CFeature*> features = qf->GetFeaturesExact(expPos, expRad);
 		vector<CFeature*>::iterator fi;
+		bool hitFeatureDamaged = false;
 
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 
+			if (hitfeature == feature) {
+				hitFeatureDamaged = true;
+			}
 			DoExplosionDamage(feature, expPos, expRad, owner, damages);
+		}
+
+		if (hitfeature && !hitFeatureDamaged) {
+			DoExplosionDamage(hitfeature, expPos, expRad, owner, damages);
 		}
 
 		// deform the map
