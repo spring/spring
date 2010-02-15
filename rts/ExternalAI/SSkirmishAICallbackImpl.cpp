@@ -49,6 +49,7 @@
 #include "Map/MapInfo.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
+#include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
 #include "GlobalUnsynced.h" // for myTeam
 #include "LogOutput.h"
@@ -1047,6 +1048,9 @@ EXPORT(const char*) skirmishAiCallback_Mod_getFileName(int teamId) {
 	return modInfo.filename.c_str();
 }
 
+EXPORT(int) skirmishAiCallback_Mod_getHash(int teamId) {
+	return gameSetup->modHash;
+}
 EXPORT(const char*) skirmishAiCallback_Mod_getHumanName(int teamId) {
 	return modInfo.humanName.c_str();
 }
@@ -1353,6 +1357,10 @@ EXPORT(float) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initRes
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
 		int teamId, int resourceId, struct SAIFloat3 pos) {
 	return getResourceMapAnalyzer(resourceId)->GetNearestSpot(pos, teamId).toSAIFloat3();
+}
+
+EXPORT(int) skirmishAiCallback_Map_getHash(int teamId) {
+	return gameSetup->mapHash;
 }
 
 EXPORT(const char*) skirmishAiCallback_Map_getName(int teamId) {
@@ -3632,6 +3640,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Group_OrderPreview_0ARRAY1VALS0getParams = &skirmishAiCallback_Group_OrderPreview_0ARRAY1VALS0getParams;
 	callback->Clb_Group_isSelected = &skirmishAiCallback_Group_isSelected;
 	callback->Clb_Mod_getFileName = &skirmishAiCallback_Mod_getFileName;
+	callback->Clb_Mod_getHash = &skirmishAiCallback_Mod_getHash;
 	callback->Clb_Mod_getHumanName = &skirmishAiCallback_Mod_getHumanName;
 	callback->Clb_Mod_getShortName = &skirmishAiCallback_Mod_getShortName;
 	callback->Clb_Mod_getVersion = &skirmishAiCallback_Mod_getVersion;
@@ -3690,6 +3699,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions;
 	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome;
 	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest;
+	callback->Clb_Map_getHash = &skirmishAiCallback_Map_getHash;
 	callback->Clb_Map_getName = &skirmishAiCallback_Map_getName;
 	callback->Clb_Map_getHumanName = &skirmishAiCallback_Map_getHumanName;
 	callback->Clb_Map_getElevationAt = &skirmishAiCallback_Map_getElevationAt;

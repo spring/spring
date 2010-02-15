@@ -946,10 +946,20 @@ int CAICallback::GetMapHeight()
 	return gs->mapy;
 }
 
+int CAICallback::GetMapHash() {
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return 0;
+}
+
 const char* CAICallback::GetMapName ()
 {
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
 	return gameSetup->mapName.c_str();
+}
+
+int CAICallback::GetModHash() {
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return 0;
 }
 
 const char* CAICallback::GetModName()

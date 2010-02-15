@@ -779,8 +779,16 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 	return metalMap;
 }
 
+int CAIAICallback::GetMapHash() {
+	return sAICallback->Clb_Map_getHash(teamId);
+}
+
 const char* CAIAICallback::GetMapName() {
 	return sAICallback->Clb_Map_getName(teamId);
+}
+
+int CAIAICallback::GetModHash() {
+	return sAICallback->Clb_Mod_getHash(teamId);
 }
 
 const char* CAIAICallback::GetModName() {

@@ -564,6 +564,7 @@ EXPORT(bool             ) skirmishAiCallback_Group_isSelected(int teamId, int gr
 
 // BEGINN OBJECT Mod
 EXPORT(const char*      ) skirmishAiCallback_Mod_getFileName(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getHash(int teamId);
 
 EXPORT(const char*      ) skirmishAiCallback_Mod_getHumanName(int teamId);
 EXPORT(const char*      ) skirmishAiCallback_Mod_getShortName(int teamId);
@@ -653,6 +654,7 @@ EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resour
 		int teamId, int resourceId, struct SAIFloat3 pos);
 EXPORT(const char*      ) skirmishAiCallback_Map_getName(int teamId);
 EXPORT(const char*      ) skirmishAiCallback_Map_getHumanName(int teamId);
+EXPORT(int              ) skirmishAiCallback_Map_getHash(int teamId);
 EXPORT(float            ) skirmishAiCallback_Map_getElevationAt(int teamId, float x, float z);
 EXPORT(float            ) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(
 		int teamId, int resourceId);
