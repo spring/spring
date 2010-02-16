@@ -686,6 +686,7 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 
 int CAICallback::InitPath(float3 start, float3 end, int pathType)
 {
+	assert(((size_t)pathType) < moveinfo->moveData.size());
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end);
 }
 
