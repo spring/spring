@@ -4203,8 +4203,10 @@ void CGame::ClientReadNet()
 							eoh->CreateSkirmishAI(skirmishAIId);
 						}
 					} else {
+						const std::string aiInstanceName = aiData->name;
 						wordCompletion->RemoveWord(aiData->name + " ");
 						skirmishAIHandler.RemoveSkirmishAI(skirmishAIId);
+						aiData = NULL; // not valid anymore after RemoveSkirmishAI()
 						// this could be done in the above function as well
 						if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
 							// team has no controller left now
@@ -4212,7 +4214,7 @@ void CGame::ClientReadNet()
 						}
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(playerId);
-						logOutput.Print("Skirmish AI \"%s\", which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
+						logOutput.Print("Skirmish AI \"%s\", which controlled team %i is now dead", aiInstanceName.c_str(), aiTeamId);
 					}
 				} else if (newState == SKIRMAISTATE_ALIVE) {
 					logOutput.Print("Skirmish AI \"%s\" took over control of team %i", aiData->name.c_str(), aiTeamId);
