@@ -1086,7 +1086,7 @@ void CMiniMap::DrawForReal()
 			}
 		}
 		glColor4f(1,1,1,0.5f);
-		GLfloat verts[left.size()];
+		GLfloat verts[left.size()*4];
 		int vertcnt = 0;
 		for(fli = left.begin(); fli != left.end(); fli++) {
 			if(fli->minz < fli->maxz) {
