@@ -280,7 +280,9 @@ void CGameHelper::Explosion(
 //////////////////////////////////////////////////////////////////////
 
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
-float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, const CUnit* owner, const CUnit*& hit, int collisionFlags)
+float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/,
+			    const CUnit* owner, const CUnit*& hit, int collisionFlags,
+			    const CFeature** hitfeature)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
@@ -298,6 +300,9 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 	qf->GetQuadsOnRay(start, dir, length, endQuad);
 
 	if (!ignoreFeatures) {
+		if (hitfeature)
+			*hitfeature = 0;
+
 		for (int* qi = quads; qi != endQuad; ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
@@ -316,6 +321,8 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 					// we want the closest feature (intersection point) on the ray
 					if (tmpLen < length) {
 						length = tmpLen;
+						if(hitfeature)
+							*hitfeature = f;
 					}
 				}
 			}
