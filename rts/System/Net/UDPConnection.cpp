@@ -538,17 +538,17 @@ void UDPConnection::SendIfNecessary(bool flushed)
 			
 			while (true)
 			{
-				if (!newChunks.empty() && buf.GetSize() + newChunks[0]->GetSize() <= mtu)
-				{
-					buf.chunks.push_back(newChunks[0]);
-					unackedChunks.push_back(newChunks[0]);
-					newChunks.pop_front();
-				}
-				else if (!resendRequested.empty() && buf.GetSize() + resendRequested[0]->GetSize() <= mtu)
+				if (!resendRequested.empty() && buf.GetSize() + resendRequested[0]->GetSize() <= mtu)
 				{
 					buf.chunks.push_back(resendRequested[0]);
 					resendRequested.pop_front();
 					++resentChunks;
+				}
+				else if (!newChunks.empty() && buf.GetSize() + newChunks[0]->GetSize() <= mtu)
+				{
+					buf.chunks.push_back(newChunks[0]);
+					unackedChunks.push_back(newChunks[0]);
+					newChunks.pop_front();
 				}
 				else
 					break;
