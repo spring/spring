@@ -140,7 +140,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 
 	unsigned playerCount = 0;
 	if (file.GetValue(playerCount, "GAME\\NumPlayers") && playerStartingData.size() != playerCount)
-		logOutput.Print("Warning: %i players in GameSetup script (NumPlayers says %i)", playerStartingData.size(), playerCount);
+		logOutput.Print("Warning: "_STPF_" players in GameSetup script (NumPlayers says %i)", playerStartingData.size(), playerCount);
 }
 
 void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList)
@@ -253,7 +253,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 	unsigned teamCount = 0;
 	if (file.GetValue(teamCount, "Game\\NumTeams") && teamStartingData.size() != teamCount)
-		logOutput.Print("Warning: %i teams in GameSetup script (NumTeams: %i)", teamStartingData.size(), teamCount);
+		logOutput.Print("Warning: "_STPF_" teams in GameSetup script (NumTeams: %i)", teamStartingData.size(), teamCount);
 }
 
 void CGameSetup::LoadAllyTeams(const TdfParser& file)

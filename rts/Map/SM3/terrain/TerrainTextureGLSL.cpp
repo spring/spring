@@ -263,7 +263,7 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	// diffuse + bumpmap in one pass?
 	if (total.Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()=%d, SM_DiffuseBumpmapSP", sd->normalMapStages.size());
+		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapSP;
 	}
 
@@ -277,7 +277,7 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	// is multipass possible?
 	if (diffuseRQ.Fits(hwmax) && (bumpmapRQ + special).Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()=%d, SM_DiffuseBumpmapMP", sd->normalMapStages.size());
+		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapMP;
 	}
 
