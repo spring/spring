@@ -2041,6 +2041,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		heading = lua_toint(L, 5);
 	}
 
+	int facing = GetFacingFromHeading(heading);
 	int team = CtrlTeam();
 	if (team < 0) {
 		team = -1; // default to global for AllAccessTeam
@@ -2069,7 +2070,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
 	CFeature* feature = new CFeature();
-	feature->Initialize(pos, featureDef, heading, 0, team, allyTeam, "");
+	feature->Initialize(pos, featureDef, heading, facing, team, allyTeam, "");
 	inCreateFeature = false;
 
 	lua_pushnumber(L, feature->id);
