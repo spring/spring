@@ -41,20 +41,6 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 {
 	CBaseWater* water = NULL;
 	int configValue = configHandler->Get("ReflectiveWater", 1);
-
-	if (gu->haveATI) {
-		// ATI drivers since early 2009 leak memory in /water 1 and /water 3
-		// add some safeguards for people who can't be bothered to change their settings
-		if (!!configHandler->Get("ATIWaterOverride", 0)) {
-			LogObject() << "ATI water safeguard override enabled!";
-		} else if (configValue == 1) {
-			LogObject() << "ATI reflective water disabled for stability reasons.";
-			configValue = 0;
-		} else if (configValue == 3) {
-			LogObject() << "ATI reflective&refractive water disabled for stability reasons.";
-			configValue = 0;
-		}
-	}
 	
 	if(water==NULL && configValue==2 && GLEW_ARB_fragment_program && GLEW_ARB_texture_float &&
 	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterDyn.fp")) {
