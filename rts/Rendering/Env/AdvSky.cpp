@@ -346,7 +346,7 @@ inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
 
 	int	yam2 = ydif[(ast - 2) & CLOUD_MASK];
 	int	yam1 = ydif[(ast - 1) & CLOUD_MASK];
-	int	yaa  = ydif[(ast) & CLOUD_MASK];
+	int	yaa  = ydif[(ast)     & CLOUD_MASK];
 	int	ap1 = (ast + 1) & CLOUD_MASK;
 
 	int	a3c = ast + a3cstart;
@@ -355,12 +355,19 @@ inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
 	for (int a = ast; a < aed; ++rc, ++ct) {
 		int yap1 = ydif[ap1] += (int) cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
 
-		int dif = (yam2 >> 2) +
-			((yam2 = yam1) >> 1) +
-			(yam1 = yaa) +
-			((yaa = yap1) >> 1) +
-			(ydif[(++ap1) &= CLOUD_MASK] >> 2);
+		ap1++;
+		ap1 = (ap1 & CLOUD_MASK);
+		int dif =
+			(yam2 >> 2) +
+			(yam1 >> 1) +
+			(yaa) +
+			(yap1 >> 1) +
+			(ydif[ap1] >> 2);
 		dif >>= 4;
+
+		yam2 = yam1;
+		yam1 = yaa;
+		yaa  = yap1;
 
 		*ct++ = 128 + dif;
 		*ct++ = thicknessTransform[(*rc) >> 7];
