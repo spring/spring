@@ -4,9 +4,6 @@ uniform sampler2DShadow shadowTex;
 uniform samplerCube     reflectTex;
 uniform samplerCube     specularTex;
 
-uniform mat4 shadowMat;
-uniform vec4 shadowParams;
-
 uniform vec4 lightDir;                // mapInfo->light.sunDir
 varying vec3 cameraDir;
 varying vec3 vertexNormal;
@@ -17,11 +14,7 @@ uniform vec3 unitDiffuseColor;
 uniform float unitShadowDensity;
 
 void main() {
-	vec4 vertexShadowPos = shadowMat * gl_TexCoord[1];
-		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + shadowParams.z) + shadowParams.w);
-		vertexShadowPos.st += shadowParams.xy;
-
-	vec4 shadowInt = shadow2DProj(shadowTex, vertexShadowPos);
+	vec4 shadowInt = shadow2DProj(shadowTex, gl_TexCoord[1]);
 		shadowInt.x = 1.0 - shadowInt.x;
 		shadowInt.x *= unitShadowDensity;
 		shadowInt.x = 1.0 - shadowInt.x;
