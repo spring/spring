@@ -522,7 +522,7 @@ void CBasicSky::Update()
 		for(int a=0; a<CLOUD_SIZE; ++a) {
 		cloudThickness[(a*CLOUD_SIZE+int(gs->frameNum*0.00009f*256+camera->pos.x*CLOUD_SIZE*0.000025f))*4+3]=0;
 		}
-		/**/
+		*/
 		glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 		glTexSubImage2D(GL_TEXTURE_2D,0, 0,0,CLOUD_SIZE, CLOUD_SIZE,GL_RGBA, GL_UNSIGNED_BYTE, cloudThickness);
 		break;
