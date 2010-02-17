@@ -3299,30 +3299,33 @@ void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float max_weapon_range
 
 	if(number_of_enemies > 0)
 	{
-		float3 temp_pos;
-		float dist;
+		float3 enemy_pos;
 
 		for(int k = 0; k < number_of_enemies; ++k)
 		{
+			enemy_pos = cb->GetUnitPos(map->units_in_los[k]);
+
 			// get distance to enemy
-			temp_pos = cb->GetUnitPos(map->units_in_los[k]);
-			dist = fastmath::apxsqrt( (temp_pos.x - unit_pos.x) * (temp_pos.x - unit_pos.x) - (temp_pos.z - unit_pos.z) * (temp_pos.z - unit_pos.z) );
+			float dx   = enemy_pos.x - unit_pos.x;
+			float dz   = enemy_pos.z - unit_pos.z;
+			float dist = fastmath::apxsqrt(dx*dx + dz*dz);
 
 			// get dir from unit to enemy
-			temp_pos.x -= unit_pos.x;
-			temp_pos.z -= unit_pos.z;
+			enemy_pos.x -= unit_pos.x;
+			enemy_pos.z -= unit_pos.z;
 
 			// move closer to enemy if we are out of range,
 			// and away if we are closer then our max range
-			pos->x += (dist / max_weapon_range - 1) * temp_pos.x;
-			pos->z += (dist / max_weapon_range - 1) * temp_pos.z;
+			pos->x += ((dist / max_weapon_range) - 1) * enemy_pos.x;
+			pos->z += ((dist / max_weapon_range) - 1) * enemy_pos.z;
 		}
 
 		// move less if lots of enemies are close
 		pos->x /= (float)number_of_enemies;
 		pos->z /= (float)number_of_enemies;
 
-		// make move relative to curretn position
+		// apply relative move distance to the current position
+		// to get the target position
 		pos->x += unit_pos.x;
 		pos->z += unit_pos.z;
 	}
