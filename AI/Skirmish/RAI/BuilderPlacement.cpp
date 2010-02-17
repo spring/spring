@@ -103,7 +103,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 	*l<<"\nLoading Build-Placement ...";
 	const double SecondAlgorithmTimeLimit = 2.5; // seconds per RAI
 
-	double clockStart = clock();
+	//double clockStart = clock();
 
 	if( int(G->Units.size()) == 0 )
 		*l<<"\nERROR: G->Units";
