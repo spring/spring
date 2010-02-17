@@ -722,8 +722,8 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			}
 
 			bool bPrerequisiteOptionsChecked=false;
-			int iBest=-1;
-			int Count=0;
+			//int iBest=-1;
+			//int Count=0;
 			for(map<int,sRAIUnitDef*>::iterator iP=udr->PrerequisiteOptions.begin(); iP!=udr->PrerequisiteOptions.end() && !bPrerequisiteOptionsChecked; iP++)
 			{
 				for(set<int>::iterator iU=iP->second->UnitsActive.begin(); iU!=iP->second->UnitsActive.end() && !bPrerequisiteOptionsChecked; iU++ )
