@@ -342,7 +342,7 @@ float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory category
 {
 	float3 pos;
 	float3 builder_pos;
-	const UnitDef *def = bt->unitList[building-1];
+	//const UnitDef *def = bt->unitList[building-1];
 
 	// check the sector of the builder
 	builder_pos = cb->GetUnitPos(builder);
@@ -441,7 +441,7 @@ bool AAIExecute::AddUnitToBuildqueue(int def_id, int number, bool urgent)
 {
 	urgent = false;
 
-	UnitCategory category = bt->units_static[def_id].category;
+	//UnitCategory category = bt->units_static[def_id].category;
 
 	list<int> *buildqueue = 0, *temp_buildqueue = 0;
 
@@ -906,8 +906,10 @@ bool AAIExecute::BuildPowerPlant()
 	else if(ut->activeFactories < 1 && ai->ut->activeUnits[POWER_PLANT] >= 2)
 		return true;
 
+	const float current_energy = cb->GetEnergyIncome();
+
 	// stop building power plants if already to much available energy
-	if(cb->GetEnergyIncome() > 1.5f * cb->GetEnergyUsage() + 200.0f)
+	if(current_energy > 1.5f * cb->GetEnergyUsage() + 200.0f)
 		return true;
 
 	int ground_plant = 0;
@@ -916,7 +918,6 @@ bool AAIExecute::BuildPowerPlant()
 	AAIConstructor *builder;
 	float3 pos;
 
-	float current_energy = cb->GetEnergyIncome();
 	bool checkWater, checkGround;
 	float urgency;
 	float max_power;
