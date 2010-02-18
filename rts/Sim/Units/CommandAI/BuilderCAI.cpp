@@ -370,7 +370,7 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	CBuilder* fac = (CBuilder*)owner;
+	CBuilder* builder = (CBuilder*) owner;
 	Command& c = commandQue.front();
 
 	if (OutOfImmobileRange(c)) {
@@ -385,14 +385,14 @@ void CBuilderCAI::SlowUpdate()
 
 		if (inCommand) {
 			if (building) {
-				if (f3SqDist(build.pos, fac->pos) > Square(fac->buildDistance + radius - 8.0f)) {
-					owner->moveType->StartMoving(build.pos, fac->buildDistance * 0.5f + radius);
+				if (f3SqDist(build.pos, builder->pos) > Square(builder->buildDistance + radius - 8.0f)) {
+					owner->moveType->StartMoving(build.pos, builder->buildDistance * 0.5f + radius);
 				} else {
 					StopMove();
 					// needed since above startmoving cancels this
-					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance + radius) * 0.6f, false);
+					owner->moveType->KeepPointingTo(build.pos, (builder->buildDistance + radius) * 0.6f, false);
 				}
-				if (!fac->curBuild && !fac->terraforming) {
+				if (!builder->curBuild && !builder->terraforming) {
 					building = false;
 					StopMove();				//cancel the effect of KeepPointingTo
 					FinishCommand();
@@ -402,7 +402,7 @@ void CBuilderCAI::SlowUpdate()
 				else if (uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit) {
 					// unit restricted
 					building = false;
-					fac->StopBuild();
+					builder->StopBuild();
 					CancelRestrictedUnit(boi->second);
 				}
 			} else {
@@ -418,10 +418,10 @@ void CBuilderCAI::SlowUpdate()
 					StopMove();
 				} else {
 					build.pos = helper->Pos2BuildPos(build);
-					const float sqdist = f3SqDist(build.pos, fac->pos);
+					const float sqdist = f3SqDist(build.pos, builder->pos);
 
-					if ((sqdist < Square(fac->buildDistance * 0.6f + radius)) ||
-						(!owner->unitDef->canmove && (sqdist <= Square(fac->buildDistance + radius - 8.0f)))) {
+					if ((sqdist < Square(builder->buildDistance * 0.6f + radius)) ||
+						(!owner->unitDef->canmove && (sqdist <= Square(builder->buildDistance + radius - 8.0f)))) {
 						StopMove();
 
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
@@ -431,9 +431,9 @@ void CBuilderCAI::SlowUpdate()
 							// unit-limit not yet reached
 							CFeature* f = NULL;
 							buildRetries++;
-							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
+							owner->moveType->KeepPointingTo(build.pos, builder->buildDistance * 0.7f + radius, false);
 
-							if (fac->StartBuild(build, f) || (buildRetries > 20)) {
+							if (builder->StartBuild(build, f) || (buildRetries > 20)) {
 								building = true;
 							}
 							else if (f) {
@@ -468,7 +468,7 @@ void CBuilderCAI::SlowUpdate()
 								FinishCommand();
 							}
 						}
-						SetGoal(build.pos, owner->pos, fac->buildDistance * 0.4f + radius);
+						SetGoal(build.pos, owner->pos, builder->buildDistance * 0.4f + radius);
 					}
 				}
 			}
@@ -544,9 +544,9 @@ void CBuilderCAI::FinishCommand(void)
 
 void CBuilderCAI::ExecuteStop(Command& c)
 {
-	CBuilder* fac=(CBuilder*)owner;
-	building=false;
-	fac->StopBuild();
+	CBuilder* builder = (CBuilder*) owner;
+	building = false;
+	builder->StopBuild();
 	CMobileCAI::ExecuteStop(c);
 }
 
