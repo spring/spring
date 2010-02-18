@@ -556,22 +556,24 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature)
 		// note: even if construction has already started,
 		// the buildee is *not* guaranteed to be the unit
 		// closest to us
-		//
-		// CUnit* u = helper->GetClosestFriendlyUnit(buildInfo.pos, buildDistance, allyteam);
-
 		CSolidObject* o = groundBlockingObjectMap->GroundBlocked(buildInfo.pos);
 		CUnit* u = NULL;
 
 		if (o != NULL) {
 			u = dynamic_cast<CUnit*>(o);
-
-			if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
-				curBuild = u;
-				AddDeathDependence(u);
-				SetBuildStanceToward(buildInfo.pos);
-				return true;
-			}
+		} else {
+			// <pos> might map to a non-blocking portion
+			// of the buildee's yardmap, fallback check
+			u = helper->GetClosestFriendlyUnit(buildInfo.pos, buildDistance, allyteam);
 		}
+
+		if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
+			curBuild = u;
+			AddDeathDependence(u);
+			SetBuildStanceToward(buildInfo.pos);
+			return true;
+		}
+
 		return false;
 	}
 
