@@ -4351,6 +4351,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\CacheDir.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\CacheDir.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\CRC.cpp"
 					>
 					<FileConfiguration
