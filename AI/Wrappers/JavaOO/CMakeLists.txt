@@ -32,13 +32,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
-	set(myParentTarget     "${Java_AIINTERFACE_TARGET}")
 	set(mySourceDirRel     "src/main/java")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 	AIWrapperMessage(STATUS "Found AI Wrapper: ${myName}")
-
-	#SetGlobal(${myName}_AIWRAPPER_TARGET      ${myTarget})
 
 
 	# Build library
@@ -77,14 +74,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	# Generate sources
 	# ----------------
-
-	# We have to create these directories, cause otherwise the AWK scripts
-	# for generating the source code will not work
-	file(REMOVE_RECURSE "${myGeneratedSourceDir}")
-	file(MAKE_DIRECTORY "${myGeneratedSourceDir}/${myPkg}/clb")
-	file(MAKE_DIRECTORY "${myGeneratedSourceDir}/${myPkg}/evt")
-	# needed by javac
-	file(MAKE_DIRECTORY "${myJavaBuildDir}")
 
 	set(commonAwkScriptArgs
 		"-v" "INTERFACE_SOURCE_DIR=${jAiIntJavaSourceDir}"
@@ -319,89 +308,130 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set_source_files_properties(${myGeneratedSources} PROPERTIES GENERATED TRUE)
 
 
+	# Assemble project generated targets (and their libraries) we depend on
+	set(myDependTargets  "${Java_AIINTERFACE_TARGET}")
+	set(myDependLibFiles "${Java_AIINTERFACE_JAR_BIN}")
+	set_source_files_properties(${myDependLibFiles} PROPERTIES GENERATED TRUE)
 
-	add_custom_target(${myTarget} ALL)
-	add_dependencies(${myTarget} ${myParentTarget})
+	add_custom_target(${myTarget} ALL
+		SOURCES
+			"${myBuildDir}/${myBinJarFile}"
+			"${myBuildDir}/${mySrcJarFile}")
+	add_dependencies(${myTarget} ${myDependTargets})
+
 
 	# generate sources: callback
 	add_custom_command(
-		#TARGET ${myParentTarget}
-		TARGET ${myTarget}
-		#OUTPUT ${myGeneratedCallbackSources}
-		DEPENDS "${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
-		#	"${myParentTarget}"
+		OUTPUT
+			${myGeneratedCallbackSources}
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "remove_directory" "${myGeneratedSourceDir}/${myPkg}/clb"
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "make_directory"   "${myGeneratedSourceDir}/${myPkg}/clb"
 		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${commonAwkScriptsDir}/commonOOCallback.awk"
 			"-f" "${myBinDir}/wrappCallback.awk"
 			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
-		WORKING_DIRECTORY "${myBinDir}"
-		COMMENT "  ${myTarget}: Generating callback sources" VERBATIM
+		DEPENDS
+			"${commonAwkScriptsDir}/common.awk"
+			"${commonAwkScriptsDir}/commonDoc.awk"
+			"${commonAwkScriptsDir}/commonOOCallback.awk"
+			"${myBinDir}/wrappCallback.awk"
+			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
+		WORKING_DIRECTORY
+			"${myBinDir}"
+		COMMENT
+			"  ${myTarget}: Generating callback sources" VERBATIM
 		)
 
 	# generate sources: events
 	add_custom_command(
-		#TARGET ${myParentTarget}
-		TARGET ${myTarget}
-		#OUTPUT ${myGeneratedEventSources}
-		DEPENDS "${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AI.java"
+		OUTPUT
+			${myGeneratedEventSources}
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "remove_directory" "${myGeneratedSourceDir}/${myPkg}/evt"
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "make_directory"   "${myGeneratedSourceDir}/${myPkg}/evt"
 		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myBinDir}/wrappEvents.awk"
 			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AI.java"
-		WORKING_DIRECTORY "${myBinDir}"
-		COMMENT "  ${myTarget}: Generating event sources" VERBATIM
+		DEPENDS
+			"${commonAwkScriptsDir}/common.awk"
+			"${commonAwkScriptsDir}/commonDoc.awk"
+			"${myBinDir}/wrappEvents.awk"
+			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AI.java"
+		WORKING_DIRECTORY
+			"${myBinDir}"
+		COMMENT
+			"  ${myTarget}: Generating event sources" VERBATIM
 		)
 
 
 	# Build the jars
 	# --------------
 
+	# Stub file for dependency tracking
+	set(myClassesStubFile "${CMAKE_CURRENT_BINARY_DIR}/myClasses.stub")
+	set_source_files_properties(${myClassesStubFile} PROPERTIES GENERATED TRUE)
+
 	# compile
 	add_custom_command(
-		#TARGET ${myParentTarget}
-		TARGET ${myTarget}
-		#OUTPUT ${myClasses}
-		DEPENDS
-			${mySources}
-			${myGeneratedSources}
+		OUTPUT
+			${myClassesStubFile}
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "make_directory" "${myJavaBuildDir}"
 		COMMAND "${JAVA_COMPILE}"
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			${mySources}
 			${myGeneratedSources}
-		WORKING_DIRECTORY "${myBinDir}"
-		COMMENT "  ${myTarget}: Compiling sources" VERBATIM
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "touch" "${myClassesStubFile}"
+		DEPENDS
+			${myDependLibFiles}
+			${mySources}
+			${myGeneratedSources}
+		WORKING_DIRECTORY
+			"${myBinDir}"
+		COMMENT
+			"  ${myTarget}: Compiling sources" VERBATIM
 		)
 
 	# pack library
 	add_custom_command(
-		#TARGET ${myParentTarget}
-		TARGET ${myTarget}
-		#OUTPUT "${myBuildDir}/${myBinJarFile}"
-		#DEPENDS "${myClasses}"
+		OUTPUT
+			"${myBuildDir}/${myBinJarFile}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			${myBinJarArgs} "${${myName}_AIWRAPPER_JAR_BIN}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
-		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  ${myTarget}: Creating library ${myBinJarFile} ..." VERBATIM)
+		DEPENDS
+			"${myClassesStubFile}"
+		WORKING_DIRECTORY
+			"${myBuildDir}"
+		COMMENT
+			"  ${myTarget}: Creating library ${myBinJarFile} ..." VERBATIM
+		)
 
 	# pack sources
 	add_custom_command(
-		#TARGET ${myParentTarget}
-		TARGET ${myTarget}
-		#OUTPUT "${myBuildDir}/${mySrcJarFile}"
-		DEPENDS
-			${myJavaSources}
-			${myJavaGeneratedSources}
+		OUTPUT
+			"${myBuildDir}/${mySrcJarFile}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${mySourceDir}" "${myPkgFirstPart}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"uf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${myGeneratedSourceDir}" "${myPkgFirstPart}"
-		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM)
+		DEPENDS
+			${myJavaSources}
+			${myJavaGeneratedSources}
+		WORKING_DIRECTORY
+			"${myBuildDir}"
+		COMMENT
+			"  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM
+		)
 
 endif (BUILD_${myName}_AIWRAPPER)
