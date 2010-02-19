@@ -313,7 +313,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 			}
 			else
 			{ // error
-				LogObject() << "Failed to read archive, files missing: " << fullName;
+				LogObject() << "Failed to scan " << fullName << " (missing files, could not determine archive type)";
 				delete ar;
 				return;
 			}

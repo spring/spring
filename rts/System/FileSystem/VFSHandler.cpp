@@ -124,8 +124,7 @@ CVFSHandler::~CVFSHandler()
 	}
 }
 
-
-int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
+bool CVFSHandler::LoadFile(const std::string& rawName, std::vector<boost::uint8_t>& buffer)
 {
 	logOutput.Print(LOG_VFS, "LoadFile(rawName = \"%s\", )", rawName.c_str());
 
@@ -135,58 +134,17 @@ int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
 	std::map<std::string, FileData>::iterator fi = files.find(name);
 	if (fi == files.end()) {
 		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in VFS.", rawName.c_str());
-		return -1;
+		return false;
 	}
 	FileData& fd = fi->second;
 
-	std::vector<boost::uint8_t> vecBuf;
-	if (!fd.ar->GetFile(name, vecBuf))
+	if (!fd.ar->GetFile(name, buffer))
 	{
 		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", rawName.c_str());
-		return -1;
+		return false;
 	}
-	std::memcpy(buffer, &vecBuf[0], vecBuf.size());
-	return vecBuf.size();
+	return true;
 }
-
-
-int CVFSHandler::GetFileSize(const std::string& rawName)
-{
-	logOutput.Print(LOG_VFS, "GetFileSize(rawName = \"%s\")", rawName.c_str());
-
-	std::string name = StringToLower(rawName);
-	filesystem.ForwardSlashes(name);
-
-	std::map<std::string, FileData>::iterator fi = files.find(name);
-	if (fi == files.end()) {
-		logOutput.Print(LOG_VFS, "GetFileSize: File '%s' does not exist in VFS.", rawName.c_str());
-		return -1;
-	}
-
-	FileData& fd = fi->second;
-
-	if (!fd.dynamic)
-	{
-		return fd.size;
-	}
-	else
-	{
-		const unsigned fid = fd.ar->FindFile(name);
-		if (fid >= fd.ar->NumFiles())
-		{
-			logOutput.Print(LOG_VFS, "GetFileSize: File '%s' does not exist in archive.", rawName.c_str());
-			return -1;
-		}
-		else
-		{
-			std::string waste;
-			int size;
-			fd.ar->FileInfo(fid, waste, size);
-			return size;
-		}
-	}
-}
-
 
 // Returns all the files in the given (virtual) directory without the preceeding pathname
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
