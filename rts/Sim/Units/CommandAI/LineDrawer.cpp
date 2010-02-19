@@ -51,17 +51,23 @@ void CLineDrawer::DrawAll()
 	glDisable(GL_LINE_STIPPLE);
 
 	for (int i = 0; i<lines.size(); ++i) {
-		glColorPointer(4, GL_FLOAT, 0, &lines[i].colors[0]);
-		glVertexPointer(3, GL_FLOAT, 0, &lines[i].verts[0]);
-		glDrawArrays(lines[i].type, 0, lines[i].verts.size()/3);
+		int size = lines[i].verts.size();
+		if(size > 0) {
+			glColorPointer(4, GL_FLOAT, 0, &lines[i].colors[0]);
+			glVertexPointer(3, GL_FLOAT, 0, &lines[i].verts[0]);
+			glDrawArrays(lines[i].type, 0, size/3);
+		}
 	}
 
 	if (!stippled.empty()) {
 		glEnable(GL_LINE_STIPPLE);
 		for (int i = 0; i<stippled.size(); ++i) {
-			glColorPointer(4, GL_FLOAT, 0, &stippled[i].colors[0]);
-			glVertexPointer(3, GL_FLOAT, 0, &stippled[i].verts[0]);
-			glDrawArrays(stippled[i].type, 0, stippled[i].verts.size()/3);
+			int size = stippled[i].verts.size();
+			if(size > 0) {
+				glColorPointer(4, GL_FLOAT, 0, &stippled[i].colors[0]);
+				glVertexPointer(3, GL_FLOAT, 0, &stippled[i].verts[0]);
+				glDrawArrays(stippled[i].type, 0, size/3);
+			}
 		}
 		glDisable(GL_LINE_STIPPLE);
 	}
