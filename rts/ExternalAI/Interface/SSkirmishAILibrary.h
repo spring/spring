@@ -29,6 +29,7 @@ extern "C" {
  * example: "/home/john/spring/AI/Skirmish/RAI/0.601"
  */
 #define SKIRMISH_AI_PROPERTY_DATA_DIR                "dataDir"
+
 /**
  * [string]
  * Absolute, version independent data dir.
@@ -36,45 +37,54 @@ extern "C" {
  * example: "/home/john/spring/AI/Skirmish/RAI/common"
  */
 #define SKIRMISH_AI_PROPERTY_DATA_DIR_COMMON         "dataDirCommon"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * example: "RAI"
  */
 #define SKIRMISH_AI_PROPERTY_SHORT_NAME              "shortName"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * example: "0.601"
  */
 #define SKIRMISH_AI_PROPERTY_VERSION                 "version"
+
 /**
  * [string]
  * example: "Reth's Skirmish AI"
  */
 #define SKIRMISH_AI_PROPERTY_NAME                    "name"
+
 /**
  * [string]
  * example: "no config files required, works well with TA based mods and more"
  */
 #define SKIRMISH_AI_PROPERTY_DESCRIPTION             "description"
+
 /**
  * [string]
  * example: "http://spring.clan-sy.com/wiki/AI:RAI"
  */
 #define SKIRMISH_AI_PROPERTY_URL                     "url"
+
 /** [bool: "yes" | "no"] */
 #define SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED          "loadSupported"
+
 /**
  * [int]
  * The engine version number the AI was compiled for,
  * though it may work with newer or older engine versions too.
  */
 #define SKIRMISH_AI_PROPERTY_ENGINE_VERSION          "engineVersion"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * This AI Interface has to be used to load the AI.
  * example: "C"
  */
 #define SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME    "interfaceShortName"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * The AI Interface version number the AI was written for.

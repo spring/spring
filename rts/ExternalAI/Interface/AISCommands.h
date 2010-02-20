@@ -254,6 +254,7 @@ enum UnitCommandOptions {
 struct SSetMyHandicapCheatCommand {
 	float handicap;
 }; // COMMAND_CHEATS_SET_MY_HANDICAP Cheats_setMyHandicap
+
 /**
  * The AI team receives the specified amount of units of the specified resource.
  */
@@ -261,6 +262,7 @@ struct SGiveMeResourceCheatCommand {
 	int resourceId;
 	float amount;
 }; // COMMAND_CHEATS_GIVE_ME_RESOURCE Cheats_giveMeResource REF:resourceId->Resource
+
 /**
  * Creates a new unit with the selected name at pos,
  * and returns its unit ID in ret_newUnitId.
@@ -321,6 +323,7 @@ struct SSendUnitsCommand {
 struct SCreateGroupCommand {
 	int ret_groupId;
 }; // COMMAND_GROUP_CREATE Group_create REF:ret_groupId->Group STATIC
+
 /// Erases a specified group
 struct SEraseGroupCommand {
 	int groupId;
@@ -346,6 +349,7 @@ struct SInitPathCommand {
 	int pathType;
 	int ret_pathId;
 }; // COMMAND_PATH_INIT Pathing_initPath REF:ret_pathId->Path
+
 /**
  * Returns the approximate path cost between two points
  * This needs to calculate the complete path, so it is somewhat expensive.
@@ -358,10 +362,12 @@ struct SGetApproximateLengthPathCommand {
 	int pathType;
 	int ret_approximatePathLength;
 }; // COMMAND_PATH_GET_APPROXIMATE_LENGTH Pathing_getApproximateLength
+
 struct SGetNextWaypointPathCommand {
 	int pathId;
 	float* ret_nextWaypoint_posF3_out;
 }; // COMMAND_PATH_GET_NEXT_WAYPOINT Pathing_getNextWaypoint REF:pathId->Path
+
 struct SFreePathCommand {
 	int pathId;
 }; // COMMAND_PATH_FREE Pathing_freePath REF:pathId->Path
@@ -388,16 +394,19 @@ struct SAddNotificationDrawerCommand {
 	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_ADD_NOTIFICATION Map_Drawer_addNotification
+
 struct SAddPointDrawCommand {
 	/// on this position, only x and z matter
 	float* pos_posF3;
 	/// create this text on pos in my team color
 	const char* label;
 }; // COMMAND_DRAWER_POINT_ADD Map_Drawer_addPoint
+
 struct SRemovePointDrawCommand {
 	/// remove map points and lines near this point (100 distance)
 	float* pos_posF3;
 }; // COMMAND_DRAWER_POINT_REMOVE Map_Drawer_deletePointsAndLines
+
 struct SAddLineDrawCommand {
 	/// draw line from this pos
 	float* posFrom_posF3;
@@ -410,28 +419,34 @@ struct SStartPathDrawerCommand {
 	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_START Map_Drawer_Path_start
+
 struct SFinishPathDrawerCommand {
 // TODO: FIXME: commands should not be empty, add a useless var if needed
 }; // COMMAND_DRAWER_PATH_FINISH Map_Drawer_Path_finish
+
 struct SDrawLinePathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_DRAW_LINE Map_Drawer_Path_drawLine
+
 struct SDrawLineAndIconPathDrawerCommand {
 	int cmdId;
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON Map_Drawer_Path_drawLineAndCommandIcon REF:cmdId->Command
+
 struct SDrawIconAtLastPosPathDrawerCommand {
 	int cmdId;
 }; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS Map_Drawer_Path_drawIcon REF:cmdId->Command
+
 struct SBreakPathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_BREAK Map_Drawer_Path_suspend
+
 struct SRestartPathDrawerCommand {
 	bool sameColor;
 }; // COMMAND_DRAWER_PATH_RESTART Map_Drawer_Path_restart
@@ -463,6 +478,7 @@ struct SCreateSplineFigureDrawerCommand {
 	/// the new group
 	int ret_newFigureGroupId;
 }; // COMMAND_DRAWER_FIGURE_CREATE_SPLINE Map_Drawer_Figure_drawSpline REF:figureGroupId->FigureGroup REF:ret_newFigureGroupId->FigureGroup
+
 /**
  * @brief Creates a straight line
  * Creates a straight line from pos1 to pos2.
@@ -487,6 +503,7 @@ struct SCreateLineFigureDrawerCommand {
 	/// the new group
 	int ret_newFigureGroupId;
 }; // COMMAND_DRAWER_FIGURE_CREATE_LINE Map_Drawer_Figure_drawLine REF:figureGroupId->FigureGroup REF:ret_newFigureGroupId->FigureGroup
+
 /**
  * Sets the color used to draw all lines of figures in a figure group.
  */
@@ -496,6 +513,7 @@ struct SSetColorFigureDrawerCommand {
 	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_FIGURE_SET_COLOR Map_Drawer_Figure_setColor REF:figureGroupId->FigureGroup
+
 /**
  * Removes a figure group, which means it will not be drawn anymore.
  */
@@ -758,6 +776,7 @@ struct SAttackUnitCommand {
 }; // COMMAND_UNIT_ATTACK Unit_attack REF:toAttackUnitId->Unit
 
 //	struct SAttackPosUnitCommand {
+
 struct SAttackAreaUnitCommand {
 	int unitId;
 	int groupId;
@@ -1481,6 +1500,7 @@ int extractAICommandTopic(const Command* internalUnitCmd, int maxUnits);
  * @brief creates - with new - an engine C++ Command struct
  */
 Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits);
+
 #endif	// __cplusplus
 
 
