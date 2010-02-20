@@ -100,9 +100,9 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 				fList[i] = fList[--fSize];
 	}
 
-	relResourceFileName = "cache/" + string(cb->GetModName());
+	relResourceFileName = "cache/" + string(cRAI::MakeFileSystemCompatible(cb->GetModHumanName()));
 	relResourceFileName.resize(relResourceFileName.size()-4);
-	relResourceFileName += "-" + string(cb->GetMapName());
+	relResourceFileName += "-" + string(cRAI::MakeFileSystemCompatible(cb->GetMapName()));
 	relResourceFileName.resize(relResourceFileName.size()-3);
 	relResourceFileName += "res";
 

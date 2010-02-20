@@ -50,7 +50,7 @@ std::string StringReplace(const std::string& text,
 
 static inline std::string IntToString(int i, const std::string& format = "%i")
 {
-	char buf[64];
+	char buf[65]; // "%x": 32bit -> 64 hex chars + '\0'
 	SNPRINTF(buf, sizeof(buf), format.c_str(), i);
 	return std::string(buf);
 }

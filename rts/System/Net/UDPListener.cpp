@@ -6,10 +6,6 @@
 
 #include "UDPListener.h"
 
-#ifndef _MSC_VER
-#include "StdAfx.h"
-#endif
-
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -20,6 +16,7 @@
 #include "mmgr.h"
 
 #include "ProtocolDef.h"
+#include "LogOutput.h"
 #include "UDPConnection.h"
 #include "Socket.h"
 
@@ -109,7 +106,7 @@ void UDPListener::Update()
 			}
 			else
 			{
-				// throw it
+				LogObject() << "Dropping packet from unknown IP: [" << sender_endpoint.address() << "]:" << sender_endpoint.port();
 			}
 		}	
 	}

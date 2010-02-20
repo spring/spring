@@ -4,6 +4,7 @@
 #include "Map/Ground.h"
 #include "PlasmaRepulser.h"
 #include "Rendering/UnitModels/3DModel.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
 #include "Sim/Units/Unit.h"
@@ -90,9 +91,12 @@ void CLightningCannon::FireImpl()
 	dir += (gs->randVector() * sprayAngle + salvoError) * (1.0f - owner->limExperience * 0.5f);
 	dir.ANormalize();
 
-	const CUnit* cu = NULL;
-	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags);
+	const CUnit* cu = 0;
+	const CFeature* cf = 0;
+	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags, &cf);
 	CUnit* u = (cu == NULL) ? NULL : uh->units[cu->id];
+	CFeature* f = cf ? featureHandler->GetFeature(cf->id) : 0;
+
 
 	float3 newDir;
 	CPlasmaRepulser* shieldHit = NULL;
@@ -143,7 +147,8 @@ void CLightningCannon::FireImpl()
 		weaponDef->explosionGenerator,
 		u,
 		dir,
-		weaponDef->id
+		weaponDef->id,
+		f
 	);
 
 	new CLightningProjectile(

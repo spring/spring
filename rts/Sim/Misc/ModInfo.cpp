@@ -18,11 +18,11 @@
 CModInfo modInfo;
 
 
-void CModInfo::Init(const char* modname)
+void CModInfo::Init(const char* modArchive)
 {
-	filename = modname;
+	filename = modArchive;
 
-	humanName = archiveScanner->NameFromArchive(modname);
+	humanName = archiveScanner->NameFromArchive(modArchive);
 
 	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
 

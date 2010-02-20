@@ -541,12 +541,19 @@ void CMouseHandler::Draw()
 		            (GLenum)cmdColors.MouseBoxBlendDst());
 
 		glLineWidth(cmdColors.MouseBoxLineWidth());
-		glBegin(GL_LINE_LOOP);
-		glVertexf3(camera->pos+dir1U*30+dir1S*30+camera->forward*30);
-		glVertexf3(camera->pos+dir2U*30+dir1S*30+camera->forward*30);
-		glVertexf3(camera->pos+dir2U*30+dir2S*30+camera->forward*30);
-		glVertexf3(camera->pos+dir1U*30+dir2S*30+camera->forward*30);
-		glEnd();
+
+		float3 verts[] = {
+			camera->pos+dir1U*30+dir1S*30+camera->forward*30,
+			camera->pos+dir2U*30+dir1S*30+camera->forward*30,
+			camera->pos+dir2U*30+dir2S*30+camera->forward*30,
+			camera->pos+dir1U*30+dir2S*30+camera->forward*30,
+		};
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 0, verts);
+		glDrawArrays(GL_LINE_LOOP, 0, 4);
+		glDisableClientState(GL_VERTEX_ARRAY);
+
 		glLineWidth(1.0f);
 
 		glPopAttrib();

@@ -24,7 +24,6 @@
 #include "ExternalAI/SkirmishAILibraryInfo.h"
 #include "ExternalAI/SAIInterfaceCallbackImpl.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-//#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Sim/Units/UnitDef.h"
@@ -46,10 +45,12 @@
 #include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
+#include "Map/MapInfo.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
-#include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
+#include "Game/GameVersion.h"
+#include "FileSystem/ArchiveScanner.h"
 #include "GlobalUnsynced.h" // for myTeam
 #include "LogOutput.h"
 
@@ -1048,6 +1049,9 @@ EXPORT(const char*) skirmishAiCallback_Mod_getFileName(int skirmishAIId) {
 	return modInfo.filename.c_str();
 }
 
+EXPORT(int) skirmishAiCallback_Mod_getHash(int skirmishAIId) {
+	return archiveScanner->GetArchiveCompleteChecksum(modInfo.humanName);
+}
 EXPORT(const char*) skirmishAiCallback_Mod_getHumanName(int skirmishAIId) {
 	return modInfo.humanName.c_str();
 }
@@ -1395,8 +1399,16 @@ EXPORT(void) skirmishAiCallback_Map_getResourceMapSpotsNearest(
 	getResourceMapAnalyzer(resourceId)->GetNearestSpot(pos_posF3, skirmishAIId_teamId[skirmishAIId]).copyInto(return_posF3_out);
 }
 
+EXPORT(int) skirmishAiCallback_Map_getHash(int skirmishAIId) {
+	return archiveScanner->GetArchiveCompleteChecksum(mapInfo->map.name);
+}
+
 EXPORT(const char*) skirmishAiCallback_Map_getName(int skirmishAIId) {
-	return skirmishAIId_callback[skirmishAIId]->GetMapName();
+	return mapInfo->map.name.c_str();
+}
+
+EXPORT(const char*) skirmishAiCallback_Map_getHumanName(int skirmishAIId) {
+	return mapInfo->map.humanName.c_str();
 }
 
 EXPORT(float) skirmishAiCallback_Map_getElevationAt(int skirmishAIId, float x, float z) {
@@ -2331,17 +2343,6 @@ EXPORT(int) skirmishAiCallback_UnitDef_getFlareSalvoDelay(int skirmishAIId, int 
 }
 
 //EXPORT(bool) skirmishAiCallback_UnitDef_isSmoothAnim(int skirmishAIId, int unitDefId) {return getUnitDefById(skirmishAIId, unitDefId)->smoothAnim;}
-
-EXPORT(bool) skirmishAiCallback_UnitDef_isResourceMaker(int skirmishAIId,
-		int unitDefId, int resourceId) {
-
-	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
-	if (resourceId == resourceHandler->GetMetalId()) {
-		return ud->isMetalMaker;
-	} else {
-		return false;
-	}
-}
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToLoopbackAttack(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->canLoopbackAttack;
@@ -3835,7 +3836,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getTidalResourceGenerator = &skirmishAiCallback_UnitDef_getTidalResourceGenerator;
 	callback->UnitDef_getStorage = &skirmishAiCallback_UnitDef_getStorage;
 	callback->UnitDef_isSquareResourceExtractor = &skirmishAiCallback_UnitDef_isSquareResourceExtractor;
-	callback->UnitDef_isResourceMaker = &skirmishAiCallback_UnitDef_isResourceMaker;
 	callback->UnitDef_getBuildTime = &skirmishAiCallback_UnitDef_getBuildTime;
 	callback->UnitDef_getAutoHeal = &skirmishAiCallback_UnitDef_getAutoHeal;
 	callback->UnitDef_getIdleAutoHeal = &skirmishAiCallback_UnitDef_getIdleAutoHeal;
@@ -4115,6 +4115,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Group_OrderPreview_getParams = &skirmishAiCallback_Group_OrderPreview_getParams;
 	callback->Group_isSelected = &skirmishAiCallback_Group_isSelected;
 	callback->Mod_getFileName = &skirmishAiCallback_Mod_getFileName;
+	callback->Mod_getHash = &skirmishAiCallback_Mod_getHash;
 	callback->Mod_getHumanName = &skirmishAiCallback_Mod_getHumanName;
 	callback->Mod_getShortName = &skirmishAiCallback_Mod_getShortName;
 	callback->Mod_getVersion = &skirmishAiCallback_Mod_getVersion;
@@ -4165,7 +4166,9 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Map_getResourceMapSpotsPositions = &skirmishAiCallback_Map_getResourceMapSpotsPositions;
 	callback->Map_getResourceMapSpotsAverageIncome = &skirmishAiCallback_Map_getResourceMapSpotsAverageIncome;
 	callback->Map_getResourceMapSpotsNearest = &skirmishAiCallback_Map_getResourceMapSpotsNearest;
+	callback->Map_getHash = &skirmishAiCallback_Map_getHash;
 	callback->Map_getName = &skirmishAiCallback_Map_getName;
+	callback->Map_getHumanName = &skirmishAiCallback_Map_getHumanName;
 	callback->Map_getElevationAt = &skirmishAiCallback_Map_getElevationAt;
 	callback->Map_getMaxResource = &skirmishAiCallback_Map_getMaxResource;
 	callback->Map_getExtractorRadius = &skirmishAiCallback_Map_getExtractorRadius;

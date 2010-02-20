@@ -229,8 +229,8 @@ void AAIMap::Init()
 	fprintf(ai->file, "%i sectors in y direction\n", ySectors);
 	fprintf(ai->file, "x-sectorsize is %i (Map %i)\n", xSectorSize, xSectorSizeMap);
 	fprintf(ai->file, "y-sectorsize is %i (Map %i)\n", ySectorSize, ySectorSizeMap);
-	fprintf(ai->file, "%i metal spots found (%i are on land, %i under water) \n \n",metal_spots.size(), land_metal_spots, water_metal_spots);
-	fprintf(ai->file, "%i continents found on map\n", continents.size());
+	fprintf(ai->file, _STPF_" metal spots found (%i are on land, %i under water) \n \n", metal_spots.size(), land_metal_spots, water_metal_spots);
+	fprintf(ai->file, _STPF_" continents found on map\n", continents.size());
 	fprintf(ai->file, "%i land and %i water continents\n", land_continents, water_continents);
 	fprintf(ai->file, "Average land continent size is %i\n", avg_land_continent_size);
 	fprintf(ai->file, "Average water continent size is %i\n", avg_water_continent_size);
@@ -382,7 +382,7 @@ void AAIMap::ReadMapCacheFile()
 		land_metal_spots = 0;
 		water_metal_spots = 0;
 
-		fprintf(file, "\n%i \n", metal_spots.size());
+		fprintf(file, "\n"_STPF_" \n", metal_spots.size());
 
 		for(list<AAIMetalSpot>::iterator spot = metal_spots.begin(); spot != metal_spots.end(); ++spot)
 		{
@@ -406,7 +406,7 @@ void AAIMap::ReadMapCacheFile()
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CFG_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	STRCAT(buffer, MakeFileSystemCompatible(cb->GetMapName()));
 	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
@@ -455,7 +455,7 @@ void AAIMap::ReadMapCacheFile()
 		// save results to cfg file
 		STRCPY(buffer, MAIN_PATH);
 		STRCAT(buffer, MAP_CFG_PATH);
-		STRCAT(buffer, cb->GetMapName());
+		STRCAT(buffer, MakeFileSystemCompatible(cb->GetMapName()));
 		ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".cfg");
 
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, map_filename);
@@ -531,11 +531,14 @@ void AAIMap::ReadContinentFile()
 	char buffer[buffer_sizeMax];
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "_");
-	STRCAT(buffer, cb->GetModName());
+	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, ".dat");
 	char filename[buffer_sizeMax];
-	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	STRCPY(filename, buffer);
 
 	// as we will have to write to the file later on anyway,
 	// we want it writeable
@@ -604,10 +607,11 @@ void AAIMap::ReadContinentFile()
 	// save movement maps
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	STRCAT(buffer, "_");
-	STRCAT(buffer, cb->GetModName());
-	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
+	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, ".dat");
+	STRCPY(filename, buffer);
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
@@ -625,7 +629,7 @@ void AAIMap::ReadContinentFile()
 	}
 
 	// save continents
-	fprintf(file, "\n%i \n", continents.size());
+	fprintf(file, "\n"_STPF_" \n", continents.size());
 
 	for(size_t c = 0; c < continents.size(); ++c)
 		fprintf(file, "%i %i \n", continents[c].size, (int)continents[c].water);
@@ -646,11 +650,14 @@ std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_LEARN_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	ReplaceExtension(buffer, buffer2, buffer_sizeMax, "_");
-	STRCPY(buffer, buffer2);
-	STRCAT(buffer, cb->GetModName());
-	ReplaceExtension(buffer, buffer2, buffer_sizeMax, ".dat");
+	STRCAT(buffer, "_");
+	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
+	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, ".dat");
+	STRCPY(buffer2, buffer);
 
 	if (forWriting) {
 		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer2);
@@ -669,7 +676,8 @@ std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, cb->GetMapName());
+	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	STRCAT(buffer, mapName.c_str());
 	ReplaceExtension(buffer, buffer2, buffer_sizeMax, ".dat");
 
 	if (forWriting) {

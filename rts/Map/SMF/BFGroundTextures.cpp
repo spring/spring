@@ -60,7 +60,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
 			logOutput.Print(
 				"[CBFGroundTextures] mismatched number of .smt file "
-				"references between map's .smd (%d) and header (%d);"
+				"references between map's .smd ("_STPF_") and header (%d);"
 				" ignoring .smd overrides",
 				smf.smtFileNames.size(), tileHeader.numTileFiles
 			);

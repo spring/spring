@@ -10,7 +10,7 @@ namespace netcode
 {
 	class RawPacket;
 }
-class PlayerStatistics;
+struct PlayerStatistics;
 
 const unsigned char NETWORK_VERSION = 1;
 

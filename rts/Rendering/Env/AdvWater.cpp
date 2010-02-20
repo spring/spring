@@ -239,7 +239,6 @@ void CAdvWater::UpdateWater(CGame* game)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE,GL_ONE);
-	glColor3f(1,1,1);
 
 	bumpFBO.Bind();
 	glViewport(0,0,128,128);
@@ -253,43 +252,53 @@ void CAdvWater::UpdateWater(CGame* game)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	glColor3f(0.2f,0.2f,0.2f);
+
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(12, 0, VA_SIZE_T);
+
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
-	glBegin(GL_QUADS);
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0046f);glVertex3f(0,0,0);
-		glTexCoord2f(0,2+gs->frameNum*0.0046f);glVertex3f(0,1,0);
-		glTexCoord2f(2,2+gs->frameNum*0.0046f);glVertex3f(1,1,0);
-		glTexCoord2f(2,0+gs->frameNum*0.0046f);glVertex3f(1,0,0);
 
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0026f);glVertex3f(0,0,0);
-		glTexCoord2f(0,4+gs->frameNum*0.0026f);glVertex3f(0,1,0);
-		glTexCoord2f(2,4+gs->frameNum*0.0026f);glVertex3f(1,1,0);
-		glTexCoord2f(2,0+gs->frameNum*0.0026f);glVertex3f(1,0,0);
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0046f);
+	va->AddVertexQT(float3(0,1,0), 0,2+gs->frameNum*0.0046f);
+	va->AddVertexQT(float3(1,1,0), 2,2+gs->frameNum*0.0046f);
+	va->AddVertexQT(float3(1,0,0), 2,0+gs->frameNum*0.0046f);
 
-		glTexCoord2f(0,0+gs->frameNum*0.0012f);glVertex3f(0,0,0);
-		glTexCoord2f(0,8+gs->frameNum*0.0012f);glVertex3f(0,1,0);
-		glTexCoord2f(2,8+gs->frameNum*0.0012f);glVertex3f(1,1,0);
-		glTexCoord2f(2,0+gs->frameNum*0.0012f);glVertex3f(1,0,0);
-	glEnd();
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0026f);
+	va->AddVertexQT(float3(0,1,0), 0,4+gs->frameNum*0.0026f);
+	va->AddVertexQT(float3(1,1,0), 2,4+gs->frameNum*0.0026f);
+	va->AddVertexQT(float3(1,0,0), 2,0+gs->frameNum*0.0026f);
 
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0012f);
+	va->AddVertexQT(float3(0,1,0), 0,8+gs->frameNum*0.0012f);
+	va->AddVertexQT(float3(1,1,0), 2,8+gs->frameNum*0.0012f);
+	va->AddVertexQT(float3(1,0,0), 2,0+gs->frameNum*0.0012f);
+
+	va->DrawArrayT(GL_QUADS);
+
+	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
-	glBegin(GL_QUADS);
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0036f);glVertex3f(0,0,0);
-		glTexCoord2f(0,1+gs->frameNum*0.0036f);glVertex3f(0,1,0);
-		glTexCoord2f(1,1+gs->frameNum*0.0036f);glVertex3f(1,1,0);
-		glTexCoord2f(1,0+gs->frameNum*0.0036f);glVertex3f(1,0,0);
-	glEnd();
 
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0036f);
+	va->AddVertexQT(float3(0,1,0), 0,1+gs->frameNum*0.0036f);
+	va->AddVertexQT(float3(1,1,0), 1,1+gs->frameNum*0.0036f);
+	va->AddVertexQT(float3(1,0,0), 1,0+gs->frameNum*0.0036f);
+
+	va->DrawArrayT(GL_QUADS);
+
+	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
-	glBegin(GL_QUADS);
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0082f);glVertex3f(0,0,0);
-		glTexCoord2f(0,1+gs->frameNum*0.0082f);glVertex3f(0,1,0);
-		glTexCoord2f(1,1+gs->frameNum*0.0082f);glVertex3f(1,1,0);
-		glTexCoord2f(1,0+gs->frameNum*0.0082f);glVertex3f(1,0,0);
-	glEnd();
+
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0082f);
+	va->AddVertexQT(float3(0,1,0), 0,1+gs->frameNum*0.0082f);
+	va->AddVertexQT(float3(1,1,0), 1,1+gs->frameNum*0.0082f);
+	va->AddVertexQT(float3(1,0,0), 1,0+gs->frameNum*0.0082f);
+
+	va->DrawArrayT(GL_QUADS);
+
+	// this fixes a memory leak on ATI cards
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glColor3f(1,1,1);
 

@@ -686,6 +686,7 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 
 int CAICallback::InitPath(float3 start, float3 end, int pathType)
 {
+	assert(((size_t)pathType) < moveinfo->moveData.size());
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end);
 }
 
@@ -971,14 +972,40 @@ int CAICallback::GetMapHeight()
 	return gs->mapy;
 }
 
+int CAICallback::GetMapHash()
+{
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return 0;
+}
+
 const char* CAICallback::GetMapName ()
 {
-	return gameSetup->mapName.c_str();
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
+}
+
+const char* CAICallback::GetMapHumanName ()
+{
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
+}
+
+int CAICallback::GetModHash()
+{
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return 0;
 }
 
 const char* CAICallback::GetModName()
 {
-	return modInfo.filename.c_str();
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
+}
+
+const char* CAICallback::GetModHumanName()
+{
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
 }
 
 

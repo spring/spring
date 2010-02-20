@@ -17,9 +17,6 @@ public:
 
 	std::string hostip;
 	int hostport;
-	int sourceport; ///< the port clients will try to connect from
-	std::string autohostip;
-	int autohostport;
 
 	bool isHost;
 };

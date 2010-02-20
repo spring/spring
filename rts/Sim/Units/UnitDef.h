@@ -63,7 +63,6 @@ public:
 	float energyStorage;
 
 	bool extractSquare;
-	bool isMetalMaker;
 
 	float autoHeal;     ///< amount autohealed
 	float idleAutoHeal; ///< amount autohealed only during idling

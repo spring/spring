@@ -45,11 +45,11 @@ AAI::~AAI()
 		fprintf(file, "%-20s: %i / %i / %i\n", bt->GetCategoryString2((UnitCategory)i), ut->activeUnits[i], ut->futureUnits[i], ut->requestedUnits[i]);
 	}
 
-	fprintf(file, "\nGround Groups:    %i\n", group_list[GROUND_ASSAULT].size());
-	fprintf(file, "\nAir Groups:       %i\n", group_list[AIR_ASSAULT].size());
-	fprintf(file, "\nHover Groups:     %i\n", group_list[HOVER_ASSAULT].size());
-	fprintf(file, "\nSea Groups:       %i\n", group_list[SEA_ASSAULT].size());
-	fprintf(file, "\nSubmarine Groups: %i\n\n", group_list[SUBMARINE_ASSAULT].size());
+	fprintf(file, "\nGround Groups:    "_STPF_"\n", group_list[GROUND_ASSAULT].size());
+	fprintf(file, "\nAir Groups:       "_STPF_"\n", group_list[AIR_ASSAULT].size());
+	fprintf(file, "\nHover Groups:     "_STPF_"\n", group_list[HOVER_ASSAULT].size());
+	fprintf(file, "\nSea Groups:       "_STPF_"\n", group_list[SEA_ASSAULT].size());
+	fprintf(file, "\nSubmarine Groups: "_STPF_"\n\n", group_list[SUBMARINE_ASSAULT].size());
 
 	fprintf(file, "Future metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
 	fprintf(file, "Future metal/energy supply:  %i / %i\n\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
@@ -133,7 +133,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 	file = fopen(filename,"w");
 
-	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModName());
+	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModHumanName());
 
 	// load config file first
 	cfg->LoadConfig(this);
@@ -615,7 +615,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 				brain->expandable = true;
 
-				fprintf(file, "\nRemoving sector %i,%i from base; base size: %i \n", x, y, brain->sectors[0].size());
+				fprintf(file, "\nRemoving sector %i,%i from base; base size: "_STPF_" \n", x, y, brain->sectors[0].size());
 			}
 		}
 		else // finished unit has been killed

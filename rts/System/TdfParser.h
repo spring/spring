@@ -138,7 +138,8 @@ public:
 		return i;
 	}
 
-	const std::map<std::string, std::string>& GetAllValues(std::string const& location) const;
+	typedef const std::map<std::string, std::string>& MapRef;
+	MapRef GetAllValues(std::string const& location) const;
 	std::vector<std::string> GetSectionList(std::string const& location) const;
 	bool SectionExist(std::string const& location) const;
 

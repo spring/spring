@@ -14,10 +14,10 @@ public:
 	CArchiveBuffered(const std::string& name);
 	virtual ~CArchiveBuffered(void);
 
-	virtual bool GetFile(unsigned fid, std::vector<uint8_t>& buffer);
+	virtual bool GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer);
 
 protected:
-	virtual bool GetFileImpl(unsigned fid, std::vector<uint8_t>& buffer) = 0;
+	virtual bool GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer) = 0;
 
 	boost::mutex archiveLock; // neither 7zip nor zlib are threadsafe
 	struct FileBuffer
@@ -25,7 +25,7 @@ protected:
 		FileBuffer() : populated(false) {};
 		bool populated; // cause a file may be 0 bytes big
 		bool exists;
-		std::vector<uint8_t> data;
+		std::vector<boost::uint8_t> data;
 	};
 	std::vector<FileBuffer> cache; // cache[fileId]
 };

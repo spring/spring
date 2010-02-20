@@ -305,12 +305,25 @@ void CMouseCursor::Draw(int x, int y, float scale)
 
 	glViewport(xp, gu->viewSizeY - yp, xs, ys);
 
-	glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 1.0f, 0.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 0.0f, 0.0f);
-	glEnd();
+	static float vertices[] = {0.f, 0.f, 0.f,
+				   0.f, 1.f, 0.f,
+				   1.f, 1.f, 0.f,
+				   1.f, 0.f, 0.f};
+	static float texcoords[] = {0.f, 0.f,
+				    0.f, 1.f,
+				    1.f, 1.f,
+				    1.f, 0.f};
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+	glVertexPointer(3, GL_FLOAT, 0, vertices);
+
+	glDrawArrays(GL_QUADS, 0, 4);
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 }
@@ -330,12 +343,25 @@ void CMouseCursor::DrawQuad(int x, int y)
 
 	glViewport(gu->viewPosX + xp, yp, xs, ys);
 
-	glBegin(GL_QUADS);
-	 	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, 0.0f);
-	 	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 1.0f, 0.0f);
-	 	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
-	 	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 0.0f, 0.0f);
-	glEnd();
+	static float vertices[] = {0.f, 0.f, 0.f,
+				   0.f, 1.f, 0.f,
+				   1.f, 1.f, 0.f,
+				   1.f, 0.f, 0.f};
+	static float texcoords[] = {0.f, 0.f,
+				    0.f, 1.f,
+				    1.f, 1.f,
+				    1.f, 0.f};
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+	glVertexPointer(3, GL_FLOAT, 0, vertices);
+
+	glDrawArrays(GL_QUADS, 0, 4);
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 

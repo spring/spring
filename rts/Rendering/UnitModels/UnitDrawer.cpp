@@ -200,6 +200,18 @@ bool CUnitDrawer::LoadModelShaders()
 			S3OAdvShader->SetUniformLocation("unitShadowDensity"); // idx 11
 			S3OAdvShader->SetUniformLocation("shadowMat");         // idx 12
 			S3OAdvShader->SetUniformLocation("shadowParams");      // idx 13
+
+			S3OAdvShader->Enable();
+			S3OAdvShader->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
+			S3OAdvShader->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
+			S3OAdvShader->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
+			S3OAdvShader->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
+			S3OAdvShader->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
+			S3OAdvShader->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			S3OAdvShader->SetUniform3fv(9, &unitAmbientColor[0]);
+			S3OAdvShader->SetUniform3fv(10, &unitSunColor[0]);
+			S3OAdvShader->SetUniform1f(11, unitShadowDensity);
+			S3OAdvShader->Disable();
 		}
 
 		S3OCurShader = S3OAdvShader;
@@ -1059,18 +1071,8 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		S3OCurShader->Enable();
 
 		if (haveGLSL && shadowHandler->drawShadows) {
-			S3OCurShader->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
-			S3OCurShader->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
-			S3OCurShader->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
-			S3OCurShader->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
-			S3OCurShader->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-			S3OCurShader->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
 			S3OCurShader->SetUniform3fv(6, &camera->pos[0]);
 			S3OCurShader->SetUniformMatrix4fv(7, false, (float*) &camera->modelviewInverse[0]);
-
-			S3OCurShader->SetUniform3fv(9, &unitAmbientColor[0]);
-			S3OCurShader->SetUniform3fv(10, &unitSunColor[0]);
-			S3OCurShader->SetUniform1f(11, unitShadowDensity);
 			S3OCurShader->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
 			S3OCurShader->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
 		} else {

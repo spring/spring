@@ -125,7 +125,7 @@ unsigned CArchive7Zip::NumFiles() const
 	return fileData.size();
 }
 
-bool CArchive7Zip::GetFile(unsigned fid, std::vector<uint8_t>& buffer)
+bool CArchive7Zip::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
 	assert(fid >= 0 && fid < NumFiles());

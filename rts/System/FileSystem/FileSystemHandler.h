@@ -35,6 +35,17 @@ public:
 	 */
 	static bool IsFSRoot(const std::string& path);
 
+	/**
+	 * Returns true if the path ends with the platform native path separator
+	 * (win: '\\', rest: '/').
+	 */
+	static bool HasPathSepAtEnd(const std::string& path);
+	/**
+	 * Ensures the path ends with the platform native path separator
+	 * (win: '\\', rest: '/').
+	 */
+	static void EnsurePathSepAtEnd(std::string& path);
+
 	// custom functions
 	/**
 	 * @brief find files

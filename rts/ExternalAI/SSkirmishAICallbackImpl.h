@@ -223,8 +223,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getStorage(int skirmishAIId
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isSquareResourceExtractor(int skirmishAIId, int unitDefId, int resourceId);
 
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isResourceMaker(int skirmishAIId, int unitDefId, int resourceId);
-
 EXPORT(float            ) skirmishAiCallback_UnitDef_getBuildTime(int skirmishAIId, int unitDefId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getAutoHeal(int skirmishAIId, int unitDefId);
@@ -799,6 +797,8 @@ EXPORT(bool             ) skirmishAiCallback_Group_isSelected(int skirmishAIId, 
 // BEGINN OBJECT Mod
 EXPORT(const char*      ) skirmishAiCallback_Mod_getFileName(int skirmishAIId);
 
+EXPORT(int              ) skirmishAiCallback_Mod_getHash(int skirmishAIId);
+
 EXPORT(const char*      ) skirmishAiCallback_Mod_getHumanName(int skirmishAIId);
 
 EXPORT(const char*      ) skirmishAiCallback_Mod_getShortName(int skirmishAIId);
@@ -902,7 +902,11 @@ EXPORT(int              ) skirmishAiCallback_Map_getResourceMapSpotsPositions(in
 
 EXPORT(float            ) skirmishAiCallback_Map_initResourceMapSpotsNearest(int skirmishAIId, int resourceId, float* pos_posF3, float* return_posF3_out);
 
+EXPORT(int              ) skirmishAiCallback_Map_getHash(int skirmishAIId);
+
 EXPORT(const char*      ) skirmishAiCallback_Map_getName(int skirmishAIId);
+
+EXPORT(const char*      ) skirmishAiCallback_Map_getHumanName(int skirmishAIId);
 
 EXPORT(float            ) skirmishAiCallback_Map_getElevationAt(int skirmishAIId, float x, float z);
 
