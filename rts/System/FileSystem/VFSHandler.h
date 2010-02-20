@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <boost/cstdint.hpp>
 
 class CArchiveBase;
 
@@ -11,10 +12,9 @@ class CVFSHandler
 {
 public:
 	CVFSHandler();
-	virtual ~CVFSHandler();
+	~CVFSHandler();
 
-	int LoadFile(const std::string& name, void* buffer);
-	int GetFileSize(const std::string& name);
+	bool LoadFile(const std::string& name, std::vector<boost::uint8_t>& buffer);
 
 	std::vector<std::string> GetFilesInDir(const std::string& dir);
 	std::vector<std::string> GetDirsInDir(const std::string& dir);

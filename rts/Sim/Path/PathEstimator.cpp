@@ -42,10 +42,11 @@ const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
 
 const std::string pathDir = "cache/paths/";
-/*
- * constructor, loads precalculated data if it exists
+
+/**
+ * Constructor, loads precalculated data if it exists
  */
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, std::string name, const std::string& map):
+CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, std::string cacheFileName, const std::string& map):
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
@@ -85,7 +86,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	vertex = new float[nbrOfVertices];
 	openBlockBufferPointer = openBlockBuffer;
 
-	InitEstimator(name, map);
+	InitEstimator(cacheFileName, map);
 
 	// As all vertexes are bidirectional and have equal values
 	// in both directions, only one value needs to be stored.
@@ -104,8 +105,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 }
 
 
-/*
- * free all used memory
+/**
+ * Free all used memory
  */
 CPathEstimator::~CPathEstimator()
 {
@@ -118,7 +119,7 @@ CPathEstimator::~CPathEstimator()
 }
 
 
-void CPathEstimator::InitEstimator(const std::string& name, const std::string& map)
+void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& map)
 {
 	int numThreads_tmp = configHandler->Get("HardwareThreadCount", 0);
 	size_t numThreads = ((numThreads_tmp < 0) ? 0 : numThreads_tmp);
@@ -145,7 +146,7 @@ void CPathEstimator::InitEstimator(const std::string& name, const std::string& m
 
 	PrintLoadMsg("Reading estimate path costs");
 
-	if (!ReadFile(name, map)) {
+	if (!ReadFile(cacheFileName, map)) {
 		char calcMsg[512];
 		sprintf(calcMsg, "Analyzing map accessibility [%d]", BLOCK_SIZE);
 		PrintLoadMsg(calcMsg);
@@ -170,7 +171,7 @@ void CPathEstimator::InitEstimator(const std::string& name, const std::string& m
 		delete pathBarrier;
 
 		PrintLoadMsg("Writing path data file...");
-		WriteFile(name, map);
+		WriteFile(cacheFileName, map);
 	}
 }
 
@@ -251,8 +252,8 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 
 
 
-/*
- * finds a square accessable by the given movedata within the given block
+/**
+ * Finds a square accessable by the given movedata within the given block
  */
 void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ) {
 	// lower corner position of block
@@ -289,8 +290,8 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 }
 
 
-/*
- * calculate all vertices connected from given block
+/**
+ * Calculate all vertices connected from the given block
  * (always 4 out of 8 vertices connected to the block)
  */
 void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int blockZ, int thread) {
@@ -299,8 +300,8 @@ void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int
 }
 
 
-/*
- * calculate requested vertex
+/**
+ * Calculate requested vertex
  */
 void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction, int thread) {
 	// initial calculations
@@ -348,8 +349,8 @@ void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX,
 }
 
 
-/*
- * mark affected blocks as obsolete
+/**
+ * Mark affected blocks as obsolete
  */
 void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x2, unsigned z2) {
 	// find the upper and lower corner of the rectangular area
@@ -398,8 +399,8 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 }
 
 
-/*
- * update some obsolete blocks using the FIFO-principle
+/**
+ * Update some obsolete blocks using the FIFO-principle
  */
 void CPathEstimator::Update() {
 	pathCache->Update();
@@ -430,8 +431,8 @@ void CPathEstimator::Update() {
 }
 
 
-/*
- * stores data and does some top-administration
+/**
+ * Stores data and does some top-administration
  */
 IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 start, const CPathFinderDef& peDef, Path& path, unsigned int maxSearchedBlocks) {
 	start.CheckInBounds();
@@ -483,8 +484,8 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 }
 
 
-/*
- * make some initial calculations and preparations
+/**
+ * Make some initial calculations and preparations
  */
 IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const CPathFinderDef& peDef) {
 	// is starting square inside goal area?
@@ -527,8 +528,8 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 }
 
 
-/*
- * performs the actual search.
+/**
+ * Performs the actual search.
  */
 IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPathFinderDef& peDef) {
 	bool foundGoal = false;
@@ -586,9 +587,9 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 }
 
 
-/*
- * test the accessability of a block and its value,
- * possibly also add it to the open-blocks pqueue
+/**
+ * Test the accessability of a block and its value,
+ * possibly also add it to the open-blocks pqueue.
  */
 void CPathEstimator::TestBlock(const MoveData& moveData, const CPathFinderDef &peDef, OpenBlock& parentOpenBlock, unsigned int direction) {
 	testedBlocks++;
@@ -662,8 +663,8 @@ void CPathEstimator::TestBlock(const MoveData& moveData, const CPathFinderDef &p
 }
 
 
-/*
- * recreate the path taken to the goal
+/**
+ * Recreate the path taken to the goal
  */
 void CPathEstimator::FinishSearch(const MoveData& moveData, Path& path) {
 	int2 block = goalBlock;
@@ -697,8 +698,8 @@ void CPathEstimator::FinishSearch(const MoveData& moveData, Path& path) {
 }
 
 
-/*
- * clean lists from last search
+/**
+ * Clean lists from last search
  */
 void CPathEstimator::ResetSearch() {
 	while (!openBlocks.empty())
@@ -714,17 +715,17 @@ void CPathEstimator::ResetSearch() {
 }
 
 
-/*
- * try to read offset and vertices data from file, return false on failure
+/**
+ * Try to read offset and vertices data from file, return false on failure
  * TODO: Read-error-check.
  */
-bool CPathEstimator::ReadFile(std::string name, const std::string& map)
+bool CPathEstimator::ReadFile(std::string cacheFileName, const std::string& map)
 {
 	unsigned int hash = Hash();
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string(pathDir) + map + hashString + "." + name + ".zip";
+	std::string filename = std::string(pathDir) + map + hashString + "." + cacheFileName + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
 	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
@@ -777,10 +778,10 @@ bool CPathEstimator::ReadFile(std::string name, const std::string& map)
 }
 
 
-/*
- * try to write offset and vertex data to file
+/**
+ * Try to write offset and vertex data to file.
  */
-void CPathEstimator::WriteFile(std::string name, const std::string& map)
+void CPathEstimator::WriteFile(std::string cacheFileName, const std::string& map)
 {
 	// We need this directory to exist
 	if (!filesystem.CreateDirectory(pathDir))
@@ -790,7 +791,7 @@ void CPathEstimator::WriteFile(std::string name, const std::string& map)
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
-	std::string filename = std::string(pathDir) + map + hashString + "." + name + ".zip";
+	std::string filename = std::string(pathDir) + map + hashString + "." + cacheFileName + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location
@@ -831,10 +832,10 @@ void CPathEstimator::WriteFile(std::string name, const std::string& map)
 }
 
 
-/*
-Gives a hash-code identifying the dataset of this estimator.
-*/
-unsigned int CPathEstimator::Hash()
+/**
+ * Returns a hash-code identifying the dataset of this estimator.
+ */
+unsigned int CPathEstimator::Hash() const
 {
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
 }

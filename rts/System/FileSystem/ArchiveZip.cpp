@@ -86,7 +86,7 @@ unsigned CArchiveZip::GetCrc32(unsigned fid)
 
 // To simplify things, files are always read completely into memory from the zipfile, since zlib does not
 // provide any way of reading more than one file at a time
-bool CArchiveZip::GetFileImpl(unsigned fid, std::vector<uint8_t>& buffer)
+bool CArchiveZip::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer)
 {
 	// Don't allow opening files on missing/invalid archives
 	if (!zip)

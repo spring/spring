@@ -46,7 +46,8 @@ CArchiveScanner::CArchiveScanner(void)
 : isDirty(false)
 {
 	std::ostringstream file;
-	file << "ArchiveCacheV" << INTERNAL_VER << ".lua";
+	// the "cache" dir is created in DataDirLocater
+	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCacheV" << INTERNAL_VER << ".lua";
 	cachefile = file.str();
 	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
 	ReadCacheData(fsh.GetWriteDir() + GetFilename());
@@ -222,7 +223,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 
 	const string fn    = filesystem.GetFilename(fullName);
 	const string fpath = filesystem.GetDirectory(fullName);
-	const string lcfn    = StringToLower(fn);
+	const string lcfn  = StringToLower(fn);
 
 	// Determine whether to rely on the cached info or not
 	bool cached = false;
@@ -313,7 +314,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 			}
 			else
 			{ // error
-				LogObject() << "Failed to read archive, files missing: " << fullName;
+				LogObject() << "Failed to scan " << fullName << " (missing files, could not determine archive type)";
 				delete ar;
 				return;
 			}
@@ -346,7 +347,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 
 bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai)
 {
-	std::vector<uint8_t> buf;
+	std::vector<boost::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf))
 		return false;
 
@@ -364,7 +365,7 @@ bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileNa
 IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
-	std::vector<uint8_t> buf;
+	std::vector<boost::uint8_t> buf;
 	if (ar->GetFile("springignore.txt", buf))
 	{
 		// this automatically splits lines
@@ -754,8 +755,7 @@ void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum) c
 
 string CArchiveScanner::GetArchivePath(const string& name) const
 {
-	string lcname = filesystem.GetFilename(name);
-	StringToLowerInPlace(lcname);
+	const string lcname = StringToLower(filesystem.GetFilename(name));
 
 	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end())
@@ -772,20 +772,21 @@ std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 	{
 		if (it->second.archiveData.name == name)
 		{
-			return it->first;
+			return it->second.origName;
 		}
 	}
 	return name;
 }
 
-string CArchiveScanner::NameFromArchive(const string& s) const
+string CArchiveScanner::NameFromArchive(const string& archiveName) const
 {
-	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(s);
+	const std::string lcArchiveName = StringToLower(archiveName);
+	std::map<string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcArchiveName);
 	if (aii != archiveInfo.end())
 	{
 		return aii->second.archiveData.name;
 	}
-	return s;
+	return archiveName;
 }
 
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& name) const

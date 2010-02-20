@@ -710,9 +710,7 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker* economyUnitTra
 	energyProduction -= economyUnitTracker->unitDef->energyUpkeep;
 	metalProduction -= economyUnitTracker->unitDef->metalUpkeep;
 
-	if (economyUnitTracker->unitDef->isMetalMaker) {
-		metalProduction += economyUnitTracker->unitDef->makesMetal;
-	}
+	metalProduction += economyUnitTracker->unitDef->makesMetal;
 
 	if (economyUnitTracker->unitDef->extractsMetal) {
 		// it's a mex: must find out what it will make later on (look at the metalMap spot data?)

@@ -27,6 +27,7 @@
 #include "ConfigHandler.h"
 #include "FileSystemHandler.h"
 #include "FileSystem.h"
+#include "CacheDir.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 #include "maindefines.h" // for sPS, cPS, cPD
@@ -34,14 +35,7 @@
 
 DataDir::DataDir(const std::string& p) : path(p), writable(false)
 {
-	// sPS/cPS (depending on OS): "\\" & '\\' or "/" & '/'
-
-	// make sure the path ends with a (back-)slash
-	if (path.empty()) {
-		path = "."sPS;
-	} else if (path[path.size() - 1] != cPS) {
-		path += cPS;
-	}
+	FileSystemHandler::EnsurePathSepAtEnd(path);
 }
 
 DataDirLocater::DataDirLocater() : writedir(NULL)
@@ -329,6 +323,12 @@ void DataDirLocater::LocateDataDirs()
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		if (d->writable) {
 			logOutput.Print("Using read-write data directory: %s", d->path.c_str());
+
+			// tag the cache dir
+			const std::string cacheDir = d->path + "cache";
+			if (filesystem.CreateDirectory(cacheDir)) {
+				CacheDir::SetCacheDir(cacheDir, true);
+			}
 		} else {
 			logOutput.Print("Using read-only data directory: %s",  d->path.c_str());
 		}

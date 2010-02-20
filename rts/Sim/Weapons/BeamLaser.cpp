@@ -4,6 +4,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Map/Ground.h"
 #include "Matrix44f.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/BeamLaserProjectile.h"
@@ -220,7 +221,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	}
 
 	// unit at the end of the beam
-	const CUnit* hit = NULL;
+	const CUnit* hit = 0;
+	const CFeature* hitfeature = 0;
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		tryAgain = false;
 		hit = NULL;
@@ -232,7 +234,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			weaponDef->damages[0],
 			owner,
 			hit,
-			collisionFlags
+			collisionFlags,
+			&hitfeature
 		);
 
 		if (hit && hit->allyteam == owner->allyteam && sweepFire) {
@@ -282,6 +285,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		dir = newDir;
 	}
 	CUnit* hitM = (hit == NULL) ? NULL : uh->units[hit->id];
+	CFeature* hitF = hitfeature ? featureHandler->GetFeature(hitfeature->id) : 0;
 
 	// fix negative damage when hitting big spheres
 	float actualRange = range;
@@ -316,7 +320,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 				weaponDef->dynDamageInverted
 			);
 		}
-
+		
 		helper->Explosion(
 			hitPos,
 			weaponDef->dynDamageExp > 0?
@@ -333,7 +337,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			weaponDef->explosionGenerator,
 			hitM,
 			dir,
-			weaponDef->id
+			weaponDef->id,
+			hitF
 		);
 	}
 

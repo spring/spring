@@ -22,25 +22,25 @@ class CPathFinderDef;
 class CPathEstimator: public IPath
 {
 public:
-	/*
-		* Creates a new estimator based on a couple of parameters
-		*	<pathFinder>
-		*		The pathfinder to be used for exact cost-calculation of vertices.
-		*
-		*	<BLOCK_SIZE>
-		*		The resolution of the estimator, given in mapsquares.
-		*
-		*	<moveMathOpt>
-		*		What level of blocking the estimator should care of. Based on the
-		*		available options given in CMoveMath.
-		*
-		*	<name>
-		*		Name of the file on disk where pre-calculated data is stored.
-		*		The name given are added to the end of the filename, after the
-		*		name of the corresponding map.
-		*		Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
-		*/
-	CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, unsigned int moveMathOpt, std::string name, const std::string& map);
+	/**
+	 * Creates a new estimator based on a couple of parameters
+	 * @param pathFinder
+	 *		The pathfinder to be used for exact cost-calculation of vertices.
+	 *
+	 * @param BLOCK_SIZE
+	 *		The resolution of the estimator, given in mapsquares.
+	 *
+	 * @param moveMathOpt
+	 *		What level of blocking the estimator should care of. Based on the
+	 *		available options given in CMoveMath.
+	 *
+	 * @param cacheFileName
+	 *		Name of the file on disk where pre-calculated data is stored.
+	 *		The name given are added to the end of the filename, after the
+	 *		name of the corresponding map.
+	 *		Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
+	 */
+	CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, unsigned int moveMathOpt, std::string cacheFileName, const std::string& map);
 	~CPathEstimator();
 
 #if !defined(USE_MMGR)
@@ -52,55 +52,54 @@ public:
 	void Draw(void);
 
 
-	/*
-		* Returns a estimate low-resolution path from starting location to the goal defined in
-		* CPathEstimatorDef, whenever any such are available.
-		* If no complete path are found, then a path leading as "close" as possible to the goal
-		* is returned instead, together with SearchResult::OutOfRange.
-		* Only if no position closer to the goal than the starting location itself could be found
-		* no path and SearchResult::CantGetCloser is returned.
-		* Param:
-		*	moveData
-		*		Defining the footprint of the unit to use the path.
-		*
-		*	start
-		*		The starting location of the search.
-		*
-		*	peDef
-		*		Object defining the goal of the search.
-		*		Could also be used to add constraints to the search.
-		*
-		* 	path
-		*		If a path could be found, it's generated and put into this structure.
-		*
-		*	maxSearchedBlocks
-		*		The maximum number of nodes/blocks the search are allowed to analyze.
-		*		This restriction could be used in cases where CPU-consumption are critical.
-		*/
+	/**
+	 * Returns a estimate low-resolution path from starting location to the goal defined in
+	 * CPathEstimatorDef, whenever any such are available.
+	 * If no complete path are found, then a path leading as "close" as possible to the goal
+	 * is returned instead, together with SearchResult::OutOfRange.
+	 * Only if no position closer to the goal than the starting location itself could be found
+	 * no path and SearchResult::CantGetCloser is returned.
+	 * @param moveData
+	 *		Defining the footprint of the unit to use the path.
+	 *
+	 * @param start
+	 *		The starting location of the search.
+	 *
+	 * @param peDef
+	 *		Object defining the goal of the search.
+	 *		Could also be used to add constraints to the search.
+	 *
+	 * @param path
+	 *		If a path could be found, it's generated and put into this structure.
+	 *
+	 * @param maxSearchedBlocks
+	 *		The maximum number of nodes/blocks the search are allowed to analyze.
+	 *		This restriction could be used in cases where CPU-consumption are critical.
+	 */
 	SearchResult GetPath(const MoveData& moveData, float3 start, const CPathFinderDef& peDef, Path& path, unsigned int maxSearchedBlocks = 10000);
 
 
-	/*
-		* Whenever the ground structure of the map changes (ex. at explosions and new buildings)
-		* this function shall be called, with (x1, z1)-(x2, z2) defining the rectangular area
-		* affected. The estimator will itself decided when update of the area is needed.
-		*/
+	/**
+	 * Whenever the ground structure of the map changes (ex. at explosions and new buildings)
+	 * this function shall be called, with (x1, z1)-(x2, z2) defining the rectangular area
+	 * affected. The estimator will itself decided when update of the area is needed.
+	 */
 	void MapChanged(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 
 
-	/*
-		* called every frame
-		*/
+	/**
+	 * called every frame
+	 */
 	void Update();
 
-	// find the best block to use for this pos
+	/// find the best block to use for this pos
 	float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
 
 	/// Return a checksum that can be used to check if every player has the same path data
 	boost::uint32_t GetPathChecksum();
 
 private:
-	void InitEstimator(const std::string& name, const std::string& map);
+	void InitEstimator(const std::string& cacheFileName, const std::string& map);
 	void InitVertices();
 	void InitBlocks();
 	void CalcOffsetsAndPathCosts(int thread);
@@ -160,9 +159,9 @@ private:
 	void FinishSearch(const MoveData& moveData, Path& path);
 	void ResetSearch();
 
-	bool ReadFile(std::string name, const std::string& map);
-	void WriteFile(std::string name, const std::string& map);
-	unsigned int Hash();
+	bool ReadFile(std::string cacheFileName, const std::string& map);
+	void WriteFile(std::string cacheFileName, const std::string& map);
+	unsigned int Hash() const;
 
 	CPathFinder* pathFinder;
 

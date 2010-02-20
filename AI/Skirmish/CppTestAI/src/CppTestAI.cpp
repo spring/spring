@@ -39,18 +39,21 @@ int cpptestai::CCppTestAI::HandleEvent(int topic, const void* data) {
 
 	switch (topic) {
 		case EVENT_UNIT_CREATED: {
-			struct SUnitCreatedEvent* evt = (struct SUnitCreatedEvent*) data;
-			int unitId = evt->unit;
+			//struct SUnitCreatedEvent* evt = (struct SUnitCreatedEvent*) data;
+			//int unitId = evt->unit;
 
 			// TODO: wrapp events and commands too
 
 			std::string unitDefName = callback->GetFriendlyUnits()[0]->GetDef()->GetName();
 
-			std::string msgText = "Hello Engine (from CppTestA), first friendly untis def name is: " + unitDefName;
+			std::string msgText = "Hello Engine (from CppTestA), first friendly units def name is: " + unitDefName;
 			SSendTextMessageCommand cmd;
 			cmd.text = msgText.c_str();
 			cmd.zone = 0;
 			int ret = callback->GetEngine()->HandleCommand(0, -1, COMMAND_SEND_TEXT_MESSAGE, &cmd);
+			if (ret != 0) {
+				return ret;
+			}
 
 			break;
 		}

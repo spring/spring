@@ -590,7 +590,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->flareSalvoDelay = sAICallback->UnitDef_getFlareSalvoDelay(skirmishAIId, unitDefId);
 		//unitDef->smoothAnim = sAICallback->UnitDef_isSmoothAnim(skirmishAIId, unitDefId);
 		unitDef->smoothAnim = false;
-		unitDef->isMetalMaker = sAICallback->UnitDef_isResourceMaker(skirmishAIId, unitDefId, m);
 		unitDef->canLoopbackAttack = sAICallback->UnitDef_isAbleToLoopbackAttack(skirmishAIId, unitDefId);
 		unitDef->levelGround = sAICallback->UnitDef_isLevelGround(skirmishAIId, unitDefId);
 		unitDef->useBuildingGroundDecal = sAICallback->UnitDef_isUseBuildingGroundDecal(skirmishAIId, unitDefId);
@@ -844,12 +843,28 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 	return metalMap;
 }
 
+int CAIAICallback::GetMapHash() {
+	return sAICallback->Map_getHash(skirmishAIId);
+}
+
 const char* CAIAICallback::GetMapName() {
 	return sAICallback->Map_getName(skirmishAIId);
 }
 
+const char* CAIAICallback::GetMapHumanName() {
+	return sAICallback->Map_getHumanName(skirmishAIId);
+}
+
+int CAIAICallback::GetModHash() {
+	return sAICallback->Mod_getHash(skirmishAIId);
+}
+
 const char* CAIAICallback::GetModName() {
 	return sAICallback->Mod_getFileName(skirmishAIId);
+}
+
+const char* CAIAICallback::GetModHumanName() {
+	return sAICallback->Mod_getHumanName(skirmishAIId);
 }
 
 float CAIAICallback::GetElevation(float x, float z) {

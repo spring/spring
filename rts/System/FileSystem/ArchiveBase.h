@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <stdint.h>
+#include <boost/cstdint.hpp>
 
 /**
 @brief Abstraction of different archive types
@@ -30,12 +30,12 @@ public:
 	virtual unsigned NumFiles() const = 0;
 	///@return fileID of the file, NumFiles() if not found
 	unsigned FindFile(const std::string& name) const;
-	virtual bool GetFile(unsigned fid, std::vector<uint8_t>& buffer) = 0;
+	virtual bool GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer) = 0;
 	virtual void FileInfo(unsigned fid, std::string& name, int& size) const = 0;
 	virtual unsigned GetCrc32(unsigned fid);
 
 	/// for convenience
-	bool GetFile(const std::string& name, std::vector<uint8_t>& buffer);
+	bool GetFile(const std::string& name, std::vector<boost::uint8_t>& buffer);
 
 protected:
 	std::map<std::string, unsigned> lcNameIndex; ///< must be populated by the subclass

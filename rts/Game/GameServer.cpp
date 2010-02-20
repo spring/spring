@@ -32,7 +32,6 @@
 
 #include "LogOutput.h"
 #include "GameSetup.h"
-#include "ClientSetup.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
@@ -110,7 +109,7 @@ void SetBoolArg(bool& value, const std::string& str)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
+CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
 {
 	assert(setup);
@@ -148,13 +147,16 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
 	if (!onlyLocal)
-		UDPNet.reset(new netcode::UDPListener(settings->hostport));
+		UDPNet.reset(new netcode::UDPListener(hostport));
 
-	if (settings->autohostport > 0) {
-		AddAutohostInterface(settings->autohostip, settings->autohostport);
+	std::string autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
+	int autohostport = configHandler->Get("AutohostPort", 0);
+	
+	if (autohostport > 0) {
+		AddAutohostInterface(autohostip, autohostport);
 	}
 	rng.Seed(newGameData->GetSetup().length());
-	Message(str( format(ServerStart) %settings->hostport), false);
+	Message(str( format(ServerStart) %hostport), false);
 
 	lastTick = spring_gettime();
 

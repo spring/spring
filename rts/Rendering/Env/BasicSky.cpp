@@ -366,7 +366,7 @@ inline void CBasicSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) 
 
 	int yam2 = ydif[(ast - 2) & CLOUD_MASK];
 	int yam1 = ydif[(ast - 1) & CLOUD_MASK];
-	int yaa  = ydif[(ast) & CLOUD_MASK];
+	int yaa  = ydif[(ast)     & CLOUD_MASK];
 	int ap1 = (ast + 1) & CLOUD_MASK;
 
 	aed = aed * 4 + 3;
@@ -378,12 +378,19 @@ inline void CBasicSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) 
 	for (int a = ast; a < aed; ++rc, ++ct) {
 		int yap1 = ydif[ap1] += (int) cloudThickness[a3c += 4] - cloudThickness[a += 4] * 2 + cloudThickness[a4c += 4];
 
-		int dif = (yam2 >> 2) +
-			((yam2 = yam1) >> 1) +
-			(yam1 = yaa) +
-			((yaa = yap1) >> 1) +
-			(ydif[(++ap1) &= CLOUD_MASK] >> 2);
+		ap1++;
+		ap1 = (ap1 & CLOUD_MASK);
+		int dif =
+			(yam2 >> 2) +
+			(yam1 >> 1) +
+			(yaa) +
+			(yap1 >> 1) +
+			(ydif[ap1] >> 2);
 		dif >>= 4;
+
+		yam2 = yam1;
+		yam1 = yaa;
+		yaa  = yap1;
 
 		*ct++ = 128 + dif;
 		*ct++ = thicknessTransform[(*rc) >> 7];
@@ -522,7 +529,7 @@ void CBasicSky::Update()
 		for(int a=0; a<CLOUD_SIZE; ++a) {
 		cloudThickness[(a*CLOUD_SIZE+int(gs->frameNum*0.00009f*256+camera->pos.x*CLOUD_SIZE*0.000025f))*4+3]=0;
 		}
-		/**/
+		*/
 		glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 		glTexSubImage2D(GL_TEXTURE_2D,0, 0,0,CLOUD_SIZE, CLOUD_SIZE,GL_RGBA, GL_UNSIGNED_BYTE, cloudThickness);
 		break;

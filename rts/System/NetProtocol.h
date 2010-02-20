@@ -27,7 +27,7 @@ public:
 	/**
 	@brief Initialise in client mode (remote server)
 	*/
-	void InitClient(const char* server,unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
+	void InitClient(const char* server,unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
 	
 	/**
 	@brief Initialise in client mode (local server)

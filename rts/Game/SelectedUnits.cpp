@@ -23,6 +23,7 @@
 #include "UI/TooltipConsole.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/GL/VertexArray.h"
 #include "SelectedUnitsAI.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
@@ -376,7 +377,9 @@ void CSelectedUnits::Draw()
 			unitSet = &selectedUnits;
 		}
 
-		glBegin(GL_QUADS);
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(unitSet->size()*4, 0, VA_SIZE_0);
 		CUnitSet::const_iterator ui;
 		for (ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
@@ -384,12 +387,12 @@ void CSelectedUnits::Draw()
 				continue;
 			}
 
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0,  unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0,  unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0, -unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0, -unit->zsize * 4));
+			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
 		}
-		glEnd();
+		va->DrawArray0(GL_QUADS);
 	}
 
 	// highlight queued build sites if we are about to build something

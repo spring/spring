@@ -88,10 +88,6 @@ public:
 	bool limitDgun;
 	float dgunRadius;
 
-	bool diminishingMetalMakers;
-	float metalMakerIncome;
-	float metalMakerEfficiency;
-
 	bool morphUnitToFeature;
 
 private:

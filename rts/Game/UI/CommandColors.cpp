@@ -39,7 +39,7 @@ CCommandColors::CCommandColors()
 	queuedBlendSrc = GL_SRC_ALPHA;
 	queuedBlendDst = GL_ONE_MINUS_SRC_ALPHA;
 	stipplePattern = 0xffffffff;
-  stippleFactor = 1;
+	stippleFactor = 1;
 	stippleSpeed = 1.0f;
 
 	selectedLineWidth = 1.49f;

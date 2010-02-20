@@ -110,8 +110,12 @@ public:
 	const unsigned short* GetRadarMap();
 	const unsigned short* GetJammerMap();
 	const unsigned char* GetMetalMap();
-	const char* GetMapName ();
+	int GetMapHash();
+	const char* GetMapName();
+	const char* GetMapHumanName();
+	int GetModHash();
 	const char* GetModName();
+	const char* GetModHumanName();
 
 	float GetMaxMetal() const;
 	float GetExtractorRadius() const;

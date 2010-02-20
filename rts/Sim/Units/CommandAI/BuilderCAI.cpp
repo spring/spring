@@ -19,6 +19,7 @@
 #include "Map/MapDamage.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaRules.h"
@@ -369,7 +370,7 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	CBuilder* fac = (CBuilder*)owner;
+	CBuilder* builder = (CBuilder*) owner;
 	Command& c = commandQue.front();
 
 	if (OutOfImmobileRange(c)) {
@@ -384,14 +385,14 @@ void CBuilderCAI::SlowUpdate()
 
 		if (inCommand) {
 			if (building) {
-				if (f3SqDist(build.pos, fac->pos) > Square(fac->buildDistance + radius - 8.0f)) {
-					owner->moveType->StartMoving(build.pos, fac->buildDistance * 0.5f + radius);
+				if (f3SqDist(build.pos, builder->pos) > Square(builder->buildDistance + radius - 8.0f)) {
+					owner->moveType->StartMoving(build.pos, builder->buildDistance * 0.5f + radius);
 				} else {
 					StopMove();
 					// needed since above startmoving cancels this
-					owner->moveType->KeepPointingTo(build.pos, (fac->buildDistance + radius) * 0.6f, false);
+					owner->moveType->KeepPointingTo(build.pos, (builder->buildDistance + radius) * 0.6f, false);
 				}
-				if (!fac->curBuild && !fac->terraforming) {
+				if (!builder->curBuild && !builder->terraforming) {
 					building = false;
 					StopMove();				//cancel the effect of KeepPointingTo
 					FinishCommand();
@@ -401,7 +402,7 @@ void CBuilderCAI::SlowUpdate()
 				else if (uh->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit) {
 					// unit restricted
 					building = false;
-					fac->StopBuild();
+					builder->StopBuild();
 					CancelRestrictedUnit(boi->second);
 				}
 			} else {
@@ -417,10 +418,10 @@ void CBuilderCAI::SlowUpdate()
 					StopMove();
 				} else {
 					build.pos = helper->Pos2BuildPos(build);
-					const float sqdist = f3SqDist(build.pos, fac->pos);
+					const float sqdist = f3SqDist(build.pos, builder->pos);
 
-					if ((sqdist < Square(fac->buildDistance * 0.6f + radius)) ||
-						(!owner->unitDef->canmove && (sqdist <= Square(fac->buildDistance + radius - 8.0f)))) {
+					if ((sqdist < Square(builder->buildDistance * 0.6f + radius)) ||
+						(!owner->unitDef->canmove && (sqdist <= Square(builder->buildDistance + radius - 8.0f)))) {
 						StopMove();
 
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
@@ -430,9 +431,9 @@ void CBuilderCAI::SlowUpdate()
 							// unit-limit not yet reached
 							CFeature* f = NULL;
 							buildRetries++;
-							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
+							owner->moveType->KeepPointingTo(build.pos, builder->buildDistance * 0.7f + radius, false);
 
-							if (fac->StartBuild(build, f) || (buildRetries > 20)) {
+							if (builder->StartBuild(build, f) || (buildRetries > 20)) {
 								building = true;
 							}
 							else if (f) {
@@ -467,7 +468,7 @@ void CBuilderCAI::SlowUpdate()
 								FinishCommand();
 							}
 						}
-						SetGoal(build.pos, owner->pos, fac->buildDistance * 0.4f + radius);
+						SetGoal(build.pos, owner->pos, builder->buildDistance * 0.4f + radius);
 					}
 				}
 			}
@@ -543,9 +544,9 @@ void CBuilderCAI::FinishCommand(void)
 
 void CBuilderCAI::ExecuteStop(Command& c)
 {
-	CBuilder* fac=(CBuilder*)owner;
-	building=false;
-	fac->StopBuild();
+	CBuilder* builder = (CBuilder*) owner;
+	building = false;
+	builder->StopBuild();
 	CMobileCAI::ExecuteStop(c);
 }
 
@@ -1687,8 +1688,9 @@ void CBuilderCAI::DrawCommands(void)
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
+				glColor4fv(cmdColors.restore);
 				glSurfaceCircle(endPos, ci->params[3], 20);
-				lineDrawer.RestartSameColor();
+				lineDrawer.RestartWithColor(cmdColors.restore);
 				break;
 			}
 			case CMD_ATTACK:
@@ -1714,8 +1716,9 @@ void CBuilderCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 					lineDrawer.Break(endPos, color);
+					glColor4fv(color);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(color);
 				} else {
 					const int signedId = (int)ci->params[0];
 					if (signedId < 0) {
@@ -1753,8 +1756,9 @@ void CBuilderCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 					lineDrawer.Break(endPos, color);
+					glColor4fv(color);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(color);
 				} else {
 					if (ci->params.size() >= 1) {
 						const unsigned int uid = (unsigned int) ci->params[0];
@@ -1796,48 +1800,137 @@ void CBuilderCAI::DrawCommands(void)
 }
 
 
+
+// XXX move away from this class
 void CBuilderCAI::DrawQuedBuildingSquares(void)
 {
 	CCommandQueue::const_iterator ci;
+	// worst case - 2 squares per building (when underwater) - 8 vertices * 3 floats
+
+	int buildCommands = 0;
+	int underwaterCommands = 0;
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		if (buildOptions.find(ci->id) != buildOptions.end()) {
+			++buildCommands;
+			BuildInfo bi(*ci);
+			bi.pos = helper->Pos2BuildPos(bi);
+			if (bi.pos.y < 0.f)
+				++underwaterCommands;
+		}
+	}
+	std::vector<GLfloat> vertices_quads(buildCommands * 12);
+	std::vector<GLfloat> vertices_quads_uw(buildCommands * 12); // underwater
+	// 4 vertical lines
+	std::vector<GLfloat> vertices_lines(underwaterCommands * 24);
+	// colors for lines
+	std::vector<GLfloat> colors_lines(underwaterCommands * 48);
+
+	int quadcounter = 0;
+	int uwqcounter = 0;
+	int linecounter = 0;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		if (buildOptions.find(ci->id) != buildOptions.end()) {
 			BuildInfo bi(*ci);
 			bi.pos = helper->Pos2BuildPos(bi);
 			const float xsize = bi.GetXSize()*4;
 			const float zsize = bi.GetZSize()*4;
-			glBegin(GL_LINE_LOOP);
-			glVertexf3(bi.pos + float3(+xsize, 1, +zsize));
-			glVertexf3(bi.pos + float3(-xsize, 1, +zsize));
-			glVertexf3(bi.pos + float3(-xsize, 1, -zsize));
-			glVertexf3(bi.pos + float3(+xsize, 1, -zsize));
-			glEnd();
+
+			const float h = bi.pos.y;
+			const float x1 = bi.pos.x - xsize;
+			const float z1 = bi.pos.z - zsize;
+			const float x2 = bi.pos.x + xsize;
+			const float z2 = bi.pos.z + zsize;
+
+			vertices_quads[quadcounter + 0] = x1;
+			vertices_quads[quadcounter + 1] = h + 1;
+			vertices_quads[quadcounter + 2] = z1;
+			vertices_quads[quadcounter + 3] = x1;
+			vertices_quads[quadcounter + 4] = h + 1;
+			vertices_quads[quadcounter + 5] = z2;
+			vertices_quads[quadcounter + 6] = x2;
+			vertices_quads[quadcounter + 7] = h + 1;
+			vertices_quads[quadcounter + 8] = z2;
+			vertices_quads[quadcounter + 9] = x2;
+			vertices_quads[quadcounter +10] = h + 1;
+			vertices_quads[quadcounter +11] = z1;
+
+			quadcounter += 12;
+
 			if (bi.pos.y < 0.0f) {
-				const float s[4] = { 0.0f, 0.0f, 1.0f, 0.5f }; // start color
-				const float e[4] = { 0.0f, 0.5f, 1.0f, 1.0f }; // end color
+				const float col[8] = { 0.0f, 0.0f, 1.0f, 0.5f, // start color
+						       0.0f, 0.5f, 1.0f, 1.0f }; // end color
 
-				const float h = bi.pos.y;
-				const float x1 = bi.pos.x - xsize;
-				const float z1 = bi.pos.z - zsize;
-				const float x2 = bi.pos.x + xsize;
-				const float z2 = bi.pos.z + zsize;
+				vertices_quads_uw[uwqcounter + 0] = x1;
+				vertices_quads_uw[uwqcounter + 1] = 0.f;
+				vertices_quads_uw[uwqcounter + 2] = z1;
+				vertices_quads_uw[uwqcounter + 3] = x1;
+				vertices_quads_uw[uwqcounter + 4] = 0.f;
+				vertices_quads_uw[uwqcounter + 5] = z2;
+				vertices_quads_uw[uwqcounter + 6] = x2;
+				vertices_quads_uw[uwqcounter + 7] = 0.f;
+				vertices_quads_uw[uwqcounter + 8] = z2;
+				vertices_quads_uw[uwqcounter + 9] = x2;
+				vertices_quads_uw[uwqcounter +10] = 0.f;
+				vertices_quads_uw[uwqcounter +11] = z1;
 
-				glPushAttrib(GL_CURRENT_BIT);
-				glBegin(GL_LINES);
-				glColor4fv(s); glVertex3f(x1, h, z1); glColor4fv(e); glVertex3f(x1, 0.0f, z1);
-				glColor4fv(s); glVertex3f(x2, h, z1); glColor4fv(e); glVertex3f(x2, 0.0f, z1);
-				glColor4fv(s); glVertex3f(x1, h, z2); glColor4fv(e); glVertex3f(x1, 0.0f, z2);
-				glColor4fv(s); glVertex3f(x2, h, z2); glColor4fv(e); glVertex3f(x2, 0.0f, z2);
-				glEnd();
-				// using the last end color
-				glBegin(GL_LINE_LOOP);
-				glVertex3f(x1, 0.0f, z1);
-				glVertex3f(x1, 0.0f, z2);
-				glVertex3f(x2, 0.0f, z2);
-				glVertex3f(x2, 0.0f, z1);
-				glEnd();
-				glPopAttrib();
+				uwqcounter += 12;
+
+				for (int i = 0; i<4; ++i) {
+					std::copy(col, col + 8, colors_lines.begin() + linecounter * 2 + i * 8);
+				}
+
+				vertices_lines[linecounter + 0] = x1;
+				vertices_lines[linecounter + 1] = h;
+				vertices_lines[linecounter + 2] = z1;
+				vertices_lines[linecounter + 3] = x1;
+				vertices_lines[linecounter + 4] = 0;
+				vertices_lines[linecounter + 5] = z1;
+
+				vertices_lines[linecounter + 6] = x2;
+				vertices_lines[linecounter + 7] = h;
+				vertices_lines[linecounter + 8] = z1;
+				vertices_lines[linecounter + 9] = x2;
+				vertices_lines[linecounter +10] = 0;
+				vertices_lines[linecounter +11] = z1;
+
+				vertices_lines[linecounter +12] = x2;
+				vertices_lines[linecounter +13] = h;
+				vertices_lines[linecounter +14] = z2;
+				vertices_lines[linecounter +15] = x2;
+				vertices_lines[linecounter +16] = 0;
+				vertices_lines[linecounter +17] = z2;
+
+				vertices_lines[linecounter +18] = x1;
+				vertices_lines[linecounter +19] = h;
+				vertices_lines[linecounter +20] = z2;
+				vertices_lines[linecounter +21] = x1;
+				vertices_lines[linecounter +22] = 0;
+				vertices_lines[linecounter +23] = z2;
+
+				linecounter += 24;
 			}
 		}
+	}
+	if (quadcounter) {
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+		glVertexPointer(3, GL_FLOAT, 0, &vertices_quads[0]);
+		glDrawArrays(GL_QUADS, 0, quadcounter/3);
+
+		if (linecounter) {
+			glPushAttrib(GL_CURRENT_BIT);
+			glColor4f(0.0f, 0.5f, 1.0f, 1.0f); // same as end color of lines
+			glVertexPointer(3, GL_FLOAT, 0, &vertices_quads_uw[0]);
+			glDrawArrays(GL_QUADS, 0, uwqcounter/3);
+			glPopAttrib();
+
+			glEnableClientState(GL_COLOR_ARRAY);
+			glColorPointer(4, GL_FLOAT, 0, &colors_lines[0]);
+			glVertexPointer(3, GL_FLOAT, 0, &vertices_lines[0]);
+			glDrawArrays(GL_LINES, 0, linecounter/3);
+			glDisableClientState(GL_COLOR_ARRAY);
+		}
+		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 }
 

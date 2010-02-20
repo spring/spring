@@ -86,14 +86,6 @@ local options =
     def    = true,
   },
   {
-    key    = 'DiminishingMMs',
-    name   = 'Diminishing metal makers efficiency',
-    desc   = "Everytime a new metal maker will be built, the energy/metal efficiency ratio will decrease",
-    type   = 'bool',
-    def    = false,
-  },
-
-  {
     key    = 'FixedAllies',
     name   = 'Fixed ingame alliances',
     desc   = 'Disables the possibility of players to dynamically change alliances ingame',
