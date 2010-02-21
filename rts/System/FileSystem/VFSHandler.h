@@ -23,9 +23,9 @@ public:
 	 * Override determines whether if conflicts overwrites
 	 * an existing entry in the virtual filesystem or not
 	 */
-	bool AddArchive(const std::string& arName, bool override,
-	                const std::string& type = "");
-	bool AddMapArchiveWithDeps(const std::string& mapName, bool override, const std::string& type = "");
+	bool AddArchive(const std::string& arName, bool override, const std::string& type = "");
+	bool AddArchiveWithDeps(const std::string& mapName, bool override, const std::string& type = "");
+
 	/**
 	 * Returns true if the archive is not loaded,
 	 * so it may was not loaded in the first place or was unloaded
