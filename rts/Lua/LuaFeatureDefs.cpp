@@ -275,7 +275,7 @@ static int FeatureDefNewIndex(lua_State* L)
 
 static int FeatureDefMetatable(lua_State* L)
 {
-	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
+	/*const void* userData =*/ lua_touserdata(L, lua_upvalueindex(1));
 	//const FeatureDef* fd = (const FeatureDef*)userData;
 	return 0;
 }

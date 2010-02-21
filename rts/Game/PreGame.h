@@ -53,12 +53,6 @@ private:
 	/// receive network traffic
 	void UpdateClientNet();
 
-	/// Load map and dependend archives into archive scanner
-	void LoadMap(const std::string& mapName);
-	
-	/// Map all required archives depending on selected mod(s)
-	void LoadMod(const std::string& modName);
-
 	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	/**

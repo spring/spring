@@ -171,7 +171,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	// We must map the map into VFS this early, because server needs the start positions.
 	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
-	LoadMap(setup->mapName);
+	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
 
 	// Loading the start positions executes the map's Lua.
 	// This means start positions can NOT be influenced by map options.
@@ -347,39 +347,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	assert(gameServer);
 }
 
-void CPreGame::LoadMap(const std::string& mapName)
-{
-	static bool alreadyLoaded = false;
-
-	if (!alreadyLoaded)
-	{
-		vfsHandler->AddMapArchiveWithDeps(mapName, false);
-		alreadyLoaded = true;
-	}
-}
-
-
-void CPreGame::LoadMod(const std::string& modName)
-{
-	static bool alreadyLoaded = false;
-
-	if (!alreadyLoaded) {
-		// Map all required archives depending on selected mod(s)
-		std::string modArchive = archiveScanner->ArchiveFromName(modName);
-		vector<string> ars = archiveScanner->GetArchives(modArchive);
-		if (ars.empty()) {
-			throw content_error("Couldn't find any archives for mod '" + modName + "'");
-		}
-		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-
-			if (!vfsHandler->AddArchive(*i, false)) {
-				throw content_error("Couldn't load archive '" + *i + "' for mod '" + modName + "'.");
-			}
-		}
-		alreadyLoaded = true;
-	}
-}
-
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	ScopedOnceTimer startserver("Loading client data");
@@ -409,7 +376,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
 		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
-	LoadMap(gameSetup->mapName);
+	vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
 	archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 
 	// This MUST be loaded this late, since this executes map Lua code which
@@ -419,7 +386,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	}
 
 	LogObject() << "Using mod " << gameSetup->modName << "\n";
-	LoadMod(gameSetup->modName);
+	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
 	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
 	LogObject() << "Using mod archive " << modArchive << "\n";
 	archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
