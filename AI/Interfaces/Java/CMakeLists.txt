@@ -118,7 +118,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 	set(myBinJarFile    "${myJarFile}.jar")
 	set(mySrcJarFile    "${myJarFile}-src.jar")
 	set(myJLibDir       "${myDir}/data/jlib")
-	GetVersionFromFile(myVersion "${myDir}/VERSION")
+	GetVersionPlusDepFile(myVersion myVersionDepFile)
 	set(myTarget        "${myName}")
 	set(myInstLibsDir   "${SKIRMISH_AI_LIBS}/${myName}/${myVersion}")
 	set(myInstDataDir   "${SKIRMISH_AI_DATA}/${myName}/${myVersion}")
@@ -217,7 +217,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 				COMMENT
 					"  ${myTarget}: Running Maven ${MVN_PHASE} phase" VERBATIM
 				)
-			add_custom_target(${myTarget} ALL SOURCES "${myBuildDir}/${myBinJarFile}")
+			add_custom_target(${myTarget} ALL SOURCES "${myBuildDir}/${myBinJarFile}" ${myVersionDepFile})
 			add_dependencies(${myTarget} ${myDependTargets})
 		else  (configureMavenProject)
 			# If main Java package is "my.ai.pkg", this has to be set to "my".
@@ -236,7 +236,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			add_custom_target(${mySourceTarget}
 				SOURCES "${myBuildDir}/${mySrcJarFile}")
 
-			add_custom_target(${myTarget} ALL)
+			add_custom_target(${myTarget} ALL SOURCES ${myVersionDepFile})
 			add_dependencies(${myTarget} ${myBinaryTarget} ${mySourceTarget})
 
 			# Create our full Java class-path
@@ -400,7 +400,7 @@ endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS
 
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
-	GetVersionFromFile(myVersion ${myDir}/VERSION)
+	GetVersionPlusDepFile(myVersion myVersionDepFile)
 	set(myTarget      "${myName}-AIInterface")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
@@ -605,7 +605,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		include_directories(BEFORE ${MINGWLIBS}/include/java)
 	endif (MINGW)
 	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
-	add_library(${myTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${CUtils_SRC})
+	add_library(${myTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${CUtils_SRC} ${myVersionDepFile})
 	target_link_libraries(${myTarget} streflop)
 	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")

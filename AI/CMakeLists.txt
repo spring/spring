@@ -85,6 +85,25 @@ macro    (GetVersionFromFile vers_var vers_file)
 endmacro (GetVersionFromFile vers_var vers_file)
 
 
+# Gets the version from a text file (${CMAKE_CURRENT_SOURCE_DIR}/VERSION),
+# and prepare a file for dependency tracking.
+# The project will reconfigure whenever the VERSION file gets touched.
+macro    (GetVersionPlusDepFile vers_var versDepFile_var)
+	set(myVersionFile    "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+	set(myVersionDepFile "${CMAKE_CURRENT_BINARY_DIR}/VERSION")
+	if    (EXISTS ${myVersionFile})
+		GetVersionFromFile(${vers_var} "${myVersionFile}")
+		configure_file("${myVersionFile}" "${myVersionDepFile}" COPYONLY)
+		set_source_files_properties("${myVersionDepFile}" PROPERTIES HEADER_FILE_ONLY TRUE)
+		set_source_files_properties("${myVersionDepFile}" PROPERTIES GENERATED TRUE)
+		set(${versDepFile_var} "${myVersionDepFile}")
+	else  (EXISTS ${myVersionFile})
+		set(${vers_var}        "UNKNOWN_VERSION")
+		set(${versDepFile_var} "${myVersionFile}")
+	endif (EXISTS ${myVersionFile})
+endmacro (GetVersionPlusDepFile vers_var versDepFile_var)
+
+
 # Returns the name of the dir or file specified by a path.
 # example: "/A/B/C" -> "C"
 macro    (GetLastPathPart part_var dir)
