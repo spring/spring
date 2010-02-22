@@ -607,9 +607,10 @@ const UnitDef* CAICallback::GetUnitDef(const char* unitName)
 {
 	return unitDefHandler->GetUnitDefByName(unitName);
 }
-const UnitDef* CAICallback::GetUnitDefById (int unitDefId)
+const UnitDef* CAICallback::GetUnitDefById(int unitDefId)
 {
-	return unitDefHandler->GetUnitDefByID(unitDefId);
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
 }
 
 float3 CAICallback::GetUnitPos(int unitId)
@@ -1325,7 +1326,8 @@ const FeatureDef* CAICallback::GetFeatureDef(int featureId)
 }
 const FeatureDef* CAICallback::GetFeatureDefById(int featureDefId)
 {
-	return featureHandler->GetFeatureDefByID(featureDefId);
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
 }
 
 float CAICallback::GetFeatureHealth(int featureId)
@@ -1472,19 +1474,16 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			SendStartPos(((AIHCSendStartPos *)data)->ready,((AIHCSendStartPos *)data)->pos);
 			return 1;
 		case AIHCGetUnitDefByIdId: {
-			AIHCGetUnitDefById* cmdData = (AIHCGetUnitDefById*) data;
-			cmdData->ret = GetUnitDefById(cmdData->unitDefId);
-			return 1;
+			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
+			return 0;
 		}
 		case AIHCGetWeaponDefByIdId: {
-			AIHCGetWeaponDefById* cmdData = (AIHCGetWeaponDefById*) data;
-			cmdData->ret = GetWeaponDefById(cmdData->weaponDefId);
-			return 1;
+			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
+			return 0;
 		}
 		case AIHCGetFeatureDefByIdId: {
-			AIHCGetFeatureDefById* cmdData = (AIHCGetFeatureDefById*) data;
-			cmdData->ret = GetFeatureDefById(cmdData->featureDefId);
-			return 1;
+			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
+			return 0;
 		}
 
 		case AIHCTraceRayId: {
@@ -1800,7 +1799,8 @@ const WeaponDef* CAICallback::GetWeapon(const char* weaponName)
 }
 const WeaponDef* CAICallback::GetWeaponDefById(int weaponDefId)
 {
-	return weaponDefHandler->GetWeaponById(weaponDefId);
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
 }
 
 
