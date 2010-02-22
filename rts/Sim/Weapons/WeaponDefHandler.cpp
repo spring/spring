@@ -378,11 +378,13 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	// get some weapon specific defaults
 	if (wd.type == "Cannon") {
 		// CExplosiveProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+
 		wd.visuals.texture1 = &ph->plasmatex;
 		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(1.0f,0.5f,0.0f));
 		wd.intensity = wdTable.GetFloat("intensity", 0.2f);
 	} else if (wd.type == "Rifle") {
-		// ...
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 	} else if (wd.type == "Melee") {
 		// ...
 	} else if (wd.type == "AircraftBomb") {
@@ -392,6 +394,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.visuals.texture1 = &ph->perlintex;
 	} else if (wd.type == "Flame") {
 		// CFlameProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
+
 		wd.visuals.texture1 = &ph->flametex;
 		wd.size          = wdTable.GetFloat("size",      tempsize);
 		wd.sizeGrowth    = wdTable.GetFloat("sizeGrowth",    0.5f);
@@ -406,6 +410,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	} else if (wd.type == "MissileLauncher") {
 		// CMissileProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		wd.visuals.texture1 = &ph->missileflaretex;
 		wd.visuals.texture2 = &ph->missiletrailtex;
 	} else if (wd.type == "TorpedoLauncher") {
@@ -413,11 +418,15 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.visuals.texture1 = &ph->plasmatex;
 	} else if (wd.type == "LaserCannon") {
 		// CLaserProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+
 		wd.visuals.texture1 = &ph->laserfallofftex;
 		wd.visuals.texture2 = &ph->laserendtex;
 		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
 		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
 	} else if (wd.type == "BeamLaser") {
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+
 		if (wd.largeBeamLaser) {
 			wd.visuals.texture1 = ph->textureAtlas->GetTexturePtr("largebeam");
 			wd.visuals.texture2 = &ph->laserendtex;
@@ -429,26 +438,36 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 			wd.visuals.texture3 = &ph->beamlaserflaretex;
 		}
 	} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+
 		wd.type = "LightningCannon";
 		wd.visuals.texture1 = &ph->laserfallofftex;
 		wd.thickness = wdTable.GetFloat("thickness", 0.8f);
 	} else if (wd.type == "EmgCannon") {
 		// CEmgProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+
 		wd.visuals.texture1 = &ph->plasmatex;
 		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f));
 		wd.size = wdTable.GetFloat("size", 3.0f);
 	} else if (wd.type == "DGun") {
 		// CFireBallProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		wd.collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
 	} else if (wd.type == "StarburstLauncher") {
 		// CStarburstProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+
 		wd.visuals.texture1 = &ph->sbflaretex;
 		wd.visuals.texture2 = &ph->sbtrailtex;
 		wd.visuals.texture3 = &ph->explotex;
 	} else {
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+
 		wd.visuals.texture1 = &ph->plasmatex;
 		wd.visuals.texture2 = &ph->plasmatex;
 	}
+
 
 	// FIXME -- remove the 'textureN' format?
 	LuaTable texTable = wdTable.SubTable("textures");

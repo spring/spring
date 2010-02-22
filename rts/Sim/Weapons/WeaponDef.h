@@ -36,6 +36,7 @@ struct WeaponDef
 	float accuracy;            // inaccuracy of whole burst
 	float sprayAngle;          // inaccuracy of individual shots inside burst
 	float movingAccuracy;      // inaccuracy while owner moving
+	float ownerExpAccWeight;   // if 0, accuracy is not increased with owner experience (max. 1)
 	float targetMoveError;     // fraction of targets move speed that is used as error offset
 	float leadLimit;           // maximum distance the weapon will lead the target
 	float leadBonus;           // factor for increasing the leadLimit with experience
