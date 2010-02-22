@@ -1785,7 +1785,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	S3OCurShader->Disable();
 		unitDrawer->UnitDrawingTexturesOff();
 
-		// first stage stage: wireframe model
+		// first stage: wireframe model
 		//
 		// Both clip planes move up. Clip plane 0 is the upper bound of the model,
 		// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
