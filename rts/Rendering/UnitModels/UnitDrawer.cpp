@@ -1773,78 +1773,74 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glEnable(GL_CLIP_PLANE1);
 
 	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
-	float3 fc;// fc := frame color
-	if (!gu->teamNanospray) {
-		fc = unit->unitDef->nanoColor;
-	}
-	else {
-		const unsigned char* tcol = teamHandler->Team(unit->team)->color;
-		fc = float3(tcol[0] * (1.0f / 255.0f),
-								tcol[1] * (1.0f / 255.0f),
-								tcol[2] * (1.0f / 255.0f));
-	}
+	const unsigned char* tcol = teamHandler->Team(unit->team)->color;
+	// frame line-color
+	const float3 fc = (!gu->teamNanospray)?
+		unit->unitDef->nanoColor:
+		float3(tcol[0] / 255.0f, tcol[1] / 255.0f, tcol[2] / 255.0f);
+
 	glColorf3(fc * col);
 
-	unitDrawer->UnitDrawingTexturesOff();
+	//! render wireframe with FFP
+	S3OCurShader->Disable();
+		unitDrawer->UnitDrawingTexturesOff();
 
-	// Wireframe model
+		// first stage stage: wireframe model
+		//
+		// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+		// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+		// wireframe/flat color/texture appear, and clip plane 1 then erases the
+		// wireframe/flat color laten on.
 
-	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
-	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
-	// wireframe/flat color/texture appear, and clip plane 1 then erases the
-	// wireframe/flat color laten on.
-
-	const double plane0[4] = {0, -1, 0, start + height * unit->buildProgress * 3};
-	glClipPlane(GL_CLIP_PLANE0, plane0);
-	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
-	glClipPlane(GL_CLIP_PLANE1, plane1);
-
-	if (!gu->atiHacks) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	} else {
-		//! some ATi mobility cards/drivers dont like clipping wireframes...
-		glDisable(GL_CLIP_PLANE0);
-		glDisable(GL_CLIP_PLANE1);
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-		glEnable(GL_CLIP_PLANE0);
-		glEnable(GL_CLIP_PLANE1);
-	}
-
-	// Flat colored model
-
-	if (unit->buildProgress > 0.33f) {
-		glColorf3(fc * (1.5f - col));
-		const double plane0[4] = {0, -1, 0, start + height * (unit->buildProgress * 3 - 1)};
+		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress *      3)};
+		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 10 - 9)};
 		glClipPlane(GL_CLIP_PLANE0, plane0);
-		const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 3 - 2)};
 		glClipPlane(GL_CLIP_PLANE1, plane1);
 
-		DrawUnitModel(unit);
-	}
+		if (!gu->atiHacks) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			DrawUnitModel(unit);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		} else {
+			//! some ATi mobility cards/drivers dont like clipping wireframes...
+			glDisable(GL_CLIP_PLANE0);
+			glDisable(GL_CLIP_PLANE1);
 
-	glDisable(GL_CLIP_PLANE1);
-	unitDrawer->UnitDrawingTexturesOn();
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			DrawUnitModel(unit);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	// Texturemapped model
+			glEnable(GL_CLIP_PLANE0);
+			glEnable(GL_CLIP_PLANE1);
+		}
 
+		// Flat-colored model
+		if (unit->buildProgress > 0.33f) {
+			glColorf3(fc * (1.5f - col));
+			const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
+			const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
+			glClipPlane(GL_CLIP_PLANE0, plane0);
+			glClipPlane(GL_CLIP_PLANE1, plane1);
+
+			DrawUnitModel(unit);
+		}
+
+		glDisable(GL_CLIP_PLANE1);
+		unitDrawer->UnitDrawingTexturesOn();
+	S3OCurShader->Enable();
+
+	// second stage: texture-mapped model
+	//
 	// XXX FIXME
 	// ATI has issues with textures, clip planes and shader programs at once - very low performance
-	// FIXME: This may work now I added OPTION ARB_position_invariant to the programs.
+	// FIXME: This may work now I added OPTION ARB_position_invariant to the ARB programs.
 	if (unit->buildProgress > 0.66f) {
 		if (gu->atiHacks) {
 			glDisable(GL_CLIP_PLANE0);
 
 			glPolygonOffset(1.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
-
-			DrawUnitModel(unit);
-
+				DrawUnitModel(unit);
 			glDisable(GL_POLYGON_OFFSET_FILL);
 		} else {
 			const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
@@ -1852,15 +1848,13 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 			glPolygonOffset(1.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
-
-			DrawUnitModel(unit);
-
+				DrawUnitModel(unit);
 			glDisable(GL_POLYGON_OFFSET_FILL);
 		}
 	}
-	glDisable(GL_CLIP_PLANE0);
 
-	glColor4f(1,1,1,1);
+	glDisable(GL_CLIP_PLANE0);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 
