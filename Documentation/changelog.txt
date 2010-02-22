@@ -40,7 +40,7 @@ Lua Unit Scripts:
  - Slightly improved AimWeapon/AimShield/Killed error messages
 
 AIs:
- - E323AI 3.18.0
+ - E323AI 3.18.1
  - AAI: Doesn't use minkowski metric for retreat distances anymore
  - AAI: Fixed some NaNs
 
