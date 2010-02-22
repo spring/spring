@@ -38,13 +38,15 @@ void CDGunWeapon::Update(void)
 void CDGunWeapon::FireImpl()
 {
 	float3 dir;
-	if(onlyForward){
-		dir=owner->frontdir;
+	if (onlyForward) {
+		dir = owner->frontdir;
 	} else {
-		dir=targetPos-weaponMuzzlePos;
-		dir.Normalize();
+		dir = (targetPos - weaponMuzzlePos).Normalize();
 	}
-	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
+
+	dir +=
+		((gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
 	new CFireBallProjectile(weaponMuzzlePos, dir * projectileSpeed, owner, 0, targetPos, weaponDef);

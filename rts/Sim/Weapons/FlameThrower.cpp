@@ -26,10 +26,11 @@ CFlameThrower::~CFlameThrower(void)
 
 void CFlameThrower::FireImpl(void)
 {
-	float3 dir=targetPos-weaponMuzzlePos;
-	dir.Normalize();
-	float3 spread=(gs->randVector()*sprayAngle+salvoError)*0.2f;
-	spread-=dir*0.001f;
+	const float3 dir = (targetPos - weaponMuzzlePos).Normalize();
+	const float3 spread =
+		((gs->randVector() * sprayAngle + salvoError) *
+		weaponDef->ownerExpAccWeight) -
+		(dir * 0.001f);
 
 	new CFlameProjectile(weaponMuzzlePos, dir * projectileSpeed,
 		spread, owner, weaponDef, (int) (range / projectileSpeed * weaponDef->duration));
@@ -57,7 +58,7 @@ bool CFlameThrower::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 
 	dir /= length;
 
-	float g = ground->LineGroundCol(weaponMuzzlePos, pos);
+	const float g = ground->LineGroundCol(weaponMuzzlePos, pos);
 	if (g > 0 && g < length * 0.9f)
 		return false;
 

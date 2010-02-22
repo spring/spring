@@ -88,7 +88,9 @@ void CLightningCannon::FireImpl()
 {
 	float3 dir = targetPos - weaponMuzzlePos;
 	dir.ANormalize();
-	dir += (gs->randVector() * sprayAngle + salvoError) * (1.0f - owner->limExperience * 0.5f);
+	dir +=
+		(gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.ANormalize();
 
 	const CUnit* cu = 0;
@@ -167,8 +169,4 @@ void CLightningCannon::FireImpl()
 void CLightningCannon::SlowUpdate(void)
 {
 	CWeapon::SlowUpdate();
-	//We don't do hardcoded inaccuracies, use targetMoveError if you want inaccuracy!
-//	if(targetType==Target_Unit){
-//		predict=(gs->randFloat()-0.5f)*20*range/weaponPos.distance(targetUnit->midPos)*(1.2f-owner->limExperience);		//make the weapon somewhat less effecient against aircrafts hopefully
-//	}
 }

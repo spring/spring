@@ -62,7 +62,9 @@ void CMissileLauncher::FireImpl()
 		}
 	}
 
-	dir += (gs->randVector() * sprayAngle + salvoError) * (1 - owner->limExperience * 0.5f);
+	dir +=
+		((gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;

@@ -61,11 +61,13 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 
 	dir /= length;
 
-	float g = ground->LineGroundCol(weaponMuzzlePos, pos);
+	const float g = ground->LineGroundCol(weaponMuzzlePos, pos);
 	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.5f);
+	const float spread =
+		(accuracy + sprayAngle) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
@@ -88,20 +90,19 @@ void CEmgCannon::Init(void)
 void CEmgCannon::FireImpl()
 {
 	float3 dir;
-	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
-		dir=owner->frontdir;
+	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
+		// the taairmovetype cant align itself properly, change back when that is fixed
+		dir = owner->frontdir;
 	} else {
-		dir=targetPos-weaponMuzzlePos;
-		dir.Normalize();
+		dir = (targetPos - weaponMuzzlePos).Normalize();
 	}
-	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
+
+	dir +=
+		((gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
 	new CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->visuals.color, weaponDef->intensity, (int) (range / projectileSpeed),
 		weaponDef);
 }
-
-
-
-

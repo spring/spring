@@ -67,11 +67,13 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 
 	dir /= length;
 
-	float g = ground->LineGroundCol(weaponMuzzlePos, pos);
+	const float g = ground->LineGroundCol(weaponMuzzlePos, pos);
 	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.9f);
+	const float spread =
+		(accuracy + sprayAngle) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
 	if (helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
 		// note: check avoidFriendly?
@@ -86,10 +88,12 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 
 void CRifle::FireImpl()
 {
-	float3 dir=targetPos-weaponMuzzlePos;
+	float3 dir = (targetPos - weaponMuzzlePos).Normalize();
+	dir +=
+		((gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
-	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.9f);
-	dir.Normalize();
+
 	const CUnit* hit;
 	float length=helper->TraceRay(weaponMuzzlePos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
 	if (hit) {

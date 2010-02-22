@@ -135,8 +135,10 @@ bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 		return false;
 	}
 
-	float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
-	float spread = (accuracy + sprayAngle) * 0.6f * (1 - owner->limExperience * 0.9f) * 0.9f;
+	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
+	const float spread =
+		((accuracy + sprayAngle) * 0.6f) *
+		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
 
 	if (avoidFriendly && helper->TestTrajectoryAllyCone(weaponMuzzlePos, flatdir,
 		flatlength - 30, dir.y, quadratic, spread, 3, owner->allyteam, owner)) {
@@ -153,9 +155,11 @@ bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 
 void CCannon::FireImpl(void)
 {
-	float3 diff = targetPos-weaponMuzzlePos;
-	float3 dir=(diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; //prevent vertical aim when emit-sfx firing the weapon
-	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.9f);
+	float3 diff = targetPos - weaponMuzzlePos;
+	float3 dir = (diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
+	dir += 
+		(gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.Normalize();
 
 	int ttl = 0;

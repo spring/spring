@@ -49,15 +49,18 @@ void CStarburstLauncher::FireImpl()
 	} else {
 		maxrange = (float)range;
 	}
-	float3 aimError((gs->randVector()*sprayAngle + salvoError)*(1-owner->limExperience*0.7f));
+
+	const float3 aimError =
+		(gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
 	CStarburstProjectile* p =
 		new CStarburstProjectile(weaponMuzzlePos + float3(0, 2, 0), speed, owner,
 		targetPos, areaOfEffect, projectileSpeed, tracking, (int) uptime, targetUnit,
 		weaponDef, interceptTarget, maxrange, aimError);
 
-	if(weaponDef->targetable)
-		interceptHandler.AddInterceptTarget(p,targetPos);
+	if (weaponDef->targetable)
+		interceptHandler.AddInterceptTarget(p, targetPos);
 }
 
 bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
