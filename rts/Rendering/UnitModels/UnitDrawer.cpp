@@ -1782,52 +1782,58 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glColorf3(fc * col);
 
 	//! render wireframe with FFP
-	S3OCurShader->Disable();
-		unitDrawer->UnitDrawingTexturesOff();
+	if (advShading && !water->drawReflection) {
+		S3OCurShader->Disable();
+	}
 
-		// first stage: wireframe model
-		//
-		// Both clip planes move up. Clip plane 0 is the upper bound of the model,
-		// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
-		// wireframe/flat color/texture appear, and clip plane 1 then erases the
-		// wireframe/flat color laten on.
+	unitDrawer->UnitDrawingTexturesOff();
 
-		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress *      3)};
-		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 10 - 9)};
+	// first stage: wireframe model
+	//
+	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+	// wireframe/flat color/texture appear, and clip plane 1 then erases the
+	// wireframe/flat color laten on.
+
+	const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress *      3)};
+	const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 10 - 9)};
+	glClipPlane(GL_CLIP_PLANE0, plane0);
+	glClipPlane(GL_CLIP_PLANE1, plane1);
+
+	if (!gu->atiHacks) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		DrawUnitModel(unit);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	} else {
+		//! some ATi mobility cards/drivers dont like clipping wireframes...
+		glDisable(GL_CLIP_PLANE0);
+		glDisable(GL_CLIP_PLANE1);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		DrawUnitModel(unit);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		glEnable(GL_CLIP_PLANE0);
+		glEnable(GL_CLIP_PLANE1);
+	}
+
+	// Flat-colored model
+	if (unit->buildProgress > 0.33f) {
+		glColorf3(fc * (1.5f - col));
+		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
+		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
 		glClipPlane(GL_CLIP_PLANE0, plane0);
 		glClipPlane(GL_CLIP_PLANE1, plane1);
 
-		if (!gu->atiHacks) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			DrawUnitModel(unit);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		} else {
-			//! some ATi mobility cards/drivers dont like clipping wireframes...
-			glDisable(GL_CLIP_PLANE0);
-			glDisable(GL_CLIP_PLANE1);
+		DrawUnitModel(unit);
+	}
 
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			DrawUnitModel(unit);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDisable(GL_CLIP_PLANE1);
+	unitDrawer->UnitDrawingTexturesOn();
 
-			glEnable(GL_CLIP_PLANE0);
-			glEnable(GL_CLIP_PLANE1);
-		}
-
-		// Flat-colored model
-		if (unit->buildProgress > 0.33f) {
-			glColorf3(fc * (1.5f - col));
-			const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
-			const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
-			glClipPlane(GL_CLIP_PLANE0, plane0);
-			glClipPlane(GL_CLIP_PLANE1, plane1);
-
-			DrawUnitModel(unit);
-		}
-
-		glDisable(GL_CLIP_PLANE1);
-		unitDrawer->UnitDrawingTexturesOn();
-	S3OCurShader->Enable();
+	if (advShading && !water->drawReflection) {
+		S3OCurShader->Enable();
+	}
 
 	// second stage: texture-mapped model
 	//
