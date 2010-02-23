@@ -2975,7 +2975,7 @@ bool CGame::DrawWorld()
 			float3 (0.f, 1.f, -1.f),
 		};
 		glVertexPointer(3, GL_FLOAT, 0, verts);
-		glDrawArrays(GL_QUADS, 0, 10);
+		glDrawArrays(GL_QUADS, 0, 4);
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
