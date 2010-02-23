@@ -2964,25 +2964,21 @@ bool CGame::DrawWorld()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLoadIdentity();
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
 	// underwater overlay, part 2
 	if (camera->pos.y < 0.0f) {
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
 		float3 verts[] = {
-			float3 (-1.f, -1.f, -1.f),
-			float3 (1.f, -1.f, -1.f),
+			float3 (0.f, 0.f, -1.f),
+			float3 (1.f, 0.f, -1.f),
 			float3 (1.f, 1.f, -1.f),
-			float3 (-1.f, 1.f, -1.f),
+			float3 (0.f, 1.f, -1.f),
 		};
 		glVertexPointer(3, GL_FLOAT, 0, verts);
 		glDrawArrays(GL_QUADS, 0, 10);
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
-
 
 	return true;
 }
