@@ -9,7 +9,7 @@
 #include <shlwapi.h>
 #include "System/Platform/Win/WinVersion.h"
 
-#elif MACOSX_BUNDLE
+#elif __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
 #include <mach-o/dyld.h>
@@ -50,7 +50,7 @@ std::string GetBinaryPath()
 	{
 		char pathReal[PATH_MAX];
 		realpath(path, pathReal);
-		procExeFilePath = std::string(pathReal);
+		return std::string(pathReal);
 	}
 #else
 	return "";
