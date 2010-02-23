@@ -9,11 +9,13 @@
 #include "OggStream.h"
 #include "ALShared.h"
 #include "float3.h"
+#include "Util.h"
 #include "LogOutput.h"
 
 float SoundSource::globalPitch = 1.0;
 float SoundSource::heightAdjustedRolloffModifier = 1.0;
 float SoundSource::referenceDistance = 200.0f;
+float SoundSource::airAbsorption = 0.0f;
 
 struct SoundSource::StreamControl
 {
@@ -144,6 +146,9 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, item->GetGain() * volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
+	if (airAbsorption > 0.0f) {
+		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, airAbsorption);
+	}
 	velocity *= item->dopplerScale;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	if (item->loopTime > 0)
@@ -271,5 +276,34 @@ void SoundSource::SetVolume(float newVol)
 	if (curStream && curStream->current)
 	{
 		alSourcef(id, AL_GAIN, newVol * curStream->current->volume);
+	}
+}
+
+void SoundSource::SetAirAbsorption(float factor)
+{
+	// check if we can use air absorption
+	std::string noAirAbsorpReason = "";
+	if (!alcIsExtensionPresent(NULL, "ALC_EXT_EFX"))
+	{
+		noAirAbsorpReason = "ALC_EXT_EFX not supported";
+	}
+	else if (factor <= AL_MIN_AIR_ABSORPTION_FACTOR)
+	{
+		noAirAbsorpReason = "absorption value (" + FloatToString(factor) + ") <= minimum (" + FloatToString(AL_MIN_AIR_ABSORPTION_FACTOR) + ")";
+	}
+	else if (factor > AL_MAX_AIR_ABSORPTION_FACTOR)
+	{
+		noAirAbsorpReason = "absorption value (" + FloatToString(factor) + ") > maximum (" + FloatToString(AL_MAX_AIR_ABSORPTION_FACTOR) + ")";
+	}
+
+	if (noAirAbsorpReason.empty())
+	{
+		airAbsorption = factor;
+		LogObject(LOG_SOUND) << "air absorption enabled, value: " << airAbsorption;
+	}
+	else
+	{
+		airAbsorption = 0.0f;
+		LogObject(LOG_SOUND) << "air absorption disabled, reason: " << noAirAbsorpReason;
 	}
 }
