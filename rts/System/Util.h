@@ -55,6 +55,13 @@ static inline std::string IntToString(int i, const std::string& format = "%i")
 	return std::string(buf);
 }
 
+static inline std::string FloatToString(float f, const std::string& format = "%f")
+{
+	char buf[64];
+	SNPRINTF(buf, sizeof(buf), format.c_str(), f);
+	return std::string(buf);
+}
+
 /**
  * @brief Safely delete object by first setting pointer to NULL and then deleting.
  * This way it is guaranteed other objects can not access the object through the
