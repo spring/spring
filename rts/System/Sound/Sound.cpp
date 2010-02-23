@@ -309,6 +309,8 @@ void CSound::StartThread(int maxSounds)
 				}
 			}
 
+			SoundSource::SetAirAbsorption(0.1f);
+
 			// Generate sound sources
 			for (int i = 0; i < maxSounds; i++)
 			{
