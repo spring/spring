@@ -28,12 +28,16 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod", NoModSelect);
+	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMod)) == 0)
+		userMod = NoModSelect;
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
 	map = new agui::Button("Select", mapL);
 	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap", NoMapSelect);
+	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMap)) == 0)
+		userMap = NoMapSelect;
 	mapT = new agui::TextElement(userMap, mapL);
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
 	script = new agui::Button("Select", scriptL);
