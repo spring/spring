@@ -1,10 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file byteorder.h
  * @brief byte order handling
- * @author Christopher Han <xiphux@gmail.com>
- *
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
  *
  * Mac   PPC: BIG    Endian
  * Mac   X86: little Endian
@@ -17,6 +14,7 @@
  * Um... all x86 machines are little endian.
  * - cfh
  */
+
 #ifndef BYTEORDER_H
 #define BYTEORDER_H
 

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef CONSOLE_HISTORY_H
 #define CONSOLE_HISTORY_H
-// ConsoleHistory.h: interface for the CConsoleHistory class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <list>

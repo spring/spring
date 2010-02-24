@@ -1,4 +1,6 @@
-//Modified DDS class from NVIDIA SDK.
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+// Modified DDS class from NVIDIA SDK.
 
 #ifndef __NV_DDS_H__
 #define __NV_DDS_H__

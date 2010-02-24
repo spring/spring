@@ -1,6 +1,4 @@
-// DrawTree.h: interface for the CDrawTree class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __ADV_TREE_GENERATOR_H__
 #define __ADV_TREE_GENERATOR_H__

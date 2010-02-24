@@ -1,3 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _SMF3_GROUND_DRAWER_H_
+#define _SMF3_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
 #include "terrain/TerrainBase.h"
@@ -31,3 +35,6 @@ protected:
 
 	friend class CSm3ReadMap;
 };
+
+#endif // _SMF3_GROUND_DRAWER_H_
+

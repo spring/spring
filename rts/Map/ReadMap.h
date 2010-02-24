@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef READMAP_H
 #define READMAP_H
-// ReadMap.h: interface for the CReadMap class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Rendering/GL/myGL.h"
 #include "creg/creg_cond.h"

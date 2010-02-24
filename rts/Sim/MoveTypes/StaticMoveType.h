@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef STATICMOVETYPE_H
 #define STATICMOVETYPE_H
 
@@ -16,6 +18,5 @@ public:
 	virtual void Update(){};
 	void SlowUpdate();
 };
-
 
 #endif // STATICMOVETYPE_H

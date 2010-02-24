@@ -1,7 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaMaterial.cpp: implementation of the CLuaMaterial class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <string>
 #include <vector>
@@ -9,8 +9,6 @@
 
 using std::string;
 using std::vector;
-
-#include "mmgr.h"
 
 #include "LuaMaterial.h"
 

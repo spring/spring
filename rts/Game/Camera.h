@@ -1,6 +1,4 @@
-// camera->h: interface for the CCamera class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __CAMERA_H__
 #define __CAMERA_H__

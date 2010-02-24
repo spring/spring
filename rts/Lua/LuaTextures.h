@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_TEXTURES_H
 #define LUA_TEXTURES_H
-// LuaTextures.h: interface for the LuaTextures class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <map>

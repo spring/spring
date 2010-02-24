@@ -1,16 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// HeightMapTexture.cpp: implementation of the HeightMapTexture class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "mmgr.h"
 
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
 #include "ConfigHandler.h"
-
-/******************************************************************************/
-/******************************************************************************/
 
 
 HeightMapTexture heightMapTexture;
@@ -97,6 +93,3 @@ void HeightMapTexture::UpdateArea(int x0, int z0, int x1, int z1)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-
-/******************************************************************************/
-/******************************************************************************/

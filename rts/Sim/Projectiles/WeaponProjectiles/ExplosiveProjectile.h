@@ -1,6 +1,4 @@
-// ExplosiveProjectile.h: interface for the CExplosiveProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __EXPLOSIVE_PROJECTILE_H__
 #define __EXPLOSIVE_PROJECTILE_H__

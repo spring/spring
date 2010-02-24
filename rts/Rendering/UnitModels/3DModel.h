@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _3DMODEL_H
 #define _3DMODEL_H
 
@@ -35,7 +37,7 @@ struct S3DModelPiece {
 	// defaults to a box
 	CollisionVolume* colvol;
 
-	//todo: add float3 orientation;
+	// TODO: add float3 orientation;
 
 	virtual ~S3DModelPiece();
 	virtual const float3& GetVertexPos(const int& idx) const = 0;

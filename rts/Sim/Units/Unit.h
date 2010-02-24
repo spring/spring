@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNIT_H
 #define UNIT_H
-// Unit.h: interface for the CUnit class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <vector>

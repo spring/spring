@@ -1,6 +1,4 @@
-/* Author: Tobi Vollebregt */
-
-/* based on code from GlobalSynced.{cpp,h} */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "TeamHandler.h"
@@ -15,8 +13,6 @@
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
-//#include "ExternalAI/SkirmishAIData.h"
-//#include "ExternalAI/IAILibraryManager.h"
 
 CR_BIND(CTeamHandler, );
 

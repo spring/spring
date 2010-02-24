@@ -1,6 +1,4 @@
-// Sky.h: interface for the CSky class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __BASIC_SKY_H__
 #define __BASIC_SKY_H__

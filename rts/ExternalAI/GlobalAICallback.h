@@ -1,5 +1,7 @@
-#ifndef _GLOBALAICALLBACK_H
-#define _GLOBALAICALLBACK_H
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _GLOBAL_AI_CALLBACK_H_
+#define _GLOBAL_AI_CALLBACK_H_
 
 #include "IGlobalAICallback.h"
 
@@ -25,4 +27,4 @@ public:
 	virtual IAICallback* GetAICallback();
 };
 
-#endif /* _GLOBALAICALLBACK_H */
+#endif // _GLOBAL_AI_CALLBACK_H_

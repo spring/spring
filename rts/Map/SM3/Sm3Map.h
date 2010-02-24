@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SM3_MAP_H
 #define SM3_MAP_H
 
@@ -79,6 +81,5 @@ protected:
 
 	Frustum tmpFrustum;
 };
-
 
 #endif

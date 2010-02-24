@@ -1,13 +1,9 @@
-//
-//  Implemented in IconHandler.cpp
-//
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef ICON_H
 #define ICON_H
 
-
 class CIconData;
-
 
 class CIcon {
 
@@ -26,6 +22,5 @@ class CIcon {
 	private:
 		CIconData* data;
 };
-
 
 #endif // ICON_H

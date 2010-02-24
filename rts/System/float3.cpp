@@ -1,9 +1,4 @@
-/**
- * @file float3.cpp
- * @brief float3 source
- *
- * Implementation of float3 class
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "float3.h"
 #include "Vec2.h"

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef EVENT_HANDLER_H
 #define EVENT_HANDLER_H
-// EventHandler.h: interface for the CEventHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef WORLDOBJECT_H
 #define WORLDOBJECT_H
-// WorldObject.h: interface for the CWorldObject class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Object.h"
 #include "float3.h"

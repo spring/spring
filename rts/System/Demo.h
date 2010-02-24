@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _DEMO_H
 #define _DEMO_H
 
@@ -21,5 +23,5 @@ protected:
 	std::string demoName;
 };
 
+#endif // _DEMO_H
 
-#endif
