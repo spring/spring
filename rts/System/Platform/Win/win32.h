@@ -1,10 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef WINDOWS_H_INCLUDED
 #define WINDOWS_H_INCLUDED
 
 	#ifdef _WIN32
-  #ifndef NOMINMAX
-  #define NOMINMAX
-  #endif
+	#ifndef NOMINMAX
+	#define NOMINMAX
+	#endif
 	#include <windows.h>
 
 		#undef  PlaySound

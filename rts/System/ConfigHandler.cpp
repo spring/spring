@@ -1,12 +1,5 @@
-/**
- * @file ConfigHandler.cpp
- * @brief config implementation
- * @author Christopher Han <xiphux@gmail.com>
- *
- * Implementation of config structure class
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "ConfigHandler.h"
 

@@ -1,5 +1,8 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TDF_GRAMMAR_HPP_INCLUDED
-#define TDF_GRAMMAR_HPP_INCLUDED 
+#define TDF_GRAMMAR_HPP_INCLUDED
+
 #include <map>
 #include <list>
 #include <iostream>
@@ -45,7 +48,7 @@ public:
 
 /**
  * \name Actor functions
- * uese these two functions to create a semantic action with ostream_actor. 
+ * use these two functions to create a semantic action with ostream_actor. 
  * \{
  */
 inline ostream_actor ostream_a( std::string const& prefix, std::ostream & ref, std::string const& suffix ="" ) 

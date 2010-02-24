@@ -1,6 +1,5 @@
-// TimeProfiler.cpp: implementation of the CTimeProfiler class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "TimeProfiler.h"
 
 #include <SDL_timer.h>

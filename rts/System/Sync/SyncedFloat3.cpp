@@ -1,9 +1,4 @@
-/**
- * @file SyncedFloat3.cpp
- * @brief SyncedFloat3 source
- *
- * Implementation of SyncedFloat3 class
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "SyncedFloat3.h"
@@ -42,4 +37,4 @@ bool SyncedFloat3::CheckInBounds()
 	return in;
 }
 
-#endif // SYNCDEBUG || SYNCCHECK
+#endif // defined(SYNCDEBUG) || defined(SYNCCHECK)

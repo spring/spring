@@ -1,6 +1,4 @@
-// MiniMap.cpp: implementation of the CMiniMap class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include <SDL_keysym.h>

@@ -1,8 +1,6 @@
-#include "StdAfx.h"
-// EventHandler.cpp: implementation of the CEventHandler class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "StdAfx.h"
 #include "EventHandler.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
 

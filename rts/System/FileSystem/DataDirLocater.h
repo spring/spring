@@ -1,10 +1,5 @@
-/**
- * @file DataDirLocater.h
- * @author Tobi Vollebregt
- *
- * Copyright (C) 2006-2008 Tobi Vollebregt
- * Licensed under the terms of the GNU GPL, v2 or later
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef DATADIRLOCATER_H
 #define DATADIRLOCATER_H
 

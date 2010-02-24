@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_UNIQUE_BIN_H
 #define LUA_UNIQUE_BIN_H
 

@@ -1,4 +1,5 @@
-// Generalized callback interface - shared between global AI and group AI
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"

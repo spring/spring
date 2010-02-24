@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef KEY_AUTO_BINDER_H
 #define KEY_AUTO_BINDER_H
-// KeyAutoBinder.h: interface for the CKeyAutoBinder class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>

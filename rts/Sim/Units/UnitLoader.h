@@ -1,15 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNITLOADER_H
 #define UNITLOADER_H
-// UnitLoader.h: interface for the CUnitLoader class.
-//
-//////////////////////////////////////////////////////////////////////
-
-class CUnit;
-class CWeapon;
-#include <string>
 
 #include "UnitDef.h"
 
+#include <string>
+
+class CUnit;
+class CWeapon;
 struct GuiSoundSet;
 
 class CUnitLoader

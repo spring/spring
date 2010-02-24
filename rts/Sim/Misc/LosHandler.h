@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LOSHANDLER_H
 #define LOSHANDLER_H
-// LosHandler.h: interface for the CLosHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <vector>
 #include <list>

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef IAICALLBACK_H
 #define IAICALLBACK_H
 
@@ -477,4 +479,4 @@ public:
 	virtual ~IAICallback() {}
 };
 
-#endif /* IAICALLBACK_H */
+#endif // IAICALLBACK_H

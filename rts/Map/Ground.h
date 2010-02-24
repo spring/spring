@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GROUND_H
 #define GROUND_H
-// Ground.h: interface for the CGround class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "float3.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -40,4 +39,5 @@ private:
 
 extern CGround* ground;
 
-#endif /* GROUND_H */
+#endif // GROUND_H
+

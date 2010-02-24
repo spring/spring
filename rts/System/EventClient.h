@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
-// EventClient.h: interface for the CEventClient class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>

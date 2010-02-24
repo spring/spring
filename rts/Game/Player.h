@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PLAYER_H
 #define PLAYER_H
-// Player.h: interface for the CPlayer class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <set>

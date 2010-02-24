@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef WAIT_COMMANDS_AI_H
 #define WAIT_COMMANDS_AI_H
-// WaitCommandsAI.h: interface for the CWaitCommandsAI class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <time.h>
 #include <map>

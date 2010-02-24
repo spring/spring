@@ -1,11 +1,7 @@
-// WordCompletion.cpp: implementation of the CWordCompletion class.
-//
-//////////////////////////////////////////////////////////////////////
-//
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 //  TODO: replace 'WordProperties' with regex/glob expressions
 //        ex: '.give [0-9]* armcom'
-//
-
 
 #include "StdAfx.h"
 #include "mmgr.h"

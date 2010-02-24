@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SYNCTRACER_H
 #define SYNCTRACER_H
-// SyncTracer.h: interface for the CSyncTracer class.
-//
-//////////////////////////////////////////////////////////////////////
 
 //#define TRACE_SYNC
 

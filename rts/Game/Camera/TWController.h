@@ -1,8 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __TW_CONTROLLER_H__
 #define __TW_CONTROLLER_H__
 
 #include "CameraController.h"
-
 
 class CTWController : public CCameraController
 {
@@ -28,6 +29,5 @@ public:
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
 };
-
 
 #endif

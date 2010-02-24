@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _3DOTEXTUREHANDLER_H
 #define _3DOTEXTUREHANDLER_H
-// _3DOTextureHandler.h: interface for the C3DOTextureHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <string>

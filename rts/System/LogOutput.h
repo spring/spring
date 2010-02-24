@@ -1,7 +1,4 @@
-/*
-LogOutput - global object to write log info to.
- Game UI elements that display log can subscribe to it to receive the log messages.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef LOGOUTPUT_H
 #define LOGOUTPUT_H
@@ -94,7 +91,11 @@ public:
 };
 
 
-/** @brief logging class */
+/**
+ * @brief logging class 
+ * Global object to write log info to.
+ * Game UI elements that display log can subscribe to it to receive the log messages.
+ */
 class CLogOutput
 {
 public:

@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// InfoConsole.cpp: implementation of the CInfoConsole class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "Rendering/GL/myGL.h"
 #include <fstream>
 

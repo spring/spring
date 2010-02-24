@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 // TODO: move this out of Sim, this is rendering code!
 
 #include "StdAfx.h"

@@ -1,9 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_CALL_IN_CHECK_H
 #define LUA_CALL_IN_CHECK_H
-// LuaCallInCheck.h: interface for the LuaCallInCheck class.
-//
-//////////////////////////////////////////////////////////////////////
-
 
 struct lua_State;
 

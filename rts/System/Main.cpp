@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file Main.cpp
- * @brief Main class
- *
  * Main application class that launches
  * everything else
  */
