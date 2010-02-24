@@ -208,7 +208,8 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			break;
 		}
 	}
-	//debug
+
+#ifdef _DEBUG
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
 		if (*usi == delUnit) {
 			logOutput.Print("Error: Duplicated unit found in active units on erase");
@@ -217,6 +218,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			++usi;
 		}
 	}
+#endif
 
 	GML_STDMUTEX_LOCK(runit); // DeleteUnitNow
 
