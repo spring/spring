@@ -3,7 +3,6 @@
 /*
  * creg - Code compoment registration system
  * Implementations of IType for specific types
- * Copyright 2005 Jelmer Cnossen
  */
 
 #ifndef CR_VARIABLE_TYPES_H

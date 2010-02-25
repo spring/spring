@@ -3,7 +3,6 @@
 /*
  * creg - Code compoment registration system
  * Classes for serialization of registrated class instances
- * Copyright 2005 Jelmer Cnossen
  */
 
 #include "StdAfx.h"
