@@ -745,7 +745,7 @@ bool CPathEstimator::ReadFile(std::string cacheFileName, const std::string& map)
 	{
 		pathChecksum = file.GetCrc32(fid);
 
-		std::vector<uint8_t> buffer;
+		std::vector<boost::uint8_t> buffer;
 		file.GetFile(fid, buffer);
 
 		if (buffer.size() < 4)
