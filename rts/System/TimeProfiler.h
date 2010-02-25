@@ -26,7 +26,6 @@ protected:
 
 /**
  * @brief Time profiling helper class
- * @author Karl-Robert Ernst
  *
  * Construct an instance of this class where you want to begin time measuring,
  * and destruct it at the end (or let it be autodestructed).

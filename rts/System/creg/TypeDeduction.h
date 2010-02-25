@@ -3,7 +3,6 @@
 /*
  * creg - Code compoment registration system
  * Type matching using class templates (only class template support partial specialization)
- * Copyright 2005 Jelmer Cnossen
  */
 
 #ifndef _TYPE_DEDUCTION_H
