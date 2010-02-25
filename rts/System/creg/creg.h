@@ -1,9 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-/*
- * creg - Code compoment registration system
- * Copyright 2005 Jelmer Cnossen
- */
+// creg - Code compoment registration system
 
 #ifndef _CREG_H
 #define _CREG_H
@@ -277,7 +274,6 @@ namespace creg {
 	inline static creg::Class *StaticClass() { return binder.class_; }
 
 /** @def CR_DECLARE_SUB
- *  @author Tobi Vollebregt
  * Use this to declare a sub class. This should be put in the class definition
  * of the superclass, alongside CR_DECLARE(CSuperClass) (or CR_DECLARE_STRUCT). */
 #define CR_DECLARE_SUB(cl) \
@@ -376,7 +372,6 @@ namespace creg {
 	} static TClass##mreg;
 
 /** @def CR_REG_METADATA_SUB
- *  @author Tobi Vollebregt
  * Just like CR_REG_METADATA, but for a subclass.
  *  @see CR_REG_METADATA
  */
