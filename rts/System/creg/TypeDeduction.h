@@ -1,9 +1,13 @@
-/*
-creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-Type matching using class templates (only class template support partial specialization)
-*/
+/*
+ * creg - Code compoment registration system
+ * Type matching using class templates (only class template support partial specialization)
+ * Copyright 2005 Jelmer Cnossen
+ */
+
+#ifndef _TYPE_DEDUCTION_H
+#define _TYPE_DEDUCTION_H
 
 // Undefined types return 0
 template<typename T>
@@ -108,4 +112,6 @@ boost::shared_ptr<IType> GetType (T& var) {
 	DeduceType<T> deduce;
 	return deduce.Get();
 }
+
+#endif // _TYPE_DEDUCTION_H
 

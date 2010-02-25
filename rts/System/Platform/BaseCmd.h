@@ -1,10 +1,5 @@
-/**
- * @file BaseCmd.h
- * 
- * Base structure for commandline parser class definition
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef BASECMD_H
 #define BASECMD_H
 
@@ -18,6 +13,7 @@
 
 /**
  * @brief Commandline parser
+ * Base structure for commandline parser class definition
  */
 class BaseCmd
 {

@@ -1,5 +1,4 @@
-// BaseSky.h
-///////////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __BASE_SKY_H__
 #define __BASE_SKY_H__

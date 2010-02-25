@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_GAIA_H
 #define LUA_GAIA_H
-// LuaGaia.h: interface for the CLuaGaia class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 using std::string;

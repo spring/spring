@@ -1,9 +1,11 @@
-/*
-creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-Classes for serialization of registrated class instances
-*/
+/*
+ * creg - Code compoment registration system
+ * Classes for serialization of registrated class instances
+ * Copyright 2005 Jelmer Cnossen
+ */
+
 #include "StdAfx.h"
 #include "creg_cond.h"
 #include "Serializer.h"

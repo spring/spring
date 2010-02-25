@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_UNSYNCED_CTRL_H
 #define LUA_UNSYNCED_CTRL_H
-// LuaUnsyncedCtrl.h: interface for the LuaUnsyncedCtrl class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Sim/Units/UnitSet.h"
 

@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// VerticalSync.cpp implementation of the CVerticalSync class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #ifdef WIN32
 #include "Platform/Win/win32.h"

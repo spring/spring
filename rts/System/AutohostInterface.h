@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef AUTOHOSTINTERFACE 
 #define AUTOHOSTINTERFACE
 
@@ -6,19 +8,18 @@
 #include <boost/asio/ip/udp.hpp>
 
 /**
-@brief Class to communicate with an autohost (or similar) using UDP over loopback
-@author Karl-Robert Ernst
-*/
+ * @brief Class to communicate with an autohost (or similar) using UDP over loopback
+ */
 class AutohostInterface
 {
 public:
 	typedef unsigned char uchar;
 	
 	/**
-	@brief Connects to a port on localhost
-	@param localport port to use by this class
-	@param remoteport the port of the autohost
-	*/
+	 * @brief Connects to a port on localhost
+	 * @param localport port to use by this class
+	 * @param remoteport the port of the autohost
+	 */
 	AutohostInterface(const std::string& autohostip, int remoteport);
 	virtual ~AutohostInterface();
 	
@@ -40,9 +41,9 @@ public:
 	void Send(const boost::uint8_t* msg, size_t msgSize);
 	
 	/**
-	@brief Receive a chat message from the autohost
-	There should be only 1 message per UDP-Packet, and it will use the hosts playernumber to inject this message
-	*/
+	 * @brief Receive a chat message from the autohost
+	 * There should be only 1 message per UDP-Packet, and it will use the hosts playernumber to inject this message
+	 */
 	std::string GetChatMessage();
 	
 private:

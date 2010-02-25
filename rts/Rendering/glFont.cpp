@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// glFont.cpp: implementation of the CglFont class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "glFont.h"
 #include <stdio.h>
@@ -24,7 +23,7 @@
 #include "mmgr.h"
 #include "float4.h"
 
-#undef GetCharWidth //winapi.h
+#undef GetCharWidth // winapi.h
 
 using std::string;
 

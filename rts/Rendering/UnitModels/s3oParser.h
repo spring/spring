@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef S3OPARSER_H
 #define S3OPARSER_H
-// s3oParser.h: interface for the Cs3oParser class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include "IModelParser.h"

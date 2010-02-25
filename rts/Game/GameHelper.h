@@ -1,6 +1,4 @@
-// GameHelper.h: interface for the CGameHelper class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __GAME_HELPER_H__
 #define __GAME_HELPER_H__

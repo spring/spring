@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_PARSER_H
 #define LUA_PARSER_H
-// LuaParser.h: interface for the LuaParser class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>

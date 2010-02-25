@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef AVIGENERATOR_H
 #define AVIGENERATOR_H
 
@@ -19,23 +21,23 @@ public:
 	CAVIGenerator(const std::string& fileName, int videoSizeX, int videoSizeY, DWORD videoFPS);
 	~CAVIGenerator();
 
-	//Initialize engine and choose codec
+	/// Initialize engine and choose codec
 	bool InitEngine();
 
-	//Returns last error message
+	/// Returns last error message
 	std::string GetLastErrorMessage() const	{return errorMsg;}
 
 	bool readOpenglPixelDataThreaded();
 
 
 private:
-	//name of output file
+	/// name of output file
 	std::string fileName;
-	//Frame rate
+	/// Frame rate
 	DWORD videoFPS;
-	//structure contains information for a single stream
+	/// structure contains information for a single stream
 	BITMAPINFOHEADER bitmapInfo;
-	//last error string
+	/// last error string
 	std::string errorMsg;
 
 	HINSTANCE msvfw32;
@@ -59,24 +61,24 @@ private:
 
 	HRESULT InitAVICompressionEngine();
 
-	//Release streams allocated for movie compression.
+	/// Release streams allocated for movie compression.
 	void ReleaseAVICompressionEngine();
 
-	//Adds a frame to the movie.
+	/// Adds a frame to the movie.
 	HRESULT AddFrame(unsigned char* pixelData);
 
 	void AVIGeneratorThreadProc();
 
 
-	//frame counter
+	/// frame counter
 	long m_lFrame;
-	//file interface pointer
+	/// file interface pointer
 	PAVIFILE m_pAVIFile;
-	//Address of the stream interface
+	/// Address of the stream interface
 	PAVISTREAM m_pStream;
-	//Address of the compressed video stream
+	/// Address of the compressed video stream
 	PAVISTREAM m_pStreamCompressed;
-	//Holds compression settings
+	/// Holds compression settings
 	COMPVARS cv;
 
 	typedef DWORD (__stdcall *VideoForWindowsVersion_type)(void);

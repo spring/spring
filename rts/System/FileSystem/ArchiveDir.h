@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef ARCHIVEDIR_H
 #define ARCHIVEDIR_H
@@ -7,8 +7,10 @@
 
 #include "ArchiveBase.h"
 
-/** Archive implementation which falls back to the regular filesystem.
-ie. a directory and all it's contents is treated as an archive by this class. */
+/**
+ * Archive implementation which falls back to the regular filesystem.
+ * ie. a directory and all it's contents is treated as an archive by this class.
+ */
 class CArchiveDir : public CArchiveBase
 {
 public:

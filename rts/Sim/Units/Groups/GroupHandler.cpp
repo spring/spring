@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// GroupHandler.cpp: implementation of the CGroupHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "GroupHandler.h"
 #include "Group.h"
@@ -19,7 +18,6 @@
 #include "mmgr.h"
 #include <boost/cstdint.hpp>
 
-//CGroupHandler* grouphandler;
 std::vector<CGroupHandler*> grouphandlers;
 extern boost::uint8_t *keys;
 

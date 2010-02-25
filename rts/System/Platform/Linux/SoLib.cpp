@@ -1,12 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file SoLib.cpp
- * @brief Linux shared object loader implementation
- * @author Christopher Han <xiphux@gmail.com>
- * @author Robin Vobruba <hoijui.quaero@gmail.com>
- *
  * Linux, Unix and Mac OS X Shared Object loader class implementation
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
  */
 
 #include "SoLib.h"

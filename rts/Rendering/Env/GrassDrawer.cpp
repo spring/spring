@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <algorithm>
 #include "mmgr.h"
@@ -20,7 +22,6 @@
 #include "GlobalUnsynced.h"
 #include "Util.h"
 #include "Exceptions.h"
-//#include "TimeProfiler.h"
 
 static const float turfSize=20;				//single turf size
 static const float partTurfSize=turfSize*0.6f;				//single turf size

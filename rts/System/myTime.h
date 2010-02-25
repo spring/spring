@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MYTIME_H
 #define MYTIME_H
 
@@ -28,4 +30,5 @@ inline spring_time spring_gettime() { return microsec_clock::local_time(); };
 #define spring_notime(time)
 #endif
 
-#endif
+#endif // MYTIME_H
+

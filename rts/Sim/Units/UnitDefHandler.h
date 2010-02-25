@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNITDEFHANDLER_H
 #define UNITDEFHANDLER_H
 
@@ -7,12 +9,11 @@
 
 #include "Sim/Misc/CommonDefHandler.h"
 
-
 class LuaTable;
 struct UnitDef;
 struct GuiSoundSet;
 
-//this class takes care of all the unit definitions
+/// Takes care of all the unit definitions
 class CUnitDefHandler : CommonDefHandler
 {
 public:
