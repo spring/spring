@@ -1,8 +1,7 @@
-// BFGroundDrawer.h
-///////////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BF_GROUND_DRAWER_H__
-#define __BF_GROUND_DRAWER_H__
+#ifndef _BF_GROUND_DRAWER_H_
+#define _BF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
 
@@ -99,5 +98,5 @@ protected:
 	void UpdateCamRestraints();
 };
 
-#endif // __BF_GROUND_DRAWER_H__
+#endif // _BF_GROUND_DRAWER_H_
 

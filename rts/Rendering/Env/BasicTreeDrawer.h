@@ -1,6 +1,4 @@
-// TreeDrawer.h: interface for the CTreeDrawer class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __BASIC_TREE_DRAWER_H__
 #define __BASIC_TREE_DRAWER_H__

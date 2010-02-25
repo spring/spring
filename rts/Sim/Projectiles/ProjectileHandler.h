@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PROJECTILEHANDLER_H
 #define PROJECTILEHANDLER_H
-// ProjectileHandler.h: interface for the CProjectileHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <list>
 #include <set>

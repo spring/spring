@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TRANSPORTUNIT_H
 #define TRANSPORTUNIT_H
 
@@ -41,6 +43,5 @@ private:
 
 	bool DetachUnitCore(CUnit* unit);
 };
-
 
 #endif /* TRANSPORTUNIT_H */

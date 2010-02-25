@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SMOKETRAILPROJECTILE_H
 #define SMOKETRAILPROJECTILE_H
-// SmokeTrailProjectile.h: interface for the CSmokeTrailProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Sim/Projectiles/Projectile.h"
 

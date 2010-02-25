@@ -1,10 +1,12 @@
-/*
-creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef jc_CR_HEADER
-#define jc_CR_HEADER
+/*
+ * creg - Code compoment registration system
+ * Copyright 2005 Jelmer Cnossen
+ */
+
+#ifndef _CREG_H
+#define _CREG_H
 
 #include <vector>
 #include <string>
@@ -480,4 +482,4 @@ namespace creg {
 	(class_->postLoadProc = (void(creg::_DummyStruct::*)())&Type::PostLoadFunc)
 };
 
-#endif
+#endif // _CREG_H

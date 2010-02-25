@@ -1,9 +1,5 @@
-/**
- * @file float4.h
- * @brief float4 header
- *
- * Declaration of float4 class
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef FLOAT4_H
 #define FLOAT4_H
 

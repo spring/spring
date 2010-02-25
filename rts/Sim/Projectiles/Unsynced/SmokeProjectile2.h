@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SMOKEPROJECTILE2_H
 #define SMOKEPROJECTILE2_H
-// SmokeProjectile.h: interface for the CSmokeProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Sim/Projectiles/Projectile.h"
 

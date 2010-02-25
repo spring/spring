@@ -1,7 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaFeatureDefs.cpp: implementation of the LuaFeatureDefs class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <set>
 #include <string>
@@ -9,8 +9,6 @@
 #include <set>
 #include <map>
 #include <cctype>
-
-#include "mmgr.h"
 
 #include "LuaFeatureDefs.h"
 

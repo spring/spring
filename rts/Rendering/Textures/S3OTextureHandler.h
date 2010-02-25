@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef S3OTEXTUREHANDLER_H
 #define S3OTEXTUREHANDLER_H
-// S3OTextureHandler.h: interface for the CS3OTextureHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <string>

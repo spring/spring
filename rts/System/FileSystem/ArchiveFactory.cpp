@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -11,7 +13,7 @@
 
 #include "Util.h"
 
-// Returns true if the indicated file is in fact an archive
+/// Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsScanArchive(const std::string& fileName)
 {
 	std::string ext = filesystem.GetExtension(fileName);
@@ -20,7 +22,7 @@ bool CArchiveFactory::IsScanArchive(const std::string& fileName)
 }
 
 
-// Returns a pointer to a newly created suitable subclass of CArchiveBase
+/// Returns a pointer to a newly created suitable subclass of CArchiveBase
 CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName, const std::string& type)
 {
 	std::string ext = type;

@@ -1,10 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file BumpWater.cpp
  * @brief extended bumpmapping water shader
- * @author jK
- *
- * Copyright (C) 2008.  Licensed under the terms of the
- * GNU GPL, v2 or later.
  */
 
 #include "StdAfx.h"

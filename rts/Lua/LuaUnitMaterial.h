@@ -1,10 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_UNIT_MATERIAL_H
 #define LUA_UNIT_MATERIAL_H
-// LuaUnitMaterial.h: interface for the LuaUnitMaterial class.
-//
+
 // NOTE: some implementation is done in LuaMaterial.cpp
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Rendering/GL/myGL.h"
 

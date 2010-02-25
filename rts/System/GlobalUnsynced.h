@@ -1,10 +1,4 @@
-/**
- * @file GlobalUnsynced.h
- * @brief Globally accessible unsynced stuff
- *
- * Contains globally accessible
- * stuff that does not remain synced
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef GLOBALSTUFF_H
 #define GLOBALSTUFF_H
@@ -15,10 +9,9 @@
 class CUnit;
 
 /**
- * @brief Global unsynced stuff
+ * @brief Globally accessible unsynced stuff
  *
- * Class containing globally accessible
- * stuff that does not remain synced
+ * Contains globally accessible stuff that does not remain synced
  */
 class CGlobalUnsyncedStuff
 {

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef HEATCLOUDPROJECTILE_H
 #define HEATCLOUDPROJECTILE_H
-// HeatCloudProjectile.h: interface for the CHeatCloudProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Sim/Projectiles/Projectile.h"
 

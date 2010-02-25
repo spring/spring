@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GL_CONTEXT_H
 #define GL_CONTEXT_H
-// GLContext.h: interface for the GLContext namespace.
-//
-//////////////////////////////////////////////////////////////////////
 
 // NOTE:  all GL persistent state should be initialized/freed within
 //        a registered set of context functions. This includes the
@@ -23,7 +22,6 @@
 //            StaticFreeContext()
 //            (use "data" for the pointer to the instance).
 
-
 // TODO: add event driven system (like alttab, resolution changed, dualscreen, ...)
 
 namespace GLContext
@@ -35,6 +33,5 @@ namespace GLContext
 	void InsertHookSet(Func init, Func free, void* data);
 	void RemoveHookSet(Func init, Func free, void* data);
 };
-
 
 #endif /* GL_CONTEXT_H */

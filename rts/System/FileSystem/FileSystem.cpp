@@ -1,12 +1,8 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file FileSystem.cpp
  * @brief Abstracts locating of content on different platforms
- * @author Tobi Vollebregt
- *
- * FindFiles implementation by Chris Han.
  * Glob conversion by Chris Han (based on work by Nathaniel Smith).
- * Copyright (C) 2005-2006.  Licensed under the terms of the
- * GNU GPL, v2 or later
  */
 
 #include "StdAfx.h"

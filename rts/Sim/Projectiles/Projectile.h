@@ -1,10 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
-#include "Rendering/GL/myGL.h"
-// Projectile.h: interface for the CProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
+#include "Rendering/GL/myGL.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)

@@ -1,3 +1,8 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _QUIT_BOX_H
+#define _QUIT_BOX_H
+
 #include "InputReceiver.h"
 
 //TOD add support for resigning without selfdestruction
@@ -34,4 +39,6 @@ private:
 
 	bool moveBox;
 };
+
+#endif // _QUIT_BOX_H
 

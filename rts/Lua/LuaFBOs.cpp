@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaFBOs.cpp: implementation of the LuaFBOs class.
-//
-//////////////////////////////////////////////////////////////////////
 #include <map>
 using std::map;
 

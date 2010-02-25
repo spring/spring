@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_SYNCED_MOVE_CTRL_H
 #define LUA_SYNCED_MOVE_CTRL_H
-// LuaSyncedMoveCtrl.h: interface for the LuaSyncedMoveCtrl class.
-//
-//////////////////////////////////////////////////////////////////////
 
 class CUnit;
 struct lua_State;

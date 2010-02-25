@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef DEMO_READER
 #define DEMO_READER
 
@@ -12,8 +14,8 @@
 namespace netcode { class RawPacket; }
 
 /**
-@brief Utility class for reading demofiles
-*/
+ * @brief Utility class for reading demofiles
+ */
 class CDemoReader : public CDemo
 {
 public:

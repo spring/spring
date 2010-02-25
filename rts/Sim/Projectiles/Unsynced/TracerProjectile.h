@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TRACERPROJECTILE_H
 #define TRACERPROJECTILE_H
-// TracerProjectile.h: interface for the CTracerProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Sim/Projectiles/Projectile.h"
 

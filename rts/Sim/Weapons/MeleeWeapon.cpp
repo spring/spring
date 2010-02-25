@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// MeleeWeapon.cpp: implementation of the CMeleeWeapon class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "MeleeWeapon.h"
 #include "Sim/Units/Unit.h"

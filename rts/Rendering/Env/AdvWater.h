@@ -1,6 +1,4 @@
-// DrawWater.h: interface for the CDrawWater class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __ADV_WATER_H__
 #define __ADV_WATER_H__

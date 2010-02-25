@@ -1,15 +1,13 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaOpenGL.cpp: implementation of the CLuaOpenGL class.
-//
-//////////////////////////////////////////////////////////////////////
-//
+
 // TODO:
 // - go back to counting matrix push/pops (just for modelview?)
 //   would have to make sure that display lists are also handled
 //   (GL_MODELVIEW_STACK_DEPTH could help current situation, but
 //    requires the ARB_imaging extension)
 // - use materials instead of raw calls (again, handle dlists)
-//
 
 #include <string>
 #include <vector>

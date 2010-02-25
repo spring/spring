@@ -1,10 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file GlobalStuff.cpp
  * @brief Globally accessible stuff
- *
- * Contains implementation of synced and
- * unsynced global stuff
+ * Contains implementation of synced and unsynced global stuff.
  */
+
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include "GlobalUnsynced.h"

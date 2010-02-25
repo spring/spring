@@ -1,12 +1,5 @@
-/**
- * @file BaseCmd.cpp
- * @brief Abstract commandline implementation
- * @author Christopher Han <xiphux@gmail.com>
- *
- * Base structure for commandline parser class implementation
- * Copyright (C) 2005. Licensed under the terms of the
- * GNU GPL, v2 or later.
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "BaseCmd.h"
 
