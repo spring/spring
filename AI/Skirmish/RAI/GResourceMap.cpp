@@ -100,11 +100,12 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 				fList[i] = fList[--fSize];
 	}
 
-	relResourceFileName = "cache/" + string(cRAI::MakeFileSystemCompatible(cb->GetModHumanName()));
-	relResourceFileName.resize(relResourceFileName.size()-4);
-	relResourceFileName += "-" + string(cRAI::MakeFileSystemCompatible(cb->GetMapName()));
-	relResourceFileName.resize(relResourceFileName.size()-3);
-	relResourceFileName += "res";
+	relResourceFileName = "cache/" + cRAI::MakeFileSystemCompatible(cb->GetModHumanName());
+	relResourceFileName += "-" + cb->GetModHash();
+	relResourceFileName += "-" + cRAI::MakeFileSystemCompatible(cb->GetMapName());
+	relResourceFileName.resize(relResourceFileName.size() - 4); // cut off extension
+	relResourceFileName += "-" + cb->GetMapHash();
+	relResourceFileName += ".res";
 
 	string resourceFileName_r;
 	FILE* resourceFile_r = NULL;

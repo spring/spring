@@ -16,8 +16,11 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	const int mapFileVersion = 2;
 	waterIsHarmful = false;
 
-	string relMapFileName = string("cache/") + cRAI::MakeFileSystemCompatible(cb->GetMapName());
-	relMapFileName = relMapFileName.substr(0, ((int) relMapFileName.size()) - 3) + "res";
+	string relMapFileName = "cache/";
+	relMapFileName += cRAI::MakeFileSystemCompatible(cb->GetMapName());
+	relMapFileName.resize(relMapFileName.size() - 4); // cut off extension
+	relMapFileName += "-" + cb->GetMapHash();
+	relMapFileName += ".res";
 
 	string mapFileName_r;
 	FILE* mapFile_r = NULL;
@@ -45,8 +48,12 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	if( !mapFileLoaded )
 	{
 //		double mapArchiveTimer = clock();
-		string mapArchiveFileName = cRAI::MakeFileSystemCompatible(cb->GetMapName());
-		mapArchiveFileName = "maps\\"+mapArchiveFileName.substr(0,int(mapArchiveFileName.size())-3)+"smd";
+		string mapArchiveFileName = "maps/";
+		mapArchiveFileName += cRAI::MakeFileSystemCompatible(cb->GetMapName());
+		mapArchiveFileName.resize(mapArchiveFileName.size() - 4); // cut off extension
+		mapArchiveFileName += "-" + cb->GetMapHash();
+		mapArchiveFileName += ".smd";
+
 		int mapArchiveFileSize = cb->GetFileSize(mapArchiveFileName.c_str());
 		if( mapArchiveFileSize > 0 )
 		{
