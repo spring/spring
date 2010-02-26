@@ -174,6 +174,13 @@ if (SIGNAL_NANS)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
 endif(SIGNAL_NANS)
 
+# set the default build type
+if    (NOT CMAKE_BUILD_TYPE)
+	SET(CMAKE_BUILD_TYPE DEBUG2 CACHE STRING
+		"Choose the type of build, options are: DEBUG DEBUG2 DEBUG3 RELWITHDEBINFO RELEASE PROFILE"
+		FORCE)
+endif (NOT CMAKE_BUILD_TYPE)
+
 # This would produce the maximum on warnings
 #set(DEBUG_WARNINGS "-Wall -Wconversion")
 # This should produce a sane ammount of warnings
