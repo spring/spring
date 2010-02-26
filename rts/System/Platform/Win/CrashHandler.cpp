@@ -161,6 +161,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 
 		const std::string str_modname = modname;
 		containsOglDll = (containsOglDll || (str_modname.find("atioglxx.dll") != std::string::npos));
+		containsOglDll = (containsOglDll || (str_modname.find("nvoglnt.dll")  != std::string::npos));
 		containsOglDll = (containsOglDll || (str_modname.find("nvoglv32.dll") != std::string::npos));
 		containsOglDll = (containsOglDll || (str_modname.find("nvoglv64.dll") != std::string::npos)); // guessed
 
