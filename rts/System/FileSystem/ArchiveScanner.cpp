@@ -597,9 +597,19 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 }
 
 
+static bool archNameCompare(const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b)
+{
+	return (a.name < b.name);
+}
+static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
+{
+	std::sort(data.begin(), data.end(), archNameCompare);
+}
+
 vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 {
 	vector<ArchiveData> ret;
+
 	for (std::map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i)
 	{
 		if (i->second.archiveData.name != "" && i->second.archiveData.modType == modtype::primary)
@@ -610,6 +620,9 @@ vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 			ret.push_back(md);
 		}
 	}
+
+	sortByName(ret);
+
 	return ret;
 }
 
@@ -617,6 +630,7 @@ vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 {
 	vector<ArchiveData> ret;
+
 	for (std::map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
 		if (i->second.archiveData.name != "" && (i->second.archiveData.modType == modtype::primary || i->second.archiveData.modType == modtype::hidden))
 		{
@@ -626,6 +640,8 @@ vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 			ret.push_back(md);
 		}
 	}
+
+	sortByName(ret);
 
 	return ret;
 }
