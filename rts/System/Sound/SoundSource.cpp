@@ -285,7 +285,9 @@ void SoundSource::SetAirAbsorption(float factor)
 {
 	// check if we can use air absorption
 	std::string noAirAbsorpReason = "";
-	if (!alcIsExtensionPresent(NULL, "ALC_EXT_EFX"))
+	ALCcontext* curContext = alcGetCurrentContext();
+	ALCdevice*  curDevice = alcGetContextsDevice(curContext);
+	if (!alcIsExtensionPresent(curDevice, "ALC_EXT_EFX"))
 	{
 		noAirAbsorpReason = "ALC_EXT_EFX not supported";
 	}
