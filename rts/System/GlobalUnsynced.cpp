@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 
-#include <cstring>
+#include <string>
 #include <assert.h>
 #include <SDL/SDL_timer.h>
 
@@ -93,8 +93,8 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	timeOffset = 0;
 
 	teamNanospray = false;
-	moveWarnings  = !!configHandler.Get("MoveWarnings", 0);
-	buildWarnings = !!configHandler.Get("BuildWarnings", 0);
+	moveWarnings  = !!configHandler->Get("MoveWarnings", 0);
+	buildWarnings = !!configHandler->Get("BuildWarnings", 0);
 
 	directControl = NULL;
 
@@ -105,12 +105,13 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	{
 		std::string vendor = std::string((char*) glGetString(GL_VENDOR));
 		StringToLowerInPlace(vendor);
-		haveATI = (vendor.find("ati ") != string::npos);
+		haveATI = (vendor.find("ati ") != std::string::npos);
 
 		if (haveATI) {
 			std::string renderer = std::string((char*) glGetString(GL_RENDERER));
 			StringToLowerInPlace(renderer);
-			supportNPOTs = (renderer.find(" x") == string::npos && renderer.find(" 9") == string::npos); //! x-series doesn't support NPOTs (but hd-series does)
+			//! x-series doesn't support NPOTs (but hd-series does)
+			supportNPOTs = (renderer.find(" x") == std::string::npos && renderer.find(" 9") == std::string::npos);
 		}
 	}
 }
