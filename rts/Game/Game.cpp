@@ -205,12 +205,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(noSpectatorChat),
-	CR_MEMBER(drawMapMarks),
 	CR_MEMBER(crossSize),
-//	CR_MEMBER(drawSky),
-//	CR_MEMBER(drawWater),
-//	CR_MEMBER(drawGround),
-	CR_MEMBER(moveWarnings),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
 //	CR_MEMBER(infoConsole),
@@ -252,11 +247,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	gameOver(false),
 
 	noSpectatorChat(false),
-	drawMapMarks(true),
-
-	drawSky(true),
-	drawWater(true),
-	drawGround(true),
 
 	creatingVideo(false),
 
@@ -344,7 +334,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		sound->LoadSoundDefs("gamedata/sounds.lua");
 		chatSound = sound->GetSoundId("IncomingChat", false);
 	}
-	moveWarnings = !!configHandler->Get("MoveWarnings", 1);
 
 	{
 		ScopedOnceTimer timer("Camera and mouse");
@@ -1989,22 +1978,35 @@ bool CGame::ActionPressed(const Action& action,
 			hudDrawer->SetDraw(!!atoi(action.extra.c_str()));
 		}
 	}
+
 	else if (cmd == "movewarnings") {
 		if (action.extra.empty()) {
-			moveWarnings = !moveWarnings;
+			gu->moveWarnings = !gu->moveWarnings;
 		} else {
-			moveWarnings = !!atoi(action.extra.c_str());
+			gu->moveWarnings = !!atoi(action.extra.c_str());
 		}
-		configHandler->Set("MoveWarnings", moveWarnings ? 1 : 0);
+
+		configHandler->Set("MoveWarnings", gu->moveWarnings? 1: 0);
 		logOutput.Print(string("movewarnings ") +
-		                (moveWarnings ? "enabled" : "disabled"));
+		                (gu->moveWarnings ? "enabled" : "disabled"));
+	}
+	else if (cmd == "buildwarnings") {
+		if (action.extra.empty()) {
+			gu->buildWarnings = !gu->buildWarnings;
+		} else {
+			gu->buildWarnings = !!atoi(action.extra.c_str());
+		}
+
+		configHandler->Set("BuildWarnings", gu->buildWarnings? 1: 0);
+		logOutput.Print(string("buildwarnings ") +
+		                (gu->buildWarnings ? "enabled" : "disabled"));
 	}
 
 	else if (cmd == "mapmarks") {
 		if (action.extra.empty()) {
-			drawMapMarks = !drawMapMarks;
+			gu->drawMapMarks = !gu->drawMapMarks;
 		} else {
-			drawMapMarks = !!atoi(action.extra.c_str());
+			gu->drawMapMarks = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "allmapmarks") {
@@ -2815,18 +2817,18 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	if (drawSky) {
+	if (gu->drawSky) {
 		sky->Draw();
 	}
 
-	if (drawGround) {
+	if (gu->drawGround) {
 		gd->Draw();
 		if (smoothGround->drawEnabled)
 			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
 	}
 
-	if (drawWater && !mapInfo->map.voidWater) {
+	if (gu->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		water->OcclusionQuery();
 		if (water->drawSolid) {
@@ -2841,7 +2843,7 @@ bool CGame::DrawWorld()
 	unitDrawer->Draw(false);
 	featureDrawer->Draw();
 
-	if (drawGround) {
+	if (gu->drawGround) {
 		gd->DrawTrees();
 	}
 
@@ -2861,7 +2863,7 @@ bool CGame::DrawWorld()
 	featureDrawer->DrawFadeFeatures(true,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
-	if (drawWater && !mapInfo->map.voidWater) {
+	if (gu->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
 			//! Water rendering may overwrite cloaked objects, so save them
@@ -2880,7 +2882,7 @@ bool CGame::DrawWorld()
 
 	ph->Draw(false);
 
-	if (drawSky) {
+	if (gu->drawSky) {
 		sky->DrawSun();
 	}
 
@@ -2899,7 +2901,7 @@ bool CGame::DrawWorld()
 
 	guihandler->DrawMapStuff(0);
 
-	if (drawMapMarks) {
+	if (gu->drawMapMarks) {
 		inMapDrawer->Draw();
 	}
 
