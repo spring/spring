@@ -101,15 +101,9 @@ public:
 	bool showSpeed;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
-	bool drawMapMarks;
+
 	/// locked mouse indicator size
 	float crossSize;
-
-	bool drawSky;
-	bool drawWater;
-	bool drawGround;
-
-	bool moveWarnings;
 
 	unsigned char gameID[16];
 

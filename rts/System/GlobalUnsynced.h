@@ -64,6 +64,7 @@ public:
 	// the draw frame number (never 0)
 	unsigned int drawFrame;
 
+
 	// the screen size in pixels
 	int screenSizeX;
 	int screenSizeY;
@@ -95,12 +96,14 @@ public:
 	 */
 	float aspectRatio;
 
+
 	/**
 	 * @brief Depthbuffer bits
 	 *
 	 * depthbuffer precision
 	 */
 	int depthBufferBits;
+
 
 	/**
 	 * @brief my player num
@@ -122,6 +125,7 @@ public:
 	 * Local player's ally team
 	 */
 	int myAllyTeam;
+
 
 	/**
 	 * @brief spectating
@@ -146,12 +150,25 @@ public:
 	 */
 	bool spectatingFullSelect;
 
+
+	bool drawSky;
+	bool drawWater;
+	bool drawGround;
+	bool drawMapMarks;
+	/**
+	 * @brief draw fog
+	 *
+	 * Whether fog (of war) is drawn or not
+	 */
+	bool drawFog;
+
 	/**
 	 * @brief draw debug
 	 *
 	 * Whether debugging info is drawn
 	 */
 	bool drawdebug;
+
 
 	/**
 	 * @brief active video
@@ -174,13 +191,6 @@ public:
 	 * (for interpolation)
 	 */
 	float timeOffset;
-
-	/**
-	 * @brief draw fog
-	 *
-	 * Whether fog (of war) is drawn or not
-	 */
-	bool drawFog;
 
 	/**
 	 * @brief compressTextures
@@ -217,6 +227,9 @@ public:
 	 * Minimap on the right is the default.
 	 */
 	bool dualScreenMiniMapOnLeft;
+
+	bool moveWarnings;
+	bool buildWarnings;
 
 	/**
 	 * @brief direct control

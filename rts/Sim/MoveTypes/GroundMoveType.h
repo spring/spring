@@ -69,8 +69,6 @@ public:
 
 	float currentDistanceToWaypoint;
 
-	float3 avoidanceVec;
-
 	unsigned int restartDelay;
 	float3 lastGetPathPos;
 
