@@ -8,6 +8,8 @@ uniform vec4 lightDir;                // mapInfo->light.sunDir
 varying vec3 cameraDir;
 varying vec3 vertexNormal;
 
+varying float fogFactor;
+
 uniform vec4 unitTeamColor;
 uniform vec3 unitAmbientColor;
 uniform vec3 unitDiffuseColor;
@@ -39,5 +41,6 @@ void main() {
 	diffuseCol = mix(diffuseCol, unitTeamColor, diffuseCol.a);
 
 	gl_FragColor.rgb = diffuseCol.rgb * diffuseInt + specularCol.rgb;
+	gl_FragColor.rgb = mix(gl_Fog.color, gl_FragColor.rgb, fogFactor);
 	gl_FragColor.a = shadingCol.a;
 }

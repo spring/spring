@@ -8,6 +8,8 @@ uniform vec4 lightDir;      // mapInfo->light.sunDir
 varying vec3 viewDir;
 varying vec3 halfDir;
 
+varying float fogFactor;
+
 #define SMF_TEXSQR_SIZE_INT 1024
 #define SMF_TEXSQR_SIZE_FLT 1024.0
 #define SMF_DETAILTEX_RES 0.02
@@ -41,4 +43,11 @@ void main() {
 	gl_TexCoord[4].st = gl_Vertex.xz * vec2(SMF_DETAILTEX_RES, SMF_DETAILTEX_RES);
 	gl_TexCoord[4].s += -floor(cameraPos.x * SMF_DETAILTEX_RES);
 	gl_TexCoord[4].t += -floor(cameraPos.z * SMF_DETAILTEX_RES);
+
+	// gl_FogCoord is not initialized
+	gl_FogFragCoord = length((gl_ModelViewMatrix * gl_Vertex).xyz);
+
+	// emulate linear fog
+	fogFactor = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);
+	fogFactor = clamp(fogFactor, 0.0, 1.0);
 }
