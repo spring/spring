@@ -2,6 +2,8 @@ uniform vec3 cameraPos;     // world-space
 varying vec3 cameraDir;     // world-space
 varying vec3 vertexNormal;  // model-space
 
+varying float fogFactor;
+
 uniform mat4 cameraMatInv;  // unused
 uniform mat4 shadowMat;
 uniform vec4 shadowParams;
@@ -29,6 +31,9 @@ void main() {
 	gl_TexCoord[0].st = gl_MultiTexCoord0.st;
 	gl_TexCoord[1] = vertexShadowPos;
 
-	gl_FogFragCoord = length(vertexPos);
+	gl_FogFragCoord = length(((gl_ProjectionMatrix * gl_ModelViewMatrix) * gl_Vertex).xyz);
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+
+	fogFactor = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);
+	fogFactor = clamp(fogFactor, 0.0, 1.0);
 }

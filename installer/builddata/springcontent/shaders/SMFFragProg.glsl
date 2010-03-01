@@ -2,6 +2,8 @@ uniform vec4 lightDir;
 varying vec3 viewDir;
 varying vec3 halfDir;
 
+varying float fogFactor;
+
 uniform sampler2D       diffuseTex;
 uniform sampler2D       normalsTex;
 uniform sampler2DShadow shadowTex;
@@ -63,4 +65,6 @@ void main() {
 	// no need to multiply by groundSpecularColor anymore
 	gl_FragColor.rgb += specularInt;
 	#endif
+
+	gl_FragColor = mix(gl_Fog.color, gl_FragColor, fogFactor);
 }
