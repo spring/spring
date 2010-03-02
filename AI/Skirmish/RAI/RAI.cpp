@@ -4,6 +4,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "CUtils/Util.h"
+#include "System/Util.h"
 #include <stdio.h>
 //#include <direct.h>	// mkdir function (windows)
 //#include <sys/stat.h>	// mkdir function (linux)
@@ -140,8 +141,8 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 	{
 		ClearLogFiles();
 		*l<<"Loading Global RAI...";
-		*l<<"\n Mod = " << cb->GetModHumanName() << "(" << cb->GetModHash() << ")";
-		*l<<"\n Map = " << cb->GetMapName()      << "(" << cb->GetMapHash() << ")";
+		*l<<"\n Mod = " << cb->GetModHumanName() << "(" << IntToString(cb->GetModHash(), "%x") << ")";
+		*l<<"\n Map = " << cb->GetMapName()      << "(" << IntToString(cb->GetMapHash(), "%x") << ")";
 		int seed = time(NULL);
 		srand(seed);
 		RAIs=0;

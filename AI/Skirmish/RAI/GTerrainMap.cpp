@@ -2,6 +2,7 @@
 #include "RAI.h"
 #include <set>
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "System/Util.h"
 #include "CUtils/Util.h"
 //#include <time.h>
 using std::deque;
@@ -19,7 +20,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	string relMapFileName = "cache/";
 	relMapFileName += cRAI::MakeFileSystemCompatible(cb->GetMapName());
 	relMapFileName.resize(relMapFileName.size() - 4); // cut off extension
-	relMapFileName += "-" + cb->GetMapHash();
+	relMapFileName += "-" + IntToString(cb->GetMapHash(), "%x");
 	relMapFileName += ".res";
 
 	string mapFileName_r;
@@ -51,7 +52,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 		string mapArchiveFileName = "maps/";
 		mapArchiveFileName += cRAI::MakeFileSystemCompatible(cb->GetMapName());
 		mapArchiveFileName.resize(mapArchiveFileName.size() - 4); // cut off extension
-		mapArchiveFileName += "-" + cb->GetMapHash();
+		mapArchiveFileName += "-" + IntToString(cb->GetMapHash(), "%x");
 		mapArchiveFileName += ".smd";
 
 		int mapArchiveFileSize = cb->GetFileSize(mapArchiveFileName.c_str());
