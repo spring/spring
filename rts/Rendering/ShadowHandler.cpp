@@ -111,9 +111,9 @@ CShadowHandler::CShadowHandler(void)
 
 	drawShadows = true;
 
-	mdlShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("unit_genshadow.vp", GL_VERTEX_PROGRAM_ARB));
+	mdlShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("unit_genshadow.vp", "", GL_VERTEX_PROGRAM_ARB));
 	mdlShadowGenShader->Link();
-	mapShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("groundshadow.vp", GL_VERTEX_PROGRAM_ARB));
+	mapShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("groundshadow.vp", "", GL_VERTEX_PROGRAM_ARB));
 	mapShadowGenShader->Link();
 }
 
