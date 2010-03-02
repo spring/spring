@@ -96,14 +96,14 @@ class CSyncDebugger {
 		unsigned historyIndex;         ///< Where are we in the history buffer?
 		volatile bool disable_history; ///< Volatile because it is read by server thread and written by client thread.
 		bool may_enable_history;       ///< Is it safe already to set disable_history = false?
-		uint64_t flop;                   ///< Current (local) operation number.
+		boost::uint64_t flop;          ///< Current (local) operation number.
 
 		// server thread
 
 		struct PlayerStruct
 		{
 			std::vector<unsigned> checksumResponses;
-			uint64_t remoteFlop;
+			boost::uint64_t remoteFlop;
 			std::vector<unsigned> remoteHistory;
 		};
 		typedef std::vector<PlayerStruct> playerVec;
