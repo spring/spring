@@ -1,3 +1,7 @@
+#define SMF_TEXSQR_SIZE_INT 1024
+#define SMF_TEXSQR_SIZE_FLT 1024.0
+#define SMF_DETAILTEX_RES 0.02
+
 uniform vec2 mapSizePO2;    // pwr2map{x,z} * SQUARE_SIZE (programmatically #define this)
 uniform vec2 mapSize;       //     map{x,z} * SQUARE_SIZE (programmatically #define this)
 uniform int texSquareX;
@@ -9,10 +13,7 @@ varying vec3 viewDir;
 varying vec3 halfDir;
 
 varying float fogFactor;
-
-#define SMF_TEXSQR_SIZE_INT 1024
-#define SMF_TEXSQR_SIZE_FLT 1024.0
-#define SMF_DETAILTEX_RES 0.02
+varying float vertexHeight;
 
 void main() {
 	viewDir = vec3(gl_ModelViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0));
@@ -50,4 +51,6 @@ void main() {
 	// emulate linear fog
 	fogFactor = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+	vertexHeight = gl_Vertex.y;
 }

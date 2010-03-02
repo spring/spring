@@ -43,71 +43,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	map = rm;
 	heightData = map->heightmap;
 
-	{
-		CShaderHandler* sh = shaderHandler;
-
-		smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "smfShaderBaseARB", true);
-		smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
-		smfShaderRefrARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderRefrARB", true);
-		smfShaderCurrARB = smfShaderBaseARB;
-		smfShaderGLSL    = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
-
-		if (shadowHandler->canUseShadows) {
-			if (!map->haveSpecularLighting) {
-				// always use FP shadows (shadowHandler->useFPShadows is short
-				// for "this graphics card supports ARB_FRAGMENT_PROGRAM", and
-				// canUseShadows can not be true while useFPShadows is false)
-				smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("ground.vp", "", GL_VERTEX_PROGRAM_ARB));
-				smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-				smfShaderBaseARB->Link();
-
-				smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("dwgroundreflectinverted.vp", "", GL_VERTEX_PROGRAM_ARB));
-				smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-				smfShaderReflARB->Link();
-
-				smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("dwgroundrefract.vp", "", GL_VERTEX_PROGRAM_ARB));
-				smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-				smfShaderRefrARB->Link();
-			} else {
-				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFVertProg.glsl", "", GL_VERTEX_SHADER));
-				smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFFragProg.glsl", "", GL_FRAGMENT_SHADER));
-				smfShaderGLSL->Link();
-				smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
-				smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1
-				smfShaderGLSL->SetUniformLocation("shadowTex");           // idx  2
-				smfShaderGLSL->SetUniformLocation("detailTex");           // idx  3
-				smfShaderGLSL->SetUniformLocation("specularTex");         // idx  4
-				smfShaderGLSL->SetUniformLocation("mapSizePO2");          // idx  5
-				smfShaderGLSL->SetUniformLocation("mapSize");             // idx  6
-				smfShaderGLSL->SetUniformLocation("texSquareX");          // idx  7
-				smfShaderGLSL->SetUniformLocation("texSquareZ");          // idx  8
-				smfShaderGLSL->SetUniformLocation("lightDir");            // idx  9
-				smfShaderGLSL->SetUniformLocation("cameraPos");           // idx 10
-				smfShaderGLSL->SetUniformLocation("cameraMatInv");        // idx 11
-				smfShaderGLSL->SetUniformLocation("shadowMat");           // idx 12
-				smfShaderGLSL->SetUniformLocation("shadowParams");        // idx 13
-				smfShaderGLSL->SetUniformLocation("groundAmbientColor");  // idx 14
-				smfShaderGLSL->SetUniformLocation("groundDiffuseColor");  // idx 15
-				smfShaderGLSL->SetUniformLocation("groundSpecularColor"); // idx 16
-				smfShaderGLSL->SetUniformLocation("groundShadowDensity"); // idx 17
-
-				smfShaderGLSL->Enable();
-				smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
-				smfShaderGLSL->SetUniform1i(1, 5); // normalsTex  (idx 1, texunit 5)
-				smfShaderGLSL->SetUniform1i(2, 4); // shadowTex   (idx 2, texunit 4)
-				smfShaderGLSL->SetUniform1i(3, 2); // detailTex   (idx 3, texunit 2)
-				smfShaderGLSL->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
-				smfShaderGLSL->SetUniform2f(5, (gs->pwr2mapx * SQUARE_SIZE), (gs->pwr2mapy * SQUARE_SIZE));
-				smfShaderGLSL->SetUniform2f(6, (gs->mapx * SQUARE_SIZE), (gs->mapy * SQUARE_SIZE));
-				smfShaderGLSL->SetUniform4fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
-				smfShaderGLSL->SetUniform3fv(14, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
-				smfShaderGLSL->SetUniform3fv(15, const_cast<float*>(&mapInfo->light.groundSunColor[0]));
-				smfShaderGLSL->SetUniform3fv(16, const_cast<float*>(&mapInfo->light.groundSpecularColor[0]));
-				smfShaderGLSL->SetUniform1f(17, mapInfo->light.groundShadowDensity);
-				smfShaderGLSL->Disable();
-			}
-		}
-	}
+	LoadMapShaders();
 
 	textures = new CBFGroundTextures(map);
 
@@ -157,6 +93,87 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 	configHandler->Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow);
 #endif
 }
+
+bool CBFGroundDrawer::LoadMapShaders() {
+	CShaderHandler* sh = shaderHandler;
+
+	smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "smfShaderBaseARB", true);
+	smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
+	smfShaderRefrARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderRefrARB", true);
+	smfShaderCurrARB = smfShaderBaseARB;
+	smfShaderGLSL    = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
+
+	if (shadowHandler->canUseShadows) {
+		if (!map->haveSpecularLighting) {
+			// always use FP shadows (shadowHandler->useFPShadows is short
+			// for "this graphics card supports ARB_FRAGMENT_PROGRAM", and
+			// canUseShadows can not be true while useFPShadows is false)
+			smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("ground.vp", "", GL_VERTEX_PROGRAM_ARB));
+			smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			smfShaderBaseARB->Link();
+
+			smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("dwgroundreflectinverted.vp", "", GL_VERTEX_PROGRAM_ARB));
+			smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			smfShaderReflARB->Link();
+
+			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("dwgroundrefract.vp", "", GL_VERTEX_PROGRAM_ARB));
+			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			smfShaderRefrARB->Link();
+		} else {
+
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFVertProg.glsl", "", GL_VERTEX_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			smfShaderGLSL->Link();
+			smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
+			smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1
+			smfShaderGLSL->SetUniformLocation("shadowTex");           // idx  2
+			smfShaderGLSL->SetUniformLocation("detailTex");           // idx  3
+			smfShaderGLSL->SetUniformLocation("specularTex");         // idx  4
+			smfShaderGLSL->SetUniformLocation("mapSizePO2");          // idx  5
+			smfShaderGLSL->SetUniformLocation("mapSize");             // idx  6
+			smfShaderGLSL->SetUniformLocation("texSquareX");          // idx  7
+			smfShaderGLSL->SetUniformLocation("texSquareZ");          // idx  8
+			smfShaderGLSL->SetUniformLocation("lightDir");            // idx  9
+			smfShaderGLSL->SetUniformLocation("cameraPos");           // idx 10
+			smfShaderGLSL->SetUniformLocation("cameraMatInv");        // idx 11
+			smfShaderGLSL->SetUniformLocation("shadowMat");           // idx 12
+			smfShaderGLSL->SetUniformLocation("shadowParams");        // idx 13
+			smfShaderGLSL->SetUniformLocation("groundAmbientColor");  // idx 14
+			smfShaderGLSL->SetUniformLocation("groundDiffuseColor");  // idx 15
+			smfShaderGLSL->SetUniformLocation("groundSpecularColor"); // idx 16
+			smfShaderGLSL->SetUniformLocation("groundShadowDensity"); // idx 17
+			smfShaderGLSL->SetUniformLocation("waterMinColor");       // idx 18
+			smfShaderGLSL->SetUniformLocation("waterBaseColor");      // idx 19
+			smfShaderGLSL->SetUniformLocation("waterAbsorbColor");    // idx 20
+
+			smfShaderGLSL->Enable();
+			smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
+			smfShaderGLSL->SetUniform1i(1, 5); // normalsTex  (idx 1, texunit 5)
+			smfShaderGLSL->SetUniform1i(2, 4); // shadowTex   (idx 2, texunit 4)
+			smfShaderGLSL->SetUniform1i(3, 2); // detailTex   (idx 3, texunit 2)
+			smfShaderGLSL->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
+			smfShaderGLSL->SetUniform2f(5, (gs->pwr2mapx * SQUARE_SIZE), (gs->pwr2mapy * SQUARE_SIZE));
+			smfShaderGLSL->SetUniform2f(6, (gs->mapx * SQUARE_SIZE), (gs->mapy * SQUARE_SIZE));
+			smfShaderGLSL->SetUniform4fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			smfShaderGLSL->SetUniform3fv(14, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
+			smfShaderGLSL->SetUniform3fv(15, const_cast<float*>(&mapInfo->light.groundSunColor[0]));
+			smfShaderGLSL->SetUniform3fv(16, const_cast<float*>(&mapInfo->light.groundSpecularColor[0]));
+			smfShaderGLSL->SetUniform1f(17, mapInfo->light.groundShadowDensity);
+			smfShaderGLSL->SetUniform3fv(18, const_cast<float*>(&mapInfo->water.minColor[0]));
+			smfShaderGLSL->SetUniform3fv(19, const_cast<float*>(&mapInfo->water.baseColor[0]));
+			smfShaderGLSL->SetUniform3fv(20, const_cast<float*>(&mapInfo->water.absorb[0]));
+			smfShaderGLSL->Disable();
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+
+
+
 
 void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 	glDisable(GL_TEXTURE_2D);

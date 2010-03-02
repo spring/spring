@@ -1,8 +1,17 @@
+// ARB shader receives groundAmbientColor multiplied
+// by this constant; shading-texture intensities are
+// also pre-dimmed
+#define SMF_INTENSITY_MUL (210 / 255.0)
+
+#define SMF_WATER_ABSORPTION 1
+#define SMF_ARB_LIGHTING 0
+
 uniform vec4 lightDir;
 varying vec3 viewDir;
 varying vec3 halfDir;
 
 varying float fogFactor;
+varying float vertexHeight;
 
 uniform sampler2D       diffuseTex;
 uniform sampler2D       normalsTex;
@@ -18,10 +27,11 @@ uniform vec3 groundDiffuseColor;
 uniform vec3 groundSpecularColor;
 uniform float groundShadowDensity;
 
-// ARB shader receives dimmed groundAmbientColor
-#define GROUND_AMBIENT_COLOR_MUL (210 / 255.0)
-
-#define SMF_ARB_LIGHTING 0
+#if (SMF_WATER_ABSORPTION == 1)
+uniform vec3 waterMinColor;
+uniform vec3 waterBaseColor;
+uniform vec3 waterAbsorbColor;
+#endif
 
 void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
@@ -48,13 +58,42 @@ void main() {
 	vec4 diffuseInt =
 		vec4(groundAmbientColor, 1.0) +
 		vec4(groundDiffuseColor, 1.0) * cosAngleDiffuse;
-	vec4 ambientInt = vec4(groundAmbientColor, 1.0) * GROUND_AMBIENT_COLOR_MUL;
+	vec4 ambientInt = vec4(groundAmbientColor, 1.0);
 	vec3 specularInt = specularCol * specularPow;
 	vec4 shadowInt = shadow2DProj(shadowTex, vertexShadowPos);
 		shadowInt.x = 1.0 - shadowInt.x;
 		shadowInt.x *= groundShadowDensity;
 		// shadowInt.x *= diffuseInt.w;
 		shadowInt.x = 1.0 - shadowInt.x;
+
+	ambientInt.xyz *= SMF_INTENSITY_MUL;
+	diffuseInt.xyz *= SMF_INTENSITY_MUL;
+	diffuseInt.a = 1.0;
+
+
+	#if (SMF_WATER_ABSORPTION == 1)
+		if (vertexHeight < 0.0) {
+			int vertexStepHeight = min(1023, int(-vertexHeight));
+			float waterLightIntensity = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
+			vec4 waterHeightColor = vec4(
+				max(waterMinColor.r, waterBaseColor.r - (waterAbsorbColor.r * vertexStepHeight)) * SMF_INTENSITY_MUL,
+				max(waterMinColor.g, waterBaseColor.g - (waterAbsorbColor.g * vertexStepHeight)) * SMF_INTENSITY_MUL,
+				max(waterMinColor.b, waterBaseColor.b - (waterAbsorbColor.b * vertexStepHeight)) * SMF_INTENSITY_MUL,
+				max(0.0, (255.0 + int(10.0 * vertexHeight)) / 255.0)
+			);
+
+			if (vertexHeight > -10.0) {
+				diffuseInt.xyz =
+					(diffuseInt.xyz * (1.0 - (-vertexHeight * 0.1))) +
+					(waterHeightColor.xyz * (0.0 + (-vertexHeight * 0.1)) * waterLightIntensity);
+			} else {
+				diffuseInt.xyz = (waterHeightColor.xyz * waterLightIntensity);
+			}
+
+			diffuseInt.a = waterHeightColor.a;
+		}
+	#endif
+
 
 	vec4 shadeCol = mix(ambientInt, diffuseInt, shadowInt.x);
 
