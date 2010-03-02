@@ -2,6 +2,7 @@
 #include "RAI.h"
 #include <set>
 #include "Sim/Features/FeatureDef.h"
+#include "System/Util.h"
 //#include <time.h>
 #include <stdio.h>
 
@@ -101,10 +102,10 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 	}
 
 	relResourceFileName = "cache/" + cRAI::MakeFileSystemCompatible(cb->GetModHumanName());
-	relResourceFileName += "-" + cb->GetModHash();
+	relResourceFileName += "-" + IntToString(cb->GetModHash(), "%x");
 	relResourceFileName += "-" + cRAI::MakeFileSystemCompatible(cb->GetMapName());
 	relResourceFileName.resize(relResourceFileName.size() - 4); // cut off extension
-	relResourceFileName += "-" + cb->GetMapHash();
+	relResourceFileName += "-" + IntToString(cb->GetMapHash(), "%x");
 	relResourceFileName += ".res";
 
 	string resourceFileName_r;
