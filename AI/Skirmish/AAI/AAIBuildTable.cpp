@@ -2496,6 +2496,9 @@ bool AAIBuildTable::LoadBuildTable()
 		STRCAT(buffer, MOD_LEARN_PATH);
 		const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
 		STRCAT(buffer, modHumanName.c_str());
+		STRCAT(buffer, "-");
+		const std::string modHash = IntToString(cb->GetModHash(), "%x");
+		STRCAT(buffer, modHash.c_str());
 		STRCAT(buffer, ".dat");
 		STRCPY(buildtable_filename, buffer);
 
@@ -2750,6 +2753,9 @@ void AAIBuildTable::DebugPrint()
 	STRCAT(buffer, "BuildTable_");
 	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
 	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, "-");
+	const std::string modHash = IntToString(cb->GetModHash(), "%x");
+	STRCAT(buffer, modHash.c_str());
 	STRCAT(buffer, ".txt");
 	STRCPY(filename, buffer);
 

@@ -22,6 +22,7 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "System/Vec2.h"
 #include "System/maindefines.h"
+#include "System/Util.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
