@@ -77,7 +77,7 @@ protected:
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
 
-
+	bool LoadMapShaders();
 	void CreateWaterPlanes(const bool &camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
