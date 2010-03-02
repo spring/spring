@@ -14,8 +14,16 @@ public:
 
 	void ReleaseProgramObjects(const std::string&);
 	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, bool);
-	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, const std::string&, const std::string&, bool);
-	Shader::IShaderObject* CreateShaderObject(const std::string&, int);
+	Shader::IProgramObject* CreateProgramObject(
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		bool
+	);
+	Shader::IShaderObject* CreateShaderObject(const std::string&, const std::string&, int);
 
 private:
 	typedef std::map<std::string, Shader::IProgramObject*> ProgramObjMap;
