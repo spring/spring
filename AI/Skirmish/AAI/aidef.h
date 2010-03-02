@@ -51,7 +51,6 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #define MOD_CFG_PATH "cfg/mod/"
 #define GENERAL_CFG_FILE "cfg/general.cfg"
 #define MOD_LEARN_PATH "learn/mod/"
-#define MAP_CFG_PATH "cfg/map/"
 #define MAP_CACHE_PATH "cache/"
 #define MAP_LEARN_PATH "learn/map/"
 
