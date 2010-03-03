@@ -98,12 +98,16 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		std::vector<char> soFileBuffer(soFile.FileSize() + 1, 0);
 		soFile.Read(&soFileBuffer[0], soFile.FileSize());
 
-		soSource = soDefs + std::string(&soFileBuffer[0]);
+		soSource = std::string(&soFileBuffer[0]);
 	} else {
 		arbShader =
 			(soName.find("!!ARBvp") != std::string::npos) ||
 			(soName.find("!!ARBfp") != std::string::npos);
 		soSource = soName;
+	}
+
+	if (!arbShader) {
+		soSource = soDefs + soSource;
 	}
 
 	Shader::IShaderObject* so = NULL;
