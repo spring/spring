@@ -63,18 +63,20 @@ void main() {
 	vec4 shadowInt = shadow2DProj(shadowTex, vertexShadowPos);
 		shadowInt.x = 1.0 - shadowInt.x;
 		shadowInt.x *= groundShadowDensity;
-		// shadowInt.x *= diffuseInt.w;
+	//	shadowInt.x *= diffuseInt.w;
 		shadowInt.x = 1.0 - shadowInt.x;
+	vec4 shadeInt;
 
 	ambientInt.xyz *= SMF_INTENSITY_MUL;
 	diffuseInt.xyz *= SMF_INTENSITY_MUL;
 	diffuseInt.a = 1.0;
+	shadeInt = mix(ambientInt, diffuseInt, shadowInt.x);
 
 
 	#if (SMF_WATER_ABSORPTION == 1)
 		if (vertexHeight < 0.0) {
 			int vertexStepHeight = min(1023, int(-vertexHeight));
-			float waterLightIntensity = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
+			float waterLightInt = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
 			vec4 waterHeightColor = vec4(
 				max(waterMinColor.r, waterBaseColor.r - (waterAbsorbColor.r * vertexStepHeight)) * SMF_INTENSITY_MUL,
 				max(waterMinColor.g, waterBaseColor.g - (waterAbsorbColor.g * vertexStepHeight)) * SMF_INTENSITY_MUL,
@@ -83,26 +85,25 @@ void main() {
 			);
 
 			if (vertexHeight > -10.0) {
-				diffuseInt.xyz =
+				shadeInt.xyz =
 					(diffuseInt.xyz * (1.0 - (-vertexHeight * 0.1))) +
-					(waterHeightColor.xyz * (0.0 + (-vertexHeight * 0.1)) * waterLightIntensity);
+					(waterHeightColor.xyz * (0.0 + (-vertexHeight * 0.1)) * waterLightInt);
 			} else {
-				diffuseInt.xyz = (waterHeightColor.xyz * waterLightIntensity);
+				shadeInt.xyz = (waterHeightColor.xyz * waterLightInt);
 			}
 
-			diffuseInt.a = waterHeightColor.a;
+			shadeInt.a = waterHeightColor.a;
+			shadeInt *= shadowInt.x;
 		}
 	#endif
 
 
-	vec4 shadeCol = mix(ambientInt, diffuseInt, shadowInt.x);
-
-	gl_FragColor = (diffuseCol + detailCol) * shadeCol;
+	gl_FragColor = (diffuseCol + detailCol) * shadeInt;
 	gl_FragColor.a = (gl_TexCoord[0].q * 0.1) + 1.0;
 
 	#if (SMF_ARB_LIGHTING == 0)
-	// no need to multiply by groundSpecularColor anymore
-	gl_FragColor.rgb += specularInt;
+		// no need to multiply by groundSpecularColor anymore
+		gl_FragColor.rgb += specularInt;
 	#endif
 
 	gl_FragColor = mix(gl_Fog.color, gl_FragColor, fogFactor);
