@@ -2,16 +2,9 @@
 
                                     AUTHORS
 
-NOTE: NEVER send bug reports, help and feature requests directly to the
-authors, but you are free to write mails about donating!
-
-Visit our project homepage at http://springrts.com for help, suggestions,
-bugs, community forum and everything spring-related.
-
-Spring (formerly TASpring) was originally written by the swedish clan SY,
+Spring (formerly TASpring) was originally written by the Swedish clan SY,
 and later extended by a bunch of other people, some of whom are listed
-here in alphabetical order.
-If you think you are missing, feel free to send a patch.
+here (in alphabetical order):
 
 Auswaschbar (Karl-Robert Ernst <k-r.ernst@my-mail.ch>)
 hoijui (Robin Vobruba <hoijui.quaero@gmail.com>)
@@ -28,13 +21,11 @@ victor
 xiphux (Christopher Han <xiphux@gmail.com>)
 zerver (<mr@zerver.net>)
 
+                                     Notes
 
-We also want to thank the following people for their contributions:
+NEVER send bug reports, help- and feature-requests directly to the
+persons in this list, but visit http://springrts.com instead.
+Of course you are free to write mails about donating.
 
-eriatarka
-hughperkins (Hugh Perkins <hughperkins@gmail.com>)
-initram
-Nathaniel Smith
-Teake Nutma
-quantum
-zenzike (Nicolas Wu)
+For additions/corrections to the list, please post in the community forum.
+
