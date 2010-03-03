@@ -1653,7 +1653,7 @@ void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
 }
 
 
-void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, CMatrix44f mat, GLUquadricObj* q)
+void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, int lapf, CMatrix44f mat, GLUquadricObj* q)
 {
 	mat.Translate(p->pos.x, p->pos.y, p->pos.z);
 	mat.RotateY(-p->rot[1]);
@@ -1664,14 +1664,14 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 		glMultMatrixf(mat.m);
 
 		if (p->visible && !p->colvol->IsDisabled()) {
-			if (p == lap) {
+			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glLineWidth(2.0f);
-				glColor3f(1.0f, 0.0f, 0.0f);
+				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
 
 			DrawCollisionVolume(p->colvol, q);
 
-			if (p == lap) {
+			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glLineWidth(1.0f);
 				glColor3f(0.0f, 0.0f, 0.0f);
 			}
@@ -1679,7 +1679,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 	glPopMatrix();
 
 	for (unsigned int i = 0; i < p->childs.size(); i++) {
-		DrawUnitDebugPieceTree(p->childs[i], lap, mat, q);
+		DrawUnitDebugPieceTree(p->childs[i], lap, lapf, mat, q);
 	}
 }
 
@@ -1705,8 +1705,6 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 			UnitDrawingTexturesOff();
 
-			const int  deltaTime  = gs->frameNum - unit->lastAttack;
-			const bool markVolume = (unit->lastAttack > 0 && deltaTime < 150);
 			const float3 midPosOffset =
 				(unit->frontdir * unit->relMidPos.z) +
 				(unit->updir    * unit->relMidPos.y) +
@@ -1728,17 +1726,17 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 				if (unit->unitDef->usePieceCollisionVolumes) {
 					// draw only the piece volumes for less clutter
 					CMatrix44f mat(-midPosOffset);
-					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, mat, q);
+					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
 				} else {
 					if (!unit->collisionVolume->IsDisabled()) {
-						if (markVolume) {
+						if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
 							glLineWidth(2.0f);
-							glColor3f(1.0f - (deltaTime / 150.0f), 0.0f, 0.0f);
+							glColor3f((1.0f - ((gs->frameNum - unit->lastAttack) / 150.0f)), 0.0f, 0.0f);
 						}
 
 						DrawCollisionVolume(unit->collisionVolume, q);
 
-						if (markVolume) {
+						if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
 							glLineWidth(1.0f);
 							glColor3f(0.0f, 0.0f, 0.0f);
 						}
