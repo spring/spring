@@ -18,19 +18,20 @@
 #include "System/mmgr.h"
 #include "System/Util.h"
 #include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
 
 
 /**
  * @brief global unsynced
  *
- * Global instance of CGlobalUnsyncedStuff
+ * Global instance of CGlobalUnsynced
  */
-CGlobalUnsyncedStuff* gu;
+CGlobalUnsynced* gu;
 
 
-CR_BIND(CGlobalUnsyncedStuff,);
+CR_BIND(CGlobalUnsynced, );
 
-CR_REG_METADATA(CGlobalUnsyncedStuff, (
+CR_REG_METADATA(CGlobalUnsynced, (
 				CR_MEMBER(teamNanospray), // ??
 				CR_MEMBER(modGameTime),
 				CR_MEMBER(gameTime),
@@ -54,10 +55,7 @@ CR_REG_METADATA(CGlobalUnsyncedStuff, (
 				CR_RESERVED(64)
 				));
 
-/**
- * Initializes variables in CGlobalUnsyncedStuff
- */
-CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
+CGlobalUnsynced::CGlobalUnsynced()
 {
 	boost::uint64_t randnum;
 	randnum = SDL_GetTicks();
@@ -101,29 +99,38 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 
 	compressTextures = false;
 	atiHacks = false;
+}
+
+
+
+void CGlobalUnsynced::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveGLSL = !!GLEW_VERSION_2_0;
 
 	{
-		std::string vendor = std::string((char*) glGetString(GL_VENDOR));
-		StringToLowerInPlace(vendor);
+		std::string vendor = StringToLower(std::string((char*) glGetString(GL_VENDOR)));
 		haveATI = (vendor.find("ati ") != std::string::npos);
 
 		if (haveATI) {
-			std::string renderer = std::string((char*) glGetString(GL_RENDERER));
-			StringToLowerInPlace(renderer);
+			std::string renderer = StringToLower(std::string((char*) glGetString(GL_RENDERER)));
 			//! x-series doesn't support NPOTs (but hd-series does)
 			supportNPOTs = (renderer.find(" x") == std::string::npos && renderer.find(" 9") == std::string::npos);
 		}
 	}
+
+	// Runtime compress textures?
+	if (GLEW_ARB_texture_compression) {
+		// we don't even need to check it, 'cos groundtextures must have that extension
+		// default to off because it reduces quality (smallest mipmap level is bigger)
+		compressTextures = !!configHandler->Get("CompressTextures", 0);
+	}
+
+	// use some ATI bugfixes?
+	if ((atiHacks = !!configHandler->Get("AtiHacks", haveATI? 1: 0))) {
+		logOutput.Print("ATI hacks enabled\n");
+	}
 }
 
-/**
- * Destroys variables in CGlobalUnsyncedStuff
- */
-CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
-{
-}
 
 
 
@@ -132,7 +139,7 @@ CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
  *
  * Returns an unsynced random integer
  */
-int CGlobalUnsyncedStuff::usRandInt()
+int CGlobalUnsynced::usRandInt()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
 	return usRandSeed & RANDINT_MAX;
@@ -143,7 +150,7 @@ int CGlobalUnsyncedStuff::usRandInt()
  *
  * returns an unsynced random float
  */
-float CGlobalUnsyncedStuff::usRandFloat()
+float CGlobalUnsynced::usRandFloat()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
 	return float(usRandSeed & RANDINT_MAX) / RANDINT_MAX;
@@ -154,7 +161,7 @@ float CGlobalUnsyncedStuff::usRandFloat()
  *
  * returns an unsynced random vector
  */
-float3 CGlobalUnsyncedStuff::usRandVector()
+float3 CGlobalUnsynced::usRandVector()
 {
 	float3 ret;
 	do {
@@ -166,7 +173,7 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 	return ret;
 }
 
-void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
+void CGlobalUnsynced::SetMyPlayer(const int mynumber)
 {
 	myPlayerNum = mynumber;
 	if (gameSetup && gameSetup->playerStartingData.size() > mynumber)
