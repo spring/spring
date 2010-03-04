@@ -1149,6 +1149,7 @@ void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
 	const float texConstant[] = {col[0] / 255.0f, col[1] / 255.0f, col[2] / 255.0f, alpha};
 	const float matConstant[] = {1.0f, 1.0f, 1.0f, alpha};
 
+	glActiveTexture(GL_TEXTURE0);
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
 }
