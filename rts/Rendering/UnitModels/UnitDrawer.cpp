@@ -722,8 +722,6 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit* unit) {
 				glActiveTexture(GL_TEXTURE1);                       \
 				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2); \
 				glEnable(GL_TEXTURE_2D);                            \
-			} else {                                                \
-				glDisable(GL_TEXTURE_2D);                           \
 			}
 		#define POP_SHADOW_TEXTURE_STATE(model)   \
 			if (model->type == MODELTYPE_S3O) {   \

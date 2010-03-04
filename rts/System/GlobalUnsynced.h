@@ -9,17 +9,17 @@
 class CUnit;
 
 /**
- * @brief Globally accessible unsynced stuff
+ * @brief Globally accessible unsynced data
  *
- * Contains globally accessible stuff that does not remain synced
+ * Contains globally accessible data that does not remain synced
  */
-class CGlobalUnsyncedStuff
+class CGlobalUnsynced
 {
-	CR_DECLARE(CGlobalUnsyncedStuff);
+	CR_DECLARE(CGlobalUnsynced);
 
 public:
-	CGlobalUnsyncedStuff();
-	~CGlobalUnsyncedStuff();
+	CGlobalUnsynced();
+	void PostInit();
 
 	int    usRandInt();    //!< Unsynced random int
 	float  usRandFloat();  //!< Unsynced random float
@@ -250,7 +250,7 @@ private:
 
 };
 
-extern CGlobalUnsyncedStuff* gu;
+extern CGlobalUnsynced* gu;
 extern bool fullscreen;
 
 #endif /* GLOBALSTUFF_H */

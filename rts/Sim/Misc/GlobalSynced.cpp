@@ -20,15 +20,15 @@
 /**
  * @brief global synced
  *
- * Global instance of CGlobalSyncedStuff
+ * Global instance of CGlobalSynced
  */
-CGlobalSyncedStuff* gs;
+CGlobalSynced* gs;
 
 
 
-CR_BIND(CGlobalSyncedStuff,);
+CR_BIND(CGlobalSynced, );
 
-CR_REG_METADATA(CGlobalSyncedStuff, (
+CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(frameNum),
 	CR_MEMBER(speedFactor),
 	CR_MEMBER(userSpeedFactor),
@@ -54,9 +54,9 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 
 
 /**
- * Initializes variables in CGlobalSyncedStuff
+ * Initializes variables in CGlobalSynced
  */
-CGlobalSyncedStuff::CGlobalSyncedStuff()
+CGlobalSynced::CGlobalSynced()
 {
 	hmapx = 256;
 	hmapy = 256;
@@ -80,7 +80,7 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 }
 
 
-CGlobalSyncedStuff::~CGlobalSyncedStuff()
+CGlobalSynced::~CGlobalSynced()
 {
 	// TODO: put this somewhere else (playerHandler is unsynced, even)
 	SafeDelete(playerHandler);
@@ -88,7 +88,7 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 }
 
 
-void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
+void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
 	noHelperAIs = !!setup->noHelperAIs;
 
@@ -108,7 +108,7 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
  *
  * returns a synced random integer
  */
-int CGlobalSyncedStuff::randInt()
+int CGlobalSynced::randInt()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
 	return randSeed & RANDINT_MAX;
@@ -119,7 +119,7 @@ int CGlobalSyncedStuff::randInt()
  *
  * returns a synced random float
  */
-float CGlobalSyncedStuff::randFloat()
+float CGlobalSynced::randFloat()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
 	return float(randSeed & RANDINT_MAX)/RANDINT_MAX;
@@ -130,7 +130,7 @@ float CGlobalSyncedStuff::randFloat()
  *
  * returns a synced random vector
  */
-float3 CGlobalSyncedStuff::randVector()
+float3 CGlobalSynced::randVector()
 {
 	float3 ret;
 	do {
