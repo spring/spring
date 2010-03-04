@@ -58,6 +58,8 @@
 extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
+#define UNIT_SHADOW_ALPHA_MASKING
+
 CUnitDrawer* unitDrawer;
 
 static bool luaDrawing = false; // FIXME
@@ -705,51 +707,89 @@ void CUnitDrawer::DrawShadowShaderUnits()
 }
 
 
+
 /******************************************************************************/
 /******************************************************************************/
 
 
-inline void CUnitDrawer::DoDrawUnitShadow(CUnit *unit) {
+inline void CUnitDrawer::DoDrawUnitShadow(CUnit* unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-	if (((losStatus & LOS_INLOS) || gu->spectatingFullView) &&
-		camera->InView(unit->drawMidPos, unit->radius + 700)) {
 
-		// FIXME: test against the shadow projection intersection
-		const float sqDist = (unit->pos-camera->pos).SqLength();
-		const float farLength = unit->sqRadius * unitDrawDistSqr;
-
-		if (sqDist < farLength) {
-			if (!DrawAsIcon(*unit, sqDist)) {
-				if (!unit->isCloaked) {
-					if (unit->lodCount <= 0) {
-						DrawUnitNow(unit);
-					} else {
-						LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
-						const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
-						unit->currentLOD = lod;
-						LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-						if ((lodMat != NULL) && lodMat->IsActive()) {
-							lodMat->AddUnit(unit);
-						} else {
-							DrawUnitNow(unit);
-						}
-					}
-				}
+	// do shadow alpha-masking for S3O units only
+	// (3DO's need more setup than it is worth)
+	#ifdef UNIT_SHADOW_ALPHA_MASKING
+		#define S3O_TEX(model) \
+			texturehandlerS3O->GetS3oTex(model->textureType)
+		#define PUSH_SHADOW_TEXTURE_STATE(model)                    \
+			if (model->type == MODELTYPE_S3O) {                     \
+				glActiveTexture(GL_TEXTURE1);                       \
+				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2); \
+				glEnable(GL_TEXTURE_2D);                            \
+			} else {                                                \
+				glDisable(GL_TEXTURE_2D);                           \
 			}
+		#define POP_SHADOW_TEXTURE_STATE(model)   \
+			if (model->type == MODELTYPE_S3O) {   \
+				glActiveTexture(GL_TEXTURE0);     \
+				glBindTexture(GL_TEXTURE_2D, 0);  \
+				glDisable(GL_TEXTURE_2D);         \
+			}
+	#else
+		#define PUSH_SHADOW_TEXTURE_STATE(model)
+		#define POP_SHADOW_TEXTURE_STATE(model)
+	#endif
+
+	// FIXME: test against the shadow projection intersection
+	if (!(((losStatus & LOS_INLOS) || gu->spectatingFullView) &&
+		camera->InView(unit->drawMidPos, unit->radius + 700))) {
+		return;
+	}
+
+	const float sqDist = (unit->pos - camera->pos).SqLength();
+	const float farLength = unit->sqRadius * unitDrawDistSqr;
+
+	if (sqDist >= farLength) { return; }
+	if (unit->isCloaked) { return; }
+	if (DrawAsIcon(*unit, sqDist)) { return; }
+
+	if (unit->lodCount <= 0) {
+		PUSH_SHADOW_TEXTURE_STATE(unit->model);
+		DrawUnitNow(unit);
+		POP_SHADOW_TEXTURE_STATE(unit->model);
+	} else {
+		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
+		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+		unit->currentLOD = lod;
+		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
+
+		if ((lodMat != NULL) && lodMat->IsActive()) {
+			lodMat->AddUnit(unit);
+		} else {
+			PUSH_SHADOW_TEXTURE_STATE(unit->model);
+			DrawUnitNow(unit);
+			POP_SHADOW_TEXTURE_STATE(unit->model);
 		}
 	}
+
+	#undef PUSH_SHADOW_TEXTURE_STATE
+	#undef POP_SHADOW_TEXTURE_STATE
 }
+
+
 
 void CUnitDrawer::DrawShadowPass(void)
 {
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glDisable(GL_TEXTURE_2D);
-
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
+	#ifdef UNIT_SHADOW_ALPHA_MASKING
+	glAlphaFunc(GL_GREATER, 0.5f);
+	glEnable(GL_ALPHA_TEST);
+	#endif
+
 	shadowHandler->GetMdlShadowGenShader()->Enable();
+
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
 	GML_RECMUTEX_LOCK(unit); // DrawShadowPass
@@ -757,19 +797,24 @@ void CUnitDrawer::DrawShadowPass(void)
 #ifdef USE_GML
 	if (multiThreadDrawUnitShadow) {
 		gmlProcessor->Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
-		  &uh->renderUnits, uh->renderUnits.size(),50,100,TRUE);
+		  &uh->renderUnits, uh->renderUnits.size(), 50, 100, TRUE);
 	}
 	else
 #endif
 	{
+		//! unsorted list of 3DO and S3O units
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
-			CUnit* unit = *usi;
-			DoDrawUnitShadow(unit);
+			DoDrawUnitShadow(*usi);
 		}
 	}
 
-	glDisable(GL_POLYGON_OFFSET_FILL);
 	shadowHandler->GetMdlShadowGenShader()->Disable();
+
+	#ifdef UNIT_SHADOW_ALPHA_MASKING
+	glDisable(GL_ALPHA_TEST);
+	#endif
+
+	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	DrawShadowShaderUnits();
 }
@@ -1053,15 +1098,6 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
-	// When rendering shadows, we just want to take extraColor.alpha (tex2) into account,
-	// so textures with masked texels create correct shadows.
-	if (shadowHandler->inShadowPass) {
-		// Instead of enabling GL_TEXTURE1_ARB i have modified CTextureHandler.SetS3oTexture()
-		// to set texture 0 if shadowHandler->inShadowPass is true.
-		glEnable(GL_TEXTURE_2D);
-		return;
-	}
-
 	if (advShading && !water->drawReflection) {
 		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
 
@@ -1143,11 +1179,6 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 {
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_ALPHA_TEST);
-
-	if (shadowHandler->inShadowPass) {
-		glDisable(GL_TEXTURE_2D);
-		return;
-	}
 
 	if (advShading && !water->drawReflection) {
 		S3OCurShader->Disable();
@@ -1886,10 +1917,13 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 
 void CUnitDrawer::DrawUnitNow(CUnit* unit)
 {
+	/*
+	// this interferes with Lua material management
 	if (unit->alphaThreshold != 0.1f) {
-		//glPushAttrib(GL_COLOR_BUFFER_BIT);
-		//glAlphaFunc(GL_GREATER, unit->alphaThreshold);
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
+		glAlphaFunc(GL_GREATER, unit->alphaThreshold);
 	}
+	*/
 
 	glPushMatrix();
 	ApplyUnitTransformMatrix(unit);
@@ -1904,9 +1938,11 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 #endif
 	glPopMatrix();
 
+	/*
 	if (unit->alphaThreshold != 0.1f) {
-		//glPopAttrib();
+		glPopAttrib();
 	}
+	*/
 }
 
 
