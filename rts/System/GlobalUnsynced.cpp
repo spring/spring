@@ -102,6 +102,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	compressTextures = false;
 	atiHacks = false;
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
+	haveGLSL = !!GLEW_VERSION_2_0;
 
 	{
 		std::string vendor = std::string((char*) glGetString(GL_VENDOR));

@@ -63,7 +63,6 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 CUnitDrawer* unitDrawer;
 
 static bool luaDrawing = false; // FIXME
-static bool haveGLSL = false;
 
 static float GetLODFloat(const string& name, float def)
 {
@@ -156,8 +155,6 @@ CUnitDrawer::~CUnitDrawer(void)
 
 bool CUnitDrawer::LoadModelShaders()
 {
-	haveGLSL = !!GLEW_VERSION_2_0;
-
 	S3ODefShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
 	S3OAdvShader = S3ODefShader;
 	S3OCurShader = S3ODefShader;
@@ -180,7 +177,7 @@ bool CUnitDrawer::LoadModelShaders()
 	S3ODefShader->Link();
 
 	if (shadowHandler->canUseShadows) {
-		if (!haveGLSL) {
+		if (!gu->haveGLSL) {
 			S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
 			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
 			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
@@ -775,8 +772,6 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit* unit) {
 	#undef POP_SHADOW_TEXTURE_STATE
 }
 
-
-
 void CUnitDrawer::DrawShadowPass(void)
 {
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -802,7 +797,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	else
 #endif
 	{
-		//! unsorted list of 3DO and S3O units
+		//! note: unsorted list of 3DO and S3O units
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			DoDrawUnitShadow(*usi);
 		}
@@ -1108,7 +1103,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		S3OCurShader = (shadowHandler->drawShadows)? S3OAdvShader: S3ODefShader;
 		S3OCurShader->Enable();
 
-		if (haveGLSL && shadowHandler->drawShadows) {
+		if (gu->haveGLSL && shadowHandler->drawShadows) {
 			S3OCurShader->SetUniform3fv(6, &camera->pos[0]);
 			S3OCurShader->SetUniformMatrix4fv(7, false, (float*) &camera->modelviewInverse[0]);
 			S3OCurShader->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
@@ -1220,7 +1215,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		CTeam* t = teamHandler->Team(team);
 		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-		if (haveGLSL && shadowHandler->drawShadows) {
+		if (gu->haveGLSL && shadowHandler->drawShadows) {
 			S3OCurShader->SetUniform4fv(8, &c[0]);
 		} else {
 			S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
