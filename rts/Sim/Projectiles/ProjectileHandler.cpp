@@ -16,6 +16,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -815,8 +816,9 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 
 void CProjectileHandler::DrawShadowPass(void)
 {
-	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, projectileShadowVP);
-	glEnable(GL_VERTEX_PROGRAM_ARB);
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
+
 	glDisable(GL_TEXTURE_2D);
 
 	CProjectile::inArray = false;
@@ -826,8 +828,10 @@ void CProjectileHandler::DrawShadowPass(void)
 	{
 		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
 
+		po->Enable();
 		DrawProjectilesShadow(syncedProjectiles);
 		DrawProjectilesShadow(unsyncedProjectiles);
+		po->Disable();
 	}
 
 	if (CProjectile::inArray) {
@@ -838,13 +842,14 @@ void CProjectileHandler::DrawShadowPass(void)
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
 
+		po->Enable();
 		currentParticles += CProjectile::DrawArray();
+		po->Disable();
 	}
 
 	glShadeModel(GL_FLAT);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_VERTEX_PROGRAM_ARB);
 }
 
 
