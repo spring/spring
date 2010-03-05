@@ -1,22 +1,24 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include "mmgr.h"
+
 #include "AdvTreeDrawer.h"
+#include "AdvTreeGenerator.h"
+#include "GrassDrawer.h"
+#include "Game/Camera.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
-#include "AdvTreeGenerator.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
-#include "LogOutput.h"
-#include "GrassDrawer.h"
-#include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"
-#include "GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/Matrix44f.h"
+#include "System/GlobalUnsynced.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -265,26 +267,23 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 	}
 }
 
+
+
 void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 {
-	int activeFarTex=camera->forward.z<0 ? treeGen->farTex[0] : treeGen->farTex[1];
-
-	bool drawDetailed=true;
-	if(treeDistance<4)
-		drawDetailed=false;
-	if(drawReflection)
-		drawDetailed=false;
+	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
+	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer ();
 
 	glEnable(GL_ALPHA_TEST);
 
-	if(gu->drawFog) {
+	if (gu->drawFog) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}
 
-	if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
+	if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
 
@@ -349,13 +348,13 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	oldTreeDistance=treeDistance;
 	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
 
-	if(drawDetailed){
+	if (drawDetailed) {
 		int xstart=std::max(0,cx-2);
 		int xend=std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);
 		int ystart=std::max(0,cy-2);
 		int yend=std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);
 
-		if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
+		if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeVP );
 
 			glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -543,6 +542,8 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	}
 }
 
+
+
 struct CAdvTreeSquareDrawer_SP : CReadMap::IQuadDrawer
 {
 	void DrawQuad (int x,int y);
@@ -629,65 +630,66 @@ void CAdvTreeSquareDrawer_SP::DrawQuad (int x,int y)
 	}
 }
 
+
+
 void CAdvTreeDrawer::DrawShadowPass(void)
 {
-	float treeDistance=oldTreeDistance;
-
-	int activeFarTex=camera->forward.z<0 ? treeGen->farTex[0] : treeGen->farTex[1];
-
-	bool drawDetailed=true;
-	if(treeDistance<4)
-		drawDetailed=false;
+	const float treeDistance = oldTreeDistance;
+	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
+	const bool drawDetailed = (treeDistance >= 4.0f);
 
 	glBindTexture(GL_TEXTURE_2D, activeFarTex);
 	glEnable(GL_TEXTURE_2D);
-	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarShadowVP );
-	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glEnable(GL_ALPHA_TEST);
-	glPolygonOffset(1,1);
+	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	CAdvTreeSquareDrawer_SP drawer;
-	int cx = drawer.cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
-	int cy = drawer.cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
+	const int cx = drawer.cx = (int)(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cy = drawer.cy = (int)(camera->pos.z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
 	drawer.drawDetailed = drawDetailed;
 	drawer.td = this;
 	drawer.treeDistance = treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE;
 
+	Shader::IProgramObject* po = NULL;
+
 	GML_STDMUTEX_LOCK(tree); // DrawShadowPass
 
 	// draw with extraSize=1
-	readmap->GridVisibility (camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
+	readmap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
-	if(drawDetailed){
-		int xstart=std::max(0,cx-2);
-		int xend=std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);
-		int ystart=std::max(0,cy-2);
-		int yend=std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);
+	if (drawDetailed) {
+		const int xstart = std::max(0,cx-2);
+		const int xend   = std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);
+		const int ystart = std::max(0,cy-2);
+		const int yend   = std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);
 
 		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 		glEnable(GL_TEXTURE_2D);
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeShadowVP );
-		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  camera->up.x,camera->up.y,camera->up.z,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, 1,1,1,0.85f);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 0,0,0,0.20f*(1.0f/MAX_TREE_HEIGHT));	//w=alpha/height modifier
-		glAlphaFunc(GL_GREATER,0.5f);
+
+		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_NEAR);
+		po->Enable();
+		po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+		po->SetUniform4f(13, camera->right.x, camera->right.y, camera->right.z, 0.0f);
+		po->SetUniform4f(9,  camera->up.x,    camera->up.y,    camera->up.z,    0.0f);
+		po->SetUniform4f(11, 1.0f, 1.0f, 1.0f, 0.85f                           );
+		po->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT));   // w = alpha/height modifier
+
+		glAlphaFunc(GL_GREATER, 0.5f);
 		glEnable(GL_ALPHA_TEST);
-		glColor4f(1,1,1,1);
-		va=GetVertexArray();
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		va = GetVertexArray();
 		va->Initialize();
 
-		struct FadeTree{
+		struct FadeTree {
 			float3 pos;
 			float relDist;
 			float deltaY;
 			int type;
 		};
 		static FadeTree fadeTrees[3000];
-		FadeTree *pFT=fadeTrees;
+		FadeTree* pFT = fadeTrees;
 
 		for(TreeSquareStruct* pTSS=trees+ystart*treesX; pTSS<=trees+yend*treesX; pTSS+=treesX) {
 			for(TreeSquareStruct* tss=pTSS+xstart; tss<=pTSS+xend; ++tss) {
@@ -730,8 +732,10 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 				}
 			}
 		}
-		//draw trees that have been marked as falling
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);
+
+		// draw trees that have been marked as falling
+		po->SetUniform4f(10, 0.0f, 0.0f, 0.0f, 0.0f);
+
 		for(std::list<FallingTree>::iterator fti=fallingTrees.begin(); fti!=fallingTrees.end(); ++fti){
 			float3 pos=fti->pos-UpVector*(fti->fallPos*20);
 			if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
@@ -758,23 +762,30 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 				glPopMatrix();
 			}
 		}
-		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarShadowVP );
+
+		po->Disable();
+		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_FAR);
+		po->Enable();
+
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		va->DrawArrayT(GL_QUADS);
 
-		for(FadeTree *pFTree=fadeTrees; pFTree<pFT; ++pFTree) { //faded close trees
-			va=GetVertexArray();
+		for (FadeTree* pFTree = fadeTrees; pFTree < pFT; ++pFTree) {
+			// faded close trees
+			va = GetVertexArray();
 			va->Initialize();
-			va->CheckInitSize(12*VA_SIZE_T);
+			va->CheckInitSize(12 * VA_SIZE_T);
 
-			DrawTreeVertex(pFTree->pos, pFTree->type*0.125f, pFTree->deltaY, false);
+			DrawTreeVertex(pFTree->pos, pFTree->type * 0.125f, pFTree->deltaY, false);
 
-			glAlphaFunc(GL_GREATER,1-pFTree->relDist*0.5f);
+			glAlphaFunc(GL_GREATER,1-pFTree->relDist * 0.5f);
 			va->DrawArrayT(GL_QUADS);
 		}
+
+		po->Disable();
 	}
+
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 }

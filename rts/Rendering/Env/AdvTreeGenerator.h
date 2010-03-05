@@ -27,8 +27,6 @@ public:
 	unsigned int treeNSVP;
 	unsigned int treeVP;
 	unsigned int treeFarVP;
-	unsigned int treeShadowVP;
-	unsigned int treeFarShadowVP;
 
 	unsigned int treeFPShadow;
 
