@@ -532,7 +532,6 @@ void LuaOpenGL::EnableDrawWorld()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorld()
 {
 	if (safeMode) {
@@ -541,7 +540,6 @@ void LuaOpenGL::DisableDrawWorld()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD);
 }
-
 
 void LuaOpenGL::ResetDrawWorld()
 {
@@ -564,7 +562,6 @@ void LuaOpenGL::EnableDrawWorldPreUnit()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorldPreUnit()
 {
 	if (safeMode) {
@@ -573,7 +570,6 @@ void LuaOpenGL::DisableDrawWorldPreUnit()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD);
 }
-
 
 void LuaOpenGL::ResetDrawWorldPreUnit()
 {
@@ -597,19 +593,23 @@ void LuaOpenGL::EnableDrawWorldShadow()
 	glPolygonOffset(1.0f, 1.0f);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	shadowHandler->GetMdlShadowGenShader()->Enable();
-}
 
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	po->Enable();
+}
 
 void LuaOpenGL::DisableDrawWorldShadow()
 {
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	shadowHandler->GetMdlShadowGenShader()->Disable();
+
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	po->Disable();
 
 	ResetWorldShadowMatrices();
 	DisableCommon(DRAW_WORLD_SHADOW);
 }
-
 
 void LuaOpenGL::ResetDrawWorldShadow()
 {
@@ -635,7 +635,6 @@ void LuaOpenGL::EnableDrawWorldReflection()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorldReflection()
 {
 	if (safeMode) {
@@ -644,7 +643,6 @@ void LuaOpenGL::DisableDrawWorldReflection()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD_REFLECTION);
 }
-
 
 void LuaOpenGL::ResetDrawWorldReflection()
 {
@@ -667,7 +665,6 @@ void LuaOpenGL::EnableDrawWorldRefraction()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorldRefraction()
 {
 	if (safeMode) {
@@ -676,7 +673,6 @@ void LuaOpenGL::DisableDrawWorldRefraction()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD_REFRACTION);
 }
-
 
 void LuaOpenGL::ResetDrawWorldRefraction()
 {

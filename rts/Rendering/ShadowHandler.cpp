@@ -5,27 +5,24 @@
 
 #include "ShadowHandler.h"
 #include "Game/Camera.h"
-#include "Game/UI/MiniMap.h"
-#include "UnitModels/FeatureDrawer.h"
-#include "UnitModels/UnitDrawer.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/Ground.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/ConfigHandler.h"
-#include "System/EventHandler.h"
-#include "System/Matrix44f.h"
-#include "System/LogOutput.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
-
-
-CShadowHandler* shadowHandler = 0;
+#include "Rendering/UnitModels/FeatureDrawer.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Matrix44f.h"
+#include "System/LogOutput.h"
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 
+CShadowHandler* shadowHandler = 0;
 
 bool CShadowHandler::canUseShadows = false;
 bool CShadowHandler::useFPShadows  = false;
@@ -43,9 +40,6 @@ CShadowHandler::CShadowHandler(void)
 	firstDraw     = true;
 	shadowTexture = 0;
 	drawTerrainShadow = true;
-
-	mdlShadowGenShader = shaderHandler->CreateProgramObject("[ShadowHandler]", "MdlShadowGenShaderARB", true);
-	mapShadowGenShader = shaderHandler->CreateProgramObject("[ShadowHandler]", "MapShadowGenShaderARB", true);
 
 	if (!tmpFirstInstance && !canUseShadows) {
 		return;
@@ -109,13 +103,72 @@ CShadowHandler::CShadowHandler(void)
 		return; // drawShadows is still false
 	}
 
-	drawShadows = true;
-
-	mdlShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("unit_genshadow.vp", "", GL_VERTEX_PROGRAM_ARB));
-	mdlShadowGenShader->Link();
-	mapShadowGenShader->AttachShaderObject(shaderHandler->CreateShaderObject("groundshadow.vp", "", GL_VERTEX_PROGRAM_ARB));
-	mapShadowGenShader->Link();
+	LoadShadowGenShaderProgs();
 }
+
+CShadowHandler::~CShadowHandler(void)
+{
+	if (drawShadows) {
+		glDeleteTextures(1, &shadowTexture);
+	}
+
+	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
+	shadowGenProgs.clear();
+}
+
+void CShadowHandler::LoadShadowGenShaderProgs()
+{
+	shadowGenProgs.resize(SHADOWGEN_PROGRAM_LAST);
+
+	static const std::string shadowGenProgNames[SHADOWGEN_PROGRAM_LAST] = {
+		"unit_genshadow.vp",
+		"groundshadow.vp",
+		"treeShadow.vp",
+		"treeFarShadow.vp",
+		"projectileshadow.vp",
+	};
+	static const std::string shadowGenProgHandles[SHADOWGEN_PROGRAM_LAST] = {
+		"ShadowGenShaderProgModel",
+		"ShadowGenshaderProgMap",
+		"ShadowGenshaderProgTreeNear",
+		"ShadowGenshaderProgTreeFar",
+		"ShadowGenshaderProgProjectile",
+	};
+	static const std::string shadowGenProgDefines[SHADOWGEN_PROGRAM_LAST] = {
+		"#define SHADOWGEN_PROGRAM_MODEL\n",
+		"#define SHADOWGEN_PROGRAM_MAP\n",
+		"#define SHADOWGEN_PROGRAM_TREE_NEAR\n",
+		"#define SHADOWGEN_PROGRAM_TREE_FAR\n",
+		"#define SHADOWGEN_PROGRAM_PROJECTILE\n",
+	};
+
+	CShaderHandler* sh = shaderHandler;
+
+	if (false && gu->haveGLSL) {
+		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
+			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
+			Shader::IShaderObject* so = sh->CreateShaderObject("ShadowGenVertProg.glsl", shadowGenProgDefines[i], GL_VERTEX_SHADER);
+
+			po->AttachShaderObject(so);
+			po->Link();
+
+			shadowGenProgs[i] = po;
+		}
+	} else {
+		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
+			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "ARB", true);
+			Shader::IShaderObject* so = sh->CreateShaderObject(shadowGenProgNames[i], "", GL_VERTEX_PROGRAM_ARB);
+
+			po->AttachShaderObject(so);
+			po->Link();
+
+			shadowGenProgs[i] = po;
+		}
+	}
+
+	drawShadows = true;
+}
+
 
 
 bool CShadowHandler::InitDepthTarget()
@@ -151,17 +204,6 @@ bool CShadowHandler::InitDepthTarget()
 	bool status = fb.CheckStatus("SHADOW");
 	fb.Unbind();
 	return status;
-}
-
-CShadowHandler::~CShadowHandler(void)
-{
-	if (drawShadows) {
-		glDeleteTextures(1, &shadowTexture);
-	}
-
-	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
-	mdlShadowGenShader = NULL;
-	mapShadowGenShader = NULL;
 }
 
 void CShadowHandler::DrawShadowPasses(void)
@@ -228,10 +270,6 @@ void CShadowHandler::CreateShadows(void)
 	cross1=(sundir.cross(UpVector)).ANormalize();
 	cross2=cross1.cross(sundir);
 	centerPos=camera->pos;
-//	centerPos.x=((int)((centerPos.x+4)/8))*8;
-//	centerPos.y=((int)((centerPos.y+4)/8))*8;
-//	centerPos.z=((int)((centerPos.z+4)/8))*8;
-//	centerPos.y=(ground->GetHeight(centerPos.x,centerPos.z));
 
 	CalcMinMaxView();
 

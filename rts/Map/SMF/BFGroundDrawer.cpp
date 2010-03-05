@@ -1194,7 +1194,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	const int NUM_LODS = 4;
 
-	Shader::IProgramObject* po = shadowHandler->GetMapShadowGenShader();
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
 	// glEnable(GL_CULL_FACE);
 	glPolygonOffset(1, 1);

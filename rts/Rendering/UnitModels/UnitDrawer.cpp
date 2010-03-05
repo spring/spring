@@ -627,7 +627,7 @@ static void SetupShadowDrawing()
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	CShadowHandler* sh = shadowHandler;
-	Shader::IProgramObject* po = sh->GetMdlShadowGenShader();
+	Shader::IProgramObject* po = sh->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 
 	// note: env is shared by ARB S3O*Shader programs
 	po->Enable();
@@ -640,7 +640,10 @@ static void SetupShadowDrawing()
 
 static void CleanUpShadowDrawing()
 {
-	shadowHandler->GetMdlShadowGenShader()->Disable();
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+
+	po->Disable();
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
@@ -781,7 +784,9 @@ void CUnitDrawer::DrawShadowPass(void)
 	glEnable(GL_ALPHA_TEST);
 	#endif
 
-	shadowHandler->GetMdlShadowGenShader()->Enable();
+	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+
+	po->Enable();
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
@@ -801,7 +806,7 @@ void CUnitDrawer::DrawShadowPass(void)
 		}
 	}
 
-	shadowHandler->GetMdlShadowGenShader()->Disable();
+	po->Disable();
 
 	#ifdef UNIT_SHADOW_ALPHA_MASKING
 	glDisable(GL_ALPHA_TEST);

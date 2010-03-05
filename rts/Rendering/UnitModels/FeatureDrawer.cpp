@@ -283,7 +283,11 @@ void CFeatureDrawer::DrawShadowPass()
 {
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	shadowHandler->GetMdlShadowGenShader()->Enable();
+
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+
+	po->Enable();
 
 	{
 		GML_RECMUTEX_LOCK(feat); // DrawShadowPass
@@ -300,13 +304,14 @@ void CFeatureDrawer::DrawShadowPass()
 		unitDrawer->DrawQuedS3O();
 	}
 
+	po->Disable();
+
 	if (!gu->atiHacks) {
 		glPopAttrib();
 		glDisable(GL_TEXTURE_2D);
 	}
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	shadowHandler->GetMdlShadowGenShader()->Disable();
 }
 
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer

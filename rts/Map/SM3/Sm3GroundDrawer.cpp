@@ -185,27 +185,25 @@ void CSm3GroundDrawer::DrawShadowPass()
 	shadowCam.pos = camera->pos;
 	shadowCam.aspect = 1.0f;
 
-	CShadowHandler* sh = shadowHandler;
-	Shader::IProgramObject* po = sh->GetMapShadowGenShader();
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
-	glPolygonOffset(1,1);
+	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-
-	po->Enable();
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
+	po->Enable();
 	tr->SetActiveContext(shadowrc);
 	tr->DrawSimple();
 	tr->SetActiveContext(rc);
+	po->Disable();
 
 	glCullFace(GL_BACK);
 	glDisable(GL_CULL_FACE);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-
-	po->Disable();
 }
 
 void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflection)
