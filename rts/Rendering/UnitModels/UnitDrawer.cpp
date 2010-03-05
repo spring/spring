@@ -720,14 +720,14 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit* unit) {
 		#define PUSH_SHADOW_TEXTURE_STATE(model)                    \
 			if (model->type == MODELTYPE_S3O) {                     \
 				glActiveTexture(GL_TEXTURE1);                       \
-				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2); \
 				glEnable(GL_TEXTURE_2D);                            \
+				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2); \
 			}
 		#define POP_SHADOW_TEXTURE_STATE(model)   \
 			if (model->type == MODELTYPE_S3O) {   \
-				glActiveTexture(GL_TEXTURE0);     \
 				glBindTexture(GL_TEXTURE_2D, 0);  \
 				glDisable(GL_TEXTURE_2D);         \
+				glActiveTexture(GL_TEXTURE0);     \
 			}
 	#else
 		#define PUSH_SHADOW_TEXTURE_STATE(model)
