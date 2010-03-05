@@ -722,7 +722,7 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit* unit) {
 			texturehandlerS3O->GetS3oTex(model->textureType)
 		#define PUSH_SHADOW_TEXTURE_STATE(model)                    \
 			if (model->type == MODELTYPE_S3O) {                     \
-				glActiveTexture(GL_TEXTURE1);                       \
+				glActiveTexture(GL_TEXTURE0);                       \
 				glEnable(GL_TEXTURE_2D);                            \
 				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2); \
 			}
