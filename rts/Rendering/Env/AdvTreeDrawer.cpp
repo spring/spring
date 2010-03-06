@@ -766,7 +766,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		}
 
 		// reset the world-offset
-		po->SetUniform4f((gu->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f, 0.0f);
+		po->SetUniform3f((gu->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
 
 		// draw trees that have been marked as falling
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
