@@ -4,7 +4,7 @@ void main() {
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
 
-	vec4 vertexShadowPos = gl_ModelViewMatrix * vertexPos;
+	vec4 vertexShadowPos = gl_ModelViewMatrix * gl_Vertex;
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
 
