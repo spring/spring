@@ -740,14 +740,14 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 
 						if (camDist < SQUARE_SIZE * SQUARE_SIZE * 110 * 110) {
 							// draw detailed tree
-							po->SetUniform4f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z, 0.0f);
+							po->SetUniform3f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z);
 							glCallList(displist);
 						} else if (camDist < SQUARE_SIZE * SQUARE_SIZE * 125 * 125) {
 							// draw fading tree
 							const float relDist = (pos.distance(camera->pos) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
 
 							glAlphaFunc(GL_GREATER, 0.8f + relDist * 0.2f);
-							po->SetUniform4f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z, 0.0f);
+							po->SetUniform3f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z);
 							glCallList(displist);
 							glAlphaFunc(GL_GREATER, 0.5f);
 
