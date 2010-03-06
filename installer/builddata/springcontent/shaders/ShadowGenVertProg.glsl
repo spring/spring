@@ -3,7 +3,7 @@ uniform vec4 shadowParams;   // {x = xmid, y = ymid, z = p17, w = p18}
 #ifdef SHADOWGEN_PROGRAM_TREE_NEAR
 uniform vec3 cameraDirX;
 uniform vec3 cameraDirY;
-uniform vec4 treeOffset;
+uniform vec3 treeOffset;
 
 #define MAX_TREE_HEIGHT 60.0
 #endif
@@ -16,7 +16,7 @@ void main() {
 	vec4 vertexPos = gl_Vertex;
 
 	#ifdef SHADOWGEN_PROGRAM_TREE_NEAR
-	vertexPos.xyz += treeOffset.xyz;
+	vertexPos.xyz += treeOffset;
 	vertexPos.xyz += (cameraDirX * gl_Normal.x);
 	vertexPos.xyz += (cameraDirY * gl_Normal.y);
 	#endif
