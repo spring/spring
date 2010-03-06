@@ -74,7 +74,6 @@ protected:
 	std::vector<fline> left;
 	FBO fb;
 
-	bool firstDraw;
 	static bool firstInstance;
 
 	//! these project geometry into light-space
