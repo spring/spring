@@ -269,7 +269,7 @@ void CAdvTreeSquareDrawer::DrawQuad (int x,int y)
 
 
 
-void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
+void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 {
 	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
@@ -365,18 +365,20 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		} else {
 			glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeNSVP );
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,15, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),1.0f/(gs->pwr2mapx*SQUARE_SIZE),1);
+			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, 1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),1.0f/(gs->pwr2mapx*SQUARE_SIZE),1);
 		}
-		glEnable( GL_VERTEX_PROGRAM_ARB );
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  camera->up.x,camera->up.y,camera->up.z,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, mapInfo->light.groundSunColor.x,mapInfo->light.groundSunColor.y,mapInfo->light.groundSunColor.z,0.85f);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, mapInfo->light.groundAmbientColor.x,mapInfo->light.groundAmbientColor.y,mapInfo->light.groundAmbientColor.z,0.85f);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12, 0,0,0,0.20f*(1.0f/MAX_TREE_HEIGHT));	//w=alpha/height modifier
-		glAlphaFunc(GL_GREATER,0.5f);
+
+		glEnable(GL_VERTEX_PROGRAM_ARB);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, camera->right.x, camera->right.y, camera->right.z, 0.0f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,  9, camera->up.x,    camera->up.y,    camera->up.z,    0.0f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, mapInfo->light.groundSunColor.x,     mapInfo->light.groundSunColor.y,     mapInfo->light.groundSunColor.z,     0.85f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, mapInfo->light.groundAmbientColor.x, mapInfo->light.groundAmbientColor.y, mapInfo->light.groundAmbientColor.z, 0.85f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
+		glAlphaFunc(GL_GREATER, 0.5f);
 		glDisable(GL_BLEND);
-		glColor4f(1,1,1,1);
-		va=GetVertexArray();
+		glColor4f(1, 1, 1, 1);
+
+		va = GetVertexArray();
 		va->Initialize();
 
 		struct FadeTree{
@@ -388,71 +390,85 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		static FadeTree fadeTrees[3000];
 		FadeTree *pFT=fadeTrees;
 
-		for(TreeSquareStruct* pTSS=trees+ystart*treesX; pTSS<=trees+yend*treesX; pTSS+=treesX) {
-			for(TreeSquareStruct* tss=pTSS+xstart; tss<=pTSS+xend; ++tss) {
-				tss->lastSeen=gs->frameNum;
-				va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
-				for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
-					TreeStruct* ts=&ti->second;
-					float3 pos(ts->pos);
-					int type=ts->type;
+		for (TreeSquareStruct* pTSS = trees + ystart * treesX; pTSS <= trees + yend * treesX; pTSS += treesX) {
+			for (TreeSquareStruct* tss = pTSS + xstart; tss <= pTSS + xend; ++tss) {
+				tss->lastSeen = gs->frameNum;
+				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+
+				for (std::map<int, TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
+					const TreeStruct* ts = &ti->second;
+					const float3 pos(ts->pos);
+
+					int type = ts->type;
 					float dy;
 					unsigned int displist;
-					if(type<8){
-						dy=0.5f;
-						displist=treeGen->pineDL+type;
+
+					if (type < 8) {
+						dy = 0.5f;
+						displist = treeGen->pineDL + type;
 					} else {
-						type-=8;
-						dy=0;
-						displist=treeGen->leafDL+type;
+						type -= 8;
+						dy = 0;
+						displist = treeGen->leafDL + type;
 					}
-					if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
-						float camDist=(pos-camera->pos).SqLength();
-						if(camDist<SQUARE_SIZE*SQUARE_SIZE*110*110){	//draw detailed tree
-							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,pos.x,pos.y,pos.z,0);
+
+					if (camera->InView(pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2)) {
+						const float camDist = (pos - camera->pos).SqLength();
+
+						if (camDist < SQUARE_SIZE * SQUARE_SIZE * 110 * 110) {
+							// draw detailed tree
+							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, pos.x, pos.y, pos.z, 0);
 							glCallList(displist);
-						} else if(camDist<SQUARE_SIZE*SQUARE_SIZE*125*125){	//draw fading tree
-							float relDist=(pos.distance(camera->pos)-SQUARE_SIZE*110)/(SQUARE_SIZE*15);
-							glAlphaFunc(GL_GREATER,0.8f+relDist*0.2f);
-							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,pos.x,pos.y,pos.z,0);
+						} else if (camDist < SQUARE_SIZE * SQUARE_SIZE * 125 * 125) {
+							// draw fading tree
+							const float relDist = (pos.distance(camera->pos) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
+
+							glAlphaFunc(GL_GREATER, 0.8f + relDist * 0.2f);
+							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, pos.x, pos.y, pos.z, 0);
 							glCallList(displist);
-							glAlphaFunc(GL_GREATER,0.5f);
-							pFT->pos=pos;
-							pFT->deltaY=dy;
-							pFT->type=type;
-							pFT->relDist=relDist;
+							glAlphaFunc(GL_GREATER, 0.5f);
+
+							pFT->pos = pos;
+							pFT->deltaY = dy;
+							pFT->type = type;
+							pFT->relDist = relDist;
 							++pFT;
-						} else {																//draw undetailed tree
-							DrawTreeVertex(pos, type*0.125f, dy, false);
+						} else {
+							// draw undetailed tree
+							DrawTreeVertex(pos, type * 0.125f, dy, false);
 						}
 					}
 				}
 			}
 		}
-		//draw trees that has been marked as falling
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  camera->right.x,camera->right.y,camera->right.z,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  camera->up.x,camera->up.y,camera->up.z,0);
-		for(std::list<FallingTree>::iterator fti=fallingTrees.begin(); fti!=fallingTrees.end(); ++fti){
-			float3 pos=fti->pos-UpVector*(fti->fallPos*20);
-			if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
-				float ang=fti->fallPos*PI;
-				float3 up(fti->dir.x*sin(ang),cos(ang),fti->dir.z*sin(ang));
-				float3 z(up.cross(float3(-1,0,0)));
+
+		// draw trees that has been marked as falling
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 0.0f, 0.0f, 0.0f, 0.0f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, camera->right.x, camera->right.y, camera->right.z, 0.0f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,  9, camera->up.x,    camera->up.y,    camera->up.z,    0.0f);
+
+		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
+			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
+
+			if (camera->InView(pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2)) {
+				const float ang = fti->fallPos * PI;
+
+				float3 up(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
+				float3 z(up.cross(float3(-1, 0, 0)));
 				z.ANormalize();
 				float3 x(up.cross(z));
-				CMatrix44f transMatrix(pos,x,up,z);
+				CMatrix44f transMatrix(pos, x, up, z);
 
 				glPushMatrix();
 				glMultMatrixf(&transMatrix[0]);
 
-				int type=fti->type;
+				int type = fti->type;
 				int displist;
-				if(type<8){
-					displist=treeGen->pineDL+type;
+				if (type < 8) {
+					displist = treeGen->pineDL + type;
 				} else {
-					type-=8;
-					displist=treeGen->leafDL+type;
+					type -= 8;
+					displist = treeGen->leafDL + type;
 				}
 				glCallList(displist);
 
@@ -462,7 +478,7 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 
 		glDisable( GL_VERTEX_PROGRAM_ARB );
 
-		if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
+		if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
 			glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarVP );
 			glEnable(GL_VERTEX_PROGRAM_ARB);
 
@@ -660,21 +676,27 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 	readmap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
 	if (drawDetailed) {
-		const int xstart = std::max(0,cx-2);
-		const int xend   = std::min(gs->mapx/TREE_SQUARE_SIZE-1,cx+2);
-		const int ystart = std::max(0,cy-2);
-		const int yend   = std::min(gs->mapy/TREE_SQUARE_SIZE-1,cy+2);
+		const int xstart = std::max(                              0, cx - 2);
+		const int xend   = std::min(gs->mapx / TREE_SQUARE_SIZE - 1, cx + 2);
+		const int ystart = std::max(                              0, cy - 2);
+		const int yend   = std::min(gs->mapy / TREE_SQUARE_SIZE - 1, cy + 2);
 
 		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 		glEnable(GL_TEXTURE_2D);
 
 		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_NEAR);
 		po->Enable();
-		po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-		po->SetUniform4f(13, camera->right.x, camera->right.y, camera->right.z, 0.0f);
-		po->SetUniform4f(9,  camera->up.x,    camera->up.y,    camera->up.z,    0.0f);
-		po->SetUniform4f(11, 1.0f, 1.0f, 1.0f, 0.85f                           );
-		po->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT));   // w = alpha/height modifier
+
+		if (gu->haveGLSL) {
+			po->SetUniform3fv(1, &camera->right[0]);
+			po->SetUniform3fv(2, &camera->up[0]);
+		} else {
+			po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+			po->SetUniform4f(13, camera->right.x, camera->right.y, camera->right.z, 0.0f);
+			po->SetUniform4f(9,  camera->up.x,    camera->up.y,    camera->up.z,    0.0f);
+			po->SetUniform4f(11, 1.0f, 1.0f, 1.0f, 0.85f                           );
+			po->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT));   // w = alpha/height modifier
+		}
 
 		glAlphaFunc(GL_GREATER, 0.5f);
 		glEnable(GL_ALPHA_TEST);
@@ -691,71 +713,85 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		static FadeTree fadeTrees[3000];
 		FadeTree* pFT = fadeTrees;
 
-		for(TreeSquareStruct* pTSS=trees+ystart*treesX; pTSS<=trees+yend*treesX; pTSS+=treesX) {
-			for(TreeSquareStruct* tss=pTSS+xstart; tss<=pTSS+xend; ++tss) {
-				tss->lastSeen=gs->frameNum;
-				va->EnlargeArrays(12*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
-				for(std::map<int,TreeStruct>::iterator ti=tss->trees.begin();ti!=tss->trees.end();++ti){
-					TreeStruct* ts=&ti->second;
-					float3 pos(ts->pos);
-					int type=ts->type;
+		for (TreeSquareStruct* pTSS = trees + ystart * treesX; pTSS <= trees + yend * treesX; pTSS += treesX) {
+			for (TreeSquareStruct* tss = pTSS + xstart; tss <= pTSS + xend; ++tss) {
+				tss->lastSeen = gs->frameNum;
+				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+
+				for (std::map<int,TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
+					const TreeStruct* ts = &ti->second;
+					const float3 pos(ts->pos);
+
+					int type = ts->type;
 					float dy;
 					unsigned int displist;
-					if(type<8){
-						dy=0.5f;
-						displist=treeGen->pineDL+type;
+
+					if (type < 8) {
+						dy = 0.5f;
+						displist = treeGen->pineDL + type;
 					} else {
-						type-=8;
-						dy=0;
-						displist=treeGen->leafDL+type;
+						type -= 8;
+						dy = 0;
+						displist = treeGen->leafDL + type;
 					}
-					if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2+150)){
-						float camDist=(pos-camera->pos).SqLength();
-						if(camDist<SQUARE_SIZE*SQUARE_SIZE*110*110){	//draw detailed tree
-							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,pos.x,pos.y,pos.z,0);
+
+					if (camera->InView(pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2 + 150)) {
+						const float camDist = (pos - camera->pos).SqLength();
+
+						if (camDist < SQUARE_SIZE * SQUARE_SIZE * 110 * 110) {
+							// draw detailed tree
+							po->SetUniform4f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z, 0.0f);
 							glCallList(displist);
-						} else if(camDist<SQUARE_SIZE*SQUARE_SIZE*125*125){	//draw fading tree
-							float relDist=(pos.distance(camera->pos)-SQUARE_SIZE*110)/(SQUARE_SIZE*15);
-							glAlphaFunc(GL_GREATER,0.8f+relDist*0.2f);
-							glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,pos.x,pos.y,pos.z,0);
+						} else if (camDist < SQUARE_SIZE * SQUARE_SIZE * 125 * 125) {
+							// draw fading tree
+							const float relDist = (pos.distance(camera->pos) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
+
+							glAlphaFunc(GL_GREATER, 0.8f + relDist * 0.2f);
+							po->SetUniform4f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z, 0.0f);
 							glCallList(displist);
-							glAlphaFunc(GL_GREATER,0.5f);
-							pFT->pos=pos;
-							pFT->deltaY=dy;
-							pFT->type=type;
-							pFT->relDist=relDist;
+							glAlphaFunc(GL_GREATER, 0.5f);
+
+							pFT->pos = pos;
+							pFT->deltaY = dy;
+							pFT->type = type;
+							pFT->relDist = relDist;
 							++pFT;
-						} else {																//draw undetailed tree
-							DrawTreeVertex(pos, type*0.125f, dy, false);
+						} else {
+							// draw undetailed tree
+							DrawTreeVertex(pos, type * 0.125f, dy, false);
 						}
 					}
 				}
 			}
 		}
 
-		// draw trees that have been marked as falling
-		po->SetUniform4f(10, 0.0f, 0.0f, 0.0f, 0.0f);
+		// reset the world-offset
+		po->SetUniform4f((gu->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f, 0.0f);
 
-		for(std::list<FallingTree>::iterator fti=fallingTrees.begin(); fti!=fallingTrees.end(); ++fti){
-			float3 pos=fti->pos-UpVector*(fti->fallPos*20);
-			if(camera->InView(pos+float3(0,MAX_TREE_HEIGHT/2,0),MAX_TREE_HEIGHT/2)){
-				float ang=fti->fallPos*PI;
-				float3 up(fti->dir.x*sin(ang),cos(ang),fti->dir.z*sin(ang));
-				float3 z(up.cross(float3(1,0,0)));
+		// draw trees that have been marked as falling
+		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
+			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
+
+			if (camera->InView(pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2)) {
+				float ang = fti->fallPos * PI;
+
+				float3 up(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
+				float3 z(up.cross(float3(1, 0, 0)));
 				z.ANormalize();
 				float3 x(z.cross(up));
-				CMatrix44f transMatrix(pos,x,up,z);
+				CMatrix44f transMatrix(pos, x, up, z);
 
 				glPushMatrix();
 				glMultMatrixf(&transMatrix[0]);
 
-				int type=fti->type;
+				int type = fti->type;
 				int displist;
-				if(type<8){
-					displist=treeGen->pineDL+type;
+
+				if (type < 8) {
+					displist = treeGen->pineDL + type;
 				} else {
-					type-=8;
-					displist=treeGen->leafDL+type;
+					type -= 8;
+					displist = treeGen->leafDL + type;
 				}
 				glCallList(displist);
 

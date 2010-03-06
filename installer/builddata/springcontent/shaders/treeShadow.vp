@@ -4,8 +4,9 @@ PARAM mat[4] = { state.matrix.projection };
 PARAM mat2[4] = { state.matrix.modelview };
 OUTPUT opos = result.position;
 TEMP modpos;
-TEMP temp,temp2;
+TEMP temp, temp2;
 
+# transform position to world-space
 ADD modpos, pos, program.env[10];
 MAD modpos, program.env[13], vertex.normal.x, modpos;
 MAD modpos, program.env[9], vertex.normal.y, modpos;
