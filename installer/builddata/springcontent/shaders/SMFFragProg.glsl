@@ -38,8 +38,11 @@ void main() {
 	vec2 tc1 = gl_TexCoord[1].st;
 	vec2 tc2 = gl_TexCoord[2].st;
 
+	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
+	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
+
 	vec4 vertexShadowPos = shadowMat * gl_TexCoord[3];
-		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + shadowParams.z) + shadowParams.w);
+		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
 
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);

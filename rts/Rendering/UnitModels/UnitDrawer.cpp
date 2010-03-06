@@ -626,15 +626,9 @@ static void SetupShadowDrawing()
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	CShadowHandler* sh = shadowHandler;
-	Shader::IProgramObject* po = sh->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
-
-	// note: env is shared by ARB S3O*Shader programs
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
-	po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-	po->SetUniform4f(16, sh->xmid, sh->ymid, 0.0f, 0.0f);
-	po->SetUniform4f(17, sh->p17,  sh->p17,  0.0f, 0.0f);
-	po->SetUniform4f(18, sh->p18,  sh->p18,  0.0f, 0.0f);
 }
 
 

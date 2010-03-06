@@ -35,9 +35,7 @@ void main() {
 	gl_TexCoord[2].s = gl_Vertex.x / mapSize.x;
 	gl_TexCoord[2].t = gl_Vertex.z / mapSize.y;
 
-	// shadow-tex coors; shadowParams stores
-	// {x=xmid, y=ymid, z=sizeFactorA, w=sizeFactorB}
-	// note: map vertices are already in world-space
+	// shadow-tex coors (map vertices are already in world-space)
 	gl_TexCoord[3] = gl_Vertex;
 
 	// detail-tex coors

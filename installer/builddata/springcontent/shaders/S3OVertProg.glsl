@@ -19,9 +19,12 @@ void main() {
 	// shifting artefacts with large triangles due to the linear
 	// interpolation of vertex positions), but this is a source
 	// of acne itself
+	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
+	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
+
 	vec4 vertexPos = gl_ModelViewMatrix * gl_Vertex;
 	vec4 vertexShadowPos = shadowMat * vertexPos;
-		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + shadowParams.z) + shadowParams.w);
+		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
 
 	cameraDir = vertexPos.xyz - cameraPos;
