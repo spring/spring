@@ -145,7 +145,7 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 
 	CShaderHandler* sh = shaderHandler;
 
-	if (false && gu->haveGLSL) {
+	if (gu->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
 			Shader::IShaderObject* so = sh->CreateShaderObject("ShadowGenVertProg.glsl", shadowGenProgDefines[i], GL_VERTEX_SHADER);
@@ -301,18 +301,20 @@ void CShadowHandler::CreateShadows(void)
 
 	glLoadMatrixf(shadowMatrix.m);
 
-	if (false && gu->haveGLSL) {
+	//! set the shadow-parameter registers
+	//! NOTE: so long as any part of Spring rendering still uses
+	//! ARB programs at run-time, these lines can not be removed
+	//! (all ARB programs share the same environment)
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, xmid, ymid, 0.0f, 0.0f);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17,  p17,  p17, 0.0f, 0.0f);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18,  p18,  p18, 0.0f, 0.0f);
+
+	if (gu->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			shadowGenProgs[i]->Enable();
 			shadowGenProgs[i]->SetUniform4f(0, xmid, ymid, p17, p18);
 			shadowGenProgs[i]->Disable();
 		}
-	} else {
-		//! all ARB programs share the same environment
-		shadowGenProgs[SHADOWGEN_PROGRAM_MODEL]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-		shadowGenProgs[SHADOWGEN_PROGRAM_MODEL]->SetUniform4f(16, xmid, ymid, 0.0f, 0.0f);
-		shadowGenProgs[SHADOWGEN_PROGRAM_MODEL]->SetUniform4f(17,  p17,  p17, 0.0f, 0.0f);
-		shadowGenProgs[SHADOWGEN_PROGRAM_MODEL]->SetUniform4f(18,  p18,  p18, 0.0f, 0.0f);
 	}
 
 	//! move view into sun-space
