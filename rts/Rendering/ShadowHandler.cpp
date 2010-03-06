@@ -304,7 +304,7 @@ void CShadowHandler::CreateShadows(void)
 	if (false && gu->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			shadowGenProgs[i]->Enable();
-			shadowGenProgs[i]->SetUniform4f(1, xmid, ymid, p17, p18);
+			shadowGenProgs[i]->SetUniform4f(0, xmid, ymid, p17, p18);
 			shadowGenProgs[i]->Disable();
 		}
 	} else {
