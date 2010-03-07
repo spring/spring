@@ -55,7 +55,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
+extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 #endif
 
 #define UNIT_SHADOW_ALPHA_MASKING
@@ -229,12 +229,12 @@ void CUnitDrawer::SetUnitDrawDist(float dist)
 	unitDrawDistSqr = dist * dist;
 }
 
-
 void CUnitDrawer::SetUnitIconDist(float dist)
 {
 	unitIconDist = dist;
 	iconLength = 750 * unitIconDist * unitIconDist;
 }
+
 
 
 void CUnitDrawer::Update(void)
@@ -266,15 +266,15 @@ void CUnitDrawer::Update(void)
 		}
 	}
 
-	distToGroundForIcons_useMethod = camHandler->GetCurrentController().GetUseDistToGroundForIcons();
-	if (distToGroundForIcons_useMethod) {
+	useDistToGroundForIcons = camHandler->GetCurrentController().GetUseDistToGroundForIcons();
+	if (useDistToGroundForIcons) {
 		const float3& camPos = camera->pos;
 		// use the height at the current camera position
 		//const float groundHeight = ground->GetHeight(camPos.x, camPos.z);
 		// use the middle between the highest and lowest position on the map as average
 		const float groundHeight = (readmap->currMinHeight + readmap->currMaxHeight) / 2;
 		const float overGround = camPos.y - groundHeight;
-		distToGroundForIcons_sqGroundCamDist = overGround * overGround;
+		sqCamDistToGroundForIcons = overGround * overGround;
 	}
 }
 
@@ -993,7 +993,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
 
 				const UnitDef* udef = ti->second.unitdef;
-				S3DModel* model = udef->LoadModel();
+				const S3DModel* model = udef->LoadModel();
 
 				SetTeamColour(ti->second.team, cloakAlpha);
 
@@ -1458,7 +1458,7 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 void CUnitDrawer::DrawQuedS3O(void)
 {
 #ifdef USE_GML
-	int sz = quedS3Os.size();
+	const int sz = quedS3Os.size();
 	for (int tex = 0; tex < sz; ++tex) {
 		if (quedS3Os[tex].size() > 0) {
 			texturehandlerS3O->SetS3oTexture(tex);
@@ -2139,8 +2139,8 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 	const float realIconLength = iconLength * sqIconDistMult;
 	bool asIcon = false;
 
-	if (distToGroundForIcons_useMethod) {
-		asIcon = (distToGroundForIcons_sqGroundCamDist > realIconLength);
+	if (useDistToGroundForIcons) {
+		asIcon = (sqCamDistToGroundForIcons > realIconLength);
 	} else {
 		asIcon = (sqUnitCamDist > realIconLength);
 	}
