@@ -33,8 +33,8 @@ public:
 	void Update(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DrawUnit(CUnit* unit);
-	void DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
+	void DoDrawUnitHelper(CUnit* unit);
+	void DoDrawUnit(CUnit* unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
 	void DrawUnitLOD(CUnit* unit);
 
 	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);     // cloaked units must be drawn after all others
