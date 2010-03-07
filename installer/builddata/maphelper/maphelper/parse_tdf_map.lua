@@ -96,7 +96,7 @@ local function ConvertLighting(map)
   end
   local lighting = {}
   for k, v in pairs(light) do
-    k = k:gsub("ambiant", "ambient")
+    -- k = k:gsub("ambiant", "ambient")
     local s, e, prefix = k:find('^(.*)suncolor$')
     if (prefix) then
       k = prefix .. 'diffusecolor'
