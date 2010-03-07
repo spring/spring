@@ -279,11 +279,16 @@ void CUnitDrawer::Update(void)
 }
 
 
+
+
+
+
+//! only called by DoDrawUnitHelper
 inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
 	if (unit->isCloaked) {
-		const LuaMatType matType =
-			(water->drawReflection) ? LUAMAT_ALPHA_REFLECT : LUAMAT_ALPHA;
+		const LuaMatType matType = (water->drawReflection)?
+			LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA;
 		LuaUnitMaterial& unitMat = unit->luaMats[matType];
 		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
 		unit->currentLOD = lod;
@@ -298,8 +303,7 @@ inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 				drawCloaked.push_back(unit);
 			}
 		}
-	}
-	else {
+	} else {
 		const LuaMatType matType =
 			(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 		LuaUnitMaterial& unitMat = unit->luaMats[matType];
@@ -310,17 +314,18 @@ inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
 		if ((lodMat != NULL) && lodMat->IsActive()) {
 			lodMat->AddUnit(unit);
 		} else {
-			if (unit->model->type==MODELTYPE_S3O) {
+			if (unit->model->type == MODELTYPE_S3O) {
 				QueS3ODraw(unit, unit->model->textureType);
 			} else {
+				//! note: team-color?
 				DrawUnitNow(unit);
 			}
 		}
 	}
 }
 
-
-inline void CUnitDrawer::DrawUnit(CUnit* unit)
+//! only called by DoDrawUnit
+inline void CUnitDrawer::DoDrawUnitHelper(CUnit* unit)
 {
 	if (unit->lodCount > 0) {
 		DrawUnitLOD(unit);
@@ -337,13 +342,14 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 		if (unit->isCloaked) {
 			drawCloaked.push_back(unit);
 		} else {
+			// non-cloaked 3DO's are not queued
+			SetTeamColour(unit->team);
 			DrawUnitNow(unit);
 		}
 	}
 }
 
-
-inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit)
+inline void CUnitDrawer::DoDrawUnit(CUnit* unit, bool drawReflection, bool drawRefraction, CUnit* excludeUnit)
 {
 	if (unit == excludeUnit) {
 		return;
@@ -351,88 +357,90 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 	if (unit->noDraw) {
 		return;
 	}
+	if (!camera->InView(unit->drawMidPos, unit->radius + 30)) {
+		return;
+	}
 
-	if (camera->InView(unit->drawMidPos, unit->radius + 30)) {
-		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-			if (drawReflection) {
-				float3 zeroPos;
-				if (unit->drawMidPos.y < 0.0f) {
-					zeroPos = unit->drawMidPos;
-				} else {
-					const float dif = unit->drawMidPos.y - camera->pos.y;
-					zeroPos = camera->pos  * (unit->drawMidPos.y / dif) +
-						unit->drawMidPos * (-camera->pos.y / dif);
-				}
-				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
-					return;
-				}
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+
+	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
+		if (drawReflection) {
+			float3 zeroPos;
+
+			if (unit->drawMidPos.y < 0.0f) {
+				zeroPos = unit->drawMidPos;
+			} else {
+				const float dif = unit->drawMidPos.y - camera->pos.y;
+				zeroPos = camera->pos  * (unit->drawMidPos.y / dif) +
+					unit->drawMidPos * (-camera->pos.y / dif);
 			}
-			else if (drawRefraction) {
-				if (unit->pos.y > 0.0f) {
-					return;
-				}
+			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
+				return;
 			}
+		}
+		else if (drawRefraction) {
+			if (unit->pos.y > 0.0f) {
+				return;
+			}
+		}
 #ifdef USE_GML
-			else
-				unit->lastDrawFrame = gs->frameNum;
+		else
+			unit->lastDrawFrame = gs->frameNum;
 #endif
+
+		const float sqDist = (unit->pos - camera->pos).SqLength();
+		unit->isIcon = DrawAsIcon(*unit, sqDist);
+
+		if (unit->isIcon) {
+			drawIcon.push_back(unit);
+		} else {
+			const float farLength = unit->sqRadius * unitDrawDistSqr;
+
+			if (sqDist > farLength) {
+				drawFar.push_back(unit);
+			} else {
+				DoDrawUnitHelper(unit);
+			}
+
+			if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
+				drawStat.push_back(unit);
+			}
+		}
+	} else if (losStatus & LOS_PREVLOS) {
+		if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
+			// it's a building we've had LOS on once,
+			// add it to the vector of cloaked units
 			const float sqDist = (unit->pos-camera->pos).SqLength();
-			if (DrawAsIcon(*unit, sqDist)) {
-				drawIcon.push_back(unit);
-				unit->isIcon = true;
-			}
-			else {
-				unit->isIcon = false;
 
-				float farLength = unit->sqRadius * unitDrawDistSqr;
-				if (sqDist > farLength) {
-					drawFar.push_back(unit);
+			unit->isIcon = DrawAsIcon(*unit, sqDist);
+
+			if (!unit->isIcon) {
+				S3DModel* model = unit->model;
+				if (unit->unitDef->decoyDef) {
+					model = unit->unitDef->decoyDef->LoadModel();
+				}
+
+				if (model->type == MODELTYPE_S3O) {
+					drawCloakedS3O.push_back(unit);
 				} else {
-					SetTeamColour(unit->team);
-					DrawUnit(unit);
-				}
-
-				if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
-					drawStat.push_back(unit);
+					drawCloaked.push_back(unit);
 				}
 			}
 		}
-		else if (losStatus & LOS_PREVLOS) {
-			unit->isIcon = true;
-
-			if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
-				// it's a building we've had LOS on once,
-				// add it to the vector of cloaked units
-				const float sqDist = (unit->pos-camera->pos).SqLength();
-
-				if (!DrawAsIcon(*unit, sqDist)) {
-					S3DModel* model = unit->model;
-					if (unit->unitDef->decoyDef) {
-						model = unit->unitDef->decoyDef->LoadModel();
-					}
-
-					if (model->type==MODELTYPE_S3O) {
-						drawCloakedS3O.push_back(unit);
-					} else {
-						drawCloaked.push_back(unit);
-					}
-					unit->isIcon = false;
-				}
+		if (losStatus & LOS_INRADAR) {
+			if (!(losStatus & LOS_CONTRADAR)) {
+				drawRadarIcon.push_back(unit);
+			} else if (unit->isIcon) {
+				// this prevents us from drawing icons on top of ghosted buildings
+				drawIcon.push_back(unit);
 			}
-			if (losStatus & LOS_INRADAR) {
-				if (!(losStatus & LOS_CONTRADAR)) {
-					drawRadarIcon.push_back(unit);
-				} else if (unit->isIcon) {
-					// this prevents us from drawing icons on top of ghosted buildings
-					drawIcon.push_back(unit);
-				}
-			}
-		} else if (losStatus & LOS_INRADAR) {
-			drawRadarIcon.push_back(unit);
 		}
+	} else if (losStatus & LOS_INRADAR) {
+		// if only in radar coverage, mark for drawing as radar icon
+		drawRadarIcon.push_back(unit);
 	}
 }
+
 
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
@@ -441,7 +449,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawStat.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	if(gu->drawFog) {
+	if (gu->drawFog) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}
@@ -472,26 +480,29 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawCloakedS3O.clear();
 
 #ifdef USE_GML
-	if(multiThreadDrawUnit) {
-		mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
-		mt_drawRefraction=drawRefraction;
-		mt_excludeUnit=excludeUnit;
-		gmlProcessor->Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->renderUnits,uh->renderUnits.size(),50,100,TRUE);
+	if (multiThreadDrawUnit) {
+		mt_drawReflection = drawReflection; // these member vars will be accessed by DoDrawUnitMT
+		mt_drawRefraction = drawRefraction;
+		mt_excludeUnit = excludeUnit;
+		gmlProcessor->Work(
+			NULL, NULL, &CUnitDrawer::DoDrawUnitMT, this, gmlThreadCount,
+			FALSE, &uh->renderUnits, uh->renderUnits.size(), 50, 100, TRUE
+		);
 	}
 	else
 #endif
 	{
+		//! note: unsorted list of 3DO and S3O units
+		//! queues up S3O's and (non-cloaked) 3DO's
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
-			CUnit* unit = *usi;
-			DoDrawUnit(unit,drawReflection,drawRefraction, excludeUnit);
+			DoDrawUnit(*usi, drawReflection, drawRefraction, excludeUnit);
 		}
 	}
 
 	{
-		//FIXME: s3o's + teamcolor
-
 		GML_STDMUTEX_LOCK(temp); // Draw
 
+		// non-cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
 		for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
 			if (camera->InView(ti->second.pos, 100)) {
 				glPushMatrix();
@@ -499,7 +510,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
 
 				const UnitDef* udef = ti->second.unitdef;
-				S3DModel* model = udef->LoadModel();
+				const S3DModel* model = udef->LoadModel();
 
 				model->DrawStatic();
 				glPopMatrix();
@@ -510,6 +521,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CleanUp3DO();
 	DrawQuedS3O();
 	CleanUpUnitDrawing();
+
 
 	DrawOpaqueShaderUnits();
 
@@ -554,6 +566,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 			DrawUnitStats(*ui);
 		}
 	}
+
 	glDisable(GL_FOG);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
@@ -599,7 +612,7 @@ static void DrawBins(LuaMatType type)
 			const LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
 
 			lodMat->uniforms.Execute(unit);
-			// we are inside a static function, so must invoke on unitDrawer instance
+
 			unitDrawer->SetTeamColour(unit->team);
 			unitDrawer->DrawUnitWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 		}
@@ -778,8 +791,8 @@ void CUnitDrawer::DrawShadowPass(void)
 	glEnable(GL_ALPHA_TEST);
 	#endif
 
-	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
-
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
@@ -788,8 +801,10 @@ void CUnitDrawer::DrawShadowPass(void)
 
 #ifdef USE_GML
 	if (multiThreadDrawUnitShadow) {
-		gmlProcessor->Work(NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount, FALSE,
-		  &uh->renderUnits, uh->renderUnits.size(), 50, 100, TRUE);
+		gmlProcessor->Work(
+			NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount,
+			FALSE, &uh->renderUnits, uh->renderUnits.size(), 50, 100, TRUE
+		);
 	}
 	else
 #endif
@@ -871,6 +886,10 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 }
 
 
+
+
+
+
 void CUnitDrawer::SetupForGhostDrawing() const
 {
 	glEnable(GL_LIGHTING); // Give faded objects same appearance as regular
@@ -880,9 +899,9 @@ void CUnitDrawer::SetupForGhostDrawing() const
 	SetupBasicS3OTexture0();
 	SetupBasicS3OTexture1(); // This also sets up the transparency
 
-	float cols[]={1,1,1,1};
-	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
-	glColor3f(1,1,1);
+	static const float cols[] = {1.0f, 1.0f, 1.0f, 1.0f};
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
+	glColor3f(1.0f, 1.0f, 1.0f);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);
@@ -894,7 +913,6 @@ void CUnitDrawer::SetupForGhostDrawing() const
 	glAlphaFunc(GL_GREATER, 0.1f);
 	glDepthMask(GL_FALSE);
 }
-
 
 void CUnitDrawer::CleanUpGhostDrawing() const
 {
@@ -913,31 +931,61 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 }
 
 
-void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
+
+void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 {
-	bool oldAdvShading = advShading;
-	advShading = advShading && !noAdvShading;
-	if (advShading) {
-		SetupForUnitDrawing();
-		glDisable(GL_ALPHA_TEST);
-	}
-	else
-		SetupForGhostDrawing();
-
-	double plane[4]={0,submerged?-1:1,0,0};
-	glClipPlane(GL_CLIP_PLANE3, plane);
-
-	SetupFor3DO();
-
-	glColor4f(1, 1, 1, cloakAlpha);
-
-	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
+	const bool oldAdvShading = advShading;
 
 	{
-		//FIXME: doesn't support s3o's nor does it set teamcolor
-		GML_STDMUTEX_LOCK(temp); // DrawCloakedUnits
-		// units drawn by AI, these aren't really
-		// cloaked but the effect is the same
+		// don't use shaders if called during the shadow pass
+		advShading = advShading && !disableAdvShading;
+
+		if (advShading) {
+			SetupForUnitDrawing();
+			glDisable(GL_ALPHA_TEST);
+		} else {
+			SetupForGhostDrawing();
+		}
+
+
+		const double plane[4] = {0.0f, submerged? -1.0f: 1.0f, 0.0f, 0.0f};
+
+		glClipPlane(GL_CLIP_PLANE3, plane);
+		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+
+		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
+
+		// 3DO transparent units
+		SetupFor3DO();
+		DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, false);
+		CleanUp3DO();
+
+		// S3O transparent units
+		DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, true);
+
+
+		if (advShading) {
+			CleanUpUnitDrawing();
+			glEnable(GL_ALPHA_TEST);
+		} else {
+			CleanUpGhostDrawing();
+		}
+	}
+
+	advShading = oldAdvShading;
+
+
+	// shader rendering
+	DrawCloakedShaderUnits();
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::list<GhostBuilding*>& ghostedBuildings, bool s3oPass)
+{
+	if (!s3oPass) {
+		GML_STDMUTEX_LOCK(temp);
+
+		// cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
 		for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
 			if (camera->InView(ti->second.pos, 100)) {
 				glPushMatrix();
@@ -961,64 +1009,40 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
 				BuildInfo bi(unitdef, pos, ti->second.facing);
 				pos = helper->Pos2BuildPos(bi);
 
-				float xsize = bi.GetXSize() * 4;
-				float zsize = bi.GetZSize() * 4;
+				const float xsize = bi.GetXSize() * 4;
+				const float zsize = bi.GetZSize() * 4;
 				glColor4f(0.2f, 1, 0.2f, cloakAlpha3);
 				glDisable(GL_TEXTURE_2D);
 				glBegin(GL_LINE_STRIP);
-				glVertexf3(pos+float3( xsize, 1,  zsize));
-				glVertexf3(pos+float3(-xsize, 1,  zsize));
-				glVertexf3(pos+float3(-xsize, 1, -zsize));
-				glVertexf3(pos+float3( xsize, 1, -zsize));
-				glVertexf3(pos+float3( xsize, 1,  zsize));
+				glVertexf3(pos + float3( xsize, 1.0f,  zsize));
+				glVertexf3(pos + float3(-xsize, 1.0f,  zsize));
+				glVertexf3(pos + float3(-xsize, 1.0f, -zsize));
+				glVertexf3(pos + float3( xsize, 1.0f, -zsize));
+				glVertexf3(pos + float3( xsize, 1.0f,  zsize));
 				glEnd();
-				glColor4f(1, 1, 1, cloakAlpha);
+				glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
 				glEnable(GL_TEXTURE_2D);
 			}
 		}
 	}
 
-	// 3dos
-	DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, false);
 
-	CleanUp3DO(); //reset faceculling
-
-	// s3os
-	DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, true);
-
-	// reset gl states
-	if (advShading) {
-		glEnable(GL_ALPHA_TEST);
-		CleanUpUnitDrawing();
-	}
-	else
-		CleanUpGhostDrawing();
-
-	// shader rendering
-	DrawCloakedShaderUnits();
-
-	advShading = oldAdvShading;
-
-	glColor4f(1, 1, 1, 1);
-}
-
-
-void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::list<GhostBuilding*>& ghostedBuildings, bool is_s3o)
-{
 	// cloaked units and living ghosted buildings (stored in same vector)
 	for (GML_VECTOR<CUnit*>::iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
 		CUnit* unit = *ui;
-#if defined(USE_GML) && GML_ENABLE_SIM
-		if(unit==NULL)
-			continue;
-#endif
+
+		#if defined(USE_GML) && GML_ENABLE_SIM
+		if (unit == NULL) { continue; }
+		#endif
+
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-			if (is_s3o) {
+			if (s3oPass) {
 				texturehandlerS3O->SetS3oTexture(unit->model->textureType);
 			}
-			SetTeamColour(unit->team, cloakAlpha);
 
+			SetTeamColour(unit->team, cloakAlpha);
 			DrawUnitNow(unit);
 		} else {
 			// ghosted enemy units
@@ -1027,30 +1051,33 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 			} else {
 				glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
 			}
+
 			glPushMatrix();
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
 			// check for decoy models
 			const UnitDef* decoyDef = unit->unitDef->decoyDef;
-			S3DModel* model;
+			const S3DModel* model = NULL;
+
 			if (decoyDef == NULL) {
 				model = unit->model;
 			} else {
 				model = decoyDef->LoadModel();
 			}
-			SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
 
-			if (is_s3o) {
+			if (s3oPass) {
 				texturehandlerS3O->SetS3oTexture(model->textureType);
 			}
 
+			SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
 			model->DrawStatic();
 			glPopMatrix();
 
-			glColor4f(1, 1, 1, cloakAlpha);
+			glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
 		}
 	}
+
 
 	// buildings that died but were still ghosted
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
@@ -1068,7 +1095,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 				glRotatef((*gbi)->facing * 90.0f, 0, 1, 0);
 				SetTeamColour((*gbi)->team, cloakAlpha1);
 
-				if (is_s3o) {
+				if (s3oPass) {
 					texturehandlerS3O->SetS3oTexture((*gbi)->model->textureType);
 				}
 
@@ -1079,6 +1106,9 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 		}
 	}
 }
+
+
+
 
 
 
@@ -1161,7 +1191,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 		SetupBasicS3OTexture0();
 
 		// Set material color
-		const float cols[] = {1.0f, 1.0f, 1.0, 1.0f};
+		static const float cols[] = {1.0f, 1.0f, 1.0, 1.0f};
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
 		glColor4fv(cols);
 	}
@@ -1223,10 +1253,10 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 			SetBasicTeamColour(team, alpha);
 		}
 	} else {
+		// non-shader case via texture combiners
 		SetBasicTeamColour(team, alpha);
 	}
 }
-
 
 void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
 {
@@ -1234,9 +1264,11 @@ void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
 	const float texConstant[] = {col[0] / 255.0f, col[1] / 255.0f, col[2] / 255.0f, alpha};
 	const float matConstant[] = {1.0f, 1.0f, 1.0f, alpha};
 
+	glActiveTexture(GL_TEXTURE0);
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
 }
+
 
 
 /**
@@ -1248,7 +1280,6 @@ void CUnitDrawer::SetupFor3DO() const
 	glPushAttrib(GL_POLYGON_BIT);
 	glDisable(GL_CULL_FACE);
 }
-
 
 /**
  * Reset face culling after 3do drawing
@@ -1272,17 +1303,16 @@ void CUnitDrawer::SetupBasicS3OTexture0(void) const
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);
 
-	// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+	// RGB = Texture * (1 - Alpha) + Teamcolor * Alpha
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
 	// ALPHA = Ignore
 }
-
 
 /**
  * This sets the first texture unit to GL_MODULATE the colours from the
@@ -1300,17 +1330,17 @@ void CUnitDrawer::SetupBasicS3OTexture1(void) const
 	glEnable(GL_TEXTURE_2D);
 
 	// RGB = Primary Color * Previous
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
 
 	// ALPHA = Current alpha * Alpha mask
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
 }
 
 
@@ -1323,7 +1353,6 @@ void CUnitDrawer::CleanupBasicS3OTexture1(void) const
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
-
 
 void CUnitDrawer::CleanupBasicS3OTexture0(void) const
 {
@@ -1373,7 +1402,7 @@ void CUnitDrawer::UnitDrawingTexturesOn()
 }
 
 /**
- * Between a pair of SetupFor/CleanUpUnitDrawing (or SetupForS3ODrawing),
+ * Between a pair of SetupFor/CleanUpUnitDrawing,
  * temporarily turns off textures and shaders.
  *
  * Used by CUnit::Draw() for drawing a unit under construction.
@@ -1405,6 +1434,7 @@ void CUnitDrawer::UnitDrawingTexturesOff()
 		glDisable(GL_TEXTURE_2D); //! albedo + teamcolor
 	}
 }
+
 
 
 
@@ -1459,6 +1489,7 @@ void CUnitDrawer::DrawQuedS3O(void)
 }
 
 
+
 /**
  * Draw one unit.
  *
@@ -1475,8 +1506,8 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	LuaUnitLODMaterial* lodMat = NULL;
 
 	if (unit->lodCount > 0) {
-		const LuaMatType matType =
-			(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+		const LuaMatType matType = (water->drawReflection)?
+			LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 		LuaUnitMaterial& unitMat = unit->luaMats[matType];
 		lodMat = unitMat.GetMaterial(unit->currentLOD);
 	}
@@ -1494,6 +1525,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		mat.Execute(LuaMaterial::defMat);
 
 		lodMat->uniforms.Execute(unit);
+
 		SetTeamColour(unit->team);
 		DrawUnitRawWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 
@@ -1502,11 +1534,12 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	else {
 		/* 3DO + S3O */
 		SetupForUnitDrawing();
-		if (unit->model->type==MODELTYPE_3DO){
+		if (unit->model->type == MODELTYPE_3DO) {
 			texturehandler3DO->Set3doAtlases();
-		}else{
+		} else {
 			texturehandlerS3O->SetS3oTexture(unit->model->textureType);
 		}
+
 		SetTeamColour(unit->team);
 		DrawUnitRaw(unit);
 		CleanUpUnitDrawing();
@@ -1538,7 +1571,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	/* Get the team-coloured texture constructed by unit 0. */
 	SetBasicTeamColour(side);
 	SetupBasicS3OTexture0();
-	if (model->type==MODELTYPE_3DO) {
+	if (model->type == MODELTYPE_3DO) {
 		texturehandler3DO->Set3doAtlases();
 	} else {
 		texturehandlerS3O->SetS3oTexture(model->textureType);
@@ -1584,6 +1617,8 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 }
 
 
+
+//! used by LuaOpenGL::DrawUnitShape only
 void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 {
 	S3DModel* model = unitDef->LoadModel();
@@ -1594,7 +1629,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 	// get the team-coloured texture constructed by unit 0
 	SetBasicTeamColour(team);
 	SetupBasicS3OTexture0();
-	if (model->type==MODELTYPE_3DO) {
+	if (model->type == MODELTYPE_3DO) {
 		texturehandler3DO->Set3doAtlases();
 	} else {
 		texturehandlerS3O->SetS3oTexture(model->textureType);
@@ -1614,8 +1649,8 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 	CleanupBasicS3OTexture1();
 
 	// also reset the alpha generation
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
 
 	// reset texture0 state
 	CleanupBasicS3OTexture0();
@@ -1887,6 +1922,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 }
 
 
+
 void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
 {
 	const CMatrix44f& m = unit->GetTransformMatrix();
@@ -2077,6 +2113,7 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 }
 
 
+
 void CUnitDrawer::DrawUnitS3O(CUnit* unit)
 {
 	SetTeamColour(unit->team);
@@ -2093,6 +2130,8 @@ void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 	feature->model->DrawStatic();
 	glPopMatrix();
 }
+
+
 
 bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const {
 
