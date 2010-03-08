@@ -441,6 +441,8 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	else
 #endif
 	{
+		//! note: unsorted list of 3DO and S3O units
+		//! this queues up S3O's and (cloaked) 3DO's
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			DoDrawUnit(unit,drawReflection,drawRefraction, excludeUnit);
