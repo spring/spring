@@ -1038,9 +1038,8 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 {
 	GML_RECMUTEX_LOCK(gui); // MousePress - updates inCommand
 
-	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT) {
+	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 		return false;
-	}
 
 	if (button < 0) {
 		// proxied click from the minimap
@@ -1079,11 +1078,11 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
 {
-	int iconCmd = -1;
+	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
+		return;
 
-	if (button != SDL_BUTTON_MIDDLE) {
-		explicitCommand = inCommand;
-	}
+	int iconCmd = -1;
+	explicitCommand = inCommand;
 
 	if (activeMousePress) {
 		activeMousePress = false;

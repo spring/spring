@@ -470,7 +470,8 @@ bool CEventHandler::MousePress(int x, int y, int button)
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listMousePress[i];
 		if (ec->MousePress(x, y, button)) {
-			mouseOwner = ec;
+			if  (!mouseOwner)
+				mouseOwner = ec;
 			return true;
 		}
 	}
@@ -484,9 +485,13 @@ int CEventHandler::MouseRelease(int x, int y, int button)
 	if (mouseOwner == NULL) {
 		return -1;
 	}
-	const int retval = mouseOwner->MouseRelease(x, y, button);
-	mouseOwner = NULL;
-	return retval;
+	else
+	{
+		const int retval = mouseOwner->MouseRelease(x, y, button);
+		if (button == 1 || button == 3)
+			mouseOwner = NULL;
+		return retval;
+	}
 }
 
 
