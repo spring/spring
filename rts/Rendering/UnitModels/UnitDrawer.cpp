@@ -937,7 +937,7 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 	const bool oldAdvShading = advShading;
 
 	{
-		// don't use shaders if called during the shadow pass
+		// don't use shaders if shadows are enabled
 		advShading = advShading && !disableAdvShading;
 
 		if (advShading) {
@@ -970,9 +970,9 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 		} else {
 			CleanUpGhostDrawing();
 		}
-	}
 
-	advShading = oldAdvShading;
+		advShading = oldAdvShading;
+	}
 
 
 	// shader rendering
@@ -1011,14 +1011,15 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 
 				const float xsize = bi.GetXSize() * 4;
 				const float zsize = bi.GetZSize() * 4;
+
 				glColor4f(0.2f, 1, 0.2f, cloakAlpha3);
 				glDisable(GL_TEXTURE_2D);
 				glBegin(GL_LINE_STRIP);
-				glVertexf3(pos + float3( xsize, 1.0f,  zsize));
-				glVertexf3(pos + float3(-xsize, 1.0f,  zsize));
-				glVertexf3(pos + float3(-xsize, 1.0f, -zsize));
-				glVertexf3(pos + float3( xsize, 1.0f, -zsize));
-				glVertexf3(pos + float3( xsize, 1.0f,  zsize));
+					glVertexf3(pos + float3( xsize, 1.0f,  zsize));
+					glVertexf3(pos + float3(-xsize, 1.0f,  zsize));
+					glVertexf3(pos + float3(-xsize, 1.0f, -zsize));
+					glVertexf3(pos + float3( xsize, 1.0f, -zsize));
+					glVertexf3(pos + float3( xsize, 1.0f,  zsize));
 				glEnd();
 				glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
 				glEnable(GL_TEXTURE_2D);
@@ -1093,12 +1094,12 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 				glPushMatrix();
 				glTranslatef3((*gbi)->pos);
 				glRotatef((*gbi)->facing * 90.0f, 0, 1, 0);
-				SetTeamColour((*gbi)->team, cloakAlpha1);
 
 				if (s3oPass) {
 					texturehandlerS3O->SetS3oTexture((*gbi)->model->textureType);
 				}
 
+				SetTeamColour((*gbi)->team, cloakAlpha1);
 				(*gbi)->model->DrawStatic();
 				glPopMatrix();
 			}
