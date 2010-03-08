@@ -231,10 +231,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	activeButton = button;
 
-	if (activeReceiver) {
-		activeReceiver->MousePress(x, y, button);
+	if (activeReceiver && activeReceiver->MousePress(x, y, button))
 		return;
-	}
 
 	if(inMapDrawer &&  inMapDrawer->keyPressed){
 		inMapDrawer->MousePress(x, y, button);
