@@ -493,7 +493,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 #endif
 	{
 		//! note: unsorted list of 3DO and S3O units
-		//! queues up S3O's and (non-cloaked) 3DO's
+		//! this queues up S3O's and (cloaked) 3DO's
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			DoDrawUnit(*usi, drawReflection, drawRefraction, excludeUnit);
 		}

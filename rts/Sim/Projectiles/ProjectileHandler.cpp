@@ -514,25 +514,34 @@ void CProjectileHandler::Update()
 			groundFlashes.delay_add();
 		}
 
-		FlyingPieceContainer::iterator pti = flyingPieces.begin();
-		while (pti != flyingPieces.end()) {
-			FlyingPiece* p = *pti;
-			p->pos     += p->speed;
-			p->speed   *= 0.996f;
-			p->speed.y += mapInfo->map.gravity; //! fp's are not projectiles
-			p->rot     += p->rotSpeed;
+		#define UPDATE_FLYING_PIECES(fpContainer)                                        \
+			FlyingPieceContainer::iterator pti = fpContainer.begin();                    \
+                                                                                         \
+			while (pti != fpContainer.end()) {                                           \
+				FlyingPiece* p = *pti;                                                   \
+				p->pos     += p->speed;                                                  \
+				p->speed   *= 0.996f;                                                    \
+				p->speed.y += mapInfo->map.gravity; /* fp's are not projectiles */       \
+				p->rot     += p->rotSpeed;                                               \
+                                                                                         \
+				if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10)) {  \
+					pti = fpContainer.erase_delete_set(pti);                             \
+				} else {                                                                 \
+					++pti;                                                               \
+				}                                                                        \
+			}
 
-			if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10))
-				pti = flyingPieces.erase_delete_set(pti);
-			else
-				++pti;
-		}
+		{ UPDATE_FLYING_PIECES(flyingPieces3DO); }
+		{ UPDATE_FLYING_PIECES(flyingPiecesS3O); }
+		#undef UPDATE_FLYING_PIECES
 
 		{
 			GML_STDMUTEX_LOCK(rpiece); // Update
 
-			flyingPieces.delay_delete();
-			flyingPieces.delay_add();
+			flyingPieces3DO.delay_delete();
+			flyingPieces3DO.delay_add();
+			flyingPiecesS3O.delay_delete();
+			flyingPiecesS3O.delay_add();
 		}
 	}
 }
@@ -540,17 +549,15 @@ void CProjectileHandler::Update()
 
 
 void CProjectileHandler::DrawProjectiles(const ProjectileContainer& pc, bool drawReflection, bool drawRefraction) {
-	unitDrawer->SetTeamColour(0); // reset the color and alpha so that the unit part projectiles draw correctly
-
 	for (ProjectileContainer::render_iterator pci = pc.render_begin(); pci != pc.render_end(); ++pci) {
 		CProjectile* pro = *pci;
+		CUnit* owner = pro->owner();
 
 		pro->UpdateDrawPos();
 
 		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
-			(pro->owner() && teamHandler->Ally(pro->owner()->allyteam, gu->myAllyTeam)))) {
+			(owner && teamHandler->Ally(pro->owner()->allyteam, gu->myAllyTeam)))) {
 
-			CUnit* owner = pro->owner();
 			bool stunned = owner? owner->stunned: false;
 
 			if (owner && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
@@ -646,7 +653,7 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(1);
 
-	if(gu->drawFog) {
+	if (gu->drawFog) {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
@@ -660,23 +667,28 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 	{
 		GML_STDMUTEX_LOCK(rpiece); // Draw
 
-		flyingPieces.delete_delayed();
-		flyingPieces.add_delayed();
+		flyingPieces3DO.delete_delayed();
+		flyingPieces3DO.add_delayed();
+		flyingPiecesS3O.delete_delayed();
+		flyingPiecesS3O.add_delayed();
 	}
 
 	size_t lasttex = 0xFFFFFFFF;
 	size_t lastteam = 0xFFFFFFFF;
 	va->Initialize();
 
-	int numFlyingPieces = flyingPieces.render_size();
-	int drawnPieces = numFlyingPieces;
+
+
+	const int numFlyingPieces = flyingPieces3DO.render_size() + flyingPiecesS3O.render_size();
+	const int drawnPieces = numFlyingPieces;
 	va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
 
-	FlyingPieceContainer::render_iterator fpi = flyingPieces.render_begin();
+	FlyingPieceContainer::render_iterator fpi;
 
 	// S3O flying pieces
-	for( ; fpi != flyingPieces.render_end(); ++fpi) {
-		FlyingPiece *fp = *fpi;
+	for (fpi = flyingPiecesS3O.render_begin(); fpi != flyingPiecesS3O.render_end(); ++fpi) {
+		const FlyingPiece* fp = *fpi;
+
 		if (fp->texture != lasttex) {
 			lasttex = fp->texture;
 			if (lasttex == 0)
@@ -691,10 +703,11 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 			va->Initialize();
 			unitDrawer->SetTeamColour(lastteam);
 		}
+
 		CMatrix44f m;
 		m.Rotate(fp->rot, fp->rotAxis);
-		float3 interPos = fp->pos + fp->speed * gu->timeOffset;
-		SS3OVertex* verts = fp->verts;
+		const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
+		const SS3OVertex* verts = fp->verts;
 		float3 tp, tn;
 
 		for (int i = 0; i < 4; i++){
@@ -711,17 +724,26 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 	unitDrawer->SetupFor3DO();
 
 	// 3DO flying pieces
-	for ( ; fpi != flyingPieces.render_end(); ++fpi) {
-		FlyingPiece* fp = *fpi;
+	for (fpi = flyingPieces3DO.render_begin(); fpi != flyingPieces3DO.render_end(); ++fpi) {
+		const FlyingPiece* fp = *fpi;
+
+		if (fp->team != lastteam) {
+			lastteam = fp->team;
+			va->DrawArrayTN(GL_QUADS);
+			va->Initialize();
+			unitDrawer->SetTeamColour(lastteam);
+		}
+
 		CMatrix44f m;
 		m.Rotate(fp->rot, fp->rotAxis);
-		float3 interPos = fp->pos + fp->speed * gu->timeOffset;
-		C3DOTextureHandler::UnitTexture* tex = fp->prim->texture;
+		const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
+		const C3DOTextureHandler::UnitTexture* tex = fp->prim->texture;
 
 		const std::vector<S3DOVertex>& vertices    = fp->object->vertices;
 		const std::vector<int>&        verticesIdx = fp->prim->vertices;
 
 		const S3DOVertex* v = &vertices[verticesIdx[0]];
+
 		float3 tp = m.Mul(v->pos);
 		float3 tn = m.Mul(v->normal);
 		tp += interPos;
@@ -1081,9 +1103,9 @@ void CProjectileHandler::DrawGroundFlashes(void)
 }
 
 
-void CProjectileHandler::AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece)
+void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece)
 {
-	FlyingPiece* fp = new FlyingPiece;
+	FlyingPiece* fp = new FlyingPiece();
 	fp->pos = pos;
 	fp->speed = speed;
 	fp->prim = piece;
@@ -1095,10 +1117,10 @@ void CProjectileHandler::AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* obj
 	fp->rotSpeed = gu->usRandFloat() * 0.1f;
 	fp->rot = 0;
 
-	fp->team = 0;
+	fp->team = team;
 	fp->texture = 0;
 
-	flyingPieces.insert(fp);
+	flyingPieces3DO.insert(fp);
 }
 
 
@@ -1107,7 +1129,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	if (textureType <= 0)
 		return; // texture 0 means 3do
 
-	FlyingPiece* fp = new FlyingPiece;
+	FlyingPiece* fp = new FlyingPiece();
 	fp->pos = pos;
 	fp->speed = speed;
 	fp->prim = NULL;
@@ -1123,7 +1145,7 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	fp->team = team;
 	fp->texture = textureType;
 
-	flyingPieces.insert(fp);
+	flyingPiecesS3O.insert(fp);
 }
 
 void CProjectileHandler::UpdateTextures()
