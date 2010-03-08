@@ -1038,7 +1038,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 {
 	GML_RECMUTEX_LOCK(gui); // MousePress - updates inCommand
 
-	if (button == SDL_BUTTON_MIDDLE) {
+	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT) {
 		return false;
 	}
 
