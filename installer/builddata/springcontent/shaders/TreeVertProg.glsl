@@ -46,14 +46,15 @@ void main() {
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	gl_TexCoord[1] = vertexPos.xzyw * invMapSizePO2;
 	#endif
-	#if (defined(TREE_NEAR) || defined(TREE_DIST))
+	#ifdef TREE_NEAR
 	gl_TexCoord[0] = vertexShadowPos;
 	gl_TexCoord[1] = gl_MultiTexCoord1;
 	#endif
 	#ifdef TREE_DIST
+	gl_TexCoord[0] = vertexShadowPos;
 	gl_TexCoord[1] = gl_MultiTexCoord0;
 	#endif
 
-	gl_FogFragCoord.x = gl_ModelViewProjectionMatrix[2] * vertexPos;
+	gl_FogFragCoord = gl_ModelViewProjectionMatrix[2] * vertexPos;
 	gl_Position = gl_ModelViewProjectionMatrix * vertexPos;
 }
