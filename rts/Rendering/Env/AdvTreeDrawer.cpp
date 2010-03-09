@@ -423,7 +423,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 		treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 		treeShader->SetUniform3f(13, camera->right.x, camera->right.y, camera->right.z);
-		treeShader->SetUniform3f( 9, camera->up.x,    camera->up.y,    camera->up.z);
+		treeShader->SetUniform3f( 9, camera->up.x,    camera->up.y,    camera->up.z   );
 		treeShader->SetUniform4f(11, L.groundSunColor.x,     L.groundSunColor.y,     L.groundSunColor.z,     0.85f);
 		treeShader->SetUniform4f(14, L.groundAmbientColor.x, L.groundAmbientColor.y, L.groundAmbientColor.z, 0.85f);
 		treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
@@ -532,6 +532,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeNearAdvShader->Disable();
 			treeDistAdvShader->Enable();
 
+			treeShader = treeDistAdvShader;
+
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glBindTexture(GL_TEXTURE_2D, activeFarTex);
 			glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -553,19 +555,22 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			glAlphaFunc(GL_GREATER, 1.0f - (pFTree->relDist * 0.5f));
 			va->DrawArrayT(GL_QUADS);
 		}
+
+		treeShader->Disable();
 	}
 
 	if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
 		treeDistAdvShader->Disable();
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
-		glDisable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
 
+	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
 	glDisable(GL_ALPHA_TEST);
 
@@ -877,7 +882,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 
 			DrawTreeVertex(pFTree->pos, pFTree->type * 0.125f, pFTree->deltaY, false);
 
-			glAlphaFunc(GL_GREATER,1-pFTree->relDist * 0.5f);
+			glAlphaFunc(GL_GREATER, 1.0f - (pFTree->relDist * 0.5f));
 			va->DrawArrayT(GL_QUADS);
 		}
 
