@@ -139,7 +139,7 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 		"#define SHADOWGEN_PROGRAM_MODEL\n",
 		"#define SHADOWGEN_PROGRAM_MAP\n",
 		"#define SHADOWGEN_PROGRAM_TREE_NEAR\n",
-		"#define SHADOWGEN_PROGRAM_TREE_FAR\n",
+		"#define SHADOWGEN_PROGRAM_TREE_DIST\n",
 		"#define SHADOWGEN_PROGRAM_PROJECTILE\n",
 	};
 

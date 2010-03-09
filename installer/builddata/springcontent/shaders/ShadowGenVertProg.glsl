@@ -41,7 +41,7 @@ void main() {
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	#endif
 
-	#ifdef SHADOWGEN_PROGRAM_TREE_FAR
+	#ifdef SHADOWGEN_PROGRAM_TREE_DIST
 	gl_FrontColor = gl_Color;
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	#endif
