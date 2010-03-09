@@ -46,11 +46,7 @@ void main() {
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	gl_TexCoord[1] = vertexPos.xzyw * invMapSizePO2;
 	#endif
-	#ifdef TREE_NEAR
-	gl_TexCoord[0] = vertexShadowPos;
-	gl_TexCoord[1] = gl_MultiTexCoord1;
-	#endif
-	#ifdef TREE_DIST
+	#if (defined(TREE_NEAR) || defined(TREE_DIST))
 	gl_TexCoord[0] = vertexShadowPos;
 	gl_TexCoord[1] = gl_MultiTexCoord0;
 	#endif
