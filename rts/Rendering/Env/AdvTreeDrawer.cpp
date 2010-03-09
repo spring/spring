@@ -868,8 +868,8 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 					type -= 8;
 					displist = treeGen->leafDL + type;
 				}
-				glCallList(displist);
 
+				glCallList(displist);
 				glPopMatrix();
 			}
 		}
