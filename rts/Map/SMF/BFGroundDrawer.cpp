@@ -68,8 +68,8 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	}
 
 #ifdef USE_GML
-	multiThreadDrawGround=configHandler->Get("MultiThreadDrawGround", 1);
-	multiThreadDrawGroundShadow=configHandler->Get("MultiThreadDrawGroundShadow", 0);
+	multiThreadDrawGround = configHandler->Get("MultiThreadDrawGround", 1);
+	multiThreadDrawGroundShadow = configHandler->Get("MultiThreadDrawGroundShadow", 0);
 #endif
 }
 
@@ -77,9 +77,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 {
 	delete textures;
 
-	if (shadowHandler->canUseShadows) {
-		shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
-	}
+	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 
 	configHandler->Set("GroundDetail", viewRadius);
 

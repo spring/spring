@@ -2,10 +2,9 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
+#include <cstring>
 
 #include "AdvTreeGenerator.h"
-
-#include <cstring>
 
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
@@ -13,10 +12,11 @@
 #include "Map/ReadMap.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
-#include "GlobalUnsynced.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
 
 using std::max;
 using std::min;
@@ -27,15 +27,12 @@ using std::min;
 
 CAdvTreeGenerator* treeGen;
 
-//namespace std{
-//void _Xlen(){};
-//}
-
 CAdvTreeGenerator::CAdvTreeGenerator()
 {
-	PrintLoadMsg("Generating trees");
-	unsigned char(* tree)[2048][4]=new unsigned char[256][2048][4];
-	memset(tree[0][0],128,256*2048*4);
+	PrintLoadMsg("Generating 3D trees");
+
+	unsigned char(* tree)[2048][4] = new unsigned char[256][2048][4];
+	memset(tree[0][0], 128, 256 * 2048 * 4);
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
@@ -45,127 +42,103 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");
 
 	CBitmap bm;
-	std::string fn("bitmaps/"+treesTable.GetString("bark", "Bark.bmp"));
+	std::string fn("bitmaps/" + treesTable.GetString("bark", "Bark.bmp"));
 	if (!bm.Load(fn) || bm.xsize != 256 || bm.ysize != 256)
 		throw content_error("Could not load tree texture from file " + fn);
-	for(int y=0;y<256;y++){
-		for(int x=0;x<256;x++){
-			tree[y][x][0]=bm.mem[(y*256+x)*4];
-			tree[y][x][1]=bm.mem[(y*256+x)*4+1];
-			tree[y][x][2]=bm.mem[(y*256+x)*4+2];
-			tree[y][x][3]=255;
-			tree[y][x+1024][0]=(unsigned char)(bm.mem[(y*256+x)*4]*0.6f);
-			tree[y][x+1024][1]=(unsigned char)(bm.mem[(y*256+x)*4+1]*0.6f);
-			tree[y][x+1024][2]=(unsigned char)(bm.mem[(y*256+x)*4+2]*0.6f);
-			tree[y][x+1024][3]=255;
+
+	for (int y = 0; y < 256; y++) {
+		for (int x = 0; x < 256; x++) {
+			tree[y][x][0] = bm.mem[(y * 256 + x) * 4    ];
+			tree[y][x][1] = bm.mem[(y * 256 + x) * 4 + 1];
+			tree[y][x][2] = bm.mem[(y * 256 + x) * 4 + 2];
+			tree[y][x][3] = 255;
+			tree[y][x + 1024][0] = (unsigned char)(bm.mem[(y * 256 + x) * 4    ] * 0.6f);
+			tree[y][x + 1024][1] = (unsigned char)(bm.mem[(y * 256 + x) * 4 + 1] * 0.6f);
+			tree[y][x + 1024][2] = (unsigned char)(bm.mem[(y * 256 + x) * 4 + 2] * 0.6f);
+			tree[y][x + 1024][3] = 255;
 		}
 	}
-	fn = "bitmaps/"+treesTable.GetString("leaf", "bleaf.bmp");
+
+	fn = "bitmaps/" + treesTable.GetString("leaf", "bleaf.bmp");
 	if (!bm.Load(fn))
 		throw content_error("Could not load tree texture from file " + fn);
-	bm.CreateAlpha(0,0,0);
-	//bm.Save("baseleaf.bmp");
-	bm.Renormalize(float3(0.22f,0.43f,0.18f)*1.0f);
-//	bm.Save("baseleaf2.bmp");
+
+	bm.CreateAlpha(0, 0, 0);
+	bm.Renormalize(float3(0.22f, 0.43f, 0.18f));
+
 	GLuint leafTex;
 	glGenTextures(1, &leafTex);
 	glBindTexture(GL_TEXTURE_2D, leafTex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
 
-	CreateLeafTex(leafTex,256,0,tree);
-	CreateLeafTex(leafTex,512,0,tree);
-	CreateLeafTex(leafTex,768,0,tree);
+	CreateLeafTex(leafTex, 256, 0, tree);
+	CreateLeafTex(leafTex, 512, 0, tree);
+	CreateLeafTex(leafTex, 768, 0, tree);
 
 	glDeleteTextures (1, &leafTex);
 
-	unsigned char* data=tree[0][0];
-	CreateGranTex(data,1024+768,0,2048);
-	CreateGranTex(data,1280,0,2048);
-	CreateGranTex(data,1536,0,2048);
-//	CBitmap b(data,2048,256);
-//	b.Save("PartTex.bmp");
+	unsigned char* data = tree[0][0];
+	CreateGranTex(data, 1024 + 768, 0, 2048);
+	CreateGranTex(data, 1280,       0, 2048);
+	CreateGranTex(data, 1536,       0, 2048);
 
 	glGenTextures(1, &barkTex);
-	CreateTex(data,barkTex,2048,256,false,10);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST_MIPMAP_NEAREST);
+	CreateTex(data, barkTex, 2048, 256, false, 10);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 
 	delete[] tree;
 
 
-	treeNSVP=LoadVertexProgram("treeNS.vp");
-
-	leafDL=glGenLists(8);
-	srand((unsigned int)15);
-	for(int a=0;a<8;++a){
-		va=GetVertexArray();
+	leafDL = glGenLists(8);
+	srand(15U);
+	for (int a = 0; a < 8; ++a) {
+		va = GetVertexArray();
 		va->Initialize();
-		barkva=GetVertexArray();
+		barkva = GetVertexArray();
 		barkva->Initialize();
 
-		glNewList(leafDL+a,GL_COMPILE);
-		float size=0.65f+fRand(0.2f);
-		MainTrunk(10,size*MAX_TREE_HEIGHT,size*0.05f*MAX_TREE_HEIGHT);
+		glNewList(leafDL + a, GL_COMPILE);
+		float size = 0.65f + fRand(0.2f);
+		MainTrunk(10, size * MAX_TREE_HEIGHT, size * 0.05f * MAX_TREE_HEIGHT);
 		va->DrawArrayTN(GL_QUADS);
 		barkva->DrawArrayTN(GL_TRIANGLE_STRIP);
 
 		glEndList();
 	}
 
-	pineDL=glGenLists(8);
-	srand((unsigned int)15);
-	for(int a=0;a<8;++a){
-		va=GetVertexArray();
+	pineDL = glGenLists(8);
+	srand(15U);
+	for (int a = 0; a < 8; ++a) {
+		va = GetVertexArray();
 		va->Initialize();
 
-		glNewList(pineDL+a,GL_COMPILE);
-		float size=0.7f+fRand(0.2f);
-		PineTree((int)(20+fRand(10)),MAX_TREE_HEIGHT*size);
+		glNewList(pineDL + a, GL_COMPILE);
+		float size = 0.7f + fRand(0.2f);
+		PineTree((int)(20 + fRand(10)), MAX_TREE_HEIGHT * size);
 		va->DrawArrayTN(GL_TRIANGLES);
 
 		glEndList();
-	}
-	CreateFarTex();
-
-	if (shadowHandler->canUseShadows) {
-		treeVP = LoadVertexProgram("tree.vp");
-		treeFarVP = LoadVertexProgram("treeFar.vp");
-
-		if (shadowHandler->useFPShadows) {
-			treeFPShadow = LoadFragmentProgram("treeFPshadow.fp");
-		}
 	}
 }
 
 CAdvTreeGenerator::~CAdvTreeGenerator()
 {
-	glDeleteTextures (1, &barkTex);
-	glDeleteTextures (2, farTex);
-	glDeleteLists(leafDL,8);
-	glDeleteLists(pineDL,8);
-//	delete[] grassCol;
-
-	glSafeDeleteProgram(treeNSVP);
-
-	if (shadowHandler->canUseShadows) {
-		glSafeDeleteProgram( treeVP );
-		glSafeDeleteProgram( treeFarVP );
-
-		if (shadowHandler->useFPShadows) {
-			glSafeDeleteProgram(treeFPShadow);
-		}
-	}
+	glDeleteTextures(1, &barkTex);
+	glDeleteTextures(2, farTex);
+	glDeleteLists(leafDL, 8);
+	glDeleteLists(pineDL, 8);
 }
 
 void CAdvTreeGenerator::Draw()
 {
 }
 
-void CAdvTreeGenerator::DrawTrunk(const float3 &start, const float3 &end,const float3& orto1,const float3& orto2, float size)
+void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size)
 {
-	float3 flatSun=mapInfo->light.sunDir;
-	flatSun.y=0;
+	float3 flatSun = mapInfo->light.sunDir;
+	flatSun.y = 0.0f;
 
 	int numIter=(int)max(3.0f,size*10);
 	for(int a=0;a<=numIter;a++){
@@ -179,115 +152,130 @@ void CAdvTreeGenerator::DrawTrunk(const float3 &start, const float3 &end,const f
 
 void CAdvTreeGenerator::MainTrunk(int numBranch,float height,float width)
 {
-	float3 orto1(1,0,0);
-	float3 orto2(0,0,1);
+	const float3 orto1(1, 0, 0);
+	const float3 orto2(0, 0, 1);
+	const float baseAngle = fRand(2 * PI);
 
-	DrawTrunk(ZeroVector,float3(0,height,0),orto1,orto2,width);
+	DrawTrunk(ZeroVector, float3(0, height, 0), orto1, orto2, width);
 
-	float baseAngle=fRand(2*PI);
-	for(int a=0;a<numBranch;++a){
-		float angle=baseAngle+a*3.88f+fRand(0.5f);
-		float3 dir=orto1*sin(angle)+orto2*cos(angle);
-		dir.y=0.3f+fRand(0.4f);
-		dir.ANormalize();
-		float3 start(0,(a+5)*height/(numBranch+5),0);
-		float length=(height*(0.4f+fRand(0.1f)))*sqrt(float(numBranch-a)/numBranch);
-		TrunkIterator(start,dir,length,length*0.05f,1);
+	for (int a = 0; a < numBranch; ++a) {
+		const float angle = baseAngle + (a * 3.88f) + fRand(0.5f);
+		float3 dir = orto1 * sin(angle) + orto2 * cos(angle);
+			dir.y = 0.3f + fRand(0.4f);
+			dir.ANormalize();
+		const float3 start(0, (a + 5) * height / (numBranch + 5), 0);
+		const float length = (height * (0.4f + fRand(0.1f))) * sqrt(float(numBranch - a) / numBranch);
+
+		TrunkIterator(start, dir, length, length * 0.05f, 1);
 	}
-	for(int a=0;a<3;++a){
-		float angle=a*3.88f+fRand(0.5f);
-		float3 dir=orto1*sin(angle)+orto2*cos(angle);
-		dir.y=0.8f;
-		dir.ANormalize();
-		float3 start(0,height-0.3f,0);
-		float length=MAX_TREE_HEIGHT*0.1f;
-		TrunkIterator(start,dir,length,length*0.05f,0);
+
+	for (int a = 0; a < 3; ++a) {
+		const float angle = (a * 3.88f) + fRand(0.5f);
+		float3 dir = orto1*sin(angle)+orto2*cos(angle);
+			dir.y = 0.8f;
+			dir.ANormalize();
+		const float3 start(0, height - 0.3f, 0);
+		const float length = MAX_TREE_HEIGHT * 0.1f;
+
+		TrunkIterator(start, dir, length, length * 0.05f, 0);
 	}
 }
 
-void CAdvTreeGenerator::TrunkIterator(float3 &start, float3 &dir, float length, float size, int depth)
+void CAdvTreeGenerator::TrunkIterator(const float3& start, const float3& dir, float length, float size, int depth)
 {
 	float3 orto1;
-	if(dir.dot(UpVector)<0.9f)
-		orto1=dir.cross(UpVector);
+	if (dir.dot(UpVector) < 0.9f)
+		orto1 = dir.cross(UpVector);
 	else
-		orto1=dir.cross(float3(1,0,0));
+		orto1 = dir.cross(float3(1, 0, 0));
 	orto1.ANormalize();
-	float3 orto2=dir.cross(orto1);
+
+	float3 orto2 = dir.cross(orto1);
 	orto2.ANormalize();
 
-	DrawTrunk(start,start+dir*length,orto1,orto2,size);
+	DrawTrunk(start, start + dir * length, orto1, orto2, size);
 
-	if(depth<=1)
-		CreateLeaves(start,dir,length,orto1,orto2);
+	if (depth <= 1)
+		CreateLeaves(start, dir, length, orto1, orto2);
 
-	if(depth==0)
+	if (depth == 0)
 		return;
 
-	float dirDif=fRand(0.8f)+1.0f;
-	int numTrunks=(int)length*5/MAX_TREE_HEIGHT;
-	for(int a=0;a<numTrunks;a++){
-		float angle=PI+float(a)*PI+fRand(0.3f);
-		float3 newbase=start+dir*length*(float(a+1)/(numTrunks+1));
-		float3 newDir=dir+orto1*cos(angle)*dirDif+orto2*sin(angle)*dirDif;
+	const float dirDif = fRand(0.8f) + 1.0f;
+	const int numTrunks = (int) length * 5 / MAX_TREE_HEIGHT;
+
+	for (int a = 0; a < numTrunks; a++) {
+		const float angle = PI + float(a) * PI + fRand(0.3f);
+		const float newLength = length * (float(numTrunks - a) / (numTrunks + 1));
+
+		float3 newbase = start + dir * length * (float(a + 1) / (numTrunks + 1));
+		float3 newDir = dir + orto1 * cos(angle) * dirDif + orto2 * sin(angle) * dirDif;
 		newDir.ANormalize();
-		float newLength=length*(float(numTrunks-a)/(numTrunks+1));
-		TrunkIterator(newbase,newDir,newLength,newLength*0.05f,depth-1);
+
+		TrunkIterator(newbase, newDir, newLength, newLength * 0.05f, depth - 1);
 	}
 }
 
-void CAdvTreeGenerator::CreateLeaves(float3 &start, float3 &dir, float length,float3& orto1,float3& orto2)
+void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, float length, float3& orto1,float3& orto2)
 {
-	float baseRot=fRand(2*PI);
-	int numLeaves=(int)length*10/MAX_TREE_HEIGHT;
+	const float baseRot = fRand(2 * PI);
+	const int numLeaves = (int) length * 10 / MAX_TREE_HEIGHT;
 
-	float3 flatSun=mapInfo->light.sunDir;
-	flatSun.y=0;
+	float3 flatSun = mapInfo->light.sunDir;
+	flatSun.y = 0;
 
-	for(int a=0;a<numLeaves+1;a++){
-		float3 pos=start+dir*length*(0.7f+fRand(0.3f));
-		float angle=baseRot+a*0.618f*2*PI;
-		pos+=(orto1*sin(angle)+orto2*cos(angle))*(sqrt((float)a+1)*0.6f+fRand(0.4f))*0.1f*MAX_TREE_HEIGHT;
-		if(pos.y<0.2f*MAX_TREE_HEIGHT)
-			pos.y=0.2f*MAX_TREE_HEIGHT;
+	for (int a = 0; a < numLeaves + 1; a++) {
+		const float angle = baseRot + a * 0.618f * 2 * PI;
 
-		float tex=float(int(rand()*3/RAND_MAX))*0.125f;
-		float flipTex=float(int(rand()*2/RAND_MAX))*0.123f;
+		float3 pos = start + dir * length * (0.7f + fRand(0.3f));
+		pos +=
+			(orto1 * sin(angle) + orto2 * cos(angle)) *
+			(sqrt((float) a + 1) * 0.6f + fRand(0.4f)) *
+			0.1f * MAX_TREE_HEIGHT;
 
-		float3 npos=pos;
-		npos.y=0;
+		if (pos.y < 0.2f * MAX_TREE_HEIGHT)
+			pos.y = 0.2f * MAX_TREE_HEIGHT;
+
+		float3 npos = pos;
+		npos.y = 0;
 		npos.ANormalize();
-		float col=0.5f+npos.dot(flatSun)*0.3f+fRand(0.1f);
-		va->AddVertexTN(pos,0.126f+tex+flipTex,0.98f,float3(0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
-		va->AddVertexTN(pos,0.249f+tex-flipTex,0.98f,float3(-0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
-		va->AddVertexTN(pos,0.249f+tex-flipTex,0.02f,float3(-0.09f*MAX_TREE_HEIGHT,0.09f*MAX_TREE_HEIGHT,col));
-		va->AddVertexTN(pos,0.126f+tex+flipTex,0.02f,float3(0.09f*MAX_TREE_HEIGHT,0.09f*MAX_TREE_HEIGHT,col));
+
+		const float tex = float(int(rand() * 3 / RAND_MAX)) * 0.125f;
+		const float flipTex = float(int(rand()*2/RAND_MAX)) * 0.123f;
+		const float col = 0.5f + (npos.dot(flatSun) * 0.3f) + fRand(0.1f);
+
+		va->AddVertexTN(pos, 0.126f + tex + flipTex, 0.98f, float3( 0.09f * MAX_TREE_HEIGHT, -0.09f * MAX_TREE_HEIGHT, col));
+		va->AddVertexTN(pos, 0.249f + tex - flipTex, 0.98f, float3(-0.09f * MAX_TREE_HEIGHT, -0.09f * MAX_TREE_HEIGHT, col));
+		va->AddVertexTN(pos, 0.249f + tex - flipTex, 0.02f, float3(-0.09f * MAX_TREE_HEIGHT,  0.09f * MAX_TREE_HEIGHT, col));
+		va->AddVertexTN(pos, 0.126f + tex + flipTex, 0.02f, float3( 0.09f * MAX_TREE_HEIGHT,  0.09f * MAX_TREE_HEIGHT, col));
 	}
-	float3 pos=start+dir*length*1.03f;
 
-	float tex=float(int(rand()*3/RAND_MAX))*0.125f;
-	float flipTex=float(int(rand()*2/RAND_MAX))*0.123f;
-
-	float3 npos=pos;
-	npos.y=0;
+	float3 pos = start + dir * length * 1.03f;
+	float3 npos = pos;
+	npos.y = 0;
 	npos.ANormalize();
-	float col=0.5f+npos.dot(flatSun)*0.3f+fRand(0.1f);
-	va->AddVertexTN(pos,0.126f+tex+flipTex,0.98f,float3(0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
-	va->AddVertexTN(pos,0.249f+tex-flipTex,0.98f,float3(-0.09f*MAX_TREE_HEIGHT,-0.09f*MAX_TREE_HEIGHT,col));
-	va->AddVertexTN(pos,0.249f+tex-flipTex,0.02f,float3(-0.09f*MAX_TREE_HEIGHT,0.09f*MAX_TREE_HEIGHT,col));
-	va->AddVertexTN(pos,0.126f+tex+flipTex,0.02f,float3(0.09f*MAX_TREE_HEIGHT,0.09f*MAX_TREE_HEIGHT,col));
+
+	const float tex = float(int(rand() * 3 / RAND_MAX)) * 0.125f;
+	const float flipTex = float(int(rand() * 2 / RAND_MAX)) * 0.123f;
+	const float col = 0.5f + (npos.dot(flatSun) * 0.3f) + fRand(0.1f);
+
+	va->AddVertexTN(pos, 0.126f + tex + flipTex, 0.98f, float3( 0.09f * MAX_TREE_HEIGHT, -0.09f * MAX_TREE_HEIGHT, col));
+	va->AddVertexTN(pos, 0.249f + tex - flipTex, 0.98f, float3(-0.09f * MAX_TREE_HEIGHT, -0.09f * MAX_TREE_HEIGHT, col));
+	va->AddVertexTN(pos, 0.249f + tex - flipTex, 0.02f, float3(-0.09f * MAX_TREE_HEIGHT,  0.09f * MAX_TREE_HEIGHT, col));
+	va->AddVertexTN(pos, 0.126f + tex + flipTex, 0.02f, float3( 0.09f * MAX_TREE_HEIGHT,  0.09f * MAX_TREE_HEIGHT, col));
 }
 
-void CAdvTreeGenerator::CreateFarTex()
+void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 {
-	unsigned char* data=new unsigned char[512*512*4];
-	unsigned char* data2=new unsigned char[512*512*4];
-	for(int y=0;y<512;++y){
-		for(int x=0;x<512;++x){
-				data[((y)*512+x)*4+0]=60;
-				data[((y)*512+x)*4+1]=90;
-				data[((y)*512+x)*4+2]=40;
-				data[((y)*512+x)*4+3]=0;
+	unsigned char* data = new unsigned char[512 * 512 * 4];
+	unsigned char* data2 = new unsigned char[512 * 512 * 4];
+
+	for (int y = 0; y < 512; ++y) {
+		for (int x = 0; x < 512; ++x) {
+			data[((y) * 512 + x) * 4 + 0] = 60;
+			data[((y) * 512 + x) * 4 + 1] = 90;
+			data[((y) * 512 + x) * 4 + 2] = 40;
+			data[((y) * 512 + x) * 4 + 3] =  0;
 		}
 	}
 
@@ -297,85 +285,94 @@ void CAdvTreeGenerator::CreateFarTex()
 	glPushMatrix();
 	glBindTexture(GL_TEXTURE_2D, barkTex);
 	glEnable(GL_TEXTURE_2D);
-	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeNSVP );
-	glEnable( GL_VERTEX_PROGRAM_ARB );
-//	glTrackMatrixNV(GL_VERTEX_PROGRAM_NV, 0,  GL_MODELVIEW_PROJECTION_NV, GL_IDENTITY_NV);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13, 1,0,0,0);	//camera side
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9, 0,1,0,0);	//camera up
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,10,0,0,0,0);	//position delta
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,11, mapInfo->light.groundSunColor.x,mapInfo->light.groundSunColor.y,mapInfo->light.groundSunColor.z,0.85f);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,14, mapInfo->light.groundAmbientColor.x,mapInfo->light.groundAmbientColor.y,mapInfo->light.groundAmbientColor.z,0.85f);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,12,0,0,0,0.02f);	//w=alpha/height modifier
-	glAlphaFunc(GL_GREATER,0.5f);
-	glDisable(GL_FOG);
-	glDisable(GL_BLEND);
-	glColor4f(1,1,1,1);
-	glViewport(0,0,64,64);
-	glAlphaFunc(GL_GREATER,0.5f);
-	glEnable(GL_ALPHA_TEST);
 
-	for(int a=0;a<8;++a){
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  1,0,0,0);	//camera side
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  0,1,0,0);	//camera up
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glScalef(-1,1,1);
-		glOrtho(-MAX_TREE_HEIGHT*0.5f,MAX_TREE_HEIGHT*0.5f,0,MAX_TREE_HEIGHT,-MAX_TREE_HEIGHT*0.5f,MAX_TREE_HEIGHT*0.5f);
-		CreateFarView(data,a*64,0,leafDL+a);
-		CreateFarView(data,a*64,256,pineDL+a);
-		glScalef(-1,1,1);
+	treeShader->Enable();
 
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  0,0,1,0);
-		glMatrixMode(GL_MODELVIEW);
-		glRotatef(-90,0,1,0);
-		CreateFarView(data,a*64,64,leafDL+a);
-		CreateFarView(data,a*64,64+256,pineDL+a);
+	{
+		if (false && gu->haveGLSL) {
+			// TODO
+		} else {
+			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+			treeShader->SetUniform3f(13, 1.0f, 0.0f, 0.0f); // camera side-dir
+			treeShader->SetUniform3f( 9, 0.0f, 1.0f, 0.0f); // camera up-dir
+			treeShader->SetUniform3f(10, 0.0f, 0.0f, 0.0f); // camera position-delta
+			treeShader->SetUniform4f(11, mapInfo->light.groundSunColor.x,     mapInfo->light.groundSunColor.y,     mapInfo->light.groundSunColor.z,     0.85f);
+			treeShader->SetUniform4f(14, mapInfo->light.groundAmbientColor.x, mapInfo->light.groundAmbientColor.y, mapInfo->light.groundAmbientColor.z, 0.85f);
+			treeShader->SetUniform4f(12, 0, 0, 0, 0.02f); // w = alpha / height modifier
+		}
 
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  -1,0,0,0);
-		glMatrixMode(GL_MODELVIEW);
-		glRotatef(-90,0,1,0);
-		CreateFarView(data2,a*64,0,leafDL+a);
-		CreateFarView(data2,a*64,256,pineDL+a);
+		glAlphaFunc(GL_GREATER, 0.5f);
+		glDisable(GL_FOG);
+		glDisable(GL_BLEND);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glViewport(0, 0, 64, 64);
+		glAlphaFunc(GL_GREATER, 0.5f);
+		glEnable(GL_ALPHA_TEST);
 
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,13,  0,0,1,0);
-		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,9,  1,0,0,0);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glRotatef(90,1,0,0);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(-MAX_TREE_HEIGHT*0.5f,MAX_TREE_HEIGHT*0.5f,-MAX_TREE_HEIGHT*0.5f,MAX_TREE_HEIGHT*0.5f,-MAX_TREE_HEIGHT,MAX_TREE_HEIGHT);
-		CreateFarView(data,a*64,128,leafDL+a);
-		CreateFarView(data,a*64,128+256,pineDL+a);
+		for (int a = 0; a < 8; ++a) {
+			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), 1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1:  9), 0.0f, 1.0f, 0.0f);
+
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glScalef(-1.0f, 1.0f, 1.0f);
+			glOrtho(-MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f, 0, MAX_TREE_HEIGHT, -MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f);
+
+			CreateFarView(data, a * 64,   0, leafDL + a);
+			CreateFarView(data, a * 64, 256, pineDL + a);
+			glScalef(-1.0f, 1.0f, 1.0f);
+
+			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), 0.0f, 0.0f, 1.0f);
+			glMatrixMode(GL_MODELVIEW);
+			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
+			CreateFarView(data, a * 64, 64,       leafDL + a);
+			CreateFarView(data, a * 64, 64 + 256, pineDL + a);
+
+			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), -1.0f, 0.0f, 0.0f);
+			glMatrixMode(GL_MODELVIEW);
+			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
+			CreateFarView(data2, a * 64,   0, leafDL + a);
+			CreateFarView(data2, a * 64, 256, pineDL + a);
+
+
+			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), 0.0f, 0.0f, 1.0f);
+			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1:  9), 1.0f, 0.0f, 0.0f);
+
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrtho(-MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f, -MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f, -MAX_TREE_HEIGHT, MAX_TREE_HEIGHT);
+
+			CreateFarView(data, a * 64, 128,       leafDL + a);
+			CreateFarView(data, a * 64, 128 + 256, pineDL + a);
+		}
+
+		glDisable(GL_ALPHA_TEST);
 	}
-	glDisable( GL_VERTEX_PROGRAM_ARB );
-	glDisable(GL_ALPHA_TEST);
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	treeShader->Disable();
+
+
+	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
-	memcpy(&data[512*192*4],&data[512*64*4],512*64*4);		//far away trees
-	memcpy(&data[512*(192+256)*4],&data[512*(64+256)*4],512*64*4);		//pine far away trees
+	memcpy(&data[512 * (192      ) * 4], &data[512 * (64      ) * 4], 512 * 64 * 4);  // far-away trees
+	memcpy(&data[512 * (192 + 256) * 4], &data[512 * (64 + 256) * 4], 512 * 64 * 4);  // far-away pine trees
 
-	memcpy(&data2[512*64*4],&data[512*64*4],512*192*4);
-	memcpy(&data2[512*(64+256)*4],&data[512*(64+256)*4],512*192*4);
-//	memcpy(data2,&data2[512*256*4],512*64*4);		//darker trees
-
-//	CBitmap bm(data,512,512);
-//	bm.Save("fartex.bmp");
-
-//	FixAlpha(data);
-//	FixAlpha(data2);
+	memcpy(&data2[512 * (64      ) * 4], &data[512 * (64      ) * 4], 512 * 192 * 4);
+	memcpy(&data2[512 * (64 + 256) * 4], &data[512 * (64 + 256) * 4], 512 * 192 * 4);
 
 	glGenTextures(2, farTex);
 
-	CreateTex(data,farTex[0],512,512,true,4);
-	CreateTex(data2,farTex[1],512,512,true,4);
+	CreateTex(data,  farTex[0], 512, 512, true, 4);
+	CreateTex(data2, farTex[1], 512, 512, true, 4);
 
 	delete[] data;
 	delete[] data2;
