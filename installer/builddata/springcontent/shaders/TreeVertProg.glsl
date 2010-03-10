@@ -55,8 +55,7 @@ void main() {
 	gl_TexCoord[1] = gl_MultiTexCoord0;
 	#endif
 
-	// gl_FogFragCoord = length(gl_ModelViewProjectionMatrix * vertexPos);
-	gl_FogFragCoord = gl_ModelViewProjectionMatrix[2] * vertexPos;
+	gl_FogFragCoord = length(gl_ModelViewMatrix * vertexPos);
 	gl_Position = gl_ModelViewProjectionMatrix * vertexPos;
 
 	#if (defined(TREE_NEAR) || defined(TREE_DIST))
