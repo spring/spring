@@ -289,17 +289,22 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 	treeShader->Enable();
 
 	{
-		if (false && gu->haveGLSL) {
-			// TODO
+		#define L mapInfo->light
+		if (gu->haveGLSL) {
+			treeShader->SetUniform3f(0, 1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(1, 0.0f, 1.0f, 0.0f);
+			treeShader->SetUniform3f(2, 0.0f, 0.0f, 0.0f);
+			treeShader->SetUniform2f(5, 0.02f, 0.85f);
 		} else {
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			treeShader->SetUniform3f(13, 1.0f, 0.0f, 0.0f); // camera side-dir
 			treeShader->SetUniform3f( 9, 0.0f, 1.0f, 0.0f); // camera up-dir
-			treeShader->SetUniform3f(10, 0.0f, 0.0f, 0.0f); // camera position-delta
-			treeShader->SetUniform4f(11, mapInfo->light.groundSunColor.x,     mapInfo->light.groundSunColor.y,     mapInfo->light.groundSunColor.z,     0.85f);
-			treeShader->SetUniform4f(14, mapInfo->light.groundAmbientColor.x, mapInfo->light.groundAmbientColor.y, mapInfo->light.groundAmbientColor.z, 0.85f);
-			treeShader->SetUniform4f(12, 0, 0, 0, 0.02f); // w = alpha / height modifier
+			treeShader->SetUniform3f(10, 0.0f, 0.0f, 0.0f); // tree position-offset
+			treeShader->SetUniform4f(11, L.groundSunColor.x,     L.groundSunColor.y,     L.groundSunColor.z,     0.85f);
+			treeShader->SetUniform4f(14, L.groundAmbientColor.x, L.groundAmbientColor.y, L.groundAmbientColor.z, 0.85f);
+			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.02f); // w = alpha / height modifier
 		}
+		#undef L
 
 		glAlphaFunc(GL_GREATER, 0.5f);
 		glDisable(GL_FOG);
@@ -310,8 +315,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 		glEnable(GL_ALPHA_TEST);
 
 		for (int a = 0; a < 8; ++a) {
-			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), 1.0f, 0.0f, 0.0f);
-			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1:  9), 0.0f, 1.0f, 0.0f);
+			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), 1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(((gu->haveGLSL)? 1:  9), 0.0f, 1.0f, 0.0f);
 
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
@@ -324,21 +329,21 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			CreateFarView(data, a * 64, 256, pineDL + a);
 			glScalef(-1.0f, 1.0f, 1.0f);
 
-			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), 0.0f, 0.0f, 1.0f);
+			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
 			CreateFarView(data, a * 64, 64,       leafDL + a);
 			CreateFarView(data, a * 64, 64 + 256, pineDL + a);
 
-			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), -1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), -1.0f, 0.0f, 0.0f);
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
 			CreateFarView(data2, a * 64,   0, leafDL + a);
 			CreateFarView(data2, a * 64, 256, pineDL + a);
 
 
-			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1: 13), 0.0f, 0.0f, 1.0f);
-			treeShader->SetUniform3f(((false && gu->haveGLSL)? -1:  9), 1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
+			treeShader->SetUniform3f(((gu->haveGLSL)? 1:  9), 1.0f, 0.0f, 0.0f);
 
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();

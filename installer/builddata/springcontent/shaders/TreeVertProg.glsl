@@ -3,8 +3,10 @@ uniform vec3 cameraDirX;
 uniform vec3 cameraDirY;
 uniform vec3 treeOffset;
 
-uniform vec4 groundDiffuseColor;
-uniform vec4 groundAmbientColor;
+uniform vec3 groundAmbientColor;
+uniform vec3 groundDiffuseColor;
+
+uniform vec2 alphaModifiers;      // (tree-height alpha, ground-diffuse alpha)
 #endif
 
 #ifdef TREE_BASIC
@@ -27,9 +29,9 @@ void main() {
 	vertexPos.xyz += (cameraDirY * gl_Normal.y);
 
 	gl_FrontColor.rgb = (gl_Normal.z * groundDiffuseColor.rgb) + groundAmbientColor.rgb;
-	gl_FrontColor.a = (gl_Vertex.y * (0.20 * (1.0 / MAX_TREE_HEIGHT))) + groundDiffuseColor.w;
+	gl_FrontColor.a = (gl_Vertex.y * alphaModifiers.x) + alphaModifiers.y;
 	#endif
-	#if (defined(TREE_DIST)
+	#if (defined(TREE_DIST))
 	gl_FrontColor = gl_Color;
 	#endif
 
@@ -42,7 +44,7 @@ void main() {
 		vertexShadowPos.st += shadowParams.xy;
 	#endif
 
-	#ifdef TREE_BASIC
+	#if (defined(TREE_BASIC))
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	gl_TexCoord[1] = vertexPos.xzyw * invMapSizePO2;
 	#endif
