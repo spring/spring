@@ -129,7 +129,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		for (int i = 0; i < numUniformNamesNDNA; i++) {
 			treeNearDefShader->SetUniformLocation(uniformNamesNDNA[i]);
 			treeNearAdvShader->SetUniformLocation(uniformNamesNDNA[i]);
-			treeDistAdvShader->SetUniformLocation("$UNUSED$");
+			treeDistAdvShader->SetUniformLocation((i != 3)? "$UNUSED$": uniformNamesNDNA[i]);
 		}
 
 		// ND: index <numUniformNamesNDNA>
@@ -421,6 +421,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 	if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
@@ -443,10 +445,6 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
 			treeShader->SetUniform4fv(8, &shadowParams[0]);
 		}
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, activeFarTex);
-		glActiveTexture(GL_TEXTURE0);
 	} else {
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 	}
@@ -656,6 +654,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
