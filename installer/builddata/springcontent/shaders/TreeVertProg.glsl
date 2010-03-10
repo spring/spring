@@ -16,6 +16,8 @@ uniform vec4 invMapSizePO2;
 #if (defined(TREE_NEAR) || defined(TREE_DIST))
 uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
+
+varying float fogFactor;
 #endif
 
 #define MAX_TREE_HEIGHT 60.0
@@ -53,6 +55,11 @@ void main() {
 	gl_TexCoord[1] = gl_MultiTexCoord0;
 	#endif
 
+	// gl_FogFragCoord = length(gl_ModelViewProjectionMatrix * vertexPos);
 	gl_FogFragCoord = gl_ModelViewProjectionMatrix[2] * vertexPos;
 	gl_Position = gl_ModelViewProjectionMatrix * vertexPos;
+
+	#if (defined(TREE_NEAR) || defined(TREE_DIST))
+	fogFactor = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);
+	#endif
 }

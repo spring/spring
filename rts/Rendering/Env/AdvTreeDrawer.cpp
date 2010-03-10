@@ -159,6 +159,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeNearAdvShader->Disable();
 
 		treeDistAdvShader->Enable();
+		treeDistAdvShader->SetUniform3fv(3, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
 		treeDistAdvShader->SetUniform1f(9, 1.0f - (mapInfo->light.groundShadowDensity * 0.5f));
 		treeDistAdvShader->SetUniform1i(10, 0);
 		treeDistAdvShader->SetUniform1i(11, 1);
@@ -595,7 +596,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 				const float ang = fti->fallPos * PI;
 
 				float3 up(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
-				float3 z(up.cross(float3(-1, 0, 0)));
+				float3 z(up.cross(float3(-1.0f, 0.0f, 0.0f)));
 				z.ANormalize();
 				float3 x(up.cross(z));
 				CMatrix44f transMatrix(pos, x, up, z);
@@ -695,11 +696,11 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 	} else {
 		for (TreeSquareStruct* pTSS = trees + startClean; pTSS < trees + endClean; ++pTSS) {
-			if (pTSS->lastSeen < gs->frameNum - 50 && pTSS->displist) {
+			if ((pTSS->lastSeen < gs->frameNum - 50) && pTSS->displist) {
 				glDeleteLists(pTSS->displist, 1);
 				pTSS->displist = 0;
 			}
-			if (pTSS->lastSeenFar < gs->frameNum - 50 && pTSS->farDisplist) {
+			if ((pTSS->lastSeenFar < gs->frameNum - 50) && pTSS->farDisplist) {
 				glDeleteLists(pTSS->farDisplist, 1);
 				pTSS->farDisplist = 0;
 			}
@@ -774,14 +775,14 @@ void CAdvTreeSquareDrawer_SP::DrawQuad(int x, int y)
 		tss->lastSeenFar = gs->frameNum;
 
 		if (!tss->farDisplist || dif.dot(tss->viewVector) < 0.97f) {
-			va=GetVertexArray();
+			va = GetVertexArray();
 			va->Initialize();
-			va->EnlargeArrays(4*tss->trees.size(),0,VA_SIZE_T); //!alloc room for all tree vertexes
-			tss->viewVector=dif;
-			if(!tss->farDisplist)
-				tss->farDisplist=glGenLists(1);
-			float3 up(0,1,0);
-			float3 side=up.cross(dif);
+			va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+			tss->viewVector = dif;
+			if (!tss->farDisplist)
+				tss->farDisplist = glGenLists(1);
+
+			const float3 side = UpVector.cross(dif);
 
 			for (std::map<int, CAdvTreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
 				CAdvTreeDrawer::TreeStruct* ts = &ti->second;
@@ -818,9 +819,11 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
 	const bool drawDetailed = (treeDistance >= 4.0f);
 
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, activeFarTex);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
+
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
