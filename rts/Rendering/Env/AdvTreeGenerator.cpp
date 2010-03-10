@@ -283,6 +283,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
+
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, barkTex);
 	glEnable(GL_TEXTURE_2D);
 
@@ -329,13 +331,17 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			CreateFarView(data, a * 64, 256, pineDL + a);
 			glScalef(-1.0f, 1.0f, 1.0f);
 
+
 			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
+
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
 			CreateFarView(data, a * 64, 64,       leafDL + a);
 			CreateFarView(data, a * 64, 64 + 256, pineDL + a);
 
+
 			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), -1.0f, 0.0f, 0.0f);
+
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
 			CreateFarView(data2, a * 64,   0, leafDL + a);
