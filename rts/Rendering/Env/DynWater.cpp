@@ -103,24 +103,24 @@ CDynWater::CDynWater(void)
 
 	delete[] scrap;
 
-	if (ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB, "waterDyn.vp"))
-		waterVP = LoadVertexProgram("waterDyn.vp");
+	if (ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB, "ARB/waterDyn.vp"))
+		waterVP = LoadVertexProgram("ARB/waterDyn.vp");
 	else
-		waterVP = LoadVertexProgram("waterDynNT.vp");
+		waterVP = LoadVertexProgram("ARB/waterDynNT.vp");
 
-	waterFP          = LoadFragmentProgram("waterDyn.fp");
-	waveFP           = LoadFragmentProgram("waterDynWave.fp");
-	waveVP           = LoadVertexProgram("waterDynWave.vp");
-	waveFP2          = LoadFragmentProgram("waterDynWave2.fp");
-	waveVP2          = LoadVertexProgram("waterDynWave2.vp");
-	waveNormalFP     = LoadFragmentProgram("waterDynNormal.fp");
-	waveNormalVP     = LoadVertexProgram("waterDynNormal.vp");
-	waveCopyHeightFP = LoadFragmentProgram("waterDynWave3.fp");
-	waveCopyHeightVP = LoadVertexProgram("waterDynWave3.vp");
-	dwDetailNormalFP = LoadFragmentProgram("dwDetailNormal.fp");
-	dwDetailNormalVP = LoadVertexProgram("dwDetailNormal.vp");
-	dwAddSplashFP    = LoadFragmentProgram("dwAddSplash.fp");
-	dwAddSplashVP    = LoadVertexProgram("dwAddSplash.vp");
+	waterFP          = LoadFragmentProgram("ARB/waterDyn.fp");
+	waveFP           = LoadFragmentProgram("ARB/waterDynWave.fp");
+	waveVP           = LoadVertexProgram("ARB/waterDynWave.vp");
+	waveFP2          = LoadFragmentProgram("ARB/waterDynWave2.fp");
+	waveVP2          = LoadVertexProgram("ARB/waterDynWave2.vp");
+	waveNormalFP     = LoadFragmentProgram("ARB/waterDynNormal.fp");
+	waveNormalVP     = LoadVertexProgram("ARB/waterDynNormal.vp");
+	waveCopyHeightFP = LoadFragmentProgram("ARB/waterDynWave3.fp");
+	waveCopyHeightVP = LoadVertexProgram("ARB/waterDynWave3.vp");
+	dwDetailNormalFP = LoadFragmentProgram("ARB/dwDetailNormal.fp");
+	dwDetailNormalVP = LoadVertexProgram("ARB/dwDetailNormal.vp");
+	dwAddSplashFP    = LoadFragmentProgram("ARB/dwAddSplash.fp");
+	dwAddSplashVP    = LoadVertexProgram("ARB/dwAddSplash.vp");
 
 	waterSurfaceColor = mapInfo->water.surfaceColor;
 

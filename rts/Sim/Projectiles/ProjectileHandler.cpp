@@ -325,10 +325,6 @@ CProjectileHandler::CProjectileHandler()
 	groundringtex = groundFXAtlas->GetTexture("groundring");
 	seismictex = groundFXAtlas->GetTexture("seismic");
 
-	if (shadowHandler->canUseShadows) {
-		projectileShadowVP = LoadVertexProgram("projectileshadow.vp");
-	}
-
 	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a]=0;
 	}
@@ -365,10 +361,6 @@ CProjectileHandler::~CProjectileHandler()
 
 	for (int a = 0; a < 8; ++a) {
 		glDeleteTextures(1, &perlinTex[a]);
-	}
-
-	if (shadowHandler->canUseShadows) {
-		glSafeDeleteProgram(projectileShadowVP);
 	}
 
 	ph = 0;

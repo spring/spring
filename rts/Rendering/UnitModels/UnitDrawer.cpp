@@ -170,22 +170,22 @@ bool CUnitDrawer::LoadModelShaders()
 	}
 
 	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
-	const char* vertexProgNameARB = (advFade)? "units3o2.vp": "units3o.vp";
+	const char* vertexProgNameARB = (advFade)? "ARB/units3o2.vp": "ARB/units3o.vp";
 
 	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject("units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 	S3ODefShader->Link();
 
 	if (shadowHandler->canUseShadows) {
 		if (!gu->haveGLSL) {
 			S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
 			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			S3OAdvShader->Link();
 		} else {
 			S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
-			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("S3OVertProg.glsl", "", GL_VERTEX_SHADER));
-			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("S3OFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/S3OVertProg.glsl", "", GL_VERTEX_SHADER));
+			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/S3OFragProg.glsl", "", GL_FRAGMENT_SHADER));
 			S3OAdvShader->Link();
 			S3OAdvShader->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
 			S3OAdvShader->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)

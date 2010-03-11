@@ -106,21 +106,21 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			// always use FP shadows (shadowHandler->useFPShadows is short
 			// for "this graphics card supports ARB_FRAGMENT_PROGRAM", and
 			// canUseShadows can not be true while useFPShadows is false)
-			smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("ground.vp", "", GL_VERTEX_PROGRAM_ARB));
-			smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("ARB/ground.vp", "", GL_VERTEX_PROGRAM_ARB));
+			smfShaderBaseARB->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			smfShaderBaseARB->Link();
 
-			smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("dwgroundreflectinverted.vp", "", GL_VERTEX_PROGRAM_ARB));
-			smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("ARB/dwgroundreflectinverted.vp", "", GL_VERTEX_PROGRAM_ARB));
+			smfShaderReflARB->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			smfShaderReflARB->Link();
 
-			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("dwgroundrefract.vp", "", GL_VERTEX_PROGRAM_ARB));
-			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("ARB/dwgroundrefract.vp", "", GL_VERTEX_PROGRAM_ARB));
+			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			smfShaderRefrARB->Link();
 		} else {
 
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFVertProg.glsl", "", GL_VERTEX_SHADER));
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("SMFFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", "", GL_VERTEX_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", "", GL_FRAGMENT_SHADER));
 			smfShaderGLSL->Link();
 			smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
 			smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1

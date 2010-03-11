@@ -92,17 +92,17 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 
 	if (gu->haveGLSL) {
 		treeNearDefShader = shaderHandler->CreateProgramObject("[TreeDrawer]", "treeNearDefShaderGLSL", false);
-		treeNearDefShader->AttachShaderObject(shaderHandler->CreateShaderObject("TreeVertProg.glsl", "#define TREE_BASIC\n", GL_VERTEX_SHADER));
+		treeNearDefShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/TreeVertProg.glsl", "#define TREE_BASIC\n", GL_VERTEX_SHADER));
 		treeNearDefShader->Link();
 
 		if (shadowHandler->canUseShadows) {
 			treeNearAdvShader = shaderHandler->CreateProgramObject("[TreeDrawer]", "treeNearAdvShaderGLSL", false);
-			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("TreeVertProg.glsl", "#define TREE_NEAR\n", GL_VERTEX_SHADER));
-			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("TreeFragProg.glsl", "#define TREE_NEAR\n", GL_FRAGMENT_SHADER));
+			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/TreeVertProg.glsl", "#define TREE_NEAR\n", GL_VERTEX_SHADER));
+			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/TreeFragProg.glsl", "#define TREE_NEAR\n", GL_FRAGMENT_SHADER));
 			treeNearAdvShader->Link();
 			treeDistAdvShader = shaderHandler->CreateProgramObject("[TreeDrawer]", "treeDistAdvShaderGLSL", false);
-			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("TreeVertProg.glsl", "#define TREE_DIST\n", GL_VERTEX_SHADER));
-			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("TreeFragProg.glsl", "#define TREE_DIST\n", GL_FRAGMENT_SHADER));
+			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/TreeVertProg.glsl", "#define TREE_DIST\n", GL_VERTEX_SHADER));
+			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/TreeFragProg.glsl", "#define TREE_DIST\n", GL_FRAGMENT_SHADER));
 			treeDistAdvShader->Link();
 		}
 
@@ -166,17 +166,17 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeDistAdvShader->Disable();
 	} else {
 		treeNearDefShader = shaderHandler->CreateProgramObject("[TreeDrawer]", "treeNearDefShaderARB", true);
-		treeNearDefShader->AttachShaderObject(shaderHandler->CreateShaderObject("treeNS.vp", "", GL_VERTEX_PROGRAM_ARB));
+		treeNearDefShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/treeNS.vp", "", GL_VERTEX_PROGRAM_ARB));
 		treeNearDefShader->Link();
 
 		if (shadowHandler->canUseShadows) {
 			treeNearAdvShader = shaderHandler->CreateProgramObject("[TreeDrawer]", "treeNearAdvShaderARB", true);
-			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("tree.vp", "", GL_VERTEX_PROGRAM_ARB));
-			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("treeFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/tree.vp", "", GL_VERTEX_PROGRAM_ARB));
+			treeNearAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/treeFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			treeNearAdvShader->Link();
 			treeDistAdvShader = shaderHandler->CreateProgramObject("[TreeDrawer]", "treeDistAdvShaderARB", true);
-			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("treeFar.vp", "", GL_VERTEX_PROGRAM_ARB));
-			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("treeFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/treeFar.vp", "", GL_VERTEX_PROGRAM_ARB));
+			treeDistAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/treeFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			treeDistAdvShader->Link();
 		}
 	}

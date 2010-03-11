@@ -88,7 +88,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	delete[] scrap;
 
 	if (loadShader)
-		waterFP=LoadFragmentProgram("water.fp");
+		waterFP=LoadFragmentProgram("ARB/water.fp");
 
 	waterSurfaceColor = mapInfo->water.surfaceColor;
 

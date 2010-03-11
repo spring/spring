@@ -68,7 +68,7 @@ CShadowHandler::CShadowHandler(void)
 
 	if (tmpFirstInstance) {
 		// this already checks for GLEW_ARB_fragment_program
-		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "units3o.fp")) {
+		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/units3o.fp")) {
 			logOutput.Print("Your GFX card does not support the fragment programs needed for shadows");
 			return;
 		}
@@ -122,11 +122,11 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 	shadowGenProgs.resize(SHADOWGEN_PROGRAM_LAST);
 
 	static const std::string shadowGenProgNames[SHADOWGEN_PROGRAM_LAST] = {
-		"unit_genshadow.vp",
-		"groundshadow.vp",
-		"treeShadow.vp",
-		"treeFarShadow.vp",
-		"projectileshadow.vp",
+		"ARB/unit_genshadow.vp",
+		"ARB/groundshadow.vp",
+		"ARB/treeShadow.vp",
+		"ARB/treeFarShadow.vp",
+		"ARB/projectileshadow.vp",
 	};
 	static const std::string shadowGenProgHandles[SHADOWGEN_PROGRAM_LAST] = {
 		"ShadowGenShaderProgModel",
@@ -148,7 +148,7 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 	if (gu->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
-			Shader::IShaderObject* so = sh->CreateShaderObject("ShadowGenVertProg.glsl", shadowGenProgDefines[i], GL_VERTEX_SHADER);
+			Shader::IShaderObject* so = sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i], GL_VERTEX_SHADER);
 
 			po->AttachShaderObject(so);
 			po->Link();

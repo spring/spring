@@ -122,8 +122,6 @@ public:
 
 	std::set<CProjectile*, distcmp> distset;
 
-	unsigned int projectileShadowVP;
-
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;
 	int currentParticles;          // number of particles weighted by how complex they are
