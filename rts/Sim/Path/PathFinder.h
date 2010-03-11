@@ -69,8 +69,21 @@ public:
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
 	                     const CPathFinderDef& pfDef, Path& path, int ownerId = 0);
 
-	//Minimum distance between two waypoints.
+	// Minimum distance between two waypoints.
 	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
+
+	enum PATH_OPTIONS {
+		PATHOPT_RIGHT     =   1,      //-x
+		PATHOPT_LEFT      =   2,      //+x
+		PATHOPT_UP        =   4,      //+z
+		PATHOPT_DOWN      =   8,      //-z
+		PATHOPT_DIRECTION = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN),
+		PATHOPT_START     =  16,
+		PATHOPT_OPEN      =  32,
+		PATHOPT_CLOSED    =  64,
+		PATHOPT_FORBIDDEN = 128,
+		PATHOPT_BLOCKED   = 256,
+	};
 
 	/** Enable/disable heat mapping.
 
@@ -227,9 +240,6 @@ private:
 	bool heatMapping;
 	std::vector<std::vector<HeatMapValue> > heatmap;
 	int heatMapOffset;  // heatmap values are relative to this
-
-public:
-	void Draw(void);
 };
 
 class CPathFinderDef {
@@ -239,7 +249,6 @@ public:
 	float Heuristic(int xSquare, int zSquare) const;
 	bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
 	virtual bool WithinConstraints(int xSquare, int Square) const {return true;}
-	void Draw() const;
 	int2 GoalSquareOffset(int blockSize) const;
 
 	float3 goal;

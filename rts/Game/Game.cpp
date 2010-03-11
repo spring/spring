@@ -74,6 +74,7 @@
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
+#include "Rendering/PathDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
@@ -2847,11 +2848,8 @@ bool CGame::DrawWorld()
 		gd->DrawTrees();
 	}
 
-#if !defined(USE_GML) || !GML_ENABLE_SIM // Pathmanager is not thread safe
-	if (gu->drawdebug && gs->cheatEnabled) {
-		pathManager->Draw();
-	}
-#endif
+	pathDrawer->Draw();
+
 	//! transparent stuff
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);

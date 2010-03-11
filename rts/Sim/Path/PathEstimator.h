@@ -51,7 +51,6 @@ public:
 	inline void operator delete(void* p, size_t size) { pfDealloc(p, size); }
 #endif
 
-	void Draw(void);
 
 
 	/**

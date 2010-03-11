@@ -139,11 +139,6 @@ public:
 	void Update();
 
 
-	/*
-	Visualize all paths currently keept in the database.
-	*/
-	void Draw();
-
 
 	boost::uint32_t GetPathChecksum();
 
