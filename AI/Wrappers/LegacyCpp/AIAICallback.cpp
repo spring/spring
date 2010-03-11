@@ -441,7 +441,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->wreckName = sAICallback->Clb_UnitDef_getWreckName(teamId, unitDefId);
 		unitDef->deathExplosion = sAICallback->Clb_UnitDef_getDeathExplosion(teamId, unitDefId);
 		unitDef->selfDExplosion = sAICallback->Clb_UnitDef_getSelfDExplosion(teamId, unitDefId);
-		unitDef->TEDClassString = sAICallback->Clb_UnitDef_getTedClassString(teamId, unitDefId);
 		unitDef->categoryString = sAICallback->Clb_UnitDef_getCategoryString(teamId, unitDefId);
 		unitDef->canSelfD = sAICallback->Clb_UnitDef_isAbleToSelfD(teamId, unitDefId);
 		unitDef->selfDCountdown = sAICallback->Clb_UnitDef_getSelfDCountdown(teamId, unitDefId);

@@ -669,8 +669,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_STRING("gaia", ud.gaia);
 
-	ADD_STRING("TEDClass", ud.TEDClassString);
-
 	ADD_STRING("wreckName", ud.wreckName);
 	ADD_STRING("deathExplosion", ud.deathExplosion);
 	ADD_STRING("selfDExplosion", ud.selfDExplosion);

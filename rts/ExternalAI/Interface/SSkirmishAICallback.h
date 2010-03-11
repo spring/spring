@@ -468,8 +468,6 @@ const char* (CALLING_CONV *Clb_UnitDef_getDeathExplosion)(int teamId,
 const char* (CALLING_CONV *Clb_UnitDef_getSelfDExplosion)(int teamId,
 		int unitDefId);
 // this might be changed later for something better
-const char* (CALLING_CONV *Clb_UnitDef_getTedClassString)(int teamId,
-		int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getCategoryString)(int teamId,
 		int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isAbleToSelfD)(int teamId, int unitDefId);

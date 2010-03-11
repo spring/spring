@@ -826,19 +826,19 @@ void CUnitTable::Init() {
 
 		else if (!uType->def->canfly) {
 			if (true /* uType->def->minWaterDepth <= 0 */) {
-				if (uType->def->buildOptions.size() >= 1 && uType->def->builder) {
-					uType->isHub = false;
+				const UnitDef* uDef = uType->def;
 
-					// a hub is any non-mobile builder
-					// that can build other non-mobile
-					// units
-					const UnitDef* uDef = uType->def;
+				if (uDef->buildOptions.size() >= 1 && uDef->builder) {
+					uType->isHub = false;
 
 					#define IS_MOBILE(uDef)                                           \
 						((uDef->speed > 0.0f) &&                                      \
 						((uDef->canmove && uDef->movedata != NULL) || uDef->canfly))
 
 					if (!IS_MOBILE(uDef)) {
+						// a hub is any non-mobile builder
+						// that can build other non-mobile
+						// units
 						typedef std::map<int, std::string>::const_iterator BuildOptIt;
 
 						for (BuildOptIt boIt = uDef->buildOptions.begin(); boIt != uDef->buildOptions.end(); boIt++) {
@@ -851,13 +851,14 @@ void CUnitTable::Init() {
 						}
 					}
 
+					#undef IS_MOBILE
+
 					categoryData.groundFactories.push_back(i);
 					uType->category = CAT_FACTORY;
-				}
-				else {
-					const WeaponDef* weapon = (uType->def->weapons.empty())? 0: uType->def->weapons.begin()->def;
+				} else {
+					const WeaponDef* weapon = (uDef->weapons.empty())? 0: uDef->weapons.begin()->def;
 
-					if (weapon && !weapon->stockpile && uType->def->extractsMetal == 0.0f) {
+					if (weapon && !weapon->stockpile && uDef->extractsMetal == 0.0f) {
 						// we don't want armed extractors to be seen as general-purpose defense
 						if (!weapon->waterweapon) {
 							// filter out depth-charge launchers etc
@@ -866,42 +867,42 @@ void CUnitTable::Init() {
 						}
 					}
 
-					if (uType->def->stockpileWeaponDef) {
-						if (uType->def->stockpileWeaponDef->targetable) {
+					if (uDef->stockpileWeaponDef) {
+						if (uDef->stockpileWeaponDef->targetable) {
 							// nuke
 							categoryData.nukeSilos.push_back(i);
 							uType->category = CAT_NUKE;
 						}
-						if (uType->def->stockpileWeaponDef->interceptor) {
+						if (uDef->stockpileWeaponDef->interceptor) {
 							// anti-nuke, not implemented yet
 						}
 					}
 
-					if (uType->def->shieldWeaponDef && uType->def->shieldWeaponDef->isShield) {
+					if (uDef->shieldWeaponDef && uDef->shieldWeaponDef->isShield) {
 						// shield, not implemented yet
 						// uType->category = CAT_SHIELD;
 					}
 
-					if (uType->def->makesMetal) {
+					if (uDef->makesMetal) {
 						categoryData.metalMakers.push_back(i);
 						uType->category = CAT_MMAKER;
 					}
-					if (uType->def->extractsMetal > 0.0f) {
+					if (uDef->extractsMetal > 0.0f) {
 						categoryData.metalExtractors.push_back(i);
 						uType->category = CAT_MEX;
 					}
-					if (((uType->def->energyMake - uType->def->energyUpkeep) / UnitCost) > 0.002 || uType->def->tidalGenerator || uType->def->windGenerator) {
-						if (/* uType->def->minWaterDepth <= 0 && */ !uType->def->needGeo) {
+					if (((uDef->energyMake - uDef->energyUpkeep) / UnitCost) > 0.002 || uDef->tidalGenerator || uDef->windGenerator) {
+						if (/* uDef->minWaterDepth <= 0 && */ !uDef->needGeo) {
 							// filter tidals and geothermals
 							categoryData.groundEnergy.push_back(i);
 							uType->category = CAT_ENERGY;
 						}
 					}
-					if (uType->def->energyStorage / UnitCost > 0.2) {
+					if (uDef->energyStorage / UnitCost > 0.2) {
 						categoryData.energyStorages.push_back(i);
 						uType->category = CAT_ESTOR;
 					}
-					if (uType->def->metalStorage / UnitCost > 0.1) {
+					if (uDef->metalStorage / UnitCost > 0.1) {
 						categoryData.metalStorages.push_back(i);
 						uType->category = CAT_MSTOR;
 					}
