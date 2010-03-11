@@ -3705,7 +3705,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 							}
 						}
 					}
-					if (uh->ShowUnitBuildSquare(*bpi, cv)) {
+					if (unitDrawer->ShowUnitBuildSquare(*bpi, cv)) {
 						glColor4f(0.7f,1,1,0.4f);
 					} else {
 						glColor4f(1,0.5f,0.5f,0.4f);

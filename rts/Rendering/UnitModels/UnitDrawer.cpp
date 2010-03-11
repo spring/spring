@@ -2150,6 +2150,120 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 }
 
 
+
+
+//! visualize if a unit can be built at specified position
+int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
+{
+	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
+}
+
+int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands)
+{
+	glDisable(GL_DEPTH_TEST );
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_TEXTURE_2D);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	CFeature* feature = NULL;
+
+	std::vector<float3> canbuildpos;
+	std::vector<float3> featurepos;
+	std::vector<float3> nobuildpos;
+
+	const float3& pos = buildInfo.pos;
+	const int x1 = (int) (pos.x - (buildInfo.GetXSize() * 0.5f * SQUARE_SIZE));
+	const int x2 = x1 + (buildInfo.GetXSize() * SQUARE_SIZE);
+	const int z1 = (int) (pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE));
+	const int z2 = z1 + (buildInfo.GetZSize() * SQUARE_SIZE);
+	const float h = uh->GetBuildHeight(pos, buildInfo.def);
+
+	const int canBuild = uh->TestUnitBuildSquare(
+		buildInfo,
+		feature,
+		-1,
+		&canbuildpos,
+		&featurepos,
+		&nobuildpos,
+		&commands
+	);
+
+	if (canBuild) {
+		glColor4f(0, 0.8f, 0.0f, 1.0f);
+	} else {
+		glColor4f(0.5f, 0.5f, 0.0f, 1.0f);
+	}
+
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(canbuildpos.size() * 4, 0, VA_SIZE_0);
+
+	for (unsigned int i = 0; i < canbuildpos.size(); i++) {
+		va->AddVertexQ0(canbuildpos[i]                                      );
+		va->AddVertexQ0(canbuildpos[i] + float3(SQUARE_SIZE, 0,           0));
+		va->AddVertexQ0(canbuildpos[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
+		va->AddVertexQ0(canbuildpos[i] + float3(          0, 0, SQUARE_SIZE));
+	}
+	va->DrawArray0(GL_QUADS);
+
+
+	glColor4f(0.5f, 0.5f, 0.0f, 1.0f);
+	va->Initialize();
+	va->EnlargeArrays(featurepos.size() * 4, 0, VA_SIZE_0);
+
+	for (unsigned int i = 0; i < featurepos.size(); i++) {
+		va->AddVertexQ0(featurepos[i]                                      );
+		va->AddVertexQ0(featurepos[i] + float3(SQUARE_SIZE, 0,           0));
+		va->AddVertexQ0(featurepos[i] + float3(SQUARE_SIZE, 0, SQUARE_SIZE));
+		va->AddVertexQ0(featurepos[i] + float3(          0, 0, SQUARE_SIZE));
+	}
+	va->DrawArray0(GL_QUADS);
+
+
+	glColor4f(0.8f, 0.0f, 0.0f, 1.0f);
+	va->Initialize();
+	va->EnlargeArrays(nobuildpos.size(), 0, VA_SIZE_0);
+
+	for (unsigned int i = 0; i < nobuildpos.size(); i++) {
+		va->AddVertexQ0(nobuildpos[i]);
+		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE, 0,           0));
+		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE, 0, SQUARE_SIZE));
+		va->AddVertexQ0(nobuildpos[i]+float3(          0, 0, SQUARE_SIZE));
+	}
+	va->DrawArray0(GL_QUADS);
+
+
+	if (h < 0.0f) {
+		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
+		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
+
+		va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(8, 0, VA_SIZE_C);
+		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
+		va->AddVertexQC(float3(x1, h, z2), s); va->AddVertexQC(float3(x1, 0.f, z2), e);
+		va->AddVertexQC(float3(x2, h, z2), s); va->AddVertexQC(float3(x2, 0.f, z2), e);
+		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
+		va->DrawArrayC(GL_LINES);
+
+		va->Initialize();
+		va->AddVertexQC(float3(x1, 0.0f, z1), e);
+		va->AddVertexQC(float3(x1, 0.0f, z2), e);
+		va->AddVertexQC(float3(x2, 0.0f, z2), e);
+		va->AddVertexQC(float3(x2, 0.0f, z1), e);
+		va->DrawArrayC(GL_LINE_LOOP);
+	}
+
+	glEnable(GL_DEPTH_TEST );
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// glDisable(GL_BLEND);
+
+	return canBuild;
+}
+
+
+
 void CUnitDrawer::SwapCloakedUnits()
 {
 	GML_RECMUTEX_LOCK(unit); // SwapCloakedUnits
