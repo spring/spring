@@ -39,32 +39,33 @@ inline float fRand(float size)
 
 CGrassDrawer::CGrassDrawer()
 {
-	int detail=configHandler->Get("GrassDetail",3);
+	const int detail = configHandler->Get("GrassDetail", 3);
 
-	if(detail==0){
-		grassOff=true;
+	if (detail == 0) {
+		grassOff = true;
 		return;
-	} else{
-		grassOff=false;
+	} else {
+		grassOff = false;
 	}
+
 	MapBitmapInfo grassbm;
-	unsigned char* grassdata=readmap->GetInfoMap("grass", &grassbm);
-	if (grassdata)
-	{
-		if (grassbm.width != gs->mapx/grassSquareSize || grassbm.height != gs->mapy/grassSquareSize) {
+	unsigned char* grassdata = readmap->GetInfoMap("grass", &grassbm);
+
+	if (grassdata) {
+		if (grassbm.width != gs->mapx / grassSquareSize || grassbm.height != gs->mapy / grassSquareSize) {
 			char b[128];
 			SNPRINTF(b, sizeof(b), "Grass map has wrong size (%dx%d, should be %dx%d)\n", 
-				grassbm.width, grassbm.height, gs->mapx/4, gs->mapy/4);
+				grassbm.width, grassbm.height, gs->mapx / 4, gs->mapy / 4);
 			throw std::runtime_error (b);
 		}
 
-		int grassMapSize = gs->mapx*gs->mapy/(grassSquareSize*grassSquareSize);
-		grassMap=new unsigned char[grassMapSize];
+		int grassMapSize = gs->mapx * gs->mapy / (grassSquareSize * grassSquareSize);
+		grassMap = new unsigned char[grassMapSize];
 
 		memcpy(grassMap, grassdata, grassMapSize);
-		readmap->FreeInfoMap ("grass", grassdata);
+		readmap->FreeInfoMap("grass", grassdata);
 	} else {
-		grassOff=true;
+		grassOff = true;
 		return;
 	}
 
@@ -73,8 +74,6 @@ CGrassDrawer::CGrassDrawer()
 	detailedBlocks=(int)((maxDetailedDist-24)/bMSsq)+1;
 	numTurfs=3+(int)(detail*0.5f);
 	strawPerTurf=50+(int)sqrt((float)detail)*10;
-
-//	logOutput.Print("%f %f %i %i %i",maxGrassDist,maxDetailedDist,detailedBlocks,numTurfs,strawPerTurf);
 
 	blocksX=gs->mapx/grassSquareSize/grassBlockSize;
 	blocksY=gs->mapy/grassSquareSize/grassBlockSize;
@@ -92,55 +91,50 @@ CGrassDrawer::CGrassDrawer()
 			nearGrass[y*32+x].square=-1;
 		}
 	}
-	lastListClean=0;
+	lastListClean = 0;
 
-	grassFarNSVP=LoadVertexProgram("grassFarNS.vp");
-
-	grassDL=glGenLists(8);
+	grassDL = glGenLists(8);
 	srand(15);
-	for(int a=0;a<1;++a){
-		CreateGrassDispList(grassDL+a);
+	for (int a = 0; a < 1; ++a) {
+		CreateGrassDispList(grassDL + a);
 	}
-	unsigned char gbt[64*256*4];
-	for(int a=0;a<16;++a){
-		CreateGrassBladeTex(&gbt[a*16*4]);
+	unsigned char gbt[64 * 256 * 4];
+	for (int a = 0; a < 16; ++a) {
+		CreateGrassBladeTex(&gbt[a * 16 * 4]);
 	}
+
 	glGenTextures(1, &grassBladeTex);
 	glBindTexture(GL_TEXTURE_2D, grassBladeTex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 64, GL_RGBA, GL_UNSIGNED_BYTE, gbt);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 256, 64, GL_RGBA, GL_UNSIGNED_BYTE, gbt);
 
 	CreateFarTex();
 
-	if(shadowHandler->canUseShadows){
-		grassVP=LoadVertexProgram("grass.vp");
-		grassFarVP=LoadVertexProgram("grassFar.vp");
+	grassFarNSVP = LoadVertexProgram("grassFarNS.vp");
+
+	if (shadowHandler->canUseShadows) {
+		grassVP = LoadVertexProgram("grass.vp");
+		grassFarVP = LoadVertexProgram("grassFar.vp");
 	}
 }
 
 CGrassDrawer::~CGrassDrawer(void)
 {
-	if(grassOff)
+	if (grassOff)
 		return;
 
-	for(int y=0;y<32;y++){
-		for(int x=0;x<32;x++){
-			if(grass[y*32+x].va)
-				delete grass[y*32+x].va;
+	for (int y = 0; y < 32; y++) {
+		for (int x = 0; x < 32; x++) {
+			if (grass[y * 32 + x].va)
+				delete grass[y * 32 + x].va;
 		}
 	}
+
 	delete[] grassMap;
-	glDeleteLists(grassDL,8);
-	glDeleteTextures(1,&grassBladeTex);
-	glDeleteTextures(1,&farTex);	
-
-	glSafeDeleteProgram( grassFarNSVP );
-
-	if(shadowHandler->canUseShadows){
-		glSafeDeleteProgram( grassVP );
-		glSafeDeleteProgram( grassFarVP );
-	}
+	glDeleteLists(grassDL, 8);
+	glDeleteTextures(1, &grassBladeTex);
+	glDeleteTextures(1, &farTex);
 }
 
 struct InviewGrass {

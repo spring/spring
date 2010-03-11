@@ -5,7 +5,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-class CAdvTreeDrawer;
 class CVertexArray;
 
 class CGrassDrawer
