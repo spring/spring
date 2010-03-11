@@ -295,12 +295,24 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 
 	int defInterceptType = 0;
-	if (wd.type == "Cannon") {
+	if ((wd.type == "Cannon") || (wd.type == "EmgCannon")) {
 		defInterceptType = 1;
 	} else if ((wd.type == "LaserCannon") || (wd.type == "BeamLaser")) {
 		defInterceptType = 2;
 	} else if ((wd.type == "StarburstLauncher") || (wd.type == "MissileLauncher")) {
 		defInterceptType = 4;
+	} else if (wd.type == "AircraftBomb") {
+		defInterceptType = 8;
+	} else if (wd.type == "Flame") {
+		defInterceptType = 16;
+	} else if (wd.type == "TorpedoLauncher") {
+		defInterceptType = 32;
+	} else if (wd.type == "LightningCannon") {
+		defInterceptType = 64;
+	} else if (wd.type == "Rifle") {
+		defInterceptType = 128;
+	} else if (wd.type == "Melee") {
+		defInterceptType = 256;
 	}
 	wd.interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
