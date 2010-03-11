@@ -3381,7 +3381,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_UnitDef_getWreckName = &skirmishAiCallback_UnitDef_getWreckName;
 	callback->Clb_UnitDef_getDeathExplosion = &skirmishAiCallback_UnitDef_getDeathExplosion;
 	callback->Clb_UnitDef_getSelfDExplosion = &skirmishAiCallback_UnitDef_getSelfDExplosion;
-	callback->Clb_UnitDef_getTedClassString = &skirmishAiCallback_UnitDef_getTedClassString;
 	callback->Clb_UnitDef_getCategoryString = &skirmishAiCallback_UnitDef_getCategoryString;
 	callback->Clb_UnitDef_isAbleToSelfD = &skirmishAiCallback_UnitDef_isAbleToSelfD;
 	callback->Clb_UnitDef_getSelfDCountdown = &skirmishAiCallback_UnitDef_getSelfDCountdown;
