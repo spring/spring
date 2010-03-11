@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <algorithm>
 #include "mmgr.h"
@@ -93,7 +95,7 @@ CGrassDrawer::CGrassDrawer()
 	}
 	lastListClean=0;
 
-	grassFarNSVP=LoadVertexProgram("grassFarNS.vp");
+	grassFarNSVP=LoadVertexProgram("ARB/grassFarNS.vp");
 
 	grassDL=glGenLists(8);
 	srand(15);
@@ -113,8 +115,8 @@ CGrassDrawer::CGrassDrawer()
 	CreateFarTex();
 
 	if(shadowHandler->canUseShadows){
-		grassVP=LoadVertexProgram("grass.vp");
-		grassFarVP=LoadVertexProgram("grassFar.vp");
+		grassVP=LoadVertexProgram("ARB/grass.vp");
+		grassFarVP=LoadVertexProgram("ARB/grassFar.vp");
 	}
 }
 

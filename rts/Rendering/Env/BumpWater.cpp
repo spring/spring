@@ -255,7 +255,7 @@ CBumpWater::CBumpWater()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5, gs->mapx, gs->mapy, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		//glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-		const string fsSource = LoadShaderSource("shaders/bumpWaterCoastBlurFS.glsl");
+		const string fsSource = LoadShaderSource("shaders/GLSL/bumpWaterCoastBlurFS.glsl");
 		const GLchar* fsSourceStr = fsSource.c_str();
 		blurFP = glCreateShader(GL_FRAGMENT_SHADER);
 		glShaderSource(blurFP, 1, &fsSourceStr, NULL);
@@ -466,8 +466,8 @@ CBumpWater::CBumpWater()
 	}
 
 	/** LOAD SHADERS **/
-	string vsSource = LoadShaderSource("shaders/bumpWaterVS.glsl");
-	string fsSource = LoadShaderSource("shaders/bumpWaterFS.glsl");
+	string vsSource = LoadShaderSource("shaders/GLSL/bumpWaterVS.glsl");
+	string fsSource = LoadShaderSource("shaders/GLSL/bumpWaterFS.glsl");
 
 	vector<GLint> lengths(2);
 	vector<const GLchar*> strings(2);

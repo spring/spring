@@ -73,7 +73,7 @@ CAdvSky::CAdvSky()
 	InitSun();
 	oldCoverBaseX=-5;
 
-	cloudFP=LoadFragmentProgram("clouds.fp");
+	cloudFP=LoadFragmentProgram("ARB/clouds.fp");
 
 	glGetError();
 	displist=glGenLists(1);

@@ -77,9 +77,9 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	delete[] buf;
 
 	if (shadowHandler->canUseShadows) {
-		decalVP    = LoadVertexProgram("GroundDecals.vp");
-		decalFPsmf = LoadFragmentProgram("GroundDecalsSMF.fp");
-		decalFPsm3 = LoadFragmentProgram("GroundDecalsSM3.fp");
+		decalVP    = LoadVertexProgram("ARB/GroundDecals.vp");
+		decalFPsmf = LoadFragmentProgram("ARB/GroundDecalsSMF.fp");
+		decalFPsm3 = LoadFragmentProgram("ARB/GroundDecalsSM3.fp");
 	}
 }
 
