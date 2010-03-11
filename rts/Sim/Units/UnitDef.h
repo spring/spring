@@ -181,7 +181,6 @@ public:
 	std::string deathExplosion;
 	std::string selfDExplosion;
 
-	std::string TEDClassString;	// these might be changed later for something better
 	std::string categoryString;
 
 	std::string buildPicName;

@@ -1927,9 +1927,6 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_getDeathExplosion(int teamId, int
 EXPORT(const char*) skirmishAiCallback_UnitDef_getSelfDExplosion(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->selfDExplosion.c_str();
 }
-EXPORT(const char*) skirmishAiCallback_UnitDef_getTedClassString(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->TEDClassString.c_str();
-}
 EXPORT(const char*) skirmishAiCallback_UnitDef_getCategoryString(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->categoryString.c_str();
 }

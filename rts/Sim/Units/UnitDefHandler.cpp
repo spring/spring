@@ -491,7 +491,6 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	}
 
 	ud.categoryString = udTable.GetString("category", "");
-	ud.TEDClassString = udTable.GetString("TEDClass", "0");
 
 	ud.category = CCategoryHandler::Instance()->GetCategories(udTable.GetString("category", ""));
 	ud.noChaseCategory = CCategoryHandler::Instance()->GetCategories(udTable.GetString("noChaseCategory", ""));
@@ -598,7 +597,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.type = "Transport";
 	}
 	else if (ud.builder) {
-		if (ud.TEDClassString != "PLANT") {
+		if ((ud.speed > 0.0f) || ud.canfly) {
 			ud.type = "Builder";
 		} else {
 			ud.type = "Factory";

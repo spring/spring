@@ -224,8 +224,6 @@ EXPORT(const char*      ) skirmishAiCallback_UnitDef_getDeathExplosion(int teamI
 		int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getSelfDExplosion(int teamId,
 		int unitDefId);
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_getTedClassString(int teamId,
-		int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getCategoryString(int teamId,
 		int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToSelfD(int teamId, int unitDefId);
