@@ -827,10 +827,28 @@ void CUnitTable::Init() {
 		else if (!uType->def->canfly) {
 			if (true /* uType->def->minWaterDepth <= 0 */) {
 				if (uType->def->buildOptions.size() >= 1 && uType->def->builder) {
-					if ((((uType->def)->TEDClassString) == "PLANT") || (((uType->def)->speed) > 0.0f)) {
-						uType->isHub = false;
-					} else {
-						uType->isHub = true;
+					uType->isHub = false;
+
+					// a hub is any non-mobile builder
+					// that can build other non-mobile
+					// units
+					const UnitDef* uDef = uType->def;
+
+					#define IS_MOBILE(uDef)                                           \
+						((uDef->speed > 0.0f) &&                                      \
+						((uDef->canmove && uDef->movedata != NULL) || uDef->canfly))
+
+					if (!IS_MOBILE(uDef)) {
+						typedef std::map<int, std::string>::const_iterator BuildOptIt;
+
+						for (BuildOptIt boIt = uDef->buildOptions.begin(); boIt != uDef->buildOptions.end(); boIt++) {
+							const char*    buildOptName = boIt->second.c_str();
+							const UnitDef* buildOptDef  = ai->cb->GetUnitDef(buildOptName);
+
+							if (buildOptDef && !IS_MOBILE(buildOptDef)) {
+								uType->isHub = true; break;
+							}
+						}
 					}
 
 					categoryData.groundFactories.push_back(i);
