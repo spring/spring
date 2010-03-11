@@ -17,6 +17,8 @@ struct UnitDef;
 class CWorldObject;
 class CUnit;
 class CFeature;
+struct Command;
+struct BuildInfo;
 struct BuildingGroundDecal;
 
 namespace Shader {
@@ -88,6 +90,10 @@ public:
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
 
+	int ShowUnitBuildSquare(const BuildInfo&);
+	int ShowUnitBuildSquare(const BuildInfo&, const std::vector<Command>&);
+
+
 	GML_VECTOR<CUnit*> drawCloaked;
 	GML_VECTOR<CUnit*> drawCloakedS3O;
 	GML_VECTOR<CUnit*> drawCloakedSave;
@@ -128,7 +134,7 @@ public:
 	float3 unitSunColor;
 	float unitShadowDensity;
 
-	struct TempDrawUnit{
+	struct TempDrawUnit {
 		const UnitDef* unitdef;
 		int team;
 		float3 pos;
