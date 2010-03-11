@@ -597,7 +597,8 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.type = "Transport";
 	}
 	else if (ud.builder) {
-		if ((ud.speed > 0.0f) || ud.canfly) {
+		if ((ud.speed > 0.0f) || ud.canfly || udTable.GetString("yardMap", "").empty()) {
+			// hubs and nano-towers need to be builders (for now)
 			ud.type = "Builder";
 		} else {
 			ud.type = "Factory";
