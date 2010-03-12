@@ -29,7 +29,7 @@ void PathDrawer::Draw() const {
 	 // PathManager is not thread safe; making it
 	// so might be too costly (performance-wise)
 	#if !defined(USE_GML) || !GML_ENABLE_SIM
-	if (gu->drawdebug && gs->cheatEnabled) {
+	if (gu->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 		Draw(pathManager);
 

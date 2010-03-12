@@ -326,12 +326,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 					if (md != NULL) {
 						// use the first selected unit, if it has the ability to move
+						const bool showBlockedMap = (gs->cheatEnabled || gu->spectating);
 						for (int y = starty; y < endy; ++y) {
 							const int y_pwr2mapx_half = y*pwr2mapx_half;
 							const int y_2             = y*2;
 							for (int x = 0; x < gs->hmapx; ++x) {
 								float m = md->moveMath->SpeedMod(*md, x*2, y_2);
-								if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
+								if (showBlockedMap && (md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))) {
 									m = 0.0f;
 								}
 								m = std::min(1.0f, (float)fastmath::apxsqrt(m));
