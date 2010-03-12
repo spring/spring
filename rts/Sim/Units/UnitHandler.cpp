@@ -346,7 +346,7 @@ int CUnitHandler::TestUnitBuildSquare(
 		//! unsynced code
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				int tbs = uh->TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam);
+				int tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam);
 
 				if (tbs) {
 					std::vector<Command>::const_iterator ci = commands->begin();

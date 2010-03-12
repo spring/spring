@@ -15,7 +15,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
-#define MODEL_DRAWER_DEBUG 0
+#define MODEL_DRAWER_DEBUG 2
 
 IModelDrawer* modelDrawer = NULL;
 
@@ -89,6 +89,9 @@ void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::UnitCreated] id=%d", u->id);
 	#endif
+	#if (MODEL_DRAWER_DEBUG == 2)
+	return;
+	#endif
 
 	if (u->model) {
 		renderableUnits[u->model->type].insert(u);
@@ -98,6 +101,9 @@ void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::UnitDestroyed] id=%d", u->id);
+	#endif
+	#if (MODEL_DRAWER_DEBUG == 2)
+	return;
 	#endif
 
 	if (u->model) {
@@ -110,6 +116,9 @@ void IModelDrawer::FeatureCreated(const CFeature* f)
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::FeatureCreated] id=%d", f->id);
 	#endif
+	#if (MODEL_DRAWER_DEBUG == 2)
+	return;
+	#endif
 
 	if (f->model) {
 		renderableFeatures[f->model->type].insert(f);
@@ -119,6 +128,9 @@ void IModelDrawer::FeatureDestroyed(const CFeature* f)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::FeatureDestroyed] id=%d", f->id);
+	#endif
+	#if (MODEL_DRAWER_DEBUG == 2)
+	return;
 	#endif
 
 	if (f->model) {
@@ -131,6 +143,9 @@ void IModelDrawer::ProjectileCreated(const CProjectile* p)
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::ProjectileCreated] id=%d", p->id);
 	#endif
+	#if (MODEL_DRAWER_DEBUG == 2)
+	return;
+	#endif
 
 	if (p->model) {
 		renderableProjectiles[p->model->type].insert(p);
@@ -140,6 +155,9 @@ void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::ProjectileDestroyed] id=%d", p->id);
+	#endif
+	#if (MODEL_DRAWER_DEBUG == 2)
+	return;
 	#endif
 
 	if (p->model) {
