@@ -1,5 +1,19 @@
 Spring change log
 
+0.81.2.1:
+Engine:
+ - Fixed incorrect projection matrix (i.e. tiny build menu)
+ - Fixed some Mac and MSVC compile errors
+ - Switched to OpenAL-soft, that should fix volume escalation
+ - Slightly improved detection of ATI/Nvidia OpenGL driver crashes
+ - Fixed team-color bug for both units and flying pieces
+
+AIs:
+ - AAI: removed obsolete map config files
+ - AAI: added BA 7.12 config file
+ - KAIK: removed dependence on TEDClass
+
+
 0.81.2:
 Engine:
  - Removed OpenGL 1.4 version check
