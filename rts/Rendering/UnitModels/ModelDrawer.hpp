@@ -4,6 +4,7 @@
 #define MODEL_DRAWER_HDR
 
 #include <map>
+#include <set>
 
 #include "System/EventClient.h"
 
