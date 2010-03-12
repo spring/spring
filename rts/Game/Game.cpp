@@ -84,6 +84,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/FeatureDrawer.h"
+#include "Rendering/UnitModels/ModelDrawer.hpp"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
@@ -443,6 +444,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	uh = new CUnitHandler();
 	unitDrawer = new CUnitDrawer();
+	modelDrawer = IModelDrawer::GetInstance();
 	farTextureHandler = new CFarTextureHandler();
 	modelParser = new C3DModelLoader();
 
@@ -588,6 +590,7 @@ CGame::~CGame()
 	SafeDelete(featureDrawer);
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
+	SafeDelete(modelDrawer);
 	SafeDelete(geometricObjects);
 	SafeDelete(ph);
 	SafeDelete(minimap);
@@ -2842,6 +2845,7 @@ bool CGame::DrawWorld()
 	eventHandler.DrawWorldPreUnit();
 
 	unitDrawer->Draw(false);
+	modelDrawer->Draw();
 	featureDrawer->Draw();
 
 	if (gu->drawGround) {
