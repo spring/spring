@@ -45,12 +45,14 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 #include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"
 
 #ifdef USE_GML
@@ -80,8 +82,10 @@ static float GetLODFloat(const string& name, float def)
 
 
 
-CUnitDrawer::CUnitDrawer(void)
+CUnitDrawer::CUnitDrawer(const std::string& name, int order, bool synced): CEventClient(name, order, synced)
 {
+	eventHandler.AddClient(this);
+
 	if (texturehandler3DO == 0) { texturehandler3DO = new C3DOTextureHandler; }
 	if (texturehandlerS3O == 0) { texturehandlerS3O = new CS3OTextureHandler; }
 
@@ -123,6 +127,8 @@ CUnitDrawer::CUnitDrawer(void)
 
 CUnitDrawer::~CUnitDrawer(void)
 {
+	eventHandler.RemoveClient(this);
+
 	glDeleteTextures(1, &whiteTex);
 
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
@@ -251,17 +257,9 @@ void CUnitDrawer::Update(void)
 	}
 
 	{
-		GML_STDMUTEX_LOCK(runit); // Update
-
-		for (std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
-			uh->renderUnits.push_back(*ui);
-		uh->toBeAdded.clear();
-	}
-
-	{
 		GML_RECMUTEX_LOCK(unit); // Update
 
-		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
 			(*usi)->UpdateDrawPos();
 		}
 	}
@@ -486,7 +484,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		mt_excludeUnit = excludeUnit;
 		gmlProcessor->Work(
 			NULL, NULL, &CUnitDrawer::DoDrawUnitMT, this, gmlThreadCount,
-			FALSE, &uh->renderUnits, uh->renderUnits.size(), 50, 100, TRUE
+			FALSE, &renderUnits, renderUnits.size(), 50, 100, TRUE
 		);
 	}
 	else
@@ -494,7 +492,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	{
 		//! note: unsorted list of 3DO and S3O units
 		//! this queues up S3O's and (cloaked) 3DO's
-		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
 			DoDrawUnit(*usi, drawReflection, drawRefraction, excludeUnit);
 		}
 	}
@@ -803,14 +801,14 @@ void CUnitDrawer::DrawShadowPass(void)
 	if (multiThreadDrawUnitShadow) {
 		gmlProcessor->Work(
 			NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount,
-			FALSE, &uh->renderUnits, uh->renderUnits.size(), 50, 100, TRUE
+			FALSE, &renderUnits, renderUnits.size(), 50, 100, TRUE
 		);
 	}
 	else
 #endif
 	{
 		//! note: unsorted list of 3DO and S3O units
-		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
 			DoDrawUnitShadow(*usi);
 		}
 	}
@@ -2270,4 +2268,89 @@ void CUnitDrawer::SwapCloakedUnits()
 
 	drawCloaked.swap(drawCloakedSave);
 	drawCloakedS3O.swap(drawCloakedS3OSave);
+}
+
+
+
+
+
+
+void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
+	// this MUST block the renderer thread or there will be trouble
+	GML_STDMUTEX_LOCK(unit);
+
+	CUnit* unit = const_cast<CUnit*>(u);
+	CBuilding* building = dynamic_cast<CBuilding*>(unit);
+
+	if (building != NULL) {
+		if (building->unitDef->useBuildingGroundDecal) {
+			groundDecals->AddBuilding(building);
+		}
+	}
+
+	renderUnits.push_back(unit);
+}
+
+void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
+	GML_STDMUTEX_LOCK(unit);
+
+	CUnit* unit = const_cast<CUnit*>(u);
+	CBuilding* building = dynamic_cast<CBuilding*>(unit);
+
+	if (building != NULL) {
+		CUnitDrawer::GhostBuilding* gb = NULL;
+
+		if (!gameSetup || gameSetup->ghostedBuildings) {
+			if (!(building->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
+				(building->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) &&
+				!gu->spectatingFullView) {
+
+				// FIXME -- adjust decals for decoys? gets weird?
+				const UnitDef* decoyDef = building->unitDef->decoyDef;
+				S3DModel* gbModel = (decoyDef == NULL) ? building->model : decoyDef->LoadModel();
+
+				gb = new GhostBuilding();
+				gb->pos    = building->pos;
+				gb->model  = gbModel;
+				gb->decal  = building->buildingDecal;
+				gb->facing = building->buildFacing;
+				gb->team   = building->team;
+
+				if (gbModel->type == MODELTYPE_S3O) {
+					ghostBuildingsS3O.push_back(gb);
+				} else {
+					ghostBuildings.push_back(gb);
+				}
+			}
+		}
+
+		if (groundDecals && building->buildingDecal) {
+			groundDecals->RemoveBuilding(building, gb);
+		}
+	}
+
+	for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
+		if (*usi == unit) {
+			renderUnits.erase(usi);
+			break;
+		}
+	}
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+	for (int i = drawCloaked.size() - 1; i >= 0; i--) {
+		if (drawCloaked[i] == delUnit) { drawCloaked[i] = NULL; }
+	}
+
+	for (int i = drawCloakedS3O.size() - 1; i >= 0; i--) {
+		if (drawCloakedS3O[i] == delUnit) { drawCloakedS3O[i] = NULL; }
+	}
+
+	for (int i = drawCloakedSave.size() - 1; i >= 0; i--) {
+		if (drawCloakedSave[i] == delUnit) { drawCloakedSave[i] = NULL; }
+	}
+
+	for (int i = drawCloakedS3OSave.size() - 1; i >= 0; i--) {
+		if (drawCloakedS3OSave[i] == delUnit) { drawCloakedS3OSave[i] = NULL; }
+	}
+#endif
 }

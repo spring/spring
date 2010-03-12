@@ -1143,11 +1143,11 @@ void CDynWater::AddShipWakes()
 	{
 		GML_RECMUTEX_LOCK(unit); // AddShipWakes
 
-		int nadd=uh->renderUnits.size()*4;
+		int nadd=unitDrawer->renderUnits.size()*4;
 		va->EnlargeArrays(nadd,0,VA_SIZE_TN);
 		va2->EnlargeArrays(nadd,0,VA_SIZE_TN);
 
-		for(std::list<CUnit*>::iterator ui=uh->renderUnits.begin(); ui!=uh->renderUnits.end();++ui){
+		for(std::list<CUnit*>::iterator ui=unitDrawer->renderUnits.begin(); ui!=unitDrawer->renderUnits.end();++ui){
 			CUnit* unit=*ui;
 			if(unit->moveType && unit->mobility) {
 				if(unit->unitDef->canhover){	//hover

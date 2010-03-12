@@ -6,10 +6,10 @@
 #include <set>
 #include <vector>
 #include <list>
-#include <stack>
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
+#include "System/EventClient.h"
 
 class CVertexArray;
 struct S3DModel;
@@ -25,10 +25,10 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-class CUnitDrawer
+class CUnitDrawer: public CEventClient
 {
 public:
-	CUnitDrawer(void);
+	CUnitDrawer(const std::string&, int, bool);
 	~CUnitDrawer(void);
 
 	bool LoadModelShaders();
@@ -56,6 +56,18 @@ public:
 	void CleanUpGhostDrawing() const;
 
 	void SwapCloakedUnits();
+
+
+
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "UnitCreated" || eventName == "UnitDestroyed");
+	}
+	bool GetFullRead() const { return true; }
+	int GetReadAllyTeam() const { return AllAccessTeam; }
+
+	void UnitCreated(const CUnit*, const CUnit*);
+	void UnitDestroyed(const CUnit*, const CUnit*);
+
 
 #ifdef USE_GML
 	int multiThreadDrawUnit;
@@ -152,7 +164,9 @@ public:
 		int facing;
 		int team;
 	};
-	std::list<GhostBuilding*> ghostBuildings;	//these are buildings that where in LOS_PREVLOS when they died and havent been in los since then
+
+	std::list<CUnit*> renderUnits;                 // units being rendered
+	std::list<GhostBuilding*> ghostBuildings;      // buildings that where in LOS_PREVLOS when they died and not in LOS since
 	std::list<GhostBuilding*> ghostBuildingsS3O;
 
 	bool showHealthBars;

@@ -10,7 +10,10 @@
 
 #include "CommandColors.h"
 #include "CursorIcons.h"
-#include "Sim/Units/Groups/Group.h"
+#include "GuiHandler.h"
+#include "MiniMap.h"
+#include "MouseHandler.h"
+#include "TooltipConsole.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -18,36 +21,34 @@
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "GuiHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "MiniMap.h"
-#include "MouseHandler.h"
-#include "ConfigHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "EventHandler.h"
-#include "Sound/AudioChannel.h"
-#include "FileSystem/SimpleParser.h"
-#include "Util.h"
-#include "TimeProfiler.h"
-#include "TooltipConsole.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/Util.h"
+#include "System/TimeProfiler.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/Sound/AudioChannel.h"
+
 #include <boost/cstdint.hpp>
 
 //////////////////////////////////////////////////////////////////////
@@ -1042,7 +1043,7 @@ void CMiniMap::DrawForReal()
 	{
 		GML_RECMUTEX_LOCK(unit); // DrawForReal
 		// draw the units
-		for (std::list<CUnit*>::iterator ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ++ui) {
+		for (std::list<CUnit*>::iterator ui = unitDrawer->renderUnits.begin(); ui != unitDrawer->renderUnits.end(); ++ui) {
 			DrawUnit(*ui);
 		}
 		// highlight the selected unit
