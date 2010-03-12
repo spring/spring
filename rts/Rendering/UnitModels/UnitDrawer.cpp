@@ -2298,7 +2298,7 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
 	if (building != NULL) {
-		CUnitDrawer::GhostBuilding* gb = NULL;
+		GhostBuilding* gb = NULL;
 
 		if (!gameSetup || gameSetup->ghostedBuildings) {
 			if (!(building->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
