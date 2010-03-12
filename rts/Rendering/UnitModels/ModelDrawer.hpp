@@ -20,7 +20,6 @@ public:
 	IModelDrawer(const std::string&, int, bool);
 	virtual ~IModelDrawer();
 	virtual void Draw();
-	virtual void DrawShadow() {}
 
 	static IModelDrawer* GetInstance();
 

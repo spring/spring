@@ -13,6 +13,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/UnitModels/FeatureDrawer.h"
+#include "Rendering/UnitModels/ModelDrawer.hpp"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
@@ -224,6 +225,7 @@ void CShadowHandler::DrawShadowPasses(void)
 			readmap->GetGroundDrawer()->DrawShadowPass();
 
 		unitDrawer->DrawShadowPass();
+		modelDrawer->Draw();
 		featureDrawer->DrawShadowPass();
 		treeDrawer->DrawShadowPass();
 		eventHandler.DrawWorldShadow();

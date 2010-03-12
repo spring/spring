@@ -6,6 +6,7 @@
 #include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -44,7 +45,7 @@ IModelDrawer::IModelDrawer(const std::string& name, int order, bool synced): CEv
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		shaders[modelType] = std::vector<Shader::IProgramObject*>();
-		shaders[modelType].resize(game->gameRefractionDraw + 1, NULL);
+		shaders[modelType].resize(CGame::gameRefractionDraw + 1, NULL);
 
 		renderableUnits[modelType] = std::set<const CUnit*>();
 		renderableFeatures[modelType] = std::set<const CFeature*>();
@@ -155,6 +156,7 @@ void IModelDrawer::Draw()
 	logOutput.Print("[IModelDrawer::Draw] frame=%d", gs->frameNum);
 	#endif
 
+	// TODO: LuaUnitRendering bypass
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		PushRenderState(modelType);
 		DrawModels(renderableUnits[modelType]);
@@ -238,8 +240,12 @@ bool CModelDrawerGLSL::LoadModelShaders()
 	#endif
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		for (int drawMode = game->gameNotDrawing; drawMode < game->gameRefractionDraw + 1; drawMode++) {
-			shaders[modelType][drawMode] = shaderHandler->CreateProgramObject(GetName(), "$DUMMY$", false);
+		for (int drawMode = CGame::gameNotDrawing; drawMode < CGame::gameRefractionDraw + 1; drawMode++) {
+			if (drawMode == CGame::gameShadowDraw) {
+				shaders[modelType][drawMode] = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+			} else {
+				shaders[modelType][drawMode] = shaderHandler->CreateProgramObject(GetName(), "$DUMMY$", false);
+			}
 		}
 	}
 
@@ -341,7 +347,7 @@ void CModelDrawerGLSL::DrawModels(const std::set<const CProjectile*>& projectile
 void CModelDrawerGLSL::PushRenderState(int modelType)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[CModelDrawerGLSL::PushRenderState] modelType=%d", modelType);
+	logOutput.Print("[CModelDrawerGLSL::PushRenderState] modelType=%d, gameDrawMode=%d", modelType, game->gameDrawMode);
 	#endif
 
 	switch (modelType) {
@@ -359,7 +365,7 @@ void CModelDrawerGLSL::PushRenderState(int modelType)
 void CModelDrawerGLSL::PopRenderState(int modelType)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[CModelDrawerGLSL::PopRenderState] modelType=%d", modelType);
+	logOutput.Print("[CModelDrawerGLSL::PopRenderState] modelType=%d, gameDrawMode=%d", modelType, game->gameDrawMode);
 	#endif
 
 	shaders[modelType][game->gameDrawMode]->Disable();
