@@ -23,13 +23,13 @@ IModelDrawer* IModelDrawer::GetInstance()
 {
 	if (modelDrawer == NULL) {
 		if (!gu->haveARB && !gu->haveGLSL) {
-			modelDrawer = new CModelDrawerFFP("[CModelDrawerFFP]", 31459, false);
+			modelDrawer = new CModelDrawerFFP("[CModelDrawerFFP]", 314596, false);
 		} else {
 			if (gu->haveGLSL) {
-				modelDrawer = new CModelDrawerGLSL("[CModelDrawerGLSL]", 31459, false);
+				modelDrawer = new CModelDrawerGLSL("[CModelDrawerGLSL]", 314596, false);
 			} else {
 				if (gu->haveARB) {
-					modelDrawer = new CModelDrawerARB("[CModelDrawerARB]", 31459, false);
+					modelDrawer = new CModelDrawerARB("[CModelDrawerARB]", 314596, false);
 				}
 			}
 		}

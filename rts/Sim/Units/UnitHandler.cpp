@@ -15,7 +15,6 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/AirBaseHandler.h"
@@ -58,8 +57,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
 //	CR_MEMBER(toBeRemoved),
-	CR_MEMBER(toBeAdded),
-	CR_MEMBER(renderUnits),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
@@ -154,8 +151,6 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	GML_STDMUTEX_LOCK(runit); // AddUnit
 
-	toBeAdded.insert(unit);
-
 	return unit->id;
 }
 
@@ -210,41 +205,14 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 	}
 #endif
-
-	GML_STDMUTEX_LOCK(runit); // DeleteUnitNow
-
-	for (usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
-		if (*usi == delUnit) {
-			renderUnits.erase(usi);
-			break;
-		}
-	}
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-	for (int i = 0, dcs = unitDrawer->drawCloaked.size(); i < dcs; ++i)
-		if (unitDrawer->drawCloaked[i] == delUnit)
-			unitDrawer->drawCloaked[i] = NULL;
-	for (int i = 0, dcs = unitDrawer->drawCloakedS3O.size(); i < dcs; ++i)
-		if (unitDrawer->drawCloakedS3O[i] == delUnit)
-			unitDrawer->drawCloakedS3O[i] = NULL;
-	for (int i = 0, dcs = unitDrawer->drawCloakedSave.size(); i < dcs; ++i)
-		if (unitDrawer->drawCloakedSave[i] == delUnit)
-			unitDrawer->drawCloakedSave[i] = NULL;
-	for (int i = 0, dcs = unitDrawer->drawCloakedS3OSave.size(); i < dcs; ++i)
-		if (unitDrawer->drawCloakedS3OSave[i] == delUnit)
-			unitDrawer->drawCloakedS3OSave[i] = NULL;
-#endif
-
-	toBeAdded.erase(delUnit);
 }
 
 
 void CUnitHandler::Update()
 {
-	if(!toBeRemoved.empty()) {
-
+	if (!toBeRemoved.empty()) {
 		GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
-		GML_RECMUTEX_LOCK(sel); // Update - unit is removed from selectedUnits in ~CObject, which is too late.
+		GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 		GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 		GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
 

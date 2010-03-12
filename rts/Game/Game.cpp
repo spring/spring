@@ -443,7 +443,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	radarhandler = new CRadarHandler(false);
 
 	uh = new CUnitHandler();
-	unitDrawer = new CUnitDrawer();
+	unitDrawer = new CUnitDrawer("[CUnitDrawer]", 271828, false);
 	modelDrawer = IModelDrawer::GetInstance();
 	farTextureHandler = new CFarTextureHandler();
 	modelParser = new C3DModelLoader();
