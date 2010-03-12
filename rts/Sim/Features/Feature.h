@@ -77,8 +77,6 @@ public:
 	// should not be here
 	void DrawS3O();
 
-	S3DModel* model;
-
 	std::string createdFromUnit;
 	/** This flag is used to stop a potential exploit involving tripping a unit back and forth
 	across a chunk boundary to get unlimited resources. Basically, once a corspe has been a little bit

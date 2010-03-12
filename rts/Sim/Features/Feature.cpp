@@ -14,7 +14,6 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -58,7 +57,6 @@ CR_REG_METADATA(CFeature, (
 
 
 CFeature::CFeature():
-	model(NULL),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0),
 	health(0),

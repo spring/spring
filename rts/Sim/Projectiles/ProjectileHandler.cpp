@@ -578,9 +578,9 @@ void CProjectileHandler::DrawProjectiles(const ProjectileContainer& pc, bool dra
 			if (drawRefraction && pro->pos.y > pro->drawRadius)
 				continue;
 
-			if (pro->s3domodel) {
-				if (pro->s3domodel->type == MODELTYPE_S3O) {
-					unitDrawer->QueS3ODraw(pro, pro->s3domodel->textureType);
+			if (pro->model) {
+				if (pro->model->type == MODELTYPE_S3O) {
+					unitDrawer->QueS3ODraw(pro, pro->model->textureType);
 				} else {
 					pro->DrawUnitPart();
 				}
@@ -599,7 +599,7 @@ void CProjectileHandler::DrawProjectilesShadow(const ProjectileContainer& pc) {
 		if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
 			(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
 
-			if (p->s3domodel) {
+			if (p->model) {
 				p->DrawUnitPart();
 			} else if (p->castShadow) {
 				p->Draw();

@@ -92,9 +92,9 @@ CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, C
 	SetRadius(0.0f);
 
 	if (weaponDef) {
-		s3domodel = LoadModel(weaponDef);
-		if (s3domodel) {
-			SetRadius(s3domodel->radius);
+		model = LoadModel(weaponDef);
+		if (model) {
+			SetRadius(model->radius);
 		}
 	}
 
@@ -442,7 +442,7 @@ void CMissileProjectile::DrawUnitPart(void)
 
 	glPushMatrix();
 		glMultMatrixf(transMatrix);
-		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading (GML)
+		glCallList(model->rootobject->displist); // dont cache displists because of delayed loading (GML)
 	glPopMatrix();
 }
 

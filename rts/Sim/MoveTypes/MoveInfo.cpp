@@ -68,7 +68,7 @@ CMoveInfo* moveinfo;
 
 static float DegreesToMaxSlope(float degrees)
 {
-	return (float)(1.0 - cos(degrees * 1.5f * PI / 180.0f));
+	return (1.0f - cos(degrees * 1.5f * PI / 180.0f));
 }
 
 

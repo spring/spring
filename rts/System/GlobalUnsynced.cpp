@@ -105,6 +105,7 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 void CGlobalUnsynced::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
+	haveARB = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
 	haveGLSL = !!GLEW_VERSION_2_0;
 
 	{

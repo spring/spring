@@ -207,7 +207,7 @@ void CLaserProjectile::Collision()
 
 void CLaserProjectile::Draw(void)
 {
-	if(s3domodel)	//dont draw if a 3d model has been defined for us
+	if (model)	//dont draw if a 3d model has been defined for us
 		return;
 
 	inArray=true;
