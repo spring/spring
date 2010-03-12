@@ -34,11 +34,10 @@ public:
 	virtual void ProjectileDestroyed(const CProjectile*);
 
 	virtual bool WantsEvent(const std::string& eventName) {
-		return (
+		return
 			(eventName ==       "UnitCreated" || eventName ==       "UnitDestroyed") ||
 			(eventName ==    "FeatureCreated" || eventName ==    "FeatureDestroyed") ||
-			(eventName == "ProjectileCreated" || eventName == "ProjectileDestroyed")
-		);
+			(eventName == "ProjectileCreated" || eventName == "ProjectileDestroyed");
 	}
 	virtual bool GetFullRead() const { return true; }
 	virtual int GetReadAllyTeam() const { return AllAccessTeam; }
