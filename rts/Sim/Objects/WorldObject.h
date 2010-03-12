@@ -6,15 +6,16 @@
 #include "Object.h"
 #include "float3.h"
 
+struct S3DModel;
 class CWorldObject: public CObject
 {
 public:
 	CR_DECLARE(CWorldObject);
 
 	CWorldObject():
-		id(0), useAirLos(false), alwaysVisible(false) {}
+		id(0), useAirLos(false), alwaysVisible(false), model(0) {}
 	CWorldObject(const float3& pos):
-		id(0), pos(pos), useAirLos(false), alwaysVisible(false) {}
+		id(0), pos(pos), useAirLos(false), alwaysVisible(false), model(0) {}
 
 	void SetRadius(float r);
 	virtual ~CWorldObject();
@@ -29,6 +30,8 @@ public:
 	float drawRadius; ///< used to see if in los
 	bool useAirLos;
 	bool alwaysVisible;
+
+	S3DModel* model;
 };
 
 #endif /* WORLDOBJECT_H */

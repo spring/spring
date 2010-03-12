@@ -1,4 +1,13 @@
 void main() {
+	#ifdef GRASS_BASIC
+	#endif
+
+	#ifdef GRASS_NEAR
+	#endif
+
+	#ifdef GRASS_DIST
+	#endif
+
 	gl_Position = ftransform();
 }
 

@@ -22,7 +22,6 @@ class CWeapon;
 class CUnitScript;
 struct DamageArray;
 struct LosInstance;
-struct S3DModel;
 struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
@@ -412,7 +411,6 @@ public:
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
-	S3DModel* model;
 	LocalModel* localmodel;
 	CUnitScript* script;
 

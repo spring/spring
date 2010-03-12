@@ -11,7 +11,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/Colors.h"
 #include "Map/MapInfo.h"
 #include "GlobalUnsynced.h"
@@ -49,7 +48,6 @@ CProjectile::CProjectile():
 	collisionFlags(0),
 	speed(ZeroVector),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	s3domodel(0),
 	ownerId(0)
 {
 	GML_GET_TICKS(lastProjUpdate);
@@ -81,7 +79,6 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	collisionFlags(0),
 	speed(speed),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	s3domodel(0),
 	ownerId(0)
 {
 	if (owner) {

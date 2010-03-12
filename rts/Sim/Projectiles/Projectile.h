@@ -18,7 +18,6 @@ class CBuilding;
 class CUnit;
 class CFeature;
 class CVertexArray;
-struct S3DModel;
 
 #define COLLISION_NOFRIENDLY	1
 #define COLLISION_NOFEATURE		2
@@ -69,8 +68,6 @@ public:
 	virtual void DrawCallback(void);
 	virtual void DrawUnitPart(void);
 	virtual void DrawS3O() { DrawUnitPart(); }
-
-	S3DModel* s3domodel;
 
 	float tempdist; // temp distance used for sorting when rendering
 	

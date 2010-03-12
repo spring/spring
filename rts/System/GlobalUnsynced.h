@@ -213,6 +213,7 @@ public:
 	 * Especially some ATI cards report that they support NPOTs, but they don't (or just very limited).
 	 */
 	bool supportNPOTs;
+	bool haveARB;
 	bool haveGLSL;
 
 	/**

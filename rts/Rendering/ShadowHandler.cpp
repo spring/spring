@@ -132,7 +132,7 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 		"ShadowGenShaderProgModel",
 		"ShadowGenshaderProgMap",
 		"ShadowGenshaderProgTreeNear",
-		"ShadowGenshaderProgTreeFar",
+		"ShadowGenshaderProgTreeDist",
 		"ShadowGenshaderProgProjectile",
 	};
 	static const std::string shadowGenProgDefines[SHADOWGEN_PROGRAM_LAST] = {

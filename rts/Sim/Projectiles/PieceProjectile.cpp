@@ -98,7 +98,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 
 		/* If we're an S3O unit, this is where ProjectileHandler
 		   fetches our texture from. */
-		s3domodel = owner->model;
+		model = owner->model;
 		/* If we're part of an S3O unit, save this so we can
 		   draw with the right teamcolour. */
 		colorTeam = owner->team;
