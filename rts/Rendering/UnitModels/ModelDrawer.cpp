@@ -14,7 +14,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
-// #define MODEL_DRAWER_DEBUG
+#define MODEL_DRAWER_DEBUG 0
 
 IModelDrawer* modelDrawer = NULL;
 
@@ -51,7 +51,7 @@ IModelDrawer::IModelDrawer(const std::string& name, int order, bool synced): CEv
 		renderableProjectiles[modelType] = std::set<const CProjectile*>();
 	}
 
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::IModelDrawer] this=%p, name=%s, order=%d, synced=%d", this, name.c_str(), order, synced);
 	#endif
 }
@@ -75,7 +75,7 @@ IModelDrawer::~IModelDrawer()
 	renderableFeatures.clear();
 	renderableProjectiles.clear();
 
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::~IModelDrawer]");
 	#endif
 }
@@ -85,7 +85,7 @@ IModelDrawer::~IModelDrawer()
 
 void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::UnitCreated] id=%d", u->id);
 	#endif
 
@@ -95,7 +95,7 @@ void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
 }
 void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::UnitDestroyed] id=%d", u->id);
 	#endif
 
@@ -106,7 +106,7 @@ void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
 
 void IModelDrawer::FeatureCreated(const CFeature* f)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::FeatureCreated] id=%d", f->id);
 	#endif
 
@@ -116,7 +116,7 @@ void IModelDrawer::FeatureCreated(const CFeature* f)
 }
 void IModelDrawer::FeatureDestroyed(const CFeature* f)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::FeatureDestroyed] id=%d", f->id);
 	#endif
 
@@ -127,7 +127,7 @@ void IModelDrawer::FeatureDestroyed(const CFeature* f)
 
 void IModelDrawer::ProjectileCreated(const CProjectile* p)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::ProjectileCreated] id=%d", p->id);
 	#endif
 
@@ -137,7 +137,7 @@ void IModelDrawer::ProjectileCreated(const CProjectile* p)
 }
 void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::ProjectileDestroyed] id=%d", p->id);
 	#endif
 
@@ -151,7 +151,7 @@ void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 
 void IModelDrawer::Draw()
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::Draw] frame=%d", gs->frameNum);
 	#endif
 
@@ -196,8 +196,9 @@ void IModelDrawer::DrawModels(const std::set<const CProjectile*>& models)
 
 
 
-CModelDrawerFFP::CModelDrawerFFP(const std::string& name, int order, bool synced): IModelDrawer(name, order, synced) {
-	#ifdef MODEL_DRAWER_DEBUG
+CModelDrawerFFP::CModelDrawerFFP(const std::string& name, int order, bool synced): IModelDrawer(name, order, synced)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerFFP::CModelDrawerFFP] name=%s, order=%d, synced=%d", name.c_str(), order, synced);
 	#endif
 }
@@ -207,8 +208,9 @@ CModelDrawerFFP::CModelDrawerFFP(const std::string& name, int order, bool synced
 
 
 
-CModelDrawerARB::CModelDrawerARB(const std::string& name, int order, bool synced): IModelDrawer(name, order, synced) {
-	#ifdef MODEL_DRAWER_DEBUG
+CModelDrawerARB::CModelDrawerARB(const std::string& name, int order, bool synced): IModelDrawer(name, order, synced)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerARB::CModelDrawerARB] name=%s, order=%d, synced=%d", name.c_str(), order, synced);
 	#endif
 
@@ -220,16 +222,18 @@ CModelDrawerARB::CModelDrawerARB(const std::string& name, int order, bool synced
 
 
 
-CModelDrawerGLSL::CModelDrawerGLSL(const std::string& name, int order, bool synced): IModelDrawer(name, order, synced) {
-	#ifdef MODEL_DRAWER_DEBUG
+CModelDrawerGLSL::CModelDrawerGLSL(const std::string& name, int order, bool synced): IModelDrawer(name, order, synced)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::CModelDrawerGLSL] name=%s, order=%d, synced=%d", name.c_str(), order, synced);
 	#endif
 
 	LoadModelShaders();
 }
 
-bool CModelDrawerGLSL::LoadModelShaders() {
-	#ifdef MODEL_DRAWER_DEBUG
+bool CModelDrawerGLSL::LoadModelShaders()
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::LoadModelShaders]");
 	#endif
 
@@ -243,15 +247,17 @@ bool CModelDrawerGLSL::LoadModelShaders() {
 }
 
 
-void CModelDrawerGLSL::UnitCreated(const CUnit* u, const CUnit*) {
-	#ifdef MODEL_DRAWER_DEBUG
+void CModelDrawerGLSL::UnitCreated(const CUnit* u, const CUnit*)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::UnitCreated] id=%d", u->id);
 	#endif
 
 	IModelDrawer::UnitCreated(u, NULL);
 }
-void CModelDrawerGLSL::UnitDestroyed(const CUnit* u, const CUnit*) {
-	#ifdef MODEL_DRAWER_DEBUG
+void CModelDrawerGLSL::UnitDestroyed(const CUnit* u, const CUnit*)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::UnitDestroyed] id=%d", u->id);
 	#endif
 
@@ -260,7 +266,7 @@ void CModelDrawerGLSL::UnitDestroyed(const CUnit* u, const CUnit*) {
 
 void CModelDrawerGLSL::FeatureCreated(const CFeature* f)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::FeatureCreated] id=%d", f->id);
 	#endif
 
@@ -268,7 +274,7 @@ void CModelDrawerGLSL::FeatureCreated(const CFeature* f)
 }
 void CModelDrawerGLSL::FeatureDestroyed(const CFeature* f)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::FeatureDestroyed] id=%d", f->id);
 	#endif
 
@@ -277,7 +283,7 @@ void CModelDrawerGLSL::FeatureDestroyed(const CFeature* f)
 
 void CModelDrawerGLSL::ProjectileCreated(const CProjectile* p)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::ProjectileCreated] id=%d", p->id);
 	#endif
 
@@ -285,7 +291,7 @@ void CModelDrawerGLSL::ProjectileCreated(const CProjectile* p)
 }
 void CModelDrawerGLSL::ProjectileDestroyed(const CProjectile* p)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::ProjectileDestroyed] id=%d", p->id);
 	#endif
 
@@ -295,7 +301,7 @@ void CModelDrawerGLSL::ProjectileDestroyed(const CProjectile* p)
 
 void CModelDrawerGLSL::Draw()
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::Draw] frame=%d", gs->frameNum);
 	#endif
 
@@ -305,7 +311,7 @@ void CModelDrawerGLSL::Draw()
 
 void CModelDrawerGLSL::DrawModels(const std::set<const CUnit*>& units)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModels(units)]");
 	#endif
 
@@ -314,7 +320,7 @@ void CModelDrawerGLSL::DrawModels(const std::set<const CUnit*>& units)
 
 void CModelDrawerGLSL::DrawModels(const std::set<const CFeature*>& features)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModels(features)]");
 	#endif
 
@@ -323,7 +329,7 @@ void CModelDrawerGLSL::DrawModels(const std::set<const CFeature*>& features)
 
 void CModelDrawerGLSL::DrawModels(const std::set<const CProjectile*>& projectiles)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModels(projectiles)]");
 	#endif
 
@@ -334,7 +340,7 @@ void CModelDrawerGLSL::DrawModels(const std::set<const CProjectile*>& projectile
 
 void CModelDrawerGLSL::PushRenderState(int modelType)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::PushRenderState] modelType=%d", modelType);
 	#endif
 
@@ -352,7 +358,7 @@ void CModelDrawerGLSL::PushRenderState(int modelType)
 
 void CModelDrawerGLSL::PopRenderState(int modelType)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::PopRenderState] modelType=%d", modelType);
 	#endif
 
@@ -371,19 +377,19 @@ void CModelDrawerGLSL::PopRenderState(int modelType)
 
 void CModelDrawerGLSL::DrawModel(const CUnit* u)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModel(CUnit)] id=%d", u->id);
 	#endif
 }
 void CModelDrawerGLSL::DrawModel(const CFeature* f)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModel(CFeature)] id=%d", f->id);
 	#endif
 }
 void CModelDrawerGLSL::DrawModel(const CProjectile* p)
 {
-	#ifdef MODEL_DRAWER_DEBUG
+	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModel(CProjectile)] id=%d", p->id);
 	#endif
 }
