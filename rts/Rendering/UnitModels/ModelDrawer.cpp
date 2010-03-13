@@ -378,9 +378,13 @@ void CModelDrawerGLSL::PushRenderState(int modelType)
 	}
 
 
-	// shadowHandler may have been deleted
-	shaders[modelType][CGame::gameShadowDraw] =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	// shadowHandler may have been deleted, so
+	// update the program if in the shadow pass
+	if (game->gameDrawMode == CGame::gameShadowDraw) {
+		shaders[modelType][game->gameDrawMode] =
+			shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	}
+
 	shaders[modelType][game->gameDrawMode]->Enable();
 }
 
