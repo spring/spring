@@ -259,7 +259,7 @@ bool CModelDrawerGLSL::LoadModelShaders()
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		for (int drawMode = CGame::gameNotDrawing; drawMode < CGame::gameRefractionDraw + 1; drawMode++) {
-			if (drawMode == CGame::gameShadowDraw) {
+			if (drawMode == CGame::gameShadowDraw && shadowHandler->drawShadows) {
 				shaders[modelType][drawMode] = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 			} else {
 				shaders[modelType][drawMode] = shaderHandler->CreateProgramObject(GetName(), "$DUMMY$", false);

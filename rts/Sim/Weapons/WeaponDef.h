@@ -139,16 +139,17 @@ struct WeaponDef
 		//bool hasmodel;
 		S3DModel* model;
 		std::string modelName;
+		std::string texNames[4];
 		CColorMap* colorMap;
 
 		bool smokeTrail;
 		bool beamweapon;
 		bool hardStop;   // whether the shot should fade out or stop and contract at max range
 
-		AtlasedTexture *texture1;
-		AtlasedTexture *texture2;
-		AtlasedTexture *texture3;
-		AtlasedTexture *texture4;
+		AtlasedTexture* texture1;
+		AtlasedTexture* texture2;
+		AtlasedTexture* texture3;
+		AtlasedTexture* texture4;
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;

@@ -54,23 +54,14 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, con
 
 	SetRadius(pos.distance(endPos));
 
-	//midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
 	corecolstart[0]=(unsigned char)(color2.x*255);
 	corecolstart[1]=(unsigned char)(color2.y*255);
 	corecolstart[2]=(unsigned char)(color2.z*255);
 	corecolstart[3]=1;
-	/*corecolend[0]=(unsigned char)(color2.x*endAlpha);
-	corecolend[1]=(unsigned char)(color2.y*endAlpha);
-	corecolend[2]=(unsigned char)(color2.z*endAlpha);
-	corecolend[3]=1;*/
 	kocolstart[0]=(unsigned char)(color.x*255);
 	kocolstart[1]=(unsigned char)(color.y*255);
 	kocolstart[2]=(unsigned char)(color.z*255);
 	kocolstart[3]=1;
-	/*kocolend[0]=(unsigned char)(color.x*endAlpha);
-	kocolend[1]=(unsigned char)(color.y*endAlpha);
-	kocolend[2]=(unsigned char)(color.z*endAlpha);
-	kocolend[3]=1;*/
 
 	if (weaponDef) {
 		thickness = weaponDef->thickness;
@@ -137,7 +128,6 @@ void CLargeBeamLaserProjectile::Draw(void)
 	starttex = 1-(starttex - (int)starttex);
 
 
-	//beamtex = ph->textureAtlas->GetTexture("largebeam");
 	float texxsize = beamtex.xend-beamtex.xstart;
 	AtlasedTexture tex = beamtex;
 

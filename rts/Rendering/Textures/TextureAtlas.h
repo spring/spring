@@ -66,17 +66,18 @@ public:
 
 	void BindTexture();
 
+	//! return a boolean true if the texture exists within the "textures" map and false if it does not. 
+	bool TextureExists(const std::string& name);
+
+
 	//! return a Texture struct of the specified texture
 	AtlasedTexture GetTexture(const std::string& name);
+	//! return a pointer to a Texture struct of the specified texture, this pointer points to the actuall Texture struct stored, do not delete or modify
+	AtlasedTexture* GetTexturePtr(const std::string& name);
 	
 	//! Return a Texture struct of the specified texture if it exists, otherwise return a backup texture.
 	AtlasedTexture GetTextureWithBackup(const std::string& name, const std::string& backupName);
-	
-	//! return a boolean true if the texture exists within the "textures" map and false if it does not. 
-	bool TextureExists(const std::string& name);
-	
-	//! return a pointer to a Texture struct of the specified texture, this pointer points to the actuall Texture struct stored, do not delete or modify
-	AtlasedTexture* GetTexturePtr(const std::string& name);
+	AtlasedTexture* GetTexturePtrWithBackup(const std::string& name, const std::string& backupName);
 
 protected:
 	struct MemTex

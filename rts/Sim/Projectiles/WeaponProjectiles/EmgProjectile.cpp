@@ -7,10 +7,10 @@
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "Sync/SyncTracer.h"
-#include "GlobalUnsynced.h"
+#include "System/Sync/SyncTracer.h"
 
 CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,NULL));
 

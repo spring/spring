@@ -3,13 +3,13 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Sim/Misc/GlobalSynced.h"
 #include "Game/Camera.h"
 #include "GfxProjectile.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CGfxProjectile, CProjectile, );
 
@@ -27,8 +27,7 @@ CR_REG_METADATA(CGfxProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGfxProjectile::CGfxProjectile()
-:	CProjectile()
+CGfxProjectile::CGfxProjectile(): CProjectile()
 {
 	creationTime = lifeTime = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
@@ -72,10 +71,12 @@ void CGfxProjectile::Draw()
 {
 	inArray = true;
 
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, ph->gfxtex.xstart, ph->gfxtex.ystart, color);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, ph->gfxtex.xend,   ph->gfxtex.ystart, color);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, ph->gfxtex.xend,   ph->gfxtex.yend,   color);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, ph->gfxtex.xstart, ph->gfxtex.yend,   color);
+	#define gfxt projectileDrawer->gfxtex
+	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, gfxt->xstart, gfxt->ystart, color);
+	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, gfxt->xend,   gfxt->ystart, color);
+	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, gfxt->xend,   gfxt->yend,   color);
+	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, gfxt->xstart, gfxt->yend,   color);
+	#undef gfxt
 }
 
 void CGfxProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)

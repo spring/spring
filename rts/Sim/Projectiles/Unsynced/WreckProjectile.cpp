@@ -3,15 +3,16 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Game/Camera.h"
-#include "Map/Ground.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/Colors.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "SmokeProjectile.h"
 #include "WreckProjectile.h"
-#include "GlobalUnsynced.h"
+#include "Game/Camera.h"
+#include "Map/Ground.h"
+#include "Rendering/Colors.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 
 CR_BIND_DERIVED(CWreckProjectile, CProjectile, (float3(0, 0,0 ), float3(0, 0, 0), 0, 0));
 
@@ -56,17 +57,19 @@ void CWreckProjectile::Update()
 
 void CWreckProjectile::Draw(void)
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	col[0]=(unsigned char) (0.15f*200);
-	col[1]=(unsigned char) (0.1f*200);
-	col[2]=(unsigned char) (0.05f*200);
-	col[3]=200;
+	col[0] = (unsigned char) (0.15f * 200);
+	col[1] = (unsigned char) (0.1f  * 200);
+	col[2] = (unsigned char) (0.05f * 200);
+	col[3] = 200;
 
-	va->AddVertexTC(drawPos-camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.ystart,col);
-	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.ystart,col);
-	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.yend,col);
-	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.yend,col);
+	#define wt projectileDrawer->wrecktex
+	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, wt->xstart, wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, wt->xend,   wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, wt->xend,   wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, wt->xstart, wt->yend,   col);
+	#undef wt
 }
 
 void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)

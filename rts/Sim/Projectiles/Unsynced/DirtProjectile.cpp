@@ -6,9 +6,10 @@
 #include "DirtProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CDirtProjectile, CProjectile, );
 
@@ -40,7 +41,7 @@ CDirtProjectile::CDirtProjectile(const float3 pos, const float3 speed, const flo
 {
 	checkCol = false;
 	alphaFalloff = 255 / ttl;
-	texture = &ph->randdotstex;
+	texture = projectileDrawer->randdotstex;
 }
 
 CDirtProjectile::CDirtProjectile() :
@@ -52,7 +53,7 @@ CDirtProjectile::CDirtProjectile() :
 	slowdown(1.0f)
 {
 	checkCol = false;
-	texture = &ph->randdotstex;
+	texture = projectileDrawer->randdotstex;
 }
 
 CDirtProjectile::~CDirtProjectile()
@@ -89,11 +90,11 @@ void CDirtProjectile::Draw()
 	col[2]=(unsigned char) (color.z*alpha);
 	col[3]=(unsigned char) (alpha)/*-gu->timeOffset*alphaFalloff*/;
 
-	float interSize=size+gu->timeOffset*sizeExpansion;
-	float texx = texture->xstart + (texture->xend-texture->xstart)*((1-partAbove)*0.5f);//0.25f*(1-partAbove)
+	const float interSize = size + gu->timeOffset * sizeExpansion;
+	const float texx = texture->xstart + (texture->xend - texture->xstart) * ((1.0f - partAbove) * 0.5f);
 
-	va->AddVertexTC(drawPos-camera->right*interSize-camera->up*interSize*partAbove,texx,texture->ystart,col);
-	va->AddVertexTC(drawPos+camera->right*interSize-camera->up*interSize*partAbove,texx,texture->yend,col);
-	va->AddVertexTC(drawPos+camera->right*interSize+camera->up*interSize,texture->xend,texture->yend,col);
-	va->AddVertexTC(drawPos-camera->right*interSize+camera->up*interSize,texture->xend,texture->ystart,col);
+	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize * partAbove,texx, texture->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * interSize - camera->up * interSize * partAbove,texx, texture->yend,   col);
+	va->AddVertexTC(drawPos + camera->right * interSize + camera->up * interSize, texture->xend, texture->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * interSize + camera->up * interSize, texture->xend, texture->ystart, col);
 }

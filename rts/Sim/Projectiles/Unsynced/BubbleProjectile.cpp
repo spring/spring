@@ -5,9 +5,11 @@
 
 #include "BubbleProjectile.h"
 #include "Game/Camera.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0,0,NULL,0));
 
@@ -43,35 +45,38 @@ void CBubbleProjectile::Update()
 	pos+=speed;
 	--ttl;
 	size+=sizeExpansion;
-	if(size<startSize)
-		size+=(startSize-size)*0.2f;
+	if (size < startSize)
+		size += (startSize - size) * 0.2f;
 	drawRadius=size;
 
-	if(pos.y>-size*0.7f){
-		pos.y=-size*0.7f;
-		alpha-=0.03f;
+	if (pos.y>-size * 0.7f) {
+		pos.y = -size * 0.7f;
+		alpha -= 0.03f;
 	}
-	if(ttl<0){
-		alpha-=0.03f;
+	if (ttl < 0) {
+		alpha -= 0.03f;
 	}
-	if(alpha<0){
-		alpha=0;
-		deleteMe=true;
+	if (alpha < 0) {
+		alpha = 0;
+		deleteMe = true;
 	}
 }
 
 void CBubbleProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	col[0]=(unsigned char)(255*alpha);
-	col[1]=(unsigned char)(255*alpha);
-	col[2]=(unsigned char)(255*alpha);
-	col[3]=(unsigned char)(255*alpha);
+	col[0] = (unsigned char)(255 * alpha);
+	col[1] = (unsigned char)(255 * alpha);
+	col[2] = (unsigned char)(255 * alpha);
+	col[3] = (unsigned char)(255 * alpha);
 
-	float interSize=size+sizeExpansion*gu->timeOffset;
-	va->AddVertexTC(drawPos-camera->right*interSize-camera->up*interSize,ph->bubbletex.xstart    ,ph->bubbletex.ystart    ,col);
-	va->AddVertexTC(drawPos+camera->right*interSize-camera->up*interSize,ph->bubbletex.xend,ph->bubbletex.ystart    ,col);
-	va->AddVertexTC(drawPos+camera->right*interSize+camera->up*interSize,ph->bubbletex.xend,ph->bubbletex.yend,col);
-	va->AddVertexTC(drawPos-camera->right*interSize+camera->up*interSize,ph->bubbletex.xstart    ,ph->bubbletex.yend,col);
+	const float interSize = size + sizeExpansion * gu->timeOffset;
+
+	#define bt projectileDrawer->bubbletex
+	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize, bt->xstart, bt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * interSize - camera->up * interSize, bt->xend,   bt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * interSize + camera->up * interSize, bt->xend,   bt->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * interSize + camera->up * interSize, bt->xstart, bt->yend,   col);
+	#undef bt
 }

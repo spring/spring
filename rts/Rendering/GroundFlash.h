@@ -3,11 +3,12 @@
 #ifndef GROUNDFLASH_H
 #define GROUNDFLASH_H
 
-#include "Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
-class CVertexArray;
+class AtlasedTexture;
+class GroundFXTexture;
 class CColorMap;
+class CVertexArray;
 
 class CGroundFlash : public CExpGenSpawnable
 {
@@ -60,13 +61,13 @@ class CSeismicGroundFlash : public CGroundFlash
 public:
 	CR_DECLARE(CSeismicGroundFlash);
 	~CSeismicGroundFlash();
-	CSeismicGroundFlash(const float3& pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col GML_FARG_H);
+	CSeismicGroundFlash(const float3& pos, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col GML_FARG_H);
 	void Draw();
 	bool Update(); // returns false when it should be deleted
 
 	float3 side1,side2;
 
-	AtlasedTexture texture;
+	AtlasedTexture* texture;
 	float sizeGrowth;
 	float size;
 	float alpha;

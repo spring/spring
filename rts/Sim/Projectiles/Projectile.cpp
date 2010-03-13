@@ -3,17 +3,18 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Map/MapInfo.h"
-#include "Rendering/GL/myGL.h"
 #include "Projectile.h"
-#include "ProjectileHandler.h"
 #include "Game/Camera.h"
+#include "Map/MapInfo.h"
+#include "Rendering/Colors.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Rendering/Colors.h"
-#include "Map/MapInfo.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
@@ -134,10 +135,13 @@ void CProjectile::Draw()
 	col[1] = 127;
 	col[2] =   0;
 	col[3] =  10;
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, ph->projectiletex.xstart, ph->projectiletex.ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, ph->projectiletex.xend,   ph->projectiletex.ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, ph->projectiletex.xend,   ph->projectiletex.yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, ph->projectiletex.xstart, ph->projectiletex.yend,   col);
+
+	#define pt projectileDrawer->projectiletex
+	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, pt->xstart, pt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, pt->xend,   pt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, pt->xend,   pt->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, pt->xstart, pt->yend,   col);
+	#undef pt
 }
 
 void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)

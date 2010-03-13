@@ -4,16 +4,18 @@
 #include "mmgr.h"
 
 #include "FireProjectile.h"
-#include "Sim/Misc/Wind.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Game/Camera.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Features/Feature.h"
-#include "ProjectileHandler.h"
+#include "Sim/Misc/Wind.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
-#include "GlobalUnsynced.h"
-#include "creg/STL_List.h"
+#include "System/GlobalUnsynced.h"
+#include "System/creg/STL_List.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));
 CR_BIND(CFireProjectile::SubParticle, );
@@ -74,7 +76,8 @@ void CFireProjectile::Update(void)
 {
 	ttl--;
 	if(ttl>0){
-		if(ph->particleSaturation<0.8f || (ph->particleSaturation<1 && (gs->frameNum & 1))){	//this area must be unsynced
+		if (ph->particleSaturation < 0.8f || (ph->particleSaturation < 1 && (gs->frameNum & 1))) {
+			//! unsynced code
 			SubParticle sub;
 			sub.age=0;
 			sub.maxSize=(0.7f+gu->usRandFloat()*0.3f)*particleSize;
@@ -83,7 +86,7 @@ void CFireProjectile::Update(void)
 			sub.pos.y+=sub.posDif.y;
 			sub.posDif.y=0;
 			sub.rotSpeed=(gu->usRandFloat()-0.5f)*4;
-			sub.smokeType=gu->usRandInt()% ph->smoketex.size();
+			sub.smokeType=gu->usRandInt()% projectileDrawer->smoketex.size();
 			subParticles.push_front(sub);
 
 			sub.maxSize=(0.7f+gu->usRandFloat()*0.3f)*particleSize;
@@ -94,7 +97,8 @@ void CFireProjectile::Update(void)
 			sub.rotSpeed=(gu->usRandFloat()-0.5f)*4;
 			subParticles2.push_front(sub);
 		}
-		if(!(ttl&31)){		//this area must be synced
+		if(!(ttl&31)){
+			//! synced code
 			std::vector<CFeature*> f=qf->GetFeaturesExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
 			for(std::vector<CFeature*>::iterator fi=f.begin();fi!=f.end();++fi){
 				if(gs->randFloat()>0.8f)
@@ -160,21 +164,21 @@ void CFireProjectile::Draw(void)
 		col[1]=(unsigned char)((1-age)*255);
 		col[2]=(unsigned char)((1-age)*255);
 
-		va->AddVertexQTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
-		va->AddVertexQTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
-		va->AddVertexQTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
-		va->AddVertexQTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
+		va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
+		va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
+		va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
+		va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
 	}
 #if defined(USE_GML) && GML_ENABLE_SIM
 	temp = 0;
 	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); temp < sz; ++pi, ++temp) {
 		int smokeType = *(volatile int *)&pi->smokeType;
-		if(smokeType < 0 || smokeType >= ph->smoketex.size())
+		if (smokeType < 0 || smokeType >= projectileDrawer->smoketex.size())
 			continue;
-		AtlasedTexture *at = &ph->smoketex[smokeType];
+		AtlasedTexture *at = &projectileDrawer->smoketex[smokeType];
 #else
 	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
-		AtlasedTexture *at = &ph->smoketex[pi->smokeType];
+		AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
 #endif
 		float age=pi->age+ageSpeed*gu->timeOffset;
 		float size=pi->maxSize*fastmath::apxsqrt(age);
@@ -193,10 +197,10 @@ void CFireProjectile::Draw(void)
 			col[2]=(unsigned char)((1-age*1.3f)*255);
 			col[3]=1;
 
-			va->AddVertexQTC(interPos-dir1-dir2,ph->explotex.xstart,ph->explotex.ystart,col);
-			va->AddVertexQTC(interPos+dir1-dir2,ph->explotex.xend ,ph->explotex.ystart,col);
-			va->AddVertexQTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
-			va->AddVertexQTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
+			va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
+			va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
+			va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
+			va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
 		}
 
 		unsigned char c;
@@ -210,10 +214,10 @@ void CFireProjectile::Draw(void)
 		col2[2]=(unsigned char)(c*0.6f);
 		col2[3]=c;
 
-		va->AddVertexQTC(interPos-dir1-dir2,at->xstart,at->ystart,col2);
-		va->AddVertexQTC(interPos+dir1-dir2,at->xend,at->ystart,col2);
-		va->AddVertexQTC(interPos+dir1+dir2,at->xend,at->yend,col2);
-		va->AddVertexQTC(interPos-dir1+dir2,at->xstart,at->yend,col2);
+		va->AddVertexQTC(interPos - dir1 - dir2, at->xstart, at->ystart, col2);
+		va->AddVertexQTC(interPos + dir1 - dir2, at->xend,   at->ystart, col2);
+		va->AddVertexQTC(interPos + dir1 + dir2, at->xend,   at->yend,   col2);
+		va->AddVertexQTC(interPos - dir1 + dir2, at->xstart, at->yend,   col2);
 	}
 }
 

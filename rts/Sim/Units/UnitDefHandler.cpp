@@ -130,21 +130,19 @@ CUnitDefHandler::~CUnitDefHandler(void)
 {
 	// delete any eventual yardmaps
 	for (int i = 1; i <= numUnitDefs; i++) {
-		UnitDef& ud = unitDefs[i];
+		UnitDef* ud = &unitDefs[i];
 		for (int u = 0; u < 4; u++) {
-			delete[] ud.yardmaps[u];
+			delete[] ud->yardmaps[u];
 		}
 
-		if (ud.buildPic) {
-			if (ud.buildPic->textureOwner) {
-				glDeleteTextures(1, &unitDefs[i].buildPic->textureID);
-			}
-			delete ud.buildPic;
-			ud.buildPic = NULL;
+		if (ud->buildPic) {
+			ud->buildPic->Free();
+			delete ud->buildPic;
+			ud->buildPic = NULL;
 		}
 
-		delete ud.collisionVolume;
-		ud.collisionVolume = NULL;
+		delete ud->collisionVolume;
+		ud->collisionVolume = NULL;
 	}
 
 	delete[] unitDefs;

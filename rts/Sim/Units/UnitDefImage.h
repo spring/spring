@@ -10,6 +10,11 @@ struct UnitDefImage
 {
 	CR_DECLARE_STRUCT(UnitDefImage);
 	UnitDefImage() { imageSizeX = -1; imageSizeY = -1; }
+	void Free() {
+		if (textureOwner) {
+			glDeleteTextures(1, &textureID);
+		}
+	}
 
 	int imageSizeX;
 	int imageSizeY;

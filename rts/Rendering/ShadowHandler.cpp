@@ -8,9 +8,9 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/ModelDrawer.hpp"
@@ -229,7 +229,7 @@ void CShadowHandler::DrawShadowPasses(void)
 		featureDrawer->DrawShadowPass();
 		treeDrawer->DrawShadowPass();
 		eventHandler.DrawWorldShadow();
-		ph->DrawShadowPass();
+		projectileDrawer->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;
