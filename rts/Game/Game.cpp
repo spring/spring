@@ -260,7 +260,9 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 
 	leastQue(0),
 	timeLeft(0.0f),
-	consumeSpeed(1.0f)
+	consumeSpeed(1.0f),
+
+	saveFile(saveFile)
 {
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
@@ -451,7 +453,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	farTextureHandler = new CFarTextureHandler();
 	modelParser = new C3DModelLoader();
 
-	featureHandler->LoadFeaturesFromMap(saveFile);
+	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
 	pathManager = new CPathManager();
 
 #ifdef SYNCCHECK
@@ -630,6 +632,7 @@ CGame::~CGame()
 	SafeDelete(consoleHistory);
 	SafeDelete(wordCompletion);
 	SafeDelete(explGenHandler);
+	SafeDelete(saveFile);
 
 	delete const_cast<CMapInfo*>(mapInfo);
 	mapInfo = NULL;
@@ -2231,6 +2234,9 @@ bool CGame::ActionPressed(const Action& action,
 		std::string savename(action.extra.c_str() + (saveoverride ? 3 : 0));
 		savename = "Saves/" + savename + ".ssf";
 		SaveGame(savename, saveoverride);
+	}
+	else if (cmd == "reloadgame") {
+		ReloadGame();
 	}
 	else if (cmd == "debuginfo") {
 		if (action.extra == "sound") {
@@ -5045,5 +5051,17 @@ void CGame::SaveGame(const std::string& filename, bool overwrite)
 		else {
 			logOutput.Print("File %s already exists(use /save -y to override)\n", filename.c_str());
 		}
+	}
+}
+
+void CGame::ReloadGame()
+{
+	if (saveFile) {
+		// This reloads heightmap, triggers Load call-in, etc.
+		// Inside the Load call-in, Lua can ensure old units are wiped before new ones are placed.
+		saveFile->LoadGame();
+	}
+	else {
+		logOutput.Print("Can only reload game when game has been started from a savegame");
 	}
 }
