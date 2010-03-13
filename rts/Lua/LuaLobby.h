@@ -30,6 +30,10 @@ public:
 
 	virtual void Motd(const std::string text);
 
+	virtual void AddUser(const std::string& name, const std::string& country, int cpu);
+	virtual void RemoveUser(const std::string& name);
+	virtual void ClientStatusUpdate(const std::string& name, ClientStatus status);
+
 	int JoinChannel(lua_State *L);
 	virtual void Joined(const std::string& channame);
 	virtual void JoinFailed(const std::string& channame, const std::string& reason);
