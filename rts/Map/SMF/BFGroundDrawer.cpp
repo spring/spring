@@ -7,13 +7,13 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/ShadowHandler.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "System/ConfigHandler.h"
 #include "System/FastMath.h"
@@ -832,7 +832,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 
 		if (groundDecals) {
 			groundDecals->Draw();
-			ph->DrawGroundFlashes();
+			projectileDrawer->DrawGroundFlashes();
 			glDepthMask(1);
 		}
 	}

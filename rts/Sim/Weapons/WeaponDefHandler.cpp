@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -9,18 +11,16 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
-#include "FileSystem/FileHandler.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
 #include "Sound/Sound.h"
-#include "mmgr.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using std::min;
 using std::max;
@@ -66,13 +66,9 @@ CWeaponDefHandler::~CWeaponDefHandler()
 
 void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 {
-	//bool twophase;
 	bool manualBombSettings; //Allow the user to manually specify the burst and burstrate for his AircraftBomb
 	int color;
 	int color2;
-	//bool turret;
-	//bool smokeTrail;
-	//string modelName;
 
 	wd.tdfId = wdTable.GetInt("id", 0);
 
@@ -394,76 +390,40 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		// CExplosiveProjectile
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 
-		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(1.0f,0.5f,0.0f));
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(1.0f, 0.5f, 0.0f));
 		wd.intensity = wdTable.GetFloat("intensity", 0.2f);
 	} else if (wd.type == "Rifle") {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 	} else if (wd.type == "Melee") {
 		// ...
-	} else if (wd.type == "AircraftBomb") {
-		// CExplosiveProjectile or CTorpedoProjectile
-		wd.visuals.texture1 = &ph->plasmatex;
-	} else if (wd.type == "Shield") {
-		wd.visuals.texture1 = &ph->perlintex;
 	} else if (wd.type == "Flame") {
 		// CFlameProjectile
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
-
-		wd.visuals.texture1 = &ph->flametex;
-		wd.size          = wdTable.GetFloat("size",      tempsize);
-		wd.sizeGrowth    = wdTable.GetFloat("sizeGrowth",    0.5f);
-		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
-		wd.duration      = wdTable.GetFloat("flameGfxTime",  1.2f);
-
-		if (wd.visuals.colorMap == 0) {
-			wd.visuals.colorMap = CColorMap::Load12f(1.000f, 1.000f, 1.000f, 0.100f,
-			                                         0.025f, 0.025f, 0.025f, 0.100f,
-			                                         0.000f, 0.000f, 0.000f, 0.000f);
-		}
-
+		wd.size              = wdTable.GetFloat("size",      tempsize);
+		wd.sizeGrowth        = wdTable.GetFloat("sizeGrowth",    0.5f);
+		wd.collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
+		wd.duration          = wdTable.GetFloat("flameGfxTime",  1.2f);
 	} else if (wd.type == "MissileLauncher") {
 		// CMissileProjectile
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		wd.visuals.texture1 = &ph->missileflaretex;
-		wd.visuals.texture2 = &ph->missiletrailtex;
-	} else if (wd.type == "TorpedoLauncher") {
-		// CExplosiveProjectile or CTorpedoProjectile
-		wd.visuals.texture1 = &ph->plasmatex;
 	} else if (wd.type == "LaserCannon") {
 		// CLaserProjectile
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-
-		wd.visuals.texture1 = &ph->laserfallofftex;
-		wd.visuals.texture2 = &ph->laserendtex;
-		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
 		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
+
+		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
 	} else if (wd.type == "BeamLaser") {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-
-		if (wd.largeBeamLaser) {
-			wd.visuals.texture1 = ph->textureAtlas->GetTexturePtr("largebeam");
-			wd.visuals.texture2 = &ph->laserendtex;
-			wd.visuals.texture3 = ph->textureAtlas->GetTexturePtr("muzzleside");
-			wd.visuals.texture4 = &ph->beamlaserflaretex;
-		} else {
-			wd.visuals.texture1 = &ph->laserfallofftex;
-			wd.visuals.texture2 = &ph->laserendtex;
-			wd.visuals.texture3 = &ph->beamlaserflaretex;
-		}
 	} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 
-		wd.type = "LightningCannon";
-		wd.visuals.texture1 = &ph->laserfallofftex;
 		wd.thickness = wdTable.GetFloat("thickness", 0.8f);
 	} else if (wd.type == "EmgCannon") {
 		// CEmgProjectile
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 
-		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f));
 		wd.size = wdTable.GetFloat("size", 3.0f);
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f, 0.9f, 0.2f));
 	} else if (wd.type == "DGun") {
 		// CFireBallProjectile
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
@@ -471,41 +431,19 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	} else if (wd.type == "StarburstLauncher") {
 		// CStarburstProjectile
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-
-		wd.visuals.texture1 = &ph->sbflaretex;
-		wd.visuals.texture2 = &ph->sbtrailtex;
-		wd.visuals.texture3 = &ph->explotex;
 	} else {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
-
-		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.texture2 = &ph->plasmatex;
 	}
 
 
-	// FIXME -- remove the 'textureN' format?
-	LuaTable texTable = wdTable.SubTable("textures");
-	string texName;
-	texName = wdTable.GetString("texture1", "");
-	texName = texTable.GetString(1, texName);
-	if (texName != "") {
-		wd.visuals.texture1 = ph->textureAtlas->GetTexturePtr(texName);
-	}
-	texName = wdTable.GetString("texture2", "");
-	texName = texTable.GetString(2, texName);
-	if (texName != "") {
-		wd.visuals.texture2 = ph->textureAtlas->GetTexturePtr(texName);
-	}
-	texName = wdTable.GetString("texture3", "");
-	texName = texTable.GetString(3, texName);
-	if (texName != "") {
-		wd.visuals.texture3 = ph->textureAtlas->GetTexturePtr(texName);
-	}
-	texName = wdTable.GetString("texture4", "");
-	texName = texTable.GetString(4, texName);
-	if (texName != "") {
-		wd.visuals.texture4 = ph->textureAtlas->GetTexturePtr(texName);
-	}
+	const LuaTable texTable = wdTable.SubTable("textures");
+
+	wd.visuals.texNames[0] = texTable.GetString(1, wdTable.GetString("texName1", ""));
+	wd.visuals.texNames[1] = texTable.GetString(2, wdTable.GetString("texName2", ""));
+	wd.visuals.texNames[2] = texTable.GetString(3, wdTable.GetString("texName3", ""));
+	wd.visuals.texNames[3] = texTable.GetString(4, wdTable.GetString("texName4", ""));
+
+
 
 	const string expGenTag = wdTable.GetString("explosionGenerator", "");
 	if (expGenTag.empty()) {

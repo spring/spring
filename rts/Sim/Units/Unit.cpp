@@ -1233,9 +1233,7 @@ void CUnit::DoSeismicPing(float pingSize)
 		const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
 		                 errorScale[gu->myAllyTeam] * (0.5f - rz));
 
-		new CSeismicGroundFlash(pos + err,
-		                             ph->seismictex, 30, 15, 0, pingSize, 1,
-		                             float3(0.8f,0.0f,0.0f));
+		new CSeismicGroundFlash(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		if (radarhandler->InSeismicDistance(this, a)) {

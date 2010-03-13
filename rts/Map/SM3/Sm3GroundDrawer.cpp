@@ -11,8 +11,8 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "System/ConfigHandler.h"
 
@@ -217,9 +217,9 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 //	if(drawWaterReflection)
 //		treeDistance*=0.5f;
 
-	if(groundDecals && !(drawWaterReflection || drawUnitReflection)) {
+	if (groundDecals && !(drawWaterReflection || drawUnitReflection)) {
 		groundDecals->Draw();
-		ph->DrawGroundFlashes();
+		projectileDrawer->DrawGroundFlashes();
 		glDepthMask(1);
 	}
 }

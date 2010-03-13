@@ -11,9 +11,9 @@
 #include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
 #include "BaseSky.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
 #include "Map/MapInfo.h"
@@ -327,7 +327,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(false,true);
 	featureDrawer->DrawFadeFeatures(false,true);
-	ph->Draw(true);
+	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 
 	game->SetDrawMode(CGame::gameNormalDraw);

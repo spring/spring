@@ -13,25 +13,26 @@
 #include "BaseSky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/Wind.h"
-#include "FileSystem/FileHandler.h"
-#include "FastMath.h"
-#include "myMath.h"
-#include "EventHandler.h"
-#include "ConfigHandler.h"
-#include "TimeProfiler.h"
-#include "LogOutput.h"
-#include "GlobalUnsynced.h"
-#include "Exceptions.h"
-#include "Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FastMath.h"
+#include "System/myMath.h"
+#include "System/EventHandler.h"
+#include "System/ConfigHandler.h"
+#include "System/TimeProfiler.h"
+#include "System/LogOutput.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Exceptions.h"
+#include "System/Util.h"
 
 using std::string;
 using std::vector;
@@ -1272,7 +1273,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true);
 	featureDrawer->DrawFadeFeatures(true);
-	ph->Draw(false,true);
+	projectileDrawer->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
 
 	glDisable(GL_CLIP_PLANE2);
@@ -1317,7 +1318,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(false,true);
 	featureDrawer->DrawFadeFeatures(false,true);
-	ph->Draw(true);
+	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 
 	game->SetDrawMode(CGame::gameNormalDraw);

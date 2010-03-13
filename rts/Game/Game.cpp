@@ -75,6 +75,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/PathDrawer.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
@@ -417,10 +418,12 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();
 
+	projectileDrawer = new CProjectileDrawer();
 	ph = new CProjectileHandler();
 
 	damageArrayHandler = new CDamageArrayHandler();
 	unitDefHandler = new CUnitDefHandler();
+	projectileDrawer->LoadWeaponTextures();
 
 	inMapDrawer = new CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
@@ -587,6 +590,7 @@ CGame::~CGame()
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
 	SafeDelete(modelDrawer);
+	SafeDelete(projectileDrawer);
 	SafeDelete(geometricObjects);
 	SafeDelete(ph);
 	SafeDelete(minimap);
@@ -2863,7 +2867,7 @@ bool CGame::DrawWorld()
 	featureDrawer->DrawFadeFeatures(false,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
-	ph->Draw(false);
+	projectileDrawer->Draw(false);
 
 	if (gu->drawSky) {
 		sky->DrawSun();
@@ -3023,7 +3027,7 @@ bool CGame::Draw() {
 		CInputReceiver::CollectGarbage();
 		if(!skipping) {
 			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
-			ph->UpdateTextures();
+			projectileDrawer->UpdateTextures();
 			water->Update();
 			sky->Update();
 		}

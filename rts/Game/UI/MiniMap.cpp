@@ -27,14 +27,14 @@
 #include "Map/MapDamage.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
+#include "Rendering/IconHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
@@ -1104,7 +1104,7 @@ void CMiniMap::DrawForReal()
 	if (drawProjectiles) {
 		GML_STDMUTEX_LOCK(proj); // DrawForReal
 
-		ph->DrawProjectilesMiniMap();
+		projectileDrawer->DrawProjectilesMiniMap();
 	}
 
 	// draw the queued commands

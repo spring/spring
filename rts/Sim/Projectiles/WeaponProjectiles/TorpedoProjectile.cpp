@@ -3,18 +3,19 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "TorpedoProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
-#include "myMath.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "TorpedoProjectile.h"
-#include "GlobalUnsynced.h"
+#include "System/myMath.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"
@@ -56,8 +57,8 @@ CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, C
 	SetRadius(0.0f);
 	drawRadius=maxSpeed*8;
 	float3 camDir=(pos-camera->pos).Normalize();
-	texx = ph->torpedotex.xstart - (ph->torpedotex.xend-ph->torpedotex.xstart)*0.5f;
-	texy = ph->torpedotex.ystart - (ph->torpedotex.yend-ph->torpedotex.ystart)*0.5f;
+	texx = projectileDrawer->torpedotex->xstart - (projectileDrawer->torpedotex->xend - projectileDrawer->torpedotex->xstart) * 0.5f;
+	texy = projectileDrawer->torpedotex->ystart - (projectileDrawer->torpedotex->yend - projectileDrawer->torpedotex->ystart) * 0.5f;
 #ifdef TRACE_SYNC
 	tracefile << "New projectile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";

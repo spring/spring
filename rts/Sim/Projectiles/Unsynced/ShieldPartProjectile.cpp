@@ -4,11 +4,11 @@
 #include "mmgr.h"
 
 #include "ShieldPartProjectile.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "GlobalUnsynced.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 
 CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (float3(0,0,0),0,0,0,float3(0,0,0),0,NULL,NULL));
 
@@ -56,7 +56,7 @@ CShieldPartProjectile::CShieldPartProjectile(
 	drawRadius = sphereSize * 0.4f;
 	usePerlin = false;
 
-	if (texture == &ph->perlintex) {
+	if (texture == projectileDrawer->perlintex) {
 		usePerlin = true;
 		ph->numPerlinProjectiles++;
 	}

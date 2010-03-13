@@ -6,26 +6,26 @@
 #include "DynWater.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "LogOutput.h"
-#include "bitops.h"
-#include "Map/BaseGroundDrawer.h"
-#include "BaseSky.h"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/GameHelper.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Rendering/Env/BaseSky.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/UnitModels/FeatureDrawer.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "GlobalUnsynced.h"
-#include "EventHandler.h"
-#include "Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/bitops.h"
+#include "System/GlobalUnsynced.h"
+#include "System/EventHandler.h"
+#include "System/Exceptions.h"
 
 #define W_SIZE 5
 #define WF_SIZE 5120
@@ -472,7 +472,7 @@ void CDynWater::DrawReflection(CGame* game)
 	unitDrawer->DrawCloakedUnits(false,true);
 	featureDrawer->DrawFadeFeatures(false,true);
 
-	ph->Draw(true);
+	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 
 	sky->DrawSun();
@@ -530,7 +530,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	unitDrawer->DrawCloakedUnits(true,true);
 	featureDrawer->DrawFadeFeatures(true,true); // FIXME: Make it fade out correctly without "noAdvShading"
 	drawReflection=false;
-	ph->Draw(false,true);
+	projectileDrawer->Draw(false, true);
 	eventHandler.DrawWorldRefraction();
 	glDisable(GL_CLIP_PLANE2);
 
