@@ -123,6 +123,40 @@ void LuaLobby::Motd(const std::string text)
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
 
+void LuaLobby::AddUser(const std::string& name, const std::string& country, int cpu)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, name.c_str());
+	lua_pushstring(L, country.c_str());
+	lua_pushnumber(L, cpu);
+	const int ret = Lunar<LuaLobby>::call(L, "AddUser", 3, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
+void LuaLobby::RemoveUser(const std::string& name)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, name.c_str());
+	const int ret = Lunar<LuaLobby>::call(L, "RemoveUser", 1, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
+void LuaLobby::ClientStatusUpdate(const std::string& name, ClientStatus status)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, name.c_str());
+	lua_pushnumber(L, status.away);
+	lua_pushnumber(L, status.bot);
+	lua_pushnumber(L, status.ingame);
+	lua_pushnumber(L, status.moderator);
+	lua_pushnumber(L, status.rank);
+	const int ret = Lunar<LuaLobby>::call(L, "ClientStatusUpdate", 6, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
 int LuaLobby::JoinChannel(lua_State *L)
 {
 	std::string channame(luaL_checkstring(L, 1));

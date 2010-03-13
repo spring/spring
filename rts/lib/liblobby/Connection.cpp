@@ -13,7 +13,6 @@
 
 #include "md5/md5.h"
 #include "md5/base64.h"
-#include "UserCache.h"
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;
@@ -55,7 +54,7 @@ std::string RTFToPlain(const std::string& rich)
 	return out;
 }
 
-Connection::Connection() : sock(netservice), users(NULL), timer(netservice)
+Connection::Connection() : sock(netservice), timer(netservice)
 {
 }
 
@@ -64,11 +63,6 @@ Connection::~Connection()
 	sock.close();
 	netservice.poll();
 	netservice.reset();
-}
-
-void Connection::AddUserCache(UserCache* newcache)
-{
-	users = newcache;
 }
 
 void Connection::Connect(const std::string& server, int port)
@@ -230,41 +224,30 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	}
 	else if (command == "ADDUSER")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string name = buf.GetWord();
-			UserInfo client = users->Get(name);
-			client.country = buf.GetWord();
-			client.cpu = buf.GetInt();
-			users->AddUser(client);
-		}
+		RawTextMessage buf(msg);
+		std::string name = buf.GetWord();
+		std::string country = buf.GetWord();
+		int cpu = buf.GetInt();
+		AddUser(name, country, cpu);
 	}
 	else if (command == "REMOVEUSER")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string name = buf.GetWord();
-			UserInfo client = users->Get(name);
-			users->RemoveUser(client);
-		}
+		RawTextMessage buf(msg);
+		std::string name = buf.GetWord();
+		RemoveUser(name);
 	}
 	else if (command == "CLIENTSTATUS")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string name = buf.GetWord();
-			UserInfo client = users->Get(name);
-			std::bitset<8> status(buf.GetInt());
-			client.ingame = status[0];
-			client.away = status[1];
-			client.rank = (status[2]? 1 : 0) + (status[3]? 2 : 0) + (status[4]? 4 : 0);
-			client.moderator = status[5];
-			client.bot = status[6];
-			users->Update(client);
-		}
+		RawTextMessage buf(msg);
+		std::string name = buf.GetWord();
+		ClientStatus status;
+		std::bitset<8> statusbf(buf.GetInt());
+		status.ingame = statusbf[0];
+		status.away = statusbf[1];
+		status.rank = (statusbf[2]? 1 : 0) + (statusbf[3]? 2 : 0) + (statusbf[4]? 4 : 0);
+		status.moderator = statusbf[5];
+		status.bot = statusbf[6];
+		ClientStatusUpdate(name, status);
 	}
 	else if (command == "JOIN")
 	{
