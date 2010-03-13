@@ -6,13 +6,13 @@
 #include <set>
 #include <vector>
 #include "creg/creg_cond.h"
-
+#include "System/EventClient.h"
 
 class CFeature;
 class CVertexArray;
 
 
-class CFeatureDrawer
+class CFeatureDrawer: public CEventClient
 {
 	CR_DECLARE(CFeatureDrawer);
 	CR_DECLARE_SUB(DrawQuad);
@@ -20,9 +20,6 @@ class CFeatureDrawer
 public:
 	CFeatureDrawer();
 	~CFeatureDrawer();
-
-	void FeatureCreated(CFeature* feature);
-	void FeatureDestroyed(CFeature* feature);
 
 	void UpdateDrawQuad(CFeature* feature);
 	void UpdateDraw();
@@ -33,10 +30,21 @@ public:
 	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures); //the part of draw that both draw and drawshadowpass can use
 
 	void DrawFadeFeatures(bool submerged, bool noAdvShading = false);
-
 	void SwapFadeFeatures();
 
-	bool showRezBars;
+	void SetShowRezBars(bool b) { showRezBars = b; }
+	bool GetShowRezBars() const { return showRezBars; }
+
+
+
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "FeatureCreated" || eventName == "FeatureDestroyed");
+	}
+	bool GetFullRead() const { return true; }
+	int GetReadAllyTeam() const { return AllAccessTeam; }
+
+	void FeatureCreated(const CFeature* feature);
+	void FeatureDestroyed(const CFeature* feature);
 
 private:
 	std::set<CFeature *> fadeFeatures;
@@ -64,6 +72,8 @@ private:
 	void DrawFeatureStats(CFeature* feature);
 
 	void PostLoad();
+
+	bool showRezBars;
 
 	friend class CFeatureQuadDrawer;
 };

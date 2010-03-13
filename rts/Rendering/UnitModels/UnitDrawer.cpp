@@ -82,7 +82,7 @@ static float GetLODFloat(const string& name, float def)
 
 
 
-CUnitDrawer::CUnitDrawer(const std::string& name, int order, bool synced): CEventClient(name, order, synced)
+CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
