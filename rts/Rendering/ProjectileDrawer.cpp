@@ -27,8 +27,8 @@
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 

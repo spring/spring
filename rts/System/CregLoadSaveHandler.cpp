@@ -115,7 +115,6 @@ static void PrintSize(const char *txt, int size)
 
 void CCregLoadSaveHandler::SaveGame(const std::string& file)
 {
-	RandomStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
@@ -147,7 +146,6 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 	} catch (...) {
 		logOutput.Print("Save failed(unknown error)");
 	}
-	UnloadStartPicture();
 }
 
 /// this just loads the mapname and some other early stuff
