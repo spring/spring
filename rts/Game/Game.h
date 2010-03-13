@@ -122,6 +122,8 @@ public:
 private:
 	/// Save the game state to file.
 	void SaveGame(const std::string& filename, bool overwrite);
+	/// Re-load the game.
+	void ReloadGame();
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
@@ -195,6 +197,9 @@ private:
 	float skipOldSpeed;
 	float skipOldUserSpeed;
 	unsigned skipLastDraw;
+
+	/// for reloading the savefile
+	ILoadSaveHandler* saveFile;
 };
 
 
