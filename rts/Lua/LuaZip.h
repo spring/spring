@@ -1,7 +1,4 @@
-/**
- * @file LuaZip.h
- * @author: Tobi Vollebregt
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef LUAZIP_H_
 #define LUAZIP_H_
