@@ -28,7 +28,7 @@ namespace Shader {
 class CUnitDrawer: public CEventClient
 {
 public:
-	CUnitDrawer(const std::string&, int, bool);
+	CUnitDrawer();
 	~CUnitDrawer(void);
 
 	bool LoadModelShaders();

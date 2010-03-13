@@ -8,7 +8,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/FeatureDrawer.h" // FIXME -- sim shouldn't depend on rendering
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
@@ -335,19 +334,14 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	features[feature->id] = feature;
 	SetFeatureUpdateable(feature);
 
-	// FIXME -- sim shouldn't depend on rendering
-	featureDrawer->FeatureCreated(feature);
-
 	eventHandler.FeatureCreated(feature);
-
-	return feature->id ;
+	return feature->id;
 }
 
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
 	toBeRemoved.push_back(feature->id);
-
 	eventHandler.FeatureDestroyed(feature);
 }
 
@@ -421,9 +415,6 @@ void CFeatureHandler::Update()
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
 				features[feature->id] = 0;
-
-				// FIXME -- sim shouldn't depend on rendering
-				featureDrawer->FeatureDestroyed(feature);
 
 				if (feature->inUpdateQue) {
 					updateFeatures.erase(feature);

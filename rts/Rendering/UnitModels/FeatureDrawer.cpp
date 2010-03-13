@@ -37,7 +37,6 @@ CFeatureDrawer* featureDrawer = NULL;
 /******************************************************************************/
 
 CR_BIND(CFeatureDrawer, );
-
 CR_BIND(CFeatureDrawer::DrawQuad, );
 
 CR_REG_METADATA(CFeatureDrawer, (
@@ -48,7 +47,7 @@ CR_REG_METADATA(CFeatureDrawer, (
 
 
 
-CFeatureDrawer::CFeatureDrawer()
+CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false)
 {
 	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
@@ -66,33 +65,38 @@ CFeatureDrawer::~CFeatureDrawer()
 }
 
 
-void CFeatureDrawer::FeatureCreated(CFeature* feature)
+
+void CFeatureDrawer::FeatureCreated(const CFeature* feature)
 {
-	if (feature->def->drawType == DRAWTYPE_MODEL) {
-		feature->drawQuad = -1;
-		UpdateDrawPos(feature);
+	CFeature* f = const_cast<CFeature*>(feature);
+
+	if (f->def->drawType == DRAWTYPE_MODEL) {
+		f->drawQuad = -1;
+		UpdateDrawPos(f);
 	}
 }
 
-
-void CFeatureDrawer::FeatureDestroyed(CFeature* feature)
+void CFeatureDrawer::FeatureDestroyed(const CFeature* feature)
 {
+	CFeature* f = const_cast<CFeature*>(feature);
+
 	{
 		GML_STDMUTEX_LOCK(rfeat); // Update
 
-		if (feature->drawQuad >= 0) {
-			DrawQuad* dq = &drawQuads[feature->drawQuad];
-			dq->features.erase(feature);
+		if (f->drawQuad >= 0) {
+			DrawQuad* dq = &drawQuads[f->drawQuad];
+			dq->features.erase(f);
 		}
 
-		updateDrawFeatures.erase(feature);
+		updateDrawFeatures.erase(f);
 	}
 
-	fadeFeatures.erase(feature);
-	fadeFeaturesS3O.erase(feature);
-	fadeFeaturesSave.erase(feature);
-	fadeFeaturesS3OSave.erase(feature);
+	fadeFeatures.erase(f);
+	fadeFeaturesS3O.erase(f);
+	fadeFeaturesSave.erase(f);
+	fadeFeaturesS3OSave.erase(f);
 }
+
 
 
 void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
