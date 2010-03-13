@@ -30,6 +30,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 
 bool distcmp::operator() (const CProjectile* arg1, const CProjectile* arg2) const {
 	if (arg1->tempdist != arg2->tempdist) // strict ordering required

@@ -7,6 +7,7 @@
 #include "LightningProjectile.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
