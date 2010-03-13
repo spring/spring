@@ -21,7 +21,6 @@ using namespace boost::system::posix_error;
 using namespace boost::system::errc;
 #endif
 using namespace boost::asio;
-boost::asio::io_service netservice;
 
 std::string RTFToPlain(const std::string& rich)
 {
@@ -147,6 +146,20 @@ void Connection::Say(const std::string& channel, const std::string& text)
 {
 	std::ostringstream out;
 	out << "SAY " << channel << " " << text << std::endl;
+	SendData(out.str());
+}
+
+void Connection::SayEx(const std::string& channel, const std::string& text)
+{
+	std::ostringstream out;
+	out << "SAYEX " << channel << " " << text << std::endl;
+	SendData(out.str());
+}
+
+void Connection::SayPrivate(const std::string& user, const std::string& text)
+{
+	std::ostringstream out;
+	out << "SAYPRIVATE " << user << " " << text << std::endl;
 	SendData(out.str());
 }
 

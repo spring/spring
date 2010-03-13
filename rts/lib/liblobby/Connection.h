@@ -97,6 +97,8 @@ public:
 	void LeaveChannel(const std::string& channame);
 
 	void Say(const std::string& channel, const std::string& text);
+	void SayEx(const std::string& channel, const std::string& text);
+	void SayPrivate(const std::string& user, const std::string& text);
 	virtual void Said(const std::string& channel, const std::string& user, const std::string& text) {};
 	virtual void SaidEx(const std::string& channel, const std::string& user, const std::string& text) {};
 	virtual void SaidPrivate(const std::string& user, const std::string& text) {};
@@ -117,6 +119,7 @@ private:
 	void ReceiveCallback(const boost::system::error_code& error, size_t bytes);
 	void SendCallback(const boost::system::error_code& error);
 	
+	boost::asio::io_service netservice;
 	std::string aggreementbuf;
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;

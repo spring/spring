@@ -8,17 +8,15 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
-#include "Lua/LuaUnsyncedCtrl.h"
 
 #include "mmgr.h"
 
+#include "Lua/LuaLobby.h" // ugh, streflop namespace corruption...
 #include "LuaUI.h"
-
-
-using namespace std;
 
 #include "LuaInclude.h"
 
+#include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaUtils.h"
 #include "Lua/LuaConstGL.h"
@@ -63,6 +61,7 @@ using namespace std;
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
 
+using namespace std;
 
 #if (LUA_VERSION_NUM < 500)
 #  define LUA_OPEN_LIB(L, lib) lib(L)
@@ -199,7 +198,7 @@ CLuaUI::CLuaUI()
 	}
 
 	lua_settop(L, 0);
-
+	LuaLobby::RegisterUserdata(L);
 	if (!LoadCode(code, "luaui.lua")) {
 		KillLua();
 		return;
