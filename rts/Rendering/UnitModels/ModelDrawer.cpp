@@ -377,6 +377,10 @@ void CModelDrawerGLSL::PushRenderState(int modelType)
 		} break;
 	}
 
+
+	// shadowHandler may have been deleted
+	shaders[modelType][CGame::gameShadowDraw] =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	shaders[modelType][game->gameDrawMode]->Enable();
 }
 

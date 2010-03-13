@@ -61,25 +61,19 @@ void PathDrawer::Draw(const CPathManager* pm) const {
 			// draw estimatePath2 (green)
 			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
 			for (PathIt pvi = path->estimatedPath2.path.begin(); pvi != path->estimatedPath2.path.end(); pvi++) {
-				float3 pos = *pvi;
-				pos.y += 5;
-				glVertexf3(pos);
+				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw estimatePath (blue)
 			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
 			for (PathIt pvi = path->estimatedPath.path.begin(); pvi != path->estimatedPath.path.end(); pvi++) {
-				float3 pos = *pvi;
-				pos.y += 5;
-				glVertexf3(pos);
+				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw detailPath (red)
 			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
 			for (PathIt pvi = path->detailedPath.path.begin(); pvi != path->detailedPath.path.end(); pvi++) {
-				float3 pos = *pvi;
-				pos.y += 5;
-				glVertexf3(pos);
+				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 		glEnd();
