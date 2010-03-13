@@ -14,7 +14,11 @@ void main() {
 	vec4 diffuseCol = texture2D(diffuseTex, gl_TexCoord[1]);
 
 	gl_FragColor.rgb = diffuseCol.rgb * shadeInt.rgb;
-	gl_FragColor = mix(gl_Fog.color, gl_FragColor, fogFactor);
+
+	#if (defined(TREE_DIST))
+	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
+	#endif
+
 	gl_FragColor.a = diffuseCol.a;
 }
 #endif
