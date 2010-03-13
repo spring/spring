@@ -183,6 +183,10 @@ local callInLists = {
   'MapDrawCmd',
   'GameSetup',
   'DefaultCommand',
+
+  -- Save/Load
+  'Save',
+  'Load',
 }
 
 
@@ -1644,6 +1648,23 @@ function gadgetHandler:GetTooltip(x, y)
   return ''
 end
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+function gadgetHandler:Save(zip)
+  for _,g in ipairs(self.SaveList) do
+    g:Save(zip)
+  end
+  return
+end
+
+
+function gadgetHandler:Load(zip)
+  for _,g in ipairs(self.LoadList) do
+    g:Load(zip)
+  end
+  return
+end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
