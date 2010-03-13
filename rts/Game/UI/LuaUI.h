@@ -8,7 +8,7 @@
 #include <map>
 
 #include "Lua/LuaHandle.h"
-#include "Sim/Units/CommandAI/Command.h"
+//#include "Sim/Units/CommandAI/Command.h"
 
 
 class CUnit;
