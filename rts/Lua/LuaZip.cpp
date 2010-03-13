@@ -69,7 +69,8 @@ bool LuaZipFileWriter::PushUnsynced(lua_State* L)
 {
 	CreateMetatable(L);
 
-	HSTR_PUSH_CFUNC(L, "CreateZipFileWriter", open);
+	// FIXME when this is enabled LuaGaia/LuaRules unsynced has access to it too!
+	//HSTR_PUSH_CFUNC(L, "CreateZipFileWriter", open);
 
 	return true;
 }
@@ -227,7 +228,8 @@ bool LuaZipFileReader::PushUnsynced(lua_State* L)
 {
 	CreateMetatable(L);
 
-	HSTR_PUSH_CFUNC(L, "CreateZipFileReader", open);
+	// FIXME when this is enabled LuaGaia/LuaRules unsynced has access to it too!
+	//HSTR_PUSH_CFUNC(L, "CreateZipFileReader", open);
 
 	return true;
 }
