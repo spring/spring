@@ -373,6 +373,8 @@ void CModelDrawerGLSL::PushRenderState(int modelType)
 		} break;
 		case MODELTYPE_S3O: {
 		} break;
+		// case MODELTYPE_OBJ: {
+		// } break;
 		default: {
 		} break;
 	}
@@ -401,6 +403,8 @@ void CModelDrawerGLSL::PopRenderState(int modelType)
 		} break;
 		case MODELTYPE_S3O: {
 		} break;
+		// case MODELTYPE_OBJ: {
+		// } break;
 		default: {
 		} break;
 	}
