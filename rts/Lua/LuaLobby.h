@@ -49,6 +49,8 @@ public:
 
 	int JoinChannel(lua_State *L);
 	virtual void Joined(const std::string& channame);
+	virtual void ChannelMember(const std::string& channame, const std::string& name, bool joined);
+	virtual void ChannelMemberLeft(const std::string& channame, const std::string& name, const std::string& reason);
 	virtual void JoinFailed(const std::string& channame, const std::string& reason);
 	int LeaveChannel(lua_State *L);
 	

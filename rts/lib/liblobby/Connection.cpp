@@ -296,6 +296,31 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		std::string reason = buf.GetWord();
 		JoinFailed(channame, reason);
 	}
+	else if (command == "CLIENTS")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client;
+		while (!(client = buf.GetWord()).empty())
+		{
+			ChannelMember(channame, client, false);
+		}
+	}
+	else if (command == "JOINED")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client = buf.GetWord();
+		ChannelMember(channame, client, true);
+	}
+	else if (command == "LEFT")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client = buf.GetWord();
+		std::string reason = buf.GetSentence();
+		ChannelMemberLeft(channame, client, reason);
+	}
 	else if (command == "CHANNELTOPIC")
 	{
 		RawTextMessage buf(msg);
