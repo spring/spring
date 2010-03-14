@@ -134,6 +134,11 @@ void Connection::ChangePass(const std::string& oldpass, const std::string& newpa
 	SendData(out.str());
 }
 
+void Connection::Channels()
+{
+	SendData("CHANNELS\n");
+}
+
 void Connection::JoinChannel(const std::string& channame, const std::string& password)
 {
 	std::ostringstream out;
@@ -293,6 +298,17 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	else if (command == "SERVERMSG")
 	{
 		ServerMessage(msg);
+	}
+	else if (command == "CHANNEL")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		unsigned users = buf.GetInt();
+		ChannelInfo(channame, users);
+	}
+	else if (command == "ENDOFCHANNELS")
+	{
+		ChannelInfoEnd();
 	}
 	else if (command == "SERVERMSGBOX")
 	{
