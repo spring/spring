@@ -126,6 +126,8 @@ public:
 	virtual void ChannelMemberLeft(const std::string& channame, const std::string& name, const std::string& reason) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
 	void LeaveChannel(const std::string& channame);
+	void ForceLeaveChannel(const std::string& channame, const std::string& user, const std::string& reason);
+	virtual void ForceLeftChannel(const std::string& channame, const std::string& user, const std::string& reason) {};
 
 	void ChangeTopic(const std::string& channame, const std::string& topic);
 	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic) {};

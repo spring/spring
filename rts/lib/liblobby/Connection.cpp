@@ -163,6 +163,16 @@ void Connection::LeaveChannel(const std::string& channame)
 	SendData(out.str());
 }
 
+void Connection::ForceLeaveChannel(const std::string& channame, const std::string& user, const std::string& reason)
+{
+	std::ostringstream out;
+	out << "FORCELEAVECHANNEL " << channame << " " << user;
+	if (!reason.empty())
+		out  << " " << reason;
+	out << std::endl;
+	SendData(out.str());
+}
+
 void Connection::ChangeTopic(const std::string& channame, const std::string& topic)
 {
 	std::ostringstream out;
@@ -320,6 +330,14 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		std::string client = buf.GetWord();
 		std::string reason = buf.GetSentence();
 		ChannelMemberLeft(channame, client, reason);
+	}
+	else if (command == "FORCELEAVECHANNEL")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client = buf.GetWord();
+		std::string reason = buf.GetSentence();
+		ForceLeftChannel(channame, client, reason);
 	}
 	else if (command == "CHANNELTOPIC")
 	{

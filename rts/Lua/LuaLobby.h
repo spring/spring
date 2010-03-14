@@ -53,7 +53,9 @@ public:
 	virtual void ChannelMemberLeft(const std::string& channame, const std::string& name, const std::string& reason);
 	virtual void JoinFailed(const std::string& channame, const std::string& reason);
 	int LeaveChannel(lua_State *L);
-	
+	int ForceLeaveChannel(lua_State *L);
+	virtual void ForceLeftChannel(const std::string& channame, const std::string& user, const std::string& reason);
+
 	int ChangeTopic(lua_State *L);
 	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic);
 	virtual void ChannelMessage(const std::string& channel, const std::string& text);
