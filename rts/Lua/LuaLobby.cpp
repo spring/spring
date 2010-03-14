@@ -312,6 +312,26 @@ int LuaLobby::LeaveChannel(lua_State *L)
 	return 1;
 }
 
+int LuaLobby::ForceLeaveChannel(lua_State *L)
+{
+	std::string channame(luaL_checkstring(L, 1));
+	std::string user(luaL_checkstring(L, 2));
+	std::string reason(luaL_checkstring(L, 3));
+	Connection::ForceLeaveChannel(channame, user, reason);
+	return 1;
+}
+
+void LuaLobby::ForceLeftChannel(const std::string& channame, const std::string& user, const std::string& reason)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, channame.c_str());
+	lua_pushstring(L, user.c_str());
+	lua_pushstring(L, reason.c_str());
+	const int ret = Lunar<LuaLobby>::call(L, "ForceLeftChannel", 3, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
 int LuaLobby::ChangeTopic(lua_State *L)
 {
 	std::string channame(luaL_checkstring(L, 1));
