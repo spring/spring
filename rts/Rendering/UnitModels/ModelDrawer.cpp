@@ -16,6 +16,8 @@
 #include "System/LogOutput.h"
 
 #define MODEL_DRAWER_DEBUG 2
+#define MDL_TYPE(o) (o->model->type)
+#define TEX_TYPE(o) (o->model->textureType)
 
 IModelDrawer* modelDrawer = NULL;
 
@@ -47,9 +49,13 @@ IModelDrawer::IModelDrawer(const std::string& name, int order, bool synced): CEv
 		shaders[modelType] = std::vector<Shader::IProgramObject*>();
 		shaders[modelType].resize(CGame::gameRefractionDraw + 1, NULL);
 
-		renderableUnits[modelType] = std::set<const CUnit*>();
-		renderableFeatures[modelType] = std::set<const CFeature*>();
-		renderableProjectiles[modelType] = std::set<const CProjectile*>();
+		opaqueUnits[modelType] = UnitRenderBin();
+		opaqueFeatures[modelType] = FeatureRenderBin();
+		opaqueProjectiles[modelType] = ProjectileRenderBin();
+
+		cloakedUnits[modelType] = UnitRenderBin();
+		cloakedFeatures[modelType] = FeatureRenderBin();
+		cloakedProjectiles[modelType] = ProjectileRenderBin();
 	}
 
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -64,17 +70,41 @@ IModelDrawer::~IModelDrawer()
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		shaders[modelType].clear();
 
-		renderableUnits[modelType].clear();
-		renderableFeatures[modelType].clear();
-		renderableProjectiles[modelType].clear();
+		UnitRenderBinIt uIt = opaqueUnits[modelType].begin();
+		FeatureRenderBinIt fIt = opaqueFeatures[modelType].begin();
+		ProjectileRenderBinIt pIt = opaqueProjectiles[modelType].begin();
+
+		for (; uIt != opaqueUnits[modelType].end(); uIt++) { opaqueUnits[modelType][uIt->first].clear(); }
+		for (; fIt != opaqueFeatures[modelType].end(); fIt++) { opaqueFeatures[modelType][fIt->first].clear(); }
+		for (; pIt != opaqueProjectiles[modelType].end(); pIt++) { opaqueProjectiles[modelType][pIt->first].clear(); }
+
+		uIt = cloakedUnits[modelType].begin();
+		fIt = cloakedFeatures[modelType].begin();
+		pIt = cloakedProjectiles[modelType].begin();
+
+		for (; uIt != cloakedUnits[modelType].end(); uIt++) { cloakedUnits[modelType][uIt->first].clear(); }
+		for (; fIt != cloakedFeatures[modelType].end(); fIt++) { cloakedFeatures[modelType][fIt->first].clear(); }
+		for (; pIt != cloakedProjectiles[modelType].end(); pIt++) { cloakedProjectiles[modelType][pIt->first].clear(); }
+
+		opaqueUnits[modelType].clear();
+		opaqueFeatures[modelType].clear();
+		opaqueProjectiles[modelType].clear();
+
+		cloakedUnits[modelType].clear();
+		cloakedFeatures[modelType].clear();
+		cloakedProjectiles[modelType].clear();
 	}
 
 	shaderHandler->ReleaseProgramObjects("[ModelDrawer]");
 	shaders.clear();
 
-	renderableUnits.clear();
-	renderableFeatures.clear();
-	renderableProjectiles.clear();
+	opaqueUnits.clear();
+	opaqueFeatures.clear();
+	opaqueProjectiles.clear();
+
+	cloakedUnits.clear();
+	cloakedFeatures.clear();
+	cloakedProjectiles.clear();
 
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::~IModelDrawer]");
@@ -94,9 +124,21 @@ void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
 	#endif
 
 	if (u->model) {
-		renderableUnits[u->model->type].insert(u);
+		if (u->isCloaked) {
+			// units can start life cloaked
+			if (opaqueUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == opaqueUnits[MDL_TYPE(u)].end())
+				opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
+
+			opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
+		} else {
+			if (cloakedUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == cloakedUnits[MDL_TYPE(u)].end())
+				cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
+
+			cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
+		}
 	}
 }
+
 void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -107,9 +149,41 @@ void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
 	#endif
 
 	if (u->model) {
-		renderableUnits[u->model->type].erase(u);
+		if (u->isCloaked) {
+			opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+		} else {
+			cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+		}
 	}
 }
+
+
+void IModelDrawer::UnitCloaked(const CUnit* u)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
+	logOutput.Print("[IModelDrawer::UnitCloaked] id=%d", u->id);
+	#endif
+
+	if (cloakedUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == cloakedUnits[MDL_TYPE(u)].end())
+		cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
+
+	cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
+	opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+}
+
+void IModelDrawer::UnitDecloaked(const CUnit* u)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
+	logOutput.Print("[IModelDrawer::UnitDecloaked] id=%d", u->id);
+	#endif
+
+	if (opaqueUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == opaqueUnits[MDL_TYPE(u)].end())
+		opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
+
+	opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
+	cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+}
+
 
 void IModelDrawer::FeatureCreated(const CFeature* f)
 {
@@ -121,9 +195,13 @@ void IModelDrawer::FeatureCreated(const CFeature* f)
 	#endif
 
 	if (f->model) {
-		renderableFeatures[f->model->type].insert(f);
+		if (opaqueFeatures[MDL_TYPE(f)].find(TEX_TYPE(f)) == opaqueFeatures[MDL_TYPE(f)].end())
+			opaqueFeatures[MDL_TYPE(f)][TEX_TYPE(f)] = FeatureSet();
+
+		opaqueFeatures[MDL_TYPE(f)][TEX_TYPE(f)].insert(f);
 	}
 }
+
 void IModelDrawer::FeatureDestroyed(const CFeature* f)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -134,9 +212,10 @@ void IModelDrawer::FeatureDestroyed(const CFeature* f)
 	#endif
 
 	if (f->model) {
-		renderableFeatures[f->model->type].erase(f);
+		opaqueFeatures[MDL_TYPE(f)][TEX_TYPE(f)].erase(f);
 	}
 }
+
 
 void IModelDrawer::ProjectileCreated(const CProjectile* p)
 {
@@ -148,9 +227,13 @@ void IModelDrawer::ProjectileCreated(const CProjectile* p)
 	#endif
 
 	if (p->model) {
-		renderableProjectiles[p->model->type].insert(p);
+		if (opaqueProjectiles[MDL_TYPE(p)].find(TEX_TYPE(p)) == opaqueProjectiles[MDL_TYPE(p)].end())
+			opaqueProjectiles[MDL_TYPE(p)][TEX_TYPE(p)] = ProjectileSet();
+
+		opaqueProjectiles[MDL_TYPE(p)][TEX_TYPE(p)].insert(p);
 	}
 }
+
 void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -161,7 +244,7 @@ void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 	#endif
 
 	if (p->model) {
-		renderableProjectiles[p->model->type].erase(p);
+		opaqueProjectiles[MDL_TYPE(p)][TEX_TYPE(p)].erase(p);
 	}
 }
 
@@ -170,43 +253,76 @@ void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 
 void IModelDrawer::Draw()
 {
+	// TODO: LuaUnitRendering bypass
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::Draw] frame=%d", gs->frameNum);
 	#endif
 
-	// TODO: LuaUnitRendering bypass
+	// opaque objects by <modelType, textureType>
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		PushRenderState(modelType);
-		DrawModels(renderableUnits[modelType]);
-		DrawModels(renderableFeatures[modelType]);
-		DrawModels(renderableProjectiles[modelType]);
+
+		UnitRenderBinIt uIt = opaqueUnits[modelType].begin();
+		FeatureRenderBinIt fIt = opaqueFeatures[modelType].begin();
+		ProjectileRenderBinIt pIt = opaqueProjectiles[modelType].begin();
+
+		for (; uIt != opaqueUnits[modelType].end(); uIt++) { DrawModels(opaqueUnits[modelType][uIt->first]); }
+		for (; fIt != opaqueFeatures[modelType].end(); fIt++) { DrawModels(opaqueFeatures[modelType][fIt->first]); }
+		for (; pIt != opaqueProjectiles[modelType].end(); pIt++) { DrawModels(opaqueProjectiles[modelType][pIt->first]); }
+
+		uIt = cloakedUnits[modelType].begin();
+		fIt = cloakedFeatures[modelType].begin();
+		pIt = cloakedProjectiles[modelType].begin();
+
+		for (; uIt != cloakedUnits[modelType].end(); uIt++) { DrawModels(cloakedUnits[modelType][uIt->first]); }
+		for (; fIt != cloakedFeatures[modelType].end(); fIt++) { DrawModels(cloakedFeatures[modelType][fIt->first]); }
+		for (; pIt != cloakedProjectiles[modelType].end(); pIt++) { DrawModels(cloakedProjectiles[modelType][pIt->first]); }
+
+		PopRenderState(modelType);
+	}
+
+	// cloaked objects by <modelType, textureType> (TODO: above-/below-water separation, etc.)
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		PushRenderState(modelType);
+
+		UnitRenderBinIt uIt = cloakedUnits[modelType].begin();
+		FeatureRenderBinIt fIt = cloakedFeatures[modelType].begin();
+		ProjectileRenderBinIt pIt = cloakedProjectiles[modelType].begin();
+
+		for (; uIt != cloakedUnits[modelType].end(); uIt++) { DrawModels(cloakedUnits[modelType][uIt->first]); }
+		for (; fIt != cloakedFeatures[modelType].end(); fIt++) { DrawModels(cloakedFeatures[modelType][fIt->first]); }
+		for (; pIt != cloakedProjectiles[modelType].end(); pIt++) { DrawModels(cloakedProjectiles[modelType][pIt->first]); }
+
+		uIt = cloakedUnits[modelType].begin();
+		fIt = cloakedFeatures[modelType].begin();
+		pIt = cloakedProjectiles[modelType].begin();
+
+		for (; uIt != cloakedUnits[modelType].end(); uIt++) { DrawModels(cloakedUnits[modelType][uIt->first]); }
+		for (; fIt != cloakedFeatures[modelType].end(); fIt++) { DrawModels(cloakedFeatures[modelType][fIt->first]); }
+		for (; pIt != cloakedProjectiles[modelType].end(); pIt++) { DrawModels(cloakedProjectiles[modelType][pIt->first]); }
+
 		PopRenderState(modelType);
 	}
 }
 
-void IModelDrawer::DrawModels(const std::set<const CUnit*>& models) 
-{
-	std::set<const CUnit*>::const_iterator uIt;
 
-	for (uIt = models.begin(); uIt != models.end(); uIt++) {
+void IModelDrawer::DrawModels(const UnitSet& models) 
+{
+	for (UnitSetIt uIt = models.begin(); uIt != models.end(); uIt++) {
 		DrawModel(*uIt);
 	}
 }
 
-void IModelDrawer::DrawModels(const std::set<const CFeature*>& models)
+void IModelDrawer::DrawModels(const FeatureSet& models)
 {
-	std::set<const CFeature*>::const_iterator fIt;
-
-	for (fIt = models.begin(); fIt != models.end(); fIt++) {
+	for (FeatureSetIt fIt = models.begin(); fIt != models.end(); fIt++) {
 		DrawModel(*fIt);
 	}
 }
 
-void IModelDrawer::DrawModels(const std::set<const CProjectile*>& models)
+void IModelDrawer::DrawModels(const ProjectileSet& models)
 {
-	std::set<const CProjectile*>::const_iterator pIt;
-
-	for (pIt = models.begin(); pIt != models.end(); pIt++) {
+	for (ProjectileSetIt pIt = models.begin(); pIt != models.end(); pIt++) {
 		DrawModel(*pIt);
 	}
 }
@@ -271,6 +387,8 @@ bool CModelDrawerGLSL::LoadModelShaders()
 }
 
 
+
+
 void CModelDrawerGLSL::UnitCreated(const CUnit* u, const CUnit*)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -279,6 +397,7 @@ void CModelDrawerGLSL::UnitCreated(const CUnit* u, const CUnit*)
 
 	IModelDrawer::UnitCreated(u, NULL);
 }
+
 void CModelDrawerGLSL::UnitDestroyed(const CUnit* u, const CUnit*)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -288,6 +407,7 @@ void CModelDrawerGLSL::UnitDestroyed(const CUnit* u, const CUnit*)
 	IModelDrawer::UnitDestroyed(u, NULL);
 }
 
+
 void CModelDrawerGLSL::FeatureCreated(const CFeature* f)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -296,6 +416,7 @@ void CModelDrawerGLSL::FeatureCreated(const CFeature* f)
 
 	IModelDrawer::FeatureCreated(f);
 }
+
 void CModelDrawerGLSL::FeatureDestroyed(const CFeature* f)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -305,6 +426,7 @@ void CModelDrawerGLSL::FeatureDestroyed(const CFeature* f)
 	IModelDrawer::FeatureDestroyed(f);
 }
 
+
 void CModelDrawerGLSL::ProjectileCreated(const CProjectile* p)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -313,6 +435,7 @@ void CModelDrawerGLSL::ProjectileCreated(const CProjectile* p)
 
 	IModelDrawer::ProjectileCreated(p);
 }
+
 void CModelDrawerGLSL::ProjectileDestroyed(const CProjectile* p)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -321,6 +444,7 @@ void CModelDrawerGLSL::ProjectileDestroyed(const CProjectile* p)
 
 	IModelDrawer::ProjectileDestroyed(p);
 }
+
 
 
 void CModelDrawerGLSL::Draw()
@@ -333,7 +457,8 @@ void CModelDrawerGLSL::Draw()
 }
 
 
-void CModelDrawerGLSL::DrawModels(const std::set<const CUnit*>& units)
+
+void CModelDrawerGLSL::DrawModels(const UnitSet& units)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModels(units)]");
@@ -342,7 +467,7 @@ void CModelDrawerGLSL::DrawModels(const std::set<const CUnit*>& units)
 	IModelDrawer::DrawModels(units);
 }
 
-void CModelDrawerGLSL::DrawModels(const std::set<const CFeature*>& features)
+void CModelDrawerGLSL::DrawModels(const FeatureSet& features)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModels(features)]");
@@ -351,7 +476,7 @@ void CModelDrawerGLSL::DrawModels(const std::set<const CFeature*>& features)
 	IModelDrawer::DrawModels(features);
 }
 
-void CModelDrawerGLSL::DrawModels(const std::set<const CProjectile*>& projectiles)
+void CModelDrawerGLSL::DrawModels(const ProjectileSet& projectiles)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModels(projectiles)]");
@@ -411,18 +536,22 @@ void CModelDrawerGLSL::PopRenderState(int modelType)
 }
 
 
+
+
 void CModelDrawerGLSL::DrawModel(const CUnit* u)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModel(CUnit)] id=%d", u->id);
 	#endif
 }
+
 void CModelDrawerGLSL::DrawModel(const CFeature* f)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[CModelDrawerGLSL::DrawModel(CFeature)] id=%d", f->id);
 	#endif
 }
+
 void CModelDrawerGLSL::DrawModel(const CProjectile* p)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)

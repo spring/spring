@@ -24,10 +24,11 @@ public:
 
 	static IModelDrawer* GetInstance();
 
-	// NOTE: listen to Unit*Cloaked for tracking transparent objects?
 	// NOTE: GML synchronization points
 	virtual void UnitCreated(const CUnit*, const CUnit*);
 	virtual void UnitDestroyed(const CUnit*, const CUnit*);
+	virtual void UnitCloaked(const CUnit*);
+	virtual void UnitDecloaked(const CUnit*);
 	virtual void FeatureCreated(const CFeature*);
 	virtual void FeatureDestroyed(const CFeature*);
 	virtual void ProjectileCreated(const CProjectile*);
@@ -36,6 +37,7 @@ public:
 	virtual bool WantsEvent(const std::string& eventName) {
 		return
 			(eventName ==       "UnitCreated" || eventName ==       "UnitDestroyed") ||
+			(eventName ==       "UnitCloaked" || eventName ==       "UnitDecloaked") ||
 			(eventName ==    "FeatureCreated" || eventName ==    "FeatureDestroyed") ||
 			(eventName == "ProjectileCreated" || eventName == "ProjectileDestroyed");
 	}
@@ -56,9 +58,26 @@ protected:
 
 	std::map<int, std::vector<Shader::IProgramObject*> > shaders;
 
-	std::map<int, std::set<const CUnit*> > renderableUnits;
-	std::map<int, std::set<const CFeature*> > renderableFeatures;
-	std::map<int, std::set<const CProjectile*> > renderableProjectiles;
+	typedef std::set<const CUnit*>                       UnitSet;
+	typedef std::set<const CUnit*>::const_iterator       UnitSetIt;
+	typedef std::set<const CFeature*>                    FeatureSet;
+	typedef std::set<const CFeature*>::const_iterator    FeatureSetIt;
+	typedef std::set<const CProjectile*>                 ProjectileSet;
+	typedef std::set<const CProjectile*>::const_iterator ProjectileSetIt;
+
+	typedef std::map<int, UnitSet>                       UnitRenderBin;
+	typedef std::map<int, UnitSet>::const_iterator       UnitRenderBinIt;
+	typedef std::map<int, FeatureSet>                    FeatureRenderBin;
+	typedef std::map<int, FeatureSet>::const_iterator    FeatureRenderBinIt;
+	typedef std::map<int, ProjectileSet>                 ProjectileRenderBin;
+	typedef std::map<int, ProjectileSet>::const_iterator ProjectileRenderBinIt;
+
+	std::map<int, UnitRenderBin>       opaqueUnits;
+	std::map<int, FeatureRenderBin>    opaqueFeatures;     // these use GridVisibility for culling
+	std::map<int, ProjectileRenderBin> opaqueProjectiles;  // (synced && (piece || weapon)) projectiles only
+	std::map<int, UnitRenderBin>       cloakedUnits;
+	std::map<int, FeatureRenderBin>    cloakedFeatures;    // these don't exist
+	std::map<int, ProjectileRenderBin> cloakedProjectiles; // these don't exist
 };
 
 
