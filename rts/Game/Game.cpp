@@ -448,7 +448,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	radarhandler = new CRadarHandler(false);
 
 	uh = new CUnitHandler();
-	unitDrawer = new CUnitDrawer("[CUnitDrawer]", 271828, false);
+	unitDrawer = new CUnitDrawer();
 	modelDrawer = IModelDrawer::GetInstance();
 	farTextureHandler = new CFarTextureHandler();
 	modelParser = new C3DModelLoader();
@@ -1491,9 +1491,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "showrezbars") {
 		if (action.extra.empty()) {
-			featureDrawer->showRezBars = !featureDrawer->showRezBars;
+			featureDrawer->SetShowRezBars(!featureDrawer->GetShowRezBars());
 		} else {
-			featureDrawer->showRezBars = !!atoi(action.extra.c_str());
+			featureDrawer->SetShowRezBars(!!atoi(action.extra.c_str()));
 		}
 	}
 	else if (cmd == "pause") {
