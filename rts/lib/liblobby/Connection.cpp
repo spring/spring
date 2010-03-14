@@ -290,6 +290,17 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	{
 		Motd(msg);
 	}
+	else if (command == "SERVERMSG")
+	{
+		ServerMessage(msg);
+	}
+	else if (command == "SERVERMSGBOX")
+	{
+		RawTextMessage buf(msg);
+		std::string message = buf.GetSentence();
+		std::string url = buf.GetSentence();
+		ServerMessageBox(message, url);
+	}
 	else if (command == "SAID")
 	{
 		

@@ -97,7 +97,9 @@ public:
 	void Rename(const std::string& newName);
 	void ChangePass(const std::string& oldpass, const std::string& newpass);
 
-	virtual void Motd(const std::string text) {};
+	virtual void Motd(const std::string& text) {};
+	virtual void ServerMessage(const std::string& text) {};
+	virtual void ServerMessageBox(const std::string& text, const std::string& url) {};
 
 	virtual void AddUser(const std::string& name, const std::string& country, int cpu) {};
 	virtual void RemoveUser(const std::string& name) {};
