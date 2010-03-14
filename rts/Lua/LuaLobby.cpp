@@ -1,6 +1,7 @@
 #include "LuaLobby.h"
 
 #include "LogOutput.h"
+#include <boost-1_42/boost/concept_check.hpp>
 
 CLogSubsystem LobbyLog("LuaLobby");
 
@@ -204,6 +205,54 @@ void LuaLobby::ClientStatusUpdate(const std::string& name, ClientStatus status)
 	if (ret < 0)
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
+
+int LuaLobby::Channels(lua_State *L)
+{
+	Connection::Channels();
+	return 1;
+}
+
+void LuaLobby::ChannelInfo(const std::string& channel, unsigned users)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, channel.c_str());
+	lua_pushnumber(L, users);
+	const int ret = Lunar<LuaLobby>::call(L, "ChannelInfo", 2, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
+void LuaLobby::ChannelInfoEnd()
+{
+	Lunar<LuaLobby>::push(L, this);
+	const int ret = Lunar<LuaLobby>::call(L, "ChannelInfoEnd", 0, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
+int LuaLobby::RequestMutelist(lua_State *L)
+{
+	std::string channame(luaL_checkstring(L, 1));
+	Connection::RequestMutelist(channame);
+	return 1;
+}
+
+void LuaLobby::Mutelist(const std::string& channel, std::list<std::string> list)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, channel.c_str());
+	lua_newtable(L);
+	int i = 1;
+	for (std::list<std::string>::const_iterator it = list.begin(); it != list.end(); ++it)
+	{
+		lua_pushstring(L, it->c_str());
+		lua_rawseti(L, -2, i++);
+	}
+	const int ret = Lunar<LuaLobby>::call(L, "Mutelist", 2, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
 
 int LuaLobby::JoinChannel(lua_State *L)
 {

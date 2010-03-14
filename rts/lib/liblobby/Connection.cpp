@@ -139,6 +139,13 @@ void Connection::Channels()
 	SendData("CHANNELS\n");
 }
 
+void Connection::RequestMutelist(const std::string& channel)
+{
+	std::ostringstream out;
+	out << "MUTELIST " << channel << std::endl;
+	SendData(out.str());
+}
+
 void Connection::JoinChannel(const std::string& channame, const std::string& password)
 {
 	std::ostringstream out;
@@ -309,6 +316,21 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	else if (command == "ENDOFCHANNELS")
 	{
 		ChannelInfoEnd();
+	}
+	else if (command == "MUTELISTBEGIN")
+	{
+		inMutelistChannel = msg;
+		mutelistBuf.clear();
+	}
+	else if (command == "MUTELIST")
+	{
+		mutelistBuf.push_back(msg);
+	}
+	else if (command == "MUTELISTEND")
+	{
+		Mutelist(inMutelistChannel, mutelistBuf);
+		inMutelistChannel.clear();
+		mutelistBuf.clear();
 	}
 	else if (command == "SERVERMSGBOX")
 	{

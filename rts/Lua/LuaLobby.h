@@ -40,6 +40,13 @@ public:
 	virtual void RemoveUser(const std::string& name);
 	virtual void ClientStatusUpdate(const std::string& name, ClientStatus status);
 
+	int Channels(lua_State *L);
+	virtual void ChannelInfo(const std::string& channel, unsigned users);
+	virtual void ChannelInfoEnd();
+
+	int RequestMutelist(lua_State *L);
+	virtual void Mutelist(const std::string& channel, std::list<std::string> list);
+
 	int JoinChannel(lua_State *L);
 	virtual void Joined(const std::string& channame);
 	virtual void JoinFailed(const std::string& channame, const std::string& reason);
