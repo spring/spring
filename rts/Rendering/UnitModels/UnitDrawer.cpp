@@ -1237,7 +1237,7 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
-	if (advShading) {
+	if (advShading && !water->drawReflection) {
 		CTeam* t = teamHandler->Team(team);
 		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
