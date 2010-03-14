@@ -9,6 +9,8 @@ Lunar<LuaLobby>::RegType LuaLobby::methods[] =
 {
 	{ "Connect", &LuaLobby::Connect },
 	{ "Login", &LuaLobby::Login },
+	{ "Rename", &LuaLobby::Rename },
+	{ "ChangePass", &LuaLobby::ChangePass },
 	{ "JoinChannel", &LuaLobby::JoinChannel },
 	{ "LeaveChannel", &LuaLobby::LeaveChannel },
 	{ "Say", &LuaLobby::Say },
@@ -45,6 +47,18 @@ void LuaLobby::DoneConnecting(bool succes, const std::string& err)
 	lua_pushboolean(L, succes);
 	lua_pushstring(L, err.c_str());
 	const int ret = Lunar<LuaLobby>::call(L, "DoneConnecting", 2, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
+void LuaLobby::ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, serverVer.c_str());
+	lua_pushstring(L, springVer.c_str());
+	lua_pushnumber(L, udpport);
+	lua_pushnumber(L, mode);
+	const int ret = Lunar<LuaLobby>::call(L, "ServerGreeting", 4, 0);
 	if (ret < 0)
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
@@ -111,6 +125,21 @@ void LuaLobby::Aggreement(const std::string text)
 int LuaLobby::ConfirmAggreement(lua_State *L)
 {
 	Connection::ConfirmAggreement();
+	return 1;
+}
+
+int LuaLobby::Rename(lua_State *L)
+{
+	std::string newname(luaL_checkstring(L, 1));
+	Connection::Rename(newname);
+	return 1;
+}
+
+int LuaLobby::ChangePass(lua_State *L)
+{
+	std::string oldpass(luaL_checkstring(L, 1));
+	std::string newpass(luaL_checkstring(L, 2));
+	Connection::ChangePass(oldpass, newpass);
 	return 1;
 }
 

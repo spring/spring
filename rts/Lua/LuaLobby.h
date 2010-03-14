@@ -17,6 +17,7 @@ public:
 	
 	int Connect(lua_State *L);
 	virtual void DoneConnecting(bool success, const std::string& err);
+	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode);
 
 	int Register(lua_State *L);
 	virtual void RegisterDenied(const std::string& reason);
@@ -27,6 +28,9 @@ public:
 	virtual void LoginEnd();
 	virtual void Aggreement(const std::string text);
 	int ConfirmAggreement(lua_State *L);
+
+	int Rename(lua_State *L);
+	int ChangePass(lua_State *L);
 
 	virtual void Motd(const std::string text);
 

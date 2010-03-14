@@ -94,6 +94,9 @@ public:
 	virtual void Aggreement(const std::string text) {};
 	void ConfirmAggreement();
 
+	void Rename(const std::string& newName);
+	void ChangePass(const std::string& oldpass, const std::string& newpass);
+
 	virtual void Motd(const std::string text) {};
 
 	virtual void AddUser(const std::string& name, const std::string& country, int cpu) {};

@@ -119,6 +119,21 @@ void Connection::ConfirmAggreement()
 	SendData("CONFIRMAGREEMENT\n");
 }
 
+
+void Connection::Rename(const std::string& newName)
+{
+	std::ostringstream out;
+	out << "RENAMEACCOUNT " << newName << "\n";
+	SendData(out.str());
+}
+
+void Connection::ChangePass(const std::string& oldpass, const std::string& newpass)
+{
+	std::ostringstream out;
+	out << "CHANGEPASSWORD " << MD5Base64(oldpass) << " " << MD5Base64(newpass) << "\n";
+	SendData(out.str());
+}
+
 void Connection::JoinChannel(const std::string& channame, const std::string& password)
 {
 	std::ostringstream out;
