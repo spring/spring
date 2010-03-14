@@ -109,6 +109,9 @@ public:
 	virtual void ChannelInfo(const std::string& channel, unsigned users) {};
 	virtual void ChannelInfoEnd() {};
 
+	void RequestMutelist(const std::string& channel);
+	virtual void Mutelist(const std::string& channel, std::list<std::string> list) {};
+
 	void JoinChannel(const std::string& channame, const std::string& password = "");
 	virtual void Joined(const std::string& channame) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
@@ -139,6 +142,8 @@ private:
 	
 	boost::asio::io_service netservice;
 	std::string aggreementbuf;
+	std::string inMutelistChannel;
+	std::list<std::string> mutelistBuf;
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;
 	boost::asio::deadline_timer timer;
