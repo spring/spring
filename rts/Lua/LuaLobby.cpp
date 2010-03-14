@@ -273,6 +273,28 @@ void LuaLobby::Joined(const std::string& channame)
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
 
+void LuaLobby::ChannelMember(const std::string& channame, const std::string& name, bool joined)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, channame.c_str());
+	lua_pushstring(L, name.c_str());
+	lua_pushboolean(L, joined);
+	const int ret = Lunar<LuaLobby>::call(L, "ChannelMember", 3, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
+void LuaLobby::ChannelMemberLeft(const std::string& channame, const std::string& name, const std::string& reason)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, channame.c_str());
+	lua_pushstring(L, name.c_str());
+	lua_pushstring(L, reason.c_str());
+	const int ret = Lunar<LuaLobby>::call(L, "ChannelMemberLeft", 3, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
 void LuaLobby::JoinFailed(const std::string& channame, const std::string& reason)
 {
 	Lunar<LuaLobby>::push(L, this);
