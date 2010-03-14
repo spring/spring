@@ -152,6 +152,25 @@ void LuaLobby::Motd(const std::string text)
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
 
+void LuaLobby::ServerMessage(const std::string& text)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, text.c_str());
+	const int ret = Lunar<LuaLobby>::call(L, "ServerMessage", 1, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
+void LuaLobby::ServerMessageBox(const std::string& text, const std::string& url)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, text.c_str());
+	lua_pushstring(L, url.c_str());
+	const int ret = Lunar<LuaLobby>::call(L, "ServerMessageBox", 2, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
 void LuaLobby::AddUser(const std::string& name, const std::string& country, int cpu)
 {
 	Lunar<LuaLobby>::push(L, this);

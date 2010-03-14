@@ -33,6 +33,8 @@ public:
 	int ChangePass(lua_State *L);
 
 	virtual void Motd(const std::string text);
+	virtual void ServerMessage(const std::string& text);
+	virtual void ServerMessageBox(const std::string& text, const std::string& url);
 
 	virtual void AddUser(const std::string& name, const std::string& country, int cpu);
 	virtual void RemoveUser(const std::string& name);
