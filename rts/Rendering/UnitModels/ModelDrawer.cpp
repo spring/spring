@@ -164,11 +164,13 @@ void IModelDrawer::UnitCloaked(const CUnit* u)
 	logOutput.Print("[IModelDrawer::UnitCloaked] id=%d", u->id);
 	#endif
 
-	if (cloakedUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == cloakedUnits[MDL_TYPE(u)].end())
-		cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
+	if (u->model) {
+		if (cloakedUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == cloakedUnits[MDL_TYPE(u)].end())
+			cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
 
-	cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
-	opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+		cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
+		opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+	}
 }
 
 void IModelDrawer::UnitDecloaked(const CUnit* u)
@@ -177,11 +179,13 @@ void IModelDrawer::UnitDecloaked(const CUnit* u)
 	logOutput.Print("[IModelDrawer::UnitDecloaked] id=%d", u->id);
 	#endif
 
-	if (opaqueUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == opaqueUnits[MDL_TYPE(u)].end())
-		opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
+	if (u->model) {
+		if (opaqueUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == opaqueUnits[MDL_TYPE(u)].end())
+			opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
 
-	opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
-	cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+		opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
+		cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+	}
 }
 
 
