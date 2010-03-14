@@ -163,6 +163,13 @@ void Connection::LeaveChannel(const std::string& channame)
 	SendData(out.str());
 }
 
+void Connection::ChangeTopic(const std::string& channame, const std::string& topic)
+{
+	std::ostringstream out;
+	out << "CHANNELTOPIC " << channame <<  " " << topic << std::endl;
+	SendData(out.str());
+}
+
 void Connection::Say(const std::string& channel, const std::string& text)
 {
 	std::ostringstream out;
@@ -288,6 +295,15 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		std::string channame = buf.GetWord();
 		std::string reason = buf.GetWord();
 		JoinFailed(channame, reason);
+	}
+	else if (command == "CHANNELTOPIC")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string author = buf.GetWord();
+		long unsigned time = buf.GetTime();
+		std::string topic = buf.GetSentence();
+		ChannelTopic(channame, author, time, topic);
 	}
 	else if (command == "AGREEMENT")
 	{
