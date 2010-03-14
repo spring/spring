@@ -126,15 +126,15 @@ void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
 	if (u->model) {
 		if (u->isCloaked) {
 			// units can start life cloaked
-			if (opaqueUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == opaqueUnits[MDL_TYPE(u)].end())
-				opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
-
-			opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
-		} else {
 			if (cloakedUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == cloakedUnits[MDL_TYPE(u)].end())
 				cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
 
 			cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
+		} else {
+			if (opaqueUnits[MDL_TYPE(u)].find(TEX_TYPE(u)) == opaqueUnits[MDL_TYPE(u)].end())
+				opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)] = UnitSet();
+
+			opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].insert(u);
 		}
 	}
 }
@@ -150,9 +150,9 @@ void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
 
 	if (u->model) {
 		if (u->isCloaked) {
-			opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
-		} else {
 			cloakedUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
+		} else {
+			opaqueUnits[MDL_TYPE(u)][TEX_TYPE(u)].erase(u);
 		}
 	}
 }
