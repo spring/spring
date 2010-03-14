@@ -1131,7 +1131,7 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
-	if (advShading) {
+	if (advShading && !water->drawReflection) {
 		const unsigned char* col = teamHandler->Team(team)->color;
 
 		S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
