@@ -21,6 +21,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 
@@ -49,6 +50,8 @@ CR_REG_METADATA(CFeatureDrawer, (
 
 CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false)
 {
+	eventHandler.AddClient(this);
+
 	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
@@ -61,6 +64,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 CFeatureDrawer::~CFeatureDrawer()
 {
+	eventHandler.RemoveClient(this);
 	delete treeDrawer;
 }
 

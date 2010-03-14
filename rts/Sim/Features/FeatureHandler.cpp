@@ -316,8 +316,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-	if (freeIDs.empty())
-	{ // alloc n new ids and randomly insert to freeIDs
+	if (freeIDs.empty()) {
+		// alloc n new ids and randomly insert to freeIDs
 		const unsigned n = 100;
 		std::vector<int> newIds(n);
 		for (unsigned i = 0; i < n; ++i)
