@@ -1,7 +1,6 @@
 #include "LuaLobby.h"
 
 #include "LogOutput.h"
-#include <boost-1_42/boost/concept_check.hpp>
 
 CLogSubsystem LobbyLog("LuaLobby");
 
@@ -357,7 +356,7 @@ void LuaLobby::ChannelMessage(const std::string& channel, const std::string& tex
 	Lunar<LuaLobby>::push(L, this);
 	lua_pushstring(L, channel.c_str());
 	lua_pushstring(L, text.c_str());
-	const int ret = Lunar<LuaLobby>::call(L, "ChannelTopic", 2, 0);
+	const int ret = Lunar<LuaLobby>::call(L, "ChannelMessage", 2, 0);
 	if (ret < 0)
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
