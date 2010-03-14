@@ -330,6 +330,13 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		std::string topic = buf.GetSentence();
 		ChannelTopic(channame, author, time, topic);
 	}
+	else if (command == "CHANNELMESSAGE")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string message = buf.GetSentence();
+		ChannelMessage(channame, message);
+	}
 	else if (command == "AGREEMENT")
 	{
 		aggreementbuf += msg + "\n";
