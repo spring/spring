@@ -332,6 +332,16 @@ void LuaLobby::ChannelTopic(const std::string& channame, const std::string& auth
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
 
+void LuaLobby::ChannelMessage(const std::string& channel, const std::string& text)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, channel.c_str());
+	lua_pushstring(L, text.c_str());
+	const int ret = Lunar<LuaLobby>::call(L, "ChannelTopic", 2, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
 int LuaLobby::Say(lua_State *L)
 {
 	std::string channame(luaL_checkstring(L, 1));

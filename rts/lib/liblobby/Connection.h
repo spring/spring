@@ -129,6 +129,7 @@ public:
 
 	void ChangeTopic(const std::string& channame, const std::string& topic);
 	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic) {};
+	virtual void ChannelMessage(const std::string& channel, const std::string& text) {};
 
 	void Say(const std::string& channel, const std::string& text);
 	void SayEx(const std::string& channel, const std::string& text);

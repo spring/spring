@@ -56,6 +56,7 @@ public:
 	
 	int ChangeTopic(lua_State *L);
 	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic);
+	virtual void ChannelMessage(const std::string& channel, const std::string& text);
 
 	int Say(lua_State *L);
 	int SayEx(lua_State *L);
