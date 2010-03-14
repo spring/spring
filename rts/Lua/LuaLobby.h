@@ -52,6 +52,9 @@ public:
 	virtual void JoinFailed(const std::string& channame, const std::string& reason);
 	int LeaveChannel(lua_State *L);
 	
+	int ChangeTopic(lua_State *L);
+	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic);
+
 	int Say(lua_State *L);
 	int SayEx(lua_State *L);
 	int SayPrivate(lua_State *L);

@@ -60,6 +60,14 @@ public:
 		return temp;
 	};
 	
+	long unsigned GetTime()
+	{
+		std::istringstream buf(GetWord());
+		long unsigned temp;
+		buf >> temp;
+		return temp;
+	};
+
 private:
 	std::string message;
 	size_t pos;
@@ -116,6 +124,9 @@ public:
 	virtual void Joined(const std::string& channame) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
 	void LeaveChannel(const std::string& channame);
+
+	void ChangeTopic(const std::string& channame, const std::string& topic);
+	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic) {};
 
 	void Say(const std::string& channel, const std::string& text);
 	void SayEx(const std::string& channel, const std::string& text);

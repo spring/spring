@@ -290,6 +290,26 @@ int LuaLobby::LeaveChannel(lua_State *L)
 	return 1;
 }
 
+int LuaLobby::ChangeTopic(lua_State *L)
+{
+	std::string channame(luaL_checkstring(L, 1));
+	std::string topic(luaL_checkstring(L, 2));
+	Connection::ChangeTopic(channame, topic);
+	return 1;
+}
+
+void LuaLobby::ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic)
+{
+	Lunar<LuaLobby>::push(L, this);
+	lua_pushstring(L, channame.c_str());
+	lua_pushstring(L, author.c_str());
+	lua_pushnumber(L, time/1000);
+	lua_pushstring(L, topic.c_str());
+	const int ret = Lunar<LuaLobby>::call(L, "ChannelTopic", 4, 0);
+	if (ret < 0)
+		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
+}
+
 int LuaLobby::Say(lua_State *L)
 {
 	std::string channame(luaL_checkstring(L, 1));
