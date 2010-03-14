@@ -105,6 +105,10 @@ public:
 	virtual void RemoveUser(const std::string& name) {};
 	virtual void ClientStatusUpdate(const std::string& name, ClientStatus status) {};
 
+	void Channels();
+	virtual void ChannelInfo(const std::string& channel, unsigned users) {};
+	virtual void ChannelInfoEnd() {};
+
 	void JoinChannel(const std::string& channame, const std::string& password = "");
 	virtual void Joined(const std::string& channame) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
