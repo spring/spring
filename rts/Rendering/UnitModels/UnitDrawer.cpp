@@ -127,6 +127,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 #endif
 
 
+	ghostBuildings.resize(MODELTYPE_OTHER);
+
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
 
@@ -147,20 +149,14 @@ CUnitDrawer::~CUnitDrawer(void)
 
 	std::list<GhostBuilding*>::iterator gbi;
 
-	for (gbi = ghostBuildings.begin(); gbi != ghostBuildings.end(); /* no inc */) {
-		if ((*gbi)->decal) {
-			(*gbi)->decal->gbOwner = 0;
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		for (gbi = ghostBuildings[modelType].begin(); gbi != ghostBuildings[modelType].end(); /* no inc */) {
+			if ((*gbi)->decal) {
+				(*gbi)->decal->gbOwner = 0;
+			}
+			delete *gbi;
+			gbi = ghostBuildings[modelType].erase(gbi);
 		}
-		delete *gbi;
-		gbi = ghostBuildings.erase(gbi);
-	}
-
-	for (gbi = ghostBuildingsS3O.begin(); gbi != ghostBuildingsS3O.end(); /* no inc */) {
-		if ((*gbi)->decal) {
-			(*gbi)->decal->gbOwner = 0;
-		}
-		delete *gbi;
-		gbi = ghostBuildingsS3O.erase(gbi);
 	}
 
 #ifdef USE_GML
@@ -168,6 +164,8 @@ CUnitDrawer::~CUnitDrawer(void)
 	configHandler->Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
 #endif
 
+
+	ghostBuildings.clear();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		delete opaqueModelRenderers[modelType];
@@ -302,73 +300,39 @@ void CUnitDrawer::Update(void)
 
 
 
-//! only called by DoDrawUnitHelper
-inline void CUnitDrawer::DrawUnitLOD(CUnit* unit)
-{
-	if (unit->isCloaked) {
-		const LuaMatType matType = (water->drawReflection)?
-			LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA;
-		LuaUnitMaterial& unitMat = unit->luaMats[matType];
-		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
-		unit->currentLOD = lod;
-		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-		if ((lodMat != NULL) && lodMat->IsActive()) {
-			lodMat->AddUnit(unit);
-		} else {
-			if (unit->model->type == MODELTYPE_S3O) {
-				drawCloakedS3O.push_back(unit);
-			} else {
-				drawCloaked.push_back(unit);
-			}
-		}
-	} else {
-		const LuaMatType matType =
-			(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-		LuaUnitMaterial& unitMat = unit->luaMats[matType];
-		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
-		unit->currentLOD = lod;
-		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-		if ((lodMat != NULL) && lodMat->IsActive()) {
-			lodMat->AddUnit(unit);
-		} else {
-			if (unit->model->type == MODELTYPE_S3O) {
-				QueS3ODraw(unit, unit->model->textureType);
-			} else {
-				//! note: team-color?
-				DrawUnitNow(unit);
-			}
-		}
-	}
-}
-
 //! only called by DoDrawUnit
-inline void CUnitDrawer::DoDrawUnitHelper(CUnit* unit)
+inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
 	if (unit->lodCount > 0) {
-		DrawUnitLOD(unit);
-		return;
+		if (unit->isCloaked) {
+			const LuaMatType matType = (water->drawReflection)?
+				LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA;
+			LuaUnitMaterial& unitMat = unit->luaMats[matType];
+			const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+			unit->currentLOD = lod;
+			LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
+
+			if ((lodMat != NULL) && lodMat->IsActive()) {
+				lodMat->AddUnit(unit); return true;
+			}
+		} else {
+			const LuaMatType matType =
+				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+			LuaUnitMaterial& unitMat = unit->luaMats[matType];
+			const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+			unit->currentLOD = lod;
+			LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
+
+			if ((lodMat != NULL) && lodMat->IsActive()) {
+				lodMat->AddUnit(unit); return true;
+			}
+		}
 	}
 
-	if (unit->model->type == MODELTYPE_S3O) {
-		if (unit->isCloaked) {
-			drawCloakedS3O.push_back(unit);
-		} else {
-			QueS3ODraw(unit, unit->model->textureType);
-		}
-	} else {
-		if (unit->isCloaked) {
-			drawCloaked.push_back(unit);
-		} else {
-			// non-cloaked 3DO's are not queued
-			SetTeamColour(unit->team);
-			DrawUnitNow(unit);
-		}
-	}
+	return false;
 }
 
-inline void CUnitDrawer::DoDrawUnit(CUnit* unit, bool drawReflection, bool drawRefraction, CUnit* excludeUnit)
+inline void CUnitDrawer::DoDrawUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
 	if (unit == excludeUnit) {
 		return;
@@ -418,7 +382,10 @@ inline void CUnitDrawer::DoDrawUnit(CUnit* unit, bool drawReflection, bool drawR
 			if (sqDist > farLength) {
 				drawFar.push_back(unit);
 			} else {
-				DoDrawUnitHelper(unit);
+				if (!DrawUnitLOD(unit)) {
+					SetTeamColour(unit->team);
+					DrawUnitNow(unit);
+				}
 			}
 
 			if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
@@ -432,19 +399,6 @@ inline void CUnitDrawer::DoDrawUnit(CUnit* unit, bool drawReflection, bool drawR
 			const float sqDist = (unit->pos-camera->pos).SqLength();
 
 			unit->isIcon = DrawAsIcon(*unit, sqDist);
-
-			if (!unit->isIcon) {
-				S3DModel* model = unit->model;
-				if (unit->unitDef->decoyDef) {
-					model = unit->unitDef->decoyDef->LoadModel();
-				}
-
-				if (model->type == MODELTYPE_S3O) {
-					drawCloakedS3O.push_back(unit);
-				} else {
-					drawCloaked.push_back(unit);
-				}
-			}
 		}
 		if (losStatus & LOS_INRADAR) {
 			if (!(losStatus & LOS_CONTRADAR)) {
@@ -466,15 +420,14 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	drawFar.clear();
 	drawStat.clear();
+	drawIcon.clear();
+	drawRadarIcon.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	if (gu->drawFog) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}
-
-	drawIcon.clear();
-	drawRadarIcon.clear();
 
 	if (drawReflection) {
 		CUnit::SetLODFactor(LODScale * LODScaleReflection);
@@ -489,17 +442,15 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	camNorm.ANormalize();
 
 	SetupForUnitDrawing();
-	SetupFor3DO();
 
-	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
+	const CUnit* excludeUnit = drawReflection? NULL: gu->directControl;
 
+	// lock on the bins
 	GML_RECMUTEX_LOCK(unit); // Draw
 
-	drawCloaked.clear();
-	drawCloakedS3O.clear();
-
-
 #ifdef USE_GML
+	/*
+	// FIXME: this code-path is now broken
 	if (multiThreadDrawUnit) {
 		mt_drawReflection = drawReflection; // these member vars will be accessed by DoDrawUnitMT
 		mt_drawRefraction = drawRefraction;
@@ -509,89 +460,147 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 			FALSE, &unsortedUnitsGML, unsortedUnitsGML.size(), 50, 100, TRUE
 		);
 	}
-	else
+	*/
 #endif
-	{
-		//! note: unsorted list of 3DO and S3O units
-		//! this queues up S3O's and (cloaked) 3DO's
-		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
-			DoDrawUnit(*usi, drawReflection, drawRefraction, excludeUnit);
-		}
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
 	}
 
-
-	{
-		GML_STDMUTEX_LOCK(temp); // Draw
-
-		// non-cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
-		for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
-			if (camera->InView(ti->second.pos, 100)) {
-				glPushMatrix();
-				glTranslatef3(ti->second.pos);
-				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
-
-				const UnitDef* udef = ti->second.unitdef;
-				const S3DModel* model = udef->LoadModel();
-
-				model->DrawStatic();
-				glPopMatrix();
-			}
-		}
-	}
-
-	CleanUp3DO();
-	DrawQuedS3O();
 	CleanUpUnitDrawing();
 
-
 	DrawOpaqueShaderUnits();
+	DrawFarTextures();
+	DrawUnitIcons(drawReflection);
 
-	if (drawFar.size() > 0) {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
-		glActiveTexture(GL_TEXTURE0);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
-		glColor4f(1, 1, 1, 1);
-		glNormal3fv((const GLfloat*) &camNorm.x);
+	glDisable(GL_FOG);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_TEXTURE_2D);
+}
 
-		if (gu->drawFog) {
-			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-			glEnable(GL_FOG);
+
+
+void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+{
+	const std::map<int, std::set<CUnit*> >& opaqueUnits =
+		opaqueModelRenderers[modelType]->GetUnitBin();
+
+	std::map<int, std::set<CUnit*> >::const_iterator binIt;
+	std::set<CUnit*>::const_iterator setIt;
+
+	#define DRAW_UNIT_SET(units)                                                          \
+		for (binIt = units.begin(); binIt != units.end(); binIt++) {                      \
+			if (modelType == MODELTYPE_S3O) {                                             \
+				texturehandlerS3O->SetS3oTexture(binIt->first);                           \
+			}                                                                             \
+                                                                                          \
+			const std::set<CUnit*>& opaqueUnitSet = binIt->second;                        \
+                                                                                          \
+			for (setIt = opaqueUnitSet.begin(); setIt != opaqueUnitSet.end(); setIt++) {  \
+				DoDrawUnit(*setIt, excludeUnit, drawReflection, drawRefraction);          \
+			}                                                                             \
 		}
 
-		va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
-		for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); it++) {
-			farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
-		}
+	switch (modelType) {
+		case MODELTYPE_3DO: {
+			SetupFor3DO();
 
-		va->DrawArrayT(GL_QUADS);
+			DRAW_UNIT_SET(opaqueUnits);
+
+			DrawOpaqueAIUnits();
+			CleanUp3DO();
+		} break;
+
+		case MODELTYPE_S3O: {
+			DRAW_UNIT_SET(opaqueUnits);
+
+			// draw non-unit opaque S3O cruft
+			// (ie. features and projectiles)
+			DrawQuedS3O();
+		} break;
+
+		default: {
+		} break;
 	}
 
+	#undef DRAW_UNIT_SET
+}
+
+void CUnitDrawer::DrawOpaqueAIUnits()
+{
+	GML_STDMUTEX_LOCK(temp);
+
+	// non-cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
+	for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
+		if (camera->InView(ti->second.pos, 100)) {
+			glPushMatrix();
+			glTranslatef3(ti->second.pos);
+			glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
+
+			const UnitDef* udef = ti->second.unitdef;
+			const S3DModel* model = udef->LoadModel();
+
+			model->DrawStatic();
+			glPopMatrix();
+		}
+	}
+}
+
+void CUnitDrawer::DrawFarTextures()
+{
+	if (drawFar.empty()) {
+		return;
+	}
+
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.5f);
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glNormal3fv((const GLfloat*) &camNorm.x);
+
+	if (gu->drawFog) {
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+		glEnable(GL_FOG);
+	}
+
+	va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
+	for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); it++) {
+		farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
+	}
+
+	va->DrawArrayT(GL_QUADS);
+}
+
+void CUnitDrawer::DrawUnitIcons(bool drawReflection)
+{
 	if (!drawReflection) {
 		// Draw unit icons and radar blips.
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
+
 		GML_VECTOR<CUnit*>::iterator ui;
+
 		for (ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
 			DrawIcon(*ui, false);
 		}
 		for (ui = drawRadarIcon.begin(); ui != drawRadarIcon.end(); ++ui) {
 			DrawIcon(*ui, true);
 		}
+
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_ALPHA_TEST);
 		for (ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
 			DrawUnitStats(*ui);
 		}
 	}
-
-	glDisable(GL_FOG);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
 }
+
+
+
 
 
 /******************************************************************************/
@@ -832,7 +841,6 @@ void CUnitDrawer::DrawShadowPass(void)
 	else
 #endif
 	{
-		//! note: unsorted list of 3DO and S3O units
 		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
 			DoDrawUnitShadow(*usi);
 		}
@@ -978,14 +986,7 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 
 		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
-		// 3DO transparent units
-		SetupFor3DO();
-		DrawCloakedUnitsHelper(drawCloaked, ghostBuildings, false);
-		CleanUp3DO();
-
-		// S3O transparent units
-		DrawCloakedUnitsHelper(drawCloakedS3O, ghostBuildingsS3O, true);
-
+		DrawCloakedUnitsHelper();
 
 		if (advShading) {
 			CleanUpUnitDrawing();
@@ -997,62 +998,46 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 		advShading = oldAdvShading;
 	}
 
-
 	// shader rendering
 	DrawCloakedShaderUnits();
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::list<GhostBuilding*>& ghostedBuildings, bool s3oPass)
+void CUnitDrawer::DrawCloakedUnitsHelper()
 {
-	if (!s3oPass) {
-		GML_STDMUTEX_LOCK(temp);
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		if (modelType == MODELTYPE_3DO) {
+			SetupFor3DO();
+			DrawCloakedAIUnits();
+		}
 
-		// cloaked AI unit ghosts (FIXME: s3o's + teamcolor)
-		for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
-			if (camera->InView(ti->second.pos, 100)) {
-				glPushMatrix();
-				glTranslatef3(ti->second.pos);
-				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
+		{
+			typedef std::map<int, std::set<CUnit*> > UnitRenderBin;
+			typedef std::map<int, std::set<CUnit*> >::const_iterator UnitRenderBinIt;
 
-				const UnitDef* udef = ti->second.unitdef;
-				const S3DModel* model = udef->LoadModel();
+			const UnitRenderBin& cloakedUnitSets =
+				cloakedModelRenderers[modelType]->GetUnitBin();
 
-				SetTeamColour(ti->second.team, cloakAlpha);
+			// cloaked units and living ghosted buildings
+			for (UnitRenderBinIt it = cloakedUnitSets.begin(); it != cloakedUnitSets.end(); it++) {
+				if (modelType == MODELTYPE_S3O) {
+					texturehandlerS3O->SetS3oTexture(it->first);
+				}
 
-				model->DrawStatic();
-				glPopMatrix();
-			}
-			if (ti->second.drawBorder) {
-				float3 pos = ti->second.pos;
-				const UnitDef *unitdef = ti->second.unitdef;
-
-				SetTeamColour(ti->second.team, cloakAlpha3);
-
-				BuildInfo bi(unitdef, pos, ti->second.facing);
-				pos = helper->Pos2BuildPos(bi);
-
-				const float xsize = bi.GetXSize() * 4;
-				const float zsize = bi.GetZSize() * 4;
-
-				glColor4f(0.2f, 1, 0.2f, cloakAlpha3);
-				glDisable(GL_TEXTURE_2D);
-				glBegin(GL_LINE_STRIP);
-					glVertexf3(pos + float3( xsize, 1.0f,  zsize));
-					glVertexf3(pos + float3(-xsize, 1.0f,  zsize));
-					glVertexf3(pos + float3(-xsize, 1.0f, -zsize));
-					glVertexf3(pos + float3( xsize, 1.0f, -zsize));
-					glVertexf3(pos + float3( xsize, 1.0f,  zsize));
-				glEnd();
-				glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
-				glEnable(GL_TEXTURE_2D);
+				DrawCloakedUnitsSet(it->second, modelType);
 			}
 		}
+
+		DrawGhostedBuildings(modelType);
+
+		if (modelType == MODELTYPE_3DO) {
+			CleanUp3DO();
+		}
 	}
+}
 
-
-	// cloaked units and living ghosted buildings (stored in same vector)
-	for (GML_VECTOR<CUnit*>::iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
+void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int modelType) {
+	for (std::set<CUnit*>::const_iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
 		CUnit* unit = *ui;
 
 		#if defined(USE_GML) && GML_ENABLE_SIM
@@ -1062,13 +1047,26 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-			if (s3oPass) {
-				texturehandlerS3O->SetS3oTexture(unit->model->textureType);
-			}
-
 			SetTeamColour(unit->team, cloakAlpha);
 			DrawUnitNow(unit);
 		} else {
+			// check for decoy models
+			const UnitDef* decoyDef = unit->unitDef->decoyDef;
+			const S3DModel* model = NULL;
+
+			if (decoyDef == NULL) {
+				model = unit->model;
+			} else {
+				model = decoyDef->LoadModel();
+			}
+
+
+			// FIXME: needs a second pass
+			if (model->type != modelType) {
+				continue;
+			}
+
+
 			// ghosted enemy units
 			if (losStatus & LOS_CONTRADAR) {
 				glColor4f(0.9f, 0.9f, 0.9f, cloakAlpha2);
@@ -1080,20 +1078,6 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-			// check for decoy models
-			const UnitDef* decoyDef = unit->unitDef->decoyDef;
-			const S3DModel* model = NULL;
-
-			if (decoyDef == NULL) {
-				model = unit->model;
-			} else {
-				model = decoyDef->LoadModel();
-			}
-
-			if (s3oPass) {
-				texturehandlerS3O->SetS3oTexture(model->textureType);
-			}
-
 			SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
 			model->DrawStatic();
 			glPopMatrix();
@@ -1101,11 +1085,61 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 			glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
 		}
 	}
+}
 
+void CUnitDrawer::DrawCloakedAIUnits()
+{
+	GML_STDMUTEX_LOCK(temp);
+
+	// cloaked AI unit ghosts (FIXME: S3O's need different state)
+	for (std::multimap<int, TempDrawUnit>::iterator ti = tempTransparentDrawUnits.begin(); ti != tempTransparentDrawUnits.end(); ++ti) {
+		if (camera->InView(ti->second.pos, 100)) {
+			glPushMatrix();
+			glTranslatef3(ti->second.pos);
+			glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
+
+			const UnitDef* udef = ti->second.unitdef;
+			const S3DModel* model = udef->LoadModel();
+
+			SetTeamColour(ti->second.team, cloakAlpha);
+
+			model->DrawStatic();
+			glPopMatrix();
+		}
+		if (ti->second.drawBorder) {
+			float3 pos = ti->second.pos;
+			const UnitDef* unitdef = ti->second.unitdef;
+
+			SetTeamColour(ti->second.team, cloakAlpha3);
+
+			BuildInfo bi(unitdef, pos, ti->second.facing);
+			pos = helper->Pos2BuildPos(bi);
+
+			const float xsize = bi.GetXSize() * 4;
+			const float zsize = bi.GetZSize() * 4;
+
+			glColor4f(0.2f, 1, 0.2f, cloakAlpha3);
+			glDisable(GL_TEXTURE_2D);
+			glBegin(GL_LINE_STRIP);
+				glVertexf3(pos + float3( xsize, 1.0f,  zsize));
+				glVertexf3(pos + float3(-xsize, 1.0f,  zsize));
+				glVertexf3(pos + float3(-xsize, 1.0f, -zsize));
+				glVertexf3(pos + float3( xsize, 1.0f, -zsize));
+				glVertexf3(pos + float3( xsize, 1.0f,  zsize));
+			glEnd();
+			glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+			glEnable(GL_TEXTURE_2D);
+		}
+	}
+}
+
+void CUnitDrawer::DrawGhostedBuildings(int modelType)
+{
+	std::list<GhostBuilding*>& ghostedBuildings = ghostBuildings[modelType];
 
 	// buildings that died but were still ghosted
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
-	for (std::list<GhostBuilding*>::iterator gbi = ghostedBuildings.begin(); gbi != ghostedBuildings.end();) {
+	for (std::list<GhostBuilding*>::iterator gbi = ghostedBuildings.begin(); gbi != ghostedBuildings.end(); ) {
 		if (loshandler->InLos((*gbi)->pos, gu->myAllyTeam)) {
 			if ((*gbi)->decal)
 				(*gbi)->decal->gbOwner = 0;
@@ -1118,7 +1152,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 				glTranslatef3((*gbi)->pos);
 				glRotatef((*gbi)->facing * 90.0f, 0, 1, 0);
 
-				if (s3oPass) {
+				if (modelType == MODELTYPE_S3O) {
 					texturehandlerS3O->SetS3oTexture((*gbi)->model->textureType);
 				}
 
@@ -1130,7 +1164,6 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 		}
 	}
 }
-
 
 
 
@@ -2157,12 +2190,6 @@ void CUnitDrawer::UpdateDrawPos(CUnit* u) {
 
 
 
-void CUnitDrawer::DrawUnitS3O(CUnit* unit)
-{
-	SetTeamColour(unit->team);
-	DrawUnitNow(unit);
-}
-
 void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 {
 	glPushMatrix();
@@ -2191,35 +2218,6 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 	return asIcon;
 }
 
-
-
-/*
-void CUnitDrawer::DrawUnitBins() {
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		const std::map<int, std::set<CUnit*> >& opaqueUnits = opaqueModelRenderers[modelType]->GetUnitBin();
-		const std::map<int, std::set<CUnit*> >& cloakedUnits = cloakedModelRenderers[modelType]->GetUnitBin();
-
-		std::map<int, std::set<CUnit*> >::const_iterator binIt;
-		std::set<CUnit*>::const_iterator setIt;
-
-		for (binIt = opaqueUnits.begin(); binIt != opaqueUnits.end(); binIt++) {
-			const std::set<CUnit*>& opaqueUnitSet = binIt->second;
-
-			for (setIt = opaqueUnitSet.begin(); setIt != opaqueUnitSet.end(); setIt++) {
-				DrawUnit(*setIt);
-			}
-		}
-
-		for (binIt = cloakedUnits.begin(); binIt != cloakedUnits.end(); binIt++) {
-			const std::set<CUnit*>& cloakedUnitSet = binIt->second;
-
-			for (setIt = cloakedUnitSet.begin(); setIt != cloakedUnitSet.end(); setIt++) {
-				DrawUnit(*setIt);
-			}
-		}
-	}
-}
-*/
 
 
 
@@ -2335,17 +2333,6 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 
 
 
-void CUnitDrawer::SwapCloakedUnits()
-{
-	GML_RECMUTEX_LOCK(unit); // SwapCloakedUnits
-
-	drawCloaked.swap(drawCloakedSave);
-	drawCloakedS3O.swap(drawCloakedS3OSave);
-}
-
-
-
-
 void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 	// this MUST block the renderer thread or there will be trouble
 	GML_STDMUTEX_LOCK(unit);
@@ -2362,9 +2349,9 @@ void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 
 	if (u->model) {
 		if (u->isCloaked) {
-			// cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
-			// opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		}
 	}
 
@@ -2396,11 +2383,7 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 				gb->facing = building->buildFacing;
 				gb->team   = building->team;
 
-				if (gbModel->type == MODELTYPE_S3O) {
-					ghostBuildingsS3O.push_back(gb);
-				} else {
-					ghostBuildings.push_back(gb);
-				}
+				ghostBuildings[gbModel->type].push_back(gb);
 			}
 		}
 
@@ -2412,41 +2395,23 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 
 	if (u->model) {
 		if (u->isCloaked) {
-			// cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		} else {
-			// opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		}
 	}
 
 	unsortedUnits.erase(const_cast<CUnit*>(u));
 
 
-#if defined(USE_GML)
+	#if defined(USE_GML)
 	for (std::list<CUnit*>::iterator usi = unsortedUnitsGML.begin(); usi != unsortedUnitsGML.end(); ++usi) {
 		if (*usi == unit) {
 			unsortedUnitsGML.erase(usi);
 			break;
 		}
 	}
-
-#if GML_ENABLE_SIM
-	for (int i = drawCloaked.size() - 1; i >= 0; i--) {
-		if (drawCloaked[i] == delUnit) { drawCloaked[i] = NULL; }
-	}
-
-	for (int i = drawCloakedS3O.size() - 1; i >= 0; i--) {
-		if (drawCloakedS3O[i] == delUnit) { drawCloakedS3O[i] = NULL; }
-	}
-
-	for (int i = drawCloakedSave.size() - 1; i >= 0; i--) {
-		if (drawCloakedSave[i] == delUnit) { drawCloakedSave[i] = NULL; }
-	}
-
-	for (int i = drawCloakedS3OSave.size() - 1; i >= 0; i--) {
-		if (drawCloakedS3OSave[i] == delUnit) { drawCloakedS3OSave[i] = NULL; }
-	}
-#endif
-#endif
+	#endif
 }
 
 
@@ -2454,8 +2419,8 @@ void CUnitDrawer::UnitCloaked(const CUnit* u) {
 	GML_STDMUTEX_LOCK(unit);
 
 	if (u->model) {
-		// cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		// opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }
 
@@ -2463,7 +2428,7 @@ void CUnitDrawer::UnitDecloaked(const CUnit* u) {
 	GML_STDMUTEX_LOCK(unit);
 
 	if (u->model) {
-		// opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		// cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }

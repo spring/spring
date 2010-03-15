@@ -20,7 +20,6 @@
 #include "Map/ReadMap.h"
 
 #include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
@@ -2161,12 +2160,6 @@ void CUnit::PostLoad()
 	}
 }
 
-
-
-void CUnit::DrawS3O()
-{
-	unitDrawer->DrawUnitS3O(this);
-}
 
 
 void CUnit::LogMessage(const char *fmt, ...)

@@ -2860,10 +2860,10 @@ bool CGame::DrawWorld()
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
 			//! Water rendering may overwrite cloaked objects, so save them
-			SwapTransparentObjects();
+			featureDrawer->SwapFadeFeatures();
 			water->UpdateWater(this);
 			water->Draw();
-			SwapTransparentObjects();
+			featureDrawer->SwapFadeFeatures();
 		}
 	}
 
@@ -2976,10 +2976,7 @@ bool CGame::DrawWorld()
 	return true;
 }
 
-void CGame::SwapTransparentObjects() {
-	unitDrawer->SwapCloakedUnits();
-	featureDrawer->SwapFadeFeatures();
-}
+
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {

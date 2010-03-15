@@ -187,8 +187,6 @@ private:
 	float consumeSpeed; ///< How fast we should eat NETMSG_NEWFRAMEs.
 	unsigned lastframe; ///< SDL_GetTicks() in previous ClientReadNet() call.
 
-	void SwapTransparentObjects();
-
 	int skipStartFrame;
 	int skipEndFrame;
 	int skipTotalFrames;
