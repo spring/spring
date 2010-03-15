@@ -11,6 +11,7 @@
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnits.h"
 #include "Game/CameraHandler.h"
+#include "Game/UI/MiniMap.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
 #include "Lua/LuaRules.h"
@@ -33,6 +34,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
 
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Features/Feature.h"
@@ -123,6 +125,15 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
 	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
+
+
+	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
+	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		opaqueModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		cloakedModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+	}
 }
 
 CUnitDrawer::~CUnitDrawer(void)
@@ -156,7 +167,17 @@ CUnitDrawer::~CUnitDrawer(void)
 	configHandler->Set("MultiThreadDrawUnit", multiThreadDrawUnit);
 	configHandler->Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
 #endif
+
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		delete opaqueModelRenderers[modelType];
+		delete cloakedModelRenderers[modelType];
+	}
+
+	opaqueModelRenderers.clear();
+	cloakedModelRenderers.clear();
 }
+
 
 
 bool CUnitDrawer::LoadModelShaders()
@@ -259,7 +280,7 @@ void CUnitDrawer::Update(void)
 	{
 		GML_RECMUTEX_LOCK(unit); // Update
 
-		for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
+		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
 			UpdateDrawPos(*usi);
 		}
 	}
@@ -477,6 +498,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawCloaked.clear();
 	drawCloakedS3O.clear();
 
+
 #ifdef USE_GML
 	if (multiThreadDrawUnit) {
 		mt_drawReflection = drawReflection; // these member vars will be accessed by DoDrawUnitMT
@@ -484,7 +506,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		mt_excludeUnit = excludeUnit;
 		gmlProcessor->Work(
 			NULL, NULL, &CUnitDrawer::DoDrawUnitMT, this, gmlThreadCount,
-			FALSE, &renderUnits, renderUnits.size(), 50, 100, TRUE
+			FALSE, &unsortedUnitsGML, unsortedUnitsGML.size(), 50, 100, TRUE
 		);
 	}
 	else
@@ -492,10 +514,11 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	{
 		//! note: unsorted list of 3DO and S3O units
 		//! this queues up S3O's and (cloaked) 3DO's
-		for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
+		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
 			DoDrawUnit(*usi, drawReflection, drawRefraction, excludeUnit);
 		}
 	}
+
 
 	{
 		GML_STDMUTEX_LOCK(temp); // Draw
@@ -795,20 +818,22 @@ void CUnitDrawer::DrawShadowPass(void)
 
 	CUnit::SetLODFactor(LODScale * LODScaleShadow);
 
+
 	GML_RECMUTEX_LOCK(unit); // DrawShadowPass
+
 
 #ifdef USE_GML
 	if (multiThreadDrawUnitShadow) {
 		gmlProcessor->Work(
 			NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount,
-			FALSE, &renderUnits, renderUnits.size(), 50, 100, TRUE
+			FALSE, &unsortedUnitsGML, unsortedUnitsGML.size(), 50, 100, TRUE
 		);
 	}
 	else
 #endif
 	{
 		//! note: unsorted list of 3DO and S3O units
-		for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
+		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
 			DoDrawUnitShadow(*usi);
 		}
 	}
@@ -2168,6 +2193,35 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 
 
 
+/*
+void CUnitDrawer::DrawUnitBins() {
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		const std::map<int, std::set<CUnit*> >& opaqueUnits = opaqueModelRenderers[modelType]->GetUnitBin();
+		const std::map<int, std::set<CUnit*> >& cloakedUnits = cloakedModelRenderers[modelType]->GetUnitBin();
+
+		std::map<int, std::set<CUnit*> >::const_iterator binIt;
+		std::set<CUnit*>::const_iterator setIt;
+
+		for (binIt = opaqueUnits.begin(); binIt != opaqueUnits.end(); binIt++) {
+			const std::set<CUnit*>& opaqueUnitSet = binIt->second;
+
+			for (setIt = opaqueUnitSet.begin(); setIt != opaqueUnitSet.end(); setIt++) {
+				DrawUnit(*setIt);
+			}
+		}
+
+		for (binIt = cloakedUnits.begin(); binIt != cloakedUnits.end(); binIt++) {
+			const std::set<CUnit*>& cloakedUnitSet = binIt->second;
+
+			for (setIt = cloakedUnitSet.begin(); setIt != cloakedUnitSet.end(); setIt++) {
+				DrawUnit(*setIt);
+			}
+		}
+	}
+}
+*/
+
+
 
 //! visualize if a unit can be built at specified position
 int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo)
@@ -2292,8 +2346,6 @@ void CUnitDrawer::SwapCloakedUnits()
 
 
 
-
-
 void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 	// this MUST block the renderer thread or there will be trouble
 	GML_STDMUTEX_LOCK(unit);
@@ -2307,7 +2359,16 @@ void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 		}
 	}
 
-	renderUnits.push_back(unit);
+
+	if (u->model) {
+		if (u->isCloaked) {
+			// cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		} else {
+			// opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		}
+	}
+
+	unsortedUnits.insert(const_cast<CUnit*>(u));
 }
 
 void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
@@ -2348,14 +2409,27 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 		}
 	}
 
-	for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
+
+	if (u->model) {
+		if (u->isCloaked) {
+			// cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		} else {
+			// opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		}
+	}
+
+	unsortedUnits.erase(const_cast<CUnit*>(u));
+
+
+#if defined(USE_GML)
+	for (std::list<CUnit*>::iterator usi = unsortedUnitsGML.begin(); usi != unsortedUnitsGML.end(); ++usi) {
 		if (*usi == unit) {
-			renderUnits.erase(usi);
+			unsortedUnitsGML.erase(usi);
 			break;
 		}
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if GML_ENABLE_SIM
 	for (int i = drawCloaked.size() - 1; i >= 0; i--) {
 		if (drawCloaked[i] == delUnit) { drawCloaked[i] = NULL; }
 	}
@@ -2372,10 +2446,24 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 		if (drawCloakedS3OSave[i] == delUnit) { drawCloakedS3OSave[i] = NULL; }
 	}
 #endif
+#endif
 }
 
 
 void CUnitDrawer::UnitCloaked(const CUnit* u) {
+	GML_STDMUTEX_LOCK(unit);
+
+	if (u->model) {
+		// cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		// opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+	}
 }
+
 void CUnitDrawer::UnitDecloaked(const CUnit* u) {
+	GML_STDMUTEX_LOCK(unit);
+
+	if (u->model) {
+		// opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		// cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+	}
 }

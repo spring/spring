@@ -1095,24 +1095,6 @@ void CUnit::Kill(float3& impulse) {
 
 
 
-void CUnit::UpdateDrawPos() {
-	CTransportUnit *trans=GetTransporter();
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (trans) {
-		drawPos = pos + (trans->speed * ((float)gu->lastFrameStart - (float)lastUnitUpdate) * gu->weightedSpeedFactor);
-	} else {
-		drawPos = pos + (speed * ((float)gu->lastFrameStart - (float)lastUnitUpdate) * gu->weightedSpeedFactor);
-	}
-#else
-	if (trans) {
-		drawPos = pos + (trans->speed * gu->timeOffset);
-	} else {
-		drawPos = pos + (speed * gu->timeOffset);
-	}
-#endif
-	drawMidPos = drawPos + (midPos - pos);
-}
-
 /******************************************************************************/
 /******************************************************************************/
 

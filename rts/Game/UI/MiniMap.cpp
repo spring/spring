@@ -1042,10 +1042,13 @@ void CMiniMap::DrawForReal()
 
 	{
 		GML_RECMUTEX_LOCK(unit); // DrawForReal
-		// draw the units
-		for (std::list<CUnit*>::iterator ui = unitDrawer->renderUnits.begin(); ui != unitDrawer->renderUnits.end(); ++ui) {
-			DrawUnit(*ui);
+
+		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
+
+		for (std::set<CUnit*>::const_iterator it = units.begin(); it != units.end(); it++) {
+			DrawUnit(*it);
 		}
+
 		// highlight the selected unit
 		CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 		if (unit != NULL) {
@@ -1390,7 +1393,7 @@ void CMiniMap::GetFrustumSide(float3& side)
 }
 
 
-inline const CIconData* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
+inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
 
@@ -1416,7 +1419,7 @@ inline const CIconData* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 }
 
 
-void CMiniMap::DrawUnit(CUnit* unit)
+void CMiniMap::DrawUnit(const CUnit* unit)
 {
 	// the simplest test
 	if (!unit)
@@ -1473,7 +1476,7 @@ void CMiniMap::DrawUnit(CUnit* unit)
 }
 
 
-void CMiniMap::DrawUnitHighlight(CUnit* unit)
+void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 {
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.1f);
