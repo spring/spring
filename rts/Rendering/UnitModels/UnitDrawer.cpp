@@ -1117,7 +1117,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
 
-	// buildings that died but were still ghosted
+	// buildings that died while ghosted
 	for (std::set<GhostBuilding*>::iterator gbi = deadGhostedBuildings.begin(); gbi != deadGhostedBuildings.end(); ) {
 		std::set<GhostBuilding*>::iterator gbiNext(gbi); gbiNext++;
 
@@ -1181,8 +1181,12 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
+			if (modelType == MODELTYPE_S3O) {
+				texturehandlerS3O->SetS3oTexture(model->textureType);
+			}
+
 			SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
-			unit->model->DrawStatic();
+			model->DrawStatic();
 			glPopMatrix();
 
 			glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
