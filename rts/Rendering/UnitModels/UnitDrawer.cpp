@@ -2355,7 +2355,11 @@ void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 		}
 	}
 
-	unsortedUnits.insert(const_cast<CUnit*>(u));
+	unsortedUnits.insert(unit);
+
+	#if defined(USE_GML)
+	unsortedUnitsGML.push_back(unit);
+	#endif
 }
 
 void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
@@ -2401,8 +2405,7 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 		}
 	}
 
-	unsortedUnits.erase(const_cast<CUnit*>(u));
-
+	unsortedUnits.erase(unit);
 
 	#if defined(USE_GML)
 	for (std::list<CUnit*>::iterator usi = unsortedUnitsGML.begin(); usi != unsortedUnitsGML.end(); ++usi) {
