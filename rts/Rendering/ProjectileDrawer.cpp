@@ -384,7 +384,7 @@ void CProjectileDrawer::DrawProjectiles(const ProjectileContainer& pc, bool draw
 		CProjectile* pro = *pci;
 		CUnit* owner = pro->owner();
 
-		pro->UpdateDrawPos();
+		UpdateDrawPos(pro);
 
 		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
 			(owner && teamHandler->Ally(pro->owner()->allyteam, gu->myAllyTeam)))) {
@@ -753,6 +753,15 @@ void CProjectileDrawer::DrawGroundFlashes(void)
 }
 
 
+
+
+void CProjectileDrawer::UpdateDrawPos(CProjectile* p) {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	p->drawPos = p->pos + (p->speed * ((float)gu->lastFrameStart - (float)p->lastProjUpdate) * gu->weightedSpeedFactor);
+#else
+	p->drawPos = p->pos + (p->speed * gu->timeOffset);
+#endif
+}
 
 
 

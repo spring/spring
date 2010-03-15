@@ -43,12 +43,12 @@ IModelDrawer::IModelDrawer(const std::string& name, int order, bool synced): CEv
 {
 	eventHandler.AddClient(this);
 
-	opaqueModels.resize(MODELTYPE_OTHER, NULL);
-	cloakedModels.resize(MODELTYPE_OTHER, NULL);
+	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
+	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModels[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
-		cloakedModels[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		opaqueModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		cloakedModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
 	}
 
 	#if (MODEL_DRAWER_DEBUG == 1)
@@ -61,12 +61,12 @@ IModelDrawer::~IModelDrawer()
 	eventHandler.RemoveClient(this);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		delete opaqueModels[modelType];
-		delete cloakedModels[modelType];
+		delete opaqueModelRenderers[modelType];
+		delete cloakedModelRenderers[modelType];
 	}
 
-	opaqueModels.clear();
-	cloakedModels.clear();
+	opaqueModelRenderers.clear();
+	cloakedModelRenderers.clear();
 
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::~IModelDrawer]");
@@ -87,9 +87,9 @@ void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
 	if (u->model) {
 		if (u->isCloaked) {
 			// units can start life cloaked
-			cloakedModels[MDL_TYPE(u)]->AddUnit(u);
+			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
-			opaqueModels[MDL_TYPE(u)]->AddUnit(u);
+			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		}
 	}
 }
@@ -105,9 +105,9 @@ void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
 
 	if (u->model) {
 		if (u->isCloaked) {
-			cloakedModels[MDL_TYPE(u)]->DelUnit(u);
+			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		} else {
-			opaqueModels[MDL_TYPE(u)]->DelUnit(u);
+			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		}
 	}
 }
@@ -123,8 +123,8 @@ void IModelDrawer::UnitCloaked(const CUnit* u)
 	#endif
 
 	if (u->model) {
-		cloakedModels[MDL_TYPE(u)]->AddUnit(u);
-		opaqueModels[MDL_TYPE(u)]->DelUnit(u);
+		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }
 
@@ -138,8 +138,8 @@ void IModelDrawer::UnitDecloaked(const CUnit* u)
 	#endif
 
 	if (u->model) {
-		opaqueModels[MDL_TYPE(u)]->AddUnit(u);
-		cloakedModels[MDL_TYPE(u)]->DelUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }
 
@@ -154,7 +154,7 @@ void IModelDrawer::FeatureCreated(const CFeature* f)
 	#endif
 
 	if (f->model) {
-		opaqueModels[MDL_TYPE(f)]->AddFeature(f);
+		opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 	}
 }
 
@@ -168,7 +168,7 @@ void IModelDrawer::FeatureDestroyed(const CFeature* f)
 	#endif
 
 	if (f->model) {
-		opaqueModels[MDL_TYPE(f)]->DelFeature(f);
+		opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
 }
 
@@ -183,7 +183,7 @@ void IModelDrawer::ProjectileCreated(const CProjectile* p)
 	#endif
 
 	if (p->model) {
-		opaqueModels[MDL_TYPE(p)]->AddProjectile(p);
+		opaqueModelRenderers[MDL_TYPE(p)]->AddProjectile(p);
 	}
 }
 
@@ -197,7 +197,7 @@ void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 	#endif
 
 	if (p->model) {
-		opaqueModels[MDL_TYPE(p)]->DelProjectile(p);
+		opaqueModelRenderers[MDL_TYPE(p)]->DelProjectile(p);
 	}
 }
 
@@ -206,7 +206,9 @@ void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
 
 void IModelDrawer::Draw()
 {
-	// TODO: LuaUnitRendering bypass
+	// TODO: write LuaUnitRendering bypass
+	// (need to know gameDrawMode and if we
+	// are drawing opaque or cloaked models)
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::Draw] frame=%d", gs->frameNum);
 	#endif
@@ -217,14 +219,14 @@ void IModelDrawer::Draw()
 	// opaque objects by <modelType, textureType>
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		PushDrawState(modelType);
-		opaqueModels[modelType]->Draw();
+		opaqueModelRenderers[modelType]->Draw();
 		PopDrawState(modelType);
 	}
 
 	// cloaked objects by <modelType, textureType> (TODO: above-/below-water separation, etc.)
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		PushDrawState(modelType);
-		cloakedModels[modelType]->Draw();
+		cloakedModelRenderers[modelType]->Draw();
 		PopDrawState(modelType);
 	}
 }

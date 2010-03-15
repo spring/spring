@@ -52,8 +52,8 @@ protected:
 
 	std::map<int, std::vector<Shader::IProgramObject*> > shaders;
 
-	std::vector<IWorldObjectModelRenderer*> opaqueModels;
-	std::vector<IWorldObjectModelRenderer*> cloakedModels;
+	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
+	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
 };
 
 

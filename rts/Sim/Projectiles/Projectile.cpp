@@ -165,19 +165,3 @@ int CProjectile::DrawArray()
 
 	return idx;
 }
-
-void CProjectile::DrawCallback(void)
-{
-}
-
-void CProjectile::DrawUnitPart(void)
-{
-}
-
-void CProjectile::UpdateDrawPos() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		drawPos = pos + (speed * ((float)gu->lastFrameStart - (float)lastProjUpdate) * gu->weightedSpeedFactor);
-#else
-		drawPos = pos + (speed * gu->timeOffset);
-#endif
-}

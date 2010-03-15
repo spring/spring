@@ -60,14 +60,17 @@ public:
 
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "UnitCreated" || eventName == "UnitDestroyed");
+		return
+			(eventName == "UnitCreated" || eventName == "UnitDestroyed") ||
+			(eventName == "UnitCloaked" || eventName == "UnitDecloaked");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void UnitCreated(const CUnit*, const CUnit*);
 	void UnitDestroyed(const CUnit*, const CUnit*);
-
+	void UnitCloaked(const CUnit*);
+	void UnitDecloaked(const CUnit*);
 
 #ifdef USE_GML
 	int multiThreadDrawUnit;
@@ -98,6 +101,7 @@ public:
 	void DrawUnitStats(CUnit*);                                     // was CUnit::DrawStats()
 	void DrawUnitS3O(CUnit*);                                       // was CUnit::DrawS3O()
 	void DrawFeatureStatic(CFeature*);                              // was CFeature::DrawS3O()
+	void UpdateDrawPos(CUnit*);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);

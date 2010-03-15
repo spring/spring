@@ -82,12 +82,13 @@ void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 		units[TEX_TYPE(u)] = UnitSet();
 	}
 
-	units[TEX_TYPE(u)].insert(u);
+	// updating a unit's draw-position requires mutability
+	units[TEX_TYPE(u)].insert(const_cast<CUnit*>(u));
 }
 
 void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
-	units[TEX_TYPE(u)].erase(u);
+	units[TEX_TYPE(u)].erase(const_cast<CUnit*>(u));
 }
 
 
@@ -97,12 +98,12 @@ void IWorldObjectModelRenderer::AddFeature(const CFeature* f)
 		features[TEX_TYPE(f)] = FeatureSet();
 	}
 
-	features[TEX_TYPE(f)].insert(f);
+	features[TEX_TYPE(f)].insert(const_cast<CFeature*>(f));
 }
 
 void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
-	features[TEX_TYPE(f)].erase(f);
+	features[TEX_TYPE(f)].erase(const_cast<CFeature*>(f));
 }
 
 
@@ -112,12 +113,12 @@ void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 		projectiles[TEX_TYPE(p)] = ProjectileSet();
 	}
 
-	projectiles[TEX_TYPE(p)].insert(p);
+	projectiles[TEX_TYPE(p)].insert(const_cast<CProjectile*>(p));
 }
 
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
-	projectiles[TEX_TYPE(p)].erase(p);
+	projectiles[TEX_TYPE(p)].erase(const_cast<CProjectile*>(p));
 }
 
 
@@ -126,39 +127,39 @@ void WorldObjectModelRenderer3DO::PushRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	/* SetupFor3DO */
+	// SetupFor3DO
 }
 void WorldObjectModelRenderer3DO::PopRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	/* Cleanup3DO */
+	// Cleanup3DO
 }
 
 void WorldObjectModelRendererS3O::PushRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	/* SetupForS3O */
+	// SetupForS3O
 }
 void WorldObjectModelRendererS3O::PopRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	/* CleanupS3O */
+	// CleanupS3O
 }
 
 void WorldObjectModelRendererOBJ::PushRenderState()
 {
-	// WRITEME
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
+	// WRITEME
 }
 void WorldObjectModelRendererOBJ::PopRenderState()
 {
-	// WRITEME
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
+	// WRITEME
 }
 
 
