@@ -157,9 +157,6 @@ public:
 	virtual bool ChangeTeam(int team, ChangeType type);
 	virtual void StopAttackingAllyTeam(int ally);
 
-	// TODO: should not be here
-	void DrawS3O();
-
 	const UnitDef* unitDef;
 	CollisionVolume* collisionVolume;
 	std::string unitDefName;

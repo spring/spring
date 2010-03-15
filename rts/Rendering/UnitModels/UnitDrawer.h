@@ -36,17 +36,23 @@ public:
 	void Update(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DoDrawUnitHelper(CUnit* unit);
-	void DoDrawUnit(CUnit* unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
-	void DrawUnitLOD(CUnit* unit);
+	bool DrawUnitLOD(CUnit* unit);
+	void DoDrawUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
+	void DoDrawUnitShadow(CUnit* unit);
 
 	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);     // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
-	void DoDrawUnitShadow(CUnit *unit);
 
+	void DrawOpaqueUnits(int, const CUnit*, bool, bool);
 	void DrawOpaqueShaderUnits();
 	void DrawCloakedShaderUnits();
 	void DrawShadowShaderUnits();
+
+	void DrawOpaqueAIUnits();
+	void DrawCloakedAIUnits();
+	void DrawGhostedBuildings(int);
+	void DrawFarTextures();
+	void DrawUnitIcons(bool);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupFor3DO() const;
@@ -55,8 +61,6 @@ public:
 	void CleanUpUnitDrawing(void) const;
 	void SetupForGhostDrawing() const;
 	void CleanUpGhostDrawing() const;
-
-	void SwapCloakedUnits();
 
 
 
@@ -100,7 +104,6 @@ public:
 	void DrawUnitRawModel(CUnit*);                                  // was CUnit::DrawRawModel() [CLuaOpenGL]
 	void DrawUnitRawWithLists(CUnit*, unsigned int, unsigned int);  // was CUnit::DrawRawWithLists()
 	void DrawUnitStats(CUnit*);                                     // was CUnit::DrawStats()
-	void DrawUnitS3O(CUnit*);                                       // was CUnit::DrawS3O()
 	void DrawFeatureStatic(CFeature*);                              // was CFeature::DrawS3O()
 	void UpdateDrawPos(CUnit*);
 
@@ -169,7 +172,6 @@ public:
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing=0);
 	void DrawUnitDef(const UnitDef* unitDef, int team);
 
-	/** CUnit::Draw **/
 	void UnitDrawingTexturesOff();
 	void UnitDrawingTexturesOn();
 
@@ -185,7 +187,8 @@ private:
 	void CleanupBasicS3OTexture1(void) const;
 	void CleanupBasicS3OTexture0(void) const;
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
-	void DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& units, std::list<GhostBuilding*>& ghostedBuildings, bool is_s3o);
+	void DrawCloakedUnitsHelper();
+	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int);
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
@@ -199,7 +202,8 @@ private:
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
 
-	// units being rendered
+	// units being rendered (note that this is a completely
+	// unsorted set of 3DO, S3O opaque, and cloaked models!)
 	std::set<CUnit*> unsortedUnits;
 
 	#ifdef USE_GML
@@ -207,13 +211,8 @@ private:
 	std::list<CUnit*> unsortedUnitsGML;
 	#endif
 
-	std::list<GhostBuilding*> ghostBuildings;      // buildings in LOS_PREVLOS when they died and not in LOS since
-	std::list<GhostBuilding*> ghostBuildingsS3O;
-
-	GML_VECTOR<CUnit*> drawCloaked;
-	GML_VECTOR<CUnit*> drawCloakedS3O;
-	GML_VECTOR<CUnit*> drawCloakedSave;
-	GML_VECTOR<CUnit*> drawCloakedS3OSave;
+	// buildings that were in LOS_PREVLOS when they died and not in LOS since
+	std::vector<std::list<GhostBuilding*> > ghostBuildings;
 
 	GML_VECTOR<CUnit*> drawFar;
 	GML_VECTOR<CUnit*> drawStat;
