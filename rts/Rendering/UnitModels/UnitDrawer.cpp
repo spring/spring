@@ -1002,7 +1002,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper()
 					texturehandlerS3O->SetS3oTexture(it->first);
 				}
 
-				DrawCloakedUnitsSet(it->second, modelType);
+				DrawCloakedUnitsSet(it->second, modelType, false);
 			}
 		}
 
@@ -1015,7 +1015,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper()
 	}
 }
 
-void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int modelType) {
+void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int modelType, bool drawGhostBuildings) {
 	for (std::set<CUnit*>::const_iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
 		CUnit* unit = *ui;
 
@@ -1054,6 +1054,14 @@ void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int 
 			glPushMatrix();
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
+
+			if (modelType == MODELTYPE_S3O && drawGhostBuildings) {
+				// the units in liveGhostedBuildings[modelType] are not
+				// sorted by textureType, but we cannot merge them with
+				// cloakedModelRenderers[modelType] since they are not
+				// actually cloaked
+				texturehandlerS3O->SetS3oTexture(model->textureType);
+			}
 
 			SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
 			model->DrawStatic();
@@ -1149,49 +1157,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 		}
 	}
 
-	for (std::set<CUnit*>::iterator gbi = liveGhostedBuildings.begin(); gbi != liveGhostedBuildings.end(); gbi++) {
-		CUnit* unit = *gbi;
-		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-
-		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-			SetTeamColour(unit->team, cloakAlpha);
-			DrawUnitNow(unit);
-		} else {
-			const UnitDef* decoyDef = unit->unitDef->decoyDef;
-			const S3DModel* model = NULL;
-
-			if (decoyDef == NULL) {
-				model = unit->model;
-			} else {
-				model = decoyDef->LoadModel();
-			}
-
-			// FIXME: needs a second pass
-			if (model->type != modelType) {
-				continue;
-			}
-
-			if (losStatus & LOS_CONTRADAR) {
-				glColor4f(0.9f, 0.9f, 0.9f, cloakAlpha2);
-			} else {
-				glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
-			}
-
-			glPushMatrix();
-			glTranslatef3(unit->pos);
-			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
-
-			if (modelType == MODELTYPE_S3O) {
-				texturehandlerS3O->SetS3oTexture(model->textureType);
-			}
-
-			SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
-			model->DrawStatic();
-			glPopMatrix();
-
-			glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
-		}
-	}
+	DrawCloakedUnitsSet(liveGhostedBuildings, modelType, true);
 }
 
 
@@ -2469,6 +2435,8 @@ void CUnitDrawer::UnitDecloaked(const CUnit* u) {
 
 
 void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyteam) {
+	GML_STDMUTEX_LOCK(unit);
+
 	if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
 		liveGhostBuildings[MDL_TYPE(u)].erase(const_cast<CUnit*>(u));
 	}
@@ -2477,6 +2445,8 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyteam) {
 }
 
 void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyteam) {
+	GML_STDMUTEX_LOCK(unit);
+
 	const unsigned short losStatus = u->losStatus[gu->myAllyTeam];
 
 	if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
@@ -2499,9 +2469,13 @@ void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyteam) {
 
 
 void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyteam) {
+	GML_STDMUTEX_LOCK(unit);
+
 	unitRadarIcons.insert(const_cast<CUnit*>(u));
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyteam) {
+	GML_STDMUTEX_LOCK(unit);
+
 	unitRadarIcons.erase(const_cast<CUnit*>(u));
 }
