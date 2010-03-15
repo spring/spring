@@ -171,7 +171,7 @@ private:
 	void CleanupBasicS3OTexture0(void) const;
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper();
-	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int);
+	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int, bool);
 
 #ifdef USE_GML
 	int multiThreadDrawUnit;
