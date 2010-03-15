@@ -105,8 +105,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		white.mem[a] = 255;
 	}
 
-	whiteTex = white.CreateTexture(false);
-
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
 	unitShadowDensity = mapInfo->light.unitShadowDensity;
@@ -141,8 +139,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 CUnitDrawer::~CUnitDrawer(void)
 {
 	eventHandler.RemoveClient(this);
-
-	glDeleteTextures(1, &whiteTex);
 
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 	cubeMapHandler->Free();
@@ -332,7 +328,7 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 	return false;
 }
 
-inline void CUnitDrawer::DoDrawUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
 	if (unit == excludeUnit) {
 		return;
@@ -441,9 +437,9 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
 
-	SetupForUnitDrawing();
-
 	const CUnit* excludeUnit = drawReflection? NULL: gu->directControl;
+
+	SetupForUnitDrawing();
 
 	// lock on the bins
 	GML_RECMUTEX_LOCK(unit); // Draw
@@ -456,7 +452,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		mt_drawRefraction = drawRefraction;
 		mt_excludeUnit = excludeUnit;
 		gmlProcessor->Work(
-			NULL, NULL, &CUnitDrawer::DoDrawUnitMT, this, gmlThreadCount,
+			NULL, NULL, &CUnitDrawer::DrawOpaqueUnitsMT, this, gmlThreadCount,
 			FALSE, &unsortedUnitsGML, unsortedUnitsGML.size(), 50, 100, TRUE
 		);
 	}
@@ -497,7 +493,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 			const std::set<CUnit*>& opaqueUnitSet = binIt->second;                        \
                                                                                           \
 			for (setIt = opaqueUnitSet.begin(); setIt != opaqueUnitSet.end(); setIt++) {  \
-				DoDrawUnit(*setIt, excludeUnit, drawReflection, drawRefraction);          \
+				DrawOpaqueUnit(*setIt, excludeUnit, drawReflection, drawRefraction);      \
 			}                                                                             \
 		}
 
@@ -616,7 +612,7 @@ static void DrawBins(LuaMatType type)
 	luaDrawing = true;
 
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
-	if (type==LUAMAT_ALPHA || type==LUAMAT_ALPHA_REFLECT) {
+	if (type == LUAMAT_ALPHA || type == LUAMAT_ALPHA_REFLECT) {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.1f);
 		glEnable(GL_BLEND);
@@ -749,7 +745,7 @@ void CUnitDrawer::DrawShadowShaderUnits()
 /******************************************************************************/
 
 
-inline void CUnitDrawer::DoDrawUnitShadow(CUnit* unit) {
+inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
 	// do shadow alpha-masking for S3O units only
@@ -834,7 +830,7 @@ void CUnitDrawer::DrawShadowPass(void)
 #ifdef USE_GML
 	if (multiThreadDrawUnitShadow) {
 		gmlProcessor->Work(
-			NULL, NULL, &CUnitDrawer::DoDrawUnitShadowMT, this, gmlThreadCount,
+			NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, gmlThreadCount,
 			FALSE, &unsortedUnitsGML, unsortedUnitsGML.size(), 50, 100, TRUE
 		);
 	}
@@ -842,7 +838,7 @@ void CUnitDrawer::DrawShadowPass(void)
 #endif
 	{
 		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
-			DoDrawUnitShadow(*usi);
+			DrawOpaqueUnitShadow(*usi);
 		}
 	}
 
