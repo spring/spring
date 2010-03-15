@@ -15,6 +15,7 @@ class CVertexArray;
 struct S3DModel;
 struct UnitDef;
 class CWorldObject;
+class IWorldObjectModelRenderer;
 class CUnit;
 class CFeature;
 struct Command;
@@ -110,17 +111,6 @@ public:
 	int ShowUnitBuildSquare(const BuildInfo&, const std::vector<Command>&);
 
 
-	GML_VECTOR<CUnit*> drawCloaked;
-	GML_VECTOR<CUnit*> drawCloakedS3O;
-	GML_VECTOR<CUnit*> drawCloakedSave;
-	GML_VECTOR<CUnit*> drawCloakedS3OSave;
-
-	GML_VECTOR<CUnit*> drawFar;
-	GML_VECTOR<CUnit*> drawStat;
-
-	GML_VECTOR<CUnit*> drawIcon;
-	GML_VECTOR<CUnit*> drawRadarIcon;
-
 	CVertexArray* va;
 
 	bool advShading;
@@ -134,10 +124,6 @@ public:
 	float LODScaleShadow;
 	float LODScaleReflection;
 	float LODScaleRefraction;
-
-	Shader::IProgramObject* S3ODefShader;   // S3O model shader (V+F) without self-shadowing
-	Shader::IProgramObject* S3OAdvShader;   // S3O model shader (V+F) with self-shadowing
-	Shader::IProgramObject* S3OCurShader;   // current S3O shader (S3OShaderDef or S3OShaderAdv)
 
 	float unitDrawDist;
 	float unitDrawDistSqr;
@@ -169,10 +155,6 @@ public:
 		int team;
 	};
 
-	std::list<CUnit*> renderUnits;                 // units being rendered
-	std::list<GhostBuilding*> ghostBuildings;      // buildings that where in LOS_PREVLOS when they died and not in LOS since
-	std::list<GhostBuilding*> ghostBuildingsS3O;
-
 	bool showHealthBars;
 
 	float3 camNorm; // used to draw far-textures
@@ -194,6 +176,8 @@ public:
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit * unit);
 
+	const std::set<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
+
 private:
 	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
 	void SetupBasicS3OTexture0(void) const;
@@ -207,6 +191,35 @@ private:
 	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
+
+	Shader::IProgramObject* S3ODefShader;   // S3O model shader (V+F) without self-shadowing
+	Shader::IProgramObject* S3OAdvShader;   // S3O model shader (V+F) with self-shadowing
+	Shader::IProgramObject* S3OCurShader;   // current S3O shader (S3OShaderDef or S3OShaderAdv)
+
+	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
+	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
+
+	// units being rendered
+	std::set<CUnit*> unsortedUnits;
+
+	#ifdef USE_GML
+	// gmlClientServer::Work only accepts lists
+	std::list<CUnit*> unsortedUnitsGML;
+	#endif
+
+	std::list<GhostBuilding*> ghostBuildings;      // buildings in LOS_PREVLOS when they died and not in LOS since
+	std::list<GhostBuilding*> ghostBuildingsS3O;
+
+	GML_VECTOR<CUnit*> drawCloaked;
+	GML_VECTOR<CUnit*> drawCloakedS3O;
+	GML_VECTOR<CUnit*> drawCloakedSave;
+	GML_VECTOR<CUnit*> drawCloakedS3OSave;
+
+	GML_VECTOR<CUnit*> drawFar;
+	GML_VECTOR<CUnit*> drawStat;
+
+	GML_VECTOR<CUnit*> drawIcon;
+	GML_VECTOR<CUnit*> drawRadarIcon;
 };
 
 extern CUnitDrawer* unitDrawer;

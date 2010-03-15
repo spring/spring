@@ -1143,48 +1143,57 @@ void CDynWater::AddShipWakes()
 	{
 		GML_RECMUTEX_LOCK(unit); // AddShipWakes
 
-		int nadd=unitDrawer->renderUnits.size()*4;
-		va->EnlargeArrays(nadd,0,VA_SIZE_TN);
-		va2->EnlargeArrays(nadd,0,VA_SIZE_TN);
+		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
+		const int nadd = units.size() * 4;
 
-		for(std::list<CUnit*>::iterator ui=unitDrawer->renderUnits.begin(); ui!=unitDrawer->renderUnits.end();++ui){
-			CUnit* unit=*ui;
-			if(unit->moveType && unit->mobility) {
-				if(unit->unitDef->canhover){	//hover
-					float3 pos=unit->pos;
-					if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-						continue;
-					if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-						continue;
-					if(pos.y>-4 && pos.y<4){
-						float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-						float3 sideAdd=unit->rightdir*unit->radius*0.75f;
-						float depth=sqrt(sqrt(unit->mass))*0.4f;
-						float3 n(depth, 0.05f*depth, depth);
+		va->EnlargeArrays(nadd, 0, VA_SIZE_TN);
+		va2->EnlargeArrays(nadd, 0, VA_SIZE_TN);
 
-						va2->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
-						va2->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
-						va2->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
-						va2->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+		for (std::set<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
+			CUnit* unit = *ui;
+
+			if (unit->moveType && unit->mobility) {
+				if (unit->unitDef->canhover) {
+					// hovercraft
+					const float3& pos = unit->pos;
+
+					if ((fabs(pos.x - camPosBig.x) > WH_SIZE - 50) || (fabs(pos.z - camPosBig.z) > WH_SIZE - 50))
+						continue;
+					if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+						continue;
+
+					if (pos.y > -4.0f && pos.y < 4.0f) {
+						const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
+						const float3 sideAdd = unit->rightdir * unit->radius * 0.75f;
+						const float depth = sqrt(sqrt(unit->mass)) * 0.4f;
+						const float3 n(depth, 0.05f * depth, depth);
+
+						va2->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
+						va2->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
+						va2->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
+						va2->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 					}
 				}
-				else if(unit->floatOnWater){	//boat
-					float speedf=unit->speed.Length2D();
-					float3 pos=unit->pos;
-					if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-						continue;
-					if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-						continue;
-					if(pos.y>-4 && pos.y<1){
-						float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-						float3 sideAdd=unit->rightdir*unit->radius*0.18f;
-						float depth=sqrt(sqrt(unit->mass));
-						float3 n(depth, 0.04f*speedf*depth, depth);
+				else if (unit->floatOnWater) {
+					// surface ship
+					const float speedf = unit->speed.Length2D();
+					const float3& pos = unit->pos;
 
-						va->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
-						va->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
-						va->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
-						va->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+					if ((fabs(pos.x - camPosBig.x) > WH_SIZE - 50) || (fabs(pos.z - camPosBig.z) > WH_SIZE - 50))
+						continue;
+					if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+						continue;
+
+					if (pos.y > -4.0f && pos.y < 1.0f) {
+						const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
+						const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
+						const float depth = sqrt(sqrt(unit->mass));
+						const float3 n(depth, 0.04f * speedf * depth, depth);
+
+						va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
+						va->AddVertexQTN(pos + frontAdd - sideAdd, 1, 0, n);
+						va->AddVertexQTN(pos - frontAdd - sideAdd, 1, 1, n);
+						va->AddVertexQTN(pos - frontAdd + sideAdd, 0, 1, n);
 					}
 				}
 			}
@@ -1192,12 +1201,12 @@ void CDynWater::AddShipWakes()
 	}
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glBindTexture(GL_TEXTURE_2D,boatShape);
+	glBindTexture(GL_TEXTURE_2D, boatShape);
 
 	va->DrawArrayTN(GL_QUADS);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
-	glBindTexture(GL_TEXTURE_2D,hoverShape);
+	glBindTexture(GL_TEXTURE_2D, hoverShape);
 
 	va2->DrawArrayTN(GL_QUADS);
 

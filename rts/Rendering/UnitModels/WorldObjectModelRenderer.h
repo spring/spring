@@ -61,6 +61,15 @@ protected:
 	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
 
 	int modelType;
+
+public:
+	const UnitSet& GetUnitSet(int texType) { return units[texType]; }
+	const FeatureSet& GetFeatureSet(int texType) { return features[texType]; }
+	const ProjectileSet& GetProjectileSet(int texType) { return projectiles[texType]; }
+
+	const UnitRenderBin& GetUnitBin() { return units; }
+	const FeatureRenderBin& GetFeatureBin() { return features; }
+	const ProjectileRenderBin& GetProjectileBin() { return projectiles; }
 };
 
 class WorldObjectModelRenderer3DO: public IWorldObjectModelRenderer {

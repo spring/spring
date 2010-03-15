@@ -66,11 +66,11 @@ class CMiniMap : public CInputReceiver {
 		void DrawNotes(void);
 		void DrawButtons();
 		void DrawMinimizedButton();
-		void DrawUnit(CUnit* unit);
-		void DrawUnitHighlight(CUnit* unit);
+		void DrawUnit(const CUnit* unit);
+		void DrawUnitHighlight(const CUnit* unit);
 		void DrawCircle(const float3& pos, float radius);
 		void DrawSquare(const float3& pos, float xsize, float zsize);
-		const CIconData* GetUnitIcon(CUnit* unit, float& scale) const;
+		const CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 		void GetFrustumSide(float3& side);
 		
 	protected:
