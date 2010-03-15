@@ -99,12 +99,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	LODScaleReflection = GetLODFloat("LODScaleReflection", 1.0f);
 	LODScaleRefraction = GetLODFloat("LODScaleRefraction", 1.0f);
 
-	CBitmap white;
-	white.Alloc(1, 1);
-	for (int a = 0; a < 4; ++a) {
-		white.mem[a] = 255;
-	}
-
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
 	unitShadowDensity = mapInfo->light.unitShadowDensity;
