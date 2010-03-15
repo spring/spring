@@ -57,8 +57,10 @@ public:
 
 	bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "UnitCreated" || eventName == "UnitDestroyed") ||
-			(eventName == "UnitCloaked" || eventName == "UnitDecloaked");
+			(eventName == "UnitCreated"      || eventName == "UnitDestroyed") ||
+			(eventName == "UnitCloaked"      || eventName == "UnitDecloaked") ||
+			(eventName == "UnitEnteredLos"   || eventName == "UnitLeftLos"  ) ||
+			(eventName == "UnitEnteredRadar" || eventName == "UnitLeftRadar");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -67,6 +69,10 @@ public:
 	void UnitDestroyed(const CUnit*, const CUnit*);
 	void UnitCloaked(const CUnit*);
 	void UnitDecloaked(const CUnit*);
+	void UnitEnteredLos(const CUnit*, int);
+	void UnitLeftLos(const CUnit*, int);
+	void UnitEnteredRadar(const CUnit*, int);
+	void UnitLeftRadar(const CUnit*, int);
 
 
 
@@ -219,13 +225,15 @@ private:
 
 
 	// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::list<GhostBuilding*> > ghostBuildings;
+	std::vector<std::set<GhostBuilding*> > deadGhostBuildings;
+	// buildings that left LOS but are still alive
+	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
 	GML_VECTOR<CUnit*> drawFar;
 	GML_VECTOR<CUnit*> drawStat;
-
 	GML_VECTOR<CUnit*> drawIcon;
-	GML_VECTOR<CUnit*> drawRadarIcon;
+
+	std::set<CUnit*> unitRadarIcons;
 };
 
 extern CUnitDrawer* unitDrawer;
