@@ -260,7 +260,7 @@ void CUnitDrawer::Update(void)
 		GML_RECMUTEX_LOCK(unit); // Update
 
 		for (std::list<CUnit*>::iterator usi = renderUnits.begin(); usi != renderUnits.end(); ++usi) {
-			(*usi)->UpdateDrawPos();
+			UpdateDrawPos(*usi);
 		}
 	}
 
@@ -2111,6 +2111,25 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	glPopMatrix();
 }
 
+void CUnitDrawer::UpdateDrawPos(CUnit* u) {
+	const CTransportUnit* trans = u->GetTransporter();
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (trans) {
+		u->drawPos = u->pos + (trans->speed * ((float)gu->lastFrameStart - (float)u->lastUnitUpdate) * gu->weightedSpeedFactor);
+	} else {
+		u->drawPos = u->pos + (u->speed * ((float)gu->lastFrameStart - (float)u->lastUnitUpdate) * gu->weightedSpeedFactor);
+	}
+#else
+	if (trans) {
+		u->drawPos = u->pos + (trans->speed * gu->timeOffset);
+	} else {
+		u->drawPos = u->pos + (u->speed * gu->timeOffset);
+	}
+#endif
+	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
+}
+
 
 
 void CUnitDrawer::DrawUnitS3O(CUnit* unit)
@@ -2353,4 +2372,10 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 		if (drawCloakedS3OSave[i] == delUnit) { drawCloakedS3OSave[i] = NULL; }
 	}
 #endif
+}
+
+
+void CUnitDrawer::UnitCloaked(const CUnit* u) {
+}
+void CUnitDrawer::UnitDecloaked(const CUnit* u) {
 }

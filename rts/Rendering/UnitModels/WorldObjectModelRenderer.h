@@ -34,12 +34,12 @@ public:
 	virtual void DelProjectile(const CProjectile*);
 
 protected:
-	typedef std::set<const CUnit*>                       UnitSet;
-	typedef std::set<const CUnit*>::const_iterator       UnitSetIt;
-	typedef std::set<const CFeature*>                    FeatureSet;
-	typedef std::set<const CFeature*>::const_iterator    FeatureSetIt;
-	typedef std::set<const CProjectile*>                 ProjectileSet;
-	typedef std::set<const CProjectile*>::const_iterator ProjectileSetIt;
+	typedef std::set<CUnit*>                       UnitSet;
+	typedef std::set<CUnit*>::const_iterator       UnitSetIt;
+	typedef std::set<CFeature*>                    FeatureSet;
+	typedef std::set<CFeature*>::const_iterator    FeatureSetIt;
+	typedef std::set<CProjectile*>                 ProjectileSet;
+	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
 
 	// textureType ==> modelSet
 	typedef std::map<int, UnitSet>                       UnitRenderBin;

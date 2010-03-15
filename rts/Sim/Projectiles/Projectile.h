@@ -52,7 +52,6 @@ public:
 	bool castShadow;
 	unsigned int collisionFlags;
 
-	void UpdateDrawPos();
 	float3 drawPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastProjUpdate;
@@ -65,8 +64,8 @@ public:
 	float3 speed;
 	float mygravity;
 
-	virtual void DrawCallback(void);
-	virtual void DrawUnitPart(void);
+	virtual void DrawCallback(void) {}
+	virtual void DrawUnitPart(void) {}
 	virtual void DrawS3O() { DrawUnitPart(); }
 
 	float tempdist; // temp distance used for sorting when rendering

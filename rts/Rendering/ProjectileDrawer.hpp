@@ -40,6 +40,7 @@ public:
 	void DrawProjectilesMiniMap();
 	void DrawShadowPass(void);
 	void DrawGroundFlashes(void);
+	void UpdateDrawPos(CProjectile*);
 
 	void LoadWeaponTextures();
 	void UpdateTextures();
