@@ -138,9 +138,9 @@ CUnitDrawer::~CUnitDrawer(void)
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 	cubeMapHandler->Free();
 
-	std::set<GhostBuilding*>::iterator gbi;
-
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		std::set<GhostBuilding*>::iterator gbi;
+
 		for (gbi = deadGhostBuildings[modelType].begin(); gbi != deadGhostBuildings[modelType].end(); gbi++) {
 			if ((*gbi)->decal) {
 				(*gbi)->decal->gbOwner = 0;
@@ -178,9 +178,9 @@ bool CUnitDrawer::LoadModelShaders()
 	S3OAdvShader = S3ODefShader;
 	S3OCurShader = S3ODefShader;
 
-	if (!GLEW_ARB_fragment_program) {
+	if (!gu->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
-		logOutput.Print("[LoadModelShaders] GLEW_ARB_fragment_program OpenGL extension missing");
+		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
 		return false;
 	}
 	if (!(!!configHandler->Get("AdvUnitShading", 1))) {
@@ -295,7 +295,7 @@ void CUnitDrawer::Update(void)
 
 
 
-//! only called by DoDrawUnit
+//! only called by DrawOpaqueUnit
 inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
 	if (unit->lodCount > 0) {
