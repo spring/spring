@@ -41,6 +41,7 @@ struct S3DModelPiece {
 
 	virtual ~S3DModelPiece();
 	virtual const float3& GetVertexPos(const int& idx) const = 0;
+	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 	void DrawStatic() const;
 };
 

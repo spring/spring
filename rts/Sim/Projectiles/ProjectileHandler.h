@@ -67,7 +67,7 @@ public:
 	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-	void AddFlyingPiece(int team, float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
+	void AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
 	ProjectileContainer syncedProjectiles;    //! contains only projectiles that can change simulation state

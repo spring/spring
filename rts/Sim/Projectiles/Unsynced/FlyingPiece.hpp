@@ -23,8 +23,8 @@ struct FlyingPiece {
 	FlyingPiece(): prim(0), object(0), verts(0) {}
 	~FlyingPiece();
 
-	S3DOPrimitive* prim;
-	S3DOPiece* object;
+	const S3DOPrimitive* prim;
+	const S3DOPiece* object;
 
 	SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
 

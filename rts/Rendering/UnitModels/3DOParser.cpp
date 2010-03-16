@@ -9,30 +9,29 @@
 #include <stdexcept>
 #include "mmgr.h"
 
-#include "Rendering/GL/myGL.h"
-#include "LogOutput.h"
-#include "Rendering/GL/VertexArray.h"
-#include "FileSystem/VFSHandler.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Units/COB/CobInstance.h"
-#include "Rendering/Textures/TAPalette.h"
-#include "Matrix44f.h"
-#include "Sim/Misc/Team.h"
-#include "Game/Player.h"
-#include "Platform/errorhandler.h"
-#include "Platform/byteorder.h"
 #include "3DOParser.h"
 #include "s3oParser.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/Matrix44f.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/byteorder.h"
 #include <boost/cstdint.hpp>
 
 using namespace std;
 
-static const float  scaleFactor = 1/(65536.0f);
-static const float3 DownVector  = float3(0,-1,0);
+static const float  scaleFactor = 1 / (65536.0f);
+static const float3 DownVector  = -UpVector;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -536,4 +535,17 @@ float C3DOParser::FindHeight(const S3DOPiece* object, float3 offset) const
 	}
 
 	return height;
+}
+
+
+
+
+void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3& pos, const float3& speed) const
+{
+	for (std::vector<S3DOPrimitive>::const_iterator pi = prims.begin(); pi != prims.end(); ++pi) {
+		if (gu->usRandFloat() > pieceChance || pi->numVertex != 4)
+			continue;
+
+		ph->AddFlyingPiece(team, pos, speed + gu->usRandVector() * 2.0f, this, &*pi);
+	}
 }

@@ -700,80 +700,11 @@ void CUnitScript::Explode(int piece, int flags)
 
 void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
-	const float pieceChance = 1 - (ph->currentParticles - (ph->maxParticles - 2000)) / 2000;
-	LocalModelPiece* pieceData = pieces[piece];
+	const LocalModelPiece* lmp = pieces[piece];
+	const S3DModelPiece* omp = lmp->original;
+	const float pieceChance = 1.0f - (ph->currentParticles - (ph->maxParticles - 2000)) / 2000.0f;
 
-	if (pieceData->type == MODELTYPE_3DO) {
-		/* 3DO */
-
-		S3DOPiece* dl = (S3DOPiece*)pieceData->original;
-
-		for (std::vector<S3DOPrimitive>::iterator pi = dl->prims.begin(); pi != dl->prims.end(); ++pi) {
-			if (gu->usRandFloat() > pieceChance || pi->numVertex != 4)
-				continue;
-
-			ph->AddFlyingPiece(unit->team, pos, speed + gu->usRandVector() * 2, dl, &*pi);
-		}
-	} else {
-		/* S3O */
-
-		SS3OPiece* cookedPiece = (SS3OPiece*)pieceData->original;
-
-		if (cookedPiece->primitiveType == 0){
-			/* GL_TRIANGLES */
-
-			for (size_t i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 3){
-				if(gu->usRandFloat() > pieceChance)
-					continue;
-
-				SS3OVertex * verts = new SS3OVertex[4];
-
-				verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
-				verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
-				verts[2] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
-				verts[3] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 2]];
-
-				ph->AddFlyingPiece(unit->model->textureType,
-					unit->team,
-					pos, speed + gu->usRandVector() * 2, verts);
-			}
-		} else if (cookedPiece->primitiveType == 1){
-			/* GL_TRIANGLE_STRIP */
-			for (size_t i = 2; i < cookedPiece->vertexDrawOrder.size(); i++){
-				if(gu->usRandFloat() > pieceChance)
-					continue;
-
-				SS3OVertex * verts = new SS3OVertex[4];
-
-				verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 2]];
-				verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 1]];
-				verts[2] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 1]];
-				verts[3] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i - 0]];
-
-				ph->AddFlyingPiece(unit->model->textureType,
-					unit->team,
-					pos, speed+gu->usRandVector()*2, verts);
-			}
-		} else if (cookedPiece->primitiveType == 2){
-			/* GL_QUADS */
-
-			for (size_t i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 4){
-				if(gu->usRandFloat() > pieceChance)
-					continue;
-
-				SS3OVertex * verts = new SS3OVertex[4];
-
-				verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
-				verts[1] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 1]];
-				verts[2] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 2]];
-				verts[3] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 3]];
-
-				ph->AddFlyingPiece(unit->model->textureType,
-					unit->team,
-					pos, speed+gu->usRandVector()*2, verts);
-			}
-		}
-	}
+	omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
 }
 
 
@@ -784,13 +715,16 @@ void CUnitScript::ShowFlare(int piece)
 		return;
 	}
 #ifndef _CONSOLE
-	float3 relpos = GetPiecePos(piece);
-	float3 pos=unit->pos + unit->frontdir*relpos.z + unit->updir*relpos.y + unit->rightdir*relpos.x;
-	float3 dir=unit->lastMuzzleFlameDir;
+	const float3 relpos = GetPiecePos(piece);
+	const float3 pos =
+		unit->pos +
+		unit->frontdir * relpos.z +
+		unit->updir * relpos.y +
+		unit->rightdir * relpos.x;
+	const float3 dir = unit->lastMuzzleFlameDir;
+	const float size = unit->lastMuzzleFlameSize;
 
-	float size=unit->lastMuzzleFlameSize;
-
-	new CMuzzleFlame(pos, unit->speed,dir, size);
+	new CMuzzleFlame(pos, unit->speed, dir, size);
 #endif
 }
 
