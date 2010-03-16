@@ -30,9 +30,7 @@ class CPieceProjectile: public CProjectile
 
 	int flags;
 	int dispList;
-	S3DOPiece* piece3do;
-	SS3OPiece* pieces3o;
-	S3DModelPiece* omp;
+	const S3DModelPiece* omp;
 	float3 spinVec;
 	float spinSpeed;
 	float spinAngle;

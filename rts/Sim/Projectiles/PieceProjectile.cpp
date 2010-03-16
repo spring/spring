@@ -35,10 +35,8 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_SERIALIZER(creg_Serialize), // numCallback, oldInfos
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),
-	// TODO what to do with the next three fields
+	// NOTE: what about this?
 	// CR_MEMBER(omp),
-	// CR_MEMBER(piece3do),
-	// CR_MEMBER(pieces3o),
 	CR_MEMBER(spinVec),
 	CR_MEMBER(spinSpeed),
 	CR_MEMBER(spinAngle),
@@ -62,10 +60,10 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int f, CUnit* owner, float radius GML_PARG_C):
+CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* lmp, int f, CUnit* owner, float radius GML_PARG_C):
 	CProjectile(pos, speed, owner, true, false, true GML_PARG_P),
 	flags(f),
-	dispList(piece? piece->displist: 0),
+	dispList(lmp? lmp->displist: 0),
 	omp(NULL),
 	spinAngle(0.0f),
 	alphaThreshold(0.1f),
@@ -107,31 +105,10 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		alphaThreshold = owner->alphaThreshold;
 	}
 
-	/* Don't store piece; owner may be a dying unit, so piece could be freed. */
-
-	/* //if (piece->texturetype == 0) {
-	   Great. LocalPiece doesn't carry the texture name.
-
-	   HACK TODO PieceProjectile shouldn't need to know about
-	   different model formats; push it into Rendering/UnitModels.
-
-	   If this needs to change, also modify Sim/Units/COB/CobInstance.cpp::Explosion.
-
-	   Nothing else wants to draw just one part without PieceInfo, so this
-	   polymorphism can stay put for the moment.
-	   */
-	if (piece) {
-		if (piece->type == MODELTYPE_3DO) {
-			piece3do = (S3DOPiece*) piece->original;
-			pieces3o = NULL;
-		} else if (piece->type == MODELTYPE_S3O) {
-			piece3do = NULL;
-			pieces3o = (SS3OPiece*) piece->original;
-		}
-		omp = piece->original;
+	if (lmp) {
+		omp = lmp->original;
 	} else {
-		piece3do = NULL;
-		pieces3o = NULL;
+		omp = NULL;
 	}
 
 	castShadow = true;
@@ -244,32 +221,20 @@ void CPieceProjectile::Collision(CUnit* unit)
 
 bool CPieceProjectile::HasVertices(void)
 {
-	if (!piece3do && !pieces3o) return false;
-	if (piece3do != NULL) {
-		/* 3DO */
-		return !piece3do->vertices.empty();
-	}
-	else {
-		/* S3O */
-		return !pieces3o->vertexDrawOrder.empty();
-	}
+	if (omp == NULL)
+		return false;
+
+	return (omp->vertexCount > 0);
 }
 
 float3 CPieceProjectile::RandomVertexPos(void)
 {
-	if (!piece3do && !pieces3o) return float3(0, 0, 0);
-	float3 pos;
+	if (omp == NULL) {
+		return ZeroVector;
+	}
 
-	if (piece3do != NULL) {
-		/* 3DO */
-		int vertexNum = (int) (gu->usRandFloat() * 0.99f * piece3do->vertices.size());
-		pos = piece3do->vertices[vertexNum].pos;
-	}
-	else {
-		/* S3O */
-		int vertexNum = (int) (gu->usRandFloat() * 0.99f * pieces3o->vertexDrawOrder.size());
-		pos = pieces3o->vertices[pieces3o->vertexDrawOrder[vertexNum]].pos;
-	}
+	const int vertexNum = (int) (gu->usRandFloat() * 0.99f * omp->vertexCount);
+	const float3 pos = omp->GetVertexPos(vertexNum);
 
 	return pos;
 }
