@@ -8,71 +8,6 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <string>
 
-#include <iostream>
-
-class RawTextMessage
-{
-public:
-	RawTextMessage(const std::string& _message) : message(_message), pos(0)
-	{};
-	
-	std::string GetWord()
-	{
-		size_t oldpos = pos;
-		pos = message.find_first_of(std::string("\t \n"), oldpos);
-		if (pos != std::string::npos)
-		{
-			return message.substr(oldpos, pos++ - oldpos);
-		}
-		else if (oldpos != std::string::npos)
-		{
-			return message.substr(oldpos);
-		}
-		else
-		{
-			return "";
-		}
-	};
-	
-	std::string GetSentence()
-	{
-		size_t oldpos = pos;
-		pos = message.find_first_of(std::string("\t\n"), oldpos);
-		if (pos != std::string::npos)
-		{
-			return message.substr(oldpos, pos++ - oldpos);
-		}
-		else if (oldpos != std::string::npos)
-		{
-			return message.substr(oldpos);
-		}
-		else
-		{
-			return "";
-		}
-	};
-	
-	int GetInt()
-	{
-		std::istringstream buf(GetWord());
-		int temp;
-		buf >> temp;
-		return temp;
-	};
-	
-	long unsigned GetTime()
-	{
-		std::istringstream buf(GetWord());
-		long unsigned temp;
-		buf >> temp;
-		return temp;
-	};
-
-private:
-	std::string message;
-	size_t pos;
-};
-
 struct ClientStatus
 {
 	bool ingame;
@@ -139,6 +74,10 @@ public:
 	virtual void Said(const std::string& channel, const std::string& user, const std::string& text) {};
 	virtual void SaidEx(const std::string& channel, const std::string& user, const std::string& text) {};
 	virtual void SaidPrivate(const std::string& user, const std::string& text) {};
+
+	virtual void BattleOpened(int id, bool replay, bool natTraversal, const std::string& founder, const std::string& hostIp, int port, int maxplayers, bool password, int rank, unsigned maphash, const std::string& title, const std::string& map, const std::string& mod) {};
+	virtual void BattleUpdated(int id, int numSpectators, bool locked, unsigned maphash, const std::string& map) {};
+	virtual void BattleClosed(int id) {};
 
 	virtual void Disconnected() {};
 	virtual void NetworkError(const std::string& msg) {};

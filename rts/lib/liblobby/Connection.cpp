@@ -54,6 +54,69 @@ std::string RTFToPlain(const std::string& rich)
 	return out;
 }
 
+class RawTextMessage
+{
+public:
+	RawTextMessage(const std::string& _message) : message(_message), pos(0)
+	{};
+	
+	std::string GetWord()
+	{
+		size_t oldpos = pos;
+		pos = message.find_first_of(std::string("\t \n"), oldpos);
+		if (pos != std::string::npos)
+		{
+			return message.substr(oldpos, pos++ - oldpos);
+		}
+		else if (oldpos != std::string::npos)
+		{
+			return message.substr(oldpos);
+		}
+		else
+		{
+			return "";
+		}
+	};
+	
+	std::string GetSentence()
+	{
+		size_t oldpos = pos;
+		pos = message.find_first_of(std::string("\t\n"), oldpos);
+		if (pos != std::string::npos)
+		{
+			return message.substr(oldpos, pos++ - oldpos);
+		}
+		else if (oldpos != std::string::npos)
+		{
+			return message.substr(oldpos);
+		}
+		else
+		{
+			return "";
+		}
+	};
+	
+	int GetInt()
+	{
+		std::istringstream buf(GetWord());
+		int temp;
+		buf >> temp;
+		return temp;
+	};
+	
+	long unsigned GetTime()
+	{
+		std::istringstream buf(GetWord());
+		long unsigned temp;
+		buf >> temp;
+		return temp;
+	};
+
+private:
+	std::string message;
+	size_t pos;
+};
+
 Connection::Connection() : sock(netservice), timer(netservice)
 {
 }
@@ -430,6 +493,42 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		std::string user = buf.GetWord();
 		std::string text = buf.GetSentence();
 		SaidPrivate(user, text);
+	}
+	else if (command == "BATTLEOPENED")
+	{
+		
+		RawTextMessage buf(msg);
+		int id = buf.GetInt();
+		bool replay = !buf.GetInt();
+		bool nat = buf.GetInt();
+		std::string founder = buf.GetWord();
+		std::string ip = buf.GetWord();
+		int port = buf.GetInt();
+		int maxplayers = buf.GetInt();
+		bool password = buf.GetInt();
+		int rank = buf.GetInt();
+		int maphash = buf.GetInt();
+		std::string map = buf.GetSentence();
+		std::string title = buf.GetSentence();
+		std::string mod = buf.GetSentence();
+		BattleOpened(id, replay, nat, founder, ip, port, maxplayers, password, rank, maphash, title, map, mod);
+	}
+	else if (command == "UPDATEBATTLEINFO")
+	{
+		RawTextMessage buf(msg);
+		int id = buf.GetInt();
+		int spectators = buf.GetInt();
+		bool locked = buf.GetInt();
+		int maphash = buf.GetInt();
+		std::string map = buf.GetSentence();
+		BattleUpdated(id, spectators, locked, maphash, map);
+	}
+	else if (command == "BATTLECLOSED")
+	{
+		
+		RawTextMessage buf(msg);
+		int id = buf.GetInt();
+		BattleClosed(id);
 	}
 	else
 	{
