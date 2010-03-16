@@ -496,10 +496,6 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 
 		case MODELTYPE_S3O: {
 			DRAW_UNIT_SET(opaqueUnits);
-
-			// draw non-unit opaque S3O cruft
-			// (ie. features and projectiles)
-			DrawQuedS3O();
 		} break;
 
 		default: {
@@ -603,7 +599,7 @@ static void DrawBins(LuaMatType type)
 		glAlphaFunc(GL_GREATER, 0.1f);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}else{
+	} else {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 	}
@@ -1511,6 +1507,8 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 #endif
 }
 
+// used by C{Feature, Projectile}Drawer to draw non-unit
+// opaque S3O objects (ie. features and projectiles)
 void CUnitDrawer::DrawQuedS3O(void)
 {
 #ifdef USE_GML
@@ -1520,9 +1518,7 @@ void CUnitDrawer::DrawQuedS3O(void)
 			texturehandlerS3O->SetS3oTexture(tex);
 
 			for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
-				// for unit and feature objects, this calls back
-				// to DrawUnitS3O() and to DrawFeatureStatic()
-				// respectively
+				// for feature objects, this calls back to DrawFeatureStatic()
 				if (*ui) { (*ui)->DrawS3O(); }
 			}
 
