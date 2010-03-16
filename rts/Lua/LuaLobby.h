@@ -38,6 +38,7 @@ public:
 
 	virtual void AddUser(const std::string& name, const std::string& country, int cpu);
 	virtual void RemoveUser(const std::string& name);
+	int StatusUpdate(lua_State *L);
 	virtual void ClientStatusUpdate(const std::string& name, ClientStatus status);
 
 	int Channels(lua_State *L);

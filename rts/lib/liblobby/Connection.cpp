@@ -175,6 +175,7 @@ void Connection::Login(const std::string& name, const std::string& password)
 	std::ostringstream out;
 	out << "LOGIN " << name << " " << MD5Base64(password) << " 0 localhost libLobby v0.1\n";
 	SendData(out.str());
+	myUserName = name;
 }
 
 void Connection::ConfirmAggreement()
@@ -194,6 +195,34 @@ void Connection::ChangePass(const std::string& oldpass, const std::string& newpa
 {
 	std::ostringstream out;
 	out << "CHANGEPASSWORD " << MD5Base64(oldpass) << " " << MD5Base64(newpass) << "\n";
+	SendData(out.str());
+}
+
+void Connection::StatusUpdate(bool ingame, bool away)
+{
+	std::bitset<8> statusbf;
+	statusbf.set(0, ingame);
+	statusbf.set(1, away);
+	int trank = myStatus.rank;
+	if (trank >= 4)
+	{
+		statusbf.set(4);
+		trank -= 4;
+	}
+	if (trank >= 2)
+	{
+		statusbf.set(3);
+		trank -= 2;
+	}
+	if (trank == 1)
+	{
+		statusbf.set(2);
+	}
+	statusbf.set(5, myStatus.moderator);
+	statusbf.set(6, myStatus.bot);
+	
+	std::ostringstream out;
+	out << "MYSTATUS " << static_cast<unsigned>(statusbf.to_ulong()) << "\n";
 	SendData(out.str());
 }
 
@@ -354,6 +383,8 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		status.rank = (statusbf[2]? 1 : 0) + (statusbf[3]? 2 : 0) + (statusbf[4]? 4 : 0);
 		status.moderator = statusbf[5];
 		status.bot = statusbf[6];
+		if (name == myUserName)
+			myStatus = status;
 		ClientStatusUpdate(name, status);
 	}
 	else if (command == "JOIN")
