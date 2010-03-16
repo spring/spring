@@ -129,6 +129,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		opaqueModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
 		cloakedModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
 	}
+
+	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 }
 
 CUnitDrawer::~CUnitDrawer(void)
@@ -168,6 +170,8 @@ CUnitDrawer::~CUnitDrawer(void)
 
 	opaqueModelRenderers.clear();
 	cloakedModelRenderers.clear();
+
+	unitRadarIcons.clear();
 }
 
 
@@ -564,7 +568,7 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		for (GML_VECTOR<CUnit*>::iterator ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
 			DrawIcon(*ui, false);
 		}
-		for (std::set<CUnit*>::const_iterator ui = unitRadarIcons.begin(); ui != unitRadarIcons.end(); ++ui) {
+		for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
 			DrawIcon(*ui, true);
 		}
 
@@ -837,10 +841,10 @@ void CUnitDrawer::DrawShadowPass(void)
 
 
 
-void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
+void CUnitDrawer::DrawIcon(CUnit* unit, bool asRadarBlip)
 {
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
-	const CIconData* iconData;
+	const CIconData* iconData = NULL;
 	if (asRadarBlip) {
 		iconData = iconHandler->GetDefaultIconData();
 	} else {
@@ -2416,8 +2420,12 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 	}
 
 	unsortedUnits.erase(unit);
-	unitRadarIcons.erase(unit);
 	liveGhostBuildings[MDL_TYPE(u)].erase(unit);
+
+	// remove the icon for all ally-teams
+	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); it++) {
+		(*it).erase(unit);
+	}
 
 	#if defined(USE_GML)
 	for (std::list<CUnit*>::iterator usi = unsortedUnitsGML.begin(); usi != unsortedUnitsGML.end(); ++usi) {
@@ -2449,30 +2457,32 @@ void CUnitDrawer::UnitDecloaked(const CUnit* u) {
 }
 
 
-void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyteam) {
+void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyTeam) {
 	GML_STDMUTEX_LOCK(unit);
 
-	if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-		liveGhostBuildings[MDL_TYPE(u)].erase(const_cast<CUnit*>(u));
+	if (allyTeam == gu->myAllyTeam) {
+		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
+			liveGhostBuildings[MDL_TYPE(u)].erase(const_cast<CUnit*>(u));
+		}
 	}
 
-	unitRadarIcons.erase(const_cast<CUnit*>(u));
+	unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
 }
 
-void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyteam) {
+void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyTeam) {
 	GML_STDMUTEX_LOCK(unit);
 
-	const unsigned short losStatus = u->losStatus[gu->myAllyTeam];
-
-	if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-		liveGhostBuildings[MDL_TYPE(u)].insert(const_cast<CUnit*>(u));
+	if (allyTeam == gu->myAllyTeam) {
+		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
+			liveGhostBuildings[MDL_TYPE(u)].insert(const_cast<CUnit*>(u));
+		}
 	}
 
-	if (losStatus & LOS_INRADAR) {
+	if (u->losStatus[allyTeam] & LOS_INRADAR) {
 		// if unit is still in radar after
 		// leaving LOS, insert an icon for
-		// it
-		unitRadarIcons.insert(const_cast<CUnit*>(u));
+		// it (for the involved allyteam)
+		unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
 
 		if (u->isIcon) {
 			// prevent us from drawing icons
@@ -2483,14 +2493,16 @@ void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyteam) {
 }
 
 
-void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyteam) {
+void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyTeam) {
 	GML_STDMUTEX_LOCK(unit);
 
-	unitRadarIcons.insert(const_cast<CUnit*>(u));
+	if (!(u->losStatus[allyTeam] & LOS_INLOS)) {
+		unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
+	}
 }
 
-void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyteam) {
+void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyTeam) {
 	GML_STDMUTEX_LOCK(unit);
 
-	unitRadarIcons.erase(const_cast<CUnit*>(u));
+	unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
 }
