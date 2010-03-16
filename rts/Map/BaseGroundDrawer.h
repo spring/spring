@@ -57,8 +57,6 @@ public:
 	bool UpdateExtraTexture();
 	bool DrawExtraTex() const { return drawMode!=drawNormal; };
 
-	void SetTexGen(float scalex,float scaley, float offsetx, float offsety) const;
-
 	bool updateFov;
 	bool drawRadarAndJammer;
 	bool drawLineOfSight;
