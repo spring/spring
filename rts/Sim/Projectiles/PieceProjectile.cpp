@@ -229,12 +229,12 @@ bool CPieceProjectile::HasVertices(void)
 
 float3 CPieceProjectile::RandomVertexPos(void)
 {
-	if (omp == NULL) {
+	if (!HasVertices()) {
 		return ZeroVector;
 	}
 
 	const int vertexNum = (int) (gu->usRandFloat() * 0.99f * omp->vertexCount);
-	const float3 pos = omp->GetVertexPos(vertexNum);
+	const float3& pos = omp->GetVertexPos(vertexNum);
 
 	return pos;
 }
@@ -451,10 +451,4 @@ void CPieceProjectile::DrawUnitPart(void)
 	}
 
 	*numCallback = 0;
-}
-
-void CPieceProjectile::DrawS3O(void)
-{
-	// copy of CWeaponProjectile::::DrawS3O()
-	DrawUnitPart();
 }
