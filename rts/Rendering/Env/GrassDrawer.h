@@ -62,7 +62,6 @@ protected:
 	int strawPerTurf;
 
 	unsigned char* grassMap;
-	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 };
 
 

@@ -526,15 +526,17 @@ void glClearErrors()
 
 /******************************************************************************/
 
-void SetTexGen(const float& scalex, const float& scaley, const float& offsetx, const float& offsety)
+void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ)
 {
-	GLfloat plan[]={scalex,0,0,offsetx};
-	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
+	const GLfloat planeX[] = {scaleX, 0.0f,   0.0f,  offsetX};
+	const GLfloat planeZ[] = {  0.0f, 0.0f, scaleZ,  offsetZ};
+
+	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);
 	glEnable(GL_TEXTURE_GEN_S);
-	GLfloat plan2[]={0,0,scaley,offsety};
-	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
+
+	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	glTexGenfv(GL_T, GL_EYE_PLANE, planeZ);
 	glEnable(GL_TEXTURE_GEN_T);
 }
 

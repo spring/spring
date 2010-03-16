@@ -508,16 +508,3 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 	updateTextureState++;
 	return false;
 }
-
-
-void CBaseGroundDrawer::SetTexGen(float scalex,float scaley, float offsetx, float offsety) const
-{
-	GLfloat plan[]={scalex,0,0,offsetx};
-	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
-	glEnable(GL_TEXTURE_GEN_S);
-	GLfloat plan2[]={0,0,scaley,offsety};
-	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
-	glEnable(GL_TEXTURE_GEN_T);
-}
