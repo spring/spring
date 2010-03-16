@@ -233,7 +233,7 @@ private:
 	GML_VECTOR<CUnit*> drawStat;
 	GML_VECTOR<CUnit*> drawIcon;
 
-	std::set<CUnit*> unitRadarIcons;
+	std::vector<std::set<CUnit*> > unitRadarIcons;
 };
 
 extern CUnitDrawer* unitDrawer;
