@@ -46,6 +46,7 @@ public:
 
 	virtual void AddUser(const std::string& name, const std::string& country, int cpu) {};
 	virtual void RemoveUser(const std::string& name) {};
+	void StatusUpdate(bool ingame, bool away);
 	virtual void ClientStatusUpdate(const std::string& name, ClientStatus status) {};
 
 	void Channels();
@@ -102,6 +103,8 @@ private:
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;
 	boost::asio::deadline_timer timer;
+	std::string myUserName;
+	ClientStatus myStatus;
 };
 
 #endif

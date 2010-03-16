@@ -191,6 +191,14 @@ void LuaLobby::RemoveUser(const std::string& name)
 		LogObject(LobbyLog) << "Error: " << luaL_checkstring(L, -1);
 }
 
+int LuaLobby::StatusUpdate(lua_State *L)
+{
+	int ingame = luaL_checknumber(L, 1);
+	int away = luaL_checknumber(L, 2);
+	Connection::StatusUpdate(ingame, away);
+	return 1;
+}
+
 void LuaLobby::ClientStatusUpdate(const std::string& name, ClientStatus status)
 {
 	Lunar<LuaLobby>::push(L, this);
