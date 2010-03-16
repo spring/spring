@@ -457,7 +457,7 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 }
 
 
-void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece)
+void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece)
 {
 	FlyingPiece* fp = new FlyingPiece();
 	fp->pos = pos;

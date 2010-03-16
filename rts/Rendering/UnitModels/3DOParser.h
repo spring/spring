@@ -29,8 +29,9 @@ struct S3DOPrimitive {
 	C3DOTextureHandler::UnitTexture* texture;
 };
 
-struct S3DOPiece : public S3DModelPiece {
+struct S3DOPiece: public S3DModelPiece {
 	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
+	void Shatter(float, int, int, const float3&, const float3&) const;
 
 	std::vector<S3DOVertex> vertices;
 	std::vector<S3DOPrimitive> prims;
