@@ -45,13 +45,21 @@ public:
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
 
-	inline const ProjectileMapPair* GetMapPairByID(int id) const {
+	inline const ProjectileMapPair* GetMapPairBySyncedID(int id) const {
 		ProjectileMap::const_iterator it = syncedProjectileIDs.find(id);
 		if (it == syncedProjectileIDs.end()) {
 			return NULL;
 		}
 		return &(it->second);
 	}
+	inline const ProjectileMapPair* GetMapPairByUnsyncedID(int id) const {
+		ProjectileMap::const_iterator it = unsyncedProjectileIDs.find(id);
+		if (it == unsyncedProjectileIDs.end()) {
+			return NULL;
+		}
+		return &(it->second);
+	}
+
 
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
@@ -76,9 +84,12 @@ public:
 	FlyingPieceContainer flyingPiecesS3O;     //! unsynced
 	GroundFlashContainer groundFlashes;       //! unsynced
 
-	int maxUsedID;
-	std::list<int> freeIDs;                   //! available synced (weapon, piece) projectile ID's
-	ProjectileMap syncedProjectileIDs;        //! ID ==> <projectile, allyteam> map for synced (weapon, piece) projectiles
+	int maxUsedSyncedID;
+	int maxUsedUnsyncedID;
+	std::list<int> freeSyncedIDs;             //! available synced (weapon, piece) projectile ID's
+	std::list<int> freeUnsyncedIDs;           //! available unsynced projectile ID's
+	ProjectileMap syncedProjectileIDs;        //! ID ==> <projectile, allyteam> map for living synced projectiles
+	ProjectileMap unsyncedProjectileIDs;      //! ID ==> <projectile, allyteam> map for living unsynced projectiles
 
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;

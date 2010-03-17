@@ -84,11 +84,13 @@ void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 
 	// updating a unit's draw-position requires mutability
 	units[TEX_TYPE(u)].insert(const_cast<CUnit*>(u));
+	numUnits += 1;
 }
 
 void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
 	units[TEX_TYPE(u)].erase(const_cast<CUnit*>(u));
+	numUnits -= 1;
 }
 
 
@@ -99,11 +101,13 @@ void IWorldObjectModelRenderer::AddFeature(const CFeature* f)
 	}
 
 	features[TEX_TYPE(f)].insert(const_cast<CFeature*>(f));
+	numFeatures += 1;
 }
 
 void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
 	features[TEX_TYPE(f)].erase(const_cast<CFeature*>(f));
+	numFeatures -= 1;
 }
 
 
@@ -114,11 +118,13 @@ void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 	}
 
 	projectiles[TEX_TYPE(p)].insert(const_cast<CProjectile*>(p));
+	numProjectiles += 1;
 }
 
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
 	projectiles[TEX_TYPE(p)].erase(const_cast<CProjectile*>(p));
+	numProjectiles -= 1;
 }
 
 

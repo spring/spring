@@ -19,7 +19,6 @@ public:
 
 	void SetRadius(float r);
 	virtual ~CWorldObject();
-	virtual void DrawS3O();
 
 	int id;
 

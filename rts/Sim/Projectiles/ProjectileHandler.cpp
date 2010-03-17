@@ -47,8 +47,8 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
 	CR_MEMBER(syncedProjectileIDs),
-	CR_MEMBER(freeIDs),
-	CR_MEMBER(maxUsedID),
+	CR_MEMBER(freeSyncedIDs),
+	CR_MEMBER(maxUsedSyncedID),
 	CR_MEMBER(groundFlashes),
 	CR_RESERVED(32),
 	CR_SERIALIZER(Serialize),
@@ -84,18 +84,25 @@ CProjectileHandler::CProjectileHandler()
 	numPerlinProjectiles   = 0;
 
 	// preload some IDs
-	// (note that 0 is reserved for unsynced projectiles)
-	for (int i = 1; i <= 12345; i++) {
-		freeIDs.push_back(i);
+	for (int i = 0; i < 16384; i++) {
+		freeSyncedIDs.push_back(i);
+		freeUnsyncedIDs.push_back(i);
 	}
 
-	maxUsedID = freeIDs.size();
+	maxUsedSyncedID = freeSyncedIDs.size();
+	maxUsedUnsyncedID = freeUnsyncedIDs.size();
 }
 
 CProjectileHandler::~CProjectileHandler()
 {
 	syncedProjectiles.clear(); // synced first, to avoid callback crashes
 	unsyncedProjectiles.clear();
+
+	freeSyncedIDs.clear();
+	freeUnsyncedIDs.clear();
+
+	syncedProjectileIDs.clear();
+	unsyncedProjectileIDs.clear();
 
 	ph = 0;
 }
@@ -153,26 +160,27 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		CProjectile* p = *pci;
 
 		if (p->deleteMe) {
+			ProjectileMap::iterator pIt;
+
 			if (p->synced) {
-				assert(synced);
-				if(p->weapon || p->piece) {
+				//! iterator is always valid
+				pIt = syncedProjectileIDs.find(p->id);
 
-					//! iterator is always valid
-					const ProjectileMap::iterator it = syncedProjectileIDs.find(p->id);
-					const ProjectileMapPair& pp = it->second;
+				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
+				syncedProjectileIDs.erase(pIt);
 
-					eventHandler.ProjectileDestroyed(pp.first, pp.second);
-					syncedProjectileIDs.erase(it);
+				freeSyncedIDs.push_back(p->id);
 
-					if (p->id != 0) {
-						freeIDs.push_back(p->id);
-					}
-				}
 				//! push_back this projectile for deletion
 				pci = pc.erase_delete_synced(pci);
-			}
-			else {
-				assert(!synced);
+			} else {
+				pIt = unsyncedProjectileIDs.find(p->id);
+
+				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
+				unsyncedProjectileIDs.erase(pIt);
+
+				freeUnsyncedIDs.push_back(p->id);
+
 				pci = pc.erase_delete(pci);
 			}
 		} else {
@@ -211,13 +219,6 @@ void CProjectileHandler::Update()
 				//! queued (push_back'ed) for deletion
 				syncedProjectiles.delete_erased_synced();
 			}
-
-			//! prepare projectile batches for
-			//! addition into the render queue
-			syncedProjectiles.delay_add();
-
-			unsyncedProjectiles.delay_delete();
-			unsyncedProjectiles.delay_add();
 		}
 
 
@@ -275,35 +276,41 @@ void CProjectileHandler::Update()
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
+	std::list<int>* freeIDs = NULL;
+	std::map<int, ProjectileMapPair>* proIDs = NULL;
+	int* maxUsedID = NULL;
+	int newID = 0;
+
 	if (p->synced) {
 		syncedProjectiles.push(p);
+		freeIDs = &freeSyncedIDs;
+		proIDs = &syncedProjectileIDs;
+		maxUsedID = &maxUsedSyncedID;
 	} else {
 		unsyncedProjectiles.push(p);
+		freeIDs = &freeUnsyncedIDs;
+		proIDs = &unsyncedProjectileIDs;
+		maxUsedID = &maxUsedUnsyncedID;
 	}
 
-	if (p->synced && (p->weapon || p->piece)) {
-		// only keep track of synced projectile IDs for Lua
-		int newID = 1;
-
-		if (!freeIDs.empty()) {
-			newID = freeIDs.front();
-			freeIDs.pop_front();
-		} else {
-			maxUsedID++;
-			newID = maxUsedID;
-
-			if (maxUsedID > (1 << 24)) {
-				logOutput.Print("LUA projectile IDs are now out of range");
-			}
-		}
-
-		p->id = newID;
-		// projectile owner can die before projectile itself
-		// does, so copy the allyteam at projectile creation
-		ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
-		syncedProjectileIDs[p->id] = pp;
-		eventHandler.ProjectileCreated(pp.first, pp.second);
+	if (!freeIDs->empty()) {
+		newID = freeIDs->front();
+		freeIDs->pop_front();
+	} else {
+		(*maxUsedID)++;
+		newID = *maxUsedID;
 	}
+
+	if ((*maxUsedID) > (1 << 24)) {
+		logOutput.Print("LUA %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
+	}
+
+	ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
+
+	p->id = newID;
+	(*proIDs)[p->id] = pp;
+
+	eventHandler.ProjectileCreated(pp.first, pp.second);
 }
 
 

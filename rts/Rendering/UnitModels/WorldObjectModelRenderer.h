@@ -19,7 +19,11 @@ class IWorldObjectModelRenderer {
 public:
 	static IWorldObjectModelRenderer* GetInstance(int);
 
-	IWorldObjectModelRenderer(int mdlType): modelType(mdlType) {}
+	IWorldObjectModelRenderer(int mdlType): modelType(mdlType) {
+		numUnits = 0;
+		numFeatures = 0;
+		numProjectiles = 0;
+	}
 	virtual ~IWorldObjectModelRenderer();
 
 	virtual void Draw();
@@ -32,6 +36,10 @@ public:
 	virtual void DelFeature(const CFeature*);
 	virtual void AddProjectile(const CProjectile*);
 	virtual void DelProjectile(const CProjectile*);
+
+	int GetNumUnits() const { return numUnits; }
+	int GetNumFeatures() const { return numFeatures; }
+	int GetNumProjectiles() const { return numProjectiles; }
 
 protected:
 	typedef std::set<CUnit*>                       UnitSet;
@@ -61,6 +69,10 @@ protected:
 	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
 
 	int modelType;
+
+	int numUnits;
+	int numFeatures;
+	int numProjectiles;
 
 public:
 	const UnitSet& GetUnitSet(int texType) { return units[texType]; }

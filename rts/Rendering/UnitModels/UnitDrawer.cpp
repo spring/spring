@@ -1492,58 +1492,6 @@ void CUnitDrawer::UnitDrawingTexturesOff()
 
 
 
-
-
-
-void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
-{
-#ifdef USE_GML
-	quedS3Os.acquire(textureType).push_back(object);
-	quedS3Os.release();
-#else
-	const size_t signedTextureType = (textureType < 0) ? 0 : textureType;
-	while (quedS3Os.size() <= signedTextureType) {
-		quedS3Os.push_back(GML_VECTOR<CWorldObject*>());
-	}
-	quedS3Os[textureType].push_back(object);
-	usedS3OTextures.insert(textureType);
-#endif
-}
-
-// used by CProjectileDrawer to draw non-unit
-// opaque S3O objects (ie. projectile types)
-void CUnitDrawer::DrawQuedS3O(void)
-{
-#ifdef USE_GML
-	const int sz = quedS3Os.size();
-	for (int tex = 0; tex < sz; ++tex) {
-		if (quedS3Os[tex].size() > 0) {
-			texturehandlerS3O->SetS3oTexture(tex);
-
-			for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
-				if (*ui) { (*ui)->DrawS3O(); }
-			}
-
-			quedS3Os[tex].clear();
-		}
-	}
-#else
-	for (std::set<int>::iterator uti = usedS3OTextures.begin(); uti != usedS3OTextures.end(); ++uti) {
-		const int tex = *uti;
-		texturehandlerS3O->SetS3oTexture(tex);
-
-		for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
-			if (*ui) { (*ui)->DrawS3O(); }
-		}
-
-		quedS3Os[tex].clear();
-	}
-	usedS3OTextures.clear();
-#endif
-}
-
-
-
 /**
  * Draw one unit.
  *
