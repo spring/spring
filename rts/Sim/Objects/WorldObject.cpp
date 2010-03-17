@@ -22,11 +22,6 @@ CWorldObject::~CWorldObject()
 {
 }
 
-void CWorldObject::DrawS3O()
-{
-	// implemented by CUnit, CFeature, CWeaponProjectile, CPieceProjectile
-}
-
 void CWorldObject::SetRadius(float r)
 {
 	radius = r;

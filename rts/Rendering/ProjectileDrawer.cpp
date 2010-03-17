@@ -19,6 +19,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -27,6 +28,7 @@
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
@@ -43,7 +45,9 @@ bool distcmp::operator() (const CProjectile* arg1, const CProjectile* arg2) cons
 
 CProjectileDrawer* projectileDrawer = NULL;
 
-CProjectileDrawer::CProjectileDrawer() {
+CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false) {
+	eventHandler.AddClient(this);
+
 	PrintLoadMsg("Creating Projectile Textures");
 
 	textureAtlas = new CTextureAtlas(2048, 2048);
@@ -303,16 +307,35 @@ CProjectileDrawer::CProjectileDrawer() {
 		drawPerlinTex = perlinFB.CheckStatus("PERLIN");
 		perlinFB.Unbind();
 	}
+
+
+	modelRenderers.resize(MODELTYPE_OTHER, NULL);
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		modelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+	}
 }
 
 CProjectileDrawer::~CProjectileDrawer() {
+	eventHandler.RemoveClient(this);
+
 	for (int a = 0; a < 8; ++a) {
 		glDeleteTextures(1, &perlinTex[a]);
 	}
 
 	delete textureAtlas;
 	delete groundFXAtlas;
+
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		delete modelRenderers[modelType];
+	}
+
+	modelRenderers.clear();
+	renderProjectiles.clear();
 }
+
+
 
 void CProjectileDrawer::LoadWeaponTextures() {
 	// post-process the synced weapon-defs to set unsynced fields
@@ -379,87 +402,181 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 
 
-void CProjectileDrawer::DrawProjectiles(const ProjectileContainer& pc, bool drawReflection, bool drawRefraction) {
-	for (ProjectileContainer::render_iterator pci = pc.render_begin(); pci != pc.render_end(); ++pci) {
-		CProjectile* pro = *pci;
-		CUnit* owner = pro->owner();
+void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction)
+{
+	typedef std::set<CProjectile*> ProjectileSet;
+	typedef std::map<int, ProjectileSet> ProjectileBin;
+	typedef ProjectileSet::iterator ProjectileSetIt;
+	typedef ProjectileBin::iterator ProjectileBinIt;
 
-		UpdateDrawPos(pro);
+	ProjectileBin& projectiles = modelRenderers[modelType]->GetProjectileBinMutable();
 
-		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
-			(owner && teamHandler->Ally(pro->owner()->allyteam, gu->myAllyTeam)))) {
+	if (modelType == MODELTYPE_3DO) {
+		unitDrawer->SetupFor3DO();
+	}
 
-			bool stunned = owner? owner->stunned: false;
-
-			if (owner && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
-				// if the unit that fired this projectile is stunned and the projectile
-				// forms part of a shield (ie., the unit has a CPlasmaRepulser weapon but
-				// cannot fire it), prevent the projectile (shield segment) from being drawn
-				//
-				// also prevents shields being drawn at unit's pre-pickup position
-				// (since CPlasmaRepulser::Update() is responsible for updating
-				// CShieldPartProjectile::centerPos) if the unit is in a non-fireplatform
-				// transport
-				continue;
-			}
-
-			if (drawReflection) {
-				if (pro->pos.y < -pro->drawRadius)
-					continue;
-
-				float dif = pro->pos.y - camera->pos.y;
-				float3 zeroPos = camera->pos * (pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
-
-				if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > 3 + 0.5f * pro->drawRadius)
-					continue;
-			}
-
-			if (drawRefraction && pro->pos.y > pro->drawRadius)
-				continue;
-
-			if (pro->model) {
-				if (pro->model->type == MODELTYPE_S3O) {
-					unitDrawer->QueS3ODraw(pro, pro->model->textureType);
-				} else {
-					pro->DrawUnitPart();
-				}
-			}
-
-			pro->tempdist = pro->pos.dot(camera->forward);
-			distset.insert(pro);
+	for (ProjectileBinIt binIt = projectiles.begin(); binIt != projectiles.end(); binIt++) {
+		if (modelType == MODELTYPE_S3O) {
+			texturehandlerS3O->SetS3oTexture(binIt->first);
 		}
+
+		DrawProjectilesSet(binIt->second, drawReflection, drawRefraction);
+	}
+
+	DrawFlyingPieces(modelType, numFlyingPieces, drawnPieces);
+
+	if (modelType == MODELTYPE_3DO) {
+		unitDrawer->CleanUp3DO();
 	}
 }
 
-void CProjectileDrawer::DrawProjectilesShadow(const ProjectileContainer& pc) {
-	for (ProjectileContainer::render_iterator pci = pc.render_begin(); pci != pc.render_end(); ++pci) {
-		CProjectile* p = *pci;
+void CProjectileDrawer::DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
+{
+	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); setIt++) {
+		DrawProjectile(*setIt, drawReflection, drawRefraction);
+	}
+}
 
-		if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
-			(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
+void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bool drawRefraction)
+{
+	const CUnit* owner = pro->owner();
 
-			if (p->model) {
-				p->DrawUnitPart();
-			} else if (p->castShadow) {
+	#if defined(USE_GML) && GML_ENABLE_SIM
+		pro->drawPos = pro->pos + (pro->speed * ((float)gu->lastFrameStart - (float)pro->lastProjUpdate) * gu->weightedSpeedFactor);
+	#else
+		pro->drawPos = pro->pos + (pro->speed * gu->timeOffset);
+	#endif
+
+	if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
+		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
+
+		const bool stunned = owner? owner->stunned: false;
+
+		if (owner && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
+			// if the unit that fired this projectile is stunned and the projectile
+			// forms part of a shield (ie., the unit has a CPlasmaRepulser weapon but
+			// cannot fire it), prevent the projectile (shield segment) from being drawn
+			//
+			// also prevents shields being drawn at unit's pre-pickup position
+			// (since CPlasmaRepulser::Update() is responsible for updating
+			// CShieldPartProjectile::centerPos) if the unit is in a non-fireplatform
+			// transport
+			return;
+		}
+
+		if (drawReflection) {
+			if (pro->pos.y < -pro->drawRadius) {
+				return;
+			}
+
+			float dif = pro->pos.y - camera->pos.y;
+			float3 zeroPos = camera->pos * (pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
+
+			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > 3 + 0.5f * pro->drawRadius) {
+				return;
+			}
+		}
+
+		if (drawRefraction && pro->pos.y > pro->drawRadius) {
+			return;
+		}
+
+		if (pro->model) {
+			// NOTE: this needs refactoring
+			pro->DrawS3O();
+		}
+
+		// z-sort to render the particles attached to projectiles
+		pro->tempdist = pro->pos.dot(camera->forward);
+		distset.insert(pro);
+	}
+}
+
+
+
+void CProjectileDrawer::DrawProjectilesShadow(int modelType)
+{
+	typedef std::map<int, std::set<CProjectile*> > ProjectileBin;
+	typedef ProjectileBin::iterator ProjectileBinIt;
+
+	ProjectileBin& projectiles = modelRenderers[modelType]->GetProjectileBinMutable();
+
+	for (ProjectileBinIt binIt = projectiles.begin(); binIt != projectiles.end(); binIt++) {
+		DrawProjectilesSetShadow(binIt->second);
+	}
+}
+
+void CProjectileDrawer::DrawProjectilesSetShadow(std::set<CProjectile*>& projectiles)
+{
+	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); setIt++) {
+		DrawProjectileShadow(*setIt);
+	}
+}
+
+void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
+{
+	if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
+		(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
+
+		if (p->model) {
+			// no team-color
+			p->DrawUnitPart();
+		} else {
+			if (p->castShadow) {
+				// no z-sorting here
 				p->Draw();
 			}
 		}
 	}
 }
 
-void CProjectileDrawer::DrawProjectilesMiniMap(const ProjectileContainer& pc) {
-	if (pc.render_size() > 0) {
+
+
+void CProjectileDrawer::DrawProjectilesMiniMap()
+{
+	typedef std::set<CProjectile*> ProjectileSet;
+	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
+	typedef std::map<int, ProjectileSet> ProjectileBin;
+	typedef std::map<int, ProjectileSet>::const_iterator ProjectileBinIt;
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		CVertexArray* lines = GetVertexArray();
 		CVertexArray* points = GetVertexArray();
 
 		lines->Initialize();
-		lines->EnlargeArrays(pc.render_size() * 2, 0, VA_SIZE_C);
+		lines->EnlargeArrays(modelRenderers[modelType]->GetNumProjectiles() * 2, 0, VA_SIZE_C);
+		points->Initialize();
+		points->EnlargeArrays(modelRenderers[modelType]->GetNumProjectiles(), 0, VA_SIZE_C);
+
+		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
+
+		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); binIt++) {
+			for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); setIt++) {
+				CProjectile* p = *setIt;
+
+				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
+					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+					p->DrawOnMinimap(*lines, *points);
+				}
+			}
+		}
+
+		lines->DrawArrayC(GL_LINES);
+		points->DrawArrayC(GL_POINTS);
+	}
+
+	if (!renderProjectiles.empty()) {
+		CVertexArray* lines = GetVertexArray();
+		CVertexArray* points = GetVertexArray();
+
+		lines->Initialize();
+		lines->EnlargeArrays(renderProjectiles.size() * 2, 0, VA_SIZE_C);
 
 		points->Initialize();
-		points->EnlargeArrays(pc.render_size(), 0, VA_SIZE_C);
+		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
 
-		for (ProjectileContainer::render_iterator pci = pc.render_begin(); pci != pc.render_end(); ++pci) {
-			CProjectile* p = *pci;
+		for (std::set<CProjectile*>::iterator it = renderProjectiles.begin(); it != renderProjectiles.end(); ++it) {
+			CProjectile* p = *it;
 
 			if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
 				gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
@@ -472,9 +589,105 @@ void CProjectileDrawer::DrawProjectilesMiniMap(const ProjectileContainer& pc) {
 	}
 }
 
-void CProjectileDrawer::DrawProjectilesMiniMap() {
-	DrawProjectilesMiniMap(ph->syncedProjectiles);
-	DrawProjectilesMiniMap(ph->unsyncedProjectiles);
+void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces)
+{
+	CVertexArray* va = GetVertexArray();
+
+	va->Initialize();
+	va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
+
+	size_t lasttex = 0xFFFFFFFF;
+	size_t lastteam = 0xFFFFFFFF;
+
+	FlyingPieceContainer::render_iterator fpi;
+
+	switch (modelType) {
+		case MODELTYPE_3DO: {
+			for (fpi = ph->flyingPieces3DO.render_begin(); fpi != ph->flyingPieces3DO.render_end(); ++fpi) {
+				const FlyingPiece* fp = *fpi;
+
+				if (fp->team != lastteam) {
+					lastteam = fp->team;
+					va->DrawArrayTN(GL_QUADS);
+					va->Initialize();
+					unitDrawer->SetTeamColour(lastteam);
+				}
+
+				CMatrix44f m;
+				m.Rotate(fp->rot, fp->rotAxis);
+				const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
+				const C3DOTextureHandler::UnitTexture* tex = fp->prim->texture;
+
+				const std::vector<S3DOVertex>& vertices    = fp->object->vertices;
+				const std::vector<int>&        verticesIdx = fp->prim->vertices;
+
+				const S3DOVertex* v = &vertices[verticesIdx[0]];
+
+				float3 tp = m.Mul(v->pos);
+				float3 tn = m.Mul(v->normal);
+				tp += interPos;
+				va->AddVertexQTN(tp, tex->xstart, tex->ystart, tn);
+
+				v = &vertices[verticesIdx[1]];
+				tp = m.Mul(v->pos);
+				tn = m.Mul(v->normal);
+				tp += interPos;
+				va->AddVertexQTN(tp, tex->xend, tex->ystart, tn);
+
+				v = &vertices[verticesIdx[2]];
+				tp = m.Mul(v->pos);
+				tn = m.Mul(v->normal);
+				tp += interPos;
+				va->AddVertexQTN(tp, tex->xend, tex->yend, tn);
+
+				v = &vertices[verticesIdx[3]];
+				tp = m.Mul(v->pos);
+				tn = m.Mul(v->normal);
+				tp += interPos;
+				va->AddVertexQTN(tp, tex->xstart, tex->yend, tn);
+			}
+		} break;
+
+		case MODELTYPE_S3O: {
+			for (fpi = ph->flyingPiecesS3O.render_begin(); fpi != ph->flyingPiecesS3O.render_end(); ++fpi) {
+				const FlyingPiece* fp = *fpi;
+
+				if (fp->texture != lasttex) {
+					lasttex = fp->texture;
+					if (lasttex == 0)
+						break;
+					va->DrawArrayTN(GL_QUADS);
+					va->Initialize();
+					texturehandlerS3O->SetS3oTexture(lasttex);
+				}
+				if (fp->team != lastteam) {
+					lastteam = fp->team;
+					va->DrawArrayTN(GL_QUADS);
+					va->Initialize();
+					unitDrawer->SetTeamColour(lastteam);
+				}
+
+				CMatrix44f m;
+				m.Rotate(fp->rot, fp->rotAxis);
+				const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
+				const SS3OVertex* verts = fp->verts;
+				float3 tp, tn;
+
+				for (int i = 0; i < 4; i++) {
+					tp = m.Mul(verts[i].pos);
+					tn = m.Mul(verts[i].normal);
+					tp += interPos;
+					va->AddVertexQTN(tp, verts[i].textureX, verts[i].textureY, tn);
+				}
+			}
+		} break;
+
+		default: {
+		} break;
+	}
+
+	(*drawnPieces) += (va->drawIndex() / 32);
+	va->DrawArrayTN(GL_QUADS);
 }
 
 
@@ -489,12 +702,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
 
-	CVertexArray* va = GetVertexArray();
-
-	/* Putting in, say, viewport culling will deserve refactoring. */
-
-	unitDrawer->SetupForUnitDrawing();
-
 	{
 		GML_STDMUTEX_LOCK(rpiece); // Draw
 
@@ -504,132 +711,31 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		ph->flyingPiecesS3O.add_delayed();
 	}
 
-	size_t lasttex = 0xFFFFFFFF;
-	size_t lastteam = 0xFFFFFFFF;
-
-
-
-	const int numFlyingPieces = ph->flyingPieces3DO.render_size() + ph->flyingPiecesS3O.render_size();
-	const int drawnPieces = numFlyingPieces;
-
-	va->Initialize();
-	va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
-
-	FlyingPieceContainer::render_iterator fpi;
-
-	// S3O flying pieces
-	for (fpi = ph->flyingPiecesS3O.render_begin(); fpi != ph->flyingPiecesS3O.render_end(); ++fpi) {
-		const FlyingPiece* fp = *fpi;
-
-		if (fp->texture != lasttex) {
-			lasttex = fp->texture;
-			if (lasttex == 0)
-				break;
-			va->DrawArrayTN(GL_QUADS);
-			va->Initialize();
-			texturehandlerS3O->SetS3oTexture(lasttex);
-		}
-		if (fp->team != lastteam) {
-			lastteam = fp->team;
-			va->DrawArrayTN(GL_QUADS);
-			va->Initialize();
-			unitDrawer->SetTeamColour(lastteam);
-		}
-
-		CMatrix44f m;
-		m.Rotate(fp->rot, fp->rotAxis);
-		const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
-		const SS3OVertex* verts = fp->verts;
-		float3 tp, tn;
-
-		for (int i = 0; i < 4; i++){
-			tp = m.Mul(verts[i].pos);
-			tn = m.Mul(verts[i].normal);
-			tp += interPos;
-			va->AddVertexQTN(tp, verts[i].textureX, verts[i].textureY, tn);
-		}
-	}
-
-	va->DrawArrayTN(GL_QUADS);
-	va->Initialize();
-
-	unitDrawer->SetupFor3DO();
-
-	// 3DO flying pieces
-	for (fpi = ph->flyingPieces3DO.render_begin(); fpi != ph->flyingPieces3DO.render_end(); ++fpi) {
-		const FlyingPiece* fp = *fpi;
-
-		if (fp->team != lastteam) {
-			lastteam = fp->team;
-			va->DrawArrayTN(GL_QUADS);
-			va->Initialize();
-			unitDrawer->SetTeamColour(lastteam);
-		}
-
-		CMatrix44f m;
-		m.Rotate(fp->rot, fp->rotAxis);
-		const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
-		const C3DOTextureHandler::UnitTexture* tex = fp->prim->texture;
-
-		const std::vector<S3DOVertex>& vertices    = fp->object->vertices;
-		const std::vector<int>&        verticesIdx = fp->prim->vertices;
-
-		const S3DOVertex* v = &vertices[verticesIdx[0]];
-
-		float3 tp = m.Mul(v->pos);
-		float3 tn = m.Mul(v->normal);
-		tp += interPos;
-		va->AddVertexQTN(tp, tex->xstart, tex->ystart, tn);
-
-		v = &vertices[verticesIdx[1]];
-		tp = m.Mul(v->pos);
-		tn = m.Mul(v->normal);
-		tp += interPos;
-		va->AddVertexQTN(tp, tex->xend, tex->ystart, tn);
-
-		v = &vertices[verticesIdx[2]];
-		tp = m.Mul(v->pos);
-		tn = m.Mul(v->normal);
-		tp += interPos;
-		va->AddVertexQTN(tp, tex->xend, tex->yend, tn);
-
-		v = &vertices[verticesIdx[3]];
-		tp = m.Mul(v->pos);
-		tn = m.Mul(v->normal);
-		tp += interPos;
-		va->AddVertexQTN(tp, tex->xstart, tex->yend, tn);
-	}
-
-	va->DrawArrayTN(GL_QUADS);
-
 	distset.clear();
 
-	{
-		GML_STDMUTEX_LOCK(rproj); // Draw
-
-		//! batch-insert projectiles into render queue
-		ph->syncedProjectiles.add_delayed();
-
-		ph->unsyncedProjectiles.delete_delayed();
-		ph->unsyncedProjectiles.add_delayed();
-	}
+	int numFlyingPieces = ph->flyingPieces3DO.render_size() + ph->flyingPiecesS3O.render_size();
+	int drawnPieces = 0;
 
 	{
 		GML_STDMUTEX_LOCK(proj); // Draw
 
-		//! 3DO projectiles get rendered immediately here, S3O's are queued
-		DrawProjectiles(ph->syncedProjectiles, drawReflection, drawRefraction);
-		DrawProjectiles(ph->unsyncedProjectiles, drawReflection, drawRefraction);
+		unitDrawer->SetupForUnitDrawing();
 
-		unitDrawer->CleanUp3DO();
-		unitDrawer->DrawQuedS3O(); //! draw qued S3O projectiles
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			DrawProjectiles(modelType, numFlyingPieces, &drawnPieces, drawReflection, drawRefraction);
+		}
+
 		unitDrawer->CleanUpUnitDrawing();
+
+		// draw the model-less projectiles
+		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
 		ph->currentParticles = 0;
 		CProjectile::inArray = false;
 		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
 
+		// draw the SFX particles
 		for (std::set<CProjectile*, distcmp>::iterator i = distset.begin(); i != distset.end(); ++i) {
 			(*i)->Draw();
 		}
@@ -655,14 +761,18 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glDepthMask(1);
 
 	ph->currentParticles  = int(ph->currentParticles * 0.2f);
-	ph->currentParticles += int((ph->syncedProjectiles.render_size() + ph->unsyncedProjectiles.render_size()) * 0.8f);
-	ph->currentParticles += (int) (0.2f * drawnPieces + 0.3f * numFlyingPieces);
+	ph->currentParticles += int(0.2f * drawnPieces + 0.3f * numFlyingPieces);
+	ph->currentParticles += (renderProjectiles.size() * 0.8f);
+
+	// NOTE: should projectiles that have a model be counted here?
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		ph->currentParticles += (modelRenderers[modelType]->GetNumProjectiles() * 0.8f);
+	}
 
 	ph->particleSaturation     = ph->currentParticles     / float(ph->maxParticles);
 	ph->nanoParticleSaturation = ph->currentNanoParticles / float(ph->maxNanoParticles);
@@ -683,8 +793,14 @@ void CProjectileDrawer::DrawShadowPass(void)
 		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
 
 		po->Enable();
-		DrawProjectilesShadow(ph->syncedProjectiles);
-		DrawProjectilesShadow(ph->unsyncedProjectiles);
+
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			DrawProjectilesShadow(modelType);
+		}
+
+		// draw the model-less projectiles
+		DrawProjectilesSetShadow(renderProjectiles);
+
 		po->Disable();
 	}
 
@@ -713,8 +829,8 @@ void CProjectileDrawer::DrawGroundFlashes(void)
 	static GLfloat black[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glActiveTexture(GL_TEXTURE0);
 	groundFXAtlas->BindTexture();
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(0);
@@ -751,18 +867,6 @@ void CProjectileDrawer::DrawGroundFlashes(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 }
-
-
-
-
-void CProjectileDrawer::UpdateDrawPos(CProjectile* p) {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	p->drawPos = p->pos + (p->speed * ((float)gu->lastFrameStart - (float)p->lastProjUpdate) * gu->weightedSpeedFactor);
-#else
-	p->drawPos = p->pos + (p->speed * gu->timeOffset);
-#endif
-}
-
 
 
 
@@ -852,7 +956,6 @@ void CProjectileDrawer::UpdatePerlin() {
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-	//glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
 
 	glPopMatrix();
@@ -877,4 +980,29 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	delete[] mem;
+}
+
+
+
+
+void CProjectileDrawer::ProjectileCreated(const CProjectile* p)
+{
+	GML_STDMUTEX_LOCK(proj);
+
+	if (p->model) {
+		modelRenderers[MDL_TYPE(p)]->AddProjectile(const_cast<CProjectile*>(p));
+	} else {
+		renderProjectiles.insert(const_cast<CProjectile*>(p));
+	}
+}
+
+void CProjectileDrawer::ProjectileDestroyed(const CProjectile* p)
+{
+	GML_STDMUTEX_LOCK(proj);
+
+	if (p->model) {
+		modelRenderers[MDL_TYPE(p)]->DelProjectile(const_cast<CProjectile*>(p));
+	} else {
+		renderProjectiles.erase(const_cast<CProjectile*>(p));
+	}
 }

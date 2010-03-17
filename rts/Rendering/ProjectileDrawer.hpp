@@ -7,6 +7,7 @@
 #include "lib/gml/ThreadSafeContainers.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "System/EventClient.h"
 
 class CTextureAtlas;
 class AtlasedTexture;
@@ -14,6 +15,7 @@ class CProjectile;
 class CGroundFlash;
 struct FlyingPiece;
 struct piececmp;
+class IWorldObjectModelRenderer;
 
 typedef ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
@@ -28,22 +30,30 @@ struct distcmp {
 	bool operator() (const CProjectile* arg1, const CProjectile* arg2) const;
 };
 
-class CProjectileDrawer {
+class CProjectileDrawer: public CEventClient {
 public:
 	CProjectileDrawer();
 	~CProjectileDrawer();
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DrawProjectiles(const ProjectileContainer&, bool, bool);
-	void DrawProjectilesShadow(const ProjectileContainer&);
-	void DrawProjectilesMiniMap(const ProjectileContainer&);
 	void DrawProjectilesMiniMap();
-	void DrawShadowPass(void);
 	void DrawGroundFlashes(void);
-	void UpdateDrawPos(CProjectile*);
+	void DrawShadowPass(void);
 
 	void LoadWeaponTextures();
 	void UpdateTextures();
+
+
+
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "ProjectileCreated" || eventName == "ProjectileDestroyed");
+	}
+	bool GetFullRead() const { return true; }
+	int GetReadAllyTeam() const { return AllAccessTeam; }
+
+	void ProjectileCreated(const CProjectile*);
+	void ProjectileDestroyed(const CProjectile*);
+
 
 
 	CTextureAtlas* textureAtlas;  //texture atlas for projectiles
@@ -88,6 +98,14 @@ public:
 	AtlasedTexture* seismictex;
 
 private:
+	void DrawProjectiles(int, int, int*, bool, bool);
+	void DrawProjectilesSet(std::set<CProjectile*>&, bool, bool);
+	void DrawProjectile(CProjectile*, bool, bool);
+	void DrawProjectilesShadow(int);
+	void DrawProjectileShadow(CProjectile*);
+	void DrawProjectilesSetShadow(std::set<CProjectile*>&);
+	void DrawFlyingPieces(int, int, int*);
+
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex, int size);
 
@@ -96,6 +114,12 @@ private:
 	FBO perlinFB;
 	bool drawPerlinTex;
 
+	// projectiles without a model
+	std::set<CProjectile*> renderProjectiles;
+	// projectiles with a model
+	std::vector<IWorldObjectModelRenderer*> modelRenderers;
+
+	// particle SFX
 	std::set<CProjectile*, distcmp> distset;
 };
 

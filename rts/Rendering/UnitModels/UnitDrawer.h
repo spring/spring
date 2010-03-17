@@ -123,8 +123,6 @@ public:
 	float3 camNorm; // used to draw far-textures
 
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
-	void QueS3ODraw(CWorldObject* object, int textureType);
-	void DrawQuedS3O(void);
 
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing=0);
 	void DrawUnitDef(const UnitDef* unitDef, int team);

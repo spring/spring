@@ -402,7 +402,7 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad projectile ID", caller);
 	}
-	const ProjectileMapPair* pmp = ph->GetMapPairByID(lua_toint(L, index));
+	const ProjectileMapPair* pmp = ph->GetMapPairBySyncedID(lua_toint(L, index));
 	if (pmp == NULL) {
 		return NULL;
 	}
