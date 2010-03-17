@@ -220,7 +220,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	FeatureRenderBin::iterator featureBinIt;
 	FeatureSet::iterator featureSetIt;
 
-	#define DRAW_FEATURE_SET(featureBin)                                                             \
+	#define DRAW_FEATURE_BIN(featureBin)                                                             \
 		for (featureBinIt = featureBin.begin(); featureBinIt != featureBin.end(); featureBinIt++) {  \
 			if (modelType == MODELTYPE_S3O) {                                                        \
 				texturehandlerS3O->SetS3oTexture(featureBinIt->first);                               \
@@ -244,18 +244,20 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 		case MODELTYPE_3DO: {
 			unitDrawer->SetupFor3DO();
 
-			DRAW_FEATURE_SET(opaqueFeatures);
+			DRAW_FEATURE_BIN(opaqueFeatures);
 
 			unitDrawer->CleanUp3DO();
 		} break;
 
 		case MODELTYPE_S3O: {
-			DRAW_FEATURE_SET(opaqueFeatures);
+			DRAW_FEATURE_BIN(opaqueFeatures);
 		} break;
 
 		default: {
 		} break;
 	}
+
+	#undef DRAW_FEATURE_BIN
 }
 
 void CFeatureDrawer::DrawFarFeatures()

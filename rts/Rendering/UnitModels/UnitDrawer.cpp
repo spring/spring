@@ -472,7 +472,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	std::map<int, std::set<CUnit*> >::const_iterator unitBinIt;
 	std::set<CUnit*>::const_iterator unitSetIt;
 
-	#define DRAW_UNIT_SET(unitBin)                                                            \
+	#define DRAW_UNIT_BIN(unitBin)                                                            \
 		for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); unitBinIt++) {          \
 			if (modelType == MODELTYPE_S3O) {                                                 \
 				texturehandlerS3O->SetS3oTexture(unitBinIt->first);                           \
@@ -489,21 +489,21 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		case MODELTYPE_3DO: {
 			SetupFor3DO();
 
-			DRAW_UNIT_SET(opaqueUnits);
+			DRAW_UNIT_BIN(opaqueUnits);
 
 			DrawOpaqueAIUnits();
 			CleanUp3DO();
 		} break;
 
 		case MODELTYPE_S3O: {
-			DRAW_UNIT_SET(opaqueUnits);
+			DRAW_UNIT_BIN(opaqueUnits);
 		} break;
 
 		default: {
 		} break;
 	}
 
-	#undef DRAW_UNIT_SET
+	#undef DRAW_UNIT_BIN
 }
 
 void CUnitDrawer::DrawOpaqueAIUnits()
