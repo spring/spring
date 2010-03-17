@@ -13,11 +13,8 @@
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/WorldObjectModelRenderer.h"
 #include "Sim/Misc/LosHandler.h"
@@ -596,82 +593,21 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 	va->Initialize();
 	va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
 
-	size_t lasttex = 0xFFFFFFFF;
-	size_t lastteam = 0xFFFFFFFF;
+	size_t lastTex = -1;
+	size_t lastTeam = -1;
 
 	FlyingPieceContainer::render_iterator fpi;
 
 	switch (modelType) {
 		case MODELTYPE_3DO: {
 			for (fpi = ph->flyingPieces3DO.render_begin(); fpi != ph->flyingPieces3DO.render_end(); ++fpi) {
-				const FlyingPiece* fp = *fpi;
-
-				if (fp->team != lastteam) {
-					lastteam = fp->team;
-					va->DrawArrayTN(GL_QUADS);
-					va->Initialize();
-					unitDrawer->SetTeamColour(lastteam);
-				}
-
-				CMatrix44f m;
-				m.Rotate(fp->rot, fp->rotAxis);
-				float3 tp, tn;
-
-				const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
-				const C3DOTextureHandler::UnitTexture* tex = fp->prim->texture;
-
-				const std::vector<S3DOVertex>& vertices    = fp->object->vertices;
-				const std::vector<int>&        verticesIdx = fp->prim->vertices;
-
-				const S3DOVertex* v = NULL;
-				const float uvCoords[8] = {
-					tex->xstart, tex->ystart,
-					tex->xend,   tex->ystart,
-					tex->xend,   tex->yend,
-					tex->xstart, tex->yend
-				};
-
-				for (int i = 0; i < 4; i++) {
-					v = &vertices[verticesIdx[i]];
-					tp = m.Mul(v->pos) + interPos;
-					tn = m.Mul(v->normal);
-					va->AddVertexQTN(tp, uvCoords[i << 1], uvCoords[(i << 1) + 1], tn);
-				}
+				(*fpi)->Draw(modelType, &lastTeam, NULL, va);
 			}
 		} break;
 
 		case MODELTYPE_S3O: {
 			for (fpi = ph->flyingPiecesS3O.render_begin(); fpi != ph->flyingPiecesS3O.render_end(); ++fpi) {
-				const FlyingPiece* fp = *fpi;
-
-				if (fp->texture != lasttex) {
-					lasttex = fp->texture;
-					if (lasttex == 0)
-						break;
-
-					va->DrawArrayTN(GL_QUADS);
-					va->Initialize();
-					texturehandlerS3O->SetS3oTexture(lasttex);
-				}
-				if (fp->team != lastteam) {
-					lastteam = fp->team;
-					va->DrawArrayTN(GL_QUADS);
-					va->Initialize();
-					unitDrawer->SetTeamColour(lastteam);
-				}
-
-				CMatrix44f m;
-				m.Rotate(fp->rot, fp->rotAxis);
-				float3 tp, tn;
-
-				const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
-				const SS3OVertex* verts = fp->verts;
-
-				for (int i = 0; i < 4; i++) {
-					tp = m.Mul(verts[i].pos) + interPos;
-					tn = m.Mul(verts[i].normal);
-					va->AddVertexQTN(tp, verts[i].textureX, verts[i].textureY, tn);
-				}
+				(*fpi)->Draw(modelType, &lastTeam, &lastTex, va);
 			}
 		} break;
 

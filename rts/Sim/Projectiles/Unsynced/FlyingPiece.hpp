@@ -10,6 +10,7 @@
 
 #include "System/float3.h"
 
+class CVertexArray;
 struct S3DOPrimitive;
 struct S3DOPiece;
 struct SS3OVertex;
@@ -22,6 +23,8 @@ struct FlyingPiece {
 
 	FlyingPiece(): prim(0), object(0), verts(0) {}
 	~FlyingPiece();
+
+	void Draw(int, size_t*, size_t*, CVertexArray*);
 
 	const S3DOPrimitive* prim;
 	const S3DOPiece* object;
