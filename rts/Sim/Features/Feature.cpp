@@ -15,7 +15,6 @@
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -713,11 +712,4 @@ float CFeature::RemainingMetal() const
 float CFeature::RemainingEnergy() const
 {
 	return RemainingResource(def->energy);
-}
-
-
-
-void CFeature::DrawS3O()
-{
-	unitDrawer->DrawFeatureStatic(this);
 }

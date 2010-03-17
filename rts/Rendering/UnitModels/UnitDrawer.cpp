@@ -141,13 +141,14 @@ CUnitDrawer::~CUnitDrawer(void)
 	cubeMapHandler->Free();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		std::set<GhostBuilding*>::iterator gbi;
+		std::set<GhostBuilding*>& ghostSet = deadGhostBuildings[modelType];
+		std::set<GhostBuilding*>::iterator ghostSetIt;
 
-		for (gbi = deadGhostBuildings[modelType].begin(); gbi != deadGhostBuildings[modelType].end(); gbi++) {
-			if ((*gbi)->decal) {
-				(*gbi)->decal->gbOwner = 0;
+		for (ghostSetIt = ghostSet.begin(); ghostSetIt != ghostSet.end(); ghostSetIt++) {
+			if ((*ghostSetIt)->decal) {
+				(*ghostSetIt)->decal->gbOwner = 0;
 			}
-			delete *gbi;
+			delete *ghostSetIt;
 		}
 
 		deadGhostBuildings[modelType].clear();
@@ -468,20 +469,20 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	const std::map<int, std::set<CUnit*> >& opaqueUnits =
 		opaqueModelRenderers[modelType]->GetUnitBin();
 
-	std::map<int, std::set<CUnit*> >::const_iterator binIt;
-	std::set<CUnit*>::const_iterator setIt;
+	std::map<int, std::set<CUnit*> >::const_iterator unitBinIt;
+	std::set<CUnit*>::const_iterator unitSetIt;
 
-	#define DRAW_UNIT_SET(units)                                                          \
-		for (binIt = units.begin(); binIt != units.end(); binIt++) {                      \
-			if (modelType == MODELTYPE_S3O) {                                             \
-				texturehandlerS3O->SetS3oTexture(binIt->first);                           \
-			}                                                                             \
-                                                                                          \
-			const std::set<CUnit*>& opaqueUnitSet = binIt->second;                        \
-                                                                                          \
-			for (setIt = opaqueUnitSet.begin(); setIt != opaqueUnitSet.end(); setIt++) {  \
-				DrawOpaqueUnit(*setIt, excludeUnit, drawReflection, drawRefraction);      \
-			}                                                                             \
+	#define DRAW_UNIT_SET(unitBin)                                                            \
+		for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); unitBinIt++) {          \
+			if (modelType == MODELTYPE_S3O) {                                                 \
+				texturehandlerS3O->SetS3oTexture(unitBinIt->first);                           \
+			}                                                                                 \
+                                                                                              \
+			const std::set<CUnit*>& unitSet = unitBinIt->second;                              \
+                                                                                              \
+			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); unitSetIt++) {      \
+				DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);      \
+			}                                                                                 \
 		}
 
 	switch (modelType) {
@@ -964,7 +965,9 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 
 		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
-		DrawCloakedUnitsHelper();
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			DrawCloakedUnitsHelper(modelType);
+		}
 
 		if (advShading) {
 			CleanUpUnitDrawing();
@@ -981,42 +984,42 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-void CUnitDrawer::DrawCloakedUnitsHelper()
+void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 {
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		if (modelType == MODELTYPE_3DO) {
-			SetupFor3DO();
-			DrawCloakedAIUnits();
-		}
 
-		{
-			typedef std::map<int, std::set<CUnit*> > UnitRenderBin;
-			typedef std::map<int, std::set<CUnit*> >::const_iterator UnitRenderBinIt;
+	if (modelType == MODELTYPE_3DO) {
+		SetupFor3DO();
+		DrawCloakedAIUnits();
+	}
 
-			const UnitRenderBin& cloakedUnitSets =
-				cloakedModelRenderers[modelType]->GetUnitBin();
+	{
+		typedef std::map<int, std::set<CUnit*> > UnitRenderBin;
+		typedef std::map<int, std::set<CUnit*> >::const_iterator UnitRenderBinIt;
 
-			// cloaked units
-			for (UnitRenderBinIt it = cloakedUnitSets.begin(); it != cloakedUnitSets.end(); it++) {
-				if (modelType == MODELTYPE_S3O) {
-					texturehandlerS3O->SetS3oTexture(it->first);
-				}
+		const UnitRenderBin& cloakedUnitSets =
+			cloakedModelRenderers[modelType]->GetUnitBin();
 
-				DrawCloakedUnitsSet(it->second, modelType, false);
+		// cloaked units
+		for (UnitRenderBinIt it = cloakedUnitSets.begin(); it != cloakedUnitSets.end(); it++) {
+			if (modelType == MODELTYPE_S3O) {
+				texturehandlerS3O->SetS3oTexture(it->first);
 			}
-		}
 
-		// living and dead ghosted buildings
-		DrawGhostedBuildings(modelType);
-
-		if (modelType == MODELTYPE_3DO) {
-			CleanUp3DO();
+			DrawCloakedUnitsSet(it->second, modelType, false);
 		}
+	}
+
+	// living and dead ghosted buildings
+	DrawGhostedBuildings(modelType);
+
+	if (modelType == MODELTYPE_3DO) {
+		CleanUp3DO();
 	}
 }
 
-void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int modelType, bool drawGhostBuildings) {
-	for (std::set<CUnit*>::const_iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
+void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int modelType, bool drawGhostBuildings)
+{
+	for (std::set<CUnit*>::const_iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ui++) {
 		CUnit* unit = *ui;
 
 		#if defined(USE_GML) && GML_ENABLE_SIM
@@ -1126,34 +1129,34 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
 
 	// buildings that died while ghosted
-	for (std::set<GhostBuilding*>::iterator gbi = deadGhostedBuildings.begin(); gbi != deadGhostedBuildings.end(); ) {
-		std::set<GhostBuilding*>::iterator gbiNext(gbi); gbiNext++;
+	for (std::set<GhostBuilding*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
+		std::set<GhostBuilding*>::iterator itNext(it); itNext++;
 
-		if (loshandler->InLos((*gbi)->pos, gu->myAllyTeam)) {
+		if (loshandler->InLos((*it)->pos, gu->myAllyTeam)) {
 			// obtained LOS on the ghost of a dead building
-			if ((*gbi)->decal) {
-				(*gbi)->decal->gbOwner = 0;
+			if ((*it)->decal) {
+				(*it)->decal->gbOwner = 0;
 			}
 
-			delete *gbi;
-			deadGhostedBuildings.erase(gbi);
-			gbi = gbiNext;
+			delete *it;
+			deadGhostedBuildings.erase(it);
+			it = itNext;
 		} else {
-			if (camera->InView((*gbi)->pos, (*gbi)->model->radius * 2.0f)) {
+			if (camera->InView((*it)->pos, (*it)->model->radius * 2.0f)) {
 				glPushMatrix();
-				glTranslatef3((*gbi)->pos);
-				glRotatef((*gbi)->facing * 90.0f, 0, 1, 0);
+				glTranslatef3((*it)->pos);
+				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
 				if (modelType == MODELTYPE_S3O) {
-					texturehandlerS3O->SetS3oTexture((*gbi)->model->textureType);
+					texturehandlerS3O->SetS3oTexture((*it)->model->textureType);
 				}
 
-				SetTeamColour((*gbi)->team, cloakAlpha1);
-				(*gbi)->model->DrawStatic();
+				SetTeamColour((*it)->team, cloakAlpha1);
+				(*it)->model->DrawStatic();
 				glPopMatrix();
 			}
 
-			gbi++;
+			it++;
 		}
 	}
 
@@ -1507,8 +1510,8 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 #endif
 }
 
-// used by C{Feature, Projectile}Drawer to draw non-unit
-// opaque S3O objects (ie. features and projectiles)
+// used by CProjectileDrawer to draw non-unit
+// opaque S3O objects (ie. projectile types)
 void CUnitDrawer::DrawQuedS3O(void)
 {
 #ifdef USE_GML
@@ -1518,7 +1521,6 @@ void CUnitDrawer::DrawQuedS3O(void)
 			texturehandlerS3O->SetS3oTexture(tex);
 
 			for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
-				// for feature objects, this calls back to DrawFeatureStatic()
 				if (*ui) { (*ui)->DrawS3O(); }
 			}
 
@@ -2196,19 +2198,6 @@ void CUnitDrawer::UpdateDrawPos(CUnit* u) {
 	}
 #endif
 	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
-}
-
-
-
-void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
-{
-	glPushMatrix();
-	glMultMatrixf(feature->transMatrix.m);
-
-	SetTeamColour(feature->team, feature->tempalpha);
-
-	feature->model->DrawStatic();
-	glPopMatrix();
 }
 
 
