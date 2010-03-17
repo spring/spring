@@ -43,7 +43,6 @@ public:
 	void DrawUnitRawModel(CUnit*);
 	void DrawUnitWithLists(CUnit*, unsigned int, unsigned int);
 	void DrawUnitRawWithLists(CUnit*, unsigned int, unsigned int);
-	void DrawFeatureStatic(CFeature*);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupFor3DO() const;
@@ -170,7 +169,7 @@ private:
 	void CleanupBasicS3OTexture1(void) const;
 	void CleanupBasicS3OTexture0(void) const;
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
-	void DrawCloakedUnitsHelper();
+	void DrawCloakedUnitsHelper(int);
 	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int, bool);
 
 #ifdef USE_GML

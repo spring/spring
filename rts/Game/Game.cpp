@@ -2859,18 +2859,15 @@ bool CGame::DrawWorld()
 	if (gu->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
-			//! Water rendering may overwrite cloaked objects, so save them
-			featureDrawer->SwapFadeFeatures();
 			water->UpdateWater(this);
 			water->Draw();
-			featureDrawer->SwapFadeFeatures();
 		}
 	}
 
 	//! draw cloaked part above surface
 	glEnable(GL_CLIP_PLANE3);
-	unitDrawer->DrawCloakedUnits(false,noAdvShading);
-	featureDrawer->DrawFadeFeatures(false,noAdvShading);
+	unitDrawer->DrawCloakedUnits(false, noAdvShading);
+	featureDrawer->DrawFadeFeatures(false, noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
 	projectileDrawer->Draw(false);

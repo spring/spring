@@ -9,6 +9,7 @@
 #include "System/EventClient.h"
 
 class CFeature;
+class IWorldObjectModelRenderer;
 class CVertexArray;
 
 
@@ -27,10 +28,8 @@ public:
 
 	void Draw();
 	void DrawShadowPass();
-	void DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures); //the part of draw that both draw and drawshadowpass can use
 
 	void DrawFadeFeatures(bool submerged, bool noAdvShading = false);
-	void SwapFadeFeatures();
 
 	void SetShowRezBars(bool b) { showRezBars = b; }
 	bool GetShowRezBars() const { return showRezBars; }
@@ -47,16 +46,20 @@ public:
 	void FeatureDestroyed(const CFeature* feature);
 
 private:
-	std::set<CFeature *> fadeFeatures;
-	std::set<CFeature *> fadeFeaturesS3O;
-	std::set<CFeature *> fadeFeaturesSave;
-	std::set<CFeature *> fadeFeaturesS3OSave;
+	void DrawOpaqueFeatures(int);
+	void DrawFarFeatures();
+	void DrawFeatureStats();
+	void DrawFeatureStatBars(const CFeature*);
+	bool DrawFeatureNow(const CFeature*);
+	void DrawFadeFeaturesHelper(int);
+	void DrawFadeFeaturesSet(std::set<CFeature*>&, int);
+	void GetVisibleFeatures(int, std::vector<CFeature*>*);
 
-	std::set<CFeature *> updateDrawFeatures;
+	void PostLoad();
 
 	struct DrawQuad {
 		CR_DECLARE_STRUCT(DrawQuad);
-		std::set<CFeature *> features;
+		std::set<CFeature*> features;
 	};
 
 	std::vector<DrawQuad> drawQuads;
@@ -66,12 +69,12 @@ private:
 
 	float farDist;
 
+	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
+	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
+
+	std::set<CFeature *> updateDrawFeatures;
 	std::vector<CFeature*> drawFar;
 	std::vector<CFeature*> drawStat;
-
-	void DrawFeatureStats(CFeature* feature);
-
-	void PostLoad();
 
 	bool showRezBars;
 

@@ -70,6 +70,10 @@ public:
 	const UnitRenderBin& GetUnitBin() { return units; }
 	const FeatureRenderBin& GetFeatureBin() { return features; }
 	const ProjectileRenderBin& GetProjectileBin() { return projectiles; }
+
+	UnitRenderBin& GetUnitBinMutable() { return units; }
+	FeatureRenderBin& GetFeatureBinMutable() { return features; }
+	ProjectileRenderBin& GetProjectileBinMutable() { return projectiles; }
 };
 
 class WorldObjectModelRenderer3DO: public IWorldObjectModelRenderer {
