@@ -468,16 +468,20 @@ void CUnitScript::EmitSfx(int type, int piece)
 		return;
 	}
 
-	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
+	const float3 pos =
+		unit->pos +
+		unit->frontdir * relPos.z +
+		unit->updir    * relPos.y +
+		unit->rightdir * relPos.x;
 
-	float alpha = 0.3f+gu->usRandFloat()*0.2f;
+	float alpha = 0.3f + gu->usRandFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
-	float fadeupTime=4;
+	float fadeupTime = 4;
 
 	//Hovers need special care
 	if (unit->unitDef->canhover) {
-		fadeupTime=8;
-		alpha = 0.15f+gu->usRandFloat()*0.2f;
+		fadeupTime = 8.0f;
+		alpha = 0.15f + gu->usRandFloat() * 0.2f;
 		alphaFalloff = 0.008f;
 	}
 
@@ -719,7 +723,7 @@ void CUnitScript::ShowFlare(int piece)
 	const float3 pos =
 		unit->pos +
 		unit->frontdir * relpos.z +
-		unit->updir * relpos.y +
+		unit->updir    * relpos.y +
 		unit->rightdir * relpos.x;
 	const float3 dir = unit->lastMuzzleFlameDir;
 	const float size = unit->lastMuzzleFlameSize;

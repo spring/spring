@@ -486,9 +486,8 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 			pro->DrawS3O();
 		}
 
-		// z-sort to render the particles attached to projectiles
 		pro->tempdist = pro->pos.dot(camera->forward);
-		distset.insert(pro);
+		zSortedProjectiles.insert(pro);
 	}
 }
 
@@ -523,7 +522,8 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 			p->DrawUnitPart();
 		} else {
 			if (p->castShadow) {
-				// no z-sorting here
+				// don't need to z-sort particle
+				// effects for the shadow pass
 				p->Draw();
 			}
 		}
@@ -615,36 +615,28 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 
 				CMatrix44f m;
 				m.Rotate(fp->rot, fp->rotAxis);
+				float3 tp, tn;
+
 				const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
 				const C3DOTextureHandler::UnitTexture* tex = fp->prim->texture;
 
 				const std::vector<S3DOVertex>& vertices    = fp->object->vertices;
 				const std::vector<int>&        verticesIdx = fp->prim->vertices;
 
-				const S3DOVertex* v = &vertices[verticesIdx[0]];
+				const S3DOVertex* v = NULL;
+				const float uvCoords[8] = {
+					tex->xstart, tex->ystart,
+					tex->xend,   tex->ystart,
+					tex->xend,   tex->yend,
+					tex->xstart, tex->yend
+				};
 
-				float3 tp = m.Mul(v->pos);
-				float3 tn = m.Mul(v->normal);
-				tp += interPos;
-				va->AddVertexQTN(tp, tex->xstart, tex->ystart, tn);
-
-				v = &vertices[verticesIdx[1]];
-				tp = m.Mul(v->pos);
-				tn = m.Mul(v->normal);
-				tp += interPos;
-				va->AddVertexQTN(tp, tex->xend, tex->ystart, tn);
-
-				v = &vertices[verticesIdx[2]];
-				tp = m.Mul(v->pos);
-				tn = m.Mul(v->normal);
-				tp += interPos;
-				va->AddVertexQTN(tp, tex->xend, tex->yend, tn);
-
-				v = &vertices[verticesIdx[3]];
-				tp = m.Mul(v->pos);
-				tn = m.Mul(v->normal);
-				tp += interPos;
-				va->AddVertexQTN(tp, tex->xstart, tex->yend, tn);
+				for (int i = 0; i < 4; i++) {
+					v = &vertices[verticesIdx[i]];
+					tp = m.Mul(v->pos) + interPos;
+					tn = m.Mul(v->normal);
+					va->AddVertexQTN(tp, uvCoords[i << 1], uvCoords[(i << 1) + 1], tn);
+				}
 			}
 		} break;
 
@@ -656,6 +648,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 					lasttex = fp->texture;
 					if (lasttex == 0)
 						break;
+
 					va->DrawArrayTN(GL_QUADS);
 					va->Initialize();
 					texturehandlerS3O->SetS3oTexture(lasttex);
@@ -669,14 +662,14 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 
 				CMatrix44f m;
 				m.Rotate(fp->rot, fp->rotAxis);
-				const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
-				const SS3OVertex* verts = fp->verts;
 				float3 tp, tn;
 
+				const float3 interPos = fp->pos + fp->speed * gu->timeOffset;
+				const SS3OVertex* verts = fp->verts;
+
 				for (int i = 0; i < 4; i++) {
-					tp = m.Mul(verts[i].pos);
+					tp = m.Mul(verts[i].pos) + interPos;
 					tn = m.Mul(verts[i].normal);
-					tp += interPos;
 					va->AddVertexQTN(tp, verts[i].textureX, verts[i].textureY, tn);
 				}
 			}
@@ -711,7 +704,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		ph->flyingPiecesS3O.add_delayed();
 	}
 
-	distset.clear();
+	zSortedProjectiles.clear();
 
 	int numFlyingPieces = ph->flyingPieces3DO.render_size() + ph->flyingPiecesS3O.render_size();
 	int drawnPieces = 0;
@@ -735,9 +728,9 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
 
-		// draw the SFX particles
-		for (std::set<CProjectile*, distcmp>::iterator i = distset.begin(); i != distset.end(); ++i) {
-			(*i)->Draw();
+		// draw the particle effects
+		for (std::set<CProjectile*, distcmp>::iterator it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); it++) {
+			(*it)->Draw();
 		}
 	}
 

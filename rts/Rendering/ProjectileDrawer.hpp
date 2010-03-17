@@ -119,8 +119,10 @@ private:
 	// projectiles with a model
 	std::vector<IWorldObjectModelRenderer*> modelRenderers;
 
-	// particle SFX
-	std::set<CProjectile*, distcmp> distset;
+	// z-sorted set of all projectiles; used to
+	// render particle effects in back-to-front
+	// order
+	std::set<CProjectile*, distcmp> zSortedProjectiles;
 };
 
 extern CProjectileDrawer* projectileDrawer;
