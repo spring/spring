@@ -596,23 +596,16 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 	size_t lastTex = -1;
 	size_t lastTeam = -1;
 
+	static FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
+		&ph->flyingPieces3DO,
+		&ph->flyingPiecesS3O
+	};
+
+	FlyingPieceContainer* container = containers[modelType];
 	FlyingPieceContainer::render_iterator fpi;
 
-	switch (modelType) {
-		case MODELTYPE_3DO: {
-			for (fpi = ph->flyingPieces3DO.render_begin(); fpi != ph->flyingPieces3DO.render_end(); ++fpi) {
-				(*fpi)->Draw(modelType, &lastTeam, NULL, va);
-			}
-		} break;
-
-		case MODELTYPE_S3O: {
-			for (fpi = ph->flyingPiecesS3O.render_begin(); fpi != ph->flyingPiecesS3O.render_end(); ++fpi) {
-				(*fpi)->Draw(modelType, &lastTeam, &lastTex, va);
-			}
-		} break;
-
-		default: {
-		} break;
+	for (fpi = container->render_begin(); fpi != container->render_end(); ++fpi) {
+		(*fpi)->Draw(modelType, &lastTeam, &lastTex, va);
 	}
 
 	(*drawnPieces) += (va->drawIndex() / 32);
