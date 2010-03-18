@@ -215,7 +215,7 @@ SectionGroupEnd
 	IfFileExists "..\game\AI\Skirmish\${skirAiName}\*.*" 0 ${skirAiName}_install_end
 	Section "${skirAiName}" SEC_${skirAiName}
 		!define INSTALL
-		!include "sections\AIs\${skirAiName}.nsh"
+			!insertmacro InstallSkirmishAI ${skirAiName}
 		!undef INSTALL
 	SectionEnd
 	${skirAiName}_install_end:
@@ -267,10 +267,10 @@ Section Uninstall
   !include "sections\shortcuts.nsh"
   !include "sections\archivemover.nsh"
   !include "sections\springDownloader.nsh"
-  !include "sections\AIs\AAI.nsh"
-  !include "sections\AIs\KAIK.nsh"
-  !include "sections\AIs\RAI.nsh"
-  !include "sections\AIs\E323AI.nsh"
+  !insertmacro DeleteSkirmishAI "AAI"
+  !insertmacro DeleteSkirmishAI "KAIK"
+  !insertmacro DeleteSkirmishAI "RAI"
+  !insertmacro DeleteSkirmishAI "E323AI"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
 
