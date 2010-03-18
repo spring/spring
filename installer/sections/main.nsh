@@ -94,7 +94,6 @@ ${EndIf}
   !insertmacro InstallAIInterface "C"
   !insertmacro InstallAIInterface "Java"
 
-  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL
   ;This is only supported in NSIS 2.39+
@@ -180,7 +179,6 @@ ${EndIf}
   Delete "$INSTDIR\fonts\FreeSansBold.otf"
   RmDir "$INSTDIR\fonts"
 
-  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro DeleteSkirmishAI skirAiName
 !ifndef INSTALL
   ;This is only supported in NSIS 2.39+
