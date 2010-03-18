@@ -210,30 +210,22 @@ SectionGroup "Tools"
   SectionEnd
 SectionGroupEnd
 
+
+!macro SkirmishAIInstSection skirAiName
+	IfFileExists "..\game\AI\Skirmish\${skirAiName}\*.*" 0 ${skirAiName}_install_end
+	Section "${skirAiName}" SEC_${skirAiName}
+		!define INSTALL
+		!include "sections\AIs\${skirAiName}.nsh"
+		!undef INSTALL
+	SectionEnd
+	${skirAiName}_install_end:
+!macroend
+
 SectionGroup "Skirmish AI plugins (Bots)"
-	Section "AAI" SEC_AAI
-	!define INSTALL
-	!include "sections\AIs\AAI.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "KAIK" SEC_KAIK
-	!define INSTALL
-	!include "sections\AIs\KAIK.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "RAI" SEC_RAI
-	!define INSTALL
-	!include "sections\AIs\RAI.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "E323AI" SEC_E323AI
-	!define INSTALL
-	!include "sections\AIs\E323AI.nsh"
-	!undef INSTALL
-	SectionEnd
+	!insertmacro InstallSkirmishAI "AAI"
+	!insertmacro InstallSkirmishAI "KAIK"
+	!insertmacro InstallSkirmishAI "RAI"
+	!insertmacro InstallSkirmishAI "E323AI"
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
