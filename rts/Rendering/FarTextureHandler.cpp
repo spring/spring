@@ -8,8 +8,8 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModel.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "System/GlobalUnsynced.h"
@@ -149,13 +149,14 @@ void CFarTextureHandler::ReallyCreateFarTexture(S3DModel* model)
 
 	glDisable(GL_BLEND);
 	unitDrawer->SetupForUnitDrawing();
-	if (model->type == MODELTYPE_3DO) {
-		unitDrawer->SetupFor3DO();
-	} else {
+	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
+
+	if (model->type == MODELTYPE_S3O) {
 		//FIXME for some strange reason we need to invert the culling, why?
 		glCullFace(GL_FRONT);
 		texturehandlerS3O->SetS3oTexture(model->textureType);
 	}
+
 	unitDrawer->SetTeamColour(0);
 
 	glMatrixMode(GL_PROJECTION);
@@ -163,10 +164,10 @@ void CFarTextureHandler::ReallyCreateFarTexture(S3DModel* model)
 		glOrtho(-model->radius, model->radius, -model->radius, model->radius, -model->radius*1.5f, model->radius*1.5f);
 	glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glScalef(-1,1,1);
+		glScalef(-1.0f, 1.0f, 1.0f);
 
-	glColor4f(1,1,1,1);
-	glRotatef(45, 1, 0, 0);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glRotatef(45.0f, 1.0f, 0.0f, 0.0f);
 
 	//! draw the model in 8 different orientations
 	for (size_t orient = 0; orient < numOrientations; ++orient) {
@@ -187,9 +188,7 @@ void CFarTextureHandler::ReallyCreateFarTexture(S3DModel* model)
 		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 	}
 
-	if (model->type == MODELTYPE_3DO) {
-		unitDrawer->CleanUp3DO();
-	}
+	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
 	unitDrawer->CleanUpUnitDrawing();
 
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);

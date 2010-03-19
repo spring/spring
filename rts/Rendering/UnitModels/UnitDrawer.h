@@ -45,8 +45,6 @@ public:
 	void DrawUnitRawWithLists(CUnit*, unsigned int, unsigned int);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
-	void SetupFor3DO() const;
-	void CleanUp3DO() const;
 	void SetupForUnitDrawing(void);
 	void CleanUpUnitDrawing(void) const;
 	void SetupForGhostDrawing() const;
@@ -134,6 +132,8 @@ public:
 	void DrawIndividual(CUnit* unit);
 
 	const std::set<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
+	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
+	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
 private:
 	bool LoadModelShaders();

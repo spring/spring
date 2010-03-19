@@ -144,7 +144,7 @@ CUnitDrawer::~CUnitDrawer(void)
 		std::set<GhostBuilding*>& ghostSet = deadGhostBuildings[modelType];
 		std::set<GhostBuilding*>::iterator ghostSetIt;
 
-		for (ghostSetIt = ghostSet.begin(); ghostSetIt != ghostSet.end(); ghostSetIt++) {
+		for (ghostSetIt = ghostSet.begin(); ghostSetIt != ghostSet.end(); ++ghostSetIt) {
 			if ((*ghostSetIt)->decal) {
 				(*ghostSetIt)->decal->gbOwner = 0;
 			}
@@ -448,7 +448,9 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 #endif
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		opaqueModelRenderers[modelType]->PushRenderState();
 		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+		opaqueModelRenderers[modelType]->PopRenderState();
 	}
 
 	CleanUpUnitDrawing();
@@ -466,44 +468,29 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
-	const std::map<int, std::set<CUnit*> >& opaqueUnits =
-		opaqueModelRenderers[modelType]->GetUnitBin();
+	typedef std::set<CUnit*> UnitSet;
+	typedef std::map<int, UnitSet> UnitBin;
 
-	std::map<int, std::set<CUnit*> >::const_iterator unitBinIt;
-	std::set<CUnit*>::const_iterator unitSetIt;
+	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	#define DRAW_UNIT_BIN(unitBin)                                                            \
-		for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); unitBinIt++) {          \
-			if (modelType == MODELTYPE_S3O) {                                                 \
-				texturehandlerS3O->SetS3oTexture(unitBinIt->first);                           \
-			}                                                                                 \
-                                                                                              \
-			const std::set<CUnit*>& unitSet = unitBinIt->second;                              \
-                                                                                              \
-			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); unitSetIt++) {      \
-				DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);      \
-			}                                                                                 \
+	UnitBin::const_iterator unitBinIt;
+	UnitSet::const_iterator unitSetIt;
+
+	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
+		if (modelType == MODELTYPE_S3O) {
+			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
 		}
 
-	switch (modelType) {
-		case MODELTYPE_3DO: {
-			SetupFor3DO();
+		const UnitSet& unitSet = unitBinIt->second;
 
-			DRAW_UNIT_BIN(opaqueUnits);
-
-			DrawOpaqueAIUnits();
-			CleanUp3DO();
-		} break;
-
-		case MODELTYPE_S3O: {
-			DRAW_UNIT_BIN(opaqueUnits);
-		} break;
-
-		default: {
-		} break;
+		for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
+			DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);
+		}
 	}
 
-	#undef DRAW_UNIT_BIN
+	if (modelType == MODELTYPE_3DO) {
+		DrawOpaqueAIUnits();
+	}
 }
 
 void CUnitDrawer::DrawOpaqueAIUnits()
@@ -548,7 +535,7 @@ void CUnitDrawer::DrawFarTextures()
 	va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
-	for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); it++) {
+	for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); ++it) {
 		farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
 	}
 
@@ -666,15 +653,41 @@ static void CleanUpShadowDrawing()
 
 /******************************************************************************/
 
-static void SetupOpaque3DO() { unitDrawer->SetupForUnitDrawing();  unitDrawer->SetupFor3DO(); }
-static void ResetOpaque3DO() { unitDrawer->CleanUp3DO();   unitDrawer->CleanUpUnitDrawing();  }
-static void SetupOpaqueS3O() { unitDrawer->SetupForUnitDrawing();  }
-static void ResetOpaqueS3O() { unitDrawer->CleanUpUnitDrawing();   }
+#define ud unitDrawer
+static void SetupOpaque3DO() {
+	ud->SetupForUnitDrawing();
+	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PushRenderState();
+}
+static void ResetOpaque3DO() {
+	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PopRenderState();
+	ud->CleanUpUnitDrawing();
+}
+static void SetupOpaqueS3O() {
+	ud->SetupForUnitDrawing();
+	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PushRenderState();
+}
+static void ResetOpaqueS3O() {
+	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PopRenderState();
+	ud->CleanUpUnitDrawing();
+}
 
-static void SetupAlpha3DO()  { unitDrawer->SetupForGhostDrawing(); unitDrawer->SetupFor3DO(); }
-static void ResetAlpha3DO()  { unitDrawer->CleanUp3DO();   unitDrawer->CleanUpGhostDrawing(); }
-static void SetupAlphaS3O()  { unitDrawer->SetupForGhostDrawing();    }
-static void ResetAlphaS3O()  { unitDrawer->CleanUpGhostDrawing();     }
+static void SetupAlpha3DO() {
+	ud->SetupForGhostDrawing();
+	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PushRenderState();
+}
+static void ResetAlpha3DO() {
+	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PopRenderState();
+	ud->CleanUpGhostDrawing();
+}
+static void SetupAlphaS3O() {
+	ud->SetupForGhostDrawing();
+	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PushRenderState();
+}
+static void ResetAlphaS3O() {
+	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PopRenderState();
+	ud->CleanUpGhostDrawing();
+}
+#undef ud
 
 static void SetupShadow3DO() { SetupShadowDrawing();   }
 static void ResetShadow3DO() { CleanUpShadowDrawing(); }
@@ -691,8 +704,9 @@ void CUnitDrawer::DrawOpaqueShaderUnits()
 	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
 	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
 
-	const LuaMatType matType =
-		(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+	const LuaMatType matType = (water->drawReflection)?
+		LUAMAT_OPAQUE_REFLECT:
+		LUAMAT_OPAQUE;
 
 	DrawBins(matType);
 }
@@ -705,8 +719,9 @@ void CUnitDrawer::DrawCloakedShaderUnits()
 	luaMatHandler.setupS3oShader = SetupAlphaS3O;
 	luaMatHandler.resetS3oShader = ResetAlphaS3O;
 
-	const LuaMatType matType =
-		(water->drawReflection) ? LUAMAT_ALPHA_REFLECT : LUAMAT_ALPHA;
+	const LuaMatType matType = (water->drawReflection)?
+		LUAMAT_ALPHA_REFLECT:
+		LUAMAT_ALPHA;
 
 	DrawBins(matType);
 }
@@ -729,8 +744,6 @@ void CUnitDrawer::DrawShadowShaderUnits()
 
 
 inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
-	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-
 	// do shadow alpha-masking for S3O units only
 	// (3DO's need more setup than it is worth)
 	#ifdef UNIT_SHADOW_ALPHA_MASKING
@@ -753,9 +766,10 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 		#define POP_SHADOW_TEXTURE_STATE(model)
 	#endif
 
+	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
+
 	// FIXME: test against the shadow projection intersection
-	if (!(((losStatus & LOS_INLOS) || gu->spectatingFullView) &&
-		camera->InView(unit->drawMidPos, unit->radius + 700))) {
+	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->radius + 700.0f))) {
 		return;
 	}
 
@@ -966,7 +980,9 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			cloakedModelRenderers[modelType]->PushRenderState();
 			DrawCloakedUnitsHelper(modelType);
+			cloakedModelRenderers[modelType]->PopRenderState();
 		}
 
 		if (advShading) {
@@ -986,21 +1002,19 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
 
 void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 {
-
 	if (modelType == MODELTYPE_3DO) {
-		SetupFor3DO();
 		DrawCloakedAIUnits();
 	}
 
 	{
-		typedef std::map<int, std::set<CUnit*> > UnitRenderBin;
-		typedef std::map<int, std::set<CUnit*> >::const_iterator UnitRenderBinIt;
+		typedef std::set<CUnit*> UnitSet;
+		typedef std::map<int, UnitSet> UnitRenderBin;
+		typedef std::map<int, UnitSet>::const_iterator UnitRenderBinIt;
 
-		const UnitRenderBin& cloakedUnitSets =
-			cloakedModelRenderers[modelType]->GetUnitBin();
+		const UnitRenderBin& unitBin = cloakedModelRenderers[modelType]->GetUnitBin();
 
 		// cloaked units
-		for (UnitRenderBinIt it = cloakedUnitSets.begin(); it != cloakedUnitSets.end(); it++) {
+		for (UnitRenderBinIt it = unitBin.begin(); it != unitBin.end(); ++it) {
 			if (modelType == MODELTYPE_S3O) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
@@ -1011,15 +1025,11 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 	// living and dead ghosted buildings
 	DrawGhostedBuildings(modelType);
-
-	if (modelType == MODELTYPE_3DO) {
-		CleanUp3DO();
-	}
 }
 
 void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int modelType, bool drawGhostBuildings)
 {
-	for (std::set<CUnit*>::const_iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ui++) {
+	for (std::set<CUnit*>::const_iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
 		CUnit* unit = *ui;
 
 		#if defined(USE_GML) && GML_ENABLE_SIM
@@ -1327,25 +1337,6 @@ void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
 
 
 /**
- * Binds the 3do texture atlas and deactivates face culling
- */
-void CUnitDrawer::SetupFor3DO() const
-{
-	texturehandler3DO->Set3doAtlases();
-	glPushAttrib(GL_POLYGON_BIT);
-	glDisable(GL_CULL_FACE);
-}
-
-/**
- * Reset face culling after 3do drawing
- */
-void CUnitDrawer::CleanUp3DO() const
-{
-	glPopAttrib();
-}
-
-
-/**
  * Set up the texture environment in texture unit 0
  * to give an S3O texture its team-colour.
  *
@@ -1532,24 +1523,18 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		DrawUnitRawWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
 
 		LuaMaterial::defMat.Execute(mat);
-	}
-	else {
-		/* 3DO + S3O */
+	} else {
 		SetupForUnitDrawing();
+		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
-		switch (MDL_TYPE(unit)) {
-			case MODELTYPE_3DO: {
-				texturehandler3DO->Set3doAtlases();
-			} break;
-			case MODELTYPE_S3O: {
-				texturehandlerS3O->SetS3oTexture(unit->model->textureType);
-			} break;
-			default: {
-			} break;
+		if (MDL_TYPE(unit) == MODELTYPE_S3O) {
+			texturehandlerS3O->SetS3oTexture(TEX_TYPE(unit));
 		}
 
 		SetTeamColour(unit->team);
 		DrawUnitRaw(unit);
+
+		opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
 		CleanUpUnitDrawing();
 	}
 
@@ -2356,7 +2341,7 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 	liveGhostBuildings[MDL_TYPE(u)].erase(unit);
 
 	// remove the icon for all ally-teams
-	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); it++) {
+	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
 		(*it).erase(unit);
 	}
 

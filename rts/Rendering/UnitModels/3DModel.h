@@ -10,9 +10,11 @@
 #include "Sim/Units/Unit.h"
 
 
-const int MODELTYPE_3DO   = 0;
-const int MODELTYPE_S3O   = 1;
-const int MODELTYPE_OTHER = 2;
+const int
+	MODELTYPE_3DO   = 0,
+	MODELTYPE_S3O   = 1,
+	MODELTYPE_OBJ   = 2,
+	MODELTYPE_OTHER = 3;
 
 struct CollisionVolume;
 struct S3DModel;

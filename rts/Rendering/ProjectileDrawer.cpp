@@ -406,13 +406,9 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 	typedef ProjectileSet::iterator ProjectileSetIt;
 	typedef ProjectileBin::iterator ProjectileBinIt;
 
-	ProjectileBin& projectiles = modelRenderers[modelType]->GetProjectileBinMutable();
+	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
-	if (modelType == MODELTYPE_3DO) {
-		unitDrawer->SetupFor3DO();
-	}
-
-	for (ProjectileBinIt binIt = projectiles.begin(); binIt != projectiles.end(); binIt++) {
+	for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
 		if (modelType == MODELTYPE_S3O) {
 			texturehandlerS3O->SetS3oTexture(binIt->first);
 		}
@@ -421,15 +417,11 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 	}
 
 	DrawFlyingPieces(modelType, numFlyingPieces, drawnPieces);
-
-	if (modelType == MODELTYPE_3DO) {
-		unitDrawer->CleanUp3DO();
-	}
 }
 
 void CProjectileDrawer::DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
 {
-	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); setIt++) {
+	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); ++setIt) {
 		DrawProjectile(*setIt, drawReflection, drawRefraction);
 	}
 }
@@ -495,16 +487,16 @@ void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 	typedef std::map<int, std::set<CProjectile*> > ProjectileBin;
 	typedef ProjectileBin::iterator ProjectileBinIt;
 
-	ProjectileBin& projectiles = modelRenderers[modelType]->GetProjectileBinMutable();
+	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
-	for (ProjectileBinIt binIt = projectiles.begin(); binIt != projectiles.end(); binIt++) {
+	for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
 		DrawProjectilesSetShadow(binIt->second);
 	}
 }
 
 void CProjectileDrawer::DrawProjectilesSetShadow(std::set<CProjectile*>& projectiles)
 {
-	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); setIt++) {
+	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); ++setIt) {
 		DrawProjectileShadow(*setIt);
 	}
 }
@@ -547,8 +539,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
 
-		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); binIt++) {
-			for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); setIt++) {
+		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
+			for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
 				CProjectile* p = *setIt;
 
 				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
@@ -598,14 +590,17 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 
 	static FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
 		&ph->flyingPieces3DO,
-		&ph->flyingPiecesS3O
+		&ph->flyingPiecesS3O,
+		NULL
 	};
 
 	FlyingPieceContainer* container = containers[modelType];
 	FlyingPieceContainer::render_iterator fpi;
 
-	for (fpi = container->render_begin(); fpi != container->render_end(); ++fpi) {
-		(*fpi)->Draw(modelType, &lastTeam, &lastTex, va);
+	if (container) {
+		for (fpi = container->render_begin(); fpi != container->render_end(); ++fpi) {
+			(*fpi)->Draw(modelType, &lastTeam, &lastTex, va);
+		}
 	}
 
 	(*drawnPieces) += (va->drawIndex() / 32);
@@ -644,12 +639,14 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		unitDrawer->SetupForUnitDrawing();
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			modelRenderers[modelType]->PushRenderState();
 			DrawProjectiles(modelType, numFlyingPieces, &drawnPieces, drawReflection, drawRefraction);
+			modelRenderers[modelType]->PopRenderState();
 		}
 
 		unitDrawer->CleanUpUnitDrawing();
 
-		// draw the model-less projectiles
+		// z-sort the model-less projectiles
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
 		ph->currentParticles = 0;
@@ -658,7 +655,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::va->Initialize();
 
 		// draw the particle effects
-		for (std::set<CProjectile*, distcmp>::iterator it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); it++) {
+		for (std::set<CProjectile*, distcmp>::iterator it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); ++it) {
 			(*it)->Draw();
 		}
 	}
