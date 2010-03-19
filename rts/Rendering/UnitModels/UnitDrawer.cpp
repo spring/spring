@@ -36,13 +36,14 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/WorldObjectModelRenderer.h"
 
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -88,9 +89,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
-	if (texturehandler3DO == 0) { texturehandler3DO = new C3DOTextureHandler; }
-	if (texturehandlerS3O == 0) { texturehandlerS3O = new CS3OTextureHandler; }
-
 	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  200));
 	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 200));
 
@@ -117,6 +115,29 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
 	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
+
+	// load unit explosion generators
+	for (int unitDefID = 1; unitDefID < unitDefHandler->numUnitDefs; unitDefID++) {
+		UnitDef* ud = &unitDefHandler->unitDefs[unitDefID];
+
+		for (std::vector<std::string>::const_iterator it = ud->sfxExplGenNames.begin(); it != ud->sfxExplGenNames.end(); ++it) {
+			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
+		}
+
+		if (groundDecals != NULL) {
+			if (ud->useBuildingGroundDecal) {
+				ud->buildingDecalType = groundDecals->GetBuildingDecalType(ud->buildingDecalTypeName);
+			} else {
+				ud->buildingDecalType = -1;
+			}
+
+			if (ud->leaveTracks) {
+				ud->trackType = groundDecals->GetTrackType(ud->trackTypeName);
+			} else {
+				ud->trackType = -1;
+			}
+		}
+	}
 
 
 	deadGhostBuildings.resize(MODELTYPE_OTHER);

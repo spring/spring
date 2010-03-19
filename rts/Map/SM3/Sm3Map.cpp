@@ -38,7 +38,7 @@ CR_BIND_DERIVED(CSm3ReadMap, CReadMap, ())
 
 CSm3ReadMap::CSm3ReadMap()
 {
-	groundDrawer=0;
+	groundDrawer = 0;
 	minimapTexture = 0;
 	numFeatures=0;
 }
@@ -162,10 +162,9 @@ void CSm3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
 }
 
 
-CBaseGroundDrawer *CSm3ReadMap::GetGroundDrawer ()
-{
-	return groundDrawer;
-}
+CBaseGroundDrawer* CSm3ReadMap::GetGroundDrawer() { return groundDrawer; }
+void CSm3ReadMap::NewGroundDrawer() { groundDrawer = new CSm3GroundDrawer(this); }
+
 
 void CSm3ReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 {

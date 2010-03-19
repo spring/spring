@@ -19,6 +19,7 @@
 #include "Rendering/UnitModels/WorldObjectModelRenderer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/FlyingPiece.hpp"
@@ -336,8 +337,7 @@ CProjectileDrawer::~CProjectileDrawer() {
 
 void CProjectileDrawer::LoadWeaponTextures() {
 	// post-process the synced weapon-defs to set unsynced fields
-	// (this requires CWeaponDefHandler to have been initialized
-	// via CUnitDefHandler)
+	// (this requires CWeaponDefHandler to have been initialized)
 	for (int wid = 0; wid < weaponDefHandler->numWeaponDefs; wid++) {
 		WeaponDef& wd = weaponDefHandler->weaponDefs[wid];
 
@@ -394,6 +394,19 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		if (wd.visuals.texNames[1] != "") { wd.visuals.texture2 = textureAtlas->GetTexturePtr(wd.visuals.texNames[1]); }
 		if (wd.visuals.texNames[2] != "") { wd.visuals.texture3 = textureAtlas->GetTexturePtr(wd.visuals.texNames[2]); }
 		if (wd.visuals.texNames[3] != "") { wd.visuals.texture4 = textureAtlas->GetTexturePtr(wd.visuals.texNames[3]); }
+
+		// load weapon explosion generators
+		if (wd.visuals.expGenTag.empty()) {
+			wd.explosionGenerator = NULL;
+		} else {
+			wd.explosionGenerator = explGenHandler->LoadGenerator(wd.visuals.expGenTag);
+		}
+
+		if (wd.visuals.bounceExpGenTag.empty()) {
+			wd.bounceExplosionGenerator = NULL;
+		} else {
+			wd.bounceExplosionGenerator = explGenHandler->LoadGenerator(wd.visuals.bounceExpGenTag);
+		}
 	}
 }
 

@@ -52,8 +52,6 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 
-	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
-
 	showRezBars = !!configHandler->Get("ShowRezBars", 1);
 
 
