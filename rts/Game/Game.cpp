@@ -634,8 +634,6 @@ void CGame::LoadLua()
 	// last in, first served
 	luaInputReceiver = new LuaInputReceiver();
 
-	eventHandler.GamePreload();
-
 	delete defsParser;
 	defsParser = NULL;
 }
@@ -643,6 +641,7 @@ void CGame::LoadLua()
 void CGame::LoadFinalize()
 {
 	PrintLoadMsg("Finalizing...");
+	eventHandler.GamePreload();
 
 	lastframe = SDL_GetTicks();
 	lastModGameTimeMeasure = lastframe;
