@@ -186,7 +186,9 @@ void CFeatureDrawer::Draw()
 	GetVisibleFeatures(0, &drawFar);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		opaqueModelRenderers[modelType]->PushRenderState();
 		DrawOpaqueFeatures(modelType);
+		opaqueModelRenderers[modelType]->PopRenderState();
 	}
 
 	unitDrawer->CleanUpUnitDrawing();
@@ -214,50 +216,29 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	typedef std::set<CFeature*> FeatureSet;
 	typedef std::map<int, FeatureSet> FeatureRenderBin;
 
-	FeatureRenderBin& opaqueFeatures =
-		opaqueModelRenderers[modelType]->GetFeatureBinMutable();
+	FeatureRenderBin& featureBin = opaqueModelRenderers[modelType]->GetFeatureBinMutable();
 
 	FeatureRenderBin::iterator featureBinIt;
 	FeatureSet::iterator featureSetIt;
 
-	#define DRAW_FEATURE_BIN(featureBin)                                                             \
-		for (featureBinIt = featureBin.begin(); featureBinIt != featureBin.end(); featureBinIt++) {  \
-			if (modelType == MODELTYPE_S3O) {                                                        \
-				texturehandlerS3O->SetS3oTexture(featureBinIt->first);                               \
-			}                                                                                        \
-                                                                                                     \
-			FeatureSet& featureSet = featureBinIt->second;                                           \
-                                                                                                     \
-			for (featureSetIt = featureSet.begin(); featureSetIt != featureSet.end(); ) {            \
-				FeatureSet::iterator featureSetItNext(featureSetIt); featureSetItNext++;             \
-                                                                                                     \
-				if (!DrawFeatureNow(*featureSetIt)) {                                                \
-					featureSet.erase(*featureSetIt);                                                 \
-					featureSetIt = featureSetItNext;                                                 \
-				} else {                                                                             \
-					featureSetIt++;                                                                  \
-				}                                                                                    \
-			}                                                                                        \
+	for (featureBinIt = featureBin.begin(); featureBinIt != featureBin.end(); ++featureBinIt) {
+		if (modelType == MODELTYPE_S3O) {
+			texturehandlerS3O->SetS3oTexture(featureBinIt->first);
 		}
 
-	switch (modelType) {
-		case MODELTYPE_3DO: {
-			unitDrawer->SetupFor3DO();
+		FeatureSet& featureSet = featureBinIt->second;
 
-			DRAW_FEATURE_BIN(opaqueFeatures);
+		for (featureSetIt = featureSet.begin(); featureSetIt != featureSet.end(); ) {
+			FeatureSet::iterator featureSetItNext(featureSetIt); ++featureSetItNext;
 
-			unitDrawer->CleanUp3DO();
-		} break;
-
-		case MODELTYPE_S3O: {
-			DRAW_FEATURE_BIN(opaqueFeatures);
-		} break;
-
-		default: {
-		} break;
+			if (!DrawFeatureNow(*featureSetIt)) {
+				featureSet.erase(*featureSetIt);
+				featureSetIt = featureSetItNext;
+			} else {
+				++featureSetIt;
+			}
+		}
 	}
-
-	#undef DRAW_FEATURE_BIN
 }
 
 void CFeatureDrawer::DrawFarFeatures()
@@ -381,7 +362,9 @@ void CFeatureDrawer::DrawFadeFeatures(bool submerged, bool noAdvShading)
 			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
 
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				cloakedModelRenderers[modelType]->PushRenderState();
 				DrawFadeFeaturesHelper(modelType);
+				cloakedModelRenderers[modelType]->PopRenderState();
 			}
 		}
 
@@ -400,29 +383,20 @@ void CFeatureDrawer::DrawFadeFeatures(bool submerged, bool noAdvShading)
 }
 
 void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
-	if (modelType == MODELTYPE_3DO) {
-		unitDrawer->SetupFor3DO();
-	}
-
 	{
 		typedef std::set<CFeature*> FeatureSet;
 		typedef std::map<int, FeatureSet> FeatureRenderBin;
 		typedef std::map<int, FeatureSet>::iterator FeatureRenderBinIt;
 
-		FeatureRenderBin& cloakedFeatureSets =
-			cloakedModelRenderers[modelType]->GetFeatureBinMutable();
+		FeatureRenderBin& featureBin = cloakedModelRenderers[modelType]->GetFeatureBinMutable();
 
-		for (FeatureRenderBinIt it = cloakedFeatureSets.begin(); it != cloakedFeatureSets.end(); it++) {
+		for (FeatureRenderBinIt it = featureBin.begin(); it != featureBin.end(); ++it) {
 			if (modelType == MODELTYPE_S3O) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 
 			DrawFadeFeaturesSet(it->second, modelType);
 		}
-	}
-
-	if (modelType == MODELTYPE_3DO) {
-		unitDrawer->CleanUp3DO();
 	}
 }
 

@@ -108,7 +108,7 @@ public:
 
 class WorldObjectModelRendererOBJ: public IWorldObjectModelRenderer {
 public:
-	// WorldObjectModelRendererOBJ(): IWorldObjectModelRenderer(MODELTYPE_OBJ) {}
+	WorldObjectModelRendererOBJ(): IWorldObjectModelRenderer(MODELTYPE_OBJ) {}
 	void PushRenderState();
 	void PopRenderState();
 };

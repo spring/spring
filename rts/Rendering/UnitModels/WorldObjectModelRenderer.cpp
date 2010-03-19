@@ -1,4 +1,6 @@
 #include "WorldObjectModelRenderer.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
@@ -11,20 +13,20 @@ IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 	switch (modelType) {
 		case MODELTYPE_3DO: { return (new WorldObjectModelRenderer3DO()); } break;
 		case MODELTYPE_S3O: { return (new WorldObjectModelRendererS3O()); } break;
-	//	case MODELTYPE_OBJ: { return (new WorldObjectModelRendererOBJ()); } break;
+		case MODELTYPE_OBJ: { return (new WorldObjectModelRendererOBJ()); } break;
 		default: { return (new IWorldObjectModelRenderer(MODELTYPE_OTHER)); } break;
 	}
 }
 
 IWorldObjectModelRenderer::~IWorldObjectModelRenderer()
 {
-	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); uIt++) {
+	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
 		units[uIt->first].clear();
 	}
-	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); fIt++) {
+	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
 		features[fIt->first].clear();
 	}
-	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); pIt++) {
+	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
 		projectiles[pIt->first].clear();
 	}
 
@@ -37,13 +39,13 @@ void IWorldObjectModelRenderer::Draw()
 {
 	PushRenderState();
 
-	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); uIt++) {
+	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
 		DrawModels(units[uIt->first]);
 	}
-	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); fIt++) {
+	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
 		DrawModels(features[fIt->first]);
 	}
-	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); pIt++) {
+	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
 		DrawModels(projectiles[pIt->first]);
 	}
 
@@ -54,21 +56,21 @@ void IWorldObjectModelRenderer::Draw()
 
 void IWorldObjectModelRenderer::DrawModels(const UnitSet& models) 
 {
-	for (UnitSetIt uIt = models.begin(); uIt != models.end(); uIt++) {
+	for (UnitSetIt uIt = models.begin(); uIt != models.end(); ++uIt) {
 		DrawModel(*uIt);
 	}
 }
 
 void IWorldObjectModelRenderer::DrawModels(const FeatureSet& models)
 {
-	for (FeatureSetIt fIt = models.begin(); fIt != models.end(); fIt++) {
+	for (FeatureSetIt fIt = models.begin(); fIt != models.end(); ++fIt) {
 		DrawModel(*fIt);
 	}
 }
 
 void IWorldObjectModelRenderer::DrawModels(const ProjectileSet& models)
 {
-	for (ProjectileSetIt pIt = models.begin(); pIt != models.end(); pIt++) {
+	for (ProjectileSetIt pIt = models.begin(); pIt != models.end(); ++pIt) {
 		DrawModel(*pIt);
 	}
 }
@@ -133,26 +135,30 @@ void WorldObjectModelRenderer3DO::PushRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	// SetupFor3DO
+
+	texturehandler3DO->Set3doAtlases();
+	glPushAttrib(GL_POLYGON_BIT);
+	glDisable(GL_CULL_FACE);
 }
 void WorldObjectModelRenderer3DO::PopRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	// Cleanup3DO
+
+	glPopAttrib();
 }
 
 void WorldObjectModelRendererS3O::PushRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	// SetupForS3O
+	// no-op
 }
 void WorldObjectModelRendererS3O::PopRenderState()
 {
 	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
 	#endif
-	// CleanupS3O
+	// no-op
 }
 
 void WorldObjectModelRendererOBJ::PushRenderState()
