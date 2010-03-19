@@ -24,7 +24,10 @@ public:
 
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
-	inline CBaseGroundDrawer* GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
+
+	void NewGroundDrawer();
+	inline CBaseGroundDrawer* GetGroundDrawer();
+
 	const float* GetHeightmap() const { return heightmap; }
 
 	inline void SetHeight(const int& idx, const float& h) {

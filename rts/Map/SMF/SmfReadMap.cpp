@@ -57,6 +57,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
 
 	heightmap = new float[(gs->mapx + 1) * (gs->mapy + 1)];
+	groundDrawer = 0;
 
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
@@ -165,8 +166,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_FLOAT, &normalsTexBuf[0]);
 	}
 
-
-	groundDrawer = new CBFGroundDrawer(this);
 	file.ReadFeatureInfo();
 }
 
@@ -182,6 +181,10 @@ CSmfReadMap::~CSmfReadMap()
 	if (shadingTex ) { glDeleteTextures(1, &shadingTex ); }
 	if (normalsTex ) { glDeleteTextures(1, &normalsTex ); }
 }
+
+
+void CSmfReadMap::NewGroundDrawer() { groundDrawer = new CBFGroundDrawer(this); }
+CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 
 
 void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
@@ -406,7 +409,7 @@ void CSmfReadMap::DrawMinimap() const
 }
 
 
-void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
+void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
 {
 	const int cx = (int)(cam->pos.x / (SQUARE_SIZE * quadSize));
 	const int cy = (int)(cam->pos.z / (SQUARE_SIZE * quadSize));
@@ -473,25 +476,25 @@ int CSmfReadMap::GetNumFeatures ()
 }
 
 
-int CSmfReadMap::GetNumFeatureTypes ()
+int CSmfReadMap::GetNumFeatureTypes()
 {
 	return file.GetNumFeatureTypes();
 }
 
 
-void CSmfReadMap::GetFeatureInfo (MapFeatureInfo* f)
+void CSmfReadMap::GetFeatureInfo(MapFeatureInfo* f)
 {
 	file.ReadFeatureInfo(f);
 }
 
 
-const char *CSmfReadMap::GetFeatureTypeName (int typeID)
+const char* CSmfReadMap::GetFeatureTypeName (int typeID)
 {
 	return file.GetFeatureTypeName(typeID);
 }
 
 
-unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bmInfo)
+unsigned char* CSmfReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
 	// get size
 	*bmInfo = file.GetInfoMapSize(name);
@@ -504,7 +507,7 @@ unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* 
 }
 
 
-void CSmfReadMap::FreeInfoMap (const std::string& name, unsigned char *data)
+void CSmfReadMap::FreeInfoMap(const std::string& name, unsigned char *data)
 {
 	delete[] data;
 }

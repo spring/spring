@@ -7,13 +7,13 @@
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
-#include "GlobalUnsynced.h"
-#include "Map/MapInfo.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -24,7 +24,7 @@ static const float MAX_TREE_HEIGHT_3=MAX_TREE_HEIGHT*0.3f;
 static const float MAX_TREE_HEIGHT_36=MAX_TREE_HEIGHT*0.36f;
 static const float MAX_TREE_HEIGHT_6=MAX_TREE_HEIGHT*0.6f;
 
-CBasicTreeDrawer::CBasicTreeDrawer()
+CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 {
 	lastListClean=0;
 
@@ -157,9 +157,9 @@ CBasicTreeDrawer::CBasicTreeDrawer()
 	nTrees=treesX*treesY;
 	trees=new TreeSquareStruct[nTrees];
 
-	for(TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
-		pTSS->displist=0;
-		pTSS->farDisplist=0;
+	for (TreeSquareStruct* pTSS = trees; pTSS < trees + nTrees; ++pTSS) {
+		pTSS->displist = 0;
+		pTSS->farDisplist = 0;
 	}
 }
 

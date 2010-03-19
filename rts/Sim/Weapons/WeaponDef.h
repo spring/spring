@@ -136,10 +136,11 @@ struct WeaponDef
 		float3 color;
 		float3 color2;
 
-		//bool hasmodel;
 		S3DModel* model;
 		std::string modelName;
 		std::string texNames[4];
+		std::string expGenTag;
+		std::string bounceExpGenTag;
 		CColorMap* colorMap;
 
 		bool smokeTrail;

@@ -118,10 +118,6 @@ void CFeature::PostLoad()
 	} else {
 		midPos = pos;
 	}
-
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->drawType - 1, pos, 1);
-	}
 }
 
 
@@ -202,11 +198,6 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	} else {
 		finalHeight = ground->GetHeight2(pos.x, pos.z);
 	}
-
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->drawType - 1, pos, 1);
-	}
-
 
 	if (speed != ZeroVector) {
 		deathSpeed = speed;
@@ -465,15 +456,6 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 void CFeature::ForcedSpin(const float3& newDir)
 {
-/*
-	heading = GetHeadingFromVector(newDir.x, newDir.z);
-	CalculateTransform();
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->DeleteTree(pos);
-		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-	}
-*/
-
 	float3 updir = UpVector;
 	if (updir == newDir) {
 		//FIXME perhaps save the old right,up,front directions, so we can
@@ -562,7 +544,7 @@ bool CFeature::UpdatePosition()
 
 		if (!reachedFinalPos)
 			finishedUpdate = false;
-	}else{
+	} else {
 		if (pos.y > finalHeight) {
 			//! feature is falling
 			if (def->drawType >= DRAWTYPE_TREE)

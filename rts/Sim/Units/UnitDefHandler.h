@@ -17,12 +17,6 @@ struct GuiSoundSet;
 class CUnitDefHandler : CommonDefHandler
 {
 public:
-	UnitDef* unitDefs;
-	int numUnitDefs;
-	std::map<std::string, int> unitDefIDsByName;
-	std::map<int, std::set<int> > decoyMap;
-	std::set<int> startUnitIDs;
-
 	CUnitDefHandler(void);
 	~CUnitDefHandler(void);
 	void Init();
@@ -38,6 +32,12 @@ public:
 	                     const std::string& texName);
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     unsigned int texID, int sizex, int sizey);
+
+	UnitDef* unitDefs;
+	int numUnitDefs;
+	std::map<std::string, int> unitDefIDsByName;
+	std::map<int, std::set<int> > decoyMap;
+	std::set<int> startUnitIDs;
 
 protected:
 	void ParseUnitDef(const LuaTable&, const std::string& name, int id);

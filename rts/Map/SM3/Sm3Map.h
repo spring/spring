@@ -23,7 +23,9 @@ public:
 	void Initialize(const char* mapname); // throws std::runtime_exception on errors
 	void ConfigNotify(const std::string& key, const std::string& value);
 
+	void NewGroundDrawer();
 	CBaseGroundDrawer* GetGroundDrawer();
+
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
 	inline const float* GetHeightmap() const { return renderer->GetHeightmap(); }
 

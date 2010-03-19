@@ -443,20 +443,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.visuals.texNames[2] = texTable.GetString(3, wdTable.GetString("texName3", ""));
 	wd.visuals.texNames[3] = texTable.GetString(4, wdTable.GetString("texName4", ""));
 
-
-
-	const string expGenTag = wdTable.GetString("explosionGenerator", "");
-	if (expGenTag.empty()) {
-		wd.explosionGenerator = NULL;
-	} else {
-		wd.explosionGenerator = explGenHandler->LoadGenerator(expGenTag);
-	}
-	const string bounceExpGenTag = wdTable.GetString("bounceExplosionGenerator", "");
-	if (bounceExpGenTag.empty()) {
-		wd.bounceExplosionGenerator = NULL;
-	} else {
-		wd.bounceExplosionGenerator = explGenHandler->LoadGenerator(bounceExpGenTag);
-	}
+	wd.visuals.expGenTag = wdTable.GetString("explosionGenerator", "");
+	wd.visuals.bounceExpGenTag = wdTable.GetString("bounceExplosionGenerator", "");
 
 	const float gd = max(30.0f, wd.damages[0] / 20.0f);
 	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrt(gd) * 0.7f)) * 0.5f;

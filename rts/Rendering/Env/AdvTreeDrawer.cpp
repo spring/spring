@@ -11,6 +11,8 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/Feature.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
@@ -42,7 +44,7 @@ static const float HALF_MAX_TREE_HEIGHT   = MAX_TREE_HEIGHT * 0.5f;
 static const float DOUBLE_MAX_TREE_HEIGHT = MAX_TREE_HEIGHT * 2.0f;
 
 
-CAdvTreeDrawer::CAdvTreeDrawer()
+CAdvTreeDrawer::CAdvTreeDrawer(): CBaseTreeDrawer()
 {
 	LoadTreeShaders();
 

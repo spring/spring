@@ -747,7 +747,9 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 
 void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 {
-	if(decalLevel == 0)
+	if (decalLevel == 0)
+		return;
+	if (unit->unitDef->trackType < 0)
 		return;
 
 	int zp = (int(unit->pos.z)/SQUARE_SIZE*2);
@@ -762,7 +764,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 
 	float3 pos = unit->pos+unit->frontdir*unit->unitDef->trackOffset;
 
-	TrackPart *tp = new TrackPart;
+	TrackPart* tp = new TrackPart;
 	tp->pos1 = pos+unit->rightdir*unit->unitDef->trackWidth*0.5f;
 	tp->pos1.y = ground->GetHeight2(tp->pos1.x,tp->pos1.z);
 	tp->pos2 = pos-unit->rightdir*unit->unitDef->trackWidth*0.5f;
@@ -813,7 +815,6 @@ void CGroundDecalHandler::RemoveUnit(CUnit* unit)
 
 int CGroundDecalHandler::GetTrackType(const std::string& name)
 {
-
 	if (decalLevel == 0) {
 		return 0;
 	}
@@ -1050,6 +1051,8 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 void CGroundDecalHandler::AddBuilding(CBuilding* building)
 {
 	if (decalLevel == 0)
+		return;
+	if (building->unitDef->buildingDecalType < 0)
 		return;
 
 	int posx = int(building->pos.x / 8);

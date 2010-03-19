@@ -18,13 +18,15 @@ public:
 	virtual ~CBaseTreeDrawer(void);
 
 	void Draw(bool drawReflection);
-	virtual void Draw(float treeDistance,bool drawReflection)=0;
-	virtual void DrawGrass(){};
-	virtual void Update()=0;
-	virtual void ResetPos(const float3& pos)=0;
+	virtual void Draw(float treeDistance, bool drawReflection) = 0;
+	virtual void DrawGrass() {};
+	virtual void Update() = 0;
+
+	virtual void ResetPos(const float3& pos) = 0;
 	static CBaseTreeDrawer* GetTreeDrawer(void);
-	virtual void AddTree(int type, float3 pos, float size)=0;
-	virtual void DeleteTree(float3 pos)=0;
+
+	virtual void AddTree(int type, float3 pos, float size) = 0;
+	virtual void DeleteTree(float3 pos) = 0;
 
 	std::vector<GLuint> delDispLists;
 	virtual void UpdateDraw();
@@ -33,8 +35,8 @@ public:
 	bool drawTrees;
 
 	virtual int AddFallingTree(float3 pos, float3 dir, int type);
-	virtual void AddGrass(float3 pos){};
-	virtual void RemoveGrass(int x, int z){};
+	virtual void AddGrass(float3 pos) {};
+	virtual void RemoveGrass(int x, int z) {};
 	virtual void DrawShadowPass(void);
 };
 

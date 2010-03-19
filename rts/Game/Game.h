@@ -32,6 +32,13 @@ class CGame : public CGameController
 {
 private:
 	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
+
+	void LoadDefs();
+	void LoadSimulation(const std::string&);
+	void LoadRendering();
+	void LoadInterface();
+	void LoadLua();
+	void LoadFinalize();
 	void PostLoad();
 
 public:
