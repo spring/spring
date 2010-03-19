@@ -18,9 +18,9 @@ class CSm3ReadMap : public CReadMap
 public:
 	CR_DECLARE(CSm3ReadMap);
 
-	CSm3ReadMap();
+	CSm3ReadMap(const std::string&);
 	~CSm3ReadMap();
-	void Initialize(const char* mapname); // throws std::runtime_exception on errors
+
 	void ConfigNotify(const std::string& key, const std::string& value);
 
 	void NewGroundDrawer();

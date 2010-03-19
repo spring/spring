@@ -45,18 +45,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 	width  = header.mapx;
 	height = header.mapy;
-	gs->mapx = header.mapx;
-	gs->mapy = header.mapy;
-	gs->mapSquares = gs->mapx*gs->mapy;
-	gs->hmapx = gs->mapx/2;
-	gs->hmapy = gs->mapy/2;
-	gs->pwr2mapx = next_power_of_2(gs->mapx);
-	gs->pwr2mapy = next_power_of_2(gs->mapy);
 
-	float3::maxxpos = gs->mapx * SQUARE_SIZE - 1;
-	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
-
-	heightmap = new float[(gs->mapx + 1) * (gs->mapy + 1)];
+	heightmap = new float[(width + 1) * (height + 1)];
 	groundDrawer = 0;
 
 	const CMapInfo::smf_t& smf = mapInfo->smf;
