@@ -117,7 +117,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 #endif
 
 	// load unit explosion generators
-	for (int unitDefID = 1; unitDefID < unitDefHandler->numUnitDefs; unitDefID++) {
+	for (int unitDefID = 1; unitDefID <= unitDefHandler->numUnitDefs; unitDefID++) {
 		UnitDef* ud = &unitDefHandler->unitDefs[unitDefID];
 
 		for (std::vector<std::string>::const_iterator it = ud->sfxExplGenNames.begin(); it != ud->sfxExplGenNames.end(); ++it) {

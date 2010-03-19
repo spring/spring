@@ -93,8 +93,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 
 	if (fullCtrl) {
-		// numWeaponDefs has an extra slot
-		for (int w = 0; w <= weaponDefHandler->numWeaponDefs; w++) {
+		for (int w = 0; w < weaponDefHandler->numWeaponDefs; w++) {
 			watchWeapons.push_back(false);
 		}
 	}

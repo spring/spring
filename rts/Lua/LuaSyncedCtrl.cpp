@@ -1859,8 +1859,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = uh->units[attackerID];
 	}
 
-	// numWeaponDefs has an extra slot
-	if (weaponID > weaponDefHandler->numWeaponDefs) {
+	if (weaponID >= weaponDefHandler->numWeaponDefs) {
 		return 0;
 	}
 
