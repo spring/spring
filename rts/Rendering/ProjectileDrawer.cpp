@@ -341,6 +341,11 @@ void CProjectileDrawer::LoadWeaponTextures() {
 	for (int wid = 0; wid < weaponDefHandler->numWeaponDefs; wid++) {
 		WeaponDef& wd = weaponDefHandler->weaponDefs[wid];
 
+		wd.visuals.texture1 = NULL;
+		wd.visuals.texture2 = NULL;
+		wd.visuals.texture3 = NULL;
+		wd.visuals.texture4 = NULL;
+
 		if (wd.type == "Cannon") {
 			wd.visuals.texture1 = plasmatex;
 		} else if (wd.type == "AircraftBomb") {

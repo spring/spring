@@ -179,7 +179,7 @@ void CGameHelper::Explosion(
 	CFeature* hitfeature
 ) {
 	if (luaUI) {
-		if ((weaponId >= 0) && (weaponId <= weaponDefHandler->numWeaponDefs)) {
+		if ((weaponId >= 0) && (weaponId < weaponDefHandler->numWeaponDefs)) {
 			WeaponDef& wd = weaponDefHandler->weaponDefs[weaponId];
 			const float cameraShake = wd.cameraShake;
 			if (cameraShake > 0.0f) {
