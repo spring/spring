@@ -124,12 +124,9 @@ void CSm3ReadMap::NewGroundDrawer() {
 	}
 
 	renderer->config.useStaticShadow = false;
+	renderer->config.useShadowMaps = shadowHandler->drawShadows;
 	renderer->config.terrainNormalMaps = false;
 	renderer->config.normalMapLevel = 3;
-
-	if (shadowHandler->drawShadows) {
-		renderer->config.useShadowMaps = true;
-	}
 
 	/*
 	int numStages = atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
