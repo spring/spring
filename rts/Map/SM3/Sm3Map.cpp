@@ -22,8 +22,13 @@
 
 #include <stdexcept>
 #include <fstream>
-#include "bitops.h"
 
+
+
+struct Sm3LoadCB: terrain::ILoadCallback
+{
+	void Write(const char* msg) { logOutput.Print("%s", msg); }
+};
 
 // FIXME - temporary, until the LuaParser change is done
 static const TdfParser& GetMapDefParser()
@@ -33,40 +38,17 @@ static const TdfParser& GetMapDefParser()
 }
 
 
-CR_BIND_DERIVED(CSm3ReadMap, CReadMap, ())
+CR_BIND_DERIVED(CSm3ReadMap, CReadMap, (""))
 
-CSm3ReadMap::CSm3ReadMap()
+CSm3ReadMap::CSm3ReadMap(const std::string& mapName)
 {
 	groundDrawer = 0;
 	minimapTexture = 0;
-	numFeatures=0;
-}
+	numFeatures = 0;
 
-CSm3ReadMap::~CSm3ReadMap()
-{
-	delete groundDrawer;
-	delete renderer;
-
-	for (std::vector<std::string*>::iterator fti = featureTypes.begin(); fti != featureTypes.end(); ++fti)
-		delete *fti;
-	featureTypes.clear();
-
-	glDeleteTextures(1, &minimapTexture);
-}
-
-struct Sm3LoadCB : terrain::ILoadCallback
-{
-	void Write(const char* msg) { logOutput.Print("%s", msg); }
-};
-
-void CSm3ReadMap::Initialize(const char* mapname)
-{
 	try {
-		string lmsg = "Loading " + string(mapname);
+		std::string lmsg = "Loading " + mapName;
 		PrintLoadMsg(lmsg.c_str());
-
-		GLint tu;
-		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
 
 		if (!mapInfo->sm3.minimap.empty()) {
 			CBitmap bmp;
@@ -83,20 +65,8 @@ void CSm3ReadMap::Initialize(const char* mapname)
 			Sm3LoadCB cb;
 			renderer->LoadHeightMap(GetMapDefParser(), &cb);
 
-			// Set global map info
-			gs->mapx = renderer->GetHeightmapWidth() - 1;
-			gs->mapy = renderer->GetHeightmapWidth() - 1; //! note: not height
-			gs->mapSquares = gs->mapx * gs->mapy;
-			gs->hmapx = gs->mapx / 2;
-			gs->hmapy = gs->mapy / 2;
-			gs->pwr2mapx = next_power_of_2(gs->mapx);
-			gs->pwr2mapy = next_power_of_2(gs->mapy);
-
-			width = gs->mapx;
-			height = gs->mapy;
-
-			float3::maxxpos = width * SQUARE_SIZE - 1;
-			float3::maxzpos = height * SQUARE_SIZE - 1;
+			width = renderer->GetHeightmapWidth() - 1;
+			height = renderer->GetHeightmapWidth() - 1; //! note: not height
 		}
 
 		CReadMap::Initialize();
@@ -115,6 +85,19 @@ void CSm3ReadMap::Initialize(const char* mapname)
 		ErrorMessageBox(e.what(), "Error:", MBF_OK);
 	}
 }
+
+CSm3ReadMap::~CSm3ReadMap()
+{
+	delete groundDrawer;
+	delete renderer;
+
+	for (std::vector<std::string*>::iterator fti = featureTypes.begin(); fti != featureTypes.end(); ++fti)
+		delete *fti;
+	featureTypes.clear();
+
+	glDeleteTextures(1, &minimapTexture);
+}
+
 
 
 void CSm3ReadMap::ConfigNotify(const std::string& key, const std::string& value)

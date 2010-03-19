@@ -7,23 +7,19 @@
 #include "mmgr.h"
 
 #include "ReadMap.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Ground.h"
-#include "ConfigHandler.h"
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"
-#include "Sim/Path/PathManager.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Units/Unit.h"
 #include "SM3/Sm3Map.h"
 #include "SMF/SmfReadMap.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "LoadSaveInterface.h"
-#include "LogOutput.h"
-#include "Platform/errorhandler.h"
-#include "Exceptions.h"
+#include "System/bitops.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/LoadSaveInterface.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/Platform/errorhandler.h"
 
 using namespace std;
 
@@ -50,8 +46,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	CReadMap* rm = 0;
 
 	if (extension == "sm3") {
-		rm = new CSm3ReadMap();
-		((CSm3ReadMap*)rm)->Initialize (mapname.c_str());
+		rm = new CSm3ReadMap(mapname);
 	} else {
 		rm = new CSmfReadMap(mapname);
 	}
@@ -59,7 +54,6 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	if (!rm) {
 		return 0;
 	}
-
 
 	/* Read metal map */
 	MapBitmapInfo mbi;
@@ -147,6 +141,18 @@ CReadMap::~CReadMap()
 void CReadMap::Initialize()
 {
 	PrintLoadMsg("Loading Map");
+
+	// set global map info
+	gs->mapx = width;
+	gs->mapy = height;
+	gs->mapSquares = gs->mapx * gs->mapy;
+	gs->hmapx = gs->mapx >> 1;
+	gs->hmapy = gs->mapy >> 1;
+	gs->pwr2mapx = next_power_of_2(gs->mapx);
+	gs->pwr2mapy = next_power_of_2(gs->mapy);
+
+	float3::maxxpos = gs->mapx * SQUARE_SIZE - 1;
+	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
 
 	orgheightmap = new float[(gs->mapx + 1) * (gs->mapy + 1)];
 	facenormals = new float3[gs->mapx * gs->mapy * 2];
