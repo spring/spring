@@ -106,7 +106,8 @@ namespace terrain {
 		void RemoveRenderContext (RenderContext *ctx);
 		void SetActiveContext (RenderContext *ctx);   // set active rendering context / camera viewpoint
 
-		void Load (const TdfParser& tdf, LightingInfo* li, ILoadCallback *cb);
+		void Load(const TdfParser& tdf, LightingInfo* li, ILoadCallback *cb);
+		void LoadHeightMap(const TdfParser&, ILoadCallback*);
 		void ReloadShaders ();
 		void Draw ();
 		void DrawAll (); // draw all terrain nodes, regardless of visibility or lod
@@ -140,7 +141,8 @@ namespace terrain {
 		float GetHeightAtPixel (int x,int y);
 
 		Vector3 TerrainSize ();
-		int GetHeightmapWidth ();
+		int GetHeightmapWidth() const;
+		int GetHeightmapHeight() const;
 
 		void CalcRenderStats (RenderStats& stats, RenderContext *ctx=0);
 
