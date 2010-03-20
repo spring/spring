@@ -304,7 +304,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 					ai.archiveData.name = filesystem.GetBasename(mapfile);
 				if (ai.archiveData.mapfile.empty())
 					ai.archiveData.mapfile = mapfile;
-				AddDependency(ai.archiveData.dependencies, "maphelper.sdz");
+				AddDependency(ai.archiveData.dependencies, "Map Helper v1");
 				ai.archiveData.modType = modtype::map;
 				
 			}
@@ -470,7 +470,7 @@ void CArchiveScanner::ReadCacheData(const string& filename)
 
 		ai.archiveData = GetArchiveData(archived);
 		if (ai.archiveData.modType == modtype::map)
-			AddDependency(ai.archiveData.dependencies, "maphelper.sdz");
+			AddDependency(ai.archiveData.dependencies, "Map Helper v1");
 		else if (ai.archiveData.modType == modtype::primary)
 			AddDependency(ai.archiveData.dependencies, "Spring content v1");
 
@@ -568,7 +568,7 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 
 			vector<string> deps = archData.dependencies;
 			if (archData.modType == modtype::map)
-				FilterDep(deps, "maphelper.sdz");
+				FilterDep(deps, "Map Helper v1");
 			else if (archData.modType == modtype::primary)
 				FilterDep(deps, "Spring content v1");
 			
