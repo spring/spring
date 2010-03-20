@@ -62,7 +62,7 @@ tgz="spring_${branch}_src.tar.gz"
 # (directories are included recursively)
 include=" \
  $dir/AI/ \
- $dir/Documentation/ \
+ $dir/doc/ \
  $dir/Doxyfile \
  $dir/game/ \
  $dir/installer/ \

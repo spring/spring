@@ -269,7 +269,7 @@ if    (UNIX AND NOT MINGW)
 	endif (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
 
 	if    (CREATE_MAN_PAGES)
-		set(MAN_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Documentation/manpages")
+		set(MAN_SOURCE_DIR "${CMAKE_SOURCE_DIR}/doc/manpages")
 		set(MAN_BUILD_DIR  "${CMAKE_BINARY_DIR}/manpages")
 		set(MAN_DEST_DIR   "${MANDIR}/man6")
 
