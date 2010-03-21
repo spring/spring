@@ -11,7 +11,7 @@ rem absolute or relative to spring source root
 set BUILD_DIR=%1
 IF "%BUILD_DIR%" == "" (
 	rem default:
-	set BUILD_DIR=game\base\
+	set BUILD_DIR=build\base\
 )
 
 cd %~dp0..

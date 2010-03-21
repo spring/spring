@@ -4,8 +4,8 @@
   SetOverWrite on
 
   ; Main stuff
-  File "..\game\spring.exe"
-  File "..\game\unitsync.dll"
+  File "..\dist\spring.exe"
+  File "..\dist\unitsync.dll"
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
 
@@ -47,30 +47,30 @@
   File "..\mingwlibs\dll\ILU.dll"
   File "..\external\zlibwapi.dll"
 
-  File "..\game\PALETTE.PAL"
+  File "..\dist\PALETTE.PAL"
 
 ${IfNot} ${FileExists} "$INSTDIR\selectkeys.txt"
-  File "..\game\selectkeys.txt"
+  File "..\dist\selectkeys.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\uikeys.txt"
-  File "..\game\uikeys.txt"
+  File "..\dist\uikeys.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\cmdcolors.txt"
-  File "..\game\cmdcolors.txt"
+  File "..\dist\cmdcolors.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\ctrlpanel.txt"
-  File "..\game\ctrlpanel.txt"
+  File "..\dist\ctrlpanel.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\teamcolors.lua"
-  File "..\game\teamcolors.lua"
+  File "..\dist\teamcolors.lua"
 ${EndIf}
 
   SetOutPath "$INSTDIR\fonts"
-  File "..\game\fonts\FreeSansBold.otf"
+  File "..\dist\fonts\FreeSansBold.otf"
 
   ; Remove Luxi.ttf, it has been replaced by FreeSansBold
   Delete "$INSTDIR\Luxi.ttf"
@@ -84,7 +84,7 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\dist\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
   ;buildbot creates 7z, and those get included in installer, fix here until buildserv got fixed
   ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !undef AI_INT_VERS
@@ -100,7 +100,7 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\dist\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
   ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
   !undef SKIRM_AI_VERS
 !endif
@@ -113,11 +113,11 @@ ${EndIf}
   SetOverWrite on
   SetOutPath "$INSTDIR\base"
 
-  File "..\game\base\springcontent.sdz"
-  File "..\game\base\maphelper.sdz"
-  File "..\game\base\cursors.sdz"
+  File "..\dist\base\springcontent.sdz"
+  File "..\dist\base\maphelper.sdz"
+  File "..\dist\base\cursors.sdz"
   SetOutPath "$INSTDIR\base\spring"
-  File "..\game\base\spring\bitmaps.sdz"
+  File "..\dist\base\spring\bitmaps.sdz"
 
 ;!ifndef SP_UPDATE
 ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
