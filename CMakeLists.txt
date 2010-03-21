@@ -303,7 +303,7 @@ add_custom_target(gamedata ALL
 	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/installer")
 
 ### install base data files
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cont/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)
 install (DIRECTORY ${CMAKE_BINARY_DIR}/base DESTINATION ${DATADIR})
 
 ### Install freedesktop-files, mime-types etc.

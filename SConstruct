@@ -439,14 +439,14 @@ inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base/spri
 Alias('install', inst)
 
 # install fonts
-for font in os.listdir('game/fonts'):
-	if not os.path.isdir(os.path.join('game/fonts', font)):
-		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('game/fonts', font))
+for font in os.listdir('cont/fonts'):
+	if not os.path.isdir(os.path.join('cont/fonts', font)):
+		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('cont/fonts', font))
 		Alias('install', inst)
 
 # install some files from root of datadir
 for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'teamcolors.lua']:
-	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('cont', f))
 	Alias('install', inst)
 
 # install menu entry & icon
@@ -457,9 +457,9 @@ Alias('install', inst)
 
 # install LuaUI files
 for f in ['luaui.lua']:
-	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('cont', f))
 	Alias('install', inst)
-luaui_files=filelist.list_files_recursive(env, 'game/LuaUI')
+luaui_files=filelist.list_files_recursive(env, 'cont/LuaUI')
 for f in luaui_files:
 	if not os.path.isdir(f):
 		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], os.path.dirname(f)[5:]), f)
