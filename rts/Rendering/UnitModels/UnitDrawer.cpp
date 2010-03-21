@@ -1218,7 +1218,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		if (gu->haveGLSL && shadowHandler->drawShadows) {
 			S3OCurShader->SetUniform3fv(6, &camera->pos[0]);
-			S3OCurShader->SetUniformMatrix4fv(7, false, (float*) &camera->modelviewInverse[0]);
+			S3OCurShader->SetUniformMatrix4fv(7, false, (float*) camera->GetViewMatInv());
 			S3OCurShader->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
 			S3OCurShader->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
 		} else {
@@ -1264,7 +1264,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixd(camera->GetModelview());
+		glMultMatrixd(camera->GetViewMat());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();

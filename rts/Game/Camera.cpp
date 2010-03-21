@@ -25,26 +25,26 @@ CCamera::CCamera() :
 	forward(1.0f, 0.0f, 0.0f),   posOffset(0.0f, 0.0f, 0.0f), tiltOffset(0.0f, 0.0f, 0.0f), lppScale(0.0f)
 {
 	// stuff that wont change can be initialised here, it doesn't need to be reinitialised every update
-	modelview[ 3] =  0.0f;
-	modelview[ 7] =  0.0f;
-	modelview[11] =  0.0f;
-	modelview[15] =  1.0f;
+	viewMat[ 3] =  0.0f;
+	viewMat[ 7] =  0.0f;
+	viewMat[11] =  0.0f;
+	viewMat[15] =  1.0f;
 
-	projection[ 1] = 0.0f;
-	projection[ 2] = 0.0f;
-	projection[ 3] = 0.0f;
+	projMat[ 1] = 0.0f;
+	projMat[ 2] = 0.0f;
+	projMat[ 3] = 0.0f;
 
-	projection[ 4] = 0.0f;
-	projection[ 6] = 0.0f;
-	projection[ 7] = 0.0f;
+	projMat[ 4] = 0.0f;
+	projMat[ 6] = 0.0f;
+	projMat[ 7] = 0.0f;
 
-	projection[12] = 0.0f;
-	projection[13] = 0.0f;
-	projection[15] = 0.0f;
+	projMat[12] = 0.0f;
+	projMat[13] = 0.0f;
+	projMat[15] = 0.0f;
 
-	billboard[3]  = billboard[7]  = billboard[11] = 0.0;
-	billboard[12] = billboard[13] = billboard[14] = 0.0;
-	billboard[15] = 1.0;
+	bboardMat[ 3] = bboardMat[ 7] = bboardMat[11] = 0.0;
+	bboardMat[12] = bboardMat[13] = bboardMat[14] = 0.0;
+	bboardMat[15] = 1.0;
 
 	SetFov(45.0f);
 
@@ -57,7 +57,7 @@ CCamera::CCamera() :
 
 CCamera::~CCamera()
 {
-	glDeleteLists(billboardList,1);
+	glDeleteLists(billboardList, 1);
 }
 
 void CCamera::Roll(float rad)
@@ -201,16 +201,14 @@ void CCamera::Update(bool freeze, bool resetUp)
 	const float zNear = (NEAR_PLANE * rangemod);
 	gu->viewRange = MAX_VIEW_RANGE * rangemod;
 
-	glMatrixMode(GL_PROJECTION); // Select the Projection Matrix
-	glLoadIdentity();            // Reset  the Projection Matrix
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 
-	// apply and store the transform, should be faster
-	// than calling glGetDoublev(GL_PROJECTION_MATRIX)
-	// right after gluPerspective()
+	// apply and store the projection transform
 	myGluPerspective(aspect, zNear, gu->viewRange);
 
 
-	glMatrixMode(GL_MODELVIEW);  // Select the Modelview Matrix
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	// FIXME: should be applying the offsets to pos/up/right/forward/etc,
@@ -222,28 +220,26 @@ void CCamera::Update(bool freeze, bool resetUp)
 	const float3 camPos = pos + posOffset;
 	const float3 center = camPos + fShake.ANormalize();
 
-	// apply and store the transform, should be faster
-	// than calling glGetDoublev(GL_MODELVIEW_MATRIX)
-	// right after gluLookAt()
+	// apply and store the view transform
 	myGluLookAt(camPos, center, up);
 
 
-	// the inverse modelview matrix (handy for shaders to have)
-	CalculateInverse4x4((double(*)[4])modelview, (double(*)[4])modelviewInverse);
+	// the inverse view matrix (handy for shaders to have)
+	CalculateInverse4x4((double(*)[4]) viewMat, (double(*)[4]) viewMatInv);
 
 	// transpose the 3x3
-	billboard[0]  = modelview[0];
-	billboard[1]  = modelview[4];
-	billboard[2]  = modelview[8];
-	billboard[4]  = modelview[1];
-	billboard[5]  = modelview[5];
-	billboard[6]  = modelview[9];
-	billboard[8]  = modelview[2];
-	billboard[9]  = modelview[6];
-	billboard[10] = modelview[10];
+	bboardMat[ 0] = viewMat[ 0];
+	bboardMat[ 1] = viewMat[ 4];
+	bboardMat[ 2] = viewMat[ 8];
+	bboardMat[ 4] = viewMat[ 1];
+	bboardMat[ 5] = viewMat[ 5];
+	bboardMat[ 6] = viewMat[ 9];
+	bboardMat[ 8] = viewMat[ 2];
+	bboardMat[ 9] = viewMat[ 6];
+	bboardMat[10] = viewMat[10];
 
 	glNewList(billboardList, GL_COMPILE);
-	glMultMatrixd(billboard);
+	glMultMatrixd(bboardMat);
 	glEndList();
 
 	viewport[0] = 0;
@@ -322,7 +318,7 @@ float3 CCamera::CalcWindowCoordinates(const float3& objPos)
 {
 	double winPos[3];
 	gluProject((GLdouble)objPos.x, (GLdouble)objPos.y, (GLdouble)objPos.z,
-	           modelview, projection, viewport,
+	           viewMat, projMat, viewport,
 	           &winPos[0], &winPos[1], &winPos[2]);
 	return float3((float)winPos[0], (float)winPos[1], (float)winPos[2]);
 }
@@ -333,18 +329,18 @@ inline void CCamera::myGluPerspective(float aspect, float zNear, float zFar) {
 	GLdouble l = b * aspect;
 	GLdouble r = t * aspect;
 
-	projection[ 0] = (2.0f * zNear) / (r - l);
+	projMat[ 0] = (2.0f * zNear) / (r - l);
 
-	projection[ 5] = (2.0f * zNear) / (t - b);
+	projMat[ 5] = (2.0f * zNear) / (t - b);
 
-	projection[ 8] = (r + l) / (r - l);
-	projection[ 9] = (t + b) / (t - b);
-	projection[10] = -(zFar + zNear) / (zFar - zNear);
-	projection[11] = -1.0f;
+	projMat[ 8] = (r + l) / (r - l);
+	projMat[ 9] = (t + b) / (t - b);
+	projMat[10] = -(zFar + zNear) / (zFar - zNear);
+	projMat[11] = -1.0f;
 
-	projection[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
+	projMat[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
 
-	glMultMatrixd(projection);
+	glMultMatrixd(projMat);
 }
 
 inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const float3& up) {
@@ -352,34 +348,25 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 	float3 s = f.cross(up);
 	float3 u = s.cross(f);
 
-	modelview[ 0] =  s.x;
-	modelview[ 1] =  u.x;
-	modelview[ 2] = -f.x;
+	viewMat[ 0] =  s.x;
+	viewMat[ 1] =  u.x;
+	viewMat[ 2] = -f.x;
 
+	viewMat[ 4] =  s.y;
+	viewMat[ 5] =  u.y;
+	viewMat[ 6] = -f.y;
 
-	modelview[ 4] =  s.y;
-	modelview[ 5] =  u.y;
-	modelview[ 6] = -f.y;
-
-	modelview[ 8] =  s.z;
-	modelview[ 9] =  u.z;
-	modelview[10] = -f.z;
+	viewMat[ 8] =  s.z;
+	viewMat[ 9] =  u.z;
+	viewMat[10] = -f.z;
 
 	// save a glTranslated(-eye.x, -eye.y, -eye.z) call
-	modelview[12] = ( s.x * -eye.x) + ( s.y * -eye.y) + ( s.z * -eye.z);
-	modelview[13] = ( u.x * -eye.x) + ( u.y * -eye.y) + ( u.z * -eye.z);
-	modelview[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
+	viewMat[12] = ( s.x * -eye.x) + ( s.y * -eye.y) + ( s.z * -eye.z);
+	viewMat[13] = ( u.x * -eye.x) + ( u.y * -eye.y) + ( u.z * -eye.z);
+	viewMat[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
 
-	glMultMatrixd(modelview);
+	glMultMatrixd(viewMat);
 }
-
-const GLdouble* CCamera::GetProjection() const { return projection; }
-const GLdouble* CCamera::GetModelview() const { return modelview; }
-const GLdouble* CCamera::GetBillboard() const { return billboard; }
-
-float CCamera::GetFov() const { return fov; }
-float CCamera::GetHalfFov() const { return halfFov; }
-float CCamera::GetTanHalfFov() const { return tanHalfFov; }
 
 void CCamera::SetFov(float myfov)
 {
