@@ -17,7 +17,7 @@ INTERFACE_VERSION=${1}
 SPRING_DATA_DIR=${2}
 
 #SPRING_HOME=$(cd ${HOME_DIR}; cd ../../..; pwd)
-#SPRING_DATA_DIR=${SPRING_HOME}/game
+#SPRING_DATA_DIR=${SPRING_HOME}/dist
 
 ##############################################
 ### do not change anything below this line ###

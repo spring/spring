@@ -15,8 +15,8 @@ SPRINGFLAGS="--minimise --quit=600"
 
 # Binaries used for testing (don't use spaces in filenames!).
 # These can be overridden from environment / other script.
-[ -z "$SPRING_SERVER" ] && SPRING_SERVER="game/spring"
-[ -z "$SPRING_CLIENT" ] && SPRING_CLIENT="game/spring"
+[ -z "$SPRING_SERVER" ] && SPRING_SERVER="dist/spring"
+[ -z "$SPRING_CLIENT" ] && SPRING_CLIENT="dist/spring"
 
 # Where AIs are stored..
 AIDIR="AI/Skirmish/impls"

@@ -5,10 +5,10 @@
 # !ifdef INSTALL
 #
 #   SetOutPath "$INSTDIR"
-#   File "..\game\luaui.lua"
+#   File "..\dist\luaui.lua"
 # 
 #   SetOutPath "$INSTDIR\LuaUI"
-#   File /r /x .svn /x Config\*.lua "..\game\LuaUI\*.*"
+#   File /r /x .svn /x Config\*.lua "..\dist\LuaUI\*.*"
 # 
 # !else
 #
@@ -23,9 +23,9 @@
 import os
 
 try:
-	os.chdir('game')
+	os.chdir('dist')
 except OSError:
-	os.chdir('../game')
+	os.chdir('../dist')
 
 top = 'LuaUI/'
 
@@ -62,12 +62,12 @@ print('!ifdef INSTALL')
 
 print('')
 print('  SetOutPath "$INSTDIR"')
-print('  File "..\\game\\luaui.lua"')
+print('  File "..\\dist\\luaui.lua"')
 print('')
 for d in dirs:
   print('  SetOutPath "$INSTDIR\\' + osName(d) + '"')
   for f in dirs[d]:
-    print('  File "..\\game\\' + osName(d) + osName(f) + '"')
+    print('  File "..\\dist\\' + osName(d) + osName(f) + '"')
 print('')
 
 print('!else')

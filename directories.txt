@@ -53,11 +53,10 @@ AI/Wrappers/LegacyCpp             ..for letting Legacy C++ AIs interface with th
 AI/Wrappers/LegacyCpp/Event             ..and Event classes needed for that
 AI/Skirmish                       ..for SkirmishAIs (Skirmish/impls)
 
-game/AI                           Files related to AI
-game/AI/Interfaces/impls          Output directory for AI interface binaries
-game/AI/Skirmish/impls            Output directory for skirmish AI binaries
-game/AI/Helper-libs               Output directory for group AI binaries
-game/base                         Output directory for springcontent.sdz & bitmaps.sdz
-game/maps                         Map archives (sd7,sdz,sdd)
-game/mods                         Mod archives (sd7,sdz,sdd)
-game                              Output directory for binaries / data directory
+dist/AI                           Files related to AI
+dist/AI/Interfaces                Output directory for AI Interface plugins
+dist/AI/Skirmish                  Output directory for Skirmish AI plugins
+dist/base                         Output directory for springcontent.sdz & bitmaps.sdz
+dist/maps                         Map archives (sd7,sdz,sdd)
+dist/mods                         Mod archives (sd7,sdz,sdd)
+dist                              Output directory for binaries / data directory
