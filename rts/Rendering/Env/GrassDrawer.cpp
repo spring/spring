@@ -368,7 +368,7 @@ void CGrassDrawer::Draw(void)
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixd(camera->GetModelview());
+		glMultMatrixd(camera->GetViewMat());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();

@@ -36,27 +36,30 @@ public:
 	float3 tiltOffset;
 	
 	float lppScale; // length-per-pixel scale
-	GLdouble modelviewInverse[16];
+
 	GLint viewport[4];
 
-	const GLdouble* GetProjection() const;
-	const GLdouble* GetModelview() const;
-	const GLdouble* GetBillboard() const;
+	const GLdouble* GetProjMat() const { return projMat; }
+	const GLdouble* GetViewMat() const { return viewMat; }
+	const GLdouble* GetViewMatInv() const { return viewMatInv; }
+	const GLdouble* GetBBoardMat() const { return bboardMat; }
+
+	float GetFov() const { return fov; }
+	float GetHalfFov() const { return halfFov; }
+	float GetTanHalfFov() const { return tanHalfFov; }
 	
 	static unsigned int billboardList;
 	
-	float GetFov() const;
-	float GetHalfFov() const;
-	float GetTanHalfFov() const;
 	void SetFov(float fov); // in degree
 	
 private:
 	void myGluPerspective(float, float, float);
 	void myGluLookAt(const float3&, const float3&, const float3&);
-	
-	GLdouble projection[16];
-	GLdouble modelview[16];
-	GLdouble billboard[16];
+
+	GLdouble projMat[16];
+	GLdouble viewMat[16];
+	GLdouble viewMatInv[16];
+	GLdouble bboardMat[16];
 
 	float fov; // in degrees
 	float halfFov; // half the fov in radians
