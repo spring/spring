@@ -6493,23 +6493,23 @@
 						Name="shaders"
 						>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainCommon.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainCommon.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainFragmentShader.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainFragmentShader.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainSimpleCopyFS.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainSimpleCopyFS.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainSimpleCopyVS.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainSimpleCopyVS.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainVertexShader.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainVertexShader.glsl"
 							>
 						</File>
 					</Filter>
