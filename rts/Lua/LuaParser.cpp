@@ -11,6 +11,7 @@
 #include "mmgr.h"
 
 #include "float3.h"
+#include "float4.h"
 #include "LuaInclude.h"
 
 #include "LuaIO.h"
@@ -1115,6 +1116,7 @@ static bool ParseTableFloat(lua_State* L,
 }
 
 
+
 static bool ParseFloat3(lua_State* L, int index, float3& value)
 {
 	if (lua_istable(L, index)) {
@@ -1134,6 +1136,28 @@ static bool ParseFloat3(lua_State* L, int index, float3& value)
 	}
 	return false;
 }
+
+static bool ParseFloat4(lua_State* L, int index, float4& value)
+{
+	if (lua_istable(L, index)) {
+		const int table = (index > 0) ? index : lua_gettop(L) + index + 1;
+		if (ParseTableFloat(L, table, 1, value.x) &&
+		    ParseTableFloat(L, table, 2, value.y) &&
+		    ParseTableFloat(L, table, 3, value.z) &&
+		    ParseTableFloat(L, table, 4, value.w)) {
+			return true;
+		}
+	}
+	else if (lua_isstring(L, index)) {
+		const int count = sscanf(lua_tostring(L, index), "%f %f %f %f",
+		                         &value.x, &value.y, &value.z, &value.w);
+		if (count == 4) {
+			return true;
+		}
+	}
+	return false;
+}
+
 
 
 static bool ParseBoolean(lua_State* L, int index, bool& value)
@@ -1212,6 +1236,7 @@ float LuaTable::GetFloat(const string& key, float def) const
 }
 
 
+
 float3 LuaTable::GetFloat3(const string& key, const float3& def) const
 {
 	if (!PushValue(key)) {
@@ -1225,6 +1250,21 @@ float3 LuaTable::GetFloat3(const string& key, const float3& def) const
 	lua_pop(L, 1);
 	return value;
 }
+
+float4 LuaTable::GetFloat4(const string& key, const float4& def) const
+{
+	if (!PushValue(key)) {
+		return def;
+	}
+	float4 value;
+	if (!ParseFloat4(L, -1, value)) {
+		lua_pop(L, 1);
+		return def;
+	}
+	lua_pop(L, 1);
+	return value;
+}
+
 
 
 string LuaTable::GetString(const string& key, const string& def) const
@@ -1293,6 +1333,7 @@ float LuaTable::GetFloat(int key, float def) const
 }
 
 
+
 float3 LuaTable::GetFloat3(int key, const float3& def) const
 {
 	if (!PushValue(key)) {
@@ -1306,6 +1347,21 @@ float3 LuaTable::GetFloat3(int key, const float3& def) const
 	lua_pop(L, 1);
 	return value;
 }
+
+float4 LuaTable::GetFloat4(int key, const float4& def) const
+{
+	if (!PushValue(key)) {
+		return def;
+	}
+	float4 value;
+	if (!ParseFloat4(L, -1, value)) {
+		lua_pop(L, 1);
+		return def;
+	}
+	lua_pop(L, 1);
+	return value;
+}
+
 
 
 string LuaTable::GetString(int key, const string& def) const

@@ -33,6 +33,14 @@ uniform vec3 waterBaseColor;
 uniform vec3 waterAbsorbColor;
 #endif
 
+#if (SMF_DETAIL_TEXTURE_SPLATTING == 1)
+uniform sampler2D splatDetailTex;
+uniform sampler2D splatDistrTex;
+// per-channel splat intensity multipliers
+uniform vec4 splatTexMults;
+#endif
+
+
 void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
 	vec2 tc1 = gl_TexCoord[1].st;
@@ -55,7 +63,17 @@ void main() {
 
 	vec4 diffuseCol = texture2D(diffuseTex, tc0);
 	vec3 specularCol = texture2D(specularTex, tc2).rgb;
+
+	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
 	vec4 detailCol = normalize((texture2D(detailTex, gl_TexCoord[4].st) * 2.0) - 1.0);
+	#else
+	vec4 detailCol;
+	vec4 splatDistr = texture2D(splatDistrTex, tc2);
+		detailCol.r = dot(((texture2D(splatDetailTex, gl_TexCoord[4].st) * 2.0) - 1.0), (splatTexMults.r * splatDistr.r));
+		detailCol.g = dot(((texture2D(splatDetailTex, gl_TexCoord[5].st) * 2.0) - 1.0), (splatTexMults.g * splatDistr.g));
+		detailCol.b = dot(((texture2D(splatDetailTex, gl_TexCoord[6].st) * 2.0) - 1.0), (splatTexMults.b * splatDistr.b));
+		detailCol.a = dot(((texture2D(splatDetailTex, gl_TexCoord[7].st) * 2.0) - 1.0), (splatTexMults.a * splatDistr.a));
+	#endif
 
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);
 	vec4 diffuseInt =
