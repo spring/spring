@@ -10,8 +10,6 @@ echo the correct .pdb can be identified!
 echo.
 pause > nul
 
-call make_gamedata_arch
-
 echo Creating normal installer
 "C:\Program Files\NSIS\makensis.exe" /V3 /DMINGW spring.nsi 
 

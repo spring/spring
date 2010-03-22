@@ -1,5 +1,10 @@
 #!/bin/sh
-# Author: hoijui
+
+# This will build the following, needed to run spring:
+# * ${BUILD_DIR}/spring/bitmaps.sdz
+# * ${BUILD_DIR}/springcontent.sdz
+# * ${BUILD_DIR}/maphelper.sdz
+# * ${BUILD_DIR}/cursors.sdz
 
 # absolute or relative to spring source root
 # default:
@@ -26,8 +31,8 @@ CMD_7Z="${EXEC_7Z} u -tzip -r"
 
 ORIG_DIR=$(pwd)
 
-# Move to spring source root (eg containing dir 'installer')
-cd $(dirname $0); cd ..
+# Move to spring source root
+cd $(dirname $0); cd ../..
 
 # Ensure directories exist (some VCSes do not support empty directories)
 mkdir -p ${BUILD_DIR}/spring
@@ -37,7 +42,7 @@ BUILD_DIR=$(cd $BUILD_DIR; pwd)
 
 # Zip up the stuff.
 
-cd installer/builddata/
+cd cont/base/
 
 echo Updating bitmaps.sdz
 cd bitmaps/
