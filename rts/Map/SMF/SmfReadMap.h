@@ -21,6 +21,9 @@ public:
 	inline GLuint GetNormalsTexture() const { return normalsTex; }
 	inline GLuint GetSpecularTexture() const { return specularTex; }
 	inline GLuint GetGrassShadingTexture() const { return minimapTex; }
+	inline GLuint GetSplatDetailTexture() const { return splatDetailTex; }
+	inline GLuint GetSplatDistrTexture() const { return splatDistrTex; }
+
 
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
@@ -43,13 +46,13 @@ public:
 
 	int GetNumFeatureTypes();
 	int GetNumFeatures();
-	void GetFeatureInfo (MapFeatureInfo* f); // returns all feature info in MapFeatureInfo[NumFeatures]
+	void GetFeatureInfo(MapFeatureInfo* f); // returns all feature info in MapFeatureInfo[NumFeatures]
 	const char* GetFeatureTypeName(int typeID);
 
 	unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm);
 	void FreeInfoMap(const std::string& name, unsigned char* data);
 
-	// todo: do not use, just here for backward compatibility with BFGroundTextures.cpp
+	// NOTE: do not use, just here for backward compatibility with BFGroundTextures.cpp
 	CSmfMapFile& GetFile() { return file; }
 
 	bool usePBO;
@@ -60,13 +63,16 @@ protected:
 
 	CSmfMapFile file;
 
-	GLuint detailTex;   // supplied by the map
-	GLuint specularTex; // supplied by the map, moderates specular contribution
-	GLuint shadingTex;  // holds precomputed dot(lightDir, faceNormal) values
-	GLuint normalsTex;  // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
-	GLuint minimapTex;  // supplied by the map
+	GLuint detailTex;      // supplied by the map
+	GLuint specularTex;    // supplied by the map, moderates specular contribution
+	GLuint shadingTex;     // holds precomputed dot(lightDir, faceNormal) values
+	GLuint normalsTex;     // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	GLuint minimapTex;     // supplied by the map
+	GLuint splatDetailTex; // contains per-channel separate greyscale detail-textures (overrides detailTex)
+	GLuint splatDistrTex;  // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
 
 	bool haveSpecularLighting;
+	bool haveSplatTexture;
 
 	unsigned char waterHeightColors[1024 * 4];
 	float* heightmap;
