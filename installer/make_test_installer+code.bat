@@ -11,7 +11,6 @@ echo.
 pause > nul
 
 call build_code
-call make_gamedata_arch
 
 echo Creating test installer
 "C:\Program Files\NSIS\makensis.exe" /V3 /DTEST_BUILD spring.nsi 
