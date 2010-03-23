@@ -8,10 +8,10 @@
 # !ifdef INSTALL
 #
 #   SetOutPath "$INSTDIR"
-#   File "$DIST_DIR\luaui.lua"
+#   File "${DIST_DIR}\luaui.lua"
 # 
 #   SetOutPath "$INSTDIR\LuaUI"
-#   File /r /x .svn /x Config\*.lua "$DIST_DIR\LuaUI\*.*"
+#   File /r /x .svn /x Config\*.lua "${DIST_DIR}\LuaUI\*.*"
 # 
 # !else
 #
@@ -82,12 +82,12 @@ print('!ifdef INSTALL')
 
 print('')
 print('  SetOutPath "$INSTDIR"')
-print('  File "$DIST_DIR\\luaui.lua"')
+print('  File "${DIST_DIR}\\luaui.lua"')
 print('')
 for d in dirs:
   print('  SetOutPath "$INSTDIR\\' + osName(d) + '"')
   for f in dirs[d]:
-    print('  File "$DIST_DIR\\' + osName(d) + osName(f) + '"')
+    print('  File "${DIST_DIR}\\' + osName(d) + osName(f) + '"')
 print('')
 
 print('!else')

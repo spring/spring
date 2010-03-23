@@ -212,7 +212,7 @@ SectionGroupEnd
 
 
 !macro SkirmishAIInstSection skirAiName
-	IfFileExists "$DIST_DIR\AI\Skirmish\${skirAiName}\*.*" 0 ${skirAiName}_install_end
+	IfFileExists "${DIST_DIR}\AI\Skirmish\${skirAiName}\*.*" 0 ${skirAiName}_install_end
 	Section "${skirAiName}" SEC_${skirAiName}
 		!define INSTALL
 			!insertmacro InstallSkirmishAI ${skirAiName}

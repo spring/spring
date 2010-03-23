@@ -76,7 +76,7 @@ chdir("$installerDir/..");
 my $distDir="";
 foreach my $dd ("$1", "dist", "game") {
 	if (($dd eq "") or (not -d $dd)) {
-		print("Distribution directory not found: \"$distDir\"\n");
+		print("Distribution directory not found: \"$dd\"\n");
 	} else {
 		$distDir=abs_path($dd);
 		print("Using distribution directory \"$distDir\"\n");
