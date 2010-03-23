@@ -5,6 +5,7 @@
 
 use strict;
 use File::Basename;
+use Cwd 'abs_path';
 
 my $installerDir=$0;
 $installerDir=$ENV{PWD}."/".$installerDir unless($installerDir =~ /^\//);
@@ -71,18 +72,17 @@ chdir("$installerDir/..");
 # Evaluate the distribution dir
 # This is where the build system installed Spring,
 # and where the installer generater will grab files from.
-my $distDir=$1;
-if (($distDir=="") or (not -d $distDir)) {
-	print("Distribution directory not found: \"$distDir\"\n");
-	$distDir="dist";
-	if (not -d $distDir) {
+
+my $distDir="";
+foreach my $dd ("$1", "dist", "game") {
+	if (($dd eq "") or (not -d $dd)) {
 		print("Distribution directory not found: \"$distDir\"\n");
-		$distDir="game";
-		if (not -d $distDir) {
-			print("Distribution directory not found: \"$distDir\"\n");
-			die "Unable to find a distribution directory.";
-		}
+	} else {
+		$distDir=abs_path($dd);
+		print("Using distribution directory \"$distDir\"\n");
+		last; # like break in other languages
 	}
 }
+die "Unable to find a distribution directory." if ($distDir eq "");
 
 system("makensis -V3$testBuildString -DREVISION=$tag -DDIST_DIR=$distDir $allVersStr installer/spring.nsi");
