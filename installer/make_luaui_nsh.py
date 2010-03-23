@@ -1,14 +1,17 @@
 #!/usr/bin/env python
+#
+# @param distributionDir
+#
 
 ################################################################################
 #
 # !ifdef INSTALL
 #
 #   SetOutPath "$INSTDIR"
-#   File "..\dist\luaui.lua"
+#   File "$DIST_DIR\luaui.lua"
 # 
 #   SetOutPath "$INSTDIR\LuaUI"
-#   File /r /x .svn /x Config\*.lua "..\dist\LuaUI\*.*"
+#   File /r /x .svn /x Config\*.lua "$DIST_DIR\LuaUI\*.*"
 # 
 # !else
 #
@@ -20,12 +23,29 @@
 ################################################################################
 
 
-import os
+import os, sys
 
-try:
-	os.chdir('dist')
-except OSError:
-	os.chdir('../dist')
+
+distDirCandidates = [sys.argv[1], 'dist', 'game', 'cont']
+
+distDir = ""
+for d in distDirCandidates:
+	distDir = d
+	try:
+		os.chdir(distDir)
+		break
+	except OSError:
+		distDir = os.path.join('..', distDir)
+		try:
+			os.chdir(distDir)
+			break
+		except OSError:
+			distDir = ""
+			continue
+
+# Distribution directory not found
+if distDir == "":
+	sys.exit(1);
 
 top = 'LuaUI/'
 
@@ -38,7 +58,7 @@ def GetDirs(path, dirs):
   for f in filelist:
     fullname = path + f
     if os.path.isdir(fullname):
-      if (f != 'Config') and (f != '.svn'):
+      if (f != 'Config') and (f != '.git'):
         fullname = fullname + '/'
         GetDirs(fullname, dirs)
     else:
@@ -62,12 +82,12 @@ print('!ifdef INSTALL')
 
 print('')
 print('  SetOutPath "$INSTDIR"')
-print('  File "..\\dist\\luaui.lua"')
+print('  File "$DIST_DIR\\luaui.lua"')
 print('')
 for d in dirs:
   print('  SetOutPath "$INSTDIR\\' + osName(d) + '"')
   for f in dirs[d]:
-    print('  File "..\\dist\\' + osName(d) + osName(f) + '"')
+    print('  File "$DIST_DIR\\' + osName(d) + osName(f) + '"')
 print('')
 
 print('!else')

@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
-# Author: Yann Riou (aka bibim)
+#
+# @param distributionDir
+#
 
 use strict;
 use File::Basename;
@@ -64,4 +66,23 @@ system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
 system("wget", "-N", "http://www.springlobby.info/installer/springsettings.exe");
 system("wget", "-N", "http://files.caspring.org/caupdater/SpringDownloader.exe");
 chdir("$installerDir/..");
-system("makensis -V3$testBuildString -DREVISION=$tag $allVersStr installer/spring.nsi");
+
+
+# Evaluate the distribution dir
+# This is where the build system installed Spring,
+# and where the installer generater will grab files from.
+my $distDir=$1;
+if (($distDir=="") or (not -d $distDir)) {
+	print("Distribution directory not found: \"$distDir\"\n");
+	$distDir="dist";
+	if (not -d $distDir) {
+		print("Distribution directory not found: \"$distDir\"\n");
+		$distDir="game";
+		if (not -d $distDir) {
+			print("Distribution directory not found: \"$distDir\"\n");
+			die "Unable to find a distribution directory.";
+		}
+	}
+}
+
+system("makensis -V3$testBuildString -DREVISION=$tag -DDIST_DIR=$distDir $allVersStr installer/spring.nsi");
