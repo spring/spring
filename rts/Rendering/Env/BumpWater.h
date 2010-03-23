@@ -106,9 +106,6 @@ private:
 	Shader::IProgramObject* waterShader;
 	Shader::IProgramObject* blurShader;
 
-	GLuint frameLoc;
-	GLuint eyePosLoc;
-
 	GLuint uniforms[20]; //! see useUniforms
 
 	bool wasLastFrameVisible;
