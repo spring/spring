@@ -118,9 +118,13 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			smfShaderRefrARB->Link();
 		} else {
-			const std::string defs = (map->haveSplatTexture)?
-				"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
-				"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
+			std::string defs;
+				defs += (map->haveSplatTexture)?
+					"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
+					"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
+				defs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
+					"#define SMF_WATER_ABSORPTION 0\n":
+					"#define SMF_WATER_ABSORPTION 1\n";
 
 			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
 			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
