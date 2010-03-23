@@ -9,10 +9,16 @@
 
 #include <bitset>
 
+namespace Shader {
+	struct IProgramObject;
+}
 
 class CBumpWater : public CBaseWater
 {
 public:
+	CBumpWater();
+	~CBumpWater();
+
 	void Update();
 	void DoUpdate();
 	void UpdateWater(CGame* game);
@@ -21,14 +27,12 @@ public:
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
 	void Draw();
-	CBumpWater();
-	~CBumpWater();
 	int GetID() const { return 4; }
 
 private:
 	void SetUniforms(); //! see useUniforms
 	void SetupUniforms( std::string& definitions );
-	void GetUniformLocations( GLuint& program );
+	void GetUniformLocations();
 
 	//! user options
 	char  reflection;   //! 0:=off, 1:=don't render the terrain, 2:=render everything+terrain
@@ -99,15 +103,10 @@ private:
 	GLuint coastUpdateTexture;
 	std::vector<GLuint> caustTextures;
 
-	GLuint waterFP;
-	GLuint waterVP;
-	GLuint waterShader;
-
-	GLuint blurFP;
-	GLuint blurShader;
+	Shader::IProgramObject* waterShader;
+	Shader::IProgramObject* blurShader;
 
 	GLuint frameLoc;
-	GLuint midPosLoc;
 	GLuint eyePosLoc;
 
 	GLuint uniforms[20]; //! see useUniforms
