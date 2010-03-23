@@ -6,6 +6,7 @@
 use strict;
 use File::Basename;
 use Cwd 'abs_path';
+use File::Spec::Functions;
 
 my $installerDir=$0;
 $installerDir=$ENV{PWD}."/".$installerDir unless($installerDir =~ /^\//);
@@ -84,5 +85,7 @@ foreach my $dd ("$1", "dist", "game") {
 	}
 }
 die "Unable to find a distribution directory." if ($distDir eq "");
+my $distDirRel = File::Spec->abs2rel($distDir, "installer");
+$distDirRel =~ tr/\//\\/d;
 
-system("makensis -V3$testBuildString -DREVISION=$tag -DDIST_DIR=$distDir $allVersStr installer/spring.nsi");
+system("makensis -V3$testBuildString -DREVISION=$tag -DDIST_DIR=\"$distDirRel\" $allVersStr installer/spring.nsi");
