@@ -2,8 +2,6 @@
 // by this constant; shading-texture intensities are
 // also pre-dimmed
 #define SMF_INTENSITY_MUL (210 / 255.0)
-
-#define SMF_WATER_ABSORPTION 1
 #define SMF_ARB_LIGHTING 0
 
 uniform vec4 lightDir;
