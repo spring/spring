@@ -173,8 +173,8 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniform3fv(20, const_cast<float*>(&mapInfo->water.absorb[0]));
 			smfShaderGLSL->SetUniform1i(21, 7); // splatDetailTex (idx 21, texunit 7)
 			smfShaderGLSL->SetUniform1i(22, 8); // splatDistrTex (idx 22, texunit 8)
-			smfShaderGLSL->SetUniform4fv(23, const_cast<float*>(&mapInfo->smf.splatTexScales[0])); // idx 23
-			smfShaderGLSL->SetUniform4fv(24, const_cast<float*>(&mapInfo->smf.splatTexMults[0])); // idx 24
+			smfShaderGLSL->SetUniform4fv(23, const_cast<float*>(&mapInfo->smf.splatTexScales[0]));
+			smfShaderGLSL->SetUniform4fv(24, const_cast<float*>(&mapInfo->smf.splatTexMults[0]));
 
 			smfShaderGLSL->Disable();
 		}
