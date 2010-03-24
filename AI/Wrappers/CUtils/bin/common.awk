@@ -75,37 +75,19 @@ function mySort(array__common, size__common, temp__common, i__common, j__common)
 	}
 }
 
-function printGeneratedWarningHeader(outFile__common) {
-
-	print("// WARNING: This file is machine generated,") > outFile__common;
-	print("// please do not edit directly!") >> outFile__common;
+function printGPLHeader(outFile__common) {
+	print("/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */") >> outFile__common;
 }
 
-function printGPLHeader(outFile__common) {
-
-	print("/*") >> outFile__common;
-	print("	Copyright (c) 2009 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile__common;
-	print("") >> outFile__common;
-	print("	This program is free software; you can redistribute it and/or modify") >> outFile__common;
-	print("	it under the terms of the GNU General Public License as published by") >> outFile__common;
-	print("	the Free Software Foundation; either version 2 of the License, or") >> outFile__common;
-	print("	(at your option) any later version.") >> outFile__common;
-	print("") >> outFile__common;
-	print("	This program is distributed in the hope that it will be useful,") >> outFile__common;
-	print("	but WITHOUT ANY WARRANTY; without even the implied warranty of") >> outFile__common;
-	print("	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the") >> outFile__common;
-	print("	GNU General Public License for more details.") >> outFile__common;
-	print("") >> outFile__common;
-	print("	You should have received a copy of the GNU General Public License") >> outFile__common;
-	print("	along with this program.  If not, see <http://www.gnu.org/licenses/>.") >> outFile__common;
-	print("*/") >> outFile__common;
+function printGeneratedNoteHeader(outFile__common) {
+	print("/* Note: This file is machine generated, do not edit directly! */") >> outFile__common;
 }
 
 function printCommentsHeader(outFile__common) {
 
-	printGeneratedWarningHeader(outFile__common);
-	print("") >> outFile__common;
 	printGPLHeader(outFile__common);
+	print("") >> outFile__common;
+	printGeneratedNoteHeader(outFile__common);
 }
 
 function printCond(text_common, outFile__common, condotion_common) {
