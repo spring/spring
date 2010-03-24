@@ -4345,10 +4345,15 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				CUnit* ctrlUnit = (playerHandler->Player(player)->dccs).playerControlledUnit;
+				CPlayer* sender = playerHandler->Player(player);
+				if (sender->spectator || !sender->active) {
+					break;
+				}
+
+				CUnit* ctrlUnit = (sender->dccs).playerControlledUnit;
 				if (ctrlUnit) {
 					// player released control
-					playerHandler->Player(player)->StopControllingUnit();
+					sender->StopControllingUnit();
 				} else {
 					// player took control
 					if (
@@ -4367,8 +4372,8 @@ void CGame::ClientReadNet()
 							}
 						}
 						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
-							unit->directControl = &playerHandler->Player(player)->myControl;
-							(playerHandler->Player(player)->dccs).playerControlledUnit = unit;
+							unit->directControl = &sender->myControl;
+							(sender->dccs).playerControlledUnit = unit;
 
 							if (player == gu->myPlayerNum) {
 								gu->directControl = unit;
