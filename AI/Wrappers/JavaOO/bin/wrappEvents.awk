@@ -78,9 +78,7 @@ BEGIN {
 
 function printOOAIHeader(outFile, clsName) {
 
-	printGeneratedWarningHeader(outFile);
-	print("") >> outFile;
-	printGPLHeader(outFile);
+	printCommentsHeader(outFile);
 	print("") >> outFile;
 	print("package " myMainPkgA ";") >> outFile;
 	print("") >> outFile;
@@ -133,9 +131,7 @@ function printOOAIEnd(outFile) {
 
 function printOOEventAIHeader(outFile) {
 
-	printGeneratedWarningHeader(outFile);
-	print("") >> outFile;
-	printGPLHeader(outFile);
+	printCommentsHeader(outFile);
 	print("") >> outFile;
 	print("package " myMainPkgA ";") >> outFile;
 	print("") >> outFile;
@@ -429,9 +425,7 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 	}
 
 	# print comments header
-	printGeneratedWarningHeader(outFile);
-	print("") >> outFile;
-	printGPLHeader(outFile);
+	printCommentsHeader(outFile);
 	print("") >> outFile;
 
 	print("package " myPkgEvtA ";") >> outFile;
@@ -526,9 +520,7 @@ function printOOEventInterface(int_name_ei) {
 	}
 
 	# print comments header
-	printGeneratedWarningHeader(outFile);
-	print("") >> outFile;
-	printGPLHeader(outFile);
+	printCommentsHeader(outFile);
 	print("") >> outFile;
 
 	print("package " myPkgEvtA ";") >> outFile;

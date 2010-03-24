@@ -76,7 +76,7 @@ function mySort(array__common, size__common, temp__common, i__common, j__common)
 }
 
 function printGPLHeader(outFile__common) {
-	print("/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */") >> outFile__common;
+	print("/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */") > outFile__common;
 }
 
 function printGeneratedNoteHeader(outFile__common) {
