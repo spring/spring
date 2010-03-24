@@ -1,24 +1,25 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "SmfReadMap.h"
 
-#include "mapfile.h"
-#include "Map/MapInfo.h"
-#include "Rendering/GL/myGL.h"
-#include "FileSystem/FileHandler.h"
-#include "ConfigHandler.h"
 #include "BFGroundTextures.h"
 #include "BFGroundDrawer.h"
-#include "LogOutput.h"
-#include "Sim/Features/FeatureHandler.h"
-#include "myMath.h"
-#include "Platform/errorhandler.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "mapfile.h"
+#include "Map/MapInfo.h"
 #include "Game/Camera.h"
-#include "Game/GameSetup.h"
-#include "bitops.h"
-#include "mmgr.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "System/bitops.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/mmgr.h"
+#include "System/myMath.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Util.h"
 
 using namespace std;
 
@@ -44,18 +45,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 	width  = header.mapx;
 	height = header.mapy;
-	gs->mapx = header.mapx;
-	gs->mapy = header.mapy;
-	gs->mapSquares = gs->mapx*gs->mapy;
-	gs->hmapx = gs->mapx/2;
-	gs->hmapy = gs->mapy/2;
-	gs->pwr2mapx = next_power_of_2(gs->mapx);
-	gs->pwr2mapy = next_power_of_2(gs->mapy);
 
-	float3::maxxpos = gs->mapx * SQUARE_SIZE - 1;
-	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
-
-	heightmap = new float[(gs->mapx + 1) * (gs->mapy + 1)];
+	heightmap = new float[(width + 1) * (height + 1)];
+	groundDrawer = 0;
 
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
@@ -75,10 +67,13 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 
 
-	haveSpecularLighting = (!(mapInfo->smf.specularTexName.empty()) && !!GLEW_VERSION_2_0);
+	haveSpecularLighting = (!(mapInfo->smf.specularTexName.empty()) && gu->haveGLSL);
+	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
 	CBitmap detailTexBM;
 	CBitmap specularTexBM;
+	CBitmap splatDetailTexBM;
+	CBitmap splatDistrTexBM;
 
 	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
@@ -98,6 +93,57 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	} else {
 		specularTex = 0;
 	}
+
+	if (haveSplatTexture) {
+		// if the map supplies an intensity- and a distribution-texture for
+		// detail-splat blending, the regular detail-texture is not used
+		if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
+			// default detail-texture should be all-grey
+			splatDetailTexBM.Alloc(1, 1);
+			splatDetailTexBM.mem[0] = 127;
+			splatDetailTexBM.mem[1] = 127;
+			splatDetailTexBM.mem[2] = 127;
+			splatDetailTexBM.mem[3] = 127;
+		}
+
+		if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
+			splatDistrTexBM.Alloc(1, 1);
+			splatDistrTexBM.mem[0] = 255;
+			splatDistrTexBM.mem[1] = 0;
+			splatDistrTexBM.mem[2] = 0;
+			splatDistrTexBM.mem[3] = 0;
+		}
+
+		splatDetailTex = splatDetailTexBM.CreateTexture(false);
+		splatDistrTex = splatDistrTexBM.CreateTexture(false);
+
+		{
+			// generate mipmaps for the splat detail-texture
+			glBindTexture(GL_TEXTURE_2D, splatDetailTex);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			if (anisotropy != 0.0f) {
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+			}
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDetailTexBM.xsize, splatDetailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDetailTexBM.mem);
+		}
+
+		{
+			// generate mipmaps for the splat distribution-texture
+			glBindTexture(GL_TEXTURE_2D, splatDistrTex);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			if (anisotropy != 0.0f) {
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+			}
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDistrTexBM.xsize, splatDistrTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDistrTexBM.mem);
+		}
+	} else {
+		splatDetailTex = 0;
+		splatDistrTex = 0;
+	}
+
+
 
 
 
@@ -164,8 +210,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_FLOAT, &normalsTexBuf[0]);
 	}
 
-
-	groundDrawer = new CBFGroundDrawer(this);
 	file.ReadFeatureInfo();
 }
 
@@ -175,12 +219,18 @@ CSmfReadMap::~CSmfReadMap()
 	delete groundDrawer;
 	delete[] heightmap;
 
-	if (detailTex  ) { glDeleteTextures(1, &detailTex  ); }
-	if (specularTex) { glDeleteTextures(1, &specularTex); }
-	if (minimapTex ) { glDeleteTextures(1, &minimapTex ); }
-	if (shadingTex ) { glDeleteTextures(1, &shadingTex ); }
-	if (normalsTex ) { glDeleteTextures(1, &normalsTex ); }
+	if (detailTex     ) { glDeleteTextures(1, &detailTex     ); }
+	if (specularTex   ) { glDeleteTextures(1, &specularTex   ); }
+	if (minimapTex    ) { glDeleteTextures(1, &minimapTex    ); }
+	if (shadingTex    ) { glDeleteTextures(1, &shadingTex    ); }
+	if (normalsTex    ) { glDeleteTextures(1, &normalsTex    ); }
+	if (splatDetailTex) { glDeleteTextures(1, &splatDetailTex); }
+	if (splatDistrTex ) { glDeleteTextures(1, &splatDistrTex ); }
 }
+
+
+void CSmfReadMap::NewGroundDrawer() { groundDrawer = new CBFGroundDrawer(this); }
+CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 
 
 void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
@@ -405,7 +455,7 @@ void CSmfReadMap::DrawMinimap() const
 }
 
 
-void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
+void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
 {
 	const int cx = (int)(cam->pos.x / (SQUARE_SIZE * quadSize));
 	const int cy = (int)(cam->pos.z / (SQUARE_SIZE * quadSize));
@@ -472,25 +522,25 @@ int CSmfReadMap::GetNumFeatures ()
 }
 
 
-int CSmfReadMap::GetNumFeatureTypes ()
+int CSmfReadMap::GetNumFeatureTypes()
 {
 	return file.GetNumFeatureTypes();
 }
 
 
-void CSmfReadMap::GetFeatureInfo (MapFeatureInfo* f)
+void CSmfReadMap::GetFeatureInfo(MapFeatureInfo* f)
 {
 	file.ReadFeatureInfo(f);
 }
 
 
-const char *CSmfReadMap::GetFeatureTypeName (int typeID)
+const char* CSmfReadMap::GetFeatureTypeName (int typeID)
 {
 	return file.GetFeatureTypeName(typeID);
 }
 
 
-unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bmInfo)
+unsigned char* CSmfReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
 	// get size
 	*bmInfo = file.GetInfoMapSize(name);
@@ -503,7 +553,7 @@ unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* 
 }
 
 
-void CSmfReadMap::FreeInfoMap (const std::string& name, unsigned char *data)
+void CSmfReadMap::FreeInfoMap(const std::string& name, unsigned char *data)
 {
 	delete[] data;
 }

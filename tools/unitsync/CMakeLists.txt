@@ -27,6 +27,7 @@ set(unitsync_files
 	../../rts/System/TdfParser
 	../../rts/System/Info
 	../../rts/System/Option
+	../../rts/System/float4
 	../../rts/Sim/Misc/SideParser
 	../../rts/Game/GameVersion
 	../../rts/ExternalAI/LuaAIImplHandler

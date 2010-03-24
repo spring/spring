@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaUnitDefs.cpp: implementation of the LuaUnitDefs class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <string>
@@ -669,8 +668,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_STRING("type", ud.type);
 
 	ADD_STRING("gaia", ud.gaia);
-
-	ADD_STRING("TEDClass", ud.TEDClassString);
 
 	ADD_STRING("wreckName", ud.wreckName);
 	ADD_STRING("deathExplosion", ud.deathExplosion);

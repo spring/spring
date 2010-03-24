@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "System/StdAfx.h"
 
 #include "Game/Camera.h"
@@ -47,7 +49,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 	glPushMatrix();
 		glMatrixMode(GL_PROJECTION);
 			glTranslatef(-0.8f, -0.4f, 0.0f);
-			glMultMatrixd(camera->GetProjection());
+			glMultMatrixd(camera->GetProjMat());
 		glMatrixMode(GL_MODELVIEW);
 
 		glTranslatef(0.0f, 0.0f, -unit->radius);
@@ -190,10 +192,10 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 	// draw the reticle in world coordinates
 	glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glMultMatrixd(camera->GetProjection());
+		glMultMatrixd(camera->GetProjMat());
 	glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glMultMatrixd(camera->GetModelview());
+		glMultMatrixd(camera->GetViewMat());
 
 	glPushMatrix();
 

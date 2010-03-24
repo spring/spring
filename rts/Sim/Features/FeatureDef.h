@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef FEATURE_DEF_H
 #define FEATURE_DEF_H
 

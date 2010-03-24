@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __ARCHIVE_7ZIP_H
 #define __ARCHIVE_7ZIP_H
 

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SPRING_SHADERHANDLER_HDR
 #define SPRING_SHADERHANDLER_HDR
 
@@ -12,8 +14,16 @@ public:
 
 	void ReleaseProgramObjects(const std::string&);
 	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, bool);
-	Shader::IProgramObject* CreateProgramObject(const std::string&, const std::string&, const std::string&, const std::string&, bool);
-	Shader::IShaderObject* CreateShaderObject(const std::string&, int);
+	Shader::IProgramObject* CreateProgramObject(
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		const std::string&,
+		bool
+	);
+	Shader::IShaderObject* CreateShaderObject(const std::string&, const std::string&, int);
 
 private:
 	typedef std::map<std::string, Shader::IProgramObject*> ProgramObjMap;

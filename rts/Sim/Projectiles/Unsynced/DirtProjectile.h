@@ -1,6 +1,4 @@
-// DirtProjectile.h: interface for the CDirtProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __DIRT_PROJECTILE_H__
 #define __DIRT_PROJECTILE_H__

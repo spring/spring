@@ -402,69 +402,6 @@ void AAIMap::ReadMapCacheFile()
 	}
 
 
-	/*char filename[500];
-
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, MAP_CFG_PATH);
-	STRCAT(buffer, MakeFileSystemCompatible(cb->GetMapName()));
-	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
-
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
-
-	if((file = fopen(filename, "r")) != NULL)
-	{
-		// read map type
-		fscanf(file, "%s ", buffer);
-
-		if(!strcmp(buffer, "LAND_MAP"))
-			map_type = LAND_MAP;
-		else if(!strcmp(buffer, "LAND_WATER_MAP"))
-			map_type = LAND_WATER_MAP;
-		else if(!strcmp(buffer, "WATER_MAP"))
-			map_type = WATER_MAP;
-		else
-			map_type = UNKNOWN_MAP;
-
-		if(map_type >= 0 && map_type <= WATER_MAP)
-		{
-			this->map_type = (MapType) map_type;
-
-			SNPRINTF(buffer, buffer_sizeMax, "%s detected", GetMapTypeTextString(map_type));
-
-			if(bt->aai_instances == 1)
-				ai->cb->SendTextMsg(buffer, 0);
-		}
-		else
-			loaded = false;
-
-		fclose(file);
-	}
-	else
-		loaded = false;
-
-	if(!loaded)
-	{
-
-		// logging
-		SNPRINTF(buffer, buffer_sizeMax, "%s detected", GetMapTypeTextString(map_type));
-		ai->cb->SendTextMsg(buffer, 0);
-		fprintf(ai->file, "\nAutodetecting map type:\n");
-		fprintf(ai->file, "%s", buffer);
-		fprintf(ai->file, "\n\n");
-
-		// save results to cfg file
-		STRCPY(buffer, MAIN_PATH);
-		STRCAT(buffer, MAP_CFG_PATH);
-		STRCAT(buffer, MakeFileSystemCompatible(cb->GetMapName()));
-		ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".cfg");
-
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, map_filename);
-
-		file = fopen(map_filename, "w+");
-		fprintf(file, "%s\n", GetMapTypeString(this->map_type));
-		fclose(file);
-	}*/
-
 	// determine important unit categories on this map
 	if(cfg->AIR_ONLY_MOD)
 	{
@@ -531,11 +468,18 @@ void AAIMap::ReadContinentFile()
 	char buffer[buffer_sizeMax];
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	mapName.resize(mapName.size() - 4); // cut off extension
 	STRCAT(buffer, mapName.c_str());
+	STRCAT(buffer, "-");
+	const std::string mapHash = IntToString(cb->GetMapHash(), "%x");
+	STRCAT(buffer, mapHash.c_str());
 	STRCAT(buffer, "_");
 	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
 	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, "-");
+	const std::string modHash = IntToString(cb->GetModHash(), "%x");
+	STRCAT(buffer, modHash.c_str());
 	STRCAT(buffer, ".dat");
 	char filename[buffer_sizeMax];
 	STRCPY(filename, buffer);
@@ -646,47 +590,54 @@ std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 
 	const size_t buffer_sizeMax = 512;
 	char buffer[buffer_sizeMax];
-	char buffer2[buffer_sizeMax];
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_LEARN_PATH);
-	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	mapName.resize(mapName.size() - 4); // cut off extension
 	STRCAT(buffer, mapName.c_str());
-	ReplaceExtension(buffer, buffer2, buffer_sizeMax, "_");
+	STRCAT(buffer, "-");
+	const std::string mapHash = IntToString(cb->GetMapHash(), "%x");
+	STRCAT(buffer, mapHash.c_str());
 	STRCAT(buffer, "_");
 	const std::string modHumanName = MakeFileSystemCompatible(cb->GetModHumanName());
 	STRCAT(buffer, modHumanName.c_str());
+	STRCAT(buffer, "-");
+	const std::string modHash = IntToString(cb->GetModHash(), "%x");
+	STRCAT(buffer, modHash.c_str());
 	STRCAT(buffer, ".dat");
-	STRCPY(buffer2, buffer);
 
 	if (forWriting) {
-		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer2);
+		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
 	} else {
-		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer2);
+		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
 	}
 
-	return std::string(buffer2);
+	return std::string(buffer);
 }
 
 std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
 
 	const size_t buffer_sizeMax = 512;
 	char buffer[buffer_sizeMax];
-	char buffer2[buffer_sizeMax];
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
-	const std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	std::string mapName = MakeFileSystemCompatible(cb->GetMapName());
+	mapName.resize(mapName.size() - 4); // cut off extension
 	STRCAT(buffer, mapName.c_str());
-	ReplaceExtension(buffer, buffer2, buffer_sizeMax, ".dat");
+	STRCAT(buffer, "-");
+	const std::string mapHash = IntToString(cb->GetMapHash(), "%x");
+	STRCAT(buffer, mapHash.c_str());
+	STRCAT(buffer, ".dat");
 
 	if (forWriting) {
-		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer2);
+		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer);
 	} else {
-		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer2);
+		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer);
 	}
 
-	return std::string(buffer2);
+	return std::string(buffer);
 }
 
 void AAIMap::ReadMapLearnFile(bool auto_set)

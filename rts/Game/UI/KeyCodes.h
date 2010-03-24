@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef KEYCODES_H
 #define KEYCODES_H
-// KeyCodes.h: interface for the CKeyCodes class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include <string>
@@ -41,6 +40,5 @@ class CKeyCodes {
 };
 
 extern CKeyCodes* keyCodes;
-
 
 #endif /* KEYCODES_H */

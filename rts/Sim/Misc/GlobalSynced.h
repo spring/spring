@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GLOBAL_UNSYNCED_H
 #define GLOBAL_UNSYNCED_H
 
@@ -12,17 +14,17 @@ class CTeam;
 class CPlayer;
 
 /**
- * @brief Global synced stuff
+ * @brief Global synced data
  *
  * Class contains globally accessible
- * stuff that remains synced.
+ * data that remains synced.
  */
-class CGlobalSyncedStuff
+class CGlobalSynced
 {
 public:
-	CR_DECLARE(CGlobalSyncedStuff);
-	CGlobalSyncedStuff();  //!< Constructor
-	~CGlobalSyncedStuff(); //!< Destructor
+	CR_DECLARE(CGlobalSynced);
+	CGlobalSynced();  //!< Constructor
+	~CGlobalSynced(); //!< Destructor
 	void LoadFromSetup(const CGameSetup*);
 
 	int    randInt();    //!< synced random int
@@ -184,7 +186,7 @@ private:
 	int initRandSeed;
 };
 
-extern CGlobalSyncedStuff* gs;
+extern CGlobalSynced* gs;
 
 
 class SyncedRNG

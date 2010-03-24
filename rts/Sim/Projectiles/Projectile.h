@@ -1,10 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
-#include "Rendering/GL/myGL.h"
-// Projectile.h: interface for the CProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
+#include "Rendering/GL/myGL.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
@@ -19,7 +18,6 @@ class CBuilding;
 class CUnit;
 class CFeature;
 class CVertexArray;
-struct S3DModel;
 
 #define COLLISION_NOFRIENDLY	1
 #define COLLISION_NOFEATURE		2
@@ -54,7 +52,6 @@ public:
 	bool castShadow;
 	unsigned int collisionFlags;
 
-	void UpdateDrawPos();
 	float3 drawPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastProjUpdate;
@@ -67,11 +64,9 @@ public:
 	float3 speed;
 	float mygravity;
 
-	virtual void DrawCallback(void);
-	virtual void DrawUnitPart(void);
+	virtual void DrawCallback(void) {}
+	virtual void DrawUnitPart(void) {}
 	virtual void DrawS3O() { DrawUnitPart(); }
-
-	S3DModel* s3domodel;
 
 	float tempdist; // temp distance used for sorting when rendering
 	

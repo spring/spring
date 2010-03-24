@@ -1,9 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -45,12 +48,13 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	SetRadius(pos.distance(endPos));
 
 	if (weaponDef) {
-		midtexx = weaponDef->visuals.texture2->xstart
-				+ (weaponDef->visuals.texture2->xend
-						- weaponDef->visuals.texture2->xstart) * 0.5f;
+		midtexx =
+			(weaponDef->visuals.texture2->xstart +
+			(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * 0.5f);
 	} else {
 		midtexx=0;
 	}
+
 	corecolstart[0]=(unsigned char)(color2.x*startAlpha);
 	corecolstart[1]=(unsigned char)(color2.y*startAlpha);
 	corecolstart[2]=(unsigned char)(color2.z*startAlpha);

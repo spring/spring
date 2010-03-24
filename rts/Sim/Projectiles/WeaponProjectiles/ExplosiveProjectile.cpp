@@ -1,6 +1,4 @@
-// ExplosiveProjectile.cpp: implementation of the CExplosiveProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -10,13 +8,13 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "GlobalUnsynced.h"
 
 #ifdef TRACE_SYNC
-	#include "Sync/SyncTracer.h"
+	#include "System/Sync/SyncTracer.h"
 #endif
 
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0, 0, 0), float3(0, 0, 0), NULL, NULL, 1, 0));
@@ -117,7 +115,7 @@ void CExplosiveProjectile::Collision(CUnit *unit)
 
 void CExplosiveProjectile::Draw(void)
 {
-	if (s3domodel) { //dont draw if a 3d model has been defined for us
+	if (model) { //dont draw if a 3d model has been defined for us
 		return;
 	}
 

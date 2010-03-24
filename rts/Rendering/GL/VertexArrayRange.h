@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef VERTEXARRAYRANGE_H
 #define VERTEXARRAYRANGE_H
-// VertexArrayRange.h: interface for the CVertexArrayRange class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "VertexArray.h"
 #include "myGL.h"

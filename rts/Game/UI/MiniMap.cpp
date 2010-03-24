@@ -1,6 +1,4 @@
-// MiniMap.cpp: implementation of the CMiniMap class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include <SDL_keysym.h>
@@ -12,7 +10,10 @@
 
 #include "CommandColors.h"
 #include "CursorIcons.h"
-#include "Sim/Units/Groups/Group.h"
+#include "GuiHandler.h"
+#include "MiniMap.h"
+#include "MouseHandler.h"
+#include "TooltipConsole.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -20,36 +21,34 @@
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "GuiHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "MiniMap.h"
-#include "MouseHandler.h"
-#include "ConfigHandler.h"
+#include "Rendering/IconHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "EventHandler.h"
-#include "Sound/AudioChannel.h"
-#include "FileSystem/SimpleParser.h"
-#include "Util.h"
-#include "TimeProfiler.h"
-#include "TooltipConsole.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/Util.h"
+#include "System/TimeProfiler.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/Sound/AudioChannel.h"
+
 #include <boost/cstdint.hpp>
 
 //////////////////////////////////////////////////////////////////////
@@ -1043,10 +1042,13 @@ void CMiniMap::DrawForReal()
 
 	{
 		GML_RECMUTEX_LOCK(unit); // DrawForReal
-		// draw the units
-		for (std::list<CUnit*>::iterator ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ++ui) {
-			DrawUnit(*ui);
+
+		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
+
+		for (std::set<CUnit*>::const_iterator it = units.begin(); it != units.end(); it++) {
+			DrawUnit(*it);
 		}
+
 		// highlight the selected unit
 		CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 		if (unit != NULL) {
@@ -1105,7 +1107,7 @@ void CMiniMap::DrawForReal()
 	if (drawProjectiles) {
 		GML_STDMUTEX_LOCK(proj); // DrawForReal
 
-		ph->DrawProjectilesMiniMap();
+		projectileDrawer->DrawProjectilesMiniMap();
 	}
 
 	// draw the queued commands
@@ -1391,7 +1393,7 @@ void CMiniMap::GetFrustumSide(float3& side)
 }
 
 
-inline const CIconData* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
+inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
 
@@ -1417,7 +1419,7 @@ inline const CIconData* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 }
 
 
-void CMiniMap::DrawUnit(CUnit* unit)
+void CMiniMap::DrawUnit(const CUnit* unit)
 {
 	// the simplest test
 	if (!unit)
@@ -1474,7 +1476,7 @@ void CMiniMap::DrawUnit(CUnit* unit)
 }
 
 
-void CMiniMap::DrawUnitHighlight(CUnit* unit)
+void CMiniMap::DrawUnitHighlight(const CUnit* unit)
 {
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.1f);

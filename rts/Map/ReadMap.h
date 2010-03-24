@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef READMAP_H
 #define READMAP_H
-// ReadMap.h: interface for the CReadMap class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Rendering/GL/myGL.h"
 #include "creg/creg_cond.h"
@@ -68,7 +67,10 @@ protected:
 	void CalcHeightmapChecksum();
 public:
 	virtual const float* GetHeightmap() const = 0; //! returns a float[(mapx+1)*(mapy+1)]
+
+	virtual void NewGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
+
 	virtual GLuint GetGrassShadingTexture() const { return 0; }
 	virtual GLuint GetShadingTexture() const = 0; //! a texture with RGB for shading and A for height (0 := above water; 1-255 := under water = 255+height*10)
 

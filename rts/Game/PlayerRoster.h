@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PLAYER_ROSTER
 #define PLAYER_ROSTER
-// PlayerRoster.h: interface for PlayerRoster class
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -42,8 +41,6 @@ inline PlayerRoster::SortType PlayerRoster::GetSortType()
 	return compareType;
 }
 
-
 extern PlayerRoster playerRoster;
-
 
 #endif /* PLAYER_ROSTER */

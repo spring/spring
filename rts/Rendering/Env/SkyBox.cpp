@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -48,11 +50,6 @@ void CSkyBox::Draw()
 	glEnable(GL_TEXTURE_CUBE_MAP);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
 
-	float3 v1 = -camera->CalcPixelDir(0,0);
-	float3 v2 = -camera->CalcPixelDir(gu->viewSizeX,0);
-	float3 v3 = -camera->CalcPixelDir(gu->viewSizeX,gu->viewSizeY);
-	float3 v4 = -camera->CalcPixelDir(0,gu->viewSizeY);
-
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -61,19 +58,27 @@ void CSkyBox::Draw()
 		glLoadIdentity();
 		gluOrtho2D(0,1,0,1);
 
-	glBegin(GL_QUADS);
-		glTexCoord3f(v1.x,v1.y,v1.z);
-		glVertex2f(0.0f,1.0f);
+	GLfloat verts[] = {0.f, 1.f,
+			   1.f, 1.f,
+			   1.f, 0.f,
+			   0.f, 0.f
+	};
+	float3 texcoords[] = {
+		-camera->CalcPixelDir(0,0),
+		-camera->CalcPixelDir(gu->viewSizeX,0),
+		-camera->CalcPixelDir(gu->viewSizeX,gu->viewSizeY),
+		-camera->CalcPixelDir(0,gu->viewSizeY)
+	};
 
-		glTexCoord3f(v2.x,v2.y,v2.z);
-		glVertex2f(1.0f,1.0f);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-		glTexCoord3f(v3.x,v3.y,v3.z);
-		glVertex2f(1.0f,0.0f);
+	glTexCoordPointer(3, GL_FLOAT, 0, texcoords);
+	glVertexPointer(2, GL_FLOAT, 0, verts);
+	glDrawArrays(GL_QUADS, 0, 4);
 
-		glTexCoord3f(v4.x,v4.y,v4.z);
-		glVertex2f(0.0f,0.0f);
-	glEnd();
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	//glMatrixMode(GL_PROJECTION);
 		glPopMatrix();

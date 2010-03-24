@@ -1,10 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef VERTEXARRAY_H
 #define VERTEXARRAY_H
+
 #include "myGL.h"
 #include "Platform/errorhandler.h"
-// VertexArray.h: interface for the CVertexArray class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #define VA_INIT_VERTEXES 1000 // please don't change this, some files rely on specific initial sizes
 #define VA_INIT_STRIPS 100

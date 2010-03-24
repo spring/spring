@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __GAME_SERVER_H__
 #define __GAME_SERVER_H__
 
@@ -57,7 +59,7 @@ public:
  */
 class CGameServer
 {
-	friend class CLoadSaveHandler;     //For initialize server state after load
+	friend class CCregLoadSaveHandler;     //For initialize server state after load
 public:
 	CGameServer(int hostport, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
 	~CGameServer();

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GRASSDRAWER_H
 #define GRASSDRAWER_H
 
@@ -60,7 +62,6 @@ protected:
 	int strawPerTurf;
 
 	unsigned char* grassMap;
-	void SetTexGen(float scalex,float scaley, float offsetx, float offsety);
 };
 
 

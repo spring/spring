@@ -1,13 +1,15 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <algorithm>
 #include "mmgr.h"
 
-#include "Sim/Misc/GlobalConstants.h"
+#include "SpherePartProjectile.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "SpherePartProjectile.h"
-#include "GlobalUnsynced.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "System/GlobalUnsynced.h"
 
 using std::min;
 
@@ -55,8 +57,8 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos, int xpart,
 
 	drawRadius=60;
 	alwaysVisible=true;
-	texx = ph->sphereparttex.xstart + (ph->sphereparttex.xend-ph->sphereparttex.xstart)*0.5f;
-	texy = ph->sphereparttex.ystart + (ph->sphereparttex.yend-ph->sphereparttex.ystart)*0.5f;
+	texx = projectileDrawer->sphereparttex->xstart + (projectileDrawer->sphereparttex->xend - projectileDrawer->sphereparttex->xstart) * 0.5f;
+	texy = projectileDrawer->sphereparttex->ystart + (projectileDrawer->sphereparttex->yend - projectileDrawer->sphereparttex->ystart) * 0.5f;
 }
 
 CSpherePartProjectile::~CSpherePartProjectile(void)
@@ -77,10 +79,14 @@ void CSpherePartProjectile::Draw(void)
 	unsigned char col[4];
 	va->EnlargeArrays(4*4*4,0,VA_SIZE_TC);
 
-	float interSize=sphereSize+expansionSpeed*gu->timeOffset;
-	for(int y=0;y<4;++y){
-		for(int x=0;x<4;++x){
-			float alpha=baseAlpha*((float)1.0f-min(float(1.0f),float(age+gu->timeOffset)/(float)ttl))*(1-fabs(y+ybase-8.0f)/8.0f*1.0f);
+	const float interSize = sphereSize + expansionSpeed * gu->timeOffset;
+
+	for (int y = 0; y < 4; ++y) {
+		for (int x = 0; x < 4; ++x) {
+			float alpha =
+				baseAlpha *
+				(1.0f - min(1.0f, float(age + gu->timeOffset) / (float) ttl)) *
+				(1.0f - fabs(y + ybase - 8.0f) / 8.0f * 1.0f);
 
 			col[0]=(unsigned char) (color.x*255.0f*alpha);
 			col[1]=(unsigned char) (color.y*255.0f*alpha);

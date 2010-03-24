@@ -1,4 +1,8 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
+#include "mmgr.h"
+
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -7,18 +11,16 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
-#include "FileSystem/FileHandler.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
 #include "Sound/Sound.h"
-#include "mmgr.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 using std::min;
 using std::max;
@@ -41,10 +43,10 @@ CWeaponDefHandler::CWeaponDefHandler()
 	vector<string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
-	numWeaponDefs = weaponNames.size(); // FIXME: starting at 0, don't need the +1 ?
-	weaponDefs = new WeaponDef[numWeaponDefs + 1];
+	numWeaponDefs = weaponNames.size();
+	weaponDefs = new WeaponDef[numWeaponDefs];
 
-	for (int wid = 0; wid < (int)weaponNames.size(); wid++) {
+	for (int wid = 0; wid < numWeaponDefs; wid++) {
 		WeaponDef& wd = weaponDefs[wid];
 		wd.id = wid;
 		wd.name = weaponNames[wid];
@@ -64,13 +66,9 @@ CWeaponDefHandler::~CWeaponDefHandler()
 
 void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 {
-	//bool twophase;
 	bool manualBombSettings; //Allow the user to manually specify the burst and burstrate for his AircraftBomb
 	int color;
 	int color2;
-	//bool turret;
-	//bool smokeTrail;
-	//string modelName;
 
 	wd.tdfId = wdTable.GetInt("id", 0);
 
@@ -293,12 +291,24 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 
 	int defInterceptType = 0;
-	if (wd.type == "Cannon") {
+	if ((wd.type == "Cannon") || (wd.type == "EmgCannon")) {
 		defInterceptType = 1;
 	} else if ((wd.type == "LaserCannon") || (wd.type == "BeamLaser")) {
 		defInterceptType = 2;
 	} else if ((wd.type == "StarburstLauncher") || (wd.type == "MissileLauncher")) {
 		defInterceptType = 4;
+	} else if (wd.type == "AircraftBomb") {
+		defInterceptType = 8;
+	} else if (wd.type == "Flame") {
+		defInterceptType = 16;
+	} else if (wd.type == "TorpedoLauncher") {
+		defInterceptType = 32;
+	} else if (wd.type == "LightningCannon") {
+		defInterceptType = 64;
+	} else if (wd.type == "Rifle") {
+		defInterceptType = 128;
+	} else if (wd.type == "Melee") {
+		defInterceptType = 256;
 	}
 	wd.interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
@@ -378,114 +388,63 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	// get some weapon specific defaults
 	if (wd.type == "Cannon") {
 		// CExplosiveProjectile
-		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(1.0f,0.5f,0.0f));
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(1.0f, 0.5f, 0.0f));
 		wd.intensity = wdTable.GetFloat("intensity", 0.2f);
 	} else if (wd.type == "Rifle") {
-		// ...
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 	} else if (wd.type == "Melee") {
 		// ...
-	} else if (wd.type == "AircraftBomb") {
-		// CExplosiveProjectile or CTorpedoProjectile
-		wd.visuals.texture1 = &ph->plasmatex;
-	} else if (wd.type == "Shield") {
-		wd.visuals.texture1 = &ph->perlintex;
 	} else if (wd.type == "Flame") {
 		// CFlameProjectile
-		wd.visuals.texture1 = &ph->flametex;
-		wd.size          = wdTable.GetFloat("size",      tempsize);
-		wd.sizeGrowth    = wdTable.GetFloat("sizeGrowth",    0.5f);
-		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
-		wd.duration      = wdTable.GetFloat("flameGfxTime",  1.2f);
-
-		if (wd.visuals.colorMap == 0) {
-			wd.visuals.colorMap = CColorMap::Load12f(1.000f, 1.000f, 1.000f, 0.100f,
-			                                         0.025f, 0.025f, 0.025f, 0.100f,
-			                                         0.000f, 0.000f, 0.000f, 0.000f);
-		}
-
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
+		wd.size              = wdTable.GetFloat("size",      tempsize);
+		wd.sizeGrowth        = wdTable.GetFloat("sizeGrowth",    0.5f);
+		wd.collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
+		wd.duration          = wdTable.GetFloat("flameGfxTime",  1.2f);
 	} else if (wd.type == "MissileLauncher") {
 		// CMissileProjectile
-		wd.visuals.texture1 = &ph->missileflaretex;
-		wd.visuals.texture2 = &ph->missiletrailtex;
-	} else if (wd.type == "TorpedoLauncher") {
-		// CExplosiveProjectile or CTorpedoProjectile
-		wd.visuals.texture1 = &ph->plasmatex;
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 	} else if (wd.type == "LaserCannon") {
 		// CLaserProjectile
-		wd.visuals.texture1 = &ph->laserfallofftex;
-		wd.visuals.texture2 = &ph->laserendtex;
-		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 		wd.collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
+
+		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
 	} else if (wd.type == "BeamLaser") {
-		if (wd.largeBeamLaser) {
-			wd.visuals.texture1 = ph->textureAtlas->GetTexturePtr("largebeam");
-			wd.visuals.texture2 = &ph->laserendtex;
-			wd.visuals.texture3 = ph->textureAtlas->GetTexturePtr("muzzleside");
-			wd.visuals.texture4 = &ph->beamlaserflaretex;
-		} else {
-			wd.visuals.texture1 = &ph->laserfallofftex;
-			wd.visuals.texture2 = &ph->laserendtex;
-			wd.visuals.texture3 = &ph->beamlaserflaretex;
-		}
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 	} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
-		wd.type = "LightningCannon";
-		wd.visuals.texture1 = &ph->laserfallofftex;
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+
 		wd.thickness = wdTable.GetFloat("thickness", 0.8f);
 	} else if (wd.type == "EmgCannon") {
 		// CEmgProjectile
-		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f,0.9f,0.2f));
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+
 		wd.size = wdTable.GetFloat("size", 3.0f);
+		wd.visuals.color = wdTable.GetFloat3("rgbColor", float3(0.9f, 0.9f, 0.2f));
 	} else if (wd.type == "DGun") {
 		// CFireBallProjectile
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		wd.collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
 	} else if (wd.type == "StarburstLauncher") {
 		// CStarburstProjectile
-		wd.visuals.texture1 = &ph->sbflaretex;
-		wd.visuals.texture2 = &ph->sbtrailtex;
-		wd.visuals.texture3 = &ph->explotex;
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
 	} else {
-		wd.visuals.texture1 = &ph->plasmatex;
-		wd.visuals.texture2 = &ph->plasmatex;
+		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
 	}
 
-	// FIXME -- remove the 'textureN' format?
-	LuaTable texTable = wdTable.SubTable("textures");
-	string texName;
-	texName = wdTable.GetString("texture1", "");
-	texName = texTable.GetString(1, texName);
-	if (texName != "") {
-		wd.visuals.texture1 = ph->textureAtlas->GetTexturePtr(texName);
-	}
-	texName = wdTable.GetString("texture2", "");
-	texName = texTable.GetString(2, texName);
-	if (texName != "") {
-		wd.visuals.texture2 = ph->textureAtlas->GetTexturePtr(texName);
-	}
-	texName = wdTable.GetString("texture3", "");
-	texName = texTable.GetString(3, texName);
-	if (texName != "") {
-		wd.visuals.texture3 = ph->textureAtlas->GetTexturePtr(texName);
-	}
-	texName = wdTable.GetString("texture4", "");
-	texName = texTable.GetString(4, texName);
-	if (texName != "") {
-		wd.visuals.texture4 = ph->textureAtlas->GetTexturePtr(texName);
-	}
 
-	const string expGenTag = wdTable.GetString("explosionGenerator", "");
-	if (expGenTag.empty()) {
-		wd.explosionGenerator = NULL;
-	} else {
-		wd.explosionGenerator = explGenHandler->LoadGenerator(expGenTag);
-	}
-	const string bounceExpGenTag = wdTable.GetString("bounceExplosionGenerator", "");
-	if (bounceExpGenTag.empty()) {
-		wd.bounceExplosionGenerator = NULL;
-	} else {
-		wd.bounceExplosionGenerator = explGenHandler->LoadGenerator(bounceExpGenTag);
-	}
+	const LuaTable texTable = wdTable.SubTable("textures");
+
+	wd.visuals.texNames[0] = texTable.GetString(1, wdTable.GetString("texName1", ""));
+	wd.visuals.texNames[1] = texTable.GetString(2, wdTable.GetString("texName2", ""));
+	wd.visuals.texNames[2] = texTable.GetString(3, wdTable.GetString("texName3", ""));
+	wd.visuals.texNames[3] = texTable.GetString(4, wdTable.GetString("texName4", ""));
+
+	wd.visuals.expGenTag = wdTable.GetString("explosionGenerator", "");
+	wd.visuals.bounceExpGenTag = wdTable.GetString("bounceExplosionGenerator", "");
 
 	const float gd = max(30.0f, wd.damages[0] / 20.0f);
 	const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (sqrt(gd) * 0.7f)) * 0.5f;
@@ -586,7 +545,7 @@ const WeaponDef *CWeaponDefHandler::GetWeapon(const string weaponname2)
 
 const WeaponDef* CWeaponDefHandler::GetWeaponById(int weaponDefId)
 {
-	if ((weaponDefId < 0) || (weaponDefId > numWeaponDefs)) {
+	if ((weaponDefId < 0) || (weaponDefId >= numWeaponDefs)) {
 		return NULL;
 	}
 	return &weaponDefs[weaponDefId];

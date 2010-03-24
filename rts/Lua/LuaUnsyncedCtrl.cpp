@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaUnsyncedCtrl.cpp: implementation of the LuaUnsyncedCtrl class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <list>
@@ -996,7 +995,7 @@ int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetDrawSky()");
 	}
-	game->drawSky = !!lua_toboolean(L, 1);
+	gu->drawSky = !!lua_toboolean(L, 1);
 	return 0;
 }
 
@@ -1009,7 +1008,7 @@ int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetDrawWater()");
 	}
-	game->drawWater = !!lua_toboolean(L, 1);
+	gu->drawWater = !!lua_toboolean(L, 1);
 	return 0;
 }
 
@@ -1022,7 +1021,7 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetDrawGround()");
 	}
-	game->drawGround = !!lua_toboolean(L, 1);
+	gu->drawGround = !!lua_toboolean(L, 1);
 	return 0;
 }
 

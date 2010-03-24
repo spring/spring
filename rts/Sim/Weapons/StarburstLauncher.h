@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef STARBURSTLAUNCHER_H
 #define STARBURSTLAUNCHER_H
 
@@ -21,6 +23,5 @@ public:
 private:
 	virtual void FireImpl();
 };
-
 
 #endif /* STARBURSTLAUNCHER_H */

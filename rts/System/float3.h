@@ -1,9 +1,5 @@
-/**
- * @file float3.h
- * @brief float3 header
- *
- * Declaration of float3 class
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef FLOAT3_H
 #define FLOAT3_H
 

@@ -1,8 +1,5 @@
-/*
- * aibase.h
- * Base header for ai shared libaries
- * Copyright (C) 2005 Christopher Han
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef AIBASE_H
 #define AIBASE_H
 
@@ -22,4 +19,4 @@
 	+ sizeof(WeaponDef) \
 	)
 
-#endif /* AIBASE_H */
+#endif // AIBASE_H

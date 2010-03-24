@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __STD_AFX_H__
 #define __STD_AFX_H__
 

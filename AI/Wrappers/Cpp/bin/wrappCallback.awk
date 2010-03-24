@@ -86,7 +86,7 @@ function printHeader(outFile_h, className_h, isOrHasInterface_h, isH_h) {
 	} else {
 		print("") >> outFile_h;
 		myHeader_h = outFile_h;
-		sub(/^\.\.\//, "", myHeader_h);
+		sub(/^.*[\/\\]/, "", myHeader_h);
 		sub(/\.cpp$/, ".h", myHeader_h);
 		print("#include \"" myHeader_h "\"") >> outFile_h;
 		print("") >> outFile_h;

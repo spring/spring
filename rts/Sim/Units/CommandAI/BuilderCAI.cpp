@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -441,7 +443,7 @@ void CBuilderCAI::SlowUpdate()
 								ReclaimFeature(f);
 							}
 							else {
-								if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
+								if ((owner->team == gu->myTeam) && !(buildRetries & 7) && gu->buildWarnings) {
 									logOutput.Print(
 										"%s: build-position <%.2f, %.2f, %.2f> blocked after %d attempts",
 										owner->unitDef->humanName.c_str(),

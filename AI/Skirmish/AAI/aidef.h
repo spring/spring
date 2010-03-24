@@ -22,6 +22,7 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "System/Vec2.h"
 #include "System/maindefines.h"
+#include "System/Util.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -56,7 +57,6 @@ std::string MakeFileSystemCompatible(const std::string& str);
 #define MOD_CFG_PATH "cfg/mod/"
 #define GENERAL_CFG_FILE "cfg/general.cfg"
 #define MOD_LEARN_PATH "learn/mod/"
-#define MAP_CFG_PATH "cfg/map/"
 #define MAP_CACHE_PATH "cache/"
 #define MAP_LEARN_PATH "learn/map/"
 

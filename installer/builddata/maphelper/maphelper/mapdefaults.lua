@@ -81,8 +81,12 @@ local mapDefaults = {
   },
 
   resources = {
-    detailTex = '',
-    specularTex = '',
+    detailTex       = '',
+    specularTex     = '',
+    splatDetailTex  = '',
+    splatDistrTex   = '',
+    splatTexScales  = {0.02, 0.02, 0.02, 0.02},
+    splatTexMults   = {1.00, 1.00, 1.00, 1.00},
   },
 
   defaultTerrainType = {

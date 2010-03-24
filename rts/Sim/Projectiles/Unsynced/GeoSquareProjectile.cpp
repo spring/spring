@@ -1,11 +1,13 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "Game/Camera.h"
 #include "GeoSquareProjectile.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "Rendering/Textures/TextureAtlas.h"
 
 CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),0,0));
 
@@ -64,20 +66,20 @@ void CGeoSquareProjectile::Draw(void)
 	dir2.ANormalize();
 
 
-	float u = (ph->geosquaretex.xstart + ph->geosquaretex.xend) / 2;
-	float v0 = ph->geosquaretex.ystart;
-	float v1 = ph->geosquaretex.yend;
+	const float u = (projectileDrawer->geosquaretex->xstart + projectileDrawer->geosquaretex->xend) / 2;
+	const float v0 = projectileDrawer->geosquaretex->ystart;
+	const float v1 = projectileDrawer->geosquaretex->yend;
 
-	if(w2!=0){
-		va->AddVertexTC(p1-dir1*w1,u,v1,col);
-		va->AddVertexTC(p1+dir1*w1,u,v0,col);
-		va->AddVertexTC(p2+dir2*w2,u,v0,col);
-		va->AddVertexTC(p2-dir2*w2,u,v1,col);
+	if (w2 != 0) {
+		va->AddVertexTC(p1 - dir1 * w1, u, v1, col);
+		va->AddVertexTC(p1 + dir1 * w1, u, v0, col);
+		va->AddVertexTC(p2 + dir2 * w2, u, v0, col);
+		va->AddVertexTC(p2 - dir2 * w2, u, v1, col);
 	} else {
-		va->AddVertexTC(p1-dir1*w1,u,v1,col);
-		va->AddVertexTC(p1+dir1*w1,u,v0,col);
-		va->AddVertexTC(p2,u,v0+(v1-v0)*0.5f,col);
-		va->AddVertexTC(p2,u,v0+(v1-v0)*1.5f,col);
+		va->AddVertexTC(p1 - dir1 * w1, u, v1,                    col);
+		va->AddVertexTC(p1 + dir1 * w1, u, v0,                    col);
+		va->AddVertexTC(p2,             u, v0 + (v1 - v0) * 0.5f, col);
+		va->AddVertexTC(p2,             u, v0 + (v1 - v0) * 1.5f, col);
 	}
 }
 

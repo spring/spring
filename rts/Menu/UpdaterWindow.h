@@ -1,6 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UPDATERWINDOW_H
 #define UPDATERWINDOW_H
-
 
 #include "aGui/Window.h"
 
@@ -35,6 +36,5 @@ private:
 	agui::Window* agreement;
 	Connection* con;
 };
-
 
 #endif

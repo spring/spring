@@ -1,5 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
-@file mapfile.h
 @brief Defines the Spring map format
 
 This file defines the Spring map format that is most common at the time of this
@@ -20,8 +21,8 @@ tiles used by the map. This file can be shared between different maps. See
 TileFileHeader for details.
 */
 
-#ifndef __MAPFILE_H
-#define __MAPFILE_H
+#ifndef _MAPFILE_H
+#define _MAPFILE_H
 
 #include "Platform/byteorder.h"
 
@@ -275,4 +276,4 @@ do {							\
 	(tfh).compressionType = (int)swabdword(__tmpdw);\
 } while (0)
 
-#endif //ndef __MAPFILE_H
+#endif //ndef _MAPFILE_H

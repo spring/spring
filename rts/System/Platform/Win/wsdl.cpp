@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /* Copyright (C) 2009 Wildfire Games.
  * This file is part of 0 A.D.
  *
@@ -18,6 +20,7 @@
 /*
  * emulate SDL on Windows.
  */
+
 #include "GlobalUnsynced.h"
 #include <stdio.h>
 #include "wsdl.h"

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SELECTEDUNITS_H
 #define SELECTEDUNITS_H
-// SelectedUnits.h: interface for the CSelectedUnits class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Object.h"
 #include <vector>

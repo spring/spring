@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -99,7 +101,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
-		s3domodel = LoadModel(weaponDef);
+		model = LoadModel(weaponDef);
 
 		collisionFlags = weaponDef->collisionFlags;
 	}
@@ -340,7 +342,7 @@ void CWeaponProjectile::DrawUnitPart()
 
 	glPushMatrix();
 		glMultMatrixf(transMatrix);
-		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
+		glCallList(model->rootobject->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 
@@ -372,7 +374,7 @@ void CWeaponProjectile::PostLoad()
 //		interceptHandler.AddShieldInterceptableProjectile(this);
 
 	if (!weaponDef->visuals.modelName.empty()) {
-		if (weaponDef->visuals.model==NULL) {
+		if (weaponDef->visuals.model == NULL) {
 			std::string modelname = string("objects3d/") + weaponDef->visuals.modelName;
 			if (modelname.find(".") == std::string::npos) {
 				modelname += ".3do";
@@ -380,7 +382,7 @@ void CWeaponProjectile::PostLoad()
 			const_cast<WeaponDef*>(weaponDef)->visuals.model = modelParser->Load3DModel(modelname);
 		}
 		if (weaponDef->visuals.model) {
-			s3domodel = weaponDef->visuals.model;
+			model = weaponDef->visuals.model;
 		}
 	}
 

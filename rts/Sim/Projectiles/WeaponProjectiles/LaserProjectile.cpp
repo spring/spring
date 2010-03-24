@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -48,9 +50,16 @@ CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 	dir.Normalize();
 	speedf=speed.Length();
 
-	if (weaponDef) SetRadius(weaponDef->collisionSize);
-	drawRadius=length;
-	if (weaponDef)midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
+	if (weaponDef) {
+		SetRadius(weaponDef->collisionSize);
+
+		midtexx =
+			(weaponDef->visuals.texture2->xstart +
+			(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * 0.5f);
+	}
+
+	drawRadius = length;
+
 #ifdef TRACE_SYNC
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -205,7 +214,7 @@ void CLaserProjectile::Collision()
 
 void CLaserProjectile::Draw(void)
 {
-	if(s3domodel)	//dont draw if a 3d model has been defined for us
+	if (model)	//dont draw if a 3d model has been defined for us
 		return;
 
 	inArray=true;

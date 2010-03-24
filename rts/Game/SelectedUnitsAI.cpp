@@ -1,9 +1,6 @@
-////////////////////////////////////////
-//         CSelectedUnitsAI           //
-// Group-AI. Handling commands given  //
-// to the selected group of units.    //
-// - Controlling formations.          //
-////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+// Handling commands given to the currently  selected group of units.
 
 #include "StdAfx.h"
 
@@ -24,7 +21,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
-//#include "Sim/MoveTypes/GroundMoveType.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;

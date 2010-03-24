@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <algorithm>
 #include "mmgr.h"
@@ -93,7 +95,7 @@ CGrassDrawer::CGrassDrawer()
 	}
 	lastListClean=0;
 
-	grassFarNSVP=LoadVertexProgram("grassFarNS.vp");
+	grassFarNSVP=LoadVertexProgram("ARB/grassFarNS.vp");
 
 	grassDL=glGenLists(8);
 	srand(15);
@@ -113,8 +115,8 @@ CGrassDrawer::CGrassDrawer()
 	CreateFarTex();
 
 	if(shadowHandler->canUseShadows){
-		grassVP=LoadVertexProgram("grass.vp");
-		grassFarVP=LoadVertexProgram("grassFar.vp");
+		grassVP=LoadVertexProgram("ARB/grass.vp");
+		grassFarVP=LoadVertexProgram("ARB/grassFar.vp");
 	}
 }
 
@@ -366,7 +368,7 @@ void CGrassDrawer::Draw(void)
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixd(camera->GetModelview());
+		glMultMatrixd(camera->GetViewMat());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -811,16 +813,4 @@ void CGrassDrawer::RemoveGrass(int x, int z)
 
 	grassMap[(z/grassSquareSize)*gs->mapx/grassSquareSize+x/grassSquareSize]=0;
 	ResetPos(float3(x*SQUARE_SIZE,0,z*SQUARE_SIZE));
-}
-
-void CGrassDrawer::SetTexGen(float scalex,float scaley, float offsetx, float offsety)
-{
-	GLfloat plan[]={scalex,0,0,offsetx};
-	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
-	glEnable(GL_TEXTURE_GEN_S);
-	GLfloat plan2[]={0,0,scaley,offsety};
-	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
-	glEnable(GL_TEXTURE_GEN_T);
 }

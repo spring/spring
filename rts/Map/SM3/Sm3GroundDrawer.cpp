@@ -1,3 +1,4 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 
@@ -10,8 +11,8 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "System/ConfigHandler.h"
 
@@ -184,27 +185,25 @@ void CSm3GroundDrawer::DrawShadowPass()
 	shadowCam.pos = camera->pos;
 	shadowCam.aspect = 1.0f;
 
-	CShadowHandler* sh = shadowHandler;
-	Shader::IProgramObject* po = sh->GetMapShadowGenShader();
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
-	glPolygonOffset(1,1);
+	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-
-	po->Enable();
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
+	po->Enable();
 	tr->SetActiveContext(shadowrc);
 	tr->DrawSimple();
 	tr->SetActiveContext(rc);
+	po->Disable();
 
 	glCullFace(GL_BACK);
 	glDisable(GL_CULL_FACE);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-
-	po->Disable();
 }
 
 void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflection)
@@ -218,9 +217,9 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 //	if(drawWaterReflection)
 //		treeDistance*=0.5f;
 
-	if(groundDecals && !(drawWaterReflection || drawUnitReflection)) {
+	if (groundDecals && !(drawWaterReflection || drawUnitReflection)) {
 		groundDecals->Draw();
-		ph->DrawGroundFlashes();
+		projectileDrawer->DrawGroundFlashes();
 		glDepthMask(1);
 	}
 }

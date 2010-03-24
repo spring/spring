@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PREGAME_H
 #define PREGAME_H
 
@@ -8,7 +10,7 @@
 #include "GameController.h"
 
 class CInfoConsole;
-class CLoadSaveHandler;
+class ILoadSaveHandler;
 class GameData;
 class ClientSetup;
 namespace netcode {
@@ -53,12 +55,6 @@ private:
 	/// receive network traffic
 	void UpdateClientNet();
 
-	/// Load map and dependend archives into archive scanner
-	void LoadMap(const std::string& mapName);
-	
-	/// Map all required archives depending on selected mod(s)
-	void LoadMod(const std::string& modName);
-
 	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	/**
@@ -69,7 +65,7 @@ private:
 	boost::scoped_ptr<const GameData> gameData;
 	boost::scoped_ptr<const ClientSetup> settings;
 	std::string modArchive;
-	CLoadSaveHandler *savefile;
+	ILoadSaveHandler *savefile;
 	
 	unsigned timer;
 };

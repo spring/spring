@@ -1,6 +1,4 @@
-// WorldObject.cpp: implementation of the CWorldObject class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -22,11 +20,6 @@ CR_REG_METADATA(CWorldObject, (
 
 CWorldObject::~CWorldObject()
 {
-}
-
-void CWorldObject::DrawS3O()
-{
-	// implemented by CUnit, CFeature, CWeaponProjectile, CPieceProjectile
 }
 
 void CWorldObject::SetRadius(float r)

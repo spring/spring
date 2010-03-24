@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "lib/gml/gml.h"
@@ -160,9 +160,10 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		}
 
 		const std::string str_modname = modname;
-		containsOglDll = (containsOglDll || (str_modname.find("atioglxx.dll") != std::string::npos));
-		containsOglDll = (containsOglDll || (str_modname.find("nvoglv32.dll") != std::string::npos));
-		containsOglDll = (containsOglDll || (str_modname.find("nvoglv64.dll") != std::string::npos)); // guessed
+		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
+		containsOglDll = (containsOglDll || (str_modname.find("atiogl") != std::string::npos));
+		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
+		containsOglDll = (containsOglDll || (str_modname.find("nvogl") != std::string::npos));
 
 		++count;
 	}

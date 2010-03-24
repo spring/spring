@@ -140,7 +140,7 @@ class ScopedMapLoader {
 			}
 
 			vfsHandler = new CVFSHandler();
-			vfsHandler->AddMapArchiveWithDeps(mapName, false);
+			vfsHandler->AddArchiveWithDeps(mapName, false);
 		}
 
 		~ScopedMapLoader()
@@ -447,12 +447,7 @@ EXPORT(void) AddAllArchives(const char* root)
 	try {
 		CheckInit();
 		CheckNullOrEmpty(root);
-
-		vector<string> ars = archiveScanner->GetArchives(root);
-		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-			logOutput.Print(LOG_UNITSYNC, "adding archive: %s\n", i->c_str());
-			vfsHandler->AddArchive(*i, false);
-		}
+		vfsHandler->AddArchiveWithDeps(root, false);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }

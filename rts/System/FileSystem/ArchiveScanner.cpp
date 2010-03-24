@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 
 #include <list>
@@ -302,7 +304,7 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 					ai.archiveData.name = filesystem.GetBasename(mapfile);
 				if (ai.archiveData.mapfile.empty())
 					ai.archiveData.mapfile = mapfile;
-				AddDependency(ai.archiveData.dependencies, "maphelper.sdz");
+				AddDependency(ai.archiveData.dependencies, "Map Helper v1");
 				ai.archiveData.modType = modtype::map;
 				
 			}
@@ -468,7 +470,7 @@ void CArchiveScanner::ReadCacheData(const string& filename)
 
 		ai.archiveData = GetArchiveData(archived);
 		if (ai.archiveData.modType == modtype::map)
-			AddDependency(ai.archiveData.dependencies, "maphelper.sdz");
+			AddDependency(ai.archiveData.dependencies, "Map Helper v1");
 		else if (ai.archiveData.modType == modtype::primary)
 			AddDependency(ai.archiveData.dependencies, "Spring content v1");
 
@@ -566,7 +568,7 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 
 			vector<string> deps = archData.dependencies;
 			if (archData.modType == modtype::map)
-				FilterDep(deps, "maphelper.sdz");
+				FilterDep(deps, "Map Helper v1");
 			else if (archData.modType == modtype::primary)
 				FilterDep(deps, "Spring content v1");
 			
@@ -595,9 +597,19 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 }
 
 
+static bool archNameCompare(const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b)
+{
+	return (a.name < b.name);
+}
+static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
+{
+	std::sort(data.begin(), data.end(), archNameCompare);
+}
+
 vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 {
 	vector<ArchiveData> ret;
+
 	for (std::map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i)
 	{
 		if (i->second.archiveData.name != "" && i->second.archiveData.modType == modtype::primary)
@@ -608,6 +620,9 @@ vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 			ret.push_back(md);
 		}
 	}
+
+	sortByName(ret);
+
 	return ret;
 }
 
@@ -615,6 +630,7 @@ vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const
 vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 {
 	vector<ArchiveData> ret;
+
 	for (std::map<string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
 		if (i->second.archiveData.name != "" && (i->second.archiveData.modType == modtype::primary || i->second.archiveData.modType == modtype::hidden))
 		{
@@ -624,6 +640,8 @@ vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 			ret.push_back(md);
 		}
 	}
+
+	sortByName(ret);
 
 	return ret;
 }

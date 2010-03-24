@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -9,7 +11,6 @@
 #include "LogOutput.h"
 #include "myMath.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Rendering/GL/myGL.h"
 #include "TimeProfiler.h"
 #include "PathFinder.h"
 #include "PathEstimator.h"
@@ -353,7 +354,7 @@ void CPathManager::DeletePath(unsigned int pathId) {
 
 	//Find the multipath.
 	std::map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathId);
-	if(pi == pathMap.end())
+	if (pi == pathMap.end())
 		return;
 	MultiPath* multiPath = pi->second;
 
@@ -392,59 +393,6 @@ void CPathManager::Update()
 	pe2->Update();
 }
 
-
-/*
-Draw path-lines for each path in pathmap.
-*/
-void CPathManager::Draw() {
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glLineWidth(3);
-	std::map<unsigned int, MultiPath*>::iterator pi;
-	for(pi = pathMap.begin(); pi != pathMap.end(); pi++) {
-		MultiPath* path = pi->second;
-		IPath::path_list_type::iterator pvi;
-
-		//Start drawing a line.
-		glBegin(GL_LINE_STRIP);
-
-		//Drawing estimatePath2.
-		glColor4f(0,0,1,1);
-		for(pvi = path->estimatedPath2.path.begin(); pvi != path->estimatedPath2.path.end(); pvi++) {
-			float3 pos = *pvi;
-			pos.y += 5;
-			glVertexf3(pos);
-		}
-
-		//Drawing estimatePath.
-		glColor4f(0,1,0,1);
-		for(pvi = path->estimatedPath.path.begin(); pvi != path->estimatedPath.path.end(); pvi++) {
-			float3 pos = *pvi;
-			pos.y += 5;
-			glVertexf3(pos);
-		}
-
-		//Drawing detailPath
-		glColor4f(1,0,0,1);
-		for(pvi = path->detailedPath.path.begin(); pvi != path->detailedPath.path.end(); pvi++) {
-			float3 pos = *pvi;
-			pos.y += 5;
-			glVertexf3(pos);
-		}
-
-		//Stop drawing a line.
-		glEnd();
-
-		//Tell the CPathFinderDef to visualise it self.
-		path->peDef->Draw();
-	}
-	glLineWidth(1);
-#if !defined(USE_GML) || !GML_ENABLE_SIM // making this threadsafe might be too costly performance wise
-	pf->Draw();
-	pe->Draw();
-	pe2->Draw();
-#endif
-}
 
 
 void CPathManager::GetDetailedPath(unsigned pathId, std::vector<float3>& points) const

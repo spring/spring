@@ -1,10 +1,9 @@
-/*
-creg - Code compoment registration system
-Copyright 2005 Jelmer Cnossen
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef jc_CR_HEADER
-#define jc_CR_HEADER
+// creg - Code compoment registration system
+
+#ifndef _CREG_H
+#define _CREG_H
 
 #include <vector>
 #include <string>
@@ -275,7 +274,6 @@ namespace creg {
 	inline static creg::Class *StaticClass() { return binder.class_; }
 
 /** @def CR_DECLARE_SUB
- *  @author Tobi Vollebregt
  * Use this to declare a sub class. This should be put in the class definition
  * of the superclass, alongside CR_DECLARE(CSuperClass) (or CR_DECLARE_STRUCT). */
 #define CR_DECLARE_SUB(cl) \
@@ -374,7 +372,6 @@ namespace creg {
 	} static TClass##mreg;
 
 /** @def CR_REG_METADATA_SUB
- *  @author Tobi Vollebregt
  * Just like CR_REG_METADATA, but for a subclass.
  *  @see CR_REG_METADATA
  */
@@ -480,4 +477,4 @@ namespace creg {
 	(class_->postLoadProc = (void(creg::_DummyStruct::*)())&Type::PostLoadFunc)
 };
 
-#endif
+#endif // _CREG_H

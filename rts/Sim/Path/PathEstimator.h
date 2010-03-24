@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
@@ -49,7 +51,6 @@ public:
 	inline void operator delete(void* p, size_t size) { pfDealloc(p, size); }
 #endif
 
-	void Draw(void);
 
 
 	/**

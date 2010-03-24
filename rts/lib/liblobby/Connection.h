@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
@@ -6,72 +8,20 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <string>
 
-#include <iostream>
-
-class RawTextMessage
+struct ClientStatus
 {
-public:
-	RawTextMessage(const std::string& _message) : message(_message), pos(0)
-	{};
-	
-	std::string GetWord()
-	{
-		size_t oldpos = pos;
-		pos = message.find_first_of(std::string("\t \n"), oldpos);
-		if (pos != std::string::npos)
-		{
-			return message.substr(oldpos, pos++ - oldpos);
-		}
-		else if (oldpos != std::string::npos)
-		{
-			return message.substr(oldpos);
-		}
-		else
-		{
-			return "";
-		}
-	};
-	
-	std::string GetSentence()
-	{
-		size_t oldpos = pos;
-		pos = message.find_first_of(std::string("\t\n"), oldpos);
-		if (pos != std::string::npos)
-		{
-			return message.substr(oldpos, pos++ - oldpos);
-		}
-		else if (oldpos != std::string::npos)
-		{
-			return message.substr(oldpos);
-		}
-		else
-		{
-			return "";
-		}
-	};
-	
-	int GetInt()
-	{
-		std::istringstream buf(GetWord());
-		int temp;
-		buf >> temp;
-		return temp;
-	};
-	
-private:
-	std::string message;
-	size_t pos;
+	bool ingame;
+	bool away;
+	int rank;
+	bool moderator;
+	bool bot;
 };
-
-class UserCache;
 
 class Connection
 {
 public:
 	Connection();
 	~Connection();
-	
-	void AddUserCache(UserCache*);
 
 	void Connect(const std::string& server, int port);
 	virtual void DoneConnecting(bool succes, const std::string& err) {};
@@ -87,17 +37,48 @@ public:
 	virtual void Aggreement(const std::string text) {};
 	void ConfirmAggreement();
 
-	virtual void Motd(const std::string text) {};
+	void Rename(const std::string& newName);
+	void ChangePass(const std::string& oldpass, const std::string& newpass);
+
+	virtual void Motd(const std::string& text) {};
+	virtual void ServerMessage(const std::string& text) {};
+	virtual void ServerMessageBox(const std::string& text, const std::string& url) {};
+
+	virtual void AddUser(const std::string& name, const std::string& country, int cpu) {};
+	virtual void RemoveUser(const std::string& name) {};
+	void StatusUpdate(bool ingame, bool away);
+	virtual void ClientStatusUpdate(const std::string& name, ClientStatus status) {};
+
+	void Channels();
+	virtual void ChannelInfo(const std::string& channel, unsigned users) {};
+	virtual void ChannelInfoEnd() {};
+
+	void RequestMutelist(const std::string& channel);
+	virtual void Mutelist(const std::string& channel, std::list<std::string> list) {};
 
 	void JoinChannel(const std::string& channame, const std::string& password = "");
 	virtual void Joined(const std::string& channame) {};
+	virtual void ChannelMember(const std::string& channame, const std::string& name, bool joined) {};
+	virtual void ChannelMemberLeft(const std::string& channame, const std::string& name, const std::string& reason) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
 	void LeaveChannel(const std::string& channame);
+	void ForceLeaveChannel(const std::string& channame, const std::string& user, const std::string& reason);
+	virtual void ForceLeftChannel(const std::string& channame, const std::string& user, const std::string& reason) {};
+
+	void ChangeTopic(const std::string& channame, const std::string& topic);
+	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic) {};
+	virtual void ChannelMessage(const std::string& channel, const std::string& text) {};
 
 	void Say(const std::string& channel, const std::string& text);
+	void SayEx(const std::string& channel, const std::string& text);
+	void SayPrivate(const std::string& user, const std::string& text);
 	virtual void Said(const std::string& channel, const std::string& user, const std::string& text) {};
 	virtual void SaidEx(const std::string& channel, const std::string& user, const std::string& text) {};
 	virtual void SaidPrivate(const std::string& user, const std::string& text) {};
+
+	virtual void BattleOpened(int id, bool replay, bool natTraversal, const std::string& founder, const std::string& hostIp, int port, int maxplayers, bool password, int rank, unsigned maphash, const std::string& title, const std::string& map, const std::string& mod) {};
+	virtual void BattleUpdated(int id, int numSpectators, bool locked, unsigned maphash, const std::string& map) {};
+	virtual void BattleClosed(int id) {};
 
 	virtual void Disconnected() {};
 	virtual void NetworkError(const std::string& msg) {};
@@ -115,11 +96,15 @@ private:
 	void ReceiveCallback(const boost::system::error_code& error, size_t bytes);
 	void SendCallback(const boost::system::error_code& error);
 	
+	boost::asio::io_service netservice;
 	std::string aggreementbuf;
+	std::string inMutelistChannel;
+	std::list<std::string> mutelistBuf;
 	boost::asio::ip::tcp::socket sock;
 	boost::asio::streambuf incomeBuffer;
-	UserCache* users;
 	boost::asio::deadline_timer timer;
+	std::string myUserName;
+	ClientStatus myStatus;
 };
 
 #endif

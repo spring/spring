@@ -38,6 +38,7 @@
 
 #include "ExternalAI/Interface/aidefines.h"
 //#include "ExternalAI/Interface/ELevelOfSupport.h"
+//struct SSkirmishAICallback;
 
 // for a list of the functions that have to be exported,
 // see struct SSkirmishAILibrary in "ExternalAI/Interface/SSkirmishAILibrary.h"

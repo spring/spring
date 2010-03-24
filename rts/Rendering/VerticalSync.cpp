@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// VerticalSync.cpp implementation of the CVerticalSync class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #ifdef WIN32
 #include "Platform/Win/win32.h"
@@ -46,6 +45,12 @@ void CVerticalSync::SetFrames(int f)
 	
 	frames = f;
 
+#if !defined(WIN32) && !defined(__APPLE__)
+	if (frames > 0)
+		if (!GLXEW_SGI_video_sync)
+			frames = 0; // disable
+#endif
+
 #ifdef WIN32
 	// VSync enabled is the default for OpenGL drivers
 	if (frames < 0) {
@@ -72,14 +77,9 @@ void CVerticalSync::Delay()
 {
 #if !defined(WIN32) && !defined(__APPLE__)
 	if (frames > 0) {
-		if (!GLXEW_SGI_video_sync) {
-			frames = 0; // disable
-		} else {
-			GLuint frameCount;
-			if (glXGetVideoSyncSGI(&frameCount) == 0) {
-				glXWaitVideoSyncSGI(frames, frameCount % frames, &frameCount);
-			}
-		}
+		GLuint frameCount;
+		if (glXGetVideoSyncSGI(&frameCount) == 0)
+			glXWaitVideoSyncSGI(frames, (frameCount+1) % frames, &frameCount);
 	}
 #endif
 }

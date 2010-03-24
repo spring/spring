@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GROUNDDECALHANDLER_H
 #define GROUNDDECALHANDLER_H
 
@@ -162,7 +164,6 @@ private:
 	unsigned int LoadTexture(const std::string& name);
 	void LoadScar(const std::string& file, unsigned char* buf,
 	              int xoffset, int yoffset);
-	void SetTexGen(float scalex, float scaley, float offsetx, float offsety);
 };
 
 extern CGroundDecalHandler* groundDecals;
