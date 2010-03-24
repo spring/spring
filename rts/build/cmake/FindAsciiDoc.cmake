@@ -1,3 +1,5 @@
+# This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
+
 # - Find AsciiDoc, XSLTProc and DocBook
 # These toolds are used to compile man pages
 #

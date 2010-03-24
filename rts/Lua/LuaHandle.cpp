@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaHandle.cpp: implementation of the CLuaHandle class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <SDL_keysym.h>
@@ -21,14 +20,13 @@
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
 #include "LuaUtils.h"
+#include "LuaZip.h"
 #include "Game/PlayerHandler.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/InMapDraw.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -302,6 +300,28 @@ void CLuaHandle::Shutdown()
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 0, 0, errfunc);
+	return;
+}
+
+void CLuaHandle::Load(CArchiveBase* archive)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	int errfunc = SetupTraceback();
+
+	static const LuaHashString cmdStr("Load");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
+		return; // the call is not defined
+	}
+
+	// Load gets ZipFileReader userdatum as single argument
+	LuaZipFileReader::PushNew(L, "", archive);
+
+	// call the routine
+	RunCallInTraceback(cmdStr, 1, 0, errfunc);
 	return;
 }
 
@@ -1001,7 +1021,7 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 /******************************************************************************/
 
-void CLuaHandle::ProjectileCreated(const CProjectile* projectile)
+void CLuaHandle::ProjectileCreated(const CProjectile* p)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -1010,18 +1030,21 @@ void CLuaHandle::ProjectileCreated(const CProjectile* projectile)
 		return; // the call is not defined
 	}
 
-	const bool b = (projectile->owner() != NULL);
+	if (p->synced && (p->weapon || p->piece)) {
+		const CUnit* owner = p->owner();
 
-	lua_pushnumber(L, projectile->id);
-	lua_pushnumber(L, b ? projectile->owner()->id : -1);
+		lua_pushnumber(L, p->id);
+		lua_pushnumber(L, (owner? owner->id: -1));
 
-	// call the routine
-	RunCallIn(cmdStr, 2, 0);
+		// call the routine
+		RunCallIn(cmdStr, 2, 0);
+	}
+
 	return;
 }
 
 
-void CLuaHandle::ProjectileDestroyed(const CProjectile* projectile)
+void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -1030,10 +1053,13 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* projectile)
 		return; // the call is not defined
 	}
 
-	lua_pushnumber(L, projectile->id);
+	if (p->synced && (p->weapon || p->piece)) {
+		lua_pushnumber(L, p->id);
 
-	// call the routine
-	RunCallIn(cmdStr, 1, 0);
+		// call the routine
+		RunCallIn(cmdStr, 1, 0);
+	}
+
 	return;
 }
 
@@ -1190,6 +1216,30 @@ inline bool CLuaHandle::PushUnsyncedCallIn(const LuaHashString& hs)
 	} else {
 		return hs.GetRegistryFunc(L);
 	}
+}
+
+
+void CLuaHandle::Save(zipFile archive)
+{
+	// LuaUI does not get this call-in
+	if (userMode) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+	static const LuaHashString cmdStr("Save");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return;
+	}
+
+	// Save gets ZipFileWriter userdatum as single argument
+	LuaZipFileWriter::PushNew(L, "", archive);
+
+	// call the routine
+	RunCallInUnsynced(cmdStr, 1, 0);
+
+	return;
 }
 
 

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MAPINFO_H
 #define MAPINFO_H
 
@@ -140,6 +142,11 @@ public:
 	struct smf_t {
 		std::string detailTexName; ///< "MAP\DetailTex"
 		std::string specularTexName; ///< "MAP\SpecularTex"
+		std::string splatDistrTexName;
+		std::string splatDetailTexName;
+
+		float4 splatTexScales;
+		float4 splatTexMults;
 
 		float minHeight;
 		bool  minHeightOverride;

@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaUI.cpp: implementation of the CLuaUI class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include <set>
@@ -9,17 +8,15 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
-#include "Lua/LuaUnsyncedCtrl.h"
 
 #include "mmgr.h"
 
+#include "Lua/LuaLobby.h" // ugh, streflop namespace corruption...
 #include "LuaUI.h"
-
-
-using namespace std;
 
 #include "LuaInclude.h"
 
+#include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaUtils.h"
 #include "Lua/LuaConstGL.h"
@@ -36,6 +33,7 @@ using namespace std;
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFS.h"
 #include "Lua/LuaIO.h"
+#include "Lua/LuaZip.h"
 #include "Game/Camera.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
@@ -63,6 +61,7 @@ using namespace std;
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
 
+using namespace std;
 
 #if (LUA_VERSION_NUM < 500)
 #  define LUA_OPEN_LIB(L, lib) lib(L)
@@ -179,6 +178,8 @@ CLuaUI::CLuaUI()
 	// load the spring libraries
 	if (!LoadCFunctions(L)                                                 ||
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
@@ -197,7 +198,7 @@ CLuaUI::CLuaUI()
 	}
 
 	lua_settop(L, 0);
-
+	LuaLobby::RegisterUserdata(L);
 	if (!LoadCode(code, "luaui.lua")) {
 		KillLua();
 		return;

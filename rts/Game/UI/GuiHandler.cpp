@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// GuiHandler.cpp: implementation of the CGuiHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <set>
@@ -1039,9 +1038,8 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 {
 	GML_RECMUTEX_LOCK(gui); // MousePress - updates inCommand
 
-	if (button == SDL_BUTTON_MIDDLE) {
+	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 		return false;
-	}
 
 	if (button < 0) {
 		// proxied click from the minimap
@@ -1080,11 +1078,11 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
 {
-	int iconCmd = -1;
+	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
+		return;
 
-	if (button != SDL_BUTTON_MIDDLE) {
-		explicitCommand = inCommand;
-	}
+	int iconCmd = -1;
+	explicitCommand = inCommand;
 
 	if (activeMousePress) {
 		activeMousePress = false;
@@ -3707,7 +3705,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 							}
 						}
 					}
-					if (uh->ShowUnitBuildSquare(*bpi, cv)) {
+					if (unitDrawer->ShowUnitBuildSquare(*bpi, cv)) {
 						glColor4f(0.7f,1,1,0.4f);
 					} else {
 						glColor4f(1,0.5f,0.5f,0.4f);

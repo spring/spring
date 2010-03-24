@@ -1,7 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaFeatureDefs.cpp: implementation of the LuaFeatureDefs class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <set>
 #include <string>
@@ -9,8 +9,6 @@
 #include <set>
 #include <map>
 #include <cctype>
-
-#include "mmgr.h"
 
 #include "LuaFeatureDefs.h"
 
@@ -275,7 +273,7 @@ static int FeatureDefNewIndex(lua_State* L)
 
 static int FeatureDefMetatable(lua_State* L)
 {
-	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
+	/*const void* userData =*/ lua_touserdata(L, lua_upvalueindex(1));
 	//const FeatureDef* fd = (const FeatureDef*)userData;
 	return 0;
 }

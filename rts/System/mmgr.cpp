@@ -1,4 +1,4 @@
-// Thread safety is copyright 2007, Tobi Vollebregt.
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Copyright 2000, Paul Nettle. All rights reserved.

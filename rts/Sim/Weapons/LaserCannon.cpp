@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Game/GameHelper.h"
 #include "LaserCannon.h"
@@ -65,7 +67,9 @@ bool CLaserCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 			return false;
 	}
 
-	const float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.7f);
+	const float spread =
+		(accuracy + sprayAngle) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
@@ -88,18 +92,22 @@ void CLaserCannon::Init(void)
 void CLaserCannon::FireImpl()
 {
 	float3 dir;
-	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
-		dir=owner->frontdir;
+	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
+		// the taairmovetype cant align itself properly, change back when that is fixed
+		dir = owner->frontdir;
 	} else {
-		dir=targetPos-weaponMuzzlePos;
+		dir = targetPos - weaponMuzzlePos;
 		dir.Normalize();
 	}
-	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.7f);
+
+	dir +=
+		(gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.Normalize();
 
-	int fpsSub=0;
-	if(owner->directControl)
-		fpsSub=6;
+	int fpsSub = 0;
+	if (owner->directControl)
+		fpsSub = 6;
 
 	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->duration * weaponDef->maxvelocity,

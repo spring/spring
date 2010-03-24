@@ -1,11 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "Game/Camera.h"
 #include "MuzzleFlame.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "System/GlobalUnsynced.h"
 
 
 CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),0));
@@ -69,7 +72,7 @@ void CMuzzleFlame::Draw(void)
 	va->EnlargeArrays(numSmoke*8,0,VA_SIZE_TC);
 
 	for (int a = 0; a < numSmoke; ++a) { //! CAUTION: loop count must match EnlargeArrays above
-		int tex = a % ph->smoketex.size();
+		int tex = a % projectileDrawer->smoketex.size();
 		//float xmod=0.125f+(float(int(tex%6)))/16;
 		//float ymod=(int(tex/6))/16.0f;
 
@@ -82,22 +85,26 @@ void CMuzzleFlame::Draw(void)
 		col[2]=(unsigned char) (180*alpha*fade);
 		col[3]=(unsigned char) (alpha*255*fade);
 
-		va->AddVertexQTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].ystart,col);
-		va->AddVertexQTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].ystart,col);
-		va->AddVertexQTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xend,ph->smoketex[tex].yend,col);
-		va->AddVertexQTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->smoketex[tex].xstart,ph->smoketex[tex].yend,col);
+		#define st projectileDrawer->smoketex[tex]
+		va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, st->xstart, st->ystart, col);
+		va->AddVertexQTC(interPos + camera->right * drawsize - camera->up * drawsize, st->xend,   st->ystart, col);
+		va->AddVertexQTC(interPos + camera->right * drawsize + camera->up * drawsize, st->xend,   st->yend,   col);
+		va->AddVertexQTC(interPos - camera->right * drawsize + camera->up * drawsize, st->xstart, st->yend,   col);
+		#undef st
 
-		if(fade<1){
-			float ifade= 1-fade;
-			col[0]=(unsigned char)(ifade*255);
-			col[1]=(unsigned char)(ifade*255);
-			col[2]=(unsigned char)(ifade*255);
-			col[3]=(unsigned char)(1);
+		if (fade < 1.0f) {
+			float ifade = 1.0f - fade;
+			col[0] = (unsigned char)(ifade*255);
+			col[1] = (unsigned char)(ifade*255);
+			col[2] = (unsigned char)(ifade*255);
+			col[3] = (unsigned char)(1);
 
-			va->AddVertexQTC(interPos-camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.ystart,col);
-			va->AddVertexQTC(interPos+camera->right*drawsize-camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.ystart,col);
-			va->AddVertexQTC(interPos+camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xend ,ph->muzzleflametex.yend ,col);
-			va->AddVertexQTC(interPos-camera->right*drawsize+camera->up*drawsize,ph->muzzleflametex.xstart,ph->muzzleflametex.yend ,col);
+			#define mft projectileDrawer->muzzleflametex
+			va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, mft->xstart, mft->ystart, col);
+			va->AddVertexQTC(interPos + camera->right * drawsize - camera->up * drawsize, mft->xend,   mft->ystart, col);
+			va->AddVertexQTC(interPos + camera->right * drawsize + camera->up * drawsize, mft->xend,   mft->yend,   col);
+			va->AddVertexQTC(interPos - camera->right * drawsize + camera->up * drawsize, mft->xstart, mft->yend,   col);
+			#undef mft
 		}
 	}
 }

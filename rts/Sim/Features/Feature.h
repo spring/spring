@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FEATURE_H__
 #define __FEATURE_H__
 
@@ -71,11 +73,6 @@ public:
 				return true;
 		}
 	}
-
-	// should not be here
-	void DrawS3O();
-
-	S3DModel* model;
 
 	std::string createdFromUnit;
 	/** This flag is used to stop a potential exploit involving tripping a unit back and forth

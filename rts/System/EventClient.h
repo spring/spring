@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
-// EventClient.h: interface for the CEventClient class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -20,7 +19,8 @@ class CFeature;
 class CProjectile;
 struct Command;
 class CLogSubsystem;
-
+typedef void* zipFile;
+class CArchiveBase;
 
 class CEventClient
 {
@@ -58,6 +58,8 @@ class CEventClient
 
 	public:
 		// Synced events
+		virtual void Load(CArchiveBase* archive);
+
 		virtual void GamePreload();
 		virtual void GameStart();
 		virtual void GameOver();
@@ -113,6 +115,8 @@ class CEventClient
 		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
 
 		// Unsynced events
+		virtual void Save(zipFile archive);
+
 		virtual void Update();
 
 		virtual bool KeyPress(unsigned short key, bool isRepeat);

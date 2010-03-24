@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_PARSER_H
 #define LUA_PARSER_H
-// LuaParser.h: interface for the LuaParser class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -16,6 +15,7 @@ using std::set;
 #include "FileSystem/VFSModes.h"
 
 class float3;
+class float4;
 class LuaTable;
 class LuaParser;
 struct lua_State;
@@ -64,6 +64,7 @@ class LuaTable {
 		bool   GetBool(int key, bool def) const;
 		float  GetFloat(int key, float def) const;
 		float3 GetFloat3(int key, const float3& def) const;
+		float4 GetFloat4(int key, const float4& def) const;
 		string GetString(int key, const string& def) const;
 
 		// string keys  (always lowercase)
@@ -71,6 +72,7 @@ class LuaTable {
 		bool   GetBool(const string& key, bool def) const;
 		float  GetFloat(const string& key, float def) const;
 		float3 GetFloat3(const string& key, const float3& def) const;
+		float4 GetFloat4(const string& key, const float4& def) const;
 		string GetString(const string& key, const string& def) const;
 
 		/* not having these makes for better code, imo

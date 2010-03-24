@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "BeamLaser.h"
 #include "Game/GameHelper.h"
@@ -122,7 +124,9 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 			return false;
 	}
 
-	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.7f);
+	const float spread =
+		(accuracy + sprayAngle) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
@@ -177,7 +181,7 @@ void CBeamLaser::FireImpl(void)
 		}
 	}
 
-	dir += (salvoError) * (1 - owner->limExperience * 0.7f);
+	dir += ((salvoError) * (1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.ANormalize();
 
 	FireInternal(dir, false);
@@ -202,7 +206,9 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	float3 curPos = weaponMuzzlePos;
 	float3 hitPos;
 
-	dir += gs->randVector() * sprayAngle * (1 - owner->limExperience * 0.7f);
+	dir +=
+		((gs->randVector() * sprayAngle *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight)));
 	dir.ANormalize();
 
 	bool tryAgain = true;
@@ -301,7 +307,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	}
 
 	// make it possible to always hit with some minimal intensity (melee weapons have use for that)
-	const float intensity = std::max(minIntensity, 1.0f - (curLength) / (actualRange * 2));
+	const float hitIntensity = std::max(minIntensity, 1.0f - (curLength) / (actualRange * 2));
 
 	if (curLength < maxLength) {
 		// Dynamic Damage
@@ -324,8 +330,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		helper->Explosion(
 			hitPos,
 			weaponDef->dynDamageExp > 0?
-				dynDamages * (intensity * damageMul):
-				weaponDef->damages * (intensity * damageMul),
+				dynDamages * (hitIntensity * damageMul):
+				weaponDef->damages * (hitIntensity * damageMul),
 			areaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,

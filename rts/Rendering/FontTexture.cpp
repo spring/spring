@@ -1,15 +1,8 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+// creates a font texture atlas and spec file (optionally outlined)
+
 #include "StdAfx.h"
-/*******************************************************************************/
-/*******************************************************************************/
-//
-//  file:     FontTexture.cpp
-//  author:   Dave Rodgers  (aka: trepan)
-//  date:     Apr 01, 2007
-//  license:  GNU GPL, v2 or later
-//  desc:     creates a font texture atlas and spec file (optionally outlined)
-//
-/*******************************************************************************/
-/*******************************************************************************/
 
 #include <errno.h>
 #include <stdio.h>

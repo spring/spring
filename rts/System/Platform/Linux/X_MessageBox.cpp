@@ -1,13 +1,4 @@
-/**
- * @file X_MessageBox.cpp
- * @brief X_MessageBox function
- * @author Tobi Vollebregt
- *
- * Defines the X_MessageBox() function.
- *
- * Copyright (C) 2006.  Licensed under the terms of the
- * GNU GPL, v2 or later
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <stdio.h>
 #include <stdlib.h>

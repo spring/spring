@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef EVENT_HANDLER_H
 #define EVENT_HANDLER_H
-// EventHandler.h: interface for the CEventHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -42,6 +41,8 @@ class CEventHandler
 
 	public:
 		// Synced events
+		void Load(CArchiveBase* archive);
+
 		void GamePreload();
 		void GameStart();
 		void GameOver();
@@ -99,6 +100,8 @@ class CEventHandler
 
 	public:
 		// Unsynced events
+		void Save(zipFile archive);
+
 		void Update();
 
 		bool KeyPress(unsigned short key, bool isRepeat);
@@ -190,6 +193,8 @@ class CEventHandler
 		EventClientList handles;
 
 		// synced
+		EventClientList listLoad;
+
 		EventClientList listGamePreload;
 		EventClientList listGameStart;
 		EventClientList listGameOver;
@@ -241,6 +246,8 @@ class CEventHandler
 		EventClientList listStockpileChanged;
 
 		// unsynced
+		EventClientList listSave;
+
 		EventClientList listUpdate;
 
 		EventClientList listKeyPress;

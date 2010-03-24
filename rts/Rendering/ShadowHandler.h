@@ -1,10 +1,13 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SHADOWHANDLER_H
 #define SHADOWHANDLER_H
 
-#include "Matrix44f.h"
-#include "GL/myGL.h"
 #include <vector>
+
+#include "GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "System/Matrix44f.h"
 
 namespace Shader {
 	struct IProgramObject;
@@ -32,8 +35,8 @@ public:
 	float3 cross1;
 	float3 cross2;
 
-	float x1,x2,y1,y2;
-	float xmid,ymid;
+	float x1, x2, y1, y2;
+	float xmid, ymid;
 	float p17, p18;
 
 	CMatrix44f shadowMatrix;
@@ -42,13 +45,24 @@ public:
 
 	void GetShadowMapSizeFactors(float &param17, float &param18);
 
-	Shader::IProgramObject* GetMdlShadowGenShader() { return mdlShadowGenShader; }
-	Shader::IProgramObject* GetMapShadowGenShader() { return mapShadowGenShader; }
+	enum ShadowGenProgram {
+		SHADOWGEN_PROGRAM_MODEL      = 0,
+		SHADOWGEN_PROGRAM_MAP        = 1,
+		SHADOWGEN_PROGRAM_TREE_NEAR  = 2,
+		SHADOWGEN_PROGRAM_TREE_FAR   = 3,
+		SHADOWGEN_PROGRAM_PROJECTILE = 4,
+		SHADOWGEN_PROGRAM_LAST       = 5,
+	};
+
+	Shader::IProgramObject* GetShadowGenProg(ShadowGenProgram p) {
+		return shadowGenProgs[p];
+	}
 
 protected:
-	void GetFrustumSide(float3& side,bool upside);
+	void GetFrustumSide(float3& side, bool upside);
 	bool InitDepthTarget();
 	void DrawShadowPasses();
+	void LoadShadowGenShaderProgs();
 
 	struct fline {
 		float base;
@@ -60,14 +74,11 @@ protected:
 	std::vector<fline> left;
 	FBO fb;
 
-	bool firstDraw;
 	static bool firstInstance;
 
-	//! these project 3DO+S3O model / SMF+SM3 map geometry
-	//! into light-space to write the depth-buffer texture
-	//! note: 99% identical code, maybe merge?
-	Shader::IProgramObject* mdlShadowGenShader;
-	Shader::IProgramObject* mapShadowGenShader;
+	//! these project geometry into light-space
+	//! to write the (FBO) depth-buffer texture
+	std::vector<Shader::IProgramObject*> shadowGenProgs;
 };
 
 extern CShadowHandler* shadowHandler;

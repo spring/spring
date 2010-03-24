@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaCallInCheck.cpp: implementation of the LuaCallInCheck class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "mmgr.h"
 
 #include "LuaCallInCheck.h"

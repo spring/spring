@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _3DMODEL_H
 #define _3DMODEL_H
 
@@ -8,9 +10,11 @@
 #include "Sim/Units/Unit.h"
 
 
-const int MODELTYPE_3DO   = 0;
-const int MODELTYPE_S3O   = 1;
-const int MODELTYPE_OTHER = 2;
+const int
+	MODELTYPE_3DO   = 0,
+	MODELTYPE_S3O   = 1,
+	MODELTYPE_OBJ   = 2,
+	MODELTYPE_OTHER = 3;
 
 struct CollisionVolume;
 struct S3DModel;
@@ -35,10 +39,11 @@ struct S3DModelPiece {
 	// defaults to a box
 	CollisionVolume* colvol;
 
-	//todo: add float3 orientation;
+	// TODO: add float3 orientation;
 
 	virtual ~S3DModelPiece();
 	virtual const float3& GetVertexPos(const int& idx) const = 0;
+	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 	void DrawStatic() const;
 };
 

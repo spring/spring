@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -11,10 +13,7 @@ CR_REG_METADATA(CMetalMap,(
 				CR_MEMBER(extractionMap)
 				));
 
-/*
-Constructor
-Receiving a map over all metal, and creating a map over extraction.
-*/
+/** Receiving a map over all metal, and creating a map over extraction. */
 CMetalMap::CMetalMap(unsigned char* map,
                      int _sizeX, int _sizeZ, float _metalScale):
 	metalMap(map),
@@ -53,10 +52,7 @@ CMetalMap::CMetalMap(unsigned char* map,
 }
 
 
-/*
-Destructor
-Free the memory used by maps.
-*/
+/** Frees the memory used by maps. */
 CMetalMap::~CMetalMap(void)
 {
 	delete[] metalMap;
@@ -74,9 +70,7 @@ static inline void ClampInt(int& var, int min, int maxPlusOne)
 }
 
 
-/*
-Gives the amount of metal over an area.
-*/
+/** Gives the amount of metal over an area. */
 float CMetalMap::GetMetalAmount(int x1, int z1, int x2, int z2)
 {
 	ClampInt(x1, 0, sizeX);
@@ -95,9 +89,7 @@ float CMetalMap::GetMetalAmount(int x1, int z1, int x2, int z2)
 }
 
 
-/*
-Gives the amount of metal on a single square.
-*/
+/** Gives the amount of metal on a single square. */
 float CMetalMap::GetMetalAmount(int x, int z)
 {
 	ClampInt(x, 0, sizeX);
@@ -107,13 +99,13 @@ float CMetalMap::GetMetalAmount(int x, int z)
 }
 
 
-/*
-Makes a request for extracting metal from a given square.
-If there is metal left to extract to the requested depth,
-the amount available will be returned and the requested
-depth will be sat as new extraction-depth on the extraction-map.
-If the requested depth is greater than the current
-extraction-depth 0.0 will be returned and nothing changed.
+/**
+ * Makes a request for extracting metal from a given square.
+ * If there is metal left to extract to the requested depth,
+ * the amount available will be returned and the requested
+ * depth will be sat as new extraction-depth on the extraction-map.
+ * If the requested depth is greater than the current
+ * extraction-depth 0.0 will be returned and nothing changed.
 */
 float CMetalMap::RequestExtraction(int x, int z, float toDepth)
 {
@@ -134,11 +126,11 @@ float CMetalMap::RequestExtraction(int x, int z, float toDepth)
 }
 
 
-/*
-When a extraction ends, the digged depth should be left
-back to the extraction-map. To be available for other
-extractors to use.
-*/
+/**
+ * When a extraction ends, the digged depth should be left
+ * back to the extraction-map. To be available for other
+ * extractors to use.
+ */
 void CMetalMap::RemoveExtraction(int x, int z, float depth)
 {
 	ClampInt(x, 0, sizeX);
@@ -146,3 +138,4 @@ void CMetalMap::RemoveExtraction(int x, int z, float depth)
 
 	extractionMap[(z * sizeX) + x] -= depth;
 }
+

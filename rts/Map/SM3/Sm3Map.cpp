@@ -1,28 +1,34 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 
 #include "Sm3Map.h"
 #include "Sm3GroundDrawer.h"
+#include "terrain/TerrainNode.h"
 
-#include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
+#include "Game/Camera.h"
+#include "Game/GameSetup.h"
 #include "Map/MapInfo.h"
 #include "Map/MapParser.h"
 #include "Rendering/ShadowHandler.h"
-#include "ConfigHandler.h"
-#include "Platform/errorhandler.h"
-#include "Platform/byteorder.h"
-#include "FileSystem/FileHandler.h"
-#include "TdfParser.h"
-#include "Util.h"
-
-#include "terrain/TerrainNode.h"
-#include "Game/Camera.h"
-#include "Game/GameSetup.h"
+#include "Rendering/GL/myGL.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/TdfParser.h"
+#include "System/Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/byteorder.h"
 
 #include <stdexcept>
 #include <fstream>
-#include "bitops.h"
 
+
+
+struct Sm3LoadCB: terrain::ILoadCallback
+{
+	void Write(const char* msg) { logOutput.Print("%s", msg); }
+};
 
 // FIXME - temporary, until the LuaParser change is done
 static const TdfParser& GetMapDefParser()
@@ -32,13 +38,52 @@ static const TdfParser& GetMapDefParser()
 }
 
 
-CR_BIND_DERIVED(CSm3ReadMap, CReadMap, ())
+CR_BIND_DERIVED(CSm3ReadMap, CReadMap, (""))
 
-CSm3ReadMap::CSm3ReadMap()
+CSm3ReadMap::CSm3ReadMap(const std::string& mapName)
 {
-	groundDrawer=0;
+	groundDrawer = 0;
 	minimapTexture = 0;
-	numFeatures=0;
+	numFeatures = 0;
+
+	try {
+		std::string lmsg = "Loading " + mapName;
+		PrintLoadMsg(lmsg.c_str());
+
+		if (!mapInfo->sm3.minimap.empty()) {
+			CBitmap bmp;
+			if (bmp.Load(mapInfo->sm3.minimap)) {
+				minimapTexture = bmp.CreateTexture(true);
+			}
+		}
+
+
+		renderer = new terrain::Terrain();
+
+		{
+			// load the heightmap in advance
+			Sm3LoadCB cb;
+			renderer->LoadHeightMap(GetMapDefParser(), &cb);
+
+			width = renderer->GetHeightmapWidth() - 1;
+			height = renderer->GetHeightmapWidth() - 1; //! note: not height
+		}
+
+		CReadMap::Initialize();
+
+		if (GetMapDefParser().SectionExist("map\\featuretypes")) {
+			const int numTypes = atoi(GetMapDefParser().SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
+			for (int a = 0; a < numTypes; a++) {
+				char loc[100];
+				SNPRINTF(loc, 100, "map\\featuretypes\\type%d", a);
+				featureTypes.push_back (new std::string(GetMapDefParser().SGetValueDef("TreeType0", loc)));
+			}
+		}
+
+		LoadFeatureData();
+	} catch (content_error& e) {
+		ErrorMessageBox(e.what(), "Error:", MBF_OK);
+	}
 }
 
 CSm3ReadMap::~CSm3ReadMap()
@@ -53,98 +98,6 @@ CSm3ReadMap::~CSm3ReadMap()
 	glDeleteTextures(1, &minimapTexture);
 }
 
-struct Sm3LoadCB : terrain::ILoadCallback
-{
-	void Write(const char *msg) { logOutput.Print ("%s", msg); }
-};
-
-void CSm3ReadMap::Initialize (const char *mapname)
-{
-	try {
-		string lmsg = "Loading " + string(mapname);
-		PrintLoadMsg(lmsg.c_str());
-		GLint tu;
-		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &tu);
-
-		renderer = new terrain::Terrain;
-
-		renderer->config.cacheTextures=false;
-
-		renderer->config.forceFallbackTexturing = !!configHandler->Get("SM3ForceFallbackTex", 0);
-
-		if (!renderer->config.forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
-			renderer->config.useBumpMaps = true;
-			renderer->config.anisotropicFiltering = 0.0f;
-		}
-
-		renderer->config.useStaticShadow = false;
-
-		renderer->config.terrainNormalMaps = false;
-		renderer->config.normalMapLevel = 3;
-
-		if (shadowHandler->drawShadows)
-			renderer->config.useShadowMaps = true;
-
-		if (!mapInfo->sm3.minimap.empty()) {
-			CBitmap bmp;
-			if(bmp.Load(mapInfo->sm3.minimap))
-				minimapTexture=bmp.CreateTexture(true);
-		}
-
-/*		int numStages=atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
-		int maxStages=configHandler->Get("SM3MaxTextureStages", 10);
-		if (numStages > maxStages) {
-			renderer->config.cacheTextures = true;
-			renderer->config.cacheTextureSize = 256;
-		//	renderer->config.detailMod
-		}
-*/
-		Sm3LoadCB loadcb;
-		terrain::LightingInfo lightInfo;
-		lightInfo.ambient = mapInfo->light.groundAmbientColor;
-		terrain::StaticLight light;
-		light.color = mapInfo->light.groundSunColor;
-		light.directional = false;
-		light.position = mapInfo->light.sunDir *1000000;
-		lightInfo.staticLights.push_back (light);
-		renderer->Load (GetMapDefParser(), &lightInfo, &loadcb);
-
-		height = width = renderer->GetHeightmapWidth() - 1;
-
-		// Set global map info
-		gs->mapx=width;
-		gs->mapy=height;
-		gs->mapSquares = width*height;
-		gs->hmapx=width/2;
-		gs->hmapy=height/2;
-		gs->pwr2mapx=next_power_of_2(width);
-		gs->pwr2mapy=next_power_of_2(height);
-
-		float3::maxxpos=width*SQUARE_SIZE-1;
-		float3::maxzpos=height*SQUARE_SIZE-1;
-
-		CReadMap::Initialize();
-
-		const TdfParser& mapDefParser = GetMapDefParser();
-		if (mapDefParser.SectionExist("map\\featuretypes")) {
-			int numTypes = atoi(mapDefParser.SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
-			for (int a=0;a<numTypes;a++) {
-				char loc[100];
-				SNPRINTF(loc, 100, "map\\featuretypes\\type%d", a);
-				featureTypes.push_back (new std::string(mapDefParser.SGetValueDef("TreeType0", loc)));
-			}
-		}
-		LoadFeatureData();
-
-		groundDrawer = new CSm3GroundDrawer (this);
-
-		configHandler->NotifyOnChange(this);
-	}
-	catch(content_error& e)
-	{
-		ErrorMessageBox(e.what(), "Error:", MBF_OK);
-	}
-}
 
 
 void CSm3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
@@ -160,10 +113,47 @@ void CSm3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
 }
 
 
-CBaseGroundDrawer *CSm3ReadMap::GetGroundDrawer ()
-{
-	return groundDrawer;
+CBaseGroundDrawer* CSm3ReadMap::GetGroundDrawer() { return groundDrawer; }
+void CSm3ReadMap::NewGroundDrawer() {
+	renderer->config.cacheTextures = false;
+	renderer->config.forceFallbackTexturing = !!configHandler->Get("SM3ForceFallbackTex", 0);
+
+	if (!renderer->config.forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
+		renderer->config.useBumpMaps = true;
+		renderer->config.anisotropicFiltering = 0.0f;
+	}
+
+	renderer->config.useStaticShadow = false;
+	renderer->config.useShadowMaps = shadowHandler->drawShadows;
+	renderer->config.terrainNormalMaps = false;
+	renderer->config.normalMapLevel = 3;
+
+	/*
+	int numStages = atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
+	int maxStages = configHandler->Get("SM3MaxTextureStages", 10);
+	if (numStages > maxStages) {
+		renderer->config.cacheTextures = true;
+		renderer->config.cacheTextureSize = 256;
+		// renderer->config.detailMod
+	}
+	*/
+
+	Sm3LoadCB loadcb;
+	terrain::LightingInfo lightInfo;
+		lightInfo.ambient = mapInfo->light.groundAmbientColor;
+	terrain::StaticLight light;
+		light.color = mapInfo->light.groundSunColor;
+		light.directional = false;
+		light.position = mapInfo->light.sunDir * 1000000.0f;
+	lightInfo.staticLights.push_back(light);
+
+	renderer->Load(GetMapDefParser(), &lightInfo, &loadcb);
+
+	groundDrawer = new CSm3GroundDrawer(this);
+
+	configHandler->NotifyOnChange(this);
 }
+
 
 void CSm3ReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 {
@@ -322,7 +312,7 @@ CSm3ReadMap::InfoMap::~InfoMap () {
 // Some map types:
 //   "metal"  -  metalmap
 //   "grass"  -  grassmap
-unsigned char *CSm3ReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* bm)
+unsigned char* CSm3ReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bm)
 {
 	std::string map;
 	if (!GetMapDefParser().SGetValue(map, "MAP\\INFOMAPS\\" + name))

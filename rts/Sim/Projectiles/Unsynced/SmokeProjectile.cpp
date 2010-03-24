@@ -1,6 +1,4 @@
-// SmokeProjectile.cpp: implementation of the CSmokeProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -9,10 +7,11 @@
 
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeProjectile, CProjectile, );
 
@@ -48,9 +47,9 @@ CSmokeProjectile::CSmokeProjectile()
 
 void CSmokeProjectile::Init(const float3& pos, CUnit *owner GML_PARG_C)
 {
-	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
+	textureNum=(int)(gu->usRandInt() % projectileDrawer->smoketex.size());
 
-	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
+	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10.0f)
 		useAirLos=true;
 
 	if(!owner)
@@ -70,7 +69,7 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float t
 	ageSpeed=1.0f/ttl;
 	checkCol=false;
 	castShadow=true;
-	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
+	textureNum=(int)(gu->usRandInt() % projectileDrawer->smoketex.size());
 
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
 		useAirLos=true;
@@ -116,8 +115,11 @@ void CSmokeProjectile::Draw()
 	const float interSize=size+sizeExpansion*gu->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
-	va->AddVertexTC(drawPos-pos2,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(drawPos+pos1,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(drawPos+pos2,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].yend,col);
-	va->AddVertexTC(drawPos-pos1,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].yend,col);
+
+	#define st projectileDrawer->smoketex[textureNum]
+	va->AddVertexTC(drawPos - pos2, st->xstart, st->ystart, col);
+	va->AddVertexTC(drawPos + pos1, st->xend,   st->ystart, col);
+	va->AddVertexTC(drawPos + pos2, st->xend,   st->yend,   col);
+	va->AddVertexTC(drawPos - pos1, st->xstart, st->yend,   col);
+	#undef st
 }

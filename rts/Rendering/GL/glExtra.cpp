@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -8,7 +10,7 @@
 #include "LogOutput.h"
 
 
-/*
+/**
  *  Draws a trigonometric circle in 'resolution' steps.
  */
 static void defSurfaceCircle(const float3& center, float radius, unsigned int res)

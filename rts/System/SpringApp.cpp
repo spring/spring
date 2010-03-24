@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 
@@ -165,8 +167,8 @@ bool SpringApp::Initialize()
 	mouseInput = IMouseInput::Get();
 
 	// Global structures
-	gs = new CGlobalSyncedStuff();
-	gu = new CGlobalUnsyncedStuff();
+	gs = new CGlobalSynced();
+	gu = new CGlobalUnsynced();
 
 	if (cmdline->IsSet("minimise")) {
 		gu->active = false;
@@ -193,17 +195,7 @@ bool SpringApp::Initialize()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
 
-	// Runtime compress textures?
-	if (GLEW_ARB_texture_compression) {
-		// we don't even need to check it, 'cos groundtextures must have that extension
-		// default to off because it reduces quality (smallest mipmap level is bigger)
-		gu->compressTextures = !!configHandler->Get("CompressTextures", 0);
-	}
-
-	// use some ATI bugfixes?
-	if ((gu->atiHacks = !!configHandler->Get("AtiHacks", gu->haveATI? 1: 0))) {
-		logOutput.Print("ATI hacks enabled\n");
-	}
+	gu->PostInit();
 
 	// Initialize named texture handler
 	CNamedTextures::Init();

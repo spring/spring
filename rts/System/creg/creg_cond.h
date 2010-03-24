@@ -1,11 +1,7 @@
-/*
- * Author: hoijui (I am giving the copyright to Jelmer Cnossen)
- *
- * Created on October 9, 2008, 7:07 AM
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef jc_CREG_COND_H
-#define jc_CREG_COND_H
+#ifndef _CREG_COND_H_
+#define _CREG_COND_H_
 
 // AIs which want to use creg have to specify this when compiling:
 // '-DUSING_CREG'
@@ -42,4 +38,4 @@
 #define CR_POSTLOAD(PostLoadFunc)
 #endif // NOT_USING_CREG
 
-#endif // jc_CREG_COND_H
+#endif // _CREG_COND_H_

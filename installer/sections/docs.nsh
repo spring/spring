@@ -2,15 +2,15 @@
   SetOutPath "$INSTDIR\docs"
   Delete "$INSTDIR\docs\readme.html"
   File "..\LICENSE.html"
-  File "..\Documentation\changelog.txt"
-  File "..\Documentation\cmds.txt"
-  File "..\Documentation\SelectionKeys.txt"
+  File "..\doc\changelog.txt"
+  File "..\doc\cmds.txt"
+  File "..\doc\SelectionKeys.txt"
 
-  File "..\Documentation\userdocs\FAQ.html"
-  File "..\Documentation\userdocs\GettingStarted.html"
-  File "..\Documentation\userdocs\Legal.html"
-  File "..\Documentation\userdocs\main.html"
-  File "..\Documentation\userdocs\MoreInfo.html"
+  File "..\doc\userdocs\FAQ.html"
+  File "..\doc\userdocs\GettingStarted.html"
+  File "..\doc\userdocs\Legal.html"
+  File "..\doc\userdocs\main.html"
+  File "..\doc\userdocs\MoreInfo.html"
 !else
   ; Documentation
   Delete "$INSTDIR\docs\readme.html"

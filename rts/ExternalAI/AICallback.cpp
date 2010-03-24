@@ -1,4 +1,5 @@
-// Generalized callback interface - shared between global AI and group AI
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -887,9 +888,9 @@ int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 	int a = 0;
 
 	const int myAllyTeam = teamHandler->AllyTeam(team);
-	const std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (ui = units.begin(); ui != units.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		if (teamHandler->Ally(u->allyteam, myAllyTeam)) {

@@ -4,13 +4,11 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "CUtils/Util.h"
-//#include <vector>
-//#include <iostream>
+#include "System/Util.h"
 #include <stdio.h>
 //#include <direct.h>	// mkdir function (windows)
 //#include <sys/stat.h>	// mkdir function (linux)
 #include <time.h>		// time(NULL)
-//#include "KrogsMetalClass-v0.4/MetalMap.h"
 
 static GlobalResourceMap* GRMap=0;
 static GlobalTerrainMap* GTMap=0;
@@ -143,8 +141,8 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 	{
 		ClearLogFiles();
 		*l<<"Loading Global RAI...";
-		*l<<"\n Mod = "<<cb->GetModHumanName();
-		*l<<"\n Map = "<<cb->GetMapName();
+		*l<<"\n Mod = " << cb->GetModHumanName() << "(" << IntToString(cb->GetModHash(), "%x") << ")";
+		*l<<"\n Map = " << cb->GetMapName()      << "(" << IntToString(cb->GetMapHash(), "%x") << ")";
 		int seed = time(NULL);
 		srand(seed);
 		RAIs=0;

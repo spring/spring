@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNIT_H
 #define UNIT_H
-// Unit.h: interface for the CUnit class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <vector>
@@ -23,7 +22,6 @@ class CWeapon;
 class CUnitScript;
 struct DamageArray;
 struct LosInstance;
-struct S3DModel;
 struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
@@ -158,9 +156,6 @@ public:
 	};
 	virtual bool ChangeTeam(int team, ChangeType type);
 	virtual void StopAttackingAllyTeam(int ally);
-
-	// TODO: should not be here
-	void DrawS3O();
 
 	const UnitDef* unitDef;
 	CollisionVolume* collisionVolume;
@@ -407,13 +402,11 @@ public:
 #endif
 	}
 
-	void UpdateDrawPos();
 	float3 drawPos;
 	float3 drawMidPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
-	S3DModel* model;
 	LocalModel* localmodel;
 	CUnitScript* script;
 

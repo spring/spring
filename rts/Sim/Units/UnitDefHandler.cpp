@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <stdio.h>
 #include <algorithm>
@@ -18,7 +20,6 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "ConfigHandler.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/IModelParser.h"
@@ -43,8 +44,6 @@ bool isblank(int c) {
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
-	weaponDefHandler = new CWeaponDefHandler();
-
 	PrintLoadMsg("Loading unit definitions");
 
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("UnitDefs");
@@ -128,25 +127,22 @@ CUnitDefHandler::~CUnitDefHandler(void)
 {
 	// delete any eventual yardmaps
 	for (int i = 1; i <= numUnitDefs; i++) {
-		UnitDef& ud = unitDefs[i];
+		UnitDef* ud = &unitDefs[i];
 		for (int u = 0; u < 4; u++) {
-			delete[] ud.yardmaps[u];
+			delete[] ud->yardmaps[u];
 		}
 
-		if (ud.buildPic) {
-			if (ud.buildPic->textureOwner) {
-				glDeleteTextures(1, &unitDefs[i].buildPic->textureID);
-			}
-			delete ud.buildPic;
-			ud.buildPic = NULL;
+		if (ud->buildPic) {
+			ud->buildPic->Free();
+			delete ud->buildPic;
+			ud->buildPic = NULL;
 		}
 
-		delete ud.collisionVolume;
-		ud.collisionVolume = NULL;
+		delete ud->collisionVolume;
+		ud->collisionVolume = NULL;
 	}
 
 	delete[] unitDefs;
-	delete weaponDefHandler;
 }
 
 
@@ -489,7 +485,6 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	}
 
 	ud.categoryString = udTable.GetString("category", "");
-	ud.TEDClassString = udTable.GetString("TEDClass", "0");
 
 	ud.category = CCategoryHandler::Instance()->GetCategories(udTable.GetString("category", ""));
 	ud.noChaseCategory = CCategoryHandler::Instance()->GetCategories(udTable.GetString("noChaseCategory", ""));
@@ -596,7 +591,8 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.type = "Transport";
 	}
 	else if (ud.builder) {
-		if (ud.TEDClassString != "PLANT") {
+		if ((ud.speed > 0.0f) || ud.canfly || udTable.GetString("yardMap", "").empty()) {
+			// hubs and nano-towers need to be builders (for now)
 			ud.type = "Builder";
 		} else {
 			ud.type = "Factory";
@@ -708,21 +704,17 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 
 	ud.leaveTracks   = udTable.GetBool("leaveTracks", false);
+	ud.trackTypeName = udTable.GetString("trackType", "StdTank");
 	ud.trackWidth    = udTable.GetFloat("trackWidth",   32.0f);
 	ud.trackOffset   = udTable.GetFloat("trackOffset",   0.0f);
 	ud.trackStrength = udTable.GetFloat("trackStrength", 0.0f);
 	ud.trackStretch  = udTable.GetFloat("trackStretch",  1.0f);
-	if (ud.leaveTracks && groundDecals) {
-		ud.trackType = groundDecals->GetTrackType(udTable.GetString("trackType", "StdTank"));
-	}
 
 	ud.useBuildingGroundDecal = udTable.GetBool("useBuildingGroundDecal", false);
+	ud.buildingDecalTypeName = udTable.GetString("buildingGroundDecalType", "");
 	ud.buildingDecalSizeX = udTable.GetInt("buildingGroundDecalSizeX", 4);
 	ud.buildingDecalSizeY = udTable.GetInt("buildingGroundDecalSizeY", 4);
 	ud.buildingDecalDecaySpeed = udTable.GetFloat("buildingGroundDecalDecaySpeed", 0.1f);
-	if (ud.useBuildingGroundDecal && groundDecals) {
-		ud.buildingDecalType = groundDecals->GetBuildingDecalType(udTable.GetString("buildingGroundDecalType", ""));
-	}
 
 	ud.canDropFlare    = udTable.GetBool("canDropFlare", false);
 	ud.flareReloadTime = udTable.GetFloat("flareReload",     5.0f);
@@ -785,12 +777,14 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	LuaTable sfxTable = udTable.SubTable("SFXTypes");
 	LuaTable expTable = sfxTable.SubTable("explosionGenerators");
+
 	for (int expNum = 1; expNum <= 1024; expNum++) {
-		string expsfx = expTable.GetString(expNum, "");
+		std::string expsfx = expTable.GetString(expNum, "");
+
 		if (expsfx == "") {
 			break;
 		} else {
-			ud.sfxExplGens.push_back(explGenHandler->LoadGenerator(expsfx));
+			ud.sfxExplGenNames.push_back(expsfx);
 		}
 	}
 

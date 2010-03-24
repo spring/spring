@@ -1,4 +1,5 @@
-# Copyright (C) 2006  Tobi Vollebregt
+# This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
+
 # Code copied from the old build system, but heavily reordered and/or rewritten.
 # vim:noet ts=4 sts=4 sw=4
 

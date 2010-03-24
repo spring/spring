@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 #include "FeatureHandler.h"
@@ -6,7 +8,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/FeatureDrawer.h" // FIXME -- sim shouldn't depend on rendering
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
@@ -315,8 +316,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-	if (freeIDs.empty())
-	{ // alloc n new ids and randomly insert to freeIDs
+	if (freeIDs.empty()) {
+		// alloc n new ids and randomly insert to freeIDs
 		const unsigned n = 100;
 		std::vector<int> newIds(n);
 		for (unsigned i = 0; i < n; ++i)
@@ -333,19 +334,14 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	features[feature->id] = feature;
 	SetFeatureUpdateable(feature);
 
-	// FIXME -- sim shouldn't depend on rendering
-	featureDrawer->FeatureCreated(feature);
-
 	eventHandler.FeatureCreated(feature);
-
-	return feature->id ;
+	return feature->id;
 }
 
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
 	toBeRemoved.push_back(feature->id);
-
 	eventHandler.FeatureDestroyed(feature);
 }
 
@@ -419,9 +415,6 @@ void CFeatureHandler::Update()
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
 				features[feature->id] = 0;
-
-				// FIXME -- sim shouldn't depend on rendering
-				featureDrawer->FeatureDestroyed(feature);
 
 				if (feature->inUpdateQue) {
 					updateFeatures.erase(feature);

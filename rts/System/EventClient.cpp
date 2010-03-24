@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// EventClient.cpp: implementation of the CEventClient class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "EventClient.h"
 using std::string;
@@ -28,6 +27,7 @@ CEventClient::~CEventClient()
 //  Synced
 //
 
+void CEventClient::Load(CArchiveBase* archive) { return; }
 void CEventClient::GamePreload() { return; }
 void CEventClient::GameStart() { return; }
 void CEventClient::GameOver() { return; }
@@ -91,6 +91,8 @@ bool CEventClient::Explosion(int weaponID, const float3& pos, const CUnit* owner
 //
 //  Unsynced
 //
+
+void CEventClient::Save(zipFile archive) { return; }
 
 void CEventClient::Update() { return; }
 

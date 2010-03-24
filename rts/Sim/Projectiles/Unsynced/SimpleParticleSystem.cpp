@@ -1,14 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Game/Camera.h"
-#include "Sim/Misc/GlobalConstants.h"
+#include "SimpleParticleSystem.h"
 #include "GenericParticleProjectile.h"
-#include "GlobalUnsynced.h"
+#include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "SimpleParticleSystem.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 

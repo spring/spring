@@ -1,9 +1,5 @@
-/**
- * @file SyncedFloat3.h
- * @brief SyncedFloat3 header
- *
- * Declaration of SyncedFloat3 class
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SYNCEDFLOAT3_H
 #define SYNCEDFLOAT3_H
 

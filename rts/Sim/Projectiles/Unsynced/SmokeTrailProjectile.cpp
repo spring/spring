@@ -1,21 +1,19 @@
-// SmokeTrailProjectile.cpp: implementation of the CSmokeTrailProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "SmokeTrailProjectile.h"
 
-#include "Rendering/Textures/TextureAtlas.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
-#include "myMath.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "System/myMath.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,0,0,NULL,NULL));
 
@@ -82,18 +80,18 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 
 	//if no custom texture is defined, use the default texture
 	//Note that this will crash anyway (no idea why) so never have a null texture!
-	if (texture==0) {
-		texture = &ph->smoketrailtex;
+	if (texture == 0) {
+		texture = projectileDrawer->smoketrailtex;
 	}
 
-	if(!drawTrail){
-		float dist=pos1.distance(pos2);
-		dirpos1=pos1-dir1*dist*0.33f;
-		dirpos2=pos2+dir2*dist*0.33f;
+	if (!drawTrail) {
+		const float dist = pos1.distance(pos2);
+		dirpos1 = pos1 - dir1 * dist * 0.33f;
+		dirpos2 = pos2 + dir2 * dist * 0.33f;
 	} else if(dir1.dot(dir2)<0.98f){
-		float dist=pos1.distance(pos2);
-		dirpos1=pos1-dir1*dist*0.33f;
-		dirpos2=pos2+dir2*dist*0.33f;
+		const float dist = pos1.distance(pos2);
+		dirpos1 = pos1 - dir1 * dist * 0.33f;
+		dirpos2 = pos2 + dir2 * dist * 0.33f;
 		float3 mp=(pos1+pos2)/2;
 		midpos=CalcBeizer(0.5f,pos1,dirpos1,dirpos2,pos2);
 		middir=(dir1+dir2).ANormalize();
@@ -195,11 +193,14 @@ void CSmokeTrailProjectile::Draw()
 			col[3]=(unsigned char)alpha;
 			float size=((0.2f+(age+a)*(1.0f/lifeTime))*orgSize)*1.2f;
 
-			float3 pos=CalcBeizer(a/8.0f,pos1,dirpos1,dirpos2,pos2);
-			va->AddVertexQTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
-			va->AddVertexQTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
-			va->AddVertexQTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
-			va->AddVertexQTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+			const float3 pos = CalcBeizer(a / 8.0f, pos1, dirpos1, dirpos2, pos2);
+
+			#define st projectileDrawer->smoketex[0]
+			va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
+			va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, st->xend,   st->ystart, col);
+			va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, st->xend,   st->ystart, col);
+			va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, st->xstart, st->ystart, col);
+			#undef st
 		}
 	}
 #if defined(USE_GML) && GML_ENABLE_SIM

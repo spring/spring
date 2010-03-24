@@ -1,6 +1,4 @@
-// Sky.cpp: implementation of the CAdvSky class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -75,7 +73,7 @@ CAdvSky::CAdvSky()
 	InitSun();
 	oldCoverBaseX=-5;
 
-	cloudFP=LoadFragmentProgram("clouds.fp");
+	cloudFP=LoadFragmentProgram("ARB/clouds.fp");
 
 	glGetError();
 	displist=glGenLists(1);

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UTIL_H
 #define UTIL_H
 
@@ -50,8 +52,15 @@ std::string StringReplace(const std::string& text,
 
 static inline std::string IntToString(int i, const std::string& format = "%i")
 {
-	char buf[65]; // "%x": 32bit -> 64 hex chars + '\0'
+	char buf[64];
 	SNPRINTF(buf, sizeof(buf), format.c_str(), i);
+	return std::string(buf);
+}
+
+static inline std::string FloatToString(float f, const std::string& format = "%f")
+{
+	char buf[64];
+	SNPRINTF(buf, sizeof(buf), format.c_str(), f);
 	return std::string(buf);
 }
 

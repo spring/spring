@@ -175,7 +175,7 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 			if( S->ScoutLocAssigned )
 			{
 				float3 Pos=cb->GetUnitPos(unit);
-				const UnitDef* ud = cb->GetUnitDef(unit);
+				//const UnitDef* ud = cb->GetUnitDef(unit);
 
 				if( Pos.x - S->SL->position.x > 100 || Pos.x - S->SL->position.x < -100 || Pos.z - S->SL->position.z > 100 || Pos.z - S->SL->position.z < -100 )
 				{
@@ -517,7 +517,12 @@ void cUnitManager::Assign(int unit,UnitInfo *U)
 
 void cUnitManager::SendattackGroups()
 {
-	for( int i=0; i<GroupSize; i++ )
-		if( int(Group[i]->Enemies.size()) == 0 && (int(Group[i]->Units.size()) >= 4 || G->UDH->BLBuilder->UDefActive == 0) )
-			int enemyID = G->CM->GetClosestEnemy(cb->GetUnitPos(Group[i]->Units.begin()->first),Group[i]->Units.begin()->second);
+	for( int i=0; i<GroupSize; i++ ) {
+		if( (Group[i]->Enemies.size() == (size_t)0) &&
+		    ( (Group[i]->Units.size() >= (size_t)4) ||
+		      (G->UDH->BLBuilder->UDefActive == 0) ) ) {
+			int enemyID = G->CM->GetClosestEnemy(cb->GetUnitPos(Group[i]->Units.begin()->first), Group[i]->Units.begin()->second);
+			// TODO: FIXME: implement me
+		}
+	}
 }

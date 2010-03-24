@@ -1,9 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FREE_CONTROLLER_H__
 #define __FREE_CONTROLLER_H__
 
-
 #include "CameraController.h"
-
 
 class CFreeController : public CCameraController {
 public:

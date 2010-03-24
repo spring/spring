@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "PlayerStatistics.h"
 
 #include "Platform/byteorder.h"
@@ -11,7 +13,6 @@ PlayerStatistics::PlayerStatistics()
 	numCommands = 0;
 	unitCommands = 0;
 }
-
 
 void PlayerStatistics::swab()
 {

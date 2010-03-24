@@ -1,5 +1,7 @@
-#ifndef GAMEPARTICIPANT_H
-#define GAMEPARTICIPANT_H
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _GAME_PARTICIPANT_H
+#define _GAME_PARTICIPANT_H
 
 #include <boost/shared_ptr.hpp>
 
@@ -42,4 +44,4 @@ public:
 #endif
 };
 
-#endif // GAMEPARTICIPANT_H
+#endif // _GAME_PARTICIPANT_H

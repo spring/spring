@@ -174,6 +174,13 @@ if (SIGNAL_NANS)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
 endif(SIGNAL_NANS)
 
+# set the default build type
+if    (NOT CMAKE_BUILD_TYPE)
+	SET(CMAKE_BUILD_TYPE DEBUG2 CACHE STRING
+		"Choose the type of build, options are: DEBUG DEBUG2 DEBUG3 RELWITHDEBINFO RELEASE PROFILE"
+		FORCE)
+endif (NOT CMAKE_BUILD_TYPE)
+
 # This would produce the maximum on warnings
 #set(DEBUG_WARNINGS "-Wall -Wconversion")
 # This should produce a sane ammount of warnings
@@ -262,7 +269,7 @@ if    (UNIX AND NOT MINGW)
 	endif (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
 
 	if    (CREATE_MAN_PAGES)
-		set(MAN_SOURCE_DIR "${CMAKE_SOURCE_DIR}/Documentation/manpages")
+		set(MAN_SOURCE_DIR "${CMAKE_SOURCE_DIR}/doc/manpages")
 		set(MAN_BUILD_DIR  "${CMAKE_BINARY_DIR}/manpages")
 		set(MAN_DEST_DIR   "${MANDIR}/man6")
 

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_SHADERS_H
 #define LUA_SHADERS_H
-// LuaShaders.h: interface for the LuaShaders class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>

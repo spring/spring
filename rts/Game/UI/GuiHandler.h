@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GUIHANDLER_H
 #define GUIHANDLER_H
-// GuiHandler.h: interface for the CGuiHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <vector>
 #include <map>

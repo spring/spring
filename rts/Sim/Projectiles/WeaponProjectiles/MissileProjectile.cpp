@@ -1,26 +1,29 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
-#include "Matrix44f.h"
 #include "MissileProjectile.h"
-#include "myMath.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Misc/GeometricObjects.h"
-#include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sync/SyncTracer.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
-#include "GlobalUnsynced.h"
+#include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/GlobalUnsynced.h"
 
 static const float Smoke_Time=60;
 
@@ -90,9 +93,9 @@ CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, C
 	SetRadius(0.0f);
 
 	if (weaponDef) {
-		s3domodel = LoadModel(weaponDef);
-		if (s3domodel) {
-			SetRadius(s3domodel->radius);
+		model = LoadModel(weaponDef);
+		if (model) {
+			SetRadius(model->radius);
 		}
 	}
 
@@ -366,8 +369,8 @@ void CMissileProjectile::Draw(void)
 			float size2 = (1 + (age2 * (1 / Smoke_Time)) * 7);
 			float txs = weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * (age2 / 8.0f);
 
-			va->AddVertexQTC(drawPos - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(drawPos + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
+			va->AddVertexQTC(drawPos  - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
+			va->AddVertexQTC(drawPos  + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
 			va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
 			va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {
@@ -386,10 +389,12 @@ void CMissileProjectile::Draw(void)
 				float size = (1 + (a * (1 / Smoke_Time)) * 7);
 				float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
-				va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
-				va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+				#define st projectileDrawer->smoketex[0]
+				va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, st->xstart, st->ystart, col);
+				#undef st
 			}
 		}
 	}
@@ -440,7 +445,7 @@ void CMissileProjectile::DrawUnitPart(void)
 
 	glPushMatrix();
 		glMultMatrixf(transMatrix);
-		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading (GML)
+		glCallList(model->rootobject->displist); // dont cache displists because of delayed loading (GML)
 	glPopMatrix();
 }
 

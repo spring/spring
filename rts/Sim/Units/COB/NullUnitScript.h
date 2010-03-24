@@ -1,10 +1,9 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef NULLUNITSCRIPT_H
 #define NULLUNITSCRIPT_H
 
 #include "UnitScript.h"
-
 
 class CNullUnitScript : public CUnitScript
 {

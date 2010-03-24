@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef WEAPONDEF_H
 #define WEAPONDEF_H
 
@@ -36,6 +38,7 @@ struct WeaponDef
 	float accuracy;            // inaccuracy of whole burst
 	float sprayAngle;          // inaccuracy of individual shots inside burst
 	float movingAccuracy;      // inaccuracy while owner moving
+	float ownerExpAccWeight;   // if 0, accuracy is not increased with owner experience (max. 1)
 	float targetMoveError;     // fraction of targets move speed that is used as error offset
 	float leadLimit;           // maximum distance the weapon will lead the target
 	float leadBonus;           // factor for increasing the leadLimit with experience
@@ -133,19 +136,21 @@ struct WeaponDef
 		float3 color;
 		float3 color2;
 
-		//bool hasmodel;
 		S3DModel* model;
 		std::string modelName;
+		std::string texNames[4];
+		std::string expGenTag;
+		std::string bounceExpGenTag;
 		CColorMap* colorMap;
 
 		bool smokeTrail;
 		bool beamweapon;
 		bool hardStop;   // whether the shot should fade out or stop and contract at max range
 
-		AtlasedTexture *texture1;
-		AtlasedTexture *texture2;
-		AtlasedTexture *texture3;
-		AtlasedTexture *texture4;
+		AtlasedTexture* texture1;
+		AtlasedTexture* texture2;
+		AtlasedTexture* texture3;
+		AtlasedTexture* texture4;
 		float tilelength;
 		float scrollspeed;
 		float pulseSpeed;

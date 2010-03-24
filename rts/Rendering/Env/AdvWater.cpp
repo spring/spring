@@ -1,6 +1,4 @@
-// DrawWater.cpp: implementation of the CAdvWater class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -13,9 +11,9 @@
 #include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
 #include "BaseSky.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
 #include "Map/MapInfo.h"
@@ -90,7 +88,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	delete[] scrap;
 
 	if (loadShader)
-		waterFP=LoadFragmentProgram("water.fp");
+		waterFP=LoadFragmentProgram("ARB/water.fp");
 
 	waterSurfaceColor = mapInfo->water.surfaceColor;
 
@@ -329,7 +327,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(false,true);
 	featureDrawer->DrawFadeFeatures(false,true);
-	ph->Draw(true);
+	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 
 	game->SetDrawMode(CGame::gameNormalDraw);

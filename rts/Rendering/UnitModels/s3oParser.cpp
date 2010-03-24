@@ -1,6 +1,5 @@
-// s3oParser.cpp: implementation of the Cs3oParser class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
@@ -10,17 +9,18 @@
 #include "mmgr.h"
 
 #include "s3oParser.h"
-#include "Rendering/GL/myGL.h"
-#include "FileSystem/FileHandler.h"
 #include "s3o.h"
-#include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Platform/byteorder.h"
-#include "Platform/errorhandler.h"
-#include "Util.h"
-#include "Exceptions.h"
-#include "LogOutput.h"
+#include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/byteorder.h"
+#include "System/Platform/errorhandler.h"
 
 
 S3DModel* CS3OParser::Load(std::string name)
@@ -363,5 +363,65 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		// t = (s.cross(n));
 		// h = ((s.cross(t)).dot(n) >= 0.0f)? 1: -1;
 		// t = t * h;
+	}
+}
+
+
+
+
+void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const
+{
+	switch (primitiveType) {
+		case 0: {
+			// GL_TRIANGLES
+			for (size_t i = 0; i < vertexDrawOrder.size(); i += 3) {
+				if (gu->usRandFloat() > pieceChance)
+					continue;
+
+				SS3OVertex* verts = new SS3OVertex[4];
+
+				verts[0] = vertices[vertexDrawOrder[i + 0]];
+				verts[1] = vertices[vertexDrawOrder[i + 1]];
+				verts[2] = vertices[vertexDrawOrder[i + 1]];
+				verts[3] = vertices[vertexDrawOrder[i + 2]];
+
+				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
+			}
+		} break;
+		case 1: {
+			// GL_TRIANGLE_STRIP
+			for (size_t i = 2; i < vertexDrawOrder.size(); i++){
+				if (gu->usRandFloat() > pieceChance)
+					continue;
+
+				SS3OVertex* verts = new SS3OVertex[4];
+
+				verts[0] = vertices[vertexDrawOrder[i - 2]];
+				verts[1] = vertices[vertexDrawOrder[i - 1]];
+				verts[2] = vertices[vertexDrawOrder[i - 1]];
+				verts[3] = vertices[vertexDrawOrder[i - 0]];
+
+				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
+			}
+		} break;
+		case 2: {
+			// GL_QUADS
+			for (size_t i = 0; i < vertexDrawOrder.size(); i += 4) {
+				if (gu->usRandFloat() > pieceChance)
+					continue;
+
+				SS3OVertex* verts = new SS3OVertex[4];
+
+				verts[0] = vertices[vertexDrawOrder[i + 0]];
+				verts[1] = vertices[vertexDrawOrder[i + 1]];
+				verts[2] = vertices[vertexDrawOrder[i + 2]];
+				verts[3] = vertices[vertexDrawOrder[i + 3]];
+
+				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
+			}
+		} break;
+
+		default: {
+		} break;
 	}
 }

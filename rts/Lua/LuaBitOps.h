@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_BOOL_OPS_H
 #define LUA_BOOL_OPS_H
-// LuaBitOps.h: interface for the LuaBitOps class.
-//
-//////////////////////////////////////////////////////////////////////
 
 struct lua_State;
 
@@ -17,6 +16,5 @@ class LuaBitOps {
 		static int bit_inv(lua_State* L);
 		static int bit_bits(lua_State* L);
 };
-
 
 #endif /* LUA_BOOL_OPS_H */

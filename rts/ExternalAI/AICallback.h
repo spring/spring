@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef AICALLBACK_H
 #define AICALLBACK_H
 
@@ -6,6 +8,7 @@
 class CGroupHandler;
 class CGroup;
 
+/** Generalized legacy callback interface */
 class CAICallback: public IAICallback
 {
 	int team;

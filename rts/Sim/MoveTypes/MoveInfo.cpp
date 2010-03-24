@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <boost/lexical_cast.hpp>
 #include "mmgr.h"
@@ -66,7 +68,7 @@ CMoveInfo* moveinfo;
 
 static float DegreesToMaxSlope(float degrees)
 {
-	return (float)(1.0 - cos(degrees * 1.5f * PI / 180.0f));
+	return (1.0f - cos(degrees * 1.5f * PI / 180.0f));
 }
 
 

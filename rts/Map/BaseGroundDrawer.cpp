@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -10,7 +12,6 @@
 #include "HeightLinePalette.h"
 #include "ReadMap.h"
 #include "MapInfo.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -324,12 +325,13 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 					if (md != NULL) {
 						// use the first selected unit, if it has the ability to move
+						const bool showBlockedMap = (gs->cheatEnabled || gu->spectating);
 						for (int y = starty; y < endy; ++y) {
 							const int y_pwr2mapx_half = y*pwr2mapx_half;
 							const int y_2             = y*2;
 							for (int x = 0; x < gs->hmapx; ++x) {
 								float m = md->moveMath->SpeedMod(*md, x*2, y_2);
-								if (gs->cheatEnabled && md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)) {
+								if (showBlockedMap && (md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))) {
 									m = 0.0f;
 								}
 								m = std::min(1.0f, (float)fastmath::apxsqrt(m));
@@ -504,17 +506,4 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 	}
 	updateTextureState++;
 	return false;
-}
-
-
-void CBaseGroundDrawer::SetTexGen(float scalex,float scaley, float offsetx, float offsety) const
-{
-	GLfloat plan[]={scalex,0,0,offsetx};
-	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
-	glEnable(GL_TEXTURE_GEN_S);
-	GLfloat plan2[]={0,0,scaley,offsety};
-	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
-	glEnable(GL_TEXTURE_GEN_T);
 }

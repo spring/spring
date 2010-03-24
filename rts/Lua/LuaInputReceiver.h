@@ -1,6 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_INPUT_RECEIVER
 #define LUA_INPUT_RECEIVER
-
 
 #include <string>
 

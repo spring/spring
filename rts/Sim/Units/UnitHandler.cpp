@@ -1,6 +1,4 @@
-// UnitHandler.cpp: implementation of the CUnitHandler class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include <assert.h>
@@ -13,34 +11,26 @@
 #include "CommandAI/BuilderCAI.h"
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnits.h"
-#include "Game/SelectedUnits.h"
+#include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/FarTextureHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Sim/Features/Feature.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "CommandAI/Command.h"
-#include "Unit.h"
-#include "GlobalUnsynced.h"
-#include "FileSystem/FileHandler.h"
-#include "LoadSaveInterface.h"
-#include "LogOutput.h"
-#include "TimeProfiler.h"
-#include "myMath.h"
-#include "ConfigHandler.h"
-#include "Sync/SyncTracer.h"
-#include "creg/STL_Deque.h"
-#include "creg/STL_List.h"
-#include "creg/STL_Set.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Lua/LuaUnsyncedCtrl.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LoadSaveInterface.h"
+#include "System/LogOutput.h"
+#include "System/TimeProfiler.h"
+#include "System/myMath.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/creg/STL_Deque.h"
+#include "System/creg/STL_List.h"
+#include "System/creg/STL_Set.h"
 
 using std::min;
 using std::max;
@@ -67,8 +57,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
 //	CR_MEMBER(toBeRemoved),
-	CR_MEMBER(toBeAdded),
-	CR_MEMBER(renderUnits),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
@@ -163,8 +151,6 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	GML_STDMUTEX_LOCK(runit); // AddUnit
 
-	toBeAdded.insert(unit);
-
 	return unit->id;
 }
 
@@ -208,7 +194,8 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			break;
 		}
 	}
-	//debug
+
+#ifdef _DEBUG
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
 		if (*usi == delUnit) {
 			logOutput.Print("Error: Duplicated unit found in active units on erase");
@@ -217,41 +204,15 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			++usi;
 		}
 	}
-
-	GML_STDMUTEX_LOCK(runit); // DeleteUnitNow
-
-	for(usi=renderUnits.begin(); usi!=renderUnits.end(); ++usi) {
-		if(*usi==delUnit) {
-			renderUnits.erase(usi);
-			break;
-		}
-	}
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-	for(int i=0, dcs=unitDrawer->drawCloaked.size(); i<dcs; ++i)
-		if(unitDrawer->drawCloaked[i]==delUnit)
-			unitDrawer->drawCloaked[i]=NULL;
-	for(int i=0, dcs=unitDrawer->drawCloakedS3O.size(); i<dcs; ++i)
-		if(unitDrawer->drawCloakedS3O[i]==delUnit)
-			unitDrawer->drawCloakedS3O[i]=NULL;
-	for(int i=0, dcs=unitDrawer->drawCloakedSave.size(); i<dcs; ++i)
-		if(unitDrawer->drawCloakedSave[i]==delUnit)
-			unitDrawer->drawCloakedSave[i]=NULL;
-	for(int i=0, dcs=unitDrawer->drawCloakedS3OSave.size(); i<dcs; ++i)
-		if(unitDrawer->drawCloakedS3OSave[i]==delUnit)
-			unitDrawer->drawCloakedS3OSave[i]=NULL;
 #endif
-
-	toBeAdded.erase(delUnit);
 }
 
 
 void CUnitHandler::Update()
 {
-	if(!toBeRemoved.empty()) {
-
+	if (!toBeRemoved.empty()) {
 		GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
-		GML_RECMUTEX_LOCK(sel); // Update - unit is removed from selectedUnits in ~CObject, which is too late.
+		GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 		GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 		GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
 
@@ -344,42 +305,85 @@ float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
 }
 
 
-int CUnitHandler::TestUnitBuildSquare(const BuildInfo& buildInfo, CFeature *&feature, int allyteam)
+int CUnitHandler::TestUnitBuildSquare(
+	const BuildInfo& buildInfo,
+	CFeature*& feature,
+	int allyteam,
+	std::vector<float3>* canbuildpos,
+	std::vector<float3>* featurepos,
+	std::vector<float3>* nobuildpos,
+	const std::vector<Command>* commands)
 {
 	feature = NULL;
-	int xsize = buildInfo.GetXSize();
-	int zsize = buildInfo.GetZSize();
-	float3 pos = buildInfo.pos;
 
-	int x1 = (int) (pos.x - (xsize * 0.5f * SQUARE_SIZE));
-	int x2 = x1 + xsize * SQUARE_SIZE;
-	int z1 = (int) (pos.z - (zsize * 0.5f * SQUARE_SIZE));
-	int z2 = z1 + zsize * SQUARE_SIZE;
-	float h=GetBuildHeight(pos,buildInfo.def);
+	const int xsize = buildInfo.GetXSize();
+	const int zsize = buildInfo.GetZSize();
+	const float3 pos = buildInfo.pos;
+
+	const int x1 = (int) (pos.x - (xsize * 0.5f * SQUARE_SIZE));
+	const int x2 = x1 + xsize * SQUARE_SIZE;
+	const int z1 = (int) (pos.z - (zsize * 0.5f * SQUARE_SIZE));
+	const int z2 = z1 + zsize * SQUARE_SIZE;
+	const float h = GetBuildHeight(pos, buildInfo.def);
 
 	int canBuild = 2;
 
 	if (buildInfo.def->needGeo) {
 		canBuild = 0;
-		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,zsize)*6);
+		std::vector<CFeature*> features = qf->GetFeaturesExact(pos, max(xsize, zsize) * 6);
 
-		for (std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi) {
+		for (std::vector<CFeature*>::iterator fi = features.begin(); fi != features.end(); ++fi) {
 			if ((*fi)->def->geoThermal
-			    && fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
-			    && fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)){
+				&& fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
+				&& fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
 				canBuild = 2;
 				break;
 			}
 		}
 	}
 
-	for (int x = x1; x < x2; x += SQUARE_SIZE) {
-		for (int z = z1; z < z2; z += SQUARE_SIZE) {
-			int tbs = TestBuildSquare(float3(x, h, z), buildInfo.def, feature, allyteam);
-			canBuild = min(canBuild, tbs);
+	if (commands != NULL) {
+		//! unsynced code
+		for (int x = x1; x < x2; x += SQUARE_SIZE) {
+			for (int z = z1; z < z2; z += SQUARE_SIZE) {
+				int tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam);
 
-			if (canBuild == 0) {
-				return 0;
+				if (tbs) {
+					std::vector<Command>::const_iterator ci = commands->begin();
+
+					for (; ci != commands->end() && tbs; ci++) {
+						BuildInfo bc(*ci);
+
+						if (std::max(bc.pos.x - x - SQUARE_SIZE, x - bc.pos.x) * 2 < bc.GetXSize() * SQUARE_SIZE &&
+							std::max(bc.pos.z - z - SQUARE_SIZE, z - bc.pos.z) * 2 < bc.GetZSize() * SQUARE_SIZE) {
+							tbs = 0;
+						}
+					}
+
+					if (!tbs) {
+						nobuildpos->push_back(float3(x, h, z));
+						canBuild = 0;
+					} else if (feature || tbs == 1) {
+						featurepos->push_back(float3(x, h, z));
+					} else {
+						canbuildpos->push_back(float3(x, h, z));
+					}
+
+					canBuild = min(canBuild, tbs);
+				} else {
+					nobuildpos->push_back(float3(x, h, z));
+					canBuild = 0;
+				}
+			}
+		}
+	} else {
+		for (int x = x1; x < x2; x += SQUARE_SIZE) {
+			for (int z = z1; z < z2; z += SQUARE_SIZE) {
+				canBuild = min(canBuild, TestBuildSquare(float3(x, h, z), buildInfo.def, feature, allyteam));
+
+				if (canBuild == 0) {
+					return 0;
+				}
 			}
 		}
 	}
@@ -446,147 +450,6 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 	return ret;
 }
 
-
-int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo)
-{
-	return ShowUnitBuildSquare(buildInfo, std::vector<Command>());
-}
-
-
-int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command> &cv)
-{
-	glDisable(GL_DEPTH_TEST );
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_TEXTURE_2D);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	int xsize=buildInfo.GetXSize();
-	int zsize=buildInfo.GetZSize();
-	const float3& pos = buildInfo.pos;
-
-	int x1 = (int) (pos.x-(xsize*0.5f*SQUARE_SIZE));
-	int x2 = x1+xsize*SQUARE_SIZE;
-	int z1 = (int) (pos.z-(zsize*0.5f*SQUARE_SIZE));
-	int z2 = z1+zsize*SQUARE_SIZE;
-	float h=GetBuildHeight(pos,buildInfo.def);
-
-	int canbuild=2;
-
-	if(buildInfo.def->needGeo)
-	{
-		canbuild=0;
-		std::vector<CFeature*> features=qf->GetFeaturesExact(pos,max(xsize,zsize)*6);
-
-		for(std::vector<CFeature*>::iterator fi=features.begin();fi!=features.end();++fi){
-			if((*fi)->def->geoThermal && fabs((*fi)->pos.x-pos.x)<xsize*4-4 && fabs((*fi)->pos.z-pos.z)<zsize*4-4){
-				canbuild=2;
-				break;
-			}
-		}
-	}
-	std::vector<float3> canbuildpos;
-	std::vector<float3> featurepos;
-	std::vector<float3> nobuildpos;
-
-	for(int x=x1; x<x2; x+=SQUARE_SIZE){
-		for(int z=z1; z<z2; z+=SQUARE_SIZE){
-
-			CFeature* feature=0;
-			int tbs=TestBuildSquare(float3(x,pos.y,z),buildInfo.def,feature,gu->myAllyTeam);
-			if(tbs){
-				std::vector<Command>::const_iterator ci = cv.begin();
-				for(;ci != cv.end() && tbs; ci++){
-					BuildInfo bc(*ci);
-					if(max(bc.pos.x-x-SQUARE_SIZE,x-bc.pos.x)*2 < bc.GetXSize()*SQUARE_SIZE
-						&& max(bc.pos.z-z-SQUARE_SIZE,z-bc.pos.z)*2 < bc.GetZSize()*SQUARE_SIZE){
-						tbs=0;
-					}
-				}
-				if(!tbs){
-					nobuildpos.push_back(float3(x,h,z));
-					canbuild = 0;
-				} else if(feature || tbs==1)
-					featurepos.push_back(float3(x,h,z));
-				else
-					canbuildpos.push_back(float3(x,h,z));
-				canbuild=min(canbuild,tbs);
-			} else {
-				nobuildpos.push_back(float3(x,h,z));
-				//glColor4f(0.8f,0.0f,0,0.4f);
-				canbuild = 0;
-			}
-		}
-	}
-
-	if(canbuild)
-		glColor4f(0,0.8f,0,1.0f);
-	else
-		glColor4f(0.5f,0.5f,0,1.0f);
-
-	CVertexArray *va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(canbuildpos.size()*4, 0, VA_SIZE_0);
-	for(unsigned int i=0; i<canbuildpos.size(); i++)
-	{
-		va->AddVertexQ0(canbuildpos[i]);
-		va->AddVertexQ0(canbuildpos[i]+float3(SQUARE_SIZE,0,0));
-		va->AddVertexQ0(canbuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
-		va->AddVertexQ0(canbuildpos[i]+float3(0,0,SQUARE_SIZE));
-	}
-	va->DrawArray0(GL_QUADS);
-
-	glColor4f(0.5f,0.5f,0,1.0f);
-	va->Initialize();
-	va->EnlargeArrays(featurepos.size()*4, 0, VA_SIZE_0);
-	for(unsigned int i=0; i<featurepos.size(); i++)
-	{
-		va->AddVertexQ0(featurepos[i]);
-		va->AddVertexQ0(featurepos[i]+float3(SQUARE_SIZE,0,0));
-		va->AddVertexQ0(featurepos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
-		va->AddVertexQ0(featurepos[i]+float3(0,0,SQUARE_SIZE));
-	}
-	va->DrawArray0(GL_QUADS);
-
-	glColor4f(0.8f,0.0f,0,1.0f);
-	va->Initialize();
-	va->EnlargeArrays(nobuildpos.size(), 0, VA_SIZE_0);
-	for(unsigned int i=0; i<nobuildpos.size(); i++)
-	{
-		va->AddVertexQ0(nobuildpos[i]);
-		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE,0,0));
-		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
-		va->AddVertexQ0(nobuildpos[i]+float3(0,0,SQUARE_SIZE));
-	}
-	va->DrawArray0(GL_QUADS);
-
-	if (h < 0.0f) {
-		const unsigned char s[4] = { 0, 0, 255, 128 }; // start color
-		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
-
-		va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(8, 0, VA_SIZE_C);
-		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
-		va->AddVertexQC(float3(x1, h, z2), s); va->AddVertexQC(float3(x1, 0.f, z2), e);
-		va->AddVertexQC(float3(x2, h, z2), s); va->AddVertexQC(float3(x2, 0.f, z2), e);
-		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
-		va->DrawArrayC(GL_LINES);
-
-		va->Initialize();
-		va->AddVertexQC(float3(x1, 0.0f, z1), e);
-		va->AddVertexQC(float3(x1, 0.0f, z2), e);
-		va->AddVertexQC(float3(x2, 0.0f, z2), e);
-		va->AddVertexQC(float3(x2, 0.0f, z1), e);
-		va->DrawArrayC(GL_LINE_LOOP);
-	}
-
-	glEnable(GL_DEPTH_TEST );
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//glDisable(GL_BLEND);
-
-	return canbuild;
-}
 
 
 void CUnitHandler::UpdateWind(float x, float z, float strength)

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __AIR_MOVE_TYPE_H__
 #define __AIR_MOVE_TYPE_H__
 

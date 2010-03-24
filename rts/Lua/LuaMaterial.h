@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_MATERIAL_H
 #define LUA_MATERIAL_H
-// LuaMaterial.h: interface for the CLuaMatHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>

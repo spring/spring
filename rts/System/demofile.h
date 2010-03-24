@@ -1,12 +1,12 @@
-/**
-@file demofile.h
-@author Tobi Vollebregt
-@brief Defines the Spring demofile format
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-This file defines the Spring demofile format and which parts of it are supposed
-to be stable (can be used safely by 3rd party applications) or unstable (format
-may change every Spring release without notice).
-*/
+/**
+ * @brief Defines the Spring demofile format
+ *
+ * This file defines the Spring demofile format and which parts of it are
+ * supposed to be stable (can be used safely by 3rd party applications) or
+ * unstable (format may change every Spring release without notice).
+ */
 
 #ifndef DEMOFILE_H
 #define DEMOFILE_H

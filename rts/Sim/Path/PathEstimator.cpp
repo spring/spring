@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "PathEstimator.h"
 
@@ -9,14 +11,13 @@
 #include "lib/minizip/zip.h"
 #include "mmgr.h"
 #include "Map/Ground.h"
-#include "Game/SelectedUnits.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "FileSystem/ArchiveZip.h"
-#include "FileSystem/FileSystem.h"
-#include "LogOutput.h"
-#include "ConfigHandler.h"
-#include "NetProtocol.h"
+#include "System/FileSystem/ArchiveZip.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/NetProtocol.h"
 
 #define PATHDEBUG false
 
@@ -743,7 +744,7 @@ bool CPathEstimator::ReadFile(std::string cacheFileName, const std::string& map)
 	{
 		pathChecksum = file.GetCrc32(fid);
 
-		std::vector<uint8_t> buffer;
+		std::vector<boost::uint8_t> buffer;
 		file.GetFile(fid, buffer);
 
 		if (buffer.size() < 4)
@@ -845,157 +846,7 @@ boost::uint32_t CPathEstimator::GetPathChecksum()
 	return pathChecksum;
 }
 
-void CPathEstimator::Draw(void)
-{
-	GML_RECMUTEX_LOCK(sel); // Draw
 
-	MoveData* md = NULL;
-
-	if (!moveinfo->moveData.empty()) {
-		md = moveinfo->moveData[0];
-	} else {
-		return;
-	}
-
-	if (!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata) {
-		md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
-	}
-
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(1, 1, 0);
-
-/*
-	float blue = BLOCK_SIZE == 32? 1: 0;
-	glBegin(GL_LINES);
-	for (int z = 0; z < nbrOfBlocksZ; z++) {
-		for (int x = 0; x < nbrOfBlocksX; x++) {
-			int blocknr = z * nbrOfBlocksX + x;
-			float3 p1;
-			p1.x = (blockState[blocknr].sqrCenter[md->pathType].x) * 8;
-			p1.z = (blockState[blocknr].sqrCenter[md->pathType].y) * 8;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 10;
-
-			glColor3f(1, 1, blue);
-			glVertexf3(p1);
-			glVertexf3(p1 - UpVector * 10);
-			for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-				int obx = x + directionVector[dir].x;
-				int obz = z + directionVector[dir].y;
-
-				if (obx >= 0 && obz >= 0 && obx < nbrOfBlocksX && obz < nbrOfBlocksZ) {
-					float3 p2;
-					int obblocknr = obz * nbrOfBlocksX + obx;
-
-					p2.x = (blockState[obblocknr].sqrCenter[md->pathType].x) * 8;
-					p2.z = (blockState[obblocknr].sqrCenter[md->pathType].y) * 8;
-					p2.y = ground->GetHeight(p2.x, p2.z) + 10;
-
-					int vertexNbr = md->pathType * nbrOfBlocks * PATH_DIRECTION_VERTICES + blocknr * PATH_DIRECTION_VERTICES + directionVertex[dir];
-					float cost = vertex[vertexNbr];
-
-					glColor3f(1 / (sqrt(cost/BLOCK_SIZE)), 1 / (cost/BLOCK_SIZE), blue);
-					glVertexf3(p1);
-					glVertexf3(p2);
-				}
-			}
-		}
-
-	}
-	glEnd();
-
-
-	glEnable(GL_TEXTURE_2D);
-	for (int z = 0; z < nbrOfBlocksZ; z++) {
-		for (int x = 0; x < nbrOfBlocksX; x++) {
-			int blocknr = z * nbrOfBlocksX + x;
-			float3 p1;
-			p1.x = (blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 10;
-
-			glColor3f(1, 1, blue);
-			for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-				int obx = x + directionVector[dir].x;
-				int obz = z + directionVector[dir].y;
-
-				if (obx >= 0 && obz >= 0 && obx < nbrOfBlocksX && obz < nbrOfBlocksZ) {
-					float3 p2;
-					int obblocknr = obz * nbrOfBlocksX + obx;
-
-					p2.x = (blockState[obblocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-					p2.z = (blockState[obblocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-					p2.y = ground->GetHeight(p2.x, p2.z) + 10;
-
-					int vertexNbr = md->pathType * nbrOfBlocks * PATH_DIRECTION_VERTICES + blocknr * PATH_DIRECTION_VERTICES + directionVertex[dir];
-					float cost = vertex[vertexNbr];
-
-					glColor3f(1, 1 / (cost/BLOCK_SIZE), blue);
-
-					p2 = (p1 + p2) / 2;
-					if (camera->pos.SqDistance(p2) < 250000) {
-						font->glWorldPrint(p2,5,"%.0f", cost);
-					}
-				}
-			}
-		}
-	}
-*/
-
-
-	if (BLOCK_SIZE == 8)
-		glColor3f(0.2f, 0.7f, 0.2f);
-	else
-		glColor3f(0.2f, 0.2f, 0.7f);
-
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_LINES);
-
-	for (OpenBlock* ob = openBlockBuffer; ob != openBlockBufferPointer; ++ob) {
-		int blocknr = ob->blocknr;
-		float3 p1;
-		p1.x = (blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-		p1.z = (blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-		p1.y = ground->GetHeight(p1.x, p1.z) + 15;
-
-		float3 p2;
-		int obx = blockState[ob->blocknr].parentBlock.x;
-		int obz = blockState[ob->blocknr].parentBlock.y;
-		int obblocknr = obz * nbrOfBlocksX + obx;
-
-		if (obblocknr >= 0) {
-			p2.x = (blockState[obblocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p2.z = (blockState[obblocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-			p2.y = ground->GetHeight(p2.x, p2.z) + 15;
-
-			glVertexf3(p1);
-			glVertexf3(p2);
-		}
-	}
-
-	glEnd();
-
-
-/*
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glColor4f(1,0,blue,0.7f);
-	glAlphaFunc(GL_GREATER,0.05f);
-	int a=0;
-	for(OpenBlock*  ob=openBlockBuffer;ob!=openBlockBufferPointer;++ob){
-		int blocknr = ob->blocknr;
-		float3 p1;
-		p1.x=(ob->block.x * BLOCK_SIZE + blockState[blocknr].sqrCenter[md->pathType].x)*SQUARE_SIZE;
-		p1.z=(ob->block.y * BLOCK_SIZE + blockState[blocknr].sqrCenter[md->pathType].y)*SQUARE_SIZE;
-		p1.y=ground->GetHeight(p1.x,p1.z)+15;
-
-		if(camera->pos.SqDistance(p1)<250000){
-			font->glWorldPrint(p1,5,"%.0f %.0f",ob->cost,ob->currentCost);
-		}
-		++a;
-	}
-	glDisable(GL_BLEND);
-*/
-}
 
 float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, float3 pos)
 {

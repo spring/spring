@@ -96,6 +96,7 @@ local function ConvertLighting(map)
   end
   local lighting = {}
   for k, v in pairs(light) do
+    -- k = k:gsub("ambiant", "ambient")
     local s, e, prefix = k:find('^(.*)suncolor$')
     if (prefix) then
       k = prefix .. 'diffusecolor'
@@ -164,7 +165,14 @@ return function(sourceText)
     error('Error parsing ' .. mapConfig .. ': missing MAP section')
   end
 
-  map.resources = {detailTex = map.detailtex, specularTex = map.speculartex}
+  map.resources = {
+     detailTex      = map.detailtex,
+     specularTex    = map.speculartex,
+     splatDetailTex = map.splatDetailTex,
+     splatDistrTex  = map.splatDistrTex,
+     splatTexScales = map.splatTexScales,
+     splatTexMults  = map.splatTexMults,
+  }
 
   ConvertTerrainTypes(map)
 

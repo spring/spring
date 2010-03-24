@@ -1,6 +1,4 @@
-// TreeDrawer.h: interface for the CTreeDrawer class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __ADV_TREE_DRAWER_H__
 #define __ADV_TREE_DRAWER_H__
@@ -12,12 +10,17 @@
 class CVertexArray;
 class CGrassDrawer;
 
-class CAdvTreeDrawer : public CBaseTreeDrawer
+namespace Shader {
+	struct IProgramObject;
+}
+
+class CAdvTreeDrawer: public CBaseTreeDrawer
 {
 public:
 	CAdvTreeDrawer();
 	virtual ~CAdvTreeDrawer();
 
+	void LoadTreeShaders();
 	void Draw(float treeDistance,bool drawReflection);
 	void Update();
 	void ResetPos(const float3& pos);
@@ -32,27 +35,16 @@ public:
 	int lastListClean;
 	float oldTreeDistance;
 
-	struct TreeStruct{
+	struct TreeStruct {
 		float3 pos;
 		int type;
 	};
-
-	struct TreeSquareStruct {
-		unsigned int displist;
-		unsigned int farDisplist;
-		int lastSeen;
-		int lastSeenFar;
-		float3 viewVector;
-		std::map<int,TreeStruct> trees;
+	struct FadeTree {
+		float3 pos;
+		float relDist;
+		float deltaY;
+		int type;
 	};
-
-	TreeSquareStruct* trees;
-	int treesX;
-	int treesY;
-	int nTrees;
-
-	CGrassDrawer* grassDrawer;
-
 	struct FallingTree {
 		int type;
 		float3 pos;
@@ -61,8 +53,29 @@ public:
 		float fallPos;
 	};
 
+	struct TreeSquareStruct {
+		unsigned int displist;
+		unsigned int farDisplist;
+		int lastSeen;
+		int lastSeenFar;
+		float3 viewVector;
+		std::map<int, TreeStruct> trees;
+	};
+
+	int treesX;
+	int treesY;
+	int nTrees;
+
+	TreeSquareStruct* trees;
+
+private:
+	Shader::IProgramObject* treeNearDefShader;  // near-tree shader (V) without self-shadowing
+	Shader::IProgramObject* treeNearAdvShader;  // near-tree shader (V+F) with self-shadowing
+	Shader::IProgramObject* treeDistAdvShader;  // far-tree shader (V+F) with self-shadowing
+
+	CGrassDrawer* grassDrawer;
+
 	std::list<FallingTree> fallingTrees;
 };
 
 #endif // __ADV_TREE_DRAWER_H__
-

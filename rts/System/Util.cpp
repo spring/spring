@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "Util.h"
 #if defined(_MSC_VER) && (_MSC_VER >= 1310)
 #include <intrin.h>

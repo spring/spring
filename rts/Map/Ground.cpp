@@ -1,6 +1,4 @@
-// Ground.cpp: implementation of the CGround class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -13,9 +11,6 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include <assert.h>
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 CGround* ground;
 
 CGround::CGround()

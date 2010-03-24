@@ -1,6 +1,5 @@
-// Sky.cpp: implementation of the CBasicSky class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef _MSC_VER
 #pragma warning(disable:4258)
 #endif
