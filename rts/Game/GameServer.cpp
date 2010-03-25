@@ -990,7 +990,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
-					Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
+				{
+					if (!players[inbuf[1]].spectator)
+						Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
+					else
+						Message(str(format("Error: spectator %s tried direct-controlling a unit") %players[inbuf[1]].name));
+				}
 			}
 			break;
 
