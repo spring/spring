@@ -87,8 +87,7 @@ int main(int argc, char** argv)
   // print the defs
   lpOpenFile("gamedata/defs.lua", SPRING_VFS_MOD_BASE , SPRING_VFS_ZIP);
   if (!lpExecute()) {
-    printf(lpErrorLog());
-    printf("\n");
+    printf("%s\n", lpErrorLog());
   }
   else {
     lpRootTable();
