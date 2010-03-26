@@ -7,7 +7,6 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "myMath.h"
-#include "Rendering/Env/BaseWater.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"

@@ -9,6 +9,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/Shaders/ShaderHandler.hpp"

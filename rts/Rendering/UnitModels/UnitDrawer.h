@@ -200,10 +200,14 @@ private:
 
 	CVertexArray* va;
 
-	Shader::IProgramObject* S3ODefShader;   // S3O model shader (V+F) without self-shadowing
-	Shader::IProgramObject* S3OAdvShader;   // S3O model shader (V+F) with self-shadowing
-	Shader::IProgramObject* S3OCurShader;   // current S3O shader (S3OShaderDef or S3OShaderAdv)
+	enum ModelShaderProgram {
+		MODEL_SHADER_S3O_SHADOW,   // S3O model shader (V+F) with self-shadowing
+		MODEL_SHADER_S3O_BASIC,    // S3O model shader (V+F) without self-shadowing
+		MODEL_SHADER_S3O_ACTIVE,   // currently active S3O shader
+		MODEL_SHADER_S3O_LAST
+	};
 
+	std::vector<Shader::IProgramObject*> modelShaders;
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
 
