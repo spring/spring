@@ -9,7 +9,7 @@
 #include "IModelParser.h"
 #include "3DModel.h"
 #include "3DOParser.h"
-#include "s3oParser.h"
+#include "S3OParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FarTextureHandler.h"

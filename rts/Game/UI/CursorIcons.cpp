@@ -13,8 +13,8 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Rendering/glFont.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 

@@ -20,7 +20,6 @@
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
 #include "LogOutput.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/GL/VertexArray.h"
 #include "SelectedUnitsAI.h"
 #include "Sim/Features/Feature.h"

@@ -1,20 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
+
 #include <algorithm>
 #include <cctype>
 #include "mmgr.h"
 
 #include "3DModel.h"
 #include "3DOParser.h"
-#include "s3oParser.h"
-#include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "S3OParser.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Util.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/Misc/CollisionVolume.h"
+#include "System/Exceptions.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
 
 
 //////////////////////////////////////////////////////////////////////

@@ -3,19 +3,16 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "FastMath.h"
-#include "float3.h"
-#include "Matrix44f.h"
-
-#include "Sim/Units/Unit.h"
-#include "Sim/Features/Feature.h"
-#include "GroundBlockingObjectMap.h"
-
-#include "GlobalSynced.h"
-#include "GlobalConstants.h"
-
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
+#include "Rendering/Models/3DModel.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "System/FastMath.h"
+#include "System/Matrix44f.h"
 
 #define ZVEC ZeroVector
 

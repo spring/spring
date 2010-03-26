@@ -25,7 +25,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"

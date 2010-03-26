@@ -39,7 +39,6 @@ public:
 	void DrawShadowTex(void);
 	void CalcMinMaxView(void);
 
-	void GetShadowMapSizeFactors(float& param17, float& param18);
 	const float4 GetShadowParams() const { return float4(xmid, ymid, p17, p18); }
 
 	enum ShadowGenProgram {
@@ -60,6 +59,7 @@ protected:
 	bool InitDepthTarget();
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
+	void SetShadowMapSizeFactors();
 
 	struct fline {
 		float base;

@@ -34,7 +34,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
+#include "Rendering/Models/WorldObjectModelRenderer.h"
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"

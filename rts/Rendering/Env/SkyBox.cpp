@@ -4,15 +4,14 @@
 #include "mmgr.h"
 
 #include "SkyBox.h"
-#include "float3.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
-#include "GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Exceptions.h"
+#include "System/Exceptions.h"
+#include "System/float3.h"
+#include "System/GlobalUnsynced.h"
 
 CSkyBox::CSkyBox(std::string texture)
 {
