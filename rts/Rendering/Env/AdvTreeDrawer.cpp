@@ -445,7 +445,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			glMatrixMode(GL_MODELVIEW);
 		} else {
 			treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
-			treeShader->SetUniform4fv(8, const_cast<float*>(&shadowHandler->GetShadowParams().x));
+			treeShader->SetUniform4fv(8, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 		}
 	} else {
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
@@ -482,7 +482,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 			if (gu->haveGLSL) {
 				treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
-				treeShader->SetUniform4fv(8, const_cast<float*>(&shadowHandler->GetShadowParams().x));
+				treeShader->SetUniform4fv(8, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 			}
 
 			glActiveTexture(GL_TEXTURE1);

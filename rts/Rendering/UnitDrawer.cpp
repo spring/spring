@@ -1225,7 +1225,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(7, false, (float*) camera->GetViewMatInv());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(13, const_cast<float*>(&shadowHandler->GetShadowParams().x));
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(13, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
