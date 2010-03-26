@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include "mmgr.h"
 
-#include "s3oParser.h"
+#include "S3OParser.h"
 #include "s3o.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/S3OTextureHandler.h"

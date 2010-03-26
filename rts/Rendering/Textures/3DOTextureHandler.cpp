@@ -9,16 +9,18 @@
 #include "mmgr.h"
 
 #include "3DOTextureHandler.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "TAPalette.h"
-#include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/Vec2.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/SimpleParser.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -263,7 +265,7 @@ C3DOTextureHandler::UnitTexture* C3DOTextureHandler::Get3DOTexture(std::string n
 	if((tti=textures.find(name))!=textures.end()){
 		return tti->second;
 	}
-	LogObject() << "Unknown texture " << name.c_str() << "\n";
+	LogObject() << "unknown 3DO texture " << name.c_str() << "\n";
 	return textures[" "];
 }
 

@@ -105,7 +105,7 @@ AUX_SOURCE_DIRECTORY(Rendering/Env renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/GL renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/Shaders renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/Textures renderfiles)
-AUX_SOURCE_DIRECTORY(Rendering/UnitModels renderfiles)
+AUX_SOURCE_DIRECTORY(Rendering/Models renderfiles)
 
 AUX_SOURCE_DIRECTORY(aGui renderfiles)
 

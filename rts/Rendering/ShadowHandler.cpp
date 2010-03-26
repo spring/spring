@@ -8,14 +8,14 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/FeatureDrawer.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/Models/ModelDrawer.hpp"
 #include "Rendering/Shaders/ShaderHandler.hpp"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/ModelDrawer.hpp"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"
@@ -236,7 +236,7 @@ void CShadowHandler::DrawShadowPasses(void)
 	inShadowPass = false;
 }
 
-void CShadowHandler::GetShadowMapSizeFactors(float& p17, float& p18)
+void CShadowHandler::SetShadowMapSizeFactors()
 {
 	if (shadowMapSize == 2048) {
 		p17 =  0.01f;
@@ -282,7 +282,7 @@ void CShadowHandler::CreateShadows(void)
 	//! intersection points of the camera frustum
 	//! with the xz-plane
 	CalcMinMaxView();
-	GetShadowMapSizeFactors(p17, p18);
+	SetShadowMapSizeFactors();
 
 	// it should be possible to tweak a bit more shadow map resolution from this
 	const float maxLength = 12000.0f;

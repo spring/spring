@@ -6,10 +6,10 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "System/ConfigHandler.h"
 
 static char cameraMemBuf[sizeof(CCamera)];

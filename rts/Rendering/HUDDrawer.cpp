@@ -7,7 +7,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/Weapon.h"

@@ -7,7 +7,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "PlasmaRepulser.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/Unsynced/RepulseGfx.h"

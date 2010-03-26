@@ -10,7 +10,6 @@
 #include "mmgr.h"
 
 #include "3DOParser.h"
-#include "s3oParser.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/CollisionVolume.h"

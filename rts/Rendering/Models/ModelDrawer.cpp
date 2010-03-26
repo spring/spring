@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "ModelDrawer.hpp"
 #include "Game/Game.h"
-#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
+#include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/ShadowHandler.h"
