@@ -4,13 +4,13 @@
 #define COLLISION_HANDLER_H
 
 #include "creg/creg_cond.h"
+#include <list>
 
 struct CollisionVolume;
+class CMatrix44f;
 class CUnit;
 class CFeature;
 struct LocalModelPiece;
-
-#include <list>
 
 struct CollisionQuery {
 	CollisionQuery() {

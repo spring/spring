@@ -20,7 +20,6 @@
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "creg/STL_List.h"
 #include "GlobalUnsynced.h"
 #include "myMath.h"

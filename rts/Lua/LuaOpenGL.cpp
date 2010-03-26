@@ -5268,10 +5268,10 @@ int LuaOpenGL::GetShadowMapParams(lua_State* L)
 	if (!shadowHandler) {
 		return 0;
 	}
-	lua_pushnumber(L, shadowHandler->xmid);
-	lua_pushnumber(L, shadowHandler->ymid);
-	lua_pushnumber(L, shadowHandler->p17);
-	lua_pushnumber(L, shadowHandler->p18);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().x);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().y);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().z);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().w);
 	return 4;
 }
 
