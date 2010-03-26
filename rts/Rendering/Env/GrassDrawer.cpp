@@ -470,7 +470,7 @@ void CGrassDrawer::Draw(void)
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		} else {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
-			grassShader->SetUniform4fv(7, const_cast<float*>(&shadowHandler->GetShadowParams().x));
+			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 		}
 
 		glMatrixMode(GL_PROJECTION);
