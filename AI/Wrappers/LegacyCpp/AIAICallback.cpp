@@ -1799,7 +1799,7 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 			ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY, &cCmdData);
 
 			myData->rayLen = cCmdData.rayLen;
-			myData->hitUID = cCmdData.hitUID;
+			myData->hitUID = cCmdData.ret_hitUnitId;
 			break;
 		}
 

@@ -1416,15 +1416,15 @@ struct SCustomUnitCommand {
 	int params_size;
 }; // COMMAND_UNIT_CUSTOM Unit_executeCustomCommand ARRAY:params
 
-// TODO: add docu, rename UID to UnitId
+// TODO: add docu
 struct STraceRayCommand {
 	float* rayPos_posF3;
 	float* rayDir_posF3;
-	float rayLen;
-	int srcUID;
-	int hitUID;
+	float rayLen; // would also be ret, but we want only one ret per command
+	int srcUnitId;
+	int ret_hitUnitId;
 	int flags;
-}; // COMMAND_TRACE_RAY Map_Drawer_traceRay REF:srcUID->Unit REF:hitUID->Unit
+}; // COMMAND_TRACE_RAY Map_Drawer_traceRay REF:srcUnitId->Unit REF:ret_hitUnitId->Unit
 
 /**
  * Pause or unpauses the game.
