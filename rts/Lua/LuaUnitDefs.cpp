@@ -263,8 +263,9 @@ static int UnitDefNewIndex(lua_State* L)
 
 static int UnitDefMetatable(lua_State* L)
 {
-	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	//const UnitDef* ud = (const UnitDef*)userData;
+	lua_touserdata(L, lua_upvalueindex(1));
+	// const void* userData = lua_touserdata(L, lua_upvalueindex(1));
+	// const UnitDef* ud = (const UnitDef*)userData;
 	return 0;
 }
 
@@ -584,15 +585,15 @@ TYPE_STRING_FUNC(MetalExtractor);
 
 TYPE_MODEL_FUNC(ModelHeight, height);
 TYPE_MODEL_FUNC(ModelRadius, radius);
-TYPE_MODEL_FUNC(ModelMinx,   minx);
+TYPE_MODEL_FUNC(ModelMinx,   mins.x);
 TYPE_MODEL_FUNC(ModelMidx,   relMidPos.x);
-TYPE_MODEL_FUNC(ModelMaxx,   maxx);
-TYPE_MODEL_FUNC(ModelMiny,   miny);
+TYPE_MODEL_FUNC(ModelMaxx,   maxs.x);
+TYPE_MODEL_FUNC(ModelMiny,   mins.y);
 TYPE_MODEL_FUNC(ModelMidy,   relMidPos.y);
-TYPE_MODEL_FUNC(ModelMaxy,   maxy);
-TYPE_MODEL_FUNC(ModelMinz,   minz);
+TYPE_MODEL_FUNC(ModelMaxy,   maxs.y);
+TYPE_MODEL_FUNC(ModelMinz,   mins.z);
 TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z);
-TYPE_MODEL_FUNC(ModelMaxz,   maxz);
+TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
 
 
 /******************************************************************************/

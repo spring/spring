@@ -8,6 +8,7 @@
 #include "OBJParser.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -44,12 +45,13 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->rootobject = NULL;
 		model->radius = modelTable.GetFloat("radius", 0.0f);
 		model->height = modelTable.GetFloat("height", 0.0f);
+		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
 		model->tex1 = modelTable.GetString("tex1", "");
 		model->tex2 = modelTable.GetString("tex2", "");
-		model->minx = model->miny = model->minz = 0.0f; // needed for per-piece coldet only?
-		model->maxx = model->maxy = model->maxz = 0.0f; // needed for per-piece coldet only?
+		model->mins = ZeroVector; // needed for per-piece coldet only?
+		model->maxs = ZeroVector; // needed for per-piece coldet only?
 
-	// for now, do basic S3O-style texturing
+	// basic S3O-style texturing
 	texturehandlerS3O->LoadS3OTexture(model);
 
 	std::string modelData;
@@ -240,15 +242,19 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
 {
 	piece->isEmpty = (piece->vertexCount == 0);
-	piece->minx = piece->miny = piece->minz = 0.0f;
-	piece->maxx = piece->maxy = piece->maxz = 0.0f;
+	piece->mins = ZeroVector;
+	piece->maxs = ZeroVector;
+	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
+	piece->colvol = new CollisionVolume("box", ZeroVector, ZeroVector, COLVOL_TEST_CONT);
+	piece->colvol->Disable();
 
 	/*
 	model = {
 		rootpiece = {
 			upperbody = {
-				head = {},
+				head = { offset = {0.0, 2.71828, 0.0}, },
 				lshoulder = {
+					offset = {-3.14159, 0.0, 0.0},
 					lupperarm = {
 						llowerarm = {
 							lhand = {},
@@ -256,6 +262,7 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 					},
 				},
 				rshoulder = {
+					offset = { 3.14159, 0.0, 0.0},
 					rupperarm = {
 						rlowerarm = {
 							rhand = {},
@@ -268,6 +275,7 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 
 		radius = 123.0,
 		height = 456.0,
+		midpos = {0.0, 0.0, 0.0},
 		tex1 = "tex1.png",
 		tex2 = "tex2.png",
 	}
@@ -277,6 +285,13 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 	pieceTable.GetKeys(childPieceNames);
 
 	for (std::vector<std::string>::const_iterator it = childPieceNames.begin(); it != childPieceNames.end(); ++it) {
+		// NOTE: handle this better? can't check types
+		// (both tables), can't reliably check lengths,
+		// test for presence of float keys?
+		if ((*it) == "offset") {
+			continue;
+		}
+
 		std::map<std::string, SOBJPiece*>::const_iterator pieceIt = pieces.find(*it);
 
 		if (pieceIt == pieces.end()) {

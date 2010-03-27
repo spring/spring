@@ -3230,14 +3230,14 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 	HSTR_PUSH_NUMBER(L, "height", m.height);
 	HSTR_PUSH_NUMBER(L, "radius", m.radius);
 	HSTR_PUSH_NUMBER(L, "midx",   mid.x);
-	HSTR_PUSH_NUMBER(L, "minx",   m.minx);
-	HSTR_PUSH_NUMBER(L, "maxx",   m.maxx);
+	HSTR_PUSH_NUMBER(L, "minx",   m.mins.x);
+	HSTR_PUSH_NUMBER(L, "maxx",   m.maxs.x);
 	HSTR_PUSH_NUMBER(L, "midy",   mid.y);
-	HSTR_PUSH_NUMBER(L, "miny",   m.miny);
-	HSTR_PUSH_NUMBER(L, "maxy",   m.maxy);
+	HSTR_PUSH_NUMBER(L, "miny",   m.mins.y);
+	HSTR_PUSH_NUMBER(L, "maxy",   m.maxs.y);
 	HSTR_PUSH_NUMBER(L, "midz",   mid.z);
-	HSTR_PUSH_NUMBER(L, "minz",   m.minz);
-	HSTR_PUSH_NUMBER(L, "maxz",   m.maxz);
+	HSTR_PUSH_NUMBER(L, "minz",   m.mins.z);
+	HSTR_PUSH_NUMBER(L, "maxz",   m.maxs.z);
 	return 1;
 }
 
@@ -4704,17 +4704,17 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 
 	HSTR_PUSH(L, "min");
 	lua_newtable(L); {
-		lua_pushnumber(L, 1); lua_pushnumber(L, op.minx); lua_rawset(L, -3);
-		lua_pushnumber(L, 2); lua_pushnumber(L, op.miny); lua_rawset(L, -3);
-		lua_pushnumber(L, 3); lua_pushnumber(L, op.minz); lua_rawset(L, -3);
+		lua_pushnumber(L, 1); lua_pushnumber(L, op.mins.x); lua_rawset(L, -3);
+		lua_pushnumber(L, 2); lua_pushnumber(L, op.mins.y); lua_rawset(L, -3);
+		lua_pushnumber(L, 3); lua_pushnumber(L, op.mins.z); lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);
 
 	HSTR_PUSH(L, "max");
 	lua_newtable(L); {
-		lua_pushnumber(L, 1); lua_pushnumber(L, op.maxx); lua_rawset(L, -3);
-		lua_pushnumber(L, 2); lua_pushnumber(L, op.maxy); lua_rawset(L, -3);
-		lua_pushnumber(L, 3); lua_pushnumber(L, op.maxz); lua_rawset(L, -3);
+		lua_pushnumber(L, 1); lua_pushnumber(L, op.maxs.x); lua_rawset(L, -3);
+		lua_pushnumber(L, 2); lua_pushnumber(L, op.maxs.y); lua_rawset(L, -3);
+		lua_pushnumber(L, 3); lua_pushnumber(L, op.maxs.z); lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);
 
