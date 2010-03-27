@@ -147,20 +147,15 @@ S3DModel* C3DOParser::Load(const string& name)
 
 	rootobj->radius = FindRadius(rootobj, -rootobj->relMidPos);
 
-	rootobj->relMidPos.x = 0; // ?
-	rootobj->relMidPos.z = 0; // ?
+	rootobj->relMidPos.x = 0.0f; // ?
+	rootobj->relMidPos.z = 0.0f; // ?
 	rootobj->relMidPos.y = std::max(rootobj->relMidPos.y, 1.0f); // ?
 
 	model->radius = rootobj->radius;
 	model->height = FindHeight(rootobj, ZeroVector);
 
-	model->maxx = rootobj->maxx;
-	model->maxy = rootobj->maxy;
-	model->maxz = rootobj->maxz;
-
-	model->minx = rootobj->minx;
-	model->miny = rootobj->miny;
-	model->minz = rootobj->minz;
+	model->maxs = rootobj->maxs;
+	model->mins = rootobj->mins;
 
 	model->relMidPos = rootobj->relMidPos;
 
@@ -453,25 +448,20 @@ void C3DOParser::FindCenter(S3DOPiece* o) const
 		minz = min(minz, vi->pos.z);
 	}
 	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
-		maxx = max(maxx, (*si)->offset.x + (*si)->maxx);
-		maxy = max(maxy, (*si)->offset.y + (*si)->maxy);
-		maxz = max(maxz, (*si)->offset.z + (*si)->maxz);
+		maxx = max(maxx, (*si)->offset.x + (*si)->maxs.x);
+		maxy = max(maxy, (*si)->offset.y + (*si)->maxs.y);
+		maxz = max(maxz, (*si)->offset.z + (*si)->maxs.z);
 
-		minx = min(minx, (*si)->offset.x + (*si)->minx);
-		miny = min(miny, (*si)->offset.y + (*si)->miny);
-		minz = min(minz, (*si)->offset.z + (*si)->minz);
+		minx = min(minx, (*si)->offset.x + (*si)->mins.x);
+		miny = min(miny, (*si)->offset.y + (*si)->mins.y);
+		minz = min(minz, (*si)->offset.z + (*si)->mins.z);
 	}
 
-	o->maxx = maxx;
-	o->maxy = maxy;
-	o->maxz = maxz;
+	o->maxs = float3(maxx, maxy, maxz);
+	o->mins = float3(minx, miny, minz);
 
-	o->minx = minx;
-	o->miny = miny;
-	o->minz = minz;
-
-	const float3 cvScales((o->maxx - o->minx),        (o->maxy - o->miny),        (o->maxz - o->minz)       );
-	const float3 cvOffset((o->maxx + o->minx) * 0.5f, (o->maxy + o->miny) * 0.5f, (o->maxz + o->minz) * 0.5f);
+	const float3 cvScales((o->maxs.x - o->mins.x),        (o->maxs.y - o->mins.y),        (o->maxs.z - o->mins.z)       );
+	const float3 cvOffset((o->maxs.x + o->mins.x) * 0.5f, (o->maxs.y + o->mins.y) * 0.5f, (o->maxs.z + o->mins.z) * 0.5f);
 
 	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
 	o->colvol->Enable();

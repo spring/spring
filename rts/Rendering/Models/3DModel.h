@@ -27,12 +27,9 @@ struct S3DModelPiece {
 	std::string name;
 	std::vector<S3DModelPiece*> childs;
 
+	bool isEmpty;
 	unsigned int vertexCount;
 	unsigned int displist;
-	float3 offset;
-	bool isEmpty;
-	float maxx, maxy, maxz;
-	float minx, miny, minz;
 
 	//! MODELTYPE_*
 	int type;
@@ -42,6 +39,9 @@ struct S3DModelPiece {
 
 	// TODO?
 	// float3 orientation;
+	float3 mins;
+	float3 maxs;
+	float3 offset;
 
 	virtual ~S3DModelPiece();
 	virtual const float3& GetVertexPos(const int& idx) const = 0;
@@ -53,18 +53,23 @@ struct S3DModelPiece {
 struct S3DModel
 {
 	S3DModelPiece* rootobject;
+
 	int numobjects;
 	float radius;
 	float height;
-	std::string name;
-	int farTextureNum;
-	float maxx, maxy, maxz;
-	float minx, miny, minz;
+
+	float3 mins;
+	float3 maxs;
 	float3 relMidPos;
+
 	int type;               //! MODELTYPE_*
 	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	int farTextureNum;
+
+	std::string name;
 	std::string tex1;
 	std::string tex2;
+
 	inline void DrawStatic() const { rootobject->DrawStatic(); };
 };
 

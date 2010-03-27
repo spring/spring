@@ -1852,7 +1852,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		return;
 	}
 
-	const float start  = std::max(unit->model->miny, -unit->model->height);
+	const float start  = std::max(unit->model->mins.y, -unit->model->height);
 	const float height = unit->model->height;
 
 	glEnable(GL_CLIP_PLANE0);

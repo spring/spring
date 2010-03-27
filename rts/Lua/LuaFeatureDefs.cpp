@@ -408,15 +408,15 @@ static int ModelRadius(lua_State* L, const void* data)
 
 //TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
 //TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
-TYPE_MODEL_FUNC(Minx,   minx);
+TYPE_MODEL_FUNC(Minx,   mins.x);
 TYPE_MODEL_FUNC(Midx,   relMidPos.x);
-TYPE_MODEL_FUNC(Maxx,   maxx);
-TYPE_MODEL_FUNC(Miny,   miny);
+TYPE_MODEL_FUNC(Maxx,   maxs.x);
+TYPE_MODEL_FUNC(Miny,   mins.y);
 TYPE_MODEL_FUNC(Midy,   relMidPos.y);
-TYPE_MODEL_FUNC(Maxy,   maxy);
-TYPE_MODEL_FUNC(Minz,   minz);
+TYPE_MODEL_FUNC(Maxy,   maxs.y);
+TYPE_MODEL_FUNC(Minz,   mins.z);
 TYPE_MODEL_FUNC(Midz,   relMidPos.z);
-TYPE_MODEL_FUNC(Maxz,   maxz);
+TYPE_MODEL_FUNC(Maxz,   maxs.z);
 
 
 /******************************************************************************/
