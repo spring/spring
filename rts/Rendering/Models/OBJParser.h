@@ -19,6 +19,7 @@ public:
 		displist    = 0;
 		isEmpty     = true;
 		type        = MODELTYPE_OBJ;
+		colvol      = NULL;
 	}
 
 	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount += 1; }

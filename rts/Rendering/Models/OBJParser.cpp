@@ -21,10 +21,10 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	CFileHandler metaFile(metaFileName);
 
 	if (!modelFile.FileExists()) {
-		throw content_error("[OBJParser] could not find model-file " + modelFileName);
+		throw content_error("[OBJParser] could not find model-file \"" + modelFileName + "\"");
 	}
 	if (!metaFile.FileExists()) {
-		throw content_error("[OBJParser] could not find meta-file " + metaFileName);
+		throw content_error("[OBJParser] could not find meta-file \"" + metaFileName + "\"");
 	}
 
 
@@ -32,7 +32,7 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	metaFileParser.Execute();
 
 	if (!metaFileParser.IsValid()) {
-		throw content_error("[OBJParser] failed to parse meta-file " + metaFileName);
+		throw content_error("[OBJParser] failed to parse meta-file \"" + metaFileName + "\"");
 	}
 
 	// get the (root-level) model table
@@ -63,7 +63,7 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		return model;
 	} else {
 		delete model;
-		throw content_error("[OBJParser] failed to parse model-data " + modelFileName);
+		throw content_error("[OBJParser] failed to parse model-data \"" + modelFileName + "\"");
 	}
 
 	return NULL;
@@ -119,7 +119,7 @@ void COBJParser::Draw(const S3DModelPiece* piece) const
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)
 {
 	static const boost::regex commentPattern("^[ ]*(#|//).*");
-	static const boost::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9]+[ ]*");
+	static const boost::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9_]+[ ]*");
 	static const boost::regex vertexPattern("^[ ]*v [ ]*-?[0-9]+\\.[0-9]+ [ ]*-?[0-9]+\\.[0-9]+ [ ]*-?[0-9]+\\.[0-9]+[ ]*");
 	static const boost::regex normalPattern("^[ ]*vn [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+[ ]*");
 	static const boost::regex txcoorPattern("^[ ]*vt [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+[ ]*");
@@ -278,7 +278,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 			delete (it->second);
 		}
 
-		throw content_error("[OBJParser] model " + model->name + " has NULL root-piece");
+		throw content_error("[OBJParser] model " + model->name + " has no piece named \"rootpiece\"");
 	}
 
 	return false;
@@ -310,7 +310,7 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 		std::map<std::string, SOBJPiece*>::const_iterator pieceIt = pieces.find(*it);
 
 		if (pieceIt == pieces.end()) {
-			throw content_error("[OBJParser] meta-data piece named " + (*it) + " not defined in model");
+			throw content_error("[OBJParser] meta-data piece named \"" + (*it) + "\" not defined in model");
 		} else {
 			SOBJPiece* childPiece = pieceIt->second;
 
