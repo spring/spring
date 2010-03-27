@@ -776,7 +776,7 @@ int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 
 	const int myAllyTeam = teamHandler->AllyTeam(team);
 	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, myAllyTeam) &&
@@ -784,11 +784,8 @@ int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 			if (!IsUnitNeutral(u->id)) {
 				if (unitIds != NULL) {
 					unitIds[a] = u->id;
-					a++;
-					if (a >= unitIds_max) {
-						break;
-					}
 				}
+				a++;
 			}
 		}
 	}
@@ -803,7 +800,7 @@ int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 
 	const int myAllyTeam = teamHandler->AllyTeam(team);
 	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, myAllyTeam)
@@ -811,11 +808,8 @@ int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 			if (!IsUnitNeutral(u->id)) {
 				if (unitIds != NULL) {
 					unitIds[a] = u->id;
-					a++;
-					if (a >= unitIds_max) {
-						break;
-					}
 				}
+				a++;
 			}
 		}
 	}
@@ -832,7 +826,7 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 	const int myAllyTeam = teamHandler->AllyTeam(team);
 	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); ui != units.end(); ++ui) {
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, myAllyTeam)
@@ -840,11 +834,8 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 			if (!IsUnitNeutral(u->id)) {
 				if (unitIds != NULL) {
 					unitIds[a] = u->id;
-					a++;
-					if (a >= unitIds_max) {
-						break;
-					}
 				}
+				a++;
 			}
 		}
 	}
@@ -860,7 +851,7 @@ int CAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max)
 
 	const int myAllyTeam = teamHandler->AllyTeam(team);
 	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		if (teamHandler->Ally(u->allyteam, myAllyTeam)) {
@@ -869,11 +860,8 @@ int CAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max)
 			if (!IsUnitNeutral(u->id)) {
 				if (unitIds != NULL) {
 					unitIds[a] = u->id;
-					a++;
-					if (a >= unitIds_max) {
-						break;
-					}
 				}
+				a++;
 			}
 		}
 	}
@@ -890,7 +878,7 @@ int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 	const int myAllyTeam = teamHandler->AllyTeam(team);
 	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); ui != units.end(); ++ui) {
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		if (teamHandler->Ally(u->allyteam, myAllyTeam)) {
@@ -899,11 +887,8 @@ int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 			if (!IsUnitNeutral(u->id)) {
 				if (unitIds != NULL) {
 					unitIds[a] = u->id;
-					a++;
-					if (a >= unitIds_max) {
-						break;
-					}
 				}
+				a++;
 			}
 		}
 	}
@@ -918,18 +903,15 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 	int a = 0;
 
 	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		// IsUnitNeutral does the LOS check
 		if (IsUnitNeutral(u->id)) {
 			if (unitIds != NULL) {
 				unitIds[a] = u->id;
-				a++;
-				if (a >= unitIds_max) {
-					break;
-				}
 			}
+			a++;
 		}
 	}
 
@@ -943,18 +925,15 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 
 	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); ui != units.end(); ++ui) {
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		// IsUnitNeutral does the LOS check
 		if (IsUnitNeutral(u->id)) {
 			if (unitIds != NULL) {
 				unitIds[a] = u->id;
-				a++;
-				if (a >= unitIds_max) {
-					break;
-				}
 			}
+			a++;
 		}
 	}
 
@@ -1679,14 +1658,11 @@ int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {
 		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
-				ui != selectedUnits.selectedUnits.end(); ++ui) {
+				(ui != selectedUnits.selectedUnits.end()) && (a < unitIds_max); ++ui) {
 			if (unitIds != NULL) {
 				unitIds[a] = (*ui)->id;
 			}
 			a++;
-			if (a >= unitIds_max) {
-				break;
-			}
 		}
 	}
 
