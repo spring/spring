@@ -118,23 +118,23 @@ void COBJParser::Draw(const S3DModelPiece* piece) const
 
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)
 {
-	static const boost::regex commentPattern("^#.*");
-	static const boost::regex objectPattern("^o [ ]*[a-zA-Z0-9]+[ ]*");
-	static const boost::regex vertexPattern("^v [ ]*[0-9]+\\.[0-9]+ [ ]*[0-9]+\\.[0-9]+ [ ]*[0-9]+\\.[0-9]+[ ]*");
-	static const boost::regex normalPattern("^vn [ ]*[0-9]+\\.[0-9]+ [ ]*[0-9]+\\.[0-9]+ [ ]*[0-9]+\\.[0-9]+[ ]*");
-	static const boost::regex txcoorPattern("^vt [ ]*[0-9]\\.[0-9]+ [ ]*[0-9]\\.[0-9]+[ ]*");
+	static const boost::regex commentPattern("^[ ]*(#|//).*");
+	static const boost::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9]+[ ]*");
+	static const boost::regex vertexPattern("^[ ]*v [ ]*-?[0-9]+\\.[0-9]+ [ ]*-?[0-9]+\\.[0-9]+ [ ]*-?[0-9]+\\.[0-9]+[ ]*");
+	static const boost::regex normalPattern("^[ ]*vn [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+[ ]*");
+	static const boost::regex txcoorPattern("^[ ]*vt [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+[ ]*");
 	static const boost::regex polygonPattern(
-		"^f "
+		"^[ ]*f "
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
+		"[ ]*"
 		// do not allow spaces around the '/' separators or the
 		// stringstream >> operator will tokenize the wrong way
 		// (according to the OBJ spec they are illegal anyway)
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 1st vertex/texcoor/normal idx
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 2nd vertex/texcoor/normal idx
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 3rd vertex/texcoor/normal idx
-		"[ ]*"
 	);
 
 	bool match = false;
@@ -166,6 +166,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 			if (!match) {
 				// ignore groups ('g'), smoothing groups ('s'),
 				// and materials ("mtllib", "usemtl") for now
+				prevReadIdx = currReadIdx + 1;
 				continue;
 			}
 
@@ -247,9 +248,9 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 							triangle.nIndices[n] = nIdx - 1;
 						}
 
-						assert(triangle.vIndices[n] < piece->vertexCount);
-						assert(triangle.tIndices[n] < piece->vertexCount);
-						assert(triangle.nIndices[n] < piece->vertexCount);
+						assert(triangle.vIndices[n] >= 0 && triangle.vIndices[n] < piece->vertexCount);
+						assert(triangle.tIndices[n] >= 0 && triangle.tIndices[n] < piece->vertexCount);
+						assert(triangle.nIndices[n] >= 0 && triangle.nIndices[n] < piece->vertexCount);
 					}
 
 					assert(n == 3);
@@ -276,6 +277,8 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		for (std::map<std::string, SOBJPiece*>::iterator it = pieces.begin(); it != pieces.end(); ++it) {
 			delete (it->second);
 		}
+
+		throw content_error("[OBJParser] model " + model->name + " has NULL root-piece");
 	}
 
 	return false;
@@ -292,39 +295,6 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 
 	// TODO
 	// SetVertexTangents(piece);
-
-	/*
-	model = {
-		rootpiece = {
-			upperbody = {
-				head = { offset = {0.0, 2.71828, 0.0}, },
-				lshoulder = {
-					offset = {-3.14159, 0.0, 0.0},
-					lupperarm = {
-						llowerarm = {
-							lhand = {},
-						},
-					},
-				},
-				rshoulder = {
-					offset = { 3.14159, 0.0, 0.0},
-					rupperarm = {
-						rlowerarm = {
-							rhand = {},
-						},
-					},
-				},
-			},
-			lowerbody = {},
-		},
-
-		radius = 123.0,
-		height = 456.0,
-		midpos = {0.0, 0.0, 0.0},
-		tex1 = "tex1.png",
-		tex2 = "tex2.png",
-	}
-	*/
 
 	std::vector<std::string> childPieceNames;
 	pieceTable.GetKeys(childPieceNames);
