@@ -10,6 +10,7 @@
 #include "3DModel.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
+#include "OBJParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FarTextureHandler.h"
@@ -28,11 +29,10 @@ C3DModelLoader* modelParser = NULL;
 
 C3DModelLoader::C3DModelLoader(void)
 {
-	C3DOParser* unit3doparser = new C3DOParser();
-	CS3OParser* units3oparser = new CS3OParser();
-
-	AddParser("3do", unit3doparser);
-	AddParser("s3o", units3oparser);
+	// file-extension should be lowercase
+	AddParser("3do", new C3DOParser());
+	AddParser("s3o", new CS3OParser());
+	AddParser("obj", new COBJParser());
 }
 
 

@@ -363,7 +363,8 @@ public:
 								const float dy = (ygbsy + fRand(1)) * gSSsq;
 								const float col = 1.0f;
 
-								const float3 pos(dx, ground->GetHeight2(dx, dy) + 0.53f - ground->GetSlope(dx, dy) * 10.0f, dy);
+								float3 pos(dx, ground->GetHeight2(dx, dy) + 0.5f, dy);
+									pos.y -= (ground->GetSlope(dx, dy) * 10.0f + 0.03f);
 
 								va->AddVertexQTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
 								va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
@@ -660,9 +661,10 @@ void CGrassDrawer::Draw(void)
 				//! CAUTION: loop count must match EnlargeArrays above
 				const float dx = (x + fRand(1)) * gSSsq;
 				const float dy = (y + fRand(1)) * gSSsq;
-				float3 pos(dx, ground->GetHeight2(dx, dy) + 0.5f, dy);
-					pos.y -= ground->GetSlope(dx, dy) * 10.0f + 0.03f;
 				const float col = 1.0f;
+
+				float3 pos(dx, ground->GetHeight2(dx, dy) + 0.5f, dy);
+					pos.y -= (ground->GetSlope(dx, dy) * 10.0f + 0.03f);
 
 				if (camera->InView(pos, turfSize * 0.7f)) {
 					va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));

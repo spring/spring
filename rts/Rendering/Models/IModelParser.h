@@ -20,7 +20,7 @@ extern C3DModelLoader* modelParser;
 class IModelParser
 {
 public:
-	virtual S3DModel* Load(std::string name) = 0;
+	virtual S3DModel* Load(const std::string& name) = 0;
 	virtual void Draw(const S3DModelPiece* o) const = 0;
 };
 
