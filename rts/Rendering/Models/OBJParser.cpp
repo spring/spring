@@ -33,6 +33,7 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		throw content_error("[OBJParser] failed to parse meta-file " + metaFileName);
 	}
 
+	// get the (root-level) model table
 	const LuaTable& modelTable = metaFileParser.GetRoot();
 
 	S3DModel* model = new S3DModel();
@@ -54,7 +55,6 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	std::string modelData;
 	modelFile.LoadStringData(modelData);
 
-	// get the (root-level) model table
 	if (ParseModelData(model, modelData, modelTable)) {
 		assert(model->numobjects == modelTable.GetInt("numpieces", 0));
 		return model;
