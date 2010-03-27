@@ -117,11 +117,11 @@ C3DOParser::C3DOParser()
 }
 
 
-S3DModel* C3DOParser::Load(string name)
+S3DModel* C3DOParser::Load(const string& name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
-		throw content_error("File not found: "+name);
+		throw content_error("[3DOParser] could not find model-file " + name);
 	}
 
 	fileBuf = new unsigned char[file.FileSize()];
@@ -133,10 +133,10 @@ S3DModel* C3DOParser::Load(string name)
 	}
 
 	S3DModel* model = new S3DModel;
-	model->name = name;
-	model->type = MODELTYPE_3DO;
-	model->textureType = 0;
-	model->numobjects  = 0;
+		model->name = name;
+		model->type = MODELTYPE_3DO;
+		model->textureType = 0;
+		model->numobjects  = 0;
 
 	// Load the Model
 	S3DOPiece* rootobj = ReadChild(0, NULL, &model->numobjects);

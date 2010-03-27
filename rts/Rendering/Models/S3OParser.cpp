@@ -23,11 +23,11 @@
 #include "System/Platform/errorhandler.h"
 
 
-S3DModel* CS3OParser::Load(std::string name)
+S3DModel* CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
-		throw content_error("File not found: "+name);
+		throw content_error("[S3OParser] could not find model-file " + name);
 	}
 
 	unsigned char* fileBuf = new unsigned char[file.FileSize()];
@@ -37,11 +37,11 @@ S3DModel* CS3OParser::Load(std::string name)
 	header.swap();
 
 	S3DModel* model = new S3DModel;
-	model->type = MODELTYPE_S3O;
-	model->numobjects = 0;
-	model->name = name;
-	model->tex1 = (char*) &fileBuf[header.texture1];
-	model->tex2 = (char*) &fileBuf[header.texture2];
+		model->name = name;
+		model->type = MODELTYPE_S3O;
+		model->numobjects = 0;
+		model->tex1 = (char*) &fileBuf[header.texture1];
+		model->tex2 = (char*) &fileBuf[header.texture2];
 	texturehandlerS3O->LoadS3OTexture(model);
 
 	SS3OPiece* rootPiece = LoadPiece(fileBuf, header.rootPiece, model);
