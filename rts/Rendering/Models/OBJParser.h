@@ -24,11 +24,17 @@ public:
 	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount += 1; }
 	void AddNormal(const float3& n) { vnormals.push_back(n);                   }
 	void AddTxCoor(const float2& t) { texcoors.push_back(t);                   }
-	void AddTriangle(const SOBJTriangle& t) { triangles.push_back(t); }
 
-	const float3& GetVertexPos(const int& vIdx) const {
-		return vertices[vIdx];
-	}
+	void AddTriangle(const SOBJTriangle& t) { triangles.push_back(t); }
+	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
+	int GetTriangleCount() const { return (triangles.size()); }
+
+	const float3& GetVertexPos(const int& idx) const { return GetVertex(idx); }
+	const float3& GetVertex(const int idx) const { return vertices[idx]; }
+	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
+	const float3& GetSTangent(const int idx) const { return sTangents[idx]; }
+	const float3& GetTTangent(const int idx) const { return tTangents[idx]; }
+	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
 
 private:
 	std::vector<float3> vertices;
