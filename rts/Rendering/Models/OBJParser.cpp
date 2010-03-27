@@ -7,6 +7,7 @@
 
 #include "OBJParser.h"
 #include "Lua/LuaParser.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
@@ -68,8 +69,49 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	return NULL;
 }
 
-void COBJParser::Draw(const S3DModelPiece*) const
+void COBJParser::Draw(const S3DModelPiece* piece) const
 {
+	if (piece->isEmpty) {
+		return;
+	}
+
+	const SOBJPiece* objPiece = dynamic_cast<const SOBJPiece*>(piece);
+
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(objPiece->GetTriangleCount() * 3, VA_SIZE_TN);
+
+	for (int i = objPiece->GetTriangleCount() - 1; i >= 0; i--) {
+		const SOBJTriangle& tri = objPiece->GetTriangle(i);
+		const float3&
+			v0p = objPiece->GetVertex(tri.vIndices[0]),
+			v1p = objPiece->GetVertex(tri.vIndices[1]),
+			v2p = objPiece->GetVertex(tri.vIndices[2]);
+		const float3&
+			v0n = objPiece->GetNormal(tri.nIndices[0]),
+			v1n = objPiece->GetNormal(tri.nIndices[1]),
+			v2n = objPiece->GetNormal(tri.nIndices[2]);
+		/*
+		// TODO: these need a new CVertexArray::AddVertex variant
+		const float3&
+			v0st = objPiece->GetSTangent(tri.vIndices[0]);
+			v1st = objPiece->GetSTangent(tri.vIndices[1]);
+			v2st = objPiece->GetSTangent(tri.vIndices[2]);
+			v0tt = objPiece->GetTTangent(tri.vIndices[0]);
+			v1tt = objPiece->GetTTangent(tri.vIndices[1]);
+			v2tt = objPiece->GetTTangent(tri.vIndices[2]);
+		*/
+		const float2&
+			v0tc = objPiece->GetTxCoor(tri.tIndices[0]),
+			v1tc = objPiece->GetTxCoor(tri.tIndices[1]),
+			v2tc = objPiece->GetTxCoor(tri.tIndices[2]);
+
+		va->AddVertexQTN(v0p, v0tc.x, v0tc.y, v0n);
+		va->AddVertexQTN(v1p, v1tc.x, v1tc.y, v1n);
+		va->AddVertexQTN(v2p, v2tc.x, v2tc.y, v2n);
+	}
+
+	va->DrawArrayTN(GL_TRIANGLES);
 }
 
 
@@ -247,6 +289,9 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
 	piece->colvol = new CollisionVolume("box", ZeroVector, ZeroVector, COLVOL_TEST_CONT);
 	piece->colvol->Disable();
+
+	// TODO
+	// SetVertexTangents(piece);
 
 	/*
 	model = {
