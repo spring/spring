@@ -34,7 +34,7 @@ struct S3DModelPiece {
 	float maxx, maxy, maxz;
 	float minx, miny, minz;
 
-	//! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
+	//! MODELTYPE_*
 	int type;
 
 	// defaults to a box
@@ -78,7 +78,7 @@ struct LocalModelPiece
 	bool updated; //FIXME unused?
 	bool visible;
 
-	//! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
+	//! MODELTYPE_*
 	int type;
 	std::string name;
 	S3DModelPiece* original;
