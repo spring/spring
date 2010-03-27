@@ -7,6 +7,7 @@
 
 #include "OBJParser.h"
 #include "Lua/LuaParser.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -32,25 +33,36 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		throw content_error("[OBJParser] failed to parse meta-file " + metaFileName);
 	}
 
+	const LuaTable& modelTable = metaFileParser.GetRoot();
 
 	S3DModel* model = new S3DModel();
 		model->name = modelFileName;
 		model->type = MODELTYPE_OBJ;
-		model->textureType = 0; // TODO: OBJTextureHandler?
+		model->textureType = 0;
 		model->numobjects = 0;
 		model->rootobject = NULL;
-		model->radius = (metaFileParser.GetRoot()).GetFloat("radius", 0.0f);
-		model->height = (metaFileParser.GetRoot()).GetFloat("height", 0.0f);
+		model->radius = modelTable.GetFloat("radius", 0.0f);
+		model->height = modelTable.GetFloat("height", 0.0f);
+		model->tex1 = modelTable.GetString("tex1", "");
+		model->tex2 = modelTable.GetString("tex2", "");
+		model->minx = model->miny = model->minz = 0.0f; // needed for per-piece coldet only?
+		model->maxx = model->maxy = model->maxz = 0.0f; // needed for per-piece coldet only?
+
+	// for now, do basic S3O-style texturing
+	texturehandlerS3O->LoadS3OTexture(model);
 
 	std::string modelData;
 	modelFile.LoadStringData(modelData);
 
 	// get the (root-level) model table
-	if (ParseModelData(model, modelData, metaFileParser.GetRoot())) {
+	if (ParseModelData(model, modelData, modelTable)) {
+		assert(model->numobjects == modelTable.GetInt("numpieces", 0));
 		return model;
+	} else {
+		delete model;
+		throw content_error("[OBJParser] failed to parse model-data " + modelFileName);
 	}
 
-	delete model;
 	return NULL;
 }
 
@@ -228,6 +240,8 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
 {
 	piece->isEmpty = (piece->vertexCount == 0);
+	piece->minx = piece->miny = piece->minz = 0.0f;
+	piece->maxx = piece->maxy = piece->maxz = 0.0f;
 
 	/*
 	model = {
@@ -254,8 +268,11 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 
 		radius = 123.0,
 		height = 456.0,
+		tex1 = "tex1.png",
+		tex2 = "tex2.png",
 	}
 	*/
+
 	std::vector<std::string> childPieceNames;
 	pieceTable.GetKeys(childPieceNames);
 
