@@ -56,7 +56,8 @@ public:
 
 private:
 	bool ParseModelData(S3DModel*, const std::string&, const LuaTable&);
-	void BuildModelPieceTree(S3DModelPiece*, const std::map<std::string, SOBJPiece*>&, const LuaTable&);
+	bool BuildModelPieceTree(S3DModel*, const std::map<std::string, SOBJPiece*>&, const LuaTable&);
+	void BuildModelPieceTreeRec(S3DModelPiece*, const std::map<std::string, SOBJPiece*>&, const LuaTable&);
 };
 
 #endif
