@@ -16,6 +16,9 @@ struct SS3OVertex {
 
 struct SS3OPiece: public S3DModelPiece {
 	~SS3OPiece() {
+		vertices.clear();
+		vertexDrawOrder.clear();
+
 		sTangents.clear();
 		tTangents.clear();
 	}
