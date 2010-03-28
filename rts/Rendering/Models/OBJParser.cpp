@@ -268,23 +268,41 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		prevReadIdx = currReadIdx + 1;
 	}
 
-	model->rootobject = pieces["rootpiece"];
-
-	if (model->rootobject != NULL) {
-		BuildModelPieceTree(model->rootobject, pieces, metaData.SubTable("rootpiece"));
+	if (BuildModelPieceTree(model, pieces, metaData.SubTable("pieces"))) {
 		return true;
-	} else {
-		for (std::map<std::string, SOBJPiece*>::iterator it = pieces.begin(); it != pieces.end(); ++it) {
-			delete (it->second);
-		}
+	}
 
-		throw content_error("[OBJParser] model " + model->name + " has no piece named \"rootpiece\"");
+	for (std::map<std::string, SOBJPiece*>::iterator it = pieces.begin(); it != pieces.end(); ++it) {
+		delete (it->second);
+	}
+
+	throw content_error("[OBJParser] model " + model->name + " has no uniquely defined root-piece");
+	return false;
+}
+
+
+bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& piecesTable)
+{
+	std::vector<std::string> rootPieceNames;
+	piecesTable.GetKeys(rootPieceNames);
+
+	if (rootPieceNames.size() != 1) {
+		return false;
+	}
+
+	const std::string& rootPieceName = rootPieceNames[0];
+	const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
+
+	if (rootPieceIt != pieces.end()) {
+		model->rootobject = rootPieceIt->second;
+		BuildModelPieceTreeRec(model->rootobject, pieces, piecesTable.SubTable(rootPieceName));
+		return true;
 	}
 
 	return false;
 }
 
-void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
+void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
 {
 	piece->isEmpty = (piece->vertexCount == 0);
 	piece->mins = ZeroVector;
@@ -314,12 +332,11 @@ void COBJParser::BuildModelPieceTree(S3DModelPiece* piece, const std::map<std::s
 		} else {
 			SOBJPiece* childPiece = pieceIt->second;
 
-			// this is not needed
 			// childPiece->parent = piece;
 			assert((*it) == childPiece->name);
 
 			piece->childs.push_back(childPiece);
-			BuildModelPieceTree(childPiece, pieces, pieceTable.SubTable(childPiece->name));
+			BuildModelPieceTreeRec(childPiece, pieces, pieceTable.SubTable(childPiece->name));
 		}
 	}
 }
