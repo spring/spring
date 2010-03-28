@@ -78,8 +78,8 @@ void COBJParser::Draw(const S3DModelPiece* piece) const
 	const SOBJPiece* objPiece = dynamic_cast<const SOBJPiece*>(piece);
 
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(objPiece->GetTriangleCount() * 3, VA_SIZE_TN);
+		va->Initialize();
+		va->EnlargeArrays(objPiece->GetTriangleCount() * 3, 0, VA_SIZE_TN);
 
 	for (int i = objPiece->GetTriangleCount() - 1; i >= 0; i--) {
 		const SOBJTriangle& tri = objPiece->GetTriangle(i);
@@ -224,7 +224,6 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 						i = vtnIndices.find('/',     0); assert(i != std::string::npos);
 						j = vtnIndices.find('/', i + 1); assert(j != std::string::npos);
-						n += 1;
 
 						vIdx = std::atoi(vtnIndices.substr(    0,     i).c_str());
 						tIdx = std::atoi(vtnIndices.substr(i + 1, j - i).c_str());
@@ -251,6 +250,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						assert(triangle.vIndices[n] >= 0 && triangle.vIndices[n] < piece->vertexCount);
 						assert(triangle.tIndices[n] >= 0 && triangle.tIndices[n] < piece->vertexCount);
 						assert(triangle.nIndices[n] >= 0 && triangle.nIndices[n] < piece->vertexCount);
+						n += 1;
 					}
 
 					assert(n == 3);
