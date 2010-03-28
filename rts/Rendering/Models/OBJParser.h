@@ -22,6 +22,8 @@ public:
 		colvol      = NULL;
 	}
 
+	void SetVertexTangents();
+
 	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount += 1; }
 	void AddNormal(const float3& n) { vnormals.push_back(n);                   }
 	void AddTxCoor(const float2& t) { texcoors.push_back(t);                   }
