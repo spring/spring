@@ -11,6 +11,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
+#include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 
 S3DModel* COBJParser::Load(const std::string& modelFileName)
@@ -120,9 +121,26 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 {
 	static const boost::regex commentPattern("^[ ]*(#|//).*");
 	static const boost::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9_]+[ ]*");
-	static const boost::regex vertexPattern("^[ ]*v [ ]*-?[0-9]+\\.[0-9]+ [ ]*-?[0-9]+\\.[0-9]+ [ ]*-?[0-9]+\\.[0-9]+[ ]*");
-	static const boost::regex normalPattern("^[ ]*vn [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+[ ]*");
-	static const boost::regex txcoorPattern("^[ ]*vt [ ]*-?[0-9]\\.[0-9]+ [ ]*-?[0-9]\\.[0-9]+[ ]*");
+	static const boost::regex vertexPattern(
+		"^[ ]*v "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]* "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]* "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]*"
+		"[ ]*"
+	);
+	static const boost::regex normalPattern(
+		"^[ ]*vn "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]* "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]* "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]*"
+		"[ ]*"
+	);
+	static const boost::regex txcoorPattern(
+		"^[ ]*vt "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]* "
+		"[ ]*-?[0-9]*\\.?[0-9]*e?-?[0-9]*"
+		"[ ]*"
+	);
 	static const boost::regex polygonPattern(
 		"^[ ]*f "
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
@@ -166,6 +184,8 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 			if (!match) {
 				// ignore groups ('g'), smoothing groups ('s'),
 				// and materials ("mtllib", "usemtl") for now
+				logOutput.Print("[OBJParser] failed to parse line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
+
 				prevReadIdx = currReadIdx + 1;
 				continue;
 			}
