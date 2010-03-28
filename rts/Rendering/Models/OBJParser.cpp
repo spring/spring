@@ -340,10 +340,8 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 
 	if (!childPieceNames.empty()) {
 		for (std::vector<std::string>::const_iterator it = childPieceNames.begin(); it != childPieceNames.end(); ++it) {
-			// NOTE: handle this better? can't check types
-			// (both tables), can't reliably check lengths,
-			// test for presence of float keys?
-			if ((*it) == "offset") {
+			// NOTE: handle these better?
+			if ((*it) == "offset" || (*it) == "name") {
 				continue;
 			}
 
@@ -363,8 +361,6 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
 			}
 		}
-
-		return;
 	}
 
 	if (!childPieceNumbers.empty()) {
@@ -385,8 +381,6 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
 			}
 		}
-
-		return;
 	}
 }
 
