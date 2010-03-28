@@ -344,7 +344,10 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 
 void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
 {
-	piece->isEmpty = (piece->vertexCount == 0);
+	assert(piece->GetVertexCount() == piece->GetNormalCount());
+	assert(piece->GetVertexCount() == piece->GetTxCoorCount());
+
+	piece->isEmpty = (piece->GetVertexCount() == 0);
 	piece->mins = ZeroVector; // TODO (needed for per-piece coldet only?)
 	piece->maxs = ZeroVector; // TODO (needed for per-piece coldet only?)
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
