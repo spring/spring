@@ -21,6 +21,16 @@ public:
 		type        = MODELTYPE_OBJ;
 		colvol      = NULL;
 	}
+	~SOBJPiece() {
+		vertices.clear();
+		vnormals.clear();
+		texcoors.clear();
+
+		triangles.clear();
+
+		sTangents.clear();
+		tTangents.clear();
+	}
 
 	void SetVertexTangents();
 
