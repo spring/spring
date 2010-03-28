@@ -462,6 +462,10 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
 		const bool isDieing = skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId);
 		if (!isDieing) {
+			if (gs->frameNum > 0) {
+				// We will only get here if the AI is created mid-game.
+				aiWrapper->Update(gs->frameNum);
+			}
 			// Send a UnitCreated event for each unit of the team.
 			// This will only do something if the AI is created mid-game.
 			CTeam* team = teamHandler->Team(aiWrapper->GetTeamId());
