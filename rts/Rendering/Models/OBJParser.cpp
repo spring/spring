@@ -50,8 +50,8 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
 		model->tex1 = modelTable.GetString("tex1", "");
 		model->tex2 = modelTable.GetString("tex2", "");
-		model->mins = ZeroVector; // needed for per-piece coldet only?
-		model->maxs = ZeroVector; // needed for per-piece coldet only?
+		model->mins = ZeroVector;
+		model->maxs = ZeroVector;
 
 	// basic S3O-style texturing
 	texturehandlerS3O->LoadS3OTexture(model);
@@ -213,16 +213,17 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 				case 'v': {
 					// position, normal, or texture-coordinates
-					// note: assume all normals are unit-length
 					assert(piece != NULL);
 
-					float x = 0.0f; lineStream >> x;
-					float y = 0.0f; lineStream >> y;
-					float z = 0.0f; lineStream >> z;
+					float3 f3;
+						lineStream >> f3.x;
+						lineStream >> f3.y;
+						lineStream >> f3.z;
+					float2 f2(f3.x, f3.y);
 
-					     if (lineHeader == "v" ) { piece->AddVertex(float3(x, y, z)); }
-					else if (lineHeader == "vn") { piece->AddNormal(float3(x, y, z)); }
-					else if (lineHeader == "vt") { piece->AddTxCoor(float2(x, y   )); }
+					     if (lineHeader == "v" ) { piece->AddVertex(f3             ); }
+					else if (lineHeader == "vn") { piece->AddNormal(f3.ANormalize()); }
+					else if (lineHeader == "vt") { piece->AddTxCoor(f2             ); }
 				} break;
 
 				case 'f': {
@@ -344,8 +345,8 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
 {
 	piece->isEmpty = (piece->vertexCount == 0);
-	piece->mins = ZeroVector;
-	piece->maxs = ZeroVector;
+	piece->mins = ZeroVector; // TODO (needed for per-piece coldet only?)
+	piece->maxs = ZeroVector; // TODO (needed for per-piece coldet only?)
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
 	piece->colvol = new CollisionVolume("box", ZeroVector, ZeroVector, COLVOL_TEST_CONT);
 	piece->colvol->Disable();
