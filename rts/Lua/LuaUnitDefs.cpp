@@ -475,12 +475,12 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 static int ModelDefTable(lua_State* L, const void* data) {
 	const UnitModelDef& md = *((const UnitModelDef*) data);
-	const char* type;
-	if (StringToLower(md.modelpath).find(".s3o") != string::npos) {
-		type = "s3o";
-	} else {
-		type = "3do";
-	}
+	const char* type = "???";
+
+	     if (StringToLower(md.modelpath).find(".3do") != string::npos) { type = "3do"; }
+	else if (StringToLower(md.modelpath).find(".s3o") != string::npos) { type = "s3o"; }
+	else if (StringToLower(md.modelpath).find(".obj") != string::npos) { type = "obj"; }
+
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "type", type);
 	HSTR_PUSH_STRING(L, "path", md.modelpath);
