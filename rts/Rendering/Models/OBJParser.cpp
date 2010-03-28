@@ -285,19 +285,37 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& piecesTable)
 {
 	std::vector<std::string> rootPieceNames;
-	piecesTable.GetKeys(rootPieceNames);
+	std::vector<int> rootPieceNumbers;
 
-	if (rootPieceNames.size() != 1) {
+	piecesTable.GetKeys(rootPieceNames);
+	piecesTable.GetKeys(rootPieceNumbers);
+
+	// there must be exactly one root-piece defined by name or number
+	if ((rootPieceNames.size() + rootPieceNumbers.size()) != 1) {
 		return false;
 	}
 
-	const std::string& rootPieceName = rootPieceNames[0];
-	const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
+	if (!rootPieceNames.empty()) {
+		const std::string& rootPieceName = rootPieceNames[0];
+		const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
 
-	if (rootPieceIt != pieces.end()) {
-		model->rootobject = rootPieceIt->second;
-		BuildModelPieceTreeRec(model->rootobject, pieces, piecesTable.SubTable(rootPieceName));
-		return true;
+		if (rootPieceIt != pieces.end()) {
+			model->rootobject = rootPieceIt->second;
+			BuildModelPieceTreeRec(model->rootobject, pieces, piecesTable.SubTable(rootPieceName));
+			return true;
+		}
+	}
+
+	if (!rootPieceNumbers.empty()) {
+		const LuaTable& rootPieceTable = piecesTable.SubTable(rootPieceNumbers[0]);
+		const std::string& rootPieceName = rootPieceTable.GetString("name", "");
+		const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
+
+		if (rootPieceIt != pieces.end()) {
+			model->rootobject = rootPieceIt->second;
+			BuildModelPieceTreeRec(model->rootobject, pieces, piecesTable.SubTable(rootPieceNumbers[0]));
+			return true;
+		}
 	}
 
 	return false;
@@ -314,30 +332,61 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 
 	piece->SetVertexTangents();
 
+	std::vector<int> childPieceNumbers;
 	std::vector<std::string> childPieceNames;
+
+	pieceTable.GetKeys(childPieceNumbers);
 	pieceTable.GetKeys(childPieceNames);
 
-	for (std::vector<std::string>::const_iterator it = childPieceNames.begin(); it != childPieceNames.end(); ++it) {
-		// NOTE: handle this better? can't check types
-		// (both tables), can't reliably check lengths,
-		// test for presence of float keys?
-		if ((*it) == "offset") {
-			continue;
+	if (!childPieceNames.empty()) {
+		for (std::vector<std::string>::const_iterator it = childPieceNames.begin(); it != childPieceNames.end(); ++it) {
+			// NOTE: handle this better? can't check types
+			// (both tables), can't reliably check lengths,
+			// test for presence of float keys?
+			if ((*it) == "offset") {
+				continue;
+			}
+
+			const std::string& childPieceName = *it;
+			const LuaTable& childPieceTable = pieceTable.SubTable(childPieceName);
+
+			std::map<std::string, SOBJPiece*>::const_iterator pieceIt = pieces.find(childPieceName);
+
+			if (pieceIt == pieces.end()) {
+				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
+			} else {
+				SOBJPiece* childPiece = pieceIt->second;
+
+				assert(childPieceName == childPiece->name);
+
+				piece->childs.push_back(childPiece);
+				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
+			}
 		}
 
-		std::map<std::string, SOBJPiece*>::const_iterator pieceIt = pieces.find(*it);
+		return;
+	}
 
-		if (pieceIt == pieces.end()) {
-			throw content_error("[OBJParser] meta-data piece named \"" + (*it) + "\" not defined in model");
-		} else {
-			SOBJPiece* childPiece = pieceIt->second;
+	if (!childPieceNumbers.empty()) {
+		for (std::vector<int>::const_iterator it = childPieceNumbers.begin(); it != childPieceNumbers.end(); ++it) {
+			const LuaTable& childPieceTable = pieceTable.SubTable(*it);
+			const std::string& childPieceName = childPieceTable.GetString("name", "");
 
-			// childPiece->parent = piece;
-			assert((*it) == childPiece->name);
+			std::map<std::string, SOBJPiece*>::const_iterator pieceIt = pieces.find(childPieceName);
 
-			piece->childs.push_back(childPiece);
-			BuildModelPieceTreeRec(childPiece, pieces, pieceTable.SubTable(childPiece->name));
+			if (pieceIt == pieces.end()) {
+				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
+			} else {
+				SOBJPiece* childPiece = pieceIt->second;
+
+				assert(childPieceName == childPiece->name);
+
+				piece->childs.push_back(childPiece);
+				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
+			}
 		}
+
+		return;
 	}
 }
 
