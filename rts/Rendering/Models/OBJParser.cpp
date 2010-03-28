@@ -311,8 +311,7 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 	piece->colvol = new CollisionVolume("box", ZeroVector, ZeroVector, COLVOL_TEST_CONT);
 	piece->colvol->Disable();
 
-	// TODO
-	// SetVertexTangents(piece);
+	piece->SetVertexTangents();
 
 	std::vector<std::string> childPieceNames;
 	pieceTable.GetKeys(childPieceNames);
@@ -338,5 +337,22 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 			piece->childs.push_back(childPiece);
 			BuildModelPieceTreeRec(childPiece, pieces, pieceTable.SubTable(childPiece->name));
 		}
+	}
+}
+
+
+
+
+
+
+void SOBJPiece::SetVertexTangents()
+{
+	if (isEmpty) {
+		return;
+	}
+
+	// TODO
+	for (int i = GetTriangleCount() - 1; i >= 0; i--) {
+		const SOBJTriangle& tri = GetTriangle(i);
 	}
 }
