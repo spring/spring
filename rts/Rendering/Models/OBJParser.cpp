@@ -193,6 +193,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 				case 'v': {
 					// position, normal, or texture-coordinates
+					// note: assume all normals are unit-length
 					assert(piece != NULL);
 
 					float x = 0.0f; lineStream >> x;
@@ -351,8 +352,60 @@ void SOBJPiece::SetVertexTangents()
 		return;
 	}
 
-	// TODO
+	sTangents.resize(vertexCount, ZeroVector);
+	tTangents.resize(vertexCount, ZeroVector);
+
+	// set the triangle-level S- and T-tangents
 	for (int i = GetTriangleCount() - 1; i >= 0; i--) {
 		const SOBJTriangle& tri = GetTriangle(i);
+		const float3&
+			p0 = GetVertex(tri.vIndices[0]),
+			p1 = GetVertex(tri.vIndices[1]),
+			p2 = GetVertex(tri.vIndices[2]);
+		const float2&
+			tc0 = GetTxCoor(tri.tIndices[0]),
+			tc1 = GetTxCoor(tri.tIndices[1]),
+			tc2 = GetTxCoor(tri.tIndices[2]);
+
+		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
+		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;
+		const float z1z0 = p1.z - p0.z, z2z0 = p2.z - p0.z;
+
+		const float s1 = tc1.x - tc0.x, s2 = tc2.x - tc0.x;
+		const float t1 = tc1.y - tc0.y, t2 = tc2.y - tc0.y;
+
+		// if d is 0, texcoors are degenerate
+		const float d = (s1 * t2 - s2 * t1);
+		const bool  b = (d > -0.0001f && d < 0.0001f);
+		const float r = b? 1.0f: 1.0f / d;
+
+		// note: not necessarily orthogonal to each other
+		// or to vertex normal (only to the triangle plane)
+		const float3 sdir((t2 * x1x0 - t1 * x2x0) * r, (t2 * y1y0 - t1 * y2y0) * r, (t2 * z1z0 - t1 * z2z0) * r);
+		const float3 tdir((s1 * x2x0 - s2 * x1x0) * r, (s1 * y2y0 - s2 * y1y0) * r, (s1 * z2z0 - s2 * z1z0) * r);
+
+		sTangents[tri.vIndices[0]] += sdir;
+		sTangents[tri.vIndices[1]] += sdir;
+		sTangents[tri.vIndices[2]] += sdir;
+
+		tTangents[tri.vIndices[0]] += tdir;
+		tTangents[tri.vIndices[1]] += tdir;
+		tTangents[tri.vIndices[2]] += tdir;
+	}
+
+	// set the smoothed per-vertex tangents
+	for (int vrtIdx = vertices.size() - 1; vrtIdx >= 0; vrtIdx--) {
+		float3& n = vnormals[vrtIdx];
+		float3& s = sTangents[vrtIdx];
+		float3& t = tTangents[vrtIdx];
+		int h = 1;
+
+		if (s == ZeroVector) { s = float3(1.0f, 0.0f, 0.0f); }
+		if (t == ZeroVector) { t = float3(0.0f, 1.0f, 0.0f); }
+
+		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
+		s = (s - n * n.dot(s));
+		s = s.SafeANormalize();
+		t = (s.cross(n)) * h;
 	}
 }

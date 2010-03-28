@@ -333,7 +333,7 @@ void SS3OPiece::SetVertexTangents()
 	}
 
 	// set the smoothed per-vertex tangents
-	for (unsigned vrtIdx = 0; vrtIdx < vertices.size(); vrtIdx++) {
+	for (int vrtIdx = vertices.size() - 1; vrtIdx >= 0; vrtIdx--) {
 		float3& n = vertices[vrtIdx].normal;
 		float3& s = sTangents[vrtIdx];
 		float3& t = tTangents[vrtIdx];
