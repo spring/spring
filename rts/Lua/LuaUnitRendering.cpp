@@ -240,11 +240,13 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 	}
 	else if (luaType == LUA_TSTRING) {
 		const string key = StringToLower(lua_tostring(L, index));
+
 		if (key == "3do") {
 			shader.type = LuaMatShader::LUASHADER_3DO;
-		}
-		else if (key == "s3o") {
+		} else if (key == "s3o") {
 			shader.type = LuaMatShader::LUASHADER_S3O;
+		} else if (key == "obj") {
+			shader.type = LuaMatShader::LUASHADER_S3O; //!
 		}
 	}
 	return;
