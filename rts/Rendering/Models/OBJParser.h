@@ -20,6 +20,8 @@ public:
 		isEmpty     = true;
 		type        = MODELTYPE_OBJ;
 		colvol      = NULL;
+		mins        = ZeroVector;
+		maxs        = ZeroVector;
 	}
 	~SOBJPiece() {
 		vertices.clear();
@@ -49,7 +51,7 @@ public:
 	int GetNormalCount() const { return vnormals.size(); }
 	int GetTxCoorCount() const { return texcoors.size(); }
 
-	const float3& GetVertexPos(const int& idx) const { return GetVertex(idx); }
+	const float3 GetVertexPos(const int& idx) const { return (GetVertex(idx) + goffset); }
 	const float3& GetVertex(const int idx) const { return vertices[idx]; }
 	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
 	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
@@ -83,9 +85,11 @@ public:
 	S3DModel* Load(const std::string&);
 
 private:
+	typedef std::map<std::string, SOBJPiece*> PieceMap;
+
 	bool ParseModelData(S3DModel*, const std::string&, const LuaTable&);
-	bool BuildModelPieceTree(S3DModel*, const std::map<std::string, SOBJPiece*>&, const LuaTable&);
-	void BuildModelPieceTreeRec(SOBJPiece*, const std::map<std::string, SOBJPiece*>&, const LuaTable&);
+	bool BuildModelPieceTree(S3DModel*, const PieceMap&, const LuaTable&, bool, bool);
+	void BuildModelPieceTreeRec(S3DModel*, SOBJPiece*, const PieceMap&, const LuaTable&, bool, bool);
 };
 
 #endif

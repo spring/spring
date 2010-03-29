@@ -25,7 +25,7 @@ struct SS3OPiece: public S3DModelPiece {
 
 	void DrawList() const;
 	void SetVertexTangents();
-	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
+	const float3 GetVertexPos(const int& idx) const { return vertices[idx].pos; };
 	void Shatter(float, int, int, const float3&, const float3&) const;
 
 	std::vector<SS3OVertex> vertices;

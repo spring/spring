@@ -111,9 +111,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 	bool match = false;
 
 
-	std::string pieceName;
-	std::map<std::string, SOBJPiece*> pieces;
-
+	PieceMap pieceMap;
 	SOBJPiece* piece = NULL;
 
 
@@ -153,13 +151,14 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 				case 'o': {
 					// named object (piece)
+					std::string pieceName;
 					lineStream >> pieceName;
 
-					assert(pieces.find(pieceName) == pieces.end());
+					assert(pieceMap.find(pieceName) == pieceMap.end());
 
 					piece = new SOBJPiece();
 					piece->name = pieceName;
-					pieces[pieceName] = piece;
+					pieceMap[pieceName] = piece;
 
 					model->numobjects += 1;
 				} break;
@@ -243,30 +242,16 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		prevReadIdx = currReadIdx + 1;
 	}
 
-	if (BuildModelPieceTree(model, pieces, metaData.SubTable("pieces"))) {
-		const bool globalVertexOffsets = metaData.GetBool("globalvertexoffsets", false);
-		const bool globalPieceOffsets = metaData.GetBool("globalpieceoffsets", false);
 
-		if (globalVertexOffsets) {
-			// we want vertices in piece-space, but the metadata
-			// indicates they are defined in model-space, so we
-			// must convert them
-			// for converted S3O's, the piece offsets are wrt.
-			// the parent piece, not the concatenated transform
-			// wrt. the root
-			for (std::map<std::string, SOBJPiece*>::iterator it = pieces.begin(); it != pieces.end(); ++it) {
-				SOBJPiece* piece = it->second;
+	const LuaTable& piecesTable = metaData.SubTable("pieces");
+	const bool globalVertexOffsets = metaData.GetBool("globalvertexoffsets", false);
+	const bool localPieceOffsets = metaData.GetBool("localpieceoffsets", false);
 
-				for (int i = piece->GetVertexCount() - 1; i >= 0; i--) {
-					piece->SetVertex(i, (piece->GetVertex(i) - (globalPieceOffsets? piece->goffset: piece->offset)));
-				}
-			}
-		}
-
+	if (BuildModelPieceTree(model, pieceMap, piecesTable, globalVertexOffsets, localPieceOffsets)) {
 		return true;
 	}
 
-	for (std::map<std::string, SOBJPiece*>::iterator it = pieces.begin(); it != pieces.end(); ++it) {
+	for (PieceMap::iterator it = pieceMap.begin(); it != pieceMap.end(); ++it) {
 		delete (it->second);
 	}
 
@@ -275,8 +260,13 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 }
 
 
-bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& piecesTable)
-{
+bool COBJParser::BuildModelPieceTree(
+	S3DModel* model,
+	const PieceMap& pieceMap,
+	const LuaTable& piecesTable,
+	bool globalVertexOffsets,
+	bool localPieceOffsets
+) {
 	std::vector<std::string> rootPieceNames;
 	std::vector<int> rootPieceNumbers;
 
@@ -292,12 +282,13 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 
 	if (!rootPieceNames.empty()) {
 		const std::string& rootPieceName = rootPieceNames[0];
-		const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
+		const LuaTable& rootPieceTable = piecesTable.SubTable(rootPieceName);
+		const PieceMap::const_iterator rootPieceIt = pieceMap.find(rootPieceName);
 
-		if (rootPieceIt != pieces.end()) {
+		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
 			model->rootobject = rootPiece;
-			BuildModelPieceTreeRec(rootPiece, pieces, piecesTable.SubTable(rootPieceName));
+			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;
 		}
 	}
@@ -305,12 +296,12 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 	if (!rootPieceNumbers.empty()) {
 		const LuaTable& rootPieceTable = piecesTable.SubTable(rootPieceNumbers[0]);
 		const std::string& rootPieceName = rootPieceTable.GetString("name", "");
-		const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
+		const PieceMap::const_iterator rootPieceIt = pieceMap.find(rootPieceName);
 
-		if (rootPieceIt != pieces.end()) {
+		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
 			model->rootobject = rootPiece;
-			BuildModelPieceTreeRec(rootPiece, pieces, piecesTable.SubTable(rootPieceNumbers[0]));
+			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;
 		}
 	}
@@ -318,22 +309,84 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 	return false;
 }
 
-void COBJParser::BuildModelPieceTreeRec(SOBJPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
-{
+void COBJParser::BuildModelPieceTreeRec(
+	S3DModel* model,
+	SOBJPiece* piece,
+	const PieceMap& pieceMap,
+	const LuaTable& pieceTable,
+	bool globalVertexOffsets,
+	bool localPieceOffsets
+) {
 	assert(piece->GetVertexCount() == piece->GetNormalCount());
 	assert(piece->GetVertexCount() == piece->GetTxCoorCount());
 
 	const SOBJPiece* parentPiece = piece->GetParent();
 
 	piece->isEmpty = (piece->GetVertexCount() == 0);
-	piece->mins = ZeroVector; // TODO (needed for per-piece coldet only?)
-	piece->maxs = ZeroVector; // TODO (needed for per-piece coldet only?)
+	piece->mins = pieceTable.GetFloat3("mins", ZeroVector);
+	piece->maxs = pieceTable.GetFloat3("maxs", ZeroVector);
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
-	piece->goffset = piece->offset + ((parentPiece)? parentPiece->goffset: ZeroVector);
-	piece->colvol = new CollisionVolume("box", ZeroVector, ZeroVector, COLVOL_TEST_CONT);
-	piece->colvol->Disable();
+	piece->goffset = localPieceOffsets?
+		(piece->offset + ((parentPiece)? parentPiece->goffset: ZeroVector)):
+		(piece->offset);
 
 	piece->SetVertexTangents();
+
+	const bool overrideMins = (piece->mins == ZeroVector);
+	const bool overrideMaxs = (piece->maxs == ZeroVector);
+
+	for (int i = piece->GetVertexCount() - 1; i >= 0; i--) {
+		float3 vertexGlobalPos;
+		float3 vertexLocalPos;
+
+		if (globalVertexOffsets) {
+			// metadata indicates vertices are defined in model-space
+			//
+			// for converted S3O's, the piece offsets are defined wrt.
+			// the parent piece, *not* wrt. the root piece (<goffset>
+			// stores the concatenated transform)
+			vertexGlobalPos = piece->GetVertex(i);
+			vertexLocalPos = vertexGlobalPos - (localPieceOffsets? piece->goffset: piece->offset);
+		} else {
+			vertexLocalPos = piece->GetVertex(i);
+			vertexGlobalPos = vertexLocalPos + (localPieceOffsets? piece->goffset: piece->offset);
+		}
+
+		// NOTE: unlike 3DO / S3O, the min- and max-extends of a
+		// piece are not calculated recursively over its children
+		// since this makes little sense for coldet purposes; the
+		// model extends do encompass all pieces
+		if (overrideMins) {
+			piece->mins.x = std::min(piece->mins.x, vertexGlobalPos.x);
+			piece->mins.y = std::min(piece->mins.y, vertexGlobalPos.y);
+			piece->mins.z = std::min(piece->mins.z, vertexGlobalPos.z);
+		}
+		if (overrideMaxs) {
+			piece->maxs.x = std::max(piece->maxs.x, vertexGlobalPos.x);
+			piece->maxs.y = std::max(piece->maxs.y, vertexGlobalPos.y);
+			piece->maxs.z = std::max(piece->maxs.z, vertexGlobalPos.z);
+		}
+
+		// we want vertices in piece-space
+		piece->SetVertex(i, vertexLocalPos);
+	}
+
+
+	model->mins.x = std::min(piece->mins.x, model->mins.x);
+	model->mins.y = std::min(piece->mins.y, model->mins.y);
+	model->mins.z = std::min(piece->mins.z, model->mins.z);
+	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
+	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
+	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
+
+	const float3 cvScales = piece->maxs - piece->mins;
+	const float3 cvOffset =
+		(piece->maxs - (localPieceOffsets? piece->goffset: piece->offset)) +
+		(piece->mins - (localPieceOffsets? piece->goffset: piece->offset));
+
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
+	piece->colvol->Enable();
+
 
 	std::vector<int> childPieceNumbers;
 	std::vector<std::string> childPieceNames;
@@ -351,9 +404,9 @@ void COBJParser::BuildModelPieceTreeRec(SOBJPiece* piece, const std::map<std::st
 			const std::string& childPieceName = *it;
 			const LuaTable& childPieceTable = pieceTable.SubTable(childPieceName);
 
-			std::map<std::string, SOBJPiece*>::const_iterator pieceIt = pieces.find(childPieceName);
+			PieceMap::const_iterator pieceIt = pieceMap.find(childPieceName);
 
-			if (pieceIt == pieces.end()) {
+			if (pieceIt == pieceMap.end()) {
 				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
 			} else {
 				SOBJPiece* childPiece = pieceIt->second;
@@ -363,7 +416,7 @@ void COBJParser::BuildModelPieceTreeRec(SOBJPiece* piece, const std::map<std::st
 				childPiece->SetParent(piece);
 				piece->childs.push_back(childPiece);
 
-				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
+				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}
 		}
 	}
@@ -373,9 +426,9 @@ void COBJParser::BuildModelPieceTreeRec(SOBJPiece* piece, const std::map<std::st
 			const LuaTable& childPieceTable = pieceTable.SubTable(*it);
 			const std::string& childPieceName = childPieceTable.GetString("name", "");
 
-			std::map<std::string, SOBJPiece*>::const_iterator pieceIt = pieces.find(childPieceName);
+			PieceMap::const_iterator pieceIt = pieceMap.find(childPieceName);
 
-			if (pieceIt == pieces.end()) {
+			if (pieceIt == pieceMap.end()) {
 				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
 			} else {
 				SOBJPiece* childPiece = pieceIt->second;
@@ -385,7 +438,7 @@ void COBJParser::BuildModelPieceTreeRec(SOBJPiece* piece, const std::map<std::st
 				childPiece->SetParent(piece);
 				piece->childs.push_back(childPiece);
 
-				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
+				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}
 		}
 	}
