@@ -49,7 +49,7 @@ struct S3DModelPiece {
 	virtual int GetNormalCount() const { return 0; }
 	virtual int GetTxCoorCount() const { return 0; }
 	virtual void SetVertexTangents() {}
-	virtual const float3& GetVertexPos(const int& idx) const = 0;
+	virtual const float3 GetVertexPos(const int& idx) const = 0;
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 	void DrawStatic() const;
 };

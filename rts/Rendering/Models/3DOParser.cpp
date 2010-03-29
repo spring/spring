@@ -408,8 +408,8 @@ void C3DOParser::FindCenter(S3DOPiece* o) const
 	o->maxs = float3(maxx, maxy, maxz);
 	o->mins = float3(minx, miny, minz);
 
-	const float3 cvScales((o->maxs.x - o->mins.x),        (o->maxs.y - o->mins.y),        (o->maxs.z - o->mins.z)       );
-	const float3 cvOffset((o->maxs.x + o->mins.x) * 0.5f, (o->maxs.y + o->mins.y) * 0.5f, (o->maxs.z + o->mins.z) * 0.5f);
+	const float3 cvScales((o->maxs - o->mins)       );
+	const float3 cvOffset((o->maxs + o->mins) * 0.5f);
 
 	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
 	o->colvol->Enable();

@@ -31,7 +31,7 @@ struct S3DOPrimitive {
 
 struct S3DOPiece: public S3DModelPiece {
 	void DrawList() const;
-	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
+	const float3 GetVertexPos(const int& idx) const { return vertices[idx].pos; }
 	void Shatter(float, int, int, const float3&, const float3&) const;
 
 	std::vector<S3DOVertex> vertices;
