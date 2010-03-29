@@ -48,9 +48,15 @@ public:
 	const float3& GetVertexPos(const int& idx) const { return GetVertex(idx); }
 	const float3& GetVertex(const int idx) const { return vertices[idx]; }
 	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
+	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
 	const float3& GetSTangent(const int idx) const { return sTangents[idx]; }
 	const float3& GetTTangent(const int idx) const { return tTangents[idx]; }
-	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
+
+	void SetVertex(int idx, const float3& v) { vertices[idx] = v; }
+	void SetNormal(int idx, const float3& v) { vnormals[idx] = v; }
+	void SetTxCoor(int idx, const float2& v) { texcoors[idx] = v; }
+	void SetSTangent(int idx, const float3& v) { sTangents[idx] = v; }
+	void SetTTangent(int idx, const float3& v) { tTangents[idx] = v; }
 
 private:
 	std::vector<float3> vertices;

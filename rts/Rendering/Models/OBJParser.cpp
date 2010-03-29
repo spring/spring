@@ -291,6 +291,18 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 	}
 
 	if (BuildModelPieceTree(model, pieces, metaData.SubTable("pieces"))) {
+		if (metaData.GetBool("offsetvertices", false)) {
+			// we want vertices in piece-space, but the metadata
+			// indicates they are defined in model-space, so we
+			// must convert them
+			for (std::map<std::string, SOBJPiece*>::iterator it = pieces.begin(); it != pieces.end(); ++it) {
+				SOBJPiece* piece = it->second;
+
+				for (int i = piece->GetVertexCount() - 1; i >= 0; i--) {
+					piece->SetVertex(i, (piece->GetVertex(i) - piece->offset));
+				}
+			}
+		}
 		return true;
 	}
 
