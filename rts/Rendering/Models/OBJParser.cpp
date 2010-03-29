@@ -291,18 +291,25 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 	}
 
 	if (BuildModelPieceTree(model, pieces, metaData.SubTable("pieces"))) {
-		if (metaData.GetBool("offsetvertices", false)) {
+		const bool globalVertexOffsets = metaData.GetBool("globalvertexoffsets", false);
+		const bool globalPieceOffsets = metaData.GetBool("globalpieceoffsets", false);
+
+		if (globalVertexOffsets) {
 			// we want vertices in piece-space, but the metadata
 			// indicates they are defined in model-space, so we
 			// must convert them
+			// for converted S3O's, the piece offsets are wrt.
+			// the parent piece, not the concatenated transform
+			// wrt. the root
 			for (std::map<std::string, SOBJPiece*>::iterator it = pieces.begin(); it != pieces.end(); ++it) {
 				SOBJPiece* piece = it->second;
 
 				for (int i = piece->GetVertexCount() - 1; i >= 0; i--) {
-					piece->SetVertex(i, (piece->GetVertex(i) - piece->offset));
+					piece->SetVertex(i, (piece->GetVertex(i) - (globalPieceOffsets? piece->goffset: piece->offset)));
 				}
 			}
 		}
+
 		return true;
 	}
 
@@ -323,6 +330,8 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 	piecesTable.GetKeys(rootPieceNames);
 	piecesTable.GetKeys(rootPieceNumbers);
 
+	SOBJPiece* rootPiece = NULL;
+
 	// there must be exactly one root-piece defined by name or number
 	if ((rootPieceNames.size() + rootPieceNumbers.size()) != 1) {
 		return false;
@@ -333,8 +342,9 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 		const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
 
 		if (rootPieceIt != pieces.end()) {
-			model->rootobject = rootPieceIt->second;
-			BuildModelPieceTreeRec(model->rootobject, pieces, piecesTable.SubTable(rootPieceName));
+			rootPiece = rootPieceIt->second;
+			model->rootobject = rootPiece;
+			BuildModelPieceTreeRec(rootPiece, pieces, piecesTable.SubTable(rootPieceName));
 			return true;
 		}
 	}
@@ -345,8 +355,9 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 		const std::map<std::string, SOBJPiece*>::const_iterator rootPieceIt = pieces.find(rootPieceName);
 
 		if (rootPieceIt != pieces.end()) {
-			model->rootobject = rootPieceIt->second;
-			BuildModelPieceTreeRec(model->rootobject, pieces, piecesTable.SubTable(rootPieceNumbers[0]));
+			rootPiece = rootPieceIt->second;
+			model->rootobject = rootPiece;
+			BuildModelPieceTreeRec(rootPiece, pieces, piecesTable.SubTable(rootPieceNumbers[0]));
 			return true;
 		}
 	}
@@ -354,15 +365,18 @@ bool COBJParser::BuildModelPieceTree(S3DModel* model, const std::map<std::string
 	return false;
 }
 
-void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
+void COBJParser::BuildModelPieceTreeRec(SOBJPiece* piece, const std::map<std::string, SOBJPiece*>& pieces, const LuaTable& pieceTable)
 {
 	assert(piece->GetVertexCount() == piece->GetNormalCount());
 	assert(piece->GetVertexCount() == piece->GetTxCoorCount());
+
+	const SOBJPiece* parentPiece = piece->GetParent();
 
 	piece->isEmpty = (piece->GetVertexCount() == 0);
 	piece->mins = ZeroVector; // TODO (needed for per-piece coldet only?)
 	piece->maxs = ZeroVector; // TODO (needed for per-piece coldet only?)
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
+	piece->goffset = piece->offset + ((parentPiece)? parentPiece->goffset: ZeroVector);
 	piece->colvol = new CollisionVolume("box", ZeroVector, ZeroVector, COLVOL_TEST_CONT);
 	piece->colvol->Disable();
 
@@ -393,7 +407,9 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 
 				assert(childPieceName == childPiece->name);
 
+				childPiece->SetParent(piece);
 				piece->childs.push_back(childPiece);
+
 				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
 			}
 		}
@@ -413,7 +429,9 @@ void COBJParser::BuildModelPieceTreeRec(S3DModelPiece* piece, const std::map<std
 
 				assert(childPieceName == childPiece->name);
 
+				childPiece->SetParent(piece);
 				piece->childs.push_back(childPiece);
+
 				BuildModelPieceTreeRec(childPiece, pieces, childPieceTable);
 			}
 		}
