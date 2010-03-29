@@ -16,7 +16,7 @@
 
 S3DModel* COBJParser::Load(const std::string& modelFileName)
 {
-	std::string metaFileName(modelFileName + ".lua");
+	std::string metaFileName = modelFileName.substr(0, modelFileName.find_last_of('.')) + ".lua";
 
 	CFileHandler modelFile(modelFileName);
 	CFileHandler metaFile(metaFileName);
