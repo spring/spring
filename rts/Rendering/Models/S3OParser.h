@@ -23,6 +23,7 @@ struct SS3OPiece: public S3DModelPiece {
 		tTangents.clear();
 	}
 
+	void DrawList() const;
 	void SetVertexTangents();
 	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
 	void Shatter(float, int, int, const float3&, const float3&) const;
@@ -51,7 +52,6 @@ class CS3OParser: public IModelParser
 {
 public:
 	S3DModel* Load(const std::string& name);
-	void Draw(const S3DModelPiece* o) const;
 
 private:
 	SS3OPiece* LoadPiece(unsigned char* buf, int offset, S3DModel* model);

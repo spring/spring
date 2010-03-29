@@ -21,7 +21,6 @@ class IModelParser
 {
 public:
 	virtual S3DModel* Load(const std::string& name) = 0;
-	virtual void Draw(const S3DModelPiece* o) const = 0;
 };
 
 
@@ -46,19 +45,14 @@ private:
 	std::map<std::string, IModelParser*> parsers;
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-	struct ModelParserPair {
-		ModelParserPair(S3DModelPiece* o, IModelParser* p) : model(o), parser(p) {};
-		S3DModelPiece* model;
-		IModelParser* parser;
-	};
-	std::vector<ModelParserPair> createLists;
+	std::vector<S3DModelPiece*> createLists;
 
 	std::set<CUnit*> fixLocalModels;
 	std::vector<LocalModel*> deleteLocalModels;
 #endif
 
-	void CreateLists(IModelParser* parser, S3DModelPiece* o);
-	void CreateListsNow(IModelParser* parser, S3DModelPiece* o);
+	void CreateLists(S3DModelPiece* o);
+	void CreateListsNow(S3DModelPiece* o);
 
 	void DeleteChilds(S3DModelPiece* o);
 

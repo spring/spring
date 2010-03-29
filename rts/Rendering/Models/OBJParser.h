@@ -35,6 +35,7 @@ public:
 	void SetParent(SOBJPiece* p) { parent = p; }
 	SOBJPiece* GetParent() { return parent; }
 
+	void DrawList() const;
 	void SetVertexTangents();
 
 	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount += 1; }
@@ -80,7 +81,6 @@ class LuaTable;
 class COBJParser: public IModelParser {
 public:
 	S3DModel* Load(const std::string&);
-	void Draw(const S3DModelPiece*) const;
 
 private:
 	bool ParseModelData(S3DModel*, const std::string&, const LuaTable&);
