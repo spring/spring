@@ -70,53 +70,6 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	return NULL;
 }
 
-void COBJParser::Draw(const S3DModelPiece* piece) const
-{
-	if (piece->isEmpty) {
-		return;
-	}
-
-	const SOBJPiece* objPiece = dynamic_cast<const SOBJPiece*>(piece);
-
-	CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(objPiece->GetTriangleCount() * 3, 0, VA_SIZE_TN);
-
-	for (int i = objPiece->GetTriangleCount() - 1; i >= 0; i--) {
-		const SOBJTriangle& tri = objPiece->GetTriangle(i);
-		const float3&
-			v0p = objPiece->GetVertex(tri.vIndices[0]),
-			v1p = objPiece->GetVertex(tri.vIndices[1]),
-			v2p = objPiece->GetVertex(tri.vIndices[2]);
-		const float3&
-			v0n = objPiece->GetNormal(tri.nIndices[0]),
-			v1n = objPiece->GetNormal(tri.nIndices[1]),
-			v2n = objPiece->GetNormal(tri.nIndices[2]);
-		/*
-		// TODO: these need a new CVertexArray::AddVertex variant
-		const float3&
-			v0st = objPiece->GetSTangent(tri.vIndices[0]);
-			v1st = objPiece->GetSTangent(tri.vIndices[1]);
-			v2st = objPiece->GetSTangent(tri.vIndices[2]);
-			v0tt = objPiece->GetTTangent(tri.vIndices[0]);
-			v1tt = objPiece->GetTTangent(tri.vIndices[1]);
-			v2tt = objPiece->GetTTangent(tri.vIndices[2]);
-		*/
-		const float2&
-			v0tc = objPiece->GetTxCoor(tri.tIndices[0]),
-			v1tc = objPiece->GetTxCoor(tri.tIndices[1]),
-			v2tc = objPiece->GetTxCoor(tri.tIndices[2]);
-
-		va->AddVertexQTN(v0p, v0tc.x, v0tc.y, v0n);
-		va->AddVertexQTN(v1p, v1tc.x, v1tc.y, v1n);
-		va->AddVertexQTN(v2p, v2tc.x, v2tc.y, v2n);
-	}
-
-	va->DrawArrayTN(GL_TRIANGLES);
-}
-
-
-
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)
 {
 	static const boost::regex commentPattern("^[ ]*(#|//).*");
@@ -442,6 +395,49 @@ void COBJParser::BuildModelPieceTreeRec(SOBJPiece* piece, const std::map<std::st
 
 
 
+
+void SOBJPiece::DrawList() const
+{
+	if (isEmpty) {
+		return;
+	}
+
+	CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(GetTriangleCount() * 3, 0, VA_SIZE_TN);
+
+	for (int i = GetTriangleCount() - 1; i >= 0; i--) {
+		const SOBJTriangle& tri = GetTriangle(i);
+		const float3&
+			v0p = GetVertex(tri.vIndices[0]),
+			v1p = GetVertex(tri.vIndices[1]),
+			v2p = GetVertex(tri.vIndices[2]);
+		const float3&
+			v0n = GetNormal(tri.nIndices[0]),
+			v1n = GetNormal(tri.nIndices[1]),
+			v2n = GetNormal(tri.nIndices[2]);
+		/*
+		// TODO: these need a new CVertexArray::AddVertex variant
+		const float3&
+			v0st = GetSTangent(tri.vIndices[0]);
+			v1st = GetSTangent(tri.vIndices[1]);
+			v2st = GetSTangent(tri.vIndices[2]);
+			v0tt = GetTTangent(tri.vIndices[0]);
+			v1tt = GetTTangent(tri.vIndices[1]);
+			v2tt = GetTTangent(tri.vIndices[2]);
+		*/
+		const float2&
+			v0tc = GetTxCoor(tri.tIndices[0]),
+			v1tc = GetTxCoor(tri.tIndices[1]),
+			v2tc = GetTxCoor(tri.tIndices[2]);
+
+		va->AddVertexQTN(v0p, v0tc.x, v0tc.y, v0n);
+		va->AddVertexQTN(v1p, v1tc.x, v1tc.y, v1n);
+		va->AddVertexQTN(v2p, v2tc.x, v2tc.y, v2n);
+	}
+
+	va->DrawArrayTN(GL_TRIANGLES);
+}
 
 void SOBJPiece::SetVertexTangents()
 {

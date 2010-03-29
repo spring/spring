@@ -202,7 +202,7 @@ float3 LocalModelPiece::GetPos() const
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
 
-	if (type==MODELTYPE_3DO) {
+	if (type == MODELTYPE_3DO) {
 		// fix for valkyres
 		const S3DOPiece* p3 = static_cast<S3DOPiece*>(original);
 		if (p3 && (p3->vertices.size() == 2)) {
@@ -238,7 +238,7 @@ float3 LocalModelPiece::GetDirection() const
 	if (count < 2) {
 		return float3(1.0f, 1.0f, 1.0f);
 	}
-	return piece->GetVertexPos(0) - piece->GetVertexPos(1);
+	return (piece->GetVertexPos(0) - piece->GetVertexPos(1));
 }
 
 
@@ -255,11 +255,11 @@ bool LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 		pos = mat.GetPos();
 		dir = mat.Mul(float3(0,0,1)) - pos;
 	}
-	else if(piece->vertexCount == 1) {
+	else if (piece->vertexCount == 1) {
 		pos = mat.GetPos();
 		dir = mat.Mul(piece->GetVertexPos(0)) - pos;
 	}
-	else if(piece->vertexCount >= 2) {
+	else if (piece->vertexCount >= 2) {
 		float3 p1 = mat.Mul(piece->GetVertexPos(0));
 		float3 p2 = mat.Mul(piece->GetVertexPos(1));
 

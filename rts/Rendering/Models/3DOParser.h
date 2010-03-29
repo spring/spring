@@ -30,6 +30,7 @@ struct S3DOPrimitive {
 };
 
 struct S3DOPiece: public S3DModelPiece {
+	void DrawList() const;
 	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
 	void Shatter(float, int, int, const float3&, const float3&) const;
 
@@ -39,7 +40,7 @@ struct S3DOPiece: public S3DModelPiece {
 	float3 relMidPos;
 };
 
-class C3DOParser : public IModelParser
+class C3DOParser: public IModelParser
 {
 	typedef struct _3DObject
 	{
@@ -76,7 +77,6 @@ public:
 	C3DOParser();
 
 	S3DModel* Load(const std::string& name);
-	void Draw(const S3DModelPiece *o) const;
 
 private:
 	void FindCenter(S3DOPiece* object) const;

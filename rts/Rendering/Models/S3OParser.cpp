@@ -174,30 +174,31 @@ void CS3OParser::FindMinMax(SS3OPiece* o) const
 	o->colvol->Enable();
 }
 
-void CS3OParser::Draw(const S3DModelPiece* o) const
+
+
+
+
+
+void SS3OPiece::DrawList() const
 {
-	if (o->isEmpty) {
+	if (isEmpty) {
 		return;
 	}
 
-	const SS3OPiece* so = static_cast<const SS3OPiece*>(o);
-	const SS3OVertex* s3ov = static_cast<const SS3OVertex*>(&so->vertices[0]);
-
+	const SS3OVertex* s3ov = &vertices[0];
 
 	// pass the tangents as 3D texture coordinates
 	// (array elements are float3's, which are 12
 	// bytes in size and each represent a single
 	// xyz triple)
-	// TODO: test if we have this many texunits
-	// (if not, could only send the s-tangents)?
-	if (!so->sTangents.empty()) {
+	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->sTangents[0].x);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &sTangents[0].x);
 
 		glClientActiveTexture(GL_TEXTURE6);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &tTangents[0].x);
 	}
 
 	glClientActiveTextureARB(GL_TEXTURE1_ARB);
@@ -214,19 +215,19 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
 
-	switch (so->primitiveType) {
+	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES:
-			glDrawElements(GL_TRIANGLES, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 			break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP:
-			glDrawElements(GL_TRIANGLE_STRIP, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 			break;
 		case S3O_PRIMTYPE_QUADS:
-			glDrawElements(GL_QUADS, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			glDrawElements(GL_QUADS, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 			break;
 	}
 
-	if (!so->sTangents.empty()) {
+	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -243,11 +244,6 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
-
-
-
-
-
 
 void SS3OPiece::SetVertexTangents()
 {
