@@ -51,7 +51,7 @@ public:
 	int GetNormalCount() const { return vnormals.size(); }
 	int GetTxCoorCount() const { return texcoors.size(); }
 
-	const float3 GetVertexPos(const int& idx) const { return (GetVertex(idx) + goffset); }
+	const float3& GetVertexPos(int idx) const { return GetVertex(idx); }
 	const float3& GetVertex(const int idx) const { return vertices[idx]; }
 	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
 	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
