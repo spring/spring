@@ -135,6 +135,24 @@ public:
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
+#ifdef USE_GML
+	int multiThreadDrawUnit;
+	int multiThreadDrawUnitShadow;
+
+	volatile bool mt_drawReflection;
+	volatile bool mt_drawRefraction;
+	CUnit* volatile mt_excludeUnit;
+
+	static void DrawOpaqueUnitsMT(void* c, CUnit* unit) {
+		CUnitDrawer* const ud = (CUnitDrawer*) c;
+		ud->DrawOpaqueUnit(unit, ud->mt_excludeUnit, ud->mt_drawReflection, ud->mt_drawRefraction);
+	}
+
+	static void DrawOpaqueUnitShadowMT(void* c, CUnit* unit) {
+		((CUnitDrawer*) c)->DrawOpaqueUnitShadow(unit);
+	}
+#endif
+
 private:
 	bool LoadModelShaders();
 
@@ -169,24 +187,6 @@ private:
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int);
 	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int, bool);
-
-#ifdef USE_GML
-	int multiThreadDrawUnit;
-	int multiThreadDrawUnitShadow;
-
-	volatile bool mt_drawReflection;
-	volatile bool mt_drawRefraction;
-	CUnit* volatile mt_excludeUnit;
-
-	static void DrawOpaqueUnitsMT(void* c, CUnit* unit) {
-		CUnitDrawer* const ud = (CUnitDrawer*) c;
-		ud->DrawOpaqueUnit(unit, ud->mt_drawReflection, ud->mt_drawRefraction, ud->mt_excludeUnit);
-	}
-
-	static void DrawOpaqueUnitsShadowMT(void* c, CUnit* unit) {
-		((CUnitDrawer*) c)->DrawOpaqueUnitShadow(unit);
-	}
-#endif
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;

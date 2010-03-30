@@ -376,6 +376,10 @@ public:
 	long size() const {
 		return added;
 	}
+
+	const bool empty() const {
+		return !added;
+	}
 	
 	const T &operator[](int i) const {
 		return data[i];
@@ -614,6 +618,10 @@ public:
 	
 	const long size() const {
 		return added;
+	}
+
+	const bool empty() const {
+		return !added;
 	}
 	
 	const T &operator[](const int i) const {

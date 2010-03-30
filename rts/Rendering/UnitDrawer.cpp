@@ -2293,7 +2293,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 
 void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 	// this MUST block the renderer thread or there will be trouble
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
@@ -2321,7 +2321,7 @@ void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 }
 
 void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
@@ -2383,7 +2383,7 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 
 
 void CUnitDrawer::UnitCloaked(const CUnit* u) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (u->model) {
 		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
@@ -2392,7 +2392,7 @@ void CUnitDrawer::UnitCloaked(const CUnit* u) {
 }
 
 void CUnitDrawer::UnitDecloaked(const CUnit* u) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (u->model) {
 		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
@@ -2402,7 +2402,7 @@ void CUnitDrawer::UnitDecloaked(const CUnit* u) {
 
 
 void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (allyTeam == gu->myAllyTeam) {
 		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
@@ -2414,7 +2414,7 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyTeam) {
 }
 
 void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (allyTeam == gu->myAllyTeam) {
 		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
@@ -2438,7 +2438,7 @@ void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyTeam) {
 
 
 void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (!(u->losStatus[allyTeam] & LOS_INLOS)) {
 		unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
@@ -2446,7 +2446,7 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyTeam) {
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
 }

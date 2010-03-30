@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "LuaLobby.h"
 
 #include "LogOutput.h"
