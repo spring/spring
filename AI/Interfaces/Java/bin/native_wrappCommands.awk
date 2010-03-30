@@ -232,10 +232,6 @@ function printNativeFP2F() {
 			print("\t" "int _ret = id_clb[_skirmishAIId]->Engine_handleCommand(_skirmishAIId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
-			if (retParam != "") {
-				print("\t" "_ret = commandData." retParam ";") >> outFile_nc;
-			}
-
 			if (hasRetType) {
 				# this is unused, delete
 				print("\t" "if (_ret == 0) {") >> outFile_nc;
