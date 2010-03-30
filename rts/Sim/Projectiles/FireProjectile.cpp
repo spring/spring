@@ -175,7 +175,7 @@ void CFireProjectile::Draw(void)
 		int smokeType = *(volatile int *)&pi->smokeType;
 		if (smokeType < 0 || smokeType >= projectileDrawer->smoketex.size())
 			continue;
-		AtlasedTexture *at = &projectileDrawer->smoketex[smokeType];
+		AtlasedTexture *at = projectileDrawer->smoketex[smokeType];
 #else
 	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
 		AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
