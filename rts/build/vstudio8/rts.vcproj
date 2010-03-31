@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../../vclibs/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -131,7 +131,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../../vclibs/include"
 				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -156,7 +156,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -1756,11 +1756,23 @@
 			Name="Rendering"
 			>
 			<File
+				RelativePath="..\..\Rendering\Colors.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\FarTextureHandler.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\Rendering\FarTextureHandler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\FeatureDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\FeatureDrawer.h"
 				>
 			</File>
 			<File
@@ -1812,6 +1824,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\Icon.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\IconHandler.cpp"
 				>
 			</File>
@@ -1825,6 +1841,22 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\InMapDraw.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\PathDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\PathDrawer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\ProjectileDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\ProjectileDrawer.hpp"
 				>
 			</File>
 			<File
@@ -1844,6 +1876,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\UnitDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\UnitDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\VerticalSync.cpp"
 				>
 			</File>
@@ -1854,58 +1894,6 @@
 			<Filter
 				Name="Unit Models"
 				>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\3DModel.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\3DModel.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\3DOParser.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\3DOParser.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\FeatureDrawer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\FeatureDrawer.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\IModelParser.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\IModelParser.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\s3o.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\s3oParser.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\s3oParser.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\UnitModels\UnitDrawer.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Env"
@@ -2279,6 +2267,286 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Models"
+				>
+				<File
+					RelativePath="..\..\Rendering\Models\3DModel.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\3DModel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\3DOParser.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\3DOParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\IModelParser.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\IModelParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\ModelDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\ModelDrawer.hpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\OBJParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\OBJParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\s3o.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\S3OParser.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\S3OParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\WorldObjectModelRenderer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\WorldObjectModelRenderer.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Sim"
@@ -2647,6 +2915,14 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Projectiles\Unsynced\ExploSpikeProjectile.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\Unsynced\FlyingPiece.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Projectiles\Unsynced\FlyingPiece.hpp"
 						>
 					</File>
 					<File
@@ -3881,6 +4157,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\LogOutput.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\LuaLoadSaveHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\LuaLoadSaveHandler.h"
 				>
 			</File>
 			<File
@@ -6277,6 +6561,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Lua\LuaLobby.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaLobby.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Lua\LuaMaterial.cpp"
 				>
 			</File>
@@ -6458,6 +6750,18 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaWeaponDefs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaZip.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaZip.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\Lunar.h"
 				>
 			</File>
 		</Filter>
@@ -12479,14 +12783,6 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\liblobby\Connection.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\liblobby\UserCache.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\liblobby\UserCache.h"
 					>
 				</File>
 				<Filter

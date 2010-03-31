@@ -12,13 +12,11 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/UnitModels/s3oParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -242,11 +240,13 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 	}
 	else if (luaType == LUA_TSTRING) {
 		const string key = StringToLower(lua_tostring(L, index));
+
 		if (key == "3do") {
 			shader.type = LuaMatShader::LUASHADER_3DO;
-		}
-		else if (key == "s3o") {
+		} else if (key == "s3o") {
 			shader.type = LuaMatShader::LUASHADER_S3O;
+		} else if (key == "obj") {
+			shader.type = LuaMatShader::LUASHADER_S3O; //!
 		}
 	}
 	return;

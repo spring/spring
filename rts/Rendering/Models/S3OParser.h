@@ -16,10 +16,16 @@ struct SS3OVertex {
 
 struct SS3OPiece: public S3DModelPiece {
 	~SS3OPiece() {
+		vertices.clear();
+		vertexDrawOrder.clear();
+
 		sTangents.clear();
 		tTangents.clear();
 	}
-	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
+
+	void DrawList() const;
+	void SetVertexTangents();
+	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
 	void Shatter(float, int, int, const float3&, const float3&) const;
 
 	std::vector<SS3OVertex> vertices;
@@ -45,8 +51,7 @@ enum {S3O_PRIMTYPE_TRIANGLES, S3O_PRIMTYPE_TRIANGLE_STRIP, S3O_PRIMTYPE_QUADS};
 class CS3OParser: public IModelParser
 {
 public:
-	S3DModel* Load(std::string name);
-	void Draw(const S3DModelPiece* o) const;
+	S3DModel* Load(const std::string& name);
 
 private:
 	SS3OPiece* LoadPiece(unsigned char* buf, int offset, S3DModel* model);

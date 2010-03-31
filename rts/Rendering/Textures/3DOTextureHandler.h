@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include "Rendering/GL/myGL.h"
-#include "Rendering/UnitModels/3DModel.h"
 
 struct TexFile;
 class CFileHandler;

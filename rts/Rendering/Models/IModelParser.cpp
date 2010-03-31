@@ -9,7 +9,8 @@
 #include "IModelParser.h"
 #include "3DModel.h"
 #include "3DOParser.h"
-#include "s3oParser.h"
+#include "S3OParser.h"
+#include "OBJParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FarTextureHandler.h"
@@ -28,11 +29,10 @@ C3DModelLoader* modelParser = NULL;
 
 C3DModelLoader::C3DModelLoader(void)
 {
-	C3DOParser* unit3doparser = new C3DOParser();
-	CS3OParser* units3oparser = new CS3OParser();
-
-	AddParser("3do", unit3doparser);
-	AddParser("s3o", units3oparser);
+	// file-extension should be lowercase
+	AddParser("3do", new C3DOParser());
+	AddParser("s3o", new CS3OParser());
+	AddParser("obj", new COBJParser());
 }
 
 
@@ -88,7 +88,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 
 		model->relMidPos += centerOffset;
 
-		CreateLists(p, model->rootobject);
+		CreateLists(model->rootobject);
 		farTextureHandler->CreateFarTexture(model);
 
 		cache[name] = model; // cache model
@@ -103,8 +103,8 @@ void C3DModelLoader::Update() {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // Update
 
-	for (std::vector<ModelParserPair>::iterator i = createLists.begin(); i != createLists.end(); ++i) {
-		CreateListsNow(i->parser, i->model);
+	for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
+		CreateListsNow(*it);
 	}
 	createLists.clear();
 
@@ -216,24 +216,24 @@ void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int
 }
 
 
-void C3DModelLoader::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
+void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->displist = glGenLists(1);
 	glNewList(o->displist, GL_COMPILE);
-	parser->Draw(o);
+	o->DrawList();
 	glEndList();
 
 	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); bs++) {
-		CreateListsNow(parser, *bs);
+		CreateListsNow(*bs);
 	}
 }
 
 
-void C3DModelLoader::CreateLists(IModelParser* parser, S3DModelPiece* o) {
+void C3DModelLoader::CreateLists(S3DModelPiece* o) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-	createLists.push_back(ModelParserPair(o, parser));
+	createLists.push_back(o);
 #else
-	CreateListsNow(parser, o);
+	CreateListsNow(o);
 #endif
 }
 

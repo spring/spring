@@ -95,7 +95,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 bool CBFGroundDrawer::LoadMapShaders() {
 	CShaderHandler* sh = shaderHandler;
 
-	smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "smfShaderBaseARB", true);
+	smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderBaseARB", true);
 	smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
 	smfShaderRefrARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderRefrARB", true);
 	smfShaderCurrARB = smfShaderBaseARB;
@@ -1320,7 +1320,6 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 	else if (shadowHandler->drawShadows) {
 		const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
-		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
@@ -1364,7 +1363,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
 			smfShaderGLSL->SetUniform4fv(11, (float*) camera->GetViewMatInv());
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
-			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
+			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 
 			glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
 			glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());

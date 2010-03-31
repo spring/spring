@@ -7,10 +7,11 @@
 #include <list>
 #include <vector>
 #include <string>
-#include "UnitModels/UnitDrawer.h"
-#include "GL/myGL.h"
-#include "GL/VertexArray.h"
-#include "Util.h"
+
+// FIXME: get rid of the inlined SafeDelete() calls and kill these
+#include "Rendering/UnitDrawer.h"
+#include "Rendering/GL/VertexArray.h"
+#include "System/Util.h"
 
 class CUnit;
 class CBuilding;
@@ -81,7 +82,7 @@ public:
 	void AddExplosion(float3 pos, float damage, float radius);
 
 	void AddBuilding(CBuilding* building);
-	void RemoveBuilding(CBuilding* building,CUnitDrawer::GhostBuilding* gb);
+	void RemoveBuilding(CBuilding* building, CUnitDrawer::GhostBuilding* gb);
 	void ForceRemoveBuilding(CBuilding* building);
 	int GetBuildingDecalType(const std::string& name);
 

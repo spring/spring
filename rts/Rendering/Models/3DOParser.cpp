@@ -10,7 +10,6 @@
 #include "mmgr.h"
 
 #include "3DOParser.h"
-#include "s3oParser.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -118,11 +117,11 @@ C3DOParser::C3DOParser()
 }
 
 
-S3DModel* C3DOParser::Load(string name)
+S3DModel* C3DOParser::Load(const string& name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
-		throw content_error("File not found: "+name);
+		throw content_error("[3DOParser] could not find model-file " + name);
 	}
 
 	fileBuf = new unsigned char[file.FileSize()];
@@ -134,10 +133,10 @@ S3DModel* C3DOParser::Load(string name)
 	}
 
 	S3DModel* model = new S3DModel;
-	model->name = name;
-	model->type = MODELTYPE_3DO;
-	model->textureType = 0;
-	model->numobjects  = 0;
+		model->name = name;
+		model->type = MODELTYPE_3DO;
+		model->textureType = 0;
+		model->numobjects  = 0;
 
 	// Load the Model
 	S3DOPiece* rootobj = ReadChild(0, NULL, &model->numobjects);
@@ -148,20 +147,15 @@ S3DModel* C3DOParser::Load(string name)
 
 	rootobj->radius = FindRadius(rootobj, -rootobj->relMidPos);
 
-	rootobj->relMidPos.x = 0; // ?
-	rootobj->relMidPos.z = 0; // ?
+	rootobj->relMidPos.x = 0.0f; // ?
+	rootobj->relMidPos.z = 0.0f; // ?
 	rootobj->relMidPos.y = std::max(rootobj->relMidPos.y, 1.0f); // ?
 
 	model->radius = rootobj->radius;
 	model->height = FindHeight(rootobj, ZeroVector);
 
-	model->maxx = rootobj->maxx;
-	model->maxy = rootobj->maxy;
-	model->maxz = rootobj->maxz;
-
-	model->minx = rootobj->minx;
-	model->miny = rootobj->miny;
-	model->minz = rootobj->minz;
+	model->maxs = rootobj->maxs;
+	model->mins = rootobj->mins;
 
 	model->relMidPos = rootobj->relMidPos;
 
@@ -372,58 +366,6 @@ S3DOPiece* C3DOParser::ReadChild(int pos, S3DOPiece* root, int* numobj)
 }
 
 
-void C3DOParser::Draw(const S3DModelPiece* o) const
-{
-	if (o->isEmpty)
-		return;
-
-	const S3DOPiece* o3 = static_cast<const S3DOPiece*>(o);
-
-	// note: do not use more than two VA's
-	// via GetVertexArray(), it wraps around
-	CVertexArray* va = GetVertexArray();
-	CVertexArray* va2 = GetVertexArray();
-	va->Initialize();
-	va2->Initialize();
-	std::vector<S3DOPrimitive>::const_iterator ps;
-
-	// glFrontFace(GL_CW);
-	for (ps = o3->prims.begin(); ps != o3->prims.end(); ps++) {
-		C3DOTextureHandler::UnitTexture* tex = ps->texture;
-
-		if (ps->numVertex == 4) {
-			va->AddVertexTN(o3->vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->normals[0]);
-			va->AddVertexTN(o3->vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->normals[1]);
-			va->AddVertexTN(o3->vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->normals[2]);
-			va->AddVertexTN(o3->vertices[ps->vertices[3]].pos, tex->xstart, tex->yend,   ps->normals[3]);
-		} else if (ps->numVertex == 3) {
-			va2->AddVertexTN(o3->vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->normals[0]);
-			va2->AddVertexTN(o3->vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->normals[1]);
-			va2->AddVertexTN(o3->vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->normals[2]);
-		} else {
-			glNormal3f(ps->normal.x, ps->normal.y, ps->normal.z);
-			glBegin(GL_TRIANGLE_FAN);
-			glTexCoord2f(tex->xstart, tex->ystart);
-
-			for (std::vector<int>::const_iterator fi = ps->vertices.begin(); fi != ps->vertices.end(); fi++) {
-				const float3& t = o3->vertices[(*fi)].pos;
-
-				glNormalf3(ps->normal);
-				glVertex3f(t.x, t.y, t.z);
-			}
-			glEnd();
-		}
-	}
-
-	va->DrawArrayTN(GL_QUADS);
-
-	if (va2->drawIndex() != 0) {
-		va2->DrawArrayTN(GL_TRIANGLES);
-	}
-
-	// glFrontFace(GL_CCW);
-}
-
 
 void C3DOParser::SimStreamRead(void* buf, int length)
 {
@@ -454,25 +396,20 @@ void C3DOParser::FindCenter(S3DOPiece* o) const
 		minz = min(minz, vi->pos.z);
 	}
 	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
-		maxx = max(maxx, (*si)->offset.x + (*si)->maxx);
-		maxy = max(maxy, (*si)->offset.y + (*si)->maxy);
-		maxz = max(maxz, (*si)->offset.z + (*si)->maxz);
+		maxx = max(maxx, (*si)->offset.x + (*si)->maxs.x);
+		maxy = max(maxy, (*si)->offset.y + (*si)->maxs.y);
+		maxz = max(maxz, (*si)->offset.z + (*si)->maxs.z);
 
-		minx = min(minx, (*si)->offset.x + (*si)->minx);
-		miny = min(miny, (*si)->offset.y + (*si)->miny);
-		minz = min(minz, (*si)->offset.z + (*si)->minz);
+		minx = min(minx, (*si)->offset.x + (*si)->mins.x);
+		miny = min(miny, (*si)->offset.y + (*si)->mins.y);
+		minz = min(minz, (*si)->offset.z + (*si)->mins.z);
 	}
 
-	o->maxx = maxx;
-	o->maxy = maxy;
-	o->maxz = maxz;
+	o->maxs = float3(maxx, maxy, maxz);
+	o->mins = float3(minx, miny, minz);
 
-	o->minx = minx;
-	o->miny = miny;
-	o->minz = minz;
-
-	const float3 cvScales((o->maxx - o->minx),        (o->maxy - o->miny),        (o->maxz - o->minz)       );
-	const float3 cvOffset((o->maxx + o->minx) * 0.5f, (o->maxy + o->miny) * 0.5f, (o->maxz + o->minz) * 0.5f);
+	const float3 cvScales((o->maxs - o->mins)       );
+	const float3 cvOffset((o->maxs + o->mins) * 0.5f);
 
 	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
 	o->colvol->Enable();
@@ -539,6 +476,58 @@ float C3DOParser::FindHeight(const S3DOPiece* object, float3 offset) const
 
 
 
+
+
+
+void S3DOPiece::DrawList() const
+{
+	if (isEmpty) {
+		return;
+	}
+
+	// note: do not use more than two VA's
+	// via GetVertexArray(), it wraps around
+	CVertexArray* va1 = GetVertexArray();
+	CVertexArray* va2 = GetVertexArray();
+	va1->Initialize();
+	va2->Initialize();
+
+	// glFrontFace(GL_CW);
+	for (std::vector<S3DOPrimitive>::const_iterator ps = prims.begin(); ps != prims.end(); ++ps) {
+		C3DOTextureHandler::UnitTexture* tex = ps->texture;
+
+		if (ps->numVertex == 4) {
+			va1->AddVertexTN(vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->normals[0]);
+			va1->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->normals[1]);
+			va1->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->normals[2]);
+			va1->AddVertexTN(vertices[ps->vertices[3]].pos, tex->xstart, tex->yend,   ps->normals[3]);
+		} else if (ps->numVertex == 3) {
+			va2->AddVertexTN(vertices[ps->vertices[0]].pos, tex->xstart, tex->ystart, ps->normals[0]);
+			va2->AddVertexTN(vertices[ps->vertices[1]].pos, tex->xend,   tex->ystart, ps->normals[1]);
+			va2->AddVertexTN(vertices[ps->vertices[2]].pos, tex->xend,   tex->yend,   ps->normals[2]);
+		} else {
+			glNormal3f(ps->normal.x, ps->normal.y, ps->normal.z);
+			glBegin(GL_TRIANGLE_FAN);
+			glTexCoord2f(tex->xstart, tex->ystart);
+
+			for (std::vector<int>::const_iterator fi = ps->vertices.begin(); fi != ps->vertices.end(); ++fi) {
+				const float3& t = vertices[(*fi)].pos;
+
+				glNormalf3(ps->normal);
+				glVertex3f(t.x, t.y, t.z);
+			}
+			glEnd();
+		}
+	}
+
+	va1->DrawArrayTN(GL_QUADS);
+
+	if (va2->drawIndex() != 0) {
+		va2->DrawArrayTN(GL_TRIANGLES);
+	}
+
+	// glFrontFace(GL_CCW);
+}
 
 void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3& pos, const float3& speed) const
 {
