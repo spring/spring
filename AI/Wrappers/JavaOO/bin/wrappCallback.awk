@@ -741,18 +741,24 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				_paNaNew = "oo_" _paNaNew;
 			}
 
-			if (_refObj != "Team" && _refObj != "FigureGroup" && _refObj != "Path") {
+			if (_refObj == "Team" || _refObj == "FigureGroup" || _refObj == "Path") {
+				print("note: ignoring meta comment: REF:" _ref);
+			} else {
 				_paNa_found = sub("int " _paNa, _refObj " " _paNaNew, params);
 				# it may not be found if it is an output parameter
 				if (_paNa_found) {
 					conversionCode_pre = conversionCode_pre "\t\t"  "int " _paNa " = " _paNaNew ".get" _refObj "Id();" "\n";
 				}
-			} else {
-				print("note: ignoring meta comment: REF:" _ref);
 			}
 		} else if (!_isMulti && _isReturn) {
 			_refObj = _ref;         # example: Resource
 			sub(/^.*->/, "", _refObj);
+
+			if (_refObj == "Team" || _refObj == "FigureGroup" || _refObj == "Path") {
+				print("note: ignoring meta comment: REF:" _ref);
+				continue;
+			}
+
 			_implId = implId_m "," _refObj;
 			if (_implId in cls_implId_fullClsName) {
 				_fullClsName = cls_implId_fullClsName[_implId];
