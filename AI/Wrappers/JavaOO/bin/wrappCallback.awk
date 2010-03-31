@@ -294,11 +294,8 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 
 	# print additional vars fetchers
 	for (ai=1; ai <= addInds_size_c; ai++) {
-		addIndName = addInds_c[ai];
-		_fRet    = "int";
-		_fName   = "get" capitalize(addIndName);
-		_fParams = "";
-		_fExceps = "";
+		addIndName    = addInds_c[ai];
+		addIndNameCap = capitalize(addIndName);
 
 		printIntAndStb_tmp_c = printIntAndStb_c;
 		_noOverride = 0;
@@ -306,11 +303,47 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			printIntAndStb_tmp_c = 0;
 			_noOverride = 1;
 		}
-		printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride);
 
+		# Print the direct fetcher function, eg. "int getUnitId()"
+		_fRet    = "int";
+		_fName   = "get" addIndNameCap;
+		_fParams = "";
+		_fExceps = "";
+		printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride);
 		print("\t\t" "return " addIndName ";") >> outFile_jni_c;
 		print("\t" "}") >> outFile_jni_c;
 		print("") >> outFile_jni_c;
+
+		# Print the OO entity fetcher function if applicable, eg. "Unit getUnit()"
+		addIndNameCapOO = addIndNameCap;
+		_hadId = sub(/Id$/, "", addIndNameCapOO);
+		if (_hadId && addIndNameCapOO in cls_name_id) {
+			_refObj = addIndNameCapOO; # example: Unit
+			_implId = implId_m "," _refObj;
+			if (_implId in cls_implId_fullClsName) {
+				_fullClsName = cls_implId_fullClsName[_implId];
+			} else if (cls_name_implIds[_refObj ",*"] == 1) {
+				_fullClsName = cls_name_implIds[_refObj ",0"];
+				_fullClsName = cls_implId_fullClsName[_fullClsName];
+			} else {
+				print("ERROR: failed finding the full class name for: " _refObj);
+				exit(1);
+			}
+
+			_wrappGetInst_params = myWrapVar;
+			for (aij=1; aij <= ai; aij++) {
+				_wrappGetInst_params = _wrappGetInst_params ", " addInds_c[aij];
+			}
+
+			_fRet    = addIndNameCapOO;
+			_fName   = "get" addIndNameCapOO;
+			_fParams = "";
+			_fExceps = "";
+			printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride);
+			print("\t\t" "return Wrapp" _fullClsName ".getInstance(" _wrappGetInst_params ");") >> outFile_jni_c;
+			print("\t" "}") >> outFile_jni_c;
+			print("") >> outFile_jni_c;
+		}
 	}
 
 	# print static instance fetcher method
