@@ -403,38 +403,38 @@ struct SStartPathDrawerCommand {
 	float* pos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_START Map_Drawer_Path_start
+}; // COMMAND_DRAWER_PATH_START Map_Drawer_PathDrawer_start
 
 struct SFinishPathDrawerCommand {
 // TODO: FIXME: commands should not be empty, add a useless var if needed
-}; // COMMAND_DRAWER_PATH_FINISH Map_Drawer_Path_finish
+}; // COMMAND_DRAWER_PATH_FINISH Map_Drawer_PathDrawer_finish
 
 struct SDrawLinePathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_DRAW_LINE Map_Drawer_Path_drawLine
+}; // COMMAND_DRAWER_PATH_DRAW_LINE Map_Drawer_PathDrawer_drawLine
 
 struct SDrawLineAndIconPathDrawerCommand {
 	int cmdId;
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON Map_Drawer_Path_drawLineAndCommandIcon REF:cmdId->Command
+}; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON Map_Drawer_PathDrawer_drawLineAndCommandIcon REF:cmdId->Command
 
 struct SDrawIconAtLastPosPathDrawerCommand {
 	int cmdId;
-}; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS Map_Drawer_Path_drawIcon REF:cmdId->Command
+}; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS Map_Drawer_PathDrawer_drawIcon REF:cmdId->Command
 
 struct SBreakPathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_BREAK Map_Drawer_Path_suspend
+}; // COMMAND_DRAWER_PATH_BREAK Map_Drawer_PathDrawer_suspend
 
 struct SRestartPathDrawerCommand {
 	bool sameColor;
-}; // COMMAND_DRAWER_PATH_RESTART Map_Drawer_Path_restart
+}; // COMMAND_DRAWER_PATH_RESTART Map_Drawer_PathDrawer_restart
 
 
 /**
