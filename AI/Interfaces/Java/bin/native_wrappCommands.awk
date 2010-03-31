@@ -132,7 +132,8 @@ function printNativeFP2F() {
 					retParam   = memName;
 					retType    = memType_c;
 					hasRetType = 1;
-					#metaInf    = metaInf "return:" bla;
+					# rewrite the meta info
+					sub(memName, "RETURN", metaInf);
 				} else {
 					paramList = paramList ", " memType_c " " memName;
 				}
