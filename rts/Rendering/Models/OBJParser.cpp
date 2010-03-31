@@ -14,6 +14,9 @@
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 
+static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
+
 S3DModel* COBJParser::Load(const std::string& modelFileName)
 {
 	std::string metaFileName = modelFileName.substr(0, modelFileName.find_last_of('.')) + ".lua";
@@ -50,8 +53,8 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
 		model->tex1 = modelTable.GetString("tex1", "");
 		model->tex2 = modelTable.GetString("tex2", "");
-		model->mins = ZeroVector;
-		model->maxs = ZeroVector;
+		model->mins = DEF_MIN_SIZE;
+		model->maxs = DEF_MAX_SIZE;
 
 	// basic S3O-style texturing
 	texturehandlerS3O->LoadS3OTexture(model);
@@ -323,8 +326,8 @@ void COBJParser::BuildModelPieceTreeRec(
 	const SOBJPiece* parentPiece = piece->GetParent();
 
 	piece->isEmpty = (piece->GetVertexCount() == 0);
-	piece->mins = pieceTable.GetFloat3("mins", ZeroVector);
-	piece->maxs = pieceTable.GetFloat3("maxs", ZeroVector);
+	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
+	piece->maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
 
 	// always convert <offset> to local coordinates
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
@@ -337,8 +340,8 @@ void COBJParser::BuildModelPieceTreeRec(
 
 	piece->SetVertexTangents();
 
-	const bool overrideMins = (piece->mins == ZeroVector);
-	const bool overrideMaxs = (piece->maxs == ZeroVector);
+	const bool overrideMins = (piece->mins == DEF_MIN_SIZE);
+	const bool overrideMaxs = (piece->maxs == DEF_MAX_SIZE);
 
 	for (int i = piece->GetVertexCount() - 1; i >= 0; i--) {
 		float3 vertexGlobalPos;

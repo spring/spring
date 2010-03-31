@@ -382,8 +382,8 @@ void C3DOParser::FindCenter(S3DOPiece* o) const
 	}
 
 	float maxSize = 0;
-	float maxx = -1000.0f, maxy = -1000.0f, maxz = -1000.0f;
-	float minx = 10000.0f, miny = 10000.0f, minz = 10000.0f;
+	float minx =  10000.0f, miny =  10000.0f, minz =  10000.0f;
+	float maxx = -10000.0f, maxy = -10000.0f, maxz = -10000.0f;
 
 	std::vector<S3DOVertex>::iterator vi;
 	for (vi = o->vertices.begin(); vi != o->vertices.end(); ++vi) {
