@@ -139,8 +139,8 @@ void CS3OParser::FindMinMax(SS3OPiece* o) const
 		FindMinMax(static_cast<SS3OPiece*>(*si));
 	}
 
-	float maxx = -1000.0f, maxy = -1000.0f, maxz = -1000.0f;
-	float minx = 10000.0f, miny = 10000.0f, minz = 10000.0f;
+	float minx =  10000.0f, miny =  10000.0f, minz =  10000.0f;
+	float maxx = -10000.0f, maxy = -10000.0f, maxz = -10000.0f;
 
 	std::vector<SS3OVertex>::iterator vi;
 
