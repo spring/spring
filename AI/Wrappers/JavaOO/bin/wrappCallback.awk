@@ -317,7 +317,7 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 		# Print the OO entity fetcher function if applicable, eg. "Unit getUnit()"
 		addIndNameCapOO = addIndNameCap;
 		_hadId = sub(/Id$/, "", addIndNameCapOO);
-		if (_hadId && addIndNameCapOO in cls_name_id) {
+		if (_hadId && (addIndNameCapOO in cls_name_id) && (addIndNameCapOO != clsName_int_c)) {
 			_refObj = addIndNameCapOO; # example: Unit
 			_implId = implId_m "," _refObj;
 			if (_implId in cls_implId_fullClsName) {
