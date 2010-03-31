@@ -325,10 +325,15 @@ void COBJParser::BuildModelPieceTreeRec(
 	piece->isEmpty = (piece->GetVertexCount() == 0);
 	piece->mins = pieceTable.GetFloat3("mins", ZeroVector);
 	piece->maxs = pieceTable.GetFloat3("maxs", ZeroVector);
+
+	// always convert <offset> to local coordinates
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
-	piece->goffset = localPieceOffsets?
+	piece->goffset = (localPieceOffsets)?
 		(piece->offset + ((parentPiece)? parentPiece->goffset: ZeroVector)):
 		(piece->offset);
+	piece->offset = (localPieceOffsets)?
+		(piece->offset):
+		(piece->offset - ((parentPiece)? parentPiece->offset: ZeroVector));
 
 	piece->SetVertexTangents();
 
@@ -346,10 +351,10 @@ void COBJParser::BuildModelPieceTreeRec(
 			// the parent piece, *not* wrt. the root piece (<goffset>
 			// stores the concatenated transform)
 			vertexGlobalPos = piece->GetVertex(i);
-			vertexLocalPos = vertexGlobalPos - (localPieceOffsets? piece->goffset: piece->offset);
+			vertexLocalPos = vertexGlobalPos - piece->goffset;
 		} else {
 			vertexLocalPos = piece->GetVertex(i);
-			vertexGlobalPos = vertexLocalPos + (localPieceOffsets? piece->goffset: piece->offset);
+			vertexGlobalPos = vertexLocalPos + piece->goffset;
 		}
 
 		// NOTE: unlike 3DO / S3O, the min- and max-extends of a
