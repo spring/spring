@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "FlyingPiece.hpp"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/UnitModels/s3oParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/Models/3DOParser.h"
+#include "Rendering/Models/S3OParser.h"
 #include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 

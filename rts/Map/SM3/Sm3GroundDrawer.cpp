@@ -79,9 +79,10 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	if (shadowHandler->drawShadows) {
 		terrain::ShadowMapParams params;
 
-		shadowHandler->GetShadowMapSizeFactors(params.f_a, params.f_b);
-		params.mid [0] = shadowHandler->xmid;
-		params.mid [1] = shadowHandler->ymid;
+		params.mid[0] = shadowHandler->GetShadowParams().x;
+		params.mid[1] = shadowHandler->GetShadowParams().y;
+		params.f_a    = shadowHandler->GetShadowParams().z;
+		params.f_b    = shadowHandler->GetShadowParams().w;
 		params.shadowMap = shadowHandler->shadowTexture;
 
 		for (int a = 0; a < 16; a++)

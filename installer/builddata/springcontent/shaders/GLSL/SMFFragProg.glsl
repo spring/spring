@@ -65,12 +65,13 @@ void main() {
 	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
 	vec4 detailCol = normalize((texture2D(detailTex, gl_TexCoord[4].st) * 2.0) - 1.0);
 	#else
-	vec4 detailCol;
 	vec4 splatDistr = texture2D(splatDistrTex, tc2);
-		detailCol.r = dot(((texture2D(splatDetailTex, gl_TexCoord[4].st) * 2.0) - 1.0), (splatTexMults.r * splatDistr.r));
-		detailCol.g = dot(((texture2D(splatDetailTex, gl_TexCoord[5].st) * 2.0) - 1.0), (splatTexMults.g * splatDistr.g));
-		detailCol.b = dot(((texture2D(splatDetailTex, gl_TexCoord[6].st) * 2.0) - 1.0), (splatTexMults.b * splatDistr.b));
-		detailCol.a = dot(((texture2D(splatDetailTex, gl_TexCoord[7].st) * 2.0) - 1.0), (splatTexMults.a * splatDistr.a));
+	float detailInt =
+		(((texture2D(splatDetailTex, gl_TexCoord[4].st) * 2.0).r - 1.0) * (splatTexMults.r * splatDistr.r)) +
+		(((texture2D(splatDetailTex, gl_TexCoord[5].st) * 2.0).g - 1.0) * (splatTexMults.g * splatDistr.g)) +
+		(((texture2D(splatDetailTex, gl_TexCoord[6].st) * 2.0).b - 1.0) * (splatTexMults.b * splatDistr.b)) +
+		(((texture2D(splatDetailTex, gl_TexCoord[7].st) * 2.0).a - 1.0) * (splatTexMults.a * splatDistr.a));
+	vec4 detailCol = vec4(detailInt, detailInt, detailInt, 1.0);
 	#endif
 
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);

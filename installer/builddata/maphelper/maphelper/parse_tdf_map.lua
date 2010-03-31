@@ -168,10 +168,10 @@ return function(sourceText)
   map.resources = {
      detailTex      = map.detailtex,
      specularTex    = map.speculartex,
-     splatDetailTex = map.splatDetailTex,
-     splatDistrTex  = map.splatDistrTex,
-     splatTexScales = map.splatTexScales,
-     splatTexMults  = map.splatTexMults,
+     splatDetailTex = map.splatdetailtex,
+     splatDistrTex  = map.splatdistrtex,
+     splatTexScales = map.splattexscales,
+     splatTexMults  = map.splattexmults,
   }
 
   ConvertTerrainTypes(map)

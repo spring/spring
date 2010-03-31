@@ -22,7 +22,7 @@
 #include "ConfigHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/CategoryHandler.h"

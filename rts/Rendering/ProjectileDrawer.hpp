@@ -1,11 +1,11 @@
 #ifndef PROJECTILE_DRAWER_HDR
 #define PROJECTILE_DRAWER_HDR
 
+#include "Rendering/GL/myGL.h"
 #include <list>
 #include <set>
 
 #include "lib/gml/ThreadSafeContainers.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "System/EventClient.h"
 

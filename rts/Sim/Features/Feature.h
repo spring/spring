@@ -10,7 +10,6 @@
 
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Rendering/UnitModels/3DModel.h"
 #include "Matrix44f.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"

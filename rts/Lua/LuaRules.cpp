@@ -23,10 +23,6 @@
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/UnitModels/s3oParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"
