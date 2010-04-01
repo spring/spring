@@ -377,7 +377,7 @@ struct SAddNotificationDrawerCommand {
 	/// on this position, only x and z matter
 	float* pos_posF3;
 	short* color_colorS3;
-	float alpha;
+	short alpha;
 }; // COMMAND_DRAWER_ADD_NOTIFICATION Map_Drawer_addNotification
 
 struct SAddPointDrawCommand {
@@ -402,7 +402,7 @@ struct SAddLineDrawCommand {
 struct SStartPathDrawerCommand {
 	float* pos_posF3;
 	short* color_colorS3;
-	float alpha;
+	short alpha;
 }; // COMMAND_DRAWER_PATH_START Map_Drawer_PathDrawer_start
 
 struct SFinishPathDrawerCommand {
@@ -412,14 +412,14 @@ struct SFinishPathDrawerCommand {
 struct SDrawLinePathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
-	float alpha;
+	short alpha;
 }; // COMMAND_DRAWER_PATH_DRAW_LINE Map_Drawer_PathDrawer_drawLine
 
 struct SDrawLineAndIconPathDrawerCommand {
 	int cmdId;
 	float* endPos_posF3;
 	short* color_colorS3;
-	float alpha;
+	short alpha;
 }; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON Map_Drawer_PathDrawer_drawLineAndCommandIcon REF:cmdId->Command
 
 struct SDrawIconAtLastPosPathDrawerCommand {
@@ -429,7 +429,7 @@ struct SDrawIconAtLastPosPathDrawerCommand {
 struct SBreakPathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
-	float alpha;
+	short alpha;
 }; // COMMAND_DRAWER_PATH_BREAK Map_Drawer_PathDrawer_suspend
 
 struct SRestartPathDrawerCommand {
@@ -496,7 +496,7 @@ struct SSetColorFigureDrawerCommand {
 	int figureGroupId;
 	/// (x, y, z) -> (red, green, blue)
 	short* color_colorS3;
-	float alpha;
+	short alpha;
 }; // COMMAND_DRAWER_FIGURE_SET_COLOR Map_Drawer_Figure_setColor REF:figureGroupId->FigureGroup
 
 /**

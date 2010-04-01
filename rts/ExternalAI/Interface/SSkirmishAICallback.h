@@ -2071,7 +2071,7 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *WeaponDef_Shield_getBadColor)(int skirmishAIId, int weaponDefId, short* return_colorS3_out);
 
 	/** The shields alpha value. */
-	float             (CALLING_CONV *WeaponDef_Shield_getAlpha)(int skirmishAIId, int weaponDefId);
+	short             (CALLING_CONV *WeaponDef_Shield_getAlpha)(int skirmishAIId, int weaponDefId);
 
 	/**
 	 * The type of the shield (bitfield).
