@@ -155,11 +155,9 @@ S3DModel* C3DOParser::Load(const string& name)
 	model->radius = streflop::sqrtf(model->radius);
 	model->height = model->maxs.y - model->mins.y;
 	// model->height = model->radius * 2.0f;
-
-	rootobj->relMidPos.x = 0.0f; // ?
-	rootobj->relMidPos.z = 0.0f; // ?
-	rootobj->relMidPos.y = std::max(rootobj->relMidPos.y, 1.0f); // ?
-	model->relMidPos = rootobj->relMidPos;
+	model->relMidPos = (model->maxs - model->mins) * 0.5f;
+	model->relMidPos.x = 0.0f; // ?
+	model->relMidPos.z = 0.0f; // ?
 
 	delete[] fileBuf;
 	return model;
