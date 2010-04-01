@@ -339,6 +339,7 @@ void COBJParser::BuildModelPieceTreeRec(
 		(piece->offset - ((parentPiece)? parentPiece->offset: ZeroVector));
 
 	piece->SetVertexTangents();
+	piece->SetMinMaxExtends(); // no-op
 
 	const bool overrideMins = (piece->mins == DEF_MIN_SIZE);
 	const bool overrideMaxs = (piece->maxs == DEF_MAX_SIZE);
@@ -498,6 +499,10 @@ void SOBJPiece::DrawList() const
 	}
 
 	va->DrawArrayTN(GL_TRIANGLES);
+}
+
+void SOBJPiece::SetMinMaxExtends()
+{
 }
 
 void SOBJPiece::SetVertexTangents()

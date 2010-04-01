@@ -36,6 +36,7 @@ public:
 	}
 
 	void DrawList() const;
+	void SetMinMaxExtends();
 	void SetVertexTangents();
 
 	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount += 1; }
