@@ -323,7 +323,7 @@ void COBJParser::BuildModelPieceTreeRec(
 	assert(piece->GetVertexCount() == piece->GetNormalCount());
 	assert(piece->GetVertexCount() == piece->GetTxCoorCount());
 
-	const SOBJPiece* parentPiece = piece->GetParent();
+	const SOBJPiece* parentPiece = dynamic_cast<SOBJPiece*>(piece->parent);
 
 	piece->isEmpty = (piece->GetVertexCount() == 0);
 	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
@@ -360,10 +360,10 @@ void COBJParser::BuildModelPieceTreeRec(
 			vertexGlobalPos = vertexLocalPos + piece->goffset;
 		}
 
-		// NOTE: unlike 3DO / S3O, the min- and max-extends of a
-		// piece are not calculated recursively over its children
-		// since this makes little sense for coldet purposes; the
-		// model extends do encompass all pieces
+		// NOTE: the min- and max-extends of a piece are not calculated
+		// recursively over its children since this makes little sense
+		// for (per-piece) coldet purposes; the model extends do bound
+		// all pieces
 		if (overrideMins) {
 			piece->mins.x = std::min(piece->mins.x, vertexGlobalPos.x);
 			piece->mins.y = std::min(piece->mins.y, vertexGlobalPos.y);
@@ -421,7 +421,7 @@ void COBJParser::BuildModelPieceTreeRec(
 
 				assert(childPieceName == childPiece->name);
 
-				childPiece->SetParent(piece);
+				childPiece->parent = piece;
 				piece->childs.push_back(childPiece);
 
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
@@ -443,7 +443,7 @@ void COBJParser::BuildModelPieceTreeRec(
 
 				assert(childPieceName == childPiece->name);
 
-				childPiece->SetParent(piece);
+				childPiece->parent = piece;
 				piece->childs.push_back(childPiece);
 
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);

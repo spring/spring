@@ -60,16 +60,6 @@ private:
 	void CreateLocalModelPieces(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
 
 	void FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
-
-/*
-	//FIXME: abstract this too
-	//s3o
-	void FindMinMax(SS3O *object);
-	//3do
-	void FindCenter(S3DO* object);
-	float FindRadius(S3DO* object,float3 offset);
-	float FindHeight(S3DO* object,float3 offset);
-*/
 };
 
 #endif /* IMODELPARSER_H */
