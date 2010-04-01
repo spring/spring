@@ -50,6 +50,7 @@ struct S3DModelPiece {
 	virtual int GetVertexCount() const { return vertexCount; }
 	virtual int GetNormalCount() const { return 0; }
 	virtual int GetTxCoorCount() const { return 0; }
+	virtual void SetMinMaxExtends() {}
 	virtual void SetVertexTangents() {}
 	virtual const float3& GetVertexPos(int) const = 0;
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}

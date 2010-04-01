@@ -354,17 +354,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	GetVertexes(&me, piece);
 	GetPrimitives(piece, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1));
 	CalcNormals(piece);
-
-
-	for (std::vector<S3DOVertex>::const_iterator vi = piece->vertices.begin(); vi != piece->vertices.end(); ++vi) {
-		piece->mins.x = std::min(piece->mins.x, (piece->goffset.x + vi->pos.x));
-		piece->mins.y = std::min(piece->mins.y, (piece->goffset.y + vi->pos.y));
-		piece->mins.z = std::min(piece->mins.z, (piece->goffset.z + vi->pos.z));
-
-		piece->maxs.x = std::max(piece->maxs.x, (piece->goffset.x + vi->pos.x));
-		piece->maxs.y = std::max(piece->maxs.y, (piece->goffset.y + vi->pos.y));
-		piece->maxs.z = std::max(piece->maxs.z, (piece->goffset.z + vi->pos.z));
-	}
+	piece->SetMinMaxExtends();
 
 	model->mins.x = std::min(piece->mins.x, model->mins.x);
 	model->mins.y = std::min(piece->mins.y, model->mins.y);
@@ -464,6 +454,19 @@ void S3DOPiece::DrawList() const
 	}
 
 	// glFrontFace(GL_CCW);
+}
+
+void S3DOPiece::SetMinMaxExtends()
+{
+	for (std::vector<S3DOVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
+		mins.x = std::min(mins.x, (goffset.x + vi->pos.x));
+		mins.y = std::min(mins.y, (goffset.y + vi->pos.y));
+		mins.z = std::min(mins.z, (goffset.z + vi->pos.z));
+
+		maxs.x = std::max(maxs.x, (goffset.x + vi->pos.x));
+		maxs.y = std::max(maxs.y, (goffset.y + vi->pos.y));
+		maxs.z = std::max(maxs.z, (goffset.z + vi->pos.z));
+	}
 }
 
 void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3& pos, const float3& speed) const
