@@ -1392,9 +1392,9 @@ weaponDef->shieldPowerRegenEnergy = sAICallback->WeaponDef_Shield_getPowerRegenR
 weaponDef->shieldStartingPower = sAICallback->WeaponDef_Shield_getStartingPower(skirmishAIId, weaponDefId);
 weaponDef->shieldRechargeDelay = sAICallback->WeaponDef_Shield_getRechargeDelay(skirmishAIId, weaponDefId);
 sAICallback->WeaponDef_Shield_getGoodColor(skirmishAIId, weaponDefId, color_cache);
-weaponDef->shieldGoodColor = float3((float)color_cache[0], (float)color_cache[1], (float)color_cache[2]);
+weaponDef->shieldGoodColor = float3((float)color_cache[0] / 256.0f, (float)color_cache[1] / 256.0f, (float)color_cache[2] / 256.0f);
 sAICallback->WeaponDef_Shield_getBadColor(skirmishAIId, weaponDefId, color_cache);
-weaponDef->shieldBadColor = float3((float)color_cache[0], (float)color_cache[1], (float)color_cache[2]);
+weaponDef->shieldBadColor = float3((float)color_cache[0] / 256.0f, (float)color_cache[1] / 256.0f, (float)color_cache[2] / 256.0f);
 weaponDef->shieldAlpha = sAICallback->WeaponDef_Shield_getAlpha(skirmishAIId, weaponDefId) / 256.0f;
 weaponDef->shieldInterceptType = sAICallback->WeaponDef_Shield_getInterceptType(skirmishAIId, weaponDefId);
 weaponDef->interceptedByShieldType = sAICallback->WeaponDef_getInterceptedByShieldType(skirmishAIId, weaponDefId);
@@ -1472,9 +1472,9 @@ void CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
 	short color_s3[3];
-	color_s3[0] = (short) color[0];
-	color_s3[1] = (short) color[1];
-	color_s3[2] = (short) color[2];
+	color_s3[0] = (short) color[0] * 256;
+	color_s3[1] = (short) color[1] * 256;
+	color_s3[2] = (short) color[2] * 256;
 	const short alpha_s = (short) alpha * 256;
 
 	SAddNotificationDrawerCommand cmd = {pos_f3, color_s3, alpha_s};
@@ -1609,9 +1609,9 @@ void CAIAICallback::LineDrawerStartPath(const float3& pos, const float* color) {
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
 	short color_s3[3];
-	color_s3[0] = (short) color[0];
-	color_s3[1] = (short) color[1];
-	color_s3[2] = (short) color[2];
+	color_s3[0] = (short) color[0] * 256;
+	color_s3[1] = (short) color[1] * 256;
+	color_s3[2] = (short) color[2] * 256;
 	const short alpha = (short) color[3] * 256;
 
 	SStartPathDrawerCommand cmd = {pos_f3, color_s3, alpha};
@@ -1629,9 +1629,9 @@ void CAIAICallback::LineDrawerDrawLine(const float3& endPos, const float* color)
 	float endPos_f3[3];
 	endPos.copyInto(endPos_f3);
 	short color_s3[3];
-	color_s3[0] = (short) color[0];
-	color_s3[1] = (short) color[1];
-	color_s3[2] = (short) color[2];
+	color_s3[0] = (short) color[0] * 256;
+	color_s3[1] = (short) color[1] * 256;
+	color_s3[2] = (short) color[2] * 256;
 	const short alpha = (short) color[3] * 256;
 
 	SDrawLinePathDrawerCommand cmd = {endPos_f3, color_s3, alpha};
@@ -1643,9 +1643,9 @@ void CAIAICallback::LineDrawerDrawLineAndIcon(int cmdId, const float3& endPos, c
 	float endPos_f3[3];
 	endPos.copyInto(endPos_f3);
 	short color_s3[3];
-	color_s3[0] = (short) color[0];
-	color_s3[1] = (short) color[1];
-	color_s3[2] = (short) color[2];
+	color_s3[0] = (short) color[0] * 256;
+	color_s3[1] = (short) color[1] * 256;
+	color_s3[2] = (short) color[2] * 256;
 	const short alpha = (short) color[3] * 256;
 
 	SDrawLineAndIconPathDrawerCommand cmd = {cmdId, endPos_f3, color_s3, alpha};
@@ -1663,9 +1663,9 @@ void CAIAICallback::LineDrawerBreak(const float3& endPos, const float* color) {
 	float endPos_f3[3];
 	endPos.copyInto(endPos_f3);
 	short color_s3[3];
-	color_s3[0] = (short) color[0];
-	color_s3[1] = (short) color[1];
-	color_s3[2] = (short) color[2];
+	color_s3[0] = (short) color[0] * 256;
+	color_s3[1] = (short) color[1] * 256;
+	color_s3[2] = (short) color[2] * 256;
 	const short alpha = (short) color[3] * 256;
 
 	SBreakPathDrawerCommand cmd = {endPos_f3, color_s3, alpha};
@@ -1715,9 +1715,9 @@ int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int a
 void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) {
 
 	short color_s3[3];
-	color_s3[0] = (short) red;
-	color_s3[1] = (short) green;
-	color_s3[2] = (short) blue;
+	color_s3[0] = (short) red * 256;
+	color_s3[1] = (short) green * 256;
+	color_s3[2] = (short) blue * 256;
 	const short alpha_s = (short) alpha * 256;
 
 	SSetColorFigureDrawerCommand cmd = {figureGroupId, color_s3, alpha_s};

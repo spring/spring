@@ -110,10 +110,10 @@ static inline int max(int val1, int val2) {
 }
 
 static void toFloatArr(const short color[3], const short alpha, float arrColor[4]) {
-	arrColor[0] = color[0];
-	arrColor[1] = color[1];
-	arrColor[2] = color[2];
-	arrColor[3] = alpha;
+	arrColor[0] = color[0] / 256.0f;
+	arrColor[1] = color[1] / 256.0f;
+	arrColor[2] = color[2] / 256.0f;
+	arrColor[3] = alpha / 256.0f;
 }
 
 static void fillVector(std::vector<int>* vector_unitIds, int* unitIds,
@@ -389,9 +389,9 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 					(SAddNotificationDrawerCommand*) commandData;
 			clb->AddNotification(cmd->pos_posF3,
 					float3(
-						cmd->color_colorS3[0],
-						cmd->color_colorS3[1],
-						cmd->color_colorS3[2]),
+						cmd->color_colorS3[0] / 256.0f,
+						cmd->color_colorS3[1] / 256.0f,
+						cmd->color_colorS3[2] / 256.0f),
 					cmd->alpha / 256.0f);
 			break;
 		}
@@ -481,9 +481,9 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			const SSetColorFigureDrawerCommand* cmd =
 					(SSetColorFigureDrawerCommand*) commandData;
 			clb->SetFigureColor(cmd->figureGroupId,
-					cmd->color_colorS3[0],
-					cmd->color_colorS3[1],
-					cmd->color_colorS3[2],
+					cmd->color_colorS3[0] / 256.0f,
+					cmd->color_colorS3[1] / 256.0f,
+					cmd->color_colorS3[2] / 256.0f,
 					cmd->alpha / 256.0f);
 			break;
 		}
@@ -3977,17 +3977,17 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Shield_getRechargeDelay(int skirmishAII
 EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int skirmishAIId, int weaponDefId, short* return_colorS3_out) {
 
 	const float3& color = getWeaponDefById(skirmishAIId, weaponDefId)->shieldGoodColor;
-	return_colorS3_out[0] = color.x;
-	return_colorS3_out[1] = color.y;
-	return_colorS3_out[2] = color.z;
+	return_colorS3_out[0] = color.x * 256;
+	return_colorS3_out[1] = color.y * 256;
+	return_colorS3_out[2] = color.z * 256;
 }
 
 EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getBadColor(int skirmishAIId, int weaponDefId, short* return_colorS3_out) {
 
 	const float3& color = getWeaponDefById(skirmishAIId, weaponDefId)->shieldBadColor;
-	return_colorS3_out[0] = color.x;
-	return_colorS3_out[1] = color.y;
-	return_colorS3_out[2] = color.z;
+	return_colorS3_out[0] = color.x * 256;
+	return_colorS3_out[1] = color.y * 256;
+	return_colorS3_out[2] = color.z * 256;
 }
 
 EXPORT(short) skirmishAiCallback_WeaponDef_Shield_getAlpha(int skirmishAIId, int weaponDefId) {
