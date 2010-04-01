@@ -1395,7 +1395,7 @@ sAICallback->WeaponDef_Shield_getGoodColor(skirmishAIId, weaponDefId, color_cach
 weaponDef->shieldGoodColor = float3((float)color_cache[0], (float)color_cache[1], (float)color_cache[2]);
 sAICallback->WeaponDef_Shield_getBadColor(skirmishAIId, weaponDefId, color_cache);
 weaponDef->shieldBadColor = float3((float)color_cache[0], (float)color_cache[1], (float)color_cache[2]);
-weaponDef->shieldAlpha = sAICallback->WeaponDef_Shield_getAlpha(skirmishAIId, weaponDefId);
+weaponDef->shieldAlpha = sAICallback->WeaponDef_Shield_getAlpha(skirmishAIId, weaponDefId) / 256.0f;
 weaponDef->shieldInterceptType = sAICallback->WeaponDef_Shield_getInterceptType(skirmishAIId, weaponDefId);
 weaponDef->interceptedByShieldType = sAICallback->WeaponDef_getInterceptedByShieldType(skirmishAIId, weaponDefId);
 weaponDef->avoidFriendly = sAICallback->WeaponDef_isAvoidFriendly(skirmishAIId, weaponDefId);
@@ -1475,8 +1475,9 @@ void CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
 	color_s3[0] = (short) color[0];
 	color_s3[1] = (short) color[1];
 	color_s3[2] = (short) color[2];
+	const short alpha_s = (short) alpha * 256;
 
-	SAddNotificationDrawerCommand cmd = {pos_f3, color_s3, alpha};
+	SAddNotificationDrawerCommand cmd = {pos_f3, color_s3, alpha_s};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_ADD_NOTIFICATION, &cmd);
 }
 
@@ -1611,7 +1612,7 @@ void CAIAICallback::LineDrawerStartPath(const float3& pos, const float* color) {
 	color_s3[0] = (short) color[0];
 	color_s3[1] = (short) color[1];
 	color_s3[2] = (short) color[2];
-	const short alpha = (short) color[3];
+	const short alpha = (short) color[3] * 256;
 
 	SStartPathDrawerCommand cmd = {pos_f3, color_s3, alpha};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_START, &cmd);
@@ -1631,7 +1632,7 @@ void CAIAICallback::LineDrawerDrawLine(const float3& endPos, const float* color)
 	color_s3[0] = (short) color[0];
 	color_s3[1] = (short) color[1];
 	color_s3[2] = (short) color[2];
-	const short alpha = (short) color[3];
+	const short alpha = (short) color[3] * 256;
 
 	SDrawLinePathDrawerCommand cmd = {endPos_f3, color_s3, alpha};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE, &cmd);
@@ -1645,7 +1646,7 @@ void CAIAICallback::LineDrawerDrawLineAndIcon(int cmdId, const float3& endPos, c
 	color_s3[0] = (short) color[0];
 	color_s3[1] = (short) color[1];
 	color_s3[2] = (short) color[2];
-	const short alpha = (short) color[3];
+	const short alpha = (short) color[3] * 256;
 
 	SDrawLineAndIconPathDrawerCommand cmd = {cmdId, endPos_f3, color_s3, alpha};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON, &cmd);
@@ -1665,7 +1666,7 @@ void CAIAICallback::LineDrawerBreak(const float3& endPos, const float* color) {
 	color_s3[0] = (short) color[0];
 	color_s3[1] = (short) color[1];
 	color_s3[2] = (short) color[2];
-	const short alpha = (short) color[3];
+	const short alpha = (short) color[3] * 256;
 
 	SBreakPathDrawerCommand cmd = {endPos_f3, color_s3, alpha};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_BREAK, &cmd);
@@ -1717,8 +1718,9 @@ void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, fl
 	color_s3[0] = (short) red;
 	color_s3[1] = (short) green;
 	color_s3[2] = (short) blue;
+	const short alpha_s = (short) alpha * 256;
 
-	SSetColorFigureDrawerCommand cmd = {figureGroupId, color_s3, alpha};
+	SSetColorFigureDrawerCommand cmd = {figureGroupId, color_s3, alpha_s};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
 }
 

@@ -109,7 +109,7 @@ static inline int max(int val1, int val2) {
 	return val1 > val2 ? val1 : val2;
 }
 
-static void toFloatArr(const short color[3], float alpha, float arrColor[4]) {
+static void toFloatArr(const short color[3], const short alpha, float arrColor[4]) {
 	arrColor[0] = color[0];
 	arrColor[1] = color[1];
 	arrColor[2] = color[2];
@@ -392,7 +392,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 						cmd->color_colorS3[0],
 						cmd->color_colorS3[1],
 						cmd->color_colorS3[2]),
-					cmd->alpha);
+					cmd->alpha / 256.0f);
 			break;
 		}
 		case COMMAND_DRAWER_PATH_START:
@@ -484,7 +484,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 					cmd->color_colorS3[0],
 					cmd->color_colorS3[1],
 					cmd->color_colorS3[2],
-					cmd->alpha);
+					cmd->alpha / 256.0f);
 			break;
 		}
 		case COMMAND_DRAWER_FIGURE_DELETE:
@@ -3990,8 +3990,8 @@ EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getBadColor(int skirmishAIId, i
 	return_colorS3_out[2] = color.z;
 }
 
-EXPORT(float) skirmishAiCallback_WeaponDef_Shield_getAlpha(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->shieldAlpha;
+EXPORT(short) skirmishAiCallback_WeaponDef_Shield_getAlpha(int skirmishAIId, int weaponDefId) {
+	return getWeaponDefById(skirmishAIId, weaponDefId)->shieldAlpha * 256;
 }
 
 EXPORT(int) skirmishAiCallback_WeaponDef_Shield_getInterceptType(int skirmishAIId, int weaponDefId) {

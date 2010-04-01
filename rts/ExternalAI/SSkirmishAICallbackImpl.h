@@ -1228,7 +1228,7 @@ EXPORT(void             ) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int s
 
 EXPORT(void             ) skirmishAiCallback_WeaponDef_Shield_getBadColor(int skirmishAIId, int weaponDefId, short* return_colorS3_out);
 
-EXPORT(float            ) skirmishAiCallback_WeaponDef_Shield_getAlpha(int skirmishAIId, int weaponDefId);
+EXPORT(short            ) skirmishAiCallback_WeaponDef_Shield_getAlpha(int skirmishAIId, int weaponDefId);
 
 EXPORT(int              ) skirmishAiCallback_WeaponDef_Shield_getInterceptType(int skirmishAIId, int weaponDefId);
 
