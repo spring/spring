@@ -14,7 +14,8 @@ struct SOBJTriangle {
 
 struct SOBJPiece: public S3DModelPiece {
 public:
-	SOBJPiece(): parent(NULL) {
+	SOBJPiece() {
+		parent      = NULL;
 		vertexCount = 0;
 		displist    = 0;
 		isEmpty     = true;
@@ -33,9 +34,6 @@ public:
 		sTangents.clear();
 		tTangents.clear();
 	}
-
-	void SetParent(SOBJPiece* p) { parent = p; }
-	SOBJPiece* GetParent() { return parent; }
 
 	void DrawList() const;
 	void SetVertexTangents();
@@ -64,11 +62,7 @@ public:
 	void SetSTangent(int idx, const float3& v) { sTangents[idx] = v; }
 	void SetTTangent(int idx, const float3& v) { tTangents[idx] = v; }
 
-	float3 goffset;
-
 private:
-	SOBJPiece* parent;
-
 	std::vector<float3> vertices;
 	std::vector<float3> vnormals;
 	std::vector<float2> texcoors;
