@@ -119,13 +119,11 @@ ${EndIf}
   SetOutPath "$INSTDIR\base\spring"
   File "${DIST_DIR}\base\spring\bitmaps.sdz"
 
-;!ifndef SP_UPDATE
 ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
   ; Demofile file association
   !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
   !insertmacro UPDATEFILEASSOC
 ${EndIf}
-;!endif ; SP_UPDATE
 
 !else
 
