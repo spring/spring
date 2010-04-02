@@ -323,7 +323,7 @@ void COBJParser::BuildModelPieceTreeRec(
 	assert(piece->GetVertexCount() == piece->GetNormalCount());
 	assert(piece->GetVertexCount() == piece->GetTxCoorCount());
 
-	const SOBJPiece* parentPiece = dynamic_cast<SOBJPiece*>(piece->parent);
+	const S3DModelPiece* parentPiece = piece->parent;
 
 	piece->isEmpty = (piece->GetVertexCount() == 0);
 	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
@@ -332,11 +332,11 @@ void COBJParser::BuildModelPieceTreeRec(
 	// always convert <offset> to local coordinates
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
 	piece->goffset = (localPieceOffsets)?
-		(piece->offset + ((parentPiece)? parentPiece->goffset: ZeroVector)):
+		(piece->offset + ((parentPiece != NULL)? parentPiece->goffset: ZeroVector)):
 		(piece->offset);
 	piece->offset = (localPieceOffsets)?
 		(piece->offset):
-		(piece->offset - ((parentPiece)? parentPiece->offset: ZeroVector));
+		(piece->offset - ((parentPiece != NULL)? parentPiece->offset: ZeroVector));
 
 	piece->SetVertexTangents();
 	piece->SetMinMaxExtends(); // no-op
