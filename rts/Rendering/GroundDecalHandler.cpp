@@ -5,7 +5,6 @@
 #include <cctype>
 #include "mmgr.h"
 
-#include "FileSystem/FileSystem.h"
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
@@ -13,17 +12,17 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "ConfigHandler.h"
-#include "ShadowHandler.h"
-#include "GL/VertexArray.h"
-#include "Textures/Bitmap.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "GlobalUnsynced.h"
-#include "LogOutput.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileSystem.h"
 
 using std::list;
 using std::min;

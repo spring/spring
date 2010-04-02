@@ -2,8 +2,6 @@
 // by this constant; shading-texture intensities are
 // also pre-dimmed
 #define SMF_INTENSITY_MUL (210 / 255.0)
-
-#define SMF_WATER_ABSORPTION 1
 #define SMF_ARB_LIGHTING 0
 
 uniform vec4 lightDir;
@@ -33,6 +31,14 @@ uniform vec3 waterBaseColor;
 uniform vec3 waterAbsorbColor;
 #endif
 
+#if (SMF_DETAIL_TEXTURE_SPLATTING == 1)
+uniform sampler2D splatDetailTex;
+uniform sampler2D splatDistrTex;
+// per-channel splat intensity multipliers
+uniform vec4 splatTexMults;
+#endif
+
+
 void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
 	vec2 tc1 = gl_TexCoord[1].st;
@@ -55,7 +61,18 @@ void main() {
 
 	vec4 diffuseCol = texture2D(diffuseTex, tc0);
 	vec3 specularCol = texture2D(specularTex, tc2).rgb;
+
+	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
 	vec4 detailCol = normalize((texture2D(detailTex, gl_TexCoord[4].st) * 2.0) - 1.0);
+	#else
+	vec4 splatDistr = texture2D(splatDistrTex, tc2);
+	float detailInt =
+		(((texture2D(splatDetailTex, gl_TexCoord[4].st) * 2.0).r - 1.0) * (splatTexMults.r * splatDistr.r)) +
+		(((texture2D(splatDetailTex, gl_TexCoord[5].st) * 2.0).g - 1.0) * (splatTexMults.g * splatDistr.g)) +
+		(((texture2D(splatDetailTex, gl_TexCoord[6].st) * 2.0).b - 1.0) * (splatTexMults.b * splatDistr.b)) +
+		(((texture2D(splatDetailTex, gl_TexCoord[7].st) * 2.0).a - 1.0) * (splatTexMults.a * splatDistr.a));
+	vec4 detailCol = vec4(detailInt, detailInt, detailInt, 1.0);
+	#endif
 
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);
 	vec4 diffuseInt =

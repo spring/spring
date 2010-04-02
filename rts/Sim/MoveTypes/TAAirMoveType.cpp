@@ -7,7 +7,7 @@
 
 #include "Game/Player.h"
 #include "Map/Ground.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"

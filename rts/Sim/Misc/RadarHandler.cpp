@@ -6,8 +6,8 @@
 #include "RadarHandler.h"
 #include "TimeProfiler.h"
 #include "LosHandler.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/TeamHandler.h"
 
 

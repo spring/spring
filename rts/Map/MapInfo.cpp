@@ -254,8 +254,14 @@ void CMapInfo::ReadSmf()
 {
 	// SMF specific settings
 	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
-	smf.detailTexName = mapResTable.GetString("detailTex", "");
-	smf.specularTexName = mapResTable.GetString("specularTex", "");
+
+	smf.detailTexName      = mapResTable.GetString("detailTex", "");
+	smf.specularTexName    = mapResTable.GetString("specularTex", "");
+	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
+	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
+
+	smf.splatTexScales = mapResTable.GetFloat4("splatTexScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
+	smf.splatTexMults = mapResTable.GetFloat4("splatTexMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
@@ -265,9 +271,9 @@ void CMapInfo::ReadSmf()
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
 	}
 
-	if (!smf.specularTexName.empty()) {
-		smf.specularTexName = "maps/" + smf.specularTexName;
-	}
+	if (!smf.specularTexName.empty()) { smf.specularTexName = "maps/" + smf.specularTexName; }
+	if (!smf.splatDetailTexName.empty()) { smf.splatDetailTexName = "maps/" + smf.splatDetailTexName; }
+	if (!smf.splatDistrTexName.empty()) { smf.splatDistrTexName = "maps/" + smf.splatDistrTexName; }
 
 	// height overrides
 	const LuaTable smfTable = parser->GetRoot().SubTable("smf");

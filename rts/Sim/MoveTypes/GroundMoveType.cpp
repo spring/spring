@@ -14,7 +14,7 @@
 #include "Map/ReadMap.h"
 #include "MoveMath/MoveMath.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"

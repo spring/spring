@@ -40,17 +40,17 @@
 #include "Rendering/glFont.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -891,7 +891,7 @@ void LuaOpenGL::SetupScreenLighting()
 
 	// sun light -- needs the camera transformation
 	glPushMatrix();
-	glLoadMatrixd(camera->GetModelview());
+	glLoadMatrixd(camera->GetViewMat());
 	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 
 	const float sunFactor = 1.0f;
@@ -951,11 +951,11 @@ void LuaOpenGL::ResetWorldMatrices()
 	}
 	glMatrixMode(GL_PROJECTION); {
 		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
-		glLoadMatrixd(camera->GetProjection());
+		glLoadMatrixd(camera->GetProjMat());
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
-		glLoadMatrixd(camera->GetModelview());
+		glLoadMatrixd(camera->GetViewMat());
 	}
 }
 
@@ -4622,16 +4622,16 @@ static const double* GetNamedMatrix(const string& name)
 		return mat;
 	}
 	else if (name == "camera") {
-		return camera->GetModelview();
+		return camera->GetViewMat();
 	}
 	else if (name == "caminv") {
-		return camera->modelviewInverse;
+		return camera->GetViewMatInv();
 	}
 	else if (name == "camprj") {
-		return camera->GetProjection();
+		return camera->GetProjMat();
 	}
 	else if (name == "billboard") {
-		return camera->GetBillboard();
+		return camera->GetBBoardMat();
 	}
 	return NULL;
 }
@@ -5268,10 +5268,10 @@ int LuaOpenGL::GetShadowMapParams(lua_State* L)
 	if (!shadowHandler) {
 		return 0;
 	}
-	lua_pushnumber(L, shadowHandler->xmid);
-	lua_pushnumber(L, shadowHandler->ymid);
-	lua_pushnumber(L, shadowHandler->p17);
-	lua_pushnumber(L, shadowHandler->p18);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().x);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().y);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().z);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().w);
 	return 4;
 }
 

@@ -34,7 +34,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
+#include "Rendering/Models/WorldObjectModelRenderer.h"
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -192,6 +192,7 @@ CUnitDrawer::~CUnitDrawer(void)
 
 	opaqueModelRenderers.clear();
 	cloakedModelRenderers.clear();
+	modelShaders.clear();
 
 	unitRadarIcons.clear();
 }
@@ -200,9 +201,13 @@ CUnitDrawer::~CUnitDrawer(void)
 
 bool CUnitDrawer::LoadModelShaders()
 {
-	S3ODefShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
-	S3OAdvShader = S3ODefShader;
-	S3OCurShader = S3ODefShader;
+	modelShaders.resize(MODEL_SHADER_S3O_LAST, NULL);
+
+	CShaderHandler* sh = shaderHandler;
+
+	modelShaders[MODEL_SHADER_S3O_BASIC ] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
+	modelShaders[MODEL_SHADER_S3O_SHADOW] = modelShaders[MODEL_SHADER_S3O_BASIC];
+	modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_BASIC];
 
 	if (!gu->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
@@ -217,50 +222,50 @@ bool CUnitDrawer::LoadModelShaders()
 	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
 	const char* vertexProgNameARB = (advFade)? "ARB/units3o2.vp": "ARB/units3o.vp";
 
-	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-	S3ODefShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	S3ODefShader->Link();
+	modelShaders[MODEL_SHADER_S3O_BASIC ]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_S3O_BASIC ]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_S3O_BASIC ]->Link();
 
 	if (shadowHandler->canUseShadows) {
 		if (!gu->haveGLSL) {
-			S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
-			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-			S3OAdvShader->Link();
+			modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 		} else {
-			S3OAdvShader = shaderHandler->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
-			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/S3OVertProg.glsl", "", GL_VERTEX_SHADER));
-			S3OAdvShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/S3OFragProg.glsl", "", GL_FRAGMENT_SHADER));
-			S3OAdvShader->Link();
-			S3OAdvShader->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
-			S3OAdvShader->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
-			S3OAdvShader->SetUniformLocation("shadowTex");         // idx  2
-			S3OAdvShader->SetUniformLocation("reflectTex");        // idx  3 (cube)
-			S3OAdvShader->SetUniformLocation("specularTex");       // idx  4 (cube)
-			S3OAdvShader->SetUniformLocation("lightDir");          // idx  5
-			S3OAdvShader->SetUniformLocation("cameraPos");         // idx  6
-			S3OAdvShader->SetUniformLocation("cameraMatInv");      // idx  7
-			S3OAdvShader->SetUniformLocation("unitTeamColor");     // idx  8
-			S3OAdvShader->SetUniformLocation("unitAmbientColor");  // idx  9
-			S3OAdvShader->SetUniformLocation("unitDiffuseColor");  // idx 10
-			S3OAdvShader->SetUniformLocation("unitShadowDensity"); // idx 11
-			S3OAdvShader->SetUniformLocation("shadowMat");         // idx 12
-			S3OAdvShader->SetUniformLocation("shadowParams");      // idx 13
+			modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/S3OVertProg.glsl", "", GL_VERTEX_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/S3OFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowTex");         // idx  2
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("reflectTex");        // idx  3 (cube)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("specularTex");       // idx  4 (cube)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("lightDir");          // idx  5
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraPos");         // idx  6
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMatInv");      // idx  7
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitTeamColor");     // idx  8
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitAmbientColor");  // idx  9
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitDiffuseColor");  // idx 10
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitShadowDensity"); // idx 11
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMat");         // idx 12
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 13
 
-			S3OAdvShader->Enable();
-			S3OAdvShader->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
-			S3OAdvShader->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
-			S3OAdvShader->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
-			S3OAdvShader->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
-			S3OAdvShader->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-			S3OAdvShader->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
-			S3OAdvShader->SetUniform3fv(9, &unitAmbientColor[0]);
-			S3OAdvShader->SetUniform3fv(10, &unitSunColor[0]);
-			S3OAdvShader->SetUniform1f(11, unitShadowDensity);
-			S3OAdvShader->Disable();
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(1, 1); // shadingTex  (idx 1, texunit 1)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(9, &unitAmbientColor[0]);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitSunColor[0]);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(11, unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
 		}
 
-		S3OCurShader = S3OAdvShader;
+		modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_SHADOW];
 	}
 
 	return true;
@@ -498,7 +503,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	UnitSet::const_iterator unitSetIt;
 
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		if (modelType == MODELTYPE_S3O) {
+		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
 			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
 		}
 
@@ -770,17 +775,17 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	#ifdef UNIT_SHADOW_ALPHA_MASKING
 		#define S3O_TEX(model) \
 			texturehandlerS3O->GetS3oTex(model->textureType)
-		#define PUSH_SHADOW_TEXTURE_STATE(model)                    \
-			if (model->type == MODELTYPE_S3O) {                     \
-				glActiveTexture(GL_TEXTURE0);                       \
-				glEnable(GL_TEXTURE_2D);                            \
-				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2); \
+		#define PUSH_SHADOW_TEXTURE_STATE(model)                                  \
+			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ) {   \
+				glActiveTexture(GL_TEXTURE0);                                     \
+				glEnable(GL_TEXTURE_2D);                                          \
+				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2);               \
 			}
-		#define POP_SHADOW_TEXTURE_STATE(model)   \
-			if (model->type == MODELTYPE_S3O) {   \
-				glBindTexture(GL_TEXTURE_2D, 0);  \
-				glDisable(GL_TEXTURE_2D);         \
-				glActiveTexture(GL_TEXTURE0);     \
+		#define POP_SHADOW_TEXTURE_STATE(model)                                   \
+			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ) {   \
+				glBindTexture(GL_TEXTURE_2D, 0);                                  \
+				glDisable(GL_TEXTURE_2D);                                         \
+				glActiveTexture(GL_TEXTURE0);                                     \
 			}
 	#else
 		#define PUSH_SHADOW_TEXTURE_STATE(model)
@@ -1036,7 +1041,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 		// cloaked units
 		for (UnitRenderBinIt it = unitBin.begin(); it != unitBin.end(); ++it) {
-			if (modelType == MODELTYPE_S3O) {
+			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 
@@ -1089,7 +1094,7 @@ void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int 
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-			if (modelType == MODELTYPE_S3O && drawGhostBuildings) {
+			if ((modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) && drawGhostBuildings) {
 				// the units in liveGhostedBuildings[modelType] are not
 				// sorted by textureType, but we cannot merge them with
 				// cloakedModelRenderers[modelType] since they are not
@@ -1178,7 +1183,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
-				if (modelType == MODELTYPE_S3O) {
+				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
 					texturehandlerS3O->SetS3oTexture((*it)->model->textureType);
 				}
 
@@ -1207,29 +1212,29 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 	glEnable(GL_ALPHA_TEST);
 
 	if (advShading && !water->drawReflection) {
-		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
-
 		// ARB standard does not seem to support
 		// vertex program + clipplanes (used for
 		// reflective pass) at once ==> not true,
 		// but needs option ARB_position_invariant
-		S3OCurShader = (shadowHandler->drawShadows)? S3OAdvShader: S3ODefShader;
-		S3OCurShader->Enable();
+		modelShaders[MODEL_SHADER_S3O_ACTIVE] = (shadowHandler->drawShadows)?
+			modelShaders[MODEL_SHADER_S3O_SHADOW]:
+			modelShaders[MODEL_SHADER_S3O_BASIC];
+		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 
 		if (gu->haveGLSL && shadowHandler->drawShadows) {
-			S3OCurShader->SetUniform3fv(6, &camera->pos[0]);
-			S3OCurShader->SetUniformMatrix4fv(7, false, (float*) &camera->modelviewInverse[0]);
-			S3OCurShader->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
-			S3OCurShader->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(7, false, (float*) camera->GetViewMatInv());
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(13, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 		} else {
-			S3OCurShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			S3OCurShader->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
-			S3OCurShader->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
-			S3OCurShader->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f); //!
-			S3OCurShader->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
-			S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			S3OCurShader->SetUniform4f(10, 0.0f, 0.0f, 0.0f, unitShadowDensity);
-			S3OCurShader->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f); //!
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
 
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -1264,7 +1269,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixd(camera->GetModelview());
+		glMultMatrixd(camera->GetViewMat());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -1289,7 +1294,7 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 	glDisable(GL_ALPHA_TEST);
 
 	if (advShading && !water->drawReflection) {
-		S3OCurShader->Disable();
+		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 
 		glActiveTexture(GL_TEXTURE1);
 		glDisable(GL_TEXTURE_2D);
@@ -1329,10 +1334,10 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
 		if (gu->haveGLSL && shadowHandler->drawShadows) {
-			S3OCurShader->SetUniform4fv(8, &c[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(8, &c[0]);
 		} else {
-			S3OCurShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			S3OCurShader->SetUniform4fv(14, &c[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);
 		}
 
 		if (luaDrawing) {// FIXME?
@@ -1548,7 +1553,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		SetupForUnitDrawing();
 		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
-		if (MDL_TYPE(unit) == MODELTYPE_S3O) {
+		if (MDL_TYPE(unit) == MODELTYPE_S3O || MDL_TYPE(unit) == MODELTYPE_OBJ) {
 			texturehandlerS3O->SetS3oTexture(TEX_TYPE(unit));
 		}
 
@@ -1769,7 +1774,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	if (gu->drawdebug) {
 		if (!shadowHandler->inShadowPass && !water->drawReflection) {
-			S3OCurShader->Disable();
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 		}
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
@@ -1831,7 +1836,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 		glPopAttrib();
 
 		if (!shadowHandler->inShadowPass && !water->drawReflection) {
-			S3OCurShader->Enable();
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 		}
 	}
 }
@@ -1847,7 +1852,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		return;
 	}
 
-	const float start  = std::max(unit->model->miny, -unit->model->height);
+	const float start  = std::max(unit->model->mins.y, -unit->model->height);
 	const float height = unit->model->height;
 
 	glEnable(GL_CLIP_PLANE0);
@@ -1864,7 +1869,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 	//! render wireframe with FFP
 	if (advShading && !water->drawReflection) {
-		S3OCurShader->Disable();
+		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 	}
 
 	unitDrawer->UnitDrawingTexturesOff();
@@ -1913,7 +1918,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	unitDrawer->UnitDrawingTexturesOn();
 
 	if (advShading && !water->drawReflection) {
-		S3OCurShader->Enable();
+		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 	}
 
 	// second stage: texture-mapped model
@@ -2288,7 +2293,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 
 void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 	// this MUST block the renderer thread or there will be trouble
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
@@ -2316,7 +2321,7 @@ void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 }
 
 void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
@@ -2378,7 +2383,7 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 
 
 void CUnitDrawer::UnitCloaked(const CUnit* u) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (u->model) {
 		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
@@ -2387,7 +2392,7 @@ void CUnitDrawer::UnitCloaked(const CUnit* u) {
 }
 
 void CUnitDrawer::UnitDecloaked(const CUnit* u) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (u->model) {
 		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
@@ -2397,7 +2402,7 @@ void CUnitDrawer::UnitDecloaked(const CUnit* u) {
 
 
 void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (allyTeam == gu->myAllyTeam) {
 		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
@@ -2409,7 +2414,7 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyTeam) {
 }
 
 void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (allyTeam == gu->myAllyTeam) {
 		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
@@ -2433,7 +2438,7 @@ void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyTeam) {
 
 
 void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	if (!(u->losStatus[allyTeam] & LOS_INLOS)) {
 		unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
@@ -2441,7 +2446,7 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyTeam) {
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyTeam) {
-	GML_STDMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit);
 
 	unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
 }

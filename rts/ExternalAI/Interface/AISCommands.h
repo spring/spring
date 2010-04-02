@@ -882,6 +882,7 @@ struct SReclaimUnitCommand {
 	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
+	/// if < maxUnits -> unitId, else -> featureId
 	int toReclaimUnitIdOrFeatureId;
 }; // COMMAND_UNIT_RECLAIM
 

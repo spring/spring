@@ -2,7 +2,7 @@
 
 #include "FeatureDef.h"
 
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 
 CR_BIND(FeatureDef, );
 
@@ -34,7 +34,9 @@ CR_REG_METADATA(FeatureDef, (
 
 S3DModel* FeatureDef::LoadModel()
 {
-	if (model==NULL)
+	if (model == NULL) {
 		model = modelParser->Load3DModel(modelname);
+	}
+
 	return model;
 }

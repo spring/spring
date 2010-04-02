@@ -4,7 +4,7 @@
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/Command.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 #include "UnitDefHandler.h"
 
 UnitDef::UnitDefWeapon::UnitDefWeapon()

@@ -9,7 +9,7 @@
 
 #include <string>
 #include <assert.h>
-#include <SDL/SDL_timer.h>
+#include <SDL_timer.h>
 
 #include "GlobalUnsynced.h"
 #include "Game/GameSetup.h"

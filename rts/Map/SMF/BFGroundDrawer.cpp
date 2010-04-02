@@ -95,7 +95,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 bool CBFGroundDrawer::LoadMapShaders() {
 	CShaderHandler* sh = shaderHandler;
 
-	smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "smfShaderBaseARB", true);
+	smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderBaseARB", true);
 	smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
 	smfShaderRefrARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderRefrARB", true);
 	smfShaderCurrARB = smfShaderBaseARB;
@@ -118,9 +118,16 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			smfShaderRefrARB->Link();
 		} else {
+			std::string defs;
+				defs += (map->haveSplatTexture)?
+					"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
+					"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
+				defs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
+					"#define SMF_WATER_ABSORPTION 0\n":
+					"#define SMF_WATER_ABSORPTION 1\n";
 
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", "", GL_VERTEX_SHADER));
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
 			smfShaderGLSL->Link();
 			smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
 			smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1
@@ -143,6 +150,10 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniformLocation("waterMinColor");       // idx 18
 			smfShaderGLSL->SetUniformLocation("waterBaseColor");      // idx 19
 			smfShaderGLSL->SetUniformLocation("waterAbsorbColor");    // idx 20
+			smfShaderGLSL->SetUniformLocation("splatDetailTex");      // idx 21
+			smfShaderGLSL->SetUniformLocation("splatDistrTex");       // idx 22
+			smfShaderGLSL->SetUniformLocation("splatTexScales");      // idx 23
+			smfShaderGLSL->SetUniformLocation("splatTexMults");       // idx 24
 
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -160,6 +171,11 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniform3fv(18, const_cast<float*>(&mapInfo->water.minColor[0]));
 			smfShaderGLSL->SetUniform3fv(19, const_cast<float*>(&mapInfo->water.baseColor[0]));
 			smfShaderGLSL->SetUniform3fv(20, const_cast<float*>(&mapInfo->water.absorb[0]));
+			smfShaderGLSL->SetUniform1i(21, 7); // splatDetailTex (idx 21, texunit 7)
+			smfShaderGLSL->SetUniform1i(22, 8); // splatDistrTex (idx 22, texunit 8)
+			smfShaderGLSL->SetUniform4fv(23, const_cast<float*>(&mapInfo->smf.splatTexScales[0]));
+			smfShaderGLSL->SetUniform4fv(24, const_cast<float*>(&mapInfo->smf.splatTexMults[0]));
+
 			smfShaderGLSL->Disable();
 		}
 
@@ -1251,7 +1267,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, infoTex);
-		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
+		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
@@ -1266,16 +1282,19 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		if (map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
-			glMultiTexCoord4f(GL_TEXTURE3_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
+			glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-			GLfloat plan[]={0.02f,0,0,0};
-			glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-			glTexGenfv(GL_S,GL_OBJECT_PLANE,plan);
+
+			static const GLfloat planeX[] = {0.02f, 0.0f, 0.0f, 0.0f};
+			static const GLfloat planeZ[] = {0.0f, 0.0f, 0.02f, 0.0f};
+
+			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+			glTexGenfv(GL_S, GL_OBJECT_PLANE, planeX);
 			glEnable(GL_TEXTURE_GEN_S);
-			GLfloat plan2[]={0,0,0.02f,0};
-			glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-			glTexGenfv(GL_T,GL_OBJECT_PLANE,plan2);
+
+			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+			glTexGenfv(GL_T, GL_OBJECT_PLANE, planeZ);
 			glEnable(GL_TEXTURE_GEN_T);
 		} else {
 			glDisable(GL_TEXTURE_2D);
@@ -1301,7 +1320,6 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 	else if (shadowHandler->drawShadows) {
 		const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
-		const float4 shadowParams = float4(shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
@@ -1343,14 +1361,14 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		} else {
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
-			smfShaderGLSL->SetUniform4fv(11, (float*) camera->modelviewInverse);
+			smfShaderGLSL->SetUniform4fv(11, (float*) camera->GetViewMatInv());
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
-			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&shadowParams[0]));
+			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 
-			glActiveTexture(GL_TEXTURE5);
-			glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
-			glActiveTexture(GL_TEXTURE6);
-			glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
+			glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
+			glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
+			glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, map->GetSplatDetailTexture());
+			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, map->GetSplatDistrTexture());
 
 			// setup for shadow2DProj
 			glActiveTexture(GL_TEXTURE4);
@@ -1367,16 +1385,19 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
-			glMultiTexCoord4f(GL_TEXTURE1_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
+			glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-			GLfloat plan[]={0.02f,0,0,0};
-			glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-			glTexGenfv(GL_S,GL_OBJECT_PLANE,plan);
+
+			static const GLfloat planeX[] = {0.02f, 0.0f, 0.0f, 0.0f};
+			static const GLfloat planeZ[] = {0.0f, 0.0f, 0.02f, 0.0f};
+
+			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+			glTexGenfv(GL_S, GL_OBJECT_PLANE, planeX);
 			glEnable(GL_TEXTURE_GEN_S);
-			GLfloat plan2[]={0,0,0.02f,0};
-			glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-			glTexGenfv(GL_T,GL_OBJECT_PLANE,plan2);
+
+			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+			glTexGenfv(GL_T, GL_OBJECT_PLANE, planeZ);
 			glEnable(GL_TEXTURE_GEN_T);
 		} else {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -1386,7 +1407,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
-		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
+		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
 		//! bind the detail texture a 2nd time to increase the details (-> GL_ADD_SIGNED_ARB is limited -0.5 to +0.5)
@@ -1398,13 +1419,16 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glMultiTexCoord4f(GL_TEXTURE3_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-			GLfloat plan[]={0.02f,0,0,0};
-			glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-			glTexGenfv(GL_S,GL_OBJECT_PLANE,plan);
+
+			static const GLfloat planeX[] = {0.02f, 0.0f, 0.0f, 0.0f};
+			static const GLfloat planeZ[] = {0.0f, 0.0f, 0.02f, 0.0f};
+
+			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+			glTexGenfv(GL_S, GL_OBJECT_PLANE, planeX);
 			glEnable(GL_TEXTURE_GEN_S);
-			GLfloat plan2[]={0,0,0.02f,0};
-			glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
-			glTexGenfv(GL_T,GL_OBJECT_PLANE,plan2);
+
+			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+			glTexGenfv(GL_T, GL_OBJECT_PLANE, planeZ);
 			glEnable(GL_TEXTURE_GEN_T);
 		} else {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
@@ -1445,19 +1469,19 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
@@ -1467,6 +1491,12 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 	} else {
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+
+		glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
+
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 		if (drawReflection) {

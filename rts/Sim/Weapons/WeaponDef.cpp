@@ -3,7 +3,7 @@
 #include "WeaponDef.h"
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 
 WeaponDef::~WeaponDef()
 {

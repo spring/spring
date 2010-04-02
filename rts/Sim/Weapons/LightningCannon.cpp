@@ -5,7 +5,7 @@
 #include "LightningCannon.h"
 #include "Map/Ground.h"
 #include "PlasmaRepulser.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"

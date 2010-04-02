@@ -7,6 +7,7 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -15,8 +16,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
+#include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -168,6 +168,9 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	// allow map specified atlas textures for gaia unit projectiles
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!mapResParser.Execute()) {
+		logOutput.Print(mapResParser.GetErrorLog());
+	}
 	if (mapResParser.IsValid()) {
 		const LuaTable mapRoot = mapResParser.GetRoot();
 		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");

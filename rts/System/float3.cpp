@@ -2,6 +2,7 @@
 
 #include "float3.h"
 #include "Vec2.h"
+#include "creg/creg_cond.h"
 
 
 // TODO: this should go in Vec2.cpp if that is ever created

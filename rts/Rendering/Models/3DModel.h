@@ -27,22 +27,32 @@ struct S3DModelPiece {
 	std::string name;
 	std::vector<S3DModelPiece*> childs;
 
+	S3DModelPiece* parent;
+
+	bool isEmpty;
 	unsigned int vertexCount;
 	unsigned int displist;
-	float3 offset;
-	bool isEmpty;
-	float maxx, maxy, maxz;
-	float minx, miny, minz;
 
-	int type;  //! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
+	//! MODELTYPE_*
+	int type;
 
 	// defaults to a box
 	CollisionVolume* colvol;
 
-	// TODO: add float3 orientation;
+	// float3 dir;    // TODO?
+	float3 mins;
+	float3 maxs;
+	float3 offset;    // wrt. parent
+	float3 goffset;   // wrt. root
 
 	virtual ~S3DModelPiece();
-	virtual const float3& GetVertexPos(const int& idx) const = 0;
+	virtual void DrawList() const = 0;
+	virtual int GetVertexCount() const { return vertexCount; }
+	virtual int GetNormalCount() const { return 0; }
+	virtual int GetTxCoorCount() const { return 0; }
+	virtual void SetMinMaxExtends() {}
+	virtual void SetVertexTangents() {}
+	virtual const float3& GetVertexPos(int) const = 0;
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 	void DrawStatic() const;
 };
@@ -51,32 +61,38 @@ struct S3DModelPiece {
 struct S3DModel
 {
 	S3DModelPiece* rootobject;
+
 	int numobjects;
 	float radius;
 	float height;
-	std::string name;
-	int farTextureNum;
-	float maxx,maxy,maxz;
-	float minx,miny,minz;
+
+	float3 mins;
+	float3 maxs;
 	float3 relMidPos;
-	int type;        //! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
-	int textureType; // FIXME MAKE S3O ONLY      //0=3do, otherwise s3o
+
+	int type;               //! MODELTYPE_*
+	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	int farTextureNum;
+
+	std::string name;
 	std::string tex1;
 	std::string tex2;
+
 	inline void DrawStatic() const { rootobject->DrawStatic(); };
 };
 
 
 struct LocalModelPiece
 {
-	//todo: add (visibility) maxradius!
+	// TODO: add (visibility) maxradius!
 
 	float3 pos;
 	float3 rot; //! in radian
 	bool updated; //FIXME unused?
 	bool visible;
 
-	int type;  //! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
+	//! MODELTYPE_*
+	int type;
 	std::string name;
 	S3DModelPiece* original;
 	LocalModelPiece* parent;
@@ -100,13 +116,12 @@ struct LocalModelPiece
 	bool GetEmitDirPos(float3 &pos, float3 &dir) const;
 };
 
-//FIXME redundant struct!?
 struct LocalModel
 {
 	LocalModel() : lodCount(0) {};
 	~LocalModel();
 
-	int type;  //! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
+	int type;  //! MODELTYPE_*
 
 	std::vector<LocalModelPiece*> pieces;
 	unsigned int lodCount;

@@ -9,7 +9,6 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "myMath.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GeometricObjects.h"
