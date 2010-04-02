@@ -168,6 +168,9 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	// allow map specified atlas textures for gaia unit projectiles
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!mapResParser.Execute()) {
+		logOutput.Print(mapResParser.GetErrorLog());
+	}
 	if (mapResParser.IsValid()) {
 		const LuaTable mapRoot = mapResParser.GetRoot();
 		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");
