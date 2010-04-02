@@ -88,4 +88,4 @@ die "Unable to find a distribution directory." if ($distDir eq "");
 my $distDirRel = File::Spec->abs2rel($distDir, "installer");
 $distDirRel =~ tr/\//\\/d;
 
-system("makensis -V3$testBuildString -DREVISION=$tag -DDIST_DIR=\"$distDirRel\" $allVersStr installer/spring.nsi");
+system("makensis -V3$testBuildString -DVERSION_TAG=\"$tag\" -DDIST_DIR=\"$distDirRel\" $allVersStr installer/spring.nsi");
