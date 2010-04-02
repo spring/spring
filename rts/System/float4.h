@@ -4,6 +4,7 @@
 #define FLOAT4_H
 
 #include "float3.h"
+#include "creg/creg_cond.h"
 
 /** Float3 with a fourth data member, which is basically unused but required
     to be able to pass data into e.g. OpenGL functions that expect

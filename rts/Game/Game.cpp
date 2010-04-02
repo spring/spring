@@ -73,20 +73,20 @@
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/FeatureDrawer.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/PathDrawer.h"
-#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
+#include "Rendering/Models/ModelDrawer.hpp"
+#include "Rendering/Models/IModelParser.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/ModelDrawer.hpp"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
@@ -4345,10 +4345,15 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				CUnit* ctrlUnit = (playerHandler->Player(player)->dccs).playerControlledUnit;
+				CPlayer* sender = playerHandler->Player(player);
+				if (sender->spectator || !sender->active) {
+					break;
+				}
+
+				CUnit* ctrlUnit = (sender->dccs).playerControlledUnit;
 				if (ctrlUnit) {
 					// player released control
-					playerHandler->Player(player)->StopControllingUnit();
+					sender->StopControllingUnit();
 				} else {
 					// player took control
 					if (
@@ -4367,8 +4372,8 @@ void CGame::ClientReadNet()
 							}
 						}
 						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
-							unit->directControl = &playerHandler->Player(player)->myControl;
-							(playerHandler->Player(player)->dccs).playerControlledUnit = unit;
+							unit->directControl = &sender->myControl;
+							(sender->dccs).playerControlledUnit = unit;
 
 							if (player == gu->myPlayerNum) {
 								gu->directControl = unit;

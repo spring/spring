@@ -16,8 +16,8 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
+#include "Rendering/UnitDrawer.h"
+#include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -220,7 +220,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	FeatureSet::iterator featureSetIt;
 
 	for (featureBinIt = featureBin.begin(); featureBinIt != featureBin.end(); ++featureBinIt) {
-		if (modelType == MODELTYPE_S3O) {
+		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
 			texturehandlerS3O->SetS3oTexture(featureBinIt->first);
 		}
 
@@ -389,7 +389,7 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
 		FeatureRenderBin& featureBin = cloakedModelRenderers[modelType]->GetFeatureBinMutable();
 
 		for (FeatureRenderBinIt it = featureBin.begin(); it != featureBin.end(); ++it) {
-			if (modelType == MODELTYPE_S3O) {
+			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 

@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "StdAfx.h"
 #include "LuaLoadSaveHandler.h"
 
 #include <sstream>
@@ -206,7 +207,7 @@ void CLuaLoadSaveHandler::LoadAIData()
 
 void CLuaLoadSaveHandler::LoadHeightmap()
 {
-	std::vector<uint8_t> buf;
+	std::vector<boost::uint8_t> buf;
 
 	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
 		const int size = (gs->mapx + 1) * (gs->mapy + 1);
@@ -228,7 +229,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 
 std::string CLuaLoadSaveHandler::LoadEntireFile(const std::string& file)
 {
-	std::vector<uint8_t> buf;
+	std::vector<boost::uint8_t> buf;
 	if (loadfile->GetFile(file, buf)) {
 		return std::string((char*) &*buf.begin(), buf.size());
 	}

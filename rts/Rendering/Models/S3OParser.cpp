@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include "mmgr.h"
 
-#include "s3oParser.h"
+#include "S3OParser.h"
 #include "s3o.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -22,12 +22,14 @@
 #include "System/Platform/byteorder.h"
 #include "System/Platform/errorhandler.h"
 
+static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
 
-S3DModel* CS3OParser::Load(std::string name)
+S3DModel* CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
-		throw content_error("File not found: "+name);
+		throw content_error("[S3OParser] could not find model-file " + name);
 	}
 
 	unsigned char* fileBuf = new unsigned char[file.FileSize()];
@@ -37,56 +39,45 @@ S3DModel* CS3OParser::Load(std::string name)
 	header.swap();
 
 	S3DModel* model = new S3DModel;
-	model->type = MODELTYPE_S3O;
-	model->numobjects = 0;
-	model->name = name;
-	model->tex1 = (char*) &fileBuf[header.texture1];
-	model->tex2 = (char*) &fileBuf[header.texture2];
+		model->name = name;
+		model->type = MODELTYPE_S3O;
+		model->numobjects = 0;
+		model->tex1 = (char*) &fileBuf[header.texture1];
+		model->tex2 = (char*) &fileBuf[header.texture2];
+		model->mins = DEF_MIN_SIZE;
+		model->maxs = DEF_MAX_SIZE;
 	texturehandlerS3O->LoadS3OTexture(model);
 
-	SS3OPiece* rootPiece = LoadPiece(fileBuf, header.rootPiece, model);
-	rootPiece->type = MODELTYPE_S3O;
-
-	FindMinMax(rootPiece);
+	SS3OPiece* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPiece);
 
 	model->rootobject = rootPiece;
 	model->radius = header.radius;
 	model->height = header.height;
 
-	model->relMidPos.x = header.midx;
-	model->relMidPos.y = header.midy;
-	model->relMidPos.z = header.midz;
-
+	model->relMidPos = float3(header.midx, header.midy, header.midz);
 	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
-
-	model->maxx = rootPiece->maxx;
-	model->maxy = rootPiece->maxy;
-	model->maxz = rootPiece->maxz;
-
-	model->minx = rootPiece->minx;
-	model->miny = rootPiece->miny;
-	model->minz = rootPiece->minz;
 
 	delete[] fileBuf;
 	return model;
 }
 
-SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model)
+SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned char* buf, int offset)
 {
 	model->numobjects++;
-
-	SS3OPiece* piece = new SS3OPiece;
-	piece->type = MODELTYPE_S3O;
 
 	Piece* fp = (Piece*)&buf[offset];
 	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
 
-	piece->offset.x = fp->xoffset;
-	piece->offset.y = fp->yoffset;
-	piece->offset.z = fp->zoffset;
-	piece->primitiveType = fp->primitiveType;
-	piece->name = (char*) &buf[fp->name];
-
+	SS3OPiece* piece = new SS3OPiece();
+		piece->type = MODELTYPE_S3O;
+		piece->mins = DEF_MIN_SIZE;
+		piece->maxs = DEF_MAX_SIZE;
+		piece->offset.x = fp->xoffset;
+		piece->offset.y = fp->yoffset;
+		piece->offset.z = fp->zoffset;
+		piece->primitiveType = fp->primitiveType;
+		piece->name = (char*) &buf[fp->name];
+		piece->parent = parent;
 
 	// retrieve each vertex
 	int vertexOffset = fp->vertices;
@@ -122,15 +113,33 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model
 
 	piece->isEmpty = piece->vertexDrawOrder.empty();
 	piece->vertexCount = piece->vertices.size();
+	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
-	SetVertexTangents(piece);
+	piece->SetVertexTangents();
+	piece->SetMinMaxExtends();
+
+	model->mins.x = std::min(piece->mins.x, model->mins.x);
+	model->mins.y = std::min(piece->mins.y, model->mins.y);
+	model->mins.z = std::min(piece->mins.z, model->mins.z);
+	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
+	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
+	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
+
+	const float3 cvScales = piece->maxs - piece->mins;
+	const float3 cvOffset =
+		(piece->maxs - piece->goffset) +
+		(piece->mins - piece->goffset);
+
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
+	piece->colvol->Enable();
+
 
 	int childTableOffset = fp->childs;
 
 	for (int a = 0; a < fp->numChilds; ++a) {
 		int childOffset = swabdword(*(int*) &buf[childTableOffset]);
 
-		SS3OPiece* childPiece = LoadPiece(buf, childOffset, model);
+		SS3OPiece* childPiece = LoadPiece(model, piece, buf, childOffset);
 		piece->childs.push_back(childPiece);
 
 		childTableOffset += sizeof(int);
@@ -139,78 +148,31 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model
 	return piece;
 }
 
-void CS3OParser::FindMinMax(SS3OPiece* o) const
+
+
+
+
+
+void SS3OPiece::DrawList() const
 {
-	std::vector<S3DModelPiece*>::iterator si;
-
-	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
-		FindMinMax(static_cast<SS3OPiece*>(*si));
-	}
-
-	float maxx = -1000.0f, maxy = -1000.0f, maxz = -1000.0f;
-	float minx = 10000.0f, miny = 10000.0f, minz = 10000.0f;
-
-	std::vector<SS3OVertex>::iterator vi;
-
-	for (vi = o->vertices.begin(); vi != o->vertices.end(); ++vi) {
-		maxx = std::max(maxx, vi->pos.x);
-		maxy = std::max(maxy, vi->pos.y);
-		maxz = std::max(maxz, vi->pos.z);
-
-		minx = std::min(minx, vi->pos.x);
-		miny = std::min(miny, vi->pos.y);
-		minz = std::min(minz, vi->pos.z);
-	}
-
-	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
-		maxx = std::max(maxx, (*si)->offset.x + (*si)->maxx);
-		maxy = std::max(maxy, (*si)->offset.y + (*si)->maxy);
-		maxz = std::max(maxz, (*si)->offset.z + (*si)->maxz);
-
-		minx = std::min(minx, (*si)->offset.x + (*si)->minx);
-		miny = std::min(miny, (*si)->offset.y + (*si)->miny);
-		minz = std::min(minz, (*si)->offset.z + (*si)->minz);
-	}
-
-	o->maxx = maxx;
-	o->maxy = maxy;
-	o->maxz = maxz;
-
-	o->minx = minx;
-	o->miny = miny;
-	o->minz = minz;
-
-	const float3 cvScales((o->maxx - o->minx),        (o->maxy - o->miny),        (o->maxz - o->minz)       );
-	const float3 cvOffset((o->maxx + o->minx) * 0.5f, (o->maxy + o->miny) * 0.5f, (o->maxz + o->minz) * 0.5f);
-
-	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
-	o->colvol->Enable();
-}
-
-void CS3OParser::Draw(const S3DModelPiece* o) const
-{
-	if (o->isEmpty) {
+	if (isEmpty) {
 		return;
 	}
 
-	const SS3OPiece* so = static_cast<const SS3OPiece*>(o);
-	const SS3OVertex* s3ov = static_cast<const SS3OVertex*>(&so->vertices[0]);
-
+	const SS3OVertex* s3ov = &vertices[0];
 
 	// pass the tangents as 3D texture coordinates
 	// (array elements are float3's, which are 12
 	// bytes in size and each represent a single
 	// xyz triple)
-	// TODO: test if we have this many texunits
-	// (if not, could only send the s-tangents)?
-	if (!so->sTangents.empty()) {
+	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->sTangents[0].x);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &sTangents[0].x);
 
 		glClientActiveTexture(GL_TEXTURE6);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &tTangents[0].x);
 	}
 
 	glClientActiveTextureARB(GL_TEXTURE1_ARB);
@@ -227,19 +189,19 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
 
-	switch (so->primitiveType) {
+	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES:
-			glDrawElements(GL_TRIANGLES, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 			break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP:
-			glDrawElements(GL_TRIANGLE_STRIP, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 			break;
 		case S3O_PRIMTYPE_QUADS:
-			glDrawElements(GL_QUADS, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			glDrawElements(GL_QUADS, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 			break;
 	}
 
-	if (!so->sTangents.empty()) {
+	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -257,20 +219,30 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
 
-
-
-void CS3OParser::SetVertexTangents(SS3OPiece* p)
+void SS3OPiece::SetMinMaxExtends()
 {
-	if (p->isEmpty || p->primitiveType == S3O_PRIMTYPE_QUADS) {
+	for (std::vector<SS3OVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
+		mins.x = std::min(mins.x, (goffset.x + vi->pos.x));
+		mins.y = std::min(mins.y, (goffset.y + vi->pos.y));
+		mins.z = std::min(mins.z, (goffset.z + vi->pos.z));
+		maxs.x = std::max(maxs.x, (goffset.x + vi->pos.x));
+		maxs.y = std::max(maxs.y, (goffset.y + vi->pos.y));
+		maxs.z = std::max(maxs.z, (goffset.z + vi->pos.z));
+	}
+}
+
+void SS3OPiece::SetVertexTangents()
+{
+	if (isEmpty || primitiveType == S3O_PRIMTYPE_QUADS) {
 		return;
 	}
 
-	p->sTangents.resize(p->vertexCount, ZeroVector);
-	p->tTangents.resize(p->vertexCount, ZeroVector);
+	sTangents.resize(vertexCount, ZeroVector);
+	tTangents.resize(vertexCount, ZeroVector);
 
 	unsigned stride = 0;
 
-	switch (p->primitiveType) {
+	switch (primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
 			stride = 3;
 		} break;
@@ -283,20 +255,20 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 	// by the draw order of the vertices numbered <v, v + 1, v + 2>
 	// for v in [0, n - 2]
 	const unsigned vrtMaxNr = (stride == 1)?
-		p->vertexDrawOrder.size() - 2:
-		p->vertexDrawOrder.size();
+		vertexDrawOrder.size() - 2:
+		vertexDrawOrder.size();
 
 	// set the triangle-level S- and T-tangents
 	for (unsigned vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
 		bool flipWinding = false;
 
-		if (p->primitiveType == S3O_PRIMTYPE_TRIANGLE_STRIP) {
+		if (primitiveType == S3O_PRIMTYPE_TRIANGLE_STRIP) {
 			flipWinding = ((vrtNr & 1) == 1);
 		}
 
-		const int v0idx = p->vertexDrawOrder[vrtNr                      ];
-		const int v1idx = p->vertexDrawOrder[vrtNr + (flipWinding? 2: 1)];
-		const int v2idx = p->vertexDrawOrder[vrtNr + (flipWinding? 1: 2)];
+		const int v0idx = vertexDrawOrder[vrtNr                      ];
+		const int v1idx = vertexDrawOrder[vrtNr + (flipWinding? 2: 1)];
+		const int v2idx = vertexDrawOrder[vrtNr + (flipWinding? 1: 2)];
 
 		if (v1idx == -1 || v2idx == -1) {
 			// not a valid triangle, skip
@@ -304,9 +276,9 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 			vrtNr += 3; continue;
 		}
 
-		const SS3OVertex* vrt0 = &p->vertices[v0idx];
-		const SS3OVertex* vrt1 = &p->vertices[v1idx];
-		const SS3OVertex* vrt2 = &p->vertices[v2idx];
+		const SS3OVertex* vrt0 = &vertices[v0idx];
+		const SS3OVertex* vrt1 = &vertices[v1idx];
+		const SS3OVertex* vrt2 = &vertices[v2idx];
 
 		const float3& p0 = vrt0->pos;
 		const float3& p1 = vrt1->pos;
@@ -333,20 +305,20 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		const float3 sdir((t2 * x1x0 - t1 * x2x0) * r, (t2 * y1y0 - t1 * y2y0) * r, (t2 * z1z0 - t1 * z2z0) * r);
 		const float3 tdir((s1 * x2x0 - s2 * x1x0) * r, (s1 * y2y0 - s2 * y1y0) * r, (s1 * z2z0 - s2 * z1z0) * r);
 
-		p->sTangents[v0idx] += sdir;
-		p->sTangents[v1idx] += sdir;
-		p->sTangents[v2idx] += sdir;
+		sTangents[v0idx] += sdir;
+		sTangents[v1idx] += sdir;
+		sTangents[v2idx] += sdir;
 
-		p->tTangents[v0idx] += tdir;
-		p->tTangents[v1idx] += tdir;
-		p->tTangents[v2idx] += tdir;
+		tTangents[v0idx] += tdir;
+		tTangents[v1idx] += tdir;
+		tTangents[v2idx] += tdir;
 	}
 
 	// set the smoothed per-vertex tangents
-	for (unsigned vrtIdx = 0; vrtIdx < p->vertices.size(); vrtIdx++) {
-		float3& n = p->vertices[vrtIdx].normal;
-		float3& s = p->sTangents[vrtIdx];
-		float3& t = p->tTangents[vrtIdx];
+	for (int vrtIdx = vertices.size() - 1; vrtIdx >= 0; vrtIdx--) {
+		float3& n = vertices[vrtIdx].normal;
+		float3& s = sTangents[vrtIdx];
+		float3& t = tTangents[vrtIdx];
 		int h = 1;
 
 		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
@@ -365,7 +337,6 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		// t = t * h;
 	}
 }
-
 
 
 

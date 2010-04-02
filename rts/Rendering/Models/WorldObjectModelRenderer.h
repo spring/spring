@@ -9,7 +9,7 @@
 #include <map>
 #include <set>
 
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 
 class CUnit;
 class CFeature;

@@ -12,7 +12,6 @@
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
 #include "myMath.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"

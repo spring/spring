@@ -18,6 +18,8 @@ using std::map;
 
 class CUnit;
 class CFeature;
+class CProjectile;
+class CWeapon;
 struct UnitDef;
 struct FeatureDef;
 struct Command;
@@ -68,6 +70,8 @@ class CLuaRules : public CLuaHandleSynced
 		bool UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
                              float damage, int weaponID, bool paralyzer,
                              float* newDamage, float* impulseMult);
+
+		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
 
 		// unsynced
 		bool DrawUnit(int unitID);
@@ -123,6 +127,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveDrawUnit;
 		bool haveAICallIn;
 		bool haveUnitPreDamaged;
+		bool haveShieldPreDamaged;
 
 		map<string, string> infoMap;
 

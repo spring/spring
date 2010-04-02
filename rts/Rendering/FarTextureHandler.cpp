@@ -4,12 +4,12 @@
 #include "mmgr.h"
 
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/WorldObjectModelRenderer.h"
+#include "Rendering/Models/3DModel.h"
+#include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "System/GlobalUnsynced.h"
@@ -148,14 +148,20 @@ void CFarTextureHandler::ReallyCreateFarTexture(S3DModel* model)
 	fbo.Bind();
 
 	glDisable(GL_BLEND);
+	glPushAttrib(GL_POLYGON_BIT);
+
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 
-	if (model->type == MODELTYPE_S3O) {
-		//FIXME for some strange reason we need to invert the culling, why?
-		glCullFace(GL_FRONT);
+
+	if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ) {
+		// FIXME for some strange reason we need to invert the culling, why?
+		if (model->type == MODELTYPE_S3O) {
+			glCullFace(GL_FRONT);
+		}
 		texturehandlerS3O->SetS3oTexture(model->textureType);
 	}
+
 
 	unitDrawer->SetTeamColour(0);
 
@@ -191,6 +197,7 @@ void CFarTextureHandler::ReallyCreateFarTexture(S3DModel* model)
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
 	unitDrawer->CleanUpUnitDrawing();
 
+	glPopAttrib();
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
 	usedFarTextures++;
