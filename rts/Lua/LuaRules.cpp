@@ -879,6 +879,7 @@ bool CLuaRules::ShieldPreDamaged(
 	const int errfunc(SetupTraceback());
 	static const LuaHashString cmdStr("ShieldPreDamaged");
 
+	const CUnit* projectileOwner = projectile->owner();
 	bool ret = false;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -892,12 +893,13 @@ bool CLuaRules::ShieldPreDamaged(
 
 	// push the call-in arguments
 	lua_pushnumber(L, projectile->id);
+	lua_pushnumber(L, ((projectileOwner != NULL)? projectileOwner->id: -1));
 	lua_pushnumber(L, shieldEmitter->weaponNum);
 	lua_pushnumber(L, shieldCarrier->id);
 	lua_pushboolean(L, bounceProjectile);
 
 	// call the routine
-	RunCallInTraceback(cmdStr, 4, 1, errfunc);
+	RunCallInTraceback(cmdStr, 5, 1, errfunc);
 
 	// pop the return-value; must be true or false
 	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));

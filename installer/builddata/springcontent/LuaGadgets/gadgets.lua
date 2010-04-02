@@ -1454,11 +1454,11 @@ end
 --  Shield call-ins
 --
 
-function gadgetHandler:ShieldPreDamaged(projectileID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)
+function gadgetHandler:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)
 
   for _,g in ipairs(self.ShieldPreDamagedList) do
     -- first gadget to handle this consumes the event
-    if (g:ShieldPreDamaged(projectileID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)) then
+    if (g:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)) then
       return true
     end
   end
