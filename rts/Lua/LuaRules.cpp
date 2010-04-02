@@ -27,12 +27,12 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "Sim/Weapons/PlasmaRepulser.h"
+#include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -864,8 +864,8 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 }
 
 bool CLuaRules::ShieldPreDamaged(
-	const CWeaponProjectile* projectile,
-	const CPlasmaRepulser* shieldEmitter,
+	const CProjectile* projectile,
+	const CWeapon* shieldEmitter,
 	const CUnit* shieldCarrier,
 	bool bounceProjectile
 ) {
@@ -874,12 +874,11 @@ bool CLuaRules::ShieldPreDamaged(
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4 + 1);
+	lua_checkstack(L, 5 + 1);
 
 	const int errfunc(SetupTraceback());
 	static const LuaHashString cmdStr("ShieldPreDamaged");
 
-	const CUnit* projectileOwner = projectile->owner();
 	bool ret = false;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -888,8 +887,10 @@ bool CLuaRules::ShieldPreDamaged(
 		}
 
 		// undefined call-in
-		return false;
+		return ret;
 	}
+
+	const CUnit* projectileOwner = projectile->owner();
 
 	// push the call-in arguments
 	lua_pushnumber(L, projectile->id);
