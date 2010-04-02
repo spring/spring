@@ -131,6 +131,9 @@ local callInLists = {
   'ProjectileCreated',
   'ProjectileDestroyed',
 
+  -- Shield CallIns
+  'ShieldPreDamaged',
+
   -- Misc Synced CallIns
   'Explosion',
 
@@ -1443,6 +1446,24 @@ function gadgetHandler:ProjectileDestroyed(proID)
     g:ProjectileDestroyed(proID)
   end
   return
+end
+
+
+--------------------------------------------------------------------------------
+--
+--  Shield call-ins
+--
+
+function gadgetHandler:ShieldPreDamaged(projectileID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)
+
+  for _,g in ipairs(self.ShieldPreDamagedList) do
+    -- first gadget to handle this consumes the event
+    if (g:ShieldPreDamaged(projectileID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)) then
+      return true
+    end
+  end
+
+  return false
 end
 
 
