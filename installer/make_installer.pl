@@ -8,12 +8,15 @@ use File::Basename;
 use Cwd 'abs_path';
 use File::Spec::Functions;
 
+
+# Evaluate installer and root dirs
 my $installerDir=$0;
 $installerDir=$ENV{PWD}."/".$installerDir unless($installerDir =~ /^\//);
 $installerDir=dirname($installerDir);
 
 chdir("$installerDir/..");
 die "Unable to find \"installer\" directory." unless(-d "installer");
+
 
 # Aquire AI Interfaces and Skirmish AI versions
 sub getSubDirsVersion {
@@ -49,19 +52,23 @@ sub getVersionVarsString {
 my $allVersStr= getVersionVarsString("AI/Interfaces/", "AI_INT_VERS_");
 $allVersStr= $allVersStr." ".getVersionVarsString("AI/Skirmish/", "SKIRM_AI_VERS_");
 
+
+# Evaluate the engines version
 my $testBuildString="";
 my $tag=`git describe --candidate=0 --tags 2>/dev/null`;
-if($?) {
-  $testBuildString=" -DTEST_BUILD";
-  $tag=`git describe  --tags`;
+if ($?) {
+  $testBuildString="-DTEST_BUILD";
+  $tag=`git describe --tags`;
   die "Unable to run \"git describe\"." if($?);
   chomp($tag);
   print "Creating test installer for revision $tag\n";
-}else{
+} else {
   chomp($tag);
   print "Creating installer for release $tag\n";
 }
 
+
+# Download some files to be included in the installer
 system("sh", "installer/springlobby_download.sh");
 chdir("$installerDir/downloads");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
@@ -88,4 +95,6 @@ die "Unable to find a distribution directory." if ($distDir eq "");
 my $distDirRel = File::Spec->abs2rel($distDir, "installer");
 $distDirRel =~ tr/\//\\/d;
 
-system("makensis -V3$testBuildString -DVERSION_TAG=\"$tag\" -DDIST_DIR=\"$distDirRel\" $allVersStr installer/spring.nsi");
+
+# Generate the installer
+system("makensis -V3 $testBuildString -DVERSION_TAG=\"$tag\" -DDIST_DIR=\"$distDirRel\" $allVersStr installer/spring.nsi");
