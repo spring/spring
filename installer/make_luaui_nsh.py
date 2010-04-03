@@ -92,12 +92,12 @@ print('  Delete "' + instBase + '\LuaUI\unitdefs.lua"')
 
 print('')
 print('  SetOutPath "' + instBase + '"')
-print('  File "' + toWinPath(os.path.join(distBase, distDir, 'luaui.lua')) + '"')
+print('  File "' + toWinPath(os.path.join(distBase, 'luaui.lua')) + '"')
 print('')
 for d in dirs:
 	print('  SetOutPath "' + toWinPath(os.path.join(instBase, d)) + '"')
 	for f in dirs[d]:
-		print('  File "' + toWinPath(os.path.join(distBase, distDir, d, f)) + '"')
+		print('  File "' + toWinPath(os.path.join(distBase, d, f)) + '"')
 print('')
 
 print('!else')
