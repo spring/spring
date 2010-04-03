@@ -34,15 +34,12 @@ void CSkirmishAI::Dieing() {
 }
 
 int CSkirmishAI::HandleEvent(int topic, const void* data) const {
+
 	SCOPED_TIMER(timerName.c_str());
-
-	// the Release event must always make it through
-	const int ret = library->HandleEvent(teamId, topic, data);
-
 	if (!dieing) {
-		return ret;
+		return library->HandleEvent(teamId, topic, data);
 	} else {
-		// signal OK to prevent error spam
+		// to prevent log error spam, signal: OK
 		return 0;
 	}
 }
