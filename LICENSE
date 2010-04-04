@@ -1,6 +1,6 @@
-                             Spring RTS game engine
+# Spring RTS game engine
 
-                                    LICENSE
+## LICENSE
 
 Spring is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-For details, see doc/gpl-2.0.txt and doc/gpl-3.0.txt.
+For details, see [doc/gpl-2.0.txt](doc/gpl-2.0.html)
+and [doc/gpl-3.0.txt](doc/gpl-3.0.html).
 
-For a list of authors of this software, see AUTHORS.
-
+For a list of authors of this software, see [AUTHORS](AUTHORS.html).
