@@ -2,6 +2,35 @@
 cmake_minimum_required(VERSION 2.6)
 project(Spring)
 
+macro    (CheckMinCMakeVersion res_var major minor patch)
+	SET(${res_var} FALSE)
+	IF     (${CMAKE_MAJOR_VERSION} GREATER ${major})
+		SET(${res_var} TRUE)
+	ELSEIF (${CMAKE_MAJOR_VERSION} EQUAL ${major})
+		IF     (${CMAKE_MINOR_VERSION} GREATER ${minor})
+			SET(${res_var} TRUE)
+		ELSEIF (${CMAKE_MINOR_VERSION} EQUAL ${minor})
+			IF     (${CMAKE_PATCH_VERSION} GREATER ${patch})
+				SET(${res_var} TRUE)
+			ELSEIF (${CMAKE_PATCH_VERSION} EQUAL ${patch})
+				SET(${res_var} TRUE)
+			ENDIF  ()
+		ENDIF  ()
+	ENDIF  ()
+endmacro (CheckMinCMakeVersion res_var major minor patch)
+
+# Supported since CMake 2.6.3
+CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
+IF     (NOT CUSTOM_TARGET_SOURCES_SUPPORT)
+	MESSAGE(
+		"warning: ADD_CUSTOM_TARGET() support for the SOURCES attribute "
+		"was added in CMake 2.6.3, you are using CMake "
+		"${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}. "
+		"Some parts of ${CMAKE_PROJECT_NAME} require this feature, "
+		"and will consequently not be configured/built. "
+		"You will get separate warnings for all parts that will not be built.")
+ENDIF  ()
+
 # This is needed, as CMake, or at least soem versions of it (eg. 2.8),
 # falsely use the ".so" suffix unde Mac OS X for MODULE's
 macro    (FixLibName targetName)
