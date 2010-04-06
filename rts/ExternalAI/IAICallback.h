@@ -424,12 +424,12 @@ public:
 	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
 
 	virtual int IsDebugDrawerEnabled() const = 0;
-	virtual void AddDebugGraphPoint(int, float, float) = 0;
-	virtual void DelDebugGraphPoints(int, int) = 0;
-	virtual void SetDebugGraphPos(float, float) = 0;
-	virtual void SetDebugGraphSize(float, float) = 0;
-	virtual void SetDebugGraphLineColor(int, const float3&) = 0;
-	virtual void SetDebugGraphLineLabel(int, const char*) = 0;
+	virtual void AddDebugGraphPoint(int lineNum, float x, float y) = 0;
+	virtual void DelDebugGraphPoints(int lineNum, int numPoints) = 0;
+	virtual void SetDebugGraphPos(float x, float y) = 0;
+	virtual void SetDebugGraphSize(float w, float h) = 0;
+	virtual void SetDebugGraphLineColor(int lineNum, const float3& color) = 0;
+	virtual void SetDebugGraphLineLabel(int lineNum, const char* label) = 0;
 
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;
