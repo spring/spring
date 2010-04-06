@@ -124,8 +124,17 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
+	COMMAND_DEBUGDRAWER_GETENABLED                = 82,
+	COMMAND_DEBUGDRAWER_ADDPOINT                  = 83,
+	COMMAND_DEBUGDRAWER_DELPOINTS                 = 84,
+	COMMAND_DEBUGDRAWER_SETPOS                    = 85,
+	COMMAND_DEBUGDRAWER_SETSIZE                   = 86,
+	COMMAND_DEBUGDRAWER_SETLINECOLOR              = 87,
+
+	COMMAND_TOPIC_LAST                            = 88,
 };
-const unsigned int NUM_CMD_TOPICS                 = 82;
+
+const unsigned int NUM_CMD_TOPICS = COMMAND_TOPIC_LAST;
 
 
 /**
@@ -230,6 +239,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SCustomUnitCommand) \
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
+		+ sizeof(struct SDebugDrawCommand) \
 		)
 
 /**
@@ -1076,7 +1086,7 @@ struct STraceRayCommand {
 /**
  * Pause or unpauses the game.
  * This is meant for debugging purposes.
- * Keep in mind that pause does not happen immediatly.
+ * Keep in mind that pause does not happen immediately.
  * It can take 1-2 frames in single- and up to 10 frames in multiplayer matches.
  */
 struct SPauseCommand {
@@ -1084,6 +1094,18 @@ struct SPauseCommand {
 	/// reason for the (un-)pause, or NULL
 	const char* reason;
 }; // COMMAND_PAUSE
+
+
+
+struct SDebugDrawCommand {
+	bool enabled;
+	float x, y;
+	int lineNum;
+	int numPoints;
+	struct SAIFloat3 color;
+}; // COMMAND_DEBUG_DRAW_*
+
+
 
 /**
  * @brief Sets default values

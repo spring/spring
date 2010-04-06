@@ -577,8 +577,97 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			break;
 		}
 
-		default:
-		{
+
+
+		case COMMAND_DEBUGDRAWER_GETENABLED: {
+			SDebugDrawCommand* cCmdData = (SDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_GETENABLED,
+				false,
+				0.0f,
+				0.0f,
+				0,
+				0,
+				ZeroVector
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+			cCmdData->enabled = cppCmdData.enabled;
+		} break;
+		case COMMAND_DEBUGDRAWER_ADDPOINT: {
+			SDebugDrawCommand* cCmdData = (SDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADDPOINT,
+				false,
+				cCmdData->x,
+				cCmdData->y,
+				cCmdData->lineNum,
+				0,
+				ZeroVector
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUGDRAWER_DELPOINTS: {
+			SDebugDrawCommand* cCmdData = (SDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DELPOINTS,
+				false,
+				0.0f,
+				0.0f,
+				cCmdData->lineNum,
+				cCmdData->numPoints,
+				ZeroVector
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUGDRAWER_SETPOS: {
+			SDebugDrawCommand* cCmdData = (SDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETPOS,
+				false,
+				cCmdData->x,
+				cCmdData->y,
+				0,
+				0,
+				ZeroVector
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUGDRAWER_SETSIZE: {
+			SDebugDrawCommand* cCmdData = (SDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETSIZE,
+				false,
+				cCmdData->x,
+				cCmdData->y,
+				0,
+				0,
+				ZeroVector
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUGDRAWER_SETLINECOLOR: {
+			SDebugDrawCommand* cCmdData = (SDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINECOLOR,
+				false,
+				0.0f,
+				0.0f,
+				cCmdData->lineNum,
+				0,
+				float3(cCmdData->color.x, cCmdData->color.y, cCmdData->color.z)
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+
+
+
+		default: {
 			// check if it is a unit command
 			Command* c = (Command*) newCommand(commandData, commandTopic);
 			if (c != NULL) { // it is a unit command

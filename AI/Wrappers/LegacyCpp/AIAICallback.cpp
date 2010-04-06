@@ -1504,25 +1504,91 @@ void CAIAICallback::LineDrawerRestartSameColor() {
 }
 
 int CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateSplineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), pos3.toSAIFloat3(), pos4.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd); return cmd.ret_newFigureGroupId;
+	SCreateSplineFigureDrawerCommand cmd = {
+		pos1.toSAIFloat3(),
+		pos2.toSAIFloat3(),
+		pos3.toSAIFloat3(),
+		pos4.toSAIFloat3(),
+		width,
+		arrow,
+		lifeTime,
+		figureGroupId
+	};
+
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd);
+	return cmd.ret_newFigureGroupId;
 }
 
 int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateLineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd); return cmd.ret_newFigureGroupId;
+	SCreateLineFigureDrawerCommand cmd = {
+		pos1.toSAIFloat3(),
+		pos2.toSAIFloat3(),
+		width,
+		arrow,
+		lifeTime,
+		figureGroupId
+	};
+
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd);
+	return cmd.ret_newFigureGroupId;
 }
 
 void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) {
 	SAIFloat3 col3 = {red, green, blue};
-	SSetColorFigureDrawerCommand cmd = {figureGroupId, col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
+	SSetColorFigureDrawerCommand cmd = {figureGroupId, col3, alpha};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
 }
 
 void CAIAICallback::DeleteFigureGroup(int figureGroupId) {
-	SDeleteFigureDrawerCommand cmd = {figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
+	SDeleteFigureDrawerCommand cmd = {figureGroupId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
 }
 
 void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int lifeTime, int unitTeamId, bool transparent, bool drawBorder, int facing) {
-	SDrawUnitDrawerCommand cmd = {sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name), pos.toSAIFloat3(), rotation, lifeTime, unitTeamId, transparent, drawBorder, facing}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
+	SDrawUnitDrawerCommand cmd = {
+		sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name),
+		pos.toSAIFloat3(),
+		rotation,
+		lifeTime,
+		unitTeamId,
+		transparent,
+		drawBorder,
+		facing
+	};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
 }
+
+
+
+int CAIAICallback::IsDebugDrawerEnabled() const {
+	SDebugDrawCommand cmd = {false, 0.0f, 0.0f, 0, 0, {0.0f, 0.0f, 0.0f}};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_GETENABLED, &cmd);
+	return (cmd.enabled);
+}
+
+void CAIAICallback::AddDebugGraphPoint(int lineNum, float x, float y) {
+	SDebugDrawCommand cmd = {false, x, y, lineNum, 0, {0.0f, 0.0f, 0.0f}};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_ADDPOINT, &cmd);
+}
+void CAIAICallback::DelDebugGraphPoints(int lineNum, int numPoints) {
+	SDebugDrawCommand cmd = {false, 0.0f, 0.0f, lineNum, numPoints, {0.0f, 0.0f, 0.0f}};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_DELPOINTS, &cmd);
+}
+
+void CAIAICallback::SetDebugGraphPos(float x, float y) {
+	SDebugDrawCommand cmd = {false, x, y, 0, 0, {0.0f, 0.0f, 0.0f}};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_SETPOS, &cmd);
+}
+void CAIAICallback::SetDebugGraphSize(float w, float h) {
+	SDebugDrawCommand cmd = {false, w, h, 0, 0, {0.0f, 0.0f, 0.0f}};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_SETSIZE, &cmd);
+}
+void CAIAICallback::SetDebugGraphLineColor(int lineNum, const float3& color) {
+	SDebugDrawCommand cmd = {false, 0.0f, 0.0f, lineNum, 0, color.toSAIFloat3()};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_SETLINECOLOR, &cmd);
+}
+
+
 
 int CAIAICallback::HandleCommand(int commandId, void* data) {
 	int ret = -99;

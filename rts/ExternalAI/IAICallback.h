@@ -77,6 +77,7 @@ struct LineMarker {
 #define AIHCTraceRayId          8
 #define AIHCPauseId             9
 #define AIHCGetDataDirId        10
+#define AIHCDebugDrawId         11
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -148,6 +149,26 @@ struct AIHCGetDataDir ///< result of HandleCommand is 1 for if path fetched, 0 f
 	bool common;
 	char* ret_path;
 };
+
+struct AIHCDebugDraw
+{
+	enum {
+		AIHC_DEBUGDRAWER_MODE_GETENABLED   = 0, //! not the same as AIVAL_DEBUG_MODE
+		AIHC_DEBUGDRAWER_MODE_ADDPOINT     = 1,
+		AIHC_DEBUGDRAWER_MODE_DELPOINTS    = 2,
+		AIHC_DEBUGDRAWER_MODE_SETPOS       = 3,
+		AIHC_DEBUGDRAWER_MODE_SETSIZE      = 4,
+		AIHC_DEBUGDRAWER_MODE_SETLINECOLOR = 5,
+	};
+
+	int cmdMode;
+	bool enabled;
+	float x, y;
+	int lineNum;
+	int numPoints;
+	float3 color;
+};
+
 
 /// Generalized callback interface, used by Global AIs
 class IAICallback
@@ -399,6 +420,14 @@ public:
 	// * they will be drawn in the "standard pose" (as if before any COB scripts are run)
 	// * the rotation is in radians, team affects the color of the unit
 	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
+
+	virtual int IsDebugDrawerEnabled() const = 0;
+	virtual void AddDebugGraphPoint(int, float, float) = 0;
+	virtual void DelDebugGraphPoints(int, int) = 0;
+	virtual void SetDebugGraphPos(float, float) = 0;
+	virtual void SetDebugGraphSize(float, float) = 0;
+	virtual void SetDebugGraphLineColor(int, const float3&) = 0;
+
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;
 	/**

@@ -159,6 +159,13 @@ public:
 			int lifetime, int team, bool transparent, bool drawBorder,
 			int facing);
 
+	virtual int IsDebugDrawerEnabled() const;
+	virtual void AddDebugGraphPoint(int, float, float);
+	virtual void DelDebugGraphPoints(int, int);
+	virtual void SetDebugGraphPos(float, float);
+	virtual void SetDebugGraphSize(float, float);
+	virtual void SetDebugGraphLineColor(int, const float3&);
+
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
 
 	virtual float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos,
