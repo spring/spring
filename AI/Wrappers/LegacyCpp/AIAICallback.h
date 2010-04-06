@@ -165,6 +165,7 @@ public:
 	virtual void SetDebugGraphPos(float, float);
 	virtual void SetDebugGraphSize(float, float);
 	virtual void SetDebugGraphLineColor(int, const float3&);
+	virtual void SetDebugGraphLineLabel(int, const char*);
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
 

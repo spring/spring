@@ -153,6 +153,7 @@ public:
 	void SetDebugGraphPos(float, float) {}
 	void SetDebugGraphSize(float, float) {}
 	void SetDebugGraphLineColor(int, const float3&) {}
+	void SetDebugGraphLineLabel(int, const char*) {}
 
 
 
