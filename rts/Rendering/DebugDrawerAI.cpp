@@ -80,6 +80,11 @@ void DebugDrawerAI::SetGraphLineColor(int teamNum, int lineNum, const float3& c)
 	graphs[teamNum].SetColor(lineNum, c);
 }
 
+void DebugDrawerAI::SetGraphLineLabel(int teamNum, int lineNum, const std::string& s) {
+	assert(teamNum < graphs.size());
+	graphs[teamNum].SetLabel(lineNum, s);
+}
+
 
 
 DebugDrawerAI::Graph::Graph(const float3& mins, const float3& maxs):
@@ -158,6 +163,15 @@ void DebugDrawerAI::Graph::SetColor(int lineNum, const float3& c) {
 	}
 
 	lines[lineNum].lineColor = c;
+}
+
+void DebugDrawerAI::Graph::SetLabel(int lineNum, const std::string& s) {
+	if (lines.find(lineNum) == lines.end()) {
+		lines[lineNum] = Graph::GraphLine(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE);
+	}
+
+	printf("\n\n\n[DebugDrawerAI::Graph::SetLabel] label = %s\n", s.c_str());
+	lines[lineNum].lineLabel = s;
 }
 
 void DebugDrawerAI::Graph::Clear() {

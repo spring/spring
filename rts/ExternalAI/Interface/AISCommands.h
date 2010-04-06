@@ -130,8 +130,9 @@ enum CommandTopic {
 	COMMAND_DEBUGDRAWER_SETPOS                    = 85,
 	COMMAND_DEBUGDRAWER_SETSIZE                   = 86,
 	COMMAND_DEBUGDRAWER_SETLINECOLOR              = 87,
+	COMMAND_DEBUGDRAWER_SETLINELABEL              = 88,
 
-	COMMAND_TOPIC_LAST                            = 88,
+	COMMAND_TOPIC_LAST                            = 89,
 };
 
 const unsigned int NUM_CMD_TOPICS = COMMAND_TOPIC_LAST;
@@ -1103,6 +1104,7 @@ struct SDebugDrawCommand {
 	int lineNum;
 	int numPoints;
 	struct SAIFloat3 color;
+	const char* label;
 }; // COMMAND_DEBUG_DRAW_*
 
 

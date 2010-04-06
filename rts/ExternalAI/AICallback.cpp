@@ -1542,6 +1542,9 @@ int CAICallback::HandleCommand(int commandId, void* data)
 				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINECOLOR: {
 					debugDrawerAI->SetGraphLineColor(this->team, cmdData->lineNum, cmdData->color);
 				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINELABEL: {
+					debugDrawerAI->SetGraphLineLabel(this->team, cmdData->lineNum, cmdData->label);
+				} break;
 				default: {
 				} break;
 			}

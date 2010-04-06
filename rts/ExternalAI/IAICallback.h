@@ -159,6 +159,7 @@ struct AIHCDebugDraw
 		AIHC_DEBUGDRAWER_MODE_SETPOS       = 3,
 		AIHC_DEBUGDRAWER_MODE_SETSIZE      = 4,
 		AIHC_DEBUGDRAWER_MODE_SETLINECOLOR = 5,
+		AIHC_DEBUGDRAWER_MODE_SETLINELABEL = 6,
 	};
 
 	int cmdMode;
@@ -167,6 +168,7 @@ struct AIHCDebugDraw
 	int lineNum;
 	int numPoints;
 	float3 color;
+	std::string label;
 };
 
 
@@ -427,6 +429,7 @@ public:
 	virtual void SetDebugGraphPos(float, float) = 0;
 	virtual void SetDebugGraphSize(float, float) = 0;
 	virtual void SetDebugGraphLineColor(int, const float3&) = 0;
+	virtual void SetDebugGraphLineLabel(int, const char*) = 0;
 
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;

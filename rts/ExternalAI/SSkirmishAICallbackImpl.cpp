@@ -588,7 +588,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				0.0f,
 				0,
 				0,
-				ZeroVector
+				ZeroVector,
+				""
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
@@ -603,7 +604,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				cCmdData->y,
 				cCmdData->lineNum,
 				0,
-				ZeroVector
+				ZeroVector,
+				""
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
@@ -617,7 +619,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				0.0f,
 				cCmdData->lineNum,
 				cCmdData->numPoints,
-				ZeroVector
+				ZeroVector,
+				""
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
@@ -631,7 +634,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				cCmdData->y,
 				0,
 				0,
-				ZeroVector
+				ZeroVector,
+				""
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
@@ -645,7 +649,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				cCmdData->y,
 				0,
 				0,
-				ZeroVector
+				ZeroVector,
+				""
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
@@ -659,7 +664,23 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				0.0f,
 				cCmdData->lineNum,
 				0,
-				float3(cCmdData->color.x, cCmdData->color.y, cCmdData->color.z)
+				float3(cCmdData->color.x, cCmdData->color.y, cCmdData->color.z),
+				""
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUGDRAWER_SETLINELABEL: {
+			SDebugDrawCommand* cCmdData = (SDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINELABEL,
+				false,
+				0.0f,
+				0.0f,
+				cCmdData->lineNum,
+				0,
+				ZeroVector,
+				std::string(cCmdData->label)
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);

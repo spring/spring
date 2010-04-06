@@ -27,6 +27,7 @@ public:
 	void SetGraphPos(int, float, float);
 	void SetGraphSize(int, float, float);
 	void SetGraphLineColor(int, int, const float3&);
+	void SetGraphLineLabel(int, int, const std::string&);
 
 private:
 	struct Graph {
@@ -42,6 +43,7 @@ private:
 		void SetPos(float x, float y) { pos.x = x; pos.y = y; }
 		void SetSize(float w, float h) { size.x = w; size.y = h; }
 		void SetColor(int, const float3&);
+		void SetLabel(int, const std::string&);
 
 	private:
 		struct GraphLine {
@@ -56,6 +58,8 @@ private:
 
 			float3 lineColor;
 			float lineWidth;
+
+			std::string lineLabel;
 		};
 
 		std::map<int, GraphLine> lines;
