@@ -91,7 +91,11 @@ DebugDrawerAI::Graph::Graph(const float3& mins, const float3& maxs):
 	pos(ZeroVector),
 	size(ZeroVector),
 	minScale(mins),
-	maxScale(maxs) {
+	maxScale(maxs),
+	minLabelSize(1000),
+	minLabelWidth(1000.0f),
+	maxLabelSize(0),
+	maxLabelWidth(0.0f) {
 }
 
 void DebugDrawerAI::Graph::AddPoint(int lineNum, float x, float y) {
@@ -171,6 +175,14 @@ void DebugDrawerAI::Graph::SetLabel(int lineNum, const std::string& s) {
 	}
 
 	lines[lineNum].lineLabel = s;
+	lines[lineNum].lineLabelSize = s.size();
+	lines[lineNum].lineLabelWidth = font->GetSize() * font->GetTextWidth(s) * gu->aspectRatio;
+	lines[lineNum].lineLabelHeight = font->GetSize() * font->GetTextHeight(s);
+
+	minLabelSize  = std::min(minLabelSize,  lines[lineNum].lineLabelSize);
+	maxLabelSize  = std::max(maxLabelSize,  lines[lineNum].lineLabelSize);
+	minLabelWidth = std::min(minLabelWidth, lines[lineNum].lineLabelWidth);
+	maxLabelWidth = std::max(maxLabelWidth, lines[lineNum].lineLabelWidth);
 }
 
 void DebugDrawerAI::Graph::Clear() {
@@ -218,6 +230,17 @@ void DebugDrawerAI::Graph::Draw() {
 		color[2] = 0.25f * 255;
 		color[3] = 1.00f * 255;
 
+		// label-box
+		va->Initialize();
+		va->AddVertexC(pos,                                                                     color);
+		va->AddVertexC(pos + float3(-((maxLabelWidth / gu->viewSizeX) * size.x),   0.0f, 0.0f), color);
+		va->AddVertexC(pos + float3(-((maxLabelWidth / gu->viewSizeX) * size.x), size.y, 0.0f), color);
+		va->AddVertexC(pos + float3(                                      0.0f,  size.y, 0.0f), color);
+		va->DrawArrayC(GL_LINE_STRIP);
+
+		font->Begin();
+		font->SetTextColor(0.25f, 0.25f, 0.25f, 1.0f);
+
 		// horizontal grid lines
 		for (float s = 0.0f; s <= (scale.y + 0.01f); s += (scale.y * 0.1f)) {
 			va->Initialize();
@@ -243,40 +266,58 @@ void DebugDrawerAI::Graph::Draw() {
 
 			font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%2.1e", s + minScale.x);
 		}
+
+		font->End();
 	}
 
 	{
 		typedef std::map<int, Graph::GraphLine>::const_iterator LineIt;
 		typedef std::list<float3>::const_iterator ListIt;
 
-		for (LineIt lit = lines.begin(); lit != lines.end(); ++lit) {
-			const Graph::GraphLine& line = lit->second;
-			const std::list<float3>& data = line.lineData;
+		if (!lines.empty()) {
+			font->Begin();
 
-			glLineWidth(line.lineWidth);
+			int lineNum = 0;
+			float linePad = (1.0f / lines.size()) * 0.5f;
 
-			color[0] = line.lineColor.x * 255;
-			color[1] = line.lineColor.y * 255;
-			color[2] = line.lineColor.z * 255;
-			color[3] = 255;
+			for (LineIt lit = lines.begin(); lit != lines.end(); ++lit) {
+				const Graph::GraphLine& line = lit->second;
+				const std::list<float3>& data = line.lineData;
 
-			va->Initialize();
+				// right-outline the labels
+				const float tx = pos.x - (line.lineLabelWidth * 0.95f / gu->viewSizeX) * size.x;
+				const float ty = pos.y + ((lineNum * linePad * 2.0f) + linePad) * size.y;
 
-			for (ListIt pit = data.begin(); pit != data.end(); ++pit) {
-				ListIt npit = pit; ++npit;
+				font->SetTextColor(line.lineColor.x, line.lineColor.y, line.lineColor.z, 1.0f);
+				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%s", (line.lineLabel).c_str());
 
-				const float px1 = (((*pit).x - minScale.x) / scale.x) * size.x;
-				const float py1 = (((*pit).y - minScale.y) / scale.y) * size.y;
-				const float px2 = ((npit == data.end() || px2 < px1)? px1: (((*npit).x - minScale.x) / scale.x) * size.x);
-				const float py2 = ((npit == data.end()             )? py1: (((*npit).y - minScale.y) / scale.y) * size.y);
+				color[0] = line.lineColor.x * 255;
+				color[1] = line.lineColor.y * 255;
+				color[2] = line.lineColor.z * 255;
+				color[3] = 255;
 
-				va->AddVertexC(pos + float3(px1, py1, 0.0f), color);
-				va->AddVertexC(pos + float3(px2, py2, 0.0f), color);
+				glLineWidth(line.lineWidth);
+				va->Initialize();
+
+				for (ListIt pit = data.begin(); pit != data.end(); ++pit) {
+					ListIt npit = pit; ++npit;
+
+					const float px1 = (((*pit).x - minScale.x) / scale.x) * size.x;
+					const float py1 = (((*pit).y - minScale.y) / scale.y) * size.y;
+					const float px2 = ((npit == data.end() || px2 < px1)? px1: (((*npit).x - minScale.x) / scale.x) * size.x);
+					const float py2 = ((npit == data.end()             )? py1: (((*npit).y - minScale.y) / scale.y) * size.y);
+
+					va->AddVertexC(pos + float3(px1, py1, 0.0f), color);
+					va->AddVertexC(pos + float3(px2, py2, 0.0f), color);
+				}
+
+				va->DrawArrayC(GL_LINE_STRIP);
+				glLineWidth(1.0f);
+
+				lineNum += 1;
 			}
 
-			va->DrawArrayC(GL_LINE_STRIP);
-
-			glLineWidth(1.0f);
+			font->End();
 		}
 	}
 

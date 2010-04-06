@@ -49,7 +49,12 @@ private:
 		struct GraphLine {
 		public:
 			GraphLine(const float3& mins = ZeroVector, const float3& maxs = ZeroVector):
-				lineMin(mins), lineMax(maxs), lineWidth(2.0f) {}
+				lineMin(mins), lineMax(maxs),
+				lineWidth(2.0f),
+				lineLabelSize(0),
+				lineLabelWidth(0.0f),
+				lineLabelHeight(0.0f) {
+			}
 
 			std::list<float3> lineData;
 
@@ -60,6 +65,9 @@ private:
 			float lineWidth;
 
 			std::string lineLabel;
+			int lineLabelSize;
+			float lineLabelWidth;
+			float lineLabelHeight;
 		};
 
 		std::map<int, GraphLine> lines;
@@ -69,6 +77,9 @@ private:
 		float3 scale;    // maxScale - minScale
 		float3 minScale;
 		float3 maxScale;
+
+		int minLabelSize; float minLabelWidth;
+		int maxLabelSize; float maxLabelWidth;
 	};
 
 	std::vector<Graph> graphs;
