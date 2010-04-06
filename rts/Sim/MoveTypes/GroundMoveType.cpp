@@ -242,7 +242,8 @@ void CGroundMoveType::Update()
 
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
-	if (owner->stunned) {
+
+	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
