@@ -76,6 +76,7 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/PathDrawer.h"
 #include "Rendering/IconHandler.h"
@@ -2002,6 +2003,15 @@ bool CGame::ActionPressed(const Action& action,
 			hudDrawer->SetDraw(!!atoi(action.extra.c_str()));
 		}
 	}
+	else if (cmd == "debugdrawai") {
+		if (action.extra.empty()) {
+			debugDrawerAI->SetDraw(!debugDrawerAI->GetDraw());
+		} else {
+			debugDrawerAI->SetDraw(!!atoi(action.extra.c_str()));
+		}
+
+		logOutput.Print("SkirmishAI debug drawing %s", (debugDrawerAI->GetDraw()? "enabled": "disabled"));
+	}
 
 	else if (cmd == "movewarnings") {
 		if (action.extra.empty()) {
@@ -3191,6 +3201,7 @@ bool CGame::Draw() {
 	}
 
 	hudDrawer->Draw(gu->directControl);
+	debugDrawerAI->Draw();
 
 	glEnable(GL_TEXTURE_2D);
 
