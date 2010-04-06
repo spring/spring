@@ -4307,7 +4307,6 @@ void CGame::ClientReadNet()
 				const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 				if (whichAllyTeam < teamHandler->ActiveAllyTeams() && whichAllyTeam >= 0 && fromAllyTeam != whichAllyTeam) {
 					// FIXME - need to reset unit allyTeams
-					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs
 					teamHandler->SetAlly(fromAllyTeam, whichAllyTeam, allied);
 
