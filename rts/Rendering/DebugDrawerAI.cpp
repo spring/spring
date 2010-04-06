@@ -170,7 +170,6 @@ void DebugDrawerAI::Graph::SetLabel(int lineNum, const std::string& s) {
 		lines[lineNum] = Graph::GraphLine(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE);
 	}
 
-	printf("\n\n\n[DebugDrawerAI::Graph::SetLabel] label = %s\n", s.c_str());
 	lines[lineNum].lineLabel = s;
 }
 
