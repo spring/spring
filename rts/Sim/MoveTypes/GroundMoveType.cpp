@@ -295,7 +295,7 @@ void CGroundMoveType::Update()
 				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
-				if (pathId && !atGoal && haveFinalWaypoint && currentDistanceToWaypoint < SQUARE_SIZE * SQUARE_SIZE * 2) {
+				if (pathId && !atGoal && haveFinalWaypoint && currentDistanceToWaypoint < SQUARE_SIZE * 2) {
 					// no more waypoints to go, clear
 					// pathId and set wantedSpeed to 0
 					Arrived();
