@@ -295,7 +295,7 @@ void CGroundMoveType::Update()
 				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
-				if (pathId && !atGoal && haveFinalWaypoint && (owner->pos - waypoint).SqLength2D() < SQUARE_SIZE * SQUARE_SIZE * 2) {
+				if (pathId && !atGoal && haveFinalWaypoint && currentDistanceToWaypoint < SQUARE_SIZE * SQUARE_SIZE * 2) {
 					// no more waypoints to go, clear
 					// pathId and set wantedSpeed to 0
 					Arrived();
@@ -1055,13 +1055,14 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			}
 
 			// now we do the obstacle avoidance proper
-			float currentDistanceToGoal = owner->pos.distance2D(goalPos);
-			float3 rightOfPath = desiredDir.cross(float3(0.0f, 1.0f, 0.0f));
-			float3 rightOfAvoid = rightOfPath;
-			float speedf = owner->speed.Length2D();
+			const float currentDistanceToGoal = owner->pos.distance2D(goalPos);
+			const float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
+			const float3 rightOfPath = desiredDir.cross(float3(0.0f, 1.0f, 0.0f));
+			const float speedf = owner->speed.Length2D();
 
 			float avoidLeft = 0.0f;
 			float avoidRight = 0.0f;
+			float3 rightOfAvoid = rightOfPath;
 
 
 			MoveData* moveData = owner->mobility;
@@ -1087,7 +1088,6 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					float radiusSum = (owner->xsize + o->xsize) * SQUARE_SIZE / 2;
 					float distanceLimit = speedf * 35 + 10 + radiusSum;
 					float distanceLimitSq = distanceLimit * distanceLimit;
-					float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
 
 					// if object is close enough
 					if (distanceToObjectSq < distanceLimitSq && distanceToObjectSq < currentDistanceToGoalSq
@@ -1795,30 +1795,31 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
-		float cmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
+		CMoveMath* movemath = owner->unitDef->movedata->moveMath;
+		float cmod = movemath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
 
 		if (fabs(owner->frontdir.x) < fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1826,13 +1827,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			}
 		} else {
 			if (newMoveSquareY > moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod>0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1840,13 +1841,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			}
 
 			if (newMoveSquareX > moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
@@ -1865,44 +1866,44 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
-			terrainSpeed = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
+			terrainSpeed = movemath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
 			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
 			etaWaypoint2 = int(25.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 10;
 
 			// if we have moved check if we can get a new waypoint
-			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2);
-			int nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2);
+			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
+			int nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
 			int numIter = 0;
 
 			// lowered the original 6 absolute distance to slightly more than 4.5f euclidian distance
 			// to fix units getting stuck in buildings --tvo
 			// My first fix set it to 21, as the pathfinding was still considered broken by many I reduced it to 11 (arbitrarily)
 			// Does anyone know whether lowering this constant has any adverse side effects? Like e.g. more CPU usage? --tvo
-			while ((nwsx - moveSquareX) * (nwsx - moveSquareX) + (nwsy - moveSquareY) * (nwsy - moveSquareY) < 11 && !haveFinalWaypoint && pathId) {
-				int ltx = nwsx - moveSquareX + 5;
-				int lty = nwsy - moveSquareY + 5;
+			while (nwsx*nwsx + nwsy*nwsy < 11 && !haveFinalWaypoint && pathId) {
+				int ltx = nwsx + 5;
+				int lty = nwsy + 5;
 				bool wpOk = true;
 
 				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
 					int x = (moveSquareX + li->x) * 2;
 					int y = (moveSquareY + li->y) * 2;
-					CMoveMath* mmath = owner->unitDef->movedata->moveMath;
-					static int blockMask =
+					static const int blockMask =
 						(CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN |
 						CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY);
 
-					if ((mmath->IsBlocked(*owner->unitDef->movedata, x, y) & blockMask) ||
-						mmath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
+					if ((movemath->IsBlocked(*owner->unitDef->movedata, x, y) & blockMask) ||
+						movemath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
 						wpOk = false;
 						break;
 					}
 				}
+
 				if (!wpOk || numIter > 6) {
 					break;
 				}
 				GetNextWaypoint();
-				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2);
-				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2);
+				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
+				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
 				++numIter;
 			}
 		}
