@@ -151,10 +151,12 @@ CAirMoveType::~CAirMoveType(void)
 
 void CAirMoveType::Update(void)
 {
-	if (owner->beingBuilt)
-		return;
-
 	float3& pos = owner->pos;
+
+	if (owner->stunned || owner->beingBuilt) {
+		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
+		goto EndNormalControl;
+	}
 
 	// note: this is only set to false after
 	// the plane has finished constructing
@@ -162,12 +164,6 @@ void CAirMoveType::Update(void)
 		useHeading = false;
 		SetState(AIRCRAFT_TAKEOFF);
 	}
-
-	if (owner->stunned) {
-		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
-		goto EndNormalControl;
-	}
-
 
 	if (owner->directControl && !(aircraftState == AIRCRAFT_CRASHING)) {
 		SetState(AIRCRAFT_FLYING);

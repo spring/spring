@@ -950,6 +950,8 @@ EXPORT(void) skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams(int teamId,
 		int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
 
+EXPORT(bool) skirmishAiCallback_Debug_Drawer_isEnabled(int teamId);
+
 #if	defined(__cplusplus)
 } // extern "C"
 #endif
