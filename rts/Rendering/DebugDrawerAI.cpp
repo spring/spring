@@ -212,17 +212,6 @@ void DebugDrawerAI::Graph::Draw() {
 	CVertexArray* va = GetVertexArray();
 
 	{
-		/*
-		va->Initialize();
-		va->AddVertexC(pos,                                color); // tl
-		va->AddVertexC(pos + float3(size.x,   0.0f, 0.0f), color); // tr
-		va->AddVertexC(pos + float3(size.x, size.y, 0.0f), color); // br
-		va->AddVertexC(pos + float3(  0.0f, size.y, 0.0f), color); // bl
-		va->DrawArrayC(GL_QUADS);
-		*/
-	}
-
-	{
 		color[0] = 0.25f * 255;
 		color[1] = 0.25f * 255;
 		color[2] = 0.25f * 255;
@@ -236,36 +225,38 @@ void DebugDrawerAI::Graph::Draw() {
 		va->AddVertexC(pos + float3(                                      0.0f,  size.y, 0.0f), color);
 		va->DrawArrayC(GL_LINE_STRIP);
 
-		font->Begin();
-		font->SetTextColor(0.25f, 0.25f, 0.25f, 1.0f);
+		if (scale.y > 0.0f && scale.x > 0.0f) {
+			font->Begin();
+			font->SetTextColor(0.25f, 0.25f, 0.25f, 1.0f);
 
-		// horizontal grid lines
-		for (float s = 0.0f; s <= (scale.y + 0.01f); s += (scale.y * 0.1f)) {
-			va->Initialize();
-			va->AddVertexC(pos + float3(  0.0f, (s / scale.y) * size.y, 0.0f), color);
-			va->AddVertexC(pos + float3(size.x, (s / scale.y) * size.y, 0.0f), color);
-			va->DrawArrayC(GL_LINES);
+			// horizontal grid lines
+			for (float s = 0.0f; s <= (scale.y + 0.01f); s += (scale.y * 0.1f)) {
+				va->Initialize();
+				va->AddVertexC(pos + float3(  0.0f, (s / scale.y) * size.y, 0.0f), color);
+				va->AddVertexC(pos + float3(size.x, (s / scale.y) * size.y, 0.0f), color);
+				va->DrawArrayC(GL_LINES);
 
-			const float tx = (pos.x + size.x) + (size.x * 0.025f);
-			const float ty = pos.y + (s / scale.y) * size.y;
+				const float tx = (pos.x + size.x) + (size.x * 0.025f);
+				const float ty = pos.y + (s / scale.y) * size.y;
 
-			font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%2.1e", s + minScale.y);
+				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%2.1e", s + minScale.y);
+			}
+
+			// vertical grid lines
+			for (float s = 0.0f; s <= (scale.x + 0.01f); s += (scale.x * 0.1f)) {
+				va->Initialize();
+				va->AddVertexC(pos + float3((s / scale.x) * size.x,   0.0f, 0.0f), color);
+				va->AddVertexC(pos + float3((s / scale.x) * size.x, size.y, 0.0f), color);
+				va->DrawArrayC(GL_LINES);
+
+				const float tx = (pos.x + (s / scale.x) * size.x) - (size.x * 0.05f);
+				const float ty = pos.y - size.y * 0.1f;
+
+				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%2.1e", s + minScale.x);
+			}
+
+			font->End();
 		}
-
-		// vertical grid lines
-		for (float s = 0.0f; s <= (scale.x + 0.01f); s += (scale.x * 0.1f)) {
-			va->Initialize();
-			va->AddVertexC(pos + float3((s / scale.x) * size.x,   0.0f, 0.0f), color);
-			va->AddVertexC(pos + float3((s / scale.x) * size.x, size.y, 0.0f), color);
-			va->DrawArrayC(GL_LINES);
-
-			const float tx = (pos.x + (s / scale.x) * size.x) - (size.x * 0.05f);
-			const float ty = pos.y - size.y * 0.1f;
-
-			font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%2.1e", s + minScale.x);
-		}
-
-		font->End();
 	}
 
 	{
@@ -281,6 +272,10 @@ void DebugDrawerAI::Graph::Draw() {
 			for (LineIt lit = lines.begin(); lit != lines.end(); ++lit) {
 				const Graph::GraphLine& line = lit->second;
 				const std::list<float3>& data = line.lineData;
+
+				if (data.empty()) {
+					continue;
+				}
 
 				// right-outline the labels
 				const float tx = pos.x - (line.lineLabelWidth * 0.95f / gu->viewSizeX) * size.x;
