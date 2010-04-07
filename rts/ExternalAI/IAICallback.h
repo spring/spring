@@ -421,6 +421,17 @@ public:
 	// * the rotation is in radians, team affects the color of the unit
 	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
 
+	// the following functions allow AI's to plot real-time
+	// performance graphs (useful for basic visual profiling)
+	//
+	// * position and size are specified in relative screen-space
+	//  (ie. position must be in [-1.0, 1.0], size in [0.0, 2.0])
+	// * position refers to the bottom-left corner of the graph
+	// * data-points are automatically normalized, but must not
+	//   exceed 1E9 (1000^3) in absolute value
+	// * you must be a spectator and watching the team of the AI
+	//   that has called added AddDebugGraphPoint() to see these
+	//   graphs (note: they are drawn IIF IsDebugDrawerEnabled())
 	virtual bool IsDebugDrawerEnabled() const = 0;
 	virtual void AddDebugGraphPoint(int lineId, float x, float y) = 0;
 	virtual void DelDebugGraphPoints(int lineId, int numPoints) = 0;
