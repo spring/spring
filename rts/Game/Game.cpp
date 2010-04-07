@@ -3100,7 +3100,7 @@ bool CGame::Draw() {
 	treeDrawer->Update();
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
-	unitDrawer->Update();
+	unitDrawer->UpdateDraw();
 	featureDrawer->UpdateDraw();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();

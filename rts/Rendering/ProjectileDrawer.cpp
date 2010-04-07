@@ -39,6 +39,10 @@ bool distcmp::operator() (const CProjectile* arg1, const CProjectile* arg2) cons
 }
 
 
+void ProjectileAdd::Add(CProjectile *p) { projectileDrawer->AddRenderProjectile(p); }
+void ProjectileAdd::Remove(CProjectile *p) { projectileDrawer->RemoveRenderProjectile(p); }
+
+
 
 
 CProjectileDrawer* projectileDrawer = NULL;
@@ -654,6 +658,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	int numFlyingPieces = ph->flyingPieces3DO.render_size() + ph->flyingPiecesS3O.render_size();
 	int drawnPieces = 0;
 
+	UpdateDraw();
+
 	{
 		GML_STDMUTEX_LOCK(proj); // Draw
 
@@ -927,8 +933,14 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 
 void CProjectileDrawer::ProjectileCreated(const CProjectile* p)
 {
-	GML_STDMUTEX_LOCK(proj);
+	if(p->synced)
+		syncedProjectiles.insert(const_cast<CProjectile*>(p));
+	else
+		unsyncedProjectiles.insert(const_cast<CProjectile*>(p));
+}
 
+void CProjectileDrawer::AddRenderProjectile(const CProjectile* p)
+{
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->AddProjectile(const_cast<CProjectile*>(p));
 	} else {
@@ -938,11 +950,37 @@ void CProjectileDrawer::ProjectileCreated(const CProjectile* p)
 
 void CProjectileDrawer::ProjectileDestroyed(const CProjectile* p)
 {
-	GML_STDMUTEX_LOCK(proj);
+	if(p->synced)
+		syncedProjectiles.erase_remove_synced(const_cast<CProjectile*>(p));
+	else
+		unsyncedProjectiles.erase_delete(const_cast<CProjectile*>(p));
+}
 
+void CProjectileDrawer::RemoveRenderProjectile(const CProjectile* p)
+{
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->DelProjectile(const_cast<CProjectile*>(p));
 	} else {
 		renderProjectiles.erase(const_cast<CProjectile*>(p));
 	}
+}
+
+void CProjectileDrawer::DeleteSynced() {
+	syncedProjectiles.remove_erased_synced();
+}
+
+void CProjectileDrawer::UpdateDraw() {
+	GML_STDMUTEX_LOCK(rproj);
+
+	syncedProjectiles.add_delayed();
+
+	unsyncedProjectiles.delete_delayed();
+	unsyncedProjectiles.add_delayed();
+}
+
+void CProjectileDrawer::Update() {
+	syncedProjectiles.delay_add();
+
+	unsyncedProjectiles.delay_delete();
+	unsyncedProjectiles.delay_add();
 }
