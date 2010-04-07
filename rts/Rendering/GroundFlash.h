@@ -5,8 +5,8 @@
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
-class AtlasedTexture;
-class GroundFXTexture;
+struct AtlasedTexture;
+struct GroundFXTexture;
 class CColorMap;
 class CVertexArray;
 

@@ -63,6 +63,12 @@
 extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 #endif
 
+void UnitAdd::Add(const CUnit *p) { unitDrawer->UnitCreatedNow(p); }
+void UnitAdd::Remove(const CUnit *p) { unitDrawer->UnitDestroyedNow(p); }
+void UnitCloak::Add(const UAD &p) { unitDrawer->UnitCloakChange(p); }
+void UnitLOS::Add(const UAD &p) { unitDrawer->UnitLOSChange(p); }
+
+
 #define UNIT_SHADOW_ALPHA_MASKING
 
 CUnitDrawer* unitDrawer;
@@ -285,9 +291,25 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 	iconLength = 750 * unitIconDist * unitIconDist;
 }
 
+void CUnitDrawer::DeleteSynced() {
+	batchCloakUnits.delay();
+	batchCloakUnits.execute();
 
+	batchLOSUnits.delay();
+	batchLOSUnits.execute();
 
-void CUnitDrawer::Update(void)
+	batchAddUnits.delay();
+	batchAddUnits.execute();
+	batchAddUnits.destroy();
+}
+
+void CUnitDrawer::Update(void) {
+	batchAddUnits.delay();
+	batchCloakUnits.delay();
+	batchLOSUnits.delay();
+}
+
+void CUnitDrawer::UpdateDraw(void)
 {
 	{
 		GML_STDMUTEX_LOCK(temp); // Update
@@ -298,6 +320,14 @@ void CUnitDrawer::Update(void)
 		while (!tempTransparentDrawUnits.empty() && tempTransparentDrawUnits.begin()->first <= gs->frameNum) {
 			tempTransparentDrawUnits.erase(tempTransparentDrawUnits.begin());
 		}
+	}
+
+	{
+		GML_STDMUTEX_LOCK(runit); // Update
+
+		batchAddUnits.execute();
+		batchCloakUnits.execute();
+		batchLOSUnits.execute();
 	}
 
 	{
@@ -459,24 +489,27 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	GML_RECMUTEX_LOCK(unit); // Draw
 
 #ifdef USE_GML
-	/*
-	// FIXME: this code-path is now broken
+	
+/*	// FIXME: this code-path is now broken
 	if (multiThreadDrawUnit) {
 		mt_drawReflection = drawReflection; // these member vars will be accessed by DoDrawUnitMT
 		mt_drawRefraction = drawRefraction;
 		mt_excludeUnit = excludeUnit;
-		gmlProcessor->Work(
-			NULL, NULL, &CUnitDrawer::DrawOpaqueUnitsMT, this, gmlThreadCount,
-			FALSE, &unsortedUnitsGML, unsortedUnitsGML.size(), 50, 100, TRUE
-		);
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			gmlProcessor->Work(
+				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitsMT, this, gmlThreadCount,
+				FALSE, &unsortedUnits, unsortedUnits.size(), 50, 100, TRUE
+				);
+		}
 	}
-	*/
+	else*/
 #endif
-
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModelRenderers[modelType]->PushRenderState();
-		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
-		opaqueModelRenderers[modelType]->PopRenderState();
+	{
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			opaqueModelRenderers[modelType]->PushRenderState();
+			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+			opaqueModelRenderers[modelType]->PopRenderState();
+		}
 	}
 
 	CleanUpUnitDrawing();
@@ -854,7 +887,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	if (multiThreadDrawUnitShadow) {
 		gmlProcessor->Work(
 			NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, gmlThreadCount,
-			FALSE, &unsortedUnitsGML, unsortedUnitsGML.size(), 50, 100, TRUE
+			FALSE, &unsortedUnits, unsortedUnits.size(), 50, 100, TRUE
 		);
 	}
 	else
@@ -2292,9 +2325,10 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 
 
 void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
-	// this MUST block the renderer thread or there will be trouble
-	GML_RECMUTEX_LOCK(unit);
+	batchAddUnits.enqueue(const_cast<CUnit*>(u));
+}
 
+void CUnitDrawer::UnitCreatedNow(const CUnit* u) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
@@ -2303,7 +2337,6 @@ void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 			groundDecals->AddBuilding(building);
 		}
 	}
-
 
 	if (u->model) {
 		if (u->isCloaked) {
@@ -2314,15 +2347,13 @@ void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
 	}
 
 	unsortedUnits.insert(unit);
-
-	#if defined(USE_GML)
-	unsortedUnitsGML.push_back(unit);
-	#endif
 }
 
 void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
-	GML_RECMUTEX_LOCK(unit);
+	batchAddUnits.dequeue(const_cast<CUnit*>(u));
+}
 
+void CUnitDrawer::UnitDestroyedNow(const CUnit* u) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
@@ -2354,13 +2385,12 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 		}
 	}
 
-
 	if (u->model) {
-		if (u->isCloaked) {
+//		if (u->isCloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		} else {
+//		} else {
 			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
+//		}
 	}
 
 	unsortedUnits.erase(unit);
@@ -2370,83 +2400,86 @@ void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
 	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
 		(*it).erase(unit);
 	}
-
-	#if defined(USE_GML)
-	for (std::list<CUnit*>::iterator usi = unsortedUnitsGML.begin(); usi != unsortedUnitsGML.end(); ++usi) {
-		if (*usi == unit) {
-			unsortedUnitsGML.erase(usi);
-			break;
-		}
-	}
-	#endif
 }
 
 
 void CUnitDrawer::UnitCloaked(const CUnit* u) {
-	GML_RECMUTEX_LOCK(unit);
-
-	if (u->model) {
-		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-	}
+	batchCloakUnits.enqueue(UAD(u,1));
 }
 
 void CUnitDrawer::UnitDecloaked(const CUnit* u) {
-	GML_RECMUTEX_LOCK(unit);
+	batchCloakUnits.enqueue(UAD(u,0));
+}
+
+
+void CUnitDrawer::UnitCloakChange(const UAD& ua) {
+	const CUnit *u = ua.unit;
+	int isCloaked = ua.data;
+
+	if(u->isDead)
+		return;
 
 	if (u->model) {
-		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		if(isCloaked) {
+			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		}
+		else {
+			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		}
 	}
 }
 
 
 void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyTeam) {
-	GML_RECMUTEX_LOCK(unit);
-
-	if (allyTeam == gu->myAllyTeam) {
-		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-			liveGhostBuildings[MDL_TYPE(u)].erase(const_cast<CUnit*>(u));
-		}
-	}
-
-	unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
+	batchLOSUnits.enqueue(UAD(u,allyTeam));
 }
 
 void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyTeam) {
-	GML_RECMUTEX_LOCK(unit);
-
-	if (allyTeam == gu->myAllyTeam) {
-		if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-			liveGhostBuildings[MDL_TYPE(u)].insert(const_cast<CUnit*>(u));
-		}
-	}
-
-	if (u->losStatus[allyTeam] & LOS_INRADAR) {
-		// if unit is still in radar after
-		// leaving LOS, insert an icon for
-		// it (for the involved allyteam)
-		unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
-
-		if (u->isIcon) {
-			// prevent us from drawing icons
-			// on top of ghosted buildings
-			drawIcon.push_back(const_cast<CUnit*>(u));
-		}
-	}
+	batchLOSUnits.enqueue(UAD(u,allyTeam));
 }
 
-
 void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyTeam) {
-	GML_RECMUTEX_LOCK(unit);
-
-	if (!(u->losStatus[allyTeam] & LOS_INLOS)) {
-		unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
-	}
+	batchLOSUnits.enqueue(UAD(u,allyTeam));
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyTeam) {
-	GML_RECMUTEX_LOCK(unit);
-
-	unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
+	batchLOSUnits.enqueue(UAD(u,allyTeam));
 }
+
+
+void CUnitDrawer::UnitLOSChange(const UAD& ua) {
+	const CUnit *u = ua.unit;
+	int allyTeam = ua.data;
+
+	if(u->isDead)
+		return;
+
+	if (u->losStatus[allyTeam] & LOS_INLOS) {
+		if (allyTeam == gu->myAllyTeam) {
+			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
+				liveGhostBuildings[MDL_TYPE(u)].erase(const_cast<CUnit*>(u));
+			}
+		}
+		unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
+	}
+	else {
+		if (allyTeam == gu->myAllyTeam) {
+			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
+				liveGhostBuildings[MDL_TYPE(u)].insert(const_cast<CUnit*>(u));
+			}
+		}
+		if (u->losStatus[allyTeam] & LOS_INRADAR) {
+			unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
+			if (u->isIcon) {
+				drawIcon.push_back(const_cast<CUnit*>(u));
+			}
+		}
+		else {
+			unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
+		}
+	}
+}
+
+

@@ -10,6 +10,37 @@
 #include <map>
 #include "Rendering/GL/myGL.h"
 #include "System/EventClient.h"
+#include "lib/gml/ThreadSafeContainers.h"
+
+struct UAD {
+	const CUnit *unit;
+	int data;
+	UAD(const CUnit *u, int d): unit(u), data(d) {}
+	bool operator==(const UAD &u) const { return unit == u.unit && data == u.data; }
+	bool operator<(const UAD &u) const { return unit < u.unit || (unit == u.unit && data < u.data); }
+};
+
+struct UnitAdd {
+	static void Add(const CUnit *p);
+	static void Remove(const CUnit *p);
+	static void Delete(const CUnit *p) { }
+};
+
+struct UnitCloak {
+	static void Add(const UAD &p);
+	static void Remove(const UAD &p) { }
+	static void Delete(const UAD &p) { }
+};
+
+struct UnitLOS {
+	static void Add(const UAD &p);
+	static void Remove(const UAD &p) { }
+	static void Delete(const UAD &p) { }
+};
+
+typedef ThreadListRender<std::set<CUnit*>, std::set<CUnit*>, CUnit*, UnitAdd> UnitAddContainer;
+typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, UnitCloak> UnitCloakContainer;
+typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, UnitLOS> UnitLOSContainer;
 
 class CVertexArray;
 struct S3DModel;
@@ -32,7 +63,9 @@ public:
 	CUnitDrawer();
 	~CUnitDrawer(void);
 
+	void UpdateDraw(void);
 	void Update(void);
+	void DeleteSynced(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);  // cloaked units must be drawn after all others
@@ -71,7 +104,11 @@ public:
 	void UnitEnteredRadar(const CUnit*, int);
 	void UnitLeftRadar(const CUnit*, int);
 
+	void UnitCreatedNow(const CUnit*);
+	void UnitDestroyedNow(const CUnit*);
 
+	void UnitLOSChange(const UAD& ua);
+	void UnitCloakChange(const UAD& ua);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
@@ -235,6 +272,10 @@ private:
 	GML_VECTOR<CUnit*> drawIcon;
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
+
+	UnitAddContainer batchAddUnits;
+	UnitCloakContainer batchCloakUnits;
+	UnitLOSContainer batchLOSUnits;
 };
 
 extern CUnitDrawer* unitDrawer;
