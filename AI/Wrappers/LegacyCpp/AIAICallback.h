@@ -159,7 +159,7 @@ public:
 			int lifetime, int team, bool transparent, bool drawBorder,
 			int facing);
 
-	virtual int IsDebugDrawerEnabled() const;
+	virtual bool IsDebugDrawerEnabled() const;
 	virtual void AddDebugGraphPoint(int, float, float);
 	virtual void DelDebugGraphPoints(int, int);
 	virtual void SetDebugGraphPos(float, float);

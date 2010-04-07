@@ -1524,14 +1524,11 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			AIHCDebugDraw* cmdData = (AIHCDebugDraw*) data;
 
 			switch (cmdData->cmdMode) {
-				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_GETENABLED: {
-					cmdData->enabled = debugDrawerAI->GetDraw();
-				} break;
 				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADDPOINT: {
-					debugDrawerAI->AddGraphPoint(this->team, cmdData->lineNum, cmdData->x, cmdData->y);
+					debugDrawerAI->AddGraphPoint(this->team, cmdData->lineId, cmdData->x, cmdData->y);
 				} break;
 				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DELPOINTS: {
-					debugDrawerAI->DelGraphPoints(this->team, cmdData->lineNum, cmdData->numPoints);
+					debugDrawerAI->DelGraphPoints(this->team, cmdData->lineId, cmdData->numPoints);
 				} break;
 				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETPOS: {
 					debugDrawerAI->SetGraphPos(this->team, cmdData->x, cmdData->y);
@@ -1540,10 +1537,10 @@ int CAICallback::HandleCommand(int commandId, void* data)
 					debugDrawerAI->SetGraphSize(this->team, cmdData->x, cmdData->y);
 				} break;
 				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINECOLOR: {
-					debugDrawerAI->SetGraphLineColor(this->team, cmdData->lineNum, cmdData->color);
+					debugDrawerAI->SetGraphLineColor(this->team, cmdData->lineId, cmdData->color);
 				} break;
 				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINELABEL: {
-					debugDrawerAI->SetGraphLineLabel(this->team, cmdData->lineNum, cmdData->label);
+					debugDrawerAI->SetGraphLineLabel(this->team, cmdData->lineId, cmdData->label);
 				} break;
 				default: {
 				} break;
@@ -1555,6 +1552,14 @@ int CAICallback::HandleCommand(int commandId, void* data)
 		default:
 			return 0;
 	}
+}
+
+bool CAICallback::IsDebugDrawerEnabled() const
+{
+	// this function will never be called,
+	// as it is handled in the C layer directly
+	// see eg. Clb_Debug_Drawer_isEnabled in rts/ExternalAI/Interface/SSkirmishAICallback.h
+	return debugDrawerAI->GetDraw();
 }
 
 int CAICallback::GetNumUnitDefs ()
