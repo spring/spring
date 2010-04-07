@@ -489,27 +489,14 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	GML_RECMUTEX_LOCK(unit); // Draw
 
 #ifdef USE_GML
-	
-/*	// FIXME: this code-path is now broken
-	if (multiThreadDrawUnit) {
-		mt_drawReflection = drawReflection; // these member vars will be accessed by DoDrawUnitMT
-		mt_drawRefraction = drawRefraction;
-		mt_excludeUnit = excludeUnit;
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			gmlProcessor->Work(
-				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitsMT, this, gmlThreadCount,
-				FALSE, &unsortedUnits, unsortedUnits.size(), 50, 100, TRUE
-				);
-		}
-	}
-	else*/
+	mt_drawReflection = drawReflection; // these member vars will be accessed by DrawOpaqueUnitMT
+	mt_drawRefraction = drawRefraction;
+	mt_excludeUnit = excludeUnit;
 #endif
-	{
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			opaqueModelRenderers[modelType]->PushRenderState();
-			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
-			opaqueModelRenderers[modelType]->PopRenderState();
-		}
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		opaqueModelRenderers[modelType]->PushRenderState();
+		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+		opaqueModelRenderers[modelType]->PopRenderState();
 	}
 
 	CleanUpUnitDrawing();
@@ -542,8 +529,19 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 
 		const UnitSet& unitSet = unitBinIt->second;
 
-		for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
-			DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);
+#ifdef USE_GML
+		if (multiThreadDrawUnit) {
+			gmlProcessor->Work(
+				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, gmlThreadCount,
+				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
+				);
+		}
+		else
+#endif
+		{
+			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
+				DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);
+			}
 		}
 	}
 
@@ -1090,10 +1088,6 @@ void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int 
 {
 	for (std::set<CUnit*>::const_iterator ui = cloakedUnits.begin(); ui != cloakedUnits.end(); ++ui) {
 		CUnit* unit = *ui;
-
-		#if defined(USE_GML) && GML_ENABLE_SIM
-		if (unit == NULL) { continue; }
-		#endif
 
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
@@ -2386,11 +2380,9 @@ void CUnitDrawer::UnitDestroyedNow(const CUnit* u) {
 	}
 
 	if (u->model) {
-//		if (u->isCloaked) {
-			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-//		} else {
-			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-//		}
+		// renderer unit cloak state may not match sim (because of MT) - erase from both renderers to be sure
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
 	unsortedUnits.erase(unit);
@@ -2472,9 +2464,9 @@ void CUnitDrawer::UnitLOSChange(const UAD& ua) {
 		}
 		if (u->losStatus[allyTeam] & LOS_INRADAR) {
 			unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
-			if (u->isIcon) {
-				drawIcon.push_back(const_cast<CUnit*>(u));
-			}
+//			if (u->isIcon) {
+//				drawIcon.push_back(const_cast<CUnit*>(u)); // useless?
+//			}
 		}
 		else {
 			unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));

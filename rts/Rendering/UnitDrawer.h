@@ -178,9 +178,9 @@ public:
 
 	volatile bool mt_drawReflection;
 	volatile bool mt_drawRefraction;
-	CUnit* volatile mt_excludeUnit;
+	const CUnit* volatile mt_excludeUnit;
 
-	static void DrawOpaqueUnitsMT(void* c, CUnit* unit) {
+	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
 		CUnitDrawer* const ud = (CUnitDrawer*) c;
 		ud->DrawOpaqueUnit(unit, ud->mt_excludeUnit, ud->mt_drawReflection, ud->mt_drawRefraction);
 	}
