@@ -19,7 +19,6 @@ macro    (CheckMinCMakeVersion res_var major minor patch)
 	ENDIF  ()
 endmacro (CheckMinCMakeVersion res_var major minor patch)
 
-# Supported since CMake 2.6.3
 CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 IF     (NOT CUSTOM_TARGET_SOURCES_SUPPORT)
 	MESSAGE(
