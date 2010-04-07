@@ -429,9 +429,9 @@ public:
 	// * position refers to the bottom-left corner of the graph
 	// * data-points are automatically normalized, but must not
 	//   exceed 1E9 (1000^3) in absolute value
-	// * you must be a spectator and watching the team of the AI
-	//   that has called added AddDebugGraphPoint() to see these
-	//   graphs (note: they are drawn IIF IsDebugDrawerEnabled())
+	// * you must be a spectator and watching the team of an AI
+	//   that has called AddDebugGraphPoint() to see these graphs
+	//   (note: they are drawn IIF IsDebugDrawerEnabled())
 	virtual bool IsDebugDrawerEnabled() const = 0;
 	virtual void AddDebugGraphPoint(int lineId, float x, float y) = 0;
 	virtual void DelDebugGraphPoints(int lineId, int numPoints) = 0;
