@@ -153,19 +153,17 @@ struct AIHCGetDataDir ///< result of HandleCommand is 1 for if path fetched, 0 f
 struct AIHCDebugDraw
 {
 	enum {
-		AIHC_DEBUGDRAWER_MODE_GETENABLED   = 0, //! not the same as AIVAL_DEBUG_MODE
-		AIHC_DEBUGDRAWER_MODE_ADDPOINT     = 1,
-		AIHC_DEBUGDRAWER_MODE_DELPOINTS    = 2,
-		AIHC_DEBUGDRAWER_MODE_SETPOS       = 3,
-		AIHC_DEBUGDRAWER_MODE_SETSIZE      = 4,
-		AIHC_DEBUGDRAWER_MODE_SETLINECOLOR = 5,
-		AIHC_DEBUGDRAWER_MODE_SETLINELABEL = 6,
+		AIHC_DEBUGDRAWER_MODE_ADDPOINT     = 0,
+		AIHC_DEBUGDRAWER_MODE_DELPOINTS    = 1,
+		AIHC_DEBUGDRAWER_MODE_SETPOS       = 2,
+		AIHC_DEBUGDRAWER_MODE_SETSIZE      = 3,
+		AIHC_DEBUGDRAWER_MODE_SETLINECOLOR = 4,
+		AIHC_DEBUGDRAWER_MODE_SETLINELABEL = 5,
 	};
 
 	int cmdMode;
-	bool enabled;
 	float x, y;
-	int lineNum;
+	int lineId;
 	int numPoints;
 	float3 color;
 	std::string label;
@@ -423,13 +421,13 @@ public:
 	// * the rotation is in radians, team affects the color of the unit
 	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
 
-	virtual int IsDebugDrawerEnabled() const = 0;
-	virtual void AddDebugGraphPoint(int lineNum, float x, float y) = 0;
-	virtual void DelDebugGraphPoints(int lineNum, int numPoints) = 0;
+	virtual bool IsDebugDrawerEnabled() const = 0;
+	virtual void AddDebugGraphPoint(int lineId, float x, float y) = 0;
+	virtual void DelDebugGraphPoints(int lineId, int numPoints) = 0;
 	virtual void SetDebugGraphPos(float x, float y) = 0;
 	virtual void SetDebugGraphSize(float w, float h) = 0;
-	virtual void SetDebugGraphLineColor(int lineNum, const float3& color) = 0;
-	virtual void SetDebugGraphLineLabel(int lineNum, const char* label) = 0;
+	virtual void SetDebugGraphLineColor(int lineId, const float3& color) = 0;
+	virtual void SetDebugGraphLineLabel(int lineId, const char* label) = 0;
 
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;

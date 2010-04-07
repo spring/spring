@@ -124,18 +124,15 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
-	COMMAND_DEBUGDRAWER_GETENABLED                = 82,
-	COMMAND_DEBUGDRAWER_ADDPOINT                  = 83,
-	COMMAND_DEBUGDRAWER_DELPOINTS                 = 84,
-	COMMAND_DEBUGDRAWER_SETPOS                    = 85,
-	COMMAND_DEBUGDRAWER_SETSIZE                   = 86,
-	COMMAND_DEBUGDRAWER_SETLINECOLOR              = 87,
-	COMMAND_DEBUGDRAWER_SETLINELABEL              = 88,
-
-	COMMAND_TOPIC_LAST                            = 89,
+	COMMAND_DRAWER_DEBUG_ADD_POINT                = 82,
+	COMMAND_DRAWER_DEBUG_DELETE_POINTS            = 83,
+	COMMAND_DRAWER_DEBUG_SET_POS                  = 84,
+	COMMAND_DRAWER_DEBUG_SET_SIZE                 = 85,
+	COMMAND_DRAWER_DEBUG_SET_LINE_COLOR           = 86,
+	COMMAND_DRAWER_DEBUG_SET_LINE_LABEL           = 87,
 };
 
-const unsigned int NUM_CMD_TOPICS = COMMAND_TOPIC_LAST;
+const unsigned int NUM_CMD_TOPICS = 88;
 
 
 /**
@@ -240,7 +237,12 @@ enum UnitCommandOptions {
 		+ sizeof(struct SCustomUnitCommand) \
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
-		+ sizeof(struct SDebugDrawCommand) \
+		+ sizeof(struct SAddPointDebugDrawCommand) \
+		+ sizeof(struct SDeletePointsDebugDrawCommand) \
+		+ sizeof(struct SSetPositionDebugDrawCommand) \
+		+ sizeof(struct SSetSizeDebugDrawCommand) \
+		+ sizeof(struct SSetLineColorDebugDrawCommand) \
+		+ sizeof(struct SSetLineLabelDebugDrawCommand) \
 		)
 
 /**
@@ -1097,16 +1099,36 @@ struct SPauseCommand {
 }; // COMMAND_PAUSE
 
 
+struct SAddPointDebugDrawCommand {
+	float x;
+	float y;
+	int lineId;
+}; // COMMAND_DRAWER_DEBUG_ADD_POINT
 
-struct SDebugDrawCommand {
-	bool enabled;
-	float x, y;
-	int lineNum;
+struct SDeletePointsDebugDrawCommand {
+	int lineId;
 	int numPoints;
-	struct SAIFloat3 color;
-	const char* label;
-}; // COMMAND_DEBUG_DRAW_*
+}; // COMMAND_DRAWER_DEBUG_DELETE_POINTS
 
+struct SSetPositionDebugDrawCommand {
+	float x;
+	float y;
+}; // COMMAND_DRAWER_DEBUG_SET_POS
+
+struct SSetSizeDebugDrawCommand {
+	float x;
+	float y;
+}; // COMMAND_DRAWER_DEBUG_SET_SIZE
+
+struct SSetLineColorDebugDrawCommand {
+	int lineId;
+	struct SAIFloat3 color;
+}; // COMMAND_DRAWER_DEBUG_SET_LINE_COLOR
+
+struct SSetLineLabelDebugDrawCommand {
+	int lineId;
+	const char* label;
+}; // COMMAND_DRAWER_DEBUG_SET_LINE_LABEL
 
 
 /**

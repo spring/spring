@@ -1560,36 +1560,34 @@ void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int l
 
 
 
-int CAIAICallback::IsDebugDrawerEnabled() const {
-	SDebugDrawCommand cmd = {false, 0.0f, 0.0f, 0, 0, {0.0f, 0.0f, 0.0f}, NULL};
-	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_GETENABLED, &cmd);
-	return (cmd.enabled);
+bool CAIAICallback::IsDebugDrawerEnabled() const {
+	return sAICallback->Clb_Debug_Drawer_isEnabled(teamId);
 }
 
-void CAIAICallback::AddDebugGraphPoint(int lineNum, float x, float y) {
-	SDebugDrawCommand cmd = {false, x, y, lineNum, 0, {0.0f, 0.0f, 0.0f}, NULL};
-	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_ADDPOINT, &cmd);
+void CAIAICallback::AddDebugGraphPoint(int lineId, float x, float y) {
+	SAddPointDebugDrawCommand cmd = {x, y, lineId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_ADD_POINT, &cmd);
 }
-void CAIAICallback::DelDebugGraphPoints(int lineNum, int numPoints) {
-	SDebugDrawCommand cmd = {false, 0.0f, 0.0f, lineNum, numPoints, {0.0f, 0.0f, 0.0f}, NULL};
-	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_DELPOINTS, &cmd);
+void CAIAICallback::DelDebugGraphPoints(int lineId, int numPoints) {
+	SDeletePointsDebugDrawCommand cmd = {lineId, numPoints};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_DELETE_POINTS, &cmd);
 }
 
 void CAIAICallback::SetDebugGraphPos(float x, float y) {
-	SDebugDrawCommand cmd = {false, x, y, 0, 0, {0.0f, 0.0f, 0.0f}, NULL};
-	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_SETPOS, &cmd);
+	SSetPositionDebugDrawCommand cmd = {x, y};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_POS, &cmd);
 }
 void CAIAICallback::SetDebugGraphSize(float w, float h) {
-	SDebugDrawCommand cmd = {false, w, h, 0, 0, {0.0f, 0.0f, 0.0f}, NULL};
-	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_SETSIZE, &cmd);
+	SSetSizeDebugDrawCommand cmd = {w, h};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_SIZE, &cmd);
 }
-void CAIAICallback::SetDebugGraphLineColor(int lineNum, const float3& color) {
-	SDebugDrawCommand cmd = {false, 0.0f, 0.0f, lineNum, 0, color.toSAIFloat3(), NULL};
-	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_SETLINECOLOR, &cmd);
+void CAIAICallback::SetDebugGraphLineColor(int lineId, const float3& color) {
+	SSetLineColorDebugDrawCommand cmd = {lineId, color.toSAIFloat3()};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_LINE_COLOR, &cmd);
 }
-void CAIAICallback::SetDebugGraphLineLabel(int lineNum, const char* label) {
-	SDebugDrawCommand cmd = {false, 0.0f, 0.0f, lineNum, 0, {0.0f, 0.0f, 0.0f}, label};
-	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUGDRAWER_SETLINELABEL, &cmd);
+void CAIAICallback::SetDebugGraphLineLabel(int lineId, const char* label) {
+	SSetLineLabelDebugDrawCommand cmd = {lineId, label};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_LINE_LABEL, &cmd);
 }
 
 
