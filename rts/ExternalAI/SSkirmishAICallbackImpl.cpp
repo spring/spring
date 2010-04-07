@@ -576,9 +576,92 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			wrapper_HandleCommand(clb, clbCheat, AIHCPauseId, &cppCmdData);
 			break;
 		}
+		case COMMAND_DRAWER_DEBUG_ADD_POINT: {
+			SAddPointDebugDrawCommand* cCmdData = (SAddPointDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADDPOINT,
+				cCmdData->x,
+				cCmdData->y,
+				cCmdData->lineId,
+				0,
+				ZeroVector,
+				""
+			};
 
-		default:
-		{
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DRAWER_DEBUG_DELETE_POINTS: {
+			SDeletePointsDebugDrawCommand* cCmdData = (SDeletePointsDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DELPOINTS,
+				0.0f,
+				0.0f,
+				cCmdData->lineId,
+				cCmdData->numPoints,
+				ZeroVector,
+				""
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DRAWER_DEBUG_SET_POS: {
+			SSetPositionDebugDrawCommand* cCmdData = (SSetPositionDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETPOS,
+				cCmdData->x,
+				cCmdData->y,
+				0,
+				0,
+				ZeroVector,
+				""
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DRAWER_DEBUG_SET_SIZE: {
+			SSetSizeDebugDrawCommand* cCmdData = (SSetSizeDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETSIZE,
+				cCmdData->x,
+				cCmdData->y,
+				0,
+				0,
+				ZeroVector,
+				""
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DRAWER_DEBUG_SET_LINE_COLOR: {
+			SSetLineColorDebugDrawCommand* cCmdData = (SSetLineColorDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINECOLOR,
+				0.0f,
+				0.0f,
+				cCmdData->lineId,
+				0,
+				float3(cCmdData->color.x, cCmdData->color.y, cCmdData->color.z),
+				""
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DRAWER_DEBUG_SET_LINE_LABEL: {
+			SSetLineLabelDebugDrawCommand* cCmdData = (SSetLineLabelDebugDrawCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINELABEL,
+				0.0f,
+				0.0f,
+				cCmdData->lineId,
+				0,
+				ZeroVector,
+				std::string(cCmdData->label)
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+
+		default: {
 			// check if it is a unit command
 			Command* c = (Command*) newCommand(commandData, commandTopic);
 			if (c != NULL) { // it is a unit command
@@ -3104,6 +3187,11 @@ EXPORT(void) skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams(int teamId, 
 //########### END WeaponDef
 
 
+EXPORT(bool) skirmishAiCallback_Debug_Drawer_isEnabled(int teamId) {
+	return team_callback[teamId]->IsDebugDrawerEnabled();
+}
+
+
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE0Group(int teamId) {
 	return grouphandlers[teamId]->groups.size();
 }
@@ -3870,6 +3958,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_WeaponDef_0MAP1SIZE0getCustomParams = &skirmishAiCallback_WeaponDef_0MAP1SIZE0getCustomParams;
 	callback->Clb_WeaponDef_0MAP1KEYS0getCustomParams = &skirmishAiCallback_WeaponDef_0MAP1KEYS0getCustomParams;
 	callback->Clb_WeaponDef_0MAP1VALS0getCustomParams = &skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams;
+	callback->Clb_Debug_Drawer_isEnabled = &skirmishAiCallback_Debug_Drawer_isEnabled;
 }
 
 SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int teamId, IGlobalAICallback* globalAICallback) {
