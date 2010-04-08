@@ -94,18 +94,17 @@ ${EndIf}
   !insertmacro InstallAIInterface "Java"
 
 !macro InstallSkirmishAI skirAiName
-!ifdef INSTALL
-  IfFileExists "..\game\AI\Skirmish\${skirAiName}\*.*" 0 ${skirAiName}_install_end
-  ;This is only supported in NSIS 2.39+
-  ;!define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
-  ;So we have to use this, which has to be supplied to us on the cmd-line
-  !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
-  SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
-  ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
-  !undef SKIRM_AI_VERS
-  ${skirAiName}_install_end:
-!endif
+	!ifdef INSTALL
+		;This is only supported in NSIS 2.39+
+		;!define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
+		;So we have to use this, which has to be supplied to us on the cmd-line
+		!define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
+		IfFileExists "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*" 0 ${skirAiName}_install_end
+			SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
+			File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+		${skirAiName}_install_end:
+		!undef SKIRM_AI_VERS
+	!endif
 !macroend
   ;TODO: Fix the vc projects to use the same names.
   !insertmacro InstallSkirmishAI "NullAI"
