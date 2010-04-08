@@ -530,8 +530,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			wrapper_HandleCommand(clb, clbCheat, AIHCPauseId, &cppCmdData);
 			break;
 		}
-		case COMMAND_DRAWER_DEBUG_ADD_POINT: {
-			SAddPointDebugDrawCommand* cCmdData = (SAddPointDebugDrawCommand*) commandData;
+		case COMMAND_DEBUG_GRAPHDRAWER_LINE_ADD_POINT: {
+			SAddPointLineGraphDrawerDebugCommand* cCmdData = (SAddPointLineGraphDrawerDebugCommand*) commandData;
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADDPOINT,
 				cCmdData->x,
@@ -544,8 +544,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
-		case COMMAND_DRAWER_DEBUG_DELETE_POINTS: {
-			SDeletePointsDebugDrawCommand* cCmdData = (SDeletePointsDebugDrawCommand*) commandData;
+		case COMMAND_DEBUG_GRAPHDRAWER_LINE_DELETE_POINTS: {
+			SDeletePointsLineGraphDrawerDebugCommand* cCmdData = (SDeletePointsLineGraphDrawerDebugCommand*) commandData;
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DELPOINTS,
 				0.0f,
@@ -558,8 +558,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
-		case COMMAND_DRAWER_DEBUG_SET_POS: {
-			SSetPositionDebugDrawCommand* cCmdData = (SSetPositionDebugDrawCommand*) commandData;
+		case COMMAND_DEBUG_GRAPHDRAWER_SET_POS: {
+			SSetPositionGraphDrawerDebugCommand* cCmdData = (SSetPositionGraphDrawerDebugCommand*) commandData;
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETPOS,
 				cCmdData->x,
@@ -572,8 +572,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
-		case COMMAND_DRAWER_DEBUG_SET_SIZE: {
-			SSetSizeDebugDrawCommand* cCmdData = (SSetSizeDebugDrawCommand*) commandData;
+		case COMMAND_DEBUG_GRAPHDRAWER_SET_SIZE: {
+			SSetSizeGraphDrawerDebugCommand* cCmdData = (SSetSizeGraphDrawerDebugCommand*) commandData;
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETSIZE,
 				cCmdData->x,
@@ -586,8 +586,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
-		case COMMAND_DRAWER_DEBUG_SET_LINE_COLOR: {
-			SSetLineColorDebugDrawCommand* cCmdData = (SSetLineColorDebugDrawCommand*) commandData;
+		case COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_COLOR: {
+			SSetColorLineGraphDrawerDebugCommand* cCmdData = (SSetColorLineGraphDrawerDebugCommand*) commandData;
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINECOLOR,
 				0.0f,
@@ -600,8 +600,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
-		case COMMAND_DRAWER_DEBUG_SET_LINE_LABEL: {
-			SSetLineLabelDebugDrawCommand* cCmdData = (SSetLineLabelDebugDrawCommand*) commandData;
+		case COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_LABEL: {
+			SSetLabelLineGraphDrawerDebugCommand* cCmdData = (SSetLabelLineGraphDrawerDebugCommand*) commandData;
 			AIHCDebugDraw cppCmdData = {
 				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINELABEL,
 				0.0f,
@@ -4165,7 +4165,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int w
 //########### END WeaponDef
 
 
-EXPORT(bool) skirmishAiCallback_Debug_Drawer_isEnabled(int skirmishAIId) {
+EXPORT(bool) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId) {
 	return skirmishAIId_callback[skirmishAIId]->IsDebugDrawerEnabled();
 }
 
@@ -4898,7 +4898,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getDynDamageRange = &skirmishAiCallback_WeaponDef_getDynDamageRange;
 	callback->WeaponDef_isDynDamageInverted = &skirmishAiCallback_WeaponDef_isDynDamageInverted;
 	callback->WeaponDef_getCustomParams = &skirmishAiCallback_WeaponDef_getCustomParams;
-	callback->Debug_Drawer_isEnabled = &skirmishAiCallback_Debug_Drawer_isEnabled;
+	callback->Debug_GraphDrawer_isEnabled = &skirmishAiCallback_Debug_GraphDrawer_isEnabled;
 }
 
 SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int skirmishAIId, int teamId, IGlobalAICallback* globalAICallback) {

@@ -2148,7 +2148,7 @@ struct SSkirmishAICallback {
 
 // END OBJECT WeaponDef
 
-	bool              (CALLING_CONV *Debug_Drawer_isEnabled)(int skirmishAIId);
+	bool              (CALLING_CONV *Debug_GraphDrawer_isEnabled)(int skirmishAIId);
 
 };
 

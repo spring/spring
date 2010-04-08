@@ -124,12 +124,12 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
-	COMMAND_DRAWER_DEBUG_ADD_POINT                = 83,
-	COMMAND_DRAWER_DEBUG_DELETE_POINTS            = 84,
-	COMMAND_DRAWER_DEBUG_SET_POS                  = 85,
-	COMMAND_DRAWER_DEBUG_SET_SIZE                 = 86,
-	COMMAND_DRAWER_DEBUG_SET_LINE_COLOR           = 87,
-	COMMAND_DRAWER_DEBUG_SET_LINE_LABEL           = 88,
+	COMMAND_DEBUG_GRAPHDRAWER_SET_POS             = 83,
+	COMMAND_DEBUG_GRAPHDRAWER_SET_SIZE            = 84,
+	COMMAND_DEBUG_GRAPHDRAWER_LINE_ADD_POINT      = 85,
+	COMMAND_DEBUG_GRAPHDRAWER_LINE_DELETE_POINTS  = 86,
+	COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_COLOR      = 87,
+	COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_LABEL      = 88,
 };
 const int NUM_CMD_TOPICS                          = 89;
 
@@ -235,12 +235,12 @@ enum UnitCommandOptions {
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
 		+ sizeof(struct SReclaimFeatureUnitCommand) \
-		+ sizeof(struct SAddPointDebugDrawCommand) \
-		+ sizeof(struct SDeletePointsDebugDrawCommand) \
-		+ sizeof(struct SSetPositionDebugDrawCommand) \
-		+ sizeof(struct SSetSizeDebugDrawCommand) \
-		+ sizeof(struct SSetLineColorDebugDrawCommand) \
-		+ sizeof(struct SSetLineLabelDebugDrawCommand) \
+		+ sizeof(struct SSetPositionGraphDrawerDebugCommand) \
+		+ sizeof(struct SSetSizeGraphDrawerDebugCommand) \
+		+ sizeof(struct SAddPointLineGraphDrawerDebugCommand) \
+		+ sizeof(struct SDeletePointsLineGraphDrawerDebugCommand) \
+		+ sizeof(struct SSetColorLineGraphDrawerDebugCommand) \
+		+ sizeof(struct SSetLabelLineGraphDrawerDebugCommand) \
 		)
 
 /**
@@ -1451,36 +1451,36 @@ struct SPauseCommand {
 }; // COMMAND_PAUSE Game_setPause
 
 
-struct SAddPointDebugDrawCommand {
+struct SSetPositionGraphDrawerDebugCommand {
 	float x;
 	float y;
-	int lineId;
-}; // COMMAND_DRAWER_DEBUG_ADD_POINT Debug_Drawer_addPoint
+}; // COMMAND_DEBUG_GRAPHDRAWER_SET_POS Debug_GraphDrawer_setPosition
 
-struct SDeletePointsDebugDrawCommand {
+struct SSetSizeGraphDrawerDebugCommand {
+	float x;
+	float y;
+}; // COMMAND_DEBUG_GRAPHDRAWER_SET_SIZE Debug_GraphDrawer_setSize
+
+struct SAddPointLineGraphDrawerDebugCommand {
+	int lineId;
+	float x;
+	float y;
+}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_ADD_POINT Debug_GraphDrawer_GraphLine_addPoint
+
+struct SDeletePointsLineGraphDrawerDebugCommand {
 	int lineId;
 	int numPoints;
-}; // COMMAND_DRAWER_DEBUG_DELETE_POINTS Debug_Drawer_deletePoints
+}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_DELETE_POINTS Debug_GraphDrawer_GraphLine_deletePoints
 
-struct SSetPositionDebugDrawCommand {
-	float x;
-	float y;
-}; // COMMAND_DRAWER_DEBUG_SET_POS Debug_Drawer_setPosition
-
-struct SSetSizeDebugDrawCommand {
-	float x;
-	float y;
-}; // COMMAND_DRAWER_DEBUG_SET_SIZE Debug_Drawer_setSize
-
-struct SSetLineColorDebugDrawCommand {
+struct SSetColorLineGraphDrawerDebugCommand {
 	int lineId;
 	short* color_colorS3;
-}; // COMMAND_DRAWER_DEBUG_SET_LINE_COLOR Debug_Drawer_setLineColor
+}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_COLOR Debug_GraphDrawer_GraphLine_setColor
 
-struct SSetLineLabelDebugDrawCommand {
+struct SSetLabelLineGraphDrawerDebugCommand {
 	int lineId;
 	const char* label;
-}; // COMMAND_DRAWER_DEBUG_SET_LINE_LABEL Debug_Drawer_setLineLabel
+}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_LABEL Debug_GraphDrawer_GraphLine_setLabel
 
 
 /**

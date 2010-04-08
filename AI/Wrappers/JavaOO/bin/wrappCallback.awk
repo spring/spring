@@ -656,6 +656,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		if (!_removed && !part_isStatic(memName_m, metaComment)) {
 			addIndName = addInds_m[ai];
 			print("ERROR: failed removing additional indices " addIndName " from method " memName_m " in class " clsName_int_m);
+			exit(1);
 		}
 	}
 
