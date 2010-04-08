@@ -1,11 +1,13 @@
 ### Java AI Interface
 #
 # Global variables set in this file:
+# * JAVA_GLOBAL_LIBS_DIRS
 # * BUILD_Java_AIINTERFACE
 # * Java_AIINTERFACE_VERS
 # * Java_AIINTERFACE_TARGET
 #
 # Functions and macros defined in this file:
+# * FindJavaLib
 # * GetFirstSubDirName
 # * CreateClasspath
 # * ConcatClasspaths
@@ -18,9 +20,31 @@
 #enable_language(Java)
 
 
+if     (CMAKE_HOST_WIN32)
+	set(JAVA_GLOBAL_LIBS_DIRS "${MINGWLIBS}")
+else   (CMAKE_HOST_WIN32)
+	set(JAVA_GLOBAL_LIBS_DIRS "/usr/share/java" "/usr/local/share/java")
+endif  (CMAKE_HOST_WIN32)
+MakeGlobal(JAVA_GLOBAL_LIBS_DIRS)
+
 ################################################################################
 ### BEGINN: MACROS_AND_FUNCTIONS
 # Define macros and functions to be used in this file and by Java Skirmish AIs
+
+# Looks for a Java library (Jar file) in system wide search paths and in
+# additional dirs supplied as argument.
+macro    (FindJavaLib path_var libName additionalSearchDirs)
+	find_file(${path_var} "${libName}.jar"
+		PATHS "${additionalSearchDirs}" ${JAVA_GLOBAL_LIBS_DIRS}
+		DOC "Path to the Java library ${libName}.jar"
+		NO_DEFAULT_PATH
+		)
+	if    (${path_var}-NOTFOUND)
+		message(SEND_ERROR "${libName}.jar not found!")
+	else  (${path_var}-NOTFOUND)
+		AIMessage(STATUS "Found ${libName}.jar: ${${path_var}}")
+	endif (${path_var}-NOTFOUND)
+endmacro (FindJavaLib path_var libName additionalSearchDirs)
 
 # Returns the name of the first sub-dir (in alphabetical descending order)
 # under dir.
