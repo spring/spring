@@ -1,13 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-// TODO: overlay-to-texture rendering (for threatmaps, etc.)
-
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/bitops.h"
 #include "System/GlobalUnsynced.h"
 
 static const float3 GRAPH_MIN_SCALE = float3( 1e9,  1e9, 0.0f);
@@ -15,13 +14,18 @@ static const float3 GRAPH_MAX_SCALE = float3(-1e9, -1e9, 0.0f);
 
 DebugDrawerAI::DebugDrawerAI(): draw(false) {
 	graphs.resize(teamHandler->ActiveTeams(), Graph(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE));
+	texsets.resize(teamHandler->ActiveTeams(), TexSet());
 }
 DebugDrawerAI::~DebugDrawerAI() {
 	for (std::vector<Graph>::iterator it = graphs.begin(); it != graphs.end(); ++it) {
 		(*it).Clear();
 	}
+	for (std::vector<TexSet>::iterator it = texsets.begin(); it != texsets.end(); ++it) {
+		(*it).Clear();
+	}
 
 	graphs.clear();
+	texsets.clear();
 }
 
 DebugDrawerAI* DebugDrawerAI::GetInstance() {
@@ -39,8 +43,29 @@ void DebugDrawerAI::Draw() {
 	assert(gu->myTeam < graphs.size());
 
 	if (!skirmishAIHandler.GetSkirmishAIsInTeam(gu->myTeam).empty()) {
-		// draw the graph for the (AI) team being spectated
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+
+		glDisable(GL_LIGHTING);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_TEXTURE_2D);
+
+		// draw data for the (AI) team being spectated
 		graphs[gu->myTeam].Draw();
+		texsets[gu->myTeam].Draw();
+
+		glPopAttrib();
+
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
 	}
 }
 
@@ -81,6 +106,38 @@ void DebugDrawerAI::SetGraphLineColor(int teamNum, int lineNum, const float3& c)
 void DebugDrawerAI::SetGraphLineLabel(int teamNum, int lineNum, const std::string& s) {
 	assert(teamNum < graphs.size());
 	graphs[teamNum].SetLabel(lineNum, s);
+}
+
+
+
+int DebugDrawerAI::AddOverlayTexture(int teamNum, const float* data, int w, int h) {
+	assert(teamNum < texsets.size());
+	return (texsets[teamNum].AddTexture(data, w, h));
+}
+
+void DebugDrawerAI::UpdateOverlayTexture(int teamNum, int texHandle, const float* data, int x, int y, int w, int h) {
+	assert(teamNum < texsets.size());
+	texsets[teamNum].UpdateTexture(texHandle, data, x, y, w, h);
+}
+
+void DebugDrawerAI::DelOverlayTexture(int teamNum, int texHandle) {
+	assert(teamNum < texsets.size());
+	texsets[teamNum].DelTexture(texHandle);
+}
+
+void DebugDrawerAI::SetOverlayTexturePos(int teamNum, int texHandle, float x, float y) {
+	if (x < -1.0f || x > 1.0f) { return; }
+	if (y < -1.0f || y > 1.0f) { return; }
+
+	assert(teamNum < texsets.size());
+	texsets[teamNum].SetTexturePos(texHandle, x, y);
+}
+void DebugDrawerAI::SetOverlayTextureSize(int teamNum, int texHandle, float w, float h) {
+	if (w < 0.0f || w > 2.0f) { return; }
+	if (h < 0.0f || h > 2.0f) { return; }
+
+	assert(teamNum < texsets.size());
+	texsets[teamNum].SetTextureSize(texHandle, w, h);
 }
 
 
@@ -194,19 +251,6 @@ void DebugDrawerAI::Graph::Clear() {
 
 
 void DebugDrawerAI::Graph::Draw() {
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-
-	glDisable(GL_LIGHTING);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
-
 	static unsigned char color[4] = {0.75f * 255, 0.75f * 255, 0.75f * 255, 0.5f * 255};
 
 	CVertexArray* va = GetVertexArray();
@@ -315,10 +359,101 @@ void DebugDrawerAI::Graph::Draw() {
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glPopAttrib();
+}
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+
+
+
+
+
+void DebugDrawerAI::TexSet::Clear() {
+	for (std::map<int, TexSet::Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
+		delete (it->second);
+	}
+
+	textures.clear();
+}
+
+int DebugDrawerAI::TexSet::AddTexture(const float* data, int w, int h) {
+	if (!gu->supportNPOTs && (w != next_power_of_2(w) || h != next_power_of_2(h))) {
+		return 0;
+	}
+
+	textures[curTexHandle] = new TexSet::Texture(w, h, data);
+	return (curTexHandle++);
+}
+
+void DebugDrawerAI::TexSet::UpdateTexture(int texHandle, const float* data, int x, int y, int w, int h) {
+	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+
+	if (it == textures.end()) {
+		return;
+	}
+
+	if ((x + w) > (it->second)->GetWidth()) { return; }
+	if ((y + h) > (it->second)->GetHeight()) { return; }
+
+	glBindTexture(GL_TEXTURE_2D, (it->second)->GetID());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, GL_RED, GL_FLOAT, data);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void DebugDrawerAI::TexSet::DelTexture(int texHandle) {
+	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+
+	if (it != textures.end()) {
+		delete (it->second);
+		textures.erase(it->first);
+	}
+}
+
+void DebugDrawerAI::TexSet::SetTexturePos(int texHandle, float x, float y) {}
+void DebugDrawerAI::TexSet::SetTextureSize(int texHandle, float w, float h) {}
+
+
+
+void DebugDrawerAI::TexSet::Draw() {
+	if (!textures.empty()) {
+		glEnable(GL_TEXTURE_2D);
+
+		CVertexArray* va = GetVertexArray();
+
+		for (std::map<int, TexSet::Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
+			const TexSet::Texture* tex = it->second;
+			const float3& pos = tex->GetPos();
+			const float3& size = tex->GetSize();
+
+			glBindTexture(GL_TEXTURE_2D, (it->second)->GetID());
+			va->Initialize();
+			va->AddVertexT(pos,                                0.0f, 0.0f);
+			va->AddVertexT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 0.0f);
+			va->AddVertexT(pos + float3(size.x, size.y, 0.0f), 1.0f, 1.0f);
+			va->AddVertexT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 1.0f);
+			va->DrawArrayT(GL_QUADS);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+
+		glDisable(GL_TEXTURE_2D);
+	}
+}
+
+
+
+DebugDrawerAI::TexSet::Texture::Texture(int w, int h, const float* data): id(0), xsize(w), ysize(h) {
+	const int intFormat = 1; // one color-component
+	const int extFormat = GL_RED;
+	const int dataType  = GL_FLOAT;
+
+	glGenTextures(1, &id);
+	glBindTexture(GL_TEXTURE_2D, id);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, intFormat, w, h, 0, extFormat, dataType, data);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+DebugDrawerAI::TexSet::Texture::~Texture() {
+	glDeleteTextures(1, &id);
 }
