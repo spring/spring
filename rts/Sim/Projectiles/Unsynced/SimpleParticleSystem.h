@@ -18,7 +18,7 @@ public:
 
 	CSimpleParticleSystem(void);
 	virtual ~CSimpleParticleSystem(void);
-	virtual void Init(const float3& explosionPos, CUnit* owner GML_PARG_H);
+	virtual void Init(const float3& explosionPos, CUnit* owner);
 
 	float3 emitVector;
 	float3 emitMul;
@@ -72,7 +72,7 @@ public:
 	void Draw(){};
 	void Update(){};
 
-	virtual void Init(const float3& explosionPos, CUnit *owner GML_PARG_H);
+	virtual void Init(const float3& explosionPos, CUnit *owner);
 
 };
 

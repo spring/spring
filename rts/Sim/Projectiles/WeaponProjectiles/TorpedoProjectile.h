@@ -12,7 +12,7 @@ class CTorpedoProjectile :
 	CR_DECLARE(CTorpedoProjectile);
 public:
 	CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect,
-		float maxSpeed, float tracking, int ttl, CUnit* target, const WeaponDef* weaponDef GML_PARG_H);
+		float maxSpeed, float tracking, int ttl, CUnit* target, const WeaponDef* weaponDef);
 	~CTorpedoProjectile(void);
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
