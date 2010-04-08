@@ -20,27 +20,27 @@ struct UAD {
 	bool operator<(const UAD &u) const { return unit < u.unit || (unit == u.unit && data < u.data); }
 };
 
-struct UnitAdd {
+struct UnitBatch {
 	static void Add(const CUnit *p);
 	static void Remove(const CUnit *p);
 	static void Delete(const CUnit *p) { }
 };
 
-struct UnitCloak {
+struct CloakBatch {
 	static void Add(const UAD &p);
 	static void Remove(const UAD &p) { }
 	static void Delete(const UAD &p) { }
 };
 
-struct UnitLOS {
+struct LOSBatch {
 	static void Add(const UAD &p);
 	static void Remove(const UAD &p) { }
 	static void Delete(const UAD &p) { }
 };
 
-typedef ThreadListRender<std::set<CUnit*>, std::set<CUnit*>, CUnit*, UnitAdd> UnitAddContainer;
-typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, UnitCloak> UnitCloakContainer;
-typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, UnitLOS> UnitLOSContainer;
+typedef ThreadListRender<std::set<CUnit*>, std::set<CUnit*>, CUnit*, UnitBatch> UnitBatchContainer;
+typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, CloakBatch> CloakBatchContainer;
+typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, LOSBatch> LOSBatchContainer;
 
 class CVertexArray;
 struct S3DModel;
@@ -273,9 +273,9 @@ private:
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 
-	UnitAddContainer batchAddUnits;
-	UnitCloakContainer batchCloakUnits;
-	UnitLOSContainer batchLOSUnits;
+	UnitBatchContainer unitBatch;
+	CloakBatchContainer cloakBatch;
+	LOSBatchContainer losBatch;
 };
 
 extern CUnitDrawer* unitDrawer;
