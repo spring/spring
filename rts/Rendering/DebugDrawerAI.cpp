@@ -407,8 +407,20 @@ void DebugDrawerAI::TexSet::DelTexture(int texHandle) {
 	}
 }
 
-void DebugDrawerAI::TexSet::SetTexturePos(int texHandle, float x, float y) {}
-void DebugDrawerAI::TexSet::SetTextureSize(int texHandle, float w, float h) {}
+void DebugDrawerAI::TexSet::SetTexturePos(int texHandle, float x, float y) {
+	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+
+	if (it != textures.end()) {
+		(it->second)->SetPos(float3(x, y, 0.0f));
+	}
+}
+void DebugDrawerAI::TexSet::SetTextureSize(int texHandle, float w, float h) {
+	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+
+	if (it != textures.end()) {
+		(it->second)->SetSize(float3(w, h, 0.0f));
+	}
+}
 
 
 
