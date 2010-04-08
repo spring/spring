@@ -124,15 +124,21 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
-	COMMAND_DRAWER_DEBUG_ADD_POINT                = 82,
-	COMMAND_DRAWER_DEBUG_DELETE_POINTS            = 83,
-	COMMAND_DRAWER_DEBUG_SET_POS                  = 84,
-	COMMAND_DRAWER_DEBUG_SET_SIZE                 = 85,
-	COMMAND_DRAWER_DEBUG_SET_LINE_COLOR           = 86,
-	COMMAND_DRAWER_DEBUG_SET_LINE_LABEL           = 87,
+	COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT          = 82,
+	COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS      = 83,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_POS            = 84,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE           = 85,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR     = 86,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL     = 87,
+
+	COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE      = 88,
+	COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE   = 89,
+	COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE      = 90,
+	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS  = 91,
+	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE = 92,
 };
 
-const unsigned int NUM_CMD_TOPICS = 88;
+const unsigned int NUM_CMD_TOPICS = 93;
 
 
 /**
@@ -237,12 +243,17 @@ enum UnitCommandOptions {
 		+ sizeof(struct SCustomUnitCommand) \
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
-		+ sizeof(struct SAddPointDebugDrawCommand) \
-		+ sizeof(struct SDeletePointsDebugDrawCommand) \
-		+ sizeof(struct SSetPositionDebugDrawCommand) \
-		+ sizeof(struct SSetSizeDebugDrawCommand) \
-		+ sizeof(struct SSetLineColorDebugDrawCommand) \
-		+ sizeof(struct SSetLineLabelDebugDrawCommand) \
+		+ sizeof(struct SDebugDrawerAddGraphPointCommand) \
+		+ sizeof(struct SDebugDrawerDeleteGraphPointsCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphPositionCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphSizeCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphLineColorCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphLineLabelCommand) \
+		+ sizeof(struct SDebugDrawerAddOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerUpdateOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerDelOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerSetOverlayTexturePosCommand) \
+		+ sizeof(struct SDebugDrawerSetOverlayTextureSizeCommand) \
 		)
 
 /**
@@ -1099,36 +1110,72 @@ struct SPauseCommand {
 }; // COMMAND_PAUSE
 
 
-struct SAddPointDebugDrawCommand {
+
+struct SDebugDrawerAddGraphPointCommand {
 	float x;
 	float y;
 	int lineId;
-}; // COMMAND_DRAWER_DEBUG_ADD_POINT
+}; // COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT
 
-struct SDeletePointsDebugDrawCommand {
+struct SDebugDrawerDeleteGraphPointsCommand {
 	int lineId;
 	int numPoints;
-}; // COMMAND_DRAWER_DEBUG_DELETE_POINTS
+}; // COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS
 
-struct SSetPositionDebugDrawCommand {
+struct SDebugDrawerSetGraphPositionCommand {
 	float x;
 	float y;
-}; // COMMAND_DRAWER_DEBUG_SET_POS
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_POS
 
-struct SSetSizeDebugDrawCommand {
-	float x;
-	float y;
-}; // COMMAND_DRAWER_DEBUG_SET_SIZE
+struct SDebugDrawerSetGraphSizeCommand {
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE
 
-struct SSetLineColorDebugDrawCommand {
+struct SDebugDrawerSetGraphLineColorCommand {
 	int lineId;
 	struct SAIFloat3 color;
-}; // COMMAND_DRAWER_DEBUG_SET_LINE_COLOR
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR
 
-struct SSetLineLabelDebugDrawCommand {
+struct SDebugDrawerSetGraphLineLabelCommand {
 	int lineId;
 	const char* label;
-}; // COMMAND_DRAWER_DEBUG_SET_LINE_LABEL
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL
+
+
+struct SDebugDrawerAddOverlayTextureCommand {
+	int texHandle;
+	const float* texData;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE
+
+struct SDebugDrawerUpdateOverlayTextureCommand {
+	int texHandle;
+	const float* texData;
+	int x;
+	int y;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE
+
+struct SDebugDrawerDelOverlayTextureCommand {
+	int texHandle;
+}; // COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE
+
+struct SDebugDrawerSetOverlayTexturePosCommand {
+	int texHandle;
+	float x;
+	float y;
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS
+
+struct SDebugDrawerSetOverlayTextureSizeCommand {
+	int texHandle;
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE
+
+
 
 
 /**

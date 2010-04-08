@@ -948,41 +948,6 @@ int CAICallback::GetMapHeight()
 	return gs->mapy;
 }
 
-int CAICallback::GetMapHash()
-{
-	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return 0;
-}
-
-const char* CAICallback::GetMapName ()
-{
-	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return NULL;
-}
-
-const char* CAICallback::GetMapHumanName ()
-{
-	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return NULL;
-}
-
-int CAICallback::GetModHash()
-{
-	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return 0;
-}
-
-const char* CAICallback::GetModName()
-{
-	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return NULL;
-}
-
-const char* CAICallback::GetModHumanName()
-{
-	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return NULL;
-}
 
 
 float CAICallback::GetMaxMetal() const { return mapInfo->map.maxMetal; }
@@ -1024,13 +989,6 @@ const float* CAICallback::GetSlopeMap()
 const unsigned short* CAICallback::GetLosMap()
 {
 	return &loshandler->losMap[teamHandler->AllyTeam(team)].front();
-}
-
-int CAICallback::GetLosMapResolution()
-{
-	// as this will never be called (it is implemented in CAIAICallback),
-	// it does not matter what we return here.
-	return -1;
 }
 
 const unsigned short* CAICallback::GetRadarMap()
@@ -1513,8 +1471,8 @@ int CAICallback::HandleCommand(int commandId, void* data)
 
 		case AIHCGetDataDirId: {
 			// do nothing
-			// this event will never end up here,
-			// as it is handled in the C layer directly
+			// this event will never end up here, as
+			// it is handled in the C layer directly
 			// see Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
 
 			return 0;
@@ -1524,24 +1482,54 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			AIHCDebugDraw* cmdData = (AIHCDebugDraw*) data;
 
 			switch (cmdData->cmdMode) {
-				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADDPOINT: {
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_GRAPH_POINT: {
 					debugDrawerAI->AddGraphPoint(this->team, cmdData->lineId, cmdData->x, cmdData->y);
 				} break;
-				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DELPOINTS: {
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_GRAPH_POINTS: {
 					debugDrawerAI->DelGraphPoints(this->team, cmdData->lineId, cmdData->numPoints);
 				} break;
-				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETPOS: {
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_POS: {
 					debugDrawerAI->SetGraphPos(this->team, cmdData->x, cmdData->y);
 				} break;
-				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETSIZE: {
-					debugDrawerAI->SetGraphSize(this->team, cmdData->x, cmdData->y);
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_SIZE: {
+					debugDrawerAI->SetGraphSize(this->team, cmdData->w, cmdData->h);
 				} break;
-				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINECOLOR: {
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_COLOR: {
 					debugDrawerAI->SetGraphLineColor(this->team, cmdData->lineId, cmdData->color);
 				} break;
-				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINELABEL: {
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_LABEL: {
 					debugDrawerAI->SetGraphLineLabel(this->team, cmdData->lineId, cmdData->label);
 				} break;
+
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_OVERLAY_TEXTURE: {
+					cmdData->texHandle = debugDrawerAI->AddOverlayTexture(
+						this->team,
+						cmdData->texData,
+						int(cmdData->w),   // interpret as absolute width
+						int(cmdData->h)    // interpret as absolute height
+					);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_UPDATE_OVERLAY_TEXTURE: {
+					debugDrawerAI->UpdateOverlayTexture(
+						this->team,
+						cmdData->texHandle,
+						cmdData->texData,
+						int(cmdData->x),    // interpret as absolute pixel col
+						int(cmdData->y),    // interpret as absolute pixel row
+						int(cmdData->w),    // interpret as absolute width
+						int(cmdData->h)     // interpret as absolute height
+					);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_OVERLAY_TEXTURE: {
+					debugDrawerAI->DelOverlayTexture(this->team, cmdData->texHandle);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_POS: {
+					debugDrawerAI->SetOverlayTexturePos(this->team, cmdData->texHandle, cmdData->x, cmdData->y);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE: {
+					debugDrawerAI->SetOverlayTextureSize(this->team, cmdData->texHandle, cmdData->w, cmdData->h);
+				} break;
+
 				default: {
 				} break;
 			}
@@ -1554,13 +1542,13 @@ int CAICallback::HandleCommand(int commandId, void* data)
 	}
 }
 
-bool CAICallback::IsDebugDrawerEnabled() const
-{
-	// this function will never be called,
-	// as it is handled in the C layer directly
-	// see eg. Clb_Debug_Drawer_isEnabled in rts/ExternalAI/Interface/SSkirmishAICallback.h
-	return debugDrawerAI->GetDraw();
+
+
+bool CAICallback::IsDebugDrawerEnabled() const {
+	return (debugDrawerAI->GetDraw());
 }
+
+
 
 int CAICallback::GetNumUnitDefs ()
 {
@@ -1846,22 +1834,4 @@ const char* CAICallback::CallLuaRules(const char* data, int inSize, int* outSize
 		return NULL;
 	}
 	return luaRules->AICallIn(data, inSize, outSize);
-}
-
-std::map<std::string, std::string> CAICallback::GetMyInfo()
-{
-	// do nothing
-	// this function will never be called,
-	// as it is handled in the C layer directly
-	// see eg. Clb_SkirmishAI_Info_getSize in rts/ExternalAI/Interface/SSkirmishAICallback.h
-	return std::map<std::string, std::string>();
-}
-
-std::map<std::string, std::string> CAICallback::GetMyOptionValues()
-{
-	// do nothing
-	// this function will never be called,
-	// as it is handled in the C layer directly
-	// see eg. Clb_SkirmishAI_OptionValues_getSize in rts/ExternalAI/Interface/SSkirmishAICallback.h
-	return std::map<std::string, std::string>();
 }

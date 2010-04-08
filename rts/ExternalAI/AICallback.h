@@ -109,16 +109,16 @@ public:
 	float GetMaxHeight();
 	const float* GetSlopeMap();
 	const unsigned short* GetLosMap();
-	int GetLosMapResolution();
+	int GetLosMapResolution() { return -1; }          // never called, implemented in CAIAICallback
 	const unsigned short* GetRadarMap();
 	const unsigned short* GetJammerMap();
 	const unsigned char* GetMetalMap();
-	int GetMapHash();
-	const char* GetMapName();
-	const char* GetMapHumanName();
-	int GetModHash();
-	const char* GetModName();
-	const char* GetModHumanName();
+	int GetMapHash() { return 0; }                    // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetMapName() { return NULL; }         // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetMapHumanName() { return NULL; }    // never called, implemented in SSkirmishAICallbackImpl
+	int GetModHash() { return 0; }                    // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetModName() { return NULL; }         // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetModHumanName() { return NULL; }    // never called, implemented in SSkirmishAICallbackImpl
 
 	float GetMaxMetal() const;
 	float GetExtractorRadius() const;
@@ -146,15 +146,22 @@ public:
 
 	void DrawUnit(const char* unitName, float3 pos, float rotation, int lifetime, int teamId, bool transparent, bool drawBorder, int facing);
 
-	bool IsDebugDrawerEnabled() const;
-	// not implemented as members, but as commands. see AIHCDebugDraw
-	void AddDebugGraphPoint(int, float, float) {}
-	void DelDebugGraphPoints(int, int) {}
-	void SetDebugGraphPos(float, float) {}
-	void SetDebugGraphSize(float, float) {}
-	void SetDebugGraphLineColor(int, const float3&) {}
-	void SetDebugGraphLineLabel(int, const char*) {}
 
+	bool IsDebugDrawerEnabled() const;
+	// not implemented as members, but as commands via HandleCommand
+	void DebugDrawerAddGraphPoint(int, float, float) {}
+	void DebugDrawerDelGraphPoints(int, int) {}
+	void DebugDrawerSetGraphPos(float, float) {}
+	void DebugDrawerSetGraphSize(float, float) {}
+	void DebugDrawerSetGraphLineColor(int, const float3&) {}
+	void DebugDrawerSetGraphLineLabel(int, const char*) {}
+
+	// these are also not implemented as members
+	int DebugDrawerAddOverlayTexture(const float*, int, int) { return 0; }
+	void DebugDrawerUpdateOverlayTexture(int, const float*, int, int, int, int) {}
+	void DebugDrawerDelOverlayTexture(int) {}
+	void DebugDrawerSetOverlayTexturePos(int, float, float) {}
+	void DebugDrawerSetOverlayTextureSize(int, float, float) {}
 
 
 	bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
@@ -217,8 +224,9 @@ public:
 	//    copy it if you wish to continue using it
 	const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL);
 
-	std::map<std::string, std::string> GetMyInfo();
-	std::map<std::string, std::string> GetMyOptionValues();
+	// never called, implemented in SSkirmishAICallbackImpl
+	std::map<std::string, std::string> GetMyInfo() { return std::map<std::string, std::string>(); }
+	std::map<std::string, std::string> GetMyOptionValues() { return std::map<std::string, std::string>(); }
 };
 
 #endif /* AICALLBACK_H */
