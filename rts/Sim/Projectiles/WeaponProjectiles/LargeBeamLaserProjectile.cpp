@@ -32,8 +32,8 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	));
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos,
-		const float3& color, const float3& color2, CUnit* owner, const WeaponDef* weaponDef GML_PARG_C)
-:	CWeaponProjectile(startPos + (endPos - startPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, 1 GML_PARG_P),
+		const float3& color, const float3& color2, CUnit* owner, const WeaponDef* weaponDef)
+:	CWeaponProjectile(startPos + (endPos - startPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, 1),
 	startPos(startPos),
 	endPos(endPos),
 	decay(1.0f)

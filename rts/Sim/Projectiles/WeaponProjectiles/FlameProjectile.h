@@ -12,7 +12,7 @@ class CFlameProjectile :
 	CR_DECLARE(CFlameProjectile);
 public:
 	CFlameProjectile(const float3& pos, const float3& speed, const float3& spread,
-		CUnit* owner, const WeaponDef* weaponDef, int ttl = 50 GML_PARG_H);
+		CUnit* owner, const WeaponDef* weaponDef, int ttl = 50);
 	~CFlameProjectile(void);
 	float3 color;
 	float3 color2;

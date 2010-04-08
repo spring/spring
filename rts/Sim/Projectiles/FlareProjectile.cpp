@@ -30,10 +30,10 @@ CR_REG_METADATA(CFlareProjectile,(
 				CR_RESERVED(8)
 				));
 
-CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame GML_PARG_C):
+CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame):
 	//! these are synced, but neither weapon nor piece
 	//! (only created by units that can drop flares)
-	CProjectile(pos, speed, owner, true, false, false GML_PARG_P),
+	CProjectile(pos, speed, owner, true, false, false),
 	activateFrame(activateFrame),
 	deathFrame(activateFrame + (owner? owner->unitDef->flareTime: 1)),
 	numSub(0),

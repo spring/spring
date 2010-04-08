@@ -12,9 +12,9 @@ public:
 
 	void Update();
 	void Draw();
-	void Init(const float3& pos, CUnit *owner GML_PARG_H);
+	void Init(const float3& pos, CUnit *owner);
 	CSmokeProjectile();
-	CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float color GML_PARG_H);
+	CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float color);
 	virtual ~CSmokeProjectile();
 
 	float color;
