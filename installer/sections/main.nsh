@@ -98,12 +98,13 @@ ${EndIf}
 	;!define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
 	;So we have to use this, which has to be supplied to us on the cmd-line
 	!define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
-	IfFileExists "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*" 0 ${skirAiName}_install_end
+	IfFileExists "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*" ${skirAiName}_inst_do ${skirAiName}_inst_end
+	${skirAiName}_inst_do:
 		!ifdef INSTALL
 				SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
 				File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
 		!endif
-	${skirAiName}_install_end:
+	${skirAiName}_inst_end:
 	!undef SKIRM_AI_VERS
 !macroend
   ;TODO: Fix the vc projects to use the same names.
