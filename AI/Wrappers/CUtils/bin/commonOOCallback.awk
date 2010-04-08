@@ -285,6 +285,10 @@ function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p, 
 		# use only first param, if there is one
 		indicesArgs_p = params_p;
 		sub(/,.*$/, "", indicesArgs_p);
+		if (!match(indicesArgs_p, /^int /)) {
+			# only use 'int' type params as indices args
+			indicesArgs_p = "";
+		}
 	}
 #print("ind args: #" implClsName_p "#" indicesArgs_p "#")
 #if (clsName_p == "Unit") { print( "Unit indicesArgs_p:  " indicesArgs_p); }
@@ -475,7 +479,7 @@ function store_classNamesAncestors() {
 			_parentImplClsId = myRootClass "," _ancestors;
 			sub(/,$/, "", _parentImplClsId);
 			_indicesArgs     = part_getIndicesArgs(_clsName, _implClsName, params, metaComment, _parentImplClsId);
-	
+
 			store_anc(_clsName, _implClsName, _ancestors, _indicesArgs);
 		}
 	}
