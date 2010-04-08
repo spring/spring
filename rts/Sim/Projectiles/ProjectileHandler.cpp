@@ -175,13 +175,16 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				//! push_back this projectile for deletion
 				pci = pc.erase_delete_synced(pci);
 			} else {
+#ifdef UNSYNCED_PROJ_NOEVENT
+				projectileDrawer->ProjectileDestroyed(p);
+#else
 				pIt = unsyncedProjectileIDs.find(p->id);
 
 				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
 				unsyncedProjectileIDs.erase(pIt);
 
 				freeUnsyncedIDs.push_back(p->id);
-
+#endif
 				pci = pc.erase_delete(pci);
 			}
 		} else {
@@ -292,6 +295,10 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		maxUsedID = &maxUsedSyncedID;
 	} else {
 		unsyncedProjectiles.push(p);
+#ifdef UNSYNCED_PROJ_NOEVENT
+		projectileDrawer->ProjectileCreated(p);
+		return;
+#endif
 		freeIDs = &freeUnsyncedIDs;
 		proIDs = &unsyncedProjectileIDs;
 		maxUsedID = &maxUsedUnsyncedID;

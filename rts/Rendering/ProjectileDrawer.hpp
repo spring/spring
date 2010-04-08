@@ -17,13 +17,13 @@ struct FlyingPiece;
 struct piececmp;
 class IWorldObjectModelRenderer;
 
-struct ProjectileAdd {
+struct ProjectileBatch {
 	static void Add(CProjectile *p);
 	static void Remove(CProjectile *p);
 	static void Delete(CProjectile *p) { delete p; }
 };
 
-typedef ThreadListRender<std::set<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileAdd> ProjectileAddContainer;
+typedef ThreadListRender<std::set<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileBatch> ProjectileBatchContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 #if defined(USE_GML) && GML_ENABLE_SIM
 typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;
@@ -67,8 +67,8 @@ public:
 	void Update();
 	void UpdateDraw();
 
-	ProjectileAddContainer syncedProjectiles;    //! contains only projectiles that can change simulation state
-	ProjectileAddContainer unsyncedProjectiles;  //! contains only projectiles that cannot change simulation state
+	ProjectileBatchContainer syncedBatch;    //! contains only projectiles that can change simulation state
+	ProjectileBatchContainer unsyncedBatch;  //! contains only projectiles that cannot change simulation state
 
 	CTextureAtlas* textureAtlas;  //texture atlas for projectiles
 	CTextureAtlas* groundFXAtlas; //texture atlas for ground fx
