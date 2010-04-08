@@ -302,6 +302,10 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	lua_getglobal(L, "string"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
+	lua_pushstring(L, "coroutine"); lua_newtable(L);
+	lua_getglobal(L, "coroutine"); LightCopyTable(-2, -1); lua_pop(L, 1);
+	lua_rawset(L, -3);
+
 	if (!CopyRealRandomFuncs()) {
 		KillLua();
 		return false;
@@ -316,7 +320,7 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 		"next",           "pairs",        "ipairs",
 		"tonumber",       "tostring",     "type",
 		"collectgarbage", "gcinfo",
-		"unpack",
+		"unpack",         "select",
 		"getmetatable",   "setmetatable",
 		"rawequal",       "rawget",       "rawset",
 		"getfenv",        "setfenv",

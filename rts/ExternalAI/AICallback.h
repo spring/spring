@@ -146,6 +146,17 @@ public:
 
 	void DrawUnit(const char* unitName, float3 pos, float rotation, int lifetime, int teamId, bool transparent, bool drawBorder, int facing);
 
+	bool IsDebugDrawerEnabled() const;
+	// not implemented as members, but as commands. see AIHCDebugDraw
+	void AddDebugGraphPoint(int, float, float) {}
+	void DelDebugGraphPoints(int, int) {}
+	void SetDebugGraphPos(float, float) {}
+	void SetDebugGraphSize(float, float) {}
+	void SetDebugGraphLineColor(int, const float3&) {}
+	void SetDebugGraphLineLabel(int, const char*) {}
+
+
+
 	bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
 	float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing);
 

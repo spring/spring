@@ -16,6 +16,7 @@
 
 #include "creg/creg_cond.h"
 #include "gml.h"
+#include <set>
 
 /////////////////////////////////////////////////////////
 //
@@ -178,6 +179,85 @@ public:
 };
 
 
+
+
+
+template <class C, class R, class T, class D>
+class ThreadListRender {
+private:
+	typedef typename std::set<T>::const_iterator constSetIT;
+	typedef typename std::set<T>::iterator SetIT;
+	typedef typename std::vector<T>::const_iterator VecIT;
+
+public:
+	CR_DECLARE_STRUCT(ThreadListRender);
+
+	~ThreadListRender() {
+		clear();
+	}
+
+	void clear() {
+	}
+
+	void PostLoad() {
+	}
+
+	//! SIMULATION/SYNCED METHODS
+	void push(const T& x) {
+		D::Add(x);
+	}
+	void insert(const T& x) {
+		D::Add(x);
+	}
+
+	void erase_remove_synced(const T& x) {
+		D::Remove(x);
+	}
+
+	void remove_erased_synced() {
+	}
+
+public:
+	//! RENDER/UNSYNCED METHODS
+	void delay_add() {
+	}
+
+	void add_delayed() {
+	}
+
+	void erase_delete(const T& x) {
+		D::Remove(x);
+	}
+
+	void delay_delete() {
+	}
+
+	void delete_delayed() {
+	}
+
+	void enqueue(const T& x) {
+		D::Add(x);
+	}
+
+	void delay() {
+	}
+
+	void execute() {
+	}
+
+	void dequeue(const T& x) {
+		D::Remove(x);
+	}
+
+	void destroy() {
+	}
+
+private:
+};
+
+
+
+
 template <class T>
 class ThreadVectorSimRender {
 private:
@@ -266,8 +346,6 @@ public:
 };
 
 #else
-
-#include <set>
 
 template <class C, class R, class T>
 class ThreadListSimRender {
@@ -580,6 +658,247 @@ private:
 };
 
 
+
+
+
+
+
+
+template <class C, class R, class T, class D>
+class ThreadListRender {
+private:
+	typedef typename std::set<T>::const_iterator constSetIT;
+	typedef typename std::set<T>::iterator SetIT;
+	typedef typename std::vector<T>::const_iterator VecIT;
+
+public:
+	CR_DECLARE_STRUCT(ThreadListRender);
+
+	~ThreadListRender() {
+		clear();
+	}
+
+	void clear() {
+		delay_delete();
+		for(R::iterator it = contRender.begin(); it!=contRender.end(); ++it)
+			addRender.insert(*it);
+		contRender.clear();
+		delete_delayed();
+	}
+
+	void PostLoad() {
+	}
+
+	//! SIMULATION/SYNCED METHODS
+	void push(const T& x) {
+		preAddRender.insert(x);
+	}
+	void insert(const T& x) {
+		preAddRender.insert(x);
+	}
+
+	void erase_remove_synced(const T& x) {
+		removeRender.push_back(x);
+	}
+
+	void remove_erased_synced() {
+		for (VecIT it = removeRender.begin(); it != removeRender.end(); ++it) {
+			T s = *it;
+			size_t d;
+			if(!(d = contRender.erase(s)) && !addRender.erase(s) && !preAddRender.erase(s))
+				assert(false);
+			if(d)
+				D::Remove(s);
+		}
+		removeRender.clear();
+	}
+
+public:
+	//! RENDER/UNSYNCED METHODS
+	void delay_add() {
+		for (constSetIT it = preAddRender.begin(); it != preAddRender.end(); ++it) {
+			addRender.insert(*it);
+		}
+		preAddRender.clear();
+	}
+
+	void add_delayed() {
+		for (constSetIT it = addRender.begin(); it != addRender.end(); ++it) {
+			D::Add(*it);
+			contRender.insert(*it);
+		}
+		addRender.clear();
+	}
+
+	void erase_delete(const T& x) {
+		delRender.push_back(x);
+	}
+
+	void delay_delete() {
+		for (VecIT it = delRender.begin(); it != delRender.end(); ++it) {
+			postDelRender.insert(*it);
+		}
+		delRender.clear();
+	}
+
+	void delete_delayed() {
+		for (SetIT it = postDelRender.begin(); it != postDelRender.end();) {
+			T s = *it;
+			size_t d;
+			if((d = contRender.erase(s)) || addRender.erase(s)) {
+#ifdef _MSC_VER
+				it = postDelRender.erase(it);
+#else
+				postDelRender.erase(it++);
 #endif
+				if(d)
+					D::Remove(s);
+				D::Delete(s);
+			}
+			else
+				++it;
+		}
+	}
+
+	void enqueue(const T& x) {
+		simQueue.push_back(x);
+	}
+
+	void delay() {
+		for (VecIT it = simQueue.begin(); it != simQueue.end(); ++it) {
+			sharedQueue.push_back(*it);
+		}
+		simQueue.clear();
+	}
+
+	void execute() {
+		for (VecIT it = sharedQueue.begin(); it != sharedQueue.end(); ++it) {
+			D::Add(*it);
+		}
+		sharedQueue.clear();
+	}
+
+	void dequeue(const T& x) {
+		simDelQueue.push_back(x);
+	}
+
+	void destroy() {
+		for (VecIT it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
+			D::Remove(*it);
+		}
+		simDelQueue.clear();
+	}
+
+private:
+	std::vector<T> simQueue;
+	std::vector<T> sharedQueue;
+	std::vector<T> simDelQueue;
+
+	std::set<T> preAddRender;
+	std::set<T> addRender;
+	R contRender;
+	std::vector<T> delRender;
+	std::set<T> postDelRender;
+	std::vector<T> removeRender;
+};
+
+#endif
+
+
+
+template <class C, class R, class T>
+class ThreadListSim {
+private:
+	typedef typename C::iterator SimIT;
+	typedef typename std::set<T>::const_iterator constSetIT;
+	typedef typename std::set<T>::iterator SetIT;
+	typedef typename std::vector<T>::const_iterator VecIT;
+
+public:
+	CR_DECLARE_STRUCT(ThreadListSim);
+
+	~ThreadListSim() {
+		clear();
+	}
+
+	void clear() {
+		for(SimIT it = cont.begin(); it != cont.end(); ++it) {
+			delete *it;
+		}
+		cont.clear();
+		delete_erased_synced();
+	}
+
+	void PostLoad() {
+		for (SimIT it = cont.begin(); it != cont.end(); ++it) {
+		}
+	}
+
+	//! SIMULATION/SYNCED METHODS
+	void push(const T& x) {
+		cont.push_back(x);
+	}
+	void insert(const T& x) {
+		cont.insert(x);
+	}
+	SimIT insert(SimIT& it, const T& x) {
+		return cont.insert(it, x);
+	}
+
+	// keep same deletion order in MT and non-MT version to reduce risk for desync
+	SimIT erase_delete_synced(SimIT& it) {
+		del.push_back(*it);
+		return cont.erase(it);
+	}
+
+	bool can_delete_synced() {
+		return !del.empty();
+	}
+
+	void delete_erased_synced() {
+		for (VecIT it = del.begin(); it != del.end(); ++it) {
+			delete *it;
+		}
+		del.clear();
+	}
+
+	void resize(const size_t& s) {
+		cont.resize(s);
+	}
+
+	size_t size() const {
+		return cont.size();
+	}
+
+	bool empty() const {
+		return cont.empty();
+	}
+
+	SimIT begin() {
+		return cont.begin();
+	}
+
+	SimIT end() {
+		return cont.end();
+	}
+
+	SimIT erase_delete(SimIT& it) {
+#if !defined(USE_GML) || !GML_ENABLE_SIM
+		delete *it;
+#endif
+		return cont.erase(it);
+	}
+
+public:
+	typedef SimIT iterator;
+
+
+public: //!needed by CREG
+	C cont;
+	std::vector<T> del;
+
+private:
+};
+
 
 #endif // #ifndef TSC_H

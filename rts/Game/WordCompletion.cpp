@@ -38,6 +38,7 @@ void CWordCompletion::Reset()
 	words["/ctrlpanel "] = sl;
 	words["/distdraw "] = sl;
 	words["/disticon "] = sl;
+	words["/debugdrawai"] = sl;
 	words["/debuginfo sound"] = sl;
 	words["/debuginfo profiling"] = sl;
 	words["/incguiopacity "] = sl;

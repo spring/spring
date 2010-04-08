@@ -1270,6 +1270,8 @@ EXPORT(int              ) skirmishAiCallback_WeaponDef_getCustomParams(int skirm
 
 // END OBJECT WeaponDef
 
+EXPORT(bool             ) skirmishAiCallback_Debug_Drawer_isEnabled(int skirmishAIId);
+
 #if	defined(__cplusplus)
 } // extern "C"
 #endif

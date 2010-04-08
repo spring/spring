@@ -30,7 +30,10 @@ struct S3DOPrimitive {
 };
 
 struct S3DOPiece: public S3DModelPiece {
+	S3DOPiece() { parent = NULL; }
+
 	void DrawList() const;
+	void SetMinMaxExtends();
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
 	void Shatter(float, int, int, const float3&, const float3&) const;
 
@@ -71,23 +74,18 @@ class C3DOParser: public IModelParser
 		int Unknown_3;
 	} _Primitive;
 
-	typedef std::vector<float3> vertex_vector;
-
 public:
 	C3DOParser();
 
 	S3DModel* Load(const std::string& name);
 
 private:
-	void FindCenter(S3DOPiece* object) const;
-	float FindRadius(const S3DOPiece* object, float3 offset) const;
-	float FindHeight(const S3DOPiece* object, float3 offset) const;
 	void CalcNormals(S3DOPiece* o) const;
-
-	void GetPrimitives(S3DOPiece* obj, int pos, int num, vertex_vector* vv, int excludePrim);
+	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim);
 	void GetVertexes(_3DObject* o,S3DOPiece* object);
 	std::string GetText(int pos);
-	S3DOPiece* ReadChild(int pos,S3DOPiece* root, int *numobj);
+
+	S3DOPiece* LoadPiece(S3DModel*, int, S3DOPiece*, int*);
 
 	std::set<std::string> teamtex;
 

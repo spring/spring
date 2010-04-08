@@ -2,6 +2,7 @@
 
 #include "SkirmishAI.h"
 
+#include "Interface/AISEvents.h"
 #include "IAILibraryManager.h"
 #include "SkirmishAILibrary.h"
 #include "TimeProfiler.h"
@@ -46,7 +47,7 @@ void CSkirmishAI::Dieing() {
 int CSkirmishAI::HandleEvent(int topic, const void* data) const {
 
 	SCOPED_TIMER(timerName.c_str());
-	if (!dieing) {
+	if (!dieing || (topic == EVENT_RELEASE)) {
 		return library->HandleEvent(skirmishAIId, topic, data);
 	} else {
 		// to prevent log error spam, signal: OK

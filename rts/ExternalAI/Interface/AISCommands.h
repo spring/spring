@@ -124,8 +124,14 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
+	COMMAND_DRAWER_DEBUG_ADD_POINT                = 83,
+	COMMAND_DRAWER_DEBUG_DELETE_POINTS            = 84,
+	COMMAND_DRAWER_DEBUG_SET_POS                  = 85,
+	COMMAND_DRAWER_DEBUG_SET_SIZE                 = 86,
+	COMMAND_DRAWER_DEBUG_SET_LINE_COLOR           = 87,
+	COMMAND_DRAWER_DEBUG_SET_LINE_LABEL           = 88,
 };
-const int NUM_CMD_TOPICS                          = 83;
+const int NUM_CMD_TOPICS                          = 89;
 
 
 /**
@@ -229,6 +235,12 @@ enum UnitCommandOptions {
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
 		+ sizeof(struct SReclaimFeatureUnitCommand) \
+		+ sizeof(struct SAddPointDebugDrawCommand) \
+		+ sizeof(struct SDeletePointsDebugDrawCommand) \
+		+ sizeof(struct SSetPositionDebugDrawCommand) \
+		+ sizeof(struct SSetSizeDebugDrawCommand) \
+		+ sizeof(struct SSetLineColorDebugDrawCommand) \
+		+ sizeof(struct SSetLineLabelDebugDrawCommand) \
 		)
 
 /**
@@ -1429,7 +1441,7 @@ struct STraceRayCommand {
 /**
  * Pause or unpauses the game.
  * This is meant for debugging purposes.
- * Keep in mind that pause does not happen immediatly.
+ * Keep in mind that pause does not happen immediately.
  * It can take 1-2 frames in single- and up to 10 frames in multiplayer matches.
  */
 struct SPauseCommand {
@@ -1437,6 +1449,39 @@ struct SPauseCommand {
 	/// reason for the (un-)pause, or NULL
 	const char* reason;
 }; // COMMAND_PAUSE Game_setPause
+
+
+struct SAddPointDebugDrawCommand {
+	float x;
+	float y;
+	int lineId;
+}; // COMMAND_DRAWER_DEBUG_ADD_POINT Debug_Drawer_addPoint
+
+struct SDeletePointsDebugDrawCommand {
+	int lineId;
+	int numPoints;
+}; // COMMAND_DRAWER_DEBUG_DELETE_POINTS Debug_Drawer_deletePoints
+
+struct SSetPositionDebugDrawCommand {
+	float x;
+	float y;
+}; // COMMAND_DRAWER_DEBUG_SET_POS Debug_Drawer_setPosition
+
+struct SSetSizeDebugDrawCommand {
+	float x;
+	float y;
+}; // COMMAND_DRAWER_DEBUG_SET_SIZE Debug_Drawer_setSize
+
+struct SSetLineColorDebugDrawCommand {
+	int lineId;
+	short* color_colorS3;
+}; // COMMAND_DRAWER_DEBUG_SET_LINE_COLOR Debug_Drawer_setLineColor
+
+struct SSetLineLabelDebugDrawCommand {
+	int lineId;
+	const char* label;
+}; // COMMAND_DRAWER_DEBUG_SET_LINE_LABEL Debug_Drawer_setLineLabel
+
 
 /**
  * @brief Sets default values

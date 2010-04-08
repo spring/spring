@@ -22,6 +22,8 @@
 #include "System/Platform/byteorder.h"
 #include "System/Platform/errorhandler.h"
 
+static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
 
 S3DModel* CS3OParser::Load(const std::string& name)
 {
@@ -42,12 +44,11 @@ S3DModel* CS3OParser::Load(const std::string& name)
 		model->numobjects = 0;
 		model->tex1 = (char*) &fileBuf[header.texture1];
 		model->tex2 = (char*) &fileBuf[header.texture2];
+		model->mins = DEF_MIN_SIZE;
+		model->maxs = DEF_MAX_SIZE;
 	texturehandlerS3O->LoadS3OTexture(model);
 
-	SS3OPiece* rootPiece = LoadPiece(fileBuf, header.rootPiece, model);
-	rootPiece->type = MODELTYPE_S3O;
-
-	FindMinMax(rootPiece);
+	SS3OPiece* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPiece);
 
 	model->rootobject = rootPiece;
 	model->radius = header.radius;
@@ -56,29 +57,27 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
 	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
 
-	model->maxs = rootPiece->maxs;
-	model->mins = rootPiece->mins;
-
 	delete[] fileBuf;
 	return model;
 }
 
-SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model)
+SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned char* buf, int offset)
 {
 	model->numobjects++;
-
-	SS3OPiece* piece = new SS3OPiece;
-	piece->type = MODELTYPE_S3O;
 
 	Piece* fp = (Piece*)&buf[offset];
 	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
 
-	piece->offset.x = fp->xoffset;
-	piece->offset.y = fp->yoffset;
-	piece->offset.z = fp->zoffset;
-	piece->primitiveType = fp->primitiveType;
-	piece->name = (char*) &buf[fp->name];
-
+	SS3OPiece* piece = new SS3OPiece();
+		piece->type = MODELTYPE_S3O;
+		piece->mins = DEF_MIN_SIZE;
+		piece->maxs = DEF_MAX_SIZE;
+		piece->offset.x = fp->xoffset;
+		piece->offset.y = fp->yoffset;
+		piece->offset.z = fp->zoffset;
+		piece->primitiveType = fp->primitiveType;
+		piece->name = (char*) &buf[fp->name];
+		piece->parent = parent;
 
 	// retrieve each vertex
 	int vertexOffset = fp->vertices;
@@ -114,64 +113,39 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model
 
 	piece->isEmpty = piece->vertexDrawOrder.empty();
 	piece->vertexCount = piece->vertices.size();
+	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
 	piece->SetVertexTangents();
+	piece->SetMinMaxExtends();
+
+	model->mins.x = std::min(piece->mins.x, model->mins.x);
+	model->mins.y = std::min(piece->mins.y, model->mins.y);
+	model->mins.z = std::min(piece->mins.z, model->mins.z);
+	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
+	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
+	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
+
+	const float3 cvScales = piece->maxs - piece->mins;
+	const float3 cvOffset =
+		(piece->maxs - piece->goffset) +
+		(piece->mins - piece->goffset);
+
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
+	piece->colvol->Enable();
+
 
 	int childTableOffset = fp->childs;
 
 	for (int a = 0; a < fp->numChilds; ++a) {
 		int childOffset = swabdword(*(int*) &buf[childTableOffset]);
 
-		SS3OPiece* childPiece = LoadPiece(buf, childOffset, model);
+		SS3OPiece* childPiece = LoadPiece(model, piece, buf, childOffset);
 		piece->childs.push_back(childPiece);
 
 		childTableOffset += sizeof(int);
 	}
 
 	return piece;
-}
-
-void CS3OParser::FindMinMax(SS3OPiece* o) const
-{
-	std::vector<S3DModelPiece*>::iterator si;
-
-	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
-		FindMinMax(static_cast<SS3OPiece*>(*si));
-	}
-
-	float maxx = -1000.0f, maxy = -1000.0f, maxz = -1000.0f;
-	float minx = 10000.0f, miny = 10000.0f, minz = 10000.0f;
-
-	std::vector<SS3OVertex>::iterator vi;
-
-	for (vi = o->vertices.begin(); vi != o->vertices.end(); ++vi) {
-		maxx = std::max(maxx, vi->pos.x);
-		maxy = std::max(maxy, vi->pos.y);
-		maxz = std::max(maxz, vi->pos.z);
-
-		minx = std::min(minx, vi->pos.x);
-		miny = std::min(miny, vi->pos.y);
-		minz = std::min(minz, vi->pos.z);
-	}
-
-	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
-		maxx = std::max(maxx, (*si)->offset.x + (*si)->maxs.x);
-		maxy = std::max(maxy, (*si)->offset.y + (*si)->maxs.y);
-		maxz = std::max(maxz, (*si)->offset.z + (*si)->maxs.z);
-
-		minx = std::min(minx, (*si)->offset.x + (*si)->mins.x);
-		miny = std::min(miny, (*si)->offset.y + (*si)->mins.y);
-		minz = std::min(minz, (*si)->offset.z + (*si)->mins.z);
-	}
-
-	o->maxs = float3(maxx, maxy, maxz);
-	o->mins = float3(minx, miny, minz);
-
-	const float3 cvScales((o->maxs - o->mins)       );
-	const float3 cvOffset((o->maxs + o->mins) * 0.5f);
-
-	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
-	o->colvol->Enable();
 }
 
 
@@ -243,6 +217,18 @@ void SS3OPiece::DrawList() const
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+void SS3OPiece::SetMinMaxExtends()
+{
+	for (std::vector<SS3OVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
+		mins.x = std::min(mins.x, (goffset.x + vi->pos.x));
+		mins.y = std::min(mins.y, (goffset.y + vi->pos.y));
+		mins.z = std::min(mins.z, (goffset.z + vi->pos.z));
+		maxs.x = std::max(maxs.x, (goffset.x + vi->pos.x));
+		maxs.y = std::max(maxs.y, (goffset.y + vi->pos.y));
+		maxs.z = std::max(maxs.z, (goffset.z + vi->pos.z));
+	}
 }
 
 void SS3OPiece::SetVertexTangents()

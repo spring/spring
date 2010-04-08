@@ -18,22 +18,22 @@
 
 inline void glVertexf3(const float3 &v)
 {
-	glVertex3f(v.x,v.y,v.z);
+	glVertex3f(v.x, v.y, v.z);
 }
 
 inline void glColorf3(const float3& v)
 {
-	glColor3f(v.x,v.y,v.z);
+	glColor3f(v.x, v.y, v.z);
 }
 
 inline void glNormalf3(const float3 &v)
 {
-	glNormal3f(v.x,v.y,v.z);
+	glNormal3f(v.x, v.y, v.z);
 }
 
 inline void glTranslatef3(const float3 &v)
 {
-	glTranslatef(v.x,v.y,v.z);
+	glTranslatef(v.x, v.y, v.z);
 }
 
 inline void glSecondaryColorf3(const float3& v)

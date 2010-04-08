@@ -15,6 +15,7 @@ struct SS3OVertex {
 };
 
 struct SS3OPiece: public S3DModelPiece {
+	SS3OPiece() { parent = NULL; }
 	~SS3OPiece() {
 		vertices.clear();
 		vertexDrawOrder.clear();
@@ -24,6 +25,7 @@ struct SS3OPiece: public S3DModelPiece {
 	}
 
 	void DrawList() const;
+	void SetMinMaxExtends();
 	void SetVertexTangents();
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
 	void Shatter(float, int, int, const float3&, const float3&) const;
@@ -54,8 +56,7 @@ public:
 	S3DModel* Load(const std::string& name);
 
 private:
-	SS3OPiece* LoadPiece(unsigned char* buf, int offset, S3DModel* model);
-	void FindMinMax(SS3OPiece* object) const;
+	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);
 	void SetVertexTangents(SS3OPiece*);
 };
 

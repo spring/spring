@@ -27,6 +27,8 @@ struct S3DModelPiece {
 	std::string name;
 	std::vector<S3DModelPiece*> childs;
 
+	S3DModelPiece* parent;
+
 	bool isEmpty;
 	unsigned int vertexCount;
 	unsigned int displist;
@@ -37,17 +39,18 @@ struct S3DModelPiece {
 	// defaults to a box
 	CollisionVolume* colvol;
 
-	// TODO?
-	// float3 orientation;
+	// float3 dir;    // TODO?
 	float3 mins;
 	float3 maxs;
-	float3 offset;
+	float3 offset;    // wrt. parent
+	float3 goffset;   // wrt. root
 
 	virtual ~S3DModelPiece();
 	virtual void DrawList() const = 0;
 	virtual int GetVertexCount() const { return vertexCount; }
 	virtual int GetNormalCount() const { return 0; }
 	virtual int GetTxCoorCount() const { return 0; }
+	virtual void SetMinMaxExtends() {}
 	virtual void SetVertexTangents() {}
 	virtual const float3& GetVertexPos(int) const = 0;
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
@@ -81,7 +84,7 @@ struct S3DModel
 
 struct LocalModelPiece
 {
-	//todo: add (visibility) maxradius!
+	// TODO: add (visibility) maxradius!
 
 	float3 pos;
 	float3 rot; //! in radian

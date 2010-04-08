@@ -15,7 +15,7 @@ using std::set;
 #include "FileSystem/VFSModes.h"
 
 class float3;
-class float4;
+struct float4;
 class LuaTable;
 class LuaParser;
 struct lua_State;

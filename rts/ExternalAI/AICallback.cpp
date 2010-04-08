@@ -21,6 +21,7 @@
 #include "NetProtocol.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
+#include "Rendering/DebugDrawerAI.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/UnitDrawer.h"
@@ -1058,6 +1059,9 @@ float CAICallback::GetElevation(float x,float z)
 	return ground->GetHeight2(x,z);
 }
 
+
+
+
 void CAICallback::LineDrawerStartPath(const float3& pos, const float* color)
 {
 	lineDrawer.StartPath(pos, color);
@@ -1098,6 +1102,7 @@ void CAICallback::LineDrawerRestartSameColor()
 	lineDrawer.RestartSameColor();
 }
 
+
 int CAICallback::CreateSplineFigure(float3 pos1,float3 pos2,float3 pos3,float3 pos4,float width,int arrow,int lifetime,int group)
 {
 	return geometricObjects->AddSpline(pos1,pos2,pos3,pos4,width,arrow,lifetime,group);
@@ -1118,6 +1123,8 @@ void CAICallback::DeleteFigureGroup(int group)
 	geometricObjects->DeleteGroup(group);
 }
 
+
+
 void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int lifetime,int teamId,bool transparent,bool drawBorder,int facing)
 {
 	CUnitDrawer::TempDrawUnit tdu;
@@ -1135,11 +1142,14 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 
 	GML_STDMUTEX_LOCK(temp); // DrawUnit
 
-	if(transparent)
+	if (transparent) {
 		unitDrawer->tempTransparentDrawUnits.insert(tp);
-	else
+	} else {
 		unitDrawer->tempDrawUnits.insert(tp);
+	}
 }
+
+
 
 bool CAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing)
 {
@@ -1435,36 +1445,39 @@ bool CAICallback::GetValue(int id, void *data)
 int CAICallback::HandleCommand(int commandId, void* data)
 {
 	switch (commandId) {
-		case AIHCQuerySubVersionId:
+		case AIHCQuerySubVersionId: {
 			return 1; // current version of Handle Command interface
+		} break;
 		case AIHCAddMapPointId: {
 			const AIHCAddMapPoint* pnt = (AIHCAddMapPoint*) data;
 			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)pnt->pos.x, (short)pnt->pos.z, std::string(pnt->label), false));
 			return 1;
-		}
+		} break;
 		case AIHCAddMapLineId: {
 			const AIHCAddMapLine* line = (AIHCAddMapLine*) data;
 			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)line->posfrom.x, (short)line->posfrom.z, (short)line->posto.x, (short)line->posto.z, false));
 			return 1;
-		}
-		case AIHCRemoveMapPointId:
+		} break;
+		case AIHCRemoveMapPointId: {
 			net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z));
 			return 1;
-		case AIHCSendStartPosId:
+		} break;
+		case AIHCSendStartPosId: {
 			SendStartPos(((AIHCSendStartPos *)data)->ready,((AIHCSendStartPos *)data)->pos);
 			return 1;
+		} break;
 		case AIHCGetUnitDefByIdId: {
 			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
 			return 0;
-		}
+		} break;
 		case AIHCGetWeaponDefByIdId: {
 			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
 			return 0;
-		}
+		} break;
 		case AIHCGetFeatureDefByIdId: {
 			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
 			return 0;
-		}
+		} break;
 
 		case AIHCTraceRayId: {
 			AIHCTraceRay* cmdData = (AIHCTraceRay*) data;
@@ -1490,7 +1503,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			}
 
 			return 1;
-		}
+		} break;
 
 		case AIHCPauseId: {
 			AIHCPause* cmdData = (AIHCPause*) data;
@@ -1501,21 +1514,57 @@ int CAICallback::HandleCommand(int commandId, void* data)
 					team, cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
 
 			return 1;
-		}
+		} break;
 
 		case AIHCGetDataDirId: {
-
 			// do nothing
 			// this event will never end up here,
 			// as it is handled in the C layer directly
 			// see Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
 
 			return 0;
-		}
+		} break;
+
+		case AIHCDebugDrawId: {
+			AIHCDebugDraw* cmdData = (AIHCDebugDraw*) data;
+
+			switch (cmdData->cmdMode) {
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADDPOINT: {
+					debugDrawerAI->AddGraphPoint(this->team, cmdData->lineId, cmdData->x, cmdData->y);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DELPOINTS: {
+					debugDrawerAI->DelGraphPoints(this->team, cmdData->lineId, cmdData->numPoints);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETPOS: {
+					debugDrawerAI->SetGraphPos(this->team, cmdData->x, cmdData->y);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETSIZE: {
+					debugDrawerAI->SetGraphSize(this->team, cmdData->x, cmdData->y);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINECOLOR: {
+					debugDrawerAI->SetGraphLineColor(this->team, cmdData->lineId, cmdData->color);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SETLINELABEL: {
+					debugDrawerAI->SetGraphLineLabel(this->team, cmdData->lineId, cmdData->label);
+				} break;
+				default: {
+				} break;
+			}
+
+			return 1;
+		} break;
 
 		default:
 			return 0;
 	}
+}
+
+bool CAICallback::IsDebugDrawerEnabled() const
+{
+	// this function will never be called,
+	// as it is handled in the C layer directly
+	// see eg. Debug_Drawer_isEnabled in rts/ExternalAI/Interface/SSkirmishAICallback.h
+	return debugDrawerAI->GetDraw();
 }
 
 int CAICallback::GetNumUnitDefs ()

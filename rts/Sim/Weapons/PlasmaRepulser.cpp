@@ -3,21 +3,21 @@
 #include "StdAfx.h"
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "LogOutput.h"
 #include "PlasmaRepulser.h"
+#include "Lua/LuaRules.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/Unsynced/RepulseGfx.h"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
-#include "Weapon.h"
-#include "mmgr.h"
-#include "myMath.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/Weapon.h"
+#include "System/mmgr.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL));
 
@@ -143,83 +143,101 @@ void CPlasmaRepulser::Update(void)
 		wasDrawn = drawMe;
 	}
 
-	if (isEnabled) {
-		for (std::list<CWeaponProjectile*>::iterator pi=incoming.begin();pi!=incoming.end();++pi) {
-			const float3 dif = (*pi)->pos-owner->pos;
-			if ((*pi)->checkCol && dif.SqLength()<sqRadius && curPower > (*pi)->weaponDef->damages[0]) {
-				if (teamHandler->Team(owner->team)->energy > weaponDef->shieldEnergyUse) {
-					rechargeDelay = defRechargeDelay;
-					if (weaponDef->shieldRepulser) {
-						// bounce the projectile
-						const int type = (*pi)->ShieldRepulse(this, weaponPos,
-						                                      weaponDef->shieldForce,
-						                                      weaponDef->shieldMaxSpeed);
-						if (type == 0) {
-							continue;
-						}
-						else if (type == 1) {
-							owner->UseEnergy(weaponDef->shieldEnergyUse);
-							if (weaponDef->shieldPower != 0) {
-								curPower -= (*pi)->weaponDef->damages[0];
-							}
-						}
-						else {
-							owner->UseEnergy(weaponDef->shieldEnergyUse / 30.0f);
-							if (weaponDef->shieldPower != 0) {
-								curPower -= (*pi)->weaponDef->damages[0] / 30.0f;
-							}
-						}
+	if (!isEnabled) {
+		return;
+	}
 
-						if (weaponDef->visibleShieldRepulse) {
-							std::list<CWeaponProjectile*>::iterator i;
-							for (i=hasGfx.begin();i!=hasGfx.end();i++)
-								if (*i==*pi) {
-									break;
-								}
-							if (i == hasGfx.end()) {
-								hasGfx.insert(hasGfx.end(),*pi);
-								const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
-								const float3 color = (weaponDef->shieldGoodColor * colorMix) +
-								                     (weaponDef->shieldBadColor * (1.0f - colorMix));
-								new CRepulseGfx(owner, *pi, radius, color);
-							}
-						}
+	for (std::list<CWeaponProjectile*>::iterator pi = incoming.begin(); pi != incoming.end(); ++pi) {
+		CWeaponProjectile* pro = *pi;
 
-						if (defHitFrames > 0) {
-							hitFrames = defHitFrames;
-						}
+		if (!pro->checkCol) {
+			continue;
+		}
+
+		if ((pro->pos - owner->pos).SqLength() > sqRadius) {
+			// projectile does not hit the shield, don't touch it
+			continue;
+		}
+
+		if (luaRules && luaRules->ShieldPreDamaged(pro, this, owner, weaponDef->shieldRepulser)) {
+			// gadget handles the collision event, don't touch the projectile
+			continue;
+		}
+
+		if (curPower < pro->weaponDef->damages[0]) {
+			// shield does not have enough power, don't touch the projectile
+			continue;
+		}
+
+		if (teamHandler->Team(owner->team)->energy < weaponDef->shieldEnergyUse) {
+			// team does not have enough energy, don't touch the projectile
+			continue;
+		}
+
+		rechargeDelay = defRechargeDelay;
+
+		if (weaponDef->shieldRepulser) {
+			// bounce the projectile
+			const int type = pro->ShieldRepulse(this, weaponPos,
+													weaponDef->shieldForce,
+													weaponDef->shieldMaxSpeed);
+
+			if (type == 0) {
+				continue;
+			} else if (type == 1) {
+				owner->UseEnergy(weaponDef->shieldEnergyUse);
+
+				if (weaponDef->shieldPower != 0) {
+					curPower -= pro->weaponDef->damages[0];
+				}
+			} else {
+				owner->UseEnergy(weaponDef->shieldEnergyUse / 30.0f);
+
+				if (weaponDef->shieldPower != 0) {
+					curPower -= pro->weaponDef->damages[0] / 30.0f;
+				}
+			}
+
+			if (weaponDef->visibleShieldRepulse) {
+				std::list<CWeaponProjectile*>::iterator i;
+
+				for (i = hasGfx.begin(); i != hasGfx.end(); ++i) {
+					if (*i == pro) {
+						break;
 					}
-					else {
-					  // kill the projectile
-						if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
-							if (weaponDef->shieldPower != 0) {
-								curPower -= (*pi)->weaponDef->damages[0];
-							}
-							(*pi)->Collision(owner);
-							if (defHitFrames > 0) {
-								hitFrames = defHitFrames;
-							}
-						}
-					}
-				} else {
-					// Calculate the amount of energy we wanted to pull
-					/*
-					Domipheus: TODO Commented out for now, ShieldRepulse has side effects, design needs altering.
+				}
 
-					if(weaponDef->shieldRepulser) {	//bounce the projectile
-						int type=(*pi)->ShieldRepulse(this,weaponPos,weaponDef->shieldForce,weaponDef->shieldMaxSpeed);
-						if (type==1){
-							teamHandler->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
-						} else {
-							teamHandler->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse/30.0f;
-						}
-					} else {						//kill the projectile
-						teamHandler->Team(owner->team)->energyPullAmount += weaponDef->shieldEnergyUse;
-					}*/
+				if (i == hasGfx.end()) {
+					hasGfx.insert(hasGfx.end(), pro);
+
+					const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
+					const float3 color =
+						(weaponDef->shieldGoodColor * colorMix) +
+						(weaponDef->shieldBadColor * (1.0f - colorMix));
+
+					new CRepulseGfx(owner, pro, radius, color);
+				}
+			}
+
+			if (defHitFrames > 0) {
+				hitFrames = defHitFrames;
+			}
+		} else {
+			// kill the projectile
+			if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
+				if (weaponDef->shieldPower != 0) {
+					curPower -= pro->weaponDef->damages[0];
+				}
+
+				pro->Collision(owner);
+
+				if (defHitFrames > 0) {
+					hitFrames = defHitFrames;
 				}
 			}
 		}
 	}
+
 }
 
 
