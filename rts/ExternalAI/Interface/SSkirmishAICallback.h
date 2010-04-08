@@ -2148,6 +2148,8 @@ struct SSkirmishAICallback {
 
 // END OBJECT WeaponDef
 
+	bool              (CALLING_CONV *Debug_Drawer_isEnabled)(int skirmishAIId);
+
 };
 
 #if	defined(__cplusplus)

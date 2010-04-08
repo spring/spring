@@ -139,6 +139,7 @@ CEventHandler::CEventHandler()
 	SetupEvent("TerraformComplete",      NULL, CONTROL_BIT);
 	SetupEvent("MoveCtrlNotify",         NULL, CONTROL_BIT);
 	SetupEvent("UnitPreDamaged",         NULL, CONTROL_BIT);
+	SetupEvent("ShieldPreDamaged",       NULL, CONTROL_BIT);
 }
 
 

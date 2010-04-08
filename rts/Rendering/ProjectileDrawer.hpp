@@ -7,17 +7,23 @@
 
 #include "lib/gml/ThreadSafeContainers.h"
 #include "Rendering/GL/FBO.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "System/EventClient.h"
 
 class CTextureAtlas;
-class AtlasedTexture;
-class CProjectile;
+struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
 struct piececmp;
 class IWorldObjectModelRenderer;
 
-typedef ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
+struct ProjectileAdd {
+	static void Add(CProjectile *p);
+	static void Remove(CProjectile *p);
+	static void Delete(CProjectile *p) { delete p; }
+};
+
+typedef ThreadListRender<std::set<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileAdd> ProjectileAddContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 #if defined(USE_GML) && GML_ENABLE_SIM
 typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;
@@ -54,7 +60,15 @@ public:
 	void ProjectileCreated(const CProjectile*);
 	void ProjectileDestroyed(const CProjectile*);
 
+	void AddRenderProjectile(const CProjectile*);
+	void RemoveRenderProjectile(const CProjectile*);
 
+	void DeleteSynced();
+	void Update();
+	void UpdateDraw();
+
+	ProjectileAddContainer syncedProjectiles;    //! contains only projectiles that can change simulation state
+	ProjectileAddContainer unsyncedProjectiles;  //! contains only projectiles that cannot change simulation state
 
 	CTextureAtlas* textureAtlas;  //texture atlas for projectiles
 	CTextureAtlas* groundFXAtlas; //texture atlas for ground fx

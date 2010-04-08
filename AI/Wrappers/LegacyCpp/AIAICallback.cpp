@@ -1695,7 +1695,17 @@ int CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, flo
 	float pos4_f3[3];
 	pos4.copyInto(pos4_f3);
 
-	SCreateSplineFigureDrawerCommand cmd = {pos1_f3, pos2_f3, pos3_f3, pos4_f3, width, arrow, lifeTime, figureGroupId};
+	SCreateSplineFigureDrawerCommand cmd = {
+		pos1_f3,
+		pos2_f3,
+		pos3_f3,
+		pos4_f3,
+		width,
+		arrow,
+		lifeTime,
+		figureGroupId
+	};
+
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd);
 	return cmd.ret_newFigureGroupId;
 }
@@ -1707,7 +1717,15 @@ int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int a
 	float pos2_f3[3];
 	pos2.copyInto(pos2_f3);
 
-	SCreateLineFigureDrawerCommand cmd = {pos1_f3, pos2_f3, width, arrow, lifeTime, figureGroupId};
+	SCreateLineFigureDrawerCommand cmd = {
+		pos1_f3,
+		pos2_f3,
+		width,
+		arrow,
+		lifeTime,
+		figureGroupId
+	};
+
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd);
 	return cmd.ret_newFigureGroupId;
 }
@@ -1734,9 +1752,59 @@ void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int l
 
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
-	SDrawUnitDrawerCommand cmd = {sAICallback->getUnitDefByName(skirmishAIId, name), pos_f3, rotation, lifeTime, unitTeamId, transparent, drawBorder, facing};
+	SDrawUnitDrawerCommand cmd = {
+		sAICallback->getUnitDefByName(skirmishAIId, name),
+		pos_f3,
+		rotation,
+		lifeTime,
+		unitTeamId,
+		transparent,
+		drawBorder,
+		facing
+	};
+
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
 }
+
+
+
+bool CAIAICallback::IsDebugDrawerEnabled() const {
+	return sAICallback->Debug_Drawer_isEnabled(skirmishAIId);
+}
+
+void CAIAICallback::AddDebugGraphPoint(int lineId, float x, float y) {
+	SAddPointDebugDrawCommand cmd = {x, y, lineId};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_ADD_POINT, &cmd);
+}
+void CAIAICallback::DelDebugGraphPoints(int lineId, int numPoints) {
+	SDeletePointsDebugDrawCommand cmd = {lineId, numPoints};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_DELETE_POINTS, &cmd);
+}
+
+void CAIAICallback::SetDebugGraphPos(float x, float y) {
+	SSetPositionDebugDrawCommand cmd = {x, y};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_POS, &cmd);
+}
+void CAIAICallback::SetDebugGraphSize(float w, float h) {
+	SSetSizeDebugDrawCommand cmd = {w, h};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_SIZE, &cmd);
+}
+void CAIAICallback::SetDebugGraphLineColor(int lineId, const float3& color) {
+
+	short color_s3[3];
+	color_s3[0] = (short) color[0] * 256;
+	color_s3[1] = (short) color[1] * 256;
+	color_s3[2] = (short) color[2] * 256;
+
+	SSetLineColorDebugDrawCommand cmd = {lineId, color_s3};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_LINE_COLOR, &cmd);
+}
+void CAIAICallback::SetDebugGraphLineLabel(int lineId, const char* label) {
+	SSetLineLabelDebugDrawCommand cmd = {lineId, label};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DEBUG_SET_LINE_LABEL, &cmd);
+}
+
+
 
 int CAIAICallback::HandleCommand(int commandId, void* data) {
 	int ret = -99;

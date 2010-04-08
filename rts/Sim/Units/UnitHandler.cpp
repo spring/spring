@@ -15,6 +15,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/AirBaseHandler.h"
@@ -149,8 +150,6 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
 
-	GML_STDMUTEX_LOCK(runit); // AddUnit
-
 	return unit->id;
 }
 
@@ -216,12 +215,24 @@ void CUnitHandler::Update()
 		GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 		GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
 
+		{
+			GML_STDMUTEX_LOCK(runit);
+
+			unitDrawer->DeleteSynced();
+		}
+
 		while (!toBeRemoved.empty()) {
 			CUnit* delUnit = toBeRemoved.back();
 			toBeRemoved.pop_back();
 
 			DeleteUnitNow(delUnit);
 		}
+	}
+
+	{
+		GML_STDMUTEX_LOCK(runit);
+
+		unitDrawer->Update();
 	}
 
 	GML_UPDATE_TICKS();

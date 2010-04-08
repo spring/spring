@@ -21,19 +21,22 @@
 #include "LuaWeaponDefs.h"
 #include "LuaOpenGL.h"
 
-#include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystem.h"
+#include "Sim/Weapons/Weapon.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+
 #include <assert.h>
 
 CLuaRules* luaRules = NULL;
@@ -119,6 +122,7 @@ CLuaRules::CLuaRules()
 	haveDrawUnit               = HasCallIn("DrawUnit");
 	haveAICallIn               = HasCallIn("AICallIn");
 	haveUnitPreDamaged         = HasCallIn("UnitPreDamaged");
+	haveShieldPreDamaged       = HasCallIn("ShieldPreDamaged");
 
 	SetupUnsyncedFunction("DrawUnit");
 	SetupUnsyncedFunction("AICallIn");
@@ -858,6 +862,53 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pop(L, 2);
 	return true;
 }
+
+bool CLuaRules::ShieldPreDamaged(
+	const CProjectile* projectile,
+	const CWeapon* shieldEmitter,
+	const CUnit* shieldCarrier,
+	bool bounceProjectile
+) {
+	if (!haveShieldPreDamaged) {
+		return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5 + 1);
+
+	const int errfunc(SetupTraceback());
+	static const LuaHashString cmdStr("ShieldPreDamaged");
+
+	bool ret = false;
+
+	if (!cmdStr.GetGlobalFunc(L)) {
+		if (errfunc) {
+			lua_pop(L, 1);
+		}
+
+		// undefined call-in
+		return ret;
+	}
+
+	const CUnit* projectileOwner = projectile->owner();
+
+	// push the call-in arguments
+	lua_pushnumber(L, projectile->id);
+	lua_pushnumber(L, ((projectileOwner != NULL)? projectileOwner->id: -1));
+	lua_pushnumber(L, shieldEmitter->weaponNum);
+	lua_pushnumber(L, shieldCarrier->id);
+	lua_pushboolean(L, bounceProjectile);
+
+	// call the routine
+	RunCallInTraceback(cmdStr, 5, 1, errfunc);
+
+	// pop the return-value; must be true or false
+	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	lua_pop(L, -1);
+
+	return ret;
+}
+
 
 
 /******************************************************************************/
