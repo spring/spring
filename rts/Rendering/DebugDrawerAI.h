@@ -115,6 +115,9 @@ private:
 			const float3& GetPos() const { return pos; }
 			const float3& GetSize() const { return size; }
 
+			void SetPos(const float3& p) { pos = p; }
+			void SetSize(const float3& s) { size = s; }
+
 			bool operator < (const Texture& t) const { return (id < t.id); }
 
 		private:
