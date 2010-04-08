@@ -60,8 +60,8 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* lmp, int f, CUnit* owner, float radius GML_PARG_C):
-	CProjectile(pos, speed, owner, true, false, true GML_PARG_P),
+CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* lmp, int f, CUnit* owner, float radius):
+	CProjectile(pos, speed, owner, true, false, true),
 	flags(f),
 	dispList(lmp? lmp->displist: 0),
 	omp(NULL),
@@ -176,7 +176,7 @@ void CPieceProjectile::Collision()
 		pos += norm * 0.1f;
 	} else {
 		if (flags & PF_Explode) {
-			helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner(), false, 1.0f, false, false, 0, 0, ZeroVector, -1);
+			helper->Explosion(pos, DamageArray(50), 5, 0, 10, owner(), false, 1.0f, false, false, 0, 0, ZeroVector, -1);
 		}
 		if (flags & PF_Smoke) {
 			if (flags & PF_NoCEGTrail) {
@@ -200,7 +200,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 	if (unit == owner())
 		return;
 	if (flags & PF_Explode) {
-		helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner(), false, 1.0f, false, false, 0, unit, ZeroVector, -1);
+		helper->Explosion(pos, DamageArray(50), 5, 0, 10, owner(), false, 1.0f, false, false, 0, unit, ZeroVector, -1);
 	}
 	if (flags & PF_Smoke) {
 		if (flags & PF_NoCEGTrail) {

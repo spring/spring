@@ -23,8 +23,8 @@ CR_REG_METADATA(CBubbleProjectile, (
 	));
 
 
-CBubbleProjectile::CBubbleProjectile(float3 pos,float3 speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float alpha GML_PARG_C):
-	CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
+CBubbleProjectile::CBubbleProjectile(float3 pos,float3 speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float alpha):
+	CProjectile(pos, speed, owner, false, false, false),
 	ttl((int) ttl),
 	alpha(alpha),
 	size(startSize * 0.4f),

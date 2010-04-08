@@ -22,8 +22,8 @@ CR_REG_METADATA(CRepulseGfx,(
 	CR_RESERVED(8)
 	));
 
-CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, float3 color GML_PARG_C):
-	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false GML_PARG_P),
+CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, float3 color):
+	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false),
 	repulsed(repulsed),
 	sqMaxDist((maxDist * maxDist) + 100),
 	age(0),

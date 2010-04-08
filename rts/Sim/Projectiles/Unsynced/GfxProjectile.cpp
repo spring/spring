@@ -35,8 +35,8 @@ CGfxProjectile::CGfxProjectile(): CProjectile()
 	checkCol = false;
 }
 
-CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color GML_PARG_C):
-	CProjectile(pos, speed, 0, false, false, false GML_PARG_P),
+CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color):
+	CProjectile(pos, speed, 0, false, false, false),
 	creationTime(gs->frameNum),
 	lifeTime(lifeTime)
 {

@@ -24,7 +24,7 @@ public:
 	CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
 			float3 targetPos,float areaOfEffect, float maxSpeed,float tracking,
 			int uptime, CUnit* target, const WeaponDef* weaponDef,
-			CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError GML_PARG_H);
+			CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError);
 	~CStarburstProjectile(void);
 	void Collision(CUnit* unit);
 	void Collision();

@@ -55,7 +55,7 @@ CProjectile::CProjectile():
 }
 
 
-void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
+void CProjectile::Init(const float3& explosionPos, CUnit* owner)
 {
 	if (owner) {
 		ownerId = owner->id;
@@ -69,7 +69,7 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 }
 
 
-CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece GML_PARG_C):
+CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
 	CExpGenSpawnable(pos),
 	synced(isSynced),
 	weapon(isWeapon),

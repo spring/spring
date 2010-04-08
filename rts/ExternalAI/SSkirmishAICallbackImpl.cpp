@@ -549,6 +549,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 					cmd->drawBorder, cmd->facing);
 			break;
 		}
+
 		case COMMAND_TRACE_RAY: {
 			STraceRayCommand* cCmdData = (STraceRayCommand*) commandData;
 			AIHCTraceRay cppCmdData = {
@@ -564,8 +565,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 			cCmdData->rayLen = cppCmdData.rayLen;
 			cCmdData->hitUID = cppCmdData.hitUID;
-			break;
-		}
+		} break;
+
 		case COMMAND_PAUSE: {
 			const SPauseCommand* cmd = (SPauseCommand*) commandData;
 			AIHCPause cppCmdData = {
@@ -574,11 +575,171 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCPauseId, &cppCmdData);
-			break;
-		}
+		} break;
 
-		default:
-		{
+
+
+		case COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT: {
+			SDebugDrawerAddGraphPointCommand* cCmdData = (SDebugDrawerAddGraphPointCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_GRAPH_POINT,
+				cCmdData->x, cCmdData->y,
+				0.0f, 0.0f,
+				cCmdData->lineId, 0,
+				ZeroVector,
+				"",
+				0, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS: {
+			SDebugDrawerDeleteGraphPointsCommand* cCmdData = (SDebugDrawerDeleteGraphPointsCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_GRAPH_POINTS,
+				0.0f, 0.0f,
+				0.0f, 0.0f,
+				cCmdData->lineId, cCmdData->numPoints,
+				ZeroVector,
+				"",
+				0, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_SET_GRAPH_POS: {
+			SDebugDrawerSetGraphPositionCommand* cCmdData = (SDebugDrawerSetGraphPositionCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_POS,
+				cCmdData->x, cCmdData->y,
+				0.0f, 0.0f,
+				0, 0,
+				ZeroVector,
+				"",
+				0, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE: {
+			SDebugDrawerSetGraphSizeCommand* cCmdData = (SDebugDrawerSetGraphSizeCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_SIZE,
+				0.0f, 0.0f,
+				cCmdData->w, cCmdData->h,
+				0, 0,
+				ZeroVector,
+				"",
+				0, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR: {
+			SDebugDrawerSetGraphLineColorCommand* cCmdData = (SDebugDrawerSetGraphLineColorCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_COLOR,
+				0.0f, 0.0f,
+				0.0f, 0.0f,
+				cCmdData->lineId, 0,
+				float3(cCmdData->color.x, cCmdData->color.y, cCmdData->color.z),
+				"",
+				0, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL: {
+			SDebugDrawerSetGraphLineLabelCommand* cCmdData = (SDebugDrawerSetGraphLineLabelCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_LABEL,
+				0.0f, 0.0f,
+				0.0f, 0.0f,
+				cCmdData->lineId, 0,
+				ZeroVector,
+				std::string(cCmdData->label),
+				0, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+ 
+
+		case COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE: {
+			SDebugDrawerAddOverlayTextureCommand* cCmdData = (SDebugDrawerAddOverlayTextureCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_OVERLAY_TEXTURE,
+				0.0f, 0.0f,
+				cCmdData->w, cCmdData->h,
+				0, 0,
+				ZeroVector,
+				"",
+				0, cCmdData->texData
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+
+			cCmdData->texHandle = cppCmdData.texHandle;
+		} break;
+		case COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE: {
+			SDebugDrawerUpdateOverlayTextureCommand* cCmdData = (SDebugDrawerUpdateOverlayTextureCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_UPDATE_OVERLAY_TEXTURE,
+				cCmdData->x, cCmdData->y,
+				cCmdData->w, cCmdData->h,
+				0, 0,
+				ZeroVector,
+				"",
+				cCmdData->texHandle, cCmdData->texData
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE: {
+			SDebugDrawerDelOverlayTextureCommand* cCmdData = (SDebugDrawerDelOverlayTextureCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_OVERLAY_TEXTURE,
+				0.0f, 0.0f,
+				0.0f, 0.0f,
+				0, 0,
+				ZeroVector,
+				"",
+				cCmdData->texHandle, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS: {
+			SDebugDrawerSetOverlayTexturePosCommand* cCmdData = (SDebugDrawerSetOverlayTexturePosCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_POS,
+				cCmdData->x, cCmdData->y,
+				0.0f, 0.0f,
+				0, 0,
+				ZeroVector,
+				"",
+				cCmdData->texHandle, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+		case COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE: {
+			SDebugDrawerSetOverlayTextureSizeCommand* cCmdData = (SDebugDrawerSetOverlayTextureSizeCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE,
+				0.0f, 0.0f,
+				cCmdData->w, cCmdData->h,
+				0, 0,
+				ZeroVector,
+				"",
+				cCmdData->texHandle, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
+
+
+		default: {
 			// check if it is a unit command
 			Command* c = (Command*) newCommand(commandData, commandTopic);
 			if (c != NULL) { // it is a unit command
@@ -599,6 +760,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 	return ret;
 }
+
+
+
+EXPORT(bool) skirmishAiCallback_Debug_Drawer_isEnabled(int teamId) {
+	return team_callback[teamId]->IsDebugDrawerEnabled();
+}
+
+
 
 
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getMajor(int teamId) {
@@ -3104,6 +3273,7 @@ EXPORT(void) skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams(int teamId, 
 //########### END WeaponDef
 
 
+
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE0Group(int teamId) {
 	return grouphandlers[teamId]->groups.size();
 }
@@ -3870,6 +4040,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_WeaponDef_0MAP1SIZE0getCustomParams = &skirmishAiCallback_WeaponDef_0MAP1SIZE0getCustomParams;
 	callback->Clb_WeaponDef_0MAP1KEYS0getCustomParams = &skirmishAiCallback_WeaponDef_0MAP1KEYS0getCustomParams;
 	callback->Clb_WeaponDef_0MAP1VALS0getCustomParams = &skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams;
+	callback->Clb_Debug_Drawer_isEnabled = &skirmishAiCallback_Debug_Drawer_isEnabled;
 }
 
 SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int teamId, IGlobalAICallback* globalAICallback) {

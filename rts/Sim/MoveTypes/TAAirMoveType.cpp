@@ -761,7 +761,7 @@ void CTAAirMoveType::Update()
 
 	float3 lastSpeed = speed;
 
-	if (owner->stunned) {
+	if (owner->stunned  || owner->beingBuilt) {
 		wantedSpeed = ZeroVector;
 		UpdateAirPhysics();
 	} else {

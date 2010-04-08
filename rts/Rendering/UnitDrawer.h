@@ -10,6 +10,37 @@
 #include <map>
 #include "Rendering/GL/myGL.h"
 #include "System/EventClient.h"
+#include "lib/gml/ThreadSafeContainers.h"
+
+struct UAD {
+	const CUnit *unit;
+	int data;
+	UAD(const CUnit *u, int d): unit(u), data(d) {}
+	bool operator==(const UAD &u) const { return unit == u.unit && data == u.data; }
+	bool operator<(const UAD &u) const { return unit < u.unit || (unit == u.unit && data < u.data); }
+};
+
+struct UnitBatch {
+	static void Add(const CUnit *p);
+	static void Remove(const CUnit *p);
+	static void Delete(const CUnit *p) { }
+};
+
+struct CloakBatch {
+	static void Add(const UAD &p);
+	static void Remove(const UAD &p) { }
+	static void Delete(const UAD &p) { }
+};
+
+struct LOSBatch {
+	static void Add(const UAD &p);
+	static void Remove(const UAD &p) { }
+	static void Delete(const UAD &p) { }
+};
+
+typedef ThreadListRender<std::set<CUnit*>, std::set<CUnit*>, CUnit*, UnitBatch> UnitBatchContainer;
+typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, CloakBatch> CloakBatchContainer;
+typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, LOSBatch> LOSBatchContainer;
 
 class CVertexArray;
 struct S3DModel;
@@ -32,7 +63,9 @@ public:
 	CUnitDrawer();
 	~CUnitDrawer(void);
 
+	void UpdateDraw(void);
 	void Update(void);
+	void DeleteSynced(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);  // cloaked units must be drawn after all others
@@ -71,7 +104,11 @@ public:
 	void UnitEnteredRadar(const CUnit*, int);
 	void UnitLeftRadar(const CUnit*, int);
 
+	void UnitCreatedNow(const CUnit*);
+	void UnitDestroyedNow(const CUnit*);
 
+	void UnitLOSChange(const UAD& ua);
+	void UnitCloakChange(const UAD& ua);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
@@ -141,9 +178,9 @@ public:
 
 	volatile bool mt_drawReflection;
 	volatile bool mt_drawRefraction;
-	CUnit* volatile mt_excludeUnit;
+	const CUnit* volatile mt_excludeUnit;
 
-	static void DrawOpaqueUnitsMT(void* c, CUnit* unit) {
+	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
 		CUnitDrawer* const ud = (CUnitDrawer*) c;
 		ud->DrawOpaqueUnit(unit, ud->mt_excludeUnit, ud->mt_drawReflection, ud->mt_drawRefraction);
 	}
@@ -235,6 +272,10 @@ private:
 	GML_VECTOR<CUnit*> drawIcon;
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
+
+	UnitBatchContainer unitBatch;
+	CloakBatchContainer cloakBatch;
+	LOSBatchContainer losBatch;
 };
 
 extern CUnitDrawer* unitDrawer;

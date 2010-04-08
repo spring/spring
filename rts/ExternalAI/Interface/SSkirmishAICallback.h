@@ -1788,6 +1788,8 @@ void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
 		int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
 
+bool (CALLING_CONV *Clb_Debug_Drawer_isEnabled)(int teamId);
+
 };
 
 #if	defined(__cplusplus)

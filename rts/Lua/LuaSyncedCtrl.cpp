@@ -897,7 +897,7 @@ static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
 	//           use | make
 	//         metal | energy
 
-	value *= 0.25f;
+	value *= 0.5f;
 
 	if (name[0] == 'u') {
 		if (name[1] == 'u') {
