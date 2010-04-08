@@ -25,8 +25,8 @@ CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_RESERVED(8)
 	));
 
-CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2 GML_PARG_C)
-: CProjectile((p1+p2)*0.5f,ZeroVector,0, false, false, false GML_PARG_P),
+CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2)
+: CProjectile((p1+p2)*0.5f,ZeroVector,0, false, false, false),
 	p1(p1),
 	p2(p2),
 	v1(v1),

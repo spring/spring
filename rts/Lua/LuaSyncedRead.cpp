@@ -1362,7 +1362,6 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 			lua_pushstring(L, o->second.c_str());
 			lua_rawset(L, -3);
 		}
-		numVals++;
 	} else {
 		HSTR_PUSH(L, "UKNOWN");
 		HSTR_PUSH(L, "UKNOWN");

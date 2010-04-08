@@ -12,6 +12,8 @@
 #include "MemPool.h"
 #include "float3.h"
 
+#define UNSYNCED_PROJ_NOEVENT // bypass id and event handling for unsynced projectiles (faster)
+
 class CProjectile;
 class CUnit;
 class CFeature;
@@ -26,7 +28,7 @@ struct piececmp {
 
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
-typedef ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
+typedef ThreadListSim<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 #if defined(USE_GML) && GML_ENABLE_SIM
 typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;
@@ -59,7 +61,6 @@ public:
 		}
 		return &(it->second);
 	}
-
 
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);

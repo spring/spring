@@ -30,8 +30,8 @@ CR_REG_METADATA(CWakeProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWakeProjectile::CWakeProjectile(const float3 pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime GML_PARG_C):
-	CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
+CWakeProjectile::CWakeProjectile(const float3 pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime):
+	CProjectile(pos, speed, owner, false, false, false),
 	alpha(0),
 	alphaFalloff(alphaFalloff),
 	alphaAdd(alpha / fadeupTime),

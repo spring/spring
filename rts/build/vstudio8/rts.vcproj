@@ -1760,6 +1760,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\DebugDrawerAI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\DebugDrawerAI.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\FarTextureHandler.cpp"
 				>
 			</File>

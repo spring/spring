@@ -61,6 +61,15 @@ function    (SetGlobal var value)
 endfunction (SetGlobal)
 
 
+# Makes variables available in global scope
+# MakeGlobal(var0 [var1 [var2 [var3 ...]]])
+function    (MakeGlobal)
+	foreach    (var ${ARGV})
+		SetGlobal(${var} "${${var}}")
+	endforeach (var)
+endfunction (MakeGlobal)
+
+
 # Find all CMakeLists.txt files in sub-directories
 macro    (GetListOfSubModules list_var)
 	file(GLOB ${list_var} RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" FOLLOW_SYMLINKS "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt")

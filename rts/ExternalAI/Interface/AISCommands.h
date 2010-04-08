@@ -124,8 +124,21 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
+	COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT          = 82,
+	COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS      = 83,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_POS            = 84,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE           = 85,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR     = 86,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL     = 87,
+
+	COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE      = 88,
+	COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE   = 89,
+	COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE      = 90,
+	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS  = 91,
+	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE = 92,
 };
-const unsigned int NUM_CMD_TOPICS                 = 82;
+
+const unsigned int NUM_CMD_TOPICS = 93;
 
 
 /**
@@ -230,6 +243,17 @@ enum UnitCommandOptions {
 		+ sizeof(struct SCustomUnitCommand) \
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
+		+ sizeof(struct SDebugDrawerAddGraphPointCommand) \
+		+ sizeof(struct SDebugDrawerDeleteGraphPointsCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphPositionCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphSizeCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphLineColorCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphLineLabelCommand) \
+		+ sizeof(struct SDebugDrawerAddOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerUpdateOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerDelOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerSetOverlayTexturePosCommand) \
+		+ sizeof(struct SDebugDrawerSetOverlayTextureSizeCommand) \
 		)
 
 /**
@@ -1076,7 +1100,7 @@ struct STraceRayCommand {
 /**
  * Pause or unpauses the game.
  * This is meant for debugging purposes.
- * Keep in mind that pause does not happen immediatly.
+ * Keep in mind that pause does not happen immediately.
  * It can take 1-2 frames in single- and up to 10 frames in multiplayer matches.
  */
 struct SPauseCommand {
@@ -1084,6 +1108,75 @@ struct SPauseCommand {
 	/// reason for the (un-)pause, or NULL
 	const char* reason;
 }; // COMMAND_PAUSE
+
+
+
+struct SDebugDrawerAddGraphPointCommand {
+	float x;
+	float y;
+	int lineId;
+}; // COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT
+
+struct SDebugDrawerDeleteGraphPointsCommand {
+	int lineId;
+	int numPoints;
+}; // COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS
+
+struct SDebugDrawerSetGraphPositionCommand {
+	float x;
+	float y;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_POS
+
+struct SDebugDrawerSetGraphSizeCommand {
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE
+
+struct SDebugDrawerSetGraphLineColorCommand {
+	int lineId;
+	struct SAIFloat3 color;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR
+
+struct SDebugDrawerSetGraphLineLabelCommand {
+	int lineId;
+	const char* label;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL
+
+
+struct SDebugDrawerAddOverlayTextureCommand {
+	int texHandle;
+	const float* texData;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE
+
+struct SDebugDrawerUpdateOverlayTextureCommand {
+	int texHandle;
+	const float* texData;
+	int x;
+	int y;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE
+
+struct SDebugDrawerDelOverlayTextureCommand {
+	int texHandle;
+}; // COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE
+
+struct SDebugDrawerSetOverlayTexturePosCommand {
+	int texHandle;
+	float x;
+	float y;
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS
+
+struct SDebugDrawerSetOverlayTextureSizeCommand {
+	int texHandle;
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE
+
+
+
 
 /**
  * @brief Sets default values

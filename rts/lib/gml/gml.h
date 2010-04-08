@@ -268,14 +268,6 @@ inline unsigned gmlGetTicks() {
 #define GML_GET_TICKS(var) var=gmlGetTicks()
 #define GML_UPDATE_TICKS() gmlUpdateTicks()
 
-#define GML_PARG_H//, boost::recursive_mutex::scoped_lock *projlock = &boost::recursive_mutex::scoped_lock(projmutex)
-#define GML_PARG_C//, boost::recursive_mutex::scoped_lock *projlock
-#define GML_PARG_P//, projlock
-
-#define GML_FARG_H// , boost::recursive_mutex::scoped_lock *flashlock = &boost::recursive_mutex::scoped_lock(flashmutex)
-#define GML_FARG_C// , boost::recursive_mutex::scoped_lock *flashlock
-#define GML_FARG_P// , flashlock
-
 #else
 
 #define GML_STDMUTEX_LOCK(name)
@@ -284,14 +276,6 @@ inline unsigned gmlGetTicks() {
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
-
-#define GML_PARG_H
-#define GML_PARG_C
-#define GML_PARG_P
-
-#define GML_FARG_H
-#define GML_FARG_C
-#define GML_FARG_P
 
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
@@ -309,14 +293,6 @@ inline unsigned gmlGetTicks() {
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
-
-#define GML_PARG_H
-#define GML_PARG_C
-#define GML_PARG_P
-
-#define GML_FARG_H
-#define GML_FARG_C
-#define GML_FARG_P
 
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()

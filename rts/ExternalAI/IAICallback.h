@@ -77,6 +77,7 @@ struct LineMarker {
 #define AIHCTraceRayId          8
 #define AIHCPauseId             9
 #define AIHCGetDataDirId        10
+#define AIHCDebugDrawId         11
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -148,6 +149,35 @@ struct AIHCGetDataDir ///< result of HandleCommand is 1 for if path fetched, 0 f
 	bool common;
 	char* ret_path;
 };
+
+struct AIHCDebugDraw
+{
+	enum {
+		AIHC_DEBUGDRAWER_MODE_ADD_GRAPH_POINT          =  0,
+		AIHC_DEBUGDRAWER_MODE_DEL_GRAPH_POINTS         =  1,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_POS            =  2,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_SIZE           =  3,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_COLOR     =  4,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_LABEL     =  5,
+
+		AIHC_DEBUGDRAWER_MODE_ADD_OVERLAY_TEXTURE      =  6,
+		AIHC_DEBUGDRAWER_MODE_UPDATE_OVERLAY_TEXTURE   =  7,
+		AIHC_DEBUGDRAWER_MODE_DEL_OVERLAY_TEXTURE      =  8,
+		AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_POS  =  9,
+		AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE = 10,
+	};
+
+	int cmdMode;
+	float x, y;           // in-params
+	float w, h;           // in-params
+	int lineId;           // in-param
+	int numPoints;        // in-param
+	float3 color;         // in-param
+	std::string label;    // in-param
+	int texHandle;        // in/out-param
+	const float* texData; // in-param
+};
+
 
 /// Generalized callback interface, used by Global AIs
 class IAICallback
@@ -399,6 +429,42 @@ public:
 	// * they will be drawn in the "standard pose" (as if before any COB scripts are run)
 	// * the rotation is in radians, team affects the color of the unit
 	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
+
+	// the following functions allow AI's to plot real-time
+	// performance graphs (useful for basic visual profiling)
+	//
+	// * position and size are specified in relative screen-space
+	//  (ie. position must be in [-1.0, 1.0], size in [0.0, 2.0])
+	// * position refers to the bottom-left corner of the graph
+	// * data-points are automatically normalized, but must not
+	//   exceed 1E9 (1000^3) in absolute value
+	// * you must be a spectator and watching the team of an AI
+	//   that has called AddDebugGraphPoint() to see these graphs
+	//   (note: they are drawn IIF IsDebugDrawerEnabled())
+	virtual bool IsDebugDrawerEnabled() const = 0;
+	virtual void DebugDrawerAddGraphPoint(int lineId, float x, float y) = 0;
+	virtual void DebugDrawerDelGraphPoints(int lineId, int numPoints) = 0;
+	virtual void DebugDrawerSetGraphPos(float x, float y) = 0;
+	virtual void DebugDrawerSetGraphSize(float w, float h) = 0;
+	virtual void DebugDrawerSetGraphLineColor(int lineId, const float3& color) = 0;
+	virtual void DebugDrawerSetGraphLineLabel(int lineId, const char* label) = 0;
+
+	// the following functions allow AI's to visualize overlay
+	// maps as textures (useful for analyzing threat-maps and
+	// the like in real-time)
+	//
+	// * position and size are specified as for graphs
+	// * AI's are responsible for normalizing the data
+	// * the data must be stored in a one-dimensional
+	//   array of floats of length (w * h); updating
+	//   a texture sub-region must be done in absolute
+	//   (pixel) coordinates
+	virtual int DebugDrawerAddOverlayTexture(const float* texData, int w, int h) = 0;
+	virtual void DebugDrawerUpdateOverlayTexture(int texHandle, const float* texData, int x, int y, int w, int h) = 0;
+	virtual void DebugDrawerDelOverlayTexture(int texHandle) = 0;
+	virtual void DebugDrawerSetOverlayTexturePos(int texHandle, float x, float y) = 0;
+	virtual void DebugDrawerSetOverlayTextureSize(int texHandle, float w, float h) = 0;
+
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;
 	/**

@@ -56,10 +56,9 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	float color,
 	bool drawTrail,
 	CProjectile* drawCallback,
-	AtlasedTexture* texture
-	GML_PARG_C):
+	AtlasedTexture* texture):
 
-	CProjectile((pos1 + pos2) * 0.5f, ZeroVector, owner, false, false, false GML_PARG_P),
+	CProjectile((pos1 + pos2) * 0.5f, ZeroVector, owner, false, false, false),
 	pos1(pos1),
 	pos2(pos2),
 	orgSize(size),

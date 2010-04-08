@@ -25,8 +25,8 @@ CR_REG_METADATA(CShieldPartProjectile,(
 
 CShieldPartProjectile::CShieldPartProjectile(
 	const float3& centerPos, int xpart, int ypart, float sphereSize,
-	float3 color, float alpha, AtlasedTexture* texture, CUnit* owner GML_PARG_C)
-:	CProjectile(centerPos, ZeroVector, owner, false, false, false GML_PARG_P),
+	float3 color, float alpha, AtlasedTexture* texture, CUnit* owner)
+:	CProjectile(centerPos, ZeroVector, owner, false, false, false),
 	centerPos(centerPos),
 	sphereSize(sphereSize),
 	baseAlpha(alpha),
