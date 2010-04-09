@@ -737,6 +737,20 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
+		case COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_LABEL: {
+			SDebugDrawerSetOverlayTextureLabelCommand* cCmdData = (SDebugDrawerSetOverlayTextureLabelCommand*) commandData;
+			AIHCDebugDraw cppCmdData = {
+				AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_LABEL,
+				0.0f, 0.0f,
+				0.0f, 0.0f,
+				0, 0,
+				ZeroVector,
+				std::string(cCmdData->label),
+				cCmdData->texHandle, NULL
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
+		} break;
 
 
 		default: {
