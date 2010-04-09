@@ -2314,7 +2314,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 
 
 void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
-	unitBatch.enqueue(const_cast<CUnit*>(u));
+	unitBatch.enqueue(u);
 }
 
 void CUnitDrawer::UnitCreatedNow(const CUnit* u) {
@@ -2339,7 +2339,7 @@ void CUnitDrawer::UnitCreatedNow(const CUnit* u) {
 }
 
 void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
-	unitBatch.dequeue(const_cast<CUnit*>(u));
+	unitBatch.dequeue(u);
 }
 
 void CUnitDrawer::UnitDestroyedNow(const CUnit* u) {
@@ -2437,7 +2437,7 @@ void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyTeam) {
 
 
 void CUnitDrawer::UnitLOSChange(const UAD& ua) {
-	const CUnit *u = ua.unit;
+	CUnit* u = const_cast<CUnit*>(ua.unit);
 	int allyTeam = ua.data;
 
 	if(u->isDead)
@@ -2446,25 +2446,25 @@ void CUnitDrawer::UnitLOSChange(const UAD& ua) {
 	if (u->losStatus[allyTeam] & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-				liveGhostBuildings[MDL_TYPE(u)].erase(const_cast<CUnit*>(u));
+				liveGhostBuildings[MDL_TYPE(u)].erase(u);
 			}
 		}
-		unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
+		unitRadarIcons[allyTeam].erase(u);
 	}
 	else {
 		if (allyTeam == gu->myAllyTeam) {
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-				liveGhostBuildings[MDL_TYPE(u)].insert(const_cast<CUnit*>(u));
+				liveGhostBuildings[MDL_TYPE(u)].insert(u);
 			}
 		}
 		if (u->losStatus[allyTeam] & LOS_INRADAR) {
-			unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
+			unitRadarIcons[allyTeam].insert(u);
 //			if (u->isIcon) {
 //				drawIcon.push_back(const_cast<CUnit*>(u)); // useless?
 //			}
 		}
 		else {
-			unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
+			unitRadarIcons[allyTeam].erase(u);
 		}
 	}
 }

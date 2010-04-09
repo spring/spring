@@ -18,12 +18,12 @@ struct piececmp;
 class IWorldObjectModelRenderer;
 
 struct ProjectileBatch {
-	static void Add(CProjectile *p);
-	static void Remove(CProjectile *p);
-	static void Delete(CProjectile *p) { delete p; }
+	static void Add(const CProjectile *p);
+	static void Remove(const CProjectile *p);
+	static void Delete(const CProjectile *p) { delete p; }
 };
 
-typedef ThreadListRender<std::set<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileBatch> ProjectileBatchContainer;
+typedef ThreadListRender<std::set<const CProjectile*>, std::set<const CProjectile*>, const CProjectile*, ProjectileBatch> ProjectileBatchContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 #if defined(USE_GML) && GML_ENABLE_SIM
 typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;
@@ -61,7 +61,7 @@ public:
 	void ProjectileDestroyed(const CProjectile*);
 
 	void AddRenderProjectile(const CProjectile*);
-	void RemoveRenderProjectile(const CProjectile*);
+	void RemoveRenderProjectile(const CProjectile* const);
 
 	void DeleteSynced();
 	void Update();
