@@ -139,6 +139,10 @@ void DebugDrawerAI::SetOverlayTextureSize(int teamNum, int texHandle, float w, f
 	assert(teamNum < texsets.size());
 	texsets[teamNum].SetTextureSize(texHandle, w, h);
 }
+void DebugDrawerAI::SetOverlayTextureLabel(int teamNum, int texHandle, const std::string& label) {
+	assert(teamNum < texsets.size());
+	texsets[teamNum].SetTextureLabel(texHandle, label);
+}
 
 
 
@@ -421,22 +425,31 @@ void DebugDrawerAI::TexSet::SetTextureSize(int texHandle, float w, float h) {
 		(it->second)->SetSize(float3(w, h, 0.0f));
 	}
 }
+void DebugDrawerAI::TexSet::SetTextureLabel(int texHandle, const std::string& label) {
+	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+
+	if (it != textures.end()) {
+		(it->second)->SetLabel(label);
+	}
+}
 
 
 
 void DebugDrawerAI::TexSet::Draw() {
 	if (!textures.empty()) {
 		glEnable(GL_TEXTURE_2D);
+		font->Begin();
+		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 		CVertexArray* va = GetVertexArray();
 
-		// TODO: labels
+		// TODO: labels (how to prevent these being textured?)
 		for (std::map<int, TexSet::Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
 			const TexSet::Texture* tex = it->second;
 			const float3& pos = tex->GetPos();
 			const float3& size = tex->GetSize();
 
-			glBindTexture(GL_TEXTURE_2D, (it->second)->GetID());
+			glBindTexture(GL_TEXTURE_2D, tex->GetID());
 			va->Initialize();
 			va->AddVertexT(pos,                                0.0f, 0.0f);
 			va->AddVertexT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 0.0f);
@@ -444,15 +457,30 @@ void DebugDrawerAI::TexSet::Draw() {
 			va->AddVertexT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 1.0f);
 			va->DrawArrayT(GL_QUADS);
 			glBindTexture(GL_TEXTURE_2D, 0);
+
+			const float tx = pos.x + size.x * 0.5f - ((tex->GetLabelWidth() * 0.5f) / gu->viewSizeX) * size.x;
+			const float ty = pos.y + size.y        + ((tex->GetLabelHeight() * 0.5f) / gu->viewSizeY) * size.y;
+
+			font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%s", tex->GetLabel().c_str());
 		}
 
+		font->End();
 		glDisable(GL_TEXTURE_2D);
 	}
 }
 
 
 
-DebugDrawerAI::TexSet::Texture::Texture(int w, int h, const float* data): id(0), xsize(w), ysize(h) {
+DebugDrawerAI::TexSet::Texture::Texture(int w, int h, const float* data):
+	id(0),
+	xsize(w),
+	ysize(h),
+	pos(ZeroVector),
+	size(ZeroVector),
+	label(""),
+	labelWidth(0.0f),
+	labelHeight(0.0f)
+{
 	const int intFormat = GL_RGBA;  // note: data only holds the red component
 	const int extFormat = GL_RED;
 	const int dataType  = GL_FLOAT;
@@ -469,4 +497,10 @@ DebugDrawerAI::TexSet::Texture::Texture(int w, int h, const float* data): id(0),
 
 DebugDrawerAI::TexSet::Texture::~Texture() {
 	glDeleteTextures(1, &id);
+}
+
+void DebugDrawerAI::TexSet::Texture::SetLabel(const std::string& s) {
+	label = s;
+	labelWidth = font->GetSize() * font->GetTextWidth(s) * gu->aspectRatio;
+	labelHeight = font->GetSize() * font->GetTextHeight(s);
 }

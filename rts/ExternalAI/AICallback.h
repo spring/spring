@@ -162,6 +162,7 @@ public:
 	void DebugDrawerDelOverlayTexture(int) {}
 	void DebugDrawerSetOverlayTexturePos(int, float, float) {}
 	void DebugDrawerSetOverlayTextureSize(int, float, float) {}
+	void DebugDrawerSetOverlayTextureLabel(int, const char*) {}
 
 
 	bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
