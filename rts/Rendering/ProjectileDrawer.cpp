@@ -39,8 +39,8 @@ bool distcmp::operator() (const CProjectile* arg1, const CProjectile* arg2) cons
 }
 
 
-void ProjectileBatch::Add(CProjectile *p) { projectileDrawer->AddRenderProjectile(p); }
-void ProjectileBatch::Remove(CProjectile *p) { projectileDrawer->RemoveRenderProjectile(p); }
+void ProjectileBatch::Add(const CProjectile *p) { projectileDrawer->AddRenderProjectile(p); }
+void ProjectileBatch::Remove(const CProjectile *p) { projectileDrawer->RemoveRenderProjectile(p); }
 
 
 
@@ -934,15 +934,15 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 void CProjectileDrawer::ProjectileCreated(const CProjectile* p)
 {
 	if(p->synced)
-		syncedBatch.insert(const_cast<CProjectile*>(p));
+		syncedBatch.insert(p);
 	else
-		unsyncedBatch.insert(const_cast<CProjectile*>(p));
+		unsyncedBatch.insert(p);
 }
 
 void CProjectileDrawer::AddRenderProjectile(const CProjectile* p)
 {
 	if (p->model) {
-		modelRenderers[MDL_TYPE(p)]->AddProjectile(const_cast<CProjectile*>(p));
+		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
 	} else {
 		renderProjectiles.insert(const_cast<CProjectile*>(p));
 	}
@@ -951,15 +951,15 @@ void CProjectileDrawer::AddRenderProjectile(const CProjectile* p)
 void CProjectileDrawer::ProjectileDestroyed(const CProjectile* p)
 {
 	if(p->synced)
-		syncedBatch.erase_remove_synced(const_cast<CProjectile*>(p));
+		syncedBatch.erase_remove_synced(p);
 	else
-		unsyncedBatch.erase_delete(const_cast<CProjectile*>(p));
+		unsyncedBatch.erase_delete(p);
 }
 
-void CProjectileDrawer::RemoveRenderProjectile(const CProjectile* p)
+void CProjectileDrawer::RemoveRenderProjectile(const CProjectile* const p)
 {
 	if (p->model) {
-		modelRenderers[MDL_TYPE(p)]->DelProjectile(const_cast<CProjectile*>(p));
+		modelRenderers[MDL_TYPE(p)]->DelProjectile(p);
 	} else {
 		renderProjectiles.erase(const_cast<CProjectile*>(p));
 	}
