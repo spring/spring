@@ -430,6 +430,7 @@ void DebugDrawerAI::TexSet::Draw() {
 
 		CVertexArray* va = GetVertexArray();
 
+		// TODO: labels
 		for (std::map<int, TexSet::Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
 			const TexSet::Texture* tex = it->second;
 			const float3& pos = tex->GetPos();
@@ -452,7 +453,7 @@ void DebugDrawerAI::TexSet::Draw() {
 
 
 DebugDrawerAI::TexSet::Texture::Texture(int w, int h, const float* data): id(0), xsize(w), ysize(h) {
-	const int intFormat = 1; // one color-component
+	const int intFormat = GL_RGBA;  // note: data only holds the red component
 	const int extFormat = GL_RED;
 	const int dataType  = GL_FLOAT;
 
