@@ -450,10 +450,10 @@ void DebugDrawerAI::TexSet::Draw() {
 
 			glBindTexture(GL_TEXTURE_2D, tex->GetID());
 			va->Initialize();
-			va->AddVertexT(pos,                                0.0f, 0.0f);
-			va->AddVertexT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 0.0f);
-			va->AddVertexT(pos + float3(size.x, size.y, 0.0f), 1.0f, 1.0f);
-			va->AddVertexT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 1.0f);
+			va->AddVertexT(pos,                                0.0f, 1.0f);
+			va->AddVertexT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f);
+			va->AddVertexT(pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f);
+			va->AddVertexT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f);
 			va->DrawArrayT(GL_QUADS);
 			glBindTexture(GL_TEXTURE_2D, 0);
 
