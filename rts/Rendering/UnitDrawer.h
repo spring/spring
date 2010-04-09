@@ -38,9 +38,9 @@ struct LOSBatch {
 	static void Delete(const UAD &p) { }
 };
 
-typedef ThreadListRender<std::set<CUnit*>, std::set<CUnit*>, CUnit*, UnitBatch> UnitBatchContainer;
-typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, CloakBatch> CloakBatchContainer;
-typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, LOSBatch> LOSBatchContainer;
+typedef ThreadListRender<std::set<const CUnit*>, std::set<const CUnit*>, const CUnit*, UnitBatch> UnitBatchContainer;
+typedef ThreadListRender<std::set<const UAD>, std::set<const UAD>, const UAD, CloakBatch> CloakBatchContainer;
+typedef ThreadListRender<std::set<const UAD>, std::set<const UAD>, const UAD, LOSBatch> LOSBatchContainer;
 
 class CVertexArray;
 struct S3DModel;
