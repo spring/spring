@@ -443,7 +443,6 @@ void DebugDrawerAI::TexSet::Draw() {
 
 		CVertexArray* va = GetVertexArray();
 
-		// TODO: labels (how to prevent these being textured?)
 		for (std::map<int, TexSet::Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
 			const TexSet::Texture* tex = it->second;
 			const float3& pos = tex->GetPos();
