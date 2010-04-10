@@ -342,7 +342,6 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
 	toBeRemoved.push_back(feature->id);
-	eventHandler.FeatureDestroyed(feature);
 }
 
 CFeature* CFeatureHandler::GetFeature(int id)
@@ -415,6 +414,8 @@ void CFeatureHandler::Update()
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
 				features[feature->id] = 0;
+
+				eventHandler.FeatureDestroyed(feature);
 
 				if (feature->inUpdateQue) {
 					updateFeatures.erase(feature);
