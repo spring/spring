@@ -411,11 +411,11 @@ void CFeatureHandler::Update()
 			CFeature* feature = GetFeature(toBeRemoved.back());
 			toBeRemoved.pop_back();
 			if (feature) {
+				eventHandler.FeatureDestroyed(feature);
+
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
 				features[feature->id] = 0;
-
-				eventHandler.FeatureDestroyed(feature);
 
 				if (feature->inUpdateQue) {
 					updateFeatures.erase(feature);
