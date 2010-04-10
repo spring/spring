@@ -3108,10 +3108,9 @@ bool CGame::Draw() {
 	texturehandlerS3O->Update();
 	modelParser->Update();
 	treeDrawer->Update();
-	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
-	unitDrawer->UpdateDraw();
-	featureDrawer->UpdateDraw();
+	unitDrawer->Update();
+	featureDrawer->Update();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();

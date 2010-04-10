@@ -39,8 +39,6 @@ bool distcmp::operator() (const CProjectile* arg1, const CProjectile* arg2) cons
 }
 
 
-void ProjectileBatch::Add(const CProjectile *p) { projectileDrawer->AddRenderProjectile(p); }
-void ProjectileBatch::Remove(const CProjectile *p) { projectileDrawer->RemoveRenderProjectile(p); }
 
 
 
@@ -633,6 +631,10 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 }
 
 
+void CProjectileDrawer::Update() {
+	eventHandler.UpdateDrawProjectiles();
+}
+
 
 void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glDisable(GL_BLEND);
@@ -658,7 +660,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	int numFlyingPieces = ph->flyingPieces3DO.render_size() + ph->flyingPiecesS3O.render_size();
 	int drawnPieces = 0;
 
-	UpdateDraw();
+	Update();
 
 	{
 		GML_STDMUTEX_LOCK(proj); // Draw
@@ -930,16 +932,7 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 
 
 
-
-void CProjectileDrawer::ProjectileCreated(const CProjectile* p)
-{
-	if(p->synced)
-		syncedBatch.insert(p);
-	else
-		unsyncedBatch.insert(p);
-}
-
-void CProjectileDrawer::AddRenderProjectile(const CProjectile* p)
+void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
@@ -948,15 +941,8 @@ void CProjectileDrawer::AddRenderProjectile(const CProjectile* p)
 	}
 }
 
-void CProjectileDrawer::ProjectileDestroyed(const CProjectile* p)
-{
-	if(p->synced)
-		syncedBatch.erase_remove_synced(p);
-	else
-		unsyncedBatch.erase_delete(p);
-}
 
-void CProjectileDrawer::RemoveRenderProjectile(const CProjectile* const p)
+void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
 {
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->DelProjectile(p);
@@ -965,22 +951,4 @@ void CProjectileDrawer::RemoveRenderProjectile(const CProjectile* const p)
 	}
 }
 
-void CProjectileDrawer::DeleteSynced() {
-	syncedBatch.remove_erased_synced();
-}
 
-void CProjectileDrawer::UpdateDraw() {
-	GML_STDMUTEX_LOCK(rproj);
-
-	syncedBatch.add_delayed();
-
-	unsyncedBatch.delete_delayed();
-	unsyncedBatch.add_delayed();
-}
-
-void CProjectileDrawer::Update() {
-	syncedBatch.delay_add();
-
-	unsyncedBatch.delay_delete();
-	unsyncedBatch.delay_add();
-}

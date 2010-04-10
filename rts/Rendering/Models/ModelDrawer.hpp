@@ -26,21 +26,20 @@ public:
 	virtual void Draw();
 
 	// NOTE: GML synchronization points
-	virtual void UnitCreated(const CUnit*, const CUnit*);
-	virtual void UnitDestroyed(const CUnit*, const CUnit*);
-	virtual void UnitCloaked(const CUnit*);
-	virtual void UnitDecloaked(const CUnit*);
-	virtual void FeatureCreated(const CFeature*);
-	virtual void FeatureDestroyed(const CFeature*);
-	virtual void ProjectileCreated(const CProjectile*);
-	virtual void ProjectileDestroyed(const CProjectile*);
+	virtual void RenderUnitCreated(const CUnit*);
+	virtual void RenderUnitDestroyed(const CUnit*);
+	virtual void RenderUnitCloakChanged(const CUnit*, int isCloaked);
+	virtual void RenderFeatureCreated(const CFeature*);
+	virtual void RenderFeatureDestroyed(const CFeature*);
+	virtual void RenderProjectileCreated(const CProjectile*);
+	virtual void RenderProjectileDestroyed(const CProjectile*);
 
 	virtual bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName ==       "UnitCreated" || eventName ==       "UnitDestroyed") ||
-			(eventName ==       "UnitCloaked" || eventName ==       "UnitDecloaked") ||
-			(eventName ==    "FeatureCreated" || eventName ==    "FeatureDestroyed") ||
-			(eventName == "ProjectileCreated" || eventName == "ProjectileDestroyed");
+			(eventName == "RenderUnitCreated" || eventName == "RenderUnitDestroyed") ||
+			(eventName == "RenderUnitCloakChanged") ||
+			(eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed") ||
+			(eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
 	}
 	virtual bool GetFullRead() const { return true; }
 	virtual int GetReadAllyTeam() const { return AllAccessTeam; }
