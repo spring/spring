@@ -23,6 +23,17 @@ void CEventHandler::SetupEvent(const string& eName,
 
 #define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
 
+void ProjectileBatch::Add(const CProjectile *p) { eventHandler.RenderProjectileCreated(p); }
+void ProjectileBatch::Remove(const CProjectile *p) { eventHandler.RenderProjectileDestroyed(p); }
+
+void UnitBatch::Add(const CUnit* p) { eventHandler.RenderUnitCreated(p); }
+void UnitBatch::Remove(const CUnit* p) { eventHandler.RenderUnitDestroyed(p); }
+void CloakBatch::Add(const UAD& p) { eventHandler.RenderUnitCloakChanged(p.unit, p.data); }
+void LOSBatch::Add(const UAD& p) { eventHandler.RenderUnitLOSChanged(p.unit, p.data); }
+
+void FeatureBatch::Add(const CFeature* p) { eventHandler.RenderFeatureCreated(p); }
+void FeatureBatch::Remove(const CFeature* p) { eventHandler.RenderFeatureDestroyed(p); }
+void MoveBatch::Add(const CFeature* p) { eventHandler.RenderFeatureMoved(p); }
 
 /******************************************************************************/
 /******************************************************************************/
@@ -71,13 +82,26 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(UnitCloaked,    MANAGED_BIT);
 	SETUP_EVENT(UnitDecloaked,  MANAGED_BIT);
 
+	SETUP_EVENT(RenderUnitCreated,  MANAGED_BIT);
+	SETUP_EVENT(RenderUnitDestroyed,  MANAGED_BIT);
+	SETUP_EVENT(RenderUnitCloakChanged,  MANAGED_BIT);
+	SETUP_EVENT(RenderUnitLOSChanged,  MANAGED_BIT);
+
 	SETUP_EVENT(UnitMoveFailed, MANAGED_BIT);
 
 	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);
 	SETUP_EVENT(FeatureDestroyed, MANAGED_BIT);
+	SETUP_EVENT(FeatureMoved, MANAGED_BIT);
+
+	SETUP_EVENT(RenderFeatureCreated,   MANAGED_BIT);
+	SETUP_EVENT(RenderFeatureDestroyed, MANAGED_BIT);
+	SETUP_EVENT(RenderFeatureMoved, MANAGED_BIT);
 
 	SETUP_EVENT(ProjectileCreated,   MANAGED_BIT);
 	SETUP_EVENT(ProjectileDestroyed, MANAGED_BIT);
+
+	SETUP_EVENT(RenderProjectileCreated,   MANAGED_BIT);
+	SETUP_EVENT(RenderProjectileDestroyed, MANAGED_BIT);
 
 	SETUP_EVENT(Explosion, MANAGED_BIT);
 

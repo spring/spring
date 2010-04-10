@@ -25,6 +25,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
+#include "System/EventHandler.h"
 #include "GlobalUnsynced.h"
 #include <assert.h>
 
@@ -418,7 +419,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	pos = newPos;
 
-	featureDrawer->UpdateDrawPos(this);
+	eventHandler.FeatureMoved(this);
 
 	// setup finalHeight
 	if (snapToGround) {
@@ -538,7 +539,7 @@ bool CFeature::UpdatePosition()
 				deathSpeed = ZeroVector;
 			}
 
-			featureDrawer->UpdateDrawPos(this);
+			eventHandler.FeatureMoved(this);
 
 			CalculateTransform();
 		}
