@@ -6,19 +6,17 @@
 
 #include "VertexArray.h"
 
-unsigned int CVertexArray::maxVertices = 1<<16; //FIXME make this customizable some how
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CVertexArray::CVertexArray()
+CVertexArray::CVertexArray(unsigned int maxVerts): maxVertices(maxVerts)
 {
-	drawArray=new float[VA_INIT_VERTEXES]; // please don't change this, some files rely on specific initial sizes
-	stripArray=new unsigned int[VA_INIT_STRIPS];
+	drawArray = new float[VA_INIT_VERTEXES]; // please don't change this, some files rely on specific initial sizes
+	stripArray = new unsigned int[VA_INIT_STRIPS];
 	Initialize();
-	drawArraySize=drawArray+VA_INIT_VERTEXES;
-	stripArraySize=stripArray+VA_INIT_STRIPS;
+	drawArraySize = drawArray + VA_INIT_VERTEXES;
+	stripArraySize = stripArray + VA_INIT_STRIPS;
 }
 
 CVertexArray::~CVertexArray()
@@ -106,38 +104,39 @@ static inline int GetStripStartOffset(GLenum mode)
 void CVertexArray::DrawArrays(const GLenum mode, const unsigned int stride)
 {
 	unsigned int length;
-	unsigned int newIndex,oldIndex=0;
-	const unsigned int* stripArrayPtr=stripArray;
+	unsigned int newIndex, oldIndex = 0;
+	const unsigned int* stripArrayPtr = stripArray;
 
 	if (!IsPrimitiveSplitable(mode)) {
 		//! we can't split this primitive types
-		while(stripArrayPtr<stripArrayPos) {
-			newIndex=(*stripArrayPtr++)/stride;
-			length=newIndex-oldIndex;
+		while (stripArrayPtr < stripArrayPos) {
+			newIndex = (*stripArrayPtr++) / stride;
+			length = newIndex - oldIndex;
 			glDrawArrays(mode, oldIndex, length);
-			oldIndex=newIndex;
+			oldIndex = newIndex;
 		}
 	} else {
 		//! split the va in optimal strip sizes, to increase the performance
-		const int optVertCount = CVertexArray::maxVertices - (CVertexArray::maxVertices % GetPrimitiveRestartEach(mode));
+		const int optVertCount = maxVertices - (maxVertices % GetPrimitiveRestartEach(mode));
 		const int stripOffset  = GetStripStartOffset(mode);
 
-		while(stripArrayPtr < stripArrayPos) {
+		while (stripArrayPtr < stripArrayPos) {
 			newIndex=(*stripArrayPtr++) / stride;
-			length=newIndex - oldIndex;
+			length = newIndex - oldIndex;
+
 			if (length > 1.5f * optVertCount) {
 				int spliti = length / optVertCount;
 				do {
 					glDrawArrays(mode, oldIndex, optVertCount);
 					oldIndex += optVertCount - stripOffset;
-				} while(--spliti>0);
+				} while (--spliti > 0);
 
 				if (newIndex > oldIndex)
 					glDrawArrays(mode, oldIndex, newIndex - oldIndex);
 			} else {
 				glDrawArrays(mode, oldIndex, length);
 			}
-			oldIndex=newIndex;
+			oldIndex = newIndex;
 		}
 	}
 }
@@ -146,27 +145,28 @@ void CVertexArray::DrawArrays(const GLenum mode, const unsigned int stride)
 void CVertexArray::DrawArraysCallback(const GLenum mode, const unsigned int stride, StripCallback callback, void* data)
 {
 	unsigned int length;
-	unsigned int newIndex,oldIndex=0;
-	const unsigned int* stripArrayPtr=stripArray;
+	unsigned int newIndex, oldIndex = 0;
+	const unsigned int* stripArrayPtr = stripArray;
 
 	if (!IsPrimitiveSplitable(mode)) {
 		//! we can't split those primitive types
-		while(stripArrayPtr<stripArrayPos) {
+		while (stripArrayPtr < stripArrayPos) {
 			callback(data);
-			newIndex=(*stripArrayPtr++)/stride;
-			length=newIndex-oldIndex;
+			newIndex = (*stripArrayPtr++)/stride;
+			length = newIndex - oldIndex;
 			glDrawArrays(mode, oldIndex, length);
-			oldIndex=newIndex;
+			oldIndex = newIndex;
 		}
 	} else {
 		//! split the va in optimal strip sizes, to increase the performance
-		const int optVertCount = CVertexArray::maxVertices - (CVertexArray::maxVertices % GetPrimitiveRestartEach(mode));
+		const int optVertCount = maxVertices - (maxVertices % GetPrimitiveRestartEach(mode));
 		const int stripOffset  = GetStripStartOffset(mode);
 
-		while(stripArrayPtr < stripArrayPos) {
+		while (stripArrayPtr < stripArrayPos) {
 			callback(data);
-			newIndex=(*stripArrayPtr++) / stride;
-			length=newIndex - oldIndex;
+			newIndex = (*stripArrayPtr++) / stride;
+			length = newIndex - oldIndex;
+
 			if (length > 1.25f * optVertCount) {
 				int spliti = length / optVertCount;
 				do {
@@ -185,15 +185,17 @@ void CVertexArray::DrawArraysCallback(const GLenum mode, const unsigned int stri
 }
 
 
+
+
 //////////////////////////////////////////////////////////////////////
 // 
 //////////////////////////////////////////////////////////////////////
 
-void CVertexArray::DrawArray0(const int drawType,unsigned int stride)
+void CVertexArray::DrawArray0(const int drawType, unsigned int stride)
 {
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3,GL_FLOAT,stride,drawArray);
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -202,7 +204,7 @@ void CVertexArray::DrawArray2d0(const int drawType, unsigned int stride)
 {
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2,GL_FLOAT,stride,drawArray);
+	glVertexPointer(2, GL_FLOAT, stride, drawArray);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -225,8 +227,8 @@ void CVertexArray::DrawArrayC(const int drawType,unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3,GL_FLOAT,stride,drawArray);
-	glColorPointer(4,GL_UNSIGNED_BYTE,stride,drawArray+3);
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
+	glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 3);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
@@ -238,21 +240,21 @@ void CVertexArray::DrawArrayT(const int drawType,unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3,GL_FLOAT,stride,drawArray);
-	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+3);
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 
-void CVertexArray::DrawArray2dT(const int drawType,unsigned int stride)
+void CVertexArray::DrawArray2dT(const int drawType, unsigned int stride)
 {
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2,GL_FLOAT,stride,drawArray);
-	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+2);
+	glVertexPointer(2, GL_FLOAT, stride, drawArray);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 2);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
@@ -264,11 +266,11 @@ void CVertexArray::DrawArray2dT(const int drawType, StripCallback callback, void
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2,GL_FLOAT,stride,drawArray);
-	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+2);
+	glVertexPointer(2, GL_FLOAT, stride, drawArray);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 2);
 	DrawArraysCallback(drawType, stride, callback, data);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);	
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 
@@ -277,11 +279,11 @@ void CVertexArray::DrawArrayT2(const int drawType,unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3,GL_FLOAT,stride,drawArray);
-	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+3);
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
 
 	glClientActiveTextureARB(GL_TEXTURE1_ARB);
-	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+5);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 5);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glClientActiveTextureARB(GL_TEXTURE0_ARB);
 	DrawArrays(drawType, stride);
@@ -300,13 +302,51 @@ void CVertexArray::DrawArrayTN(const int drawType, unsigned int stride)
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glVertexPointer(3,GL_FLOAT,stride,drawArray);
-	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+3);
-	glNormalPointer(GL_FLOAT,stride,drawArray+5);
+
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
+	glNormalPointer(GL_FLOAT, stride, drawArray + 5);
 	DrawArrays(drawType, stride);
+
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+void CVertexArray::DrawArrayTNT(const int drawType, unsigned int stride)
+{
+	CheckEndStrip();
+
+	#define SET_ENABLE_ACTIVE_TEX(texUnit)            \
+		glClientActiveTexture(texUnit);               \
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	#define SET_DISABLE_ACTIVE_TEX(texUnit)           \
+		glClientActiveTexture(texUnit);               \
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE0); glTexCoordPointer(2, GL_FLOAT, stride, drawArray +  3);
+	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE1); glTexCoordPointer(2, GL_FLOAT, stride, drawArray +  3); // FIXME? (format-specific)
+	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE5); glTexCoordPointer(3, GL_FLOAT, stride, drawArray +  8);
+	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE6); glTexCoordPointer(3, GL_FLOAT, stride, drawArray + 11);
+
+	glVertexPointer(3, GL_FLOAT, stride, drawArray + 0);
+	glNormalPointer(GL_FLOAT, stride, drawArray + 5);
+
+	DrawArrays(drawType, stride);
+
+	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE6);
+	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE5);
+	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE1);
+	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE0);
+
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	#undef SET_ENABLE_ACTIVE_TEX
+	#undef SET_DISABLE_ACTIVE_TEX
 }
 
 
@@ -316,14 +356,16 @@ void CVertexArray::DrawArrayTC(const int drawType, unsigned int stride)
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3,GL_FLOAT,stride,drawArray);
-	glTexCoordPointer(2,GL_FLOAT,stride,drawArray+3);
-	glColorPointer(4,GL_UNSIGNED_BYTE,stride,drawArray+5);
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
+	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
+	glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 5);
 	DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 }
+
+
 
 
 //////////////////////////////////////////////////////////////////////
@@ -332,31 +374,30 @@ void CVertexArray::DrawArrayTC(const int drawType, unsigned int stride)
 
 void CVertexArray::EnlargeDrawArray()
 {
-	unsigned int pos=drawArrayPos-drawArray;
-	unsigned int oldsize=drawArraySize-drawArray;
-	unsigned int newsize=oldsize*2;
+	const unsigned int pos = drawArrayPos - drawArray;
+	const unsigned int oldsize = drawArraySize - drawArray;
+	const unsigned int newsize = oldsize * 2;
 
-	float* tempArray=new float[newsize];
-	memcpy(tempArray,drawArray,oldsize*sizeof(float));
+	float* tempArray = new float[newsize];
+	memcpy(tempArray, drawArray, oldsize * sizeof(float));
 
 	delete[] drawArray;
-	drawArray=tempArray;
-	drawArraySize=drawArray+newsize;
-	drawArrayPos=drawArray+pos;
+	drawArray = tempArray;
+	drawArraySize = drawArray + newsize;
+	drawArrayPos = drawArray + pos;
 }
-
 
 void CVertexArray::EnlargeStripArray()
 {
-	unsigned int pos=stripArrayPos-stripArray;
-	unsigned int oldsize=stripArraySize-stripArray;
-	unsigned int newsize=oldsize*2;
+	const unsigned int pos = stripArrayPos - stripArray;
+	const unsigned int oldsize = stripArraySize - stripArray;
+	const unsigned int newsize = oldsize * 2;
 
-	unsigned int* tempArray=new unsigned int[newsize];
-	memcpy(tempArray,stripArray,oldsize*sizeof(unsigned int));
+	unsigned int* tempArray = new unsigned int[newsize];
+	memcpy(tempArray,stripArray, oldsize * sizeof(unsigned int));
 
 	delete[] stripArray;
-	stripArray=tempArray;
-	stripArraySize=stripArray+newsize;
-	stripArrayPos=stripArray+pos;
+	stripArray = tempArray;
+	stripArraySize = stripArray + newsize;
+	stripArrayPos = stripArray + pos;
 }
