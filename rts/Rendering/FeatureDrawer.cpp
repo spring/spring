@@ -521,9 +521,11 @@ public:
 
 					if (sqDist < sqFadeDistB) {
 						f->tempalpha = 0.99f;
+						cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 						opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 					} else if (sqDist < sqFadeDistE) {
 						f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+						opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 						cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 					}
 				} else {
