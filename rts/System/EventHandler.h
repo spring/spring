@@ -8,11 +8,11 @@
 #include <map>
 
 #include "EventClient.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "lib/gml/ThreadSafeContainers.h"
-
 
 class CWeapon;
 struct Command;
@@ -24,7 +24,14 @@ struct ProjectileBatch {
 	static void Delete(const CProjectile *p) { delete p; }
 };
 
+struct UnsyncedProjectileBatch {
+	static void Add(const CProjectile *p);
+	static void Remove(const CProjectile *p);
+	static void Delete(const CProjectile *p) { delete p; }
+};
+
 typedef ThreadListRender<std::set<const CProjectile*>, std::set<const CProjectile*>, const CProjectile*, ProjectileBatch> ProjectileBatchContainer;
+typedef ThreadListRender<std::set<const CProjectile*>, std::set<const CProjectile*>, const CProjectile*, UnsyncedProjectileBatch> UnsyncedProjectileBatchContainer;
 
 struct UAD {
 	const CUnit *unit;
@@ -165,6 +172,9 @@ class CEventHandler
 		void RenderProjectileCreated(const CProjectile* proj);
 		void RenderProjectileDestroyed(const CProjectile* proj);
 
+		void UnsyncedProjectileCreated(const CProjectile* proj);
+		void UnsyncedProjectileDestroyed(const CProjectile* proj);
+
 		void DeleteSyncedProjectiles();
 		void UpdateDrawProjectiles();
 		void UpdateProjectiles();
@@ -228,7 +238,11 @@ class CEventHandler
 	private:
 		typedef vector<CEventClient*> EventClientList;
 		ProjectileBatchContainer syncedBatch;    //! contains only projectiles that can change simulation state
+#if UNSYNCED_PROJ_NOEVENT
+		UnsyncedProjectileBatchContainer unsyncedBatch;  //! contains only projectiles that cannot change simulation state
+#else
 		ProjectileBatchContainer unsyncedBatch;  //! contains only projectiles that cannot change simulation state
+#endif
 
 		UnitBatchContainer unitBatch;
 		CloakBatchContainer cloakBatch;
@@ -717,6 +731,7 @@ inline void CEventHandler::FeatureDestroyed(const CFeature* feature)
 
 inline void CEventHandler::FeatureMoved(const CFeature* feature)
 {
+	moveBatch.enqueue(feature);
 	const int featureAllyTeam = feature->allyteam;
 	const int count = listFeatureMoved.size();
 	for (int i = 0; i < count; i++) {
@@ -813,6 +828,14 @@ inline void CEventHandler::ProjectileDestroyed(const CProjectile* proj,
 			ec->ProjectileDestroyed(proj);
 		}
 	}
+}
+
+inline void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
+	unsyncedBatch.insert(proj);
+}
+
+inline void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
+	unsyncedBatch.erase_delete(proj);
 }
 
 inline void CEventHandler::RenderProjectileCreated(const CProjectile* proj)

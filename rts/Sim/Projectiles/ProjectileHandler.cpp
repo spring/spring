@@ -25,10 +25,6 @@
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
 
-#ifdef UNSYNCED_PROJ_NOEVENT
-#include "Rendering/ProjectileDrawer.hpp"
-#endif
-
 CProjectileHandler* ph;
 
 using namespace std;
@@ -177,8 +173,8 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				//! push_back this projectile for deletion
 				pci = pc.erase_delete_synced(pci);
 			} else {
-#ifdef UNSYNCED_PROJ_NOEVENT
-				projectileDrawer->ProjectileDestroyed(p);
+#if UNSYNCED_PROJ_NOEVENT
+				eventHandler.UnsyncedProjectileDestroyed(p);
 #else
 				pIt = unsyncedProjectileIDs.find(p->id);
 
@@ -297,8 +293,8 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		maxUsedID = &maxUsedSyncedID;
 	} else {
 		unsyncedProjectiles.push(p);
-#ifdef UNSYNCED_PROJ_NOEVENT
-		projectileDrawer->ProjectileCreated(p);
+#if UNSYNCED_PROJ_NOEVENT
+		eventHandler.UnsyncedProjectileCreated(p);
 		return;
 #endif
 		freeIDs = &freeUnsyncedIDs;
