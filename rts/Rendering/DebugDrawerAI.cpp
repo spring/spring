@@ -235,7 +235,7 @@ void DebugDrawerAI::Graph::SetLabel(int lineNum, const std::string& s) {
 
 	lines[lineNum].lineLabel = s;
 	lines[lineNum].lineLabelSize = s.size();
-	lines[lineNum].lineLabelWidth = font->GetSize() * font->GetTextWidth(s) * gu->aspectRatio;
+	lines[lineNum].lineLabelWidth = font->GetSize() * font->GetTextWidth(s);
 	lines[lineNum].lineLabelHeight = font->GetSize() * font->GetTextHeight(s);
 
 	minLabelSize  = std::min(minLabelSize,  lines[lineNum].lineLabelSize);
@@ -267,10 +267,10 @@ void DebugDrawerAI::Graph::Draw() {
 
 		// label-box
 		va->Initialize();
-		va->AddVertexC(pos,                                                                     color);
-		va->AddVertexC(pos + float3(-((maxLabelWidth / gu->viewSizeX) * size.x),   0.0f, 0.0f), color);
-		va->AddVertexC(pos + float3(-((maxLabelWidth / gu->viewSizeX) * size.x), size.y, 0.0f), color);
-		va->AddVertexC(pos + float3(                                      0.0f,  size.y, 0.0f), color);
+		va->AddVertexC(pos,                                                                               color);
+		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / gu->viewSizeX) * size.x),   0.0f, 0.0f), color);
+		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / gu->viewSizeX) * size.x), size.y, 0.0f), color);
+		va->AddVertexC(pos + float3(                                                0.0f,  size.y, 0.0f), color);
 		va->DrawArrayC(GL_LINE_STRIP);
 
 		if (scale.y > 0.0f && scale.x > 0.0f) {
@@ -326,7 +326,8 @@ void DebugDrawerAI::Graph::Draw() {
 				}
 
 				// right-outline the labels
-				const float tx = pos.x - (line.lineLabelWidth * 0.95f / gu->viewSizeX) * size.x;
+				const float sx = (maxLabelWidth / gu->viewSizeX) * size.x;
+				const float tx = pos.x - ((line.lineLabelWidth / maxLabelWidth) * 1.33f) * sx;
 				const float ty = pos.y + ((lineNum * linePad * 2.0f) + linePad) * size.y;
 
 				font->SetTextColor(line.lineColor.x, line.lineColor.y, line.lineColor.z, 1.0f);
@@ -500,6 +501,6 @@ DebugDrawerAI::TexSet::Texture::~Texture() {
 
 void DebugDrawerAI::TexSet::Texture::SetLabel(const std::string& s) {
 	label = s;
-	labelWidth = font->GetSize() * font->GetTextWidth(s) * gu->aspectRatio;
+	labelWidth = font->GetSize() * font->GetTextWidth(s);
 	labelHeight = font->GetSize() * font->GetTextHeight(s);
 }
