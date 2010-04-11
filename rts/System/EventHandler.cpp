@@ -25,6 +25,8 @@ void CEventHandler::SetupEvent(const string& eName,
 
 void ProjectileBatch::Add(const CProjectile *p) { eventHandler.RenderProjectileCreated(p); }
 void ProjectileBatch::Remove(const CProjectile *p) { eventHandler.RenderProjectileDestroyed(p); }
+void UnsyncedProjectileBatch::Add(const CProjectile *p) { projectileDrawer->RenderProjectileCreated(p); }
+void UnsyncedProjectileBatch::Remove(const CProjectile *p) { projectileDrawer->RenderProjectileDestroyed(p); }
 
 void UnitBatch::Add(const CUnit* p) { eventHandler.RenderUnitCreated(p); }
 void UnitBatch::Remove(const CUnit* p) { eventHandler.RenderUnitDestroyed(p); }
