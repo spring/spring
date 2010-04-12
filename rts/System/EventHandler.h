@@ -118,6 +118,8 @@ class CEventHandler
 		void UpdateDrawProjectiles();
 		void UpdateProjectiles();
 
+		void UpdateObjects();
+
 		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
 
 		void StockpileChanged(const CUnit* unit,
@@ -764,7 +766,9 @@ inline void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjec
 inline void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
 inline void CEventHandler::DeleteSyncedProjectiles() { eventBatchHandler->DeleteSyncedProjectiles(); }
 
-
+inline void CEventHandler::UpdateObjects() {
+	eventBatchHandler->UpdateObjects();
+}
 
 inline bool CEventHandler::Explosion(int weaponID, const float3& pos, const CUnit* owner)
 {

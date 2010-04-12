@@ -129,6 +129,8 @@ public:
 	void UpdateDrawProjectiles();
 	void DeleteSyncedProjectiles();
 
+	void UpdateObjects();
+
 	void EnqueueUnitLOSStateChangeEvent(const CUnit* unit, int allyteam) { unitLOSStateChangedEventBatch.enqueue(UAD(unit, allyteam)); }
 	void EnqueueUnitCloakStateChangeEvent(const CUnit* unit, int cloaked) { unitCloakStateChangedEventBatch.enqueue(UAD(unit, cloaked)); }
 
