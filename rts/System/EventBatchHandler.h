@@ -4,6 +4,7 @@
 #define EVENT_BATCH_HANDLER_HDR
 
 #include "lib/gml/ThreadSafeContainers.h"
+#include "Sim/Projectiles/ProjectileHandler.h" // for UNSYNCED_PROJ_NOEVENT
 
 class CUnit;
 class CFeature;
@@ -99,7 +100,7 @@ private:
 	ProjectileCreatedDestroyedEventBatch syncedProjectileCreatedDestroyedEventBatch;
 
 #if UNSYNCED_PROJ_NOEVENT
-	UnsyncedProjectileCreatedDestroyedEventBatch
+	static UnsyncedProjectileCreatedDestroyedEventBatch
 #else
 	ProjectileCreatedDestroyedEventBatch
 #endif
@@ -134,7 +135,7 @@ public:
 	ProjectileCreatedDestroyedEventBatch& GetSyncedProjectileCreatedDestroyedBatch() { return syncedProjectileCreatedDestroyedEventBatch; }
 
 #if UNSYNCED_PROJ_NOEVENT
-	UnsyncedProjectileCreatedDestroyedEventBatch&
+	static inline UnsyncedProjectileCreatedDestroyedEventBatch&
 #else
 	ProjectileCreatedDestroyedEventBatch&
 #endif
