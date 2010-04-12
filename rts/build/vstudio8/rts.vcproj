@@ -4100,6 +4100,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\EventBatchHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\EventBatchHandler.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\EventClient.cpp"
 				>
 			</File>
