@@ -116,58 +116,17 @@ private:
 public:
 	static EventBatchHandler* GetInstance();
 
-	void UpdateUnits() {
-		unitCreatedDestroyedEventBatch.delay();
-		unitCloakStateChangedEventBatch.delay();
-		unitLOSStateChangedEventBatch.delay();
-	}
-	void UpdateDrawUnits() {
-		unitCreatedDestroyedEventBatch.execute();
-		unitCloakStateChangedEventBatch.execute();
-		unitLOSStateChangedEventBatch.execute();
-	}
-	void DeleteSyncedUnits() {
-		unitCloakStateChangedEventBatch.delay();
-		unitCloakStateChangedEventBatch.execute();
+	void UpdateUnits();
+	void UpdateDrawUnits();
+	void DeleteSyncedUnits();
 
-		unitLOSStateChangedEventBatch.delay();
-		unitLOSStateChangedEventBatch.execute();
+	void UpdateFeatures();
+	void UpdateDrawFeatures();
+	void DeleteSyncedFeatures();
 
-		unitCreatedDestroyedEventBatch.delay();
-		unitCreatedDestroyedEventBatch.execute();
-		unitCreatedDestroyedEventBatch.destroy();
-	}
-
-	void UpdateFeatures() {
-		featureCreatedDestroyedEventBatch.delay();
-		featureMovedEventBatch.delay();
-	}
-	void UpdateDrawFeatures() {
-		featureCreatedDestroyedEventBatch.execute();
-		featureMovedEventBatch.execute();
-	}
-	void DeleteSyncedFeatures() {
-		featureMovedEventBatch.delay();
-		featureMovedEventBatch.execute();
-
-		featureCreatedDestroyedEventBatch.delay();
-		featureCreatedDestroyedEventBatch.execute();
-		featureCreatedDestroyedEventBatch.destroy();
-	}
-
-	void UpdateProjectiles() {
-		syncedProjectileCreatedDestroyedEventBatch.delay_add();
-		unsyncedProjectileCreatedDestroyedEventBatch.delay_delete();
-		unsyncedProjectileCreatedDestroyedEventBatch.delay_add();
-	}
-	void UpdateDrawProjectiles() {
-		syncedProjectileCreatedDestroyedEventBatch.add_delayed();
-		unsyncedProjectileCreatedDestroyedEventBatch.delete_delayed();
-		unsyncedProjectileCreatedDestroyedEventBatch.add_delayed();
-	}
-	void DeleteSyncedProjectiles() {
-		syncedProjectileCreatedDestroyedEventBatch.remove_erased_synced();
-	}
+	void UpdateProjectiles();
+	void UpdateDrawProjectiles();
+	void DeleteSyncedProjectiles();
 
 	void EnqueueUnitLOSStateChangeEvent(const CUnit* unit, int allyteam) { unitLOSStateChangedEventBatch.enqueue(UAD(unit, allyteam)); }
 	void EnqueueUnitCloakStateChangeEvent(const CUnit* unit, int cloaked) { unitCloakStateChangedEventBatch.enqueue(UAD(unit, cloaked)); }
