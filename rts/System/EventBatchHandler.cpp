@@ -34,3 +34,59 @@ EventBatchHandler* EventBatchHandler::GetInstance() {
 	static EventBatchHandler ebh;
 	return &ebh;
 }
+
+void EventBatchHandler::UpdateUnits() {
+	unitCreatedDestroyedEventBatch.delay();
+	unitCloakStateChangedEventBatch.delay();
+	unitLOSStateChangedEventBatch.delay();
+}
+void EventBatchHandler::UpdateDrawUnits() {
+	GML_STDMUTEX_LOCK(runit); // UpdateDrawUnits
+	unitCreatedDestroyedEventBatch.execute();
+	unitCloakStateChangedEventBatch.execute();
+	unitLOSStateChangedEventBatch.execute();
+}
+void EventBatchHandler::DeleteSyncedUnits() {
+	unitCloakStateChangedEventBatch.delay();
+	unitCloakStateChangedEventBatch.execute();
+
+	unitLOSStateChangedEventBatch.delay();
+	unitLOSStateChangedEventBatch.execute();
+
+	unitCreatedDestroyedEventBatch.delay();
+	unitCreatedDestroyedEventBatch.execute();
+	unitCreatedDestroyedEventBatch.destroy();
+}
+
+void EventBatchHandler::UpdateFeatures() {
+	featureCreatedDestroyedEventBatch.delay();
+	featureMovedEventBatch.delay();
+}
+void EventBatchHandler::UpdateDrawFeatures() {
+	GML_STDMUTEX_LOCK(rfeat); // UpdateDrawFeatures
+	featureCreatedDestroyedEventBatch.execute();
+	featureMovedEventBatch.execute();
+}
+void EventBatchHandler::DeleteSyncedFeatures() {
+	featureMovedEventBatch.delay();
+	featureMovedEventBatch.execute();
+
+	featureCreatedDestroyedEventBatch.delay();
+	featureCreatedDestroyedEventBatch.execute();
+	featureCreatedDestroyedEventBatch.destroy();
+}
+
+void EventBatchHandler::UpdateProjectiles() {
+	syncedProjectileCreatedDestroyedEventBatch.delay_add();
+	unsyncedProjectileCreatedDestroyedEventBatch.delay_delete();
+	unsyncedProjectileCreatedDestroyedEventBatch.delay_add();
+}
+void EventBatchHandler::UpdateDrawProjectiles() {
+	GML_STDMUTEX_LOCK(rproj); // UpdateDrawProjectiles
+	syncedProjectileCreatedDestroyedEventBatch.add_delayed();
+	unsyncedProjectileCreatedDestroyedEventBatch.delete_delayed();
+	unsyncedProjectileCreatedDestroyedEventBatch.add_delayed();
+}
+void EventBatchHandler::DeleteSyncedProjectiles() {
+	syncedProjectileCreatedDestroyedEventBatch.remove_erased_synced();
+}

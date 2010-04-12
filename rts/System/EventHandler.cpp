@@ -402,7 +402,7 @@ void CEventHandler::Update()
 {
 	const int count = listUpdate.size();
 
-	if(count <= 0)
+	if (count <= 0)
 		return;
 
 	GML_RECMUTEX_LOCK(unit); // Update
