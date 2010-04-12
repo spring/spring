@@ -209,16 +209,6 @@ private:
 	// unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	std::set<CUnit*> unsortedUnits;
 
-	#ifdef USE_GML
-	// gmlClientServer::Work only accepts lists
-	std::list<CUnit*> unsortedUnitsGML;
-	#endif
-
-	// holds S3O features and S3O projectiles
-	GML_CLASSVECTOR<GML_VECTOR<CWorldObject*> > quedS3Os;
-	std::set<int> usedS3OTextures;
-
-
 	// buildings that were in LOS_PREVLOS when they died and not in LOS since
 	std::vector<std::set<GhostBuilding*> > deadGhostBuildings;
 	// buildings that left LOS but are still alive
