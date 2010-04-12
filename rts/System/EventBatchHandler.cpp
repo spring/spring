@@ -90,3 +90,21 @@ void EventBatchHandler::UpdateDrawProjectiles() {
 void EventBatchHandler::DeleteSyncedProjectiles() {
 	syncedProjectileCreatedDestroyedEventBatch.remove_erased_synced();
 }
+
+void EventBatchHandler::UpdateObjects() {
+	{ 
+		GML_STDMUTEX_LOCK(runit); // UpdateObjects
+
+		UpdateUnits();
+	}
+	{
+		GML_STDMUTEX_LOCK(rfeat); // UpdateObjects
+
+		UpdateFeatures();
+	}
+	{
+		GML_STDMUTEX_LOCK(rproj); // UpdateObjects
+
+		UpdateProjectiles();
+	}
+}

@@ -2816,6 +2816,9 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
+	if(gs->frameNum == 0)
+		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
+
 	ClientReadNet();
 
 	if (!net->Active() && !gameOver) {
