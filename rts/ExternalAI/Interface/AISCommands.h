@@ -1180,7 +1180,7 @@ struct SDebugDrawerSetOverlayTextureSizeCommand {
 struct SDebugDrawerSetOverlayTextureLabelCommand {
 	int texHandle;
 	const char* label;
-};
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_LABEL
 
 
 
