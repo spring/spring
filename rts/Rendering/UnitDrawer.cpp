@@ -2351,13 +2351,11 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 }
 
 
-void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int isCloaked) {
+void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
 	CUnit *u = const_cast<CUnit *>(unit);
-	if (u->isDead)
-		return;
 
 	if (u->model) {
-		if (isCloaked) {
+		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		} else {
@@ -2370,8 +2368,6 @@ void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int isCloaked) {
 
 void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
 	CUnit *u = const_cast<CUnit *>(unit);
-	if (u->isDead)
-		return;
 
 	if (u->losStatus[allyTeam] & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {

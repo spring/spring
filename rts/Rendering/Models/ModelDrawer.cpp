@@ -110,7 +110,7 @@ void IModelDrawer::RenderUnitDestroyed(const CUnit* u)
 }
 
 
-void IModelDrawer::RenderUnitCloakChanged(const CUnit* u, int isCloaked)
+void IModelDrawer::RenderUnitCloakChanged(const CUnit* u, int cloaked)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::RenderUnitCloakChanged] id=%d", u->id);
@@ -120,7 +120,7 @@ void IModelDrawer::RenderUnitCloakChanged(const CUnit* u, int isCloaked)
 	#endif
 
 	if (u->model) {
-		if(isCloaked) {
+		if(cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		}

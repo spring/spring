@@ -59,7 +59,7 @@ class CEventHandler
 
 		void RenderUnitCreated(const CUnit* unit);
 		void RenderUnitDestroyed(const CUnit* unit);
-		void RenderUnitCloakChanged(const CUnit* unit, int isCloaked);
+		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam);
 
 		void DeleteSyncedUnits();
@@ -454,12 +454,12 @@ inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
 	}
 }
 
-inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int isCloaked)
+inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked)
 {
 	const int count = listRenderUnitCloakChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitCloakChanged[i];
-		ec->RenderUnitCloakChanged(unit,isCloaked);
+		ec->RenderUnitCloakChanged(unit, cloaked);
 	}
 }
 
@@ -468,7 +468,7 @@ inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam)
 	const int count = listRenderUnitLOSChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitLOSChanged[i];
-		ec->RenderUnitLOSChanged(unit,allyTeam);
+		ec->RenderUnitLOSChanged(unit, allyTeam);
 	}
 }
 

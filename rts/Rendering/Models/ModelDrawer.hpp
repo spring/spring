@@ -28,7 +28,7 @@ public:
 	// NOTE: GML synchronization points
 	virtual void RenderUnitCreated(const CUnit*);
 	virtual void RenderUnitDestroyed(const CUnit*);
-	virtual void RenderUnitCloakChanged(const CUnit*, int isCloaked);
+	virtual void RenderUnitCloakChanged(const CUnit*, int cloaked);
 	virtual void RenderFeatureCreated(const CFeature*);
 	virtual void RenderFeatureDestroyed(const CFeature*);
 	virtual void RenderProjectileCreated(const CProjectile*);
