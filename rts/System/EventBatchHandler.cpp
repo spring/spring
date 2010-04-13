@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Sim/Projectiles/Projectile.h" // for operator delete
-#include "Sim/Projectiles/ProjectileHandler.h" // for UNSYNCED_PROJ_NOEVENT
 
 #include "EventBatchHandler.h"
 #include "EventHandler.h"
@@ -16,6 +15,7 @@ void EventBatchHandler::ProjectileCreatedDestroyedEvent::Remove(const CProjectil
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
 
 #if UNSYNCED_PROJ_NOEVENT
+EventBatchHandler::UnsyncedProjectileCreatedDestroyedEventBatch EventBatchHandler::unsyncedProjectileCreatedDestroyedEventBatch;
 void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Add(const CProjectile* p) { projectileDrawer->RenderProjectileCreated(p); }
 void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Remove(const CProjectile* p) { projectileDrawer->RenderProjectileDestroyed(p); }
 void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
@@ -89,4 +89,22 @@ void EventBatchHandler::UpdateDrawProjectiles() {
 }
 void EventBatchHandler::DeleteSyncedProjectiles() {
 	syncedProjectileCreatedDestroyedEventBatch.remove_erased_synced();
+}
+
+void EventBatchHandler::UpdateObjects() {
+	{ 
+		GML_STDMUTEX_LOCK(runit); // UpdateObjects
+
+		UpdateUnits();
+	}
+	{
+		GML_STDMUTEX_LOCK(rfeat); // UpdateObjects
+
+		UpdateFeatures();
+	}
+	{
+		GML_STDMUTEX_LOCK(rproj); // UpdateObjects
+
+		UpdateProjectiles();
+	}
 }
