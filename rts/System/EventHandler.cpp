@@ -74,7 +74,7 @@ CEventHandler::CEventHandler()
 
 	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);
 	SETUP_EVENT(FeatureDestroyed, MANAGED_BIT);
-	SETUP_EVENT(FeatureMoved, MANAGED_BIT);
+	SETUP_EVENT(FeatureMoved,     MANAGED_BIT);
 
 	SETUP_EVENT(ProjectileCreated,   MANAGED_BIT);
 	SETUP_EVENT(ProjectileDestroyed, MANAGED_BIT);
@@ -118,14 +118,14 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(DrawScreen,          MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(DrawInMiniMap,       MANAGED_BIT | UNSYNCED_BIT);
 
-	SETUP_EVENT(RenderUnitCreated,  MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(RenderUnitDestroyed,  MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(RenderUnitCloakChanged,  MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(RenderUnitLOSChanged,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitCreated,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitDestroyed,    MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitCloakChanged, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitLOSChanged,   MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(RenderFeatureCreated,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(RenderFeatureDestroyed, MANAGED_BIT | UNSYNCED_BIT);
-	SETUP_EVENT(RenderFeatureMoved, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderFeatureMoved,     MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(RenderProjectileCreated,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(RenderProjectileDestroyed, MANAGED_BIT | UNSYNCED_BIT);

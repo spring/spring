@@ -1056,9 +1056,11 @@ void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int 
 
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
-		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-			SetTeamColour(unit->team, cloakAlpha);
-			DrawUnitNow(unit);
+		if (!drawGhostBuildings) {
+			if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
+				SetTeamColour(unit->team, cloakAlpha);
+				DrawUnitNow(unit);
+			}
 		} else {
 			// check for decoy models
 			const UnitDef* decoyDef = unit->unitDef->decoyDef;
@@ -1086,7 +1088,7 @@ void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int 
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-			if ((modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) && drawGhostBuildings) {
+			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
 				// the units in liveGhostedBuildings[modelType] are not
 				// sorted by textureType, but we cannot merge them with
 				// cloakedModelRenderers[modelType] since they are not
