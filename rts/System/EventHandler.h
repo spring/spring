@@ -441,7 +441,9 @@ inline void CEventHandler::RenderUnitCreated(const CUnit* unit)
 	const int count = listRenderUnitCreated.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitCreated[i];
-		ec->RenderUnitCreated(unit);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitCreated(unit);
+		}
 	}
 }
 
@@ -450,7 +452,9 @@ inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
 	const int count = listRenderUnitDestroyed.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitDestroyed[i];
-		ec->RenderUnitDestroyed(unit);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitDestroyed(unit);
+		}
 	}
 }
 
@@ -459,7 +463,9 @@ inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked
 	const int count = listRenderUnitCloakChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitCloakChanged[i];
-		ec->RenderUnitCloakChanged(unit, cloaked);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitCloakChanged(unit, cloaked);
+		}
 	}
 }
 
@@ -468,7 +474,9 @@ inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam)
 	const int count = listRenderUnitLOSChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitLOSChanged[i];
-		ec->RenderUnitLOSChanged(unit, allyTeam);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitLOSChanged(unit, allyTeam);
+		}
 	}
 }
 
