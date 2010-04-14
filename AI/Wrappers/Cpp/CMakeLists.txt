@@ -60,6 +60,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/CurrentCommand.cpp
 		${myGeneratedSourceDir}/Damage.cpp
 		${myGeneratedSourceDir}/DataDirs.cpp
+		${myGeneratedSourceDir}/Debug.cpp
+		${myGeneratedSourceDir}/Drawer.cpp
 		${myGeneratedSourceDir}/Economy.cpp
 		${myGeneratedSourceDir}/Engine.cpp
 		${myGeneratedSourceDir}/Feature.cpp

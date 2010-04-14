@@ -45,7 +45,7 @@ CSmokeProjectile::CSmokeProjectile()
 	checkCol=false;
 }
 
-void CSmokeProjectile::Init(const float3& pos, CUnit *owner GML_PARG_C)
+void CSmokeProjectile::Init(const float3& pos, CUnit *owner)
 {
 	textureNum=(int)(gu->usRandInt() % projectileDrawer->smoketex.size());
 
@@ -55,11 +55,11 @@ void CSmokeProjectile::Init(const float3& pos, CUnit *owner GML_PARG_C)
 	if(!owner)
 		alwaysVisible=true;
 
-	CProjectile::Init(pos, owner GML_PARG_P);
+	CProjectile::Init(pos, owner);
 }
 
-CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color GML_PARG_C):
-	CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
+CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color):
+	CProjectile(pos, speed, owner, false, false, false),
 	color(color),
 	age(0),
 	size(0),

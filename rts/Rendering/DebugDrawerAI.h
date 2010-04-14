@@ -29,16 +29,23 @@ public:
 	void SetGraphLineColor(int, int, const float3&);
 	void SetGraphLineLabel(int, int, const std::string&);
 
+	int AddOverlayTexture(int, const float*, int, int);
+	void UpdateOverlayTexture(int, int, const float*, int, int, int, int);
+	void DelOverlayTexture(int, int);
+	void SetOverlayTexturePos(int, int, float, float);
+	void SetOverlayTextureSize(int, int, float, float);
+	void SetOverlayTextureLabel(int, int, const std::string&);
+
 private:
 	struct Graph {
 	public:
 		Graph(const float3& mins = ZeroVector, const float3& maxs = ZeroVector);
 		~Graph() {}
+		void Clear();
 
 		void Draw();
 		void AddPoint(int, float, float);
 		void DelPoints(int, int);
-		void Clear();
 
 		void SetPos(float x, float y) { pos.x = x; pos.y = y; }
 		void SetSize(float w, float h) { size.x = w; size.y = h; }
@@ -82,7 +89,65 @@ private:
 		int maxLabelSize; float maxLabelWidth;
 	};
 
+	struct TexSet {
+	public:
+		TexSet(): curTexHandle(0) {}
+		~TexSet() {}
+		void Clear();
+
+		void Draw();
+		int AddTexture(const float*, int, int);
+		void UpdateTexture(int, const float*, int, int, int, int);
+		void DelTexture(int);
+		void SetTexturePos(int, float, float);
+		void SetTextureSize(int, float, float);
+		void SetTextureLabel(int, const std::string&);
+
+	private:
+		struct Texture {
+		public:
+			Texture(int, int, const float*);
+			~Texture();
+
+			unsigned int GetID() const { return id; }
+
+			int GetWidth() const { return xsize; }
+			int GetHeight() const { return ysize; }
+
+			const float3& GetPos() const { return pos; }
+			const float3& GetSize() const { return size; }
+			const std::string& GetLabel() const { return label; }
+
+			float GetLabelWidth() const { return labelWidth; }
+			float GetLabelHeight() const { return labelHeight; }
+
+			void SetPos(const float3& p) { pos = p; }
+			void SetSize(const float3& s) { size = s; }
+			void SetLabel(const std::string&);
+
+			bool operator < (const Texture& t) const { return (id < t.id); }
+
+		private:
+			unsigned int id;
+
+			int xsize;   // in pixels
+			int ysize;   // in pixels
+
+			float3 pos;  // in relative screen-space
+			float3 size; // in relative screen-space
+
+			std::string label;
+			float labelWidth;
+			float labelHeight;
+		};
+
+		std::map<int, Texture*> textures;
+		int curTexHandle;
+	};
+
 	std::vector<Graph> graphs;
+	std::vector<TexSet> texsets;
+
 	bool draw;
 };
 

@@ -341,8 +341,9 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	toBeRemoved.push_back(feature->id);
 	eventHandler.FeatureDestroyed(feature);
+
+	toBeRemoved.push_back(feature->id);
 }
 
 CFeature* CFeatureHandler::GetFeature(int id)
@@ -403,26 +404,34 @@ void CFeatureHandler::Update()
 			freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
 	}
 
-	if(!toBeRemoved.empty()) {
+	{
+		GML_STDMUTEX_LOCK(rfeat); // Update
 
-		GML_RECMUTEX_LOCK(feat); // Update
-		GML_RECMUTEX_LOCK(quad); // Update
+		if(!toBeRemoved.empty()) {
 
-		while (!toBeRemoved.empty()) {
-			CFeature* feature = GetFeature(toBeRemoved.back());
-			toBeRemoved.pop_back();
-			if (feature) {
-				toBeFreedIDs.push_back(feature->id);
-				activeFeatures.erase(feature);
-				features[feature->id] = 0;
+			GML_RECMUTEX_LOCK(feat); // Update
+			GML_RECMUTEX_LOCK(quad); // Update
 
-				if (feature->inUpdateQue) {
-					updateFeatures.erase(feature);
+			eventHandler.DeleteSyncedFeatures();
+
+			while (!toBeRemoved.empty()) {
+				CFeature* feature = GetFeature(toBeRemoved.back());
+				toBeRemoved.pop_back();
+				if (feature) {
+					toBeFreedIDs.push_back(feature->id);
+					activeFeatures.erase(feature);
+					features[feature->id] = 0;
+
+					if (feature->inUpdateQue) {
+						updateFeatures.erase(feature);
+					}
+
+					delete feature;
 				}
-
-				delete feature;
 			}
 		}
+
+		eventHandler.UpdateFeatures();
 	}
 
 	CFeatureSet::iterator fi = updateFeatures.begin();

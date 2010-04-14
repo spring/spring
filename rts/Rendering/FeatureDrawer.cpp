@@ -82,38 +82,38 @@ CFeatureDrawer::~CFeatureDrawer()
 
 
 
-void CFeatureDrawer::FeatureCreated(const CFeature* feature)
+void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
-		UpdateDrawPos(f);
+		UpdateDrawQuad(f);
 	}
 }
 
-void CFeatureDrawer::FeatureDestroyed(const CFeature* feature)
+void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 
-	{
-		GML_STDMUTEX_LOCK(rfeat); // Update
+	if (f->drawQuad >= 0) {
+		DrawQuad* dq = &drawQuads[f->drawQuad];
+		dq->features.erase(f);
+	}
 
-		if (f->drawQuad >= 0) {
-			DrawQuad* dq = &drawQuads[f->drawQuad];
-			dq->features.erase(f);
-		}
-
-		updateDrawFeatures.erase(f);
-
-		if (f->model) {
-			opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-			cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-		}
+	if (f->model) {
+		opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
+		cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
 }
 
 
+void CFeatureDrawer::RenderFeatureMoved(const CFeature* feature)
+{
+	CFeature* f = const_cast<CFeature*>(feature);
+
+	UpdateDrawQuad(f);
+}
 
 void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 {
@@ -132,26 +132,10 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 }
 
 
-void CFeatureDrawer::UpdateDraw()
+void CFeatureDrawer::Update()
 {
-	GML_STDMUTEX_LOCK(rfeat); // UpdateDraw
-
-	for (std::set<CFeature *>::iterator i = updateDrawFeatures.begin(); i != updateDrawFeatures.end(); ++i) {
-		UpdateDrawQuad(*i);
-	}
-
-	updateDrawFeatures.clear();
+	eventHandler.UpdateDrawFeatures();
 }
-
-
-void CFeatureDrawer::UpdateDrawPos(CFeature* feature)
-{
-	GML_STDMUTEX_LOCK(rfeat); // UpdateDrawPos
-
-	updateDrawFeatures.insert(feature);
-}
-
-
 
 void CFeatureDrawer::Draw()
 {
@@ -537,9 +521,11 @@ public:
 
 					if (sqDist < sqFadeDistB) {
 						f->tempalpha = 0.99f;
+						cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 						opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 					} else if (sqDist < sqFadeDistE) {
 						f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+						opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 						cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 					}
 				} else {

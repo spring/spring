@@ -30,8 +30,8 @@ CExploSpikeProjectile::CExploSpikeProjectile()
 {
 }
 
-CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& speed, float length, float width, float alpha, float alphaDecay, CUnit* owner GML_PARG_C):
-	CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
+CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& speed, float length, float width, float alpha, float alphaDecay, CUnit* owner):
+	CProjectile(pos, speed, owner, false, false, false),
 	length(length),
 	width(width),
 	alpha(alpha),
@@ -90,9 +90,9 @@ void CExploSpikeProjectile::Draw(void)
 	#undef let
 }
 
-void CExploSpikeProjectile::Init(const float3& pos, CUnit *owner GML_PARG_C)
+void CExploSpikeProjectile::Init(const float3& pos, CUnit *owner)
 {
-	CProjectile::Init(pos, owner GML_PARG_P);
+	CProjectile::Init(pos, owner);
 
 	lengthGrowth = dir.Length() * (0.5f + gu->usRandFloat() * 0.4f);
 	dir /= lengthGrowth;

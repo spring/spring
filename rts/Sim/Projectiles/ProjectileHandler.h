@@ -12,6 +12,8 @@
 #include "MemPool.h"
 #include "float3.h"
 
+#define UNSYNCED_PROJ_NOEVENT 1 // bypass id and event handling for unsynced projectiles (faster)
+
 class CProjectile;
 class CUnit;
 class CFeature;
@@ -59,7 +61,6 @@ public:
 		}
 		return &(it->second);
 	}
-
 
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);

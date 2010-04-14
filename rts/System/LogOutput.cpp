@@ -149,7 +149,7 @@ const std::string& CLogOutput::GetFilePath() const
 }
 void CLogOutput::SetFileName(std::string fname)
 {
-	GML_STDMUTEX_LOCK(log); // SetFileName
+	GML_STDMUTEX_LOCK_NOPROF(log); // SetFileName
 
 	assert(!initialized);
 	fileName = fname;
