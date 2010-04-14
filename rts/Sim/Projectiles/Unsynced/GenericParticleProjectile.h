@@ -11,7 +11,7 @@ class CGenericParticleProjectile : public CProjectile
 {
 	CR_DECLARE(CGenericParticleProjectile);
 public:
-	CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner GML_PARG_H);
+	CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner);
 	~CGenericParticleProjectile(void);
 
 	virtual void Update();

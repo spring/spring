@@ -82,9 +82,9 @@ void CBaseTreeDrawer::Draw (bool drawReflection)
 	Draw (treeDistance, drawReflection);
 }
 
-void CBaseTreeDrawer::UpdateDraw() {
+void CBaseTreeDrawer::Update() {
 
-	GML_STDMUTEX_LOCK(tree); // UpdateDraw
+	GML_STDMUTEX_LOCK(tree); // Update
 
 	for(std::vector<GLuint>::iterator i=delDispLists.begin(); i!=delDispLists.end(); ++i)
 		glDeleteLists(*i, 1);

@@ -124,14 +124,20 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
-	COMMAND_DEBUG_GRAPHDRAWER_SET_POS             = 83,
-	COMMAND_DEBUG_GRAPHDRAWER_SET_SIZE            = 84,
-	COMMAND_DEBUG_GRAPHDRAWER_LINE_ADD_POINT      = 85,
-	COMMAND_DEBUG_GRAPHDRAWER_LINE_DELETE_POINTS  = 86,
-	COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_COLOR      = 87,
-	COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_LABEL      = 88,
+	COMMAND_DEBUG_DRAWER_GRAPH_SET_POS            = 83,
+	COMMAND_DEBUG_DRAWER_GRAPH_SET_SIZE           = 84,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_ADD_POINT     = 85,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_DELETE_POINTS = 86,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_COLOR     = 87,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_LABEL     = 88,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD       = 89,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_UPDATE    = 90,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE    = 91,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS   = 92,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE  = 93,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL = 94,
 };
-const int NUM_CMD_TOPICS                          = 89;
+const int NUM_CMD_TOPICS                          = 95;
 
 
 /**
@@ -241,6 +247,12 @@ enum UnitCommandOptions {
 		+ sizeof(struct SDeletePointsLineGraphDrawerDebugCommand) \
 		+ sizeof(struct SSetColorLineGraphDrawerDebugCommand) \
 		+ sizeof(struct SSetLabelLineGraphDrawerDebugCommand) \
+		+ sizeof(struct SAddOverlayTextureDrawerDebugCommand) \
+		+ sizeof(struct SUpdateOverlayTextureDrawerDebugCommand) \
+		+ sizeof(struct SDeleteOverlayTextureDrawerDebugCommand) \
+		+ sizeof(struct SSetPositionOverlayTextureDrawerDebugCommand) \
+		+ sizeof(struct SSetSizeOverlayTextureDrawerDebugCommand) \
+		+ sizeof(struct SSetLabelOverlayTextureDrawerDebugCommand) \
 		)
 
 /**
@@ -1454,33 +1466,72 @@ struct SPauseCommand {
 struct SSetPositionGraphDrawerDebugCommand {
 	float x;
 	float y;
-}; // COMMAND_DEBUG_GRAPHDRAWER_SET_POS Debug_GraphDrawer_setPosition
+}; // COMMAND_DEBUG_DRAWER_GRAPH_SET_POS Debug_GraphDrawer_setPosition
 
 struct SSetSizeGraphDrawerDebugCommand {
-	float x;
-	float y;
-}; // COMMAND_DEBUG_GRAPHDRAWER_SET_SIZE Debug_GraphDrawer_setSize
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_GRAPH_SET_SIZE Debug_GraphDrawer_setSize
 
 struct SAddPointLineGraphDrawerDebugCommand {
 	int lineId;
 	float x;
 	float y;
-}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_ADD_POINT Debug_GraphDrawer_GraphLine_addPoint
+}; // COMMAND_DEBUG_DRAWER_GRAPH_LINE_ADD_POINT Debug_GraphDrawer_GraphLine_addPoint
 
 struct SDeletePointsLineGraphDrawerDebugCommand {
 	int lineId;
 	int numPoints;
-}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_DELETE_POINTS Debug_GraphDrawer_GraphLine_deletePoints
+}; // COMMAND_DEBUG_DRAWER_GRAPH_LINE_DELETE_POINTS Debug_GraphDrawer_GraphLine_deletePoints
 
 struct SSetColorLineGraphDrawerDebugCommand {
 	int lineId;
 	short* color_colorS3;
-}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_COLOR Debug_GraphDrawer_GraphLine_setColor
+}; // COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_COLOR Debug_GraphDrawer_GraphLine_setColor
 
 struct SSetLabelLineGraphDrawerDebugCommand {
 	int lineId;
 	const char* label;
-}; // COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_LABEL Debug_GraphDrawer_GraphLine_setLabel
+}; // COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_LABEL Debug_GraphDrawer_GraphLine_setLabel
+
+
+struct SAddOverlayTextureDrawerDebugCommand {
+	int ret_overlayTextureId;
+	const float* texData;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD Debug_addOverlayTexture REF:ret_textureId->OverlayTexture
+
+struct SUpdateOverlayTextureDrawerDebugCommand {
+	int overlayTextureId;
+	const float* texData;
+	int x;
+	int y;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_UPDATE Debug_OverlayTexture_update
+
+struct SDeleteOverlayTextureDrawerDebugCommand {
+	int overlayTextureId;
+}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE Debug_OverlayTexture_delete
+
+struct SSetPositionOverlayTextureDrawerDebugCommand {
+	int overlayTextureId;
+	float x;
+	float y;
+}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS Debug_OverlayTexture_setPosition
+
+struct SSetSizeOverlayTextureDrawerDebugCommand {
+	int overlayTextureId;
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE Debug_OverlayTexture_setSize
+
+struct SSetLabelOverlayTextureDrawerDebugCommand {
+	int overlayTextureId;
+	const char* label;
+}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL Debug_OverlayTexture_setLabel
+
 
 
 /**

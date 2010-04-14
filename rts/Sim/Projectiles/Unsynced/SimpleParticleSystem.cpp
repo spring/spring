@@ -141,9 +141,9 @@ void CSimpleParticleSystem::Update()
 
 }
 
-void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
+void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 {
-	CProjectile::Init(explosionPos, owner GML_PARG_P);
+	CProjectile::Init(explosionPos, owner);
 
 	particles = new Particle[numParticles];
 
@@ -186,7 +186,7 @@ CSphereParticleSpawner::~CSphereParticleSpawner()
 {
 }
 
-void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
+void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 {
 	float3 up = emitVector;
 	float3 right = up.cross(float3(up.y, up.z, -up.x));

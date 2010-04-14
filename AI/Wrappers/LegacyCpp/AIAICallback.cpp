@@ -732,7 +732,7 @@ const float* CAIAICallback::GetHeightMap() {
 
 	if (heightMap == NULL) {
 		const int size = sAICallback->Map_getHeightMap(skirmishAIId, NULL, 0);
-		heightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		heightMap = new float[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Map_getHeightMap(skirmishAIId, heightMap, size);
 	}
 
@@ -745,7 +745,7 @@ const float* CAIAICallback::GetCornersHeightMap() {
 
 	if (cornersHeightMap == NULL) {
 		const int size = sAICallback->Map_getCornersHeightMap(skirmishAIId, NULL, 0);
-		cornersHeightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		cornersHeightMap = new float[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Map_getCornersHeightMap(skirmishAIId, cornersHeightMap, size);
 	}
 
@@ -766,7 +766,7 @@ const float* CAIAICallback::GetSlopeMap() {
 
 	if (slopeMap == NULL) {
 		const int size = sAICallback->Map_getSlopeMap(skirmishAIId, NULL, 0);
-		slopeMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		slopeMap = new float[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Map_getSlopeMap(skirmishAIId, slopeMap, size);
 	}
 
@@ -781,7 +781,7 @@ const unsigned short* CAIAICallback::GetLosMap() {
 		const int size = sAICallback->Map_getLosMap(skirmishAIId, NULL, 0);
 		int tmpLosMap[size];
 		sAICallback->Map_getLosMap(skirmishAIId, tmpLosMap, size);
-		losMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		losMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyIntToUShortArray(tmpLosMap, losMap, size);
 	}
 
@@ -804,7 +804,7 @@ const unsigned short* CAIAICallback::GetRadarMap() {
 		const int size = sAICallback->Map_getRadarMap(skirmishAIId, NULL, 0);
 		int tmpRadarMap[size];
 		sAICallback->Map_getRadarMap(skirmishAIId, tmpRadarMap, size);
-		radarMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		radarMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyIntToUShortArray(tmpRadarMap, radarMap, size);
 	}
 
@@ -819,7 +819,7 @@ const unsigned short* CAIAICallback::GetJammerMap() {
 		const int size = sAICallback->Map_getJammerMap(skirmishAIId, NULL, 0);
 		int tmpJammerMap[size];
 		sAICallback->Map_getJammerMap(skirmishAIId, tmpJammerMap, size);
-		jammerMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		jammerMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyIntToUShortArray(tmpJammerMap, jammerMap, size);
 	}
 
@@ -835,7 +835,7 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 		const int size = sAICallback->Map_getResourceMapRaw(skirmishAIId, m, NULL, 0);
 		short tmpMetalMap[size];
 		sAICallback->Map_getResourceMapRaw(skirmishAIId, m, tmpMetalMap, size);
-		metalMap = new unsigned char[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		metalMap = new unsigned char[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyShortToUCharArray(tmpMetalMap, metalMap, size);
 	}
 
@@ -1772,24 +1772,24 @@ bool CAIAICallback::IsDebugDrawerEnabled() const {
 	return sAICallback->Debug_GraphDrawer_isEnabled(skirmishAIId);
 }
 
-void CAIAICallback::AddDebugGraphPoint(int lineId, float x, float y) {
+void CAIAICallback::DebugDrawerAddGraphPoint(int lineId, float x, float y) {
 	SAddPointLineGraphDrawerDebugCommand cmd = {lineId, x, y};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_GRAPHDRAWER_LINE_ADD_POINT, &cmd);
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_ADD_POINT, &cmd);
 }
-void CAIAICallback::DelDebugGraphPoints(int lineId, int numPoints) {
+void CAIAICallback::DebugDrawerDelGraphPoints(int lineId, int numPoints) {
 	SDeletePointsLineGraphDrawerDebugCommand cmd = {lineId, numPoints};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_GRAPHDRAWER_LINE_DELETE_POINTS, &cmd);
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_DELETE_POINTS, &cmd);
 }
 
-void CAIAICallback::SetDebugGraphPos(float x, float y) {
+void CAIAICallback::DebugDrawerSetGraphPos(float x, float y) {
 	SSetPositionGraphDrawerDebugCommand cmd = {x, y};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_GRAPHDRAWER_SET_POS, &cmd);
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_SET_POS, &cmd);
 }
-void CAIAICallback::SetDebugGraphSize(float w, float h) {
+void CAIAICallback::DebugDrawerSetGraphSize(float w, float h) {
 	SSetSizeGraphDrawerDebugCommand cmd = {w, h};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_GRAPHDRAWER_SET_SIZE, &cmd);
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_SET_SIZE, &cmd);
 }
-void CAIAICallback::SetDebugGraphLineColor(int lineId, const float3& color) {
+void CAIAICallback::DebugDrawerSetGraphLineColor(int lineId, const float3& color) {
 
 	short color_s3[3];
 	color_s3[0] = (short) color[0] * 256;
@@ -1797,11 +1797,37 @@ void CAIAICallback::SetDebugGraphLineColor(int lineId, const float3& color) {
 	color_s3[2] = (short) color[2] * 256;
 
 	SSetColorLineGraphDrawerDebugCommand cmd = {lineId, color_s3};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_COLOR, &cmd);
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_COLOR, &cmd);
 }
-void CAIAICallback::SetDebugGraphLineLabel(int lineId, const char* label) {
+void CAIAICallback::DebugDrawerSetGraphLineLabel(int lineId, const char* label) {
 	SSetLabelLineGraphDrawerDebugCommand cmd = {lineId, label};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_GRAPHDRAWER_LINE_SET_LABEL, &cmd);
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_LABEL, &cmd);
+}
+
+int CAIAICallback::DebugDrawerAddOverlayTexture(const float* texData, int w, int h) {
+	SAddOverlayTextureDrawerDebugCommand cmd = {0, texData, w, h};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD, &cmd);
+	return cmd.ret_overlayTextureId;
+}
+void CAIAICallback::DebugDrawerUpdateOverlayTexture(int overlayTextureId, const float* texData, int x, int y, int w, int h) {
+	SUpdateOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, texData, x, y, w, h};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_UPDATE, &cmd);
+}
+void CAIAICallback::DebugDrawerDelOverlayTexture(int overlayTextureId) {
+	SDeleteOverlayTextureDrawerDebugCommand cmd = {overlayTextureId};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE, &cmd);
+}
+void CAIAICallback::DebugDrawerSetOverlayTexturePos(int overlayTextureId, float x, float y) {
+	SSetPositionOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, x, y};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS, &cmd);
+}
+void CAIAICallback::DebugDrawerSetOverlayTextureSize(int overlayTextureId, float w, float h) {
+	SSetSizeOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, w, h};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE, &cmd);
+}
+void CAIAICallback::DebugDrawerSetOverlayTextureLabel(int overlayTextureId, const char* texLabel) {
+	SSetLabelOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, texLabel};
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL, &cmd);
 }
 
 

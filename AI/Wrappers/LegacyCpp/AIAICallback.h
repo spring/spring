@@ -30,202 +30,211 @@ public:
 	CAIAICallback();
 	CAIAICallback(int skirmishAIId, const SSkirmishAICallback* sAICallback);
 
-	virtual void SendTextMsg(const char* text, int zone);
-	virtual void SetLastMsgPos(float3 pos);
-	virtual void AddNotification(float3 pos, float3 color, float alpha);
+	void SendTextMsg(const char* text, int zone);
+	void SetLastMsgPos(float3 pos);
+	void AddNotification(float3 pos, float3 color, float alpha);
 
-	virtual bool SendResources(float mAmount, float eAmount, int receivingTeam);
+	bool SendResources(float mAmount, float eAmount, int receivingTeam);
 
-	virtual int SendUnits(const std::vector<int>& unitIDs, int receivingTeam);
+	int SendUnits(const std::vector<int>& unitIDs, int receivingTeam);
 
-	virtual bool PosInCamera(float3 pos, float radius);
+	bool PosInCamera(float3 pos, float radius);
 
-	virtual int GetCurrentFrame();
+	int GetCurrentFrame();
 
-	virtual int GetMyTeam();
-	virtual int GetMyAllyTeam();
-	virtual int GetPlayerTeam(int player);
-	virtual const char* GetTeamSide(int team);
+	int GetMyTeam();
+	int GetMyAllyTeam();
+	int GetPlayerTeam(int player);
+	const char* GetTeamSide(int team);
 
-	virtual void* CreateSharedMemArea(char* name, int size);
+	void* CreateSharedMemArea(char* name, int size);
 
-	virtual void ReleasedSharedMemArea(char* name);
+	void ReleasedSharedMemArea(char* name);
 
-	virtual int CreateGroup();
+	int CreateGroup();
 
-	virtual void EraseGroup(int groupid);
-	virtual bool AddUnitToGroup(int unitid, int groupid);
+	void EraseGroup(int groupid);
+	bool AddUnitToGroup(int unitid, int groupid);
 
-	virtual bool RemoveUnitFromGroup(int unitid);
-	virtual int GetUnitGroup(int unitid);
-	virtual const std::vector<CommandDescription>* GetGroupCommands(int unitid);
-	virtual int GiveGroupOrder(int unitid, Command* c);
+	bool RemoveUnitFromGroup(int unitid);
+	int GetUnitGroup(int unitid);
+	const std::vector<CommandDescription>* GetGroupCommands(int unitid);
+	int GiveGroupOrder(int unitid, Command* c);
 
-	virtual int GiveOrder(int unitid, Command* c);
+	int GiveOrder(int unitid, Command* c);
 
-	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitid);
-	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid);
+	const std::vector<CommandDescription>* GetUnitCommands(int unitid);
+	const CCommandQueue* GetCurrentUnitCommands(int unitid);
 
-	virtual int GetUnitAiHint(int unitid);
-	virtual int GetUnitTeam(int unitid);
-	virtual int GetUnitAllyTeam(int unitid);
-	virtual float GetUnitHealth(int unitid);
-	virtual float GetUnitMaxHealth(int unitid);
-	virtual float GetUnitSpeed(int unitid);
-	virtual float GetUnitPower(int unitid);
-	virtual float GetUnitExperience(int unitid);
-	virtual float GetUnitMaxRange(int unitid);
-	virtual bool IsUnitActivated (int unitid);
-	virtual bool UnitBeingBuilt(int unitid);
-	virtual const UnitDef* GetUnitDef(int unitid);
+	int GetUnitAiHint(int unitid);
+	int GetUnitTeam(int unitid);
+	int GetUnitAllyTeam(int unitid);
+	float GetUnitHealth(int unitid);
+	float GetUnitMaxHealth(int unitid);
+	float GetUnitSpeed(int unitid);
+	float GetUnitPower(int unitid);
+	float GetUnitExperience(int unitid);
+	float GetUnitMaxRange(int unitid);
+	bool IsUnitActivated (int unitid);
+	bool UnitBeingBuilt(int unitid);
+	const UnitDef* GetUnitDef(int unitid);
 
-	virtual float3 GetUnitPos(int unitid);
-	virtual int GetBuildingFacing(int unitid);
-	virtual bool IsUnitCloaked(int unitid);
-	virtual bool IsUnitParalyzed(int unitid);
-	virtual bool IsUnitNeutral(int unitid);
-	virtual bool GetUnitResourceInfo(int unitid,
+	float3 GetUnitPos(int unitid);
+	int GetBuildingFacing(int unitid);
+	bool IsUnitCloaked(int unitid);
+	bool IsUnitParalyzed(int unitid);
+	bool IsUnitNeutral(int unitid);
+	bool GetUnitResourceInfo(int unitid,
 			UnitResourceInfo* resourceInfo);
 
-	virtual const UnitDef* GetUnitDef(const char* unitName);
-	virtual const UnitDef* GetUnitDefById(int unitDefId);
+	const UnitDef* GetUnitDef(const char* unitName);
+	const UnitDef* GetUnitDefById(int unitDefId);
 
-	virtual int InitPath(float3 start, float3 end, int pathType);
-	virtual float3 GetNextWaypoint(int pathid);
-	virtual void FreePath(int pathid);
+	int InitPath(float3 start, float3 end, int pathType);
+	float3 GetNextWaypoint(int pathid);
+	void FreePath(int pathid);
 
-	virtual float GetPathLength(float3 start, float3 end, int pathType);
+	float GetPathLength(float3 start, float3 end, int pathType);
 
-	virtual int GetEnemyUnits(int* unitIds, int unitIds_max);
-	virtual int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
-	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius,
+	int GetEnemyUnits(int* unitIds, int unitIds_max);
+	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 			int unitIds_max);
-	virtual int GetFriendlyUnits(int* unitIds, int unitIds_max);
-	virtual int GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
+	int GetFriendlyUnits(int* unitIds, int unitIds_max);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 			int unitIds_max);
-	virtual int GetNeutralUnits(int* unitIds, int unitIds_max);
-	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius,
+	int GetNeutralUnits(int* unitIds, int unitIds_max);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius,
 			int unitIds_max);
 
-	virtual int GetMapWidth();
-	virtual int GetMapHeight();
-	virtual const float* GetHeightMap();
-	virtual const float* GetCornersHeightMap();
-	virtual float GetMinHeight();
-	virtual float GetMaxHeight();
-	virtual const float* GetSlopeMap();
+	int GetMapWidth();
+	int GetMapHeight();
+	const float* GetHeightMap();
+	const float* GetCornersHeightMap();
+	float GetMinHeight();
+	float GetMaxHeight();
+	const float* GetSlopeMap();
 
-	virtual const unsigned short* GetLosMap();
-	virtual int GetLosMapResolution();
-	virtual const unsigned short* GetRadarMap();
-	virtual const unsigned short* GetJammerMap();
-	virtual const unsigned char* GetMetalMap();
-	virtual int GetMapHash();
-	virtual const char* GetMapName();
-	virtual const char* GetMapHumanName();
-	virtual int GetModHash();
-	virtual const char* GetModName();
-	virtual const char* GetModHumanName();
+	const unsigned short* GetLosMap();
+	int GetLosMapResolution();
+	const unsigned short* GetRadarMap();
+	const unsigned short* GetJammerMap();
+	const unsigned char* GetMetalMap();
+	int GetMapHash();
+	const char* GetMapName();
+	const char* GetMapHumanName();
+	int GetModHash();
+	const char* GetModName();
+	const char* GetModHumanName();
 
-	virtual float GetElevation(float x, float z);
+	float GetElevation(float x, float z);
 
-	virtual float GetMaxMetal() const;
-	virtual float GetExtractorRadius() const;
-	virtual float GetMinWind() const;
-	virtual float GetMaxWind() const;
-	virtual float GetCurWind() const;
-	virtual float GetTidalStrength() const;
-	virtual float GetGravity() const;
+	float GetMaxMetal() const;
+	float GetExtractorRadius() const;
+	float GetMinWind() const;
+	float GetMaxWind() const;
+	float GetCurWind() const;
+	float GetTidalStrength() const;
+	float GetGravity() const;
 
-	virtual void LineDrawerStartPath(const float3& pos, const float* color);
-	virtual void LineDrawerFinishPath();
-	virtual void LineDrawerDrawLine(const float3& endPos, const float* color);
-	virtual void LineDrawerDrawLineAndIcon(int cmdID, const float3& endPos,
+	void LineDrawerStartPath(const float3& pos, const float* color);
+	void LineDrawerFinishPath();
+	void LineDrawerDrawLine(const float3& endPos, const float* color);
+	void LineDrawerDrawLineAndIcon(int cmdID, const float3& endPos,
 			const float* color);
-	virtual void LineDrawerDrawIconAtLastPos(int cmdID);
-	virtual void LineDrawerBreak(const float3& endPos, const float* color);
-	virtual void LineDrawerRestart();
-	virtual void LineDrawerRestartSameColor();
+	void LineDrawerDrawIconAtLastPos(int cmdID);
+	void LineDrawerBreak(const float3& endPos, const float* color);
+	void LineDrawerRestart();
+	void LineDrawerRestartSameColor();
 
-	virtual int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3,
+	int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3,
 			float3 pos4, float width, int arrow, int lifetime, int group);
-	virtual int CreateLineFigure(float3 pos1, float3 pos2, float width,
+	int CreateLineFigure(float3 pos1, float3 pos2, float width,
 			int arrow, int lifetime, int group);
-	virtual void SetFigureColor(int group, float red, float green, float blue,
+	void SetFigureColor(int group, float red, float green, float blue,
 			float alpha);
-	virtual void DeleteFigureGroup(int group);
+	void DeleteFigureGroup(int group);
 
-	virtual void DrawUnit(const char* name, float3 pos, float rotation,
+	void DrawUnit(const char* name, float3 pos, float rotation,
 			int lifetime, int team, bool transparent, bool drawBorder,
 			int facing);
 
-	virtual bool IsDebugDrawerEnabled() const;
-	virtual void AddDebugGraphPoint(int, float, float);
-	virtual void DelDebugGraphPoints(int, int);
-	virtual void SetDebugGraphPos(float, float);
-	virtual void SetDebugGraphSize(float, float);
-	virtual void SetDebugGraphLineColor(int, const float3&);
-	virtual void SetDebugGraphLineLabel(int, const char*);
 
-	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
+	bool IsDebugDrawerEnabled() const;
+	void DebugDrawerAddGraphPoint(int, float, float);
+	void DebugDrawerDelGraphPoints(int, int);
+	void DebugDrawerSetGraphPos(float, float);
+	void DebugDrawerSetGraphSize(float, float);
+	void DebugDrawerSetGraphLineColor(int, const float3&);
+	void DebugDrawerSetGraphLineLabel(int, const char*);
 
-	virtual float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos,
+	int DebugDrawerAddOverlayTexture(const float*, int, int);
+	void DebugDrawerUpdateOverlayTexture(int, const float*, int, int, int, int);
+	void DebugDrawerDelOverlayTexture(int);
+	void DebugDrawerSetOverlayTexturePos(int, float, float);
+	void DebugDrawerSetOverlayTextureSize(int, float, float);
+	void DebugDrawerSetOverlayTextureLabel(int, const char*);
+
+
+	bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
+
+	float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos,
 			float searchRadius, int minDist, int facing);
 
-	virtual bool GetProperty(int id, int property, void* dst);
-	virtual bool GetValue(int id, void* dst);
-	virtual int HandleCommand(int commandId, void* data);
+	bool GetProperty(int id, int property, void* dst);
+	bool GetValue(int id, void* dst);
+	int HandleCommand(int commandId, void* data);
 
-	virtual int GetFileSize(const char* name);
-	virtual bool ReadFile(const char* name, void* buffer, int bufferLen);
+	int GetFileSize(const char* name);
+	bool ReadFile(const char* name, void* buffer, int bufferLen);
 
-	virtual int GetSelectedUnits(int* unitIds, int unitIds_max);
-	virtual float3 GetMousePos();
-	virtual int GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies);
-	virtual int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies);
+	int GetSelectedUnits(int* unitIds, int unitIds_max);
+	float3 GetMousePos();
+	int GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies);
+	int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies);
 
-	virtual float GetMetal();
-	virtual float GetMetalIncome();
-	virtual float GetMetalUsage();
-	virtual float GetMetalStorage();
+	float GetMetal();
+	float GetMetalIncome();
+	float GetMetalUsage();
+	float GetMetalStorage();
 
-	virtual float GetEnergy();
-	virtual float GetEnergyIncome();
-	virtual float GetEnergyUsage();
-	virtual float GetEnergyStorage();
+	float GetEnergy();
+	float GetEnergyIncome();
+	float GetEnergyUsage();
+	float GetEnergyStorage();
 
-	virtual int GetFeatures(int *features, int max);
-	virtual int GetFeatures(int *features, int max, const float3& pos,
+	int GetFeatures(int *features, int max);
+	int GetFeatures(int *features, int max, const float3& pos,
 			float radius);
-	virtual const FeatureDef* GetFeatureDef(int feature);
-	virtual const FeatureDef* GetFeatureDefById(int featureDefId);
-	virtual float GetFeatureHealth(int feature);
-	virtual float GetFeatureReclaimLeft(int feature);
-	virtual float3 GetFeaturePos(int feature);
+	const FeatureDef* GetFeatureDef(int feature);
+	const FeatureDef* GetFeatureDefById(int featureDefId);
+	float GetFeatureHealth(int feature);
+	float GetFeatureReclaimLeft(int feature);
+	float3 GetFeaturePos(int feature);
 
-	virtual int GetNumUnitDefs();
-	virtual void GetUnitDefList(const UnitDef** list);
-	virtual float GetUnitDefHeight(int def);
-	virtual float GetUnitDefRadius(int def);
+	int GetNumUnitDefs();
+	void GetUnitDefList(const UnitDef** list);
+	float GetUnitDefHeight(int def);
+	float GetUnitDefRadius(int def);
 
-	virtual const WeaponDef* GetWeapon(const char* weaponName);
-	virtual const WeaponDef* GetWeaponDefById(int weaponDefId);
+	const WeaponDef* GetWeapon(const char* weaponName);
+	const WeaponDef* GetWeaponDefById(int weaponDefId);
 
-	virtual const float3* GetStartPos();
+	const float3* GetStartPos();
 
 
-	virtual const char* CallLuaRules(const char* data, int inSize = -1,
+	const char* CallLuaRules(const char* data, int inSize = -1,
 			int* outSize = NULL);
 
-	virtual std::map<std::string, std::string> GetMyInfo();
-	virtual std::map<std::string, std::string> GetMyOptionValues();
+	std::map<std::string, std::string> GetMyInfo();
+	std::map<std::string, std::string> GetMyOptionValues();
 
 private:
 	int skirmishAIId;
 	const SSkirmishAICallback* sAICallback;
-//	int currentFrame;
+
 	void init();
-//	void setCurrentFrame(int frame) { currentFrame = frame; }
+
 	int Internal_GiveOrder(int unitId, int groupId, Command* c);
 
 	// caches
@@ -233,7 +242,7 @@ private:
 	int* weaponDefFrames;
 	UnitDef** unitDefs;
 	int* unitDefFrames;
-	// the following three are needed to prevent memory leacks
+	// the following three are needed to prevent memory leaks
 	std::vector<CommandDescription>** groupPossibleCommands;
 	std::vector<CommandDescription>** unitPossibleCommands;
 	CCommandQueue** unitCurrentCommandQueues;
