@@ -116,10 +116,14 @@ Function .onInit
 
 	; This allows us to easily use build products from an out of source build,
 	; without the need to run 'make install'
-	!define BUILD_OR_DIST_DIR "${DIST_DIR}"
-	IfFileExists "${BUILD_DIR}\*.*" 0 +2
+	IfFileExists "${BUILD_DIR}\*.*" useDir_build useDir_dist
+	useDir_build:
 		!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
 		!define USE_BUILD_DIR
+		Goto useDir_end
+	useDir_dist:
+		!define BUILD_OR_DIST_DIR "${DIST_DIR}"
+	useDir_end:
 
 !ifndef TEST_BUILD
   ; check if we need to exit some processes which may be using unitsync
