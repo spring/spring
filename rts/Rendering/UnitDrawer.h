@@ -12,36 +12,6 @@
 #include "System/EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
-struct UAD {
-	const CUnit *unit;
-	int data;
-	UAD(const CUnit *u, int d): unit(u), data(d) {}
-	bool operator==(const UAD &u) const { return unit == u.unit && data == u.data; }
-	bool operator<(const UAD &u) const { return unit < u.unit || (unit == u.unit && data < u.data); }
-};
-
-struct UnitBatch {
-	static void Add(const CUnit *p);
-	static void Remove(const CUnit *p);
-	static void Delete(const CUnit *p) { }
-};
-
-struct CloakBatch {
-	static void Add(const UAD &p);
-	static void Remove(const UAD &p) { }
-	static void Delete(const UAD &p) { }
-};
-
-struct LOSBatch {
-	static void Add(const UAD &p);
-	static void Remove(const UAD &p) { }
-	static void Delete(const UAD &p) { }
-};
-
-typedef ThreadListRender<std::set<CUnit*>, std::set<CUnit*>, CUnit*, UnitBatch> UnitBatchContainer;
-typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, CloakBatch> CloakBatchContainer;
-typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, LOSBatch> LOSBatchContainer;
-
 class CVertexArray;
 struct S3DModel;
 struct UnitDef;
@@ -63,9 +33,7 @@ public:
 	CUnitDrawer();
 	~CUnitDrawer(void);
 
-	void UpdateDraw(void);
 	void Update(void);
-	void DeleteSynced(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);  // cloaked units must be drawn after all others
@@ -87,28 +55,17 @@ public:
 
 	bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "UnitCreated"      || eventName == "UnitDestroyed") ||
-			(eventName == "UnitCloaked"      || eventName == "UnitDecloaked") ||
-			(eventName == "UnitEnteredLos"   || eventName == "UnitLeftLos"  ) ||
-			(eventName == "UnitEnteredRadar" || eventName == "UnitLeftRadar");
+			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed") ||
+			(eventName == "RenderUnitCloakChanged"      || eventName == "RenderUnitLOSChanged");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void UnitCreated(const CUnit*, const CUnit*);
-	void UnitDestroyed(const CUnit*, const CUnit*);
-	void UnitCloaked(const CUnit*);
-	void UnitDecloaked(const CUnit*);
-	void UnitEnteredLos(const CUnit*, int);
-	void UnitLeftLos(const CUnit*, int);
-	void UnitEnteredRadar(const CUnit*, int);
-	void UnitLeftRadar(const CUnit*, int);
+	void RenderUnitCreated(const CUnit*);
+	void RenderUnitDestroyed(const CUnit*);
 
-	void UnitCreatedNow(const CUnit*);
-	void UnitDestroyedNow(const CUnit*);
-
-	void UnitLOSChange(const UAD& ua);
-	void UnitCloakChange(const UAD& ua);
+	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam);
+	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
@@ -252,16 +209,6 @@ private:
 	// unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	std::set<CUnit*> unsortedUnits;
 
-	#ifdef USE_GML
-	// gmlClientServer::Work only accepts lists
-	std::list<CUnit*> unsortedUnitsGML;
-	#endif
-
-	// holds S3O features and S3O projectiles
-	GML_CLASSVECTOR<GML_VECTOR<CWorldObject*> > quedS3Os;
-	std::set<int> usedS3OTextures;
-
-
 	// buildings that were in LOS_PREVLOS when they died and not in LOS since
 	std::vector<std::set<GhostBuilding*> > deadGhostBuildings;
 	// buildings that left LOS but are still alive
@@ -272,10 +219,6 @@ private:
 	GML_VECTOR<CUnit*> drawIcon;
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
-
-	UnitBatchContainer unitBatch;
-	CloakBatchContainer cloakBatch;
-	LOSBatchContainer losBatch;
 };
 
 extern CUnitDrawer* unitDrawer;

@@ -17,13 +17,7 @@ struct FlyingPiece;
 struct piececmp;
 class IWorldObjectModelRenderer;
 
-struct ProjectileBatch {
-	static void Add(CProjectile *p);
-	static void Remove(CProjectile *p);
-	static void Delete(CProjectile *p) { delete p; }
-};
 
-typedef ThreadListRender<std::set<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileBatch> ProjectileBatchContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 #if defined(USE_GML) && GML_ENABLE_SIM
 typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;
@@ -49,26 +43,17 @@ public:
 	void LoadWeaponTextures();
 	void UpdateTextures();
 
+	void Update();
 
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "ProjectileCreated" || eventName == "ProjectileDestroyed");
+		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void ProjectileCreated(const CProjectile*);
-	void ProjectileDestroyed(const CProjectile*);
-
-	void AddRenderProjectile(const CProjectile*);
-	void RemoveRenderProjectile(const CProjectile*);
-
-	void DeleteSynced();
-	void Update();
-	void UpdateDraw();
-
-	ProjectileBatchContainer syncedBatch;    //! contains only projectiles that can change simulation state
-	ProjectileBatchContainer unsyncedBatch;  //! contains only projectiles that cannot change simulation state
+	void RenderProjectileCreated(const CProjectile*);
+	void RenderProjectileDestroyed(const CProjectile*);
 
 	CTextureAtlas* textureAtlas;  //texture atlas for projectiles
 	CTextureAtlas* groundFXAtlas; //texture atlas for ground fx

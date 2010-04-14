@@ -23,7 +23,6 @@ void CEventHandler::SetupEvent(const string& eName,
 
 #define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
 
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -75,6 +74,7 @@ CEventHandler::CEventHandler()
 
 	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);
 	SETUP_EVENT(FeatureDestroyed, MANAGED_BIT);
+	SETUP_EVENT(FeatureMoved, MANAGED_BIT);
 
 	SETUP_EVENT(ProjectileCreated,   MANAGED_BIT);
 	SETUP_EVENT(ProjectileDestroyed, MANAGED_BIT);
@@ -117,6 +117,18 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(DrawScreenEffects,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(DrawScreen,          MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(DrawInMiniMap,       MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderUnitCreated,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitDestroyed,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitCloakChanged,  MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitLOSChanged,  MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderFeatureCreated,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderFeatureDestroyed, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderFeatureMoved, MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderProjectileCreated,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderProjectileDestroyed, MANAGED_BIT | UNSYNCED_BIT);
 
 	// unmanaged call-ins
 	SetupEvent("RecvLuaMsg", NULL, 0);
@@ -390,7 +402,7 @@ void CEventHandler::Update()
 {
 	const int count = listUpdate.size();
 
-	if(count <= 0)
+	if (count <= 0)
 		return;
 
 	GML_RECMUTEX_LOCK(unit); // Update

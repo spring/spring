@@ -39,14 +39,26 @@ void IWorldObjectModelRenderer::Draw()
 {
 	PushRenderState();
 
-	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
-		DrawModels(units[uIt->first]);
+	{
+		GML_RECMUTEX_LOCK(unit); // Draw
+
+		for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
+			DrawModels(units[uIt->first]);
+		}
 	}
-	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
-		DrawModels(features[fIt->first]);
+	{
+		GML_RECMUTEX_LOCK(feat); // Draw
+
+		for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
+			DrawModels(features[fIt->first]);
+		}
 	}
-	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
-		DrawModels(projectiles[pIt->first]);
+	{
+		GML_STDMUTEX_LOCK(proj); // Draw
+
+		for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
+			DrawModels(projectiles[pIt->first]);
+		}
 	}
 
 	PopRenderState();
