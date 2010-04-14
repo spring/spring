@@ -22,7 +22,7 @@
 /dist
 
 # DoxyGen output
-/Documentation/doxygen
+/doc/doxygen
 
 # Scons related
 /build
