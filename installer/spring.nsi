@@ -28,50 +28,10 @@ SetCompressor lzma
 !define MUI_COMPONENTSPAGE_TEXT_TOP "Some of these components must be downloaded during the install process."
 
 
-; Set default values for undefined vars
-!ifndef CONTENT_DIR
-	!define CONTENT_DIR "..\cont"
-!endif
-IfFileExists "${CONTENT_DIR}\*.*" 1 0
-	Abort "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
-
-!ifndef DOC_DIR
-	!define DOC_DIR "..\doc"
-!endif
-IfFileExists "${DOC_DIR}\*.*" 1 0
-	Abort "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
-
-!ifndef MINGWLIBS_DIR
-	!define MINGWLIBS_DIR "..\mingwlibs"
-!endif
-IfFileExists "${MINGWLIBS_DIR}\*.*" 1 0
-	Abort "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
-
-!ifndef BUILD_DIR
-	!define BUILD_DIR "..\build"
-!endif
-
-!ifndef DIST_DIR
-	!define DIST_DIR "..\dist"
-	IfFileExists "${DIST_DIR}\*.*" 1 0
-	!define DIST_DIR "..\game"
-!endif
-IfFileExists "${BUILD_DIR}\*.*" 2 0
-	IfFileExists "${DIST_DIR}\*.*" 1 0
-		Abort "Could not find neither the build dir at '${BUILD_DIR}' nor the dist dir at '${DIST_DIR}', try setting BUILD_DIR or  DIST_DIR manually."
-
-; This allows us to easily use build products from an out of source build,
-; without the need to run 'make install'
-!define BUILD_OR_DIST_DIR "${DIST_DIR}"
-IfFileExists "${BUILD_DIR}\*.*" 0 2
-	!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
-	!define USE_BUILD_DIR
-
-
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; Licensepage
-!insertmacro MUI_PAGE_LICENSE "${DOC_DIR}\gpl-2.0.txt"
+!insertmacro MUI_PAGE_LICENSE "..\doc\gpl-2.0.txt"
 
 ; Components page
 !insertmacro MUI_PAGE_COMPONENTS
@@ -121,6 +81,46 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 
 
 Function .onInit
+
+	; Set default values for undefined vars
+	!ifndef CONTENT_DIR
+		!define CONTENT_DIR "..\cont"
+	!endif
+	IfFileExists "${CONTENT_DIR}\*.*" 1 0
+		Abort "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
+
+	!ifndef DOC_DIR
+		!define DOC_DIR "..\doc"
+	!endif
+	IfFileExists "${DOC_DIR}\*.*" 1 0
+		Abort "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
+
+	!ifndef MINGWLIBS_DIR
+		!define MINGWLIBS_DIR "..\mingwlibs"
+	!endif
+	IfFileExists "${MINGWLIBS_DIR}\*.*" 1 0
+		Abort "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
+
+	!ifndef BUILD_DIR
+		!define BUILD_DIR "..\build"
+	!endif
+
+	!ifndef DIST_DIR
+		!define DIST_DIR "..\dist"
+		IfFileExists "${DIST_DIR}\*.*" 1 0
+		!define DIST_DIR "..\game"
+	!endif
+	IfFileExists "${BUILD_DIR}\*.*" 2 0
+		IfFileExists "${DIST_DIR}\*.*" 1 0
+			Abort "Could not find neither the build dir at '${BUILD_DIR}' nor the dist dir at '${DIST_DIR}', try setting BUILD_DIR or  DIST_DIR manually."
+
+	; This allows us to easily use build products from an out of source build,
+	; without the need to run 'make install'
+	!define BUILD_OR_DIST_DIR "${DIST_DIR}"
+	IfFileExists "${BUILD_DIR}\*.*" 0 2
+		!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
+		!define USE_BUILD_DIR
+
 !ifndef TEST_BUILD
   ; check if we need to exit some processes which may be using unitsync
   call CheckTASClientRunning
