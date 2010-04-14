@@ -22,7 +22,7 @@
 /dist
 
 # DoxyGen output
-/doc
+/Documentation/doxygen
 
 # Scons related
 /build
@@ -85,3 +85,9 @@ Makefile
 # ???
 progress.make
 
+#buildbot generated dirs
+/build-*
+
+#installer downloaded/generated stuff
+/installer/Springlobby/
+/installer/*.exe

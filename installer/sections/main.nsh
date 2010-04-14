@@ -2,29 +2,27 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
   SetOverWrite on
-
+	
   ; Main stuff
-  File "${DIST_DIR}\spring.exe"
-  File "${DIST_DIR}\unitsync.dll"
+  File "${BUILDDIR_PATH}\spring.exe"
+  File "${BUILDDIR_PATH}\unitsync.dll"
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
 
   File "downloads\TASServer.jar"
 
+	!ifndef MINGWLIBS_PATH
+		!define MINGWLIBS_PATH "${MINGWLIBS_PATH}"
+	!endif
+
   ; DLLs (updated in mingwlibs-v20.1)
-  File "..\mingwlibs\dll\glew32.dll"
-  File "..\mingwlibs\dll\python25.dll"
-  File "..\mingwlibs\dll\zlib1.dll"
-  File "..\mingwlibs\dll\soft_oal.dll"
-  File "..\mingwlibs\dll\vorbisfile.dll"
-  File "..\mingwlibs\dll\vorbis.dll"
-  File "..\mingwlibs\dll\ogg.dll"
-
-  ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
-  File "..\external\SDL.dll"
-
-  ; shared libgcc compiled with dwarf2 exception support
-  File "..\external\libgcc_s_dw2-1.dll"
+  File "${MINGWLIBS_PATH}\dll\glew32.dll"
+  File "${MINGWLIBS_PATH}\dll\python25.dll"
+  File "${MINGWLIBS_PATH}\dll\zlib1.dll"
+  File "${MINGWLIBS_PATH}\dll\soft_oal.dll"
+  File "${MINGWLIBS_PATH}\dll\vorbisfile.dll"
+  File "${MINGWLIBS_PATH}\dll\vorbis.dll"
+  File "${MINGWLIBS_PATH}\dll\ogg.dll"
 
   ; Old DLLs, not needed anymore
   ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
@@ -32,7 +30,6 @@
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
 
-  File "..\external\SelectionEditor.exe"
   Delete "$INSTDIR\settingstemplate.xml"
 
 ;New Settings Program
@@ -40,12 +37,9 @@
   File /r "..\installer\Springlobby\SettingsDlls\*.dll"
 
   ; DLLs
-  File "..\external\MSVCR71.dll"
-  File "..\external\MSVCP71.dll"
-  File "..\mingwlibs\dll\DevIL.dll"
-  File "..\mingwlibs\dll\freetype6.dll"
-  File "..\mingwlibs\dll\ILU.dll"
-  File "..\external\zlibwapi.dll"
+  File "${MINGWLIBS_PATH}\dll\DevIL.dll"
+  File "${MINGWLIBS_PATH}\dll\freetype6.dll"
+  File "${MINGWLIBS_PATH}\dll\ILU.dll"
 
   File "${DIST_DIR}\PALETTE.PAL"
 
@@ -84,9 +78,13 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  !ifdef OUTOFSOURCEBUILD
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILDDIR_PATH}\AI\Interfaces\${aiIntName}\*.*"
+	File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
+  !else
+	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  !endif
   ;buildbot creates 7z, and those get included in installer, fix here until buildserv got fixed
-  ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !undef AI_INT_VERS
 !endif
 !macroend
@@ -100,8 +98,12 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
-  ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
+  !ifdef OUTOFSOURCEBUILD
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILDDIR_PATH}\AI\Skirmish\${skirAiName}\*.*"
+	File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
+  !else
+	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  !endif
   !undef SKIRM_AI_VERS
 !endif
 !macroend
@@ -113,11 +115,11 @@ ${EndIf}
   SetOverWrite on
   SetOutPath "$INSTDIR\base"
 
-  File "${DIST_DIR}\base\springcontent.sdz"
-  File "${DIST_DIR}\base\maphelper.sdz"
-  File "${DIST_DIR}\base\cursors.sdz"
+  File "${BUILDDIR_PATH}\base\springcontent.sdz"
+  File "${BUILDDIR_PATH}\base\maphelper.sdz"
+  File "${BUILDDIR_PATH}\base\cursors.sdz"
   SetOutPath "$INSTDIR\base\spring"
-  File "${DIST_DIR}\base\spring\bitmaps.sdz"
+  File "${BUILDDIR_PATH}\base\spring\bitmaps.sdz"
 
 ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
   ; Demofile file association
@@ -162,7 +164,7 @@ ${EndIf}
   Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\soft_oal.dll"
-  ; next two are deprecated sinze mingwlibs 20.1 (around spring v0.81.2.1)
+  ; next two are deprecated since mingwlibs 20.1 (around spring v0.81.2.1)
   Delete "$INSTDIR\OpenAL32.dll"
   Delete "$INSTDIR\wrap_oal.dll"
   Delete "$INSTDIR\vorbisfile.dll"
