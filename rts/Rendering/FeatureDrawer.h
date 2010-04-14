@@ -23,8 +23,7 @@ public:
 	~CFeatureDrawer();
 
 	void UpdateDrawQuad(CFeature* feature);
-	void UpdateDraw();
-	void UpdateDrawPos(CFeature* feature);
+	void Update();
 
 	void Draw();
 	void DrawShadowPass();
@@ -37,13 +36,14 @@ public:
 
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "FeatureCreated" || eventName == "FeatureDestroyed");
+		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "RenderFeatureMoved");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void FeatureCreated(const CFeature* feature);
-	void FeatureDestroyed(const CFeature* feature);
+	void RenderFeatureCreated(const CFeature* feature);
+	void RenderFeatureDestroyed(const CFeature* feature);
+	void RenderFeatureMoved(const CFeature* feature);
 
 private:
 	void DrawOpaqueFeatures(int);
@@ -72,7 +72,6 @@ private:
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
 
-	std::set<CFeature *> updateDrawFeatures;
 	std::vector<CFeature*> drawFar;
 	std::vector<CFeature*> drawStat;
 

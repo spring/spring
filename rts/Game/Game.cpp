@@ -2816,6 +2816,9 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
+	if(gs->frameNum == 0)
+		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
+
 	ClientReadNet();
 
 	if (!net->Active() && !gameOver) {
@@ -3108,10 +3111,9 @@ bool CGame::Draw() {
 	texturehandlerS3O->Update();
 	modelParser->Update();
 	treeDrawer->Update();
-	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
-	unitDrawer->UpdateDraw();
-	featureDrawer->UpdateDraw();
+	unitDrawer->Update();
+	featureDrawer->Update();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();

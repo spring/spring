@@ -1529,6 +1529,9 @@ int CAICallback::HandleCommand(int commandId, void* data)
 				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE: {
 					debugDrawerAI->SetOverlayTextureSize(this->team, cmdData->texHandle, cmdData->w, cmdData->h);
 				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_LABEL: {
+					debugDrawerAI->SetOverlayTextureLabel(this->team, cmdData->texHandle, cmdData->label);
+				} break;
 
 				default: {
 				} break;

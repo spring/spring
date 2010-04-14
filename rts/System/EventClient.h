@@ -101,13 +101,26 @@ class CEventClient
 		virtual void UnitCloaked(const CUnit* unit);
 		virtual void UnitDecloaked(const CUnit* unit);
 
+		virtual void RenderUnitCreated(const CUnit* unit);
+		virtual void RenderUnitDestroyed(const CUnit* unit);
+		virtual void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
+		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam);
+
 		virtual void UnitMoveFailed(const CUnit* unit);
 
 		virtual void FeatureCreated(const CFeature* feature);
 		virtual void FeatureDestroyed(const CFeature* feature);
+		virtual void FeatureMoved(const CFeature* feature);
+
+		virtual void RenderFeatureCreated(const CFeature* feature);
+		virtual void RenderFeatureDestroyed(const CFeature* feature);
+		virtual void RenderFeatureMoved(const CFeature* feature);
 
 		virtual void ProjectileCreated(const CProjectile* proj);
 		virtual void ProjectileDestroyed(const CProjectile* proj);
+
+		virtual void RenderProjectileCreated(const CProjectile* proj);
+		virtual void RenderProjectileDestroyed(const CProjectile* proj);
 
 		virtual void StockpileChanged(const CUnit* unit,
 		                              const CWeapon* weapon, int oldCount);

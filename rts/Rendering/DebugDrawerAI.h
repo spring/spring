@@ -34,6 +34,7 @@ public:
 	void DelOverlayTexture(int, int);
 	void SetOverlayTexturePos(int, int, float, float);
 	void SetOverlayTextureSize(int, int, float, float);
+	void SetOverlayTextureLabel(int, int, const std::string&);
 
 private:
 	struct Graph {
@@ -100,6 +101,7 @@ private:
 		void DelTexture(int);
 		void SetTexturePos(int, float, float);
 		void SetTextureSize(int, float, float);
+		void SetTextureLabel(int, const std::string&);
 
 	private:
 		struct Texture {
@@ -114,9 +116,14 @@ private:
 
 			const float3& GetPos() const { return pos; }
 			const float3& GetSize() const { return size; }
+			const std::string& GetLabel() const { return label; }
+
+			float GetLabelWidth() const { return labelWidth; }
+			float GetLabelHeight() const { return labelHeight; }
 
 			void SetPos(const float3& p) { pos = p; }
 			void SetSize(const float3& s) { size = s; }
+			void SetLabel(const std::string&);
 
 			bool operator < (const Texture& t) const { return (id < t.id); }
 
@@ -128,6 +135,10 @@ private:
 
 			float3 pos;  // in relative screen-space
 			float3 size; // in relative screen-space
+
+			std::string label;
+			float labelWidth;
+			float labelHeight;
 		};
 
 		std::map<int, Texture*> textures;

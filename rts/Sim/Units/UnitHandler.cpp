@@ -15,7 +15,6 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/AirBaseHandler.h"
@@ -32,7 +31,7 @@
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
-
+#include "EventHandler.h"
 using std::min;
 using std::max;
 
@@ -209,30 +208,26 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 void CUnitHandler::Update()
 {
-	if (!toBeRemoved.empty()) {
-		GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
-		GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
-		GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
-		GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
-
-		{
-			GML_STDMUTEX_LOCK(runit);
-
-			unitDrawer->DeleteSynced();
-		}
-
-		while (!toBeRemoved.empty()) {
-			CUnit* delUnit = toBeRemoved.back();
-			toBeRemoved.pop_back();
-
-			DeleteUnitNow(delUnit);
-		}
-	}
-
 	{
-		GML_STDMUTEX_LOCK(runit);
+		GML_STDMUTEX_LOCK(runit); // Update
 
-		unitDrawer->Update();
+		if (!toBeRemoved.empty()) {
+			GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
+			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
+			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
+			GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
+
+			eventHandler.DeleteSyncedUnits();
+
+			while (!toBeRemoved.empty()) {
+				CUnit* delUnit = toBeRemoved.back();
+				toBeRemoved.pop_back();
+
+				DeleteUnitNow(delUnit);
+			}
+		}
+
+		eventHandler.UpdateUnits();
 	}
 
 	GML_UPDATE_TICKS();
