@@ -4,25 +4,21 @@
   SetOverWrite on
 	
   ; Main stuff
-  File "${BUILDDIR_PATH}\spring.exe"
-  File "${BUILDDIR_PATH}\unitsync.dll"
+  File "${BUILD_OR_DIST_DIR}\spring.exe"
+  File "${BUILD_OR_DIST_DIR}\unitsync.dll"
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
 
   File "downloads\TASServer.jar"
 
-	!ifndef MINGWLIBS_PATH
-		!define MINGWLIBS_PATH "${MINGWLIBS_PATH}"
-	!endif
-
   ; DLLs (updated in mingwlibs-v20.1)
-  File "${MINGWLIBS_PATH}\dll\glew32.dll"
-  File "${MINGWLIBS_PATH}\dll\python25.dll"
-  File "${MINGWLIBS_PATH}\dll\zlib1.dll"
-  File "${MINGWLIBS_PATH}\dll\soft_oal.dll"
-  File "${MINGWLIBS_PATH}\dll\vorbisfile.dll"
-  File "${MINGWLIBS_PATH}\dll\vorbis.dll"
-  File "${MINGWLIBS_PATH}\dll\ogg.dll"
+  File "${MINGWLIBS_DIR}\dll\glew32.dll"
+  File "${MINGWLIBS_DIR}\dll\python25.dll"
+  File "${MINGWLIBS_DIR}\dll\zlib1.dll"
+  File "${MINGWLIBS_DIR}\dll\soft_oal.dll"
+  File "${MINGWLIBS_DIR}\dll\vorbisfile.dll"
+  File "${MINGWLIBS_DIR}\dll\vorbis.dll"
+  File "${MINGWLIBS_DIR}\dll\ogg.dll"
 
   ; Old DLLs, not needed anymore
   ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
@@ -37,34 +33,34 @@
   File /r "..\installer\Springlobby\SettingsDlls\*.dll"
 
   ; DLLs
-  File "${MINGWLIBS_PATH}\dll\DevIL.dll"
-  File "${MINGWLIBS_PATH}\dll\freetype6.dll"
-  File "${MINGWLIBS_PATH}\dll\ILU.dll"
+  File "${MINGWLIBS_DIR}\dll\DevIL.dll"
+  File "${MINGWLIBS_DIR}\dll\freetype6.dll"
+  File "${MINGWLIBS_DIR}\dll\ILU.dll"
 
-  File "${DIST_DIR}\PALETTE.PAL"
+  File "${CONTENT_DIR}\PALETTE.PAL"
 
 ${IfNot} ${FileExists} "$INSTDIR\selectkeys.txt"
-  File "${DIST_DIR}\selectkeys.txt"
+  File "${CONTENT_DIR}\selectkeys.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\uikeys.txt"
-  File "${DIST_DIR}\uikeys.txt"
+  File "${CONTENT_DIR}\uikeys.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\cmdcolors.txt"
-  File "${DIST_DIR}\cmdcolors.txt"
+  File "${CONTENT_DIR}\cmdcolors.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\ctrlpanel.txt"
-  File "${DIST_DIR}\ctrlpanel.txt"
+  File "${CONTENT_DIR}\ctrlpanel.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\teamcolors.lua"
-  File "${DIST_DIR}\teamcolors.lua"
+  File "${CONTENT_DIR}\teamcolors.lua"
 ${EndIf}
 
   SetOutPath "$INSTDIR\fonts"
-  File "${DIST_DIR}\fonts\FreeSansBold.otf"
+  File "${CONTENT_DIR}\fonts\FreeSansBold.otf"
 
   ; Remove Luxi.ttf, it has been replaced by FreeSansBold
   Delete "$INSTDIR\Luxi.ttf"
@@ -78,8 +74,8 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  !ifdef OUTOFSOURCEBUILD
-	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILDDIR_PATH}\AI\Interfaces\${aiIntName}\*.*"
+  !ifdef USE_BUILD_DIR
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
 	File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !else
 	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
@@ -98,8 +94,8 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  !ifdef OUTOFSOURCEBUILD
-	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILDDIR_PATH}\AI\Skirmish\${skirAiName}\*.*"
+  !ifdef USE_BUILD_DIR
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Skirmish\${skirAiName}\*.*"
 	File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
   !else
 	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
@@ -115,11 +111,11 @@ ${EndIf}
   SetOverWrite on
   SetOutPath "$INSTDIR\base"
 
-  File "${BUILDDIR_PATH}\base\springcontent.sdz"
-  File "${BUILDDIR_PATH}\base\maphelper.sdz"
-  File "${BUILDDIR_PATH}\base\cursors.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\springcontent.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\maphelper.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\cursors.sdz"
   SetOutPath "$INSTDIR\base\spring"
-  File "${BUILDDIR_PATH}\base\spring\bitmaps.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\spring\bitmaps.sdz"
 
 ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
   ; Demofile file association
