@@ -1,8 +1,8 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
 
-	!ifdef OUTOFSOURCEBUILD 
-		File "${BUILDDIR_PATH}\tools\ArchiveMover\ArchiveMover.exe"
+	!ifdef USE_BUILD_DIR 
+		File "${BUILD_DIR}\tools\ArchiveMover\ArchiveMover.exe"
 	!else
 		File "${DIST_DIR}\ArchiveMover.exe"
 	!endif

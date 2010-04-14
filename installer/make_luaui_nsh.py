@@ -5,7 +5,7 @@
 # Use like this:
 # python {this_script}.py > installer/sections/luaui.nsh
 #
-# @param baseDir for example: "/abs/path/to/my/dist/dir"
+# @param baseDir for example: "/home/userX/src/spring"
 #
 
 ################################################################################
@@ -13,10 +13,10 @@
 # !ifdef INSTALL
 #
 #   SetOutPath "$INSTDIR"
-#   File "${DIST_DIR}\luaui.lua"
+#   File "${CONTENT_DIR}\luaui.lua"
 # 
 #   SetOutPath "$INSTDIR\LuaUI"
-#   File /r /x .svn /x Config\*.lua "${DIST_DIR}\LuaUI\*.*"
+#   File /r /x .svn /x Config\*.lua "${CONTENT_DIR}\LuaUI\*.*"
 # 
 # !else
 #
@@ -36,30 +36,30 @@ if len(sys.argv) > 1:
 else:
 	baseDir = os.path.join(sys.path[0], '..')
 
-distDirCandidates = ['dist', 'game', 'cont']
+contentDirCandidates = ['cont']
 luaUIDir = 'LuaUI'
-distBase = '${DIST_DIR}'
+contentBase = '${CONTENT_DIR}'
 instBase = '${INSTDIR}'
 
 # Change to source root dir
 os.chdir(sys.path[0])
 os.chdir('..')
 
-distDir = ""
-for d in distDirCandidates:
-	distDir = d
+contentDir = ""
+for d in contentDirCandidates:
+	contentDir = d
 	try:
-		os.chdir(os.path.join(distDir, luaUIDir))
+		os.chdir(os.path.join(contentDir, luaUIDir))
 		break
 	except OSError:
-		distDir = ""
+		contentDir = ""
 
-if distDir == "":
-	# Distribution directory not found
+if contentDir == "":
+	# Content directory not found
 	sys.exit(1)
 else:
-	# Change to the distribution dir
-	os.chdir(os.path.join(baseDir, distDir))
+	# Change to the content dir
+	os.chdir(os.path.join(baseDir, contentDir))
 
 ################################################################################
 
@@ -92,12 +92,12 @@ print('  Delete "' + instBase + '\LuaUI\unitdefs.lua"')
 
 print('')
 print('  SetOutPath "' + instBase + '"')
-print('  File "' + toWinPath(os.path.join(distBase, 'luaui.lua')) + '"')
+print('  File "' + toWinPath(os.path.join(contentBase, 'luaui.lua')) + '"')
 print('')
 for d in dirs:
 	print('  SetOutPath "' + toWinPath(os.path.join(instBase, d)) + '"')
 	for f in dirs[d]:
-		print('  File "' + toWinPath(os.path.join(distBase, d, f)) + '"')
+		print('  File "' + toWinPath(os.path.join(contentBase, d, f)) + '"')
 print('')
 
 print('!else')
