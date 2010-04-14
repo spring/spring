@@ -63,12 +63,6 @@
 extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 #endif
 
-void UnitBatch::Add(const CUnit *p) { unitDrawer->UnitCreatedNow(p); }
-void UnitBatch::Remove(const CUnit *p) { unitDrawer->UnitDestroyedNow(p); }
-void CloakBatch::Add(const UAD &p) { unitDrawer->UnitCloakChange(p); }
-void LOSBatch::Add(const UAD &p) { unitDrawer->UnitLOSChange(p); }
-
-
 #define UNIT_SHADOW_ALPHA_MASKING
 
 CUnitDrawer* unitDrawer;
@@ -291,25 +285,7 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 	iconLength = 750 * unitIconDist * unitIconDist;
 }
 
-void CUnitDrawer::DeleteSynced() {
-	cloakBatch.delay();
-	cloakBatch.execute();
-
-	losBatch.delay();
-	losBatch.execute();
-
-	unitBatch.delay();
-	unitBatch.execute();
-	unitBatch.destroy();
-}
-
-void CUnitDrawer::Update(void) {
-	unitBatch.delay();
-	cloakBatch.delay();
-	losBatch.delay();
-}
-
-void CUnitDrawer::UpdateDraw(void)
+void CUnitDrawer::Update(void)
 {
 	{
 		GML_STDMUTEX_LOCK(temp); // Update
@@ -322,13 +298,7 @@ void CUnitDrawer::UpdateDraw(void)
 		}
 	}
 
-	{
-		GML_STDMUTEX_LOCK(runit); // Update
-
-		unitBatch.execute();
-		cloakBatch.execute();
-		losBatch.execute();
-	}
+	eventHandler.UpdateDrawUnits();
 
 	{
 		GML_RECMUTEX_LOCK(unit); // Update
@@ -2311,13 +2281,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	return canBuild;
 }
 
-
-
-void CUnitDrawer::UnitCreated(const CUnit* u, const CUnit*) {
-	unitBatch.enqueue(const_cast<CUnit*>(u));
-}
-
-void CUnitDrawer::UnitCreatedNow(const CUnit* u) {
+void CUnitDrawer::RenderUnitCreated(const CUnit* u) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
@@ -2338,11 +2302,8 @@ void CUnitDrawer::UnitCreatedNow(const CUnit* u) {
 	unsortedUnits.insert(unit);
 }
 
-void CUnitDrawer::UnitDestroyed(const CUnit* u, const CUnit*) {
-	unitBatch.dequeue(const_cast<CUnit*>(u));
-}
 
-void CUnitDrawer::UnitDestroyedNow(const CUnit* u) {
+void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
@@ -2390,28 +2351,14 @@ void CUnitDrawer::UnitDestroyedNow(const CUnit* u) {
 }
 
 
-void CUnitDrawer::UnitCloaked(const CUnit* u) {
-	cloakBatch.enqueue(UAD(u,1));
-}
-
-void CUnitDrawer::UnitDecloaked(const CUnit* u) {
-	cloakBatch.enqueue(UAD(u,0));
-}
-
-
-void CUnitDrawer::UnitCloakChange(const UAD& ua) {
-	const CUnit *u = ua.unit;
-	int isCloaked = ua.data;
-
-	if(u->isDead)
-		return;
+void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
+	CUnit *u = const_cast<CUnit *>(unit);
 
 	if (u->model) {
-		if(isCloaked) {
+		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
-		else {
+		} else {
 			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		}
@@ -2419,54 +2366,29 @@ void CUnitDrawer::UnitCloakChange(const UAD& ua) {
 }
 
 
-void CUnitDrawer::UnitEnteredLos(const CUnit* u, int allyTeam) {
-	losBatch.enqueue(UAD(u,allyTeam));
-}
-
-void CUnitDrawer::UnitLeftLos(const CUnit* u, int allyTeam) {
-	losBatch.enqueue(UAD(u,allyTeam));
-}
-
-void CUnitDrawer::UnitEnteredRadar(const CUnit* u, int allyTeam) {
-	losBatch.enqueue(UAD(u,allyTeam));
-}
-
-void CUnitDrawer::UnitLeftRadar(const CUnit* u, int allyTeam) {
-	losBatch.enqueue(UAD(u,allyTeam));
-}
-
-
-void CUnitDrawer::UnitLOSChange(const UAD& ua) {
-	const CUnit *u = ua.unit;
-	int allyTeam = ua.data;
-
-	if(u->isDead)
-		return;
+void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
+	CUnit *u = const_cast<CUnit *>(unit);
 
 	if (u->losStatus[allyTeam] & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-				liveGhostBuildings[MDL_TYPE(u)].erase(const_cast<CUnit*>(u));
+				liveGhostBuildings[MDL_TYPE(u)].erase(u);
 			}
 		}
-		unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
-	}
-	else {
+		unitRadarIcons[allyTeam].erase(u);
+	} else {
 		if (allyTeam == gu->myAllyTeam) {
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-				liveGhostBuildings[MDL_TYPE(u)].insert(const_cast<CUnit*>(u));
+				liveGhostBuildings[MDL_TYPE(u)].insert(u);
 			}
 		}
 		if (u->losStatus[allyTeam] & LOS_INRADAR) {
-			unitRadarIcons[allyTeam].insert(const_cast<CUnit*>(u));
+			unitRadarIcons[allyTeam].insert(u);
 //			if (u->isIcon) {
 //				drawIcon.push_back(const_cast<CUnit*>(u)); // useless?
 //			}
-		}
-		else {
-			unitRadarIcons[allyTeam].erase(const_cast<CUnit*>(u));
+		} else {
+			unitRadarIcons[allyTeam].erase(u);
 		}
 	}
 }
-
-

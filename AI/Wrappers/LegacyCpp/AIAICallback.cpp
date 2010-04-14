@@ -1610,7 +1610,10 @@ void CAIAICallback::DebugDrawerSetOverlayTextureSize(int texHandle, float w, flo
 	SDebugDrawerSetOverlayTextureSizeCommand cmd = {texHandle, w, h};
 	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE, &cmd);
 }
-
+void CAIAICallback::DebugDrawerSetOverlayTextureLabel(int texHandle, const char* texLabel) {
+	SDebugDrawerSetOverlayTextureLabelCommand cmd = {texHandle, texLabel};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_LABEL, &cmd);
+}
 
 
 

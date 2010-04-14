@@ -75,10 +75,10 @@ IModelDrawer::~IModelDrawer()
 
 
 
-void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
+void IModelDrawer::RenderUnitCreated(const CUnit* u)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::UnitCreated] id=%d", u->id);
+	logOutput.Print("[IModelDrawer::RenderUnitCreated] id=%d", u->id);
 	#endif
 	#if (MODEL_DRAWER_DEBUG == 2)
 	return;
@@ -94,60 +94,48 @@ void IModelDrawer::UnitCreated(const CUnit* u, const CUnit*)
 	}
 }
 
-void IModelDrawer::UnitDestroyed(const CUnit* u, const CUnit*)
+void IModelDrawer::RenderUnitDestroyed(const CUnit* u)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::UnitDestroyed] id=%d", u->id);
+	logOutput.Print("[IModelDrawer::RenderUnitDestroyed] id=%d", u->id);
 	#endif
 	#if (MODEL_DRAWER_DEBUG == 2)
 	return;
 	#endif
 
 	if (u->model) {
-		if (u->isCloaked) {
-			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		} else {
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+	}
+}
+
+
+void IModelDrawer::RenderUnitCloakChanged(const CUnit* u, int cloaked)
+{
+	#if (MODEL_DRAWER_DEBUG == 1)
+	logOutput.Print("[IModelDrawer::RenderUnitCloakChanged] id=%d", u->id);
+	#endif
+	#if (MODEL_DRAWER_DEBUG == 2)
+	return;
+	#endif
+
+	if (u->model) {
+		if(cloaked) {
+			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		}
+		else {
+			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		}
 	}
 }
 
 
-void IModelDrawer::UnitCloaked(const CUnit* u)
+void IModelDrawer::RenderFeatureCreated(const CFeature* f)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::UnitCloaked] id=%d", u->id);
-	#endif
-	#if (MODEL_DRAWER_DEBUG == 2)
-	return;
-	#endif
-
-	if (u->model) {
-		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-	}
-}
-
-void IModelDrawer::UnitDecloaked(const CUnit* u)
-{
-	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::UnitDecloaked] id=%d", u->id);
-	#endif
-	#if (MODEL_DRAWER_DEBUG == 2)
-	return;
-	#endif
-
-	if (u->model) {
-		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-	}
-}
-
-
-void IModelDrawer::FeatureCreated(const CFeature* f)
-{
-	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::FeatureCreated] id=%d", f->id);
+	logOutput.Print("[IModelDrawer::RenderFeatureCreated] id=%d", f->id);
 	#endif
 	#if (MODEL_DRAWER_DEBUG == 2)
 	return;
@@ -158,10 +146,10 @@ void IModelDrawer::FeatureCreated(const CFeature* f)
 	}
 }
 
-void IModelDrawer::FeatureDestroyed(const CFeature* f)
+void IModelDrawer::RenderFeatureDestroyed(const CFeature* f)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::FeatureDestroyed] id=%d", f->id);
+	logOutput.Print("[IModelDrawer::RenderFeatureDestroyed] id=%d", f->id);
 	#endif
 	#if (MODEL_DRAWER_DEBUG == 2)
 	return;
@@ -173,10 +161,10 @@ void IModelDrawer::FeatureDestroyed(const CFeature* f)
 }
 
 
-void IModelDrawer::ProjectileCreated(const CProjectile* p)
+void IModelDrawer::RenderProjectileCreated(const CProjectile* p)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::ProjectileCreated] id=%d", p->id);
+	logOutput.Print("[IModelDrawer::RenderProjectileCreated] id=%d", p->id);
 	#endif
 	#if (MODEL_DRAWER_DEBUG == 2)
 	return;
@@ -187,10 +175,10 @@ void IModelDrawer::ProjectileCreated(const CProjectile* p)
 	}
 }
 
-void IModelDrawer::ProjectileDestroyed(const CProjectile* p)
+void IModelDrawer::RenderProjectileDestroyed(const CProjectile* p)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
-	logOutput.Print("[IModelDrawer::ProjectileDestroyed] id=%d", p->id);
+	logOutput.Print("[IModelDrawer::RenderProjectileDestroyed] id=%d", p->id);
 	#endif
 	#if (MODEL_DRAWER_DEBUG == 2)
 	return;
