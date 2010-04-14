@@ -153,18 +153,19 @@ struct AIHCGetDataDir ///< result of HandleCommand is 1 for if path fetched, 0 f
 struct AIHCDebugDraw
 {
 	enum {
-		AIHC_DEBUGDRAWER_MODE_ADD_GRAPH_POINT          =  0,
-		AIHC_DEBUGDRAWER_MODE_DEL_GRAPH_POINTS         =  1,
-		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_POS            =  2,
-		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_SIZE           =  3,
-		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_COLOR     =  4,
-		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_LABEL     =  5,
+		AIHC_DEBUGDRAWER_MODE_ADD_GRAPH_POINT           =  0,
+		AIHC_DEBUGDRAWER_MODE_DEL_GRAPH_POINTS          =  1,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_POS             =  2,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_SIZE            =  3,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_COLOR      =  4,
+		AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_LABEL      =  5,
 
-		AIHC_DEBUGDRAWER_MODE_ADD_OVERLAY_TEXTURE      =  6,
-		AIHC_DEBUGDRAWER_MODE_UPDATE_OVERLAY_TEXTURE   =  7,
-		AIHC_DEBUGDRAWER_MODE_DEL_OVERLAY_TEXTURE      =  8,
-		AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_POS  =  9,
-		AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE = 10,
+		AIHC_DEBUGDRAWER_MODE_ADD_OVERLAY_TEXTURE       =  6,
+		AIHC_DEBUGDRAWER_MODE_UPDATE_OVERLAY_TEXTURE    =  7,
+		AIHC_DEBUGDRAWER_MODE_DEL_OVERLAY_TEXTURE       =  8,
+		AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_POS   =  9,
+		AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE  = 10,
+		AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_LABEL = 11,
 	};
 
 	int cmdMode;
@@ -464,6 +465,7 @@ public:
 	virtual void DebugDrawerDelOverlayTexture(int texHandle) = 0;
 	virtual void DebugDrawerSetOverlayTexturePos(int texHandle, float x, float y) = 0;
 	virtual void DebugDrawerSetOverlayTextureSize(int texHandle, float w, float h) = 0;
+	virtual void DebugDrawerSetOverlayTextureLabel(int texHandle, const char* label) = 0;
 
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;

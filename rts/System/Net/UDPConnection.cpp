@@ -399,7 +399,7 @@ void UDPConnection::Flush(const bool forced)
 
 bool UDPConnection::CheckTimeout() const
 {
-	const spring_duration timeout = ((dataRecv == 0) ? spring_secs(45) : spring_secs(30));
+	const spring_duration timeout = ((dataRecv == 0) ? spring_secs(90) : spring_secs(60));
 	if((lastReceiveTime+timeout) < spring_gettime())
 	{
 		return true;
