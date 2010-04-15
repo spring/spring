@@ -39,11 +39,11 @@ macro    (FindJavaLib path_var libName additionalSearchDirs)
 		DOC "Path to the Java library ${libName}.jar"
 		NO_DEFAULT_PATH
 		)
-	if    (${path_var}-NOTFOUND)
+	if    (NOT ${path_var})
 		message(SEND_ERROR "${libName}.jar not found!")
-	else  (${path_var}-NOTFOUND)
+	else  (NOT ${path_var})
 		AIMessage(STATUS "Found ${libName}.jar: ${${path_var}}")
-	endif (${path_var}-NOTFOUND)
+	endif (NOT ${path_var})
 endmacro (FindJavaLib path_var libName additionalSearchDirs)
 
 # Returns the name of the first sub-dir (in alphabetical descending order)
