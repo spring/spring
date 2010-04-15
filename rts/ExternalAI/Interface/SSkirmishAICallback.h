@@ -222,6 +222,16 @@ int (CALLING_CONV *Clb_Game_getAiInterfaceVersion)(int teamId);
 int (CALLING_CONV *Clb_Game_getMyTeam)(int teamId);
 int (CALLING_CONV *Clb_Game_getMyAllyTeam)(int teamId);
 int (CALLING_CONV *Clb_Game_getPlayerTeam)(int teamId, int playerId);
+/**
+ * Returns the name of the side of a team in the game.
+ *
+ * This should not be used, as it may be "",
+ * and as the AI should rather rely on the units it has,
+ * which will lead to a more stable and versatile AI.
+ * @deprecated
+ *
+ * @return eg. "ARM" or "CORE"; may be "", depending on how the game was setup
+ */
 const char* (CALLING_CONV *Clb_Game_getTeamSide)(int teamId, int otherTeamId);
 bool (CALLING_CONV *Clb_Game_isExceptionHandlingEnabled)(int teamId);
 bool (CALLING_CONV *Clb_Game_isDebugModeEnabled)(int teamId);
