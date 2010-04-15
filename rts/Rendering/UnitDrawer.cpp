@@ -2371,13 +2371,6 @@ void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
 void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	//
-	// FIXME: during a Left{Los, Radar} event, the IN{LOS, RADAR} bit is still set but
-	// we no longer know what type (left or entered) we are dealing with at this point
-	// ==> radar icons continue to be drawn when units go out of radar range, buildings
-	// do not become ghosts when going out of LOS, etc.
-	//
-
 	if (u->losStatus[allyTeam] & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
