@@ -35,9 +35,10 @@ MakeGlobal(JAVA_GLOBAL_LIBS_DIRS)
 # additional dirs supplied as argument.
 macro    (FindJavaLib path_var libName additionalSearchDirs)
 	find_file(${path_var} "${libName}.jar"
-		PATHS "${additionalSearchDirs}" ${JAVA_GLOBAL_LIBS_DIRS}
+		PATHS ${additionalSearchDirs} ${JAVA_GLOBAL_LIBS_DIRS}
 		DOC "Path to the Java library ${libName}.jar"
 		NO_DEFAULT_PATH
+		NO_CMAKE_FIND_ROOT_PATH
 		)
 	if    (NOT ${path_var})
 		message(SEND_ERROR "${libName}.jar not found!")
