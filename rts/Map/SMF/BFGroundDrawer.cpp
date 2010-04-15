@@ -1389,14 +1389,14 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
-			static const GLfloat planeX[] = {0.02f, 0.0f, 0.0f, 0.0f};
-			static const GLfloat planeZ[] = {0.0f, 0.0f, 0.02f, 0.0f};
+			static const GLfloat planeX[] = {0.02f, 0.0f, 0.00f, 0.0f};
+			static const GLfloat planeZ[] = {0.00f, 0.0f, 0.02f, 0.0f};
 
 			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 			glTexGenfv(GL_S, GL_OBJECT_PLANE, planeX);
 			glEnable(GL_TEXTURE_GEN_S);
 
-			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
+			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 			glTexGenfv(GL_T, GL_OBJECT_PLANE, planeZ);
 			glEnable(GL_TEXTURE_GEN_T);
 		} else {
@@ -1491,6 +1491,7 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 	} else {
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, 0);
