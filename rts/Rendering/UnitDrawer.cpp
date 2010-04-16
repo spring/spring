@@ -2368,10 +2368,10 @@ void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
 }
 
 
-void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
+void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (u->losStatus[allyTeam] & LOS_INLOS) {
+	if (newStatus & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
 				liveGhostBuildings[MDL_TYPE(u)].erase(u);
@@ -2379,7 +2379,7 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
 		}
 		unitRadarIcons[allyTeam].erase(u);
 	} else {
-		if (u->losStatus[allyTeam] & LOS_PREVLOS) {
+		if (newStatus & LOS_PREVLOS) {
 			if (allyTeam == gu->myAllyTeam) {
 				if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
 					liveGhostBuildings[MDL_TYPE(u)].insert(u);
@@ -2387,7 +2387,7 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
 			}
 		}
 
-		if (u->losStatus[allyTeam] & LOS_INRADAR) {
+		if (newStatus & LOS_INRADAR) {
 			unitRadarIcons[allyTeam].insert(u);
 //			if (u->isIcon) {
 //				drawIcon.push_back(const_cast<CUnit*>(u)); // useless?
