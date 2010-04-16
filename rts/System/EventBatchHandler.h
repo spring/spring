@@ -43,10 +43,12 @@ private:
 	struct UAD {
 		const CUnit* unit;
 		int data;
+		int status;
 
-		UAD(const CUnit* u, int d): unit(u), data(d) {}
-		bool operator==(const UAD& u) const { return unit == u.unit && data == u.data; }
-		bool operator<(const UAD& u) const { return unit < u.unit || (unit == u.unit && data < u.data); }
+		UAD(const CUnit* u, int d): unit(u), data(d), status(0) {}
+		UAD(const CUnit* u, int d, int s): unit(u), data(d), status(s) {}
+		bool operator==(const UAD& u) const { return unit == u.unit && data == u.data && status == u.status; }
+		bool operator<(const UAD& u) const { return unit < u.unit || (unit == u.unit && (data < u.data || (data == u.data && status < u.status))); }
 	};
 
 	struct UnitCreatedDestroyedEvent {
@@ -131,7 +133,7 @@ public:
 
 	void UpdateObjects();
 
-	void EnqueueUnitLOSStateChangeEvent(const CUnit* unit, int allyteam) { unitLOSStateChangedEventBatch.enqueue(UAD(unit, allyteam)); }
+	void EnqueueUnitLOSStateChangeEvent(const CUnit* unit, int allyteam, int newstatus) { unitLOSStateChangedEventBatch.enqueue(UAD(unit, allyteam, newstatus)); }
 	void EnqueueUnitCloakStateChangeEvent(const CUnit* unit, int cloaked) { unitCloakStateChangedEventBatch.enqueue(UAD(unit, cloaked)); }
 
 	ProjectileCreatedDestroyedEventBatch& GetSyncedProjectileCreatedDestroyedBatch() { return syncedProjectileCreatedDestroyedEventBatch; }
