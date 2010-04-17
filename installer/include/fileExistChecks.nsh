@@ -7,7 +7,6 @@
 	!undef _TEMPFILE
 	!ifdef _FILE_EXISTS
 		!undef _FILE_EXISTS
-	!endif
 !macroend
 !define !ifexist "!insertmacro !ifexist"
 
@@ -19,7 +18,6 @@
 	!undef _TEMPFILE
 	!ifdef _FILE_EXISTS
 		!undef _FILE_EXISTS
-	!endif
 !macroend
 !define !ifnexist "!insertmacro !ifnexist"
 
