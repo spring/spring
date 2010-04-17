@@ -214,7 +214,9 @@ CBumpWater::CBumpWater()
 			blurShader->Link();
 
 			if (!blurShader->IsValid()) {
-				throw content_error(string("[BumpWater] blur-shader compilation error!"));
+				//! string size is limited with content_error()
+				logOutput.Print("[BumpWater] shorewaves-shader compilation error: " + blurShader->GetLog());
+				throw content_error(string("[BumpWater] shorewaves-shader compilation error!"));
 			}
 
 			blurShader->SetUniformLocation("tex0"); // idx 0
@@ -440,6 +442,8 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("waverand");    // idx 10
 
 		if (!waterShader->IsValid()) {
+			//! string size is limited with content_error()
+			logOutput.Print("[BumpWater] water-shader compilation error: " + waterShader->GetLog());
 			throw content_error(string("[BumpWater] water-shader compilation error!"));
 		}
 
