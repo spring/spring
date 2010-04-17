@@ -17,6 +17,7 @@ $installerDir=dirname($installerDir);
 chdir("$installerDir/..");
 die "Unable to find \"installer\" directory." unless(-d "installer");
 
+my $nsisDefines="";
 
 # Aquire AI Interfaces and Skirmish AI versions
 sub getSubDirsVersion {
@@ -54,10 +55,9 @@ $allVersStr= $allVersStr." ".getVersionVarsString("AI/Skirmish/", "SKIRM_AI_VERS
 
 
 # Evaluate the engines version
-my $testBuildString="";
 my $tag=`git describe --candidate=0 --tags 2>/dev/null`;
 if ($?) {
-  $testBuildString="-DTEST_BUILD";
+  $nsisDefines="$nsisDefines -DTEST_BUILD";
   $tag=`git describe --tags`;
   die "Unable to run \"git describe\"." if($?);
   chomp($tag);
@@ -66,6 +66,7 @@ if ($?) {
   chomp($tag);
   print "Creating installer for release $tag\n";
 }
+$nsisDefines="$nsisDefines -DVERSION_TAG=\"$tag\"";
 
 
 # Download some files to be included in the installer
@@ -91,10 +92,17 @@ foreach my $dd ("$1", "dist", "game") {
 		last; # like break in other languages
 	}
 }
-die "Unable to find a distribution directory." if ($distDir eq "");
-my $distDirRel = File::Spec->abs2rel($distDir, "installer");
-$distDirRel =~ tr/\//\\/d;
+
+if ($distDir eq "") {
+	print("Unable to find a distribution directory.\n");
+	print(" -> Relying on BUILD_DIR or DIST_DIR beeing set in custom_defines.nsi.\n");
+} else {
+	print("Using distribution directory \"$distDir\"\n");
+	my $distDirRel = File::Spec->abs2rel($distDir, "installer");
+	$distDirRel =~ tr/\//\\/d;
+	$nsisDefines="$nsisDefines -DDIST_DIR=\"$distDirRel\"";
+}
 
 
 # Generate the installer
-system("makensis -V3 $testBuildString -DVERSION_TAG=\"$tag\" -DDIST_DIR=\"$distDirRel\" $allVersStr installer/spring.nsi");
+system("makensis -V3 $nsisDefines $allVersStr installer/spring.nsi");
