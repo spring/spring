@@ -64,7 +64,7 @@ public:
 	void RenderUnitCreated(const CUnit*);
 	void RenderUnitDestroyed(const CUnit*);
 
-	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam);
+	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 
 	void SetUnitDrawDist(float dist);

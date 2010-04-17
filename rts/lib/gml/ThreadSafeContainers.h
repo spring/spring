@@ -680,7 +680,7 @@ public:
 
 	void clear() {
 		delay_delete();
-		for(R::iterator it = contRender.begin(); it!=contRender.end(); ++it)
+		for(typename R::iterator it = contRender.begin(); it!=contRender.end(); ++it)
 			addRender.insert(*it);
 		contRender.clear();
 		delete_delayed();

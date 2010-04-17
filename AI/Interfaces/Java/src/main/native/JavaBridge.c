@@ -249,9 +249,22 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	size_t              classPath_size = 0;
 
 	// the Java AI Interfaces java library file path (.../AIInterface.jar)
-	classPath[classPath_size++] = callback->DataDirs_allocatePath(interfaceId,
+	// We need to search for this jar, instead of looking only where
+	// the AIInterface.so/InterfaceInfo.lua is, because on some systems
+	// (eg. Debian), the .so is in /usr/lib, and the .jar's  are in /use/shared.
+	char* mainJarPath = callback->DataDirs_allocatePath(interfaceId,
 			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME,
 			false, false, false, false);
+	classPath[classPath_size++] = util_allocStrCpy(mainJarPath);
+
+	bool ok = util_getParentDir(mainJarPath);
+	if (!ok) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Retrieving the parent dir of the path to AIInterface.jar (%s) failed.",
+				mainJarPath);
+	}
+	char* jarsDataDir = mainJarPath;
+	mainJarPath = NULL;
 
 	// the directories in the following list will be searched for .jar files
 	// which will then be added to the classPathStr, plus the dirs will be added
@@ -261,14 +274,12 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	size_t              jarDirs_size = 0;
 
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jconfig/
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), JAVA_CONFIG_DIR);
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, JAVA_CONFIG_DIR);
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jscript/
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), JAVA_SCRIPT_DIR);
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, JAVA_SCRIPT_DIR);
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), JAVA_LIBS_DIR);
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, JAVA_LIBS_DIR);
+	FREE(jarsDataDir);
 
 	// add the jar dirs (for .class files) and all contained .jars recursively
 	size_t jd, jf;
