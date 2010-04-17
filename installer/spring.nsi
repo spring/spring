@@ -86,44 +86,45 @@ Function .onInit
 	!ifndef CONTENT_DIR
 		!define CONTENT_DIR "..\cont"
 	!endif
-	IfFileExists "${CONTENT_DIR}\*.*" +1 0
+	${IfNot} ${FileExists} "${CONTENT_DIR}\*.*"
 		Abort "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
+	${EndIf}
 
 	!ifndef DOC_DIR
 		!define DOC_DIR "..\doc"
 	!endif
-	IfFileExists "${DOC_DIR}\*.*" +1 0
+	${IfNot} ${FileExists} "${DOC_DIR}\*.*"
 		Abort "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
+	${EndIf}
 
 	!ifndef MINGWLIBS_DIR
 		!define MINGWLIBS_DIR "..\mingwlibs"
 	!endif
-	IfFileExists "${MINGWLIBS_DIR}\*.*" +1 0
+	${IfNot} ${FileExists} "${MINGWLIBS_DIR}\*.*"
 		Abort "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
+	${EndIf}
 
 	!ifndef BUILD_DIR
-		!define BUILD_DIR "..\build"
-	!endif
-
-	!ifndef DIST_DIR
-		!define DIST_DIR "..\dist"
-		IfFileExists "${DIST_DIR}\*.*" +1 0
-		!define DIST_DIR "..\game"
-	!endif
-	IfFileExists "${BUILD_DIR}\*.*" +2 0
-		IfFileExists "${DIST_DIR}\*.*" +1 0
-			Abort "Could not find neither the build dir at '${BUILD_DIR}' nor the dist dir at '${DIST_DIR}', try setting BUILD_DIR or  DIST_DIR manually."
-
-	; This allows us to easily use build products from an out of source build,
-	; without the need to run 'make install'
-	IfFileExists "${BUILD_DIR}\*.*" useDir_build useDir_dist
-	useDir_build:
-		!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
-		!define USE_BUILD_DIR
-		Goto useDir_end
-	useDir_dist:
+		!ifndef DIST_DIR
+			Abort "Neither BUILD_DIR nor DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
+		!endif
+		${IfNot} ${FileExists} "${DIST_DIR}\*.*"
+			Abort "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
+		${EndIf}
 		!define BUILD_OR_DIST_DIR "${DIST_DIR}"
-	useDir_end:
+	!endif
+	!ifdef BUILD_DIR
+		!ifdef DIST_DIR
+			Abort "Both BUILD_DIR and DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
+		!endif
+		${IfNot} ${FileExists} "${BUILD_DIR}\*.*"
+			Abort "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
+		${EndIf}
+		; This allows us to easily use build products from an out of source build,
+		; without the need to run 'make install'
+		!define USE_BUILD_DIR
+		!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
+	!endif
 
 !ifndef TEST_BUILD
   ; check if we need to exit some processes which may be using unitsync
