@@ -15,7 +15,7 @@ void main() {
 
 	gl_FragColor.rgb = diffuseCol.rgb * shadeInt.rgb;
 
-	#if (defined(TREE_DIST))
+	#if (defined(TREE_NEAR) || defined(TREE_DIST))
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor);
 	#endif
 

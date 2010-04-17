@@ -60,5 +60,6 @@ void main() {
 
 	#if (defined(TREE_NEAR) || defined(TREE_DIST))
 	fogFactor = (gl_Fog.end - gl_FogFragCoord) / (gl_Fog.end - gl_Fog.start);
+	fogFactor = clamp(fogFactor, 0.0, 1.0);
 	#endif
 }
