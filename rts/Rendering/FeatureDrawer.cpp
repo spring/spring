@@ -314,7 +314,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 
 
 
-void CFeatureDrawer::DrawFadeFeatures(bool submerged, bool noAdvShading)
+void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 {
 	const bool oldAdvShading = unitDrawer->advShading;
 
@@ -336,9 +336,6 @@ void CFeatureDrawer::DrawFadeFeatures(bool submerged, bool noAdvShading)
 			glEnable(GL_FOG);
 			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		}
-
-		const double plane[4] = {0.0f, submerged? -1.0f: 1.0f, 0.0f, 0.0f};
-		glClipPlane(GL_CLIP_PLANE3, plane);
 
 		{
 			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
