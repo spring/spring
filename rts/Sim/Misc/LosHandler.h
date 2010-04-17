@@ -55,7 +55,7 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
-	bool InLos(const CWorldObject* object, int allyTeam) {
+	inline bool InLos(const CWorldObject* object, int allyTeam) {
 		if (object->alwaysVisible || gs->globalLOS) {
 			return true;
 		}
@@ -71,7 +71,7 @@ public:
 		}
 	}
 
-	bool InLos(const CUnit* unit, int allyTeam) {
+	inline bool InLos(const CUnit* unit, int allyTeam) {
 		// NOTE: units are treated differently than world objects in 2 ways:
 		//       1. they can be cloaked
 		//       2. when underwater, they only get LOS if they also have sonar
@@ -98,7 +98,7 @@ public:
 		}
 	}
 
-	bool InLos(float3 pos, int allyTeam) {
+	inline bool InLos(float3 pos, int allyTeam) {
 		if (gs->globalLOS) {
 			return true;
 		}
@@ -107,7 +107,7 @@ public:
 		return !!losMap[allyTeam].At(gx, gz);
 	}
 
-	bool InAirLos(float3 pos, int allyTeam) {
+	inline bool InAirLos(float3 pos, int allyTeam) {
 		if (gs->globalLOS) {
 			return true;
 		}
