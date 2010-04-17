@@ -98,10 +98,10 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ;ShowInstDetails show ;fix graphical glitch
 ;ShowUnInstDetails show ;fix graphical glitch
 
+!include "include\fileExistChecks.nsh"
 !include "include\fileassoc.nsh"
 !include "include\checkrunning.nsh"
 !include "include\aiHelpers.nsh"
-!include "include\fileExistChecks.nsh"
 
 
 Function .onInit
