@@ -211,14 +211,6 @@ SectionGroup "Tools"
 SectionGroupEnd
 
 
-!macro SkirmishAIInstSection skirAiName
-	IfFileExists "..\game\AI\Skirmish\${skirAiName}\*.*" 0 ${skirAiName}_install_end
-	Section "${skirAiName}" SEC_${skirAiName}
-		!insertmacro InstallSkirmishAI ${skirAiName}
-	SectionEnd
-	${skirAiName}_install_end:
-!macroend
-
 SectionGroup "Skirmish AI plugins (Bots)"
 	!insertmacro InstallSkirmishAI "AAI"
 	!insertmacro InstallSkirmishAI "KAIK"
