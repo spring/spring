@@ -28,7 +28,7 @@ public:
 	void Draw();
 	void DrawShadowPass();
 
-	void DrawFadeFeatures(bool submerged, bool noAdvShading = false);
+	void DrawFadeFeatures(bool noAdvShading = false);
 
 	void SetShowRezBars(bool b) { showRezBars = b; }
 	bool GetShowRezBars() const { return showRezBars; }
