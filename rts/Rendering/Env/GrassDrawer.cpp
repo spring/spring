@@ -501,7 +501,7 @@ void CGrassDrawer::Draw(void)
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		SetTexGen(1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE), 0.0f, 0.0f);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glBindTexture(GL_TEXTURE_2D, readmap->GetGrassShadingTexture());
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -607,17 +607,17 @@ void CGrassDrawer::Draw(void)
 		const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
 
 		const float ang = acos(billboardDirZ.y);
-		const int texPart = std::min(15, (int)std::max(0, (int)((ang + PI / 16 - PI / 2) / PI * 30)));
+		const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
 
 		if (gu->haveGLSL) {
 			grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
-			grassShader->SetUniform3f(3, billboardDirX.x, billboardDirX.y, billboardDirX.z);
-			grassShader->SetUniform3f(4, billboardDirY.x, billboardDirY.y, billboardDirY.z);
-			grassShader->SetUniform3f(5, billboardDirZ.x, billboardDirZ.y, billboardDirZ.z);
+			grassShader->SetUniform3f(3,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
+			grassShader->SetUniform3f(4,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
+			grassShader->SetUniform3f(5, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
 		} else {
-			grassShader->SetUniform3f( 8, billboardDirX.x, billboardDirX.y, billboardDirX.z);
-			grassShader->SetUniform3f( 9, billboardDirY.x, billboardDirY.y, billboardDirY.z);
-			grassShader->SetUniform3f(10, billboardDirZ.x, billboardDirZ.y, billboardDirZ.z);
+			grassShader->SetUniform3f( 8,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
+			grassShader->SetUniform3f( 9,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
+			grassShader->SetUniform3f(10, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
 			grassShader->SetUniform2f(11, texPart / 16.0f, 0.0f);
 		}
 
@@ -642,13 +642,13 @@ void CGrassDrawer::Draw(void)
 
 			if (gu->haveGLSL) {
 				grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
-				grassShader->SetUniform3f(3, billboardDirX.x, billboardDirX.y, billboardDirX.z);
-				grassShader->SetUniform3f(4, billboardDirY.x, billboardDirY.y, billboardDirY.z);
-				grassShader->SetUniform3f(5, billboardDirZ.x, billboardDirZ.y, billboardDirZ.z);
+				grassShader->SetUniform3f(3,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
+				grassShader->SetUniform3f(4,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
+				grassShader->SetUniform3f(5, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
 			} else {
-				grassShader->SetUniform3f( 8, billboardDirX.x, billboardDirX.y, billboardDirX.z);
-				grassShader->SetUniform3f( 9, billboardDirY.x, billboardDirY.y, billboardDirY.z);
-				grassShader->SetUniform3f(11, billboardDirZ.x, billboardDirZ.y, billboardDirZ.z);
+				grassShader->SetUniform3f( 8,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
+				grassShader->SetUniform3f( 9,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
+				grassShader->SetUniform3f(11, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
 				grassShader->SetUniform2f(10, texPart / 16.0f, 0.0f);
 			}
 

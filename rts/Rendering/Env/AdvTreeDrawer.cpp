@@ -583,11 +583,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			}
 		}
 
-
 		// draw trees that has been marked as falling
 		treeShader->SetUniform3f(((gu->haveGLSL)? 2: 10), 0.0f, 0.0f, 0.0f);
-		treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), camera->right.x, camera->right.y, camera->right.z);
-		treeShader->SetUniform3f(((gu->haveGLSL)? 1:  9), camera->up.x,    camera->up.y,    camera->up.z   );
 
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
@@ -595,11 +592,11 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			if (camera->InView(pos + float3(0.0f, MAX_TREE_HEIGHT / 2, 0.0f), MAX_TREE_HEIGHT / 2.0f)) {
 				const float ang = fti->fallPos * PI;
 
-				float3 up(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
-				float3 z(up.cross(float3(-1.0f, 0.0f, 0.0f)));
-				z.ANormalize();
-				float3 x(up.cross(z));
-				CMatrix44f transMatrix(pos, x, up, z);
+				const float3 yvec(fti->dir.x * sin(ang), cos(ang), fti->dir.z * sin(ang));
+				const float3 zvec((yvec.cross(float3(-1.0f, 0.0f, 0.0f))).ANormalize());
+				const float3 xvec(yvec.cross(zvec));
+
+				CMatrix44f transMatrix(pos, xvec, yvec, zvec);
 
 				glPushMatrix();
 				glMultMatrixf(&transMatrix[0]);
@@ -618,7 +615,6 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 				glPopMatrix();
 			}
 		}
-
 
 		if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
 			treeShader->Disable();
