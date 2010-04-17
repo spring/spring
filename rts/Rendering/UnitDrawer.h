@@ -36,7 +36,7 @@ public:
 	void Update(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);  // cloaked units must be drawn after all others
+	void DrawCloakedUnits(bool noAdvShading = false);  // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 
 	void ApplyUnitTransformMatrix(CUnit*);

@@ -981,41 +981,40 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 
 
 
-void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
+void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 {
 	const bool oldAdvShading = advShading;
 
-	// don't use shaders if shadows are enabled
-	advShading = advShading && !disableAdvShading;
+	{
+		// don't use shaders if shadows are enabled
+		advShading = advShading && !disableAdvShading;
 
-	if (advShading) {
-		SetupForUnitDrawing();
-		glDisable(GL_ALPHA_TEST);
-	} else {
-		SetupForGhostDrawing();
+		if (advShading) {
+			SetupForUnitDrawing();
+			glDisable(GL_ALPHA_TEST);
+		} else {
+			SetupForGhostDrawing();
+		}
+
+		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+
+		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
+
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			cloakedModelRenderers[modelType]->PushRenderState();
+			DrawCloakedUnitsHelper(modelType);
+			cloakedModelRenderers[modelType]->PopRenderState();
+		}
+
+		if (advShading) {
+			CleanUpUnitDrawing();
+			glEnable(GL_ALPHA_TEST);
+		} else {
+			CleanUpGhostDrawing();
+		}
+
+		advShading = oldAdvShading;
 	}
-
-	const double plane[4] = {0.0f, submerged? -1.0f: 1.0f, 0.0f, 0.0f};
-
-	glClipPlane(GL_CLIP_PLANE3, plane);
-	glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
-
-	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
-
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		cloakedModelRenderers[modelType]->PushRenderState();
-		DrawCloakedUnitsHelper(modelType);
-		cloakedModelRenderers[modelType]->PopRenderState();
-	}
-
-	if (advShading) {
-		CleanUpUnitDrawing();
-		glEnable(GL_ALPHA_TEST);
-	} else {
-		CleanUpGhostDrawing();
-	}
-
-	advShading = oldAdvShading;
 
 	// shader rendering
 	DrawCloakedShaderUnits();
