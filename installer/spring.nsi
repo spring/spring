@@ -100,6 +100,7 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 
 !include "include\fileassoc.nsh"
 !include "include\checkrunning.nsh"
+!include "include\aiHelpers.nsh"
 
 
 Function .onInit
