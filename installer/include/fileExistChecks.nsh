@@ -14,12 +14,12 @@
 !macro !ifexist _FILE_NAME
 	!tempfile _TEMPFILE
 	!ifdef OS_WIN
-		!system `if exist "${_FILE_NAME}" echo !define _FILE_EXISTS > "${_TEMPFILE}"`
+		!system 'if exist "${_FILE_NAME}" echo !define _FILE_EXISTS > "${_TEMPFILE}"'
 	!else
-		!system `if [ -e "${_FILE_NAME}" ]; then echo "!define _FILE_EXISTS" > "${_TEMPFILE}"; fi`
+		!system 'if [ -e "${_FILE_NAME}" ]; then echo "!define _FILE_EXISTS" > "${_TEMPFILE}"; fi'
 	!endif
-	!include `${_TEMPFILE}`
-	!delfile `${_TEMPFILE}`
+	!include '${_TEMPFILE}'
+	!delfile '${_TEMPFILE}'
 	!undef _TEMPFILE
 	!ifdef _FILE_EXISTS
 		!undef _FILE_EXISTS
@@ -28,14 +28,14 @@
 
 !macro !ifnexist _FILE_NAME
 	!tempfile _TEMPFILE
-	!system `if not exist "${_FILE_NAME}" echo !define _FILE_EXISTS > "${_TEMPFILE}"`
+	!system 'if not exist "${_FILE_NAME}" echo !define _FILE_EXISTS > "${_TEMPFILE}"'
 	!ifdef OS_WIN
-		!system `if not exist "${_FILE_NAME}" echo !define _FILE_EXISTS_NOT > "${_TEMPFILE}"`
+		!system 'if not exist "${_FILE_NAME}" echo !define _FILE_EXISTS_NOT > "${_TEMPFILE}"'
 	!else
-		!system `if [ ! -e "${_FILE_NAME}" ]; then echo "!define _FILE_EXISTS_NOT" > "${_TEMPFILE}"; fi`
+		!system 'if [ ! -e "${_FILE_NAME}" ]; then echo "!define _FILE_EXISTS_NOT" > "${_TEMPFILE}"; fi'
 	!endif
-	!include `${_TEMPFILE}`
-	!delfile `${_TEMPFILE}`
+	!include '${_TEMPFILE}'
+	!delfile '${_TEMPFILE}'
 	!undef _TEMPFILE
 	!ifdef _FILE_EXISTS_NOT
 		!undef _FILE_EXISTS_NOT
