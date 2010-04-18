@@ -3,6 +3,7 @@
 
 use strict;
 use File::Basename;
+use Config;
 
 my $installerDir=$0;
 $installerDir=$ENV{PWD}."/".$installerDir unless($installerDir =~ /^\//);
@@ -58,7 +59,8 @@ if($?) {
   print "Creating installer for release $tag\n";
 }
 
-if($OSNAME eq 'MSWin32') {
+my $osDef='';
+if($Config{'osname'} eq 'MSWin32') {
   $osDef=" -DOS_WIN";
 }else{
   $osDef=" -DOS_NIX";
