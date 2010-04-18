@@ -249,10 +249,22 @@ public:
 		D::Remove(x);
 	}
 
+	void dequeue_synced(const T& x) {
+		simDelQueue.push_back(x);
+	}
+
 	void destroy() {
 	}
 
+	void destroy_synced() {
+		for (VecIT it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
+			D::Remove(*it);
+		}
+		simDelQueue.clear();
+	}
+
 private:
+	std::vector<T> simDelQueue;
 };
 
 
@@ -782,7 +794,18 @@ public:
 		simDelQueue.push_back(x);
 	}
 
+	void dequeue_synced(const T& x) {
+		simDelQueue.push_back(x);
+	}
+
 	void destroy() {
+		for (VecIT it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
+			D::Remove(*it);
+		}
+		simDelQueue.clear();
+	}
+
+	void destroy_synced() {
 		for (VecIT it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
 			D::Remove(*it);
 		}
