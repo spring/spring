@@ -424,7 +424,7 @@ inline void CEventHandler::UnitFromFactory(const CUnit* unit,
 inline void CEventHandler::UnitDestroyed(const CUnit* unit,
                                              const CUnit* attacker)
 {
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue(unit);
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitDestroyed.size();

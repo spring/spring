@@ -55,7 +55,7 @@ void EventBatchHandler::DeleteSyncedUnits() {
 
 	unitCreatedDestroyedEventBatch.delay();
 	unitCreatedDestroyedEventBatch.execute();
-	unitCreatedDestroyedEventBatch.destroy();
+	unitCreatedDestroyedEventBatch.destroy_synced();
 }
 
 void EventBatchHandler::UpdateFeatures() {
