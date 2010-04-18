@@ -145,9 +145,9 @@ void CGrassDrawer::LoadGrassShaders() {
 		"grassDistDefShader"
 	};
 	static const std::string shaderDefines[GRASS_PROGRAM_LAST] = {
-		"#define GRASS_NEAR\n",
-		"#define GRASS_DIST\n",
-		"#define GRASS_BASIC\n"
+		"#define GRASS_NEAR_SHADOW\n",
+		"#define GRASS_DIST_SHADOW\n",
+		"#define GRASS_DIST_BASIC\n"
 	};
 
 	static const int NUM_UNIFORMS = 8;
@@ -396,6 +396,7 @@ void CGrassDrawer::Draw(void)
 	if (grassOff || !readmap->GetGrassShadingTexture())
 		return;
 
+	glPushAttrib(GL_CURRENT_BIT);
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
@@ -409,6 +410,7 @@ void CGrassDrawer::Draw(void)
 			grassShader->SetUniform2f(13, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			grassShader->SetUniform2f(14, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
 		}
+
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glEnable(GL_TEXTURE_2D);
@@ -465,6 +467,7 @@ void CGrassDrawer::Draw(void)
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
+
 
 		if (!gu->haveGLSL) {
 			glMatrixMode(GL_MATRIX0_ARB);
@@ -594,7 +597,6 @@ void CGrassDrawer::Draw(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-
 	for (std::vector<CGrassDrawer::InviewGrass>::iterator gi = drawer.inviewGrass.begin(); gi != drawer.inviewGrass.end(); ++gi) {
 		if ((*gi).dist + 128 < grassDistance) {
 			glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
@@ -617,8 +619,8 @@ void CGrassDrawer::Draw(void)
 		} else {
 			grassShader->SetUniform3f( 8,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
 			grassShader->SetUniform3f( 9,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
-			grassShader->SetUniform3f(10, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
-			grassShader->SetUniform2f(11, texPart / 16.0f, 0.0f);
+			grassShader->SetUniform3f(11, -billboardDirZ.x, -billboardDirZ.y, -billboardDirZ.z);
+			grassShader->SetUniform2f(10, texPart / 16.0f, 0.0f);
 		}
 
 		grass[(*gi).num].va->DrawArrayTN(GL_QUADS);
@@ -717,6 +719,8 @@ void CGrassDrawer::Draw(void)
 	glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+
+	glPopAttrib();
 
 
 	const int startClean = (lastListClean * 20) % (32 * 32);
