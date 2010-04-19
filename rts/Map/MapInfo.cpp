@@ -263,6 +263,9 @@ void CMapInfo::ReadSmf()
 	smf.splatTexScales = mapResTable.GetFloat4("splatTexScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
 	smf.splatTexMults = mapResTable.GetFloat4("splatTexMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
 
+	smf.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
+	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
+
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
 	} else {
@@ -274,6 +277,8 @@ void CMapInfo::ReadSmf()
 	if (!smf.specularTexName.empty()) { smf.specularTexName = "maps/" + smf.specularTexName; }
 	if (!smf.splatDetailTexName.empty()) { smf.splatDetailTexName = "maps/" + smf.splatDetailTexName; }
 	if (!smf.splatDistrTexName.empty()) { smf.splatDistrTexName = "maps/" + smf.splatDistrTexName; }
+	if (!smf.grassBladeTexName.empty()) { smf.grassBladeTexName = "maps/" + smf.grassBladeTexName; } 
+	if (!smf.grassShadingTexName.empty()) { smf.grassShadingTexName = "maps/" + smf.grassShadingTexName; } 
 
 	// height overrides
 	const LuaTable smfTable = parser->GetRoot().SubTable("smf");

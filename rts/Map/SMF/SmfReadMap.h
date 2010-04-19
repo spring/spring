@@ -20,7 +20,7 @@ public:
 	inline GLuint GetShadingTexture() const { return shadingTex; }
 	inline GLuint GetNormalsTexture() const { return normalsTex; }
 	inline GLuint GetSpecularTexture() const { return specularTex; }
-	inline GLuint GetGrassShadingTexture() const { return minimapTex; }
+	inline GLuint GetGrassShadingTexture() const { return grassShadingTex; }
 	inline GLuint GetSplatDetailTexture() const { return splatDetailTex; }
 	inline GLuint GetSplatDistrTexture() const { return splatDistrTex; }
 
@@ -63,13 +63,14 @@ protected:
 
 	CSmfMapFile file;
 
-	GLuint detailTex;      // supplied by the map
-	GLuint specularTex;    // supplied by the map, moderates specular contribution
-	GLuint shadingTex;     // holds precomputed dot(lightDir, faceNormal) values
-	GLuint normalsTex;     // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
-	GLuint minimapTex;     // supplied by the map
-	GLuint splatDetailTex; // contains per-channel separate greyscale detail-textures (overrides detailTex)
-	GLuint splatDistrTex;  // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
+	GLuint detailTex;       // supplied by the map
+	GLuint specularTex;     // supplied by the map, moderates specular contribution
+	GLuint shadingTex;      // holds precomputed dot(lightDir, faceNormal) values
+	GLuint normalsTex;      // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	GLuint minimapTex;      // supplied by the map
+	GLuint splatDetailTex;  // contains per-channel separate greyscale detail-textures (overrides detailTex)
+	GLuint splatDistrTex;   // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
+	GLuint grassShadingTex; // specifies grass-blade modulation color (defaults to minimapTex)
 
 	bool haveSpecularLighting;
 	bool haveSplatTexture;

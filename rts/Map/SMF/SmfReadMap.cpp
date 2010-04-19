@@ -74,6 +74,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	CBitmap specularTexBM;
 	CBitmap splatDetailTexBM;
 	CBitmap splatDistrTexBM;
+	CBitmap grassShadingTexBM;
 
 	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
@@ -144,9 +145,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	}
 
 
-
-
-
 	{
 		glGenTextures(1, &detailTex);
 		glBindTexture(GL_TEXTURE_2D, detailTex);
@@ -178,6 +176,24 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		}
 	}
 
+	{
+		if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
+			// generate mipmaps for the grass shading-texture
+			grassShadingTex = grassShadingTexBM.CreateTexture(false);
+			glGenTextures(1, &grassShadingTex);
+			glBindTexture(GL_TEXTURE_2D, grassShadingTex);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+			if (anisotropy != 0.0f) {
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+			}
+
+			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, grassShadingTexBM.xsize, grassShadingTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, grassShadingTexBM.mem);
+		} else {
+			grassShadingTex = minimapTex;
+		}
+	}
 
 
 	{
@@ -219,13 +235,14 @@ CSmfReadMap::~CSmfReadMap()
 	delete groundDrawer;
 	delete[] heightmap;
 
-	if (detailTex     ) { glDeleteTextures(1, &detailTex     ); }
-	if (specularTex   ) { glDeleteTextures(1, &specularTex   ); }
-	if (minimapTex    ) { glDeleteTextures(1, &minimapTex    ); }
-	if (shadingTex    ) { glDeleteTextures(1, &shadingTex    ); }
-	if (normalsTex    ) { glDeleteTextures(1, &normalsTex    ); }
-	if (splatDetailTex) { glDeleteTextures(1, &splatDetailTex); }
-	if (splatDistrTex ) { glDeleteTextures(1, &splatDistrTex ); }
+	if (detailTex      ) { glDeleteTextures(1, &detailTex      ); }
+	if (specularTex    ) { glDeleteTextures(1, &specularTex    ); }
+	if (minimapTex     ) { glDeleteTextures(1, &minimapTex     ); }
+	if (shadingTex     ) { glDeleteTextures(1, &shadingTex     ); }
+	if (normalsTex     ) { glDeleteTextures(1, &normalsTex     ); }
+	if (splatDetailTex ) { glDeleteTextures(1, &splatDetailTex ); }
+	if (splatDistrTex  ) { glDeleteTextures(1, &splatDistrTex  ); }
+	if (grassShadingTex) { glDeleteTextures(1, &grassShadingTex); }
 }
 
 
