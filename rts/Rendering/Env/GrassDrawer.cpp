@@ -102,12 +102,21 @@ CGrassDrawer::CGrassDrawer()
 		CBitmap grassBladeTexBM;
 		std::vector<unsigned char> grassBladeTexMem;
 
+		int xsize = 0;
+		int ysize = 0;
+
 		if (grassBladeTexBM.Load(mapInfo->smf.grassBladeTexName)) {
-			// load the map-supplied external blade-texture
-			grassBladeTexMem.resize(grassBladeTexBM.xsize * grassBladeTexBM.ysize * 4, 0);
+			// load the map-supplied blade-texture
+			xsize = grassBladeTexBM.xsize;
+			ysize = grassBladeTexBM.ysize;
+
+			grassBladeTexMem.resize(xsize * ysize * 4, 0);
 			memcpy(&grassBladeTexMem[0], &grassBladeTexBM.mem[0], grassBladeTexMem.size());
 		} else {
-			grassBladeTexMem.resize(64 * 256 * 4, 0);
+			xsize = 256;
+			ysize =  64;
+
+			grassBladeTexMem.resize(xsize * ysize * 4, 0);
 
 			for (int a = 0; a < 16; ++a) {
 				CreateGrassBladeTex(&grassBladeTexMem[a * 16 * 4]);
@@ -118,7 +127,7 @@ CGrassDrawer::CGrassDrawer()
 		glBindTexture(GL_TEXTURE_2D, grassBladeTex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 256, 64, GL_RGBA, GL_UNSIGNED_BYTE, &grassBladeTexMem[0]);
+		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &grassBladeTexMem[0]);
 	}
 
 	CreateFarTex();
