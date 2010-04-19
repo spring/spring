@@ -75,7 +75,7 @@ CGrassDrawer::CGrassDrawer()
 	maxDetailedDist = 146 + detail * 24;
 	detailedBlocks = int((maxDetailedDist - 24) / bMSsq) + 1;
 	numTurfs = 3 + int(detail * 0.5f);
-	strawPerTurf = 50 + (int)sqrt((float) detail) * 10;
+	strawPerTurf = 50 + int(sqrt((float) detail) * 10);
 
 	blocksX = gs->mapx / grassSquareSize  /grassBlockSize;
 	blocksY = gs->mapy / grassSquareSize / grassBlockSize;
@@ -399,6 +399,8 @@ void CGrassDrawer::Draw(void)
 	glPushAttrib(GL_CURRENT_BIT);
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
+	const float grassDistance = maxGrassDist;
+
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* grassShader = NULL;
 
@@ -542,8 +544,6 @@ void CGrassDrawer::Draw(void)
 
 
 	CVertexArray* va = drawer.va;
-	
-	const float grassDistance = maxGrassDist;
 
 	std::sort(drawer.inviewGrass.begin(), drawer.inviewGrass.end(), GrassSort);
 	std::sort(drawer.inviewNearGrass.begin(), drawer.inviewNearGrass.end(), GrassSortNear);
@@ -597,6 +597,7 @@ void CGrassDrawer::Draw(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
+
 	for (std::vector<CGrassDrawer::InviewGrass>::iterator gi = drawer.inviewGrass.begin(); gi != drawer.inviewGrass.end(); ++gi) {
 		if ((*gi).dist + 128 < grassDistance) {
 			glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
@@ -626,13 +627,14 @@ void CGrassDrawer::Draw(void)
 		grass[(*gi).num].va->DrawArrayTN(GL_QUADS);
 	}
 
+
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
 	for (std::vector<InviewNearGrass>::iterator gi = drawer.inviewNearGrass.begin(); gi != drawer.inviewNearGrass.end(); ++gi) {
 		const int x = (*gi).x;
 		const int y = (*gi).y;
 
-		if (grassMap[(y) * gs->mapx/grassSquareSize + (x)]) {
+		if (grassMap[y * gs->mapx / grassSquareSize + x]) {
 			float3 squarePos((x + 0.5f) * gSSsq, 0.0f, (y + 0.5f) * gSSsq);
 				squarePos.y = ground->GetHeight2(squarePos.x, squarePos.z);
 			const float3 billboardDirZ = (squarePos - camera->pos).ANormalize();
@@ -682,6 +684,7 @@ void CGrassDrawer::Draw(void)
 			va->DrawArrayTN(GL_QUADS);
 		}
 	}
+
 
 	grassShader->Disable();
 	glDepthMask(true);
@@ -772,7 +775,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 
 void CGrassDrawer::CreateGrassDispList(int listNum)
 {
-	CVertexArray* va=GetVertexArray();
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 
 
