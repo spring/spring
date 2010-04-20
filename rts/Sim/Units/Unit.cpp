@@ -606,6 +606,11 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 	const unsigned short diffBits = (currStatus ^ newStatus);
 
 	// add to the state before running the callins
+	//
+	// note that is not symmetric: UnitEntered* and
+	// UnitLeft* are after-the-fact events, yet the
+	// Left* call-ins would still see the old state
+	// without first clearing the IN{LOS, RADAR} bit
 	losStatus[at] |= newStatus;
 
 	if (diffBits) {
@@ -614,6 +619,9 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 				eventHandler.UnitEnteredLos(this, at);
 				eoh->UnitEnteredLos(*this, at);
 			} else {
+				// clear before sending the event
+				losStatus[at] &= ~LOS_INLOS;
+
 				eventHandler.UnitLeftLos(this, at);
 				eoh->UnitLeftLos(*this, at);
 			}
@@ -624,6 +632,9 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 				eventHandler.UnitEnteredRadar(this, at);
 				eoh->UnitEnteredRadar(*this, at);
 			} else {
+				// clear before sending the event
+				losStatus[at] &= ~LOS_INRADAR;
+
 				eventHandler.UnitLeftRadar(this, at);
 				eoh->UnitLeftRadar(*this, at);
 			}

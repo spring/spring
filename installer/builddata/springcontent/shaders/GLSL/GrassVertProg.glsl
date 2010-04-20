@@ -11,11 +11,11 @@ uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
 
 void main() {
-	#ifdef GRASS_BASIC
+	#ifdef GRASS_DIST_BASIC
 	vec4 vertexPos = gl_Vertex;
-		vertexPos += billboardDirX * gl_Normal.x;
-		vertexPos += billboardDirY * gl_Normal.y;
-		vertexPos += billboardDirZ;
+		vertexPos.xyz += billboardDirX * gl_Normal.x;
+		vertexPos.xyz += billboardDirY * gl_Normal.y;
+		vertexPos.xyz += billboardDirZ;
 
 	gl_TexCoord[0].st = gl_MultiTexCoord0.st + texOffset;
 	gl_TexCoord[1].st = vertexPos.xz * mapSize;
@@ -28,7 +28,7 @@ void main() {
 	#endif
 
 
-	#ifdef GRASS_NEAR
+	#ifdef GRASS_NEAR_SHADOW
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
 
@@ -39,10 +39,10 @@ void main() {
 
 	gl_TexCoord[0].st = vertexPos.xz * mapSizePO2;
 	gl_TexCoord[1]    = vertexShadowPos;
-	gl_TexCoord[1].z  = shadowMatrix[2] * vertexPos; // ?
-	gl_TexCoord[1].w  = shadowMatrix[3] * vertexPos; // ?
+	gl_TexCoord[1].z  = dot(shadowMatrix[2], vertexPos);
+	gl_TexCoord[1].w  = dot(shadowMatrix[3], vertexPos);
 	gl_TexCoord[2].st = vertexPos.xz * mapSize;
-	gl_TexCoord[3].st = gl_TexCoord[0].st;
+	gl_TexCoord[3].st = gl_MultiTexCoord0.st;
 
 	gl_FrontColor = gl_Color;
 	gl_FogFragCoord = length((gl_ProjectionMatrix * vertexPos).xyz);
@@ -50,14 +50,14 @@ void main() {
 	#endif
 
 
-	#ifdef GRASS_DIST
+	#ifdef GRASS_DIST_SHADOW
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
 
 	vec4 vertexPos = gl_Vertex;
-		vertexPos += billboardDirX * gl_Normal.x;
-		vertexPos += billboardDirY * gl_Normal.y;
-		vertexPos += billboardDirZ;
+		vertexPos.xyz += billboardDirX * gl_Normal.x;
+		vertexPos.xyz += billboardDirY * gl_Normal.y;
+		vertexPos.xyz += billboardDirZ;
 	vec4 vertexShadowPos = shadowMatrix * vertexPos;
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
@@ -65,10 +65,10 @@ void main() {
 	// prevent grass from being shadowed by the ground beneath it
 	gl_TexCoord[0].st = vertexPos.xz * mapSizePO2;
 	gl_TexCoord[1]    = vertexShadowPos;
-	gl_TexCoord[1].z  = (shadowMatrix[2] * vertexPos) - 0.0005;
-	gl_TexCoord[1].w  = (shadowMatrix[3] * vertexPos);
+	gl_TexCoord[1].z  = dot(shadowMatrix[2], vertexPos) - 0.0005;
+	gl_TexCoord[1].w  = dot(shadowMatrix[3], vertexPos);
 	gl_TexCoord[2].st = vertexPos.xz * mapSize;
-	gl_TexCoord[3].st = vertexPos.xz * texOffset;
+	gl_TexCoord[3].st = gl_MultiTexCoord0.st + texOffset;
 
 	gl_FrontColor = gl_Color;
 	gl_FogFragCoord = length((gl_ModelViewProjectionMatrix * vertexPos).xyz);

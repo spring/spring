@@ -981,41 +981,40 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 
 
 
-void CUnitDrawer::DrawCloakedUnits(bool submerged, bool disableAdvShading)
+void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 {
 	const bool oldAdvShading = advShading;
 
-	// don't use shaders if shadows are enabled
-	advShading = advShading && !disableAdvShading;
+	{
+		// don't use shaders if shadows are enabled
+		advShading = advShading && !disableAdvShading;
 
-	if (advShading) {
-		SetupForUnitDrawing();
-		glDisable(GL_ALPHA_TEST);
-	} else {
-		SetupForGhostDrawing();
+		if (advShading) {
+			SetupForUnitDrawing();
+			glDisable(GL_ALPHA_TEST);
+		} else {
+			SetupForGhostDrawing();
+		}
+
+		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+
+		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
+
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			cloakedModelRenderers[modelType]->PushRenderState();
+			DrawCloakedUnitsHelper(modelType);
+			cloakedModelRenderers[modelType]->PopRenderState();
+		}
+
+		if (advShading) {
+			CleanUpUnitDrawing();
+			glEnable(GL_ALPHA_TEST);
+		} else {
+			CleanUpGhostDrawing();
+		}
+
+		advShading = oldAdvShading;
 	}
-
-	const double plane[4] = {0.0f, submerged? -1.0f: 1.0f, 0.0f, 0.0f};
-
-	glClipPlane(GL_CLIP_PLANE3, plane);
-	glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
-
-	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
-
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		cloakedModelRenderers[modelType]->PushRenderState();
-		DrawCloakedUnitsHelper(modelType);
-		cloakedModelRenderers[modelType]->PopRenderState();
-	}
-
-	if (advShading) {
-		CleanUpUnitDrawing();
-		glEnable(GL_ALPHA_TEST);
-	} else {
-		CleanUpGhostDrawing();
-	}
-
-	advShading = oldAdvShading;
 
 	// shader rendering
 	DrawCloakedShaderUnits();
@@ -1056,9 +1055,11 @@ void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int 
 
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
-		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-			SetTeamColour(unit->team, cloakAlpha);
-			DrawUnitNow(unit);
+		if (!drawGhostBuildings) {
+			if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
+				SetTeamColour(unit->team, cloakAlpha);
+				DrawUnitNow(unit);
+			}
 		} else {
 			// check for decoy models
 			const UnitDef* decoyDef = unit->unitDef->decoyDef;
@@ -1086,7 +1087,7 @@ void CUnitDrawer::DrawCloakedUnitsSet(const std::set<CUnit*>& cloakedUnits, int 
 			glTranslatef3(unit->pos);
 			glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-			if ((modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) && drawGhostBuildings) {
+			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
 				// the units in liveGhostedBuildings[modelType] are not
 				// sorted by textureType, but we cannot merge them with
 				// cloakedModelRenderers[modelType] since they are not
@@ -2352,7 +2353,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 
 
 void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
-	CUnit *u = const_cast<CUnit *>(unit);
+	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (u->model) {
 		if (cloaked) {
@@ -2366,10 +2367,10 @@ void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
 }
 
 
-void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
-	CUnit *u = const_cast<CUnit *>(unit);
+void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {
+	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (u->losStatus[allyTeam] & LOS_INLOS) {
+	if (newStatus & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
 				liveGhostBuildings[MDL_TYPE(u)].erase(u);
@@ -2377,12 +2378,15 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) {
 		}
 		unitRadarIcons[allyTeam].erase(u);
 	} else {
-		if (allyTeam == gu->myAllyTeam) {
-			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-				liveGhostBuildings[MDL_TYPE(u)].insert(u);
+		if (newStatus & LOS_PREVLOS) {
+			if (allyTeam == gu->myAllyTeam) {
+				if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
+					liveGhostBuildings[MDL_TYPE(u)].insert(u);
+				}
 			}
 		}
-		if (u->losStatus[allyTeam] & LOS_INRADAR) {
+
+		if (newStatus & LOS_INRADAR) {
 			unitRadarIcons[allyTeam].insert(u);
 //			if (u->isIcon) {
 //				drawIcon.push_back(const_cast<CUnit*>(u)); // useless?

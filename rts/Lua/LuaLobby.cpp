@@ -1,5 +1,10 @@
+#ifdef _MSC_VER
 #include "StdAfx.h"
+#endif
 #include "LuaLobby.h"
+#ifndef _MSC_VER
+#include "StdAfx.h"
+#endif
 
 #include "LogOutput.h"
 

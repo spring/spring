@@ -253,6 +253,16 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *Game_getPlayerTeam)(int skirmishAIId, int playerId);
 
+	/**
+	 * Returns the name of the side of a team in the game.
+	 *
+	 * This should not be used, as it may be "",
+	 * and as the AI should rather rely on the units it has,
+	 * which will lead to a more stable and versatile AI.
+	 * @deprecated
+	 *
+	 * @return eg. "ARM" or "CORE"; may be "", depending on how the game was setup
+	 */
 	const char*       (CALLING_CONV *Game_getTeamSide)(int skirmishAIId, int otherTeamId);
 
 	bool              (CALLING_CONV *Game_isExceptionHandlingEnabled)(int skirmishAIId);
