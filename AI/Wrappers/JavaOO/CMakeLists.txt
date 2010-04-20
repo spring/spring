@@ -280,38 +280,18 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myClassesStubFile "${CMAKE_CURRENT_BINARY_DIR}/myClasses.stub")
 	set_source_files_properties(${myClassesStubFile} PROPERTIES GENERATED TRUE)
 
-	if    (CMAKE_HOST_WIN32)
-		# As Windows (even Win 7) fails with long command lines,
-		# we have to compile each source files separately.
-		set(myCompileCmds )
-		foreach    (srcFile ${mySources} ${myGeneratedSources})
-			set(myCompileCmds ${myCompileCmds}
-				COMMAND "${JAVA_COMPILE}"
-					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-					"-cp" "${myClassPath}"
-					"-d" "${myJavaBuildDir}"
-					${srcFile}
-				)
-		endforeach (srcFile )
-	else (CMAKE_HOST_WIN32)
-		# Compile all source files in a single javac call.
-		set(myCompileCmds
-			COMMAND "${JAVA_COMPILE}"
-				"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-				"-cp" "${myClassPath}"
-				"-d" "${myJavaBuildDir}"
-				${mySources}
-				${myGeneratedSources}
-			)
-	endif (CMAKE_HOST_WIN32)
-
 	# compile
 	add_custom_command(
 		OUTPUT
 			${myClassesStubFile}
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "make_directory" "${myJavaBuildDir}"
-		${myCompileCmds}
+		COMMAND "${JAVA_COMPILE}"
+			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+			"-cp" "${myClassPath}"
+			"-d" "${myJavaBuildDir}"
+			${mySources}
+			${myGeneratedSources}
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "touch" "${myClassesStubFile}"
 		DEPENDS
