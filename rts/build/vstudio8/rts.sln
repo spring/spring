@@ -6,6 +6,7 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug+MT|Win32 = Debug+MT|Win32
+		Dedicated Server (Release)|Win32 = Dedicated Server (Release)|Win32
 		Final release|Win32 = Final release|Win32
 		No debug|Win32 = No debug|Win32
 		Release with error catching|Win32 = Release with error catching|Win32
@@ -17,6 +18,8 @@ Global
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug|Win32.Build.0 = Debug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug+MT|Win32.ActiveCfg = Debug+MT|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug+MT|Win32.Build.0 = Debug+MT|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Dedicated Server (Release)|Win32.ActiveCfg = Dedicated Server (Release)|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Dedicated Server (Release)|Win32.Build.0 = Dedicated Server (Release)|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Final release|Win32.ActiveCfg = No debug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Final release|Win32.Build.0 = No debug|Win32
 		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.No debug|Win32.ActiveCfg = No debug|Win32
