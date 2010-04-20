@@ -164,7 +164,7 @@ Format: {
 		threads = {
 			[thread] = {
 				thread = thread,      -- the coroutine object
-				signal_mask = number, -- see Signal/SetSignalMask
+				signal_mask = object, -- see Signal/SetSignalMask
 				unitID = number,      -- 'owner' of the thread
 				onerror = function,   -- called after thread died due to an error
 			},
@@ -361,9 +361,16 @@ end
 function Spring.UnitScript.Signal(mask)
 	-- beware, unsynced loop order
 	-- (doesn't matter here as long as all threads get removed)
-	for _,thread in pairs(activeUnit.threads) do
-		if (bit_and(thread.signal_mask, mask) ~= 0) then
-			if thread.container then
+	if type(mask) == "number" then
+		for _,thread in pairs(activeUnit.threads) do
+			local signal_mask = thread.signal_mask
+			if (type(signal_mask) == "number" and bit_and(signal_mask, mask) ~= 0 and thread.container) then
+				Remove(thread.container, thread)
+			end
+		end
+	else
+		for _,thread in pairs(activeUnit.threads) do
+			if (thread.signal_mask == mask and thread.container) then
 				Remove(thread.container, thread)
 			end
 		end
