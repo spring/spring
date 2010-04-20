@@ -355,10 +355,7 @@ local function SetOnError(fun)
 end
 
 function Spring.UnitScript.SetSignalMask(mask)
-	local thread = activeUnit.threads[co_running()]
-	if thread then
-		thread.signal_mask = mask
-	end
+	activeUnit.threads[co_running() or error("not in a thread", 2)].signal_mask = mask
 end
 
 function Spring.UnitScript.Signal(mask)
