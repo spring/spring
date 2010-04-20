@@ -21,6 +21,7 @@ SET(system_files
 	../../rts/System/DemoRecorder
 	../../rts/System/AutohostInterface
 	../../rts/System/UnsyncedRNG
+	../../rts/System/Util
 	../../rts/System/float4)
 IF (WIN32)
 	SET(system_files
