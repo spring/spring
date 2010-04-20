@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#include "StdAfx.h"
+#endif
+
 #include <string>
 #include <iostream>
 #include <SDL.h>
