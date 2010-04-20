@@ -429,7 +429,7 @@ do
 	for k,v in pairs(System) do
 		script[k] = v
 	end
-	script._G = _G  -- the global table
+	--script._G = _G  -- the global table. (Update: _G points to unit environment now)
 	script.GG = GG  -- the shared table (shared with gadgets!)
 	prototypeEnv = script
 end
@@ -631,6 +631,9 @@ function gadget:UnitCreated(unitID, unitDefID)
 		unitDefID = unitDefID,
 		script = {},     -- will store the callins
 	}
+
+	-- easy self-referencing (Note: use of _G differs from _G in gadgets & widgets)
+	env._G = env
 
 	env.include = function(f)
 		return MemoizedInclude(f, env)
