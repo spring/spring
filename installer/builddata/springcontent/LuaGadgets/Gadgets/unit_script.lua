@@ -242,7 +242,7 @@ local function WakeUp(thread, ...)
 end
 
 -- Helper for MoveFinished and TurnFinished
-local function AnimFinished(threads, waitingForAnim, piece, axis)
+local function AnimFinished(waitingForAnim, piece, axis)
 	local index = piece * 3 + axis
 	local threads = waitingForAnim[index]
 	if threads then
@@ -256,11 +256,11 @@ end
 -- MoveFinished and TurnFinished are put in every script by the framework.
 -- They resume the threads which were waiting for the move/turn.
 local function MoveFinished(piece, axis)
-	return AnimFinished(activeUnit.threads, activeUnit.waitingForMove, piece, axis)
+	return AnimFinished(activeUnit.waitingForMove, piece, axis)
 end
 
 local function TurnFinished(piece, axis)
-	return AnimFinished(activeUnit.threads, activeUnit.waitingForTurn, piece, axis)
+	return AnimFinished(activeUnit.waitingForTurn, piece, axis)
 end
 
 --------------------------------------------------------------------------------
