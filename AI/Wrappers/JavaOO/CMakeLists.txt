@@ -280,6 +280,12 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myClassesStubFile "${CMAKE_CURRENT_BINARY_DIR}/myClasses.stub")
 	set_source_files_properties(${myClassesStubFile} PROPERTIES GENERATED TRUE)
 
+	# Write list of source files to an arg-file
+	set(mySrcArgFile "${CMAKE_CURRENT_BINARY_DIR}/sourceFiles.txt")
+	foreach    (srcFile ${mySources} ${myGeneratedSources})
+		file(APPEND ${mySrcArgFile} "${srcFile}\n")
+	endforeach (srcFile)
+
 	# compile
 	add_custom_command(
 		OUTPUT
@@ -290,8 +296,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
-			${mySources}
-			${myGeneratedSources}
+			"@${mySrcArgFile}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "touch" "${myClassesStubFile}"
 		DEPENDS
