@@ -290,7 +290,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 					"-cp" "${myClassPath}"
 					"-d" "${myJavaBuildDir}"
-					"-sourcepath" "${mySourceDir}${PATH_DELIM_H}${myGeneratedSourceDir}"
 					${srcFile}
 				)
 		endforeach (srcFile )
