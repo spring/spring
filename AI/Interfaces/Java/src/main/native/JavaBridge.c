@@ -143,9 +143,22 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	size_t              classPath_size = 0;
 
 	// the Java AI Interfaces java library file path (.../AIInterface.jar)
-	classPath[classPath_size++] = callback->DataDirs_allocatePath(interfaceId,
+	// We need to search for this jar, instead of looking only where
+	// the AIInterface.so/InterfaceInfo.lua is, because on some systems
+	// (eg. Debian), the .so is in /usr/lib, and the .jar's  are in /use/shared.
+	char* mainJarPath = callback->DataDirs_allocatePath(interfaceId,
 			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME,
 			false, false, false, false);
+	classPath[classPath_size++] = util_allocStrCpy(mainJarPath);
+
+	bool ok = util_getParentDir(mainJarPath);
+	if (!ok) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Retrieving the parent dir of the path to AIInterface.jar (%s) failed.",
+				mainJarPath);
+	}
+	char* jarsDataDir = mainJarPath;
+	mainJarPath = NULL;
 
 	// the directories in the following list will be searched for .jar files
 	// which will then be added to the classPathStr, plus the dirs will be added
@@ -156,20 +169,13 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 
 	// add to classpath:
 	// {spring-data-dir}/Interfaces/Java/0.1/${x}/
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), "jconfig");
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), "config");
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), "jresources");
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), "resources");
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), "jscript");
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), "script");
-	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
-			callback->DataDirs_getConfigDir(interfaceId), "jlib");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, "jconfig");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, "config");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, "jresources");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, "resources");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, "jscript");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, "script");
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, jarsDataDir, "jlib");
 	// "lib" is for native libs only
 
 	// add the jar dirs (for .class files) and all contained .jars recursively

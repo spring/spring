@@ -49,6 +49,11 @@ std::string StringReplace(const std::string& text,
                           const std::string& from,
                           const std::string& to);
 
+/// Removes leading and trailing whitespace from a string, in place.
+void StringTrimInPlace(std::string& str);
+/// Removes leading and trailing whitespace from a string, in a copy.
+std::string StringTrim(const std::string& str);
+
 
 static inline std::string IntToString(int i, const std::string& format = "%i")
 {

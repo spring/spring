@@ -140,10 +140,12 @@ public:
 
 	/** SMF specific settings */
 	struct smf_t {
-		std::string detailTexName; ///< "MAP\DetailTex"
-		std::string specularTexName; ///< "MAP\SpecularTex"
+		std::string detailTexName;        ///< "MAP\DetailTex"
+		std::string specularTexName;      ///< "MAP\SpecularTex"
 		std::string splatDistrTexName;
 		std::string splatDetailTexName;
+		std::string grassBladeTexName;    // defaults to internally-generated texture
+		std::string grassShadingTexName;  // defaults to minimap texture
 
 		float4 splatTexScales;
 		float4 splatTexMults;

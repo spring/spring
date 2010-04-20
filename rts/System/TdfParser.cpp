@@ -6,7 +6,6 @@
 #include <limits.h>
 #include <stdexcept>
 
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_array.hpp>
 
@@ -145,7 +144,7 @@ void TdfParser::parse_buffer( char const* buf, std::size_t size){
 
   for( std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end();
       it !=e ; ++it ){
-    std::string temp = boost::trim_copy( *it );
+    std::string temp = StringTrim( *it );
     if( ! temp.empty( ) ) {
       ::logOutput.Print( "TdfParser: Junk in "+ filename +  ": " + temp );
     }

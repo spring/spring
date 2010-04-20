@@ -69,13 +69,17 @@ public:
 	TreeSquareStruct* trees;
 
 private:
-	Shader::IProgramObject* treeNearDefShader;  // near-tree shader (V) without self-shadowing
-	Shader::IProgramObject* treeNearAdvShader;  // near-tree shader (V+F) with self-shadowing
-	Shader::IProgramObject* treeDistAdvShader;  // far-tree shader (V+F) with self-shadowing
+	enum TreeShaderProgram {
+		TREE_PROGRAM_NEAR_BASIC  = 0, // near-tree shader (V) without self-shadowing
+		TREE_PROGRAM_NEAR_SHADOW = 1, // near-tree shader (V+F) with self-shadowing
+		TREE_PROGRAM_DIST_SHADOW = 2, // far-tree shader (V+F) with self-shadowing
+		TREE_PROGRAM_LAST        = 3
+	};
+
+	std::vector<Shader::IProgramObject*> treeShaders;
+	std::list<FallingTree> fallingTrees;
 
 	CGrassDrawer* grassDrawer;
-
-	std::list<FallingTree> fallingTrees;
 };
 
 #endif // __ADV_TREE_DRAWER_H__

@@ -36,7 +36,7 @@ public:
 	void Update(void);
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);  // cloaked units must be drawn after all others
+	void DrawCloakedUnits(bool noAdvShading = false);  // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 
 	void ApplyUnitTransformMatrix(CUnit*);
@@ -64,7 +64,7 @@ public:
 	void RenderUnitCreated(const CUnit*);
 	void RenderUnitDestroyed(const CUnit*);
 
-	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam);
+	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 
 	void SetUnitDrawDist(float dist);

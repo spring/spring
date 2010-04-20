@@ -72,7 +72,7 @@ void CEventClient::UnitDecloaked(const CUnit* unit) { return; }
 void CEventClient::RenderUnitCreated(const CUnit* unit) { return; }
 void CEventClient::RenderUnitDestroyed(const CUnit* unit) { return; }
 void CEventClient::RenderUnitCloakChanged(const CUnit* unit, int cloaked) { return; }
-void CEventClient::RenderUnitLOSChanged(const CUnit* unit, int allyTeam) { return; }
+void CEventClient::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) { return; }
 
 void CEventClient::UnitMoveFailed(const CUnit* unit) { return; }
 

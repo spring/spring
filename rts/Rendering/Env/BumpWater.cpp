@@ -214,7 +214,9 @@ CBumpWater::CBumpWater()
 			blurShader->Link();
 
 			if (!blurShader->IsValid()) {
-				throw content_error(string("[BumpWater] blur-shader compilation error!"));
+				//! string size is limited with content_error()
+				logOutput.Print("[BumpWater] shorewaves-shader compilation error: " + blurShader->GetLog());
+				throw content_error(string("[BumpWater] shorewaves-shader compilation error!"));
 			}
 
 			blurShader->SetUniformLocation("tex0"); // idx 0
@@ -440,6 +442,8 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("waverand");    // idx 10
 
 		if (!waterShader->IsValid()) {
+			//! string size is limited with content_error()
+			logOutput.Print("[BumpWater] water-shader compilation error: " + waterShader->GetLog());
 			throw content_error(string("[BumpWater] water-shader compilation error!"));
 		}
 
@@ -1205,8 +1209,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	readmap->GetGroundDrawer()->Draw();
 	unitDrawer->Draw(false,true);
 	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true);
+	unitDrawer->DrawCloakedUnits();
+	featureDrawer->DrawFadeFeatures();
 	projectileDrawer->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
 
@@ -1250,8 +1254,8 @@ void CBumpWater::DrawReflection(CGame* game)
 		readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(false,true);
-	featureDrawer->DrawFadeFeatures(false,true);
+	unitDrawer->DrawCloakedUnits(true);
+	featureDrawer->DrawFadeFeatures(true);
 	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 

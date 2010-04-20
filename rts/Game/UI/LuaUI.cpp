@@ -1,6 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#ifdef _MSC_VER
 #include "StdAfx.h"
+#endif
+#include "Lua/LuaLobby.h" // ugh, streflop namespace corruption...
+#ifndef _MSC_VER
+#include "StdAfx.h"
+#endif
 
 #include <stdio.h>
 #include <set>
@@ -11,7 +17,6 @@
 
 #include "mmgr.h"
 
-#include "Lua/LuaLobby.h" // ugh, streflop namespace corruption...
 #include "LuaUI.h"
 
 #include "LuaInclude.h"

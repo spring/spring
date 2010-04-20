@@ -2888,12 +2888,18 @@ bool CGame::DrawWorld()
 	glDepthFunc(GL_LEQUAL);
 
 	bool noAdvShading = shadowHandler->drawShadows;
-	//! draw cloaked part below surface
+
+	const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
+	glClipPlane(GL_CLIP_PLANE3, plane_below);
 	glEnable(GL_CLIP_PLANE3);
-	unitDrawer->DrawCloakedUnits(true,noAdvShading);
-	featureDrawer->DrawFadeFeatures(true,noAdvShading);
+
+		//! draw cloaked part below surface
+		unitDrawer->DrawCloakedUnits(noAdvShading);
+		featureDrawer->DrawFadeFeatures(noAdvShading);
+
 	glDisable(GL_CLIP_PLANE3);
 
+	//! draw water
 	if (gu->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
@@ -2902,10 +2908,14 @@ bool CGame::DrawWorld()
 		}
 	}
 
-	//! draw cloaked part above surface
+	const double plane_above[4] = {0.0f, 1.0f, 0.0f, 0.0f};
+	glClipPlane(GL_CLIP_PLANE3, plane_above);
 	glEnable(GL_CLIP_PLANE3);
-	unitDrawer->DrawCloakedUnits(false, noAdvShading);
-	featureDrawer->DrawFadeFeatures(false, noAdvShading);
+
+		//! draw cloaked part above surface
+		unitDrawer->DrawCloakedUnits(noAdvShading);
+		featureDrawer->DrawFadeFeatures(noAdvShading);
+
 	glDisable(GL_CLIP_PLANE3);
 
 	projectileDrawer->Draw(false);

@@ -60,7 +60,7 @@ class CEventHandler
 		void RenderUnitCreated(const CUnit* unit);
 		void RenderUnitDestroyed(const CUnit* unit);
 		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
-		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam);
+		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 
 		void DeleteSyncedUnits();
 		void UpdateDrawUnits();
@@ -390,7 +390,7 @@ UNIT_CALLIN_INT_PARAM(Given)
 #define UNIT_CALLIN_LOS_PARAM(name)                                        \
 	inline void CEventHandler:: Unit ## name (const CUnit* unit, int at)   \
 	{                                                                      \
-		eventBatchHandler->EnqueueUnitLOSStateChangeEvent(unit, at);       \
+		eventBatchHandler->EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]);       \
 		const int count = listUnit ## name.size();                         \
 		for (int i = 0; i < count; i++) {                                  \
 			CEventClient* ec = listUnit ## name [i];                       \
@@ -424,7 +424,7 @@ inline void CEventHandler::UnitFromFactory(const CUnit* unit,
 inline void CEventHandler::UnitDestroyed(const CUnit* unit,
                                              const CUnit* attacker)
 {
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue(unit);
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitDestroyed.size();
@@ -441,7 +441,9 @@ inline void CEventHandler::RenderUnitCreated(const CUnit* unit)
 	const int count = listRenderUnitCreated.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitCreated[i];
-		ec->RenderUnitCreated(unit);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitCreated(unit);
+		}
 	}
 }
 
@@ -450,7 +452,9 @@ inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
 	const int count = listRenderUnitDestroyed.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitDestroyed[i];
-		ec->RenderUnitDestroyed(unit);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitDestroyed(unit);
+		}
 	}
 }
 
@@ -459,16 +463,20 @@ inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked
 	const int count = listRenderUnitCloakChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitCloakChanged[i];
-		ec->RenderUnitCloakChanged(unit, cloaked);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitCloakChanged(unit, cloaked);
+		}
 	}
 }
 
-inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam)
+inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
 {
 	const int count = listRenderUnitLOSChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitLOSChanged[i];
-		ec->RenderUnitLOSChanged(unit, allyTeam);
+		if (ec->CanReadAllyTeam(unit->allyteam)) {
+			ec->RenderUnitLOSChanged(unit, allyTeam, newStatus);
+		}
 	}
 }
 
