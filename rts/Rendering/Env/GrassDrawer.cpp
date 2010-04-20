@@ -493,12 +493,12 @@ void CGrassDrawer::Draw(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 
-		if (!gu->haveGLSL) {
-			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->shadowMatrix.m);
-		} else {
+		if (gu->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
 			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+		} else {
+			glMatrixMode(GL_MATRIX0_ARB);
+			glLoadMatrixf(shadowHandler->shadowMatrix.m);
 		}
 
 		glMatrixMode(GL_PROJECTION);
@@ -590,6 +590,11 @@ void CGrassDrawer::Draw(void)
 		grassShader->Disable();
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_SHADOW];
 		grassShader->Enable();
+
+		if (gu->haveGLSL) {
+			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
+			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+		}
 	} else {
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_BASIC];
 		grassShader->Enable();

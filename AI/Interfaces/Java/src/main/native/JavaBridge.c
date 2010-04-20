@@ -145,7 +145,7 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	// the Java AI Interfaces java library file path (.../AIInterface.jar)
 	// We need to search for this jar, instead of looking only where
 	// the AIInterface.so/InterfaceInfo.lua is, because on some systems
-	// (eg. Debian), the .so is in /usr/lib, and the .jar's  are in /use/shared.
+	// (eg. Debian), the .so is in /usr/lib, and the .jar's  are in /usr/shared.
 	char* mainJarPath = callback->DataDirs_allocatePath(interfaceId,
 			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME,
 			false, false, false, false);
