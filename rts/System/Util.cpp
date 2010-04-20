@@ -25,6 +25,29 @@ std::string StringReplace(const std::string& text,
 	return working;
 }
 
+/// @see http://www.codeproject.com/KB/stl/stdstringtrim.aspx
+void StringTrimInPlace(std::string& str)
+{
+	static const std::string whiteSpaces(" \t\n\r");
+	std::string::size_type pos = str.find_last_not_of(whiteSpaces);
+	if (pos != std::string::npos) {
+		str.erase(pos + 1);
+		pos = str.find_first_not_of(whiteSpaces);
+		if (pos != std::string::npos) {
+			str.erase(0, pos);
+		}
+	} else {
+		str.erase(str.begin(), str.end());
+	}
+}
+
+std::string StringTrim(const std::string& str)
+{
+	std::string copy(str);
+	StringTrimInPlace(copy);
+	return copy;
+}
+
 namespace proc {
 	#if defined(__GNUC__)
 	// function inlining breaks this
