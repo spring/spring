@@ -643,6 +643,15 @@ if    (BUILD_${myName}_AIINTERFACE)
 	# Build the java part
 	# -------------------
 
+	# Write list of source files to an arg-file
+	set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
+	if    (EXISTS "${mySrcArgFile}")
+		file(REMOVE "${mySrcArgFile}")
+	endif (EXISTS "${mySrcArgFile}")
+	foreach    (srcFile ${myJavaSources} ${myJavaGeneratedSources})
+		file(APPEND "${mySrcArgFile}" "${srcFile}\n")
+	endforeach (srcFile)
+
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaBuildDir}/${myPkg}/*.class"
 		COMMAND "${CMAKE_COMMAND}"
@@ -651,8 +660,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
-			${myJavaSources}
-			${myJavaGeneratedSources}
+			"@${mySrcArgFile}"
 		DEPENDS ${myJavaSources} ${myJavaGeneratedSources}
 		WORKING_DIRECTORY "${myJavaGeneratedSourceDir}"
 		COMMENT "  ${myTarget}: Compiling Java sources ..." VERBATIM)
