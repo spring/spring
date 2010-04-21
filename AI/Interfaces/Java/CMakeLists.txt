@@ -279,6 +279,16 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 				set(myBinJarArgs "cf")
 			endif (myManifestFile)
 
+			# Write list of source files to an arg-file
+			set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
+			if    (EXISTS "${mySrcArgFile}")
+				file(REMOVE "${mySrcArgFile}")
+			endif (EXISTS "${mySrcArgFile}")
+			set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
+			foreach    (srcFile ${mySources})
+				file(APPEND "${mySrcArgFile}" "${srcFile}\n")
+			endforeach (srcFile)
+
 			# Compile and pack the library
 			add_custom_command(
 				OUTPUT
@@ -292,7 +302,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 					"-cp" "${myClassPath}"
 					"-d" "${myJavaBuildDir}"
-					${mySources}
+					"@${mySrcArgFile}"
 				COMMAND "${JAVA_ARCHIVE}"
 					${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 					"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
