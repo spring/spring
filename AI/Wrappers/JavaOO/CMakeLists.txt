@@ -282,8 +282,11 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	# Write list of source files to an arg-file
 	set(mySrcArgFile "${CMAKE_CURRENT_BINARY_DIR}/sourceFiles.txt")
+	if    (EXISTS "${mySrcArgFile}")
+		file(REMOVE "${mySrcArgFile}")
+	endif (EXISTS "${mySrcArgFile}")
 	foreach    (srcFile ${mySources} ${myGeneratedSources})
-		file(APPEND ${mySrcArgFile} "${srcFile}\n")
+		file(APPEND "${mySrcArgFile}" "${srcFile}\n")
 	endforeach (srcFile)
 
 	# compile
