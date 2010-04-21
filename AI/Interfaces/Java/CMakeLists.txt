@@ -653,7 +653,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"-d" "${myJavaBuildDir}"
 			${myJavaSources}
 			${myJavaGeneratedSources}
-		DEPENDS ${myJavaGeneratedSources}
+		DEPENDS ${myJavaSources} ${myJavaGeneratedSources}
 		WORKING_DIRECTORY "${myJavaGeneratedSourceDir}"
 		COMMENT "  ${myTarget}: Compiling Java sources ..." VERBATIM)
 
