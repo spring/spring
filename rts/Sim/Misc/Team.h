@@ -91,15 +91,16 @@ public:
 	float energySent;
 	float energyReceived;
 
-	typedef TeamStatistics Statistics;
-	Statistics currentStats;
 	/// in intervalls of this many seconds, statistics are updated
-	static const int statsPeriod = 15;
+	static const int statsPeriod = 16;
+	int nextHistoryEntry;
+	TeamStatistics* currentStats;
+	std::list<TeamStatistics> statHistory;
+	typedef TeamStatistics Statistics; //! for easier access via CTeam::Statistics
 
-	int lastStatSave;
 	/// number of units with commander tag in team, if it reaches zero with cmd ends the team dies
 	int numCommanders;
-	std::list<Statistics> statHistory;
+
 	void CommanderDied(CUnit* commander);
 	void LeftLineage(CUnit* unit);
 

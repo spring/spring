@@ -1334,7 +1334,7 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 		return 0;
 	}
 
-	const float buildScale = (1.0f / 32.0f);
+	const float buildScale = (1.0f / (2 * UNIT_SLOWUPDATE_RATE));
 	const float buildSpeed = buildScale * max(0.0f, luaL_checkfloat(L, 2));
 
 	CFactory* factory = dynamic_cast<CFactory*>(unit);
