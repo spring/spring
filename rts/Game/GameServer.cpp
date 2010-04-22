@@ -1301,12 +1301,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
-		case NETMSG_TEAMSTAT: {
-			if (hostif)
-				hostif->Send(packet->data, packet->length);
-			break;
-		}
-
 		case NETMSG_REGISTER_NETMSG: {
 			const unsigned char player = inbuf[1];
 			const unsigned char msg = inbuf[2];
