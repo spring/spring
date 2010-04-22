@@ -615,7 +615,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	}
 
 	const string type  = luaL_checkstring(L, 3);
-	const float amount = luaL_checkfloat(L, 4);
+	float amount = luaL_checkfloat(L, 4);
 
 	if (type == "metal") {
 		amount = std::min(amount, team1->metal);
@@ -627,8 +627,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 			team2->metalReceived               += amount;
 			team2->currentStats->metalReceived += amount;
 		}
-	}
-	else if (type == "energy") {
+	} else if (type == "energy") {
 		amount = std::min(amount, team1->energy);
 		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", amount)) {
 			team1->energy                       -= amount;
