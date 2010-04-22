@@ -1172,7 +1172,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(teamID)) {
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
 		return 0;
 	}
 
@@ -1187,6 +1187,11 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
 	if (team == NULL) {
+		return 0;
+	}
+	const int teamID = team->teamNum;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
 		return 0;
 	}
 
@@ -3815,7 +3820,12 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
-		luaL_error(L, "Incorrect arguments to GetUnitRulesParams()");
+		return 0;
+	}
+	const int teamID = unit->team;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
+		return 0;
 	}
 
 	const vector<float>& params       = unit->modParams;
@@ -3829,6 +3839,11 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
+		return 0;
+	}
+	const int teamID = unit->team;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
 		return 0;
 	}
 
