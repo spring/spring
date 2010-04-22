@@ -84,7 +84,7 @@ float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade       = 0.0f;
-float CUnit::empDecline     = 32.0f / GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
+float CUnit::empDecline     = 2 * UNIT_SLOWUPDATE_RATE / GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
 
 
 CUnit::CUnit():
@@ -990,9 +990,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
 			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
 			if (attacker) {
-				teamHandler->Team(attacker->team)->currentStats.damageDealt += statsdamage;
+				teamHandler->Team(attacker->team)->currentStats->damageDealt += statsdamage;
 			}
-			teamHandler->Team(team)->currentStats.damageReceived += statsdamage;
+			teamHandler->Team(team)->currentStats->damageReceived += statsdamage;
 			health -= damage;
 		}
 		else { // healing
@@ -1084,7 +1084,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 		if (isDead && (attacker != 0) &&
 		    !teamHandler->Ally(allyteam, attacker->allyteam) && !beingBuilt) {
 			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-			teamHandler->Team(attacker->team)->currentStats.unitsKilled++;
+			teamHandler->Team(attacker->team)->currentStats->unitsKilled++;
 		}
 	}
 //	if(attacker!=0 && attacker->team==team)
