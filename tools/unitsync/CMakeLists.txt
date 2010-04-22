@@ -51,3 +51,5 @@ if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
+
+Add_Subdirectory(test)
