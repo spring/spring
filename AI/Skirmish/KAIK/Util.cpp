@@ -24,7 +24,6 @@ namespace AIUtil {
 	}
 
 	bool IsFSGoodChar(const char c) {
-
 		if ((c >= '0') && (c <= '9')) {
 			return true;
 		} else if ((c >= 'a') && (c <= 'z')) {
@@ -38,7 +37,6 @@ namespace AIUtil {
 		return false;
 	}
 	std::string MakeFileSystemCompatible(const std::string& str) {
-
 		std::string cleaned = str;
 
 		for (std::string::size_type i=0; i < cleaned.size(); i++) {
@@ -48,5 +46,13 @@ namespace AIUtil {
 		}
 
 		return cleaned;
+	}
+
+	void StringToLowerInPlace(std::string& s) {
+		std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
+	}
+	std::string StringToLower(std::string s) {
+		StringToLowerInPlace(s);
+		return s;
 	}
 }

@@ -55,7 +55,7 @@ CAttackGroup::CAttackGroup() {
 	this->defending = false;
 	this->isMoving = false;
 	this->isShooting = false;
-	this->attackPosition = ZEROVECTOR;
+	this->attackPosition = ZeroVector;
 	this->attackRadius = 1;
 }
 
@@ -69,7 +69,7 @@ CAttackGroup::CAttackGroup(AIClasses* ai, int groupID_in) {
 	this->defending = false;
 	this->isMoving = false;
 	this->isShooting = false;
-	this->attackPosition = ZEROVECTOR;
+	this->attackPosition = ZeroVector;
 	this->attackRadius = 1;
 }
 
@@ -222,7 +222,7 @@ int CAttackGroup::PopStuckUnit() {
 bool CAttackGroup::CloakedFix(int enemy) {
 	const UnitDef* ud = ai->ccb->GetUnitDef(enemy);
 
-	return ((ud != NULL) && !(ud->canCloak && ud->startCloaked && (ai->cb->GetUnitPos(enemy) == ZEROVECTOR)));
+	return ((ud != NULL) && !(ud->canCloak && ud->startCloaked && (ai->cb->GetUnitPos(enemy) == ZeroVector)));
 }
 
 
@@ -398,7 +398,7 @@ bool CAttackGroup::NeedsNewTarget() {
 void CAttackGroup::ClearTarget() {
 	this->isMoving = false;
 	this->defending = true;
-	this->attackPosition = ZEROVECTOR;
+	this->attackPosition = ZeroVector;
 	this->attackRadius = 0.0f;
 	this->pathToTarget.clear();
 	// to avoid getting a new target the first frame after arrival

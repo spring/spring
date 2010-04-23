@@ -8,6 +8,9 @@ namespace AIUtil {
 	bool IsFSGoodChar(const char c);
 	/// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
 	std::string MakeFileSystemCompatible(const std::string& str);
+
+	void StringToLowerInPlace(std::string&);
+	std::string StringToLower(std::string);
 }
 
 #endif
