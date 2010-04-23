@@ -352,7 +352,7 @@ void CTeam::SlowUpdate()
 	}
 
 	//! make sure that the intervals when the history gets updated aren't between two SlowUpdates
-	assert(fmod(statsPeriod * (float(GAME_SPEED) / TEAM_SLOWUPDATE_RATE)) != 0.0f);
+	assert(fmod(statsPeriod * (float(GAME_SPEED) / TEAM_SLOWUPDATE_RATE, 1.0f)) != 0.0f);
 
 	const int statsFrames = statsPeriod * GAME_SPEED;
 	if (nextHistoryEntry <= gs->frameNum) {
