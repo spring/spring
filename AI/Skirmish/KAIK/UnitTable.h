@@ -127,29 +127,12 @@ class CUnitTable {
 		std::vector<UnitType> unitTypes;
 		int numDefs;
 
-		// KLOOTNOTE: unused for now
-		int minTechLevel;
-		int maxTechLevel;
-
 	private:
-		/// int BuildModSideMap();
-		/// int ReadTeamSides();
 		void ReadModConfig();
 		void DebugPrint();
 
-		/// int GetSide(void) const;
-		/// int GetSide(int) const;
-		/// int GetSide(const UnitDef*) const;
-
 		std::string GetDbgLogName() const;
 		std::string GetModCfgName() const;
-
-		/// start units of each side (e.g. commander)
-		/// std::vector<int> startUnits;
-
-		/// std::vector<std::string> sideNames;		// side number (0) to side string ("Arm")
-		/// std::map<std::string, int> modSideMap;	// side string ("Arm") to side number (0)
-		/// std::vector<int> teamSides;				// team numbers to side numbers
 
 		AIClasses* ai;
 };

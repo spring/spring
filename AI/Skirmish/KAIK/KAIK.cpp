@@ -2,6 +2,14 @@
 #include <sstream>
 #include <fstream>
 
+#ifdef LUA_LIB_EXT
+#include <lua5.1/lua.hpp>
+#else
+#include "lib/lua/include/lua.h"
+#include "lib/lua/include/lualib.h"
+#include "lib/lua/include/lauxlib.h"
+#endif
+
 #include "KAIK.h"
 #include "IncGlobalAI.h"
 
@@ -12,9 +20,10 @@ CR_REG_METADATA(CKAIK, (
 	CR_POSTLOAD(PostLoad)
 ));
 
-// #define CREX_REG_STATE_COLLECTOR(Name, RootClass)
-//    static RootClass=CKAIK* Name##State=KAIKState;
+
 CREX_REG_STATE_COLLECTOR(KAIK, CKAIK);
+// #define CREX_REG_STATE_COLLECTOR(Name, RootClass)
+//    static RootClass* Name ## State;
 CKAIK* KAIKStateExt = KAIKState;
 
 
