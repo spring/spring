@@ -198,6 +198,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsDead);
 	REGISTER_LUA_CFUNC(GetUnitIsStunned);
 	REGISTER_LUA_CFUNC(GetUnitResources);
+	REGISTER_LUA_CFUNC(GetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
 	REGISTER_LUA_CFUNC(GetUnitStates);
 	REGISTER_LUA_CFUNC(GetUnitArmored);
@@ -2658,6 +2659,20 @@ int LuaSyncedRead::GetUnitResources(lua_State* L)
 	lua_pushnumber(L, unit->energyMake);
 	lua_pushnumber(L, unit->energyUse);
 	return 4;
+}
+
+
+int LuaSyncedRead::GetUnitMetalExtraction(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (!unit->unitDef->extractsMetal) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->metalExtract);
+	return 1;
 }
 
 
