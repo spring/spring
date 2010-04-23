@@ -5,7 +5,7 @@
 #include "IncExternAI.h"
 
 namespace AIUtil {
-	std::string GetAbsFileName(IAICallback* cb, const std::string& relFileName) {
+	std::string GetAbsFileName(IAICallback* icb, const std::string& relFileName) {
 		char        dst[2048] = {0};
 		const char* src       = relFileName.c_str();
 		const int   len       = relFileName.size();
@@ -18,7 +18,7 @@ namespace AIUtil {
 
 		// get the absolute path to the file
 		// (and create folders along the way)
-		cb->GetValue(AIVAL_LOCATE_FILE_W, dst);
+		icb->GetValue(AIVAL_LOCATE_FILE_W, dst);
 
 		return (std::string(dst));
 	}

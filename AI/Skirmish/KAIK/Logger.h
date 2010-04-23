@@ -13,8 +13,8 @@ enum LogLevel {
 
 class CLogger {
 	public:
-		CLogger(IAICallback* cb) {
-			icb  = cb;
+		CLogger(IAICallback* aicb) {
+			icb  = aicb;
 			name = GetLogName();
 
 			log.open(name.c_str());
