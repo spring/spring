@@ -1,3 +1,6 @@
+#include <string>
+
+#include "System/Util.h"
 #include "AIClasses.hpp"
 #include "IncGlobalAI.h"
 
@@ -6,15 +9,17 @@ extern CKAIK* KAIKStateExt;
 
 CR_BIND(AIClasses, );
 CR_REG_METADATA(AIClasses, (
-	CR_MEMBER(econTracker),
-	CR_MEMBER(bu),
-	CR_MEMBER(tm),
-	CR_MEMBER(uh),
-	CR_MEMBER(dm),
-	CR_MEMBER(ah),
-	CR_MEMBER(dgunConHandler),
-	CR_MEMBER(MyUnits),
+	CR_MEMBER(ecoTracker),
+	CR_MEMBER(buildupHandler),
+	CR_MEMBER(threatMap),
+	CR_MEMBER(unitHandler),
+	CR_MEMBER(defenseMatrix),
+	CR_MEMBER(attackHandler),
+	CR_MEMBER(dgunControllerHandler),
+	CR_MEMBER(activeUnits),
 	CR_MEMBER(unitIDs),
+	CR_MEMBER(initialized),
+	CR_MEMBER(initFrame),
 	CR_POSTLOAD(Load),
 	CR_RESERVED(16)
 ));
@@ -123,93 +128,163 @@ CR_REG_METADATA(MetalExtractor, (
 
 
 AIClasses::AIClasses(IGlobalAICallback* gcb):
-	econTracker(NULL),
-	bu(NULL),
-	mm(NULL),
-	math(NULL),
-	pather(NULL),
-	ut(NULL),
-	tm(NULL),
-	uh(NULL),
-	dm(NULL),
-	ah(NULL),
-	dgunConHandler(NULL),
-	ct(NULL),
-	logger(NULL),
-	luaParser(NULL)
+	callbackHandler(NULL),
+	ccallbackHandler(NULL),
+
+	ecoTracker(NULL),
+	buildupHandler(NULL),
+	metalMap(NULL),
+	mathHandler(NULL),
+	pathFinder(NULL),
+	unitTable(NULL),
+	threatMap(NULL),
+	unitHandler(NULL),
+	defenseMatrix(NULL),
+	attackHandler(NULL),
+	dgunControllerHandler(NULL),
+	commandTracker(NULL),
+	logHandler(NULL),
+	luaConfigParser(NULL)
 {
-	cb  = gcb->GetAICallback();
-	ccb = gcb->GetCheatInterface();
-	initFrame = cb->GetCurrentFrame();
+	callbackHandler  = gcb->GetAICallback();
+	ccallbackHandler = gcb->GetCheatInterface();
+
+	initialized = false;
+	initFrame = callbackHandler->GetCurrentFrame();
 }
 
 AIClasses::~AIClasses() {
-	for (int i = 0; i < MAX_UNITS; i++) {
-		delete MyUnits[i];
+	if (initialized) {
+		for (int i = 0; i < MAX_UNITS; i++) {
+			delete activeUnits[i];
+		}
 	}
 
-	delete ah;
-	delete bu;
-	delete econTracker;
-	delete math;
-	delete pather;
-	delete tm;
-	delete ut;
-	delete mm;
-	delete uh;
-	delete dgunConHandler;
+	delete attackHandler;
+	delete buildupHandler;
+	delete ecoTracker;
+	delete mathHandler;
+	delete pathFinder;
+	delete threatMap;
+	delete unitTable;
+	delete metalMap;
+	delete unitHandler;
+	delete dgunControllerHandler;
 
-	delete ct;
-	delete logger;
-	delete luaParser;
+	delete commandTracker;
+	delete logHandler;
+	delete luaConfigParser;
 }
 
 void AIClasses::Init() {
-	MyUnits.resize(MAX_UNITS, NULL);
+	const std::map<std::string, std::string>& info = callbackHandler->GetMyInfo();
+	const std::map<std::string, std::string>::const_iterator it = info.find("supportedMods");
+	const std::string& modArchvName = callbackHandler->GetModName();
+	const std::string& modHumanName = callbackHandler->GetModHumanName();
+
+	if (it != info.end()) {
+		const std::string& mods = it->second;
+
+		size_t i = 0;
+		size_t j = 0;
+		size_t p = 0, q = 0;
+
+		std::string s;
+
+		while (!initialized) {
+			i = mods.find_first_of('(', i);
+			j = mods.find_first_of(')', j);
+
+			if (i == std::string::npos) {
+				break;
+			}
+
+			// extract a "(shortName, longName, minVersion, maxVersion)" tuple
+			s = mods.substr(i + 1, j - i - 1);
+
+			q = s.find_first_of(',', p); std::string shortName  = StringTrim(s.substr(p, q - p)); p = q + 1;
+			q = s.find_first_of(',', p); std::string longName   = StringTrim(s.substr(p, q - p)); p = q + 1;
+		//	q = s.find_first_of(',', p); std::string minVersion = StringTrim(s.substr(p, q - p)); p = q + 1;
+		//	                             std::string maxVersion = StringTrim(s.substr(p, q - p));
+
+			// to determine whether the current mod is supported, test if
+			//   1. one of the "shortName" values is a substring of the mod archive-name, or
+			//   2. one of the "longName" values is a substring of the mod human-name
+			//
+			// we do it this way because
+			//   1. AI's can not retrieve the mod version (except by "looking" for it in the archive- or
+			//      human-name strings) nor the real short-name, so the alternatives are comparing mod
+			//      (archive- or human-)names directly or matching hashes
+			//   2. a mod can unknowingly or deliberately break AI support when going from v0.1 to v0.2
+			//   3. the archive- and human-names of any given mod can be completely unrelated
+			//   4. storing the exact human-name of every supported mod in AIInfo is a maintenance PITA
+			//      (since these typically change with every mod release, and mods are updated frequently)
+			//   5. mod hashes are even more unfriendly to keep in AIInfo and also version-dependent
+			//   6. comparing names without the version parts means greater flexibility for end-users
+			if (modArchvName.find(shortName) != std::string::npos) { initialized = true; }
+			if (modHumanName.find(longName ) != std::string::npos) { initialized = true; }
+
+			i += 1;
+			j += 1;
+			p  = 0;
+			q  = 0;
+
+		}
+
+		if (!initialized) {
+			return;
+		}
+	}
+
+
+	activeUnits.resize(MAX_UNITS, NULL);
 	unitIDs.resize(MAX_UNITS, -1);
 
 	for (int i = 0; i < MAX_UNITS; i++) {
-		MyUnits[i]          = new CUNIT(this);
-		MyUnits[i]->myid    =  i;
-		MyUnits[i]->groupID = -1;
+		activeUnits[i]          = new CUNIT(this);
+		activeUnits[i]->myid    =  i;
+		activeUnits[i]->groupID = -1;
 	}
 
-	logger         = new CLogger(cb);
-	luaParser      = new LuaParser();
+	logHandler            = new CLogger(callbackHandler);
+	luaConfigParser       = new LuaParser();
+	commandTracker        = new CCommandTracker(this);
 
-	ct             = new CCommandTracker(this);
-	math           = new CMaths(this);
-	ut             = new CUnitTable(this);
-	mm             = new CMetalMap(this);
-	pather         = new CPathFinder(this);
-	tm             = new CThreatMap(this);
-	uh             = new CUnitHandler(this);
-	dm             = new CDefenseMatrix(this);
-	econTracker    = new CEconomyTracker(this);
-	bu             = new CBuildUp(this);
-	ah             = new CAttackHandler(this);
-	dgunConHandler = new CDGunControllerHandler(this);
+	mathHandler           = new CMaths(this);
+	unitTable             = new CUnitTable(this);
+	metalMap              = new CMetalMap(this);
+	pathFinder            = new CPathFinder(this);
+	threatMap             = new CThreatMap(this);
+	unitHandler           = new CUnitHandler(this);
+	defenseMatrix         = new CDefenseMatrix(this);
+	ecoTracker            = new CEconomyTracker(this);
+	buildupHandler        = new CBuildUp(this);
+	attackHandler         = new CAttackHandler(this);
+	dgunControllerHandler = new CDGunControllerHandler(this);
 
-	mm->Init();
-	ut->Init();
-	pather->Init();
+	metalMap->Init();
+	unitTable->Init();
+	pathFinder->Init();
 }
 
 void AIClasses::Load() {
-	assert(MyUnits.size() == MAX_UNITS);
+	assert(callbackHandler != NULL);
+	assert(ccallbackHandler != NULL);
+
+	assert(activeUnits.size() == MAX_UNITS);
 	assert(unitIDs.size() == MAX_UNITS);
 
 	// allocate and initialize all NON-serialized
 	// AI components; the ones that were serialized
 	// have their own PostLoad() callins
-	logger  = new CLogger(cb);
-	ct      = new CCommandTracker(this);
-	math    = new CMaths(this);
-	mm      = new CMetalMap(this);
-	pather  = new CPathFinder(this);
+	logHandler     = new CLogger(callbackHandler);
+	commandTracker = new CCommandTracker(this);
+	mathHandler    = new CMaths(this);
+	metalMap       = new CMetalMap(this);
+	pathFinder     = new CPathFinder(this);
 
-	mm->Init();
-	pather->Init();
+	metalMap->Init();
+	pathFinder->Init();
 }
 
 
