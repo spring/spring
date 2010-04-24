@@ -666,7 +666,7 @@ skirmishai_needCPP_list       = ['CppTestAI']
 skirmishai_needCUtils_list    = ['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI', 'XAI']
 skirmishai_needCREG_list      = ['KAIK', 'KAI']
 skirmishai_needBoost_list     = ['NTai']
-skirmishai_needLua_list       = ['XAI']
+skirmishai_needLua_list       = ['KAIK', 'XAI']
 skirmishai_isJava_list        = ['NullJavaAI', 'NullOOJavaAI']
 
 # generate the C++ Skirmish AI Wrapper sources if needed
