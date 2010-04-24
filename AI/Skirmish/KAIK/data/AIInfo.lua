@@ -69,6 +69,7 @@ recommended: use only for *A mods
 		key    = "supportedMods",
 		value  = [[
 (BA, Balanced Annihilation, *, *)
+(BOTA, Basically OTA, *, *)
 (SA, Supreme Annihilation, *, *)
 (XTA, XTA, *, *)
 (EE, Expand and Exterminate, 0.171, 0.46)

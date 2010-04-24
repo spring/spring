@@ -195,7 +195,7 @@ void AIClasses::Init() {
 			i = mods.find_first_of('(', i);
 			j = mods.find_first_of(')', j);
 
-			if (i == std::string::npos) {
+			if (i == std::string::npos || j == std::string::npos) {
 				break;
 			}
 
