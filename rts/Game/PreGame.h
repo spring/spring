@@ -63,7 +63,7 @@ private:
 	We won't start until we received this
 	*/
 	boost::scoped_ptr<const GameData> gameData;
-	boost::scoped_ptr<const ClientSetup> settings;
+	const ClientSetup *settings;
 	std::string modArchive;
 	ILoadSaveHandler *savefile;
 	

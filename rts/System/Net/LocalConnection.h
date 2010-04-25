@@ -43,8 +43,12 @@ public:
 	virtual void Flush(const bool forced = false);
 	
 	/// is always false
-	virtual bool CheckTimeout() const;
+	virtual bool CheckTimeout(int nsecs = 0) const;
 	
+	virtual void ReconnectTo(CConnection &conn) {}
+	virtual bool CanReconnect() const;
+	virtual bool NeedsReconnect();
+
 	virtual std::string Statistics() const;
 	virtual std::string GetFullAddress() const
 	{
