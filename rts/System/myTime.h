@@ -11,8 +11,8 @@ typedef int spring_duration;
 inline spring_time spring_gettime() { return SDL_GetTicks(); };
 #define spring_tomsecs(time) (time)
 #define spring_msecs(time) (time)
-#define spring_secs(time) (time*1000)
-#define spring_istime(time) (time>0)
+#define spring_secs(time) ((time)*1000)
+#define spring_istime(time) ((time)>0)
 #define spring_sleep(time) SDL_Delay(time)
 #define spring_notime(time) time = 0
 #else
