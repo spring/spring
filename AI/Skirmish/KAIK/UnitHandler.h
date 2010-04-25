@@ -3,12 +3,14 @@
 
 #include <vector>
 
-#include "Containers.h"
-
 struct UnitDef;
 
 class CMetalMaker;
 struct AIClasses;
+struct BuilderTracker;
+struct BuildTask;
+struct TaskPlan;
+struct UpgradeTask;
 
 class CUnitHandler {
 	public:

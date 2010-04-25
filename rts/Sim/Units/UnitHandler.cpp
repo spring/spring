@@ -251,11 +251,11 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit slow update");
-		if (!(gs->frameNum & 15)) {
+		if (!(gs->frameNum & (UNIT_SLOWUPDATE_RATE-1))) {
 			slowUpdateIterator = activeUnits.begin();
 		}
 
-		int numToUpdate = activeUnits.size() / 16 + 1;
+		int numToUpdate = activeUnits.size() / UNIT_SLOWUPDATE_RATE + 1;
 		for (; slowUpdateIterator != activeUnits.end() && numToUpdate != 0; ++ slowUpdateIterator) {
 			(*slowUpdateIterator)->SlowUpdate();
 			numToUpdate--;

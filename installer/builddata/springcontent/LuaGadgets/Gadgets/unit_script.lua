@@ -164,7 +164,7 @@ Format: {
 		threads = {
 			[thread] = {
 				thread = thread,      -- the coroutine object
-				signal_mask = number, -- see Signal/SetSignalMask
+				signal_mask = object, -- see Signal/SetSignalMask
 				unitID = number,      -- 'owner' of the thread
 				onerror = function,   -- called after thread died due to an error
 			},
@@ -242,7 +242,7 @@ local function WakeUp(thread, ...)
 end
 
 -- Helper for MoveFinished and TurnFinished
-local function AnimFinished(threads, waitingForAnim, piece, axis)
+local function AnimFinished(waitingForAnim, piece, axis)
 	local index = piece * 3 + axis
 	local threads = waitingForAnim[index]
 	if threads then
@@ -256,11 +256,11 @@ end
 -- MoveFinished and TurnFinished are put in every script by the framework.
 -- They resume the threads which were waiting for the move/turn.
 local function MoveFinished(piece, axis)
-	return AnimFinished(activeUnit.threads, activeUnit.waitingForMove, piece, axis)
+	return AnimFinished(activeUnit.waitingForMove, piece, axis)
 end
 
 local function TurnFinished(piece, axis)
-	return AnimFinished(activeUnit.threads, activeUnit.waitingForTurn, piece, axis)
+	return AnimFinished(activeUnit.waitingForTurn, piece, axis)
 end
 
 --------------------------------------------------------------------------------
@@ -355,18 +355,22 @@ local function SetOnError(fun)
 end
 
 function Spring.UnitScript.SetSignalMask(mask)
-	local thread = activeUnit.threads[co_running()]
-	if thread then
-		thread.signal_mask = mask
-	end
+	activeUnit.threads[co_running() or error("not in a thread", 2)].signal_mask = mask
 end
 
 function Spring.UnitScript.Signal(mask)
 	-- beware, unsynced loop order
 	-- (doesn't matter here as long as all threads get removed)
-	for _,thread in pairs(activeUnit.threads) do
-		if (bit_and(thread.signal_mask, mask) ~= 0) then
-			if thread.container then
+	if type(mask) == "number" then
+		for _,thread in pairs(activeUnit.threads) do
+			local signal_mask = thread.signal_mask
+			if (type(signal_mask) == "number" and bit_and(signal_mask, mask) ~= 0 and thread.container) then
+				Remove(thread.container, thread)
+			end
+		end
+	else
+		for _,thread in pairs(activeUnit.threads) do
+			if (thread.signal_mask == mask and thread.container) then
 				Remove(thread.container, thread)
 			end
 		end
@@ -425,7 +429,7 @@ do
 	for k,v in pairs(System) do
 		script[k] = v
 	end
-	script._G = _G  -- the global table
+	--script._G = _G  -- the global table. (Update: _G points to unit environment now)
 	script.GG = GG  -- the shared table (shared with gadgets!)
 	prototypeEnv = script
 end
@@ -627,6 +631,9 @@ function gadget:UnitCreated(unitID, unitDefID)
 		unitDefID = unitDefID,
 		script = {},     -- will store the callins
 	}
+
+	-- easy self-referencing (Note: use of _G differs from _G in gadgets & widgets)
+	env._G = env
 
 	env.include = function(f)
 		return MemoizedInclude(f, env)
