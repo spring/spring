@@ -218,6 +218,8 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 		}
 	}
 
+	canReconnect = false;
+
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
@@ -1508,7 +1510,8 @@ void CGameServer::StartGame()
 	gameStartTime = spring_gettime();
 	if (!allowAdditionalPlayers)
 		packetCache.clear(); // free memory
-	if (UDPNet && !allowAdditionalPlayers)
+
+	if (UDPNet && !allowAdditionalPlayers && !canReconnect)
 		UDPNet->Listen(false); // don't accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
@@ -1846,6 +1849,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	Message(str(format(" -> Address: %s") %link->GetFullAddress()), false);
 	size_t hisNewNumber = players.size();
 
+	if(link->CanReconnect())
+		canReconnect = true;
+
 	for (size_t i = 0; i < players.size(); ++i)
 	{
 		if (!players[i].isFromDemo && name == players[i].name)
@@ -1857,6 +1863,10 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			}
 			else
 			{
+				if(canReconnect && players[i].link->CheckTimeout(-1) && players[i].link->GetFullAddress() != link->GetFullAddress()) {
+					hisNewNumber = i;
+					break;
+				}
 				Message(str(format(" -> %s is already ingame") %name));
 				name += "_";
 			}
@@ -1888,8 +1898,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
-	if (it != players[hisNewNumber].GetAllValues().end() && !isLocal)
+	GameParticipant& newGuy = players[hisNewNumber];
+	GameParticipant::customOpts::const_iterator it = newGuy.GetAllValues().find("Password");
+	if (it != newGuy.GetAllValues().end() && !isLocal)
 	{
 		if (passwd != it->second)
 		{
@@ -1898,7 +1909,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			return 0;
 		};
 	}
-	GameParticipant& newGuy = players[hisNewNumber];
+
+	if(newGuy.myState == GameParticipant::CONNECTED || newGuy.myState == GameParticipant::INGAME) {
+		newGuy.link->ReconnectTo(*link);
+		Message(str(format(" -> connection reestablished (given id %i)") %hisNewNumber));
+		link->Flush(true);
+		return hisNewNumber;
+	}
+
 	newGuy.Connected(link, isLocal);
 	newGuy.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));

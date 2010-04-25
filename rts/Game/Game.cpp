@@ -27,10 +27,12 @@
 #include "float.h"
 #include "Camera.h"
 #include "CameraHandler.h"
+#include "ClientSetup.h"
 #include "ConsoleHistory.h"
 #include "FPUCheck.h"
 #include "GameHelper.h"
 #include "GameServer.h"
+#include "GameVersion.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
 #include "LoadSaveHandler.h"
@@ -2816,12 +2818,17 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
-	if(gs->frameNum == 0)
+	if(gs->frameNum == 0 || gs->paused)
 		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
 	ClientReadNet();
 
-	if (!net->Active() && !gameOver) {
+	if(net->NeedsReconnect() && !gameOver) {
+		extern ClientSetup* startsetup;
+		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
+	}
+
+	if (net->CheckTimeout() && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
 		GameEnd();
 	}
