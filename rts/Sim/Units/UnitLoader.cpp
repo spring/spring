@@ -47,6 +47,7 @@
 #include "Sim/Weapons/StarburstLauncher.h"
 #include "Sim/Weapons/TorpedoLauncher.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/EventBatchHandler.h"
 #include "Sound/AudioChannel.h"
 #include "myMath.h"
 #include "LogOutput.h"
@@ -376,6 +377,9 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	if (!build) {
 		unit->FinishedBuilding();
 	}
+
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(unit);
+
 	return unit;
 }
 
