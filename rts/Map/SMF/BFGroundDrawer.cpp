@@ -140,7 +140,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniformLocation("texSquareZ");          // idx  8
 			smfShaderGLSL->SetUniformLocation("lightDir");            // idx  9
 			smfShaderGLSL->SetUniformLocation("cameraPos");           // idx 10
-			smfShaderGLSL->SetUniformLocation("cameraMatInv");        // idx 11
+			smfShaderGLSL->SetUniformLocation("$UNUSED$");            // idx 11
 			smfShaderGLSL->SetUniformLocation("shadowMat");           // idx 12
 			smfShaderGLSL->SetUniformLocation("shadowParams");        // idx 13
 			smfShaderGLSL->SetUniformLocation("groundAmbientColor");  // idx 14
@@ -1361,7 +1361,6 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		} else {
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
-			smfShaderGLSL->SetUniform4fv(11, (float*) camera->GetViewMatInv());
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
 			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 
