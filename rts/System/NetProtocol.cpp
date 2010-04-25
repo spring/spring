@@ -59,7 +59,7 @@ void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string
 	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	conn->Flush(true);
 
-	logOutput.Print("Reconnecting to server... %ds", conn->GetReconnectSecs());
+	logOutput.Print("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection &>(*serverConn).GetReconnectSecs());
 
 	delete conn;
 }
