@@ -156,6 +156,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTeamInfo);
 	REGISTER_LUA_CFUNC(GetTeamResources);
 	REGISTER_LUA_CFUNC(GetTeamUnitStats);
+	REGISTER_LUA_CFUNC(GetTeamResourceStats);
 	REGISTER_LUA_CFUNC(GetTeamRulesParam);
 	REGISTER_LUA_CFUNC(GetTeamRulesParams);
 	REGISTER_LUA_CFUNC(GetTeamStatsHistory);
@@ -197,6 +198,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsDead);
 	REGISTER_LUA_CFUNC(GetUnitIsStunned);
 	REGISTER_LUA_CFUNC(GetUnitResources);
+	REGISTER_LUA_CFUNC(GetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
 	REGISTER_LUA_CFUNC(GetUnitStates);
 	REGISTER_LUA_CFUNC(GetUnitArmored);
@@ -1111,18 +1113,55 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(teamID)) {
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
 		return 0;
 	}
 
-	lua_pushnumber(L, team->currentStats.unitsKilled);
-	lua_pushnumber(L, team->currentStats.unitsDied);
-	lua_pushnumber(L, team->currentStats.unitsCaptured);
-	lua_pushnumber(L, team->currentStats.unitsOutCaptured);
-	lua_pushnumber(L, team->currentStats.unitsReceived);
-	lua_pushnumber(L, team->currentStats.unitsSent);
+	const CTeam::Statistics& stats = *team->currentStats;
+	lua_pushnumber(L, stats.unitsKilled);
+	lua_pushnumber(L, stats.unitsDied);
+	lua_pushnumber(L, stats.unitsCaptured);
+	lua_pushnumber(L, stats.unitsOutCaptured);
+	lua_pushnumber(L, stats.unitsReceived);
+	lua_pushnumber(L, stats.unitsSent);
 
 	return 6;
+}
+
+
+int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
+{
+	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+	if (team == NULL) {
+		return 0;
+	}
+	const int teamID = team->teamNum;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
+		return 0;
+	}
+
+	const CTeam::Statistics& stats = *team->currentStats;
+
+	const string type = luaL_checkstring(L, 2);
+	if (type == "metal") {
+		lua_pushnumber(L, stats.metalUsed);
+		lua_pushnumber(L, stats.metalProduced);
+		lua_pushnumber(L, stats.metalExcess);
+		lua_pushnumber(L, stats.metalReceived);
+		lua_pushnumber(L, stats.metalSent);
+		return 5;
+	}
+	else if (type == "energy") {
+		lua_pushnumber(L, stats.energyUsed);
+		lua_pushnumber(L, stats.energyProduced);
+		lua_pushnumber(L, stats.energyExcess);
+		lua_pushnumber(L, stats.energyReceived);
+		lua_pushnumber(L, stats.energySent);
+		return 5;
+	}
+
+	return 0;
 }
 
 
@@ -1134,7 +1173,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 	}
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(teamID)) {
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
 		return 0;
 	}
 
@@ -1149,6 +1188,11 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
 	if (team == NULL) {
+		return 0;
+	}
+	const int teamID = team->teamNum;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
 		return 0;
 	}
 
@@ -1195,8 +1239,6 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 
 	std::advance(it, start);
 
-	const int statsFrames = (CTeam::statsPeriod * GAME_SPEED);
-
 	lua_newtable(L);
 	int count = 0;
 	if (statCount > 0) {
@@ -1205,20 +1247,31 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 			count++;
 			lua_pushnumber(L, count);
 			lua_newtable(L); {
-				HSTR_PUSH_NUMBER(L, "time",             i * CTeam::statsPeriod);
-				HSTR_PUSH_NUMBER(L, "frame",            i * statsFrames);
+				if (i+1 == teamStats.size()) {
+					//! the `stats.frame` var indicates the frame when a new entry needs to get added,
+					//! for the most recent stats entry this lies obviously in the future,
+					//! so we just output the current frame here
+					HSTR_PUSH_NUMBER(L, "time",             gs->frameNum / GAME_SPEED);
+					HSTR_PUSH_NUMBER(L, "frame",            gs->frameNum);
+				} else {
+					HSTR_PUSH_NUMBER(L, "time",             stats.frame / GAME_SPEED);
+					HSTR_PUSH_NUMBER(L, "frame",            stats.frame);
+				}
 				HSTR_PUSH_NUMBER(L, "metalUsed",        stats.metalUsed);
 				HSTR_PUSH_NUMBER(L, "metalProduced",    stats.metalProduced);
 				HSTR_PUSH_NUMBER(L, "metalExcess",      stats.metalExcess);
 				HSTR_PUSH_NUMBER(L, "metalReceived",    stats.metalReceived);
 				HSTR_PUSH_NUMBER(L, "metalSent",        stats.metalSent);
+
 				HSTR_PUSH_NUMBER(L, "energyUsed",       stats.energyUsed);
 				HSTR_PUSH_NUMBER(L, "energyProduced",   stats.energyProduced);
 				HSTR_PUSH_NUMBER(L, "energyExcess",     stats.energyExcess);
 				HSTR_PUSH_NUMBER(L, "energyReceived",   stats.energyReceived);
 				HSTR_PUSH_NUMBER(L, "energySent",       stats.energySent);
+
 				HSTR_PUSH_NUMBER(L, "damageDealt",      stats.damageDealt);
 				HSTR_PUSH_NUMBER(L, "damageReceived",   stats.damageReceived);
+
 				HSTR_PUSH_NUMBER(L, "unitsProduced",    stats.unitsProduced);
 				HSTR_PUSH_NUMBER(L, "unitsDied",        stats.unitsDied);
 				HSTR_PUSH_NUMBER(L, "unitsReceived",    stats.unitsReceived);
@@ -2609,6 +2662,20 @@ int LuaSyncedRead::GetUnitResources(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitMetalExtraction(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	if (!unit->unitDef->extractsMetal) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->metalExtract);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitExperience(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -3768,7 +3835,12 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
-		luaL_error(L, "Incorrect arguments to GetUnitRulesParams()");
+		return 0;
+	}
+	const int teamID = unit->team;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
+		return 0;
 	}
 
 	const vector<float>& params       = unit->modParams;
@@ -3782,6 +3854,11 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
+		return 0;
+	}
+	const int teamID = unit->team;
+
+	if (!IsAlliedTeam(teamID) && !game->gameOver) {
 		return 0;
 	}
 

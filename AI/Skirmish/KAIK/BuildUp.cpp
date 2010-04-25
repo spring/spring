@@ -606,7 +606,7 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 			float        closestDstSq = MY_FLT_MAX;
 
 			int             oldReactorID  = -1;
-			float3          oldReactorPos = ZEROVECTOR;
+			float3          oldReactorPos = ZeroVector;
 			const  UnitDef* oldReactorDef = NULL;
 
 			std::list<int> lst = ai->uh->AllUnitsByCat[CAT_ENERGY];

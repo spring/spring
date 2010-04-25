@@ -57,121 +57,140 @@ void CUnitTable::PostLoad() {
 void CUnitTable::ReadModConfig() {
 	L(ai, "[CUnitTable::ReadModConfig()]");
 
-	std::stringstream msg;
 	std::string cfgFileName = GetModCfgName();
+	std::fstream cfgFile;
+	std::stringstream msg;
 
-	FILE* f = fopen(cfgFileName.c_str(), "r");
+	int cfgVersion = 0;
 
-	if (f != NULL) {
-		msg << "\tparsing existing mod configuration file ";
-		msg << cfgFileName;
-		L(ai, msg.str());
+	if (ai->cb->GetFileSize(cfgFileName.c_str()) != -1) {
+		if (!ai->luaParser->Execute(cfgFileName, "config")) {
+			msg << "\tparse-error in existing mod configuration file \"";
+			msg << cfgFileName << "\": " << ai->luaParser->GetError();
 
-		// read the mod's .cfg file
-		char str[1024] = {0};
+			L(ai, msg.str());
+			return;
+		} else {
+			msg << "\tparsed existing mod configuration file \"";
+			msg << cfgFileName << "\"";
 
-		char         unitName[512] = {0};
-		float        unitCostMult  =  1.0f;
-		int          unitTechLvl   = -1;
-		UnitCategory defUnitCat    = CAT_LAST;
-		UnitCategory cfgUnitCat    = CAT_LAST;
-
-		while (fgets(str, 1024, f) != NULL) {
-			if (str[0] == '/' && str[1] == '/') {
-				continue;
-			}
-
-			const int i = sscanf(str, "%s %f %d %d", unitName, &unitCostMult, &unitTechLvl, (int*) &cfgUnitCat);
-			const UnitDef* udef = ai->cb->GetUnitDef(unitName);
-
-			if ((i == 4) && udef != NULL) {
-				UnitType* utype = &unitTypes[udef->id];
-
-				utype->costMultiplier = unitCostMult;
-				utype->techLevel      = unitTechLvl;
-
-				defUnitCat = utype->category;
-
-				msg.str("");
-				msg << "\t\tudef->id: " << udef->id << ", udef->name: " << udef->name;
-				msg << ", default cat.: " << defUnitCat << ", .cfg cat.: " << cfgUnitCat;
-				L(ai, msg.str());
-
-				// TODO: look for any possible side-effects that might arise
-				// from overriding categories like this, then enable overrides
-				// other than builder --> attacker?
-				//
-				// FIXME: SEGV when unarmed CAT_BUILDER units masquerading as
-				// CAT_G_ATTACK'ers want to or are attacked (NULL weapondefs)
-				//
-				if (cfgUnitCat >= 0 && cfgUnitCat < CAT_LAST) {
-					if (cfgUnitCat == CAT_G_ATTACK && defUnitCat == CAT_BUILDER) {
-						msg.str("");
-						msg << "\t\t\t.cfg unit category (CAT_G_ATTACK) overrides utype->category (CAT_BUILDER)";
-						L(ai, msg.str());
-
-						std::vector<int>::iterator vit;
-
-						std::vector<int>& oldDefs = categoryData.GetDefsForUnitCat(defUnitCat);
-						std::vector<int>& newDefs = categoryData.GetDefsForUnitCat(cfgUnitCat);
-
-						for (vit = oldDefs.begin(); vit != oldDefs.end(); vit++) {
-							const int udefID = *vit;
-
-							if (udefID == udef->id) {
-								oldDefs.erase(vit);
-								newDefs.push_back(udef->id);
-								vit--;
-							}
-						}
-
-						utype->category = cfgUnitCat;
-					}
-				}
-			}
-		}
-
-		msg.str("");
-		msg << "read mod configuration file ";
-		msg << cfgFileName;
-		L(ai, msg.str());
-	} else {
-		msg.str("");
-		msg << "\tcreating new mod configuration file ";
-		msg << cfgFileName;
-		L(ai, msg.str());
-
-		// write a new .cfg file with default values
-		f = fopen(cfgFileName.c_str(), "w");
-		fprintf(f, "// unitName costMultiplier techLevel category\n");
-
-		for (int i = 1; i <= numDefs; i++) {
-			UnitType* utype = &unitTypes[i];
-			// assign and write default values for costMultiplier
-			// and techLevel, category is already set in ::Init()
-			utype->costMultiplier =  1.0f;
-			utype->techLevel      = -1;
-
-			fprintf(
-				f,
-				"%s %.2f %d %d\n",
-				utype->def->name.c_str(), utype->costMultiplier,
-				utype->techLevel, utype->category
-			);
-
-			msg.str("");
-			msg << "\t\tname: " << (utype->def->name);
-			msg << ", .cfg category: " << (utype->category);
 			L(ai, msg.str());
 		}
 
-		msg.str("");
-		msg << "wrote mod configuration file ";
-		msg << cfgFileName;
-		L(ai, msg.str());
-	}
+		const LuaTable* rootTbl = ai->luaParser->GetRootTbl();
+		const LuaTable* unitTbl = NULL;
+		const UnitDef*  unitDef = NULL;
 
-	fclose(f);
+		if (rootTbl->GetIntVal("version", cfgVersion) > CFGVERSION) {
+			msg.str("");
+			msg << "\tconfig-file version (" << cfgVersion << ") is newer than current version (" << CFGVERSION << ")";
+			return;
+		}
+
+		UnitType*    unitType   = NULL;
+		UnitCategory defUnitCat = CAT_LAST;
+		UnitCategory cfgUnitCat = CAT_LAST;
+
+		std::list<std::string> keys;
+		rootTbl->GetStrTblKeys(&keys);
+
+		for (std::list<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it) {
+			unitDef = ai->cb->GetUnitDef((*it).c_str());
+
+			if (unitDef == NULL) {
+				msg.str("");
+				msg << "\t\t.cfg entry \"" << (*it) << "\" does not refer to a valid unit-type";
+
+				L(ai, msg.str());
+				continue;
+			}
+
+			unitTbl = rootTbl->GetTblVal(*it);
+			unitType = &unitTypes[unitDef->id];
+
+			unitType->costMultiplier = unitTbl->GetIntVal("costMult", 100) / 100.0f;
+			unitType->techLevel      = unitTbl->GetIntVal("techLevel", -1);
+
+			defUnitCat = unitType->category;
+			cfgUnitCat = UnitCategory(unitTbl->GetIntVal("category", CAT_LAST));
+
+			{
+				msg.str("");
+				msg << "\t\tunitDef->id: " << unitDef->id << ", unitDef->name: " << unitDef->name;
+				msg << ", default cat.: " << defUnitCat << ", .cfg cat.: " << cfgUnitCat;
+
+				L(ai, msg.str());
+			}
+
+			/*
+			 * TODO: look for any possible "side-effects" that might arise
+			 * from overriding categories like this, then enable overrides
+			 * other than builder --> attacker (ie. SEGV when an *unarmed*
+			 * CAT_BUILDER unit masquerading as a CAT_G_ATTACK'er wants to
+			 * or is attacked, due to NULL weapondefs)
+			 */
+			if (defUnitCat != cfgUnitCat) {
+				if (cfgUnitCat < 0 || cfgUnitCat >= CAT_LAST) {
+					// invalid unit-category number
+					continue;
+				}
+
+				if (cfgUnitCat == CAT_G_ATTACK && defUnitCat == CAT_BUILDER) {
+					{
+						msg.str("");
+						msg << "\t\t\t.cfg unit category (CAT_G_ATTACK) overrides unitType->category (CAT_BUILDER)";
+						L(ai, msg.str());
+					}
+
+					std::vector<int>::iterator vit;
+					std::vector<int>& oldDefs = categoryData.GetDefsForUnitCat(defUnitCat);
+					std::vector<int>& newDefs = categoryData.GetDefsForUnitCat(cfgUnitCat);
+
+					for (vit = oldDefs.begin(); vit != oldDefs.end(); vit++) {
+						const int unitDefID = *vit;
+
+						if (unitDefID == unitDef->id) {
+							oldDefs.erase(vit);
+							newDefs.push_back(unitDefID);
+							vit--;
+						}
+					}
+
+					unitType->category = cfgUnitCat;
+				}
+			}
+		}
+	} else {
+		{
+			msg.str("");
+			msg << "\twriting new mod configuration file \"";
+			msg << cfgFileName << "\"";
+
+			L(ai, msg.str());
+		}
+
+		cfgFile.open(cfgFileName.c_str(), std::ios::out);
+		cfgFile << "config = {\n";
+		cfgFile << "\tversion = " << CFGVERSION << ",\n\n";
+
+		for (int i = 1; i <= numDefs; i++) {
+			UnitType* unitType = &unitTypes[i];
+
+			// assign and write default values for costMultiplier
+			// and techLevel, category is already set in ::Init()
+			unitType->costMultiplier =  1.0f;
+			unitType->techLevel      = -1;
+
+			cfgFile << "\t" << unitType->def->name << " = {\n";
+			cfgFile << "\t\tcostMult = " << unitType->costMultiplier << " * 100" << ",\n";
+			cfgFile << "\t\ttechLevel = " << unitType->techLevel << ",\n";
+			cfgFile << "\t\tcategory = " << unitType->category << ",\n";
+			cfgFile << "\t},\n";
+		}
+
+		cfgFile << "}\n";
+		cfgFile.close();
+	}
 }
 
 
@@ -383,7 +402,8 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unitDef, const UnitDef* victim) {
 
 
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
-	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
+	const int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
+
 	std::vector<int> enemiesOfType(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	float score = 0.01f;
@@ -1031,7 +1051,7 @@ std::string CUnitTable::GetModCfgName() const {
 		std::string(CFGFOLDER) +
 		AIUtil::MakeFileSystemCompatible(ai->cb->GetModHumanName()) +
 		"-" + IntToString(ai->cb->GetModHash(), "%x") +
-		".cfg";
+		".lua";
 	std::string absFile = AIUtil::GetAbsFileName(ai->cb, relFile);
 
 	return absFile;
