@@ -318,6 +318,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			unit->moveType = mt;
 		}
 	} else {
+		assert(ud->movedata == NULL);
 		unit->moveType = new CStaticMoveType(unit);
 		unit->upright = true;
 	}
