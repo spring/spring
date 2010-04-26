@@ -218,7 +218,6 @@ CUnit::CUnit():
 	cloakTimeout(128),
 	curCloakTimeout(gs->frameNum),
 	isCloaked(false),
-	oldCloak(false),
 	decloakDistance(0.0f),
 	lastTerrainType(-1),
 	curTerrainType(0),
@@ -1798,17 +1797,9 @@ void CUnit::FinishedBuilding(void)
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
 
-
-	oldCloak = isCloaked;
 	if (unitDef->startCloaked) {
 		wantCloak = true;
-		isCloaked = true;
 	}
-	if (oldCloak != isCloaked) {
-		eventHandler.UnitCloaked(this); // do this after the UnitFinished call-in
-		oldCloak = true;
-	}
-
 
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
 		UnBlock();
@@ -2198,6 +2189,8 @@ void CUnit::StopAttackingAllyTeam(int ally)
 
 void CUnit::SlowUpdateCloak(bool stunCheck)
 {
+	const bool oldCloak = isCloaked;
+
 	if (stunCheck) {
 		if (stunned && isCloaked && scriptCloak <= 3) {
 			isCloaked = false;
@@ -2241,8 +2234,6 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 			eventHandler.UnitDecloaked(this);
 		}
 	}
-
-	oldCloak = isCloaked;
 }
 
 void CUnit::ScriptDecloak(bool updateCloakTimeOut)
@@ -2250,7 +2241,6 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	if (scriptCloak <= 2) {
 		if (isCloaked) {
 			isCloaked = false;
-			oldCloak = false;
 			eventHandler.UnitDecloaked(this);
 		}
 
@@ -2422,7 +2412,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(cloakTimeout),
 	CR_MEMBER(curCloakTimeout),
 	CR_MEMBER(isCloaked),
-	CR_MEMBER(oldCloak),
 	CR_MEMBER(decloakDistance),
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),

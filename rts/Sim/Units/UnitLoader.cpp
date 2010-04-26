@@ -182,6 +182,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->maxSpeed = ud->speed / GAME_SPEED;
 	unit->maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 	unit->decloakDistance = ud->decloakDistance;
+	unit->cloakTimeout = ud->cloakTimeout;
 
 	unit->flankingBonusMode        = ud->flankingBonusMode;
 	unit->flankingBonusDir         = ud->flankingBonusDir;

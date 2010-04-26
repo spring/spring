@@ -403,6 +403,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
 	ud.decloakSpherical = udTable.GetBool("decloakSpherical", true);
 	ud.decloakOnFire    = udTable.GetBool("decloakOnFire",    true);
+	ud.cloakTimeout     = udTable.GetInt("cloakTimeout", 128);
 
 	ud.highTrajectoryType = udTable.GetInt("highTrajectory", 0);
 
