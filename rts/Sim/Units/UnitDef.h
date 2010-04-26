@@ -283,6 +283,7 @@ public:
 	float decloakDistance;							// if enemy unit come within this range decloaking is forced
 	bool decloakSpherical;							// use a spherical test instead of a cylindrical test?
 	bool decloakOnFire;								// should the unit decloak upon firing
+	int cloakTimeout;								// minimum time between decloak and subsequent cloak
 
 	bool canKamikaze;								//self destruct if enemy come to close
 	float kamikazeDist;
