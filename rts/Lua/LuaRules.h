@@ -11,6 +11,7 @@ using std::vector;
 using std::map;
 
 #include "LuaHandleSynced.h"
+#include "LuaRulesParams.h"
 
 
 #define MAX_LUA_COB_ARGS 10
@@ -35,8 +36,8 @@ class CLuaRules : public CLuaHandleSynced
 		static void SetConfigString(const string& cfg);
 		static const string& GetConfigString() { return configString; }
 
-		static const vector<float>&    GetGameParams();
-		static const map<string, int>& GetGameParamsMap();
+		static const LuaRulesParams::Params&  GetGameParams();
+		static const LuaRulesParams::HashMap& GetGameParamsMap();
 
 		const map<string, string>& GetInfoMap() const { return infoMap; }
 
@@ -88,11 +89,11 @@ class CLuaRules : public CLuaHandleSynced
 		int UnpackCobArg(lua_State* L);
 
 		static void SetRulesParam(lua_State* L, const char* caller, int offset,
-		                          vector<float>& params,
-		                          map<string, int>& paramsMap);
+		                          LuaRulesParams::Params& params,
+		                          LuaRulesParams::HashMap& paramsMap);
 		static void CreateRulesParams(lua_State* L, const char* caller, int offset,
-		                              vector<float>& params,
-		                              map<string, int>& paramsMap);
+		                              LuaRulesParams::Params& params,
+		                              LuaRulesParams::HashMap& paramsMap);
 
 	protected: // call-outs
 		static int GetConfigString(lua_State* L);
@@ -133,8 +134,10 @@ class CLuaRules : public CLuaHandleSynced
 
 	private:
 		static string configString;
-		static vector<float>    gameParams;
-		static map<string, int> gameParamsMap;
+
+		static LuaRulesParams::Params  gameParams;
+		static LuaRulesParams::HashMap gameParamsMap;
+
 		static const int* currentCobArgs;
 };
 

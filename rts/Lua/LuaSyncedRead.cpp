@@ -17,6 +17,7 @@
 //FIXME #include "LuaMetalMap.h"
 #include "LuaPathFinder.h"
 #include "LuaRules.h"
+#include "LuaRulesParams.h"
 #include "LuaUtils.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Game.h"
@@ -564,15 +565,21 @@ static inline void CheckNoArgs(lua_State* L, const char* funcName)
 /******************************************************************************/
 
 static int PushRulesParams(lua_State* L, const char* caller,
-                          const vector<float>& params,
-                          const map<string, int>& paramsMap)
+                          const LuaRulesParams::Params& params,
+                          const LuaRulesParams::HashMap& paramsMap,
+                          const int& losStatus)
 {
 	lua_newtable(L);
 	const int pCount = (int)params.size();
 	for (int i = 0; i < pCount; i++) {
+		const LuaRulesParams::Param& param = params[i];
+		if (!(param.los & losStatus))
+			continue;
+
 		lua_pushnumber(L, i + 1);
 		lua_newtable(L);
-		map<string, int>::const_iterator it;
+
+		LuaRulesParams::HashMap::const_iterator it;
 		string name = "";
 		for (it = paramsMap.begin(); it != paramsMap.end(); ++it) {
 			if (it->second == i) {
@@ -580,18 +587,20 @@ static int PushRulesParams(lua_State* L, const char* caller,
 				break;
 			}
 		}
-		LuaPushNamedNumber(L, name, params[i]);
+
+		LuaPushNamedNumber(L, name, param.value);
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", pCount);
+	hs_n.PushNumber(L, pCount);
 
 	return 1;
 }
 
 
 static int GetRulesParam(lua_State* L, const char* caller, int index,
-                         const vector<float>& params,
-                         const map<string, int>& paramsMap)
+                          const LuaRulesParams::Params& params,
+                          const LuaRulesParams::HashMap& paramsMap,
+                          const int& losStatus)
 {
 	int pIndex = -1;
 
@@ -600,7 +609,7 @@ static int GetRulesParam(lua_State* L, const char* caller, int index,
 	}
 	else if (lua_israwstring(L, index)) {
 		const string pName = lua_tostring(L, index);
-		map<string, int>::const_iterator it = paramsMap.find(pName);
+		LuaRulesParams::HashMap::const_iterator it = paramsMap.find(pName);
 		if (it != paramsMap.end()) {
 			pIndex = it->second;
 		}
@@ -612,8 +621,15 @@ static int GetRulesParam(lua_State* L, const char* caller, int index,
 	if ((pIndex < 0) || (pIndex >= (int)params.size())) {
 		return 0;
 	}
-	lua_pushnumber(L, params[pIndex]);
-	return 1;
+
+	const LuaRulesParams::Param& param = params[pIndex];
+
+	if (param.los & losStatus) {
+		lua_pushnumber(L, param.value);
+		return 1;
+	}
+
+	return 0;
 }
 
 
@@ -773,20 +789,27 @@ int LuaSyncedRead::GetWind(lua_State* L)
 
 int LuaSyncedRead::GetGameRulesParams(lua_State* L)
 {
-	const vector<float>& params       = CLuaRules::GetGameParams();
-	const map<string, int>& paramsMap = CLuaRules::GetGameParamsMap();
+	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
+	const LuaRulesParams::Params&  params    = lr->GetGameParams();
+	const LuaRulesParams::HashMap& paramsMap = lr->GetGameParamsMap();
 
-	return PushRulesParams(L, __FUNCTION__, params, paramsMap);
+	//! always readable for all
+	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+
+	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
 }
 
 
 int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 {
 	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const vector<float>& params       = lr->GetGameParams();
-	const map<string, int>& paramsMap = lr->GetGameParamsMap();
+	const LuaRulesParams::Params&  params    = lr->GetGameParams();
+	const LuaRulesParams::HashMap& paramsMap = lr->GetGameParamsMap();
 
-	return GetRulesParam(L, __FUNCTION__, 1, params, paramsMap);
+	//! always readable for all
+	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+
+	return GetRulesParam(L, __FUNCTION__, 1, params, paramsMap, losMask);
 }
 
 
@@ -1171,16 +1194,22 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(teamID) && !game->gameOver) {
-		return 0;
+	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
+
+	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
+
+	if (IsAlliedTeam(team->teamNum) || game->gameOver) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+	}
+	else if (teamHandler->AlliedTeams(team->teamNum, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
-	const vector<float>& params       = team->modParams;
-	const map<string, int>& paramsMap = team->modParamsMap;
+	const LuaRulesParams::Params&  params    = team->modParams;
+	const LuaRulesParams::HashMap& paramsMap = team->modParamsMap;
 
-	return PushRulesParams(L, __FUNCTION__, params, paramsMap);
+	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
 }
 
 
@@ -1190,16 +1219,22 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(teamID) && !game->gameOver) {
-		return 0;
+	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
+
+	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
+
+	if (IsAlliedTeam(team->teamNum) || game->gameOver) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+	}
+	else if (teamHandler->AlliedTeams(team->teamNum, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
-	const vector<float>& params       = team->modParams;
-	const map<string, int>& paramsMap = team->modParamsMap;
+	const LuaRulesParams::Params&  params    = team->modParams;
+	const LuaRulesParams::HashMap& paramsMap = team->modParamsMap;
 
-	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap);
+	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap, losMask);
 }
 
 
@@ -3837,16 +3872,29 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int teamID = unit->team;
 
-	if (!IsAlliedTeam(teamID) && !game->gameOver) {
-		return 0;
+	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
+	const int& losStatus = unit->losStatus[readAllyTeam];
+
+	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+
+	if (IsAllyUnit(unit) || game->gameOver) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+	}
+	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+	}
+	else if (losStatus & LOS_INLOS) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+	}
+	else if (losStatus & LOS_INRADAR) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 
-	const vector<float>& params       = unit->modParams;
-	const map<string, int>& paramsMap = unit->modParamsMap;
+	const LuaRulesParams::Params&  params    = unit->modParams;
+	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
 
-	return PushRulesParams(L, __FUNCTION__, params, paramsMap);
+	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
 }
 
 
@@ -3856,16 +3904,29 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int teamID = unit->team;
 
-	if (!IsAlliedTeam(teamID) && !game->gameOver) {
-		return 0;
+	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
+	const int& losStatus = unit->losStatus[readAllyTeam];
+
+	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+
+	if (IsAllyUnit(unit) || game->gameOver) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+	}
+	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+	}
+	else if (losStatus & LOS_INLOS) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+	}
+	else if (losStatus & LOS_INRADAR) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 
-	const vector<float>& params       = unit->modParams;
-	const map<string, int>& paramsMap = unit->modParamsMap;
+	const LuaRulesParams::Params&  params    = unit->modParams;
+	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
 
-	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap);
+	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap, losMask);
 }
 
 

@@ -5,9 +5,12 @@
 
 #include "Object.h"
 #include <vector>
-#include <set>
+#include <string>
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitSet.h"
+
+using std::vector;
+
 class CFeature;
 
 class CSelectedUnits : public CObject

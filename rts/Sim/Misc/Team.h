@@ -12,6 +12,7 @@
 #include "TeamStatistics.h"
 #include "Sim/Units/UnitSet.h"
 #include "ExternalAI/SkirmishAIKey.h"
+#include "Lua/LuaRulesParams.h"
 
 class CTeam : public TeamBase
 {
@@ -105,9 +106,8 @@ public:
 	void LeftLineage(CUnit* unit);
 
 	/// mod controlled parameters
-	std::vector<float>         modParams;
-	/// name map for mod parameters
-	std::map<std::string, int> modParamsMap;
+	LuaRulesParams::Params  modParams;
+	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
 };
 
 #endif /* TEAM_H */

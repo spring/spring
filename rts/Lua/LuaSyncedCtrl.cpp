@@ -614,7 +614,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 		return 0;
 	}
 
-	const string type  = luaL_checkstring(L, 3);
+	const string type = luaL_checkstring(L, 3);
 	float amount = luaL_checkfloat(L, 4);
 
 	if (type == "metal") {

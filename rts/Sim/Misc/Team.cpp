@@ -26,7 +26,6 @@
 #include "NetProtocol.h"
 
 CR_BIND(CTeam,);
-
 CR_REG_METADATA(CTeam, (
 // from CTeamBase
 				CR_MEMBER(leader),
