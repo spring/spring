@@ -1,6 +1,6 @@
 uniform vec3 cameraPos;      // WS
 varying vec3 cameraDir;      // WS
-varying vec3 vertexNormal;   // OS
+varying vec3 vertexNormal;   // ES
 
 varying float fogFactor;
 
@@ -31,10 +31,10 @@ void main() {
 		vertexShadowPos.st += shadowParams.xy;
 
 	cameraDir = vertexPos.xyz - cameraPos;
-	vertexNormal = gl_Normal;
 
 	// M and V are both (always) orthonormal
 	normalMatrix = mat3(cameraMat * gl_ModelViewMatrix);
+	vertexNormal = normalMatrix * gl_Normal;
 
 	// diffuse- and shading-tex coors, shadow-tex coors
 	gl_TexCoord[0].st = gl_MultiTexCoord0.st;

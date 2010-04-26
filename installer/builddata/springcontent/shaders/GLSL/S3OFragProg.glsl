@@ -4,11 +4,10 @@ uniform sampler2DShadow shadowTex;
 uniform samplerCube     reflectTex;
 uniform samplerCube     specularTex;
 
-varying mat3 normalMatrix;
 uniform mat4 cameraMat;
 uniform vec4 lightDir;                // WS (mapInfo->light.sunDir)
 varying vec3 cameraDir;               // WS
-varying vec3 vertexNormal;            // OS
+varying vec3 vertexNormal;            // ES
 
 varying float fogFactor;
 
@@ -23,7 +22,7 @@ void main() {
 		shadowInt.x *= unitShadowDensity;
 		shadowInt.x = 1.0 - shadowInt.x;
 
-	vec3 vertexNormES = normalize(normalMatrix * normalize(vertexNormal));
+	vec3 vertexNormES = normalize(vertexNormal);
 	vec3 cameraDirES = normalize(cameraMat * vec4(normalize(cameraDir), 0.0)).xyz;
 	vec3 reflectDirES = normalize(reflect(cameraDirES, vertexNormES));
 
