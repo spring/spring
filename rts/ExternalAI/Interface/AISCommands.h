@@ -528,7 +528,7 @@ struct SSetColorFigureDrawerCommand {
  */
 struct SDeleteFigureDrawerCommand {
 	int figureGroupId;
-}; // COMMAND_DRAWER_FIGURE_DELETE Map_Drawer_Figure_delete REF:figureGroupId->FigureGroup
+}; // COMMAND_DRAWER_FIGURE_DELETE Map_Drawer_Figure_remove REF:figureGroupId->FigureGroup
 
 /**
  * This function allows you to draw units onto the map.
@@ -1513,7 +1513,7 @@ struct SUpdateOverlayTextureDrawerDebugCommand {
 
 struct SDeleteOverlayTextureDrawerDebugCommand {
 	int overlayTextureId;
-}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE Debug_OverlayTexture_delete
+}; // COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE Debug_OverlayTexture_remove
 
 struct SSetPositionOverlayTextureDrawerDebugCommand {
 	int overlayTextureId;
