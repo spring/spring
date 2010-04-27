@@ -209,6 +209,8 @@ private:
 	typedef std::set<unsigned char> PlayersToForwardMsgvec;
 	typedef std::map<unsigned char, PlayersToForwardMsgvec> MsgToForwardMap;
 	MsgToForwardMap relayingMessagesMap;
+
+	bool canReconnect;
 };
 
 extern CGameServer* gameServer;

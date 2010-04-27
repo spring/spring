@@ -22,7 +22,7 @@
 #define _AIINITEVENT_H
 
 #include "AIEvent.h"
-#include "ExternalAI/IGlobalAICallback.h"
+#include "../IGlobalAICallback.h"
 #include "../AIGlobalAICallback.h"
 
 class CAIInitEvent : public CAIEvent {

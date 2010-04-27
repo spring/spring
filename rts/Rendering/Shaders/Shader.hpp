@@ -81,6 +81,9 @@ namespace Shader {
 		virtual void SetUniformMatrix2fv(int, bool, float*) {}
 		virtual void SetUniformMatrix3fv(int, bool, float*) {}
 		virtual void SetUniformMatrix4fv(int, bool, float*) {}
+		virtual void SetUniformMatrix2dv(int, bool, double*) {}
+		virtual void SetUniformMatrix3dv(int, bool, double*) {}
+		virtual void SetUniformMatrix4dv(int, bool, double*) {}
 
 		typedef std::vector<const IShaderObject*> SOVec;
 		typedef std::vector<const IShaderObject*>::const_iterator SOVecIt;
@@ -162,6 +165,9 @@ namespace Shader {
 		void SetUniformMatrix2fv(int, bool, float*);
 		void SetUniformMatrix3fv(int, bool, float*);
 		void SetUniformMatrix4fv(int, bool, float*);
+		void SetUniformMatrix2dv(int, bool, double*);
+		void SetUniformMatrix3dv(int, bool, double*);
+		void SetUniformMatrix4dv(int, bool, double*);
 
 		void AttachShaderObject(const IShaderObject*);
 

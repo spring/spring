@@ -334,7 +334,7 @@ extern CEventHandler eventHandler;
 
 inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
 {
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(unit);
+//	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(unit);
 
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitCreated.size();
@@ -424,7 +424,7 @@ inline void CEventHandler::UnitFromFactory(const CUnit* unit,
 inline void CEventHandler::UnitDestroyed(const CUnit* unit,
                                              const CUnit* attacker)
 {
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
+//	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 
 	const int unitAllyTeam = unit->allyteam;
 	const int count = listUnitDestroyed.size();

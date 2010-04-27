@@ -79,6 +79,7 @@ bool globalQuit = false;
 boost::uint8_t *keys = 0;
 boost::uint16_t currentUnicode = 0;
 bool fullscreen = true;
+ClientSetup* startsetup = NULL;
 
 /**
  * @brief xres default
@@ -744,7 +745,7 @@ void SpringApp::Startup()
 
 		demoPlayerName += " (spec)";
 
-		ClientSetup* startsetup = new ClientSetup();
+		startsetup = new ClientSetup();
 			startsetup->isHost       = true; // local demo play
 			startsetup->myPlayerName = demoPlayerName;
 
@@ -758,7 +759,7 @@ void SpringApp::Startup()
 	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
 	{
 		std::string savefile = inputFile;
-		ClientSetup* startsetup = new ClientSetup();
+		startsetup = new ClientSetup();
 		startsetup->isHost = true;
 		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
 #ifdef SYNCDEBUG
@@ -778,7 +779,7 @@ void SpringApp::Startup()
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + startscript);
-		ClientSetup* startsetup = new ClientSetup();
+		startsetup = new ClientSetup();
 		startsetup->Init(buf);
 
 		// commandline parameters overwrite setup
@@ -1129,6 +1130,8 @@ void SpringApp::Shutdown()
 	SDL_Quit();
 	delete gs;
 	delete gu;
+	if(startsetup)
+		delete startsetup;
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif

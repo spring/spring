@@ -242,7 +242,7 @@ namespace
 	);
 
 	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParamsMap.find(param) != unit->modParamsMap.end() &&
-	                  unit->modParams[unit->modParamsMap.find(param)->second] == wantedValue,
+	                  unit->modParams[unit->modParamsMap.find(param)->second].value == wantedValue,
 		std::string param;
 		float wantedValue;
 		void SetParam(int index, const std::string& value) {

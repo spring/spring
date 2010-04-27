@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "ExternalAI/AICallback.h"
+
 #include "StdAfx.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -36,6 +38,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -43,8 +46,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "AICheats.h"
-#include "ExternalAI/GlobalAICallback.h"
+#include "ExternalAI/AICheats.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/EngineOutHandler.h"
@@ -62,10 +64,10 @@
 // ...or disable the check altogether for release.
 //#define CHECK_UNITID(id) true
 
-CAICallback::CAICallback(int Team, CGroupHandler* ghandler)
-	: team(Team)
+CAICallback::CAICallback(int teamId)
+	: team(teamId)
 	, noMessages(false)
-	, gh(ghandler)
+	, gh(grouphandlers[teamId])
 {}
 
 CAICallback::~CAICallback(void)

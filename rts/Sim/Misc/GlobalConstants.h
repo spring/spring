@@ -25,6 +25,20 @@ const int  SQUARE_SIZE = 8;
 const int GAME_SPEED = 30;
 
 /**
+ * @brief unit SlowUpdate rate
+ *
+ * Defines the interval of CUnit::SlowUpdate calls
+ */
+const int UNIT_SLOWUPDATE_RATE = 16;
+
+/**
+ * @brief team SlowUpdate rate
+ *
+ * Defines the interval of CTeam::SlowUpdate calls
+ */
+const int TEAM_SLOWUPDATE_RATE = 32;
+
+/**
  * @brief max view range
  *
  * Defines the maximum view range as 8000

@@ -48,6 +48,7 @@ std::string StringTrim(const std::string& str)
 	return copy;
 }
 
+#if (!defined DEDICATED || defined _MSC_VER) && !defined UNITSYNC && !defined BUILDING_AI
 namespace proc {
 	#if defined(__GNUC__)
 	// function inlining breaks this
@@ -154,3 +155,4 @@ namespace proc {
 		return bits;
 	}
 }
+#endif

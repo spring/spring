@@ -17,7 +17,7 @@
 
 #include "AIAI.h"
 #include "Event/AIEvents.h"
-#include "ExternalAI/IGlobalAI.h"
+#include "IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
 CAIAI::CAIAI(IGlobalAI* gAI):

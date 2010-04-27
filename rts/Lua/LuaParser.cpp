@@ -90,7 +90,7 @@ LuaParser::LuaParser(const string& _textChunk,
 LuaParser::~LuaParser()
 {
 	if (L != NULL) {
-		lua_close(L);
+		lua_close(L); L = NULL;
 	}
 	set<LuaTable*>::iterator it;
 	for (it = tables.begin(); it != tables.end(); ++it) {

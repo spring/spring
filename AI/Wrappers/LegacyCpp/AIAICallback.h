@@ -18,7 +18,7 @@
 #ifndef _AIAICALLBACK_H
 #define _AIAICALLBACK_H
 
-#include "ExternalAI/IAICallback.h"
+#include "IAICallback.h"
 
 struct SSkirmishAICallback;
 

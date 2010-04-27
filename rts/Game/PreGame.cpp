@@ -197,7 +197,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 void CPreGame::UpdateClientNet()
 {
-	if (!net->Active())
+	if (net->CheckTimeout())
 	{
 		logOutput.Print("Server not reachable");
 		globalQuit = true;

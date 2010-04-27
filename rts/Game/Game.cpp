@@ -27,10 +27,12 @@
 #include "float.h"
 #include "Camera.h"
 #include "CameraHandler.h"
+#include "ClientSetup.h"
 #include "ConsoleHistory.h"
 #include "FPUCheck.h"
 #include "GameHelper.h"
 #include "GameServer.h"
+#include "GameVersion.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
 #include "LoadSaveHandler.h"
@@ -2816,12 +2818,17 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
-	if(gs->frameNum == 0)
+	if(gs->frameNum == 0 || gs->paused)
 		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
 	ClientReadNet();
 
-	if (!net->Active() && !gameOver) {
+	if(net->NeedsReconnect() && !gameOver) {
+		extern ClientSetup* startsetup;
+		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
+	}
+
+	if (net->CheckTimeout() && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
 		GameEnd();
 	}
@@ -4072,22 +4079,34 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in share msg",player);
 					break;
 				}
-				int team1 = playerHandler->Player(player)->team;
-				int team2 = inbuf[2];
+				int teamID1 = playerHandler->Player(player)->team;
+				int teamID2 = inbuf[2];
 				bool shareUnits = !!inbuf[3];
-				float metalShare = std::min(*(float*)&inbuf[4], (float)teamHandler->Team(team1)->metal);
-				float energyShare = std::min(*(float*)&inbuf[8], (float)teamHandler->Team(team1)->energy);
+				CTeam* team1 = teamHandler->Team(teamID1);
+				CTeam* team2 = teamHandler->Team(teamID2);
+				float metalShare  = std::min(*(float*)&inbuf[4], (float)team1->metal);
+				float energyShare = std::min(*(float*)&inbuf[8], (float)team1->energy);
 
 				if (metalShare != 0.0f) {
-					if (!luaRules || luaRules->AllowResourceTransfer(team1, team2, "m", metalShare)) {
-						teamHandler->Team(team1)->metal -= metalShare;
-						teamHandler->Team(team2)->metal += metalShare;
+					metalShare = std::min(metalShare, team1->metal);
+					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", metalShare)) {
+						team1->metal                       -= metalShare;
+						team1->metalSent                   += metalShare;
+						team1->currentStats->metalSent     += metalShare;
+						team2->metal                       += metalShare;
+						team2->metalReceived               += metalShare;
+						team2->currentStats->metalReceived += metalShare;
 					}
 				}
 				if (energyShare != 0.0f) {
-					if (!luaRules || luaRules->AllowResourceTransfer(team1, team2, "e", energyShare)) {
-						teamHandler->Team(team1)->energy -= energyShare;
-						teamHandler->Team(team2)->energy += energyShare;
+					energyShare = std::min(energyShare, team1->energy);
+					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", energyShare)) {
+						team1->energy                       -= energyShare;
+						team1->energySent                   += energyShare;
+						team1->currentStats->energySent     += energyShare;
+						team2->energy                       += energyShare;
+						team2->energyReceived               += energyShare;
+						team2->currentStats->energyReceived += energyShare;
 					}
 				}
 
@@ -4096,9 +4115,9 @@ void CGame::ClientReadNet()
 					vector<int>::const_iterator ui;
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui){
 						CUnit* unit = uh->units[*ui];
-						if (unit && unit->team == team1 && !unit->beingBuilt) {
+						if (unit && unit->team == teamID1 && !unit->beingBuilt) {
 							if (!unit->directControl)
-								unit->ChangeTeam(team2, CUnit::ChangeGiven);
+								unit->ChangeTeam(teamID2, CUnit::ChangeGiven);
 						}
 					}
 					netSelUnits.clear();
@@ -4645,9 +4664,6 @@ void CGame::GameEnd()
 			}
 			for (int i = 0; i < numTeams; ++i) {
 				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
-				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
-				net->Send(buf);
 			}
 		}
 	}

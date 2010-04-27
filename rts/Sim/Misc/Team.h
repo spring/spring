@@ -12,6 +12,7 @@
 #include "TeamStatistics.h"
 #include "Sim/Units/UnitSet.h"
 #include "ExternalAI/SkirmishAIKey.h"
+#include "Lua/LuaRulesParams.h"
 
 class CTeam : public TeamBase
 {
@@ -91,22 +92,22 @@ public:
 	float energySent;
 	float energyReceived;
 
-	typedef TeamStatistics Statistics;
-	Statistics currentStats;
 	/// in intervalls of this many seconds, statistics are updated
-	static const int statsPeriod = 15;
+	static const int statsPeriod = 16;
+	int nextHistoryEntry;
+	TeamStatistics* currentStats;
+	std::list<TeamStatistics> statHistory;
+	typedef TeamStatistics Statistics; //! for easier access via CTeam::Statistics
 
-	int lastStatSave;
 	/// number of units with commander tag in team, if it reaches zero with cmd ends the team dies
 	int numCommanders;
-	std::list<Statistics> statHistory;
+
 	void CommanderDied(CUnit* commander);
 	void LeftLineage(CUnit* unit);
 
 	/// mod controlled parameters
-	std::vector<float>         modParams;
-	/// name map for mod parameters
-	std::map<std::string, int> modParamsMap;
+	LuaRulesParams::Params  modParams;
+	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
 };
 
 #endif /* TEAM_H */

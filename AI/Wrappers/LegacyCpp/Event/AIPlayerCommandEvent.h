@@ -22,6 +22,7 @@
 
 #include "AIEvent.h"
 #include "ExternalAI/Interface/AISCommands.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 class CAIPlayerCommandEvent : public CAIEvent {
 public:
