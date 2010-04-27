@@ -115,7 +115,7 @@ void CCameraHandler::UpdateCam()
 		camera->SetFov(camera->GetFov() + (deltaFOV * ratio));
 		camera->pos     += deltaPos * ratio;
 		camera->forward += deltaDir * ratio;
-		camera->forward.ANormalize();
+		camera->forward.Normalize();
 	}
 }
 

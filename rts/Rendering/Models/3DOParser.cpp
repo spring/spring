@@ -152,7 +152,7 @@ S3DModel* C3DOParser::Load(const string& name)
 		(((model->maxs.x - model->mins.x) * 0.5f) * ((model->maxs.x - model->mins.x) * 0.5f)) +
 		(((model->maxs.y - model->mins.y) * 0.5f) * ((model->maxs.y - model->mins.y) * 0.5f)) +
 		(((model->maxs.z - model->mins.z) * 0.5f) * ((model->maxs.z - model->mins.z) * 0.5f));
-	model->radius = streflop::sqrtf(model->radius);
+	model->radius = math::sqrt(model->radius);
 	model->height = model->maxs.y - model->mins.y;
 	// model->height = model->radius * 2.0f;
 	model->relMidPos = (model->maxs - model->mins) * 0.5f;
@@ -372,7 +372,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 		((cvScales.y * 0.5f) * (cvScales.y * 0.5f)) +
 		((cvScales.z * 0.5f) * (cvScales.z * 0.5f));
 
-	piece->radius = streflop::sqrtf(radiusSq);
+	piece->radius = math::sqrt(radiusSq);
 	piece->relMidPos = cvOffset * 0.5f;
 
 	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);

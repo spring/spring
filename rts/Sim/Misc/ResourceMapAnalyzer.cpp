@@ -156,7 +156,7 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 	for (int a = 0; a < DoubleRadius + 1; a++) {
 		float z = a - XtractorRadius;
 		float floatsqrradius = SquareRadius;
-		xend[a] = int(streflop::sqrtf(floatsqrradius - z * z));
+		xend[a] = int(math::sqrt(floatsqrradius - z * z));
 	}
 
 	// load up the resource values in each pixel

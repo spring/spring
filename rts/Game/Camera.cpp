@@ -300,7 +300,7 @@ void CCamera::UpdateForward()
 	forward.z = cos(rot.y) * cos(rot.x);
 	forward.x = sin(rot.y) * cos(rot.x);
 	forward.y = sin(rot.x);
-	forward.ANormalize();
+	forward.Normalize();
 }
 
 
@@ -309,7 +309,7 @@ float3 CCamera::CalcPixelDir(int x, int y)
 	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY * tanHalfFov * 2;
 	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY * tanHalfFov * 2;
 	float3 dir = forward - up * dy + right * dx;
-	dir.ANormalize();
+	dir.Normalize();
 	return dir;
 }
 
