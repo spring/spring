@@ -3,22 +3,36 @@
 #ifndef AICALLBACK_H
 #define AICALLBACK_H
 
-#include "IAICallback.h"
+#include "ExternalAI/AILegacySupport.h"
+#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+#include "float3.h"
 
+#include <string>
+#include <vector>
+#include <map>
+
+struct Command;
+struct UnitDef;
+struct FeatureDef;
+struct WeaponDef;
+struct CommandDescription;
+class CCommandQueue;
 class CGroupHandler;
 class CGroup;
 
 /** Generalized legacy callback interface */
-class CAICallback: public IAICallback
+class CAICallback
 {
 	int team;
+public:
 	bool noMessages;
+private:
 	CGroupHandler* gh;
 
 	void verify();
 
 public:
-	CAICallback(int team, CGroupHandler* gh);
+	CAICallback(int teamId);
 	~CAICallback();
 
 	void SendStartPos(bool ready, float3 pos);
@@ -92,13 +106,13 @@ public:
 
 	float GetPathLength(float3 start, float3 end, int pathType);
 
-	int GetEnemyUnits(int* unitIds, int unitIds_max);
-	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
-	int GetFriendlyUnits(int* unitIds, int unitIds_max);
-	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
-	int GetNeutralUnits(int* unitIds, int unitIds_max);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
+	int GetFriendlyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
+	int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
 
 
 	int GetMapWidth();
@@ -200,7 +214,7 @@ public:
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);
 
-	int GetSelectedUnits(int* unitIds, int unitIds_max);
+	int GetSelectedUnits(int* unitIds, int unitIds_max = MAX_UNITS);
 	float3 GetMousePos();
 	int GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies);
 	int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies);

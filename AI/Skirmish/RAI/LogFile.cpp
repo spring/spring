@@ -1,7 +1,7 @@
 #include "LogFile.h"
 
 #include "RAI.h"
-#include "ExternalAI/IAICallback.h"
+#include "LegacyCpp/IAICallback.h"
 
 #include <string>
 //#include <fstream>

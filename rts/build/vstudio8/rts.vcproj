@@ -723,7 +723,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\aikey.h"
+				RelativePath="..\..\ExternalAI\AILegacySupport.cpp"
 				>
 			</File>
 			<File
@@ -747,43 +747,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAICallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\GlobalAICallback.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IAICallback.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IAICheats.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\ExternalAI\IAILibraryManager.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\ExternalAI\IAILibraryManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IGlobalAI.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IGlobalAICallback.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IGroupAI.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IGroupAiCallback.h"
 				>
 			</File>
 			<File

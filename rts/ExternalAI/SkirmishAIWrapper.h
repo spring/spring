@@ -4,7 +4,6 @@
 #define _SKIRMISHAIWRAPPER_H
 
 #include "Object.h"
-#include "GlobalAICallback.h"
 #include "SkirmishAIKey.h"
 #include "Platform/SharedLib.h"
 
@@ -12,6 +11,7 @@
 #include <string>
 
 class CAICallback;
+class CAICheats;
 struct SSkirmishAICallback;
 class CSkirmishAI;
 struct Command;
@@ -86,7 +86,8 @@ private:
 
 	CSkirmishAI* ai;
 	bool initialized, released;
-	CGlobalAICallback* callback;
+	CAICallback* callback;
+	CAICheats* cheats;
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
 	const struct InfoItem* info;

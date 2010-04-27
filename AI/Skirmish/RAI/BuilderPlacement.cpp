@@ -3,6 +3,7 @@
 //#include "ExternalAI/IAICallback.h"
 #include <set>
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 #include <time.h>
 
 ResourceSiteExtBO::ResourceSiteExtBO(sRAIUnitDef* UDR )

@@ -1,5 +1,6 @@
 #include "CombatManager.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 cCombatManager::cCombatManager(IAICallback* callback, cRAI* Global)
 {

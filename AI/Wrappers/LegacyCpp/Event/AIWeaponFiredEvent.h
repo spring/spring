@@ -21,7 +21,7 @@
 #define	_AIWEAPONFIREDEVENT_H
 
 #include "AIEvent.h"
-#include "ExternalAI/IAICallback.h"
+#include "../IAICallback.h"
 
 class CAIWeaponFiredEvent : public CAIEvent {
 public:
