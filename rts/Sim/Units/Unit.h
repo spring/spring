@@ -7,10 +7,13 @@
 #include <vector>
 #include <string>
 
+#include "Lua/LuaRulesParams.h"
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Matrix44f.h"
 #include "Vec2.h"
+
+using std::string;
 
 class CCommandAI;
 class CGroup;
@@ -169,9 +172,8 @@ public:
 	 * (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
-	std::vector<float>         modParams;
-	/// name map for mod parameters
-	std::map<std::string, int> modParamsMap;
+	LuaRulesParams::Params  modParams;
+	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
 
 	int team;
 	int allyteam;
@@ -465,7 +467,6 @@ public:
 	int curCloakTimeout;
 	///true if the unit is currently cloaked (has enough energy etc)
 	bool isCloaked;
-	bool oldCloak;
 	float decloakDistance;
 
 	int lastTerrainType;

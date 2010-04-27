@@ -22,6 +22,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "CommandAI/Command.h"
+#include "System/EventBatchHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LoadSaveInterface.h"
 #include "System/LogOutput.h"
@@ -156,6 +157,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	toBeRemoved.push_back(unit);
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 }
 
 
@@ -251,11 +253,11 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit slow update");
-		if (!(gs->frameNum & 15)) {
+		if (!(gs->frameNum & (UNIT_SLOWUPDATE_RATE-1))) {
 			slowUpdateIterator = activeUnits.begin();
 		}
 
-		int numToUpdate = activeUnits.size() / 16 + 1;
+		int numToUpdate = activeUnits.size() / UNIT_SLOWUPDATE_RATE + 1;
 		for (; slowUpdateIterator != activeUnits.end() && numToUpdate != 0; ++ slowUpdateIterator) {
 			(*slowUpdateIterator)->SlowUpdate();
 			numToUpdate--;

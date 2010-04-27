@@ -188,7 +188,7 @@ bool CAttackHandler::PlaceIdleUnit(int unit) {
 	if (ai->cb->GetUnitDef(unit) != NULL) {
 		float3 moo = FindUnsafeArea(ai->cb->GetUnitPos(unit));
 
-		if (moo != ZEROVECTOR && moo != ERRORVECTOR) {
+		if (moo != ZeroVector && moo != ZeroVector) {
             ai->MyUnits[unit]->Move(moo);
 		}
 	}
@@ -778,7 +778,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 				if (ud) {
 					bool canFly = ud->canfly;
 					bool isCloaked = ud->canCloak && ud->startCloaked;
-					bool goodPos = !(ai->ccb->GetUnitPos(ai->unitIDs[i]) == ZEROVECTOR);
+					bool goodPos = !(ai->ccb->GetUnitPos(ai->unitIDs[i]) == ZeroVector);
 
 					if (!canFly && !isCloaked && goodPos) {
 						allEligibleEnemies.push_back(ai->unitIDs[i]);

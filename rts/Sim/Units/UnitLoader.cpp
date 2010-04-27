@@ -47,6 +47,7 @@
 #include "Sim/Weapons/StarburstLauncher.h"
 #include "Sim/Weapons/TorpedoLauncher.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "System/EventBatchHandler.h"
 #include "Sound/AudioChannel.h"
 #include "myMath.h"
 #include "LogOutput.h"
@@ -181,6 +182,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->maxSpeed = ud->speed / GAME_SPEED;
 	unit->maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 	unit->decloakDistance = ud->decloakDistance;
+	unit->cloakTimeout = ud->cloakTimeout;
 
 	unit->flankingBonusMode        = ud->flankingBonusMode;
 	unit->flankingBonusDir         = ud->flankingBonusDir;
@@ -317,6 +319,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			unit->moveType = mt;
 		}
 	} else {
+		assert(ud->movedata == NULL);
 		unit->moveType = new CStaticMoveType(unit);
 		unit->upright = true;
 	}
@@ -376,6 +379,9 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	if (!build) {
 		unit->FinishedBuilding();
 	}
+
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(unit);
+
 	return unit;
 }
 

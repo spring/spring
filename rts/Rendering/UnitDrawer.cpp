@@ -244,13 +244,14 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("specularTex");       // idx  4 (cube)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("lightDir");          // idx  5
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraPos");         // idx  6
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMatInv");      // idx  7
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitTeamColor");     // idx  8
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitAmbientColor");  // idx  9
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitDiffuseColor");  // idx 10
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitShadowDensity"); // idx 11
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMat");         // idx 12
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 13
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMat");         // idx  7
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMatInv");      // idx  8
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitTeamColor");     // idx  9
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitAmbientColor");  // idx 10
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitDiffuseColor");  // idx 11
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitShadowDensity"); // idx 12
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMat");         // idx 13
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 14
 
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -259,9 +260,9 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(9, &unitAmbientColor[0]);
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitSunColor[0]);
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(11, unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, unitShadowDensity);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
 		}
 
@@ -1216,9 +1217,10 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		if (gu->haveGLSL && shadowHandler->drawShadows) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(7, false, (float*) camera->GetViewMatInv());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(13, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(7, false, const_cast<double*>(camera->GetViewMat()));
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, const_cast<double*>(camera->GetViewMatInv()));
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
@@ -1327,7 +1329,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
 		if (gu->haveGLSL && shadowHandler->drawShadows) {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(8, &c[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);

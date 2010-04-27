@@ -3,10 +3,25 @@
 #ifndef AICHEATS_H
 #define AICHEATS_H
 
-#include "IAICheats.h"
+#include "ExternalAI/AILegacySupport.h"
+#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+#include "float3.h"
+
+#include <string>
+#include <vector>
+#include <map>
+
+struct Command;
+struct UnitDef;
+struct FeatureDef;
+struct WeaponDef;
+struct CommandDescription;
+class CCommandQueue;
+class CGroupHandler;
+class CGroup;
 class CSkirmishAIWrapper;
 
-class CAICheats: public IAICheats
+class CAICheats
 {
 	CSkirmishAIWrapper* ai;
 public:
@@ -22,10 +37,10 @@ public:
 
 	const UnitDef* GetUnitDef(int unitId);
 	float3 GetUnitPos(int unitId);
-	int GetEnemyUnits(int* unitIds, int unitIds_max);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
-	int GetNeutralUnits(int* unitIds, int unitIds_max);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
+	int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
 
 	int GetFeatures(int *features, int max);
 	int GetFeatures(int *features, int max, const float3& pos,

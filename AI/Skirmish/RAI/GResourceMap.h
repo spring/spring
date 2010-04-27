@@ -7,7 +7,7 @@
 #ifndef RAIG_RESOURCE_MAP_H
 #define RAIG_RESOURCE_MAP_H
 
-#include "ExternalAI/IAICallback.h"
+#include "LegacyCpp/IAICallback.h"
 #include "GTerrainMap.h"
 #include <set>
 using std::map;

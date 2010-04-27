@@ -2790,7 +2790,7 @@ const char *GetStr(string str)
 	//static char strBuf[STRBUF_SIZE];
 
 	if (str.length() + 1 > STRBUF_SIZE) {
-		sprintf(strBuf, "Increase STRBUF_SIZE (needs %d bytes)", str.length() + 1);
+		sprintf(strBuf, "Increase STRBUF_SIZE (needs "_STPF_" bytes)", str.length() + 1);
 	}
 	else {
 		strcpy(strBuf, str.c_str());

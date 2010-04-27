@@ -21,8 +21,8 @@
 #ifndef _AIEVENT_H
 #define _AIEVENT_H
 
-#include "ExternalAI/IGlobalAI.h"
-#include "ExternalAI/IGlobalAICallback.h"
+#include "../IGlobalAI.h"
+#include "../IGlobalAICallback.h"
 
 class CAIEvent {
 public:

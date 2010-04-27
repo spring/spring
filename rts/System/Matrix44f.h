@@ -11,6 +11,14 @@ public:
 	CR_DECLARE_STRUCT(CMatrix44f);
 
 	CMatrix44f();
+
+	template<typename T> CMatrix44f(const T* m44) {
+		m[ 0] = float(m44[ 0]); m[ 1] = float(m44[ 1]); m[ 2] = float(m44[ 2]); m[ 3] = float(m44[ 3]);
+		m[ 4] = float(m44[ 4]); m[ 5] = float(m44[ 5]); m[ 6] = float(m44[ 6]); m[ 7] = float(m44[ 7]);
+		m[ 8] = float(m44[ 8]); m[ 9] = float(m44[ 9]); m[10] = float(m44[10]); m[11] = float(m44[11]);
+		m[12] = float(m44[12]); m[13] = float(m44[13]); m[14] = float(m44[14]); m[15] = float(m44[15]);
+	}
+
 	CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
 	CMatrix44f(const float& rotX, const float& rotY, const float& rotZ);
 	explicit CMatrix44f(const float3& pos);

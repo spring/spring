@@ -4,9 +4,10 @@ uniform sampler2DShadow shadowTex;
 uniform samplerCube     reflectTex;
 uniform samplerCube     specularTex;
 
-uniform vec4 lightDir;                // mapInfo->light.sunDir
-varying vec3 cameraDir;
-varying vec3 vertexNormal;
+uniform mat4 cameraMat;
+uniform vec4 lightDir;                // WS (mapInfo->light.sunDir)
+varying vec3 cameraDir;               // WS
+varying vec3 vertexNormal;            // ES
 
 varying float fogFactor;
 
@@ -21,11 +22,11 @@ void main() {
 		shadowInt.x *= unitShadowDensity;
 		shadowInt.x = 1.0 - shadowInt.x;
 
-	vec3 vertexNormES = gl_NormalMatrix * normalize(vertexNormal);
-	vec3 cameraDirES = gl_NormalMatrix * normalize(cameraDir);
+	vec3 vertexNormES = normalize(vertexNormal);
+	vec3 cameraDirES = normalize(cameraMat * vec4(normalize(cameraDir), 0.0)).xyz;
 	vec3 reflectDirES = normalize(reflect(cameraDirES, vertexNormES));
 
-	float cosAngleDiffuse = min(max(dot(vertexNormES, gl_NormalMatrix * lightDir.xyz), 0.0), 1.0);
+	float cosAngleDiffuse = min(max(dot(vertexNormES, cameraDirES), 0.0), 1.0);
 
 	vec4 diffuseCol = texture2D(diffuseTex, gl_TexCoord[0].st);
 	vec4 shadingCol = texture2D(shadingTex, gl_TexCoord[0].st);

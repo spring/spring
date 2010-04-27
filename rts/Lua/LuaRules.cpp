@@ -48,8 +48,8 @@ static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 
 const int* CLuaRules::currentCobArgs = NULL;
 
-vector<float>    CLuaRules::gameParams;
-map<string, int> CLuaRules::gameParamsMap;
+LuaRulesParams::Params  CLuaRules::gameParams;
+LuaRulesParams::HashMap CLuaRules::gameParamsMap;
 
 
 /******************************************************************************/
@@ -193,13 +193,13 @@ bool CLuaRules::AddUnsyncedCode()
 
 /******************************************************************************/
 
-const vector<float>& CLuaRules::GetGameParams()
+const LuaRulesParams::Params& CLuaRules::GetGameParams()
 {
 	return gameParams;
 }
 
 
-const map<string, int>& CLuaRules::GetGameParamsMap()
+const LuaRulesParams::HashMap& CLuaRules::GetGameParamsMap()
 {
 	return gameParamsMap;
 }
@@ -1158,11 +1158,12 @@ int CLuaRules::SetRulesInfoMap(lua_State* L)
 /******************************************************************************/
 
 void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
-                              vector<float>& params,
-		                          map<string, int>& paramsMap)
+				LuaRulesParams::Params& params,
+				LuaRulesParams::HashMap& paramsMap)
 {
 	const int index = offset + 1;
 	const int valIndex = offset + 2;
+	const int losIndex = offset + 3;
 	int pIndex = -1;
 
 	if (lua_israwnumber(L, index)) {
@@ -1177,29 +1178,71 @@ void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
 		else {
 			// create a new parameter
 			pIndex = params.size();
-			paramsMap[pName] = params.size();
-			params.push_back(0.0f); // dummy value
+			paramsMap[pName] = pIndex;
+			params.push_back(LuaRulesParams::Param());
 		}
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
 
-	if ((pIndex < 0) || (pIndex >= (int)params.size())) {
-		return;
-	}
-
-	if (!lua_isnumber(L, valIndex)) {
+	if ((pIndex < 0)
+		|| (pIndex >= (int)params.size())
+		|| !lua_isnumber(L, valIndex)
+	) {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
-	params[pIndex] = lua_tofloat(L, valIndex);
+
+	LuaRulesParams::Param& param = params[pIndex];
+
+	//! set the value of the parameter
+	param.value = lua_tofloat(L, valIndex);
+
+	//! set the los checking of the parameter
+	if (lua_istable(L, losIndex)) {
+		const int& table = losIndex;
+		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
+
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			//! ignore if the value is false
+			if (lua_isboolean(L, -1) && !lua_toboolean(L, -1)) {
+				continue;
+			}
+
+			//! read the losType from the key
+			if (lua_isstring(L, -2)) {
+				const string losType = lua_tostring(L, -2);
+
+				if (losType == "public") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_PUBLIC;
+				}
+				else if (losType == "inlos") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_INLOS;
+				}
+				else if (losType == "inradar") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR;
+				}
+				else if (losType == "allied") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED;
+				}
+				/*else if (losType == "private") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE;
+				}*/
+			}
+		}
+
+		param.los = losMask;
+	} else {
+		param.los = luaL_optint(L, losIndex, param.los);
+	}
+
 	return;
 }
 
 
 void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
-		                              vector<float>& params,
-		                              map<string, int>& paramsMap)
+					LuaRulesParams::Params& params,
+					LuaRulesParams::HashMap& paramsMap)
 {
 	const int table = offset + 1;
 	if (!lua_istable(L, table)) {
@@ -1216,8 +1259,8 @@ void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
 			return;
 		}
 		else if (lua_israwnumber(L, -1)) {
-			const float value = lua_tofloat(L, -1);
-			params.push_back(value);
+			params.push_back(LuaRulesParams::Param());
+			params.back().value = lua_tofloat(L, -1);
 		}
 		else if (lua_istable(L, -1)) {
 			lua_pushnil(L);
@@ -1226,7 +1269,8 @@ void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
 					const string name = lua_tostring(L, -2);
 					const float value = lua_tonumber(L, -1);
 					paramsMap[name] = params.size();
-					params.push_back(value);
+					params.push_back(LuaRulesParams::Param());
+					params.back().value = value;
 				}
 				lua_pop(L, 2);
 			}

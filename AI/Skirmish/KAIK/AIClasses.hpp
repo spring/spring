@@ -1,5 +1,5 @@
-#ifndef KAIK_CONTAINERS_HDR
-#define KAIK_CONTAINERS_HDR
+#ifndef KAIK_CLASSES_HDR
+#define KAIK_CLASSES_HDR
 
 #include <list>
 #include <set>
@@ -26,41 +26,97 @@ class CEconomyTracker;
 class CBuildUp;
 class CAttackHandler;
 class CDGunControllerHandler;
+
 class CLogger;
 class CCommandTracker;
-struct MapData;
+struct LuaParser;
 
 struct AIClasses {
+public:
 	CR_DECLARE_STRUCT(AIClasses);
 
-	AIClasses() { /* CREG-only */ }
+	AIClasses(): initialized(true) { /* CREG-only */ }
 	AIClasses(IGlobalAICallback*);
 	~AIClasses();
+
 	void Init();
 	void Load();
 
-	IAICallback*            cb;
-	IAICheats*              ccb;
-	CEconomyTracker*        econTracker;
-	CBuildUp*               bu;
-	CMetalMap*              mm;
-	CMaths*                 math;
-	CPathFinder*            pather;
-	CUnitTable*             ut;
-	CThreatMap*             tm;
-	CUnitHandler*           uh;
-	CDefenseMatrix*         dm;
-	CAttackHandler*         ah;
-	CLogger*                logger;
-	CDGunControllerHandler* dgunConHandler;
-	CCommandTracker*        ct;
-	MapData*                mapData;
+	bool Initialized() const { return initialized; }
+	int InitFrame() const { return initFrame; }
 
-	std::vector<CUNIT*>     MyUnits;
+	IAICallback* GetCallbackHandler() { return callbackHandler; }
+	IAICheats* GetCheatCallbackHandler() { return ccallbackHandler; }
+
+	CEconomyTracker* GetEcoTracker() { return ecoTracker; }
+	CBuildUp* GetBuildUp() { return buildupHandler; }
+	CMetalMap* GetMetalMap() { return metalMap; }
+	CMaths* GetMathHandler() { return mathHandler; }
+	CPathFinder* GetPathFinder() { return pathFinder; }
+	CUnitTable* GetUnitTable() { return unitTable; }
+	CThreatMap* GetThreatMap() { return threatMap; }
+	CUnitHandler* GetUnitHandler() { return unitHandler; }
+	CDefenseMatrix* GetDefenseMatrix() { return defenseMatrix; }
+	CAttackHandler* GetAttackHandler() { return attackHandler; }
+	CDGunControllerHandler* GetDGunControllerHandler() { return dgunControllerHandler; }
+
+	CCommandTracker* GetCommandTracker() { return commandTracker; }
+	CLogger* GetLogHandler() { return logHandler; }
+	LuaParser* GetLuaParser() { return luaConfigParser; }
+
+	std::vector<CUNIT*>& GetActiveUnits() { return activeUnits; }
+	std::vector<int>& GetUnitIDs() { return unitIDs; }
+
+private:
+	IAICallback*            callbackHandler;
+	IAICheats*              ccallbackHandler;
+
+	CEconomyTracker*        ecoTracker;
+	CBuildUp*               buildupHandler;
+	CMetalMap*              metalMap;
+	CMaths*                 mathHandler;
+	CPathFinder*            pathFinder;
+	CUnitTable*             unitTable;
+	CThreatMap*             threatMap;
+	CUnitHandler*           unitHandler;
+	CDefenseMatrix*         defenseMatrix;
+	CAttackHandler*         attackHandler;
+	CDGunControllerHandler* dgunControllerHandler;
+
+	CCommandTracker*        commandTracker;
+	CLogger*                logHandler;
+	LuaParser*              luaConfigParser;
+
+	std::vector<CUNIT*>     activeUnits;
 	std::vector<int>        unitIDs;
-	/// The frame the AI instances InitAI() function was called in.
-	int                     initFrame;
+
+	bool                    initialized;       //! true if the current mod was on the AIInfo whitelist
+	int                     initFrame;         //! frame that this->InitAI() was called in
 };
+
+#define cb GetCallbackHandler()
+#define ccb GetCheatCallbackHandler()
+
+#define econTracker GetEcoTracker()
+#define mm GetMetalMap()
+#define bu GetBuildUp()
+#define math GetMathHandler()
+#define pather GetPathFinder()
+#define ut GetUnitTable()
+#define tm GetThreatMap()
+#define uh GetUnitHandler()
+#define dm GetDefenseMatrix()
+#define ah GetAttackHandler()
+#define dgunConHandler GetDGunControllerHandler()
+
+#define ct GetCommandTracker()
+#define logger GetLogHandler()
+#define luaParser GetLuaParser()
+
+#define MyUnits GetActiveUnits()
+#define unitIDs GetUnitIDs()
+
+
 
 // NOTE: CUNIT does not know about this structure
 struct UnitType {
@@ -76,11 +132,6 @@ struct UnitType {
 	bool isHub;
 	int techLevel;
 	float costMultiplier;
-
-	// which sides can build this UnitType (usually only
-	// one, needed for types that are shared among sides
-	// in certain mods)
-	/// std::set<int> sides;
 };
 
 

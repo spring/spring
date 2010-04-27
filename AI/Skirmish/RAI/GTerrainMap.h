@@ -13,7 +13,7 @@
 #ifndef RAI_GLOBAL_TERRAIN_MAP_H
 #define RAI_GLOBAL_TERRAIN_MAP_H
 
-#include "ExternalAI/IAICallback.h"
+#include "LegacyCpp/IAICallback.h"
 #include "Sim/Units/UnitDef.h"
 #include "LogFile.h"
 #include <map>

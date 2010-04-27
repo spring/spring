@@ -18,7 +18,7 @@
 #ifndef _AIGLOBALAICALLBACK_H
 #define _AIGLOBALAICALLBACK_H
 
-#include "ExternalAI/IGlobalAICallback.h"
+#include "IGlobalAICallback.h"
 
 struct SSkirmishAICallback;
 class CAIAICallback;
