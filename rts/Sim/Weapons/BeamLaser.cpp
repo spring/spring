@@ -55,7 +55,7 @@ void CBeamLaser::Update(void)
 
 		if (!onlyForward) {
 			wantedDir = targetPos - weaponPos;
-			wantedDir.ANormalize();
+			wantedDir.Normalize();
 		}
 
 		if (!weaponDef->beamburst) {
@@ -171,18 +171,18 @@ void CBeamLaser::FireImpl(void)
 	} else {
 		if (salvoLeft == salvoSize - 1) {
 			dir = targetPos - weaponMuzzlePos;
-			dir.ANormalize();
+			dir.Normalize();
 			oldDir = dir;
 		} else if (weaponDef->beamburst) {
-			dir = targetPos-weaponMuzzlePos;
-			dir.ANormalize();
+			dir = targetPos - weaponMuzzlePos;
+			dir.Normalize();
 		} else {
 			dir = oldDir;
 		}
 	}
 
 	dir += ((salvoError) * (1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
-	dir.ANormalize();
+	dir.Normalize();
 
 	FireInternal(dir, false);
 }
@@ -209,7 +209,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	dir +=
 		((gs->randVector() * sprayAngle *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight)));
-	dir.ANormalize();
+	dir.Normalize();
 
 	bool tryAgain = true;
 
@@ -218,7 +218,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		// const float3 up(0, owner->radius*cylinderTargetting, 0);
 		// const float uplen = up.dot(dir);
 		const float uplen = owner->radius * cylinderTargetting * dir.y;
-		maxLength = streflop::sqrtf(maxLength * maxLength + uplen * uplen);
+		maxLength = math::sqrt(maxLength * maxLength + uplen * uplen);
 	}
 
 	// increase range if targetting edge of hitsphere
