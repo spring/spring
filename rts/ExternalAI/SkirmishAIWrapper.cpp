@@ -12,9 +12,9 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "ExternalAI/IGlobalAI.h"
+#include "ExternalAI/AICallback.h"
+#include "ExternalAI/AICheats.h"
 #include "ExternalAI/SkirmishAI.h"
-#include "ExternalAI/GlobalAICallback.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/SkirmishAILibraryInfo.h"
@@ -69,8 +69,9 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
 void CSkirmishAIWrapper::CreateCallback() {
 
 	if (c_callback == NULL) {
-		callback = new CGlobalAICallback(this);
-		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback);
+		callback = new CAICallback(teamId);
+		cheats = new CAICheats(this);
+		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback, cheats);
 	}
 }
 

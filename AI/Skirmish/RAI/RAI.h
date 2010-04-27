@@ -15,7 +15,7 @@ struct UnitInfo;
 struct EnemyInfo;
 class cRAI;
 
-#include "ExternalAI/IGlobalAI.h"
+#include "LegacyCpp/IGlobalAI.h"
 using std::map;
 #include "BasicArray.h"
 #include "UnitDefHandler.h"

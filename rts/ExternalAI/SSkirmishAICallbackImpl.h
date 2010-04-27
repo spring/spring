@@ -3,8 +3,10 @@
 #ifndef _SSKIRMISHAICALLBACKIMPL_H
 #define	_SSKIRMISHAICALLBACKIMPL_H
 
-// Doc-comments for the functions in this header can be found in this file
-#include "Interface/SSkirmishAICallback.h"
+// Doc-comments for the functions in this header can be found in this file:
+// rts/ExternalAI/Interface/SSkirmishAICallback.h
+
+#include "System/exportdefines.h"
 
 #if	defined(__cplusplus)
 extern "C" {
@@ -957,10 +959,12 @@ EXPORT(bool) skirmishAiCallback_Debug_Drawer_isEnabled(int teamId);
 #endif
 
 #if defined __cplusplus && !defined BUILDING_AI
-class IGlobalAICallback;
+struct SSkirmishAICallback;
+class CAICallback;
+class CAICheats;
 
 // for engine internal use only
-SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int teamId, IGlobalAICallback* aiGlobalCallback);
+SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int teamId, CAICallback* aiCallback, CAICheats* aiCheats);
 void skirmishAiCallback_release(int teamId);
 #endif // defined __cplusplus && !defined BUILDING_AI
 
