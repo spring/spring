@@ -1,13 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file errorhandler.cpp
  * @brief error messages
- * @author Tobi Vollebregt <tobivollebregt@gmail.com>
- * @author Christopher Han <xiphux@gmail.com>
- *
- * Error handling based on platform
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
+ * Error handling based on platform.
  */
+
 #include <StdAfx.h>
 #include "errorhandler.h"
 

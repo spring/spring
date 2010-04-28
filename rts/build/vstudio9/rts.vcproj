@@ -619,7 +619,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\aikey.h"
+				RelativePath="..\..\ExternalAI\AILegacySupport.cpp"
 				>
 			</File>
 			<File
@@ -643,22 +643,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\GlobalAICallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\GlobalAICallback.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IAICallback.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IAICheats.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\ExternalAI\IAILibraryManager.cpp"
 				>
 			</File>
@@ -667,19 +651,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IGlobalAI.h"
+				RelativePath="..\..\ExternalAI\LuaAIImplHandler.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\IGlobalAICallback.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IGroupAI.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\IGroupAiCallback.h"
+				RelativePath="..\..\ExternalAI\LuaAIImplHandler.h"
 				>
 			</File>
 			<File
@@ -699,7 +675,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\ExternalAI\SkirmishAIData.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\ExternalAI\SkirmishAIData.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SkirmishAIHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SkirmishAIHandler.h"
 				>
 			</File>
 			<File
@@ -1879,11 +1867,11 @@
 			Name="Rendering"
 			>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.cpp"
+				RelativePath="..\..\Rendering\FarTextureHandler.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\FartextureHandler.h"
+				RelativePath="..\..\Rendering\FarTextureHandler.h"
 				>
 			</File>
 			<File

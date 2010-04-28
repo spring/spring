@@ -1,7 +1,7 @@
 #ifndef INC_GLOBALAI_HDR
 #define INC_GLOBALAI_HDR
 
-#include "Containers.h"
+#include "AIClasses.hpp"
 #include "CommandTracker.h"
 #include "Defines.h"
 #include "MTRand.h"
@@ -23,5 +23,6 @@
 #include "DGunController.h"
 #include "Logger.h"
 #include "Util.h"
+#include "LuaParser.hpp"
 
 #endif

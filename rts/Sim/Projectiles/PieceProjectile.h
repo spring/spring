@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PIECEPROJECTILE_H
 #define PIECEPROJECTILE_H
 
@@ -28,9 +30,7 @@ class CPieceProjectile: public CProjectile
 
 	int flags;
 	int dispList;
-	S3DOPiece* piece3do;
-	SS3OPiece* pieces3o;
-	S3DModelPiece* omp;
+	const S3DModelPiece* omp;
 	float3 spinVec;
 	float spinSpeed;
 	float spinAngle;
@@ -52,7 +52,7 @@ class CPieceProjectile: public CProjectile
 	int colorTeam;
 
 public:
-	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius GML_PARG_H);
+	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius);
 	virtual ~CPieceProjectile(void);
 	void Update();
 	void Draw();
@@ -60,11 +60,8 @@ public:
 	void Collision();
 	void Collision(CUnit* unit);
 
-	void DrawUnitPart(void);
 	void DrawCallback(void);
 
-	// should not be here
-	void DrawS3O(void);
 private:
 	bool HasVertices();
 	float3 RandomVertexPos();

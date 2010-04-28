@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_HANDLE_H
 #define LUA_HANDLE_H
-// LuaHandle.h: interface for the CLuaHandle class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -94,6 +93,8 @@ class CLuaHandle : public CEventClient
 
 		void Shutdown();
 
+		void Load(CArchiveBase* archive);
+
 		void GamePreload();
 		void GameStart();
 		void GameOver();
@@ -150,6 +151,8 @@ class CLuaHandle : public CEventClient
 
 		// LuaHandleSynced wraps this to set allowChanges
 		virtual bool RecvLuaMsg(const string& msg, int playerID);
+
+		void Save(zipFile archive);
 
 		void Update();
 

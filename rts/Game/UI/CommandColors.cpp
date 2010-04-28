@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// CommandColors.cpp: implementation of the CCommandColors class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "CommandColors.h"
 #include <cstdio>
 #include <cstring>

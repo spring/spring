@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "LocalConnection.h"
 
 #include <boost/format.hpp>
@@ -68,7 +70,17 @@ void CLocalConnection::Flush(const bool forced)
 {
 }
 
-bool CLocalConnection::CheckTimeout() const
+bool CLocalConnection::CheckTimeout(int nsecs) const
+{
+	return false;
+}
+
+bool CLocalConnection::CanReconnect() const
+{
+	return false;
+}
+
+bool CLocalConnection::NeedsReconnect()
 {
 	return false;
 }

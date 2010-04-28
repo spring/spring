@@ -1,25 +1,12 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef _SSKIRMISHAICALLBACKIMPL_H
 #define	_SSKIRMISHAICALLBACKIMPL_H
 
-// Doc-comments for the functions in this header can be found in this file
-#include "Interface/SSkirmishAICallback.h"
+// Doc-comments for the functions in this header can be found in this file:
+// rts/ExternalAI/Interface/SSkirmishAICallback.h
+
+#include "System/exportdefines.h"
 
 #if	defined(__cplusplus)
 extern "C" {
@@ -163,8 +150,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0ge
 		int teamId, int unitDefId, int resourceId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isSquareResourceExtractor(
 		int teamId, int unitDefId, int resourceId);
-EXPORT(bool             ) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isResourceMaker(
-		int teamId, int unitDefId, int resourceId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getBuildTime(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getAutoHeal(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getIdleAutoHeal(int teamId, int unitDefId);
@@ -240,8 +225,6 @@ EXPORT(const char*      ) skirmishAiCallback_UnitDef_getWreckName(int teamId, in
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getDeathExplosion(int teamId,
 		int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getSelfDExplosion(int teamId,
-		int unitDefId);
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_getTedClassString(int teamId,
 		int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getCategoryString(int teamId,
 		int unitDefId);
@@ -566,6 +549,7 @@ EXPORT(bool             ) skirmishAiCallback_Group_isSelected(int teamId, int gr
 
 // BEGINN OBJECT Mod
 EXPORT(const char*      ) skirmishAiCallback_Mod_getFileName(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getHash(int teamId);
 
 EXPORT(const char*      ) skirmishAiCallback_Mod_getHumanName(int teamId);
 EXPORT(const char*      ) skirmishAiCallback_Mod_getShortName(int teamId);
@@ -654,6 +638,8 @@ EXPORT(float            ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resour
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
 		int teamId, int resourceId, struct SAIFloat3 pos);
 EXPORT(const char*      ) skirmishAiCallback_Map_getName(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Map_getHumanName(int teamId);
+EXPORT(int              ) skirmishAiCallback_Map_getHash(int teamId);
 EXPORT(float            ) skirmishAiCallback_Map_getElevationAt(int teamId, float x, float z);
 EXPORT(float            ) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(
 		int teamId, int resourceId);
@@ -966,15 +952,19 @@ EXPORT(void) skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams(int teamId,
 		int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
 
+EXPORT(bool) skirmishAiCallback_Debug_Drawer_isEnabled(int teamId);
+
 #if	defined(__cplusplus)
 } // extern "C"
 #endif
 
 #if defined __cplusplus && !defined BUILDING_AI
-class IGlobalAICallback;
+struct SSkirmishAICallback;
+class CAICallback;
+class CAICheats;
 
 // for engine internal use only
-SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int teamId, IGlobalAICallback* aiGlobalCallback);
+SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int teamId, CAICallback* aiCallback, CAICheats* aiCheats);
 void skirmishAiCallback_release(int teamId);
 #endif // defined __cplusplus && !defined BUILDING_AI
 

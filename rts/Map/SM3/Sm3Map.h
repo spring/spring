@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SM3_MAP_H
 #define SM3_MAP_H
 
@@ -16,12 +18,14 @@ class CSm3ReadMap : public CReadMap
 public:
 	CR_DECLARE(CSm3ReadMap);
 
-	CSm3ReadMap();
+	CSm3ReadMap(const std::string&);
 	~CSm3ReadMap();
-	void Initialize(const char* mapname); // throws std::runtime_exception on errors
+
 	void ConfigNotify(const std::string& key, const std::string& value);
 
+	void NewGroundDrawer();
 	CBaseGroundDrawer* GetGroundDrawer();
+
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
 	inline const float* GetHeightmap() const { return renderer->GetHeightmap(); }
 
@@ -79,6 +83,5 @@ protected:
 
 	Frustum tmpFrustum;
 };
-
 
 #endif

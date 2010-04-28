@@ -1,6 +1,4 @@
-// Cannon.h: interface for the CCannon class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __CANNON_H__
 #define __CANNON_H__

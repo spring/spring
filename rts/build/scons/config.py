@@ -1,4 +1,5 @@
-# Copyright (C) 2006  Tobi Vollebregt
+# This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
+
 # Code copied from the old build system, but heavily reordered and/or rewritten.
 # vim:noet ts=4 sts=4 sw=4
 
@@ -295,7 +296,7 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['freetype6', 'freetype'], ['ft2build.h'])]
 	d += [Dependency(['IL', 'devil'], ['IL/il.h'])]
 	d += [Dependency(['ILU', 'ilu'], ['IL/ilu.h'])]
-	d += [Dependency(['openal', 'openal32', 'OpenAL32'], ['AL/al.h'])]
+	d += [Dependency(['openal', 'openal32', 'OpenAL32', 'soft_oal'], ['AL/al.h'])]
 
 	if env['platform'] == 'windows':
 		d += [Dependency(['imagehlp'], [])]

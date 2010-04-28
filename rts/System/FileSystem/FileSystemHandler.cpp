@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "FileSystemHandler.h"
 
 #include <cassert>
@@ -135,6 +137,26 @@ bool FileSystemHandler::IsFSRoot(const std::string& p)
 	}
 
 	return false;
+}
+
+// sPS/cPS (depending on OS): "\\" & '\\' or "/" & '/'
+bool FileSystemHandler::HasPathSepAtEnd(const std::string& path) {
+
+	bool pathSepAtEnd = false;
+
+	if (!path.empty() && (path[path.size() - 1] == cPS)) {
+		pathSepAtEnd = true;
+	}
+
+	return pathSepAtEnd;
+}
+void FileSystemHandler::EnsurePathSepAtEnd(std::string& path) {
+
+	if (path.empty()) {
+		path += "."sPS;
+	} else if (path[path.size() - 1] != cPS) {
+		path += cPS;
+	}
 }
 
 std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, int flags) const

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -81,9 +83,9 @@ void CBitmapMuzzleFlame::Update(void)
 		deleteMe = true;
 }
 
-void CBitmapMuzzleFlame::Init(const float3 &pos, CUnit *owner GML_PARG_C)
+void CBitmapMuzzleFlame::Init(const float3 &pos, CUnit *owner)
 {
-	CProjectile::Init(pos, owner GML_PARG_P);
+	CProjectile::Init(pos, owner);
 	life = 0;
 	createTime = gs->frameNum;
 	invttl = 1.0f/(float)ttl;

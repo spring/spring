@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 #include "FeatureHandler.h"
@@ -6,7 +8,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/FeatureDrawer.h" // FIXME -- sim shouldn't depend on rendering
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
@@ -315,8 +316,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-	if (freeIDs.empty())
-	{ // alloc n new ids and randomly insert to freeIDs
+	if (freeIDs.empty()) {
+		// alloc n new ids and randomly insert to freeIDs
 		const unsigned n = 100;
 		std::vector<int> newIds(n);
 		for (unsigned i = 0; i < n; ++i)
@@ -333,20 +334,16 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	features[feature->id] = feature;
 	SetFeatureUpdateable(feature);
 
-	// FIXME -- sim shouldn't depend on rendering
-	featureDrawer->FeatureCreated(feature);
-
 	eventHandler.FeatureCreated(feature);
-
-	return feature->id ;
+	return feature->id;
 }
 
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	toBeRemoved.push_back(feature->id);
-
 	eventHandler.FeatureDestroyed(feature);
+
+	toBeRemoved.push_back(feature->id);
 }
 
 CFeature* CFeatureHandler::GetFeature(int id)
@@ -407,29 +404,34 @@ void CFeatureHandler::Update()
 			freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
 	}
 
-	if(!toBeRemoved.empty()) {
+	{
+		GML_STDMUTEX_LOCK(rfeat); // Update
 
-		GML_RECMUTEX_LOCK(feat); // Update
-		GML_RECMUTEX_LOCK(quad); // Update
+		if(!toBeRemoved.empty()) {
 
-		while (!toBeRemoved.empty()) {
-			CFeature* feature = GetFeature(toBeRemoved.back());
-			toBeRemoved.pop_back();
-			if (feature) {
-				toBeFreedIDs.push_back(feature->id);
-				activeFeatures.erase(feature);
-				features[feature->id] = 0;
+			GML_RECMUTEX_LOCK(feat); // Update
+			GML_RECMUTEX_LOCK(quad); // Update
 
-				// FIXME -- sim shouldn't depend on rendering
-				featureDrawer->FeatureDestroyed(feature);
+			eventHandler.DeleteSyncedFeatures();
 
-				if (feature->inUpdateQue) {
-					updateFeatures.erase(feature);
+			while (!toBeRemoved.empty()) {
+				CFeature* feature = GetFeature(toBeRemoved.back());
+				toBeRemoved.pop_back();
+				if (feature) {
+					toBeFreedIDs.push_back(feature->id);
+					activeFeatures.erase(feature);
+					features[feature->id] = 0;
+
+					if (feature->inUpdateQue) {
+						updateFeatures.erase(feature);
+					}
+
+					delete feature;
 				}
-
-				delete feature;
 			}
 		}
+
+		eventHandler.UpdateFeatures();
 	}
 
 	CFeatureSet::iterator fi = updateFeatures.begin();

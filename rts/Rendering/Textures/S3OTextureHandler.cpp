@@ -1,6 +1,4 @@
-// S3OTextureHandler.cpp: implementation of the CS3OTextureHandler class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 
@@ -16,8 +14,9 @@
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
+#include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "TAPalette.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"

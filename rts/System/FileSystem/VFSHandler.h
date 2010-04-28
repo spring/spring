@@ -1,9 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __VFS_HANDLER_H
 #define __VFS_HANDLER_H
 
 #include <map>
 #include <string>
 #include <vector>
+#include <boost/cstdint.hpp>
 
 class CArchiveBase;
 
@@ -11,10 +14,9 @@ class CVFSHandler
 {
 public:
 	CVFSHandler();
-	virtual ~CVFSHandler();
+	~CVFSHandler();
 
-	int LoadFile(const std::string& name, void* buffer);
-	int GetFileSize(const std::string& name);
+	bool LoadFile(const std::string& name, std::vector<boost::uint8_t>& buffer);
 
 	std::vector<std::string> GetFilesInDir(const std::string& dir);
 	std::vector<std::string> GetDirsInDir(const std::string& dir);
@@ -23,9 +25,9 @@ public:
 	 * Override determines whether if conflicts overwrites
 	 * an existing entry in the virtual filesystem or not
 	 */
-	bool AddArchive(const std::string& arName, bool override,
-	                const std::string& type = "");
-	bool AddMapArchiveWithDeps(const std::string& mapName, bool override, const std::string& type = "");
+	bool AddArchive(const std::string& arName, bool override, const std::string& type = "");
+	bool AddArchiveWithDeps(const std::string& mapName, bool override, const std::string& type = "");
+
 	/**
 	 * Returns true if the archive is not loaded,
 	 * so it may was not loaded in the first place or was unloaded

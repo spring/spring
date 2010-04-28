@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// Factory.cpp: implementation of the CFactory class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Factory.h"
 #include "Game/Camera.h"
@@ -9,7 +8,6 @@
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"

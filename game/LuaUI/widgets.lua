@@ -1343,7 +1343,9 @@ function widgetHandler:MousePress(x, y, button)
     end
     for _,w in ipairs(self.MousePressList) do
       if (w:MousePress(x, y, button)) then
-        self.mouseOwner = w
+        if (not mo) then
+          self.mouseOwner = w
+        end
         return true
       end
     end

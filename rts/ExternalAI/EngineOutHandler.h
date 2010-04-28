@@ -1,19 +1,4 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software {} you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation {} either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY {} without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef _ENGINEOUTHANDLER_H
 #define _ENGINEOUTHANDLER_H
@@ -93,7 +78,7 @@ public:
 	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to mark as dieing
-	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 * @see DestroySkirmishAI()
 	 */
 	void SetSkirmishAIDieing(const size_t skirmishAIId);
@@ -103,7 +88,7 @@ public:
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to destroy
 	 * @see SetSkirmishAIDieing()
-	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
 	void DestroySkirmishAI(const size_t skirmishAIId);
 

@@ -1,12 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "ShieldPartProjectile.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "GlobalUnsynced.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 
 CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (float3(0,0,0),0,0,0,float3(0,0,0),0,NULL,NULL));
 
@@ -23,8 +25,8 @@ CR_REG_METADATA(CShieldPartProjectile,(
 
 CShieldPartProjectile::CShieldPartProjectile(
 	const float3& centerPos, int xpart, int ypart, float sphereSize,
-	float3 color, float alpha, AtlasedTexture* texture, CUnit* owner GML_PARG_C)
-:	CProjectile(centerPos, ZeroVector, owner, false, false, false GML_PARG_P),
+	float3 color, float alpha, AtlasedTexture* texture, CUnit* owner)
+:	CProjectile(centerPos, ZeroVector, owner, false, false, false),
 	centerPos(centerPos),
 	sphereSize(sphereSize),
 	baseAlpha(alpha),
@@ -54,7 +56,7 @@ CShieldPartProjectile::CShieldPartProjectile(
 	drawRadius = sphereSize * 0.4f;
 	usePerlin = false;
 
-	if (texture == &ph->perlintex) {
+	if (texture == projectileDrawer->perlintex) {
 		usePerlin = true;
 		ph->numPerlinProjectiles++;
 	}

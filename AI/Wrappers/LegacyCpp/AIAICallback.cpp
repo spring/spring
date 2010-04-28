@@ -441,7 +441,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->wreckName = sAICallback->Clb_UnitDef_getWreckName(teamId, unitDefId);
 		unitDef->deathExplosion = sAICallback->Clb_UnitDef_getDeathExplosion(teamId, unitDefId);
 		unitDef->selfDExplosion = sAICallback->Clb_UnitDef_getSelfDExplosion(teamId, unitDefId);
-		unitDef->TEDClassString = sAICallback->Clb_UnitDef_getTedClassString(teamId, unitDefId);
 		unitDef->categoryString = sAICallback->Clb_UnitDef_getCategoryString(teamId, unitDefId);
 		unitDef->canSelfD = sAICallback->Clb_UnitDef_isAbleToSelfD(teamId, unitDefId);
 		unitDef->selfDCountdown = sAICallback->Clb_UnitDef_getSelfDCountdown(teamId, unitDefId);
@@ -546,7 +545,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->flareSalvoDelay = sAICallback->Clb_UnitDef_getFlareSalvoDelay(teamId, unitDefId);
 		//unitDef->smoothAnim = sAICallback->Clb_UnitDef_isSmoothAnim(teamId, unitDefId);
 		unitDef->smoothAnim = false;
-		unitDef->isMetalMaker = sAICallback->Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker(teamId, unitDefId, m);
 		unitDef->canLoopbackAttack = sAICallback->Clb_UnitDef_isAbleToLoopbackAttack(teamId, unitDefId);
 		unitDef->levelGround = sAICallback->Clb_UnitDef_isLevelGround(teamId, unitDefId);
 		unitDef->useBuildingGroundDecal = sAICallback->Clb_UnitDef_isUseBuildingGroundDecal(teamId, unitDefId);
@@ -678,7 +676,7 @@ const float* CAIAICallback::GetHeightMap() {
 
 	if (heightMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getHeightMap(teamId);
-		heightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		heightMap = new float[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Clb_Map_0ARRAY1VALS0getHeightMap(teamId, heightMap, size);
 	}
 
@@ -691,7 +689,7 @@ const float* CAIAICallback::GetCornersHeightMap() {
 
 	if (cornersHeightMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getCornersHeightMap(teamId);
-		cornersHeightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		cornersHeightMap = new float[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Clb_Map_0ARRAY1VALS0getCornersHeightMap(teamId, cornersHeightMap, size);
 	}
 
@@ -712,7 +710,7 @@ const float* CAIAICallback::GetSlopeMap() {
 
 	if (slopeMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getSlopeMap(teamId);
-		slopeMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		slopeMap = new float[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Clb_Map_0ARRAY1VALS0getSlopeMap(teamId, slopeMap, size);
 	}
 
@@ -725,7 +723,7 @@ const unsigned short* CAIAICallback::GetLosMap() {
 
 	if (losMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getLosMap(teamId);
-		losMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		losMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Clb_Map_0ARRAY1VALS0getLosMap(teamId, losMap, size);
 	}
 
@@ -746,7 +744,7 @@ const unsigned short* CAIAICallback::GetRadarMap() {
 
 	if (radarMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getRadarMap(teamId);
-		radarMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		radarMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Clb_Map_0ARRAY1VALS0getRadarMap(teamId, radarMap, size);
 	}
 
@@ -759,7 +757,7 @@ const unsigned short* CAIAICallback::GetJammerMap() {
 
 	if (jammerMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getJammerMap(teamId);
-		jammerMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		jammerMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Clb_Map_0ARRAY1VALS0getJammerMap(teamId, jammerMap, size);
 	}
 
@@ -773,19 +771,35 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 
 	if (metalMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw(teamId, m);
-		metalMap = new unsigned char[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		metalMap = new unsigned char[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		sAICallback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw(teamId, m, metalMap, size);
 	}
 
 	return metalMap;
 }
 
+int CAIAICallback::GetMapHash() {
+	return sAICallback->Clb_Map_getHash(teamId);
+}
+
 const char* CAIAICallback::GetMapName() {
 	return sAICallback->Clb_Map_getName(teamId);
 }
 
+const char* CAIAICallback::GetMapHumanName() {
+	return sAICallback->Clb_Map_getHumanName(teamId);
+}
+
+int CAIAICallback::GetModHash() {
+	return sAICallback->Clb_Mod_getHash(teamId);
+}
+
 const char* CAIAICallback::GetModName() {
 	return sAICallback->Clb_Mod_getFileName(teamId);
+}
+
+const char* CAIAICallback::GetModHumanName() {
+	return sAICallback->Clb_Mod_getHumanName(teamId);
 }
 
 float CAIAICallback::GetElevation(float x, float z) {
@@ -1490,25 +1504,118 @@ void CAIAICallback::LineDrawerRestartSameColor() {
 }
 
 int CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateSplineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), pos3.toSAIFloat3(), pos4.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd); return cmd.ret_newFigureGroupId;
+	SCreateSplineFigureDrawerCommand cmd = {
+		pos1.toSAIFloat3(),
+		pos2.toSAIFloat3(),
+		pos3.toSAIFloat3(),
+		pos4.toSAIFloat3(),
+		width,
+		arrow,
+		lifeTime,
+		figureGroupId
+	};
+
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd);
+	return cmd.ret_newFigureGroupId;
 }
 
 int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateLineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd); return cmd.ret_newFigureGroupId;
+	SCreateLineFigureDrawerCommand cmd = {
+		pos1.toSAIFloat3(),
+		pos2.toSAIFloat3(),
+		width,
+		arrow,
+		lifeTime,
+		figureGroupId
+	};
+
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd);
+	return cmd.ret_newFigureGroupId;
 }
 
 void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) {
 	SAIFloat3 col3 = {red, green, blue};
-	SSetColorFigureDrawerCommand cmd = {figureGroupId, col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
+	SSetColorFigureDrawerCommand cmd = {figureGroupId, col3, alpha};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
 }
 
 void CAIAICallback::DeleteFigureGroup(int figureGroupId) {
-	SDeleteFigureDrawerCommand cmd = {figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
+	SDeleteFigureDrawerCommand cmd = {figureGroupId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
 }
 
 void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int lifeTime, int unitTeamId, bool transparent, bool drawBorder, int facing) {
-	SDrawUnitDrawerCommand cmd = {sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name), pos.toSAIFloat3(), rotation, lifeTime, unitTeamId, transparent, drawBorder, facing}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
+	SDrawUnitDrawerCommand cmd = {
+		sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name),
+		pos.toSAIFloat3(),
+		rotation,
+		lifeTime,
+		unitTeamId,
+		transparent,
+		drawBorder,
+		facing
+	};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
 }
+
+
+
+bool CAIAICallback::IsDebugDrawerEnabled() const {
+	return sAICallback->Clb_Debug_Drawer_isEnabled(teamId);
+}
+
+void CAIAICallback::DebugDrawerAddGraphPoint(int lineId, float x, float y) {
+	SDebugDrawerAddGraphPointCommand cmd = {x, y, lineId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT, &cmd);
+}
+void CAIAICallback::DebugDrawerDelGraphPoints(int lineId, int numPoints) {
+	SDebugDrawerDeleteGraphPointsCommand cmd = {lineId, numPoints};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS, &cmd);
+}
+void CAIAICallback::DebugDrawerSetGraphPos(float x, float y) {
+	SDebugDrawerSetGraphPositionCommand cmd = {x, y};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_GRAPH_POS, &cmd);
+}
+void CAIAICallback::DebugDrawerSetGraphSize(float w, float h) {
+	SDebugDrawerSetGraphSizeCommand cmd = {w, h};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE, &cmd);
+}
+void CAIAICallback::DebugDrawerSetGraphLineColor(int lineId, const float3& color) {
+	SDebugDrawerSetGraphLineColorCommand cmd = {lineId, color.toSAIFloat3()};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR, &cmd);
+}
+void CAIAICallback::DebugDrawerSetGraphLineLabel(int lineId, const char* label) {
+	SDebugDrawerSetGraphLineLabelCommand cmd = {lineId, label};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL, &cmd);
+}
+
+int CAIAICallback::DebugDrawerAddOverlayTexture(const float* texData, int w, int h) {
+	SDebugDrawerAddOverlayTextureCommand cmd = {0, texData, w, h};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE, &cmd);
+	return cmd.texHandle;
+}
+void CAIAICallback::DebugDrawerUpdateOverlayTexture(int texHandle, const float* texData, int x, int y, int w, int h) {
+	SDebugDrawerUpdateOverlayTextureCommand cmd = {texHandle, texData, x, y, w, h};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE, &cmd);
+}
+void CAIAICallback::DebugDrawerDelOverlayTexture(int texHandle) {
+	SDebugDrawerDelOverlayTextureCommand cmd = {texHandle};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE, &cmd);
+}
+void CAIAICallback::DebugDrawerSetOverlayTexturePos(int texHandle, float x, float y) {
+	SDebugDrawerSetOverlayTexturePosCommand cmd = {texHandle, x, y};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS, &cmd);
+}
+void CAIAICallback::DebugDrawerSetOverlayTextureSize(int texHandle, float w, float h) {
+	SDebugDrawerSetOverlayTextureSizeCommand cmd = {texHandle, w, h};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE, &cmd);
+}
+void CAIAICallback::DebugDrawerSetOverlayTextureLabel(int texHandle, const char* texLabel) {
+	SDebugDrawerSetOverlayTextureLabelCommand cmd = {texHandle, texLabel};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_LABEL, &cmd);
+}
+
+
 
 int CAIAICallback::HandleCommand(int commandId, void* data) {
 	int ret = -99;
@@ -1599,4 +1706,34 @@ const char* CAIAICallback::CallLuaRules(const char* data, int inSize, int* outSi
 		SCallLuaRulesCommand cmd = {data, inSize, outSize}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_RULES, &cmd); return cmd.ret_outData;
 }
 
+std::map<std::string, std::string> CAIAICallback::GetMyInfo()
+{
+	std::map<std::string, std::string> info;
 
+	const int info_size = sAICallback->Clb_SkirmishAI_Info_getSize(teamId);
+	for (int ii = 0; ii < info_size; ++ii) {
+		const char* key   = sAICallback->Clb_SkirmishAI_Info_getKey(teamId, ii);
+		const char* value = sAICallback->Clb_SkirmishAI_Info_getValue(teamId, ii);
+		if ((key != NULL) && (value != NULL)) {
+			info[key] = value;
+		}
+	}
+
+	return info;
+}
+
+std::map<std::string, std::string> CAIAICallback::GetMyOptionValues()
+{
+	std::map<std::string, std::string> optionVals;
+
+	const int optionVals_size = sAICallback->Clb_SkirmishAI_OptionValues_getSize(teamId);
+	for (int ovi = 0; ovi < optionVals_size; ++ovi) {
+		const char* key   = sAICallback->Clb_SkirmishAI_OptionValues_getKey(teamId, ovi);
+		const char* value = sAICallback->Clb_SkirmishAI_OptionValues_getValue(teamId, ovi);
+		if ((key != NULL) && (value != NULL)) {
+			optionVals[key] = value;
+		}
+	}
+
+	return optionVals;
+}

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_HASH_STRING_H
 #define LUA_HASH_STRING_H
-// LuaHashString.h: lua utility routines
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 using std::string;

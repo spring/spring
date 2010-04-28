@@ -1,23 +1,25 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "StarburstProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
-#include "Matrix44f.h"
-#include "myMath.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/Models/3DModel.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "StarburstProjectile.h"
-#include "Sync/SyncTracer.h"
-#include "Rendering/UnitModels/s3oParser.h"
-#include "GlobalUnsynced.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
 
 static const float Smoke_Time=70;
 
@@ -49,17 +51,24 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 {
 	s.Serialize(numCallback, sizeof(int));
 	// NOTE This could be tricky if gs is serialized after losHandler.
-	for(int a=0;a<5;++a){
+	for (int a = 0; a < 5; ++a) {
 		s.Serialize(oldInfos[a],sizeof(struct CStarburstProjectile::OldInfo));
 	}
 }
 
-CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
-		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
-		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200 GML_PARG_P),
+CStarburstProjectile::CStarburstProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner,
+	float3 targetPos,
+	float areaOfEffect, float maxSpeed,
+	float tracking, int uptime,
+	CUnit* target,
+	const WeaponDef* weaponDef,
+	CWeaponProjectile* interceptTarget,
+	float maxdistance, float3 aimError):
+
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200),
 	tracking(tracking),
-	dir(speed),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
 	age(0),
@@ -73,23 +82,24 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	missileAge(0),
 	distanceToTravel(maxdistance)
 {
-	this->uptime=uptime;
+	projectileType = WEAPON_STARBURST_PROJECTILE;
+	this->uptime = uptime;
+
 	if (weaponDef) {
 		if (weaponDef->flighttime == 0) {
-			ttl = (int) std::min(3000.f,uptime+weaponDef->range/maxSpeed+100);
-		}
-		else {
-			ttl=weaponDef->flighttime;
+			ttl = (int) std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
+		} else {
+			ttl = weaponDef->flighttime;
 		}
 	}
-	maxGoodDif=cos(tracking*0.6f);
-	curSpeed=speed.Length();
-	dir.Normalize();
-	oldSmokeDir=dir;
+	maxGoodDif = cos(tracking * 0.6f);
+	curSpeed = speed.Length();
+	dir = speed / curSpeed;
+	oldSmokeDir = dir;
 
-	drawRadius=maxSpeed*8;
-	numCallback=new int;
-	*numCallback=0;
+	drawRadius = maxSpeed * 8;
+	numCallback = new int;
+	*numCallback = 0;
 
 	float3 camDir=(pos-camera->pos).Normalize();
 	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
@@ -105,7 +115,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 			oldInfos[a]->ageMods.push_back(ageMod);
 		}
 	}
-	castShadow=true;
+	castShadow = true;
 
 #ifdef TRACE_SYNC
 	tracefile << "New starburst rocket: ";
@@ -309,32 +319,39 @@ void CStarburstProjectile::Draw(void)
 			col2[2]=(unsigned char) (color*alpha);
 			col2[3]=(unsigned char)alpha;
 
-			float size=1;
-			float size2=(1+age2*(1/Smoke_Time)*7);
+			const float size = 1.0f;
+			const float size2 = (1.0f + age2 * (1.0f / Smoke_Time) * 7.0f);
 
-			float txs=weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*(age2/8.0f);//(1-age2/8.0f);
-			va->AddVertexQTC(drawPos-dir1*size, txs, weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(drawPos+dir1*size, txs, weaponDef->visuals.texture2->yend, col);
-			va->AddVertexQTC(oldSmoke+dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend, col2);
-			va->AddVertexQTC(oldSmoke-dir2*size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
+			const float txs =
+				weaponDef->visuals.texture2->xend -
+				(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) *
+				(age2 / 8.0f); // (1.0f - age2 / 8.0f);
+
+			va->AddVertexQTC(drawPos  - dir1 * size, txs, weaponDef->visuals.texture2->ystart, col);
+			va->AddVertexQTC(drawPos  + dir1 * size, txs, weaponDef->visuals.texture2->yend,   col);
+			va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
+			va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {	//draw the trail as particles
 			float dist=pos.distance(oldSmoke);
 			float3 dirpos1=pos-dir*dist*0.33f;
 			float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33f;
 
-			for(int a=0;a<curNumParts;++a){ //! CAUTION: loop count must match EnlargeArrays above
+			for (int a = 0; a < curNumParts; ++a) {
+				//! CAUTION: loop count must match EnlargeArrays above
 				//float a1=1-float(a)/Smoke_Time;
 				col[0]=(unsigned char) (color*255);
 				col[1]=(unsigned char) (color*255);
 				col[2]=(unsigned char) (color*255);
 				col[3]=255;//min(255,max(0,a1*255));
-				float size=(1+(a)*(1/Smoke_Time)*7);
+				const float size=(1+(a)*(1/Smoke_Time)*7);
+				const float3 pos1=CalcBeizer(float(a)/(curNumParts),pos,dirpos1,dirpos2,oldSmoke);
 
-				float3 pos1=CalcBeizer(float(a)/(curNumParts),pos,dirpos1,dirpos2,oldSmoke);
-				va->AddVertexQTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
-				va->AddVertexQTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
-				va->AddVertexQTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
-				va->AddVertexQTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+				#define st projectileDrawer->smoketex[0]
+				va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, st->xstart, st->ystart, col);
+				#undef st
 			}
 		}
 	}
@@ -381,59 +398,43 @@ void CStarburstProjectile::DrawCallback(void)
 				col[1]=(unsigned char) (200*alpha);
 				col[2]=(unsigned char) (150*alpha);
 			}
-			drawsize=1+age2*0.8f*ageMod*7;
-			va->AddVertexTC(interPos-camera->right*drawsize-camera->up*drawsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize-camera->up*drawsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->ystart,col);
-			va->AddVertexTC(interPos+camera->right*drawsize+camera->up*drawsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,col);
-			va->AddVertexTC(interPos-camera->right*drawsize+camera->up*drawsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->yend,col);
+
+			drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
+			va->AddVertexTC(interPos - camera->right * drawsize-camera->up * drawsize, weaponDef->visuals.texture3->xstart, weaponDef->visuals.texture3->ystart, col);
+			va->AddVertexTC(interPos + camera->right * drawsize-camera->up * drawsize, weaponDef->visuals.texture3->xend,   weaponDef->visuals.texture3->ystart, col);
+			va->AddVertexTC(interPos + camera->right * drawsize+camera->up * drawsize, weaponDef->visuals.texture3->xend,   weaponDef->visuals.texture3->yend,   col);
+			va->AddVertexTC(interPos - camera->right * drawsize+camera->up * drawsize, weaponDef->visuals.texture3->xstart, weaponDef->visuals.texture3->yend,   col);
 		}
 	}
 
-	//rita flaren
-	col[0]=255;
-	col[1]=180;
-	col[2]=180;
-	col[3]=1;
-	float fsize = 25.0f;
-	va->AddVertexTC(drawPos-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(drawPos+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(drawPos+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-	va->AddVertexTC(drawPos-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
-}
+	// draw the engine flare
+	col[0] = 255;
+	col[1] = 180;
+	col[2] = 180;
+	col[3] =   1;
+	const float fsize = 25.0f;
 
-void CStarburstProjectile::DrawUnitPart(void)
-{
-	float3 rightdir, updir;
-
-	if (fabs(dir.y) < 0.95f) {
-		rightdir = dir.cross(UpVector);
-		rightdir.SafeNormalize();
-	} else {
-		rightdir = float3(1.0f, 0.0f, 0.0f);
-	}
-
-	updir = rightdir.cross(dir);
-
-	CMatrix44f transMatrix(drawPos, -rightdir, updir, dir);
-
-	glPushMatrix();
-		glMultMatrixf(transMatrix);
-		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
-	glPopMatrix();
+	#define wt weaponDef->visuals.texture1
+	va->AddVertexTC(drawPos - camera->right * fsize-camera->up * fsize, wt->xstart, wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * fsize-camera->up * fsize, wt->xend,   wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * fsize+camera->up * fsize, wt->xend,   wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * fsize+camera->up * fsize, wt->xstart, wt->yend,   col);
+	#undef wt
 }
 
 int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 sdir=pos-shieldPos;
-	sdir.Normalize();
+	const float3 rdir = (pos - shieldPos).Normalize();
+
 	if (ttl > 0) {
-		float3 dif2 = sdir - dir;
+		float3 dif2 = rdir - dir;
 		// steer away twice as fast as we can steer toward target
 		float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+
 		if (dif2.Length() < tracking) {
-			dir = sdir;
+			dir = rdir;
 		} else {
-			dif2 -= dir * (dif2.dot(dir));
+			dif2 -= (dir * (dif2.dot(dir)));
 			dif2.Normalize();
 			dir += dif2 * tracking;
 			dir.Normalize();

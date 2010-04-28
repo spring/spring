@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// MouseHandler.cpp: implementation of the CMouseHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "mmgr.h"
 
@@ -232,10 +231,8 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	activeButton = button;
 
-	if (activeReceiver) {
-		activeReceiver->MousePress(x, y, button);
+	if (activeReceiver && activeReceiver->MousePress(x, y, button))
 		return;
-	}
 
 	if(inMapDrawer &&  inMapDrawer->keyPressed){
 		inMapDrawer->MousePress(x, y, button);
@@ -266,18 +263,22 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if (!game->hideInterface) {
 		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 			CInputReceiver* recv=*ri;
-			if (recv && recv->MousePress(x, y, button)) {
-				activeReceiver = recv;
+			if (recv && recv->MousePress(x, y, button))
+			{
+				if (!activeReceiver)
+					activeReceiver = recv;
 				return;
 			}
 		}
 	} else {
 		if (luaInputReceiver && luaInputReceiver->MousePress(x, y, button)) {
-			activeReceiver = luaInputReceiver;
+			if (!activeReceiver)
+				activeReceiver = luaInputReceiver;
 			return;
 		}
 		if (guihandler && guihandler->MousePress(x,y,button)) {
-			activeReceiver = guihandler; // for default (rmb) commands
+			if (!activeReceiver)
+				activeReceiver = guihandler; // for default (rmb) commands
 			return;
 		}
 	}

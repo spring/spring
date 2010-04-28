@@ -1,8 +1,11 @@
-/** @file GameVersion.cpp
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+/**
 	@brief Defines the current version string.
 	Take special care when moving this file, the Spring buildbot refers to this
 	file to append the version string with the SVN revision number.
 */
+
 #include "StdAfx.h"
 #include "GameVersion.h"
 
@@ -14,9 +17,9 @@
 namespace SpringVersion
 {
 
-const char* const Major = "0.81";
-const char* const Minor = "2";
-const char* const Patchset = "1";
+const char* const Major = "0.81+";
+const char* const Minor = "0";
+const char* const Patchset = "0";
 const char* const Additional = "" // Build-Bot will write in here before compiling
 
 #if !defined GV_ADD_SPACE

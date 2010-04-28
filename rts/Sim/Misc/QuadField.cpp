@@ -1,20 +1,16 @@
-#include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
-// QuadField.cpp: implementation of the CQuadField class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "StdAfx.h"
 #include "mmgr.h"
 
 #include "QuadField.h"
 
-#include "GlobalSynced.h"
-#include "GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "LogOutput.h"
-#include "creg/STL_List.h"
+#include "System/creg/STL_List.h"
 
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
@@ -288,9 +284,6 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 	if(to.z>gs->mapy*SQUARE_SIZE-1){
 		to.z=gs->mapy*SQUARE_SIZE-1;
 	}
-//	if(to.x<0){
-///		logOutput.Print("error %f %f %f %f %f %f %f %f",start.x,start.z,to.x,to.z,dir.x,dir.z,dir.y,length);
-//	}
 
 	float dx=to.x-start.x;
 	float dz=to.z-start.z;
@@ -450,11 +443,6 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
 
 	vector<CFeature*> features;
-/*	if(pos.x<0 || pos.z<0 || pos.x>gs->mapx*SQUARE_SIZE || pos.z>gs->mapy*SQUARE_SIZE){
-		logOutput.Print("Trying to get units outside map %.0f %.0f",pos.x,pos.z);
-		return units;
-	}*/
-
 	vector<int> quads=GetQuads(pos,radius);
 
 	int tempNum=gs->tempNum++;

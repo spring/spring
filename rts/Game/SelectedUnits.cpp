@@ -1,6 +1,4 @@
-// SelectedUnits.cpp: implementation of the CSelectedUnits class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include <map>
@@ -22,7 +20,6 @@
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
 #include "LogOutput.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/GL/VertexArray.h"
 #include "SelectedUnitsAI.h"
 #include "Sim/Features/Feature.h"

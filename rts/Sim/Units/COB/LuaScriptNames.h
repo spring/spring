@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef LUASCRIPTNAMES_H
 #define LUASCRIPTNAMES_H

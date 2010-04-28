@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#include "StdAfx.h"
+#endif
+
 #include <string>
 #include <iostream>
 #include <SDL.h>
@@ -69,11 +73,11 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			data.SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
+			data.SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName));
 
 			CFileHandler f("maps/" + gameSetup->mapName);
 			if (!f.FileExists()) {
-				vfsHandler->AddMapArchiveWithDeps(gameSetup->mapName, false);
+				vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
 			}
 			gameSetup->LoadStartPositions(); // full mode
 		}
@@ -81,12 +85,12 @@ int main(int argc, char *argv[])
 		if (gameSetup->modHash != 0) {
 			data.SetModChecksum(gameSetup->modHash);
 		} else {
-			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
-			data.SetModChecksum(archiveScanner->GetModChecksum(modArchive));
+			const std::string modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
+			data.SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
 		}
 
 		data.SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(&settings, false, &data, gameSetup);
+		server = new CGameServer(settings.hostport, false, &data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
 #ifdef _WIN32

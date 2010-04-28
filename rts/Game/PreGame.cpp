@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <map>
@@ -36,7 +38,6 @@
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/glFont.h"
-#include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "aGui/Gui.h"
 #include "Exceptions.h"
@@ -58,7 +59,7 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 
 	if(!settings->isHost)
 	{
-		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
+		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
 		timer = SDL_GetTicks();
 	}
 	else
@@ -92,8 +93,8 @@ void CPreGame::LoadDemo(const std::string& demo)
 void CPreGame::LoadSavefile(const std::string& save)
 {
 	assert(settings->isHost);
-	savefile = new CLoadSaveHandler();
-	savefile->LoadGameStartInfo(savefile->FindSaveFile(save.c_str()));
+	savefile = ILoadSaveHandler::Create();
+	savefile->LoadGameStartInfo(save.c_str());
 	StartServer(savefile->scriptText);
 }
 
@@ -136,6 +137,7 @@ bool CPreGame::Draw()
 
 	font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "User name: %s", settings->myPlayerName.c_str());
 
+	font->glFormat(0.5f,0.25f,0.8f,FONT_CENTER | FONT_SCALE | FONT_NORM, "Press SHIFT + ESC to quit");
 	// credits
 	font->glFormat(0.5f,0.06f,1.0f,FONT_CENTER | FONT_SCALE | FONT_NORM, "Spring %s", SpringVersion::GetFull().c_str());
 	font->glPrint(0.5f,0.02f,0.6f,FONT_CENTER | FONT_SCALE | FONT_NORM, "This program is distributed under the GNU General Public License, see license.html for more info");
@@ -172,20 +174,21 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	// We must map the map into VFS this early, because server needs the start positions.
 	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
-	LoadMap(setup->mapName);
+	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
 
 	// Loading the start positions executes the map's Lua.
 	// This means start positions can NOT be influenced by map options.
 	// (Which is OK, since unitsync does not have map options available either.)
 	setup->LoadStartPositions();
 
-	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
-	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
-	startupData->SetMapChecksum(archiveScanner->GetMapChecksum(setup->mapName));
+	const std::string modArchive = archiveScanner->ArchiveFromName(setup->modName);
+	startupData->SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
+	const std::string mapArchive = archiveScanner->ArchiveFromName(setup->mapName);
+	startupData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
 
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
-	gameServer = new CGameServer(settings.get(), false, startupData, setup);
+	gameServer = new CGameServer(settings->hostport, (setup->playerStartingData.size() == 1), startupData, setup);
 	delete startupData;
 	gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 	good_fpu_control_registers("after CGameServer creation");
@@ -194,7 +197,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 void CPreGame::UpdateClientNet()
 {
-	if (!net->Active())
+	if (net->CheckTimeout())
 	{
 		logOutput.Print("Server not reachable");
 		globalQuit = true;
@@ -236,11 +239,14 @@ void CPreGame::UpdateClientNet()
 				if (!mapStartMusic.empty())
 					Channels::BGMusic.Play(mapStartMusic);
 
-				game = new CGame(gameSetup->mapName, modArchive, savefile);
+				game = new CGame(gameSetup->MapFile(), modArchive, savefile);
 
 				if (savefile) {
+					PrintLoadMsg("Loading game");
 					savefile->LoadGame();
 				}
+
+				UnloadStartPicture();
 
 				pregame=0;
 				delete this;
@@ -278,7 +284,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			TdfParser script(data->GetSetup().c_str(), data->GetSetup().size());
 			TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
-			tgame->AddPair("ScriptName", demoScript->scriptName);
 			tgame->AddPair("MapName", demoScript->mapName);
 			tgame->AddPair("Gametype", demoScript->modName);
 			tgame->AddPair("Demofile", demoName);
@@ -330,7 +335,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			}
 			logOutput.Print("Starting GameServer");
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
+			gameServer = new CGameServer(settings->hostport, true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			delete data;
 			good_fpu_control_registers("after CGameServer creation");
@@ -346,39 +351,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	}
 
 	assert(gameServer);
-}
-
-void CPreGame::LoadMap(const std::string& mapName)
-{
-	static bool alreadyLoaded = false;
-
-	if (!alreadyLoaded)
-	{
-		vfsHandler->AddMapArchiveWithDeps(mapName, false);
-		alreadyLoaded = true;
-	}
-}
-
-
-void CPreGame::LoadMod(const std::string& modName)
-{
-	static bool alreadyLoaded = false;
-
-	if (!alreadyLoaded) {
-		// Map all required archives depending on selected mod(s)
-		std::string modArchive = archiveScanner->ModNameToModArchive(modName);
-		vector<string> ars = archiveScanner->GetArchives(modArchive);
-		if (ars.empty()) {
-			throw content_error("Couldn't find any archives for mod '" + modName + "'");
-		}
-		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i) {
-
-			if (!vfsHandler->AddArchive(*i, false)) {
-				throw content_error("Couldn't load archive '" + *i + "' for mod '" + modName + "'.");
-			}
-		}
-		alreadyLoaded = true;
-	}
 }
 
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
@@ -410,26 +382,18 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
 		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
-	LoadMap(gameSetup->mapName);
-	archiveScanner->CheckMap(gameSetup->mapName, gameData->GetMapChecksum());
+	vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
+	archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 
 	// This MUST be loaded this late, since this executes map Lua code which
 	// may call Spring.GetMapOptions(), which NEEDS gameSetup to be set!
 	if (!mapInfo) {
-		mapInfo = new CMapInfo(gameSetup->mapName);
+		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
-
-	const std::string mapWantedScript(mapInfo->GetStringValue("script"));
-	if (!mapWantedScript.empty()) {
-		temp->scriptName = mapWantedScript;
-	}
-
-	LogObject() << "Using script " << gameSetup->scriptName << "\n";
-	CScriptHandler::SelectScript(gameSetup->scriptName);
 
 	LogObject() << "Using mod " << gameSetup->modName << "\n";
-	LoadMod(gameSetup->modName);
-	modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
+	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
+	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
 	LogObject() << "Using mod archive " << modArchive << "\n";
-	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
+	archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 }

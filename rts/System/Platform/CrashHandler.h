@@ -1,5 +1,7 @@
-#ifndef CRASHHANDLER
-#define CRASHHANDLER
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _CRASH_HANDLER_H_
+#define _CRASH_HANDLER_H_
 
 namespace CrashHandler {
 	void Install();
@@ -10,4 +12,4 @@ namespace CrashHandler {
 	void ClearSimWDT(bool disable = false);
 };
 
-#endif // CRASHHANDLER
+#endif // _CRASH_HANDLER_H_

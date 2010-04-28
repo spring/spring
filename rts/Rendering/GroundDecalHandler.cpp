@@ -1,9 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
 #include "mmgr.h"
 
-#include "FileSystem/FileSystem.h"
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
@@ -11,17 +12,17 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "ConfigHandler.h"
-#include "ShadowHandler.h"
-#include "GL/VertexArray.h"
-#include "Textures/Bitmap.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "GlobalUnsynced.h"
-#include "LogOutput.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileSystem.h"
 
 using std::list;
 using std::min;
@@ -75,9 +76,9 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 	delete[] buf;
 
 	if (shadowHandler->canUseShadows) {
-		decalVP    = LoadVertexProgram("GroundDecals.vp");
-		decalFPsmf = LoadFragmentProgram("GroundDecalsSMF.fp");
-		decalFPsm3 = LoadFragmentProgram("GroundDecalsSM3.fp");
+		decalVP    = LoadVertexProgram("ARB/GroundDecals.vp");
+		decalFPsmf = LoadFragmentProgram("ARB/GroundDecalsSMF.fp");
+		decalFPsm3 = LoadFragmentProgram("ARB/GroundDecalsSM3.fp");
 	}
 }
 
@@ -745,7 +746,9 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 
 void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 {
-	if(decalLevel == 0)
+	if (decalLevel == 0)
+		return;
+	if (unit->unitDef->trackType < 0)
 		return;
 
 	int zp = (int(unit->pos.z)/SQUARE_SIZE*2);
@@ -760,7 +763,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 
 	float3 pos = unit->pos+unit->frontdir*unit->unitDef->trackOffset;
 
-	TrackPart *tp = new TrackPart;
+	TrackPart* tp = new TrackPart;
 	tp->pos1 = pos+unit->rightdir*unit->unitDef->trackWidth*0.5f;
 	tp->pos1.y = ground->GetHeight2(tp->pos1.x,tp->pos1.z);
 	tp->pos2 = pos-unit->rightdir*unit->unitDef->trackWidth*0.5f;
@@ -811,7 +814,6 @@ void CGroundDecalHandler::RemoveUnit(CUnit* unit)
 
 int CGroundDecalHandler::GetTrackType(const std::string& name)
 {
-
 	if (decalLevel == 0) {
 		return 0;
 	}
@@ -1049,6 +1051,8 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 {
 	if (decalLevel == 0)
 		return;
+	if (building->unitDef->buildingDecalType < 0)
+		return;
 
 	int posx = int(building->pos.x / 8);
 	int posy = int(building->pos.z / 8);
@@ -1155,17 +1159,4 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 	buildingDecalTypes.push_back(tt);
 
 	return (buildingDecalTypes.size() - 1);
-}
-
-
-void CGroundDecalHandler::SetTexGen(float scalex,float scaley, float offsetx, float offsety)
-{
-	GLfloat plan[]={scalex,0,0,offsetx};
-	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_S,GL_EYE_PLANE,plan);
-	glEnable(GL_TEXTURE_GEN_S);
-	GLfloat plan2[]={0,0,scaley,offsety};
-	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-	glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
-	glEnable(GL_TEXTURE_GEN_T);
 }

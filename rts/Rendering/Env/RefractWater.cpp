@@ -1,3 +1,4 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -29,10 +30,10 @@ void CRefractWater::LoadGfx()
 	glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 	if(target == GL_TEXTURE_RECTANGLE_ARB) {
 		glTexImage2D(target, 0, 3, gu->viewSizeX, gu->viewSizeY, 0, GL_RGB, GL_INT, 0);
-		waterFP = LoadFragmentProgram("waterRefractTR.fp");
+		waterFP = LoadFragmentProgram("ARB/waterRefractTR.fp");
 	} else{
 		glTexImage2D(target, 0, 3, next_power_of_2(gu->viewSizeX), next_power_of_2(gu->viewSizeY), 0, GL_RGB, GL_INT, 0);
-		waterFP = LoadFragmentProgram("waterRefractT2D.fp");
+		waterFP = LoadFragmentProgram("ARB/waterRefractT2D.fp");
 	}
 }
 

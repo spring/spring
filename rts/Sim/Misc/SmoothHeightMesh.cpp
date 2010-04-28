@@ -1,7 +1,8 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include <vector>
 #include <cassert>
 #include <cstring>
-
 
 #include "SmoothHeightMesh.h"
 
@@ -11,6 +12,8 @@
 #include "Map/ReadMap.h"
 #include "LogOutput.h"
 #include "TimeProfiler.h"
+
+#include "mmgr.h"
 
 using std::vector;
 
@@ -71,6 +74,13 @@ float SmoothHeightMesh::GetHeight(float x, float y)
 	return Interpolate(x, y, maxx, maxy, resolution, mesh);
 }
 
+float SmoothHeightMesh::GetHeight2(float x, float y)
+{
+	assert(mesh);
+	float h = Interpolate(x, y, maxx, maxy, resolution, mesh);
+	return (h < 0.0f ? 0.0f : h);
+}
+
 
 float SmoothHeightMesh::SetHeight(int index, float h)
 {
@@ -113,6 +123,10 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 	maximums.resize(maxx+1);
 	rows.resize(maxx+1);
 
+	// fill maximums with lowest possible value
+	for(int x = 0; x <= maxx; x++)
+		maximums[x] = -1e20f;
+
 	// initialize the algorithm
 	for (int y = 0; y <= std::min(maxy, intrad); ++y) {
 		for (int x = 0; x <= maxx; ++x)  {
@@ -151,7 +165,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 				assert(i <= maxx);
 
 				float storedx = i * resolution;
-				assert(ground->GetHeight(storedx, cury) <= maximums[i]);
+				assert(ground->GetHeight2(storedx, cury) <= maximums[i]);
 
 				if (val < maximums[i]) {
 					val = maximums[i];
@@ -160,7 +174,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 
 #if defined(_DEBUG) && defined(SMOOTHMESH_CORRECTNESS_CHECK)
 			// naive algorithm
-			float val2 = -1.f;
+			float val2 = -1e20f;
 			for (float y1 = cury - smoothRadius; y1 <= cury + smoothRadius; y1 += resolution) {
 				for (float x1 = curx - smoothRadius; x1 <= curx + smoothRadius; x1 += resolution) {
 					// CGround::GetHeight() never returns values < 0
@@ -172,10 +186,12 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 			}
 			assert(val2 == val);
 #endif
+
+#ifndef NDEBUG
 			float h = ground->GetHeight(curx, cury);
-			// use smoothstep
-			assert(val <= readmap->currMaxHeight);
+			assert(val <= std::max(readmap->currMaxHeight, 0.f));
 			assert(val >= h);
+#endif
 
 			mesh[x + y*maxx] = val;
 			// stats
@@ -188,13 +204,13 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 		for (int x = 0; x <= maxx; ++x) {
 #ifdef _DEBUG
 			for (int y1 = std::max(0, y-intrad); y1<=std::min(maxy, y+intrad); ++y1) {
-				assert(ground->GetHeight(x*resolution, y1*resolution) <= maximums[x]);
+				assert(ground->GetHeight2(x*resolution, y1*resolution) <= maximums[x]);
 			}
 #endif
 			float curx = x * resolution;
 			if (rows[x] <= y-intrad) {
 				// find a new maximum if the old one left the window
-				maximums[x] = -1.f;
+				maximums[x] = -1e20f;
 				for (int y1 = std::max(0, y-intrad+1); y1<=std::min(maxy, nextrow); ++y1) {
 					float h = ground->GetHeight(curx, y1*resolution);
 					if (maximums[x] < h) {
@@ -217,7 +233,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 			assert(rows[x] >= y - intrad + 1);
 #ifdef _DEBUG
 			for (int y1 = std::max(0, y-intrad+1); y1<=std::min(maxy, y+intrad+1); ++y1) {
-				assert(ground->GetHeight(curx, y1*resolution) <= maximums[x]);
+				assert(ground->GetHeight2(curx, y1*resolution) <= maximums[x]);
 			}
 #endif
 		}
@@ -227,13 +243,13 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 			for (int x = 0; x <= maxx; ++x) {
 				assert(rows[x] > y - intrad);
 				assert(rows[x] <= maxy);
-				assert(maximums[x] <= readmap->currMaxHeight);
+				assert(maximums[x] <= std::max(readmap->currMaxHeight, 0.f));
 				assert(maximums[x] >= readmap->currMinHeight);
 			}
 		}
 		for (int y1 = std::max(0, y-intrad+1); y1<=std::min(maxy, y+intrad+1); ++y1) {
 			for (int x1 = 0; x1 <= maxx; ++x1) {
-				assert(ground->GetHeight(x1*resolution, y1*resolution) <= maximums[x1]);
+				assert(ground->GetHeight2(x1*resolution, y1*resolution) <= maximums[x1]);
 			}
 		}
 #endif
@@ -242,8 +258,9 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 
 	// actually smooth
 	const size_t smoothsize = (size_t)((this->maxx+1) * (this->maxy + 1));
-	const int smoothrad = 4;
+	const int smoothrad = 3;
 	float *smoothed = new float[smoothsize];
+	/*
 	for (int y = 0; y <= maxy; ++y) {
 		for (int x = 0; x <= maxx; ++x) {
 			// sum and average
@@ -259,10 +276,83 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 			smoothed[idx] = std::max(ground->GetHeight(x*resolution, y*resolution), smoothed[idx]/(float)counter);
 		}
 	}
-	delete [] mesh;
+	*/
+
+	float n = 2*smoothrad + 1;
+	float recipn = 1.f/n;
+
+	// approximate gaussian blur
+	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {
+		/* horizontal pass */
+		for (int y = 0; y <= maxy; ++y) {
+			float avg = 0;
+			for (int x = 0; x <= 2*smoothrad; ++x)
+				avg += mesh[x + y * maxx];
+			for (int x = 0; x <= maxx; ++x) {
+				int idx = x + y * maxx;
+				if (x <= smoothrad) {
+					smoothed[idx] = 0.;
+					for (int x1 = 0; x1 <= x + smoothrad; ++x1)
+						smoothed[idx] += mesh[x1 + y * maxx];
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(x + smoothrad + 1)));
+				} else if (x > maxx-smoothrad) {
+					smoothed[idx] = 0.;
+					for (int x1 = x-smoothrad; x1 <= maxx; ++x1)
+						smoothed[idx] += mesh[x1 + y * maxx];
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(maxx - (x - smoothrad) + 1)));
+				} else {
+					avg += mesh[idx + smoothrad] - mesh[idx - smoothrad - 1];
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  recipn * avg));
+				}
+				assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.f));
+				assert(smoothed[idx] >= readmap->currMinHeight);
+			}
+		}
+		memcpy(mesh, smoothed, smoothsize*sizeof(float));
+
+		/* vertical pass */
+		for (int x = 0; x <= maxx; ++x) {
+			float avg = 0;
+			for (int y = 0; y <= 2*smoothrad; ++y)
+				avg += mesh[x + y * maxx];
+			for (int y = 0; y <= maxy; ++y) {
+				int idx = x + y * maxx;
+				if (y <= smoothrad) {
+					smoothed[idx] = 0.;
+					for (int y1 = 0; y1 <= y + smoothrad; ++y1)
+						smoothed[idx] += mesh[x + y1 * maxx];
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(y + smoothrad + 1)));
+				} else if (y > maxy-smoothrad) {
+					smoothed[idx] = 0.;
+					for (int y1 = y - smoothrad; y1 <= maxy; ++y1)
+						smoothed[idx] += mesh[x + y1 * maxx];
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  smoothed[idx]/(maxy - (y - smoothrad) + 1)));
+				} else {
+					avg += mesh[x + (y+smoothrad)*maxx] - mesh[x + (y-smoothrad-1)*maxx];
+					smoothed[idx] = std::min(readmap->currMaxHeight,
+								 std::max(ground->GetHeight(x*resolution, y*resolution),
+									  recipn * avg));
+				}
+				assert(smoothed[idx] <= std::max(readmap->currMaxHeight, 0.f));
+				assert(smoothed[idx] >= readmap->currMinHeight);
+			}
+		}
+		memcpy(mesh, smoothed, smoothsize*sizeof(float));
+	}
+
+	delete[] origMesh;
+	origMesh = mesh;
 	mesh = smoothed;
-	origMesh = new float[smoothsize];
-	memcpy(origMesh, mesh, smoothsize);
 }
 
 
@@ -284,10 +374,10 @@ void SmoothHeightMesh::DrawWireframe(float yoffset)
 	const float inc = 4*resolution;
 	for (float z = 0; z < this->fmaxy; z += inc) {
 		for (float x = 0; x < this->fmaxx; x += inc) {
-			float h1 = this->GetHeight(x, z);
-			float h2 = this->GetHeight(x + inc, z);
-			float h3 = this->GetHeight(x + inc, z + inc);
-			float h4 = this->GetHeight(x, z + inc);
+			float h1 = this->GetHeight2(x, z);
+			float h2 = this->GetHeight2(x + inc, z);
+			float h3 = this->GetHeight2(x + inc, z + inc);
+			float h4 = this->GetHeight2(x, z + inc);
 
 			glVertex3f(x,
 				   h1 + yoffset,

@@ -35,7 +35,7 @@ SetCompressor lzma
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; Licensepage
-!insertmacro MUI_PAGE_LICENSE "gpl.txt"
+!insertmacro MUI_PAGE_LICENSE "..\doc\gpl-2.0.txt"
 
 ; Components page
 !insertmacro MUI_PAGE_COMPONENTS
@@ -210,30 +210,20 @@ SectionGroup "Tools"
   SectionEnd
 SectionGroupEnd
 
+
+!macro SkirmishAIInstSection skirAiName
+	Section "${skirAiName}" SEC_${skirAiName}
+		!define INSTALL
+			!insertmacro InstallSkirmishAI ${skirAiName}
+		!undef INSTALL
+	SectionEnd
+!macroend
+
 SectionGroup "Skirmish AI plugins (Bots)"
-	Section "AAI" SEC_AAI
-	!define INSTALL
-	!include "sections\AIs\AAI.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "KAIK" SEC_KAIK
-	!define INSTALL
-	!include "sections\AIs\KAIK.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "RAI" SEC_RAI
-	!define INSTALL
-	!include "sections\AIs\RAI.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "E323AI" SEC_E323AI
-	!define INSTALL
-	!include "sections\AIs\E323AI.nsh"
-	!undef INSTALL
-	SectionEnd
+	!insertmacro SkirmishAIInstSection "AAI"
+	!insertmacro SkirmishAIInstSection "KAIK"
+	!insertmacro SkirmishAIInstSection "RAI"
+	!insertmacro SkirmishAIInstSection "E323AI"
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
@@ -275,10 +265,10 @@ Section Uninstall
   !include "sections\shortcuts.nsh"
   !include "sections\archivemover.nsh"
   !include "sections\springDownloader.nsh"
-  !include "sections\AIs\AAI.nsh"
-  !include "sections\AIs\KAIK.nsh"
-  !include "sections\AIs\RAI.nsh"
-  !include "sections\AIs\E323AI.nsh"
+  !insertmacro DeleteSkirmishAI "AAI"
+  !insertmacro DeleteSkirmishAI "KAIK"
+  !insertmacro DeleteSkirmishAI "RAI"
+  !insertmacro DeleteSkirmishAI "E323AI"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
 

@@ -1,9 +1,5 @@
-/*---------------------------------------------------------------------
- Terrain Renderer using texture splatting and geomipmapping
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
- Copyright (2006) Jelmer Cnossen
- This code is released under GPL license (See LICENSE.html for info)
----------------------------------------------------------------------*/
 #include "StdAfx.h"
 
 #include "TerrainBase.h"
@@ -263,7 +259,7 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	// diffuse + bumpmap in one pass?
 	if (total.Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()=%d, SM_DiffuseBumpmapSP", sd->normalMapStages.size());
+		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapSP;
 	}
 
@@ -277,7 +273,7 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	// is multipass possible?
 	if (diffuseRQ.Fits(hwmax) && (bumpmapRQ + special).Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()=%d, SM_DiffuseBumpmapMP", sd->normalMapStages.size());
+		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapMP;
 	}
 
@@ -431,7 +427,7 @@ void ShaderBuilder::AddPPDefines(ShaderDef* sd, Shader& shader, uint passIndex)
 	if (ShadowMapping())
 		shader.texts.push_back("#define UseShadowMapping\n");
 
-	shader.AddFile("shaders/terrainCommon.glsl");
+	shader.AddFile("shaders/GLSL/terrainCommon.glsl");
 	char specularExponentStr[20];
 	SNPRINTF(specularExponentStr, 20, "%5.3f", sd->specularExponent);
 	shader.texts.push_back(string("const float specularExponent = ") + specularExponentStr + ";\n");
@@ -456,7 +452,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	AddPPDefines(sd, fragmentShader, passIndex);
 	fragmentShader.texts.push_back(textureSamplers);
 
-	fragmentShader.AddFile("shaders/terrainFragmentShader.glsl");
+	fragmentShader.AddFile("shaders/GLSL/terrainFragmentShader.glsl");
 
 	string gentxt = "vec4 CalculateColor()  { vec4 color; float curalpha; \n" + operations;
 
@@ -505,7 +501,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 	tcgen += "}\n";
 	vertexShader.texts.push_back(tcgen);
 
-	vertexShader.AddFile("shaders/terrainVertexShader.glsl");
+	vertexShader.AddFile("shaders/GLSL/terrainVertexShader.glsl");
 	vertexShader.Build(GL_VERTEX_SHADER_ARB);
 	d_trace("Vertex shader built successfully.");
 
@@ -896,10 +892,10 @@ SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
 
 	if(buf->IsRect())
 		fs.texts.push_back("#define UseTextureRECT");
-	fs.AddFile("shaders/terrainSimpleCopyFS.glsl");
+	fs.AddFile("shaders/GLSL/terrainSimpleCopyFS.glsl");
 	fs.Build(GL_FRAGMENT_SHADER_ARB);
 
-	vs.AddFile("shaders/terrainSimpleCopyVS.glsl");
+	vs.AddFile("shaders/GLSL/terrainSimpleCopyVS.glsl");
 	vs.Build(GL_VERTEX_SHADER_ARB);
 
 	vertexShader = vs.handle;

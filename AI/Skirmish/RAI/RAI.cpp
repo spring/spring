@@ -1,16 +1,15 @@
 #include "RAI.h"
-#include "ExternalAI/IGlobalAICallback.h"
+#include "LegacyCpp/IGlobalAICallback.h"
 //#include "ExternalAI/IAICheats.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "CUtils/Util.h"
-//#include <vector>
-//#include <iostream>
+#include "System/Util.h"
 #include <stdio.h>
 //#include <direct.h>	// mkdir function (windows)
 //#include <sys/stat.h>	// mkdir function (linux)
 #include <time.h>		// time(NULL)
-//#include "KrogsMetalClass-v0.4/MetalMap.h"
 
 static GlobalResourceMap* GRMap=0;
 static GlobalTerrainMap* GTMap=0;
@@ -143,8 +142,8 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 	{
 		ClearLogFiles();
 		*l<<"Loading Global RAI...";
-		*l<<"\n Mod = "<<cb->GetModName();
-		*l<<"\n Map = "<<cb->GetMapName();
+		*l<<"\n Mod = " << cb->GetModHumanName() << "(" << IntToString(cb->GetModHash(), "%x") << ")";
+		*l<<"\n Map = " << cb->GetMapName()      << "(" << IntToString(cb->GetMapHash(), "%x") << ")";
 		int seed = time(NULL);
 		srand(seed);
 		RAIs=0;
@@ -1104,6 +1103,33 @@ bool cRAI::LocateFile(IAICallback* cb, const string& relFileName, string& absFil
 	}
 
 	return located;
+}
+
+static bool IsFSGoodChar(const char c) {
+
+	if ((c >= '0') && (c <= '9')) {
+		return true;
+	} else if ((c >= 'a') && (c <= 'z')) {
+		return true;
+	} else if ((c >= 'A') && (c <= 'Z')) {
+		return true;
+	} else if ((c == '.') || (c == '_') || (c == '-')) {
+		return true;
+	}
+
+	return false;
+}
+std::string cRAI::MakeFileSystemCompatible(const std::string& str) {
+
+	std::string cleaned = str;
+
+	for (std::string::size_type i=0; i < cleaned.size(); i++) {
+		if (!IsFSGoodChar(cleaned[i])) {
+			cleaned[i] = '_';
+		}
+	}
+
+	return cleaned;
 }
 
 void cRAI::RemoveLogFile(string relFileName) const {

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef KEYBINDINGS_H
 #define KEYBINDINGS_H
-// KeyBindings.h: interface for the CKeyBindings class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
 #include <string>

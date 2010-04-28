@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TIMEPROFILER_H
 #define TIMEPROFILER_H
-// TimeProfiler.h: interface for the CTimeProfiler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <map>
@@ -27,7 +26,6 @@ protected:
 
 /**
  * @brief Time profiling helper class
- * @author Karl-Robert Ernst
  *
  * Construct an instance of this class where you want to begin time measuring,
  * and destruct it at the end (or let it be autodestructed).

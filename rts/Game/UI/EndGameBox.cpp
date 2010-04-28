@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 
 #include <cstdio>
@@ -282,9 +284,8 @@ void CEndGameBox::Draw()
 
 		va->DrawArrayT(GL_QUADS);
 
-		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f){
-
-			int sel=(int)floor(-(my-box.y1-0.57f)*50);
+		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f) {
+			int sel=-(int)floor(50 * (my - box.y1 - 0.57f));
 
 			glColor4f(0.7f,0.2f,0.2f,guiAlpha);
 			glDisable(GL_TEXTURE_2D);
@@ -313,8 +314,6 @@ void CEndGameBox::Draw()
 			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/CTeam::statsPeriod;
 
 		int numPoints=stats[0].values[0].size();
-		float scalex=0.54f / std::max(1.0f,numPoints-1.0f);
-		float scaley=0.54f / maxy;
 
 		for (int a = 0; a < 5; ++a) {
 			font->glPrint(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, FONT_SCALE | FONT_NORM,
@@ -340,6 +339,9 @@ void CEndGameBox::Draw()
 				glVertex3f(box.x1+0.55f,box.y1+0.64f,0);
 		glEnd();
 		glDisable(GL_LINE_STIPPLE);
+
+		const float scalex = 0.54f / std::max(1.0f,numPoints-1.0f);
+		const float scaley = 0.54f / maxy;
 
 		for(int team=0; team<teamHandler->ActiveTeams(); team++){
 			if (teamHandler->Team(team)->gaia) continue;

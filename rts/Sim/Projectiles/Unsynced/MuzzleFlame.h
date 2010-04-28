@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MUZZLEFLAME_H
 #define MUZZLEFLAME_H
 
@@ -10,7 +12,7 @@ class CMuzzleFlame :
 
 	void creg_Serialize(creg::ISerializer& s);
 public:
-	CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size GML_PARG_H);
+	CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size);
 	~CMuzzleFlame(void);
 
 	void Draw(void);

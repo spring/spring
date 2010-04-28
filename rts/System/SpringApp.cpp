@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 
@@ -77,6 +79,7 @@ bool globalQuit = false;
 boost::uint8_t *keys = 0;
 boost::uint16_t currentUnicode = 0;
 bool fullscreen = true;
+ClientSetup* startsetup = NULL;
 
 /**
  * @brief xres default
@@ -165,8 +168,8 @@ bool SpringApp::Initialize()
 	mouseInput = IMouseInput::Get();
 
 	// Global structures
-	gs = new CGlobalSyncedStuff();
-	gu = new CGlobalUnsyncedStuff();
+	gs = new CGlobalSynced();
+	gu = new CGlobalUnsynced();
 
 	if (cmdline->IsSet("minimise")) {
 		gu->active = false;
@@ -193,17 +196,7 @@ bool SpringApp::Initialize()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
 
-	// Runtime compress textures?
-	if (GLEW_ARB_texture_compression) {
-		// we don't even need to check it, 'cos groundtextures must have that extension
-		// default to off because it reduces quality (smallest mipmap level is bigger)
-		gu->compressTextures = !!configHandler->Get("CompressTextures", 0);
-	}
-
-	// use some ATI bugfixes?
-	if ((gu->atiHacks = !!configHandler->Get("AtiHacks", gu->haveATI? 1: 0))) {
-		logOutput.Print("ATI hacks enabled\n");
-	}
+	gu->PostInit();
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -752,7 +745,7 @@ void SpringApp::Startup()
 
 		demoPlayerName += " (spec)";
 
-		ClientSetup* startsetup = new ClientSetup();
+		startsetup = new ClientSetup();
 			startsetup->isHost       = true; // local demo play
 			startsetup->myPlayerName = demoPlayerName;
 
@@ -766,7 +759,7 @@ void SpringApp::Startup()
 	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
 	{
 		std::string savefile = inputFile;
-		ClientSetup* startsetup = new ClientSetup();
+		startsetup = new ClientSetup();
 		startsetup->isHost = true;
 		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
 #ifdef SYNCDEBUG
@@ -786,7 +779,7 @@ void SpringApp::Startup()
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + startscript);
-		ClientSetup* startsetup = new ClientSetup();
+		startsetup = new ClientSetup();
 		startsetup->Init(buf);
 
 		// commandline parameters overwrite setup
@@ -1137,6 +1130,8 @@ void SpringApp::Shutdown()
 	SDL_Quit();
 	delete gs;
 	delete gu;
+	if(startsetup)
+		delete startsetup;
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif

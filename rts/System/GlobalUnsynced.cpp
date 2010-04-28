@@ -1,43 +1,37 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file GlobalStuff.cpp
  * @brief Globally accessible stuff
- *
- * Contains implementation of synced and
- * unsynced global stuff
+ * Contains implementation of synced and unsynced global stuff.
  */
+
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
-#include "GlobalUnsynced.h"
 
-#include <cstring>
+#include <string>
 #include <assert.h>
+#include <SDL_timer.h>
 
-#include "mmgr.h"
-#include "Util.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Game/GameHelper.h"
+#include "GlobalUnsynced.h"
 #include "Game/GameSetup.h"
-#include "Sync/SyncTracer.h"
-#include "Sim/Misc/Team.h"
-#include "Game/Player.h"
+#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Rendering/Textures/TAPalette.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
-#include "SDL_timer.h"
+#include "System/mmgr.h"
+#include "System/Util.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
 
 
 /**
  * @brief global unsynced
  *
- * Global instance of CGlobalUnsyncedStuff
+ * Global instance of CGlobalUnsynced
  */
-CGlobalUnsyncedStuff* gu;
+CGlobalUnsynced* gu;
 
 
-CR_BIND(CGlobalUnsyncedStuff,);
+CR_BIND(CGlobalUnsynced, );
 
-CR_REG_METADATA(CGlobalUnsyncedStuff, (
+CR_REG_METADATA(CGlobalUnsynced, (
 				CR_MEMBER(teamNanospray), // ??
 				CR_MEMBER(modGameTime),
 				CR_MEMBER(gameTime),
@@ -61,59 +55,83 @@ CR_REG_METADATA(CGlobalUnsyncedStuff, (
 				CR_RESERVED(64)
 				));
 
-/**
- * Initializes variables in CGlobalUnsyncedStuff
- */
-CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
+CGlobalUnsynced::CGlobalUnsynced()
 {
 	boost::uint64_t randnum;
 	randnum = SDL_GetTicks();
-	usRandSeed = randnum&0xffffffff;
+	usRandSeed = randnum & 0xffffffff;
+
 	modGameTime = 0;
 	gameTime = 0;
 	lastFrameTime = 0;
 	drawFrame = 1;
+
 	viewSizeX = 100;
 	viewSizeY = 100;
 	pixelX = 0.01f;
 	pixelY = 0.01f;
 	aspectRatio = 1.0f;
+
 	myPlayerNum = 0;
 	myTeam = 1;
 	myAllyTeam = 1;
+
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
-	drawdebug = false;
+
+	drawSky      = true;
+	drawWater    = true;
+	drawGround   = true;
+	drawFog      = true;
+	drawMapMarks = true;
+	drawdebug    = false;
+
 	active = true;
 	viewRange = MAX_VIEW_RANGE;
 	timeOffset = 0;
-	drawFog = true;
+
 	teamNanospray = false;
-	directControl = 0;
+	moveWarnings  = !!configHandler->Get("MoveWarnings", 0);
+	buildWarnings = !!configHandler->Get("BuildWarnings", 0);
+
+	directControl = NULL;
+
 	compressTextures = false;
 	atiHacks = false;
+}
+
+
+
+void CGlobalUnsynced::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
+	haveARB = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	haveGLSL = !!GLEW_VERSION_2_0;
 
 	{
-		std::string vendor = std::string((char*) glGetString(GL_VENDOR));
-		StringToLowerInPlace(vendor);
-		haveATI = (vendor.find("ati ") != string::npos);
+		std::string vendor = StringToLower(std::string((char*) glGetString(GL_VENDOR)));
+		haveATI = (vendor.find("ati ") != std::string::npos);
 
 		if (haveATI) {
-			std::string renderer = std::string((char*) glGetString(GL_RENDERER));
-			StringToLowerInPlace(renderer);
-			supportNPOTs = (renderer.find(" x") == string::npos && renderer.find(" 9") == string::npos); //! x-series doesn't support NPOTs (but hd-series does)
+			std::string renderer = StringToLower(std::string((char*) glGetString(GL_RENDERER)));
+			//! x-series doesn't support NPOTs (but hd-series does)
+			supportNPOTs = (renderer.find(" x") == std::string::npos && renderer.find(" 9") == std::string::npos);
 		}
+	}
+
+	// Runtime compress textures?
+	if (GLEW_ARB_texture_compression) {
+		// we don't even need to check it, 'cos groundtextures must have that extension
+		// default to off because it reduces quality (smallest mipmap level is bigger)
+		compressTextures = !!configHandler->Get("CompressTextures", 0);
+	}
+
+	// use some ATI bugfixes?
+	if ((atiHacks = !!configHandler->Get("AtiHacks", haveATI? 1: 0))) {
+		logOutput.Print("ATI hacks enabled\n");
 	}
 }
 
-/**
- * Destroys variables in CGlobalUnsyncedStuff
- */
-CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
-{
-}
 
 
 
@@ -122,7 +140,7 @@ CGlobalUnsyncedStuff::~CGlobalUnsyncedStuff()
  *
  * Returns an unsynced random integer
  */
-int CGlobalUnsyncedStuff::usRandInt()
+int CGlobalUnsynced::usRandInt()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
 	return usRandSeed & RANDINT_MAX;
@@ -133,10 +151,10 @@ int CGlobalUnsyncedStuff::usRandInt()
  *
  * returns an unsynced random float
  */
-float CGlobalUnsyncedStuff::usRandFloat()
+float CGlobalUnsynced::usRandFloat()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return float(usRandSeed & RANDINT_MAX)/RANDINT_MAX;
+	return float(usRandSeed & RANDINT_MAX) / RANDINT_MAX;
 }
 
 /**
@@ -144,7 +162,7 @@ float CGlobalUnsyncedStuff::usRandFloat()
  *
  * returns an unsynced random vector
  */
-float3 CGlobalUnsyncedStuff::usRandVector()
+float3 CGlobalUnsynced::usRandVector()
 {
 	float3 ret;
 	do {
@@ -156,7 +174,7 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 	return ret;
 }
 
-void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
+void CGlobalUnsynced::SetMyPlayer(const int mynumber)
 {
 	myPlayerNum = mynumber;
 	if (gameSetup && gameSetup->playerStartingData.size() > mynumber)

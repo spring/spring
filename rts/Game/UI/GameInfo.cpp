@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <string>
 #include <vector>
@@ -195,9 +197,6 @@ void CGameInfo::Draw()
 
 	labels.push_back("Limited DGun:");
 	values.push_back(gameSetup->limitDgun);
-
-	labels.push_back("Diminishing Metal:");
-	values.push_back(gameSetup->diminishingMMs);
 
 	labels.push_back("Map Size:");
 	sprintf(buf, "%ix%i", readmap->width / 64, readmap->height / 64);

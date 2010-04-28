@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef FILESYSTEMHANDLER_H
 #define FILESYSTEMHANDLER_H
 
@@ -34,6 +36,17 @@ public:
 	 * on all other systems: ^/$
 	 */
 	static bool IsFSRoot(const std::string& path);
+
+	/**
+	 * Returns true if the path ends with the platform native path separator
+	 * (win: '\\', rest: '/').
+	 */
+	static bool HasPathSepAtEnd(const std::string& path);
+	/**
+	 * Ensures the path ends with the platform native path separator
+	 * (win: '\\', rest: '/').
+	 */
+	static void EnsurePathSepAtEnd(std::string& path);
 
 	// custom functions
 	/**

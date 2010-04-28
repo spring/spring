@@ -267,7 +267,7 @@ if env['strip']:
 ### Build unitsync shared object
 ################################################################################
 
-# HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
+# HACK   we should probably compile libraries from 7zip and minizip
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
 #
@@ -301,9 +301,7 @@ unitsync_fs_files       = usync_get_source('rts/System/FileSystem/', exclude_lis
 unitsync_lua_files      = usync_get_source('rts/lib/lua/src');
 unitsync_7zip_files     = usync_get_source('rts/lib/7z') ##+ usync_get_source('rts/lib/7z/Archive/7z')
 unitsync_minizip_files  = usync_get_source('rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
-unitsync_hpiutil2_files = usync_get_source('rts/lib/hpiutil2');
 unitsync_extra_files = [
-	'rts/ExternalAI/LuaAIImplHandler.cpp',
 	'rts/Game/GameVersion.cpp',
 	'rts/Lua/LuaUtils.cpp',
 	'rts/Lua/LuaIO.cpp',
@@ -323,7 +321,6 @@ unitsync_files.extend(unitsync_fs_files)
 unitsync_files.extend(unitsync_lua_files)
 unitsync_files.extend(unitsync_7zip_files)
 unitsync_files.extend(unitsync_minizip_files)
-unitsync_files.extend(unitsync_hpiutil2_files)
 unitsync_files.extend(unitsync_extra_files)
 
 unitsync_objects = []
@@ -380,7 +377,7 @@ ai_env = env.Clone(
 )
 remove_precompiled_header(ai_env)
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=env['builddir'])
-SConscript(['AI/SConscript'], exports=['env', 'ai_env', 'streflop_lib'])
+#SConscript(['AI/SConscript'], exports=['env', 'ai_env', 'streflop_lib'])
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=ai_env['builddir'])
 
 

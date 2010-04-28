@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 
 #include "Map/SMF/BFGroundTextures.h"
@@ -60,7 +62,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
 			logOutput.Print(
 				"[CBFGroundTextures] mismatched number of .smt file "
-				"references between map's .smd (%d) and header (%d);"
+				"references between map's .smd ("_STPF_") and header (%d);"
 				" ignoring .smd overrides",
 				smf.smtFileNames.size(), tileHeader.numTileFiles
 			);
@@ -230,7 +232,8 @@ void CBFGroundTextures::SetTexture(int x, int y)
 {
 	GroundSquare* square = &squares[y * numBigTexX + x];
 	glBindTexture(GL_TEXTURE_2D, square->texture);
-	if (game->GetDrawMode() == CGame::normalDraw) {
+
+	if (game->GetDrawMode() == CGame::gameNormalDraw) {
 		square->lastUsed = gu->drawFrame;
 	}
 }

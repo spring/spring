@@ -13,14 +13,16 @@
 #include <time.h>
 #include <string>
 
-#include "ExternalAI/IAICheats.h"
-#include "ExternalAI/IGlobalAI.h"
-#include "ExternalAI/IGlobalAICallback.h"
-#include "ExternalAI/IAICallback.h"
-#include "ExternalAI/aibase.h"
+#include "LegacyCpp/IAICheats.h"
+#include "LegacyCpp/IGlobalAI.h"
+#include "LegacyCpp/IGlobalAICallback.h"
+#include "LegacyCpp/IAICallback.h"
+#include "LegacyCpp/aibase.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "System/Vec2.h"
+#include "System/maindefines.h"
+#include "System/Util.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -34,7 +36,11 @@
 #pragma warning(disable: 4244 4018) // signed/unsigned and loss of precision...
 #endif
 
-void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
+// The following two helper functions implementations are in AAIBuildTable.cpp
+
+void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
+/// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
+std::string MakeFileSystemCompatible(const std::string& str);
 
 #ifndef AIDEF_H
 #define AIDEF_H

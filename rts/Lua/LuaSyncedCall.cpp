@@ -1,14 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaSyncedCall.cpp: implementation of the LuaSyncedCall class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <set>
 #include <list>
 #include <cctype>
 using namespace std;
-
-#include "mmgr.h"
 
 #include "LuaSyncedCall.h"
 

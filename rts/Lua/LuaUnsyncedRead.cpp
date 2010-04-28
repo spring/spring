@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaRules.cpp: implementation of the CLuaRules class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Game/SelectedUnits.h"
 
@@ -42,8 +41,8 @@ using namespace std;
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/BaseWater.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"

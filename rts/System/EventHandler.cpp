@@ -1,8 +1,6 @@
-#include "StdAfx.h"
-// EventHandler.cpp: implementation of the CEventHandler class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "StdAfx.h"
 #include "EventHandler.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
 
@@ -25,7 +23,6 @@ void CEventHandler::SetupEvent(const string& eName,
 
 #define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
 
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -34,6 +31,8 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	// synced call-ins
+	SETUP_EVENT(Load, MANAGED_BIT);
+
 	SETUP_EVENT(GamePreload,   MANAGED_BIT);
 	SETUP_EVENT(GameStart,     MANAGED_BIT);
 	SETUP_EVENT(GameOver,      MANAGED_BIT);
@@ -75,6 +74,7 @@ CEventHandler::CEventHandler()
 
 	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);
 	SETUP_EVENT(FeatureDestroyed, MANAGED_BIT);
+	SETUP_EVENT(FeatureMoved,     MANAGED_BIT);
 
 	SETUP_EVENT(ProjectileCreated,   MANAGED_BIT);
 	SETUP_EVENT(ProjectileDestroyed, MANAGED_BIT);
@@ -84,6 +84,8 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(StockpileChanged, MANAGED_BIT);
 
 	// unsynced call-ins
+	SETUP_EVENT(Save,           MANAGED_BIT | UNSYNCED_BIT);
+
 	SETUP_EVENT(Update,         MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);
@@ -116,6 +118,18 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(DrawScreen,          MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(DrawInMiniMap,       MANAGED_BIT | UNSYNCED_BIT);
 
+	SETUP_EVENT(RenderUnitCreated,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitDestroyed,    MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitCloakChanged, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderUnitLOSChanged,   MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderFeatureCreated,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderFeatureDestroyed, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderFeatureMoved,     MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(RenderProjectileCreated,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RenderProjectileDestroyed, MANAGED_BIT | UNSYNCED_BIT);
+
 	// unmanaged call-ins
 	SetupEvent("RecvLuaMsg", NULL, 0);
 
@@ -137,6 +151,7 @@ CEventHandler::CEventHandler()
 	SetupEvent("TerraformComplete",      NULL, CONTROL_BIT);
 	SetupEvent("MoveCtrlNotify",         NULL, CONTROL_BIT);
 	SetupEvent("UnitPreDamaged",         NULL, CONTROL_BIT);
+	SetupEvent("ShieldPreDamaged",       NULL, CONTROL_BIT);
 }
 
 
@@ -286,6 +301,16 @@ void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 /******************************************************************************/
 /******************************************************************************/
 
+void CEventHandler::Save(zipFile archive)
+{
+	const int count = listSave.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listSave[i];
+		ec->Save(archive);
+	}
+}
+
+
 void CEventHandler::GamePreload()
 {
 	const int count = listGamePreload.size();
@@ -295,6 +320,7 @@ void CEventHandler::GamePreload()
 	}
 }
 
+
 void CEventHandler::GameStart()
 {
 	const int count = listGameStart.size();
@@ -303,6 +329,7 @@ void CEventHandler::GameStart()
 		ec->GameStart();
 	}
 }
+
 
 void CEventHandler::GameOver()
 {
@@ -357,11 +384,25 @@ void CEventHandler::PlayerRemoved(int playerID, int reason)
 /******************************************************************************/
 /******************************************************************************/
 
+void CEventHandler::Load(CArchiveBase* archive)
+{
+	const int count = listLoad.size();
+
+	if (count <= 0)
+		return;
+
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listLoad[i];
+		ec->Load(archive);
+	}
+}
+
+
 void CEventHandler::Update()
 {
 	const int count = listUpdate.size();
 
-	if(count <= 0)
+	if (count <= 0)
 		return;
 
 	GML_RECMUTEX_LOCK(unit); // Update
@@ -472,7 +513,8 @@ bool CEventHandler::MousePress(int x, int y, int button)
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listMousePress[i];
 		if (ec->MousePress(x, y, button)) {
-			mouseOwner = ec;
+			if (!mouseOwner)
+				mouseOwner = ec;
 			return true;
 		}
 	}
@@ -486,9 +528,12 @@ int CEventHandler::MouseRelease(int x, int y, int button)
 	if (mouseOwner == NULL) {
 		return -1;
 	}
-	const int retval = mouseOwner->MouseRelease(x, y, button);
-	mouseOwner = NULL;
-	return retval;
+	else
+	{
+		const int retval = mouseOwner->MouseRelease(x, y, button);
+		mouseOwner = NULL;
+		return retval;
+	}
 }
 
 

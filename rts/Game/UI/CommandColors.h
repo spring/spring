@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __COMMAND_COLORS_H__
 #define __COMMAND_COLORS_H__
-// CommandColors.h: interface for the CCommandColors class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <string>

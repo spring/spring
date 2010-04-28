@@ -20,7 +20,9 @@ SET(system_files
 	../../rts/System/DemoReader
 	../../rts/System/DemoRecorder
 	../../rts/System/AutohostInterface
-	../../rts/System/UnsyncedRNG)
+	../../rts/System/UnsyncedRNG
+	../../rts/System/Util
+	../../rts/System/float4)
 IF (WIN32)
 	SET(system_files
 		${system_files}
@@ -48,7 +50,8 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
 	../../rts/Map/MapParser)
-TARGET_LINK_LIBRARIES(springserver ${SDL_LIBRARY_TEMP} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} hpiutil2 7zip minizip lua)
+
+TARGET_LINK_LIBRARIES(springserver ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} 7zip minizip lua)
 if (MINGW)
 	TARGET_LINK_LIBRARIES (springserver ws2_32)
 else (MINGW)

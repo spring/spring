@@ -1,9 +1,4 @@
-/*---------------------------------------------------------------------
- Terrain Renderer using texture splatting and geomipmapping
-
- Copyright (2006) Jelmer Cnossen
- This code is released under GPL license (See LICENSE.html for info)
----------------------------------------------------------------------*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 

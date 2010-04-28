@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef OBJECT_H
 #define OBJECT_H
-// Object.h: interface for the CObject class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <list>
 #include "creg/creg_cond.h"

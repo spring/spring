@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MOD_INFO_H
 #define MOD_INFO_H
 
@@ -9,13 +11,29 @@ public:
 	CModInfo() {};
 	~CModInfo() {};
 
-	void Init(const char* modname);
+	void Init(const char* modArchive);
 
-	/// archive filename
+	/**
+	 * The archive file name.
+	 * examples: "Supreme Annihilation U32 V1.0.sdz", "BA704.sd7", "133855d253e657e9406122f346cfe8f1.sdp"
+	 */
 	std::string filename;
 
+	/**
+	 * The human readable name (including version).
+	 * The lower-case version of this is used for dependency checking.
+	 * examples: "Supreme Annihilation U32 V1.0", "Balanced Annihilation V7.04", "Balanced Annihilation V7.11"
+	 */
 	std::string humanName;
+	/**
+	 * The short name (not including version).
+	 * examples: "SA", "BA", "BA"
+	 */
 	std::string shortName;
+	/**
+	 * The version
+	 * examples: "U32 V1.0", "7.04", "7.11"
+	 */
 	std::string version;
 	std::string mutator;
 	std::string description;

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "Rendering/GL/myGL.h"
 
 #include "Rendering/Shaders/Shader.hpp"
@@ -199,4 +201,27 @@ namespace Shader {
 	void GLSLProgramObject::SetUniform2fv(int idx, float* v) { glUniform2fv(uniformLocs[idx], 1, v); }
 	void GLSLProgramObject::SetUniform3fv(int idx, float* v) { glUniform3fv(uniformLocs[idx], 1, v); }
 	void GLSLProgramObject::SetUniform4fv(int idx, float* v) { glUniform4fv(uniformLocs[idx], 1, v); }
+
+	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, float* v) { glUniformMatrix2fv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, float* v) { glUniformMatrix3fv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, float* v) { glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
+
+	#define M22(m, v)                           \
+		m[0] = float(v[0]); m[1] = float(v[1]); \
+		m[2] = float(v[2]); m[3] = float(v[3]);
+	#define M33(m, v)                                               \
+		m[0] = float(v[0]); m[1] = float(v[1]); m[2] = float(v[2]); \
+		m[3] = float(v[3]); m[4] = float(v[4]); m[5] = float(v[5]); \
+		m[6] = float(v[6]); m[7] = float(v[7]); m[8] = float(v[8]);
+	#define M44(m, v)                                                                           \
+		m[ 0] = float(v[ 0]); m[ 1] = float(v[ 1]); m[ 2] = float(v[ 2]); m[ 3] = float(v[ 3]); \
+		m[ 4] = float(v[ 4]); m[ 5] = float(v[ 5]); m[ 6] = float(v[ 6]); m[ 7] = float(v[ 7]); \
+		m[ 8] = float(v[ 8]); m[ 9] = float(v[ 9]); m[10] = float(v[10]); m[11] = float(v[11]); \
+		m[12] = float(v[12]); m[13] = float(v[13]); m[14] = float(v[14]); m[15] = float(v[15]);
+	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, double* v) { float m[2 * 2]; M22(m, v); SetUniformMatrix2fv(idx, transp, m); }
+	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, double* v) { float m[3 * 3]; M33(m, v); SetUniformMatrix3fv(idx, transp, m); }
+	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, double* v) { float m[4 * 4]; M44(m, v); SetUniformMatrix4fv(idx, transp, m); }
+	#undef M22
+	#undef M33
+	#undef M44
 }

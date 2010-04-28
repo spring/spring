@@ -1,12 +1,5 @@
-/**
- * @file ConfigHandler.h
- * @brief config base
- * @author Christopher Han <xiphux@gmail.com>
- *
- * Definition of config structure class
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef CONFIGHANDLER_H
 #define CONFIGHANDLER_H
 
@@ -47,6 +40,9 @@ public:
 	* @param value string value to set
 	 */
 	void SetString(std::string name, std::string value);
+
+	/// set configure option for this instance only
+	void SetOverlay(std::string name, std::string valu);
 
 	/**
 	 * @brief get string
@@ -119,6 +115,13 @@ private:
 	 * instead of constantly rereading from the file
 	 */
 	std::map<std::string, std::string> data;
+
+	/**
+	 * @brief config overlay
+	 *
+	 * Won't be written to file, and will thus be discarded
+	 */
+	std::map<std::string, std::string> overlay;
 
 	/**
 	 * @brief Get the name of the default configuration file

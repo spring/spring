@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /* Copyright (C) 2009 Wildfire Games.
  * This file is part of 0 A.D.
  *
@@ -36,4 +38,4 @@ LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwK
 void mouse_update(); // poll to generate move events
 }
 
-#endif	// #ifndef INCLUDED_WSDL
+#endif // #ifndef INCLUDED_WSDL

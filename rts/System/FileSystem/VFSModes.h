@@ -1,6 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef VFS_MODES_H
 #define VFS_MODES_H
-
 
 #define SPRING_VFS_RAW  "r"
 #define SPRING_VFS_MOD  "M"  // currently equivalent to SPRING_VFS_ZIP
@@ -13,6 +14,5 @@
 #define SPRING_VFS_RAW_FIRST  SPRING_VFS_RAW  SPRING_VFS_ZIP
 #define SPRING_VFS_ZIP_FIRST  SPRING_VFS_ZIP  SPRING_VFS_RAW
 #define SPRING_VFS_ALL        SPRING_VFS_RAW_FIRST
-
 
 #endif // VFS_MODES_H

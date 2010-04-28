@@ -1,10 +1,11 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "GroundMoveType.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/Camera.h"
-#include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
@@ -13,7 +14,7 @@
 #include "Map/ReadMap.h"
 #include "MoveMath/MoveMath.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -30,14 +31,14 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sync/SyncTracer.h"
-#include "GlobalUnsynced.h"
-#include "EventHandler.h"
-#include "LogOutput.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/GlobalUnsynced.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
 #include "Sound/AudioChannel.h"
-#include "FastMath.h"
-#include "myMath.h"
-#include "Vec2.h"
+#include "System/FastMath.h"
+#include "System/myMath.h"
+#include "System/Vec2.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
@@ -72,8 +73,6 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(requestedTurnRate),
 
 		CR_MEMBER(currentDistanceToWaypoint),
-
-		CR_MEMBER(avoidanceVec),
 
 		CR_MEMBER(restartDelay),
 		CR_MEMBER(lastGetPathPos),
@@ -119,7 +118,7 @@ const float MAX_OFF_PATH_FACTOR = 20;				// How far away from a waypoint a unit 
 
 const float MINIMUM_SPEED = 0.01f;					// Minimum speed a unit may move in.
 
-static const bool DEBUG_CONTROLLER=false;
+static const bool DEBUG_CONTROLLER = false;
 std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
 
 //////////////////////////////////////////////////////////////////////
@@ -157,7 +156,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	requestedSpeed(0.0f),
 	requestedTurnRate(0),
 	currentDistanceToWaypoint(0),
-	avoidanceVec(0.0f, 0.0f, 0.0f),
 	restartDelay(0),
 	lastGetPathPos(0.0f, 0.0f, 0.0f),
 	pathFailures(0),
@@ -244,7 +242,8 @@ void CGroundMoveType::Update()
 
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
-	if (owner->stunned) {
+
+	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
@@ -264,15 +263,22 @@ void CGroundMoveType::Update()
 				if (pathId && !atGoal && gs->frameNum > etaWaypoint) {
 					etaFailures += 10;
 					etaWaypoint = INT_MAX;
-					if (DEBUG_CONTROLLER)
-						logOutput.Print("eta failure %i %i %i %i %i", owner->id, pathId, !atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint);
+
+					if (DEBUG_CONTROLLER) {
+						logOutput.Print(
+							"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i, cd2wp < md2wp: %i, frame > etaWP: %i)",
+							owner->id, pathId, atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint
+						);
+					}
 				}
 				if (pathId && !atGoal && gs->frameNum > etaWaypoint2) {
 					if (owner->pos.SqDistance2D(goalPos) > (200 * 200) || CheckGoalFeasability()) {
 						etaWaypoint2 += 100;
 					} else {
-						if (DEBUG_CONTROLLER)
-							logOutput.Print("Goal clogged up for unit %i", owner->id);
+						if (DEBUG_CONTROLLER) {
+							logOutput.Print("[CGMT::U] goal-position clogged up for unit %i", owner->id);
+						}
+
 						Fail();
 					}
 				}
@@ -289,7 +295,7 @@ void CGroundMoveType::Update()
 				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
-				if (pathId && !atGoal && haveFinalWaypoint && (owner->pos - waypoint).SqLength2D() < SQUARE_SIZE * SQUARE_SIZE * 2) {
+				if (pathId && !atGoal && haveFinalWaypoint && currentDistanceToWaypoint < SQUARE_SIZE * 2) {
 					// no more waypoints to go, clear
 					// pathId and set wantedSpeed to 0
 					Arrived();
@@ -300,16 +306,16 @@ void CGroundMoveType::Update()
 				}
 
 				// apply obstacle avoidance (steering)
-				float3 avoidanceVec = ObstacleAvoidance(waypointDir);
+				const float3 avoidVec = ObstacleAvoidance(waypointDir);
 
-				ASSERT_SYNCED_FLOAT3(avoidanceVec);
+				ASSERT_SYNCED_FLOAT3(avoidVec);
 
-				if (avoidanceVec != ZeroVector) {
+				if (avoidVec != ZeroVector) {
 					if (wantReverse) {
 						ChangeHeading(GetHeadingFromVector(wpDirInv.x, wpDirInv.z));
 					} else {
 						// should be waypointDir + avoidanceDir
-						ChangeHeading(GetHeadingFromVector(avoidanceVec.x, avoidanceVec.z));
+						ChangeHeading(GetHeadingFromVector(avoidVec.x, avoidVec.z));
 					}
 				} else {
 					SetMainHeading();
@@ -327,9 +333,9 @@ void CGroundMoveType::Update()
 
 					if (owner->unitDef->turnInPlace) {
 						if (wantReverse) {
-							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidanceVec.dot(-owner->frontdir) + 0.1f));
+							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot(-owner->frontdir) + 0.1f));
 						} else {
-							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidanceVec.dot(owner->frontdir) + 0.1f));
+							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot( owner->frontdir) + 0.1f));
 						}
 					}
 
@@ -375,14 +381,16 @@ void CGroundMoveType::SlowUpdate()
 	// if we've strayed too far away from path, then need to reconsider
 	if (progressState == Active && etaFailures > 8) {
 		if (owner->pos.SqDistance2D(goalPos) > (200 * 200) || CheckGoalFeasability()) {
-			if (DEBUG_CONTROLLER)
-				logOutput.Print("ETA failure for unit %i", owner->id);
+			if (DEBUG_CONTROLLER) {
+				logOutput.Print("[CGMT::SU] ETA failure for unit %i", owner->id);
+			}
 
 			StopEngine();
 			StartEngine();
 		} else {
-			if (DEBUG_CONTROLLER)
-				logOutput.Print("Goal clogged up for unit %i", owner->id);
+			if (DEBUG_CONTROLLER) {
+				logOutput.Print("[CGMT::SU] goal-position clogged up for unit %i", owner->id);
+			}
 			Fail();
 		}
 	}
@@ -391,7 +399,7 @@ void CGroundMoveType::SlowUpdate()
 	// re-try-delay has passed, then start the engine.
 	if (progressState == Active && !pathId && gs->frameNum > restartDelay) {
 		if (DEBUG_CONTROLLER) {
-			logOutput.Print("Unit restart %i", owner->id);
+			logOutput.Print("[CGMT::SU] restart engine for unit %i", owner->id);
 		}
 		StartEngine();
 	}
@@ -472,7 +480,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	progressState = Active;
 
 	if (DEBUG_CONTROLLER) {
-		LogObject() << int(owner->id) << ": StartMoving() starting engine.\n";
+		logOutput.Print("[CGMT::StartMove] starting engine for unit %i", owner->id);
 	}
 
 	StartEngine();
@@ -493,8 +501,10 @@ void CGroundMoveType::StopMoving() {
 	tracefile << "Stop moving called: ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
-	if (DEBUG_CONTROLLER)
-		LogObject() << "SMove: Action stopped." << " " << int(owner->id) << "\n";
+
+	if (DEBUG_CONTROLLER) {
+		logOutput.Print("[CGMT::StopMove] stopping engine for unit %i", owner->id);
+	}
 
 	StopEngine();
 
@@ -675,7 +685,6 @@ void CGroundMoveType::ImpulseAdded(void)
 		impulse -= groundNormal * impulse.dot(groundNormal);
 
 	const float sqstrength = impulse.SqLength();
-//	logOutput.Print("strength %f",strength);
 
 	if (sqstrength > 9 || impulse.dot(groundNormal) > 0.3f) {
 		skidding = true;
@@ -725,7 +734,7 @@ void CGroundMoveType::UpdateSkid(void)
 			if(impactSpeed > owner->unitDef->minCollisionSpeed
 				&& owner->unitDef->minCollisionSpeed >= 0)
 			{
-				owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
 					0, ZeroVector);
 			}
 		}
@@ -871,11 +880,11 @@ void CGroundMoveType::CheckCollisionSkid(void)
 
 					if (impactSpeed > owner->unitDef->minCollisionSpeed
 						&& owner->unitDef->minCollisionSpeed >= 0) {
-						owner->DoDamage(DamageArray() * impactSpeed * owner->mass * 0.2f, 0, ZeroVector);
+						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 					}
 					if (impactSpeed > u->unitDef->minCollisionSpeed
 						&& u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(DamageArray() * impactSpeed * owner->mass * 0.2f, 0, ZeroVector);
+						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 					}
 				}
 			} else {
@@ -903,14 +912,14 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					if (impactSpeed > owner->unitDef->minCollisionSpeed
 						&& owner->unitDef->minCollisionSpeed >= 0) {
 						owner->DoDamage(
-							DamageArray() * impactSpeed * owner->mass * 0.2f * (1 - part),
+							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
 							0, dif * impactSpeed * (owner->mass * (1 - part)));
 					}
 
 					if (impactSpeed > u->unitDef->minCollisionSpeed
 						&& u->unitDef->minCollisionSpeed >= 0) {
 						u->DoDamage(
-							DamageArray() * impactSpeed * owner->mass * 0.2f * part,
+							DamageArray(impactSpeed * owner->mass * 0.2f * part),
 							0, dif * -impactSpeed * (u->mass * part));
 					}
 					owner->speed *= 0.9f;
@@ -942,10 +951,10 @@ void CGroundMoveType::CheckCollisionSkid(void)
 				if(impactSpeed > owner->unitDef->minCollisionSpeed
 					&& owner->unitDef->minCollisionSpeed >= 0)
 				{
-					owner->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
 						0, ZeroVector);
 				}
-				u->DoDamage(DamageArray()*impactSpeed*owner->mass*0.2f,
+				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
 					0, -dif*impactSpeed);
 			}
 		}
@@ -1010,7 +1019,9 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 	// Obstacle-avoidance-system only needs to be run if the unit wants to move
 	if (pathId) {
+		float3 avoidanceVec = ZeroVector;
 		float3 avoidanceDir = desiredDir;
+
 		// Speed-optimizer. Reduces the times this system is run.
 		if (gs->frameNum >= nextObstacleAvoidanceUpdate) {
 			nextObstacleAvoidanceUpdate = gs->frameNum + 4;
@@ -1034,8 +1045,9 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					    (moveData.moveMath->SpeedMod(moveData, x, y) <= 0.01f)) {
 						// not reachable, force a new path to be calculated next slowupdate
 						++etaFailures;
+
 						if (DEBUG_CONTROLLER) {
-							logOutput.Print("Waypoint path blocked for unit %i", owner->id);
+							logOutput.Print("[CGMT::OA] path blocked for unit %i", owner->id);
 						}
 						break;
 					}
@@ -1043,13 +1055,14 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			}
 
 			// now we do the obstacle avoidance proper
-			float currentDistanceToGoal = owner->pos.distance2D(goalPos);
-			float3 rightOfPath = desiredDir.cross(float3(0.0f, 1.0f, 0.0f));
-			float3 rightOfAvoid = rightOfPath;
-			float speedf = owner->speed.Length2D();
+			const float currentDistanceToGoal = owner->pos.distance2D(goalPos);
+			const float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
+			const float3 rightOfPath = desiredDir.cross(float3(0.0f, 1.0f, 0.0f));
+			const float speedf = owner->speed.Length2D();
 
 			float avoidLeft = 0.0f;
 			float avoidRight = 0.0f;
+			float3 rightOfAvoid = rightOfPath;
 
 
 			MoveData* moveData = owner->mobility;
@@ -1075,7 +1088,6 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					float radiusSum = (owner->xsize + o->xsize) * SQUARE_SIZE / 2;
 					float distanceLimit = speedf * 35 + 10 + radiusSum;
 					float distanceLimitSq = distanceLimit * distanceLimit;
-					float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
 
 					// if object is close enough
 					if (distanceToObjectSq < distanceLimitSq && distanceToObjectSq < currentDistanceToGoalSq
@@ -1088,25 +1100,30 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						// (or not yet fully apart), then the object is on the path of the unit
 						// and they are not collided.
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
-								fabs(objectDistToAvoidDirCenter) < radiusSum &&
-								(o->mobility || Distance2D(owner, o) >= 0)) {
+							fabs(objectDistToAvoidDirCenter) < radiusSum &&
+							(o->mobility || Distance2D(owner, o) >= 0)) {
+
 							// Avoid collision by turning the heading to left or right.
 							// Using the object thats needs the most adjustment.
-#if D_DEBUG_CONTROLLER
+
+							#if D_DEBUG_CONTROLLER
 							GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
 
 							if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
 								geometricObjects->AddLine(owner->pos + UpVector * 20, o->pos + UpVector * 20, 3, 1, 4);
-#endif
+							#endif
+
 							if (objectDistToAvoidDirCenter > 0.0f) {
-								avoidRight += (radiusSum - objectDistToAvoidDirCenter)
-										* AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
+								avoidRight +=
+									(radiusSum - objectDistToAvoidDirCenter) *
+									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir += (rightOfAvoid * avoidRight);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
 							} else {
-								avoidLeft += (radiusSum - fabs(objectDistToAvoidDirCenter))
-										* AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
+								avoidLeft +=
+									(radiusSum - fabs(objectDistToAvoidDirCenter)) *
+									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
@@ -1122,7 +1139,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 
 			// Sum up avoidance.
-			avoidanceVec = (desiredDir.cross(float3(0.0f, 1.0f, 0.0f)) * (avoidRight - avoidLeft));
+			avoidanceVec = (desiredDir.cross(UpVector) * (avoidRight - avoidLeft));
 
 #if D_DEBUG_CONTROLLER
 			GML_RECMUTEX_LOCK(sel); //ObstacleAvoidance
@@ -1138,8 +1155,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 		}
 
 		// Return the resulting recommended velocity.
-		avoidanceDir = desiredDir + avoidanceVec;
-		avoidanceDir.Normalize();
+		avoidanceDir = (desiredDir + avoidanceVec).Normalize();
 
 #ifdef TRACE_SYNC
 		tracefile << __FUNCTION__ << " avoidanceVec = " << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << "\n";
@@ -1222,8 +1238,10 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 void CGroundMoveType::GetNewPath()
 {
 	if (owner->pos.SqDistance2D(lastGetPathPos) < 400) {
-		if (DEBUG_CONTROLLER)
-			logOutput.Print("Non-moving path failures for unit %i: %i", owner->id, nonMovingFailures);
+		if (DEBUG_CONTROLLER) {
+			logOutput.Print("[CGMT::GNP] non-moving path failures for unit %i: %i", owner->id, nonMovingFailures);
+		}
+
 		nonMovingFailures++;
 
 		if (nonMovingFailures > 10) {
@@ -1271,8 +1289,10 @@ void CGroundMoveType::GetNextWaypoint()
 			etaWaypoint2 = int(25.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 10;
 			atGoal = false;
 		} else {
-			if (DEBUG_CONTROLLER)
-				logOutput.Print("Path-failure count for unit %i: %i", owner->id, pathFailures);
+			if (DEBUG_CONTROLLER) {
+				logOutput.Print("[CGMT::GNWP] path-failure count for unit %i: %i", owner->id, pathFailures);
+			}
+
 			pathFailures++;
 			if (pathFailures > 0) {
 				pathFailures = 0;
@@ -1357,11 +1377,11 @@ void CGroundMoveType::StartEngine() {
 			owner->script->StartMoving();
 
 			if (DEBUG_CONTROLLER) {
-				LogObject() << "Engine started" << " " << int(owner->id) << "\n";
+				logOutput.Print("[CGMT::StartEngine] engine started for unit %i", owner->id);
 			}
 		} else {
 			if (DEBUG_CONTROLLER) {
-				LogObject() << "Engine start failed: " << int(owner->id) << "\n";
+				logOutput.Print("[CGMT::StartEngine] failed to start engine for unit %i", owner->id);
 			}
 
 			Fail();
@@ -1386,7 +1406,7 @@ void CGroundMoveType::StopEngine() {
 		owner->script->StopMoving();
 
 		if (DEBUG_CONTROLLER) {
-			LogObject() << "Engine stopped. " << int(owner->id) << "\n";
+			logOutput.Print("[CGMT::StopEngine] engine stopped for unit %i", owner->id);
 		}
 	}
 
@@ -1418,8 +1438,9 @@ void CGroundMoveType::Arrived()
 		progressState = Done;
 		owner->commandAI->SlowUpdate();
 
-		if (DEBUG_CONTROLLER)
-			LogObject() << "Unit arrived!\n";
+		if (DEBUG_CONTROLLER) {
+			logOutput.Print("[CGMT::Arrive] unit %i arrived", owner->id);
+		}
 	}
 }
 
@@ -1429,8 +1450,9 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail()
 {
-	if (DEBUG_CONTROLLER)
-		logOutput.Print("Unit failed! %i",owner->id);
+	if (DEBUG_CONTROLLER) {
+		logOutput.Print("[CGMT::Fail] unit %i failed", owner->id);
+	}
 
 	StopEngine();
 
@@ -1441,9 +1463,8 @@ void CGroundMoveType::Fail()
 	eventHandler.UnitMoveFailed(owner);
 	eoh->UnitMoveFailed(*owner);
 
-	// sends a message to user.
-	if (game->moveWarnings && (owner->team == gu->myTeam)) {
-		// playing "cant" sound.
+
+	if (gu->moveWarnings && (owner->team == gu->myTeam)) {
 		const int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
 		if (soundIdx >= 0) {
 			Channels::UnitReply.PlaySample(
@@ -1774,30 +1795,31 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
-		float cmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
+		CMoveMath* movemath = owner->unitDef->movedata->moveMath;
+		float cmod = movemath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
 
 		if (fabs(owner->frontdir.x) < fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1805,13 +1827,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			}
 		} else {
 			if (newMoveSquareY > moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod>0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1819,13 +1841,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			}
 
 			if (newMoveSquareX > moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
@@ -1844,44 +1866,44 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
-			terrainSpeed = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
+			terrainSpeed = movemath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
 			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
 			etaWaypoint2 = int(25.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 10;
 
 			// if we have moved check if we can get a new waypoint
-			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2);
-			int nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2);
+			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
+			int nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
 			int numIter = 0;
 
 			// lowered the original 6 absolute distance to slightly more than 4.5f euclidian distance
 			// to fix units getting stuck in buildings --tvo
 			// My first fix set it to 21, as the pathfinding was still considered broken by many I reduced it to 11 (arbitrarily)
 			// Does anyone know whether lowering this constant has any adverse side effects? Like e.g. more CPU usage? --tvo
-			while ((nwsx - moveSquareX) * (nwsx - moveSquareX) + (nwsy - moveSquareY) * (nwsy - moveSquareY) < 11 && !haveFinalWaypoint && pathId) {
-				int ltx = nwsx - moveSquareX + 5;
-				int lty = nwsy - moveSquareY + 5;
+			while (nwsx*nwsx + nwsy*nwsy < 11 && !haveFinalWaypoint && pathId) {
+				int ltx = nwsx + 5;
+				int lty = nwsy + 5;
 				bool wpOk = true;
 
 				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
 					int x = (moveSquareX + li->x) * 2;
 					int y = (moveSquareY + li->y) * 2;
-					CMoveMath* mmath = owner->unitDef->movedata->moveMath;
-					static int blockMask =
+					static const int blockMask =
 						(CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN |
 						CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY);
 
-					if ((mmath->IsBlocked(*owner->unitDef->movedata, x, y) & blockMask) ||
-						mmath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
+					if ((movemath->IsBlocked(*owner->unitDef->movedata, x, y) & blockMask) ||
+						movemath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
 						wpOk = false;
 						break;
 					}
 				}
+
 				if (!wpOk || numIter > 6) {
 					break;
 				}
 				GetNextWaypoint();
-				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2);
-				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2);
+				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
+				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
 				++numIter;
 			}
 		}
@@ -1923,11 +1945,15 @@ bool CGroundMoveType::CheckGoalFeasability(void)
 	}
 
 	if (numSquares > 0.0f) {
-		float partBlocked = numBlocked / numSquares;
+		const float partBlocked = numBlocked / numSquares;
+
 		if (DEBUG_CONTROLLER) {
-			logOutput.Print("Percentage of blocked squares for unit %i: %.0f%% (goal distance: %.0f)",
-				owner->id, partBlocked * 100.0f, goalDist);
+			logOutput.Print(
+				"[CGMT::CGF] percentage of blocked squares for unit %i: %.0f%% (goal distance: %.0f)",
+				owner->id, partBlocked * 100.0f, goalDist
+			);
 		}
+
 		if (partBlocked > 0.4f) {
 			return false;
 		}
@@ -2004,7 +2030,6 @@ void CGroundMoveType::SetMainHeading(){
 #ifdef TRACE_SYNC
 				tracefile << "Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
 #endif
-				//logOutput.Print("Test heading: %d,  Real heading: %d", heading, owner->heading);
 			} else if (progressState != Active
 			  && owner->heading != heading
 			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {

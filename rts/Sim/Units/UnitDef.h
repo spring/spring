@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNITDEF_H
 #define UNITDEF_H
 
@@ -63,7 +65,6 @@ public:
 	float energyStorage;
 
 	bool extractSquare;
-	bool isMetalMaker;
 
 	float autoHeal;     // amount autohealed
 	float idleAutoHeal; // amount autohealed only during idling
@@ -180,7 +181,6 @@ public:
 	std::string deathExplosion;
 	std::string selfDExplosion;
 
-	std::string TEDClassString;	// these might be changed later for something better
 	std::string categoryString;
 
 	std::string buildPicName;
@@ -283,6 +283,7 @@ public:
 	float decloakDistance;							// if enemy unit come within this range decloaking is forced
 	bool decloakSpherical;							// use a spherical test instead of a cylindrical test?
 	bool decloakOnFire;								// should the unit decloak upon firing
+	int cloakTimeout;								// minimum time between decloak and subsequent cloak
 
 	bool canKamikaze;								//self destruct if enemy come to close
 	float kamikazeDist;
@@ -317,6 +318,7 @@ public:
 	SoundStruct sounds;
 
 	bool leaveTracks;
+	std::string trackTypeName;
 	float trackWidth;
 	float trackOffset;
 	float trackStrength;
@@ -337,6 +339,7 @@ public:
 	bool levelGround;								// only matters for buildings
 
 	bool useBuildingGroundDecal;
+	std::string buildingDecalTypeName;
 	int buildingDecalType;
 	int buildingDecalSizeX;
 	int buildingDecalSizeY;
@@ -350,7 +353,9 @@ public:
 	float refuelTime;								// time to fully refuel unit
 	float minAirBasePower;							// min build power for airbases that this aircraft can land on
 
+	std::vector<std::string> sfxExplGenNames;
 	std::vector<CExplosionGenerator*> sfxExplGens;	// list of explosion generators for use in scripts
+
 	std::string pieceTrailCEGTag;					// base tag (eg. "flame") of CEG attached to pieces of exploding units
 	int pieceTrailCEGRange;							// range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
 

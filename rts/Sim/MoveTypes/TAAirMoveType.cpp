@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -5,7 +7,7 @@
 
 #include "Game/Player.h"
 #include "Map/Ground.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -759,7 +761,7 @@ void CTAAirMoveType::Update()
 
 	float3 lastSpeed = speed;
 
-	if (owner->stunned) {
+	if (owner->stunned  || owner->beingBuilt) {
 		wantedSpeed = ZeroVector;
 		UpdateAirPhysics();
 	} else {

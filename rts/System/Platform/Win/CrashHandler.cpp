@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "lib/gml/gml.h"
@@ -206,7 +206,7 @@ static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userCo
 static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
-	logOutput.RemoveAllSubscribers();
+	logOutput.SetSubscribersEnabled(false);
 	PRINT("Spring %s has crashed.", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);

@@ -1,61 +1,59 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// ReadMap.cpp: implementation of the CReadMap class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
 #include <string>
 #include "mmgr.h"
 
 #include "ReadMap.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Ground.h"
-#include "ConfigHandler.h"
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"
-#include "Sim/Path/PathManager.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Units/Unit.h"
 #include "SM3/Sm3Map.h"
 #include "SMF/SmfReadMap.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "LoadSaveInterface.h"
-#include "LogOutput.h"
-#include "Platform/errorhandler.h"
-#include "Exceptions.h"
+#include "System/bitops.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/LoadSaveInterface.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/Platform/errorhandler.h"
 
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-CReadMap* readmap=0;
+
+// assigned to in CGame::CGame ("readmap = CReadMap::LoadMap(mapname)")
+CReadMap* readmap = 0;
 
 CR_BIND_INTERFACE(CReadMap)
 CR_REG_METADATA(CReadMap, (
-				CR_SERIALIZER(Serialize)
-				));
+	CR_SERIALIZER(Serialize)
+));
 
 
-CReadMap* CReadMap::LoadMap (const std::string& mapname)
+CReadMap* CReadMap::LoadMap(const std::string& mapname)
 {
 	if (mapname.length() < 3)
 		throw std::runtime_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
 
-	string extension = mapname.substr(mapname.length()-3);
+	string extension = mapname.substr(mapname.length() - 3);
 
 	CReadMap* rm = 0;
+
 	if (extension == "sm3") {
-		rm = new CSm3ReadMap;
-		((CSm3ReadMap*)rm)->Initialize (mapname.c_str());
-	} else
+		rm = new CSm3ReadMap(mapname);
+	} else {
 		rm = new CSmfReadMap(mapname);
+	}
 
-	if (!rm)
+	if (!rm) {
 		return 0;
-
+	}
 
 	/* Read metal map */
 	MapBitmapInfo mbi;
@@ -106,14 +104,14 @@ void CReadMap::Serialize(creg::ISerializer& s)
 }
 
 
-CReadMap::CReadMap() :
-		orgheightmap(NULL),
-		centerheightmap(NULL),
-		slopemap(NULL),
-		facenormals(NULL),
-		centernormals(NULL),
-		typemap(NULL),
-		metalMap(NULL)
+CReadMap::CReadMap():
+	orgheightmap(NULL),
+	centerheightmap(NULL),
+	slopemap(NULL),
+	facenormals(NULL),
+	centernormals(NULL),
+	typemap(NULL),
+	metalMap(NULL)
 {
 	memset(mipHeightmap, 0, sizeof(mipHeightmap));
 }
@@ -129,10 +127,14 @@ CReadMap::~CReadMap()
 	delete[] centernormals;
 
 	delete[] centerheightmap;
-	for(int i=1; i<numHeightMipMaps; i++)	//don't delete first pointer since it points to centerheightmap
+	for (int i = 1; i < numHeightMipMaps; i++) {
+		// don't delete mipHeightmap[0] since it points to centerheightmap
 		delete[] mipHeightmap[i];
+	}
 
 	delete[] orgheightmap;
+
+	vertexNormals.clear();
 }
 
 
@@ -140,15 +142,28 @@ void CReadMap::Initialize()
 {
 	PrintLoadMsg("Loading Map");
 
-	orgheightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
-	facenormals=new float3[gs->mapx*gs->mapy*2];
-	centernormals=new float3[gs->mapx*gs->mapy];
-	centerheightmap=new float[gs->mapx*gs->mapy];
+	// set global map info
+	gs->mapx = width;
+	gs->mapy = height;
+	gs->mapSquares = gs->mapx * gs->mapy;
+	gs->hmapx = gs->mapx >> 1;
+	gs->hmapy = gs->mapy >> 1;
+	gs->pwr2mapx = next_power_of_2(gs->mapx);
+	gs->pwr2mapy = next_power_of_2(gs->mapy);
+
+	float3::maxxpos = gs->mapx * SQUARE_SIZE - 1;
+	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
+
+	orgheightmap = new float[(gs->mapx + 1) * (gs->mapy + 1)];
+	facenormals = new float3[gs->mapx * gs->mapy * 2];
+	centernormals = new float3[gs->mapx * gs->mapy];
+	centerheightmap = new float[gs->mapx * gs->mapy];
 	mipHeightmap[0] = centerheightmap;
-	for(int i=1; i<numHeightMipMaps; i++)
-		mipHeightmap[i] = new float[(gs->mapx>>i)*(gs->mapy>>i)];
+	for (int i = 1; i < numHeightMipMaps; i++)
+		mipHeightmap[i] = new float[(gs->mapx >> i) * (gs->mapy >> i)];
 
 	slopemap = new float[gs->hmapx * gs->hmapy];
+	vertexNormals.resize((gs->mapx + 1) * (gs->mapy + 1));
 
 	CalcHeightmapChecksum();
 	HeightmapUpdated(0, 0, gs->mapx, gs->mapy);
@@ -216,8 +231,8 @@ void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 	//! create the surface normals
 	for (int y = decy; y <= incy; y++) {
 		for (int x = decx; x <= incx; x++) {
-			int idx0 = (y    ) * (gs->mapx + 1) + x;
-			int idx1 = (y + 1) * (gs->mapx + 1) + x;
+			const int idx0 = (y    ) * (gs->mapx + 1) + x;
+			const int idx1 = (y + 1) * (gs->mapx + 1) + x;
 
 			float3 e1(-SQUARE_SIZE, heightmap[idx0] - heightmap[idx0 + 1],            0);
 			float3 e2(           0, heightmap[idx0] - heightmap[idx1    ], -SQUARE_SIZE);
@@ -266,8 +281,8 @@ void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 			maxslope = std::min(maxslope, facenormals[(idx1 + 1) * 2 + 1].y);
 
 			//! smooth it a bit, so small holes don't block huge tanks
-			float lerp = maxslope / avgslope;
-			float slope = maxslope * (1.0f - lerp) + avgslope * lerp;
+			const float lerp = maxslope / avgslope;
+			const float slope = maxslope * (1.0f - lerp) + avgslope * lerp;
 
 			slopemap[y * gs->hmapx + x] = 1.0f - slope;
 		}

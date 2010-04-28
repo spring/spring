@@ -1,6 +1,4 @@
-// Ground.cpp: implementation of the CGround class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -13,9 +11,6 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include <assert.h>
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 CGround* ground;
 
 CGround::CGround()
@@ -371,8 +366,8 @@ float3 CGround::GetSmoothNormal(float x, float y) const
 	if (sx >= gs->mapx - 1)
 		sx = gs->mapx - 2;
 
-	float dx = (x - sx * SQUARE_SIZE) / SQUARE_SIZE;
-	float dy = (y - sy * SQUARE_SIZE) / SQUARE_SIZE;
+	float dx = (x / SQUARE_SIZE) - sx;
+	float dy = (y / SQUARE_SIZE) - sy;
 
 	int sy2;
 	float fy;

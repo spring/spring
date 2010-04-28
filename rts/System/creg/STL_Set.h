@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef CR_SET_TYPE_IMPL_H
 #define CR_SET_TYPE_IMPL_H
 
@@ -82,6 +84,6 @@ namespace creg
 		}
 	};
 };
-#endif
 
+#endif
 

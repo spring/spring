@@ -1,11 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_UNIT_RENDERING_H
 #define LUA_UNIT_RENDERING_H
-// LuaUnitRendering.h: interface for the LuaUnitRendering class.
-//
-//////////////////////////////////////////////////////////////////////
 
 struct lua_State;
-
 
 class LuaUnitRendering {
 	public:
@@ -33,6 +31,5 @@ class LuaUnitRendering {
 
 		static int Debug(lua_State* L);
 };
-
 
 #endif /* LUA_UNIT_RENDERING_H */

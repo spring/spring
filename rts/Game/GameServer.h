@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __GAME_SERVER_H__
 #define __GAME_SERVER_H__
 
@@ -57,9 +59,9 @@ public:
  */
 class CGameServer
 {
-	friend class CLoadSaveHandler;     //For initialize server state after load
+	friend class CCregLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(const ClientSetup* settings, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
+	CGameServer(int hostport, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
 	~CGameServer();
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
@@ -149,8 +151,6 @@ private:
 	float internalSpeed;
 	bool cheating;
 
-	// Ugly hax for letting the script define initial team->isAI and team->leader for AI teams
-	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
 	size_t ReserveNextAvailableSkirmishAIId();
 	
@@ -209,6 +209,8 @@ private:
 	typedef std::set<unsigned char> PlayersToForwardMsgvec;
 	typedef std::map<unsigned char, PlayersToForwardMsgvec> MsgToForwardMap;
 	MsgToForwardMap relayingMessagesMap;
+
+	bool canReconnect;
 };
 
 extern CGameServer* gameServer;

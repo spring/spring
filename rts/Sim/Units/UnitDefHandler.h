@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNITDEFHANDLER_H
 #define UNITDEFHANDLER_H
 
@@ -7,21 +9,14 @@
 
 #include "Sim/Misc/CommonDefHandler.h"
 
-
 class LuaTable;
 struct UnitDef;
 struct GuiSoundSet;
 
-//this class takes care of all the unit definitions
+/// Takes care of all the unit definitions
 class CUnitDefHandler : CommonDefHandler
 {
 public:
-	UnitDef* unitDefs;
-	int numUnitDefs;
-	std::map<std::string, int> unitDefIDsByName;
-	std::map<int, std::set<int> > decoyMap;
-	std::set<int> startUnitIDs;
-
 	CUnitDefHandler(void);
 	~CUnitDefHandler(void);
 	void Init();
@@ -37,6 +32,12 @@ public:
 	                     const std::string& texName);
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     unsigned int texID, int sizex, int sizey);
+
+	UnitDef* unitDefs;
+	int numUnitDefs;
+	std::map<std::string, int> unitDefIDsByName;
+	std::map<int, std::set<int> > decoyMap;
+	std::set<int> startUnitIDs;
 
 protected:
 	void ParseUnitDef(const LuaTable&, const std::string& name, int id);

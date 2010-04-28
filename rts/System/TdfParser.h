@@ -1,7 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TDFPARSER_H_INCLUDED
 #define TDFPARSER_H_INCLUDED
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -138,7 +138,8 @@ public:
 		return i;
 	}
 
-	const std::map<std::string, std::string>& GetAllValues(std::string const& location) const;
+	typedef const std::map<std::string, std::string>& MapRef;
+	MapRef GetAllValues(std::string const& location) const;
 	std::vector<std::string> GetSectionList(std::string const& location) const;
 	bool SectionExist(std::string const& location) const;
 

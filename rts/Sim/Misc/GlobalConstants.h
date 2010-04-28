@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GLOBAL_CONSTANTS_H
 #define GLOBAL_CONSTANTS_H
 
@@ -21,6 +23,20 @@ const int  SQUARE_SIZE = 8;
  * Defines the game speed as 30
  */
 const int GAME_SPEED = 30;
+
+/**
+ * @brief unit SlowUpdate rate
+ *
+ * Defines the interval of CUnit::SlowUpdate calls
+ */
+const int UNIT_SLOWUPDATE_RATE = 16;
+
+/**
+ * @brief team SlowUpdate rate
+ *
+ * Defines the interval of CTeam::SlowUpdate calls
+ */
+const int TEAM_SLOWUPDATE_RATE = 32;
 
 /**
  * @brief max view range

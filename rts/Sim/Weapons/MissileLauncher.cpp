@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
@@ -62,7 +64,9 @@ void CMissileLauncher::FireImpl()
 		}
 	}
 
-	dir += (gs->randVector() * sprayAngle + salvoError) * (1 - owner->limExperience * 0.5f);
+	dir +=
+		((gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;

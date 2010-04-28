@@ -1,14 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Game/Camera.h"
-#include "Sim/Misc/GlobalConstants.h"
+#include "SimpleParticleSystem.h"
 #include "GenericParticleProjectile.h"
-#include "GlobalUnsynced.h"
+#include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "SimpleParticleSystem.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 
@@ -141,9 +141,9 @@ void CSimpleParticleSystem::Update()
 
 }
 
-void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
+void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 {
-	CProjectile::Init(explosionPos, owner GML_PARG_P);
+	CProjectile::Init(explosionPos, owner);
 
 	particles = new Particle[numParticles];
 
@@ -186,7 +186,7 @@ CSphereParticleSpawner::~CSphereParticleSpawner()
 {
 }
 
-void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
+void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 {
 	float3 up = emitVector;
 	float3 right = up.cross(float3(up.y, up.z, -up.x));

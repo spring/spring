@@ -1,13 +1,10 @@
-/**
- * @file float4.h
- * @brief float4 header
- *
- * Declaration of float4 class
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef FLOAT4_H
 #define FLOAT4_H
 
 #include "float3.h"
+#include "creg/creg_cond.h"
 
 /** Float3 with a fourth data member, which is basically unused but required
     to be able to pass data into e.g. OpenGL functions that expect

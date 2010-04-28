@@ -1,23 +1,26 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GROUNDFLASH_H
 #define GROUNDFLASH_H
 
-#include "Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
-class CVertexArray;
+struct AtlasedTexture;
+struct GroundFXTexture;
 class CColorMap;
+class CVertexArray;
 
 class CGroundFlash : public CExpGenSpawnable
 {
 public:
 	CR_DECLARE(CGroundFlash);
 
-	CGroundFlash(const float3& p GML_FARG_H);
+	CGroundFlash(const float3& p);
 	CGroundFlash();
 	virtual ~CGroundFlash(){};
 	virtual void Draw(){};
 	virtual bool Update(){return false;}; // returns false when it should be deleted
-	virtual void Init(const float3& pos, CUnit *owner GML_FARG_H){};
+	virtual void Init(const float3& pos, CUnit *owner){};
 
 	//bool alwaysVisible;
 	//float3 pos;
@@ -31,7 +34,7 @@ public:
 	CR_DECLARE(CStandardGroundFlash);
 
 	CStandardGroundFlash();
-	CStandardGroundFlash(const float3& pos, float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& color=float3(1.0f,1.0f,0.7f) GML_FARG_H);
+	CStandardGroundFlash(const float3& pos, float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& color=float3(1.0f,1.0f,0.7f));
 	~CStandardGroundFlash();
 	void Draw();
 	bool Update(); // returns false when it should be deleted
@@ -58,13 +61,13 @@ class CSeismicGroundFlash : public CGroundFlash
 public:
 	CR_DECLARE(CSeismicGroundFlash);
 	~CSeismicGroundFlash();
-	CSeismicGroundFlash(const float3& pos, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col GML_FARG_H);
+	CSeismicGroundFlash(const float3& pos, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col);
 	void Draw();
 	bool Update(); // returns false when it should be deleted
 
 	float3 side1,side2;
 
-	AtlasedTexture texture;
+	AtlasedTexture* texture;
 	float sizeGrowth;
 	float size;
 	float alpha;
@@ -82,7 +85,7 @@ public:
 	CSimpleGroundFlash();
 	~CSimpleGroundFlash();
 
-	void Init(const float3& explosionPos, CUnit *owner GML_FARG_H);
+	void Init(const float3& explosionPos, CUnit *owner);
 	void Draw();
 	bool Update(); // returns false when it should be deleted
 

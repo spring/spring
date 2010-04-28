@@ -1,10 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
-#include "Rendering/GL/myGL.h"
-// Projectile.h: interface for the CProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
+#include "Rendering/GL/myGL.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
@@ -19,7 +18,6 @@ class CBuilding;
 class CUnit;
 class CFeature;
 class CVertexArray;
-struct S3DModel;
 
 #define COLLISION_NOFRIENDLY	1
 #define COLLISION_NOFEATURE		2
@@ -37,13 +35,13 @@ public:
 	virtual void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	CProjectile(); // default constructor is needed for creg
-	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece GML_PARG_H);
+	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual ~CProjectile();
 	virtual void Update();
-	virtual void Init(const float3& pos, CUnit* owner GML_PARG_H);
+	virtual void Init(const float3& pos, CUnit* owner);
 
 	bool synced; //! is this projectile part of the simulation?
 	bool weapon; //! is this a weapon projectile? (true implies synced true)
@@ -54,29 +52,25 @@ public:
 	bool castShadow;
 	unsigned int collisionFlags;
 
-	void UpdateDrawPos();
 	float3 drawPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastProjUpdate;
 #endif
 
-	inline CUnit* owner() const {
-		return uh->units[ownerId];
-	}
+	CUnit* owner() const { return uh->units[ownerId]; }
+	int GetProjectileType() const { return projectileType; }
 
+	float3 dir;
 	float3 speed;
 	float mygravity;
 
-	virtual void DrawCallback(void);
-	virtual void DrawUnitPart(void);
-	virtual void DrawS3O() { DrawUnitPart(); }
-
-	S3DModel* s3domodel;
+	virtual void DrawCallback(void) {}
 
 	float tempdist; // temp distance used for sorting when rendering
 	
-private:
+protected:
 	int ownerId;
+	int projectileType;
 };
 
 #endif /* PROJECTILE_H */

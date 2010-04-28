@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MINIMAP_H
 #define MINIMAP_H
-// MiniMap.h: interface for the CMiniMap class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <vector>
 #include <string>
@@ -67,11 +66,11 @@ class CMiniMap : public CInputReceiver {
 		void DrawNotes(void);
 		void DrawButtons();
 		void DrawMinimizedButton();
-		void DrawUnit(CUnit* unit);
-		void DrawUnitHighlight(CUnit* unit);
+		void DrawUnit(const CUnit* unit);
+		void DrawUnitHighlight(const CUnit* unit);
 		void DrawCircle(const float3& pos, float radius);
 		void DrawSquare(const float3& pos, float xsize, float zsize);
-		const CIconData* GetUnitIcon(CUnit* unit, float& scale) const;
+		const CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 		void GetFrustumSide(float3& side);
 		
 	protected:

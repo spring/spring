@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef HEIGHT_MAP_TEXTURE_H
 #define HEIGHT_MAP_TEXTURE_H
-// HeightMapTexture.h
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Rendering/GL/myGL.h"
 

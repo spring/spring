@@ -1,9 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "Archive7Zip.h"
 
 #include <algorithm>
 #include <boost/system/error_code.hpp>
 #include <stdexcept>
-#include <string.h>
 
 extern "C" {
 #include "lib/7z/Types.h"
@@ -17,8 +18,7 @@ extern "C" {
 #include "LogOutput.h"
 
 CArchive7Zip::CArchive7Zip(const std::string& name) :
-	CArchiveBuffered(name),
-	curSearchHandle(1),
+	CArchiveBase(name),
 	isOpen(false)
 {
 	blockIndex = 0xFFFFFFFF;
@@ -49,10 +49,12 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	CrcGenerateTable();
 
 	SRes res = SzArEx_Open(&db, &lookStream.s, &allocImp, &allocTempImp);
-	if (res == SZ_OK) {
+	if (res == SZ_OK)
+	{
 		isOpen = true;
 	}
-	else {
+	else
+	{
 		isOpen = false;
 		std::string error;
 		switch (res) {
@@ -83,7 +85,8 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	}
 
 	// Get contents of archive and store name->int mapping
-	for (unsigned i = 0; i < db.db.NumFiles; ++i) {
+	for (unsigned i = 0; i < db.db.NumFiles; ++i)
+	{
 		CSzFileItem *f = db.db.Files + i;
 		if ((f->Size >= 0) && !f->IsDir) {
 			std::string name = f->Name;
@@ -95,87 +98,66 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 			fd.crc = (f->Size > 0) ? f->FileCRC : 0;
 
 			StringToLowerInPlace(name);
-			fileData[name] = fd;
+			fileData.push_back(fd);
+			lcNameIndex[name] = fileData.size()-1;
 		}
 	}
 }
 
 CArchive7Zip::~CArchive7Zip(void)
 {
-	if (outBuffer) {
+	if (outBuffer)
+	{
 		IAlloc_Free(&allocImp, outBuffer);
 	}
-	if (isOpen) {
+	if (isOpen)
+	{
 		File_Close(&archiveStream.file);
 	}
 	SzArEx_Free(&db, &allocImp);
 }
 
-unsigned int CArchive7Zip::GetCrc32 (const std::string& fileName)
-{
-	std::string lower = StringToLower(fileName);
-	FileData fd = fileData[lower];
-	return fd.crc;
-}
-
-FileBuffer* CArchive7Zip::GetEntireFileImpl(const std::string& fName)
-{
-	if (!isOpen)
-		return NULL;
-
-	// Figure out the file index
-	std::string fileName = StringToLower(fName);
-
-	if (fileData.find(fileName) == fileData.end())
-		return NULL;
-
-	FileData fd = fileData[fileName];
-
-	// Get 7zip to decompress it
-	size_t offset;
-	size_t outSizeProcessed;
-
-	SRes res;
-
-	res = SzAr_Extract(&db, &lookStream.s, fd.fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
-
-	FileBuffer* of = NULL;
-	if (res == SZ_OK) {
-		of = new FileBuffer;
-		of->size = outSizeProcessed;
-		of->data = (char*)outBuffer + offset;
-	}
-
-	if (res != SZ_OK)
-		return NULL;
-
-	return of;
-}
-
-int CArchive7Zip::FindFiles(int cur, std::string* name, int* size)
-{
-	if (cur == 0) {
-		curSearchHandle++;
-		cur = curSearchHandle;
-		searchHandles[cur] = fileData.begin();
-	}
-
-	if (searchHandles.find(cur) == searchHandles.end())
-		throw std::runtime_error("Unregistered handle. Pass a handle returned by CArchive7Zip::FindFiles.");
-
-	if (searchHandles[cur] == fileData.end()) {
-		searchHandles.erase(cur);
-		return 0;
-	}
-
-	*name = searchHandles[cur]->second.origName;
-	*size = searchHandles[cur]->second.size;
-
-	searchHandles[cur]++;
-	return cur;
-}
-
 bool CArchive7Zip::IsOpen()
 {
 	return isOpen;
+}
+
+unsigned CArchive7Zip::NumFiles() const
+{
+	return fileData.size();
+}
+
+bool CArchive7Zip::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
+{
+	boost::mutex::scoped_lock lck(archiveLock);
+	assert(fid >= 0 && fid < NumFiles());
+	
+	// Get 7zip to decompress it
+	size_t offset;
+	size_t outSizeProcessed;
+	SRes res;
+
+	res = SzAr_Extract(&db, &lookStream.s, fileData[fid].fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
+	if (res == SZ_OK)
+	{
+		std::copy((char*)outBuffer+offset, (char*)outBuffer+offset+outSizeProcessed, std::back_inserter(buffer));
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void CArchive7Zip::FileInfo(unsigned fid, std::string& name, int& size) const
+{
+	assert(fid >= 0 && fid < NumFiles());
+	name = fileData[fid].origName;
+	size = fileData[fid].size;
+}
+
+unsigned CArchive7Zip::GetCrc32(unsigned fid)
+{
+	assert(fid >= 0 && fid < NumFiles());
+	return fileData[fid].crc;
 }

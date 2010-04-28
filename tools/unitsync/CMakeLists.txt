@@ -14,7 +14,7 @@ INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
 FIND_PACKAGE(GLEW REQUIRED)
 set (unitsync_libs ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY} ${GL_gl_LIBRARY} ${GL_glu_LIBRARY})
 
-ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
+ADD_DEFINITIONS(-DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG} -DNOT_USING_CREG)
 
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
@@ -27,6 +27,8 @@ set(unitsync_files
 	../../rts/System/TdfParser
 	../../rts/System/Info
 	../../rts/System/Option
+	../../rts/System/Util
+	../../rts/System/float4
 	../../rts/Sim/Misc/SideParser
 	../../rts/Game/GameVersion
 	../../rts/ExternalAI/LuaAIImplHandler
@@ -43,9 +45,11 @@ if (WIN32)
 		../../rts/System/Platform/Win/WinVersion)
 endif (WIN32)
 
-ADD_LIBRARY(unitsync SHARED ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
-TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
+ADD_LIBRARY(unitsync MODULE ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
+TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
+
+Add_Subdirectory(test)

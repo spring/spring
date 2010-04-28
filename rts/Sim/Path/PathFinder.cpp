@@ -1,34 +1,24 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <ostream>
 #include <deque>
 #include "mmgr.h"
 
 #include "PathFinder.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "Map/ReadMap.h"
-#include "LogOutput.h"
-#include "Rendering/GL/glExtra.h"
-#include "Sim/MoveTypes/MoveInfo.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "System/LogOutput.h"
 
 #define PATHDEBUG 0
 
 
-// Option constants.
-const unsigned int PATHOPT_RIGHT = 1;		//-x
-const unsigned int PATHOPT_LEFT = 2;		//+x
-const unsigned int PATHOPT_UP = 4;			//+z
-const unsigned int PATHOPT_DOWN = 8;		//-z
-const unsigned int PATHOPT_DIRECTION = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
-const unsigned int PATHOPT_START = 16;
-const unsigned int PATHOPT_OPEN = 32;
-const unsigned int PATHOPT_CLOSED = 64;
-const unsigned int PATHOPT_FORBIDDEN = 128;
-const unsigned int PATHOPT_BLOCKED = 256;
 
 // Cost constants.
-const float PATHCOST_INFINITY = 10000000;
+const float PATHCOST_INFINITY = 10000000.0f;
 
 void* pfAlloc(size_t n)
 {
@@ -759,44 +749,7 @@ int2 CPathFinderDef::GoalSquareOffset(int blockSize) const {
 	return offset;
 }
 
-/**
- * Draw a circle around the goal, indicating the goal area.
- */
-void CPathFinderDef::Draw() const {
-	glColor4f(0, 1, 1, 1);
-	glSurfaceCircle(goal, sqrt(sqGoalRadius), 20);
-}
 
-void CPathFinder::Draw(void)
-{
-	glColor3f(0.7f,0.2f,0.2f);
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_LINES);
-	for(OpenSquare* os=openSquareBuffer;os!=openSquareBufferPointer;++os){
-		int2 sqr=os->square;
-		int square = os->sqr;
-		if(squareState[square].status & PATHOPT_START)
-			continue;
-		float3 p1;
-		p1.x=sqr.x*SQUARE_SIZE;
-		p1.z=sqr.y*SQUARE_SIZE;
-		p1.y=ground->GetHeight(p1.x,p1.z)+15;
-		float3 p2;
-		int obx=sqr.x-directionVector[squareState[square].status & PATHOPT_DIRECTION].x;
-		int obz=sqr.y-directionVector[squareState[square].status & PATHOPT_DIRECTION].y;
-		int obsquare =  obz * gs->mapx + obx;
-
-		if(obsquare>=0){
-			p2.x=obx*SQUARE_SIZE;
-			p2.z=obz*SQUARE_SIZE;
-			p2.y=ground->GetHeight(p2.x,p2.z)+15;
-
-			glVertexf3(p1);
-			glVertexf3(p2);
-		}
-	}
-	glEnd();
-}
 
 //////////////////////////////////////////
 // CRangedGoalWithCircularConstraintPFD //

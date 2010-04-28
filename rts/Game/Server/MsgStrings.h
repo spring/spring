@@ -1,5 +1,7 @@
-#ifndef SERVERMSGSTRINGS_H_
-#define SERVERMSGSTRINGS_H_
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _SERVER_MSG_STRINGS_H_
+#define _SERVER_MSG_STRINGS_H_
 
 #include <string>
 
@@ -33,4 +35,5 @@ const std::string UnknownNetmsg = "Unhandled net msg (%d) in server from %d";
 
 const std::string CommandNotAllowed = "Player %d is not allowed to execute command %s";
 
-#endif /*SERVERMSGSTRINGS_H_*/
+#endif // _SERVER_MSG_STRINGS_H_
+

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -130,11 +132,7 @@ static void GetDecoyResources(const CUnit* unit,
 	}
 
 	if (active) {
-		if (ud->isMetalMaker) {
-			mMake += (ud->makesMetal * uh->metalMakerEfficiency);
-		} else {
-			mMake += ud->makesMetal;
-		}
+		mMake += ud->makesMetal;
 		if (ud->extractsMetal > 0.0f) {
 			if (rd->extractsMetal > 0.0f) {
 				mMake += unit->metalExtract * (ud->extractsMetal / rd->extractsMetal);

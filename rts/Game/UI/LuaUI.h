@@ -1,15 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_UI_H
 #define LUA_UI_H
-// LuaUI.h: interface for the CLuaUI class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
 #include <map>
 
 #include "Lua/LuaHandle.h"
-#include "Sim/Units/CommandAI/Command.h"
+//#include "Sim/Units/CommandAI/Command.h"
 
 
 class CUnit;
