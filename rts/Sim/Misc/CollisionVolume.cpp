@@ -189,7 +189,7 @@ void CollisionVolume::SetBoundingRadius() {
 		case COLVOL_TYPE_BOX: {
 			// would be an over-estimation for cylinders
 			volumeBoundingRadiusSq = axisHScalesSq.x + axisHScalesSq.y + axisHScalesSq.z;
-			volumeBoundingRadius = streflop::sqrt(volumeBoundingRadiusSq);
+			volumeBoundingRadius = math::sqrt(volumeBoundingRadiusSq);
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
 			const float prhs = axisHScales[primaryAxis     ];   // primary axis half-scale
@@ -198,7 +198,7 @@ void CollisionVolume::SetBoundingRadius() {
 			const float mshs = std::max(sahs, sbhs);            // max. secondary axis half-scale
 
 			volumeBoundingRadiusSq = prhs * prhs + mshs * mshs;
-			volumeBoundingRadius = streflop::sqrtf(volumeBoundingRadiusSq);
+			volumeBoundingRadius = math::sqrt(volumeBoundingRadiusSq);
 		} break;
 		case COLVOL_TYPE_ELLIPSOID: {
 			volumeBoundingRadius = std::max(axisHScales.x, std::max(axisHScales.y, axisHScales.z));

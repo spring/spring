@@ -22,7 +22,6 @@ public:
 	void Collision();
 	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
-	float3 dir;
 	float intensity;
 	float3 color;
 	float3 color2;

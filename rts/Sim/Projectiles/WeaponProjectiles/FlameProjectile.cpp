@@ -27,16 +27,20 @@ CR_REG_METADATA(CFlameProjectile,(
 	));
 
 
-CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread,
-		CUnit* owner, const WeaponDef* weaponDef, int ttl)
-:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
+CFlameProjectile::CFlameProjectile(
+	const float3& pos, const float3& speed, const float3& spread,
+	CUnit* owner, const WeaponDef* weaponDef, int ttl):
+
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	color(color),
 	color2(color2),
 	intensity(intensity),
 	spread(spread),
 	curTime(0)
 {
+	projectileType = WEAPON_FLAME_PROJECTILE;
 	invttl = 1.0f / ttl;
+
 	if (weaponDef) {
 		SetRadius(weaponDef->size*weaponDef->collisionSize);
 		drawRadius = weaponDef->size;
@@ -107,11 +111,12 @@ void CFlameProjectile::Draw(void)
 
 int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 dir=pos-shieldPos;
-	dir.Normalize();
-	if(dir.dot(speed)<shieldMaxSpeed){
-		speed+=dir*shieldForce;
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < shieldMaxSpeed) {
+		speed += (rdir * shieldForce);
 		return 2;
 	}
+
 	return 0;
 }

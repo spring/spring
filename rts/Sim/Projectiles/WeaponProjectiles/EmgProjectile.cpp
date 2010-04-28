@@ -21,13 +21,18 @@ CR_REG_METADATA(CEmgProjectile,(
     CR_RESERVED(8)
     ));
 
-CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, const float3& color, float intensity, int ttl,
-		const WeaponDef* weaponDef)
-:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
+CEmgProjectile::CEmgProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner,
+	const float3& color, float intensity,
+	int ttl, const WeaponDef* weaponDef):
+
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	intensity(intensity),
 	color(color)
 {
+	projectileType = WEAPON_EMG_PROJECTILE;
+
 	if (weaponDef) {
 		SetRadius(weaponDef->collisionSize);
 		drawRadius=weaponDef->size;
@@ -93,11 +98,12 @@ void CEmgProjectile::Draw(void)
 
 int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 dir=pos-shieldPos;
-	dir.Normalize();
-	if(dir.dot(speed)<shieldMaxSpeed){
-		speed+=dir*shieldForce;
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < shieldMaxSpeed) {
+		speed += (rdir * shieldForce);
 		return 2;
 	}
+
 	return 0;
 }
