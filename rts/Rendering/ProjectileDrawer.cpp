@@ -774,22 +774,25 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 
 	const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
 
+	#define SET_TRANSFORM_VECTORS()              \
+		float3 rightdir, updir;                  \
+                                                 \
+		if (fabs(wp->dir.y) < 0.95f) {           \
+			rightdir = wp->dir.cross(UpVector);  \
+			rightdir.SafeANormalize();           \
+		} else {                                 \
+			rightdir = float3(1.0f, 0.0f, 0.0f); \
+		}                                        \
+                                                 \
+		updir = rightdir.cross(wp->dir);
+
 	switch (wp->GetProjectileType()) {
 		case CWeaponProjectile::WEAPON_MISSILE_PROJECTILE: {
 			if (!shadowPass) {
 				unitDrawer->SetTeamColour(wp->colorTeam);
 			}
 
-			float3 rightdir, updir;
-
-			if (fabs(wp->dir.y) < 0.95f) {
-				rightdir = wp->dir.cross(UpVector);
-				rightdir.SafeNormalize();
-			} else {
-				rightdir = float3(1.0f, 0.0f, 0.0f);
-			}
-
-			updir = rightdir.cross(wp->dir);
+			SET_TRANSFORM_VECTORS();
 
 			CMatrix44f transMatrix(wp->drawPos + wp->dir * wp->radius * 0.9f, -rightdir, updir, wp->dir);
 
@@ -800,16 +803,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		} break;
 
 		case CWeaponProjectile::WEAPON_STARBURST_PROJECTILE: {
-			float3 rightdir, updir;
-
-			if (fabs(wp->dir.y) < 0.95f) {
-				rightdir = wp->dir.cross(UpVector);
-				rightdir.SafeNormalize();
-			} else {
-				rightdir = float3(1.0f, 0.0f, 0.0f);
-			}
-
-			updir = rightdir.cross(wp->dir);
+			SET_TRANSFORM_VECTORS();
 
 			CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
 
@@ -824,16 +818,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 				unitDrawer->SetTeamColour(wp->colorTeam);
 			}
 
-			float3 rightdir, updir;
-
-			if (fabs(wp->dir.y) < 0.95f) {
-				rightdir = wp->dir.cross(UpVector);
-				rightdir.SafeANormalize();
-			} else {
-				rightdir = float3(1.0f, 0.0f, 0.0f);
-			}
-
-			updir = rightdir.cross(wp->dir);
+			SET_TRANSFORM_VECTORS();
 
 			CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
 
@@ -845,6 +830,8 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		default: {
 		} break;
 	}
+
+	#undef SET_TRANSFORM_VECTORS
 
 	return true;
 }
