@@ -8,7 +8,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile,
