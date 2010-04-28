@@ -726,6 +726,12 @@ void SpringApp::Startup()
 	std::string inputFile = cmdline->GetInputFile();
 	if (inputFile.empty())
 	{
+#ifdef HEADLESS
+		LogObject()
+				<< "The headless version of the engine can not be run in interactive mode.\n"
+				<< "Please supply a start-script, save- or demo-file.";
+		exit(1);
+#endif
 		bool server = !cmdline->IsSet("client") || cmdline->IsSet("server");
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(server, 64);
