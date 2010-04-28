@@ -17,8 +17,6 @@
 #include <SDL.h>
 #ifdef _WIN32
 #include <windows.h>
-#elif defined(__APPLE__)
-#include "Mac/MacUtils.h"
 #endif
 
 // from X_MessageBox.cpp:
@@ -44,12 +42,9 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 		winFlags |= MB_ICONINFORMATION;
 
 	MessageBox (GetActiveWindow(), msg, caption, winFlags);
-
-// TODO: write Mac OS X specific message box
-#elif defined(__APPLE__)
-	MacMessageBox(msg, caption, flags);
 #else
 	// X implementation
+// TODO: write Mac OS X specific message box
 
 	X_MessageBox(msg, caption, flags);
 #endif

@@ -42,7 +42,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	if (fileHeader.scriptSize != 0) {
 		char* buf = new char[fileHeader.scriptSize];
 		playbackDemo.read(buf, fileHeader.scriptSize);
-		setupScript = std::string(buf);
+		setupScript = std::string(buf, fileHeader.scriptSize);
 		delete[] buf;
 	}
 
@@ -51,6 +51,20 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 
 	demoTimeOffset = curTime - chunkHeader.modGameTime - 0.1f;
 	nextDemoRead = curTime - 0.01f;
+
+	if (fileHeader.demoStreamSize != 0) {
+		bytesRemaining = fileHeader.demoStreamSize;
+	}
+	else {
+		// Spring crashed while recording the demo: replay until EOF,
+		// but at most filesize bytes to block watching demo of running game.
+		// For this we must determine the file size.
+		// (if this had still used CFileHandler that would have been easier ;-))
+		long curPos = playbackDemo.tellg();
+		playbackDemo.seekg(0, std::ios::end);
+ 		bytesRemaining = (long) playbackDemo.tellg() - curPos;
+ 		playbackDemo.seekg(curPos);
+	}
 }
 
 netcode::RawPacket* CDemoReader::GetData(float curTime)
@@ -62,17 +76,16 @@ netcode::RawPacket* CDemoReader::GetData(float curTime)
 	if (nextDemoRead < curTime) {
 		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
 		playbackDemo.read((char*)(buf->data), chunkHeader.length);
+		bytesRemaining -= chunkHeader.length;
 
-		if (playbackDemo.tellg() >= sizeof(fileHeader) + fileHeader.scriptSize + fileHeader.demoStreamSize)
-		{
-			playbackDemo.seekg(0, std::ios::end); //seek to end, no more stuff to read
-		}
-		else
-		{ // read next chunk ehader
+		if (!ReachedEnd()) {
+			// read next chunk header
 			playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
 			chunkHeader.swab();
 			nextDemoRead = chunkHeader.modGameTime + demoTimeOffset;
+			bytesRemaining -= sizeof(chunkHeader);
 		}
+
 		return buf;
 	} else {
 		return 0;
@@ -81,7 +94,7 @@ netcode::RawPacket* CDemoReader::GetData(float curTime)
 
 bool CDemoReader::ReachedEnd() const
 {
-	if (playbackDemo.eof())
+	if (bytesRemaining <= 0 || playbackDemo.eof())
 		return true;
 	else
 		return false;
@@ -104,6 +117,11 @@ const std::vector< std::vector<TeamStatistics> >& CDemoReader::GetTeamStats() co
 
 void CDemoReader::LoadStats()
 {
+	// Stats are not available if Spring crashed while writing the demo.
+	if (fileHeader.demoStreamSize == 0) {
+		return;
+	}
+
 	const int curPos = playbackDemo.tellg();
 	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
 

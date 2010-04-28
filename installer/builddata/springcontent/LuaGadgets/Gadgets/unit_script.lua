@@ -10,7 +10,6 @@ In other words, HERE BE DRAGONS =)
 Known issues:
 - {Query,AimFrom,Aim,Fire}{Primary,Secondary,Tertiary} are not handled.
   (use {Query,AimFrom,Aim,Fire}{Weapon1,Weapon2,Weapon3} instead!)
-- Errors in Killed do not show a traceback.
 - Errors in callins which aren't wrapped in a thread do not show a traceback.
 - Which callins are wrapped in a thread and which aren't is a bit arbitrary.
 - MoveFinished, TurnFinished and Destroy are overwritten by the framework.
@@ -159,13 +158,20 @@ iteration of threads WILL cause desync!
 
 Format: {
 	[unitID] = {
-		env = { the unit's environment table },
+		env = {},  -- the unit's environment table
 		waitingForMove = { [piece*3+axis] = thread, ... },
 		waitingForTurn = { [piece*3+axis] = thread, ... },
-		threads = { [thread] = { thread = thread, signal_mask = number, unitID = number }, ... },
+		threads = {
+			[thread] = {
+				thread = thread,      -- the coroutine object
+				signal_mask = number, -- see Signal/SetSignalMask
+				unitID = number,      -- 'owner' of the thread
+				onerror = function,   -- called after thread died due to an error
+			},
+			...
+		},
 	},
 }
-where ~ refers to the unit table again (allows finding the unit given a thread)
 --]]
 local units = {}
 
@@ -211,6 +217,17 @@ local function Destroy()
 	end
 end
 
+-- Pcalls thread.onerror, if present.
+local function RunOnError(thread)
+	local fun = thread.onerror
+	if fun then
+		local good, err = pcall(fun, err)
+		if (not good) then
+			Spring.Echo("error in error handler: " .. err)
+		end
+	end
+end
+
 -- Helper for AnimFinished, StartThread and gadget:GameFrame.
 -- Resumes a sleeping or waiting thread; displays any errors.
 local function WakeUp(thread, ...)
@@ -220,6 +237,7 @@ local function WakeUp(thread, ...)
 	if (not good) then
 		Spring.Echo(err)
 		Spring.Echo(debug.traceback(co))
+		RunOnError(thread)
 	end
 end
 
@@ -327,6 +345,13 @@ function Spring.UnitScript.StartThread(fun, ...)
 	-- to remember the parameters for the first co_resume call somewhere.
 	-- I think in practice the difference in behavior isn't an issue.
 	return WakeUp(thread, ...)
+end
+
+local function SetOnError(fun)
+	local thread = activeUnit.threads[co_running()]
+	if thread then
+		thread.onerror = fun
+	end
 end
 
 function Spring.UnitScript.SetSignalMask(mask)
@@ -488,13 +513,13 @@ local StartThread = Spring.UnitScript.StartThread
 
 
 local function Wrap_AimWeapon(unitID, callins)
-	local fun = callins["AimWeapon"]
-	if (not fun) then return end
+	local AimWeapon = callins["AimWeapon"]
+	if (not AimWeapon) then return end
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
 	local function AimWeaponThread(weaponNum, heading, pitch)
-		if fun(weaponNum, heading, pitch) then
+		if AimWeapon(weaponNum, heading, pitch) then
 			-- SetUnitWeaponState counts weapons from 0
 			return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", 1)
 		end
@@ -507,36 +532,31 @@ end
 
 
 local function Wrap_AimShield(unitID, callins)
-	local fun = callins["AimShield"]
-	if (not fun) then return end
+	local AimShield = callins["AimShield"]
+	if (not AimShield) then return end
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
-	local function AimWeaponThread(weaponNum)
-		local enabled = fun(weaponNum) and true or false
+	local function AimShieldThread(weaponNum)
+		local enabled = AimShield(weaponNum) and true or false
 		-- SetUnitShieldState counts weapons from 0
-		return sp_SetUnitShieldState(unitID, weaponNum, enabled)
+		return sp_SetUnitShieldState(unitID, weaponNum - 1, enabled)
 	end
 
 	callins["AimShield"] = function(weaponNum)
-		return StartThread(AimWeaponThread, weaponNum)
+		return StartThread(AimShieldThread, weaponNum)
 	end
 end
 
 
 local function Wrap_Killed(unitID, callins)
-	local fun = callins["Killed"]
-	if (not fun) then return end
+	local Killed = callins["Killed"]
+	if (not Killed) then return end
 
 	local function KilledThread(recentDamage, maxHealth)
-		-- It is *very* important the sp_SetDeathScriptFinished is executed, hence pcall.
-		--local good, wreckLevel = xpcall(fun, debug.traceback, recentDamage, maxHealth)
-		local good, wreckLevel = pcall(fun, recentDamage, maxHealth)
-		if (not good) then
-			-- wreckLevel is the error message in this case =)
-			Spring.Echo(wreckLevel)
-			wreckLevel = -1 -- no wreck, no error
-		end
+		-- It is *very* important the sp_SetDeathScriptFinished is executed, even on error.
+		SetOnError(sp_SetDeathScriptFinished)
+		local wreckLevel = Killed(recentDamage, maxHealth)
 		sp_SetDeathScriptFinished(wreckLevel)
 	end
 

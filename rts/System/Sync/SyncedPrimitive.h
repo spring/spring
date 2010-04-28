@@ -230,10 +230,15 @@ typedef    long double SyncedLongDouble;
 #endif // !SYNCDEBUG && !SYNCCHECK
 
 // this macro looks like a noop, but causes checksum update
-#if defined(SYNCDEBUG) && defined(__GNUC__)
-#define ASSERT_SYNCED_PRIMITIVE(x) { SyncedPrimitive<typeof(x)>(x); }
+#ifdef SYNCDEBUG
+#  ifdef __GNUC__
+#    define ASSERT_SYNCED_PRIMITIVE(x) { SyncedPrimitive<typeof(x)>(x); }
+#  else
+#    include <boost/typeof/typeof.hpp>
+#    define ASSERT_SYNCED_PRIMITIVE(x) { SyncedPrimitive<BOOST_TYPEOF(x)>(x); }
+#  endif
 #else
-#define ASSERT_SYNCED_PRIMITIVE(x)
+#  define ASSERT_SYNCED_PRIMITIVE(x)
 #endif
 
 #endif // SYNCEDPRIMITIVE_H

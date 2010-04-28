@@ -179,9 +179,9 @@ void CubeMapHandler::CreateSpecularFace(
 
 			const float spec = std::min(1.f, pow(dot, specExponent) + pow(dot, 3) * 0.25f);
 
-			buf[(y * size + x) * 4 + 0] = (unsigned char) (mapInfo->light.specularSunColor.x * spec * 255);
-			buf[(y * size + x) * 4 + 1] = (unsigned char) (mapInfo->light.specularSunColor.y * spec * 255);
-			buf[(y * size + x) * 4 + 2] = (unsigned char) (mapInfo->light.specularSunColor.z * spec * 255);
+			buf[(y * size + x) * 4 + 0] = (unsigned char) (mapInfo->light.unitSpecularColor.x * spec * 255);
+			buf[(y * size + x) * 4 + 1] = (unsigned char) (mapInfo->light.unitSpecularColor.y * spec * 255);
+			buf[(y * size + x) * 4 + 2] = (unsigned char) (mapInfo->light.unitSpecularColor.z * spec * 255);
 			buf[(y * size + x) * 4 + 3] = 255;
 		}
 	}

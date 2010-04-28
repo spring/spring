@@ -391,7 +391,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 					const int y_mapx     = y * gs->mapx;
 					for (int x = 0; x  < gs->mapx; ++x) {
 						const float height = readmap->centerheightmap[y_mapx + x];
-						const unsigned char value = (unsigned char)(height * 8 * 3);
+						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4;
 						infoTexMem[i]     = 64 + (extraTexPal[value]     >> 1);
 						infoTexMem[i + 1] = 64 + (extraTexPal[value + 1] >> 1);

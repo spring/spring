@@ -34,6 +34,7 @@ public:
 	bool TestTrajectoryNeutralCone(const float3 &from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner);
 
 	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
+	void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos, float searchRadius);
 	CUnit* GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam);
 	CUnit* GetClosestValidTarget(const float3& pos, float radius, int searchAllyteam, const CMobileCAI* cai);
@@ -42,13 +43,16 @@ public:
 	CUnit* GetClosestEnemyAircraft(const float3& pos, float searchRadius, int searchAllyteam);
 
 	void GenerateTargets(const CWeapon *attacker, CUnit* lastTarget,std::map<float,CUnit*> &targets);
-	float TraceRay(const float3& start,const float3& dir,float length,float power,const CUnit* owner,const CUnit*& hit,int collisionFlags=0);
+	float TraceRay(const float3& start,const float3& dir,float length,float power,const CUnit* owner,const CUnit*& hit,int collisionFlags=0,const CFeature** hitfeature=0);
 	float GuiTraceRay(const float3& start,const float3& dir,float length,const CUnit*& hit,bool useRadar,const CUnit* exclude=NULL);
 	float GuiTraceRayFeature(const float3& start, const float3& dir, float length,const CFeature*& feature);
 
 	void DoExplosionDamage(CUnit*, const float3&, float, float, bool, CUnit*, float, const DamageArray&, int);
 	void DoExplosionDamage(CFeature*, const float3&, float, CUnit*, const DamageArray&);
-	void Explosion(float3 pos, const DamageArray& damages,float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner,bool damageGround,float gfxMod,bool ignoreOwner,bool impactOnly, CExplosionGenerator *explosionGraphics,CUnit *hit, const float3 &impactDir, int weaponId);
+	void Explosion(float3 pos, const DamageArray& damages,float radius, float edgeEffectiveness, float explosionSpeed,
+		       CUnit* owner,bool damageGround,float gfxMod,bool ignoreOwner,bool impactOnly,
+		       CExplosionGenerator *explosionGraphics,CUnit *hit, const float3 &impactDir, int weaponId,
+		       CFeature* hitfeature=0);
 
 	float TraceRayTeam(const float3& start,const float3& dir,float length, CUnit*& hit,bool useRadar,CUnit* exclude,int allyteam);
 	void BuggerOff(float3 pos, float radius, bool spherical = true, CUnit* exclude = 0);

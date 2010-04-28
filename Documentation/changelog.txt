@@ -1,5 +1,83 @@
 Spring change log
 
+0.81.2.1:
+Engine:
+ - Fixed incorrect projection matrix (i.e. tiny build menu)
+ - Fixed some Mac and MSVC compile errors
+ - Switched to OpenAL-soft, that should fix volume escalation
+ - Slightly improved detection of ATI/Nvidia OpenGL driver crashes
+ - Fixed team-color bug for both units and flying pieces
+
+AIs:
+ - AAI: removed obsolete map config files
+ - AAI: added BA 7.12 config file
+ - KAIK: removed dependence on TEDClass
+
+
+0.81.2:
+Engine:
+ - Removed OpenGL 1.4 version check
+ - Fixed sync with GCC 4.3 builds
+ - Fixed crash when sending startpositions of uncontrolled team
+ - Fixed race condition when taking screenshot
+ - In 'info' screen, human name instead of archive name is shown
+ - Reduced input CPU usage
+ - StartSpectating only has an effect if the player is not already spectating
+ - Packet resends have higher priority now than new packets
+ - Print message to infolog when traffic from unknown IP gets dropped
+ - Fixed vsync for Linux
+ - Removed OpenGL immediate mode rendering to work around broken ATI drivers
+
+Engine / Simulation:
+ - Kamikaze distance is now 3D, this fixes mines
+ - Added new UnitDef tag 'kamikazeUseLOS' (default false)
+ - Fixed submarine stacking
+ - Fixed units using smoothMesh unable to land at repair pads near hills
+ - Fixed COB interpreter incorrect compiler optimizations (fixes e.g. XTA hovercraft)
+ - Fixed features not taking damage from impactOnly weapons
+ - Fixed multiple-cons-build failing on structures with open yardmaps
+ - Fixed maxParalyzeTime when paralyzeOnMaxHealth is enabled
+
+Engine / AI:
+ - Fixed AI initialization process for games with >1 human player and for Lua AIs
+ - Fixed NETMSG_AISHARE for message size >32k
+ - Allow fetching the file path of an AI interface plugin
+ - Fixed crash on Skirmish AI death
+
+Engine / Lua:
+ - Spring.MarkerAddPoint now defaults to local
+ - Spring.CreateFeature heading value is converted to closest-matching facing
+
+Lua Unit Scripts:
+ - Fixed handling of AimShield return value
+ - Fixed Sleep/WaitFor not working in Killed
+ - Slightly improved AimWeapon/AimShield/Killed error messages
+
+AIs:
+ - E323AI 3.18.1
+ - AAI: Doesn't use minkowski metric for retreat distances anymore
+ - AAI: Fixed some NaNs
+
+
+0.81.1.3:
+Engine:
+ - Fixed automatically assigning start position if none is chosen
+ - Fixed bug in DXT5 loading (caused artifacts with teamcolors)
+ - Fixed F1 heightmap view
+ - Fixed playing of demos created in a game in which Spring crashed
+ - Made spectator drawings white instead of random team color
+ - Disable recording demos from demos (default, DemoFromDemo in springrc to enable)
+ - Added a mechanism to register/unregister for messages that are normally not broadcasted to game server
+
+AIs:
+- E323AI 3.14.5:
+  * support for: partial watermaps (plays land only), group merging,
+    auto kbot/vehicle lab selection, template configs
+  * XTA & BA config improvements
+  * Better lab assisting
+- KAIK: do not build MExes on spots used by allies
+
+
 0.81.1:
 Engine / Simulation:
  - Terrain types and water damage are now taken into account for pathing checksum

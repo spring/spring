@@ -58,10 +58,10 @@ if($?) {
   print "Creating installer for release $tag\n";
 }
 
-system("sh", "installer/tasclient_download.sh");
 system("sh", "installer/springlobby_download.sh");
 chdir("$installerDir/downloads");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
-system("wget", "-N",  "http://www.springlobby.info/installer/springsettings.exe");
+system("wget", "-N", "http://www.springlobby.info/installer/springsettings.exe");
+system("wget", "-N", "http://files.caspring.org/caupdater/SpringDownloader.exe");
 chdir("$installerDir/..");
 system("makensis -V3$testBuildString -DREVISION=$tag $allVersStr installer/spring.nsi");

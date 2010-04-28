@@ -146,7 +146,7 @@ void CProjectile::Draw()
 
 void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
-	points.AddVertexQC(pos, color4::white);
+	points.AddVertexQC(pos, color4::whiteA);
 }
 
 int CProjectile::DrawArray()

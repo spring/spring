@@ -187,39 +187,73 @@ bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* obj
  * (ex. a submarine's moveDef vs. a surface ship object)
  */
 bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obstacle) {
+	const CSolidObject* unit = moveData.tempOwner;
+
+	const int hx = int(obstacle->pos.x / SQUARE_SIZE);
+	const int hz = int(obstacle->pos.z / SQUARE_SIZE);
+	const int hi = (hx >> 1) + (hz >> 1) * gs->hmapx;
+	const int hj = (gs->mapx >> 1) * (gs->mapy >> 1); // sizeof(mipHeightmap[1])
+
+	if (hi < 0 || hi >= hj) {
+		// unit is out of map bounds, so cannot be blocked
+		return true;
+	}
+
+	if (unit != NULL) {
+		// simple case: if unit and obstacle have non-zero
+		// vertical separation as measured by their (model)
+		// heights, unit can always pass
+		// note: in many cases separation is not sufficient
+		// even when it logically should be (submarines vs.
+		// floating DT in shallow water)
+		const float elevDif = streflop::fabs(unit->pos.y - obstacle->pos.y);
+		const float hghtSum = streflop::fabs(unit->height) + streflop::fabs(obstacle->height);
+
+		if ((elevDif - hghtSum) >= 1.0f) { return true;  }
+		if ( elevDif            <= 1.0f) { return false; }
+	}
+
 	if (moveData.terrainClass == MoveData::Land) {
+		// if unit is restricted to land with > 0 height,
+		// it can not be blocked by underwater obstacles
 		return (obstacle->isUnderWater);
+	}
+
+	const bool unitSub = moveData.subMarine;
+	const bool obstSub = (obstacle->mobility && obstacle->mobility->subMarine);
+
+	// some objects appear to have negative model heights
+	// (the S3DO parsers allow it for some reason), take
+	// the absolute value to prevent them being regarded
+	// as non-blocking
+	const float oy = obstacle->pos.y;
+	const float oh = std::max(obstacle->height, -obstacle->height);
+	const float gy = readmap->mipHeightmap[1][hi];
+
+	// remaining conditions under which obstacle does NOT block unit
+	//   1.
+	//      (unit is ground-following or not currently in water) and
+	//      obstacle's altitude minus its model height leaves a gap
+	//      between it and the ground
+	//   2.
+	//      unit is a submarine, obstacle sticks out above-water
+	//      (and not itself flagged as a submarine) *OR* unit is
+	//      not a submarine and obstacle is (fully under-water or
+	//      flagged as a submarine)
+	//      NOTE: causes stacking for submarines that are *not*
+	//      explicitly flagged as such
+	//
+	// note that these conditions can lead to a certain degree of
+	// clipping, for full 3D accuracy the height of the movedata
+	// owner would need to be accessible (but the path-estimator
+	// defs aren't tied to any)
+	if (moveData.followGround || (gy > 0.0f)) {
+		return ((oy - oh) > gy);
 	} else {
-		const int x = int(obstacle->pos.x / SQUARE_SIZE);
-		const int z = int(obstacle->pos.z / SQUARE_SIZE);
-		const int i = (x >> 1) + (z >> 1) * gs->hmapx;
-		const int j = (gs->mapx >> 1) * (gs->mapy >> 1); // sizeof(mipHeightmap[1])
-
-		const bool iss = moveData.subMarine;
-		const bool oss = (obstacle->mobility && obstacle->mobility->subMarine);
-
-		// some objects appear to have negative model heights
-		// (the S3DO parsers allow it for some reason), take
-		// the absolute value to prevent them being regarded
-		// as non-blocking
-		const float oy = obstacle->pos.y;
-		const float oh = std::max(obstacle->height, -obstacle->height);
-		const float gy = (i < 0 || i >= j)? 0.0f: readmap->mipHeightmap[1][i];
-
-		// note that these conditions can lead to
-		// a certain degree of clipping, for full
-		// 3D accuracy the height of the movedata
-		// owner would need to be accessible (but
-		// the path-estimator defs aren't tied to
-		// any)
-		if (moveData.followGround || gy > 0.0f) {
-			return ((oy - oh) > gy);
+		if (unitSub) {
+			return (((oy + oh) >  0.0f) && !obstSub);
 		} else {
-			if (iss) {
-				return (((oy + oh) >  0.0f) && !oss);
-			} else {
-				return (((oy + oh) <= 0.0f) ||  oss);
-			}
+			return (((oy + oh) <= 0.0f) ||  obstSub);
 		}
 	}
 

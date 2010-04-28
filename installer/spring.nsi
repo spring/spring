@@ -196,11 +196,19 @@ Section "Desktop shortcut" SEC_DESKTOP
   ${EndIf}
 SectionEnd
 
-Section "Easy content installation" SEC_ARCHIVEMOVER
-  !define INSTALL
-  !include "sections\archivemover.nsh"
-  !undef INSTALL
-SectionEnd
+SectionGroup "Tools"
+  Section "Easy content installation" SEC_ARCHIVEMOVER
+    !define INSTALL
+    !include "sections\archivemover.nsh"
+    !undef INSTALL
+  SectionEnd
+
+  Section "Content downloader" SEC_SPRINGDOWNLOADER
+    !define INSTALL
+    !include "sections\springDownloader.nsh"
+    !undef INSTALL
+  SectionEnd
+SectionGroupEnd
 
 SectionGroup "Skirmish AI plugins (Bots)"
 	Section "AAI" SEC_AAI
@@ -266,6 +274,7 @@ Section Uninstall
   !include "sections\docs.nsh"
   !include "sections\shortcuts.nsh"
   !include "sections\archivemover.nsh"
+  !include "sections\springDownloader.nsh"
   !include "sections\AIs\AAI.nsh"
   !include "sections\AIs\KAIK.nsh"
   !include "sections\AIs\RAI.nsh"

@@ -84,6 +84,8 @@ void CPreGame::LoadSetupscript(const std::string& script)
 void CPreGame::LoadDemo(const std::string& demo)
 {
 	assert(settings->isHost);
+	if (!configHandler->Get("DemoFromDemo", false))
+		net->DisableDemoRecording();
 	ReadDataFromDemo(demo);
 }
 
@@ -218,6 +220,10 @@ void CPreGame::UpdateClientNet()
 				gu->SetMyPlayer(packet->data[1]);
 				logOutput.Print("User number %i (team %i, allyteam %i)", gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
+				// When calling this function, mod archives have to be loaded
+				// and gu->myPlayerNum has to be set.
+				skirmishAIHandler.LoadPreGame();
+
 				const CTeam* team = teamHandler->Team(gu->myTeam);
 				assert(team);
 				std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
@@ -284,7 +290,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 					it->second->AddPair("isfromdemo", 1);
 				}
 			}
-
 
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			int myPlayerNum;
@@ -373,8 +378,6 @@ void CPreGame::LoadMod(const std::string& modName)
 			}
 		}
 		alreadyLoaded = true;
-		// This loads the Lua AIs from the mod archives LuaAI.lua
-		skirmishAIHandler.LoadPreGame();
 	}
 }
 

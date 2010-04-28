@@ -711,10 +711,9 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 			if (gu->usRandFloat() > pieceChance || pi->numVertex != 4)
 				continue;
 
-			ph->AddFlyingPiece(pos, speed+gu->usRandVector()*2, dl, &*pi);
+			ph->AddFlyingPiece(unit->team, pos, speed + gu->usRandVector() * 2, dl, &*pi);
 		}
-	}
-	else {
+	} else {
 		/* S3O */
 
 		SS3OPiece* cookedPiece = (SS3OPiece*)pieceData->original;
@@ -735,7 +734,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 
 				ph->AddFlyingPiece(unit->model->textureType,
 					unit->team,
-					pos, speed+gu->usRandVector()*2, verts);
+					pos, speed + gu->usRandVector() * 2, verts);
 			}
 		} else if (cookedPiece->primitiveType == 1){
 			/* GL_TRIANGLE_STRIP */

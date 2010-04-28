@@ -16,8 +16,10 @@
 #include "LogOutput.h"
 #include "Rendering/GL/FBO.h"
 #include "EventHandler.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Shaders/ShaderHandler.hpp"
 
-CShadowHandler* shadowHandler=0;
+CShadowHandler* shadowHandler = 0;
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 
@@ -275,20 +277,29 @@ void CShadowHandler::DrawShadowTex(void)
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,shadowTexture);
 
-	glBegin(GL_QUADS);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glTexCoord2f(0,0);
-	glVertex3f(0,0,1);
+	float3 verts[] = {
+		float3(0,0,1),
+		float3(0, 0.5f, 1),
+		float3(0.5f, 0.5f, 1.f),
+		float3(0.5f, 0, 1),
+	};
 
-	glTexCoord2f(0,1);
-	glVertex3f(0,0.5f,1);
+	GLfloat texcoords[] = {
+		0.f, 0.f,
+		0.f, 1.f,
+		1.f, 1.f,
+		1.f, 0.f,
+	};
 
-	glTexCoord2f(1,1);
-	glVertex3f(0.5f,0.5f,1);
+	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+	glVertexPointer(3, GL_FLOAT, 0, verts);
+	glDrawArrays(GL_QUADS, 0, 4);
 
-	glTexCoord2f(1,0);
-	glVertex3f(0.5f,0,1);
-	glEnd();
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void CShadowHandler::CalcMinMaxView(void)

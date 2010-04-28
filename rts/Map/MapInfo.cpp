@@ -145,7 +145,7 @@ void CMapInfo::ReadLight()
 	                                                float3(0.4f, 0.4f, 0.4f));
 	light.unitSunColor      = lightTable.GetFloat3("unitDiffuseColor",
 	                                                float3(0.7f, 0.7f, 0.7f));
-	light.specularSunColor  = lightTable.GetFloat3("unitSpecularColor",
+	light.unitSpecularColor  = lightTable.GetFloat3("unitSpecularColor",
 	                                               light.unitSunColor);
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 }

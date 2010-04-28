@@ -24,7 +24,7 @@ unsigned char TeamBase::teamDefaultColor[10][4] =
 TeamBase::TeamBase() :
 leader(-1),
 handicap(1),
-startPos(100,100,100),
+startPos(-100,-100,-100),
 teamAllyteam(-1),
 startMetal(-1.0),
 startEnergy(-1.0)

@@ -2,6 +2,17 @@
 cmake_minimum_required(VERSION 2.6)
 project(Spring)
 
+# This is needed, as CMake, or at least soem versions of it (eg. 2.8),
+# falsely use the ".so" suffix unde Mac OS X for MODULE's
+macro    (FixLibName targetName)
+	IF    (UNIX)
+		SET_TARGET_PROPERTIES(${targetName} PROPERTIES PREFIX "lib")
+		IF    (APPLE)
+			SET_TARGET_PROPERTIES(${targetName} PROPERTIES SUFFIX ".dylib")
+		ENDIF (APPLE)
+	ENDIF (UNIX)
+endmacro (FixLibName targetName)
+
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
