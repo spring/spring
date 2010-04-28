@@ -1,3 +1,24 @@
+#
+# This is a config template for running the headless version of spring.
+# It will prevent some crashes and reduce the CPU load.
+#
+# To use it, you should copy it to one of these locations:
+#
+# Linux & Mac:
+# ~/.springrc
+# ~/.springrc-<version>
+#
+# Windows:
+# %APPDATA%\springsettings.cfg
+# %APPDATA%\springsettings-<version>.cfg
+#
+# While "<version>" would be something like "0.81.2.1",
+# and "%APPDATA%" something like
+# "C:\Dokumente und Einstellungen\MyUser\Anwendungsdaten".
+#
+# Note: These comments will be gone after the first launch of spring.
+# 
+
 AdvSky=0
 AdvUnitShading=0
 AtiHacks=0
