@@ -60,7 +60,6 @@ public:
 	void Collision();
 	void Collision(CUnit* unit);
 
-	void DrawUnitPart(void);
 	void DrawCallback(void);
 
 private:

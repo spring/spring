@@ -29,14 +29,23 @@ CEmgCannon::~CEmgCannon(void)
 
 void CEmgCannon::Update(void)
 {
-	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-		if(!onlyForward){
-			wantedDir=targetPos-weaponPos;
-			wantedDir.Normalize();
+	if(targetType != Target_None){
+		weaponPos = owner->pos +
+			owner->frontdir * relWeaponPos.z +
+			owner->updir    * relWeaponPos.y +
+			owner->rightdir * relWeaponPos.x;
+		weaponMuzzlePos = owner->pos +
+			owner->frontdir * relWeaponMuzzlePos.z +
+			owner->updir    * relWeaponMuzzlePos.y +
+			owner->rightdir * relWeaponMuzzlePos.x;
+
+		float3 wantedDirTemp(targetPos - weaponPos);
+		float len = wantedDirTemp.Length();
+		if(!onlyForward && (len != 0.0f)) {
+			wantedDir = wantedDirTemp;
+			wantedDir /= len;
 		}
-		predict=(targetPos-weaponPos).Length()/projectileSpeed;
+		predict=len/projectileSpeed;
 	}
 	CWeapon::Update();
 }
@@ -56,7 +65,7 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		}
 	}
 
-	float3 dir = pos - weaponMuzzlePos;
+	float3 dir(pos - weaponMuzzlePos);
 	float length = dir.Length();
 	if (length == 0)
 		return true;

@@ -430,25 +430,3 @@ void CPieceProjectile::DrawCallback(void)
 		}
 	}
 }
-
-
-void CPieceProjectile::DrawUnitPart(void)
-{
-	unitDrawer->SetTeamColour(colorTeam);
-
-	if (alphaThreshold != 0.1f) {
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-		glAlphaFunc(GL_GEQUAL, alphaThreshold);
-	}
-	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
-	glRotatef(spinAngle, spinVec.x, spinVec.y, spinVec.z);
-	glCallList(dispList);
-	glPopMatrix();
-
-	if (alphaThreshold != 0.1f) {
-		glPopAttrib();
-	}
-
-	*numCallback = 0;
-}

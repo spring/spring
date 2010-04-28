@@ -132,7 +132,7 @@ private:
 	void Read(FILE* file);
 	void Write(FILE* file);
 	char* Strip(char* begin, char* end);
-	void AppendLine(char* buf);
+	void AppendLine(char* line);
 
 	std::list<ConfigNotifyCallback> observers;
 };

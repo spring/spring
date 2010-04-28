@@ -22,8 +22,10 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/Unsynced/FlyingPiece.hpp"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
@@ -493,10 +495,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 			return;
 		}
 
-		if (pro->model) {
-			// NOTE: this needs refactoring
-			pro->DrawS3O();
-		}
+		DrawProjectileModel(pro, false);
 
 		pro->tempdist = pro->pos.dot(camera->forward);
 		zSortedProjectiles.insert(pro);
@@ -529,10 +528,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 	if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
 		(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
 
-		if (p->model) {
-			// no team-color
-			p->DrawUnitPart();
-		} else {
+		if (!DrawProjectileModel(p, true)) {
 			if (p->castShadow) {
 				// don't need to z-sort particle
 				// effects for the shadow pass
@@ -772,9 +768,103 @@ void CProjectileDrawer::DrawShadowPass(void)
 
 
 
+bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPass) {
+	if (!(p->weapon || p->piece) || (p->model == NULL)) {
+		return false;
+	}
+
+	if (p->weapon) {
+		// weapon-projectile
+		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+
+		#define SET_TRANSFORM_VECTORS()              \
+			float3 rightdir, updir;                  \
+                                                     \
+			if (fabs(wp->dir.y) < 0.95f) {           \
+				rightdir = wp->dir.cross(UpVector);  \
+				rightdir.SafeANormalize();           \
+			} else {                                 \
+				rightdir = float3(1.0f, 0.0f, 0.0f); \
+			}                                        \
+                                                     \
+			updir = rightdir.cross(wp->dir);
+
+		#define TRANSFORM_DRAW(mat)                          \
+			glPushMatrix();                                  \
+				glMultMatrixf(mat);                          \
+				glCallList(wp->model->rootobject->displist); \
+			glPopMatrix();
+
+		switch (wp->GetProjectileType()) {
+			case CWeaponProjectile::WEAPON_MISSILE_PROJECTILE: {
+				if (!shadowPass) {
+					unitDrawer->SetTeamColour(wp->colorTeam);
+				}
+
+				SET_TRANSFORM_VECTORS();
+
+				CMatrix44f transMatrix(wp->drawPos + wp->dir * wp->radius * 0.9f, -rightdir, updir, wp->dir);
+
+				TRANSFORM_DRAW(transMatrix);
+			} break;
+
+			case CWeaponProjectile::WEAPON_STARBURST_PROJECTILE: {
+				SET_TRANSFORM_VECTORS();
+
+				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
+
+				TRANSFORM_DRAW(transMatrix);
+			} break;
+
+			case CWeaponProjectile::WEAPON_BASE_PROJECTILE: {
+				if (!shadowPass) {
+					unitDrawer->SetTeamColour(wp->colorTeam);
+				}
+
+				SET_TRANSFORM_VECTORS();
+
+				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
+
+				TRANSFORM_DRAW(transMatrix);
+			} break;
+			default: {
+			} break;
+		}
+
+		#undef SET_TRANSFORM_VECTORS
+		#undef TRANSFORM_DRAW
+	} else {
+		// piece-projectile
+		const CPieceProjectile* pp = dynamic_cast<const CPieceProjectile*>(p);
+
+		if (!shadowPass) {
+			unitDrawer->SetTeamColour(pp->colorTeam);
+		}
+
+		if (pp->alphaThreshold != 0.1f) {
+			glPushAttrib(GL_COLOR_BUFFER_BIT);
+			glAlphaFunc(GL_GEQUAL, pp->alphaThreshold);
+		}
+
+		glPushMatrix();
+			glTranslatef3(pp->pos);
+			glRotatef(pp->spinAngle, pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
+			glCallList(pp->dispList);
+		glPopMatrix();
+
+		if (pp->alphaThreshold != 0.1f) {
+			glPopAttrib();
+		}
+
+		*(pp->numCallback) = 0;
+	}
+
+	return true;
+}
+
 void CProjectileDrawer::DrawGroundFlashes(void)
 {
-	static GLfloat black[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -941,7 +1031,6 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 	}
 }
 
-
 void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
 {
 	if (p->model) {
@@ -950,5 +1039,3 @@ void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
 		renderProjectiles.erase(const_cast<CProjectile*>(p));
 	}
 }
-
-

@@ -13,7 +13,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
 
@@ -37,26 +36,33 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_RESERVED(16)
 	));
 
-CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner,
-		float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target,
-		const WeaponDef *weaponDef):
+CTorpedoProjectile::CTorpedoProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner,
+	float areaOfEffect, float maxSpeed,
+	float tracking, int ttl,
+	CUnit* target,
+	const WeaponDef* weaponDef):
+
 	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, ttl),
 	tracking(tracking),
-	dir(speed),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
 	target(target),
 	nextBubble(4)
 {
-	curSpeed=speed.Length();
-	dir.Normalize();
+	projectileType = WEAPON_TORPEDO_PROJECTILE;
+	curSpeed = speed.Length();
+	dir = speed / curSpeed;
+
 	if (target) {
 		AddDeathDependence(target);
 	}
 
 	SetRadius(0.0f);
-	drawRadius=maxSpeed*8;
-	float3 camDir=(pos-camera->pos).Normalize();
+	drawRadius = maxSpeed * 8;
+
+	const float3 camDir = (pos - camera->pos).Normalize();
 	texx = projectileDrawer->torpedotex->xstart - (projectileDrawer->torpedotex->xend - projectileDrawer->torpedotex->xstart) * 0.5f;
 	texy = projectileDrawer->torpedotex->ystart - (projectileDrawer->torpedotex->yend - projectileDrawer->torpedotex->ystart) * 0.5f;
 #ifdef TRACE_SYNC
@@ -75,8 +81,8 @@ CTorpedoProjectile::~CTorpedoProjectile(void)
 
 void CTorpedoProjectile::DependentDied(CObject* o)
 {
-	if(o==target)
-		target=0;
+	if (o == target)
+		target = 0;
 	CWeaponProjectile::DependentDied(o);
 }
 

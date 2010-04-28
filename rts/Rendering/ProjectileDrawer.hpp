@@ -37,6 +37,7 @@ public:
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
+	bool DrawProjectileModel(const CProjectile*, bool);
 	void DrawGroundFlashes(void);
 	void DrawShadowPass(void);
 
