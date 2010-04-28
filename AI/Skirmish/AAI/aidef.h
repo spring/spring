@@ -51,7 +51,6 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #define MOD_CFG_PATH "cfg/mod/"
 #define GENERAL_CFG_FILE "cfg/general.cfg"
 #define MOD_LEARN_PATH "learn/mod/"
-#define MAP_CFG_PATH "cfg/map/"
 #define MAP_CACHE_PATH "cache/"
 #define MAP_LEARN_PATH "learn/map/"
 
@@ -147,7 +146,7 @@ struct UnitTypeStatic
 	list<int> builtByList;
 	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
 									// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
-	float range;
+	float range;              // max weapon range (0 for unarmed units)
 	float cost;
 	float builder_cost;
 	UnitCategory category;

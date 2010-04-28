@@ -342,7 +342,7 @@ float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory category
 {
 	float3 pos;
 	float3 builder_pos;
-	const UnitDef *def = bt->unitList[building-1];
+	//const UnitDef *def = bt->unitList[building-1];
 
 	// check the sector of the builder
 	builder_pos = cb->GetUnitPos(builder);
@@ -441,7 +441,7 @@ bool AAIExecute::AddUnitToBuildqueue(int def_id, int number, bool urgent)
 {
 	urgent = false;
 
-	UnitCategory category = bt->units_static[def_id].category;
+	//UnitCategory category = bt->units_static[def_id].category;
 
 	list<int> *buildqueue = 0, *temp_buildqueue = 0;
 
@@ -906,8 +906,10 @@ bool AAIExecute::BuildPowerPlant()
 	else if(ut->activeFactories < 1 && ai->ut->activeUnits[POWER_PLANT] >= 2)
 		return true;
 
+	const float current_energy = cb->GetEnergyIncome();
+
 	// stop building power plants if already to much available energy
-	if(cb->GetEnergyIncome() > 1.5f * cb->GetEnergyUsage() + 200.0f)
+	if(current_energy > 1.5f * cb->GetEnergyUsage() + 200.0f)
 		return true;
 
 	int ground_plant = 0;
@@ -916,7 +918,6 @@ bool AAIExecute::BuildPowerPlant()
 	AAIConstructor *builder;
 	float3 pos;
 
-	float current_energy = cb->GetEnergyIncome();
 	bool checkWater, checkGround;
 	float urgency;
 	float max_power;
@@ -3255,16 +3256,16 @@ void AAIExecute::ChooseDifferentStartingSector(int x, int y)
 
 void AAIExecute::CheckFallBack(int unit_id, int def_id)
 {
-	float range = bt->units_static[def_id].range;
+	float max_weapon_range = bt->units_static[def_id].range;
 
-	if(range > cfg->MIN_FALLBACK_RANGE && bt->unitList[def_id-1]->turnRate >= cfg->MIN_FALLBACK_TURNRATE)
+	if(max_weapon_range > cfg->MIN_FALLBACK_RANGE && bt->unitList[def_id-1]->turnRate >= cfg->MIN_FALLBACK_TURNRATE)
 	{
-		if(range > cfg->MAX_FALLBACK_RANGE)
-			range = cfg->MAX_FALLBACK_RANGE;
+		if(max_weapon_range > cfg->MAX_FALLBACK_RANGE)
+			max_weapon_range = cfg->MAX_FALLBACK_RANGE;
 
 		float3 pos;
 
-		GetFallBackPos(&pos, unit_id, range);
+		GetFallBackPos(&pos, unit_id, max_weapon_range);
 
 		if(pos.x > 0)
 		{
@@ -3283,38 +3284,48 @@ void AAIExecute::CheckFallBack(int unit_id, int def_id)
 }
 
 
-void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float range)
+void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float max_weapon_range) const
 {
-	float3 unit_pos = cb->GetUnitPos(unit_id), temp_pos;
-
 	*pos = ZeroVector;
 
+	const float3 unit_pos = cb->GetUnitPos(unit_id);
+
+	// units without range should not end up here; this is for attacking units only
+	// prevents a NaN
+	assert(max_weapon_range != 0.0f);
+
 	// get list of enemies within weapons range
-	int number_of_enemies = cb->GetEnemyUnits(&(map->units_in_los.front()), unit_pos, range * cfg->FALLBACK_DIST_RATIO);
+	const int number_of_enemies = cb->GetEnemyUnits(&(map->units_in_los.front()), unit_pos, max_weapon_range * cfg->FALLBACK_DIST_RATIO);
 
 	if(number_of_enemies > 0)
 	{
-		float dist;
+		float3 enemy_pos;
 
 		for(int k = 0; k < number_of_enemies; ++k)
 		{
-			// get distance to enemy
-			temp_pos = cb->GetUnitPos(map->units_in_los[k]);
+			enemy_pos = cb->GetUnitPos(map->units_in_los[k]);
 
-			dist = fastmath::apxsqrt( (temp_pos.x - unit_pos.x) * (temp_pos.x - unit_pos.x) - (temp_pos.z - unit_pos.z) * (temp_pos.z - unit_pos.z) );
+			// get distance to enemy
+			float dx   = enemy_pos.x - unit_pos.x;
+			float dz   = enemy_pos.z - unit_pos.z;
+			float dist = fastmath::apxsqrt(dx*dx + dz*dz);
 
 			// get dir from unit to enemy
-			temp_pos.x -= unit_pos.x;
-			temp_pos.z -= unit_pos.z;
+			enemy_pos.x -= unit_pos.x;
+			enemy_pos.z -= unit_pos.z;
 
-			//
-			pos->x += (dist / range - 1) * temp_pos.x;
-			pos->z += (dist / range - 1) * temp_pos.z;
+			// move closer to enemy if we are out of range,
+			// and away if we are closer then our max range
+			pos->x += ((dist / max_weapon_range) - 1) * enemy_pos.x;
+			pos->z += ((dist / max_weapon_range) - 1) * enemy_pos.z;
 		}
 
+		// move less if lots of enemies are close
 		pos->x /= (float)number_of_enemies;
 		pos->z /= (float)number_of_enemies;
 
+		// apply relative move distance to the current position
+		// to get the target position
 		pos->x += unit_pos.x;
 		pos->z += unit_pos.z;
 	}

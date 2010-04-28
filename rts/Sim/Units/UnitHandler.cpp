@@ -19,6 +19,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/AirBaseHandler.h"
@@ -475,7 +476,6 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glBegin(GL_QUADS);
 
 	int xsize=buildInfo.GetXSize();
 	int zsize=buildInfo.GetZSize();
@@ -540,50 +540,61 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	else
 		glColor4f(0.5f,0.5f,0,1.0f);
 
+	CVertexArray *va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(canbuildpos.size()*4, 0, VA_SIZE_0);
 	for(unsigned int i=0; i<canbuildpos.size(); i++)
 	{
-		glVertexf3(canbuildpos[i]);
-		glVertexf3(canbuildpos[i]+float3(SQUARE_SIZE,0,0));
-		glVertexf3(canbuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
-		glVertexf3(canbuildpos[i]+float3(0,0,SQUARE_SIZE));
+		va->AddVertexQ0(canbuildpos[i]);
+		va->AddVertexQ0(canbuildpos[i]+float3(SQUARE_SIZE,0,0));
+		va->AddVertexQ0(canbuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
+		va->AddVertexQ0(canbuildpos[i]+float3(0,0,SQUARE_SIZE));
 	}
+	va->DrawArray0(GL_QUADS);
+
 	glColor4f(0.5f,0.5f,0,1.0f);
+	va->Initialize();
+	va->EnlargeArrays(featurepos.size()*4, 0, VA_SIZE_0);
 	for(unsigned int i=0; i<featurepos.size(); i++)
 	{
-		glVertexf3(featurepos[i]);
-		glVertexf3(featurepos[i]+float3(SQUARE_SIZE,0,0));
-		glVertexf3(featurepos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
-		glVertexf3(featurepos[i]+float3(0,0,SQUARE_SIZE));
+		va->AddVertexQ0(featurepos[i]);
+		va->AddVertexQ0(featurepos[i]+float3(SQUARE_SIZE,0,0));
+		va->AddVertexQ0(featurepos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
+		va->AddVertexQ0(featurepos[i]+float3(0,0,SQUARE_SIZE));
 	}
+	va->DrawArray0(GL_QUADS);
 
 	glColor4f(0.8f,0.0f,0,1.0f);
+	va->Initialize();
+	va->EnlargeArrays(nobuildpos.size(), 0, VA_SIZE_0);
 	for(unsigned int i=0; i<nobuildpos.size(); i++)
 	{
-		glVertexf3(nobuildpos[i]);
-		glVertexf3(nobuildpos[i]+float3(SQUARE_SIZE,0,0));
-		glVertexf3(nobuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
-		glVertexf3(nobuildpos[i]+float3(0,0,SQUARE_SIZE));
+		va->AddVertexQ0(nobuildpos[i]);
+		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE,0,0));
+		va->AddVertexQ0(nobuildpos[i]+float3(SQUARE_SIZE,0,SQUARE_SIZE));
+		va->AddVertexQ0(nobuildpos[i]+float3(0,0,SQUARE_SIZE));
 	}
-
-	glEnd();
+	va->DrawArray0(GL_QUADS);
 
 	if (h < 0.0f) {
-		const float s[4] = { 0.0f, 0.0f, 1.0f, 0.5f }; // start color
-		const float e[4] = { 0.0f, 0.5f, 1.0f, 1.0f }; // end color
+		const unsigned char s[4] = { 0, 0, 255, 128 }; // start color
+		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
-		glBegin(GL_LINES);
-		glColor4fv(s); glVertex3f(x1, h, z1); glColor4fv(e); glVertex3f(x1, 0.0f, z1);
-		glColor4fv(s); glVertex3f(x2, h, z1); glColor4fv(e); glVertex3f(x2, 0.0f, z1);
-		glColor4fv(s); glVertex3f(x1, h, z2); glColor4fv(e); glVertex3f(x1, 0.0f, z2);
-		glColor4fv(s); glVertex3f(x2, h, z2); glColor4fv(e); glVertex3f(x2, 0.0f, z2);
-		glEnd();
-		// using the last end color
-		glBegin(GL_LINE_LOOP);
-		glVertex3f(x1, 0.0f, z1);
-		glVertex3f(x1, 0.0f, z2);
-		glVertex3f(x2, 0.0f, z2);
-		glVertex3f(x2, 0.0f, z1);
-		glEnd();
+		va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(8, 0, VA_SIZE_C);
+		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
+		va->AddVertexQC(float3(x1, h, z2), s); va->AddVertexQC(float3(x1, 0.f, z2), e);
+		va->AddVertexQC(float3(x2, h, z2), s); va->AddVertexQC(float3(x2, 0.f, z2), e);
+		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
+		va->DrawArrayC(GL_LINES);
+
+		va->Initialize();
+		va->AddVertexQC(float3(x1, 0.0f, z1), e);
+		va->AddVertexQC(float3(x1, 0.0f, z2), e);
+		va->AddVertexQC(float3(x2, 0.0f, z2), e);
+		va->AddVertexQC(float3(x2, 0.0f, z1), e);
+		va->DrawArrayC(GL_LINE_LOOP);
 	}
 
 	glEnable(GL_DEPTH_TEST );

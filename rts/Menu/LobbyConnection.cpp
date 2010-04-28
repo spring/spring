@@ -1,4 +1,6 @@
+#ifdef _MSC_VER
 #include "StdAfx.h"
+#endif
 #include "LobbyConnection.h"
 
 #include <boost/bind.hpp>

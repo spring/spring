@@ -160,15 +160,18 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		}
 
 		const std::string str_modname = modname;
-		containsOglDll = (containsOglDll || (str_modname.find("atioglxx.dll") != std::string::npos));
-		containsOglDll = (containsOglDll || (str_modname.find("nvoglv32.dll") != std::string::npos));
-		containsOglDll = (containsOglDll || (str_modname.find("nvoglv64.dll") != std::string::npos)); // guessed
+		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
+		containsOglDll = (containsOglDll || (str_modname.find("atiogl") != std::string::npos));
+		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
+		containsOglDll = (containsOglDll || (str_modname.find("nvogl") != std::string::npos));
 
 		++count;
 	}
 
 	if (containsOglDll) {
-		PRINT("This stack trace indicates a problem with your graphic card driver. Please try upgrading or downgrading it.");
+		PRINT("This stack trace indicates a problem with your graphic card driver. "
+		      "Please try upgrading or downgrading it. "
+		      "Specifically recommended is the latest driver, and one that is as old as your graphic card.");
 	}
 
 	if (suspended) {

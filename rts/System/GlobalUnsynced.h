@@ -201,6 +201,7 @@ public:
 	 *
 	 * enables some ATI bugfixes
 	 */
+	bool haveATI;
 	bool atiHacks;
 
 	/**

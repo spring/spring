@@ -30,6 +30,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -85,7 +86,8 @@ float CUnit::expMultiplier  = 1.0f;
 float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
-float CUnit::expGrade = 0.0f;
+float CUnit::expGrade       = 0.0f;
+float CUnit::empDecline     = 32.0f / GAME_SPEED / 40.0f;  //! info: SlowUpdate runs twice all 32 gameframe
 
 
 CUnit::CUnit():
@@ -703,7 +705,7 @@ void CUnit::SlowUpdate()
 	repairAmount=0.0f;
 
 	if (paralyzeDamage > 0) {
-		paralyzeDamage -= maxHealth * (16.0f / GAME_SPEED / 40.0f);
+		paralyzeDamage -= maxHealth * 0.5f * CUnit::empDecline;
 		if (paralyzeDamage < 0) {
 			paralyzeDamage = 0;
 		}
@@ -815,18 +817,36 @@ void CUnit::SlowUpdate()
 
 	SlowUpdateCloak(false);
 
-	if (unitDef->canKamikaze) {
-		if (fireState >= 2) {
-			CUnit* u = helper->GetClosestEnemyUnit(pos, unitDef->kamikazeDist, allyteam);
-			if (u && u->speed.dot(pos - u->pos) <= 0) {
-				//! self destruct when we start moving away from the target, this should maximize the damage
-				KillUnit(true, false, NULL);
+	if (unitDef->canKamikaze && (fireState >= 2 || userTarget || userAttackGround)) {
+		if (fireState >= 2)
+		{
+			std::vector<int> nearbyUnits;
+			if (unitDef->kamikazeUseLOS) {
+				helper->GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
+			} else {
+				helper->GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
+			}
+
+			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it)
+			{
+				float3 dif = pos - uh->units[*it]->pos;
+				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
+					if (uh->units[*it]->speed.dot(dif) <= 0) {
+						//! self destruct when we start moving away from the target, this should maximize the damage
+						KillUnit(true, false, NULL);
+						return;
+					}
+				}
 			}
 		}
-		if (userTarget && (userTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
+
+		if (
+			   (userTarget       && (userTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
+			|| (userAttackGround && (userAttackPos.SqDistance(pos))  < Square(unitDef->kamikazeDist))
+		) {
 			KillUnit(true, false, NULL);
-		if (userAttackGround && (userAttackPos.distance(pos)) < Square(unitDef->kamikazeDist))
-			KillUnit(true, false, NULL);
+			return;
+		}
 	}
 
 	if(!weapons.empty()){
@@ -943,9 +963,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 		restTime = 0; // bleeding != resting
 	}
 
-	float3 hitDir = impulse;
+	float3 hitDir = -impulse;
 	hitDir.y = 0.0f;
-	hitDir = -hitDir.SafeNormalize();
+	hitDir.SafeNormalize();
 
 	script->HitByWeapon(hitDir, weaponDefId, /*inout*/ damage);
 
@@ -955,13 +975,12 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 	float impulseMult = 1.0f;
 
 	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefId,
-			!!damages.paralyzeDamageTime, &newDamage, &impulseMult)) {
+			!!paralyzeTime, &newDamage, &impulseMult)) {
 		damage = newDamage;
 	}
 
 	residualImpulse += ((impulse * impulseMult) / mass);
 	moveType->ImpulseAdded();
-
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
@@ -989,7 +1008,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			// paralyzeDamage may not get higher than maxHealth * (paralyzeTime + 1),
 			// which means the unit will be destunned after paralyzeTime seconds.
 			// (maximum paralyzeTime of all paralyzer weapons which recently hit it ofc)
-			const float maxParaDmg = maxHealth + 0.025f * maxHealth * float(paralyzeTime) - paralyzeDamage;
+			const float maxParaDmg = (modInfo.paralyzeOnMaxHealth? maxHealth: health) + maxHealth * CUnit::empDecline * paralyzeTime - paralyzeDamage;
 			if (damage > maxParaDmg) {
 				if (maxParaDmg > 0.0f) {
 					damage = maxParaDmg;
@@ -1001,9 +1020,6 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 				experienceMod = 0.0f;
 			}
 			paralyzeDamage += damage;
-			if (paralyzeDamage > maxHealth) {
-				stunned = true;
-			}
 			if (paralyzeDamage > (modInfo.paralyzeOnMaxHealth? maxHealth: health)) {
 				stunned = true;
 			}
@@ -2214,8 +2230,7 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 			isCloaked = true;
 		} else if (wantCloak || (scriptCloak >= 1)) {
 			if ((decloakDistance > 0.0f) &&
-				helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance,
-														allyteam, unitDef->decloakSpherical, false)) {
+				helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false)) {
 				curCloakTimeout = gs->frameNum + cloakTimeout;
 				isCloaked = false;
 			}

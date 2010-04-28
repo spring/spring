@@ -391,7 +391,8 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 bool AAIAttackManager::SufficientDefencePowerAt(AAISector *dest, float aggressiveness)
 {
 	// store ammount and category of involved groups;
-	double my_power = 0, enemy_power = 0;
+	double my_power = 0;
+	//double enemy_power = 0;
 	float enemies = 0;
 
 	// get defence power

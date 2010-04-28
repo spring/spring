@@ -876,8 +876,9 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL( "decloakSpherical", ud.decloakSpherical);
 	ADD_BOOL( "decloakOnFire",    ud.decloakOnFire);
 
-	ADD_BOOL( "canKamikaze",  ud.canKamikaze);
-	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);
+	ADD_BOOL( "canKamikaze",    ud.canKamikaze);
+	ADD_FLOAT("kamikazeDist",   ud.kamikazeDist);
+	ADD_BOOL( "kamikazeUseLOS", ud.kamikazeUseLOS);
 
 	ADD_BOOL("targfac", ud.targfac);
 

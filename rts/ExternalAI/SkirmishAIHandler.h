@@ -54,7 +54,9 @@ public:
 
 	void LoadFromSetup(const CGameSetup& setup);
 	/**
-	 * Will be called when the Mods archives were loaded into the VFS.
+	 * Will be called when the Mods archives were loaded into the VFS,
+	 * and we received our player number (gu->myPlayerNum is set).
+	 * This loads the list of Lua AIs from the mod archives LuaAI.lua.
 	 */
 	void LoadPreGame();
 
@@ -86,21 +88,21 @@ public:
 
 	/**
 	 * @brief Skirmish AIs controlling a team
-	 * 
+	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
 	ids_t GetSkirmishAIsInTeam(const int teamId, const int playerId = -1);
 
 	/**
 	 * @brief Skirmish AIs hosted by a player
-	 * 
+	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
 	ids_t GetSkirmishAIsByPlayer(const int playerId);
 
 	/**
 	 * @brief All active Skirmish AIs
-	 * 
+	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
 	const id_ai_t& GetAllSkirmishAIs() const;
@@ -122,7 +124,7 @@ public:
 
 	/**
 	 * @brief Number of players the game was created for
-	 * 
+	 *
 	 * Constant at runtime
 	 */
 	size_t GetNumSkirmishAIs() const;

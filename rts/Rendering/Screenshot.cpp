@@ -40,9 +40,9 @@ public:
 		{
 			boost::mutex::scoped_lock mylock(myMutex);
 			tasks.push_back(arg);
+			Update();
 		}
 		
-		Update();
 		if (!myThread)
 		{
 			finished = false;

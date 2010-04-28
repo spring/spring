@@ -108,12 +108,13 @@ public:
 	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
+	void AddFlyingPiece(int team, float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
 	ProjectileContainer syncedProjectiles;    //! contains only projectiles that can change simulation state
 	ProjectileContainer unsyncedProjectiles;  //! contains only projectiles that cannot change simulation state
-	FlyingPieceContainer flyingPieces;
+	FlyingPieceContainer flyingPieces3DO;
+	FlyingPieceContainer flyingPiecesS3O;
 	GroundFlashContainer groundFlashes;
 
 	int maxUsedID;

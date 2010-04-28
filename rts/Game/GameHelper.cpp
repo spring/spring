@@ -177,7 +177,8 @@ void CGameHelper::Explosion(
 	bool damageGround, float gfxMod,
 	bool ignoreOwner, bool impactOnly,
 	CExplosionGenerator* explosionGraphics, CUnit* hit,
-	const float3& impactDir, int weaponId
+	const float3& impactDir, int weaponId,
+	CFeature* hitfeature
 ) {
 	if (luaUI) {
 		if ((weaponId >= 0) && (weaponId <= weaponDefHandler->numWeaponDefs)) {
@@ -203,6 +204,8 @@ void CGameHelper::Explosion(
 	if (impactOnly) {
 		if (hit) {
 			DoExplosionDamage(hit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+		} else if (hitfeature) {
+			DoExplosionDamage(hitfeature, expPos, expRad, owner, damages);
 		}
 	} else {
 		float height = std::max(expPos.y - h2, 0.0f);
@@ -233,11 +236,19 @@ void CGameHelper::Explosion(
 		// damage all features within the explosion radius
 		vector<CFeature*> features = qf->GetFeaturesExact(expPos, expRad);
 		vector<CFeature*>::iterator fi;
+		bool hitFeatureDamaged = false;
 
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 
+			if (hitfeature == feature) {
+				hitFeatureDamaged = true;
+			}
 			DoExplosionDamage(feature, expPos, expRad, owner, damages);
+		}
+
+		if (hitfeature && !hitFeatureDamaged) {
+			DoExplosionDamage(hitfeature, expPos, expRad, owner, damages);
 		}
 
 		// deform the map
@@ -269,7 +280,9 @@ void CGameHelper::Explosion(
 //////////////////////////////////////////////////////////////////////
 
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
-float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, const CUnit* owner, const CUnit*& hit, int collisionFlags)
+float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/,
+			    const CUnit* owner, const CUnit*& hit, int collisionFlags,
+			    const CFeature** hitfeature)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
@@ -287,6 +300,9 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 	qf->GetQuadsOnRay(start, dir, length, endQuad);
 
 	if (!ignoreFeatures) {
+		if (hitfeature)
+			*hitfeature = 0;
+
 		for (int* qi = quads; qi != endQuad; ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
@@ -305,6 +321,8 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 					// we want the closest feature (intersection point) on the ray
 					if (tmpLen < length) {
 						length = tmpLen;
+						if(hitfeature)
+							*hitfeature = f;
 					}
 				}
 			}
@@ -918,6 +936,12 @@ void CGameHelper::GetEnemyUnits(const float3 &pos, float searchRadius, int searc
 	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
 }
 
+void CGameHelper::GetEnemyUnitsNoLosTest(const float3 &pos, float searchRadius, int searchAllyteam, vector<int> &found)
+{
+	Query::AllUnitsById q(pos, searchRadius, found);
+	QueryUnits(Filter::Enemy(searchAllyteam), q);
+}
+
 //////////////////////////////////////////////////////////////////////
 // Miscellaneous (i.e. not yet categorized)
 //////////////////////////////////////////////////////////////////////
@@ -1172,7 +1196,7 @@ void CGameHelper::Update(void)
 		WaitingDamage* w = wd->back();
 		wd->pop_back();
 		if (uh->units[w->target])
-			uh->units[w->target]->DoDamage(w->damage, w->attacker == -1? 0: uh->units[w->attacker], w->impulse, w->weaponId);
+			uh->units[w->target]->DoDamage(w->damage, w->attacker == -1? NULL: uh->units[w->attacker], w->impulse, w->weaponId);
 		delete w;
 	}
 }
