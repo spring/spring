@@ -13,7 +13,6 @@ class CExpGenSpawner : public CProjectile
 	CR_DECLARE(CExpGenSpawner);
 public:
 	int delay;
-	float3 dir;
 	float damage;
 	CExplosionGenerator* explosionGenerator;
 

@@ -38,8 +38,8 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startpos),
-	CR_MEMBER(ttl),
 	CR_MEMBER(colorTeam),
+	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(keepBouncing),
 	CR_MEMBER(ceg),
@@ -50,12 +50,12 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_POSTLOAD(PostLoad)
 	));
 
-CWeaponProjectile::CWeaponProjectile()
-:	CProjectile()
+CWeaponProjectile::CWeaponProjectile(): CProjectile()
 {
 	targeted = false;
 	weaponDef = 0;
 	target = 0;
+	projectileType = WEAPON_BASE_PROJECTILE;
 	ttl = 0;
 	colorTeam = 0;
 	interceptTarget = 0;
@@ -75,13 +75,15 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	target(target),
 	targetPos(targetPos),
 	cegTag(weaponDef? weaponDef->cegTag: std::string("")),
+	colorTeam(0),
 	startpos(pos),
 	ttl(ttl),
-	colorTeam(0),
 	bounces(0),
 	keepBouncing(true),
 	interceptTarget(interceptTarget)
 {
+	projectileType = WEAPON_BASE_PROJECTILE;
+
 	if (owner) {
 		colorTeam = owner->team;
 	}
@@ -321,36 +323,6 @@ bool CWeaponProjectile::TraveledRange()
 }
 
 
-
-void CWeaponProjectile::DrawUnitPart()
-{
-	float3 dir(speed);
-	dir.SafeANormalize();
-
-	float3 rightdir, updir;
-
-	if (fabs(dir.y) < 0.95f) {
-		rightdir = dir.cross(UpVector);
-		rightdir.SafeANormalize();
-	} else {
-		rightdir = float3(1.0f, 0.0f, 0.0f);
-	}
-
-	updir = rightdir.cross(dir);
-
-	CMatrix44f transMatrix(drawPos, -rightdir, updir, dir);
-
-	glPushMatrix();
-		glMultMatrixf(transMatrix);
-		glCallList(model->rootobject->displist); // dont cache displists because of delayed loading
-	glPopMatrix();
-}
-
-void CWeaponProjectile::DrawS3O(void)
-{
-	unitDrawer->SetTeamColour(colorTeam);
-	DrawUnitPart();
-}
 
 void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {

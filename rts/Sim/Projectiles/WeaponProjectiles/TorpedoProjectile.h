@@ -19,7 +19,6 @@ public:
 	void Collision();
 
 	float tracking;
-	float3 dir;
 	float maxSpeed;
 	float curSpeed;
 	float areaOfEffect;

@@ -30,10 +30,15 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_RESERVED(8)
 	));
 
-CFireBallProjectile::CFireBallProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef)
-:	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, 1)
+CFireBallProjectile::CFireBallProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner, CUnit* target,
+	const float3& targetPos,
+	const WeaponDef* weaponDef):
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, 1)
 {
+	projectileType = WEAPON_FIREBALL_PROJECTILE;
+
 	if (weaponDef) {
 		SetRadius(weaponDef->collisionSize);
 		drawRadius = weaponDef->size;

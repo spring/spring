@@ -23,6 +23,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(castShadow),
 	CR_MEMBER(ownerId),
+	CR_MEMBER(projectileType),
 	CR_MEMBER(synced),
 //	CR_MEMBER(drawPos),
 //	CR_RESERVED(4),
@@ -104,6 +105,7 @@ void CProjectile::Update()
 {
 	speed.y += mygravity;
 	pos += speed;
+	dir = speed; dir.Normalize();
 }
 
 
