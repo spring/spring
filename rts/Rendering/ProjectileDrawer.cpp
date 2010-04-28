@@ -22,6 +22,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/Unsynced/FlyingPiece.hpp"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -768,70 +769,95 @@ void CProjectileDrawer::DrawShadowPass(void)
 
 
 bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPass) {
-	if (!p->weapon || p->model == NULL) {
+	if (!(p->weapon || p->piece) || (p->model == NULL)) {
 		return false;
 	}
 
-	const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+	if (p->weapon) {
+		// weapon-projectile
+		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
 
-	#define SET_TRANSFORM_VECTORS()              \
-		float3 rightdir, updir;                  \
-                                                 \
-		if (fabs(wp->dir.y) < 0.95f) {           \
-			rightdir = wp->dir.cross(UpVector);  \
-			rightdir.SafeANormalize();           \
-		} else {                                 \
-			rightdir = float3(1.0f, 0.0f, 0.0f); \
-		}                                        \
-                                                 \
-		updir = rightdir.cross(wp->dir);
+		#define SET_TRANSFORM_VECTORS()              \
+			float3 rightdir, updir;                  \
+                                                     \
+			if (fabs(wp->dir.y) < 0.95f) {           \
+				rightdir = wp->dir.cross(UpVector);  \
+				rightdir.SafeANormalize();           \
+			} else {                                 \
+				rightdir = float3(1.0f, 0.0f, 0.0f); \
+			}                                        \
+                                                     \
+			updir = rightdir.cross(wp->dir);
 
-	switch (wp->GetProjectileType()) {
-		case CWeaponProjectile::WEAPON_MISSILE_PROJECTILE: {
-			if (!shadowPass) {
-				unitDrawer->SetTeamColour(wp->colorTeam);
-			}
-
-			SET_TRANSFORM_VECTORS();
-
-			CMatrix44f transMatrix(wp->drawPos + wp->dir * wp->radius * 0.9f, -rightdir, updir, wp->dir);
-
-			glPushMatrix();
-				glMultMatrixf(transMatrix);
-				glCallList(wp->model->rootobject->displist);
+		#define TRANSFORM_DRAW(mat)                          \
+			glPushMatrix();                                  \
+				glMultMatrixf(mat);                          \
+				glCallList(wp->model->rootobject->displist); \
 			glPopMatrix();
-		} break;
 
-		case CWeaponProjectile::WEAPON_STARBURST_PROJECTILE: {
-			SET_TRANSFORM_VECTORS();
+		switch (wp->GetProjectileType()) {
+			case CWeaponProjectile::WEAPON_MISSILE_PROJECTILE: {
+				if (!shadowPass) {
+					unitDrawer->SetTeamColour(wp->colorTeam);
+				}
 
-			CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
+				SET_TRANSFORM_VECTORS();
 
-			glPushMatrix();
-				glMultMatrixf(transMatrix);
-				glCallList(wp->model->rootobject->displist);
-			glPopMatrix();
-		} break;
+				CMatrix44f transMatrix(wp->drawPos + wp->dir * wp->radius * 0.9f, -rightdir, updir, wp->dir);
 
-		case CWeaponProjectile::WEAPON_BASE_PROJECTILE: {
-			if (!shadowPass) {
-				unitDrawer->SetTeamColour(wp->colorTeam);
-			}
+				TRANSFORM_DRAW(transMatrix);
+			} break;
 
-			SET_TRANSFORM_VECTORS();
+			case CWeaponProjectile::WEAPON_STARBURST_PROJECTILE: {
+				SET_TRANSFORM_VECTORS();
 
-			CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
+				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
 
-			glPushMatrix();
-				glMultMatrixf(transMatrix);
-				glCallList(wp->model->rootobject->displist);
-			glPopMatrix();
-		} break;
-		default: {
-		} break;
+				TRANSFORM_DRAW(transMatrix);
+			} break;
+
+			case CWeaponProjectile::WEAPON_BASE_PROJECTILE: {
+				if (!shadowPass) {
+					unitDrawer->SetTeamColour(wp->colorTeam);
+				}
+
+				SET_TRANSFORM_VECTORS();
+
+				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
+
+				TRANSFORM_DRAW(transMatrix);
+			} break;
+			default: {
+			} break;
+		}
+
+		#undef SET_TRANSFORM_VECTORS
+		#undef TRANSFORM_DRAW
+	} else {
+		// piece-projectile
+		const CPieceProjectile* pp = dynamic_cast<const CPieceProjectile*>(p);
+
+		if (!shadowPass) {
+			unitDrawer->SetTeamColour(pp->colorTeam);
+		}
+
+		if (pp->alphaThreshold != 0.1f) {
+			glPushAttrib(GL_COLOR_BUFFER_BIT);
+			glAlphaFunc(GL_GEQUAL, pp->alphaThreshold);
+		}
+
+		glPushMatrix();
+			glTranslatef3(pp->pos);
+			glRotatef(pp->spinAngle, pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
+			glCallList(pp->dispList);
+		glPopMatrix();
+
+		if (pp->alphaThreshold != 0.1f) {
+			glPopAttrib();
+		}
+
+		*(pp->numCallback) = 0;
 	}
-
-	#undef SET_TRANSFORM_VECTORS
 
 	return true;
 }
