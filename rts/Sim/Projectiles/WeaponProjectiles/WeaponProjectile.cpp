@@ -11,17 +11,14 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Rendering/Colors.h"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Models/IModelParser.h"
-#include "Rendering/Models/S3OParser.h"
-#include "Rendering/Models/3DOParser.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
 #include "System/GlobalUnsynced.h"
 #include "System/Sound/AudioChannel.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"
 #endif
