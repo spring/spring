@@ -1,5 +1,4 @@
-// BFGroundTextures.h
-///////////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __BASE_GROUND_DRAWER_H__
 #define __BASE_GROUND_DRAWER_H__
@@ -17,20 +16,24 @@ public:
 	CBaseGroundDrawer(void);
 	virtual ~CBaseGroundDrawer(void);
 
-	virtual void Draw(bool drawWaterReflection=false,bool drawUnitReflection=false,unsigned int overrideVP=0)=0;
+	virtual void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false) = 0;
 	virtual void DrawShadowPass(void);
-	virtual void Update()=0;
 
-	virtual void IncreaseDetail()=0;
-	virtual void DecreaseDetail()=0;
+	virtual void SetupBaseDrawPass(void) {}
+	virtual void SetupReflDrawPass(void) {}
+	virtual void SetupRefrDrawPass(void) {}
+
+	virtual void Update() = 0;
+
+	virtual void IncreaseDetail() = 0;
+	virtual void DecreaseDetail() = 0;
 
 #ifdef USE_GML
 	int multiThreadDrawGround;
 	int multiThreadDrawGroundShadow;
 #endif
 
-	enum DrawMode
-	{
+	enum BaseGroundDrawMode {
 		drawNormal,
 		drawLos,
 		drawMetal,
@@ -39,7 +42,8 @@ public:
 	};
 
 protected:
-	virtual void SetDrawMode(DrawMode dm);
+	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
+
 public:
 	void DrawTrees(bool drawReflection=false) const;
 
@@ -52,8 +56,6 @@ public:
 	void ToggleRadarAndJammer();
 	bool UpdateExtraTexture();
 	bool DrawExtraTex() const { return drawMode!=drawNormal; };
-
-	void SetTexGen(float scalex,float scaley, float offsetx, float offsety) const;
 
 	bool updateFov;
 	bool drawRadarAndJammer;
@@ -76,7 +78,7 @@ public:
 
 	int updateTextureState;
 
-	DrawMode drawMode;
+	BaseGroundDrawMode drawMode;
 
 	float infoTexAlpha;
 

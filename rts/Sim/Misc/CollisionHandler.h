@@ -1,14 +1,18 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef COLLISION_HANDLER_H
 #define COLLISION_HANDLER_H
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
+#include "System/float3.h"
+#include <list>
 
 struct CollisionVolume;
+class CMatrix44f;
+class CSolidObject;
 class CUnit;
 class CFeature;
 struct LocalModelPiece;
-
-#include <list>
 
 struct CollisionQuery {
 	CollisionQuery() {

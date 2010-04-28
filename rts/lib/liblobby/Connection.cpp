@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef _MSC_VER
 #include "lib/streflop/streflop_cond.h"
 #endif
@@ -11,7 +13,6 @@
 
 #include "md5/md5.h"
 #include "md5/base64.h"
-#include "UserCache.h"
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;
@@ -19,7 +20,6 @@ using namespace boost::system::posix_error;
 using namespace boost::system::errc;
 #endif
 using namespace boost::asio;
-boost::asio::io_service netservice;
 
 std::string RTFToPlain(const std::string& rich)
 {
@@ -54,13 +54,75 @@ std::string RTFToPlain(const std::string& rich)
 	return out;
 }
 
-Connection::Connection() : sock(netservice), users(new UserCache)
+class RawTextMessage
+{
+public:
+	RawTextMessage(const std::string& _message) : message(_message), pos(0)
+	{};
+	
+	std::string GetWord()
+	{
+		size_t oldpos = pos;
+		pos = message.find_first_of(std::string("\t \n"), oldpos);
+		if (pos != std::string::npos)
+		{
+			return message.substr(oldpos, pos++ - oldpos);
+		}
+		else if (oldpos != std::string::npos)
+		{
+			return message.substr(oldpos);
+		}
+		else
+		{
+			return "";
+		}
+	};
+	
+	std::string GetSentence()
+	{
+		size_t oldpos = pos;
+		pos = message.find_first_of(std::string("\t\n"), oldpos);
+		if (pos != std::string::npos)
+		{
+			return message.substr(oldpos, pos++ - oldpos);
+		}
+		else if (oldpos != std::string::npos)
+		{
+			return message.substr(oldpos);
+		}
+		else
+		{
+			return "";
+		}
+	};
+	
+	int GetInt()
+	{
+		std::istringstream buf(GetWord());
+		int temp;
+		buf >> temp;
+		return temp;
+	};
+	
+	long unsigned GetTime()
+	{
+		std::istringstream buf(GetWord());
+		long unsigned temp;
+		buf >> temp;
+		return temp;
+	};
+
+private:
+	std::string message;
+	size_t pos;
+};
+
+Connection::Connection() : sock(netservice), timer(netservice)
 {
 }
 
 Connection::~Connection()
 {
-	delete users;
 	sock.close();
 	netservice.poll();
 	netservice.reset();
@@ -113,11 +175,67 @@ void Connection::Login(const std::string& name, const std::string& password)
 	std::ostringstream out;
 	out << "LOGIN " << name << " " << MD5Base64(password) << " 0 localhost libLobby v0.1\n";
 	SendData(out.str());
+	myUserName = name;
 }
 
 void Connection::ConfirmAggreement()
 {
 	SendData("CONFIRMAGREEMENT\n");
+}
+
+
+void Connection::Rename(const std::string& newName)
+{
+	std::ostringstream out;
+	out << "RENAMEACCOUNT " << newName << "\n";
+	SendData(out.str());
+}
+
+void Connection::ChangePass(const std::string& oldpass, const std::string& newpass)
+{
+	std::ostringstream out;
+	out << "CHANGEPASSWORD " << MD5Base64(oldpass) << " " << MD5Base64(newpass) << "\n";
+	SendData(out.str());
+}
+
+void Connection::StatusUpdate(bool ingame, bool away)
+{
+	std::bitset<8> statusbf;
+	statusbf.set(0, ingame);
+	statusbf.set(1, away);
+	int trank = myStatus.rank;
+	if (trank >= 4)
+	{
+		statusbf.set(4);
+		trank -= 4;
+	}
+	if (trank >= 2)
+	{
+		statusbf.set(3);
+		trank -= 2;
+	}
+	if (trank == 1)
+	{
+		statusbf.set(2);
+	}
+	statusbf.set(5, myStatus.moderator);
+	statusbf.set(6, myStatus.bot);
+	
+	std::ostringstream out;
+	out << "MYSTATUS " << static_cast<unsigned>(statusbf.to_ulong()) << "\n";
+	SendData(out.str());
+}
+
+void Connection::Channels()
+{
+	SendData("CHANNELS\n");
+}
+
+void Connection::RequestMutelist(const std::string& channel)
+{
+	std::ostringstream out;
+	out << "MUTELIST " << channel << std::endl;
+	SendData(out.str());
 }
 
 void Connection::JoinChannel(const std::string& channame, const std::string& password)
@@ -126,7 +244,64 @@ void Connection::JoinChannel(const std::string& channame, const std::string& pas
 	out << "JOIN " << channame;
 	if (!password.empty())
 		out << " " << password;
+	out << std::endl;
 	SendData(out.str());
+}
+
+void Connection::LeaveChannel(const std::string& channame)
+{
+	std::ostringstream out;
+	out << "LEAVE " << channame << std::endl;
+	SendData(out.str());
+}
+
+void Connection::ForceLeaveChannel(const std::string& channame, const std::string& user, const std::string& reason)
+{
+	std::ostringstream out;
+	out << "FORCELEAVECHANNEL " << channame << " " << user;
+	if (!reason.empty())
+		out  << " " << reason;
+	out << std::endl;
+	SendData(out.str());
+}
+
+void Connection::ChangeTopic(const std::string& channame, const std::string& topic)
+{
+	std::ostringstream out;
+	out << "CHANNELTOPIC " << channame <<  " " << topic << std::endl;
+	SendData(out.str());
+}
+
+void Connection::Say(const std::string& channel, const std::string& text)
+{
+	std::ostringstream out;
+	out << "SAY " << channel << " " << text << std::endl;
+	SendData(out.str());
+}
+
+void Connection::SayEx(const std::string& channel, const std::string& text)
+{
+	std::ostringstream out;
+	out << "SAYEX " << channel << " " << text << std::endl;
+	SendData(out.str());
+}
+
+void Connection::SayPrivate(const std::string& user, const std::string& text)
+{
+	std::ostringstream out;
+	out << "SAYPRIVATE " << user << " " << text << std::endl;
+	SendData(out.str());
+}
+
+void Connection::Ping()
+{
+	if (sock.is_open())
+	{
+		SendData("PING\n");
+	
+		timer.expires_from_now(boost::posix_time::seconds(10));
+		timer.async_wait(boost::bind(&Connection::Ping, this));
+	}
 }
 
 void Connection::SendData(const std::string& msg)
@@ -143,13 +318,6 @@ void Connection::SendData(const std::string& msg)
 
 void Connection::Poll()
 {
-	const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-	const boost::posix_time::time_duration diff = now - lastPing;
-	if (diff.seconds() > 30)
-	{
-		SendData("PING\n");
-		lastPing = now;
-	}
 	netservice.poll();
 }
 
@@ -172,6 +340,7 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 			int mode = buf.GetInt();
 			ServerGreeting(serverVer, clientVer, udpport, mode);
 		}
+		Ping();
 	}
 	else if (command == "DENIED")
 	{
@@ -191,60 +360,94 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	}
 	else if (command == "ADDUSER")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string name = buf.GetWord();
-			UserInfo client = users->Get(name);
-			client.country = buf.GetWord();
-			client.cpu = buf.GetInt();
-			users->AddUser(client);
-		}
+		RawTextMessage buf(msg);
+		std::string name = buf.GetWord();
+		std::string country = buf.GetWord();
+		int cpu = buf.GetInt();
+		AddUser(name, country, cpu);
 	}
 	else if (command == "REMOVEUSER")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string name = buf.GetWord();
-			UserInfo client = users->Get(name);
-			users->RemoveUser(client);
-		}
+		RawTextMessage buf(msg);
+		std::string name = buf.GetWord();
+		RemoveUser(name);
 	}
 	else if (command == "CLIENTSTATUS")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string name = buf.GetWord();
-			UserInfo client = users->Get(name);
-			std::bitset<8> status(buf.GetInt());
-			client.ingame = status[0];
-			client.away = status[1];
-			client.rank = (status[2]? 1 : 0) + (status[3]? 2 : 0) + (status[4]? 4 : 0);
-			client.moderator = status[5];
-			client.bot = status[6];
-			users->Update(client);
-		}
+		RawTextMessage buf(msg);
+		std::string name = buf.GetWord();
+		ClientStatus status;
+		std::bitset<8> statusbf(buf.GetInt());
+		status.ingame = statusbf[0];
+		status.away = statusbf[1];
+		status.rank = (statusbf[2]? 1 : 0) + (statusbf[3]? 2 : 0) + (statusbf[4]? 4 : 0);
+		status.moderator = statusbf[5];
+		status.bot = statusbf[6];
+		if (name == myUserName)
+			myStatus = status;
+		ClientStatusUpdate(name, status);
 	}
 	else if (command == "JOIN")
 	{
-		if (users)
-		{
-			RawTextMessage buf(msg);
-			std::string channame = buf.GetWord();
-			Joined(channame);
-		}
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		Joined(channame);
 	}
 	else if (command == "JOINFAILED")
 	{
-		if (users)
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string reason = buf.GetWord();
+		JoinFailed(channame, reason);
+	}
+	else if (command == "CLIENTS")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client;
+		while (!(client = buf.GetWord()).empty())
 		{
-			RawTextMessage buf(msg);
-			std::string channame = buf.GetWord();
-			std::string reason = buf.GetWord();
-			JoinFailed(channame, reason);
+			ChannelMember(channame, client, false);
 		}
+	}
+	else if (command == "JOINED")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client = buf.GetWord();
+		ChannelMember(channame, client, true);
+	}
+	else if (command == "LEFT")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client = buf.GetWord();
+		std::string reason = buf.GetSentence();
+		ChannelMemberLeft(channame, client, reason);
+	}
+	else if (command == "FORCELEAVECHANNEL")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string client = buf.GetWord();
+		std::string reason = buf.GetSentence();
+		ForceLeftChannel(channame, client, reason);
+	}
+	else if (command == "CHANNELTOPIC")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string author = buf.GetWord();
+		long unsigned time = buf.GetTime();
+		std::string topic = buf.GetSentence();
+		ChannelTopic(channame, author, time, topic);
+	}
+	else if (command == "CHANNELMESSAGE")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string message = buf.GetSentence();
+		ChannelMessage(channame, message);
 	}
 	else if (command == "AGREEMENT")
 	{
@@ -259,9 +462,108 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	{
 		Motd(msg);
 	}
+	else if (command == "SERVERMSG")
+	{
+		ServerMessage(msg);
+	}
+	else if (command == "CHANNEL")
+	{
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		unsigned users = buf.GetInt();
+		ChannelInfo(channame, users);
+	}
+	else if (command == "ENDOFCHANNELS")
+	{
+		ChannelInfoEnd();
+	}
+	else if (command == "MUTELISTBEGIN")
+	{
+		inMutelistChannel = msg;
+		mutelistBuf.clear();
+	}
+	else if (command == "MUTELIST")
+	{
+		mutelistBuf.push_back(msg);
+	}
+	else if (command == "MUTELISTEND")
+	{
+		Mutelist(inMutelistChannel, mutelistBuf);
+		inMutelistChannel.clear();
+		mutelistBuf.clear();
+	}
+	else if (command == "SERVERMSGBOX")
+	{
+		RawTextMessage buf(msg);
+		std::string message = buf.GetSentence();
+		std::string url = buf.GetSentence();
+		ServerMessageBox(message, url);
+	}
+	else if (command == "SAID")
+	{
+		
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string user = buf.GetWord();
+		std::string text = buf.GetSentence();
+		Said(channame, user, text);
+	}
+	else if (command == "SAIDEX")
+	{
+		
+		RawTextMessage buf(msg);
+		std::string channame = buf.GetWord();
+		std::string user = buf.GetWord();
+		std::string text = buf.GetSentence();
+		SaidEx(channame, user, text);
+	}
+	else if (command == "SAIDPRIVATE")
+	{
+		
+		RawTextMessage buf(msg);
+		std::string user = buf.GetWord();
+		std::string text = buf.GetSentence();
+		SaidPrivate(user, text);
+	}
+	else if (command == "BATTLEOPENED")
+	{
+		
+		RawTextMessage buf(msg);
+		int id = buf.GetInt();
+		bool replay = !buf.GetInt();
+		bool nat = buf.GetInt();
+		std::string founder = buf.GetWord();
+		std::string ip = buf.GetWord();
+		int port = buf.GetInt();
+		int maxplayers = buf.GetInt();
+		bool password = buf.GetInt();
+		int rank = buf.GetInt();
+		int maphash = buf.GetInt();
+		std::string map = buf.GetSentence();
+		std::string title = buf.GetSentence();
+		std::string mod = buf.GetSentence();
+		BattleOpened(id, replay, nat, founder, ip, port, maxplayers, password, rank, maphash, title, map, mod);
+	}
+	else if (command == "UPDATEBATTLEINFO")
+	{
+		RawTextMessage buf(msg);
+		int id = buf.GetInt();
+		int spectators = buf.GetInt();
+		bool locked = buf.GetInt();
+		int maphash = buf.GetInt();
+		std::string map = buf.GetSentence();
+		BattleUpdated(id, spectators, locked, maphash, map);
+	}
+	else if (command == "BATTLECLOSED")
+	{
+		
+		RawTextMessage buf(msg);
+		int id = buf.GetInt();
+		BattleClosed(id);
+	}
 	else
 	{
-		// std::cout << "Unhandled command: " << command << " " << msg << std::endl;
+		 // std::cout << "Unhandled command: " << command << " " << msg << std::endl;
 	}
 }
 

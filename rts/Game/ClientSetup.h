@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef CLIENT_SETUP_H
 #define CLIENT_SETUP_H
 
@@ -17,9 +19,6 @@ public:
 
 	std::string hostip;
 	int hostport;
-	int sourceport; ///< the port clients will try to connect from
-	std::string autohostip;
-	int autohostport;
 
 	bool isHost;
 };

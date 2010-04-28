@@ -5,7 +5,7 @@ file=test.cpp
 map="${1:-Castles.smf}"
 mod="${2:-ba621.sd7}"
 
-g++ -g -I../../../rts/System $file ../../../game/unitsync.so && \
+g++ -g -I../../../rts -I../../../rts/System $file ../../../game/unitsync.so && \
 echo ./a.out "$map" "$mod" && \
 ./a.out "$map" "$mod"
 
@@ -20,7 +20,7 @@ exit
 /******************************************************************************/
 //  Simple file to help test unitsync, compile with:
 //
-//    g++ -I../../../rts/System test.cxx ../../../game/unitsync.so
+//    g++ -I../../../rts -I../../../rts/System test.cxx ../../../game/unitsync.so
 //
 
 
@@ -32,7 +32,8 @@ exit
 using namespace std;
 
 #include "../unitsync_api.h"
-
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
+#include "System/Option.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -44,7 +45,7 @@ static bool TestLuaParser();
 /******************************************************************************/
 /******************************************************************************/
 
-static bool PrintMapInfo(const string& mapName)
+static void PrintMapInfo(const string& mapName)
 {
   printf("  MAP INFO  (for %s)\n", mapName.c_str());
   MapInfo mi;
@@ -74,7 +75,7 @@ static bool PrintMapInfo(const string& mapName)
       printf("    pos %i:     <%5i, %5i>\n", p, sp.x, sp.z);
     }
 
-    char* infomaps[] = { "height", "grass", "metal", "type", NULL };
+    const char* infomaps[] = { "height", "grass", "metal", "type", NULL };
     int width, height;
     for (int i = 0; infomaps[i]; ++i) {
       if (GetInfoMapSize(mapName.c_str(), infomaps[i], &width, &height)) {
@@ -182,12 +183,19 @@ int main(int argc, char** argv)
            i, sideName.c_str(), startUnit.c_str());
   }
 
-  // LuaAI options
-  printf("  LuaAI\n");
-  const int luaAICount = GetLuaAICount();
-  for (int i = 0; i < luaAICount; i++) {
-    printf("    %i: name = %s\n", i, GetLuaAIName(i));
-    printf("       desc = %s\n",     GetLuaAIDesc(i));
+  // available Skirmish AIs
+  printf("  SkirmishAI\n");
+  const int skirmishAICount = GetSkirmishAICount();
+  for (int i = 0; i < skirmishAICount; i++) {
+    const int skirmishAIInfoCount = GetSkirmishAIInfoCount(i);
+    printf("    %i:\n", i);
+    for (int j = 0; j < skirmishAIInfoCount; j++) {
+      const string key = GetInfoKey(j);
+      if ((key == SKIRMISH_AI_PROPERTY_SHORT_NAME) || (key == SKIRMISH_AI_PROPERTY_VERSION)) {
+        const string value = GetInfoValue(j);
+      	printf("        %s = %s\n", key.c_str(), value.c_str());
+      }
+    }
   }
 
   // MapOptions
@@ -214,12 +222,12 @@ int main(int argc, char** argv)
 
   InitDirListVFS("", NULL, NULL);
   char buf[512];
-  for (int i = 0; i = FindFilesVFS(i, buf, sizeof(buf)); /* noop */) {
+  for (int i = 0; (i = FindFilesVFS(i, buf, sizeof(buf))); /* noop */) {
     printf("FOUND FILE:  %s\n", buf);
   }
 
   InitSubDirsVFS("", NULL, NULL);
-  for (int i = 0; i = FindFilesVFS(i, buf, sizeof(buf)); /* noop */) {
+  for (int i = 0; (i = FindFilesVFS(i, buf, sizeof(buf))); /* noop */) {
     printf("FOUND DIR:  %s\n", buf);
   }
 
@@ -345,7 +353,6 @@ static bool TestLuaParser()
 
   lpRootTable();
     lpSubTableInt(12);
-      const char* result;
       printf("SubTable test1: '%s'\n", lpGetIntKeyStrVal(2, "FAILURE"));
       lpSubTableStr("three");
         printf("SubTable test2: '%s'\n", lpGetIntKeyStrVal(1, "FAILURE"));

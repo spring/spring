@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef INPUT_HANDLER_H
 #define INPUT_HANDLER_H
 
@@ -24,4 +26,4 @@ private:
 
 extern InputHandler input;
 
-#endif
+#endif // INPUT_HANDLER_H

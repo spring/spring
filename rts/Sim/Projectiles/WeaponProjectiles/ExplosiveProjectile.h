@@ -1,6 +1,4 @@
-// ExplosiveProjectile.h: interface for the CExplosiveProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __EXPLOSIVE_PROJECTILE_H__
 #define __EXPLOSIVE_PROJECTILE_H__
@@ -14,7 +12,7 @@ class CExplosiveProjectile : public CWeaponProjectile
 public:
 	CExplosiveProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		const WeaponDef *weaponDef, int ttl = 100000, float areaOfEffect = 8,
-		float gravity = 0 GML_PARG_H);
+		float gravity = 0);
 	virtual ~CExplosiveProjectile();
 	virtual void Update();
 	void Draw(void);

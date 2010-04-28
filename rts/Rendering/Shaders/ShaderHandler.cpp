@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "Rendering/GL/myGL.h"
 #include <cassert>
 
@@ -51,7 +53,9 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(
 	const std::string& poClass,
 	const std::string& poName,
 	const std::string& vsStr,
+	const std::string& vsDefs,
 	const std::string& fsStr,
+	const std::string& fsDefs,
 	bool arbProgram
 ) {
 	Shader::IProgramObject* po = CreateProgramObject(poClass, poName, arbProgram);
@@ -60,8 +64,8 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(
 		return po;
 	}
 
-	Shader::IShaderObject* vso = CreateShaderObject(vsStr, (arbProgram? GL_VERTEX_PROGRAM_ARB: GL_VERTEX_SHADER));
-	Shader::IShaderObject* fso = CreateShaderObject(fsStr, (arbProgram? GL_FRAGMENT_PROGRAM_ARB: GL_FRAGMENT_SHADER));
+	Shader::IShaderObject* vso = CreateShaderObject(vsStr, vsDefs, (arbProgram? GL_VERTEX_PROGRAM_ARB: GL_VERTEX_SHADER));
+	Shader::IShaderObject* fso = CreateShaderObject(fsStr, fsDefs, (arbProgram? GL_FRAGMENT_PROGRAM_ARB: GL_FRAGMENT_SHADER));
 
 	po->AttachShaderObject(vso);
 	po->AttachShaderObject(fso);
@@ -77,7 +81,7 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(
 
 
 
-Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, int soType) {
+Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
 	assert(!soName.empty());
 
 	bool arbShader = false;
@@ -100,6 +104,10 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 			(soName.find("!!ARBvp") != std::string::npos) ||
 			(soName.find("!!ARBfp") != std::string::npos);
 		soSource = soName;
+	}
+
+	if (!arbShader) {
+		soSource = soDefs + soSource;
 	}
 
 	Shader::IShaderObject* so = NULL;

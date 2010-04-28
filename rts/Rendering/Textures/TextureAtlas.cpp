@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 
 #include <list>
@@ -309,6 +311,12 @@ void CTextureAtlas::BindTexture()
 	glBindTexture(GL_TEXTURE_2D, gltex);
 }
 
+bool CTextureAtlas::TextureExists(const std::string& name)
+{
+	return textures.find(StringToLower(name)) != textures.end();
+}
+
+
 AtlasedTexture CTextureAtlas::GetTexture(const std::string& name)
 {
 	return textures[StringToLower(name)];
@@ -319,10 +327,6 @@ AtlasedTexture* CTextureAtlas::GetTexturePtr(const std::string& name)
 	return &textures[StringToLower(name)];
 }
 
-bool CTextureAtlas::TextureExists(const std::string& name)
-{
-	return textures.find(StringToLower(name)) != textures.end();
-}
 
 AtlasedTexture CTextureAtlas::GetTextureWithBackup(const std::string& name,
                                                    const std::string& backupName)
@@ -334,4 +338,12 @@ AtlasedTexture CTextureAtlas::GetTextureWithBackup(const std::string& name,
 	}
 }
 
-
+AtlasedTexture* CTextureAtlas::GetTexturePtrWithBackup(const std::string& name,
+                                                   const std::string& backupName)
+{
+	if (textures.find(StringToLower(name)) != textures.end()) {
+		return &textures[StringToLower(name)];
+	} else {
+		return &textures[StringToLower(backupName)];
+	}
+}

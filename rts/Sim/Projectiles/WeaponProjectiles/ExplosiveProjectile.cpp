@@ -1,6 +1,4 @@
-// ExplosiveProjectile.cpp: implementation of the CExplosiveProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -10,13 +8,13 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "GlobalUnsynced.h"
 
 #ifdef TRACE_SYNC
-	#include "Sync/SyncTracer.h"
+	#include "System/Sync/SyncTracer.h"
 #endif
 
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0, 0, 0), float3(0, 0, 0), NULL, NULL, 1, 0));
@@ -31,13 +29,17 @@ CR_REG_METADATA(CExplosiveProjectile, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
-		const float3& speed, CUnit* owner, const WeaponDef *weaponDef, int ttl,
-		float areaOfEffect, float g GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
+CExplosiveProjectile::CExplosiveProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner, const WeaponDef *weaponDef,
+	int ttl, float areaOfEffect, float g):
+
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	areaOfEffect(areaOfEffect),
 	curTime(0)
 {
+	projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+
 	//! either map or weaponDef gravity
 	mygravity = g;
 	useAirLos = true;
@@ -117,7 +119,7 @@ void CExplosiveProjectile::Collision(CUnit *unit)
 
 void CExplosiveProjectile::Draw(void)
 {
-	if (s3domodel) { //dont draw if a 3d model has been defined for us
+	if (model) { //dont draw if a 3d model has been defined for us
 		return;
 	}
 
@@ -140,11 +142,10 @@ void CExplosiveProjectile::Draw(void)
 	const int    stages     = weaponDef->visuals.stages;
 	const float  invStages  = 1.0f / (float)stages;
 
-	float3 dir = speed;
-	dir.Normalize();
-	dir *= separation * 0.6f;
+	const float3 ndir = dir * separation * 0.6f;
 
-	va->EnlargeArrays(stages*4,0,VA_SIZE_TC);
+	va->EnlargeArrays(stages * 4,0, VA_SIZE_TC);
+
 	for (int a = 0; a < stages; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 		const float aDecay = (stages - (a * alphaDecay)) * invStages;
 		col[0] = int(aDecay * col[0]);
@@ -155,7 +156,7 @@ void CExplosiveProjectile::Draw(void)
 		const float  size  = drawRadius * (1.0f - (a * sizeDecay));
 		const float3 up    = camera->up    * size;
 		const float3 right = camera->right * size;
-		const float3 interPos2 = drawPos - ((noGap)?(dir * size * a):(dir * drawRadius * a));
+		const float3 interPos2 = drawPos - ((noGap)? (ndir * size * a): (ndir * drawRadius * a));
 
 		va->AddVertexQTC(interPos2 - right - up, tex->xstart, tex->ystart, col);
 		va->AddVertexQTC(interPos2 + right - up, tex->xend,   tex->ystart, col);
@@ -164,7 +165,7 @@ void CExplosiveProjectile::Draw(void)
 	}
 }
 
-int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
 	float3 dir = pos - shieldPos;
 	dir.Normalize();

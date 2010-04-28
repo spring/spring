@@ -1,22 +1,20 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-#include <assert.h>
-#include <cstdio>
 #include "mmgr.h"
 
 #include "MapInfo.h"
+
+#include <assert.h>
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
 #include "Exceptions.h"
 
 
 using namespace std;
-
-
-static CLogSubsystem LOG_MAPINFO("mapinfo");
 
 
 // Before delete, the const is const_cast'ed away. There are
@@ -26,11 +24,11 @@ static CLogSubsystem LOG_MAPINFO("mapinfo");
 const CMapInfo* mapInfo;
 
 
-CMapInfo::CMapInfo(const string& mapName)
+CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : mapInfoFile(_mapInfoFile)
 {
 	map.name = mapName;
 
-	parser = new MapParser(mapName);
+	parser = new MapParser(mapInfoFile);
 	if (!parser->IsValid()) {
 		throw content_error("MapInfo: " + parser->GetErrorLog());
 	}
@@ -73,7 +71,6 @@ void CMapInfo::ReadGlobal()
 
 	map.humanName    = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
-	map.wantedScript = topTable.GetString("script", "");
 
 	map.hardness      = topTable.GetFloat("maphardness", 100.0f);
 	map.notDeformable = topTable.GetBool("notDeformable", false);
@@ -257,8 +254,17 @@ void CMapInfo::ReadSmf()
 {
 	// SMF specific settings
 	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
-	smf.detailTexName = mapResTable.GetString("detailTex", "");
-	smf.specularTexName = mapResTable.GetString("specularTex", "");
+
+	smf.detailTexName      = mapResTable.GetString("detailTex", "");
+	smf.specularTexName    = mapResTable.GetString("specularTex", "");
+	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
+	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
+
+	smf.splatTexScales = mapResTable.GetFloat4("splatTexScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
+	smf.splatTexMults = mapResTable.GetFloat4("splatTexMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	smf.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
+	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
 
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
@@ -268,9 +274,11 @@ void CMapInfo::ReadSmf()
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
 	}
 
-	if (!smf.specularTexName.empty()) {
-		smf.specularTexName = "maps/" + smf.specularTexName;
-	}
+	if (!smf.specularTexName.empty()) { smf.specularTexName = "maps/" + smf.specularTexName; }
+	if (!smf.splatDetailTexName.empty()) { smf.splatDetailTexName = "maps/" + smf.splatDetailTexName; }
+	if (!smf.splatDistrTexName.empty()) { smf.splatDistrTexName = "maps/" + smf.splatDistrTexName; }
+	if (!smf.grassBladeTexName.empty()) { smf.grassBladeTexName = "maps/" + smf.grassBladeTexName; } 
+	if (!smf.grassShadingTexName.empty()) { smf.grassShadingTexName = "maps/" + smf.grassShadingTexName; } 
 
 	// height overrides
 	const LuaTable smfTable = parser->GetRoot().SubTable("smf");

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SPHEREPARTPROJECTILE_H
 #define SPHEREPARTPROJECTILE_H
 
@@ -8,7 +10,7 @@ class CSpherePartProjectile :
 {
 	CR_DECLARE(CSpherePartProjectile);
 public:
-	CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color GML_PARG_H);
+	CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color);
 	~CSpherePartProjectile(void);
 
 	float3 centerPos;
@@ -44,7 +46,7 @@ public:
 	CSpherePartSpawner();
 	~CSpherePartSpawner();
 
-	virtual void Init(const float3& pos, CUnit *owner GML_PARG_H);
+	virtual void Init(const float3& pos, CUnit *owner);
 };
 
 #endif /* SPHEREPARTPROJECTILE_H */

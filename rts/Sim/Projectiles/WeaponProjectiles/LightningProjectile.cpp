@@ -1,13 +1,16 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "Game/Camera.h"
 #include "LightningProjectile.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "Sim/Misc/GlobalSynced.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"
@@ -25,16 +28,21 @@ CR_REG_METADATA(CLightningProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLightningProjectile::CLightningProjectile(const float3& pos, const float3& end,
-		CUnit* owner, const float3& color, const WeaponDef *weaponDef,
-		int ttl, CWeapon* weap GML_PARG_C)
-:	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
+CLightningProjectile::CLightningProjectile(
+	const float3& pos, const float3& end,
+	CUnit* owner,
+	const float3& color,
+	const WeaponDef* weaponDef,
+	int ttl, CWeapon* weap):
+
+	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	color(color),
 	endPos(end),
 	weapon(weap)
 {
-	checkCol=false;
-	drawRadius=pos.distance(endPos);
+	projectileType = WEAPON_LIGHTNING_PROJECTILE;
+	checkCol = false;
+	drawRadius = pos.distance(endPos);
 
 	displacements[0]=0;
 	for(int a=1;a<10;++a)
@@ -91,13 +99,12 @@ void CLightningProjectile::Draw(void)
 	col[2]=(unsigned char) (color.z*255);
 	col[3]=1;//intensity*255;
 
-	float3 dir=(endPos-pos).Normalize();
-	float3 dif(pos-camera->pos);
-	float camDist=dif.Length();
-	dif/=camDist;
-	float3 dir1(dif.cross(dir));
-	dir1.Normalize();
-	float3 tempPos=pos;
+	const float3 ddir = (endPos - pos).Normalize();
+	float3 dif(pos - camera->pos);
+	float camDist = dif.Length();
+	dif /= camDist;
+	const float3 dir1 = (dif.cross(ddir)).Normalize();
+	float3 tempPos = pos;
 
 	va->EnlargeArrays(18*4,0,VA_SIZE_TC);
 	for(int a=0;a<9;++a){

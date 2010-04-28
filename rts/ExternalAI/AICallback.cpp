@@ -1,4 +1,7 @@
-// Generalized callback interface - shared between global AI and group AI
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#include "ExternalAI/AICallback.h"
+
 #include "StdAfx.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -20,9 +23,10 @@
 #include "NetProtocol.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
+#include "Rendering/DebugDrawerAI.h"
 #include "Rendering/InMapDraw.h"
-#include "Rendering/UnitModels/3DModel.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/Models/3DModel.h"
+#include "Rendering/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
@@ -34,6 +38,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -41,8 +46,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "AICheats.h"
-#include "ExternalAI/GlobalAICallback.h"
+#include "ExternalAI/AICheats.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/EngineOutHandler.h"
@@ -60,10 +64,10 @@
 // ...or disable the check altogether for release.
 //#define CHECK_UNITID(id) true
 
-CAICallback::CAICallback(int Team, CGroupHandler* ghandler)
-	: team(Team)
+CAICallback::CAICallback(int teamId)
+	: team(teamId)
 	, noMessages(false)
-	, gh(ghandler)
+	, gh(grouphandlers[teamId])
 {}
 
 CAICallback::~CAICallback(void)
@@ -770,11 +774,10 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
-	std::list<CUnit*>::iterator ui;
-	int a = 0;
 
-	for (std::list<CUnit*>::const_iterator ui = uh->activeUnits.begin();
-			ui != uh->activeUnits.end(); ++ui) {
+	std::list<CUnit*>::const_iterator ui;
+	int a = 0;
+	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team)) &&
@@ -794,11 +797,10 @@ int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 {
 	verify();
-	std::list<CUnit*>::iterator ui;
-	int a = 0;
 
-	for (std::list<CUnit*>::const_iterator ui = uh->activeUnits.begin();
-			ui != uh->activeUnits.end(); ++ui) {
+	std::list<CUnit*>::const_iterator ui;
+	int a = 0;
+	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))
@@ -819,11 +821,11 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
+
+	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
 	int a = 0;
-
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (ui = units.begin(); ui != units.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))
@@ -844,10 +846,10 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 int CAICallback::GetFriendlyUnits(int *unitIds, int unitIds_max)
 {
 	verify();
-	int a = 0;
 
-	for (std::list<CUnit*>::const_iterator ui = uh->activeUnits.begin();
-			ui != uh->activeUnits.end(); ++ui) {
+	std::list<CUnit*>::const_iterator ui;
+	int a = 0;
+	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		if (teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))) {
@@ -869,10 +871,10 @@ int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
+
 	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
 	int a = 0;
-
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
 		const CUnit* u = *ui;
 
@@ -895,9 +897,10 @@ int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius,
 int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	verify();
-	int a = 0;
 
-	for (std::list<CUnit*>::const_iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	std::list<CUnit*>::const_iterator ui;
+	int a = 0;
+	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		// IsUnitNeutral does the LOS check
@@ -915,10 +918,10 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	verify();
+
 	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
 	int a = 0;
-
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
 		const CUnit* u = *ui;
 
@@ -947,15 +950,6 @@ int CAICallback::GetMapHeight()
 	return gs->mapy;
 }
 
-const char* CAICallback::GetMapName ()
-{
-	return gameSetup->mapName.c_str();
-}
-
-const char* CAICallback::GetModName()
-{
-	return modInfo.filename.c_str();
-}
 
 
 float CAICallback::GetMaxMetal() const { return mapInfo->map.maxMetal; }
@@ -999,13 +993,6 @@ const unsigned short* CAICallback::GetLosMap()
 	return &loshandler->losMap[teamHandler->AllyTeam(team)].front();
 }
 
-int CAICallback::GetLosMapResolution()
-{
-	// as this will never be called (it is implemented in CAIAICallback),
-	// it does not matter what we return here.
-	return -1;
-}
-
 const unsigned short* CAICallback::GetRadarMap()
 {
 	return &radarhandler->radarMaps[teamHandler->AllyTeam(team)].front();
@@ -1025,6 +1012,9 @@ float CAICallback::GetElevation(float x,float z)
 {
 	return ground->GetHeight2(x,z);
 }
+
+
+
 
 void CAICallback::LineDrawerStartPath(const float3& pos, const float* color)
 {
@@ -1066,6 +1056,7 @@ void CAICallback::LineDrawerRestartSameColor()
 	lineDrawer.RestartSameColor();
 }
 
+
 int CAICallback::CreateSplineFigure(float3 pos1,float3 pos2,float3 pos3,float3 pos4,float width,int arrow,int lifetime,int group)
 {
 	return geometricObjects->AddSpline(pos1,pos2,pos3,pos4,width,arrow,lifetime,group);
@@ -1086,6 +1077,8 @@ void CAICallback::DeleteFigureGroup(int group)
 	geometricObjects->DeleteGroup(group);
 }
 
+
+
 void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int lifetime,int teamId,bool transparent,bool drawBorder,int facing)
 {
 	CUnitDrawer::TempDrawUnit tdu;
@@ -1103,11 +1096,14 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 
 	GML_STDMUTEX_LOCK(temp); // DrawUnit
 
-	if(transparent)
+	if (transparent) {
 		unitDrawer->tempTransparentDrawUnits.insert(tp);
-	else
+	} else {
 		unitDrawer->tempDrawUnits.insert(tp);
+	}
 }
+
+
 
 bool CAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing)
 {
@@ -1401,39 +1397,42 @@ bool CAICallback::GetValue(int id, void *data)
 int CAICallback::HandleCommand(int commandId, void* data)
 {
 	switch (commandId) {
-		case AIHCQuerySubVersionId:
+		case AIHCQuerySubVersionId: {
 			return 1; // current version of Handle Command interface
+		} break;
 		case AIHCAddMapPointId: {
 			const AIHCAddMapPoint* pnt = (AIHCAddMapPoint*) data;
 			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)pnt->pos.x, (short)pnt->pos.z, std::string(pnt->label), false));
 			return 1;
-		}
+		} break;
 		case AIHCAddMapLineId: {
 			const AIHCAddMapLine* line = (AIHCAddMapLine*) data;
 			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)line->posfrom.x, (short)line->posfrom.z, (short)line->posto.x, (short)line->posto.z, false));
 			return 1;
-		}
-		case AIHCRemoveMapPointId:
+		} break;
+		case AIHCRemoveMapPointId: {
 			net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z));
 			return 1;
-		case AIHCSendStartPosId:
+		} break;
+		case AIHCSendStartPosId: {
 			SendStartPos(((AIHCSendStartPos *)data)->ready,((AIHCSendStartPos *)data)->pos);
 			return 1;
+		} break;
 		case AIHCGetUnitDefByIdId: {
 			AIHCGetUnitDefById* cmdData = (AIHCGetUnitDefById*) data;
 			cmdData->ret = GetUnitDefById(cmdData->unitDefId);
 			return 1;
-		}
+		} break;
 		case AIHCGetWeaponDefByIdId: {
 			AIHCGetWeaponDefById* cmdData = (AIHCGetWeaponDefById*) data;
 			cmdData->ret = GetWeaponDefById(cmdData->weaponDefId);
 			return 1;
-		}
+		} break;
 		case AIHCGetFeatureDefByIdId: {
 			AIHCGetFeatureDefById* cmdData = (AIHCGetFeatureDefById*) data;
 			cmdData->ret = GetFeatureDefById(cmdData->featureDefId);
 			return 1;
-		}
+		} break;
 
 		case AIHCTraceRayId: {
 			AIHCTraceRay* cmdData = (AIHCTraceRay*) data;
@@ -1459,7 +1458,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			}
 
 			return 1;
-		}
+		} break;
 
 		case AIHCPauseId: {
 			AIHCPause* cmdData = (AIHCPause*) data;
@@ -1470,22 +1469,91 @@ int CAICallback::HandleCommand(int commandId, void* data)
 					team, cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
 
 			return 1;
-		}
+		} break;
 
 		case AIHCGetDataDirId: {
-
 			// do nothing
-			// this event will never end up here,
-			// as it is handled in the C layer directly
+			// this event will never end up here, as
+			// it is handled in the C layer directly
 			// see Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
 
 			return 0;
-		}
+		} break;
+
+		case AIHCDebugDrawId: {
+			AIHCDebugDraw* cmdData = (AIHCDebugDraw*) data;
+
+			switch (cmdData->cmdMode) {
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_GRAPH_POINT: {
+					debugDrawerAI->AddGraphPoint(this->team, cmdData->lineId, cmdData->x, cmdData->y);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_GRAPH_POINTS: {
+					debugDrawerAI->DelGraphPoints(this->team, cmdData->lineId, cmdData->numPoints);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_POS: {
+					debugDrawerAI->SetGraphPos(this->team, cmdData->x, cmdData->y);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_SIZE: {
+					debugDrawerAI->SetGraphSize(this->team, cmdData->w, cmdData->h);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_COLOR: {
+					debugDrawerAI->SetGraphLineColor(this->team, cmdData->lineId, cmdData->color);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_GRAPH_LINE_LABEL: {
+					debugDrawerAI->SetGraphLineLabel(this->team, cmdData->lineId, cmdData->label);
+				} break;
+
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_ADD_OVERLAY_TEXTURE: {
+					cmdData->texHandle = debugDrawerAI->AddOverlayTexture(
+						this->team,
+						cmdData->texData,
+						int(cmdData->w),   // interpret as absolute width
+						int(cmdData->h)    // interpret as absolute height
+					);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_UPDATE_OVERLAY_TEXTURE: {
+					debugDrawerAI->UpdateOverlayTexture(
+						this->team,
+						cmdData->texHandle,
+						cmdData->texData,
+						int(cmdData->x),    // interpret as absolute pixel col
+						int(cmdData->y),    // interpret as absolute pixel row
+						int(cmdData->w),    // interpret as absolute width
+						int(cmdData->h)     // interpret as absolute height
+					);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_DEL_OVERLAY_TEXTURE: {
+					debugDrawerAI->DelOverlayTexture(this->team, cmdData->texHandle);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_POS: {
+					debugDrawerAI->SetOverlayTexturePos(this->team, cmdData->texHandle, cmdData->x, cmdData->y);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_SIZE: {
+					debugDrawerAI->SetOverlayTextureSize(this->team, cmdData->texHandle, cmdData->w, cmdData->h);
+				} break;
+				case AIHCDebugDraw::AIHC_DEBUGDRAWER_MODE_SET_OVERLAY_TEXTURE_LABEL: {
+					debugDrawerAI->SetOverlayTextureLabel(this->team, cmdData->texHandle, cmdData->label);
+				} break;
+
+				default: {
+				} break;
+			}
+
+			return 1;
+		} break;
 
 		default:
 			return 0;
 	}
 }
+
+
+
+bool CAICallback::IsDebugDrawerEnabled() const {
+	return (debugDrawerAI->GetDraw());
+}
+
+
 
 int CAICallback::GetNumUnitDefs ()
 {

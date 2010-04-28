@@ -1,7 +1,4 @@
-/*
-LogOutput - global object to write log info to.
- Game UI elements that display log can subscribe to it to receive the log messages.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef LOGOUTPUT_H
 #define LOGOUTPUT_H
@@ -94,7 +91,11 @@ public:
 };
 
 
-/** @brief logging class */
+/**
+ * @brief logging class 
+ * Global object to write log info to.
+ * Game UI elements that display log can subscribe to it to receive the log messages.
+ */
 class CLogOutput
 {
 public:
@@ -110,14 +111,26 @@ public:
 
 	void SetLastMsgPos(const float3& pos);
 
-	// In case the InfoConsole and other in game subscribers
-	// should not be used anymore (SDL shutdown)
-	void RemoveAllSubscribers();
-	// Close the output file, so the crash reporter can copy it
-	void End();
-
 	void AddSubscriber(ILogSubscriber* ls);
 	void RemoveSubscriber(ILogSubscriber* ls);
+	/**
+	 * @brief Enables/Disables notifying of subscribers
+	 *
+	 * The list of subscribers does not get altered when calling this function,
+	 * just its use is enabled or disabled.
+	 * Used, for example, in case the info console and other in game subscribers
+	 * should not be notified anymore (eg. SDL shutdown).
+	 */
+	void SetSubscribersEnabled(bool enabled);
+	/**
+	 * @brief Indicates whether notifying of subscribers is enabled
+	 *
+	 * The initial value is true.
+	 */
+	bool IsSubscribersEnabled() const;
+
+	/// Close the output file, so the crash reporter can copy it
+	void End();
 
 	/**
 	 * @brief set the log file
@@ -219,6 +232,7 @@ private:
 	std::string fileName;
 	std::string filePath;
 	bool rotateLogFiles;
+	bool subscribersEnabled;
 };
 
 

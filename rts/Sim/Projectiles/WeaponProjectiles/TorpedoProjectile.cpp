@@ -1,18 +1,21 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "TorpedoProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
-#include "myMath.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "TorpedoProjectile.h"
-#include "GlobalUnsynced.h"
+#include "System/myMath.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"
@@ -34,28 +37,35 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_RESERVED(16)
 	));
 
-CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner,
-		float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target,
-		const WeaponDef *weaponDef GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
+CTorpedoProjectile::CTorpedoProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner,
+	float areaOfEffect, float maxSpeed,
+	float tracking, int ttl,
+	CUnit* target,
+	const WeaponDef* weaponDef):
+
+	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, ttl),
 	tracking(tracking),
-	dir(speed),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
 	target(target),
 	nextBubble(4)
 {
-	curSpeed=speed.Length();
-	dir.Normalize();
+	projectileType = WEAPON_TORPEDO_PROJECTILE;
+	curSpeed = speed.Length();
+	dir = speed / curSpeed;
+
 	if (target) {
 		AddDeathDependence(target);
 	}
 
 	SetRadius(0.0f);
-	drawRadius=maxSpeed*8;
-	float3 camDir=(pos-camera->pos).Normalize();
-	texx = ph->torpedotex.xstart - (ph->torpedotex.xend-ph->torpedotex.xstart)*0.5f;
-	texy = ph->torpedotex.ystart - (ph->torpedotex.yend-ph->torpedotex.ystart)*0.5f;
+	drawRadius = maxSpeed * 8;
+
+	const float3 camDir = (pos - camera->pos).Normalize();
+	texx = projectileDrawer->torpedotex->xstart - (projectileDrawer->torpedotex->xend - projectileDrawer->torpedotex->xstart) * 0.5f;
+	texy = projectileDrawer->torpedotex->ystart - (projectileDrawer->torpedotex->yend - projectileDrawer->torpedotex->ystart) * 0.5f;
 #ifdef TRACE_SYNC
 	tracefile << "New projectile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -72,8 +82,8 @@ CTorpedoProjectile::~CTorpedoProjectile(void)
 
 void CTorpedoProjectile::DependentDied(CObject* o)
 {
-	if(o==target)
-		target=0;
+	if (o == target)
+		target = 0;
 	CWeaponProjectile::DependentDied(o);
 }
 
@@ -167,7 +177,7 @@ void CTorpedoProjectile::Update(void)
 
 void CTorpedoProjectile::Draw(void)
 {
-	if(s3domodel)	//dont draw if a 3d model has been defined for us
+	if (model)	//dont draw if a 3d model has been defined for us
 		return;
 
 	inArray=true;

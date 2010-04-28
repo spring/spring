@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "BaseNetProtocol.h"
 
@@ -118,7 +120,7 @@ PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int 
 
 PacketType CBaseNetProtocol::SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs)
 {
-	uint16_t totalNumBytes = (1 + sizeof(uint16_t)) + (3 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short)));
+	boost::uint16_t totalNumBytes = (1 + sizeof(boost::uint16_t)) + (3 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short)));
 
 	PackPacket* packet = new PackPacket(totalNumBytes, NETMSG_AISHARE);
 	*packet << totalNumBytes << myPlayerNum << sourceTeam << destTeam << metal << energy << unitIDs;
@@ -461,8 +463,6 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEDATA, -2);
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
-	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(CTeam::Statistics));
-	proto->AddType(NETMSG_REQUEST_TEAMSTAT, 4 );
 	proto->AddType(NETMSG_REGISTER_NETMSG, 3 );
 	proto->AddType(NETMSG_UNREGISTER_NETMSG, 3);
 

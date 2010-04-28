@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "Util.h"
 #if defined(_MSC_VER) && (_MSC_VER >= 1310)
 #include <intrin.h>
@@ -23,6 +25,30 @@ std::string StringReplace(const std::string& text,
 	return working;
 }
 
+/// @see http://www.codeproject.com/KB/stl/stdstringtrim.aspx
+void StringTrimInPlace(std::string& str)
+{
+	static const std::string whiteSpaces(" \t\n\r");
+	std::string::size_type pos = str.find_last_not_of(whiteSpaces);
+	if (pos != std::string::npos) {
+		str.erase(pos + 1);
+		pos = str.find_first_not_of(whiteSpaces);
+		if (pos != std::string::npos) {
+			str.erase(0, pos);
+		}
+	} else {
+		str.erase(str.begin(), str.end());
+	}
+}
+
+std::string StringTrim(const std::string& str)
+{
+	std::string copy(str);
+	StringTrimInPlace(copy);
+	return copy;
+}
+
+#if (!defined DEDICATED || defined _MSC_VER) && !defined UNITSYNC && !defined BUILDING_AI
 namespace proc {
 	#if defined(__GNUC__)
 	// function inlining breaks this
@@ -129,3 +155,4 @@ namespace proc {
 		return bits;
 	}
 }
+#endif

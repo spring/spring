@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MISSILEPROJECTILE_H
 #define MISSILEPROJECTILE_H
 
@@ -14,7 +16,7 @@ protected:
 	void UpdateGroundBounce();
 public:
 	CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect,
-		float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef, float3 targetPos GML_PARG_H);
+		float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef, float3 targetPos);
 	~CMissileProjectile(void);
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
@@ -22,11 +24,9 @@ public:
 
 	void Update(void);
 	void Draw(void);
-	void DrawUnitPart(void);
-	void DrawS3O(void);
-	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
-	float3 dir;
+	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed);
+
 	float maxSpeed;
 	float curSpeed;
 	float areaOfEffect;

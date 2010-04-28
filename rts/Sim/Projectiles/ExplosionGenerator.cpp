@@ -1,31 +1,37 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-#include <fstream>
-#include <stdexcept>
 #include "mmgr.h"
 
-#include "creg/VarTypes.h"
+#include <fstream>
+#include <stdexcept>
+#include <cassert>
+#include <boost/cstdint.hpp>
+
 #include "ExplosionGenerator.h"
-#include "FileSystem/FileHandler.h"
 #include "Game/Camera.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "ConfigHandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GroundFlash.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "ProjectileHandler.h"
-#include "Unsynced/BubbleProjectile.h"
-#include "Unsynced/DirtProjectile.h"
-#include "Unsynced/ExploSpikeProjectile.h"
-#include "Unsynced/HeatCloudProjectile.h"
-#include "Unsynced/SmokeProjectile2.h"
-#include "Unsynced/SpherePartProjectile.h"
-#include "Unsynced/WakeProjectile.h"
-#include "Unsynced/WreckProjectile.h"
-#include <assert.h>
-#include "GlobalUnsynced.h"
-#include "Exceptions.h"
-#include <boost/cstdint.hpp>
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
+#include "Sim/Projectiles/Unsynced/DirtProjectile.h"
+#include "Sim/Projectiles/Unsynced/ExploSpikeProjectile.h"
+#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
+#include "Sim/Projectiles/Unsynced/SmokeProjectile2.h"
+#include "Sim/Projectiles/Unsynced/SpherePartProjectile.h"
+#include "Sim/Projectiles/Unsynced/WakeProjectile.h"
+#include "Sim/Projectiles/Unsynced/WreckProjectile.h"
+
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
+#include "System/creg/VarTypes.h"
+#include "System/FileSystem/FileHandler.h"
 
 using std::min;
 using std::max;
@@ -593,7 +599,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		if (type->GetName() == "AtlasedTexture*") {
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
-			void* tex = ph->textureAtlas->GetTexturePtr(texname);
+			void* tex = projectileDrawer->textureAtlas->GetTexturePtr(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;
@@ -603,7 +609,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		else if (type->GetName() == "GroundFXTexture*") {
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
-			void* tex = ph->groundFXAtlas->GetTexturePtr(texname);
+			void* tex = projectileDrawer->groundFXAtlas->GetTexturePtr(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;

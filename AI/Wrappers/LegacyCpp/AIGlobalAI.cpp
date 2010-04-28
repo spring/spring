@@ -20,8 +20,8 @@
 
 #include "AIGlobalAI.h"
 
-#include "ExternalAI/IGlobalAI.h"
-#include "ExternalAI/IGlobalAICallback.h"
+#include "IGlobalAI.h"
+#include "IGlobalAICallback.h"
 
 CAIGlobalAI::CAIGlobalAI(int teamId, IGlobalAI* gai): CAIAI(teamId, gai) {
 }

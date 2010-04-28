@@ -1,19 +1,4 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software {} you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation {} either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY {} without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SkirmishAIWrapper.h"
 
@@ -27,9 +12,9 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "ExternalAI/IGlobalAI.h"
+#include "ExternalAI/AICallback.h"
+#include "ExternalAI/AICheats.h"
 #include "ExternalAI/SkirmishAI.h"
-#include "ExternalAI/GlobalAICallback.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/SkirmishAILibraryInfo.h"
@@ -84,8 +69,9 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
 void CSkirmishAIWrapper::CreateCallback() {
 
 	if (c_callback == NULL) {
-		callback = new CGlobalAICallback(this);
-		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback);
+		callback = new CAICallback(teamId);
+		cheats = new CAICheats(this);
+		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback, cheats);
 	}
 }
 

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __ARCHIVE_ZIP
 #define __ARCHIVE_ZIP
 
@@ -11,29 +13,30 @@
 #include "lib/minizip/iowin32.h"
 #endif
 
-class CArchiveZip :
-	public CArchiveBuffered
+class CArchiveZip : public CArchiveBuffered
 {
+public:
+	CArchiveZip(const std::string& name);
+	virtual ~CArchiveZip(void);
+
+	virtual bool IsOpen();
+
+	virtual unsigned NumFiles() const;
+	virtual void FileInfo(unsigned fid, std::string& name, int& size) const;
+	virtual unsigned GetCrc32(unsigned fid);
+
 protected:
+	unzFile zip;
+
 	struct FileData {
 		unz_file_pos fp;
 		int size;
 		std::string origName;
-		unsigned int crc;
+		unsigned crc;
 	};
-	unzFile zip;
-	std::map<std::string, FileData> fileData;		// using unzLocateFile is quite slow
-	int curSearchHandle;
-	std::map<int, std::map<std::string, FileData>::iterator> searchHandles;
-	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fileName);
-	void SetSlashesForwardToBack(std::string& name);
-	void SetSlashesBackToForward(std::string& name);
-public:
-	CArchiveZip(const std::string& name);
-	virtual ~CArchiveZip(void);
-	virtual bool IsOpen();
-	virtual int FindFiles(int cur, std::string* name, int* size);
-	virtual unsigned int GetCrc32 (const std::string& fileName);
+	std::vector<FileData> fileData;
+	
+	virtual bool GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer);
 };
 
 #endif

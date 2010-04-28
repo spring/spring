@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -11,10 +13,9 @@
 #include "myMath.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
+#include "Rendering/FeatureDrawer.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -24,6 +25,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
+#include "System/EventHandler.h"
 #include "GlobalUnsynced.h"
 #include <assert.h>
 
@@ -56,7 +58,6 @@ CR_REG_METADATA(CFeature, (
 
 
 CFeature::CFeature():
-	model(NULL),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0),
 	health(0),
@@ -118,10 +119,6 @@ void CFeature::PostLoad()
 		height = 2 * TREE_RADIUS;
 	} else {
 		midPos = pos;
-	}
-
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->drawType - 1, pos, 1);
 	}
 }
 
@@ -203,11 +200,6 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	} else {
 		finalHeight = ground->GetHeight2(pos.x, pos.z);
 	}
-
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->drawType - 1, pos, 1);
-	}
-
 
 	if (speed != ZeroVector) {
 		deathSpeed = speed;
@@ -427,7 +419,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	pos = newPos;
 
-	featureDrawer->UpdateDrawPos(this);
+	eventHandler.FeatureMoved(this);
 
 	// setup finalHeight
 	if (snapToGround) {
@@ -466,15 +458,6 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 void CFeature::ForcedSpin(const float3& newDir)
 {
-/*
-	heading = GetHeadingFromVector(newDir.x, newDir.z);
-	CalculateTransform();
-	if (def->drawType >= DRAWTYPE_TREE) {
-		treeDrawer->DeleteTree(pos);
-		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-	}
-*/
-
 	float3 updir = UpVector;
 	if (updir == newDir) {
 		//FIXME perhaps save the old right,up,front directions, so we can
@@ -556,14 +539,14 @@ bool CFeature::UpdatePosition()
 				deathSpeed = ZeroVector;
 			}
 
-			featureDrawer->UpdateDrawPos(this);
+			eventHandler.FeatureMoved(this);
 
 			CalculateTransform();
 		}
 
 		if (!reachedFinalPos)
 			finishedUpdate = false;
-	}else{
+	} else {
 		if (pos.y > finalHeight) {
 			//! feature is falling
 			if (def->drawType >= DRAWTYPE_TREE)
@@ -713,11 +696,4 @@ float CFeature::RemainingMetal() const
 float CFeature::RemainingEnergy() const
 {
 	return RemainingResource(def->energy);
-}
-
-
-
-void CFeature::DrawS3O()
-{
-	unitDrawer->DrawFeatureStatic(this);
 }

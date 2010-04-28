@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// CKeyBindings.cpp: implementation of the CKeyBindings class.
-//
-//////////////////////////////////////////////////////////////////////
 #include <stdlib.h>
 
 #include "mmgr.h"

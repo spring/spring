@@ -1,6 +1,4 @@
-// Game.h: interface for the CGame class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __GAME_H__
 #define __GAME_H__
@@ -15,7 +13,6 @@
 
 #include "lib/gml/gml.h"
 
-class CScript;
 class CBaseWater;
 class CAVIGenerator;
 class CConsoleHistory;
@@ -24,7 +21,7 @@ class CKeySet;
 class CInfoConsole;
 class LuaParser;
 class LuaInputReceiver;
-class CLoadSaveHandler;
+class ILoadSaveHandler;
 class Action;
 class ChatMessage;
 class SkirmishAIData;
@@ -35,10 +32,17 @@ class CGame : public CGameController
 {
 private:
 	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
+
+	void LoadDefs();
+	void LoadSimulation(const std::string&);
+	void LoadRendering();
+	void LoadInterface();
+	void LoadLua();
+	void LoadFinalize();
 	void PostLoad();
 
 public:
-	CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile);
+	CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile);
 
 	bool Draw();
 	bool DrawMT();
@@ -57,16 +61,17 @@ public:
 	
 	bool HasLag() const;
 
-	enum DrawMode {
-		notDrawing     = 0,
-		normalDraw     = 1,
-		shadowDraw     = 2,
-		reflectionDraw = 3,
-		refractionDraw = 4
+	enum GameDrawMode {
+		gameNotDrawing     = 0,
+		gameNormalDraw     = 1,
+		gameShadowDraw     = 2,
+		gameReflectionDraw = 3,
+		gameRefractionDraw = 4
 	};
-	DrawMode drawMode;
-	inline void     SetDrawMode(DrawMode mode) { drawMode = mode; }
-	inline DrawMode GetDrawMode() const { return drawMode; }
+	GameDrawMode gameDrawMode;
+
+	inline void         SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
+	inline GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 	LuaParser* defsParser;
 
@@ -103,19 +108,11 @@ public:
 	bool showSpeed;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
-	bool drawMapMarks;
+
 	/// locked mouse indicator size
 	float crossSize;
 
-	bool drawSky;
-	bool drawWater;
-	bool drawGround;
-
-	bool moveWarnings;
-
 	unsigned char gameID[16];
-
-	CScript* script;
 
 	CInfoConsole *infoConsole;
 
@@ -130,6 +127,10 @@ public:
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
 private:
+	/// Save the game state to file.
+	void SaveGame(const std::string& filename, bool overwrite);
+	/// Re-load the game.
+	void ReloadGame();
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
@@ -193,8 +194,6 @@ private:
 	float consumeSpeed; ///< How fast we should eat NETMSG_NEWFRAMEs.
 	unsigned lastframe; ///< SDL_GetTicks() in previous ClientReadNet() call.
 
-	void SwapTransparentObjects();
-
 	int skipStartFrame;
 	int skipEndFrame;
 	int skipTotalFrames;
@@ -203,6 +202,9 @@ private:
 	float skipOldSpeed;
 	float skipOldUserSpeed;
 	unsigned skipLastDraw;
+
+	/// for reloading the savefile
+	ILoadSaveHandler* saveFile;
 };
 
 

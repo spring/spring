@@ -1,4 +1,4 @@
-/* Author: Teake Nutma */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef ICON_HANDLER_H
 #define ICON_HANDLER_H
@@ -9,7 +9,6 @@
 
 #include "Icon.h"
 #include "float3.h"
-
 
 class CIconData {
 	public:

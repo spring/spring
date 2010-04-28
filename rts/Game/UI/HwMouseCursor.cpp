@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Rendering/Textures/Bitmap.h"
 
@@ -6,7 +8,7 @@
 #  include "MouseInput.h"
 typedef unsigned char byte;
 #elif defined(__APPLE__)
-	/*do nothing (duno how to create cursors on runtime on macs)*/
+	/* do nothing (FIXME: duno how to create cursors at runtime on macs) */
 #else
 #  include <X11/Xcursor/Xcursor.h>
 #endif

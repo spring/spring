@@ -18,7 +18,7 @@
 #ifndef _AIAICHEATS_H
 #define _AIAICHEATS_H
 
-#include "ExternalAI/IAICheats.h"
+#include "IAICheats.h"
 
 class SSkirmishAICallback;
 class CAIAICallback;

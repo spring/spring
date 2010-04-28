@@ -47,7 +47,6 @@ dir="spring_${version_string}"
 # Each one of these that is set, is built when running this script.
 # Linux archives
 # * linux (LF) line endings
-# * removed files needed for windows installer generation only
 # * GPL compatible
 lzma="spring_${version_string}_src.tar.lzma"
 #tbz="spring_${version_string}_src.tar.bz2"
@@ -63,7 +62,7 @@ tgz="spring_${branch}_src.tar.gz"
 # (directories are included recursively)
 include=" \
  $dir/AI/ \
- $dir/Documentation/ \
+ $dir/doc/ \
  $dir/Doxyfile \
  $dir/game/ \
  $dir/installer/ \
@@ -79,18 +78,7 @@ include=" \
 
 # On linux, win32 executables are useless.
 exclude_from_all=""
-linux_exclude="${exclude_from_all}
-	${dir}/installer/include/
-	${dir}/installer/sections/
-	${dir}/installer/graphics/
-	${dir}/installer/nsis_plugins/
-	${dir}/installer/*.exe
-	${dir}/installer/*.bat
-	${dir}/installer/*.nsi
-	${dir}/installer/*.nsh
-	${dir}/installer/make_installer.pl
-	${dir}/installer/make_luaui_nsh.py
-	${dir}/installer/springlobby_download.sh"
+linux_exclude="${exclude_from_all}"
 linux_include=""
 windows_exclude="${exclude_from_all}"
 windows_include=""

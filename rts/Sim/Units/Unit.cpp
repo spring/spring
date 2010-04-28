@@ -1,6 +1,4 @@
-// Unit.cpp: implementation of the CUnit class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -21,8 +19,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
-#include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
@@ -87,7 +84,7 @@ float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade       = 0.0f;
-float CUnit::empDecline     = 32.0f / GAME_SPEED / 40.0f;  //! info: SlowUpdate runs twice all 32 gameframe
+float CUnit::empDecline     = 2 * UNIT_SLOWUPDATE_RATE / GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
 
 
 CUnit::CUnit():
@@ -221,7 +218,6 @@ CUnit::CUnit():
 	cloakTimeout(128),
 	curCloakTimeout(gs->frameNum),
 	isCloaked(false),
-	oldCloak(false),
 	decloakDistance(0.0f),
 	lastTerrainType(-1),
 	curTerrainType(0),
@@ -609,6 +605,11 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 	const unsigned short diffBits = (currStatus ^ newStatus);
 
 	// add to the state before running the callins
+	//
+	// note that is not symmetric: UnitEntered* and
+	// UnitLeft* are after-the-fact events, yet the
+	// Left* call-ins would still see the old state
+	// without first clearing the IN{LOS, RADAR} bit
 	losStatus[at] |= newStatus;
 
 	if (diffBits) {
@@ -617,6 +618,9 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 				eventHandler.UnitEnteredLos(this, at);
 				eoh->UnitEnteredLos(*this, at);
 			} else {
+				// clear before sending the event
+				losStatus[at] &= ~LOS_INLOS;
+
 				eventHandler.UnitLeftLos(this, at);
 				eoh->UnitLeftLos(*this, at);
 			}
@@ -627,6 +631,9 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 				eventHandler.UnitEnteredRadar(this, at);
 				eoh->UnitEnteredRadar(*this, at);
 			} else {
+				// clear before sending the event
+				losStatus[at] &= ~LOS_INRADAR;
+
 				eventHandler.UnitLeftRadar(this, at);
 				eoh->UnitLeftRadar(*this, at);
 			}
@@ -782,12 +789,7 @@ void CUnit::SlowUpdate()
 	AddMetal(unitDef->metalMake*0.5f);
 	if (activated) {
 		if (UseEnergy(unitDef->energyUpkeep * 0.5f)) {
-			if (unitDef->isMetalMaker) {
-				AddMetal(unitDef->makesMetal * 0.5f * uh->metalMakerEfficiency);
-				uh->metalMakerIncome += unitDef->makesMetal;
-			} else {
-				AddMetal(unitDef->makesMetal * 0.5f);
-			}
+			AddMetal(unitDef->makesMetal * 0.5f);
 			if (unitDef->extractsMetal > 0.0f) {
 				AddMetal(metalExtract * 0.5f);
 			}
@@ -917,7 +919,7 @@ void CUnit::DoWaterDamage()
 			const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
 
 			if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
-				DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
+				DoDamage(DamageArray(uh->waterDamage), 0, ZeroVector, -1);
 			}
 		}
 	}
@@ -987,9 +989,9 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
 			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
 			if (attacker) {
-				teamHandler->Team(attacker->team)->currentStats.damageDealt += statsdamage;
+				teamHandler->Team(attacker->team)->currentStats->damageDealt += statsdamage;
 			}
-			teamHandler->Team(team)->currentStats.damageReceived += statsdamage;
+			teamHandler->Team(team)->currentStats->damageReceived += statsdamage;
 			health -= damage;
 		}
 		else { // healing
@@ -1081,7 +1083,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 		if (isDead && (attacker != 0) &&
 		    !teamHandler->Ally(allyteam, attacker->allyteam) && !beingBuilt) {
 			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-			teamHandler->Team(attacker->team)->currentStats.unitsKilled++;
+			teamHandler->Team(attacker->team)->currentStats->unitsKilled++;
 		}
 	}
 //	if(attacker!=0 && attacker->team==team)
@@ -1096,29 +1098,11 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 
 void CUnit::Kill(float3& impulse) {
-	DamageArray da;
-	DoDamage(da * (health / da[armorType]), 0, impulse, -1);
+	DamageArray da(health);
+	DoDamage(da, NULL, impulse, -1);
 }
 
 
-
-void CUnit::UpdateDrawPos() {
-	CTransportUnit *trans=GetTransporter();
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (trans) {
-		drawPos = pos + (trans->speed * ((float)gu->lastFrameStart - (float)lastUnitUpdate) * gu->weightedSpeedFactor);
-	} else {
-		drawPos = pos + (speed * ((float)gu->lastFrameStart - (float)lastUnitUpdate) * gu->weightedSpeedFactor);
-	}
-#else
-	if (trans) {
-		drawPos = pos + (trans->speed * gu->timeOffset);
-	} else {
-		drawPos = pos + (speed * gu->timeOffset);
-	}
-#endif
-	drawMidPos = drawPos + (midPos - pos);
-}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -1240,9 +1224,7 @@ void CUnit::DoSeismicPing(float pingSize)
 		const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
 		                 errorScale[gu->myAllyTeam] * (0.5f - rz));
 
-		new CSeismicGroundFlash(pos + err,
-		                             ph->seismictex, 30, 15, 0, pingSize, 1,
-		                             float3(0.8f,0.0f,0.0f));
+		new CSeismicGroundFlash(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		if (radarhandler->InSeismicDistance(this, a)) {
@@ -1815,17 +1797,9 @@ void CUnit::FinishedBuilding(void)
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
 
-
-	oldCloak = isCloaked;
 	if (unitDef->startCloaked) {
 		wantCloak = true;
-		isCloaked = true;
 	}
-	if (oldCloak != isCloaked) {
-		eventHandler.UnitCloaked(this); // do this after the UnitFinished call-in
-		oldCloak = true;
-	}
-
 
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
 		UnBlock();
@@ -2190,12 +2164,6 @@ void CUnit::PostLoad()
 
 
 
-void CUnit::DrawS3O()
-{
-	unitDrawer->DrawUnitS3O(this);
-}
-
-
 void CUnit::LogMessage(const char *fmt, ...)
 {
 #ifdef DEBUG
@@ -2221,6 +2189,8 @@ void CUnit::StopAttackingAllyTeam(int ally)
 
 void CUnit::SlowUpdateCloak(bool stunCheck)
 {
+	const bool oldCloak = isCloaked;
+
 	if (stunCheck) {
 		if (stunned && isCloaked && scriptCloak <= 3) {
 			isCloaked = false;
@@ -2264,8 +2234,6 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 			eventHandler.UnitDecloaked(this);
 		}
 	}
-
-	oldCloak = isCloaked;
 }
 
 void CUnit::ScriptDecloak(bool updateCloakTimeOut)
@@ -2273,7 +2241,6 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	if (scriptCloak <= 2) {
 		if (isCloaked) {
 			isCloaked = false;
-			oldCloak = false;
 			eventHandler.UnitDecloaked(this);
 		}
 
@@ -2445,7 +2412,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(cloakTimeout),
 	CR_MEMBER(curCloakTimeout),
 	CR_MEMBER(isCloaked),
-	CR_MEMBER(oldCloak),
 	CR_MEMBER(decloakDistance),
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),

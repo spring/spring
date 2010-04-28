@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -32,10 +34,14 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, float length, const float3& color, const float3& color2,
-		float intensity, const WeaponDef *weaponDef, int ttl GML_PARG_C)
-:	CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, ttl GML_PARG_P),
+CLaserProjectile::CLaserProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner, float length,
+	const float3& color, const float3& color2,
+	float intensity,
+	const WeaponDef* weaponDef, int ttl):
+
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	intensity(intensity),
 	color(color),
 	color2(color2),
@@ -44,13 +50,21 @@ CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 	intensityFalloff(weaponDef?intensity*weaponDef->falloffRate:0),
 	stayTime(0)
 {
-	dir=speed;
-	dir.Normalize();
-	speedf=speed.Length();
+	projectileType = WEAPON_LASER_PROJECTILE;
 
-	if (weaponDef) SetRadius(weaponDef->collisionSize);
-	drawRadius=length;
-	if (weaponDef)midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
+	speedf = speed.Length();
+	dir = speed / speedf;
+
+	if (weaponDef) {
+		SetRadius(weaponDef->collisionSize);
+
+		midtexx =
+			(weaponDef->visuals.texture2->xstart +
+			(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * 0.5f);
+	}
+
+	drawRadius = length;
+
 #ifdef TRACE_SYNC
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
@@ -205,7 +219,7 @@ void CLaserProjectile::Collision()
 
 void CLaserProjectile::Draw(void)
 {
-	if(s3domodel)	//dont draw if a 3d model has been defined for us
+	if (model)	//dont draw if a 3d model has been defined for us
 		return;
 
 	inArray=true;
@@ -297,11 +311,11 @@ void CLaserProjectile::Draw(void)
 
 int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 sdir=pos-shieldPos;
-	sdir.Normalize();
-	if(sdir.dot(speed)<0){
-		speed-=sdir*sdir.dot(speed)*2;
-		dir=speed;
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < 0.0f) {
+		speed -= (rdir * rdir.dot(speed) * 2.0f);
+		dir = speed;
 		dir.Normalize();
 		return 1;
 	}

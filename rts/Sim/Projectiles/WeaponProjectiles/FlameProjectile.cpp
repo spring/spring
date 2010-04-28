@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -6,9 +8,9 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,NULL,0));
 
@@ -25,16 +27,20 @@ CR_REG_METADATA(CFlameProjectile,(
 	));
 
 
-CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread,
-		CUnit* owner, const WeaponDef* weaponDef, int ttl GML_PARG_C)
-:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
+CFlameProjectile::CFlameProjectile(
+	const float3& pos, const float3& speed, const float3& spread,
+	CUnit* owner, const WeaponDef* weaponDef, int ttl):
+
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	color(color),
 	color2(color2),
 	intensity(intensity),
 	spread(spread),
 	curTime(0)
 {
+	projectileType = WEAPON_FLAME_PROJECTILE;
 	invttl = 1.0f / ttl;
+
 	if (weaponDef) {
 		SetRadius(weaponDef->size*weaponDef->collisionSize);
 		drawRadius = weaponDef->size;
@@ -105,11 +111,12 @@ void CFlameProjectile::Draw(void)
 
 int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 dir=pos-shieldPos;
-	dir.Normalize();
-	if(dir.dot(speed)<shieldMaxSpeed){
-		speed+=dir*shieldForce;
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < shieldMaxSpeed) {
+		speed += (rdir * shieldForce);
 		return 2;
 	}
+
 	return 0;
 }

@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaConstGame.cpp: implementation of the LuaConstGame class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "mmgr.h"
 
 #include "LuaConstGame.h"
@@ -42,12 +41,10 @@ static void LuaPushNamedColor(lua_State* L,
 
 bool LuaConstGame::PushEntries(lua_State* L)
 {
-
 	// FIXME  --  this is getting silly, convert to userdata?
 
 	const float gravity = -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
 	const bool limitDGun        = gameSetup ? gameSetup->limitDgun        : false;
-	const bool diminishingMMs   = gameSetup ? gameSetup->diminishingMMs   : false;
 	const bool ghostedBuildings = gameSetup ? gameSetup->ghostedBuildings : false;
 	const int  startPosType     = gameSetup ? gameSetup->startPosType     : 0;
 
@@ -69,7 +66,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedBool(L,   "commEnds",         (gameSetup->gameMode >= 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
-	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
 	const CMapInfo* mi = mapInfo;
@@ -163,10 +159,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	char buf[64];
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetMapChecksum(mapInfo->map.name));
+	         archiveScanner->GetArchiveCompleteChecksum(mapInfo->map.name));
 	LuaPushNamedString(L, "mapChecksum", buf);
 	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetModChecksum(modInfo.filename));
+	         archiveScanner->GetArchiveCompleteChecksum(modInfo.filename));
 	LuaPushNamedString(L, "modChecksum", buf);
 
 	const vector<string> cats =

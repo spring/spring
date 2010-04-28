@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PATHMANAGER_H
 #define PATHMANAGER_H
 
@@ -136,11 +138,6 @@ public:
 	*/
 	void Update();
 
-
-	/*
-	Visualize all paths currently keept in the database.
-	*/
-	void Draw();
 
 
 	boost::uint32_t GetPathChecksum();

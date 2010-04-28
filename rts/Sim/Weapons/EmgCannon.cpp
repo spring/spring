@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "EmgCannon.h"
 #include "Game/GameHelper.h"
@@ -27,14 +29,23 @@ CEmgCannon::~CEmgCannon(void)
 
 void CEmgCannon::Update(void)
 {
-	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-		if(!onlyForward){
-			wantedDir=targetPos-weaponPos;
-			wantedDir.Normalize();
+	if(targetType != Target_None){
+		weaponPos = owner->pos +
+			owner->frontdir * relWeaponPos.z +
+			owner->updir    * relWeaponPos.y +
+			owner->rightdir * relWeaponPos.x;
+		weaponMuzzlePos = owner->pos +
+			owner->frontdir * relWeaponMuzzlePos.z +
+			owner->updir    * relWeaponMuzzlePos.y +
+			owner->rightdir * relWeaponMuzzlePos.x;
+
+		float3 wantedDirTemp(targetPos - weaponPos);
+		float len = wantedDirTemp.Length();
+		if(!onlyForward && (len != 0.0f)) {
+			wantedDir = wantedDirTemp;
+			wantedDir /= len;
 		}
-		predict=(targetPos-weaponPos).Length()/projectileSpeed;
+		predict=len/projectileSpeed;
 	}
 	CWeapon::Update();
 }
@@ -54,18 +65,20 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		}
 	}
 
-	float3 dir = pos - weaponMuzzlePos;
+	float3 dir(pos - weaponMuzzlePos);
 	float length = dir.Length();
 	if (length == 0)
 		return true;
 
 	dir /= length;
 
-	float g = ground->LineGroundCol(weaponMuzzlePos, pos);
+	const float g = ground->LineGroundCol(weaponMuzzlePos, pos);
 	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	float spread = (accuracy + sprayAngle) * (1 - owner->limExperience * 0.5f);
+	const float spread =
+		(accuracy + sprayAngle) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
@@ -88,20 +101,19 @@ void CEmgCannon::Init(void)
 void CEmgCannon::FireImpl()
 {
 	float3 dir;
-	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
-		dir=owner->frontdir;
+	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
+		// the taairmovetype cant align itself properly, change back when that is fixed
+		dir = owner->frontdir;
 	} else {
-		dir=targetPos-weaponMuzzlePos;
-		dir.Normalize();
+		dir = (targetPos - weaponMuzzlePos).Normalize();
 	}
-	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
+
+	dir +=
+		((gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
 	new CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->visuals.color, weaponDef->intensity, (int) (range / projectileSpeed),
 		weaponDef);
 }
-
-
-
-

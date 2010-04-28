@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// glFont.cpp: implementation of the CglFont class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "glFont.h"
 #include <stdio.h>
@@ -24,7 +23,7 @@
 #include "mmgr.h"
 #include "float4.h"
 
-#undef GetCharWidth //winapi.h
+#undef GetCharWidth // winapi.h
 
 using std::string;
 
@@ -1865,14 +1864,14 @@ void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, co
 	int col = 0;
 	int row = 0;
 	std::vector<std::string> coltext;
-	std::vector<int> colcurcolor;
+	std::vector<int> coldata;
 	coltext.push_back("");
 	unsigned char curcolor[4];
 	unsigned char defaultcolor[4];
 	defaultcolor[0] = '\xff';
 	for(int i = 0; i < 3; ++i)
 		defaultcolor[i+1] = (unsigned char)(textColor[i]*255.0f);
-	colcurcolor.push_back(*(int *)&defaultcolor);
+	coldata.push_back(*(int *)&defaultcolor);
 	for(int i = 0; i < 4; ++i)
 		curcolor[i] = defaultcolor[i];
 
@@ -1884,7 +1883,7 @@ void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, co
 					coltext[col] += text[pos];
 					((unsigned char *)curcolor)[i] = text[pos];
 				}
-				colcurcolor[col] = *(int *)curcolor;
+				coldata[col] = *(int *)curcolor;
 				--pos;
 				break;
 			case '\x09':
@@ -1893,12 +1892,12 @@ void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, co
 					coltext.push_back("");
 					for(int i = 0; i < row; ++i)
 						coltext[col] += '\x0a';
-					colcurcolor.push_back(*(int *)&defaultcolor);
+					coldata.push_back(*(int *)&defaultcolor);
 				}
-				if(colcurcolor[col] != *(int *)curcolor) {
+				if(coldata[col] != *(int *)curcolor) {
 					for(int i = 0; i < 4; ++i)
 						coltext[col] += curcolor[i];
-					colcurcolor[col] = *(int *)curcolor;
+					coldata[col] = *(int *)curcolor;
 				}
 				break;
 			case '\x0d':
@@ -1907,10 +1906,10 @@ void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, co
 			case '\x0a':
 				for(int i = 0; i < coltext.size(); ++i)
 					coltext[i] += '\x0a';
-				if(colcurcolor[0] != *(int *)curcolor) {
+				if(coldata[0] != *(int *)curcolor) {
 					for(int i = 0; i < 4; ++i)
 						coltext[0] += curcolor[i];
-					colcurcolor[0] = *(int *)curcolor;
+					coldata[0] = *(int *)curcolor;
 				}
 				col = 0;
 				++row;
@@ -1924,7 +1923,9 @@ void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, co
 	float maxHeight = 0.0f;
 	float minDescender = 0.0f;
 	for(int i = 0; i < coltext.size(); ++i) {
-		totalWidth += GetTextWidth(coltext[i]);
+		float colwidth = GetTextWidth(coltext[i]);
+		coldata[i] = *(int *)&colwidth;
+		totalWidth += colwidth;
 		float textDescender;
 		float textHeight = GetTextHeight(coltext[i], &textDescender);
 		if(textHeight > maxHeight)
@@ -1973,7 +1974,8 @@ void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, co
 
 	for(int i = 0; i < coltext.size(); ++i) {
 		glPrint(x, y, s, (options | FONT_BASELINE) & ~(FONT_RIGHT | FONT_CENTER), coltext[i]);
-		x += sizeX * GetTextWidth(coltext[i]);
+		int colwidth = coldata[i];
+		x += sizeX * *(float *)&colwidth;
 	}
 }
 

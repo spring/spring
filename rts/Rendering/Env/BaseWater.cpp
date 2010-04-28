@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -43,7 +45,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 	int configValue = configHandler->Get("ReflectiveWater", 1);
 	
 	if(water==NULL && configValue==2 && GLEW_ARB_fragment_program && GLEW_ARB_texture_float &&
-	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterDyn.fp")) {
+	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp")) {
 		try {
 			water = new CDynWater;
 		} catch (content_error& e) {
@@ -77,7 +79,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 	}
 	
 	if(water==NULL && configValue!=0 && GLEW_ARB_fragment_program &&
-	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"water.fp")){
+	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp")){
 		try {
 			water = new CAdvWater;
 		} catch (content_error& e) {

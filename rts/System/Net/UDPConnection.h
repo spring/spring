@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _REMOTE_CONNECTION
 #define _REMOTE_CONNECTION
 
@@ -66,6 +68,7 @@ class UDPConnection : public CConnection
 public:
 	UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> NetSocket, const boost::asio::ip::udp::endpoint& MyAddr);
 	UDPConnection(int sourceport, const std::string& address, const unsigned port);
+	UDPConnection(CConnection &conn);
 	virtual ~UDPConnection();
 
 	/**
@@ -99,8 +102,18 @@ public:
 	/// send all data waiting in char outgoingData[]
 	virtual void Flush(const bool forced = false);
 	
-	virtual bool CheckTimeout() const;
+	virtual bool CheckTimeout(int nsecs = 0) const;
 	
+	void InitConnection(boost::asio::ip::udp::endpoint address, boost::shared_ptr<boost::asio::ip::udp::socket> socket);
+
+	void CopyConnection(UDPConnection &conn);
+
+	virtual void ReconnectTo(CConnection &conn);
+
+	bool NeedsReconnect();
+	bool CanReconnect() const;
+	int GetReconnectSecs() const;
+
 	virtual std::string Statistics() const;
 
 	/// do we have these address?
@@ -126,6 +139,11 @@ private:
 
 	/// maximum size of packets to send
 	unsigned mtu;
+
+	int networkTimeout;
+	int initialNetworkTimeout;
+	int reconnectTimeout;
+	int reconnectTime;
 	
 	bool sharedSocket;
 

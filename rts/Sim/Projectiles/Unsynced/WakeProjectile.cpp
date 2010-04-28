@@ -1,14 +1,16 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "WakeProjectile.h"
 #include "Game/Camera.h"
-#include "Sim/Misc/GlobalConstants.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "WakeProjectile.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CWakeProjectile, CProjectile, (ZeroVector, ZeroVector, 0, 0, NULL, 0, 0, 0));
 
@@ -28,8 +30,8 @@ CR_REG_METADATA(CWakeProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWakeProjectile::CWakeProjectile(const float3 pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime GML_PARG_C):
-	CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
+CWakeProjectile::CWakeProjectile(const float3 pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime):
+	CProjectile(pos, speed, owner, false, false, false),
 	alpha(0),
 	alphaFalloff(alphaFalloff),
 	alphaAdd(alpha / fadeupTime),
@@ -84,10 +86,13 @@ void CWakeProjectile::Draw()
 	float interSize=size+sizeExpansion*gu->timeOffset;
 	float interRot=rotation+rotSpeed*gu->timeOffset;
 
-	float3 dir1=float3(cos(interRot),0,sin(interRot))*interSize;
-	float3 dir2=dir1.cross(UpVector);
-	va->AddVertexTC(drawPos+dir1+dir2, ph->waketex.xstart,ph->waketex.ystart,col);
-	va->AddVertexTC(drawPos+dir1-dir2, ph->waketex.xstart,ph->waketex.yend,col);
-	va->AddVertexTC(drawPos-dir1-dir2, ph->waketex.xend,ph->waketex.yend,col);
-	va->AddVertexTC(drawPos-dir1+dir2, ph->waketex.xend,ph->waketex.ystart,col);
+	const float3 dir1 = float3(cos(interRot),0,sin(interRot))*interSize;
+	const float3 dir2 = dir1.cross(UpVector);
+
+	#define wt projectileDrawer->waketex
+	va->AddVertexTC(drawPos + dir1 + dir2, wt->xstart, wt->ystart, col);
+	va->AddVertexTC(drawPos + dir1 - dir2, wt->xstart, wt->yend,   col);
+	va->AddVertexTC(drawPos - dir1 - dir2, wt->xend,   wt->yend,   col);
+	va->AddVertexTC(drawPos - dir1 + dir2, wt->xend,   wt->ystart, col);
+	#undef wt
 }

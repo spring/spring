@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /*
 	This workaround fixes the windows slow mouse movement problem (happens on fullscreen mode + pressing keys).
 	The code hacks around the mouse input from DirectInput, which SDL uses in fullscreen mode.

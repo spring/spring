@@ -1,5 +1,7 @@
-#ifndef __MAPDAMAGE_H__
-#define __MAPDAMAGE_H__
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _MAPDAMAGE_H_
+#define _MAPDAMAGE_H_
 
 #include "float3.h"
 
@@ -23,4 +25,4 @@ public:
 
 extern IMapDamage* mapDamage;
 
-#endif // __MAPDAMAGE_H__
+#endif // _MAPDAMAGE_H_

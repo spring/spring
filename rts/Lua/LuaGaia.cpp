@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaGaia.cpp: implementation of the CLuaGaia class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <cctype>
@@ -19,7 +18,7 @@
 #include "LuaWeaponDefs.h"
 #include "LuaOpenGL.h"
 
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/UnitDrawer.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"

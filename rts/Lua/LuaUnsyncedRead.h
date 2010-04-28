@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_UNSYNCED_INFO_H
 #define LUA_UNSYNCED_INFO_H
-// LuaUnsyncedRead.h: interface for the LuaUnsyncedRead class.
-//
-//////////////////////////////////////////////////////////////////////
 
 struct lua_State;
 

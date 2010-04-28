@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __EMG_PROJECTILE_H__
 #define __EMG_PROJECTILE_H__
 
@@ -10,7 +12,7 @@ class CEmgProjectile :
 	CR_DECLARE(CEmgProjectile);
 public:
 	CEmgProjectile(const float3& pos, const float3& speed, CUnit* owner, const float3& color,
-		float intensity, int ttl, const WeaponDef *weaponDef GML_PARG_H);
+		float intensity, int ttl, const WeaponDef *weaponDef);
 	virtual ~CEmgProjectile();
 	void Update(void);
 	void Draw(void);

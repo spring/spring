@@ -1,19 +1,9 @@
-/*******************************************************************************/
-/*******************************************************************************/
-//
-//  file:     FontTexture.h
-//  author:   Dave Rodgers  (aka: trepan)
-//  date:     Apr 01, 2007
-//  license:  GNU GPL, v2 or later
-// 
-/*******************************************************************************/
-/*******************************************************************************/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef FONT_TEXTURE_H
 #define FONT_TEXTURE_H
 
 #include <string>
-
 
 namespace FontTexture
 {
@@ -34,6 +24,5 @@ namespace FontTexture
   bool SetStuffing      (unsigned int stuffing);
   bool SetDebugLevel    (unsigned int debugLevel);
 };
-
 
 #endif // FONT_TEXTURE_H

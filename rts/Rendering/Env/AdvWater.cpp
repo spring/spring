@@ -1,25 +1,23 @@
-// DrawWater.cpp: implementation of the CAdvWater class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "AdvWater.h"
+#include "BaseSky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Map/ReadMap.h"
-#include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
-#include "BaseSky.h"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
-#include "EventHandler.h"
 #include "Map/MapInfo.h"
-#include "Exceptions.h"
+#include "Map/ReadMap.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/FeatureDrawer.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/UnitDrawer.h"
+#include "System/EventHandler.h"
+#include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -90,7 +88,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	delete[] scrap;
 
 	if (loadShader)
-		waterFP=LoadFragmentProgram("water.fp");
+		waterFP=LoadFragmentProgram("ARB/water.fp");
 
 	waterSurfaceColor = mapInfo->water.surfaceColor;
 
@@ -315,7 +313,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glViewport(0, 0, 512, 512);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 
 	sky->Draw();
 
@@ -327,12 +325,12 @@ void CAdvWater::UpdateWater(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(false,true);
-	featureDrawer->DrawFadeFeatures(false,true);
-	ph->Draw(true);
+	unitDrawer->DrawCloakedUnits(true);
+	featureDrawer->DrawFadeFeatures(true);
+	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);

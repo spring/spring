@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaSyncedCtrl.cpp: implementation of the CLuaSyncedCtrl class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <list>
@@ -31,7 +30,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/UnitModels/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -123,6 +121,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UseTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
+	REGISTER_LUA_CFUNC(ShareTeamResource);
 
 	REGISTER_LUA_CFUNC(CreateUnit);
 	REGISTER_LUA_CFUNC(DestroyUnit);
@@ -403,7 +402,7 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad projectile ID", caller);
 	}
-	const ProjectileMapPair* pmp = ph->GetMapPairByID(lua_toint(L, index));
+	const ProjectileMapPair* pmp = ph->GetMapPairBySyncedID(lua_toint(L, index));
 	if (pmp == NULL) {
 		return NULL;
 	}
@@ -587,6 +586,57 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	}
 	else if ((type == "e") || (type == "energy")) {
 		team->energyShare = max(0.0f, min(1.0f, value));
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
+{
+	const int teamID1 = luaL_checkint(L, 1);
+	if ((teamID1 < 0) || (teamID1 >= teamHandler->ActiveTeams())) {
+		luaL_error(L, "Incorrect arguments to ShareTeamResource(teamID1, teamID2, type, amount)");
+	}
+	if (!CanControlTeam(teamID1)) {
+		return 0;
+	}
+	CTeam* team1 = teamHandler->Team(teamID1);
+	if (team1 == NULL) {
+		return 0;
+	}
+
+	const int teamID2 = luaL_checkint(L, 2);
+	if ((teamID2 < 0) || (teamID2 >= teamHandler->ActiveTeams())) {
+		luaL_error(L, "Incorrect arguments to ShareTeamResource(teamID1, teamID2, type, amount)");
+	}
+	CTeam* team2 = teamHandler->Team(teamID2);
+	if (team2 == NULL) {
+		return 0;
+	}
+
+	const string type = luaL_checkstring(L, 3);
+	float amount = luaL_checkfloat(L, 4);
+
+	if (type == "metal") {
+		amount = std::min(amount, team1->metal);
+		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", amount)) {
+			team1->metal                       -= amount;
+			team1->metalSent                   += amount;
+			team1->currentStats->metalSent     += amount;
+			team2->metal                       += amount;
+			team2->metalReceived               += amount;
+			team2->currentStats->metalReceived += amount;
+		}
+	} else if (type == "energy") {
+		amount = std::min(amount, team1->energy);
+		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", amount)) {
+			team1->energy                       -= amount;
+			team1->energySent                   += amount;
+			team1->currentStats->energySent     += amount;
+			team2->energy                       += amount;
+			team2->energyReceived               += amount;
+			team2->currentStats->energyReceived += amount;
+		}
 	}
 	return 0;
 }
@@ -899,7 +949,7 @@ static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
 	//           use | make
 	//         metal | energy
 
-	value *= 0.25f;
+	value *= 0.5f;
 
 	if (name[0] == 'u') {
 		if (name[1] == 'u') {
@@ -1336,7 +1386,7 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 		return 0;
 	}
 
-	const float buildScale = (1.0f / 32.0f);
+	const float buildScale = (1.0f / (2 * UNIT_SLOWUPDATE_RATE));
 	const float buildSpeed = buildScale * max(0.0f, luaL_checkfloat(L, 2));
 
 	CFactory* factory = dynamic_cast<CFactory*>(unit);
@@ -1860,8 +1910,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = uh->units[attackerID];
 	}
 
-	// numWeaponDefs has an extra slot
-	if (weaponID > weaponDefHandler->numWeaponDefs) {
+	if (weaponID >= weaponDefHandler->numWeaponDefs) {
 		return 0;
 	}
 

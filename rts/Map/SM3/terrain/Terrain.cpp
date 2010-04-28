@@ -1,9 +1,5 @@
-/*---------------------------------------------------------------------
- Terrain Renderer using texture splatting and geomipmapping
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
- Copyright (2006) Jelmer Cnossen
- This code is released under GPL license (See LICENSE.html for info)
----------------------------------------------------------------------*/
 #include "StdAfx.h"
 #include <cstdarg>
 #include <cstring>
@@ -821,8 +817,6 @@ namespace terrain {
 
 	void Terrain::Load(const TdfParser& tdf, LightingInfo *li, ILoadCallback *cb)
 	{
-		string basepath = "MAP\\TERRAIN\\";
-
 		// validate configuration
 		if (config.cacheTextures)
 			config.useBumpMaps = false;
@@ -838,44 +832,20 @@ namespace terrain {
 			}
 		}
 
-		// load heightmap
-		string heightmapName;
-		tdf.GetDef(heightmapName, string(), basepath + "Heightmap");
-		if (heightmapName.empty ())
-			throw content_error("No heightmap given");
-
-		if (cb) cb->PrintMsg ("loading heightmap (%s)...", heightmapName.c_str());
-		string extension = heightmapName.substr (heightmapName.length ()-3,heightmapName.length ());
-		if (extension == "raw") heightmap = LoadHeightmapFromRAW (heightmapName, cb);
-		else heightmap = LoadHeightmapFromImage (heightmapName,cb);
-
-		if (!heightmap)
-			throw content_error("Failed to load heightmap " + heightmapName);
-
-		d_trace("heightmap size: %dx%d\n", heightmap->w, heightmap->h);
-
-		if (heightmap->w-1 != atoi(tdf.SGetValueDef("","MAP\\GameAreaW").c_str()) ||
-			heightmap->h-1 != atoi(tdf.SGetValueDef("","MAP\\GameAreaH").c_str()))
-		{
-			char hmdims[32];
-			SNPRINTF(hmdims,32,"%dx%d", heightmap->w, heightmap->h);
-			throw content_error("Map size (" + string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
-		}
-
-		float hmScale = atof (tdf.SGetValueDef ("1000", basepath + "HeightScale").c_str());
-		float hmOffset = atof (tdf.SGetValueDef ("0", basepath + "HeightOffset").c_str());
+		float hmScale = atof (tdf.SGetValueDef ("1000", "MAP\\TERRAIN\\HeightScale").c_str());
+		float hmOffset = atof (tdf.SGetValueDef ("0", "MAP\\TERRAIN\\HeightOffset").c_str());
 
 		// apply scaling and offset to the heightmap
-		for (int y=0;y<heightmap->w*heightmap->h;y++)
-			heightmap->data[y]=heightmap->data[y]*hmScale + hmOffset;
+		for (int y = 0; y < heightmap->w * heightmap->h; y++)
+			heightmap->data[y] = heightmap->data[y] * hmScale + hmOffset;
 
 		if (cb) cb->PrintMsg ("initializing heightmap renderer...");
 
 		// create a set of low resolution heightmaps
-		int w=heightmap->w-1;
-		Heightmap *prev = heightmap;
+		int w = heightmap->w - 1;
+		Heightmap* prev = heightmap;
 		quadTreeDepth = 0;
-		while (w>QUAD_W) {
+		while (w > QUAD_W) {
 			prev = prev->CreateLowDetailHM();
 			quadTreeDepth++;
 			w/=2;
@@ -921,13 +891,44 @@ namespace terrain {
 
 		// load textures
 		texturing = new TerrainTexture;
-		texturing->Load (&tdf, heightmap, quadtree, qmaps, &config, cb, li);
+		texturing->Load(&tdf, heightmap, quadtree, qmaps, &config, cb, li);
 
-		renderDataManager = new RenderDataManager (lowdetailhm, qmaps.front());
+		renderDataManager = new RenderDataManager(lowdetailhm, qmaps.front());
 
 		// calculate index table
-		indexTable=new IndexTable;
-		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize ());
+		indexTable = new IndexTable;
+		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize());
+	}
+
+	void Terrain::LoadHeightMap(const TdfParser& parser, ILoadCallback* cb)
+	{
+		std::string heightMapName;
+		parser.GetDef(heightMapName, string(), "MAP\\TERRAIN\\Heightmap");
+
+		if (heightMapName.empty()) {
+			throw content_error("No heightmap given");
+		}
+
+		std::string extension = heightMapName.substr(heightMapName.length() - 3, heightMapName.length());
+
+		if (extension == "raw") {
+			heightmap = LoadHeightmapFromRAW(heightMapName, cb);
+		} else {
+			heightmap = LoadHeightmapFromImage(heightMapName, cb);
+		}
+
+		if (!GetHeightmap()) {
+			throw content_error("Failed to load heightmap " + heightMapName);
+		}
+
+		d_trace("heightmap size: %dx%d\n", GetHeightmapWidth(), GetHeightmapHeight());
+
+		if ((GetHeightmapWidth() - 1) != atoi(parser.SGetValueDef("","MAP\\GameAreaW").c_str()) ||
+			(GetHeightmapHeight() - 1) != atoi(parser.SGetValueDef("","MAP\\GameAreaH").c_str())) {
+			char hmdims[32];
+			SNPRINTF(hmdims, 32, "%dx%d", GetHeightmapWidth(), GetHeightmapHeight());
+			throw content_error("Map size (" + string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
+		}
 	}
 
 	void Terrain::ReloadShaders ()
@@ -956,7 +957,7 @@ namespace terrain {
 		width = w;
 	}
 
-	Heightmap* Terrain::LoadHeightmapFromRAW (const std::string& file, ILoadCallback *cb)
+	Heightmap* Terrain::LoadHeightmapFromRAW(const std::string& file, ILoadCallback *cb)
 	{
 		CFileHandler fh (file);
 		if (!fh.FileExists ()) {
@@ -1060,10 +1061,8 @@ namespace terrain {
 		return Vector3 (heightmap->w, 0.0f, heightmap->h) * SquareSize;
 	}
 
-	int Terrain::GetHeightmapWidth ()
-	{
-		return heightmap->w;
-	}
+	int Terrain::GetHeightmapWidth() const { return heightmap->w; }
+	int Terrain::GetHeightmapHeight() const { return heightmap->h; }
 
 	void Terrain::SetShaderParams (Vector3 dir, Vector3 eyevec)
 	{
@@ -1071,7 +1070,7 @@ namespace terrain {
 	}
 
 	// heightmap blitting
-	void Terrain::HeightmapUpdated (int sx,int sy,int w,int h)
+	void Terrain::HeightmapUpdated(int sx,int sy,int w,int h)
 	{
 		// clip
 		if (sx < 0) sx = 0;
@@ -1089,7 +1088,7 @@ namespace terrain {
 		CacheTextures();
 	}
 
-	void Terrain::GetHeightmap (int sx,int sy,int w,int h, float *dest)
+	void Terrain::GetHeightmap(int sx,int sy,int w,int h, float *dest)
 	{
 		// clip
 		if (sx < 0) sx = 0;

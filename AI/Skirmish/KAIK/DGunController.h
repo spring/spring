@@ -80,8 +80,8 @@ class CDGunController {
 		void TrackAttackTarget(unsigned int);
 		void SelectTarget(unsigned int);
 
-		void IssueOrder(int, int, int) const;
-		void IssueOrder(const float3&, int, int) const;
+		void IssueOrder(int, int, int);
+		void IssueOrder(const float3&, int, int);
 
 		AIClasses* ai;
 		const UnitDef* commanderUD;

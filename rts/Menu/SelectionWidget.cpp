@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "SelectionWidget.h"
 
@@ -6,9 +8,8 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileSystem.h"
 #include "Exceptions.h"
-#include "Game/StartScripts/ScriptHandler.h"
 #include "ConfigHandler.h"
-
+#include "ScriptHandler.h"
 
 
 const std::string SelectionWidget::NoModSelect = "No mod selected";
@@ -28,12 +29,16 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod", NoModSelect);
+	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMod)) == 0)
+		userMod = NoModSelect;
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
 	map = new agui::Button("Select", mapL);
 	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap", NoMapSelect);
+	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMap)) == 0)
+		userMap = NoMapSelect;
 	mapT = new agui::TextElement(userMap, mapL);
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
 	script = new agui::Button("Select", scriptL);
@@ -56,10 +61,10 @@ void SelectionWidget::ShowModList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMod, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
-	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
+	std::vector<CArchiveScanner::ArchiveData> found = archiveScanner->GetPrimaryMods();
 
 	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
-	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
+	for (std::vector<CArchiveScanner::ArchiveData>::iterator it = found.begin(); it != found.end(); ++it) {
 		modMap[it->name] = it->description;
 	}
 
@@ -98,12 +103,12 @@ void SelectionWidget::ShowScriptList()
 	curSelect = new ListSelectWnd("Select script");
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
-	
-	std::list<std::string> scriptList = CScriptHandler::Instance().ScriptList();
-	for (std::list<std::string>::iterator it = scriptList.begin(); it != scriptList.end(); ++it)
-	{
+
+	CScriptHandler::ScriptList scriptList = CScriptHandler::Instance().GetScriptList();
+	for (CScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
 		curSelect->list->AddItem(*it, "");
 	}
+
 	curSelect->list->SetCurrentItem(userScript);
 }
 

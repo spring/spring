@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SPRING_APP
 #define SPRING_APP
 
@@ -7,6 +9,7 @@
 class BaseCmd;
 class CGameController;
 union SDL_Event;
+
 /**
  * @brief Spring App
  *

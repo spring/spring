@@ -30,12 +30,13 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 	if (topic == INIT_EVENT) {
 		myAIs[teamId] = CAIObject();
 	}
-	if (myAIs.count(teamId) > 0){
+	if (myAIs.count(teamId) > 0) {
 		// allow the AI instance to handle the event.
 		return myAIs[teamId].handleEvent(topic, data);
+	} else {
+		// no AI for that team, so return error.
+		return -1;
 	}
-	// no AI for that team, so return error.
-	else return -1;
 }
 [/code]
 Advantages:
@@ -84,7 +85,17 @@ The same issues and reasonins described here for init() and EVENT_INIT applies
 to release() and EVENT_RELEASE.
 */
 
+//#include "ExternalAI/Interface/SSkirmishAICallback.h"
+
 #include "AIExport.h"
+
+/*EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
+
+	// TODO: do something
+
+	// signal: ok
+    return 0;
+}*/
 
 EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 

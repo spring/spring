@@ -1,9 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "AAirMoveType.h"
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-
 
 CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType);
 

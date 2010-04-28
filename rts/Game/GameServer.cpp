@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef _MSC_VER
 #	include "StdAfx.h"
 #elif defined(_WIN32)
@@ -32,7 +34,6 @@
 
 #include "LogOutput.h"
 #include "GameSetup.h"
-#include "ClientSetup.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
@@ -110,7 +111,7 @@ void SetBoolArg(bool& value, const std::string& str)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
+CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
 {
 	assert(setup);
@@ -148,13 +149,16 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
 	if (!onlyLocal)
-		UDPNet.reset(new netcode::UDPListener(settings->hostport));
+		UDPNet.reset(new netcode::UDPListener(hostport));
 
-	if (settings->autohostport > 0) {
-		AddAutohostInterface(settings->autohostip, settings->autohostport);
+	std::string autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
+	int autohostport = configHandler->Get("AutohostPort", 0);
+	
+	if (autohostport > 0) {
+		AddAutohostInterface(autohostip, autohostport);
 	}
 	rng.Seed(newGameData->GetSetup().length());
-	Message(str( format(ServerStart) %settings->hostport), false);
+	Message(str( format(ServerStart) %hostport), false);
 
 	lastTick = spring_gettime();
 
@@ -213,6 +217,8 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 			teams[t].leader = ai->second.hostPlayer;
 		}
 	}
+
+	canReconnect = false;
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
@@ -935,7 +941,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			int frameNum = *(int*)&inbuf[1];
+			const int frameNum = *(int*)&inbuf[1];
 			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
 			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
@@ -986,7 +992,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
-					Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
+				{
+					if (!players[inbuf[1]].spectator)
+						Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
+					else
+						Message(str(format("Error: spectator %s tried direct-controlling a unit") %players[inbuf[1]].name));
+				}
 			}
 			break;
 
@@ -1292,12 +1303,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
-		case NETMSG_TEAMSTAT: {
-			if (hostif)
-				hostif->Send(packet->data, packet->length);
-			break;
-		}
-
 		case NETMSG_REGISTER_NETMSG: {
 			const unsigned char player = inbuf[1];
 			const unsigned char msg = inbuf[2];
@@ -1499,7 +1504,8 @@ void CGameServer::StartGame()
 	gameStartTime = spring_gettime();
 	if (!allowAdditionalPlayers)
 		packetCache.clear(); // free memory
-	if (UDPNet && !allowAdditionalPlayers)
+
+	if (UDPNet && !allowAdditionalPlayers && !canReconnect)
 		UDPNet->Listen(false); // don't accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
@@ -1837,6 +1843,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	Message(str(format(" -> Address: %s") %link->GetFullAddress()), false);
 	size_t hisNewNumber = players.size();
 
+	if(link->CanReconnect())
+		canReconnect = true;
+
 	for (size_t i = 0; i < players.size(); ++i)
 	{
 		if (!players[i].isFromDemo && name == players[i].name)
@@ -1848,6 +1857,10 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			}
 			else
 			{
+				if(canReconnect && players[i].link->CheckTimeout(-1) && players[i].link->GetFullAddress() != link->GetFullAddress()) {
+					hisNewNumber = i;
+					break;
+				}
 				Message(str(format(" -> %s is already ingame") %name));
 				name += "_";
 			}
@@ -1879,8 +1892,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
-	if (it != players[hisNewNumber].GetAllValues().end() && !isLocal)
+	GameParticipant& newGuy = players[hisNewNumber];
+	GameParticipant::customOpts::const_iterator it = newGuy.GetAllValues().find("Password");
+	if (it != newGuy.GetAllValues().end() && !isLocal)
 	{
 		if (passwd != it->second)
 		{
@@ -1889,7 +1903,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			return 0;
 		};
 	}
-	GameParticipant& newGuy = players[hisNewNumber];
+
+	if(newGuy.myState == GameParticipant::CONNECTED || newGuy.myState == GameParticipant::INGAME) {
+		newGuy.link->ReconnectTo(*link);
+		Message(str(format(" -> connection reestablished (given id %i)") %hisNewNumber));
+		link->Flush(true);
+		return hisNewNumber;
+	}
+
 	newGuy.Connected(link, isLocal);
 	newGuy.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));

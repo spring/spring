@@ -131,6 +131,9 @@ local callInLists = {
   'ProjectileCreated',
   'ProjectileDestroyed',
 
+  -- Shield CallIns
+  'ShieldPreDamaged',
+
   -- Misc Synced CallIns
   'Explosion',
 
@@ -183,6 +186,10 @@ local callInLists = {
   'MapDrawCmd',
   'GameSetup',
   'DefaultCommand',
+
+  -- Save/Load
+  'Save',
+  'Load',
 }
 
 
@@ -1444,6 +1451,24 @@ end
 
 --------------------------------------------------------------------------------
 --
+--  Shield call-ins
+--
+
+function gadgetHandler:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)
+
+  for _,g in ipairs(self.ShieldPreDamagedList) do
+    -- first gadget to handle this consumes the event
+    if (g:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile)) then
+      return true
+    end
+  end
+
+  return false
+end
+
+
+--------------------------------------------------------------------------------
+--
 --  Misc call-ins
 --
 
@@ -1644,6 +1669,23 @@ function gadgetHandler:GetTooltip(x, y)
   return ''
 end
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+function gadgetHandler:Save(zip)
+  for _,g in ipairs(self.SaveList) do
+    g:Save(zip)
+  end
+  return
+end
+
+
+function gadgetHandler:Load(zip)
+  for _,g in ipairs(self.LoadList) do
+    g:Load(zip)
+  end
+  return
+end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------

@@ -1,15 +1,13 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaOpenGL.cpp: implementation of the CLuaOpenGL class.
-//
-//////////////////////////////////////////////////////////////////////
-//
+
 // TODO:
 // - go back to counting matrix push/pops (just for modelview?)
 //   would have to make sure that display lists are also handled
 //   (GL_MODELVIEW_STACK_DEPTH could help current situation, but
 //    requires the ARB_imaging extension)
 // - use materials instead of raw calls (again, handle dlists)
-//
 
 #include <string>
 #include <vector>
@@ -42,16 +40,17 @@
 #include "Rendering/glFont.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Models/3DModel.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -63,9 +62,10 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
-#include "LogOutput.h"
-#include "Matrix44f.h"
-#include "ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/Matrix44f.h"
+#include "System/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
 
 using std::max;
 using std::string;
@@ -95,9 +95,6 @@ bool  LuaOpenGL::canUseShaders = false;
 float LuaOpenGL::screenWidth = 0.36f;
 float LuaOpenGL::screenDistance = 0.60f;
 
-static bool haveGL20 = false;
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -111,9 +108,7 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	haveGL20 = !!GLEW_VERSION_2_0;
-
-	if (haveGL20 && !!configHandler->Get("LuaShaders", 1)) {
+	if (gu->haveGLSL && !!configHandler->Get("LuaShaders", 1)) {
 		canUseShaders = true;
 	}
 }
@@ -123,7 +118,7 @@ void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
 
-	if (haveGL20) {
+	if (gu->haveGLSL) {
 		set<unsigned int>::const_iterator it;
 		for (it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
 			glDeleteQueries(1, &(*it));
@@ -176,7 +171,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
-	if (haveGL20) {
+	if (gu->haveGLSL) {
 		REGISTER_LUA_CFUNC(BlendEquationSeparate);
 		REGISTER_LUA_CFUNC(BlendFuncSeparate);
 	}
@@ -191,7 +186,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StencilMask);
 	REGISTER_LUA_CFUNC(StencilFunc);
 	REGISTER_LUA_CFUNC(StencilOp);
-	if (haveGL20) {
+	if (gu->haveGLSL) {
 		REGISTER_LUA_CFUNC(StencilMaskSeparate);
 		REGISTER_LUA_CFUNC(StencilFuncSeparate);
 		REGISTER_LUA_CFUNC(StencilOpSeparate);
@@ -199,7 +194,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(LineWidth);
 	REGISTER_LUA_CFUNC(PointSize);
-	if (haveGL20) {
+	if (gu->haveGLSL) {
 		REGISTER_LUA_CFUNC(PointSprite);
 		REGISTER_LUA_CFUNC(PointParameter);
 	}
@@ -302,7 +297,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ReadPixels);
 	REGISTER_LUA_CFUNC(SaveImage);
 
-	if (haveGL20) {
+	if (gu->haveGLSL) {
 		REGISTER_LUA_CFUNC(CreateQuery);
 		REGISTER_LUA_CFUNC(DeleteQuery);
 		REGISTER_LUA_CFUNC(RunQuery);
@@ -417,10 +412,10 @@ void LuaOpenGL::ResetGLState()
 	glLineWidth(1.0f);
 	glPointSize(1.0f);
 
-	if (haveGL20) {
+	if (gu->haveGLSL) {
 		glDisable(GL_POINT_SPRITE);
 	}
-	if (haveGL20) {
+	if (gu->haveGLSL) {
 		GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
 		glPointParameterf(GL_POINT_SIZE_MIN, 0.0f);
@@ -537,7 +532,6 @@ void LuaOpenGL::EnableDrawWorld()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorld()
 {
 	if (safeMode) {
@@ -546,7 +540,6 @@ void LuaOpenGL::DisableDrawWorld()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD);
 }
-
 
 void LuaOpenGL::ResetDrawWorld()
 {
@@ -569,7 +562,6 @@ void LuaOpenGL::EnableDrawWorldPreUnit()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorldPreUnit()
 {
 	if (safeMode) {
@@ -578,7 +570,6 @@ void LuaOpenGL::DisableDrawWorldPreUnit()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD);
 }
-
 
 void LuaOpenGL::ResetDrawWorldPreUnit()
 {
@@ -602,19 +593,23 @@ void LuaOpenGL::EnableDrawWorldShadow()
 	glPolygonOffset(1.0f, 1.0f);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Enable();
-}
 
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	po->Enable();
+}
 
 void LuaOpenGL::DisableDrawWorldShadow()
 {
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	unitDrawer->MDLLSPShader->Disable();
+
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
+	po->Disable();
 
 	ResetWorldShadowMatrices();
 	DisableCommon(DRAW_WORLD_SHADOW);
 }
-
 
 void LuaOpenGL::ResetDrawWorldShadow()
 {
@@ -640,7 +635,6 @@ void LuaOpenGL::EnableDrawWorldReflection()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorldReflection()
 {
 	if (safeMode) {
@@ -649,7 +643,6 @@ void LuaOpenGL::DisableDrawWorldReflection()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD_REFLECTION);
 }
-
 
 void LuaOpenGL::ResetDrawWorldReflection()
 {
@@ -672,7 +665,6 @@ void LuaOpenGL::EnableDrawWorldRefraction()
 	SetupWorldLighting();
 }
 
-
 void LuaOpenGL::DisableDrawWorldRefraction()
 {
 	if (safeMode) {
@@ -681,7 +673,6 @@ void LuaOpenGL::DisableDrawWorldRefraction()
 	RevertWorldLighting();
 	DisableCommon(DRAW_WORLD_REFRACTION);
 }
-
 
 void LuaOpenGL::ResetDrawWorldRefraction()
 {
@@ -900,7 +891,7 @@ void LuaOpenGL::SetupScreenLighting()
 
 	// sun light -- needs the camera transformation
 	glPushMatrix();
-	glLoadMatrixd(camera->GetModelview());
+	glLoadMatrixd(camera->GetViewMat());
 	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 
 	const float sunFactor = 1.0f;
@@ -960,11 +951,11 @@ void LuaOpenGL::ResetWorldMatrices()
 	}
 	glMatrixMode(GL_PROJECTION); {
 		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
-		glLoadMatrixd(camera->GetProjection());
+		glLoadMatrixd(camera->GetProjMat());
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
-		glLoadMatrixd(camera->GetModelview());
+		glLoadMatrixd(camera->GetViewMat());
 	}
 }
 
@@ -4631,16 +4622,16 @@ static const double* GetNamedMatrix(const string& name)
 		return mat;
 	}
 	else if (name == "camera") {
-		return camera->GetModelview();
+		return camera->GetViewMat();
 	}
 	else if (name == "caminv") {
-		return camera->modelviewInverse;
+		return camera->GetViewMatInv();
 	}
 	else if (name == "camprj") {
-		return camera->GetProjection();
+		return camera->GetProjMat();
 	}
 	else if (name == "billboard") {
-		return camera->GetBillboard();
+		return camera->GetBBoardMat();
 	}
 	return NULL;
 }
@@ -5277,10 +5268,10 @@ int LuaOpenGL::GetShadowMapParams(lua_State* L)
 	if (!shadowHandler) {
 		return 0;
 	}
-	lua_pushnumber(L, shadowHandler->xmid);
-	lua_pushnumber(L, shadowHandler->ymid);
-	lua_pushnumber(L, shadowHandler->p17);
-	lua_pushnumber(L, shadowHandler->p18);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().x);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().y);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().z);
+	lua_pushnumber(L, shadowHandler->GetShadowParams().w);
 	return 4;
 }
 

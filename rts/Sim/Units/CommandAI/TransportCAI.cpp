@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -18,7 +20,6 @@
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "creg/STL_List.h"
 #include "GlobalUnsynced.h"
 #include "myMath.h"

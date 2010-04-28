@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FIRE_BALL_PROJECTILE_H__
 #define __FIRE_BALL_PROJECTILE_H__
 
@@ -17,7 +19,7 @@ class CFireBallProjectile :
 	CR_DECLARE_SUB(Spark);
 public:
 	CFireBallProjectile(const float3& pos,const float3& speed, CUnit* owner,
-			CUnit *target, const float3 &targetPos, const WeaponDef* weaponDef GML_PARG_H);
+			CUnit *target, const float3 &targetPos, const WeaponDef* weaponDef);
 	~CFireBallProjectile(void);
 
 	void Draw();

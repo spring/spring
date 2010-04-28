@@ -1,3 +1,4 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -18,13 +19,13 @@
 CModInfo modInfo;
 
 
-void CModInfo::Init(const char* modname)
+void CModInfo::Init(const char* modArchive)
 {
-	filename = modname;
+	filename = modArchive;
 
-	humanName = archiveScanner->ModArchiveToModName(modname);
+	humanName = archiveScanner->NameFromArchive(modArchive);
 
-	const CArchiveScanner::ModData md = archiveScanner->ModArchiveToModData(modname);
+	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
 
 	shortName   = md.shortName;
 	version     = md.version;

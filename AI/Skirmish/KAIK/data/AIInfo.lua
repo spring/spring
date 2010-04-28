@@ -28,6 +28,7 @@ local infos = {
 		value  = 'Kloots Skirmish AI (KAIK)',
 		desc   = 'human readable name.',
 	},
+
 	{
 		key    = 'description',
 		value  = [[
@@ -35,12 +36,14 @@ Plays a though and fast game, using nearly exclusively ground units,
 with a lonesome plane then and when. Attacks in big groups,
 and never with hovercraft or water units.
 Usually is easy to beat once the game gets to T2.
-Realtive CPU usage: 1.5
+Relative CPU usage: 1.5
 Scales well with growing unit numbers.
 Known to Support: BA, SA, XTA
-recommended: use only for *A mods]],
+recommended: use only for *A mods
+		]],
 		desc   = 'this should help noobs to find out whether this AI is what they want',
 	},
+
 	{
 		key    = 'url',
 		value  = 'http://spring.clan-sy.com/wiki/AI:KAIK',
@@ -61,6 +64,19 @@ recommended: use only for *A mods]],
 		value  = '0.1', -- AI Interface version - !This comment is used for parsing!
 		desc   = 'the minimum version of the AI interface this AI needs',
 	},
+
+	{
+		key    = "supportedMods",
+		value  = [[
+(BA, Balanced Annihilation, *, *)
+(BOTA, Basically OTA, *, *)
+(SA, Supreme Annihilation, *, *)
+(XTA, XTA, *, *)
+(EE, Expand and Exterminate, 0.171, 0.46)
+(EvoRTS, Evolution RTS, *, *)
+		]],
+		desc   = "mods this AI is confirmed to be able to play",
+	}
 }
 
 return infos

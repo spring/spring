@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FILE_HANDLER_H__
 #define __FILE_HANDLER_H__
 
@@ -5,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <ios>
+#include <boost/cstdint.hpp>
 
 #include "VFSModes.h"
 
@@ -83,10 +86,9 @@ private:
 
 	std::string filename;
 	std::ifstream* ifs;
-	unsigned char* hpiFileBuffer;
-	int hpiLength;
-	int hpiOffset;
-	int filesize;
+	std::vector<boost::uint8_t> fileBuffer;
+	int filePos;
+	int fileSize;
 };
 
 #endif // __FILE_HANDLER_H__

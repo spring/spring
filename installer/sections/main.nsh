@@ -11,12 +11,11 @@
 
   File "downloads\TASServer.jar"
 
-  ; DLLs (updated in mingwlibs-v8)
+  ; DLLs (updated in mingwlibs-v20.1)
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\python25.dll"
   File "..\mingwlibs\dll\zlib1.dll"
-  File "..\mingwlibs\dll\OpenAL32.dll"
-  File "..\mingwlibs\dll\wrap_oal.dll"
+  File "..\mingwlibs\dll\soft_oal.dll"
   File "..\mingwlibs\dll\vorbisfile.dll"
   File "..\mingwlibs\dll\vorbis.dll"
   File "..\mingwlibs\dll\ogg.dll"
@@ -94,7 +93,6 @@ ${EndIf}
   !insertmacro InstallAIInterface "C"
   !insertmacro InstallAIInterface "Java"
 
-  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL
   ;This is only supported in NSIS 2.39+
@@ -165,6 +163,8 @@ ${EndIf}
   Delete "$INSTDIR\zlibwapi.dll"
   Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\MSVCP71.dll"
+  Delete "$INSTDIR\soft_oal.dll"
+  ; next two are deprecated sinze mingwlibs 20.1 (around spring v0.81.2.1)
   Delete "$INSTDIR\OpenAL32.dll"
   Delete "$INSTDIR\wrap_oal.dll"
   Delete "$INSTDIR\vorbisfile.dll"
@@ -180,7 +180,6 @@ ${EndIf}
   Delete "$INSTDIR\fonts\FreeSansBold.otf"
   RmDir "$INSTDIR\fonts"
 
-  ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro DeleteSkirmishAI skirAiName
 !ifndef INSTALL
   ;This is only supported in NSIS 2.39+

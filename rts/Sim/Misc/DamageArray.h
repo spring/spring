@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __DAMAGE_ARRAY_H__
 #define __DAMAGE_ARRAY_H__
 
@@ -11,6 +13,7 @@ struct DamageArray
 public:
 
 	DamageArray();
+	DamageArray(const float mul);
 	/**
 	 * This constructor is currently only used by C++ AIs
 	 * which use the legacy C++ wrapper around the C AI interface.

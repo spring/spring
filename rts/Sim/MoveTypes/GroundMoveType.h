@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GROUNDMOVETYPE_H
 #define GROUNDMOVETYPE_H
 
@@ -66,8 +68,6 @@ public:
 	short requestedTurnRate;
 
 	float currentDistanceToWaypoint;
-
-	float3 avoidanceVec;
 
 	unsigned int restartDelay;
 	float3 lastGetPathPos;

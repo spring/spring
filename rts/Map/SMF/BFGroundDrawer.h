@@ -1,8 +1,7 @@
-// BFGroundDrawer.h
-///////////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BF_GROUND_DRAWER_H__
-#define __BF_GROUND_DRAWER_H__
+#ifndef _BF_GROUND_DRAWER_H_
+#define _BF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
 
@@ -10,6 +9,9 @@ class CVertexArray;
 class CSmfReadMap;
 class CBFGroundTextures;
 
+namespace Shader {
+	struct IProgramObject;
+}
 
 /**
 Map drawer implementation for the CSmfReadMap map system.
@@ -20,8 +22,13 @@ public:
 	CBFGroundDrawer(CSmfReadMap* rm);
 	~CBFGroundDrawer(void);
 
-	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false, unsigned int VP = 0);
+	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false);
 	void DrawShadowPass();
+
+	void SetupBaseDrawPass(void) { smfShaderCurrARB = smfShaderBaseARB; }
+	void SetupReflDrawPass(void) { smfShaderCurrARB = smfShaderReflARB; }
+	void SetupRefrDrawPass(void) { smfShaderCurrARB = smfShaderRefrARB; }
+
 	void Update();
 
 	void IncreaseDetail();
@@ -38,6 +45,7 @@ protected:
 	const int maxIdx;
 
 	int mapWidth;
+	int mapHeight;
 	int bigTexH;
 
 	int neededLod;
@@ -53,21 +61,23 @@ protected:
 
 	friend class CSmfReadMap;
 
-	unsigned int groundVP;
-	unsigned int groundShadowVP;
-	unsigned int groundFPShadow;
-	unsigned int overrideVP;
+	Shader::IProgramObject* smfShaderBaseARB;   //! default (V+F) SMF ARB shader
+	Shader::IProgramObject* smfShaderReflARB;   //! shader (V+F) for the DynamicWater reflection pass
+	Shader::IProgramObject* smfShaderRefrARB;   //! shader (V+F) for the DynamicWater refraction pass
+	Shader::IProgramObject* smfShaderCurrARB;   //! currently active ARB shader
+	Shader::IProgramObject* smfShaderGLSL;      //! used if the map wants specular lighting
+
 	bool waterDrawn;
 
 #ifdef USE_GML
-	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty);}
-	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
+	static void DoDrawGroundRowMT(void* c, int bty) { ((CBFGroundDrawer*) c)->DoDrawGroundRow(bty); }
+	static void DoDrawGroundShadowLODMT(void* c, int nlod) { ((CBFGroundDrawer*) c)->DoDrawGroundShadowLOD(nlod); }
 #endif
 
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
 
-protected:
+	bool LoadMapShaders();
 	void CreateWaterPlanes(const bool &camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
@@ -88,5 +98,5 @@ protected:
 	void UpdateCamRestraints();
 };
 
-#endif // __BF_GROUND_DRAWER_H__
+#endif // _BF_GROUND_DRAWER_H_
 

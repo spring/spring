@@ -1,13 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SMOOTHHEIGHTMESH_H
 #define SMOOTHHEIGHTMESH_H
 
 #include "Map/Ground.h"
 
-/** This class requires that BaseMesh objects support GetHeight(float x, float y) method.
-
-Provides a GetHeight(x, y) of its own that smooths the mesh.
-*/
-
+/**
+ * This class requires that BaseMesh objects support GetHeight(float x, float y) method.
+ * Provides a GetHeight(x, y) of its own that smooths the mesh.
+ */
 class SmoothHeightMesh
 {
 protected:
@@ -38,6 +39,7 @@ public:
 	void MakeSmoothMesh(const CGround* ground);
 
 	float GetHeight(float x, float y);
+	float GetHeight2(float x, float y);
 	float SetHeight(int index, float h);
 	float AddHeight(int index, float h);
 	float SetMaxHeight(int index, float h);

@@ -1,12 +1,5 @@
-/**
- * @file ConfigHandler.cpp
- * @brief config implementation
- * @author Christopher Han <xiphux@gmail.com>
- *
- * Implementation of config structure class
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "ConfigHandler.h"
 
@@ -164,7 +157,11 @@ ConfigHandler::~ConfigHandler()
  */
 string ConfigHandler::GetString(const string name, const string def)
 {
-	std::map<string,string>::iterator pos = data.find(name);
+	std::map<string,string>::iterator pos = overlay.find(name);
+	if (pos != overlay.end())
+		return pos->second;
+
+	pos = data.find(name);
 	if (pos == data.end()) {
 		SetString(name, def);
 		return def;
@@ -183,14 +180,13 @@ string ConfigHandler::GetString(const string name, const string def)
  * 4) Write file (so we keep the settings in the event of a crash or error)
  * 5) Unlock file.
  *
- * Pretty hackish, but Windows registry changes
- * save immediately, while with DotfileHandler the
- * data is stored in an internal data structure for
- * fast access.  So we want to keep the settings in
- * the event of a crash, but at the same time we don't
- * want conflicts when multiple instances are running
- * at the same time (which would cause data loss)
- * (e.g. unitsync and spring).
+ * Data is stored in an internal data structure for
+ * fast access.
+ * Currently, settings are lost in the event of a crash.
+ * We do not want conflicts when multiple instances are running
+ * at the same time (which would cause data loss).
+ * This would happen if e.g. unitsync and spring would access
+ * the config file at the same time, if we would not lock.
  */
 void ConfigHandler::SetString(const string name, const string value)
 {
@@ -219,12 +215,22 @@ void ConfigHandler::SetString(const string name, const string value)
 		fclose(file);
 }
 
+/// set configure option for this instance only
+void ConfigHandler::SetOverlay(std::string name, std::string value)
+{
+	std::map<string,string>::iterator pos = overlay.find(name);
+	if (pos != overlay.end() && pos->second == value)
+		return;
+	else
+		overlay[name] = value;
+}
+
 /**
  * @brief Get the name of the default configuration file
  */
 string ConfigHandler::GetDefaultConfig()
 {
-	string binaryPath = Platform::GetBinaryPath() + "/";
+	string binaryPath = Platform::GetProcessExecutablePath() + "/";
 	std::string portableConfPath = binaryPath + "springsettings.cfg";
 	if (access(portableConfPath.c_str(), 6) != -1) {
 		return portableConfPath;
@@ -240,7 +246,7 @@ string ConfigHandler::GetDefaultConfig()
 	const string verCfg = defCfg + "-" + SpringVersion::Get();
 
 	struct stat st;
-	if (stat(verCfg.c_str(), &st) == 0) {
+	if (stat(verCfg.c_str(), &st) == 0) { // check if file exists
 		cfg = verCfg; // use the versionned config file
 	} else {
 		cfg = defCfg; // use the default config file
@@ -252,9 +258,9 @@ string ConfigHandler::GetDefaultConfig()
 	// doesn't work on directories (precisely, mode is always 0)
 	TCHAR strPath[MAX_PATH+1];
 	SHGetFolderPath( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
-	std::string userDir = strPath;
-	std::string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
-	if (_access(verConfigPath.c_str(), 6) != -1) {
+	const std::string userDir = strPath;
+	const std::string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
+	if (_access(verConfigPath.c_str(), 6) != -1) { // check for read & write access
 		cfg = verConfigPath;
 	} else {
 		cfg = strPath;

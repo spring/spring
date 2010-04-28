@@ -1,21 +1,20 @@
-// Projectile.cpp: implementation of the CProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Map/MapInfo.h"
-#include "Rendering/GL/myGL.h"
 #include "Projectile.h"
-#include "ProjectileHandler.h"
 #include "Game/Camera.h"
+#include "Map/MapInfo.h"
+#include "Rendering/Colors.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/Colors.h"
-#include "Map/MapInfo.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
@@ -24,6 +23,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(castShadow),
 	CR_MEMBER(ownerId),
+	CR_MEMBER(projectileType),
 	CR_MEMBER(synced),
 //	CR_MEMBER(drawPos),
 //	CR_RESERVED(4),
@@ -50,14 +50,13 @@ CProjectile::CProjectile():
 	collisionFlags(0),
 	speed(ZeroVector),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	s3domodel(0),
 	ownerId(0)
 {
 	GML_GET_TICKS(lastProjUpdate);
 }
 
 
-void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
+void CProjectile::Init(const float3& explosionPos, CUnit* owner)
 {
 	if (owner) {
 		ownerId = owner->id;
@@ -71,7 +70,7 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 }
 
 
-CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece GML_PARG_C):
+CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
 	CExpGenSpawnable(pos),
 	synced(isSynced),
 	weapon(isWeapon),
@@ -82,7 +81,6 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	collisionFlags(0),
 	speed(speed),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	s3domodel(0),
 	ownerId(0)
 {
 	if (owner) {
@@ -107,6 +105,7 @@ void CProjectile::Update()
 {
 	speed.y += mygravity;
 	pos += speed;
+	dir = speed; dir.Normalize();
 }
 
 
@@ -138,10 +137,13 @@ void CProjectile::Draw()
 	col[1] = 127;
 	col[2] =   0;
 	col[3] =  10;
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, ph->projectiletex.xstart, ph->projectiletex.ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, ph->projectiletex.xend,   ph->projectiletex.ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, ph->projectiletex.xend,   ph->projectiletex.yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, ph->projectiletex.xstart, ph->projectiletex.yend,   col);
+
+	#define pt projectileDrawer->projectiletex
+	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, pt->xstart, pt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, pt->xend,   pt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, pt->xend,   pt->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, pt->xstart, pt->yend,   col);
+	#undef pt
 }
 
 void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
@@ -164,20 +166,4 @@ int CProjectile::DrawArray()
 	inArray = false;
 
 	return idx;
-}
-
-void CProjectile::DrawCallback(void)
-{
-}
-
-void CProjectile::DrawUnitPart(void)
-{
-}
-
-void CProjectile::UpdateDrawPos() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-		drawPos = pos + (speed * ((float)gu->lastFrameStart - (float)lastProjUpdate) * gu->weightedSpeedFactor);
-#else
-		drawPos = pos + (speed * gu->timeOffset);
-#endif
 }

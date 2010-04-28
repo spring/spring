@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// Player.cpp: implementation of the CPlayer class.
-//
-//////////////////////////////////////////////////////////////////////
 #include <assert.h>
 #include <SDL_mouse.h>
 

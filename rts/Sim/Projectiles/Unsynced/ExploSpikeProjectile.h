@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef EXPLOSPIKEPROJECTILE_H
 #define EXPLOSPIKEPROJECTILE_H
 
@@ -9,7 +11,7 @@ class CExploSpikeProjectile :
 	CR_DECLARE(CExploSpikeProjectile);
 public:
 	CExploSpikeProjectile();
-	CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner GML_PARG_H);
+	CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner);
 	~CExploSpikeProjectile(void);
 	void Update(void);
 	void Draw(void);
@@ -22,7 +24,7 @@ public:
 	float3 dir;
 	float3 color;
 
-	virtual void Init(const float3& pos, CUnit *owner GML_PARG_H);
+	virtual void Init(const float3& pos, CUnit *owner);
 };
 
 #endif

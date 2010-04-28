@@ -1,6 +1,4 @@
-// Builder.cpp: implementation of the CBuilder class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include <assert.h>
@@ -14,7 +12,6 @@
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
 #include "myMath.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"

@@ -1,9 +1,6 @@
-////////////////////////////////////////
-//         CSelectedUnitsAI           //
-// Group-AI. Handling commands given  //
-// to the selected group of units.    //
-// - Controlling formations.          //
-////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+// Handling commands given to the currently  selected group of units.
 
 #include "StdAfx.h"
 
@@ -24,7 +21,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
-//#include "Sim/MoveTypes/GroundMoveType.h"
 
 const int CMDPARAM_MOVE_X = 0;
 const int CMDPARAM_MOVE_Y = 1;
@@ -332,8 +328,55 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	std::multimap<float,int> orderedUnits;
 	CreateUnitOrder(orderedUnits,player);
 
-	for (std::multimap<float,int>::iterator oi=orderedUnits.begin();oi!=orderedUnits.end();++oi){
-		nextPos = MoveToPos(oi->second, nextPos, sd, c);
+	std::multimap<float, std::vector<int> > sortUnits;
+	std::vector<std::pair<int,Command> > frontcmds;
+	for (std::multimap<float,int>::iterator oi = orderedUnits.begin(); oi != orderedUnits.end();){
+		bool newline;
+		nextPos = MoveToPos(oi->second, nextPos, sd, c, &frontcmds, &newline);
+		// mix units in each row to avoid weak flanks consisting solely of e.g. artillery units
+		std::multimap<float, std::vector<int> >::iterator si = sortUnits.find(oi->first);
+		if(si == sortUnits.end())
+			si = sortUnits.insert(std::pair<float, std::vector<int> >(oi->first, std::vector<int>()));
+		si->second.push_back(oi->second);
+		++oi;
+
+		if(oi != orderedUnits.end())
+			MoveToPos(oi->second, nextPos, sd, c, NULL, &newline);
+
+		if(oi == orderedUnits.end() || newline) {
+			std::vector<std::vector<int> *> sortUnitsVector;
+			for(std::multimap<float, std::vector<int> >::iterator ui = sortUnits.begin(); ui!=sortUnits.end(); ++ui)
+				sortUnitsVector.push_back(&(*ui).second);
+
+			std::vector<int> randunits;
+			int sz = sortUnitsVector.size();
+			std::vector<int> sortPos(sz, 0);
+			for(std::vector<std::pair<int,Command> >::iterator fi = frontcmds.begin(); fi != frontcmds.end(); ++fi){
+				int bestpos = 0;
+				float bestval = 1.0f;
+				for(int i = 0; i < sz; ++i) {
+					int n = sortUnitsVector[i]->size();
+					int k = sortPos[i];
+					if(k < n) {
+						float val = (0.5f + k) / (float)n;
+						if(val < bestval) {
+							bestval = val;
+							bestpos = i;
+						}
+					}
+				}
+				int pos = sortPos[bestpos];
+				randunits.push_back((*sortUnitsVector[bestpos])[pos]);
+				sortPos[bestpos] = pos + 1;
+			}
+			sortUnits.clear();
+
+			int i=0;
+			for (std::vector<std::pair<int,Command> >::iterator fi = frontcmds.begin(); fi != frontcmds.end(); ++fi){
+				uh->units[randunits[i++]]->commandAI->GiveCommand(fi->second, false);
+			}
+			frontcmds.clear();
+		}
 	}
 }
 
@@ -348,22 +391,25 @@ void CSelectedUnitsAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 			float range=unit->maxRange;
 			if(range<1)
 				range=2000;		//give weaponless units a long range to make them go to the back
-			float value=(ud->metalCost*60+ud->energyCost)/unit->maxHealth*range;
+			float value=(ud->metalCost*60+ud->energyCost)/unit->unitDef->health*range;
 			out.insert(std::pair<float,int>(value,*ui));
 		}
 	}
 }
 
 
-float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, Command* command)
+float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, Command* command, std::vector<std::pair<int,Command> > *frontcmds, bool *newline)
 {
 	//int lineNum=posNum/numColumns;
 	//int colNum=posNum-lineNum*numColumns;
 	//float side=(0.25f+colNum*0.5f)*columnDist*(colNum&1 ? -1:1);
-
+	*newline=false;
 	if(nextCornerPos.x-addSpace>frontLength) {
 		nextCornerPos.x=0; nextCornerPos.z-=avgLength*2*8;
+		*newline=true;
 	}
+	if(!frontcmds)
+		return nextCornerPos;
 	int unitSize=16;
 	CUnit* u = uh->units[unit];
 	if (u) {
@@ -385,7 +431,8 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, C
 	c.params.push_back(pos.z);
 	c.options = command->options;
 
-	uh->units[unit]->commandAI->GiveCommand(c, false);
+	frontcmds->push_back(std::pair<int,Command>(unit,c));
+
 	return retPos;
 }
 

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef EXPLOSION_GRAPHICS_H
 #define EXPLOSION_GRAPHICS_H
 
@@ -19,7 +21,7 @@ public:
 	CExpGenSpawnable(): CWorldObject(){ GML_EXPGEN_CHECK() };
 	CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() };
 	virtual ~CExpGenSpawnable() {};
-	virtual void Init(const float3& pos, CUnit* owner GML_PARG_H) = 0;
+	virtual void Init(const float3& pos, CUnit* owner) = 0;
 };
 
 

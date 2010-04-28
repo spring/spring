@@ -1,14 +1,17 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "creg/STL_Deque.h"
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "GlobalUnsynced.h"
+#include "System/creg/STL_Deque.h"
 
 CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,float3(0,0,0),NULL));
 CR_BIND(CFireBallProjectile::Spark, );
@@ -27,13 +30,18 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_RESERVED(8)
 	));
 
-CFireBallProjectile::CFireBallProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, CUnit* target, const float3 &targetPos, const WeaponDef* weaponDef GML_PARG_C)
-:	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, 1 GML_PARG_P)
+CFireBallProjectile::CFireBallProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner, CUnit* target,
+	const float3& targetPos,
+	const WeaponDef* weaponDef):
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, 1)
 {
+	projectileType = WEAPON_FIREBALL_PROJECTILE;
+
 	if (weaponDef) {
 		SetRadius(weaponDef->collisionSize);
-		drawRadius=weaponDef->size;
+		drawRadius = weaponDef->size;
 	}
 
 	if (cegTag.size() > 0) {
@@ -56,15 +64,19 @@ void CFireBallProjectile::Draw()
 	int numSparks=sparks.size();
 	int numFire=std::min(10,numSparks);
 	va->EnlargeArrays((numSparks+numFire)*4,0,VA_SIZE_TC);
-	for(int i=0; i<numSparks; i++) //! CAUTION: loop count must match EnlargeArrays above
-	{
-		col[0]=(numSparks-i)*12;
-		col[1]=(numSparks-i)*6;
-		col[2]=(numSparks-i)*4;
-		va->AddVertexQTC(sparks[i].pos-camera->right*sparks[i].size-camera->up*sparks[i].size,ph->explotex.xstart,ph->explotex.ystart,col);
-		va->AddVertexQTC(sparks[i].pos+camera->right*sparks[i].size-camera->up*sparks[i].size,ph->explotex.xend ,ph->explotex.ystart,col);
-		va->AddVertexQTC(sparks[i].pos+camera->right*sparks[i].size+camera->up*sparks[i].size,ph->explotex.xend ,ph->explotex.yend ,col);
-		va->AddVertexQTC(sparks[i].pos-camera->right*sparks[i].size+camera->up*sparks[i].size,ph->explotex.xstart,ph->explotex.yend ,col);
+
+	for (int i = 0; i < numSparks; i++) {
+		//! CAUTION: loop count must match EnlargeArrays above
+		col[0] = (numSparks - i) * 12;
+		col[1] = (numSparks - i) *  6;
+		col[2] = (numSparks - i) *  4;
+
+		#define ept projectileDrawer->explotex
+		va->AddVertexQTC(sparks[i].pos - camera->right * sparks[i].size - camera->up * sparks[i].size, ept->xstart, ept->ystart, col);
+		va->AddVertexQTC(sparks[i].pos + camera->right * sparks[i].size - camera->up * sparks[i].size, ept->xend,   ept->ystart, col);
+		va->AddVertexQTC(sparks[i].pos + camera->right * sparks[i].size + camera->up * sparks[i].size, ept->xend,   ept->yend,   col);
+		va->AddVertexQTC(sparks[i].pos - camera->right * sparks[i].size + camera->up * sparks[i].size, ept->xstart, ept->yend,   col);
+		#undef ept
 	}
 
 	int maxCol=numFire;
@@ -76,10 +88,12 @@ void CFireBallProjectile::Draw()
 		col[0] = (maxCol - i) * 25;
 		col[1] = (maxCol - i) * 15;
 		col[2] = (maxCol - i) * 10;
-		va->AddVertexQTC(interPos - camera->right * size - camera->up * size, ph->dguntex.xstart, ph->dguntex.ystart, col);
-		va->AddVertexQTC(interPos + camera->right * size - camera->up * size, ph->dguntex.xend ,  ph->dguntex.ystart, col);
-		va->AddVertexQTC(interPos + camera->right * size + camera->up * size, ph->dguntex.xend ,  ph->dguntex.yend,   col);
-		va->AddVertexQTC(interPos  -camera->right * size + camera->up * size, ph->dguntex.xstart, ph->dguntex.yend,   col);
+		#define dgt projectileDrawer->dguntex
+		va->AddVertexQTC(interPos - camera->right * size - camera->up * size, dgt->xstart, dgt->ystart, col);
+		va->AddVertexQTC(interPos + camera->right * size - camera->up * size, dgt->xend ,  dgt->ystart, col);
+		va->AddVertexQTC(interPos + camera->right * size + camera->up * size, dgt->xend ,  dgt->yend,   col);
+		va->AddVertexQTC(interPos  -camera->right * size + camera->up * size, dgt->xstart, dgt->yend,   col);
+		#undef dgt
 		interPos = interPos - speed * 0.5f;
 	}
 }

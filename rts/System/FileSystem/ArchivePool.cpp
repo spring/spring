@@ -1,17 +1,20 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
+
 #include "ArchivePool.h"
-#include "FileSystem.h"
+
 #include <algorithm>
 #include <stdexcept>
-#include "Util.h"
-#include "mmgr.h"
-#include "LogOutput.h"
-
 #include <sstream>
 #include <string>
 #include <cstring>
 #include <iostream>
 
+#include "FileSystem.h"
+#include "Util.h"
+#include "mmgr.h"
+#include "LogOutput.h"
 
 static unsigned int parse_int32(unsigned char c[4])
 {
@@ -72,7 +75,7 @@ CArchivePool::CArchivePool(const std::string& name):
 		f->size = parse_int32(c_size);
 
 		files.push_back(f);
-		fileMap[f->name] = f;
+		lcNameIndex[f->name] = files.size()-1;
 	}
 	gzclose(in);
 }
@@ -83,29 +86,35 @@ CArchivePool::~CArchivePool(void)
 	for(; i < files.end(); i++) delete *i;
 }
 
-unsigned int CArchivePool::GetCrc32 (const std::string& fileName)
-{
-	std::string lower = StringToLower(fileName);
-	FileData *f = fileMap[lower];
-	return f->crc32;
-}
-
 bool CArchivePool::IsOpen()
 {
 	return isOpen;
 }
 
-ABOpenFile_t* CArchivePool::GetEntireFileImpl(const std::string& fName)
+unsigned CArchivePool::NumFiles() const
 {
+	return files.size();
+}
 
-	if (!isOpen) return NULL;
+void CArchivePool::FileInfo(unsigned fid, std::string& name, int& size) const
+{
+	assert(fid >= 0 && fid < NumFiles());
+	name = files[fid]->name;
+	size = files[fid]->size;
+}
 
-	std::string fileName = StringToLower(fName);
-	if (fileMap.find(fileName) == fileMap.end()) {
-		return NULL;
-	}
+unsigned CArchivePool::GetCrc32(unsigned fid)
+{
+	assert(fid >= 0 && fid < NumFiles());
+	return files[fid]->crc32;
+}
 
-	FileData *f = fileMap[fileName];
+
+bool CArchivePool::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer)
+{
+	assert(fid >= 0 && fid < NumFiles());
+
+	FileData *f = files[fid];
 
 	char table[] = "0123456789abcdef";
 	char c_hex[32];
@@ -123,36 +132,26 @@ ABOpenFile_t* CArchivePool::GetEntireFileImpl(const std::string& fName)
 	filesystem.FixSlashes(rpath);
 	std::string path = filesystem.LocateFile(rpath);
 	gzFile in = gzopen (path.c_str(), "rb");
-	if (in == NULL) return NULL;
+	if (in == NULL)
+		return false;
 
-	ABOpenFile_t* of = new ABOpenFile_t;
-	of->size = f->size;
-	of->pos = 0;
-	of->data = (char*) malloc(of->size);
+	buffer.resize(f->size);
 
 	int j, i = 0;
-	while (true) {
-		j = gzread(in, of->data + i, of->size - i);
-		if (j == 0) break;
-		if (j == -1) {
+	while (true)
+	{
+		j = gzread(in, &buffer[i], buffer.size() - i);
+		if (j == 0)
+			break;
+		else if (j == -1)
+		{
 			gzclose(in);
-			delete of;
-			return NULL;
+			buffer.clear();
+			return false;
 		}
 		i += j;
 	}
 
 	gzclose(in);
-	return of;
-}
-
-int CArchivePool::FindFiles(int cur, std::string* name, int* size)
-{
-	if (cur < 0 || static_cast<size_t>(cur) >= files.size()) {
-		return 0;
-	} else {
-		*name = files[cur]->name;
-		*size = files[cur]->size;
-		return cur + 1;
-	}
+	return true;
 }

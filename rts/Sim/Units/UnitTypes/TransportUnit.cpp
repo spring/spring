@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "TransportUnit.h"
 #include "Game/SelectedUnits.h"
@@ -129,7 +131,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		if (!unitDef->releaseHeld) {
 			if (!selfDestruct) {
 				// we don't want it to leave a corpse
-				u->DoDamage(DamageArray() * 1000000, 0, ZeroVector);
+				u->DoDamage(DamageArray(1000000), 0, ZeroVector);
 			}
 			u->KillUnit(selfDestruct, reclaimed, attacker);
 		} else {

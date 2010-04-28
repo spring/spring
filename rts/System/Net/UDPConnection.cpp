@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef _MSC_VER
 #	include "StdAfx.h"
 #elif defined(_WIN32)
@@ -156,6 +158,25 @@ UDPConnection::UDPConnection(int sourceport, const std::string& address, const u
 	}
 	sharedSocket = false;
 	Init();
+}
+
+UDPConnection::UDPConnection(CConnection &conn) {
+	sharedSocket = true;
+	ReconnectTo(conn);
+	Init();
+}
+
+void UDPConnection::ReconnectTo(CConnection &conn) {
+	dynamic_cast<UDPConnection &>(conn).CopyConnection(*this);
+}
+
+void UDPConnection::CopyConnection(UDPConnection &conn) {
+	conn.InitConnection(addr, mySocket);
+}
+
+void UDPConnection::InitConnection(boost::asio::ip::udp::endpoint address, boost::shared_ptr<ip::udp::socket> socket) {
+	addr = address;
+	mySocket = socket;
 }
 
 UDPConnection::~UDPConnection()
@@ -395,15 +416,40 @@ void UDPConnection::Flush(const bool forced)
 	SendIfNecessary(forced);
 }
 
-bool UDPConnection::CheckTimeout() const
-{
-	const spring_duration timeout = ((dataRecv == 0) ? spring_secs(45) : spring_secs(30));
-	if((lastReceiveTime+timeout) < spring_gettime())
-	{
+bool UDPConnection::CheckTimeout(int nsecs) const {
+	spring_duration timeout;
+	if(nsecs == 0)
+		timeout = spring_secs(dataRecv ? networkTimeout : initialNetworkTimeout);
+	else if(nsecs > 0)
+		timeout = spring_secs(nsecs);
+	else
+		timeout = spring_secs(reconnectTimeout);
+		
+	if(timeout > 0 && (lastReceiveTime + timeout) < spring_gettime())
 		return true;
-	}
 	else
 		return false;
+}
+
+bool UDPConnection::NeedsReconnect() {
+	if(CanReconnect()) {
+		if(!CheckTimeout(-1)) {
+			reconnectTime = reconnectTimeout;
+		}
+		else if(CheckTimeout(reconnectTime)) {
+			++reconnectTime;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool UDPConnection::CanReconnect() const {
+	return reconnectTimeout > 0;
+}
+
+int UDPConnection::GetReconnectSecs() const {
+	return reconnectTime;
 }
 
 std::string UDPConnection::Statistics() const
@@ -451,6 +497,10 @@ void UDPConnection::Init()
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
 	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
+	initialNetworkTimeout = std::max(configHandler->Get("InitialNetworkTimeout", 30), 0);	
+	networkTimeout = std::max(configHandler->Get("NetworkTimeout", 100), 0);	
+	reconnectTimeout = configHandler->Get("ReconnectTimeout", 15);
+	reconnectTime = reconnectTimeout;
 }
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)

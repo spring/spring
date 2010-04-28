@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "DamageArray.h"
 
 #if defined __cplusplus && !defined BUILDING_AI
@@ -39,6 +41,22 @@ DamageArray::DamageArray() : paralyzeDamageTime(0),
 	damages = new float[numTypes];
 	for(int a = 0; a < numTypes; ++a) {
 		damages[a] = 1.0f;
+	}
+}
+
+DamageArray::DamageArray(const float mult) : paralyzeDamageTime(0),
+			impulseFactor(1.0f), impulseBoost(0.0f),
+			craterMult(1.0f), craterBoost(0.0f),
+			numTypes(1) 
+{
+#if !defined BUILDING_AI
+	if (damageArrayHandler) {
+		numTypes = damageArrayHandler->GetNumTypes();
+	}
+#endif // !defined BUILDING_AI
+	damages = new float[numTypes];
+	for(int a = 0; a < numTypes; ++a) {
+		damages[a] = mult;
 	}
 }
 

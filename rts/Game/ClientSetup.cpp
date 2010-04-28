@@ -1,15 +1,15 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "ClientSetup.h"
 
 #include "TdfParser.h"
 #include "Exceptions.h"
 #include "LogOutput.h"
+#include "ConfigHandler.h"
 #include "Util.h"
 
 ClientSetup::ClientSetup() :
 		hostport(DEFAULT_HOST_PORT),
-		sourceport(0),
-		autohostip("localhost"),
-		autohostport(0),
 		isHost(false)
 {
 }
@@ -28,14 +28,26 @@ void ClientSetup::Init(const std::string& setup)
 	// Technical parameters
 	file.GetDef(hostip,       "localhost",           "GAME\\HostIP");
 	file.GetDef(hostport,     DEFAULT_HOST_PORT_STR, "GAME\\HostPort");
-	file.GetDef(sourceport,   "0",                   "GAME\\SourcePort");
-	file.GetDef(autohostip,   "localhost",           "GAME\\AutohostIP");
-	file.GetDef(autohostport, "0",                   "GAME\\AutohostPort");
 
 	file.GetDef(myPlayerName, "",                    "GAME\\MyPlayerName");
 	file.GetDef(myPasswd, "",                    "GAME\\MyPasswd");
 
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
 		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
+	}
+
+	std::string sourceport, autohostip, autohostport;
+	if (file.SGetValue(sourceport, "GAME\\SourcePort"))
+		configHandler->SetOverlay("SourcePort", sourceport);
+	if (file.SGetValue(autohostip, "GAME\\AutohostIP"))
+		configHandler->SetOverlay("AutohostIP", autohostip);
+	if (file.SGetValue(autohostport, "GAME\\AutohostPort"))
+		configHandler->SetOverlay("AutohostPort", autohostport);
+
+	if (file.SectionExist("OPTIONS"))
+	{
+		TdfParser::MapRef options = file.GetAllValues("OPTIONS");
+		for (std::map<std::string,std::string>::const_iterator it = options.begin(); it != options.end(); ++it)
+			configHandler->SetOverlay(it->first, it->second);
 	}
 }

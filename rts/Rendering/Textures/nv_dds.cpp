@@ -1,5 +1,9 @@
-//This file contains source code provided by NVIDIA Corporation
-//Modified DDS reader class from NVIDIA SDK
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+// This software contains source code provided by NVIDIA Corporation.
+// License: http://developer.download.nvidia.com/licenses/general_license.txt
+
+// Modified DDS reader class from NVIDIA SDK
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Description:

@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaVFS.cpp: implementation of the LuaVFS class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <list>
@@ -411,7 +410,7 @@ int LuaVFS::MapArchive(lua_State* L)
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	const string filename = archiveScanner->ModNameToModArchive(luaL_checkstring(L, 1));
+	const string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
 	if (!LuaIO::IsSimplePath(filename))
 	{
 		//FIXME		return 0;
@@ -433,7 +432,7 @@ int LuaVFS::MapArchive(lua_State* L)
 		int checksum = 0;
 		std::istringstream buf(checksumBuf);
 		buf >> checksum;
-		const int realchecksum = archiveScanner->GetArchiveChecksum(filename);
+		const int realchecksum = archiveScanner->GetSingleArchiveChecksum(filename);
 		if (checksum != realchecksum)
 		{
 			std::ostringstream buf;

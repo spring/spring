@@ -56,7 +56,7 @@ struct gmlExecState {
 	int maxthreads;
 	BOOL_ syncmode;
 	int num_units;
-	GML_TYPENAME std::list<U> *iter;
+	const GML_TYPENAME std::set<U> *iter;
 	int limit1;
 	int limit2;
 	BOOL_ serverwork;
@@ -64,7 +64,7 @@ struct gmlExecState {
 
 	gmlCount UnitCounter;
 	gmlExecState(R (*wrk)(void *)=NULL,R (*wrka)(void *,A)=NULL,R (*wrki)(void *,U)=NULL,
-		void* cls=NULL,int mt=0,BOOL_ sm=FALSE,int nu=0,GML_TYPENAME std::list<U> *it=NULL,int l1=1,int l2=1,BOOL_ sw=FALSE,void (*swf)(void *)=NULL):
+		void* cls=NULL,int mt=0,BOOL_ sm=FALSE,int nu=0,const GML_TYPENAME std::set<U> *it=NULL,int l1=1,int l2=1,BOOL_ sw=FALSE,void (*swf)(void *)=NULL):
 	worker(wrk),workerarg(wrka),workeriter(wrki),workerclass(cls),maxthreads(mt),
 		syncmode(sm),num_units(nu),iter(it),limit1(l1),limit2(l2),serverwork(sw),serverfun(swf),UnitCounter(-1) {
 	}
@@ -74,7 +74,7 @@ struct gmlExecState {
 			(*serverfun)(workerclass);
 	}
 
-	void ExecAll(int &pos, typename std::list<U>::iterator &it) {
+	void ExecAll(int &pos, typename std::set<U>::const_iterator &it) {
 		int i=UnitCounter;
 		if(i>=num_units)
 			return;
@@ -96,7 +96,7 @@ struct gmlExecState {
 		UnitCounter%=num_units;
 	}
 
-	BOOL_ Exec(int &pos, typename std::list<U>::iterator &it) {
+	BOOL_ Exec(int &pos, typename std::set<U>::const_iterator &it) {
 		int i=++UnitCounter;
 		if(i>=num_units)
 			return FALSE;
@@ -198,7 +198,7 @@ public:
 			if(execswf)
 				ex->ExecServerFun();
 
-			typename std::list<U>::iterator it;
+			typename std::set<U>::const_iterator it;
 			if(ex->workeriter)
 				it=ex->iter->begin();
 			int pos=0;
@@ -263,7 +263,7 @@ public:
 		inited=TRUE;
 	}
 
-	void Work(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, GML_TYPENAME std::list<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {
+	void Work(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, const GML_TYPENAME std::set<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {
 		if(!inited)
 			WorkInit();
 		if(auxworker)
@@ -277,7 +277,7 @@ public:
 		gmlServer();
 	}
 
-	void NewWork(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, GML_TYPENAME std::list<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {
+	void NewWork(R (*wrk)(void *),R (*wrka)(void *,A), R (*wrkit)(void *,U),void *cls,int mt,BOOL_ sm, const GML_TYPENAME std::set<U> *it,int nu,int l1,int l2,BOOL_ sw,void (*swf)(void *)=NULL) {
 		gmlQueue *qd=&gmlQueues[gmlThreadNumber];
 		qd->ReleaseWrite();
 
@@ -307,9 +307,9 @@ public:
 			return;
 		}
 
-		typename std::list<U>::iterator it;
+		typename std::set<U>::iterator it;
 		if(ex->workeriter)
-			it=((GML_TYPENAME std::list<U> *)*(GML_TYPENAME std::list<U> * volatile *)&ex->iter)->begin();
+			it=((GML_TYPENAME std::set<U> *)*(GML_TYPENAME std::set<U> * volatile *)&ex->iter)->begin();
 		int pos=0;
 
 		int processed=0;
