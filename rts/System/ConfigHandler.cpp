@@ -278,29 +278,41 @@ string ConfigHandler::GetDefaultConfig()
  *
  * Strips whitespace off the string [begin, end] by setting the first
  * non-whitespace character from the end to 0 and returning a pointer
- * to the first non-whitespace character from the begin.
+ * to the first non-whitespace character from the begining.
  *
  * Precondition: end must point to the last character of the string,
- * ie. the one before the terminating null.
+ * ie. the one before the terminating '\0'.
  */
 char* ConfigHandler::Strip(char* begin, char* end) {
 	while (isspace(*begin)) ++begin;
 	while (end >= begin && isspace(*end)) --end;
-	*(end + 1) = 0;
+	*(end + 1) = '\0';
 	return begin;
 }
 
 /**
  * @brief process one line read from file
  *
- * Parses the 'key=value' assignment in buf and sets data[key] to value.
+ * Parses the 'key=value' assignment in line and sets data[key] to value.
  */
-void ConfigHandler::AppendLine(char* buf) {
-	char* eq = strchr(buf, '=');
-	if (eq) {
-		char* key = Strip(buf, eq - 1);
-		char* value = Strip(eq + 1, strchr(eq + 1, 0) - 1);
-		data[key] = value;
+void ConfigHandler::AppendLine(char* line) {
+
+	char* line_stripped = Strip(line, strchr(line, '\0'));
+
+	if (strlen(line_stripped) > 0) {
+		// line is not empty
+		if (line_stripped[0] == '#') {
+			// a comment line
+			return;
+		}
+
+		char* eq = strchr(line_stripped, '=');
+		if (eq) {
+			// a "key=value" line
+			char* key = Strip(line_stripped, eq - 1);
+			char* value = Strip(eq + 1, strchr(eq + 1, 0) - 1);
+			data[key] = value;
+		}
 	}
 }
 
