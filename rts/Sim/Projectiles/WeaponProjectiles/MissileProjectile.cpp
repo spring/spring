@@ -58,11 +58,14 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_RESERVED(16)
 	));
 
-CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner,
-		float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef,
-		float3 targetPos):
+CMissileProjectile::CMissileProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner,
+	float areaOfEffect, float maxSpeed, int ttl,
+	CUnit* target, const WeaponDef* weaponDef,
+	float3 targetPos):
+
 	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, ttl),
-	dir(speed),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
 	age(0),
@@ -82,8 +85,9 @@ CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, C
 	danceCenter(0, 0, 0),
 	extraHeightTime(0)
 {
+	projectileType = WEAPON_MISSILE_PROJECTILE;
 	curSpeed = speed.Length();
-	dir.Normalize();
+	dir = speed / curSpeed;
 	oldDir = dir;
 
 	if (target) {
@@ -409,44 +413,6 @@ void CMissileProjectile::Draw(void)
 	va->AddVertexQTC(drawPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
 	va->AddVertexQTC(drawPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
 	va->AddVertexQTC(drawPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
-
-/*	col[0]=200;
-	col[1]=200;
-	col[2]=200;
-	col[3]=255;
-	float3 r=dir.cross(UpVector);
-	r.Normalize();
-	float3 u=dir.cross(r);
-	va->AddVertexTC(interPos+r*1.0f,1.0f/16,1.0f/16,col);
-	va->AddVertexTC(interPos-r*1.0f,1.0f/16,1.0f/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);
-
-	va->AddVertexTC(interPos+u*1.0f,1.0f/16,1.0f/16,col);
-	va->AddVertexTC(interPos-u*1.0f,1.0f/16,1.0f/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);
-	va->AddVertexTC(interPos+dir*9,1.0f/16,1.0f/16,col);*/
-}
-
-void CMissileProjectile::DrawUnitPart(void)
-{
-	float3 rightdir, updir;
-
-	if (fabs(dir.y) < 0.95f) {
-		rightdir = dir.cross(UpVector);
-		rightdir.SafeNormalize();
-	} else {
-		rightdir = float3(1.0f, 0.0f, 0.0f);
-	}
-
-	updir = rightdir.cross(dir);
-
-	CMatrix44f transMatrix(drawPos + dir * radius * 0.9f, -rightdir, updir, dir);
-
-	glPushMatrix();
-		glMultMatrixf(transMatrix);
-		glCallList(model->rootobject->displist); // dont cache displists because of delayed loading (GML)
-	glPopMatrix();
 }
 
 int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -472,10 +438,4 @@ int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, 
 	}
 
 	return 0;
-}
-
-void CMissileProjectile::DrawS3O(void)
-{
-	unitDrawer->SetTeamColour(colorTeam);
-	DrawUnitPart();
 }

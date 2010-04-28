@@ -51,17 +51,24 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 {
 	s.Serialize(numCallback, sizeof(int));
 	// NOTE This could be tricky if gs is serialized after losHandler.
-	for(int a=0;a<5;++a){
+	for (int a = 0; a < 5; ++a) {
 		s.Serialize(oldInfos[a],sizeof(struct CStarburstProjectile::OldInfo));
 	}
 }
 
-CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
-		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
-		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError):
+CStarburstProjectile::CStarburstProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner,
+	float3 targetPos,
+	float areaOfEffect, float maxSpeed,
+	float tracking, int uptime,
+	CUnit* target,
+	const WeaponDef* weaponDef,
+	CWeaponProjectile* interceptTarget,
+	float maxdistance, float3 aimError):
+
 	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200),
 	tracking(tracking),
-	dir(speed),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
 	age(0),
@@ -75,23 +82,24 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	missileAge(0),
 	distanceToTravel(maxdistance)
 {
-	this->uptime=uptime;
+	projectileType = WEAPON_STARBURST_PROJECTILE;
+	this->uptime = uptime;
+
 	if (weaponDef) {
 		if (weaponDef->flighttime == 0) {
-			ttl = (int) std::min(3000.f,uptime+weaponDef->range/maxSpeed+100);
-		}
-		else {
-			ttl=weaponDef->flighttime;
+			ttl = (int) std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
+		} else {
+			ttl = weaponDef->flighttime;
 		}
 	}
-	maxGoodDif=cos(tracking*0.6f);
-	curSpeed=speed.Length();
-	dir.Normalize();
-	oldSmokeDir=dir;
+	maxGoodDif = cos(tracking * 0.6f);
+	curSpeed = speed.Length();
+	dir = speed / curSpeed;
+	oldSmokeDir = dir;
 
-	drawRadius=maxSpeed*8;
-	numCallback=new int;
-	*numCallback=0;
+	drawRadius = maxSpeed * 8;
+	numCallback = new int;
+	*numCallback = 0;
 
 	float3 camDir=(pos-camera->pos).Normalize();
 	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
@@ -107,7 +115,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 			oldInfos[a]->ageMods.push_back(ageMod);
 		}
 	}
-	castShadow=true;
+	castShadow = true;
 
 #ifdef TRACE_SYNC
 	tracefile << "New starburst rocket: ";
@@ -399,51 +407,34 @@ void CStarburstProjectile::DrawCallback(void)
 		}
 	}
 
-	//rita flaren
-	col[0]=255;
-	col[1]=180;
-	col[2]=180;
-	col[3]=1;
-	float fsize = 25.0f;
-	va->AddVertexTC(drawPos-camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(drawPos+camera->right*fsize-camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart,col);
-	va->AddVertexTC(drawPos+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-	va->AddVertexTC(drawPos-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
-}
+	// draw the engine flare
+	col[0] = 255;
+	col[1] = 180;
+	col[2] = 180;
+	col[3] =   1;
+	const float fsize = 25.0f;
 
-void CStarburstProjectile::DrawUnitPart(void)
-{
-	float3 rightdir, updir;
-
-	if (fabs(dir.y) < 0.95f) {
-		rightdir = dir.cross(UpVector);
-		rightdir.SafeNormalize();
-	} else {
-		rightdir = float3(1.0f, 0.0f, 0.0f);
-	}
-
-	updir = rightdir.cross(dir);
-
-	CMatrix44f transMatrix(drawPos, -rightdir, updir, dir);
-
-	glPushMatrix();
-		glMultMatrixf(transMatrix);
-		glCallList(model->rootobject->displist); // dont cache displists because of delayed loading
-	glPopMatrix();
+	#define wt weaponDef->visuals.texture1
+	va->AddVertexTC(drawPos - camera->right * fsize-camera->up * fsize, wt->xstart, wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * fsize-camera->up * fsize, wt->xend,   wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * fsize+camera->up * fsize, wt->xend,   wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * fsize+camera->up * fsize, wt->xstart, wt->yend,   col);
+	#undef wt
 }
 
 int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 sdir=pos-shieldPos;
-	sdir.Normalize();
+	const float3 rdir = (pos - shieldPos).Normalize();
+
 	if (ttl > 0) {
-		float3 dif2 = sdir - dir;
+		float3 dif2 = rdir - dir;
 		// steer away twice as fast as we can steer toward target
 		float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+
 		if (dif2.Length() < tracking) {
-			dir = sdir;
+			dir = rdir;
 		} else {
-			dif2 -= dir * (dif2.dot(dir));
+			dif2 -= (dir * (dif2.dot(dir)));
 			dif2.Normalize();
 			dir += dif2 * tracking;
 			dir.Normalize();

@@ -30,12 +30,11 @@ public:
 	void Collision();
 	void Update(void);
 	void Draw(void);
-	void DrawUnitPart(void);
-	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
+
+	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
 	float tracking;
 	float maxGoodDif;
-	float3 dir;
 	float maxSpeed;
 	float curSpeed;
 	float acceleration;

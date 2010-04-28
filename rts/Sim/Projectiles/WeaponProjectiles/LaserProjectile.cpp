@@ -34,10 +34,14 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, float length, const float3& color, const float3& color2,
-		float intensity, const WeaponDef *weaponDef, int ttl)
-:	CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, ttl),
+CLaserProjectile::CLaserProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner, float length,
+	const float3& color, const float3& color2,
+	float intensity,
+	const WeaponDef* weaponDef, int ttl):
+
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	intensity(intensity),
 	color(color),
 	color2(color2),
@@ -46,9 +50,10 @@ CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 	intensityFalloff(weaponDef?intensity*weaponDef->falloffRate:0),
 	stayTime(0)
 {
-	dir=speed;
-	dir.Normalize();
-	speedf=speed.Length();
+	projectileType = WEAPON_LASER_PROJECTILE;
+
+	speedf = speed.Length();
+	dir = speed / speedf;
 
 	if (weaponDef) {
 		SetRadius(weaponDef->collisionSize);
@@ -306,11 +311,11 @@ void CLaserProjectile::Draw(void)
 
 int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 sdir=pos-shieldPos;
-	sdir.Normalize();
-	if(sdir.dot(speed)<0){
-		speed-=sdir*sdir.dot(speed)*2;
-		dir=speed;
+	const float3 rdir = (pos - shieldPos).Normalize();
+
+	if (rdir.dot(speed) < 0.0f) {
+		speed -= (rdir * rdir.dot(speed) * 2.0f);
+		dir = speed;
 		dir.Normalize();
 		return 1;
 	}

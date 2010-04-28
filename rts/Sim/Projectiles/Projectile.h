@@ -57,21 +57,20 @@ public:
 	unsigned lastProjUpdate;
 #endif
 
-	inline CUnit* owner() const {
-		return uh->units[ownerId];
-	}
+	CUnit* owner() const { return uh->units[ownerId]; }
+	int GetProjectileType() const { return projectileType; }
 
+	float3 dir;
 	float3 speed;
 	float mygravity;
 
 	virtual void DrawCallback(void) {}
-	virtual void DrawUnitPart(void) {}
-	virtual void DrawS3O() { DrawUnitPart(); }
 
 	float tempdist; // temp distance used for sorting when rendering
 	
-private:
+protected:
 	int ownerId;
+	int projectileType;
 };
 
 #endif /* PROJECTILE_H */

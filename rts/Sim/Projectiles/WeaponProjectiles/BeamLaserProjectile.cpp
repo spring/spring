@@ -30,11 +30,15 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3& endPos,
-	float startAlpha, float endAlpha, const float3& color, const float3& color2,
-	CUnit* owner, float thickness, float corethickness, float flaresize,
-	const WeaponDef* weaponDef, int ttl, float decay)
-:	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, ttl),
+CBeamLaserProjectile::CBeamLaserProjectile(
+	const float3& startPos, const float3& endPos,
+	float startAlpha, float endAlpha,
+	const float3& color, const float3& color2,
+	CUnit* owner,
+	float thickness, float corethickness, float flaresize,
+	const WeaponDef* weaponDef, int ttl, float decay):
+
+	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),
@@ -42,8 +46,9 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	flaresize(flaresize),
 	decay(decay)
 {
-	checkCol=false;
-	useAirLos=true;
+	projectileType = WEAPON_BEAMLASER_PROJECTILE;
+	checkCol = false;
+	useAirLos = true;
 
 	SetRadius(pos.distance(endPos));
 
@@ -106,11 +111,10 @@ void CBeamLaserProjectile::Draw(void)
 	float3 dif(pos-camera->pos);
 	float camDist=dif.Length();
 	dif/=camDist;
-	float3 dir=endPos-startPos;
-	dir.Normalize();
-	float3 dir1(dif.cross(dir));
-	dir1.Normalize();
-	float3 dir2(dif.cross(dir1));
+
+	const float3 ddir = (endPos - startPos).Normalize();
+	const float3 dir1 = (dif.cross(ddir)).Normalize();
+	const float3 dir2(dif.cross(dir1));
 
 	float size=thickness;
 	float coresize=size*corethickness;
