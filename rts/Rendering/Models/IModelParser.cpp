@@ -124,8 +124,9 @@ void C3DModelLoader::Update() {
 void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
 {
 	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); di++) {
-		delete (*di);
+		DeleteChilds(*di);
 	}
+
 	o->childs.clear();
 	delete o;
 }
