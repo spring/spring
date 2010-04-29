@@ -29,9 +29,9 @@ public:
 	void ToggleState(); // lock+hide (used by fps camera and middle click scrolling)
 	void WarpMouse(int x, int y);
 	void Draw(); // draw mousebox (selection box)
-	void MouseRelease(int x,int y,int button);
-	void MousePress(int x,int y,int button);
-	void MouseMove(int x,int y);
+	void MouseRelease(int x, int y, int button);
+	void MousePress(int x, int y, int button);
+	void MouseMove(int x, int y, int dx, int dy);
 	void MouseWheel(float delta);
 	CMouseHandler();
 	virtual ~CMouseHandler();

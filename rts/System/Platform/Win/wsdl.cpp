@@ -344,7 +344,7 @@ void SDL_WarpMouse(int x, int y)
 	const int client_x = x, client_y = y;
 	const POINT screen_pt = ScreenFromClient(client_x, client_y);
 	SetCursorPos(screen_pt.x, screen_pt.y);
-	mouse_x = screen_pt.x;
-	mouse_y = screen_pt.y;
+	mouse_x = x;
+	mouse_y = y;
 }
 }

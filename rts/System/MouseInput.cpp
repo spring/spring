@@ -52,7 +52,7 @@ bool IMouseInput::HandleSDLMouseEvent (const SDL_Event& event)
 		case SDL_MOUSEMOTION: {
 			mousepos = int2(event.motion.x, event.motion.y);
 			if (mouse) {
-				mouse->MouseMove(mousepos.x, mousepos.y);
+				mouse->MouseMove(mousepos.x, mousepos.y, event.motion.xrel, event.motion.yrel);
 			}
 			break;
 		}
@@ -201,11 +201,13 @@ CWin32MouseInput* CWin32MouseInput::inst = 0;
 void IMouseInput::SetPos(int2 pos)
 {
 	mousepos = pos;
+	SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
 #ifdef WIN32
 	wsdl::SDL_WarpMouse(pos.x, pos.y);
 #else
 	SDL_WarpMouse(pos.x, pos.y);
 #endif
+	SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
 }
 
 IMouseInput *IMouseInput::Get ()
