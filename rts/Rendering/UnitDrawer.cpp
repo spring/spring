@@ -1162,7 +1162,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	for (std::set<GhostBuilding*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		std::set<GhostBuilding*>::iterator itNext(it); itNext++;
 
-		if (loshandler->InLos((*it)->pos, gu->myAllyTeam)) {
+		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			if ((*it)->decal) {
 				(*it)->decal->gbOwner = 0;
