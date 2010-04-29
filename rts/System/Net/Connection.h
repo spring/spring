@@ -39,7 +39,7 @@ public:
 	virtual boost::shared_ptr<const RawPacket> GetData()=0;
 
 	virtual void Flush(const bool forced = false)=0;
-	virtual bool CheckTimeout(int nsecs = 0) const = 0;
+	virtual bool CheckTimeout(int nsecs = 0, bool initial = false) const = 0;
 	
 	virtual void ReconnectTo(CConnection &conn) = 0;
 	virtual bool CanReconnect() const = 0;

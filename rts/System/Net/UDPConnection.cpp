@@ -416,10 +416,10 @@ void UDPConnection::Flush(const bool forced)
 	SendIfNecessary(forced);
 }
 
-bool UDPConnection::CheckTimeout(int nsecs) const {
+bool UDPConnection::CheckTimeout(int nsecs, bool initial) const {
 	spring_duration timeout;
 	if(nsecs == 0)
-		timeout = spring_secs(dataRecv ? networkTimeout : initialNetworkTimeout);
+		timeout = spring_secs((dataRecv && !initial) ? networkTimeout : initialNetworkTimeout);
 	else if(nsecs > 0)
 		timeout = spring_secs(nsecs);
 	else
@@ -498,7 +498,7 @@ void UDPConnection::Init()
 	droppedChunks = 0;
 	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
 	initialNetworkTimeout = std::max(configHandler->Get("InitialNetworkTimeout", 30), 0);	
-	networkTimeout = std::max(configHandler->Get("NetworkTimeout", 100), 0);	
+	networkTimeout = std::max(configHandler->Get("NetworkTimeout", 120), 0);	
 	reconnectTimeout = configHandler->Get("ReconnectTimeout", 15);
 	reconnectTime = reconnectTimeout;
 }
