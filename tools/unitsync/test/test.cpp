@@ -5,7 +5,7 @@ file=test.cpp
 map="${1:-Castles.smf}"
 mod="${2:-ba621.sd7}"
 
-g++ -g -I../../../rts -I../../../rts/System $file ../../../game/unitsync.so && \
+g++ -g -I../../../rts -I../../../rts/System $file ../../../dist/unitsync.so && \
 echo ./a.out "$map" "$mod" && \
 ./a.out "$map" "$mod"
 
@@ -20,7 +20,7 @@ exit
 /******************************************************************************/
 //  Simple file to help test unitsync, compile with:
 //
-//    g++ -I../../../rts -I../../../rts/System test.cxx ../../../game/unitsync.so
+//    g++ -I../../../rts -I../../../rts/System test.cxx ../../../dist/unitsync.so
 //
 
 

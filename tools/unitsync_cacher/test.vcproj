@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="D:\SpringSVN_Development\vclibs\Boost\include"
+				AdditionalIncludeDirectories="..\..\vclibs\Boost\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,8 +61,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\..\game\unitsync.lib"
-				OutputFile="..\..\game\unitsync_test.exe"
+				AdditionalDependencies="..\..\dist\unitsync.lib"
+				OutputFile="..\..\dist\unitsync_test.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -95,7 +95,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)/../../game/"
+			OutputDirectory="$(SolutionDir)\..\..\dist\"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"

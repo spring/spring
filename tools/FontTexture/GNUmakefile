@@ -23,8 +23,8 @@ test:	$(EXEC)
 	$(MAKE) copy
 	
 copy:
-	cp test.png ../../game/LuaUI/Fonts/test.png            
-	cp test.lua ../../game/LuaUI/Fonts/test.lua     
+	cp test.png ../../dist/LuaUI/Fonts/test.png            
+	cp test.lua ../../dist/LuaUI/Fonts/test.lua     
 
 
 $(EXEC):	main.o $(ftOBJ)

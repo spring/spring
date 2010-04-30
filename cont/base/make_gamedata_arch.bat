@@ -11,10 +11,11 @@ rem absolute or relative to spring source root
 set BUILD_DIR=%1
 IF "%BUILD_DIR%" == "" (
 	rem default:
-	set BUILD_DIR=game\base\
+	set BUILD_DIR=build\base\
 )
 
-cd %~dp0..
+rem Move to spring source root
+cd %~dp0..\..
 
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
@@ -22,24 +23,47 @@ cd "%BUILD_DIR%"
 rem make BUILD_DIR absolute, if it is not yet
 for %%a in (cd) do set BUILD_DIR=%%~dpa
 
-rem move to spring source root
-cd %~dp0..
+cd %~dp0
 
 
+rem Interpret second cmd-line param as path to 7-Zip executable
 set EXEC_7Z=%2
+
+rem Look for 7za.exe in CWD
 IF "%EXEC_7Z%" == "" (
-	rem default:
 	set EXEC_7Z=%~dp07za.exe
 )
 %EXEC_7Z% > NUL 2>&1
 if "%ERRORLEVEL%" == "0" goto ok7z
-echo 7zip executable (7z.exe or 7za.exe) not found, please make sure it is in your PATH environment variable.
+
+rem Look for 7za.exe in MINGWLIBS
+set EXEC_7Z=%MINGWLIBS%\bin\7za.exe
+%EXEC_7Z% > NUL 2>&1
+if "%ERRORLEVEL%" == "0" goto ok7z
+
+rem Look for 7za.exe in VCLIBS
+set EXEC_7Z=%VCLIBS%\bin\7za.exe
+%EXEC_7Z% > NUL 2>&1
+if "%ERRORLEVEL%" == "0" goto ok7z
+
+rem Look for 7za.exe in PATH
+set EXEC_7Z=7za.exe
+%EXEC_7Z% > NUL 2>&1
+if "%ERRORLEVEL%" == "0" goto ok7z
+
+rem Look for 7z.exe in PATH
+set EXEC_7Z=7z.exe
+%EXEC_7Z% > NUL 2>&1
+if "%ERRORLEVEL%" == "0" goto ok7z
+
+rem Give up trying to find 7za.exe
+echo 7zip executable (7za.exe or 7z.exe) not found, please make sure it is in your PATH environment variable.
 exit /B 1
+
+rem Found 7za.exe
 :ok7z
 set CMD_7Z=%EXEC_7Z% u -tzip -r
 
-
-cd %~dp0builddata
 
 rem Only copy to a temp for converting line endings if
 rem the git config value core.autocrlf is set to false,
@@ -53,8 +77,43 @@ FOR /F "usebackq" %%P IN (`git config --get core.autocrlf`) DO if "%%P" == "fals
 
 if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no
 :tmpDir_yes
+
+	rem Interpret 3rd cmd-line param as path to dos2unix executable
+	set EXEC_D2U=%3
+
+	set TEST_TEXT_FILE=%BUILD_DIR%\tmp.txt
+	echo bla > %TEST_TEXT_FILE%
+
+	rem Look for dos2unix.exe in CWD
+	IF "%EXEC_D2U%" == "" (
+		set EXEC_D2U=%~dp0dos2unix.exe
+	)
+	%EXEC_D2U% %TEST_TEXT_FILE% > NUL 2>&1
+	if "%ERRORLEVEL%" == "0" goto okD2U
+
+	rem Look for dos2unix.exe in MINGWLIBS
+	set EXEC_D2U=%MINGWLIBS%\bin\dos2unix.exe
+	%EXEC_D2U% %TEST_TEXT_FILE% > NUL 2>&1
+	if "%ERRORLEVEL%" == "0" goto okD2U
+
+	rem Look for dos2unix.exe in VCLIBS
+	set EXEC_D2U=%VCLIBS%\bin\dos2unix.exe
+	%EXEC_D2U% %TEST_TEXT_FILE% > NUL 2>&1
+	if "%ERRORLEVEL%" == "0" goto okD2U
+
+	rem Look for dos2unix.exe in PATH
+	set EXEC_D2U=dos2unix.exe
+	%EXEC_D2U% %TEST_TEXT_FILE% > NUL 2>&1
+	if "%ERRORLEVEL%" == "0" goto okD2U
+
+	rem Give up trying to find dos2unix.exe
+	echo dos2unix.exe not found, please make sure it is in your PATH environment variable.
+	del /F %TEST_TEXT_FILE%
+	exit /B 1
+:okD2U
+	del /F %TEST_TEXT_FILE%
+
 	set TMP_DIR=%BUILD_DIR%_tmp
-	set EXEC_TUC=%~dp0toUnixConv.bat
 	echo Copying to temporary directory ...
 	rem rmdir /S /Q %TMP_DIR%
 	mkdir %TMP_DIR% > NUL 2>&1
@@ -71,14 +130,13 @@ if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no
 	goto tmpDir_end
 :tmpDir_no
 	echo Caution: Not converting line endings of base files.
-	echo          In case you experience deyncs, use build files
+	echo          In case you experience desyncs, use build files
 	echo          from the buildbot.
 	goto tmpDir_end
 
 rem Batch subroutine for converting a files line endings
 rem to unix style, if it is a text file.
 :s_convLineEnds
-	set EXEC_D2U=%~dp0dos2unix.exe
 	if "%~x1" == ".txt" goto isTxtFile
 	if "%~x1" == ".lua" goto isTxtFile
 	if "%~x1" == ".glsl" goto isTxtFile
@@ -131,6 +189,5 @@ cd ..
 rmdir /S /Q %TMP_DIR%
 
 :theEnd
-cd ..
 endlocal
 
