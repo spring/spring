@@ -173,7 +173,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		"#define GRASS_DIST_BASIC\n"
 	};
 
-	static const int NUM_UNIFORMS = 11;
+	static const int NUM_UNIFORMS = 10;
 	static const std::string uniformNames[NUM_UNIFORMS] = {
 		"mapSizePO2",
 		"mapSize",
@@ -185,7 +185,6 @@ void CGrassDrawer::LoadGrassShaders() {
 		"shadowParams",
 		"simFrame",
 		"curWindSpeed",
-		"curWindDirection",
 	};
 
 	const std::string extraDefs =
@@ -514,7 +513,6 @@ void CGrassDrawer::Draw(void)
 			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 			grassShader->SetUniform1f(8, gs->frameNum);
 			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
-			grassShader->SetUniform3fv(10, const_cast<float*>(&(wind.GetCurrentDirection().x)));
 		} else {
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -615,7 +613,6 @@ void CGrassDrawer::Draw(void)
 			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 			grassShader->SetUniform1f(8, gs->frameNum);
 			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
-			grassShader->SetUniform3fv(10, const_cast<float*>(&(wind.GetCurrentDirection().x)));
 		}
 	} else {
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_BASIC];
@@ -627,7 +624,6 @@ void CGrassDrawer::Draw(void)
 		} else {
 			grassShader->SetUniform1f(8, gs->frameNum);
 			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
-			grassShader->SetUniform3fv(10, const_cast<float*>(&(wind.GetCurrentDirection().x)));
 		}
 
 		glBindTexture(GL_TEXTURE_2D, farTex);

@@ -115,10 +115,10 @@ local function ConvertGrass(map)
   end
 
   local cgrass = {
-    bladeWaveScale = map.grassbladewavescale,
-    bladeWidth     = map.grassbladewidth,
-    bladeHeight    = map.grassbladeheight,
-    bladeAngle     = map.grassbladeangle,
+    bladeWaveScale = grass.grassbladewavescale,
+    bladeWidth     = grass.grassbladewidth,
+    bladeHeight    = grass.grassbladeheight,
+    bladeAngle     = grass.grassbladeangle,
   }
 
   map.grass = cgrass
