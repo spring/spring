@@ -11,35 +11,18 @@
 # /game/maps
 # bad examples:
 # game/maps
-# game/maps/
+# /game/maps/
 #
 # For more details about how this file works, see:
 # http://www.kernel.org/pub/software/scm/git/docs/gitignore.html
 #
 
-# springs generated base content files
-/game/base
-
-# when installing into ./game
+# when installing into ./dist
 # this is the default, but not recommended
-/game/infolog.txt
-/game/maps
-/game/mods
-/game/demos
-/game/AI
-/game/ArchiveCacheV7.lua
-/game/ext.txt
-/game/LuaUI/Config/widget_data.lua
-/game/LuaUI/Config/widget_order.lua
-/game/spring
-/game/spring-dedicated
-/game/*.def
-/game/*.exe
-/game/*.dll
-/game/*.so
+/dist
 
 # DoxyGen output
-/doc
+/doc/doxygen
 
 # Scons related
 /build
@@ -102,3 +85,9 @@ Makefile
 # ???
 progress.make
 
+#buildbot generated dirs
+/build-*
+
+#installer downloaded/generated stuff
+/installer/Springlobby/
+/installer/*.exe

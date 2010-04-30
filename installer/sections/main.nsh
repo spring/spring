@@ -2,29 +2,23 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
   SetOverWrite on
-
+	
   ; Main stuff
-  File "..\game\spring.exe"
-  File "..\game\unitsync.dll"
+  File "${BUILD_OR_DIST_DIR}\spring.exe"
+  File "${BUILD_OR_DIST_DIR}\unitsync.dll"
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
 
   File "downloads\TASServer.jar"
 
   ; DLLs (updated in mingwlibs-v20.1)
-  File "..\mingwlibs\dll\glew32.dll"
-  File "..\mingwlibs\dll\python25.dll"
-  File "..\mingwlibs\dll\zlib1.dll"
-  File "..\mingwlibs\dll\soft_oal.dll"
-  File "..\mingwlibs\dll\vorbisfile.dll"
-  File "..\mingwlibs\dll\vorbis.dll"
-  File "..\mingwlibs\dll\ogg.dll"
-
-  ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
-  File "..\external\SDL.dll"
-
-  ; shared libgcc compiled with dwarf2 exception support
-  File "..\external\libgcc_s_dw2-1.dll"
+  File "${MINGWLIBS_DIR}\dll\glew32.dll"
+  File "${MINGWLIBS_DIR}\dll\python25.dll"
+  File "${MINGWLIBS_DIR}\dll\zlib1.dll"
+  File "${MINGWLIBS_DIR}\dll\soft_oal.dll"
+  File "${MINGWLIBS_DIR}\dll\vorbisfile.dll"
+  File "${MINGWLIBS_DIR}\dll\vorbis.dll"
+  File "${MINGWLIBS_DIR}\dll\ogg.dll"
 
   ; Old DLLs, not needed anymore
   ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
@@ -32,7 +26,6 @@
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
 
-  File "..\external\SelectionEditor.exe"
   Delete "$INSTDIR\settingstemplate.xml"
 
 ;New Settings Program
@@ -40,37 +33,34 @@
   File /r "..\installer\Springlobby\SettingsDlls\*.dll"
 
   ; DLLs
-  File "..\external\MSVCR71.dll"
-  File "..\external\MSVCP71.dll"
-  File "..\mingwlibs\dll\DevIL.dll"
-  File "..\mingwlibs\dll\freetype6.dll"
-  File "..\mingwlibs\dll\ILU.dll"
-  File "..\external\zlibwapi.dll"
+  File "${MINGWLIBS_DIR}\dll\DevIL.dll"
+  File "${MINGWLIBS_DIR}\dll\freetype6.dll"
+  File "${MINGWLIBS_DIR}\dll\ILU.dll"
 
-  File "..\game\PALETTE.PAL"
+  File "${CONTENT_DIR}\PALETTE.PAL"
 
 ${IfNot} ${FileExists} "$INSTDIR\selectkeys.txt"
-  File "..\game\selectkeys.txt"
+  File "${CONTENT_DIR}\selectkeys.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\uikeys.txt"
-  File "..\game\uikeys.txt"
+  File "${CONTENT_DIR}\uikeys.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\cmdcolors.txt"
-  File "..\game\cmdcolors.txt"
+  File "${CONTENT_DIR}\cmdcolors.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\ctrlpanel.txt"
-  File "..\game\ctrlpanel.txt"
+  File "${CONTENT_DIR}\ctrlpanel.txt"
 ${EndIf}
 
 ${IfNot} ${FileExists} "$INSTDIR\teamcolors.lua"
-  File "..\game\teamcolors.lua"
+  File "${CONTENT_DIR}\teamcolors.lua"
 ${EndIf}
 
   SetOutPath "$INSTDIR\fonts"
-  File "..\game\fonts\FreeSansBold.otf"
+  File "${CONTENT_DIR}\fonts\FreeSansBold.otf"
 
   ; Remove Luxi.ttf, it has been replaced by FreeSansBold
   Delete "$INSTDIR\Luxi.ttf"
@@ -84,9 +74,13 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  !ifdef USE_BUILD_DIR
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
+	File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
+  !else
+	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  !endif
   ;buildbot creates 7z, and those get included in installer, fix here until buildserv got fixed
-  ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !undef AI_INT_VERS
 !endif
 !macroend
@@ -100,8 +94,12 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
-  ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
+  !ifdef USE_BUILD_DIR
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Skirmish\${skirAiName}\*.*"
+	File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
+  !else
+	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  !endif
   !undef SKIRM_AI_VERS
 !endif
 !macroend
@@ -113,19 +111,17 @@ ${EndIf}
   SetOverWrite on
   SetOutPath "$INSTDIR\base"
 
-  File "..\game\base\springcontent.sdz"
-  File "..\game\base\maphelper.sdz"
-  File "..\game\base\cursors.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\springcontent.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\maphelper.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\cursors.sdz"
   SetOutPath "$INSTDIR\base\spring"
-  File "..\game\base\spring\bitmaps.sdz"
+  File "${BUILD_OR_DIST_DIR}\base\spring\bitmaps.sdz"
 
-;!ifndef SP_UPDATE
 ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
   ; Demofile file association
   !insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
   !insertmacro UPDATEFILEASSOC
 ${EndIf}
-;!endif ; SP_UPDATE
 
 !else
 
@@ -164,7 +160,7 @@ ${EndIf}
   Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\soft_oal.dll"
-  ; next two are deprecated sinze mingwlibs 20.1 (around spring v0.81.2.1)
+  ; next two are deprecated since mingwlibs 20.1 (around spring v0.81.2.1)
   Delete "$INSTDIR\OpenAL32.dll"
   Delete "$INSTDIR\wrap_oal.dll"
   Delete "$INSTDIR\vorbisfile.dll"
