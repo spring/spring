@@ -159,11 +159,10 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08X]", count, modname, sf.AddrPC.Offset);
 		}
 
-		const std::string str_modname = modname;
 		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
-		containsOglDll = (containsOglDll || (str_modname.find("atiogl") != std::string::npos));
+		containsOglDll = containsOglDll || strstr(modname, "atiogl");
 		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
-		containsOglDll = (containsOglDll || (str_modname.find("nvogl") != std::string::npos));
+		containsOglDll = containsOglDll || strstr(modname, "nvogl");
 
 		++count;
 	}
