@@ -87,6 +87,14 @@ public:
 		std::string skyBox;
 	} atmosphere;
 
+	/** settings read from "MAP\GRASS" section */
+	struct grass_t {
+		float bladeWaveScale; //! how strongly wind affects grass-blade waving (if 0, disables vertex animation)
+		float bladeWidth;
+		float bladeHeight;    //! actual blades will be (bladeHeight + randf(0, bladeHeight)) tall
+		float bladeAngle;
+	} grass;
+
 	/** settings read from "MAP\LIGHT" section */
 	struct light_t {
 		float4 sunDir;     ///< Holds vector for the direction of the sun
@@ -183,6 +191,7 @@ private:
 	void ReadGlobal();
 	void ReadGui();
 	void ReadAtmosphere();
+	void ReadGrass();
 	void ReadLight();
 	void ReadWater();
 	void ReadSmf();
