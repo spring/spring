@@ -184,7 +184,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		"shadowMatrix",
 		"shadowParams",
 		"simFrame",
-		"curWindSpeed",
+		"windSpeed",
 	};
 
 	const std::string extraDefs =
@@ -822,6 +822,7 @@ void CGrassDrawer::ResetPos(const float3& pos)
 	grass[idx].square = -1;
 }
 
+
 void CGrassDrawer::CreateGrassDispList(int listNum)
 {
 	CVertexArray* va = GetVertexArray();
@@ -836,36 +837,40 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 		float3 forwardVect = sideVect.cross(UpVector);
 		sideVect *= mapInfo->grass.bladeWidth;
 
+		const float3 cornerPos = (UpVector * cos(maxAng) + forwardVect * sin(maxAng)) * length;
 		float3 basePos(30.0f, 0.0f, 30.0f);
 
 		while (basePos.SqLength2D() > (turfSize * turfSize / 4)) {
 			basePos = float3(fRand(turfSize) - turfSize * 0.5f, 0.0f, fRand(turfSize) - turfSize * 0.5f);
 		}
 
-		const int texOffset = int(fRand(15.9999f));
-		const float xtexBase = texOffset * (1.0f / 16.0f);
-		const int numSections = 1 + int(maxAng * 5);
+		const int xtexOffset = int(fRand(15.9999f));
+		const float xtexBase = xtexOffset * (1.0f / 16.0f);
+		const int numSections = 1 + int(maxAng * 5.0f);
 
 		for (int b = 0; b < numSections; ++b) {
 			const float h = b * (1.0f / numSections);
 			const float ang = maxAng * h;
 
-			const float3 cornerPos =
+			const float3 edgePosL =
+				-sideVect * (1 - h) +
+				(UpVector * cos(ang) + forwardVect * sin(ang)) * length * h;
+			const float3 edgePosR =
 				sideVect * (1.0f - h) +
-				((UpVector * cos(ang) + forwardVect * sin(ang)) * length) * h;
+				(UpVector * cos(ang) + forwardVect * sin(ang)) * length * h;
 
 			if (b == 0) {
-				va->AddVertexT((basePos + cornerPos) - float3(0.0f, 0.1f, 0.0f), xtexBase + texOffset, h);
-				va->AddVertexT((basePos + cornerPos) - float3(0.0f, 0.1f, 0.0f), xtexBase + texOffset, h);
+				va->AddVertexT(basePos + (edgePosR - float3(0.0f, 0.1f, 0.0f)), xtexBase + xtexOffset, h);
+				va->AddVertexT(basePos + (edgePosR - float3(0.0f, 0.1f, 0.0f)), xtexBase + xtexOffset, h);
 			} else {
-				va->AddVertexT((basePos + cornerPos), xtexBase + texOffset, h);
+				va->AddVertexT((basePos + edgePosR), xtexBase + xtexOffset, h);
 			}
 
-			va->AddVertexT((basePos - cornerPos), xtexBase + (1.0f / 16.0f) + texOffset, h);
+			va->AddVertexT((basePos + edgePosL), xtexBase + (1.0f / 16) + xtexOffset, h);
 		}
 
-		va->AddVertexT(basePos + (UpVector * cos(maxAng) + forwardVect * sin(maxAng)) * length, xtexBase + (1.0f / 32) + texOffset, 1.0f);
-		va->AddVertexT(basePos + (UpVector * cos(maxAng) + forwardVect * sin(maxAng)) * length, xtexBase + (1.0f / 32) + texOffset, 1.0f);
+		va->AddVertexT(basePos + cornerPos, xtexBase + xtexOffset + (1.0f / 32), 1.0f);
+		va->AddVertexT(basePos + cornerPos, xtexBase + xtexOffset + (1.0f / 32), 1.0f);
 	}
 
 	glNewList(listNum, GL_COMPILE);
