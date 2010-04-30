@@ -107,6 +107,22 @@ local function ConvertLighting(map)
   map.lighting = lighting
 end
 
+local function ConvertGrass(map)
+  local grass = map.grass
+
+  if (type(grass) ~= 'table') then
+    return
+  end
+
+  local cgrass = {
+    bladeWaveScale = map.grassbladewavescale,
+    bladeWidth     = map.grassbladewidth,
+    bladeHeight    = map.grassbladeheight,
+    bladeAngle     = map.grassbladeangle,
+  }
+
+  map.grass = cgrass
+end
 
 local function ConvertWater(map)
   -- remove the 'water' prefix
@@ -177,11 +193,9 @@ return function(sourceText)
   }
 
   ConvertTerrainTypes(map)
-
   ConvertLighting(map)
-
+  ConvertGrass(map)
   ConvertWater(map)
-
   ConvertTeams(map)
 
   --PrintTable(map)  -- FIXME -- debugging
