@@ -4,6 +4,7 @@
 #define GLOBALSTUFF_H
 
 #include "float3.h"
+#include "Rendering/GL/myGL.h"
 
 
 class CUnit;
@@ -215,6 +216,13 @@ public:
 	bool supportNPOTs;
 	bool haveARB;
 	bool haveGLSL;
+
+	/**
+	 * @brief maxTextureSize
+	 *
+	 * maximum 2D texture size
+	 */
+	GLint maxTextureSize;
 
 	/**
 	 * @brief dual screen mode

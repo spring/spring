@@ -12,7 +12,6 @@
 #include "System/EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
-class CVertexArray;
 struct S3DModel;
 struct UnitDef;
 class CWorldObject;
@@ -162,7 +161,6 @@ private:
 	void DrawOpaqueAIUnits();
 	void DrawCloakedAIUnits();
 	void DrawGhostedBuildings(int);
-	void DrawFarTextures();
 	void DrawUnitIcons(bool);
 
 	// note: make these static?
@@ -192,8 +190,6 @@ private:
 	float cloakAlpha2;
 	float cloakAlpha3;
 
-	CVertexArray* va;
-
 	enum ModelShaderProgram {
 		MODEL_SHADER_S3O_SHADOW,   // S3O model shader (V+F) with self-shadowing
 		MODEL_SHADER_S3O_BASIC,    // S3O model shader (V+F) without self-shadowing
@@ -214,7 +210,6 @@ private:
 	// buildings that left LOS but are still alive
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
-	GML_VECTOR<CUnit*> drawFar;
 	GML_VECTOR<CUnit*> drawStat;
 	GML_VECTOR<CUnit*> drawIcon;
 
