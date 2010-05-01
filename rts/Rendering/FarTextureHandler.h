@@ -22,8 +22,6 @@ class CFarTextureHandler
 public:
 	CFarTextureHandler();
 	~CFarTextureHandler();
-	void CreateFarTexture(const CSolidObject* obj);
-	void CreateFarTextures();
 	GLuint GetTextureID() const { return farTexture; }
 
 	void Queue(const CSolidObject* obj);
@@ -43,12 +41,11 @@ private:
 	FBO fbo;
 	GLuint farTexture;
 	int usedFarTextures;
-	std::vector<const CSolidObject*> pending;
 
 	float2 GetTextureCoords(const int& farTextureNum, const int& orientation);
 	void DrawFarTexture(const CSolidObject* obj, CVertexArray*);
 	int2 GetTextureCoordsInt(const int& farTextureNum, const int& orientation);
-	void ReallyCreateFarTexture(const CSolidObject* obj);
+	void CreateFarTexture(const CSolidObject* obj);
 };
 
 extern CFarTextureHandler* farTextureHandler;

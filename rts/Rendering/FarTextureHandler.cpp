@@ -33,7 +33,7 @@ CFarTextureHandler::CFarTextureHandler()
 	const int maxTexSize = (gu->maxTextureSize<=4096) ? gu->maxTextureSize : 4096; //! ATi supports 16k textures, which might be a bit much for this purpose, so limit it to 4k
 
 	texSizeX = maxTexSize;
-	texSizeY = std::max(iconSizeY,  4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minium space for 4 icons
+	texSizeY = std::max(iconSizeY, 4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minium space for 4 icons
 	texSizeY = next_power_of_2(texSizeY);
 
 	if (!fbo.IsValid()) {
@@ -66,36 +66,6 @@ CFarTextureHandler::~CFarTextureHandler()
 {
 	glDeleteTextures(1, &farTexture);
 	queuedForRender.clear();
-	pending.clear();
-}
-
-
-/**
- * @brief Add the model to the queue of units waiting for their farTexture.
- * On the next CreateFarTextures() call the farTexture for this model will be
- * created.
- */
-void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
-{
-	GML_STDMUTEX_LOCK(tex); // CreateFarTexture
-
-	pending.push_back(obj);
-}
-
-
-/**
- * @brief Process the queue of pending farTexture creation requests.
- * This loops through the queue calling ReallyCreateFarTexture() on each entry,
- * and empties the queue afterwards.
- */
-void CFarTextureHandler::CreateFarTextures()
-{
-	GML_STDMUTEX_LOCK(tex); // CreateFarTextures
-
-	for(std::vector<const CSolidObject*>::const_iterator it = pending.begin(); it != pending.end(); ++it) {
-		ReallyCreateFarTexture(*it);
-	}
-	pending.clear();
 }
 
 
@@ -134,10 +104,13 @@ float2 CFarTextureHandler::GetTextureCoords(const int& farTextureNum, const int&
 /**
  * @brief Really create the far texture for the given model.
  */
-void CFarTextureHandler::ReallyCreateFarTexture(const CSolidObject* obj)
+void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 {
+	GML_STDMUTEX_LOCK(tex); // CreateFarTextures
+
 	const S3DModel* model = obj->model;
 
+	//! make space in the std::vectors
 	while (cache.size() <= obj->team) {
 		cache.push_back(std::vector<int>());
 	}
@@ -146,8 +119,8 @@ void CFarTextureHandler::ReallyCreateFarTexture(const CSolidObject* obj)
 	}
 	cache[obj->team][model->id] = -1;
 
+	//! check if there is enough free space in the atlas, if not try to resize it
 	const int maxSprites = (texSizeX / iconSizeX)*(texSizeY / iconSizeY) / numOrientations - 1;
-
 	if (usedFarTextures >= maxSprites) {
 		const int oldTexSizeY = texSizeY;
 
@@ -195,10 +168,10 @@ void CFarTextureHandler::ReallyCreateFarTexture(const CSolidObject* obj)
 	}
 
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY); //! delete it after finished rendering to the texture
 	fbo.CheckStatus("FARTEXTURE");
 
-	glPushAttrib(GL_ALL_ATTRIB_BITS);//GL_POLYGON_BIT);
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glDisable(GL_BLEND);
 
 	unitDrawer->SetupForUnitDrawing();
@@ -248,8 +221,8 @@ void CFarTextureHandler::ReallyCreateFarTexture(const CSolidObject* obj)
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
 	unitDrawer->CleanUpUnitDrawing();
 
+	//glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	glPopAttrib();
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 
 	fbo.Unattach(GL_DEPTH_ATTACHMENT_EXT);
 	fbo.Unbind();
@@ -308,11 +281,10 @@ void CFarTextureHandler::Draw()
 	//! create new faricons
 	for (std::vector<const CSolidObject*>::const_iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
 		const CSolidObject& obj = **it;
-		if (cache.size()<=obj.team || !cache[obj.team][obj.model->id]) {
+		if (cache.size()<=obj.team || cache[obj.team].size()<=obj.model->id || !cache[obj.team][obj.model->id]) {
 			CreateFarTexture(*it);
 		}
 	}
-	CreateFarTextures();
 
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
