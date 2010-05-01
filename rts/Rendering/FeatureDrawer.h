@@ -33,8 +33,6 @@ public:
 	void SetShowRezBars(bool b) { showRezBars = b; }
 	bool GetShowRezBars() const { return showRezBars; }
 
-
-
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "RenderFeatureMoved");
 	}
@@ -46,6 +44,8 @@ public:
 	void RenderFeatureMoved(const CFeature* feature);
 
 private:
+	void UpdateDrawPos(CFeature* f);
+
 	void DrawOpaqueFeatures(int);
 	void DrawFarFeatures();
 	void DrawFeatureStats();
@@ -53,9 +53,11 @@ private:
 	bool DrawFeatureNow(const CFeature*);
 	void DrawFadeFeaturesHelper(int);
 	void DrawFadeFeaturesSet(std::set<CFeature*>&, int);
-	void GetVisibleFeatures(int, std::vector<CFeature*>*);
+	void GetVisibleFeatures(int, bool drawFar);
 
 	void PostLoad();
+
+	std::set<CFeature*> unsortedFeatures;
 
 	struct DrawQuad {
 		CR_DECLARE_STRUCT(DrawQuad);
@@ -72,7 +74,6 @@ private:
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
 
-	std::vector<CFeature*> drawFar;
 	std::vector<CFeature*> drawStat;
 
 	bool showRezBars;

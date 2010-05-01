@@ -73,25 +73,25 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 
 	StringToLowerInPlace(name);
 
-	// search in cache first
+	//! search in cache first
 	std::map<std::string, S3DModel*>::iterator ci;
 	if ((ci = cache.find(name)) != cache.end()) {
 		return ci->second;
 	}
 
-	std::string fileExt = filesystem.GetExtension(name);
-
-	std::map<std::string, IModelParser*>::iterator pi;
-	if ((pi = parsers.find(fileExt)) != parsers.end()) {
+	//! didn't found in cache, create the model and cache it
+	const std::string fileExt = filesystem.GetExtension(name);
+	std::map<std::string, IModelParser*>::iterator pi = parsers.find(fileExt);
+	if (pi != parsers.end()) {
 		IModelParser* p = pi->second;
 		S3DModel* model = p->Load(name);
 
 		model->relMidPos += centerOffset;
 
 		CreateLists(model->rootobject);
-		farTextureHandler->CreateFarTexture(model);
 
-		cache[name] = model; // cache model
+		cache[name] = model;    //! cache model
+		model->id = cache.size(); //! IDs start with 1
 		return model;
 	}
 

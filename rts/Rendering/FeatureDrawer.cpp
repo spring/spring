@@ -54,7 +54,6 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 	showRezBars = !!configHandler->Get("ShowRezBars", 1);
 
-
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
 
@@ -69,7 +68,6 @@ CFeatureDrawer::~CFeatureDrawer()
 {
 	eventHandler.RemoveClient(this);
 	delete treeDrawer;
-
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		delete opaqueModelRenderers[modelType];
@@ -89,12 +87,18 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
 		UpdateDrawQuad(f);
+
+		unsortedFeatures.insert(f);
 	}
 }
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
+
+	if (f->def->drawType == DRAWTYPE_MODEL) {
+		unsortedFeatures.erase(f);
+	}
 
 	if (f->drawQuad >= 0) {
 		DrawQuad* dq = &drawQuads[f->drawQuad];
@@ -135,17 +139,34 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 void CFeatureDrawer::Update()
 {
 	eventHandler.UpdateDrawFeatures();
+
+	{
+		GML_RECMUTEX_LOCK(feat); // Update
+
+		for (std::set<CFeature*>::iterator fsi = unsortedFeatures.begin(); fsi != unsortedFeatures.end(); ++fsi) {
+			UpdateDrawPos(*fsi);
+		}
+	}
 }
+
+
+void CFeatureDrawer::UpdateDrawPos(CFeature* f)
+{
+//#if defined(USE_GML) && GML_ENABLE_SIM
+//	f->drawPos = f->pos + (f->speed * ((float)gu->lastFrameStart - (float)f->lastUnitUpdate) * gu->weightedSpeedFactor);
+//#else
+	f->drawPos = f->pos + (f->speed * gu->timeOffset);
+//#endif
+	f->drawMidPos = f->drawPos + (f->midPos - f->pos);
+}
+
 
 void CFeatureDrawer::Draw()
 {
-	drawFar.clear();
-
 	if(gu->drawFog) {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
-
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
@@ -165,7 +186,7 @@ void CFeatureDrawer::Draw()
 
 
 	unitDrawer->SetupForUnitDrawing();
-	GetVisibleFeatures(0, &drawFar);
+	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		opaqueModelRenderers[modelType]->PushRenderState();
@@ -175,8 +196,7 @@ void CFeatureDrawer::Draw()
 
 	unitDrawer->CleanUpUnitDrawing();
 
-
-	DrawFarFeatures();
+	farTextureHandler->Draw();
 
 	if (gd->DrawExtraTex()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -220,27 +240,6 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 				++featureSetIt;
 			}
 		}
-	}
-}
-
-void CFeatureDrawer::DrawFarFeatures()
-{
-	if (!drawFar.empty()) {
-		glAlphaFunc(GL_GREATER, 0.5f);
-		glEnable(GL_ALPHA_TEST);
-		glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
-
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
-		for (std::vector<CFeature*>::iterator it = drawFar.begin(); it != drawFar.end(); ++it) {
-			farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->pos, (*it)->radius, (*it)->heading, va);
-		}
-		va->DrawArrayT(GL_QUADS);
-
-		glDisable(GL_ALPHA_TEST);
 	}
 }
 
@@ -424,7 +423,7 @@ void CFeatureDrawer::DrawShadowPass()
 		// shadows are still rendered, but this is expensive
 		// and does not make much difference
 		//
-		// GetVisibleFeatures(1, NULL);
+		// GetVisibleFeatures(1, false);
 
 		if (!gu->atiHacks) {
 			// FIXME: why does texture alpha not work with shadows on ATI?
@@ -459,9 +458,9 @@ public:
 	float unitDrawDist;
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
+	bool farFeatures;
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
-	std::vector<CFeature*>* farFeatures;
 	std::vector<CFeature*>* statFeatures;
 
 	void DrawQuad(int x, int y)
@@ -527,7 +526,7 @@ public:
 					}
 				} else {
 					if (farFeatures) {
-						farFeatures->push_back(f);
+						farTextureHandler->Queue(f);
 					}
 				}
 			}
@@ -537,7 +536,7 @@ public:
 
 
 
-void CFeatureDrawer::GetVisibleFeatures(int extraSize, std::vector<CFeature*>* farFeatures)
+void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 {
 	float featureDist = 3000.0f;
 
@@ -554,7 +553,7 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, std::vector<CFeature*>* f
 	drawer.unitDrawDist = unitDrawer->unitDrawDist;
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
-	drawer.farFeatures = farFeatures;
+	drawer.farFeatures = drawFar;
 	drawer.statFeatures = showRezBars ? &drawStat : NULL;
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);

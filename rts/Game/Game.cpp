@@ -3135,7 +3135,6 @@ bool CGame::Draw() {
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
 	lineDrawer.UpdateLineStipple();
-	farTextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();

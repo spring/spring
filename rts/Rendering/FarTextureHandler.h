@@ -8,8 +8,8 @@
 #include "Vec2.h"
 #include "GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "Sim/Objects/SolidObject.h"
 
-class CCamera;
 struct S3DModel;
 class float3;
 class CVertexArray;
@@ -22,12 +22,14 @@ class CFarTextureHandler
 public:
 	CFarTextureHandler();
 	~CFarTextureHandler();
-	void CreateFarTexture(S3DModel* model);
+	void CreateFarTexture(const CSolidObject* obj);
 	void CreateFarTextures();
 	GLuint GetTextureID() const { return farTexture; }
-	float2 GetTextureCoords(const int& farTextureNum, const int& orientation);
-	void DrawFarTexture(const CCamera*, const S3DModel*, const float3&, float, short, CVertexArray*);
 
+	void Queue(const CSolidObject* obj);
+	void Draw();
+
+private:
 	int texSizeX;
 	int texSizeY;
 
@@ -35,14 +37,18 @@ public:
 	static const int iconSizeY = 32;
 	static const int numOrientations = 8;
 
-private:
-	int2 GetTextureCoordsInt(const int& farTextureNum, const int& orientation);
-	void ReallyCreateFarTexture(S3DModel* model);
+	std::vector<const CSolidObject*> queuedForRender;
+	std::vector< std::vector<int> > cache;
 
 	FBO fbo;
 	GLuint farTexture;
 	int usedFarTextures;
-	std::vector<S3DModel*> pending;
+	std::vector<const CSolidObject*> pending;
+
+	float2 GetTextureCoords(const int& farTextureNum, const int& orientation);
+	void DrawFarTexture(const CSolidObject* obj, CVertexArray*);
+	int2 GetTextureCoordsInt(const int& farTextureNum, const int& orientation);
+	void ReallyCreateFarTexture(const CSolidObject* obj);
 };
 
 extern CFarTextureHandler* farTextureHandler;

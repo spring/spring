@@ -28,7 +28,7 @@ CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
 
 CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 {
-	PrintLoadMsg("Loading map");
+	PrintLoadMsg("Loading SMF");
 
 	ConfigureAnisotropy();
 	usePBO = !!configHandler->Get("UsePBO", 1);
