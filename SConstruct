@@ -425,7 +425,7 @@ if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in s
 		os.remove(maphelperArch)
 		os.remove(cursorsArch)
 	else:
-		if os.system(os.path.join("cont', 'base', 'make_gamedata_arch' + script_ext) + ' ' + base_dir):
+		if os.system(os.path.join('cont', 'base', 'make_gamedata_arch' + script_ext) + ' ' + base_dir):
 			env.Exit(1)
 
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), springcontentArch)

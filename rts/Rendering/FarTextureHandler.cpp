@@ -35,7 +35,7 @@ CFarTextureHandler::CFarTextureHandler()
 	const int maxTexSize = (gu->maxTextureSize<=4096) ? gu->maxTextureSize : 4096; //! ATi supports 16k textures, which might be a bit much for this purpose, so limit it to 4k
 
 	texSizeX = maxTexSize;
-	texSizeY = std::max(iconSizeY, 4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minium space for 4 icons
+	texSizeY = std::max(iconSizeY, 4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minimum space for 4 icons
 	texSizeY = next_power_of_2(texSizeY);
 
 	if (!fbo.IsValid()) {
