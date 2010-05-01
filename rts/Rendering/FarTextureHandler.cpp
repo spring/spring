@@ -20,6 +20,9 @@
 
 CFarTextureHandler* farTextureHandler = NULL;
 
+const int CFarTextureHandler::iconSizeX = 32;
+const int CFarTextureHandler::iconSizeY = 32;
+const int CFarTextureHandler::numOrientations = 8;
 
 CFarTextureHandler::CFarTextureHandler()
 {
