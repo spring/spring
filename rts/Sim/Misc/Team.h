@@ -20,6 +20,11 @@ class CTeam : public TeamBase
 public:
 	CTeam();
 	~CTeam();
+private: //! cannot allow shallow copying of Teams, contains pointers
+	CTeam(const CTeam &team) {}
+	CTeam &operator=(const CTeam &team) {}
+public:
+
 	/**
 	 * This has to be called for every team before SlowUpdates start,
 	 * otherwise values get overwritten.
