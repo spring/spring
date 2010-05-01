@@ -691,12 +691,12 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 int CAICallback::InitPath(float3 start, float3 end, int pathType)
 {
 	assert(((size_t)pathType) < moveinfo->moveData.size());
-	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end);
+	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end, false);
 }
 
 float3 CAICallback::GetNextWaypoint(int pathId)
 {
-	return pathManager->NextWaypoint(pathId, ZeroVector);
+	return pathManager->NextWaypoint(pathId, ZeroVector, false);
 }
 
 void CAICallback::FreePath(int pathId)
