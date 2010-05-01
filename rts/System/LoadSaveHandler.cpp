@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <string>
+
 #include "mmgr.h"
 #include "LoadSaveHandler.h"
 #include "CregLoadSaveHandler.h"

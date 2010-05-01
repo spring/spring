@@ -990,9 +990,9 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       const std::string& texName)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = new UnitDefImage;
-	} else if (unitDef->buildPic->textureOwner) {
-		glDeleteTextures(1, &unitDef->buildPic->textureID);
+		unitDef->buildPic = new UnitDefImage();
+	} else {
+		unitDef->buildPic->Free();
 	}
 
 	CBitmap bitmap;
@@ -1013,7 +1013,6 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
-	unitImage->textureOwner = true;
 	unitImage->imageSizeX = bitmap.xsize;
 	unitImage->imageSizeY = bitmap.ysize;
 }
@@ -1023,14 +1022,13 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       unsigned int texID, int xsize, int ysize)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = new UnitDefImage;
-	} else if (unitDef->buildPic->textureOwner) {
-		glDeleteTextures(1, &unitDef->buildPic->textureID);
+		unitDef->buildPic = new UnitDefImage();
+	} else {
+		unitDef->buildPic->Free();
 	}
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
-	unitImage->textureOwner = false;
 	unitImage->imageSizeX = xsize;
 	unitImage->imageSizeY = ysize;
 }
