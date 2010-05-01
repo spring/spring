@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
+#include "string.h"
 
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
