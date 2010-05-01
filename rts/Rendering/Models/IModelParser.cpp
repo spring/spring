@@ -79,7 +79,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 		return ci->second;
 	}
 
-	//! didn't found in cache, create the model and cache it
+	//! not found in cache, create the model and cache it
 	const std::string fileExt = filesystem.GetExtension(name);
 	std::map<std::string, IModelParser*>::iterator pi = parsers.find(fileExt);
 	if (pi != parsers.end()) {

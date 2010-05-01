@@ -8,9 +8,8 @@
 #include "Vec2.h"
 #include "GL/myGL.h"
 #include "Rendering/GL/FBO.h"
-#include "Sim/Objects/SolidObject.h"
 
-struct S3DModel;
+class CSolidObject;
 class float3;
 class CVertexArray;
 

@@ -4,6 +4,9 @@
 #include "mmgr.h"
 #include "string.h"
 
+#include "Map/MapInfo.h"
+#include "Game/Camera.h"
+
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
@@ -11,8 +14,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
-#include "Map/MapInfo.h"
-#include "Game/Camera.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
@@ -237,7 +239,7 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 	const int farTextureNum = cache[obj->team][obj->model->id];
 
 	//! not found in the atlas
-	if (farTextureNum<=0)
+	if (farTextureNum <= 0)
 		return;
 
 	const float3 interPos = obj->drawPos + UpVector * obj->model->height * 0.5f;
