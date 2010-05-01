@@ -83,7 +83,7 @@ public:
 		const CPathFinderDef& peDef,
 		Path& path,
 		unsigned int maxSearchedBlocks = 10000,
-		bool synced
+		bool synced = true
 	);
 
 
