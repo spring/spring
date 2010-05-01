@@ -33,9 +33,9 @@ private:
 	int texSizeX;
 	int texSizeY;
 
-	static const int iconSizeX = 32;
-	static const int iconSizeY = 32;
-	static const int numOrientations = 8;
+	static const int iconSizeX;
+	static const int iconSizeY;
+	static const int numOrientations;
 
 	std::vector<const CSolidObject*> queuedForRender;
 	std::vector< std::vector<int> > cache;
