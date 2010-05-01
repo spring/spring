@@ -77,7 +77,14 @@ public:
 	 *		The maximum number of nodes/blocks the search are allowed to analyze.
 	 *		This restriction could be used in cases where CPU-consumption are critical.
 	 */
-	SearchResult GetPath(const MoveData& moveData, float3 start, const CPathFinderDef& peDef, Path& path, unsigned int maxSearchedBlocks = 10000);
+	SearchResult GetPath(
+		const MoveData& moveData,
+		float3 start,
+		const CPathFinderDef& peDef,
+		Path& path,
+		unsigned int maxSearchedBlocks = 10000,
+		bool synced = true
+	);
 
 
 	/**

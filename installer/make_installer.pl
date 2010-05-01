@@ -1,16 +1,23 @@
 #!/usr/bin/perl -w
-# Author: Yann Riou (aka bibim)
+#
+# @param distributionDir
+#
 
 use strict;
 use File::Basename;
-use Config;
+use Cwd 'abs_path';
+use File::Spec::Functions;
 
+
+# Evaluate installer and root dirs
 my $installerDir=$0;
 $installerDir=$ENV{PWD}."/".$installerDir unless($installerDir =~ /^\//);
 $installerDir=dirname($installerDir);
 
 chdir("$installerDir/..");
 die "Unable to find \"installer\" directory." unless(-d "installer");
+
+my $nsisDefines="";
 
 # Aquire AI Interfaces and Skirmish AI versions
 sub getSubDirsVersion {
@@ -46,23 +53,56 @@ sub getVersionVarsString {
 my $allVersStr= getVersionVarsString("AI/Interfaces/", "AI_INT_VERS_");
 $allVersStr= $allVersStr." ".getVersionVarsString("AI/Skirmish/", "SKIRM_AI_VERS_");
 
-my $testBuildString="";
+
+# Evaluate the engines version
 my $tag=`git describe --candidate=0 --tags 2>/dev/null`;
-if($?) {
-  $testBuildString=" -DTEST_BUILD";
-  $tag=`git describe  --tags`;
+if ($?) {
+  $nsisDefines="$nsisDefines -DTEST_BUILD";
+  $tag=`git describe --tags`;
   die "Unable to run \"git describe\"." if($?);
   chomp($tag);
   print "Creating test installer for revision $tag\n";
-}else{
+} else {
   chomp($tag);
   print "Creating installer for release $tag\n";
 }
+$nsisDefines="$nsisDefines -DVERSION_TAG=\"$tag\"";
 
+
+# Download some files to be included in the installer
 system("sh", "installer/springlobby_download.sh");
 chdir("$installerDir/downloads");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
 system("wget", "-N", "http://www.springlobby.info/installer/springsettings.exe");
 system("wget", "-N", "http://files.caspring.org/caupdater/SpringDownloader.exe");
 chdir("$installerDir/..");
-system("makensis -V3$testBuildString -DREVISION=$tag $allVersStr installer/spring.nsi");
+
+
+# Evaluate the distribution dir
+# This is where the build system installed Spring,
+# and where the installer generater will grab files from.
+
+my $distDir="";
+foreach my $dd ("$1", "dist", "game") {
+	if (($dd eq "") or (not -d $dd)) {
+		print("Distribution directory not found: \"$dd\"\n");
+	} else {
+		$distDir=abs_path($dd);
+		print("Using distribution directory \"$distDir\"\n");
+		last; # like break in other languages
+	}
+}
+
+if ($distDir eq "") {
+	print("Unable to find a distribution directory.\n");
+	print(" -> Relying on BUILD_DIR or DIST_DIR beeing set in custom_defines.nsi.\n");
+} else {
+	print("Using distribution directory \"$distDir\"\n");
+	my $distDirRel = File::Spec->abs2rel($distDir, "installer");
+	$distDirRel =~ tr/\//\\/d;
+	$nsisDefines="$nsisDefines -DDIST_DIR=\"$distDirRel\"";
+}
+
+
+# Generate the installer
+system("makensis -V3 $nsisDefines $allVersStr installer/spring.nsi");

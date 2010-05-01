@@ -80,6 +80,13 @@ local mapDefaults = {
     unitShadowDensity = 0.8,
   },
 
+  grass = {
+    grassBladeWaveScale = 1.0,
+    grassBladeWidth     = 0.32,
+    grassBladeHeight    = 4.0,
+    grassBladeAngle     = 1.57, -- (PI / 2) radians
+  },
+
   resources = {
     detailTex       = '',
     specularTex     = '',

@@ -102,7 +102,7 @@ public:
 	/// send all data waiting in char outgoingData[]
 	virtual void Flush(const bool forced = false);
 	
-	virtual bool CheckTimeout(int nsecs = 0) const;
+	virtual bool CheckTimeout(int nsecs = 0, bool initial = false) const;
 	
 	void InitConnection(boost::asio::ip::udp::endpoint address, boost::shared_ptr<boost::asio::ip::udp::socket> socket);
 

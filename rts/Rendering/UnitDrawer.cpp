@@ -407,7 +407,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 			drawIcon.push_back(unit);
 		} else {
 			if (sqDist > farLength) {
-				drawFar.push_back(unit);
+				farTextureHandler->Queue(unit);
 			} else {
 				if (!DrawUnitLOD(unit)) {
 					SetTeamColour(unit->team);
@@ -430,7 +430,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	drawFar.clear();
 	drawStat.clear();
 	drawIcon.clear();
 
@@ -473,7 +472,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CleanUpUnitDrawing();
 
 	DrawOpaqueShaderUnits();
-	DrawFarTextures();
+	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
 
 	glDisable(GL_FOG);
@@ -539,35 +538,6 @@ void CUnitDrawer::DrawOpaqueAIUnits()
 			glPopMatrix();
 		}
 	}
-}
-
-void CUnitDrawer::DrawFarTextures()
-{
-	if (drawFar.empty()) {
-		return;
-	}
-
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glNormal3fv((const GLfloat*) &camNorm.x);
-
-	if (gu->drawFog) {
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		glEnable(GL_FOG);
-	}
-
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
-	for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); ++it) {
-		farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
-	}
-
-	va->DrawArrayT(GL_QUADS);
 }
 
 void CUnitDrawer::DrawUnitIcons(bool drawReflection)
@@ -1162,7 +1132,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	for (std::set<GhostBuilding*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		std::set<GhostBuilding*>::iterator itNext(it); itNext++;
 
-		if (loshandler->InLos((*it)->pos, gu->myAllyTeam)) {
+		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			if ((*it)->decal) {
 				(*it)->decal->gbOwner = 0;
@@ -2260,7 +2230,6 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
 		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
-		va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(8, 0, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);

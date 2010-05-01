@@ -60,7 +60,14 @@ struct S3DModelPiece {
 
 struct S3DModel
 {
-	S3DModelPiece* rootobject;
+	int id; //! unsynced ID, starting with 1
+
+	int type;               //! MODELTYPE_*
+	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+
+	std::string name;
+	std::string tex1;
+	std::string tex2;
 
 	int numobjects;
 	float radius;
@@ -70,13 +77,7 @@ struct S3DModel
 	float3 maxs;
 	float3 relMidPos;
 
-	int type;               //! MODELTYPE_*
-	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
-	int farTextureNum;
-
-	std::string name;
-	std::string tex1;
-	std::string tex2;
+	S3DModelPiece* rootobject;
 
 	inline void DrawStatic() const { rootobject->DrawStatic(); };
 };

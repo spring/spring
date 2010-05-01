@@ -10,9 +10,22 @@ uniform vec3 billboardDirZ;
 uniform mat4 shadowMatrix;
 uniform vec4 shadowParams;
 
+uniform float simFrame;
+uniform vec3 windSpeed;
+
 void main() {
 	#ifdef GRASS_DIST_BASIC
 	vec4 vertexPos = gl_Vertex;
+
+		#ifdef GRASS_ANIMATION
+		float windScale =
+			0.005 * (1.0 + sin((vertexPos.x + vertexPos.z) / 45.0 + simFrame / 15.0)) *
+			gl_Normal.y * (1.0 - texOffset.x);
+
+		 vertexPos.x += (windSpeed.x * windScale);
+		 vertexPos.z += (windSpeed.z * windScale);
+		#endif
+
 		vertexPos.xyz += billboardDirX * gl_Normal.x;
 		vertexPos.xyz += billboardDirY * gl_Normal.y;
 		vertexPos.xyz += billboardDirZ;
@@ -33,6 +46,15 @@ void main() {
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
 
 	vec4 vertexPos = gl_ModelViewMatrix * gl_Vertex;
+		#ifdef GRASS_ANIMATION
+		vec2 windScale = vec2(
+			sin((simFrame + gl_MultiTexCoord0.s) * 5.0 / (10.0 + floor(gl_MultiTexCoord0.s))) * (gl_MultiTexCoord0.t) * 0.01,
+			(1.0 + sin((vertexPos.x + vertexPos.z) / 45.0 + simFrame / 15.0)) * 0.025 * gl_MultiTexCoord0.t
+		);
+
+		vertexPos.x += dot(windSpeed.zx, windScale);
+		vertexPos.z += dot(windSpeed.xz, windScale);
+		#endif
 	vec4 vertexShadowPos = shadowMatrix * vertexPos;
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
@@ -55,6 +77,15 @@ void main() {
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
 
 	vec4 vertexPos = gl_Vertex;
+		#ifdef GRASS_ANIMATION
+		float windScale =
+			0.005 * (1.0 + sin((vertexPos.x + vertexPos.z) / 45.0 + simFrame / 15.0)) *
+			gl_Normal.y * (1.0 - texOffset.x);
+
+		 vertexPos.x += (windSpeed.x * windScale);
+		 vertexPos.z += (windSpeed.z * windScale);
+		#endif
+
 		vertexPos.xyz += billboardDirX * gl_Normal.x;
 		vertexPos.xyz += billboardDirY * gl_Normal.y;
 		vertexPos.xyz += billboardDirZ;

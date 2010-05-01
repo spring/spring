@@ -83,8 +83,6 @@ public:
 
 	float health;
 	float reclaimLeft;
-	int allyteam;
-	int team;
 
 	bool noSelect;
 

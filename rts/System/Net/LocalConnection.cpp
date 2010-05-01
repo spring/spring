@@ -70,7 +70,7 @@ void CLocalConnection::Flush(const bool forced)
 {
 }
 
-bool CLocalConnection::CheckTimeout(int nsecs) const
+bool CLocalConnection::CheckTimeout(int nsecs, bool initial) const
 {
 	return false;
 }

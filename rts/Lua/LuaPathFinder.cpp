@@ -69,9 +69,9 @@ static int path_next(lua_State* L)
 		return 0;
 	}
 
-	lua_pushnumber(L, point.x);		
-	lua_pushnumber(L, point.y);		
-	lua_pushnumber(L, point.z);		
+	lua_pushnumber(L, point.x);
+	lua_pushnumber(L, point.y);
+	lua_pushnumber(L, point.z);
 
 	return 3;
 }
