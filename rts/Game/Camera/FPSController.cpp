@@ -10,6 +10,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
+#include "myMath.h"
 
 using std::min;
 using std::max;
@@ -18,6 +19,7 @@ CFPSController::CFPSController()
 	: oldHeight(300)
 {
 	scrollSpeed = configHandler->Get("FPSScrollSpeed", 10) * 0.1f;
+	mouseScale = configHandler->Get("FPSMouseScale", 0.01f);
 	enabled = !!configHandler->Get("FPSEnabled", 1);
 	fov = configHandler->Get("FPSFOV", 45.0f);
 }
@@ -25,19 +27,16 @@ CFPSController::CFPSController()
 
 void CFPSController::KeyMove(float3 move)
 {
-	move*=move.z*400;
-	pos+=(camera->forward*move.y+camera->right*move.x)*scrollSpeed;
+	move *= move.z * 400;
+	pos  += (camera->forward * move.y + camera->right * move.x) * scrollSpeed;
 }
 
 
 void CFPSController::MouseMove(float3 move)
 {
-	camera->rot.y -= mouseScale*move.x;
-	camera->rot.x -= mouseScale*move.y*move.z;
-	if(camera->rot.x>PI*0.4999f)
-		camera->rot.x=PI*0.4999f;
-	if(camera->rot.x<-PI*0.4999f)
-		camera->rot.x=-PI*0.4999f;
+	camera->rot.y -= mouseScale * move.x;
+	camera->rot.x -= mouseScale * move.y * move.z;
+	camera->rot.x = Clamp(camera->rot.x, -PI*0.4999f, PI*0.4999f);
 }
 
 
@@ -114,7 +113,7 @@ void CFPSController::SwitchTo(bool showText)
 {
 	if (showText) {
 		logOutput.Print("Switching to FPS style camera");
-  }
+	}
 }
 
 

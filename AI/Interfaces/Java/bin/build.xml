@@ -24,7 +24,7 @@
 		<property name="build.home" location="${spring.home}/build"/>
 		<property name="build.dir"
 				location="${build.home}/AI/Interfaces/${interface.name}"/>
-		<property name="dist.home" location="${spring.home}/game"/>
+		<property name="dist.home" location="${spring.home}/dist"/>
 		<property name="dist.dir"
 					location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
 		<property name="doc.dir"

@@ -64,7 +64,7 @@ include=" \
  $dir/AI/ \
  $dir/doc/ \
  $dir/Doxyfile \
- $dir/game/ \
+ $dir/cont/ \
  $dir/installer/ \
  $dir/LICENSE.html \
  $dir/README.* \

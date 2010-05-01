@@ -89,9 +89,6 @@ LuaParser::LuaParser(const string& _textChunk,
 
 LuaParser::~LuaParser()
 {
-	if (L != NULL) {
-		lua_close(L); L = NULL;
-	}
 	set<LuaTable*>::iterator it;
 	for (it = tables.begin(); it != tables.end(); ++it) {
 		LuaTable& table = **it;
@@ -99,6 +96,9 @@ LuaParser::~LuaParser()
 		table.L       = NULL;
 		table.isValid = false;
 		table.refnum  = LUA_NOREF;
+	}
+	if (L != NULL) {
+		lua_close(L); L = NULL;
 	}
 }
 

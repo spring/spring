@@ -2828,7 +2828,7 @@ bool CGame::Update()
 		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
 	}
 
-	if (net->CheckTimeout() && !gameOver) {
+	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
 		GameEnd();
 	}
@@ -3135,7 +3135,6 @@ bool CGame::Draw() {
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
 	lineDrawer.UpdateLineStipple();
-	farTextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();

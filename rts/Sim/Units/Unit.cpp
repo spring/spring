@@ -90,8 +90,6 @@ float CUnit::empDecline     = 2 * UNIT_SLOWUPDATE_RATE / GAME_SPEED / 40.0f;  //
 CUnit::CUnit():
 	unitDef(0),
 	collisionVolume(0),
-	team(0),
-	allyteam(0),
 	frontdir(0,0,1),
 	rightdir(-1,0,0),
 	updir(0,1,0),
@@ -2256,8 +2254,6 @@ CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefName),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(team),
-	CR_MEMBER(allyteam),
 	CR_MEMBER(lineage),
 	CR_MEMBER(aihint),
 	CR_MEMBER(frontdir),
@@ -2377,8 +2373,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),
 	CR_MEMBER(activated),
-//	CR_MEMBER(drawPos), ??
-//	CR_MEMBER(drawMidPos), ??
 //#if defined(USE_GML) && GML_ENABLE_SIM
 //	CR_MEMBER(lastUnitUpdate),
 //#endif

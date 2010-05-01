@@ -37,7 +37,7 @@ public:
 	void InitLocalClient();
 
 	/// Are we still connected (or did the connection timed out)?
-	bool CheckTimeout(int nsecs = 0) const;
+	bool CheckTimeout(int nsecs = 0, bool initial = false) const;
 
 	void AttemptReconnect(const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
 

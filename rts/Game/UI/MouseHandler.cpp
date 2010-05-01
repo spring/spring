@@ -161,14 +161,11 @@ void CMouseHandler::LoadCursors()
 
 /******************************************************************************/
 
-void CMouseHandler::MouseMove(int x, int y)
+void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 {
 	if(hide) {
 		lastx = x;
 		lasty = y;
-
-		int dx = lastx - (gu->viewSizeX / 2 + gu->viewPosX);
-		int dy = lasty - (gu->viewSizeY / 2 + gu->viewPosY);
 
 		float3 move;
 		move.x = dx;
@@ -178,18 +175,16 @@ void CMouseHandler::MouseMove(int x, int y)
 		return;
 	}
 
-	const int dx = x - lastx;
-	const int dy = y - lasty;
 	lastx = x;
 	lasty = y;
 
-	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
+	dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
 
-	buttons[SDL_BUTTON_LEFT].movement += abs(dx) + abs(dy);
-	buttons[SDL_BUTTON_RIGHT].movement += abs(dx) + abs(dy);
+	buttons[SDL_BUTTON_LEFT].movement  += (int)sqrt(float(dx*dx + dy*dy));
+	buttons[SDL_BUTTON_RIGHT].movement += (int)sqrt(float(dx*dx + dy*dy));
 
 	if (!game->gameOver) {
-		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels+=abs(dx)+abs(dy);
+		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += (int)sqrt(float(dx*dx + dy*dy));
 	}
 
 	if(activeReceiver){
@@ -226,7 +221,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	buttons[button].x = x;
 	buttons[button].y = y;
 	buttons[button].camPos = camera->pos;
-	buttons[button].dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
+	buttons[button].dir = dir;
 	buttons[button].movement = 0;
 
 	activeButton = button;

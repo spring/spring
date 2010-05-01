@@ -33,6 +33,7 @@ public:
 	bool flipped;
 
 private:
+	float middleClickScrollSpeed;
 	float zscale;
 	float3 dir;
 	float height;

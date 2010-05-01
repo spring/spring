@@ -72,15 +72,8 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	trackRadius = radius;;
 
 	// lock the view direction to the target
-	const float3 diff = (trackPos - pos);
+	const float3 diff(trackPos - pos);
 	const float rads = atan2(diff.x, diff.z);
-	float radDiff = -fmod(camera->rot.y - rads, 2.0f * PI);
-
-	if (radDiff < -PI) {
-		radDiff += (2.0 * PI);
-	} else if (radDiff > PI) {
-		radDiff -= (2.0 * PI);
-	}
 	camera->rot.y = rads;
 
 	const float len2D = diff.Length2D();

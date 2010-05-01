@@ -78,8 +78,8 @@ void CNetProtocol::InitLocalClient()
 	logOutput.Print("Connecting to local server");
 }
 
-bool CNetProtocol::CheckTimeout(int nsecs) const {
-	return serverConn->CheckTimeout(nsecs);
+bool CNetProtocol::CheckTimeout(int nsecs, bool initial) const {
+	return serverConn->CheckTimeout(nsecs, initial);
 }
 
 bool CNetProtocol::Connected() const

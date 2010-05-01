@@ -40,6 +40,7 @@ public:
 private:
 	void Move(const float3& move, const unsigned timeDiff);
 	
+	float middleClickScrollSpeed;
 	float zscale;
 	float3 dir;
 	float height;

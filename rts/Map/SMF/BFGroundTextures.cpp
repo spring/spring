@@ -255,9 +255,14 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 
 void CBFGroundTextures::DrawUpdate(void)
 {
-	float diag = fastmath::apxsqrt(gu->viewSizeX*gu->viewSizeX + gu->viewSizeY*gu->viewSizeY); //screen diagonal number of pixels
+	// screen-diagonal number of pixels
+	const float diag = fastmath::apxsqrt(gu->viewSizeX * gu->viewSizeX + gu->viewSizeY * gu->viewSizeY);
+
 	for (int y = 0; y < numBigTexY; ++y) {
-		float dy = cam2->pos.z - y * bigSquareSize * SQUARE_SIZE - (SQUARE_SIZE << 6);
+		float dy =
+			cam2->pos.z -
+			y * bigSquareSize * SQUARE_SIZE -
+			(SQUARE_SIZE << 6);
 		dy = max(0.0f, float(fabs(dy) - (SQUARE_SIZE << 6)));
 
 		for (int x = 0; x < numBigTexX; ++x) {
@@ -273,38 +278,52 @@ void CBFGroundTextures::DrawUpdate(void)
 				continue;
 			}
 
-			float dx = cam2->pos.x - x * bigSquareSize * SQUARE_SIZE - (SQUARE_SIZE << 6);
+			float dx =
+				cam2->pos.x -
+				x * bigSquareSize * SQUARE_SIZE -
+				(SQUARE_SIZE << 6);
 			dx = max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
-			float dz = max( cam2->pos.y - (heightMaxes[y * numBigTexX + x] + heightMins[y * numBigTexX + x])/2 ,0.0f);
-			float dist = fastmath::apxsqrt(dx * dx + dy * dy + dz * dz);
 
-			// so, we shall work under the following assumptions:
-			// the minimum mip level is the closest ceiling mip level that we can use based on distance, FOV and tile size.
-			// we can increase this mip level IF the stretch factor requires us to do so.
-			// for simplicitys sake we will approximate tile size with a sphere of 512 elmos radius- which is =~ a sqrt2*1024 =~ 1400 diag pixels diameter sphere.
-			// half fov is 45 degs, for default ta and most other camera modes
-			int wantedLevel =0;
-			float dh=heightMaxes[y * numBigTexX + x] - heightMins[y * numBigTexX + x];
-			float sp=0; //screenpixels
-			if (dh > 1024) // this means that is the heightmap chunk is taller than it is wide, then we use the tallness metric instead of the width for calculating the size of it on screen.
-				sp = (dh)*(diag/2)/dist; //dist and viewsize based number (screenpixels).
+			const float dz = max(cam2->pos.y - (heightMaxes[y * numBigTexX + x] + heightMins[y * numBigTexX + x]) / 2, 0.0f);
+			const float dist = fastmath::apxsqrt(dx * dx + dy * dy + dz * dz);
+
+			// we work under the following assumptions:
+			//    the minimum mip level is the closest ceiling mip level that we can use
+			//    based on distance, FOV and tile size; we can increase this mip level IF
+			//    the stretch factor requires us to do so.
+			//
+			//    we will approximate tile size with a sphere 512 elmos in radius, which
+			//    translates to a diameter of =~ sqrt2 * 1024 =~ 1400 pixels
+			//
+			//    half (vertical) FOV is 45 degs, for default and most other camera modes
+			int wantedLevel = 0;
+			float heightDiff = heightMaxes[y * numBigTexX + x] - heightMins[y * numBigTexX + x];
+			int screenPixels = 1024;
+
+			if (dist > 0.0f) {
+				if (heightDiff > 1024.0f) {
+					// this means the heightmap chunk is taller than it is wide,
+					// so we use the tallness metric instead for calculating its
+					// on-screen size in pixels
+					screenPixels = int((heightDiff) * (diag * 0.5f) / dist);
+				} else {
+					screenPixels = int(1024 * (diag * 0.5f) / dist);
+				}
+			}
+
+			if (screenPixels > 513)
+				wantedLevel = 0;
+			else if (screenPixels > 257)
+				wantedLevel = 1;
+			else if (screenPixels > 129)
+				wantedLevel = 2;
 			else
-				sp = 1024*(diag/2)/dist;
-
-			if (sp>513)
-				wantedLevel=0;
-			else if (sp > 257)
-				wantedLevel=1;
-			else if (sp > 129)
-				wantedLevel=2;
-			else
-				wantedLevel=3;
-
-			if (stretchFactors[y*numBigTexX+x]>16000 && wantedLevel>0) //16k is an approximation of the sobel sum required to have a heightmap that has double the texture area than a flat square.
-				wantedLevel--;
-
-			if (wantedLevel > 3)
 				wantedLevel = 3;
+
+			// 16K is an approximation of the Sobel sum required to have a
+			// heightmap that has double the texture area of a flat square
+			if (stretchFactors[y * numBigTexX + x] > 16000 && wantedLevel > 0)
+				wantedLevel--;
 
 			if (square->texLevel != wantedLevel) {
 				glDeleteTextures(1, &square->texture);

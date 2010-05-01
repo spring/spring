@@ -197,7 +197,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 void CPreGame::UpdateClientNet()
 {
-	if (net->CheckTimeout())
+	if (net->CheckTimeout(0, true))
 	{
 		logOutput.Print("Server not reachable");
 		globalQuit = true;
@@ -212,7 +212,7 @@ void CPreGame::UpdateClientNet()
 			case NETMSG_QUIT: {
 				const std::string message((char*)(inbuf+3));
 				logOutput.Print(message);
-				throw std::runtime_error(message);
+				handleerror(NULL, message, "Quit message", MBF_OK | MBF_EXCL);
 				break;
 			}
 			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.

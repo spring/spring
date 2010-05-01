@@ -3,7 +3,7 @@
 
 # absolute or relative to spring source root
 # default:
-BUILD_DIR=game/manpages
+BUILD_DIR=build/manpages
 # ... or use first argument to this script, if one was given
 if [ $# -ge 1 ]
 then

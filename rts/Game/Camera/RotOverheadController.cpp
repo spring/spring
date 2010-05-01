@@ -9,7 +9,7 @@
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-
+#include "myMath.h"
 
 CRotOverheadController::CRotOverheadController()
 	: oldHeight(500)
@@ -23,27 +23,23 @@ CRotOverheadController::CRotOverheadController()
 
 void CRotOverheadController::KeyMove(float3 move)
 {
-	move*=sqrt(move.z)*400;
+	move *= sqrt(move.z) * 400;
 
-	float3 flatForward=camera->forward;
-	if(camera->forward.y<-0.9f)
-		flatForward+=camera->up;
-	flatForward.y=0;
+	float3 flatForward = camera->forward;
+	if(camera->forward.y < -0.9f)
+		flatForward += camera->up;
+	flatForward.y = 0;
 	flatForward.ANormalize();
 
-	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
+	pos += (flatForward * move.y + camera->right * move.x) * scrollSpeed;
 }
 
 
 void CRotOverheadController::MouseMove(float3 move)
 {
-	camera->rot.y -= mouseScale*move.x;
-	camera->rot.x -= mouseScale*move.y*move.z;
-
-	if(camera->rot.x>PI*0.4999f)
-		camera->rot.x=PI*0.4999f;
-	if(camera->rot.x<-PI*0.4999f)
-		camera->rot.x=-PI*0.4999f;
+	camera->rot.y -= mouseScale * move.x;
+	camera->rot.x -= mouseScale * move.y * move.z;
+	camera->rot.x = Clamp(camera->rot.x, -PI*0.4999f, PI*0.4999f);
 }
 
 
@@ -67,18 +63,9 @@ void CRotOverheadController::Update()
 
 float3 CRotOverheadController::GetPos()
 {
-	if(pos.x<0.01f)
-		pos.x=0.01f;
-	if(pos.z<0.01f)
-		pos.z=0.01f;
-	if(pos.x>(gs->mapx)*SQUARE_SIZE-0.01f)
-		pos.x=(gs->mapx)*SQUARE_SIZE-0.01f;
-	if(pos.z>(gs->mapy)*SQUARE_SIZE-0.01f)
-		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
-	if(pos.y<ground->GetHeight(pos.x,pos.z)+5)
-		pos.y=ground->GetHeight(pos.x,pos.z)+5;
-	if(pos.y>9000)
-		pos.y=9000;
+	pos.x = Clamp(pos.x, 0.01f, gs->mapx*SQUARE_SIZE-0.01f);
+	pos.z = Clamp(pos.z, 0.01f, gs->mapy*SQUARE_SIZE-0.01f);
+	pos.y = Clamp(pos.y, ground->GetHeight(pos.x,pos.z)+5, 9000);
 
 	oldHeight = pos.y - ground->GetHeight(pos.x,pos.z);
 

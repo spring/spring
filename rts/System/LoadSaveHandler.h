@@ -3,9 +3,6 @@
 #ifndef LOADSAVEHANDLER_H
 #define LOADSAVEHANDLER_H
 
-#include <string>
-
-
 class ILoadSaveHandler
 {
 public:

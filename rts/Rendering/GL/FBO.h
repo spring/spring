@@ -125,6 +125,8 @@ public:
 
 
 private:
+	bool valid;
+
 	/**
 	 * @brief rbos
 	 *

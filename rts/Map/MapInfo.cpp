@@ -47,6 +47,7 @@ void CMapInfo::Load()
 	ReadGlobal();
 	ReadAtmosphere();
 	ReadGui();
+	ReadGrass();
 	ReadLight();
 	ReadWater();
 	ReadSmf();
@@ -122,6 +123,16 @@ void CMapInfo::ReadAtmosphere()
 	atmo.minWind      = min(atmo.maxWind, atmo.minWind);
 }
 
+
+void CMapInfo::ReadGrass()
+{
+	const LuaTable grassTable = parser->GetRoot().SubTable("grass");
+
+	grass.bladeWaveScale = grassTable.GetFloat("bladeWaveScale", 1.0f);
+	grass.bladeWidth     = grassTable.GetFloat("bladeWidth", 0.32f);
+	grass.bladeHeight    = grassTable.GetFloat("bladeHeight", 4.0f);
+	grass.bladeAngle     = grassTable.GetFloat("bladeAngle", 1.57f);
+}
 
 void CMapInfo::ReadLight()
 {

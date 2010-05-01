@@ -63,11 +63,17 @@ protected:
 
 protected:
 	float fov;
-	float mouseScale;
+	float3 pos;
+
+	/**
+	* @brief scrollSpeed
+	* scales the scroll speed in general
+	* (includes middleclick, arrowkey, screenedge scrolling)
+	*/
 	float scrollSpeed;
 
-	float3 pos;
 	/**
+	 * @brief switchVal
 	 * Where to switch from Camera-Unit-distance to Camera-Ground-distance
 	 * for deciding whether to draw 3D view or icon of units.
 	 * * 1.0 = 0 degree  = overview
