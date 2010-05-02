@@ -22,7 +22,7 @@ public:
 	~CTeam();
 private: //! cannot allow shallow copying of Teams, contains pointers
 	CTeam(const CTeam &team) {}
-	CTeam &operator=(const CTeam &team) {}
+	CTeam& operator=(const CTeam& team) { return *((CTeam*)NULL); }
 public:
 
 	/**
