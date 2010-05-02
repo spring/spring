@@ -315,21 +315,21 @@ struct SSkirmishAICallback {
 
 
 // BEGINN OBJECT Resource
-	int               (CALLING_CONV *getResources)(int skirmishAIId); // FETCHER:MULTI:NUM:Resource
+	int               (CALLING_CONV *getResources)(int skirmishAIId); //$ FETCHER:MULTI:NUM:Resource
 
-	int               (CALLING_CONV *getResourceByName)(int skirmishAIId, const char* resourceName); // REF:RETURN->Resource
+	int               (CALLING_CONV *getResourceByName)(int skirmishAIId, const char* resourceName); //$ REF:RETURN->Resource
 
 	const char*       (CALLING_CONV *Resource_getName)(int skirmishAIId, int resourceId);
 
 	float             (CALLING_CONV *Resource_getOptimum)(int skirmishAIId, int resourceId);
 
-	float             (CALLING_CONV *Economy_getCurrent)(int skirmishAIId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Economy_getCurrent)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *Economy_getIncome)(int skirmishAIId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Economy_getIncome)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *Economy_getUsage)(int skirmishAIId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Economy_getUsage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *Economy_getStorage)(int skirmishAIId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Economy_getStorage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 // END OBJECT Resource
 
@@ -355,9 +355,9 @@ struct SSkirmishAICallback {
 	 * These properties are usually fixed, and not meant to change during a game.
 	 * The unitId is a unique id for this type of unit.
 	 */
-	int               (CALLING_CONV *getUnitDefs)(int skirmishAIId, int* unitDefIds, int unitDefIds_sizeMax); // FETCHER:MULTI:IDs:UnitDef:unitDefIds
+	int               (CALLING_CONV *getUnitDefs)(int skirmishAIId, int* unitDefIds, int unitDefIds_sizeMax); //$ FETCHER:MULTI:IDs:UnitDef:unitDefIds
 
-	int               (CALLING_CONV *getUnitDefByName)(int skirmishAIId, const char* unitName); // REF:RETURN->UnitDef
+	int               (CALLING_CONV *getUnitDefByName)(int skirmishAIId, const char* unitName); //$ REF:RETURN->UnitDef
 
 //	int               (CALLING_CONV *UnitDef_getId)(int skirmishAIId, int unitDefId);
 
@@ -383,30 +383,30 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *UnitDef_getGaia)(int skirmishAIId, int unitDefId);
 
-	float             (CALLING_CONV *UnitDef_getUpkeep)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getUpkeep)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
 	/** This amount of the resource will always be created. */
-	float             (CALLING_CONV *UnitDef_getResourceMake)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getResourceMake)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
 	/**
 	 * This amount of the resource will be created when the unit is on and enough
 	 * energy can be drained.
 	 */
-	float             (CALLING_CONV *UnitDef_getMakesResource)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getMakesResource)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *UnitDef_getCost)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getCost)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *UnitDef_getExtractsResource)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getExtractsResource)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *UnitDef_getResourceExtractorRange)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getResourceExtractorRange)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *UnitDef_getWindResourceGenerator)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getWindResourceGenerator)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *UnitDef_getTidalResourceGenerator)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getTidalResourceGenerator)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *UnitDef_getStorage)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *UnitDef_getStorage)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
-	bool              (CALLING_CONV *UnitDef_isSquareResourceExtractor)(int skirmishAIId, int unitDefId, int resourceId); // REF:resourceId->Resource
+	bool              (CALLING_CONV *UnitDef_isSquareResourceExtractor)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *UnitDef_getBuildTime)(int skirmishAIId, int unitDefId);
 
@@ -706,7 +706,7 @@ struct SSkirmishAICallback {
 	 * @return 0 if invalid facing or the unit has no yard-map defined,
 	 *         the size of the yard-map otherwise: getXSize() * getXSize()
 	 */
-	int               (CALLING_CONV *UnitDef_getYardMap)(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax); // ARRAY:yardMap
+	int               (CALLING_CONV *UnitDef_getYardMap)(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax); //$ ARRAY:yardMap
 
 	int               (CALLING_CONV *UnitDef_getXSize)(int skirmishAIId, int unitDefId);
 
@@ -878,21 +878,21 @@ struct SSkirmishAICallback {
 	/** Number of units of this type allowed simultaneously in the game */
 	int               (CALLING_CONV *UnitDef_getMaxThisUnit)(int skirmishAIId, int unitDefId);
 
-	int               (CALLING_CONV *UnitDef_getDecoyDef)(int skirmishAIId, int unitDefId); // REF:RETURN->UnitDef
+	int               (CALLING_CONV *UnitDef_getDecoyDef)(int skirmishAIId, int unitDefId); //$ REF:RETURN->UnitDef
 
 	bool              (CALLING_CONV *UnitDef_isDontLand)(int skirmishAIId, int unitDefId);
 
-	int               (CALLING_CONV *UnitDef_getShieldDef)(int skirmishAIId, int unitDefId); // REF:RETURN->WeaponDef
+	int               (CALLING_CONV *UnitDef_getShieldDef)(int skirmishAIId, int unitDefId); //$ REF:RETURN->WeaponDef
 
-	int               (CALLING_CONV *UnitDef_getStockpileDef)(int skirmishAIId, int unitDefId); // REF:RETURN->WeaponDef
+	int               (CALLING_CONV *UnitDef_getStockpileDef)(int skirmishAIId, int unitDefId); //$ REF:RETURN->WeaponDef
 
-	int               (CALLING_CONV *UnitDef_getBuildOptions)(int skirmishAIId, int unitDefId, int* unitDefIds, int unitDefIds_sizeMax); // REF:MULTI:unitDefIds->UnitDef
+	int               (CALLING_CONV *UnitDef_getBuildOptions)(int skirmishAIId, int unitDefId, int* unitDefIds, int unitDefIds_sizeMax); //$ REF:MULTI:unitDefIds->UnitDef
 
-	int               (CALLING_CONV *UnitDef_getCustomParams)(int skirmishAIId, int unitDefId, const char** keys, const char** values); // MAP
+	int               (CALLING_CONV *UnitDef_getCustomParams)(int skirmishAIId, int unitDefId, const char** keys, const char** values); //$ MAP
 
 
 
-	bool              (CALLING_CONV *UnitDef_isMoveDataAvailable)(int skirmishAIId, int unitDefId); // AVAILABLE:MoveData
+	bool              (CALLING_CONV *UnitDef_isMoveDataAvailable)(int skirmishAIId, int unitDefId); //$ AVAILABLE:MoveData
 
 	float             (CALLING_CONV *UnitDef_MoveData_getMaxAcceleration)(int skirmishAIId, int unitDefId);
 
@@ -932,11 +932,11 @@ struct SSkirmishAICallback {
 
 
 
-	int               (CALLING_CONV *UnitDef_getWeaponMounts)(int skirmishAIId, int unitDefId); // FETCHER:MULTI:NUM:WeaponMount
+	int               (CALLING_CONV *UnitDef_getWeaponMounts)(int skirmishAIId, int unitDefId); //$ FETCHER:MULTI:NUM:WeaponMount
 
 	const char*       (CALLING_CONV *UnitDef_WeaponMount_getName)(int skirmishAIId, int unitDefId, int weaponMountId);
 
-	int               (CALLING_CONV *UnitDef_WeaponMount_getWeaponDef)(int skirmishAIId, int unitDefId, int weaponMountId); // REF:RETURN->WeaponDef
+	int               (CALLING_CONV *UnitDef_WeaponMount_getWeaponDef)(int skirmishAIId, int unitDefId, int weaponMountId); //$ REF:RETURN->WeaponDef
 
 	int               (CALLING_CONV *UnitDef_WeaponMount_getSlavedTo)(int skirmishAIId, int unitDefId, int weaponMountId);
 
@@ -967,74 +967,74 @@ struct SSkirmishAICallback {
 	 * therefore often be set on games with old hardware to prevent lagging
 	 * because of too many units.
 	 */
-	int               (CALLING_CONV *Unit_getLimit)(int skirmishAIId); // STATIC
+	int               (CALLING_CONV *Unit_getLimit)(int skirmishAIId); //$ STATIC
 
 	/**
 	 * Returns the maximum total number of units that may exist at any one point
 	 * in time induring the current game.
 	 */
-	int               (CALLING_CONV *Unit_getMax)(int skirmishAIId); // STATIC
+	int               (CALLING_CONV *Unit_getMax)(int skirmishAIId); //$ STATIC
 
 	/**
 	 * Returns all units that are not in this teams ally-team nor neutral and are
 	 * in LOS.
 	 */
-	int               (CALLING_CONV *getEnemyUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getEnemyUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are not in this teams ally-team nor neutral and are
 	 * in LOS plus they have to be located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *getEnemyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getEnemyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are not in this teams ally-team nor neutral and are in
 	 * some way visible (sight or radar).
 	 */
-	int               (CALLING_CONV *getEnemyUnitsInRadarAndLos)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getEnemyUnitsInRadarAndLos)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are in this teams ally-team, including this teams
 	 * units.
 	 */
-	int               (CALLING_CONV *getFriendlyUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getFriendlyUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are in this teams ally-team, including this teams
 	 * units plus they have to be located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *getFriendlyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getFriendlyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are neutral and are in LOS.
 	 */
-	int               (CALLING_CONV *getNeutralUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getNeutralUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are neutral and are in LOS plus they have to be
 	 * located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *getNeutralUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getNeutralUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are of the team controlled by this AI instance. This
 	 * list can also be created dynamically by the AI, through updating a list on
 	 * each unit-created and unit-destroyed event.
 	 */
-	int               (CALLING_CONV *getTeamUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getTeamUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns all units that are currently selected
 	 * (usually only contains units if a human player
 	 * is controlling this team as well).
 	 */
-	int               (CALLING_CONV *getSelectedUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
+	int               (CALLING_CONV *getSelectedUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
 	 * Returns the unit's unitdef struct from which you can read all
 	 * the statistics of the unit, do NOT try to change any values in it.
 	 */
-	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); // REF:RETURN->UnitDef
+	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); //$ REF:RETURN->UnitDef
 
 	/**
 	 * This is a set of parameters that is initialized
@@ -1043,7 +1043,7 @@ struct SSkirmishAICallback {
 	 * (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
-	int               (CALLING_CONV *Unit_getModParams)(int skirmishAIId, int unitId); // FETCHER:MULTI:NUM:ModParam
+	int               (CALLING_CONV *Unit_getModParams)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:ModParam
 
 	const char*       (CALLING_CONV *Unit_ModParam_getName)(int skirmishAIId, int unitId, int modParamId);
 
@@ -1105,13 +1105,13 @@ struct SSkirmishAICallback {
 	/** Returns the group a unit belongs to, -1 if none */
 	int               (CALLING_CONV *Unit_getGroup)(int skirmishAIId, int unitId);
 
-	int               (CALLING_CONV *Unit_getCurrentCommands)(int skirmishAIId, int unitId); // FETCHER:MULTI:NUM:CurrentCommand-Command
+	int               (CALLING_CONV *Unit_getCurrentCommands)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:CurrentCommand-Command
 
 	/**
 	 * For the type of the command queue, see CCommandQueue::CommandQueueType
 	 * in Sim/Unit/CommandAI/CommandQueue.h
 	 */
-	int               (CALLING_CONV *Unit_CurrentCommand_getType)(int skirmishAIId, int unitId); // STATIC
+	int               (CALLING_CONV *Unit_CurrentCommand_getType)(int skirmishAIId, int unitId); //$ STATIC
 
 	/**
 	 * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
@@ -1125,10 +1125,10 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *Unit_CurrentCommand_getTimeOut)(int skirmishAIId, int unitId, int commandId);
 
-	int               (CALLING_CONV *Unit_CurrentCommand_getParams)(int skirmishAIId, int unitId, int commandId, float* params, int params_sizeMax); // ARRAY:params
+	int               (CALLING_CONV *Unit_CurrentCommand_getParams)(int skirmishAIId, int unitId, int commandId, float* params, int params_sizeMax); //$ ARRAY:params
 
 	/** The commands that this unit can understand, other commands will be ignored */
-	int               (CALLING_CONV *Unit_getSupportedCommands)(int skirmishAIId, int unitId); // FETCHER:MULTI:NUM:SupportedCommand-CommandDescription
+	int               (CALLING_CONV *Unit_getSupportedCommands)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:SupportedCommand-CommandDescription
 
 	/**
 	 * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
@@ -1144,7 +1144,7 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *Unit_SupportedCommand_isDisabled)(int skirmishAIId, int unitId, int supportedCommandId);
 
-	int               (CALLING_CONV *Unit_SupportedCommand_getParams)(int skirmishAIId, int unitId, int supportedCommandId, const char** params, int params_sizeMax); // ARRAY:params
+	int               (CALLING_CONV *Unit_SupportedCommand_getParams)(int skirmishAIId, int unitId, int supportedCommandId, const char** params, int params_sizeMax); //$ ARRAY:params
 
 	/** The unit's current health */
 	float             (CALLING_CONV *Unit_getHealth)(int skirmishAIId, int unitId);
@@ -1158,11 +1158,11 @@ struct SSkirmishAICallback {
 	 */
 	float             (CALLING_CONV *Unit_getPower)(int skirmishAIId, int unitId);
 
-//	int               (CALLING_CONV *Unit_getResourceInfos)(int skirmishAIId, int unitId); // FETCHER:MULTI:NUM:ResourceInfo
+//	int               (CALLING_CONV *Unit_getResourceInfos)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:ResourceInfo
 
-	float             (CALLING_CONV *Unit_getResourceUse)(int skirmishAIId, int unitId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Unit_getResourceUse)(int skirmishAIId, int unitId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *Unit_getResourceMake)(int skirmishAIId, int unitId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Unit_getResourceMake)(int skirmishAIId, int unitId, int resourceId); //$ REF:resourceId->Resource
 
 	void              (CALLING_CONV *Unit_getPos)(int skirmishAIId, int unitId, float* return_posF3_out);
 
@@ -1187,9 +1187,9 @@ struct SSkirmishAICallback {
 
 
 // BEGINN OBJECT Group
-	int               (CALLING_CONV *getGroups)(int skirmishAIId, int* groupIds, int groupIds_sizeMax); // FETCHER:MULTI:IDs:Group:groupIds
+	int               (CALLING_CONV *getGroups)(int skirmishAIId, int* groupIds, int groupIds_sizeMax); //$ FETCHER:MULTI:IDs:Group:groupIds
 
-	int               (CALLING_CONV *Group_getSupportedCommands)(int skirmishAIId, int groupId); // FETCHER:MULTI:NUM:SupportedCommand-CommandDescription
+	int               (CALLING_CONV *Group_getSupportedCommands)(int skirmishAIId, int groupId); //$ FETCHER:MULTI:NUM:SupportedCommand-CommandDescription
 
 	/**
 	 * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
@@ -1205,7 +1205,7 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *Group_SupportedCommand_isDisabled)(int skirmishAIId, int groupId, int supportedCommandId);
 
-	int               (CALLING_CONV *Group_SupportedCommand_getParams)(int skirmishAIId, int groupId, int supportedCommandId, const char** params, int params_sizeMax); // ARRAY:params
+	int               (CALLING_CONV *Group_SupportedCommand_getParams)(int skirmishAIId, int groupId, int supportedCommandId, const char** params, int params_sizeMax); //$ ARRAY:params
 
 	/**
 	 * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
@@ -1219,7 +1219,7 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *Group_OrderPreview_getTimeOut)(int skirmishAIId, int groupId);
 
-	int               (CALLING_CONV *Group_OrderPreview_getParams)(int skirmishAIId, int groupId, float* params, int params_sizeMax); // ARRAY:params
+	int               (CALLING_CONV *Group_OrderPreview_getParams)(int skirmishAIId, int groupId, float* params, int params_sizeMax); //$ ARRAY:params
 
 	bool              (CALLING_CONV *Group_isSelected)(int skirmishAIId, int groupId);
 
@@ -1461,7 +1461,7 @@ struct SSkirmishAICallback {
 	 *
 	 * @see getCornersHeightMap()
 	 */
-	int               (CALLING_CONV *Map_getHeightMap)(int skirmishAIId, float* heights, int heights_sizeMax); // ARRAY:heights
+	int               (CALLING_CONV *Map_getHeightMap)(int skirmishAIId, float* heights, int heights_sizeMax); //$ ARRAY:heights
 
 	/**
 	 * Returns the height for the corners of the squares.
@@ -1476,7 +1476,7 @@ struct SSkirmishAICallback {
 	 *
 	 * @see getHeightMap()
 	 */
-	int               (CALLING_CONV *Map_getCornersHeightMap)(int skirmishAIId, float* cornerHeights, int cornerHeights_sizeMax); // ARRAY:cornerHeights
+	int               (CALLING_CONV *Map_getCornersHeightMap)(int skirmishAIId, float* cornerHeights, int cornerHeights_sizeMax); //$ ARRAY:cornerHeights
 
 	float             (CALLING_CONV *Map_getMinHeight)(int skirmishAIId);
 
@@ -1492,7 +1492,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
 	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
 	 */
-	int               (CALLING_CONV *Map_getSlopeMap)(int skirmishAIId, float* slopes, int slopes_sizeMax); // ARRAY:slopes
+	int               (CALLING_CONV *Map_getSlopeMap)(int skirmishAIId, float* slopes, int slopes_sizeMax); //$ ARRAY:slopes
 
 	/**
 	 * @brief the level of sight map
@@ -1511,7 +1511,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / res)
 	 * - the last value, bottom right, is at index (width/res * height/res - 1)
 	 */
-	int               (CALLING_CONV *Map_getLosMap)(int skirmishAIId, int* losValues, int losValues_sizeMax); // ARRAY:losValues
+	int               (CALLING_CONV *Map_getLosMap)(int skirmishAIId, int* losValues, int losValues_sizeMax); //$ ARRAY:losValues
 
 	/**
 	 * @brief the radar map
@@ -1523,7 +1523,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
-	int               (CALLING_CONV *Map_getRadarMap)(int skirmishAIId, int* radarValues, int radarValues_sizeMax); // ARRAY:radarValues
+	int               (CALLING_CONV *Map_getRadarMap)(int skirmishAIId, int* radarValues, int radarValues_sizeMax); //$ ARRAY:radarValues
 
 	/**
 	 * @brief the radar jammer map
@@ -1535,7 +1535,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
-	int               (CALLING_CONV *Map_getJammerMap)(int skirmishAIId, int* jammerValues, int jammerValues_sizeMax); // ARRAY:jammerValues
+	int               (CALLING_CONV *Map_getJammerMap)(int skirmishAIId, int* jammerValues, int jammerValues_sizeMax); //$ ARRAY:jammerValues
 
 	/**
 	 * @brief resource maps
@@ -1547,7 +1547,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
 	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
 	 */
-	int               (CALLING_CONV *Map_getResourceMapRaw)(int skirmishAIId, int resourceId, short* resources, int resources_sizeMax); // REF:resourceId->Resource ARRAY:resources
+	int               (CALLING_CONV *Map_getResourceMapRaw)(int skirmishAIId, int resourceId, short* resources, int resources_sizeMax); //$ REF:resourceId->Resource ARRAY:resources
 
 	/**
 	 * Returns positions indicating where to place resource extractors on the map.
@@ -1556,17 +1556,17 @@ struct SSkirmishAICallback {
 	 * You should only compare the y values to each other, and not try to estimate
 	 * effective output from spots.
 	 */
-	int               (CALLING_CONV *Map_getResourceMapSpotsPositions)(int skirmishAIId, int resourceId, float* spots_AposF3, int spots_AposF3_sizeMax); // REF:resourceId->Resource ARRAY:spots_AposF3
+	int               (CALLING_CONV *Map_getResourceMapSpotsPositions)(int skirmishAIId, int resourceId, float* spots_AposF3, int spots_AposF3_sizeMax); //$ REF:resourceId->Resource ARRAY:spots_AposF3
 
 	/**
 	 * Returns the average resource income for an extractor on one of the evaluated positions.
 	 */
-	float             (CALLING_CONV *Map_getResourceMapSpotsAverageIncome)(int skirmishAIId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Map_getResourceMapSpotsAverageIncome)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 	/**
 	 * Returns the nearest resource extractor spot to a specified position out of the evaluated list.
 	 */
-	void              (CALLING_CONV *Map_getResourceMapSpotsNearest)(int skirmishAIId, int resourceId, float* pos_posF3, float* return_posF3_out); // REF:resourceId->Resource
+	void              (CALLING_CONV *Map_getResourceMapSpotsNearest)(int skirmishAIId, int resourceId, float* pos_posF3, float* return_posF3_out); //$ REF:resourceId->Resource
 
 	/**
 	 * Returns the archive hash of the map.
@@ -1601,10 +1601,10 @@ struct SSkirmishAICallback {
 
 
 	/** Returns what value 255 in the resource map is worth */
-	float             (CALLING_CONV *Map_getMaxResource)(int skirmishAIId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Map_getMaxResource)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 	/** Returns extraction radius for resource extractors */
-	float             (CALLING_CONV *Map_getExtractorRadius)(int skirmishAIId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *Map_getExtractorRadius)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *Map_getMinWind)(int skirmishAIId);
 
@@ -1622,7 +1622,7 @@ struct SSkirmishAICallback {
 	 * and additionally the ones drawn with allied team colors,
 	 * if <code>includeAllies</code> is true.
 	 */
-	int               (CALLING_CONV *Map_getPoints)(int skirmishAIId, bool includeAllies); // FETCHER:MULTI:NUM:Point
+	int               (CALLING_CONV *Map_getPoints)(int skirmishAIId, bool includeAllies); //$ FETCHER:MULTI:NUM:Point
 
 	void              (CALLING_CONV *Map_Point_getPosition)(int skirmishAIId, int pointId, float* return_posF3_out);
 
@@ -1635,7 +1635,7 @@ struct SSkirmishAICallback {
 	 * and additionally the ones drawn with allied team colors,
 	 * if <code>includeAllies</code> is true.
 	 */
-	int               (CALLING_CONV *Map_getLines)(int skirmishAIId, bool includeAllies); // FETCHER:MULTI:NUM:Line
+	int               (CALLING_CONV *Map_getLines)(int skirmishAIId, bool includeAllies); //$ FETCHER:MULTI:NUM:Line
 
 	void              (CALLING_CONV *Map_Line_getFirstPosition)(int skirmishAIId, int lineId, float* return_posF3_out);
 
@@ -1643,7 +1643,7 @@ struct SSkirmishAICallback {
 
 	void              (CALLING_CONV *Map_Line_getColor)(int skirmishAIId, int lineId, short* return_colorS3_out);
 
-	bool              (CALLING_CONV *Map_isPossibleToBuildAt)(int skirmishAIId, int unitDefId, float* pos_posF3, int facing); // REF:unitDefId->UnitDef
+	bool              (CALLING_CONV *Map_isPossibleToBuildAt)(int skirmishAIId, int unitDefId, float* pos_posF3, int facing); //$ REF:unitDefId->UnitDef
 
 	/**
 	 * Returns the closest position from a given position that a building can be
@@ -1655,14 +1655,14 @@ struct SSkirmishAICallback {
 	 * @return actual map position with x, y and z all beeing positive,
 	 *         or float[3]{-1, 0, 0} if no suitable position is found.
 	 */
-	void              (CALLING_CONV *Map_findClosestBuildSite)(int skirmishAIId, int unitDefId, float* pos_posF3, float searchRadius, int minDist, int facing, float* return_posF3_out); // REF:unitDefId->UnitDef
+	void              (CALLING_CONV *Map_findClosestBuildSite)(int skirmishAIId, int unitDefId, float* pos_posF3, float searchRadius, int minDist, int facing, float* return_posF3_out); //$ REF:unitDefId->UnitDef
 
 // BEGINN OBJECT Map
 
 
 
 // BEGINN OBJECT FeatureDef
-	int               (CALLING_CONV *getFeatureDefs)(int skirmishAIId, int* featureDefIds, int featureDefIds_sizeMax); // FETCHER:MULTI:IDs:FeatureDef:featureDefIds
+	int               (CALLING_CONV *getFeatureDefs)(int skirmishAIId, int* featureDefIds, int featureDefIds_sizeMax); //$ FETCHER:MULTI:IDs:FeatureDef:featureDefIds
 
 //	int (CALLING_CONV *FeatureDef_getId)(int skirmishAIId, int featureDefId);
 
@@ -1672,7 +1672,7 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *FeatureDef_getFileName)(int skirmishAIId, int featureDefId);
 
-	float             (CALLING_CONV *FeatureDef_getContainedResource)(int skirmishAIId, int featureDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *FeatureDef_getContainedResource)(int skirmishAIId, int featureDefId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *FeatureDef_getMaxHealth)(int skirmishAIId, int featureDefId);
 
@@ -1751,7 +1751,7 @@ struct SSkirmishAICallback {
 	 */
 	int               (CALLING_CONV *FeatureDef_getZSize)(int skirmishAIId, int featureDefId);
 
-	int               (CALLING_CONV *FeatureDef_getCustomParams)(int skirmishAIId, int featureDefId, const char** keys, const char** values); // MAP
+	int               (CALLING_CONV *FeatureDef_getCustomParams)(int skirmishAIId, int featureDefId, const char** keys, const char** values); //$ MAP
 
 // END OBJECT FeatureDef
 
@@ -1761,15 +1761,15 @@ struct SSkirmishAICallback {
 	 * Returns all features currently in LOS, or all features on the map
 	 * if cheating is enabled.
 	 */
-	int               (CALLING_CONV *getFeatures)(int skirmishAIId, int* featureIds, int featureIds_sizeMax); // REF:MULTI:featureIds->Feature
+	int               (CALLING_CONV *getFeatures)(int skirmishAIId, int* featureIds, int featureIds_sizeMax); //$ REF:MULTI:featureIds->Feature
 
 	/**
 	 * Returns all features in a specified area that are currently in LOS,
 	 * or all features in this area if cheating is enabled.
 	 */
-	int               (CALLING_CONV *getFeaturesIn)(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIds_sizeMax); // REF:MULTI:featureIds->Feature
+	int               (CALLING_CONV *getFeaturesIn)(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIds_sizeMax); //$ REF:MULTI:featureIds->Feature
 
-	int               (CALLING_CONV *Feature_getDef)(int skirmishAIId, int featureId); // REF:RETURN->FeatureDef
+	int               (CALLING_CONV *Feature_getDef)(int skirmishAIId, int featureId); //$ REF:RETURN->FeatureDef
 
 	float             (CALLING_CONV *Feature_getHealth)(int skirmishAIId, int featureId);
 
@@ -1782,9 +1782,9 @@ struct SSkirmishAICallback {
 
 
 // BEGINN OBJECT WeaponDef
-	int               (CALLING_CONV *getWeaponDefs)(int skirmishAIId); // FETCHER:MULTI:NUM:WeaponDef
+	int               (CALLING_CONV *getWeaponDefs)(int skirmishAIId); //$ FETCHER:MULTI:NUM:WeaponDef
 
-	int               (CALLING_CONV *getWeaponDefByName)(int skirmishAIId, const char* weaponDefName); // REF:RETURN->WeaponDef
+	int               (CALLING_CONV *getWeaponDefByName)(int skirmishAIId, const char* weaponDefName); //$ REF:RETURN->WeaponDef
 
 	const char*       (CALLING_CONV *WeaponDef_getName)(int skirmishAIId, int weaponDefId);
 
@@ -1822,7 +1822,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *WeaponDef_getPredictBoost)(int skirmishAIId, int weaponDefId);
 
 //	TODO: Deprecate the following function, if no longer needed by legacy Cpp AIs
-	int               (CALLING_CONV *WeaponDef_getNumDamageTypes)(int skirmishAIId); // STATIC
+	int               (CALLING_CONV *WeaponDef_getNumDamageTypes)(int skirmishAIId); //$ STATIC
 
 //	DamageArray (CALLING_CONV *WeaponDef_getDamages)(int skirmishAIId, int weaponDefId);
 
@@ -1838,7 +1838,7 @@ struct SSkirmishAICallback {
 
 //	float (CALLING_CONV *WeaponDef_Damage_getType)(int skirmishAIId, int weaponDefId, int typeId);
 
-	int               (CALLING_CONV *WeaponDef_Damage_getTypes)(int skirmishAIId, int weaponDefId, float* types, int types_sizeMax); // ARRAY:types
+	int               (CALLING_CONV *WeaponDef_Damage_getTypes)(int skirmishAIId, int weaponDefId, float* types, int types_sizeMax); //$ ARRAY:types
 
 //	int (CALLING_CONV *WeaponDef_getId)(int skirmishAIId, int weaponDefId);
 
@@ -1884,7 +1884,7 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *WeaponDef_getFlightTime)(int skirmishAIId, int weaponDefId);
 
-	float             (CALLING_CONV *WeaponDef_getCost)(int skirmishAIId, int weaponDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *WeaponDef_getCost)(int skirmishAIId, int weaponDefId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *WeaponDef_getSupplyCost)(int skirmishAIId, int weaponDefId);
 
@@ -2041,7 +2041,7 @@ struct SSkirmishAICallback {
 	 * Amount of the resource used per shot or per second,
 	 * depending on the type of projectile.
 	 */
-	float             (CALLING_CONV *WeaponDef_Shield_getResourceUse)(int skirmishAIId, int weaponDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *WeaponDef_Shield_getResourceUse)(int skirmishAIId, int weaponDefId, int resourceId); //$ REF:resourceId->Resource
 
 	/** Size of shield covered area */
 	float             (CALLING_CONV *WeaponDef_Shield_getRadius)(int skirmishAIId, int weaponDefId);
@@ -2066,7 +2066,7 @@ struct SSkirmishAICallback {
 	 * How much of a given resource is needed to regenerate power
 	 * with max speed per second.
 	 */
-	float             (CALLING_CONV *WeaponDef_Shield_getPowerRegenResource)(int skirmishAIId, int weaponDefId, int resourceId); // REF:resourceId->Resource
+	float             (CALLING_CONV *WeaponDef_Shield_getPowerRegenResource)(int skirmishAIId, int weaponDefId, int resourceId); //$ REF:resourceId->Resource
 
 	/** How much power the shield has when it is created. */
 	float             (CALLING_CONV *WeaponDef_Shield_getStartingPower)(int skirmishAIId, int weaponDefId);
@@ -2154,7 +2154,7 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *WeaponDef_isDynDamageInverted)(int skirmishAIId, int weaponDefId);
 
-	int               (CALLING_CONV *WeaponDef_getCustomParams)(int skirmishAIId, int weaponDefId, const char** keys, const char** values); // MAP
+	int               (CALLING_CONV *WeaponDef_getCustomParams)(int skirmishAIId, int weaponDefId, const char** keys, const char** values); //$ MAP
 
 // END OBJECT WeaponDef
 
