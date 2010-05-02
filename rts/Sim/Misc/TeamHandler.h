@@ -8,7 +8,6 @@
 #include "creg/creg_cond.h"
 #include "Team.h"
 #include "AllyTeam.h"
-#include <boost/scoped_ptr.hpp>
 
 class CGameSetup;
 
