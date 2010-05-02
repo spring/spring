@@ -210,7 +210,6 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(noSpectatorChat),
-	CR_MEMBER(crossSize),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
 //	CR_MEMBER(infoConsole),
@@ -283,7 +282,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	showFPS   = !!configHandler->Get("ShowFPS",   0);
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
-	crossSize = configHandler->Get("CrossSize", 10.0f);
+
 
 	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
 
@@ -1871,15 +1870,15 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "cross") {
 		if (action.extra.empty()) {
-			if (crossSize > 0.0f) {
-				crossSize = -crossSize;
+			if (mouse->crossSize > 0.0f) {
+				mouse->crossSize = -mouse->crossSize;
 			} else {
-				crossSize = std::max(1.0f, -crossSize);
+				mouse->crossSize = std::max(1.0f, -mouse->crossSize);
 			}
 		} else {
-			crossSize = atof(action.extra.c_str());
+			mouse->crossSize = atof(action.extra.c_str());
 		}
-		configHandler->Set("CrossSize", crossSize);
+		configHandler->Set("CrossSize", mouse->crossSize);
 	}
 	else if (cmd == "fps") {
 		if (action.extra.empty()) {
@@ -3205,19 +3204,6 @@ bool CGame::Draw() {
 
 	if (doDrawWorld) {
 		eventHandler.DrawScreenEffects();
-	}
-
-	if (mouse->locked && (crossSize > 0.0f)) {
-		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-		glLineWidth(1.49f);
-		glDisable(GL_TEXTURE_2D);
-		glBegin(GL_LINES);
-			glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
-			glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
-		glEnd();
-		glLineWidth(1.0f);
 	}
 
 	hudDrawer->Draw(gu->directControl);
