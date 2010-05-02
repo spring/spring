@@ -37,7 +37,7 @@ CTeamHandler::CTeamHandler():
 
 CTeamHandler::~CTeamHandler()
 {
-	for(std::vector<CTeam *>::iterator it = teams.begin(); it != teams.end(); ++it)
+	for (std::vector<CTeam*>::iterator it = teams.begin(); it != teams.end(); ++it)
 		delete *it;
 }
 
@@ -66,7 +66,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// Setup the gaia team
-		CTeam &team = *new CTeam();
+		CTeam& team = *(new CTeam());
 		team.color[0] = 255;
 		team.color[1] = 255;
 		team.color[2] = 255;
