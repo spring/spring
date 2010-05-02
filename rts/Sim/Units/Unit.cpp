@@ -84,7 +84,7 @@ float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade       = 0.0f;
-float CUnit::empDecline     = 2 * UNIT_SLOWUPDATE_RATE / GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
+float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
 
 
 CUnit::CUnit():
