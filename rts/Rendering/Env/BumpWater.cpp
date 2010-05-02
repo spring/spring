@@ -497,7 +497,7 @@ CBumpWater::CBumpWater()
 
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
-	wasLastFrameVisible = false;
+	wasLastFrameVisible = true;
 	bool useOcclQuery  = (!!configHandler->Get("BumpWaterOcclusionQuery", 1));
 	if (useOcclQuery && GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
@@ -598,13 +598,10 @@ void CBumpWater::GetUniformLocations()
 
 void CBumpWater::Update()
 {
-	if (!occlusionQuery)
-		DoUpdate();
-}
-
-void CBumpWater::DoUpdate()
-{
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
+		return;
+
+	if (!wasLastFrameVisible)
 		return;
 
 /*
@@ -940,6 +937,8 @@ void CBumpWater::UpdateCoastmap()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+
+
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -1002,18 +1001,19 @@ void CBumpWater::UpdateCoastmap()
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 
+	blurShader->Disable();
+	coastFBO.Unattach(GL_COLOR_ATTACHMENT1_EXT);
+	coastFBO.Unbind();
+
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, coastTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-	blurShader->Disable();
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
-
-	//coastFBO.Unattach(GL_COLOR_ATTACHMENT1_EXT);
-	coastFBO.Unbind();
-
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glDeleteTextures(1, &coastUpdateTexture);
 	coastmapAtlasRects.clear();
 }
@@ -1043,11 +1043,14 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	}
 
 	dynWavesFBO.Bind();
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, normalTexture2);
 	glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
 	glBlendColor(1.0f,1.0f,1.0f, (initialize) ? 1.0f : (f + 1)/600.0f );
 	glColor4f(1.0f,1.0f,1.0f,1.0f);
 	glEnable(GL_BLEND);
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
 
 	glViewport(0,0, normalTextureX, normalTextureY);
 	glMatrixMode(GL_MODELVIEW);
@@ -1288,6 +1291,7 @@ void CBumpWater::OcclusionQuery()
 	if (!wasLastFrameVisible) {
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		glDepthMask(GL_FALSE);
+		glEnable(GL_DEPTH_TEST);
 
 		glPushMatrix();
 			glTranslatef(0.0,10.0,0.0);
@@ -1298,10 +1302,5 @@ void CBumpWater::OcclusionQuery()
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDepthMask(GL_TRUE);
-	}
-
-	if (gs->frameNum != lastFrame) {
-		DoUpdate();
-		lastFrame = gs->frameNum;
 	}
 }

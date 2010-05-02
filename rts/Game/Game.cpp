@@ -3174,6 +3174,8 @@ bool CGame::Draw() {
 		}
 	}
 
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
@@ -3380,11 +3382,7 @@ bool CGame::Draw() {
 
 	mouse->DrawCursor();
 
-//	float tf[]={1,1,1,1,1,1,1,1,1};
-//	glVertexPointer(3,GL_FLOAT,0,tf);
-//	glDrawArrays(GL_TRIANGLES,0,3);
-
-	glEnable(GL_DEPTH_TEST );
+	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
 	unsigned start = SDL_GetTicks();
@@ -3465,11 +3463,10 @@ void CGame::DrawInputText()
 	}
 
 	// draw the text
+	font->SetColors(textColor, NULL);
 	if (!guihandler->GetOutlineFonts()) {
-		glColor4fv(*textColor);
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM, tempstring);
 	} else {
-		font->SetColors(textColor, NULL);
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM, tempstring);
 	}
 }
