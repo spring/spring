@@ -499,7 +499,7 @@ function canDeleteDocumentation() {
 ### BEGINN: parsing and saving the event structs
 
 # end of struct S*Event
-/^}; \/\/ EVENT_/ {
+/^}; \/\/\$ EVENT_/ {
 
 	evtsNumMembers[ind_evtStructs]  = ind_evtMember;
 	evtsTopicName[ind_evtStructs]   = $3;

@@ -237,12 +237,12 @@ function canDeleteDocumentation() {
 {
 	if (isMultiLineFunc) { # function is defined on one single line
 		funcIntermLine = $0;
-		# separate possible comment at end of line: // foo bar
+		# separate possible comment at end of line: //$ foo bar
 		commentEol = funcIntermLine;
-		if (sub(/.*\/\//, "", commentEol)) {
+		if (sub(/.*\/\/\$/, "", commentEol)) {
 			commentEolTot = commentEolTot commentEol;
 		}
-		# remove possible comment at end of line: // foo bar
+		# remove possible comment at end of line: //$ foo bar
 		sub(/[ \t]*\/\/.*/, "", funcIntermLine);
 		funcIntermLine = trim(funcIntermLine);
 		funcSoFar = funcSoFar " " funcIntermLine;
@@ -257,13 +257,13 @@ function canDeleteDocumentation() {
 /^[^\/]*CALLING_CONV.*$/ {
 
 	funcStartLine = $0;
-	# separate possible comment at end of line: // foo bar
+	# separate possible comment at end of line: //$ foo bar
 	commentEolTot = "";
 	commentEol = funcStartLine;
-	if (sub(/.*\/\//, "", commentEol)) {
+	if (sub(/.*\/\/\$/, "", commentEol)) {
 		commentEolTot = commentEolTot commentEol;
 	}
-	# remove possible comment at end of line: // foo bar
+	# remove possible comment at end of line: //$ foo bar
 	sub(/\/\/.*$/, "", funcStartLine);
 	funcStartLine = trim(funcStartLine);
 	if (match(funcStartLine, /\;$/)) {
