@@ -19,7 +19,7 @@
 #include <boost/shared_ptr.hpp>
 #include <deque>
 #if defined DEDICATED || defined DEBUG
-#include <iostream>
+	#include <iostream>
 #endif
 #include <stdlib.h> // why is this here?
 
@@ -29,7 +29,7 @@
 #include "GameServer.h"
 
 #ifndef NO_AVI
-#include "Game.h"
+	#include "Game.h"
 #endif
 
 #include "LogOutput.h"
@@ -41,9 +41,9 @@
 #include "PlayerHandler.h"
 #include "Net/LocalConnection.h"
 #include "Net/UnpackPacket.h"
-#include "DemoReader.h"
+#include "LoadSave/DemoReader.h"
 #ifdef DEDICATED
-#include "DemoRecorder.h"
+	#include "LoadSave/DemoRecorder.h"
 #endif
 #include "AutohostInterface.h"
 #include "Util.h"

@@ -4,13 +4,13 @@
 #include "Rendering/Textures/Bitmap.h"
 
 #ifdef WIN32
-#  include "windows.h"
-#  include "MouseInput.h"
-typedef unsigned char byte;
+	#include "windows.h"
+	#include "Input/MouseInput.h"
+	typedef unsigned char byte;
 #elif defined(__APPLE__)
 	/* do nothing (FIXME: duno how to create cursors at runtime on macs) */
 #else
-#  include <X11/Xcursor/Xcursor.h>
+	#include <X11/Xcursor/Xcursor.h>
 #endif
 
 #include "mmgr.h"

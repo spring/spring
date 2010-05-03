@@ -6,7 +6,7 @@
 #include <SDL_events.h>
 
 #include "Rendering/GL/myGL.h"
-#include "System/InputHandler.h"
+#include "System/Input/InputHandler.h"
 #include "GuiElement.h"
 #include "LogOutput.h"
 

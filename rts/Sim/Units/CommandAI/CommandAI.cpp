@@ -31,7 +31,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "EventHandler.h"
-#include "LoadSaveInterface.h"
+#include "LoadSave/LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "myMath.h"
 #include "creg/STL_Set.h"

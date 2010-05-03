@@ -13,7 +13,7 @@
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "MouseCursor.h"
-#include "MouseInput.h"
+#include "System/Input/MouseInput.h"
 #include "TooltipConsole.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Game/Game.h"

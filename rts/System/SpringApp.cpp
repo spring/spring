@@ -45,10 +45,10 @@
 #include "aGui/Gui.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Input/MouseInput.h"
+#include "Input/InputHandler.h"
+#include "Input/Joystick.h"
 #include "LogOutput.h"
-#include "MouseInput.h"
-#include "InputHandler.h"
-#include "Joystick.h"
 #include "bitops.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
@@ -159,7 +159,7 @@ bool SpringApp::Initialize()
 	FileSystemHandler::Initialize(true);
 
 	UpdateOldConfigs();
-
+	
 	if (!InitWindow(("Spring " + SpringVersion::Get()).c_str())) {
 		SDL_Quit();
 		return false;
