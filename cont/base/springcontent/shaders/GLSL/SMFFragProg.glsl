@@ -5,6 +5,7 @@
 #define SMF_ARB_LIGHTING 0
 
 uniform vec4 lightDir;
+varying vec3 cameraDir;
 varying vec3 viewDir;
 varying vec3 halfDir;
 
@@ -77,6 +78,16 @@ void main() {
 		(((texture2D(splatDetailTex, gl_TexCoord[7].st) * 2.0).a - 1.0) * (splatTexMults.a * splatDistr.a));
 	vec4 detailCol = vec4(detailInt, detailInt, detailInt, 1.0);
 	#endif
+
+
+	#if (SMF_SKY_REFLECTIONS == 1)
+	vec3 reflectDir = reflect(normalize(cameraDir), normal);
+	vec3 reflectCol = textureCube(skyReflectTex, normalize(gl_NormalMatrix * reflectDir)).rgb;
+
+	// TODO: texture2D()-ify the blending coefficient
+	diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, 0.25);
+	#endif
+
 
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);
 	vec4 diffuseInt =
