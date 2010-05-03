@@ -47,7 +47,7 @@
 #include "Sync/SyncedPrimitive.h"
 #include "Sync/SyncTracer.h"
 #include "EventHandler.h"
-#include "LoadSaveInterface.h"
+#include "LoadSave/LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"

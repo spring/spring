@@ -23,9 +23,9 @@
 
 #include "Game/GameData.h"
 #include "LogOutput.h"
-#include "DemoRecorder.h"
 #include "GlobalUnsynced.h"
 #include "ConfigHandler.h"
+#include "LoadSave/DemoRecorder.h"
 #include "lib/gml/gml.h"
 
 

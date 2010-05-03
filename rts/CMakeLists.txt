@@ -140,6 +140,8 @@ AUX_SOURCE_DIRECTORY(System/Script sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sync sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sound sysfiles)
 AUX_SOURCE_DIRECTORY(System/creg sysfiles)
+AUX_SOURCE_DIRECTORY(System/Input sysfiles)
+AUX_SOURCE_DIRECTORY(System/LoadSave sysfiles)
 
 ### Add icon and manifest to exe using windres
 IF (MINGW)
