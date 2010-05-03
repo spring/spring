@@ -93,9 +93,9 @@ public:
 	virtual int GetUnitAllyTeam(int unitId) = 0;
 	/// the unit's current health
 	virtual float GetUnitHealth(int unitId) = 0;
-	/// the unit's max health
+	/// the unit's maximum health
 	virtual float GetUnitMaxHealth(int unitId) = 0;
-	/// the unit's max speed
+	/// the unit's maximum speed
 	virtual float GetUnitSpeed(int unitId) = 0;
 	/// sort of the measure of the units overall power
 	virtual float GetUnitPower(int unitId) = 0;
@@ -111,7 +111,10 @@ public:
 	 * the statistics of the unit, do NOT try to change any values in it.
 	 */
 	virtual const UnitDef* GetUnitDef(int unitId) = 0;
-	virtual float3 GetUnitPos(int unitId) = 0;
+
+	virtual float3 GetUnitPos(int unitId) = 0; //! current unit position vector
+	virtual float3 GetUnitVel(int unitId) = 0; //! current unit velocity vector
+
 	/// returns the unit's build facing (0-3)
 	virtual int GetBuildingFacing(int unitId) = 0;
 	virtual bool IsUnitCloaked(int unitId) = 0;

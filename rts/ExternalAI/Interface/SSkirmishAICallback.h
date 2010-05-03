@@ -922,7 +922,10 @@ float (CALLING_CONV *Clb_Unit_0REF1Resource2resourceId0getResourceUse)(
 		int teamId, int unitId, int resourceId);
 float (CALLING_CONV *Clb_Unit_0REF1Resource2resourceId0getResourceMake)(
 		int teamId, int unitId, int resourceId);
+
 struct SAIFloat3 (CALLING_CONV *Clb_Unit_getPos)(int teamId, int unitId);
+struct SAIFloat3 (CALLING_CONV *Clb_Unit_getVel)(int teamId, int unitId);
+
 bool (CALLING_CONV *Clb_Unit_isActivated)(int teamId, int unitId);
 /// Returns true if the unit is currently being built
 bool (CALLING_CONV *Clb_Unit_isBeingBuilt)(int teamId, int unitId);
