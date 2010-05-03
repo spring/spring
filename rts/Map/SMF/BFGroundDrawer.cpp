@@ -10,6 +10,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
@@ -125,6 +126,9 @@ bool CBFGroundDrawer::LoadMapShaders() {
 				defs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
 					"#define SMF_WATER_ABSORPTION 0\n":
 					"#define SMF_WATER_ABSORPTION 1\n";
+				defs += (!!configHandler->Get("MapSkyReflections", 0))?
+					"#define SMF_SKY_REFLECTIONS 1\n":
+					"#define SMF_SKY_REFLECTIONS 0\n";
 
 			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
 			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
@@ -154,6 +158,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniformLocation("splatDistrTex");       // idx 22
 			smfShaderGLSL->SetUniformLocation("splatTexScales");      // idx 23
 			smfShaderGLSL->SetUniformLocation("splatTexMults");       // idx 24
+			smfShaderGLSL->SetUniformLocation("skyReflectTex");       // idx 25
 
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -175,6 +180,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniform1i(22, 8); // splatDistrTex (idx 22, texunit 8)
 			smfShaderGLSL->SetUniform4fv(23, const_cast<float*>(&mapInfo->smf.splatTexScales[0]));
 			smfShaderGLSL->SetUniform4fv(24, const_cast<float*>(&mapInfo->smf.splatTexMults[0]));
+			smfShaderGLSL->SetUniform1i(25, 9); // skyReflectTex (idx 25, texunit 9)
 
 			smfShaderGLSL->Disable();
 		}
@@ -1368,6 +1374,9 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
 			glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, map->GetSplatDetailTexture());
 			glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, map->GetSplatDistrTexture());
+			glActiveTexture(GL_TEXTURE9);
+				glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+				glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSkyReflectionTextureID());
 
 			// setup for shadow2DProj
 			glActiveTexture(GL_TEXTURE4);
@@ -1496,6 +1505,9 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 		glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE9);
+			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 

@@ -38,6 +38,10 @@ uniform sampler2D splatDistrTex;
 uniform vec4 splatTexMults;
 #endif
 
+#if (SMF_SKY_REFLECTIONS == 1)
+uniform samplerCube skyReflectTex;
+#endif
+
 
 void main() {
 	vec2 tc0 = gl_TexCoord[0].st;
