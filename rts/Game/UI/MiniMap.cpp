@@ -1112,7 +1112,9 @@ void CMiniMap::DrawForReal(bool use_geo)
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 
+	glPushMatrix();
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
+	glScalef(1.0f, 0.0f, 1.0f); // skip the y-coord (Lua's DrawScreen is perspective and so any z-coord in it influence the x&y, too)
 
 	// draw the projectiles
 	if (drawProjectiles) {
@@ -1174,7 +1176,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 		}
 	}
 
-	glRotatef(+90.0f, +1.0f, 0.0f, 0.0f); // revert to the 2d xform
+	glPopMatrix(); // revert to the 2d xform
 
 	// Draw the Camera Frustum
 	left.clear();
