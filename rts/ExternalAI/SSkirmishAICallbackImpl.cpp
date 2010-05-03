@@ -2702,6 +2702,8 @@ EXPORT(float) skirmishAiCallback_Unit_getHealth(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitHealth(unitId);
 	}
 }
+
+
 EXPORT(float) skirmishAiCallback_Unit_getSpeed(int teamId, int unitId) {
 	CAICallback* clb = team_callback[teamId]; return clb->GetUnitSpeed(unitId);
 }
@@ -2712,6 +2714,9 @@ EXPORT(float) skirmishAiCallback_Unit_getPower(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitPower(unitId);
 	}
 }
+
+
+
 EXPORT(SAIFloat3) skirmishAiCallback_Unit_getPos(int teamId, int unitId) {
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
 		return team_cheatCallback[teamId]->GetUnitPos(unitId).toSAIFloat3();
@@ -2719,6 +2724,16 @@ EXPORT(SAIFloat3) skirmishAiCallback_Unit_getPos(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitPos(unitId).toSAIFloat3();
 	}
 }
+EXPORT(SAIFloat3) skirmishAiCallback_Unit_getVel(int teamId, int unitId) {
+	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
+		return team_cheatCallback[teamId]->GetUnitVelocity(unitId).toSAIFloat3();
+	} else {
+		return team_callback[teamId]->GetUnitVelocity(unitId).toSAIFloat3();
+	}
+}
+
+
+
 EXPORT(int) skirmishAiCallback_Unit_0MULTI1SIZE0ResourceInfo(int teamId, int unitId) {
 	return skirmishAiCallback_0MULTI1SIZE0Resource(teamId);
 }
@@ -3810,7 +3825,10 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Unit_0MULTI1SIZE0ResourceInfo = &skirmishAiCallback_Unit_0MULTI1SIZE0ResourceInfo;
 	callback->Clb_Unit_0REF1Resource2resourceId0getResourceUse = &skirmishAiCallback_Unit_0REF1Resource2resourceId0getResourceUse;
 	callback->Clb_Unit_0REF1Resource2resourceId0getResourceMake = &skirmishAiCallback_Unit_0REF1Resource2resourceId0getResourceMake;
+
 	callback->Clb_Unit_getPos = &skirmishAiCallback_Unit_getPos;
+	callback->Clb_Unit_getVel = &skirmishAiCallback_Unit_getVel;
+
 	callback->Clb_Unit_isActivated = &skirmishAiCallback_Unit_isActivated;
 	callback->Clb_Unit_isBeingBuilt = &skirmishAiCallback_Unit_isBeingBuilt;
 	callback->Clb_Unit_isCloaked = &skirmishAiCallback_Unit_isCloaked;

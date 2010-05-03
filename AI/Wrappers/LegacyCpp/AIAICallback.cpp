@@ -304,9 +304,17 @@ const UnitDef* CAIAICallback::GetUnitDef(int unitId) {
 	return this->GetUnitDefById(unitDefId);
 }
 
+
+
 float3 CAIAICallback::GetUnitPos(int unitId) {
 	return float3(sAICallback->Clb_Unit_getPos(teamId, unitId));
 }
+
+float3 CAIAICallback::GetUnitVel(int unitId) {
+	return float3(sAICallback->Clb_Unit_getVel(teamId, unitId));
+}
+
+
 
 int CAIAICallback::GetBuildingFacing(int unitId) {
 	return sAICallback->Clb_Unit_getBuildingFacing(teamId, unitId);

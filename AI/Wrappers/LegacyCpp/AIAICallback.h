@@ -80,6 +80,8 @@ public:
 	const UnitDef* GetUnitDef(int unitid);
 
 	float3 GetUnitPos(int unitid);
+	float3 GetUnitVel(int unitid);
+
 	int GetBuildingFacing(int unitid);
 	bool IsUnitCloaked(int unitid);
 	bool IsUnitParalyzed(int unitid);

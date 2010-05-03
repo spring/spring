@@ -501,7 +501,10 @@ EXPORT(float            ) skirmishAiCallback_Unit_0REF1Resource2resourceId0getRe
 		int teamId, int unitId, int resourceId);
 EXPORT(float            ) skirmishAiCallback_Unit_0REF1Resource2resourceId0getResourceMake(
 		int teamId, int unitId, int resourceId);
+
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Unit_getPos(int teamId, int unitId);
+EXPORT(struct SAIFloat3 ) skirmishAiCallback_Unit_getVel(int teamId, int unitId);
+
 EXPORT(bool             ) skirmishAiCallback_Unit_isActivated(int teamId, int unitId);
 EXPORT(bool             ) skirmishAiCallback_Unit_isBeingBuilt(int teamId, int unitId);
 EXPORT(bool             ) skirmishAiCallback_Unit_isCloaked(int teamId, int unitId);
