@@ -297,6 +297,8 @@ bool SpringApp::InitWindow(const char* title)
 		return false;
 	}
 
+	PrintAvailableResolutions();
+
 	// Sets window manager properties
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
@@ -400,10 +402,15 @@ bool SpringApp::SetSDLVideoMode()
 		GLContext::Init();
 	}
 
+	VSync.Init();
+
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
-	logOutput.Print("Video mode set to  %i x %i / %i bit", screenWidth, screenHeight, bits );
-	VSync.Init();
+	if (fullscreen) {
+		logOutput.Print("Video mode set to %ix%i/%ibit", screenWidth, screenHeight, bits);
+	} else {
+		logOutput.Print("Video mode set to %ix%i/%ibit (windowed)", screenWidth, screenHeight, bits);
+	}
 
 	return true;
 }
