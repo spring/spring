@@ -449,8 +449,8 @@ bool SpringApp::GetDisplayGeometry()
 	info.info.x11.unlock_func();
 
 #else
-	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
-	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
+	gu->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
+	gu->screenSizeY = GetSystemMetrics(SM_CYSCREEN);
 
 	RECT rect;
 	if (!GetClientRect(info.window, &rect)) {
