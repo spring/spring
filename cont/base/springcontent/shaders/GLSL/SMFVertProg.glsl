@@ -9,6 +9,7 @@ uniform int texSquareZ;
 
 uniform vec3 cameraPos;
 uniform vec4 lightDir;      // mapInfo->light.sunDir
+varying vec3 cameraDir;     // WS
 varying vec3 viewDir;
 varying vec3 halfDir;
 
@@ -22,6 +23,7 @@ void main() {
 	viewDir = vec3(gl_ModelViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0));
 	viewDir = normalize(viewDir - gl_Vertex.xyz);
 	halfDir = normalize(lightDir.xyz + viewDir);
+	cameraDir = gl_Vertex.xyz - cameraPos;
 
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 
