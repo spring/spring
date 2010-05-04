@@ -41,6 +41,7 @@ uniform vec4 splatTexMults;
 
 #if (SMF_SKY_REFLECTIONS == 1)
 uniform samplerCube skyReflectTex;
+uniform sampler2D skyReflectModTex;
 #endif
 
 
@@ -83,9 +84,11 @@ void main() {
 	#if (SMF_SKY_REFLECTIONS == 1)
 	vec3 reflectDir = reflect(normalize(cameraDir), normal);
 	vec3 reflectCol = textureCube(skyReflectTex, normalize(gl_NormalMatrix * reflectDir)).rgb;
+	vec3 reflectMod = texture2D(skyReflectModTex, tc2);
 
-	// TODO: texture2D()-ify the blending coefficient
-	diffuseCol.rgb = mix(diffuseCol.rgb, reflectCol, 0.25);
+	diffuseCol.r = mix(diffuseCol.r, reflectCol.r, reflectMod.r);
+	diffuseCol.g = mix(diffuseCol.g, reflectCol.g, reflectMod.g);
+	diffuseCol.b = mix(diffuseCol.b, reflectCol.b, reflectMod.b);
 	#endif
 
 

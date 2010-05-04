@@ -88,14 +88,15 @@ local mapDefaults = {
   },
 
   resources = {
-    detailTex       = '',
-    specularTex     = '',
-    splatDetailTex  = '',
-    splatDistrTex   = '',
-    splatTexScales  = {0.02, 0.02, 0.02, 0.02},
-    splatTexMults   = {1.00, 1.00, 1.00, 1.00},
-    grassBladeTex   = '',
-    grassShadingTex = '',
+    detailTex        = '',
+    specularTex      = '',
+    splatDetailTex   = '',
+    splatDistrTex    = '',
+    splatTexScales   = {0.02, 0.02, 0.02, 0.02},
+    splatTexMults    = {1.00, 1.00, 1.00, 1.00},
+    grassBladeTex    = '',
+    grassShadingTex  = '',
+    skyReflectModTex = '',
   },
 
   defaultTerrainType = {
