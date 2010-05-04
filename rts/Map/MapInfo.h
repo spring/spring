@@ -154,6 +154,7 @@ public:
 		std::string splatDetailTexName;
 		std::string grassBladeTexName;    // defaults to internally-generated texture
 		std::string grassShadingTexName;  // defaults to minimap texture
+		std::string skyReflectModTexName;
 
 		float4 splatTexScales;
 		float4 splatTexMults;

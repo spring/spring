@@ -28,13 +28,14 @@ CubeMapHandler::CubeMapHandler() {
 	specTexSize = 0;
 
 	currReflectionFace = 0;
+	mapSkyReflections = false;
 }
 
 bool CubeMapHandler::Init() {
 	specTexSize = configHandler->Get("CubeTexSizeSpecular", 128);
 	reflTexSize = configHandler->Get("CubeTexSizeReflection", 128);
 
-	mapSkyReflections = !!configHandler->Get("MapSkyReflections", 0);
+	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());
 
 	const float specExp = configHandler->Get("CubeTexSpecularExponent", 100.0f);
 
