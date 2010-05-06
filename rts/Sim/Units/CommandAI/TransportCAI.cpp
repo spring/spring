@@ -1008,11 +1008,13 @@ bool CTransportCAI::LoadStillValid(CUnit* unit)
 		return false;
 
 	const Command& cmd = commandQue[1];
+
+	if (cmd.id != CMD_LOAD_UNITS || cmd.params.size() != 4)
+		return true;
+
 	const float3 cmdPos(cmd.params[0], cmd.params[1], cmd.params[2]);
 
-	return
-		!(cmd.id == CMD_LOAD_UNITS && cmd.params.size() == 4 &&
-		unit->pos.SqDistance2D(cmdPos) > Square(cmd.params[3] * 2));
+	return unit->pos.SqDistance2D(cmdPos) <= Square(cmd.params[3] * 2);
 }
 
 
