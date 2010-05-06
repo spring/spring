@@ -47,6 +47,7 @@ void CMapInfo::Load()
 	ReadGlobal();
 	ReadAtmosphere();
 	ReadGui();
+	ReadSplats();
 	ReadGrass();
 	ReadLight();
 	ReadWater();
@@ -123,6 +124,14 @@ void CMapInfo::ReadAtmosphere()
 	atmo.minWind      = min(atmo.maxWind, atmo.minWind);
 }
 
+
+void CMapInfo::ReadSplats()
+{
+	const LuaTable splatsTable = parser->GetRoot().SubTable("splats");
+
+	splats.texScales = splatsTable.GetFloat4("texScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
+	splats.texMults = splatsTable.GetFloat4("texMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
+}
 
 void CMapInfo::ReadGrass()
 {
@@ -270,9 +279,6 @@ void CMapInfo::ReadSmf()
 	smf.specularTexName    = mapResTable.GetString("specularTex", "");
 	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
 	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
-
-	smf.splatTexScales = mapResTable.GetFloat4("splatTexScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
-	smf.splatTexMults = mapResTable.GetFloat4("splatTexMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	smf.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");

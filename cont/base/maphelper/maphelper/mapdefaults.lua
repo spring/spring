@@ -87,13 +87,16 @@ local mapDefaults = {
     grassBladeAngle     = 1.57, -- (PI / 2) radians
   },
 
+  splats = {
+    splatTexScales = {0.02, 0.02, 0.02, 0.02},
+    splatTexMults  = {1.00, 1.00, 1.00, 1.00},
+  }
+
   resources = {
     detailTex        = '',
     specularTex      = '',
     splatDetailTex   = '',
     splatDistrTex    = '',
-    splatTexScales   = {0.02, 0.02, 0.02, 0.02},
-    splatTexMults    = {1.00, 1.00, 1.00, 1.00},
     grassBladeTex    = '',
     grassShadingTex  = '',
     skyReflectModTex = '',
