@@ -265,14 +265,33 @@ void CSound::StartThread(int maxSounds)
 	{
 		{
 			boost::mutex::scoped_lock lck(soundMutex);
-			//TODO: device choosing, like this:
-			//const ALchar* deviceName = "ALSA Software on SB Live 5.1 [SB0220] [Multichannel Playback]";
+
+			// NULL -> default device
 			const ALchar* deviceName = NULL;
-			ALCdevice *device = alcOpenDevice(deviceName);
+			std::string configDeviceName = "";
+
+			// we do not want to set a default for snd_device,
+			// so we do it like this ...
+			if (configHandler->IsSet("snd_device"))
+			{
+				configDeviceName = configHandler->GetString("snd_device", "YOU_SHOULD_NOT_EVER_SEE_THIS");
+				deviceName = configDeviceName.c_str();
+			}
+
+			ALCdevice* device = alcOpenDevice(deviceName);
+
+			if ((device == NULL) && (deviceName != NULL))
+			{
+				LogObject(LOG_SOUND) <<  "Could not open the sound device \""
+						<< deviceName << "\", trying the default device ...";
+				configDeviceName = "";
+				deviceName = NULL;
+				device = alcOpenDevice(deviceName);
+			}
 
 			if (device == NULL)
 			{
-				LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
+				LogObject(LOG_SOUND) <<  "Could not open a sound device, disabling sounds";
 				CheckError("CSound::InitAL");
 				return;
 			}
