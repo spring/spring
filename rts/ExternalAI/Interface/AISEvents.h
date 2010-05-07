@@ -174,33 +174,39 @@ struct SUnitMoveFailedEvent {
  * directly from the attacker to the attacked unit, while with artillery it will
  * rather be from somewhere up in the sky to the attacked unit.
  * See also the unit-destroyed event.
- * attacker may be 0, which means no attacker was directly involved.
- * If paralyzer is true, then damage is paralyzation damage,
- * otherwise it is real damage.
  */
 struct SUnitDamagedEvent {
 	int unit;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not visible and cheat events are off
+	 */
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
 	int weaponDefId;
+	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
 }; // EVENT_UNIT_DAMAGED
 
 /**
  * This AI event is sent when a unit was destroyed; see also the unit-damaged
  * event.
- * attacker may be 0, which means no attacker was directly involveld.
  */
 struct SUnitDestroyedEvent {
 	int unit;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not visible and cheat events are off
+	 */
 	int attacker;
 }; // EVENT_UNIT_DESTROYED
 
 /**
- * This AI event is sent when a unit changed from one team to an other either
- * because the old owner gave it to the new one, or because the new one took it
- * from the old one; see the /take command.
+ * This AI event is sent when a unit changed from one team to an other,
+ * either because the old owner gave it to the new one, or because the
+ * new one took it from the old one; see the /take command.
+ * Both giving and receiving team will get this event.
  */
 struct SUnitGivenEvent {
 	int unitId;
@@ -211,6 +217,7 @@ struct SUnitGivenEvent {
 /**
  * This AI event is sent when a unit changed from one team to an other through
  * capturing.
+ * Both giving and receiving team will get this event.
  */
 struct SUnitCapturedEvent {
 	int unitId;
@@ -255,25 +262,32 @@ struct SEnemyLeaveRadarEvent {
  * direction will point directly from the attacker to the attacked unit, while
  * with artillery it will rather be from somewhere up in the sky to the attacked
  * unit.
- * attacker may be 0, which means no attacker was directly involved.
  * See also the enemy-destroyed event.
  */
 struct SEnemyDamagedEvent {
 	int enemy;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not allied with the team receiving this event
+	 */
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
 	int weaponDefId;
+	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
 }; // EVENT_ENEMY_DAMAGED
 
 /**
  * This AI event is sent when an enemy unit was destroyed; see also the
  * enemy-damaged event.
- * attacker may be 0, which means no attacker was directly involveld.
  */
 struct SEnemyDestroyedEvent {
 	int enemy;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not allied with the team receiving this event
+	 */
 	int attacker;
 }; // EVENT_ENEMY_DESTROYED
 
