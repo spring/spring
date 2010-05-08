@@ -460,7 +460,7 @@ function canDeleteDocumentation() {
 
 # inside of struct S*Event
 {
-	if (isInsideEvtStruct == 1 && !isInsideDoc()) {
+	if (isInsideEvtStruct == 1) {
 		size_tmpMembers = split($0, tmpMembers, ";");
 		for (i=1; i<=size_tmpMembers; i++) {
 			tmpMembers[i] = trim(tmpMembers[i]);
