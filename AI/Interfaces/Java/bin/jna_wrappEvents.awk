@@ -464,7 +464,7 @@ function canDeleteDocumentation() {
 		size_tmpMembers = split($0, tmpMembers, ";");
 		for (i=1; i<=size_tmpMembers; i++) {
 			tmpMembers[i] = trim(tmpMembers[i]);
-			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
+			if (tmpMembers[i] == "" || match(tmpMembers[i], /(^\/\/)|(^\/\*)|(^\*)|(\*\/$)/)) {
 				break;
 			}
 			saveMember(ind_evtMember++, tmpMembers[i]);
