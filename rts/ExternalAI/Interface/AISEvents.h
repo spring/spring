@@ -52,8 +52,10 @@ enum EventTopic {
 	EVENT_COMMAND_FINISHED             = 22,
 	EVENT_LOAD                         = 23,
 	EVENT_SAVE                         = 24,
+	EVENT_ENEMY_CREATED                = 25,
+	EVENT_ENEMY_FINISHED               = 26,
 };
-const unsigned int NUM_EVENTS          = 25;
+const unsigned int NUM_EVENTS          = 27;
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
@@ -81,6 +83,8 @@ const unsigned int NUM_EVENTS          = 25;
 		+ sizeof(struct SSeismicPingEvent) \
 		+ sizeof(struct SLoadEvent) \
 		+ sizeof(struct SSaveEvent) \
+		+ sizeof(struct SEnemyCreatedEvent) \
+		+ sizeof(struct SEnemyFinishedEvent) \
 		)
 
 /**
@@ -130,8 +134,8 @@ struct SMessageEvent {
 /**
  * This AI event is sent whenever a unit of this team is created, and contains
  * the created unit. Usually, the unit has only 1 HP at this time, and consists
- * only of a nano frame (-> will not accept commands yet);
- * see also the unit-finnished event.
+ * only of a nano frame (-> will not accept commands yet).
+ * See also the unit-finnished event.
  */
 struct SUnitCreatedEvent {
 	int unit;
@@ -141,7 +145,8 @@ struct SUnitCreatedEvent {
 /**
  * This AI event is sent whenever a unit is fully built, and contains the
  * finnished unit. Usually, the unit has full health at this time, and is ready
- * to accept commands; see also the unit-created event.
+ * to accept commands.
+ * See also the unit-created event.
  */
 struct SUnitFinishedEvent {
 	int unit;
@@ -358,6 +363,25 @@ struct SSaveEvent {
 	/// Absolute file path, writeable
 	const char* file;
 }; // EVENT_SAVE
+
+/**
+ * This AI event is sent whenever a unit of an enemy team is created,
+ * and contains the created unit. Usually, the unit has only 1 HP at this time,
+ * and consists only of a nano frame.
+ * See also the enemy-finnished event.
+ */
+struct SEnemyCreatedEvent {
+	int enemy;
+}; // EVENT_ENEMY_CREATED
+
+/**
+ * This AI event is sent whenever an enemy unit is fully built, and contains the
+ * finnished unit. Usually, the unit has full health at this time.
+ * See also the unit-created event.
+ */
+struct SEnemyFinishedEvent {
+	int enemy;
+}; // EVENT_ENEMY_FINISHED
 
 #ifdef	__cplusplus
 } // extern "C"
