@@ -1162,20 +1162,29 @@ struct SAIFloat3 (CALLING_CONV *Clb_Map_getStartPos)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Clb_Map_getMousePos)(int teamId);
 bool (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, struct SAIFloat3 pos,
 		float radius);
-/// Returns the maps width in full resolution
+/** Returns the maps center heightmap width 
+ * 
+ * @see getHeightMap()
+ */
 int (CALLING_CONV *Clb_Map_getWidth)(int teamId);
-/// Returns the maps height in full resolution
+/** Returns the maps center heightmap height 
+ * 
+ * @see getHeightMap()
+ */
 int (CALLING_CONV *Clb_Map_getHeight)(int teamId);
 /**
  * Returns the height for the center of the squares.
  * This differs slightly from the drawn map, since
  * that one uses the height at the corners.
+ * Note that the actual map is 8 times larger (in each dimension) and 
+ * all other maps (slope, los, resources, etc.) are relative to the 
+ * size of the heightmap.
  *
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 8*8 in size
- * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
- * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+ * - the value for the full resolution position (x, z) is at index (z * width + x)
+ * - the last value, bottom right, is at index (width * height - 1)
  *
  * @see getCornersHeightMap()
  */
@@ -1190,8 +1199,8 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - 4 points mark the edges of an area of 8*8 in size
- * - the value for upper left corner of the full resolution position (x, z) is at index ((z * width + x) / 8)
- * - the last value, bottom right, is at index ((width/8+1) * (height/8+1) - 1)
+ * - the value for upper left corner of the full resolution position (x, z) is at index (z * width + x)
+ * - the last value, bottom right, is at index ((width+1) * (height+1) - 1)
  *
  * @see getHeightMap()
  */
