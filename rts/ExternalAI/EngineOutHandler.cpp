@@ -283,21 +283,61 @@ void CEngineOutHandler::UnitMoveFailed(const CUnit& unit) {
 void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 	AI_EVT_MTH();
 
-	const int newTeam = unit.team;
-	const int unitId  = unit.id;
+	const int newTeam       = unit.team;
+	const int unitId        = unit.id;
+	const int newAllyTeamId = unit.allyteam;
+	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitGiven(unitId, oldTeam, newTeam), oldTeam);
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitGiven(unitId, oldTeam, newTeam), newTeam);
+	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
+		const int t          = ai->second->GetTeamId();
+		const int allyT      = teamHandler->AllyTeam(t);
+		const bool alliedOld = teamHandler->Ally(allyT, oldAllyTeamId);
+		const bool alliedNew = teamHandler->Ally(allyT, newAllyTeamId);
+		// inform everyone except those allied with both
+		// the new and the old team
+		bool inform = ((t == newTeam) || (t == oldTeam) || !alliedOld || !alliedNew);
+		// exclude enemies that know from nothing
+		if (inform && !alliedOld && !alliedNew &&
+				!ai->second->IsCheatEventsEnabled() &&
+				!isUnitInLosOrRadarOfAllyTeam(unit, allyT)) {
+			inform = false;
+		}
+		if (inform) {
+			try {
+				ai->second->UnitGiven(unitId, oldTeam, newTeam);
+			} CATCH_AI_EXCEPTION;
+		}
+	}
 }
 
 void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 	AI_EVT_MTH();
 
-	const int oldTeam = unit.team;
-	const int unitId  = unit.id;
+	const int oldTeam       = unit.team;
+	const int unitId        = unit.id;
+	const int newAllyTeamId = unit.allyteam;
+	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitCaptured(unitId, oldTeam, newTeam), oldTeam);
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitCaptured(unitId, oldTeam, newTeam), newTeam);
+	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
+		const int t          = ai->second->GetTeamId();
+		const int allyT      = teamHandler->AllyTeam(t);
+		const bool alliedOld = teamHandler->Ally(allyT, oldAllyTeamId);
+		const bool alliedNew = teamHandler->Ally(allyT, newAllyTeamId);
+		// inform everyone except those allied with both
+		// the new and the old team
+		bool inform = ((t == newTeam) || (t == oldTeam) || !alliedOld || !alliedNew);
+		// exclude enemies that know from nothing
+		if (inform && !alliedOld && !alliedNew &&
+				!ai->second->IsCheatEventsEnabled() &&
+				!isUnitInLosOrRadarOfAllyTeam(unit, allyT)) {
+			inform = false;
+		}
+		if (inform) {
+			try {
+				ai->second->UnitCaptured(unitId, oldTeam, newTeam);
+			} CATCH_AI_EXCEPTION;
+		}
+	}
 }
 
 void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
