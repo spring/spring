@@ -33,6 +33,11 @@ CR_REG_METADATA(CEngineOutHandler, (
 				CR_RESERVED(128)
 				));
 
+
+static inline bool isUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
+	return unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR);
+}
+
 /////////////////////////////
 // BEGIN: Exception Handling
 
@@ -215,6 +220,24 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 		}
 
 
+
+// Send to all teams which the unit is not allied to,
+// and which have cheat-events enabled, or the unit in sensor range.
+#define DO_FOR_ENEMY_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT)				        \
+		for (id_ai_t::iterator ai = id_skirmishAI.begin();							\
+				ai != id_skirmishAI.end(); ++ai) {									\
+			const int aiAllyTeam = teamHandler->AllyTeam(ai->second->GetTeamId());	\
+			if (!teamHandler->Ally(aiAllyTeam, ALLY_TEAM_ID) &&                     \
+					(ai->second->IsCheatEventsEnabled() ||                          \
+					isUnitInLosOrRadarOfAllyTeam(UNIT, aiAllyTeam))) {			\
+				try {																\
+					ai->second->FUNC;												\
+				} CATCH_AI_EXCEPTION;												\
+			}																		\
+		}
+
+
+
 void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 	AI_EVT_MTH();
 
@@ -227,20 +250,24 @@ void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 	AI_EVT_MTH();
 
-	const int teamId    = unit.team;
-	const int unitId    = unit.id;
-	const int builderId = builder? builder->id: -1;
+	const int teamId     = unit.team;
+	const int allyTeamId = unit.allyteam;
+	const int unitId     = unit.id;
+	const int builderId  = builder? builder->id: -1;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitCreated(unitId, builderId), teamId);
+	DO_FOR_ENEMY_SKIRMISH_AIS(EnemyCreated(unitId), allyTeamId, unit);
 }
 
 void CEngineOutHandler::UnitFinished(const CUnit& unit) {
 	AI_EVT_MTH();
 
-	const int teamId = unit.team;
-	const int unitId = unit.id;
+	const int teamId     = unit.team;
+	const int allyTeamId = unit.allyteam;
+	const int unitId     = unit.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitFinished(unitId), teamId);
+	DO_FOR_ENEMY_SKIRMISH_AIS(EnemyFinished(unitId), allyTeamId, unit);
 }
 
 
@@ -271,10 +298,6 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitCaptured(unitId, oldTeam, newTeam), oldTeam);
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitCaptured(unitId, oldTeam, newTeam), newTeam);
-}
-
-static inline bool isUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
-	return unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR);
 }
 
 void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
