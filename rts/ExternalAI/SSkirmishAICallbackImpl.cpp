@@ -1065,10 +1065,17 @@ EXPORT(int) skirmishAiCallback_Game_getPlayerTeam(int teamId, int player) {
 	CAICallback* clb = team_callback[teamId]; return clb->GetPlayerTeam(player);
 }
 
-EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int teamId, int team) {
-	CAICallback* clb = team_callback[teamId]; return clb->GetTeamSide(team);
+EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int teamId, int otherTeamId) {
+	CAICallback* clb = team_callback[teamId]; return clb->GetTeamSide(otherTeamId);
 }
 
+EXPORT(int) skirmishAiCallback_Game_getTeamAllyTeam(int teamId, int otherTeamId) {
+	return teamHandler->AllyTeam(otherTeamId);
+}
+
+EXPORT(bool) skirmishAiCallback_Game_isAllied(int teamId, int firstAllyTeamId, int secondAllyTeamId) {
+	return teamHandler->Ally(firstAllyTeamId, secondAllyTeamId);
+}
 
 
 
@@ -3501,6 +3508,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Game_getMyAllyTeam = &skirmishAiCallback_Game_getMyAllyTeam;
 	callback->Clb_Game_getPlayerTeam = &skirmishAiCallback_Game_getPlayerTeam;
 	callback->Clb_Game_getTeamSide = &skirmishAiCallback_Game_getTeamSide;
+	callback->Clb_Game_getTeamAllyTeam = &skirmishAiCallback_Game_getTeamAllyTeam;
+	callback->Clb_Game_isAllied = &skirmishAiCallback_Game_isAllied;
 	callback->Clb_Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
 	callback->Clb_Game_isDebugModeEnabled = &skirmishAiCallback_Game_isDebugModeEnabled;
 	callback->Clb_Game_getMode = &skirmishAiCallback_Game_getMode;
