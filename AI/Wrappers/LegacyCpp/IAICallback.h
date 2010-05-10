@@ -51,7 +51,20 @@ public:
 	virtual int GetMyTeam() = 0;
 	virtual int GetMyAllyTeam() = 0;
 	virtual int GetPlayerTeam(int playerId) = 0;
+	/**
+	 * Returns the name of the side of a team in the game.
+	 *
+	 * This should not be used, as it may be "",
+	 * and as the AI should rather rely on the units it has,
+	 * which will lead to a more stable and versatile AI.
+	 * @deprecated
+	 *
+	 * @return eg. "ARM" or "CORE"; may be "", depending on how the game was setup
+	 */
 	virtual const char* GetTeamSide(int teamId) = 0;
+	virtual int GetTeamAllyTeam(int teamId) = 0;
+	/// Returns true, if the two supplied ally-teams are currently allied
+	virtual bool IsAllied(int firstAllyTeamId, int secondAllyTeamId) = 0;
 
 	// returns the size of the created area, this is initialized to all 0 if not previously created
 	// set something to !0 to tell other AI's that the area is already initialized when they try to

@@ -152,6 +152,14 @@ const char* CAIAICallback::GetTeamSide(int team) {
 	return sAICallback->Clb_Game_getTeamSide(teamId, team);
 }
 
+int CAIAICallback::GetTeamAllyTeam(int team) {
+	return sAICallback->Clb_Game_getTeamAllyTeam(teamId, team);
+}
+
+bool CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
+	return sAICallback->Clb_Game_isAllied(teamId, firstAllyTeamId, secondAllyTeamId);
+}
+
 int CAIAICallback::GetUnitGroup(int unitId) {
 	return sAICallback->Clb_Unit_getGroup(teamId, unitId);
 }
