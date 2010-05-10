@@ -46,6 +46,8 @@ public:
 	int GetMyAllyTeam();
 	int GetPlayerTeam(int player);
 	const char* GetTeamSide(int team);
+	int GetTeamAllyTeam(int teamId);
+	bool IsAllied(int firstAllyTeamId, int secondAllyTeamId);
 
 	void* CreateSharedMemArea(char* name, int size);
 
