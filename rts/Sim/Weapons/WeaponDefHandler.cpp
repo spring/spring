@@ -438,10 +438,10 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	const LuaTable texTable = wdTable.SubTable("textures");
 
-	wd.visuals.texNames[0] = texTable.GetString(1, wdTable.GetString("texName1", ""));
-	wd.visuals.texNames[1] = texTable.GetString(2, wdTable.GetString("texName2", ""));
-	wd.visuals.texNames[2] = texTable.GetString(3, wdTable.GetString("texName3", ""));
-	wd.visuals.texNames[3] = texTable.GetString(4, wdTable.GetString("texName4", ""));
+	wd.visuals.texNames[0] = texTable.GetString(1, wdTable.GetString("texture1", ""));
+	wd.visuals.texNames[1] = texTable.GetString(2, wdTable.GetString("texture2", ""));
+	wd.visuals.texNames[2] = texTable.GetString(3, wdTable.GetString("texture3", ""));
+	wd.visuals.texNames[3] = texTable.GetString(4, wdTable.GetString("texture4", ""));
 
 	wd.visuals.expGenTag = wdTable.GetString("explosionGenerator", "");
 	wd.visuals.bounceExpGenTag = wdTable.GetString("bounceExplosionGenerator", "");
