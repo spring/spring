@@ -38,7 +38,7 @@ cd $(dirname $0); cd ../..
 mkdir -p ${BUILD_DIR}/spring
 
 # make the install dir absolute, if it is not yet
-BUILD_DIR=$(cd $BUILD_DIR; pwd)
+BUILD_DIR=$(cd ${BUILD_DIR}; pwd)
 
 # Zip up the stuff.
 

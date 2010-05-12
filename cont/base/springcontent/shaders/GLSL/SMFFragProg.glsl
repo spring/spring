@@ -5,6 +5,7 @@
 #define SMF_ARB_LIGHTING 0
 
 uniform vec4 lightDir;
+varying vec3 cameraDir;
 varying vec3 viewDir;
 varying vec3 halfDir;
 
@@ -36,6 +37,11 @@ uniform sampler2D splatDetailTex;
 uniform sampler2D splatDistrTex;
 // per-channel splat intensity multipliers
 uniform vec4 splatTexMults;
+#endif
+
+#if (SMF_SKY_REFLECTIONS == 1)
+uniform samplerCube skyReflectTex;
+uniform sampler2D skyReflectModTex;
 #endif
 
 
@@ -73,6 +79,18 @@ void main() {
 		(((texture2D(splatDetailTex, gl_TexCoord[7].st) * 2.0).a - 1.0) * (splatTexMults.a * splatDistr.a));
 	vec4 detailCol = vec4(detailInt, detailInt, detailInt, 1.0);
 	#endif
+
+
+	#if (SMF_SKY_REFLECTIONS == 1)
+	vec3 reflectDir = reflect(normalize(cameraDir), normal);
+	vec3 reflectCol = textureCube(skyReflectTex, normalize(gl_NormalMatrix * reflectDir)).rgb;
+	vec3 reflectMod = texture2D(skyReflectModTex, tc2);
+
+	diffuseCol.r = mix(diffuseCol.r, reflectCol.r, reflectMod.r);
+	diffuseCol.g = mix(diffuseCol.g, reflectCol.g, reflectMod.g);
+	diffuseCol.b = mix(diffuseCol.b, reflectCol.b, reflectMod.b);
+	#endif
+
 
 	// vec4 diffuseInt = texture2D(shadingTex, tc0);
 	vec4 diffuseInt =

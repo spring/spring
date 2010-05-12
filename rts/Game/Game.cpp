@@ -35,7 +35,6 @@
 #include "GameVersion.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
-#include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
@@ -48,6 +47,8 @@
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
+#include "NetProtocol.h"
+#include "ConfigHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -56,6 +57,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
+#include "FileSystem/FileSystem.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/HeightMapTexture.h"
@@ -63,10 +65,8 @@
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "NetProtocol.h"
-#include "DemoRecorder.h"
-#include "ConfigHandler.h"
-#include "FileSystem/FileSystem.h"
+#include "LoadSave/LoadSaveHandler.h"
+#include "LoadSave/DemoRecorder.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
@@ -127,7 +127,7 @@
 #include "Util.h"
 #include "Exceptions.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include "Sound/Music.h"
 #include "FileSystem/SimpleParser.h"
@@ -210,7 +210,6 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(noSpectatorChat),
-	CR_MEMBER(crossSize),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
 //	CR_MEMBER(infoConsole),
@@ -283,7 +282,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	showFPS   = !!configHandler->Get("ShowFPS",   0);
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
-	crossSize = configHandler->Get("CrossSize", 10.0f);
+
 
 	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
 
@@ -397,7 +396,7 @@ CGame::~CGame()
 	SafeDelete(tooltip);
 	SafeDelete(keyBindings);
 	SafeDelete(keyCodes);
-	SafeDelete(sound);
+	ISound::Shutdown();
 	SafeDelete(selectionKeys);
 	SafeDelete(mouse);
 	SafeDelete(camHandler);
@@ -1871,15 +1870,15 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "cross") {
 		if (action.extra.empty()) {
-			if (crossSize > 0.0f) {
-				crossSize = -crossSize;
+			if (mouse->crossSize > 0.0f) {
+				mouse->crossSize = -mouse->crossSize;
 			} else {
-				crossSize = std::max(1.0f, -crossSize);
+				mouse->crossSize = std::max(1.0f, -mouse->crossSize);
 			}
 		} else {
-			crossSize = atof(action.extra.c_str());
+			mouse->crossSize = atof(action.extra.c_str());
 		}
-		configHandler->Set("CrossSize", crossSize);
+		configHandler->Set("CrossSize", mouse->crossSize);
 	}
 	else if (cmd == "fps") {
 		if (action.extra.empty()) {
@@ -3174,6 +3173,8 @@ bool CGame::Draw() {
 		}
 	}
 
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
@@ -3203,19 +3204,6 @@ bool CGame::Draw() {
 
 	if (doDrawWorld) {
 		eventHandler.DrawScreenEffects();
-	}
-
-	if (mouse->locked && (crossSize > 0.0f)) {
-		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-		glLineWidth(1.49f);
-		glDisable(GL_TEXTURE_2D);
-		glBegin(GL_LINES);
-			glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
-			glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
-		glEnd();
-		glLineWidth(1.0f);
 	}
 
 	hudDrawer->Draw(gu->directControl);
@@ -3380,11 +3368,7 @@ bool CGame::Draw() {
 
 	mouse->DrawCursor();
 
-//	float tf[]={1,1,1,1,1,1,1,1,1};
-//	glVertexPointer(3,GL_FLOAT,0,tf);
-//	glDrawArrays(GL_TRIANGLES,0,3);
-
-	glEnable(GL_DEPTH_TEST );
+	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
 	unsigned start = SDL_GetTicks();
@@ -3465,11 +3449,10 @@ void CGame::DrawInputText()
 	}
 
 	// draw the text
+	font->SetColors(textColor, NULL);
 	if (!guihandler->GetOutlineFonts()) {
-		glColor4fv(*textColor);
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM, tempstring);
 	} else {
-		font->SetColors(textColor, NULL);
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM, tempstring);
 	}
 }

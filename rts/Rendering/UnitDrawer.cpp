@@ -5,7 +5,6 @@
 
 #include "UnitDrawer.h"
 
-#include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -1222,7 +1221,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		glActiveTexture(GL_TEXTURE3);
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetReflectionTextureID());
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
 
 		glActiveTexture(GL_TEXTURE4);
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);

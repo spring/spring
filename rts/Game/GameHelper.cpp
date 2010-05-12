@@ -7,7 +7,6 @@
 #include "GlobalUnsynced.h"
 #include "Camera.h"
 #include "GameSetup.h"
-#include "Game.h"
 #include "GameHelper.h"
 #include "UI/LuaUI.h"
 #include "LogOutput.h"

@@ -90,6 +90,10 @@ EXPORT(int              ) skirmishAiCallback_Game_getPlayerTeam(int skirmishAIId
 
 EXPORT(const char*      ) skirmishAiCallback_Game_getTeamSide(int skirmishAIId, int otherTeamId);
 
+EXPORT(int              ) skirmishAiCallback_Game_getTeamAllyTeam(int skirmishAIId, int otherTeamId);
+
+EXPORT(bool             ) skirmishAiCallback_Game_isAllied(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
+
 EXPORT(bool             ) skirmishAiCallback_Game_isExceptionHandlingEnabled(int skirmishAIId);
 
 EXPORT(bool             ) skirmishAiCallback_Game_isDebugModeEnabled(int skirmishAIId);
@@ -728,6 +732,8 @@ EXPORT(float            ) skirmishAiCallback_Unit_getResourceUse(int skirmishAII
 EXPORT(float            ) skirmishAiCallback_Unit_getResourceMake(int skirmishAIId, int unitId, int resourceId);
 
 EXPORT(void             ) skirmishAiCallback_Unit_getPos(int skirmishAIId, int unitId, float* return_posF3_out);
+
+EXPORT(void             ) skirmishAiCallback_Unit_getVel(int skirmishAIId, int unitId, float* return_posF3_out);
 
 EXPORT(bool             ) skirmishAiCallback_Unit_isActivated(int skirmishAIId, int unitId);
 

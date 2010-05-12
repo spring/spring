@@ -37,6 +37,7 @@ public:
 
 	const UnitDef* GetUnitDef(int unitId);
 	float3 GetUnitPos(int unitId);
+	float3 GetUnitVelocity(int unitId);
 	int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
 	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
 	int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS);

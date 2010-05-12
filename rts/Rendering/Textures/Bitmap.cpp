@@ -7,7 +7,7 @@
 #include <fstream>
 #include <string.h>
 #include <IL/il.h>
-#include <IL/ilu.h>
+//#include <IL/ilu.h>
 #include <boost/thread.hpp>
 #include "mmgr.h"
 
@@ -34,7 +34,7 @@ static const float blurkernel[9] = {
 struct InitializeOpenIL {
 	InitializeOpenIL() {
 		ilInit();
-		iluInit();
+		//iluInit();
 	}
 	~InitializeOpenIL() {
 		ilShutDown();

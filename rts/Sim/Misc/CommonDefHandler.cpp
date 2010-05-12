@@ -4,7 +4,7 @@
 
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "LogOutput.h"
 
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)

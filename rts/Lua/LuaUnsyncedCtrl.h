@@ -81,7 +81,6 @@ class LuaUnsyncedCtrl {
 		static int SetConfigString(lua_State* L);
 
 		static int CreateDir(lua_State* L);
-		static int MakeFont(lua_State* L);
 
 		static int Restart(lua_State* L);
 

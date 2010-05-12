@@ -45,6 +45,8 @@
 #include "AIUnitGivenEvent.h"
 #include "AIUnitCapturedEvent.h"
 
+#include "AIEnemyCreatedEvent.h"
+#include "AIEnemyFinishedEvent.h"
 #include "AIEnemyEnterLOSEvent.h"
 #include "AIEnemyLeaveLOSEvent.h"
 #include "AIEnemyEnterRadarEvent.h"

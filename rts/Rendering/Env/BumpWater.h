@@ -20,7 +20,6 @@ public:
 	~CBumpWater();
 
 	void Update();
-	void DoUpdate();
 	void UpdateWater(CGame* game);
 	void OcclusionQuery();
 	void HeightmapChanged(const int x1, const int y1, const int x2, const int y2);
@@ -115,8 +114,6 @@ private:
 	float3 windVec;
 	float3 windndir;
 	float  windStrength;
-
-	unsigned int lastFrame;
 };
 
 #endif // __BUMP_WATER_H__

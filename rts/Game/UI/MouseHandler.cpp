@@ -13,7 +13,7 @@
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "MouseCursor.h"
-#include "MouseInput.h"
+#include "System/Input/MouseInput.h"
 #include "TooltipConsole.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Game/Game.h"
@@ -38,7 +38,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include <boost/cstdint.hpp>
 
@@ -96,6 +96,8 @@ CMouseHandler::CMouseHandler()
 
 	scrollWheelSpeed = configHandler->Get("ScrollWheelSpeed", 25.0f);
 	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
+
+	crossSize = configHandler->Get("CrossSize", 10.0f);
 }
 
 CMouseHandler::~CMouseHandler()
@@ -748,6 +750,21 @@ void CMouseHandler::DrawCursor(void)
 {
 	if (guihandler)
 		guihandler->DrawCentroidCursor();
+
+	if (locked && (crossSize > 0.0f)) {
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+		glDisable(GL_TEXTURE_2D);
+		glLineWidth(1.49f);
+		glBegin(GL_LINES);
+			glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
+			glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
+			glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
+			glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
+		glEnd();
+		glLineWidth(1.0f);
+		glEnable(GL_TEXTURE_2D);
+		return;
+	}
 
 	if (hide || (cursorText == "none"))
 		return;

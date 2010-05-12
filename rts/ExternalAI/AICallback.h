@@ -89,6 +89,7 @@ public:
 	bool UnitBeingBuilt(int unitId);
 	const UnitDef* GetUnitDef(int unitId);
 	float3 GetUnitPos(int unitId);
+	float3 GetUnitVelocity(int unitId);
 	int GetBuildingFacing(int unitId);
 	bool IsUnitCloaked(int unitId);
 	bool IsUnitParalyzed(int unitId);

@@ -45,10 +45,10 @@
 #include "aGui/Gui.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Input/MouseInput.h"
+#include "Input/InputHandler.h"
+#include "Input/Joystick.h"
 #include "LogOutput.h"
-#include "MouseInput.h"
-#include "InputHandler.h"
-#include "Joystick.h"
 #include "bitops.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
@@ -56,7 +56,7 @@
 #include "FPUCheck.h"
 #include "Exceptions.h"
 #include "System/TimeProfiler.h"
-#include "System/Sound/Sound.h"
+#include "System/Sound/ISound.h"
 
 #include "mmgr.h"
 
@@ -159,7 +159,7 @@ bool SpringApp::Initialize()
 	FileSystemHandler::Initialize(true);
 
 	UpdateOldConfigs();
-
+	
 	if (!InitWindow(("Spring " + SpringVersion::Get()).c_str())) {
 		SDL_Quit();
 		return false;
@@ -297,6 +297,8 @@ bool SpringApp::InitWindow(const char* title)
 		return false;
 	}
 
+	PrintAvailableResolutions();
+
 	// Sets window manager properties
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
@@ -400,10 +402,15 @@ bool SpringApp::SetSDLVideoMode()
 		GLContext::Init();
 	}
 
+	VSync.Init();
+
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
-	logOutput.Print("Video mode set to  %i x %i / %i bit", screenWidth, screenHeight, bits );
-	VSync.Init();
+	if (fullscreen) {
+		logOutput.Print("Video mode set to %ix%i/%ibit", screenWidth, screenHeight, bits);
+	} else {
+		logOutput.Print("Video mode set to %ix%i/%ibit (windowed)", screenWidth, screenHeight, bits);
+	}
 
 	return true;
 }
@@ -449,8 +456,8 @@ bool SpringApp::GetDisplayGeometry()
 	info.info.x11.unlock_func();
 
 #else
-	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
-	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
+	gu->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
+	gu->screenSizeY = GetSystemMetrics(SM_CYSCREEN);
 
 	RECT rect;
 	if (!GetClientRect(info.window, &rect)) {
@@ -1176,8 +1183,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			CrashHandler::ClearDrawWDT(true);
 			if (event.active.state & SDL_APPACTIVE) {
 				gu->active = !!event.active.gain;
-				if (sound)
+				if (ISound::IsInitialized()) {
 					sound->Iconified(!event.active.gain);
+				}
 			}
 
 			if (mouse && mouse->locked) {
