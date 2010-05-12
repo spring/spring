@@ -21,7 +21,7 @@
 #include "Colors.h"
 #include "NetProtocol.h"
 #include "LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include "creg/STL_List.h"
 
