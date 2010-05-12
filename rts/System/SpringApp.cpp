@@ -56,7 +56,7 @@
 #include "FPUCheck.h"
 #include "Exceptions.h"
 #include "System/TimeProfiler.h"
-#include "System/Sound/Sound.h"
+#include "System/Sound/ISound.h"
 
 #include "mmgr.h"
 
@@ -1183,8 +1183,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			CrashHandler::ClearDrawWDT(true);
 			if (event.active.state & SDL_APPACTIVE) {
 				gu->active = !!event.active.gain;
-				if (sound)
+				if (ISound::IsInitialized()) {
 					sound->Iconified(!event.active.gain);
+				}
 			}
 
 			if (mouse && mouse->locked) {
