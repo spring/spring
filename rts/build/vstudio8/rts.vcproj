@@ -5256,10 +5256,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\NullSound.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\SharedLib.cpp"
 					>
 				</File>
@@ -5970,6 +5966,30 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sound\Sound.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\ISound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\ISound.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.h"
 					>
 				</File>
 				<File

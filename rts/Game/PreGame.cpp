@@ -32,7 +32,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/Music.h"
 #include "Map/MapInfo.h"
 #include "ConfigHandler.h"
@@ -66,7 +66,7 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 	{
 		net->InitLocalClient();
 	}
-	sound = new CSound(); // should have finished until server response arrives
+	ISound::Initialize(); // should have finished until server response arrives
 }
 
 

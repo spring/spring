@@ -9,7 +9,7 @@
 #include "errorhandler.h"
 
 #include "Game/GameServer.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 
 #include <SDL.h>
 #ifdef _WIN32
@@ -25,7 +25,7 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 	SDL_Quit();
 	// not exiting threads causes another exception
 	delete gameServer; gameServer = NULL;
-	delete sound; sound = NULL;
+	ISound::Shutdown();
 
 #ifdef _WIN32
 	// Windows implementation, using MessageBox.

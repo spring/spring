@@ -18,7 +18,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 

@@ -3,11 +3,11 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "myMath.h"
-#include "Matrix44f.h"
-#include "GlobalUnsynced.h"
 #include "Camera.h"
 #include "Map/Ground.h"
+#include "System/myMath.h"
+#include "System/Matrix44f.h"
+#include "System/GlobalUnsynced.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -76,71 +76,6 @@ void CCamera::Pitch(float rad)
 	rot.y = atan2(forward.x,forward.z);
 	rot.x = asin(forward.y);
 	UpdateForward();
-}
-
-static double Calculate4x4Cofactor(const double m[4][4], int ei, int ej)
-{
-	int ai, bi, ci;
-	switch (ei) {
-		case 0: { ai = 1; bi = 2; ci = 3; break; }
-		case 1: { ai = 0; bi = 2; ci = 3; break; }
-		case 2: { ai = 0; bi = 1; ci = 3; break; }
-		case 3: { ai = 0; bi = 1; ci = 2; break; }
-	}
-	int aj, bj, cj;
-	switch (ej) {
-		case 0: { aj = 1; bj = 2; cj = 3; break; }
-		case 1: { aj = 0; bj = 2; cj = 3; break; }
-		case 2: { aj = 0; bj = 1; cj = 3; break; }
-		case 3: { aj = 0; bj = 1; cj = 2; break; }
-	}
-
-	const double val =
-	    (m[ai][aj] * ((m[bi][bj] * m[ci][cj]) - (m[ci][bj] * m[bi][cj])))
-		- (m[ai][bj] * ((m[bi][aj] * m[ci][cj]) - (m[ci][aj] * m[bi][cj])))
-		+ (m[ai][cj] * ((m[bi][aj] * m[ci][bj]) - (m[ci][aj] * m[bi][bj])));
-
-	if (((ei + ej) % 2) == 0) {
-		return +val;
-	} else {
-		return -val;
-	}
-}
-
-
-static bool CalculateInverse4x4(const double m[4][4], double inv[4][4])
-{
-	double cofac[4][4];
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			cofac[i][j] = Calculate4x4Cofactor(m, i, j);
-		}
-	}
-
-	const double det = (m[0][0] * cofac[0][0]) +
-	                   (m[0][1] * cofac[0][1]) +
-	                   (m[0][2] * cofac[0][2]) +
-	                   (m[0][3] * cofac[0][3]);
-
-	if (det <= 1.0e-9) {
-		// singular matrix, set to identity?
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 4; j++) {
-				inv[i][j] = (i == j) ? 1.0 : 0.0;
-			}
-		}
-		return false;
-	}
-
-	const double scale = 1.0 / det;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			inv[i][j] = cofac[j][i] * scale; // (adjoint / determinant)
-			                                 // (note the transposition in 'cofac')
-		}
-	}
-
-	return true;
 }
 
 void CCamera::Update(bool freeze, bool resetUp)
@@ -224,8 +159,8 @@ void CCamera::Update(bool freeze, bool resetUp)
 	myGluLookAt(camPos, center, up);
 
 
-	// the inverse view matrix (handy for shaders to have)
-	CalculateInverse4x4((double(*)[4]) viewMat, (double(*)[4]) viewMatInv);
+	// get the inverse view matrix (handy for shaders to have)
+	CMatrix44f::Invert((double(*)[4]) viewMat, (double(*)[4]) viewMatInv);
 
 	// transpose the 3x3
 	bboardMat[ 0] = viewMat[ 0];

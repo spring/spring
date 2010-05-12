@@ -127,7 +127,7 @@
 #include "Util.h"
 #include "Exceptions.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include "Sound/Music.h"
 #include "FileSystem/SimpleParser.h"
@@ -397,7 +397,7 @@ CGame::~CGame()
 	SafeDelete(tooltip);
 	SafeDelete(keyBindings);
 	SafeDelete(keyCodes);
-	SafeDelete(sound);
+	ISound::Shutdown();
 	SafeDelete(selectionKeys);
 	SafeDelete(mouse);
 	SafeDelete(camHandler);
