@@ -85,6 +85,8 @@ public:
 	/// Is the server still running?
 	bool HasFinished() const;
 
+	void UpdateSpeedControl(int speedCtrl);
+
 private:
 	/**
 	 * @brief relay chat messages to players / autohost
@@ -162,7 +164,8 @@ private:
 
 	float medianCpu;
 	int medianPing;
-	int enforceSpeed;
+	int curSpeedCtrl;
+	int speedControl;
 	/////////////////// game settings ///////////////////
 	boost::scoped_ptr<const CGameSetup> setup;
 	boost::scoped_ptr<const GameData> gameData;

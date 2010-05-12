@@ -283,6 +283,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
 
+	speedControl = configHandler->Get("SpeedControl", 0);
 
 	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
 
@@ -1705,6 +1706,24 @@ bool CGame::ActionPressed(const Action& action,
 #	endif
 	}
 #endif
+	else if (cmd == "speedcontrol") {
+		if (action.extra.empty()) {
+			++speedControl;
+			if(speedControl > 2)
+				speedControl = -2;
+		}
+		else {
+			speedControl = atoi(action.extra.c_str());
+		}
+		speedControl = std::max(-2, std::min(speedControl, 2));
+		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
+		logOutput.Print("Speed Control: %s%s",
+			(speedControl == 0) ? "Default" : ((speedControl == 1 || speedControl == -1) ? "Average CPU" : "Maximum CPU"),
+			(speedControl < 0) ? " (server voting disabled)" : "");
+		configHandler->Set("SpeedControl", speedControl);
+		if (gameServer)
+			gameServer->UpdateSpeedControl(speedControl);
+	}
 	else if (!isRepeat && (cmd == "gameinfo")) {
 		if (!CGameInfo::IsActive()) {
 			CGameInfo::Enable();
@@ -3514,6 +3533,7 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
+	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 }
 
 
