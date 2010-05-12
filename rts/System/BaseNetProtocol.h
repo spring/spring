@@ -85,6 +85,7 @@ enum NETMSG {
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
+	NETMSG_CUSTOM_DATA      = 55, // uchar myPlayerNum, uchar dataType, uchar dataValue
 
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
@@ -92,6 +93,9 @@ enum NETMSG {
 	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
 	NETMSG_UNREGISTER_NETMSG= 74  // uchar myPlayerNum, uchar NETMSG
 };
+
+// Data types for NETMSG_CUSTOM_DATA
+#define CUSTOM_DATA_SPEEDCONTROL 0
 
 // action to do with NETMSG_TEAM
 enum TEAMMSG {
@@ -136,6 +140,8 @@ public:
 	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);
 	PacketType SendInternalSpeed(float internalSpeed);
 	PacketType SendCPUUsage(float cpuUsage);
+	PacketType SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue);
+	PacketType SendSpeedControl(uchar myPlayerNum, int speedCtrl);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
 	PacketType SendAttemptConnect(const std::string name, const std::string& passwd, const std::string version);
