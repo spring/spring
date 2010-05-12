@@ -617,17 +617,33 @@ const UnitDef* CAICallback::GetUnitDefById(int unitDefId)
 	return NULL;
 }
 
+
+
 float3 CAICallback::GetUnitPos(int unitId)
 {
 	verify();
 	if (CHECK_UNITID(unitId)) {
 		const CUnit* unit = uh->units[unitId];
-		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & (LOS_INLOS|LOS_INRADAR))){
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
 			return helper->GetUnitErrorPos(unit,teamHandler->AllyTeam(team));
 		}
 	}
 	return ZeroVector;
 }
+
+float3 CAICallback::GetUnitVelocity(int unitId)
+{
+	verify();
+	if (CHECK_UNITID(unitId)) {
+		const CUnit* unit = uh->units[unitId];
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
+			return unit->speed;
+		}
+	}
+	return ZeroVector;
+}
+
+
 
 int CAICallback::GetBuildingFacing(int unitId) {
 

@@ -265,6 +265,12 @@ struct SSkirmishAICallback {
 	 */
 	const char*       (CALLING_CONV *Game_getTeamSide)(int skirmishAIId, int otherTeamId);
 
+	/// Returns the ally-team of a team
+	int               (CALLING_CONV *Game_getTeamAllyTeam)(int skirmishAIId, int otherTeamId);
+
+	/// Returns true, if the two supplied ally-teams are currently allied
+	bool              (CALLING_CONV *Game_isAllied)(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
+
 	bool              (CALLING_CONV *Game_isExceptionHandlingEnabled)(int skirmishAIId);
 
 	bool              (CALLING_CONV *Game_isDebugModeEnabled)(int skirmishAIId);
@@ -1166,6 +1172,8 @@ struct SSkirmishAICallback {
 
 	void              (CALLING_CONV *Unit_getPos)(int skirmishAIId, int unitId, float* return_posF3_out);
 
+	void              (CALLING_CONV *Unit_getVel)(int skirmishAIId, int unitId, float* return_posF3_out);
+
 	bool              (CALLING_CONV *Unit_isActivated)(int skirmishAIId, int unitId);
 
 	/** Returns true if the unit is currently being built */
@@ -1442,22 +1450,31 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *Map_isPosInCamera)(int skirmishAIId, float* pos_posF3, float radius);
 
-	/** Returns the maps width in full resolution */
+	/**
+	 * Returns the maps center heightmap width.
+	 * @see getHeightMap()
+	 */
 	int               (CALLING_CONV *Map_getWidth)(int skirmishAIId);
 
-	/** Returns the maps height in full resolution */
+	/**
+	 * Returns the maps center heightmap height.
+	 * @see getHeightMap()
+	 */
 	int               (CALLING_CONV *Map_getHeight)(int skirmishAIId);
 
 	/**
 	 * Returns the height for the center of the squares.
 	 * This differs slightly from the drawn map, since
 	 * that one uses the height at the corners.
+	 * Note that the actual map is 8 times larger (in each dimension) and 
+	 * all other maps (slope, los, resources, etc.) are relative to the 
+	 * size of the heightmap.
 	 *
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - each data position is 8*8 in size
-	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
-	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+	 * - the value for the full resolution position (x, z) is at index (z * width + x)
+	 * - the last value, bottom right, is at index (width * height - 1)
 	 *
 	 * @see getCornersHeightMap()
 	 */
@@ -1471,8 +1488,8 @@ struct SSkirmishAICallback {
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - 4 points mark the edges of an area of 8*8 in size
-	 * - the value for upper left corner of the full resolution position (x, z) is at index ((z * width + x) / 8)
-	 * - the last value, bottom right, is at index ((width/8+1) * (height/8+1) - 1)
+	 * - the value for upper left corner of the full resolution position (x, z) is at index (z * width + x)
+	 * - the last value, bottom right, is at index ((width+1) * (height+1) - 1)
 	 *
 	 * @see getHeightMap()
 	 */

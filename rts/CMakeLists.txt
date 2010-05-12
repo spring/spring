@@ -54,7 +54,8 @@ FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(GLU REQUIRED)
 FIND_PACKAGE(GLUT REQUIRED)
 FIND_PACKAGE(GLEW REQUIRED)
-LIST(APPEND spring_libraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY})
+LIST(APPEND spring_libraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY})
+#LIST(APPEND spring_libraries ${DEVIL_ILU_LIBRARY})
 
 FIND_PACKAGE(Freetype REQUIRED)
 INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
@@ -140,12 +141,26 @@ AUX_SOURCE_DIRECTORY(System/Script sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sync sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sound sysfiles)
 AUX_SOURCE_DIRECTORY(System/creg sysfiles)
+AUX_SOURCE_DIRECTORY(System/Input sysfiles)
+AUX_SOURCE_DIRECTORY(System/LoadSave sysfiles)
 
 ### Add icon and manifest to exe using windres
-IF (MINGW)
-	FIND_PROGRAM(WINDRES NAMES windres i586-mingw32msvc-windres i586-pc-mingw32-windres i686-mingw32-windres DOC "path to mingw's windres executable")
-	ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/icon.o COMMAND ${WINDRES} -I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc -o ${CMAKE_CURRENT_BINARY_DIR}/icon.o -v)
-	LIST(APPEND sysfiles icon.o)
+IF    (MINGW)
+	IF    (WINDRES_FOUND)
+		ADD_CUSTOM_COMMAND(
+			OUTPUT
+				"${CMAKE_CURRENT_BINARY_DIR}/icon.o"
+			COMMAND
+				"${WINDRES_BIN}"
+				"-I${CMAKE_CURRENT_SOURCE_DIR}"
+				"-i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc" 
+				"-o" "${CMAKE_CURRENT_BINARY_DIR}/icon.o"
+				"-v"
+			)
+		LIST(APPEND sysfiles "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
+	ELSE  (WINDRES_FOUND)
+		MESSAGE(WARNING "Could not find windres, not adding icon to executable.")
+	ENDIF (WINDRES_FOUND)
 ENDIF (MINGW)
 
 ### Add headers for generated project files (e.g. Code::Blocks)

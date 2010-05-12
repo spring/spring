@@ -5,8 +5,8 @@ SET(build_files
 	../../rts/Game/PlayerStatistics
 	../../rts/Sim/Misc/TeamStatistics
 	../../rts/System/Net/RawPacket
-	../../rts/System/DemoReader
-	../../rts/System/Demo)
+	../../rts/System/LoadSave/DemoReader
+	../../rts/System/LoadSave/Demo)
 
 ADD_EXECUTABLE(demotool EXCLUDE_FROM_ALL DemoTool ${build_files})
 IF (MINGW)

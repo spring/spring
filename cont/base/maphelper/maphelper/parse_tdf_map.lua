@@ -107,6 +107,21 @@ local function ConvertLighting(map)
   map.lighting = lighting
 end
 
+local function ConvertSplats(map)
+  local splats = map.splats
+
+  if (type(splats) ~= 'table') then
+    return
+  end
+
+  local csplats = {
+    texScales = splats.splattexscales,
+    texMults  = splats.splattexmults,
+  }
+
+  map.splats = csplats
+end
+
 local function ConvertGrass(map)
   local grass = map.grass
 
@@ -182,18 +197,18 @@ return function(sourceText)
   end
 
   map.resources = {
-     detailTex       = map.detailtex,
-     specularTex     = map.speculartex,
-     splatDetailTex  = map.splatdetailtex,
-     splatDistrTex   = map.splatdistrtex,
-     splatTexScales  = map.splattexscales,
-     splatTexMults   = map.splattexmults,
-     grassBladeTex   = map.grassbladetex,
-     grassShadingTex = map.grassshadingtex,
+     detailTex        = map.detailtex,
+     specularTex      = map.speculartex,
+     splatDetailTex   = map.splatdetailtex,
+     splatDistrTex    = map.splatdistrtex,
+     grassBladeTex    = map.grassbladetex,
+     grassShadingTex  = map.grassshadingtex,
+     skyReflectModTex = map.skyreflectmodtex,
   }
 
   ConvertTerrainTypes(map)
   ConvertLighting(map)
+  ConvertSplats(map)
   ConvertGrass(map)
   ConvertWater(map)
   ConvertTeams(map)

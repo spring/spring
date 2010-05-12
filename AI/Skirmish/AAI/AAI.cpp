@@ -880,22 +880,37 @@ int AAI::HandleEvent(int msg, const void* data)
 	switch (msg)
 	{
 		case AI_EVENT_UNITGIVEN: // 1
-			{
-				const IGlobalAI::ChangeTeamEvent* cte =
-						(const IGlobalAI::ChangeTeamEvent*) data;
-				if(cte->newteam == cb->GetMyTeam())
-				{
-					UnitCreated(cte->unit, -1);
-					UnitFinished(cte->unit);
-				}
-				break;
-			}
 		case AI_EVENT_UNITCAPTURED: // 2
 			{
-				const IGlobalAI::ChangeTeamEvent* cte =
-						(const IGlobalAI::ChangeTeamEvent*) data;
-					if ((cte->oldteam) == (cb->GetMyTeam())) {
+				const IGlobalAI::ChangeTeamEvent* cte = (const IGlobalAI::ChangeTeamEvent*) data;
+
+				const int myAllyTeamId = cb->GetMyAllyTeam();
+				const bool oldEnemy = !cb->IsAllied(myAllyTeamId, cb->GetTeamAllyTeam(cte->oldteam));
+				const bool newEnemy = !cb->IsAllied(myAllyTeamId, cb->GetTeamAllyTeam(cte->newteam));
+
+				if (oldEnemy && !newEnemy) {
+					// unit changed from an enemy to an allied team
+					// we got a new friend! :)
+					EnemyDestroyed(cte->unit, -1);
+				} else if (!oldEnemy && newEnemy) {
+					// unit changed from an ally to an enemy team
+					// we lost a friend! :(
+					EnemyCreated(cte->unit);
+					if (!cb->UnitBeingBuilt(cte->unit)) {
+						EnemyFinished(cte->unit);
+					}
+				}
+
+				if (cte->oldteam == cb->GetMyTeam()) {
+					// we lost a unit
 					UnitDestroyed(cte->unit, -1);
+				} else if (cte->newteam == cb->GetMyTeam()) {
+					// we have a new unit
+					UnitCreated(cte->unit, -1);
+					if (!cb->UnitBeingBuilt(cte->unit)) {
+						UnitFinished(cte->unit);
+						UnitIdle(cte->unit);
+					}
 				}
 				break;
 			}

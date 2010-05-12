@@ -31,7 +31,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Exceptions.h"
 
 CUnitDefHandler* unitDefHandler;

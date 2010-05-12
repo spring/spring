@@ -95,16 +95,29 @@ const UnitDef* CAICheats::GetUnitDef(int unitid)
 
 }
 
+
+
 float3 CAICheats::GetUnitPos(int unitid)
 {
 	if (!CHECK_UNITID(unitid)) return ZeroVector;
-	CUnit* unit = uh->units[unitid];
-	if (unit) {
+	const CUnit* unit = uh->units[unitid];
+	if (unit != NULL) {
 		return unit->pos;
 	}
 	return ZeroVector;
-
 }
+
+float3 CAICheats::GetUnitVelocity(int unitid)
+{
+	if (!CHECK_UNITID(unitid)) return ZeroVector;
+	const CUnit* unit = uh->units[unitid];
+	if (unit != NULL) {
+		return unit->speed;
+	}
+	return ZeroVector;
+}
+
+
 
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {

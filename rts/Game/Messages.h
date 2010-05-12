@@ -7,11 +7,15 @@
 #include <string>
 #include <vector>
 
-/** Singleton object to read and store messages. It essentially behaves like a
-one-to-many translator: you pass a message to it, and according to the content
-of messages.lua, it picks a random 'translation' and returns that. In the
-future this could be extended to support proper internationalisation too.
-Currently this is only the "player is no more" message. */
+/**
+ * Singleton object to read and store team-death-messages.
+ * It essentially behaves like a one-to-many translator:
+ * You pass a message to it, and according to the content
+ * of messages.lua, it picks a random 'translation' and returns that.
+ * In the future this could be extended to support proper internationalisation
+ * too.
+ * Currently, this is only used for team-death-messages, eg: "team1 is no more"
+ */
 class CMessages
 {
 private:
@@ -35,4 +39,4 @@ public:
 	}
 };
 
-#endif
+#endif // MESSAGES_H

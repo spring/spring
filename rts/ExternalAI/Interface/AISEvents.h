@@ -51,8 +51,10 @@ enum EventTopic {
 	EVENT_COMMAND_FINISHED             = 22,
 	EVENT_LOAD                         = 23,
 	EVENT_SAVE                         = 24,
+	EVENT_ENEMY_CREATED                = 25,
+	EVENT_ENEMY_FINISHED               = 26,
 };
-const int NUM_EVENTS                   = 25;
+const int NUM_EVENTS          = 27;
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
@@ -80,6 +82,8 @@ const int NUM_EVENTS                   = 25;
 		+ sizeof(struct SSeismicPingEvent) \
 		+ sizeof(struct SLoadEvent) \
 		+ sizeof(struct SSaveEvent) \
+		+ sizeof(struct SEnemyCreatedEvent) \
+		+ sizeof(struct SEnemyFinishedEvent) \
 		)
 
 /**
@@ -129,8 +133,8 @@ struct SMessageEvent {
 /**
  * This AI event is sent whenever a unit of this team is created, and contains
  * the created unit. Usually, the unit has only 1 HP at this time, and consists
- * only of a nano frame (-> will not accept commands yet);
- * see also the unit-finnished event.
+ * only of a nano frame (-> will not accept commands yet).
+ * See also the unit-finnished event.
  */
 struct SUnitCreatedEvent {
 	int unit;
@@ -140,7 +144,8 @@ struct SUnitCreatedEvent {
 /**
  * This AI event is sent whenever a unit is fully built, and contains the
  * finnished unit. Usually, the unit has full health at this time, and is ready
- * to accept commands; see also the unit-created event.
+ * to accept commands.
+ * See also the unit-created event.
  */
 struct SUnitFinishedEvent {
 	int unit;
@@ -173,33 +178,39 @@ struct SUnitMoveFailedEvent {
  * directly from the attacker to the attacked unit, while with artillery it will
  * rather be from somewhere up in the sky to the attacked unit.
  * See also the unit-destroyed event.
- * attacker may be 0, which means no attacker was directly involved.
- * If paralyzer is true, then damage is paralyzation damage,
- * otherwise it is real damage.
  */
 struct SUnitDamagedEvent {
 	int unit;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not visible and cheat events are off
+	 */
 	int attacker;
 	float damage;
 	float* dir_posF3;
 	int weaponDefId;
+	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
 }; //$ EVENT_UNIT_DAMAGED INTERFACES:Unit(unit)
 
 /**
  * This AI event is sent when a unit was destroyed; see also the unit-damaged
  * event.
- * attacker may be 0, which means no attacker was directly involveld.
  */
 struct SUnitDestroyedEvent {
 	int unit;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not visible and cheat events are off
+	 */
 	int attacker;
 }; //$ EVENT_UNIT_DESTROYED INTERFACES:Unit(unit),UnitLifeState()
 
 /**
- * This AI event is sent when a unit changed from one team to an other either
- * because the old owner gave it to the new one, or because the new one took it
- * from the old one; see the /take command.
+ * This AI event is sent when a unit changed from one team to an other,
+ * either because the old owner gave it to the new one, or because the
+ * new one took it from the old one; see the /take command.
+ * Both giving and receiving team will get this event.
  */
 struct SUnitGivenEvent {
 	int unitId;
@@ -210,6 +221,7 @@ struct SUnitGivenEvent {
 /**
  * This AI event is sent when a unit changed from one team to an other through
  * capturing.
+ * Both giving and receiving team will get this event.
  */
 struct SUnitCapturedEvent {
 	int unitId;
@@ -254,25 +266,32 @@ struct SEnemyLeaveRadarEvent {
  * direction will point directly from the attacker to the attacked unit, while
  * with artillery it will rather be from somewhere up in the sky to the attacked
  * unit.
- * attacker may be 0, which means no attacker was directly involved.
  * See also the enemy-destroyed event.
  */
 struct SEnemyDamagedEvent {
 	int enemy;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not allied with the team receiving this event
+	 */
 	int attacker;
 	float damage;
 	float* dir_posF3;
 	int weaponDefId;
+	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
 }; //$ EVENT_ENEMY_DAMAGED INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent when an enemy unit was destroyed; see also the
  * enemy-damaged event.
- * attacker may be 0, which means no attacker was directly involveld.
  */
 struct SEnemyDestroyedEvent {
 	int enemy;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not allied with the team receiving this event
+	 */
 	int attacker;
 }; //$ EVENT_ENEMY_DESTROYED INTERFACES:Unit(enemy),Enemy(enemy),UnitLifeState()
 
@@ -344,6 +363,25 @@ struct SSaveEvent {
 	/// Absolute file path, writeable
 	const char* file;
 }; //$ EVENT_SAVE INTERFACES:LoadSave(file)
+
+/**
+ * This AI event is sent whenever a unit of an enemy team is created,
+ * and contains the created unit. Usually, the unit has only 1 HP at this time,
+ * and consists only of a nano frame.
+ * See also the enemy-finnished event.
+ */
+struct SEnemyCreatedEvent {
+	int enemy;
+}; // EVENT_ENEMY_CREATED INTERFACES:Unit(enemy),Enemy(enemy)
+
+/**
+ * This AI event is sent whenever an enemy unit is fully built, and contains the
+ * finnished unit. Usually, the unit has full health at this time.
+ * See also the unit-created event.
+ */
+struct SEnemyFinishedEvent {
+	int enemy;
+}; // EVENT_ENEMY_FINISHED INTERFACES:Unit(enemy),Enemy(enemy)
 
 #ifdef	__cplusplus
 } // extern "C"

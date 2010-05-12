@@ -171,6 +171,14 @@ const char* CAIAICallback::GetTeamSide(int team) {
 	return sAICallback->Game_getTeamSide(skirmishAIId, team);
 }
 
+int CAIAICallback::GetTeamAllyTeam(int team) {
+	return sAICallback->Game_getTeamAllyTeam(skirmishAIId, team);
+}
+
+bool CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
+	return sAICallback->Game_isAllied(skirmishAIId, firstAllyTeamId, secondAllyTeamId);
+}
+
 int CAIAICallback::GetUnitGroup(int unitId) {
 	return sAICallback->Unit_getGroup(skirmishAIId, unitId);
 }
@@ -323,12 +331,23 @@ const UnitDef* CAIAICallback::GetUnitDef(int unitId) {
 	return this->GetUnitDefById(unitDefId);
 }
 
+
+
 float3 CAIAICallback::GetUnitPos(int unitId) {
 
 	float pos_cache[3];
 	sAICallback->Unit_getPos(skirmishAIId, unitId, pos_cache);
 	return pos_cache;
 }
+
+float3 CAIAICallback::GetUnitVel(int unitId) {
+
+	float pos_cache[3];
+	sAICallback->Unit_getVel(skirmishAIId, unitId, pos_cache);
+	return pos_cache;
+}
+
+
 
 int CAIAICallback::GetBuildingFacing(int unitId) {
 	return sAICallback->Unit_getBuildingFacing(skirmishAIId, unitId);

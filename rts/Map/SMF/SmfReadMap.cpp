@@ -75,6 +75,16 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	CBitmap splatDetailTexBM;
 	CBitmap splatDistrTexBM;
 	CBitmap grassShadingTexBM;
+	CBitmap skyReflectModTexBM;
+
+	detailTex        = 0;
+	shadingTex       = 0;
+	normalsTex       = 0;
+	minimapTex       = 0;
+	specularTex      = 0;
+	splatDetailTex   = 0;
+	splatDistrTex    = 0;
+	skyReflectModTex = 0;
 
 	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
@@ -91,58 +101,64 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		}
 
 		specularTex = specularTexBM.CreateTexture(false);
-	} else {
-		specularTex = 0;
+
+		if (haveSplatTexture) {
+			// if the map supplies an intensity- and a distribution-texture for
+			// detail-splat blending, the regular detail-texture is not used
+			if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
+				// default detail-texture should be all-grey
+				splatDetailTexBM.Alloc(1, 1);
+				splatDetailTexBM.mem[0] = 127;
+				splatDetailTexBM.mem[1] = 127;
+				splatDetailTexBM.mem[2] = 127;
+				splatDetailTexBM.mem[3] = 127;
+			}
+
+			if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
+				splatDistrTexBM.Alloc(1, 1);
+				splatDistrTexBM.mem[0] = 255;
+				splatDistrTexBM.mem[1] = 0;
+				splatDistrTexBM.mem[2] = 0;
+				splatDistrTexBM.mem[3] = 0;
+			}
+
+			splatDetailTex = splatDetailTexBM.CreateTexture(false);
+			splatDistrTex = splatDistrTexBM.CreateTexture(false);
+
+			{
+				// generate mipmaps for the splat detail-texture
+				glBindTexture(GL_TEXTURE_2D, splatDetailTex);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+				if (anisotropy != 0.0f) {
+					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+				}
+				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDetailTexBM.xsize, splatDetailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDetailTexBM.mem);
+			}
+
+			{
+				// generate mipmaps for the splat distribution-texture
+				glBindTexture(GL_TEXTURE_2D, splatDistrTex);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+				if (anisotropy != 0.0f) {
+					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+				}
+				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDistrTexBM.xsize, splatDistrTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDistrTexBM.mem);
+			}
+		}
+
+		if (!skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
+			skyReflectModTexBM.Alloc(1, 1);
+			skyReflectModTexBM.mem[0] = 127;
+			skyReflectModTexBM.mem[1] = 127;
+			skyReflectModTexBM.mem[2] = 127;
+			skyReflectModTexBM.mem[3] = 255;
+		}
+
+		skyReflectModTex = skyReflectModTexBM.CreateTexture(false);
 	}
 
-	if (haveSplatTexture) {
-		// if the map supplies an intensity- and a distribution-texture for
-		// detail-splat blending, the regular detail-texture is not used
-		if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
-			// default detail-texture should be all-grey
-			splatDetailTexBM.Alloc(1, 1);
-			splatDetailTexBM.mem[0] = 127;
-			splatDetailTexBM.mem[1] = 127;
-			splatDetailTexBM.mem[2] = 127;
-			splatDetailTexBM.mem[3] = 127;
-		}
-
-		if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
-			splatDistrTexBM.Alloc(1, 1);
-			splatDistrTexBM.mem[0] = 255;
-			splatDistrTexBM.mem[1] = 0;
-			splatDistrTexBM.mem[2] = 0;
-			splatDistrTexBM.mem[3] = 0;
-		}
-
-		splatDetailTex = splatDetailTexBM.CreateTexture(false);
-		splatDistrTex = splatDistrTexBM.CreateTexture(false);
-
-		{
-			// generate mipmaps for the splat detail-texture
-			glBindTexture(GL_TEXTURE_2D, splatDetailTex);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			if (anisotropy != 0.0f) {
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-			}
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDetailTexBM.xsize, splatDetailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDetailTexBM.mem);
-		}
-
-		{
-			// generate mipmaps for the splat distribution-texture
-			glBindTexture(GL_TEXTURE_2D, splatDistrTex);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			if (anisotropy != 0.0f) {
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-			}
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDistrTexBM.xsize, splatDistrTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDistrTexBM.mem);
-		}
-	} else {
-		splatDetailTex = 0;
-		splatDistrTex = 0;
-	}
 
 
 	{
@@ -235,14 +251,15 @@ CSmfReadMap::~CSmfReadMap()
 	delete groundDrawer;
 	delete[] heightmap;
 
-	if (detailTex      ) { glDeleteTextures(1, &detailTex      ); }
-	if (specularTex    ) { glDeleteTextures(1, &specularTex    ); }
-	if (minimapTex     ) { glDeleteTextures(1, &minimapTex     ); }
-	if (shadingTex     ) { glDeleteTextures(1, &shadingTex     ); }
-	if (normalsTex     ) { glDeleteTextures(1, &normalsTex     ); }
-	if (splatDetailTex ) { glDeleteTextures(1, &splatDetailTex ); }
-	if (splatDistrTex  ) { glDeleteTextures(1, &splatDistrTex  ); }
-	if (grassShadingTex) { glDeleteTextures(1, &grassShadingTex); }
+	if (detailTex       ) { glDeleteTextures(1, &detailTex       ); }
+	if (specularTex     ) { glDeleteTextures(1, &specularTex     ); }
+	if (minimapTex      ) { glDeleteTextures(1, &minimapTex      ); }
+	if (shadingTex      ) { glDeleteTextures(1, &shadingTex      ); }
+	if (normalsTex      ) { glDeleteTextures(1, &normalsTex      ); }
+	if (splatDetailTex  ) { glDeleteTextures(1, &splatDetailTex  ); }
+	if (splatDistrTex   ) { glDeleteTextures(1, &splatDistrTex   ); }
+	if (grassShadingTex ) { glDeleteTextures(1, &grassShadingTex ); }
+	if (skyReflectModTex) { glDeleteTextures(1, &skyReflectModTex); }
 }
 
 

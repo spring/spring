@@ -57,7 +57,6 @@
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
-#include "Rendering/FontTexture.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
@@ -167,7 +166,7 @@ CLuaUI::CLuaUI()
 		//lua_pushliteral(L, "rename");    lua_pushnil(L); lua_rawset(L, -3);
 		lua_pushliteral(L, "tmpname");   lua_pushnil(L); lua_rawset(L, -3);
 		lua_pushliteral(L, "getenv");    lua_pushnil(L); lua_rawset(L, -3);
-		lua_pushliteral(L, "setlocale"); lua_pushnil(L); lua_rawset(L, -3);
+		//lua_pushliteral(L, "setlocale"); lua_pushnil(L); lua_rawset(L, -3);
 	}
 	lua_pop(L, 1); // os
 

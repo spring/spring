@@ -58,9 +58,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	std::set<std::string> blockMapTexNames;
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser.Execute()) {
-		logOutput.Print(resourcesParser.GetErrorLog());
-	}
+	resourcesParser.Execute();
 
 	const LuaTable rootTable = resourcesParser.GetRoot();
 	const LuaTable gfxTable = rootTable.SubTable("graphics");
@@ -172,10 +170,8 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	// allow map specified atlas textures for gaia unit projectiles
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!mapResParser.Execute()) {
-		logOutput.Print(mapResParser.GetErrorLog());
-	}
-	if (mapResParser.IsValid()) {
+	
+	if (mapResParser.Execute()) {
 		const LuaTable mapRoot = mapResParser.GetRoot();
 		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");
 
@@ -548,29 +544,31 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	typedef std::map<int, ProjectileSet>::const_iterator ProjectileBinIt;
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		CVertexArray* lines = GetVertexArray();
-		CVertexArray* points = GetVertexArray();
-
-		lines->Initialize();
-		lines->EnlargeArrays(modelRenderers[modelType]->GetNumProjectiles() * 2, 0, VA_SIZE_C);
-		points->Initialize();
-		points->EnlargeArrays(modelRenderers[modelType]->GetNumProjectiles(), 0, VA_SIZE_C);
-
 		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
 
-		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-			for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
-				CProjectile* p = *setIt;
+		if (!projectileBin.empty()) {
+			CVertexArray* lines = GetVertexArray();
+			CVertexArray* points = GetVertexArray();
 
-				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
-					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
-					p->DrawOnMinimap(*lines, *points);
+			lines->Initialize();
+			lines->EnlargeArrays(projectileBin.size() * 2, 0, VA_SIZE_C);
+			points->Initialize();
+			points->EnlargeArrays(projectileBin.size(), 0, VA_SIZE_C);
+
+			for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
+				for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
+					CProjectile* p = *setIt;
+
+					if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
+						gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+						p->DrawOnMinimap(*lines, *points);
+					}
 				}
 			}
-		}
 
-		lines->DrawArrayC(GL_LINES);
-		points->DrawArrayC(GL_POINTS);
+			lines->DrawArrayC(GL_LINES);
+			points->DrawArrayC(GL_POINTS);
+		}
 	}
 
 	if (!renderProjectiles.empty()) {

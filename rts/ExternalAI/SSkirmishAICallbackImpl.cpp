@@ -1041,6 +1041,14 @@ EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int skirmishAIId, int te
 	return skirmishAIId_callback[skirmishAIId]->GetTeamSide(team);
 }
 
+EXPORT(int) skirmishAiCallback_Game_getTeamAllyTeam(int skirmishAIId, int otherTeamId) {
+	return teamHandler->AllyTeam(otherTeamId);
+}
+
+EXPORT(bool) skirmishAiCallback_Game_isAllied(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId) {
+	return teamHandler->Ally(firstAllyTeamId, secondAllyTeamId);
+}
+
 
 
 
@@ -3279,6 +3287,14 @@ EXPORT(void) skirmishAiCallback_Unit_getPos(int skirmishAIId, int unitId, float*
 	}
 }
 
+EXPORT(void) skirmishAiCallback_Unit_getVel(int skirmishAIId, int unitId, float* return_posF3_out) {
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		skirmishAIId_cheatCallback[skirmishAIId]->GetUnitVelocity(unitId).copyInto(return_posF3_out);
+	} else {
+		skirmishAIId_callback[skirmishAIId]->GetUnitVelocity(unitId).copyInto(return_posF3_out);
+	}
+}
+
 //EXPORT(int) skirmishAiCallback_Unit_0MULTI1SIZE0ResourceInfo(int skirmishAIId, int unitId) {
 //	return skirmishAiCallback_0MULTI1SIZE0Resource(skirmishAIId);
 //}
@@ -4467,6 +4483,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getMyAllyTeam = &skirmishAiCallback_Game_getMyAllyTeam;
 	callback->Game_getPlayerTeam = &skirmishAiCallback_Game_getPlayerTeam;
 	callback->Game_getTeamSide = &skirmishAiCallback_Game_getTeamSide;
+	callback->Game_getTeamAllyTeam = &skirmishAiCallback_Game_getTeamAllyTeam;
+	callback->Game_isAllied = &skirmishAiCallback_Game_isAllied;
 	callback->Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
 	callback->Game_isDebugModeEnabled = &skirmishAiCallback_Game_isDebugModeEnabled;
 	callback->Game_getMode = &skirmishAiCallback_Game_getMode;
@@ -4770,6 +4788,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_getResourceUse = &skirmishAiCallback_Unit_getResourceUse;
 	callback->Unit_getResourceMake = &skirmishAiCallback_Unit_getResourceMake;
 	callback->Unit_getPos = &skirmishAiCallback_Unit_getPos;
+	callback->Unit_getVel = &skirmishAiCallback_Unit_getVel;
 	callback->Unit_isActivated = &skirmishAiCallback_Unit_isActivated;
 	callback->Unit_isBeingBuilt = &skirmishAiCallback_Unit_isBeingBuilt;
 	callback->Unit_isCloaked = &skirmishAiCallback_Unit_isCloaked;

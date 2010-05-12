@@ -150,6 +150,16 @@ int CAIAI::handleEvent(int topic, const void* data) {
 				e = new CAISeismicPingEvent(*((const SSeismicPingEvent*) data));
 				break;
 			}
+			case EVENT_ENEMY_CREATED: {
+				e = new CAIEnemyCreatedEvent(
+						*((const SEnemyCreatedEvent*) data));
+				break;
+			}
+			case EVENT_ENEMY_FINISHED: {
+				e = new CAIEnemyFinishedEvent(
+						*((const SEnemyFinishedEvent*) data));
+				break;
+			}
 			default: {
 				e = new CAINullEvent();
 				break;

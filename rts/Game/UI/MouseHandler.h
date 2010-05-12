@@ -45,6 +45,9 @@ public:
 	float doubleClickTime;
 	float scrollWheelSpeed;
 
+	/// locked mouse indicator size
+	float crossSize;
+
 	struct ButtonPressEvt {
 		bool pressed;
 		bool chorded;

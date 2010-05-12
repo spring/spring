@@ -33,49 +33,51 @@ public:
 			CAIAICallback* aiCallback);
 
 
-	virtual void SetMyHandicap(float handicap);
+	void SetMyHandicap(float handicap);
 
-	virtual void GiveMeMetal(float amount);
-	virtual void GiveMeEnergy(float amount);
+	void GiveMeMetal(float amount);
+	void GiveMeEnergy(float amount);
 
-	virtual int CreateUnit(const char* name, float3 pos);
+	int CreateUnit(const char* name, float3 pos);
 
-	virtual const UnitDef* GetUnitDef(int unitid);
-	virtual float3 GetUnitPos(int unitid);
-	virtual int GetEnemyUnits(int* unitIds, int unitIds_max);
-	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius,
+	const UnitDef* GetUnitDef(int unitid);
+
+	float3 GetUnitPos(int unitid);
+	float3 GetUnitVel(int unitid);
+
+	int GetEnemyUnits(int* unitIds, int unitIds_max);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 			int unitIds_max);
-	virtual int GetNeutralUnits(int* unitIds, int unitIds_max);
-	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius,
+	int GetNeutralUnits(int* unitIds, int unitIds_max);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius,
 			int unitIds_max);
 
-	virtual int GetFeatures(int *features, int max);
-	virtual int GetFeatures(int *features, int max, const float3& pos,
+	int GetFeatures(int *features, int max);
+	int GetFeatures(int *features, int max, const float3& pos,
 			float radius);
 
-	virtual int GetUnitTeam(int unitid);
-	virtual int GetUnitAllyTeam(int unitid);
-	virtual float GetUnitHealth(int unitid);
-	virtual float GetUnitMaxHealth(int unitid);
-	virtual float GetUnitPower(int unitid);
-	virtual float GetUnitExperience(int unitid);
-	virtual bool IsUnitActivated(int unitid);
-	virtual bool UnitBeingBuilt(int unitid);
-	virtual bool IsUnitNeutral(int unitid);
-	virtual bool GetUnitResourceInfo(int unitid,
-			UnitResourceInfo* resourceInfo);
-	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid);
+	int GetUnitTeam(int unitid);
+	int GetUnitAllyTeam(int unitid);
+	float GetUnitHealth(int unitid);
+	float GetUnitMaxHealth(int unitid);
+	float GetUnitPower(int unitid);
+	float GetUnitExperience(int unitid);
+	bool IsUnitActivated(int unitid);
+	bool UnitBeingBuilt(int unitid);
+	bool IsUnitNeutral(int unitid);
+	bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
+	const CCommandQueue* GetCurrentUnitCommands(int unitid);
 
-	virtual int GetBuildingFacing(int unitid);
-	virtual bool IsUnitCloaked(int unitid);
-	virtual bool IsUnitParalyzed(int unitid);
+	int GetBuildingFacing(int unitid);
+	bool IsUnitCloaked(int unitid);
+	bool IsUnitParalyzed(int unitid);
 
-	virtual bool OnlyPassiveCheats();
-	virtual void EnableCheatEvents(bool enable);
+	bool OnlyPassiveCheats();
+	void EnableCheatEvents(bool enable);
 
-	virtual bool GetProperty(int id, int property, void* dst);
-	virtual bool GetValue(int id, void* dst);
-	virtual int HandleCommand(int commandId, void* data);
+	bool GetProperty(int id, int property, void* dst);
+	bool GetValue(int id, void* dst);
+	int HandleCommand(int commandId, void* data);
 
 private:
 	int skirmishAIId;

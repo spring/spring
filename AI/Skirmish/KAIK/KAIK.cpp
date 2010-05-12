@@ -200,26 +200,42 @@ void CKAIK::GotChatMsg(const char* msg, int player) {
 int CKAIK::HandleEvent(int msg, const void* data) {
 	if (ai->Initialized()) {
 		switch (msg) {
-			case AI_EVENT_UNITGIVEN: {
+			case AI_EVENT_UNITGIVEN:
+			case AI_EVENT_UNITCAPTURED:
+			{
 				const ChangeTeamEvent* cte = (const ChangeTeamEvent*) data;
 
-				if ((cte->newteam) == (ai->cb->GetMyTeam())) {
-					// got a unit
-					UnitCreated(cte->unit, -1);
-					UnitFinished(cte->unit);
-					ai->uh->IdleUnitAdd(cte->unit, ai->cb->GetCurrentFrame());
+				const int myAllyTeamId = ai->cb->GetMyAllyTeam();
+				const bool oldEnemy = !ai->cb->IsAllied(myAllyTeamId, ai->cb->GetTeamAllyTeam(cte->oldteam));
+				const bool newEnemy = !ai->cb->IsAllied(myAllyTeamId, ai->cb->GetTeamAllyTeam(cte->newteam));
+
+				if (oldEnemy && !newEnemy) {
+					// unit changed from an enemy to an allied team
+					// we got a new friend! :)
+					EnemyDestroyed(cte->unit, -1);
+				} else if (!oldEnemy && newEnemy) {
+					// unit changed from an ally to an enemy team
+					// we lost a friend! :(
+					EnemyCreated(cte->unit);
+					if (!ai->cb->UnitBeingBuilt(cte->unit)) {
+						EnemyFinished(cte->unit);
+					}
 				}
-			} break;
-			case AI_EVENT_UNITCAPTURED: {
-				const ChangeTeamEvent* cte = (const ChangeTeamEvent*) data;
 
-				if ((cte->oldteam) == (ai->cb->GetMyTeam())) {
-					// lost a unit
-					UnitDestroyed(cte->unit, 0);
+				if (cte->oldteam == ai->cb->GetMyTeam()) {
+					// we lost a unit
+					UnitDestroyed(cte->unit, -1);
 
-					// FIXME: multiple units captured during same frame?
+					// FIXME: multiple units given during same frame?
 					ai->uh->lastCapturedUnitFrame = ai->cb->GetCurrentFrame();
 					ai->uh->lastCapturedUnitID = cte->unit;
+				} else if (cte->newteam == ai->cb->GetMyTeam()) {
+					// we have a new unit
+					UnitCreated(cte->unit, -1);
+					if (!ai->cb->UnitBeingBuilt(cte->unit)) {
+						UnitFinished(cte->unit);
+						ai->uh->IdleUnitAdd(cte->unit, ai->cb->GetCurrentFrame());
+					}
 				}
 			} break;
 		}

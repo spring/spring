@@ -49,6 +49,8 @@ public:
 	virtual void UnitMoveFailed(int unitId);
 	virtual void UnitGiven(int unitId, int oldTeam, int newTeam);
 	virtual void UnitCaptured(int unitId, int oldTeam, int newTeam);
+	virtual void EnemyCreated(int unitId);
+	virtual void EnemyFinished(int unitId);
 	virtual void EnemyEnterLOS(int unitId);
 	virtual void EnemyLeaveLOS(int unitId);
 	virtual void EnemyEnterRadar(int unitId);

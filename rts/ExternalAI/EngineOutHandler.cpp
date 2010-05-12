@@ -34,6 +34,11 @@ CR_REG_METADATA(CEngineOutHandler, (
 				CR_RESERVED(128)
 				));
 
+
+static inline bool isUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
+	return unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR);
+}
+
 /////////////////////////////
 // BEGIN: Exception Handling
 
@@ -216,6 +221,24 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 		}
 
 
+
+// Send to all teams which the unit is not allied to,
+// and which have cheat-events enabled, or the unit in sensor range.
+#define DO_FOR_ENEMY_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT)				        \
+		for (id_ai_t::iterator ai = id_skirmishAI.begin();							\
+				ai != id_skirmishAI.end(); ++ai) {									\
+			const int aiAllyTeam = teamHandler->AllyTeam(ai->second->GetTeamId());	\
+			if (!teamHandler->Ally(aiAllyTeam, ALLY_TEAM_ID) &&                     \
+					(ai->second->IsCheatEventsEnabled() ||                          \
+					isUnitInLosOrRadarOfAllyTeam(UNIT, aiAllyTeam))) {			\
+				try {																\
+					ai->second->FUNC;												\
+				} CATCH_AI_EXCEPTION;												\
+			}																		\
+		}
+
+
+
 void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 	AI_EVT_MTH();
 
@@ -228,20 +251,24 @@ void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 	AI_EVT_MTH();
 
-	const int teamId    = unit.team;
-	const int unitId    = unit.id;
-	const int builderId = builder? builder->id: -1;
+	const int teamId     = unit.team;
+	const int allyTeamId = unit.allyteam;
+	const int unitId     = unit.id;
+	const int builderId  = builder? builder->id: -1;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitCreated(unitId, builderId), teamId);
+	DO_FOR_ENEMY_SKIRMISH_AIS(EnemyCreated(unitId), allyTeamId, unit);
 }
 
 void CEngineOutHandler::UnitFinished(const CUnit& unit) {
 	AI_EVT_MTH();
 
-	const int teamId = unit.team;
-	const int unitId = unit.id;
+	const int teamId     = unit.team;
+	const int allyTeamId = unit.allyteam;
+	const int unitId     = unit.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitFinished(unitId), teamId);
+	DO_FOR_ENEMY_SKIRMISH_AIS(EnemyFinished(unitId), allyTeamId, unit);
 }
 
 
@@ -257,23 +284,61 @@ void CEngineOutHandler::UnitMoveFailed(const CUnit& unit) {
 void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 	AI_EVT_MTH();
 
-	const int newTeam = unit.team;
-	const int unitId  = unit.id;
+	const int newTeam       = unit.team;
+	const int unitId        = unit.id;
+	const int newAllyTeamId = unit.allyteam;
+	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitGiven(unitId, oldTeam, newTeam), newTeam);
+	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
+		const int t          = ai->second->GetTeamId();
+		const int allyT      = teamHandler->AllyTeam(t);
+		const bool alliedOld = teamHandler->Ally(allyT, oldAllyTeamId);
+		const bool alliedNew = teamHandler->Ally(allyT, newAllyTeamId);
+		// inform everyone except those allied with both
+		// the new and the old team
+		bool inform = ((t == newTeam) || (t == oldTeam) || !alliedOld || !alliedNew);
+		// exclude enemies that know from nothing
+		if (inform && !alliedOld && !alliedNew &&
+				!ai->second->IsCheatEventsEnabled() &&
+				!isUnitInLosOrRadarOfAllyTeam(unit, allyT)) {
+			inform = false;
+		}
+		if (inform) {
+			try {
+				ai->second->UnitGiven(unitId, oldTeam, newTeam);
+			} CATCH_AI_EXCEPTION;
+		}
+	}
 }
 
 void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 	AI_EVT_MTH();
 
-	const int oldTeam = unit.team;
-	const int unitId  = unit.id;
+	const int oldTeam       = unit.team;
+	const int unitId        = unit.id;
+	const int newAllyTeamId = unit.allyteam;
+	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitCaptured(unitId, oldTeam, newTeam), oldTeam);
-}
-
-static inline bool isUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
-	return unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR);
+	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
+		const int t          = ai->second->GetTeamId();
+		const int allyT      = teamHandler->AllyTeam(t);
+		const bool alliedOld = teamHandler->Ally(allyT, oldAllyTeamId);
+		const bool alliedNew = teamHandler->Ally(allyT, newAllyTeamId);
+		// inform everyone except those allied with both
+		// the new and the old team
+		bool inform = ((t == newTeam) || (t == oldTeam) || !alliedOld || !alliedNew);
+		// exclude enemies that know from nothing
+		if (inform && !alliedOld && !alliedNew &&
+				!ai->second->IsCheatEventsEnabled() &&
+				!isUnitInLosOrRadarOfAllyTeam(unit, allyT)) {
+			inform = false;
+		}
+		if (inform) {
+			try {
+				ai->second->UnitCaptured(unitId, oldTeam, newTeam);
+			} CATCH_AI_EXCEPTION;
+		}
+	}
 }
 
 void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
@@ -299,18 +364,19 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 		}
 	}
 
-	// inform attacker units team (including allies)
-	if (attacker != NULL && !teamHandler->Ally(attacker->allyteam, destroyed.allyteam)) {
-		for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
-			const int t     = ai->second->GetTeamId();
-			const int allyT = teamHandler->AllyTeam(t);
-			if (teamHandler->Ally(allyT, attacker->allyteam)
-				&& (ai->second->IsCheatEventsEnabled() || isUnitInLosOrRadarOfAllyTeam(destroyed, allyT)))
-			{
-				try {
-					ai->second->EnemyDestroyed(destroyedId, attackerId);
-				} CATCH_AI_EXCEPTION;
+	// inform all enemy teams
+	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
+		const int t      = ai->second->GetTeamId();
+		const int allyT  = teamHandler->AllyTeam(t);
+		int myAttackerId = -1;
+		if (!teamHandler->Ally(allyT, destroyed.allyteam) &&
+				(ai->second->IsCheatEventsEnabled() || isUnitInLosOrRadarOfAllyTeam(destroyed, allyT))) {
+			if ((attacker != NULL) && teamHandler->Ally(allyT, attacker->allyteam)) {
+				myAttackerId = attackerId;
 			}
+			try {
+				ai->second->EnemyDestroyed(destroyedId, myAttackerId);
+			} CATCH_AI_EXCEPTION;
 		}
 	}
 }

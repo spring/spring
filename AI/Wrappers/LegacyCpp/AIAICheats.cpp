@@ -97,12 +97,25 @@ const UnitDef* CAIAICheats::GetUnitDef(int unitId) {
 	setCheatsEnabled(false);
 	return unitDef;
 }
+
+
+
 float3 CAIAICheats::GetUnitPos(int unitId) {
 	setCheatsEnabled(true);
 	float3 pos = aiCallback->GetUnitPos(unitId);
 	setCheatsEnabled(false);
 	return pos;
 }
+
+float3 CAIAICheats::GetUnitVel(int unitId) {
+	setCheatsEnabled(true);
+	float3 pos = aiCallback->GetUnitVel(unitId);
+	setCheatsEnabled(false);
+	return pos;
+}
+
+
+
 int CAIAICheats::GetEnemyUnits(int* unitIds, int unitIds_max) {
 	setCheatsEnabled(true);
 	int numUnits = aiCallback->GetEnemyUnits(unitIds, unitIds_max);
