@@ -64,7 +64,7 @@
 #include "LogOutput.h"
 #include "Util.h"
 #include "NetProtocol.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include "Sound/Music.h"
 

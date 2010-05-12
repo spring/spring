@@ -11,7 +11,7 @@
 #include "CobFile.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Platform/byteorder.h"
 #include "Util.h"
 

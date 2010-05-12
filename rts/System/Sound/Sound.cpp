@@ -9,6 +9,7 @@
 #include <alc.h>
 #include <boost/cstdint.hpp>
 
+#include "SoundLog.h"
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
@@ -25,7 +26,7 @@
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
 
-CSound* sound = NULL;
+#include "float3.h"
 
 CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL)
 {
@@ -435,18 +436,18 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 
-bool CSound::LoadSoundDefs(const std::string& filename)
+bool CSound::LoadSoundDefs(const std::string& fileName)
 {
 	//! can be called from LuaUnsyncedCtrl too
 	boost::mutex::scoped_lock lck(soundMutex);
 
-	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
+	LuaParser parser(fileName, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
 	parser.Execute();
 	if (!parser.IsValid())
 	{
-		LogObject(LOG_SOUND) << "Could not load " << filename << ": " << parser.GetErrorLog();
+		LogObject(LOG_SOUND) << "Could not load " << fileName << ": " << parser.GetErrorLog();
 		return false;
 	}
 	else
@@ -455,7 +456,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
 		if (!soundItemTable.IsValid())
 		{
-			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << filename;
+			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << fileName;
 			return false;
 		}
 		else
@@ -471,7 +472,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 				bufmap["name"] = name;
 				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
 				if (sit != soundItemDefs.end())
-					LogObject(LOG_SOUND) << "Sound " << name << " gets overwritten by " << filename;
+					LogObject(LOG_SOUND) << "Sound " << name << " gets overwritten by " << fileName;
 
 				soundItemDef::const_iterator inspec = bufmap.find("file");
 				if (inspec == bufmap.end())	// no file, drop
@@ -484,7 +485,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 					MakeItemFromDef(bufmap);
 				}
 			}
-			LogObject(LOG_SOUND) << " parsed " << keys.size() << " sounds from " << filename;
+			LogObject(LOG_SOUND) << " parsed " << keys.size() << " sounds from " << fileName;
 		}
 	}
 	return true;

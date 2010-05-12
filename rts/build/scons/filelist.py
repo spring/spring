@@ -120,7 +120,6 @@ def get_spring_source(env):
 			exclude1 += [
 				'rts/System/Platform/Linux',
 				'rts/Rendering/GL/GLXPBuffer.cpp']
-				#'rts/System/Platform/Win/DxSound.cpp']
 		else:
 			exclude1 += [
 				'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?
