@@ -5969,6 +5969,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Sound\NullSound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sound\ISound.cpp"
 					>
 				</File>
