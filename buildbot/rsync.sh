@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/bin/sh
 
+# Quit on error.
 set -e
+
 cd $(dirname $0)/..
 
 CONFIG=${1}
@@ -23,5 +25,4 @@ CMD="rsync -avz"
 $CMD ${TMP_BASE}/ ${REMOTE_HOST}:${REMOTE_BASE}/
 
 #rm -rf ${TMP_BASE}/*
-
 
