@@ -2083,7 +2083,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 
-			GML_STDMUTEX_LOCK(sim); // ActionPressed
+			GML_RECMUTEX_LOCK(sim); // ActionPressed
 
 			guihandler->RunLayoutCommand(action.extra);
 		}
@@ -3135,7 +3135,7 @@ bool CGame::Draw() {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
 
-		GML_STDMUTEX_LOCK(sim); // Draw
+		GML_RECMUTEX_LOCK(sim); // Draw
 
 		guihandler->RunLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
