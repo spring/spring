@@ -6,6 +6,9 @@ Engine:
  - fixed middle click scroll speed on linux
  - added new MiddleClickScrollSpeed
 
+FontRendering:
+ - added a new inline ctrl command '\008', it resets the TextColor to the active color when Print() got called (e.g. e.g. font:SetTextColor(0,0,1); font:Print("\255\255\000\000red\255\000\255\000green\008blue");)
+
 Lua:
  - added a new los checking argument to Set..RulesParam()
     e.g. new syntax is SetUnitRulesParam(int unitID, string paramName, float paramValue, { public = true } )
@@ -24,6 +27,12 @@ Lua:
  - fixed incorrect scaling in Spring.SetUnitResourceParam
  - fixed Spring.GetAIInfo, it returned incorrectly the given teamID as first return argument
  - added missing `coroutines` module and missing `select` function to unsynced LuaGadgets
+ - added os.setlocale to LuaUI
+ - removed deprecated Spring.MakeFont
+
+bugfixes
+ - LightingCannon (sic) finally isn't  supported anymore, use LightningCannon instead (default weapondef_post.lua still includes backward compability for it)
+
 
 0.81.2.1:
 Engine:
