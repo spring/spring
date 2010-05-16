@@ -61,7 +61,7 @@ public:
 	virtual void GotChatMsg(const char* msg, int fromPlayerId);
 	virtual void WeaponFired(int unitId, int weaponDefId);
 	virtual void PlayerCommandGiven(const std::vector<int>& selectedUnits, const Command& c, int playerId);
-	virtual void CommandFinished(int unitId, int commandTopicId);
+	virtual void CommandFinished(int unitId, int commandId, int commandTopicId);
 	virtual void SeismicPing(int allyTeam, int unitId, const float3& pos, float strength);
 
 	/** Called just before all the units are destroyed. */

@@ -136,7 +136,7 @@ public:
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
 
-	PacketType SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
+	PacketType SendAICommand(uchar myPlayerNum, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params);
 	PacketType SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
 
 	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);

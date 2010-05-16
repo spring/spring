@@ -337,7 +337,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -5;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->id, c->options, c->params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->id, c->aiCommandId, c->options, c->params));
 
 	return 0;
 }

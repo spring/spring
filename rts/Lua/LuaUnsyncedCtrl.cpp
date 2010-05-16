@@ -1866,7 +1866,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 	Command cmd;
 	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.id, cmd.options, cmd.params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.id, cmd.aiCommandId, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;

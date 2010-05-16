@@ -474,7 +474,7 @@ void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& comman
 	const int unitId           = unit.id;
 	const int aiCommandTopicId = extractAICommandTopic(&command, uh->MaxUnits());
 
-	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, aiCommandTopicId), teamId);
+	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, command.aiCommandId, aiCommandTopicId), teamId);
 }
 
 void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
