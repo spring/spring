@@ -94,25 +94,16 @@ CMiniMap::CMiniMap()
 	}
 
 	fullProxy = !!configHandler->Get("MiniMapFullProxy", 1);
-
 	buttonSize = configHandler->Get("MiniMapButtonSize", 16);
 
-	unitBaseSize =
-		atof(configHandler->GetString("MiniMapUnitSize", "2.5").c_str());
+	unitBaseSize = configHandler->Get("MiniMapUnitSize", 2.5f);
 	unitBaseSize = std::max(0.0f, unitBaseSize);
+	unitExponent = configHandler->Get("MiniMapUnitExp", 0.25f);
 
-	unitExponent =
-		atof(configHandler->GetString("MiniMapUnitExp", "0.25").c_str());
-
-	cursorScale =
-		atof(configHandler->GetString("MiniMapCursorScale", "-0.5").c_str());
-
+	cursorScale = configHandler->Get("MiniMapCursorScale", -0.5f);
 	useIcons = !!configHandler->Get("MiniMapIcons", 1);
-
 	drawCommands = std::max(0, configHandler->Get("MiniMapDrawCommands", 1));
-
 	drawProjectiles = !!configHandler->Get("MiniMapDrawProjectiles", 1);
-
 	simpleColors = !!configHandler->Get("SimpleMiniMapColors", 0);
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
@@ -1251,9 +1242,6 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	DrawNotes();
 
-	// allow the LUA scripts to draw into the minimap
-	eventHandler.DrawInMiniMap();
-
 	// reset 1
 	if (resetTextureMatrix) {
 		glMatrixMode(GL_TEXTURE_MATRIX);
@@ -1269,6 +1257,14 @@ void CMiniMap::DrawForReal(bool use_geo)
 	glPopAttrib();
 	glEnable(GL_TEXTURE_2D);
 
+	// allow the LUA scripts to draw into the minimap
+	eventHandler.DrawInMiniMap();
+
+	//FIXME: Lua modifies the modelview matrix w/o reseting it! (quite complexe to fix because ClearMatrixStack() makes it impossible to use glPushMatrix)
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// disable ClipPlanes
 	glDisable(GL_CLIP_PLANE0);
 	glDisable(GL_CLIP_PLANE1);
 	glDisable(GL_CLIP_PLANE2);
