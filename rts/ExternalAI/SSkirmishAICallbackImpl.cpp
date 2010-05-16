@@ -618,7 +618,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
- 
+
 
 		case COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD: {
 			SAddOverlayTextureDrawerDebugCommand* cCmdData = (SAddOverlayTextureDrawerDebugCommand*) commandData;
@@ -713,6 +713,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			// check if it is a unit command
 			Command* c = (Command*) newCommand(commandData, commandTopic, uh->MaxUnits());
 			if (c != NULL) { // it is a unit command
+				c->aiCommandId = commandId;
 				const SStopUnitCommand* cmd = (SStopUnitCommand*) commandData;
 				if (cmd->unitId >= 0) {
 					ret = clb->GiveOrder(cmd->unitId, c);
@@ -3018,7 +3019,7 @@ EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int skirmishAIId, int un
 		}
 
 		const LuaRulesParams::Param param = unit->modParams[modParamId];
-		if (param.los & losMask) { 
+		if (param.los & losMask) {
 			return param.value;
 		} else {
 			return 0.0f;
@@ -3639,7 +3640,7 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 		const int featureIds_sizeReal = fset.size();
 
 		int featureIds_size = featureIds_sizeReal;
-		
+
 		if (featureIds != NULL) {
 			featureIds_size = min(featureIds_sizeReal, featureIds_sizeMax);
 			CFeatureSet::const_iterator it;
@@ -3676,7 +3677,7 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 		const int featureIds_sizeReal = fset.size();
 
 		int featureIds_size = featureIds_sizeReal;
-		
+
 		if (featureIds != NULL) {
 			featureIds_size = min(featureIds_sizeReal, featureIds_sizeMax);
 			std::vector<CFeature*>::const_iterator it;
@@ -3839,7 +3840,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getTypes(int skirmishAIId, int w
 
 	if (types != NULL) {
 		types_size = min(types_sizeReal, types_sizeMax);
-	
+
 		for (size_t i=0; i < types_size; ++i) {
 			types[i] = weaponDef->damages[i];
 		}
@@ -4364,7 +4365,7 @@ EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getParams(int skirmishAIId
 
 	if (params != NULL) {
 		params_size = min(params_sizeReal, params_sizeMax);
-	
+
 		for (size_t p=0; p < params_size; ++p) {
 			params[p] = ps.at(p).c_str();
 		}
@@ -5072,4 +5073,4 @@ void skirmishAiCallback_release(int skirmishAIId) {
 
 	skirmishAIId_teamId.erase(skirmishAIId);
 }
- 
+

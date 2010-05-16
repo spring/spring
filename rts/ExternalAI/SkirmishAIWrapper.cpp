@@ -387,10 +387,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 	delete [] unitIds;
 }
 
-void CSkirmishAIWrapper::CommandFinished(int unitId, int commandTopicId) {
-	// TODO: add support for commandIds:
-	// each issued command would have its own id
-	const int commandId = -1;
+void CSkirmishAIWrapper::CommandFinished(int unitId, int commandId, int commandTopicId) {
 	SCommandFinishedEvent evtData = {unitId, commandId, commandTopicId};
 	ai->HandleEvent(EVENT_COMMAND_FINISHED, &evtData);
 }
