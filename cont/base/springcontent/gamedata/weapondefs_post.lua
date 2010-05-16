@@ -81,6 +81,10 @@ local function BackwardCompability(wdName,wd)
     else
       wd.weapontype = "Cannon";
     end
+
+    if (wd.weapontype == "LightingCannon") then
+      wd.weapontype = "LightningCannon";
+    end
   end
 
   -- 

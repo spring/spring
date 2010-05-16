@@ -334,7 +334,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	if (wd.type == "Cannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.8f);
-	} else if (wd.type == "BeamLaser" || wd.type == "LightingCannon") {
+	} else if (wd.type == "BeamLaser" || wd.type == "LightningCannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 1.0f);
 	} else {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.2f);
@@ -414,7 +414,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
 	} else if (wd.type == "BeamLaser") {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-	} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
+	} else if (wd.type == "LightningCannon") {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 
 		wd.thickness = wdTable.GetFloat("thickness", 0.8f);
