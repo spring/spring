@@ -466,7 +466,7 @@ inline void LuaOpenGL::EnableCommon(DrawMode mode)
 		glCallList(resetStateList);
 	}
 	// FIXME  --  not needed by shadow or minimap   (use a WorldCommon ? )
-	glEnable(GL_NORMALIZE);
+	//glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
 }
 
@@ -696,7 +696,7 @@ void LuaOpenGL::EnableDrawScreenEffects()
 	SetupScreenMatrices();
 	SetupScreenLighting();
 	glCallList(resetStateList);
-	glEnable(GL_NORMALIZE);
+	//glEnable(GL_NORMALIZE);
 }
 
 
@@ -730,7 +730,7 @@ void LuaOpenGL::EnableDrawScreen()
 	SetupScreenMatrices();
 	SetupScreenLighting();
 	glCallList(resetStateList);
-	glEnable(GL_NORMALIZE);
+	//glEnable(GL_NORMALIZE);
 }
 
 
