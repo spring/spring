@@ -336,6 +336,10 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 
+	#ifdef SYNCCHECK
+	net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
+	#endif
+
 	mouse->ShowMouse();
 }
 
@@ -514,12 +518,6 @@ void CGame::LoadSimulation(const std::string& mapname)
 	radarhandler = new CRadarHandler(false);
 
 	pathManager = new CPathManager();
-
-	#ifdef SYNCCHECK
-		// update the checksum with path data
-		{ SyncedUint tmp(pathManager->GetPathChecksum()); }
-	#endif
-	logOutput.Print("Pathing data checksum: %08x\n", pathManager->GetPathChecksum());
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -3868,6 +3866,26 @@ void CGame::ClientReadNet()
 				break;
 			}
 
+			case NETMSG_PATH_CHECKSUM: {
+				const unsigned char playerNum = inbuf[1];
+				const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
+				const CPlayer* player = playerHandler->Player(playerNum);
+
+				if (playerCheckSum == 0) {
+					logOutput.Print(
+						"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable cache?",
+						playerNum, player->name.c_str()
+					);
+				} else {
+					if (playerCheckSum != pathManager->GetPathCheckSum()) {
+						logOutput.Print(
+							"[DESYNC WARNING] path-checksum %08x for player %d (%s) does not match local checksum %08x",
+							playerNum, playerCheckSum, player->name.c_str(), pathManager->GetPathCheckSum()
+						);
+					}
+				}
+			} break;
+
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
@@ -3886,8 +3904,6 @@ void CGame::ClientReadNet()
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gs->frameNum, CSyncChecker::GetChecksum()));
 				if ((gs->frameNum & 4095) == 0) {// reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
-					// update the checksum with path data
-					SyncedUint tmp(pathManager->GetPathChecksum());
 				}
 #endif
 				AddTraffic(-1, packetCode, dataLength);
