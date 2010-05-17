@@ -3869,6 +3869,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PATH_CHECKSUM: {
 				const unsigned char playerNum = inbuf[1];
 				const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
+				const boost::uint32_t localCheckSum = pathManager->GetPathCheckSum();
 				const CPlayer* player = playerHandler->Player(playerNum);
 
 				if (playerCheckSum == 0) {
@@ -3877,10 +3878,10 @@ void CGame::ClientReadNet()
 						playerNum, player->name.c_str()
 					);
 				} else {
-					if (playerCheckSum != pathManager->GetPathCheckSum()) {
+					if (playerCheckSum != localCheckSum) {
 						logOutput.Print(
 							"[DESYNC WARNING] path-checksum %08x for player %d (%s) does not match local checksum %08x",
-							playerNum, playerCheckSum, player->name.c_str(), pathManager->GetPathCheckSum()
+							playerCheckSum, playerNum, player->name.c_str(), localCheckSum
 						);
 					}
 				}
