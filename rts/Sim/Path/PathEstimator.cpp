@@ -853,11 +853,6 @@ unsigned int CPathEstimator::Hash() const
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
 }
 
-boost::uint32_t CPathEstimator::GetPathChecksum()
-{
-	return pathChecksum;
-}
-
 
 
 float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, float3 pos)

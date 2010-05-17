@@ -830,7 +830,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_PLAYERNAME: {
 			unsigned playerNum = inbuf[2];
-			if(playerNum!=a){
+			if (playerNum != a) {
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %playerNum));
 			} else {
 				players[playerNum].name = (std::string)((char*)inbuf+3);
@@ -845,6 +845,17 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			break;
 		}
+
+		case NETMSG_PATH_CHECKSUM: {
+			const unsigned char playerNum = inbuf[1];
+			const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
+
+			if (playerNum != a) {
+				Message(str(format(WrongPlayer) %((unsigned int) inbuf[0]) %a %playerNum));
+			} else {
+				Broadcast(CBaseNetProtocol::Get().SendPathCheckSum(playerNum, playerCheckSum));
+			}
+		} break;
 
 		case NETMSG_CHAT: {
 			ChatMessage msg(packet);

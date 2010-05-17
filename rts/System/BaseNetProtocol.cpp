@@ -83,6 +83,14 @@ PacketType CBaseNetProtocol::SendGameID(const uchar* buf)
 	return PacketType(packet);
 }
 
+PacketType CBaseNetProtocol::SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum)
+{
+	PackPacket* packet = new PackPacket(1 + 1 + sizeof(boost::uint32_t), NETMSG_PATH_CHECKSUM);
+	*packet << myPlayerNum;
+	*packet << checksum;
+	return PacketType(packet);
+}
+
 
 PacketType CBaseNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
 {

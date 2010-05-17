@@ -40,6 +40,7 @@ enum NETMSG {
 	NETMSG_CHAT             = 7,  // uchar from, dest; std::string message;
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_GAMEID           = 9,  // uchar gameID[16];
+	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, boost::uint32_t checksum
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
@@ -130,6 +131,7 @@ public:
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	PacketType SendRandSeed(uint randSeed);
 	PacketType SendGameID(const uchar* buf);
+	PacketType SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum);
 	PacketType SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
