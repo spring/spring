@@ -1755,13 +1755,8 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 			UnitDrawingTexturesOff();
 
-			const float3 midPosOffset =
-				(unit->frontdir * unit->relMidPos.z) +
-				(unit->updir    * unit->relMidPos.y) +
-				(unit->rightdir * unit->relMidPos.x);
-
 			glPushMatrix();
-				glTranslatef3(midPosOffset);
+				glTranslatef3(unit->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 
 				GLUquadricObj* q = gluNewQuadric();
 
@@ -1775,7 +1770,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 				if (unit->unitDef->usePieceCollisionVolumes) {
 					// draw only the piece volumes for less clutter
-					CMatrix44f mat(-midPosOffset);
+					CMatrix44f mat(unit->relMidPos * float3(0.0f, -1.0f, 0.0f));
 					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
 				} else {
 					if (!unit->collisionVolume->IsDisabled()) {

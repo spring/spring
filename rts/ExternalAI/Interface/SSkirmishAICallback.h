@@ -450,29 +450,6 @@ float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMin)(int teamId,
  */
 float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMobilityAdd)(int teamId,
 		int unitDefId);
-/**
- * The type of the collision volume's form.
- *
- * @return  "Ell"
- *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
- *          "Box"
- */
-const char* (CALLING_CONV *Clb_UnitDef_CollisionVolume_getType)(int teamId,
-		int unitDefId);
-/** The collision volume's full axis lengths. */
-struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_CollisionVolume_getScales)(
-		int teamId, int unitDefId);
-/** The collision volume's offset relative to the unit's center position */
-struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_CollisionVolume_getOffsets)(
-		int teamId, int unitDefId);
-/**
- * Collission test algorithm used.
- *
- * @return  0: discrete
- *          1: continuous
- */
-int (CALLING_CONV *Clb_UnitDef_CollisionVolume_getTest)(int teamId,
-		int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMaxWeaponRange)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getType)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getTooltip)(int teamId, int unitDefId);
@@ -1404,29 +1381,6 @@ float (CALLING_CONV *Clb_FeatureDef_getReclaimTime)(int teamId,
 		int featureDefId);
 /** Used to see if the object can be overrun by units of a certain heavyness */
 float (CALLING_CONV *Clb_FeatureDef_getMass)(int teamId, int featureDefId);
-/**
- * The type of the collision volume's form.
- *
- * @return  "Ell"
- *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
- *          "Box"
- */
-const char* (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getType)(int teamId,
-		int featureDefId);
-/** The collision volume's full axis lengths. */
-struct SAIFloat3 (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getScales)(
-		int teamId, int featureDefId);
-/** The collision volume's offset relative to the feature's center position */
-struct SAIFloat3 (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getOffsets)(
-		int teamId, int featureDefId);
-/**
- * Collission test algorithm used.
- *
- * @return  0: discrete
- *          1: continuous
- */
-int (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getTest)(int teamId,
-		int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isUpright)(int teamId, int featureDefId);
 int (CALLING_CONV *Clb_FeatureDef_getDrawType)(int teamId, int featureDefId);
 const char* (CALLING_CONV *Clb_FeatureDef_getModelName)(int teamId,
