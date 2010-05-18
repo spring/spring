@@ -1,21 +1,23 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
+# Quit on error.
 set -e
+
 cd $(dirname ${0})/..
 
 DIR=build-${1}
 shift
-echo -n creating ${DIR} ...
+echo -n "creating ${DIR} ... "
 
 if [ ! -d ${DIR} ] ; then
 	mkdir ${DIR}
-	echo done
+	echo "done."
 else
-	echo skipped
+	echo "skipped."
 fi
 
-echo -n configuring ${DIR} with $@ ...
+echo "configuring ${DIR} with $@ ..."
 
 cd ${DIR}
-cmake ..  $@
+cmake .. $@
 

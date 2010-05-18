@@ -442,8 +442,8 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 			((CStarburstLauncher*) weapon)->tracking = 0;
 		((CStarburstLauncher*) weapon)->uptime = weapondef->uptime * GAME_SPEED;
 	} else {
+		weapon = new CNoWeapon(owner);
 		LogObject() << "Unknown weapon type " << weapondef->type.c_str() << "\n";
-		return 0;
 	}
 	weapon->weaponDef = weapondef;
 

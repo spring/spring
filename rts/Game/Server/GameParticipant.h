@@ -35,6 +35,7 @@ public:
 	State myState;
 	
 	int lastFrameResponse;
+	int speedControl;
 
 	bool isLocal;
 	boost::shared_ptr<netcode::CConnection> link;

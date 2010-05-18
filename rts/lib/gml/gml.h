@@ -174,7 +174,6 @@ extern boost::mutex inmapmutex;
 extern boost::mutex tempmutex;
 extern boost::mutex posmutex;
 extern boost::mutex runitmutex;
-extern boost::mutex simmutex;
 extern boost::mutex netmutex;
 extern boost::mutex histmutex;
 extern boost::mutex logmutex;
@@ -201,6 +200,7 @@ extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
 extern boost::recursive_mutex &groupmutex;
 extern boost::recursive_mutex &grpselmutex;
+extern boost::recursive_mutex simmutex;
 
 #if GML_MUTEX_PROFILER
 #	include "System/TimeProfiler.h"

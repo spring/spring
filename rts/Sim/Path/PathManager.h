@@ -150,7 +150,7 @@ public:
 
 
 
-	boost::uint32_t GetPathChecksum();
+	boost::uint32_t GetPathCheckSum();
 
 	/** Enable/disable heat mapping */
 	void SetHeatMappingEnabled(bool enabled);

@@ -83,6 +83,14 @@ PacketType CBaseNetProtocol::SendGameID(const uchar* buf)
 	return PacketType(packet);
 }
 
+PacketType CBaseNetProtocol::SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum)
+{
+	PackPacket* packet = new PackPacket(1 + 1 + sizeof(boost::uint32_t), NETMSG_PATH_CHECKSUM);
+	*packet << myPlayerNum;
+	*packet << checksum;
+	return PacketType(packet);
+}
+
 
 PacketType CBaseNetProtocol::SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params)
 {
@@ -148,6 +156,16 @@ PacketType CBaseNetProtocol::SendCPUUsage(float cpuUsage)
 	return PacketType(packet);
 }
 
+PacketType CBaseNetProtocol::SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue)
+{
+	PackPacket* packet = new PackPacket(7, NETMSG_CUSTOM_DATA);
+	*packet << myPlayerNum << dataType << dataValue;
+	return PacketType(packet);
+}
+
+PacketType CBaseNetProtocol::SendSpeedControl(uchar myPlayerNum, int speedCtrl) {
+	return SendCustomData(myPlayerNum, CUSTOM_DATA_SPEEDCONTROL, speedCtrl);
+}
 
 PacketType CBaseNetProtocol::SendDirectControl(uchar myPlayerNum)
 {
@@ -444,6 +462,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_USER_SPEED, 6);
 	proto->AddType(NETMSG_INTERNAL_SPEED, 5);
 	proto->AddType(NETMSG_CPU_USAGE, 5);
+	proto->AddType(NETMSG_CUSTOM_DATA, 7);
 	proto->AddType(NETMSG_DIRECT_CONTROL, 2);
 	proto->AddType(NETMSG_DC_UPDATE, 7);
 	proto->AddType(NETMSG_ATTEMPTCONNECT, -2);

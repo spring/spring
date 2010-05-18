@@ -217,7 +217,6 @@ boost::mutex inmapmutex;
 boost::mutex tempmutex;
 boost::mutex posmutex;
 boost::mutex runitmutex;
-boost::mutex simmutex;
 boost::mutex netmutex;
 boost::mutex histmutex;
 boost::mutex logmutex;
@@ -244,6 +243,7 @@ boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
+boost::recursive_mutex simmutex;
 #endif
 
 // GMLqueue implementation

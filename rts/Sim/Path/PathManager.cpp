@@ -8,13 +8,13 @@
 #include <vector>
 #include <boost/cstdint.hpp>
 
-#include "LogOutput.h"
-#include "myMath.h"
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "TimeProfiler.h"
 #include "PathFinder.h"
 #include "PathEstimator.h"
 #include "Map/MapInfo.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/TimeProfiler.h"
 
 const float ESTIMATE_DISTANCE = 55;
 const float MIN_ESTIMATE_DISTANCE = 40;
@@ -23,7 +23,7 @@ const float MIN_DETAILED_DISTANCE = 12;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 const unsigned int CPathManager::PATH_RESOLUTION = CPathFinder::PATH_RESOLUTION;
 
-CPathManager* pathManager=0;
+CPathManager* pathManager = 0;
 
 CPathManager::CPathManager()
 {
@@ -34,6 +34,17 @@ CPathManager::CPathManager()
 
 	// Reset id-counter.
 	nextPathId = 0;
+
+	logOutput.Print("[CPathManager] pathing data checksum: %08x\n", GetPathCheckSum());
+
+	#ifdef SYNCDEBUG
+	// clients may have a non-writable cache directory (which causes
+	// the estimator path-file checksum to remain zero), so we can't
+	// update the sync-checker with this in normal builds
+	// NOTE: better to just checksum the in-memory data and broadcast
+	// that instead of relying on the zip-file CRC?
+	{ SyncedUint tmp(GetPathCheckSum()); }
+	#endif
 }
 
 CPathManager::~CPathManager()
@@ -495,9 +506,9 @@ void CPathManager::SetHeatOnSquare(int x, int y, int value, int ownerId)
 }
 
 
-boost::uint32_t CPathManager::GetPathChecksum()
+boost::uint32_t CPathManager::GetPathCheckSum()
 {
-	return pe->GetPathChecksum() + pe2->GetPathChecksum();
+	return (pe->GetPathChecksum() + pe2->GetPathChecksum());
 }
 
 
