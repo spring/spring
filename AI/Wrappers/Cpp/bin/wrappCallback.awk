@@ -422,8 +422,8 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 	sub(/^, /, "", addIndPars_c);
 	addIndParsNoTypes_c = removeParamTypes(addIndPars_c);
 	condAddIndPars_c    = (addIndPars_c == "") ? "" : ", ";
-	print("\t" clsName_wrp_c "(" ctorParams ")" ";")  >> outFile_wrp_h_c;
-	print("\t" clsName_wrp_c "(" ctorParams ")" " {") >> outFile_wrp_cpp_c;
+	print("\t"                                     clsName_wrp_c "(" ctorParams ")" ";")  >> outFile_wrp_h_c;
+	print("\t" myNameSpace "::" clsName_wrp_c "::" clsName_wrp_c "(" ctorParams ")" " {") >> outFile_wrp_cpp_c;
 	print("") >> outFile_wrp_cpp_c;
 	print("\t\t" "this->" myWrapVar " = " myWrapVar ";") >> outFile_wrp_cpp_c;
 	# init additionalVars
@@ -470,7 +470,7 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 
 		if (clsIsBuffered_c) {
 			print("private:") >> outFile_wrp_h_c;
-			print("\t" "static std::map<int," clsName_c "> _buffer_instances;") >> outFile_wrp_h_c;
+			print("\t" "static std::map<int," clsName_c "*> _buffer_instances;") >> outFile_wrp_h_c;
 			print("") >> outFile_wrp_h_c;
 		}
 		print("public:") >> outFile_wrp_h_c;
@@ -491,13 +491,13 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			print("\t\t" "}") >> outFile_wrp_cpp_c;
 			print("") >> outFile_wrp_cpp_c;
 		}
-		print("\t\t" clsName_c " _ret = NULL;") >> outFile_wrp_cpp_c;
+		print("\t\t" myNameSpace"::"clsName_c "* _ret = NULL;") >> outFile_wrp_cpp_c;
 		if (_isAvailableMethod == "") {
-			print("\t\t" "_ret = new " clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
+			print("\t\t" "_ret = new " myNameSpace"::"clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
 		} else {
 			print("\t\t" "bool isAvailable = " myWrapVar "." _isAvailableMethod "(" addIndParsNoTypes_c ");") >> outFile_wrp_cpp_c;
 			print("\t\t" "if (isAvailable) {") >> outFile_wrp_cpp_c;
-			print("\t\t\t" "_ret = new " clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
+			print("\t\t\t" "_ret = new " myNameSpace"::"clsName_wrp_c "(" ctorParamsNoTypes ");") >> outFile_wrp_cpp_c;
 			print("\t\t" "}") >> outFile_wrp_cpp_c;
 		}
 		if (clsIsBuffered_c) {
@@ -874,18 +874,20 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					# convert float[3] to AIFloat3
 					retParamType = "springai::AIFloat3*";
 					retVar_out_m = "_ret";
-					conversionCode_pre  = conversionCode_pre  "\t" "float[] " paNa " = new float[3];" "\n";
+					conversionCode_pre  = conversionCode_pre  "\t" "float* " paNa " = new float[3];" "\n";
 					conversionCode_post = conversionCode_post "\t" retVar_out_m " = new AIFloat3(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
+					conversionCode_post = conversionCode_post "\t" "delete [] " paNa ";" "\n";
 					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
-					sub("(, )?float\\[\\] " paNa, "", params);
+					sub("(, )?float\\* " paNa, "", params);
 					retType = retParamType;
 				} else if (match(paNa, /_colorS3/)) {
 					retParamType = "springai::AIColor*";
 					retVar_out_m = "_ret";
-					conversionCode_pre  = conversionCode_pre  "\t\t" "short[] " paNa " = new short[3];" "\n";
+					conversionCode_pre  = conversionCode_pre  "\t\t" "short* " paNa " = new short[3];" "\n";
 					conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = Util.toColor(" paNa ");" "\n";
+					conversionCode_post = conversionCode_post "\t" "delete [] " paNa ";" "\n";
 					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
-					sub("(, )?short\\[\\] " paNa, "", params);
+					sub("(, )?short\\* " paNa, "", params);
 					retType = retParamType;
 				} else {
 					print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
@@ -1095,9 +1097,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 		_arrayListVar    = _arrayPaNa "_list";
 		if (_isF3) {
-			_arrListGenType = "AIFloat3";
+			_arrListGenType = myNameSpace "::" "AIFloat3";
 		} else if (_isObj) {
-			_arrListGenType = myNameSpace "::" _refObjInt;
+			_arrListGenType = myNameSpace "::" _refObjInt "*";
 		} else if (_isNative) {
 			#_arrListGenType  = convertJavaBuiltinTypeToClass(_arrayType);
 			_arrListGenType  = _arrayType;
@@ -1247,7 +1249,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			print(conversionCode_pre) >> outFile_wrp_cpp_m;
 		}
 		if (!ommitMainCall) {
-			print(indent_m condRet_int_m myWrapVar "." functionName_m "(" innerParams ");") >> outFile_wrp_cpp_m;
+			print(indent_m condRet_int_m myWrapVar "->" functionName_m "(" innerParams ");") >> outFile_wrp_cpp_m;
 		}
 		if (conversionCode_post != "") {
 			print(conversionCode_post) >> outFile_wrp_cpp_m;
