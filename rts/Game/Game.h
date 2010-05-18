@@ -200,6 +200,8 @@ private:
 	float skipOldUserSpeed;
 	unsigned skipLastDraw;
 
+	int speedControl;
+
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
 };

@@ -885,6 +885,14 @@ const char* CAIAICallback::GetModHumanName() {
 	return sAICallback->Mod_getHumanName(skirmishAIId);
 }
 
+const char* CAIAICallback::GetModShortName() {
+	return sAICallback->Mod_getShortName(skirmishAIId);
+}
+
+const char* CAIAICallback::GetModVersion() {
+	return sAICallback->Mod_getVersion(skirmishAIId);
+}
+
 float CAIAICallback::GetElevation(float x, float z) {
 	return sAICallback->Map_getElevationAt(skirmishAIId, x, z);
 }

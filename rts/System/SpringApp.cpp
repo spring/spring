@@ -827,7 +827,7 @@ int SpringApp::Sim()
 			gmlProcessor->ExpandAuxQueue();
 
 			{
-				GML_STDMUTEX_LOCK(sim); // Sim
+				GML_RECMUTEX_LOCK(sim); // Sim
 
 				if (!activeController->Update()) {
 					return 0;
@@ -866,7 +866,7 @@ int SpringApp::Update()
 			if(gmlMultiThreadSim) {
 				if(!gs->frameNum) {
 
-					GML_STDMUTEX_LOCK(sim); // Update
+					GML_RECMUTEX_LOCK(sim); // Update
 
 					activeController->Update();
 					if(gs->frameNum)
@@ -875,7 +875,7 @@ int SpringApp::Update()
 			}
 			else {
 
-				GML_STDMUTEX_LOCK(sim); // Update
+				GML_RECMUTEX_LOCK(sim); // Update
 
 				activeController->Update();
 			}
@@ -1149,7 +1149,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 	switch (event.type) {
 		case SDL_VIDEORESIZE: {
 
-			GML_STDMUTEX_LOCK(sim); // Run
+			GML_RECMUTEX_LOCK(sim); // Run
 
 			CrashHandler::ClearDrawWDT(true);
 			screenWidth = event.resize.w;
@@ -1165,7 +1165,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		}
 		case SDL_VIDEOEXPOSE: {
 
-			GML_STDMUTEX_LOCK(sim); // Run
+			GML_RECMUTEX_LOCK(sim); // Run
 
 			CrashHandler::ClearDrawWDT(true);
 			// re-initialize the stencil

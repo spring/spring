@@ -283,6 +283,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
 
+	speedControl = configHandler->Get("SpeedControl", 0);
 
 	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
 
@@ -334,6 +335,10 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	// sending your playername to the server indicates that you are finished loading
 	const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
+
+	#ifdef SYNCCHECK
+	net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
+	#endif
 
 	mouse->ShowMouse();
 }
@@ -513,12 +518,6 @@ void CGame::LoadSimulation(const std::string& mapname)
 	radarhandler = new CRadarHandler(false);
 
 	pathManager = new CPathManager();
-
-	#ifdef SYNCCHECK
-		// update the checksum with path data
-		{ SyncedUint tmp(pathManager->GetPathChecksum()); }
-	#endif
-	logOutput.Print("Pathing data checksum: %08x\n", pathManager->GetPathChecksum());
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -1705,6 +1704,24 @@ bool CGame::ActionPressed(const Action& action,
 #	endif
 	}
 #endif
+	else if (cmd == "speedcontrol") {
+		if (action.extra.empty()) {
+			++speedControl;
+			if(speedControl > 2)
+				speedControl = -2;
+		}
+		else {
+			speedControl = atoi(action.extra.c_str());
+		}
+		speedControl = std::max(-2, std::min(speedControl, 2));
+		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
+		logOutput.Print("Speed Control: %s%s",
+			(speedControl == 0) ? "Default" : ((speedControl == 1 || speedControl == -1) ? "Average CPU" : "Maximum CPU"),
+			(speedControl < 0) ? " (server voting disabled)" : "");
+		configHandler->Set("SpeedControl", speedControl);
+		if (gameServer)
+			gameServer->UpdateSpeedControl(speedControl);
+	}
 	else if (!isRepeat && (cmd == "gameinfo")) {
 		if (!CGameInfo::IsActive()) {
 			CGameInfo::Enable();
@@ -2064,7 +2081,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 
-			GML_STDMUTEX_LOCK(sim); // ActionPressed
+			GML_RECMUTEX_LOCK(sim); // ActionPressed
 
 			guihandler->RunLayoutCommand(action.extra);
 		}
@@ -3116,7 +3133,7 @@ bool CGame::Draw() {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
 
-		GML_STDMUTEX_LOCK(sim); // Draw
+		GML_RECMUTEX_LOCK(sim); // Draw
 
 		guihandler->RunLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
@@ -3514,6 +3531,7 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
+	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 }
 
 
@@ -3848,6 +3866,27 @@ void CGame::ClientReadNet()
 				break;
 			}
 
+			case NETMSG_PATH_CHECKSUM: {
+				const unsigned char playerNum = inbuf[1];
+				const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
+				const boost::uint32_t localCheckSum = pathManager->GetPathCheckSum();
+				const CPlayer* player = playerHandler->Player(playerNum);
+
+				if (playerCheckSum == 0) {
+					logOutput.Print(
+						"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable cache?",
+						playerNum, player->name.c_str()
+					);
+				} else {
+					if (playerCheckSum != localCheckSum) {
+						logOutput.Print(
+							"[DESYNC WARNING] path-checksum %08x for player %d (%s) does not match local checksum %08x",
+							playerCheckSum, playerNum, player->name.c_str(), localCheckSum
+						);
+					}
+				}
+			} break;
+
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
@@ -3866,8 +3905,6 @@ void CGame::ClientReadNet()
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gs->frameNum, CSyncChecker::GetChecksum()));
 				if ((gs->frameNum & 4095) == 0) {// reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
-					// update the checksum with path data
-					SyncedUint tmp(pathManager->GetPathChecksum());
 				}
 #endif
 				AddTraffic(-1, packetCode, dataLength);

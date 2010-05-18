@@ -104,7 +104,7 @@ public:
 	float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
 
 	/// Return a checksum that can be used to check if every player has the same path data
-	boost::uint32_t GetPathChecksum();
+	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
 
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);

@@ -384,7 +384,7 @@ void CProjectileDrawer::LoadWeaponTextures() {
 				wd.visuals.texture2 = laserendtex;
 				wd.visuals.texture3 = beamlaserflaretex;
 			}
-		} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
+		} else if (wd.type == "LightningCannon") {
 			wd.visuals.texture1 = laserfallofftex;
 		} else if (wd.type == "EmgCannon") {
 			wd.visuals.texture1 = plasmatex;

@@ -53,14 +53,19 @@ local function GetStartUnit(teamID)
 	return startUnit
 end
 
-
 local function SpawnStartUnit(teamID)
 	local startUnit = GetStartUnit(teamID)
 	if (startUnit and startUnit ~= "") then
 		-- spawn the specified start unit
 		local x,y,z = Spring.GetTeamStartPosition(teamID)
-		local unitID = Spring.CreateUnit(startUnit, x, y, z, 0, teamID)
-
+		-- snap to 16x16 grid
+		x, z = 16*math.floor((x+8)/16), 16*math.floor((z+8)/16)
+		y = Spring.GetGroundHeight(x, z)
+		-- facing toward map center
+		local facing=math.abs(Game.mapSizeX/2 - x) > math.abs(Game.mapSizeZ/2 - z)
+			and ((x>Game.mapSizeX/2) and "west" or "east")
+			or ((z>Game.mapSizeZ/2) and "north" or "south")
+		local unitID = Spring.CreateUnit(startUnit, x, y, z, facing, teamID)
 		-- set the *team's* lineage root
 		Spring.SetUnitLineage(unitID, teamID, true)
 	end
@@ -100,6 +105,7 @@ function gadget:GameStart()
 	-- spawn start units
 	local gaiaTeamID = Spring.GetGaiaTeamID()
 	local teams = Spring.GetTeamList()
+	getfenv(0).AllowUnsafeChanges("USE AT YOUR OWN PERIL")
 	for i = 1,#teams do
 		local teamID = teams[i]
 		-- don't spawn a start unit for the Gaia team
@@ -107,4 +113,5 @@ function gadget:GameStart()
 			SpawnStartUnit(teamID)
 		end
 	end
+	getfenv(0).AllowUnsafeChanges("Any string to turn it off")
 end

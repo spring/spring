@@ -1,6 +1,8 @@
-#! /bin/sh
+#!/bin/sh
 
+# Quit on error.
 set -e
+
 cd $(dirname $0)/..
 
 doxygen

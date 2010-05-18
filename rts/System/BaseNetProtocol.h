@@ -40,6 +40,7 @@ enum NETMSG {
 	NETMSG_CHAT             = 7,  // uchar from, dest; std::string message;
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_GAMEID           = 9,  // uchar gameID[16];
+	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, boost::uint32_t checksum
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
@@ -85,6 +86,7 @@ enum NETMSG {
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
+	NETMSG_CUSTOM_DATA      = 55, // uchar myPlayerNum, uchar dataType, uchar dataValue
 
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
@@ -92,6 +94,9 @@ enum NETMSG {
 	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
 	NETMSG_UNREGISTER_NETMSG= 74  // uchar myPlayerNum, uchar NETMSG
 };
+
+// Data types for NETMSG_CUSTOM_DATA
+#define CUSTOM_DATA_SPEEDCONTROL 0
 
 // action to do with NETMSG_TEAM
 enum TEAMMSG {
@@ -126,6 +131,7 @@ public:
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	PacketType SendRandSeed(uint randSeed);
 	PacketType SendGameID(const uchar* buf);
+	PacketType SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum);
 	PacketType SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
@@ -136,6 +142,8 @@ public:
 	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);
 	PacketType SendInternalSpeed(float internalSpeed);
 	PacketType SendCPUUsage(float cpuUsage);
+	PacketType SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue);
+	PacketType SendSpeedControl(uchar myPlayerNum, int speedCtrl);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
 	PacketType SendAttemptConnect(const std::string name, const std::string& passwd, const std::string version);
