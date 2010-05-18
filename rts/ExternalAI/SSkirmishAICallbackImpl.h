@@ -212,14 +212,7 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_FlankingBonus_getMin(int te
 		int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd(int teamId,
 		int unitDefId);
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_CollisionVolume_getType(int teamId,
-		int unitDefId);
-EXPORT(struct SAIFloat3 ) skirmishAiCallback_UnitDef_CollisionVolume_getScales(
-		int teamId, int unitDefId);
-EXPORT(struct SAIFloat3 ) skirmishAiCallback_UnitDef_CollisionVolume_getOffsets(
-		int teamId, int unitDefId);
-EXPORT(int              ) skirmishAiCallback_UnitDef_CollisionVolume_getTest(int teamId,
-		int unitDefId);
+
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxWeaponRange(int teamId, int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getType(int teamId, int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getTooltip(int teamId, int unitDefId);
@@ -696,14 +689,6 @@ EXPORT(float            ) skirmishAiCallback_FeatureDef_getMaxHealth(int teamId,
 EXPORT(float            ) skirmishAiCallback_FeatureDef_getReclaimTime(int teamId,
 		int featureDefId);
 EXPORT(float            ) skirmishAiCallback_FeatureDef_getMass(int teamId, int featureDefId);
-EXPORT(const char*      ) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int teamId,
-		int featureDefId);
-EXPORT(struct SAIFloat3 ) skirmishAiCallback_FeatureDef_CollisionVolume_getScales(
-		int teamId, int featureDefId);
-EXPORT(struct SAIFloat3 ) skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets(
-		int teamId, int featureDefId);
-EXPORT(int              ) skirmishAiCallback_FeatureDef_CollisionVolume_getTest(int teamId,
-		int featureDefId);
 EXPORT(bool             ) skirmishAiCallback_FeatureDef_isUpright(int teamId, int featureDefId);
 EXPORT(int              ) skirmishAiCallback_FeatureDef_getDrawType(int teamId, int featureDefId);
 EXPORT(const char*      ) skirmishAiCallback_FeatureDef_getModelName(int teamId,

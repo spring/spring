@@ -2070,22 +2070,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_FlankingBonus_getMin(int teamId, int un
 EXPORT(float) skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->flankingBonusMobilityAdd;
 }
-EXPORT(const char*) skirmishAiCallback_UnitDef_CollisionVolume_getType(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeTypeStr.c_str();
-}
-EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_CollisionVolume_getScales(int teamId,
-		int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeScales
-			.toSAIFloat3();
-}
-EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_CollisionVolume_getOffsets(int teamId,
-		int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeOffsets
-			.toSAIFloat3();
-}
-EXPORT(int) skirmishAiCallback_UnitDef_CollisionVolume_getTest(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeTest;
-}
+
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxWeaponRange(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->maxWeaponRange;
 }
@@ -3003,10 +2988,6 @@ EXPORT(float) skirmishAiCallback_FeatureDef_0REF1Resource2resourceId0getContaine
 EXPORT(float) skirmishAiCallback_FeatureDef_getMaxHealth(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->maxHealth;}
 EXPORT(float) skirmishAiCallback_FeatureDef_getReclaimTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimTime;}
 EXPORT(float) skirmishAiCallback_FeatureDef_getMass(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->mass;}
-EXPORT(const char*) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTypeStr.c_str();}
-EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getScales(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeScales.toSAIFloat3();}
-EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeOffsets.toSAIFloat3();}
-EXPORT(int) skirmishAiCallback_FeatureDef_CollisionVolume_getTest(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTest;}
 EXPORT(bool) skirmishAiCallback_FeatureDef_isUpright(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->upright;}
 EXPORT(int) skirmishAiCallback_FeatureDef_getDrawType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->drawType;}
 EXPORT(const char*) skirmishAiCallback_FeatureDef_getModelName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelname.c_str();}
@@ -3610,10 +3591,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_UnitDef_FlankingBonus_getMax = &skirmishAiCallback_UnitDef_FlankingBonus_getMax;
 	callback->Clb_UnitDef_FlankingBonus_getMin = &skirmishAiCallback_UnitDef_FlankingBonus_getMin;
 	callback->Clb_UnitDef_FlankingBonus_getMobilityAdd = &skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd;
-	callback->Clb_UnitDef_CollisionVolume_getType = &skirmishAiCallback_UnitDef_CollisionVolume_getType;
-	callback->Clb_UnitDef_CollisionVolume_getScales = &skirmishAiCallback_UnitDef_CollisionVolume_getScales;
-	callback->Clb_UnitDef_CollisionVolume_getOffsets = &skirmishAiCallback_UnitDef_CollisionVolume_getOffsets;
-	callback->Clb_UnitDef_CollisionVolume_getTest = &skirmishAiCallback_UnitDef_CollisionVolume_getTest;
 	callback->Clb_UnitDef_getMaxWeaponRange = &skirmishAiCallback_UnitDef_getMaxWeaponRange;
 	callback->Clb_UnitDef_getType = &skirmishAiCallback_UnitDef_getType;
 	callback->Clb_UnitDef_getTooltip = &skirmishAiCallback_UnitDef_getTooltip;
@@ -3952,10 +3929,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_FeatureDef_getMaxHealth = &skirmishAiCallback_FeatureDef_getMaxHealth;
 	callback->Clb_FeatureDef_getReclaimTime = &skirmishAiCallback_FeatureDef_getReclaimTime;
 	callback->Clb_FeatureDef_getMass = &skirmishAiCallback_FeatureDef_getMass;
-	callback->Clb_FeatureDef_CollisionVolume_getType = &skirmishAiCallback_FeatureDef_CollisionVolume_getType;
-	callback->Clb_FeatureDef_CollisionVolume_getScales = &skirmishAiCallback_FeatureDef_CollisionVolume_getScales;
-	callback->Clb_FeatureDef_CollisionVolume_getOffsets = &skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets;
-	callback->Clb_FeatureDef_CollisionVolume_getTest = &skirmishAiCallback_FeatureDef_CollisionVolume_getTest;
 	callback->Clb_FeatureDef_isUpright = &skirmishAiCallback_FeatureDef_isUpright;
 	callback->Clb_FeatureDef_getDrawType = &skirmishAiCallback_FeatureDef_getDrawType;
 	callback->Clb_FeatureDef_getModelName = &skirmishAiCallback_FeatureDef_getModelName;

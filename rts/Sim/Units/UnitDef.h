@@ -142,12 +142,8 @@ public:
 	std::string scriptName;		// the name of the unit's script, e.g. "armjeth.cob"
 	std::string scriptPath;		// the path of the unit's script, e.g. "scripts/armjeth.cob"
 
-	float3 modelCenterOffset;	// offset from the unit model's default center point
+	float3 modelCenterOffset;	// offset from the unit model's default center point (unit-space)
 
-	std::string collisionVolumeTypeStr;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
-	float3 collisionVolumeScales;		// the collision volume's full axis lengths
-	float3 collisionVolumeOffsets;		// relative to the unit's center position
-	int collisionVolumeTest;			// 0: discrete, 1: continuous
 	bool usePieceCollisionVolumes;		// if true, collisions are checked per-piece
 
 
