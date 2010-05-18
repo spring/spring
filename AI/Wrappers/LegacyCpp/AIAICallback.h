@@ -42,6 +42,7 @@ public:
 
 	int GetCurrentFrame();
 
+	int GetMySkirmishAIId();
 	int GetMyTeam();
 	int GetMyAllyTeam();
 	int GetPlayerTeam(int player);

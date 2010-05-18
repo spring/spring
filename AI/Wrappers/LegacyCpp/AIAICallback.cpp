@@ -155,6 +155,10 @@ int CAIAICallback::GetCurrentFrame() {
 	return sAICallback->Game_getCurrentFrame(skirmishAIId);
 }
 
+int CAIAICallback::GetMySkirmishAIId() {
+	return skirmishAIId;
+}
+
 int CAIAICallback::GetMyTeam() {
 	return sAICallback->Game_getMyTeam(skirmishAIId);
 }

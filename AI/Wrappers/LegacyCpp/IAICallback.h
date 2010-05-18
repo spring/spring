@@ -48,6 +48,7 @@ public:
 	// speed)
 	virtual int GetCurrentFrame() = 0;
 
+	virtual int GetMySkirmishAIId() = 0;
 	virtual int GetMyTeam() = 0;
 	virtual int GetMyAllyTeam() = 0;
 	virtual int GetPlayerTeam(int playerId) = 0;
