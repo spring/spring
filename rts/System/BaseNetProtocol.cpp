@@ -120,9 +120,18 @@ PacketType CBaseNetProtocol::SendPause(uchar myPlayerNum, uchar bPaused)
 
 PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params)
 {
-	unsigned size = 15 + params.size() * sizeof(float);
-	PackPacket* packet = new PackPacket(size, NETMSG_AICOMMAND);
-	*packet << static_cast<unsigned short>(size) << myPlayerNum << unitID << id << options << aiCommandId << params;
+	int cmdTypeId = NETMSG_AICOMMAND;
+	unsigned size = 11 + (params.size() * sizeof(float));
+	if (aiCommandId != -1) {
+		cmdTypeId = NETMSG_AICOMMAND_TRACKED;
+		size += 4;
+	}
+	PackPacket* packet = new PackPacket(size, cmdTypeId);
+	*packet << static_cast<unsigned short>(size) << myPlayerNum << unitID << id << options;
+	if (cmdTypeId == NETMSG_AICOMMAND_TRACKED) {
+		*packet << aiCommandId;
+	}
+	*packet << params;
 	return PacketType(packet);
 }
 
@@ -456,6 +465,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_PAUSE, 3);
 
 	proto->AddType(NETMSG_AICOMMAND, -2);
+	proto->AddType(NETMSG_AICOMMAND_TRACKED, -2);
 	proto->AddType(NETMSG_AICOMMANDS, -2);
 	proto->AddType(NETMSG_AISHARE, -2);
 

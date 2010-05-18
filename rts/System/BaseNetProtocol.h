@@ -47,8 +47,8 @@ enum NETMSG {
 
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
-	                              // short unitIDCount;  unitIDCount X short(unitID)
-	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
+	                              // short unitIDCount;  unitIDCount * short(unitID)
+	                              // short commandCount; commandCount * { int id; uchar options; std::vector<float> params }
 	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs
 
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
@@ -92,7 +92,9 @@ enum NETMSG {
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
 
 	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
-	NETMSG_UNREGISTER_NETMSG= 74  // uchar myPlayerNum, uchar NETMSG
+	NETMSG_UNREGISTER_NETMSG= 74, // uchar myPlayerNum, uchar NETMSG
+
+	NETMSG_AICOMMAND_TRACKED= 75  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
 };
 
 // Data types for NETMSG_CUSTOM_DATA

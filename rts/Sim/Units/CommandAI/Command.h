@@ -99,7 +99,7 @@ private:
 
 public:
 	Command():
-        aiCommandId(-1),
+		aiCommandId(-1),
 		options(0),
 		tag(0),
 		timeOut(INT_MAX) {}
