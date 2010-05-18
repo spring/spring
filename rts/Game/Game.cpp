@@ -3956,7 +3956,8 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_AICOMMAND: {
+			case NETMSG_AICOMMAND:
+			case NETMSG_AICOMMAND_TRACKED: {
 				const int player = inbuf[3];
 				if (player >= playerHandler->ActivePlayers() || player < 0) {
 					logOutput.Print("Got invalid player number (%i) in NETMSG_AICOMMAND", player);
@@ -3971,12 +3972,16 @@ void CGame::ClientReadNet()
 
 				Command c;
 				c.id = *((int*) &inbuf[6]);
-				c.aiCommandId = *((int*) &inbuf[11]);
 				c.options = inbuf[10];
+				int curIndex = 11;
+				if (packetCode == NETMSG_AICOMMAND_TRACKED) {
+					c.aiCommandId = *((int*) &inbuf[curIndex]);
+					curIndex += 4;
+				}
 
 				// insert the command parameters
-				for (int a = 0; a < ((*((short int*) &inbuf[1]) - 15) / 4); ++a) {
-					c.params.push_back(*((float*) &inbuf[15 + a * 4]));
+				for (int a = 0; a < ((*((short int*) &inbuf[1]) - curIndex) / 4); ++a) {
+					c.params.push_back(*((float*) &inbuf[curIndex + a * 4]));
 				}
 
 				selectedUnits.AiOrder(unitid, c, player);
