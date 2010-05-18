@@ -818,6 +818,14 @@ const char* CAIAICallback::GetModHumanName() {
 	return sAICallback->Clb_Mod_getHumanName(teamId);
 }
 
+const char* CAIAICallback::GetModShortName() {
+	return sAICallback->Clb_Mod_getShortName(teamId);
+}
+
+const char* CAIAICallback::GetModVersion() {
+	return sAICallback->Clb_Mod_getVersion(teamId);
+}
+
 float CAIAICallback::GetElevation(float x, float z) {
 	return sAICallback->Clb_Map_getElevationAt(teamId, x, z);
 }

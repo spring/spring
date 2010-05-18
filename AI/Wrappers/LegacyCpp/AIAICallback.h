@@ -130,6 +130,8 @@ public:
 	int GetModHash();
 	const char* GetModName();
 	const char* GetModHumanName();
+	const char* GetModShortName();
+	const char* GetModVersion();
 
 	float GetElevation(float x, float z);
 

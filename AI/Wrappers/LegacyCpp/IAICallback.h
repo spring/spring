@@ -240,6 +240,16 @@ public:
 	virtual const char* GetModName() = 0;
 	/// Use this one for reference (eg. in config-file names)
 	virtual const char* GetModHumanName() = 0;
+	/**
+	 * Returns the short name of the mod, which does not include the version.
+	 * Use this for reference to the mod in general, eg. as version independent
+	 * reference.
+	 * Be aware though, that this still contain special characters and spaces,
+	 * and may not be used as a file name without checks and replaces.
+	 * Tip: replace every char matching [^0-9a-zA-Z_-.] with '_'
+	 */
+	virtual const char* GetModShortName() = 0;
+	virtual const char* GetModVersion() = 0;
 
 	/// Gets the elevation of the map at position (x, z)
 	virtual float GetElevation(float x, float z) = 0;
