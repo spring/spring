@@ -1737,7 +1737,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	if (gu->drawdebug) {
-		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 		}
 
@@ -1794,7 +1794,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			UnitDrawingTexturesOn();
 		glPopAttrib();
 
-		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 		}
 	}
@@ -1827,7 +1827,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glColorf3(fc * col);
 
 	//! render wireframe with FFP
-	if (advShading && !water->drawReflection) {
+	if (!luaDrawing && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 	}
 
@@ -1876,7 +1876,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glDisable(GL_CLIP_PLANE1);
 	unitDrawer->UnitDrawingTexturesOn();
 
-	if (advShading && !water->drawReflection) {
+	if (!luaDrawing && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 	}
 
