@@ -103,6 +103,7 @@ void LoadExtensions()
 	logOutput.Print("GL:   %s\n", glGetString(GL_VERSION));
 	logOutput.Print("GL:   %s\n", glGetString(GL_VENDOR));
 	logOutput.Print("GL:   %s\n", glGetString(GL_RENDERER));
+	logOutput.Print("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	logOutput.Print("GLEW: %s\n", glewGetString(GLEW_VERSION));
 
 #if       !defined DEBUG
