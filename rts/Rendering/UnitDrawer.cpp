@@ -878,7 +878,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool asRadarBlip)
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
 
 	// Is the unit selected? Then draw it white.
-	if (unit->commandAI->selected) {
+	if (unit->commandAI && unit->commandAI->selected) {
 		glColor3ub(255, 255, 255);
 	} else {
 		glColor3ubv(teamHandler->Team(unit->team)->color);
