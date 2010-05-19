@@ -11,9 +11,9 @@
 		!ifdef AI_INT_VERS_${aiIntName}
 			!define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
 			!ifdef USE_BUILD_DIR
-				${!defineifexist} AI_INT_BUILT "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
+				${!defineifdirexists} AI_INT_BUILT "${BUILD_DIR}\AI\Interfaces\${aiIntName}"
 			!else
-				${!defineifexist} AI_INT_BUILT "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+				${!defineifdirexists} AI_INT_BUILT "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
 			!endif
 			!ifdef AI_INT_BUILT
 				SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
@@ -59,9 +59,9 @@
 		!ifdef SKIRM_AI_VERS_${skirAiName}
 			!define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
 			!ifdef USE_BUILD_DIR
-				${!defineifexist} SKIRM_AI_BUILT "${BUILD_DIR}\AI\Skirmish\${skirAiName}\*.*"
+				${!defineifdirexists} SKIRM_AI_BUILT "${BUILD_DIR}\AI\Skirmish\${skirAiName}"
 			!else
-				${!defineifexist} SKIRM_AI_BUILT "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+				${!defineifdirexists} SKIRM_AI_BUILT "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
 			!endif
 			!ifdef SKIRM_AI_BUILT
 				SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
