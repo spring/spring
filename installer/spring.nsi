@@ -202,6 +202,20 @@ SectionGroup "Multiplayer battlerooms"
   SectionEnd
 SectionGroupEnd
 
+
+Section "Start menu shortcuts" SEC_START
+  !define INSTALL
+  !include "sections\shortcuts.nsh"
+  !undef INSTALL
+SectionEnd
+
+Section "Desktop shortcut" SEC_DESKTOP
+  ${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
+    SetOutPath "$INSTDIR"
+    CreateShortCut "$DESKTOP\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
+  ${EndIf}
+SectionEnd
+
 SectionGroup "Tools"
   Section "Easy content installation" SEC_ARCHIVEMOVER
     !define INSTALL
@@ -231,21 +245,6 @@ SectionGroup "Skirmish AI plugins (Bots)"
 	!insertmacro SkirmishAIInstSection "RAI"
 	!insertmacro SkirmishAIInstSection "E323AI"
 SectionGroupEnd
-
-
-Section "Start menu shortcuts" SEC_START
-	!define INSTALL
-		!include "sections\shortcuts.nsh"
-	!undef INSTALL
-SectionEnd
-
-Section "Desktop shortcut" SEC_DESKTOP
-	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
-		SetOutPath "$INSTDIR"
-		CreateShortCut "$DESKTOP\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
-	${EndIf}
-SectionEnd
-
 
 !include "sections\sectiondesc.nsh"
 
