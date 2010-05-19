@@ -168,20 +168,17 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 	}
 
 
-	// these take precedence over the old sphere tags as well as
-	// feature->radius (for feature <--> projectile interactions)
-	fd->collisionVolumeTypeStr = fdTable.GetString("collisionVolumeType", "");
-	fd->collisionVolumeScales  = fdTable.GetFloat3("collisionVolumeScales", ZeroVector);
-	fd->collisionVolumeOffsets = fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	fd->collisionVolumeTest    = fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT);
-
 	// initialize the (per-featuredef) collision-volume,
 	// all CFeature instances hold a copy of this object
+	//
+	// takes precedence over the old sphere tags as well
+	// as feature->radius (for feature <---> projectile
+	// interactions)
 	fd->collisionVolume = new CollisionVolume(
-		fd->collisionVolumeTypeStr,
-		fd->collisionVolumeScales,
-		fd->collisionVolumeOffsets,
-		fd->collisionVolumeTest
+		fdTable.GetString("collisionVolumeType", ""),
+		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
+		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
+		fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT)
 	);
 
 

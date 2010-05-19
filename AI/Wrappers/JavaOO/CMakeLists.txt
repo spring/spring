@@ -95,7 +95,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myGenClbClasses
 		"Camera"
 		"Cheats"
-		"CollisionVolume"
 		"CommandDescription"
 		"Command"
 		"Damage"
@@ -147,12 +146,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"${myGeneratedSourceDir}/${myPkg}/clb/Abstract${className}.java"
 			"${myGeneratedSourceDir}/${myPkg}/clb/Stub${className}.java"
 			)
-		if     ("${className}" STREQUAL "CollisionVolume")
-			list(APPEND myGeneratedCallbackSources
-				"${myGeneratedSourceDir}/${myPkg}/clb/WrappFeatureDef${className}.java"
-				"${myGeneratedSourceDir}/${myPkg}/clb/WrappUnitDef${className}.java"
-				)
-		elseif ("${className}" STREQUAL "CommandDescription")
+		if ("${className}" STREQUAL "CommandDescription")
 			list(APPEND myGeneratedCallbackSources
 				"${myGeneratedSourceDir}/${myPkg}/clb/WrappGroupSupportedCommand.java"
 				"${myGeneratedSourceDir}/${myPkg}/clb/WrappUnitSupportedCommand.java"

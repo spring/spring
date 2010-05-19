@@ -563,29 +563,6 @@ struct SSkirmishAICallback {
 	 */
 	float             (CALLING_CONV *UnitDef_FlankingBonus_getMobilityAdd)(int skirmishAIId, int unitDefId);
 
-	/**
-	 * The type of the collision volume's form.
-	 *
-	 * @return  "Ell"
-	 *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
-	 *          "Box"
-	 */
-	const char*       (CALLING_CONV *UnitDef_CollisionVolume_getType)(int skirmishAIId, int unitDefId);
-
-	/** The collision volume's full axis lengths. */
-	void              (CALLING_CONV *UnitDef_CollisionVolume_getScales)(int skirmishAIId, int unitDefId, float* return_posF3_out);
-
-	/** The collision volume's offset relative to the unit's center position */
-	void              (CALLING_CONV *UnitDef_CollisionVolume_getOffsets)(int skirmishAIId, int unitDefId, float* return_posF3_out);
-
-	/**
-	 * Collission test algorithm used.
-	 *
-	 * @return  0: discrete
-	 *          1: continuous
-	 */
-	int               (CALLING_CONV *UnitDef_CollisionVolume_getTest)(int skirmishAIId, int unitDefId);
-
 	float             (CALLING_CONV *UnitDef_getMaxWeaponRange)(int skirmishAIId, int unitDefId);
 
 	const char*       (CALLING_CONV *UnitDef_getType)(int skirmishAIId, int unitDefId);
@@ -1697,29 +1674,6 @@ struct SSkirmishAICallback {
 
 	/** Used to see if the object can be overrun by units of a certain heavyness */
 	float             (CALLING_CONV *FeatureDef_getMass)(int skirmishAIId, int featureDefId);
-
-	/**
-	 * The type of the collision volume's form.
-	 *
-	 * @return  "Ell"
-	 *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
-	 *          "Box"
-	 */
-	const char*       (CALLING_CONV *FeatureDef_CollisionVolume_getType)(int skirmishAIId, int featureDefId);
-
-	/** The collision volume's full axis lengths. */
-	void              (CALLING_CONV *FeatureDef_CollisionVolume_getScales)(int skirmishAIId, int featureDefId, float* return_posF3_out);
-
-	/** The collision volume's offset relative to the feature's center position */
-	void              (CALLING_CONV *FeatureDef_CollisionVolume_getOffsets)(int skirmishAIId, int featureDefId, float* return_posF3_out);
-
-	/**
-	 * Collission test algorithm used.
-	 *
-	 * @return  0: discrete
-	 *          1: continuous
-	 */
-	int               (CALLING_CONV *FeatureDef_CollisionVolume_getTest)(int skirmishAIId, int featureDefId);
 
 	bool              (CALLING_CONV *FeatureDef_isUpright)(int skirmishAIId, int featureDefId);
 

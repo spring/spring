@@ -878,7 +878,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool asRadarBlip)
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
 
 	// Is the unit selected? Then draw it white.
-	if (unit->commandAI->selected) {
+	if (unit->commandAI && unit->commandAI->selected) {
 		glColor3ub(255, 255, 255);
 	} else {
 		glColor3ubv(teamHandler->Team(unit->team)->color);
@@ -1737,7 +1737,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	if (gu->drawdebug) {
-		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 		}
 
@@ -1755,13 +1755,8 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 			UnitDrawingTexturesOff();
 
-			const float3 midPosOffset =
-				(unit->frontdir * unit->relMidPos.z) +
-				(unit->updir    * unit->relMidPos.y) +
-				(unit->rightdir * unit->relMidPos.x);
-
 			glPushMatrix();
-				glTranslatef3(midPosOffset);
+				glTranslatef3(unit->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 
 				GLUquadricObj* q = gluNewQuadric();
 
@@ -1775,7 +1770,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 				if (unit->unitDef->usePieceCollisionVolumes) {
 					// draw only the piece volumes for less clutter
-					CMatrix44f mat(-midPosOffset);
+					CMatrix44f mat(unit->relMidPos * float3(0.0f, -1.0f, 0.0f));
 					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
 				} else {
 					if (!unit->collisionVolume->IsDisabled()) {
@@ -1799,7 +1794,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			UnitDrawingTexturesOn();
 		glPopAttrib();
 
-		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 		}
 	}
@@ -1832,7 +1827,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glColorf3(fc * col);
 
 	//! render wireframe with FFP
-	if (advShading && !water->drawReflection) {
+	if (!luaDrawing && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 	}
 
@@ -1881,7 +1876,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glDisable(GL_CLIP_PLANE1);
 	unitDrawer->UnitDrawingTexturesOn();
 
-	if (advShading && !water->drawReflection) {
+	if (!luaDrawing && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 	}
 

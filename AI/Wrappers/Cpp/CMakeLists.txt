@@ -63,7 +63,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myGeneratedWrapperSources
 		${myGeneratedSourceDir}/AbstractCamera.cpp
 		${myGeneratedSourceDir}/AbstractCheats.cpp
-		${myGeneratedSourceDir}/AbstractCollisionVolume.cpp
 		${myGeneratedSourceDir}/AbstractCommand.cpp
 		${myGeneratedSourceDir}/AbstractCommandDescription.cpp
 		${myGeneratedSourceDir}/AbstractDamage.cpp
@@ -106,7 +105,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractWeaponMount.cpp
 		${myGeneratedSourceDir}/StubCamera.cpp
 		${myGeneratedSourceDir}/StubCheats.cpp
-		${myGeneratedSourceDir}/StubCollisionVolume.cpp
 		${myGeneratedSourceDir}/StubCommand.cpp
 		${myGeneratedSourceDir}/StubCommandDescription.cpp
 		${myGeneratedSourceDir}/StubDamage.cpp
@@ -157,7 +155,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappEngine.cpp
 		${myGeneratedSourceDir}/WrappFeature.cpp
 		${myGeneratedSourceDir}/WrappFeatureDef.cpp
-		${myGeneratedSourceDir}/WrappFeatureDefCollisionVolume.cpp
 		${myGeneratedSourceDir}/WrappFigure.cpp
 		${myGeneratedSourceDir}/WrappFile.cpp
 		${myGeneratedSourceDir}/WrappFlankingBonus.cpp
@@ -187,7 +184,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappTeams.cpp
 		${myGeneratedSourceDir}/WrappUnit.cpp
 		${myGeneratedSourceDir}/WrappUnitDef.cpp
-		${myGeneratedSourceDir}/WrappUnitDefCollisionVolume.cpp
 		${myGeneratedSourceDir}/WrappUnitSupportedCommand.cpp
 		${myGeneratedSourceDir}/WrappVersion.cpp
 		${myGeneratedSourceDir}/WrappWeaponDef.cpp

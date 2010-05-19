@@ -320,14 +320,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_FlankingBonus_getMin(int sk
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd(int skirmishAIId, int unitDefId);
 
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_CollisionVolume_getType(int skirmishAIId, int unitDefId);
-
-EXPORT(void             ) skirmishAiCallback_UnitDef_CollisionVolume_getScales(int skirmishAIId, int unitDefId, float* return_posF3_out);
-
-EXPORT(void             ) skirmishAiCallback_UnitDef_CollisionVolume_getOffsets(int skirmishAIId, int unitDefId, float* return_posF3_out);
-
-EXPORT(int              ) skirmishAiCallback_UnitDef_CollisionVolume_getTest(int skirmishAIId, int unitDefId);
-
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxWeaponRange(int skirmishAIId, int unitDefId);
 
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getType(int skirmishAIId, int unitDefId);
@@ -955,14 +947,6 @@ EXPORT(float            ) skirmishAiCallback_FeatureDef_getMaxHealth(int skirmis
 EXPORT(float            ) skirmishAiCallback_FeatureDef_getReclaimTime(int skirmishAIId, int featureDefId);
 
 EXPORT(float            ) skirmishAiCallback_FeatureDef_getMass(int skirmishAIId, int featureDefId);
-
-EXPORT(const char*      ) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int skirmishAIId, int featureDefId);
-
-EXPORT(void             ) skirmishAiCallback_FeatureDef_CollisionVolume_getScales(int skirmishAIId, int featureDefId, float* return_posF3_out);
-
-EXPORT(void             ) skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets(int skirmishAIId, int featureDefId, float* return_posF3_out);
-
-EXPORT(int              ) skirmishAiCallback_FeatureDef_CollisionVolume_getTest(int skirmishAIId, int featureDefId);
 
 EXPORT(bool             ) skirmishAiCallback_FeatureDef_isUpright(int skirmishAIId, int featureDefId);
 

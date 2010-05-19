@@ -479,12 +479,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->flankingBonusMax = sAICallback->UnitDef_FlankingBonus_getMax(skirmishAIId, unitDefId);
 		unitDef->flankingBonusMin = sAICallback->UnitDef_FlankingBonus_getMin(skirmishAIId, unitDefId);
 		unitDef->flankingBonusMobilityAdd = sAICallback->UnitDef_FlankingBonus_getMobilityAdd(skirmishAIId, unitDefId);
-		unitDef->collisionVolumeTypeStr = sAICallback->UnitDef_CollisionVolume_getType(skirmishAIId, unitDefId);
-		sAICallback->UnitDef_CollisionVolume_getScales(skirmishAIId, unitDefId, pos_cache);
-		unitDef->collisionVolumeScales = pos_cache;
-		sAICallback->UnitDef_CollisionVolume_getOffsets(skirmishAIId, unitDefId, pos_cache);
-		unitDef->collisionVolumeOffsets = pos_cache;
-		unitDef->collisionVolumeTest = sAICallback->UnitDef_CollisionVolume_getTest(skirmishAIId, unitDefId);
 		unitDef->maxWeaponRange = sAICallback->UnitDef_getMaxWeaponRange(skirmishAIId, unitDefId);
 		unitDef->type = sAICallback->UnitDef_getType(skirmishAIId, unitDefId);
 		unitDef->tooltip = sAICallback->UnitDef_getTooltip(skirmishAIId, unitDefId);
@@ -1185,12 +1179,6 @@ featureDef->energy = sAICallback->FeatureDef_getContainedResource(skirmishAIId, 
 featureDef->maxHealth = sAICallback->FeatureDef_getMaxHealth(skirmishAIId, featureDefId);
 featureDef->reclaimTime = sAICallback->FeatureDef_getReclaimTime(skirmishAIId, featureDefId);
 featureDef->mass = sAICallback->FeatureDef_getMass(skirmishAIId, featureDefId);
-featureDef->collisionVolumeTypeStr = sAICallback->FeatureDef_CollisionVolume_getType(skirmishAIId, featureDefId);
-sAICallback->FeatureDef_CollisionVolume_getScales(skirmishAIId, featureDefId, pos_cache);
-featureDef->collisionVolumeScales = pos_cache;
-sAICallback->FeatureDef_CollisionVolume_getOffsets(skirmishAIId, featureDefId, pos_cache);
-featureDef->collisionVolumeOffsets = pos_cache;
-featureDef->collisionVolumeTest = sAICallback->FeatureDef_CollisionVolume_getTest(skirmishAIId, featureDefId);
 featureDef->upright = sAICallback->FeatureDef_isUpright(skirmishAIId, featureDefId);
 featureDef->drawType = sAICallback->FeatureDef_getDrawType(skirmishAIId, featureDefId);
 featureDef->modelname = sAICallback->FeatureDef_getModelName(skirmishAIId, featureDefId);
