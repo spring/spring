@@ -39,7 +39,7 @@ else:
 contentDirCandidates = ['cont']
 luaUIDir = 'LuaUI'
 contentBase = '${CONTENT_DIR}'
-instBase = '${INSTDIR}'
+instBase = '$INSTDIR'
 
 # Change to source root dir
 os.chdir(sys.path[0])
