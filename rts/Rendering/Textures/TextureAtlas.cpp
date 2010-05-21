@@ -217,7 +217,7 @@ void CTextureAtlas::CreateTexture()
 			for(int y=0; y<tex->ysize; y++) {
 				((int*)data)[tex->xpos+x+(tex->ypos+y)*xsize] = ((int*)tex->data)[x+y*tex->xsize];
 			}
-		}			
+		}
 	}
 
 	if (debug) {
