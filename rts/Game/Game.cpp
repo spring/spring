@@ -3471,12 +3471,14 @@ void CGame::DrawInputText()
 	}
 
 	// draw the text
+	font->Begin();
 	font->SetColors(textColor, NULL);
 	if (!guihandler->GetOutlineFonts()) {
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM, tempstring);
 	} else {
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM, tempstring);
 	}
+	font->End();
 }
 
 
