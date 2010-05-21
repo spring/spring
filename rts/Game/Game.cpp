@@ -3161,6 +3161,8 @@ bool CGame::Draw() {
 		return true;
 	}
 
+	teamHandler->EnableHighlight(currentTime);
+
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
 	}
@@ -3349,7 +3351,8 @@ bool CGame::Draw() {
 						(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)), 
 							std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
 					int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
-					float4 pingcolor(std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
+					float4 pingcolor(!p->spectator && gu->reconnectTimeout > 0 && ping > 1000 * gu->reconnectTimeout &&
+							(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
 							std::min(1.0f, std::max(0.01f, (1000 - ping) / 375.0f)), 0.01f, 1.0f);
 					SNPRINTF(buf, sizeof(buf), "\xff%c%c%c%c \t%i \t%s   \t\xff%c%c%c%s   \t\xff%c%c%c%.0f%%  \t\xff%c%c%c%dms",
 							allycolor[0], allycolor[1], allycolor[2], (gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
@@ -3405,6 +3408,8 @@ bool CGame::Draw() {
 #endif
 
 	SetDrawMode(gameNotDrawing);
+
+	teamHandler->DisableHighlight();
 
 	return true;
 }

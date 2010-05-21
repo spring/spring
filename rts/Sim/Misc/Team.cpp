@@ -110,7 +110,8 @@ CTeam::CTeam()
   energySent(0),
   energyReceived(0),
   nextHistoryEntry(0),
-  numCommanders(0)
+  numCommanders(0),
+  highlight(0.0f)
 {
 	statHistory.push_back(TeamStatistics());
 	currentStats = &statHistory.back();

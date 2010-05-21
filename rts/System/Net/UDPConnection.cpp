@@ -19,6 +19,7 @@
 #include "Exception.h"
 #include "ConfigHandler.h"
 #include <boost/cstdint.hpp>
+#include "GlobalUnsynced.h"
 
 namespace netcode {
 using namespace boost::asio;
@@ -497,9 +498,9 @@ void UDPConnection::Init()
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
 	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
-	initialNetworkTimeout = std::max(configHandler->Get("InitialNetworkTimeout", 30), 0);	
-	networkTimeout = std::max(configHandler->Get("NetworkTimeout", 120), 0);	
-	reconnectTimeout = configHandler->Get("ReconnectTimeout", 15);
+	initialNetworkTimeout = gu->initialNetworkTimeout;
+	networkTimeout = gu->networkTimeout;
+	reconnectTimeout = gu->reconnectTimeout;
 	reconnectTime = reconnectTimeout;
 }
 
