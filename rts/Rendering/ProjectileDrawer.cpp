@@ -72,6 +72,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 		blockMapTexNames.insert(StringToLower(pi->first));
 	}
+	ptex.clear();
 
 	// add all texture from sections within projectiletextures section
 	std::vector<std::string> seclist;
@@ -81,13 +82,13 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		const LuaTable ptSubTable = ptTable.SubTable(seclist[i]);
 
 		if (ptSubTable.IsValid()) {
-			std::map<std::string, std::string> ptex2;
-			ptSubTable.GetMap(ptex2);
+			ptSubTable.GetMap(ptex);
 
-			for (std::map<std::string, std::string>::iterator pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
+			for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 				blockMapTexNames.insert(StringToLower(pi->first));
 			}
+			ptex.clear();
 		}
 	}
 
@@ -176,29 +177,29 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");
 
 		// add all textures in projectiletextures section
-		std::map<std::string, std::string> mptex;
 		std::map<std::string, std::string>::iterator pi;
 
-		mapTable.GetMap(mptex);
+		mapTable.GetMap(ptex);
 
-		for (pi = mptex.begin(); pi != mptex.end(); ++pi) {
+		for (pi = ptex.begin(); pi != ptex.end(); ++pi) {
 			if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
 				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 			}
 		}
+		ptex.clear();
 
 		// add all texture from sections within projectiletextures section
 		mapTable.GetKeys(seclist);
 		for (size_t i = 0; i < seclist.size(); i++) {
 			const LuaTable mapSubTable = mapTable.SubTable(seclist[i]);
 			if (mapSubTable.IsValid()) {
-				std::map<std::string, std::string> ptex2;
-				mapSubTable.GetMap(ptex2);
-				for (std::map<std::string, std::string>::iterator pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
+				mapSubTable.GetMap(ptex);
+				for (pi = ptex.begin(); pi != ptex.end(); ++pi) {
 					if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
 						textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 					}
 				}
+				ptex.clear();
 			}
 		}
 	}
@@ -254,22 +255,21 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 		groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 	}
+	ptex.clear();
 
-	// add all texture from sections within groundfx section
+	// add all textures from sections within groundfx section
 	groundfxTable.GetKeys(seclist);
 
 	for (size_t i = 0; i < seclist.size(); i++) {
 		const LuaTable gfxSubTable = groundfxTable.SubTable(seclist[i]);
 
 		if (gfxSubTable.IsValid()) {
-			std::map<std::string, std::string> ptex2;
-			std::map<std::string, std::string>::iterator pi;
+			gfxSubTable.GetMap(ptex);
 
-			gfxSubTable.GetMap(ptex2);
-
-			for (pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
+			for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 				groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 			}
+			ptex.clear();
 		}
 	}
 
