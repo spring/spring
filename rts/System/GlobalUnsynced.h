@@ -249,6 +249,27 @@ public:
 	 */
 	CUnit* directControl;
 
+	/**
+	 * @brief initial network timeout
+	 *
+	 * Network timeout in seconds, effective before the game has started
+	 */
+	int initialNetworkTimeout;
+
+	/**
+	 * @brief network timeout
+	 *
+	 * Network timeout in seconds, effective after the game has started
+	 */
+	int networkTimeout;
+
+	/**
+	 * @brief reconnect timeout
+	 *
+	 * Network timeout in seconds after which a player is allowed to reconnect with a different IP
+	 */
+	int reconnectTimeout;
+
 private:
 	/**
 	* @brief rand seed

@@ -100,6 +100,10 @@ CGlobalUnsynced::CGlobalUnsynced()
 	maxTextureSize = 1024;
 	compressTextures = false;
 	atiHacks = false;
+
+	initialNetworkTimeout =  std::max(configHandler->Get("InitialNetworkTimeout", 30), 0);
+	networkTimeout = std::max(configHandler->Get("NetworkTimeout", 120), 0);
+	reconnectTimeout = configHandler->Get("ReconnectTimeout", 15);
 }
 
 

@@ -104,6 +104,10 @@ public:
 
 	void GameFrame(int frameNum);
 
+	void EnableHighlight(unsigned currentTime);
+	void DisableHighlight();
+	void UpdateHighlight();
+
 private:
 
 	/**
@@ -127,6 +131,9 @@ private:
 	 */
 	std::vector<CTeam *> teams;
 	std::vector< ::AllyTeam > allyTeams;
+
+	std::map<int, int> oldColors;
+	bool highlight;
 };
 
 extern CTeamHandler* teamHandler;
