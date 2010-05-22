@@ -420,11 +420,11 @@ void UDPConnection::Flush(const bool forced)
 bool UDPConnection::CheckTimeout(int nsecs, bool initial) const {
 	spring_duration timeout;
 	if(nsecs == 0)
-		timeout = spring_secs((dataRecv && !initial) ? networkTimeout : initialNetworkTimeout);
+		timeout = spring_secs((dataRecv && !initial) ? gu->networkTimeout : gu->initialNetworkTimeout);
 	else if(nsecs > 0)
 		timeout = spring_secs(nsecs);
 	else
-		timeout = spring_secs(reconnectTimeout);
+		timeout = spring_secs(gu->reconnectTimeout);
 		
 	if(timeout > 0 && (lastReceiveTime + timeout) < spring_gettime())
 		return true;
@@ -435,7 +435,7 @@ bool UDPConnection::CheckTimeout(int nsecs, bool initial) const {
 bool UDPConnection::NeedsReconnect() {
 	if(CanReconnect()) {
 		if(!CheckTimeout(-1)) {
-			reconnectTime = reconnectTimeout;
+			reconnectTime = gu->reconnectTimeout;
 		}
 		else if(CheckTimeout(reconnectTime)) {
 			++reconnectTime;
@@ -446,7 +446,7 @@ bool UDPConnection::NeedsReconnect() {
 }
 
 bool UDPConnection::CanReconnect() const {
-	return reconnectTimeout > 0;
+	return gu->reconnectTimeout > 0;
 }
 
 int UDPConnection::GetReconnectSecs() const {
@@ -498,10 +498,7 @@ void UDPConnection::Init()
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
 	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
-	initialNetworkTimeout = gu->initialNetworkTimeout;
-	networkTimeout = gu->networkTimeout;
-	reconnectTimeout = gu->reconnectTimeout;
-	reconnectTime = reconnectTimeout;
+	reconnectTime = gu->reconnectTimeout;
 }
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)
