@@ -131,9 +131,6 @@ private:
 	 */
 	std::vector<CTeam *> teams;
 	std::vector< ::AllyTeam > allyTeams;
-
-	std::map<int, int> oldColors;
-	bool highlight;
 };
 
 extern CTeamHandler* teamHandler;

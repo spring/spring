@@ -109,6 +109,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/TeamHighlight.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
@@ -3161,7 +3162,7 @@ bool CGame::Draw() {
 		return true;
 	}
 
-	teamHandler->EnableHighlight(currentTime);
+	CTeamHighlight::Enable(currentTime);
 
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
@@ -3409,7 +3410,7 @@ bool CGame::Draw() {
 
 	SetDrawMode(gameNotDrawing);
 
-	teamHandler->DisableHighlight();
+	CTeamHighlight::Disable();
 
 	return true;
 }
