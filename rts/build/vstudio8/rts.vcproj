@@ -4061,6 +4061,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\TeamHighlight.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamHighlight.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\TeamStatistics.cpp"
 					>
 				</File>
@@ -4314,18 +4322,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\tools\DedicatedServer\main.cpp"
 				>
 				<FileConfiguration
@@ -4395,6 +4391,18 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -5945,11 +5953,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Sound\ISound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\ISound.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sound\Music.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\System\Sound\Music.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.h"
 					>
 				</File>
 				<File
@@ -5969,30 +5993,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\NullSound.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\NullSound.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\ISound.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\ISound.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\SoundLog.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\SoundLog.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Sound\SoundBuffer.cpp"
 					>
 				</File>
@@ -6006,6 +6006,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sound\SoundItem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.h"
 					>
 				</File>
 				<File
