@@ -726,6 +726,7 @@ void CProjectileDrawer::DrawShadowPass(void)
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 
 	glDisable(GL_TEXTURE_2D);
+	po->Enable();
 
 	CProjectile::inArray = false;
 	CProjectile::va = GetVertexArray();
@@ -734,16 +735,12 @@ void CProjectileDrawer::DrawShadowPass(void)
 	{
 		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
 
-		po->Enable();
-
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawProjectilesShadow(modelType);
 		}
 
 		// draw the model-less projectiles
 		DrawProjectilesSetShadow(renderProjectiles);
-
-		po->Disable();
 	}
 
 	if (CProjectile::inArray) {
@@ -754,11 +751,10 @@ void CProjectileDrawer::DrawShadowPass(void)
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
 
-		po->Enable();
 		ph->currentParticles += CProjectile::DrawArray();
-		po->Disable();
 	}
 
+	po->Disable();
 	glShadeModel(GL_FLAT);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
@@ -869,7 +865,7 @@ void CProjectileDrawer::DrawGroundFlashes(void)
 	glActiveTexture(GL_TEXTURE0);
 	groundFXAtlas->BindTexture();
 	glEnable(GL_TEXTURE_2D);
-	glDepthMask(0);
+	glDepthMask(GL_FALSE);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.01f);
 	glPolygonOffset(-20, -1000);
@@ -890,8 +886,12 @@ void CProjectileDrawer::DrawGroundFlashes(void)
 
 	GroundFlashContainer::render_iterator gfi;
 	for (gfi = ph->groundFlashes.render_begin(); gfi != ph->groundFlashes.render_end(); ++gfi) {
-		if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
-			loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
+		if (
+			((*gfi)->alwaysVisible || 
+				gu->spectatingFullView ||
+				loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam)
+			) && camera->InView((*gfi)->pos, (*gfi)->size)
+		)
 			(*gfi)->Draw();
 	}
 
@@ -924,7 +924,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	glLoadIdentity();
 
 	glDisable(GL_DEPTH_TEST);
-	glDepthMask(0);
+	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_TEXTURE_2D);
@@ -992,7 +992,7 @@ void CProjectileDrawer::UpdatePerlin() {
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-	glDepthMask(1);
+	glDepthMask(GL_TRUE);
 
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
