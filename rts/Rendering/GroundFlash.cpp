@@ -15,6 +15,13 @@
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
 
+CR_REG_METADATA(CGroundFlash,
+(
+ 	CR_MEMBER_BEGINFLAG(CM_Config),
+				CR_MEMBER(size),
+	CR_MEMBER_ENDFLAG(CM_Config)
+));
+
 CR_BIND_DERIVED(CStandardGroundFlash, CGroundFlash, );
 
 CR_REG_METADATA(CStandardGroundFlash,
@@ -33,10 +40,8 @@ CR_BIND_DERIVED(CSeismicGroundFlash, CGroundFlash, (float3(0,0,0),1,0,1,1,1,floa
 CR_REG_METADATA(CSeismicGroundFlash,(
 				CR_MEMBER(side1),
 				CR_MEMBER(side2),
-
 				CR_MEMBER(texture),
 				CR_MEMBER(sizeGrowth),
-				CR_MEMBER(size),
 				CR_MEMBER(alpha),
 				CR_MEMBER(fade),
 				CR_MEMBER(ttl),
@@ -48,7 +53,6 @@ CR_BIND_DERIVED(CSimpleGroundFlash, CGroundFlash, );
 CR_REG_METADATA(CSimpleGroundFlash,
 (
  	CR_MEMBER_BEGINFLAG(CM_Config),
- 		CR_MEMBER(size),
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(ttl),
 		CR_MEMBER(colorMap),
@@ -108,6 +112,8 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p,float circleAlpha,flo
 	float3 n2((p4-p2).cross(p3-p2));
 	n2.ANormalize();
 
+	size = flashSize; // flashSize is just backward compability
+
 	float3 normal=n1+n2;
 	normal.ANormalize();
 	side1=normal.cross(float3(1,0,0));
@@ -125,7 +131,7 @@ bool CStandardGroundFlash::Update()
 	circleSize+=circleGrowth;
 	circleAlpha-=circleAlphaDec;
 	flashAge+=flashAgeSpeed;
-	return ttl?(--ttl>0):true;
+	return ttl?(--ttl>0):false;
 }
 
 void CStandardGroundFlash::Draw()
@@ -166,7 +172,7 @@ void CStandardGroundFlash::Draw()
 		if (iAlpha < 0.0f) iAlpha = 0.0f;
 
 		col[3]=(unsigned char)(iAlpha*255);
-		iSize=flashSize;
+		iSize=size;
 
 		float3 p1=pos+(-side1-side2)*iSize;
 		float3 p2=pos+( side1-side2)*iSize;
@@ -184,11 +190,12 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	: CGroundFlash(p),
 	texture(projectileDrawer->seismictex),
 	sizeGrowth(sizeGrowth),
-	size(size),
 	alpha(alpha),
 	fade(fade),
 	ttl(ttl)
 {
+	size = size;
+
 	alwaysVisible = true;
 
 	for (int a=0;a<3;a++)
@@ -290,8 +297,8 @@ void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit *owner)
 	side2=side1.cross(normal);
 	ph->AddGroundFlash(this);
 
-	age=0.0f;
-	agerate = ttl?1/(float)ttl:0;
+	age = ttl ? 0.0f : 1.0f;
+	agerate = ttl ? 1.0f/ttl : 1.0f;
 }
 
 void CSimpleGroundFlash::Draw()
