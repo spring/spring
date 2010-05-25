@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include "Rendering/GL/PBO.h"
 #include "Map/SMF/mapfile.h"
 #include "Map/SMF/SmfReadMap.h"
 #include "Map/MapInfo.h"
@@ -31,13 +32,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	numBigTexX(gs->mapx / bigSquareSize),
 	numBigTexY(gs->mapy / bigSquareSize)
 {
-	usePBO = false;
-	if (GLEW_EXT_pixel_buffer_object && rm->usePBO) {
-		glGenBuffers(10, pboIDs);
-		currentPBO = 0;
-		usePBO = true;
-	}
-
 	// todo: refactor: put reading code in CSmfFile and keep errorhandling/progress reporting here..
 	map = rm;
 	CFileHandler* ifs = rm->GetFile().GetFileHandler();
@@ -218,10 +212,6 @@ CBFGroundTextures::~CBFGroundTextures(void)
 	delete[] tileMap;
 	delete[] tiles;
 
-	if (usePBO) {
-		glDeleteBuffers(10,pboIDs);
-	}
-
 	delete[] heightMaxes;
 	delete[] heightMins;
 	delete[] stretchFactors;
@@ -339,23 +329,9 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 {
 	int size = 1024 >> level;
 
-	GLint* buf = NULL;
-	bool usedPBO = false;
-
-	if (usePBO) {
-		if (currentPBO > 9) currentPBO = 0;
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboIDs[currentPBO++]);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, size * size / 2, 0, GL_STREAM_DRAW);
-
-		//! map the buffer object into client's memory
-		buf = (GLint*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
-		usedPBO = true;
-	}
-
-	if (buf == NULL) {
-		buf = (GLint*)(new GLubyte[size * size / 2]);
-		usedPBO = false;
-	}
+	pbo.Bind();
+	pbo.Resize(size * size / 2);
+	GLint* buf = (GLint*)pbo.MapBuffer();
 
 	GroundSquare* square = &squares[y * numBigTexX + x];
 	square->texLevel = level;
@@ -374,6 +350,8 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 		}
 	}
 
+	pbo.UnmapBuffer();
+
 	glGenTextures(1, &square->texture);
 	glBindTexture(GL_TEXTURE_2D, square->texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -390,14 +368,6 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 0.5f);
 	}
 
-	if (usedPBO) {
-		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, 0);
-		if (!gu->atiHacks)
-			glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW); //discard old content
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-	} else {
-		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, buf);
-		delete[] buf;
-	}
+	glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, pbo.GetPtr());
+	pbo.Unbind();
 }

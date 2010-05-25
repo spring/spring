@@ -31,7 +31,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	PrintLoadMsg("Loading SMF");
 
 	ConfigureAnisotropy();
-	usePBO = !!configHandler->Get("UsePBO", 1);
 
 	for (int a = 0; a < 1024; ++a) {
 		for (int b = 0; b < 3; ++b) {
