@@ -66,7 +66,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	}
 
 
-
 	haveSpecularLighting = (!(mapInfo->smf.specularTexName.empty()) && gu->haveGLSL);
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
@@ -86,10 +85,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	splatDistrTex    = 0;
 	skyReflectModTex = 0;
 
-	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
-		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
-	}
-
 	if (haveSpecularLighting) {
 		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 			// maps wants specular lighting, but no moderation
@@ -100,7 +95,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 			specularTexBM.mem[3] = 255;
 		}
 
-		specularTex = specularTexBM.CreateTexture(false);
+		specularTex = specularTexBM.CreateTexture(true);
 
 		if (haveSplatTexture) {
 			// if the map supplies an intensity- and a distribution-texture for
@@ -122,30 +117,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 				splatDistrTexBM.mem[3] = 0;
 			}
 
-			splatDetailTex = splatDetailTexBM.CreateTexture(false);
-			splatDistrTex = splatDistrTexBM.CreateTexture(false);
-
-			{
-				// generate mipmaps for the splat detail-texture
-				glBindTexture(GL_TEXTURE_2D, splatDetailTex);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				if (anisotropy != 0.0f) {
-					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-				}
-				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDetailTexBM.xsize, splatDetailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDetailTexBM.mem);
-			}
-
-			{
-				// generate mipmaps for the splat distribution-texture
-				glBindTexture(GL_TEXTURE_2D, splatDistrTex);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				if (anisotropy != 0.0f) {
-					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-				}
-				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDistrTexBM.xsize, splatDistrTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDistrTexBM.mem);
-			}
+			splatDetailTex = splatDetailTexBM.CreateTexture(true);
+			splatDistrTex = splatDistrTexBM.CreateTexture(true);
 		}
 
 		if (!skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
@@ -159,9 +132,11 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		skyReflectModTex = skyReflectModTexBM.CreateTexture(false);
 	}
 
-
-
 	{
+		if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
+			throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
+		}
+
 		glGenTextures(1, &detailTex);
 		glBindTexture(GL_TEXTURE_2D, detailTex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -192,20 +167,11 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		}
 	}
 
+
 	{
 		if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
 			// generate mipmaps for the grass shading-texture
-			grassShadingTex = grassShadingTexBM.CreateTexture(false);
-			glGenTextures(1, &grassShadingTex);
-			glBindTexture(GL_TEXTURE_2D, grassShadingTex);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-			if (anisotropy != 0.0f) {
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-			}
-
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, grassShadingTexBM.xsize, grassShadingTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, grassShadingTexBM.mem);
+			grassShadingTex = grassShadingTexBM.CreateTexture(true);
 		} else {
 			grassShadingTex = minimapTex;
 		}
@@ -215,23 +181,24 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	{
 		// the shading/normal texture buffers must have PO2 dimensions
 		// (excess elements that no vertices map into are left unused)
-		std::vector<unsigned char> shadingTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0);
-
 		glGenTextures(1, &shadingTex);
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		if (anisotropy != 0.0f) {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 		}
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuf[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	}
 
+
 	{
-		std::vector<float> normalsTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0.0f);
+		GLenum texformat = GL_LUMINANCE_ALPHA16F_ARB;
+		if (!!configHandler->Get("GroundNormalTextureHighPrecision", 0)) {
+			texformat = GL_LUMINANCE_ALPHA32F_ARB;
+		}
 
 		glGenTextures(1, &normalsTex);
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
@@ -239,7 +206,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_FLOAT, &normalsTexBuf[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, texformat, gs->pwr2mapx, gs->pwr2mapy, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
 	}
 
 	file.ReadFeatureInfo();
@@ -345,7 +312,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		const int xsize = maxx - minx;
 		const int zsize = maxz - minz;
 
-		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
+		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 2, 0.0f);
 
 		for (int z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
@@ -386,17 +353,16 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 
 				vertexNormals[vIdx] = vn.ANormalize();
 
-				// compress the range [-1, 1] to [0, 1] to prevent clamping
-				// (ideally, should use an FBO with FP32 texture attachment)
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vn.x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vn.y + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vn.z + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
+				//! compress the range [-1, 1] to [0, 1] to prevent clamping
+				//! (ideally, should use an FBO with FP32 texture attachment)
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vn.x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vn.y + 1.0f) * 0.5f);
+				//! note: z-coord is regenerated in the shader
 			}
 		}
 
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
