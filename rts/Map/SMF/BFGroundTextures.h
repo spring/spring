@@ -3,7 +3,7 @@
 #ifndef _BF_GROUND_TEXTURES_H_
 #define _BF_GROUND_TEXTURES_H_
 
-#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/PBO.h"
 
 class CFileHandler;
 class CSmfReadMap;
@@ -45,9 +45,7 @@ protected:
 	float* stretchFactors;
 
 	//! use Pixel Buffer Objects for async. uploading (DMA)
-	bool usePBO;
-	GLuint pboIDs[10];
-	int currentPBO;
+	PBO pbo;
 
 	float anisotropy;
 

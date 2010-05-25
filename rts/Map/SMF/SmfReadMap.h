@@ -55,7 +55,6 @@ public:
 	// NOTE: do not use, just here for backward compatibility with BFGroundTextures.cpp
 	CSmfMapFile& GetFile() { return file; }
 
-	bool usePBO;
 	float anisotropy;
 
 protected:
