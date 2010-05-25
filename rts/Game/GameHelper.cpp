@@ -406,8 +406,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 					}
 	
 					if (CCollisionHandler::MouseHit(unit, start, start + dir * length, &cv, &cq)) {
-						//! get the distance to the ray-volume egress point
-						//! so we can still select stuff inside factories
+						//! get the distance to the ray-volume ingress point
 						const float lenSq = (cq.p0 - start).SqLength();
 						const bool isfactory = dynamic_cast<CFactory*>(unit);
 
