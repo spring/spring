@@ -85,10 +85,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	splatDistrTex    = 0;
 	skyReflectModTex = 0;
 
-	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
-		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
-	}
-
 	if (haveSpecularLighting) {
 		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 			// maps wants specular lighting, but no moderation
@@ -121,44 +117,18 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 				splatDistrTexBM.mem[3] = 0;
 			}
 
-			splatDetailTex = splatDetailTexBM.CreateTexture(false);
-			splatDistrTex = splatDistrTexBM.CreateTexture(false);
-
-			{
-				// generate mipmaps for the splat detail-texture
-				glBindTexture(GL_TEXTURE_2D, splatDetailTex);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				if (anisotropy != 0.0f) {
-					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-				}
-				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDetailTexBM.xsize, splatDetailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDetailTexBM.mem);
-			}
-
-			{
-				// generate mipmaps for the splat distribution-texture
-				glBindTexture(GL_TEXTURE_2D, splatDistrTex);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				if (anisotropy != 0.0f) {
-					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-				}
-				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, splatDistrTexBM.xsize, splatDistrTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, splatDistrTexBM.mem);
-			}
+			splatDetailTex = splatDetailTexBM.CreateTexture(true);
+			splatDistrTex = splatDistrTexBM.CreateTexture(true);
 		}
 
-		if (!skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
-			skyReflectModTexBM.Alloc(1, 1);
-			skyReflectModTexBM.mem[0] = 127;
-			skyReflectModTexBM.mem[1] = 127;
-			skyReflectModTexBM.mem[2] = 127;
-			skyReflectModTexBM.mem[3] = 255;
+		if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
+			skyReflectModTex = skyReflectModTexBM.CreateTexture(false);
 		}
-
-		skyReflectModTex = skyReflectModTexBM.CreateTexture(false);
 	}
 
-
+	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
+		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
+	}
 
 	{
 		glGenTextures(1, &detailTex);
@@ -194,17 +164,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	{
 		if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
 			// generate mipmaps for the grass shading-texture
-			grassShadingTex = grassShadingTexBM.CreateTexture(false);
-			glGenTextures(1, &grassShadingTex);
-			glBindTexture(GL_TEXTURE_2D, grassShadingTex);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-			if (anisotropy != 0.0f) {
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-			}
-
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, grassShadingTexBM.xsize, grassShadingTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, grassShadingTexBM.mem);
+			grassShadingTex = grassShadingTexBM.CreateTexture(true);
 		} else {
 			grassShadingTex = minimapTex;
 		}
