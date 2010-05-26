@@ -62,8 +62,8 @@ void main() {
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
 	#else
 	vec3 normal;
-		normal.xy = (texture2D(normalsTex, tc1).ra * 2.0) - 1.0;
-		normal.z  = sqrt(1.0 - dot(normal.xy, normal.xy));
+		normal.xz = (texture2D(normalsTex, tc1).ra * 2.0) - 1.0;
+		normal.y  = sqrt(1.0 - dot(normal.xz, normal.xz));
 	#endif
 
 	float cosAngleDiffuse = min(max(dot(normalize(lightDir.xyz), normal), 0.0), 1.0);
