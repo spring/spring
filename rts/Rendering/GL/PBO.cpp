@@ -29,6 +29,7 @@ PBO::PBO() : pboId(0)
 {
 	bound = false;
 	mapped = true;
+	data = NULL;
 
 	if (IsSupported()) {
 		glGenBuffers(1, &pboId);
