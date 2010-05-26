@@ -217,7 +217,7 @@ void CTextureAtlas::CreateTexture()
 	PBO pbo;
 	pbo.Bind();
 	pbo.Resize(xsize*ysize*4);
-	unsigned char* data = (unsigned char*)pbo.MapBuffer(debug ? GL_READ_WRITE : GL_READ_ONLY);
+	unsigned char* data = (unsigned char*)pbo.MapBuffer(debug ? GL_READ_WRITE : GL_WRITE_ONLY);
 	std::memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
 
 	for(size_t i=0; i<memtextures.size(); i++) {
