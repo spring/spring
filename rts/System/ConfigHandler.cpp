@@ -115,6 +115,9 @@ std::string ConfigHandler::Instantiate(std::string configSource)
 		configSource = GetDefaultConfig();
 	}
 	configHandler = new ConfigHandler(configSource);
+
+	GlobalConfig::Instantiate();
+
 	return configSource;
 }
 
@@ -124,6 +127,8 @@ std::string ConfigHandler::Instantiate(std::string configSource)
  */
 void ConfigHandler::Deallocate()
 {
+	GlobalConfig::Deallocate();
+
 	// can not use SafeDelete because ~ConfigHandler is protected
 	delete configHandler;
 	configHandler = NULL;
