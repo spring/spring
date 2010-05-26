@@ -1,8 +1,9 @@
 // ARB shader receives groundAmbientColor multiplied
 // by this constant; shading-texture intensities are
 // also pre-dimmed
-#define SMF_INTENSITY_MUL (210 / 255.0)
+#define SMF_INTENSITY_MUL (210.0 / 255.0)
 #define SMF_ARB_LIGHTING 0
+#define SSMF_UNCOMPRESSED_NORMALS
 
 uniform vec4 lightDir;
 varying vec3 cameraDir;
@@ -57,7 +58,13 @@ void main() {
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
 
+	#ifdef SSMF_UNCOMPRESSED_NORMALS
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
+	#else
+	vec3 normal;
+		normal.xy = (texture2D(normalsTex, tc1).ra * 2.0) - 1.0;
+		normal.z  = sqrt(1.0 - dot(normal.xy, normal.xy));
+	#endif
 
 	float cosAngleDiffuse = min(max(dot(normalize(lightDir.xyz), normal), 0.0), 1.0);
 	float cosAngleSpecular = min(max(dot(normalize(halfDir), normal), 0.0), 1.0);
