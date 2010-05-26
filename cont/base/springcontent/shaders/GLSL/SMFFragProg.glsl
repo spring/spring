@@ -3,7 +3,7 @@
 // also pre-dimmed
 #define SMF_INTENSITY_MUL (210.0 / 255.0)
 #define SMF_ARB_LIGHTING 0
-#define SSMF_UNCOMPRESSED_NORMALS
+#define SSMF_UNCOMPRESSED_NORMALS 0
 
 uniform vec4 lightDir;
 varying vec3 cameraDir;
@@ -58,7 +58,7 @@ void main() {
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
 
-	#ifdef SSMF_UNCOMPRESSED_NORMALS
+	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
 	vec3 normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
 	#else
 	vec3 normal;
