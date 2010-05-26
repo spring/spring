@@ -21,6 +21,8 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Util.h"
 
+#define SSMF_UNCOMPRESSED_NORMALS
+
 using namespace std;
 
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
@@ -174,23 +176,29 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	{
 		// the shading/normal texture buffers must have PO2 dimensions
 		// (excess elements that no vertices map into are left unused)
-		std::vector<unsigned char> shadingTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0);
-
 		glGenTextures(1, &shadingTex);
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		if (anisotropy != 0.0f) {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 		}
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuf[0]);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	}
 
 	{
+		#ifdef SSMF_UNCOMPRESSED_NORMALS
 		std::vector<float> normalsTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0.0f);
+		#else
+		GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
+
+		if (!!configHandler->Get("GroundNormalTextureHighPrecision", 0)) {
+			texFormat = GL_LUMINANCE_ALPHA32F_ARB;
+		}
+		#endif
 
 		glGenTextures(1, &normalsTex);
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
@@ -198,7 +206,11 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		#ifdef SSMF_UNCOMPRESSED_NORMALS
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_FLOAT, &normalsTexBuf[0]);
+		#else
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, gs->pwr2mapx, gs->pwr2mapy, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
+		#endif
 	}
 
 	file.ReadFeatureInfo();
@@ -304,7 +316,11 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		const int xsize = maxx - minx;
 		const int zsize = maxz - minz;
 
+		#ifdef SSMF_UNCOMPRESSED_NORMALS
 		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
+		#else
+		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 2, 0.0f);
+		#endif
 
 		for (int z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
@@ -347,15 +363,25 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 
 				// compress the range [-1, 1] to [0, 1] to prevent clamping
 				// (ideally, should use an FBO with FP32 texture attachment)
+				#ifdef SSMF_UNCOMPRESSED_NORMALS
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vn.x + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vn.y + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vn.z + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
+				#else
+				//! note: z-coord is regenerated in the shader
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vn.x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vn.y + 1.0f) * 0.5f);
+				#endif
 			}
 		}
 
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
+		#ifdef SSMF_UNCOMPRESSED_NORMALS
 		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
+		#else
+		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
+		#endif
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
