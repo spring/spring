@@ -27,6 +27,7 @@ using namespace boost::asio;
 const unsigned UDPMaxPacketSize = 4096;
 const int MaxChunkSize = 254;
 
+
 class Unpacker
 {
 public:
@@ -420,11 +421,11 @@ void UDPConnection::Flush(const bool forced)
 bool UDPConnection::CheckTimeout(int nsecs, bool initial) const {
 	spring_duration timeout;
 	if(nsecs == 0)
-		timeout = spring_secs((dataRecv && !initial) ? gu->networkTimeout : gu->initialNetworkTimeout);
+		timeout = spring_secs((dataRecv && !initial) ? gc->networkTimeout : gc->initialNetworkTimeout);
 	else if(nsecs > 0)
 		timeout = spring_secs(nsecs);
 	else
-		timeout = spring_secs(gu->reconnectTimeout);
+		timeout = spring_secs(gc->reconnectTimeout);
 		
 	if(timeout > 0 && (lastReceiveTime + timeout) < spring_gettime())
 		return true;
@@ -435,7 +436,7 @@ bool UDPConnection::CheckTimeout(int nsecs, bool initial) const {
 bool UDPConnection::NeedsReconnect() {
 	if(CanReconnect()) {
 		if(!CheckTimeout(-1)) {
-			reconnectTime = gu->reconnectTimeout;
+			reconnectTime = gc->reconnectTimeout;
 		}
 		else if(CheckTimeout(reconnectTime)) {
 			++reconnectTime;
@@ -446,7 +447,7 @@ bool UDPConnection::NeedsReconnect() {
 }
 
 bool UDPConnection::CanReconnect() const {
-	return gu->reconnectTimeout > 0;
+	return gc->reconnectTimeout > 0;
 }
 
 int UDPConnection::GetReconnectSecs() const {
@@ -497,8 +498,8 @@ void UDPConnection::Init()
 	resentChunks = 0;
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
-	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
-	reconnectTime = gu->reconnectTimeout;
+	mtu = gc->mtu;
+	reconnectTime = gc->reconnectTimeout;
 }
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)

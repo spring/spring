@@ -2337,6 +2337,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\GL\PBO.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\GL\PBO.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Gl\VertexArray.cpp"
 					>
 				</File>
@@ -4295,6 +4303,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\FPUCheck.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\GlobalConfig.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\GlobalConfig.h"
 				>
 			</File>
 			<File

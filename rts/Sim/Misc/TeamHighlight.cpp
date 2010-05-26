@@ -5,7 +5,7 @@
 #include "TeamHandler.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/GlobalUnsynced.h"
+#include "System/ConfigHandler.h"
 #include <limits.h>
 
 bool CTeamHighlight::highlight = false;
@@ -52,7 +52,7 @@ void CTeamHighlight::Update() {
 		}
 		float teamhighlight = 0.0f;
 		if(!t->isDead && ((minPing != INT_MAX && minPing > 1000) || t->leader < 0)) {
-			int maxhl = 1000 * (gu->networkTimeout + 1);
+			int maxhl = 1000 * (gc->networkTimeout + 1);
 			teamhighlight = (t->leader < 0) ? 1.0f : (float)std::max(0, std::min(minPing, maxhl)) / (float)maxhl;
 			hl = true;
 		}
