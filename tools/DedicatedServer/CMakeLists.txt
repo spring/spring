@@ -13,6 +13,7 @@ SET(system_files
 	../../rts/System/Platform/Misc
 	../../rts/System/TdfParser
 	../../rts/System/ConfigHandler
+	../../rts/System/GlobalConfig
 	../../rts/System/LogOutput
 	../../rts/System/TimeUtil
 	../../rts/System/BaseNetProtocol
