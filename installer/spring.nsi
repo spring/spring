@@ -76,11 +76,14 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ;ShowInstDetails show ;fix graphical glitch
 ;ShowUnInstDetails show ;fix graphical glitch
 
+!include "include\echo.nsh"
 !include "include\fileassoc.nsh"
 !include "include\checkrunning.nsh"
 
 
 Function .onInit
+
+	${!echonow} ""
 
 	; Set default values for undefined vars
 	!ifndef CONTENT_DIR
@@ -89,6 +92,7 @@ Function .onInit
 	${IfNot} ${FileExists} "${CONTENT_DIR}\*.*"
 		Abort "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
 	${EndIf}
+	${!echonow} "Using CONTENT_DIR:   ${CONTENT_DIR}"
 
 	!ifndef DOC_DIR
 		!define DOC_DIR "..\doc"
@@ -96,6 +100,7 @@ Function .onInit
 	${IfNot} ${FileExists} "${DOC_DIR}\*.*"
 		Abort "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
 	${EndIf}
+	${!echonow} "Using DOC_DIR:       ${DOC_DIR}"
 
 	!ifndef MINGWLIBS_DIR
 		!define MINGWLIBS_DIR "..\mingwlibs"
@@ -103,6 +108,7 @@ Function .onInit
 	${IfNot} ${FileExists} "${MINGWLIBS_DIR}\*.*"
 		Abort "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
 	${EndIf}
+	${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
 
 	!ifndef BUILD_DIR
 		!ifndef DIST_DIR
@@ -111,6 +117,7 @@ Function .onInit
 		${IfNot} ${FileExists} "${DIST_DIR}\*.*"
 			Abort "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
 		${EndIf}
+		${!echonow} "Using DIST_DIR:      ${DIST_DIR}"
 		!define BUILD_OR_DIST_DIR "${DIST_DIR}"
 	!endif
 	!ifdef BUILD_DIR
@@ -120,11 +127,14 @@ Function .onInit
 		${IfNot} ${FileExists} "${BUILD_DIR}\*.*"
 			Abort "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
 		${EndIf}
+		${!echonow} "Using BUILD_DIR:     ${BUILD_DIR}"
 		; This allows us to easily use build products from an out of source build,
 		; without the need to run 'make install'
 		!define USE_BUILD_DIR
 		!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
 	!endif
+
+	${!echonow} ""
 
 !ifndef TEST_BUILD
   ; check if we need to exit some processes which may be using unitsync
