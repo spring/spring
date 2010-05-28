@@ -26,7 +26,6 @@
 #include "wsdl.h"
 #include <queue>
 #include <algorithm>
-#include "LogOutput.h"
 
 namespace wsdl
 {

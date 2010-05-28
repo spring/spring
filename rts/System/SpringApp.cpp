@@ -62,14 +62,15 @@
 
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
-	#include <winreg.h>
-	#include <direct.h>
 	#include "Platform/Win/WinVersion.h"
-#endif // WIN32
+#elif defined(__APPLE__)
+#else
+	#include <X11/Xlib.h>
+#endif
 
 #ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
+	#include "lib/gml/gmlsrv.h"
+	extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 using std::string;
@@ -936,6 +937,37 @@ void SpringApp::UpdateSDLKeys()
 	keys[SDLK_LSHIFT] = (mods & KMOD_SHIFT) ? 1 : 0;
 }
 
+
+static void ResetScreenSaverTimeout()
+{
+#ifdef __APPLE__
+	return;
+#endif
+
+#ifdef WIN32
+	static unsigned lastreset = 0;
+	unsigned curreset = SDL_GetTicks();
+	if(gu->active && (curreset - lastreset > 1000)) {
+		lastreset = curreset;
+		int timeout; // reset screen saver timer
+		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
+			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
+	}
+#else
+	static unsigned lastreset = 0;
+	unsigned curreset = SDL_GetTicks();
+	if(gu->active && (curreset - lastreset > 1000)) {
+		lastreset = curreset;
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if (SDL_GetWMInfo(&info)) {
+			XForceScreenSaver(info.info.x11.display, ScreenSaverReset);
+		}
+	}
+#endif
+}
+
+
 /**
  * @param argc argument count
  * @param argv array of argument strings
@@ -962,16 +994,8 @@ int SpringApp::Run(int argc, char *argv[])
 #endif
 	while (true) // end is handled by globalQuit
 	{
-#ifdef WIN32
-		static unsigned lastreset = 0;
-		unsigned curreset = SDL_GetTicks();
-		if(gu->active && (curreset - lastreset > 1000)) {
-			lastreset = curreset;
-			int timeout; // reset screen saver timer
-			if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
-				SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
-		}
-#endif
+		ResetScreenSaverTimeout();
+
 		{
 			SCOPED_TIMER("Input");
 			SDL_Event event;
@@ -979,6 +1003,7 @@ int SpringApp::Run(int argc, char *argv[])
 				input.PushEvent(event);
 			}
 		}
+
 		if (globalQuit)
 			break;
 
