@@ -17,7 +17,7 @@ public:
 	~Joystick();
 	
 private:
-	void HandleEvent(const SDL_Event& event);
+	bool HandleEvent(const SDL_Event& event);
 	boost::signals::scoped_connection inputCon;
 
 	SDL_Joystick* myStick;
