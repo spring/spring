@@ -2,9 +2,11 @@ Spring change log
 
 0.82:
 Engine:
- - fixed far textures (changing teamcolors and disappearing units)
+ - fixed far textures (caused changing teamcolors and disappearing units)
  - fixed middle click scroll speed on linux
- - added new MiddleClickScrollSpeed
+ - added new MiddleClickScrollSpeed option
+ - more responsive mouse movement
+ - made it easier to select units in factories
 
 FontRendering:
  - added a new inline ctrl command '\008', it resets the TextColor to the active color when Print() got called (e.g. e.g. font:SetTextColor(0,0,1); font:Print("\255\255\000\000red\255\000\255\000green\008blue");)
@@ -23,15 +25,16 @@ Lua:
  - new Spring.GetUnitMetalExtraction(unitID) -> nil | number
  - new synced Spring.ShareTeamResource(teamID_src, teamID_dst, type = ["metal"|"energy"], amount) -> nil
  - new Spring.GetTeamResourceStats(teamID, resourcetype = ["metal"|"energy"]) -> nil | used, produced, excess, recv, sent
- - improved Spring.GetTeamStatsHistory. It retuns now also the most recent informations and not just the data of the cached stats all 16seconds.
+ - improved Spring.GetTeamStatsHistory. It retuns now also the most recent data, not just the data of the cached stats which get updated only all 16 seconds.
  - fixed incorrect scaling in Spring.SetUnitResourceParam
- - fixed Spring.GetAIInfo, it returned incorrectly the given teamID as first return argument
+ - fixed Spring.GetAIInfo, it returned incorrectly the given teamID as first argument
  - added missing `coroutines` module and missing `select` function to unsynced LuaGadgets
  - added os.setlocale to LuaUI
  - removed deprecated Spring.MakeFont
 
-bugfixes
- - LightingCannon (sic) finally isn't  supported anymore, use LightningCannon instead (default weapondef_post.lua still includes backward compability for it)
+Bugfixes:
+ - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compability)
+ - fixed a bug in LuaParser, so you can know use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
 
 
 0.81.2.1:
