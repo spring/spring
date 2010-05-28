@@ -24,8 +24,6 @@ public:
 	};
 	void SetPos (int2 pos);
 
-	virtual void Update () {}
-
 	bool HandleSDLMouseEvent (const SDL_Event& event);
 
 	virtual void SetWMMouseCursor (void* wmcursor) {}

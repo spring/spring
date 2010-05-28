@@ -182,12 +182,12 @@ bool SpringApp::Initialize()
 
 	// Initialize keyboard
 	SDL_EnableUNICODE(1);
-	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	SDL_SetModState (KMOD_NONE);
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+	SDL_SetModState(KMOD_NONE);
 
 	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
 	keys = new boost::uint8_t[SDLK_LAST];
-	memset (keys,0,sizeof(boost::uint8_t)*SDLK_LAST);
+	memset(keys,0,sizeof(boost::uint8_t)*SDLK_LAST);
 
 	LoadFonts();
 
@@ -922,7 +922,7 @@ int SpringApp::Update()
  * Tests SDL keystates and sets values
  * in key array
  */
-void SpringApp::UpdateSDLKeys ()
+void SpringApp::UpdateSDLKeys()
 {
 	int numkeys;
 	boost::uint8_t *state;
@@ -950,9 +950,6 @@ int SpringApp::Run(int argc, char *argv[])
 	if (!Initialize())
 		return -1;
 
-#ifdef WIN32
-	//SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
-#endif
 	CrashHandler::InstallHangHandler();
 
 #ifdef USE_GML
@@ -977,7 +974,6 @@ int SpringApp::Run(int argc, char *argv[])
 #endif
 		{
 			SCOPED_TIMER("Input");
-			mouseInput->Update();
 			SDL_Event event;
 			while (SDL_PollEvent(&event)) {
 				input.PushEvent(event);
@@ -1199,7 +1195,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			const bool isRepeat = !!keys[i];
 
-			UpdateSDLKeys ();
+			UpdateSDLKeys();
 
 			if (activeController) {
 				if (i <= SDLK_DELETE) {
@@ -1237,8 +1233,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						}
 					}
 				}
+				activeController->ignoreNextChar = false;
 			}
-			activeController->ignoreNextChar = false;
 			break;
 		}
 		case SDL_KEYUP: {
