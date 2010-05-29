@@ -86,6 +86,7 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 Function .onInit
 
 	${!echonow} ""
+	${!echonow} "Base dir:   <engine-source-root>/installer/"
 
 	; Set default values for undefined vars
 	!ifndef CONTENT_DIR
