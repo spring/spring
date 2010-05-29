@@ -3,7 +3,9 @@
 !addPluginDir "nsis_plugins"
 
 ; Use the 7zip-like compressor
-SetCompressor lzma
+SetCompress force
+SetCompressor /SOLID /FINAL lzma
+
 
 !include "springsettings.nsh"
 !include "LogicLib.nsh"
