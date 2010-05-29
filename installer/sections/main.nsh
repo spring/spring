@@ -10,6 +10,7 @@
 	File "${BUILD_OR_DIST_DIR}\unitsync.dll"
 	CreateDirectory "$INSTDIR\maps"
 	CreateDirectory "$INSTDIR\mods"
+	SetOutPath "$INSTDIR"
 
 	${!echonow} "Processing: main: TASServer.jar"
 	File "downloads\TASServer.jar"
