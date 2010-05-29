@@ -4,6 +4,8 @@
 	SetOutPath "$INSTDIR"
 	; Main shortcuts
 	CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+	SetOutPath "$INSTDIR"
+
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
 	${EndIf}
