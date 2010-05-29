@@ -1,7 +1,7 @@
 !ifdef TEST_BUILD
- !define PRODUCT_NAME "Spring - Test Build"
+	!define PRODUCT_NAME "Spring - Test Build"
 !else
- !define PRODUCT_NAME "Spring"
+	!define PRODUCT_NAME "Spring"
 !endif
 
 !define PRODUCT_VERSION "${VERSION_TAG}"
