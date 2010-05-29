@@ -210,13 +210,6 @@ SectionGroup "Multiplayer battlerooms"
 	SectionEnd
 SectionGroupEnd
 
-
-Section "Start menu shortcuts" SEC_START
-	!define INSTALL
-		!include "sections\shortcuts.nsh"
-	!undef INSTALL
-SectionEnd
-
 Section "Desktop shortcut" SEC_DESKTOP
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
 		SetOutPath "$INSTDIR"
@@ -237,6 +230,14 @@ SectionGroup "Tools"
 		!undef INSTALL
 	SectionEnd
 SectionGroupEnd
+
+
+Section "Start menu shortcuts" SEC_START
+	!define INSTALL
+		${!echonow} "Processing: shortcuts"
+		!include "sections\shortcuts.nsh"
+	!undef INSTALL
+SectionEnd
 
 
 !macro SkirmishAIInstSection skirAiName
