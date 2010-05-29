@@ -7,7 +7,7 @@
 		!system 'if exist "${_FILE_NAME}" echo !define ${_VAR_NAME} > "${_TEMPFILE}"'
 	!else
 		; Posix - sh
-		!system 'if [ -e "${_FILE_NAME}" ]; then echo "!define ${_VAR_NAME}" > "${_TEMPFILE}"; fi'
+		!system 'if [ -e "$(echo "${_FILE_NAME}" | sed -e "s_\\_\/_g")" ]; then echo "!define ${_VAR_NAME}" > "${_TEMPFILE}"; fi'
 	!endif
 	!include '${_TEMPFILE}'
 	!delfile '${_TEMPFILE}'
@@ -23,7 +23,7 @@
 		!system 'if exist "${_FILE_NAME}\*.*" echo !define ${_VAR_NAME} > "${_TEMPFILE}"'
 	!else
 		; Posix - sh
-		!system 'if [ -d "${_FILE_NAME}" ]; then echo "!define ${_VAR_NAME}" > "${_TEMPFILE}"; fi'
+		!system 'if [ -d "$(echo "${_FILE_NAME}" | sed -e "s_\\_\/_g")" ]; then echo "!define ${_VAR_NAME}" > "${_TEMPFILE}"; fi'
 	!endif
 	!include '${_TEMPFILE}'
 	!delfile '${_TEMPFILE}'
@@ -33,13 +33,13 @@
 
 
 ; Usage:
-;${!defineiffileexist} FILE_EXISTS ".\to\check\file.txt"
+;${!defineiffileexists} FILE_EXISTS ".\to\check\file.txt"
 ;!ifdef FILE_EXISTS
 ;	!system 'echo "The file exists!"'
 ;	!undef FILE_EXISTS
 ;!endif
 ;
-;${!defineifdirexist} DIR_EXISTS ".\to\check\dir"
+;${!defineifdirexists} DIR_EXISTS ".\to\check\dir"
 ;!ifdef DIR_EXISTS
 ;	!system 'echo "The dir exists!"'
 ;	!undef DIR_EXISTS
