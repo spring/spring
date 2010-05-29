@@ -93,44 +93,54 @@ Function .onInit
 	!ifndef CONTENT_DIR
 		!define CONTENT_DIR "..\cont"
 	!endif
-	${IfNot} ${FileExists} "${CONTENT_DIR}\*.*"
-		Abort "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
-	${EndIf}
+	${!defineifdirexists} CONTENT_DIR_EXISTS "${CONTENT_DIR}"
+	!ifndef CONTENT_DIR_EXISTS
+		!error "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
+		!undef CONTENT_DIR_EXISTS
+	!endif
 	${!echonow} "Using CONTENT_DIR:   ${CONTENT_DIR}"
 
 	!ifndef DOC_DIR
 		!define DOC_DIR "..\doc"
 	!endif
-	${IfNot} ${FileExists} "${DOC_DIR}\*.*"
-		Abort "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
-	${EndIf}
+	${!defineifdirexists} DOC_DIR_EXISTS "${DOC_DIR}"
+	!ifndef DOC_DIR_EXISTS
+		!error "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
+		!undef DOC_DIR_EXISTS
+	!endif
 	${!echonow} "Using DOC_DIR:       ${DOC_DIR}"
 
 	!ifndef MINGWLIBS_DIR
 		!define MINGWLIBS_DIR "..\mingwlibs"
 	!endif
-	${IfNot} ${FileExists} "${MINGWLIBS_DIR}\*.*"
-		Abort "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
-	${EndIf}
+	${!defineifdirexists} MINGWLIBS_DIR_EXISTS "${MINGWLIBS_DIR}"
+	!ifndef MINGWLIBS_DIR_EXISTS
+		!error "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
+		!undef MINGWLIBS_DIR_EXISTS
+	!endif
 	${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
 
 	!ifndef BUILD_DIR
 		!ifndef DIST_DIR
-			Abort "Neither BUILD_DIR nor DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
+			!error "Neither BUILD_DIR nor DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
 		!endif
-		${IfNot} ${FileExists} "${DIST_DIR}\*.*"
-			Abort "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
-		${EndIf}
+		${!defineifdirexists} DIST_DIR_EXISTS "${DIST_DIR}"
+		!ifndef DIST_DIR_EXISTS
+			!error "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
+			!undef DIST_DIR_EXISTS
+		!endif
 		${!echonow} "Using DIST_DIR:      ${DIST_DIR}"
 		!define BUILD_OR_DIST_DIR "${DIST_DIR}"
 	!endif
 	!ifdef BUILD_DIR
 		!ifdef DIST_DIR
-			Abort "Both BUILD_DIR and DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
+			!error "Both BUILD_DIR and DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
 		!endif
-		${IfNot} ${FileExists} "${BUILD_DIR}\*.*"
-			Abort "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
-		${EndIf}
+		${!defineifdirexists} BUILD_DIR_EXISTS "${BUILD_DIR}"
+		!ifndef BUILD_DIR_EXISTS
+			!error "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
+			!undef BUILD_DIR_EXISTS
+		!endif
 		${!echonow} "Using BUILD_DIR:     ${BUILD_DIR}"
 		; This allows us to easily use build products from an out of source build,
 		; without the need to run 'make install'
