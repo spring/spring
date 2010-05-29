@@ -1,16 +1,20 @@
 
 !ifdef INSTALL
+
 	SetOutPath "$INSTDIR"
 	SetOverWrite on
 
 	; Main stuff
+	${!echonow} "Processing: main: spring.exe & unitsync.dll"
 	File "${BUILD_OR_DIST_DIR}\spring.exe"
 	File "${BUILD_OR_DIST_DIR}\unitsync.dll"
 	CreateDirectory "$INSTDIR\maps"
 	CreateDirectory "$INSTDIR\mods"
 
+	${!echonow} "Processing: main: TASServer.jar"
 	File "downloads\TASServer.jar"
 
+	${!echonow} "Processing: main: DLLs (mingwlibs)"
 	; DLLs (updated in mingwlibs-v20.1)
 	File "${MINGWLIBS_DIR}\dll\glew32.dll"
 	File "${MINGWLIBS_DIR}\dll\python25.dll"
@@ -29,14 +33,18 @@
 	Delete "$INSTDIR\settingstemplate.xml"
 
 	; New Settings Program
+	${!echonow} "Processing: main: springsettings"
 	File "..\installer\Springlobby\SettingsDlls\springsettings.exe"
 	File /r "..\installer\Springlobby\SettingsDlls\*.dll"
 
+	${!echonow} "Processing: main: DLLs 2 (mingwlibs)"
 	; DLLs
 	File "${MINGWLIBS_DIR}\dll\DevIL.dll"
 	File "${MINGWLIBS_DIR}\dll\freetype6.dll"
 	File "${MINGWLIBS_DIR}\dll\ILU.dll"
 
+
+	${!echonow} "Processing: main: content"
 	File "${CONTENT_DIR}\PALETTE.PAL"
 
 	${IfNot} ${FileExists} "$INSTDIR\selectkeys.txt"
@@ -84,6 +92,7 @@
   !undef AI_INT_VERS
 !endif
 !macroend
+	${!echonow} "Processing: main: AI Interfaces"
 	!insertmacro InstallAIInterface "C"
 	!insertmacro InstallAIInterface "Java"
 
@@ -103,10 +112,12 @@
   !undef SKIRM_AI_VERS
 !endif
 !macroend
+	${!echonow} "Processing: main: Null Skirmish AIs"
 	;TODO: Fix the vc projects to use the same names.
 	!insertmacro InstallSkirmishAI "NullAI"
 	!insertmacro InstallSkirmishAI "NullOOJavaAI"
 
+	${!echonow} "Processing: main: base archives"
 	; Default content
 	SetOverWrite on
 	SetOutPath "$INSTDIR\base"
@@ -117,13 +128,16 @@
 	SetOutPath "$INSTDIR\base\spring"
 	File "${BUILD_OR_DIST_DIR}\base\spring\bitmaps.sdz"
 
+	${!echonow} "Processing: main: demo file association"
 	${IfNot} ${FileExists} "$INSTDIR\spring.exe"
 		; Demofile file association
-		!insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" "$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
+		!insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" \
+				"$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
 		!insertmacro UPDATEFILEASSOC
 	${EndIf}
 
 !else
+	${!echonow} "Processing: main: Uninstall"
 
 	; Main files
 	Delete "$INSTDIR\spring.exe"

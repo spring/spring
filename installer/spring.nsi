@@ -196,7 +196,9 @@ FunctionEnd
 
 Section "Main application (req)" SEC_MAIN
 	!define INSTALL
+		${!echonow} "Processing: main"
 		!include "sections\main.nsh"
+		${!echonow} "Processing: luaui"
 		!include "sections\luaui.nsh"
 	!undef INSTALL
 SectionEnd
@@ -205,6 +207,7 @@ SectionEnd
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
 	!define INSTALL
+		${!echonow} "Processing section: springlobby"
 		!include "sections\springlobby.nsh"
 	!undef INSTALL
 	SectionEnd
@@ -212,6 +215,7 @@ SectionGroupEnd
 
 Section "Desktop shortcut" SEC_DESKTOP
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
+		${!echonow} "Processing: springlobby shortcut"
 		SetOutPath "$INSTDIR"
 		CreateShortCut "$DESKTOP\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
 	${EndIf}
@@ -220,12 +224,14 @@ SectionEnd
 SectionGroup "Tools"
 	Section "Easy content installation" SEC_ARCHIVEMOVER
 		!define INSTALL
+			${!echonow} "Processing: archivemover"
 			!include "sections\archivemover.nsh"
 		!undef INSTALL
 	SectionEnd
 
 	Section "Content downloader" SEC_SPRINGDOWNLOADER
 		!define INSTALL
+			${!echonow} "Processing: springDownloader"
 			!include "sections\springDownloader.nsh"
 		!undef INSTALL
 	SectionEnd
@@ -243,6 +249,7 @@ SectionEnd
 !macro SkirmishAIInstSection skirAiName
 	Section "${skirAiName}" SEC_${skirAiName}
 		!define INSTALL
+			${!echonow} "Processing: Skirmish AI install: ${skirAiName}"
 			!insertmacro InstallSkirmishAI ${skirAiName}
 		!undef INSTALL
 	SectionEnd
@@ -255,15 +262,18 @@ SectionGroup "Skirmish AI plugins (Bots)"
 	!insertmacro SkirmishAIInstSection "E323AI"
 SectionGroupEnd
 
+
 !include "sections\sectiondesc.nsh"
 
 Section -Documentation
 	!define INSTALL
+		${!echonow} "Processing: docs"
 		!include "sections\docs.nsh"
 	!undef INSTALL
 SectionEnd
 
 Section -Post
+	${!echonow} "Processing: Registry entries"
 	WriteUninstaller "$INSTDIR\uninst.exe"
 	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\springclient.exe"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
@@ -289,6 +299,7 @@ FunctionEnd
 
 
 Section Uninstall
+	${!echonow} "Processing: Uninstall"
 
 	!include "sections\main.nsh"
 
