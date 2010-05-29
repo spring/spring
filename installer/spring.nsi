@@ -168,7 +168,7 @@ FunctionEnd
 
 Function NoDotNet
   MessageBox MB_YESNO \
-  "The .NET runtime library is not installed. v2.0 or newer is required for the Complete Annihilation automatic updates. Do you wish to download and install it?" \
+  "The .NET runtime library is not installed. v2.0 or newer is required for SpringDownloader. Do you wish to download and install it?" \
   IDYES true IDNO false
 true:
     inetc::get "http://springrts.com/dl/dotnetfx.exe"   "$INSTDIR\dotnetfx.exe"
@@ -181,7 +181,7 @@ FunctionEnd
 
 Function OldDotNet
   MessageBox MB_YESNO \
-  ".NET runtime library v2.0 or newer is required for Complete Annihilation automatic updates. You have $0. Do you wish to download and install it?" \
+  ".NET runtime library v2.0 or newer is required for SpringDownloader. You have $0. Do you wish to download and install it?" \
     IDYES true IDNO false
 true:
     inetc::get \
