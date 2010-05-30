@@ -24,10 +24,14 @@
 	File "${MINGWLIBS_DIR}\dll\vorbisfile.dll"
 	File "${MINGWLIBS_DIR}\dll\vorbis.dll"
 	File "${MINGWLIBS_DIR}\dll\ogg.dll"
+	File "${MINGWLIBS_DIR}\dll\libgcc_s_dw2-1.dll"
+	; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
+	File "${MINGWLIBS_DIR}\dll\SDL.dll"
 
 	; Old DLLs, not needed anymore
-	; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
+	; (python upgraded to 25)
 	Delete "$INSTDIR\python24.dll"
+	; (MSVC*71.dll are used by MSVC compiled SelectionEditor.exe)
 	Delete "$INSTDIR\MSVCP71.dll"
 	Delete "$INSTDIR\MSVCR71.dll"
 
