@@ -31,9 +31,6 @@
 	; Old DLLs, not needed anymore
 	; (python upgraded to 25)
 	Delete "$INSTDIR\python24.dll"
-	; (MSVC*71.dll are used by MSVC compiled SelectionEditor.exe)
-	Delete "$INSTDIR\MSVCP71.dll"
-	Delete "$INSTDIR\MSVCR71.dll"
 
 	Delete "$INSTDIR\settingstemplate.xml"
 
@@ -175,9 +172,6 @@
 	Delete "$INSTDIR\python25.dll"
 	Delete "$INSTDIR\SDL.dll"
 	Delete "$INSTDIR\zlib1.dll"
-	Delete "$INSTDIR\zlibwapi.dll"
-	Delete "$INSTDIR\MSVCR71.dll"
-	Delete "$INSTDIR\MSVCP71.dll"
 	Delete "$INSTDIR\soft_oal.dll"
 	; next two are deprecated since mingwlibs 20.1 (around spring v0.81.2.1)
 	Delete "$INSTDIR\OpenAL32.dll"
