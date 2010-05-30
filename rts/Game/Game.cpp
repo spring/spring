@@ -4502,7 +4502,10 @@ void CGame::ClientReadNet()
 				if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))
 #endif
 				{
-					logOutput.Print("Unknown net msg in client %d", (int) inbuf[0]);
+					logOutput.Print("Unknown net msg received, packet code is %d."
+							" A likely cause of this is network instability,"
+							" which may happen in a WLAN, for example.",
+							packetCode);
 				}
 				AddTraffic(-1, packetCode, dataLength);
 				break;
