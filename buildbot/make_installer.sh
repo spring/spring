@@ -9,7 +9,7 @@ CONFIG=${1}
 BRANCH=${2}
 MINGWLIBS_PATH=${3}
 BUILDDIR=${PWD}/build-${CONFIG}
-TMP_BASE=/tmp/sl
+TMP_BASE=/tmp/spring
 TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}
 REV=$(git describe --tags)
 
