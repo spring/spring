@@ -530,6 +530,18 @@ GML_FUN(void, name, tA A, tB B, tC C, tD D) {\
 	GML_SYNC_COND(__VA_ARGS__,)\
 }
 
+#define GML_MAKEFUN4R(name,tA,tB,tC,tD,tR)\
+	GML_MAKEDATA_D(name,tA,tB,tC,tD)\
+	GML_MAKEVAR_RET(tR)\
+GML_FUN(tR, name, tA A, tB B, tC C, tD D) {\
+	GML_COND_RET(name,tR,A,B,C,D)\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_D()\
+	GML_UPD_POS()\
+	GML_SYNC();\
+	GML_RETVAL(tR)\
+}
+
 #define GML_MAKEFUN5(name,tA,tB,tC,tD,tE,...)\
 	GML_MAKEDATA_E(name,tA,tB,tC,tD,tE)\
 GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E) {\
@@ -1366,5 +1378,6 @@ GML_MAKEFUN3V(Uniform4iv,GLint,GLsizei,const GLint,GLint,4*B)
 GML_MAKEFUN3V(Uniform2fv,GLint,GLsizei,const GLfloat,GLfloat,2*B)
 GML_MAKEFUN3V(Uniform3fv,GLint,GLsizei,const GLfloat,GLfloat,3*B)
 GML_MAKEFUN3V(Uniform4fv,GLint,GLsizei,const GLfloat,GLfloat,4*B)
+GML_MAKEFUN4R(MapBufferRange,GLenum,GLintptr,GLsizeiptr,GLbitfield,GLvoid *)
 
 #endif
