@@ -145,23 +145,12 @@ AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/LoadSave sysfiles)
 
 ### Add icon and manifest to exe using windres
 IF    (MINGW)
-	IF    (WINDRES_FOUND)
-		ADD_CUSTOM_COMMAND(
-			OUTPUT
-				"${CMAKE_CURRENT_BINARY_DIR}/icon.o"
-			DEPENDS
-				"${CMAKE_CURRENT_SOURCE_DIR}/icon.rc" 
-			COMMAND
-				"${WINDRES_BIN}"
-					"-I${CMAKE_CURRENT_SOURCE_DIR}"
-					"-i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc" 
-					"-o" "${CMAKE_CURRENT_BINARY_DIR}/icon.o"
-					"-v"
-			)
-		LIST(APPEND sysfiles "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
-	ELSE  (WINDRES_FOUND)
-		MESSAGE(WARNING "Could not find windres, not adding icon to executable.")
-	ENDIF (WINDRES_FOUND)
+	SET(ENGINE_ICON_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+	SET(ENGINE_ICON_RES "${CMAKE_CURRENT_SOURCE_DIR}/icon.rc")
+	SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
+	CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
+ELSE  (MINGW)
+	SET(ENGINE_ICON "")
 ENDIF (MINGW)
 
 ### Add headers for generated project files (e.g. Code::Blocks)
@@ -169,10 +158,10 @@ IF (NOT WIN32)
 	EXECUTE_PROCESS(COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} \( -name *.h -o -name *.hpp \) -printf %p\; OUTPUT_VARIABLE headers)
 ENDIF (NOT WIN32)
 
-SET( allspringfiles ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj} )
+SET( allspringfiles ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj})
 SET( allspringfiles ${allspringfiles} PARENT_SCOPE )
 
-ADD_EXECUTABLE(spring ${allspringfiles} ${headers} )
+ADD_EXECUTABLE(spring ${allspringfiles} ${headers} ${ENGINE_ICON})
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
 
 IF (MINGW)
