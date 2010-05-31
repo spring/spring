@@ -6,7 +6,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 # which makes testing spring in the builddir easier, eg. like this:
 # cd build-dir
 # SPRING_DATADIR=$(pwd) ./spring
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "..")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Spring defines
