@@ -11,7 +11,7 @@ OPTS="0 2"
 
 # AI used for testing.. (used as compile target and to generate DLL/SO name)
 AI="AAI"
-AIDIR="AI/Skirmish/impls"  # relative to '$WINEDIR' or 'game'.
+AIDIR="AI/Skirmish/impls"  # relative to '$WINEDIR' or 'dist'.
 
 # For crosscompiling MinGW builds.
 MINGDIR="/usr/i586-mingw32msvc"
@@ -94,8 +94,8 @@ for CC in $GCCS; do
 		EXEC="spring-r$REVISION-$CC-O$OPT"
 		AIEXEC="$AI-r$REVISION-$CC-O$OPT"
 		# only build etc. if one of the things we are gonna build doesn't exist yet
-		if ( [ ! -x "game/$EXEC" ] && [ ! -x "$WINEDIR/$EXEC.exe" ] ) || \
-			( [ ! -x "game/$AIDIR/$AIEXEC.so" ] && [ ! -x "$WINEDIR/$AIDIR/$AIEXEC.dll" ] )
+		if ( [ ! -x "dist/$EXEC" ] && [ ! -x "$WINEDIR/$EXEC.exe" ] ) || \
+			( [ ! -x "dist/$AIDIR/$AIEXEC.so" ] && [ ! -x "$WINEDIR/$AIDIR/$AIEXEC.dll" ] )
 		then
 			echo
 			echo "$EXEC: building..."
@@ -103,13 +103,13 @@ for CC in $GCCS; do
 			echo "$EXEC: building...<br>" >>"$MASTERLOG"
 			clean
 			if CC=$CC configure "optimize=$OPT" "$@" && CC=$CC compile spring "$AI"; then
-				if [ -x "game/spring" ]; then
-					mv "game/spring" "game/$EXEC"
-					mv "game/$AIDIR/$AI.so" "game/$AIDIR/$AIEXEC.so"
-					SPRING_SERVER="$SPRING_SERVER game/$EXEC"
-				elif [ -x "game/spring.exe" ]; then
-					mv "game/spring.exe" "$WINEDIR/$EXEC.exe"
-					mv "game/$AIDIR/$AI.dll" "$WINEDIR/$AIDIR/$AIEXEC.dll"
+				if [ -x "dist/spring" ]; then
+					mv "dist/spring" "dist/$EXEC"
+					mv "dist/$AIDIR/$AI.so" "dist/$AIDIR/$AIEXEC.so"
+					SPRING_SERVER="$SPRING_SERVER dist/$EXEC"
+				elif [ -x "dist/spring.exe" ]; then
+					mv "dist/spring.exe" "$WINEDIR/$EXEC.exe"
+					mv "dist/$AIDIR/$AI.dll" "$WINEDIR/$AIDIR/$AIEXEC.dll"
 					SPRING_SERVER="$SPRING_SERVER $WINEDIR/$EXEC.exe"
 				fi
 				echo "$EXEC : build succeeded"
@@ -119,8 +119,8 @@ for CC in $GCCS; do
 				echo "$EXEC : <font color=\"red\">build failed</font><br>" >>"$MASTERLOG"
 			fi
 		else
-			if [ -x "game/$EXEC" ]; then
-				SPRING_SERVER="$SPRING_SERVER game/$EXEC"
+			if [ -x "dist/$EXEC" ]; then
+				SPRING_SERVER="$SPRING_SERVER dist/$EXEC"
 			elif [ -x "$WINEDIR/$EXEC.exe" ]; then
 				SPRING_SERVER="$SPRING_SERVER $WINEDIR/$EXEC.exe"
 			fi

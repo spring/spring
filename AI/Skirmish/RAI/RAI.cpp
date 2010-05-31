@@ -627,42 +627,49 @@ int cRAI::HandleEvent(int msg,const void* data)
 	switch (msg)
 	{
 	case AI_EVENT_UNITGIVEN:
-		{
-			const IGlobalAI::ChangeTeamEvent* cte = (const IGlobalAI::ChangeTeamEvent*) data;
-			if( cte->newteam != cb->GetMyTeam() )
-			{
-				cb->SendTextMsg("cRAI::HandleEvent(AI_EVENT_UNITGIVEN): This AI is out of date, check for a more recent one.",0);
-				*l<<"\nERROR: cRAI::HandleEvent(AI_EVENT_UNITGIVEN): This AI is out of date, check for a more recent one.\n";
-			}
-
-			if( Enemies.find(cte->unit) != Enemies.end() )
-				EnemyDestroyed(cte->unit,-1);
-
-			if( cb->GetUnitHealth(cte->unit) <= 0 ) // ! Work Around:  Spring-Version(v0.74b1-0.75b2)
-			{
-				*l<<"\nERROR: HandleEvent(AI_EVENT_UNITGIVEN): given unit is dead or does not exist";
-				return 0;
-			}
-
-			UnitCreated(cte->unit, -1);
-			Units.find(cte->unit)->second.AIDisabled=false;
-			if( !cb->UnitBeingBuilt(cte->unit) )
-			{
-				UnitFinished(cte->unit);
-				UnitIdle(cte->unit);
-			}
-		}
-		break;
 	case AI_EVENT_UNITCAPTURED:
 		{
 			const IGlobalAI::ChangeTeamEvent* cte = (const IGlobalAI::ChangeTeamEvent*) data;
-			if( cte->oldteam != cb->GetMyTeam() )
+
+			const int myAllyTeamId = cb->GetMyAllyTeam();
+			const bool oldEnemy = !cb->IsAllied(myAllyTeamId, cb->GetTeamAllyTeam(cte->oldteam));
+			const bool newEnemy = !cb->IsAllied(myAllyTeamId, cb->GetTeamAllyTeam(cte->newteam));
+
+			if ( oldEnemy && !newEnemy ) {
 			{
-				cb->SendTextMsg("cRAI::HandleEvent(AI_EVENT_UNITCAPTURED): This AI is out of date, check for a more recent one.",0);
-				*l<<"\nERROR: cRAI::HandleEvent(AI_EVENT_UNITCAPTURED): This AI is out of date, check for a more recent one.\n";
+				if( Enemies.find(cte->unit) != Enemies.end() )
+					EnemyDestroyed(cte->unit,-1);
+				}
+			}
+			else if( !oldEnemy && newEnemy )
+			{
+				// unit changed from an ally to an enemy team
+				// we lost a friend! :(
+				EnemyCreated(cte->unit);
+				if (!cb->UnitBeingBuilt(cte->unit)) {
+					EnemyFinished(cte->unit);
+				}
 			}
 
-			UnitDestroyed(cte->unit,-1);
+			if( cte->oldteam == cb->GetMyTeam() )
+			{
+				UnitDestroyed(cte->unit,-1);
+			}
+			else if( cte->newteam == cb->GetMyTeam() )
+			{
+				if( cb->GetUnitHealth(cte->unit) <= 0 ) // ! Work Around:  Spring-Version(v0.74b1-0.75b2)
+				{
+					*l<<"\nERROR: HandleEvent(AI_EVENT_(UNITGIVEN|UNITCAPTURED)): given unit is dead or does not exist";
+					return 0;
+				}
+				UnitCreated(cte->unit, -1);
+				Units.find(cte->unit)->second.AIDisabled=false;
+				if( !cb->UnitBeingBuilt(cte->unit) )
+				{
+					UnitFinished(cte->unit);
+					UnitIdle(cte->unit);
+				}
+			}
 		}
 		break;
 	case AI_EVENT_PLAYER_COMMAND:

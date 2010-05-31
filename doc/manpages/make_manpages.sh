@@ -1,9 +1,10 @@
 #!/bin/sh
-# Author: hoijui
+
+ORIG_DIR=$(pwd)
 
 # absolute or relative to spring source root
 # default:
-BUILD_DIR=game/manpages
+BUILD_DIR=build/manpages
 # ... or use first argument to this script, if one was given
 if [ $# -ge 1 ]
 then
@@ -40,26 +41,26 @@ fi
 
 # Sanity check.
 if ! which ${EXEC_ASCIIDOC} > /dev/null; then
-	echo "Error: Could not find asciidoc."
+	echo "Error: Could not find asciidoc." >&2
 	exit 1
 fi
 if ! which ${EXEC_XSLTPROC} > /dev/null; then
-	echo "Error: Could not find xsltproc."
+	echo "Error: Could not find xsltproc." >&2
 	exit 1
 fi
 if [ ! -f ${XSL_DOCBOOK} ]; then
-	echo "Error: Could not find docbook.xsl."
+	echo "Error: Could not find docbook.xsl." >&2
 	exit 1
 fi
 if ! which ${EXEC_7Z} > /dev/null; then
-	echo "Error: Could not find 7z."
+	echo "Error: Could not find 7z." >&2
 	exit 1
 fi
 
-SRC_DIR=$(pwd)
+SRC_DIR=$(cd $(dirname $0); pwd)
 
 # Move to spring source root (eg containing dir 'installer')
-cd $(dirname $0); cd ..
+cd ${SRC_DIR}; cd ../..
 
 # Ensure directories exist (some VCSes do not support empty directories)
 mkdir -p ${BUILD_DIR}
@@ -93,5 +94,4 @@ done
 # delete sources from build dir
 rm ${BUILD_DIR}/*.6.txt
 
-cd ${SRC_DIR}
-
+cd ${ORIG_DIR}

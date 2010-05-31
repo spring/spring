@@ -28,7 +28,7 @@ CR_REG_METADATA(CollisionVolume, (
 std::pair<int, int> CollisionVolume::GetVolumeTypeForString(const std::string& volumeTypeStr) {
 	std::pair<int, int> p(COLVOL_TYPE_FOOTPRINT, COLVOL_AXIS_Z);
 
-	if (volumeTypeStr.size() > 0) {
+	if (!volumeTypeStr.empty()) {
 		std::string lcVolumeTypeStr(StringToLower(volumeTypeStr));
 
 		if (lcVolumeTypeStr.find("ell") != std::string::npos) {
@@ -102,7 +102,7 @@ CollisionVolume::CollisionVolume(const CollisionVolume* v, float defRadius)
 
 CollisionVolume::CollisionVolume(const std::string& typeStr, const float3& scales, const float3& offsets, int testType)
 {
-	std::pair<int, int> p = CollisionVolume::GetVolumeTypeForString(typeStr);
+	const std::pair<int, int>& p = CollisionVolume::GetVolumeTypeForString(typeStr);
 
 	switch (p.first) {
 		case COLVOL_TYPE_ELLIPSOID: { logOutput.Print(LOG_COLVOL, "New ellipsoid"); } break;

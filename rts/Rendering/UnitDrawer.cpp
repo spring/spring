@@ -5,7 +5,6 @@
 
 #include "UnitDrawer.h"
 
-#include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -407,7 +406,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 			drawIcon.push_back(unit);
 		} else {
 			if (sqDist > farLength) {
-				drawFar.push_back(unit);
+				farTextureHandler->Queue(unit);
 			} else {
 				if (!DrawUnitLOD(unit)) {
 					SetTeamColour(unit->team);
@@ -430,7 +429,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	drawFar.clear();
 	drawStat.clear();
 	drawIcon.clear();
 
@@ -473,7 +471,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	CleanUpUnitDrawing();
 
 	DrawOpaqueShaderUnits();
-	DrawFarTextures();
+	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
 
 	glDisable(GL_FOG);
@@ -539,35 +537,6 @@ void CUnitDrawer::DrawOpaqueAIUnits()
 			glPopMatrix();
 		}
 	}
-}
-
-void CUnitDrawer::DrawFarTextures()
-{
-	if (drawFar.empty()) {
-		return;
-	}
-
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, farTextureHandler->GetTextureID());
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glNormal3fv((const GLfloat*) &camNorm.x);
-
-	if (gu->drawFog) {
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		glEnable(GL_FOG);
-	}
-
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
-	for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); ++it) {
-		farTextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
-	}
-
-	va->DrawArrayT(GL_QUADS);
 }
 
 void CUnitDrawer::DrawUnitIcons(bool drawReflection)
@@ -909,7 +878,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool asRadarBlip)
 	unit->iconRadius = scale; // store the icon size so that we don't have to calculate it again
 
 	// Is the unit selected? Then draw it white.
-	if (unit->commandAI->selected) {
+	if (unit->commandAI && unit->commandAI->selected) {
 		glColor3ub(255, 255, 255);
 	} else {
 		glColor3ubv(teamHandler->Team(unit->team)->color);
@@ -1162,7 +1131,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	for (std::set<GhostBuilding*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		std::set<GhostBuilding*>::iterator itNext(it); itNext++;
 
-		if (loshandler->InLos((*it)->pos, gu->myAllyTeam)) {
+		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			if ((*it)->decal) {
 				(*it)->decal->gbOwner = 0;
@@ -1252,7 +1221,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		glActiveTexture(GL_TEXTURE3);
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetReflectionTextureID());
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
 
 		glActiveTexture(GL_TEXTURE4);
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
@@ -1768,7 +1737,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	if (gu->drawdebug) {
-		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 		}
 
@@ -1786,13 +1755,8 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 			UnitDrawingTexturesOff();
 
-			const float3 midPosOffset =
-				(unit->frontdir * unit->relMidPos.z) +
-				(unit->updir    * unit->relMidPos.y) +
-				(unit->rightdir * unit->relMidPos.x);
-
 			glPushMatrix();
-				glTranslatef3(midPosOffset);
+				glTranslatef3(unit->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 
 				GLUquadricObj* q = gluNewQuadric();
 
@@ -1806,7 +1770,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 				if (unit->unitDef->usePieceCollisionVolumes) {
 					// draw only the piece volumes for less clutter
-					CMatrix44f mat(-midPosOffset);
+					CMatrix44f mat(unit->relMidPos * float3(0.0f, -1.0f, 0.0f));
 					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
 				} else {
 					if (!unit->collisionVolume->IsDisabled()) {
@@ -1830,7 +1794,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			UnitDrawingTexturesOn();
 		glPopAttrib();
 
-		if (!shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 		}
 	}
@@ -1863,7 +1827,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glColorf3(fc * col);
 
 	//! render wireframe with FFP
-	if (advShading && !water->drawReflection) {
+	if (!luaDrawing && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 	}
 
@@ -1912,7 +1876,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glDisable(GL_CLIP_PLANE1);
 	unitDrawer->UnitDrawingTexturesOn();
 
-	if (advShading && !water->drawReflection) {
+	if (!luaDrawing && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 	}
 
@@ -2260,7 +2224,6 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
 		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
-		va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(8, 0, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);

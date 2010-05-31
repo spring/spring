@@ -20,6 +20,11 @@ class CTeam : public TeamBase
 public:
 	CTeam();
 	~CTeam();
+private: //! cannot allow shallow copying of Teams, contains pointers
+	CTeam(const CTeam &team) {}
+	CTeam& operator=(const CTeam& team) { return *((CTeam*)NULL); }
+public:
+
 	/**
 	 * This has to be called for every team before SlowUpdates start,
 	 * otherwise values get overwritten.
@@ -108,6 +113,8 @@ public:
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
+
+	float highlight;
 };
 
 #endif /* TEAM_H */

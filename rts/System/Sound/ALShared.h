@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef ALShared
-#define ALShared
+#ifndef _AL_SHARED_H_
+#define _AL_SHARED_H_
 
-#include "LogOutput.h"
+#include <al.h>
 
 // Copied from efx.h, as this header only exists under windows
 // so far (February 2010).
@@ -15,8 +15,6 @@
 #define AL_DEFAULT_AIR_ABSORPTION_FACTOR                   0.0f
 #endif // !defined(AL_AIR_ABSORPTION_FACTOR)
 
-extern const CLogSubsystem LOG_SOUND;
-
 bool CheckError(const char* msg);
 
-#endif
+#endif // _AL_SHARED_H_

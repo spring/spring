@@ -67,12 +67,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib;msvcrt.lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				SubSystem="2"
 				StackReserveSize="0"
 				RandomizedBaseAddress="1"
@@ -157,14 +157,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../installer/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				MapExports="true"
 				SubSystem="2"
 				OptimizeReferences="0"
@@ -253,14 +253,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="LIBC.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../game/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -348,13 +348,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../installer/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				MapExports="true"
 				SubSystem="2"
 				OptimizeReferences="0"
@@ -443,14 +443,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="LIBC.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../game/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -533,12 +533,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib;msvcrt.lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				SubSystem="2"
 				StackReserveSize="0"
 				RandomizedBaseAddress="1"
@@ -5042,10 +5042,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\NullSound.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\SharedLib.cpp"
 					>
 				</File>
@@ -5428,6 +5424,30 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sound\Sound.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\ISound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\ISound.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.h"
 					>
 				</File>
 				<File
@@ -6481,23 +6501,23 @@
 						Name="shaders"
 						>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainCommon.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainCommon.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainFragmentShader.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainFragmentShader.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainSimpleCopyFS.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainSimpleCopyFS.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainSimpleCopyVS.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainSimpleCopyVS.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainVertexShader.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainVertexShader.glsl"
 							>
 						</File>
 					</Filter>

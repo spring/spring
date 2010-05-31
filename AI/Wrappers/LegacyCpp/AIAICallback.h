@@ -46,6 +46,8 @@ public:
 	int GetMyAllyTeam();
 	int GetPlayerTeam(int player);
 	const char* GetTeamSide(int team);
+	int GetTeamAllyTeam(int teamId);
+	bool IsAllied(int firstAllyTeamId, int secondAllyTeamId);
 
 	void* CreateSharedMemArea(char* name, int size);
 
@@ -80,6 +82,8 @@ public:
 	const UnitDef* GetUnitDef(int unitid);
 
 	float3 GetUnitPos(int unitid);
+	float3 GetUnitVel(int unitid);
+
 	int GetBuildingFacing(int unitid);
 	bool IsUnitCloaked(int unitid);
 	bool IsUnitParalyzed(int unitid);
@@ -126,6 +130,8 @@ public:
 	int GetModHash();
 	const char* GetModName();
 	const char* GetModHumanName();
+	const char* GetModShortName();
+	const char* GetModVersion();
 
 	float GetElevation(float x, float z);
 

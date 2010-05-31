@@ -31,7 +31,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Exceptions.h"
 
 CUnitDefHandler* unitDefHandler;
@@ -733,20 +733,15 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 
 	ud.modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
-
-	ud.collisionVolumeTypeStr   = udTable.GetString("collisionVolumeType", "");
-	ud.collisionVolumeScales    = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
-	ud.collisionVolumeOffsets   = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	ud.collisionVolumeTest      = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
 	ud.usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false);
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	ud.collisionVolume = new CollisionVolume(
-		ud.collisionVolumeTypeStr,
-		ud.collisionVolumeScales,
-		ud.collisionVolumeOffsets,
-		ud.collisionVolumeTest
+		udTable.GetString("collisionVolumeType", ""),
+		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
+		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
+		udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC)
 	);
 
 	if (ud.usePieceCollisionVolumes) {
@@ -990,9 +985,9 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       const std::string& texName)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = new UnitDefImage;
-	} else if (unitDef->buildPic->textureOwner) {
-		glDeleteTextures(1, &unitDef->buildPic->textureID);
+		unitDef->buildPic = new UnitDefImage();
+	} else {
+		unitDef->buildPic->Free();
 	}
 
 	CBitmap bitmap;
@@ -1013,7 +1008,6 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
-	unitImage->textureOwner = true;
 	unitImage->imageSizeX = bitmap.xsize;
 	unitImage->imageSizeY = bitmap.ysize;
 }
@@ -1023,14 +1017,13 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       unsigned int texID, int xsize, int ysize)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = new UnitDefImage;
-	} else if (unitDef->buildPic->textureOwner) {
-		glDeleteTextures(1, &unitDef->buildPic->textureID);
+		unitDef->buildPic = new UnitDefImage();
+	} else {
+		unitDef->buildPic->Free();
 	}
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
-	unitImage->textureOwner = false;
 	unitImage->imageSizeX = xsize;
 	unitImage->imageSizeY = ysize;
 }

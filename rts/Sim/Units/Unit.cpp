@@ -47,7 +47,7 @@
 #include "Sync/SyncedPrimitive.h"
 #include "Sync/SyncTracer.h"
 #include "EventHandler.h"
-#include "LoadSaveInterface.h"
+#include "LoadSave/LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"
@@ -84,14 +84,12 @@ float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade       = 0.0f;
-float CUnit::empDecline     = 2 * UNIT_SLOWUPDATE_RATE / GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
+float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
 
 
 CUnit::CUnit():
 	unitDef(0),
 	collisionVolume(0),
-	team(0),
-	allyteam(0),
 	frontdir(0,0,1),
 	rightdir(-1,0,0),
 	updir(0,1,0),
@@ -2256,8 +2254,6 @@ CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefName),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(team),
-	CR_MEMBER(allyteam),
 	CR_MEMBER(lineage),
 	CR_MEMBER(aihint),
 	CR_MEMBER(frontdir),
@@ -2377,8 +2373,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(dontFire),
 	CR_MEMBER(moveState),
 	CR_MEMBER(activated),
-//	CR_MEMBER(drawPos), ??
-//	CR_MEMBER(drawMidPos), ??
 //#if defined(USE_GML) && GML_ENABLE_SIM
 //	CR_MEMBER(lastUnitUpdate),
 //#endif

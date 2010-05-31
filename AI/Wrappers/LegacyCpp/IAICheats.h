@@ -39,7 +39,10 @@ public:
 	// the following commands work exactly like those in the standard
 	// callback interface, except that they don't do any LOS checks
 	virtual const UnitDef* GetUnitDef(int unitId) = 0;
+
 	virtual float3 GetUnitPos(int unitId) = 0;
+	virtual float3 GetUnitVel(int unitId) = 0;
+
 	virtual int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
 	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
 	virtual int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;

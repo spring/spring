@@ -31,6 +31,7 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
+	float mouseScale;
 	float oldHeight;
 	float3 dir;
 };

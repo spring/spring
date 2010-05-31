@@ -466,7 +466,7 @@ inline void LuaOpenGL::EnableCommon(DrawMode mode)
 		glCallList(resetStateList);
 	}
 	// FIXME  --  not needed by shadow or minimap   (use a WorldCommon ? )
-	glEnable(GL_NORMALIZE);
+	//glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
 }
 
@@ -696,7 +696,7 @@ void LuaOpenGL::EnableDrawScreenEffects()
 	SetupScreenMatrices();
 	SetupScreenLighting();
 	glCallList(resetStateList);
-	glEnable(GL_NORMALIZE);
+	//glEnable(GL_NORMALIZE);
 }
 
 
@@ -730,7 +730,7 @@ void LuaOpenGL::EnableDrawScreen()
 	SetupScreenMatrices();
 	SetupScreenLighting();
 	glCallList(resetStateList);
-	glEnable(GL_NORMALIZE);
+	//glEnable(GL_NORMALIZE);
 }
 
 
@@ -1176,7 +1176,22 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 		luaL_error(L,
 			"gl.DrawMiniMap() can only be used if the minimap is in slave mode");
 	}
-	minimap->DrawForReal();
+
+	bool transform = true;
+	if (lua_isboolean(L, 1)) {
+		transform = lua_toboolean(L, 1);
+	}
+
+	if (transform) {
+		glPushMatrix();
+		glScalef(gu->viewSizeX,gu->viewSizeY,1.0f);
+
+		minimap->DrawForReal(true);
+
+		glPopMatrix();
+	} else {
+		minimap->DrawForReal(false);
+	}
 	return 0;
 }
 
@@ -3755,7 +3770,7 @@ int LuaOpenGL::Texture(lua_State* L)
 			lua_pushboolean(L, true);
 		}
 		else if (texture == "$reflection") {
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetReflectionTextureID());
+			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
 			lua_pushboolean(L, true);
 		}
 		else if (texture == "$heightmap") {

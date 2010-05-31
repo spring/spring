@@ -16,6 +16,7 @@
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
+#include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -172,7 +173,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		"#define GRASS_DIST_BASIC\n"
 	};
 
-	static const int NUM_UNIFORMS = 8;
+	static const int NUM_UNIFORMS = 10;
 	static const std::string uniformNames[NUM_UNIFORMS] = {
 		"mapSizePO2",
 		"mapSize",
@@ -182,7 +183,14 @@ void CGrassDrawer::LoadGrassShaders() {
 		"billboardDirZ",
 		"shadowMatrix",
 		"shadowParams",
+		"simFrame",
+		"windSpeed",
 	};
+
+	const std::string extraDefs =
+		(mapInfo->grass.bladeWaveScale > 0.0f)?
+		"#define GRASS_ANIMATION\n":
+		"";
 
 	CShaderHandler* sh = shaderHandler;
 
@@ -209,7 +217,9 @@ void CGrassDrawer::LoadGrassShaders() {
 	} else {
 		for (int i = GRASS_PROGRAM_NEAR_SHADOW; i < GRASS_PROGRAM_LAST; i++) {
 			grassShaders[i] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[i] + "GLSL", false);
-			grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassVertProg.glsl", shaderDefines[i], GL_VERTEX_SHADER));
+			grassShaders[i]->AttachShaderObject(
+				sh->CreateShaderObject("GLSL/GrassVertProg.glsl", shaderDefines[i] + extraDefs, GL_VERTEX_SHADER)
+			);
 		}
 	}
 
@@ -270,10 +280,12 @@ public:
 						float3 squarePos((xgbsx + 0.5f) * gSSsq, 0.0f, (ygbsy + 0.5f) * gSSsq);
 							squarePos.y = ground->GetHeight2(squarePos.x, squarePos.z);
 
-						if (!camera->InView(squarePos, gSSsq)) {
+						if (!camera->InView(squarePos, gSSsq * 2.0f)) {
+							// double the radius of the check, grass on the left of
+							// the screen gets prematurely clipped even at moderate
+							// zoom levels otherwise
 							continue;
 						}
-
 
 						const float sqdist = (camera->pos - squarePos).SqLength();
 
@@ -422,6 +434,10 @@ void CGrassDrawer::Draw(void)
 	glColor4f(0.62f, 0.62f, 0.62f, 1.0f);
 
 	const float grassDistance = maxGrassDist;
+	const float3 windSpeed =
+		wind.GetCurrentDirection() *
+		wind.GetCurrentStrength() *
+		mapInfo->grass.bladeWaveScale;
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* grassShader = NULL;
@@ -492,10 +508,11 @@ void CGrassDrawer::Draw(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
-
 		if (gu->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
 			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+			grassShader->SetUniform1f(8, gs->frameNum);
+			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
 		} else {
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -594,6 +611,8 @@ void CGrassDrawer::Draw(void)
 		if (gu->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
 			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+			grassShader->SetUniform1f(8, gs->frameNum);
+			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
 		}
 	} else {
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_BASIC];
@@ -602,6 +621,9 @@ void CGrassDrawer::Draw(void)
 		if (!gu->haveGLSL) {
 			grassShader->SetUniform2f(13, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			grassShader->SetUniform2f(12, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
+		} else {
+			grassShader->SetUniform1f(8, gs->frameNum);
+			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
 		}
 
 		glBindTexture(GL_TEXTURE_2D, farTex);
@@ -800,44 +822,58 @@ void CGrassDrawer::ResetPos(const float3& pos)
 	grass[idx].square = -1;
 }
 
+
 void CGrassDrawer::CreateGrassDispList(int listNum)
 {
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 
+	for (int a = 0; a < strawPerTurf; ++a) {
+		const float maxAng = fRand(mapInfo->grass.bladeAngle);
+		const float length = mapInfo->grass.bladeHeight + fRand(mapInfo->grass.bladeHeight);
 
-	for(int a=0;a<strawPerTurf;++a){
-		float maxAng=fRand(PI/2);
-		float3 sideVect(fRand(1)-0.5f,0,fRand(1)-0.5f);
+		float3 sideVect(fRand(1.0f) - 0.5f, 0.0f, fRand(1.0f) - 0.5f);
 		sideVect.ANormalize();
-		float3 forwardVect=sideVect.cross(UpVector);
-		sideVect*=0.32f;
+		float3 forwardVect = sideVect.cross(UpVector);
+		sideVect *= mapInfo->grass.bladeWidth;
 
-		float3 basePos(30,0,30);
-		while(basePos.SqLength2D()>turfSize*turfSize/4)
-			basePos=float3(fRand(turfSize)-turfSize*0.5f,0,fRand(turfSize)-turfSize*0.5f);
+		const float3 cornerPos = (UpVector * cos(maxAng) + forwardVect * sin(maxAng)) * length;
+		float3 basePos(30.0f, 0.0f, 30.0f);
 
-		float length=4+fRand(4);
-
-		int tex=(int)fRand(15.9999f);
-		float xtexBase=tex*(1/16.0f);
-		int numSections=1+(int)(maxAng*5);
-		for(int b=0;b<numSections;++b){
-			float h=b*(1.0f/numSections);
-			float ang=maxAng*h;
-			if(b==0){
-				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h-float3(0,0.1f,0), xtexBase, h);
-				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h-float3(0,0.1f,0), xtexBase, h);
-			} else {
-				va->AddVertexT(basePos+sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h, xtexBase, h);
-			}
-			va->AddVertexT(basePos-sideVect*(1-h)+(UpVector*cos(ang)+forwardVect*sin(ang))*length*h, xtexBase+1.0f/16, h);
+		while (basePos.SqLength2D() > (turfSize * turfSize / 4)) {
+			basePos = float3(fRand(turfSize) - turfSize * 0.5f, 0.0f, fRand(turfSize) - turfSize * 0.5f);
 		}
-		va->AddVertexT(basePos+(UpVector*cos(maxAng)+forwardVect*sin(maxAng))*length, xtexBase+1.0f/32, 1);
-		va->AddVertexT(basePos+(UpVector*cos(maxAng)+forwardVect*sin(maxAng))*length, xtexBase+1.0f/32, 1);
+
+		const int xtexOffset = int(fRand(15.9999f));
+		const float xtexBase = xtexOffset * (1.0f / 16.0f);
+		const int numSections = 1 + int(maxAng * 5.0f);
+
+		for (int b = 0; b < numSections; ++b) {
+			const float h = b * (1.0f / numSections);
+			const float ang = maxAng * h;
+
+			const float3 edgePosL =
+				-sideVect * (1 - h) +
+				(UpVector * cos(ang) + forwardVect * sin(ang)) * length * h;
+			const float3 edgePosR =
+				sideVect * (1.0f - h) +
+				(UpVector * cos(ang) + forwardVect * sin(ang)) * length * h;
+
+			if (b == 0) {
+				va->AddVertexT(basePos + (edgePosR - float3(0.0f, 0.1f, 0.0f)), xtexBase + xtexOffset, h);
+				va->AddVertexT(basePos + (edgePosR - float3(0.0f, 0.1f, 0.0f)), xtexBase + xtexOffset, h);
+			} else {
+				va->AddVertexT((basePos + edgePosR), xtexBase + xtexOffset, h);
+			}
+
+			va->AddVertexT((basePos + edgePosL), xtexBase + (1.0f / 16) + xtexOffset, h);
+		}
+
+		va->AddVertexT(basePos + cornerPos, xtexBase + xtexOffset + (1.0f / 32), 1.0f);
+		va->AddVertexT(basePos + cornerPos, xtexBase + xtexOffset + (1.0f / 32), 1.0f);
 	}
 
-	glNewList(listNum,GL_COMPILE);
+	glNewList(listNum, GL_COMPILE);
 	va->DrawArrayT(GL_TRIANGLE_STRIP);
 	glEndList();
 }

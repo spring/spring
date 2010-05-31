@@ -66,12 +66,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib;msvcrt.lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				SubSystem="2"
 				StackReserveSize="0"
 				TargetMachine="1"
@@ -157,14 +157,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../installer/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				MapExports="true"
 				SubSystem="2"
 				OptimizeReferences="0"
@@ -254,14 +254,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="LIBC.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../game/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -350,13 +350,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;&quot;../../../vclibs/freetype/objs&quot;;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;&quot;../../../vclibs/SDL/lib&quot;;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../installer/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				MapExports="true"
 				SubSystem="2"
 				OptimizeReferences="0"
@@ -446,14 +446,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="LIBC.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="2"
-				ProgramDatabaseFile="../../../game/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				GenerateMapFile="true"
 				MapExports="true"
 				SubSystem="2"
@@ -537,12 +537,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="dsound.lib freetype.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlibwapi/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib;msvcrt.lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/spring.pdb"
+				ProgramDatabaseFile="..\..\..\dist\spring.pdb"
 				SubSystem="2"
 				StackReserveSize="0"
 				TargetMachine="1"
@@ -720,10 +720,6 @@
 			</File>
 			<File
 				RelativePath="..\..\ExternalAI\AIInterfaceLibraryInfo.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\AILegacySupport.cpp"
 				>
 			</File>
 			<File
@@ -960,6 +956,77 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\GlobalConstants.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\Messages.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="No debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Syncdebug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+MT with error catching|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug+MT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\Game\Messages.h"
 				>
 			</File>
 			<File
@@ -1931,14 +1998,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\FontTexture.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Rendering\FontTexture.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Rendering\GLContext.cpp"
 				>
 			</File>
@@ -2275,6 +2334,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Gl\myGL.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\GL\PBO.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\GL\PBO.h"
 					>
 				</File>
 				<File
@@ -4002,6 +4069,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\TeamHighlight.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamHighlight.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\TeamStatistics.cpp"
 					>
 				</File>
@@ -4191,159 +4266,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Demo.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug+MT|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Demo.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\demofile.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\DemoReader.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug+MT|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\DemoReader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\DemoRecorder.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="No debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Syncdebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+MT with error catching|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug+MT|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\DemoRecorder.h"
 				>
 			</File>
 			<File
@@ -4383,6 +4306,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\GlobalConfig.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\GlobalConfig.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\GlobalUnsynced.cpp"
 				>
 			</File>
@@ -4399,48 +4330,12 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\InputHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\InputHandler.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\Joystick.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\Joystick.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\LogOutput.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\System\LogOutput.h"
 				>
-			</File>
-			<File
-				RelativePath="..\..\System\LuaLoadSaveHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\LuaLoadSaveHandler.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\..\tools\DedicatedServer\main.cpp"
@@ -4516,6 +4411,18 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\System\MemPool.cpp"
 				>
 			</File>
@@ -4524,27 +4431,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Messages.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\Messages.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\mmgr.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\System\mmgr.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\MouseInput.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\MouseInput.h"
 				>
 			</File>
 			<File
@@ -5389,10 +5280,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\NullSound.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\SharedLib.cpp"
 					>
 				</File>
@@ -5641,35 +5528,331 @@
 				Name="LoadSave"
 				>
 				<File
-					RelativePath="..\..\System\LoadInterface.cpp"
+					RelativePath="..\..\System\LoadSave\CregLoadSaveHandler.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\LoadInterface.h"
+					RelativePath="..\..\System\LoadSave\CregLoadSaveHandler.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveHandler.cpp"
+					RelativePath="..\..\System\LoadSave\Demo.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Release)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\Demo.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveHandler.h"
+					RelativePath="..\..\System\LoadSave\demofile.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveInterface.cpp"
+					RelativePath="..\..\System\LoadSave\DemoReader.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Release)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\DemoReader.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\LoadSaveInterface.h"
+					RelativePath="..\..\System\LoadSave\DemoRecorder.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Release)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\DemoRecorder.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\SaveInterface.cpp"
+					RelativePath="..\..\System\LoadSave\LoadInterface.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\SaveInterface.h"
+					RelativePath="..\..\System\LoadSave\LoadInterface.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\LoadSaveHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\LoadSaveHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\LoadSaveInterface.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\LoadSaveInterface.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\LuaLoadSaveHandler.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Release)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\LuaLoadSaveHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\SaveInterface.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\LoadSave\SaveInterface.h"
 					>
 				</File>
 			</Filter>
@@ -5786,11 +5969,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Sound\ISound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\ISound.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sound\Music.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\System\Sound\Music.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullSound.h"
 					>
 				</File>
 				<File
@@ -5823,6 +6022,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sound\SoundItem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundLog.h"
 					>
 				</File>
 				<File
@@ -6602,6 +6809,34 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Input"
+				>
+				<File
+					RelativePath="..\..\System\Input\InputHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Input\InputHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Input\Joystick.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Input\Joystick.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Input\MouseInput.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Input\MouseInput.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Map"
@@ -6960,23 +7195,23 @@
 						Name="shaders"
 						>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainCommon.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainCommon.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainFragmentShader.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainFragmentShader.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainSimpleCopyFS.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainSimpleCopyFS.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainSimpleCopyVS.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainSimpleCopyVS.glsl"
 							>
 						</File>
 						<File
-							RelativePath="..\..\..\game\shaders\terrainVertexShader.glsl"
+							RelativePath="..\..\..\cont\shaders\terrainVertexShader.glsl"
 							>
 						</File>
 					</Filter>
@@ -7172,6 +7407,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaRules.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaRulesParams.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaRulesParams.h"
 				>
 			</File>
 			<File

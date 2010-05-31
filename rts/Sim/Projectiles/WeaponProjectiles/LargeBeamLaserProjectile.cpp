@@ -110,34 +110,30 @@ void CLargeBeamLaserProjectile::Draw(void)
 	float camDist = dif.Length();
 	dif /= camDist;
 
-	float3 ddir = endPos - startPos;
+	float3 ddir(endPos - startPos);
 	float beamlength = ddir.Length();
 	ddir = ddir / beamlength;
 
-	const float3 dir1 = (dif.cross(ddir)).Normalize();
+	const float3 dir1((dif.cross(ddir)).Normalize());
 	const float3 dir2(dif.cross(dir1));
-
-	float size = thickness;
-	float coresize = size * corethickness;
 
 	float3 pos1 = startPos;
 	float3 pos2 = endPos;
 
 	float starttex = (gu->modGameTime) * scrollspeed;
 	starttex = 1.0f - (starttex - (int)starttex);
-
-	float texxsize = beamtex.xend - beamtex.xstart;
+	const float texxsize = beamtex.xend - beamtex.xstart;
 	AtlasedTexture tex = beamtex;
+	const float& size = thickness;
+	const float& coresize = size * corethickness;
 
 	float polylength = (tex.xend-beamtex.xstart)*(1/texxsize)*tilelength;
 
-	float istart=polylength*(1-starttex);
-	float iend=beamlength-tilelength;
+	float istart = polylength * (1-starttex);
+	float iend = beamlength - tilelength;
 	va->EnlargeArrays(64+8*((int)((iend-istart)/tilelength)+2),0,VA_SIZE_TC);
 	if(istart>beamlength)  //beam short enough to be drawn by one polygon
 	{
-		pos2=endPos;
-
 		//draw laser start
 		tex.xstart = beamtex.xstart + starttex*((beamtex.xend-beamtex.xstart));
 
@@ -210,12 +206,9 @@ void CLargeBeamLaserProjectile::Draw(void)
 	va->AddVertexQTC(pos2+dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->yend,corecolstart);
 	va->AddVertexQTC(pos2-dir1*coresize+dir2*coresize,weaponDef->visuals.texture2->xend,weaponDef->visuals.texture2->ystart,corecolstart);
 
-	//for(float bpos=0; bpos
-	//CTextureAtlas::Texture side = ph->textureAtlas->GetTexture("muzzleside");
-
 	//draw muzzleflare
-	starttex=(gu->modGameTime)*pulseSpeed;
-	starttex = (starttex - (int)starttex);
+	starttex  = gu->modGameTime * pulseSpeed;
+	starttex -= (int)starttex;
 
 		float muzzlesize = size*flaresize*starttex;
 		unsigned char corcol[4];
@@ -258,9 +251,6 @@ void CLargeBeamLaserProjectile::Draw(void)
 		va->AddVertexQTC(pos1+dir1*muzzlesize+ddir*muzzlesize,side.xend,side.ystart,corcol);
 		va->AddVertexQTC(pos1-dir1*muzzlesize+ddir*muzzlesize,side.xend,side.yend,corcol);
 		va->AddVertexQTC(pos1-dir1*muzzlesize,side.xstart,side.yend,corcol);
-
-
-	//CTextureAtlas::Texture texture = ph->textureAtlas->GetTexture("largebeam");
 
 	//draw flare
 	float fsize = size*flaresize;

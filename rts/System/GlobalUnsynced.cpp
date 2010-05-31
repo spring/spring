@@ -97,6 +97,7 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 	directControl = NULL;
 
+	maxTextureSize = 1024;
 	compressTextures = false;
 	atiHacks = false;
 }
@@ -124,6 +125,11 @@ void CGlobalUnsynced::PostInit() {
 		// we don't even need to check it, 'cos groundtextures must have that extension
 		// default to off because it reduces quality (smallest mipmap level is bigger)
 		compressTextures = !!configHandler->Get("CompressTextures", 0);
+	}
+
+	// maximum 2D texture size
+	{
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 	}
 
 	// use some ATI bugfixes?

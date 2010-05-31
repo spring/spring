@@ -53,6 +53,11 @@ public:
 	/// called when a unit is destroyed
 	virtual void UnitDestroyed(int unit, int attacker)=0;
 
+	/// called when a new enemy unit is created
+	virtual void EnemyCreated(int enemy) {};
+	/// called when a new enemy unit has finished building
+	virtual void EnemyFinished(int enemy) {};
+
 	virtual void EnemyEnterLOS(int enemy)=0;
 	virtual void EnemyLeaveLOS(int enemy)=0;
 

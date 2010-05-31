@@ -77,7 +77,14 @@ public:
 	 *		The maximum number of nodes/blocks the search are allowed to analyze.
 	 *		This restriction could be used in cases where CPU-consumption are critical.
 	 */
-	SearchResult GetPath(const MoveData& moveData, float3 start, const CPathFinderDef& peDef, Path& path, unsigned int maxSearchedBlocks = 10000);
+	SearchResult GetPath(
+		const MoveData& moveData,
+		float3 start,
+		const CPathFinderDef& peDef,
+		Path& path,
+		unsigned int maxSearchedBlocks = 10000,
+		bool synced = true
+	);
 
 
 	/**
@@ -97,7 +104,7 @@ public:
 	float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
 
 	/// Return a checksum that can be used to check if every player has the same path data
-	boost::uint32_t GetPathChecksum();
+	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
 
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);

@@ -152,6 +152,14 @@ const char* CAIAICallback::GetTeamSide(int team) {
 	return sAICallback->Clb_Game_getTeamSide(teamId, team);
 }
 
+int CAIAICallback::GetTeamAllyTeam(int team) {
+	return sAICallback->Clb_Game_getTeamAllyTeam(teamId, team);
+}
+
+bool CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
+	return sAICallback->Clb_Game_isAllied(teamId, firstAllyTeamId, secondAllyTeamId);
+}
+
 int CAIAICallback::GetUnitGroup(int unitId) {
 	return sAICallback->Clb_Unit_getGroup(teamId, unitId);
 }
@@ -304,9 +312,17 @@ const UnitDef* CAIAICallback::GetUnitDef(int unitId) {
 	return this->GetUnitDefById(unitDefId);
 }
 
+
+
 float3 CAIAICallback::GetUnitPos(int unitId) {
 	return float3(sAICallback->Clb_Unit_getPos(teamId, unitId));
 }
+
+float3 CAIAICallback::GetUnitVel(int unitId) {
+	return float3(sAICallback->Clb_Unit_getVel(teamId, unitId));
+}
+
+
 
 int CAIAICallback::GetBuildingFacing(int unitId) {
 	return sAICallback->Clb_Unit_getBuildingFacing(teamId, unitId);
@@ -431,10 +447,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->flankingBonusMax = sAICallback->Clb_UnitDef_FlankingBonus_getMax(teamId, unitDefId);
 		unitDef->flankingBonusMin = sAICallback->Clb_UnitDef_FlankingBonus_getMin(teamId, unitDefId);
 		unitDef->flankingBonusMobilityAdd = sAICallback->Clb_UnitDef_FlankingBonus_getMobilityAdd(teamId, unitDefId);
-		unitDef->collisionVolumeTypeStr = sAICallback->Clb_UnitDef_CollisionVolume_getType(teamId, unitDefId);
-		unitDef->collisionVolumeScales = float3(sAICallback->Clb_UnitDef_CollisionVolume_getScales(teamId, unitDefId));
-		unitDef->collisionVolumeOffsets = float3(sAICallback->Clb_UnitDef_CollisionVolume_getOffsets(teamId, unitDefId));
-		unitDef->collisionVolumeTest = sAICallback->Clb_UnitDef_CollisionVolume_getTest(teamId, unitDefId);
 		unitDef->maxWeaponRange = sAICallback->Clb_UnitDef_getMaxWeaponRange(teamId, unitDefId);
 		unitDef->type = sAICallback->Clb_UnitDef_getType(teamId, unitDefId);
 		unitDef->tooltip = sAICallback->Clb_UnitDef_getTooltip(teamId, unitDefId);
@@ -802,6 +814,14 @@ const char* CAIAICallback::GetModHumanName() {
 	return sAICallback->Clb_Mod_getHumanName(teamId);
 }
 
+const char* CAIAICallback::GetModShortName() {
+	return sAICallback->Clb_Mod_getShortName(teamId);
+}
+
+const char* CAIAICallback::GetModVersion() {
+	return sAICallback->Clb_Mod_getVersion(teamId);
+}
+
 float CAIAICallback::GetElevation(float x, float z) {
 	return sAICallback->Clb_Map_getElevationAt(teamId, x, z);
 }
@@ -1061,35 +1081,31 @@ const FeatureDef* CAIAICallback::GetFeatureDefById(int featureDefId) {
 //		int currentFrame = this->GetCurrentFrame();
 		int currentFrame = 1;
 	FeatureDef* featureDef = new FeatureDef();
-featureDef->myName = sAICallback->Clb_FeatureDef_getName(teamId, featureDefId);
-featureDef->description = sAICallback->Clb_FeatureDef_getDescription(teamId, featureDefId);
-featureDef->filename = sAICallback->Clb_FeatureDef_getFileName(teamId, featureDefId);
-//featureDef->id = sAICallback->Clb_FeatureDef_getId(teamId, featureDefId);
-featureDef->id = featureDefId;
-featureDef->metal = sAICallback->Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource(teamId, featureDefId, m);
-featureDef->energy = sAICallback->Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource(teamId, featureDefId, e);
-featureDef->maxHealth = sAICallback->Clb_FeatureDef_getMaxHealth(teamId, featureDefId);
-featureDef->reclaimTime = sAICallback->Clb_FeatureDef_getReclaimTime(teamId, featureDefId);
-featureDef->mass = sAICallback->Clb_FeatureDef_getMass(teamId, featureDefId);
-featureDef->collisionVolumeTypeStr = sAICallback->Clb_FeatureDef_CollisionVolume_getType(teamId, featureDefId);
-featureDef->collisionVolumeScales = float3(sAICallback->Clb_FeatureDef_CollisionVolume_getScales(teamId, featureDefId));
-featureDef->collisionVolumeOffsets = float3(sAICallback->Clb_FeatureDef_CollisionVolume_getOffsets(teamId, featureDefId));
-featureDef->collisionVolumeTest = sAICallback->Clb_FeatureDef_CollisionVolume_getTest(teamId, featureDefId);
-featureDef->upright = sAICallback->Clb_FeatureDef_isUpright(teamId, featureDefId);
-featureDef->drawType = sAICallback->Clb_FeatureDef_getDrawType(teamId, featureDefId);
-featureDef->modelname = sAICallback->Clb_FeatureDef_getModelName(teamId, featureDefId);
-featureDef->resurrectable = sAICallback->Clb_FeatureDef_getResurrectable(teamId, featureDefId);
-featureDef->smokeTime = sAICallback->Clb_FeatureDef_getSmokeTime(teamId, featureDefId);
-featureDef->destructable = sAICallback->Clb_FeatureDef_isDestructable(teamId, featureDefId);
-featureDef->reclaimable = sAICallback->Clb_FeatureDef_isReclaimable(teamId, featureDefId);
-featureDef->blocking = sAICallback->Clb_FeatureDef_isBlocking(teamId, featureDefId);
-featureDef->burnable = sAICallback->Clb_FeatureDef_isBurnable(teamId, featureDefId);
-featureDef->floating = sAICallback->Clb_FeatureDef_isFloating(teamId, featureDefId);
-featureDef->noSelect = sAICallback->Clb_FeatureDef_isNoSelect(teamId, featureDefId);
-featureDef->geoThermal = sAICallback->Clb_FeatureDef_isGeoThermal(teamId, featureDefId);
-featureDef->deathFeature = sAICallback->Clb_FeatureDef_getDeathFeature(teamId, featureDefId);
-featureDef->xsize = sAICallback->Clb_FeatureDef_getXSize(teamId, featureDefId);
-featureDef->zsize = sAICallback->Clb_FeatureDef_getZSize(teamId, featureDefId);
+	featureDef->myName = sAICallback->Clb_FeatureDef_getName(teamId, featureDefId);
+	featureDef->description = sAICallback->Clb_FeatureDef_getDescription(teamId, featureDefId);
+	featureDef->filename = sAICallback->Clb_FeatureDef_getFileName(teamId, featureDefId);
+	//featureDef->id = sAICallback->Clb_FeatureDef_getId(teamId, featureDefId);
+	featureDef->id = featureDefId;
+	featureDef->metal = sAICallback->Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource(teamId, featureDefId, m);
+	featureDef->energy = sAICallback->Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource(teamId, featureDefId, e);
+	featureDef->maxHealth = sAICallback->Clb_FeatureDef_getMaxHealth(teamId, featureDefId);
+	featureDef->reclaimTime = sAICallback->Clb_FeatureDef_getReclaimTime(teamId, featureDefId);
+	featureDef->mass = sAICallback->Clb_FeatureDef_getMass(teamId, featureDefId);
+	featureDef->upright = sAICallback->Clb_FeatureDef_isUpright(teamId, featureDefId);
+	featureDef->drawType = sAICallback->Clb_FeatureDef_getDrawType(teamId, featureDefId);
+	featureDef->modelname = sAICallback->Clb_FeatureDef_getModelName(teamId, featureDefId);
+	featureDef->resurrectable = sAICallback->Clb_FeatureDef_getResurrectable(teamId, featureDefId);
+	featureDef->smokeTime = sAICallback->Clb_FeatureDef_getSmokeTime(teamId, featureDefId);
+	featureDef->destructable = sAICallback->Clb_FeatureDef_isDestructable(teamId, featureDefId);
+	featureDef->reclaimable = sAICallback->Clb_FeatureDef_isReclaimable(teamId, featureDefId);
+	featureDef->blocking = sAICallback->Clb_FeatureDef_isBlocking(teamId, featureDefId);
+	featureDef->burnable = sAICallback->Clb_FeatureDef_isBurnable(teamId, featureDefId);
+	featureDef->floating = sAICallback->Clb_FeatureDef_isFloating(teamId, featureDefId);
+	featureDef->noSelect = sAICallback->Clb_FeatureDef_isNoSelect(teamId, featureDefId);
+	featureDef->geoThermal = sAICallback->Clb_FeatureDef_isGeoThermal(teamId, featureDefId);
+	featureDef->deathFeature = sAICallback->Clb_FeatureDef_getDeathFeature(teamId, featureDefId);
+	featureDef->xsize = sAICallback->Clb_FeatureDef_getXSize(teamId, featureDefId);
+	featureDef->zsize = sAICallback->Clb_FeatureDef_getZSize(teamId, featureDefId);
 {
 	int size = sAICallback->Clb_FeatureDef_0MAP1SIZE0getCustomParams(teamId, featureDefId);
 	featureDef->customParams = std::map<std::string,std::string>();

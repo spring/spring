@@ -1,14 +1,22 @@
 #!/usr/bin/env python
+#
+# This is meant for manual execution, and should be run whenever
+# the content of cont/LuaUI/ changed.
+# Use like this:
+# python {this_script}.py > installer/sections/luaui.nsh
+#
+# @param baseDir for example: "/home/userX/src/spring"
+#
 
 ################################################################################
 #
 # !ifdef INSTALL
 #
 #   SetOutPath "$INSTDIR"
-#   File "..\game\luaui.lua"
+#   File "${CONTENT_DIR}\luaui.lua"
 # 
 #   SetOutPath "$INSTDIR\LuaUI"
-#   File /r /x .svn /x Config\*.lua "..\game\LuaUI\*.*"
+#   File /r /x .svn /x Config\*.lua "${CONTENT_DIR}\LuaUI\*.*"
 # 
 # !else
 #
@@ -20,40 +28,58 @@
 ################################################################################
 
 
-import os
+import os, sys
 
-try:
-	os.chdir('game')
-except OSError:
-	os.chdir('../game')
 
-top = 'LuaUI/'
+if len(sys.argv) > 1:
+	baseDir = sys.argv[1]
+else:
+	baseDir = os.path.join(sys.path[0], '..')
 
+contentDirCandidates = ['cont']
+luaUIDir = 'LuaUI'
+contentBase = '${CONTENT_DIR}'
+instBase = '$INSTDIR'
+
+# Change to source root dir
+os.chdir(sys.path[0])
+os.chdir('..')
+
+contentDir = ""
+for d in contentDirCandidates:
+	contentDir = d
+	try:
+		os.chdir(os.path.join(contentDir, luaUIDir))
+		break
+	except OSError:
+		contentDir = ""
+
+if contentDir == "":
+	# Content directory not found
+	sys.exit(1)
+else:
+	# Change to the content dir
+	os.chdir(os.path.join(baseDir, contentDir))
 
 ################################################################################
 
 def GetDirs(path, dirs):
-  dirs[path] = []
-  filelist = os.listdir(path)
-  for f in filelist:
-    fullname = path + f
-    if os.path.isdir(fullname):
-      if (f != 'Config') and (f != '.svn'):
-        fullname = fullname + '/'
-        GetDirs(fullname, dirs)
-    else:
-      dirs[path].append(f)
+	dirs[path] = []
+	filelist = os.listdir(path)
+	for f in filelist:
+		fullname = os.path.join(path, f)
+		if os.path.isdir(fullname):
+			if (f != 'Config') and (f != '.git'):
+				GetDirs(fullname, dirs)
+		else:
+			dirs[path].append(f)
 
 
-def osName(path):
-  return path.replace('/', '\\')
+def toWinPath(path):
+	return path.replace('/', '\\')
 
 dirs = {}
-GetDirs(top, dirs)
-
-#for d in dirs:
-#  for f in dirs[d]:
-#    print(d, f)
+GetDirs(luaUIDir, dirs)
 
 
 ################################################################################
@@ -61,26 +87,30 @@ GetDirs(top, dirs)
 print('!ifdef INSTALL')
 
 print('')
-print('  SetOutPath "$INSTDIR"')
-print('  File "..\\game\\luaui.lua"')
+print('  ; Purge old file from 0.75 install.')
+print('  Delete "' + instBase + '\LuaUI\unitdefs.lua"')
+
+print('')
+print('  SetOutPath "' + instBase + '"')
+print('  File "' + toWinPath(os.path.join(contentBase, 'luaui.lua')) + '"')
 print('')
 for d in dirs:
-  print('  SetOutPath "$INSTDIR\\' + osName(d) + '"')
-  for f in dirs[d]:
-    print('  File "..\\game\\' + osName(d) + osName(f) + '"')
+	print('  SetOutPath "' + toWinPath(os.path.join(instBase, d)) + '"')
+	for f in dirs[d]:
+		print('  File "' + toWinPath(os.path.join(contentBase, d, f)) + '"')
 print('')
 
 print('!else')
 
 print('')
-print('  Delete "$INSTDIR\\luaui.lua"')
+print('  Delete "' + toWinPath(os.path.join(instBase, 'luaui.lua')) + '"')
 print('')
 for d in dirs:
-  for f in dirs[d]:
-    print('  Delete "$INSTDIR\\' + osName(d) + osName(f) + '"')
-  print('  RmDir "$INSTDIR\\' + osName(d) + '"')
+	for f in dirs[d]:
+		print('  Delete "' + toWinPath(os.path.join(instBase, d, f)) + '"')
+	print('  RmDir  "' + toWinPath(os.path.join(instBase, d)) + '"')
 print('')
-print('  RmDir "$INSTDIR\\LuaUI"')
+print('  RmDir  "' + toWinPath(os.path.join(instBase, luaUIDir)) + '"')
 print('')
 
 print('!endif')

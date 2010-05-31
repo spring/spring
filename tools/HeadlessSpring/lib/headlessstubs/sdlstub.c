@@ -18,6 +18,9 @@
 // You can find the licence also on the web at:
 // http://www.opensource.org/licenses/gpl-license.php
 //
+// documentation for the functions in this file can be found at:
+// http://www.libsdl.org/docs/html/
+//
 
 #include "SDL.h"
 
@@ -177,5 +180,13 @@ SDL_Joystick *SDL_JoystickOpen(int device_index) {
 }
 
 void SDL_JoystickClose(SDL_Joystick *joystick) {
+}
+
+SDL_Rect** SDL_ListModes(SDL_PixelFormat *format, Uint32 flags) {
+	return NULL;
+}
+
+int SDL_PeepEvents(SDL_Event *events, int numevents, SDL_eventaction action, Uint32 mask) {
+	return 0;
 }
 
