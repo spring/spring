@@ -220,11 +220,6 @@ elseif (MINGW)
 	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
 endif  (NOT MINGW AND NOT APPLE)
 
-### Find the windres program (used to generate icon object files)
-IF (MINGW)
-	FIND_PROGRAM(WINDRES NAMES windres i586-mingw32msvc-windres i586-pc-mingw32-windres i686-mingw32-windres DOC "Path to MinGW's windres executable")
-ENDIF (MINGW)
-
 ### Where the other CMakeLists.txt are
 if    (SDL_FOUND)
 	Add_Subdirectory(rts)
