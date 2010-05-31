@@ -348,16 +348,6 @@ function Spring.UnitScript.StartThread(fun, ...)
 end
 
 local function SetOnError(fun)
-<<<<<<< HEAD
-	local thread = activeUnit.threads[co_running()]
-	if thread then
-		thread.onerror = fun
-	end
-end
-
-function Spring.UnitScript.SetSignalMask(mask)
-=======
->>>>>>> spring/master
 	local thread = activeUnit.threads[co_running()]
 	if thread then
 		thread.onerror = fun
