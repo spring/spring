@@ -75,7 +75,7 @@ chdir("$installerDir/downloads");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
 system("wget", "-N", "http://springrts.com/dl/SelectionEditor.zip");
 system("mkdir", "-p", "./SelectionEditor/");
-system("unzip", "SelectionEditor.zip", "-d", "./SelectionEditor/");
+system("unzip", "-o", "SelectionEditor.zip", "-d", "./SelectionEditor/");
 system("wget", "-N", "http://www.springlobby.info/installer/springsettings.exe");
 system("wget", "-N", "http://files.caspring.org/caupdater/SpringDownloader.exe");
 chdir("$installerDir/..");
