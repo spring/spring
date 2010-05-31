@@ -14,9 +14,6 @@
 class PBO
 {
 public:
-	GLuint pboId;
-
-public:
 	PBO();
 	~PBO();
 
@@ -31,7 +28,11 @@ public:
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
 	void UnmapBuffer();
 
-	const GLvoid* GetPtr();
+	const GLvoid* GetPtr(GLintptr offset = 0);
+
+protected:
+	GLuint pboId;
+	size_t size;
 
 private:
 	bool PBOused;

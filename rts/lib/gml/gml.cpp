@@ -548,6 +548,10 @@ void gmlQueue::SyncRequest() {
 	GML_EXEC(name,GML_DATA_D(name))\
 	GML_NEXT(name)
 
+#define GML_MAKEHANDLER4R(name)\
+	GML_EXEC_RET(name,GML_DATA_D(name))\
+	GML_NEXT(name)
+
 #define GML_MAKEHANDLER5(name)\
 	GML_EXEC(name,GML_DATA_E(name))\
 	GML_NEXT(name)
@@ -985,6 +989,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3V(Uniform2fv)
 		GML_MAKEHANDLER3V(Uniform3fv)
 		GML_MAKEHANDLER3V(Uniform4fv)
+		GML_MAKEHANDLER4R(MapBufferRange)
 	}
 }
 
