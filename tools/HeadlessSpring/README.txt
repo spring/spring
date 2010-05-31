@@ -1,33 +1,28 @@
-What is this?
--------------
+# README
 
-It's a headless version of spring.
+It is a headless version of spring.
 
 You can run it on headless servers that have neither X nor a graphics card.
 
-How to use?
------------
 
-instead of launching 'spring' launch instead 'spring-headlessstubs'.
+## How to use?
 
-Since it has no interface, you need to specify a script file, eg:
+instead of launching `spring` launch `spring-hl` instead.
 
-./spring-headerlessstubs myscript.txt
+Since it has no interactive interface, you need to specify a script file, eg:
 
-You can create an appropriate script file using springlobby or equivalent, which will
-create a file  'script.txt' for you in your spring game directory, eg in ~/.spring.
+	./spring-hl /abs/path/to/my/script.txt
 
-Once springlobby has created the script.txt, simply copy it to another name, so that running
-springlobby again won't overwrite the old file, and pass in the name of that file on the 
-spring-headlessstubs commmand-line.
+You can create an appropriate script file using SpringLobby or any other
+spring lobby client. Usually, this will create a file `script.txt` for you
+in your writable spring data directory, eg at `~/.spring/script.txt`.
 
-Who wrote it?
--------------
+Once you have a `script.txt`, simply copy it to another name, so that running
+SpringLobby again will not overwrite the old file. Now pass in the absolute path
+to that file on the `spring-hl` commmand-line.
 
-Hugh Perkins, hughperkins@gmail.com
 
-What's the license?
--------------------
+## What is the license?
 
-GPLv2, as for the rest of Spring.
+GPL v2 or later, as for the rest of Spring.
 
