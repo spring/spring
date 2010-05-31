@@ -260,7 +260,7 @@ void LuaMatTexture::Bind(const LuaMatTexture& prev) const
 		}
 	}
 	else if (type == LUATEX_REFLECTION) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetReflectionTextureID());
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
 		if (enable) {
 			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		}

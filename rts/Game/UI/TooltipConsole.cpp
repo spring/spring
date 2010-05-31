@@ -235,6 +235,8 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		s += buf;
 	}
 
+	s += "\n\xff\xff\xff\xff" + teamHandler->Team(unit->team)->GetControllerName();
+
 	return s;
 }
 

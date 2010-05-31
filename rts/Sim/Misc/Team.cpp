@@ -6,11 +6,11 @@
 #include "Team.h"
 #include "TeamHandler.h"
 
-#include "Messages.h"
 #include "GlobalSynced.h"
 #include "LogOutput.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
+#include "Game/Messages.h"
 #include "GlobalUnsynced.h"
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaRules.h"
@@ -110,7 +110,8 @@ CTeam::CTeam()
   energySent(0),
   energyReceived(0),
   nextHistoryEntry(0),
-  numCommanders(0)
+  numCommanders(0),
+  highlight(0.0f)
 {
 	statHistory.push_back(TeamStatistics());
 	currentStats = &statHistory.back();

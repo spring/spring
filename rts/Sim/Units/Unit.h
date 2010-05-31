@@ -175,8 +175,6 @@ public:
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
 
-	int team;
-	int allyteam;
 	/**
 	 * The unit's origin lies in this team.
 	 *
@@ -404,11 +402,10 @@ public:
 #endif
 	}
 
-	float3 drawPos;
-	float3 drawMidPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
+
 	LocalModel* localmodel;
 	CUnitScript* script;
 

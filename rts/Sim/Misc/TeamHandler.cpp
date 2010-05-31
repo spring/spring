@@ -8,6 +8,7 @@
 #include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/TeamHighlight.h"
 #include "mmgr.h"
 #include "Util.h"
 #include "LogOutput.h"
@@ -37,6 +38,8 @@ CTeamHandler::CTeamHandler():
 
 CTeamHandler::~CTeamHandler()
 {
+	for (std::vector<CTeam*>::iterator it = teams.begin(); it != teams.end(); ++it)
+		delete *it;
 }
 
 
@@ -49,7 +52,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 	for (size_t i = 0; i < teams.size(); ++i) {
 		// TODO: this loop body could use some more refactoring
-		CTeam* team = Team(i);
+		CTeam* team = new CTeam();
+		teams[i] = team;
 		*team = setup->teamStartingData[i];
 		team->teamNum = i;
 		SetAllyTeam(i, team->teamAllyteam);
@@ -63,7 +67,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// Setup the gaia team
-		CTeam team;
+		CTeam& team = *(new CTeam());
 		team.color[0] = 255;
 		team.color[1] = 255;
 		team.color[2] = 255;
@@ -72,7 +76,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		team.teamNum = gaiaTeamID;
 		team.StartposMessage(float3(0.0, 0.0, 0.0));
 		team.teamAllyteam = gaiaAllyTeamID;
-		teams.push_back(team);
+		teams.push_back(&team);
 
 		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it)
 		{
@@ -94,5 +98,6 @@ void CTeamHandler::GameFrame(int frameNum)
 		for (int a = 0; a < ActiveTeams(); ++a) {
 			Team(a)->SlowUpdate();
 		}
+		CTeamHighlight::Update();
 	}
 }

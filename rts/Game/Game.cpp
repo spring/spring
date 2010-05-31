@@ -35,7 +35,6 @@
 #include "GameVersion.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
-#include "LoadSaveHandler.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
@@ -48,6 +47,8 @@
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
+#include "NetProtocol.h"
+#include "ConfigHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -56,6 +57,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
+#include "FileSystem/FileSystem.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/HeightMapTexture.h"
@@ -63,10 +65,8 @@
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "NetProtocol.h"
-#include "DemoRecorder.h"
-#include "ConfigHandler.h"
-#include "FileSystem/FileSystem.h"
+#include "LoadSave/LoadSaveHandler.h"
+#include "LoadSave/DemoRecorder.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
@@ -109,6 +109,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/TeamHighlight.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
@@ -127,7 +128,7 @@
 #include "Util.h"
 #include "Exceptions.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include "Sound/Music.h"
 #include "FileSystem/SimpleParser.h"
@@ -210,7 +211,6 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(noSpectatorChat),
-	CR_MEMBER(crossSize),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
 //	CR_MEMBER(infoConsole),
@@ -283,7 +283,8 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	showFPS   = !!configHandler->Get("ShowFPS",   0);
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
-	crossSize = configHandler->Get("CrossSize", 10.0f);
+
+	speedControl = configHandler->Get("SpeedControl", 0);
 
 	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
 
@@ -335,6 +336,10 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	// sending your playername to the server indicates that you are finished loading
 	const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
+
+	#ifdef SYNCCHECK
+	net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
+	#endif
 
 	mouse->ShowMouse();
 }
@@ -397,7 +402,7 @@ CGame::~CGame()
 	SafeDelete(tooltip);
 	SafeDelete(keyBindings);
 	SafeDelete(keyCodes);
-	SafeDelete(sound);
+	ISound::Shutdown();
 	SafeDelete(selectionKeys);
 	SafeDelete(mouse);
 	SafeDelete(camHandler);
@@ -514,12 +519,6 @@ void CGame::LoadSimulation(const std::string& mapname)
 	radarhandler = new CRadarHandler(false);
 
 	pathManager = new CPathManager();
-
-	#ifdef SYNCCHECK
-		// update the checksum with path data
-		{ SyncedUint tmp(pathManager->GetPathChecksum()); }
-	#endif
-	logOutput.Print("Pathing data checksum: %08x\n", pathManager->GetPathChecksum());
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -1706,6 +1705,24 @@ bool CGame::ActionPressed(const Action& action,
 #	endif
 	}
 #endif
+	else if (cmd == "speedcontrol") {
+		if (action.extra.empty()) {
+			++speedControl;
+			if(speedControl > 2)
+				speedControl = -2;
+		}
+		else {
+			speedControl = atoi(action.extra.c_str());
+		}
+		speedControl = std::max(-2, std::min(speedControl, 2));
+		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
+		logOutput.Print("Speed Control: %s%s",
+			(speedControl == 0) ? "Default" : ((speedControl == 1 || speedControl == -1) ? "Average CPU" : "Maximum CPU"),
+			(speedControl < 0) ? " (server voting disabled)" : "");
+		configHandler->Set("SpeedControl", speedControl);
+		if (gameServer)
+			gameServer->UpdateSpeedControl(speedControl);
+	}
 	else if (!isRepeat && (cmd == "gameinfo")) {
 		if (!CGameInfo::IsActive()) {
 			CGameInfo::Enable();
@@ -1871,15 +1888,15 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "cross") {
 		if (action.extra.empty()) {
-			if (crossSize > 0.0f) {
-				crossSize = -crossSize;
+			if (mouse->crossSize > 0.0f) {
+				mouse->crossSize = -mouse->crossSize;
 			} else {
-				crossSize = std::max(1.0f, -crossSize);
+				mouse->crossSize = std::max(1.0f, -mouse->crossSize);
 			}
 		} else {
-			crossSize = atof(action.extra.c_str());
+			mouse->crossSize = atof(action.extra.c_str());
 		}
-		configHandler->Set("CrossSize", crossSize);
+		configHandler->Set("CrossSize", mouse->crossSize);
 	}
 	else if (cmd == "fps") {
 		if (action.extra.empty()) {
@@ -2065,7 +2082,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 
-			GML_STDMUTEX_LOCK(sim); // ActionPressed
+			GML_RECMUTEX_LOCK(sim); // ActionPressed
 
 			guihandler->RunLayoutCommand(action.extra);
 		}
@@ -2828,7 +2845,7 @@ bool CGame::Update()
 		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
 	}
 
-	if (net->CheckTimeout() && !gameOver) {
+	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
 		GameEnd();
 	}
@@ -3117,7 +3134,7 @@ bool CGame::Draw() {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
 
-		GML_STDMUTEX_LOCK(sim); // Draw
+		GML_RECMUTEX_LOCK(sim); // Draw
 
 		guihandler->RunLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
@@ -3135,7 +3152,6 @@ bool CGame::Draw() {
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
 	lineDrawer.UpdateLineStipple();
-	farTextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
@@ -3145,6 +3161,8 @@ bool CGame::Draw() {
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
+
+	CTeamHighlight::Enable(currentTime);
 
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
@@ -3175,6 +3193,8 @@ bool CGame::Draw() {
 		}
 	}
 
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
@@ -3204,19 +3224,6 @@ bool CGame::Draw() {
 
 	if (doDrawWorld) {
 		eventHandler.DrawScreenEffects();
-	}
-
-	if (mouse->locked && (crossSize > 0.0f)) {
-		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-		glLineWidth(1.49f);
-		glDisable(GL_TEXTURE_2D);
-		glBegin(GL_LINES);
-			glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
-			glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
-		glEnd();
-		glLineWidth(1.0f);
 	}
 
 	hudDrawer->Draw(gu->directControl);
@@ -3345,7 +3352,8 @@ bool CGame::Draw() {
 						(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)), 
 							std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
 					int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
-					float4 pingcolor(std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
+					float4 pingcolor(!p->spectator && gc->reconnectTimeout > 0 && ping > 1000 * gc->reconnectTimeout &&
+							(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
 							std::min(1.0f, std::max(0.01f, (1000 - ping) / 375.0f)), 0.01f, 1.0f);
 					SNPRINTF(buf, sizeof(buf), "\xff%c%c%c%c \t%i \t%s   \t\xff%c%c%c%s   \t\xff%c%c%c%.0f%%  \t\xff%c%c%c%dms",
 							allycolor[0], allycolor[1], allycolor[2], (gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
@@ -3381,11 +3389,7 @@ bool CGame::Draw() {
 
 	mouse->DrawCursor();
 
-//	float tf[]={1,1,1,1,1,1,1,1,1};
-//	glVertexPointer(3,GL_FLOAT,0,tf);
-//	glDrawArrays(GL_TRIANGLES,0,3);
-
-	glEnable(GL_DEPTH_TEST );
+	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
 	unsigned start = SDL_GetTicks();
@@ -3405,6 +3409,8 @@ bool CGame::Draw() {
 #endif
 
 	SetDrawMode(gameNotDrawing);
+
+	CTeamHighlight::Disable();
 
 	return true;
 }
@@ -3466,13 +3472,14 @@ void CGame::DrawInputText()
 	}
 
 	// draw the text
+	font->Begin();
+	font->SetColors(textColor, NULL);
 	if (!guihandler->GetOutlineFonts()) {
-		glColor4fv(*textColor);
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM, tempstring);
 	} else {
-		font->SetColors(textColor, NULL);
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM, tempstring);
 	}
+	font->End();
 }
 
 
@@ -3532,6 +3539,7 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
+	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 }
 
 
@@ -3866,6 +3874,27 @@ void CGame::ClientReadNet()
 				break;
 			}
 
+			case NETMSG_PATH_CHECKSUM: {
+				const unsigned char playerNum = inbuf[1];
+				const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
+				const boost::uint32_t localCheckSum = pathManager->GetPathCheckSum();
+				const CPlayer* player = playerHandler->Player(playerNum);
+
+				if (playerCheckSum == 0) {
+					logOutput.Print(
+						"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable cache?",
+						playerNum, player->name.c_str()
+					);
+				} else {
+					if (playerCheckSum != localCheckSum) {
+						logOutput.Print(
+							"[DESYNC WARNING] path-checksum %08x for player %d (%s) does not match local checksum %08x",
+							playerCheckSum, playerNum, player->name.c_str(), localCheckSum
+						);
+					}
+				}
+			} break;
+
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
@@ -3884,8 +3913,6 @@ void CGame::ClientReadNet()
 				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gs->frameNum, CSyncChecker::GetChecksum()));
 				if ((gs->frameNum & 4095) == 0) {// reset checksum every ~2.5 minute gametime
 					CSyncChecker::NewFrame();
-					// update the checksum with path data
-					SyncedUint tmp(pathManager->GetPathChecksum());
 				}
 #endif
 				AddTraffic(-1, packetCode, dataLength);
@@ -4475,7 +4502,10 @@ void CGame::ClientReadNet()
 				if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))
 #endif
 				{
-					logOutput.Print("Unknown net msg in client %d", (int) inbuf[0]);
+					logOutput.Print("Unknown net msg received, packet code is %d."
+							" A likely cause of this is network instability,"
+							" which may happen in a WLAN, for example.",
+							packetCode);
 				}
 				AddTraffic(-1, packetCode, dataLength);
 				break;

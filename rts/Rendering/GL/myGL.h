@@ -69,6 +69,8 @@ unsigned int LoadFragmentProgram(const char* filename);
 void glClearErrors();
 void glSafeDeleteProgram(GLuint program);
 
+void PrintAvailableResolutions();
+
 void LoadExtensions();
 void UnloadExtensions();
 

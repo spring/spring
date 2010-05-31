@@ -109,9 +109,6 @@ public:
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 
-	/// locked mouse indicator size
-	float crossSize;
-
 	unsigned char gameID[16];
 
 	CInfoConsole *infoConsole;
@@ -202,6 +199,8 @@ private:
 	float skipOldSpeed;
 	float skipOldUserSpeed;
 	unsigned skipLastDraw;
+
+	int speedControl;
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;

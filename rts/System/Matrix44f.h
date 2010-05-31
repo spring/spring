@@ -34,12 +34,16 @@ public:
 	void RotateX(float rad);
 	void RotateY(float rad);
 	void RotateZ(float rad);
-	void Rotate(float rad, const float3& axis);	//axis assumed normalized
+	void Rotate(float rad, const float3& axis); // axis is assumed to be normalized
 	void Translate(float x, float y, float z);
 	CMatrix44f Mul(const CMatrix44f& other) const;
 
 	CMatrix44f& InvertInPlace();
 	CMatrix44f Invert() const;
+
+	static double CalculateCofactor(const double m[4][4], int ei, int ej);
+	static bool Invert(const double m[4][4], double mInv[4][4]);
+
 
 	float3 Mul(const float3& vect) const;
 	float3 GetPos(void) const { return float3(m[12], m[13], m[14]); }

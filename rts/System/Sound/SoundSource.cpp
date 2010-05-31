@@ -6,6 +6,7 @@
 #include <alc.h>
 #include <SDL_timer.h>
 
+#include "SoundLog.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
 #include "OggStream.h"

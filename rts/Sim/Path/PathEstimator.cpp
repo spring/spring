@@ -435,7 +435,14 @@ void CPathEstimator::Update() {
 /**
  * Stores data and does some top-administration
  */
-IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 start, const CPathFinderDef& peDef, Path& path, unsigned int maxSearchedBlocks) {
+IPath::SearchResult CPathEstimator::GetPath(
+	const MoveData& moveData,
+	float3 start,
+	const CPathFinderDef& peDef,
+	Path& path,
+	unsigned int maxSearchedBlocks,
+	bool synced
+) {
 	start.CheckInBounds();
 	// clear the path
 	path.path.clear();
@@ -450,11 +457,13 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 	goalBlock.x = peDef.goalSquareX / BLOCK_SIZE;
 	goalBlock.y = peDef.goalSquareZ / BLOCK_SIZE;
 
-	CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
-	if (ci) {
-		// use a cached path if we have one
-		path = ci->path;
-		return ci->result;
+	if (synced) {
+		CPathCache::CacheItem* ci = pathCache->GetCachedPath(startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
+		if (ci) {
+			// use a cached path if we have one (NOTE: only when in synced context)
+			path = ci->path;
+			return ci->result;
+		}
 	}
 
 	// oterhwise search
@@ -463,8 +472,11 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 	// if search successful, generate new path
 	if (result == Ok || result == GoalOutOfRange) {
 		FinishSearch(moveData, path);
-		// only add succesful paths to the cache
-		pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
+
+		if (synced) {
+			// add succesful paths to the cache (NOTE: only when in synced context)
+			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
+		}
 
 		if (PATHDEBUG) {
 			LogObject() << "PE: Search completed.\n";
@@ -839,11 +851,6 @@ void CPathEstimator::WriteFile(std::string cacheFileName, const std::string& map
 unsigned int CPathEstimator::Hash() const
 {
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
-}
-
-boost::uint32_t CPathEstimator::GetPathChecksum()
-{
-	return pathChecksum;
 }
 
 

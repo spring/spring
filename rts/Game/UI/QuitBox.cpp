@@ -12,7 +12,7 @@
 #include "QuitBox.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
-#include "LoadSaveHandler.h"
+#include "LoadSave/LoadSaveHandler.h"
 #include "TimeUtil.h"
 #include "FileSystem/FileSystem.h"
 #include "Sim/Misc/ModInfo.h"

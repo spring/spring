@@ -13,7 +13,7 @@
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "MouseCursor.h"
-#include "MouseInput.h"
+#include "System/Input/MouseInput.h"
 #include "TooltipConsole.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Game/Game.h"
@@ -38,7 +38,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include <boost/cstdint.hpp>
 
@@ -96,6 +96,8 @@ CMouseHandler::CMouseHandler()
 
 	scrollWheelSpeed = configHandler->Get("ScrollWheelSpeed", 25.0f);
 	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
+
+	crossSize = configHandler->Get("CrossSize", 10.0f);
 }
 
 CMouseHandler::~CMouseHandler()
@@ -161,14 +163,11 @@ void CMouseHandler::LoadCursors()
 
 /******************************************************************************/
 
-void CMouseHandler::MouseMove(int x, int y)
+void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 {
 	if(hide) {
 		lastx = x;
 		lasty = y;
-
-		int dx = lastx - (gu->viewSizeX / 2 + gu->viewPosX);
-		int dy = lasty - (gu->viewSizeY / 2 + gu->viewPosY);
 
 		float3 move;
 		move.x = dx;
@@ -178,18 +177,16 @@ void CMouseHandler::MouseMove(int x, int y)
 		return;
 	}
 
-	const int dx = x - lastx;
-	const int dy = y - lasty;
 	lastx = x;
 	lasty = y;
 
-	dir=hide ? camera->forward : camera->CalcPixelDir(x,y);
+	dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
 
-	buttons[SDL_BUTTON_LEFT].movement += abs(dx) + abs(dy);
-	buttons[SDL_BUTTON_RIGHT].movement += abs(dx) + abs(dy);
+	buttons[SDL_BUTTON_LEFT].movement  += (int)sqrt(float(dx*dx + dy*dy));
+	buttons[SDL_BUTTON_RIGHT].movement += (int)sqrt(float(dx*dx + dy*dy));
 
 	if (!game->gameOver) {
-		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels+=abs(dx)+abs(dy);
+		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += (int)sqrt(float(dx*dx + dy*dy));
 	}
 
 	if(activeReceiver){
@@ -226,7 +223,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	buttons[button].x = x;
 	buttons[button].y = y;
 	buttons[button].camPos = camera->pos;
-	buttons[button].dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
+	buttons[button].dir = dir;
 	buttons[button].movement = 0;
 
 	activeButton = button;
@@ -753,6 +750,21 @@ void CMouseHandler::DrawCursor(void)
 {
 	if (guihandler)
 		guihandler->DrawCentroidCursor();
+
+	if (locked && (crossSize > 0.0f)) {
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+		glDisable(GL_TEXTURE_2D);
+		glLineWidth(1.49f);
+		glBegin(GL_LINES);
+			glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
+			glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
+			glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
+			glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
+		glEnd();
+		glLineWidth(1.0f);
+		glEnable(GL_TEXTURE_2D);
+		return;
+	}
 
 	if (hide || (cursorText == "none"))
 		return;

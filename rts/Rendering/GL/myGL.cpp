@@ -68,6 +68,29 @@ CVertexArray* GetVertexArray()
 
 /******************************************************************************/
 
+void PrintAvailableResolutions()
+{
+	// Get available fullscreen/hardware modes
+	SDL_Rect **modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
+	if (modes == (SDL_Rect **)0) {
+		logOutput.Print("Supported Video modes: No modes available!\n");
+	}else if (modes == (SDL_Rect **)-1) {
+		logOutput.Print("Supported Video modes: All modes available.\n");
+	}else{
+		char buffer[1024];
+		unsigned char n = 0;
+		for(int i=0;modes[i];++i) {
+			n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", modes[i]->w, modes[i]->h);
+		}
+		// remove last comma
+		if (n>=2) {
+			buffer[n-2] = NULL;
+		}
+		logOutput.Print("Supported Video modes: %s\n",buffer);
+	}
+}
+  
+  
 void LoadExtensions()
 {
 	glewInit();
@@ -80,25 +103,8 @@ void LoadExtensions()
 	logOutput.Print("GL:   %s\n", glGetString(GL_VERSION));
 	logOutput.Print("GL:   %s\n", glGetString(GL_VENDOR));
 	logOutput.Print("GL:   %s\n", glGetString(GL_RENDERER));
+	logOutput.Print("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	logOutput.Print("GLEW: %s\n", glewGetString(GLEW_VERSION));
-
-	// Get available fullscreen/hardware modes
-/*
-	SDL_Rect **modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL|SDL_RESIZABLE);
-
-	if (modes == (SDL_Rect **)0) {
-		logOutput.Print("SDL_ListModes: No modes available!\n");
-	}else if (modes == (SDL_Rect **)-1) {
-		logOutput.Print("SDL_ListModes: Resolution is restricted.\n");
-	}else{
-		char buffer[512];
-		unsigned char n = 0;
-		for(int i=0;modes[i];++i) {
-			n += SNPRINTF(&buffer[n], 512-n, "%dx%d, ", modes[i]->w, modes[i]->h);
-		}
-		logOutput.Print("SDL_ListModes: %s\n",buffer);
-	}
-*/
 
 #if       !defined DEBUG
 	// Print out warnings for really crappy graphic cards/drivers

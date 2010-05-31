@@ -5,6 +5,7 @@
 #include <SDL_keysym.h>
 
 #include "mmgr.h"
+#include <boost/cstdint.hpp>
 
 #include "TWController.h"
 
@@ -14,7 +15,7 @@
 #include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
 #include "GlobalUnsynced.h"
-#include <boost/cstdint.hpp>
+#include "myMath.h"
 
 extern boost::uint8_t *keys;
 
@@ -33,21 +34,22 @@ void CTWController::KeyMove(float3 move)
 	flatForward.y=0;
 	flatForward.ANormalize();
 
-	move*=sqrt(move.z)*200;
-	pos+=(flatForward*move.y+camera->right*move.x)*scrollSpeed;
+	move *= sqrt(move.z) * 200;
+	pos  += (camera->right * move.x + flatForward * move.y) * scrollSpeed;
 }
 
 
 void CTWController::MouseMove(float3 move)
 {
-	float dist=-camera->rot.x*1500;
-	float pixelsize=camera->GetTanHalfFov()*2/gu->viewSizeY*dist*2;
-	move*=(1+keys[SDLK_LSHIFT]*3)*pixelsize;
-	float3 flatForward=camera->forward;
-	flatForward.y=0;
+	float dist = -camera->rot.x * 1500;
+	float pixelsize = camera->GetTanHalfFov() * 2/gu->viewSizeY * dist * 2;
+	move *= (1+keys[SDLK_LSHIFT]*3) * pixelsize;
+
+	float3 flatForward = camera->forward;
+	flatForward.y = 0;
 	flatForward.ANormalize();
 
-	pos+=-(flatForward*move.y-camera->right*move.x)*scrollSpeed;
+	pos += (camera->right * move.x - flatForward * move.y) * scrollSpeed;
 }
 
 
@@ -72,20 +74,11 @@ void CTWController::Update()
 
 float3 CTWController::GetPos()
 {
-	if(pos.x<0.01f)
-		pos.x=0.01f;
-	if(pos.z<0.01f)
-		pos.z=0.01f;
-	if(pos.x>(gs->mapx)*SQUARE_SIZE-0.01f)
-		pos.x=(gs->mapx)*SQUARE_SIZE-0.01f;
-	if(pos.z>(gs->mapy)*SQUARE_SIZE-0.01f)
-		pos.z=(gs->mapy)*SQUARE_SIZE-0.01f;
-	if(camera->rot.x>-0.1f)
-		camera->rot.x=-0.1f;
-	if(camera->rot.x<-PI*0.4f)
-		camera->rot.x=-PI*0.4f;
+	pos.x = Clamp(pos.x, 0.01f, gs->mapx*SQUARE_SIZE-0.01f);
+	pos.z = Clamp(pos.z, 0.01f, gs->mapy*SQUARE_SIZE-0.01f);
+	pos.y = ground->GetHeight(pos.x,pos.z);
 
-	pos.y=ground->GetHeight(pos.x,pos.z);
+	camera->rot.x = Clamp(camera->rot.x, -PI*0.4f, -0.1f);
 
 	float3 dir;
 	dir.x=(float)(sin(camera->rot.y)*cos(camera->rot.x));
@@ -93,12 +86,11 @@ float3 CTWController::GetPos()
 	dir.z=(float)(cos(camera->rot.y)*cos(camera->rot.x));
 	dir.ANormalize();
 
-	float dist=-camera->rot.x*1500;
+	float dist = -camera->rot.x * 1500;
 
-	float3 cpos=pos-dir*dist;
-
-	if(cpos.y<ground->GetHeight(cpos.x,cpos.z)+5)
-		cpos.y=ground->GetHeight(cpos.x,cpos.z)+5;
+	float3 cpos = pos - dir * dist;
+	if(cpos.y < ground->GetHeight(cpos.x,cpos.z) + 5)
+		cpos.y = ground->GetHeight(cpos.x,cpos.z) + 5;
 
 	return cpos;
 }

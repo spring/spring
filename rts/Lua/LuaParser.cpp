@@ -1052,9 +1052,15 @@ bool LuaTable::GetMap(map<int, string>& data) const
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isstring(L, -1)) {
-			const int    key   = lua_toint(L, -2);
-			const string value = lua_tostring(L, -1);
-			data[key] = value;
+			if (lua_isstring(L, -1)) {
+				const int    key   = lua_toint(L, -2);
+				const string value = lua_tostring(L, -1);
+				data[key] = value;
+			} else if (lua_isboolean(L, -1)) {
+				const int    key   = lua_toint(L, -2);
+				const string value = lua_toboolean(L, -1) ? "1" : "0";
+				data[key] = value;
+			}
 		}
 	}
 	return true;
@@ -1085,10 +1091,16 @@ bool LuaTable::GetMap(map<string, string>& data) const
 	}
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2) && lua_isstring(L, -1)) {
-			const string key   = lua_tostring(L, -2);
-			const string value = lua_tostring(L, -1);
-			data[key] = value;
+		if (lua_israwstring(L, -2)) {
+			if (lua_isstring(L, -1)) {
+				const string key   = lua_tostring(L, -2);
+				const string value = lua_tostring(L, -1);
+				data[key] = value;
+			} else if (lua_isboolean(L, -1)) {
+				const string key   = lua_tostring(L, -2);
+				const string value = lua_toboolean(L, -1) ? "1" : "0";
+				data[key] = value;
+			}
 		}
 	}
 	return true;

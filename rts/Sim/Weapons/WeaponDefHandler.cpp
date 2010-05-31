@@ -18,7 +18,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 
@@ -334,7 +334,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	if (wd.type == "Cannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.8f);
-	} else if (wd.type == "BeamLaser" || wd.type == "LightingCannon") {
+	} else if (wd.type == "BeamLaser" || wd.type == "LightningCannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 1.0f);
 	} else {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.2f);
@@ -414,7 +414,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.visuals.hardStop = wdTable.GetBool("hardstop", false);
 	} else if (wd.type == "BeamLaser") {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-	} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
+	} else if (wd.type == "LightningCannon") {
 		wd.ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 
 		wd.thickness = wdTable.GetFloat("thickness", 0.8f);
@@ -438,10 +438,10 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	const LuaTable texTable = wdTable.SubTable("textures");
 
-	wd.visuals.texNames[0] = texTable.GetString(1, wdTable.GetString("texName1", ""));
-	wd.visuals.texNames[1] = texTable.GetString(2, wdTable.GetString("texName2", ""));
-	wd.visuals.texNames[2] = texTable.GetString(3, wdTable.GetString("texName3", ""));
-	wd.visuals.texNames[3] = texTable.GetString(4, wdTable.GetString("texName4", ""));
+	wd.visuals.texNames[0] = texTable.GetString(1, wdTable.GetString("texture1", ""));
+	wd.visuals.texNames[1] = texTable.GetString(2, wdTable.GetString("texture2", ""));
+	wd.visuals.texNames[2] = texTable.GetString(3, wdTable.GetString("texture3", ""));
+	wd.visuals.texNames[3] = texTable.GetString(4, wdTable.GetString("texture4", ""));
 
 	wd.visuals.expGenTag = wdTable.GetString("explosionGenerator", "");
 	wd.visuals.bounceExpGenTag = wdTable.GetString("bounceExplosionGenerator", "");

@@ -30,7 +30,7 @@ public:
 	 *
 	 * Accesses a CTeam instance at a given index
 	 */
-	CTeam* Team(int i) { return &teams[i]; }
+	CTeam* Team(int i) { return teams[i]; }
 
 	bool IsValidTeam(int id) {
 		return ((id >= 0) && (id < teams.size()));
@@ -53,7 +53,7 @@ public:
 	 *
 	 * returns the team2ally at given index
 	 */
-	int AllyTeam(int team) { return teams[team].teamAllyteam; }
+	int AllyTeam(int team) { return teams[team]->teamAllyteam; }
 	::AllyTeam& GetAllyTeam(size_t id) { return allyTeams[id]; };
 
 	bool ValidAllyTeam(size_t id)
@@ -78,7 +78,7 @@ public:
 	 *
 	 * Sets team's ally team
 	 */
-	void SetAllyTeam(int team, int allyteam) { teams[team].teamAllyteam = allyteam; }
+	void SetAllyTeam(int team, int allyteam) { teams[team]->teamAllyteam = allyteam; }
 
 	/**
 	 * @brief set ally
@@ -104,6 +104,10 @@ public:
 
 	void GameFrame(int frameNum);
 
+	void EnableHighlight(unsigned currentTime);
+	void DisableHighlight();
+	void UpdateHighlight();
+
 private:
 
 	/**
@@ -125,7 +129,7 @@ private:
 	 *
 	 * Array of CTeam instances for teams in game
 	 */
-	std::vector<CTeam> teams;
+	std::vector<CTeam *> teams;
 	std::vector< ::AllyTeam > allyTeams;
 };
 

@@ -2,7 +2,7 @@
 
 #include "Music.h"
 
-#include "Sound.h"
+#include "ISound.h"
 #include "SoundSource.h"
 
 MusicChannel::MusicChannel() : current(NULL)

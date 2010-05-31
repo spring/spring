@@ -217,7 +217,6 @@ boost::mutex inmapmutex;
 boost::mutex tempmutex;
 boost::mutex posmutex;
 boost::mutex runitmutex;
-boost::mutex simmutex;
 boost::mutex netmutex;
 boost::mutex histmutex;
 boost::mutex logmutex;
@@ -244,6 +243,7 @@ boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
+boost::recursive_mutex simmutex;
 #endif
 
 // GMLqueue implementation
@@ -546,6 +546,10 @@ void gmlQueue::SyncRequest() {
 
 #define GML_MAKEHANDLER4(name)\
 	GML_EXEC(name,GML_DATA_D(name))\
+	GML_NEXT(name)
+
+#define GML_MAKEHANDLER4R(name)\
+	GML_EXEC_RET(name,GML_DATA_D(name))\
 	GML_NEXT(name)
 
 #define GML_MAKEHANDLER5(name)\
@@ -985,6 +989,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3V(Uniform2fv)
 		GML_MAKEHANDLER3V(Uniform3fv)
 		GML_MAKEHANDLER3V(Uniform4fv)
+		GML_MAKEHANDLER4R(MapBufferRange)
 	}
 }
 

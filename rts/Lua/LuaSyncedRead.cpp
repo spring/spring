@@ -2536,15 +2536,26 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
 	string tooltip;
+
+	const CTeam* unitTeam = NULL;
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = IsAllyUnit(unit) ? NULL : unitDef->decoyDef;
 	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
+
 	if (effectiveDef->showPlayerName) {
-		tooltip = playerHandler->Player(teamHandler->Team(unit->team)->leader)->name;
-		CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
-		if (saids.size() > 0) {
-			tooltip = std::string("AI@") + tooltip;
+		if (teamHandler->IsValidTeam(unit->team)) {
+			unitTeam = teamHandler->Team(unit->team);
+		}
+
+		if (unitTeam != NULL && unitTeam->leader != -1) {
+			tooltip = playerHandler->Player(unitTeam->leader)->name;
+			CSkirmishAIHandler::ids_t teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
+
+			if (!teamAIs.empty()) {
+				tooltip = std::string("AI@") + tooltip;
+			}
 		}
 	} else {
 		if (!decoyDef) {

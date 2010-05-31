@@ -1054,7 +1054,7 @@ void CWaitCommandsAI::SquadWait::Update()
 			SendWaitCommand(unblockSet);
 			for (it = unblockSet.begin(); it != unblockSet.end(); ++it) {
 				DeleteDeathDependence(*it);
-				waitUnits.erase(it);
+				waitUnits.erase(*it);
 			}
 		}
 	}

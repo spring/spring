@@ -294,6 +294,7 @@
 #undef glUniform2fv
 #undef glUniform3fv
 #undef glUniform4fv
+#undef glMapBufferRange
 
 // #####################################################################
 
@@ -584,3 +585,4 @@
 #define glUniform2fv gmlUniform2fv
 #define glUniform3fv gmlUniform3fv
 #define glUniform4fv gmlUniform4fv
+#define glMapBufferRange gmlMapBufferRange

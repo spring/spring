@@ -7,8 +7,10 @@
 
 #include "mmgr.h"
 
+#include "Rendering/GL/PBO.h"
 #include "TextureAtlas.h"
 #include "Bitmap.h"
+#include "System/GlobalUnsynced.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
 #include "Util.h"
@@ -111,73 +113,79 @@ bool CTextureAtlas::Finalize()
 	sort(memtextures.begin(), memtextures.end(), CTextureAtlas::CompareTex);
 
 	bool success = true;
-	int cury=0;
-	int maxy=0;
+	int maxx=0;
 	int curx=0;
+	int maxy=0;
+	int cury=0;
 	std::list<int2> nextSub;
 	std::list<int2> thisSub;
 	bool recalc=false;
-	for(int a=0;a<static_cast<int>(memtextures.size());++a){
+	for(int a=0; a < static_cast<int>(memtextures.size()); ++a) {
 		MemTex* curtex = memtextures[a];
 
-		bool done=false;
-		while(!done){
-			if(thisSub.empty()){
-				if(nextSub.empty()){
-					cury=maxy;
-					maxy+=curtex->ysize+TEXMARGIN;
-					if(maxy>ysize){
-						if(IncreaseSize())
-						{
+		bool done = false;
+		while(!done) {
+			if(thisSub.empty()) {
+				if(nextSub.empty()) {
+					maxx = std::max(maxx, curx);
+					cury = maxy;
+					maxy += curtex->ysize + TEXMARGIN;
+					if(maxy > ysize) {
+						if(IncreaseSize()){
  							nextSub.clear();
 							thisSub.clear();
-							cury=maxy=curx=0;
-							recalc=true;
+							cury = maxy = curx = 0;
+							recalc = true;
 							break;
-						}
-						else
-						{
+						} else {
 							success = false;
 							break;
 						}
 					}
 					thisSub.push_back(int2(0,cury));
 				} else {
-					thisSub=nextSub;
+					thisSub = nextSub;
 					nextSub.clear();
 				}
 			}
-			if(thisSub.front().x+curtex->xsize>xsize){
+
+			if(thisSub.front().x + curtex->xsize > xsize) {
 				thisSub.clear();
 				continue;
 			}
-			if(thisSub.front().y+curtex->ysize>maxy){
+			if(thisSub.front().y + curtex->ysize > maxy) {
 				thisSub.pop_front();
 				continue;
 			}
+
 			//ok found space for us
-			curtex->xpos=thisSub.front().x;
-			curtex->ypos=thisSub.front().y;
+			curtex->xpos = thisSub.front().x;
+			curtex->ypos = thisSub.front().y;
 
-			done=true;
+			done = true;
 
-			if(thisSub.front().y+curtex->ysize+TEXMARGIN<maxy){
-				nextSub.push_back(int2(thisSub.front().x+TEXMARGIN,thisSub.front().y+curtex->ysize+TEXMARGIN));
+			if(thisSub.front().y + curtex->ysize + TEXMARGIN < maxy) {
+				nextSub.push_back(int2(thisSub.front().x + TEXMARGIN, thisSub.front().y + curtex->ysize + TEXMARGIN));
 			}
 
-			thisSub.front().x+=curtex->xsize+TEXMARGIN;
-			while(thisSub.size()>1 && thisSub.front().x >= (++thisSub.begin())->x){
-				(++thisSub.begin())->x=thisSub.front().x;
+			thisSub.front().x += curtex->xsize + TEXMARGIN;
+			while(thisSub.size()>1 && thisSub.front().x >= (++thisSub.begin())->x) {
+				(++thisSub.begin())->x = thisSub.front().x;
 				thisSub.erase(thisSub.begin());
 			}
 
 		}
-		if(recalc)
-		{
+		if(recalc) {
 			recalc=false;
 			a=-1;
 			continue;
 		}
+	}
+
+	if (gu->supportNPOTs && !debug) {
+		maxx = std::max(maxx,curx);
+		//xsize = maxx;
+		ysize = maxy;
 	}
 
 	CreateTexture();
@@ -206,19 +214,21 @@ bool CTextureAtlas::Finalize()
 
 void CTextureAtlas::CreateTexture()
 {
-	unsigned char *data;
-	data = new unsigned char[xsize*ysize*4];
+	PBO pbo;
+	pbo.Bind();
+	pbo.Resize(xsize*ysize*4);
+	unsigned char* data = (unsigned char*)pbo.MapBuffer(debug ? GL_READ_WRITE : GL_WRITE_ONLY);
 	std::memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
 
-	for(size_t i=0; i<memtextures.size(); i++)
-	{
-		MemTex *tex = memtextures[i];
-		for(int x=0; x<tex->xsize; x++) {
-			for(int y=0; y<tex->ysize; y++) {
-				((int*)data)[tex->xpos+x+(tex->ypos+y)*xsize] = ((int*)tex->data)[x+y*tex->xsize];
-			}
-		}			
+	for(size_t i=0; i<memtextures.size(); i++) {
+		MemTex& tex = *memtextures[i];
+		for(int y=0; y<tex.ysize; y++) {
+			int* dst = ((int*)data) + tex.xpos + (tex.ypos + y) * xsize;
+			int* src = ((int*)tex.data) + y * tex.xsize;
+			memcpy(dst, src, tex.xsize*4);
+		}
 	}
+	pbo.UnmapBuffer();
 
 	if (debug) {
 		// hack to make sure we don't overwrite our own atlases
@@ -228,24 +238,19 @@ void CTextureAtlas::CreateTexture()
 		CBitmap save(data,xsize,ysize);
 		save.Save(fname);
 		logOutput.Print("Saved finalized textureatlas to '%s'.", fname);
-		//CBitmap save2(data[1],xsize>>1,ysize>>1);
-		//save2.Save("textureatlas2.tga");
-		//CBitmap save3(data[2],xsize>>2,ysize>>2);
-		//save3.Save("textureatlas3.tga");
 	}
 
 
 	glGenTextures(1, &gltex);
 	glBindTexture(GL_TEXTURE_2D, gltex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,/*GL_NEAREST_MIPMAP_LINEAR*/GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST/*GL_NEAREST_MIPMAP_LINEAR*/);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-	//glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, pbo.GetPtr());
 
-	delete [] data;
+	pbo.Unbind();
 
 	initialized=true;
 }

@@ -407,6 +407,10 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 # in the respective directories doesn't work either because then the SConstript
 # ends up in the zip too... Bah. SCons sucks. Just like autoshit and everything else btw.
 base_dir = os.path.join(env['builddir'], 'base')
+if sys.platform == 'win32':
+	script_ext = '.bat'
+else:
+	script_ext = '.sh'
 springcontentArch = os.path.join(base_dir, 'springcontent.sdz')
 maphelperArch =     os.path.join(base_dir, 'maphelper.sdz')
 cursorsArch =       os.path.join(base_dir, 'cursors.sdz')
@@ -415,19 +419,14 @@ bitmapsArch =       os.path.join(base_dir, 'spring', 'bitmaps.sdz')
 #env.Zip(bitmapsArch, filelist.list_files(env, 'installer/builddata/bitmaps'))
 
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
-	if sys.platform != 'win32':
-		if env.GetOption('clean'):
-			if os.system("rm -f " + springcontentArch):
-				env.Exit(1)
-			if os.system("rm -f " + bitmapsArch):
-				env.Exit(1)
-			if os.system("rm -f " + maphelperArch):
-				env.Exit(1)
-			if os.system("rm -f " + cursorsArch):
-				env.Exit(1)
-		else:
-			if os.system("installer/make_gamedata_arch.sh " + base_dir):
-				env.Exit(1)
+	if env.GetOption('clean'):
+		os.remove(springcontentArch)
+		os.remove(bitmapsArch)
+		os.remove(maphelperArch)
+		os.remove(cursorsArch)
+	else:
+		if os.system(os.path.join('cont', 'base', 'make_gamedata_arch' + script_ext) + ' ' + base_dir):
+			env.Exit(1)
 
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), springcontentArch)
 Alias('install', inst)
@@ -439,14 +438,14 @@ inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base/spri
 Alias('install', inst)
 
 # install fonts
-for font in os.listdir('game/fonts'):
-	if not os.path.isdir(os.path.join('game/fonts', font)):
-		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('game/fonts', font))
+for font in os.listdir('cont/fonts'):
+	if not os.path.isdir(os.path.join('cont/fonts', font)):
+		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('cont/fonts', font))
 		Alias('install', inst)
 
 # install some files from root of datadir
 for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'teamcolors.lua']:
-	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('cont', f))
 	Alias('install', inst)
 
 # install menu entry & icon
@@ -457,9 +456,9 @@ Alias('install', inst)
 
 # install LuaUI files
 for f in ['luaui.lua']:
-	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('cont', f))
 	Alias('install', inst)
-luaui_files=filelist.list_files_recursive(env, 'game/LuaUI')
+luaui_files=filelist.list_files_recursive(env, 'cont/LuaUI')
 for f in luaui_files:
 	if not os.path.isdir(f):
 		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], os.path.dirname(f)[5:]), f)

@@ -2,7 +2,7 @@
 ################################################################################
 file=lua2php.cpp
 
-g++ -g -I../../../rts/System $file ../../../game/unitsync.so
+g++ -g -I../../../rts/System $file ../../../dist/unitsync.so
 
 mod=$1
 if [ -z $mod ]; then

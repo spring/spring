@@ -1,12 +1,13 @@
 #!/bin/sh
-# Author: Tobi Vollebregt
 
 # Quit on error.
 set -e
 
+ORIG_DIR=$(pwd)
+
 # Sanity check.
 if [ ! -x /usr/bin/git ]; then
-	echo "Error: Couldn't find /usr/bin/git"
+	echo "Error: Couldn't find /usr/bin/git" >&2
 	exit 1
 fi
 
@@ -14,12 +15,12 @@ fi
 # (Compatible with SConstruct, which is in trunk root)
 
 while [ ! -d installer ]; do
-        if [ "$PWD" = "/" ]; then
-                echo "Error: Could not find installer directory."
-                echo "Make sure to run this script from a directory below your checkout directory."
-                exit 1
-        fi
-        cd ..
+	if [ "$PWD" = "/" ]; then
+		echo "Error: Could not find installer directory." >&2
+		echo "Make sure to run this script from a directory below your checkout directory." >&2
+		exit 1
+	fi
+	cd ..
 done
 
 set +e # turn of quit on error
@@ -40,7 +41,7 @@ else
 	version_string=`git describe --tags | sed s/\-[^\-]*$//`
 	branch="master"
 fi
-echo "Using $branch as source"
+echo "Using ${branch} as source"
 
 dir="spring_${version_string}"
 
@@ -64,7 +65,7 @@ include=" \
  $dir/AI/ \
  $dir/doc/ \
  $dir/Doxyfile \
- $dir/game/ \
+ $dir/cont/ \
  $dir/installer/ \
  $dir/LICENSE.html \
  $dir/README.* \
@@ -122,4 +123,4 @@ if [ -n "$zip" ] || [ -n "$seven_zip" ]; then
 	rm -rf crlf
 fi
 
-cd ..
+cd ${ORIG_DIR}

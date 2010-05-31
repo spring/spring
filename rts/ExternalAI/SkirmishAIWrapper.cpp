@@ -305,6 +305,17 @@ void CSkirmishAIWrapper::UnitCaptured(int unitId, int oldTeam, int newTeam) {
 	ai->HandleEvent(EVENT_UNIT_CAPTURED, &evtData);
 }
 
+
+void CSkirmishAIWrapper::EnemyCreated(int unitId) {
+	SEnemyCreatedEvent evtData = {unitId};
+	ai->HandleEvent(EVENT_ENEMY_CREATED, &evtData);
+}
+
+void CSkirmishAIWrapper::EnemyFinished(int unitId) {
+	SEnemyFinishedEvent evtData = {unitId};
+	ai->HandleEvent(EVENT_ENEMY_FINISHED, &evtData);
+}
+
 void CSkirmishAIWrapper::EnemyEnterLOS(int unitId) {
 	SEnemyEnterLOSEvent evtData = {unitId};
 	ai->HandleEvent(EVENT_ENEMY_ENTER_LOS, &evtData);

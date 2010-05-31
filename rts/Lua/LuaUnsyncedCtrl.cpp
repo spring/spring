@@ -51,7 +51,6 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/FontTexture.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -65,7 +64,7 @@
 #include "LogOutput.h"
 #include "Util.h"
 #include "NetProtocol.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/AudioChannel.h"
 #include "Sound/Music.h"
 
@@ -164,7 +163,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetConfigString);
 
 	REGISTER_LUA_CFUNC(CreateDir);
-	REGISTER_LUA_CFUNC(MakeFont);
 
 	REGISTER_LUA_CFUNC(SendCommands);
 	REGISTER_LUA_CFUNC(GiveOrder);
@@ -1607,73 +1605,6 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 
 /******************************************************************************/
-
-int LuaUnsyncedCtrl::MakeFont(lua_State* L)
-{
-	if (!CheckModUICtrl()) {
-		return 0;
-	}
-
-	int tableIndex = 1;
-	string inputFile;
-	string inputData;
-	if (lua_israwstring(L, 1)) {
-		inputFile = lua_tostring(L, 1);
-		tableIndex++;
-	}
-
-	FontTexture::Reset();
-	if (lua_istable(L, tableIndex)) {
-		for (lua_pushnil(L); lua_next(L, tableIndex) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2)) {
-				const string key = lua_tostring(L, -2);
-				if (lua_israwstring(L, -1)) {
-					if (key == "outName") {
-						FontTexture::SetOutBaseName(lua_tostring(L, -1));
-					}
-					else if (key == "inData") {
-						size_t len = 0;
-						const char* ptr = lua_tolstring(L, -1, &len);
-						inputData.assign(ptr, len);
-						FontTexture::SetInData(inputData);
-					}
-				}
-				else if (lua_isnumber(L, -1)) {
-					const unsigned int value = (unsigned int)lua_tonumber(L, -1);
-					if (key == "height") {
-						FontTexture::SetFontHeight(value);
-					} else if (key == "texWidth") {
-						FontTexture::SetTextureWidth(value);
-					} else if (key == "minChar") {
-						FontTexture::SetMinChar(value);
-					} else if (key == "maxChar") {
-						FontTexture::SetMaxChar(value);
-					} else if (key == "outlineMode") {
-						FontTexture::SetOutlineMode(value);
-					} else if (key == "outlineRadius") {
-						FontTexture::SetOutlineRadius(value);
-					} else if (key == "outlineWeight") {
-						FontTexture::SetOutlineWeight(value);
-					} else if (key == "padding") {
-						FontTexture::SetPadding(value);
-					} else if (key == "stuffing") {
-						FontTexture::SetStuffing(value);
-					} else if (key == "debug") {
-						FontTexture::SetDebugLevel(value);
-					}
-				}
-			}
-		}
-	}
-
-	if (!inputFile.empty()) {
-		// inputData has the override
-		FontTexture::SetInFileName(inputFile);
-	}
-
-	lua_pushboolean(L, FontTexture::Execute());
-	return 1;
-}
 
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {

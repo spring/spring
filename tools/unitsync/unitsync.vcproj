@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib Advapi32.lib"
-				OutputFile="../../game/unitsync.dll"
+				OutputFile="..\..\dist\unitsync.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.9/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
 				ModuleDefinitionFile="exports.def"
@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib Advapi32.lib"
-				OutputFile="../../game/unitsync.dll"
+				OutputFile="..\..\dist\unitsync.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.9/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
 				ModuleDefinitionFile="exports.def"
@@ -225,7 +225,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="zlibwapi.lib DevIL.lib ILU.lib SDL.lib Advapi32.lib"
-				OutputFile="../../game/unitsync-python.dll"
+				OutputFile="..\..\dist\unitsync-python.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../vclibs/DevIL/lib;&quot;../../vclibs/freetype-2.1.10/objs&quot;;../../vclibs/OpenAL/libs;../../vclibs/glew/lib;../../vclibs/zlibwapi/lib;&quot;../../vclibs/SDL-1.2.9/lib&quot;;../../vclibs/boost/lib;../../vclibs/libjpeg"
 				ModuleDefinitionFile="exports.def"

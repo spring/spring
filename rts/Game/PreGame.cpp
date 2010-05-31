@@ -25,14 +25,14 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "NetProtocol.h"
 #include "Net/RawPacket.h"
-#include "DemoRecorder.h"
-#include "DemoReader.h"
-#include "LoadSaveHandler.h"
+#include "LoadSave/DemoRecorder.h"
+#include "LoadSave/DemoReader.h"
+#include "LoadSave/LoadSaveHandler.h"
 #include "TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Sound/Music.h"
 #include "Map/MapInfo.h"
 #include "ConfigHandler.h"
@@ -66,7 +66,7 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 	{
 		net->InitLocalClient();
 	}
-	sound = new CSound(); // should have finished until server response arrives
+	ISound::Initialize(); // should have finished until server response arrives
 }
 
 
@@ -197,7 +197,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 void CPreGame::UpdateClientNet()
 {
-	if (net->CheckTimeout())
+	if (net->CheckTimeout(0, true))
 	{
 		logOutput.Print("Server not reachable");
 		globalQuit = true;
@@ -212,7 +212,7 @@ void CPreGame::UpdateClientNet()
 			case NETMSG_QUIT: {
 				const std::string message((char*)(inbuf+3));
 				logOutput.Print(message);
-				throw std::runtime_error(message);
+				handleerror(NULL, message, "Quit message", MBF_OK | MBF_EXCL);
 				break;
 			}
 			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.

@@ -23,7 +23,7 @@ public:
 	inline GLuint GetGrassShadingTexture() const { return grassShadingTex; }
 	inline GLuint GetSplatDetailTexture() const { return splatDetailTex; }
 	inline GLuint GetSplatDistrTexture() const { return splatDistrTex; }
-
+	inline GLuint GetSkyReflectModTexture() const { return skyReflectModTex; }
 
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
@@ -55,7 +55,6 @@ public:
 	// NOTE: do not use, just here for backward compatibility with BFGroundTextures.cpp
 	CSmfMapFile& GetFile() { return file; }
 
-	bool usePBO;
 	float anisotropy;
 
 protected:
@@ -63,14 +62,15 @@ protected:
 
 	CSmfMapFile file;
 
-	GLuint detailTex;       // supplied by the map
-	GLuint specularTex;     // supplied by the map, moderates specular contribution
-	GLuint shadingTex;      // holds precomputed dot(lightDir, faceNormal) values
-	GLuint normalsTex;      // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
-	GLuint minimapTex;      // supplied by the map
-	GLuint splatDetailTex;  // contains per-channel separate greyscale detail-textures (overrides detailTex)
-	GLuint splatDistrTex;   // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
-	GLuint grassShadingTex; // specifies grass-blade modulation color (defaults to minimapTex)
+	GLuint detailTex;        // supplied by the map
+	GLuint specularTex;      // supplied by the map, moderates specular contribution
+	GLuint shadingTex;       // holds precomputed dot(lightDir, faceNormal) values
+	GLuint normalsTex;       // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	GLuint minimapTex;       // supplied by the map
+	GLuint splatDetailTex;   // contains per-channel separate greyscale detail-textures (overrides detailTex)
+	GLuint splatDistrTex;    // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
+	GLuint grassShadingTex;  // specifies grass-blade modulation color (defaults to minimapTex)
+	GLuint skyReflectModTex; // modulates sky-reflection RGB intensities (must be the same size as specularTex)
 
 	bool haveSpecularLighting;
 	bool haveSplatTexture;

@@ -58,9 +58,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	std::set<std::string> blockMapTexNames;
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser.Execute()) {
-		logOutput.Print(resourcesParser.GetErrorLog());
-	}
+	resourcesParser.Execute();
 
 	const LuaTable rootTable = resourcesParser.GetRoot();
 	const LuaTable gfxTable = rootTable.SubTable("graphics");
@@ -74,6 +72,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 		blockMapTexNames.insert(StringToLower(pi->first));
 	}
+	ptex.clear();
 
 	// add all texture from sections within projectiletextures section
 	std::vector<std::string> seclist;
@@ -83,13 +82,13 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		const LuaTable ptSubTable = ptTable.SubTable(seclist[i]);
 
 		if (ptSubTable.IsValid()) {
-			std::map<std::string, std::string> ptex2;
-			ptSubTable.GetMap(ptex2);
+			ptSubTable.GetMap(ptex);
 
-			for (std::map<std::string, std::string>::iterator pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
+			for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 				blockMapTexNames.insert(StringToLower(pi->first));
 			}
+			ptex.clear();
 		}
 	}
 
@@ -172,37 +171,35 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	// allow map specified atlas textures for gaia unit projectiles
 	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!mapResParser.Execute()) {
-		logOutput.Print(mapResParser.GetErrorLog());
-	}
-	if (mapResParser.IsValid()) {
+	
+	if (mapResParser.Execute()) {
 		const LuaTable mapRoot = mapResParser.GetRoot();
 		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");
 
 		// add all textures in projectiletextures section
-		std::map<std::string, std::string> mptex;
 		std::map<std::string, std::string>::iterator pi;
 
-		mapTable.GetMap(mptex);
+		mapTable.GetMap(ptex);
 
-		for (pi = mptex.begin(); pi != mptex.end(); ++pi) {
+		for (pi = ptex.begin(); pi != ptex.end(); ++pi) {
 			if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
 				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 			}
 		}
+		ptex.clear();
 
 		// add all texture from sections within projectiletextures section
 		mapTable.GetKeys(seclist);
 		for (size_t i = 0; i < seclist.size(); i++) {
 			const LuaTable mapSubTable = mapTable.SubTable(seclist[i]);
 			if (mapSubTable.IsValid()) {
-				std::map<std::string, std::string> ptex2;
-				mapSubTable.GetMap(ptex2);
-				for (std::map<std::string, std::string>::iterator pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
+				mapSubTable.GetMap(ptex);
+				for (pi = ptex.begin(); pi != ptex.end(); ++pi) {
 					if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
 						textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 					}
 				}
+				ptex.clear();
 			}
 		}
 	}
@@ -258,22 +255,21 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 		groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 	}
+	ptex.clear();
 
-	// add all texture from sections within groundfx section
+	// add all textures from sections within groundfx section
 	groundfxTable.GetKeys(seclist);
 
 	for (size_t i = 0; i < seclist.size(); i++) {
 		const LuaTable gfxSubTable = groundfxTable.SubTable(seclist[i]);
 
 		if (gfxSubTable.IsValid()) {
-			std::map<std::string, std::string> ptex2;
-			std::map<std::string, std::string>::iterator pi;
+			gfxSubTable.GetMap(ptex);
 
-			gfxSubTable.GetMap(ptex2);
-
-			for (pi = ptex2.begin(); pi != ptex2.end(); ++pi) {
+			for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
 				groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
 			}
+			ptex.clear();
 		}
 	}
 
@@ -388,7 +384,7 @@ void CProjectileDrawer::LoadWeaponTextures() {
 				wd.visuals.texture2 = laserendtex;
 				wd.visuals.texture3 = beamlaserflaretex;
 			}
-		} else if (wd.type == "LightingCannon" || wd.type == "LightningCannon") {
+		} else if (wd.type == "LightningCannon") {
 			wd.visuals.texture1 = laserfallofftex;
 		} else if (wd.type == "EmgCannon") {
 			wd.visuals.texture1 = plasmatex;
@@ -548,29 +544,31 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	typedef std::map<int, ProjectileSet>::const_iterator ProjectileBinIt;
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		CVertexArray* lines = GetVertexArray();
-		CVertexArray* points = GetVertexArray();
-
-		lines->Initialize();
-		lines->EnlargeArrays(modelRenderers[modelType]->GetNumProjectiles() * 2, 0, VA_SIZE_C);
-		points->Initialize();
-		points->EnlargeArrays(modelRenderers[modelType]->GetNumProjectiles(), 0, VA_SIZE_C);
-
 		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
 
-		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-			for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
-				CProjectile* p = *setIt;
+		if (!projectileBin.empty()) {
+			CVertexArray* lines = GetVertexArray();
+			CVertexArray* points = GetVertexArray();
 
-				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
-					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
-					p->DrawOnMinimap(*lines, *points);
+			lines->Initialize();
+			lines->EnlargeArrays(projectileBin.size() * 2, 0, VA_SIZE_C);
+			points->Initialize();
+			points->EnlargeArrays(projectileBin.size(), 0, VA_SIZE_C);
+
+			for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
+				for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
+					CProjectile* p = *setIt;
+
+					if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
+						gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
+						p->DrawOnMinimap(*lines, *points);
+					}
 				}
 			}
-		}
 
-		lines->DrawArrayC(GL_LINES);
-		points->DrawArrayC(GL_POINTS);
+			lines->DrawArrayC(GL_LINES);
+			points->DrawArrayC(GL_POINTS);
+		}
 	}
 
 	if (!renderProjectiles.empty()) {
@@ -728,6 +726,7 @@ void CProjectileDrawer::DrawShadowPass(void)
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 
 	glDisable(GL_TEXTURE_2D);
+	po->Enable();
 
 	CProjectile::inArray = false;
 	CProjectile::va = GetVertexArray();
@@ -736,16 +735,12 @@ void CProjectileDrawer::DrawShadowPass(void)
 	{
 		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
 
-		po->Enable();
-
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawProjectilesShadow(modelType);
 		}
 
 		// draw the model-less projectiles
 		DrawProjectilesSetShadow(renderProjectiles);
-
-		po->Disable();
 	}
 
 	if (CProjectile::inArray) {
@@ -756,11 +751,10 @@ void CProjectileDrawer::DrawShadowPass(void)
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
 
-		po->Enable();
 		ph->currentParticles += CProjectile::DrawArray();
-		po->Disable();
 	}
 
+	po->Disable();
 	glShadeModel(GL_FLAT);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
@@ -871,7 +865,7 @@ void CProjectileDrawer::DrawGroundFlashes(void)
 	glActiveTexture(GL_TEXTURE0);
 	groundFXAtlas->BindTexture();
 	glEnable(GL_TEXTURE_2D);
-	glDepthMask(0);
+	glDepthMask(GL_FALSE);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.01f);
 	glPolygonOffset(-20, -1000);
@@ -892,8 +886,12 @@ void CProjectileDrawer::DrawGroundFlashes(void)
 
 	GroundFlashContainer::render_iterator gfi;
 	for (gfi = ph->groundFlashes.render_begin(); gfi != ph->groundFlashes.render_end(); ++gfi) {
-		if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
-			loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
+		if (
+			((*gfi)->alwaysVisible || 
+				gu->spectatingFullView ||
+				loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam)
+			) && camera->InView((*gfi)->pos, (*gfi)->size)
+		)
 			(*gfi)->Draw();
 	}
 
@@ -926,7 +924,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	glLoadIdentity();
 
 	glDisable(GL_DEPTH_TEST);
-	glDepthMask(0);
+	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_TEXTURE_2D);
@@ -994,7 +992,7 @@ void CProjectileDrawer::UpdatePerlin() {
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-	glDepthMask(1);
+	glDepthMask(GL_TRUE);
 
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);

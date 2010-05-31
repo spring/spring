@@ -2,7 +2,7 @@
 
 #include "AudioChannel.h"
 
-#include "Sound.h"
+#include "ISound.h"
 #include "Sim/Units/Unit.h"
 
 namespace Channels

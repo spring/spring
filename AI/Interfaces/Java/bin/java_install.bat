@@ -12,8 +12,6 @@ IF "%INTERFACE_VERSION%"=="" IF "%SPRING_DATA_DIR%"=="" (
 )
 
 SET HOME_DIR=..
-REM SET SPRING_HOME=%HOME_DIR%/../../..
-REM SET SPRING_DATA_DIR=%SPRING_HOME%/game
 
 ##############################################
 ### do not change anything below this line ###
