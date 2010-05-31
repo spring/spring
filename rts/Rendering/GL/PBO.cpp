@@ -28,7 +28,7 @@ bool PBO::IsSupported()
 PBO::PBO() : pboId(0)
 {
 	bound = false;
-	mapped = true;
+	mapped = false;
 	data = NULL;
 
 	if (IsSupported()) {
@@ -83,13 +83,18 @@ void PBO::Unbind(bool discard)
 			data = NULL;
 		}
 	}
+
+	if (discard) {
+		size = 0;
+	}
 }
 
 
-void PBO::Resize(GLsizeiptr size, GLenum usage)
+void PBO::Resize(GLsizeiptr _size, GLenum usage)
 {
 	assert(bound);
 
+	size = _size;
 	if (PBOused) {
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, size, 0, usage);
 	} else {
@@ -103,26 +108,44 @@ GLubyte* PBO::MapBuffer(GLbitfield access)
 {
 	assert(!mapped);
 
-	mapped = true;
+	//! we don't use glMapBuffer, because glMapBufferRange seems to be a small
+	//! step faster than it due to GL_MAP_UNSYNCHRONIZED_BIT
+	/*mapped = true;
 	if (PBOused) {
 		return (GLubyte*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, access);
 	} else {
 		assert(data);
 		return data;
-	}
+	}*/
+
+	return MapBuffer(0, size, access);
 }
 
 
-GLubyte* PBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
+GLubyte* PBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
 {
 	assert(!mapped);
 
+	//! glMapBuffer & glMapBufferRange use different flags for their access argument
+	//! for easier handling convert the glMapBuffer ones here
+	switch (access) {
+		case GL_WRITE_ONLY:
+			access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			break;
+		case GL_READ_WRITE:
+			access = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			break;
+		case GL_READ_ONLY:
+			access = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+			break;
+	}
+
 	mapped = true;
 	if (PBOused) {
-		return (GLubyte*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, offset, size, access);
+		return (GLubyte*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, offset, _size, access);
 	} else {
 		assert(data);
-		return data;
+		return data+offset;
 	}
 }
 
@@ -139,15 +162,15 @@ void PBO::UnmapBuffer()
 }
 
 
-const GLvoid* PBO::GetPtr()
+const GLvoid* PBO::GetPtr(GLintptr offset)
 {
 	assert(bound);
 
 	if (PBOused) {
-		return 0;
+		return (GLvoid*)((char*)NULL + (offset));
 	} else {
 		assert(data);
-		return (GLvoid*)data;
+		return (GLvoid*)(data + offset);
 	}
 }
 
