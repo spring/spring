@@ -173,3 +173,6 @@ int SDL_PeepEvents(SDL_Event *events, int numevents, SDL_eventaction action, Uin
 	return 0;
 }
 
+Uint8 SDL_GetAppState() {
+	return 0;
+}
