@@ -1,0 +1,87 @@
+#
+# This is a config template for running the headless version of spring.
+# It will prevent some crashes and reduce the CPU load.
+#
+# To use it, you should copy it to one of these locations:
+#
+# Linux & Mac:
+# ~/.springrc
+# ~/.springrc-<version>
+#
+# Windows:
+# %APPDATA%\springsettings.cfg
+# %APPDATA%\springsettings-<version>.cfg
+#
+# While "<version>" would be something like "0.81.2.1",
+# and "%APPDATA%" something like
+# "C:\Dokumente und Einstellungen\MyUser\Anwendungsdaten".
+#
+# Note: These comments will be gone after the first launch of spring.
+# 
+
+AdvSky=0
+AdvUnitShading=0
+AtiHacks=0
+BuildIconsFirst=0
+BumpWaterAnisotropy=0
+BumpWaterBlurReflection=0
+BumpWaterReflection=0
+BumpWaterRefraction=0
+BumpWaterShoreWaves=0
+BumpWaterTexSizeReflection=0
+BumpWaterUseDepthTexture=0
+CompressTextures=0
+DualScreenMode=0
+DynamicSky=0
+Fullscreen=0
+GrassDetail=0
+GroundDecals=0
+GroundDetail=0
+GroundLODScaleReflection=0
+GroundLODScaleRefraction=0
+GroundLODScaleUnitReflection=0
+GroundScarAlphaFade=0
+HardwareCursor=0
+LodScale=1.00
+LodScaleReflection=1.00
+LodScaleRefraction=1.00
+LodScaleShadow=1.00
+LuaAutoEnableUserWidgets=1
+LuaModUICtrl=0
+LuaShaders=0
+LuaUI=0
+MaxNanoParticles=0
+MaxParticles=0
+MaxSounds=0
+MiniMapDrawProjectiles=0
+MiniMapDrawCommands=0
+MiniMapIcons=0
+MiniMapMarker=0
+NoHelperAIs=0
+OrbitControllerEnabled=0
+OverheadEnabled=0
+ReflectiveWater=0
+RotOverheadEnabled=0
+SMFTexAniso=0.0
+Shadows=-1
+ShowClock=0
+ShowFPS=0
+ShowHealthBars=0
+ShowPlayerInfo=0
+ShowRezBars=0
+SmoothEnabled=0
+SmoothLines=0
+SmoothPoints=0
+SmoothTiltSpeed=0
+TWEnabled=0
+TeamNanoSpray=0
+TextureLODBias=0
+TooltipOutlineFont=0
+TreeRadius=0
+UnitIconDist=0
+UnitLodDist=0
+UsePBO=0
+VSync=0
+XResolution=113
+YResolution=1
+
