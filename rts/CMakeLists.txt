@@ -149,12 +149,14 @@ IF    (MINGW)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT
 				"${CMAKE_CURRENT_BINARY_DIR}/icon.o"
+			DEPENDS
+				"${CMAKE_CURRENT_SOURCE_DIR}/icon.rc" 
 			COMMAND
 				"${WINDRES_BIN}"
-				"-I${CMAKE_CURRENT_SOURCE_DIR}"
-				"-i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc" 
-				"-o" "${CMAKE_CURRENT_BINARY_DIR}/icon.o"
-				"-v"
+					"-I${CMAKE_CURRENT_SOURCE_DIR}"
+					"-i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc" 
+					"-o" "${CMAKE_CURRENT_BINARY_DIR}/icon.o"
+					"-v"
 			)
 		LIST(APPEND sysfiles "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
 	ELSE  (WINDRES_FOUND)
