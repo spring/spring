@@ -71,7 +71,7 @@ LIST(APPEND spring_headlessstubs_libraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD
 
 # headlessstubs are our stubs that replace libGL, libGLU, libSDL (yes really!)
 # and also certain functions in libGLEW (we still link with libGLEW anyway)
-LIST(APPEND spring_headlessstubs_libraries headlessstubs lua 7zip oscpack minizip streflop lobby)
+LIST(APPEND spring_headlessstubs_libraries headlessStubs lua 7zip oscpack minizip streflop lobby)
 #IF (USE_GML)
 #	list (APPEND spring_libraries gml)
 #ENDIF (USE_GML)
@@ -109,7 +109,6 @@ ENDIF (MINGW)
 
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_EXECUTABLE(spring-hl ${allspringfiles})
-ADD_DEPENDENCIES(spring-hl headlessstubs)
 TARGET_LINK_LIBRARIES(spring-hl ${spring_headlessstubs_libraries})
 
 IF    (MINGW)

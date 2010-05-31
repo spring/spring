@@ -1,7 +1,13 @@
 INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/System)
 
 INCLUDE_DIRECTORIES(BEFORE ${SDL_INCLUDE_DIR})
-AUX_SOURCE_DIRECTORY("." headlessstubsfiles)
-ADD_LIBRARY(headlessstubs STATIC EXCLUDE_FROM_ALL ${headlessstubsfiles})
-SET_TARGET_PROPERTIES(headlessstubs PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
+SET(headlessStubsFiles
+		"glewstub.c"
+		"glstub.c"
+		"glustub.c"
+		"sdlstub.c"
+		"sdlstub_cppbit.cpp"
+	)
+ADD_LIBRARY(headlessStubs STATIC EXCLUDE_FROM_ALL ${headlessStubsFiles})
+SET_TARGET_PROPERTIES(headlessStubs PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
 
