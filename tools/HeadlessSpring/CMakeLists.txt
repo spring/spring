@@ -76,7 +76,7 @@ LIST(APPEND spring_headlessstubs_libraries headlessStubs lua 7zip oscpack minizi
 #	list (APPEND spring_libraries gml)
 #ENDIF (USE_GML)
 
-ADD_SUBDIRECTORY(lib/headlessstubs)
+ADD_SUBDIRECTORY(lib/headlessStubs)
 
 # we still need the header files, even if we are not going to link
 # with gl, glu, or glut
