@@ -1070,14 +1070,14 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const bool isOwnTeam_g                   = (fromTeam_g == fromTeam);
 						const bool isSpec                        = players[player].spectator;
 						const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
-						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam);
+						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam == teams[fromTeam].teamAllyteam);
 						const char* playerType                   = players[player].GetType();
 						const bool isSinglePlayer                = (players.size() <= 1);
 
 						if (!isSinglePlayer &&
 								(isSpec ||
 								(!isOwnTeam_g && !isLeader_g) ||
-								(hasAIs_g && (isAllied_g && !cheating))))
+								(hasAIs_g && !isAllied_g && !cheating)))
 						{
 							Message(str( boost::format("%s %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %playerType %players[player].name), true);
 							break;

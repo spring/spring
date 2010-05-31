@@ -140,9 +140,6 @@ private:
 	/// maximum size of packets to send
 	unsigned mtu;
 
-	int networkTimeout;
-	int initialNetworkTimeout;
-	int reconnectTimeout;
 	int reconnectTime;
 	
 	bool sharedSocket;

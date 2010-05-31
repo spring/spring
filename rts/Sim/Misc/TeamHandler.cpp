@@ -8,6 +8,7 @@
 #include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/TeamHighlight.h"
 #include "mmgr.h"
 #include "Util.h"
 #include "LogOutput.h"
@@ -97,5 +98,6 @@ void CTeamHandler::GameFrame(int frameNum)
 		for (int a = 0; a < ActiveTeams(); ++a) {
 			Team(a)->SlowUpdate();
 		}
+		CTeamHighlight::Update();
 	}
 }

@@ -109,6 +109,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/TeamHighlight.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
@@ -3161,6 +3162,8 @@ bool CGame::Draw() {
 		return true;
 	}
 
+	CTeamHighlight::Enable(currentTime);
+
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
 	}
@@ -3349,7 +3352,8 @@ bool CGame::Draw() {
 						(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)),
 							std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
 					int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
-					float4 pingcolor(std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)),
+					float4 pingcolor(!p->spectator && gc->reconnectTimeout > 0 && ping > 1000 * gc->reconnectTimeout &&
+							(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)), 
 							std::min(1.0f, std::max(0.01f, (1000 - ping) / 375.0f)), 0.01f, 1.0f);
 					SNPRINTF(buf, sizeof(buf), "\xff%c%c%c%c \t%i \t%s   \t\xff%c%c%c%s   \t\xff%c%c%c%.0f%%  \t\xff%c%c%c%dms",
 							allycolor[0], allycolor[1], allycolor[2], (gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
@@ -3405,6 +3409,8 @@ bool CGame::Draw() {
 #endif
 
 	SetDrawMode(gameNotDrawing);
+
+	CTeamHighlight::Disable();
 
 	return true;
 }
@@ -3466,12 +3472,14 @@ void CGame::DrawInputText()
 	}
 
 	// draw the text
+	font->Begin();
 	font->SetColors(textColor, NULL);
 	if (!guihandler->GetOutlineFonts()) {
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM, tempstring);
 	} else {
 		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM, tempstring);
 	}
+	font->End();
 }
 
 
@@ -4500,7 +4508,10 @@ void CGame::ClientReadNet()
 				if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))
 #endif
 				{
-					logOutput.Print("Unknown net msg in client %d", (int) inbuf[0]);
+					logOutput.Print("Unknown net msg received, packet code is %d."
+							" A likely cause of this is network instability,"
+							" which may happen in a WLAN, for example.",
+							packetCode);
 				}
 				AddTraffic(-1, packetCode, dataLength);
 				break;
