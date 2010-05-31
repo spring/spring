@@ -1,40 +1,41 @@
-What this is
-------------
+# README
 
 These stubs can be used to run OpenGL applications headlessly, ie without
 needing X or a graphics card.
 
-How to use
-----------
 
-To use them, instead of linking with libGL, libGLU, and so on, build the stubs into
-one or more libraries (eg glstub.c -> libGLstub.a), link with that/those libraries,
-and then additionally continue linking with GLEW, but make sure to link AFTER 
-linking with the glewstub.c object.
+## How to use
 
-Then, any calls to gl and so on will simply do nothing.
+To use them, instead of linking with `libGL`, `libGLU` and so on,
+build the stubs into one or more libraries (eg `glstub.c` -> `libGLstub.a`).
+Then link with that/those libraries, and additionally continue linking
+with GLEW, but make sure to link __after__ linking with the `glewstub.c` object.
 
-Note that the API is NOT complete, just sufficieint for Spring, so if you use it 
-with other applications, you may need to stub out more functions.
+Then, any calls to `gl*` and so on will simply do nothing.
 
-Adding new stubs
-----------------
+Note that the API is NOT complete, just sufficieint for Spring,
+so if you use it with other applications, you may need to stub out
+more functions.
 
-Ok, so let's say you link these with your application but it complains that there is
-a missing simple SDL_somesymbol, what you do is:
 
-- open the correspondign include, for example if it is SDL, it mmight be /usr/include/SDL
-/SDL.h
-- search for the appropriate missing function
-- copy and paste the function declarataion into the appropriat stub file, eg if it is
-an SDL function, paste it into stlstub.c
-- add an empty body for it.
+## Adding new stubs
 
-So you'll end up with something like:
+Ok, so let us say you link these with your application but it complains that
+there is a missing symbol, like `SDL_SomeSymbol`.
+What you do is:
 
-int SDL_somesymbol(int some param ){
-   return 0;
-}
+* open the corresponding include, for example if it is SDL,
+	it might be `/usr/include/SDL/SDL.h`
+* search for the appropriate missing function
+* copy and paste the function declarataion into the appropriate stub file,
+	eg if it is an SDL function, paste it into `stlstub.c`
+* add an empty body for it.
 
-Rebuild your application and hopefully it will work now!
+	So you will end up with something like:
+
+		int SDL_SomeSymbol(int some param ){
+		   return 0;
+		}
+
+* Rebuild your application and hopefully it will work now.
 
