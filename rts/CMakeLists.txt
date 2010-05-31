@@ -179,3 +179,5 @@ IF (MINGW)
 ENDIF (MINGW)
 
 install (TARGETS spring DESTINATION ${BINDIR})
+
+Add_Subdirectory(builds)
