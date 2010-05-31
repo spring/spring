@@ -79,5 +79,6 @@ IF    (MINGW)
 	#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
-INSTALL(TARGETS spring-hl DESTINATION ${BINDIR})
+# Note: installing a target that has EXCLUDE_FROM_ALL set is illegal
+#INSTALL(TARGETS spring-hl DESTINATION ${BINDIR})
 
