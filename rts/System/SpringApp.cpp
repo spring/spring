@@ -62,14 +62,15 @@
 
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
-	#include <winreg.h>
-	#include <direct.h>
 	#include "Platform/Win/WinVersion.h"
-#endif // WIN32
+#elif defined(__APPLE__)
+#else
+	#include <X11/Xlib.h>
+#endif
 
 #ifdef USE_GML
-#include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
+	#include "lib/gml/gmlsrv.h"
+	extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 using std::string;
@@ -182,12 +183,12 @@ bool SpringApp::Initialize()
 
 	// Initialize keyboard
 	SDL_EnableUNICODE(1);
-	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	SDL_SetModState (KMOD_NONE);
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+	SDL_SetModState(KMOD_NONE);
 
 	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
 	keys = new boost::uint8_t[SDLK_LAST];
-	memset (keys,0,sizeof(boost::uint8_t)*SDLK_LAST);
+	memset(keys,0,sizeof(boost::uint8_t)*SDLK_LAST);
 
 	LoadFonts();
 
@@ -922,7 +923,7 @@ int SpringApp::Update()
  * Tests SDL keystates and sets values
  * in key array
  */
-void SpringApp::UpdateSDLKeys ()
+void SpringApp::UpdateSDLKeys()
 {
 	int numkeys;
 	boost::uint8_t *state;
@@ -935,6 +936,37 @@ void SpringApp::UpdateSDLKeys ()
 	keys[SDLK_LMETA]  = (mods & KMOD_META)  ? 1 : 0;
 	keys[SDLK_LSHIFT] = (mods & KMOD_SHIFT) ? 1 : 0;
 }
+
+
+static void ResetScreenSaverTimeout()
+{
+#ifdef __APPLE__
+	return;
+#endif
+
+#ifdef WIN32
+	static unsigned lastreset = 0;
+	unsigned curreset = SDL_GetTicks();
+	if(gu->active && (curreset - lastreset > 1000)) {
+		lastreset = curreset;
+		int timeout; // reset screen saver timer
+		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
+			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
+	}
+#else
+	static unsigned lastreset = 0;
+	unsigned curreset = SDL_GetTicks();
+	if(gu->active && (curreset - lastreset > 1000)) {
+		lastreset = curreset;
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if (SDL_GetWMInfo(&info)) {
+			XForceScreenSaver(info.info.x11.display, ScreenSaverReset);
+		}
+	}
+#endif
+}
+
 
 /**
  * @param argc argument count
@@ -950,9 +982,6 @@ int SpringApp::Run(int argc, char *argv[])
 	if (!Initialize())
 		return -1;
 
-#ifdef WIN32
-	//SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
-#endif
 	CrashHandler::InstallHangHandler();
 
 #ifdef USE_GML
@@ -965,24 +994,16 @@ int SpringApp::Run(int argc, char *argv[])
 #endif
 	while (true) // end is handled by globalQuit
 	{
-#ifdef WIN32
-		static unsigned lastreset = 0;
-		unsigned curreset = SDL_GetTicks();
-		if(gu->active && (curreset - lastreset > 1000)) {
-			lastreset = curreset;
-			int timeout; // reset screen saver timer
-			if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
-				SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
-		}
-#endif
+		ResetScreenSaverTimeout();
+
 		{
 			SCOPED_TIMER("Input");
-			mouseInput->Update();
 			SDL_Event event;
 			while (SDL_PollEvent(&event)) {
 				input.PushEvent(event);
 			}
 		}
+
 		if (globalQuit)
 			break;
 
@@ -1199,7 +1220,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			const bool isRepeat = !!keys[i];
 
-			UpdateSDLKeys ();
+			UpdateSDLKeys();
 
 			if (activeController) {
 				if (i <= SDLK_DELETE) {
@@ -1237,8 +1258,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						}
 					}
 				}
+				activeController->ignoreNextChar = false;
 			}
-			activeController->ignoreNextChar = false;
 			break;
 		}
 		case SDL_KEYUP: {

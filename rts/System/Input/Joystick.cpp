@@ -55,7 +55,7 @@ Joystick::~Joystick()
 		SDL_JoystickClose(myStick);
 }
 
-void Joystick::HandleEvent(const SDL_Event& event)
+bool Joystick::HandleEvent(const SDL_Event& event)
 {
 	switch (event.type) {
 		case SDL_JOYAXISMOTION:
@@ -82,4 +82,5 @@ void Joystick::HandleEvent(const SDL_Event& event)
 		{
 		}
 	}
+	return false;
 }

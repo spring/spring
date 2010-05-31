@@ -24,6 +24,7 @@ public:
 
 	//bool alwaysVisible;
 	//float3 pos;
+	float size;
 
 	static CVertexArray* va;
 };
@@ -69,7 +70,6 @@ public:
 
 	AtlasedTexture* texture;
 	float sizeGrowth;
-	float size;
 	float alpha;
 	int fade;
 	int ttl;
@@ -92,7 +92,6 @@ public:
 	float3 side1,side2;
 
 	float sizeGrowth;
-	float size;
 	int ttl;
 	float age, agerate;
 

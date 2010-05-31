@@ -113,6 +113,8 @@ public:
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
+
+	float highlight;
 };
 
 #endif /* TEAM_H */

@@ -66,6 +66,7 @@ Makefile
 /installer/SpringLobby
 /installer/TASClient
 /installer/downloads
+/installer/custom_defines.nsi
 
 # Java AI related
 /AI/Interfaces/Java/build

@@ -897,7 +897,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			} else {
 				const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
-				const bool inRange = diff.Length2D() < (w->range - (w->relWeaponPos).Length2D());
+				const bool inRange = diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D());
 
 				if (inAngle || inRange) {
 					StopMove();
