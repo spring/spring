@@ -84,6 +84,7 @@ void PBO::Unbind(bool discard)
 		}
 	}
 
+	bound = false;
 	if (discard) {
 		size = 0;
 	}
