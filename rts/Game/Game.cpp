@@ -1833,6 +1833,11 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "togglelos") {
 		gd->ToggleLosTexture();
 	}
+	else if (cmd == "showheat") {
+		if (gs->cheatEnabled) {
+			gd->ToggleHeatMapTexture();
+		}
+	}
 	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
@@ -3095,28 +3100,44 @@ bool CGame::Draw() {
 		lastUpdate = SDL_GetTicks();
 	}
 
-	if(lastSimFrame!=gs->frameNum) {
-		CInputReceiver::CollectGarbage();
-		if(!skipping) {
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
-			projectileDrawer->UpdateTextures();
-			water->Update();
-			sky->Update();
-		}
-		lastSimFrame=gs->frameNum;
-	}
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 
-	//set camera
+	//! set camera
 	camHandler->UpdateCam();
 	camera->Update(false);
 
 	CBaseGroundDrawer* gd = 0;
 	if (doDrawWorld) {
-		SCOPED_TIMER("Ground Update");
-		gd = readmap->GetGroundDrawer();
-		gd->Update(); // let it update before shadows have to be drawn
+		{
+			SCOPED_TIMER("Ground Update");
+			gd = readmap->GetGroundDrawer();
+			gd->Update();
+		}
+
+		if (lastSimFrame != gs->frameNum) {
+			CInputReceiver::CollectGarbage();
+			if (!skipping) {
+				sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+				projectileDrawer->UpdateTextures();
+				water->Update();
+				sky->Update();
+			}
+		}
+
+		//! update extra texture even if paused (you can still give orders)
+		if (!skipping && (lastSimFrame != gs->frameNum || gs->paused)) {
+			static unsigned next_upd = lastUpdate + 1000/30;
+
+			if (!gs->paused || next_upd <= lastUpdate) {
+				next_upd = lastUpdate + 1000/30;
+
+				SCOPED_TIMER("ExtraTexture");
+				gd->UpdateExtraTexture();
+			}
+		}
+
+		lastSimFrame = gs->frameNum;
 	}
 
 	if(!skipping)
@@ -3140,6 +3161,7 @@ bool CGame::Draw() {
 		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
+
 
 	CNamedTextures::Update();
 	texturehandlerS3O->Update();
@@ -3169,11 +3191,6 @@ bool CGame::Draw() {
 	}
 
 	if (doDrawWorld) {
-		{
-			SCOPED_TIMER("ExtraTexture");
-			gd->UpdateExtraTexture();
-		}
-
 		{
 			SCOPED_TIMER("Shadows/Reflections");
 			if (shadowHandler->drawShadows &&
