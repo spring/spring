@@ -1,5 +1,3 @@
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
-
 # Place executables and shared libs under "build-dir/",
 # instead of under "build-dir/rts/"
 # This way, we have the build-dir structure more like the install-dir one,
@@ -9,7 +7,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-SET(SPRINGRTSDIR "${CMAKE_SOURCE_DIR}/rts")
+SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 FIND_PACKAGE(OpenAL REQUIRED)
@@ -53,16 +51,16 @@ LIST(APPEND spring_headlessstubs_libraries ${GLEW_LIBRARIES})
 LIST(APPEND spring_headlessstubs_libraries ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY})
 
 # include directories needed for compiling spring
-INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR}/lib/lua/include)
+INCLUDE_DIRECTORIES(BEFORE ${ENGINE_SRC_ROOT_DIR}/lib/lua/include)
 
 # need to add this so stuff compiles:
-INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR})
-INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR}/System)
+INCLUDE_DIRECTORIES(BEFORE ${ENGINE_SRC_ROOT_DIR})
+INCLUDE_DIRECTORIES(BEFORE ${ENGINE_SRC_ROOT_DIR}/System)
 
 ### Add icon and manifest to exe using windres
 IF    (MINGW)
-	SET(ENGINE_ICON_HL_DIR "${SPRINGRTSDIR}")
-	SET(ENGINE_ICON_HL_RES "${SPRINGRTSDIR}/icon.rc")
+	SET(ENGINE_ICON_HL_DIR "${ENGINE_SRC_ROOT_DIR}")
+	SET(ENGINE_ICON_HL_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
 	SET(ENGINE_ICON_HL_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
 	CreateResourceCompileCommand(ENGINE_HL_ICON "${ENGINE_ICON_HL_DIR}" "${ENGINE_ICON_HL_RES}" "${ENGINE_ICON_HL_OBJ}")
 ELSE  (MINGW)
