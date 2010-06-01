@@ -139,8 +139,18 @@ public:
 	gmlCount AuxClientsReady;
 
 
-	gmlClientServer():threadcnt(0),ClientsReady(0),Barrier(GML_CPU_COUNT),ExecDepth(0),newwork(FALSE),
-				inited(FALSE),dorun(TRUE),auxinited(FALSE),auxworker(NULL),AuxBarrier(2),AuxClientsReady(0) {
+	gmlClientServer()
+		: ExecDepth(0)
+		, Barrier(GML_CPU_COUNT)
+		, dorun(TRUE)
+		, inited(FALSE)
+		, threadcnt(0)
+		, ClientsReady(0)
+		, newwork(FALSE)
+		, auxinited(FALSE)
+		, auxworker(NULL)
+		, AuxBarrier(2)
+		, AuxClientsReady(0) {
 	}
 
 	~gmlClientServer() {
