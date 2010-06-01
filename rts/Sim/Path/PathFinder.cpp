@@ -416,9 +416,8 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 	}
 	// Include heatmap cost adjustment.
 	float heatCostMod = 1.0f;
-	if (heatMapping && moveData.heatMapping
-			&& heatmap[square.x][square.y].ownerId != ownerId) {
-		heatCostMod += moveData.heatMod * std::max(0, heatmap[square.x][square.y].value - heatMapOffset);
+	if (heatMapping && moveData.heatMapping && GetHeatOwner(square.x, square.y) != ownerId) {
+		heatCostMod += moveData.heatMod * GetHeatValue(square.x,square.y);
 	}
 
 	float squareCost = heatCostMod * moveCost[enterDirection] / squareSpeedMod;
@@ -506,13 +505,6 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 
 		if (foundPath.path.size() > 0) {
 			foundPath.pathGoal = foundPath.path.front();
-
-			if (false && heatMapping && moveData.heatMapping) {
-				for (int i = 0; i < foundPath.squares.size(); ++i) {
-					const int2& tmp = foundPath.squares[i];
-					heatmap[tmp.x][tmp.y].value = std::max(heatmap[tmp.x][tmp.y].value, moveData.heatProduced + heatMapOffset);
-				}
-			}
 		}
 	}
 	// Adds the cost of the path.
@@ -674,9 +666,9 @@ void CPathFinder::SetHeatMapState(bool enabled)
 
 void CPathFinder::InitHeatMap()
 {
-	heatmap.resize(gs->mapx);
-	for (int i = 0; i<gs->mapx; ++i) {
-		heatmap[i].resize(gs->mapy, HeatMapValue());
+	heatmap.resize(gs->hmapx);
+	for (int i = 0; i<gs->hmapx; ++i) {
+		heatmap[i].resize(gs->hmapy, HeatMapValue());
 	}
 	heatMapOffset = 0;
 }

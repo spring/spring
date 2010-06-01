@@ -5,10 +5,10 @@
 
 #include <map>
 #include "IPath.h"
+#include "PathFinder.h"
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
 
 class CSolidObject;
-class CPathFinder;
 class CPathEstimator;
 class CPathFinderDef;
 struct MoveData;
@@ -158,6 +158,8 @@ public:
 
 	void SetHeatOnSquare(int x, int y, int value, int ownerId);
 	void SetHeatOnPos(float3, int value, int ownerId);
+
+	const int GetHeatOnSquare(int x, int y) { return pf->GetHeatValue(x, y); };
 
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;
