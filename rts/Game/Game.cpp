@@ -3837,7 +3837,7 @@ void CGame::ClientReadNet()
 					HandleChatMsg(msg);
 					AddTraffic(msg.fromPlayer, packetCode, dataLength);
 				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid ChatMessage: %s", e.err);
+					logOutput.Print("Got invalid ChatMessage: %s", e.err.c_str());
 				}
 				break;
 			}
@@ -4127,7 +4127,7 @@ void CGame::ClientReadNet()
 					CLuaHandle::HandleLuaMsg(player, script, mode, data);
 					AddTraffic(player, packetCode, dataLength);
 				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid LuaMsg: %s", e.err);
+					logOutput.Print("Got invalid LuaMsg: %s", e.err.c_str());
 				}
 				break;
 			}
@@ -4135,7 +4135,7 @@ void CGame::ClientReadNet()
 			case NETMSG_SHARE: {
 				int player = inbuf[1];
 				if ((player >= playerHandler->ActivePlayers()) || (player < 0)){
-					logOutput.Print("Got invalid player num %i in share msg",player);
+					logOutput.Print("Got invalid player num %i in share msg", player);
 					break;
 				}
 				int teamID1 = playerHandler->Player(player)->team;
@@ -4437,7 +4437,7 @@ void CGame::ClientReadNet()
 
 					ActionReceived(msg.action, msg.player);
 				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid CommandMessage: %s", e.err);
+					logOutput.Print("Got invalid CommandMessage: %s", e.err.c_str());
 				}
 				break;
 			}
