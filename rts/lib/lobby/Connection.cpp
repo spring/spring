@@ -6,6 +6,8 @@
 
 #include "Connection.h"
 
+#include "RawTextMessage.h"
+
 #include <bitset>
 
 #include <boost/asio.hpp>
@@ -21,101 +23,6 @@ using namespace boost::system::errc;
 #endif
 using namespace boost::asio;
 
-std::string RTFToPlain(const std::string& rich)
-{
-	static const std::string screwTag = "\\pard";
-	static const std::string lineend = "\\par";
-	std::string out = rich.substr(rich.find_first_of('{')+1, (rich.find_last_of('}') - rich.find_first_of('{')) -2);
-
-	out = out.substr(out.find_last_of('}')+1);
-	size_t pos = 0;
-
-	while ((pos = out.find(screwTag)) != std::string::npos)
-	{
-		out.erase(pos, screwTag.size());
-	}
-	while ((pos = out.find(lineend)) != std::string::npos)
-	{
-		out.replace(pos, lineend.size(), "\n");
-	}
-	while ((pos = out.find('\\')) != std::string::npos)
-	{
-		size_t pos2 = out.find_first_of("\\ \t\n}", pos+1);
-		if (pos2 != std::string::npos)
-		{
-			out.erase(pos, pos2-pos);
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	return out;
-}
-
-class RawTextMessage
-{
-public:
-	RawTextMessage(const std::string& _message) : message(_message), pos(0)
-	{};
-	
-	std::string GetWord()
-	{
-		size_t oldpos = pos;
-		pos = message.find_first_of(std::string("\t \n"), oldpos);
-		if (pos != std::string::npos)
-		{
-			return message.substr(oldpos, pos++ - oldpos);
-		}
-		else if (oldpos != std::string::npos)
-		{
-			return message.substr(oldpos);
-		}
-		else
-		{
-			return "";
-		}
-	};
-	
-	std::string GetSentence()
-	{
-		size_t oldpos = pos;
-		pos = message.find_first_of(std::string("\t\n"), oldpos);
-		if (pos != std::string::npos)
-		{
-			return message.substr(oldpos, pos++ - oldpos);
-		}
-		else if (oldpos != std::string::npos)
-		{
-			return message.substr(oldpos);
-		}
-		else
-		{
-			return "";
-		}
-	};
-	
-	int GetInt()
-	{
-		std::istringstream buf(GetWord());
-		int temp;
-		buf >> temp;
-		return temp;
-	};
-	
-	long unsigned GetTime()
-	{
-		std::istringstream buf(GetWord());
-		long unsigned temp;
-		buf >> temp;
-		return temp;
-	};
-
-private:
-	std::string message;
-	size_t pos;
-};
 
 Connection::Connection() : sock(netservice), timer(netservice)
 {
@@ -455,8 +362,7 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	}
 	else if (command == "AGREEMENTEND")
 	{
-		
-		Aggreement(RTFToPlain(aggreementbuf));
+		Aggreement(Connection::RTFToPlain(aggreementbuf));
 	}
 	else if (command == "MOTD")
 	{
@@ -619,4 +525,37 @@ void Connection::SendCallback(const boost::system::error_code& error)
 	else
 	{
 	}
+}
+
+std::string Connection::RTFToPlain(const std::string& rich)
+{
+	static const std::string screwTag = "\\pard";
+	static const std::string lineend = "\\par";
+	std::string out = rich.substr(rich.find_first_of('{')+1, (rich.find_last_of('}') - rich.find_first_of('{')) -2);
+
+	out = out.substr(out.find_last_of('}')+1);
+	size_t pos = 0;
+
+	while ((pos = out.find(screwTag)) != std::string::npos)
+	{
+		out.erase(pos, screwTag.size());
+	}
+	while ((pos = out.find(lineend)) != std::string::npos)
+	{
+		out.replace(pos, lineend.size(), "\n");
+	}
+	while ((pos = out.find('\\')) != std::string::npos)
+	{
+		size_t pos2 = out.find_first_of("\\ \t\n}", pos+1);
+		if (pos2 != std::string::npos)
+		{
+			out.erase(pos, pos2-pos);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return out;
 }
