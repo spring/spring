@@ -140,8 +140,7 @@ IF (NOT WIN32)
 	EXECUTE_PROCESS(COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} \( -name *.h -o -name *.hpp \) -printf %p\; OUTPUT_VARIABLE headers)
 ENDIF (NOT WIN32)
 
-SET( allspringfiles ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj})
-SET( allspringfiles ${allspringfiles} PARENT_SCOPE )
+SET(allspringfiles ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj})
 
 ADD_EXECUTABLE(spring ${allspringfiles} ${headers} ${ENGINE_ICON})
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
