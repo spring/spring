@@ -99,13 +99,29 @@ public:
 	void UpdateHeatValue(int x, int y, int value, int ownerId)
 	{
 		assert(!heatmap.empty());
-
+		x >>= 1;
+		y >>= 1;
 		if (heatmap[x][y].value < value + heatMapOffset) {
 			heatmap[x][y].value = value + heatMapOffset;
 			heatmap[x][y].ownerId = ownerId;
 		}
 	}
 
+	const int GetHeatOwner(int x, int y)
+	{
+		assert(!heatmap.empty());
+		x >>= 1;
+		y >>= 1;
+		return heatmap[x][y].ownerId;
+	}
+
+	const int GetHeatValue(int x, int y)
+	{
+		assert(!heatmap.empty());
+		x >>= 1;
+		y >>= 1;
+		return std::max(0, heatmap[x][y].value - heatMapOffset);
+	}
 
 private:
 	enum { MAX_SEARCHED_SQUARES = 10000 };
@@ -237,9 +253,9 @@ private:
 		int ownerId;
 	};
 
+	std::vector<std::vector<HeatMapValue> > heatmap; //! resolution is hmapx*hmapy
+	int heatMapOffset;  //! heatmap values are relative to this
 	bool heatMapping;
-	std::vector<std::vector<HeatMapValue> > heatmap;
-	int heatMapOffset;  // heatmap values are relative to this
 };
 
 class CPathFinderDef {
