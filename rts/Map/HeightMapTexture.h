@@ -4,6 +4,7 @@
 #define HEIGHT_MAP_TEXTURE_H
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/PBO.h"
 
 class HeightMapTexture {
 	public:
@@ -38,6 +39,7 @@ class HeightMapTexture {
 		GLuint texID;
 		int xSize;
 		int ySize;
+		PBO pbo;
 };
 
 extern HeightMapTexture heightMapTexture;
