@@ -27,6 +27,7 @@
 #include "ConfigHandler.h"
 #include "LoadSave/DemoRecorder.h"
 #include "lib/gml/gml.h"
+#include "Net/UnpackPacket.h"
 
 
 CNetProtocol::CNetProtocol() : disableDemo(false)
@@ -56,7 +57,7 @@ void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string
 	GML_STDMUTEX_LOCK(net); // AttemptReconnect
 
 	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
-	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
+	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, true));
 	conn->Flush(true);
 
 	logOutput.Print("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection &>(*serverConn).GetReconnectSecs());
@@ -110,11 +111,16 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
 		}
 		else if (ret->data[0] == NETMSG_GAMEDATA && !disableDemo) {
-			logOutput.Print("Starting demo recording");
-			GameData gd(ret);
-			record.reset(new CDemoRecorder());
-			record->WriteSetupText(gd.GetSetup());
-			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
+			try {
+				GameData gd(ret);
+
+				logOutput.Print("Starting demo recording");
+				record.reset(new CDemoRecorder());
+				record->WriteSetupText(gd.GetSetup());
+				record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
+			} catch (netcode::UnpackPacketException &e) {
+				logOutput.Print("Invalid GameData received");
+			}
 		}
 	}
 
