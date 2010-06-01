@@ -15,25 +15,6 @@ if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
 endif (USE_MMGR)
 
-SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
-if (USE_GML)
-	ADD_DEFINITIONS(-DUSE_GML)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
-endif (USE_GML)
-
-SET(USE_GML_SIM FALSE CACHE BOOL "Use independent Simulation thread?")
-if (USE_GML_SIM)
-	if (NOT USE_GML)
-		MESSAGE(SEND_ERROR "USE_GML_SIM requires USE_GML")
-	endif (NOT USE_GML)
-	ADD_DEFINITIONS(-DUSE_GML_SIM)
-endif (USE_GML_SIM)
-
-SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
-if (USE_GML_DEBUG)
-	ADD_DEFINITIONS(-DUSE_GML_DEBUG)
-endif (USE_GML_DEBUG)
-
 SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
 if (TRACE_SYNC)
 	ADD_DEFINITIONS(-DTRACE_SYNC)
@@ -43,6 +24,10 @@ SET(SYNCDEBUG FALSE CACHE BOOL "Enable sync debugger (needs SYNCCHECK=true)")
 if (SYNCDEBUG)
 	ADD_DEFINITIONS(-DSYNCDEBUG)
 endif (SYNCDEBUG)
+
+# Only used by GML build, but used in builds/GML and lib/gml
+SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
+
 
 FIND_PACKAGE(OpenAL REQUIRED)
 LIST(APPEND spring_libraries ${OPENAL_LIBRARY})
@@ -74,9 +59,6 @@ LIST(APPEND spring_libraries ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREA
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
 LIST(APPEND spring_libraries lua 7zip oscpack minizip streflop lobby)
-if (USE_GML)
-	list (APPEND spring_libraries gml)
-endif (USE_GML)
 
 ### include directories needed for compiling spring
 INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
