@@ -8,7 +8,7 @@
 #include <boost/bind.hpp>
 
 #include "ConfigHandler.h"
-#include "lib/liblobby/Connection.h"
+#include "lib/lobby/Connection.h"
 #include "aGui/LineEdit.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
