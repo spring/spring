@@ -1,7 +1,8 @@
+# Spring supplied CMake build file
 
 SET(oscpackSources
-		"OscOutboundPacketStream.cpp"
-		"OscTypes.cpp"
+		"OscOutboundPacketStream"
+		"OscTypes"
 	)
 
 ADD_LIBRARY(oscpack STATIC EXCLUDE_FROM_ALL ${oscpackSources})

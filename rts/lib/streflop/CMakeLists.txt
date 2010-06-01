@@ -1,3 +1,5 @@
+# Spring supplied CMake build file
+
 AUX_SOURCE_DIRECTORY(libm/flt-32 libm_flt32_source)
 
 SET(cxxflags "-w -O3 -I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
