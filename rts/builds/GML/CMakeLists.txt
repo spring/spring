@@ -33,7 +33,7 @@ ELSE  (MINGW)
 ENDIF (MINGW)
 
 
-ADD_EXECUTABLE(spring-gml EXCLUDE_FROM_ALL ${allspringfiles} ${headers} ${ENGINE_ICON_GML})
+ADD_EXECUTABLE(spring-gml EXCLUDE_FROM_ALL ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
 TARGET_LINK_LIBRARIES(spring-gml gml ${spring_libraries})
 
 # Note: installing a target that has EXCLUDE_FROM_ALL set is illegal

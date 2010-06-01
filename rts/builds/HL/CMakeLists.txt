@@ -34,9 +34,6 @@ LIST(APPEND spring_headlessstubs_libraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD
 # headlessstubs are our stubs that replace libGL, libGLU, libSDL (yes really!)
 # and also certain functions in libGLEW (we still link with libGLEW anyway)
 LIST(APPEND spring_headlessstubs_libraries headlessStubs lua 7zip oscpack minizip streflop lobby)
-#IF (USE_GML)
-#	list (APPEND spring_libraries gml)
-#ENDIF (USE_GML)
 
 # we still need the header files, even if we are not going to link
 # with gl, glu, or glut
@@ -64,11 +61,11 @@ IF    (MINGW)
 	SET(ENGINE_ICON_HL_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
 	CreateResourceCompileCommand(ENGINE_HL_ICON "${ENGINE_ICON_HL_DIR}" "${ENGINE_ICON_HL_RES}" "${ENGINE_ICON_HL_OBJ}")
 ELSE  (MINGW)
-	SET(ENGINE_HL_ICON "")
+	SET(ENGINE_ICON_HL "")
 ENDIF (MINGW)
 
 ADD_DEFINITIONS(-DHEADLESS)
-ADD_EXECUTABLE(spring-hl EXCLUDE_FROM_ALL ${allspringfiles} ${ENGINE_HL_ICON})
+ADD_EXECUTABLE(spring-hl EXCLUDE_FROM_ALL ${engineSources} ${ENGINE_ICON_HL} ${engineHeaders})
 TARGET_LINK_LIBRARIES(spring-hl ${spring_headlessstubs_libraries})
 
 IF    (MINGW)

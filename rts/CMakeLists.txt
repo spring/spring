@@ -136,16 +136,14 @@ ELSE  (MINGW)
 ENDIF (MINGW)
 
 ### Add headers for generated project files (e.g. Code::Blocks)
-IF (NOT WIN32)
-	EXECUTE_PROCESS(COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} \( -name *.h -o -name *.hpp \) -printf %p\; OUTPUT_VARIABLE headers)
-ENDIF (NOT WIN32)
+file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
 
-SET(allspringfiles ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj})
+SET(engineSources ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj})
 
-ADD_EXECUTABLE(spring ${allspringfiles} ${headers} ${ENGINE_ICON})
+ADD_EXECUTABLE(spring ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
 
-IF (MINGW)
+IF    (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
 	#install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
