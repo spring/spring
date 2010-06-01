@@ -388,7 +388,7 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 	{
 		players[p].SendData(packet);
 	}
-	if (allowAdditionalPlayers || !spring_istime(gameStartTime))
+	if (canReconnect || allowAdditionalPlayers || !spring_istime(gameStartTime))
 	{
 		packetCache.push_back(packet);
 	}
@@ -1545,10 +1545,10 @@ void CGameServer::CheckForGameStart(bool forced)
 void CGameServer::StartGame()
 {
 	gameStartTime = spring_gettime();
-	if (!allowAdditionalPlayers)
+	if (!canReconnect && !allowAdditionalPlayers)
 		packetCache.clear(); // free memory
 
-	if (UDPNet && !allowAdditionalPlayers && !canReconnect)
+	if (UDPNet && !canReconnect && !allowAdditionalPlayers)
 		UDPNet->Listen(false); // don't accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
