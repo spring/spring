@@ -9,7 +9,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-### Spring defines
+
+### Assemble defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
@@ -29,36 +30,45 @@ endif (SYNCDEBUG)
 SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
 
+### Assemble libraries
 FIND_PACKAGE(OpenAL REQUIRED)
-LIST(APPEND spring_libraries ${OPENAL_LIBRARY})
+LIST(APPEND engineCommonLibraries ${OPENAL_LIBRARY})
 INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
 FIND_PACKAGE(OggVorbis REQUIRED)
-LIST(APPEND spring_libraries ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
+LIST(APPEND engineCommonLibraries ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
 
+# We also still need the header files for headless,
+# even if we are not going to link with gl, glu, or glut
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(GLU REQUIRED)
 FIND_PACKAGE(GLUT REQUIRED)
 FIND_PACKAGE(GLEW REQUIRED)
-LIST(APPEND spring_libraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY})
+LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
+# We still link with glew for headless too.
+# (you try stubbing the whole of libGLEW ;-) Good luck with that :-P)
+LIST(APPEND engineCommonLibraries ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY})
 
 FIND_PACKAGE(Freetype REQUIRED)
 INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-LIST(APPEND spring_libraries ${FREETYPE_LIBRARIES})
+LIST(APPEND engineCommonLibraries ${FREETYPE_LIBRARIES})
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
-	LIST(APPEND spring_libraries ${WIN32_LIBRARIES} mingw32)
+	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
 ELSE (MINGW)
 	FIND_PACKAGE(X11 REQUIRED)
-	LIST(APPEND spring_libraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
+	LIST(APPEND engineCommonLibraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
 ENDIF (MINGW)
 
-LIST(APPEND spring_libraries ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
+LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
+LIST(APPEND engineLibraries ${SDL_LIBRARY})
 
-### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
-LIST(APPEND spring_libraries lua 7zip oscpack minizip streflop lobby)
+LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
+
+LIST(APPEND engineLibraries ${engineCommonLibraries})
+
 
 ### include directories needed for compiling spring
 INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
@@ -141,7 +151,7 @@ file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
 SET(engineSources ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj})
 
 ADD_EXECUTABLE(spring ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-TARGET_LINK_LIBRARIES(spring ${spring_libraries})
+TARGET_LINK_LIBRARIES(spring ${engineLibraries})
 
 IF    (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
