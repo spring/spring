@@ -10,49 +10,11 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
-FIND_PACKAGE(OpenAL REQUIRED)
-LIST(APPEND spring_headlessstubs_libraries ${OPENAL_LIBRARY})
-INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
-FIND_PACKAGE(OggVorbis REQUIRED)
-LIST(APPEND spring_headlessstubs_libraries ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
-
-FIND_PACKAGE(Freetype REQUIRED)
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-LIST(APPEND spring_headlessstubs_libraries ${FREETYPE_LIBRARIES})
-
-### Find include directories and add platform specific libraries
-IF    (MINGW)
-	FIND_PACKAGE(Win32Libs REQUIRED)
-	LIST(APPEND spring_headlessstubs_libraries ${WIN32_LIBRARIES} mingw32)
-ELSE  (MINGW)
-	FIND_PACKAGE(X11 REQUIRED)
-	LIST(APPEND spring_headlessstubs_libraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
-ENDIF (MINGW)
-
-LIST(APPEND spring_headlessstubs_libraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-
 # headlessstubs are our stubs that replace libGL, libGLU, libSDL (yes really!)
 # and also certain functions in libGLEW (we still link with libGLEW anyway)
-LIST(APPEND spring_headlessstubs_libraries headlessStubs lua 7zip oscpack minizip streflop lobby)
+LIST(APPEND engineHeadlessLibraries headlessStubs)
 
-# we still need the header files, even if we are not going to link
-# with gl, glu, or glut
-FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(GLU REQUIRED)
-FIND_PACKAGE(GLUT REQUIRED)
-FIND_PACKAGE(GLEW REQUIRED)
-# we still link with glew
-# (you try stubbing the whole of libGLEW ;-) Good luck with that :-P)
-LIST(APPEND spring_headlessstubs_libraries ${GLEW_LIBRARIES})
-
-LIST(APPEND spring_headlessstubs_libraries ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY})
-
-# include directories needed for compiling spring
-INCLUDE_DIRECTORIES(BEFORE ${ENGINE_SRC_ROOT_DIR}/lib/lua/include)
-
-# need to add this so stuff compiles:
-INCLUDE_DIRECTORIES(BEFORE ${ENGINE_SRC_ROOT_DIR})
-INCLUDE_DIRECTORIES(BEFORE ${ENGINE_SRC_ROOT_DIR}/System)
+LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 
 ### Add icon and manifest to exe using windres
 IF    (MINGW)
@@ -66,7 +28,7 @@ ENDIF (MINGW)
 
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_EXECUTABLE(spring-hl EXCLUDE_FROM_ALL ${engineSources} ${ENGINE_ICON_HL} ${engineHeaders})
-TARGET_LINK_LIBRARIES(spring-hl ${spring_headlessstubs_libraries})
+TARGET_LINK_LIBRARIES(spring-hl ${engineHeadlessLibraries})
 
 IF    (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
