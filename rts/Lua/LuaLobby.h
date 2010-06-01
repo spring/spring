@@ -3,7 +3,7 @@
 #ifndef LUALOBBY_H
 #define LUALOBBY_H
 
-#include "lib/liblobby/Connection.h"
+#include "lib/lobby/Connection.h"
 #include "Lunar.h"
 
 class LuaLobby : public Connection
