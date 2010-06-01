@@ -3107,38 +3107,40 @@ bool CGame::Draw() {
 	camHandler->UpdateCam();
 	camera->Update(false);
 
-	CBaseGroundDrawer* gd = 0;
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
 		{
 			SCOPED_TIMER("Ground Update");
-			gd = readmap->GetGroundDrawer();
 			gd->Update();
 		}
 
-		if (lastSimFrame != gs->frameNum) {
-			CInputReceiver::CollectGarbage();
-			if (!skipping) {
-				sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
-				projectileDrawer->UpdateTextures();
-				water->Update();
-				sky->Update();
-			}
+		if (lastSimFrame != gs->frameNum && !skipping) {
+			projectileDrawer->UpdateTextures();
+			water->Update();
+			sky->Update();
 		}
-
-		//! update extra texture even if paused (you can still give orders)
-		if (!skipping && (lastSimFrame != gs->frameNum || gs->paused)) {
-			static unsigned next_upd = lastUpdate + 1000/30;
-
-			if (!gs->paused || next_upd <= lastUpdate) {
-				next_upd = lastUpdate + 1000/30;
-
-				SCOPED_TIMER("ExtraTexture");
-				gd->UpdateExtraTexture();
-			}
-		}
-
-		lastSimFrame = gs->frameNum;
 	}
+
+	if (lastSimFrame != gs->frameNum) {
+		CInputReceiver::CollectGarbage();
+		if (!skipping) {
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+		}
+	}
+
+	//! update extra texture even if paused (you can still give orders)
+	if (!skipping && (lastSimFrame != gs->frameNum || gs->paused)) {
+		static unsigned next_upd = lastUpdate + 1000/30;
+
+		if (!gs->paused || next_upd <= lastUpdate) {
+			next_upd = lastUpdate + 1000/30;
+
+			SCOPED_TIMER("ExtraTexture");
+			gd->UpdateExtraTexture();
+		}
+	}
+
+	lastSimFrame = gs->frameNum;
 
 	if(!skipping)
 		UpdateUI(true);
