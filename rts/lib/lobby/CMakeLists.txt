@@ -2,6 +2,7 @@
 INCLUDE_DIRECTORIES(BEFORE ../)
 
 set(lobbySources
+		"RawTextMessage"
 		"Connection"
 	)
 
