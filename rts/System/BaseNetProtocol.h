@@ -146,7 +146,7 @@ public:
 	PacketType SendSpeedControl(uchar myPlayerNum, int speedCtrl);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
-	PacketType SendAttemptConnect(const std::string name, const std::string& passwd, const std::string version);
+	PacketType SendAttemptConnect(const std::string name, const std::string& passwd, const std::string version, bool reconnect = false);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	PacketType SendSendPlayerStat();

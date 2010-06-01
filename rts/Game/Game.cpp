@@ -3812,9 +3812,14 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_CHAT: {
-				ChatMessage msg(packet);
-				HandleChatMsg(msg);
-				AddTraffic(msg.fromPlayer, packetCode, dataLength);
+				try {
+					ChatMessage msg(packet);
+
+					HandleChatMsg(msg);
+					AddTraffic(msg.fromPlayer, packetCode, dataLength);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid ChatMessage: %s", e.err);
+				}
 				break;
 			}
 
@@ -4081,22 +4086,30 @@ void CGame::ClientReadNet()
 				const int player = inbuf[3];
 				if ((player < 0) || (player >= playerHandler->ActivePlayers())) {
 					logOutput.Print("Got invalid player num %i in LuaMsg", player);
+					break;
 				}
-				netcode::UnpackPacket unpack(packet, 1);
-				boost::uint16_t size;
-				unpack >> size;
-				assert(size == packet->length);
-				boost::uint8_t playerNum;
-				unpack >> playerNum;
-				assert(player == playerNum);
-				boost::uint16_t script;
-				unpack >> script;
-				boost::uint8_t mode;
-				unpack >> mode;
-				std::vector<boost::uint8_t> data(size - 7);
-				unpack >> data;
-				CLuaHandle::HandleLuaMsg(player, script, mode, data);
-				AddTraffic(player, packetCode, dataLength);
+				try {
+					netcode::UnpackPacket unpack(packet, 1);
+					boost::uint16_t size;
+					unpack >> size;
+					if(size != packet->length)
+						throw netcode::UnpackPacketException("Invalid size");
+					boost::uint8_t playerNum;
+					unpack >> playerNum;
+					if(player != playerNum)
+						throw netcode::UnpackPacketException("Invalid player number");
+					boost::uint16_t script;
+					unpack >> script;
+					boost::uint8_t mode;
+					unpack >> mode;
+					std::vector<boost::uint8_t> data(size - 7);
+					unpack >> data;
+
+					CLuaHandle::HandleLuaMsg(player, script, mode, data);
+					AddTraffic(player, packetCode, dataLength);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid LuaMsg: %s", e.err);
+				}
 				break;
 			}
 
@@ -4400,8 +4413,13 @@ void CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_CCOMMAND: {
-				CommandMessage msg(packet);
-				ActionReceived(msg.action, msg.player);
+				try {
+					CommandMessage msg(packet);
+
+					ActionReceived(msg.action, msg.player);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid CommandMessage: %s", e.err);
+				}
 				break;
 			}
 
