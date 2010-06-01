@@ -67,6 +67,11 @@ LIST(APPEND engineLibraries ${SDL_LIBRARY})
 ADD_SUBDIRECTORY(lib)
 LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
 
+IF    (UNIX)
+	# Needed for dynamically loading shared libraries (on some OS)
+	LIST(APPEND engineCommonLibraries dl)
+ENDIF (UNIX)
+
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
 
