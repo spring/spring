@@ -339,10 +339,13 @@ void ConfigHandler::Write(FILE* file)
 {
 	rewind(file);
 #ifdef WIN32
-	_chsize(fileno(file), 0);
+	int err = _chsize(fileno(file), 0);
 #else
-	ftruncate(fileno(file), 0);
+	int err = ftruncate(fileno(file), 0);
 #endif
+	if (err != 0) {
+		logOutput.Print("Error: Failed truncating config file.");
+	}
 	for(std::map<string,string>::iterator iter = data.begin(); iter != data.end(); ++iter)
 		fprintf(file, "%s=%s\n", iter->first.c_str(), iter->second.c_str());
 }
