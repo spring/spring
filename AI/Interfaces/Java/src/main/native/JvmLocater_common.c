@@ -174,7 +174,7 @@ bool GetJREPath(char* path, size_t pathSize, const char* configFile,
 
 int main(int argc, const char* argv[]) {
 
-	simpleLog_init(NULL, false, SIMPLELOG_LEVEL_FINEST);
+	simpleLog_init(NULL, false, SIMPLELOG_LEVEL_FINEST, false);
 
 	static const size_t path_sizeMax = 1024;
 	char path[path_sizeMax];
