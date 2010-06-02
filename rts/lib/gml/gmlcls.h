@@ -543,11 +543,14 @@ class gmlVector {
 	int shrinksize;
 	
 public:
-	gmlVector():doshrink(0),shrinksize(0),
+	gmlVector() :
 #if GML_ORDERED_VOLATILE
 		count(0),
 #endif
-		added(0) {
+		added(0),
+		doshrink(0),
+		shrinksize(0)
+	{
 		data=(T *)malloc(1*sizeof(T));
 		maxsize=1;
 	}

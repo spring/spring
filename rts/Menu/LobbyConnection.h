@@ -3,7 +3,7 @@
 #ifndef LOBBYCONNECTION_H
 #define LOBBYCONNECTION_H
 
-#include "lib/liblobby/Connection.h"
+#include "lib/lobby/Connection.h"
 
 class UpdaterWindow;
 

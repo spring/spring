@@ -1833,6 +1833,11 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "togglelos") {
 		gd->ToggleLosTexture();
 	}
+	else if (cmd == "showheat") {
+		if (gs->cheatEnabled) {
+			gd->ToggleHeatMapTexture();
+		}
+	}
 	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
@@ -3095,29 +3100,47 @@ bool CGame::Draw() {
 		lastUpdate = SDL_GetTicks();
 	}
 
-	if(lastSimFrame!=gs->frameNum) {
-		CInputReceiver::CollectGarbage();
-		if(!skipping) {
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+
+	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
+
+	//! set camera
+	camHandler->UpdateCam();
+	camera->Update(false);
+
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+	if (doDrawWorld) {
+		{
+			SCOPED_TIMER("Ground Update");
+			gd->Update();
+		}
+
+		if (lastSimFrame != gs->frameNum && !skipping) {
 			projectileDrawer->UpdateTextures();
 			water->Update();
 			sky->Update();
 		}
-		lastSimFrame=gs->frameNum;
 	}
 
-	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
-
-	//set camera
-	camHandler->UpdateCam();
-	camera->Update(false);
-
-	CBaseGroundDrawer* gd = 0;
-	if (doDrawWorld) {
-		SCOPED_TIMER("Ground Update");
-		gd = readmap->GetGroundDrawer();
-		gd->Update(); // let it update before shadows have to be drawn
+	if (lastSimFrame != gs->frameNum) {
+		CInputReceiver::CollectGarbage();
+		if (!skipping) {
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+		}
 	}
+
+	//! update extra texture even if paused (you can still give orders)
+	if (!skipping && (lastSimFrame != gs->frameNum || gs->paused)) {
+		static unsigned next_upd = lastUpdate + 1000/30;
+
+		if (!gs->paused || next_upd <= lastUpdate) {
+			next_upd = lastUpdate + 1000/30;
+
+			SCOPED_TIMER("ExtraTexture");
+			gd->UpdateExtraTexture();
+		}
+	}
+
+	lastSimFrame = gs->frameNum;
 
 	if(!skipping)
 		UpdateUI(true);
@@ -3140,6 +3163,7 @@ bool CGame::Draw() {
 		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
+
 
 	CNamedTextures::Update();
 	texturehandlerS3O->Update();
@@ -3169,11 +3193,6 @@ bool CGame::Draw() {
 	}
 
 	if (doDrawWorld) {
-		{
-			SCOPED_TIMER("ExtraTexture");
-			gd->UpdateExtraTexture();
-		}
-
 		{
 			SCOPED_TIMER("Shadows/Reflections");
 			if (shadowHandler->drawShadows &&
@@ -3812,9 +3831,14 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_CHAT: {
-				ChatMessage msg(packet);
-				HandleChatMsg(msg);
-				AddTraffic(msg.fromPlayer, packetCode, dataLength);
+				try {
+					ChatMessage msg(packet);
+
+					HandleChatMsg(msg);
+					AddTraffic(msg.fromPlayer, packetCode, dataLength);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid ChatMessage: %s", e.err.c_str());
+				}
 				break;
 			}
 
@@ -4087,29 +4111,37 @@ void CGame::ClientReadNet()
 				const int player = inbuf[3];
 				if ((player < 0) || (player >= playerHandler->ActivePlayers())) {
 					logOutput.Print("Got invalid player num %i in LuaMsg", player);
+					break;
 				}
-				netcode::UnpackPacket unpack(packet, 1);
-				boost::uint16_t size;
-				unpack >> size;
-				assert(size == packet->length);
-				boost::uint8_t playerNum;
-				unpack >> playerNum;
-				assert(player == playerNum);
-				boost::uint16_t script;
-				unpack >> script;
-				boost::uint8_t mode;
-				unpack >> mode;
-				std::vector<boost::uint8_t> data(size - 7);
-				unpack >> data;
-				CLuaHandle::HandleLuaMsg(player, script, mode, data);
-				AddTraffic(player, packetCode, dataLength);
+				try {
+					netcode::UnpackPacket unpack(packet, 1);
+					boost::uint16_t size;
+					unpack >> size;
+					if(size != packet->length)
+						throw netcode::UnpackPacketException("Invalid size");
+					boost::uint8_t playerNum;
+					unpack >> playerNum;
+					if(player != playerNum)
+						throw netcode::UnpackPacketException("Invalid player number");
+					boost::uint16_t script;
+					unpack >> script;
+					boost::uint8_t mode;
+					unpack >> mode;
+					std::vector<boost::uint8_t> data(size - 7);
+					unpack >> data;
+
+					CLuaHandle::HandleLuaMsg(player, script, mode, data);
+					AddTraffic(player, packetCode, dataLength);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid LuaMsg: %s", e.err.c_str());
+				}
 				break;
 			}
 
 			case NETMSG_SHARE: {
 				int player = inbuf[1];
 				if ((player >= playerHandler->ActivePlayers()) || (player < 0)){
-					logOutput.Print("Got invalid player num %i in share msg",player);
+					logOutput.Print("Got invalid player num %i in share msg", player);
 					break;
 				}
 				int teamID1 = playerHandler->Player(player)->team;
@@ -4406,8 +4438,13 @@ void CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_CCOMMAND: {
-				CommandMessage msg(packet);
-				ActionReceived(msg.action, msg.player);
+				try {
+					CommandMessage msg(packet);
+
+					ActionReceived(msg.action, msg.player);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid CommandMessage: %s", e.err.c_str());
+				}
 				break;
 			}
 
@@ -4674,6 +4711,9 @@ void CGame::GameEnd()
 		gameOver=true;
 		eventHandler.GameOver();
 		new CEndGameBox();
+#ifdef    HEADLESS
+		profiler.PrintProfilingInfo();
+#endif // HEADLESS
 		CDemoRecorder* record = net->GetDemoRecorder();
 		if (record != NULL) {
 			// Write CPlayer::Statistics and CTeam::Statistics to demo

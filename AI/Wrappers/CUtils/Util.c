@@ -15,18 +15,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Util.h"
-
-#include "System/maindefines.h"
-#if defined USING_STREFLOP
-#include "lib/streflop/streflopC.h" // for streflop_init_Simple()
-#else
-#include <assert.h>
-#endif
-
+#include <stdio.h>       // fgets()
 #include <string.h>      // strcpy(), str...()
 #include <stdlib.h>      // malloc(), calloc(), free()
-#include <stdio.h>       // fgets()
 #include <stdarg.h>      // var-args
 #include <sys/stat.h>    // used for check if a file exists
 #ifdef _WIN32
@@ -37,6 +28,15 @@
 #include <sys/types.h>   // mkdir()
 #include <dirent.h>      // needed for dir listing
 #endif // WIN32
+
+#include "Util.h"
+
+#include "System/maindefines.h"
+#if defined USING_STREFLOP
+#include "lib/streflop/streflopC.h" // for streflop_init_Simple()
+#else
+#include <assert.h>
+#endif
 
 
 char* util_allocStr(unsigned int length) {

@@ -68,6 +68,12 @@ const char* const Additional = "" // Build-Bot will write in here before compili
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
+
+#if defined HEADLESS
+	GV_ADD_SPACE "Headless"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
 	;
 
 /** Build date and time. */

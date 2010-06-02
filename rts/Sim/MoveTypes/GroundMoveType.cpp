@@ -342,6 +342,8 @@ void CGroundMoveType::Update()
 					SetDeltaSpeed(wantReverse);
 				}
 
+				UpdateHeatMap();
+
 			} else {
 				SetMainHeading();
 			}
@@ -1195,8 +1197,11 @@ void CGroundMoveType::UpdateHeatMap()
 #endif
 
 	pathManager->GetDetailedPathSquares(pathId, points);
+
+	float scale = 1.0f / points.size();
+	int i = points.size();
 	for (std::vector<int2>::iterator it = points.begin(); it != points.end(); ++it) {
-		pathManager->SetHeatOnSquare(it->x, it->y, owner->mobility->heatProduced, owner->id);
+		pathManager->SetHeatOnSquare(it->x, it->y, (i--) * scale * owner->mobility->heatProduced, owner->id);
 	}
 }
 
