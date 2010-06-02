@@ -15,6 +15,8 @@ CR_REG_METADATA(AMoveType, (
 		CR_MEMBER(forceTurnTo),
 		CR_MEMBER(owner),
 		CR_MEMBER(goalPos),
+		CR_MEMBER(oldPos),
+		CR_MEMBER(oldSlowUpdatePos),
 		CR_MEMBER(maxSpeed),
 		CR_MEMBER(maxWantedSpeed),
 		CR_MEMBER(reservedPad),
@@ -30,6 +32,8 @@ AMoveType::AMoveType(CUnit* owner):
 	forceTurnTo(0),
 	owner(owner),
 	goalPos(owner ? owner->pos : float3(0.0f, 0.0f, 0.0f)),
+	oldPos(owner? owner->pos: float3(0.0f, 0.0f, 0.0f)),
+	oldSlowUpdatePos(oldPos),
 	maxSpeed(0.2f),
 	maxWantedSpeed(0.2f),
 	reservedPad(0),
@@ -81,15 +85,15 @@ void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 	KeepPointingTo(float3(unit->pos), distance, aggressive);
 }
 
-void AMoveType::SetGoal(float3 pos)
+void AMoveType::SetGoal(const float3& pos)
 {
 	goalPos = pos;
 }
 
 void AMoveType::DependentDied(CObject* o)
 {
-	if(o == reservedPad){
-		reservedPad=0;
+	if (o == reservedPad) {
+		reservedPad = 0;
 	}
 }
 

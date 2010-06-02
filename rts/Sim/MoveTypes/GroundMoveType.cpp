@@ -53,9 +53,6 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(currentSpeed),
 		CR_MEMBER(deltaSpeed),
 		CR_MEMBER(deltaHeading),
-
-		CR_MEMBER(oldPos),
-		CR_MEMBER(oldSlowUpdatePos),
 		CR_MEMBER(flatFrontDir),
 
 		CR_MEMBER(pathId),
@@ -139,8 +136,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	deltaSpeed(0.0f),
 	deltaHeading(0),
 
-	oldPos(owner? owner->pos: float3(0.0f, 0.0f, 0.0f)),
-	oldSlowUpdatePos(oldPos),
 	flatFrontDir(1, 0, 0),
 	pathId(0),
 	goalRadius(0),
@@ -360,6 +355,7 @@ void CGroundMoveType::Update()
 
 		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
+
 		oldPos = owner->pos;
 
 		if (groundDecals && owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
@@ -713,14 +709,14 @@ void CGroundMoveType::ImpulseAdded(void)
 
 void CGroundMoveType::UpdateSkid(void)
 {
-	float3& speed=owner->speed;
-	float3& pos=owner->pos;
-	SyncedFloat3& midPos=owner->midPos;
+	float3& speed = owner->speed;
+	float3& pos = owner->pos;
+	SyncedFloat3& midPos = owner->midPos;
 
-	if(flying){
-		speed.y+=mapInfo->map.gravity;
-		if(midPos.y < 0)
-			speed*=0.95f;
+	if (flying) {
+		speed.y += mapInfo->map.gravity;
+		if (midPos.y < 0)
+			speed *= 0.95f;
 
 		float wh;
 		if(floatOnWater)
@@ -732,7 +728,7 @@ void CGroundMoveType::UpdateSkid(void)
 			flying=false;
 			skidRotSpeed+=(gs->randFloat()-0.5f)*1500;//*=0.5f+gs->randFloat();
 			midPos.y=wh+owner->relMidPos.y-speed.y*0.5f;
-			float impactSpeed=-speed.dot(ground->GetNormal(midPos.x,midPos.z));
+			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
 			if(impactSpeed > owner->unitDef->minCollisionSpeed
 				&& owner->unitDef->minCollisionSpeed >= 0)
 			{
@@ -943,7 +939,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			float dist=sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
 			dif/=std::max(dist, 1.f);
-			float impactSpeed=-owner->speed.dot(dif);
+			float impactSpeed = -owner->speed.dot(dif);
 			if(impactSpeed > 0){
 				midPos+=dif*(impactSpeed);
 				pos = midPos - owner->frontdir*owner->relMidPos.z
