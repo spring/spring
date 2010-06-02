@@ -38,9 +38,10 @@ enum SimpleLog_Level {
 /**
  * Initializes the log.
  * @param  logLevel   see enum SimpleLog_Level
+ * @param  append     if true, previous content of the file is preserved
  */
 void simpleLog_init(const char* logFileName, bool useTimeStamps,
-		int logLevel);
+		int logLevel, bool append);
 
 /**
  * Logs a text message,
