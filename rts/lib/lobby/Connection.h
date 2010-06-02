@@ -95,6 +95,7 @@ private:
 	void ConnectCallback(const boost::system::error_code& error);
 	void ReceiveCallback(const boost::system::error_code& error, size_t bytes);
 	void SendCallback(const boost::system::error_code& error);
+	static std::string RTFToPlain(const std::string& rich);
 	
 	boost::asio::io_service netservice;
 	std::string aggreementbuf;

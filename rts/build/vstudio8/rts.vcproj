@@ -14456,30 +14456,30 @@
 				Name="liblobby"
 				>
 				<File
-					RelativePath="..\..\lib\liblobby\Connection.cpp"
+					RelativePath="..\..\lib\lobby\Connection.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\liblobby\Connection.h"
+					RelativePath="..\..\lib\lobby\Connection.h"
 					>
 				</File>
 				<Filter
 					Name="md5"
 					>
 					<File
-						RelativePath="..\..\lib\liblobby\md5\base64.cpp"
+						RelativePath="..\..\lib\lobby\md5\base64.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\lib\liblobby\md5\base64.h"
+						RelativePath="..\..\lib\lobby\md5\base64.h"
 						>
 					</File>
 					<File
-						RelativePath="..\..\lib\liblobby\md5\md5.c"
+						RelativePath="..\..\lib\lobby\md5\md5.c"
 						>
 					</File>
 					<File
-						RelativePath="..\..\lib\liblobby\md5\md5.h"
+						RelativePath="..\..\lib\lobby\md5\md5.h"
 						>
 					</File>
 				</Filter>

@@ -24,6 +24,7 @@ GameData::GameData()
 GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 {
 	assert(pckt->data[0] == NETMSG_GAMEDATA);
+
 	UnpackPacket packet(pckt, 3);
 	boost::uint16_t compressedSize;
 	packet >> compressedSize;
@@ -32,7 +33,8 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 	long unsigned size = 40000;
 	std::vector<boost::uint8_t> buffer(size);
 	const int error = uncompress(&buffer[0], &size, &compressed[0], compressed.size());
-	assert(error == Z_OK);
+	if(error != Z_OK)
+		throw UnpackPacketException("Uncompress failed");
 	setupText = reinterpret_cast<char*>(&buffer[0]);
 	packet >> mapChecksum;
 	packet >> modChecksum;

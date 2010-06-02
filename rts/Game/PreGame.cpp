@@ -42,6 +42,7 @@
 #include "aGui/Gui.h"
 #include "Exceptions.h"
 #include "TimeProfiler.h"
+#include "Net/UnpackPacket.h"
 
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
@@ -272,7 +273,12 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	{
 		if (buf->data[0] == NETMSG_GAMEDATA)
 		{
-			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
+			GameData *data = NULL;
+			try {
+				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
+			} catch (netcode::UnpackPacketException &e) {
+				throw content_error("Demo contains invalid GameData");
+			}
 
 			CGameSetup* demoScript = new CGameSetup();
 			if (!demoScript->Init(data->GetSetup()))
@@ -356,7 +362,14 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	ScopedOnceTimer startserver("Loading client data");
-	gameData.reset(new GameData(packet));
+
+	try {
+		GameData *data = new GameData(packet);
+
+		gameData.reset(data);
+	} catch (netcode::UnpackPacketException &e) {
+		throw content_error("Server sent us invalid GameData");
+	}
 
 	CGameSetup* temp = new CGameSetup();
 
