@@ -33,10 +33,11 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#include "EventHandler.h"
-#include "LogOutput.h"
-#include "SpringApp.h"
-#include "FileSystem/FileHandler.h"
+#include "System/BaseNetProtocol.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/SpringApp.h"
+#include "System/FileSystem/FileHandler.h"
 
 #include "LuaInclude.h"
 
@@ -2001,7 +2002,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 
 	lua_pushnumber(L, playerID);
 
-	if (type == CInMapDraw::NET_POINT) {
+	if (type == MAPDRAW_POINT) {
 		HSTR_PUSH(L, "point");
 		lua_pushnumber(L, pos0->x);
 		lua_pushnumber(L, pos0->y);
@@ -2009,7 +2010,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		lua_pushstring(L, label->c_str());
 		args = 6;
 	}
-	else if (type == CInMapDraw::NET_LINE) {
+	else if (type == MAPDRAW_LINE) {
 		HSTR_PUSH(L, "line");
 		lua_pushnumber(L, pos0->x);
 		lua_pushnumber(L, pos0->y);
@@ -2019,7 +2020,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		lua_pushnumber(L, pos1->z);
 		args = 8;
 	}
-	else if (type == CInMapDraw::NET_ERASE) {
+	else if (type == MAPDRAW_ERASE) {
 		HSTR_PUSH(L, "erase");
 		lua_pushnumber(L, pos0->x);
 		lua_pushnumber(L, pos0->y);
@@ -2028,7 +2029,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		args = 6;
 	}
 	else {
-		logOutput.Print("Unknown MapDrawCmd() type");
+		logOutput.Print("Unknown MapDrawCmd() type: %i", type);
 		lua_pop(L, 2); // pop the function and playerID
 		return false;
 	}
