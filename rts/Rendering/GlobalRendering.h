@@ -169,9 +169,7 @@ public:
 	/**
 	 * @brief full-screen or windowed rendering
 	 */
-	//bool fullScreen;
-	// see instead: rts/System/SpringApp.h:extern bool fullscreen;
-
+	bool fullScreen;
 };
 
 extern CGlobalRendering* globalRendering;

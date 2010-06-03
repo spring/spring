@@ -174,7 +174,6 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 
 extern boost::uint8_t *keys;
 extern bool globalQuit;
-extern bool fullscreen;
 
 CGame* game = NULL;
 
@@ -4541,8 +4540,8 @@ void CGame::UpdateUI(bool updateCam)
 
 		movement = ZeroVector;
 
-		if (( fullscreen && fullscreenEdgeMove) ||
-		    (!fullscreen && windowedEdgeMove)) {
+		if ((globalRendering->fullScreen && fullscreenEdgeMove) ||
+		    (!globalRendering->fullScreen && windowedEdgeMove)) {
 
 			const int screenW = globalRendering->dualScreenMode ? (globalRendering->viewSizeX << 1): globalRendering->viewSizeX;
 			disableTracker = false;

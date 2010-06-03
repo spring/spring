@@ -52,7 +52,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-extern bool	fullscreen;
 extern boost::uint8_t *keys;
 
 
