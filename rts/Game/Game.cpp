@@ -1588,38 +1588,43 @@ bool CGame::ActionPressed(const Action& action,
 			delete aviGenerator;
 			aviGenerator = NULL;
 		} else {
-			creatingVideo = true;
-			string fileName;
-			for (int a=0; a < 999; ++a) {
-				char t[50];
-				itoa(a, t, 10);
-				fileName = std::string("video") + t + ".avi";
+			// find a file to capture to
+			std::string fileName;
+			const size_t MAX_NUM_VIDEOS = 1000;
+			size_t vi;
+			for (vi = 0; vi < MAX_NUM_VIDEOS; ++vi) {
+				fileName = std::string("video") + IntToString(vi) + ".avi";
 				CFileHandler ifs(fileName);
 				if (!ifs.FileExists()) {
 					break;
 				}
 			}
-
-			int videoSizeX = (gu->viewSizeX / 4) * 4;
-			int videoSizeY = (gu->viewSizeY / 4) * 4;
-			aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
-
-			int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
-			SDL_ShowCursor(SDL_ENABLE);
-
-			if (!aviGenerator->InitEngine()) {
-				creatingVideo=false;
-				logOutput.Print(aviGenerator->GetLastErrorMessage());
-				delete aviGenerator;
-				aviGenerator = NULL;
+			if (vi == MAX_NUM_VIDEOS) {
+				logOutput.Print("Error: You have too many videos on disc already, please move, rename or delete some.");
+				logOutput.Print("Error: Not creating video!");
 			} else {
-				LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
-			}
+				creatingVideo = true;
+				const int videoSizeX = (gu->viewSizeX / 4) * 4;
+				const int videoSizeY = (gu->viewSizeY / 4) * 4;
+				aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
 
-			SDL_ShowCursor(savedCursorMode);
-			//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
-			//Setting it back to default state.
-			streflop_init<streflop::Simple>();
+				const int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
+				SDL_ShowCursor(SDL_ENABLE);
+
+				if (!aviGenerator->InitEngine()) {
+					creatingVideo = false;
+					logOutput.Print(aviGenerator->GetLastErrorMessage());
+					delete aviGenerator;
+					aviGenerator = NULL;
+				} else {
+					LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
+				}
+
+				SDL_ShowCursor(savedCursorMode);
+				//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
+				//Setting it back to default state.
+				streflop_init<streflop::Simple>();
+			}
 		}
 #endif
 	}
