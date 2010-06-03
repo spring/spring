@@ -28,10 +28,6 @@
 
 #include "GameServer.h"
 
-#ifndef NO_AVI
-	#include "Game.h"
-#endif
-
 #include "LogOutput.h"
 #include "GameSetup.h"
 #include "Action.h"
@@ -53,6 +49,7 @@
 #include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
+#include "IVideoCapturing.h"
 #include "Server/GameParticipant.h"
 #include "Server/GameSkirmishAI.h"
 // This undef is needed, as somewhere there is a type interface specified,
@@ -1805,23 +1802,21 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			}
 		}
 
-		bool rec = false;
-#ifndef NO_AVI
-		rec = game && game->creatingVideo;
-#endif
-		bool normalFrame = !isPaused && !rec;
-		bool videoFrame = !isPaused && fixedFrameTime;
-		bool singleStep = fixedFrameTime && !rec;
+		const bool rec = videoCapturing->IsCapturing();
+		const bool normalFrame = !isPaused && !rec;
+		const bool videoFrame = !isPaused && fixedFrameTime;
+		const bool singleStep = fixedFrameTime && !rec;
 
-		if(normalFrame || videoFrame || singleStep){
-			for(int i=0; i < newFrames; ++i){
+		if (normalFrame || videoFrame || singleStep) {
+			for (int i=0; i < newFrames; ++i) {
 				assert(!demoReader);
 				++serverframenum;
-				//Send out new frame messages.
-				if (0 == (serverframenum % serverKeyframeIntervall))
+				// Send out new frame messages.
+				if ((serverframenum % serverKeyframeIntervall) == 0) {
 					Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
-				else
+				} else {
 					Broadcast(CBaseNetProtocol::Get().SendNewFrame());
+				}
 #ifdef SYNCCHECK
 				outstandingSyncFrames.push_back(serverframenum);
 #endif

@@ -9,6 +9,8 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
+ADD_DEFINITIONS(-DHEADLESS)
+REMOVE_DEFINITIONS(-DAVI_CAPTURING)
 
 # headlessstubs are our stubs that replace libGL, libGLU, libSDL (yes really!)
 # and also certain functions in libGLEW (we still link with libGLEW anyway)
@@ -26,7 +28,6 @@ ELSE  (MINGW)
 	SET(ENGINE_ICON_HL "")
 ENDIF (MINGW)
 
-ADD_DEFINITIONS(-DHEADLESS)
 ADD_EXECUTABLE(spring-hl EXCLUDE_FROM_ALL ${engineSources} ${ENGINE_ICON_HL} ${engineHeaders})
 TARGET_LINK_LIBRARIES(spring-hl ${engineHeadlessLibraries})
 
