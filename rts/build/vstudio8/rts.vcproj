@@ -1994,6 +1994,14 @@
 			Name="Rendering"
 			>
 			<File
+				RelativePath="..\..\Rendering\AVIGenerator.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\AVIGenerator.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\Colors.h"
 				>
 			</File>
@@ -5314,14 +5322,6 @@
 				<Filter
 					Name="Win32"
 					>
-					<File
-						RelativePath="..\..\System\Platform\Win\AVIGenerator.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\AVIGenerator.h"
-						>
-					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\CrashHandler.cpp"
 						>
