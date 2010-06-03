@@ -1578,36 +1578,40 @@ bool CGame::ActionPressed(const Action& action,
 			Channels::BGMusic.Enable(enable);
 	}
 
-#ifndef NO_AVI
 	else if (cmd == "createvideo") {
-		if(creatingVideo){
-			creatingVideo=false;
+#ifdef NO_AVI
+		logOutput.Print("Creating a video is only supported with win32 MinGW builds of the engine.");
+		logOutput.Print("Please use an external frame-grabbing/-capturing application.");
+#else
+		if (creatingVideo) {
+			creatingVideo = false;
 			delete aviGenerator;
-			aviGenerator=0;
+			aviGenerator = NULL;
 		} else {
-			creatingVideo=true;
+			creatingVideo = true;
 			string fileName;
-			for(int a=0;a<999;++a){
+			for (int a=0; a < 999; ++a) {
 				char t[50];
-				itoa(a,t,10);
-				fileName=string("video")+t+".avi";
+				itoa(a, t, 10);
+				fileName = std::string("video") + t + ".avi";
 				CFileHandler ifs(fileName);
-				if(!ifs.FileExists())
+				if (!ifs.FileExists()) {
 					break;
+				}
 			}
 
-			int videoSizeX = (gu->viewSizeX/4)*4;
-			int videoSizeY = (gu->viewSizeY/4)*4;
+			int videoSizeX = (gu->viewSizeX / 4) * 4;
+			int videoSizeY = (gu->viewSizeY / 4) * 4;
 			aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
 
 			int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
 			SDL_ShowCursor(SDL_ENABLE);
 
-			if(!aviGenerator->InitEngine()){
+			if (!aviGenerator->InitEngine()) {
 				creatingVideo=false;
 				logOutput.Print(aviGenerator->GetLastErrorMessage());
 				delete aviGenerator;
-				aviGenerator=0;
+				aviGenerator = NULL;
 			} else {
 				LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
 			}
@@ -1617,9 +1621,8 @@ bool CGame::ActionPressed(const Action& action,
 			//Setting it back to default state.
 			streflop_init<streflop::Simple>();
 		}
-	}
 #endif
-
+	}
 	else if (cmd == "updatefov") {
 		if (action.extra.empty()) {
 			gd->updateFov = !gd->updateFov;
@@ -3417,8 +3420,8 @@ bool CGame::Draw() {
 
 #ifndef NO_AVI
 	if (creatingVideo) {
-		gu->lastFrameTime = 1.0f/GAME_SPEED;
-		if(!aviGenerator->readOpenglPixelDataThreaded()){
+		gu->lastFrameTime = 1.0f / GAME_SPEED;
+		if (!aviGenerator->readOpenglPixelDataThreaded()) {
 			creatingVideo = false;
 			delete aviGenerator;
 			aviGenerator = NULL;
