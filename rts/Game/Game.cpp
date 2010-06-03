@@ -75,6 +75,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
@@ -543,8 +544,8 @@ void CGame::LoadRendering()
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START, gu->viewRange * mapInfo->atmosphere.fogStart);
-	glFogf(GL_FOG_END, gu->viewRange);
+	glFogf(GL_FOG_START, globalRendering->viewRange * mapInfo->atmosphere.fogStart);
+	glFogf(GL_FOG_END, globalRendering->viewRange);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 	glFogi(GL_FOG_MODE, GL_LINEAR);
 	glEnable(GL_FOG);
@@ -1527,15 +1528,15 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "debug") {
-		if (gu->drawdebug)
+		if (globalRendering->drawdebug)
 		{
 			ProfileDrawer::Disable();
-			gu->drawdebug = false;
+			globalRendering->drawdebug = false;
 		}
 		else
 		{
 			ProfileDrawer::Enable();
-			gu->drawdebug = true;
+			globalRendering->drawdebug = true;
 		}
 	}
 	else if (cmd == "nosound") {
@@ -2017,9 +2018,9 @@ bool CGame::ActionPressed(const Action& action,
 
 	else if (cmd == "mapmarks") {
 		if (action.extra.empty()) {
-			gu->drawMapMarks = !gu->drawMapMarks;
+			globalRendering->drawMapMarks = !globalRendering->drawMapMarks;
 		} else {
-			gu->drawMapMarks = !!atoi(action.extra.c_str());
+			globalRendering->drawMapMarks = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "allmapmarks") {
@@ -2834,18 +2835,18 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	if (gu->drawSky) {
+	if (globalRendering->drawSky) {
 		sky->Draw();
 	}
 
-	if (gu->drawGround) {
+	if (globalRendering->drawGround) {
 		gd->Draw();
 		if (smoothGround->drawEnabled)
 			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
 	}
 
-	if (gu->drawWater && !mapInfo->map.voidWater) {
+	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		water->OcclusionQuery();
 		if (water->drawSolid) {
@@ -2861,7 +2862,7 @@ bool CGame::DrawWorld()
 	modelDrawer->Draw();
 	featureDrawer->Draw();
 
-	if (gu->drawGround) {
+	if (globalRendering->drawGround) {
 		gd->DrawTrees();
 	}
 
@@ -2884,7 +2885,7 @@ bool CGame::DrawWorld()
 	glDisable(GL_CLIP_PLANE3);
 
 	//! draw water
-	if (gu->drawWater && !mapInfo->map.voidWater) {
+	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
 			water->UpdateWater(this);
@@ -2904,7 +2905,7 @@ bool CGame::DrawWorld()
 
 	projectileDrawer->Draw(false);
 
-	if (gu->drawSky) {
+	if (globalRendering->drawSky) {
 		sky->DrawSun();
 	}
 
@@ -2923,7 +2924,7 @@ bool CGame::DrawWorld()
 
 	guihandler->DrawMapStuff(0);
 
-	if (gu->drawMapMarks) {
+	if (globalRendering->drawMapMarks) {
 		inMapDrawer->Draw();
 	}
 
@@ -2932,7 +2933,7 @@ bool CGame::DrawWorld()
 	if (camera->pos.y < 0.0f) {
 		glEnableClientState(GL_VERTEX_ARRAY);
 		const float3& cpos = camera->pos;
-		const float vr = gu->viewRange * 0.5f;
+		const float vr = globalRendering->viewRange * 0.5f;
 		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.5f, 0.3f, 0.50f);
@@ -3047,11 +3048,11 @@ bool CGame::Draw() {
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
 	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
-		gu->lastFrameStart = SDL_GetTicks();
-		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
-		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
+		globalRendering->lastFrameStart = SDL_GetTicks();
+		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
+		globalRendering->timeOffset = (float)(globalRendering->lastFrameStart - lastUpdate) * globalRendering->weightedSpeedFactor;
 	} else  {
-		gu->timeOffset=0;
+		globalRendering->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
 	}
 
@@ -3079,7 +3080,8 @@ bool CGame::Draw() {
 	if (lastSimFrame != gs->frameNum) {
 		CInputReceiver::CollectGarbage();
 		if (!skipping) {
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+			// TODO call only when camera changed
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
 		}
 	}
 
@@ -3136,7 +3138,7 @@ bool CGame::Draw() {
 	eventHandler.Update();
 	eventHandler.DrawGenesis();
 
-	if (!gu->active) {
+	if (!globalRendering->active) {
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
@@ -3163,7 +3165,7 @@ bool CGame::Draw() {
 			if (FBO::IsSupported())
 				FBO::Unbind();
 
-			glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+			glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 		}
 	}
 
@@ -3224,7 +3226,7 @@ bool CGame::Draw() {
 
 	glEnable(GL_TEXTURE_2D);
 
-	if (gu->drawdebug) {
+	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
 		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %d Frame: %d Particles: %d (%d)",
@@ -3350,7 +3352,7 @@ bool CGame::Draw() {
 
 			font_options |= FONT_BOTTOM;
 			smallFont->SetColors();
-			smallFont->glPrintTable(1.0f - 5 * gu->pixelX, 0.00f + 5 * gu->pixelY, 1.0f, font_options, chart);
+			smallFont->glPrintTable(1.0f - 5 * globalRendering->pixelX, 0.00f + 5 * globalRendering->pixelY, 1.0f, font_options, chart);
 		}
 
 		smallFont->End();
@@ -3367,7 +3369,7 @@ bool CGame::Draw() {
 	glLoadIdentity();
 
 	unsigned start = SDL_GetTicks();
-	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
+	globalRendering->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
 	lastMoveUpdate = start;
 
 	videoCapturing->RenderFrame();
@@ -3407,17 +3409,17 @@ void CGame::DrawInputText()
 	// draw the caret
 	const int caretPos = userPrompt.length() + writingPos;
 	const string caretStr = tempstring.substr(0, caretPos);
-	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * gu->pixelX;
+	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
 
 	char c = userInput[writingPos];
 	if (c == 0) { c = ' '; }
 
-	const float cw = fontSize * font->GetCharacterWidth(c) * gu->pixelX;
+	const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
 	const float csx = inputTextPosX + caretWidth;
 	glDisable(GL_TEXTURE_2D);
 	const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
 	glColor4f(f, f, f, 0.75f);
-	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + fontSize * font->GetLineHeight() * gu->pixelY);
+	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + fontSize * font->GetLineHeight() * globalRendering->pixelY);
 	glEnable(GL_TEXTURE_2D);
 
 	// setup the color
@@ -4523,10 +4525,10 @@ void CGame::UpdateUI(bool updateCam)
 		float3 movement = ZeroVector;
 
 		bool disableTracker = false;
-		if (camMove[0]) { movement.y += gu->lastFrameTime; disableTracker = true; }
-		if (camMove[1]) { movement.y -= gu->lastFrameTime; disableTracker = true; }
-		if (camMove[3]) { movement.x += gu->lastFrameTime; disableTracker = true; }
-		if (camMove[2]) { movement.x -= gu->lastFrameTime; disableTracker = true; }
+		if (camMove[0]) { movement.y += globalRendering->lastFrameTime; disableTracker = true; }
+		if (camMove[1]) { movement.y -= globalRendering->lastFrameTime; disableTracker = true; }
+		if (camMove[3]) { movement.x += globalRendering->lastFrameTime; disableTracker = true; }
+		if (camMove[2]) { movement.x -= globalRendering->lastFrameTime; disableTracker = true; }
 
 		if (!updateCam) {
 			if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
@@ -4542,13 +4544,13 @@ void CGame::UpdateUI(bool updateCam)
 		if (( fullscreen && fullscreenEdgeMove) ||
 		    (!fullscreen && windowedEdgeMove)) {
 
-			const int screenW = gu->dualScreenMode ? (gu->viewSizeX << 1): gu->viewSizeX;
+			const int screenW = globalRendering->dualScreenMode ? (globalRendering->viewSizeX << 1): globalRendering->viewSizeX;
 			disableTracker = false;
 
-			if (mouse->lasty <                  2 ) { movement.y += gu->lastFrameTime; disableTracker = true; }
-			if (mouse->lasty > (gu->viewSizeY - 2)) { movement.y -= gu->lastFrameTime; disableTracker = true; }
-			if (mouse->lastx >       (screenW - 2)) { movement.x += gu->lastFrameTime; disableTracker = true; }
-			if (mouse->lastx <                  2 ) { movement.x -= gu->lastFrameTime; disableTracker = true; }
+			if (mouse->lasty <                  2 ) { movement.y += globalRendering->lastFrameTime; disableTracker = true; }
+			if (mouse->lasty > (globalRendering->viewSizeY - 2)) { movement.y -= globalRendering->lastFrameTime; disableTracker = true; }
+			if (mouse->lastx >       (screenW - 2)) { movement.x += globalRendering->lastFrameTime; disableTracker = true; }
+			if (mouse->lastx <                  2 ) { movement.x -= globalRendering->lastFrameTime; disableTracker = true; }
 
 			if (!updateCam && disableTracker) {
 				unitTracker.Disable();
@@ -4558,8 +4560,8 @@ void CGame::UpdateUI(bool updateCam)
 			movement.z = cameraSpeed;
 			camHandler->GetCurrentController().ScreenEdgeMove(movement);
 
-			if (camMove[4]) { camHandler->GetCurrentController().MouseWheelMove( gu->lastFrameTime * 200 * cameraSpeed); }
-			if (camMove[5]) { camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime * 200 * cameraSpeed); }
+			if (camMove[4]) { camHandler->GetCurrentController().MouseWheelMove( globalRendering->lastFrameTime * 200 * cameraSpeed); }
+			if (camMove[5]) { camHandler->GetCurrentController().MouseWheelMove(-globalRendering->lastFrameTime * 200 * cameraSpeed); }
 		}
 	}
 

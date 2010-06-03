@@ -8,6 +8,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
@@ -153,9 +154,9 @@ void CFeatureDrawer::Update()
 void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 //#if defined(USE_GML) && GML_ENABLE_SIM
-//	f->drawPos = f->pos + (f->speed * ((float)gu->lastFrameStart - (float)f->lastUnitUpdate) * gu->weightedSpeedFactor);
+//	f->drawPos = f->pos + (f->speed * ((float)globalRendering->lastFrameStart - (float)f->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
 //#else
-	f->drawPos = f->pos + (f->speed * gu->timeOffset);
+	f->drawPos = f->pos + (f->speed * globalRendering->timeOffset);
 //#endif
 	f->drawMidPos = f->drawPos + (f->midPos - f->pos);
 }
@@ -163,7 +164,7 @@ void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	if(gu->drawFog) {
+	if(globalRendering->drawFog) {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
@@ -330,7 +331,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		if (gu->drawFog) {
+		if (globalRendering->drawFog) {
 			glEnable(GL_FOG);
 			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		}
@@ -424,7 +425,7 @@ void CFeatureDrawer::DrawShadowPass()
 		//
 		// GetVisibleFeatures(1, false);
 
-		if (!gu->atiHacks) {
+		if (!globalRendering->atiHacks) {
 			// FIXME: why does texture alpha not work with shadows on ATI?
 			// need the alpha-mask for transparent features
 			glEnable(GL_TEXTURE_2D);
@@ -437,7 +438,7 @@ void CFeatureDrawer::DrawShadowPass()
 			DrawOpaqueFeatures(modelType);
 		}
 
-		if (!gu->atiHacks) {
+		if (!globalRendering->atiHacks) {
 			glPopAttrib();
 			glDisable(GL_TEXTURE_2D);
 		}

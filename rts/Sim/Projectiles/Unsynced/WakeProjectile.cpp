@@ -5,6 +5,7 @@
 
 #include "WakeProjectile.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/GL/VertexArray.h"
@@ -81,10 +82,10 @@ void CWakeProjectile::Draw()
 	col[0]=(unsigned char) (255*alpha);
 	col[1]=(unsigned char) (255*alpha);
 	col[2]=(unsigned char) (255*alpha);
-	col[3]=(unsigned char) (255*alpha)/*-alphaFalloff*gu->timeOffset*/;
+	col[3]=(unsigned char) (255*alpha)/*-alphaFalloff*globalRendering->timeOffset*/;
 
-	float interSize=size+sizeExpansion*gu->timeOffset;
-	float interRot=rotation+rotSpeed*gu->timeOffset;
+	float interSize=size+sizeExpansion*globalRendering->timeOffset;
+	float interRot=rotation+rotSpeed*globalRendering->timeOffset;
 
 	const float3 dir1 = float3(cos(interRot),0,sin(interRot))*interSize;
 	const float3 dir2 = dir1.cross(UpVector);

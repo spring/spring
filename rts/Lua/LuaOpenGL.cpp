@@ -38,6 +38,7 @@
 #include "Map/ReadMap.h"
 #include "Map/HeightMapTexture.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
@@ -108,7 +109,7 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	if (gu->haveGLSL && !!configHandler->Get("LuaShaders", 1)) {
+	if (globalRendering->haveGLSL && !!configHandler->Get("LuaShaders", 1)) {
 		canUseShaders = true;
 	}
 }
@@ -118,7 +119,7 @@ void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
 
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		set<unsigned int>::const_iterator it;
 		for (it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
 			glDeleteQueries(1, &(*it));
@@ -171,7 +172,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		REGISTER_LUA_CFUNC(BlendEquationSeparate);
 		REGISTER_LUA_CFUNC(BlendFuncSeparate);
 	}
@@ -186,7 +187,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StencilMask);
 	REGISTER_LUA_CFUNC(StencilFunc);
 	REGISTER_LUA_CFUNC(StencilOp);
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		REGISTER_LUA_CFUNC(StencilMaskSeparate);
 		REGISTER_LUA_CFUNC(StencilFuncSeparate);
 		REGISTER_LUA_CFUNC(StencilOpSeparate);
@@ -194,7 +195,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(LineWidth);
 	REGISTER_LUA_CFUNC(PointSize);
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		REGISTER_LUA_CFUNC(PointSprite);
 		REGISTER_LUA_CFUNC(PointParameter);
 	}
@@ -297,7 +298,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ReadPixels);
 	REGISTER_LUA_CFUNC(SaveImage);
 
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		REGISTER_LUA_CFUNC(CreateQuery);
 		REGISTER_LUA_CFUNC(DeleteQuery);
 		REGISTER_LUA_CFUNC(RunQuery);
@@ -412,10 +413,10 @@ void LuaOpenGL::ResetGLState()
 	glLineWidth(1.0f);
 	glPointSize(1.0f);
 
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		glDisable(GL_POINT_SPRITE);
 	}
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
 		glPointParameterf(GL_POINT_SIZE_MIN, 0.0f);
@@ -831,12 +832,12 @@ void LuaOpenGL::SetupScreenMatrices()
 	glLoadIdentity();
 	const float dist   = screenDistance;         // eye-to-screen (meters)
 	const float width  = screenWidth;            // screen width (meters)
-	const float vppx   = float(gu->winPosX + gu->viewPosX); // view pixel pos x
-	const float vppy   = float(gu->winPosY + gu->viewPosY); // view pixel pos y
-	const float vpsx   = float(gu->viewSizeX);   // view pixel size x
-	const float vpsy   = float(gu->viewSizeY);   // view pixel size y
-	const float spsx   = float(gu->screenSizeX); // screen pixel size x
-	const float spsy   = float(gu->screenSizeY); // screen pixel size x
+	const float vppx   = float(globalRendering->winPosX + globalRendering->viewPosX); // view pixel pos x
+	const float vppy   = float(globalRendering->winPosY + globalRendering->viewPosY); // view pixel pos y
+	const float vpsx   = float(globalRendering->viewSizeX);   // view pixel size x
+	const float vpsy   = float(globalRendering->viewSizeY);   // view pixel size y
+	const float spsx   = float(globalRendering->screenSizeX); // screen pixel size x
+	const float spsy   = float(globalRendering->screenSizeY); // screen pixel size x
 	const float halfSX = 0.5f * spsx;            // half screen pixel size x
 	const float halfSY = 0.5f * spsy;            // half screen pixel size y
 
@@ -1109,8 +1110,8 @@ int LuaOpenGL::ConfigScreen(lua_State* L)
 
 int LuaOpenGL::GetViewSizes(lua_State* L)
 {
-	lua_pushnumber(L, gu->viewSizeX);
-	lua_pushnumber(L, gu->viewSizeY);
+	lua_pushnumber(L, globalRendering->viewSizeX);
+	lua_pushnumber(L, globalRendering->viewSizeY);
 	return 2;
 }
 
@@ -1184,7 +1185,7 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 
 	if (transform) {
 		glPushMatrix();
-		glScalef(gu->viewSizeX,gu->viewSizeY,1.0f);
+		glScalef(globalRendering->viewSizeX,globalRendering->viewSizeY,1.0f);
 
 		minimap->DrawForReal(true);
 
@@ -1989,9 +1990,9 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
 	CTransportUnit *trans=unit->GetTransporter();
 	if (trans == NULL) {
-		pos += (unit->speed * gu->timeOffset);
+		pos += (unit->speed * globalRendering->timeOffset);
 	} else {
-		pos += (trans->speed * gu->timeOffset);
+		pos += (trans->speed * globalRendering->timeOffset);
 	}
 
 	const float3 scale(luaL_optnumber(L, 4, 1.0f),
@@ -2038,9 +2039,9 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
 	CTransportUnit *trans=unit->GetTransporter();
 	if (trans == NULL) {
-		pos += (unit->speed * gu->timeOffset);
+		pos += (unit->speed * globalRendering->timeOffset);
 	} else {
-		pos += (trans->speed * gu->timeOffset);
+		pos += (trans->speed * globalRendering->timeOffset);
 	}
 
 	const int args = lua_gettop(L); // number of arguments
@@ -2954,7 +2955,7 @@ int LuaOpenGL::Scissor(lua_State* L)
 		const GLint   y =   (GLint)lua_tonumber(L, 2);
 		const GLsizei w = (GLsizei)lua_tonumber(L, 3);
 		const GLsizei h = (GLsizei)lua_tonumber(L, 4);
-		glScissor(x + gu->viewPosX, y + gu->viewPosY, w, h);
+		glScissor(x + globalRendering->viewPosX, y + globalRendering->viewPosY, w, h);
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.Scissor()");

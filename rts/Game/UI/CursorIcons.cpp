@@ -123,11 +123,11 @@ void CCursorIcons::DrawCursors()
 
 void CCursorIcons::DrawTexts()
 {
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glColor4f(1.0f,  1.0f, 1.0f, 1.0f);
 
 	const float fontScale = 1.0f;
-	const float yOffset = 50.0f * gu->pixelY;
+	const float yOffset = 50.0f * globalRendering->pixelY;
 
 	font->Begin();
 	font->SetColors(); //default
@@ -136,8 +136,8 @@ void CCursorIcons::DrawTexts()
 	for (it = texts.begin(); it != texts.end(); ++it) {
 		const float3 winPos = camera->CalcWindowCoordinates(it->pos);
 		if (winPos.z <= 1.0f) {
-			const float x = (winPos.x * gu->pixelX);
-			const float y = (winPos.y * gu->pixelY) + yOffset;
+			const float x = (winPos.x * globalRendering->pixelX);
+			const float y = (winPos.y * globalRendering->pixelY) + yOffset;
 
 			if (guihandler->GetOutlineFonts()) {
 				font->glPrint(x, y, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_TOP | FONT_SCALE | FONT_NORM, it->text);
@@ -152,7 +152,7 @@ void CCursorIcons::DrawTexts()
 
 void CCursorIcons::DrawBuilds()
 {
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glEnable(GL_DEPTH_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);

@@ -72,8 +72,8 @@ void AviVideoCapturing::StartCapturing() {
 		logOutput.Print("Error: Not creating video!");
 	} else {
 		capturing = true;
-		const int videoSizeX = (gu->viewSizeX / 4) * 4;
-		const int videoSizeY = (gu->viewSizeY / 4) * 4;
+		const int videoSizeX = (globalRendering->viewSizeX / 4) * 4;
+		const int videoSizeY = (globalRendering->viewSizeY / 4) * 4;
 		aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
 
 		const int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
@@ -99,7 +99,7 @@ void AviVideoCapturing::StartCapturing() {
 void AviVideoCapturing::RenderFrame() {
 
 	if (IsCapturing()) {
-		gu->lastFrameTime = 1.0f / GAME_SPEED;
+		globalRendering->lastFrameTime = 1.0f / GAME_SPEED;
 		if (!aviGenerator->readOpenglPixelDataThreaded()) {
 			StopCapturing();
 		}

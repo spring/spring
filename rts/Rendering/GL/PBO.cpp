@@ -11,9 +11,11 @@
 #include "mmgr.h"
 
 #include "PBO.h"
-#include "LogOutput.h"
-#include "GlobalUnsynced.h"
-#include "ConfigHandler.h"
+
+#include "Rendering/GlobalRendering.h"
+#include "System/LogOutput.h"
+#include "System/GlobalUnsynced.h"
+#include "System/ConfigHandler.h"
 
 
 /**
@@ -68,7 +70,7 @@ void PBO::Unbind(bool discard)
 
 	if (PBOused) {
 		if (discard) {
-			if (!gu->atiHacks) {
+			if (!globalRendering->atiHacks) {
 				glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW);
 			} else {
 				glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);

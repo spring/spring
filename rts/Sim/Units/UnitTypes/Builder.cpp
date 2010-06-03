@@ -12,6 +12,7 @@
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
 #include "myMath.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -25,10 +26,10 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "GlobalUnsynced.h"
-#include "EventHandler.h"
-#include "Sound/AudioChannel.h"
-#include "mmgr.h"
+#include "System/GlobalUnsynced.h"
+#include "System/EventHandler.h"
+#include "System/Sound/AudioChannel.h"
+#include "System/mmgr.h"
 
 using std::min;
 using std::max;
@@ -738,7 +739,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		float3 error = gu->usRandVector() * (radius / l);
 		float3 color = unitDef->nanoColor;
 
-		if (gu->teamNanospray) {
+		if (globalRendering->teamNanospray) {
 			unsigned char* tcol = teamHandler->Team(team)->color;
 			color = float3(tcol[0] * (1.f / 255.f), tcol[1] * (1.f / 255.f), tcol[2] * (1.f / 255.f));
 		}

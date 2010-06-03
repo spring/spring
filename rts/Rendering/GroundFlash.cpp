@@ -6,6 +6,7 @@
 #include "GroundFlash.h"
 #include "Map/Ground.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -136,7 +137,7 @@ bool CStandardGroundFlash::Update()
 
 void CStandardGroundFlash::Draw()
 {
-	float iAlpha=circleAlpha-circleAlphaDec*gu->timeOffset;
+	float iAlpha=circleAlpha-circleAlphaDec*globalRendering->timeOffset;
 	if (iAlpha > 1.0f) iAlpha = 1.0f;
 	if (iAlpha < 0.0f) iAlpha = 0.0f;
 
@@ -146,7 +147,7 @@ void CStandardGroundFlash::Draw()
 	col[2]=color[2];
 	col[3]=(unsigned char) (iAlpha*255);
 
-	float iSize=circleSize+circleGrowth*gu->timeOffset;
+	float iSize=circleSize+circleGrowth*globalRendering->timeOffset;
 
 	if(iAlpha>0){
 		float3 p1=pos+(-side1-side2)*iSize;
@@ -160,7 +161,7 @@ void CStandardGroundFlash::Draw()
 		va->AddVertexQTC(p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   col);
 	}
 
-	float iAge=flashAge+flashAgeSpeed*gu->timeOffset;
+	float iAge=flashAge+flashAgeSpeed*globalRendering->timeOffset;
 
 	if(iAge<1){
 		if(iAge<0.091f)

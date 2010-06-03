@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "ModelDrawer.hpp"
 #include "Game/Game.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
@@ -22,13 +23,13 @@ IModelDrawer* modelDrawer = NULL;
 IModelDrawer* IModelDrawer::GetInstance()
 {
 	if (modelDrawer == NULL) {
-		if (!gu->haveARB && !gu->haveGLSL) {
+		if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
 			modelDrawer = new CModelDrawerFFP("[CModelDrawerFFP]", 314596, false);
 		} else {
-			if (gu->haveGLSL) {
+			if (globalRendering->haveGLSL) {
 				modelDrawer = new CModelDrawerGLSL("[CModelDrawerGLSL]", 314596, false);
 			} else {
-				if (gu->haveARB) {
+				if (globalRendering->haveARB) {
 					modelDrawer = new CModelDrawerARB("[CModelDrawerARB]", 314596, false);
 				}
 			}

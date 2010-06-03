@@ -5,6 +5,7 @@
 
 #include "ExploSpikeProjectile.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -73,13 +74,13 @@ void CExploSpikeProjectile::Draw(void)
 	dir2.ANormalize();
 
 	unsigned char col[4];
-	float a=std::max(0.f,alpha-alphaDecay*gu->timeOffset)*255;
+	float a=std::max(0.f,alpha-alphaDecay*globalRendering->timeOffset)*255;
 	col[0]=(unsigned char)(a*color.x);
 	col[1]=(unsigned char)(a*color.y);
 	col[2]=(unsigned char)(a*color.z);
 	col[3]=1;
 
-	const float3 l = dir * length + lengthGrowth * gu->timeOffset;
+	const float3 l = dir * length + lengthGrowth * globalRendering->timeOffset;
 	const float3 w = dir2 * width;
 
 	#define let projectileDrawer->laserendtex

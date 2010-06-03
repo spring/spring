@@ -5,6 +5,7 @@
 
 #include "BitmapMuzzleFlame.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -44,7 +45,7 @@ CBitmapMuzzleFlame::~CBitmapMuzzleFlame(void)
 void CBitmapMuzzleFlame::Draw(void)
 {
 	inArray = true;
-	life = (gs->frameNum - createTime + gu->timeOffset) * invttl;
+	life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
 
 	unsigned char col[4];
 	colorMap->GetColor(col, life);

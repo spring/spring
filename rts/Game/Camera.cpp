@@ -8,6 +8,7 @@
 #include "System/myMath.h"
 #include "System/Matrix44f.h"
 #include "System/GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -94,16 +95,16 @@ void CCamera::Update(bool freeze, bool resetUp)
 	up = right.cross(forward);
 	up.UnsafeANormalize();
 
-	const float aspect = gu->aspectRatio;
+	const float aspect = globalRendering->aspectRatio;
 	const float viewx = tan(aspect * halfFov);
 	// const float viewx = aspect * tanHalfFov;
 	const float viewy = tanHalfFov;
 
-	if (gu->viewSizeY <= 0) {
+	if (globalRendering->viewSizeY <= 0) {
 		lppScale = 0.0f;
 	} else {
 		const float span = 2.0f * tanHalfFov;
-		lppScale = span / (float) gu->viewSizeY;
+		lppScale = span / (float) globalRendering->viewSizeY;
 	}
 
 	const float3 forwardy = (-forward * viewy);
@@ -134,13 +135,13 @@ void CCamera::Update(bool freeze, bool resetUp)
 	const float gndHeight = ground->GetHeight(pos.x, pos.z);
 	const float rangemod = 1.0f + std::max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
 	const float zNear = (NEAR_PLANE * rangemod);
-	gu->viewRange = MAX_VIEW_RANGE * rangemod;
+	globalRendering->viewRange = MAX_VIEW_RANGE * rangemod;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
 	// apply and store the projection transform
-	myGluPerspective(aspect, zNear, gu->viewRange);
+	myGluPerspective(aspect, zNear, globalRendering->viewRange);
 
 
 	glMatrixMode(GL_MODELVIEW);
@@ -179,8 +180,8 @@ void CCamera::Update(bool freeze, bool resetUp)
 
 	viewport[0] = 0;
 	viewport[1] = 0;
-	viewport[2] = gu->viewSizeX;
-	viewport[3] = gu->viewSizeY;
+	viewport[2] = globalRendering->viewSizeX;
+	viewport[3] = globalRendering->viewSizeY;
 }
 
 
@@ -215,7 +216,7 @@ bool CCamera::InView(const float3 &p, float radius)
 	if (lsq < 2500.0f) {
 		return true;
 	}
-	else if (lsq > Square(gu->viewRange)) {
+	else if (lsq > Square(globalRendering->viewRange)) {
 		return false;
 	}
 
@@ -241,8 +242,8 @@ void CCamera::UpdateForward()
 
 float3 CCamera::CalcPixelDir(int x, int y)
 {
-	float dx = float(x-gu->viewPosX-gu->viewSizeX/2)/gu->viewSizeY * tanHalfFov * 2;
-	float dy = float(y-gu->viewSizeY/2)/gu->viewSizeY * tanHalfFov * 2;
+	float dx = float(x-globalRendering->viewPosX-globalRendering->viewSizeX/2)/globalRendering->viewSizeY * tanHalfFov * 2;
+	float dy = float(y-globalRendering->viewSizeY/2)/globalRendering->viewSizeY * tanHalfFov * 2;
 	float3 dir = forward - up * dy + right * dx;
 	dir.Normalize();
 	return dir;

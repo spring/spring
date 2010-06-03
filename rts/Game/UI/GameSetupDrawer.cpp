@@ -171,9 +171,9 @@ void GameSetupDrawer::Draw()
 		}
 		const float fontScale = 1.0f;
 		const float fontSize  = fontScale * font->GetSize();
-		const float yScale = fontSize * font->GetLineHeight() * gu->pixelY;
+		const float yScale = fontSize * font->GetLineHeight() * globalRendering->pixelY;
 		const float yPos = 0.5f - (0.5f * yScale * numPlayers) + (yScale * (float)a);
-		const float xPos = 10.0f * gu->pixelX;
+		const float xPos = 10.0f * globalRendering->pixelX;
 		font->SetColors(color, NULL);
 		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);
 	}

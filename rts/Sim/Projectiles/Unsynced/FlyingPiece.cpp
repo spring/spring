@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "FlyingPiece.hpp"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -31,7 +33,7 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 			m.Rotate(rot, rotAxis);
 			float3 tp, tn;
 
-			const float3 interPos = pos + speed * gu->timeOffset;
+			const float3 interPos = pos + speed * globalRendering->timeOffset;
 			const C3DOTextureHandler::UnitTexture* tex = prim->texture;
 
 			const std::vector<S3DOVertex>& vertices    = object->vertices;
@@ -76,7 +78,7 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 			m.Rotate(rot, rotAxis);
 			float3 tp, tn;
 
-			const float3 interPos = pos + speed * gu->timeOffset;
+			const float3 interPos = pos + speed * globalRendering->timeOffset;
 
 			for (int i = 0; i < 4; i++) {
 				tp = m.Mul(verts[i].pos) + interPos;

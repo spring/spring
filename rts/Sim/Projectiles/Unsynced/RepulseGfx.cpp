@@ -4,6 +4,7 @@
 #include "mmgr.h"
 
 #include "RepulseGfx.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -70,7 +71,7 @@ void CRepulseGfx::Draw(void)
 	float3 dir=repulsed->pos-owner->pos;
 	dir.SafeANormalize();
 
-	pos=repulsed->pos-dir*10+repulsed->speed*gu->timeOffset;
+	pos=repulsed->pos-dir*10+repulsed->speed*globalRendering->timeOffset;
 
 	float3 dir1=dir.cross(UpVector);
 	dir1.SafeANormalize();

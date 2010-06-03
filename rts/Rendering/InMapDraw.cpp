@@ -336,7 +336,7 @@ void CInMapDraw::Draw(void)
 	// XXX hopeless drivers, retest in a year or so...
 	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 	// so redraw lines with width 1
-	if (gu->atiHacks) {
+	if (globalRendering->atiHacks) {
 		glLineWidth(1.f);
 		lineva->DrawArrayC(GL_LINES);
 	}
@@ -418,7 +418,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 
 float3 CInMapDraw::GetMouseMapPos(void)
 {
-	float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * gu->viewRange * 1.4f);
+	float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * globalRendering->viewRange * 1.4f);
 	if (dist < 0) {
 		return float3(-1, 1, -1);
 	}
