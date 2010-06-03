@@ -1,5 +1,5 @@
-ADD_DEFINITIONS(-DDEDICATED ${PIC_FLAG} -DNO_AVI -DNOT_USING_CREG)
-remove_definitions(-DSTREFLOP_SSE)
+ADD_DEFINITIONS(-DDEDICATED ${PIC_FLAG} -DNOT_USING_CREG)
+remove_definitions(-DSTREFLOP_SSE -DAVI_CAPTURING)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
@@ -41,6 +41,8 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Game/PlayerBase
 	../../rts/Game/PlayerStatistics
 	../../rts/Game/GameVersion
+	../../rts/Game/IVideoCapturing
+	../../rts/Game/DummyVideoCapturing
 	../../rts/Game/CommandMessage
 	../../rts/Game/ChatMessage
 	../../rts/Game/Action

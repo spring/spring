@@ -19,7 +19,6 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 #include <SDL_events.h>
-#include <SDL_video.h>
 
 #include "mmgr.h"
 
@@ -44,6 +43,7 @@
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
+#include "IVideoCapturing.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -159,10 +159,6 @@
 
 #include <boost/cstdint.hpp>
 
-#ifndef NO_AVI
-#  include "Platform/Win/AVIGenerator.h"
-#endif
-
 #include "myMath.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Weapons/Weapon.h"
@@ -216,8 +212,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(infoConsole),
 //	CR_MEMBER(consoleHistory),
 //	CR_MEMBER(wordCompletion),
-//	CR_MEMBER(creatingVideo),
-//	CR_MEMBER(aviGenerator),
 //	CR_MEMBER(hotBinding),
 //	CR_MEMBER(inputTextPosX),
 //	CR_MEMBER(inputTextPosY),
@@ -252,8 +246,6 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	gameOver(false),
 
 	noSpectatorChat(false),
-
-	creatingVideo(false),
 
 	skipping(false),
 	playing(false),
@@ -348,12 +340,10 @@ CGame::~CGame()
 {
 	SafeDelete(guihandler);
 
-#ifndef NO_AVI
-	if (creatingVideo) {
-		creatingVideo = false;
-		SafeDelete(aviGenerator);
+	if (videoCapturing->IsCapturing()) {
+		videoCapturing->StopCapturing();
 	}
-#endif
+	IVideoCapturing::FreeInstance();
 
 #ifdef TRACE_SYNC
 	tracefile << "End game\n";
@@ -1579,54 +1569,11 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "createvideo") {
-#ifdef NO_AVI
-		logOutput.Print("Creating a video is only supported with win32 MinGW builds of the engine.");
-		logOutput.Print("Please use an external frame-grabbing/-capturing application.");
-#else
-		if (creatingVideo) {
-			creatingVideo = false;
-			delete aviGenerator;
-			aviGenerator = NULL;
+		if (videoCapturing->IsCapturing()) {
+			videoCapturing->StopCapturing();
 		} else {
-			// find a file to capture to
-			std::string fileName;
-			const size_t MAX_NUM_VIDEOS = 1000;
-			size_t vi;
-			for (vi = 0; vi < MAX_NUM_VIDEOS; ++vi) {
-				fileName = std::string("video") + IntToString(vi) + ".avi";
-				CFileHandler ifs(fileName);
-				if (!ifs.FileExists()) {
-					break;
-				}
-			}
-			if (vi == MAX_NUM_VIDEOS) {
-				logOutput.Print("Error: You have too many videos on disc already, please move, rename or delete some.");
-				logOutput.Print("Error: Not creating video!");
-			} else {
-				creatingVideo = true;
-				const int videoSizeX = (gu->viewSizeX / 4) * 4;
-				const int videoSizeY = (gu->viewSizeY / 4) * 4;
-				aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
-
-				const int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
-				SDL_ShowCursor(SDL_ENABLE);
-
-				if (!aviGenerator->InitEngine()) {
-					creatingVideo = false;
-					logOutput.Print(aviGenerator->GetLastErrorMessage());
-					delete aviGenerator;
-					aviGenerator = NULL;
-				} else {
-					LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
-				}
-
-				SDL_ShowCursor(savedCursorMode);
-				//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
-				//Setting it back to default state.
-				streflop_init<streflop::Simple>();
-			}
+			videoCapturing->StartCapturing();
 		}
-#endif
 	}
 	else if (cmd == "updatefov") {
 		if (action.extra.empty()) {
@@ -2844,7 +2791,7 @@ bool CGame::Update()
 
 	net->Update();
 
-	if (creatingVideo && playing && gameServer){
+	if (videoCapturing->IsCapturing() && playing && gameServer) {
 		gameServer->CreateNewFrame(false, true);
 	}
 
@@ -3099,7 +3046,7 @@ bool CGame::Draw() {
 
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
-	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
+	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
 		gu->lastFrameStart = SDL_GetTicks();
 		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
 		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
@@ -3423,17 +3370,7 @@ bool CGame::Draw() {
 	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
 	lastMoveUpdate = start;
 
-#ifndef NO_AVI
-	if (creatingVideo) {
-		gu->lastFrameTime = 1.0f / GAME_SPEED;
-		if (!aviGenerator->readOpenglPixelDataThreaded()) {
-			creatingVideo = false;
-			delete aviGenerator;
-			aviGenerator = NULL;
-		}
-//		logOutput.Print("Saved avi frame size %i %i",ih->biWidth,ih->biHeight);
-	}
-#endif
+	videoCapturing->RenderFrame();
 
 	SetDrawMode(gameNotDrawing);
 
@@ -3949,7 +3886,7 @@ void CGame::ClientReadNet()
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
-				if (creatingVideo) {
+				if (videoCapturing->IsCapturing()) {
 					return;
 				}
 				break;
