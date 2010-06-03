@@ -1093,6 +1093,7 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 		case CBaseGroundDrawer::drawMetal:  { HSTR_PUSH(L, "metal");  break; }
 		case CBaseGroundDrawer::drawPath:   { HSTR_PUSH(L, "path");   break; }
 		case CBaseGroundDrawer::drawLos:    { HSTR_PUSH(L, "los");    break; }
+		case CBaseGroundDrawer::drawHeat:   { HSTR_PUSH(L, "heat");   break; }
 	}
 	return 1;
 }
