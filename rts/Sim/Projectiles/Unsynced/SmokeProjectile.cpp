@@ -7,6 +7,7 @@
 
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -107,12 +108,12 @@ void CSmokeProjectile::Draw()
 	col[0]=(unsigned char) (color*alpha);
 	col[1]=(unsigned char) (color*alpha);
 	col[2]=(unsigned char) (color*alpha);
-	col[3]=(unsigned char)alpha/*-alphaFalloff*gu->timeOffset*/;
+	col[3]=(unsigned char)alpha/*-alphaFalloff*globalRendering->timeOffset*/;
 	//int frame=textureNum;
 	//float xmod=0.125f+(float(int(frame%6)))/16;
 	//float ymod=(int(frame/6))/16.0f;
 
-	const float interSize=size+sizeExpansion*gu->timeOffset;
+	const float interSize=size+sizeExpansion*globalRendering->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
 

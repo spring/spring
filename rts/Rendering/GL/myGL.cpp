@@ -13,6 +13,7 @@
 #include "VertexArrayRange.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Platform/errorhandler.h"
 #include "ConfigHandler.h"
@@ -186,7 +187,7 @@ void UnloadExtensions()
 
 void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data)
 {
-	if (gu->compressTextures) {
+	if (globalRendering->compressTextures) {
 		switch ( internalFormat ) {
 			case 4:
 			case GL_RGBA8 :
@@ -202,10 +203,10 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 
 	// create mipmapped texture
 
-	if (glGenerateMipmapEXT_NONGML && !gu->atiHacks) {
+	if (glGenerateMipmapEXT_NONGML && !globalRendering->atiHacks) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-		if (gu->atiHacks) {
+		if (globalRendering->atiHacks) {
 			glEnable(target);
 			glGenerateMipmapEXT(target);
 			glDisable(target);
@@ -280,15 +281,15 @@ void LoadStartPicture(const std::string& name)
 	startupTexture_aspectRatio = (float) bm.xsize / bm.ysize;
 
 	// HACK Really big load pictures made GLU choke.
-	if ((bm.xsize > gu->viewSizeX) || (bm.ysize > gu->viewSizeY)) {
-		float newX = gu->viewSizeX;
-		float newY = gu->viewSizeY;
+	if ((bm.xsize > globalRendering->viewSizeX) || (bm.ysize > globalRendering->viewSizeY)) {
+		float newX = globalRendering->viewSizeX;
+		float newY = globalRendering->viewSizeY;
 
 		if (startupTexture_keepAspectRatio) {
 			// Make smaller but preserve aspect ratio.
 			// The resulting resolution will make it fill one axis of the
 			// screen, and be smaller or equal to the screen on the other axis.
-			const float screen_aspectRatio = gu->aspectRatio;
+			const float screen_aspectRatio = globalRendering->aspectRatio;
 			const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
 			if (ratioComp > 1.0f) {
 				newX = newX / ratioComp;
@@ -351,7 +352,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	float xDiv = 0.0f;
 	float yDiv = 0.0f;
 	if (startupTexture_keepAspectRatio) {
-		const float screen_aspectRatio = gu->aspectRatio;
+		const float screen_aspectRatio = globalRendering->aspectRatio;
 		const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
 		if ((ratioComp > 0.99f) && (ratioComp < 1.01f)) { // ~= 1
 			// show Load-Screen full screen
@@ -380,16 +381,16 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
 	font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
 
-	font->glPrint(0.5f,0.5f,   gu->viewSizeY / 15.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+	font->glPrint(0.5f,0.5f,   globalRendering->viewSizeY / 15.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			text);
 #ifdef USE_GML
-	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+	font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
 #else
-	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+	font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"Spring %s", SpringVersion::GetFull().c_str());
 #endif
-	font->glFormat(0.5f,0.02f, gu->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
+	font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"This program is distributed under the GNU General Public License, see license.html for more info");
 
 	if (swapbuffers) {

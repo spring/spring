@@ -15,6 +15,7 @@
 #include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
 #include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 #include "myMath.h"
 
 extern boost::uint8_t *keys;
@@ -42,7 +43,7 @@ void CTWController::KeyMove(float3 move)
 void CTWController::MouseMove(float3 move)
 {
 	float dist = -camera->rot.x * 1500;
-	float pixelsize = camera->GetTanHalfFov() * 2/gu->viewSizeY * dist * 2;
+	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * dist * 2;
 	move *= (1+keys[SDLK_LSHIFT]*3) * pixelsize;
 
 	float3 flatForward = camera->forward;
@@ -55,8 +56,8 @@ void CTWController::MouseMove(float3 move)
 
 void CTWController::ScreenEdgeMove(float3 move)
 {
-	if(mouse->lasty<gu->viewSizeY/3){
-		camera->rot.y-=move.x*gu->lastFrameTime*0.5f*200;
+	if(mouse->lasty<globalRendering->viewSizeY/3){
+		camera->rot.y-=move.x*globalRendering->lastFrameTime*0.5f*200;
 		move.x=0;
 	}
 	KeyMove(move);

@@ -8,6 +8,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/CubeMapHandler.h"
@@ -801,7 +802,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	viewRadius  = (int) (viewRadius * fastmath::apxsqrt(zoom));
 	viewRadius  = max(max(numBigTexY,numBigTexX), viewRadius);
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
-	neededLod   = int((gu->viewRange * 0.125f) / viewRadius) << 1;
+	neededLod   = int((globalRendering->viewRange * 0.125f) / viewRadius) << 1;
 
 	UpdateCamRestraints();
 
@@ -1589,9 +1590,9 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 		float3 colpoint;                    // a point on the collision line
 
 		if (side.y > 0.0f)
-			colpoint = cam2->pos + camHorizontal * gu->viewRange * 1.05f - c * (cam2->pos.y / c.y);
+			colpoint = cam2->pos + camHorizontal * globalRendering->viewRange * 1.05f - c * (cam2->pos.y / c.y);
 		else
-			colpoint = cam2->pos + camHorizontal * gu->viewRange * 1.05f - c * ((cam2->pos.y - 255 / 3.5f) / c.y);
+			colpoint = cam2->pos + camHorizontal * globalRendering->viewRange * 1.05f - c * ((cam2->pos.y - 255 / 3.5f) / c.y);
 
 		// get intersection between colpoint and z axis
 		temp.base = (colpoint.x - colpoint.z * temp.dir) / SQUARE_SIZE;

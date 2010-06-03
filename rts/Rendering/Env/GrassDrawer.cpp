@@ -10,6 +10,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -194,7 +195,7 @@ void CGrassDrawer::LoadGrassShaders() {
 
 	CShaderHandler* sh = shaderHandler;
 
-	if (!gu->haveGLSL) {
+	if (!globalRendering->haveGLSL) {
 		grassShaders[GRASS_PROGRAM_DIST_BASIC] =
 			sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_BASIC] + "ARB", true);
 		grassShaders[GRASS_PROGRAM_DIST_BASIC]->AttachShaderObject(
@@ -227,7 +228,7 @@ void CGrassDrawer::LoadGrassShaders() {
 	for (int i = GRASS_PROGRAM_NEAR_SHADOW; i < GRASS_PROGRAM_LAST; i++) {
 		grassShaders[i]->Link();
 
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			for (int j = 0; j < NUM_UNIFORMS; j++) {
 				grassShaders[i]->SetUniformLocation(uniformNames[j]);
 			}
@@ -446,7 +447,7 @@ void CGrassDrawer::Draw(void)
 		grassShader = grassShaders[GRASS_PROGRAM_NEAR_SHADOW];
 		grassShader->Enable();
 
-		if (!gu->haveGLSL) {
+		if (!globalRendering->haveGLSL) {
 			grassShader->SetUniform2f(13, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			grassShader->SetUniform2f(14, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
 		}
@@ -508,7 +509,7 @@ void CGrassDrawer::Draw(void)
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
 			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 			grassShader->SetUniform1f(8, gs->frameNum);
@@ -567,7 +568,7 @@ void CGrassDrawer::Draw(void)
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
@@ -608,7 +609,7 @@ void CGrassDrawer::Draw(void)
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_SHADOW];
 		grassShader->Enable();
 
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
 			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 			grassShader->SetUniform1f(8, gs->frameNum);
@@ -618,7 +619,7 @@ void CGrassDrawer::Draw(void)
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_BASIC];
 		grassShader->Enable();
 
-		if (!gu->haveGLSL) {
+		if (!globalRendering->haveGLSL) {
 			grassShader->SetUniform2f(13, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			grassShader->SetUniform2f(12, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
 		} else {
@@ -661,7 +662,7 @@ void CGrassDrawer::Draw(void)
 		const float ang = acos(billboardDirZ.y);
 		const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
 
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
 			grassShader->SetUniform3f(3,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
 			grassShader->SetUniform3f(4,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
@@ -693,7 +694,7 @@ void CGrassDrawer::Draw(void)
 			const float ang = acos(billboardDirZ.y);
 			const int texPart = std::min(15, int(std::max(0, int((ang + PI / 16 - PI / 2) / PI * 30))));
 
-			if (gu->haveGLSL) {
+			if (globalRendering->haveGLSL) {
 				grassShader->SetUniform2f(2, texPart / 16.0f, 0.0f);
 				grassShader->SetUniform3f(3,  billboardDirX.x,  billboardDirX.y,  billboardDirX.z);
 				grassShader->SetUniform3f(4,  billboardDirY.x,  billboardDirY.y,  billboardDirY.z);
@@ -738,7 +739,7 @@ void CGrassDrawer::Draw(void)
 	grassShader->Disable();
 	glDepthMask(true);
 
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	}
 
@@ -994,7 +995,7 @@ void CGrassDrawer::CreateFarTex(void)
 		}
 	}
 
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);

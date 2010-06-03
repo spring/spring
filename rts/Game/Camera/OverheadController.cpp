@@ -14,6 +14,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 #include "myMath.h"
 
 extern boost::uint8_t *keys;
@@ -40,7 +41,7 @@ void COverheadController::KeyMove(float3 move)
 		move.y = -move.y;
 	}
 	move *= sqrt(move.z) * 200;
-	float pixelsize = camera->GetTanHalfFov() * 2/gu->viewSizeY * height * 2;
+	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * height * 2;
 	pos.x += move.x * pixelsize * 2 * scrollSpeed;
 	pos.z -= move.y * pixelsize * 2 * scrollSpeed;
 }
@@ -52,7 +53,7 @@ void COverheadController::MouseMove(float3 move)
 		move.y = -move.y;
 	}
 	move *= 100 * middleClickScrollSpeed;
-	float pixelsize = camera->GetTanHalfFov() * 2/gu->viewSizeY * height * 2;
+	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * height * 2;
 	pos.x += move.x * pixelsize * (1+keys[SDLK_LSHIFT]*3) * scrollSpeed;
 	pos.z += move.y * pixelsize * (1+keys[SDLK_LSHIFT]*3) * scrollSpeed;
 }

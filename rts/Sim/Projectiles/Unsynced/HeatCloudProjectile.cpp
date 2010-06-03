@@ -5,6 +5,7 @@
 
 #include "Game/Camera.h"
 #include "HeatCloudProjectile.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -78,7 +79,7 @@ void CHeatCloudProjectile::Draw()
 {
 	inArray=true;
 	unsigned char col[4];
-	float dheat=heat-gu->timeOffset;
+	float dheat=heat-globalRendering->timeOffset;
 	if(dheat<0)
 		dheat=0;
 	float alpha=(dheat/maxheat)*255.0f;
@@ -87,7 +88,7 @@ void CHeatCloudProjectile::Draw()
 	col[2]=(unsigned char)alpha;
 	col[3]=1;//(dheat/maxheat)*255.0f;
 
-	const float drawsize = (size + sizeGrowth * gu->timeOffset) * (1.0f - sizemod);
+	const float drawsize = (size + sizeGrowth * globalRendering->timeOffset) * (1.0f - sizemod);
 
 	va->AddVertexTC(drawPos - camera->right * drawsize - camera->up * drawsize, texture->xstart, texture->ystart, col);
 	va->AddVertexTC(drawPos + camera->right * drawsize - camera->up * drawsize, texture->xend,   texture->ystart, col);

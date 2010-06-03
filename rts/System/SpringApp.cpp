@@ -36,6 +36,7 @@
 #include "FileSystem/FileSystemHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
@@ -171,9 +172,10 @@ bool SpringApp::Initialize()
 	// Global structures
 	gs = new CGlobalSynced();
 	gu = new CGlobalUnsynced();
+	globalRendering = new CGlobalRendering();
 
 	if (cmdline->IsSet("minimise")) {
-		gu->active = false;
+		globalRendering->active = false;
 		SDL_WM_IconifyWindow();
 	}
 
@@ -198,6 +200,7 @@ bool SpringApp::Initialize()
 	SDL_GL_SwapBuffers();
 
 	gu->PostInit();
+	globalRendering->PostInit();
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -336,7 +339,7 @@ bool SpringApp::SetSDLVideoMode()
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
 
 	depthBufferBits = configHandler->Get("DepthBufferBits", 24);
-	if (gu) gu->depthBufferBits = depthBufferBits;
+	if (globalRendering) globalRendering->depthBufferBits = depthBufferBits;
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 8));
@@ -443,10 +446,10 @@ bool SpringApp::GetDisplayGeometry()
 		XGetWindowAttributes(display, window, &attrs);
 		const Screen* screen = attrs.screen;
 
-		gu->screenSizeX = WidthOfScreen(screen);
-		gu->screenSizeY = HeightOfScreen(screen);
-		gu->winSizeX = attrs.width;
-		gu->winSizeY = attrs.height;
+		globalRendering->screenSizeX = WidthOfScreen(screen);
+		globalRendering->screenSizeY = HeightOfScreen(screen);
+		globalRendering->winSizeX = attrs.width;
+		globalRendering->winSizeY = attrs.height;
 
 		Window tmp;
 		int xp, yp;
@@ -457,8 +460,8 @@ bool SpringApp::GetDisplayGeometry()
 	info.info.x11.unlock_func();
 
 #else
-	gu->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
-	gu->screenSizeY = GetSystemMetrics(SM_CYSCREEN);
+	globalRendering->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
+	globalRendering->screenSizeY = GetSystemMetrics(SM_CYSCREEN);
 
 	RECT rect;
 	if (!GetClientRect(info.window, &rect)) {
@@ -468,8 +471,8 @@ bool SpringApp::GetDisplayGeometry()
 	if ((rect.right - rect.left) == 0 || (rect.bottom - rect.top) == 0)
 		return false;
 
-	gu->winSizeX = rect.right - rect.left;
-	gu->winSizeY = rect.bottom - rect.top;
+	globalRendering->winSizeX = rect.right - rect.left;
+	globalRendering->winSizeY = rect.bottom - rect.top;
 
 	// translate from client coords to screen coords
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
@@ -483,8 +486,8 @@ bool SpringApp::GetDisplayGeometry()
 	windowPosY = rect.top;
 #endif // _WIN32
 
-	gu->winPosX = windowPosX;
-	gu->winPosY = gu->screenSizeY - gu->winSizeY - windowPosY; //! origin BOTTOMLEFT
+	globalRendering->winPosX = windowPosX;
+	globalRendering->winPosY = globalRendering->screenSizeY - globalRendering->winSizeY - windowPosY; //! origin BOTTOMLEFT
 
 	return true;
 }
@@ -494,51 +497,51 @@ bool SpringApp::GetDisplayGeometry()
 void SpringApp::SetupViewportGeometry()
 {
 	if (!GetDisplayGeometry()) {
-		gu->screenSizeX = screenWidth;
-		gu->screenSizeY = screenHeight;
-		gu->winSizeX = screenWidth;
-		gu->winSizeY = screenHeight;
-		gu->winPosX = 0;
-		gu->winPosY = 0;
+		globalRendering->screenSizeX = screenWidth;
+		globalRendering->screenSizeY = screenHeight;
+		globalRendering->winSizeX = screenWidth;
+		globalRendering->winSizeY = screenHeight;
+		globalRendering->winPosX = 0;
+		globalRendering->winPosY = 0;
 	}
 
-	gu->dualScreenMode = !!configHandler->Get("DualScreenMode", 0);
-	if (gu->dualScreenMode) {
-		gu->dualScreenMiniMapOnLeft =
+	globalRendering->dualScreenMode = !!configHandler->Get("DualScreenMode", 0);
+	if (globalRendering->dualScreenMode) {
+		globalRendering->dualScreenMiniMapOnLeft =
 			!!configHandler->Get("DualScreenMiniMapOnLeft", 0);
 	} else {
-		gu->dualScreenMiniMapOnLeft = false;
+		globalRendering->dualScreenMiniMapOnLeft = false;
 	}
 
-	if (!gu->dualScreenMode) {
-		gu->viewSizeX = gu->winSizeX;
-		gu->viewSizeY = gu->winSizeY;
-		gu->viewPosX = 0;
-		gu->viewPosY = 0;
+	if (!globalRendering->dualScreenMode) {
+		globalRendering->viewSizeX = globalRendering->winSizeX;
+		globalRendering->viewSizeY = globalRendering->winSizeY;
+		globalRendering->viewPosX = 0;
+		globalRendering->viewPosY = 0;
 	}
 	else {
-		gu->viewSizeX = gu->winSizeX / 2;
-		gu->viewSizeY = gu->winSizeY;
-		if (gu->dualScreenMiniMapOnLeft) {
-			gu->viewPosX = gu->winSizeX / 2;
-			gu->viewPosY = 0;
+		globalRendering->viewSizeX = globalRendering->winSizeX / 2;
+		globalRendering->viewSizeY = globalRendering->winSizeY;
+		if (globalRendering->dualScreenMiniMapOnLeft) {
+			globalRendering->viewPosX = globalRendering->winSizeX / 2;
+			globalRendering->viewPosY = 0;
 		} else {
-			gu->viewPosX = 0;
-			gu->viewPosY = 0;
+			globalRendering->viewPosX = 0;
+			globalRendering->viewPosY = 0;
 		}
 	}
 
 	agui::gui->UpdateScreenGeometry(
-			gu->viewSizeX,
-			gu->viewSizeY,
-			gu->viewPosX,
-			(gu->winSizeY - gu->viewSizeY - gu->viewPosY) );
-	gu->pixelX = 1.0f / (float)gu->viewSizeX;
-	gu->pixelY = 1.0f / (float)gu->viewSizeY;
+			globalRendering->viewSizeX,
+			globalRendering->viewSizeY,
+			globalRendering->viewPosX,
+			(globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY) );
+	globalRendering->pixelX = 1.0f / (float)globalRendering->viewSizeX;
+	globalRendering->pixelY = 1.0f / (float)globalRendering->viewSizeY;
 
-	// NOTE:  gu->viewPosY is not currently used
+	// NOTE:  globalRendering->viewPosY is not currently used
 
-	gu->aspectRatio = (float)gu->viewSizeX / (float)gu->viewSizeY;
+	globalRendering->aspectRatio = (float)globalRendering->viewSizeX / (float)globalRendering->viewSizeY;
 }
 
 
@@ -550,9 +553,9 @@ void SpringApp::InitOpenGL()
 {
 	SetupViewportGeometry();
 
-	glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
+	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-	gluPerspective(45.0f, (GLfloat)gu->viewSizeX / (GLfloat)gu->viewSizeY, 2.8f, MAX_VIEW_RANGE);
+	gluPerspective(45.0f, (GLfloat)globalRendering->viewSizeX / (GLfloat)globalRendering->viewSizeY, 2.8f, MAX_VIEW_RANGE);
 
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
@@ -890,9 +893,9 @@ int SpringApp::Update()
 			if(game)
 				CrashHandler::ClearDrawWDT();
 
-			gu->drawFrame++;
-			if (gu->drawFrame == 0) {
-				gu->drawFrame++;
+			globalRendering->drawFrame++;
+			if (globalRendering->drawFrame == 0) {
+				globalRendering->drawFrame++;
 			}
 			if(
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -953,7 +956,7 @@ static void ResetScreenSaverTimeout()
 #ifdef WIN32
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
-	if(gu->active && (curreset - lastreset > 1000)) {
+	if(globalRendering->active && (curreset - lastreset > 1000)) {
 		lastreset = curreset;
 		int timeout; // reset screen saver timer
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
@@ -962,7 +965,7 @@ static void ResetScreenSaverTimeout()
 #else
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
-	if(gu->active && (curreset - lastreset > 1000)) {
+	if(globalRendering->active && (curreset - lastreset > 1000)) {
 		lastreset = curreset;
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
@@ -1209,7 +1212,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		case SDL_ACTIVEEVENT: {
 			CrashHandler::ClearDrawWDT(true);
 			if (event.active.state & SDL_APPACTIVE) {
-				gu->active = !!event.active.gain;
+				globalRendering->active = !!event.active.gain;
 				if (ISound::IsInitialized()) {
 					sound->Iconified(!event.active.gain);
 				}

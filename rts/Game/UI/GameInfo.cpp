@@ -87,8 +87,8 @@ struct FontString {
 	FontString(bool b)	: msg(boolString(b))  { CalcDimensions(); }
 	FontString(float f)	: msg(floatString(f)) { CalcDimensions(); }
 	void CalcDimensions() {
-		width  = font->GetSize() * font->GetTextWidth(msg) * gu->pixelX;
-		height = font->GetSize() * font->GetLineHeight() * gu->pixelY;
+		width  = font->GetSize() * font->GetTextWidth(msg) * globalRendering->pixelX;
+		height = font->GetSize() * font->GetLineHeight() * globalRendering->pixelY;
 	}
 	string msg;
 	float width;
@@ -214,9 +214,9 @@ void CGameInfo::Draw()
 	}
 
 	// in screen fractions
-	const float split = 10.0f / (float)gu->viewSizeX;
-	const float xBorder = 5.0f / (float)gu->viewSizeX;
-	const float yBorder = 5.0f / (float)gu->viewSizeY;
+	const float split = 10.0f / (float)globalRendering->viewSizeX;
+	const float xBorder = 5.0f / (float)globalRendering->viewSizeX;
+	const float yBorder = 5.0f / (float)globalRendering->viewSizeY;
 
 	float labelsWidth, labelsHeight;
 	float valuesWidth, valuesHeight;

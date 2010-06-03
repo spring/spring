@@ -78,13 +78,13 @@ CMiniMap::CMiniMap()
   showButtons(false),
   useIcons(true)
  {
-	lastWindowSizeX = gu->viewSizeX;
-	lastWindowSizeY = gu->viewSizeY;
+	lastWindowSizeX = globalRendering->viewSizeX;
+	lastWindowSizeY = globalRendering->viewSizeY;
 
-	if (gu->dualScreenMode) {
-		width = gu->viewSizeX;
-		height = gu->viewSizeY;
-		xpos = (gu->viewSizeX - gu->viewPosX);
+	if (globalRendering->dualScreenMode) {
+		width = globalRendering->viewSizeX;
+		height = globalRendering->viewSizeY;
+		xpos = (globalRendering->viewSizeX - globalRendering->viewPosX);
 		ypos = 0;
 	}
 	else {
@@ -219,7 +219,7 @@ void CMiniMap::ParseGeometry(const string& geostr)
 	}
 
 	// convert to GL coords with a top-left corner affinity
-	ypos = gu->viewSizeY - height - ypos;
+	ypos = globalRendering->viewSizeY - height - ypos;
 }
 
 
@@ -247,24 +247,24 @@ void CMiniMap::ToggleMaximized(bool _maxspect)
 void CMiniMap::SetMaximizedGeometry()
 {
 	if (!maxspect) {
-		height = gu->viewSizeY;
+		height = globalRendering->viewSizeY;
 		width = height;
-		xpos = (gu->viewSizeX - gu->viewSizeY) / 2;
+		xpos = (globalRendering->viewSizeX - globalRendering->viewSizeY) / 2;
 		ypos = 0;
 	}
 	else {
 		const float mapRatio = (float)gs->mapx / (float)gs->mapy;
-		const float viewRatio = gu->aspectRatio;
+		const float viewRatio = globalRendering->aspectRatio;
 		if (mapRatio > viewRatio) {
 			xpos = 0;
-			width = gu->viewSizeX;
-			height = int((float)gu->viewSizeX / mapRatio);
-			ypos = (gu->viewSizeY - height) / 2;
+			width = globalRendering->viewSizeX;
+			height = int((float)globalRendering->viewSizeX / mapRatio);
+			ypos = (globalRendering->viewSizeY - height) / 2;
 		} else {
 			ypos = 0;
-			height = gu->viewSizeY;
-			width = int((float)gu->viewSizeY * mapRatio);
-			xpos = (gu->viewSizeX - width) / 2;
+			height = globalRendering->viewSizeY;
+			width = int((float)globalRendering->viewSizeY * mapRatio);
+			xpos = (globalRendering->viewSizeX - width) / 2;
 		}
 	}
 }
@@ -356,7 +356,7 @@ void CMiniMap::ConfigCommand(const std::string& line)
 	}
 
 	// the following commands can not be used in dualscreen mode
-	if (gu->dualScreenMode) {
+	if (globalRendering->dualScreenMode) {
 		return;
 	}
 
@@ -403,25 +403,25 @@ void CMiniMap::SetGeometry(int px, int py, int sx, int sy)
 void CMiniMap::UpdateGeometry()
 {
 	// keep the same distance to the top
-	ypos -= (lastWindowSizeY - gu->viewSizeY);
-	if (gu->dualScreenMode) {
-		width = gu->viewSizeX;
-		height = gu->viewSizeY;
-		xpos = (gu->viewSizeX - gu->viewPosX);
+	ypos -= (lastWindowSizeY - globalRendering->viewSizeY);
+	if (globalRendering->dualScreenMode) {
+		width = globalRendering->viewSizeX;
+		height = globalRendering->viewSizeY;
+		xpos = (globalRendering->viewSizeX - globalRendering->viewPosX);
 		ypos = 0;
 	}
 	else if (maximized) {
 		SetMaximizedGeometry();
 	}
 	else {
-		width = std::max(1, std::min(width, gu->viewSizeX));
-		height = std::max(1, std::min(height, gu->viewSizeY));
+		width = std::max(1, std::min(width, globalRendering->viewSizeX));
+		height = std::max(1, std::min(height, globalRendering->viewSizeY));
 		ypos = std::max(slaveDrawMode ? 0 : buttonSize, ypos);
-		ypos = std::min(gu->viewSizeY - height, ypos);
-		xpos = std::max(0, std::min(gu->viewSizeX - width, xpos));
+		ypos = std::min(globalRendering->viewSizeY - height, ypos);
+		xpos = std::max(0, std::min(globalRendering->viewSizeX - width, xpos));
 	}
-	lastWindowSizeX = gu->viewSizeX;
-	lastWindowSizeY = gu->viewSizeY;
+	lastWindowSizeX = globalRendering->viewSizeX;
+	lastWindowSizeY = globalRendering->viewSizeY;
 
 	// setup the unit scaling
 	const float w = float(width);
@@ -438,7 +438,7 @@ void CMiniMap::UpdateGeometry()
 	// in mouse coordinates
 	mapBox.xmin = xpos;
 	mapBox.xmax = mapBox.xmin + width - 1;
-	mapBox.ymin = gu->viewSizeY - (ypos + height);
+	mapBox.ymin = globalRendering->viewSizeY - (ypos + height);
 	mapBox.ymax = mapBox.ymin + height - 1;
 
 	if (!maximized) {
@@ -486,14 +486,14 @@ void CMiniMap::MoveView(int x, int y)
 {
 	const float3& pos = camera->pos;
 	const float3& dir = camera->forward;
-	float dist = ground->LineGroundCol(pos, pos + (dir * gu->viewRange * 1.4f));
+	float dist = ground->LineGroundCol(pos, pos + (dir * globalRendering->viewRange * 1.4f));
 	float3 dif(0,0,0);
 	if (dist > 0) {
 		dif = dir * dist;
 	}
 	float3 clickPos;
 	clickPos.x = (float(x - xpos)) / width * gs->mapx * 8;
-	clickPos.z = (float(y - (gu->viewSizeY - ypos - height))) / height * gs->mapy * 8;
+	clickPos.z = (float(y - (globalRendering->viewSizeY - ypos - height))) / height * gs->mapy * 8;
 	camHandler->GetCurrentController().SetPos(clickPos);
 	unitTracker.Disable();
 }
@@ -695,12 +695,12 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		xpos += dx;
 		ypos -= dy;
 		xpos = std::max(0, xpos);
-		if (gu->dualScreenMode) {
-			xpos = std::min((2 * gu->viewSizeX) - width, xpos);
+		if (globalRendering->dualScreenMode) {
+			xpos = std::min((2 * globalRendering->viewSizeX) - width, xpos);
 		} else {
-			xpos = std::min(gu->viewSizeX - width, xpos);
+			xpos = std::min(globalRendering->viewSizeX - width, xpos);
 		}
-		ypos = std::max(5, std::min(gu->viewSizeY - height, ypos));
+		ypos = std::max(5, std::min(globalRendering->viewSizeY - height, ypos));
 		UpdateGeometry();
 		return;
 	}
@@ -709,18 +709,18 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		ypos   -= dy;
 		width  += dx;
 		height += dy;
-		height = std::min(gu->viewSizeY, height);
-		if (gu->dualScreenMode) {
-			width = std::min(2 * gu->viewSizeX, width);
+		height = std::min(globalRendering->viewSizeY, height);
+		if (globalRendering->dualScreenMode) {
+			width = std::min(2 * globalRendering->viewSizeX, width);
 		} else {
-			width = std::min(gu->viewSizeX, width);
+			width = std::min(globalRendering->viewSizeX, width);
 		}
 		if (keys[SDLK_LSHIFT]) {
 			width = (height * gs->mapx) / gs->mapy;
 		}
 		width = std::max(5, width);
 		height = std::max(5, height);
-		ypos = std::min(gu->viewSizeY - height, ypos);
+		ypos = std::min(globalRendering->viewSizeY - height, ypos);
 		UpdateGeometry();
 		return;
 	}
@@ -790,7 +790,7 @@ float3 CMiniMap::GetMapPosition(int x, int y) const
 	const float mapX = gs->mapx * SQUARE_SIZE;
 	const float mapY = gs->mapy * SQUARE_SIZE;
 	const float3 pos(mapX * float(x - xpos) / width, mapHeight,
-	                 mapY * float(y - (gu->viewSizeY - ypos - height)) / height);
+	                 mapY * float(y - (globalRendering->viewSizeY - ypos - height)) / height);
 	return pos;
 }
 
@@ -912,7 +912,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 	}
 
 	const float3 pos(float(x-xpos)/width*gs->mapx*SQUARE_SIZE, 500,
-	                 float(y-(gu->viewSizeY-ypos-height))/height*gs->mapx*SQUARE_SIZE);
+	                 float(y-(globalRendering->viewSizeY-ypos-height))/height*gs->mapx*SQUARE_SIZE);
 	return CTooltipConsole::MakeGroundString(pos);
 }
 
@@ -1016,8 +1016,8 @@ void CMiniMap::DrawForReal(bool use_geo)
 	if (use_geo) {
 		// switch to normalized minimap coords
 		glPushMatrix();
-		glTranslatef(xpos * gu->pixelX, ypos * gu->pixelY, 0.0f);
-		glScalef(width * gu->pixelX, height * gu->pixelY, 1.0f);
+		glTranslatef(xpos * globalRendering->pixelX, ypos * globalRendering->pixelY, 0.0f);
+		glScalef(width * globalRendering->pixelX, height * globalRendering->pixelY, 1.0f);
 
 		/* FIXME: fix mouse handling too and make it fully customizable, so Lua can rotate the minimap to any angle
 		CCameraController* camController = &camHandler->GetCurrentController();
@@ -1282,17 +1282,17 @@ void CMiniMap::DrawFrame()
 	glLineWidth(1.0f);
 	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(xpos - 2 + 0.5f) * gu->pixelX,         float(ypos - 2 + 0.5f) * gu->pixelY);
-		glVertex2f(float(xpos - 2 + 0.5f) * gu->pixelX,         float(ypos + height + 2 - 0.5f) * gu->pixelY);
-		glVertex2f(float(xpos + width + 2 - 0.5f) * gu->pixelX, float(ypos + height + 2 - 0.5f) * gu->pixelY);
-		glVertex2f(float(xpos + width + 2 - 0.5f) * gu->pixelX, float(ypos - 2 + 0.5f) * gu->pixelY);
+		glVertex2f(float(xpos - 2 + 0.5f) * globalRendering->pixelX,         float(ypos - 2 + 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(xpos - 2 + 0.5f) * globalRendering->pixelX,         float(ypos + height + 2 - 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(xpos + width + 2 - 0.5f) * globalRendering->pixelX, float(ypos + height + 2 - 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(xpos + width + 2 - 0.5f) * globalRendering->pixelX, float(ypos - 2 + 0.5f) * globalRendering->pixelY);
 	glEnd();
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(xpos - 1 + 0.5f) * gu->pixelX,         float(ypos - 1 + 0.5f) * gu->pixelY);
-		glVertex2f(float(xpos - 1 + 0.5f) * gu->pixelX,         float(ypos + height + 1 - 0.5f) * gu->pixelY);
-		glVertex2f(float(xpos + width + 1 - 0.5f) * gu->pixelX, float(ypos + height + 1 - 0.5f) * gu->pixelY);
-		glVertex2f(float(xpos + width + 1 - 0.5f) * gu->pixelX, float(ypos - 1 + 0.5f) * gu->pixelY);
+		glVertex2f(float(xpos - 1 + 0.5f) * globalRendering->pixelX,         float(ypos - 1 + 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(xpos - 1 + 0.5f) * globalRendering->pixelX,         float(ypos + height + 1 - 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(xpos + width + 1 - 0.5f) * globalRendering->pixelX, float(ypos + height + 1 - 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(xpos + width + 1 - 0.5f) * globalRendering->pixelX, float(ypos - 1 + 0.5f) * globalRendering->pixelY);
 	glEnd();
 
 	DrawButtons();
@@ -1303,10 +1303,10 @@ void CMiniMap::DrawMinimizedButton()
 {
 	const int bs = buttonSize + 0;
 
-	float xmin = (gu->viewPosX + 1) * gu->pixelX;
-	float xmax = (gu->viewPosX + 1 + bs) * gu->pixelX;
-	float ymin = 1.0f - (1 + bs) * gu->pixelY;
-	float ymax = 1.0f - (1) * gu->pixelY;
+	float xmin = (globalRendering->viewPosX + 1) * globalRendering->pixelX;
+	float xmax = (globalRendering->viewPosX + 1 + bs) * globalRendering->pixelX;
+	float ymin = 1.0f - (1 + bs) * globalRendering->pixelY;
+	float ymax = 1.0f - (1) * globalRendering->pixelY;
 
 	if (!buttonsTexture) {
 		glDisable(GL_TEXTURE_2D);
@@ -1337,27 +1337,27 @@ void CMiniMap::DrawMinimizedButton()
 	// outline
 	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 	glBegin(GL_LINE_LOOP);
-		glVertex2f(xmin - 0.5f * gu->pixelX, ymax + 0.5f * gu->pixelY);
-		glVertex2f(xmin - 0.5f * gu->pixelX, ymin - 0.5f * gu->pixelY);
-		glVertex2f(xmax + 0.5f * gu->pixelX, ymin - 0.5f * gu->pixelY);
-		glVertex2f(xmax + 0.5f * gu->pixelX, ymax + 0.5f * gu->pixelY);
+		glVertex2f(xmin - 0.5f * globalRendering->pixelX, ymax + 0.5f * globalRendering->pixelY);
+		glVertex2f(xmin - 0.5f * globalRendering->pixelX, ymin - 0.5f * globalRendering->pixelY);
+		glVertex2f(xmax + 0.5f * globalRendering->pixelX, ymin - 0.5f * globalRendering->pixelY);
+		glVertex2f(xmax + 0.5f * globalRendering->pixelX, ymax + 0.5f * globalRendering->pixelY);
 	glEnd();
 }
 
 
 void CMiniMap::IntBox::DrawBox() const
 {
-	glRectf(float(xmin)/gu->viewSizeX, 1.0f - float(ymin)/gu->viewSizeY, float(xmax+1)/gu->viewSizeX, 1.0f - float(ymax+1)/gu->viewSizeY);
+	glRectf(float(xmin)/globalRendering->viewSizeX, 1.0f - float(ymin)/globalRendering->viewSizeY, float(xmax+1)/globalRendering->viewSizeX, 1.0f - float(ymax+1)/globalRendering->viewSizeY);
 }
 
 
 void CMiniMap::IntBox::DrawTextureBox() const
 {
 	glBegin(GL_QUADS);
-		glTexCoord2f(xminTx, yminTx); glVertex2f(float(xmin) * gu->pixelX, 1.0f - float(ymin) * gu->pixelY);
-		glTexCoord2f(xmaxTx, yminTx); glVertex2f(float(xmax+1) * gu->pixelX, 1.0f - float(ymin) * gu->pixelY);
-		glTexCoord2f(xmaxTx, ymaxTx); glVertex2f(float(xmax+1) * gu->pixelX, 1.0f - float(ymax+1) * gu->pixelY);
-		glTexCoord2f(xminTx, ymaxTx); glVertex2f(float(xmin) * gu->pixelX, 1.0f - float(ymax+1) * gu->pixelY);
+		glTexCoord2f(xminTx, yminTx); glVertex2f(float(xmin) * globalRendering->pixelX, 1.0f - float(ymin) * globalRendering->pixelY);
+		glTexCoord2f(xmaxTx, yminTx); glVertex2f(float(xmax+1) * globalRendering->pixelX, 1.0f - float(ymin) * globalRendering->pixelY);
+		glTexCoord2f(xmaxTx, ymaxTx); glVertex2f(float(xmax+1) * globalRendering->pixelX, 1.0f - float(ymax+1) * globalRendering->pixelY);
+		glTexCoord2f(xminTx, ymaxTx); glVertex2f(float(xmin) * globalRendering->pixelX, 1.0f - float(ymax+1) * globalRendering->pixelY);
 	glEnd();
 }
 
@@ -1369,7 +1369,7 @@ void CMiniMap::DrawButtons()
 
 	// update the showButtons state
 	if (!showButtons) {
-		if (mapBox.Inside(x, y) && (buttonSize > 0) && !gu->dualScreenMode) {
+		if (mapBox.Inside(x, y) && (buttonSize > 0) && !globalRendering->dualScreenMode) {
 			showButtons = true;
 		} else {
 			return;
@@ -1423,18 +1423,18 @@ void CMiniMap::DrawButtons()
 	// outline the button box
 	glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(buttonBox.xmin - 1 - 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymin + 2 - 0.5f) * gu->pixelY);
-		glVertex2f(float(buttonBox.xmin - 1 - 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymax + 2 + 0.5f) * gu->pixelY);
-		glVertex2f(float(buttonBox.xmax + 2 + 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymax + 2 + 0.5f) * gu->pixelY);
-		glVertex2f(float(buttonBox.xmax + 2 + 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymin + 2 - 0.5f) * gu->pixelY);
+		glVertex2f(float(buttonBox.xmin - 1 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 2 - 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(buttonBox.xmin - 1 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 2 + 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(buttonBox.xmax + 2 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 2 + 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(buttonBox.xmax + 2 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 2 - 0.5f) * globalRendering->pixelY);
 	glEnd();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glBegin(GL_LINE_LOOP);
-		glVertex2f(float(buttonBox.xmin - 0 - 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymin + 3 - 0.5f) * gu->pixelY);
-		glVertex2f(float(buttonBox.xmin - 0 - 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymax + 1 + 0.5f) * gu->pixelY);
-		glVertex2f(float(buttonBox.xmax + 1 + 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymax + 1 + 0.5f) * gu->pixelY);
-		glVertex2f(float(buttonBox.xmax + 1 + 0.5f) * gu->pixelX, 1.0f - float(buttonBox.ymin + 3 - 0.5f) * gu->pixelY);
+		glVertex2f(float(buttonBox.xmin - 0 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 3 - 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(buttonBox.xmin - 0 - 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 1 + 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(buttonBox.xmax + 1 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymax + 1 + 0.5f) * globalRendering->pixelY);
+		glVertex2f(float(buttonBox.xmax + 1 + 0.5f) * globalRendering->pixelX, 1.0f - float(buttonBox.ymin + 3 - 0.5f) * globalRendering->pixelY);
 	glEnd();
 }
 

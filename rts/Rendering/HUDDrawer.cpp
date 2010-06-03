@@ -6,6 +6,7 @@
 #include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/HUDDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -78,7 +79,7 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
-			glScalef(0.33f, 0.33f * gu->aspectRatio, 0.33f);
+			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
 			glRotatef(unit->heading * 180.0f / 32768 + 180, 0.0f, 0.0f, 1.0f);
 
 			glColor4f(0.3f, 0.9f, 0.3f, 0.4f);
@@ -100,7 +101,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
-			glScalef(0.33f, 0.33f * gu->aspectRatio, 0.33f);
+			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
 
 			glRotatef(
 				GetHeadingFromVector(camera->forward.x, camera->forward.z) * 180.0f / 32768 + 180,

@@ -4,6 +4,7 @@
 #include "mmgr.h"
 
 #include "SkyBox.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
@@ -31,7 +32,7 @@ CSkyBox::CSkyBox(std::string texture)
 	skyColor = mapInfo->atmosphere.skyColor;
 	sunColor = mapInfo->atmosphere.sunColor;
 	fogStart = mapInfo->atmosphere.fogStart;
-	if (fogStart>0.99f) gu->drawFog = false;
+	if (fogStart>0.99f) globalRendering->drawFog = false;
 }
 
 CSkyBox::~CSkyBox(void)
@@ -64,9 +65,9 @@ void CSkyBox::Draw()
 	};
 	float3 texcoords[] = {
 		-camera->CalcPixelDir(0,0),
-		-camera->CalcPixelDir(gu->viewSizeX,0),
-		-camera->CalcPixelDir(gu->viewSizeX,gu->viewSizeY),
-		-camera->CalcPixelDir(0,gu->viewSizeY)
+		-camera->CalcPixelDir(globalRendering->viewSizeX,0),
+		-camera->CalcPixelDir(globalRendering->viewSizeX,globalRendering->viewSizeY),
+		-camera->CalcPixelDir(0,globalRendering->viewSizeY)
 	};
 
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -92,10 +93,10 @@ void CSkyBox::Draw()
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
+	glFogf(GL_FOG_END,globalRendering->viewRange);
 	glFogf(GL_FOG_DENSITY,1.00f);
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	}
 }

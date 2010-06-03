@@ -8,6 +8,7 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "LogOutput.h"
@@ -64,7 +65,7 @@ CAdvSky::CAdvSky()
 	skyColor = mapInfo->atmosphere.skyColor;
 	sunColor = mapInfo->atmosphere.sunColor;
 	fogStart = mapInfo->atmosphere.fogStart;
-	if (fogStart>0.99f) gu->drawFog = false;
+	if (fogStart>0.99f) globalRendering->drawFog = false;
 
 	dynamicSky=true;
 	CreateClouds();
@@ -210,11 +211,11 @@ void CAdvSky::Draw()
 	glDisable(GL_BLEND);
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
+	glFogf(GL_FOG_END,globalRendering->viewRange);
 	glFogf(GL_FOG_DENSITY,1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	} else {
 		glDisable(GL_FOG);
@@ -683,7 +684,7 @@ void CAdvSky::InitSun()
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
-		if (gu->drawFog) glEnable(GL_FOG);
+		if (globalRendering->drawFog) glEnable(GL_FOG);
 	glEndList();
 }
 
@@ -802,7 +803,7 @@ void CAdvSky::CreateDetailTex(void)
 //	SwapBuffers(hDC);
 //	SleepEx(500,true);
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	glEnable(GL_DEPTH_TEST);
 }
 

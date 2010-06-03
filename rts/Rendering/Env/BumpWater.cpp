@@ -16,6 +16,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
@@ -146,7 +147,7 @@ CBumpWater::CBumpWater()
 	refraction   = configHandler->Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
 	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy", "0.0").c_str());
 	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
-	depthBits    = configHandler->Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
+	depthBits    = configHandler->Get("BumpWaterDepthBits", (globalRendering->atiHacks)?16:24);
 	blurRefl     = !!configHandler->Get("BumpWaterBlurReflection", 0);
 	shoreWaves   = (!!configHandler->Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
 	endlessOcean = (!!configHandler->Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
@@ -251,15 +252,15 @@ CBumpWater::CBumpWater()
 	/** CREATE TEXTURES **/
 	if ((refraction > 0) || depthCopy) {
 		//! ati's don't have glsl support for texrects
-		screenTextureX = gu->viewSizeX;
-		screenTextureY = gu->viewSizeY;
-		if (GLEW_ARB_texture_rectangle && !gu->atiHacks) {
+		screenTextureX = globalRendering->viewSizeX;
+		screenTextureY = globalRendering->viewSizeY;
+		if (GLEW_ARB_texture_rectangle && !globalRendering->atiHacks) {
 			target = GL_TEXTURE_RECTANGLE_ARB;
 		} else {
 			target = GL_TEXTURE_2D;
-			if (!gu->supportNPOTs) {
-				screenTextureX = next_power_of_2(gu->viewSizeX);
-				screenTextureY = next_power_of_2(gu->viewSizeY);
+			if (!globalRendering->supportNPOTs) {
+				screenTextureX = next_power_of_2(globalRendering->viewSizeX);
+				screenTextureY = next_power_of_2(globalRendering->viewSizeY);
 			}
 		}
 	}
@@ -303,9 +304,9 @@ CBumpWater::CBumpWater()
 		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 		GLuint depthFormat = GL_DEPTH_COMPONENT; 
-		switch (gu->depthBufferBits) { /// use same depth as screen framebuffer
+		switch (globalRendering->depthBufferBits) { /// use same depth as screen framebuffer
 			case 16: depthFormat = GL_DEPTH_COMPONENT16; break;
-			case 24: if (!gu->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; break; } //ATIs fall through and use 32bit!
+			case 24: if (!globalRendering->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; break; } //ATIs fall through and use 32bit!
 			default: depthFormat = GL_DEPTH_COMPONENT32; break;
 		}
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -382,9 +383,9 @@ CBumpWater::CBumpWater()
 	if (target == GL_TEXTURE_RECTANGLE_ARB) definitions += "#define opt_texrect\n";
 
 	GLSLDefineConstf3(definitions, "MapMid",                    float3(readmap->width * SQUARE_SIZE * 0.5f, 0.0f, readmap->height * SQUARE_SIZE * 0.5f) );
-	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / gu->viewSizeX, 1.0f / gu->viewSizeY );
+	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY );
 	GLSLDefineConstf2(definitions, "ScreenTextureSizeInverse",  1.0f / screenTextureX, 1.0f / screenTextureY );
-	GLSLDefineConstf2(definitions, "ViewPos",                   gu->viewPosX,gu->viewPosY );
+	GLSLDefineConstf2(definitions, "ViewPos",                   globalRendering->viewPosX,globalRendering->viewPosY );
 
 	if (useUniforms) {
 		SetupUniforms(definitions);
@@ -402,7 +403,7 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "FresnelMax",     mapInfo->water.fresnelMax);
 		GLSLDefineConstf1(definitions, "FresnelPower",   mapInfo->water.fresnelPower);
 		GLSLDefineConstf1(definitions, "ReflDistortion", mapInfo->water.reflDistortion);
-		GLSLDefineConstf2(definitions, "BlurBase",       0.0f,mapInfo->water.blurBase/gu->viewSizeY);
+		GLSLDefineConstf2(definitions, "BlurBase",       0.0f,mapInfo->water.blurBase/globalRendering->viewSizeY);
 		GLSLDefineConstf1(definitions, "BlurExponent",   mapInfo->water.blurExponent);
 		GLSLDefineConstf1(definitions, "PerlinStartFreq",  mapInfo->water.perlinStartFreq);
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
@@ -656,7 +657,7 @@ void CBumpWater::UpdateWater(CGame* game)
 	if (reflection>0) DrawReflection(game);
 	if (reflection || refraction) {
 		FBO::Unbind();
-		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	}
 	glPopAttrib();
 }
@@ -1011,7 +1012,7 @@ void CBumpWater::UpdateCoastmap()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDeleteTextures(1, &coastUpdateTexture);
@@ -1086,7 +1087,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 
 	dynWavesFBO.Unbind();
 
@@ -1114,7 +1115,7 @@ void CBumpWater::SetUniforms()
 	glUniform1f(uniforms[10], mapInfo->water.fresnelMax);
 	glUniform1f(uniforms[11], mapInfo->water.fresnelPower);
 	glUniform1f(uniforms[12], mapInfo->water.reflDistortion);
-	glUniform2f(uniforms[13], 0.0f,mapInfo->water.blurBase/gu->viewSizeY);
+	glUniform2f(uniforms[13], 0.0f,mapInfo->water.blurBase/globalRendering->viewSizeY);
 	glUniform1f(uniforms[14], mapInfo->water.blurExponent);
 	glUniform1f(uniforms[15], mapInfo->water.perlinStartFreq);
 	glUniform1f(uniforms[16], mapInfo->water.perlinLacunarity);
@@ -1134,13 +1135,13 @@ void CBumpWater::Draw()
 	if (refraction == 1) {
 		//! _SCREENCOPY_ REFRACT TEXTURE
 		glBindTexture(target, refractTexture);
-		glCopyTexSubImage2D(target, 0, 0, 0, gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+		glCopyTexSubImage2D(target, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	if (depthCopy) {
 		//! _SCREENCOPY_ DEPTH TEXTURE
 		glBindTexture(target, depthTexture);
-		glCopyTexSubImage2D(target, 0, 0, 0, gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+		glCopyTexSubImage2D(target, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	glDisable(GL_ALPHA_TEST);
@@ -1163,7 +1164,7 @@ void CBumpWater::Draw()
 
 	waterShader->Enable();
 	waterShader->SetUniform3fv(0, &camera->pos[0]);
-	waterShader->SetUniform1f(1, (gs->frameNum + gu->timeOffset) / 15000.0f);
+	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
 	if (useUniforms) {
 		SetUniforms();
@@ -1191,7 +1192,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	refractFBO.Bind();
 
 	camera->Update(false);
-	glViewport(0,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(0,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG);

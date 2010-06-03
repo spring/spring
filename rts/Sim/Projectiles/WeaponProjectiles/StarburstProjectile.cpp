@@ -7,6 +7,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -274,7 +275,7 @@ void CStarburstProjectile::Update(void)
 void CStarburstProjectile::Draw(void)
 {
 	inArray=true;
-	float age2=(age&7)+gu->timeOffset;
+	float age2=(age&7)+globalRendering->timeOffset;
 
 	float color=0.7f;
 	unsigned char col[4];
@@ -360,8 +361,8 @@ void CStarburstProjectile::Draw(void)
 
 void CStarburstProjectile::DrawCallback(void)
 {
-	if(*numCallback != gu->drawFrame) {
-		*numCallback = gu->drawFrame;
+	if(*numCallback != globalRendering->drawFrame) {
+		*numCallback = globalRendering->drawFrame;
 		return;
 	}
 	*numCallback = 0;

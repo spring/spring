@@ -9,6 +9,7 @@
 #include <cstdio>
 
 #include "Rendering/GL/PBO.h"
+#include "Rendering/GlobalRendering.h"
 #include "Map/SMF/mapfile.h"
 #include "Map/SMF/SmfReadMap.h"
 #include "Map/MapInfo.h"
@@ -224,7 +225,7 @@ void CBFGroundTextures::SetTexture(int x, int y)
 	glBindTexture(GL_TEXTURE_2D, square->texture);
 
 	if (game->GetDrawMode() == CGame::gameNormalDraw) {
-		square->lastUsed = gu->drawFrame;
+		square->lastUsed = globalRendering->drawFrame;
 	}
 }
 
@@ -246,7 +247,7 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 void CBFGroundTextures::DrawUpdate(void)
 {
 	// screen-diagonal number of pixels
-	const float diag = fastmath::apxsqrt(gu->viewSizeX * gu->viewSizeX + gu->viewSizeY * gu->viewSizeY);
+	const float diag = fastmath::apxsqrt(globalRendering->viewSizeX * globalRendering->viewSizeX + globalRendering->viewSizeY * globalRendering->viewSizeY);
 
 	for (int y = 0; y < numBigTexY; ++y) {
 		float dy =
@@ -259,7 +260,7 @@ void CBFGroundTextures::DrawUpdate(void)
 			GroundSquare* square = &squares[y * numBigTexX + x];
 
 			if (!TexSquareInView(x, y)) {
-				if ((square->texLevel < 3) && (gu->drawFrame - square->lastUsed > 120)) {
+				if ((square->texLevel < 3) && (globalRendering->drawFrame - square->lastUsed > 120)) {
 					// `unload` texture (= load lowest mipmap)
 					// if the square wasn't visible for 120 vframes
 					glDeleteTextures(1, &square->texture);

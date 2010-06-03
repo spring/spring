@@ -157,8 +157,8 @@ void CResourceBar::Draw(void)
 
 	smallFont->Begin();
 
-	const float headerFontSize = (box.y2 - box.y1) * 0.7 * gu->viewSizeY;
-	const float labelsFontSize = (box.y2 - box.y1) * 0.5 * gu->viewSizeY;
+	const float headerFontSize = (box.y2 - box.y1) * 0.7 * globalRendering->viewSizeY;
+	const float labelsFontSize = (box.y2 - box.y1) * 0.5 * globalRendering->viewSizeY;
 	const int fontOptions = (guihandler && guihandler->GetOutlineFonts()) ? FONT_OUTLINE | FONT_NORM : FONT_NORM;
 
 	smallFont->SetTextColor(0.8f,0.8f,1,0.8f);
@@ -176,10 +176,10 @@ void CResourceBar::Draw(void)
 	                FloatToSmallString(fabs(myTeam->energySent)).c_str());
 
 	smallFont->SetTextColor(0.4f, 1.0f, 0.4f, 0.95f); // Income
-	smallFont->glFormat(metalx + 0.044f, box.y2-2*gu->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
+	smallFont->glFormat(metalx + 0.044f, box.y2-2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
 	                FloatToSmallString(myTeam->prevMetalIncome).c_str());
 	                // FloatToSmallString(myTeam->metalReceived).c_str());
-	smallFont->glFormat(energyx + 0.044f, box.y2-2*gu->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
+	smallFont->glFormat(energyx + 0.044f, box.y2-2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
 	                FloatToSmallString(myTeam->prevEnergyIncome).c_str());
 	                // FloatToSmallString(myTeam->energyReceived).c_str());
 
@@ -265,10 +265,10 @@ void CResourceBar::MouseMove(int x, int y, int dx,int dy, int button)
 	}
 
 	if(moveBox){
-		box.x1+=float(dx)/gu->viewSizeX;
-		box.x2+=float(dx)/gu->viewSizeX;
-		box.y1-=float(dy)/gu->viewSizeY;
-		box.y2-=float(dy)/gu->viewSizeY;
+		box.x1+=float(dx)/globalRendering->viewSizeX;
+		box.x2+=float(dx)/globalRendering->viewSizeX;
+		box.y1-=float(dy)/globalRendering->viewSizeY;
+		box.y2-=float(dy)/globalRendering->viewSizeY;
 		if (box.x1 < 0.0f) {
 			box.x1 = 0.0f;
 			box.x2 = 0.74f;

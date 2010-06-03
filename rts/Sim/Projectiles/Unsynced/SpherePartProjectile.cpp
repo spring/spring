@@ -5,6 +5,7 @@
 #include "mmgr.h"
 
 #include "SpherePartProjectile.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -79,13 +80,13 @@ void CSpherePartProjectile::Draw(void)
 	unsigned char col[4];
 	va->EnlargeArrays(4*4*4,0,VA_SIZE_TC);
 
-	const float interSize = sphereSize + expansionSpeed * gu->timeOffset;
+	const float interSize = sphereSize + expansionSpeed * globalRendering->timeOffset;
 
 	for (int y = 0; y < 4; ++y) {
 		for (int x = 0; x < 4; ++x) {
 			float alpha =
 				baseAlpha *
-				(1.0f - min(1.0f, float(age + gu->timeOffset) / (float) ttl)) *
+				(1.0f - min(1.0f, float(age + globalRendering->timeOffset) / (float) ttl)) *
 				(1.0f - fabs(y + ybase - 8.0f) / 8.0f * 1.0f);
 
 			col[0]=(unsigned char) (color.x*255.0f*alpha);
@@ -94,7 +95,7 @@ void CSpherePartProjectile::Draw(void)
 			col[3]=((unsigned char) (40*alpha))+1;
 			va->AddVertexQTC(centerPos+vectors[y*5+x]*interSize,texx,texy,col);
 			va->AddVertexQTC(centerPos+vectors[y*5+x+1]*interSize,texx,texy,col);
-			alpha=baseAlpha*(1.0f-min(float(1.0f),float(age+gu->timeOffset)/(float)ttl))*(1-fabs(y+1+ybase-8.0f)/8.0f*1.0f);
+			alpha=baseAlpha*(1.0f-min(float(1.0f),float(age+globalRendering->timeOffset)/(float)ttl))*(1-fabs(y+1+ybase-8.0f)/8.0f*1.0f);
 
 			col[0]=(unsigned char) (color.x*255.0f*alpha);
 			col[1]=(unsigned char) (color.y*255.0f*alpha);

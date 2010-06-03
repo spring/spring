@@ -61,7 +61,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 		return !Ready();
 	}
 
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*gu->viewRange*1.4f);
+	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*globalRendering->viewRange*1.4f);
 	if(dist<0)
 		return true;
 
@@ -157,8 +157,8 @@ void CStartPosSelecter::Draw()
 	glPopMatrix();
 	glDisable(GL_DEPTH_TEST);
 
-	float mx=float(mouse->lastx)/gu->viewSizeX;
-	float my=(gu->viewSizeY-float(mouse->lasty))/gu->viewSizeY;
+	float mx=float(mouse->lastx)/globalRendering->viewSizeX;
+	float my=(globalRendering->viewSizeY-float(mouse->lasty))/globalRendering->viewSizeY;
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -187,8 +187,8 @@ void CStartPosSelecter::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// fit text into box
-	const float unitWidth  = font->GetSize() * font->GetTextWidth("Ready") * gu->pixelX;
-	const float unitHeight = font->GetSize() * font->GetLineHeight() * gu->pixelY;
+	const float unitWidth  = font->GetSize() * font->GetTextWidth("Ready") * globalRendering->pixelX;
+	const float unitHeight = font->GetSize() * font->GetLineHeight() * globalRendering->pixelY;
 
 	const float ySize = (readyBox.y2 - readyBox.y1);
 	const float xSize = (readyBox.x2 - readyBox.x1);

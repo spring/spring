@@ -21,6 +21,7 @@
 #include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 
 
 CCameraHandler* camHandler = NULL;
@@ -104,7 +105,7 @@ void CCameraHandler::UpdateCam()
 	}
 	else {
 		const float currTime = cameraTimeLeft;
-		cameraTimeLeft = std::max(0.0f, (cameraTimeLeft - gu->lastFrameTime));
+		cameraTimeLeft = std::max(0.0f, (cameraTimeLeft - globalRendering->lastFrameTime));
 		const float nextTime = cameraTimeLeft;
 		const float exp = cameraTimeExponent;
 		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);

@@ -7,6 +7,7 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/UI/MouseHandler.h"
 #include "Gui.h"
@@ -127,7 +128,7 @@ void List::MouseRelease(int x, int y, int button)
 }
 
 float List::ScaleFactor() {
-	return (float)std::max(1, gu->winSizeY) * (size[1] - 2.0f * borderSpacing);
+	return (float)std::max(1, globalRendering->winSizeY) * (size[1] - 2.0f * borderSpacing);
 }
 
 void List::UpdateTopIndex()
