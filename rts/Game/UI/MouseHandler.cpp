@@ -25,6 +25,7 @@
 #include "Lua/LuaInputReceiver.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/InMapDraw.h"
