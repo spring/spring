@@ -8,6 +8,20 @@ use File::Basename;
 use Cwd 'abs_path';
 use File::Spec::Functions;
 
+# List of posible distribution dirs, relative to ../
+my @possDistDirs = ("dist", "game");
+
+my $defineDistDir = 1;
+if ($#ARGV >= 0) {
+	if ($ARGV[0]) {
+		# Use the first argument to this script as posible dist-dir
+		unshift(@possDistDirs, "$ARGV[0]"); # adds to the beginning
+	} else {
+		# If the first argument to this script is false (0, "0" or "")
+		# we will not define DIST_DIR.
+		$defineDistDir = 0;
+	}
+}
 
 # Evaluate installer and root dirs
 my $installerDir=$0;
@@ -84,26 +98,31 @@ chdir("$installerDir/..");
 # Evaluate the distribution dir
 # This is where the build system installed Spring,
 # and where the installer generater will grab files from.
-
-my $distDir="";
-foreach my $dd ("$1", "dist", "game") {
-	if (($dd eq "") or (not -d $dd)) {
-		print("Distribution directory not found: \"$dd\"\n");
-	} else {
-		$distDir=abs_path($dd);
-		print("Using distribution directory \"$distDir\"\n");
-		last; # like break in other languages
+my $distDir = "";
+if ($defineDistDir) {
+	foreach my $dd (@possDistDirs) {
+		if (($dd eq "") or (not -d $dd)) {
+			print("Distribution directory not found: \"$dd\"\n");
+		} else {
+			$distDir=abs_path($dd);
+			print("Using distribution directory \"$distDir\"\n");
+			last; # like break in other languages
+		}
 	}
-}
 
-if ($distDir eq "") {
-	print("Unable to find a distribution directory.\n");
-	print(" -> Relying on BUILD_DIR or DIST_DIR beeing set in custom_defines.nsi.\n");
+	if ($distDir eq "") {
+		print("Unable to find a distribution directory.\n");
+	} else {
+		print("Using distribution directory \"$distDir\"\n");
+		my $distDirRel = File::Spec->abs2rel($distDir, "installer");
+		$distDirRel =~ tr/\//\\/d;
+		$nsisDefines="$nsisDefines -DDIST_DIR=\"$distDirRel\"";
+	}
 } else {
-	print("Using distribution directory \"$distDir\"\n");
-	my $distDirRel = File::Spec->abs2rel($distDir, "installer");
-	$distDirRel =~ tr/\//\\/d;
-	$nsisDefines="$nsisDefines -DDIST_DIR=\"$distDirRel\"";
+	print("It was explicitly requested to not set DIST_DIR.\n");
+}
+if ($distDir eq "") {
+	print(" -> Relying on BUILD_DIR or DIST_DIR beeing set in custom_defines.nsi.\n");
 }
 
 
