@@ -225,6 +225,13 @@ SectionGroup "Multiplayer battlerooms"
 		!include "sections\springlobby.nsh"
 	!undef INSTALL
 	SectionEnd
+
+	Section "Content downloader and fast-join lobby" SEC_SPRINGDOWNLOADER
+		!define INSTALL
+			${!echonow} "Processing: springDownloader"
+			!include "sections\springDownloader.nsh"
+		!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 
 Section "Desktop shortcut" SEC_DESKTOP
@@ -240,13 +247,6 @@ SectionGroup "Tools"
 		!define INSTALL
 			${!echonow} "Processing: archivemover"
 			!include "sections\archivemover.nsh"
-		!undef INSTALL
-	SectionEnd
-
-	Section "Content downloader" SEC_SPRINGDOWNLOADER
-		!define INSTALL
-			${!echonow} "Processing: springDownloader"
-			!include "sections\springDownloader.nsh"
 		!undef INSTALL
 	SectionEnd
 
