@@ -12,6 +12,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/lib/streflop/streflop_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/AVIGenerator.h"
 #include <SDL_mouse.h>
 #include <SDL_events.h>
