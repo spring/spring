@@ -7,12 +7,12 @@
 
 #include "System/LogOutput.h"
 
-#include "System/Platform/Win/AVIGenerator.h"
 #include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
-#include "lib/streflop/streflop_cond.h"
+#include "System/lib/streflop/streflop_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Rendering/AVIGenerator.h"
 #include <SDL_mouse.h>
 #include <SDL_events.h>
 

@@ -1,11 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
+#if       defined AVI_CAPTURING
+
 #include "AVIGenerator.h"
+
+//#include "StdAfx.h"
+
+#include "Rendering/GL/myGL.h"
 #include "Game/GameVersion.h"
-#include "LogOutput.h"
-#include "SpringApp.h"
+#include "System/LogOutput.h"
+#include "System/SpringApp.h"
 
 #include <windows.h>
 #if defined(_WIN32) && defined(__MINGW32__)
@@ -455,4 +459,6 @@ void CAVIGenerator::AVIGeneratorThreadProc() {
 	}
 	delete [] localWriteBuf;
 }
+
+#endif // defined AVI_CAPTURING
 
