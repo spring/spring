@@ -6,6 +6,7 @@
 
 //#include "StdAfx.h"
 
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GameVersion.h"
 #include "System/LogOutput.h"
@@ -350,13 +351,13 @@ bool CAVIGenerator::InitEngine() {
 	}
 
 	HWND mainWindow = FindWindow(NULL, ("Spring " + SpringVersion::GetFull()).c_str());
-	if (fullscreen) {
+	if (globalRendering->fullScreen) {
 		ShowWindow(mainWindow, SW_SHOWMINNOACTIVE);
 	}
 	boost::mutex::scoped_lock lock(AVIMutex);
 	AVIThread = new boost::thread(boost::bind(&CAVIGenerator::AVIGeneratorThreadProc, this));
 	AVICondition.wait(lock);  // Wait until InitAVICompressionEngine() completes.
-	if (fullscreen) {
+	if (globalRendering->fullScreen) {
 		ShowWindow(mainWindow, SW_RESTORE);
 	}
 	return !quitAVIgen;

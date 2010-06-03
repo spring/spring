@@ -80,7 +80,6 @@ CGameController* activeController = 0;
 bool globalQuit = false;
 boost::uint8_t *keys = 0;
 boost::uint16_t currentUnicode = 0;
-bool fullscreen = true;
 ClientSetup* startsetup = NULL;
 
 /**
@@ -144,6 +143,8 @@ bool SpringApp::Initialize()
 	// Initialize crash reporting
 	CrashHandler::Install();
 
+	globalRendering = new CGlobalRendering();
+
 	ParseCmdLine();
 	CMyMath::Init();
 	good_fpu_control_registers("::Run");
@@ -172,7 +173,6 @@ bool SpringApp::Initialize()
 	// Global structures
 	gs = new CGlobalSynced();
 	gu = new CGlobalUnsynced();
-	globalRendering = new CGlobalRendering();
 
 	if (cmdline->IsSet("minimise")) {
 		globalRendering->active = false;
@@ -330,8 +330,8 @@ bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
-	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
+	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, globalRendering->fullScreen);
+	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN : 0;
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -410,7 +410,7 @@ bool SpringApp::SetSDLVideoMode()
 
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
-	if (fullscreen) {
+	if (globalRendering->fullScreen) {
 		logOutput.Print("Video mode set to %ix%i/%ibit", screenWidth, screenHeight, bits);
 	} else {
 		logOutput.Print("Video mode set to %ix%i/%ibit (windowed)", screenWidth, screenHeight, bits);
@@ -478,7 +478,7 @@ bool SpringApp::GetDisplayGeometry()
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 
 	// GetClientRect doesn't do the right thing for restoring window position
-	if (!fullscreen) {
+	if (!globalRendering->fullScreen) {
 		GetWindowRect(info.window, &rect);
 	}
 
@@ -684,15 +684,15 @@ void SpringApp::ParseCmdLine()
 	}
 
 #ifdef _DEBUG
-	fullscreen = false;
+	globalRendering->fullScreen = false;
 #else
-	fullscreen = !!configHandler->Get("Fullscreen", 1);
+	globalRendering->fullScreen = !!configHandler->Get("Fullscreen", 1);
 #endif
 	// flags
 	if (cmdline->IsSet("window")) {
-		fullscreen = false;
+		globalRendering->fullScreen = false;
 	} else if (cmdline->IsSet("fullscreen")) {
-		fullscreen = true;
+		globalRendering->fullScreen = true;
 	}
 
 	if (cmdline->IsSet("textureatlas")) {
@@ -1045,14 +1045,14 @@ int SpringApp::Run(int argc, char *argv[])
 
 
 /**
- * Restores position of the window, if we're not in fullscreen
+ * Restores position of the window, if we are not in full-screen mode
  */
 void SpringApp::RestoreWindowPosition()
 {
 #ifdef __APPLE__
 	return;
 #else
-	if (!fullscreen) {
+	if (!globalRendering->fullScreen) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 
@@ -1103,14 +1103,14 @@ void SpringApp::RestoreWindowPosition()
 }
 
 /**
- * Saves position of the window, if we're not in fullscreen
+ * Saves position of the window, if we are not in full-screen mode
  */
 void SpringApp::SaveWindowPosition()
 {
 #ifdef __APPLE__
 	return;
 #else
-	if (!fullscreen) {
+	if (!globalRendering->fullScreen) {
   #if defined(_WIN32)
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);

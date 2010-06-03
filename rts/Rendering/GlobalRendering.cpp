@@ -67,6 +67,8 @@ CGlobalRendering::CGlobalRendering() {
 	compressTextures = false;
 	atiHacks = false;
 	maxTextureSize = 1024;
+
+	fullScreen = true;
 }
 
 void CGlobalRendering::PostInit() {

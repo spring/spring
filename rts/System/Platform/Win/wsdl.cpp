@@ -21,7 +21,7 @@
  * emulate SDL on Windows.
  */
 
-#include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 #include <stdio.h>
 #include "wsdl.h"
 #include <queue>
@@ -239,7 +239,7 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 	}
 
 	//! mouse capture
-	if (!fullscreen) {
+	if (!globalRendering->fullScreen) {
 		const POINT screen_pt = ScreenFromClient(client_x, client_y);
 
 		static int outstanding_press_events = 0;
@@ -281,7 +281,7 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 		if(GetCoords(screen_pt.x, screen_pt.y, x, y))
 			queue_button_event(button, state, x, y);
 	} else {
-		//! no outside checking needed for fullscreen
+		//! no outside checking needed for full-screen
 		queue_button_event(button, state, client_x, client_y);
 	}
 
