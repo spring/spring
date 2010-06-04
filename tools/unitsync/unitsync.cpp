@@ -641,7 +641,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 	// If the map didn't parse, say so now
 	if (!err.empty()) {
 		SetLastError(err);
-		safe_strzcpy(outInfo->description, err, (MAX_MAP_DESCRIPTION_CHARS - 1));
+		safe_strzcpy(outInfo->description, err, 255);
 
 		// Fill in stuff so tasclient won't crash
 		outInfo->posCount = 0;
@@ -652,7 +652,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 	}
 
 	const string desc = mapTable.GetString("description", "");
-	safe_strzcpy(outInfo->description, desc, (MAX_MAP_DESCRIPTION_CHARS - 1));
+	safe_strzcpy(outInfo->description, desc, 255);
 
 	outInfo->tidalStrength   = mapTable.GetInt("tidalstrength", 0);
 	outInfo->gravity         = mapTable.GetInt("gravity", 0);
@@ -661,7 +661,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 
 	if (version >= 1) {
 		const string author = mapTable.GetString("author", "");
-		safe_strzcpy(outInfo->author, author, (MAX_MAP_AUTHOR_CHARS - 1));
+		safe_strzcpy(outInfo->author, author, 200);
 	}
 
 	const LuaTable atmoTable = mapTable.SubTable("atmosphere");
@@ -695,15 +695,20 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  *
  * If version >= 1, then the author field is filled.
  *
- * Important: the description and author fields are MAX_MAP_DESCRIPTION_CHARS and
- * MAX_MAP_AUTHOR_CHARS in length respectively (including zero-terminator byte).
+ * Important: the description and author fields must point to a valid, and sufficiently long buffer
+ * to store their contents.  Description is max 255 chars, and author is max 200 chars. (including
+ * terminating zero byte).
  *
  * If an error occurs (return value 0), the description is set to an error message.
  * However, using GetNextError() is the recommended way to get the error message.
  *
  * Example:
  *		@code
+ *		char description[255];
+ *		char author[200];
  *		MapInfo mi;
+ *		mi.description = description;
+ *		mi.author = author;
  *		if (GetMapInfoEx("somemap.smf", &mi, 1)) {
  *			//now mi is contains map data
  *		} else {
@@ -2274,7 +2279,11 @@ static int LuaGetMapInfo(lua_State* L)
 	const string mapName = luaL_checkstring(L, 1);
 
 	MapInfo mi;
+	char auth[256];
+	char desc[256];
+	mi.author = auth;
  	mi.author[0] = 0;
+	mi.description = desc;
 	mi.description[0] = 0;
 
 	if (!GetMapInfoEx(mapName.c_str(), &mi, 1)) {
