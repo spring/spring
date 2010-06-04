@@ -233,23 +233,23 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 		} else {
 			modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/S3OVertProg.glsl", "", GL_VERTEX_SHADER));
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/S3OFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", "", GL_VERTEX_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", "", GL_FRAGMENT_SHADER));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowTex");         // idx  2
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("reflectTex");        // idx  3 (cube)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("specularTex");       // idx  4 (cube)
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("lightDir");          // idx  5
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunDir");            // idx  5
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraPos");         // idx  6
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMat");         // idx  7
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMatInv");      // idx  8
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitTeamColor");     // idx  9
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitAmbientColor");  // idx 10
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitDiffuseColor");  // idx 11
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitShadowDensity"); // idx 12
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMat");         // idx 13
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("teamColor");         // idx  9
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunAmbient");        // idx 10
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunDiffuse");        // idx 11
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowDensity");     // idx 12
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMatrix");      // idx 13
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 14
 
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
@@ -258,7 +258,7 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, unitShadowDensity);
