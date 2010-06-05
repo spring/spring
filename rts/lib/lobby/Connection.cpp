@@ -13,8 +13,8 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#include "md5/md5.h"
-#include "md5/base64.h"
+#include "lib/md5/md5.h"
+#include "lib/md5/base64.h"
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;

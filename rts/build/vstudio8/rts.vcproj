@@ -843,6 +843,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\AviVideoCapturing.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\AviVideoCapturing.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\Camera.cpp"
 				>
 			</File>
@@ -896,6 +904,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\ConsoleHistory.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\DummyVideoCapturing.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\DummyVideoCapturing.h"
 				>
 			</File>
 			<File
@@ -959,27 +975,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\IVideoCapturing.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Game\IVideoCapturing.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\DummyVideoCapturing.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\DummyVideoCapturing.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\AviVideoCapturing.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\AviVideoCapturing.cpp"
+				RelativePath="..\..\Game\IVideoCapturing.h"
 				>
 			</File>
 			<File
@@ -2043,6 +2043,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\glFont.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\GlobalRendering.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\GlobalRendering.h"
 				>
 			</File>
 			<File
@@ -4370,6 +4378,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\tools\DedicatedServer\main.cpp"
 				>
 				<FileConfiguration
@@ -4439,18 +4459,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -14487,26 +14495,160 @@
 					RelativePath="..\..\lib\lobby\Connection.h"
 					>
 				</File>
-				<Filter
-					Name="md5"
+				<File
+					RelativePath="..\..\lib\lobby\RawTextMessage.cpp"
 					>
-					<File
-						RelativePath="..\..\lib\lobby\md5\base64.cpp"
+				</File>
+				<File
+					RelativePath="..\..\lib\lobby\RawTextMessage.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="md5"
+				>
+				<File
+					RelativePath="..\..\lib\md5\base64.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
 						>
-					</File>
-					<File
-						RelativePath="..\..\lib\lobby\md5\base64.h"
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
 						>
-					</File>
-					<File
-						RelativePath="..\..\lib\lobby\md5\md5.c"
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
 						>
-					</File>
-					<File
-						RelativePath="..\..\lib\lobby\md5\md5.h"
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
 						>
-					</File>
-				</Filter>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Release)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\lib\md5\base64.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\md5\md5.c"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Release)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\lib\md5\md5.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
