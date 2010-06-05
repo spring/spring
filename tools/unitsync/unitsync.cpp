@@ -212,8 +212,12 @@ EXPORT(const char*) GetSpringVersion()
 }
 
 
+static void internal_deleteMapInfos();
+
 static void _UnInit()
 {
+	internal_deleteMapInfos();
+
 	lpClose();
 
 	FileSystemHandler::Cleanup();
@@ -513,6 +517,173 @@ EXPORT(const char*) GetArchivePath(const char* arname)
 }
 
 
+static void safe_strzcpy(char* dst, std::string src, size_t max)
+{
+	if (src.length() > max-1) {
+		src = src.substr(0, max-1);
+	}
+	strcpy(dst, src.c_str());
+}
+
+
+static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+{
+	CheckInit();
+	CheckNullOrEmpty(name);
+	CheckNull(outInfo);
+
+	logOutput.Print(LOG_UNITSYNC, "get map info: %s", name);
+
+	ScopedMapLoader mapLoader(name);
+	const string mapName = archiveScanner->MapNameToMapFile(name);
+
+	string err("");
+
+	MapParser mapParser(mapName);
+	if (!mapParser.IsValid()) {
+		err = mapParser.GetErrorLog();
+	}
+	const LuaTable mapTable = mapParser.GetRoot();
+
+	// Retrieve the map header as well
+	if (err.empty()) {
+		const string extension = mapName.substr(mapName.length() - 3);
+		if (extension == "smf") {
+			try {
+				CSmfMapFile file(mapName);
+				const SMFHeader& mh = file.GetHeader();
+
+				outInfo->width  = mh.mapx * SQUARE_SIZE;
+				outInfo->height = mh.mapy * SQUARE_SIZE;
+			}
+			catch (content_error&) {
+				outInfo->width  = -1;
+			}
+		}
+		else {
+			int w = mapTable.GetInt("gameAreaW", 0);
+			int h = mapTable.GetInt("gameAreaW", 1);
+
+			outInfo->width  = w * SQUARE_SIZE;
+			outInfo->height = h * SQUARE_SIZE;
+		}
+
+		// Make sure we found stuff in both the smd and the header
+		if (outInfo->width <= 0) {
+			err = "Bad map width";
+		}
+		else if (outInfo->height <= 0) {
+			err = "Bad map height";
+		}
+	}
+
+	// If the map didn't parse, say so now
+	if (!err.empty()) {
+		SetLastError(err);
+		safe_strzcpy(outInfo->description, err, 255);
+
+		// Fill in stuff so tasclient won't crash
+		outInfo->posCount = 0;
+		if (version >= 1) {
+			outInfo->author[0] = 0;
+		}
+		return 0;
+	}
+
+	const string desc = mapTable.GetString("description", "");
+	safe_strzcpy(outInfo->description, desc, 255);
+
+	outInfo->tidalStrength   = mapTable.GetInt("tidalstrength", 0);
+	outInfo->gravity         = mapTable.GetInt("gravity", 0);
+	outInfo->extractorRadius = mapTable.GetInt("extractorradius", 0);
+	outInfo->maxMetal        = mapTable.GetFloat("maxmetal", 0.0f);
+
+	if (version >= 1) {
+		const string author = mapTable.GetString("author", "");
+		safe_strzcpy(outInfo->author, author, 200);
+	}
+
+	const LuaTable atmoTable = mapTable.SubTable("atmosphere");
+	outInfo->minWind = atmoTable.GetInt("minWind", 0);
+	outInfo->maxWind = atmoTable.GetInt("maxWind", 0);
+
+	// Find the start positions
+	int curTeam;
+	for (curTeam = 0; curTeam < 16; ++curTeam) {
+		float3 pos(-1.0f, -1.0f, -1.0f); // defaults
+		if (!mapParser.GetStartPos(curTeam, pos)) {
+			break; // position could not be parsed
+		}
+		outInfo->positions[curTeam].x = pos.x;
+		outInfo->positions[curTeam].z = pos.z;
+		logOutput.Print(LOG_UNITSYNC, "  startpos: %.0f, %.0f", pos.x, pos.z);
+	}
+
+	outInfo->posCount = curTeam;
+
+	return 1;
+}
+
+
+/**
+ * @brief Retrieve map info
+ * @param name name of the map, e.g. "SmallDivide.smf"
+ * @param outInfo pointer to structure which is filled with map info
+ * @param version this determines which fields of the MapInfo structure are filled
+ * @return Zero on error; non-zero on success
+ * @deprecated
+ *
+ * If version >= 1, then the author field is filled.
+ *
+ * Important: the description and author fields must point to a valid, and sufficiently long buffer
+ * to store their contents.  Description is max 255 chars, and author is max 200 chars. (including
+ * terminating zero byte).
+ *
+ * If an error occurs (return value 0), the description is set to an error message.
+ * However, using GetNextError() is the recommended way to get the error message.
+ *
+ * Example:
+ *		@code
+ *		char description[255];
+ *		char author[200];
+ *		MapInfo mi;
+ *		mi.description = description;
+ *		mi.author = author;
+ *		if (GetMapInfoEx("somemap.smf", &mi, 1)) {
+ *			//now mi is contains map data
+ *		} else {
+ *			//handle the error
+ *		}
+ *		@endcode
+ */
+EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+{
+	try {
+		return _GetMapInfoEx(name, outInfo, version);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0;
+}
+
+
+/**
+ * @brief Retrieve map info, equivalent to GetMapInfoEx(name, outInfo, 0)
+ * @param name name of the map, e.g. "SmallDivide.smf"
+ * @param outInfo pointer to structure which is filled with map info
+ * @return Zero on error; non-zero on success
+ * @see GetMapInfoEx
+ * @deprecated
+ */
+EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
+{
+	try {
+		return _GetMapInfoEx(name, outInfo, 0);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0;
+}
+
+
 // Updated on every call to GetMapCount
 static vector<string> mapNames;
 
@@ -578,166 +749,262 @@ EXPORT(const char*) GetMapName(int index)
 }
 
 
-static void safe_strzcpy(char* dst, std::string src, size_t max)
-{
-	if (src.length() > max-1) {
-		src = src.substr(0, max-1);
+static std::map<int, MapInfo> mapInfos;
+
+static MapInfo* internal_getMapInfo(int index) {
+
+	if (index >= mapNames.size()) {
+		SetLastError("invalid map index");
+	} else {
+		if (mapInfos.find(index) == mapInfos.end()) {
+			try {
+				MapInfo mi;
+				mi.description = new char[255];
+				mi.author  = new char[200];
+				if (_GetMapInfoEx(mapNames[index].c_str(), &mi, 1) != 0) {
+					mapInfos[index] = mi;
+					return &(mapInfos[index]);
+				} else {
+					delete [] mi.description;
+					delete [] mi.author;
+				}
+			}
+			UNITSYNC_CATCH_BLOCKS;
+		} else {
+			return &(mapInfos[index]);
+		}
 	}
-	strcpy(dst, src.c_str());
+
+	return NULL;
 }
 
+static void internal_deleteMapInfos() {
 
-static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
-{
-	CheckInit();
-	CheckNullOrEmpty(name);
-	CheckNull(outInfo);
-
-	logOutput.Print(LOG_UNITSYNC, "get map info: %s", name);
-
-	ScopedMapLoader mapLoader(name);
-	const string mapName = archiveScanner->MapNameToMapFile(name);
-
-	string err("");
-
-	MapParser mapParser(mapName);
-	if (!mapParser.IsValid()) {
-		err = mapParser.GetErrorLog();
+	while (!mapInfos.empty()) {
+		std::map<int, MapInfo>::iterator mi = mapInfos.begin();
+		delete [] mi->second.description;
+		delete [] mi->second.author;
+		mapInfos.erase(mi);
 	}
-	const LuaTable mapTable = mapParser.GetRoot();
+}
 
-	// Retrieve the map header as well
-	if (err.empty()) {
-		const string extension = mapName.substr(mapName.length() - 3);
-		if (extension == "smf") {
-			try {
-				CSmfMapFile file(mapName);
-				const SMFHeader& mh = file.GetHeader();
+/**
+ * @brief Get the description of a map
+ * @return NULL on error; the description of the map
+ *         (e.g. "Lot of metal in middle") on success
+ */
+EXPORT(const char*) GetMapDescription(int index) {
 
-				outInfo->width  = mh.mapx * SQUARE_SIZE;
-				outInfo->height = mh.mapy * SQUARE_SIZE;
-			}
-			catch (content_error&) {
-				outInfo->width  = -1;
-			}
-		}
-		else {
-			int w = mapTable.GetInt("gameAreaW", 0);
-			int h = mapTable.GetInt("gameAreaW", 1);
-
-			outInfo->width  = w * SQUARE_SIZE;
-			outInfo->height = h * SQUARE_SIZE;
-		}
-
-		// Make sure we found stuff in both the smd and the header
-		if (outInfo->width <= 0) {
-			err = "Bad map width";
-		}
-		else if (outInfo->height <= 0) {
-			err = "Bad map height";
-		}
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->description;
 	}
 
-	// If the map didn't parse, say so now
-	if (!err.empty()) {
-		SetLastError(err);
-		safe_strzcpy(outInfo->description, err, (MAX_MAP_DESCRIPTION_CHARS - 1));
+	return NULL;
+}
 
-		// Fill in stuff so tasclient won't crash
-		outInfo->posCount = 0;
-		if (version >= 1) {
-			outInfo->author[0] = 0;
-		}
-		return 0;
+/**
+ * @brief Get the name of the author of a map
+ * @return NULL on error; the name of the author of a map on success
+ */
+EXPORT(const char*) GetMapAuthor(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->author;
 	}
 
-	const string desc = mapTable.GetString("description", "");
-	safe_strzcpy(outInfo->description, desc, (MAX_MAP_DESCRIPTION_CHARS - 1));
+	return NULL;
+}
 
-	outInfo->tidalStrength   = mapTable.GetInt("tidalstrength", 0);
-	outInfo->gravity         = mapTable.GetInt("gravity", 0);
-	outInfo->extractorRadius = mapTable.GetInt("extractorradius", 0);
-	outInfo->maxMetal        = mapTable.GetFloat("maxmetal", 0.0f);
+/**
+ * @brief Get the width of a map
+ * @return -1 on error; the width of a map
+ */
+EXPORT(int) GetMapWidth(int index) {
 
-	if (version >= 1) {
-		const string author = mapTable.GetString("author", "");
-		safe_strzcpy(outInfo->author, author, (MAX_MAP_AUTHOR_CHARS - 1));
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->width;
 	}
 
-	const LuaTable atmoTable = mapTable.SubTable("atmosphere");
-	outInfo->minWind = atmoTable.GetInt("minWind", 0);
-	outInfo->maxWind = atmoTable.GetInt("maxWind", 0);
+	return -1;
+}
 
-	// Find the start positions
-	int curTeam;
-	for (curTeam = 0; curTeam < 16; ++curTeam) {
-		float3 pos(-1.0f, -1.0f, -1.0f); // defaults
-		if (!mapParser.GetStartPos(curTeam, pos)) {
-			break; // position could not be parsed
-		}
-		outInfo->positions[curTeam].x = pos.x;
-		outInfo->positions[curTeam].z = pos.z;
-		logOutput.Print(LOG_UNITSYNC, "  startpos: %.0f, %.0f", pos.x, pos.z);
+/**
+ * @brief Get the height of a map
+ * @return -1 on error; the height of a map
+ */
+EXPORT(int) GetMapHeight(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->height;
 	}
 
-	outInfo->posCount = curTeam;
+	return -1;
+}
 
+/**
+ * @brief Get the tidal speed of a map
+ * @return -1 on error; the tidal speed of the map on success
+ */
+EXPORT(int) GetMapTidalStrength(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->tidalStrength;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the minimum wind speed on a map
+ * @return -1 on error; the minimum wind speed on a map
+ */
+EXPORT(int) GetMapWindMin(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->minWind;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the maximum wind strenght on a map
+ * @return -1 on error; the maximum wind strenght on a map
+ */
+EXPORT(int) GetMapWindMax(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->maxWind;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the gravity of a map
+ * @return -1 on error; the gravity of the map on success
+ */
+EXPORT(int) GetMapGravity(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->gravity;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the number of resources supported available
+ * @return -1 on error; the number of resources supported available on success
+ */
+EXPORT(int) GetMapResourceCount(int index) {
 	return 1;
 }
 
+/**
+ * @brief Get the name of a map resource
+ * @return NULL on error; the name of a map resource (e.g. "Metal") on success
+ */
+EXPORT(const char*) GetMapResourceName(int index, int resourceIndex) {
+
+	if (resourceIndex == 0) {
+		return "Metal";
+	} else {
+		SetLastError("No valid map resource index");
+	}
+
+	return NULL;
+}
 
 /**
- * @brief Retrieve map info
- * @param name name of the map, e.g. "SmallDivide.smf"
- * @param outInfo pointer to structure which is filled with map info
- * @param version this determines which fields of the MapInfo structure are filled
- * @return Zero on error; non-zero on success
- *
- * If version >= 1, then the author field is filled.
- *
- * Important: the description and author fields are MAX_MAP_DESCRIPTION_CHARS and
- * MAX_MAP_AUTHOR_CHARS in length respectively (including zero-terminator byte).
- *
- * If an error occurs (return value 0), the description is set to an error message.
- * However, using GetNextError() is the recommended way to get the error message.
- *
- * Example:
- *		@code
- *		MapInfo mi;
- *		if (GetMapInfoEx("somemap.smf", &mi, 1)) {
- *			//now mi is contains map data
- *		} else {
- *			//handle the error
- *		}
- *		@endcode
+ * @brief Get the scale factor of a resource map
+ * @return 0.0f on error; the scale factor of a resource map on success
  */
-EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
-{
-	try {
-		return _GetMapInfoEx(name, outInfo, version);
+EXPORT(float) GetMapResourceMax(int index, int resourceIndex) {
+
+	if (resourceIndex == 0) {
+		const MapInfo* mapInfo = internal_getMapInfo(index);
+		if (mapInfo) {
+			return mapInfo->maxMetal;
+		}
+	} else {
+		SetLastError("No valid map resource index");
 	}
-	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return 0.0f;
+}
+
+/**
+ * @brief Get the extractor radius for a map resource
+ * @return -1 on error; the extractor radius for a map resource on success
+ */
+EXPORT(int) GetMapResourceExtractorRadius(int index, int resourceIndex) {
+
+	if (resourceIndex == 0) {
+		const MapInfo* mapInfo = internal_getMapInfo(index);
+		if (mapInfo) {
+			return mapInfo->extractorRadius;
+		}
+	} else {
+		SetLastError("No valid map resource index");
+	}
+
+	return -1;
 }
 
 
 /**
- * @brief Retrieve map info, equivalent to GetMapInfoEx(name, outInfo, 0)
- * @param name name of the map, e.g. "SmallDivide.smf"
- * @param outInfo pointer to structure which is filled with map info
- * @return Zero on error; non-zero on success
- * @see GetMapInfoEx
+ * @brief Get the number of defined start positions for a map
+ * @return -1 on error; the number of defined start positions for a map
+ *         on success
  */
-EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
-{
-	try {
-		return _GetMapInfoEx(name, outInfo, 0);
+EXPORT(int) GetMapPosCount(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->posCount;
 	}
-	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return -1;
 }
 
+/**
+ * @brief Get the position on the x-axis for a start position on a map
+ * @return -1.0f on error; the position on the x-axis for a start position
+ *         on a map on success
+ */
+EXPORT(float) GetMapPosX(int index, int posIndex) {
 
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->positions[posIndex].x;
+	}
+
+	return -1.0f;
+}
+
+/**
+ * @brief Get the position on the z-axis for a start position on a map
+ * @return -1.0f on error; the position on the z-axis for a start position
+ *         on a map on success
+ */
+EXPORT(float) GetMapPosZ(int index, int posIndex) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->positions[posIndex].z;
+	}
+
+	return -1.0f;
+}
 
 /**
  * @brief return the map's minimum height
@@ -2274,7 +2541,11 @@ static int LuaGetMapInfo(lua_State* L)
 	const string mapName = luaL_checkstring(L, 1);
 
 	MapInfo mi;
+	char auth[256];
+	char desc[256];
+	mi.author = auth;
  	mi.author[0] = 0;
+	mi.description = desc;
 	mi.description[0] = 0;
 
 	if (!GetMapInfoEx(mapName.c_str(), &mi, 1)) {
