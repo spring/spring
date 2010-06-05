@@ -212,8 +212,12 @@ EXPORT(const char*) GetSpringVersion()
 }
 
 
+static void internal_deleteMapInfos();
+
 static void _UnInit()
 {
+	internal_deleteMapInfos();
+
 	lpClose();
 
 	FileSystemHandler::Cleanup();
@@ -513,71 +517,6 @@ EXPORT(const char*) GetArchivePath(const char* arname)
 }
 
 
-// Updated on every call to GetMapCount
-static vector<string> mapNames;
-
-
-/**
- * @brief Get the number of maps available
- * @return Zero on error; the number of maps available on success
- *
- * Call this before any of the map functions which take a map index as parameter.
- * This function actually performs a relatively costly enumeration of all maps,
- * so you should resist from calling it repeatedly in a loop.  Rather use:
- *		@code
- *		int map_count = GetMapCount();
- *		for (int index = 0; index < map_count; ++index) {
- *			printf("map name: %s\n", GetMapName(index));
- *		}
- *		@endcode
- * Then:
- *		@code
- *		for (int index = 0; index < GetMapCount(); ++index) { ... }
- *		@endcode
- */
-EXPORT(int) GetMapCount()
-{
-	try {
-		CheckInit();
-
-		//vector<string> files = CFileHandler::FindFiles("{maps/*.smf,maps/*.sm3}");
-		vector<string> files = CFileHandler::FindFiles("maps/", "{*.smf,*.sm3}");
-		vector<string> ars = archiveScanner->GetMaps();
-
-		mapNames.clear();
-		for (vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
-			string mn = *i;
-			mn = mn.substr(mn.find_last_of('/') + 1);
-			mapNames.push_back(mn);
-		}
-		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
-			mapNames.push_back(*i);
-		sort(mapNames.begin(), mapNames.end());
-
-		return mapNames.size();
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return 0;
-}
-
-
-/**
- * @brief Get the name of a map
- * @return NULL on error; the name of the map (e.g. "SmallDivide.smf") on success
- */
-EXPORT(const char*) GetMapName(int index)
-{
-	try {
-		CheckInit();
-		CheckBounds(index, mapNames.size());
-
-		return GetStr(mapNames[index]);
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
-}
-
-
 static void safe_strzcpy(char* dst, std::string src, size_t max)
 {
 	if (src.length() > max-1) {
@@ -692,6 +631,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  * @param outInfo pointer to structure which is filled with map info
  * @param version this determines which fields of the MapInfo structure are filled
  * @return Zero on error; non-zero on success
+ * @deprecated
  *
  * If version >= 1, then the author field is filled.
  *
@@ -732,6 +672,7 @@ EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  * @param outInfo pointer to structure which is filled with map info
  * @return Zero on error; non-zero on success
  * @see GetMapInfoEx
+ * @deprecated
  */
 EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
 {
@@ -743,6 +684,327 @@ EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
 }
 
 
+// Updated on every call to GetMapCount
+static vector<string> mapNames;
+
+
+/**
+ * @brief Get the number of maps available
+ * @return Zero on error; the number of maps available on success
+ *
+ * Call this before any of the map functions which take a map index as parameter.
+ * This function actually performs a relatively costly enumeration of all maps,
+ * so you should resist from calling it repeatedly in a loop.  Rather use:
+ *		@code
+ *		int map_count = GetMapCount();
+ *		for (int index = 0; index < map_count; ++index) {
+ *			printf("map name: %s\n", GetMapName(index));
+ *		}
+ *		@endcode
+ * Then:
+ *		@code
+ *		for (int index = 0; index < GetMapCount(); ++index) { ... }
+ *		@endcode
+ */
+EXPORT(int) GetMapCount()
+{
+	try {
+		CheckInit();
+
+		//vector<string> files = CFileHandler::FindFiles("{maps/*.smf,maps/*.sm3}");
+		vector<string> files = CFileHandler::FindFiles("maps/", "{*.smf,*.sm3}");
+		vector<string> ars = archiveScanner->GetMaps();
+
+		mapNames.clear();
+		for (vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
+			string mn = *i;
+			mn = mn.substr(mn.find_last_of('/') + 1);
+			mapNames.push_back(mn);
+		}
+		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
+			mapNames.push_back(*i);
+		sort(mapNames.begin(), mapNames.end());
+
+		return mapNames.size();
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0;
+}
+
+
+/**
+ * @brief Get the name of a map
+ * @return NULL on error; the name of the map (e.g. "SmallDivide.smf") on success
+ */
+EXPORT(const char*) GetMapName(int index)
+{
+	try {
+		CheckInit();
+		CheckBounds(index, mapNames.size());
+
+		return GetStr(mapNames[index]);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}
+
+
+static std::map<int, MapInfo> mapInfos;
+
+static MapInfo* internal_getMapInfo(int index) {
+
+	if (index >= mapNames.size()) {
+		SetLastError("invalid map index");
+	} else {
+		if (mapInfos.find(index) == mapInfos.end()) {
+			try {
+				MapInfo mi;
+				mi.description = new char[255];
+				mi.author  = new char[200];
+				if (_GetMapInfoEx(mapNames[index].c_str(), &mi, 1) != 0) {
+					mapInfos[index] = mi;
+					return &(mapInfos[index]);
+				} else {
+					delete [] mi.description;
+					delete [] mi.author;
+				}
+			}
+			UNITSYNC_CATCH_BLOCKS;
+		} else {
+			return &(mapInfos[index]);
+		}
+	}
+
+	return NULL;
+}
+
+static void internal_deleteMapInfos() {
+
+	while (!mapInfos.empty()) {
+		std::map<int, MapInfo>::iterator mi = mapInfos.begin();
+		delete [] mi->second.description;
+		delete [] mi->second.author;
+		mapInfos.erase(mi);
+	}
+}
+
+/**
+ * @brief Get the description of a map
+ * @return NULL on error; the description of the map
+ *         (e.g. "Lot of metal in middle") on success
+ */
+EXPORT(const char*) GetMapDescription(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->description;
+	}
+
+	return NULL;
+}
+
+/**
+ * @brief Get the name of the author of a map
+ * @return NULL on error; the name of the author of a map on success
+ */
+EXPORT(const char*) GetMapAuthor(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->author;
+	}
+
+	return NULL;
+}
+
+/**
+ * @brief Get the width of a map
+ * @return -1 on error; the width of a map
+ */
+EXPORT(int) GetMapWidth(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->width;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the height of a map
+ * @return -1 on error; the height of a map
+ */
+EXPORT(int) GetMapHeight(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->height;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the tidal speed of a map
+ * @return -1 on error; the tidal speed of the map on success
+ */
+EXPORT(int) GetMapTidalStrength(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->tidalStrength;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the minimum wind speed on a map
+ * @return -1 on error; the minimum wind speed on a map
+ */
+EXPORT(int) GetMapWindMin(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->minWind;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the maximum wind strenght on a map
+ * @return -1 on error; the maximum wind strenght on a map
+ */
+EXPORT(int) GetMapWindMax(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->maxWind;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the gravity of a map
+ * @return -1 on error; the gravity of the map on success
+ */
+EXPORT(int) GetMapGravity(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->gravity;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the number of resources supported available
+ * @return -1 on error; the number of resources supported available on success
+ */
+EXPORT(int) GetMapResourceCount(int index) {
+	return 1;
+}
+
+/**
+ * @brief Get the name of a map resource
+ * @return NULL on error; the name of a map resource (e.g. "Metal") on success
+ */
+EXPORT(const char*) GetMapResourceName(int index, int resourceIndex) {
+
+	if (resourceIndex == 0) {
+		return "Metal";
+	} else {
+		SetLastError("No valid map resource index");
+	}
+
+	return NULL;
+}
+
+/**
+ * @brief Get the scale factor of a resource map
+ * @return 0.0f on error; the scale factor of a resource map on success
+ */
+EXPORT(float) GetMapResourceMax(int index, int resourceIndex) {
+
+	if (resourceIndex == 0) {
+		const MapInfo* mapInfo = internal_getMapInfo(index);
+		if (mapInfo) {
+			return mapInfo->maxMetal;
+		}
+	} else {
+		SetLastError("No valid map resource index");
+	}
+
+	return 0.0f;
+}
+
+/**
+ * @brief Get the extractor radius for a map resource
+ * @return -1 on error; the extractor radius for a map resource on success
+ */
+EXPORT(int) GetMapResourceExtractorRadius(int index, int resourceIndex) {
+
+	if (resourceIndex == 0) {
+		const MapInfo* mapInfo = internal_getMapInfo(index);
+		if (mapInfo) {
+			return mapInfo->extractorRadius;
+		}
+	} else {
+		SetLastError("No valid map resource index");
+	}
+
+	return -1;
+}
+
+
+/**
+ * @brief Get the number of defined start positions for a map
+ * @return -1 on error; the number of defined start positions for a map
+ *         on success
+ */
+EXPORT(int) GetMapPosCount(int index) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->posCount;
+	}
+
+	return -1;
+}
+
+/**
+ * @brief Get the position on the x-axis for a start position on a map
+ * @return -1.0f on error; the position on the x-axis for a start position
+ *         on a map on success
+ */
+EXPORT(float) GetMapPosX(int index, int posIndex) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->positions[posIndex].x;
+	}
+
+	return -1.0f;
+}
+
+/**
+ * @brief Get the position on the z-axis for a start position on a map
+ * @return -1.0f on error; the position on the z-axis for a start position
+ *         on a map on success
+ */
+EXPORT(float) GetMapPosZ(int index, int posIndex) {
+
+	const MapInfo* mapInfo = internal_getMapInfo(index);
+	if (mapInfo) {
+		return mapInfo->positions[posIndex].z;
+	}
+
+	return -1.0f;
+}
 
 /**
  * @brief return the map's minimum height
