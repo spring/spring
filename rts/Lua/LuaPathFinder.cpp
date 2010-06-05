@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 
+#include "Sim/Path/PathManager.h"
 #include <stdlib.h>
 #include <algorithm>
 
@@ -16,7 +17,6 @@ using namespace std;
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Path/PathManager.h"
 
 
 static void CreatePathMetatable(lua_State* L);
