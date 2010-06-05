@@ -234,7 +234,7 @@ SectionGroup "Multiplayer battlerooms"
 	SectionEnd
 SectionGroupEnd
 
-Section "Desktop shortcut" SEC_DESKTOP
+Section "Desktop shortcuts" SEC_DESKTOP
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
 		${!echonow} "Processing: springlobby shortcut"
 		SetOutPath "$INSTDIR"
