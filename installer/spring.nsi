@@ -234,6 +234,16 @@ SectionGroup "Multiplayer battlerooms"
 	SectionEnd
 SectionGroupEnd
 
+
+SectionGroup "Multiplayer lobby servers"
+	Section "TASServer" SEC_TASSERVER
+		!define INSTALL
+			${!echonow} "Processing: TASServer"
+			!include "sections\tasServer.nsh"
+		!undef INSTALL
+	SectionEnd
+SectionGroupEnd
+
 Section "Desktop shortcuts" SEC_DESKTOP
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
 		${!echonow} "Processing: springlobby shortcut"
@@ -328,6 +338,7 @@ Section Uninstall
 	!include "sections\shortcuts.nsh"
 	!include "sections\archivemover.nsh"
 	!include "sections\springDownloader.nsh"
+	!include "sections\tasServer.nsh"
 	!insertmacro DeleteSkirmishAI "AAI"
 	!insertmacro DeleteSkirmishAI "KAIK"
 	!insertmacro DeleteSkirmishAI "RAI"
