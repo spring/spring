@@ -19,12 +19,14 @@ echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
 
 #strip symbols and archive them
 cd ${BUILDDIR}
-for tostripfile in spring.exe unitsync.dll $(find AI/Skirmish -name SkirmishAI.dll); do
-	echo ${tostripfile}
-	debugfile=${tostripfile}.dbg
-	${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
-	${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile}
-	${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+for tostripfile in spring.exe spring-gml.exe spring-hl.exe unitsync.dll $(find AI/Skirmish -name SkirmishAI.dll); do
+	if [-f ${tostripfile} ]; then
+		echo ${tostripfile}
+		debugfile=${tostripfile%.*}.dbg
+		${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
+		${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile}
+		${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+	fi
 done
 cd $OLDPWD
 
@@ -32,4 +34,3 @@ cd $OLDPWD
 ./installer/make_installer.pl 0
 
 mv ./installer/spring*.exe ${TMP_PATH}
-
