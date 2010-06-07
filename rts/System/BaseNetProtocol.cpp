@@ -450,6 +450,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_CHAT, -1);
 	proto->AddType(NETMSG_RANDSEED, 5);
 	proto->AddType(NETMSG_GAMEID, 17);
+	proto->AddType(NETMSG_PATH_CHECKSUM, 1 + 1 + sizeof(boost::uint32_t));
 	proto->AddType(NETMSG_COMMAND, -2);
 	proto->AddType(NETMSG_SELECT, -2);
 	proto->AddType(NETMSG_PAUSE, 3);
