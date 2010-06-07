@@ -12,6 +12,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 #include <boost/cstdint.hpp>
 
 using std::max;
@@ -89,7 +90,7 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 
 void CFreeController::Update()
 {
-	if (!gu->active) {
+	if (!globalRendering->active) {
 		vel  = ZeroVector;
 		avel = ZeroVector;
 		prevVel  = vel;
@@ -106,7 +107,7 @@ void CFreeController::Update()
 	const float3 prevPos = pos;
 
 	// setup the time fractions
-	const float ft = gu->lastFrameTime;
+	const float ft = globalRendering->lastFrameTime;
 	const float nt = (ft / velTime); // next time factor
 	const float pt = (1.0f - nt);    // prev time factor
 	const float ant = (ft / avelTime); // next time factor

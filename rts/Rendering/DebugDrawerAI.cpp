@@ -3,6 +3,7 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -268,8 +269,8 @@ void DebugDrawerAI::Graph::Draw() {
 		// label-box
 		va->Initialize();
 		va->AddVertexC(pos,                                                                               color);
-		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / gu->viewSizeX) * size.x),   0.0f, 0.0f), color);
-		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / gu->viewSizeX) * size.x), size.y, 0.0f), color);
+		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / globalRendering->viewSizeX) * size.x),   0.0f, 0.0f), color);
+		va->AddVertexC(pos + float3(-(((maxLabelWidth * 1.33f) / globalRendering->viewSizeX) * size.x), size.y, 0.0f), color);
 		va->AddVertexC(pos + float3(                                                0.0f,  size.y, 0.0f), color);
 		va->DrawArrayC(GL_LINE_STRIP);
 
@@ -326,7 +327,7 @@ void DebugDrawerAI::Graph::Draw() {
 				}
 
 				// right-outline the labels
-				const float sx = (maxLabelWidth / gu->viewSizeX) * size.x;
+				const float sx = (maxLabelWidth / globalRendering->viewSizeX) * size.x;
 				const float tx = pos.x - ((line.lineLabelWidth / maxLabelWidth) * 1.33f) * sx;
 				const float ty = pos.y + ((lineNum * linePad * 2.0f) + linePad) * size.y;
 
@@ -380,7 +381,7 @@ void DebugDrawerAI::TexSet::Clear() {
 }
 
 int DebugDrawerAI::TexSet::AddTexture(const float* data, int w, int h) {
-	if (!gu->supportNPOTs && (w != next_power_of_2(w) || h != next_power_of_2(h))) {
+	if (!globalRendering->supportNPOTs && (w != next_power_of_2(w) || h != next_power_of_2(h))) {
 		return 0;
 	}
 
@@ -458,8 +459,8 @@ void DebugDrawerAI::TexSet::Draw() {
 			va->DrawArrayT(GL_QUADS);
 			glBindTexture(GL_TEXTURE_2D, 0);
 
-			const float tx = pos.x + size.x * 0.5f - ((tex->GetLabelWidth() * 0.5f) / gu->viewSizeX) * size.x;
-			const float ty = pos.y + size.y        + ((tex->GetLabelHeight() * 0.5f) / gu->viewSizeY) * size.y;
+			const float tx = pos.x + size.x * 0.5f - ((tex->GetLabelWidth() * 0.5f) / globalRendering->viewSizeX) * size.x;
+			const float ty = pos.y + size.y        + ((tex->GetLabelHeight() * 0.5f) / globalRendering->viewSizeY) * size.y;
 
 			font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%s", tex->GetLabel().c_str());
 		}

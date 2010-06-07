@@ -11,6 +11,7 @@
 #include <boost/thread.hpp>
 #include "mmgr.h"
 
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -307,7 +308,7 @@ const GLuint CBitmap::CreateTexture(bool mipmaps)
 	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
 	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
-	if (!gu->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
+	if (!globalRendering->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
 	{
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
 		return bm.CreateTexture(mipmaps);

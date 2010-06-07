@@ -1,0 +1,3 @@
+#!/bin/sh
+export LD_PRELOAD=~/bin/no-msync.so
+exec /usr/bin/makensis "$@"

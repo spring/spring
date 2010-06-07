@@ -26,10 +26,7 @@ public:
 	virtual void ImpulseAdded(void);
 	virtual void ReservePad(CAirBaseHandler::LandingPad* lp);
 
-//	virtual float GetSpeedMod(int square){return 1;};
-//	virtual float GetSpeedMod(float avrHeight, float maxHeight, float maxDepth, float avrSlope, float maxSlope) {return 1;};
-
-	virtual void SetGoal(float3 pos);
+	virtual void SetGoal(const float3& pos);
 	virtual void SetMaxSpeed(float speed);
 	virtual void SetWantedMaxSpeed(float speed);
 	virtual void LeaveTransport(void);
@@ -43,12 +40,15 @@ public:
 	CUnit* owner;
 
 	float3 goalPos;
+	float3 oldPos;             // owner position at last Update(); only used by GMT
+	float3 oldSlowUpdatePos;   // owner position at last SlowUpdate(); only used by GMT
 
 	float maxSpeed;
 	float maxWantedSpeed;
 
 	CAirBaseHandler::LandingPad* reservedPad;
-	/// 0 moving toward,1 landing at,2 arrived
+
+	/// 0: moving toward, 1: landing at, 2: arrived
 	int padStatus;
 	float repairBelowHealth;
 
@@ -61,6 +61,7 @@ public:
 		Failed = 2
 	};
 	ProgressState progressState;
+
 protected:
 	void DependentDied(CObject* o);
 };

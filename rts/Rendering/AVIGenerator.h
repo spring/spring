@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef AVIGENERATOR_H
-#define AVIGENERATOR_H
+#ifndef AVI_GENERATOR_H
+#define AVI_GENERATOR_H
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -113,4 +113,4 @@ private:
 
 };
 
-#endif /* AVIGENERATOR_H */
+#endif /* AVI_GENERATOR_H */

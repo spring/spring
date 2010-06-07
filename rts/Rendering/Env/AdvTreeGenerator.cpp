@@ -10,6 +10,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.hpp"
@@ -292,7 +293,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 
 	{
 		#define L mapInfo->light
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			treeShader->SetUniform3f(0, 1.0f, 0.0f, 0.0f);
 			treeShader->SetUniform3f(1, 0.0f, 1.0f, 0.0f);
 			treeShader->SetUniform3f(2, 0.0f, 0.0f, 0.0f);
@@ -317,8 +318,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 		glEnable(GL_ALPHA_TEST);
 
 		for (int a = 0; a < 8; ++a) {
-			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), 1.0f, 0.0f, 0.0f);
-			treeShader->SetUniform3f(((gu->haveGLSL)? 1:  9), 0.0f, 1.0f, 0.0f);
+			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 0: 13), 1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 1:  9), 0.0f, 1.0f, 0.0f);
 
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
@@ -332,7 +333,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			glScalef(-1.0f, 1.0f, 1.0f);
 
 
-			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
+			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
 
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
@@ -340,7 +341,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			CreateFarView(data, a * 64, 64 + 256, pineDL + a);
 
 
-			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), -1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 0: 13), -1.0f, 0.0f, 0.0f);
 
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
@@ -348,8 +349,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			CreateFarView(data2, a * 64, 256, pineDL + a);
 
 
-			treeShader->SetUniform3f(((gu->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
-			treeShader->SetUniform3f(((gu->haveGLSL)? 1:  9), 1.0f, 0.0f, 0.0f);
+			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
+			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 1:  9), 1.0f, 0.0f, 0.0f);
 
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
@@ -368,7 +369,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 	treeShader->Disable();
 
 
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -830,7 +831,7 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 		}
 	}
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);

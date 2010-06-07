@@ -5,6 +5,7 @@
 
 #include "FlareProjectile.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -118,7 +119,7 @@ void CFlareProjectile::Draw(void)
 	va->EnlargeArrays(numSub*4,0,VA_SIZE_TC);
 	for (int a = 0; a < numSub; ++a) {
 		//! CAUTION: loop count must match EnlargeArrays above
-		const float3 interPos = subPos[a] + subSpeed[a] * gu->timeOffset;
+		const float3 interPos = subPos[a] + subSpeed[a] * globalRendering->timeOffset;
 
 		#define fpt projectileDrawer->flareprojectiletex
 		va->AddVertexQTC(interPos - camera->right * rad - camera->up * rad, fpt->xstart, fpt->ystart, col);

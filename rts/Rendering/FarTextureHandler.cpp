@@ -1,14 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "mmgr.h"
-#include "string.h"
+
+#include "FarTextureHandler.h"
 
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
-
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -19,6 +18,9 @@
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 #include "System/bitops.h"
+
+#include "mmgr.h"
+#include "string.h"
 
 CFarTextureHandler* farTextureHandler = NULL;
 
@@ -32,7 +34,9 @@ CFarTextureHandler::CFarTextureHandler()
 
 	farTexture = 0;
 
-	const int maxTexSize = (gu->maxTextureSize<=4096) ? gu->maxTextureSize : 4096; //! ATi supports 16k textures, which might be a bit much for this purpose, so limit it to 4k
+	// ATI supports 16K textures, which might be a bit too much
+	// for this purpose,so we limit it to 4K
+	const int maxTexSize = (globalRendering->maxTextureSize<=4096) ? globalRendering->maxTextureSize : 4096;
 
 	texSizeX = maxTexSize;
 	texSizeY = std::max(iconSizeY, 4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minimum space for 4 icons
@@ -126,13 +130,13 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	if (usedFarTextures >= maxSprites) {
 		const int oldTexSizeY = texSizeY;
 
-		if (gu->supportNPOTs) {
+		if (globalRendering->supportNPOTs) {
 			texSizeY += std::max(iconSizeY,  4 * numOrientations * iconSizeX * iconSizeY / texSizeX); //! minimum additional space for 4 icons
 		} else {
 			texSizeY <<= 1;
 		}
 
-		if (texSizeY > gu->maxTextureSize) {
+		if (texSizeY > globalRendering->maxTextureSize) {
 			//logOutput.Print("Out of farTextures"); 
 			texSizeY = oldTexSizeY;
 			return;
@@ -223,7 +227,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
 	unitDrawer->CleanUpUnitDrawing();
 
-	//glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	//glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
 
 	fbo.Unattach(GL_DEPTH_ATTACHMENT_EXT);
@@ -296,7 +300,7 @@ void CFarTextureHandler::Draw()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
 
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}

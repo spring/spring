@@ -28,10 +28,29 @@ EXPORT(void        ) RemoveAllArchives();
 EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
 EXPORT(const char* ) GetArchivePath(const char* arname);
 
+/** @deprecated */
+EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
+/** @deprecated */
+EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+
 EXPORT(int         ) GetMapCount();
 EXPORT(const char* ) GetMapName(int index);
-EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
-EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(const char* ) GetMapDescription(int index);
+EXPORT(const char* ) GetMapAuthor(int index);
+EXPORT(int         ) GetMapWidth(int index);
+EXPORT(int         ) GetMapHeight(int index);
+EXPORT(int         ) GetMapTidalStrength(int index);
+EXPORT(int         ) GetMapWindMin(int index);
+EXPORT(int         ) GetMapWindMax(int index);
+EXPORT(int         ) GetMapGravity(int index);
+EXPORT(int         ) GetMapResourceCount(int index);
+EXPORT(const char* ) GetMapResourceName(int index, int resourceIndex);
+EXPORT(float       ) GetMapResourceMax(int index, int resourceIndex);
+EXPORT(int         ) GetMapResourceExtractorRadius(int index, int resourceIndex);
+EXPORT(int         ) GetMapPosCount(int index);
+EXPORT(float       ) GetMapPosX(int index, int posIndex);
+EXPORT(float       ) GetMapPosZ(int index, int posIndex);
+
 EXPORT(float       ) GetMapMinHeight(const char* name);
 EXPORT(float       ) GetMapMaxHeight(const char* name); 
 EXPORT(int         ) GetMapArchiveCount(const char* mapName);

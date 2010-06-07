@@ -6,6 +6,7 @@
 #include "DirtProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -88,9 +89,9 @@ void CDirtProjectile::Draw()
 	col[0]=(unsigned char) (color.x*alpha);
 	col[1]=(unsigned char) (color.y*alpha);
 	col[2]=(unsigned char) (color.z*alpha);
-	col[3]=(unsigned char) (alpha)/*-gu->timeOffset*alphaFalloff*/;
+	col[3]=(unsigned char) (alpha)/*-globalRendering->timeOffset*alphaFalloff*/;
 
-	const float interSize = size + gu->timeOffset * sizeExpansion;
+	const float interSize = size + globalRendering->timeOffset * sizeExpansion;
 	const float texx = texture->xstart + (texture->xend - texture->xstart) * ((1.0f - partAbove) * 0.5f);
 
 	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize * partAbove,texx, texture->ystart, col);

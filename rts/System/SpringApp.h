@@ -72,14 +72,14 @@ protected:
 	/**
 	 * @brief window position - X
 	 *
-	 * Game window position from the left of the screen (if not fullscreen)
+	 * Game window position from the left of the screen (if not full-screen)
 	 */
 	int windowPosX;
 
 	/**
 	 * @brief window position - Y
 	 *
-	 * Game window position from the top of the screen (if not fullscreen)
+	 * Game window position from the top of the screen (if not full-screen)
 	 */
 	int windowPosY;
 
@@ -93,7 +93,7 @@ protected:
 	/**
 	 * @brief FSAA
 	 *
-	 * Level of fullscreen anti-aliasing
+	 * Level of full-screen anti-aliasing
 	 */
 	bool FSAA;
 
@@ -144,12 +144,5 @@ extern boost::uint8_t *keys;
  * Unicode character for the current KeyPressed or KeyReleased
  */
 extern boost::uint16_t currentUnicode;
-
-/**
- * @brief fullscreen
- *
- * Whether or not the game is running in fullscreen
- */
-extern bool fullscreen;
 
 #endif

@@ -6,6 +6,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GroundFlash.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/FBO.h"
@@ -452,9 +453,9 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 	const CUnit* owner = pro->owner();
 
 	#if defined(USE_GML) && GML_ENABLE_SIM
-		pro->drawPos = pro->pos + (pro->speed * ((float)gu->lastFrameStart - (float)pro->lastProjUpdate) * gu->weightedSpeedFactor);
+		pro->drawPos = pro->pos + (pro->speed * ((float)globalRendering->lastFrameStart - (float)pro->lastProjUpdate) * globalRendering->weightedSpeedFactor);
 	#else
-		pro->drawPos = pro->pos + (pro->speed * gu->timeOffset);
+		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
 	#endif
 
 	if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
@@ -635,7 +636,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(1);
 
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
@@ -932,7 +933,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	glDisable(GL_FOG);
 
 	unsigned char col[4];
-	float time = gu->lastFrameTime * gs->speedFactor * 3;
+	float time = globalRendering->lastFrameTime * gs->speedFactor * 3;
 	float speed = 1.0f;
 	float size = 1.0f;
 
@@ -988,7 +989,7 @@ void CProjectileDrawer::UpdatePerlin() {
 	}
 
 	perlinFB.Unbind();
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);

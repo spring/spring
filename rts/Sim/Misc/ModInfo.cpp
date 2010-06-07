@@ -3,17 +3,19 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "GlobalUnsynced.h"
 #include "ModInfo.h"
+
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
-#include "LogOutput.h"
-#include "ConfigHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "Exceptions.h"
+#include "Rendering/GlobalRendering.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/Exceptions.h"
 
 
 CModInfo modInfo;
@@ -55,7 +57,7 @@ void CModInfo::Init(const char* modArchive)
 	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);
 	if (allowTeamColors) {
 		// Load the users preference for team coloured nanospray
-		gu->teamNanospray = !!configHandler->Get("TeamNanoSpray", 1);
+		globalRendering->teamNanospray = !!configHandler->Get("TeamNanoSpray", 1);
 	}
 
 	// constructions

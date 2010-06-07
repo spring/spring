@@ -25,6 +25,7 @@
 #include "Lua/LuaInputReceiver.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/InMapDraw.h"
@@ -52,7 +53,6 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-extern bool	fullscreen;
 extern boost::uint8_t *keys;
 
 
@@ -330,14 +330,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 		if (buttons[SDL_BUTTON_LEFT].movement > 4) {
 			// select box
-			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
+			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
 			if(dist<0)
-				dist=gu->viewRange*1.4f;
+				dist=globalRendering->viewRange*1.4f;
 			float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4f);
+			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*globalRendering->viewRange*1.4f);
 			if(dist<0)
-				dist=gu->viewRange*1.4f;
+				dist=globalRendering->viewRange*1.4f;
 			float3 pos2=camera->pos+dir*dist;
 
 			float3 dir1=pos1-camera->pos;
@@ -429,7 +429,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				Channels::UserInterface.PlaySample(soundMultiselID);
 		} else {
 			const CUnit* unit;
-			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,false);
+			helper->GuiTraceRay(camera->pos,dir,globalRendering->viewRange*1.4f,unit,false);
 			if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 				if (buttons[button].lastRelease < (gu->gameTime - doubleClickTime)) {
 					CUnit* unitM = uh->units[unit->id];
@@ -505,14 +505,14 @@ void CMouseHandler::Draw()
 
 		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,
 		                                 buttons[SDL_BUTTON_LEFT].camPos
-		                                 + buttons[SDL_BUTTON_LEFT].dir*gu->viewRange*1.4f);
+		                                 + buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
 		if(dist<0)
-			dist=gu->viewRange*1.4f;
+			dist=globalRendering->viewRange*1.4f;
 		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*gu->viewRange*1.4f);
+		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*globalRendering->viewRange*1.4f);
 		if(dist<0)
-			dist=gu->viewRange*1.4f;
+			dist=globalRendering->viewRange*1.4f;
 		float3 pos2=camera->pos+dir*dist;
 
 		float3 dir1=pos1-camera->pos;
@@ -562,8 +562,8 @@ void CMouseHandler::Draw()
 void CMouseHandler::WarpMouse(int x, int y)
 {
 	if (!locked) {
-		lastx = x + gu->viewPosX;
-		lasty = y + gu->viewPosY;
+		lastx = x + globalRendering->viewPosX;
+		lasty = y + globalRendering->viewPosY;
 		mouseInput->SetPos(int2(lastx, lasty));
 	}
 }
@@ -594,7 +594,7 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	GML_RECMUTEX_LOCK(sel); // GetCurrentTooltip - anti deadlock
 	GML_RECMUTEX_LOCK(quad); // GetCurrentTooltip - called from ToolTipConsole::Draw --> MouseHandler::GetCurrentTooltip
 
-	const float range = (gu->viewRange * 1.4f);
+	const float range = (globalRendering->viewRange * 1.4f);
 	const CUnit* unit = NULL;
 	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
 	const CFeature* feature = NULL;
@@ -639,10 +639,10 @@ void CMouseHandler::EmptyMsgQueUpdate()
 		return;
 	}
 
-	lastx = gu->viewSizeX / 2 + gu->viewPosX;
-	lasty = gu->viewSizeY / 2 + gu->viewPosY;
+	lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
+	lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
 
-	if (gu->active) {
+	if (globalRendering->active) {
 		mouseInput->SetPos(int2(lastx, lasty));
 	}
 }
@@ -670,8 +670,8 @@ void CMouseHandler::HideMouse()
 		hwHide = true;
 		SDL_ShowCursor(SDL_DISABLE);
 		mouseInput->SetWMMouseCursor(NULL);
-		lastx = gu->viewSizeX / 2 + gu->viewPosX;
-		lasty = gu->viewSizeY / 2 + gu->viewPosY;
+		lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
+		lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
 		mouseInput->SetPos(int2(lastx, lasty));
 		hide = true;
 	}
@@ -756,10 +756,10 @@ void CMouseHandler::DrawCursor(void)
 		glDisable(GL_TEXTURE_2D);
 		glLineWidth(1.49f);
 		glBegin(GL_LINES);
-			glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
-			glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
-			glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
+			glVertex2f(0.5f - (crossSize / globalRendering->viewSizeX), 0.5f);
+			glVertex2f(0.5f + (crossSize / globalRendering->viewSizeX), 0.5f);
+			glVertex2f(0.5f, 0.5f - (crossSize / globalRendering->viewSizeY));
+			glVertex2f(0.5f, 0.5f + (crossSize / globalRendering->viewSizeY));
 		glEnd();
 		glLineWidth(1.0f);
 		glEnable(GL_TEXTURE_2D);

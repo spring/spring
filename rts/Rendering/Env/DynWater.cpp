@@ -11,6 +11,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Game/GameHelper.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
@@ -45,7 +46,7 @@ CDynWater::CDynWater(void)
 	firstDraw=true;
 	drawSolid=true;
 	camPosBig=float3(2048,0,2048);
-	refractSize=gu->viewSizeY>=1024 ? 1024:512;
+	refractSize=globalRendering->viewSizeY>=1024 ? 1024:512;
 
 	glGenTextures(1, &reflectTexture);
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
@@ -314,8 +315,8 @@ void CDynWater::Draw()
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waterVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
-	float dx=float(gu->viewSizeX)/gu->viewSizeY * camera->GetTanHalfFov();
-	float dy=float(gu->viewSizeY)/gu->viewSizeY * camera->GetTanHalfFov();
+	float dx=float(globalRendering->viewSizeX)/globalRendering->viewSizeY * camera->GetTanHalfFov();
+	float dy=float(globalRendering->viewSizeY)/globalRendering->viewSizeY * camera->GetTanHalfFov();
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/(W_SIZE*256),1.0f/(W_SIZE*256), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f+0.5f,-camPosZ/256.0f+0.5f, 0, 0);
@@ -482,7 +483,7 @@ void CDynWater::DrawReflection(CGame* game)
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 //	delete camera;
@@ -539,7 +540,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawRefraction=false;
 
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 	unitDrawer->unitSunColor=oldsun;
@@ -842,9 +843,9 @@ void CDynWater::UpdateCamRestraints(void)
 		float3 colpoint;				//a point on the collision line
 
 		if(side.y>0)
-			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*(cam2->pos.y/c.y);
+			colpoint=cam2->pos+camHorizontal*globalRendering->viewRange*1.05f-c*(cam2->pos.y/c.y);
 		else
-			colpoint=cam2->pos+camHorizontal*gu->viewRange*1.05f-c*((cam2->pos.y-255/3.5f)/c.y);
+			colpoint=cam2->pos+camHorizontal*globalRendering->viewRange*1.05f-c*((cam2->pos.y-255/3.5f)/c.y);
 
 
 		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis

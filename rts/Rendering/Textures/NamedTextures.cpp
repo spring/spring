@@ -3,12 +3,14 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "bitops.h"
 #include "NamedTextures.h"
+
+#include "bitops.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Bitmap.h"
-#include "GlobalUnsynced.h"
-#include "Vec2.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Vec2.h"
 
 
 map<string, CNamedTextures::TexInfo> CNamedTextures::texMap;
@@ -193,7 +195,7 @@ bool CNamedTextures::Load(const string& texName, GLuint texID)
 
 			//! Note: NPOTs + nearest filtering seems broken on ATIs
 			if ( !(count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) &&
-				(!GLEW_ARB_texture_non_power_of_two || (gu->atiHacks && nearest)) )
+				(!GLEW_ARB_texture_non_power_of_two || (globalRendering->atiHacks && nearest)) )
 			{
 				bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
 			}

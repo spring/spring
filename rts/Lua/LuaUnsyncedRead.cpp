@@ -39,6 +39,7 @@ using namespace std;
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
@@ -280,10 +281,10 @@ int LuaUnsyncedRead::GetModUICtrl(lua_State* L)
 int LuaUnsyncedRead::GetViewGeometry(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, gu->viewSizeX);
-	lua_pushnumber(L, gu->viewSizeY);
-	lua_pushnumber(L, gu->viewPosX);
-	lua_pushnumber(L, gu->viewPosY);
+	lua_pushnumber(L, globalRendering->viewSizeX);
+	lua_pushnumber(L, globalRendering->viewSizeY);
+	lua_pushnumber(L, globalRendering->viewPosX);
+	lua_pushnumber(L, globalRendering->viewPosY);
 	return 4;
 }
 
@@ -291,10 +292,10 @@ int LuaUnsyncedRead::GetViewGeometry(lua_State* L)
 int LuaUnsyncedRead::GetWindowGeometry(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, gu->winSizeX);
-	lua_pushnumber(L, gu->winSizeY);
-	lua_pushnumber(L, gu->winPosX);
-	lua_pushnumber(L, gu->winPosY);
+	lua_pushnumber(L, globalRendering->winSizeX);
+	lua_pushnumber(L, globalRendering->winSizeY);
+	lua_pushnumber(L, globalRendering->winPosX);
+	lua_pushnumber(L, globalRendering->winPosY);
 	return 4;
 }
 
@@ -302,8 +303,8 @@ int LuaUnsyncedRead::GetWindowGeometry(lua_State* L)
 int LuaUnsyncedRead::GetScreenGeometry(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, gu->screenSizeX);
-	lua_pushnumber(L, gu->screenSizeY);
+	lua_pushnumber(L, globalRendering->screenSizeX);
+	lua_pushnumber(L, globalRendering->screenSizeY);
 	lua_pushnumber(L, 0.0f);
 	lua_pushnumber(L, 0.0f);
 	return 4;
@@ -331,10 +332,10 @@ int LuaUnsyncedRead::GetMiniMapDualScreen(lua_State* L)
 	if (minimap == NULL) {
 		return 0;
 	}
-	if (!gu->dualScreenMode) {
+	if (!globalRendering->dualScreenMode) {
 		lua_pushboolean(L, false);
 	} else {
-		if (gu->dualScreenMiniMapOnLeft) {
+		if (globalRendering->dualScreenMiniMapOnLeft) {
 			lua_pushliteral(L, "left");
 		} else {
 			lua_pushliteral(L, "right");
@@ -354,7 +355,7 @@ int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
 		return false;
 	}
 
-	const int x = luaL_checkint(L, 1) + gu->viewPosX;
+	const int x = luaL_checkint(L, 1) + globalRendering->viewPosX;
 	const int y = luaL_checkint(L, 2);
 
 	const int x0 = minimap->GetPosX();
@@ -374,8 +375,8 @@ int LuaUnsyncedRead::IsAboveMiniMap(lua_State* L)
 int LuaUnsyncedRead::GetDrawFrame(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, gu->drawFrame & 0xFFFF);
-	lua_pushnumber(L, (gu->drawFrame >> 16) & 0xFFFF);
+	lua_pushnumber(L, globalRendering->drawFrame & 0xFFFF);
+	lua_pushnumber(L, (globalRendering->drawFrame >> 16) & 0xFFFF);
 	return 2;
 }
 
@@ -383,7 +384,7 @@ int LuaUnsyncedRead::GetDrawFrame(lua_State* L)
 int LuaUnsyncedRead::GetFrameTimeOffset(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, gu->timeOffset);
+	lua_pushnumber(L, globalRendering->timeOffset);
 	return 1;
 }
 
@@ -597,9 +598,9 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
 	CTransportUnit *trans=unit->GetTransporter();
 	if (trans == NULL) {
-		pos += (unit->speed * gu->timeOffset);
+		pos += (unit->speed * globalRendering->timeOffset);
 	} else {
-		pos += (trans->speed * gu->timeOffset);
+		pos += (trans->speed * globalRendering->timeOffset);
 	}
 
 	lua_pushnumber(L, pos.x);
@@ -1093,6 +1094,7 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 		case CBaseGroundDrawer::drawMetal:  { HSTR_PUSH(L, "metal");  break; }
 		case CBaseGroundDrawer::drawPath:   { HSTR_PUSH(L, "path");   break; }
 		case CBaseGroundDrawer::drawLos:    { HSTR_PUSH(L, "los");    break; }
+		case CBaseGroundDrawer::drawHeat:   { HSTR_PUSH(L, "heat");   break; }
 	}
 	return 1;
 }
@@ -1215,11 +1217,11 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	const bool onlyCoords = (lua_isboolean(L, 3) && lua_toboolean(L, 3));
 	const bool useMiniMap = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
 
-	const int wx = mx + gu->viewPosX;
-	const int wy = gu->viewSizeY - 1 - my - gu->viewPosY;
+	const int wx = mx + globalRendering->viewPosX;
+	const int wy = globalRendering->viewSizeY - 1 - my - globalRendering->viewPosY;
 
 	if (useMiniMap && (minimap != NULL) && !minimap->GetMinimized()) {
-		const int px = minimap->GetPosX() - gu->viewPosX; // for left dualscreen
+		const int px = minimap->GetPosX() - globalRendering->viewPosX; // for left dualscreen
 		const int py = minimap->GetPosY();
 		const int sx = minimap->GetSizeX();
 		const int sy = minimap->GetSizeY();
@@ -1244,14 +1246,14 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		}
 	}
 
-	if ((mx < 0) || (mx >= gu->viewSizeX) ||
-	    (my < 0) || (my >= gu->viewSizeY)) {
+	if ((mx < 0) || (mx >= globalRendering->viewSizeX) ||
+	    (my < 0) || (my >= globalRendering->viewSizeY)) {
 		return 0;
 	}
 
 	const CUnit* unit = NULL;
 	const CFeature* feature = NULL;
-	const float range = gu->viewRange * 1.4f;
+	const float range = globalRendering->viewRange * 1.4f;
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);
 
@@ -1650,8 +1652,8 @@ int LuaUnsyncedRead::GetActivePage(lua_State* L)
 int LuaUnsyncedRead::GetMouseState(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, mouse->lastx - gu->viewPosX);
-	lua_pushnumber(L, gu->viewSizeY - mouse->lasty - 1);
+	lua_pushnumber(L, mouse->lastx - globalRendering->viewPosX);
+	lua_pushnumber(L, globalRendering->viewSizeY - mouse->lasty - 1);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);

@@ -6,6 +6,7 @@
 #include "SimpleParticleSystem.h"
 #include "GenericParticleProjectile.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "System/GlobalUnsynced.h"
@@ -89,7 +90,7 @@ void CSimpleParticleSystem::Draw()
 				dir1.SafeANormalize();
 
 				const float3 dir2(dif.cross(dir1));
-				const float3 interPos = p->pos + p->speed * gu->timeOffset;
+				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
 				const float size = p->size;
 
 				unsigned char color[4];
@@ -109,7 +110,7 @@ void CSimpleParticleSystem::Draw()
 				unsigned char color[4];
 				colorMap->GetColor(color, p->life);
 
-				const float3 interPos = p->pos + p->speed * gu->timeOffset;
+				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
 				const float3 cameraRight = camera->right * p->size;
 				const float3 cameraUp    = camera->up * p->size;
 

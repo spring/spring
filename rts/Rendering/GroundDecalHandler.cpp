@@ -12,6 +12,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -490,7 +491,7 @@ void CGroundDecalHandler::Draw(void)
 					if (decal->owner && decal->owner->buildProgress >= 0) {
 						decal->alpha = decal->owner->buildProgress;
 					} else if (!decal->gbOwner) {
-						decal->alpha -= decal->alphaFalloff * gu->lastFrameTime * gs->speedFactor;
+						decal->alpha -= decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor;
 					}
 
 					if (decal->alpha < 0.0f) {

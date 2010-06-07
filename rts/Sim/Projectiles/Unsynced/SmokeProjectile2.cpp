@@ -7,6 +7,7 @@
 
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -110,7 +111,7 @@ void CSmokeProjectile2::Update()
 void CSmokeProjectile2::Draw()
 {
 	inArray=true;
-	float interAge=std::min(1.0f,age+ageSpeed*gu->timeOffset);
+	float interAge=std::min(1.0f,age+ageSpeed*globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
 	if(interAge<0.05f)
@@ -122,14 +123,14 @@ void CSmokeProjectile2::Draw()
 	col[0]=(unsigned char)(color*alpha+rglow);
 	col[1]=(unsigned char)(color*alpha+gglow);
 	col[2]=(unsigned char)std::max(0.f,color*alpha-gglow*0.5f);
-	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
+	col[3]=alpha/*-alphaFalloff*globalRendering->timeOffset*/;
 	//int frame=textureNum;
 	//float xmod=0.125f+(float(int(frame%6)))/16.0f;
 	//float ymod=(int(frame/6))/16.0f;
 	//int smokenum = frame%12;
 
-	const float3 interPos = pos + (wantedPos + speed * gu->timeOffset - pos) * 0.1f * gu->timeOffset;
-	const float interSize = size + sizeExpansion * gu->timeOffset;
+	const float3 interPos = pos + (wantedPos + speed * globalRendering->timeOffset - pos) * 0.1f * globalRendering->timeOffset;
+	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
 

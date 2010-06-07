@@ -8,6 +8,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
@@ -147,7 +148,7 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 
 	CShaderHandler* sh = shaderHandler;
 
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
 			Shader::IShaderObject* so = sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i], GL_VERTEX_SHADER);
@@ -315,7 +316,7 @@ void CShadowHandler::CreateShadows(void)
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17,  p17,  p17, 0.0f, 0.0f);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18,  p18,  p18, 0.0f, 0.0f);
 
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			shadowGenProgs[i]->Enable();
 			shadowGenProgs[i]->SetUniform4f(0, xmid, ymid, p17, p18);
@@ -341,7 +342,7 @@ void CShadowHandler::CreateShadows(void)
 
 	//we do this later to save render context switches (this is one of the slowest opengl operations!)
 	//fb.Unbind();
-	//glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	//glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 }
 
 
@@ -420,7 +421,7 @@ void CShadowHandler::CalcMinMaxView(void)
 	//if someone could figure out how the frustum and nonlinear shadow transform really works (and not use the SJan trial and error method)
 	//so that we can skip this sort of fudge factors it would be good
 	float borderSize = 270;
-	float maxSize = gu->viewRange * 0.75f;
+	float maxSize = globalRendering->viewRange * 0.75f;
 
 	if (shadowMapSize == 1024) {
 		borderSize *= 1.5f;

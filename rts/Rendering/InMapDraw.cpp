@@ -6,6 +6,9 @@
 #include "mmgr.h"
 
 #include "InMapDraw.h"
+#include "glFont.h"
+#include "GL/VertexArray.h"
+#include "Colors.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/PlayerHandler.h"
@@ -15,15 +18,13 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "glFont.h"
-#include "GL/VertexArray.h"
-#include "EventHandler.h"
-#include "Colors.h"
-#include "NetProtocol.h"
-#include "LogOutput.h"
-#include "Sound/ISound.h"
-#include "Sound/AudioChannel.h"
-#include "creg/STL_List.h"
+#include "System/EventHandler.h"
+#include "System/BaseNetProtocol.h"
+#include "System/NetProtocol.h"
+#include "System/LogOutput.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/AudioChannel.h"
+#include "System/creg/STL_List.h"
 
 
 #define DRAW_QUAD_SIZE 32
@@ -335,7 +336,7 @@ void CInMapDraw::Draw(void)
 	// XXX hopeless drivers, retest in a year or so...
 	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 	// so redraw lines with width 1
-	if (gu->atiHacks) {
+	if (globalRendering->atiHacks) {
 		glLineWidth(1.f);
 		lineva->DrawArrayC(GL_LINES);
 	}
@@ -417,7 +418,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 
 float3 CInMapDraw::GetMouseMapPos(void)
 {
-	float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * gu->viewRange * 1.4f);
+	float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * globalRendering->viewRange * 1.4f);
 	if (dist < 0) {
 		return float3(-1, 1, -1);
 	}
@@ -458,7 +459,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 	}
 
 	switch (msg[3]) {
-		case NET_POINT: {
+		case MAPDRAW_POINT: {
 			const float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
 			const bool fromLua = msg[8];
 			const string label = (char*) &msg[9];
@@ -467,7 +468,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 			}
 			break;
 		}
-		case NET_LINE: {
+		case MAPDRAW_LINE: {
 			const float3 pos1(*(short*) &msg[4], 0, *(short*) &msg[6]);
 			const float3 pos2(*(short*) &msg[8], 0, *(short*) &msg[10]);
 			const bool fromLua = msg[12];
@@ -476,7 +477,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 			}
 			break;
 		}
-		case NET_ERASE: {
+		case MAPDRAW_ERASE: {
 			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
 			LocalErase(pos, playerID);
 			break;
@@ -502,7 +503,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 
 	// event clients may process the point
 	// if their owner is allowed to see it
-	if (allowed && eventHandler.MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
+	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label)) {
 		return;
 	}
 
@@ -547,7 +548,7 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 	pos1.y = ground->GetHeight(pos1.x, pos1.z) + 2.0f;
 	pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, NET_LINE, &pos1, &pos2, NULL)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, NULL)) {
 		return;
 	}
 
@@ -574,7 +575,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 	pos.CheckInBounds();
 	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, NULL, NULL)) {
 		return;
 	}
 

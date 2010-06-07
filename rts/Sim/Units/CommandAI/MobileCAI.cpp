@@ -729,7 +729,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				return;
 			}
 		}
-		else {
+		else if (c.params.size() == 3) {
 			// user gave force-fire attack command
 			float3 pos(c.params[0], c.params[1], c.params[2]);
 			SetGoal(pos, owner->pos);
@@ -869,7 +869,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	}
 
 	// user is attacking ground
-	else {
+	else if (c.params.size() == 3) {
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float3 diff = owner->pos - pos;
 
@@ -993,14 +993,15 @@ void CMobileCAI::DrawCommands(void)
 			}
 			case CMD_ATTACK:
 			case CMD_DGUN:{
-				if(ci->params.size()==1){
+				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->units[int(ci->params[0])];
 					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
 							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
-				} else {
+				}
+				else if (ci->params.size() == 3) {
 					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}

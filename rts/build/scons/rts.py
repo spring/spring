@@ -490,7 +490,7 @@ def generate(env):
 		# Don't define this: it causes a full recompile when you change it, even though it is only used in Main.cpp,
 		# and some AIs maybe.  Just make exceptions in SConstruct.
 		#defines += ['SPRING_DATADIR="\\"'+env['datadir']+'\\""']
-		if env['disable_avi']      : spring_defines += ['NO_AVI']
+		if not env['disable_avi']  : spring_defines += ['AVI_CAPTURING']
 		if env['use_mmgr']         : spring_defines += ['USE_MMGR']
 		if env['dc_allowed']       : spring_defines += ['DIRECT_CONTROL_ALLOWED']
 

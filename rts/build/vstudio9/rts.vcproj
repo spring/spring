@@ -416,7 +416,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
-				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK;USE_GML;USE_GML_SIM;NO_AVI"
+				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK;USE_GML;USE_GML_SIM;AVI_CAPTURING"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
@@ -936,6 +936,30 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\SelectMenu.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\IVideoCapturing.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\IVideoCapturing.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\DummyVideoCapturing.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\DummyVideoCapturing.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\AviVideoCapturing.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\AviVideoCapturing.cpp"
 				>
 			</File>
 			<File
@@ -1866,6 +1890,14 @@
 		<Filter
 			Name="Rendering"
 			>
+			<File
+				RelativePath="..\..\Rendering\AVIGenerator.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\AVIGenerator.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\Rendering\FarTextureHandler.cpp"
 				>
@@ -5052,14 +5084,6 @@
 				<Filter
 					Name="Win32"
 					>
-					<File
-						RelativePath="..\..\System\Platform\Win\AVIGenerator.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\AVIGenerator.h"
-						>
-					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\CrashHandler.cpp"
 						>

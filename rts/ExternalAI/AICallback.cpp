@@ -713,7 +713,7 @@ int CAICallback::InitPath(float3 start, float3 end, int pathType)
 
 float3 CAICallback::GetNextWaypoint(int pathId)
 {
-	return pathManager->NextWaypoint(pathId, ZeroVector, false);
+	return pathManager->NextWaypoint(pathId, ZeroVector, 0.0f, 0, 0, false);
 }
 
 void CAICallback::FreePath(int pathId)
@@ -1364,7 +1364,7 @@ bool CAICallback::GetValue(int id, void *data)
 			*(unsigned int*)data = readmap->mapChecksum;
 			return true;
 		}case AIVAL_DEBUG_MODE:{
-			*(bool*)data = gu->drawdebug;
+			*(bool*)data = globalRendering->drawdebug;
 			return true;
 		}case AIVAL_GAME_MODE:{
 			*(int*)data = gameSetup->gameMode;
@@ -1376,13 +1376,13 @@ bool CAICallback::GetValue(int id, void *data)
 			*(float*)data = gs->speedFactor;
 			return true;
 		}case AIVAL_GUI_VIEW_RANGE:{
-			*(float*)data = gu->viewRange;
+			*(float*)data = globalRendering->viewRange;
 			return true;
 		}case AIVAL_GUI_SCREENX:{
-			*(float*)data = gu->viewSizeX;
+			*(float*)data = globalRendering->viewSizeX;
 			return true;
 		}case AIVAL_GUI_SCREENY:{
-			*(float*)data = gu->viewSizeY;
+			*(float*)data = globalRendering->viewSizeY;
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
 			*(float3*)data = camHandler->GetCurrentController().GetDir();

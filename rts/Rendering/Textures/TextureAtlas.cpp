@@ -7,15 +7,16 @@
 
 #include "mmgr.h"
 
-#include "Rendering/GL/PBO.h"
 #include "TextureAtlas.h"
 #include "Bitmap.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/PBO.h"
 #include "System/GlobalUnsynced.h"
-#include "FileSystem/FileHandler.h"
-#include "LogOutput.h"
-#include "Util.h"
-#include "Exceptions.h"
-#include "Vec2.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
+#include "System/Vec2.h"
 
 CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
@@ -182,7 +183,7 @@ bool CTextureAtlas::Finalize()
 		}
 	}
 
-	if (gu->supportNPOTs && !debug) {
+	if (globalRendering->supportNPOTs && !debug) {
 		maxx = std::max(maxx,curx);
 		//xsize = maxx;
 		ysize = maxy;

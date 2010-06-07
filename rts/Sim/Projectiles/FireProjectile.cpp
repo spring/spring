@@ -4,6 +4,7 @@
 #include "mmgr.h"
 
 #include "FireProjectile.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -149,7 +150,7 @@ void CFireProjectile::Draw(void)
 #else
 	for(SUBPARTICLE_LIST::iterator pi = subParticles2.begin(); pi != subParticles2.end(); ++pi) {
 #endif
-		float age=pi->age+ageSpeed*gu->timeOffset;
+		float age=pi->age+ageSpeed*globalRendering->timeOffset;
 		float size=pi->maxSize*(age);
 		float rot=pi->rotSpeed*age;
 
@@ -180,7 +181,7 @@ void CFireProjectile::Draw(void)
 	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
 		AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
 #endif
-		float age=pi->age+ageSpeed*gu->timeOffset;
+		float age=pi->age+ageSpeed*globalRendering->timeOffset;
 		float size=pi->maxSize*fastmath::apxsqrt(age);
 		float rot=pi->rotSpeed*age;
 
