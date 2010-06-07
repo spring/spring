@@ -115,7 +115,7 @@ EXPORT(const char* ) GetModValidMap(int index);
 
 EXPORT(int         ) OpenFileVFS(const char* name);
 EXPORT(void        ) CloseFileVFS(int handle);
-EXPORT(int        ) ReadFileVFS(int handle, void* buf, int length);
+EXPORT(int         ) ReadFileVFS(int handle, void* buf, int length);
 EXPORT(int         ) FileSizeVFS(int handle);
 
 EXPORT(int         ) InitFindVFS(const char* pattern);
