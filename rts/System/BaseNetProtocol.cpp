@@ -291,8 +291,8 @@ PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, ucha
 
 PacketType CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
-	PackPacket* packet = new PackPacket(8, NETMSG_PLAYERINFO);
-	*packet << myPlayerNum << cpuUsage << static_cast<boost::uint16_t>(ping);
+	PackPacket* packet = new PackPacket(10, NETMSG_PLAYERINFO);
+	*packet << myPlayerNum << cpuUsage << static_cast<boost::uint32_t>(ping);
 	return PacketType(packet);
 }
 
@@ -475,7 +475,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
 	proto->AddType(NETMSG_SYSTEMMSG, -2);
 	proto->AddType(NETMSG_STARTPOS, 16);
-	proto->AddType(NETMSG_PLAYERINFO, 8);
+	proto->AddType(NETMSG_PLAYERINFO, 10);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);
 	proto->AddType(NETMSG_LUAMSG, -2);
 	proto->AddType(NETMSG_TEAM, 5);
