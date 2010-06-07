@@ -593,10 +593,13 @@ void CGameServer::Update()
 			float refCpu = 0.0f;
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
-					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, (serverframenum - players[a].lastFrameResponse)));
+					int curPing = (serverframenum - players[a].lastFrameResponse);
+					if(players[a].isReconn && curPing < 2 * GAME_SPEED)
+						players[a].isReconn = false;
+					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, curPing));
 					if(demoReader ? !players[a].isFromDemo : !players[a].spectator)
 					{
-						if (players[a].cpuUsage > refCpu) {
+						if (!players[a].isReconn && players[a].cpuUsage > refCpu) {
 							refCpu = players[a].cpuUsage;
 						}
 						cpu.push_back(players[a].cpuUsage);
@@ -1991,6 +1994,8 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		if(hostif)
 			hostif->SendPlayerLeft(hisNewNumber, 0);
 	}
+
+	newGuy.isReconn = GameHasStarted();
 
 	if(newGuy.link) {
 		newGuy.link->ReconnectTo(*link);
