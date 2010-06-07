@@ -211,9 +211,6 @@ FunctionEnd
 SectionGroup /e "!Engine"
 	Section "Main application (req)" SEC_MAIN
 
-		${!echonow} "Processing: main: spring.exe & unitsync.dll"
-		File "${BUILD_OR_DIST_DIR}\spring.exe"
-
 		!define INSTALL
 			${!echonow} "Processing: main"
 			!include "sections\main.nsh"
@@ -225,7 +222,7 @@ SectionGroup /e "!Engine"
 	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-gml.exe"
 	!ifdef GML_BUILD_EXISTS
 		Section "GML (multi-threaded)" SEC_GML
-			${!echonow} "Processing: main: spring-gml.exe"
+			${!echonow} "Processing: spring-gml.exe"
 			SetOutPath "$INSTDIR"
 			SetOverWrite on
 			File "${BUILD_OR_DIST_DIR}\spring-gml.exe"
