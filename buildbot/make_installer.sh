@@ -21,11 +21,16 @@ echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
 cd ${BUILDDIR}
 for tostripfile in spring.exe spring-gml.exe spring-hl.exe unitsync.dll $(find AI/Skirmish -name SkirmishAI.dll); do
 	if [ -f ${tostripfile} ]; then
-		echo ${tostripfile}
-		debugfile=${tostripfile%.*}.dbg
-		${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
-		${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile}
-		${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+		# dont strip binaries that we processed earlier
+		if ! ${MINGW_HOST}objdump -h ${tostripfile} | grep -q .gnu_debuglink; then
+			echo "stripping ${tostripfile}"
+			debugfile=${tostripfile%.*}.dbg
+			${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
+			${MINGW_HOST}strip --strip-debug --strip-unneeded ${tostripfile}
+			${MINGW_HOST}objcopy --add-gnu-debuglink=${debugfile} ${tostripfile}
+		else
+			echo "not stripping ${tostripfile}"
+		fi
 	fi
 done
 cd $OLDPWD
