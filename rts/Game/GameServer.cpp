@@ -236,6 +236,10 @@ CGameServer::~CGameServer()
 	quitServer=true;
 	thread->join();
 	delete thread;
+
+	for (std::list<const netcode::RawPacket*>::const_iterator it = packetCache.begin(); it != packetCache.end(); ++it)
+		delete *it;
+
 #ifdef DEDICATED
 	// TODO: move this to a method in CTeamHandler
 	// Figure out who won the game.
@@ -387,7 +391,9 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 	}
 	if (canReconnect || allowAdditionalPlayers || !spring_istime(gameStartTime))
 	{
-		packetCache.push_back(packet);
+		char mem[sizeof(boost::shared_ptr<const RawPacket>)];
+		new (mem) boost::shared_ptr<const RawPacket>(packet); // ugly hack to prevent packet deletion
+		packetCache.push_back(packet.get());
 	}
 #ifdef DEDICATED
 	if (demoRecorder) {
@@ -1542,8 +1548,6 @@ void CGameServer::CheckForGameStart(bool forced)
 void CGameServer::StartGame()
 {
 	gameStartTime = spring_gettime();
-	if (!canReconnect && !allowAdditionalPlayers)
-		packetCache.clear(); // free memory
 
 	if (UDPNet && !canReconnect && !allowAdditionalPlayers)
 		UDPNet->Listen(false); // don't accept new connections
@@ -2000,8 +2004,12 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 
 	// after gamedata and playernum, the player can start loading
-	for (std::list< boost::shared_ptr<const netcode::RawPacket> >::const_iterator it = packetCache.begin(); it != packetCache.end(); ++it)
-		newGuy.SendData(*it); // throw at him all stuff he missed until now
+	for (std::list<const RawPacket *>::const_iterator it = packetCache.begin(); it != packetCache.end(); ++it) {
+		boost::shared_ptr<const RawPacket> packet(*it);
+		char mem[sizeof(boost::shared_ptr<const RawPacket>)];
+		new (mem) boost::shared_ptr<const RawPacket>(packet); // ugly hack to prevent packet deletion
+		newGuy.SendData(packet); // throw at him all stuff he missed until now
+	}
 
 	if (!demoReader || setup->demoName.empty()) { // gamesetup from demo?
 		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
