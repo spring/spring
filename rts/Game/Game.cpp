@@ -3628,8 +3628,10 @@ void CGame::ClientReadNet()
 		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor;
 	}
 
+	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
+	unsigned procstarttime = SDL_GetTicks();
 	// really process the messages
-	while (timeLeft > 0.0f && (packet = net->GetData()))
+	while (timeLeft > 0.0f && (SDL_GetTicks() - procstarttime) < 500 && (packet = net->GetData()))
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
