@@ -10,6 +10,7 @@ GameParticipant::GameParticipant()
 , lastFrameResponse(0)
 , speedControl(0)
 , isLocal(false)
+, isReconn(false)
 {
 }
 
