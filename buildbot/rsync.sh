@@ -35,7 +35,7 @@ function zip() {
 # one containing the exe/dll, and one containing debug symbols.
 cd ${LOCAL_BASE}
 7z u ${BASE_ARCHIVE} base
-for tostripfile in spring.exe spring-gml.exe spring-hl.exe unitsync.dll; do
+for tostripfile in spring.exe spring-dedicated.exe spring-gml.exe spring-hl.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
 done
 for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll); do
