@@ -208,14 +208,31 @@ Function OldDotNet
 FunctionEnd
 
 
-Section "Main application (req)" SEC_MAIN
-	!define INSTALL
-		${!echonow} "Processing: main"
-		!include "sections\main.nsh"
-		${!echonow} "Processing: luaui"
-		!include "sections\luaui.nsh"
-	!undef INSTALL
-SectionEnd
+SectionGroup /e "!Engine"
+	Section "Main application (req)" SEC_MAIN
+
+		${!echonow} "Processing: main: spring.exe & unitsync.dll"
+		File "${BUILD_OR_DIST_DIR}\spring.exe"
+
+		!define INSTALL
+			${!echonow} "Processing: main"
+			!include "sections\main.nsh"
+			${!echonow} "Processing: luaui"
+			!include "sections\luaui.nsh"
+		!undef INSTALL
+	SectionEnd
+
+	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-gml.exe"
+	!ifdef GML_BUILD_EXISTS
+		Section "GML (multi-threaded)" SEC_GML
+			${!echonow} "Processing: main: spring-gml.exe"
+			SetOutPath "$INSTDIR"
+			SetOverWrite on
+			File "${BUILD_OR_DIST_DIR}\spring-gml.exe"
+		SectionEnd
+		!undef GML_BUILD_EXISTS
+	!endif
+SectionGroupEnd
 
 
 SectionGroup "Multiplayer battlerooms"
@@ -333,6 +350,8 @@ Section Uninstall
 	${!echonow} "Processing: Uninstall"
 
 	!include "sections\main.nsh"
+
+	Delete "$INSTDIR\spring-gml.exe"
 
 	!include "sections\docs.nsh"
 	!include "sections\shortcuts.nsh"
