@@ -20,7 +20,7 @@ echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
 #strip symbols and archive them
 cd ${BUILDDIR}
 for tostripfile in spring.exe spring-gml.exe spring-hl.exe unitsync.dll $(find AI/Skirmish -name SkirmishAI.dll); do
-	if [-f ${tostripfile} ]; then
+	if [ -f ${tostripfile} ]; then
 		echo ${tostripfile}
 		debugfile=${tostripfile%.*}.dbg
 		${MINGW_HOST}objcopy --only-keep-debug ${tostripfile} ${debugfile}
@@ -33,4 +33,5 @@ cd $OLDPWD
 # The 0 means: do not define DIST_DIR
 ./installer/make_installer.pl 0
 
+mkdir -p ${TMP_PATH}
 mv ./installer/spring*.exe ${TMP_PATH}
