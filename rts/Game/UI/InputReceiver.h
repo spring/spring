@@ -7,6 +7,7 @@
 #include <string>
 
 #include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 
 class CInputReceiver
 {
@@ -45,10 +46,10 @@ public:
 
 	// transform from mouse (x,y) to opengl (x,y) (first in screen pixels,
 	// second in orthogonal projection 0-1 left-right, bottom-top)
-	static float MouseX(int x) { return float(x - gu->viewPosX) / gu->viewSizeX; }
-	static float MouseY(int y) { return float(gu->viewSizeY - y) / gu->viewSizeY; }
-	static float MouseMoveX(int x) { return float(x) / gu->viewSizeX; }
-	static float MouseMoveY(int y) { return -float(y) / gu->viewSizeY; }
+	static float MouseX(int x) { return float(x - globalRendering->viewPosX) / globalRendering->viewSizeX; }
+	static float MouseY(int y) { return float(globalRendering->viewSizeY - y) / globalRendering->viewSizeY; }
+	static float MouseMoveX(int x) { return float(x) / globalRendering->viewSizeX; }
+	static float MouseMoveY(int y) { return -float(y) / globalRendering->viewSizeY; }
 
 	static float guiAlpha;
 

@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 
+#include "Sim/Path/PathManager.h"
 #include <stdlib.h>
 #include <algorithm>
 
@@ -16,7 +17,6 @@ using namespace std;
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Path/PathManager.h"
 
 
 static void CreatePathMetatable(lua_State* L);
@@ -61,7 +61,8 @@ static int path_next(lua_State* L)
 
 	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
-	const float3 point = pathManager->NextWaypoint(pathID, callerPos, minDist);
+	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const float3 point = pathManager->NextWaypoint(pathID, callerPos, minDist, 0, 0, synced);
 
 	if ((point.x == -1.0f) &&
 	    (point.y == -1.0f) &&
@@ -198,8 +199,8 @@ int LuaPathFinder::RequestPath(lua_State* L)
 
 	const float radius = luaL_optfloat(L, 8, 8.0f);
 
-	const int pathID =
-		pathManager->RequestPath(moveData, start, end, radius, NULL);
+	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const int pathID = pathManager->RequestPath(moveData, start, end, radius, NULL, synced);
 
 	if (pathID == 0) {
 		return 0;

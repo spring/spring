@@ -9,7 +9,6 @@
 #include "Game/PlayerStatistics.h"
 #include "Sim/Misc/Team.h"
 #include "Net/RawPacket.h"
-#include "Rendering/InMapDraw.h"
 #include "Net/PackPacket.h"
 #include "Net/ProtocolDef.h"
 #if defined(_MSC_VER)
@@ -233,15 +232,15 @@ PacketType CBaseNetProtocol::SendGameOver()
 }
 
 
-// [NETMSG_MAPDRAW = 31] uchar messageSize = 9, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z; bool
+// [NETMSG_MAPDRAW = 31] uchar messageSize = 9, myPlayerNum, command = MAPDRAW_ERASE; short x, z; bool
 PacketType CBaseNetProtocol::SendMapErase(uchar myPlayerNum, short x, short z)
 {
 	PackPacket* packet = new PackPacket(8, NETMSG_MAPDRAW);
-	*packet << static_cast<uchar>(8) << myPlayerNum << static_cast<uchar>(CInMapDraw::NET_ERASE) << x << z;
+	*packet << static_cast<uchar>(8) << myPlayerNum << static_cast<uchar>(MAPDRAW_ERASE) << x << z;
 	return PacketType(packet);
 }
 
-// [NETMSG_MAPDRAW = 31] uchar messageSize, uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; bool; std::string label;
+// [NETMSG_MAPDRAW = 31] uchar messageSize, uchar myPlayerNum, command = MAPDRAW_POINT; short x, z; bool; std::string label;
 PacketType CBaseNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label, bool fromLua)
 {
 	const unsigned size = 9 + label.size() + 1;
@@ -249,7 +248,7 @@ PacketType CBaseNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short 
 	*packet <<
 		static_cast<uchar>(size) <<
 		myPlayerNum <<
-		static_cast<uchar>(CInMapDraw::NET_POINT) <<
+		static_cast<uchar>(MAPDRAW_POINT) <<
 		x <<
 		z <<
 		uchar(fromLua) <<
@@ -257,14 +256,14 @@ PacketType CBaseNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short 
 	return PacketType(packet);
 }
 
-// [NETMSG_MAPDRAW = 31] uchar messageSize = 13, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2; bool
+// [NETMSG_MAPDRAW = 31] uchar messageSize = 13, myPlayerNum, command = MAPDRAW_LINE; short x1, z1, x2, z2; bool
 PacketType CBaseNetProtocol::SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool fromLua)
 {
 	PackPacket* packet = new PackPacket(13, NETMSG_MAPDRAW);
 	*packet <<
 		static_cast<uchar>(13) <<
 		myPlayerNum <<
-		static_cast<uchar>(CInMapDraw::NET_LINE) <<
+		static_cast<uchar>(MAPDRAW_LINE) <<
 		x1 << z1 <<
 		x2 << z2 <<
 		uchar(fromLua);
@@ -301,8 +300,8 @@ PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, ucha
 
 PacketType CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
-	PackPacket* packet = new PackPacket(8, NETMSG_PLAYERINFO);
-	*packet << myPlayerNum << cpuUsage << static_cast<boost::uint16_t>(ping);
+	PackPacket* packet = new PackPacket(10, NETMSG_PLAYERINFO);
+	*packet << myPlayerNum << cpuUsage << static_cast<boost::uint32_t>(ping);
 	return PacketType(packet);
 }
 
@@ -460,6 +459,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_CHAT, -1);
 	proto->AddType(NETMSG_RANDSEED, 5);
 	proto->AddType(NETMSG_GAMEID, 17);
+	proto->AddType(NETMSG_PATH_CHECKSUM, 1 + 1 + sizeof(boost::uint32_t));
 	proto->AddType(NETMSG_COMMAND, -2);
 	proto->AddType(NETMSG_SELECT, -2);
 	proto->AddType(NETMSG_PAUSE, 3);
@@ -485,7 +485,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
 	proto->AddType(NETMSG_SYSTEMMSG, -2);
 	proto->AddType(NETMSG_STARTPOS, 16);
-	proto->AddType(NETMSG_PLAYERINFO, 8);
+	proto->AddType(NETMSG_PLAYERINFO, 10);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);
 	proto->AddType(NETMSG_LUAMSG, -2);
 	proto->AddType(NETMSG_TEAM, 5);

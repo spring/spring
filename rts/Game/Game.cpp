@@ -19,7 +19,6 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 #include <SDL_events.h>
-#include <SDL_video.h>
 
 #include "mmgr.h"
 
@@ -44,6 +43,7 @@
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
+#include "IVideoCapturing.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -75,6 +75,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
@@ -159,10 +160,6 @@
 
 #include <boost/cstdint.hpp>
 
-#ifndef NO_AVI
-#  include "Platform/Win/AVIGenerator.h"
-#endif
-
 #include "myMath.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Weapons/Weapon.h"
@@ -177,7 +174,6 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 
 extern boost::uint8_t *keys;
 extern bool globalQuit;
-extern bool fullscreen;
 
 CGame* game = NULL;
 
@@ -216,8 +212,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(infoConsole),
 //	CR_MEMBER(consoleHistory),
 //	CR_MEMBER(wordCompletion),
-//	CR_MEMBER(creatingVideo),
-//	CR_MEMBER(aviGenerator),
 //	CR_MEMBER(hotBinding),
 //	CR_MEMBER(inputTextPosX),
 //	CR_MEMBER(inputTextPosY),
@@ -252,8 +246,6 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	gameOver(false),
 
 	noSpectatorChat(false),
-
-	creatingVideo(false),
 
 	skipping(false),
 	playing(false),
@@ -348,12 +340,10 @@ CGame::~CGame()
 {
 	SafeDelete(guihandler);
 
-#ifndef NO_AVI
-	if (creatingVideo) {
-		creatingVideo = false;
-		SafeDelete(aviGenerator);
+	if (videoCapturing->IsCapturing()) {
+		videoCapturing->StopCapturing();
 	}
-#endif
+	IVideoCapturing::FreeInstance();
 
 #ifdef TRACE_SYNC
 	tracefile << "End game\n";
@@ -553,8 +543,8 @@ void CGame::LoadRendering()
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START, gu->viewRange * mapInfo->atmosphere.fogStart);
-	glFogf(GL_FOG_END, gu->viewRange);
+	glFogf(GL_FOG_START, globalRendering->viewRange * mapInfo->atmosphere.fogStart);
+	glFogf(GL_FOG_END, globalRendering->viewRange);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 	glFogi(GL_FOG_MODE, GL_LINEAR);
 	glEnable(GL_FOG);
@@ -1537,15 +1527,15 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "debug") {
-		if (gu->drawdebug)
+		if (globalRendering->drawdebug)
 		{
 			ProfileDrawer::Disable();
-			gu->drawdebug = false;
+			globalRendering->drawdebug = false;
 		}
 		else
 		{
 			ProfileDrawer::Enable();
-			gu->drawdebug = true;
+			globalRendering->drawdebug = true;
 		}
 	}
 	else if (cmd == "nosound") {
@@ -1578,48 +1568,13 @@ bool CGame::ActionPressed(const Action& action,
 			Channels::BGMusic.Enable(enable);
 	}
 
-#ifndef NO_AVI
 	else if (cmd == "createvideo") {
-		if(creatingVideo){
-			creatingVideo=false;
-			delete aviGenerator;
-			aviGenerator=0;
+		if (videoCapturing->IsCapturing()) {
+			videoCapturing->StopCapturing();
 		} else {
-			creatingVideo=true;
-			string fileName;
-			for(int a=0;a<999;++a){
-				char t[50];
-				itoa(a,t,10);
-				fileName=string("video")+t+".avi";
-				CFileHandler ifs(fileName);
-				if(!ifs.FileExists())
-					break;
-			}
-
-			int videoSizeX = (gu->viewSizeX/4)*4;
-			int videoSizeY = (gu->viewSizeY/4)*4;
-			aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
-
-			int savedCursorMode = SDL_ShowCursor(SDL_QUERY);
-			SDL_ShowCursor(SDL_ENABLE);
-
-			if(!aviGenerator->InitEngine()){
-				creatingVideo=false;
-				logOutput.Print(aviGenerator->GetLastErrorMessage());
-				delete aviGenerator;
-				aviGenerator=0;
-			} else {
-				LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
-			}
-
-			SDL_ShowCursor(savedCursorMode);
-			//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
-			//Setting it back to default state.
-			streflop_init<streflop::Simple>();
+			videoCapturing->StartCapturing();
 		}
 	}
-#endif
-
 	else if (cmd == "updatefov") {
 		if (action.extra.empty()) {
 			gd->updateFov = !gd->updateFov;
@@ -2062,9 +2017,9 @@ bool CGame::ActionPressed(const Action& action,
 
 	else if (cmd == "mapmarks") {
 		if (action.extra.empty()) {
-			gu->drawMapMarks = !gu->drawMapMarks;
+			globalRendering->drawMapMarks = !globalRendering->drawMapMarks;
 		} else {
-			gu->drawMapMarks = !!atoi(action.extra.c_str());
+			globalRendering->drawMapMarks = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "allmapmarks") {
@@ -2836,7 +2791,7 @@ bool CGame::Update()
 
 	net->Update();
 
-	if (creatingVideo && playing && gameServer){
+	if (videoCapturing->IsCapturing() && playing && gameServer) {
 		gameServer->CreateNewFrame(false, true);
 	}
 
@@ -2879,18 +2834,18 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	if (gu->drawSky) {
+	if (globalRendering->drawSky) {
 		sky->Draw();
 	}
 
-	if (gu->drawGround) {
+	if (globalRendering->drawGround) {
 		gd->Draw();
 		if (smoothGround->drawEnabled)
 			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
 	}
 
-	if (gu->drawWater && !mapInfo->map.voidWater) {
+	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		water->OcclusionQuery();
 		if (water->drawSolid) {
@@ -2906,7 +2861,7 @@ bool CGame::DrawWorld()
 	modelDrawer->Draw();
 	featureDrawer->Draw();
 
-	if (gu->drawGround) {
+	if (globalRendering->drawGround) {
 		gd->DrawTrees();
 	}
 
@@ -2929,7 +2884,7 @@ bool CGame::DrawWorld()
 	glDisable(GL_CLIP_PLANE3);
 
 	//! draw water
-	if (gu->drawWater && !mapInfo->map.voidWater) {
+	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
 			water->UpdateWater(this);
@@ -2949,7 +2904,7 @@ bool CGame::DrawWorld()
 
 	projectileDrawer->Draw(false);
 
-	if (gu->drawSky) {
+	if (globalRendering->drawSky) {
 		sky->DrawSun();
 	}
 
@@ -2968,7 +2923,7 @@ bool CGame::DrawWorld()
 
 	guihandler->DrawMapStuff(0);
 
-	if (gu->drawMapMarks) {
+	if (globalRendering->drawMapMarks) {
 		inMapDrawer->Draw();
 	}
 
@@ -2977,7 +2932,7 @@ bool CGame::DrawWorld()
 	if (camera->pos.y < 0.0f) {
 		glEnableClientState(GL_VERTEX_ARRAY);
 		const float3& cpos = camera->pos;
-		const float vr = gu->viewRange * 0.5f;
+		const float vr = globalRendering->viewRange * 0.5f;
 		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);
 		glColor4f(0.0f, 0.5f, 0.3f, 0.50f);
@@ -3091,12 +3046,12 @@ bool CGame::Draw() {
 
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
-	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
-		gu->lastFrameStart = SDL_GetTicks();
-		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
-		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
+	if (!gs->paused && !HasLag() && gs->frameNum>1 && !videoCapturing->IsCapturing()) {
+		globalRendering->lastFrameStart = SDL_GetTicks();
+		globalRendering->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
+		globalRendering->timeOffset = (float)(globalRendering->lastFrameStart - lastUpdate) * globalRendering->weightedSpeedFactor;
 	} else  {
-		gu->timeOffset=0;
+		globalRendering->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
 	}
 
@@ -3124,7 +3079,8 @@ bool CGame::Draw() {
 	if (lastSimFrame != gs->frameNum) {
 		CInputReceiver::CollectGarbage();
 		if (!skipping) {
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+			// TODO call only when camera changed
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
 		}
 	}
 
@@ -3181,7 +3137,7 @@ bool CGame::Draw() {
 	eventHandler.Update();
 	eventHandler.DrawGenesis();
 
-	if (!gu->active) {
+	if (!globalRendering->active) {
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
@@ -3208,7 +3164,7 @@ bool CGame::Draw() {
 			if (FBO::IsSupported())
 				FBO::Unbind();
 
-			glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+			glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 		}
 	}
 
@@ -3269,7 +3225,7 @@ bool CGame::Draw() {
 
 	glEnable(GL_TEXTURE_2D);
 
-	if (gu->drawdebug) {
+	if (globalRendering->drawdebug) {
 		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
 		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %d Frame: %d Particles: %d (%d)",
@@ -3395,7 +3351,7 @@ bool CGame::Draw() {
 
 			font_options |= FONT_BOTTOM;
 			smallFont->SetColors();
-			smallFont->glPrintTable(1.0f - 5 * gu->pixelX, 0.00f + 5 * gu->pixelY, 1.0f, font_options, chart);
+			smallFont->glPrintTable(1.0f - 5 * globalRendering->pixelX, 0.00f + 5 * globalRendering->pixelY, 1.0f, font_options, chart);
 		}
 
 		smallFont->End();
@@ -3412,20 +3368,10 @@ bool CGame::Draw() {
 	glLoadIdentity();
 
 	unsigned start = SDL_GetTicks();
-	gu->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
+	globalRendering->lastFrameTime = (float)(start - lastMoveUpdate)/1000.f;
 	lastMoveUpdate = start;
 
-#ifndef NO_AVI
-	if (creatingVideo) {
-		gu->lastFrameTime = 1.0f/GAME_SPEED;
-		if(!aviGenerator->readOpenglPixelDataThreaded()){
-			creatingVideo = false;
-			delete aviGenerator;
-			aviGenerator = NULL;
-		}
-//		logOutput.Print("Saved avi frame size %i %i",ih->biWidth,ih->biHeight);
-	}
-#endif
+	videoCapturing->RenderFrame();
 
 	SetDrawMode(gameNotDrawing);
 
@@ -3462,17 +3408,17 @@ void CGame::DrawInputText()
 	// draw the caret
 	const int caretPos = userPrompt.length() + writingPos;
 	const string caretStr = tempstring.substr(0, caretPos);
-	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * gu->pixelX;
+	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
 
 	char c = userInput[writingPos];
 	if (c == 0) { c = ' '; }
 
-	const float cw = fontSize * font->GetCharacterWidth(c) * gu->pixelX;
+	const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
 	const float csx = inputTextPosX + caretWidth;
 	glDisable(GL_TEXTURE_2D);
 	const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
 	glColor4f(f, f, f, 0.75f);
-	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + fontSize * font->GetLineHeight() * gu->pixelY);
+	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + fontSize * font->GetLineHeight() * globalRendering->pixelY);
 	glEnable(GL_TEXTURE_2D);
 
 	// setup the color
@@ -3682,8 +3628,10 @@ void CGame::ClientReadNet()
 		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor;
 	}
 
+	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
+	unsigned procstarttime = SDL_GetTicks();
 	// really process the messages
-	while (timeLeft > 0.0f && (packet = net->GetData()))
+	while (timeLeft > 0.0f && (SDL_GetTicks() - procstarttime) < 500 && (packet = net->GetData()))
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;
@@ -3814,7 +3762,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 				} else {
 					playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
-					playerHandler->Player(player)->ping = *(boost::uint16_t*) &inbuf[6];
+					playerHandler->Player(player)->ping = *(boost::uint32_t*) &inbuf[6];
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3941,7 +3889,7 @@ void CGame::ClientReadNet()
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
-				if (creatingVideo) {
+				if (videoCapturing->IsCapturing()) {
 					return;
 				}
 				break;
@@ -4584,10 +4532,10 @@ void CGame::UpdateUI(bool updateCam)
 		float3 movement = ZeroVector;
 
 		bool disableTracker = false;
-		if (camMove[0]) { movement.y += gu->lastFrameTime; disableTracker = true; }
-		if (camMove[1]) { movement.y -= gu->lastFrameTime; disableTracker = true; }
-		if (camMove[3]) { movement.x += gu->lastFrameTime; disableTracker = true; }
-		if (camMove[2]) { movement.x -= gu->lastFrameTime; disableTracker = true; }
+		if (camMove[0]) { movement.y += globalRendering->lastFrameTime; disableTracker = true; }
+		if (camMove[1]) { movement.y -= globalRendering->lastFrameTime; disableTracker = true; }
+		if (camMove[3]) { movement.x += globalRendering->lastFrameTime; disableTracker = true; }
+		if (camMove[2]) { movement.x -= globalRendering->lastFrameTime; disableTracker = true; }
 
 		if (!updateCam) {
 			if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
@@ -4600,16 +4548,16 @@ void CGame::UpdateUI(bool updateCam)
 
 		movement = ZeroVector;
 
-		if (( fullscreen && fullscreenEdgeMove) ||
-		    (!fullscreen && windowedEdgeMove)) {
+		if ((globalRendering->fullScreen && fullscreenEdgeMove) ||
+		    (!globalRendering->fullScreen && windowedEdgeMove)) {
 
-			const int screenW = gu->dualScreenMode ? (gu->viewSizeX << 1): gu->viewSizeX;
+			const int screenW = globalRendering->dualScreenMode ? (globalRendering->viewSizeX << 1): globalRendering->viewSizeX;
 			disableTracker = false;
 
-			if (mouse->lasty <                  2 ) { movement.y += gu->lastFrameTime; disableTracker = true; }
-			if (mouse->lasty > (gu->viewSizeY - 2)) { movement.y -= gu->lastFrameTime; disableTracker = true; }
-			if (mouse->lastx >       (screenW - 2)) { movement.x += gu->lastFrameTime; disableTracker = true; }
-			if (mouse->lastx <                  2 ) { movement.x -= gu->lastFrameTime; disableTracker = true; }
+			if (mouse->lasty <                  2 ) { movement.y += globalRendering->lastFrameTime; disableTracker = true; }
+			if (mouse->lasty > (globalRendering->viewSizeY - 2)) { movement.y -= globalRendering->lastFrameTime; disableTracker = true; }
+			if (mouse->lastx >       (screenW - 2)) { movement.x += globalRendering->lastFrameTime; disableTracker = true; }
+			if (mouse->lastx <                  2 ) { movement.x -= globalRendering->lastFrameTime; disableTracker = true; }
 
 			if (!updateCam && disableTracker) {
 				unitTracker.Disable();
@@ -4619,8 +4567,8 @@ void CGame::UpdateUI(bool updateCam)
 			movement.z = cameraSpeed;
 			camHandler->GetCurrentController().ScreenEdgeMove(movement);
 
-			if (camMove[4]) { camHandler->GetCurrentController().MouseWheelMove( gu->lastFrameTime * 200 * cameraSpeed); }
-			if (camMove[5]) { camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime * 200 * cameraSpeed); }
+			if (camMove[4]) { camHandler->GetCurrentController().MouseWheelMove( globalRendering->lastFrameTime * 200 * cameraSpeed); }
+			if (camMove[5]) { camHandler->GetCurrentController().MouseWheelMove(-globalRendering->lastFrameTime * 200 * cameraSpeed); }
 		}
 	}
 

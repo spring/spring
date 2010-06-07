@@ -50,7 +50,7 @@ CInterface::CInterface(int interfaceId,
 			"Failed locating the log file %s.", logFileName);
 	}
 
-	simpleLog_init(logFilePath, timeStamps, logLevel);
+	simpleLog_init(logFilePath, timeStamps, logLevel, false);
 
 	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,
 			AI_INTERFACE_PROPERTY_SHORT_NAME);

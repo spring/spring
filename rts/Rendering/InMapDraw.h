@@ -41,12 +41,6 @@ public:
 	void SendLine(const float3& pos1, const float3& pos2, bool fromLua);
 	void SendErase(const float3& pos);
 
-	enum NetTypes {
-		NET_POINT,
-		NET_ERASE,
-		NET_LINE
-	};
-
 	bool keyPressed;
 	float lastLeftClickTime;
 	float lastLineTime;

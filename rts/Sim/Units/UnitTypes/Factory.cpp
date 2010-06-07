@@ -8,6 +8,7 @@
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -344,7 +345,7 @@ void CFactory::CreateNanoParticle(void)
 		dif += gu->usRandVector() * 0.15f;
 		float3 color = unitDef->nanoColor;
 
-		if (gu->teamNanospray) {
+		if (globalRendering->teamNanospray) {
 			unsigned char* tcol = teamHandler->Team(team)->color;
 			color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
 		}

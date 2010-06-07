@@ -10,6 +10,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
@@ -122,9 +123,9 @@ void CAdvWater::Draw(bool useBlending)
 		return;
 
 	float3 dir,zpos;
-	float3 base=camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
-	float3 dv=camera->CalcPixelDir(gu->viewPosX,0)-camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
-	float3 dh=camera->CalcPixelDir(gu->viewPosX+gu->viewSizeX,0)-camera->CalcPixelDir(gu->viewPosX,0);
+	float3 base=camera->CalcPixelDir(globalRendering->viewPosX,globalRendering->viewSizeY);
+	float3 dv=camera->CalcPixelDir(globalRendering->viewPosX,0)-camera->CalcPixelDir(globalRendering->viewPosX,globalRendering->viewSizeY);
+	float3 dh=camera->CalcPixelDir(globalRendering->viewPosX+globalRendering->viewSizeX,0)-camera->CalcPixelDir(globalRendering->viewPosX,0);
 
 	float3 xbase;
 	const int numDivs=20;
@@ -337,7 +338,7 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	FBO::Unbind();
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 //	delete camera;

@@ -13,6 +13,7 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "TimeProfiler.h"
 #include "ConfigHandler.h"
@@ -63,7 +64,7 @@ CBasicSky::CBasicSky()
 	skyColor = mapInfo->atmosphere.skyColor;
 	sunColor = mapInfo->atmosphere.sunColor;
 	fogStart = mapInfo->atmosphere.fogStart;
-	if (fogStart>0.99f) gu->drawFog = false;
+	if (fogStart>0.99f) globalRendering->drawFog = false;
 
 	for(int a=0;a<CLOUD_DETAIL;a++)
 		cloudDown[a]=false;
@@ -261,10 +262,10 @@ void CBasicSky::Draw()
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
+	glFogf(GL_FOG_END,globalRendering->viewRange);
 	glFogf(GL_FOG_DENSITY,1.00f);
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	} else {
 		glDisable(GL_FOG);
@@ -690,7 +691,7 @@ void CBasicSky::InitSun()
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
-		if (gu->drawFog) glEnable(GL_FOG);
+		if (globalRendering->drawFog) glEnable(GL_FOG);
 
 	glEndList();
 }

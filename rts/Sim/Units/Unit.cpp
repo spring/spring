@@ -478,14 +478,9 @@ void CUnit::DisableScriptMoveType()
 
 	// FIXME: prevent the issuing of extra commands ?
 	if (moveType) {
+		moveType->oldPos = pos;
 		moveType->SetGoal(pos);
 		moveType->StopMoving();
-	}
-
-	// ??
-	CMobileCAI* mobile = dynamic_cast<CMobileCAI*>(moveType);
-	if (mobile) {
-		mobile->lastUserGoal = pos;
 	}
 }
 

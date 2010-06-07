@@ -15,6 +15,7 @@
 #undef private
 
 #include "Sim/Units/UnitDef.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/PathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
@@ -29,7 +30,7 @@ void PathDrawer::Draw() const {
 	 // PathManager is not thread safe; making it
 	// so might be too costly (performance-wise)
 	#if !defined(USE_GML) || !GML_ENABLE_SIM
-	if (gu->drawdebug && (gs->cheatEnabled || gu->spectating)) {
+	if (globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 		Draw(pathManager);
 

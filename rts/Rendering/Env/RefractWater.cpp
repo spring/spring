@@ -3,11 +3,12 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "RefractWater.h"
-#include "LogOutput.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "LogOutput.h"
 #include "GlobalUnsynced.h"
 #include "bitops.h"
 
@@ -29,10 +30,10 @@ void CRefractWater::LoadGfx()
 	glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 	glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 	if(target == GL_TEXTURE_RECTANGLE_ARB) {
-		glTexImage2D(target, 0, 3, gu->viewSizeX, gu->viewSizeY, 0, GL_RGB, GL_INT, 0);
+		glTexImage2D(target, 0, 3, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_RGB, GL_INT, 0);
 		waterFP = LoadFragmentProgram("ARB/waterRefractTR.fp");
 	} else{
-		glTexImage2D(target, 0, 3, next_power_of_2(gu->viewSizeX), next_power_of_2(gu->viewSizeY), 0, GL_RGB, GL_INT, 0);
+		glTexImage2D(target, 0, 3, next_power_of_2(globalRendering->viewSizeX), next_power_of_2(globalRendering->viewSizeY), 0, GL_RGB, GL_INT, 0);
 		waterFP = LoadFragmentProgram("ARB/waterRefractT2D.fp");
 	}
 }
@@ -51,7 +52,7 @@ void CRefractWater::Draw()
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glBindTexture(target, subSurfaceTex);
 	glEnable(target);
-	glCopyTexSubImage2D(target, 0, 0, 0, 0, 0, gu->viewSizeX, gu->viewSizeY);
+	glCopyTexSubImage2D(target, 0, 0, 0, 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	SetupWaterDepthTex();
 
@@ -59,13 +60,13 @@ void CRefractWater::Draw()
 
 	// GL_TEXTURE_RECTANGLE uses texcoord range 0 to width, whereas GL_TEXTURE_2D uses 0 to 1
 	if (target == GL_TEXTURE_RECTANGLE_ARB) {
-		float v[] = { 10.0f * gu->viewSizeX, 10.0f * gu->viewSizeY, 0.0f, 0.0f };
+		float v[] = { 10.0f * globalRendering->viewSizeX, 10.0f * globalRendering->viewSizeY, 0.0f, 0.0f };
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, v);
 	} else {
 		float v[] = { 10.0f, 10.0f, 0.0f, 0.0f };
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, v);
-		v[0] = 1.0f / next_power_of_2(gu->viewSizeX);
-		v[1] = 1.0f / next_power_of_2(gu->viewSizeY);
+		v[0] = 1.0f / next_power_of_2(globalRendering->viewSizeX);
+		v[1] = 1.0f / next_power_of_2(globalRendering->viewSizeY);
 		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 3, v);
 	}
 	CAdvWater::Draw(false);

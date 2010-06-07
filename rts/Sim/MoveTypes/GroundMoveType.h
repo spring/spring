@@ -47,8 +47,6 @@ public:
 	float deltaSpeed;
 	short int deltaHeading;
 
-	float3 oldPos;
-	float3 oldSlowUpdatePos;
 	float3 flatFrontDir;
 
 	unsigned int pathId;

@@ -5,6 +5,7 @@
 
 #include "BubbleProjectile.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -71,7 +72,7 @@ void CBubbleProjectile::Draw()
 	col[2] = (unsigned char)(255 * alpha);
 	col[3] = (unsigned char)(255 * alpha);
 
-	const float interSize = size + sizeExpansion * gu->timeOffset;
+	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
 
 	#define bt projectileDrawer->bubbletex
 	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize, bt->xstart, bt->ystart, col);

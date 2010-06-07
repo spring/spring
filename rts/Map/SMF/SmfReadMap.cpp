@@ -8,6 +8,7 @@
 #include "mapfile.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
@@ -68,7 +69,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 
 
-	haveSpecularLighting = (!(mapInfo->smf.specularTexName.empty()) && gu->haveGLSL);
+	haveSpecularLighting = (!(mapInfo->smf.specularTexName.empty()) && globalRendering->haveGLSL);
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
 	CBitmap detailTexBM;

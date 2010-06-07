@@ -3,9 +3,12 @@
 // TODO: move this out of Sim, this is rendering code!
 
 #include "StdAfx.h"
+
 #include "LineDrawer.h"
+
+#include "Rendering/GlobalRendering.h"
 #include "Game/UI/CommandColors.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CLineDrawer lineDrawer;
 
@@ -20,7 +23,7 @@ CLineDrawer::CLineDrawer()
 
 void CLineDrawer::UpdateLineStipple()
 {
-	stippleTimer += (gu->lastFrameTime * cmdColors.StippleSpeed());
+	stippleTimer += (globalRendering->lastFrameTime * cmdColors.StippleSpeed());
 	stippleTimer = fmod(stippleTimer, (16.0f / 20.0f));
 }
 

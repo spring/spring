@@ -1,17 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 /*
-	This workaround fixes the windows slow mouse movement problem (happens on fullscreen mode + pressing keys).
-	The code hacks around the mouse input from DirectInput, which SDL uses in fullscreen mode.
+	This workaround fixes the windows slow mouse movement problem
+	(happens on full-screen mode + pressing keys).
+	The code hacks around the mouse input from DirectInput,
+	which SDL uses in full-screen mode.
 	Instead it installs a window message proc and reads input from WM_MOUSEMOVE.
 	On non-windows, the normal SDL events are used for mouse input
 
 	new:
-	It also workarounds a issue with SDL+windows and hardware cursors (->it has to block WM_SETCURSOR),
+	It also workarounds a issue with SDL+windows and hardware cursors
+	(->it has to block WM_SETCURSOR),
 	so it is used now always even in window mode!
 
 	newer:
-	SDL_Event struct is used for new input handling. Several people confirmed its working.
+	SDL_Event struct is used for new input handling.
+	Several people confirmed its working.
 */
 
 #include "StdAfx.h"
@@ -22,6 +26,7 @@
 #include <boost/bind.hpp>
 #include <SDL_events.h>
 #include <SDL_syswm.h>
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
 #include "GlobalUnsynced.h"
 #ifdef _WIN32
@@ -145,10 +150,10 @@ public:
 			{
 				// wsdl::OnActivate(wnd, LOWORD(wParam), NULL, HIWORD(lParam));
 				// FIXME: move to SpringApp somehow and use GLContext.h instead!
-				if(fullscreen) {
+				if (globalRendering->fullScreen) {
 					if (LOWORD(wParam) == WA_INACTIVE) {
 						FBO::GLContextLost();
-					}else if (LOWORD(wParam) == WA_ACTIVE) {
+					} else if (LOWORD(wParam) == WA_ACTIVE) {
 						FBO::GLContextReinit();
 					}
 				}

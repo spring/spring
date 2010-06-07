@@ -7,6 +7,7 @@
 
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -110,7 +111,7 @@ CSmokeTrailProjectile::~CSmokeTrailProjectile()
 void CSmokeTrailProjectile::Draw()
 {
 	inArray=true;
-	float age=gs->frameNum+gu->timeOffset-creationTime;
+	float age=gs->frameNum+globalRendering->timeOffset-creationTime;
 	va->EnlargeArrays(8*4,0,VA_SIZE_TC);
 
 	if(drawTrail){

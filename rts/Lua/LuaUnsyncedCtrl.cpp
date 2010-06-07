@@ -993,7 +993,7 @@ int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetDrawSky()");
 	}
-	gu->drawSky = !!lua_toboolean(L, 1);
+	globalRendering->drawSky = !!lua_toboolean(L, 1);
 	return 0;
 }
 
@@ -1006,7 +1006,7 @@ int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetDrawWater()");
 	}
-	gu->drawWater = !!lua_toboolean(L, 1);
+	globalRendering->drawWater = !!lua_toboolean(L, 1);
 	return 0;
 }
 
@@ -1019,7 +1019,7 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 	if (!lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetDrawGround()");
 	}
-	gu->drawGround = !!lua_toboolean(L, 1);
+	globalRendering->drawGround = !!lua_toboolean(L, 1);
 	return 0;
 }
 
@@ -1459,7 +1459,7 @@ int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 		luaL_error(L, "Incorrect arguments to WarpMouse()");
 	}
 	const int x = lua_toint(L, 1);
-	const int y = gu->viewSizeY - lua_toint(L, 2) - 1;
+	const int y = globalRendering->viewSizeY - lua_toint(L, 2) - 1;
 	mouse->WarpMouse(x, y);
 	return 0;
 }

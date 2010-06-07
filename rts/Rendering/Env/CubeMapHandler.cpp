@@ -197,7 +197,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 
 	//! we do this later to save render context switches (this is one of the slowest opengl operations!)
 	// reflectionCubeFBO.Unbind();
-	// glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
 
 	game->SetDrawMode(CGame::gameNormalDraw);

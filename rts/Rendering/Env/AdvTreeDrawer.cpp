@@ -13,6 +13,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
@@ -117,7 +118,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		"diffuseTex",          // FP
 	};
 
-	if (gu->haveGLSL) {
+	if (globalRendering->haveGLSL) {
 		treeShaders[TREE_PROGRAM_NEAR_BASIC] =
 			shaderHandler->CreateProgramObject("[TreeDrawer]", shaderNames[TREE_PROGRAM_NEAR_BASIC] + "GLSL", false);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->AttachShaderObject(
@@ -435,7 +436,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}
@@ -453,7 +454,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		treeShader = treeShaders[TREE_PROGRAM_DIST_SHADOW];
 		treeShader->Enable();
 
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
 			treeShader->SetUniform4fv(8, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 		} else {
@@ -499,7 +500,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader = treeShaders[TREE_PROGRAM_NEAR_SHADOW];
 			treeShader->Enable();
 
-			if (gu->haveGLSL) {
+			if (globalRendering->haveGLSL) {
 				treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
 				treeShader->SetUniform4fv(8, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 			}
@@ -514,7 +515,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader = treeShaders[TREE_PROGRAM_NEAR_BASIC];
 			treeShader->Enable();
 
-			if (!gu->haveGLSL) {
+			if (!globalRendering->haveGLSL) {
 				#define MX (gs->pwr2mapx * SQUARE_SIZE)
 				#define MY (gs->pwr2mapy * SQUARE_SIZE)
 				treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
@@ -525,7 +526,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 
 
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			treeShader->SetUniform3fv(0, &camera->right[0]);
 			treeShader->SetUniform3fv(1, &camera->up[0]);
 			treeShader->SetUniform2f(5, 0.20f * (1.0f / MAX_TREE_HEIGHT), 0.85f);
@@ -579,13 +580,13 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 					if (camDist < (SQUARE_SIZE * SQUARE_SIZE * 110 * 110)) {
 						// draw detailed near-distance tree (same as mid-distance trees without alpha)
-						treeShader->SetUniform3f(((gu->haveGLSL)? 2: 10), pos.x, pos.y, pos.z);
+						treeShader->SetUniform3f(((globalRendering->haveGLSL)? 2: 10), pos.x, pos.y, pos.z);
 						glCallList(displist);
 					} else if (camDist < (SQUARE_SIZE * SQUARE_SIZE * 125 * 125)) {
 						// draw mid-distance tree
 						const float relDist = (pos.distance(camera->pos) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
 
-						treeShader->SetUniform3f(((gu->haveGLSL)? 2: 10), pos.x, pos.y, pos.z);
+						treeShader->SetUniform3f(((globalRendering->haveGLSL)? 2: 10), pos.x, pos.y, pos.z);
 
 						glAlphaFunc(GL_GREATER, 0.8f + relDist * 0.2f);
 						glCallList(displist);
@@ -607,7 +608,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 		// reset the world-offset
-		treeShader->SetUniform3f(((gu->haveGLSL)? 2: 10), 0.0f, 0.0f, 0.0f);
+		treeShader->SetUniform3f(((globalRendering->haveGLSL)? 2: 10), 0.0f, 0.0f, 0.0f);
 
 		// draw trees that have been marked as falling
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
@@ -879,7 +880,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_NEAR);
 		po->Enable();
 
-		if (gu->haveGLSL) {
+		if (globalRendering->haveGLSL) {
 			po->SetUniform3fv(1, &camera->right[0]);
 			po->SetUniform3fv(2, &camera->up[0]);
 		} else {
@@ -928,13 +929,13 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 					}
 
 					if (camDist < SQUARE_SIZE * SQUARE_SIZE * 110 * 110) {
-						po->SetUniform3f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z);
+						po->SetUniform3f((globalRendering->haveGLSL? 3: 10), pos.x, pos.y, pos.z);
 						glCallList(displist);
 					} else if (camDist < SQUARE_SIZE * SQUARE_SIZE * 125 * 125) {
 						const float relDist = (pos.distance(camera->pos) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
 
 						glAlphaFunc(GL_GREATER, 0.8f + relDist * 0.2f);
-						po->SetUniform3f((gu->haveGLSL? 3: 10), pos.x, pos.y, pos.z);
+						po->SetUniform3f((globalRendering->haveGLSL? 3: 10), pos.x, pos.y, pos.z);
 						glCallList(displist);
 						glAlphaFunc(GL_GREATER, 0.5f);
 
@@ -951,7 +952,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		}
 
 
-		po->SetUniform3f((gu->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
+		po->SetUniform3f((globalRendering->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
 
 		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);

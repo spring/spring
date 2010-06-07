@@ -208,7 +208,7 @@ bool CUnitDrawer::LoadModelShaders()
 	modelShaders[MODEL_SHADER_S3O_SHADOW] = modelShaders[MODEL_SHADER_S3O_BASIC];
 	modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_BASIC];
 
-	if (!gu->haveARB) {
+	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
 		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
 		return false;
@@ -226,30 +226,30 @@ bool CUnitDrawer::LoadModelShaders()
 	modelShaders[MODEL_SHADER_S3O_BASIC ]->Link();
 
 	if (shadowHandler->canUseShadows) {
-		if (!gu->haveGLSL) {
+		if (!globalRendering->haveGLSL) {
 			modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 		} else {
 			modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/S3OVertProg.glsl", "", GL_VERTEX_SHADER));
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/S3OFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", "", GL_VERTEX_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", "", GL_FRAGMENT_SHADER));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowTex");         // idx  2
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("reflectTex");        // idx  3 (cube)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("specularTex");       // idx  4 (cube)
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("lightDir");          // idx  5
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunDir");            // idx  5
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraPos");         // idx  6
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMat");         // idx  7
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("cameraMatInv");      // idx  8
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitTeamColor");     // idx  9
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitAmbientColor");  // idx 10
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitDiffuseColor");  // idx 11
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("unitShadowDensity"); // idx 12
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMat");         // idx 13
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("teamColor");         // idx  9
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunAmbient");        // idx 10
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("sunDiffuse");        // idx 11
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowDensity");     // idx 12
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMatrix");      // idx 13
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 14
 
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
@@ -258,7 +258,7 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform4fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, unitShadowDensity);
@@ -433,7 +433,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawIcon.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}
@@ -1184,7 +1184,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 			modelShaders[MODEL_SHADER_S3O_BASIC];
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 
-		if (gu->haveGLSL && shadowHandler->drawShadows) {
+		if (globalRendering->haveGLSL && shadowHandler->drawShadows) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(7, false, const_cast<double*>(camera->GetViewMat()));
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, const_cast<double*>(camera->GetViewMatInv()));
@@ -1297,7 +1297,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		CTeam* t = teamHandler->Team(team);
 		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-		if (gu->haveGLSL && shadowHandler->drawShadows) {
+		if (globalRendering->haveGLSL && shadowHandler->drawShadows) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
@@ -1483,8 +1483,8 @@ void CUnitDrawer::UnitDrawingTexturesOff()
  */
 void CUnitDrawer::DrawIndividual(CUnit* unit)
 {
-	const bool origDebug = gu->drawdebug;
-	gu->drawdebug = false;
+	const bool origDebug = globalRendering->drawdebug;
+	globalRendering->drawdebug = false;
 
 	LuaUnitLODMaterial* lodMat = NULL;
 
@@ -1528,7 +1528,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		CleanUpUnitDrawing();
 	}
 
-	gu->drawdebug = origDebug;
+	globalRendering->drawdebug = origDebug;
 }
 
 
@@ -1736,7 +1736,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
-	if (gu->drawdebug) {
+	if (globalRendering->drawdebug) {
 		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 		}
@@ -1820,7 +1820,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	const float col = fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
 	const unsigned char* tcol = teamHandler->Team(unit->team)->color;
 	// frame line-color
-	const float3 fc = (!gu->teamNanospray)?
+	const float3 fc = (!globalRendering->teamNanospray)?
 		unit->unitDef->nanoColor:
 		float3(tcol[0] / 255.0f, tcol[1] / 255.0f, tcol[2] / 255.0f);
 
@@ -1845,7 +1845,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glClipPlane(GL_CLIP_PLANE0, plane0);
 	glClipPlane(GL_CLIP_PLANE1, plane1);
 
-	if (!gu->atiHacks) {
+	if (!globalRendering->atiHacks) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		DrawUnitModel(unit);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1886,7 +1886,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	// ATI has issues with textures, clip planes and shader programs at once - very low performance
 	// FIXME: This may work now I added OPTION ARB_position_invariant to the ARB programs.
 	if (unit->buildProgress > 0.66f) {
-		if (gu->atiHacks) {
+		if (globalRendering->atiHacks) {
 			glDisable(GL_CLIP_PLANE0);
 
 			glPolygonOffset(1.0f, 1.0f);
@@ -2104,15 +2104,15 @@ void CUnitDrawer::UpdateDrawPos(CUnit* u) {
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	if (trans) {
-		u->drawPos = u->pos + (trans->speed * ((float)gu->lastFrameStart - (float)u->lastUnitUpdate) * gu->weightedSpeedFactor);
+		u->drawPos = u->pos + (trans->speed * ((float)globalRendering->lastFrameStart - (float)u->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
 	} else {
-		u->drawPos = u->pos + (u->speed * ((float)gu->lastFrameStart - (float)u->lastUnitUpdate) * gu->weightedSpeedFactor);
+		u->drawPos = u->pos + (u->speed * ((float)globalRendering->lastFrameStart - (float)u->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
 	}
 #else
 	if (trans) {
-		u->drawPos = u->pos + (trans->speed * gu->timeOffset);
+		u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);
 	} else {
-		u->drawPos = u->pos + (u->speed * gu->timeOffset);
+		u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
 	}
 #endif
 	u->drawMidPos = u->drawPos + (u->midPos - u->pos);

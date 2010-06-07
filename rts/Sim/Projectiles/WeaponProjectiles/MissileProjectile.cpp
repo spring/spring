@@ -7,6 +7,7 @@
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "MissileProjectile.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -326,7 +327,7 @@ void CMissileProjectile::UpdateGroundBounce() {
 void CMissileProjectile::Draw(void)
 {
 	inArray = true;
-	float age2 = (age & 7) + gu->timeOffset;
+	float age2 = (age & 7) + globalRendering->timeOffset;
 
 	float color = 0.6f;
 	unsigned char col[4];

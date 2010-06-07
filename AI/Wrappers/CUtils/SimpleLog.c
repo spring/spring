@@ -100,7 +100,7 @@ static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 }
 
 void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
-		int _logLevel) {
+		int _logLevel, bool append) {
 
 	if (_logFileName != NULL) {
 		// NOTE: this causes a memory leack, as it is never freed.
@@ -111,7 +111,11 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 		// delete the logFile, and try writing to it
 		FILE* file = NULL;
 		if (logFileName != NULL) {
-			file = FOPEN(logFileName, "w");
+			if (append) {
+				file = FOPEN(logFileName, "a");
+			} else {
+				file = FOPEN(logFileName, "w");
+			}
 		}
 		if (file != NULL) {
 			// make the file empty

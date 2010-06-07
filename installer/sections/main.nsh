@@ -12,9 +12,6 @@
 	CreateDirectory "$INSTDIR\mods"
 	SetOutPath "$INSTDIR"
 
-	${!echonow} "Processing: main: TASServer.jar"
-	File "downloads\TASServer.jar"
-
 	${!echonow} "Processing: main: DLLs (mingwlibs)"
 	; DLLs (updated in mingwlibs-v20.1)
 	File "${MINGWLIBS_DIR}\dll\glew32.dll"
@@ -111,7 +108,6 @@
 	Delete "$INSTDIR\spring.exe"
 	Delete "$INSTDIR\spring.def"
 	Delete "$INSTDIR\unitsync.dll"
-	Delete "$INSTDIR\TASServer.jar"
 	Delete "$INSTDIR\PALETTE.PAL"
 	Delete "$INSTDIR\SelectionEditor.exe"
 	Delete "$INSTDIR\selectkeys.txt"

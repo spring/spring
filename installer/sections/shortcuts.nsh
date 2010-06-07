@@ -15,11 +15,16 @@
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk" "$INSTDIR\SelectionEditor.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
+	!ifdef SEC_GML
+		${If} ${SectionIsSelected} ${SEC_GML}
+			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring GML.lnk" "$INSTDIR\spring-gml.exe"
+		${EndIf}
+	!endif
 
 	WriteIniStr "$INSTDIR\Spring.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
 	WriteIniStr "$INSTDIR\springfiles.url" "InternetShortcut" "URL" "http://www.springfiles.com"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk" "$INSTDIR\Spring.url"
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\$$INSTDIR\springfiles.url"
+	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\springfiles.url"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 
 !else
@@ -30,6 +35,7 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring GML.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"

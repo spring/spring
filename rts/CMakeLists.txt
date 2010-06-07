@@ -1,5 +1,3 @@
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
-
 # Place executables and shared libs under "build-dir/",
 # instead of under "build-dir/rts/"
 # This way, we have the build-dir structure more like the install-dir one,
@@ -8,6 +6,9 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 # SPRING_DATADIR=$(pwd) ./spring
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+
+SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
+
 
 
 ### Assemble defines
@@ -30,10 +31,17 @@ endif (SYNCDEBUG)
 SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
 
+
+### Assemble our incude dirs
+INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/System/)
+
+
+
 ### Assemble libraries
 FIND_PACKAGE(OpenAL REQUIRED)
 LIST(APPEND engineCommonLibraries ${OPENAL_LIBRARY})
-INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
 FIND_PACKAGE(OggVorbis REQUIRED)
 LIST(APPEND engineCommonLibraries ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
 
@@ -49,7 +57,6 @@ LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
 LIST(APPEND engineCommonLibraries ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY})
 
 FIND_PACKAGE(Freetype REQUIRED)
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
 LIST(APPEND engineCommonLibraries ${FREETYPE_LIBRARIES})
 
 ### Find include directories and add platform specific libraries
@@ -75,85 +82,100 @@ ENDIF (UNIX)
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
 
-### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
 
-### all spring source directories
-### each directorie which contains source has to be here
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Game gamefiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Game/Camera gamefiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Game/Server gamefiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Game/StartScripts gamefiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Game/UI gamefiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Menu gamefiles)
+### Assemble external incude dirs
+INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Lua luafiles)
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/ExternalAI aifiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/ExternalAI/Interface aifiles)
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Map mapfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Map/SM3 mapfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Map/SM3/terrain mapfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Map/SMF mapfiles)
+### Assemble engine sources
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game game_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/Camera game_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/Server game_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/StartScripts game_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/UI game_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Menu game_files)
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Rendering renderfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Rendering/Env renderfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Rendering/GL renderfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Rendering/Shaders renderfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Rendering/Textures renderfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Rendering/Models renderfiles)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Lua lua_files)
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/aGui renderfiles)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/ExternalAI ai_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/ExternalAI/Interface ai_files)
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Features simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Misc simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/MoveTypes simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/MoveTypes/MoveMath simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Objects simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Path simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Projectiles simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Projectiles/WeaponProjectiles simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Projectiles/Unsynced simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Units simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Units/COB simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Units/CommandAI simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Units/Groups simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Units/UnitTypes simfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/Sim/Weapons simfiles)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map map_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map/SM3 map_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map/SM3/terrain map_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map/SMF map_files)
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Platform sysfiles)
-### only use the directory for target platform
-IF (UNIX)
-	AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Platform/Linux sysfiles)
-ELSE (UNIX)
-	AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Platform/Win sysfiles)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering render_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Env render_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/GL render_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Shaders render_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Textures render_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Models render_files)
+
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/aGui render_files)
+
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Features sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Misc sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/MoveTypes sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/MoveTypes/MoveMath sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Objects sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Path sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles/WeaponProjectiles sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles/Unsynced sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/COB sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/CommandAI sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/Groups sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/UnitTypes sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Weapons sim_files)
+
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Platform sys_files)
+### only use the target platform related directory
+IF    (UNIX)
+	AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux sys_files)
+ELSE  (UNIX)
+	AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Platform/Win sys_files)
 ENDIF (UNIX)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/FileSystem sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Net sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Script sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Sync sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Sound sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/creg sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/Input sysfiles)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/System/LoadSave sysfiles)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/FileSystem sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Net sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Script sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sync sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sound sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/creg sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Input sys_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/LoadSave sys_files)
+
+SET(engineSources
+		${game_files}
+		${lua_files}
+		${map_files}
+		${fs_files}
+		${render_files}
+		${sim_files}
+		${sys_files}
+		${ai_files}
+		${nedmalloc_obj}
+	)
+
+### Add headers for generated project files (e.g. Code::Blocks)
+file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
+
 
 ### Add icon and manifest to exe using windres
 IF    (MINGW)
-	SET(ENGINE_ICON_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-	SET(ENGINE_ICON_RES "${CMAKE_CURRENT_SOURCE_DIR}/icon.rc")
+	SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
+	SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
 	SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
 	CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
 ELSE  (MINGW)
 	SET(ENGINE_ICON "")
 ENDIF (MINGW)
 
-### Add headers for generated project files (e.g. Code::Blocks)
-file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
-
-SET(engineSources ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj})
 
 ADD_EXECUTABLE(spring ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(spring ${engineLibraries})
@@ -163,6 +185,6 @@ IF    (MINGW)
 	#install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
-install (TARGETS spring DESTINATION ${BINDIR})
+INSTALL(TARGETS spring DESTINATION ${BINDIR})
 
 Add_Subdirectory(builds)

@@ -9,19 +9,20 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "LogOutput.h"
 #include "Game/Camera.h"
-#include "myMath.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
+#include "System/mmgr.h"
+#include "System/float4.h"
 #include "bitops.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "GL/VertexArray.h"
-#include "Textures/Bitmap.h"
-#include "GlobalUnsynced.h"
-#include "Util.h"
-#include "Exceptions.h"
-#include "mmgr.h"
-#include "float4.h"
 
 #undef GetCharWidth // winapi.h
 
@@ -366,7 +367,7 @@ GLuint CFontTextureRenderer::CreateTexture()
 
 	//! generate the ogl texture
 	texHeight = curY + curHeight;
-	if (!gu->supportNPOTs)
+	if (!globalRendering->supportNPOTs)
 		texHeight = next_power_of_2(texHeight);
 	GLuint tex;
 	glGenTextures(1, &tex);
@@ -1850,8 +1851,8 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 
 	//! render in normalized coords (0..1) instead of screencoords (0..~1024)
 	if (options & FONT_NORM) {
-		sizeX *= gu->pixelX;
-		sizeY *= gu->pixelY;
+		sizeX *= globalRendering->pixelX;
+		sizeY *= globalRendering->pixelY;
 	}
 
 	//! horizontal alignment (FONT_LEFT is default)
@@ -2010,8 +2011,8 @@ void CglFont::glPrintTable(GLfloat x, GLfloat y, float s, const int& options, co
 
 	//! render in normalized coords (0..1) instead of screencoords (0..~1024)
 	if (options & FONT_NORM) {
-		sizeX *= gu->pixelX;
-		sizeY *= gu->pixelY;
+		sizeX *= globalRendering->pixelX;
+		sizeY *= globalRendering->pixelY;
 	}
 
 	//! horizontal alignment (FONT_LEFT is default)

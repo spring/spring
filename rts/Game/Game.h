@@ -14,7 +14,6 @@
 #include "lib/gml/gml.h"
 
 class CBaseWater;
-class CAVIGenerator;
 class CConsoleHistory;
 class CWordCompletion;
 class CKeySet;
@@ -117,9 +116,6 @@ public:
 
 	CConsoleHistory* consoleHistory;
 	CWordCompletion* wordCompletion;
-
-	bool creatingVideo;
-	CAVIGenerator* aviGenerator;
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 

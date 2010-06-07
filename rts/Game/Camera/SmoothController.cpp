@@ -15,6 +15,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 #include "myMath.h"
 
 extern boost::uint8_t *keys;
@@ -49,7 +50,7 @@ void SmoothController::KeyMove(float3 move)
 		move.y = -move.y;
 	}
 	move *= sqrt(move.z)*200;
-	float pixelsize = camera->GetTanHalfFov() * 2/gu->viewSizeY * height * 2;
+	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * height * 2;
 	const float3 thisMove(move.x*pixelsize*2*scrollSpeed, 0, -move.y*pixelsize*2*scrollSpeed);
 	static unsigned lastKeyMove = SDL_GetTicks();
 	const unsigned timeDiff = SDL_GetTicks() - lastKeyMove;
@@ -75,7 +76,7 @@ void SmoothController::MouseMove(float3 move)
 		move.y = -move.y;
 	}
 	move *= 100 * middleClickScrollSpeed;
-	float pixelsize = camera->GetTanHalfFov() * 2/gu->viewSizeY * height * 2;
+	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * height * 2;
 	float3 thisMove(move.x*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed, 0, move.y*pixelsize*(1+keys[SDLK_LSHIFT]*3)*scrollSpeed);
 	// do little smoothing here (and because its little it won't hurt if it depends on framerate)
 	static float3 lastMove(0, 0, 0);
@@ -91,7 +92,7 @@ void SmoothController::ScreenEdgeMove(float3 move)
 		move.y = -move.y;
 	}
 	move*=sqrt(move.z)*200;
-	float pixelsize= camera->GetTanHalfFov()*2/gu->viewSizeY*height*2;
+	float pixelsize= camera->GetTanHalfFov()*2/globalRendering->viewSizeY*height*2;
 	const float3 thisMove(move.x*pixelsize*2*scrollSpeed, 0, -move.y*pixelsize*2*scrollSpeed);
 	static unsigned lastScreenMove = SDL_GetTicks();
 	const unsigned timeDiff = SDL_GetTicks() - lastScreenMove;

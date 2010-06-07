@@ -6,6 +6,7 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -308,7 +309,7 @@ void CPieceProjectile::Draw()
 		if (flags & PF_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
 			inArray = true;
-			float age2 = (age & 7) + gu->timeOffset;
+			float age2 = (age & 7) + globalRendering->timeOffset;
 			float color = 0.5f;
 			unsigned char col[4];
 
@@ -398,8 +399,8 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CPieceProjectile::DrawCallback(void)
 {
-	if (*numCallback != gu->drawFrame) {
-		*numCallback = gu->drawFrame;
+	if (*numCallback != globalRendering->drawFrame) {
+		*numCallback = globalRendering->drawFrame;
 		return;
 	}
 	*numCallback = 0;

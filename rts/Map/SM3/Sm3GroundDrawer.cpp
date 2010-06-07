@@ -8,6 +8,7 @@
 
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GroundDecalHandler.h"
@@ -49,7 +50,7 @@ static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 	tc.right = sc.right;
 	tc.up = sc.up;
 	tc.pos = sc.pos;
-	tc.aspect = gu->aspectRatio;
+	tc.aspect = globalRendering->aspectRatio;
 
 	tc.right = tc.front.cross(tc.up);
 	tc.right.ANormalize();

@@ -74,8 +74,8 @@ public:
 
 	virtual void UnitInit(const UnitDef* def, int team, const float3& position);
 
-	bool AttackGround(const float3&pos,bool dgun);
-	bool AttackUnit(CUnit* unit,bool dgun);
+	bool AttackGround(const float3& pos, bool dgun);
+	bool AttackUnit(CUnit* unit, bool dgun);
 
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
