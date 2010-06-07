@@ -254,9 +254,9 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 }
 
 /** Print stack traces for relevant threads. */
-void HangHandler()
+void HangHandler(bool simhang)
 {
-	PRINT("Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
+	PRINT("Hang detection triggered %sfor Spring %s.", simhang ? "(in sim thread) " : "", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
@@ -295,15 +295,15 @@ void HangDetector() {
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (gmlMultiThreadSim) {
 			unsigned cursimwdt = simwdt;
-			if (cursimwdt && (curwdt - cursimwdt) > hangTimeout * 1000) {
-				HangHandler();
+			if (cursimwdt && curwdt > cursimwdt && (curwdt - cursimwdt) > hangTimeout * 1000) {
+				HangHandler(true);
 				simwdt = curwdt;
 			}
 		}
 #endif
 		unsigned curdrawwdt = drawwdt;
-		if (curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * 1000) {
-			HangHandler();
+		if (curdrawwdt && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * 1000) {
+			HangHandler(false);
 			drawwdt = curwdt;
 		}
 		SDL_Delay(1000);
