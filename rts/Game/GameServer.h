@@ -181,7 +181,7 @@ private:
 	bool noHelperAIs;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
-	std::list<const netcode::RawPacket*> packetCache;
+	std::list< boost::shared_ptr<const netcode::RawPacket> > packetCache;
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
