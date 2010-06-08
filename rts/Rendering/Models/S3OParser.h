@@ -57,7 +57,6 @@ public:
 
 private:
 	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);
-	void SetVertexTangents(SS3OPiece*);
 };
 
 #endif /* S3OPARSER_H */
