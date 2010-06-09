@@ -94,6 +94,9 @@ int SDL_PushEvent(SDL_Event *event) {
    return 0;
 }
 
+void SDL_PumpEvents() {
+}
+
 void SDL_WM_SetIcon(SDL_Surface *icon, Uint8 *mask) {
    printf("SetIcon\n");
 }
