@@ -804,6 +804,10 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			} break;
 
 			case CWeaponProjectile::WEAPON_STARBURST_PROJECTILE: {
+				if (!shadowPass) {
+					unitDrawer->SetTeamColour(wp->colorTeam);
+				}
+
 				SET_TRANSFORM_VECTORS();
 
 				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
