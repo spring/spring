@@ -2016,7 +2016,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 		players[hisNewNumber].team = hisTeam;
 
-		if (!setup->playerStartingData[hisNewNumber].spectator)
+		if (!players[hisNewNumber].spectator && !setup->playerStartingData[hisNewNumber].spectator)
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
 	}
 

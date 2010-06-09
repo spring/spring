@@ -243,7 +243,7 @@ void CTeam::Died()
 	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 
 	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-		if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == teamNum)) {
+		if (playerHandler->Player(a)->team == teamNum) {
 			playerHandler->Player(a)->StartSpectating();
 		}
 	}
