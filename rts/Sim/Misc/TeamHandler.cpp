@@ -83,8 +83,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 			it->allies.push_back(false); // enemy to everyone
 		}
 		::AllyTeam allyteam;
-		allyteam.allies.resize(allyTeams.size()+1,false); // everyones enemy
-		allyteam.allies[gaiaTeamID] = true; // peace with itself
+		allyteam.allies.resize(allyTeams.size() + 1, false); // everyones enemy
+		allyteam.allies[gaiaAllyTeamID] = true; // peace with itself
 		allyTeams.push_back(allyteam);
 	}
 }
