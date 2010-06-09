@@ -209,7 +209,16 @@ void IMouseInput::SetPos(int2 pos)
 	SDL_WarpMouse(pos.x, pos.y);
 #endif
 
-	//! delete all SDL_MOUSEMOTION in the queue to avoid fast jumps when entering `middle click scrolling`
+	//! SDL_WarpMouse generates SDL_MOUSEMOTION events
+	//! in `middle click scrolling` those SDL generated ones would point into
+	//! the oppossite direction the user moved the mouse, and so events would
+	//! cancel each other -> camera wouldn't move at all
+	//! so we need to catch those SDL generated events and delete them
+
+	//! first we need to gather the motion events
+	SDL_PumpEvents();
+
+	//! delete all SDL_MOUSEMOTION in the queue
 	static SDL_Event events[100];
 	SDL_PeepEvents(&events[0], 100, SDL_GETEVENT, SDL_MOUSEMOTIONMASK);
 }
