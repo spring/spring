@@ -3,8 +3,6 @@
 
 REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www
-TMP_BASE=/tmp/spring
-TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}
 BASE_ARCHIVE="${TMP_PATH}/${VERSION}_base.7z"
 CMD="rsync -avz --chmod=D+rx,F+r"
 
