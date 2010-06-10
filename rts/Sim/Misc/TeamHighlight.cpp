@@ -6,6 +6,7 @@
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/ConfigHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include <limits.h>
 
 bool CTeamHighlight::highlight = false;
@@ -43,7 +44,7 @@ void CTeamHighlight::Update() {
 	for(int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
 		CTeam *t = teamHandler->Team(ti);
 		float teamhighlight = 0.0f;
-		if(!t->isDead && !t->gaia) {
+		if(!t->isDead && !t->gaia && skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) {
 			int minPing = INT_MAX;
 			bool hasPlayers = false;
 			for(int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
