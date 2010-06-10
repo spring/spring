@@ -39,22 +39,30 @@ void CTeamHighlight::Disable() {
 
 void CTeamHighlight::Update() {
 	bool hl = false;
+	int maxhl = 1000 * (gc->networkTimeout + 1);
 	for(int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
 		CTeam *t = teamHandler->Team(ti);
-		int minPing = INT_MAX;
-		for(int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
-			CPlayer *p = playerHandler->Player(pi);
-			if (p->active && !p->spectator && (p->team == ti) && p->ping != PATHING_FLAG && p->ping >= 0) {
-				int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
-				if(ping < minPing)
-					minPing = ping;
-			}
-		}
 		float teamhighlight = 0.0f;
-		if(!t->isDead && ((minPing != INT_MAX && minPing > 1000) || t->leader < 0)) {
-			int maxhl = 1000 * (gc->networkTimeout + 1);
-			teamhighlight = (t->leader < 0) ? 1.0f : (float)std::max(0, std::min(minPing, maxhl)) / (float)maxhl;
-			hl = true;
+		if(!t->isDead) {
+			int minPing = INT_MAX;
+			bool hasPlayers = false;
+			for(int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
+				CPlayer *p = playerHandler->Player(pi);
+				if (p->active && !p->spectator && (p->team == ti)) {
+					hasPlayers = true;
+					if(p->ping != PATHING_FLAG && p->ping >= 0) {
+						int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
+						if(ping < minPing)
+							minPing = ping;
+					}
+				}
+			}
+			if(!hasPlayers || t->leader < 0)
+				teamhighlight = 1.0f;
+			else if(minPing != INT_MAX && minPing > 1000)
+				teamhighlight = (float)std::max(0, std::min(minPing, maxhl)) / (float)maxhl;
+			if(teamhighlight > 0.0f)
+				hl = true;
 		}
 		*(volatile float *)&t->highlight = teamhighlight;
 	}
