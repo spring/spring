@@ -89,7 +89,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	}
 }
 
-void CTeamHandler::GameFrame(int frameNum)
+void CTeamHandler::GameFrame(int frameNum, int team)
 {
 	if (!(frameNum & (TEAM_SLOWUPDATE_RATE-1))) {
 		for (int a = 0; a < ActiveTeams(); ++a) {
@@ -98,6 +98,6 @@ void CTeamHandler::GameFrame(int frameNum)
 		for (int a = 0; a < ActiveTeams(); ++a) {
 			Team(a)->SlowUpdate();
 		}
-		CTeamHighlight::Update();
+		CTeamHighlight::Update(team);
 	}
 }

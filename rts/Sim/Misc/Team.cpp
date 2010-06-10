@@ -86,7 +86,7 @@ CR_REG_METADATA(CTeam, (
 //////////////////////////////////////////////////////////////////////
 
 CTeam::CTeam()
-: isDead(true),
+: isDead(false),
   gaia(false),
   lineageRoot(-1),
   metal(0),
@@ -383,8 +383,6 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit,AddType type)
 {
-	if(units.empty())
-		isDead = false;
 	units.insert(unit);
 	switch (type) {
 		case AddBuilt: {

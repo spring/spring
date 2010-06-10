@@ -102,11 +102,7 @@ public:
 		return ((id >= 0) && (id < ActiveTeams()));
 	}
 
-	void GameFrame(int frameNum);
-
-	void EnableHighlight(unsigned currentTime);
-	void DisableHighlight();
-	void UpdateHighlight();
+	void GameFrame(int frameNum, int team);
 
 private:
 
