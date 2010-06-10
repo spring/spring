@@ -283,31 +283,49 @@ std::vector<SkirmishAIKey> CAILibraryManager::FittingSkirmishAIKeys(
 
 
 const CSkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
-	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
 
+	const CSkirmishAILibrary* aiLib = NULL;
+
+	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
 	if (aiInfo == skirmishAIInfos.end()) {
 		logOutput.Print(
-			"Aborting the game, unknown skirmish AI specified: %s %s",
-			skirmishAIKey.GetShortName().c_str(),
-			skirmishAIKey.GetVersion().c_str()
-		);
-		return NULL;
+				"ERROR: Unknown skirmish AI specified: %s %s",
+				skirmishAIKey.GetShortName().c_str(),
+				skirmishAIKey.GetVersion().c_str()
+				);
+	} else {
+		CAIInterfaceLibrary* interfaceLib = FetchInterface(skirmishAIKey.GetInterface());
+		if ((interfaceLib != NULL) && interfaceLib->IsInitialized()) {
+			aiLib = interfaceLib->FetchSkirmishAILibrary(*(aiInfo->second));
+		}
 	}
 
-	return FetchInterface(skirmishAIKey.GetInterface())->FetchSkirmishAILibrary(*(aiInfo->second));
+	return aiLib;
 }
 
 void CAILibraryManager::ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
-	FetchInterface(skirmishAIKey.GetInterface())->ReleaseSkirmishAILibrary(skirmishAIKey);
-	ReleaseInterface(skirmishAIKey.GetInterface()); // only releases the library if its load count is 0
+
+	CAIInterfaceLibrary* interfaceLib = FetchInterface(skirmishAIKey.GetInterface());
+	if ((interfaceLib != NULL) && interfaceLib->IsInitialized()) {
+		interfaceLib->ReleaseSkirmishAILibrary(skirmishAIKey);
+		// only releases the library if its load count is 0
+		ReleaseInterface(skirmishAIKey.GetInterface());
+	} else {
+		// Not releasing, because the AI Interface is not initialized,
+		// and so neither was the AI.
+	}
 }
 
 void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
 	T_loadedInterfaces::const_iterator lil;
 
 	for (lil = loadedAIInterfaceLibraries.begin(); lil != loadedAIInterfaceLibraries.end(); lil++) {
-		FetchInterface(lil->first)->ReleaseAllSkirmishAILibraries();
-		ReleaseInterface(lil->first); // only releases the library if its load count is 0
+		CAIInterfaceLibrary* interfaceLib = FetchInterface(lil->first);
+		if ((interfaceLib != NULL) && interfaceLib->IsInitialized()) {
+			interfaceLib->ReleaseAllSkirmishAILibraries();
+			// only releases the library if its load count is 0
+			ReleaseInterface(lil->first);
+		}
 	}
 }
 
@@ -322,6 +340,11 @@ CAIInterfaceLibrary* CAILibraryManager::FetchInterface(const AIInterfaceKey& int
 		T_interfaceInfos::const_iterator interfaceInfo = interfaceInfos.find(interfaceKey);
 		if (interfaceInfo != interfaceInfos.end()) {
 			interfaceLib = new CAIInterfaceLibrary(*(interfaceInfo->second));
+			if (!interfaceLib->IsInitialized()) {
+				delete interfaceLib;
+				interfaceLib = NULL;
+			}
+			// storing this for later use, even if it is NULL (faield to init)
 			loadedAIInterfaceLibraries[interfaceKey] = interfaceLib;
 		} else {
 			// unavailable interface requested, returning NULL

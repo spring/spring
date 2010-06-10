@@ -18,7 +18,8 @@ struct SSkirmishAICallback;
  */
 class CSkirmishAI {
 public:
-	CSkirmishAI(int teamId, const SkirmishAIKey& skirmishAIKey,
+	CSkirmishAI(int teamId, int skirmishAIId,
+		const SkirmishAIKey& skirmishAIKey,
 		const SSkirmishAICallback* c_callback);
 	~CSkirmishAI();
 
@@ -30,6 +31,9 @@ public:
 	/**
 	 * No events are forwarded to the Skirmish AI plugin
 	 * after this method has been called.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
 	void Dieing();
 

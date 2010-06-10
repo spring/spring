@@ -66,9 +66,7 @@ public:
 	/**
 	 * @brief	is the Skirmish AI library loaded
 	 */
-	bool IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const {
-		return GetSkirmishAILibraryLoadCount(key) > 0;
-	}
+	bool IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const;
 	/**
 	 * @brief	unloads all AIs
 	 * Unloads all AI libraries currently loaded through this interface.
@@ -79,13 +77,17 @@ public:
 	 * @brief	path to the library file
 	 * Returns the path to the shared library file wrapped by this class.
 	 */
-	const std::string& GetLibraryFilePath() const {
-		return libFilePath;
-	}
+	const std::string& GetLibraryFilePath() const;
+
+	/**
+	 * @brief	whether this interface is successfully initialized
+	 */
+	const bool IsInitialized() const;
 
 private:
 	int interfaceId;
 	struct SAIInterfaceCallback callback;
+	bool initialized;
 	void InitStatic();
 	void ReleaseStatic();
 
