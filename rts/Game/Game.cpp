@@ -3563,7 +3563,7 @@ void CGame::SimFrame() {
 	wind.Update();
 	loshandler->Update();
 
-	teamHandler->GameFrame(gs->frameNum);
+	teamHandler->GameFrame(gs->frameNum, gu->myTeam);
 	playerHandler->GameFrame(gs->frameNum);
 
 	lastUpdate = SDL_GetTicks();

@@ -16,7 +16,7 @@ void CTeamHighlight::Enable(unsigned currentTime) {
 	if(highlight) {
 		for(int i=0; i < teamHandler->ActiveTeams(); ++i) {
 			CTeam *t = teamHandler->Team(i);
-			if(!t->isDead && t->highlight > 0.0f) {
+			if(t->highlight > 0.0f) {
 				oldColors[i] = *(int *)t->color;
 				float s = (float)(currentTime & 255) * 4.0f / 255.0f;
 				int c =(int)(255.0f * ((s > 2.0f) ? 3.0f - s : s - 1.0f));
@@ -38,13 +38,14 @@ void CTeamHighlight::Disable() {
 	}
 }
 
-void CTeamHighlight::Update() {
+void CTeamHighlight::Update(int team) {
 	bool hl = false;
 	int maxhl = 1000 * (gc->networkTimeout + 1);
 	for(int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
 		CTeam *t = teamHandler->Team(ti);
 		float teamhighlight = 0.0f;
-		if(!t->isDead && !t->gaia && skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) {
+		if(!t->isDead && !t->units.empty() && teamHandler->AlliedTeams(team, ti) && 
+			!t->gaia && skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) {
 			int minPing = INT_MAX;
 			bool hasPlayers = false;
 			for(int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
