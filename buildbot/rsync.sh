@@ -1,19 +1,11 @@
 #!/bin/bash
+. prepare.sh
 
-# Quit on error.
-set -e
-
-cd $(dirname $0)/..
-
-CONFIG=${1}
-BRANCH=${2}
-TMP_BASE=/tmp/spring
 REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www
+TMP_BASE=/tmp/spring
 TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}
-REV=$(git describe --tags)
-LOCAL_BASE=build-${CONFIG}
-BASE_ARCHIVE=${TMP_PATH}/${REV}_base.7z
+BASE_ARCHIVE="${TMP_PATH}/${VERSION}_base.7z"
 CMD="rsync -avz --chmod=D+rx,F+r"
 
 umask 022
@@ -24,17 +16,17 @@ function zip() {
 	name=$2
 	if [ -f ${file} ]; then
 		debugfile=${file%.*}.dbg
-		archive=${TMP_PATH}/${REV}_${name}.7z
-		archive_debug=${TMP_PATH}/${REV}_${name}_dbg.7z
-		7z u ${archive} ${file}
-		[ ! -f ${debugfile} ] || 7z u ${archive_debug} ${debugfile}
+		archive="${TMP_PATH}/${VERSION}_${name}.7z"
+		archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
+		7za u "${archive}" ${file}
+		[ ! -f ${debugfile} ] || 7za u "${archive_debug}" ${debugfile}
 	fi
 }
 
 # Create one archive for base content and two archives for each exe/dll:
 # one containing the exe/dll, and one containing debug symbols.
-cd ${LOCAL_BASE}
-7z u ${BASE_ARCHIVE} base
+cd ${BUILDDIR}
+7za u "${BASE_ARCHIVE}" base
 for tostripfile in spring.exe spring-dedicated.exe spring-gml.exe spring-hl.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
 done
