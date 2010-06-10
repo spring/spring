@@ -43,7 +43,7 @@ void CTeamHighlight::Update() {
 	for(int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
 		CTeam *t = teamHandler->Team(ti);
 		float teamhighlight = 0.0f;
-		if(!t->isDead) {
+		if(!t->isDead && !t->gaia) {
 			int minPing = INT_MAX;
 			bool hasPlayers = false;
 			for(int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
