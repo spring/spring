@@ -3,8 +3,6 @@
 
 MINGWLIBS_PATH=${3}
 MINGW_HOST=i586-mingw32msvc-
-TMP_BASE=/tmp/spring
-TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}
 
 echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.nsi
 echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
