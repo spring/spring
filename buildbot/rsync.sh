@@ -1,5 +1,5 @@
 #!/bin/bash
-. prepare.sh
+. buildbot/prepare.sh
 
 REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www

@@ -11,7 +11,6 @@
 
 # Quit on error.
 set -e
-cd $(dirname $0)/..
 
 CONFIG=${1:-default}
 BRANCH=${2:-master}
