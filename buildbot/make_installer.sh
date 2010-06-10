@@ -1,5 +1,5 @@
 #!/bin/bash
-. prepare.sh
+. buildbot/prepare.sh
 
 MINGWLIBS_PATH=${3}
 MINGW_HOST=i586-mingw32msvc-
