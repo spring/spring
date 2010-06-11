@@ -224,23 +224,29 @@ void SpringApp::SetProcessAffinity(int affinity) {
 	if (affinity > 0) {
 		//! Get the available cores
 		DWORD curMask;
-		DWORD cores;
+		DWORD cores = 0;
 		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
 
-		DWORD wantedCore = 0xff;
+		DWORD_PTR wantedCore = 0xff;
 
 		//! Find an useable core
-		cores /= 0x1;
-		while ((wantedCore & cores) == 0x0) {
-			wantedCore >>= 0x1;
+		while ((wantedCore & cores) == 0 ) {
+			wantedCore >>= 1;
 		}
 
 		//! Set the affinity
 		HANDLE thread = GetCurrentThread();
-		if (affinity == 1) {
-			SetThreadIdealProcessor(thread, wantedCore);
-		} else if (affinity >= 2) {
-			SetThreadAffinityMask(thread, wantedCore);
+		DWORD_PTR result = 0;
+		if (affinity==1) {
+			result = SetThreadIdealProcessor(thread,(DWORD)wantedCore);
+		} else if (affinity>=2) {
+			result = SetThreadAffinityMask(thread,wantedCore);
+		}
+
+		if (result > 0) {
+			logOutput.Print("CPU: affinity set (%d)", affinity);
+		} else {
+			logOutput.Print("CPU: affinity failed");
 		}
 	}
 #elif defined(__APPLE__)
