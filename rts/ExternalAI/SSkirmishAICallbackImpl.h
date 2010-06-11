@@ -60,6 +60,7 @@ EXPORT(int              ) skirmishAiCallback_Game_getMyTeam(int teamId);
 EXPORT(int              ) skirmishAiCallback_Game_getMyAllyTeam(int teamId);
 EXPORT(int              ) skirmishAiCallback_Game_getPlayerTeam(int teamId, int playerId);
 EXPORT(const char*      ) skirmishAiCallback_Game_getTeamSide(int teamId, int otherTeamId);
+EXPORT(struct SAIFloat3 ) skirmishAiCallback_Game_getTeamColor(int teamId, int otherTeamId);
 EXPORT(int              ) skirmishAiCallback_Game_getTeamAllyTeam(int teamId, int otherTeamId);
 EXPORT(bool             ) skirmishAiCallback_Game_isAllied(int teamId, int firstAllyTeamId, int secondAllyTeamId);
 EXPORT(bool             ) skirmishAiCallback_Game_isExceptionHandlingEnabled(int teamId);

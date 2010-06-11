@@ -233,6 +233,14 @@ int (CALLING_CONV *Clb_Game_getPlayerTeam)(int teamId, int playerId);
  * @return eg. "ARM" or "CORE"; may be "", depending on how the game was setup
  */
 const char* (CALLING_CONV *Clb_Game_getTeamSide)(int teamId, int otherTeamId);
+/**
+ * Returns the color of a team in the game.
+ *
+ * This should only be used when drawing stuff,
+ * and not for team-identification.
+ * @return the RGB color of a team, with values in [0, 255]
+ */
+struct SAIFloat3 (CALLING_CONV *Clb_Game_getTeamColor)(int teamId, int otherTeamId);
 /// Returns the ally-team of a team
 int (CALLING_CONV *Clb_Game_getTeamAllyTeam)(int teamId, int otherTeamId);
 /// Returns true, if the two supplied ally-teams are currently allied
