@@ -1069,6 +1069,13 @@ EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int teamId, int otherTea
 	CAICallback* clb = team_callback[teamId]; return clb->GetTeamSide(otherTeamId);
 }
 
+EXPORT(struct SAIFloat3) skirmishAiCallback_Game_getTeamColor(int teamId, int otherTeamId) {
+
+	const unsigned char* color = teamHandler->Team(otherTeamId)->color;
+	const SAIFloat3 f3color = {color[0], color[1], color[2]};
+	return f3color;
+}
+
 EXPORT(int) skirmishAiCallback_Game_getTeamAllyTeam(int teamId, int otherTeamId) {
 	return teamHandler->AllyTeam(otherTeamId);
 }
@@ -3489,6 +3496,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Game_getMyAllyTeam = &skirmishAiCallback_Game_getMyAllyTeam;
 	callback->Clb_Game_getPlayerTeam = &skirmishAiCallback_Game_getPlayerTeam;
 	callback->Clb_Game_getTeamSide = &skirmishAiCallback_Game_getTeamSide;
+	callback->Clb_Game_getTeamColor = &skirmishAiCallback_Game_getTeamColor;
 	callback->Clb_Game_getTeamAllyTeam = &skirmishAiCallback_Game_getTeamAllyTeam;
 	callback->Clb_Game_isAllied = &skirmishAiCallback_Game_isAllied;
 	callback->Clb_Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
