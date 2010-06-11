@@ -51,7 +51,7 @@ RE_VERSION_LINES = [
 RE_CONFIG = r'(?:\[(?P<config>\w+)\])?'
 RE_BRANCH = r'(?:\{(?P<branch>\w+)\})?'
 RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
-RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV)
+RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
 
 # Match filename of file with debugging symbols, capture module name.
 RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>\w+)_dbg.7z')
@@ -121,11 +121,20 @@ def detect_version_details(infolog):
 	'''\
 	Detect config, branch, rev from version string(s) in infolog.
 
+	These should be fine:
+
 		>>> detect_version_details('Spring 0.81+.0.0 (0.81.2.1-1059-g7937d00) has crashed.')
 		('default', 'master', '0.81.2.1-1059-g7937d00')
 
 		>>> detect_version_details('Hang detection triggered for Spring 0.81+.0.0 ([debug2]{pyAiInt}0.81.2.1-1059-g7937d00).')
 		('debug2', 'pyAiInt', '0.81.2.1-1059-g7937d00')
+
+	This is an old-style (BuildServ) version string, it should be rejected:
+
+		>>> detect_version_details('Spring 0.81.2.1 (0.81.2.1-0-g884a107{@}-cmake-mingw32) has crashed.')
+		Traceback (most recent call last):
+			...
+		FatalError: Unable to parse detailed version string "0.81.2.1-0-g884a107{@}-cmake-mingw32"
 	'''
 	log.info('Detecting version details...')
 
@@ -138,7 +147,8 @@ def detect_version_details(infolog):
 	else:
 		fatal('Unable to find detailed version in infolog')
 
-	match = RE_VERSION_DETAILS.match(version)
+	# a space is added so the regex can check for (end of string | space) easily.
+	match = RE_VERSION_DETAILS.match(version + ' ')
 	if not match:
 		fatal('Unable to parse detailed version string "%s"' % version)
 
@@ -179,6 +189,9 @@ def collect_modules(config, branch, rev):
 	log.info('Checking debug data availability...')
 
 	dir = os.path.join(WWWROOT, config, branch, rev)
+	if not os.path.isdir(dir):
+		fatal('No debugging symbols available')
+
 	modules = {}
 	for filename in os.listdir(dir):
 		match = RE_DEBUG_FILENAME.match(filename)
@@ -288,7 +301,7 @@ def translate_stacktrace(infolog):
 
 	Example of a local call:
 
-		>>> translate_stacktrace(file('infolog.txt').read())
+		>>> translate_stacktrace(file('infolog.txt').read())   #doctest:+SKIP
 		[('rts/Rendering/Env/GrassDrawer.cpp', 229),
 		 ('rts/Rendering/Env/GrassDrawer.cpp', 136),
 		 ('rts/Rendering/Env/AdvTreeDrawer.cpp', 54),
