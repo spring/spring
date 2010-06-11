@@ -67,6 +67,7 @@
 #elif defined(__APPLE__)
 #else
 	#include <X11/Xlib.h>
+	#include <sched.h>
 #endif
 
 #ifdef USE_GML
@@ -208,10 +209,19 @@ bool SpringApp::Initialize()
 	// Initialize Lua GL
 	LuaOpenGL::Init();
 
-#ifdef WIN32
-	int affinity = configHandler->Get("SetCoreAffinity", 0);
 
-	if (affinity>0) {
+	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
+
+	InitJoystick();
+	// Create CGameSetup and CPreGame objects
+	Startup();
+
+	return true;
+}
+
+void SpringApp::SetProcessAffinity(int affinity) {
+#ifdef WIN32
+	if (affinity > 0) {
 		//! Get the available cores
 		DWORD curMask;
 		DWORD cores;
@@ -221,26 +231,48 @@ bool SpringApp::Initialize()
 
 		//! Find an useable core
 		cores /= 0x1;
-		while( (wantedCore & cores) == 0x0 ) {
+		while ((wantedCore & cores) == 0x0) {
 			wantedCore >>= 0x1;
 		}
 
 		//! Set the affinity
 		HANDLE thread = GetCurrentThread();
-		if (affinity==1) {
-			SetThreadIdealProcessor(thread,wantedCore);
-		} else if (affinity>=2) {
-			SetThreadAffinityMask(thread,wantedCore);
+		if (affinity == 1) {
+			SetThreadIdealProcessor(thread, wantedCore);
+		} else if (affinity >= 2) {
+			SetThreadAffinityMask(thread, wantedCore);
 		}
 	}
-#endif // WIN32
+#elif defined(__APPLE__)
+	// no-op
+#else
+	if (affinity > 0) {
+		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
+		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
 
-	InitJoystick();
-	// Create CGameSetup and CPreGame objects
-	Startup();
+		// use pid of calling process (0)
+		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
 
-	return true;
+		// interpret <affinity> as a bit-mask indicating
+		// on which of the available system CPU's (which
+		// are numbered logically from 0 to N-1) we want
+		// to run
+		// note that this approach will fail when N > 32
+		logOutput.Print("[SetProcessAffinity(%d)] available system CPU's: %d", affinity, CPU_COUNT(&cpusSystem));
+
+		// add the available system CPU's to the wanted set
+		for (int n = CPU_COUNT(&cpusSystem) - 1; n >= 0; n--) {
+			if ((affinity & (1 << n)) != 0 && CPU_ISSET(n, &cpusSystem)) {
+				CPU_SET(n, &cpusWanted);
+			}
+		}
+
+		sched_setaffinity(0, sizeof(cpu_set_t), &cpusWanted);
+	}
+#endif
 }
+
+
 
 /**
  * @brief multisample test
