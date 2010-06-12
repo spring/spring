@@ -3545,8 +3545,8 @@ void CGame::SimFrame() {
 		if (gu->directControl) {
 			(playerHandler->Player(gu->myPlayerNum)->dccs).SendStateUpdate(camMove);
 		}
+		CTeamHighlight::Update(gs->frameNum);
 	}
-
 
 	// everything from here is simulation
 	ScopedTimer forced("Sim time"); // don't use SCOPED_TIMER here because this is the only timer needed always
@@ -3563,7 +3563,7 @@ void CGame::SimFrame() {
 	wind.Update();
 	loshandler->Update();
 
-	teamHandler->GameFrame(gs->frameNum, gu->myTeam);
+	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
 
 	lastUpdate = SDL_GetTicks();

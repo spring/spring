@@ -39,6 +39,13 @@ public:
 	 * Maximum size of network packets to send
 	 */
 	unsigned mtu;
+
+	/**
+	 * @brief teamHighlight
+	 *
+	 * Team highlighting for teams that are uncontrolled or have connection problems
+	 */
+	bool teamHighlight;
 };
 
 extern GlobalConfig* gc;
