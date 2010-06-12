@@ -215,8 +215,8 @@ def collect_modules(config, branch, rev):
 
 def translate_module_addresses(module, debugfile, addresses):
 	'''\
-	Translate addresses in a single module to (filename, lineno) tuples by
-	invoking addr2line exactly once on the debugging symbols for that module.
+	Translate addresses in a module to (module, address, filename, lineno) tuples
+	by invoking addr2line exactly once on the debugging symbols for that module.
 	'''
 	with NamedTemporaryFile() as tempfile:
 		log.info('\tExtracting debug symbols for module %s from archive %s...' % (module, os.path.basename(debugfile)))
@@ -241,12 +241,12 @@ def translate_module_addresses(module, debugfile, addresses):
 			fatal('%s exited with status %s' % (ADDR2LINE, addr2line.returncode))
 		log.info('\t\t[OK]')
 
-	def fixup(func, line):
+	def fixup(addr, func, line):
 		if PATH_STRIP_UNTIL in func:
 			func = func[func.index(PATH_STRIP_UNTIL)+len(PATH_STRIP_UNTIL):]
-		return func, int(line)
+		return module, addr, func, int(line)
 
-	return [fixup(*line.split(':')) for line in stdout.splitlines()]
+	return [fixup(addr, *line.split(':')) for addr, line in zip(addresses, stdout.splitlines())]
 
 
 def translate_(module_frames, frame_count, modules):
@@ -266,8 +266,8 @@ def translate_(module_frames, frame_count, modules):
 			for index, translated_frame in zip(indices, translated_frames):
 				translated_stacktrace[index] = translated_frame
 		else:
-			for index in indices:
-				translated_stacktrace[index] = ('??', 0)   # unknown
+			for i in range(len(indices)):
+				translated_stacktrace[indices[i]] = (module, addrs[i], '??', 0)   # unknown
 
 	log.debug('translated_stacktrace = %s', translated_stacktrace)
 	log.info('\t[OK]')
@@ -275,15 +275,15 @@ def translate_(module_frames, frame_count, modules):
 
 
 def translate_stacktrace(infolog):
-	'''\
-	Translate a complete stacktrace to (filename, lineno) tuples.
+	r'''\
+	Translate a complete stacktrace to (module, address, filename, lineno) tuples.
 
 	The input string may be a complete infolog (i.e. infolog.txt). At the very
 	least it must contain the 'Spring XXX has crashed.' or 'Hang detection
 	triggered for Spring XXX.' line and at least one stack frame.
 
-	The output is a list of (filename, lineno) tuples, or ('??', 0) for each
-	frame that could not be translated.
+	The output is a list of (module, address, filename, lineno) tuples,
+	or (module, address, '??', 0) for each frame that could not be translated.
 
 	Example of a remote call to the service in Python:
 	(Note that tuples have become lists)
@@ -291,24 +291,24 @@ def translate_stacktrace(infolog):
 		>>> from xmlrpclib import ServerProxy   #doctest:+SKIP
 		... proxy = ServerProxy('http://springrts.com:8000/')
 		... proxy.translate_stacktrace(file('infolog.txt').read())
-		[['rts/Rendering/Env/GrassDrawer.cpp', 229],
-		 ['rts/Rendering/Env/GrassDrawer.cpp', 136],
-		 ['rts/Rendering/Env/AdvTreeDrawer.cpp', 54],
-		 ['rts/Rendering/Env/BaseTreeDrawer.cpp', 57],
-		 ['rts/Game/Game.cpp', 527],
+		[['C:\\Program Files\\Spring\\spring.exe', '0x0080F6F8', 'rts/Rendering/Env/GrassDrawer.cpp', 229],
+		 ['C:\\Program Files\\Spring\\spring.exe', '0x008125DF', 'rts/Rendering/Env/GrassDrawer.cpp', 136],
+		 ['C:\\Program Files\\Spring\\spring.exe', '0x00837E8C', 'rts/Rendering/Env/AdvTreeDrawer.cpp', 54],
+		 ['C:\\Program Files\\Spring\\spring.exe', '0x0084189E', 'rts/Rendering/Env/BaseTreeDrawer.cpp', 57],
+		 ['C:\\Program Files\\Spring\\spring.exe', '0x00402AA8', 'rts/Game/Game.cpp', 527],
 		 ...
-		 ['??', 0]]
+		 ['C:\\WINDOWS\\system32\\kernel32.dll(RegisterWaitForInputIdle+0x49)', '0x7C7E7077', '??', 0]]
 
 	Example of a local call:
 
-		>>> translate_stacktrace(file('infolog.txt').read())   #doctest:+SKIP
-		[('rts/Rendering/Env/GrassDrawer.cpp', 229),
-		 ('rts/Rendering/Env/GrassDrawer.cpp', 136),
-		 ('rts/Rendering/Env/AdvTreeDrawer.cpp', 54),
-		 ('rts/Rendering/Env/BaseTreeDrawer.cpp', 57),
-		 ('rts/Game/Game.cpp', 527),
+		>>> translate_stacktrace(file('infolog.txt').read())
+		[('C:\\Program Files\\Spring\\spring.exe', '0x0080F6F8', 'rts/Rendering/Env/GrassDrawer.cpp', 229),
+		 ('C:\\Program Files\\Spring\\spring.exe', '0x008125DF', 'rts/Rendering/Env/GrassDrawer.cpp', 136),
+		 ('C:\\Program Files\\Spring\\spring.exe', '0x00837E8C', 'rts/Rendering/Env/AdvTreeDrawer.cpp', 54),
+		 ('C:\\Program Files\\Spring\\spring.exe', '0x0084189E', 'rts/Rendering/Env/BaseTreeDrawer.cpp', 57),
+		 ('C:\\Program Files\\Spring\\spring.exe', '0x00402AA8', 'rts/Game/Game.cpp', 527),
 		 ...
-		 ('??', 0)]
+		 ('C:\\WINDOWS\\system32\\kernel32.dll(RegisterWaitForInputIdle+0x49)', '0x7C7E7077', '??', 0)]
 	'''
 
 	log.info('----- Start of translation process -----')
