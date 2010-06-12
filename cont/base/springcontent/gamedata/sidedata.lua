@@ -11,16 +11,15 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local TDF = VFS.Include('gamedata/parse_tdf.lua')
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
-if (not VFS.FileExists('gamedata/sidedata.tdf')) then
-  return false
+local tdfFile = 'gamedata/sidedata.tdf'
+if (not VFS.FileExists(tdfFile)) then
+  return {}
 end
 
-local sideData, err = TDF.Parse('gamedata/sidedata.tdf')
+
+local TDF = VFS.Include('gamedata/parse_tdf.lua')
+local sideData, err = TDF.Parse(tdfFile)
 if (sideData == nil) then
   error('Error parsing sidedata.tdf: ' .. err)
 end
@@ -42,6 +41,7 @@ while (true) do
 end
 
 
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 return luaSides
