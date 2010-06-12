@@ -299,9 +299,16 @@ inline unsigned gmlGetTicks() {
 
 #endif // USE_GML
 
+#ifdef    HEADLESS
+#define glGenerateMipmapEXT_NONGML NULL
+#define glUseProgram_NONGML NULL
+#define glProgramParameteriEXT_NONGML NULL
+#define glBlendEquation_NONGML NULL
+#else  // HEADLESS
 #define glGenerateMipmapEXT_NONGML GLEW_GET_FUN(__glewGenerateMipmapEXT)
 #define glUseProgram_NONGML GLEW_GET_FUN(__glewUseProgram)
 #define glProgramParameteriEXT_NONGML GLEW_GET_FUN(__glewProgramParameteriEXT)
 #define glBlendEquation_NONGML GLEW_GET_FUN(__glewBlendEquation)
+#endif // HEADLESS
 
 #endif

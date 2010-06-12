@@ -116,7 +116,8 @@ SDL_GrabMode SDL_WM_GrabInput(SDL_GrabMode mode) {
 
 // this probably needs to populate infostruct with something reasonable...
 int SDL_GetWMInfo(void * infostruct) {
-   printf("GetWMInfo\n");
+   // called about once per second
+   //printf("GetWMInfo\n");
    return 0; // I *think* this triggers SpringApp.cpp to just use the screen geometry
      // we probably need to stub out X11 and Xcursors too...
 }

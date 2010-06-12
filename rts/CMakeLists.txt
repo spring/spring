@@ -51,10 +51,10 @@ FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(GLU REQUIRED)
 FIND_PACKAGE(GLUT REQUIRED)
 FIND_PACKAGE(GLEW REQUIRED)
-LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
+LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
 # We still link with glew for headless too.
 # (you try stubbing the whole of libGLEW ;-) Good luck with that :-P)
-LIST(APPEND engineCommonLibraries ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY})
+LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 
 FIND_PACKAGE(Freetype REQUIRED)
 LIST(APPEND engineCommonLibraries ${FREETYPE_LIBRARIES})
