@@ -77,9 +77,6 @@ const spring_duration gameStartDelay = spring_secs(4);
 /// The time intervall in msec for sending player statistics to each client
 const spring_duration playerInfoTime = spring_secs(2);
 
-/// msecs to wait until the timeout condition (na active clients) activates
-const spring_duration serverTimeout = spring_secs(30);
-
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
 const unsigned serverKeyframeIntervall = 16;
 
@@ -680,7 +677,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (spring_gettime() > serverStartTime + serverTimeout || spring_istime(gameStartTime))
+	if (spring_gettime() > serverStartTime + spring_secs(gc->initialNetworkTimeout) || spring_istime(gameStartTime))
 	{
 		bool hasPlayers = false;
 		for (size_t i = 0; i < players.size(); ++i)
