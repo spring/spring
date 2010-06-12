@@ -3,6 +3,7 @@ SET(headlessStubsSources
 		"glstub"
 		"glustub"
 		"glxextstub"
+		"wglstub"
 		"sdlstub"
 		"sdlstub_cppbit"
 	)
