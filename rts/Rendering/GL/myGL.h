@@ -10,9 +10,9 @@
 
 #include <string>
 #ifndef HEADLESS
-#include <GL/glew.h>
+	#include <GL/glew.h>
 #else
-#include "lib/headlessStubs/glewstub.h"
+	#include "lib/headlessStubs/glewstub.h"
 #endif
 #include "lib/gml/gml.h"
 
