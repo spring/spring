@@ -102,7 +102,7 @@ public:
 		return ((id >= 0) && (id < ActiveTeams()));
 	}
 
-	void GameFrame(int frameNum, int team);
+	void GameFrame(int frameNum);
 
 private:
 
