@@ -64,9 +64,9 @@ void main() {
 
 	vec3 normal;
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		normal = normalize((texture2D(normalsTex, tc1) * 2.0).rgb - 1.0);
+		normal = normalize((texture2D(normalsTex, normalTexCoords).rgb * 2.0) - 1.0);
 	#else
-		normal.xz = (texture2D(normalsTex, tc1).ra * 2.0) - 1.0;
+		normal.xz = (texture2D(normalsTex, normalTexCoords).ra * 2.0) - 1.0;
 		normal.y  = sqrt(1.0 - dot(normal.xz, normal.xz));
 	#endif
 
