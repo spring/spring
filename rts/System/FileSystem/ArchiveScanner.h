@@ -81,6 +81,12 @@ private:
 		bool updated;
 		std::string replaced;					// If not empty, use that archive instead
 	};
+	struct BrokenArchive
+	{
+		std::string path;
+		unsigned int modified;
+		bool updated;
+	};
 
 	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
 	void Scan(const std::string& curPath, bool doChecksum);
@@ -93,6 +99,7 @@ private:
 	void WriteCacheData(const std::string& filename);
 
 	std::map<std::string, ArchiveInfo> archiveInfo;
+	std::map<std::string, BrokenArchive> brokenArchives;
 	ArchiveData GetArchiveData(const LuaTable& archiveTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	unsigned int GetCRC(const std::string& filename);
