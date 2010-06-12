@@ -28,7 +28,7 @@ What you do is:
 	it might be `/usr/include/SDL/SDL.h`
 * search for the appropriate missing function
 * copy and paste the function declarataion into the appropriate stub file,
-	eg if it is an SDL function, paste it into `stlstub.c`
+	eg if it is an SDL function, paste it into `sdlstub.c`
 * add an empty body for it.
 
 	So you will end up with something like:

@@ -1,6 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "GL/glu.h"
+#undef GL_GLEXT_LEGACY
+#define GL_GLEXT_PROTOTYPES
+#include <GL/glu.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // #include <stdio.h>
 
@@ -26,4 +32,8 @@ GLAPI GLint APIENTRY gluProject (GLdouble objX, GLdouble objY, GLdouble objZ, co
    //printf("gluProject\n");
    return 0;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
