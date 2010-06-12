@@ -1101,6 +1101,14 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return std::max(p1, p2);
 	case ABS:
 		return abs(p1);
+	case KSIN:
+		return int(1024*streflop::sinf(TAANG2RAD*(float)p1));
+	case KCOS:
+		return int(1024*streflop::cosf(TAANG2RAD*(float)p1));
+	case KTAN:
+		return int(1024*streflop::tanf(TAANG2RAD*(float)p1));
+	case SQRT:
+		return int(streflop::sqrtf((float)p1));
 	case FLANK_B_MODE:
 		return unit->flankingBonusMode;
 	case FLANK_B_DIR:

@@ -109,6 +109,10 @@
 #define MAX                      132 // get
 #define ABS                      133 // get
 #define GAME_FRAME               134 // get
+#define KSIN                     135 // get (kiloSine    : 1024*sin(x))
+#define KCOS                     136 // get (kiloCosine  : 1024*cos(x))
+#define KTAN                     137 // get (kiloTangent : 1024*tan(x))
+#define SQRT                     138 // get (square root)
 
 // NOTE: shared variables use codes [1024 - 5119]
 
