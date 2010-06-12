@@ -12,9 +12,14 @@
 --------------------------------------------------------------------------------
 
 
-local TDF = VFS.Include('gamedata/parse_tdf.lua')
+local tdfFile = 'armor.txt'
+if (not VFS.FileExists(tdfFile)) then
+  return {}
+end
 
-local armor, err = TDF.Parse('armor.txt')
+
+local TDF = VFS.Include('gamedata/parse_tdf.lua')
+local armor, err = TDF.Parse(tdfFile)
 if (armor == nil) then
   error('Error parsing armor.txt: ' .. err)
 end
