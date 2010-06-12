@@ -110,7 +110,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/TeamHighlight.h"
+#include "Rendering/TeamHighlight.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
@@ -1796,6 +1796,13 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
+	}
+	else if (cmd == "quitmessage") {
+		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0) {
+			CKeyBindings::HotkeyList quitlist = keyBindings->GetHotkeys("quitmenu");
+			std::string quitkey = quitlist.empty() ? "<none>" : quitlist.front();
+			logOutput.Print(std::string("Press ") + quitkey + " to access the quit menu");
+		}
 	}
 	else if (cmd == "quitmenu") {
 		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0)
