@@ -111,7 +111,7 @@ void CBitmap::Alloc(int w,int h)
 }
 
 
-bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
+bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 {
 	bool noAlpha = true;
 
@@ -120,7 +120,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 
 	textype = GL_TEXTURE_2D;
 
-	if(filename.find(".dds")!=string::npos){
+	if (filename.find(".dds") != std::string::npos) {
 		ddsimage = new nv_dds::CDDSImage();
 		type = BitmapTypeDDS;
 		bool status = ddsimage->load(filename);
@@ -207,7 +207,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 }
 
 
-bool CBitmap::LoadGrayscale (const string& filename)
+bool CBitmap::LoadGrayscale (const std::string& filename)
 {
 	type = BitmapTypeStandardAlpha;
 	channels = 1;
@@ -247,7 +247,7 @@ bool CBitmap::LoadGrayscale (const string& filename)
 }
 
 
-bool CBitmap::Save(string const& filename, bool opaque)
+bool CBitmap::Save(std::string const& filename, bool opaque)
 {
 	if (type == BitmapTypeDDS) {
 		return ddsimage->save(filename);
@@ -282,7 +282,7 @@ bool CBitmap::Save(string const& filename, bool opaque)
 
 	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf);
 
-	const string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
+	const std::string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
 	const bool success = ilSaveImage((char*)fullpath.c_str());
 
 	ilDeleteImages(1,&ImageName);

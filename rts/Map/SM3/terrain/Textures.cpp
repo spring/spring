@@ -80,7 +80,7 @@ namespace terrain {
 
 		tilesize.x = tilesize.y = atof (tdf->SGetValueDef ("10", section + "\\Tilesize").c_str());
 
-		string texture;
+		std::string texture;
 		if (isBumpmap) {
 			if (!tdf->SGetValue (texture, section + "\\Bumpmap"))
 				return;
@@ -128,8 +128,8 @@ namespace terrain {
 		tilesize.y = heightmap->h;
 
 		// Is the blendmap generated or loaded from a file?
-		string blendmapImg;
-		tdf->GetDef (blendmapImg, string(), section + "\\File");
+		std::string blendmapImg;
+		tdf->GetDef (blendmapImg, std::string(), section + "\\File");
 		bool generateBlendmap = blendmapImg.empty();
 		if (generateBlendmap) {
 			// Load blendfactor function parameters
@@ -325,7 +325,7 @@ namespace terrain {
 		return id;
 	}
 
-	GLuint LoadTexture (const string& fn, bool isBumpmap)
+	GLuint LoadTexture (const std::string& fn, bool isBumpmap)
 	{
 		CBitmap bmp;
 
