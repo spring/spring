@@ -20,6 +20,7 @@
 #include "ConfigHandler.h"
 #include <boost/cstdint.hpp>
 #include "GlobalUnsynced.h"
+#include "System/LogOutput.h"
 
 namespace netcode {
 using namespace boost::asio;
@@ -191,7 +192,10 @@ UDPConnection::~UDPConnection()
 void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
 {
 	assert(data->length > 0);
-	outgoingData.push_back(data);
+	if(ProtocolDef::instance()->IsComplete(data->data, data->length))
+		outgoingData.push_back(data);
+	else
+		logOutput.Print("ERROR: Discarding outgoing incomplete packet: ID %d, LEN %d", (data->length > 0) ? (int)data->data[0] : -1, data->length);
 }
 
 bool UDPConnection::HasIncomingData() const
@@ -357,7 +361,10 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 				if (buf.size() >= pos + msglength)
 				{
 					// yes => add to msgQueue and keep going
-					msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(&buf[pos], msglength)));
+					if(proto->IsComplete(&buf[pos], msglength))
+						msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(&buf[pos], msglength)));
+					else
+						logOutput.Print("ERROR: Discarding incoming incomplete packet: ID %d, LEN %d", (msglength > 0) ? (int)buf[pos] : -1, msglength);
 					pos += msglength;
 				}
 				else
