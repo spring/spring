@@ -18,6 +18,7 @@
 #include "myMath.h"
 #include "Rendering/Textures/Bitmap.h"
 
+using std::string;
 
 //////////////////////////////////////////////////////////////////////
 // CMouseCursor Class
