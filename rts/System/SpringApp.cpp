@@ -64,7 +64,7 @@
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/WinVersion.h"
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
 	#include <sched.h>
@@ -469,7 +469,7 @@ bool SpringApp::GetDisplayGeometry()
 		return false;
 	}
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(HEADLESS)
 	// todo: enable this function, RestoreWindowPosition() and SaveWindowPosition() on Mac
 	return false;
 
@@ -987,7 +987,7 @@ void SpringApp::UpdateSDLKeys()
 
 static void ResetScreenSaverTimeout()
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(HEADLESS)
 	return;
 #endif
 
@@ -1087,7 +1087,7 @@ int SpringApp::Run(int argc, char *argv[])
  */
 void SpringApp::RestoreWindowPosition()
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(HEADLESS)
 	return;
 #else
 	if (!globalRendering->fullScreen) {

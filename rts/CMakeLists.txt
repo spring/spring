@@ -65,7 +65,7 @@ IF (MINGW)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
 ELSE (MINGW)
 	FIND_PACKAGE(X11 REQUIRED)
-	LIST(APPEND engineCommonLibraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
+	LIST(APPEND engineLibraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
 ENDIF (MINGW)
 
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
