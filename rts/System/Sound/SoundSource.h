@@ -11,7 +11,6 @@
 
 class float3;
 class SoundItem;
-class COggStream;
 
 /**
  * @brief One soundsource wich can play some sounds

@@ -8,11 +8,13 @@ SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ADD_DEFINITIONS(-DHEADLESS)
+ADD_DEFINITIONS(-DNO_SOUND)
 REMOVE_DEFINITIONS(-DAVI_CAPTURING)
 
 # headlessstubs are our stubs that replace libGL, libGLU, libSDL (yes really!)
-# and also certain functions in libGLEW (we still link with libGLEW anyway)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
+
+LIST(APPEND engineHeadlessLibraries no-sound)
 
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 

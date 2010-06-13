@@ -2,7 +2,9 @@
 
 #include "ISound.h"
 
+#ifndef   NO_SOUND
 #include "Sound.h"
+#endif // NO_SOUND
 #include "NullSound.h"
 
 #include "SoundLog.h"
@@ -14,11 +16,14 @@ ISound* ISound::singleton = NULL;
 void ISound::Initialize() {
 
 	if (singleton == NULL) {
+#ifndef NO_SOUND
 		const bool noSound = configHandler->Get("NoSound", false);
-		if (noSound) {
-			singleton = new NullSound();
-		} else {
+		if (!noSound) {
 			singleton = new CSound();
+		} else
+#endif // NO_SOUND
+		{
+			singleton = new NullSound();
 		}
 	} else {
 		LogObject(LOG_SOUND) <<  "warning: Sound is already initialized!";

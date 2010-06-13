@@ -51,7 +51,7 @@
 #include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "UnitDef.h"
 #include "Unit.h"
 #include "UnitHandler.h"

@@ -13,10 +13,9 @@
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
-#include "AudioChannel.h"
-#include "Music.h"
+#include "IEffectChannel.h"
+#include "IMusicChannel.h"
 #include "ALShared.h"
-#include "Music.h"
 
 #include "LogOutput.h"
 #include "TimeProfiler.h"

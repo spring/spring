@@ -40,7 +40,7 @@
 #include "Sim/Units/UnitTracker.h"
 #include "EventHandler.h"
 #include "Sound/ISound.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include <boost/cstdint.hpp>
 
 // can't be up there since those contain conflicting definitions

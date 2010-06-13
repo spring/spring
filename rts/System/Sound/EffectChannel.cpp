@@ -1,25 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "AudioChannel.h"
+#include "EffectChannel.h"
 
 #include "ISound.h"
+#include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 
-namespace Channels
+EffectChannel::EffectChannel()
 {
-	EffectChannel General;
-	EffectChannel Battle;
-	EffectChannel UnitReply;
-	EffectChannel UserInterface;
 }
-
-AudioChannel::AudioChannel() : volume(1.0f), enabled(true)
-{
-};
-
-EffectChannel::EffectChannel() : emmitsPerFrame(32)
-{
-};
 
 void EffectChannel::PlaySample(size_t id, float ovolume)
 {
