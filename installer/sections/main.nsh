@@ -17,7 +17,7 @@
 	File "${MINGWLIBS_DIR}\dll\glew32.dll"
 	File "${MINGWLIBS_DIR}\dll\python25.dll"
 	File "${MINGWLIBS_DIR}\dll\zlib1.dll"
-	File "${MINGWLIBS_DIR}\dll\soft_oal.dll"
+	File "${MINGWLIBS_DIR}\dll\OpenAL32.dll"
 	File "${MINGWLIBS_DIR}\dll\vorbisfile.dll"
 	File "${MINGWLIBS_DIR}\dll\vorbis.dll"
 	File "${MINGWLIBS_DIR}\dll\ogg.dll"
@@ -168,9 +168,8 @@
 	Delete "$INSTDIR\python25.dll"
 	Delete "$INSTDIR\SDL.dll"
 	Delete "$INSTDIR\zlib1.dll"
-	Delete "$INSTDIR\soft_oal.dll"
-	; next two are deprecated since mingwlibs 20.1 (around spring v0.81.2.1)
 	Delete "$INSTDIR\OpenAL32.dll"
+	; next one is deprecated since mingwlibs 20.1 (around spring v0.81.2.1)
 	Delete "$INSTDIR\wrap_oal.dll"
 	Delete "$INSTDIR\vorbisfile.dll"
 	Delete "$INSTDIR\vorbis.dll"
