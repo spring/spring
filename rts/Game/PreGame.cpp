@@ -33,7 +33,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "Sound/ISound.h"
-#include "Sound/Music.h"
+#include "Sound/IMusicChannel.h"
 #include "Map/MapInfo.h"
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"

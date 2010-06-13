@@ -45,7 +45,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "Sound/ISound.h"
 #include "EventHandler.h"
 #include "FileSystem/SimpleParser.h"

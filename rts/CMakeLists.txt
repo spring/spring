@@ -40,10 +40,14 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/System/)
 
 
 ### Assemble libraries
-FIND_PACKAGE(OpenAL REQUIRED)
-LIST(APPEND engineCommonLibraries ${OPENAL_LIBRARY})
-FIND_PACKAGE(OggVorbis REQUIRED)
-LIST(APPEND engineCommonLibraries ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
+SET(NO_SOUND FALSE CACHE BOOL "Do not compile with support for sound output")
+Add_Subdirectory(System/Sound)
+if    (NO_SOUND)
+	ADD_DEFINITIONS(-DNO_SOUND)
+	LIST(APPEND engineLibraries no-sound)
+else  (NO_SOUND)
+	LIST(APPEND engineLibraries sound)
+endif (NO_SOUND)
 
 # We also still need the header files for headless,
 # even if we are not going to link with gl, glu, or glut
@@ -52,8 +56,6 @@ FIND_PACKAGE(GLU REQUIRED)
 FIND_PACKAGE(GLUT REQUIRED)
 FIND_PACKAGE(GLEW REQUIRED)
 LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
-# We still link with glew for headless too.
-# (you try stubbing the whole of libGLEW ;-) Good luck with that :-P)
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 
 FIND_PACKAGE(Freetype REQUIRED)
@@ -145,7 +147,8 @@ AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/FileSystem sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Net sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Script sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sync sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sound sys_files)
+# Sound is now two static libs
+#AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sound sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/creg sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Input sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/LoadSave sys_files)
