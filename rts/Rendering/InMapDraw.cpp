@@ -17,6 +17,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Net/UnpackPacket.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/BaseNetProtocol.h"
@@ -446,43 +447,66 @@ bool CInMapDraw::AllowedMsg(const CPlayer* sender) const {
 	return true;
 }
 
-void CInMapDraw::GotNetMsg(const unsigned char* msg)
+int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 {
-	const int playerID = msg[2];
+	unsigned char playerID = -1;
+	try {
+		netcode::UnpackPacket pckt(packet, 2);
+		pckt >> playerID;
 
-	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers())) {
-		return;
-	}
-	const CPlayer* sender = playerHandler->Player(playerID);
-	if (sender == NULL) {
-		return;
-	}
+		if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
+			throw netcode::UnpackPacketException("Invalid player number");
 
-	switch (msg[3]) {
+		const CPlayer* sender = playerHandler->Player(playerID);
+		if (sender == NULL)
+			throw netcode::UnpackPacketException("Invalid player number");
+
+		unsigned char drawType;
+		pckt >> drawType;
+
+		switch (drawType) {
 		case MAPDRAW_POINT: {
-			const float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			const bool fromLua = msg[8];
-			const string label = (char*) &msg[9];
-			if (!fromLua || allowLuaMapDrawing) {
+			short int x,z;
+			pckt >> x;
+			pckt >> z;
+			const float3 pos(x, 0, z);
+			unsigned char fromLua;
+			pckt >> fromLua;
+			string label;
+			pckt >> label;
+			if (!fromLua || allowLuaMapDrawing)
 				LocalPoint(pos, label, playerID);
-			}
 			break;
-		}
+							}
 		case MAPDRAW_LINE: {
-			const float3 pos1(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			const float3 pos2(*(short*) &msg[8], 0, *(short*) &msg[10]);
-			const bool fromLua = msg[12];
+			short int x1,z1,x2,z2;
+			pckt >> x1;
+			pckt >> z1;
+			pckt >> x2;
+			pckt >> z2;
+			const float3 pos1(x1, 0, z1);
+			const float3 pos2(x2, 0, z2);
+			unsigned char fromLua;
+			pckt >> fromLua;
 			if (!fromLua || allowLuaMapDrawing) {
 				LocalLine(pos1, pos2, playerID);
 			}
 			break;
-		}
+						   }
 		case MAPDRAW_ERASE: {
-			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
+			short int x,z;
+			pckt >> x;
+			pckt >> z;
+			float3 pos(x, 0, z);
 			LocalErase(pos, playerID);
 			break;
+							}
 		}
+	} catch (netcode::UnpackPacketException &e) {
+		logOutput.Print("Got invalid MapDraw: %s", e.err);
+		playerID = -1;
 	}
+	return playerID;
 }
 
 void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,

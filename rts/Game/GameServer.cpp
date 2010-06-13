@@ -747,8 +747,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 {
 	const boost::uint8_t* inbuf = packet->data;
 	const unsigned a = playernum;
+	unsigned msgCode = (unsigned) inbuf[0];
 
-	switch (inbuf[0]){
+	switch (msgCode){
 		case NETMSG_KEYFRAME:
 		{
 			const int frameNum = *(int*)&inbuf[1];
@@ -758,7 +759,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_PAUSE:
 			if(inbuf[1]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 			} else {
 				if (!inbuf[2])  // reset sync checker
 					syncErrorFrame = 0;
@@ -805,7 +806,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_CUSTOM_DATA: {
 			unsigned playerNum = inbuf[1];
 			if(playerNum!=a) {
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %playerNum));
+				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
 			} else if(inbuf[2] == CUSTOM_DATA_SPEEDCONTROL) {
 				players[a].speedControl = *((int*)&inbuf[3]);
 				UpdateSpeedControl(speedControl);
@@ -826,20 +827,27 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 
 		case NETMSG_PLAYERNAME: {
-			unsigned playerNum = inbuf[2];
-			if (playerNum != a) {
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %playerNum));
-			} else {
-				players[playerNum].name = (std::string)((char*)inbuf+3);
-				players[playerNum].myState = GameParticipant::INGAME;
-				Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
-				Message(str(format(PlayerJoined) %players[playerNum].GetType() %players[playerNum].name), false);
-				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
-				if (hostif)
-				{
-					hostif->SendPlayerJoined(playerNum, players[playerNum].name);
+			try {
+				netcode::UnpackPacket pckt(packet, 2);
+				unsigned char playerNum;
+				pckt >> playerNum;
+
+				if (playerNum != a) {
+					Message(str(format(WrongPlayer) %msgCode %a %playerNum));
+				} else {
+					pckt >> players[playerNum].name;
+					players[playerNum].myState = GameParticipant::INGAME;
+					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
+					Message(str(format(PlayerJoined) %players[playerNum].GetType() %players[playerNum].name), false);
+					Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
+					if (hostif)
+					{
+						hostif->SendPlayerJoined(playerNum, players[playerNum].name);
+					}
 				}
-			}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %d sent invalid PlayerName: %s") %a %e.err));
+			}	
 			break;
 		}
 
@@ -848,7 +856,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
 
 			if (playerNum != a) {
-				Message(str(format(WrongPlayer) %((unsigned int) inbuf[0]) %a %playerNum));
+				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
 			} else {
 				Broadcast(CBaseNetProtocol::Get().SendPathCheckSum(playerNum, playerCheckSum));
 			}
@@ -859,7 +867,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				ChatMessage msg(packet);
 
 				if (static_cast<unsigned>(msg.fromPlayer) != a ) {
-					Message(str(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer));
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)msg.fromPlayer));
 				} else {
 					GotChatMessage(msg);
 				}
@@ -869,17 +877,26 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 		case NETMSG_SYSTEMMSG:
-			if(inbuf[3]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
-			} else {
-				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(inbuf[3], (char*)(&inbuf[4])));
-			}
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				std::string strmsg;
+				pckt >> strmsg;
+				if(playerNum!=a){
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+				} else {
+					Broadcast(CBaseNetProtocol::Get().SendSystemMessage(playerNum, strmsg));
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %d sent invalid SystemMessage: %s") %a %e.err));
+			}	
 			break;
 
 		case NETMSG_STARTPOS: {
 			const unsigned player = inbuf[1];
 			if (player != a) {
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 			} else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				const unsigned team     = (unsigned)inbuf[2];
 				if (team >= teams.size()) {
@@ -906,65 +923,108 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 
 		case NETMSG_COMMAND:
-			if(inbuf[3]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
-			} else {
-				if (!demoReader)
-					Broadcast(packet); //forward data
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				if(playerNum!=a){
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+				} else {
+					if (!demoReader)
+						Broadcast(packet); //forward data
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %e.err));
 			}
 			break;
 
 		case NETMSG_SELECT:
-			if(inbuf[3]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
-			} else {
-				if (!demoReader)
-					Broadcast(packet); //forward data
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				if(playerNum!=a){
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+				} else {
+					if (!demoReader)
+						Broadcast(packet); //forward data
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %e.err));
 			}
 			break;
 
 		case NETMSG_AICOMMAND: {
-			if (inbuf[3] != a) {
-				Message(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				if (playerNum != a) {
+					Message(str(format(WrongPlayer) %msgCode  %a  %(unsigned) playerNum));
+				}
+				else if (noHelperAIs) {
+					Message(str(format(NoHelperAI) %players[a].name %a));
+				}
+				else if (!demoReader) {
+					Broadcast(packet); //forward data
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid AICommand: %s") %players[a].name %e.err));
 			}
-			else if (noHelperAIs) {
-				Message(str(format(NoHelperAI) %players[a].name %a));
-			}
-			else if (!demoReader) {
-				Broadcast(packet); //forward data
-			}
-		} break;
+		} 
+		break;
 
 		case NETMSG_AICOMMANDS: {
-			if (inbuf[3] != a) {
-				Message(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
-			}
-			else if (noHelperAIs) {
-				Message(str(format(NoHelperAI) %players[a].name %a));
-			}
-			else if (!demoReader) {
-				Broadcast(packet); //forward data
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				if (playerNum != a) {
+					Message(str(format(WrongPlayer) %msgCode  %a  %(unsigned) playerNum));
+				}
+				else if (noHelperAIs) {
+					Message(str(format(NoHelperAI) %players[a].name %a));
+				}
+				else if (!demoReader) {
+					Broadcast(packet); //forward data
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid AICommands: %s") %players[a].name %e.err));
 			}
 		} break;
 
 		case NETMSG_AISHARE: {
-			if (inbuf[3] != a) {
-				Message(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
-			} else if (noHelperAIs) {
-				Message(str(format(NoHelperAI) %players[a].name %a));
-			} else if (!demoReader) {
-				Broadcast(packet); //forward data
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				if (playerNum != a) {
+					Message(str(format(WrongPlayer) %msgCode  %a  %(unsigned) playerNum));
+				} else if (noHelperAIs) {
+					Message(str(format(NoHelperAI) %players[a].name %a));
+				} else if (!demoReader) {
+					Broadcast(packet); //forward data
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid AIShare: %s") %players[a].name %e.err));
 			}
 		} break;
 
 		case NETMSG_LUAMSG:
-			if(inbuf[3]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
-			}
-			else if (!demoReader) {
-				Broadcast(packet); //forward data
-				if (hostif)
-					hostif->SendLuaMsg(packet->data, packet->length);
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				if(playerNum!=a){
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+				}
+				else if (!demoReader) {
+					Broadcast(packet); //forward data
+					if (hostif)
+						hostif->SendLuaMsg(packet->data, packet->length);
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %e.err));
 			}
 			break;
 
@@ -981,7 +1041,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SHARE:
 			if(inbuf[1]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 					Broadcast(CBaseNetProtocol::Get().SendShare(inbuf[1], inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8])));
@@ -990,7 +1050,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SETSHARE:
 			if(inbuf[1]!= a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 					Broadcast(CBaseNetProtocol::Get().SendSetShare(inbuf[1], inbuf[2], *((float*)&inbuf[3]), *((float*)&inbuf[7])));
@@ -999,7 +1059,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_PLAYERSTAT:
 			if(inbuf[1]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 			} else {
 				players[a].lastStats = *(PlayerStatistics*)&inbuf[2];
 				Broadcast(packet); //forward data
@@ -1007,18 +1067,22 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_MAPDRAW:
-			if(inbuf[2] != a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]));
-			}
-			else if (!players[playernum].spectator || allowSpecDraw)
-			{
-				Broadcast(packet); //forward data
+			try {
+				netcode::UnpackPacket pckt(packet, 2);
+				unsigned char playerNum;
+				pckt >> playerNum;
+				if(playerNum != a)
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+				else if (!players[playernum].spectator || allowSpecDraw)
+					Broadcast(packet); //forward data
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid MapDraw: %s") %players[a].name %e.err));
 			}
 			break;
 
 		case NETMSG_DIRECT_CONTROL:
 			if(inbuf[1]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 				{
@@ -1032,7 +1096,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_DC_UPDATE:
 			if(inbuf[1]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 					Broadcast(CBaseNetProtocol::Get().SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5])));
@@ -1051,7 +1115,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const unsigned player = (unsigned)inbuf[1];
 			if (player != a)
 			{
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)player));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
 			}
 			else
 			{
@@ -1200,28 +1264,35 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 		}
 		case NETMSG_AI_CREATED: {
-			const unsigned char playerId     = inbuf[2];
-			//const unsigned skirmAIId_rec     = *((unsigned int*)&inbuf[3]); // 4 bytes; should be -1, as we have to create the real one
-			const unsigned char aiTeamId     = inbuf[7];
-			const char* aiName               = (const char*) (&inbuf[8]);
-			const unsigned char playerTeamId = players[playerId].team;
-			GameTeam* tpl                    = &teams[playerTeamId];
-			GameTeam* tai                    = &teams[aiTeamId];
-			//const int numPlayersInAITeam     = countNumPlayersInTeam(players, aiTeam);
-			//const int numAIsInAITeam         = countNumSkirmishAIsInTeam(ais, aiTeam);
-			const bool weAreLeader           = (tai->leader == playerId);
-			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
-			const bool singlePlayer          = (players.size() <= 1);
-			const bool noLeader              = (tai->leader == -1);
+			try {
+				netcode::UnpackPacket pckt(packet, 2);
+				unsigned char playerId;
+				pckt >> playerId;
+				unsigned int skirmishAIId_rec; // 4 bytes; should be -1, as we have to create the real one
+				pckt >> skirmishAIId_rec;
+				unsigned char aiTeamId;
+				pckt >> aiTeamId;
+				std::string aiName;
+				pckt >> aiName;
 
-			if (weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader))) {
-				// creating the AI is ok
-			} else {
-				Message(str(format(NoAICreated) %players[playerId].name %(int)playerId %(int)aiTeamId));
-				break;
-			}
-			const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
-			Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
+				const unsigned char playerTeamId = players[playerId].team;
+				GameTeam* tpl                    = &teams[playerTeamId];
+				GameTeam* tai                    = &teams[aiTeamId];
+				//const int numPlayersInAITeam     = countNumPlayersInTeam(players, aiTeam);
+				//const int numAIsInAITeam         = countNumSkirmishAIsInTeam(ais, aiTeam);
+				const bool weAreLeader           = (tai->leader == playerId);
+				const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
+				const bool singlePlayer          = (players.size() <= 1);
+				const bool noLeader              = (tai->leader == -1);
+
+				if (weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader))) {
+					// creating the AI is ok
+				} else {
+					Message(str(format(NoAICreated) %players[playerId].name %(int)playerId %(int)aiTeamId));
+					break;
+				}
+				const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
+				Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
 
 /*
 #ifdef SYNCDEBUG
@@ -1230,12 +1301,15 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 #endif // SYNCDEBUG
 */
-			ais[skirmishAIId].team = aiTeamId;
-			ais[skirmishAIId].name = aiName;
-			ais[skirmishAIId].hostPlayer = playerId;
-			if (tai->leader == -1) {
-				tai->leader = ais[skirmishAIId].hostPlayer;
-				tai->active = true;
+				ais[skirmishAIId].team = aiTeamId;
+				ais[skirmishAIId].name = aiName;
+				ais[skirmishAIId].hostPlayer = playerId;
+				if (tai->leader == -1) {
+					tai->leader = ais[skirmishAIId].hostPlayer;
+					tai->active = true;
+				}
+			} catch (netcode::UnpackPacketException &e) {
+				Message(str(format("Player %s sent invalid AICreated: %s") %players[a].name %e.err));
 			}
 			break;
 		}
@@ -1291,7 +1365,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const unsigned char allied = inbuf[3];
 			if (player != a)
 			{
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)player));
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
 			}
 			else if (whichAllyTeam == teams[players[a].team].teamAllyteam)
 			{
@@ -1392,14 +1466,14 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		//case NETMSG_RANDSEED:
 		default:
 		{
-			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
+			Message(str(format(UnknownNetmsg) %msgCode %a));
 		}
 		break;
 	}
 
 	// forward special messages to the players that request them
 	size_t playersSize = players.size();
-	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find( inbuf[0] );
+	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find( msgCode );
 	if ( toRelay != relayingMessagesMap.end() ) {
 		PlayersToForwardMsgvec& toRelaySet = toRelay->second;
 		for ( PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); playerToRelay++ ) {
