@@ -503,7 +503,7 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 							}
 		}
 	} catch (netcode::UnpackPacketException &e) {
-		logOutput.Print("Got invalid MapDraw: %s", e.err);
+		logOutput.Print("Got invalid MapDraw: %s", e.err.c_str());
 		playerID = -1;
 	}
 	return playerID;

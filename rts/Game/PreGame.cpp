@@ -218,7 +218,7 @@ void CPreGame::UpdateClientNet()
 					logOutput.Print(message);
 					handleerror(NULL, message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid QuitMessage: %s", e.err);
+					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
 				}		
 				break;
 			}
