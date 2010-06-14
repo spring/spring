@@ -61,6 +61,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Server/MsgStrings.h"
 
+#define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
 
@@ -384,7 +385,7 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 	}
 	if (canReconnect || allowAdditionalPlayers || !spring_istime(gameStartTime))
 	{
-		packetCache.push_back(packet);
+		AddToPacketCache(packet);
 	}
 #ifdef DEDICATED
 	if (demoRecorder) {
@@ -2076,8 +2077,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 
 	// after gamedata and playernum, the player can start loading
-	for (std::list< boost::shared_ptr<const netcode::RawPacket> >::const_iterator it = packetCache.begin(); it != packetCache.end(); ++it)
-		newGuy.SendData(*it); // throw at him all stuff he missed until now
+	for (std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > >::const_iterator lit = packetCache.begin(); lit != packetCache.end(); ++lit)
+		for (std::vector<boost::shared_ptr<const netcode::RawPacket> >::const_iterator vit = lit->begin(); vit != lit->end(); ++vit)
+			newGuy.SendData(*vit); // throw at him all stuff he missed until now
 
 	if (!demoReader || setup->demoName.empty()) { // gamesetup from demo?
 		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
@@ -2161,4 +2163,13 @@ size_t CGameServer::ReserveNextAvailableSkirmishAIId() {
 
 void CGameServer::FreeSkirmishAIId(const size_t skirmishAIId) {
 	usedSkirmishAIIds.remove(skirmishAIId);
+}
+
+void CGameServer::AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt) {
+	if(packetCache.empty() || packetCache.back().size() >= PKTCACHE_VECSIZE) {
+		std::vector<boost::shared_ptr<const netcode::RawPacket> > vec;
+		vec.reserve(PKTCACHE_VECSIZE);
+		packetCache.push_back(vec);
+	}
+	packetCache.back().push_back(pckt);
 }
