@@ -729,7 +729,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				return;
 			}
 		}
-		else if (c.params.size() == 3) {
+		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
 			float3 pos(c.params[0], c.params[1], c.params[2]);
 			SetGoal(pos, owner->pos);
@@ -869,7 +869,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	}
 
 	// user is attacking ground
-	else if (c.params.size() == 3) {
+	else if (c.params.size() >= 3) {
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float3 diff = owner->pos - pos;
 
@@ -1001,7 +1001,7 @@ void CMobileCAI::DrawCommands(void)
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				}
-				else if (ci->params.size() == 3) {
+				else if (ci->params.size() >= 3) {
 					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}
