@@ -19,7 +19,7 @@ include_directories(
 	${rts}/System
 	${rts}/ExternalAI/Interface
 	Wrappers
-	${SDL_INCLUDE_DIR})
+	)
 
 
 # Set these for Interfaces and AIs with C sources
