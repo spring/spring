@@ -71,32 +71,25 @@ Uint32 SDL_GetTicks() {
 }
 
 void SDL_WarpMouse(Uint16 x, Uint16 y) {
-   printf("SDL_WarpMouse\n");
 }
 
 int SDL_WM_IconifyWindow() {
-   printf("IconifyWindow\n");
 }
 
 int SDL_EnableUNICODE(int i) {
-   printf("EnableUNICODE\n");
 }
 
 int SDL_EnableKeyRepeat(int i, int j) {
-   printf("EnableKeyRepeat\n");
 }
 
 void SDL_SetModState(SDLMod i) {
-   printf("SetModState\n");
 }
 
 int SDL_PollEvent(SDL_Event* event) {
- //  printf("PollEvent\n");
 	return 0;
 }
 
 int SDL_PushEvent(SDL_Event* event) {
- //  printf("PushEvent\n");
 	return 0;
 }
 
@@ -104,20 +97,16 @@ void SDL_PumpEvents() {
 }
 
 void SDL_WM_SetIcon(SDL_Surface* icon, Uint8* mask) {
-   printf("SetIcon\n");
 }
 
 void SDL_WM_SetCaption(const char* title, const char* icon) {
-   printf("SetCaption\n");
 }
 
 int SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
-   printf("GetAttribute\n");
 	*value = 0;
 }
 
 SDL_GrabMode SDL_WM_GrabInput(SDL_GrabMode mode) {
-   printf("GrabInput\n");
 }
 
 int SDL_GetWMInfo(void* infostruct) {
@@ -129,32 +118,26 @@ int SDL_GetWMInfo(void* infostruct) {
 }
 
 Uint8* SDL_GetKeyState(int* numkeys) {
-   printf("GetKeyState\n");
 	*numkeys = 0;
 	return stubKeyState;
 }
 
 SDLMod SDL_GetModState() {
-   printf("GetModState\n");
 	return 0;
 }
 
 const SDL_version*  SDL_Linked_Version() {
-   printf("Linked_Version\n");
 	return &stubVersion;
 }
 
 int SDL_ShowCursor(int toggle) {
-   printf("ShowCursor\n");
 }
 
 Uint8 SDL_GetMouseState(int* x, int* y) {
-   printf("GetMouseState\n");
 	return 0;
 }
 
 int SDL_SetGamma(float red, float green, float blue) {
-   printf("SetGamma\n");
 	return 0;
 }
 
