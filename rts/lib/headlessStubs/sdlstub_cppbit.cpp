@@ -3,22 +3,32 @@
 /*
  * This wraps a couple of useful boost c++ time functions,
  * for use in sdlstub
- * (which is written in C, and ca not easily access C++ stuff directly)
+ * (which is written in C, and can not easily access C++ stuff directly)
  */
 
 #include "boost/thread.hpp"
 
-extern "C" int getsystemmilliseconds() {
-   boost::xtime t;
-		boost::xtime_get(&t, boost::TIME_UTC);
-   int milliseconds = t.sec * 1000 + (t.nsec / 1000000 );   
-   return milliseconds;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stub_sdl_getSystemMilliSeconds() {
+
+	boost::xtime t;
+	boost::xtime_get(&t, boost::TIME_UTC);
+	const int milliSeconds = t.sec * 1000 + (t.nsec / 1000000 );   
+	return milliSeconds;
 }
 
-extern "C" void sleepmilliseconds( int milliseconds ) {
-   boost::xtime t;
-		boost::xtime_get(&t, boost::TIME_UTC);
-		t.nsec += 1000000 * milliseconds;
-		boost::thread::sleep(t);
+void stub_sdl_sleepMilliSeconds(int milliSeconds) {
+
+	boost::xtime t;
+	boost::xtime_get(&t, boost::TIME_UTC);
+	t.nsec += 1000000 * milliSeconds;
+	boost::thread::sleep(t);
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
