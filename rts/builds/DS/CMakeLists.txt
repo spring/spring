@@ -19,6 +19,10 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 LIST(APPEND engineDedicatedLibraries ${SDL_LIBRARY})
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries 7zip minizip lua)
+IF    (UNIX)
+	# Needed for dynamically loading shared libraries (on some OS)
+	LIST(APPEND engineDedicatedLibraries dl)
+ENDIF (UNIX)
 
 
 
@@ -26,7 +30,6 @@ LIST(APPEND engineDedicatedLibraries 7zip minizip lua)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/lua/include/)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
-INCLUDE_DIRECTORIES(${GLEW_INCLUDE_DIR})
 
 
 
