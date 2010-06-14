@@ -24,6 +24,11 @@ IF    (UNIX)
 	LIST(APPEND engineDedicatedLibraries dl)
 ENDIF (UNIX)
 
+# We still need these header files,
+# even if we are not going to link with SDL
+FIND_PACKAGE(SDL REQUIRED)
+INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+
 
 
 ### Assemble the incude dirs
@@ -84,8 +89,8 @@ SET(engineDedicatedSources
 	)
 
 
-
-ADD_LIBRARY(springserver SHARED ${engineDedicatedSources})
+# Compile dedicated server shared library
+ADD_LIBRARY(springserver SHARED ${EXCLUDE_HEADLESS_FROM_ALL} ${engineDedicatedSources})
 TARGET_LINK_LIBRARIES(springserver ${engineDedicatedLibraries})
 IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver ws2_32)
@@ -94,9 +99,14 @@ ELSE  (MINGW)
 ENDIF (MINGW)
 
 
-ADD_EXECUTABLE(spring-dedicated main)
+# Compile dedicated server executable
+ADD_EXECUTABLE(spring-dedicated ${EXCLUDE_HEADLESS_FROM_ALL} main)
 TARGET_LINK_LIBRARIES(spring-dedicated springserver)
 
 
-INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
-INSTALL(TARGETS spring-dedicated DESTINATION ${BINDIR})
+# Install
+if    (HEADLESS_SYSTEM)
+	# Note: installing a target that has EXCLUDE_FROM_ALL set is illegal
+	INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
+	INSTALL(TARGETS spring-dedicated DESTINATION ${BINDIR})
+endif (HEADLESS_SYSTEM)

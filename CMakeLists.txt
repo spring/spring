@@ -45,6 +45,12 @@ set (AI_LIBS_DIR "${DATADIR}"     CACHE STRING "Where to install Skirmish AI lib
 set (AI_DATA_DIR "${AI_LIBS_DIR}" CACHE STRING "Where to install Skirmish AI additional files (eg. configuration)")
 set (AI_TYPES    "ALL"            CACHE STRING "Which AI Interfaces (and Skirmish AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
+set(HEADLESS_SYSTEM FALSE CACHE BOOL "Compile for a headless system (default- and MT-spring will not be built!)")
+SET(NO_SOUND FALSE CACHE BOOL "No sound output support")
+if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
+	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
+endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
+
 set(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
 if    (SYNCCHECK)
 	add_definitions(-DSYNCCHECK)
@@ -92,10 +98,10 @@ endif (CUSTOM_COMPILER_DEFINITIONS)
 
 if    (MINGW)
 	set(SDL_INCLUDE_DIR "${MINGWLIBS}/include/SDL")
-	FIND_PACKAGE(Windres)
 endif (MINGW)
-FIND_PACKAGE(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+if    (WIN32)
+	FIND_PACKAGE(Windres)
+endif (WIN32)
 
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
@@ -188,9 +194,7 @@ if     (MINGW)
 endif  (MINGW)
 
 ### Where the other CMakeLists.txt are
-if    (SDL_FOUND)
-	Add_Subdirectory(rts)
-endif (SDL_FOUND)
+Add_Subdirectory(rts)
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 	Add_Subdirectory(AI)
 endif (NOT "${AI_TYPES}" STREQUAL "NONE")

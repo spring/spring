@@ -8,11 +8,14 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 LIST(APPEND unitsync_libs ${DEVIL_IL_LIBRARY})
-#LIST(APPEND unitsync_libs ${DEVIL_ILU_LIBRARY})
-#LIST(APPEND unitsync_libs ${SDL_LIBRARY})
 LIST(APPEND unitsync_libs ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND unitsync_libs 7zip minizip lua)
 LIST(APPEND unitsync_libs headlessStubs)
+
+# We still need these header files,
+# even if we are not going to link with SDL
+FIND_PACKAGE(SDL REQUIRED)
+INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 
 ADD_DEFINITIONS(-DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG} -DNOT_USING_CREG -DHEADLESS)
 
