@@ -2,18 +2,10 @@
 cmake_minimum_required(VERSION 2.6)
 project(Spring)
 
-# This is needed, as CMake, or at least soem versions of it (eg. 2.8),
-# falsely use the ".so" suffix unde Mac OS X for MODULE's
-macro    (FixLibName targetName)
-	IF    (UNIX)
-		SET_TARGET_PROPERTIES(${targetName} PROPERTIES PREFIX "lib")
-		IF    (APPLE)
-			SET_TARGET_PROPERTIES(${targetName} PROPERTIES SUFFIX ".dylib")
-		ENDIF (APPLE)
-	ENDIF (UNIX)
-endmacro (FixLibName targetName)
-
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
+
+# includes rts/build/cmake/Util.cmake
+INCLUDE(Util)
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
@@ -68,25 +60,6 @@ if    (WIN32)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
 	endif (NOT WINDOWS_CONSOLE)
 endif (WIN32)
-
-if (CMAKE_HOST_WIN32)
-	set(PATH_SEP_H      "\\")
-	set(PATH_DELIM_H    ";")
-	set(ABS_DIR_REGEX_H "^[a-zA-Z]:\\")
-else (CMAKE_HOST_WIN32)
-	set(PATH_SEP_H      "/")
-	set(PATH_DELIM_H    ":")
-	set(ABS_DIR_REGEX_H "^/")
-endif(CMAKE_HOST_WIN32)
-if (WIN32)
-	set(PATH_SEP_T      "\\")
-	set(PATH_DELIM_T    ";")
-	set(ABS_DIR_REGEX_T "^[a-zA-Z]:\\")
-else (WIN32)
-	set(PATH_SEP_T      "/")
-	set(PATH_DELIM_T    ":")
-	set(ABS_DIR_REGEX_T "^/")
-endif(WIN32)
 
 set(BUILTIN_DATADIRS "")
 if    (NOT MINGW)
@@ -210,13 +183,9 @@ else  (STABS_DEBUG_SYMBOLS)
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
 endif (STABS_DEBUG_SYMBOLS)
 
-if (NOT MINGW AND NOT APPLE)
-	set (PIC_FLAG "-fpic")
-elseif (APPLE)
-	set (PIC_FLAG "-fPIC")
-elseif (MINGW)
+if     (MINGW)
 	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
-endif  (NOT MINGW AND NOT APPLE)
+endif  (MINGW)
 
 ### Where the other CMakeLists.txt are
 if    (SDL_FOUND)
@@ -225,7 +194,7 @@ endif (SDL_FOUND)
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 	Add_Subdirectory(AI)
 endif (NOT "${AI_TYPES}" STREQUAL "NONE")
-if (WIN32)
+if    (WIN32)
 	Add_Subdirectory(tools/ArchiveMover)
 endif (WIN32)
 
