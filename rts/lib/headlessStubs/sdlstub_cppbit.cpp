@@ -16,7 +16,7 @@ int stub_sdl_getSystemMilliSeconds() {
 
 	boost::xtime t;
 	boost::xtime_get(&t, boost::TIME_UTC);
-	const int milliSeconds = t.sec * 1000 + (t.nsec / 1000000 );   
+	const int milliSeconds = t.sec * 1000 + (t.nsec / 1000000);   
 	return milliSeconds;
 }
 
