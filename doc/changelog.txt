@@ -25,6 +25,8 @@ Engine:
  - engine does not read `ScriptName' modoption anymore
  - engine does not deal with `StartMetal' and `StartEnergy' modoptions anymore
  - more default intercept types added
+    EmgCannon -> 1, AircraftBomb -> 8, Flame -> 16, TorpedoLauncher -> 32
+    LightningCannon -> 64, Rifle -> 128, Melee -> 256
  - pathfinder debugging views can be rendered now when spectating (and not cheating)
  - new unit tag: cloakTimeout, int, default 128 frames
  - tdf format not supported anymore for modinfo
