@@ -3,11 +3,15 @@
 #include "StdAfx.h"
 
 #include "glFont.h"
+#include <string>
+#include <cstring> // for memset, memcpy
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdexcept>
+#ifndef   HEADLESS
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#endif // HEADLESS
 
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
@@ -108,6 +112,7 @@ class texture_size_exception : public std::exception
 };
 
 
+#ifndef   HEADLESS
 #undef __FTERRORS_H__
 #define FT_ERRORDEF( e, v, s )  { e, s },
 #define FT_ERROR_START_LIST     {
@@ -128,6 +133,7 @@ static const char* GetFTError(FT_Error e)
 	}
 	return "Unknown error";
 }
+#endif // HEADLESS
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -408,6 +414,12 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	const float invSize = 1.0f / size;
 	const float normScale = invSize / 64.0f;
 
+	//! setup character range
+	charstart = 32;
+	charend   = 254; //! char 255 = colorcode
+	chars     = (charend - charstart) + 1;
+
+#ifndef   HEADLESS
 	FT_Library library;
 	FT_Face face;
 
@@ -460,11 +472,6 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 		msg += GetFTError(error);
 		throw content_error(msg);
 	}
-
-	//! setup character range
-	charstart = 32;
-	charend   = 254; //! char 255 = colorcode
-	chars     = (charend - charstart) + 1;
 
 	//! get font information
 	fontFamily = face->family_name;
@@ -548,6 +555,15 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
 	delete[] buf;
+#else  // HEADLESS
+	fontFamily = "NONE";
+	fontStyle  = "NONE";
+	fontDescender = 0.0f;
+	lineHeight = 0.0f;
+	fontTexture = 0;
+	texWidth  = 0;
+	texHeight = 0;
+#endif // HEADLESS
 
 	textColor    = white;
 	outlineColor = darkOutline;

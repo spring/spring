@@ -59,7 +59,7 @@ LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LI
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 
 FIND_PACKAGE(Freetype REQUIRED)
-LIST(APPEND engineCommonLibraries ${FREETYPE_LIBRARIES})
+LIST(APPEND engineLibraries ${FREETYPE_LIBRARIES})
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
