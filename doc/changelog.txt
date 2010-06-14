@@ -30,6 +30,21 @@ Engine:
  - pathfinder debugging views can be rendered now when spectating (and not cheating)
  - new unit tag: cloakTimeout, int, default 128 frames
  - tdf format not supported anymore for modinfo
+ - fixed calls to the engine path-finder to be sync-safe when run in unsynced context
+ - fixed the featureVisibility mod-option
+ - removed the TEDclassString UnitDef parameter (side-effect: hub-like units will break if they have a yardmap)
+ - clients now compare their path-cache CRCs and warn about differences instead of updating their running checksums with them
+
+Rendering:
+ - support the OBJ model format (springrts.com/phpbb/viewtopic.php?f=9&t=22635)
+ - support specular lighting, multiple blendable detail textures, and sky reflections on SMF maps ("SSMF")
+     springrts.com/phpbb/viewtopic.php?f=13&t=21951
+     springrts.com/phpbb/viewtopic.php?f=13&t=22564 (slightly outdated wrt. the SMD parameters)
+ - converted all shadow, tree, grass, model, and map shaders to GLSL
+ - vertex-animated grass; maps can specify the grass blade- and shading-textures and the dimensions/angle for blades
+ - refactored and abstracted unit/feature/projectile drawing to be format-agnostic
+ - increased global decoupling between simulation and rendering code
+ - fixed specular lighting on units
 
 Sound:
  - use OpenAL Soft 1.11 under windows (was Creative)
@@ -68,6 +83,7 @@ Lua:
     Should allow implementing savegames mod side with less hacks
     /reloadgame chat command added for development purposes, this fires the Load event again
  - modified base {armordefs|movedefs|sidedata}.lua to follow pattern of icontypes.lua
+ - added a ShieldPreDamaged call-in to LuaRules, triggered before any engine shield-vs-projectile logic executes
 
 Engine / Unit Scripts:
  - LUS: SetSignalMask raises error now when called outside thread
@@ -76,12 +92,19 @@ Engine / Unit Scripts:
  - LUS: TargetWeight and BlockShot are actually called now
  - COB: Added KSIN (135, 1024*sin(x)), KCOS (136), KTAN (137) and SQRT (138) get constants.
 
+Interface:
+ - added new command "/buildwarnings", analoguous to "/movewarnings"
+
 AIs:
+ - TODO: describe the debug-draw callbacks
+ - make sure the Release event always reaches dieing-state AI's
+ - added a GetUnitVel callback, returns a unit's velocity vector
  - new Python AI Interface by theGeorge & abma
  - E323AI bug-fixes, logic- and performance enhancements
  - AAI: fix some crashes (one on death) & a logic error
  - RAI, KAIK and AAI: support unit captured&given from&to them
  - RAI, KAIK and AAI: config-, log- & cache-files now compatible with pool archived mods
+ - KAIK: switched to .lua config-file format, added a basic mod whitelisting mechanism
  - fix a crash on Skirmish AI death
  - fix Java AI Interface loading on Debian
  - fix Java compilation on some systems
@@ -92,6 +115,7 @@ Bugfixes:
  - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compability)
  - fixed a bug in LuaParser, so you can know use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
  - fixed occasional bug where countdown time went into negative numbers and game never started
+
 
 0.81.2.1:
 Engine:
