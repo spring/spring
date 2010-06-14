@@ -11,7 +11,14 @@ ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 REMOVE_DEFINITIONS(-DAVI_CAPTURING)
 
-# headlessstubs are our stubs that replace libGL, libGLU, libSDL (yes really!)
+# We still need these header files,
+# even if we are not going to link with gl, glu and SDL
+FIND_PACKAGE(OpenGL REQUIRED)
+FIND_PACKAGE(GLU REQUIRED)
+FIND_PACKAGE(SDL REQUIRED)
+INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+
+# headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
 
 LIST(APPEND engineHeadlessLibraries no-sound)
@@ -28,7 +35,7 @@ ELSE  (MINGW)
 	SET(ENGINE_ICON_HL "")
 ENDIF (MINGW)
 
-ADD_EXECUTABLE(spring-hl EXCLUDE_FROM_ALL ${engineSources} ${ENGINE_ICON_HL})
+ADD_EXECUTABLE(spring-hl ${EXCLUDE_HEADLESS_FROM_ALL} ${engineSources} ${ENGINE_ICON_HL})
 TARGET_LINK_LIBRARIES(spring-hl ${engineHeadlessLibraries})
 
 IF    (MINGW)
@@ -37,6 +44,8 @@ IF    (MINGW)
 	#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
-# Note: installing a target that has EXCLUDE_FROM_ALL set is illegal
-#INSTALL(TARGETS spring-hl DESTINATION ${BINDIR})
+if    (HEADLESS_SYSTEM)
+	# Note: installing a target that has EXCLUDE_FROM_ALL set is illegal
+	INSTALL(TARGETS spring-hl DESTINATION ${BINDIR})
+endif (HEADLESS_SYSTEM)
 
