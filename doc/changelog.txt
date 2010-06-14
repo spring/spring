@@ -2,6 +2,7 @@ Spring change log
 
 0.82:
 Engine:
+ - added HeadLess version of the engine (no graphics, no sound) by hughperkins
  - fixed far textures (caused changing teamcolors and disappearing units)
  - fixed middle click scroll speed on linux
  - added new MiddleClickScrollSpeed option
@@ -10,6 +11,22 @@ Engine:
  - better overall handling of connection problems, with highlighting of uncontrolled units
  - players in startscript may reconnect to a running game, even with changed IP address
  - players can choose server speed throttling algorithm by voting (/speedcontrol)
+ - do not crash on AI Interface error
+ - MT/GML: now a separate build target: make spring-mt
+ - fix linking under Fedora 13
+ - allow choosing between available sound devices through config (snd_device)
+ - add missing /skip variants to word completion
+ - use new dependency system for maphelper.sdz (by Beheright)
+ - OS X fixes
+
+Sound:
+ - use OpenAL Soft 1.11 under windows (was Creative)
+ - air-absorpion: absorb high frequencies when sound effects are far away
+
+Unitsync:
+ - list of data-dirs for engine & unitsync are now always equal
+ - API cleaned: no more void*, all structs deprecated
+ - data dirs read from /etc/spring/datadir (separator is now ":" instead of " ")
 
 FontRendering:
  - added a new inline ctrl command '\008', it resets the TextColor to the active color when Print() got called (e.g. e.g. font:SetTextColor(0,0,1); font:Print("\255\255\000\000red\255\000\255\000green\008blue");)
@@ -34,6 +51,18 @@ Lua:
  - added missing `coroutines` module and missing `select` function to unsynced LuaGadgets
  - added os.setlocale to LuaUI
  - removed deprecated Spring.MakeFont
+
+AIs:
+ - new Python AI Interface by theGeorge & abma
+ - E323AI bug-fixes, logic- and performance enhancements
+ - AAI: fix some crashes (one on death) & a logic error
+ - RAI, KAIK and AAI: support unit captured&given from&to them
+ - RAI, KAIK and AAI: config-, log- & cache-files now compatible with pool archived mods
+ - fix a crash on Skirmish AI death
+ - fix Java AI Interface loading on Debian
+ - fix Java compilation on some systems
+ - fix Java crash: increase initial java heap size (by cranphin)
+ - send an Update event before the first UnitCreated (when initializing mid-game)
 
 Bugfixes:
  - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compability)
