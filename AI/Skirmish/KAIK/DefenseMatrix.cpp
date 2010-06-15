@@ -180,7 +180,7 @@ void CDefenseMatrix::AddDefense(float3 pos, const UnitDef* def) {
 	}
 
 	spotFinder->InvalidateSumMap(x, y, Range + 1);
-	// ai->debug->MakeBWTGA(Chokepointmap, ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight, "DebugPathMatrix", 1);
+	// ai->debug->MakeBWTGA(Chokepointmap, ai->tm->GetThreatMapWidth(), ai->tm->GetThreatMapHeight(), "DebugPathMatrix", 1);
 }
 
 
