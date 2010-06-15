@@ -231,9 +231,9 @@ install (DIRECTORY ${CMAKE_BINARY_DIR}/base DESTINATION ${DATADIR})
 
 ### Install freedesktop-files, mime-types etc.
 if    (UNIX AND NOT MINGW)
-	install (FILES installer/freedesktop/applications/spring.desktop DESTINATION ${APPLICATIONS_DIR})
-	install (FILES installer/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
-	install (FILES installer/freedesktop/pixmaps/spring.png installer/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
+	install (FILES cont/freedesktop/applications/spring.desktop DESTINATION ${APPLICATIONS_DIR})
+	install (FILES cont/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
+	install (FILES cont/freedesktop/pixmaps/spring.png cont/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
 else  (UNIX AND NOT MINGW)
 	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR} PATTERN "*.dll")
 endif (UNIX AND NOT MINGW)
