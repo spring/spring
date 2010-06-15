@@ -210,33 +210,12 @@ FIND_PACKAGE(7zip REQUIRED)
 # man pages
 Add_Subdirectory(doc)
 
-### make the basefiles (aka sdz's)
-file (TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/base" BASE_BUILD_DIR)
-if    (CMAKE_HOST_WIN32)
-	# As TO_NATIVE_PATH fails on windows, we need to do it manually
-	string(REPLACE "/" "\\" BASE_BUILD_DIR "${BASE_BUILD_DIR}")
-	set(BASE_BUILD_COMMAND call make_gamedata_arch.bat)
-else  (CMAKE_HOST_WIN32)
-	set(BASE_BUILD_COMMAND sh ./make_gamedata_arch.sh)
-endif (CMAKE_HOST_WIN32)
-add_custom_target(gamedata ALL
-	COMMAND ${BASE_BUILD_COMMAND}
-		${BASE_BUILD_DIR}
-		${7ZIP_BIN}
-	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cont/base")
-
-### install base data files
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cont/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE PATTERN "base" EXCLUDE)
-install (DIRECTORY ${CMAKE_BINARY_DIR}/base DESTINATION ${DATADIR})
-
-### Install freedesktop-files, mime-types etc.
-if    (UNIX AND NOT MINGW)
-	install (FILES cont/freedesktop/applications/spring.desktop DESTINATION ${APPLICATIONS_DIR})
-	install (FILES cont/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
-	install (FILES cont/freedesktop/pixmaps/spring.png cont/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
-else  (UNIX AND NOT MINGW)
-	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR} PATTERN "*.dll")
-endif (UNIX AND NOT MINGW)
+### Handle game content
+### - Pack base-files
+### - Install base-files
+### - Install freedesktop stuff
+### - Install mingw DLLs
+Add_Subdirectory(cont)
 
 # additional tools
 Add_Subdirectory(tools/DemoTool)
