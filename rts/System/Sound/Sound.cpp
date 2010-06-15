@@ -330,7 +330,15 @@ void CSound::StartThread(int maxSounds)
 				}
 			}
 
-			SoundSource::SetAirAbsorption(0.1f);
+			// air-absorption should stay in [0.0f, 1.0f],
+			// while 0.0f => off
+			float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
+			if (airAbsorption < 0.0f) {
+				airAbsorption = 0.0f;
+			} else if (airAbsorption > 1.0f) {
+				airAbsorption = 1.0f;
+			}
+			SoundSource::SetAirAbsorption(airAbsorption);
 
 			// Generate sound sources
 			for (int i = 0; i < maxSounds; i++)
