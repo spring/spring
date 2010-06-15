@@ -403,7 +403,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			SInitPathCommand* cmd = (SInitPathCommand*) commandData;
 			cmd->ret_pathId = clb->InitPath(float3(cmd->start),
-					float3(cmd->end), cmd->pathType);
+					float3(cmd->end), cmd->pathType, cmd->goalRadius);
 			break;
 		}
 		case COMMAND_PATH_GET_APPROXIMATE_LENGTH:
@@ -412,7 +412,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 					(SGetApproximateLengthPathCommand*) commandData;
 			cmd->ret_approximatePathLength =
 					clb->GetPathLength(float3(cmd->start), float3(cmd->end),
-							cmd->pathType);
+							cmd->pathType, cmd->goalRadius);
 			break;
 		}
 		case COMMAND_PATH_GET_NEXT_WAYPOINT:

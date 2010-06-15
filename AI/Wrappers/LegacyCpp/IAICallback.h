@@ -143,13 +143,13 @@ public:
 	// * note that the pathfinder calculates the waypoints as needed so don't retrieve them until they are needed
 	// * the waypoint's x and z coordinates are returned in x and z while y is used for error codes
 	//   y >= 0: worked ok, y = -2: still thinking call again, y = -1: end of path reached or invalid path
-	virtual int InitPath(float3 start, float3 end, int pathType) = 0;
+	virtual int InitPath(float3 start, float3 end, int pathType, float goalRadius = 8) = 0;
 	virtual float3 GetNextWaypoint(int pathId) = 0;
 	virtual void FreePath(int pathId) = 0;
 
 	// returns the approximate path cost between two points (note that
 	// it needs to calculate the complete path so somewhat expensive)
-	virtual float GetPathLength(float3 start, float3 end, int pathType) = 0;
+	virtual float GetPathLength(float3 start, float3 end, int pathType, float goalRadius = 8) = 0;
 
 	// the following function return the units into arrays that must be allocated by the dll
 	// * 10000 is currently the max amount of units so that should be a safe size for the array

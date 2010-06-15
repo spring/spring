@@ -357,8 +357,8 @@ struct SRemoveUnitFromGroupCommand {
 /**
  * The following functions allow the AI to use the built-in path-finder.
  *
- * - call InitPath and you get a pathid back
- * - use this to call GetNextWaypoint to get subsequent waypoints,
+ * - call InitPath and you get a pathId back
+ * - use this to call GetNextWaypoint to get subsequent waypoints;
  *   the waypoints are centered on 8*8 squares
  * - note that the pathfinder calculates the waypoints as needed,
  *   so do not retrieve them until they are needed
@@ -367,23 +367,40 @@ struct SRemoveUnitFromGroupCommand {
  *   y >= 0: worked ok
  *   y = -2: still thinking, call again
  *   y = -1: end of path reached or path is invalid
+ * - for pathType {Ground_Move=0, Hover_Move=1, Ship_Move=2},
+ *   @see UnitDef_MoveData_getMoveType()
+ * - goalRadius defines a goal area within which any square could be accepted as
+ *   path target. If a singular goal position is wanted, use 0.0f.
+ *   default: 8.0f
  */
 struct SInitPathCommand {
+	/// The starting location of the requested path
 	struct SAIFloat3 start;
+	/// The goal location of the requested path
 	struct SAIFloat3 end;
+	/// For what type of unit should the path be calculated
 	int pathType;
+	/// default: 8.0f
+	float goalRadius;
 	int ret_pathId;
 }; // COMMAND_PATH_INIT
 /**
- * Returns the approximate path cost between two points
- * This needs to calculate the complete path, so it is somewhat expensive.
- *
- * NOTE: currently disabled, always returns 0
+ * Returns the approximate path cost between two points.
+ * - for pathType {Ground_Move=0, Hover_Move=1, Ship_Move=2},
+ *   @see UnitDef_MoveData_getMoveType()
+ * - goalRadius defines a goal area within which any square could be accepted as
+ *   path target. If a singular goal position is wanted, use 0.0f.
+ *   default: 8.0f
  */
 struct SGetApproximateLengthPathCommand {
+	/// The starting location of the requested path
 	struct SAIFloat3 start;
+	/// The goal location of the requested path
 	struct SAIFloat3 end;
+	/// For what type of unit should the path be calculated
 	int pathType;
+	/// default: 8.0f
+	float goalRadius;
 	int ret_approximatePathLength;
 }; // COMMAND_PATH_GET_APPROXIMATE_LENGTH
 struct SGetNextWaypointPathCommand {
