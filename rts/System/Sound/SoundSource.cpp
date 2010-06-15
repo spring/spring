@@ -14,6 +14,7 @@
 #include "float3.h"
 #include "Util.h"
 #include "LogOutput.h"
+#include "myMath.h"
 
 float SoundSource::globalPitch = 1.0;
 float SoundSource::heightAdjustedRolloffModifier = 1.0;
@@ -284,6 +285,8 @@ void SoundSource::SetVolume(float newVol)
 
 void SoundSource::SetAirAbsorption(float factor)
 {
+	factor = Clamp(factor, 0.0f, 10.0f);
+
 	// check if we can use air absorption
 	std::string noAirAbsorpReason = "";
 	ALCcontext* curContext = alcGetCurrentContext();

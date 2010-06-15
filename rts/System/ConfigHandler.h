@@ -12,6 +12,7 @@
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/thread/mutex.hpp>
 
 #ifdef __FreeBSD__
 #include <sys/stat.h>
@@ -32,6 +33,7 @@ public:
 	void NotifyOnChange(T* observer)
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
+		boost::mutex::scoped_lock lck(observerMutex);
 		observers.push_back(boost::bind(&T::ConfigNotify, observer, _1, _2));
 	};
 
@@ -94,11 +96,19 @@ public:
 	{
 		return filename;
 	}
+
 	/**
 	 * @brief deallocate
 	 */
 	static void Deallocate();
+
 	const std::map<std::string, std::string> &GetData();
+
+	/**
+	 * @brief update
+	 * calls observers if configs changed
+	 */
+	void Update();
 
 private:
 	ConfigHandler(const std::string& configFile);
@@ -135,7 +145,10 @@ private:
 	char* Strip(char* begin, char* end);
 	void AppendLine(char* line);
 
+	// observer related
 	std::list<ConfigNotifyCallback> observers;
+	boost::mutex observerMutex;
+	std::map<std::string, std::string> changedValues;
 };
 
 extern ConfigHandler* configHandler;

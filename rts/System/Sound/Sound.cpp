@@ -330,14 +330,7 @@ void CSound::StartThread(int maxSounds)
 				}
 			}
 
-			// air-absorption should stay in [0.0f, 1.0f],
-			// while 0.0f => off
 			float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
-			if (airAbsorption < 0.0f) {
-				airAbsorption = 0.0f;
-			} else if (airAbsorption > 1.0f) {
-				airAbsorption = 1.0f;
-			}
 			SoundSource::SetAirAbsorption(airAbsorption);
 
 			// Generate sound sources
@@ -368,7 +361,6 @@ void CSound::StartThread(int maxSounds)
 		while (true)
 		{
 			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
-			boost::mutex::scoped_lock lck(soundMutex); // lock
 			Update(); // call update
 		}
 	}
@@ -385,6 +377,7 @@ void CSound::StartThread(int maxSounds)
 
 void CSound::Update()
 {
+	boost::mutex::scoped_lock lck(soundMutex); // lock
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");
