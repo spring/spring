@@ -172,20 +172,24 @@ void CKAIK::EnemyLeaveRadar(int enemy) {
 	}
 }
 
-void CKAIK::EnemyDestroyed(int enemy, int attacker) {
+void CKAIK::EnemyDestroyed(int enemyUnitID, int attackerUnitID) {
 	if (ai->Initialized()) {
-		ai->dgunConHandler->NotifyEnemyDestroyed(enemy, attacker);
+		ai->dgunConHandler->NotifyEnemyDestroyed(enemyUnitID, attackerUnitID);
+		ai->tm->EnemyDestroyed(enemyUnitID, attackerUnitID);
 	}
 }
 
-void CKAIK::EnemyDamaged(int damaged, int attacker, float damage, float3 dir) {
+void CKAIK::EnemyDamaged(int enemyUnitID, int attackerUnitID, float damage, float3 dir) {
 	if (ai->Initialized()) {
-		damaged = damaged;
-		attacker = attacker;
+		ai->tm->EnemyDamaged(enemyUnitID, attackerUnitID);
+
 		damage = damage;
 		dir = dir;
 	}
 }
+
+void CKAIK::EnemyCreated(int enemyUnitID) { ai->tm->EnemyCreated(enemyUnitID); }
+void CKAIK::EnemyFinished(int enemyUnitID) { ai->tm->EnemyFinished(enemyUnitID); }
 
 
 
