@@ -3127,7 +3127,7 @@ bool CGame::Draw() {
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
-
+	configHandler->Update();
 	CNamedTextures::Update();
 	texturehandlerS3O->Update();
 	modelParser->Update();
