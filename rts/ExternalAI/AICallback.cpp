@@ -13,7 +13,6 @@
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
@@ -36,7 +35,10 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/PathManager.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -50,8 +52,6 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
 #include "LogOutput.h"
 #include "mmgr.h"
 
@@ -704,10 +704,10 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 	return isNeutral;
 }
 
-int CAICallback::InitPath(float3 start, float3 end, int pathType)
+int CAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius)
 {
 	assert(((size_t)pathType) < moveinfo->moveData.size());
-	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end, false);
+	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end, goalRadius, NULL, false);
 }
 
 float3 CAICallback::GetNextWaypoint(int pathId)
@@ -720,9 +720,9 @@ void CAICallback::FreePath(int pathId)
 	pathManager->DeletePath(pathId);
 }
 
-float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
+float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float goalRadius)
 {
-	const int pathID  = InitPath(start, end, pathType);
+	const int pathID  = InitPath(start, end, pathType, goalRadius);
 	float     pathLen = -1.0f;
 
 	if (pathID == 0) {

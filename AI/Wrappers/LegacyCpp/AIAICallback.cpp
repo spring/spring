@@ -1463,16 +1463,16 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 	return ret;
 }
 
-int CAIAICallback::InitPath(float3 start, float3 end, int pathType) {
-		SInitPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_INIT, &cmd); return cmd.ret_pathId;
+int CAIAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius) {
+		SInitPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType, goalRadius}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_INIT, &cmd); return cmd.ret_pathId;
 }
 
 float3 CAIAICallback::GetNextWaypoint(int pathId) {
 		SGetNextWaypointPathCommand cmd = {pathId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_NEXT_WAYPOINT, &cmd); return float3(cmd.ret_nextWaypoint);
 }
 
-float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType) {
-		SGetApproximateLengthPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
+float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType, float goalRadius) {
+		SGetApproximateLengthPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType, goalRadius}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
 }
 
 void CAIAICallback::FreePath(int pathId) {

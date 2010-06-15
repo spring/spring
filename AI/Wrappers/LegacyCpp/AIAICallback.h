@@ -94,11 +94,11 @@ public:
 	const UnitDef* GetUnitDef(const char* unitName);
 	const UnitDef* GetUnitDefById(int unitDefId);
 
-	int InitPath(float3 start, float3 end, int pathType);
+	int InitPath(float3 start, float3 end, int pathType, float goalRadius = 8);
 	float3 GetNextWaypoint(int pathid);
 	void FreePath(int pathid);
 
-	float GetPathLength(float3 start, float3 end, int pathType);
+	float GetPathLength(float3 start, float3 end, int pathType, float goalRadius = 8);
 
 	int GetEnemyUnits(int* unitIds, int unitIds_max);
 	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
