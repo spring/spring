@@ -35,7 +35,7 @@ ELSE  (MINGW)
 	SET(ENGINE_ICON_HL "")
 ENDIF (MINGW)
 
-ADD_EXECUTABLE(spring-hl ${EXCLUDE_HEADLESS_FROM_ALL} ${engineSources} ${ENGINE_ICON_HL})
+ADD_EXECUTABLE(spring-hl ${engineSources} ${ENGINE_ICON_HL})
 TARGET_LINK_LIBRARIES(spring-hl ${engineHeadlessLibraries})
 
 IF    (MINGW)

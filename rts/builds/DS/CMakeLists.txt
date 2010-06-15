@@ -90,7 +90,7 @@ SET(engineDedicatedSources
 
 
 # Compile dedicated server shared library
-ADD_LIBRARY(springserver SHARED ${EXCLUDE_HEADLESS_FROM_ALL} ${engineDedicatedSources})
+ADD_LIBRARY(springserver SHARED ${engineDedicatedSources})
 TARGET_LINK_LIBRARIES(springserver ${engineDedicatedLibraries})
 IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver ws2_32)
@@ -100,7 +100,7 @@ ENDIF (MINGW)
 
 
 # Compile dedicated server executable
-ADD_EXECUTABLE(spring-dedicated ${EXCLUDE_HEADLESS_FROM_ALL} main)
+ADD_EXECUTABLE(spring-dedicated main)
 TARGET_LINK_LIBRARIES(spring-dedicated springserver)
 
 
