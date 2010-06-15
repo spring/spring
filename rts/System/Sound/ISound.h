@@ -17,7 +17,7 @@ class ISound {
 	static ISound* singleton;
 
 public:
-	virtual ~ISound() = 0;
+	virtual ~ISound() {};
 
 	static void Initialize();
 	static void Shutdown();
