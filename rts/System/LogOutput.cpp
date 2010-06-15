@@ -432,8 +432,12 @@ void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string mess
 	std::cout << message;
 	if (newline)
 		std::cout << std::endl;
+#ifdef DEBUG
+	// flushing may be bad for in particular dedicated server performance
+	// crash handler should cleanly close the log file usually anyway
 	else
 		std::cout.flush();
+#endif
 }
 
 void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string message)
@@ -452,6 +456,10 @@ void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string messag
 	(*filelog) << message;
 	if (newline)
 		(*filelog) << std::endl;
+#ifdef DEBUG
+	// flushing may be bad for in particular dedicated server performance
+	// crash handler should cleanly close the log file usually anyway
 	else
 		filelog->flush();
+#endif
 }
