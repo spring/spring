@@ -40,7 +40,7 @@
 //if you set a 64-bit segment selector it makes context switches more expensive!
 
 //Generic representation of an x86 segment descriptor (32-bit mode and 64-bit mode w/ 32-bit syscall)
-typedef struct i386_descriptor {
+struct i386_descriptor {
 	unsigned int limit_0_15:16;
 	unsigned int base_0_15:16;
 	unsigned int base_16_23:8;
@@ -171,7 +171,7 @@ int speedy_tls_get_next_avail_ldt(){
 		exit(-1);
 	}
 	int num=1;
-	struct i386_descriptor* entries = (i386_descriptor*)temp;
+	struct i386_descriptor* entries = (struct i386_descriptor*)temp;
 	for (; entries[num].present; num++){}
 	return num;
 #else
@@ -190,7 +190,7 @@ int speedy_tls_get_number_ldt_entries(){
 	}
 	int maxToScan=ret / LDT_ENTRY_SIZE;
 	int num=0;
-	struct i386_descriptor* entries = (i386_descriptor*)temp;
+	struct i386_descriptor* entries = (struct i386_descriptor*)temp;
 	for (int i=0; i<maxToScan; i++){
 		if (entries[i].present){ num++; }
 	}
@@ -421,7 +421,7 @@ void* speedy_tls_get_base()
 		perror("speedy_tls_get_base: failed to read ldt");
 		return NULL;
 	}
-	struct i386_descriptor* entries = (i386_descriptor*)temp;
+	struct i386_descriptor* entries = (struct i386_descriptor*)temp;
 	if (!entries[idx].present){ return NULL; }
 	unsigned int realBase = entries[idx].base_0_15 | (entries[idx].base_16_23 << 16) | (entries[idx].base_24_31 << 24);
 	return (void*)realBase;	
