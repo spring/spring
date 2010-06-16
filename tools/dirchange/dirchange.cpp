@@ -1,12 +1,11 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-// Header includes directory change tool
-// By Jelmer Cnossen
-// Ported to Linux by Tobi Vollebregt
-
+// # Header includes directory change tool
 // Used to automatically change #include "[somepath/]header" to #include "correctheaderpath"
 // Give the base project directory as argument:
 // Example for spring:
-//  dch <trunk path>/rts -ISystem
+// 	dch <trunk-path>/rts -ISystem
+
 #include <cstdio> 
 #include <cassert>
 #include <cstring>
