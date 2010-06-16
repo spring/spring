@@ -86,6 +86,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		((Vertex*) &buf[vertexOffset])->swap();
 
 		SS3OVertex* v = (SS3OVertex*) &buf[vertexOffset];
+			v->normal.ANormalize();
 		piece->vertices.push_back(*v);
 
 		vertexOffset += sizeof(Vertex);
