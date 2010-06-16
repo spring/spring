@@ -199,12 +199,10 @@ void ConfigHandler::SetString(const string name, const string value)
 	// Can't use GetString because of risk for infinite loop.
 	// (GetString writes default value if key isn't present.)
 	std::map<string,string>::iterator pos = data.find(name);
-	if (pos != data.end() && pos->second == value)
+	if (pos != data.end() && pos->second == value) {
 		return;
-
-	for (std::list<ConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
-		(*it)(name, value);
 	}
+
 	FILE* file = fopen(filename.c_str(), "r+");
 
 	if (file) {
@@ -218,9 +216,30 @@ void ConfigHandler::SetString(const string name, const string value)
 	// must be outside above 'if (file)' block because of the lock.
 	if (file)
 		fclose(file);
+
+	boost::mutex::scoped_lock lck(observerMutex);
+	changedValues[name] = value;
 }
 
-/// set configure option for this instance only
+/**
+ * @brief call observers if a config changed
+ */
+void ConfigHandler::Update()
+{
+	boost::mutex::scoped_lock lck(observerMutex);
+	for (std::map<std::string, std::string>::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
+		const std::string& name = ut->first;
+		const std::string& value = ut->second;
+		for (std::list<ConfigNotifyCallback>::const_iterator it = observers.begin(); it != observers.end(); ++it) {
+			(*it)(name, value);
+		}
+	}
+	changedValues.clear();
+}
+
+/**
+ * @brief set configure option for this instance only
+ */
 void ConfigHandler::SetOverlay(std::string name, std::string value)
 {
 	std::map<string,string>::iterator pos = overlay.find(name);

@@ -179,6 +179,7 @@ AIClasses::~AIClasses() {
 void AIClasses::Init() {
 	const std::map<std::string, std::string>& info = callbackHandler->GetMyInfo();
 	const std::map<std::string, std::string>::const_iterator it = info.find("supportedMods");
+	// NOTE: use GetModShortName and GetModVersion()?
 	const std::string& modArchvName = callbackHandler->GetModName();
 	const std::string& modHumanName = callbackHandler->GetModHumanName();
 

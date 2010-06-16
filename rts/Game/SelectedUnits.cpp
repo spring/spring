@@ -34,7 +34,7 @@
 #include "ConfigHandler.h"
 #include "PlayerHandler.h"
 #include "Camera.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "Util.h"
 
 extern boost::uint8_t *keys;

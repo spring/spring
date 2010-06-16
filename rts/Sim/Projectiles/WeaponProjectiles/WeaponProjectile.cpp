@@ -17,7 +17,7 @@
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
 #include "System/GlobalUnsynced.h"
-#include "System/Sound/AudioChannel.h"
+#include "System/Sound/IEffectChannel.h"
 #include "System/LogOutput.h"
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"

@@ -40,7 +40,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "myMath.h"
 #include "Sync/SyncTracer.h"
 

@@ -104,10 +104,6 @@ public:
 
 	void GameFrame(int frameNum);
 
-	void EnableHighlight(unsigned currentTime);
-	void DisableHighlight();
-	void UpdateHighlight();
-
 private:
 
 	/**

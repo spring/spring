@@ -58,7 +58,7 @@ using namespace std;
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "Sound/Music.h"
+#include "Sound/IMusicChannel.h"
 
 
 extern boost::uint8_t *keys;

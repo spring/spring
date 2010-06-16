@@ -57,9 +57,9 @@ EXPORT(int         ) GetMapArchiveCount(const char* mapName);
 EXPORT(const char* ) GetMapArchiveName(int index);
 EXPORT(unsigned int) GetMapChecksum(int index);
 EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
-EXPORT(void*       ) GetMinimap(const char* filename, int miplevel);
+EXPORT(unsigned short*) GetMinimap(const char* filename, int miplevel);
 EXPORT(int         ) GetInfoMapSize(const char* filename, const char* name, int* width, int* height);
-EXPORT(int         ) GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
+EXPORT(int         ) GetInfoMap(const char* filename, const char* name, unsigned char* data, int typeHint);
 
 EXPORT(int         ) GetSkirmishAICount();
 EXPORT(int         ) GetSkirmishAIInfoCount(int index);
@@ -115,7 +115,7 @@ EXPORT(const char* ) GetModValidMap(int index);
 
 EXPORT(int         ) OpenFileVFS(const char* name);
 EXPORT(void        ) CloseFileVFS(int handle);
-EXPORT(int        ) ReadFileVFS(int handle, void* buf, int length);
+EXPORT(int         ) ReadFileVFS(int handle, unsigned char* buf, int length);
 EXPORT(int         ) FileSizeVFS(int handle);
 
 EXPORT(int         ) InitFindVFS(const char* pattern);
@@ -128,7 +128,7 @@ EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
 EXPORT(void        ) CloseArchive(int archive);
 EXPORT(int         ) FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
 EXPORT(int         ) OpenArchiveFile(int archive, const char* name);
-EXPORT(int         ) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes);
+EXPORT(int         ) ReadArchiveFile(int archive, int handle, unsigned char* buffer, int numBytes);
 EXPORT(void        ) CloseArchiveFile(int archive, int handle);
 EXPORT(int         ) SizeArchiveFile(int archive, int handle);
 

@@ -36,6 +36,9 @@ public:
 	/**
 	 * No events are forwarded to the Skirmish AI plugin
 	 * after this method has been called.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
 	void Dieing();
 

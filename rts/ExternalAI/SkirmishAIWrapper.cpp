@@ -170,8 +170,6 @@ void CSkirmishAIWrapper::Init() {
 	if (ai == NULL) {
 		bool loadOk = LoadSkirmishAI(false);
 		if (!loadOk) {
-			delete ai;
-			ai = NULL;
 			return;
 		}
 	}
@@ -189,7 +187,10 @@ void CSkirmishAIWrapper::Init() {
 }
 
 void CSkirmishAIWrapper::Dieing() {
-	ai->Dieing();
+
+	if (ai != NULL) {
+		ai->Dieing();
+	}
 }
 
 void CSkirmishAIWrapper::Release(int reason) {

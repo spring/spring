@@ -4,8 +4,10 @@
 
 #ifdef WIN32
 #include "Platform/Win/win32.h"
+#elif defined HEADLESS
+#include "lib/headlessStubs/glxextstub.h" // for glXGetVideoSyncSGI() glXWaitVideoSyncSGI()
 #else
-#include <GL/glxew.h> // for glXWaitVideoSyncSGI()
+#include <GL/glxew.h> // for glXGetVideoSyncSGI() glXWaitVideoSyncSGI()
 #endif
 #include "mmgr.h"
 

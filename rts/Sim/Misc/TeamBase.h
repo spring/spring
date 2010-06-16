@@ -26,6 +26,10 @@ public:
 	 * or an AI running on his computer does so.
 	 */
 	int leader;
+	/**
+	 * The team-color in RGB, with values in [0, 255].
+	 * The fourth channel (alpha) has to be 255, always.
+	 */
 	unsigned char color[4];
 	float handicap;
 	/**

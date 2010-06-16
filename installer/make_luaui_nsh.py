@@ -69,10 +69,11 @@ def GetDirs(path, dirs):
 	for f in filelist:
 		fullname = os.path.join(path, f)
 		if os.path.isdir(fullname):
-			if (f != 'Config') and (f != '.git'):
+			if (f != 'Config') and (f != '.git') and (f != 'base') and (f != 'freedesktop'):
 				GetDirs(fullname, dirs)
 		else:
-			dirs[path].append(f)
+			if (f != 'CMakeLists.txt'):
+				dirs[path].append(f)
 
 
 def toWinPath(path):

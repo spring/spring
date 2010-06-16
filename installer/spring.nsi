@@ -212,9 +212,6 @@ FunctionEnd
 SectionGroup /e "!Engine"
 	Section "Main application (req)" SEC_MAIN
 
-		${!echonow} "Processing: main: spring.exe & unitsync.dll"
-		File "${BUILD_OR_DIST_DIR}\spring.exe"
-
 		!define INSTALL
 			${!echonow} "Processing: main"
 			!include "sections\main.nsh"
@@ -223,13 +220,13 @@ SectionGroup /e "!Engine"
 		!undef INSTALL
 	SectionEnd
 
-	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-gml.exe"
+	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-mt.exe"
 	!ifdef GML_BUILD_EXISTS
 		Section "GML (multi-threaded)" SEC_GML
-			${!echonow} "Processing: main: spring-gml.exe"
+			${!echonow} "Processing: spring-mt.exe"
 			SetOutPath "$INSTDIR"
 			SetOverWrite on
-			File "${BUILD_OR_DIST_DIR}\spring-gml.exe"
+			File "${BUILD_OR_DIST_DIR}\spring-mt.exe"
 		SectionEnd
 		!undef GML_BUILD_EXISTS
 	!endif
@@ -343,7 +340,7 @@ Section Uninstall
 
 	!include "sections\main.nsh"
 
-	Delete "$INSTDIR\spring-gml.exe"
+	Delete "$INSTDIR\spring-mt.exe"
 
 	!include "sections\docs.nsh"
 	!include "sections\shortcuts.nsh"

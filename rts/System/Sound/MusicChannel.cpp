@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Music.h"
+#include "MusicChannel.h"
 
 #include "ISound.h"
 #include "SoundSource.h"
@@ -74,10 +74,4 @@ float MusicChannel::GetPlayTime()
 		return current->GetStreamPlayTime();
 	else
 		return 0;
-}
-
-
-namespace Channels
-{
-	MusicChannel BGMusic;
 }

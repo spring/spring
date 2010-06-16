@@ -3,7 +3,8 @@
 #include "StdAfx.h"
 #include "Clipboard.h"
 
-#ifdef _WIN32
+#if defined(__APPLE__) || defined(HEADLESS)
+#elif defined(WIN32)
 #  include <windows.h>
 #else
 #  include <SDL_syswm.h>
@@ -12,15 +13,15 @@
 std::string CClipboard::GetContents() const
 {
 	std::string contents;
-#ifdef _WIN32
+#if defined(__APPLE__) || defined(HEADLESS)
+	// Nothing for now
+#elif defined(WIN32)
 	OpenClipboard(NULL);
 	const void* p = GetClipboardData(CF_TEXT);
 	if (p != NULL) {
 		contents = (char*)p;
 	}
 	CloseClipboard();
-#elif defined(__APPLE__)
-	// Nothing for now
 #else
 	// only works with the cut-buffer method (xterm)
 	// (and not with the more recent selections method)

@@ -5,6 +5,7 @@
 #include "Interface/AISEvents.h"
 #include "IAILibraryManager.h"
 #include "SkirmishAILibrary.h"
+#include "SkirmishAIHandler.h"
 #include "TimeProfiler.h"
 #include "Util.h"
 
@@ -21,6 +22,10 @@ CSkirmishAI::CSkirmishAI(int skirmishAIId, int teamId, const SkirmishAIKey& key,
 {
 	SCOPED_TIMER(timerName.c_str());
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
+	if (library == NULL) {
+		dieing = true;
+		skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5);
+	}
 }
 
 CSkirmishAI::~CSkirmishAI() {

@@ -38,6 +38,7 @@ public:
 	int speedControl;
 
 	bool isLocal;
+	bool isReconn;
 	boost::shared_ptr<netcode::CConnection> link;
 	PlayerStatistics lastStats;
 #ifdef SYNCCHECK

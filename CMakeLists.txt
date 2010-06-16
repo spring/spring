@@ -2,22 +2,10 @@
 cmake_minimum_required(VERSION 2.6)
 project(Spring)
 
-macro    (CheckMinCMakeVersion res_var major minor patch)
-	SET(${res_var} FALSE)
-	IF     (${CMAKE_MAJOR_VERSION} GREATER ${major})
-		SET(${res_var} TRUE)
-	ELSEIF (${CMAKE_MAJOR_VERSION} EQUAL ${major})
-		IF     (${CMAKE_MINOR_VERSION} GREATER ${minor})
-			SET(${res_var} TRUE)
-		ELSEIF (${CMAKE_MINOR_VERSION} EQUAL ${minor})
-			IF     (${CMAKE_PATCH_VERSION} GREATER ${patch})
-				SET(${res_var} TRUE)
-			ELSEIF (${CMAKE_PATCH_VERSION} EQUAL ${patch})
-				SET(${res_var} TRUE)
-			ENDIF  ()
-		ENDIF  ()
-	ENDIF  ()
-endmacro (CheckMinCMakeVersion res_var major minor patch)
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
+
+# includes rts/build/cmake/Util.cmake
+INCLUDE(Util)
 
 CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 IF     (NOT CUSTOM_TARGET_SOURCES_SUPPORT)
@@ -29,19 +17,6 @@ IF     (NOT CUSTOM_TARGET_SOURCES_SUPPORT)
 		"and will consequently not be configured/built. "
 		"You will get separate warnings for all parts that will not be built.")
 ENDIF  ()
-
-# This is needed, as CMake, or at least soem versions of it (eg. 2.8),
-# falsely use the ".so" suffix unde Mac OS X for MODULE's
-macro    (FixLibName targetName)
-	IF    (UNIX)
-		SET_TARGET_PROPERTIES(${targetName} PROPERTIES PREFIX "lib")
-		IF    (APPLE)
-			SET_TARGET_PROPERTIES(${targetName} PROPERTIES SUFFIX ".dylib")
-		ENDIF (APPLE)
-	ENDIF (UNIX)
-endmacro (FixLibName targetName)
-
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
@@ -81,6 +56,12 @@ set (AI_LIBS_DIR "${DATADIR}"     CACHE STRING "Where to install Skirmish AI lib
 set (AI_DATA_DIR "${AI_LIBS_DIR}" CACHE STRING "Where to install Skirmish AI additional files (eg. configuration)")
 set (AI_TYPES    "ALL"            CACHE STRING "Which AI Interfaces (and Skirmish AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
+set(HEADLESS_SYSTEM FALSE CACHE BOOL "Compile for a headless system (default- and MT-spring will not be built!)")
+SET(NO_SOUND FALSE CACHE BOOL "No sound output support")
+if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
+	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
+endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
+
 set(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
 if    (SYNCCHECK)
 	add_definitions(-DSYNCCHECK)
@@ -96,25 +77,6 @@ if    (WIN32)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
 	endif (NOT WINDOWS_CONSOLE)
 endif (WIN32)
-
-if (CMAKE_HOST_WIN32)
-	set(PATH_SEP_H      "\\")
-	set(PATH_DELIM_H    ";")
-	set(ABS_DIR_REGEX_H "^[a-zA-Z]:\\")
-else (CMAKE_HOST_WIN32)
-	set(PATH_SEP_H      "/")
-	set(PATH_DELIM_H    ":")
-	set(ABS_DIR_REGEX_H "^/")
-endif(CMAKE_HOST_WIN32)
-if (WIN32)
-	set(PATH_SEP_T      "\\")
-	set(PATH_DELIM_T    ";")
-	set(ABS_DIR_REGEX_T "^[a-zA-Z]:\\")
-else (WIN32)
-	set(PATH_SEP_T      "/")
-	set(PATH_DELIM_T    ":")
-	set(ABS_DIR_REGEX_T "^/")
-endif(WIN32)
 
 set(BUILTIN_DATADIRS "")
 if    (NOT MINGW)
@@ -147,10 +109,10 @@ endif (CUSTOM_COMPILER_DEFINITIONS)
 
 if    (MINGW)
 	set(SDL_INCLUDE_DIR "${MINGWLIBS}/include/SDL")
-	FIND_PACKAGE(Windres)
 endif (MINGW)
-FIND_PACKAGE(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+if    (WIN32)
+	FIND_PACKAGE(Windres)
+endif (WIN32)
 
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
@@ -238,111 +200,29 @@ else  (STABS_DEBUG_SYMBOLS)
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
 endif (STABS_DEBUG_SYMBOLS)
 
-if (NOT MINGW AND NOT APPLE)
-	set (PIC_FLAG "-fpic")
-elseif (APPLE)
-	set (PIC_FLAG "-fPIC")
-elseif (MINGW)
+if     (MINGW)
 	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
-endif  (NOT MINGW AND NOT APPLE)
+endif  (MINGW)
 
 ### Where the other CMakeLists.txt are
-if    (SDL_FOUND)
-	Add_Subdirectory(rts)
-endif (SDL_FOUND)
+Add_Subdirectory(rts)
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 	Add_Subdirectory(AI)
 endif (NOT "${AI_TYPES}" STREQUAL "NONE")
-if    (SDL_FOUND)
-	Add_Subdirectory(tools/DedicatedServer)
-endif (SDL_FOUND)
-if (WIN32)
-	Add_Subdirectory(tools/ArchiveMover)
-endif (WIN32)
 
-Add_Subdirectory(tools/unitsync)
+# additional tools
+Add_Subdirectory(tools)
 
 # required for man pages (optional) and base files (mandatory)
 FIND_PACKAGE(7zip REQUIRED)
 
-### make and install the man pages
-if    (UNIX AND NOT MINGW)
-	set(AsciiDoc_FIND_QUIETLY TRUE)
-	FIND_PACKAGE(AsciiDoc)
-	set(CREATE_MAN_PAGES)
-	if    (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
-		execute_process(
-			COMMAND "${ASCIIDOC_BIN}"
-			RESULT_VARIABLE ASCIIDOC_RESULT
-			ERROR_QUIET
-			OUTPUT_QUIET
-			ERROR_STRIP_TRAILING_WHITESPACE)
-		if    (ASCIIDOC_RESULT EQUAL 0)
-			set(CREATE_MAN_PAGES TRUE)
-		else  (ASCIIDOC_RESULT EQUAL 0)
-			set(CREATE_MAN_PAGES FALSE)
-			message(STATUS "MAN pages will not be generated/installed (utility asciidoc is broken)")
-		endif (ASCIIDOC_RESULT EQUAL 0)
-	else  (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
-		set(MISSING_UTILS "")
-		if    (NOT ASCIIDOC_FOUND)
-			set(MISSING_UTILS "${MISSING_UTILS} asciidoc")
-		endif (NOT ASCIIDOC_FOUND)
-		if    (NOT XSLTPROC_FOUND)
-			set(MISSING_UTILS "${MISSING_UTILS} xsltproc")
-		endif (NOT XSLTPROC_FOUND)
-		if    (NOT DOCBOOK_FOUND)
-			set(MISSING_UTILS "${MISSING_UTILS} docbook-xsl")
-		endif (NOT DOCBOOK_FOUND)
-		message(STATUS "MAN pages will not be generated/installed; missing utilit(y|ies):${MISSING_UTILS}")
-	endif (ASCIIDOC_FOUND AND XSLTPROC_FOUND AND DOCBOOK_FOUND)
+# man pages
+Add_Subdirectory(doc)
 
-	if    (CREATE_MAN_PAGES)
-		set(MAN_SOURCE_DIR "${CMAKE_SOURCE_DIR}/doc/manpages")
-		set(MAN_BUILD_DIR  "${CMAKE_BINARY_DIR}/manpages")
-		set(MAN_DEST_DIR   "${MANDIR}/man6")
+### Handle game content
+### - Pack base-files
+### - Install base-files
+### - Install freedesktop stuff
+### - Install mingw DLLs
+Add_Subdirectory(cont)
 
-		add_custom_target(manpages ALL
-			COMMAND "${MAN_SOURCE_DIR}/make_manpages.sh"
-				"${MAN_BUILD_DIR}"
-				"${ASCIIDOC_BIN}"
-				"${XSLTPROC_BIN}"
-				"${DOCBOOK_XSL}"
-				"${7ZIP_BIN}"
-			WORKING_DIRECTORY "${MAN_SOURCE_DIR}")
-
-		install(DIRECTORY "${MAN_BUILD_DIR}/" DESTINATION "${MAN_DEST_DIR}" FILES_MATCHING PATTERN REGEX ".*\\.6\\.gz$")
-		message(STATUS "MAN pages will be installed to {INSTALL_PREFIX}/${MAN_DEST_DIR}")
-	endif (CREATE_MAN_PAGES)
-endif (UNIX AND NOT MINGW)
-
-### make the basefiles (aka sdz's)
-file (TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/base" BASE_BUILD_DIR)
-if    (CMAKE_HOST_WIN32)
-	# As TO_NATIVE_PATH fails on windows, we need to do it manually
-	string(REPLACE "/" "\\" BASE_BUILD_DIR "${BASE_BUILD_DIR}")
-	set(BASE_BUILD_COMMAND call make_gamedata_arch.bat)
-else  (CMAKE_HOST_WIN32)
-	set(BASE_BUILD_COMMAND sh ./make_gamedata_arch.sh)
-endif (CMAKE_HOST_WIN32)
-add_custom_target(gamedata ALL
-	COMMAND ${BASE_BUILD_COMMAND}
-		${BASE_BUILD_DIR}
-		${7ZIP_BIN}
-	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cont/base")
-
-### install base data files
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cont/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE PATTERN "base" EXCLUDE)
-install (DIRECTORY ${CMAKE_BINARY_DIR}/base DESTINATION ${DATADIR})
-
-### Install freedesktop-files, mime-types etc.
-if    (UNIX AND NOT MINGW)
-	install (FILES installer/freedesktop/applications/spring.desktop DESTINATION ${APPLICATIONS_DIR})
-	install (FILES installer/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
-	install (FILES installer/freedesktop/pixmaps/spring.png installer/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
-else  (UNIX AND NOT MINGW)
-	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR} PATTERN "*.dll")
-endif (UNIX AND NOT MINGW)
-
-# additional tools
-Add_Subdirectory(tools/DemoTool)

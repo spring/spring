@@ -22,7 +22,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "EventHandler.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"

@@ -24,7 +24,7 @@
 #include "Sync/SyncTracer.h"
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"

@@ -1,5 +1,6 @@
 ADD_DEFINITIONS    (-DDEDICATED ${PIC_FLAG} -DNOT_USING_CREG)
 REMOVE_DEFINITIONS (-DSTREFLOP_SSE -DAVI_CAPTURING)
+REMOVE_DEFINITIONS (-DUSE_MMGR -DTRACE_SYNC -DSYNCDEBUG -DSYNCCHECK)
 
 # Place executables and shared libs under "build-dir/",
 # instead of under "build-dir/rts/"
@@ -13,21 +14,26 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
-
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${SDL_LIBRARY})
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries 7zip minizip lua)
+LIST(APPEND engineDedicatedLibraries headlessStubs)
+IF    (UNIX)
+	# Needed for dynamically loading shared libraries (on some OS)
+	LIST(APPEND engineDedicatedLibraries dl)
+ENDIF (UNIX)
+
+# We still need these header files,
+# even if we are not going to link with SDL
+FIND_PACKAGE(SDL REQUIRED)
+INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 
 
 
 ### Assemble the incude dirs
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/System/)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/System/Net/)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/lua/include/)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
-INCLUDE_DIRECTORIES(${GLEW_INCLUDE_DIR})
 
 
 
@@ -82,7 +88,7 @@ SET(engineDedicatedSources
 	)
 
 
-
+# Compile dedicated server shared library
 ADD_LIBRARY(springserver SHARED ${engineDedicatedSources})
 TARGET_LINK_LIBRARIES(springserver ${engineDedicatedLibraries})
 IF    (MINGW)
@@ -92,9 +98,26 @@ ELSE  (MINGW)
 ENDIF (MINGW)
 
 
+# Compile dedicated server executable
 ADD_EXECUTABLE(spring-dedicated main)
 TARGET_LINK_LIBRARIES(spring-dedicated springserver)
 
 
+### Install the executable
 INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
 INSTALL(TARGETS spring-dedicated DESTINATION ${BINDIR})
+
+# Only install spring-ds executable & dependencies
+# use case: make install-spring-ds
+set(springDsInstallDirs
+		"rts/builds/DS"
+		"tools/unitsync"
+		"cont"
+	)
+set(springDsInstallDeps
+		spring-dedicated
+		springserver
+		gamedata
+		unitsync
+	)
+CreateInstallTarget(spring-dedicated springDsInstallDeps springDsInstallDirs)

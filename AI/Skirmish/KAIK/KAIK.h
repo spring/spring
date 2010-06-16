@@ -31,6 +31,8 @@ class CKAIK: public IGlobalAI {
 		void EnemyEnterRadar(int enemy);
 		void EnemyLeaveRadar(int enemy);
 		void EnemyDestroyed(int enemy, int attacker);
+		void EnemyCreated(int enemy);
+		void EnemyFinished(int enemy);
 
 		void GotChatMsg(const char* msg, int player);
 		int HandleEvent(int msg, const void* data);

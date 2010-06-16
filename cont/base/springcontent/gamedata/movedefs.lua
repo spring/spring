@@ -11,20 +11,20 @@
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-local moveInfo = {}
+
+local tdfFile = 'gamedata/moveinfo.tdf'
+if (not VFS.FileExists(tdfFile)) then
+  return {}
+end
 
 
 local TDF = VFS.Include('gamedata/parse_tdf.lua')
-
-local moveTdf, err = TDF.Parse('gamedata/moveinfo.tdf')
+local moveTdf, err = TDF.Parse(tdfFile)
 if (moveTdf == nil) then
   error('Error parsing moveinfo.tdf: ' .. err)
 end
 
-
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
+local moveInfo = {}
 local i = 0
 while (true) do
   local move = moveTdf['class' .. i]

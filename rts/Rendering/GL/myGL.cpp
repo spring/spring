@@ -343,6 +343,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	// to render the screen background each frame.
 	if (strcmp(prevText, text)) {
 		logOutput.Print("%s",text);
+		logOutput.Flush();
 		strncpy(prevText, text, sizeof(prevText));
 		prevText[sizeof(prevText) - 1] = 0;
 	}
