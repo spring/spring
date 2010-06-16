@@ -39,8 +39,10 @@ ADD_EXECUTABLE(spring-hl ${engineSources} ${ENGINE_ICON_HL})
 TARGET_LINK_LIBRARIES(spring-hl ${engineHeadlessLibraries})
 
 IF    (MINGW)
-	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
+	# To enable console output/force a console window to open
 	SET_TARGET_PROPERTIES(spring-hl PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
+
+	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
 	#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
