@@ -1,3 +1,4 @@
+# This repository
 rts/build                         Project files / build scripts
 rts/build/cmake                   CMake build files (for Linux, Windows, OS X)
 rts/build/scons                   Scons build files (for Linux & Windows (MinGW))
@@ -66,6 +67,7 @@ AI/Wrappers/LegacyCpp             ...for letting Legacy C++ AIs interface with t
 AI/Wrappers/LegacyCpp/Event       ...and Event classes needed for that
 AI/Skirmish                       ...for SkirmishAIs (Skirmish/impls)
 
+# When installed
 dist/AI                           Files related to AI
 dist/AI/Interfaces                Output directory for AI Interface plugins
 dist/AI/Skirmish                  Output directory for Skirmish AI plugins
