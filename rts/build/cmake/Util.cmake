@@ -64,6 +64,60 @@ macro    (FixLibName targetName)
 endmacro (FixLibName targetName)
 
 
+# Create an install target which installs multiple sub-projects.
+# Sub-projects have to be specified by paths relative to CMAKE_SOURCE_DIR.
+# All install instructions in the specified dirs (recursively) are executed.
+# example:
+# 	set(myInstallDirs
+# 			"rts/builds/default"
+# 			"tools/unitsync"
+# 			"cont"
+# 			"AI"
+# 		)
+# 	set(myInstallDeps
+# 			spring
+# 			gamedata
+# 			unitsync
+# 			C-AIInterface
+# 			NullAI
+# 			KAIK
+# 			ArchiveMover
+# 		)
+# 	CreateInstallTarget(myPkg myInstallDeps myInstallDirs)
+# This creates a new target "install-myPkg"
+macro    (CreateInstallTarget targetName var_list_depends var_list_instDirs)
+	# Assemble the list of commands
+	set(installCmds "")
+	foreach    (instDir ${${var_list_instDirs}})
+		if    (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
+			message(FATAL_ERROR "Not a valid dir for installer target: ${instDir}, \"${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt\" does not exist.")
+		endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/${instDir}/CMakeLists.txt")
+		set(installCmds ${installCmds} 
+			COMMAND "${CMAKE_COMMAND}"
+				"-P" "${CMAKE_BINARY_DIR}/${instDir}/cmake_install.cmake"
+				# NOTE: The following does not work in CMake 2.6.4
+				#"-DCMAKE_INSTALL_COMPONENT=${targetName}"
+			)
+	endforeach (instDir)
+
+	# Make sure we do have commands at all
+	if    ("${installCmds}" STREQUAL "")
+		message(FATAL_ERROR "No valid install dirs supplied.")
+	endif ("${installCmds}" STREQUAL "")
+
+	# Create a custom install target
+	add_custom_target(install-${targetName}
+		${installCmds}
+		WORKING_DIRECTORY
+			"${CMAKE_BINARY_DIR}"
+		COMMENT
+			"  ${targetName}: Installing ..." VERBATIM
+		)
+	# This also works for custom targets
+	add_dependencies(install-${targetName} ${${var_list_depends}})
+endmacro (CreateInstallTarget targetName)
+
+
 # Sets a variable in global scope
 function    (SetGlobal var value)
 	set(${var} "${value}" CACHE INTERNAL "" FORCE)
