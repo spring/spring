@@ -2167,9 +2167,8 @@ void CGameServer::FreeSkirmishAIId(const size_t skirmishAIId) {
 
 void CGameServer::AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt) {
 	if(packetCache.empty() || packetCache.back().size() >= PKTCACHE_VECSIZE) {
-		std::vector<boost::shared_ptr<const netcode::RawPacket> > vec;
-		vec.reserve(PKTCACHE_VECSIZE);
-		packetCache.push_back(vec);
+		packetCache.push_back(std::vector<boost::shared_ptr<const netcode::RawPacket> >());
+		packetCache.back().reserve(PKTCACHE_VECSIZE);
 	}
 	packetCache.back().push_back(pckt);
 }
