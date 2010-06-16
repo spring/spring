@@ -14,7 +14,6 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
-
 ### Assemble libraries
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries 7zip minizip lua)
@@ -104,5 +103,21 @@ ADD_EXECUTABLE(spring-dedicated main)
 TARGET_LINK_LIBRARIES(spring-dedicated springserver)
 
 
+### Install the executable
 INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
 INSTALL(TARGETS spring-dedicated DESTINATION ${BINDIR})
+
+# Only install spring-ds executable & dependencies
+# use case: make install-spring-ds
+set(springDsInstallDirs
+		"rts/builds/DS"
+		"tools/unitsync"
+		"cont"
+	)
+set(springDsInstallDeps
+		spring-dedicated
+		springserver
+		gamedata
+		unitsync
+	)
+CreateInstallTarget(spring-dedicated springDsInstallDeps springDsInstallDirs)

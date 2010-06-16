@@ -3,6 +3,7 @@
 # Global variables set in this file:
 # * AI_EXCLUDE_REGEX
 # * AI_FIND_QUIETLY
+# * DEPS_AI_ALL
 #
 
 add_definitions(-DBUILDING_AI)
@@ -21,6 +22,17 @@ include_directories(
 	Wrappers
 	)
 
+set(DEPS_AI_ALL
+		CppTestAI
+		C-AIInterface
+		NullAI
+		NullJavaAI
+		NullOOJavaAI
+		AAI
+		KAIK
+		RAI
+	)
+MakeGlobal(DEPS_AI_ALL)
 
 # Set these for Interfaces and AIs with C sources
 set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")

@@ -47,14 +47,20 @@ ELSE  (WIN32)
 ENDIF (WIN32)
 
 
-### Build & install the executable
+### Build the executable
 ADD_EXECUTABLE(spring ${engineSources} ${ENGINE_ICON} ${engineHeaders})
 TARGET_LINK_LIBRARIES(spring ${engineLibraries})
+
+
+### Install the executable
+INSTALL(TARGETS spring DESTINATION ${BINDIR})
 
 #IF    (MINGW)
 #	SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
 #	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 #ENDIF (MINGW)
 
-INSTALL(TARGETS spring DESTINATION ${BINDIR})
+# Only install spring-mt executable & dependencies
+# use case: make install-spring
+CreateEngineBuildInstallTarget(spring)
 

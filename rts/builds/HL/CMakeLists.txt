@@ -35,6 +35,8 @@ ELSE  (MINGW)
 	SET(ENGINE_ICON_HL "")
 ENDIF (MINGW)
 
+
+### Build the executable
 ADD_EXECUTABLE(spring-hl ${engineSources} ${ENGINE_ICON_HL})
 TARGET_LINK_LIBRARIES(spring-hl ${engineHeadlessLibraries})
 
@@ -46,5 +48,11 @@ IF    (MINGW)
 	#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
+
+### Install the executable
 INSTALL(TARGETS spring-hl DESTINATION ${BINDIR})
+
+# Only install spring-hl executable & dependencies
+# use case: make install-spring-hl
+CreateEngineBuildInstallTarget(spring-hl)
 
