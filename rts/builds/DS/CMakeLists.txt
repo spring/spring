@@ -104,9 +104,5 @@ ADD_EXECUTABLE(spring-dedicated main)
 TARGET_LINK_LIBRARIES(spring-dedicated springserver)
 
 
-# Install
-if    (HEADLESS_SYSTEM)
-	# Note: installing a target that has EXCLUDE_FROM_ALL set is illegal
-	INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
-	INSTALL(TARGETS spring-dedicated DESTINATION ${BINDIR})
-endif (HEADLESS_SYSTEM)
+INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
+INSTALL(TARGETS spring-dedicated DESTINATION ${BINDIR})
