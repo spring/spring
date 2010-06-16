@@ -337,13 +337,6 @@ namespace nv_dds
             bool m_valid;
 
             std::deque<CTexture> m_images;
-
-#ifndef __APPLE__
-            static PFNGLTEXIMAGE3DEXTPROC glTexImage3D;
-            static PFNGLCOMPRESSEDTEXIMAGE1DARBPROC glCompressedTexImage1DARB;
-            static PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB;
-            static PFNGLCOMPRESSEDTEXIMAGE3DARBPROC glCompressedTexImage3DARB;
-#endif
     };
 }
 

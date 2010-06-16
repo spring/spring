@@ -13,9 +13,6 @@
 #include "System/SpringApp.h"
 
 #include <windows.h>
-#if defined(_WIN32) && defined(__MINGW32__)
-#include <GL/glext.h>
-#endif
 
 #include <boost/bind.hpp>
 #include <cassert>

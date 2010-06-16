@@ -159,62 +159,20 @@
 //         image[0].get_mipmap(i).get_depth(), 0, image.get_format(), 
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
-
 #include "StdAfx.h"
-
-#if defined(WIN32)
-#  include <windows.h>
-#  define GET_EXT_POINTER(name, type) \
-      name = (type)wglGetProcAddress(#name)
-#elif defined(UNIX) || defined(unix)
-#define GLX_GLXEXT_PROTOTYPES
-//#  include <GL/glx.h>
-#  define GET_EXT_POINTER(name, type) \
-      name = (type)glXGetProcAddressARB((const GLubyte*)#name)
-#elif defined(__APPLE__)
-// Mac OpenGL headers are 1.4/1.5 Compatable already!
-#  define GET_EXT_POINTER(name, type)
-#else
-#  define GET_EXT_POINTER(name, type)
-#  error unknown platform
-#endif
-
-/*#ifdef MACOS
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#define GL_TEXTURE_RECTANGLE_NV GL_TEXTURE_RECTANGLE_EXT
-#else*/
-
-//#include <GL/gl.h>
-//#include <GL/glext.h>
-//#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "nv_dds.h"
 
+// spring related
+#include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/byteorder.h"
-// Moved because of conflicts with GLEW.
-#if defined(UNIX) || defined(unix)
-#  include <GL/glx.h>
-#endif
-
 #include "mmgr.h"
 
 using namespace std;
 using namespace nv_dds;
-
-///////////////////////////////////////////////////////////////////////////////
-// static function pointers for uploading 3D textures and compressed 1D, 2D
-// and 3D textures.
-#ifndef __APPLE__
-PFNGLTEXIMAGE3DEXTPROC CDDSImage::glTexImage3D = NULL;
-PFNGLCOMPRESSEDTEXIMAGE1DARBPROC CDDSImage::glCompressedTexImage1DARB = NULL;
-PFNGLCOMPRESSEDTEXIMAGE2DARBPROC CDDSImage::glCompressedTexImage2DARB = NULL;
-PFNGLCOMPRESSEDTEXIMAGE3DARBPROC CDDSImage::glCompressedTexImage3DARB = NULL;
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // CDDSImage public functions
@@ -698,17 +656,7 @@ bool CDDSImage::upload_texture1D()
 
     if (is_compressed())
     {
-        // get function pointer if needed
-#ifndef USE_GML
-        if (glCompressedTexImage1DARB == NULL)
-        {
-            GET_EXT_POINTER(glCompressedTexImage1DARB, 
-                            PFNGLCOMPRESSEDTEXIMAGE1DARBPROC);
-        }
-
-        if (glCompressedTexImage1DARB == NULL)
-            return false;
-#else
+#ifdef USE_GML
         ::
 #endif                
         glCompressedTexImage1DARB(GL_TEXTURE_1D, 0, m_format, 
@@ -783,17 +731,7 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, GLenum target)
     
     if (is_compressed())
     {
-        // load function pointer if needed
-#ifndef USE_GML
-        if (glCompressedTexImage2DARB == NULL)
-        {
-            GET_EXT_POINTER(glCompressedTexImage2DARB, 
-                            PFNGLCOMPRESSEDTEXIMAGE2DARBPROC);
-        }
-        
-        if (glCompressedTexImage2DARB == NULL)
-            return false;
-#else
+#ifdef USE_GML
         ::
 #endif
         glCompressedTexImage2DARB(target, 0, m_format, image.get_width(), 
@@ -854,17 +792,7 @@ bool CDDSImage::upload_texture3D()
 
     if (is_compressed())
     {
-        // retrieve function pointer if needed
-#ifndef USE_GML
-        if (glCompressedTexImage3DARB == NULL)
-        {
-            GET_EXT_POINTER(glCompressedTexImage3DARB, 
-                            PFNGLCOMPRESSEDTEXIMAGE3DARBPROC);
-        }
-
-        if (glCompressedTexImage3DARB == NULL)
-            return false;
-#else
+#ifdef USE_GML
         ::
 #endif
         glCompressedTexImage3DARB(GL_TEXTURE_3D, 0, m_format,  
@@ -885,17 +813,6 @@ bool CDDSImage::upload_texture3D()
     }
     else
     {
-        // retrieve function pointer if needed
-#ifndef USE_GML
-        if (glTexImage3D == NULL)
-        {
-            GET_EXT_POINTER(glTexImage3D, PFNGLTEXIMAGE3DEXTPROC);
-        }
-    
-        if (glTexImage3D == NULL)
-            return false;
-#endif
-    
         GLint alignment = -1;
         if (!is_dword_aligned())
         {

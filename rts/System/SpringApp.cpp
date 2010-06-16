@@ -64,9 +64,10 @@
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/WinVersion.h"
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
+	#include <sched.h>
 #endif
 
 #ifdef USE_GML
@@ -208,32 +209,8 @@ bool SpringApp::Initialize()
 	// Initialize Lua GL
 	LuaOpenGL::Init();
 
-#ifdef WIN32
-	int affinity = configHandler->Get("SetCoreAffinity", 0);
 
-	if (affinity>0) {
-		//! Get the available cores
-		DWORD curMask;
-		DWORD cores;
-		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
-
-		DWORD wantedCore = 0xff;
-
-		//! Find an useable core
-		cores /= 0x1;
-		while( (wantedCore & cores) == 0x0 ) {
-			wantedCore >>= 0x1;
-		}
-
-		//! Set the affinity
-		HANDLE thread = GetCurrentThread();
-		if (affinity==1) {
-			SetThreadIdealProcessor(thread,wantedCore);
-		} else if (affinity>=2) {
-			SetThreadAffinityMask(thread,wantedCore);
-		}
-	}
-#endif // WIN32
+	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
 
 	InitJoystick();
 	// Create CGameSetup and CPreGame objects
@@ -241,6 +218,67 @@ bool SpringApp::Initialize()
 
 	return true;
 }
+
+void SpringApp::SetProcessAffinity(int affinity) {
+#ifdef WIN32
+	if (affinity > 0) {
+		//! Get the available cores
+		DWORD curMask;
+		DWORD cores = 0;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
+
+		DWORD_PTR wantedCore = 0xff;
+
+		//! Find an useable core
+		while ((wantedCore & cores) == 0 ) {
+			wantedCore >>= 1;
+		}
+
+		//! Set the affinity
+		HANDLE thread = GetCurrentThread();
+		DWORD_PTR result = 0;
+		if (affinity==1) {
+			result = SetThreadIdealProcessor(thread,(DWORD)wantedCore);
+		} else if (affinity>=2) {
+			result = SetThreadAffinityMask(thread,wantedCore);
+		}
+
+		if (result > 0) {
+			logOutput.Print("CPU: affinity set (%d)", affinity);
+		} else {
+			logOutput.Print("CPU: affinity failed");
+		}
+	}
+#elif defined(__APPLE__)
+	// no-op
+#else
+	if (affinity > 0) {
+		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
+		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
+
+		// use pid of calling process (0)
+		sched_getaffinity(0, sizeof(cpu_set_t), &cpusSystem);
+
+		// interpret <affinity> as a bit-mask indicating
+		// on which of the available system CPU's (which
+		// are numbered logically from 0 to N-1) we want
+		// to run
+		// note that this approach will fail when N > 32
+		logOutput.Print("[SetProcessAffinity(%d)] available system CPU's: %d", affinity, CPU_COUNT(&cpusSystem));
+
+		// add the available system CPU's to the wanted set
+		for (int n = CPU_COUNT(&cpusSystem) - 1; n >= 0; n--) {
+			if ((affinity & (1 << n)) != 0 && CPU_ISSET(n, &cpusSystem)) {
+				CPU_SET(n, &cpusWanted);
+			}
+		}
+
+		sched_setaffinity(0, sizeof(cpu_set_t), &cpusWanted);
+	}
+#endif
+}
+
+
 
 /**
  * @brief multisample test
@@ -431,7 +469,7 @@ bool SpringApp::GetDisplayGeometry()
 		return false;
 	}
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(HEADLESS)
 	// todo: enable this function, RestoreWindowPosition() and SaveWindowPosition() on Mac
 	return false;
 
@@ -949,7 +987,7 @@ void SpringApp::UpdateSDLKeys()
 
 static void ResetScreenSaverTimeout()
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(HEADLESS)
 	return;
 #endif
 
@@ -1049,7 +1087,7 @@ int SpringApp::Run(int argc, char *argv[])
  */
 void SpringApp::RestoreWindowPosition()
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(HEADLESS)
 	return;
 #else
 	if (!globalRendering->fullScreen) {

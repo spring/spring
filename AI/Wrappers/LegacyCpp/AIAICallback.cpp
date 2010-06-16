@@ -1586,14 +1586,14 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 	return ret;
 }
 
-int CAIAICallback::InitPath(float3 start, float3 end, int pathType) {
+int CAIAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius) {
 
 	float start_f3[3];
 	start.copyInto(start_f3);
 	float end_f3[3];
 	end.copyInto(end_f3);
 
-	SInitPathCommand cmd = {start_f3, end_f3, pathType};
+	SInitPathCommand cmd = {start_f3, end_f3, pathType, goalRadius};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_INIT, &cmd);
 	return cmd.ret_pathId;
 }
@@ -1606,14 +1606,14 @@ float3 CAIAICallback::GetNextWaypoint(int pathId) {
 	return float3(cmd.ret_nextWaypoint_posF3_out);
 }
 
-float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType) {
+float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType, float goalRadius) {
 
 	float start_f3[3];
 	start.copyInto(start_f3);
 	float end_f3[3];
 	end.copyInto(end_f3);
 
-	SGetApproximateLengthPathCommand cmd = {start_f3, end_f3, pathType};
+	SGetApproximateLengthPathCommand cmd = {start_f3, end_f3, pathType, goalRadius};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
 }
 

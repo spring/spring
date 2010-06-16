@@ -1,17 +1,29 @@
+# This repository
 rts/build                         Project files / build scripts
-rts/build/scons                   Scons build files (for Linux & MinGW)
+rts/build/cmake                   CMake build files (for Linux, Windows, OS X)
+rts/build/scons                   Scons build files (for Linux & Windows (MinGW))
 rts/build/vstudio8                Visual Studio 8 project files
-rts/build/xcode                   xcode project file
+rts/build/vstudio9                Visual Studio 9 project files
+rts/builds                        build scripts for different builds of the engine (CMake)
+rts/default                       default engine (single threaded) build scripts (CMake)
+rts/GML                           MT graphics engine (GML) build scripts (CMake)
+rts/DS                            Dedicated Server build scripts (CMake)
+rts/HL                            Headless client (no graphics, no sound) build scripts (CMake)
 rts/ExternalAI                    engine side AI interface
 rts/ExternalAI/Interface          AI side AI interface (also used by the engine)
 rts/Game                          General game code
+rts/Game/Camera                   different camera implementations
+rts/Game/Server                   server part of the game (communication heart of all engine builds)
 rts/Game/StartScripts             Hardcoded startscripts
 rts/Game/UI                       Game controls including current gui
-rts/lib/7zip                      7zip library
-rts/lib/hpiutil2                  TA archive loading
-rts/lib/libhpi                    Unused (old version of hpiutil2?)
+rts/lib/7z                        7zip library
+rts/lib/gml                       graphics MT assistance library
+rts/lib/headlessStubs             stub libraries for OpenGL, GLEW & SDL
+rts/lib/lobby                     library that allows communication with a lobby server
 rts/lib/lua                       lua interpreter library
+rts/lib/md5                       MD5 & base64 en-/de-cription library (used by lobby library)
 rts/lib/minizip                   zip library
+rts/lib/oscpack                   Open Sound Control library (used for statistics broadcasting)
 rts/lib/streflop/libm             Math libary (long double, double and float implementations)
 rts/lib/streflop/softfloat        Emulated FP library
 rts/lib/streflop                  STandalone REproducable FLOating Point lib
@@ -20,6 +32,8 @@ rts/Lua                           Spring Lua libraries
 rts/Map                           Map loading & rendering
 rts/Map/SM3                       SM3 map support
 rts/Map/SMF                       SMF map support
+rts/Menu                          Menu shown when the engine executable is launched without parameters
+rts/aGui                          engine internal, OpenGL based simple GUI framework
 rts/Rendering
 rts/Rendering/Env                 Sky(box), trees, water, grass
 rts/Rendering/GL                  OpenGL extension loading, vertex arrays and utility code
@@ -45,14 +59,15 @@ rts/System/Platform/Linux         Linux/Unix specific code
 rts/System/Platform/Mac           Mac specific code
 rts/System/Platform/Win           Windows specific code
 rts/System/Sync                   Sync debuggers
-
-AI                                AI sourcecode..
-AI/Interfaces                     ..for interfaceing with Skirmish and Group AIs (Interfaces/impls)
+rts/System/Sound                  Sound output implementation (<Null> & OpenAL)
+AI                                AI sourcecode...
+AI/Interfaces                     ...for interfaceing with Skirmish and Group AIs (Interfaces/impls)
 AI/Wrappers                       meta AI interfaces (consist only of code that will be integrated into AI binaries)
-AI/Wrappers/LegacyCpp             ..for letting Legacy C++ AIs interface with the C AI Interface
-AI/Wrappers/LegacyCpp/Event             ..and Event classes needed for that
-AI/Skirmish                       ..for SkirmishAIs (Skirmish/impls)
+AI/Wrappers/LegacyCpp             ...for letting Legacy C++ AIs interface with the C AI Interface
+AI/Wrappers/LegacyCpp/Event       ...and Event classes needed for that
+AI/Skirmish                       ...for SkirmishAIs (Skirmish/impls)
 
+# When installed
 dist/AI                           Files related to AI
 dist/AI/Interfaces                Output directory for AI Interface plugins
 dist/AI/Skirmish                  Output directory for Skirmish AI plugins

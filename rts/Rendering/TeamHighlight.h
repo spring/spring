@@ -10,7 +10,7 @@ class CTeamHighlight
 public:
 	static void Enable(unsigned currentTime);
 	static void Disable();
-	static void Update();
+	static void Update(int frameNum);
 	static bool highlight;
 	static std::map<int, int> oldColors;
 };

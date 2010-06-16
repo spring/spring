@@ -17,6 +17,7 @@ IF    (MINGW)
 			windres
 			i586-mingw32msvc-windres
 			i586-pc-mingw32-windres
+			i686-pc-mingw32-windres
 			i686-mingw32-windres
 		DOC "path to mingw's windres executable"
 		)

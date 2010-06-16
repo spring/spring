@@ -132,6 +132,8 @@ private:
 	void Message(const std::string& message, bool broadcast=true);
 	void PrivateMessage(int playernum, const std::string& message);
 
+	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt);
+
 	/////////////////// game status variables ///////////////////
 
 	volatile bool quitServer;
@@ -181,7 +183,7 @@ private:
 	bool noHelperAIs;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
-	std::list< boost::shared_ptr<const netcode::RawPacket> > packetCache; //waaa, the overhead
+	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK

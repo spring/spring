@@ -265,6 +265,15 @@ struct SSkirmishAICallback {
 	 */
 	const char*       (CALLING_CONV *Game_getTeamSide)(int skirmishAIId, int otherTeamId);
 
+	/**
+	 * Returns the color of a team in the game.
+	 *
+	 * This should only be used when drawing stuff,
+	 * and not for team-identification.
+	 * @return the RGB color of a team, with values in [0, 255]
+	 */
+	void              (CALLING_CONV *Game_getTeamColor)(int skirmishAIId, int otherTeamId, short* return_colorS3_out);
+
 	/// Returns the ally-team of a team
 	int               (CALLING_CONV *Game_getTeamAllyTeam)(int skirmishAIId, int otherTeamId);
 

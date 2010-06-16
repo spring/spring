@@ -10,7 +10,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
-
 ### Assemble defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
@@ -32,44 +31,28 @@ SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
 
 
-### Assemble our incude dirs
+### Assemble common incude dirs
 INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/System/)
 
 
 
-### Assemble libraries
-FIND_PACKAGE(OpenAL REQUIRED)
-LIST(APPEND engineCommonLibraries ${OPENAL_LIBRARY})
-FIND_PACKAGE(OggVorbis REQUIRED)
-LIST(APPEND engineCommonLibraries ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY})
+### Assemble common libraries
+Add_Subdirectory(System/Sound)
+if    (NO_SOUND)
+	ADD_DEFINITIONS(-DNO_SOUND)
+endif (NO_SOUND)
 
-# We also still need the header files for headless,
-# even if we are not going to link with gl, glu, or glut
-FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(GLU REQUIRED)
-FIND_PACKAGE(GLUT REQUIRED)
-FIND_PACKAGE(GLEW REQUIRED)
-LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
-# We still link with glew for headless too.
-# (you try stubbing the whole of libGLEW ;-) Good luck with that :-P)
-LIST(APPEND engineCommonLibraries ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY})
-
-FIND_PACKAGE(Freetype REQUIRED)
-LIST(APPEND engineCommonLibraries ${FREETYPE_LIBRARIES})
+LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
-ELSE (MINGW)
-	FIND_PACKAGE(X11 REQUIRED)
-	LIST(APPEND engineCommonLibraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
 ENDIF (MINGW)
 
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-LIST(APPEND engineLibraries ${SDL_LIBRARY})
 
 ADD_SUBDIRECTORY(lib)
 LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
@@ -78,15 +61,6 @@ IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineCommonLibraries dl)
 ENDIF (UNIX)
-
-LIST(APPEND engineLibraries ${engineCommonLibraries})
-
-
-
-### Assemble external incude dirs
-INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-
 
 
 ### Assemble engine sources
@@ -145,7 +119,8 @@ AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/FileSystem sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Net sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Script sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sync sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sound sys_files)
+# Sound is now two static libs
+#AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sound sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/creg sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Input sys_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/LoadSave sys_files)
@@ -167,24 +142,14 @@ file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
 
 
 ### Add icon and manifest to exe using windres
-IF    (MINGW)
+IF    (WIN32)
 	SET(ENGINE_ICON_DIR "${ENGINE_SRC_ROOT_DIR}")
 	SET(ENGINE_ICON_RES "${ENGINE_SRC_ROOT_DIR}/icon.rc")
 	SET(ENGINE_ICON_OBJ "${CMAKE_CURRENT_BINARY_DIR}/icon.o")
 	CreateResourceCompileCommand(ENGINE_ICON "${ENGINE_ICON_DIR}" "${ENGINE_ICON_RES}" "${ENGINE_ICON_OBJ}")
-ELSE  (MINGW)
+ELSE  (WIN32)
 	SET(ENGINE_ICON "")
-ENDIF (MINGW)
+ENDIF (WIN32)
 
-
-ADD_EXECUTABLE(spring ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-TARGET_LINK_LIBRARIES(spring ${engineLibraries})
-
-IF    (MINGW)
-	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
-	#install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
-ENDIF (MINGW)
-
-INSTALL(TARGETS spring DESTINATION ${BINDIR})
 
 Add_Subdirectory(builds)

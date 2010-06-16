@@ -33,7 +33,7 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "Sound/ISound.h"
-#include "Sound/Music.h"
+#include "Sound/IMusicChannel.h"
 #include "Map/MapInfo.h"
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -211,9 +211,15 @@ void CPreGame::UpdateClientNet()
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
 			case NETMSG_QUIT: {
-				const std::string message((char*)(inbuf+3));
-				logOutput.Print(message);
-				handleerror(NULL, message, "Quit message", MBF_OK | MBF_EXCL);
+				try {
+					netcode::UnpackPacket pckt(packet, 3);
+					std::string message;
+					pckt >> message;
+					logOutput.Print(message);
+					handleerror(NULL, message, "Quit message", MBF_OK | MBF_EXCL);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
+				}		
 				break;
 			}
 			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.

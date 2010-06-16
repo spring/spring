@@ -8,7 +8,6 @@
 #include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Misc/TeamHighlight.h"
 #include "mmgr.h"
 #include "Util.h"
 #include "LogOutput.h"
@@ -83,8 +82,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 			it->allies.push_back(false); // enemy to everyone
 		}
 		::AllyTeam allyteam;
-		allyteam.allies.resize(allyTeams.size()+1,false); // everyones enemy
-		allyteam.allies[gaiaTeamID] = true; // peace with itself
+		allyteam.allies.resize(allyTeams.size() + 1, false); // everyones enemy
+		allyteam.allies[gaiaAllyTeamID] = true; // peace with itself
 		allyTeams.push_back(allyteam);
 	}
 }
@@ -98,6 +97,5 @@ void CTeamHandler::GameFrame(int frameNum)
 		for (int a = 0; a < ActiveTeams(); ++a) {
 			Team(a)->SlowUpdate();
 		}
-		CTeamHighlight::Update();
 	}
 }

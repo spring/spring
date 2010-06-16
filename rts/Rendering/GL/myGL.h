@@ -9,7 +9,11 @@
 #endif
 
 #include <string>
-#include <GL/glew.h>
+#ifndef HEADLESS
+	#include <GL/glew.h>
+#else
+	#include "lib/headlessStubs/glewstub.h"
+#endif
 #include "lib/gml/gml.h"
 
 // includes boost now!

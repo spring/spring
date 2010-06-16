@@ -315,12 +315,10 @@ void InstallHangHandler() {
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 	hangTimeout = configHandler->Get("HangTimeout", 0);
-#ifdef USE_GML
 	if (hangTimeout == 0) {
-		// HangTimeout = -1 to force disable hang detection in MT build
+		// HangTimeout = -1 to force disable hang detection
 		hangTimeout = 10;
 	}
-#endif
 	if (hangTimeout > 0) {
 		hangdetectorthread = new boost::thread(&HangDetector);
 	}

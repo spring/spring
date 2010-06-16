@@ -10,6 +10,7 @@ GlobalConfig::GlobalConfig() {
 	networkTimeout = std::max(configHandler->Get("NetworkTimeout", 120), 0);
 	reconnectTimeout = configHandler->Get("ReconnectTimeout", 15);
 	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
+	teamHighlight = !!configHandler->Get("TeamHighlight", 1);
 }
 
 void GlobalConfig::Instantiate() {

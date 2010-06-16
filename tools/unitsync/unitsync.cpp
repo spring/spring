@@ -1163,9 +1163,9 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName)
 #define PACKRGB(r, g, b) (((r<<11)&RM) | ((g << 5)&GM) | (b&BM) )
 
 // Used to return the image
-static char* imgbuf[1024*1024*2];
+static unsigned short imgbuf[1024*1024];
 
-static void* GetMinimapSM3(string mapName, int miplevel)
+static unsigned short* GetMinimapSM3(string mapName, int miplevel)
 {
 	MapParser mapParser(mapName);
 	const string minimapFile = mapParser.GetRoot().GetString("minimap", "");
@@ -1184,11 +1184,10 @@ static void* GetMinimapSM3(string mapName, int miplevel)
 	if (1024 >> miplevel != bm.xsize || 1024 >> miplevel != bm.ysize)
 		bm = bm.CreateRescaled (1024 >> miplevel, 1024 >> miplevel);
 
-	unsigned short *dst = (unsigned short*)imgbuf;
-	unsigned char *src = bm.mem;
-	for (int y=0;y<bm.ysize;y++)
-		for (int x=0;x<bm.xsize;x++)
-		{
+	unsigned short* dst = (unsigned short*)imgbuf;
+	unsigned char* src = bm.mem;
+	for (int y=0; y < bm.ysize; y++) {
+		for (int x=0; x < bm.xsize; x++) {
 			*dst = 0;
 
 			*dst |= ((src[0]>>3) << 11) & RM;
@@ -1198,19 +1197,19 @@ static void* GetMinimapSM3(string mapName, int miplevel)
 			dst ++;
 			src += 4;
 		}
+	}
 
 	return imgbuf;
 }
 
-static void* GetMinimapSMF(string mapName, int miplevel)
+static unsigned short* GetMinimapSMF(string mapName, int miplevel)
 {
 	CSmfMapFile in(mapName);
 	std::vector<uint8_t> buffer;
 	const int mipsize = in.ReadMinimap(buffer, miplevel);
 
 	// Do stuff
-	void* ret = (void*)imgbuf;
-	unsigned short* colors = (unsigned short*)ret;
+	unsigned short* colors = (unsigned short*)((void*)imgbuf);
 
 	unsigned char* temp = &buffer[0];
 
@@ -1259,7 +1258,8 @@ static void* GetMinimapSMF(string mapName, int miplevel)
 		}
 		temp += 8;
 	}
-	return (void*)ret;
+
+	return colors;
 }
 
 /**
@@ -1276,7 +1276,7 @@ static void* GetMinimapSMF(string mapName, int miplevel)
  * An example usage would be GetMinimap("SmallDivide.smf", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
-EXPORT(void*) GetMinimap(const char* filename, int miplevel)
+EXPORT(unsigned short*) GetMinimap(const char* filename, int miplevel)
 {
 	try {
 		CheckInit();
@@ -1290,7 +1290,7 @@ EXPORT(void*) GetMinimap(const char* filename, int miplevel)
 
 		const string extension = mapName.substr(mapName.length() - 3);
 
-		void* ret = NULL;
+		unsigned short* ret = NULL;
 
 		if (extension == "smf") {
 			ret = GetMinimapSMF(mapName, miplevel);
@@ -1357,7 +1357,7 @@ EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, i
  * this function to convert from one format to another. Currently only the
  * conversion from 16 bpp to 8 bpp is implemented.
  */
-EXPORT(int) GetInfoMap(const char* filename, const char* name, void* data, int typeHint)
+EXPORT(int) GetInfoMap(const char* filename, const char* name, unsigned char* data, int typeHint)
 {
 	try {
 		CheckInit();
@@ -1387,7 +1387,7 @@ EXPORT(int) GetInfoMap(const char* filename, const char* name, void* data, int t
 
 			const unsigned short* inp = temp;
 			const unsigned short* inp_end = temp + size;
-			unsigned char* outp = (unsigned char*) data;
+			unsigned char* outp = data;
 			for (; inp < inp_end; ++inp, ++outp) {
 				*outp = *inp >> 8;
 			}
@@ -2719,7 +2719,7 @@ EXPORT(void) CloseFileVFS(int handle)
  * @return -1 on error; the number of bytes read on success
  * (if this is less than length you reached the end of the file.)
  */
-EXPORT(int) ReadFileVFS(int handle, void* buf, int length)
+EXPORT(int) ReadFileVFS(int handle, unsigned char* buf, int length)
 {
 	try {
 		CheckFileHandle(handle);
@@ -2987,7 +2987,7 @@ EXPORT(int) OpenArchiveFile(int archive, const char* name)
  * @return -1 on error; the number of bytes read on success
  * (if this is less than numBytes you reached the end of the file.)
  */
-EXPORT(int) ReadArchiveFile(int archive, int handle, void* buffer, int numBytes)
+EXPORT(int) ReadArchiveFile(int archive, int handle, unsigned char* buffer, int numBytes)
 {
 	try {
 		CheckArchiveHandle(archive);

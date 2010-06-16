@@ -330,6 +330,7 @@ namespace CrashHandler {
 						logOutput.Print("# NOTE: above line is invalid -> not translating\n");
 					} else {
 						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
+						containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
 						if (containedAIInterfaceSo.empty() && (absPath.find("Interfaces") != std::string::npos)) {
 							containedAIInterfaceSo = absPath;

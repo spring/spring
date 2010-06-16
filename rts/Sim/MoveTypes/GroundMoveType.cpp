@@ -35,7 +35,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/Vec2.h"

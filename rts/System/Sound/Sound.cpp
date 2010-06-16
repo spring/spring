@@ -13,10 +13,9 @@
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
-#include "AudioChannel.h"
-#include "Music.h"
+#include "IEffectChannel.h"
+#include "IMusicChannel.h"
 #include "ALShared.h"
-#include "Music.h"
 
 #include "LogOutput.h"
 #include "TimeProfiler.h"
@@ -331,7 +330,8 @@ void CSound::StartThread(int maxSounds)
 				}
 			}
 
-			SoundSource::SetAirAbsorption(0.1f);
+			float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
+			SoundSource::SetAirAbsorption(airAbsorption);
 
 			// Generate sound sources
 			for (int i = 0; i < maxSounds; i++)
@@ -361,7 +361,6 @@ void CSound::StartThread(int maxSounds)
 		while (true)
 		{
 			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
-			boost::mutex::scoped_lock lck(soundMutex); // lock
 			Update(); // call update
 		}
 	}
@@ -378,6 +377,7 @@ void CSound::StartThread(int maxSounds)
 
 void CSound::Update()
 {
+	boost::mutex::scoped_lock lck(soundMutex); // lock
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");

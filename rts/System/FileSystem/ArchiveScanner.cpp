@@ -227,6 +227,15 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 	const string fpath = filesystem.GetDirectory(fullName);
 	const string lcfn  = StringToLower(fn);
 
+	// Determine whether this archive has earlier be found to be broken
+	std::map<string, BrokenArchive>::iterator bai = brokenArchives.find(lcfn);
+	if (bai != brokenArchives.end()) {
+		if ((unsigned)info.st_mtime == bai->second.modified && fpath == bai->second.path) {
+			bai->second.updated = true;
+			return;
+		}
+	}
+
 	// Determine whether to rely on the cached info or not
 	bool cached = false;
 
@@ -318,6 +327,13 @@ void CArchiveScanner::ScanArchive(const string& fullName, bool doChecksum)
 			{ // error
 				LogObject() << "Failed to scan " << fullName << " (missing files, could not determine archive type)";
 				delete ar;
+
+				// record it as broken, so we don't need to look inside everytime
+				BrokenArchive ba;
+				ba.path = fpath;
+				ba.modified = info.st_mtime;
+				ba.updated = true;
+				brokenArchives[lcfn] = ba;
 				return;
 			}
 
@@ -479,6 +495,22 @@ void CArchiveScanner::ReadCacheData(const string& filename)
 		archiveInfo[lcname] = ai;
 	}
 
+	const LuaTable brokenArchives = archiveCache.SubTable("brokenArchives");
+
+	for (int i = 1; brokenArchives.KeyExists(i); ++i) {
+		const LuaTable curArchive = brokenArchives.SubTable(i);
+		BrokenArchive ba;
+		string name = curArchive.GetString("name", "");
+
+		ba.path = curArchive.GetString("path", "");
+		ba.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
+		ba.updated = false;
+
+		string lcname = StringToLower(name);
+
+		this->brokenArchives[lcname] = ba;
+	}
+
 	isDirty = false;
 }
 
@@ -525,12 +557,24 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 	}
 
 	// First delete all outdated information
+	// TODO: this pattern should be moved into utility function..
 	for (std::map<string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ) {
 		if (!i->second.updated) {
 #ifdef _MSC_VER
 			i = archiveInfo.erase(i);
 #else
 			archiveInfo.erase(i++);
+#endif
+		}
+		else
+			++i;
+	}
+	for (std::map<string, BrokenArchive>::iterator i = brokenArchives.begin(); i != brokenArchives.end(); ) {
+		if (!i->second.updated) {
+#ifdef _MSC_VER
+			i = brokenArchives.erase(i);
+#else
+			brokenArchives.erase(i++);
 #endif
 		}
 		else
@@ -587,7 +631,23 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 		fprintf(out, "\t\t},\n");
 	}
 
-	fprintf(out, "\t},\n"); // close 'archives'
+	fprintf(out, "\t},\n\n"); // close 'archives'
+
+	fprintf(out, "\tbrokenArchives = {  -- count = "_STPF_"\n", brokenArchives.size());
+
+	std::map<string, BrokenArchive>::const_iterator bai;
+	for (bai = brokenArchives.begin(); bai != brokenArchives.end(); ++bai) {
+		const BrokenArchive& ba = bai->second;
+
+		fprintf(out, "\t\t{\n");
+		SafeStr(out, "\t\t\tname = ", bai->first);
+		SafeStr(out, "\t\t\tpath = ", ba.path);
+		fprintf(out, "\t\t\tmodified = \"%u\",\n", ba.modified);
+		fprintf(out, "\t\t},\n");
+	}
+
+	fprintf(out, "\t},\n"); // close 'brokenArchives'
+
 	fprintf(out, "}\n\n"); // close 'archiveCache'
 	fprintf(out, "return archiveCache\n");
 

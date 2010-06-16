@@ -352,7 +352,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		{
 			SInitPathCommand* cmd = (SInitPathCommand*) commandData;
 			cmd->ret_pathId = clb->InitPath(cmd->start_posF3,
-					cmd->end_posF3, cmd->pathType);
+					cmd->end_posF3, cmd->pathType, cmd->goalRadius);
 			break;
 		}
 		case COMMAND_PATH_GET_APPROXIMATE_LENGTH:
@@ -361,7 +361,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 					(SGetApproximateLengthPathCommand*) commandData;
 			cmd->ret_approximatePathLength =
 					clb->GetPathLength(cmd->start_posF3, cmd->end_posF3,
-							cmd->pathType);
+							cmd->pathType, cmd->goalRadius);
 			break;
 		}
 		case COMMAND_PATH_GET_NEXT_WAYPOINT:
@@ -1040,6 +1040,14 @@ EXPORT(int) skirmishAiCallback_Game_getPlayerTeam(int skirmishAIId, int player) 
 
 EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int skirmishAIId, int team) {
 	return skirmishAIId_callback[skirmishAIId]->GetTeamSide(team);
+}
+
+EXPORT(void) skirmishAiCallback_Game_getTeamColor(int skirmishAIId, int otherTeamId, short* return_colorS3_out) {
+
+	const unsigned char* color = teamHandler->Team(otherTeamId)->color;
+	return_colorS3_out[0] = color[0];
+	return_colorS3_out[1] = color[1];
+	return_colorS3_out[2] = color[2];
 }
 
 EXPORT(int) skirmishAiCallback_Game_getTeamAllyTeam(int skirmishAIId, int otherTeamId) {
@@ -4452,6 +4460,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getMyAllyTeam = &skirmishAiCallback_Game_getMyAllyTeam;
 	callback->Game_getPlayerTeam = &skirmishAiCallback_Game_getPlayerTeam;
 	callback->Game_getTeamSide = &skirmishAiCallback_Game_getTeamSide;
+	callback->Game_getTeamColor = &skirmishAiCallback_Game_getTeamColor;
 	callback->Game_getTeamAllyTeam = &skirmishAiCallback_Game_getTeamAllyTeam;
 	callback->Game_isAllied = &skirmishAiCallback_Game_isAllied;
 	callback->Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
