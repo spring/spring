@@ -23,6 +23,26 @@
 #include <sys/types.h>
 #endif
 
+// define a common indicator for 32bit or 64bit-ness
+#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
+#define __arch64__
+#else
+#define __arch32__
+#endif
+
+// define a cross-platform/-compiler compatible "%z" format replacement for
+// printf() style functions.
+// "%z" being the propper way for size_t typed values,
+// but support for it has not yet spread wide enough.
+#if defined __arch64__
+#define __SIZE_T_PRINTF_FORMAT__ "%lu"
+#else
+#define __SIZE_T_PRINTF_FORMAT__ "%u"
+#endif
+// a shorter form
+#define _STPF_ __SIZE_T_PRINTF_FORMAT__
+
+
 using namespace std;
 
 
@@ -263,7 +283,7 @@ int main (int argc, char *argv[])
 			hmap [i->name]=&*i;
 		}
 	}
-	printf ("%d headers.\n", hmap.size());
+	printf (_STPF_" headers.\n", hmap.size());
 
 	for (list<file_t>::iterator i=filelist.begin();i!=filelist.end();++i)
 	{
