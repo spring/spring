@@ -198,11 +198,9 @@ Add_Subdirectory(rts)
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 	Add_Subdirectory(AI)
 endif (NOT "${AI_TYPES}" STREQUAL "NONE")
-if    (WIN32)
-	Add_Subdirectory(tools/ArchiveMover)
-endif (WIN32)
 
-Add_Subdirectory(tools/unitsync)
+# additional tools
+Add_Subdirectory(tools)
 
 # required for man pages (optional) and base files (mandatory)
 FIND_PACKAGE(7zip REQUIRED)
@@ -217,5 +215,3 @@ Add_Subdirectory(doc)
 ### - Install mingw DLLs
 Add_Subdirectory(cont)
 
-# additional tools
-Add_Subdirectory(tools/DemoTool)
