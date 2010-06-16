@@ -7,8 +7,9 @@
 // Give the base project directory as argument:
 // Example for spring:
 //  dch <trunk path>/rts -ISystem
-#include <stdio.h> 
-#include <assert.h>
+#include <cstdio> 
+#include <cassert>
+#include <cstring>
 #include <vector>
 #include <string>
 #include <set>
