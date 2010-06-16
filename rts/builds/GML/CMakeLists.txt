@@ -68,3 +68,7 @@ TARGET_LINK_LIBRARIES(spring-mt gml ${engineLibraries})
 ### Install the executable
 INSTALL(TARGETS spring-mt DESTINATION ${BINDIR})
 
+# Only install spring-mt executable & dependencies
+# use case: make install-spring-mt
+CreateEngineBuildInstallTarget(spring-mt)
+
