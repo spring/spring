@@ -61,9 +61,10 @@ ENDIF (WIN32)
 
 
 ### Build the executable
-ADD_EXECUTABLE(spring-mt EXCLUDE_FROM_ALL ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
+ADD_EXECUTABLE(spring-mt ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
 TARGET_LINK_LIBRARIES(spring-mt gml ${engineLibraries})
 
-# Note: installing a target that has EXCLUDE_FROM_ALL set is illegal
-#INSTALL(TARGETS spring-mt DESTINATION ${BINDIR})
+
+### Install the executable
+INSTALL(TARGETS spring-mt DESTINATION ${BINDIR})
 
