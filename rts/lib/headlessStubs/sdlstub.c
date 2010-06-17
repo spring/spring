@@ -7,6 +7,11 @@
 
 #include "SDL.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // @see sdlstub_cppbit.cpp
 int stub_sdl_getSystemMilliSeconds();
 void stub_sdl_sleepMilliSeconds(int milliSeconds);
@@ -19,7 +24,7 @@ static Uint8 stubKeyState[0];
 static SDL_version stubVersion;
 
 
-int SDL_Init(Uint32 flags) {
+extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 
 	startSystemMilliSeconds = stub_sdl_getSystemMilliSeconds();
 
@@ -29,87 +34,87 @@ int SDL_Init(Uint32 flags) {
 	return 0;
 }
 
-int SDL_InitSubSystem(Uint32 flags) {
+extern DECLSPEC int SDLCALL SDL_InitSubSystem(Uint32 flags) {
 	return 0;
 }
 
-char* SDL_GetError() {
+extern DECLSPEC char* SDLCALL SDL_GetError() {
 	return "using the SDL stub library";
 }
 
-int SDL_GL_SetAttribute(SDL_GLattr attr, int value) {
+extern DECLSPEC int SDLCALL SDL_GL_SetAttribute(SDL_GLattr attr, int value) {
 	return 0;
 }
 
-SDL_Surface* SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags) {
+extern DECLSPEC SDL_Surface* SDLCALL SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags) {
 	return &stubSurface;
 }
 
-struct SDL_RWops* SDL_RWFromFile(const char* file, const char* mode) {
+extern DECLSPEC struct SDL_RWops* SDLCALL SDL_RWFromFile(const char* file, const char* mode) {
 	return &stubRWops;
 }
 
-SDL_Surface* SDL_LoadBMP_RW(SDL_RWops* src, int freesrc) {
+extern DECLSPEC SDL_Surface* SDLCALL SDL_LoadBMP_RW(SDL_RWops* src, int freesrc) {
 	return &stubSurface;
 }
 
-void SDL_Quit() {
+extern DECLSPEC void SDLCALL SDL_Quit() {
 }
 
-void SDL_FreeSurface(SDL_Surface* surface) {
+extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface* surface) {
 }
 
-void SDL_GL_SwapBuffers() {
+extern DECLSPEC void SDLCALL SDL_GL_SwapBuffers() {
 }
 
-void SDL_Delay(Uint32 ms) {
+extern DECLSPEC void SDLCALL SDL_Delay(Uint32 ms) {
 	stub_sdl_sleepMilliSeconds(ms);
 }
 
-Uint32 SDL_GetTicks() {
+extern DECLSPEC Uint32 SDLCALL SDL_GetTicks() {
 	return stub_sdl_getSystemMilliSeconds() - startSystemMilliSeconds;
 }
 
-void SDL_WarpMouse(Uint16 x, Uint16 y) {
+extern DECLSPEC void SDLCALL SDL_WarpMouse(Uint16 x, Uint16 y) {
 }
 
-int SDL_WM_IconifyWindow() {
+extern DECLSPEC int SDLCALL SDL_WM_IconifyWindow() {
 }
 
-int SDL_EnableUNICODE(int i) {
+extern DECLSPEC int SDLCALL SDL_EnableUNICODE(int i) {
 }
 
-int SDL_EnableKeyRepeat(int i, int j) {
+extern DECLSPEC int SDLCALL SDL_EnableKeyRepeat(int i, int j) {
 }
 
-void SDL_SetModState(SDLMod i) {
+extern DECLSPEC void SDLCALL SDL_SetModState(SDLMod i) {
 }
 
-int SDL_PollEvent(SDL_Event* event) {
+extern DECLSPEC int SDLCALL SDL_PollEvent(SDL_Event* event) {
 	return 0;
 }
 
-int SDL_PushEvent(SDL_Event* event) {
+extern DECLSPEC int SDLCALL SDL_PushEvent(SDL_Event* event) {
 	return 0;
 }
 
-void SDL_PumpEvents() {
+extern DECLSPEC void SDLCALL SDL_PumpEvents() {
 }
 
-void SDL_WM_SetIcon(SDL_Surface* icon, Uint8* mask) {
+extern DECLSPEC void SDLCALL SDL_WM_SetIcon(SDL_Surface* icon, Uint8* mask) {
 }
 
-void SDL_WM_SetCaption(const char* title, const char* icon) {
+extern DECLSPEC void SDLCALL SDL_WM_SetCaption(const char* title, const char* icon) {
 }
 
-int SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
+extern DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
 	*value = 0;
 }
 
-SDL_GrabMode SDL_WM_GrabInput(SDL_GrabMode mode) {
+extern DECLSPEC SDL_GrabMode SDLCALL SDL_WM_GrabInput(SDL_GrabMode mode) {
 }
 
-int SDL_GetWMInfo(void* infostruct) {
+extern DECLSPEC int SDLCALL SDL_GetWMInfo(void* infostruct) {
 
 	// TODO: probably needs to populate infostruct with something reasonable...
 
@@ -117,53 +122,58 @@ int SDL_GetWMInfo(void* infostruct) {
 	return 0;
 }
 
-Uint8* SDL_GetKeyState(int* numkeys) {
+extern DECLSPEC Uint8* SDLCALL SDL_GetKeyState(int* numkeys) {
 	*numkeys = 0;
 	return stubKeyState;
 }
 
-SDLMod SDL_GetModState() {
+extern DECLSPEC SDLMod SDLCALL SDL_GetModState() {
 	return 0;
 }
 
-const SDL_version*  SDL_Linked_Version() {
+extern DECLSPEC const SDL_version* SDLCALL SDL_Linked_Version() {
 	return &stubVersion;
 }
 
-int SDL_ShowCursor(int toggle) {
+extern DECLSPEC int SDLCALL SDL_ShowCursor(int toggle) {
 }
 
-Uint8 SDL_GetMouseState(int* x, int* y) {
+extern DECLSPEC Uint8 SDLCALL SDL_GetMouseState(int* x, int* y) {
 	return 0;
 }
 
-int SDL_SetGamma(float red, float green, float blue) {
+extern DECLSPEC int SDLCALL SDL_SetGamma(float red, float green, float blue) {
 	return 0;
 }
 
-int SDL_NumJoysticks() {
+extern DECLSPEC int SDLCALL SDL_NumJoysticks() {
 	return 0;
 }
 
-const char* SDL_JoystickName(int device_index) {
+extern DECLSPEC const char* SDLCALL SDL_JoystickName(int device_index) {
 	return "";
 }
 
-SDL_Joystick* SDL_JoystickOpen(int device_index) {
+extern DECLSPEC SDL_Joystick* SDLCALL SDL_JoystickOpen(int device_index) {
 	return 0;
 }
 
-void SDL_JoystickClose(SDL_Joystick* joystick) {
+extern DECLSPEC void SDLCALL SDL_JoystickClose(SDL_Joystick* joystick) {
 }
 
-SDL_Rect** SDL_ListModes(SDL_PixelFormat* format, Uint32 flags) {
+extern DECLSPEC SDL_Rect** SDLCALL SDL_ListModes(SDL_PixelFormat* format, Uint32 flags) {
 	return NULL;
 }
 
-int SDL_PeepEvents(SDL_Event* events, int numevents, SDL_eventaction action, Uint32 mask) {
+extern DECLSPEC int SDLCALL SDL_PeepEvents(SDL_Event* events, int numevents, SDL_eventaction action, Uint32 mask) {
 	return 0;
 }
 
-Uint8 SDL_GetAppState() {
+extern DECLSPEC Uint8 SDLCALL SDL_GetAppState() {
 	return 0;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
