@@ -23,6 +23,10 @@
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int main(int argc, char *argv[])
 {
 #ifdef _WIN32
@@ -118,3 +122,15 @@ int main(int argc, char *argv[])
 #endif
 	return 0;
 }
+
+#ifdef WIN32
+int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	return main(__argc, __argv);
+}
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
