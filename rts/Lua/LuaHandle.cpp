@@ -266,24 +266,6 @@ int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errormessage)
 	return RunCallInTraceback(inArgs, outArgs, 0, errormessage);
 }
 
-
-bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
-{
-	return RunCallInTraceback(hs, inArgs, outArgs, 0);
-}
-
-
-
-inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs,
-                                          int inArgs, int outArgs)
-{
-	synced = false;
-	const bool retval = RunCallIn(hs, inArgs, outArgs);
-	synced = !userMode;
-	return retval;
-}
-
-
 /******************************************************************************/
 
 void CLuaHandle::Shutdown()

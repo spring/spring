@@ -5,14 +5,10 @@
 #endif
 
 #include "Connection.h"
-
 #include "RawTextMessage.h"
-
 #include <bitset>
-
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-
 #include "lib/md5/md5.h"
 #include "lib/md5/base64.h"
 
@@ -162,7 +158,7 @@ void Connection::LeaveChannel(const std::string& channame)
 	SendData(out.str());
 }
 
-void Connection::ForceLeaveChannel(const std::string& channame, const std::string& user, const std::string& reason)
+void Connection::KickChannelMember(const std::string& channame, const std::string& user, const std::string& reason)
 {
 	std::ostringstream out;
 	out << "FORCELEAVECHANNEL " << channame << " " << user;
@@ -251,7 +247,7 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	}
 	else if (command == "DENIED")
 	{
-		Denied(msg);
+		LoginDenied(msg);
 	}
 	else if (command == "LOGININFOEND")
 	{
@@ -292,7 +288,7 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		status.bot = statusbf[6];
 		if (name == myUserName)
 			myStatus = status;
-		ClientStatusUpdate(name, status);
+		UserStatusUpdate(name, status);
 	}
 	else if (command == "JOIN")
 	{
@@ -338,7 +334,7 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 		std::string channame = buf.GetWord();
 		std::string client = buf.GetWord();
 		std::string reason = buf.GetSentence();
-		ForceLeftChannel(channame, client, reason);
+		ChannelMemberKicked(channame, client, reason);
 	}
 	else if (command == "CHANNELTOPIC")
 	{

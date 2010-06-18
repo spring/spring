@@ -349,5 +349,19 @@ inline void CLuaHandle::SetActiveHandle(CLuaHandle* lh)
 	}
 }
 
+inline bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
+{
+	return RunCallInTraceback(hs, inArgs, outArgs, 0);
+}
+
+
+inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs)
+{
+	synced = false;
+	const bool retval = RunCallIn(hs, inArgs, outArgs);
+	synced = !userMode;
+	return retval;
+}
+
 
 #endif /* LUA_HANDLE_H */

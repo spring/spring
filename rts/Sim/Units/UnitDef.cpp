@@ -46,7 +46,15 @@ S3DModel* UnitDef::LoadModel() const
 	UnitDef* udef = const_cast<UnitDef*>(this);
 
 	if (udef->modelDef.model == NULL) {
-		udef->modelDef.model = modelParser->Load3DModel(udef->modelDef.modelpath, udef->modelCenterOffset);
+		if (udef->objectName.find(".") == std::string::npos) {
+			udef->objectName += ".3do"; // NOTE: get rid of this?
+		}
+
+		udef->modelDef.modelPath = "objects3d/" + udef->objectName;
+		udef->modelDef.modelName = udef->objectName;
+		udef->modelDef.model = modelParser->Load3DModel(udef->modelDef.modelPath, udef->modelCenterOffset);
+		udef->modelDef.modelTextures["tex1"] = udef->modelDef.model->tex1;
+		udef->modelDef.modelTextures["tex2"] = udef->modelDef.model->tex2;
 	}
 
 	return (udef->modelDef.model);

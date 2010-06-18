@@ -7,9 +7,9 @@
 #include <vector>
 #include <map>
 
-#include "float3.h"
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"
+#include "System/float3.h"
 
 struct MoveData;
 struct WeaponDef;
@@ -20,11 +20,13 @@ class CExplosionGenerator;
 
 struct UnitModelDef
 {
-	UnitModelDef():model(NULL) {};
+	UnitModelDef(): model(NULL) {}
+
 	S3DModel* model;
-	std::string modelpath;
-	std::string modelname;
-	std::map<std::string, std::string> textures;
+
+	std::string modelPath;
+	std::string modelName;
+	std::map<std::string, std::string> modelTextures;
 };
 
 struct UnitDef
@@ -148,8 +150,9 @@ public:
 
 	UnitModelDef modelDef;
 
-	std::string scriptName;		///< the name of the unit's script, e.g. "armjeth.cob"
-	std::string scriptPath;		///< the path of the unit's script, e.g. "scripts/armjeth.cob"
+	std::string objectName;     ///< raw name of the unit's model without objects3d prefix, eg. "armjeth.s3o"
+	std::string scriptName;     ///< the name of the unit's script, e.g. "armjeth.cob"
+	std::string scriptPath;     ///< the path of the unit's script, e.g. "scripts/armjeth.cob"
 
 	float3 modelCenterOffset;	///< offset from the unit model's default center point
 

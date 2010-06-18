@@ -189,6 +189,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
 	    !AddEntriesToTable(L, "Script",      LuaUnsyncedCall::PushEntries) ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
+	    !AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
@@ -202,7 +203,6 @@ CLuaUI::CLuaUI()
 	}
 
 	lua_settop(L, 0);
-	LuaLobby::RegisterUserdata(L);
 	if (!LoadCode(code, "luaui.lua")) {
 		KillLua();
 		return;
