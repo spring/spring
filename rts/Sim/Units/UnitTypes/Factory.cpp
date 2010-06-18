@@ -316,12 +316,12 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 	float3 tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 
 	if (buildFacing == FACING_NORTH || buildFacing == FACING_SOUTH) {
-		while ((tmpPos.z >= unit->pos.z - zs || tmpPos.z <= unit->pos.z + zs)) {
+		while ((tmpPos.z >= unit->pos.z - zs && tmpPos.z <= unit->pos.z + zs)) {
 			tmpDst += 0.5f;
 			tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 		}
 	} else {
-		while ((tmpPos.x >= unit->pos.x - xs || tmpPos.x <= unit->pos.x + xs)) {
+		while ((tmpPos.x >= unit->pos.x - xs && tmpPos.x <= unit->pos.x + xs)) {
 			tmpDst += 0.5f;
 			tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 		}
