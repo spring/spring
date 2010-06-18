@@ -39,7 +39,7 @@ struct LuaHashString {
 
 		inline void GetGlobal(lua_State* L) const {
 			Push(L);
-			lua_gettable(L, LUA_GLOBALSINDEX);
+			lua_rawget(L, LUA_GLOBALSINDEX);
 		}
 		inline bool GetGlobalFunc(lua_State* L) const {
 			GetGlobal(L);
@@ -52,7 +52,7 @@ struct LuaHashString {
 
 		inline void GetRegistry(lua_State* L) const {
 			Push(L);
-			lua_gettable(L, LUA_REGISTRYINDEX);
+			lua_rawget(L, LUA_REGISTRYINDEX);
 		}
 		inline bool GetRegistryFunc(lua_State* L) const {
 			GetRegistry(L);

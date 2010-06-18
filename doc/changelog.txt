@@ -56,9 +56,59 @@ Unitsync:
  - data dirs read from /etc/spring/datadir (separator is now ":" instead of " ")
 
 FontRendering:
- - added a new inline ctrl command '\008', it resets the TextColor to the active color when Print() got called (e.g. e.g. font:SetTextColor(0,0,1); font:Print("\255\255\000\000red\255\000\255\000green\008blue");)
+ - added a new inline ctrl command '\008', it resets the TextColor to the active color when Print() got called (e.g. font:SetTextColor(0,0,1); font:Print("\255\255\000\000red\255\000\255\000green\008blue");)
 
 Lua:
+ - LuaLobby:
+   callouts:
+   - Script.CreateLobby() -> userdata lobCon
+   - lobCon:Connect(string url, int port)
+   - lobCon:Login(string username, string password)
+   - lobCon:Rename(string newname)
+   - lobCon:ChangePass(string oldpassword, string newpassword)
+   - lobCon:Register(string username, string password)
+   - lobCon:ConfirmAggreement()
+   - lobCon:JoinChannel(string chan_name [,string password])
+   - lobCon:LeaveChannel(string chan_name)
+   - lobCon:Say(string chan_name, string message)
+   - lobCon:SayEx(string chan_name, string message)
+   - lobCon:SayPrivate(string user_name, string message)
+   - lobCon:StatusUpdate(bool ingame, bool away)
+   - lobCon:Channels()
+   - lobCon:KickChannelMember(string chan_name, string user_name, string reason)
+   - lobCon:ChangeTopic(string chan_name, string topic)
+   - lobCon:Poll()
+   callins:
+   - lobCon.DoneConnecting(bool sucess, string error_message)
+   - lobCon.ServerGreeting(string server_version, string spring_version, int udp_port, int mode)
+   - lobCon.RegisterDenied(string reason)
+   - lobCon.RegisterAccept()
+   - lobCon.LoginDenied(string reason)
+   - lobCon.LoginEnd()
+   - lobCon.Aggreement(string text)
+   - lobCon.Motd(string text)
+   - lobCon.ServerMessage(string text)
+   - lobCon.ServerMessageBox(string text, string url)
+   - lobCon.AddUser(string user_name, string country, number cpu)
+   - lobCon.RemoveUser(string user_name)
+   - lobCon.UserStatusUpdate(string user_name, bool away, bool bot, bool ingame, bool moderator, int rank)
+   - lobCon.ChannelInfo(string chan_name, int num_users)
+   - lobCon.ChannelInfoEnd()
+   - lobCon.RequestMutelist(string chan_name)
+   - lobCon.Mutelist(string chan_name, table {"userABC","userXYZ",...})
+   - lobCon.Joined(string chan_name)
+   - lobCon.JoinFailed(string chan_name, string reason)
+   - lobCon.ChannelMember(string chan_name, string user_name, bool joined)
+   - lobCon.ChannelMemberLeft(string chan_name, string user_name, string reason)
+   - lobCon.ChannelMemberKicked(string chan_name, string user_name, string reason)
+   - lobCon.ChannelTopic(string chan_name, string author, int time, string topic)
+   - lobCon.ChannelMessage(string chan_name, string text)
+   - lobCon.Said(string chan_name, string user_name, string text)
+   - lobCon.SaidEx(string chan_name, string user_name, string text)
+   - lobCon.SaidPrivate(string user_name, string text)
+   - lobCon.Disconnected()
+   - lobCon.NetworkError(string message)
+
  - added a new los checking argument to Set..RulesParam()
     e.g. new syntax is SetUnitRulesParam(int unitID, string paramName, float paramValue, { public = true } )
     possible values for the table are:
@@ -115,6 +165,7 @@ Bugfixes:
  - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compability)
  - fixed a bug in LuaParser, so you can know use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
  - fixed occasional bug where countdown time went into negative numbers and game never started
+ - fixed impactOnly ignored features
 
 
 0.81.2.1:

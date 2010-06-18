@@ -237,13 +237,14 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 			sprintf(t,"ta_color%i",p.PaletteEntry);
 			sp.texture=texturehandler3DO->Get3DOTexture(t);
 		}
-		float3 n=-(obj->vertices[sp.vertices[1]].pos-obj->vertices[sp.vertices[0]].pos).cross(obj->vertices[sp.vertices[2]].pos-obj->vertices[sp.vertices[0]].pos);
+
+		float3 n = -(obj->vertices[sp.vertices[1]].pos - obj->vertices[sp.vertices[0]].pos).cross(obj->vertices[sp.vertices[2]].pos - obj->vertices[sp.vertices[0]].pos);
 		n.SafeNormalize();
-		sp.normal=n;
+		sp.normal = n;
 		sp.normals.insert(sp.normals.begin(), sp.numVertex, n);
 
-		//sometimes there are more than one selection primitive (??)
-		if(n.dot(DownVector)>0.99f){
+		// sometimes there are more than one selection primitive (??)
+		if (n.dot(DownVector) > 0.99f) {
 			bool ignore=true;
 
 			if(sp.numVertex!=4) {
@@ -276,14 +277,14 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		} else {
 			prevHashes[vertHash]=obj->prims.size();
 			obj->prims.push_back(sp);
-			obj->isEmpty=false;
+			obj->isEmpty = false;
 		}
-		curOffset=p.OffsetToVertexIndexArray;
+		curOffset = p.OffsetToVertexIndexArray;
 
-		for(int b=0;b<sp.numVertex;b++){
-			SimStreamRead(&w,2);
+		for (int b = 0; b < sp.numVertex; b++) {
+			SimStreamRead(&w, 2);
 			w = swabword(w);
-			obj->vertices[w].prims.push_back(obj->prims.size()-1);
+			obj->vertices[w].prims.push_back(obj->prims.size() - 1);
 		}
 	}
 }

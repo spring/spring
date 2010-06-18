@@ -477,18 +477,19 @@ static int ModelDefTable(lua_State* L, const void* data) {
 	const UnitModelDef& md = *((const UnitModelDef*) data);
 	const char* type = "???";
 
-	     if (StringToLower(md.modelpath).find(".3do") != string::npos) { type = "3do"; }
-	else if (StringToLower(md.modelpath).find(".s3o") != string::npos) { type = "s3o"; }
-	else if (StringToLower(md.modelpath).find(".obj") != string::npos) { type = "obj"; }
+	     if (StringToLower(md.modelName).find(".3do") != string::npos) { type = "3do"; }
+	else if (StringToLower(md.modelName).find(".s3o") != string::npos) { type = "s3o"; }
+	else if (StringToLower(md.modelName).find(".obj") != string::npos) { type = "obj"; }
 
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "type", type);
-	HSTR_PUSH_STRING(L, "path", md.modelpath);
-	HSTR_PUSH_STRING(L, "name", md.modelname);
+	HSTR_PUSH_STRING(L, "path", md.modelPath);
+	HSTR_PUSH_STRING(L, "name", md.modelName);
 	HSTR_PUSH(L, "textures");
+
 	lua_newtable(L);
 	map<string, string>::const_iterator it;
-	for (it = md.textures.begin(); it != md.textures.end(); ++it) {
+	for (it = md.modelTextures.begin(); it != md.modelTextures.end(); ++it) {
 		LuaPushNamedString(L, it->first, it->second);
 	}
 	lua_rawset(L, -3);

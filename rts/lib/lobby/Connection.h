@@ -4,8 +4,8 @@
 #define CONNECTION_H
 
 #include <boost/asio/streambuf.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <string>
 
 struct ClientStatus
@@ -32,7 +32,7 @@ public:
 	virtual void RegisterAccept() {};
 
 	void Login(const std::string& name, const std::string& password);
-	virtual void Denied(const std::string& reason) {};
+	virtual void LoginDenied(const std::string& reason) {};
 	virtual void LoginEnd() {};
 	virtual void Aggreement(const std::string text) {};
 	void ConfirmAggreement();
@@ -47,7 +47,7 @@ public:
 	virtual void AddUser(const std::string& name, const std::string& country, int cpu) {};
 	virtual void RemoveUser(const std::string& name) {};
 	void StatusUpdate(bool ingame, bool away);
-	virtual void ClientStatusUpdate(const std::string& name, ClientStatus status) {};
+	virtual void UserStatusUpdate(const std::string& name, ClientStatus status) {};
 
 	void Channels();
 	virtual void ChannelInfo(const std::string& channel, unsigned users) {};
@@ -62,8 +62,8 @@ public:
 	virtual void ChannelMemberLeft(const std::string& channame, const std::string& name, const std::string& reason) {};
 	virtual void JoinFailed(const std::string& channame, const std::string& reason) {};
 	void LeaveChannel(const std::string& channame);
-	void ForceLeaveChannel(const std::string& channame, const std::string& user, const std::string& reason);
-	virtual void ForceLeftChannel(const std::string& channame, const std::string& user, const std::string& reason) {};
+	void KickChannelMember(const std::string& channame, const std::string& user, const std::string& reason);
+	virtual void ChannelMemberKicked(const std::string& channame, const std::string& user, const std::string& reason) {};
 
 	void ChangeTopic(const std::string& channame, const std::string& topic);
 	virtual void ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic) {};

@@ -54,10 +54,7 @@ public:
 
 	SyncedFloat3 waypoint;
 	SyncedFloat3 nextWaypoint;
-	/// by this time it really should have gotten there genereate new path otherwise
-	int etaWaypoint;
-	/// by this time we get suspicious, check if goal is clogged if we are close
-	int etaWaypoint2;
+
 	bool atGoal;
 	bool haveFinalWaypoint;
 	float terrainSpeed;
@@ -70,7 +67,6 @@ public:
 	unsigned int restartDelay;
 	float3 lastGetPathPos;
 
-	unsigned int pathFailures;
 	/// how many times we havent gotten to a waypoint in time
 	unsigned int etaFailures;
 	/// how many times we have requested a path from the same place
@@ -147,7 +143,6 @@ public:
 	static void CreateLineTable(void);
 	static void DeleteLineTable(void);
 	void TestNewTerrainSquare(void);
-	bool CheckGoalFeasability(void);
 	virtual void LeaveTransport(void);
 
 	void StartSkidding(void);

@@ -60,8 +60,6 @@ CR_REG_METADATA(CGroundMoveType, (
 
 		CR_MEMBER(waypoint),
 		CR_MEMBER(nextWaypoint),
-		CR_MEMBER(etaWaypoint),
-		CR_MEMBER(etaWaypoint2),
 		CR_MEMBER(atGoal),
 		CR_MEMBER(haveFinalWaypoint),
 		CR_MEMBER(terrainSpeed),
@@ -74,7 +72,6 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(restartDelay),
 		CR_MEMBER(lastGetPathPos),
 
-		CR_MEMBER(pathFailures),
 		CR_MEMBER(etaFailures),
 		CR_MEMBER(nonMovingFailures),
 
@@ -142,8 +139,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	waypoint(0.0f, 0.0f, 0.0f),
 	nextWaypoint(0.0f, 0.0f, 0.0f),
-	etaWaypoint(0.0f),
-	etaWaypoint2(0.0f),
 	atGoal(false),
 	haveFinalWaypoint(false),
 
@@ -153,7 +148,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currentDistanceToWaypoint(0),
 	restartDelay(0),
 	lastGetPathPos(0.0f, 0.0f, 0.0f),
-	pathFailures(0),
 	etaFailures(0),
 	nonMovingFailures(0),
 
@@ -255,26 +249,16 @@ void CGroundMoveType::Update()
 
 				currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
 
-				if (pathId && !atGoal && gs->frameNum > etaWaypoint) {
-					etaFailures += 10;
-					etaWaypoint = INT_MAX;
+				if (pathId && !atGoal) {
+					if (currentSpeed <= 0.0f) {
+						etaFailures++;
 
-					if (DEBUG_CONTROLLER) {
-						logOutput.Print(
-							"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i, cd2wp < md2wp: %i, frame > etaWP: %i)",
-							owner->id, pathId, atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint(), gs->frameNum > etaWaypoint
-						);
-					}
-				}
-				if (pathId && !atGoal && gs->frameNum > etaWaypoint2) {
-					if (owner->pos.SqDistance2D(goalPos) > (200 * 200) || CheckGoalFeasability()) {
-						etaWaypoint2 += 100;
-					} else {
 						if (DEBUG_CONTROLLER) {
-							logOutput.Print("[CGMT::U] goal-position clogged up for unit %i", owner->id);
+							logOutput.Print(
+								"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i, cd2wp < md2wp: %i)",
+								owner->id, pathId, atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint()
+							);
 						}
-
-						Fail();
 					}
 				}
 
@@ -376,9 +360,10 @@ void CGroundMoveType::SlowUpdate()
 		return;
 	}
 
-	// if we've strayed too far away from path, then need to reconsider
-	if (progressState == Active && etaFailures > 8) {
-		if (owner->pos.SqDistance2D(goalPos) > (200 * 200) || CheckGoalFeasability()) {
+	if (progressState == Active && etaFailures > UNIT_SLOWUPDATE_RATE) {
+		if (owner->pos.SqDistance2D(goalPos) > (200 * 200)) {
+			// too many ETA failures and not within acceptable range of
+			// our goal, try get a new path from our current position
 			if (DEBUG_CONTROLLER) {
 				logOutput.Print("[CGMT::SU] ETA failure for unit %i", owner->id);
 			}
@@ -386,6 +371,9 @@ void CGroundMoveType::SlowUpdate()
 			StopEngine();
 			StartEngine();
 		} else {
+			// already reasonably close to our goal waypoint, but cannot
+			// get to it: trigger a UnitMoveFailed event so higher-level
+			// logic can deal with this
 			if (DEBUG_CONTROLLER) {
 				logOutput.Print("[CGMT::SU] goal-position clogged up for unit %i", owner->id);
 			}
@@ -1038,11 +1026,13 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
 					                      CMoveMath::BLOCK_TERRAIN   |
 					                      CMoveMath::BLOCK_MOBILE_BUSY;
-					MoveData& moveData = *owner->unitDef->movedata;
+					const MoveData& moveData = *owner->unitDef->movedata;
+
 					if ((moveData.moveMath->IsBlocked(moveData, x, y) & blockBits) ||
 					    (moveData.moveMath->SpeedMod(moveData, x, y) <= 0.01f)) {
-						// not reachable, force a new path to be calculated next slowupdate
-						++etaFailures;
+
+						// one of the potential avoidance squares is blocked
+						etaFailures++;
 
 						if (DEBUG_CONTROLLER) {
 							logOutput.Print("[CGMT::OA] path blocked for unit %i", owner->id);
@@ -1283,26 +1273,15 @@ void CGroundMoveType::GetNextWaypoint()
 {
 	if (pathId) {
 		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner->id);
+		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
 		if (nextWaypoint.x != -1) {
-			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
-			etaWaypoint2 = int(25.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 10;
 			atGoal = false;
 		} else {
-			if (DEBUG_CONTROLLER) {
-				logOutput.Print("[CGMT::GNWP] path-failure count for unit %i: %i", owner->id, pathFailures);
-			}
-
-			pathFailures++;
-			if (pathFailures > 0) {
-				pathFailures = 0;
-				Fail();
-			}
-			etaWaypoint = INT_MAX;
-			etaWaypoint2 =INT_MAX;
+			// no more waypoints
 			nextWaypoint = waypoint;
 		}
+
 		// If the waypoint is very close to the goal, then correct it into the goal.
 		if (waypoint.SqDistance2D(goalPos) < Square(CPathManager::PATH_RESOLUTION)) {
 			waypoint = goalPos;
@@ -1372,7 +1351,6 @@ void CGroundMoveType::StartEngine() {
 		// activate "engine" only if a path was found
 		if (pathId) {
 			UpdateHeatMap();
-			pathFailures = 0;
 			etaFailures = 0;
 			owner->isMoving = true;
 			owner->script->StartMoving();
@@ -1868,8 +1846,6 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
 			terrainSpeed = movemath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
-			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
-			etaWaypoint2 = int(25.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 10;
 
 			// if we have moved check if we can get a new waypoint
 			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
@@ -1909,57 +1885,6 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			}
 		}
 	}
-}
-
-bool CGroundMoveType::CheckGoalFeasability(void)
-{
-	float goalDist = goalPos.distance2D(owner->pos);
-
-	int minx = (int) std::max(0.0f, (goalPos.x - goalDist) / (SQUARE_SIZE * 2));
-	int minz = (int) std::max(0.0f, (goalPos.z - goalDist) / (SQUARE_SIZE * 2));
-	int maxx = (int) std::min(float(gs->hmapx - 1), (goalPos.x + goalDist) / (SQUARE_SIZE * 2));
-	int maxz = (int) std::min(float(gs->hmapy - 1), (goalPos.z + goalDist) / (SQUARE_SIZE * 2));
-
-	MoveData* md = owner->unitDef->movedata;
-	CMoveMath* mm = md->moveMath;
-
-	float numBlocked = 0.0f;
-	float numSquares = 0.0f;
-
-	for (int z = minz; z <= maxz; ++z) {
-		for (int x = minx; x <= maxx; ++x) {
-			float3 pos(x * SQUARE_SIZE * 2, 0, z * SQUARE_SIZE * 2);
-			if ((pos - goalPos).SqLength2D() < goalDist * goalDist) {
-				int blockingType = mm->SquareIsBlocked(*md, x * 2, z * 2);
-
-				if ((blockingType & CMoveMath::BLOCK_STRUCTURE) || mm->SpeedMod(*md, x * 2, z * 2) < 0.01f) {
-					numBlocked += 0.3f;
-					numSquares += 0.3f;
-				} else {
-					numSquares += 1.0f;
-					if (blockingType) {
-						numBlocked += 1.0f;
-					}
-				}
-			}
-		}
-	}
-
-	if (numSquares > 0.0f) {
-		const float partBlocked = numBlocked / numSquares;
-
-		if (DEBUG_CONTROLLER) {
-			logOutput.Print(
-				"[CGMT::CGF] percentage of blocked squares for unit %i: %.0f%% (goal distance: %.0f)",
-				owner->id, partBlocked * 100.0f, goalDist
-			);
-		}
-
-		if (partBlocked > 0.4f) {
-			return false;
-		}
-	}
-	return true;
 }
 
 void CGroundMoveType::LeaveTransport(void)
