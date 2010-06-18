@@ -332,7 +332,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		c.params.push_back(tmpPos.x);
 		c.params.push_back(tmpPos.y);
 		c.params.push_back(tmpPos.z);
-	curBuild->commandAI->GiveCommand(c);
+	unit->commandAI->GiveCommand(c);
 
 	/*
 	const float3 tmpWaypoint = curBuild->pos + frontdir * (this->radius * 2.5f);
@@ -342,13 +342,13 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		c.params.push_back(tmpWaypoint.x);
 		c.params.push_back(tmpWaypoint.y);
 		c.params.push_back(tmpWaypoint.z);
-	curBuild->commandAI->GiveCommand(c);
+	unit->commandAI->GiveCommand(c);
 	*/
 
 	for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
 		c = *ci;
 		c.options |= SHIFT_KEY;
-		curBuild->commandAI->GiveCommand(c);
+		unit->commandAI->GiveCommand(c);
 	}
 }
 
