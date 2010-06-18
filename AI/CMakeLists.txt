@@ -25,12 +25,14 @@ include_directories(
 set(DEPS_AI_ALL
 		CppTestAI
 		C-AIInterface
+		Python-AIInterface
 		NullAI
 		NullJavaAI
 		NullOOJavaAI
 		AAI
 		KAIK
 		RAI
+		E323AI
 	)
 MakeGlobal(DEPS_AI_ALL)
 
