@@ -19,7 +19,7 @@ rts/Game/UI                       Game controls including current gui
 rts/lib/7z                        7zip library
 rts/lib/gml                       graphics MT assistance library
 rts/lib/headlessStubs             stub libraries for OpenGL, GLEW & SDL
-rts/lib/lobby                     library that allows communication with a lobby server
+rts/lib/lobby                     library that allows communication with a lobby server (used by LuaUI's LuaLobby API)
 rts/lib/lua                       lua interpreter library
 rts/lib/md5                       MD5 & base64 en-/de-cription library (used by lobby library)
 rts/lib/minizip                   zip library
@@ -54,12 +54,16 @@ rts                               Spring engine source code
 rts/System
 rts/System/creg                   Class register system (reflection)
 rts/System/FileSystem             Virtual File System
+rts/System/Input                  Mouse & joystick handling
+rts/System/LoadSave               Demo & SaveGame handling
+rts/System/Net                    Network/Socket handling
 rts/System/Platform               Code handling differences between OSes/processors
 rts/System/Platform/Linux         Linux/Unix specific code
 rts/System/Platform/Mac           Mac specific code
 rts/System/Platform/Win           Windows specific code
-rts/System/Sync                   Sync debuggers
 rts/System/Sound                  Sound output implementation (<Null> & OpenAL)
+rts/System/Sync                   Sync debuggers
+
 AI                                AI sourcecode...
 AI/Interfaces                     ...for interfaceing with Skirmish and Group AIs (Interfaces/impls)
 AI/Wrappers                       meta AI interfaces (consist only of code that will be integrated into AI binaries)
