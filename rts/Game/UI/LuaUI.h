@@ -16,9 +16,13 @@ class CFeature;
 struct Command;
 struct lua_State;
 struct CommandDescription;
+class LuaLobby;
 
 
-class CLuaUI : public CLuaHandle {
+class CLuaUI : public CLuaHandle
+{
+	friend class LuaLobby;
+
 	public:
 		static void LoadHandler();
 		static void FreeHandler();
