@@ -78,6 +78,8 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		piece->primitiveType = fp->primitiveType;
 		piece->name = (char*) &buf[fp->name];
 		piece->parent = parent;
+		piece->vertices.reserve(fp->numVertices);
+		piece->vertexDrawOrder.reserve((size_t)(fp->vertexTableSize * 1.1f)); //1.1f is just a guess (check below)
 
 	// retrieve each vertex
 	int vertexOffset = fp->vertices;
