@@ -2068,7 +2068,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	if(newGuy.link) {
 		newGuy.link->ReconnectTo(*link);
 		Message(str(format(" -> Connection reestablished (id %i)") %hisNewNumber));
-		link->Flush(true);
+		link->Flush(!GameHasStarted());
 		return hisNewNumber;
 	}
 
@@ -2095,7 +2095,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	Message(str(format(" -> Connection established (given id %i)") %hisNewNumber));
 
-	link->Flush(true);
+	link->Flush(!GameHasStarted());
 	return hisNewNumber;
 }
 
