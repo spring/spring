@@ -22,20 +22,6 @@ include_directories(
 	Wrappers
 	)
 
-set(DEPS_AI_ALL
-		CppTestAI
-		C-AIInterface
-		Python-AIInterface
-		NullAI
-		NullJavaAI
-		NullOOJavaAI
-		AAI
-		KAIK
-		RAI
-		E323AI
-	)
-MakeGlobal(DEPS_AI_ALL)
-
 # Set these for Interfaces and AIs with C sources
 set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_DEBUG2         "${CMAKE_CXX_FLAGS_DEBUG2}")
@@ -63,3 +49,10 @@ aux_source_directory("${rts}/System/creg" creg_SRC)
 Add_Subdirectory(Wrappers)
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)
+
+set(DEPS_AI_ALL
+		${DEPS_AI_INTERFACES}
+		${DEPS_AI_WRAPPERS}
+		${DEPS_AI_SKIRMISH}
+	)
+MakeGlobal(DEPS_AI_ALL)

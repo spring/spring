@@ -22,6 +22,9 @@ endmacro (AIInterfaceMessage type msg)
 
 # Add all AI Interface submodules
 GetListOfSubModules(AI_INTERFACE_DIRS)
+set(DEPS_AI_INTERFACES )
 foreach    (aiInterfaceDir ${AI_INTERFACE_DIRS})
 	Add_Subdirectory(${aiInterfaceDir})
+	list(APPEND DEPS_AI_INTERFACES ${aiInterfaceDir}-AIInterface)
 endforeach (aiInterfaceDir)
+MakeGlobal(DEPS_AI_INTERFACES)
