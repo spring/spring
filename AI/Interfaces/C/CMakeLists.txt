@@ -70,11 +70,15 @@ set(mySourceDirRel    "src")
 
 
 # Check if the user wants to compile the interface
-if    (  "${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE"   AND   NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 	set(AI_TYPES_NATIVE TRUE)
-else  (  "${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE"   AND   NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 	set(AI_TYPES_NATIVE FALSE)
-endif (  "${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE"   AND   NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
+
+if    (AI_TYPES_NATIVE AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+	set(AI_TYPES_NATIVE FALSE)
+endif (AI_TYPES_NATIVE AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
 # Check dependencies of the interface are met
