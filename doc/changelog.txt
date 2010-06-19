@@ -25,6 +25,7 @@ Engine / General:
  - pathfinder debugging views can be rendered now when spectating (and not cheating)
  - tdf format not supported anymore for modinfo
  - clients now compare their path-cache CRCs and warn about differences instead of updating their running checksums with them
+ - Spring's CPU affinity can now also be set on non-win32 platforms, use the SetCoreAffinity ~/.springrc parameter as a bitmask
 
 Engine / Simulation:
  - new unit tag: cloakTimeout, int, default 128 frames
@@ -140,6 +141,7 @@ Lua:
  - modified base {armordefs|movedefs|sidedata}.lua to follow pattern of icontypes.lua
  - added a ShieldPreDamaged call-in to LuaRules, triggered before any engine shield-vs-projectile logic executes
  - UnitDefs[i].model.textures now actually contains the names of the model textures for unit-type i
+ - fixed GetScreenGeometry on win32 platforms to return the proper screenSizeY, not screenSizeY - taskbarSizeY
 
 Engine / Unit Scripts:
  - LUS: SetSignalMask raises error now when called outside thread
