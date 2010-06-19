@@ -23,6 +23,9 @@ endmacro (SkirmishAIMessage typemsg)
 
 # Add all Skirmish AI submodules
 GetListOfSubModules(SKIRMISH_AI_DIRS)
+set(DEPS_AI_SKIRMISH )
 foreach    (skirmishAIDir ${SKIRMISH_AI_DIRS})
 	Add_Subdirectory(${skirmishAIDir})
+	list(APPEND DEPS_AI_SKIRMISH ${skirmishAIDir})
 endforeach (skirmishAIDir)
+MakeGlobal(DEPS_AI_SKIRMISH)

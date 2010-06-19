@@ -20,6 +20,9 @@ endmacro (AIWrapperMessage type msg)
 
 # Configure all AI Wrapper submodules that need processing
 GetListOfSubModules(AI_WRAPPER_DIRS)
+set(DEPS_AI_WRAPPERS )
 foreach    (aiWrapperDir ${AI_WRAPPER_DIRS})
 	Add_Subdirectory(${aiWrapperDir})
+	list(APPEND DEPS_AI_WRAPPERS ${aiWrapperDir}-AIWrapper)
 endforeach (aiWrapperDir)
+MakeGlobal(DEPS_AI_WRAPPERS)
