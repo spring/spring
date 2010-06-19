@@ -11,6 +11,7 @@ GlobalConfig::GlobalConfig() {
 	reconnectTimeout = configHandler->Get("ReconnectTimeout", 15);
 	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
 	teamHighlight = !!configHandler->Get("TeamHighlight", 1);
+	linkBandwidth = configHandler->Get("LinkBandwidth", 64*1024);
 }
 
 void GlobalConfig::Instantiate() {
