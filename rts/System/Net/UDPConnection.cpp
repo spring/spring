@@ -410,7 +410,7 @@ void UDPConnection::Flush(const bool forced)
 		bool sendMore = true;
 
 		do {
-			bool bwExceeded = !partialPacket && !forced && gc->linkBandwidth >= 0 && outgoing.GetAverage(true) > gc->linkBandwidth;
+			bool bwExceeded = !partialPacket && !forced && gc->linkBandwidth > 0 && outgoing.GetAverage(true) > gc->linkBandwidth;
 			if (!bwExceeded && !outgoingData.empty()) {
 				packetList::iterator it = outgoingData.begin();
 				if(!partialPacket && !ProtocolDef::instance()->IsComplete((*it)->data, (*it)->length)) {
@@ -598,7 +598,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak > 0 || lastSendTime + spring_msecs(200) < curTime)
 	{
 		bool todo = true;
-		while (todo && outgoing.GetAverage() <= gc->linkBandwidth)
+		while (todo && (outgoing.GetAverage() <= gc->linkBandwidth || gc->linkBandwidth <= 0))
 		{
 			Packet buf(lastInOrder, nak);
 			if (nak > 0)
