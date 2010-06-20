@@ -17,7 +17,7 @@
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	!ifdef SEC_GML
 		${If} ${SectionIsSelected} ${SEC_GML}
-			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring GML.lnk" "$INSTDIR\spring-mt.exe"
+			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk" "$INSTDIR\spring-mt.exe"
 		${EndIf}
 	!endif
 
@@ -35,7 +35,7 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring GML.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
