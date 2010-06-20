@@ -25,16 +25,16 @@ class CVertexArray;
 
 class CProjectile: public CExpGenSpawnable
 {
-public:
 	CR_DECLARE(CProjectile);
+	CProjectile(); // default constructor is needed for creg
 
+public:
 	static bool inArray;
 	static CVertexArray* va;
 	static int DrawArray();
 
 	virtual void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
-	CProjectile(); // default constructor is needed for creg
 	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
