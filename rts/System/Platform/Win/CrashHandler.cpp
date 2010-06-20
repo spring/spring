@@ -9,6 +9,8 @@
 #include <SDL.h> // for SDL_Quit
 #include "CrashHandler.h"
 #include "Game/GameVersion.h"
+#include "Game/Game.h"
+#include "Game/GameController.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "Util.h"
@@ -291,18 +293,23 @@ void HangHandler(bool simhang)
 void HangDetector() {
 
 	while (keepRunning) {
+		CGame *curGame = *(CGame * volatile *)&game;
+		CGameController *curController = *(CGameController * volatile *)&activeController;
+		// increase multiplier during game load to prevent false positives e.g. during pathing
+		int hangTimeMultiplier = (curGame && (curGame == activeController)) ? 1000 : 3000;
+
 		unsigned curwdt = SDL_GetTicks();
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (gmlMultiThreadSim) {
 			unsigned cursimwdt = simwdt;
-			if (cursimwdt && curwdt > cursimwdt && (curwdt - cursimwdt) > hangTimeout * 1000) {
+			if (cursimwdt && curwdt > cursimwdt && (curwdt - cursimwdt) > hangTimeout * hangTimeMultiplier) {
 				HangHandler(true);
 				simwdt = curwdt;
 			}
 		}
 #endif
 		unsigned curdrawwdt = drawwdt;
-		if (curdrawwdt && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * 1000) {
+		if (curdrawwdt && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * hangTimeMultiplier) {
 			HangHandler(false);
 			drawwdt = curwdt;
 		}

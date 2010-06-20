@@ -906,6 +906,7 @@ int SpringApp::Update()
 
 	int ret = 1;
 	if (activeController) {
+		CrashHandler::ClearDrawWDT();
 #if !defined(USE_GML) || !GML_ENABLE_SIM
 		if (!activeController->Update()) {
 			ret = 0;
@@ -928,8 +929,6 @@ int SpringApp::Update()
 				activeController->Update();
 			}
 #endif
-			if(game)
-				CrashHandler::ClearDrawWDT();
 
 			globalRendering->drawFrame++;
 			if (globalRendering->drawFrame == 0) {
