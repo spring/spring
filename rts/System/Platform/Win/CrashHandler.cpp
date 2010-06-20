@@ -296,7 +296,7 @@ void HangDetector() {
 		CGame *curGame = *(CGame * volatile *)&game;
 		CGameController *curController = *(CGameController * volatile *)&activeController;
 		// increase multiplier during game load to prevent false positives e.g. during pathing
-		int hangTimeMultiplier = (curGame && (curGame == activeController)) ? 1000 : 3000;
+		int hangTimeMultiplier = (curGame && (curGame == curController)) ? 1000 : 3000;
 
 		unsigned curwdt = SDL_GetTicks();
 #if defined(USE_GML) && GML_ENABLE_SIM
