@@ -52,7 +52,8 @@ Engine / Rendering:
 
 Sound:
  - use OpenAL Soft 1.11 under windows (was Creative)
- - air-absorpion: absorb high frequencies when sound effects are far away
+ - air-absorpion: absorb high frequencies when sound effects are far away (config-key & default value: snd_airAbsorption=0.1)
+ - no-sound support through NO_SOUND compile time define or NoSound config-key
 
 Unitsync:
  - list of data-dirs for engine & unitsync are now always equal
