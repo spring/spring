@@ -410,8 +410,8 @@ void UDPConnection::Flush(const bool forced)
 		bool sendMore = true;
 
 		do {
-			bool bwExceeded = !partialPacket && !forced && gc->linkBandwidth > 0 && outgoing.GetAverage(true) > gc->linkBandwidth;
-			if (!bwExceeded && !outgoingData.empty()) {
+			sendMore = outgoing.GetAverage(true) <= gc->linkBandwidth || gc->linkBandwidth <= 0 || partialPacket || forced;
+			if (!outgoingData.empty() && sendMore) {
 				packetList::iterator it = outgoingData.begin();
 				if(!partialPacket && !ProtocolDef::instance()->IsComplete((*it)->data, (*it)->length)) {
 					logOutput.Print("ERROR: Discarding outgoing incomplete packet: ID %d, LEN %d", ((*it)->length > 0) ? (int)(*it)->data[0] : -1, (*it)->length);
@@ -423,18 +423,14 @@ void UDPConnection::Flush(const bool forced)
 					memcpy(buffer+pos, (*it)->data, numBytes);
 					pos+= numBytes;
 					outgoing.DataSent(numBytes, true);
-					if (numBytes == (*it)->length) { // full packet copied
-						outgoingData.pop_front();
-						partialPacket = false;
-					}
-					else { // partially transfered
+					partialPacket = (numBytes != (*it)->length);
+					if(partialPacket) // partially transfered
 						(*it).reset(new RawPacket((*it)->data + numBytes, (*it)->length - numBytes));
-						partialPacket = true;
-					}
+					else // full packet copied
+						outgoingData.pop_front();
 				}
-			} // iterator "it" is now invalid
-			sendMore = forced || partialPacket || !bwExceeded;
-			if (pos > 0 && (pos == MaxChunkSize || outgoingData.empty() || !sendMore)) {
+			}
+			if (pos > 0 && (outgoingData.empty() || pos == MaxChunkSize || !sendMore)) {
 				CreateChunk(buffer, pos, currentNum++);
 				pos = 0;
 			}
