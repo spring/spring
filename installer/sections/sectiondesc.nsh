@@ -1,7 +1,7 @@
 ; Section descriptions
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAIN} "The core components required to run Spring. This includes the configuration utilities.$\n$\nNote: This section is required and cannot be deselected."
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_GML} "The GML/Multi-Threaded version of the engine."
+	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_GML} "Multi-threaded version of the main program executable.$\n$\nNote: Requires that you also set up your lobby to launch spring-mt.exe."
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_SPRINGLOBBY} "The default, cross-platform battleroom used to set up single- and multiplayer games and finding opponents.$\n$\nNote: You must install either TASClient or SpringLobby to play."
 
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_ARCHIVEMOVER}     "The tool and the necessary file associations (for sd7 and sdz files) to ease installation of new content."
