@@ -36,7 +36,8 @@ Engine / Simulation:
  - removed the TEDclassString UnitDef parameter (side-effect: hub-like units will break if they have a yardmap)
 
 Engine / Rendering:
- - fixed far textures (caused changing teamcolors and disappearing units)
+ - fixed alpha-masked shadows for S3O models
+ - fixed far-textures (caused changing teamcolors and disappearing units)
  - support the OBJ model format (springrts.com/phpbb/viewtopic.php?f=9&t=22635)
  - support specular lighting, multiple blendable detail textures, and sky reflections on SMF maps ("SSMF")
      springrts.com/phpbb/viewtopic.php?f=13&t=21951
