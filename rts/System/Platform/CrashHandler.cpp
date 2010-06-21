@@ -21,20 +21,14 @@ namespace CrashHandler {
 		Win32::Remove();
 	}
 
-	void InstallHangHandler() {
-		Win32::InstallHangHandler();
-	}
+	void InstallHangHandler() { Win32::InstallHangHandler(); }
+	void UninstallHangHandler() { Win32::UninstallHangHandler(); }
 
-	void UninstallHangHandler() {
-		Win32::UninstallHangHandler();
-	}
+	void ClearDrawWDT(bool disable) { Win32::ClearDrawWDT(disable); }
+	void ClearSimWDT(bool disable) { Win32::ClearSimWDT(disable); }
 
-	void ClearDrawWDT(bool disable) {
-		Win32::ClearDrawWDT(disable);
-	}
-
-	void ClearSimWDT(bool disable) {
-		Win32::ClearSimWDT(disable);
+	void GameLoading(bool loading) {
+		Win32::GameLoading(loading);
 	}
 };
 
@@ -244,6 +238,7 @@ static void findBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 		fclose(mapsFile);
 	}
 }
+
 
 
 namespace CrashHandler {
@@ -468,12 +463,12 @@ namespace CrashHandler {
 	}
 
 	void InstallHangHandler() {}
-
 	void UninstallHangHandler() {}
 
 	void ClearDrawWDT(bool disable) {}
-
 	void ClearSimWDT(bool disable) {}
+
+	void GameLoading(bool) {}
 };
 
 // ### Unix(compliant) CrashHandler END
@@ -488,6 +483,7 @@ namespace CrashHandler {
 	void UninstallHangHandler() {}
 	void ClearDrawWDT(bool disable) {}
 	void ClearSimWDT(bool disable) {}
+	void GameLoading(bool) {}
 };
 
 // ### Fallback CrashHandler (old Apple) END

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef CRASHHANDLER_H
-#define CRASHHANDLER_H
+#ifndef _CRASH_HANDLER_WIN32_H_
+#define _CRASH_HANDLER_WIN32_H_
 
 // don't use directly
 namespace CrashHandler {
@@ -12,7 +12,8 @@ namespace CrashHandler {
 		void UninstallHangHandler();
 		void ClearDrawWDT(bool disable);
 		void ClearSimWDT(bool disable);
+		void GameLoading(bool);
 	};
 };
 
-#endif // !CRASHHANDLER_H
+#endif // !_CRASH_HANDLER_WIN32_H_
