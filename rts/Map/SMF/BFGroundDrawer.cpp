@@ -1253,7 +1253,9 @@ inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigS
 		smfShaderGLSL->SetUniform1i(7, bigSquareX);
 		smfShaderGLSL->SetUniform1i(8, bigSquareY);
 	} else {
-		SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
+		if (!shadowHandler->drawShadows || DrawExtraTex()) {
+			SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
+		}
 
 		smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 		smfShaderCurrARB->SetUniform4f(11, -bigSquareX, -bigSquareY, 0, 0);
