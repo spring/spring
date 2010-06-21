@@ -12,8 +12,6 @@
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 
-#include <boost/thread/barrier.hpp>
-
 #include <SDL_keyboard.h>
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -23,12 +21,10 @@
 #include "mmgr.h"
 
 #include "Game.h"
-#include "float.h"
 #include "Camera.h"
 #include "CameraHandler.h"
 #include "ClientSetup.h"
 #include "ConsoleHistory.h"
-#include "FPUCheck.h"
 #include "GameHelper.h"
 #include "GameServer.h"
 #include "GameVersion.h"
@@ -37,7 +33,6 @@
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
-#include "Sync/SyncTracer.h"
 #include "ChatMessage.h"
 #include "TimeProfiler.h"
 #include "WaitCommandsAI.h"
@@ -47,17 +42,9 @@
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
-#include "NetProtocol.h"
-#include "ConfigHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "FileSystem/FileSystem.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/HeightMapTexture.h"
@@ -65,8 +52,6 @@
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "LoadSave/LoadSaveHandler.h"
-#include "LoadSave/DemoRecorder.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
@@ -85,9 +70,11 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/TeamHighlight.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Models/ModelDrawer.hpp"
 #include "Rendering/Models/IModelParser.h"
+#include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -110,7 +97,6 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Rendering/TeamHighlight.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/PathManager.h"
@@ -125,17 +111,13 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitTracker.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
-#include "Sync/SyncedPrimitiveIO.h"
-#include "Util.h"
-#include "Exceptions.h"
-#include "EventHandler.h"
-#include "Sound/ISound.h"
-#include "Sound/IEffectChannel.h"
-#include "Sound/IMusicChannel.h"
-#include "FileSystem/SimpleParser.h"
-#include "Net/RawPacket.h"
-#include "Net/PackPacket.h"
-#include "Net/UnpackPacket.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
+#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
@@ -154,16 +136,31 @@
 #include "UI/ShareBox.h"
 #include "UI/TooltipConsole.h"
 #include "UI/ProfileDrawer.h"
-#include "Rendering/Textures/ColorMap.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/Exceptions.h"
+#include "System/FPUCheck.h"
+#include "System/myMath.h"
+#include "System/NetProtocol.h"
+#include "System/Util.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/LoadSave/LoadSaveHandler.h"
+#include "System/LoadSave/DemoRecorder.h"
+#include "System/Net/RawPacket.h"
+#include "System/Net/PackPacket.h"
+#include "System/Net/UnpackPacket.h"
+#include "System/Platform/CrashHandler.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/IMusicChannel.h"
+#include "System/Sync/SyncedPrimitiveIO.h"
+#include "System/Sync/SyncTracer.h"
 
 #include <boost/cstdint.hpp>
-
-#include "myMath.h"
-#include "Sim/MoveTypes/MoveType.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 
 #undef CreateDirectory
 
@@ -259,6 +256,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	saveFile(saveFile)
 {
 	game = this;
+	CrashHandler::GameLoading(true);
 	boost::thread loadThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	memset(gameID, 0, sizeof(gameID));
@@ -324,6 +322,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	LoadFinalize();
 
 	loadThread.join();
+	CrashHandler::GameLoading(false);
 
 	// sending your playername to the server indicates that you are finished loading
 	const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
