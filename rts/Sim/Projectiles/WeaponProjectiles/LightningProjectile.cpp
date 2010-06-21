@@ -60,7 +60,7 @@ CLightningProjectile::CLightningProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << end.x << " " << end.y << " " << end.z << "\n";
 #endif
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -71,19 +71,18 @@ CLightningProjectile::~CLightningProjectile(void)
 
 void CLightningProjectile::Update(void)
 {
-	ttl--;
-
-	if (ttl <= 0) {
+	if (--ttl <= 0) {
 		deleteMe = true;
 	} else {
-		if (cegTag.size() > 0) {
+		if (!cegTag.empty()) {
 			ceg.Explosion(pos + ((endPos - pos) / ttl), 0.0f, displacements[0], 0x0, 0.0f, 0x0, endPos - pos);
 		}
 	}
 
-	if (weapon) {
+	if (weapon && !luaMoveCtrl) {
 		pos = weapon->weaponMuzzlePos;
 	}
+
 	for (int a = 1; a < 10; ++a) {
 		displacements[a] += (gs->randFloat() - 0.5f) * 0.3f;
 		displacements2[a] += (gs->randFloat() - 0.5f) * 0.3f;
@@ -106,24 +105,30 @@ void CLightningProjectile::Draw(void)
 	const float3 dir1 = (dif.cross(ddir)).Normalize();
 	float3 tempPos = pos;
 
-	va->EnlargeArrays(18*4,0,VA_SIZE_TC);
-	for(int a=0;a<9;++a){
-		float f=(a+1)*0.111f;
-		va->AddVertexQTC(tempPos+dir1*(displacements[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
-		va->AddVertexQTC(tempPos+dir1*(displacements[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
-		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexQTC(tempPos+dir1*(displacements[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-		va->AddVertexQTC(tempPos+dir1*(displacements[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
+	va->EnlargeArrays(18 * 4, 0, VA_SIZE_TC);
+	for (int a = 0; a < 9; ++a) {
+		float f = (a + 1) * 0.111f;
+
+		#define WD weaponDef
+		va->AddVertexQTC(tempPos + dir1 * (displacements[a    ] + WD->thickness), WD->visuals.texture1->xstart, WD->visuals.texture1->ystart, col);
+		va->AddVertexQTC(tempPos + dir1 * (displacements[a    ] - WD->thickness), WD->visuals.texture1->xstart, WD->visuals.texture1->yend,   col);
+		tempPos = pos * (1.0f - f) + endPos * f;
+		va->AddVertexQTC(tempPos + dir1 * (displacements[a + 1] - WD->thickness), WD->visuals.texture1->xend,   WD->visuals.texture1->yend,   col);
+		va->AddVertexQTC(tempPos + dir1 * (displacements[a + 1] + WD->thickness), WD->visuals.texture1->xend,   WD->visuals.texture1->ystart, col);
+		#undef WD
 	}
 
-	tempPos=pos;
-	for(int a=0;a<9;++a){
-		float f=(a+1)*0.111f;
-		va->AddVertexQTC(tempPos+dir1*(displacements2[a]+weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->ystart,    col);
-		va->AddVertexQTC(tempPos+dir1*(displacements2[a]-weaponDef->thickness),weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
-		tempPos=pos*(1-f)+endPos*f;
-		va->AddVertexQTC(tempPos+dir1*(displacements2[a+1]-weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->yend,col);
-		va->AddVertexQTC(tempPos+dir1*(displacements2[a+1]+weaponDef->thickness),weaponDef->visuals.texture1->xend,weaponDef->visuals.texture1->ystart    ,col);
+	tempPos = pos;
+	for (int a = 0; a < 9; ++a) {
+		float f = (a + 1) * 0.111f;
+
+		#define WD weaponDef
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[a    ] + WD->thickness), WD->visuals.texture1->xstart, WD->visuals.texture1->ystart, col);
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[a    ] - WD->thickness), WD->visuals.texture1->xstart, WD->visuals.texture1->yend,   col);
+		tempPos = pos * (1.0f - f) + endPos * f;
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[a + 1] - WD->thickness), WD->visuals.texture1->xend, WD->visuals.texture1->yend,   col);
+		va->AddVertexQTC(tempPos + dir1 * (displacements2[a + 1] + WD->thickness), WD->visuals.texture1->xend, WD->visuals.texture1->ystart, col);
+		#undef WD
 	}
 }
 
@@ -136,6 +141,6 @@ void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 
 void CLightningProjectile::DependentDied(CObject* o)
 {
-	if(o==weapon)
-		weapon=0;
+	if (o == weapon)
+		weapon = 0;
 }

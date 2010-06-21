@@ -47,6 +47,7 @@ public:
 	bool weapon; //! is this a weapon projectile? (true implies synced true)
 	bool piece;  //! is this a piece projectile? (true implies synced true)
 
+	bool luaMoveCtrl;
 	bool checkCol;
 	bool deleteMe;
 	bool castShadow;

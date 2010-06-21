@@ -187,6 +187,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
 
+	REGISTER_LUA_CFUNC(SetProjectileMoveControl);
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
@@ -2298,6 +2299,21 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaSyncedCtrl::SetProjectileMoveControl(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
+		return 0;
+	}
+
+	if (!proj->weapon && !proj->piece) {
+		return 0;
+	}
+
+	proj->luaMoveCtrl = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+	return 0;
+}
+
 int LuaSyncedCtrl::SetProjectilePosition(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
@@ -2322,6 +2338,9 @@ int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
 	proj->speed.x = luaL_optfloat(L, 2, 0.0f);
 	proj->speed.y = luaL_optfloat(L, 3, 0.0f);
 	proj->speed.z = luaL_optfloat(L, 4, 0.0f);
+
+	proj->dir = proj->speed;
+	proj->dir.SafeNormalize();
 
 	return 0;
 }

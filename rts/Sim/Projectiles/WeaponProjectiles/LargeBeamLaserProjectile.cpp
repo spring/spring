@@ -71,10 +71,7 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 		decay = weaponDef->visuals.beamdecay;
 	}
 
-	// tilelength = 200;
-	// scrollspeed = 5;
-	// pulseSpeed = 1;
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -93,7 +90,7 @@ void CLargeBeamLaserProjectile::Update(void)
 			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
 		}
 
-		if (cegTag.size() > 0) {
+		if (!cegTag.empty()) {
 			ceg.Explosion(startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
 		}
 	}

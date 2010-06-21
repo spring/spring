@@ -260,7 +260,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 				weaponDef->soundhit.getVolume(0));
 	}
 
-	if(!weaponDef->noExplode)
+	if (!weaponDef->noExplode)
 		CProjectile::Collision(unit);
 	else {
 		if (TraveledRange())
@@ -276,23 +276,26 @@ void CWeaponProjectile::Update()
 
 void CWeaponProjectile::UpdateGroundBounce()
 {
-	if((weaponDef->groundBounce || weaponDef->waterBounce)
+	if (luaMoveCtrl) {
+		return;
+	}
+
+	if ((weaponDef->groundBounce || weaponDef->waterBounce)
 			&& (ttl > 0 || weaponDef->numBounce >= 0))
 	{
 		float wh = 0;
-		if(!weaponDef->waterBounce)
-		{
+
+		if (!weaponDef->waterBounce) {
 			wh = ground->GetHeight2(pos.x, pos.z);
-		} else if(weaponDef->groundBounce)
-		{
+		} else if (weaponDef->groundBounce) {
 			wh = ground->GetHeight(pos.x, pos.z);
 		}
-		if(pos.y < wh)
-		{
+
+		if (pos.y < wh) {
 			bounces++;
-			if(!keepBouncing || (this->weaponDef->numBounce >= 0
-							&& bounces > this->weaponDef->numBounce))
-			{
+
+			if (!keepBouncing || (this->weaponDef->numBounce >= 0
+							&& bounces > this->weaponDef->numBounce)) {
 				//Collision();
 				keepBouncing = false;
 			} else {
@@ -303,7 +306,8 @@ void CWeaponProjectile::UpdateGroundBounce()
 				speed -= (speed + normal*fabs(dot))*(1 - weaponDef->bounceSlip);
 				speed += (normal*(fabs(dot)))*(1 + weaponDef->bounceRebound);
 				pos += speed;
-				if(weaponDef->bounceExplosionGenerator) {
+
+				if (weaponDef->bounceExplosionGenerator) {
 					weaponDef->bounceExplosionGenerator->Explosion(pos,
 							speed.Length(), 1, owner(), 1, NULL, normal);
 				}

@@ -60,7 +60,7 @@ CExplosiveProjectile::CExplosiveProjectile(
 #endif
 
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -72,14 +72,15 @@ CExplosiveProjectile::~CExplosiveProjectile()
 
 void CExplosiveProjectile::Update()
 {
-	pos += speed;
-	speed.y += mygravity;
-	ttl--;
+	if (!luaMoveCtrl) {
+		pos += speed;
+		speed.y += mygravity;
+	}
 
-	if (ttl == 0) {
+	if (--ttl == 0) {
 		Collision();
 	} else {
-		if (cegTag.size() > 0 && ttl > 0) {
+		if (!cegTag.empty() && ttl > 0) {
 			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
 		}
 	}
@@ -167,11 +168,14 @@ void CExplosiveProjectile::Draw(void)
 
 int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 dir = pos - shieldPos;
-	dir.Normalize();
-	if (dir.dot(speed) < shieldMaxSpeed) {
-		speed += dir * shieldForce;
-		return 2;
+	if (!luaMoveCtrl) {
+		const float3 rdir = (pos - shieldPos).Normalize();
+
+		if (rdir.dot(speed) < shieldMaxSpeed) {
+			speed += (rdir * shieldForce);
+			return 2;
+		}
 	}
+
 	return 0;
 }

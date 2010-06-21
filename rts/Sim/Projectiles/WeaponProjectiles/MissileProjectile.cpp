@@ -130,7 +130,7 @@ CMissileProjectile::CMissileProjectile(
 	}
 
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -182,98 +182,99 @@ void CMissileProjectile::Collision(CUnit *unit)
 
 void CMissileProjectile::Update(void)
 {
-	ttl--;
-	if (ttl > 0) {
-		if (curSpeed < maxSpeed)
-			curSpeed += weaponDef->weaponacceleration;
+	if (--ttl > 0) {
+		if (!luaMoveCtrl) {
+			if (curSpeed < maxSpeed) {
+				curSpeed += weaponDef->weaponacceleration;
+			}
 
-		float3 targSpeed(0, 0, 0);
+			float3 targSpeed(0, 0, 0);
 
-		if (weaponDef->tracks && (decoyTarget || target)) {
-			if (decoyTarget) {
-				targPos = decoyTarget->pos;
-				targSpeed = decoyTarget->speed;
+			if (weaponDef->tracks && (decoyTarget || target)) {
+				if (decoyTarget) {
+					targPos = decoyTarget->pos;
+					targSpeed = decoyTarget->speed;
+				} else {
+					targSpeed = target->speed;
+
+					if ((target->physicalState == CSolidObject::Flying && (target->midPos - pos).SqLength() < 150 * 150) || !owner()) {
+						targPos = target->midPos;
+					} else {
+						targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+					}
+				}
+			}
+
+
+			if (isWobbling) {
+				--wobbleTime;
+				if (wobbleTime == 0) {
+					float3 newWob = gs->randVector();
+					wobbleDif = (newWob - wobbleDir) * (1.0f / 16);
+					wobbleTime = 16;
+				}
+
+				wobbleDir += wobbleDif;
+
+				dir += wobbleDir * weaponDef->wobble * (owner()? (1.0f - owner()->limExperience * 0.5f): 1);
+				dir.Normalize();
+			}
+
+			if (isDancing) {
+				--danceTime;
+				if (danceTime <= 0) {
+					danceMove = gs->randVector() * weaponDef->dance - danceCenter;
+					danceCenter += danceMove;
+					danceTime = 8;
+				}
+
+				pos += danceMove;
+			}
+
+			float3 orgTargPos = targPos;
+			float3 targetDir = (targPos - pos).Normalize();
+			float dist = targPos.distance(pos) + 0.1f;
+
+			if (extraHeightTime > 0) {
+				extraHeight -= extraHeightDecay;
+				--extraHeightTime;
+
+				targPos.y += extraHeight;
+
+				if (dir.y <= 0.0f) {
+					// missile has reached apex, smoothly transition
+					// to targetDir (can still overshoot when target
+					// is too close or height difference too large)
+					const float horDiff = (targPos - pos).Length2D() + 0.01f;
+					const float verDiff = (targPos.y - pos.y) + 0.01f;
+					const float dirDiff = fabs(targetDir.y - dir.y);
+					const float ratio = fabs(verDiff / horDiff);
+
+					dir.y -= (dirDiff * ratio);
+				} else {
+					// missile is still ascending
+					dir.y -= (extraHeightDecay / dist);
+				}
+			}
+
+
+			float3 dif = (targPos + targSpeed * (dist / maxSpeed) * 0.7f - pos).Normalize();
+			float3 dif2 = dif - dir;
+
+			if (dif2.SqLength() < Square(weaponDef->turnrate)) {
+				dir = dif;
 			} else {
-				targSpeed = target->speed;
-				if ((target->physicalState == CSolidObject::Flying && (target->midPos-pos).SqLength() < 150 * 150) || !owner())
-					targPos = target->midPos;
-				else
-					targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+				dif2 -= (dir * (dif2.dot(dir)));
+				dif2.SafeNormalize();
+				dir += (dif2 * weaponDef->turnrate);
+				dir.SafeNormalize();
 			}
+
+			targPos = orgTargPos;
+			speed = dir * curSpeed;
 		}
 
-
-		if (isWobbling) {
-			--wobbleTime;
-			if (wobbleTime == 0) {
-				float3 newWob = gs->randVector();
-				wobbleDif = (newWob - wobbleDir) * (1.0f / 16);
-				wobbleTime = 16;
-			}
-			wobbleDir += wobbleDif;
-			dir += wobbleDir * weaponDef->wobble * (owner()? (1 - owner()->limExperience * 0.5f): 1);
-			dir.Normalize();
-		}
-
-		if (isDancing) {
-			--danceTime;
-			if (danceTime <= 0) {
-				danceMove = gs->randVector() * weaponDef->dance - danceCenter;
-				danceCenter += danceMove;
-				danceTime = 8;
-			}
-			pos += danceMove;
-		}
-
-
-		float3 orgTargPos(targPos);
-		float3 targetDir = (targPos - pos).Normalize();
-		float dist = targPos.distance(pos);
-
-		if (dist == 0) {
-			dist = 0.1f;
-		}
-
-		if (extraHeightTime > 0) {
-			extraHeight -= extraHeightDecay;
-			--extraHeightTime;
-
-			targPos.y += extraHeight;
-
-			if (dir.y <= 0.0f) {
-				// missile has reached apex, smoothly transition
-				// to targetDir (can still overshoot when target
-				// is too close or height difference too large)
-				const float horDiff = (targPos - pos).Length2D() + 0.01f;
-				const float verDiff = (targPos.y - pos.y) + 0.01f;
-				const float dirDiff = fabs(targetDir.y - dir.y);
-				const float ratio = fabs(verDiff / horDiff);
-				dir.y -= (dirDiff * ratio);
-			} else {
-				// missile is still ascending
-				dir.y -= (extraHeightDecay / dist);
-			}
-		}
-
-
-		float3 dif(targPos + targSpeed * (dist / maxSpeed) * 0.7f - pos);
-		dif.Normalize();
-		float3 dif2 = dif - dir;
-		float tracking = weaponDef->turnrate;
-
-		if (dif2.SqLength() < Square(tracking)) {
-			dir = dif;
-		} else {
-			dif2 -= (dir * (dif2.dot(dir)));
-			dif2.SafeNormalize();
-			dir += (dif2 * tracking);
-			dir.SafeNormalize();
-		}
-
-		speed = dir * curSpeed;
-		targPos = orgTargPos;
-
-		if (cegTag.size() > 0) {
+		if (!cegTag.empty()) {
 			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, dir);
 		}
 	} else {
@@ -282,31 +283,41 @@ void CMissileProjectile::Update(void)
 		} else {
 			// only when TTL <= 0 do we (missiles)
 			// get influenced by gravity and drag
-			speed *= 0.98f;
-			speed.y += mygravity;
-			dir = speed;
-			dir.Normalize();
+			if (!luaMoveCtrl) {
+				speed *= 0.98f;
+				speed.y += mygravity;
+				dir = speed;
+				dir.Normalize();
+			}
 		}
 	}
 
-	pos += speed;
+	if (!luaMoveCtrl) {
+		pos += speed;
+	}
+
 	age++;
 	numParts++;
 
 
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
-		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(pos, oldSmoke,
+		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+			pos, oldSmoke,
 			dir, oldDir, owner(), age == 8, false, 7, Smoke_Time, 0.6f, drawTrail, 0,
-			weaponDef->visuals.texture2);
+			weaponDef->visuals.texture2
+		);
+
 		oldSmoke = pos;
 		oldDir = dir;
 		numParts = 0;
 		useAirLos = tp->useAirLos;
 
 		if (!drawTrail) {
-			float3 camDir = (pos - camera->pos).Normalize();
-			if ((camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000) > 300)
+			const float3 camDir = (pos - camera->pos).Normalize();
+
+			if ((camera->pos.distance(pos) * 0.2f + (1 - fabs(camDir.dot(dir))) * 3000) > 300) {
 				drawTrail = true;
+			}
 		}
 	}
 
@@ -314,7 +325,11 @@ void CMissileProjectile::Update(void)
 }
 
 void CMissileProjectile::UpdateGroundBounce() {
-	float3 tempSpeed = speed;
+	if (luaMoveCtrl) {
+		return;
+	}
+
+	const float3 tempSpeed = speed;
 	CWeaponProjectile::UpdateGroundBounce();
 
 	if (tempSpeed != speed) {
@@ -323,6 +338,8 @@ void CMissileProjectile::UpdateGroundBounce() {
 		dir.Normalize();
 	}
 }
+
+
 
 void CMissileProjectile::Draw(void)
 {
@@ -412,26 +429,26 @@ void CMissileProjectile::Draw(void)
 	va->AddVertexQTC(drawPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
-int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 sdir = pos - shieldPos;
-	sdir.Normalize();
+	if (!luaMoveCtrl) {
+		if (ttl > 0) {
+			const float3 sdir = (pos - shieldPos).Normalize();
+			// steer away twice as fast as we can steer toward target
+			float3 dif2 = sdir - dir;
+			float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
 
-	if (ttl > 0) {
-		// steer away twice as fast as we can steer toward target
-		float3 dif2 = sdir - dir;
-		float tracking = std::max(shieldForce * 0.05f, weaponDef->turnrate * 2);
+			if (dif2.SqLength() < Square(tracking)) {
+				dir = sdir;
+			} else {
+				dif2 -= dir * (dif2.dot(dir));
+				dif2.Normalize();
+				dir += dif2 * tracking;
+				dir.Normalize();
+			}
 
-		if (dif2.SqLength() < Square(tracking)) {
-			dir = sdir;
-		} else {
-			dif2 -= dir * (dif2.dot(dir));
-			dif2.Normalize();
-			dir += dif2 * tracking;
-			dir.Normalize();
+			return 2;
 		}
-
-		return 2;
 	}
 
 	return 0;

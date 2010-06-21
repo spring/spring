@@ -44,7 +44,7 @@ CFireBallProjectile::CFireBallProjectile(
 		drawRadius = weaponDef->size;
 	}
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -101,10 +101,13 @@ void CFireBallProjectile::Draw()
 void CFireBallProjectile::Update()
 {
 	if (checkCol) {
-		pos += speed;
+		if (!luaMoveCtrl) {
+			pos += speed;
 
-		if (weaponDef->gravityAffected)
-			speed.y += mygravity;
+			if (weaponDef->gravityAffected) {
+				speed.y += mygravity;
+			}
+		}
 
 		if (weaponDef->noExplode) {
 			if (TraveledRange())
@@ -112,8 +115,7 @@ void CFireBallProjectile::Update()
 		}
 
 		EmitSpark();
-	}
-	else {
+	} else {
 		if (sparks.size() == 0)
 			deleteMe = true;
 	}
@@ -129,7 +131,7 @@ void CFireBallProjectile::Update()
 		sparks[i].speed *= 0.95f;
 	}
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Explosion(pos, ttl, (sparks.size() > 0)? sparks[0].size: 0.0f, 0x0, 0.0f, 0x0, speed);
 	}
 
@@ -160,6 +162,3 @@ void CFireBallProjectile::Collision()
 	CWeaponProjectile::Collision();
 	deleteMe = false;
 }
-
-
-
