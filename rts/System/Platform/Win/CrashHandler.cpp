@@ -9,8 +9,6 @@
 #include <SDL.h> // for SDL_Quit
 #include "CrashHandler.h"
 #include "Game/GameVersion.h"
-#include "Game/Game.h"
-#include "Game/GameController.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "Util.h"
