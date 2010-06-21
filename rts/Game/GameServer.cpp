@@ -1505,14 +1505,14 @@ void CGameServer::ServerReadNet()
 				msg >> reconnect;
 				BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect);
 			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format(ConnectionReject) %packet->data[0] %packet->data[2] %packet->length));
+				Message(str(format(ConnectionReject) %e.err %packet->data[0] %packet->data[2] %packet->length));
 				UDPNet->RejectConnection();
 			}
 		}
 		else
 		{
 			if (packet && packet->length >= 3) {
-				Message(str(format(ConnectionReject) %packet->data[0] %packet->data[2] %packet->length));
+				Message(str(format(ConnectionReject) %"Invalid message ID" %packet->data[0] %packet->data[2] %packet->length));
 			}
 			else {
 				Message("Connection attempt rejected: Packet too short");

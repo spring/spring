@@ -283,7 +283,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			try {
 				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			} catch (netcode::UnpackPacketException &e) {
-				throw content_error("Demo contains invalid GameData");
+				throw content_error("Demo contains invalid GameData: " + e.err);
 			}
 
 			CGameSetup* demoScript = new CGameSetup();
@@ -374,7 +374,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 
 		gameData.reset(data);
 	} catch (netcode::UnpackPacketException &e) {
-		throw content_error("Server sent us invalid GameData");
+		throw content_error("Server sent us invalid GameData: " + e.err);
 	}
 
 	CGameSetup* temp = new CGameSetup();
