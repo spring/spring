@@ -70,7 +70,7 @@ CTorpedoProjectile::CTorpedoProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -100,74 +100,88 @@ void CTorpedoProjectile::Collision(CUnit *unit)
 
 void CTorpedoProjectile::Update(void)
 {
-	if (!(weaponDef->submissile) && pos.y > -3) {
+	if (!(weaponDef->submissile) && pos.y > -3.0f) {
 		// tracking etc only works when we are underwater
-		speed.y += mygravity;
-		if (dir.y > 0)
-			dir.y = 0;
-		dir = speed;
-		dir.Normalize();
-	} else {
-		if (!(weaponDef->submissile) && pos.y-speed.y > -3) {
-			// level out torpedo a bit when hitting water
-			dir.y *= 0.5f;
-			dir.Normalize();
-		}
-
-		ttl--;
-
-		if (ttl > 0) {
-			if (curSpeed < maxSpeed)
-				curSpeed += std::max(0.2f, tracking);
-			if (target) {
-				float3 targPos;
-				if ((target->midPos - pos).SqLength() < 150 * 150 || !owner())
-					targPos = target->midPos;
-				else
-					targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
-				if (!(weaponDef->submissile) && targPos.y > 0)
-					targPos.y = 0;
-
-				float dist = targPos.distance(pos);
-				float3 dif(targPos + target->speed * (dist / maxSpeed) * 0.7f - pos);
-				dif.Normalize();
-				float3 dif2 = dif - dir;
-
-				if (dif2.Length() < tracking) {
-					dir = dif;
-				} else {
-					dif2 -= dir * (dif2.dot(dir));
-					dif2.Normalize();
-					dir += dif2 * tracking;
-					dir.Normalize();
-				}
-			}
-
-			speed = dir * curSpeed;
-
-			if (cegTag.size() > 0) {
-				ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
-			}
-		} else {
-			speed *= 0.98f;
+		if (!luaMoveCtrl) {
 			speed.y += mygravity;
+			dir.y = std::min(dir.y, 0.0f);
 			dir = speed;
 			dir.Normalize();
 		}
+	} else {
+		if (!(weaponDef->submissile) && pos.y-speed.y > -3.0f) {
+			// level out torpedo a bit when hitting water
+			if (!luaMoveCtrl) {
+				dir.y *= 0.5f;
+				dir.Normalize();
+			}
+		}
+
+		if (--ttl > 0) {
+			if (!luaMoveCtrl) {
+				if (curSpeed < maxSpeed) {
+					curSpeed += std::max(0.2f, tracking);
+				}
+
+				if (target) {
+					float3 targPos;
+
+					if ((target->midPos - pos).SqLength() < 150 * 150 || !owner()) {
+						targPos = target->midPos;
+					} else {
+						targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+					}
+
+					if (!(weaponDef->submissile) && targPos.y > 0) {
+						targPos.y = 0;
+					}
+
+					float dist = targPos.distance(pos);
+					float3 dif = (targPos + target->speed * (dist / maxSpeed) * 0.7f - pos).Normalize();
+					float3 dif2 = dif - dir;
+
+					if (dif2.Length() < tracking) {
+						dir = dif;
+					} else {
+						dif2 -= dir * (dif2.dot(dir));
+						dif2.Normalize();
+						dir += dif2 * tracking;
+						dir.Normalize();
+					}
+				}
+
+				speed = dir * curSpeed;
+			}
+
+			if (!cegTag.empty()) {
+				ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
+			}
+		} else {
+			if (!luaMoveCtrl) {
+				speed *= 0.98f;
+				speed.y += mygravity;
+				dir = speed;
+				dir.Normalize();
+			}
+		}
 	}
 
-	pos += speed;
+	if (!luaMoveCtrl) {
+		pos += speed;
+	}
 
-	if (pos.y < -2) {
+	if (pos.y < -2.0f) {
 		--nextBubble;
 
 		if (nextBubble == 0) {
 			nextBubble = 1 + (int) (gs->randFloat() * 1.5f);
 
-			float3 pspeed = gs->randVector() * 0.1f;
-			pspeed.y += 0.2f;
-			new CBubbleProjectile(pos + gs->randVector(), pspeed, 40 + gs->randFloat() * 30,
-				1 + gs->randFloat() * 2, 0.01f, owner(), 0.3f + gs->randFloat() * 0.3f);
+			const float3 pspeed = (gs->randVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
+
+			new CBubbleProjectile(
+				pos + gs->randVector(), pspeed, 40 + gs->randFloat() * 30,
+				1 + gs->randFloat() * 2, 0.01f, owner(), 0.3f + gs->randFloat() * 0.3f
+			);
 		}
 	}
 
