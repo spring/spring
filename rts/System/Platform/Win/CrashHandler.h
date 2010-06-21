@@ -14,6 +14,8 @@ namespace CrashHandler {
 		void ClearSimWDT(bool disable);
 		void GameLoading(bool);
 	};
+
+	static volatile bool gameLoading;
 };
 
 #endif // !_CRASH_HANDLER_WIN32_H_

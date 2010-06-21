@@ -11,8 +11,6 @@ namespace CrashHandler {
 	void ClearDrawWDT(bool disable = false);
 	void ClearSimWDT(bool disable = false);
 	void GameLoading(bool);
-
-	static volatile bool gameLoading;
 };
 
 #endif // _CRASH_HANDLER_H_
