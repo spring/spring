@@ -44,6 +44,7 @@ CProjectile::CProjectile():
 	synced(false),
 	weapon(false),
 	piece(false),
+	luaMoveCtrl(false),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
@@ -75,6 +76,7 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	synced(isSynced),
 	weapon(isWeapon),
 	piece(isPiece),
+	luaMoveCtrl(false),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
@@ -103,9 +105,11 @@ CProjectile::~CProjectile()
 
 void CProjectile::Update()
 {
-	speed.y += mygravity;
-	pos += speed;
-	dir = speed; dir.Normalize();
+	if (!luaMoveCtrl) {
+		speed.y += mygravity;
+		pos += speed;
+		dir = speed; dir.Normalize();
+	}
 }
 
 

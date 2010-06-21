@@ -390,11 +390,15 @@ set(myPkg                "${myPkgFirstPart}/springrts/ai")
 
 
 # Check if the user wants to compile the interface
-if    ( ( "${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA" ) AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 	set(AI_TYPES_JAVA TRUE)
-else  ( ( "${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA" ) AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 	set(AI_TYPES_JAVA FALSE)
-endif ( ( "${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA" ) AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+
+if    (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+	set(AI_TYPES_JAVA FALSE)
+endif (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
 # Look for dependencies, but only if the user wants to build the interface

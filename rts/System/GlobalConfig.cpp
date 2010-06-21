@@ -6,11 +6,17 @@
 GlobalConfig* gc = NULL;
 
 GlobalConfig::GlobalConfig() {
-	initialNetworkTimeout =  std::max(configHandler->Get("InitialNetworkTimeout", 30), 0);
-	networkTimeout = std::max(configHandler->Get("NetworkTimeout", 120), 0);
-	reconnectTimeout = configHandler->Get("ReconnectTimeout", 15);
-	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
+	// Recommended semantics for "expert" type config values:
+	//  0 = use default value
+	// <0 = disable (if applicable)
+	// This enables new engine versions to provide modified default values without any changes to config file
+#define READ_CONFIG(name, str, def, min) name = configHandler->Get(str, 0); if(name == 0) name = def; else if(name < min) name = min;
+	READ_CONFIG(initialNetworkTimeout, "InitialNetworkTimeout", 30, 0)
+	READ_CONFIG(networkTimeout, "NetworkTimeout", 120, 0)
+	READ_CONFIG(reconnectTimeout, "ReconnectTimeout", 15, 0)
+	READ_CONFIG(mtu, "MaximumTransmissionUnit", 1400, 300)
 	teamHighlight = !!configHandler->Get("TeamHighlight", 1);
+	READ_CONFIG(linkBandwidth, "LinkBandwidth", 64 * 1024, 0)
 }
 
 void GlobalConfig::Instantiate() {

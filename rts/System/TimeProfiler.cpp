@@ -108,7 +108,8 @@ void CTimeProfiler::AddTime(const std::string& name, unsigned time)
 		profile[name].color.x = rand.RandFloat();
 		profile[name].color.y = rand.RandFloat();
 		profile[name].color.z = rand.RandFloat();
-		profile[name].showGraph=true;
+		// only show "CPU load" by default
+		profile[name].showGraph = (name == "CPU load");
 	}
 }
 

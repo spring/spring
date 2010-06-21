@@ -1249,15 +1249,12 @@ inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigS
 {
 	textures->SetTexture(bigSquareX, bigSquareY);
 
-	//! must be in drawLos mode or shadows must be off
-	if (DrawExtraTex() || !shadowHandler->drawShadows) {
-		SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
-	}
-
-	if (map->haveSpecularLighting) {
+	if ((map->haveSpecularLighting && shadowHandler->drawShadows) && !DrawExtraTex()) {
 		smfShaderGLSL->SetUniform1i(7, bigSquareX);
 		smfShaderGLSL->SetUniform1i(8, bigSquareY);
 	} else {
+		SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
+
 		smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 		smfShaderCurrARB->SetUniform4f(11, -bigSquareX, -bigSquareY, 0, 0);
 	}

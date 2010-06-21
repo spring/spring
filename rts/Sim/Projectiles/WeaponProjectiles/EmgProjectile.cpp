@@ -43,7 +43,7 @@ CEmgProjectile::CEmgProjectile(
 #endif
 
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -54,18 +54,18 @@ CEmgProjectile::~CEmgProjectile(void)
 
 void CEmgProjectile::Update(void)
 {
-	pos += speed;
-	ttl--;
+	if (!luaMoveCtrl) {
+		pos += speed;
+	}
 
-	if (ttl < 0) {
+	if (--ttl < 0) {
 		intensity -= 0.1f;
 		if (intensity <= 0){
 			deleteMe = true;
 			intensity = 0;
 		}
-	}
-	else {
-		if (cegTag.size() > 0) {
+	} else {
+		if (!cegTag.empty()) {
 			ceg.Explosion(pos, ttl, intensity, 0x0, 0.0f, 0x0, speed);
 		}
 	}
@@ -96,13 +96,15 @@ void CEmgProjectile::Draw(void)
 	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,weaponDef->visuals.texture1->xstart,weaponDef->visuals.texture1->yend,col);
 }
 
-int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	const float3 rdir = (pos - shieldPos).Normalize();
+	if (!luaMoveCtrl) {
+		const float3 rdir = (pos - shieldPos).Normalize();
 
-	if (rdir.dot(speed) < shieldMaxSpeed) {
-		speed += (rdir * shieldForce);
-		return 2;
+		if (rdir.dot(speed) < shieldMaxSpeed) {
+			speed += (rdir * shieldForce);
+			return 2;
+		}
 	}
 
 	return 0;

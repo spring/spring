@@ -222,7 +222,7 @@ SectionGroup /e "!Engine"
 
 	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-mt.exe"
 	!ifdef GML_BUILD_EXISTS
-		Section "GML (multi-threaded)" SEC_GML
+		Section "Multi-threaded executable" SEC_GML
 			${!echonow} "Processing: spring-mt.exe"
 			SetOutPath "$INSTDIR"
 			SetOverWrite on

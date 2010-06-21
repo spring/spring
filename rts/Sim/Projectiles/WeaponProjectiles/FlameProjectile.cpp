@@ -47,7 +47,7 @@ CFlameProjectile::CFlameProjectile(
 		physLife = 1.0f / weaponDef->duration;
 	}
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -76,9 +76,11 @@ void CFlameProjectile::Collision(CUnit* unit)
 
 void CFlameProjectile::Update(void)
 {
-	pos += speed;
-	UpdateGroundBounce();
-	speed += spread;
+	if (!luaMoveCtrl) {
+		pos += speed;
+		UpdateGroundBounce();
+		speed += spread;
+	}
 
 	radius = radius + weaponDef->sizeGrowth;
 	sqRadius = radius * radius;
@@ -92,7 +94,7 @@ void CFlameProjectile::Update(void)
 		deleteMe = true;
 	}
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Explosion(pos, curTime, intensity, 0x0, 0.0f, 0x0, speed);
 	}
 }
@@ -109,13 +111,15 @@ void CFlameProjectile::Draw(void)
 	va->AddVertexTC(drawPos - camera->right * radius + camera->up * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
-int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	const float3 rdir = (pos - shieldPos).Normalize();
+	if (!luaMoveCtrl) {
+		const float3 rdir = (pos - shieldPos).Normalize();
 
-	if (rdir.dot(speed) < shieldMaxSpeed) {
-		speed += (rdir * shieldForce);
-		return 2;
+		if (rdir.dot(speed) < shieldMaxSpeed) {
+			speed += (rdir * shieldForce);
+			return 2;
+		}
 	}
 
 	return 0;

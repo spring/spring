@@ -1,13 +1,8 @@
 Spring change log
 
 0.82:
-Engine:
+Engine / General:
  - added HeadLess version of the engine (no graphics, no sound) by hughperkins
- - fixed far textures (caused changing teamcolors and disappearing units)
- - fixed middle click scroll speed on linux
- - added new MiddleClickScrollSpeed option
- - more responsive mouse movement
- - made it easier to select units in factories
  - better overall handling of connection problems, with highlighting of uncontrolled units
  - players in startscript may reconnect to a running game, even with changed IP address
  - players can choose server speed throttling algorithm by voting (/speedcontrol)
@@ -19,23 +14,30 @@ Engine:
  - use new dependency system for maphelper.sdz (by Beherith)
  - OS X fixes
  - hardcoded startscripts removed (Air Test, etc.)
+ - more default intercept types added
+    EmgCannon -> 1, AircraftBomb -> 8, Flame -> 16, TorpedoLauncher -> 32
+    LightningCannon -> 64, Rifle -> 128, Melee -> 256
  - engine does not spawn start unit anymore
  - engine does not use StartUnit tag in sidedata.lua anymore (but still passes it to Spring.GetSideData)
  - engine does not read `Script' map tag anymore
  - engine does not read `ScriptName' modoption anymore
  - engine does not deal with `StartMetal' and `StartEnergy' modoptions anymore
- - more default intercept types added
-    EmgCannon -> 1, AircraftBomb -> 8, Flame -> 16, TorpedoLauncher -> 32
-    LightningCannon -> 64, Rifle -> 128, Melee -> 256
  - pathfinder debugging views can be rendered now when spectating (and not cheating)
- - new unit tag: cloakTimeout, int, default 128 frames
  - tdf format not supported anymore for modinfo
- - fixed calls to the engine path-finder to be sync-safe when run in unsynced context
- - fixed the featureVisibility mod-option
- - removed the TEDclassString UnitDef parameter (side-effect: hub-like units will break if they have a yardmap)
  - clients now compare their path-cache CRCs and warn about differences instead of updating their running checksums with them
+ - Spring's CPU affinity can now also be set on non-win32 platforms, use the SetCoreAffinity ~/.springrc parameter as a bitmask
 
-Rendering:
+Engine / Simulation:
+ - new unit tag: cloakTimeout, int, default 128 frames
+ - fixed the featureVisibility mod-option
+ - fixed calls to the engine path-finder to be sync-safe when run in unsynced context
+ - reduced frequency of units ending up in "can't reach destination" situations
+ - fixed units not inheriting orders from factories and piling up (due to having their paths aborted)
+ - removed the TEDclassString UnitDef parameter (side-effect: hub-like units will break if they have a yardmap)
+
+Engine / Rendering:
+ - fixed alpha-masked shadows for S3O models
+ - fixed far-textures (caused changing teamcolors and disappearing units)
  - support the OBJ model format (springrts.com/phpbb/viewtopic.php?f=9&t=22635)
  - support specular lighting, multiple blendable detail textures, and sky reflections on SMF maps ("SSMF")
      springrts.com/phpbb/viewtopic.php?f=13&t=21951
@@ -44,11 +46,14 @@ Rendering:
  - vertex-animated grass; maps can specify the grass blade- and shading-textures and the dimensions/angle for blades
  - refactored and abstracted unit/feature/projectile drawing to be format-agnostic
  - increased global decoupling between simulation and rendering code
- - fixed specular lighting on units
+ - fixed model specular lighting (most visible on units)
+ - S3O model normals are now auto-scaled to unit-length
+ - maps with mis-specified skybox textures will now load (without crashing Spring)
 
 Sound:
  - use OpenAL Soft 1.11 under windows (was Creative)
- - air-absorpion: absorb high frequencies when sound effects are far away
+ - air-absorpion: absorb high frequencies when sound effects are far away (config-key & default value: snd_airAbsorption=0.1)
+ - no-sound support through NO_SOUND compile time define or NoSound config-key
 
 Unitsync:
  - list of data-dirs for engine & unitsync are now always equal
@@ -56,7 +61,10 @@ Unitsync:
  - data dirs read from /etc/spring/datadir (separator is now ":" instead of " ")
 
 FontRendering:
- - added a new inline ctrl command '\008', it resets the TextColor to the active color when Print() got called (e.g. font:SetTextColor(0,0,1); font:Print("\255\255\000\000red\255\000\255\000green\008blue");)
+ - added a new inline ctrl command '\008' which resets the TextColor to the
+   color that was active when Print() got called, as in the following example:
+      font:SetTextColor(0, 0, 1); -- blue
+      font:Print("\255\255\000\000red\255\000\255\000green\008blue");
 
 Lua:
  - LuaLobby:
@@ -134,6 +142,8 @@ Lua:
     /reloadgame chat command added for development purposes, this fires the Load event again
  - modified base {armordefs|movedefs|sidedata}.lua to follow pattern of icontypes.lua
  - added a ShieldPreDamaged call-in to LuaRules, triggered before any engine shield-vs-projectile logic executes
+ - UnitDefs[i].model.textures now actually contains the names of the model textures for unit-type i
+ - fixed GetScreenGeometry on win32 platforms to return the proper screenSizeY, not screenSizeY - taskbarSizeY
 
 Engine / Unit Scripts:
  - LUS: SetSignalMask raises error now when called outside thread
@@ -143,10 +153,14 @@ Engine / Unit Scripts:
  - COB: Added KSIN (135, 1024*sin(x)), KCOS (136), KTAN (137) and SQRT (138) get constants.
 
 Interface:
- - added new command "/buildwarnings", analoguous to "/movewarnings"
+ - fixed middle click scroll speed on linux
+ - added new MiddleClickScrollSpeed option
+ - more responsive mouse movement
+ - made it easier to select units in factories
+ - added new command "/buildwarnings [0|1]", analogous to "/movewarnings [0|1]"
 
 AIs:
- - TODO: describe the debug-draw callbacks
+ - added various new debug-draw callouts for profiling, state visualization, etc.
  - make sure the Release event always reaches dieing-state AI's
  - added a GetUnitVel callback, returns a unit's velocity vector
  - new Python AI Interface by theGeorge & abma
@@ -155,6 +169,7 @@ AIs:
  - RAI, KAIK and AAI: support unit captured&given from&to them
  - RAI, KAIK and AAI: config-, log- & cache-files now compatible with pool archived mods
  - KAIK: switched to .lua config-file format, added a basic mod whitelisting mechanism
+ - KAIK: event-based TM updates
  - fix a crash on Skirmish AI death
  - fix Java AI Interface loading on Debian
  - fix Java compilation on some systems
@@ -166,6 +181,7 @@ Bugfixes:
  - fixed a bug in LuaParser, so you can know use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
  - fixed occasional bug where countdown time went into negative numbers and game never started
  - fixed impactOnly ignored features
+ - improved error handling on network packet level
 
 
 0.81.2.1:

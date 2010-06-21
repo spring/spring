@@ -14,7 +14,7 @@ public:
 		const WeaponDef *weaponDef, int ttl = 100000, float areaOfEffect = 8,
 		float gravity = 0);
 	virtual ~CExplosiveProjectile();
-	virtual void Update();
+	void Update();
 	void Draw(void);
 	void Collision(CUnit* unit);
 	void Collision();

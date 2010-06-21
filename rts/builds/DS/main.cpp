@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(_MSC_VER)
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	return main(__argc, __argv);

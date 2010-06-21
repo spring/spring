@@ -172,7 +172,7 @@ endif (NOT CMAKE_BUILD_TYPE)
 
 # This would produce the maximum on warnings
 #set(DEBUG_WARNINGS "-Wall -Wconversion")
-# This should produce a sane ammount of warnings
+# This should produce a sane amount of warnings
 set(DEBUG_WARNINGS "-Wall -Wno-sign-compare")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${IEEE_FP_FLAG} -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")

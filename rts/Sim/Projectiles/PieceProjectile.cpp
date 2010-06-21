@@ -243,12 +243,15 @@ float3 CPieceProjectile::RandomVertexPos(void)
 
 void CPieceProjectile::Update()
 {
-	if (flags & PF_Fall) {
-		speed.y += mygravity;
+	if (!luaMoveCtrl) {
+		if (flags & PF_Fall) {
+			speed.y += mygravity;
+		}
+
+		speed *= 0.997f;
+		pos += speed;
 	}
 
-	speed *= 0.997f;
-	pos += speed;
 	spinAngle += spinSpeed;
 
 	if (flags & PF_Fire && HasVertices()) {
