@@ -289,20 +289,22 @@ void HangHandler(bool simhang)
 }
 
 void HangDetector() {
-
 	while (keepRunning) {
+		// increase multiplier during game load to prevent false positives e.g. during pathing
+		const int hangTimeMultiplier = CrashHandler::gameLoading? 3000 : 1000;
+
 		unsigned curwdt = SDL_GetTicks();
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (gmlMultiThreadSim) {
 			unsigned cursimwdt = simwdt;
-			if (cursimwdt && curwdt > cursimwdt && (curwdt - cursimwdt) > hangTimeout * 1000) {
+			if (cursimwdt && curwdt > cursimwdt && (curwdt - cursimwdt) > hangTimeout * hangTimeMultiplier) {
 				HangHandler(true);
 				simwdt = curwdt;
 			}
 		}
 #endif
 		unsigned curdrawwdt = drawwdt;
-		if (curdrawwdt && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * 1000) {
+		if (curdrawwdt && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * hangTimeMultiplier) {
 			HangHandler(false);
 			drawwdt = curwdt;
 		}
@@ -310,11 +312,12 @@ void HangDetector() {
 	}
 }
 
-void InstallHangHandler() {
 
+void InstallHangHandler() {
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 	hangTimeout = configHandler->Get("HangTimeout", 0);
+	CrashHandler::gameLoading = false;
 	if (hangTimeout == 0) {
 		// HangTimeout = -1 to force disable hang detection
 		hangTimeout = 10;
@@ -324,13 +327,10 @@ void InstallHangHandler() {
 	}
 }
 
-void ClearDrawWDT(bool disable) {
-	drawwdt = disable ? 0 : SDL_GetTicks();
-}
+void ClearDrawWDT(bool disable) { drawwdt = disable ? 0 : SDL_GetTicks(); }
+void ClearSimWDT(bool disable) { simwdt = disable ? 0 : SDL_GetTicks(); }
 
-void ClearSimWDT(bool disable) {
-	simwdt = disable ? 0 : SDL_GetTicks();
-}
+void GameLoading(bool loading) { CrashHandler::gameLoading = loading; }
 
 void UninstallHangHandler() {
 

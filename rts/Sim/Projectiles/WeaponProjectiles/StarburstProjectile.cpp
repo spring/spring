@@ -121,7 +121,7 @@ CStarburstProjectile::CStarburstProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -129,24 +129,32 @@ CStarburstProjectile::CStarburstProjectile(
 CStarburstProjectile::~CStarburstProjectile(void)
 {
 	delete numCallback;
-	if(curCallback)
-		curCallback->drawCallbacker=0;
-	for(int a=0;a<5;++a){
+	if (curCallback)
+		curCallback->drawCallbacker = 0;
+	for (int a = 0; a < 5; ++a) {
 		delete oldInfos[a];
 	}
 }
 
 void CStarburstProjectile::Collision()
 {
-	float h=ground->GetHeight2(pos.x,pos.z);
-	if(weaponDef->waterweapon && h < pos.y) return; //prevent impact on water if waterweapon is set
-	if(h>pos.y)
-		pos+=speed*(h-pos.y)/speed.y;
-	if (weaponDef->visuals.smokeTrail)
-		new CSmokeTrailProjectile(pos,oldSmoke,dir,oldSmokeDir,owner(),false,true,7,Smoke_Time,0.7f,drawTrail,0,weaponDef->visuals.texture2);
-	oldSmokeDir=dir;
+	const float h = ground->GetHeight2(pos.x, pos.z);
+
+	if (weaponDef->waterweapon && h < pos.y) {
+		// prevent impact on water if waterweapon is set
+		return;
+	}
+	if (h > pos.y) {
+		pos += speed * (h - pos.y) / speed.y;
+	}
+
+	if (weaponDef->visuals.smokeTrail) {
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(), false, true, 7, Smoke_Time, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+	}
+
+	oldSmokeDir = dir;
 	CWeaponProjectile::Collision();
-	oldSmoke=pos;
+	oldSmoke = pos;
 }
 
 void CStarburstProjectile::Collision(CUnit *unit)
@@ -174,64 +182,85 @@ void CStarburstProjectile::Update(void)
 			Collision();
 		}
 	}
+
 	if (uptime > 0) {
-		if (curSpeed < maxSpeed)
-			curSpeed += weaponDef->weaponacceleration;
-		speed = dir * curSpeed;
+		if (!luaMoveCtrl) {
+			if (curSpeed < maxSpeed) {
+				curSpeed += weaponDef->weaponacceleration;
+			}
+
+			speed = dir * curSpeed;
+		}
 	} else if (doturn && ttl > 0 && distanceToTravel > 0) {
-		float3 dif(targetPos-pos);
-		dif.Normalize();
-		dif += aimError;
-		dif.Normalize();
-		if (dif.dot(dir) > 0.99f) {
-			dir = dif;
-			doturn = false;
-		} else {
-			dif = dif - dir;
-			dif -= dir * (dif.dot(dir));
+		if (!luaMoveCtrl) {
+			float3 dif(targetPos - pos);
 			dif.Normalize();
-			if (weaponDef->turnrate != 0) {
-				dir += dif * weaponDef->turnrate;
+			dif += aimError;
+			dif.Normalize();
+
+			if (dif.dot(dir) > 0.99f) {
+				dir = dif;
+				doturn = false;
+			} else {
+				dif = dif - dir;
+				dif -= dir * (dif.dot(dir));
+				dif.Normalize();
+				if (weaponDef->turnrate != 0) {
+					dir += dif * weaponDef->turnrate;
+				}
+				else {
+					dir += dif * 0.06;
+				}
+				dir.Normalize();
 			}
-			else {
-				dir += dif * 0.06;
+			speed = dir * curSpeed;
+			if (distanceToTravel != MAX_WORLD_SIZE) {
+				distanceToTravel -= speed.Length2D();
 			}
-			dir.Normalize();
 		}
-		speed = dir * curSpeed;
-		if (distanceToTravel != MAX_WORLD_SIZE)
-			distanceToTravel -= speed.Length2D();
 	} else if (ttl > 0 && distanceToTravel > 0) {
-		if (curSpeed < maxSpeed)
-			curSpeed += weaponDef->weaponacceleration;
-		float3 dif(targetPos - pos);
-		dif.Normalize();
-		if (dif.dot(dir) > maxGoodDif) {
-			dir = dif;
-		} else {
-			dif = dif - dir;
-			dif -= dir * (dif.dot(dir));
-			dif.SafeNormalize();
-			dir += dif * tracking;
-			dir.SafeNormalize();
+		if (!luaMoveCtrl) {
+			if (curSpeed < maxSpeed) {
+				curSpeed += weaponDef->weaponacceleration;
+			}
+
+			float3 dif = (targetPos - pos).Normalize();
+
+			if (dif.dot(dir) > maxGoodDif) {
+				dir = dif;
+			} else {
+				dif = dif - dir;
+				dif -= dir * (dif.dot(dir));
+				dif.SafeNormalize();
+				dir += dif * tracking;
+				dir.SafeNormalize();
+			}
+
+			speed = dir * curSpeed;
+
+			if (distanceToTravel != MAX_WORLD_SIZE) {
+				distanceToTravel -= speed.Length2D();
+			}
 		}
-		speed = dir * curSpeed;
-		if (distanceToTravel != MAX_WORLD_SIZE)
-			distanceToTravel -= speed.Length2D();
 	} else {
-		dir.y += mygravity;
-		dir.Normalize();
-		curSpeed -= mygravity;
-		speed = dir * curSpeed;
+		if (!luaMoveCtrl) {
+			dir.y += mygravity;
+			dir.Normalize();
+			curSpeed -= mygravity;
+			speed = dir * curSpeed;
+		}
 	}
 
-	pos += speed;
+	if (!luaMoveCtrl) {
+		pos += speed;
+	}
 
 	if (ttl > 0) {
-		if (cegTag.size() > 0) {
+		if (!cegTag.empty()) {
 			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, dir);
 		}
 	}
+
 
 	OldInfo* tempOldInfo = oldInfos[4];
 	for (int a = 3; a >= 0; --a) {
@@ -242,14 +271,14 @@ void CStarburstProjectile::Update(void)
 	oldInfos[0]->dir = dir;
 	oldInfos[0]->speedf = curSpeed;
 	int newsize = 0;
-	for(float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
+	for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
 		float ageMod = (missileAge < 20) ? 1 : 0.6f + rand() * 0.8f / RAND_MAX;
-		if(oldInfos[0]->ageMods.size()<=newsize)
+		if (oldInfos[0]->ageMods.size() <= newsize)
 			oldInfos[0]->ageMods.push_back(ageMod);
 		else
 			oldInfos[0]->ageMods[newsize] = ageMod;
 	}
-	if(oldInfos[0]->ageMods.size() != newsize)
+	if (oldInfos[0]->ageMods.size() != newsize)
 		oldInfos[0]->ageMods.resize(newsize);
 
 	age++;
@@ -274,8 +303,8 @@ void CStarburstProjectile::Update(void)
 
 void CStarburstProjectile::Draw(void)
 {
-	inArray=true;
-	float age2=(age&7)+globalRendering->timeOffset;
+	inArray = true;
+	float age2 = (age & 7) + globalRendering->timeOffset;
 
 	float color=0.7f;
 	unsigned char col[4];

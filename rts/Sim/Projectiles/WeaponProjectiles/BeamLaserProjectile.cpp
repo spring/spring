@@ -76,7 +76,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 	kocolend[2]=(unsigned char)(color.z*endAlpha);
 	kocolend[3]=1;
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -98,7 +98,7 @@ void CBeamLaserProjectile::Update(void)
 			kocolend[i] = (unsigned char) (kocolend[i] * decay);
 		}
 
-		if (cegTag.size() > 0) {
+		if (!cegTag.empty()) {
 			ceg.Explosion(startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
 		}
 	}

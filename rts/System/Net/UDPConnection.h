@@ -186,13 +186,14 @@ private:
 	public:
 		BandwidthUsage();
 		void UpdateTime(unsigned newTime);
-		void DataSent(unsigned amount);
+		void DataSent(unsigned amount, bool prel = false);
 		
-		float GetAverage() const;
+		float GetAverage(bool prel = false) const;
 		
 	private:
 		unsigned lastTime;
 		unsigned trafficSinceLastTime;
+		unsigned prelTrafficSinceLastTime;
 		
 		float average;
 	};

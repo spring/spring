@@ -22,7 +22,7 @@
 #include "GlobalUnsynced.h"
 #include "Util.h"
 #include "Exceptions.h"
-
+#include "Platform/CrashHandler.h"
 #include "FBO.h"
 
 using namespace std;
@@ -334,6 +334,8 @@ void ClearScreen()
 
 void PrintLoadMsg(const char* text, bool swapbuffers)
 {
+	CrashHandler::ClearDrawWDT();
+
 	static char prevText[100];
 
 	// Stuff that needs to be done regularly while loading.

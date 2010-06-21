@@ -10,6 +10,7 @@ namespace CrashHandler {
 	void UninstallHangHandler();
 	void ClearDrawWDT(bool disable = false);
 	void ClearSimWDT(bool disable = false);
+	void GameLoading(bool);
 };
 
 #endif // _CRASH_HANDLER_H_

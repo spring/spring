@@ -119,7 +119,7 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 				record->WriteSetupText(gd.GetSetup());
 				record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
 			} catch (netcode::UnpackPacketException &e) {
-				logOutput.Print("Invalid GameData received");
+				logOutput.Print("Invalid GameData received: %s", e.err.c_str());
 			}
 		}
 	}

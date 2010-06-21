@@ -25,18 +25,6 @@ include_directories(
 	Wrappers
 	)
 
-set(DEPS_AI_ALL
-		CppTestAI
-		C-AIInterface
-		NullAI
-		NullJavaAI
-		NullOOJavaAI
-		AAI
-		KAIK
-		RAI
-	)
-MakeGlobal(DEPS_AI_ALL)
-
 # Set these for Interfaces and AIs with C sources
 set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_DEBUG2         "${CMAKE_CXX_FLAGS_DEBUG2}")
@@ -77,3 +65,10 @@ endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Wrappers)
 Add_Subdirectory(Skirmish)
+
+set(DEPS_AI_ALL
+		${DEPS_AI_INTERFACES}
+		${DEPS_AI_WRAPPERS}
+		${DEPS_AI_SKIRMISH}
+	)
+MakeGlobal(DEPS_AI_ALL)

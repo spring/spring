@@ -4378,7 +4378,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\tools\DedicatedServer\main.cpp"
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -4447,18 +4459,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -5993,11 +5993,35 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\AudioChannel.cpp"
+					RelativePath="..\..\System\Sound\EffectChannel.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\AudioChannel.h"
+					RelativePath="..\..\System\Sound\EffectChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\IAudioChannel.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\IAudioChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\IEffectChannel.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\IEffectChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\IMusicChannel.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\IMusicChannel.h"
 					>
 				</File>
 				<File
@@ -6009,11 +6033,19 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\Music.cpp"
+					RelativePath="..\..\System\Sound\MusicChannel.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\Music.h"
+					RelativePath="..\..\System\Sound\MusicChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullEffectChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\NullMusicChannel.h"
 					>
 				</File>
 				<File
