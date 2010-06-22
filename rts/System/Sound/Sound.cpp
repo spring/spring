@@ -316,12 +316,15 @@ void CSound::StartThread(int maxSounds)
 				}
 			}
 
+			const bool airAbsorptionSupported = alcIsExtensionPresent(device, "ALC_EXT_EFX");
+
 			LogObject(LOG_SOUND) << "OpenAL info:\n";
 			LogObject(LOG_SOUND) << "  Vendor:     " << (const char*)alGetString(AL_VENDOR );
 			LogObject(LOG_SOUND) << "  Version:    " << (const char*)alGetString(AL_VERSION);
 			LogObject(LOG_SOUND) << "  Renderer:   " << (const char*)alGetString(AL_RENDERER);
 			LogObject(LOG_SOUND) << "  AL Extensions: " << (const char*)alGetString(AL_EXTENSIONS);
 			LogObject(LOG_SOUND) << "  ALC Extensions: " << (const char*)alcGetString(device, ALC_EXTENSIONS);
+			LogObject(LOG_SOUND) << "                  ALC_EXT_EFX found (required for air absorption): " << (airAbsorptionSupported ? "yes" : "no");
 			if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 			{
 				LogObject(LOG_SOUND) << "  Device:     " << alcGetString(device, ALC_DEVICE_SPECIFIER);
@@ -335,8 +338,11 @@ void CSound::StartThread(int maxSounds)
 				}
 			}
 
-			const float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
-			SoundSource::SetAirAbsorption(airAbsorption);
+			SoundSource::SetAirAbsorptionSupported(airAbsorptionSupported);
+			if (airAbsorptionSupported) {
+				const float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
+				SoundSource::SetAirAbsorption(airAbsorption);
+			}
 
 			// Generate sound sources
 			for (int i = 0; i < maxSounds; i++)
