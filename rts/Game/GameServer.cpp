@@ -770,7 +770,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					{
 						PrivateMessage(a, "Spectators cannot pause the game" );
 					}
-					else if (curSpeedCtrl > 0 && !isPaused &&
+					else if (curSpeedCtrl > 0 && !isPaused && !players[a].isLocal &&
 						(players[a].spectator || (curSpeedCtrl > 0 &&
 						(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						(serverframenum - players[a].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
