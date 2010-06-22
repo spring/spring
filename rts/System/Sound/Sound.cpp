@@ -190,6 +190,11 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	{
 		Channels::BGMusic.SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
+	else if (key == "snd_airAbsorption")
+	{
+		const float airAbsorption = std::atof(value.c_str());
+		SoundSource::SetAirAbsorption(airAbsorption);
+	}
 	else if (key == "PitchAdjust")
 	{
 		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
@@ -330,7 +335,7 @@ void CSound::StartThread(int maxSounds)
 				}
 			}
 
-			float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
+			const float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
 			SoundSource::SetAirAbsorption(airAbsorption);
 
 			// Generate sound sources
