@@ -4,11 +4,10 @@
 #include "mmgr.h"
 
 #include "RadarHandler.h"
-#include "TimeProfiler.h"
 #include "LosHandler.h"
 #include "Map/ReadMap.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/TimeProfiler.h"
 
 
 CR_BIND(CRadarHandler, (false));
@@ -110,7 +109,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		if (unit->radarRadius) {
 			airRadarMaps[unit->allyteam].AddMapArea(newPos, unit->radarRadius, 1);
 			if (!circularRadar) {
-				radarAlgo.LosAdd(newPos, unit->radarRadius, unit->model->height, unit->radarSquares);
+				radarAlgo.LosAdd(newPos, unit->radarRadius, unit->height, unit->radarSquares);
 				radarMaps[unit->allyteam].AddMapSquares(unit->radarSquares, 1);
 			}
 		}
