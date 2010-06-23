@@ -368,17 +368,17 @@ CGame::~CGame()
 	SafeDelete(sky);
 	SafeDelete(resourceBar);
 
-	SafeDelete(featureHandler);
 	SafeDelete(featureDrawer);
-	SafeDelete(uh);
 	SafeDelete(unitDrawer);
 	SafeDelete(modelDrawer);
 	SafeDelete(projectileDrawer);
 	SafeDelete(geometricObjects);
+	SafeDelete(featureHandler);
 	SafeDelete(ph);
+	SafeDelete(uh);
+	SafeDelete(groundDecals);
 	SafeDelete(minimap);
 	SafeDelete(pathManager);
-	SafeDelete(groundDecals);
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
 	SafeDelete(luaInputReceiver);

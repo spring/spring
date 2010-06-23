@@ -158,6 +158,15 @@ CUnitDrawer::~CUnitDrawer(void)
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 	cubeMapHandler->Free();
 
+	// RenderUnitDestroyed does not trigger on exit, clean up manually
+	for (std::set<CUnit*>::iterator it = unsortedUnits.begin(); it != unsortedUnits.end(); ++it) {
+		CBuilding* building = dynamic_cast<CBuilding*>(*it);
+
+		if (building != NULL) {
+			groundDecals->RemoveBuilding(building, NULL);
+		}
+	}
+
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		std::set<GhostBuilding*>& ghostSet = deadGhostBuildings[modelType];
 		std::set<GhostBuilding*>::iterator ghostSetIt;
@@ -192,6 +201,7 @@ CUnitDrawer::~CUnitDrawer(void)
 	modelShaders.clear();
 
 	unitRadarIcons.clear();
+	unsortedUnits.clear();
 }
 
 
