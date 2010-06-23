@@ -2259,10 +2259,8 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
-	if (building != NULL) {
-		if (building->unitDef->useBuildingGroundDecal) {
-			groundDecals->AddBuilding(building);
-		}
+	if (building && building->unitDef->useBuildingGroundDecal) {
+		groundDecals->AddBuilding(building);
 	}
 
 	if (u->model) {
