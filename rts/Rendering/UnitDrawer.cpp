@@ -123,18 +123,16 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
 		}
 
-		if (groundDecals != NULL) {
-			if (ud->useBuildingGroundDecal) {
-				ud->buildingDecalType = groundDecals->GetBuildingDecalType(ud->buildingDecalTypeName);
-			} else {
-				ud->buildingDecalType = -1;
-			}
+		if (ud->useBuildingGroundDecal) {
+			ud->buildingDecalType = groundDecals->GetBuildingDecalType(ud->buildingDecalTypeName);
+		} else {
+			ud->buildingDecalType = -1;
+		}
 
-			if (ud->leaveTracks) {
-				ud->trackType = groundDecals->GetTrackType(ud->trackTypeName);
-			} else {
-				ud->trackType = -1;
-			}
+		if (ud->leaveTracks) {
+			ud->trackType = groundDecals->GetTrackType(ud->trackTypeName);
+		} else {
+			ud->trackType = -1;
 		}
 	}
 
