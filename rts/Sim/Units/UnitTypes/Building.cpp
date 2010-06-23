@@ -6,7 +6,6 @@
 #include "Building.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/UnitDef.h"
-#include "Rendering/GroundDecalHandler.h"
 
 CR_BIND_DERIVED(CBuilding, CUnit, );
 
@@ -19,16 +18,11 @@ CR_REG_METADATA(CBuilding, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilding::CBuilding()
-: buildingDecal(0)
+CBuilding::CBuilding(): buildingDecal(0)
 {
-	immobile=true;
+	immobile = true;
 }
 
-CBuilding::~CBuilding()
-{
-	groundDecals->RemoveBuilding(this, NULL);
-}
 
 
 void CBuilding::Init(const CUnit* builder)

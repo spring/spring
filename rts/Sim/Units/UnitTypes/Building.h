@@ -13,7 +13,7 @@ public:
 	CR_DECLARE(CBuilding);
 
 	CBuilding();
-	virtual ~CBuilding();
+	virtual ~CBuilding() {}
 	void PostLoad();
 
 	void Init(const CUnit* builder);
