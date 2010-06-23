@@ -374,8 +374,9 @@ CGame::~CGame()
 	SafeDelete(projectileDrawer);
 	SafeDelete(geometricObjects);
 	SafeDelete(featureHandler);
-	SafeDelete(ph);
+	SafeDelete(treeDrawer);
 	SafeDelete(uh);
+	SafeDelete(ph);
 	SafeDelete(groundDecals);
 	SafeDelete(minimap);
 	SafeDelete(pathManager);

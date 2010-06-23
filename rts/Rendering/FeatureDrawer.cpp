@@ -68,7 +68,6 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 CFeatureDrawer::~CFeatureDrawer()
 {
 	eventHandler.RemoveClient(this);
-	delete treeDrawer;
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		delete opaqueModelRenderers[modelType];
