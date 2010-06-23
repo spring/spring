@@ -6,6 +6,7 @@
 #include "Building.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/UnitDef.h"
+#include "Rendering/GroundDecalHandler.h"
 
 CR_BIND_DERIVED(CBuilding, CUnit, );
 
@@ -26,6 +27,7 @@ CBuilding::CBuilding()
 
 CBuilding::~CBuilding()
 {
+	groundDecals->RemoveBuilding(this, NULL);
 }
 
 
