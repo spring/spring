@@ -855,11 +855,9 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 			DrawWaterPlane(drawWaterReflection);
 		}
 
-		if (groundDecals) {
-			groundDecals->Draw();
-			projectileDrawer->DrawGroundFlashes();
-			glDepthMask(1);
-		}
+		groundDecals->Draw();
+		projectileDrawer->DrawGroundFlashes();
+		glDepthMask(1);
 	}
 
 //	sky->SetCloudShadow(1);

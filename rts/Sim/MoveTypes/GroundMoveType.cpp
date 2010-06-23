@@ -342,7 +342,7 @@ void CGroundMoveType::Update()
 
 		oldPos = owner->pos;
 
-		if (groundDecals && owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
+		if (owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
 			((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			lastTrackUpdate = gs->frameNum;
 			groundDecals->UnitMoved(owner);
