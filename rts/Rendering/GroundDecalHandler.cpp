@@ -1096,6 +1096,9 @@ void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::Ghost
 	if (!decal)
 		return;
 
+	if(gb)
+		gb->decal = decal;
+
 	decal->owner = 0;
 	decal->gbOwner = gb;
 	building->buildingDecal = 0;

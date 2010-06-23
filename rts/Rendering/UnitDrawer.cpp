@@ -2296,7 +2296,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 				gb = new GhostBuilding();
 				gb->pos    = building->pos;
 				gb->model  = gbModel;
-				gb->decal  = building->buildingDecal;
+				gb->decal  = NULL;
 				gb->facing = building->buildFacing;
 				gb->team   = building->team;
 
