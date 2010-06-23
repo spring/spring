@@ -2294,9 +2294,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 			}
 		}
 
-		if (groundDecals && building->buildingDecal) {
-			groundDecals->RemoveBuilding(building, gb);
-		}
+		groundDecals->RemoveBuilding(building, gb);
 	}
 
 	if (u->model) {
