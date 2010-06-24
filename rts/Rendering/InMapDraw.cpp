@@ -449,13 +449,17 @@ bool CInMapDraw::AllowedMsg(const CPlayer* sender) const {
 
 int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 {
-	unsigned char playerID = -1;
+	int playerID = -1;
+
 	try {
 		netcode::UnpackPacket pckt(packet, 2);
-		pckt >> playerID;
 
-		if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
+		unsigned char uPlayerID;
+		pckt >> uPlayerID;
+		if (uPlayerID >= playerHandler->ActivePlayers()) {
 			throw netcode::UnpackPacketException("Invalid player number");
+		}
+		playerID = uPlayerID;
 
 		const CPlayer* sender = playerHandler->Player(playerID);
 		if (sender == NULL)
@@ -507,6 +511,7 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 		logOutput.Print("Got invalid MapDraw: %s", e.err.c_str());
 		playerID = -1;
 	}
+
 	return playerID;
 }
 
