@@ -85,43 +85,62 @@ public:
 		PATHOPT_BLOCKED   = 256,
 	};
 
-	/** Enable/disable heat mapping.
-
-	Heat mapping makes the pathfinder value unused paths more. Less path overlap should
-	make units behave more intelligently.
-
-	*/
+public:
+	/**
+	 * @brief Enable/disable heat mapping.
+	 *
+	 * Heat mapping makes the pathfinder value unused paths more. Less path overlap should
+	 * make units behave more intelligently.
+	 */
 	void InitHeatMap();
 	void SetHeatMapState(bool enabled);
 	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
 
-	void UpdateHeatValue(int x, int y, int value, int ownerId)
+	void UpdateHeatValue(const int& x, const int& y, const int& value, const int& ownerId)
 	{
-		assert(!heatmap.empty());
-		x >>= 1;
-		y >>= 1;
-		if (heatmap[x][y].value < value + heatMapOffset) {
-			heatmap[x][y].value = value + heatMapOffset;
-			heatmap[x][y].ownerId = ownerId;
+		const int i = GetHeatMapIndex(x, y);
+		if (heatmap[i].value < value + heatMapOffset) {
+			heatmap[i].value = value + heatMapOffset;
+			heatmap[i].ownerId = ownerId;
 		}
 	}
 
-	const int GetHeatOwner(int x, int y)
+	const int GetHeatOwner(const int& x, const int& y)
 	{
-		assert(!heatmap.empty());
-		x >>= 1;
-		y >>= 1;
-		return heatmap[x][y].ownerId;
+		const int i = GetHeatMapIndex(x, y);
+		return heatmap[i].ownerId;
 	}
 
-	const int GetHeatValue(int x, int y)
+	const int GetHeatValue(const int& x, const int& y)
+	{
+		const int i = GetHeatMapIndex(x, y);
+		return std::max(0, heatmap[i].value - heatMapOffset);
+	}
+
+private:
+
+	int GetHeatMapIndex(int x, int y)
 	{
 		assert(!heatmap.empty());
+
+		//! x & y are given in gs->mapi coords (:= gs->hmapi * 2)
 		x >>= 1;
 		y >>= 1;
-		return std::max(0, heatmap[x][y].value - heatMapOffset);
+
+		return y * gs->hmapx + x;
 	}
+
+	// Heat mapping
+	struct HeatMapValue {
+		HeatMapValue(): value(0), ownerId(0) {}
+		int value;
+		int ownerId;
+	};
+
+	std::vector<HeatMapValue> heatmap; //! resolution is hmapx*hmapy
+	int heatMapOffset;  //! heatmap values are relative to this
+	bool heatMapping;
 
 private:
 	enum { MAX_SEARCHED_SQUARES = 10000 };
@@ -244,18 +263,6 @@ private:
 
 	OpenSquare *openSquareBufferPointer;
 	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
-
-	// Heat mapping
-	struct HeatMapValue {
-		HeatMapValue(): value(0), ownerId(0) {
-		}
-		int value;
-		int ownerId;
-	};
-
-	std::vector<std::vector<HeatMapValue> > heatmap; //! resolution is hmapx*hmapy
-	int heatMapOffset;  //! heatmap values are relative to this
-	bool heatMapping;
 };
 
 class CPathFinderDef {
