@@ -157,8 +157,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextObstacleAvoidanceUpdate(0),
 	lastTrackUpdate(0),
 
-	lastHeatRequestFrame(0),
-
 	skidding(false),
 	flying(false),
 	reversing(false),
