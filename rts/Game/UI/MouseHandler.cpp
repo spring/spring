@@ -310,15 +310,6 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	// Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
-	// (the latter is determined by the time the mouse was held down:
-	//  <= 0.3 s means a camera mode switch, > 0.3 s means a drag scroll)
-	if (button == SDL_BUTTON_MIDDLE) {
-		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f))
-			ToggleState();
-		return;
-	}
-
 	if (gu->directControl) {
 		return;
 	}
