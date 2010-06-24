@@ -1156,17 +1156,9 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 }
 
 
-unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos,
-		float goalRadius)
+unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos, float goalRadius)
 {
-	if (lastHeatRequestFrame + 60 < gs->frameNum) {
-		pathManager->SetHeatMappingEnabled(true);
-		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
-		pathManager->SetHeatMappingEnabled(false);
-		lastHeatRequestFrame = gs->frameNum;
-	} else {
-		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
-	}
+	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 	return pathId;
 }
 
