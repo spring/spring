@@ -495,8 +495,8 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 
 void CPathManager::SetHeatOnPos(float3 pos, int value, int ownerId)
 {
-	int x = (int)pos.x/SQUARE_SIZE;
-	int y = (int)pos.z/SQUARE_SIZE;
+	int x = (int)(pos.x/SQUARE_SIZE);
+	int y = (int)(pos.z/SQUARE_SIZE);
 	SetHeatOnSquare(x, y, value, ownerId);
 }
 

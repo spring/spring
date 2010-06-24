@@ -666,13 +666,9 @@ void CPathFinder::SetHeatMapState(bool enabled)
 
 void CPathFinder::InitHeatMap()
 {
-	heatmap.resize(gs->hmapx);
-	for (int i = 0; i<gs->hmapx; ++i) {
-		heatmap[i].resize(gs->hmapy, HeatMapValue());
-	}
+	heatmap.resize(gs->hmapx * gs->hmapy, HeatMapValue());
 	heatMapOffset = 0;
 }
-
 
 void CPathFinder::UpdateHeatMap()
 {
