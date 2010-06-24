@@ -465,42 +465,43 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 		pckt >> drawType;
 
 		switch (drawType) {
-		case MAPDRAW_POINT: {
-			short int x,z;
-			pckt >> x;
-			pckt >> z;
-			const float3 pos(x, 0, z);
-			unsigned char fromLua;
-			pckt >> fromLua;
-			string label;
-			pckt >> label;
-			if (!fromLua || allowLuaMapDrawing)
-				LocalPoint(pos, label, playerID);
-			break;
-							}
-		case MAPDRAW_LINE: {
-			short int x1,z1,x2,z2;
-			pckt >> x1;
-			pckt >> z1;
-			pckt >> x2;
-			pckt >> z2;
-			const float3 pos1(x1, 0, z1);
-			const float3 pos2(x2, 0, z2);
-			unsigned char fromLua;
-			pckt >> fromLua;
-			if (!fromLua || allowLuaMapDrawing) {
-				LocalLine(pos1, pos2, playerID);
+			case MAPDRAW_POINT: {
+				short int x,z;
+				pckt >> x;
+				pckt >> z;
+				const float3 pos(x, 0, z);
+				unsigned char fromLua;
+				pckt >> fromLua;
+				string label;
+				pckt >> label;
+				if (!fromLua || allowLuaMapDrawing) {
+					LocalPoint(pos, label, playerID);
+				}
+				break;
 			}
-			break;
-						   }
-		case MAPDRAW_ERASE: {
-			short int x,z;
-			pckt >> x;
-			pckt >> z;
-			float3 pos(x, 0, z);
-			LocalErase(pos, playerID);
-			break;
-							}
+			case MAPDRAW_LINE: {
+				short int x1,z1,x2,z2;
+				pckt >> x1;
+				pckt >> z1;
+				pckt >> x2;
+				pckt >> z2;
+				const float3 pos1(x1, 0, z1);
+				const float3 pos2(x2, 0, z2);
+				unsigned char fromLua;
+				pckt >> fromLua;
+				if (!fromLua || allowLuaMapDrawing) {
+					LocalLine(pos1, pos2, playerID);
+				}
+				break;
+			}
+			case MAPDRAW_ERASE: {
+				short int x,z;
+				pckt >> x;
+				pckt >> z;
+				float3 pos(x, 0, z);
+				LocalErase(pos, playerID);
+				break;
+			}
 		}
 	} catch (netcode::UnpackPacketException &e) {
 		logOutput.Print("Got invalid MapDraw: %s", e.err.c_str());
