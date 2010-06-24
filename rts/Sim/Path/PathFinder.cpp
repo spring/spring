@@ -41,7 +41,7 @@ void pfDealloc(void *p,size_t n)
 CPathFinder::CPathFinder()
 : openSquareBufferPointer(openSquareBuffer)
 {
-	heatMapping = false;
+	heatMapping = true;
 	InitHeatMap();
 
 	// Creates and init all square states.
