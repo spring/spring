@@ -44,6 +44,7 @@ public:
 	bool invertMouse;
 	float doubleClickTime;
 	float scrollWheelSpeed;
+	float dragScrollThreshold;
 
 	/// locked mouse indicator size
 	float crossSize;
