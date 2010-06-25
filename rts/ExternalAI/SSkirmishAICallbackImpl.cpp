@@ -2268,7 +2268,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMinAirBasePower(int teamId, int unit
 }
 EXPORT(int) skirmishAiCallback_UnitDef_getMaxThisUnit(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxThisUnit;}
 EXPORT(int) skirmishAiCallback_UnitDef_0SINGLE1FETCH2UnitDef0getDecoyDef(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->decoyDef->id;
+
+	const UnitDef* decoyDef = getUnitDefById(teamId, unitDefId)->decoyDef;
+	return (decoyDef == NULL) ? -1 : decoyDef->id;
 }
 EXPORT(bool) skirmishAiCallback_UnitDef_isDontLand(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->DontLand();}
 EXPORT(int) skirmishAiCallback_UnitDef_0SINGLE1FETCH2WeaponDef0getShieldDef(int teamId,
