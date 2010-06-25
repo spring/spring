@@ -439,7 +439,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
 	ud.transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	ud.minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
-	ud.holdSteady        = udTable.GetBool("holdSteady",        true);
+	ud.holdSteady        = udTable.GetBool("holdSteady",        false);
 	ud.releaseHeld       = udTable.GetBool("releaseHeld",       false);
 	ud.cantBeTransported = udTable.GetBool("cantBeTransported", false);
 	ud.transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
