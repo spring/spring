@@ -3,9 +3,25 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "UnitDef.h"
+#include "Unit.h"
+#include "UnitHandler.h"
+#include "UnitDefHandler.h"
+#include "UnitLoader.h"
+#include "UnitTypes/Building.h"
+#include "UnitTypes/TransportUnit.h"
+#include "COB/NullUnitScript.h"
+#include "COB/UnitScriptFactory.h"
+#include "COB/CobInstance.h" // for TAANG2RAD
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
-#include "creg/STL_List.h"
+#include "CommandAI/AirCAI.h"
+#include "CommandAI/BuilderCAI.h"
+#include "CommandAI/CommandAI.h"
+#include "CommandAI/FactoryCAI.h"
+#include "CommandAI/MobileCAI.h"
+#include "CommandAI/TransportCAI.h"
+
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
@@ -44,31 +60,15 @@
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sync/SyncedPrimitive.h"
-#include "Sync/SyncTracer.h"
-#include "EventHandler.h"
-#include "LoadSave/LoadSaveInterface.h"
-#include "LogOutput.h"
-#include "Matrix44f.h"
-#include "myMath.h"
-#include "Sound/IEffectChannel.h"
-#include "UnitDef.h"
-#include "Unit.h"
-#include "UnitHandler.h"
-#include "UnitLoader.h"
-#include "UnitTypes/Building.h"
-#include "UnitTypes/TransportUnit.h"
-
-#include "COB/NullUnitScript.h"
-#include "COB/UnitScriptFactory.h"
-#include "COB/CobInstance.h" // for TAANG2RAD
-#include "CommandAI/AirCAI.h"
-#include "CommandAI/BuilderCAI.h"
-#include "CommandAI/CommandAI.h"
-#include "CommandAI/FactoryCAI.h"
-#include "CommandAI/MobileCAI.h"
-#include "CommandAI/TransportCAI.h"
-#include "UnitDefHandler.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "System/creg/STL_List.h"
+#include "System/LoadSave/LoadSaveInterface.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/Sync/SyncedPrimitive.h"
+#include "System/Sync/SyncTracer.h"
 
 CLogSubsystem LOG_UNIT("unit");
 
@@ -882,20 +882,18 @@ void CUnit::SlowUpdate()
 
 void CUnit::SetDirectionFromHeading(void)
 {
-	frontdir=GetVectorFromHeading(heading);
-	if(transporter && transporter->unitDef->holdSteady) {
-		updir = transporter->updir;
-		rightdir=frontdir.cross(updir);
-		rightdir.Normalize();
-		frontdir=updir.cross(rightdir);
-	} else if(upright || !unitDef->canmove){
-		updir=UpVector;
-		rightdir=frontdir.cross(updir);
-	} else  {
-		updir=ground->GetNormal(pos.x,pos.z);
-		rightdir=frontdir.cross(updir);
-		rightdir.Normalize();
-		frontdir=updir.cross(rightdir);
+	if (GetTransporter() == NULL) {
+		frontdir = GetVectorFromHeading(heading);
+
+		if (upright || !unitDef->canmove) {
+			updir = UpVector;
+			rightdir = frontdir.cross(updir);
+		} else  {
+			updir = ground->GetNormal(pos.x, pos.z);
+			rightdir = frontdir.cross(updir);
+			rightdir.Normalize();
+			frontdir = updir.cross(rightdir);
+		}
 	}
 }
 
@@ -1108,7 +1106,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
 
-	CTransportUnit *trans;
+	CTransportUnit* trans = NULL;
 
 	if (usingScriptMoveType ||
 	    (!beingBuilt && (physicalState == CSolidObject::Flying) && unitDef->canmove)) {
@@ -1117,14 +1115,9 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		// use this matrix, or their nanoframes won't spin on pad
 		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
-	else if ((trans=GetTransporter()) && trans->unitDef->holdSteady) {
-		// making local copies of vectors
-		float3 frontDir = GetVectorFromHeading(heading);
-		float3 upDir    = updir;
-		float3 rightDir = frontDir.cross(upDir);
-		rightDir.Normalize();
-		frontDir = upDir.cross(rightDir);
-		return CMatrix44f(interPos, -rightDir, upDir, frontDir);
+	else if ((trans = GetTransporter()) != NULL) {
+		// we're being transported, transporter sets our vectors
+		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
 	else if (upright || !unitDef->canmove) {
 		if (heading == 0) {
