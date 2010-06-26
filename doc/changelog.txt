@@ -158,6 +158,7 @@ Interface:
  - more responsive mouse movement
  - made it easier to select units in factories
  - added new command "/buildwarnings [0|1]", analogous to "/movewarnings [0|1]"
+ - improved unit type mix in front moves
 
 AIs:
  - added various new debug-draw callouts for profiling, state visualization, etc.
