@@ -84,6 +84,9 @@ public:
 	                        CMouseCursor::HotSpot hotSpot);
 	void SafeDeleteCursor(CMouseCursor* cursor);
 
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
+
 protected:
 	void LoadCursors();
 
