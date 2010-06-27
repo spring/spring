@@ -9,6 +9,7 @@
 
 EXPORT(const char* ) GetNextError();
 EXPORT(const char* ) GetSpringVersion();
+EXPORT(void        ) SetConfigSource(const char* configSource);
 
 EXPORT(int         ) Init(bool isServer, int id);
 EXPORT(void        ) UnInit();
