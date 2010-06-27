@@ -100,6 +100,8 @@ CMouseHandler::CMouseHandler()
 	crossSize = configHandler->Get("CrossSize", 10.0f);
 
 	dragScrollThreshold = configHandler->Get("MouseDragScrollThreshold", 0.3f);
+
+	configHandler->NotifyOnChange(this);
 }
 
 CMouseHandler::~CMouseHandler()
@@ -900,3 +902,12 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 
 
 /******************************************************************************/
+
+void CMouseHandler::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key == "MouseDragScrollThreshold") {
+		// get the new value as float
+		// the default value here will never be used
+		dragScrollThreshold = configHandler->Get(key, 0.3f);
+	}
+}
