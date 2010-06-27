@@ -199,27 +199,6 @@ EXPORT(const char*) GetNextError()
 }
 
 
-/// use the default config file
-static std::string curConfigSource = "";
-
-/**
- * Sets the spring config file location.
- * This has to be called before Init(...) to have an effect.
- *
- * @brief Sets the config file to be used
- * @param configSource the config file to be used, using the default one if empty
- */
-EXPORT(void) SetConfigSource(const char* configSource)
-{
-	if (configSource == NULL) {
-		// use the default config file
-		curConfigSource = "";
-	} else {
-		curConfigSource = configSource;
-	}
-}
-
-
 /**
  * @brief Retrieve the version of Spring this unitsync was compiled with
  * @return The Spring/unitsync version string
@@ -287,7 +266,7 @@ EXPORT(int) Init(bool isServer, int id)
 		if (!logOutputInitialised)
 			logOutput.SetFileName("unitsync.log");
 		if (!configHandler)
-			ConfigHandler::Instantiate(curConfigSource);
+			ConfigHandler::Instantiate(); // use the default config file
 		FileSystemHandler::Initialize(false);
 
 		if (!logOutputInitialised)
