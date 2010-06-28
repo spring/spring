@@ -55,6 +55,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
 	nbrOfBlocks(nbrOfBlocksX * nbrOfBlocksZ),
+	openBlockBufferIndex(0),
 	moveMathOptions(mmOpt),
 	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocks),costBlockNum(nbrOfBlocks),
@@ -85,7 +86,6 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	blockState = new BlockInfo[nbrOfBlocks];
 	nbrOfVertices = moveinfo->moveData.size() * nbrOfBlocks * PATH_DIRECTION_VERTICES;
 	vertex = new float[nbrOfVertices];
-	openBlockBufferPointer = openBlockBuffer;
 
 	InitEstimator(cacheFileName, map);
 
@@ -444,12 +444,14 @@ IPath::SearchResult CPathEstimator::GetPath(
 	bool synced
 ) {
 	start.CheckInBounds();
+
 	// clear the path
 	path.path.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
 	// initial calculations
-	maxBlocksToBeSearched = std::min(maxSearchedBlocks, (unsigned int) MAX_SEARCHED_BLOCKS);
+	maxBlocksToBeSearched = std::min(maxSearchedBlocks, MAX_SEARCHED_BLOCKS);
+
 	startBlock.x = (int)(start.x / BLOCK_PIXEL_SIZE);
 	startBlock.y = (int)(start.z / BLOCK_PIXEL_SIZE);
 	startBlocknr = startBlock.y * nbrOfBlocksX + startBlock.x;
@@ -481,7 +483,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 		if (PATHDEBUG) {
 			LogObject() << "PE: Search completed.\n";
 			LogObject() << "Tested blocks: " << testedBlocks << "\n";
-			LogObject() << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
+			LogObject() << "Open blocks: " << openBlockBufferIndex << "\n";
 			LogObject() << "Path length: " << (int)(path.path.size()) << "\n";
 			LogObject() << "Path cost: " << path.pathCost << "\n";
 		}
@@ -489,7 +491,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 		if (PATHDEBUG) {
 			LogObject() << "PE: Search failed!\n";
 			LogObject() << "Tested blocks: " << testedBlocks << "\n";
-			LogObject() << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
+			LogObject() << "Open blocks: " << openBlockBufferIndex << "\n";
 		}
 	}
 
@@ -515,12 +517,13 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 	blockState[startBlocknr].cost = 0;
 	dirtyBlocks.push_back(startBlocknr);
 
+	openBlockBufferIndex = 0;
 	// add the starting block to the open-blocks-queue
-	OpenBlock* ob = openBlockBufferPointer = openBlockBuffer;
-	ob->cost = 0;
-	ob->currentCost = 0;
-	ob->block = startBlock;
-	ob->blocknr = startBlocknr;
+	OpenBlock* ob = &openBlockBuffer[openBlockBufferIndex];
+		ob->cost = 0;
+		ob->currentCost = 0;
+		ob->block = startBlock;
+		ob->blocknr = startBlocknr;
 	openBlocks.push(ob);
 
 	// mark starting point as best found position
@@ -546,7 +549,8 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
  */
 IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPathFinderDef& peDef) {
 	bool foundGoal = false;
-	while (!openBlocks.empty() && (openBlockBufferPointer - openBlockBuffer) < (maxBlocksToBeSearched - 8)) {
+
+	while (!openBlocks.empty() && (openBlockBufferIndex < maxBlocksToBeSearched)) {
 		// get the open block with lowest cost
 		OpenBlock* ob = openBlocks.top();
 		openBlocks.pop();
@@ -587,7 +591,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		return Ok;
 
 	// we could not reach the goal
-	if (openBlockBufferPointer - openBlockBuffer >= (maxBlocksToBeSearched - 8))
+	if (openBlockBufferIndex >= maxBlocksToBeSearched)
 		return GoalOutOfRange;
 
 	// search could not reach the goal due to the unit being locked in
@@ -661,11 +665,14 @@ void CPathEstimator::TestBlock(const MoveData& moveData, const CPathFinderDef &p
 	}
 
 	// store this block as open.
-	OpenBlock* ob = ++openBlockBufferPointer;
-	ob->block = block;
-	ob->blocknr = blocknr;
-	ob->cost = cost;
-	ob->currentCost = currentCost;
+	++openBlockBufferIndex;
+	assert(openBlockBufferIndex < MAX_SEARCHED_BLOCKS);
+
+	OpenBlock* ob = &openBlockBuffer[openBlockBufferIndex];
+		ob->block = block;
+		ob->blocknr = blocknr;
+		ob->cost = cost;
+		ob->currentCost = currentCost;
 	openBlocks.push(ob);
 
 	// Mark the block as open, and its parent.
