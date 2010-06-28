@@ -3512,6 +3512,15 @@ void CGame::StartPlaying()
 
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
+#ifdef USE_GML
+	CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
+	std::string lskey = lslist.empty() ? "<none>" : lslist.front();
+	logOutput.Print("");
+	logOutput.Print("************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
+	logOutput.Print("GRAPHICS WIDGETS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
+	logOutput.Print("Press " + lskey + " and click to disable specific widgets (mouse wheel scrolls the list)");
+	logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes");
+#endif
 }
 
 
