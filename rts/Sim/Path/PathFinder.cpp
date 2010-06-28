@@ -154,7 +154,11 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::ve
 
 		goalSquare = startSquare;
 
-		OpenSquare* os = openSquareBuffer[openSquareBufferIndex++];
+		if (openSquareBufferIndex >= MAX_SEARCHED_SQUARES) {
+			continue;
+		}
+
+		OpenSquare* os = &openSquareBuffer[openSquareBufferIndex++];
 			os->currentCost = 0;
 			os->cost = 0;
 			os->square.x = startxSqr;
