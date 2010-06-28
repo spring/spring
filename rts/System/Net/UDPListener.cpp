@@ -21,6 +21,7 @@
 #include "LogOutput.h"
 #include "UDPConnection.h"
 #include "Socket.h"
+#include "Platform/errorhandler.h"
 
 namespace netcode
 {
@@ -28,25 +29,30 @@ using namespace boost::asio;
 
 UDPListener::UDPListener(int port)
 {
-	SocketPtr temp(new ip::udp::socket(netservice));
+	try {
+		SocketPtr temp(new ip::udp::socket(netservice));
 
-	boost::system::error_code err;
-	temp->open(ip::udp::v6(), err); // test v6
-	if (!err)
-	{
-		temp->bind(ip::udp::endpoint(ip::address_v6::any(), port));
-	}
-	else
-	{
-		// fallback to v4
-		temp->open(ip::udp::v4());
-		temp->bind(ip::udp::endpoint(ip::address_v4::any(), port));
-	}
-	boost::asio::socket_base::non_blocking_io command(true);
-	temp->io_control(command);
+		boost::system::error_code err;
+		temp->open(ip::udp::v6(), err); // test v6
+		if (!err)
+		{
+			temp->bind(ip::udp::endpoint(ip::address_v6::any(), port));
+		}
+		else
+		{
+			// fallback to v4
+			temp->open(ip::udp::v4());
+			temp->bind(ip::udp::endpoint(ip::address_v4::any(), port));
+		}
+		boost::asio::socket_base::non_blocking_io command(true);
+		temp->io_control(command);
 
-	mySocket = temp;
-	acceptNewConnections = true;
+		mySocket = temp;
+		acceptNewConnections = true;
+	}
+	catch(boost::system::system_error &) {
+		handleerror(NULL, "Error: Failed to initialize UDP.\nSpring may already be running.", "Network error", MBF_OK|MBF_EXCL);
+	}
 }
 
 UDPListener::~UDPListener()
