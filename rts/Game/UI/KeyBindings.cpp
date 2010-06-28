@@ -748,7 +748,7 @@ void CKeyBindings::BuildHotkeyMap()
 		const string keystr = ks.GetString(true);
 		const ActionList& al = kit->second;
 		for (int i = 0; i < (int)al.size(); ++i) {
-			HotkeyList& hl = hotkeys[al[i].command];
+			HotkeyList& hl = hotkeys[al[i].command + ((al[i].extra == "") ? "" : " " + al[i].extra)];
 			int j;
 			for (j = 0; j < (int)hl.size(); ++j) {
 				if (hl[j] == keystr) {
