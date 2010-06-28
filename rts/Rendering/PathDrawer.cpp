@@ -99,7 +99,7 @@ void PathDrawer::Draw(const CPathFinder* pf) const {
 	glBegin(GL_LINES);
 
 	for (unsigned int idx = 0; idx < pf->openSquareBufferIndex; idx++) {
-		const CPathFinder::OpenSquare* os = pf->openSquareBuffer[idx];
+		const CPathFinder::OpenSquare* os = &pf->openSquareBuffer[idx];
 		const int2 sqr = os->square;
 		const int square = os->sqr;
 
