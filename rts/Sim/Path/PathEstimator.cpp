@@ -450,7 +450,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 	path.pathCost = PATHCOST_INFINITY;
 
 	// initial calculations
-	maxBlocksToBeSearched = std::min(maxSearchedBlocks, MAX_SEARCHED_BLOCKS);
+	maxBlocksToBeSearched = std::min(maxSearchedBlocks, MAX_SEARCHED_BLOCKS - 8U);
 
 	startBlock.x = (int)(start.x / BLOCK_PIXEL_SIZE);
 	startBlock.y = (int)(start.z / BLOCK_PIXEL_SIZE);
@@ -573,6 +573,8 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		}
 
 		// no, test the 8 surrounding blocks
+		// NOTE: each of these calls increments openBlockBufferIndex by 1, so
+		// maxBlocksToBeSearched is always less than <MAX_SEARCHED_BLOCKS - 8>
 		TestBlock(moveData, peDef, *ob, PATHDIR_LEFT);
 		TestBlock(moveData, peDef, *ob, PATHDIR_LEFT_UP);
 		TestBlock(moveData, peDef, *ob, PATHDIR_UP);
