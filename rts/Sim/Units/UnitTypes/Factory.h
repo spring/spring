@@ -13,7 +13,7 @@ public:
 	CR_DECLARE(CFactory);
 
 	CFactory();
-	virtual ~CFactory();
+	virtual ~CFactory() {}
 	void PostLoad();
 	void StopBuild();
 	void StartBuild(const UnitDef* ud);

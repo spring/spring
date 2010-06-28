@@ -40,6 +40,7 @@
 #include "Rendering/GroundFlash.h"
 
 #include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -1812,6 +1813,16 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 			((CAirMoveType*) moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 			health = maxHealth * 0.5f;
 			return;
+		}
+	}
+
+	// if we are a factory, our buildee must be destroyed
+	// and removed from CUnitHandler in the same simframe
+	// to prevent dangling renderer pointers
+	if (dynamic_cast<CFactory*>(this)) {
+		if (((CFactory*) this)->curBuild != NULL) {
+			((CFactory*) this)->curBuild->KillUnit(false, true, NULL);
+			((CFactory*) this)->curBuild = NULL;
 		}
 	}
 
