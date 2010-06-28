@@ -236,7 +236,8 @@ void PathDrawer::Draw(const CPathEstimator* pe) const {
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 
-	for (const CPathEstimator::OpenBlock* ob = pe->openBlockBuffer; ob != pe->openBlockBufferPointer; ++ob) {
+	for (unsigned int idx = 0; idx < pe->openBlockBufferIndex; idx++) {
+		const CPathEstimator::OpenBlock* ob = &pe->openBlockBuffer[idx];
 		const int blocknr = ob->blocknr;
 
 		float3 p1;

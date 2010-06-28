@@ -120,7 +120,7 @@ private:
 
 
 
-	enum {MAX_SEARCHED_BLOCKS = 10000};
+	static const unsigned int MAX_SEARCHED_BLOCKS = 10000U;
 	const unsigned int BLOCK_SIZE;
 	const unsigned int BLOCK_PIXEL_SIZE;
 	const unsigned int BLOCKS_TO_UPDATE;
@@ -132,9 +132,9 @@ private:
 			float currentCost;
 			int2 block;
 			int blocknr;
-			inline bool operator< (const OpenBlock& ob) { return cost < ob.cost; }
-			inline bool operator> (const OpenBlock& ob) { return cost > ob.cost; }
-			inline bool operator==(const OpenBlock& ob) { return blocknr == ob.blocknr; }
+			inline bool operator <  (const OpenBlock& ob) { return cost < ob.cost; }
+			inline bool operator >  (const OpenBlock& ob) { return cost > ob.cost; }
+			inline bool operator == (const OpenBlock& ob) { return blocknr == ob.blocknr; }
 	};
 
 	struct lessCost: public std::binary_function<OpenBlock*, OpenBlock*, bool> {
@@ -176,7 +176,7 @@ private:
 	int nbrOfBlocksX, nbrOfBlocksZ, nbrOfBlocks;									// Number of blocks on map.
 	BlockInfo* blockState;															// Map over all blocks and there states.
 	OpenBlock openBlockBuffer[MAX_SEARCHED_BLOCKS];									// The buffer to be used in the priority-queue.
-	OpenBlock *openBlockBufferPointer;												// Pointer to the current position in the buffer.
+	unsigned int openBlockBufferIndex;												// index of the most recently added open block
 	std::priority_queue<OpenBlock*, std::vector<OpenBlock*>, lessCost> openBlocks;	// The priority-queue used to select next block to be searched.
 	std::list<int> dirtyBlocks;														// List of blocks changed in last search.
 	std::list<SingleBlock> needUpdate;												// Blocks that may need an update due to map changes.
