@@ -143,7 +143,7 @@ private:
 	bool heatMapping;
 
 private:
-	enum { MAX_SEARCHED_SQUARES = 10000 };
+	static const unsigned int MAX_SEARCHED_SQUARES = 10000U;
 
 	class OpenSquare {
 	public:
@@ -261,7 +261,7 @@ private:
 	// Statistic
 	unsigned int testedNodes;
 
-	OpenSquare *openSquareBufferPointer;
+	unsigned int openSquareBufferIndex;
 	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
 };
 
