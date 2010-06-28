@@ -34,6 +34,9 @@ Engine / Simulation:
  - reduced frequency of units ending up in "can't reach destination" situations
  - fixed units not inheriting orders from factories and piling up (due to having their paths aborted)
  - removed the TEDclassString UnitDef parameter (side-effect: hub-like units will break if they have a yardmap)
+ - changed the semantics of the holdSteady UnitDef tag
+      true ==> slave transportees to orientation of transporter attachment piece
+      false ==> slave transportees to orientation of transporter body (default)
 
 Engine / Rendering:
  - fixed alpha-masked shadows for S3O models
@@ -130,6 +133,7 @@ Lua:
  - new Spring.GetUnitMetalExtraction(unitID) -> nil | number
  - new synced Spring.ShareTeamResource(teamID_src, teamID_dst, type = ["metal"|"energy"], amount) -> nil
  - new Spring.GetTeamResourceStats(teamID, resourcetype = ["metal"|"energy"]) -> nil | used, produced, excess, recv, sent
+ - added Spring.SetProjectileMoveControl(number pid, boolean b) --> nil callout; if <b>, makes all piece/weapon projectile movement fully Lua-controllable
  - improved Spring.GetTeamStatsHistory. It retuns now also the most recent data, not just the data of the cached stats which get updated only all 16 seconds.
  - fixed incorrect scaling in Spring.SetUnitResourceParam
  - fixed Spring.GetAIInfo, it returned incorrectly the given teamID as first argument
