@@ -203,6 +203,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
+	CR_MEMBER(showMTInfo),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
@@ -273,6 +274,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	showFPS   = !!configHandler->Get("ShowFPS",   0);
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
+	showMTInfo = !!configHandler->Get("ShowMTInfo", 1);
 
 	speedControl = configHandler->Get("SpeedControl", 0);
 
@@ -1874,6 +1876,14 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		configHandler->Set("ShowSpeed", showSpeed ? 1 : 0);
 	}
+	else if (cmd == "mtinfo") {
+		if (action.extra.empty()) {
+			showMTInfo = !showMTInfo;
+		} else {
+			showMTInfo = !!atoi(action.extra.c_str());
+		}
+		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
+	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {
 			if (playerRoster.GetSortType() == PlayerRoster::Disabled) {
@@ -3287,6 +3297,25 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
 		}
 
+#ifdef USE_GML
+		if(showMTInfo) {
+			int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
+			static int luaDrawTime = 0;
+			if(cit > luaDrawTime)
+				++luaDrawTime;
+			else if(cit < luaDrawTime)
+				--luaDrawTime;
+
+			float drawPercent = (float)luaDrawTime / 10.0f;
+			char buf[32];
+			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
+			float4 warncol(drawPercent >= 10.0f && (currentTime & 128) ? 
+				0.5f : std::max(0.0f, std::min(drawPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - drawPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
+			smallFont->SetColors(&warncol, NULL);
+			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+		}
+#endif
+
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
 			static std::string chart; chart = "";
 			static std::string prefix;
@@ -3506,13 +3535,17 @@ void CGame::StartPlaying()
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 #ifdef USE_GML
-	CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
-	std::string lskey = lslist.empty() ? "<none>" : lslist.front();
-	logOutput.Print("");
-	logOutput.Print("************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-	logOutput.Print("GRAPHICS WIDGETS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
-	logOutput.Print("Press " + lskey + " and click to disable specific widgets (mouse wheel scrolls the list)");
-	logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes");
+	if(showMTInfo) {
+		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
+		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
+		logOutput.Print("");
+		logOutput.Print("************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
+		logOutput.Print("GRAPHICS WIDGETS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
+		logOutput.Print("Press " + lskey + " and click to disable specific widgets (mouse wheel scrolls the list)");
+		logOutput.Print("The LUA-DRAW(MT) value in the upper right corner can be used for guidance");
+		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes");
+		logOutput.Print("");
+	}
 #endif
 }
 
