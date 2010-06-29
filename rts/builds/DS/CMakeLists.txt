@@ -45,6 +45,7 @@ SET(system_files
 	${fs_files}
 	${net_files}
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc
+	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser
 	${ENGINE_SRC_ROOT_DIR}/System/ConfigHandler
 	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig
@@ -58,7 +59,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG
 	${ENGINE_SRC_ROOT_DIR}/System/Util
 	${ENGINE_SRC_ROOT_DIR}/System/float4)
-IF (WIN32)
+IF    (WIN32)
 	LIST(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion)
 ENDIF (WIN32)
 

@@ -9,15 +9,22 @@
 #include "errorhandler.h"
 
 #include "Game/GameServer.h"
+#ifndef DEDICATED
 #include "Sound/ISound.h"
+#endif
 
 #include <SDL.h>
-#ifdef _WIN32
+
+#if       !defined(DEDICATED) && !defined(HEADLESS)
+#if       defined(WIN32)
 #include <windows.h>
-#endif
+#endif // defined(WIN32)
 
 // from X_MessageBox.cpp:
 void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
+#else  // !defined(DEDICATED) && !defined(HEADLESS)
+#include "LogOutput.h"
+#endif // !defined(DEDICATED) && !defined(HEADLESS)
 
 void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 {
@@ -25,9 +32,13 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 	SDL_Quit();
 	// not exiting threads causes another exception
 	delete gameServer; gameServer = NULL;
+#ifndef DEDICATED
 	ISound::Shutdown();
+#endif
 
-#ifdef _WIN32
+
+#if       !defined(DEDICATED) && !defined(HEADLESS)
+#if       defined(WIN32)
 	// Windows implementation, using MessageBox.
 
 	// Translate spring flags to corresponding win32 dialog flags
@@ -39,12 +50,15 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 		winFlags |= MB_ICONINFORMATION;
 
 	MessageBox (GetActiveWindow(), msg, caption, winFlags);
-#else
+#else  // defined(WIN32)
 	// X implementation
 // TODO: write Mac OS X specific message box
 
 	X_MessageBox(msg, caption, flags);
-#endif
+#endif // defined(WIN32)
+#else  // !defined(DEDICATED) && !defined(HEADLESS)
+	LogObject() << msg;
+#endif // !defined(DEDICATED) && !defined(HEADLESS)
 
 	exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash
 }
