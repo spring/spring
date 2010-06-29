@@ -1575,13 +1575,6 @@ bool CGame::ActionPressed(const Action& action,
 			videoCapturing->StartCapturing();
 		}
 	}
-	else if (cmd == "updatefov") {
-		if (action.extra.empty()) {
-			gd->updateFov = !gd->updateFov;
-		} else {
-			gd->updateFov = !!atoi(action.extra.c_str());
-		}
-	}
 	else if (cmd == "drawtrees") {
 		if (action.extra.empty()) {
 			treeDrawer->drawTrees = !treeDrawer->drawTrees;

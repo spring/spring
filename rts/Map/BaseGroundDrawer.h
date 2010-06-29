@@ -60,7 +60,6 @@ public:
 	bool UpdateExtraTexture();
 	bool DrawExtraTex() const { return drawMode!=drawNormal; };
 
-	bool updateFov;
 	bool wireframe;
 
 	float LODScaleReflection;
