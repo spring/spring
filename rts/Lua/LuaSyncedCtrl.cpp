@@ -1122,7 +1122,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 	const string key = lua_tostring(L, index);
 	const float value = lua_tofloat(L, index + 1);
 	// FIXME: KDR -- missing checks and updates?
-	if (key == "reloadState") {
+	if (key == "reloadState" || key == "reloadFrame") {
 		weapon->reloadStatus = (int)value;
 	}
 	else if (key == "reloadTime") {
@@ -3151,10 +3151,10 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 	CMapInfo::TerrainType* tt = const_cast<CMapInfo::TerrainType*>(&mapInfo->terrainTypes[tti]);
 
-	if (args >= 2) { tt->tankSpeed  = luaL_checkfloat(L, 2); }
-	if (args >= 3) { tt->kbotSpeed  = luaL_checkfloat(L, 3); }
-	if (args >= 4) { tt->hoverSpeed = luaL_checkfloat(L, 4); }
-	if (args >= 5) { tt->shipSpeed  = luaL_checkfloat(L, 5); }
+	if (args >= 2 && lua_isnumber(L, 2)) { tt->tankSpeed  = lua_tofloat(L, 2); }
+	if (args >= 3 && lua_isnumber(L, 3)) { tt->kbotSpeed  = lua_tofloat(L, 3); }
+	if (args >= 4 && lua_isnumber(L, 4)) { tt->hoverSpeed = lua_tofloat(L, 4); }
+	if (args >= 5 && lua_isnumber(L, 5)) { tt->shipSpeed  = lua_tofloat(L, 5); }
 
 	/*
 	if (!mapDamage->disabled) {
