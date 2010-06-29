@@ -663,6 +663,12 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	}
 
 	ud.objectName = udTable.GetString("objectName", "");
+	if (ud.objectName.find(".") == std::string::npos) {
+		ud.objectName += ".3do"; // NOTE: get rid of this?
+	}
+	ud.modelDef.modelPath = "objects3d/" + ud.objectName;
+	ud.modelDef.modelName = ud.objectName;
+
 	ud.scriptName = udTable.GetString("script", unitName + ".cob");
 	ud.scriptPath = "scripts/" + ud.scriptName;
 
