@@ -938,8 +938,6 @@ void CBumpWater::UpdateCoastmap()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-
-
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -1004,19 +1002,23 @@ void CBumpWater::UpdateCoastmap()
 
 	blurShader->Disable();
 	coastFBO.Unattach(GL_COLOR_ATTACHMENT1_EXT);
-	coastFBO.Unbind();
+	//coastFBO.Unbind();
 
+	//! generate mipmaps
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, coastTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	//! delete UpdateAtlas
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDeleteTextures(1, &coastUpdateTexture);
 	coastmapAtlasRects.clear();
+
+	//glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 
