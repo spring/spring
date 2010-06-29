@@ -260,9 +260,11 @@ inline unsigned gmlGetTicks() {
 		if(gmlCurrentLuaState) luaL_error(gmlCurrentLuaState,"Invalid call");\
 	}
 #define GML_CALL_DEBUGGER() gmlCallDebugger gmlCDBG(L);
+#define GML_DRAW_CALLIN_TIME() (gmlCallDebugger::getDrawCallInTime())
 #else
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
+#define GML_DRAW_CALLIN_TIME() 0
 #endif
 
 #define GML_GET_TICKS(var) var=gmlGetTicks()
@@ -279,6 +281,7 @@ inline unsigned gmlGetTicks() {
 
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
+#define GML_DRAW_CALLIN_TIME() 0
 
 #endif
 
@@ -296,6 +299,7 @@ inline unsigned gmlGetTicks() {
 
 #define GML_EXPGEN_CHECK()
 #define GML_CALL_DEBUGGER()
+#define GML_DRAW_CALLIN_TIME() 0
 
 #endif // USE_GML
 

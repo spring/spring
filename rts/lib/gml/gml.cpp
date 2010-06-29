@@ -39,6 +39,7 @@
 #include "LogOutput.h"
 
 const char *gmlProfMutex = "lua";
+unsigned drawCallInTime = 0;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
