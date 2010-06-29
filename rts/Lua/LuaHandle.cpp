@@ -815,28 +815,28 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 
 void CLuaHandle::UnitEnteredRadar(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitEnteredRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitEnteredLos(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitEnteredLos");
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitLeftRadar(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitLeftRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitLeftLos");
 	LosCallIn(hs, unit, allyTeam);
 }
 
