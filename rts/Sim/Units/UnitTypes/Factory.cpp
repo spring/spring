@@ -56,6 +56,13 @@ CFactory::CFactory():
 {
 }
 
+CFactory::~CFactory() {
+	if (curBuild != NULL) {
+		curBuild->KillUnit(false, true, NULL);
+		curBuild = NULL;
+	}
+}
+
 
 
 void CFactory::PostLoad()

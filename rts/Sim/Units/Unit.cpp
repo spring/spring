@@ -40,7 +40,6 @@
 #include "Rendering/GroundFlash.h"
 
 #include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -123,7 +122,6 @@ CUnit::CUnit():
 	useHighTrajectory(false),
 	dontUseWeapons(false),
 	deathScriptFinished(false),
-	deathCountdown(0),
 	delayedWreckLevel(-1),
 	restTime(0),
 	shieldWeapon(0),
@@ -493,25 +491,7 @@ void CUnit::Update()
 	posErrorVector += posErrorDelta;
 
 	if (deathScriptFinished) {
-		// if our kill-script is already finished, don't
-		// wait for the deathCountdown to reach zero and
-		// just delete us ASAP (costs one extra frame)
 		uh->DeleteUnit(this);
-		return;
-	}
-
-	if (deathCountdown) {
-		--deathCountdown;
-
-		if (!deathCountdown) {
-			if (deathScriptFinished) {
-				// kill-script has terminated, remove unit now
-				uh->DeleteUnit(this);
-			} else {
-				// kill-script still running, delay one more frame
-				deathCountdown = 1;
-			}
-		}
 		return;
 	}
 
@@ -1816,16 +1796,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		}
 	}
 
-	// if we are a factory, our buildee must be destroyed
-	// and removed from CUnitHandler in the same simframe
-	// to prevent dangling renderer pointers
-	if (dynamic_cast<CFactory*>(this)) {
-		if (((CFactory*) this)->curBuild != NULL) {
-			((CFactory*) this)->curBuild->KillUnit(false, true, NULL);
-			((CFactory*) this)->curBuild = NULL;
-		}
-	}
-
 	isDead = true;
 	deathSpeed = speed;
 
@@ -1868,18 +1838,13 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 		// start running the unit's kill-script
 		script->Killed();
-	}
-	else {
+	} else {
 		deathScriptFinished = true;
 	}
 
-	if (beingBuilt || dynamic_cast<CAirMoveType*>(moveType) || reclaimed) {
-		uh->DeleteUnit(this);
-	} else {
+	if (!deathScriptFinished) {
+		// put the unit in a pseudo-zombie state until Killed finishes
 		speed = ZeroVector;
-		// wait at least 5 more frames before
-		// permanently deleting this unit obj
-		deathCountdown = 5;
 		stunned = true;
 		paralyzeDamage = 100.0f * maxHealth;
 		if (health < 0.0f) {
@@ -2288,7 +2253,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(useHighTrajectory),
 	CR_MEMBER(dontUseWeapons),
 	CR_MEMBER(deathScriptFinished),
-	CR_MEMBER(deathCountdown),
 	CR_MEMBER(delayedWreckLevel),
 	CR_MEMBER(restTime),
 	CR_MEMBER(weapons),
