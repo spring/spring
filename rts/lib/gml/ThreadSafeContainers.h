@@ -182,7 +182,7 @@ public:
 
 
 
-template <class C, class R, class T, class D>
+template <class R, class T, class D>
 class ThreadListRender {
 private:
 	typedef typename std::set<T>::const_iterator constSetIT;
@@ -676,7 +676,7 @@ private:
 
 
 
-template <class C, class R, class T, class D>
+template <class R, class T, class D>
 class ThreadListRender {
 private:
 	typedef typename std::set<T>::const_iterator constSetIT;
