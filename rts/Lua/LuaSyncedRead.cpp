@@ -3879,13 +3879,15 @@ int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 
 int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 {
+	if ((readAllyTeam < 0) && !fullRead) {
+		return 0;
+	}
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
 
 	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const int& losStatus = unit->losStatus[readAllyTeam];
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
@@ -3895,10 +3897,10 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
-	else if (losStatus & LOS_INLOS) {
+	else if (unit->losStatus[readAllyTeam] & LOS_INLOS) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
 	}
-	else if (losStatus & LOS_INRADAR) {
+	else if (unit->losStatus[readAllyTeam] & LOS_INRADAR) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 
@@ -3911,13 +3913,15 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 
 int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 {
+	if ((readAllyTeam < 0) && !fullRead) {
+		return 0;
+	}
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
 		return 0;
 	}
 
 	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const int& losStatus = unit->losStatus[readAllyTeam];
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
@@ -3927,10 +3931,10 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
-	else if (losStatus & LOS_INLOS) {
+	else if (unit->losStatus[readAllyTeam] & LOS_INLOS) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
 	}
-	else if (losStatus & LOS_INRADAR) {
+	else if (unit->losStatus[readAllyTeam] & LOS_INRADAR) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 
