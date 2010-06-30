@@ -11,12 +11,20 @@ ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 REMOVE_DEFINITIONS(-DAVI_CAPTURING)
 
-# We still need these header files,
-# even if we are not going to link with gl, glu and SDL
-FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(GLU REQUIRED)
-FIND_PACKAGE(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+IF    (MINGW)
+	# We still need these header files,
+	# even if we are not going to link with gl, glu and SDL.
+	# We have them available anyway (mingwlibs).
+	FIND_PACKAGE(OpenGL REQUIRED)
+	FIND_PACKAGE(GLU REQUIRED)
+	FIND_PACKAGE(SDL REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+ELSE  (MINGW)
+	# Use a direct copy of the GL and SDL headers,
+	# as these may not be available on headless systems.
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
+ENDIF (MINGW)
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
