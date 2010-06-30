@@ -2255,7 +2255,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	return canBuild;
 }
 
-void CUnitDrawer::RenderUnitCreated(const CUnit* u) {
+void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
@@ -2264,7 +2264,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u) {
 	}
 
 	if (u->model) {
-		if (u->isCloaked) {
+		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
 			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);

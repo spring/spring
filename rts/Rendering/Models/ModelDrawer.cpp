@@ -76,7 +76,7 @@ IModelDrawer::~IModelDrawer()
 
 
 
-void IModelDrawer::RenderUnitCreated(const CUnit* u)
+void IModelDrawer::RenderUnitCreated(const CUnit* u, int cloaked)
 {
 	#if (MODEL_DRAWER_DEBUG == 1)
 	logOutput.Print("[IModelDrawer::RenderUnitCreated] id=%d", u->id);
@@ -86,7 +86,7 @@ void IModelDrawer::RenderUnitCreated(const CUnit* u)
 	#endif
 
 	if (u->model) {
-		if (u->isCloaked) {
+		if (cloaked) {
 			// units can start life cloaked
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
