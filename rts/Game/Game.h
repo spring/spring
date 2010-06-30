@@ -161,9 +161,6 @@ private:
 	unsigned lastFrameTime;
 
 public:
-	void PushLayoutCommand(const std::string &cmd);
-	std::vector<std::string> layoutCommands;
-
 	struct PlayerTrafficInfo {
 		PlayerTrafficInfo() : total(0) {}
 		int total;

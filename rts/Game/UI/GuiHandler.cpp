@@ -924,6 +924,7 @@ void CGuiHandler::Update()
 {
 	GML_RECMUTEX_LOCK(gui); // Update - updates inCommand
 
+	RunLayoutCommands();
 	SetCursorIcon();
 
 	// Notify LuaUI about groups that have changed
@@ -1609,7 +1610,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		return true;
 	}
 	else if (action.command == "luaui") {
-		game->PushLayoutCommand(action.extra);
+		PushLayoutCommand(action.extra);
 		return true;
 	}
 	else if (action.command == "invqueuekey") {
@@ -4261,3 +4262,23 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+void CGuiHandler::PushLayoutCommand(const std::string& cmd) {
+	GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
+
+	layoutCommands.push_back(cmd);
+}
+
+void CGuiHandler::RunLayoutCommands() {
+	if (!layoutCommands.empty()) {
+		GML_RECMUTEX_LOCK(sim); // Draw
+		GML_STDMUTEX_LOCK(laycmd); // Draw
+
+		for (std::vector<std::string>::iterator cit = layoutCommands.begin(); cit != layoutCommands.end(); ++cit) {
+			RunLayoutCommand(*cit);
+		}
+
+		layoutCommands.clear();
+	}
+}
