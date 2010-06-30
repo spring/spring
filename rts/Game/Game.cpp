@@ -1884,6 +1884,14 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
 	}
+	else if (cmd == "teamhighlight") {
+		if (action.extra.empty()) {
+			gc->teamHighlight = !gc->teamHighlight;
+		} else {
+			gc->teamHighlight = !!atoi(action.extra.c_str());
+		}
+		configHandler->Set("TeamHighlight", gc->teamHighlight ? 1 : 0);
+	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {
 			if (playerRoster.GetSortType() == PlayerRoster::Disabled) {
