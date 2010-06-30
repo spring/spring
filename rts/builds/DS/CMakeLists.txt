@@ -24,11 +24,17 @@ IF    (UNIX)
 	LIST(APPEND engineDedicatedLibraries dl)
 ENDIF (UNIX)
 
-# We still need these header files,
-# even if we are not going to link with SDL
-FIND_PACKAGE(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-
+IF    (MINGW)
+	# We still need these header files,
+	# even if we are not going to link with SDL.
+	# We have them available anyway (mingwlibs).
+	FIND_PACKAGE(SDL REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+ELSE  (MINGW)
+	# Use a direct copy of the GL and SDL headers,
+	# as these may not be available on headless systems.
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
+ENDIF (MINGW)
 
 
 ### Assemble the incude dirs
