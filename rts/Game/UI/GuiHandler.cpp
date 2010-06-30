@@ -922,9 +922,10 @@ void CGuiHandler::SetShowingMetal(bool show)
 
 void CGuiHandler::Update()
 {
+	RunLayoutCommands();
+
 	GML_RECMUTEX_LOCK(gui); // Update - updates inCommand
 
-	RunLayoutCommands();
 	SetCursorIcon();
 
 	// Notify LuaUI about groups that have changed
