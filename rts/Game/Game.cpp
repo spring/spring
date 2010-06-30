@@ -2051,10 +2051,7 @@ bool CGame::ActionPressed(const Action& action,
 
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
-
-			GML_RECMUTEX_LOCK(sim); // ActionPressed
-
-			guihandler->RunLayoutCommand(action.extra);
+			PushLayoutCommand(action.extra);
 		}
 	}
 	else if (cmd == "luamoduictrl") {
@@ -2294,7 +2291,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (!Console::Instance().ExecuteAction(action))
 		{
 			if (guihandler != NULL) // maybe a widget is interested?
-				guihandler->RunLayoutCommand(action.rawline);
+				PushLayoutCommand(action.rawline);
 			return false;
 		}
 	}
@@ -3123,11 +3120,18 @@ bool CGame::Draw() {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
 
-		GML_RECMUTEX_LOCK(sim); // Draw
-
-		guihandler->RunLayoutCommand("disable");
+		PushLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
+	}
+	if(!layoutCommands.empty()) {
+
+		GML_RECMUTEX_LOCK(sim); // Draw
+		GML_STDMUTEX_LOCK(laycmd); // Draw
+
+		for(std::vector<std::string>::iterator cit = layoutCommands.begin(); cit != layoutCommands.end(); ++cit)
+			guihandler->RunLayoutCommand(*cit);
+		layoutCommands.clear();
 	}
 
 	configHandler->Update();
@@ -5247,4 +5251,10 @@ void CGame::ReloadGame()
 	else {
 		logOutput.Print("Can only reload game when game has been started from a savegame");
 	}
+}
+
+void CGame::PushLayoutCommand(const std::string &cmd) {
+	GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
+
+	layoutCommands.push_back(cmd);
 }

@@ -1609,7 +1609,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		return true;
 	}
 	else if (action.command == "luaui") {
-		RunLayoutCommand(action.extra);
+		game->PushLayoutCommand(action.extra);
 		return true;
 	}
 	else if (action.command == "invqueuekey") {
