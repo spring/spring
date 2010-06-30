@@ -50,15 +50,25 @@ private:
 		bool operator==(const UAD& u) const { return unit == u.unit && data == u.data && status == u.status; }
 		bool operator<(const UAD& u) const { return unit < u.unit || (unit == u.unit && (data < u.data || (data == u.data && status < u.status))); }
 	};
+public:
+	struct UD {
+		const CUnit* unit;
+		int data;
 
+		UD(const CUnit* u): unit(u), data(0) {}
+		UD(const CUnit* u, int d): unit(u), data(d) {}
+		bool operator==(const UD& u) const { return unit == u.unit; }
+		bool operator<(const UD& u) const { return unit < u.unit; }
+	};
+private:
 	struct UnitCreatedDestroyedEvent {
-		static void Add(const CUnit*);
-		static void Remove(const CUnit*);
-		static void Delete(const CUnit*) { }
+		static void Add(const UD&);
+		static void Remove(const UD&);
+		static void Delete(const UD&) { }
 	};
 
 	struct UnitCloakStateChangedEvent {
-		static void Add(const UAD&p);
+		static void Add(const UAD&);
 		static void Remove(const UAD&) { }
 		static void Delete(const UAD&) { }
 	};
@@ -69,7 +79,7 @@ private:
 		static void Delete(const UAD&) { }
 	};
 
-	typedef ThreadListRender<std::set<const CUnit*>, std::set<const CUnit*>, const CUnit*, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
+	typedef ThreadListRender<std::set<UAD>, std::set<UD>, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
 	typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
 	typedef ThreadListRender<std::set<UAD>, std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
 

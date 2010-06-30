@@ -60,7 +60,7 @@ public:
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void RenderUnitCreated(const CUnit*);
+	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 
 	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);

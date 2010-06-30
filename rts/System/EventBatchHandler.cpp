@@ -21,8 +21,8 @@ void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Remove(const CP
 void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
 #endif
 
-void EventBatchHandler::UnitCreatedDestroyedEvent::Add(const CUnit* u) { eventHandler.RenderUnitCreated(u); }
-void EventBatchHandler::UnitCreatedDestroyedEvent::Remove(const CUnit* u) { eventHandler.RenderUnitDestroyed(u); }
+void EventBatchHandler::UnitCreatedDestroyedEvent::Add(const UD& u) { eventHandler.RenderUnitCreated(u.unit, u.data); }
+void EventBatchHandler::UnitCreatedDestroyedEvent::Remove(const UD& u) { eventHandler.RenderUnitDestroyed(u.unit); }
 void EventBatchHandler::UnitCloakStateChangedEvent::Add(const UAD& u) { if(!u.unit->isDead) eventHandler.RenderUnitCloakChanged(u.unit, u.data); }
 void EventBatchHandler::UnitLOSStateChangedEvent::Add(const UAD& u) { if(!u.unit->isDead) eventHandler.RenderUnitLOSChanged(u.unit, u.data, u.status); }
 
