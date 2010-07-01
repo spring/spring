@@ -66,6 +66,19 @@
 /clock    [0|1]
 /fps      [0|1]
 /endgraph [0|1]
+/speed         [0|1]
+/teamhighlight [0|1]
+/speedcontrol  [-2|-1|0|1|2]  -- max (ignore votes), average (ignore votes), none/default, average, max 
+                              -- votes for server algorithm that controls game speed based on player CPU
+
+/mtinfo                      [0|1] -- these commands are for the multithreaded version only
+/multithread                 [0|1]
+/multithreadsim              [0|1]
+/multithreaddraw             [0|1]
+/multithreaddrawunit         [0|1]
+/multithreaddrawunitshadow   [0|1]
+/multithreaddrawground       [0|1]
+/multithreaddrawgroundshadow [0|1]
 
 /setf <name> <float value>		-- Set a config variable (.springrc linux, Registry windows)
 /seti <name> <integer value>
