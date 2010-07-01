@@ -28,14 +28,7 @@ static unsigned int parse_int32(unsigned char c[4])
 
 static bool gz_really_read(gzFile file, voidp buf, unsigned len)
 {
-	unsigned offset = 0;
-
-	while (true) {
-		int i = gzread(file, ((char *)buf)+offset, len-offset);
-		if (i == -1) return false;
-		offset += i;
-		if (offset == len) return true;
-	}
+	return gzread(file, (char *)buf, len) == len;
 }
 
 CArchivePool::CArchivePool(const std::string& name):
@@ -135,23 +128,16 @@ bool CArchivePool::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer
 	if (in == NULL)
 		return false;
 
-	buffer.resize(f->size);
+	unsigned int len = f->size;
+	buffer.resize(len);
 
-	int j, i = 0;
-	while (true)
-	{
-		j = gzread(in, &buffer[i], buffer.size() - i);
-		if (j == 0)
-			break;
-		else if (j == -1)
-		{
-			gzclose(in);
-			buffer.clear();
-			return false;
-		}
-		i += j;
+	int bytesread = gzread(in, (char *)&buffer[0], len);
+	gzclose(in);
+
+	if(bytesread != len) {
+		buffer.clear();
+		return false;
 	}
 
-	gzclose(in);
 	return true;
 }
