@@ -285,7 +285,7 @@ void CFarTextureHandler::Draw()
 	}
 
 	//! create new faricons
-	for (std::vector<const CSolidObject*>::const_iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
+	for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
 		const CSolidObject& obj = **it;
 		if (cache.size()<=obj.team || cache[obj.team].size()<=obj.model->id || !cache[obj.team][obj.model->id]) {
 			CreateFarTexture(*it);
@@ -308,7 +308,7 @@ void CFarTextureHandler::Draw()
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(queuedForRender.size() * 4, 0, VA_SIZE_T);
-	for (std::vector<const CSolidObject*>::const_iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
+	for (GML_VECTOR<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
 		DrawFarTexture(*it, va);
 	}
 
