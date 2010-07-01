@@ -131,7 +131,7 @@ bool CArchivePool::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer
 	unsigned int len = f->size;
 	buffer.resize(len);
 
-	int bytesread = gzread(in, (char *)&buffer[0], len);
+	int bytesread = (len == 0) ? 0 : gzread(in, (char *)&buffer[0], len);
 	gzclose(in);
 
 	if(bytesread != len) {
