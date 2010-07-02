@@ -145,13 +145,16 @@ static const char* GetFTError(FT_Error e)
 class CFontTextureRenderer
 {
 public:
-	CFontTextureRenderer(int _outlinewidth, int _outlineweight) :
+	CFontTextureRenderer(int _outlinewidth, int _outlineweight)
+		: texWidth(0), texHeight(0),
 		outlinewidth(_outlinewidth), outlineweight(_outlineweight),
-		atlas(NULL), cur(NULL),
-		curX(0), curY(0), curHeight(0),
+		atlas(NULL),
+		cur(NULL),
+		curX(0), curY(0),
+		curHeight(0),
 		numGlyphs(0),
-		texWidth(0), texHeight(0),
-		maxGlyphWidth(0), maxGlyphHeight(0), numPixels(0)
+		maxGlyphWidth(0), maxGlyphHeight(0),
+		numPixels(0)
 	{
 	};
 
