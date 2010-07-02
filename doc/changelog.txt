@@ -93,7 +93,7 @@ Lua:
    - lobCon.DoneConnecting(bool sucess, string error_message)
    - lobCon.ServerGreeting(string server_version, string spring_version, int udp_port, int mode)
    - lobCon.RegisterDenied(string reason)
-   - lobCon.RegisterAccept()
+   - lobCon.RegisterAccepted()
    - lobCon.LoginDenied(string reason)
    - lobCon.LoginEnd()
    - lobCon.Aggreement(string text)
