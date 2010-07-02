@@ -1070,8 +1070,7 @@ int SpringApp::Run(int argc, char *argv[])
 	while(!gmlProcessor->PumpAux())
 		boost::thread::yield();
 	#endif
-	if(gmlProcessor)
-		delete gmlProcessor;
+	delete gmlProcessor;
 #endif
 
 	CrashHandler::UninstallHangHandler();

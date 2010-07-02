@@ -322,13 +322,14 @@ const CKeyBindings::ActionList&
 		SNPRINTF(buf, sizeof(buf), "GetAction: %s (0x%03X)",
 		         ks.GetString(false).c_str(), ks.Key());
 		if (alPtr == &empty) {
-			strncat(buf, "  EMPTY", sizeof(buf));
+			// Note: strncat: 3rd param: maximum number of characters to append
+			STRNCAT(buf, "  EMPTY", sizeof(buf) - strlen(buf) - 1);
 			logOutput.Print("%s", buf);
 		}
 		else {
 			logOutput.Print("%s", buf);
 			const ActionList& al = *alPtr;
-			for (int i = 0; i < (int)al.size(); ++i) {
+			for (size_t i = 0; i < al.size(); ++i) {
 				SNPRINTF(buf, sizeof(buf), "  %s  \"%s\"",
 				         al[i].command.c_str(), al[i].rawline.c_str());
 				logOutput.Print("%s", buf);

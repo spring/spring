@@ -31,9 +31,23 @@ const int CMDPARAM_MOVE_Z = 2;
 CSelectedUnitsAI selectedUnitsAI;
 
 CSelectedUnitsAI::CSelectedUnitsAI()
+	: centerPos(ZeroVector)
+	, rightPos(ZeroVector)
+	, sumLength(0)
+	, avgLength(0.0f)
+	, frontLength(0.0f)
+	, addSpace(0.0f)
+	, minCoor(ZeroVector)
+	, maxCoor(ZeroVector)
+	, centerCoor(ZeroVector)
+	, minMaxSpeed(0.0f)
+
+	, frontDir(ZeroVector)
+	, sideDir(ZeroVector)
+	, columnDist(64.0f)
+	, lineDist(64.0f)
+	, numColumns(0)
 {
-	columnDist = 64;
-	lineDist = 64;
 }
 
 

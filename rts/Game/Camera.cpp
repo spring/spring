@@ -20,12 +20,24 @@ CCamera* cam2;
 
 unsigned int CCamera::billboardList = 0;
 
-CCamera::CCamera() :
-	pos(2000.0f, 70.0f, 1800.0f),
-	rot(0.0f, 0.0f, 0.0f),
-	forward(1.0f, 0.0f, 0.0f),   posOffset(0.0f, 0.0f, 0.0f), tiltOffset(0.0f, 0.0f, 0.0f), lppScale(0.0f)
+CCamera::CCamera()
+	: pos(2000.0f, 70.0f, 1800.0f)
+	, rot(0.0f, 0.0f, 0.0f)
+	, forward(1.0f, 0.0f, 0.0f)
+	, posOffset(0.0f, 0.0f, 0.0f)
+	, tiltOffset(0.0f, 0.0f, 0.0f)
+	, lppScale(0.0f)
+	, fov(0.0f)
+	, halfFov(0.0f)
+	, tanHalfFov(0.0f)
 {
-	// stuff that wont change can be initialised here, it doesn't need to be reinitialised every update
+	viewport[0] = 0.0f;
+	viewport[1] = 0.0f;
+	viewport[2] = 0.0f;
+	viewport[3] = 0.0f;
+
+	// stuff that will not change can be initialised here,
+	// so it does not need to be reinitialised every update
 	viewMat[ 3] =  0.0f;
 	viewMat[ 7] =  0.0f;
 	viewMat[11] =  0.0f;
