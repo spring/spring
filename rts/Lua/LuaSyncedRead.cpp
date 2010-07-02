@@ -3017,7 +3017,7 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		lua_pushnumber(L,  weapon->numStockpiled);
 		return 5;
 	}
-	else if (key == "reloadState") {
+	else if (key == "reloadState" || key == "reloadFrame") {
 		lua_pushnumber(L, weapon->reloadStatus);
 	}
 	else if (key == "reloadTime") {

@@ -559,10 +559,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	const string soundFile = lua_tostring(L, 1);
 	const unsigned int soundID = sound->GetSoundId(soundFile, false);
 	if (soundID > 0) {
-		float volume = 1.0f;
-		if (args >= 2) {
-			volume = lua_tofloat(L, 2);
-		}
+		float volume = luaL_optfloat(L, 2, 1.0f);
 
 		if (args < 5) {
 			Channels::General.PlaySample(soundID, volume);
