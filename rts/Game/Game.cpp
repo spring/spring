@@ -1625,9 +1625,9 @@ bool CGame::ActionPressed(const Action& action,
 		logOutput.Print("Multithreaded unit shadow rendering is %s", unitDrawer->multiThreadDrawUnitShadow?"enabled":"disabled");
 	}
 	else if (cmd == "multithread" || cmd == "multithreaddraw" || cmd == "multithreadsim") {
+		const int mtenabled = gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
 		if (cmd == "multithread" || cmd == "multithreaddraw") {
 			if (action.extra.empty()) {
-				const int mtenabled = gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
 				gd->multiThreadDrawGround = !mtenabled;
 				unitDrawer->multiThreadDrawUnit = !mtenabled;
 				unitDrawer->multiThreadDrawUnitShadow = !mtenabled;
