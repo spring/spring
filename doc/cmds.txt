@@ -166,7 +166,6 @@
 /nosound
 /savegame
 /createvideo
-/updatefov
 /drawtrees
 /dynamicsky
 
