@@ -259,7 +259,7 @@ void Connection::DataReceived(const std::string& command, const std::string& msg
 	}
 	else if (command == "REGISTRATIONACCEPTED")
 	{
-		RegisterAccept();
+		RegisterAccepted();
 	}
 	else if (command == "ADDUSER")
 	{

@@ -395,7 +395,7 @@ void LuaLobby::RegisterDenied(const std::string& reason)
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
 }
 
-void LuaLobby::RegisterAccept()
+void LuaLobby::RegisterAccepted()
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
@@ -436,7 +436,7 @@ void LuaLobby::LoginEnd()
 	luaUI->RunCallInUnsynced(cmdStr, 0, 0);
 }
 
-void LuaLobby::Aggreement(const std::string text)
+void LuaLobby::Aggreement(const std::string& text)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
@@ -451,7 +451,7 @@ void LuaLobby::Aggreement(const std::string text)
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
 }
 
-void LuaLobby::Motd(const std::string text)
+void LuaLobby::Motd(const std::string& text)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);

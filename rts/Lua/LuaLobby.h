@@ -81,13 +81,13 @@ private: // call-ins
 	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode);
 
 	virtual void RegisterDenied(const std::string& reason);
-	virtual void RegisterAccept();
+	virtual void RegisterAccepted();
 
 	virtual void LoginDenied(const std::string& reason);
 	virtual void LoginEnd();
-	virtual void Aggreement(const std::string text);
+	virtual void Aggreement(const std::string& text);
 
-	virtual void Motd(const std::string text);
+	virtual void Motd(const std::string& text);
 	virtual void ServerMessage(const std::string& text);
 	virtual void ServerMessageBox(const std::string& text, const std::string& url);
 
