@@ -910,34 +910,33 @@ int SpringApp::Update()
 	int ret = 1;
 	if (activeController) {
 		CrashHandler::ClearDrawWDT();
-#if !defined(USE_GML) || !GML_ENABLE_SIM
-		if (!activeController->Update()) {
-			ret = 0;
-		} else {
-#else
-			if(gmlMultiThreadSim) {
-				if(!gs->frameNum) {
-
+#if defined(USE_GML) && GML_ENABLE_SIM
+			if (gmlMultiThreadSim) {
+				if (!gs->frameNum) {
 					GML_RECMUTEX_LOCK(sim); // Update
 
 					activeController->Update();
-					if(gs->frameNum)
-						gmlStartSim=1;
+					if (gs->frameNum) {
+						gmlStartSim = 1;
+					}
 				}
-			}
-			else {
-
+			} else {
 				GML_RECMUTEX_LOCK(sim); // Update
 
 				activeController->Update();
 			}
+#else
+		if (!activeController->Update()) {
+			ret = 0;
+		} else {
 #endif
 
 			globalRendering->drawFrame++;
 			if (globalRendering->drawFrame == 0) {
 				globalRendering->drawFrame++;
 			}
-			if(
+
+			if (
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
@@ -947,8 +946,7 @@ int SpringApp::Update()
 
 				ret = activeController->Draw();
 				lastRequiredDraw=gs->frameNum;
-			}
-			else {
+			} else {
 				ret = activeController->Draw();
 			}
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -961,8 +959,9 @@ int SpringApp::Update()
 	VSync.Delay();
 	SDL_GL_SwapBuffers();
 
-	if (FSAA)
+	if (FSAA) {
 		glDisable(GL_MULTISAMPLE_ARB);
+	}
 
 	return ret;
 }
