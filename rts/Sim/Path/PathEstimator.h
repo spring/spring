@@ -132,9 +132,9 @@ private:
 			float currentCost;
 			int2 block;
 			int blocknr;
-			inline bool operator <  (const OpenBlock& ob) { return cost < ob.cost; }
-			inline bool operator >  (const OpenBlock& ob) { return cost > ob.cost; }
-			inline bool operator == (const OpenBlock& ob) { return blocknr == ob.blocknr; }
+			inline bool operator<  (const OpenBlock& ob) const { return cost < ob.cost; }
+			inline bool operator>  (const OpenBlock& ob) const { return cost > ob.cost; }
+			inline bool operator== (const OpenBlock& ob) const { return blocknr == ob.blocknr; }
 	};
 
 	struct lessCost: public std::binary_function<OpenBlock*, OpenBlock*, bool> {

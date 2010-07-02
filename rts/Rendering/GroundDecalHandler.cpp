@@ -1148,14 +1148,14 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 		++a;
 	}
 
-	BuildingDecalType* tt = new BuildingDecalType;
-	tt->name = lowerName;
 	const std::string fullName = "unittextures/" + lowerName;
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
 		throw content_error("Could not load building decal from file " + fullName);
 	}
 
+	BuildingDecalType* tt = new BuildingDecalType;
+	tt->name = lowerName;
 	tt->texture = bm.CreateTexture(true);
 
 //	GML_STDMUTEX_LOCK(decaltype); // GetBuildingDecalType

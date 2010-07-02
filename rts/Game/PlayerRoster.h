@@ -24,7 +24,7 @@ class PlayerRoster {
 		bool SetSortTypeByName(const std::string& type);
 		bool SetSortTypeByCode(SortType type);
 
-		SortType GetSortType();
+		SortType GetSortType() const;
 		const char* GetSortName();
 
 	private:
@@ -36,7 +36,7 @@ class PlayerRoster {
 };
 
 
-inline PlayerRoster::SortType PlayerRoster::GetSortType()
+inline PlayerRoster::SortType PlayerRoster::GetSortType() const
 {
 	return compareType;
 }

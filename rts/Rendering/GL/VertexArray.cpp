@@ -36,7 +36,7 @@ void CVertexArray::Initialize()
 	stripArrayPos=stripArray;
 }
 
-bool CVertexArray::IsReady()
+bool CVertexArray::IsReady() const
 {
 	return true;
 }

@@ -1930,8 +1930,8 @@ bool CGame::ActionPressed(const Action& action,
 			newFont = CglFont::LoadFont(action.extra, fontSize, outlineWidth, outlineWeight);
 			newSmallFont = CglFont::LoadFont(action.extra, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 		} catch (std::exception e) {
-			if (newFont) delete newFont;
-			if (newSmallFont) delete newSmallFont;
+			delete newFont;
+			delete newSmallFont;
 			newFont = newSmallFont = NULL;
 			logOutput.Print(string("font error: ") + e.what());
 		}

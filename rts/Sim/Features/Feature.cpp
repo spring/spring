@@ -71,9 +71,10 @@ CFeature::CFeature():
 	myFire(0),
 	fireTime(0),
 	emitSmokeTime(0),
-	solidOnTop(0)
+	solidOnTop(0),
+	tempalpha(1)
 {
-	immobile=true;
+	immobile = true;
 	physicalState = OnGround;
 }
 

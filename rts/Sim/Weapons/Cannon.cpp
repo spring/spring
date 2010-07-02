@@ -38,8 +38,12 @@ CCannon::CCannon(CUnit* owner)
 	lastDiff(0.f, 0.f, 0.f),
 	lastDir(0.f, -1.f, 0.f)
 {
-	highTrajectory=false;
+	highTrajectory = false;
 	rangeFactor = 1;
+	gravity = 0.0f;
+	selfExplode = false;
+	minPredict = 0.0f;
+	maxPredict = 0.0f;
 }
 
 void CCannon::Init(void)

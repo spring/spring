@@ -56,16 +56,15 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 CSimpleParticleSystem::CSimpleParticleSystem(void)
 :	CProjectile()
 {
-	checkCol=false;
-	useAirLos=true;
-	particles=0;
+	checkCol = false;
+	useAirLos = true;
+	particles = NULL;
 	emitMul = float3(1,1,1);
 }
 
 CSimpleParticleSystem::~CSimpleParticleSystem(void)
 {
-	if(particles)
-		delete [] particles;
+	delete[] particles;
 }
 
 void CSimpleParticleSystem::Draw()

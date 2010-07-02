@@ -29,7 +29,7 @@ void CVertexArrayRange::Initialize() {
 	glFinishFenceNV(fence);
 }
 
-bool CVertexArrayRange::IsReady() {
+bool CVertexArrayRange::IsReady() const {
 	return !!glTestFenceNV(fence);
 }
 

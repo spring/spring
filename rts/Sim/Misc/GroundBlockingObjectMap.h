@@ -36,7 +36,7 @@ public:
 	// same as GroundBlocked(), but does not bounds-check mapSquare
 	CSolidObject* GroundBlockedUnsafe(int mapSquare, bool topMost = true);
 
-	const BlockingMapCell& GetCell(int mapSquare) { return groundBlockingMap[mapSquare]; }
+	const BlockingMapCell& GetCell(int mapSquare) const { return groundBlockingMap[mapSquare]; }
 
 private:
 	BlockingMap groundBlockingMap;

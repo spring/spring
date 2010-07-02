@@ -60,7 +60,7 @@ CSolidObject::CSolidObject():
 	residualImpulse(0, 0, 0),
 	allyteam(0),
 	team(0),
-	mobility(0),
+	mobility(NULL),
 	midPos(pos),
 	curYardMap(0),
 	buildFacing(0)
@@ -69,11 +69,8 @@ CSolidObject::CSolidObject():
 }
 
 CSolidObject::~CSolidObject() {
-	if (mobility) {
-		delete mobility;
-	}
-
-	mobility = 0x0;
+	delete mobility;
+	mobility = NULL;
 	blocking = false;
 }
 

@@ -34,6 +34,8 @@ struct DirectControlClientState {
 		oldHeading = 0;
 		oldState   = 255;
 		oldDCpos   = ZeroVector;
+
+		playerControlledUnit = NULL;
 	}
 
 	void SendStateUpdate(bool*);
@@ -64,7 +66,7 @@ public:
 	void StartSpectating();
 	void GameFrame(int frameNum);
 
-	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
+	CPlayer& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
 
 	bool active;
 

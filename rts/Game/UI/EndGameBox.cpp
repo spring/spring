@@ -44,7 +44,7 @@ static string FloatToSmallString(float num,float mul=1){
 bool CEndGameBox::disabled = false;
 
 
-CEndGameBox::CEndGameBox(void)
+CEndGameBox::CEndGameBox(void) : moveBox(false)
 {
 	box.x1 = 0.14f;
 	box.y1 = 0.1f;

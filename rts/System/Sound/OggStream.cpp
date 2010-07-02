@@ -138,7 +138,7 @@ float COggStream::GetTotalTime()
 	return time;
 }
 
-const COggStream::TagVector& COggStream::VorbisTags()
+const COggStream::TagVector& COggStream::VorbisTags() const
 {
 	return vorbisTags;
 }

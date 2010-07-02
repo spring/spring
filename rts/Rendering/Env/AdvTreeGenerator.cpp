@@ -132,7 +132,7 @@ CAdvTreeGenerator::~CAdvTreeGenerator()
 	glDeleteLists(pineDL, 8);
 }
 
-void CAdvTreeGenerator::Draw()
+void CAdvTreeGenerator::Draw() const
 {
 }
 

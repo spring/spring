@@ -21,7 +21,7 @@ class CLineDrawer {
 		void UpdateLineStipple();
 		               
 		void StartPath(const float3& pos, const float* color);
-		void FinishPath();
+		void FinishPath() const;
 		void DrawLine(const float3& endPos, const float* color);
 		void DrawLineAndIcon(int cmdID, const float3& endPos, const float* color);
 		void DrawIconAtLastPos(int cmdID);
@@ -76,7 +76,7 @@ inline void CLineDrawer::Configure(bool ucr, bool urc,
 }
 
 
-inline void CLineDrawer::FinishPath()
+inline void CLineDrawer::FinishPath() const
 {
 	// noop, left for compatibility
 }

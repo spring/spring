@@ -17,6 +17,9 @@ CBaseSky* sky=0;
 CBaseSky::CBaseSky(void)
 {
 	wireframe = false;
+	dynamicSky = false;
+	cloudDensity = 0;
+	fogStart = 0;
 }
 
 CBaseSky::~CBaseSky(void)

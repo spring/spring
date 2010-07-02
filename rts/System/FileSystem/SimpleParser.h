@@ -15,7 +15,7 @@ public:
 
 	CSimpleParser(CFileHandler& fh);
 
-	int GetLineNumber();
+	int GetLineNumber() const;
 	std::string GetLine();
 	std::string GetCleanLine();
 

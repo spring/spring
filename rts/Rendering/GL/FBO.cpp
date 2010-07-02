@@ -264,7 +264,7 @@ FBO::~FBO()
 /**
  * Tests whether or not if we have a valid framebuffer
  */
-bool FBO::IsValid()
+bool FBO::IsValid() const
 {
 	return (fboId!=0 && valid);
 }

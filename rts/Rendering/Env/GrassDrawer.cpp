@@ -361,10 +361,8 @@ public:
 			if (grass->square != curSquare) {
 				grass->square = curSquare;
 
-				if (grass->va) {
-					delete grass->va;
-					grass->va = 0;
-				}
+				delete grass->va;
+				grass->va = NULL;
 			}
 
 			if (!grass->va) {

@@ -75,7 +75,7 @@ void CVerticalSync::SetFrames(int f)
 
 /******************************************************************************/
 
-void CVerticalSync::Delay()
+void CVerticalSync::Delay() const
 {
 #if !defined(WIN32) && !defined(__APPLE__)
 	if (frames > 0) {

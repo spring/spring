@@ -420,7 +420,7 @@ CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
 	return LOG_DEFAULT;
 }
 
-void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string message)
+void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& message)
 {
 	if (message.empty())
 		return;
@@ -440,7 +440,7 @@ void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string mess
 #endif
 }
 
-void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string message)
+void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string& message)
 {
 	if (message.empty())
 		return;

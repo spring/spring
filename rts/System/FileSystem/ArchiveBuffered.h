@@ -24,7 +24,7 @@ protected:
 	boost::mutex archiveLock; // neither 7zip nor zlib are threadsafe
 	struct FileBuffer
 	{
-		FileBuffer() : populated(false) {};
+		FileBuffer() : populated(false), exists(false) {};
 		bool populated; // cause a file may be 0 bytes big
 		bool exists;
 		std::vector<boost::uint8_t> data;

@@ -20,7 +20,6 @@ class LuaFBOs {
 
 		struct FBO;
 		const FBO* GetLuaFBO(lua_State* L, int index);
-		const void* GetMetatable() const { return metatable; }
 
 	public:
 		static bool PushEntries(lua_State* L);
@@ -41,7 +40,6 @@ class LuaFBOs {
 
 	private:
 		set<FBO*> fbos;
-		const void* metatable;
 
 	private: // helpers
 		static bool CreateMetatable(lua_State* L);

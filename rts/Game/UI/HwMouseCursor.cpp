@@ -409,6 +409,7 @@ CHwWinCursor::CHwWinCursor(void)
 	hotSpot= CMouseCursor::Center;
 	image_count = 0;
 	xmaxsize = ymaxsize = 0;
+	hotx = hoty = 0;
 }
 
 CHwWinCursor::~CHwWinCursor(void)

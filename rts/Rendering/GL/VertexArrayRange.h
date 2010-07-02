@@ -20,7 +20,7 @@ public:
 	virtual void DrawArrayT(int drawType,int stride=20);
 
 	virtual void EnlargeDrawArray();
-	virtual bool IsReady();
+	virtual bool IsReady() const;
 
   GLuint fence;
 };
