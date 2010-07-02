@@ -1456,12 +1456,11 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
 				const CUnit* hitUnit = NULL;
-				float  realLen = 0.0f;
 				bool   haveHit = false;
 				bool   visible = true;
 
 				if (srcUnit != NULL) {
-					realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
 
 					if (hitUnit != NULL) {
 						haveHit = true;

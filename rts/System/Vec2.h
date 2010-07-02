@@ -11,7 +11,7 @@ struct int2
 {
 	CR_DECLARE_STRUCT(int2);
 
-	int2() {};
+	int2() : x(0), y(0) {};
 	int2(const int nx, const int ny) : x(nx), y(ny) {};
 
 	int x;
@@ -22,7 +22,7 @@ struct float2
 {
 	CR_DECLARE_STRUCT(float2);
 
-	float2() {};
+	float2() : x(0.0f), y(0.0f) {};
 	float2(const float nx, const float ny) : x(nx), y(ny) {};
 
 	float x;
