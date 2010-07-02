@@ -531,7 +531,7 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 }
 
 
-const WeaponDef *CWeaponDefHandler::GetWeapon(const string weaponname2)
+const WeaponDef *CWeaponDefHandler::GetWeapon(const string& weaponname2)
 {
 	string weaponname(StringToLower(weaponname2));
 

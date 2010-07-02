@@ -185,8 +185,8 @@ void UDPConnection::InitConnection(boost::asio::ip::udp::endpoint address, boost
 
 UDPConnection::~UDPConnection()
 {
-	if (fragmentBuffer)
-		delete fragmentBuffer;
+	delete fragmentBuffer;
+	fragmentBuffer = NULL;
 	Flush(true);
 }
 

@@ -15,8 +15,9 @@ class CDemo
 {
 public:
 	CDemo();
+	virtual ~CDemo() {};
 
-	const DemoFileHeader& GetFileHeader() { return fileHeader; }
+	const DemoFileHeader& GetFileHeader() const { return fileHeader; }
 
 protected:
 	DemoFileHeader fileHeader;

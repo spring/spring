@@ -13,6 +13,7 @@
 COverviewController::COverviewController()
 {
 	enabled = false;
+	minimizeMinimap = false;
 }
 
 void COverviewController::KeyMove(float3 move)

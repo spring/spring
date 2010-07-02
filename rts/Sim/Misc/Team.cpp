@@ -258,9 +258,10 @@ void CTeam::StartposMessage(const float3& pos)
 	startPos = pos;
 }
 
-void CTeam::operator=(const TeamBase& base)
+CTeam& CTeam::operator=(const TeamBase& base)
 {
 	TeamBase::operator=(base);
+	return *this;
 }
 
 void CTeam::ResetFrameVariables()

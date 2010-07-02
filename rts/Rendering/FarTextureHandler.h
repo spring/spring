@@ -10,7 +10,6 @@
 #include "Rendering/GL/FBO.h"
 
 class CSolidObject;
-class float3;
 class CVertexArray;
 
 /**

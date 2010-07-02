@@ -106,7 +106,10 @@ SpringApp::SpringApp()
 	cmdline = 0;
 	screenWidth = screenHeight = 0;
 	FSAA = false;
-	lastRequiredDraw=0;
+	lastRequiredDraw = 0;
+	depthBufferBits = 24;
+	windowState = 0;
+	windowPosX = windowPosY = 0;
 }
 
 /**
@@ -114,8 +117,8 @@ SpringApp::SpringApp()
  */
 SpringApp::~SpringApp()
 {
-	if (cmdline) delete cmdline;
-	if (keys) delete[] keys;
+	delete cmdline;
+	delete[] keys;
 
 	creg::System::FreeClasses ();
 }
@@ -219,7 +222,7 @@ bool SpringApp::Initialize()
 	return true;
 }
 
-void SpringApp::SetProcessAffinity(int affinity) {
+void SpringApp::SetProcessAffinity(int affinity) const {
 #ifdef WIN32
 	if (affinity > 0) {
 		//! Get the available cores
@@ -1188,10 +1191,8 @@ void SpringApp::Shutdown()
 {
 	SaveWindowPosition();
 
-	if (pregame)
-		delete pregame;			//in case we exit during init
-	if (game)
-		delete game;
+	delete pregame;	//in case we exit during init
+	delete game;
 	delete gameSetup;
 	delete font;
 	delete smallFont;
@@ -1204,8 +1205,7 @@ void SpringApp::Shutdown()
 	SDL_Quit();
 	delete gs;
 	delete gu;
-	if(startsetup)
-		delete startsetup;
+	delete startsetup;
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif

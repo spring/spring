@@ -58,7 +58,7 @@ void CUnitTracker::Disable()
 }
 
 
-int CUnitTracker::GetMode()
+int CUnitTracker::GetMode() const
 {
 	return trackMode;
 }

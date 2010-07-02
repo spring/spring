@@ -18,7 +18,7 @@ void pfDealloc(void *p,size_t n);
 class CPathFinder : public IPath {
 public:
 	CPathFinder();
-	~CPathFinder();
+	virtual ~CPathFinder();
 
 #if !defined(USE_MMGR)
 	void* operator new(size_t size){return pfAlloc(size);};
@@ -151,9 +151,9 @@ private:
 		float currentCost;
 		int2 square;
 		int sqr;
-		inline bool operator< (const OpenSquare& os){return cost < os.cost;};
-		inline bool operator> (const OpenSquare& os){return cost > os.cost;};
-		inline bool operator==(const OpenSquare& os){return sqr == os.sqr;};
+		inline bool operator< (const OpenSquare& os) const {return cost < os.cost;};
+		inline bool operator> (const OpenSquare& os) const {return cost > os.cost;};
+		inline bool operator== (const OpenSquare& os) const {return sqr == os.sqr;};
 	};
 
 	struct lessCost : public std::binary_function<OpenSquare*, OpenSquare*, bool> {

@@ -109,6 +109,7 @@ CR_REG_METADATA(CWeapon,(
 CWeapon::CWeapon(CUnit* owner):
 	owner(owner),
 	weaponDef(0),
+	weaponNum(-1),
 	haveUserTarget(false),
 	areaOfEffect(1),
 	relWeaponPos(0,1,0),
@@ -128,6 +129,7 @@ CWeapon::CWeapon(CUnit* owner):
 	sprayAngle(0),
 	salvoDelay(0),
 	salvoSize(1),
+	projectilesPerShot(1),
 	nextSalvo(0),
 	salvoLeft(0),
 	salvoError(0,0,0),

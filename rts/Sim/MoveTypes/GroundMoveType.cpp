@@ -1702,7 +1702,6 @@ void CGroundMoveType::CreateLineTable(void)
 			float dz=to.z-start.z;
 			float xp=start.x;
 			float zp=start.z;
-			float xn,zn;
 
 			if(floor(start.x)==floor(to.x)){
 				if(dz>0)
@@ -1719,6 +1718,7 @@ void CGroundMoveType::CreateLineTable(void)
 					for(int a=-1;a>floor(to.x);--a)
 						lineTable[yt][xt].push_back(int2(a,0));
 			} else {
+				float xn,zn;
 				bool keepgoing=true;
 				while(keepgoing){
 					if(dx>0){

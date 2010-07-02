@@ -22,7 +22,7 @@ public:
 	DamageArray(const DamageArray& other);
 	~DamageArray();
 
-	void operator=(const DamageArray& other) {
+	DamageArray& operator=(const DamageArray& other) {
 		paralyzeDamageTime = other.paralyzeDamageTime;
 		impulseFactor = other.impulseFactor;
 		impulseBoost = other.impulseBoost;
@@ -30,6 +30,7 @@ public:
 		craterBoost = other.craterBoost;
 		numTypes = other.numTypes;
 		std::copy(other.damages, other.damages + numTypes, damages);
+		return *this;
 	}
 	float& operator[](int i) { return damages[i]; }
 	float operator[](int i) const { return damages[i]; }

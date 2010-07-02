@@ -9,6 +9,8 @@
 
 class IPath {
 public:
+	virtual ~IPath() {};
+
 	enum SearchResult {
 		Ok,
 		GoalOutOfRange,

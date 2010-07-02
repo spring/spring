@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <boost/utility.hpp> //! boost::noncopyable
 
 #include "TeamBase.h"
 #include "TeamStatistics.h"
@@ -14,15 +15,12 @@
 #include "ExternalAI/SkirmishAIKey.h"
 #include "Lua/LuaRulesParams.h"
 
-class CTeam : public TeamBase
+class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
 {
 	CR_DECLARE(CTeam);
 public:
 	CTeam();
 	~CTeam();
-private: //! cannot allow shallow copying of Teams, contains pointers
-	CTeam(const CTeam &team) {}
-	CTeam& operator=(const CTeam& team) { return *((CTeam*)NULL); }
 public:
 
 	/**
@@ -45,7 +43,7 @@ public:
 
 	void StartposMessage(const float3& pos);
 
-	void operator=(const TeamBase& base);
+	CTeam& operator=(const TeamBase& base);
 
 	std::string GetControllerName() const;
 

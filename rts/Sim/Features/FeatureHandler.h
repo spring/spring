@@ -38,7 +38,7 @@ public:
 	CFeature* GetFeature(int id);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
-	const FeatureDef* GetFeatureDef(const std::string name, const bool showError = true);
+	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true);
 	const FeatureDef* GetFeatureDefByID(int id);
 
 	void SetFeatureUpdateable(CFeature* feature);

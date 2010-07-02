@@ -109,7 +109,7 @@ public:
 	 */
 	static void Deallocate();
 
-	const std::map<std::string, std::string>& GetData();
+	const std::map<std::string, std::string>& GetData() const;
 
 	/**
 	 * @brief update

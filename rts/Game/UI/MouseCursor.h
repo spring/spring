@@ -41,7 +41,7 @@ class CMouseCursor {
 		};
 		struct FrameData {
 			FrameData(const ImageData& _image, float time)
-			: image(_image), length(time) {}
+			: image(_image), length(time), startTime(0.0f), endTime(0.0f) {}
 			ImageData image;
 			float length;
 			float startTime;

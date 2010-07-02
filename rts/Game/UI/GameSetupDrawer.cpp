@@ -43,10 +43,8 @@ void GameSetupDrawer::Enable()
 
 void GameSetupDrawer::Disable()
 {
-	if (instance) {
-		delete instance;
-		instance = NULL;
-	}
+	delete instance;
+	instance = NULL;
 }
 
 void GameSetupDrawer::StartCountdown(unsigned time)

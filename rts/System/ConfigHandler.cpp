@@ -346,7 +346,7 @@ void ConfigHandler::AppendLine(char* line) {
 
 	char* line_stripped = Strip(line, strchr(line, '\0'));
 
-	if (strlen(line_stripped) > 0) {
+	if (*line_stripped != '\0') {
 		// line is not empty
 		if (line_stripped[0] == '#') {
 			// a comment line
@@ -393,6 +393,6 @@ void ConfigHandler::Write(FILE* file)
 }
 
 
-const std::map<std::string, std::string> &ConfigHandler::GetData() {
+const std::map<std::string, std::string> &ConfigHandler::GetData() const {
 	return data;
 }

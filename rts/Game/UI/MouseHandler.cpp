@@ -62,7 +62,7 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
-: locked(false)
+: locked(false), activeButton(-1), wasLocked(false)
 {
 	lastx = 300;
 	lasty = 200;
