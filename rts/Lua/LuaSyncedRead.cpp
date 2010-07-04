@@ -3021,7 +3021,7 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		lua_pushnumber(L, weapon->reloadStatus);
 	}
 	else if (key == "reloadTime") {
-		lua_pushnumber(L, weapon->reloadTime / GAME_SPEED);
+		lua_pushnumber(L, (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED);
 	}
 	else if (key == "accuracy") {
 		lua_pushnumber(L, weapon->accuracy);
