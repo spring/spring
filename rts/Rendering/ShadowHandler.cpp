@@ -40,7 +40,6 @@ CShadowHandler::CShadowHandler(void)
 
 	drawShadows   = false;
 	inShadowPass  = false;
-	showShadowMap = false;
 	shadowTexture = 0;
 	drawTerrainShadow = true;
 
@@ -351,42 +350,6 @@ void CShadowHandler::CreateShadows(void)
 	//fb.Unbind();
 	//glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 }
-
-
-void CShadowHandler::DrawShadowTex(void)
-{
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
-	glColor3f(1,1,1);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D,shadowTexture);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	float3 verts[] = {
-		float3(0,0,1),
-		float3(0, 0.5f, 1),
-		float3(0.5f, 0.5f, 1.f),
-		float3(0.5f, 0, 1),
-	};
-
-	GLfloat texcoords[] = {
-		0.f, 0.f,
-		0.f, 1.f,
-		1.f, 1.f,
-		1.f, 0.f,
-	};
-
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-	glVertexPointer(3, GL_FLOAT, 0, verts);
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
 
 
 void CShadowHandler::CalcMinMaxView(void)

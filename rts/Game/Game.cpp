@@ -1762,9 +1762,6 @@ bool CGame::ActionPressed(const Action& action,
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
 		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 	}
-	else if (cmd == "showshadowmap") {
-		shadowHandler->showShadowMap = !shadowHandler->showShadowMap;
-	}
 	else if (cmd == "showstandard") {
 		gd->DisableExtraTexture();
 	}
@@ -2991,10 +2988,6 @@ bool CGame::DrawWorld()
 	glLoadIdentity();
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
-
-	if (shadowHandler->drawShadows && shadowHandler->showShadowMap) {
-		shadowHandler->DrawShadowTex();
-	}
 
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST );

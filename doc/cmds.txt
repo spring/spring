@@ -179,11 +179,11 @@
 /speedup
 /slowdown
 /controlunit
-/showshadowmap
 /showstandard
 /showelevation
 /showmetalmap
 /showpathmap
+/showheat
 /toggleradarandjammer
 /yardmap4
 /wiremap [0|1]
