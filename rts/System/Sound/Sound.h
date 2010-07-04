@@ -88,6 +88,8 @@ private:
 
 	boost::thread* soundThread;
 	boost::mutex soundMutex;
+
+	volatile bool soundThreadQuit;
 };
 
 #endif // _SOUND_H_
