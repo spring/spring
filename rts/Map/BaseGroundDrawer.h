@@ -4,7 +4,6 @@
 #define __BASE_GROUND_DRAWER_H__
 
 #include <vector>
-#include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/PBO.h"
 #include "float3.h"
