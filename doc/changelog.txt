@@ -23,7 +23,7 @@ Engine / General:
  - engine does not read `ScriptName' modoption anymore
  - engine does not deal with `StartMetal' and `StartEnergy' modoptions anymore
  - pathfinder debugging views can be rendered now when spectating (and not cheating)
- - tdf format not supported anymore for modinfo
+ - dropped modinfo.tdf support (only modinfo.lua is supported now)
  - clients now compare their path-cache CRCs and warn about differences instead of updating their running checksums with them
  - Spring's CPU affinity can now also be set on non-win32 platforms, use the SetCoreAffinity ~/.springrc parameter as a bitmask
 
@@ -74,6 +74,7 @@ Lua:
    callouts:
    - Script.CreateLobby() -> userdata lobCon
    - lobCon:Connect(string url, int port)
+   - lobCon:Disconnect()
    - lobCon:Login(string username, string password)
    - lobCon:Rename(string newname)
    - lobCon:ChangePass(string oldpassword, string newpassword)

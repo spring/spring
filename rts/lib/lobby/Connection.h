@@ -24,6 +24,7 @@ public:
 	~Connection();
 
 	void Connect(const std::string& server, int port);
+	void Disconnect();
 	virtual void DoneConnecting(bool succes, const std::string& err) {};
 	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode) {};
 

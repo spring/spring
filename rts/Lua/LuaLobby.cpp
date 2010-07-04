@@ -67,6 +67,7 @@ bool LuaLobby::CreateMetatable(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Poll);
 	REGISTER_LUA_CFUNC(Connect);
+	REGISTER_LUA_CFUNC(Disconnect);
 	REGISTER_LUA_CFUNC(Register);
 	REGISTER_LUA_CFUNC(Login);
 	REGISTER_LUA_CFUNC(ConfirmAggreement);
@@ -209,6 +210,13 @@ int LuaLobby::Connect(lua_State *L)
 	std::string host(luaL_checkstring(L, 2));
 	int port = luaL_checknumber(L, 3);
 	lob->Connect(host, port);
+	return 0;
+}
+
+int LuaLobby::Disconnect(lua_State *L)
+{
+	LuaLobby* lob = toLuaLobby(L, 1);
+	lob->Disconnect();
 	return 0;
 }
 
