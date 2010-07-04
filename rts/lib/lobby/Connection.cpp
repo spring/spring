@@ -26,6 +26,9 @@ Connection::Connection() : sock(netservice), timer(netservice)
 
 Connection::~Connection()
 {
+	if (sock.is_open()) {
+		SendData("EXIT\n");
+	}
 	sock.close();
 	netservice.poll();
 	netservice.reset();
@@ -54,6 +57,15 @@ void Connection::Connect(const std::string& server, int port)
 
 	ip::tcp::endpoint serverep(tempAddr, port);
 	sock.async_connect(serverep, boost::bind(&Connection::ConnectCallback, this, placeholders::error));
+}
+
+void Connection::Disconnect()
+{
+	if (sock.is_open()) {
+		SendData("EXIT\n");
+	}
+	sock.close();
+	Disconnected();
 }
 
 std::string MD5Base64(const std::string& plain)
@@ -502,7 +514,7 @@ void Connection::ReceiveCallback(const boost::system::error_code& error, size_t 
 			sock.close();
 			Disconnected();
 		}
-		else
+		else if (sock.is_open()) //! ignore error messages after connect was closed
 		{
 			NetworkError(error.message());
 		}

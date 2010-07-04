@@ -18,9 +18,6 @@ public:
 	static bool PushEntries(lua_State* L);
 	static bool CreateMetatable(lua_State* L);
 
-private:
-	//static set<LuaLobby*> lobbies;
-
 private: // metatable
 	static const void* metatable;
 
@@ -39,8 +36,10 @@ private:
 	static int CreateLobby(lua_State* L);
 
 private:
+	//! we are overloading them, so we need to redefine them to make them usable (c++ disallows overloading with class-inheritance)
 	using Connection::Poll;
 	using Connection::Connect;
+	using Connection::Disconnect;
 	using Connection::Register;
 	using Connection::Login;
 	using Connection::ConfirmAggreement;
@@ -60,6 +59,7 @@ private:
 private: // call-outs
 	static int Poll(lua_State *L);
 	static int Connect(lua_State *L);
+	static int Disconnect(lua_State *L);
 	static int Register(lua_State *L);
 	static int Login(lua_State *L);
 	static int ConfirmAggreement(lua_State *L);
