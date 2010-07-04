@@ -22,6 +22,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 #include "System/LogOutput.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 
@@ -191,6 +192,8 @@ bool CShadowHandler::InitDepthTarget()
 	}
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
+	float one[4] = {1.0f,1.0f,1.0f,1.0f};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -198,6 +201,8 @@ bool CShadowHandler::InitDepthTarget()
 	if (useColorTexture) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	} else {
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
@@ -221,7 +226,7 @@ void CShadowHandler::DrawShadowPasses(void)
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
 		glEnable(GL_CULL_FACE);
-	//	glCullFace(GL_FRONT);
+		glCullFace(GL_BACK);
 
 		if (drawTerrainShadow)
 			readmap->GetGroundDrawer()->DrawShadowPass();
@@ -260,6 +265,8 @@ void CShadowHandler::CreateShadows(void)
 	glShadeModel(GL_FLAT);
 	glColor4f(1, 1, 1, 1);
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
 
 	glViewport(0, 0, shadowMapSize, shadowMapSize);
 

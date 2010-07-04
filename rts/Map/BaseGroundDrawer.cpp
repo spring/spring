@@ -23,6 +23,7 @@
 #include "ConfigHandler.h"
 #include "FastMath.h"
 #include "myMath.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {

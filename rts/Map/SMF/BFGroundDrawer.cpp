@@ -1218,9 +1218,9 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	Shader::IProgramObject* po =
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
-	// glEnable(GL_CULL_FACE);
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
+	glFrontFace(GL_CW);
 
 	po->Enable();
 
@@ -1238,8 +1238,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	po->Disable();
 
+	glFrontFace(GL_CCW);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_CULL_FACE);
 }
 
 
