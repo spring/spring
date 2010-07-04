@@ -102,26 +102,12 @@ CGrassDrawer::CGrassDrawer()
 
 	{
 		CBitmap grassBladeTexBM;
-		std::vector<unsigned char> grassBladeTexMem;
-
-		int xsize = 0;
-		int ysize = 0;
-
-		if (grassBladeTexBM.Load(mapInfo->smf.grassBladeTexName)) {
-			// load the map-supplied blade-texture
-			xsize = grassBladeTexBM.xsize;
-			ysize = grassBladeTexBM.ysize;
-
-			grassBladeTexMem.resize(xsize * ysize * 4, 0);
-			memcpy(&grassBladeTexMem[0], &grassBladeTexBM.mem[0], grassBladeTexMem.size());
-		} else {
-			xsize = 256;
-			ysize =  64;
-
-			grassBladeTexMem.resize(xsize * ysize * 4, 0);
+		if (!grassBladeTexBM.Load(mapInfo->smf.grassBladeTexName)) {
+			//! map didn't defined a grasstex, so generate one
+			grassBladeTexBM.Alloc(256,64);
 
 			for (int a = 0; a < 16; ++a) {
-				CreateGrassBladeTex(&grassBladeTexMem[a * 16 * 4]);
+				CreateGrassBladeTex(&grassBladeTexBM.mem[a * 16 * 4]);
 			}
 		}
 
@@ -129,7 +115,7 @@ CGrassDrawer::CGrassDrawer()
 		glBindTexture(GL_TEXTURE_2D, grassBladeTex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &grassBladeTexMem[0]);
+		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, grassBladeTexBM.xsize, grassBladeTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &grassBladeTexBM.mem[0]);
 	}
 
 	CreateFarTex();
@@ -281,12 +267,12 @@ public:
 						float3 squarePos((xgbsx + 0.5f) * gSSsq, 0.0f, (ygbsy + 0.5f) * gSSsq);
 							squarePos.y = ground->GetHeight2(squarePos.x, squarePos.z);
 
-						if (!camera->InView(squarePos, gSSsq * 2.0f)) {
+						/*if (!camera->InView(squarePos, gSSsq * 2.0f)) { //the QuadField visibility check should be enough
 							// double the radius of the check, grass on the left of
 							// the screen gets prematurely clipped even at moderate
 							// zoom levels otherwise
 							continue;
-						}
+						}*/
 
 						const float sqdist = (camera->pos - squarePos).SqLength();
 
@@ -306,7 +292,7 @@ public:
 
 								glColor3f(col, col, col);
 
-								if (camera->InView(pos, turfSize * 0.7f)) {
+								//if (camera->InView(pos, turfSize * 0.7f)) { //the QuadField visibility check should be enough
 									glPushMatrix();
 									glTranslatef3(pos);
 									CGrassDrawer::NearGrassStruct* ng = &nearGrass[(ygbsy & 31) * 32 + (xgbsx & 31)];
@@ -320,7 +306,7 @@ public:
 									glRotatef(ng->rotation, 0.0f, 1.0f, 0.0f);
 									glCallList(gd->grassDL);
 									glPopMatrix();
-								}
+								//}
 							}
 						} else {
 							//! near but not close, save for later drawing
@@ -882,39 +868,12 @@ void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 	float3 col(0.59f+fRand(0.11f),0.81f+fRand(0.08f),0.57f+fRand(0.11f));
 	for(int y=0;y<64;++y){
 		for(int x=0;x<16;++x){
-			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f))*255);
-			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f))*255);
-			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f))*255);
+			buf[(y*256+x)*4+0]=(unsigned char) ((col.x*(0.4f+.6f*y/(64.0f)))*255);
+			buf[(y*256+x)*4+1]=(unsigned char) ((col.y*(0.4f+.6f*y/(64.0f)))*255);
+			buf[(y*256+x)*4+2]=(unsigned char) ((col.z*(0.4f+.6f*y/(64.0f)))*255);
 			buf[(y*256+x)*4+3]=1;
 		}
 	}
-	for(int y=0;y<64;++y){
-		for(int x=7;x<9;++x){
-			buf[(y*256+x)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f)-0.03f)*255);
-			buf[(y*256+x)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f)-0.03f)*255);
-			buf[(y*256+x)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f)-0.03f)*255);
-		}
-	}
-	for(int y=4;y<64;y+=4+(int)fRand(3)){
-		for(int a=0;a<7 && a+y<64;++a){
-			buf[((a+y)*256+a+9)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f)-0.03f)*255);
-			buf[((a+y)*256+a+9)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f)-0.03f)*255);
-			buf[((a+y)*256+a+9)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f)-0.03f)*255);
-
-			buf[((a+y)*256+6-a)*4+0]=(unsigned char) ((col.x+y*0.0005f+fRand(0.05f)-0.03f)*255);
-			buf[((a+y)*256+6-a)*4+1]=(unsigned char) ((col.y+y*0.0006f+fRand(0.05f)-0.03f)*255);
-			buf[((a+y)*256+6-a)*4+2]=(unsigned char) ((col.z+y*0.0004f+fRand(0.05f)-0.03f)*255);
-		}
-	}
-
-/*	for(int y=0;y<64;++y){
-		for(int x=0;x<16;++x){
-			buf[(y*256+x)*4+0]=255;
-			buf[(y*256+x)*4+1]=255;
-			buf[(y*256+x)*4+2]=255;
-			buf[(y*256+x)*4+3]=1;
-		}
-	}*/
 }
 
 void CGrassDrawer::CreateFarTex(void)
