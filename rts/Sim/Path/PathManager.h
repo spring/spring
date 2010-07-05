@@ -4,11 +4,12 @@
 #define PATHMANAGER_H
 
 #include <map>
-#include "IPath.h"
-#include "PathFinder.h"
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
 
+#include "IPath.h"
+
 class CSolidObject;
+class CPathFinder;
 class CPathEstimator;
 class CPathFinderDef;
 struct MoveData;
@@ -19,7 +20,7 @@ public:
 	CPathManager();
 	~CPathManager();
 
-	/*
+	/**
 	Generate a path from startPos to the target defined by either peDef or (goalPos, goalRadius).
 	If no complete path from startPos to the path target could be found, then a path getting as
 	"close" as possible to target is generated.
@@ -60,16 +61,16 @@ public:
 	);
 
 
-	/*
+	/**
 	Gives the next waypoint of the path.
-	Gives (-1,-1,-1) in case no new waypoint could be found.
+	Returns (-1,-1,-1) in case no new waypoint could be found.
 	Param:
 		pathId
 			The path-id returned by RequestPath.
 
 		callerPos
 			The current position of the user of the path.
-			This extra information is needed to keep the path connected to it's user.
+			This extra information is needed to keep the path connected to its user.
 
 		minDistance
 			Could be used to set a minimum required distance between callerPos and
@@ -106,7 +107,7 @@ public:
 	void GetDetailedPathSquares(unsigned pathId, std::vector<int2>& points) const;
 
 
-	/*
+	/**
 	Returns current estimated waypoints sorted by estimation levels
 	Param:
 		pathId
@@ -120,7 +121,7 @@ public:
 		std::vector<float3>& points, std::vector<int>& starts) const;
 
 
-	/*
+	/**
 	When a path are no longer used, please call this function to release it from memory.
 	Param:
 		pathId
@@ -129,7 +130,7 @@ public:
 	void DeletePath(unsigned int pathId);
 
 
-	/*
+	/**
 	Whenever there are any changes in the terrain (ex. explosions, new buildings, etc.)
 	this function need to be called to keep the estimator a jour.
 	Param:
@@ -142,11 +143,8 @@ public:
 	void TerrainChange(float3 upperCorner, float3 lowerCorner);
 	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 
-
-	/*
-	Shall be called every 1/30sec during runtime.
-	*/
 	void Update();
+	void UpdatePath(const CSolidObject*, unsigned int);
 
 
 
@@ -157,9 +155,7 @@ public:
 	bool GetHeatMappingEnabled();
 
 	void SetHeatOnSquare(int x, int y, int value, int ownerId);
-	void SetHeatOnPos(float3, int value, int ownerId);
-
-	const int GetHeatOnSquare(int x, int y) { return pf->GetHeatValue(x, y); };
+	const int GetHeatOnSquare(int x, int y);
 
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;
@@ -198,6 +194,6 @@ private:
 	unsigned int nextPathId;
 };
 
-extern CPathManager *pathManager;
+extern CPathManager* pathManager;
 
 #endif

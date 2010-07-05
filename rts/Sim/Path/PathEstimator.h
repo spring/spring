@@ -3,13 +3,12 @@
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
-#include "IPath.h"
-#include "PathFinder.h"
-#include "float3.h"
-#include "Sim/MoveTypes/MoveInfo.h"
 #include <string>
 #include <list>
-#include "PathCache.h"
+#include <queue>
+
+#include "IPath.h"
+#include "System/float3.h"
 
 #include <boost/thread/thread.hpp>
 #include <boost/detail/atomic_count.hpp>
@@ -17,9 +16,11 @@
 #include <boost/thread/barrier.hpp>
 #include <boost/cstdint.hpp>
 
+struct MoveData;
+class CPathFinder;
 class CPathEstimatorDef;
 class CPathFinderDef;
-
+class CPathCache;
 
 class CPathEstimator: public IPath
 {
@@ -47,8 +48,8 @@ public:
 
 #if !defined(USE_MMGR)
 	// note: thread-safety (see PathFinder.cpp)?
-	void* operator new(size_t size) { return pfAlloc(size); }
-	inline void operator delete(void* p, size_t size) { pfDealloc(p, size); }
+	void* operator new(size_t size);
+	void operator delete(void* p, size_t size);
 #endif
 
 
@@ -203,8 +204,7 @@ private:
 
 	boost::uint32_t pathChecksum; ///< currently crc from the zip
 
-	boost::barrier *pathBarrier;
-
+	boost::barrier* pathBarrier;
 	boost::detail::atomic_count offsetBlockNum, costBlockNum;
 
 	int lastOffsetMessage, lastCostMessage;

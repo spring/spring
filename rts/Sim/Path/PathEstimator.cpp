@@ -10,7 +10,11 @@
 
 #include "lib/minizip/zip.h"
 #include "mmgr.h"
-#include "Map/Ground.h"
+#include "PathCache.h"
+#include "PathFinder.h"
+#include "Map/ReadMap.h"
+#include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/FileSystem/ArchiveZip.h"
@@ -43,6 +47,11 @@ const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
 
 const std::string pathDir = "cache/paths/";
+
+#if !defined(USE_MMGR)
+void* CPathEstimator::operator new(size_t size) { return pfAlloc(size); }
+void CPathEstimator::operator delete(void* p, size_t size) { pfDealloc(p, size); }
+#endif
 
 /**
  * Constructor, loads precalculated data if it exists
