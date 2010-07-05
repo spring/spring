@@ -49,8 +49,8 @@ const int SQUARES_TO_UPDATE = 600;
 const std::string pathDir = "cache/paths/";
 
 #if !defined(USE_MMGR)
-void* CPathEstimator::operator new(size_t size) { return pfAlloc(size); }
-void CPathEstimator::operator delete(void* p, size_t size) { pfDealloc(p, size); }
+void* CPathEstimator::operator new(size_t size) { return ::PF_ALLOC(size); }
+void CPathEstimator::operator delete(void* p, size_t size) { ::PF_FREE(p, size); }
 #endif
 
 /**

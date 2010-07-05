@@ -24,22 +24,22 @@ const unsigned int CPathFinder::PATH_RESOLUTION = 2 * SQUARE_SIZE;
 
 
 
-void* pfAlloc(size_t n)
+void* PF_ALLOC(size_t n)
 {
 	char* ret = new char[n];
 	memset(ret, 0, n);
 	return ret;
 }
 
-void pfDealloc(void* p, size_t n)
+void PF_FREE(void* p, size_t n)
 {
 	delete[] ((char*)p);
 }
 
 
 #if !defined(USE_MMGR)
-void* CPathFinder::operator new(size_t size) { return ::pfAlloc(size); }
-void CPathFinder::operator delete(void* p, size_t size) { ::pfDealloc(p, size); }
+void* CPathFinder::operator new(size_t size) { return ::PF_ALLOC(size); }
+void CPathFinder::operator delete(void* p, size_t size) { ::PF_FREE(p, size); }
 #endif
 
 
