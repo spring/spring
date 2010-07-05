@@ -1,10 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+#include <cstring>
 #include <ostream>
 #include <deque>
-#include "mmgr.h"
 
+#include "mmgr.h"
 #include "PathFinder.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -17,22 +18,30 @@
 
 
 
-// Cost constants.
-const float PATHCOST_INFINITY = 10000000.0f;
+// constants
+const float CPathFinder::PATHCOST_INFINITY = 10000000.0f;
+const unsigned int CPathFinder::PATH_RESOLUTION = 2 * SQUARE_SIZE;
+
+
 
 void* pfAlloc(size_t n)
 {
-	char* ret=new char[n];
-	for(int a=0;a<n;++a)
-		ret[a]=0;
-
+	char* ret = new char[n];
+	memset(ret, 0, n);
 	return ret;
 }
 
-void pfDealloc(void *p,size_t n)
+void pfDealloc(void* p, size_t n)
 {
 	delete[] ((char*)p);
 }
+
+
+#if !defined(USE_MMGR)
+void* CPathFinder::operator new(size_t size) { return ::pfAlloc(size); }
+void CPathFinder::operator delete(void* p, size_t size) { ::pfDealloc(p, size); }
+#endif
+
 
 /**
  * Constructor.
@@ -473,7 +482,7 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
  */
 void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 	// Backtracking the path.
-	if(needPath) {
+	if (needPath) {
 		int2 square;
 		square.x = goalSquare % gs->mapx;
 		square.y = goalSquare / gs->mapx;
@@ -663,6 +672,10 @@ void CPathFinder::ResetSearch()
 }
 
 
+
+
+
+
 /////////////////
 // heat mapping
 
@@ -681,6 +694,19 @@ void CPathFinder::UpdateHeatMap()
 {
 	++heatMapOffset;
 }
+
+int CPathFinder::GetHeatMapIndex(int x, int y)
+{
+	assert(!heatmap.empty());
+
+	//! x & y are given in gs->mapi coords (:= gs->hmapi * 2)
+	x >>= 1;
+	y >>= 1;
+
+	return y * gs->hmapx + x;
+}
+
+
 
 
 ////////////////////

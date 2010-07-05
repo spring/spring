@@ -319,7 +319,7 @@ void CGroundMoveType::Update()
 					SetDeltaSpeed(wantReverse);
 				}
 
-				UpdateHeatMap();
+				pathManager->UpdatePath(owner, pathId);
 
 			} else {
 				SetMainHeading();
@@ -1161,27 +1161,6 @@ unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos, float
 }
 
 
-void CGroundMoveType::UpdateHeatMap()
-{
-	if (!pathId)
-		return;
-
-#ifndef USE_GML
-	static std::vector<int2> points;
-#else
-	std::vector<int2> points;
-#endif
-
-	pathManager->GetDetailedPathSquares(pathId, points);
-
-	float scale = 1.0f / points.size();
-	int i = points.size();
-	for (std::vector<int2>::iterator it = points.begin(); it != points.end(); ++it) {
-		pathManager->SetHeatOnSquare(it->x, it->y, (i--) * scale * owner->mobility->heatProduced, owner->id);
-	}
-}
-
-
 // Calculates an aproximation of the physical 2D-distance between given two objects.
 float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal)
 {
@@ -1340,7 +1319,7 @@ void CGroundMoveType::StartEngine() {
 
 		// activate "engine" only if a path was found
 		if (pathId) {
-			UpdateHeatMap();
+			pathManager->UpdatePath(owner, pathId);
 			etaFailures = 0;
 			owner->isMoving = true;
 			owner->script->StartMoving();

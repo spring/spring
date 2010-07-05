@@ -3,17 +3,21 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
-#include <cstdlib>
-#include "IPath.h"
-#include "Map/ReadMap.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include <queue>
 #include <list>
+#include <queue>
+#include <cstdlib>
 
-class CPathFinderDef;
+#include "IPath.h"
+
+
 
 void* pfAlloc(size_t n);
-void pfDealloc(void *p,size_t n);
+void pfDealloc(void* p, size_t n);
+
+
+
+struct MoveData;
+class CPathFinderDef;
 
 class CPathFinder : public IPath {
 public:
@@ -21,8 +25,8 @@ public:
 	virtual ~CPathFinder();
 
 #if !defined(USE_MMGR)
-	void* operator new(size_t size){return pfAlloc(size);};
-	inline void operator delete(void* p,size_t size){pfDealloc(p,size);};
+	void* operator new(size_t size);
+	void operator delete(void* p, size_t size);
 #endif
 
 	/**
@@ -69,8 +73,8 @@ public:
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
 	                     const CPathFinderDef& pfDef, Path& path, int ownerId = 0);
 
-	// Minimum distance between two waypoints.
-	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
+	static const float PATHCOST_INFINITY;
+	static const unsigned int PATH_RESOLUTION;
 
 	enum PATH_OPTIONS {
 		PATHOPT_RIGHT     =   1,      //-x
@@ -119,19 +123,9 @@ public:
 	}
 
 private:
-
-	int GetHeatMapIndex(int x, int y)
-	{
-		assert(!heatmap.empty());
-
-		//! x & y are given in gs->mapi coords (:= gs->hmapi * 2)
-		x >>= 1;
-		y >>= 1;
-
-		return y * gs->hmapx + x;
-	}
-
 	// Heat mapping
+	int GetHeatMapIndex(int x, int y);
+
 	struct HeatMapValue {
 		HeatMapValue(): value(0), ownerId(0) {}
 		int value;
