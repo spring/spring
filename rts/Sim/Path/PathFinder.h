@@ -11,8 +11,8 @@
 
 
 
-void* pfAlloc(size_t n);
-void pfDealloc(void* p, size_t n);
+void* PF_ALLOC(size_t n);
+void PF_FREE(void* p, size_t n);
 
 
 
