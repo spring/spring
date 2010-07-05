@@ -157,7 +157,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	toBeRemoved.push_back(unit);
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(EventBatchHandler::UD(unit));
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 }
 
 

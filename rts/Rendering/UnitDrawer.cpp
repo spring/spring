@@ -2259,6 +2259,11 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(u->model && TEX_TYPE(u) < 0)
+		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model->tex1, u->model->tex2);
+#endif
+
 	if (building && building->unitDef->useBuildingGroundDecal) {
 		groundDecals->AddBuilding(building);
 	}

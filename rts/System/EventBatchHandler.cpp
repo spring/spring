@@ -42,19 +42,17 @@ void EventBatchHandler::UpdateUnits() {
 }
 void EventBatchHandler::UpdateDrawUnits() {
 	GML_STDMUTEX_LOCK(runit); // UpdateDrawUnits
+
 	unitCreatedDestroyedEventBatch.execute();
 	unitCloakStateChangedEventBatch.execute();
 	unitLOSStateChangedEventBatch.execute();
 }
 void EventBatchHandler::DeleteSyncedUnits() {
-	unitCloakStateChangedEventBatch.delay();
-	unitCloakStateChangedEventBatch.execute();
+	unitCloakStateChangedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
 
-	unitLOSStateChangedEventBatch.delay();
-	unitLOSStateChangedEventBatch.execute();
+	unitLOSStateChangedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
 
-	unitCreatedDestroyedEventBatch.delay();
-	unitCreatedDestroyedEventBatch.execute();
+	unitCreatedDestroyedEventBatch.clean();
 	unitCreatedDestroyedEventBatch.destroy_synced();
 }
 
@@ -64,15 +62,14 @@ void EventBatchHandler::UpdateFeatures() {
 }
 void EventBatchHandler::UpdateDrawFeatures() {
 	GML_STDMUTEX_LOCK(rfeat); // UpdateDrawFeatures
+
 	featureCreatedDestroyedEventBatch.execute();
 	featureMovedEventBatch.execute();
 }
 void EventBatchHandler::DeleteSyncedFeatures() {
-	featureMovedEventBatch.delay();
-	featureMovedEventBatch.execute();
+	featureMovedEventBatch.clean(featureCreatedDestroyedEventBatch.to_destroy());
 
-	featureCreatedDestroyedEventBatch.delay();
-	featureCreatedDestroyedEventBatch.execute();
+	featureCreatedDestroyedEventBatch.clean();
 	featureCreatedDestroyedEventBatch.destroy();
 }
 
@@ -83,6 +80,7 @@ void EventBatchHandler::UpdateProjectiles() {
 }
 void EventBatchHandler::UpdateDrawProjectiles() {
 	GML_STDMUTEX_LOCK(rproj); // UpdateDrawProjectiles
+
 	syncedProjectileCreatedDestroyedEventBatch.add_delayed();
 	unsyncedProjectileCreatedDestroyedEventBatch.delete_delayed();
 	unsyncedProjectileCreatedDestroyedEventBatch.add_delayed();

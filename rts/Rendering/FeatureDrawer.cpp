@@ -83,6 +83,10 @@ CFeatureDrawer::~CFeatureDrawer()
 void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(f->model && TEX_TYPE(f) < 0)
+		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(f->model->tex1, f->model->tex2);
+#endif
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;

@@ -19,6 +19,7 @@ private:
 	};
 
 	typedef ThreadListRender<
+		const CProjectile*,
 		std::set<const CProjectile*>,
 		const CProjectile*,
 		ProjectileCreatedDestroyedEvent
@@ -32,6 +33,7 @@ private:
 	};
 
 	typedef ThreadListRender<
+		const CProjectile*,
 		std::set<const CProjectile*>,
 		const CProjectile*,
 		UnsyncedProjectileCreatedDestroyedEvent
@@ -45,6 +47,7 @@ private:
 
 		UAD(const CUnit* u, int d): unit(u), data(d), status(0) {}
 		UAD(const CUnit* u, int d, int s): unit(u), data(d), status(s) {}
+		bool operator==(const CUnit* u) const { return unit == u; }
 		bool operator==(const UAD& u) const { return unit == u.unit && data == u.data && status == u.status; }
 		bool operator<(const UAD& u) const { return unit < u.unit || (unit == u.unit && (data < u.data || (data == u.data && status < u.status))); }
 	};
@@ -77,9 +80,9 @@ private:
 		static void Delete(const UAD&) { }
 	};
 
-	typedef ThreadListRender<std::set<UD>, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
-	typedef ThreadListRender<std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
-	typedef ThreadListRender<std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
+	typedef ThreadListRender<const CUnit *, std::set<UD>, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
+	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
+	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
 
 	struct FeatureCreatedDestroyedEvent {
 		static void Add(const CFeature*);
@@ -94,11 +97,13 @@ private:
 	};
 
 	typedef ThreadListRender<
+		const CFeature*,
 		std::set<const CFeature*>,
 		const CFeature*,
 		FeatureCreatedDestroyedEvent
 	> FeatureCreatedDestroyedEventBatch;
 	typedef ThreadListRender<
+		const CFeature*,
 		std::set<const CFeature*>,
 		const CFeature*,
 		FeatureMovedEvent
