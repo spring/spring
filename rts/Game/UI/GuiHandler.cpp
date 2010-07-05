@@ -4276,10 +4276,13 @@ void CGuiHandler::RunLayoutCommands() {
 		GML_RECMUTEX_LOCK(sim); // Draw
 		GML_STDMUTEX_LOCK(laycmd); // Draw
 
-		for (std::vector<std::string>::iterator cit = layoutCommands.begin(); cit != layoutCommands.end(); ++cit) {
+		//! RunLayoutCommand can add new commands
+		//! and because it is never good to change the vector you are iterating over, we swap it with a new one
+		std::vector<std::string> layoutCmds;
+		layoutCmds.swap(layoutCommands);
+
+		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
 			RunLayoutCommand(*cit);
 		}
-
-		layoutCommands.clear();
 	}
 }
