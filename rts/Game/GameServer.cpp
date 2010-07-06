@@ -2044,32 +2044,35 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	// don't check for passwords when reading demos
-	if( !demoReader && errmsg == "" && !isLocal) {
+	if(errmsg == "" && !isLocal) {
 		std::string correctPasswd = "";
 		bool passwdFound = false;
-		if ( hisNewNumber < players.size() )  {
+		bool userFound = hisNewNumber < players.size();
+		if ( userFound )  {
 			// look for players password in the list from the start script only if he's not about to be added
 			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
 			passwdFound = (it != players[hisNewNumber].GetAllValues().end());
 			if (passwdFound) {
 				correctPasswd = it->second;
 			}
-		} else {
+		} else if (demoReader||allowAdditionalPlayers) {
 			// look for players password in the list received over the autohost management connection
 			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(players[hisNewNumber].name);
-			passwdFound = (pi != playerName_passwd.end());
+			userFound = passwdFound = (pi != playerName_passwd.end());
 			if (passwdFound) {
 				correctPasswd = pi->second;
 			}
 		}
-
-		if (passwdFound) {
-			if (passwd != correctPasswd) {
-				errmsg = "Incorrect password";
+		if (userFound) {
+			if (passwdFound) {
+				if (passwd != correctPasswd) {
+					errmsg = "Incorrect password";
+				}
+			} else {
+				errmsg = "No password set";
 			}
 		} else {
-			errmsg = "No password set";
+			errmsg = "Username not authorized to connect";
 		}
 	}
 
