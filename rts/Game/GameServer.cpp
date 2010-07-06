@@ -2056,7 +2056,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			}
 		} else if (demoReader||allowAdditionalPlayers) {
 			// look for players password in the list received over the autohost management connection
-			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(players[hisNewNumber].name);
+			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(name);
 			userFound = passwdFound = (pi != playerName_passwd.end());
 			if (passwdFound) {
 				correctPasswd = pi->second;
