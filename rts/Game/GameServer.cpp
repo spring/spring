@@ -147,6 +147,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	UpdateSpeedControl(--speedControl + 1);
 
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
+	whiteListAdditionalPlayers = configHandler->Get("whiteListAdditionalPlayers", true);
 
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(hostport));
@@ -2054,24 +2055,25 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			if (passwdFound) {
 				correctPasswd = it->second;
 			}
-		} else if (demoReader||allowAdditionalPlayers) {
+			if (passwdFound) {
+				if (passwd != correctPasswd) {
+					errmsg = "Incorrect password";
+				}
+			}
+		} else if ((demoReader||allowAdditionalPlayers)&&whiteListAdditionalPlayers) {
 			// look for players password in the list received over the autohost management connection
 			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(name);
 			userFound = passwdFound = (pi != playerName_passwd.end());
 			if (passwdFound) {
 				correctPasswd = pi->second;
 			}
-		}
-		if (userFound) {
-			if (passwdFound) {
+			if (userFound) {
 				if (passwd != correctPasswd) {
 					errmsg = "Incorrect password";
 				}
 			} else {
-				errmsg = "No password set";
+				errmsg = "Username not authorized to connect";
 			}
-		} else {
-			errmsg = "Username not authorized to connect";
 		}
 	}
 
