@@ -2075,8 +2075,12 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			}
 		}
 
-		if (passwdFound && (passwd != correctPasswd)) {
-			errmsg = "Incorrect password";
+		if (passwdFound) {
+			if (passwd != correctPasswd) {
+				errmsg = "Incorrect password";
+			}
+		} else {
+			errmsg = "No password set";
 		}
 	}
 
