@@ -1764,6 +1764,25 @@ void CGameServer::PushAction(const Action& action)
 		if (isPaused && !demoReader)
 			CreateNewFrame(true, true);
 	}
+	else if (action.command == "adduser")
+	{
+		if (!action.extra.empty())
+		{
+			// split string by whitespaces
+			std::vector<std::string> tokens;
+			std::stringstream iss(action.extra);
+			std::copy(std::istream_iterator<std::string>(iss),
+					std::istream_iterator<std::string>(),
+					std::back_inserter<std::vector<std::string> >(tokens));
+
+			if (tokens.size() > 1) {
+				std::string name = tokens[0];
+				std::string password = tokens[1];
+				//players[name].SetValue("Password", password);
+				playerName_passwd[name] = password;
+			}
+		}
+	}
 #ifdef DEDICATED // we already have a quit command in the client
 	else if (action.command == "kill")
 	{
@@ -2040,9 +2059,25 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	}
 
 	if(hisNewNumber < players.size() && errmsg == "" && !isLocal) {
+		std::string correctPasswd = "";
+
+		// look for players password in the list from the start script
 		GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
-		if (it != players[hisNewNumber].GetAllValues().end() && passwd != it->second)
+		bool passwdFound = (it != players[hisNewNumber].GetAllValues().end());
+		if (passwdFound) {
+			correctPasswd = it->second;
+		} else {
+			// look for players password in the list received over the autohost management connection
+			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(players[hisNewNumber].name);
+			passwdFound = (pi != playerName_passwd.end());
+			if (passwdFound) {
+				correctPasswd = pi->second;
+			}
+		}
+
+		if (passwdFound && (passwd != correctPasswd)) {
 			errmsg = "Incorrect password";
+		}
 	}
 
 	if(hisNewNumber >= players.size() || errmsg != "") {
