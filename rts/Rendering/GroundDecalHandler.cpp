@@ -1052,7 +1052,14 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 {
 	if (decalLevel == 0)
 		return;
+	if (!building->unitDef->useBuildingGroundDecal)
+		return;
 	if (building->unitDef->buildingDecalType < 0)
+		return;
+
+	GML_STDMUTEX_LOCK(decal); // AddBuilding
+
+	if (building->buildingDecal)
 		return;
 
 	int posx = int(building->pos.x / 8);
@@ -1081,8 +1088,6 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	decal->posx = posx - (decal->xsize / 2);
 	decal->posy = posy - (decal->ysize / 2);
 
-	GML_STDMUTEX_LOCK(decal); // AddBuilding
-
 	building->buildingDecal = decal;
 	buildingDecalTypes[building->unitDef->buildingDecalType]->buildingDecals.insert(decal);
 }
@@ -1090,6 +1095,9 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 
 void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::GhostBuilding* gb)
 {
+	if (!building->unitDef->useBuildingGroundDecal)
+		return;
+
 	GML_STDMUTEX_LOCK(decal); // RemoveBuilding
 
 	BuildingGroundDecal* decal = building->buildingDecal;
@@ -1110,24 +1118,20 @@ void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::Ghost
  */
 void CGroundDecalHandler::ForceRemoveBuilding(CBuilding* building)
 {
-	GML_STDMUTEX_LOCK(decal); // ForcedRemoveBuilding
-
-	if (!building || !building->buildingDecal)
+	if (!building)
+		return;
+	if (!building->unitDef->useBuildingGroundDecal)
 		return;
 
-	std::vector<BuildingDecalType*>& types = buildingDecalTypes;
-	std::vector<BuildingDecalType*>::iterator bdt;
+	GML_STDMUTEX_LOCK(decal); // ForcedRemoveBuilding
 
-	for (bdt = types.begin(); bdt != types.end(); ++bdt) {
-		std::set<BuildingGroundDecal*>& decals = (*bdt)->buildingDecals;
-		std::set<BuildingGroundDecal*>::iterator bgd = decals.find(building->buildingDecal);
-		if (bgd != decals.end()) {
-			BuildingGroundDecal* decal = *bgd;
-			decals.erase(bgd);
-			building->buildingDecal = NULL;
-			delete decal;
-		}
-	}
+	BuildingGroundDecal* decal = building->buildingDecal;
+	if (!decal)
+		return;
+
+	decal->owner = NULL;
+	decal->alpha = 0.0f;
+	building->buildingDecal = NULL;
 }
 
 

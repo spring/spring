@@ -390,8 +390,8 @@ public:
 			delete *it;
 		}
 		cont.clear();
-		delete_erased_synced();
 		delete_delayed();
+		delete_erased_synced();
 	}
 
 	void PostLoad() {
