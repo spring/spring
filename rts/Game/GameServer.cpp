@@ -48,6 +48,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
+#include "FileSystem/SimpleParser.h"
 #include "Player.h"
 #include "IVideoCapturing.h"
 #include "Server/GameParticipant.h"
@@ -1769,17 +1770,15 @@ void CGameServer::PushAction(const Action& action)
 		if (!action.extra.empty())
 		{
 			// split string by whitespaces
-			std::vector<std::string> tokens;
-			std::stringstream iss(action.extra);
-			std::copy(std::istream_iterator<std::string>(iss),
-					std::istream_iterator<std::string>(),
-					std::back_inserter<std::vector<std::string> >(tokens));
+			const std::vector<std::string> tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.size() > 1) {
 				std::string name = tokens[0];
 				std::string password = tokens[1];
-				//players[name].SetValue("Password", password);
 				playerName_passwd[name] = password;
+				logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+			} else {
+				logOutput.Print("Failed to add player/spectator password. usage: /aduser <player-name> <password>");
 			}
 		}
 	}
