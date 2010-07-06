@@ -2044,28 +2044,17 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	if (hisNewNumber >= players.size() && errmsg == "") {
-		if (demoReader || allowAdditionalPlayers) {
-			GameParticipant buf;
-			buf.isFromDemo = false;
-			buf.name = name;
-			buf.spectator = true;
-			buf.team = 0;
-			players.push_back(buf);
-		}
-		else {
-			errmsg = "User name not found in script";
-		}
-	}
-
-	if(hisNewNumber < players.size() && errmsg == "" && !isLocal) {
+	// don't check for passwords when reading demos
+	if( !demoReader && errmsg == "" && !isLocal) {
 		std::string correctPasswd = "";
-
-		// look for players password in the list from the start script
-		GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
-		bool passwdFound = (it != players[hisNewNumber].GetAllValues().end());
-		if (passwdFound) {
-			correctPasswd = it->second;
+		bool passwdFound = false;
+		if ( hisNewNumber < players.size() )  {
+			// look for players password in the list from the start script only if he's not about to be added
+			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
+			passwdFound = (it != players[hisNewNumber].GetAllValues().end());
+			if (passwdFound) {
+				correctPasswd = it->second;
+			}
 		} else {
 			// look for players password in the list received over the autohost management connection
 			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(players[hisNewNumber].name);
@@ -2083,6 +2072,21 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			errmsg = "No password set";
 		}
 	}
+
+	if (hisNewNumber >= players.size() && errmsg == "") {
+		if (demoReader || allowAdditionalPlayers) {
+			GameParticipant buf;
+			buf.isFromDemo = false;
+			buf.name = name;
+			buf.spectator = true;
+			buf.team = 0;
+			players.push_back(buf);
+		}
+		else {
+			errmsg = "User name not found in script";
+		}
+	}
+
 
 	if(hisNewNumber >= players.size() || errmsg != "") {
 		Message(str(format(" -> %s") %errmsg));
