@@ -156,6 +156,7 @@ private:
 	bool cheating;
 
 	std::vector<GameParticipant> players;
+	std::map<std::string, std::string> playerName_passwd;
 	size_t ReserveNextAvailableSkirmishAIId();
 	
 	std::map<size_t, GameSkirmishAI> ais;
