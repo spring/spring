@@ -363,16 +363,14 @@ void CUnit::ForcedMove(const float3& newPos)
 	}
 
 	CBuilding* building = dynamic_cast<CBuilding*>(this);
-	if (building) {
+	if (building)
 		groundDecals->RemoveBuilding(building, NULL);
-	}
 
 	pos = newPos;
 	UpdateMidPos();
 
-	if (building && unitDef->useBuildingGroundDecal) {
+	if (building)
 		groundDecals->AddBuilding(building);
-	}
 
 	if (blocking) {
 		Block();

@@ -2264,9 +2264,8 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model->tex1, u->model->tex2);
 #endif
 
-	if (building && building->unitDef->useBuildingGroundDecal) {
+	if (building)
 		groundDecals->AddBuilding(building);
-	}
 
 	if (u->model) {
 		if (cloaked) {
