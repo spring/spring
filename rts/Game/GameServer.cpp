@@ -2050,7 +2050,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		bool userFound = hisNewNumber < players.size();
 		if ( userFound )  {
 			// look for players password in the list from the start script only if he's not about to be added
-			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
+			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("password");
 			passwdFound = (it != players[hisNewNumber].GetAllValues().end());
 			if (passwdFound) {
 				correctPasswd = it->second;
