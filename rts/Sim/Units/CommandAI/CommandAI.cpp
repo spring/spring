@@ -347,11 +347,7 @@ static inline const CUnit* GetCommandUnit(const Command& c, int idx) {
 		return false;
 	}
 
-	const int unitID = int(c.params[idx]);
-	const CUnit* unit = (unitID >= 0 && unitID < uh->MaxUnits())?
-		uh->units[unitID]:
-		NULL;
-
+	const CUnit* unit = uh->GetUnit(c.params[idx]);
 	return unit;
 }
 
@@ -1175,12 +1171,14 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c,
 }
 
 
-int CCommandAI::UpdateTargetLostTimer(int unitid)
+int CCommandAI::UpdateTargetLostTimer(int unitID)
 {
 	if (targetLostTimer)
 		--targetLostTimer;
 
-	if (uh->units[unitid] && (uh->units[unitid]->losStatus[owner->allyteam] & LOS_INRADAR))
+	const CUnit* unit = uh->GetUnit(unitID);
+
+	if (unit && (unit->losStatus[owner->allyteam] & LOS_INRADAR))
 		targetLostTimer = TARGET_LOST_TIMER;
 
 	return targetLostTimer;
@@ -1211,11 +1209,9 @@ void CCommandAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			const unsigned int targetID = (unsigned int) c.params[0];
-			const bool legalTarget      = (targetID >= 0) && (targetID < uh->MaxUnits());
-			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
+			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
-			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
+			if (targetUnit != NULL && targetUnit != owner) {
 				owner->AttackUnit(targetUnit, c.id == CMD_DGUN);
 
 				if (orderTarget)
@@ -1349,13 +1345,14 @@ void CCommandAI::DrawCommands(void)
 	}
 
 	CCommandQueue::iterator ci;
-	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		switch(ci->id){
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		switch (ci->id) {
 			case CMD_ATTACK:
-			case CMD_DGUN:{
-				if(ci->params.size()==1){
-					const CUnit* unit = uh->units[int(ci->params[0])];
-					if((unit != NULL) && isTrackable(unit)) {
+			case CMD_DGUN: {
+				if (ci->params.size() == 1) {
+					const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+					if ((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
 							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
@@ -1395,15 +1392,13 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 	const int paramsCount = c.params.size();
 
 	if (paramsCount == 1) {
-		const unsigned int unitID = (unsigned int) c.params[0];
-		if (unitID < uh->MaxUnits()) {
-			const CUnit* unit = uh->units[unitID];
-			if((unit != NULL) && isTrackable(unit)) {
-				const float3 endPos =
-					helper->GetUnitErrorPos(unit, owner->allyteam);
-				lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-			}
+		const CUnit* unit = uh->GetUnit(c.params[0]);
+
+		if ((unit != NULL) && isTrackable(unit)) {
+			const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
+			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
 		}
+
 		return;
 	}
 
@@ -1627,11 +1622,12 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 
 	// erasing in the middle invalidates all iterators
 	for (CCommandQueue::iterator it = commandQue.begin(); it != commandQue.end(); ++it) {
-		const Command &c = *it;
+		const Command& c = *it;
+
 		if ((c.id == CMD_FIGHT || c.id == CMD_ATTACK) && c.params.size() == 1) {
-			int targetId = (int)c.params[0];
-			if (targetId < uh->MaxUnits() && uh->units[targetId]
-					&& uh->units[targetId]->allyteam == ally) {
+			const CUnit* target = uh->GetUnit(c.params[0]);
+
+			if (target && target->allyteam == ally) {
 				todel.push_back(it - commandQue.begin());
 			}
 		}
