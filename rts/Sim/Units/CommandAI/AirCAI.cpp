@@ -458,7 +458,7 @@ void CAirCAI::ExecuteFight(Command &c)
 	return;
 }
 
-void CAirCAI::ExecuteAttack(Command &c)
+void CAirCAI::ExecuteAttack(Command& c)
 {
 	assert(owner->unitDef->canAttack);
 	targetAge++;
@@ -499,11 +499,9 @@ void CAirCAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			const unsigned int targetID = (unsigned int) c.params[0];
-			const bool legalTarget      = (targetID < uh->MaxUnits());
-			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
+			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
-			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
+			if (targetUnit != NULL && targetUnit != owner) {
 				orderTarget = targetUnit;
 				owner->AttackUnit(orderTarget, false);
 				AddDeathDependence(orderTarget);
@@ -514,7 +512,7 @@ void CAirCAI::ExecuteAttack(Command &c)
 				return;
 			}
 		} else {
-			float3 pos(c.params[0], c.params[1], c.params[2]);
+			const float3 pos(c.params[0], c.params[1], c.params[2]);
 			owner->AttackGround(pos, false);
 			inCommand = true;
 		}
@@ -527,12 +525,15 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
 	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
-	if (targetDied){
+
+	if (targetDied) {
 		targetDied = false;
 		inCommand = false;
 	}
+
 	const float3 pos(c.params[0], c.params[1], c.params[2]);
 	const float radius = c.params[3];
+
 	if (inCommand) {
 		if (myPlane->aircraftState == AAirMoveType::AIRCRAFT_LANDED)
 			inCommand = false;
@@ -549,7 +550,8 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 			else if (owner->userAttackGround) {
 				// reset the attack position after each run
 				float3 attackPos = pos + (gs->randVector() * radius);
-				attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
+					attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
+
 				owner->AttackGround(attackPos, false);
 				owner->commandShotCount = 0;
 			}
@@ -559,17 +561,19 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 
 		if (myPlane->aircraftState != AAirMoveType::AIRCRAFT_LANDED) {
 			inCommand = true;
-			std::vector<int> eu;
-			helper->GetEnemyUnits(pos, radius, owner->allyteam, eu);
 
-			if (eu.empty()) {
+			std::vector<int> enemyUnitIDs;
+			helper->GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
+
+			if (enemyUnitIDs.empty()) {
 				float3 attackPos = pos + gs->randVector() * radius;
 				attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
 				owner->AttackGround(attackPos, false);
 			} else {
-				// the range of randFloat() is inclusive of 1.0f
-				int num = (int) (gs->randFloat() * (eu.size() - 1));
-				orderTarget = uh->units[eu[num]];
+				// note: the range of randFloat() is inclusive of 1.0f
+				const unsigned int idx(gs->randFloat() * (enemyUnitIDs.size() - 1));
+
+				orderTarget = uh->GetUnitUnsafe( enemyUnitIDs[idx] );
 				owner->AttackUnit(orderTarget, false);
 				AddDeathDependence(orderTarget);
 			}
@@ -577,30 +581,42 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 	}
 }
 
-void CAirCAI::ExecuteGuard(Command &c)
+void CAirCAI::ExecuteGuard(Command& c)
 {
 	assert(owner->unitDef->canGuard);
-	if (int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL
-			&& UpdateTargetLostTimer(int(c.params[0]))) {
-		CUnit* guarded = uh->units[int(c.params[0])];
-		if(owner->unitDef->canAttack && guarded->lastAttack + 40 < gs->frameNum
-				&& owner->maxRange > 0 && IsValidTarget(guarded->lastAttacker))
+
+	const CUnit* guardee = uh->GetUnit(c.params[0]);
+
+	if (guardee != NULL && UpdateTargetLostTimer(guardee->id)) {
+		if (owner->unitDef->canAttack && guardee->lastAttack + 40 < gs->frameNum
+				&& owner->maxRange > 0 && IsValidTarget(guardee->lastAttacker))
 		{
 			Command nc;
 			nc.id = CMD_ATTACK;
-			nc.params.push_back(guarded->lastAttacker->id);
+			nc.params.push_back(guardee->lastAttacker->id);
 			nc.options = c.options | INTERNAL_ORDER;
 			commandQue.push_front(nc);
 			SlowUpdate();
 			return;
 		} else {
 			Command c2;
-			c2.id = CMD_MOVE;
-			c2.options = c.options | INTERNAL_ORDER;
-			c2.params.push_back(guarded->pos.x);
-			c2.params.push_back(guarded->pos.y);
-			c2.params.push_back(guarded->pos.z);
-			c2.timeOut = gs->frameNum + 60;
+				c2.id = CMD_MOVE;
+				c2.options = c.options | INTERNAL_ORDER;
+				c2.timeOut = gs->frameNum + 60;
+
+			if (guardee->pos.IsInBounds()) {
+				c2.params.push_back(guardee->pos.x);
+				c2.params.push_back(guardee->pos.y);
+				c2.params.push_back(guardee->pos.z);
+			} else {
+				float3 clampedGuardeePos = guardee->pos;
+					clampedGuardeePos.CheckInBounds();
+
+				c2.params.push_back(clampedGuardeePos.x);
+				c2.params.push_back(clampedGuardeePos.y);
+				c2.params.push_back(clampedGuardeePos.z);
+			}
+
 			commandQue.push_front(c2);
 			return;
 		}
@@ -639,39 +655,40 @@ void CAirCAI::DrawCommands(void)
 	}
 
 	CCommandQueue::iterator ci;
-	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		switch(ci->id){
-			case CMD_MOVE:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		switch (ci->id) {
+			case CMD_MOVE: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
 				break;
 			}
-			case CMD_FIGHT:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_FIGHT: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
 				break;
 			}
-			case CMD_PATROL:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_PATROL: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
 				break;
 			}
-			case CMD_ATTACK:{
-				if(ci->params.size()==1){
-					const CUnit* unit = uh->units[int(ci->params[0])];
-					if((unit != NULL) && isTrackable(unit)) {
-						const float3 endPos =
-							helper->GetUnitErrorPos(unit, owner->allyteam);
+			case CMD_ATTACK: {
+				if (ci->params.size() == 1) {
+					const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+					if ((unit != NULL) && isTrackable(unit)) {
+						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
-					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}
 				break;
 			}
-			case CMD_AREA_ATTACK:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_AREA_ATTACK: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				lineDrawer.Break(endPos, cmdColors.attack);
 				glColor4fv(cmdColors.attack);
@@ -679,20 +696,20 @@ void CAirCAI::DrawCommands(void)
 				lineDrawer.RestartWithColor(cmdColors.attack);
 				break;
 			}
-			case CMD_GUARD:{
-				const CUnit* unit = uh->units[int(ci->params[0])];
-				if((unit != NULL) && isTrackable(unit)) {
-					const float3 endPos =
-						helper->GetUnitErrorPos(unit, owner->allyteam);
+			case CMD_GUARD: {
+				const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+				if ((unit != NULL) && isTrackable(unit)) {
+					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
 			}
-			case CMD_WAIT:{
+			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
 				break;
 			}
-			case CMD_SELFD:{
+			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}

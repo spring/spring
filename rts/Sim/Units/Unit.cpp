@@ -801,11 +801,12 @@ void CUnit::SlowUpdate()
 				helper->GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
 			}
 
-			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it)
-			{
-				float3 dif = pos - uh->units[*it]->pos;
+			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it) {
+				const CUnit* victim = uh->GetUnitUnsafe(*it);
+				const float3 dif = pos - victim->pos;
+
 				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
-					if (uh->units[*it]->speed.dot(dif) <= 0) {
+					if (victim->speed.dot(dif) <= 0) {
 						//! self destruct when we start moving away from the target, this should maximize the damage
 						KillUnit(true, false, NULL);
 						return;
