@@ -1851,7 +1851,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 }
 
-bool CUnit::AllowedReclaim (CUnit *builder)
+bool CUnit::AllowedReclaim(CUnit* builder) const
 {
 	// Don't allow the reclaim if the unit is finished and we arent allowed to reclaim it
 	if (!beingBuilt) {

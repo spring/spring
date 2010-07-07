@@ -337,15 +337,48 @@ bool CCommandAI::isAttackCapable() const
 }
 
 
-static inline bool isCommandInMap(const Command& c)
-{
-	if (c.params.size() >= 3 &&
-			(c.params[0] < 0.f || c.params[2] < 0.f
-			 || c.params[0] > gs->mapx*SQUARE_SIZE
-			 || c.params[2] > gs->mapy*SQUARE_SIZE))
+
+static inline bool IsAreaCommand(const Command& c) {
+	if (c.id == CMD_REPAIR || c.id == CMD_RECLAIM || c.id == CMD_CAPTURE || c.id == CMD_RESURRECT) {
+		return (c.params.size() == 4);
+	}
+
+	return false;
+}
+
+static inline const CUnit* GetCommandUnit(const Command& c, int idx) {
+	if (idx >= c.params.size()) {
+		return NULL;
+	}
+
+	if (IsAreaCommand(c)) {
 		return false;
+	}
+
+	const int unitID = int(c.params[idx]);
+	const CUnit* unit = (unitID >= 0 && unitID < uh->MaxUnits())?
+		uh->units[unitID]:
+		NULL;
+
+	return unit;
+}
+
+static inline bool IsCommandInMap(const Command& c)
+{
+	// TODO:
+	//   extend the check to commands for which
+	//   position is not stored in params[0..2]
+	//
+	// for the area variants of repair / reclaim / capture / resurrect,
+	// params[0..2] always holds the position and params[3] the radius
+	if (c.params.size() >= 3) {
+		return (float3(c.params[0], c.params[1], c.params[2]).IsInBounds());
+	}
+
 	return true;
 }
+
+
 
 bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 {
@@ -362,34 +395,46 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_FIGHT:
 		case CMD_DGUN:
 		case CMD_UNLOAD_UNIT:
-		case CMD_UNLOAD_UNITS:
-			if (!isCommandInMap(c)) { return false; }
-			break;
-		default:
+		case CMD_UNLOAD_UNITS: {
+			if (!IsCommandInMap(c)) { return false; }
+		} break;
+
+		default: {
 			// build commands
-			if (c.id < 0 && !isCommandInMap(c)) { return false; }
-			break;
+			if (c.id < 0 && !IsCommandInMap(c)) { return false; }
+		} break;
 	}
 
+
 	const UnitDef* ud = owner->unitDef;
-	int maxHeightDiff = SQUARE_SIZE;
 	// AI's may do as they like
-	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
-	const bool aiOrder = (saids.size() > 0);
+	const CSkirmishAIHandler::ids_t& saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
+	const bool aiOrder = (!saids.empty());
 
 	switch (c.id) {
 		case CMD_DGUN:
-			if (!owner->unitDef->canDGun)
+			if (!ud->canDGun)
 				return false;
+
 		case CMD_ATTACK: {
 			if (!isAttackCapable())
 				return false;
 
-			if (c.params.size() == 3) {
-				// check if attack ground is really attack ground
-				if (!aiOrder && !fromSynced &&
-					fabs(c.params[1] - ground->GetHeight2(c.params[0], c.params[2])) > maxHeightDiff) {
+			if (c.params.size() == 1) {
+				const CUnit* attackee = GetCommandUnit(c, 0);
+
+				if (attackee && !attackee->pos.IsInBounds()) {
 					return false;
+				}
+			} else {
+				if (c.params.size() == 3) {
+					const float3 cPos(c.params[0], c.params[1], c.params[2]);
+
+					// check if attack ground is really attack ground
+					if (!aiOrder && !fromSynced &&
+						fabs(cPos.y - ground->GetHeight2(cPos.x, cPos.z)) > SQUARE_SIZE) {
+						return false;
+					}
 				}
 			}
 			break;
@@ -397,38 +442,66 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 		case CMD_MOVE:      if (!ud->canmove)       return false; break;
 		case CMD_FIGHT:     if (!ud->canFight)      return false; break;
-		case CMD_GUARD:     if (!ud->canGuard)      return false; break;
-		case CMD_PATROL:    if (!ud->canPatrol)     return false; break;
-		case CMD_CAPTURE:   if (!ud->canCapture)    return false; break;
-		case CMD_RECLAIM:   if (!ud->canReclaim)    return false; break;
+		case CMD_GUARD: {
+			const CUnit* guardee = GetCommandUnit(c, 0);
+
+			if (!ud->canGuard) { return false; }
+			if (owner && !owner->pos.IsInBounds()) { return false; }
+			if (guardee && !guardee->pos.IsInBounds()) { return false; }
+		} break;
+
+		case CMD_PATROL: {
+			if (!ud->canPatrol) { return false; }
+		} break;
+
+		case CMD_CAPTURE: {
+			const CUnit* capturee = GetCommandUnit(c, 0);
+
+			if (!ud->canCapture) { return false; }
+			if (capturee && !capturee->pos.IsInBounds()) { return false; }
+		} break;
+
+		case CMD_RECLAIM: {
+			const CUnit* reclaimeeUnit = GetCommandUnit(c, 0);
+			const CFeature* reclaimeeFeature = NULL;
+
+			if (!ud->canReclaim) { return false; }
+			if (reclaimeeUnit && !reclaimeeUnit->unitDef->reclaimable) { return false; }
+			if (reclaimeeUnit && !reclaimeeUnit->AllowedReclaim(owner)) { return false; }
+			if (reclaimeeUnit && !reclaimeeUnit->pos.IsInBounds()) { return false; }
+
+			if (reclaimeeUnit == NULL && !IsAreaCommand(c)) {
+				const unsigned int reclaimeeFeatureID(c.params[0]);
+
+				if (!c.params.empty() && reclaimeeFeatureID >= uh->MaxUnits()) {
+					reclaimeeFeature = featureHandler->GetFeature(reclaimeeFeatureID - uh->MaxUnits());
+
+					if (reclaimeeFeature && !reclaimeeFeature->def->reclaimable) {
+						return false;
+					}
+				}
+			}
+		} break;
+
 		case CMD_RESTORE: {
-			if (!ud->canRestore || mapDamage->disabled) return false; break;
-		}
-		case CMD_RESURRECT: if (!ud->canResurrect)  return false; break;
+			if (!ud->canRestore || mapDamage->disabled) {
+				return false;
+			}
+		} break;
+
+		case CMD_RESURRECT: {
+			if (!ud->canResurrect) { return false; }
+		} break;
+
 		case CMD_REPAIR: {
-			if (!ud->canRepair && !ud->canAssist)   return false; break;
-		}
+			const CUnit* repairee = GetCommandUnit(c, 0);
+
+			if (!ud->canRepair && !ud->canAssist) { return false; }
+			if (repairee && !repairee->pos.IsInBounds()) { return false; }
+			if (repairee && ((repairee->beingBuilt && !ud->canAssist) || (!repairee->beingBuilt && !ud->canRepair))) { return false; }
+		} break;
 	}
 
-	if ((c.id == CMD_RECLAIM) && (c.params.size() == 1 || c.params.size() == 5)) {
-		const unsigned int unitID = (unsigned int) c.params[0];
-		if (unitID < uh->MaxUnits()) { // not a feature
-			CUnit* unit = uh->units[unitID];
-			if (unit && !unit->unitDef->reclaimable)
-				return false;
-			if (unit && !unit->AllowedReclaim(owner)) return false;
-		} else {
-			const CFeature* feature = featureHandler->GetFeature(unitID - uh->MaxUnits());
-			if (feature && !feature->def->reclaimable)
-				return false;
-		}
-	}
-
-	if ((c.id == CMD_REPAIR) && (c.params.size() == 1 || c.params.size() == 5)) {
-		CUnit* unit = uh->units[(int) c.params[0]];
-		if (unit && ((unit->beingBuilt && !ud->canAssist) || (!unit->beingBuilt && !ud->canRepair)))
-			return false;
-	}
 
 	if (c.id == CMD_FIRE_STATE
 			&& (c.params.empty() || !CanChangeFireState()))
