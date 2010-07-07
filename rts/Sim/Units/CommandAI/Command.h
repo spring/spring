@@ -103,6 +103,17 @@ public:
 		tag(0),
 		timeOut(INT_MAX) {}
 
+	bool IsAreaCommand() const {
+		if (id == CMD_REPAIR || id == CMD_RECLAIM || id == CMD_CAPTURE || id == CMD_RESURRECT) {
+			return (params.size() == 4);
+		}
+		if (id == CMD_AREA_ATTACK) {
+			return true;
+		}
+
+		return false;
+	}
+
 	/// CMD_xxx code  (custom codes can also be used)
 	int id;
 	/// option bits

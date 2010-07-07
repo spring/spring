@@ -338,20 +338,12 @@ bool CCommandAI::isAttackCapable() const
 
 
 
-static inline bool IsAreaCommand(const Command& c) {
-	if (c.id == CMD_REPAIR || c.id == CMD_RECLAIM || c.id == CMD_CAPTURE || c.id == CMD_RESURRECT) {
-		return (c.params.size() == 4);
-	}
-
-	return false;
-}
-
 static inline const CUnit* GetCommandUnit(const Command& c, int idx) {
 	if (idx >= c.params.size()) {
 		return NULL;
 	}
 
-	if (IsAreaCommand(c)) {
+	if (c.IsAreaCommand()) {
 		return false;
 	}
 
@@ -470,7 +462,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (reclaimeeUnit && !reclaimeeUnit->AllowedReclaim(owner)) { return false; }
 			if (reclaimeeUnit && !reclaimeeUnit->pos.IsInBounds()) { return false; }
 
-			if (reclaimeeUnit == NULL && !IsAreaCommand(c)) {
+			if (reclaimeeUnit == NULL && !c.IsAreaCommand()) {
 				const unsigned int reclaimeeFeatureID(c.params[0]);
 
 				if (!c.params.empty() && reclaimeeFeatureID >= uh->MaxUnits()) {
