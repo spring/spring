@@ -104,7 +104,13 @@ public:
 		timeOut(INT_MAX) {}
 
 	bool IsAreaCommand() const {
-		if (id == CMD_REPAIR || id == CMD_RECLAIM || id == CMD_CAPTURE || id == CMD_RESURRECT) {
+		if (id == CMD_REPAIR ||
+			id == CMD_RECLAIM ||
+			id == CMD_CAPTURE ||
+			id == CMD_RESURRECT ||
+			id == CMD_LOAD_UNITS ||
+			id == CMD_UNLOAD_UNITS) {
+			// params[0..2] always holds the position, params[3] the radius
 			return (params.size() == 4);
 		}
 		if (id == CMD_AREA_ATTACK) {
