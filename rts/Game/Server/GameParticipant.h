@@ -23,7 +23,7 @@ public:
 	void Connected(boost::shared_ptr<netcode::CConnection> link, bool local);
 	void Kill(const std::string& reason);
 
-	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
+	GameParticipant& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
 
 	enum State
 	{

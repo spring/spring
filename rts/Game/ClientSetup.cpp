@@ -7,6 +7,9 @@
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 #include "Util.h"
+#ifdef DEDICATED
+#include "Platform/errorhandler.h"
+#endif
 
 ClientSetup::ClientSetup() :
 		hostport(DEFAULT_HOST_PORT),
@@ -35,6 +38,11 @@ void ClientSetup::Init(const std::string& setup)
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
 		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
 	}
+#ifdef DEDICATED
+	if (!isHost) {
+		handleerror(NULL, "Error: Dedicated server needs to be host, but the start script does not have \"IsHost=1\".", "Start script error", MBF_OK|MBF_EXCL);
+	}
+#endif
 
 	std::string sourceport, autohostip, autohostport;
 	if (file.SGetValue(sourceport, "GAME\\SourcePort"))

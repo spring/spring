@@ -106,7 +106,10 @@ SpringApp::SpringApp()
 	cmdline = 0;
 	screenWidth = screenHeight = 0;
 	FSAA = false;
-	lastRequiredDraw=0;
+	lastRequiredDraw = 0;
+	depthBufferBits = 24;
+	windowState = 0;
+	windowPosX = windowPosY = 0;
 }
 
 /**
@@ -114,8 +117,8 @@ SpringApp::SpringApp()
  */
 SpringApp::~SpringApp()
 {
-	if (cmdline) delete cmdline;
-	if (keys) delete[] keys;
+	delete cmdline;
+	delete[] keys;
 
 	creg::System::FreeClasses ();
 }
@@ -219,7 +222,7 @@ bool SpringApp::Initialize()
 	return true;
 }
 
-void SpringApp::SetProcessAffinity(int affinity) {
+void SpringApp::SetProcessAffinity(int affinity) const {
 #ifdef WIN32
 	if (affinity > 0) {
 		//! Get the available cores
@@ -907,34 +910,33 @@ int SpringApp::Update()
 	int ret = 1;
 	if (activeController) {
 		CrashHandler::ClearDrawWDT();
-#if !defined(USE_GML) || !GML_ENABLE_SIM
-		if (!activeController->Update()) {
-			ret = 0;
-		} else {
-#else
-			if(gmlMultiThreadSim) {
-				if(!gs->frameNum) {
-
+#if defined(USE_GML) && GML_ENABLE_SIM
+			if (gmlMultiThreadSim) {
+				if (!gs->frameNum) {
 					GML_RECMUTEX_LOCK(sim); // Update
 
 					activeController->Update();
-					if(gs->frameNum)
-						gmlStartSim=1;
+					if (gs->frameNum) {
+						gmlStartSim = 1;
+					}
 				}
-			}
-			else {
-
+			} else {
 				GML_RECMUTEX_LOCK(sim); // Update
 
 				activeController->Update();
 			}
+#else
+		if (!activeController->Update()) {
+			ret = 0;
+		} else {
 #endif
 
 			globalRendering->drawFrame++;
 			if (globalRendering->drawFrame == 0) {
 				globalRendering->drawFrame++;
 			}
-			if(
+
+			if (
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
@@ -944,8 +946,7 @@ int SpringApp::Update()
 
 				ret = activeController->Draw();
 				lastRequiredDraw=gs->frameNum;
-			}
-			else {
+			} else {
 				ret = activeController->Draw();
 			}
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -958,8 +959,9 @@ int SpringApp::Update()
 	VSync.Delay();
 	SDL_GL_SwapBuffers();
 
-	if (FSAA)
+	if (FSAA) {
 		glDisable(GL_MULTISAMPLE_ARB);
+	}
 
 	return ret;
 }
@@ -1068,8 +1070,7 @@ int SpringApp::Run(int argc, char *argv[])
 	while(!gmlProcessor->PumpAux())
 		boost::thread::yield();
 	#endif
-	if(gmlProcessor)
-		delete gmlProcessor;
+	delete gmlProcessor;
 #endif
 
 	CrashHandler::UninstallHangHandler();
@@ -1188,10 +1189,8 @@ void SpringApp::Shutdown()
 {
 	SaveWindowPosition();
 
-	if (pregame)
-		delete pregame;			//in case we exit during init
-	if (game)
-		delete game;
+	delete pregame;	//in case we exit during init
+	delete game;
 	delete gameSetup;
 	delete font;
 	delete smallFont;
@@ -1204,8 +1203,7 @@ void SpringApp::Shutdown()
 	SDL_Quit();
 	delete gs;
 	delete gu;
-	if(startsetup)
-		delete startsetup;
+	delete startsetup;
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif
@@ -1248,7 +1246,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		}
 		case SDL_ACTIVEEVENT: {
 			CrashHandler::ClearDrawWDT(true);
-			if (event.active.state & SDL_APPACTIVE) {
+			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {
 				globalRendering->active = !!event.active.gain;
 				if (ISound::IsInitialized()) {
 					sound->Iconified(!event.active.gain);

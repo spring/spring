@@ -79,10 +79,8 @@ CFeatureHandler::~CFeatureHandler()
 		// unsavory, but better than a memleak
 		FeatureDef* fd = (FeatureDef*) (*fi)->def;
 
-		if (fd->collisionVolume) {
-			delete fd->collisionVolume;
-			fd->collisionVolume = 0;
-		}
+		delete fd->collisionVolume;
+		fd->collisionVolume = NULL;
 		delete *fi;
 	}
 
@@ -94,11 +92,8 @@ CFeatureHandler::~CFeatureHandler()
 
 		FeatureDef* fd = (FeatureDef*) fi->second;
 
-		if (fd->collisionVolume) {
-			delete fd->collisionVolume;
-			fd->collisionVolume = 0;
-		}
-
+		delete fd->collisionVolume;
+		fd->collisionVolume = NULL;
 		delete fi->second;
 		featureDefs.erase(fi);
 	}
@@ -199,12 +194,12 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 }
 
 
-const FeatureDef* CFeatureHandler::GetFeatureDef(const string mixedCase, const bool showError)
+const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showError)
 {
-	if (mixedCase.empty())
+	if (name.empty())
 		return NULL;
 
-	const string name = StringToLower(mixedCase);
+	StringToLowerInPlace(name);
 	map<string, const FeatureDef*>::iterator fi = featureDefs.find(name);
 
 	if (fi != featureDefs.end()) {

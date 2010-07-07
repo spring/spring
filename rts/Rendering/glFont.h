@@ -126,7 +126,7 @@ private:
 
 private:
 	struct colorcode {
-		colorcode() : resetColor(false) {};
+		colorcode() : resetColor(false),pos(0) {};
 		bool resetColor;
 		float4 color;
 		unsigned int pos;

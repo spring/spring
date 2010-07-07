@@ -190,7 +190,7 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 }
 
 
-PacketType CBaseNetProtocol::SendAttemptConnect(const std::string name, const std::string& passwd, const std::string version, bool reconnect)
+PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, bool reconnect)
 {
 	boost::uint16_t size = 7 + name.size() + passwd.size() + version.size();
 	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);

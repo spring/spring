@@ -18,7 +18,7 @@ public:
 	{
 		enabled = newState;
 	}
-	bool IsEnabled()
+	bool IsEnabled() const
 	{
 		return enabled;
 	}
@@ -27,7 +27,7 @@ public:
 	{
 		volume = newVolume;
 	}
-	float GetVolume()
+	float GetVolume() const
 	{
 		return volume;
 	}

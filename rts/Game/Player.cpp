@@ -57,9 +57,6 @@ CPlayer::CPlayer()
 	cpuUsage = 0;
 	ping     = 0;
 
-
-	dccs.playerControlledUnit = 0;
-
 	myControl.forward = 0;
 	myControl.back    = 0;
 	myControl.left    = 0;

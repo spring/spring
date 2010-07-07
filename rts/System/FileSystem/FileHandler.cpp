@@ -45,9 +45,7 @@ CFileHandler::~CFileHandler(void)
 {
 	GML_RECMUTEX_LOCK(file); // ~CFileHandler
 
-	if (ifs) {
-		delete ifs;
-	}
+	delete ifs;
 }
 
 

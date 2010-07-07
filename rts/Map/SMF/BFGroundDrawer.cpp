@@ -855,11 +855,9 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 			DrawWaterPlane(drawWaterReflection);
 		}
 
-		if (groundDecals) {
-			groundDecals->Draw();
-			projectileDrawer->DrawGroundFlashes();
-			glDepthMask(1);
-		}
+		groundDecals->Draw();
+		projectileDrawer->DrawGroundFlashes();
+		glDepthMask(1);
 	}
 
 //	sky->SetCloudShadow(1);
@@ -1220,9 +1218,9 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	Shader::IProgramObject* po =
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
-	// glEnable(GL_CULL_FACE);
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
+	glFrontFace(GL_CW);
 
 	po->Enable();
 
@@ -1240,8 +1238,8 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	po->Disable();
 
+	glFrontFace(GL_CCW);
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_CULL_FACE);
 }
 
 
@@ -1253,7 +1251,9 @@ inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigS
 		smfShaderGLSL->SetUniform1i(7, bigSquareX);
 		smfShaderGLSL->SetUniform1i(8, bigSquareY);
 	} else {
-		SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
+		if (!shadowHandler->drawShadows || DrawExtraTex()) {
+			SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
+		}
 
 		smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 		smfShaderCurrARB->SetUniform4f(11, -bigSquareX, -bigSquareY, 0, 0);

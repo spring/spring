@@ -22,10 +22,8 @@ void ProfileDrawer::Enable()
 
 void ProfileDrawer::Disable()
 {
-	if (instance) {
-		delete instance;
-		instance = NULL;
-	}
+	delete instance;
+	instance = NULL;
 }
 
 static const float start_x = 0.6f;

@@ -368,9 +368,9 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
 		const int t      = ai->second->GetTeamId();
 		const int allyT  = teamHandler->AllyTeam(t);
-		int myAttackerId = -1;
 		if (!teamHandler->Ally(allyT, destroyed.allyteam) &&
 				(ai->second->IsCheatEventsEnabled() || isUnitInLosOrRadarOfAllyTeam(destroyed, allyT))) {
+			int myAttackerId = -1;
 			if ((attacker != NULL) && teamHandler->Ally(allyT, attacker->allyteam)) {
 				myAttackerId = attackerId;
 			}

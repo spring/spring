@@ -235,7 +235,7 @@ void CScriptMoveType::Update()
 		owner->Block();
 	}
 
-	if (groundDecals && owner->unitDef->leaveTracks && leaveTracks &&
+	if (owner->unitDef->leaveTracks && leaveTracks &&
 	    (lastTrackUpdate < (gs->frameNum - 7)) &&
 	    ((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 		lastTrackUpdate = gs->frameNum;

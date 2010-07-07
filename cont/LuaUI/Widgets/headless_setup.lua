@@ -1,3 +1,7 @@
+if (Spring.GetConfigInt('Headless', 0) == 0) then
+   return false
+end
+
 function widget:GetInfo()
    return {
       name = "HeadlessSetup",

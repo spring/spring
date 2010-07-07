@@ -289,7 +289,6 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 	float dz=to.z-start.z;
 	float xp=start.x;
 	float zp=start.z;
-	float xn,zn;
 	float invQuadSize=1.0f/QUAD_SIZE;
 
 	if((floor(start.x*invQuadSize)==floor(to.x*invQuadSize)) && (floor(start.z*invQuadSize)==floor(to.z*invQuadSize))){
@@ -322,6 +321,7 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 				++dst;
 			}
 	} else {
+		float xn,zn;
 		bool keepgoing=true;
 		for(int i = 0; i < 1000 && keepgoing; i++){
 			*dst=((int(zp*invQuadSize))*numQuadsX+(int(xp*invQuadSize)));

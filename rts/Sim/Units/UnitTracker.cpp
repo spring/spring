@@ -58,7 +58,7 @@ void CUnitTracker::Disable()
 }
 
 
-int CUnitTracker::GetMode()
+int CUnitTracker::GetMode() const
 {
 	return trackMode;
 }
@@ -140,7 +140,7 @@ void CUnitTracker::CleanTrackGroup()
 	std::set<int>::iterator it = trackGroup.begin();
 
 	while (it != trackGroup.end()) {
-		if (uh->units[*it] != NULL) {
+		if (uh->GetUnitUnsafe(*it) != NULL) {
 			it++;
 			continue;
 		}
@@ -197,7 +197,7 @@ CUnit* CUnitTracker::GetTrackUnit()
 		return NULL;
 	}
 
-	return uh->units[trackUnit];
+	return uh->GetUnitUnsafe(trackUnit);
 }
 
 
@@ -206,7 +206,7 @@ float3 CUnitTracker::CalcAveragePos() const
 	float3 p(0,0,0);
 	std::set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
-		p += uh->units[*it]->drawPos;
+		p += uh->GetUnitUnsafe(*it)->drawPos;
 	}
 	p /= (float)trackGroup.size();
 	return p;
@@ -219,7 +219,8 @@ float3 CUnitTracker::CalcExtentsPos() const
 	float3 maxPos(-1e9f, -1e9f, -1e9f);
 	std::set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
-		const float3& p = uh->units[*it]->drawPos;
+		const float3& p = uh->GetUnitUnsafe(*it)->drawPos;
+
 		if (p.x < minPos.x) { minPos.x = p.x; }
 		if (p.y < minPos.y) { minPos.y = p.y; }
 		if (p.z < minPos.z) { minPos.z = p.z; }
@@ -246,9 +247,9 @@ void CUnitTracker::SetCam()
 		return;
 	}
 
-	if(lastFollowUnit!=0 && uh->units[lastFollowUnit]==0){
-		timeOut=1;
-		lastFollowUnit=0;
+	if (lastFollowUnit != 0 && uh->GetUnitUnsafe(lastFollowUnit) == 0) {
+		timeOut = 1;
+		lastFollowUnit = 0;
 	}
 
 	if(timeOut>0){

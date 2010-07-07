@@ -193,8 +193,8 @@ protected:
 	 */
 	void Output(const CLogSubsystem& subsystem, const std::string& str);
 
-	void ToStdout(const CLogSubsystem& subsystem, const std::string message);
-	void ToFile(const CLogSubsystem& subsystem, const std::string message);
+	void ToStdout(const CLogSubsystem& subsystem, const std::string& message);
+	void ToFile(const CLogSubsystem& subsystem, const std::string& message);
 
 private:
 	/**

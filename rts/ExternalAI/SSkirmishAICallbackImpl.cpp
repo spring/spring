@@ -2723,7 +2723,9 @@ EXPORT(int) skirmishAiCallback_UnitDef_getMaxThisUnit(int skirmishAIId, int unit
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_getDecoyDef(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->decoyDef->id;
+
+	const UnitDef* decoyDef = getUnitDefById(skirmishAIId, unitDefId)->decoyDef;
+	return (decoyDef == NULL) ? -1 : decoyDef->id;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isDontLand(int skirmishAIId, int unitDefId) {

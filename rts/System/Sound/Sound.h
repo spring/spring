@@ -35,6 +35,7 @@ public:
 	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	virtual void NewFrame();
 
+	/// @see ConfigHandler::ConfigNotifyCallback
 	virtual void ConfigNotify(const std::string& key, const std::string& value);
 	virtual void PitchAdjust(const float newPitch);
 
@@ -87,6 +88,8 @@ private:
 
 	boost::thread* soundThread;
 	boost::mutex soundMutex;
+
+	volatile bool soundThreadQuit;
 };
 
 #endif // _SOUND_H_

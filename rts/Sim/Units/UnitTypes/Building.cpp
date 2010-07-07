@@ -18,15 +18,11 @@ CR_REG_METADATA(CBuilding, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilding::CBuilding()
-: buildingDecal(0)
+CBuilding::CBuilding(): buildingDecal(0)
 {
-	immobile=true;
+	immobile = true;
 }
 
-CBuilding::~CBuilding()
-{
-}
 
 
 void CBuilding::Init(const CUnit* builder)

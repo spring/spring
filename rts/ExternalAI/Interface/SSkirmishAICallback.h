@@ -459,9 +459,6 @@ struct SSkirmishAICallback {
 	 */
 	float             (CALLING_CONV *UnitDef_getTurnInPlaceSpeedLimit)(int skirmishAIId, int unitDefId);
 
-// use UnitDef_MoveData_getMoveType instead
-//	int               (CALLING_CONV *UnitDef_getMoveType)(int skirmishAIId, int unitDefId);
-
 	bool              (CALLING_CONV *UnitDef_isUpright)(int skirmishAIId, int unitDefId);
 
 	bool              (CALLING_CONV *UnitDef_isCollide)(int skirmishAIId, int unitDefId);

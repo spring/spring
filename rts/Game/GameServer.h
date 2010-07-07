@@ -48,7 +48,7 @@ class GameTeam : public TeamBase
 public:
 	GameTeam() : active(false) {};
 	bool active;
-	void operator=(const TeamBase& base) { TeamBase::operator=(base); };
+	GameTeam& operator=(const TeamBase& base) { TeamBase::operator=(base); return *this; };
 };
 
 /**
@@ -156,6 +156,7 @@ private:
 	bool cheating;
 
 	std::vector<GameParticipant> players;
+	std::map<std::string, std::string> playerName_passwd;
 	size_t ReserveNextAvailableSkirmishAIId();
 	
 	std::map<size_t, GameSkirmishAI> ais;
@@ -183,6 +184,7 @@ private:
 	bool noHelperAIs;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
+	bool whiteListAdditionalPlayers;
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////

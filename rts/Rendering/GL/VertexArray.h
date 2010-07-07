@@ -69,9 +69,10 @@ public:
 	//! same as EndStrip, but without automated EnlargeStripArray
 	inline void EndStripQ();
 
-	bool IsReady();
-	inline unsigned int drawIndex() const;
 	void EndStrip();
+
+	bool IsReady() const;
+	inline unsigned int drawIndex() const;
 	inline void EnlargeArrays(const unsigned int vertexes, const unsigned int strips, const unsigned int stripsize=VA_SIZE_0);
 
 	float* drawArray;

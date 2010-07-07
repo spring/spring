@@ -231,29 +231,22 @@ inline bool CBuilderCAI::ObjInBuildRange(const CWorldObject* obj) const
 inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 {
 	if (owner->unitDef->canmove) {
-		return false; // unit can move
+		return false; // builder can move
 	}
 	if (((cmd.options & INTERNAL_ORDER) == 0) || (cmd.params.size() != 1)) {
 		return false; // not an internal object targetted command
 	}
 
-	const int id = (int)cmd.params[0];
-	CWorldObject* obj = NULL;
-	if (id < 0) {
-		return false;
-	}
-	else if (static_cast<unsigned int>(id) < uh->MaxUnits()) {
-		obj = uh->units[id];
-	}
-	else {
-		// features don't move, but maybe the unit was transported?
-		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
-		if (feature) {
-			obj = feature;
-		}
-	}
+	const int objID = cmd.params[0];
+	const CWorldObject* obj = uh->GetUnit(objID);
+
 	if (obj == NULL) {
-		return false;
+		// features don't move, but maybe the unit was transported?
+		obj = featureHandler->GetFeature(objID - uh->MaxUnits());
+
+		if (obj == NULL) {
+			return false;
+		}
 	}
 
 	switch (cmd.id) {

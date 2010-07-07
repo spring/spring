@@ -13,7 +13,7 @@ CArchiveBase::~CArchiveBase()
 {
 }
 
-std::string CArchiveBase::GetArchiveName()
+std::string CArchiveBase::GetArchiveName() const
 {
 	return archiveFile;
 }

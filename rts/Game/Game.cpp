@@ -203,6 +203,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
+	CR_MEMBER(showMTInfo),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
@@ -273,6 +274,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	showFPS   = !!configHandler->Get("ShowFPS",   0);
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
+	showMTInfo = !!configHandler->Get("ShowMTInfo", 1);
 
 	speedControl = configHandler->Get("SpeedControl", 0);
 
@@ -368,17 +370,18 @@ CGame::~CGame()
 	SafeDelete(sky);
 	SafeDelete(resourceBar);
 
-	SafeDelete(featureHandler);
 	SafeDelete(featureDrawer);
-	SafeDelete(uh);
 	SafeDelete(unitDrawer);
 	SafeDelete(modelDrawer);
 	SafeDelete(projectileDrawer);
 	SafeDelete(geometricObjects);
+	SafeDelete(featureHandler);
+	SafeDelete(treeDrawer);
+	SafeDelete(uh);
 	SafeDelete(ph);
+	SafeDelete(groundDecals);
 	SafeDelete(minimap);
 	SafeDelete(pathManager);
-	SafeDelete(groundDecals);
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
 	SafeDelete(luaInputReceiver);
@@ -1574,13 +1577,6 @@ bool CGame::ActionPressed(const Action& action,
 			videoCapturing->StartCapturing();
 		}
 	}
-	else if (cmd == "updatefov") {
-		if (action.extra.empty()) {
-			gd->updateFov = !gd->updateFov;
-		} else {
-			gd->updateFov = !!atoi(action.extra.c_str());
-		}
-	}
 	else if (cmd == "drawtrees") {
 		if (action.extra.empty()) {
 			treeDrawer->drawTrees = !treeDrawer->drawTrees;
@@ -1629,7 +1625,7 @@ bool CGame::ActionPressed(const Action& action,
 		logOutput.Print("Multithreaded unit shadow rendering is %s", unitDrawer->multiThreadDrawUnitShadow?"enabled":"disabled");
 	}
 	else if (cmd == "multithread" || cmd == "multithreaddraw" || cmd == "multithreadsim") {
-		int mtenabled=gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
+		const int mtenabled = gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
 		if (cmd == "multithread" || cmd == "multithreaddraw") {
 			if (action.extra.empty()) {
 				gd->multiThreadDrawGround = !mtenabled;
@@ -1766,9 +1762,6 @@ bool CGame::ActionPressed(const Action& action,
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
 		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 	}
-	else if (cmd == "showshadowmap") {
-		shadowHandler->showShadowMap = !shadowHandler->showShadowMap;
-	}
 	else if (cmd == "showstandard") {
 		gd->DisableExtraTexture();
 	}
@@ -1880,6 +1873,22 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		configHandler->Set("ShowSpeed", showSpeed ? 1 : 0);
 	}
+	else if (cmd == "mtinfo") {
+		if (action.extra.empty()) {
+			showMTInfo = !showMTInfo;
+		} else {
+			showMTInfo = !!atoi(action.extra.c_str());
+		}
+		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
+	}
+	else if (cmd == "teamhighlight") {
+		if (action.extra.empty()) {
+			gc->teamHighlight = !gc->teamHighlight;
+		} else {
+			gc->teamHighlight = !!atoi(action.extra.c_str());
+		}
+		configHandler->Set("TeamHighlight", gc->teamHighlight ? 1 : 0);
+	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {
 			if (playerRoster.GetSortType() == PlayerRoster::Disabled) {
@@ -1918,8 +1927,8 @@ bool CGame::ActionPressed(const Action& action,
 			newFont = CglFont::LoadFont(action.extra, fontSize, outlineWidth, outlineWeight);
 			newSmallFont = CglFont::LoadFont(action.extra, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 		} catch (std::exception e) {
-			if (newFont) delete newFont;
-			if (newSmallFont) delete newSmallFont;
+			delete newFont;
+			delete newSmallFont;
 			newFont = newSmallFont = NULL;
 			logOutput.Print(string("font error: ") + e.what());
 		}
@@ -2047,10 +2056,7 @@ bool CGame::ActionPressed(const Action& action,
 
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
-
-			GML_RECMUTEX_LOCK(sim); // ActionPressed
-
-			guihandler->RunLayoutCommand(action.extra);
+			guihandler->PushLayoutCommand(action.extra);
 		}
 	}
 	else if (cmd == "luamoduictrl") {
@@ -2290,7 +2296,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (!Console::Instance().ExecuteAction(action))
 		{
 			if (guihandler != NULL) // maybe a widget is interested?
-				guihandler->RunLayoutCommand(action.rawline);
+				guihandler->PushLayoutCommand(action.rawline);
 			return false;
 		}
 	}
@@ -2983,10 +2989,6 @@ bool CGame::DrawWorld()
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
 
-	if (shadowHandler->drawShadows && shadowHandler->showShadowMap) {
-		shadowHandler->DrawShadowTex();
-	}
-
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -3119,9 +3121,7 @@ bool CGame::Draw() {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
 
-		GML_RECMUTEX_LOCK(sim); // Draw
-
-		guihandler->RunLayoutCommand("disable");
+		guihandler->PushLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
@@ -3292,6 +3292,25 @@ bool CGame::Draw() {
 			smallFont->SetColors(&speedcol, NULL);
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
 		}
+
+#ifdef USE_GML
+		if(showMTInfo) {
+			int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
+			static int luaDrawTime = 0;
+			if(cit > luaDrawTime)
+				++luaDrawTime;
+			else if(cit < luaDrawTime)
+				--luaDrawTime;
+
+			float drawPercent = (float)luaDrawTime / 10.0f;
+			char buf[32];
+			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
+			float4 warncol(drawPercent >= 10.0f && (currentTime & 128) ? 
+				0.5f : std::max(0.0f, std::min(drawPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - drawPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
+			smallFont->SetColors(&warncol, NULL);
+			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+		}
+#endif
 
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
 			static std::string chart; chart = "";
@@ -3511,6 +3530,19 @@ void CGame::StartPlaying()
 
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
+#ifdef USE_GML
+	if(showMTInfo) {
+		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
+		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
+		logOutput.Print("");
+		logOutput.Print("************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
+		logOutput.Print("GRAPHICS WIDGETS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
+		logOutput.Print("Press " + lskey + " and click to disable specific widgets (mouse wheel scrolls the list)");
+		logOutput.Print("The LUA-DRAW(MT) value in the upper right corner can be used for guidance");
+		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes");
+		logOutput.Print("");
+	}
+#endif
 }
 
 
@@ -3660,8 +3692,8 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_PLAYERLEFT: {
-				int player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers() || player < 0) {
+				const unsigned char player = inbuf[1];
+				if (player >= playerHandler->ActivePlayers()) {
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					playerHandler->PlayerLeft(player, inbuf[2]);
@@ -3767,8 +3799,8 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_PLAYERINFO: {
-				int player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers() || player < 0) {
+				const unsigned char player = inbuf[1];
+				if (player >= playerHandler->ActivePlayers()) {
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 				} else {
 					playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
@@ -3924,7 +3956,7 @@ void CGame::ClientReadNet()
 					pckt >> psize;
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers() || player < 0)
+					if (player >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					Command c;
@@ -3950,7 +3982,7 @@ void CGame::ClientReadNet()
 					pckt >> psize;
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers() || player < 0)
+					if (player >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					vector<int> selected;
@@ -3985,7 +4017,7 @@ void CGame::ClientReadNet()
 					unsigned char player;
 					pckt >> player;
 
-					if (player >= playerHandler->ActivePlayers() || player < 0)
+					if (player >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					short int unitid;
@@ -4020,7 +4052,7 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers() || player < 0)
+					if (player >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					// parse the unit list
@@ -4069,7 +4101,7 @@ void CGame::ClientReadNet()
 					pckt >> numBytes;
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers() || player < 0)
+					if (player >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					// total message length
@@ -4143,8 +4175,8 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SHARE: {
-				int player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers() || player < 0){
+				const unsigned char player = inbuf[1];
+				if (player >= playerHandler->ActivePlayers()){
 					logOutput.Print("Got invalid player num %i in share msg", player);
 					break;
 				}
@@ -4462,9 +4494,9 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_DIRECT_CONTROL: {
-				const int player = inbuf[1];
+				const unsigned char player = inbuf[1];
 
-				if (player >= playerHandler->ActivePlayers() || player < 0) {
+				if (player >= playerHandler->ActivePlayers()) {
 					logOutput.Print("Invalid player number (%i) in NETMSG_DIRECT_CONTROL", player);
 					break;
 				}
@@ -4518,8 +4550,8 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_DC_UPDATE: {
-				int player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers() || player < 0) {
+				const unsigned char player = inbuf[1];
+				if (player >= playerHandler->ActivePlayers()) {
 					logOutput.Print("Invalid player number (%i) in NETMSG_DC_UPDATE", player);
 					break;
 				}

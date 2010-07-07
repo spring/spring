@@ -32,7 +32,7 @@ protected:
 	void UpdateOldConfigs();                        //!< Forces an update to new config defaults
 	void LoadFonts();                               //!< Initialize glFonts (font & smallFont)
 	bool SetSDLVideoMode();                         //!< Sets SDL video mode
-	void SetProcessAffinity(int);
+	void SetProcessAffinity(int) const;
 	void Shutdown();                                //!< Shuts down application
 	int Update();                                   //!< Run simulation and draw
 

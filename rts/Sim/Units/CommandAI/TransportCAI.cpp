@@ -86,8 +86,11 @@ CTransportCAI::~CTransportCAI(void)
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers
 	if (uh && toBeTransportedUnitId != -1) {
-		if (uh->units[toBeTransportedUnitId])
-			uh->units[toBeTransportedUnitId]->toBeTransported = false;
+		CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
+
+		if (transportee)
+			transportee->toBeTransported = false;
+
 		toBeTransportedUnitId = -1;
 	}
 }
@@ -119,7 +122,8 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 
 	if (c.params.size() == 1) {
 		// load single unit
-		CUnit* unit=uh->units[(int)c.params[0]];
+		CUnit* unit = uh->GetUnit(c.params[0]);
+
 		if (!unit) {
 			FinishCommand();
 			return;
@@ -895,69 +899,68 @@ void CTransportCAI::DrawCommands(void)
 	}
 
 	CCommandQueue::iterator ci;
-	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		switch(ci->id){
-			case CMD_MOVE:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		switch (ci->id) {
+			case CMD_MOVE: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
 				break;
 			}
-			case CMD_FIGHT:{
+			case CMD_FIGHT: {
 				if (ci->params.size() >= 3) {
-					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
 				}
 				break;
 			}
-			case CMD_PATROL:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_PATROL: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
 				break;
 			}
-			case CMD_ATTACK:{
-				if(ci->params.size()==1){
-					const CUnit* unit = uh->units[int(ci->params[0])];
-					if((unit != NULL) && isTrackable(unit)) {
-						const float3 endPos =
-							helper->GetUnitErrorPos(unit, owner->allyteam);
+			case CMD_ATTACK: {
+				if (ci->params.size() == 1) {
+					const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+					if ((unit != NULL) && isTrackable(unit)) {
+						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
-					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}
 				break;
 			}
-			case CMD_GUARD:{
-				const CUnit* unit = uh->units[int(ci->params[0])];
-				if((unit != NULL) && isTrackable(unit)) {
-					const float3 endPos =
-						helper->GetUnitErrorPos(unit, owner->allyteam);
+			case CMD_GUARD: {
+				const CUnit* unit = uh->GetUnit(ci->params[0]);
+				if ((unit != NULL) && isTrackable(unit)) {
+					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
 			}
-			case CMD_LOAD_UNITS:{
-				if(ci->params.size()==4){
-					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_LOAD_UNITS: {
+				if (ci->params.size() == 4) {
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.load);
 					lineDrawer.Break(endPos, cmdColors.load);
 					glColor4fv(cmdColors.load);
 					glSurfaceCircle(endPos, ci->params[3], 20);
 					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
-					const CUnit* unit = uh->units[int(ci->params[0])];
-					if((unit != NULL) && isTrackable(unit)) {
-						const float3 endPos =
-							helper->GetUnitErrorPos(unit, owner->allyteam);
+					const CUnit* unit = uh->GetUnit(ci->params[0]);
+					if ((unit != NULL) && isTrackable(unit)) {
+						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.load);
 					}
 				}
 				break;
 			}
-			case CMD_UNLOAD_UNITS:{
-				if(ci->params.size()==4){
-					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_UNLOAD_UNITS: {
+				if (ci->params.size() == 4) {
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
 					glColor4fv(cmdColors.unload);
@@ -966,16 +969,16 @@ void CTransportCAI::DrawCommands(void)
 				}
 				break;
 			}
-			case CMD_UNLOAD_UNIT:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_UNLOAD_UNIT: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
 				break;
 			}
-			case CMD_WAIT:{
+			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
 				break;
 			}
-			case CMD_SELFD:{
+			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
@@ -990,14 +993,18 @@ void CTransportCAI::DrawCommands(void)
 
 void CTransportCAI::FinishCommand(void)
 {
-	if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType))
-		am->dontCheckCol=false;
+	if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType))
+		am->dontCheckCol = false;
 
-	if(toBeTransportedUnitId!=-1){
-		if(uh->units[toBeTransportedUnitId])
-			uh->units[toBeTransportedUnitId]->toBeTransported=false;
-		toBeTransportedUnitId=-1;
+	if (toBeTransportedUnitId != -1) {
+		CUnit* transportee = uh->GetUnitUnsafe(toBeTransportedUnitId);
+
+		if (transportee)
+			transportee->toBeTransported = false;
+
+		toBeTransportedUnitId = -1;
 	}
+
 	CMobileCAI::FinishCommand();
 }
 

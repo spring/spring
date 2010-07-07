@@ -13,7 +13,7 @@ public:
 		//, cpuUsage (0.0f)
 		{}
 
-	void operator=(const SkirmishAIBase& base) { SkirmishAIBase::operator=(base); };
+	GameSkirmishAI& operator=(const SkirmishAIBase& base) { SkirmishAIBase::operator=(base); return *this; };
 
 	//State myState;
 

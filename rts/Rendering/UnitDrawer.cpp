@@ -123,18 +123,16 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
 		}
 
-		if (groundDecals != NULL) {
-			if (ud->useBuildingGroundDecal) {
-				ud->buildingDecalType = groundDecals->GetBuildingDecalType(ud->buildingDecalTypeName);
-			} else {
-				ud->buildingDecalType = -1;
-			}
+		if (ud->useBuildingGroundDecal) {
+			ud->buildingDecalType = groundDecals->GetBuildingDecalType(ud->buildingDecalTypeName);
+		} else {
+			ud->buildingDecalType = -1;
+		}
 
-			if (ud->leaveTracks) {
-				ud->trackType = groundDecals->GetTrackType(ud->trackTypeName);
-			} else {
-				ud->trackType = -1;
-			}
+		if (ud->leaveTracks) {
+			ud->trackType = groundDecals->GetTrackType(ud->trackTypeName);
+		} else {
+			ud->trackType = -1;
 		}
 	}
 
@@ -159,6 +157,15 @@ CUnitDrawer::~CUnitDrawer(void)
 
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 	cubeMapHandler->Free();
+
+	// RenderUnitDestroyed does not trigger on exit, clean up manually
+	for (std::set<CUnit*>::iterator it = unsortedUnits.begin(); it != unsortedUnits.end(); ++it) {
+		CBuilding* building = dynamic_cast<CBuilding*>(*it);
+
+		if (building != NULL) {
+			groundDecals->RemoveBuilding(building, NULL);
+		}
+	}
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		std::set<GhostBuilding*>& ghostSet = deadGhostBuildings[modelType];
@@ -194,6 +201,7 @@ CUnitDrawer::~CUnitDrawer(void)
 	modelShaders.clear();
 
 	unitRadarIcons.clear();
+	unsortedUnits.clear();
 }
 
 
@@ -2247,18 +2255,20 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	return canBuild;
 }
 
-void CUnitDrawer::RenderUnitCreated(const CUnit* u) {
+void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
-	if (building != NULL) {
-		if (building->unitDef->useBuildingGroundDecal) {
-			groundDecals->AddBuilding(building);
-		}
-	}
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(u->model && TEX_TYPE(u) < 0)
+		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model->tex1, u->model->tex2);
+#endif
+
+	if (building)
+		groundDecals->AddBuilding(building);
 
 	if (u->model) {
-		if (u->isCloaked) {
+		if (cloaked) {
 			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
 			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
@@ -2288,7 +2298,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 				gb = new GhostBuilding();
 				gb->pos    = building->pos;
 				gb->model  = gbModel;
-				gb->decal  = building->buildingDecal;
+				gb->decal  = NULL;
 				gb->facing = building->buildFacing;
 				gb->team   = building->team;
 
@@ -2296,9 +2306,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 			}
 		}
 
-		if (groundDecals && building->buildingDecal) {
-			groundDecals->RemoveBuilding(building, gb);
-		}
+		groundDecals->RemoveBuilding(building, gb);
 	}
 
 	if (u->model) {

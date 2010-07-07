@@ -70,6 +70,12 @@ public:
 		return units.size();
 	};
 
+
+	// note: negative ID's are implicitly converted
+	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
+	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: NULL); }
+
+
 	std::vector< vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
 
 	std::list<CUnit*> activeUnits;               ///< used to get all active units

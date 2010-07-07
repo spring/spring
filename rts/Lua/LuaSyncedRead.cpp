@@ -3017,11 +3017,11 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		lua_pushnumber(L,  weapon->numStockpiled);
 		return 5;
 	}
-	else if (key == "reloadState") {
+	else if (key == "reloadState" || key == "reloadFrame") {
 		lua_pushnumber(L, weapon->reloadStatus);
 	}
 	else if (key == "reloadTime") {
-		lua_pushnumber(L, weapon->reloadTime / GAME_SPEED);
+		lua_pushnumber(L, (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED);
 	}
 	else if (key == "accuracy") {
 		lua_pushnumber(L, weapon->accuracy);
@@ -3885,7 +3885,6 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 	}
 
 	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const int& losStatus = unit->losStatus[readAllyTeam];
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
@@ -3895,10 +3894,13 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
-	else if (losStatus & LOS_INLOS) {
+	else if (readAllyTeam < 0) {
+		//! NoAccessTeam
+	}
+	else if (unit->losStatus[readAllyTeam] & LOS_INLOS) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
 	}
-	else if (losStatus & LOS_INRADAR) {
+	else if (unit->losStatus[readAllyTeam] & LOS_INRADAR) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 
@@ -3917,7 +3919,6 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	}
 
 	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const int& losStatus = unit->losStatus[readAllyTeam];
 
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
@@ -3927,10 +3928,13 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
-	else if (losStatus & LOS_INLOS) {
+	else if (readAllyTeam < 0) {
+		//! NoAccessTeam
+	}
+	else if (unit->losStatus[readAllyTeam] & LOS_INLOS) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
 	}
-	else if (losStatus & LOS_INRADAR) {
+	else if (unit->losStatus[readAllyTeam] & LOS_INRADAR) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 

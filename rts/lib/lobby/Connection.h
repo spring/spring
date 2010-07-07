@@ -24,17 +24,18 @@ public:
 	~Connection();
 
 	void Connect(const std::string& server, int port);
+	void Disconnect();
 	virtual void DoneConnecting(bool succes, const std::string& err) {};
 	virtual void ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode) {};
 
 	void Register(const std::string& name, const std::string& password);
 	virtual void RegisterDenied(const std::string& reason) {};
-	virtual void RegisterAccept() {};
+	virtual void RegisterAccepted() {};
 
 	void Login(const std::string& name, const std::string& password);
 	virtual void LoginDenied(const std::string& reason) {};
 	virtual void LoginEnd() {};
-	virtual void Aggreement(const std::string text) {};
+	virtual void Aggreement(const std::string& text) {};
 	void ConfirmAggreement();
 
 	void Rename(const std::string& newName);

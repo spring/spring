@@ -30,7 +30,7 @@
 #include "Net/UnpackPacket.h"
 
 
-CNetProtocol::CNetProtocol() : disableDemo(false)
+CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
 {
 }
 

@@ -28,7 +28,6 @@ public:
 
 	bool drawShadows;
 	bool inShadowPass;
-	bool showShadowMap;
 	bool drawTerrainShadow;
 
 	float3 centerPos;
@@ -36,7 +35,6 @@ public:
 	float3 cross2;
 
 	CMatrix44f shadowMatrix;
-	void DrawShadowTex(void);
 	void CalcMinMaxView(void);
 
 	const float4 GetShadowParams() const { return float4(xmid, ymid, p17, p18); }

@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <cfloat> // for FLT_MAX
+#include <climits> // for INT_MAX
 
 /**
  * @brief Available mod/map/ai option types
@@ -36,7 +38,15 @@ struct OptionListItem {
 
 
 struct Option {
-	Option() : typeCode(opt_error) {}
+	Option()
+		: typeCode(opt_error)
+		, boolDef(false)
+		, numberDef(0.0f)
+		, numberMin(0.0f)
+		, numberMax(FLT_MAX)
+		, numberStep(1.0f)
+		, stringMaxLen(INT_MAX)
+	{}
 
 	std::string key;
 	std::string scope;

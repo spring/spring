@@ -145,23 +145,23 @@ static const char* GetFTError(FT_Error e)
 class CFontTextureRenderer
 {
 public:
-	CFontTextureRenderer(int _outlinewidth, int _outlineweight) :
-		texWidth(0), texHeight(0),
+	CFontTextureRenderer(int _outlinewidth, int _outlineweight)
+		: texWidth(0), texHeight(0),
 		outlinewidth(_outlinewidth), outlineweight(_outlineweight),
-		curX(0), curY(0), curHeight(0),
+		atlas(NULL),
+		cur(NULL),
+		curX(0), curY(0),
+		curHeight(0),
 		numGlyphs(0),
-		maxGlyphWidth(0), maxGlyphHeight(0), numPixels(0)
+		maxGlyphWidth(0), maxGlyphHeight(0),
+		numPixels(0)
 	{
-		numGlyphs = 0;
-		texWidth = texHeight = 0;
-		curX = curY = curHeight = 0;
-		numPixels = maxGlyphWidth = maxGlyphHeight = 0;
 	};
 
 	GLuint CreateTexture();
 
 	void AddGlyph(unsigned int& index, int& xsize, int& ysize, unsigned char* pixels, int& pitch);
-	void GetGlyph(unsigned int& index, CglFont::GlyphInfo* g);
+	void GetGlyph(unsigned int& index, CglFont::GlyphInfo* g) const;
 
 	int texWidth, texHeight;
 private:
@@ -264,9 +264,9 @@ void CFontTextureRenderer::CopyGlyphsIntoBitmapAtlas(bool outline)
 
 
 
-void CFontTextureRenderer::GetGlyph(unsigned int& index, CglFont::GlyphInfo* g)
+void CFontTextureRenderer::GetGlyph(unsigned int& index, CglFont::GlyphInfo* g) const
 {
-	GlyphInfo& gi = glyphs[index];
+	const GlyphInfo& gi = glyphs[index];
 	g->u0 = gi.u / (float)texWidth;
 	g->v0 = gi.v / (float)texHeight;
 	g->u1 = (gi.u+gi.xsize) / (float)texWidth;
@@ -406,7 +406,9 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	fontPath(fontfile),
 	outlineWidth(_outlinewidth),
 	outlineWeight(_outlineweight),
-	inBeginEnd(false)
+	inBeginEnd(false),
+	autoOutlineColor(true),
+	setColor(false)
 {
 	if (size<=0)
 		size = 14;

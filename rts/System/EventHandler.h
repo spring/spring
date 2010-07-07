@@ -57,7 +57,7 @@ class CEventHandler
 		void UnitTaken(const CUnit* unit, int newTeam);
 		void UnitGiven(const CUnit* unit, int oldTeam);
 
-		void RenderUnitCreated(const CUnit* unit);
+		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
 		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
@@ -436,13 +436,13 @@ inline void CEventHandler::UnitDestroyed(const CUnit* unit,
 	}
 }
 
-inline void CEventHandler::RenderUnitCreated(const CUnit* unit)
+inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
 {
 	const int count = listRenderUnitCreated.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listRenderUnitCreated[i];
 		if (ec->CanReadAllyTeam(unit->allyteam)) {
-			ec->RenderUnitCreated(unit);
+			ec->RenderUnitCreated(unit, cloaked);
 		}
 	}
 }

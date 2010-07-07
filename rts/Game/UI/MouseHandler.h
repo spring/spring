@@ -44,6 +44,7 @@ public:
 	bool invertMouse;
 	float doubleClickTime;
 	float scrollWheelSpeed;
+	float dragScrollThreshold;
 
 	/// locked mouse indicator size
 	float crossSize;
@@ -82,6 +83,9 @@ public:
 	                        const std::string& newName,
 	                        CMouseCursor::HotSpot hotSpot);
 	void SafeDeleteCursor(CMouseCursor* cursor);
+
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 protected:
 	void LoadCursors();

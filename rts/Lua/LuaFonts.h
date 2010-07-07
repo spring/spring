@@ -14,13 +14,8 @@ class LuaFonts {
 		LuaFonts();
 		~LuaFonts();
 
-		const void* GetMetatable() const { return metatable; }
-
 	public:
 		static bool PushEntries(lua_State* L);
-
-	private:
-		const void* metatable;
 
 	private: // helpers
 		static bool CreateMetatable(lua_State* L);

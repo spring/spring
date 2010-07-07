@@ -209,6 +209,17 @@ inline float Clamp(const float& v, const float& min, const float& max)
 	return v;
 }
 
+template<class T>
+inline T Clamp(const T& v, const T& min, const T& max)
+{
+	if (v>max) {
+		return max;
+	} else if (v<min) {
+		return min;
+	}
+	return v;
+}
+
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp

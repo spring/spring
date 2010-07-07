@@ -380,7 +380,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		unit->FinishedBuilding();
 	}
 
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(unit);
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
 
 	return unit;
 }

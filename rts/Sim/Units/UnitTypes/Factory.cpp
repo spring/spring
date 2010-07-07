@@ -3,7 +3,6 @@
 #include "StdAfx.h"
 
 #include "Factory.h"
-#include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
@@ -21,13 +20,12 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sync/SyncTracer.h"
-#include "GlobalUnsynced.h"
-#include "EventHandler.h"
-#include "Sound/IEffectChannel.h"
-#include "LogOutput.h"
-#include "Matrix44f.h"
-#include "myMath.h"
+#include "System/GlobalUnsynced.h"
+#include "System/EventHandler.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/Sync/SyncTracer.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CFactory, CBuilding, );
@@ -58,15 +56,13 @@ CFactory::CFactory():
 {
 }
 
-
-CFactory::~CFactory()
-{
-	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (uh && curBuild) {
+CFactory::~CFactory() {
+	if (curBuild != NULL) {
 		curBuild->KillUnit(false, true, NULL);
 		curBuild = NULL;
 	}
 }
+
 
 
 void CFactory::PostLoad()
@@ -155,7 +151,7 @@ void CFactory::Update()
 			// buildPiece is the rotating platform
 			const int buildPiece = GetBuildPiece();
 			const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
-			const int h = GetHeadingFromVector(mat[2], mat[10]);
+			const int h = GetHeadingFromVector(mat[2], mat[10]); //! x.z, z.z
 
 			// rotate unit nanoframe with platform
 			curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & 65535;

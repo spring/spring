@@ -23,7 +23,7 @@ public:
 	void Update();
 	float GetPlayTime();
 	float GetTotalTime();
-	const TagVector& VorbisTags();
+	const TagVector& VorbisTags() const;
 	bool Valid() const;
 
 private:

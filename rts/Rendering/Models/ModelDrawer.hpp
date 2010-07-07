@@ -26,7 +26,7 @@ public:
 	virtual void Draw();
 
 	// NOTE: GML synchronization points
-	virtual void RenderUnitCreated(const CUnit*);
+	virtual void RenderUnitCreated(const CUnit*, int cloaked);
 	virtual void RenderUnitDestroyed(const CUnit*);
 	virtual void RenderUnitCloakChanged(const CUnit*, int cloaked);
 	virtual void RenderFeatureCreated(const CFeature*);

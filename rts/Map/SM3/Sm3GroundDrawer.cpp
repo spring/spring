@@ -219,7 +219,7 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 //	if(drawWaterReflection)
 //		treeDistance*=0.5f;
 
-	if (groundDecals && !(drawWaterReflection || drawUnitReflection)) {
+	if (!(drawWaterReflection || drawUnitReflection)) {
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
 		glDepthMask(1);

@@ -322,13 +322,14 @@ const CKeyBindings::ActionList&
 		SNPRINTF(buf, sizeof(buf), "GetAction: %s (0x%03X)",
 		         ks.GetString(false).c_str(), ks.Key());
 		if (alPtr == &empty) {
-			strncat(buf, "  EMPTY", sizeof(buf));
+			// Note: strncat: 3rd param: maximum number of characters to append
+			STRNCAT(buf, "  EMPTY", sizeof(buf) - strlen(buf) - 1);
 			logOutput.Print("%s", buf);
 		}
 		else {
 			logOutput.Print("%s", buf);
 			const ActionList& al = *alPtr;
-			for (int i = 0; i < (int)al.size(); ++i) {
+			for (size_t i = 0; i < al.size(); ++i) {
 				SNPRINTF(buf, sizeof(buf), "  %s  \"%s\"",
 				         al[i].command.c_str(), al[i].rawline.c_str());
 				logOutput.Print("%s", buf);
@@ -748,7 +749,7 @@ void CKeyBindings::BuildHotkeyMap()
 		const string keystr = ks.GetString(true);
 		const ActionList& al = kit->second;
 		for (int i = 0; i < (int)al.size(); ++i) {
-			HotkeyList& hl = hotkeys[al[i].command];
+			HotkeyList& hl = hotkeys[al[i].command + ((al[i].extra == "") ? "" : " " + al[i].extra)];
 			int j;
 			for (j = 0; j < (int)hl.size(); ++j) {
 				if (hl[j] == keystr) {

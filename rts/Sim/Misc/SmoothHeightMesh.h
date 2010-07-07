@@ -44,9 +44,9 @@ public:
 	float AddHeight(int index, float h);
 	float SetMaxHeight(int index, float h);
 
-	int GetMaxX() { return maxx; }
-	int GetMaxY() { return maxy; }
-	float GetResolution() { return resolution; }
+	int GetMaxX() const { return maxx; }
+	int GetMaxY() const { return maxy; }
+	float GetResolution() const { return resolution; }
 
 	float* GetMeshData() { return mesh; }
 	float* GetOriginalMeshData() { return origMesh; }

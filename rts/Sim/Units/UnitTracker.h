@@ -20,7 +20,7 @@ class CUnitTracker
 
 		void SetCam();
 
-		int  GetMode();
+		int  GetMode() const;
 		void IncMode();
 		void SetMode(int);
 		enum TrackMode {

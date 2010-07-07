@@ -25,8 +25,6 @@ void GlobalConfig::Instantiate() {
 }
 
 void GlobalConfig::Deallocate() {
-	if(gc != NULL) {
-		delete gc;
-		gc = NULL;
-	}
+	delete gc;
+	gc = NULL;
 }

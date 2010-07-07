@@ -28,7 +28,6 @@ public:
 	CS3OTextureHandler();
 	virtual ~CS3OTextureHandler();
 
-	std::vector<S3DModel* > loadTextures;
 	void Update();
 	void LoadS3OTexture(S3DModel* model);
 	int LoadS3OTextureNow(const std::string& tex1, const std::string& tex2);

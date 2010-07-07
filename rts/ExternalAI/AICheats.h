@@ -43,9 +43,9 @@ public:
 	int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS);
 	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
 
-	int GetFeatures(int *features, int max);
+	int GetFeatures(int *features, int max) const;
 	int GetFeatures(int *features, int max, const float3& pos,
-			float radius);
+			float radius) const;
 
 	int GetUnitTeam(int unitId);
 	int GetUnitAllyTeam(int unitId);
@@ -68,7 +68,7 @@ public:
 	void EnableCheatEvents(bool enable);
 
 	bool GetProperty(int unit, int property, void* dst);
-	bool GetValue(int id, void* dst);
+	bool GetValue(int id, void* dst) const;
 	int HandleCommand(int commandId, void* data);
 };
 

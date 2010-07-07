@@ -548,27 +548,30 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
 
 		if (!projectileBin.empty()) {
-			CVertexArray* lines = GetVertexArray();
-			CVertexArray* points = GetVertexArray();
-
-			lines->Initialize();
-			lines->EnlargeArrays(projectileBin.size() * 2, 0, VA_SIZE_C);
-			points->Initialize();
-			points->EnlargeArrays(projectileBin.size(), 0, VA_SIZE_C);
 
 			for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
+				CVertexArray* lines = GetVertexArray();
+				CVertexArray* points = GetVertexArray();
+
+				lines->Initialize();
+				lines->EnlargeArrays((binIt->second).size() * 2, 0, VA_SIZE_C);
+				points->Initialize();
+				points->EnlargeArrays((binIt->second).size(), 0, VA_SIZE_C);
+
 				for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
 					CProjectile* p = *setIt;
 
-					if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
+					CUnit *owner = p->owner();
+					if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
 						gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
-						p->DrawOnMinimap(*lines, *points);
+							p->DrawOnMinimap(*lines, *points);
 					}
 				}
+
+				lines->DrawArrayC(GL_LINES);
+				points->DrawArrayC(GL_POINTS);
 			}
 
-			lines->DrawArrayC(GL_LINES);
-			points->DrawArrayC(GL_POINTS);
 		}
 	}
 
@@ -1027,6 +1030,11 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(p->model && TEX_TYPE(p) < 0)
+		TEX_TYPE(p) = texturehandlerS3O->LoadS3OTextureNow(p->model->tex1, p->model->tex2);
+#endif
+
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
 	} else {

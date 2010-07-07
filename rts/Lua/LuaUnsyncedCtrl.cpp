@@ -559,10 +559,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	const string soundFile = lua_tostring(L, 1);
 	const unsigned int soundID = sound->GetSoundId(soundFile, false);
 	if (soundID > 0) {
-		float volume = 1.0f;
-		if (args >= 2) {
-			volume = lua_tofloat(L, 2);
-		}
+		float volume = luaL_optfloat(L, 2, 1.0f);
 
 		if (args < 5) {
 			Channels::General.PlaySample(soundID, volume);
@@ -1540,7 +1537,8 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
-	const int value = configHandler->Get(name, def);
+	const bool setInOverlay = (bool) luaL_optnumber(L, 3, 0); // default: false
+	const int value = configHandler->Get(name, def, setInOverlay);
 	lua_pushnumber(L, value);
 	return 1;
 }
@@ -1553,7 +1551,8 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int value   = luaL_checkint(L, 2);
-	configHandler->Set(name, value);
+	const bool useOverlay = (bool) luaL_optnumber(L, 3, 0); // default: false
+	configHandler->Set(name, value, useOverlay);
 	return 0;
 }
 
@@ -1565,7 +1564,8 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const string def  = luaL_optstring(L, 2, "");
-	const string value = configHandler->GetString(name, def);
+	const bool setInOverlay = (bool) luaL_optnumber(L, 3, 0); // default: false
+	const string value = configHandler->GetString(name, def, setInOverlay);
 	lua_pushstring(L, value.c_str());
 	return 1;
 }
@@ -1578,7 +1578,8 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 	}
 	const string name  = luaL_checkstring(L, 1);
 	const string value = luaL_checkstring(L, 2);
-	configHandler->SetString(name, value);
+	const bool useOverlay = (bool) luaL_optnumber(L, 3, 0); // default: false
+	configHandler->SetString(name, value, useOverlay);
 	return 0;
 }
 

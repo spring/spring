@@ -178,7 +178,7 @@ int CMoveMath::IsBlocked2(const MoveData& moveData, int xSquare, int zSquare, bo
  * objects block iif their mass exceeds the movedata's crush-strength).
  * NOTE: modify for selective blocking
  */
-bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* object) {
+bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* object) const {
 	return
 		(object->blocking && (!dynamic_cast<const CFeature*>(object) ||
 		object->mass > moveData.crushStrength));
