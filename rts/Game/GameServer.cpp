@@ -1779,7 +1779,7 @@ void CGameServer::PushAction(const Action& action)
 				playerName_passwd[name] = password;
 				logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 			} else {
-				logOutput.Print("Failed to add player/spectator password. usage: /aduser <player-name> <password>");
+				logOutput.Print("Failed to add player/spectator password. usage: /adduser <player-name> <password>");
 			}
 		}
 	}
