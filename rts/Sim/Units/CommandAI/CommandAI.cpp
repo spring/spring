@@ -356,9 +356,6 @@ static inline bool IsCommandInMap(const Command& c)
 	// TODO:
 	//   extend the check to commands for which
 	//   position is not stored in params[0..2]
-	//
-	// for the area variants of repair / reclaim / capture / resurrect,
-	// params[0..2] always holds the position and params[3] the radius
 	if (c.params.size() >= 3) {
 		return (float3(c.params[0], c.params[1], c.params[2]).IsInBounds());
 	}
