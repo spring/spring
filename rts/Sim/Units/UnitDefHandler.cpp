@@ -439,7 +439,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
 	ud.transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	ud.minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
-	ud.holdSteady        = udTable.GetBool("holdSteady",        true);
+	ud.holdSteady        = udTable.GetBool("holdSteady",        false);
 	ud.releaseHeld       = udTable.GetBool("releaseHeld",       false);
 	ud.cantBeTransported = udTable.GetBool("cantBeTransported", false);
 	ud.transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
@@ -663,6 +663,12 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	}
 
 	ud.objectName = udTable.GetString("objectName", "");
+	if (ud.objectName.find(".") == std::string::npos) {
+		ud.objectName += ".3do"; // NOTE: get rid of this?
+	}
+	ud.modelDef.modelPath = "objects3d/" + ud.objectName;
+	ud.modelDef.modelName = ud.objectName;
+
 	ud.scriptName = udTable.GetString("script", unitName + ".cob");
 	ud.scriptPath = "scripts/" + ud.scriptName;
 

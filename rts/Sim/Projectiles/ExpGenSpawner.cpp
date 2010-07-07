@@ -20,7 +20,9 @@ CR_REG_METADATA(CExpGenSpawner,
 
 CExpGenSpawner::CExpGenSpawner(void) :
 	CProjectile(),
-	damage(0)
+	delay(1),
+	damage(0),
+	explosionGenerator(NULL)
 {
 	checkCol=false;
 	deleteMe=false;

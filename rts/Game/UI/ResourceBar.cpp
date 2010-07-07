@@ -16,7 +16,7 @@
 CResourceBar* resourceBar=0;
 
 
-CResourceBar::CResourceBar(void) : disabled(false)
+CResourceBar::CResourceBar(void) : moveBox(false), disabled(false)
 {
 	box.x1 = 0.26f;
 	box.y1 = 0.97f;

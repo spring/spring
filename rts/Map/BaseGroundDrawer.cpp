@@ -23,11 +23,10 @@
 #include "ConfigHandler.h"
 #include "FastMath.h"
 #include "myMath.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
-	updateFov = true;
-
 	LODScaleReflection = configHandler->Get("GroundLODScaleReflection", 1.0f);
 	LODScaleRefraction = configHandler->Get("GroundLODScaleRefraction", 1.0f);
 	LODScaleUnitReflection = configHandler->Get("GroundLODScaleUnitReflection", 1.0f);

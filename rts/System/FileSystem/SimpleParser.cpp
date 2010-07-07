@@ -20,7 +20,7 @@ CSimpleParser::CSimpleParser(CFileHandler& fh) : file(fh)
 
 
 /** returns the current line number */
-int CSimpleParser::GetLineNumber()
+int CSimpleParser::GetLineNumber() const
 {
 	return lineNumber;
 }

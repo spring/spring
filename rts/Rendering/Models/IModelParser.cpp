@@ -61,7 +61,7 @@ C3DModelLoader::~C3DModelLoader(void)
 }
 
 
-void C3DModelLoader::AddParser(const std::string ext, IModelParser* parser)
+void C3DModelLoader::AddParser(const std::string& ext, IModelParser* parser)
 {
 	parsers[ext] = parser;
 }

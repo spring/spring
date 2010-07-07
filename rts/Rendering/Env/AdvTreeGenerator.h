@@ -15,9 +15,10 @@ namespace Shader {
 class CAdvTreeGenerator  
 {
 public:
-	void Draw();
 	CAdvTreeGenerator();
 	virtual ~CAdvTreeGenerator();
+
+	void Draw() const;
 
 	GLuint barkTex;
 	GLuint farTex[2];

@@ -13,9 +13,7 @@
 #include "System/Matrix44f.h"
 
 FlyingPiece::~FlyingPiece() {
-	if (verts != NULL) {
-		delete[] verts;
-	}
+	delete[] verts;
 }
 
 void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertexArray* va) {

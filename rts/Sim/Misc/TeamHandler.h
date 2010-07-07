@@ -30,9 +30,9 @@ public:
 	 *
 	 * Accesses a CTeam instance at a given index
 	 */
-	CTeam* Team(int i) { return teams[i]; }
+	CTeam* Team(int i) const { return teams[i]; }
 
-	bool IsValidTeam(int id) {
+	bool IsValidTeam(int id) const {
 		return ((id >= 0) && (id < teams.size()));
 	}
 
@@ -44,7 +44,7 @@ public:
 	 *
 	 * Returns ally at [a][b]
 	 */
-	bool Ally(int a, int b) { return allyTeams[a].allies[b]; }
+	bool Ally(int a, int b) const { return allyTeams[a].allies[b]; }
 
 	/**
 	 * @brief ally team
@@ -53,10 +53,10 @@ public:
 	 *
 	 * returns the team2ally at given index
 	 */
-	int AllyTeam(int team) { return teams[team]->teamAllyteam; }
+	int AllyTeam(int team) const { return teams[team]->teamAllyteam; }
 	::AllyTeam& GetAllyTeam(size_t id) { return allyTeams[id]; };
 
-	bool ValidAllyTeam(size_t id)
+	bool ValidAllyTeam(size_t id) const
 	{
 		return ((id >= 0) && (id < allyTeams.size()));
 	}
@@ -69,7 +69,7 @@ public:
 	 *
 	 * Tests whether teams are allied
 	 */
-	bool AlliedTeams(int a, int b) { return allyTeams[AllyTeam(a)].allies[AllyTeam(b)]; }
+	bool AlliedTeams(int a, int b) const { return allyTeams[AllyTeam(a)].allies[AllyTeam(b)]; }
 
 	/**
 	 * @brief set ally team
@@ -98,7 +98,7 @@ public:
 	int ActiveTeams() const { return teams.size(); }
 	int ActiveAllyTeams() const { return allyTeams.size(); }
 
-	bool IsActiveTeam(int id) {
+	bool IsActiveTeam(int id) const {
 		return ((id >= 0) && (id < ActiveTeams()));
 	}
 

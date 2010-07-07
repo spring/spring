@@ -11,7 +11,9 @@
 #include "PathFinder.h"
 #include "PathEstimator.h"
 #include "Map/MapInfo.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
@@ -22,6 +24,8 @@ const float DETAILED_DISTANCE = 25;
 const float MIN_DETAILED_DISTANCE = 12;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 const unsigned int CPathManager::PATH_RESOLUTION = CPathFinder::PATH_RESOLUTION;
+
+
 
 CPathManager* pathManager = 0;
 
@@ -54,17 +58,6 @@ CPathManager::~CPathManager()
 	delete pf;
 }
 
-
-
-void CPathManager::SetHeatMappingEnabled(bool enabled)
-{
-	pf->SetHeatMapState(enabled);
-}
-
-bool CPathManager::GetHeatMappingEnabled()
-{
-	return pf->GetHeatMapState();
-}
 
 
 /*
@@ -393,15 +386,12 @@ void CPathManager::TerrainChange(float3 upperCorner, float3 lowerCorner) {
 Tells estimators about changes in or on the map.
 */
 void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
-//	LogObject() << "Terrain changed: (" << int(x1) << int(z1) << int(x2) << int(z2) << "\n";	//Debug
 	pe->MapChanged(x1, z1, x2, z2);
 	pe2->MapChanged(x1, z1, x2, z2);
 }
 
 
-/*
-Runned every 1/30sec during runtime.
-*/
+
 void CPathManager::Update()
 {
 	SCOPED_TIMER("PFS Update");
@@ -409,6 +399,37 @@ void CPathManager::Update()
 	pe->Update();
 	pe2->Update();
 }
+
+// used to deposit heat on the heat-map as a unit moves along its path
+void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
+{
+	if (!pathId) {
+		return;
+	}
+
+#ifndef USE_GML
+	static std::vector<int2> points;
+#else
+	std::vector<int2> points;
+#endif
+
+	GetDetailedPathSquares(pathId, points);
+
+	float scale = 1.0f / points.size();
+	unsigned int i = points.size();
+
+	for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
+		SetHeatOnSquare(it->x, it->y, i * scale * owner->mobility->heatProduced, owner->id); i--;
+	}
+}
+
+
+
+void CPathManager::SetHeatMappingEnabled(bool enabled) { pf->SetHeatMapState(enabled); }
+bool CPathManager::GetHeatMappingEnabled() { return pf->GetHeatMapState(); }
+
+void CPathManager::SetHeatOnSquare(int x, int y, int value, int ownerId) { pf->UpdateHeatValue(x, y, value, ownerId); }
+const int CPathManager::GetHeatOnSquare(int x, int y) { return pf->GetHeatValue(x, y); }
 
 
 
@@ -492,18 +513,6 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 	}
 }
 
-
-void CPathManager::SetHeatOnPos(float3 pos, int value, int ownerId)
-{
-	int x = (int)pos.x/SQUARE_SIZE;
-	int y = (int)pos.z/SQUARE_SIZE;
-	SetHeatOnSquare(x, y, value, ownerId);
-}
-
-void CPathManager::SetHeatOnSquare(int x, int y, int value, int ownerId)
-{
-	pf->UpdateHeatValue(x, y, value, ownerId);
-}
 
 
 boost::uint32_t CPathManager::GetPathCheckSum()

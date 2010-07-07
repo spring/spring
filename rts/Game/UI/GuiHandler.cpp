@@ -922,6 +922,8 @@ void CGuiHandler::SetShowingMetal(bool show)
 
 void CGuiHandler::Update()
 {
+	RunLayoutCommands();
+
 	GML_RECMUTEX_LOCK(gui); // Update - updates inCommand
 
 	SetCursorIcon();
@@ -1609,7 +1611,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		return true;
 	}
 	else if (action.command == "luaui") {
-		RunLayoutCommand(action.extra);
+		PushLayoutCommand(action.extra);
 		return true;
 	}
 	else if (action.command == "invqueuekey") {
@@ -4261,3 +4263,26 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+void CGuiHandler::PushLayoutCommand(const std::string& cmd) {
+	GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
+
+	layoutCommands.push_back(cmd);
+}
+
+void CGuiHandler::RunLayoutCommands() {
+	if (!layoutCommands.empty()) {
+		GML_RECMUTEX_LOCK(sim); // Draw
+		GML_STDMUTEX_LOCK(laycmd); // Draw
+
+		//! RunLayoutCommand can add new commands
+		//! and because it is never good to change the vector you are iterating over, we swap it with a new one
+		std::vector<std::string> layoutCmds;
+		layoutCmds.swap(layoutCommands);
+
+		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
+			RunLayoutCommand(*cit);
+		}
+	}
+}

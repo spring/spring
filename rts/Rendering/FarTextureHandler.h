@@ -10,7 +10,6 @@
 #include "Rendering/GL/FBO.h"
 
 class CSolidObject;
-class float3;
 class CVertexArray;
 
 /**
@@ -34,7 +33,7 @@ private:
 	static const int iconSizeY;
 	static const int numOrientations;
 
-	std::vector<const CSolidObject*> queuedForRender;
+	GML_VECTOR<const CSolidObject*> queuedForRender;
 	std::vector< std::vector<int> > cache;
 
 	FBO fbo;

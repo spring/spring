@@ -229,7 +229,7 @@ static int WeaponDefNewIndex(lua_State* L)
 
 static int WeaponDefMetatable(lua_State* L)
 {
-	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
+	//const void* userData = lua_touserdata(L, lua_upvalueindex(1));
 	//const WeaponDef* wd = (const WeaponDef*)userData;
 	return 0;
 }

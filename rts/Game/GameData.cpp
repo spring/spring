@@ -19,6 +19,7 @@ GameData::GameData()
 {
 	mapChecksum = 0;
 	modChecksum = 0;
+	randomSeed = 0;
 }
 
 GameData::GameData(boost::shared_ptr<const RawPacket> pckt)

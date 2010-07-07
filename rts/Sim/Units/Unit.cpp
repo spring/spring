@@ -3,9 +3,25 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "UnitDef.h"
+#include "Unit.h"
+#include "UnitHandler.h"
+#include "UnitDefHandler.h"
+#include "UnitLoader.h"
+#include "UnitTypes/Building.h"
+#include "UnitTypes/TransportUnit.h"
+#include "COB/NullUnitScript.h"
+#include "COB/UnitScriptFactory.h"
+#include "COB/CobInstance.h" // for TAANG2RAD
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
-#include "creg/STL_List.h"
+#include "CommandAI/AirCAI.h"
+#include "CommandAI/BuilderCAI.h"
+#include "CommandAI/CommandAI.h"
+#include "CommandAI/FactoryCAI.h"
+#include "CommandAI/MobileCAI.h"
+#include "CommandAI/TransportCAI.h"
+
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
@@ -44,31 +60,15 @@
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sync/SyncedPrimitive.h"
-#include "Sync/SyncTracer.h"
-#include "EventHandler.h"
-#include "LoadSave/LoadSaveInterface.h"
-#include "LogOutput.h"
-#include "Matrix44f.h"
-#include "myMath.h"
-#include "Sound/IEffectChannel.h"
-#include "UnitDef.h"
-#include "Unit.h"
-#include "UnitHandler.h"
-#include "UnitLoader.h"
-#include "UnitTypes/Building.h"
-#include "UnitTypes/TransportUnit.h"
-
-#include "COB/NullUnitScript.h"
-#include "COB/UnitScriptFactory.h"
-#include "COB/CobInstance.h" // for TAANG2RAD
-#include "CommandAI/AirCAI.h"
-#include "CommandAI/BuilderCAI.h"
-#include "CommandAI/CommandAI.h"
-#include "CommandAI/FactoryCAI.h"
-#include "CommandAI/MobileCAI.h"
-#include "CommandAI/TransportCAI.h"
-#include "UnitDefHandler.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "System/creg/STL_List.h"
+#include "System/LoadSave/LoadSaveInterface.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/Sync/SyncedPrimitive.h"
+#include "System/Sync/SyncTracer.h"
 
 CLogSubsystem LOG_UNIT("unit");
 
@@ -122,7 +122,6 @@ CUnit::CUnit():
 	useHighTrajectory(false),
 	dontUseWeapons(false),
 	deathScriptFinished(false),
-	deathCountdown(0),
 	delayedWreckLevel(-1),
 	restTime(0),
 	shieldWeapon(0),
@@ -364,16 +363,14 @@ void CUnit::ForcedMove(const float3& newPos)
 	}
 
 	CBuilding* building = dynamic_cast<CBuilding*>(this);
-	if (building && unitDef->useBuildingGroundDecal) {
+	if (building)
 		groundDecals->RemoveBuilding(building, NULL);
-	}
 
 	pos = newPos;
 	UpdateMidPos();
 
-	if (building && unitDef->useBuildingGroundDecal) {
+	if (building)
 		groundDecals->AddBuilding(building);
-	}
 
 	if (blocking) {
 		Block();
@@ -492,25 +489,7 @@ void CUnit::Update()
 	posErrorVector += posErrorDelta;
 
 	if (deathScriptFinished) {
-		// if our kill-script is already finished, don't
-		// wait for the deathCountdown to reach zero and
-		// just delete us ASAP (costs one extra frame)
 		uh->DeleteUnit(this);
-		return;
-	}
-
-	if (deathCountdown) {
-		--deathCountdown;
-
-		if (!deathCountdown) {
-			if (deathScriptFinished) {
-				// kill-script has terminated, remove unit now
-				uh->DeleteUnit(this);
-			} else {
-				// kill-script still running, delay one more frame
-				deathCountdown = 1;
-			}
-		}
 		return;
 	}
 
@@ -822,11 +801,12 @@ void CUnit::SlowUpdate()
 				helper->GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
 			}
 
-			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it)
-			{
-				float3 dif = pos - uh->units[*it]->pos;
+			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it) {
+				const CUnit* victim = uh->GetUnitUnsafe(*it);
+				const float3 dif = pos - victim->pos;
+
 				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
-					if (uh->units[*it]->speed.dot(dif) <= 0) {
+					if (victim->speed.dot(dif) <= 0) {
 						//! self destruct when we start moving away from the target, this should maximize the damage
 						KillUnit(true, false, NULL);
 						return;
@@ -882,20 +862,18 @@ void CUnit::SlowUpdate()
 
 void CUnit::SetDirectionFromHeading(void)
 {
-	frontdir=GetVectorFromHeading(heading);
-	if(transporter && transporter->unitDef->holdSteady) {
-		updir = transporter->updir;
-		rightdir=frontdir.cross(updir);
-		rightdir.Normalize();
-		frontdir=updir.cross(rightdir);
-	} else if(upright || !unitDef->canmove){
-		updir=UpVector;
-		rightdir=frontdir.cross(updir);
-	} else  {
-		updir=ground->GetNormal(pos.x,pos.z);
-		rightdir=frontdir.cross(updir);
-		rightdir.Normalize();
-		frontdir=updir.cross(rightdir);
+	if (GetTransporter() == NULL) {
+		frontdir = GetVectorFromHeading(heading);
+
+		if (upright || !unitDef->canmove) {
+			updir = UpVector;
+			rightdir = frontdir.cross(updir);
+		} else  {
+			updir = ground->GetNormal(pos.x, pos.z);
+			rightdir = frontdir.cross(updir);
+			rightdir.Normalize();
+			frontdir = updir.cross(rightdir);
+		}
 	}
 }
 
@@ -1108,7 +1086,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
 
-	CTransportUnit *trans;
+	CTransportUnit* trans = NULL;
 
 	if (usingScriptMoveType ||
 	    (!beingBuilt && (physicalState == CSolidObject::Flying) && unitDef->canmove)) {
@@ -1117,14 +1095,9 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		// use this matrix, or their nanoframes won't spin on pad
 		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
-	else if ((trans=GetTransporter()) && trans->unitDef->holdSteady) {
-		// making local copies of vectors
-		float3 frontDir = GetVectorFromHeading(heading);
-		float3 upDir    = updir;
-		float3 rightDir = frontDir.cross(upDir);
-		rightDir.Normalize();
-		frontDir = upDir.cross(rightDir);
-		return CMatrix44f(interPos, -rightDir, upDir, frontDir);
+	else if ((trans = GetTransporter()) != NULL) {
+		// we're being transported, transporter sets our vectors
+		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
 	else if (upright || !unitDef->canmove) {
 		if (heading == 0) {
@@ -1864,18 +1837,13 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 		// start running the unit's kill-script
 		script->Killed();
-	}
-	else {
+	} else {
 		deathScriptFinished = true;
 	}
 
-	if (beingBuilt || dynamic_cast<CAirMoveType*>(moveType) || reclaimed) {
-		uh->DeleteUnit(this);
-	} else {
+	if (!deathScriptFinished) {
+		// put the unit in a pseudo-zombie state until Killed finishes
 		speed = ZeroVector;
-		// wait at least 5 more frames before
-		// permanently deleting this unit obj
-		deathCountdown = 5;
 		stunned = true;
 		paralyzeDamage = 100.0f * maxHealth;
 		if (health < 0.0f) {
@@ -1884,7 +1852,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 }
 
-bool CUnit::AllowedReclaim (CUnit *builder)
+bool CUnit::AllowedReclaim(CUnit* builder) const
 {
 	// Don't allow the reclaim if the unit is finished and we arent allowed to reclaim it
 	if (!beingBuilt) {
@@ -2284,7 +2252,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(useHighTrajectory),
 	CR_MEMBER(dontUseWeapons),
 	CR_MEMBER(deathScriptFinished),
-	CR_MEMBER(deathCountdown),
 	CR_MEMBER(delayedWreckLevel),
 	CR_MEMBER(restTime),
 	CR_MEMBER(weapons),

@@ -81,26 +81,35 @@ ScopedFileLock::~ScopedFileLock()
 #endif
 }
 
-void ConfigHandler::Delete(const std::string& name)
+void ConfigHandler::Delete(const std::string& name, bool inOverlay)
 {
-	FILE* file = fopen(filename.c_str(), "r+");
-	if (file) {
-		ScopedFileLock scoped_lock(fileno(file), true);
-		Read(file);
-		std::map<std::string, std::string>::iterator pos = data.find(name);
-		if (pos != data.end())
-			data.erase(pos);
-		Write(file);
-	}
-	else {
-		std::map<std::string, std::string>::iterator pos = data.find(name);
-		if (pos != data.end())
-			data.erase(pos);
-	}
+	if (inOverlay) {
+		std::map<std::string, std::string>::iterator pos = overlay.find(name);
+		if (pos != overlay.end()) {
+			overlay.erase(pos);
+		}
+	} else {
+		FILE* file = fopen(filename.c_str(), "r+");
+		if (file) {
+			ScopedFileLock scoped_lock(fileno(file), true);
+			Read(file);
+			std::map<std::string, std::string>::iterator pos = data.find(name);
+			if (pos != data.end()) {
+				data.erase(pos);
+			}
+			Write(file);
+		} else {
+			std::map<std::string, std::string>::iterator pos = data.find(name);
+			if (pos != data.end()) {
+				data.erase(pos);
+			}
+		}
 
-	// must be outside above 'if (file)' block because of the lock.
-	if (file)
-		fclose(file);
+		// must be outside above 'if (file)' block because of the lock.
+		if (file) {
+			fclose(file);
+		}
+	}
 }
 
 /**
@@ -154,21 +163,29 @@ ConfigHandler::~ConfigHandler()
 }
 
 
+bool ConfigHandler::IsSet(const std::string& key) const
+{
+	return ((overlay.find(key) != overlay.end()) || (data.find(key) != data.end()));
+}
+
+
 /**
  * @brief Gets string value from config
  *
  * If string value isn't set, it returns def AND it sets data[name] = def,
  * so the defaults end up in the config file.
  */
-string ConfigHandler::GetString(const string name, const string def)
+string ConfigHandler::GetString(const string name, const string def, bool setInOverlay)
 {
-	std::map<string,string>::iterator pos = overlay.find(name);
-	if (pos != overlay.end())
+	std::map<string,string>::iterator pos;
+	pos = overlay.find(name);
+	if (pos != overlay.end()) {
 		return pos->second;
+	}
 
 	pos = data.find(name);
 	if (pos == data.end()) {
-		SetString(name, def);
+		SetString(name, def, setInOverlay);
 		return def;
 	}
 	return pos->second;
@@ -193,29 +210,42 @@ string ConfigHandler::GetString(const string name, const string def)
  * This would happen if e.g. unitsync and spring would access
  * the config file at the same time, if we would not lock.
  */
-void ConfigHandler::SetString(const string name, const string value)
+void ConfigHandler::SetString(const string name, const string value, bool useOverlay)
 {
+	// if we set something to be persisted,
+	// we do want to override the overlay value
+	if (!useOverlay) {
+		overlay.erase(name);
+	}
+
 	// Don't do anything if value didn't change.
 	// Can't use GetString because of risk for infinite loop.
 	// (GetString writes default value if key isn't present.)
-	std::map<string,string>::iterator pos = data.find(name);
-	if (pos != data.end() && pos->second == value) {
+	std::map<string, string>& dataCont = useOverlay ? overlay : data;
+	std::map<string,string>::iterator pos = dataCont.find(name);
+	if (pos != dataCont.end() && pos->second == value) {
 		return;
 	}
 
-	FILE* file = fopen(filename.c_str(), "r+");
+	if (useOverlay) {
+		overlay[name] = value;
+	} else {
+		FILE* file = fopen(filename.c_str(), "r+");
 
-	if (file) {
-		ScopedFileLock scoped_lock(fileno(file), true);
-		Read(file);
-		data[name] = value;
-		Write(file);
-	} else
-		data[name] = value;
+		if (file) {
+			ScopedFileLock scoped_lock(fileno(file), true);
+			Read(file);
+			data[name] = value;
+			Write(file);
+		} else {
+			data[name] = value;
+		}
 
-	// must be outside above 'if (file)' block because of the lock.
-	if (file)
-		fclose(file);
+		// must be outside above 'if (file)' block because of the lock.
+		if (file) {
+			fclose(file);
+		}
+	}
 
 	boost::mutex::scoped_lock lck(observerMutex);
 	changedValues[name] = value;
@@ -237,16 +267,9 @@ void ConfigHandler::Update()
 	changedValues.clear();
 }
 
-/**
- * @brief set configure option for this instance only
- */
 void ConfigHandler::SetOverlay(std::string name, std::string value)
 {
-	std::map<string,string>::iterator pos = overlay.find(name);
-	if (pos != overlay.end() && pos->second == value)
-		return;
-	else
-		overlay[name] = value;
+	SetString(name, value, true);
 }
 
 /**
@@ -323,7 +346,7 @@ void ConfigHandler::AppendLine(char* line) {
 
 	char* line_stripped = Strip(line, strchr(line, '\0'));
 
-	if (strlen(line_stripped) > 0) {
+	if (*line_stripped != '\0') {
 		// line is not empty
 		if (line_stripped[0] == '#') {
 			// a comment line
@@ -370,6 +393,6 @@ void ConfigHandler::Write(FILE* file)
 }
 
 
-const std::map<std::string, std::string> &ConfigHandler::GetData() {
+const std::map<std::string, std::string> &ConfigHandler::GetData() const {
 	return data;
 }

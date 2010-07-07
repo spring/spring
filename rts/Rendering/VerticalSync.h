@@ -12,7 +12,7 @@ class CVerticalSync {
 		void SetFrames(int frames);
 		int  GetFrames() const { return frames; }
 
-		void Delay();
+		void Delay() const;
 		
 	private:
 		int frames;

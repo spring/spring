@@ -62,7 +62,7 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
-: locked(false)
+: locked(false), activeButton(-1), wasLocked(false)
 {
 	lastx = 300;
 	lasty = 200;
@@ -98,6 +98,10 @@ CMouseHandler::CMouseHandler()
 	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
 
 	crossSize = configHandler->Get("CrossSize", 10.0f);
+
+	dragScrollThreshold = configHandler->Get("MouseDragScrollThreshold", 0.3f);
+
+	configHandler->NotifyOnChange(this);
 }
 
 CMouseHandler::~CMouseHandler()
@@ -310,11 +314,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	// Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
-	// (the latter is determined by the time the mouse was held down:
-	//  <= 0.3 s means a camera mode switch, > 0.3 s means a drag scroll)
+	//! Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
+	//! the latter is determined by the time the mouse was held down:
+	//! switch (dragScrollThreshold)
+	//!   <= means a camera mode switch
+	//!    > means a drag scroll
 	if (button == SDL_BUTTON_MIDDLE) {
-		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f))
+		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - dragScrollThreshold))
 			ToggleState();
 		return;
 	}
@@ -896,3 +902,12 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 
 
 /******************************************************************************/
+
+void CMouseHandler::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key == "MouseDragScrollThreshold") {
+		// get the new value as float
+		// the default value here will never be used
+		dragScrollThreshold = configHandler->Get(key, 0.3f);
+	}
+}

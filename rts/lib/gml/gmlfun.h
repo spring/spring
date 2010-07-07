@@ -13,6 +13,7 @@
 #include <set>
 #include <map>
 #include "LogOutput.h"
+#include <SDL_timer.h>
 #include <string.h>
 
 #define GML_ENABLE_DEBUG 0
@@ -316,21 +317,40 @@ EXTERN inline int gmlSizeOf(int datatype) {
 
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
+extern unsigned drawCallInTime;
 extern lua_State *gmlCurrentLuaState;
 class gmlCallDebugger {
 public:
 	bool set;
+	unsigned drawtime;
 	gmlCallDebugger(lua_State *L) { 
 		if(!gmlCurrentLuaState) {
 			gmlCurrentLuaState = L;
 			set=true;
+			if(gmlThreadNumber == 0)
+				drawtime = SDL_GetTicks();
+			else
+				drawtime = 0;
 		} 
 		else 
 			set = false;
 	}
 	~gmlCallDebugger() {
-		if(set)
+		if(set) {
 			gmlCurrentLuaState = NULL;
+			if(drawtime) {
+				drawCallInTime += (SDL_GetTicks() - drawtime);
+				drawtime = 0;
+			}
+		}
+	}
+	static unsigned getDrawCallInTime() {
+		extern volatile int gmlMultiThreadSim, gmlStartSim;
+		unsigned ret = 0;
+		if(gmlMultiThreadSim && gmlStartSim)
+			ret = drawCallInTime;
+		drawCallInTime = 0;
+		return ret;
 	}
 };
 #define GML_CURRENT_LUA() (gmlCurrentLuaState ? "LUA" : "Unknown")

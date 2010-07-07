@@ -31,6 +31,7 @@ CR_REG_METADATA(CBeamLaser,(
 CBeamLaser::CBeamLaser(CUnit* owner)
 : CWeapon(owner),
 	oldDir(ZeroVector),
+	damageMul(0),
 	lastFireFrame(0)
 {
 }

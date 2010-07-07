@@ -79,9 +79,9 @@ public:
 	const FeatureSet& GetFeatureSet(int texType) { return features[texType]; }
 	const ProjectileSet& GetProjectileSet(int texType) { return projectiles[texType]; }
 
-	const UnitRenderBin& GetUnitBin() { return units; }
-	const FeatureRenderBin& GetFeatureBin() { return features; }
-	const ProjectileRenderBin& GetProjectileBin() { return projectiles; }
+	const UnitRenderBin& GetUnitBin() const { return units; }
+	const FeatureRenderBin& GetFeatureBin() const { return features; }
+	const ProjectileRenderBin& GetProjectileBin() const { return projectiles; }
 
 	UnitRenderBin& GetUnitBinMutable() { return units; }
 	FeatureRenderBin& GetFeatureBinMutable() { return features; }

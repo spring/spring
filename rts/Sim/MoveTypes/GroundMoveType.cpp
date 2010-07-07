@@ -157,8 +157,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextObstacleAvoidanceUpdate(0),
 	lastTrackUpdate(0),
 
-	lastHeatRequestFrame(0),
-
 	skidding(false),
 	flying(false),
 	reversing(false),
@@ -321,7 +319,7 @@ void CGroundMoveType::Update()
 					SetDeltaSpeed(wantReverse);
 				}
 
-				UpdateHeatMap();
+				pathManager->UpdatePath(owner, pathId);
 
 			} else {
 				SetMainHeading();
@@ -342,7 +340,7 @@ void CGroundMoveType::Update()
 
 		oldPos = owner->pos;
 
-		if (groundDecals && owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
+		if (owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
 			((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			lastTrackUpdate = gs->frameNum;
 			groundDecals->UnitMoved(owner);
@@ -1156,39 +1154,10 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 }
 
 
-unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos,
-		float goalRadius)
+unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos, float goalRadius)
 {
-	if (lastHeatRequestFrame + 60 < gs->frameNum) {
-		pathManager->SetHeatMappingEnabled(true);
-		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
-		pathManager->SetHeatMappingEnabled(false);
-		lastHeatRequestFrame = gs->frameNum;
-	} else {
-		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
-	}
+	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 	return pathId;
-}
-
-
-void CGroundMoveType::UpdateHeatMap()
-{
-	if (!pathId)
-		return;
-
-#ifndef USE_GML
-	static std::vector<int2> points;
-#else
-	std::vector<int2> points;
-#endif
-
-	pathManager->GetDetailedPathSquares(pathId, points);
-
-	float scale = 1.0f / points.size();
-	int i = points.size();
-	for (std::vector<int2>::iterator it = points.begin(); it != points.end(); ++it) {
-		pathManager->SetHeatOnSquare(it->x, it->y, (i--) * scale * owner->mobility->heatProduced, owner->id);
-	}
 }
 
 
@@ -1350,7 +1319,7 @@ void CGroundMoveType::StartEngine() {
 
 		// activate "engine" only if a path was found
 		if (pathId) {
-			UpdateHeatMap();
+			pathManager->UpdatePath(owner, pathId);
 			etaFailures = 0;
 			owner->isMoving = true;
 			owner->script->StartMoving();
@@ -1712,7 +1681,6 @@ void CGroundMoveType::CreateLineTable(void)
 			float dz=to.z-start.z;
 			float xp=start.x;
 			float zp=start.z;
-			float xn,zn;
 
 			if(floor(start.x)==floor(to.x)){
 				if(dz>0)
@@ -1729,6 +1697,7 @@ void CGroundMoveType::CreateLineTable(void)
 					for(int a=-1;a>floor(to.x);--a)
 						lineTable[yt][xt].push_back(int2(a,0));
 			} else {
+				float xn,zn;
 				bool keepgoing=true;
 				while(keepgoing){
 					if(dx>0){

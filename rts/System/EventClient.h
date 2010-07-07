@@ -101,7 +101,7 @@ class CEventClient
 		virtual void UnitCloaked(const CUnit* unit);
 		virtual void UnitDecloaked(const CUnit* unit);
 
-		virtual void RenderUnitCreated(const CUnit* unit);
+		virtual void RenderUnitCreated(const CUnit* unit, int cloaked);
 		virtual void RenderUnitDestroyed(const CUnit* unit);
 		virtual void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);

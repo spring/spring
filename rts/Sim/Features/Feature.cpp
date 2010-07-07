@@ -13,7 +13,6 @@
 #include "myMath.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
-#include "Rendering/FeatureDrawer.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -72,9 +71,10 @@ CFeature::CFeature():
 	myFire(0),
 	fireTime(0),
 	emitSmokeTime(0),
-	solidOnTop(0)
+	solidOnTop(0),
+	tempalpha(1)
 {
-	immobile=true;
+	immobile = true;
 	physicalState = OnGround;
 }
 

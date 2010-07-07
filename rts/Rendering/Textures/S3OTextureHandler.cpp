@@ -44,25 +44,19 @@ CS3OTextureHandler::~CS3OTextureHandler()
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-	model->textureType=0;
-	loadTextures.push_back(model);
+	model->textureType=-1;
 #else
 	model->textureType=LoadS3OTextureNow(model->tex1, model->tex2);
 #endif
 }
 
 void CS3OTextureHandler::Update() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	GML_STDMUTEX_LOCK(model); // Update
-
-	for(std::vector<S3DModel *>::iterator i=loadTextures.begin(); i!=loadTextures.end();++i)
-		(*i)->textureType=LoadS3OTextureNow((char*)(*i)->tex1.c_str(),(char*)(*i)->tex2.c_str());
-	loadTextures.clear();
-#endif
 }
 
 int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2)
 {
+	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
+
 	string totalName=tex1+tex2;
 
 	if(s3oTextureNames.find(totalName)!=s3oTextureNames.end()){

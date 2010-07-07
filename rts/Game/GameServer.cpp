@@ -48,6 +48,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
+#include "FileSystem/SimpleParser.h"
 #include "Player.h"
 #include "IVideoCapturing.h"
 #include "Server/GameParticipant.h"
@@ -146,6 +147,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	UpdateSpeedControl(--speedControl + 1);
 
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
+	whiteListAdditionalPlayers = configHandler->Get("whiteListAdditionalPlayers", true);
 
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(hostport));
@@ -770,7 +772,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					{
 						PrivateMessage(a, "Spectators cannot pause the game" );
 					}
-					else if (curSpeedCtrl > 0 && !isPaused &&
+					else if (curSpeedCtrl > 0 && !isPaused && !players[a].isLocal &&
 						(players[a].spectator || (curSpeedCtrl > 0 &&
 						(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						(serverframenum - players[a].lastFrameResponse) - medianPing > internalSpeed * GAME_SPEED / 2)))) {
@@ -1764,6 +1766,23 @@ void CGameServer::PushAction(const Action& action)
 		if (isPaused && !demoReader)
 			CreateNewFrame(true, true);
 	}
+	else if (action.command == "adduser")
+	{
+		if (!action.extra.empty())
+		{
+			// split string by whitespaces
+			const std::vector<std::string> tokens = CSimpleParser::Tokenize(action.extra);
+
+			if (tokens.size() > 1) {
+				std::string name = tokens[0];
+				std::string password = tokens[1];
+				playerName_passwd[name] = password;
+				logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+			} else {
+				logOutput.Print("Failed to add player/spectator password. usage: /adduser <player-name> <password>");
+			}
+		}
+	}
 #ifdef DEDICATED // we already have a quit command in the client
 	else if (action.command == "kill")
 	{
@@ -2025,6 +2044,39 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
+	if(errmsg == "" && !isLocal) {
+		std::string correctPasswd = "";
+		bool passwdFound = false;
+		bool userFound = hisNewNumber < players.size();
+		if ( userFound )  {
+			// look for players password in the list from the start script only if he's not about to be added
+			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("password");
+			passwdFound = (it != players[hisNewNumber].GetAllValues().end());
+			if (passwdFound) {
+				correctPasswd = it->second;
+			}
+			if (passwdFound) {
+				if (passwd != correctPasswd) {
+					errmsg = "Incorrect password";
+				}
+			}
+		} else if ((demoReader||allowAdditionalPlayers)&&whiteListAdditionalPlayers) {
+			// look for players password in the list received over the autohost management connection
+			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(name);
+			userFound = passwdFound = (pi != playerName_passwd.end());
+			if (passwdFound) {
+				correctPasswd = pi->second;
+			}
+			if (userFound) {
+				if (passwd != correctPasswd) {
+					errmsg = "Incorrect password";
+				}
+			} else {
+				errmsg = "Username not authorized to connect";
+			}
+		}
+	}
+
 	if (hisNewNumber >= players.size() && errmsg == "") {
 		if (demoReader || allowAdditionalPlayers) {
 			GameParticipant buf;
@@ -2039,11 +2091,6 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	if(hisNewNumber < players.size() && errmsg == "" && !isLocal) {
-		GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
-		if (it != players[hisNewNumber].GetAllValues().end() && passwd != it->second)
-			errmsg = "Incorrect password";
-	}
 
 	if(hisNewNumber >= players.size() || errmsg != "") {
 		Message(str(format(" -> %s") %errmsg));

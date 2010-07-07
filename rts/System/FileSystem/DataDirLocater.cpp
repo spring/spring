@@ -208,8 +208,8 @@ void DataDirLocater::LocateDataDirs()
 	// e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	dd_appData += "\\Spring";
 #elif     defined(MACOSX_BUNDLE)
-	const std::string dd_curWorkDirData = dd_curWorkDir + "/" + SubstEnvVars(DATADIR));
-	const std::string dd_curWorkDirLib  = dd_curWorkDir + "/" + SubstEnvVars(LIBDIR));
+	const std::string dd_curWorkDirData = dd_curWorkDir + "/" + SubstEnvVars(DATADIR);
+	const std::string dd_curWorkDirLib  = dd_curWorkDir + "/" + SubstEnvVars(LIBDIR);
 #else // *nix (-OSX)
 	// settings in /etc
 	std::string dd_etc = "";

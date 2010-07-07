@@ -22,6 +22,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 #include "System/LogOutput.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 
@@ -39,7 +40,6 @@ CShadowHandler::CShadowHandler(void)
 
 	drawShadows   = false;
 	inShadowPass  = false;
-	showShadowMap = false;
 	shadowTexture = 0;
 	drawTerrainShadow = true;
 
@@ -191,6 +191,8 @@ bool CShadowHandler::InitDepthTarget()
 	}
 	glGenTextures(1,&shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
+	float one[4] = {1.0f,1.0f,1.0f,1.0f};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -198,6 +200,8 @@ bool CShadowHandler::InitDepthTarget()
 	if (useColorTexture) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	} else {
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
@@ -221,7 +225,7 @@ void CShadowHandler::DrawShadowPasses(void)
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
 		glEnable(GL_CULL_FACE);
-	//	glCullFace(GL_FRONT);
+		glCullFace(GL_BACK);
 
 		if (drawTerrainShadow)
 			readmap->GetGroundDrawer()->DrawShadowPass();
@@ -260,6 +264,8 @@ void CShadowHandler::CreateShadows(void)
 	glShadeModel(GL_FLAT);
 	glColor4f(1, 1, 1, 1);
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
 
 	glViewport(0, 0, shadowMapSize, shadowMapSize);
 
@@ -344,42 +350,6 @@ void CShadowHandler::CreateShadows(void)
 	//fb.Unbind();
 	//glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 }
-
-
-void CShadowHandler::DrawShadowTex(void)
-{
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
-	glColor3f(1,1,1);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D,shadowTexture);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	float3 verts[] = {
-		float3(0,0,1),
-		float3(0, 0.5f, 1),
-		float3(0.5f, 0.5f, 1.f),
-		float3(0.5f, 0, 1),
-	};
-
-	GLfloat texcoords[] = {
-		0.f, 0.f,
-		0.f, 1.f,
-		1.f, 1.f,
-		1.f, 0.f,
-	};
-
-	glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
-	glVertexPointer(3, GL_FLOAT, 0, verts);
-	glDrawArrays(GL_QUADS, 0, 4);
-
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-}
-
 
 
 void CShadowHandler::CalcMinMaxView(void)
