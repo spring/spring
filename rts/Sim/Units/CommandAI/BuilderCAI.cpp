@@ -553,18 +553,15 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// repair unit
-		unsigned int uid = (unsigned int) c.params[0];
-		CUnit* unit = NULL;
+		CUnit* unit = uh->GetUnit(c.params[0]);
 
-		if (uid >= uh->MaxUnits()) {
+		if (unit == NULL) {
 			return;
 		}
 
-		unit = uh->units[uid];
-
 		if (tempOrder && owner->moveState == 1) {
 			// limit how far away we go
-			if (unit && LinePointDist(commandPos1, commandPos2, unit->pos) > 500) {
+			if (LinePointDist(commandPos1, commandPos2, unit->pos) > 500) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -575,7 +572,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			const float3 pos(c.params[1], c.params[2], c.params[3]);
 			const float radius = c.params[4] + 100.0f; // do not walk too far outside repair area
 
-			if (unit && ((pos - unit->pos).SqLength2D() > radius * radius ||
+			if (((pos - unit->pos).SqLength2D() > radius * radius ||
 				(fac->curBuild == unit && unit->isMoving && !ObjInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
@@ -585,12 +582,12 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 		// don't consider units under construction irreparable
 		// even if they can be repaired
-		if (unit && (unit->beingBuilt || unit->unitDef->repairable)
+		if ((unit->beingBuilt || unit->unitDef->repairable)
 		    && (unit->health < unit->maxHealth) &&
 		    ((unit != owner) || owner->unitDef->canSelfRepair) &&
 		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
 			(!(c.options & INTERNAL_ORDER) || (c.options & CONTROL_KEY) || !IsUnitBeingReclaimed(unit, owner)) &&
-		    UpdateTargetLostTimer(uid)) {
+		    UpdateTargetLostTimer(unit->id)) {
 
 			if (f3SqDist(unit->pos, fac->pos) < Square(fac->buildDistance + unit->radius - 8.0f)) {
 				StopMove();
@@ -633,20 +630,25 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// capture unit
-		CUnit* unit = uh->units[(int)c.params[0]];
+		CUnit* unit = uh->GetUnit(c.params[0]);
+
+		if (unit == NULL) {
+			return;
+		}
 
 		if (c.params.size() == 5) {
 			const float3 pos(c.params[1], c.params[2], c.params[3]);
 			const float radius = c.params[4] + 100; // do not walk too far outside capture area
 
-			if (unit && ((pos - unit->pos).SqLength2D() > (radius * radius) ||
+			if (((pos - unit->pos).SqLength2D() > (radius * radius) ||
 				(fac->curCapture == unit && unit->isMoving && !ObjInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
 				return;
 			}
 		}
-		if (unit && unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer(unit->id)) {
+
+		if (unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer(unit->id)) {
 			if (f3SqDist(unit->pos, fac->pos) < Square(fac->buildDistance + unit->radius - 8)) {
 				StopMove();
 				fac->SetCaptureTarget(unit);
@@ -686,19 +688,19 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 {
 	assert(owner->unitDef->canGuard);
 	CBuilder* fac = (CBuilder*) owner;
-	CUnit* guarded = uh->units[(int)c.params[0]];
+	CUnit* guarded = uh->GetUnit(c.params[0]);
 
-	if (guarded && guarded != owner && UpdateTargetLostTimer((int)c.params[0])) {
+	if (guarded != NULL && guarded != owner && UpdateTargetLostTimer(guarded->id)) {
 		if (CBuilder* b = dynamic_cast<CBuilder*>(guarded)) {
 			if (b->terraforming) {
 				if (f3SqDist(fac->pos, b->terraformCenter) <
 						Square((fac->buildDistance * 0.8f) + (b->terraformRadius * 0.7f))) {
 					StopMove();
-					owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance*0.9f, false);
+					owner->moveType->KeepPointingTo(b->terraformCenter, fac->buildDistance * 0.9f, false);
 					fac->HelpTerraform(b);
 				} else {
 					StopSlowGuard();
-					SetGoal(b->terraformCenter,fac->pos,fac->buildDistance*0.7f+b->terraformRadius*0.6f);
+					SetGoal(b->terraformCenter, fac->pos, fac->buildDistance * 0.7f + b->terraformRadius * 0.6f);
 				}
 				return;
 			} else if (b->curReclaim && owner->unitDef->canReclaim){
@@ -803,19 +805,24 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 
 void CBuilderCAI::ExecuteReclaim(Command& c)
 {
-	CBuilder* fac=(CBuilder*)owner;
+	CBuilder* fac = (CBuilder*) owner;
 	assert(owner->unitDef->canReclaim);
+
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		const int signedId = (int) c.params[0];
+
 		if (signedId < 0) {
 			logOutput.Print("Trying to reclaim unit or feature with id < 0 (%i), aborting.", signedId);
 			return;
 		}
-		const unsigned int id = signedId;
-		if (id >= uh->MaxUnits()) { // reclaim feature
-		CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
-			if (feature) {
-				if(((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingResurrected(feature->id, owner)) ||
+
+		const unsigned int uid = signedId;
+
+		if (uid >= uh->MaxUnits()) { // reclaim feature
+			CFeature* feature = featureHandler->GetFeature(uid - uh->MaxUnits());
+
+			if (feature != NULL) {
+				if (((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingResurrected(feature->id, owner)) ||
 					!ReclaimObject(feature)) {
 					StopMove();
 					FinishCommand();
@@ -829,15 +836,22 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				RemoveUnitFromFeatureReclaimers(owner);
 			}
 			RemoveUnitFromReclaimers(owner);
+		} else { // reclaim unit
+			CUnit* unit = uh->GetUnitUnsafe(uid);
 
-		} else {                  // reclaim unit
-			CUnit* unit = uh->units[id];
-			if(c.params.size() == 5) {
-				float3 pos(c.params[1], c.params[2], c.params[3]);
-				float radius=c.params[4]+100; // do not walk too far outside reclaim area
-				if(unit && ((pos-unit->pos).SqLength2D()>radius*radius ||
-					(fac->curReclaim == unit && unit->isMoving && !ObjInBuildRange(unit)) ||
-					(unit->unitDef->builder && !unit->commandAI->commandQue.empty() && teamHandler->Ally(owner->allyteam, unit->allyteam)))) {
+			if (unit != NULL && c.params.size() == 5) {
+				const float3 pos(c.params[1], c.params[2], c.params[3]);
+				const float radius = c.params[4] + 100.0f; // do not walk too far outside reclaim area
+
+				const bool outOfReclaimRange =
+					((pos - unit->pos).SqLength2D() > radius * radius) ||
+					(fac->curReclaim == unit && unit->isMoving && !ObjInBuildRange(unit));
+				const bool busyAlliedBuilder =
+					unit->unitDef->builder &&
+					!unit->commandAI->commandQue.empty() &&
+					teamHandler->Ally(owner->allyteam, unit->allyteam);
+
+				if (outOfReclaimRange || busyAlliedBuilder) {
 					StopMove();
 					RemoveUnitFromReclaimers(owner);
 					FinishCommand();
@@ -845,8 +859,9 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 					return;
 				}
 			}
-			if(unit && unit!=owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(id) && unit->AllowedReclaim(owner) ){
-				if(!ReclaimObject(unit)){
+
+			if (unit != NULL && unit != owner && unit->unitDef->reclaimable && UpdateTargetLostTimer(unit->id) && unit->AllowedReclaim(owner)) {
+				if (!ReclaimObject(unit)) {
 					StopMove();
 					FinishCommand();
 				} else {
@@ -856,6 +871,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 				RemoveUnitFromReclaimers(owner);
 				FinishCommand();
 			}
+
 			RemoveUnitFromFeatureReclaimers(owner);
 		}
 	} else if (c.params.size() == 4) {
@@ -924,7 +940,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 			} else {
 				RemoveUnitFromResurrecters(owner);
 
-				if (fac->lastResurrected && uh->units[fac->lastResurrected] && owner->unitDef->canRepair) {
+				if (fac->lastResurrected && uh->GetUnitUnsafe(fac->lastResurrected) != NULL && owner->unitDef->canRepair) {
 					// resurrection finished, start repair
 					c.id = CMD_REPAIR; // kind of hackery to overwrite the current order i suppose
 					c.params.clear();
@@ -1671,10 +1687,10 @@ void CBuilderCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_GUARD: {
-				const CUnit* unit = uh->units[int(ci->params[0])];
-				if((unit != NULL) && isTrackable(unit)) {
-					const float3 endPos =
-						helper->GetUnitErrorPos(unit, owner->allyteam);
+				const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+				if ((unit != NULL) && isTrackable(unit)) {
+					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
@@ -1691,10 +1707,10 @@ void CBuilderCAI::DrawCommands(void)
 			case CMD_ATTACK:
 			case CMD_DGUN: {
 				if (ci->params.size() == 1) {
-					const CUnit* unit = uh->units[int(ci->params[0])];
-					if((unit != NULL) && isTrackable(unit)) {
-						const float3 endPos =
-						  helper->GetUnitErrorPos(unit, owner->allyteam);
+					const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+					if ((unit != NULL) && isTrackable(unit)) {
+						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
@@ -1722,9 +1738,10 @@ void CBuilderCAI::DrawCommands(void)
 								signedId);
 						break;
 					}
-					const unsigned int id = signedId;
-					if (id >= uh->MaxUnits()) {
 
+					const unsigned int id = signedId;
+
+					if (id >= uh->MaxUnits()) {
 						GML_RECMUTEX_LOCK(feat); // DrawCommands
 
 						CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
@@ -1733,10 +1750,10 @@ void CBuilderCAI::DrawCommands(void)
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					} else {
-						const CUnit* unit = uh->units[id];
-						if((unit != NULL) && (unit != owner) && isTrackable(unit)) {
-							const float3 endPos =
-								helper->GetUnitErrorPos(unit, owner->allyteam);
+						const CUnit* unit = uh->GetUnitUnsafe(id);
+
+						if ((unit != NULL) && (unit != owner) && isTrackable(unit)) {
+							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					}
@@ -1756,31 +1773,26 @@ void CBuilderCAI::DrawCommands(void)
 					lineDrawer.RestartWithColor(color);
 				} else {
 					if (ci->params.size() >= 1) {
-						const unsigned int uid = (unsigned int) ci->params[0];
-						const CUnit* unit = NULL;
+						const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-						if (uid < uh->MaxUnits()) {
-							unit = uh->units[uid];
-
-							if ((unit != NULL) && isTrackable(unit)) {
-								const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-								lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
-							}
+						if ((unit != NULL) && isTrackable(unit)) {
+							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
+							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
 						}
 					}
 				}
 				break;
 			}
-			case CMD_LOAD_ONTO:{
-				const CUnit* unit = uh->units[int(ci->params[0])];
+			case CMD_LOAD_ONTO: {
+				const CUnit* unit = uh->GetUnitUnsafe(ci->params[0]);
 				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
 				break;
 			}
-			case CMD_WAIT:{
+			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
 				break;
 			}
-			case CMD_SELFD:{
+			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}

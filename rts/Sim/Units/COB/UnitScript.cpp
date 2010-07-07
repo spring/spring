@@ -598,11 +598,10 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	CTransportUnit* tu=dynamic_cast<CTransportUnit*>(unit);
+	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
 
-	if(tu && uh->units[u]){
-		//logOutput.Print("attach");
-		tu->AttachUnit(uh->units[u],piece);
+	if (tu && uh->units[u]) {
+		tu->AttachUnit(uh->units[u], piece);
 	}
 #endif
 }
@@ -611,9 +610,9 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	CTransportUnit* tu=dynamic_cast<CTransportUnit*>(unit);
+	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
 
-	if(tu && uh->units[u]){
+	if (tu && uh->units[u]) {
 		tu->DetachUnit(uh->units[u]);
 	}
 #endif
@@ -793,7 +792,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 
 #ifndef _CONSOLE
-	switch(val)
+	switch (val)
 	{
 	case ACTIVATION:
 		if (unit->activated)
@@ -807,15 +806,17 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case STANDINGFIREORDERS:
 		return unit->fireState;
 		break;
-	case HEALTH:{
+	case HEALTH: {
 		if (p1 <= 0)
-			return (int) ((unit->health/unit->maxHealth)*100.0f);
-		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
+			return int((unit->health / unit->maxHealth) * 100.0f);
+
+		const CUnit* u = uh->GetUnit(p1);
+
 		if (u == NULL)
 			return 0;
 		else
-			return (int) ((u->health/u->maxHealth)*100.0f);
-		}
+			return int((u->health / u->maxHealth) * 100.0f);
+	}
 	case INBUILDSTANCE:
 		if (unit->inBuildStance)
 			return 1;
@@ -827,61 +828,72 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return 0;
 		break;
-	case PIECE_XZ:{
+	case PIECE_XZ: {
 		if (!PieceExists(p1)) {
 			ShowScriptError("Invalid piecenumber for get piece_xz");
 			break;
 		}
 		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return PACKXZ(pos.x, pos.z);}
-	case PIECE_Y:{
+		return PACKXZ(pos.x, pos.z);
+	}
+	case PIECE_Y: {
 		if (!PieceExists(p1)) {
 			ShowScriptError("Invalid piecenumber for get piece_y");
 			break;
 		}
 		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
-		return (int)(pos.y * COBSCALE);}
+		return int(pos.y * COBSCALE);
+	}
 	case UNIT_XZ: {
 		if (p1 <= 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
-		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
+
+		const CUnit* u = uh->GetUnit(p1);
+
 		if (u == NULL)
-			return PACKXZ(0,0);
+			return PACKXZ(0, 0);
 		else
-			return PACKXZ(u->pos.x, u->pos.z);}
+			return PACKXZ(u->pos.x, u->pos.z);
+	}
 	case UNIT_Y: {
-		//logOutput.Print("Unit-y %d", p1);
 		if (p1 <= 0)
-			return (int)(unit->pos.y * COBSCALE);
-		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
+			return int(unit->pos.y * COBSCALE);
+
+		const CUnit* u = uh->GetUnit(p1);
+
 		if (u == NULL)
 			return 0;
 		else
-			return (int)(u->pos.y * COBSCALE);}
-	case UNIT_HEIGHT:{
+			return int(u->pos.y * COBSCALE);
+	}
+	case UNIT_HEIGHT: {
 		if (p1 <= 0)
-			return (int)(unit->radius * COBSCALE);
-		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
+			return int(unit->radius * COBSCALE);
+
+		const CUnit* u = uh->GetUnit(p1);
+
 		if (u == NULL)
 			return 0;
 		else
-			return (int)(u->radius * COBSCALE);}
+			return int(u->radius * COBSCALE);
+	}
 	case XZ_ATAN:
-		return (int)(RAD2TAANG*atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
+		return int(RAD2TAANG*atan2((float)UNPACKX(p1), (float)UNPACKZ(p1)) + 32768 - unit->heading);
 	case XZ_HYPOT:
-		return (int)(hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * COBSCALE);
+		return int(hypot((float)UNPACKX(p1), (float)UNPACKZ(p1)) * COBSCALE);
 	case ATAN:
-		return (int)(RAD2TAANG*atan2((float)p1, (float)p2));
+		return int(RAD2TAANG*atan2((float)p1, (float)p2));
 	case HYPOT:
-		return (int)hypot((float)p1, (float)p2);
+		return int(hypot((float)p1, (float)p2));
 	case GROUND_HEIGHT:
-		return (int)(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case GROUND_WATER_HEIGHT:
-		return (int)(ground->GetHeight2(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(ground->GetHeight2(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case BUILD_PERCENT_LEFT:
-		return (int)((1 - unit->buildProgress) * 100);
+		return int((1.0f - unit->buildProgress) * 100);
+
 	case YARD_OPEN:
 		if (yardOpen)
 			return 1;
@@ -895,10 +907,10 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else
 			return 0;
 	case VETERAN_LEVEL:
-		return (int)(100*unit->experience);
+		return int(100 * unit->experience);
 	case CURRENT_SPEED:
 		if (unit->moveType)
-			return (int)(unit->speed.Length()*COBSCALE);
+			return int(unit->speed.Length() * COBSCALE);
 		return 0;
 	case ON_ROAD:
 		return 0;
@@ -908,18 +920,27 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return uh->MaxUnits()-1;
 	case MY_ID:
 		return unit->id;
+
 	case UNIT_TEAM: {
-		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-		return u ? unit->team : 0;
+		const CUnit* u = uh->GetUnit(p1);
+		return (u != NULL)? unit->team : 0;
 	}
 	case UNIT_ALLIED: {
-		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-		if (u) return teamHandler->Ally (unit->allyteam, u->allyteam) ? 1 : 0;
+		const CUnit* u = uh->GetUnit(p1);
+
+		if (u != NULL) {
+			return teamHandler->Ally(unit->allyteam, u->allyteam) ? 1 : 0;
+		}
+
 		return 0;
 	}
 	case UNIT_BUILD_PERCENT_LEFT: {
-		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-		if (u) return (int)((1 - u->buildProgress) * 100);
+		const CUnit* u = uh->GetUnit(p1);
+
+		if (u != NULL) {
+			return int((1.0f - u->buildProgress) * 100);
+		}
+
 		return 0;
 	}
 	case MAX_SPEED:
@@ -945,18 +966,23 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		logOutput.Print("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
 		break;
 	case HEADING: {
-		if (p1 <= 0)
+		if (p1 <= 0) {
 			return unit->heading;
-		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-		if (u == NULL)
-			return -1;
-		else
+		}
+
+		const CUnit* u = uh->GetUnit(p1);
+
+		if (u != NULL) {
 			return u->heading;
+		}
+
+		return -1;
 	}
-	case TARGET_ID:
-		if (unit->weapons[p1-1]) {
-			CWeapon* weapon = unit->weapons[p1-1];
-			TargetType tType = weapon->targetType;
+	case TARGET_ID: {
+		if (unit->weapons[p1 - 1]) {
+			const CWeapon* weapon = unit->weapons[p1 - 1];
+			const TargetType tType = weapon->targetType;
+
 			if (tType == Target_Unit)
 				return unit->weapons[p1 - 1]->targetUnit->id;
 			else if (tType == Target_None)
@@ -967,8 +993,10 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				return -3;
 		}
 		return -4; // weapon does not exist
+	}
+
 	case LAST_ATTACKER_ID:
-		return unit->lastAttacker?unit->lastAttacker->id:-1;
+		return unit->lastAttacker? unit->lastAttacker->id: -1;
 	case LOS_RADIUS:
 		return unit->realLosRadius;
 	case AIR_LOS_RADIUS:
@@ -983,6 +1011,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return unit->sonarJamRadius;
 	case SEISMIC_RADIUS:
 		return unit->seismicRadius;
+
 	case DO_SEISMIC_PING:
 		float pingSize;
 		if (p1 == 0) {
@@ -992,17 +1021,20 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		unit->DoSeismicPing(pingSize);
 		break;
+
 	case CURRENT_FUEL:
 		return int(unit->currentFuel * float(COBSCALE));
 	case TRANSPORT_ID:
 		return unit->transporter?unit->transporter->id:-1;
+
 	case SHIELD_POWER: {
 		if (unit->shieldWeapon == NULL) {
 			return -1;
 		}
-		const CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+		const CPlasmaRepulser* shield = (CPlasmaRepulser*) unit->shieldWeapon;
 		return int(shield->curPower * float(COBSCALE));
 	}
+
 	case STEALTH: {
 		return unit->stealth ? 1 : 0;
 	}
@@ -1014,14 +1046,16 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case ALPHA_THRESHOLD: {
 		return int(unit->alphaThreshold * 255);
 	}
+
 	case COB_ID: {
 		if (p1 <= 0) {
 			return unit->unitDef->cobID;
 		} else {
-			const CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-			return (u == NULL) ? -1 : u->unitDef->cobID;
+			const CUnit* u = uh->GetUnit(p1);
+			return ((u == NULL)? -1 : u->unitDef->cobID);
 		}
 	}
+
  	case PLAY_SOUND: {
  		// FIXME: this can currently only work for CCobInstance, because Lua can not get sound IDs
  		// (however, for Lua scripts there is already LuaUnsyncedCtrl::PlaySoundFile)
@@ -1072,14 +1106,24 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		const int weaponID = p1 - 1;
 		const int targetID = p2;
 		const bool userTarget = !!p3;
+
 		if ((weaponID < 0) || (static_cast<size_t>(weaponID) >= unit->weapons.size())) {
 			return 0;
 		}
+
 		CWeapon* weapon = unit->weapons[weaponID];
-		if (weapon == NULL) { return 0; }
-		if ((targetID < 0) || (static_cast<size_t>(targetID) >= uh->MaxUnits())) { return 0; }
-		CUnit* target = (targetID == 0) ? NULL : uh->units[targetID];
-		return weapon->AttackUnit(target, userTarget) ? 1 : 0;
+
+		if (weapon == NULL) {
+			return 0;
+		}
+
+		CUnit* target = uh->GetUnit(targetID);
+
+		if (target != NULL) {
+			return weapon->AttackUnit(target, userTarget) ? 1 : 0;
+		}
+
+		return 0;
 	}
 	case SET_WEAPON_GROUND_TARGET: {
 		const int weaponID = p1 - 1;
@@ -1129,16 +1173,20 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case FLANK_B_MIN_DAMAGE:
 		return int((unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage) * COBSCALE);
 	case KILL_UNIT: {
-		if (p1 >= 0 && p1 < uh->MaxUnits()) {
-			CUnit *u = p1 ? uh->units[p1] : unit;
-			if (!u) {
-				return 0;
-			}
-			if (u->beingBuilt) u->KillUnit(false, true, NULL); // no explosions and no corpse for units under construction
-			else u->KillUnit(p2!=0, p3!=0, NULL);
-			return 1;
+		CUnit* u = uh->GetUnit(p1);
+
+		if (u == NULL) {
+			return 0;
 		}
-		return 0;
+
+		if (u->beingBuilt) {
+			// no explosions and no corpse for units under construction
+			u->KillUnit(false, true, NULL);
+		} else {
+			u->KillUnit(p2 != 0, p3 != 0, NULL);
+		}
+
+		return 1;
 	}
 	case WEAPON_RELOADSTATE: {
 		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
@@ -1233,27 +1281,27 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
 			const int varID = val - UNIT_VAR_START;
+
 			if (p1 == 0) {
 				return unitVars[varID];
 			}
 			else if (p1 > 0) {
 				// get the unit var for another unit
-				if (p1 < uh->MaxUnits()) {
-					const CUnit* u = uh->units[p1];
-					if (u != NULL && u->script != NULL) {
-						return u->script->unitVars[varID];
-					}
+				const CUnit* u = uh->GetUnit(p1);
+
+				if (u != NULL && u->script != NULL) {
+					return u->script->unitVars[varID];
 				}
 			}
 			else {
 				// set the unit var for another unit
 				p1 = -p1;
-				if (p1 < uh->MaxUnits()) {
-					CUnit* u = uh->units[p1];
-					if (u != NULL && u->script != NULL) {
-						u->script->unitVars[varID] = p2;
-						return 1;
-					}
+
+				CUnit* u = uh->GetUnit(p1);
+
+				if (u != NULL && u->script != NULL) {
+					u->script->unitVars[varID] = p2;
+					return 1;
 				}
 			}
 			return 0;
