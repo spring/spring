@@ -1246,7 +1246,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		}
 		case SDL_ACTIVEEVENT: {
 			CrashHandler::ClearDrawWDT(true);
-			if (event.active.state & SDL_APPACTIVE) {
+			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {
 				globalRendering->active = !!event.active.gain;
 				if (ISound::IsInitialized()) {
 					sound->Iconified(!event.active.gain);
