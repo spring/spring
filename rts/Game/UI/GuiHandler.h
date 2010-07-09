@@ -15,8 +15,8 @@ class CUnit;
 struct UnitDef;
 struct BuildInfo;
 class Action;
-class Command;
-class CommandDescription;
+struct Command;
+struct CommandDescription;
 
 class CGuiHandler : public CInputReceiver {
 public:
