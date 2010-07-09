@@ -4266,7 +4266,7 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 
 void CGuiHandler::PushLayoutCommand(const std::string& cmd) {
-	GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
+	GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 	layoutCommands.push_back(cmd);
 }
@@ -4274,7 +4274,7 @@ void CGuiHandler::PushLayoutCommand(const std::string& cmd) {
 void CGuiHandler::RunLayoutCommands() {
 	if (!layoutCommands.empty()) {
 		GML_RECMUTEX_LOCK(sim); // Draw
-		GML_STDMUTEX_LOCK(laycmd); // Draw
+		GML_RECMUTEX_LOCK(laycmd); // Draw
 
 		//! RunLayoutCommand can add new commands
 		//! and because it is never good to change the vector you are iterating over, we swap it with a new one
