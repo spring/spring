@@ -761,10 +761,10 @@ void CMouseHandler::DrawScrollCursor()
 	const int screenCenterX = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
 	const int screenCenterY = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
 
-	const float scaleL = std::fabs(std::min(0.0f,scrollx)) * crossMoveScale + 1.0f;
-	const float scaleT = std::fabs(std::min(0.0f,scrolly)) * crossMoveScale + 1.0f;
-	const float scaleR = std::fabs(std::max(0.0f,scrollx)) * crossMoveScale + 1.0f;
-	const float scaleB = std::fabs(std::max(0.0f,scrolly)) * crossMoveScale + 1.0f;
+	const float scaleL = fabs(std::min(0.0f,scrollx)) * crossMoveScale + 1.0f;
+	const float scaleT = fabs(std::min(0.0f,scrolly)) * crossMoveScale + 1.0f;
+	const float scaleR = fabs(std::max(0.0f,scrollx)) * crossMoveScale + 1.0f;
+	const float scaleB = fabs(std::max(0.0f,scrolly)) * crossMoveScale + 1.0f;
 
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_TRIANGLES);
