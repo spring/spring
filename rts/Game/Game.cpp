@@ -1853,7 +1853,18 @@ bool CGame::ActionPressed(const Action& action,
 				mouse->crossSize = std::max(1.0f, -mouse->crossSize);
 			}
 		} else {
-			mouse->crossSize = atof(action.extra.c_str());
+			float size, alpha, scale;
+			const char* args = action.extra.c_str();
+			const int argcount = sscanf(args, "%f %f %f", &size, &alpha, &scale);
+			if (argcount > 1) {
+				mouse->crossAlpha = alpha;
+				configHandler->Set("CrossAlpha", alpha);
+			}
+			if (argcount > 2) {
+				mouse->crossMoveScale = scale;
+				configHandler->Set("CrossMoveScale", scale);
+			}
+			mouse->crossSize = size;
 		}
 		configHandler->Set("CrossSize", mouse->crossSize);
 	}
@@ -2931,7 +2942,7 @@ bool CGame::DrawWorld()
 	cursorIcons.Draw();
 	cursorIcons.Clear();
 
-	mouse->Draw();
+	mouse->DrawSelectionBox();
 
 	guihandler->DrawMapStuff(0);
 

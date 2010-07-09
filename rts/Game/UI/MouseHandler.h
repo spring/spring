@@ -8,6 +8,7 @@
 #include <map>
 
 #include "MouseCursor.h"
+#include "Rendering/GL/myGL.h"
 
 static const int NUM_BUTTONS = 10;
 
@@ -18,24 +19,42 @@ class CCameraController;
 class CMouseHandler
 {
 public:
+	CMouseHandler();
+	virtual ~CMouseHandler();
+
 	void SetCursor(const std::string& cmdName);
 
-	bool hardwareCursor;
-	void UpdateHwCursor(); //calls SDL_ShowCursor, used for ingame hwcursor enabling
+	void UpdateHwCursor(); /// calls SDL_ShowCursor, used for ingame hwcursor enabling
 
+	void EmptyMsgQueUpdate(void);
 	void UpdateCursors();
+	std::string GetCurrentTooltip(void);
+
 	void HideMouse();
 	void ShowMouse();
-	void ToggleState(); // lock+hide (used by fps camera and middle click scrolling)
+	void ToggleState(); /// lock+hide (used by fps camera and middle click scrolling)
 	void WarpMouse(int x, int y);
-	void Draw(); // draw mousebox (selection box)
+
+	void DrawSelectionBox(); /// draw mousebox (selection box)
+	void DrawCursor();
+
 	void MouseRelease(int x, int y, int button);
 	void MousePress(int x, int y, int button);
 	void MouseMove(int x, int y, int dx, int dy);
 	void MouseWheel(float delta);
-	CMouseHandler();
-	virtual ~CMouseHandler();
 
+	bool AssignMouseCursor(const std::string& cmdName,
+	                       const std::string& fileName,
+	                       CMouseCursor::HotSpot hotSpot,
+	                       bool overwrite);
+	bool ReplaceMouseCursor(const std::string& oldName,
+	                        const std::string& newName,
+	                        CMouseCursor::HotSpot hotSpot);
+
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
+
+	bool hardwareCursor;
 	int lastx;
 	int lasty;
 	bool hide;
@@ -48,6 +67,8 @@ public:
 
 	/// locked mouse indicator size
 	float crossSize;
+	float crossAlpha;
+	float crossMoveScale;
 
 	struct ButtonPressEvt {
 		bool pressed;
@@ -61,41 +82,33 @@ public:
 		int movement;
 	};
 
-	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /* One-bottomed. */
+	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /// One-bottomed.
 	int activeButton;
 	float3 dir;
 
 	int soundMultiselID;
 
 	float cursorScale;
-	void DrawCursor(void);
-	std::string GetCurrentTooltip(void);
 
-	std::string cursorText; //current cursor name
-	CMouseCursor *currentCursor;
+	std::string cursorText; /// current cursor name
+	CMouseCursor* currentCursor;
+
+	/// Stores if the mouse was locked or not before going into direct control,
+	/// so we can restore it when we return to normal.
+	bool wasLocked;
+
 	std::map<std::string, CMouseCursor*> cursorFileMap;
 	std::map<std::string, CMouseCursor*> cursorCommandMap;
-	bool AssignMouseCursor(const std::string& cmdName,
-	                       const std::string& fileName,
-	                       CMouseCursor::HotSpot hotSpot,
-	                       bool overwrite);
-	bool ReplaceMouseCursor(const std::string& oldName,
-	                        const std::string& newName,
-	                        CMouseCursor::HotSpot hotSpot);
+
+private:
 	void SafeDeleteCursor(CMouseCursor* cursor);
-
-	/// @see ConfigHandler::ConfigNotifyCallback
-	void ConfigNotify(const std::string& key, const std::string& value);
-
-protected:
 	void LoadCursors();
 
-public:
-	void EmptyMsgQueUpdate(void);
+	void DrawScrollCursor();
+	void DrawFPSCursor();
 
-	/* Stores if the mouse was locked or not before going into direct control,
-	   so we can restore it when we return to normal. */
-	bool wasLocked;
+	float scrollx;
+	float scrolly;
 };
 
 extern CMouseHandler* mouse;
