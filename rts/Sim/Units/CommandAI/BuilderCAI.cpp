@@ -888,13 +888,15 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		// area reclaim
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float radius = c.params[3];
-		const bool recUnits = ((c.options & META_KEY) != 0);
+		const bool recUnits = !!(c.options & META_KEY);
+		const bool recEnemyOnly = (c.options & META_KEY) && (c.options & CONTROL_KEY);
+		const bool recSpecial = !!(c.options & CONTROL_KEY);
 
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
 		builder->StopBuild();
 
-		if (FindReclaimTargetAndReclaim(pos, radius, c.options, true, true, recUnits, false, false)) {
+		if (FindReclaimTargetAndReclaim(pos, radius, c.options, true, recUnits, false, false, recEnemyOnly, recSpecial)) {
 			inCommand=false;
 			SlowUpdate();
 			return;
@@ -1065,9 +1067,12 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	if (pos != goalPos) {
 		SetGoal(pos, owner->pos);
 	}
+	const bool resurrectMode = !!(c.options & ALT_KEY);
+	const bool reclaimEnemyMode = !!(c.options & META_KEY);
+	const bool reclaimEnemyOnlyMode = (c.options & CONTROL_KEY) && (c.options & META_KEY);
 	float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-	if ((owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
-	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+builder->buildDistance-8, c.options, true, (c.options & META_KEY))){
+	if (!reclaimEnemyOnlyMode && (owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
+	    FindRepairTargetAndRepair(curPosOnLine, 300*owner->moveState+builder->buildDistance-8, c.options, true, resurrectMode)){
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC1 != gs->frameNum) {  //avoid infinite loops
@@ -1076,7 +1081,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		}
 		return;
 	}
-	if ((c.options & META_KEY) && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
+	if (!reclaimEnemyOnlyMode && resurrectMode && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
 	    FindResurrectableFeatureAndResurrect(curPosOnLine, 300, c.options, false)) {
 		tempOrder = true;
 		inCommand = false;
@@ -1087,7 +1092,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (owner->unitDef->canReclaim && // Priority 3: Reclaim / reclaim non resurrectable (optional) / reclaim enemy units (optional)
-	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, true, (c.options & ALT_KEY), (c.options & META_KEY), (c.options & ALT_KEY))) {
+	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, false, resurrectMode, reclaimEnemyMode, reclaimEnemyOnlyMode, false)) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC3 != gs->frameNum) {  //avoid infinite loops
@@ -1323,29 +1328,26 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
                                                    float radius,
                                                    unsigned char options,
                                                    bool noResCheck,
-                                                   bool recAnyTeam,
                                                    bool recUnits,
-												   bool recNonRez,
-												   bool recEnemy)
+                                                   bool recNonRez,
+                                                   bool recEnemy,
+                                                   bool recEnemyOnly,
+                                                   bool recSpecial)
 {
 	const CSolidObject* best = NULL;
 	float bestDist = 1.0e30f;
 	bool stationary = false;
+	bool metal = false;
 	int rid = -1;
 
-	if(recUnits) {
+	if(recUnits || recEnemy || recEnemyOnly) {
 		const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 		for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* u = *ui;
 			if (u != owner
 			    && u->unitDef->reclaimable
-			    && (
-			        (!recEnemy && (u->team == owner->team))
-			        || (
-			            (recAnyTeam || (recEnemy && !teamHandler->Ally(owner->allyteam, u->allyteam)))
-			            && (u->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))
-			           )
-			       )
+			    && ((!recEnemy && !recEnemyOnly) || !teamHandler->Ally(owner->allyteam, u->allyteam))
+			    && (u->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))
 			   ) {
 				// do not reclaim friendly builders that are busy
 				if(!u->unitDef->builder || u->commandAI->commandQue.empty() || !teamHandler->Ally(owner->allyteam, u->allyteam)) {
@@ -1370,16 +1372,19 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 			rid = best->id;
 	}
 
-	if(!best || !stationary) {
+	if((!best || !stationary) && !recEnemyOnly) {
 		const CTeam* team = teamHandler->Team(owner->team);
 		best = NULL;
 		const std::vector<CFeature*> features = qf->GetFeaturesExact(pos, radius);
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
-			if (f->def->reclaimable && ((options & CONTROL_KEY) || f->def->autoreclaim) && (!recNonRez || !(f->def->destructable && f->createdFromUnit != "")) &&
-				(recAnyTeam || (f->allyteam != owner->allyteam))) {
+			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) && 
+				(!recNonRez || !(f->def->destructable && f->createdFromUnit != ""))) {
+				if (recSpecial && metal && f->def->metal <= 0.0) {
+					continue;
+				}
 				float dist = f3SqLen(f->pos - owner->pos);
-				if ((dist < bestDist) &&
+				if ((dist < bestDist || (recSpecial && !metal && f->def->metal > 0.0)) &&
 					(noResCheck ||
 					((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
 					((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))) {
@@ -1391,6 +1396,9 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 					}
 					if(!(options & CONTROL_KEY) && IsFeatureBeingResurrected(f->id, owner)) {
 						continue;
+					}
+					if(recSpecial && !metal && f->def->metal > 0.0f) {
+						metal = true;
 					}
 					bestDist = dist;
 					best = f;
