@@ -254,12 +254,12 @@ void CTransportCAI::ExecuteUnloadUnit(Command &c)
 	switch (unloadType) {
 		case UNLOAD_LAND: UnloadLand(c); break;
 
-		case UNLOAD_DROP:
-						if (owner->unitDef->canfly)
-							UnloadDrop(c);
-						else
-							UnloadLand(c);
-						break;
+		case UNLOAD_DROP: {
+			if (owner->unitDef->canfly)
+				UnloadDrop(c);
+			else
+				UnloadLand(c);
+		} break;
 
 		case UNLOAD_LANDFLOOD: UnloadLandFlood(c); break;
 
