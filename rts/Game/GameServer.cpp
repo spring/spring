@@ -1776,8 +1776,24 @@ void CGameServer::PushAction(const Action& action)
 			if (tokens.size() > 1) {
 				std::string name = tokens[0];
 				std::string password = tokens[1];
-				playerName_passwd[name] = password;
-				logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+				std::vector<GameParticipant>::iterator partecipantIter = players.begin();
+				for ( ; partecipantIter != players.end(); partecipantIter++ ) {
+					if ( partecipantIter->name == name ) {
+						break;
+					}
+				}
+				if ( partecipantIter != players.end()) {
+					partecipantIter->SetValue( "password", password );
+					logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+				} else {
+					if ( playerName_passwd.count(name) == 0 ) {
+						playerName_passwd[name] = password;
+						logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+					} else {
+						playerName_passwd[name] = password;
+						logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
+					}
+				}
 			} else {
 				logOutput.Print("Failed to add player/spectator password. usage: /adduser <player-name> <password>");
 			}
