@@ -56,102 +56,107 @@ CRepulseGfx::~CRepulseGfx(void)
 
 void CRepulseGfx::DependentDied(CObject* o)
 {
-	if(o==repulsed){
-		repulsed=0;
-		deleteMe=true;
+	if (o == repulsed) {
+		repulsed = 0;
+		deleteMe = true;
 	}
 }
 
 void CRepulseGfx::Draw(void)
 {
-	CUnit* owner = CProjectile::owner();
-	if(!owner || !repulsed)
+	const CUnit* owner = CProjectile::owner();
+	if (!owner || !repulsed)
 		return;
 
-	float3 dir=repulsed->pos-owner->pos;
-	dir.SafeANormalize();
+	const float3 zdir = (repulsed->pos - owner->pos).SafeANormalize();
+	const float3 xdir = (zdir.cross(UpVector)).SafeANormalize();
+	const float3 ydir = xdir.cross(zdir);
 
-	pos=repulsed->pos-dir*10+repulsed->speed*globalRendering->timeOffset;
+	float3 xdirDS;
+	float3 ydirDS;
 
-	float3 dir1=dir.cross(UpVector);
-	dir1.SafeANormalize();
-	float3 dir2=dir1.cross(dir);
+	pos = (repulsed->pos - zdir * 10.0f) + (repulsed->speed * globalRendering->timeOffset);
+	inArray = true;
 
-	inArray=true;
-	unsigned char col[4];
-	float alpha=std::min(255,age*10);
-	col[0]=(unsigned char)(color.x*alpha);
-	col[1]=(unsigned char)(color.y*alpha);
-	col[2]=(unsigned char)(color.z*alpha);
-	col[3]=(unsigned char)(alpha*0.2f);
-	float drawsize=10;
+	float drawsize = 10.0f;
+	float alpha = std::min(255.0f, age * 10.0f);
+	unsigned char col[4] = {
+		(unsigned char)(color.x * alpha),
+		(unsigned char)(color.y * alpha),
+		(unsigned char)(color.z * alpha),
+		(unsigned char)(alpha * 0.2f),
+	};
+
+	xdirDS = xdir * drawsize;
+	ydirDS = ydir * drawsize;
 
 	const AtlasedTexture* et = projectileDrawer->repulsetex;
-	float txo = et->xstart;
-	float tyo = et->ystart;
-	float txs = et->xend - et->xstart;
-	float tys = et->yend - et->ystart;
+	const float txo = et->xstart;
+	const float tyo = et->ystart;
+	const float txs = et->xend - et->xstart;
+	const float tys = et->yend - et->ystart;
 
-	const int loopCountY = 4;
-	const int loopCountX = 4;
+	static const int loopCountY = 4;
+	static const int loopCountX = 4;
+
 	va->EnlargeArrays(loopCountY * loopCountX * 4 + 16, 0, VA_SIZE_TC);
-	for (int y = 0; y < loopCountY; ++y) { //! CAUTION: loop count must match EnlargeArrays above
-		float dy = y - 2;
-		float ry = y * 0.25f;
-		for (int x = 0; x < loopCountX; ++x) {
-			const float dx = x - 2;
-			const float rx = x * 0.25f;
-			const float3 p = pos + dir1 * drawsize;
-			const float3 s = dir2 * drawsize;
 
-			va->AddVertexQTC(p * (dx + 0) + s * (dy + 0) + dir * difs[(y    ) * 5 + x    ], txo + (ry        ) * txs, tyo + (rx        ) * tys, col);
-			va->AddVertexQTC(p * (dx + 0) + s * (dy + 1) + dir * difs[(y + 1) * 5 + x    ], txo + (ry + 0.25f) * txs, tyo + (rx        ) * tys, col);
-			va->AddVertexQTC(p * (dx + 1) + s * (dy + 1) + dir * difs[(y + 1) * 5 + x + 1], txo + (ry + 0.25f) * txs, tyo + (rx + 0.25f) * tys, col);
-			va->AddVertexQTC(p * (dx + 1) + s * (dy + 0) + dir * difs[(y    ) * 5 + x + 1], txo + (ry        ) * txs, tyo + (rx + 0.25f) * tys, col);
+	for (int y = 0; y < loopCountY; ++y) { //! CAUTION: loop count must match EnlargeArrays above
+		const float dy = y - 2.0f;
+		const float ry = y * 0.25f;
+
+		for (int x = 0; x < loopCountX; ++x) {
+			const float dx = x - 2.00f;
+			const float rx = x * 0.25f;
+
+			va->AddVertexQTC(pos + xdirDS * (dx + 0) + ydirDS * (dy + 0) + zdir * difs[(y    ) * 5 + x    ],  txo + (ry        ) * txs, tyo + (rx        ) * tys,  col);
+			va->AddVertexQTC(pos + xdirDS * (dx + 0) + ydirDS * (dy + 1) + zdir * difs[(y + 1) * 5 + x    ],  txo + (ry + 0.25f) * txs, tyo + (rx        ) * tys,  col);
+			va->AddVertexQTC(pos + xdirDS * (dx + 1) + ydirDS * (dy + 1) + zdir * difs[(y + 1) * 5 + x + 1],  txo + (ry + 0.25f) * txs, tyo + (rx + 0.25f) * tys,  col);
+			va->AddVertexQTC(pos + xdirDS * (dx + 1) + ydirDS * (dy + 0) + zdir * difs[(y    ) * 5 + x + 1],  txo + (ry        ) * txs, tyo + (rx + 0.25f) * tys,  col);
 		}
 	}
-	drawsize=7;
-	alpha=std::min(10,age/2);
-	col[0]=(unsigned char)(color.x*alpha);
-	col[1]=(unsigned char)(color.y*alpha);
-	col[2]=(unsigned char)(color.z*alpha);
-	col[3]=(unsigned char)(alpha*0.4f);
+
+	drawsize = 7.0f;
+	alpha = std::min(10.0f, age / 2.0f);
+	col[0] = (unsigned char)(color.x * alpha);
+	col[1] = (unsigned char)(color.y * alpha);
+	col[2] = (unsigned char)(color.z * alpha);
+	col[3] = (unsigned char)(alpha * 0.4f);
 
 	const AtlasedTexture* ct = projectileDrawer->repulsegfxtex;
 	const float tx = (ct->xend + ct->xstart) * 0.5f;
 	const float ty = (ct->yend + ct->ystart) * 0.5f;
 
-	unsigned char col2[4];
-	col2[0]=0;
-	col2[1]=0;
-	col2[2]=0;
-	col2[3]=0;
+	static const unsigned char col2[4] = {0, 0, 0, 0};
 
-	va->AddVertexQTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexQTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
+	xdirDS = xdir * drawsize;
+	ydirDS = ydir * drawsize;
 
-	va->AddVertexQTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexQTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(owner->pos + (-xdir + ydir) * drawsize * 0.2f,  tx, ty, col2);
+	va->AddVertexQTC(owner->pos + ( xdir + ydir) * drawsize * 0.2f,  tx, ty, col2);
+	va->AddVertexQTC(       pos + xdirDS + ydirDS + zdir * difs[6],  tx, ty, col);
+	va->AddVertexQTC(       pos - xdirDS + ydirDS + zdir * difs[6],  tx, ty, col);
 
-	va->AddVertexQTC(owner->pos+(dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(owner->pos+(dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(pos+dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexQTC(pos+dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(owner->pos + (-xdir - ydir) * drawsize * 0.2f,  tx, ty, col2);
+	va->AddVertexQTC(owner->pos + ( xdir - ydir) * drawsize * 0.2f,  tx, ty, col2);
+	va->AddVertexQTC(       pos + xdirDS - ydirDS + zdir * difs[6],  tx, ty, col);
+	va->AddVertexQTC(       pos - xdirDS - ydirDS + zdir * difs[6],  tx, ty, col);
 
-	va->AddVertexQTC(owner->pos+(-dir1-dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(owner->pos+(-dir1+dir2)*drawsize*0.2f,tx,ty,col2);
-	va->AddVertexQTC(pos-dir1*drawsize+dir2*drawsize+dir*difs[6],tx,ty,col);
-	va->AddVertexQTC(pos-dir1*drawsize-dir2*drawsize+dir*difs[6],tx,ty,col);
+	va->AddVertexQTC(owner->pos + (xdir - ydir) * drawsize * 0.2f,   tx, ty, col2);
+	va->AddVertexQTC(owner->pos + (xdir + ydir) * drawsize * 0.2f,   tx, ty, col2);
+	va->AddVertexQTC(       pos + xdirDS + ydirDS + zdir * difs[6],  tx, ty, col);
+	va->AddVertexQTC(       pos + xdirDS - ydirDS + zdir * difs[6],  tx, ty, col);
+
+	va->AddVertexQTC(owner->pos + (-xdir - ydir) * drawsize * 0.2f,  tx, ty, col2);
+	va->AddVertexQTC(owner->pos + (-xdir + ydir) * drawsize * 0.2f,  tx, ty, col2);
+	va->AddVertexQTC(       pos - xdirDS + ydirDS + zdir * difs[6],  tx, ty, col);
+	va->AddVertexQTC(       pos - xdirDS - ydirDS + zdir * difs[6],  tx, ty, col);
 }
 
 void CRepulseGfx::Update(void)
 {
 	age++;
 
-	if(repulsed && owner() && (repulsed->pos-owner()->pos).SqLength()>sqMaxDist)
-		deleteMe=true;
+	if (repulsed && owner() && (repulsed->pos - owner()->pos).SqLength() > sqMaxDist)
+		deleteMe = true;
 }
