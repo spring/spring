@@ -1768,7 +1768,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "adduser")
 	{
-		if (!action.extra.empty())
+		if (!action.extra.empty() && whiteListAdditionalPlayers)
 		{
 			// split string by whitespaces
 			const std::vector<std::string> tokens = CSimpleParser::Tokenize(action.extra);
@@ -1783,19 +1783,13 @@ void CGameServer::PushAction(const Action& action)
 						break;
 					}
 				}
-				// since the logic checks playerName_passwd only if the user wasn't found in players
-				// setting it up for players only should suffice even if the entry is present in both places
-				// ( if an user connects and was listed in playerName_passwd, a new entry will be created in players too )
 				if ( partecipantIter != players.end()) {
 					partecipantIter->SetValue( "password", password );
 					logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				} else {
-					if ( playerName_passwd.count(name) == 0 ) {
-						playerName_passwd[name] = password;
+					if ( whiteListAdditionalPlayers ) {
+						AddAdditionalUser( name, password );
 						logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
-					} else {
-						playerName_passwd[name] = password;
-						logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 					}
 				}
 			} else {
@@ -2022,6 +2016,20 @@ void CGameServer::KickPlayer(const int playerNum)
 }
 
 
+void CGameServer::AddAdditionalUser( const std::string& name, const std::string& passwd )
+{
+	GameParticipant buf;
+	buf.isFromDemo = false;
+	buf.name = name;
+	buf.spectator = true;
+	buf.team = 0;
+	if (passwd.size() > 0) {
+		buf.SetValue("password",passwd);
+	}
+	players.push_back(buf);
+}
+
+
 unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect)
 {
 	Message(str(format("%s attempt from %s") %(reconnect ? "Reconnection" : "Connection") %name));
@@ -2064,57 +2072,27 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	if(errmsg == "" && !isLocal) {
-		std::string correctPasswd = "";
-		bool passwdFound = false;
-		bool userFound = hisNewNumber < players.size();
-		// if you change the order of the existance checks in players/playerName_passwd, remember to edit adduser's logic too
-		if ( userFound )  {
-			// look for players password in the list from the start script only if he's not about to be added
-			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("password");
-			passwdFound = (it != players[hisNewNumber].GetAllValues().end());
-			if (passwdFound) {
-				correctPasswd = it->second;
-			}
-			if (passwdFound) {
-				if (passwd != correctPasswd) {
-					errmsg = "Incorrect password";
-				}
-			}
-		} else if ((demoReader||allowAdditionalPlayers)&&whiteListAdditionalPlayers) {
-			// look for players password in the list received over the autohost management connection
-			std::map<std::string, std::string>::const_iterator pi = playerName_passwd.find(name);
-			userFound = passwdFound = (pi != playerName_passwd.end());
-			if (passwdFound) {
-				correctPasswd = pi->second;
-			}
-			if (userFound) {
-				if (passwd != correctPasswd) {
-					errmsg = "Incorrect password";
-				}
-			} else {
-				errmsg = "Username not authorized to connect";
-			}
-		}
-	}
-
 	if (hisNewNumber >= players.size() && errmsg == "") {
 		if (demoReader || allowAdditionalPlayers) {
-			GameParticipant buf;
-			buf.isFromDemo = false;
-			buf.name = name;
-			buf.spectator = true;
-			buf.team = 0;
-			if (passwd.size() > 0) {
-				buf.SetValue("password",passwd);
-			}
-			players.push_back(buf);
+			AddAdditionalUser(name, passwd);
 		}
 		else {
-			errmsg = "User name not found in script";
+			errmsg = "User name not authorized to connect";
 		}
 	}
 
+	// check for user's password
+	if(errmsg == "" && !isLocal) {
+		if ( hisNewNumber < players.size() )  {
+			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("password");
+			bool passwdFound = (it != players[hisNewNumber].GetAllValues().end());
+			if (passwdFound) {
+				if (passwd != it->second) {
+					errmsg = "Incorrect password";
+				}
+			}
+		}
+	}
 
 	if(hisNewNumber >= players.size() || errmsg != "") {
 		Message(str(format(" -> %s") %errmsg));
