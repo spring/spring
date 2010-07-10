@@ -147,7 +147,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	UpdateSpeedControl(--speedControl + 1);
 
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
-	whiteListAdditionalPlayers = configHandler->Get("whiteListAdditionalPlayers", true);
+	whiteListAdditionalPlayers = configHandler->Get("WhiteListAdditionalPlayers", true);
 
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(hostport));
