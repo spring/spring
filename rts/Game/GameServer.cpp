@@ -1776,12 +1776,16 @@ void CGameServer::PushAction(const Action& action)
 			if (tokens.size() > 1) {
 				std::string name = tokens[0];
 				std::string password = tokens[1];
+				// search user in known user's list
 				std::vector<GameParticipant>::iterator partecipantIter = players.begin();
 				for ( ; partecipantIter != players.end(); partecipantIter++ ) {
 					if ( partecipantIter->name == name ) {
 						break;
 					}
 				}
+				// since the logic checks playerName_passwd only if the user wasn't found in players
+				// setting it up for players only should suffice even if the entry is present in both places
+				// ( if an user connects and was listed in playerName_passwd, a new entry will be created in players too )
 				if ( partecipantIter != players.end()) {
 					partecipantIter->SetValue( "password", password );
 					logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
@@ -2064,6 +2068,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		std::string correctPasswd = "";
 		bool passwdFound = false;
 		bool userFound = hisNewNumber < players.size();
+		// if you change the order of the existance checks in players/playerName_passwd, remember to edit adduser's logic too
 		if ( userFound )  {
 			// look for players password in the list from the start script only if he's not about to be added
 			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("password");
@@ -2100,6 +2105,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			buf.name = name;
 			buf.spectator = true;
 			buf.team = 0;
+			if (passwd.size() > 0) {
+				buf.SetValue("password",passwd);
+			}
 			players.push_back(buf);
 		}
 		else {
