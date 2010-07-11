@@ -17,6 +17,7 @@ IF    (MINGW)
 ELSE  (MINGW)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
 ENDIF (MINGW)
 
