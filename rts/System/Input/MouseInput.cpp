@@ -25,7 +25,6 @@
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
-#include <SDL_syswm.h>
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
 #include "GlobalUnsynced.h"
