@@ -29,6 +29,7 @@
 #include "Rendering/GL/FBO.h"
 #include "GlobalUnsynced.h"
 #ifdef _WIN32
+	#include <SDL_syswm.h>
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/wsdl.h"
 #endif
