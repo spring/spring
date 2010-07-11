@@ -26,12 +26,18 @@ ELSE  (MINGW)
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
 ENDIF (MINGW)
 
+
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
 LIST(APPEND engineHeadlessLibraries headlessStubs)
 
 LIST(APPEND engineHeadlessLibraries no-sound)
 
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
+
+
+### Assemble external incude dirs
+INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
+
 
 ### Add icon and manifest to exe using windres
 IF    (MINGW)

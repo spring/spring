@@ -45,6 +45,7 @@ LIST(APPEND engineLibraries ${engineCommonLibraries})
 
 
 ### Assemble external incude dirs
+INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
 
