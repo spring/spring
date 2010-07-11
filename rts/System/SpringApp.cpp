@@ -7,7 +7,9 @@
 
 #include <signal.h>
 #include <SDL.h>
+#if !defined(HEADLESS)
 #include <SDL_syswm.h>
+#endif
 
 #include "mmgr.h"
 
@@ -465,6 +467,10 @@ bool SpringApp::SetSDLVideoMode()
 // origin for our coordinates is the bottom left corner
 bool SpringApp::GetDisplayGeometry()
 {
+#if       defined(HEADLESS)
+	return false;
+#else  // defined(HEADLESS)
+
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 
@@ -472,12 +478,10 @@ bool SpringApp::GetDisplayGeometry()
 		return false;
 	}
 
-#if defined(__APPLE__) || defined(HEADLESS)
-	// todo: enable this function, RestoreWindowPosition() and SaveWindowPosition() on Mac
+#if       defined(__APPLE__)
+	// TODO: implement this function, RestoreWindowPosition() and SaveWindowPosition() on Mac
 	return false;
-
-
-#elif !defined(_WIN32)
+#elif     !defined(WIN32)
 	info.info.x11.lock_func();
 	{
 		Display* display = info.info.x11.display;
@@ -525,12 +529,13 @@ bool SpringApp::GetDisplayGeometry()
 
 	windowPosX = rect.left;
 	windowPosY = rect.top;
-#endif // _WIN32
+#endif // defined(__APPLE__)
 
 	globalRendering->winPosX = windowPosX;
 	globalRendering->winPosY = globalRendering->screenSizeY - globalRendering->winSizeY - windowPosY; //! origin BOTTOMLEFT
 
 	return true;
+#endif // defined(HEADLESS)
 }
 
 
@@ -988,11 +993,9 @@ void SpringApp::UpdateSDLKeys()
 
 static void ResetScreenSaverTimeout()
 {
-#if defined(__APPLE__) || defined(HEADLESS)
+#if   defined(HEADLESS)
 	return;
-#endif
-
-#ifdef WIN32
+#elif defined(WIN32)
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
 	if(globalRendering->active && (curreset - lastreset > 1000)) {
@@ -1001,6 +1004,9 @@ static void ResetScreenSaverTimeout()
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
 			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
 	}
+#elif defined(__APPLE__)
+	// TODO: implement
+	return;
 #else
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
@@ -1087,15 +1093,18 @@ int SpringApp::Run(int argc, char *argv[])
  */
 void SpringApp::RestoreWindowPosition()
 {
-#if defined(__APPLE__) || defined(HEADLESS)
+#if       defined(HEADLESS)
 	return;
-#else
+#elif     defined(__APPLE__)
+	// TODO: implement this function
+	return;
+#else  // defined(HEADLESS)
 	if (!globalRendering->fullScreen) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 
 		if (SDL_GetWMInfo(&info)) {
-#ifdef _WIN32
+#if       defined(WIN32)
 			bool stateChanged = false;
 
 			if (windowState > 0) {
@@ -1126,7 +1135,7 @@ void SpringApp::RestoreWindowPosition()
 			if (!stateChanged) {
 				MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
 			}
-#else
+#else  // defined(WIN32)
 			info.info.x11.lock_func();
 
 			{
@@ -1134,10 +1143,10 @@ void SpringApp::RestoreWindowPosition()
 			}
 
 			info.info.x11.unlock_func();
-#endif
+#endif // defined(WIN32)
 		}
 	}
-#endif // ifdef __APPLE__
+#endif // defined(HEADLESS)
 }
 
 /**
@@ -1145,7 +1154,10 @@ void SpringApp::RestoreWindowPosition()
  */
 void SpringApp::SaveWindowPosition()
 {
-#ifdef __APPLE__
+#if       defined(HEADLESS)
+	return;
+#elif     defined(__APPLE__)
+	// TODO: implement this function
 	return;
 #else
 	if (!globalRendering->fullScreen) {
@@ -1177,7 +1189,7 @@ void SpringApp::SaveWindowPosition()
 		configHandler->Set("WindowPosY", windowPosY);
   #endif
 	}
-#endif
+#endif // defined(HEADLESS)
 }
 
 
