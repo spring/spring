@@ -1011,7 +1011,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	const int top = lua_gettop(L);
 
-	if (!lua_checkstack(L, top + 1 + 3 + argsCount)) {
+	if (!lua_checkstack(L, 1 + 3 + argsCount)) {
 		logOutput.Print("CLuaRules::Cob2Lua() lua_checkstack() error: %s\n",
 		                name.GetString().c_str());
 		args[0] = 0; // failure
@@ -1176,7 +1176,7 @@ void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
 					losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED;
 				}
 				/*else if (losType == "private") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE;
+					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE; //! default
 				}*/
 			}
 		}
