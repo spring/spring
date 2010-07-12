@@ -11,7 +11,7 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamStatistics.h"
 #include "Util.h"
 #include "TimeUtil.h"
 
@@ -42,7 +42,7 @@ CDemoRecorder::CDemoRecorder()
 
 	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
 	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
-	fileHeader.teamStatPeriod = CTeam::statsPeriod;
+	fileHeader.teamStatPeriod = TeamStatistics::statsPeriod;
 	fileHeader.winningAllyTeam = -1;
 
 	WriteFileHeader(false);
@@ -151,15 +151,15 @@ void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 	playerStats[playerNum] = stats;
 }
 
-/** @brief Set (overwrite) the CTeam::Statistics history for team teamNum */
-void CDemoRecorder::SetTeamStats(int teamNum, const std::list< CTeam::Statistics >& stats)
+/** @brief Set (overwrite) the TeamStatistics history for team teamNum */
+void CDemoRecorder::SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats)
 {
 	assert((unsigned)teamNum < teamStats.size());
 
 	teamStats[teamNum].clear();
 	teamStats[teamNum].reserve(stats.size());
 
-	for (std::list< CTeam::Statistics >::const_iterator it = stats.begin(); it != stats.end(); ++it)
+	for (std::list< TeamStatistics >::const_iterator it = stats.begin(); it != stats.end(); ++it)
 		teamStats[teamNum].push_back(*it);
 }
 
@@ -199,7 +199,7 @@ void CDemoRecorder::WritePlayerStats()
 	fileHeader.playerStatSize = (int)recordDemo.tellp() - pos;
 }
 
-/** @brief Write the CTeam::Statistics at the current position in the file. */
+/** @brief Write the TeamStatistics at the current position in the file. */
 void CDemoRecorder::WriteTeamStats()
 {
 	if (fileHeader.numTeams == 0)
@@ -207,16 +207,16 @@ void CDemoRecorder::WriteTeamStats()
 
 	int pos = recordDemo.tellp();
 
-	// Write array of dwords indicating number of CTeam::Statistics per team.
-	for (std::vector< std::vector< CTeam::Statistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
+	// Write array of dwords indicating number of TeamStatistics per team.
+	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
 		unsigned int c = swabdword(it->size());
 		recordDemo.write((char*)&c, sizeof(unsigned int));
 	}
 
-	// Write big array of CTeam::Statistics.
+	// Write big array of TeamStatistics.
 	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
-		for (std::vector< CTeam::Statistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
-			CTeam::Statistics& stats = *it2;
+		for (std::vector< TeamStatistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
+			TeamStatistics& stats = *it2;
 			stats.swab();
 			recordDemo.write((char*)&stats, sizeof(TeamStatistics));
 		}
