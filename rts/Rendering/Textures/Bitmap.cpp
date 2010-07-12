@@ -12,7 +12,9 @@
 #include "mmgr.h"
 
 #include "Rendering/GlobalRendering.h"
+#ifndef BITMAP_NO_OPENGL
 #include "Rendering/GL/myGL.h"
+#endif // !BITMAP_NO_OPENGL
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "GlobalUnsynced.h"
@@ -47,7 +49,9 @@ CBitmap::CBitmap()
   : xsize(0), ysize(0), channels(4)
 {
 	mem = 0;
-	ddsimage = 0;
+#ifndef BITMAP_NO_OPENGL
+	ddsimage = NULL;
+#endif // !BITMAP_NO_OPENGL
 	type = BitmapTypeStandardRGBA;
 }
 
@@ -55,14 +59,18 @@ CBitmap::CBitmap()
 CBitmap::~CBitmap()
 {
 	delete[] mem;
+#ifndef BITMAP_NO_OPENGL
 	delete ddsimage;
+#endif // !BITMAP_NO_OPENGL
 }
 
 
 CBitmap::CBitmap(const CBitmap& old)
 {
 	assert(old.type != BitmapTypeDDS);
-	ddsimage = 0;
+#ifndef BITMAP_NO_OPENGL
+	ddsimage = NULL;
+#endif // !BITMAP_NO_OPENGL
 	type  = old.type;
 	xsize = old.xsize;
 	ysize = old.ysize;
@@ -78,7 +86,9 @@ CBitmap::CBitmap(const unsigned char *data, int xsize, int ysize)
   : xsize(xsize), ysize(ysize), channels(4)
 {
 	type = BitmapTypeStandardRGBA;
-	ddsimage = 0;
+#ifndef BITMAP_NO_OPENGL
+	ddsimage = NULL;
+#endif // !BITMAP_NO_OPENGL
 	mem=new unsigned char[xsize*ysize*channels];
 	memcpy(mem,data,xsize*ysize*channels);
 }
@@ -118,14 +128,18 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	delete[] mem;
 	mem = NULL;
 
+#ifndef BITMAP_NO_OPENGL
 	textype = GL_TEXTURE_2D;
+#endif // !BITMAP_NO_OPENGL
 
 	if (filename.find(".dds") != std::string::npos) {
-		ddsimage = new nv_dds::CDDSImage();
 		type = BitmapTypeDDS;
-		bool status = ddsimage->load(filename);
 		xsize = 0;
 		ysize = 0;
+		channels = 0;
+#ifndef BITMAP_NO_OPENGL
+		ddsimage = new nv_dds::CDDSImage();
+		bool status = ddsimage->load(filename);
 		if (status) {
 			xsize = ddsimage->get_width();
 			ysize = ddsimage->get_height();
@@ -146,6 +160,9 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 			}
 		}
 		return status;
+#else
+		return false;
+#endif // !BITMAP_NO_OPENGL
 	}
 	type = BitmapTypeStandardRGBA;
 	channels = 4;
@@ -250,7 +267,11 @@ bool CBitmap::LoadGrayscale (const std::string& filename)
 bool CBitmap::Save(std::string const& filename, bool opaque)
 {
 	if (type == BitmapTypeDDS) {
+#ifndef BITMAP_NO_OPENGL
 		return ddsimage->save(filename);
+#else
+		return false;
+#endif // !BITMAP_NO_OPENGL
 	}
 
 	unsigned char* buf = new unsigned char[xsize * ysize * 4];
@@ -294,7 +315,6 @@ bool CBitmap::Save(std::string const& filename, bool opaque)
 
 
 #ifndef BITMAP_NO_OPENGL
-
 const GLuint CBitmap::CreateTexture(bool mipmaps)
 {
 	if(type == BitmapTypeDDS)
@@ -389,7 +409,6 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 	glPopAttrib();
 	return texID;
 }
-
 #endif // !BITMAP_NO_OPENGL
 
 

@@ -31,6 +31,7 @@ ADD_DEFINITIONS(${PIC_FLAG})
 ADD_DEFINITIONS(-DNOT_USING_CREG)
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
+ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
 
 INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(../../rts/lib/lua/include)
@@ -58,7 +59,6 @@ set(main_files
 	../../rts/Map/MapParser
 	../../rts/Map/SMF/SmfMapFile
 	../../rts/Rendering/Textures/Bitmap
-	../../rts/Rendering/Textures/nv_dds
 	)
 if (WIN32)
 	LIST(APPEND main_files ../../rts/System/Platform/Win/WinVersion)
