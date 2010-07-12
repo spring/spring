@@ -4,6 +4,7 @@
 #include "TeamHighlight.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/PlayerHandler.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/ConfigHandler.h"
 #include "System/GlobalUnsynced.h"
