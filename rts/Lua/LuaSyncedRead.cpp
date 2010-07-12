@@ -124,7 +124,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsGameOver);
 
 	REGISTER_LUA_CFUNC(GetGaiaTeamID);
-	REGISTER_LUA_CFUNC(GetRulesInfoMap);
 
 	REGISTER_LUA_CFUNC(GetGameSpeed);
 	REGISTER_LUA_CFUNC(GetGameFrame);
@@ -708,36 +707,6 @@ int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, teamHandler->GaiaTeamID());
-	return 1;
-}
-
-
-int LuaSyncedRead::GetRulesInfoMap(lua_State* L)
-{
-	if (luaRules == NULL) {
-		return 0;
-	}
-	const map<string, string>& infoMap = luaRules->GetInfoMap();
-	map<string, string>::const_iterator it;
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (!lua_isstring(L, 1)) {
-			luaL_error(L, "Incorrect arguments to GetRulesInfoMap");
-		}
-		const string key = lua_tostring(L, 1);
-		it = infoMap.find(key);
-		if (it == infoMap.end()) {
-			return 0;
-		}
-		lua_pushstring(L, it->second.c_str());
-		return 1;
-	}
-
-	lua_newtable(L);
-	for (it = infoMap.begin(); it != infoMap.end(); ++it) {
-		LuaPushNamedString(L, it->first.c_str(), it->second.c_str());
-	}
 	return 1;
 }
 
