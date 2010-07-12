@@ -111,9 +111,10 @@ void CWordCompletion::Reset()
 	words["/save "] = sl;
 	words["/setmaxspeed "] = sl;
 	words["/setminspeed "] = sl;
+	words["/skip "] = sl;
 	words["/skip +"] = sl;
 	words["/skip f"] = sl;
-	words["/skip "] = sl;
+	words["/skip f+"] = sl;
 	words["/spectator"] = sl;
 	words["/take"] = sl;
 	words["/team "] = sl;
