@@ -63,7 +63,7 @@ void CLuaGaia::FreeHandler()
 /******************************************************************************/
 
 CLuaGaia::CLuaGaia()
-: CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA, ".luagaia ")
+: CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
 	luaGaia = this;
 

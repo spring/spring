@@ -43,7 +43,7 @@ class CLuaHandleSynced : public CLuaHandle
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
 
 	protected:
-		CLuaHandleSynced(const string& name, int order, const string& msgPrefix);
+		CLuaHandleSynced(const string& name, int order);
 		virtual ~CLuaHandleSynced();
 		void Init(const string& syncedFile,
 		          const string& unsyncedFile,
@@ -70,7 +70,6 @@ class CLuaHandleSynced : public CLuaHandle
 		}
 
 	protected:
-		const string messagePrefix;
 		bool allowChanges;
 		bool allowUnsafeChanges;
 		bool teamsLocked; // disables CallAsTeam()
