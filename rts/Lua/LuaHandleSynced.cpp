@@ -1145,12 +1145,11 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 	map<string, string>::iterator it = lhs->textCommands.find(cmd);
 	if (it != lhs->textCommands.end()) {
 		lhs->textCommands.erase(it);
+		game->wordCompletion->RemoveWord(cmdRaw);
 		lua_pushboolean(L, true);
 	} else {
 		lua_pushboolean(L, false);
 	}
-	// FIXME -- word completion should also be removed
-	lua_pushboolean(L, true);
 	return 1;
 }
 
