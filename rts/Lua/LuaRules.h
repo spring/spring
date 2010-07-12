@@ -33,9 +33,6 @@ class CLuaRules : public CLuaHandleSynced
 		static void LoadHandler();
 		static void FreeHandler();
 
-		static void SetConfigString(const string& cfg);
-		static const string& GetConfigString() { return configString; }
-
 		static const LuaRulesParams::Params&  GetGameParams();
 		static const LuaRulesParams::HashMap& GetGameParamsMap();
 
@@ -133,8 +130,6 @@ class CLuaRules : public CLuaHandleSynced
 		map<string, string> infoMap;
 
 	private:
-		static string configString;
-
 		static LuaRulesParams::Params  gameParams;
 		static LuaRulesParams::HashMap gameParamsMap;
 

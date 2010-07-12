@@ -32,8 +32,6 @@
 
 CLuaGaia* luaGaia = NULL;
 
-string CLuaGaia::configString;
-
 static const char* LuaGaiaSyncedFilename   = "LuaGaia/main.lua";
 static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 
@@ -58,16 +56,6 @@ void CLuaGaia::LoadHandler()
 void CLuaGaia::FreeHandler()
 {
 	delete luaGaia;
-}
-
-
-bool CLuaGaia::SetConfigString(const string& cfg)
-{
-	configString = cfg;
-	if ((cfg == "0") || (cfg == "disabled")) {
-		return false;
-	}
-	return true;
 }
 
 
@@ -108,35 +96,17 @@ CLuaGaia::~CLuaGaia()
 
 bool CLuaGaia::AddSyncedCode()
 {
-	lua_getglobal(L, "Script");
-	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
-	lua_pop(L, 1);
-
 	return true;
 }
 
 
 bool CLuaGaia::AddUnsyncedCode()
 {
-	lua_pushstring(L, "UNSYNCED");
-	lua_gettable(L, LUA_REGISTRYINDEX);
-	lua_pushstring(L, "Script");
-	lua_rawget(L, -2);
-	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
-	lua_pop(L, 1);
+	/*lua_pushstring(L, "UNSYNCED");
+	lua_gettable(L, LUA_REGISTRYINDEX);*/
 
 	return true;
 }
-
-
-/******************************************************************************/
-
-int CLuaGaia::GetConfigString(lua_State* L)
-{
-	lua_pushlstring(L, configString.c_str(), configString.size());
-	return 1;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
