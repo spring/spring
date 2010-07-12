@@ -157,6 +157,7 @@ private:
 	int activePage;
 	int defaultCmdMemory;
 	int explicitCommand;
+	int curIconCommand;
 	//int fadein;
 
 	int actionOffset;

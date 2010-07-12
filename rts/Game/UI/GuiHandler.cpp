@@ -79,6 +79,7 @@ CGuiHandler::CGuiHandler():
 	explicitCommand(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
+	curIconCommand(-1),
 	gatherMode(false)
 {
 	icons = new IconInfo[16];
@@ -1049,6 +1050,14 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 	}
 	else if (AboveGui(x,y)) {
 		activeMousePress = true;
+		if ((curIconCommand < 0) && !game->hideInterface) {
+			const int iconPos = IconAtPos(x, y);
+			if (iconPos >= 0) {
+				curIconCommand = icons[iconPos].commandsID;
+			}
+		}
+		if (button == SDL_BUTTON_RIGHT)
+			inCommand = defaultCmdMemory = -1;
 		return true;
 	}
 	else if (minimap && minimap->IsAbove(x, y)) {
@@ -1079,8 +1088,13 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
 {
+	GML_RECMUTEX_LOCK(gui); // MouseRelease
+
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 		return;
+
+	int lastIconCmd = curIconCommand;
+	curIconCommand = -1;
 
 	int iconCmd = -1;
 	explicitCommand = inCommand;
@@ -1101,10 +1115,12 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 		button = -button; // proxied click from the minimap
 	} else {
 		// setup iconCmd
-		if ((iconCmd < 0) && !game->hideInterface) {
+		if (!game->hideInterface) {
 			const int iconPos = IconAtPos(x, y);
 			if (iconPos >= 0) {
 				iconCmd = icons[iconPos].commandsID;
+				if(iconCmd != lastIconCmd)
+					iconCmd = -1; // mouse was pressed on one button and released on another one --> ignore the command
 			}
 		}
 	}
@@ -3392,7 +3408,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			}
 		}
 
-		if ((cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
+		if (mouse->buttons[button].pressed && (cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
 			const CommandDescription& cmdDesc = commands[cmdIndex];
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
