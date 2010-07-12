@@ -32,6 +32,9 @@
 #include "System/Info.h"
 #include "System/Option.h"
 
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 // unitsync only:
 #include "LuaParserAPI.h"
