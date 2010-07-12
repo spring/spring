@@ -310,12 +310,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 	if (activeReceiver) {
 		activeReceiver->MouseRelease(x, y, button);
-		int x, y;
-		const boost::uint8_t buttons = SDL_GetMouseState(&x, &y);
-		const boost::uint8_t mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
-		if ((buttons & mask) == 0) {
+		if(!buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_MIDDLE].pressed && !buttons[SDL_BUTTON_RIGHT].pressed)
 			activeReceiver = NULL;
-		}
 		return;
 	}
 
