@@ -77,7 +77,7 @@ void CLuaRules::FreeHandler()
 /******************************************************************************/
 
 CLuaRules::CLuaRules()
-: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES, ".luarules ")
+: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
 	luaRules = this;
 
