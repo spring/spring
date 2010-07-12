@@ -268,8 +268,8 @@ float CGround::GetApproximateHeight(float x, float y) const
 //rename to GetHeightAboveWater?
 float CGround::GetHeight(float x, float y) const
 {
-	float r = GetHeight2(x, y);
-	return (r < 0.0f? 0.0f: r);
+	const float r = GetHeight2(x, y);
+	return std::max(0.0f, r);
 }
 
 

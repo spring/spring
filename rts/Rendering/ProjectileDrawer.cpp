@@ -458,12 +458,14 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 		pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
 	#endif
 
-	if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
-		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
+	if (
+		(gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))
+		&& camera->InView(pro->pos, pro->drawRadius)
+	) {
 
-		const bool stunned = owner? owner->stunned: false;
+		const bool stunned = owner ? owner->stunned : false;
 
-		if (owner && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
+		if (stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
 			// if the unit that fired this projectile is stunned and the projectile
 			// forms part of a shield (ie., the unit has a CPlasmaRepulser weapon but
 			// cannot fire it), prevent the projectile (shield segment) from being drawn

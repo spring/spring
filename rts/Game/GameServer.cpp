@@ -59,7 +59,6 @@
 #ifdef interface
 	#undef interface
 #endif
-#include "Sim/Misc/GlobalSynced.h"
 #include "Server/MsgStrings.h"
 
 #define PKTCACHE_VECSIZE 1000
