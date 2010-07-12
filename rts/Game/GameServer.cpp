@@ -1747,16 +1747,42 @@ void CGameServer::PushAction(const Action& action)
 	{
 		if (demoReader)
 		{
-			const std::string timeStr = action.extra;
-			int endFrame;
+			std::string timeStr = action.extra;
+
 			// parse the skip time
-			if (timeStr[0] == 'f') {        // skip to frame
-				endFrame = atoi(timeStr.c_str() + 1);
-			} else if (timeStr[0] == '+') { // relative time
-				endFrame = serverframenum + (GAME_SPEED * atoi(timeStr.c_str() + 1));
-			} else {                        // absolute time
-				endFrame = GAME_SPEED * atoi(timeStr.c_str());
+
+			// skip in seconds
+			bool skipFrames = false;
+			if (timeStr[0] == 'f') {
+				// skip in frame
+				skipFrames = true;
+				timeStr.erase(0, 1); // remove first char
 			}
+
+			// skip to absolute game-second/-frame
+			bool skipRelative = false;
+			if (timeStr[0] == '+') {
+				// skip to relative game-second/-frame
+				skipRelative = true;
+				timeStr.erase(0, 1); // remove first char
+			}
+
+			// amount of frames/seconds to skip (to)
+			const int amount = atoi(timeStr.c_str());
+
+			// the absolute frame to skip to
+			int endFrame;
+
+			if (skipFrames) {
+				endFrame = amount;
+			} else {
+				endFrame = GAME_SPEED * amount;
+			}
+
+			if (skipRelative) {
+				endFrame += serverframenum;
+			}
+
 			SkipTo(endFrame);
 		}
 	}
