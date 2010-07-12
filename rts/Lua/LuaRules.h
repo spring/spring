@@ -88,21 +88,13 @@ class CLuaRules : public CLuaHandleSynced
 		static void SetRulesParam(lua_State* L, const char* caller, int offset,
 		                          LuaRulesParams::Params& params,
 		                          LuaRulesParams::HashMap& paramsMap);
-		static void CreateRulesParams(lua_State* L, const char* caller, int offset,
-		                              LuaRulesParams::Params& params,
-		                              LuaRulesParams::HashMap& paramsMap);
 
 	protected: // call-outs
 		static int PermitHelperAIs(lua_State* L);
 
 		static int SetUnitRulesParam(lua_State* L);
-		static int CreateUnitRulesParams(lua_State* L);
-
 		static int SetTeamRulesParam(lua_State* L);
-		static int CreateTeamRulesParams(lua_State* L);
-
 		static int SetGameRulesParam(lua_State* L);
-		static int CreateGameRulesParams(lua_State* L);
 
 	private:
 		bool haveCommandFallback;
