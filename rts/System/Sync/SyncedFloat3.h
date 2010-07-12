@@ -9,6 +9,7 @@
 
 #include "lib/streflop/streflop_cond.h"
 #include "SyncedPrimitive.h"
+#include "FastMath.h" //SSE (I)SQRT
 
 /**
  * @brief SyncedFloat3 class
@@ -402,13 +403,13 @@ public:
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
-		return (float) streflop::sqrt(dx*dx + dy*dy + dz*dz);
+		return (float) math::sqrt(dx*dx + dy*dy + dz*dz);
 	}
 	inline float distance(const float3 &f) const{
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
-		return (float) streflop::sqrt(dx*dx + dy*dy + dz*dz);
+		return (float) math::sqrt(dx*dx + dy*dy + dz*dz);
 	}
 
 	/**
@@ -425,12 +426,12 @@ public:
 	inline float distance2D(const SyncedFloat3 &f) const{
 		const float dx = x - f.x;
 		const float dz = z - f.z;
-		return (float) streflop::sqrt(dx*dx + dz*dz);
+		return (float) math::sqrt(dx*dx + dz*dz);
 	}
 	inline float distance2D(const float3 &f) const{
 		const float dx = x - f.x;
 		const float dz = z - f.z;
-		return (float) streflop::sqrt(dx*dx + dz*dz);
+		return (float) math::sqrt(dx*dx + dz*dz);
 	}
 
 	/**
@@ -442,7 +443,7 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length() const{
-		return (float) streflop::sqrt(x*x+y*y+z*z);
+		return (float) math::sqrt(x*x+y*y+z*z);
 	}
 
 	/**
@@ -454,7 +455,7 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length2D() const{
-		return (float) streflop::sqrt(x*x+z*z);
+		return (float) math::sqrt(x*x+z*z);
 	}
 
 	/**
@@ -468,12 +469,10 @@ public:
 	{
 		// contrary to most other operations we can make this synced
 		// because the results are always written in the synced x,y,z components
-		const SyncedFloat L = streflop::sqrt(x*x + y*y + z*z);
-		if(L != 0.f){
-			const SyncedFloat invL = (float) 1.f / L;
-			x *= invL;
-			y *= invL;
-			z *= invL;
+		const float len = SqLength();
+		if(len != 0.f){
+			const SyncedFloat invL = math::isqrt(len);
+			*this *= invL;
 		}
 		return *this;
 	}
