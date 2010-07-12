@@ -3,7 +3,12 @@
 #ifndef READMAP_H
 #define READMAP_H
 
+#ifdef BITMAP_NO_OPENGL
+// FIXME: this is hacky. this class should not depend on OpenGL stuff
+typedef unsigned int GLuint;
+#else
 #include "Rendering/GL/myGL.h"
+#endif
 #include "creg/creg_cond.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalConstants.h"
