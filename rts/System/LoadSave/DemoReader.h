@@ -37,7 +37,10 @@ public:
 	*/
 	bool ReachedEnd() const;
 
-	float GetNextReadTime() const;
+	float GetModGameTime() const { return chunkHeader.modGameTime; }
+	float GetDemoTimeOffset() const { return demoTimeOffset; }
+	float GetNextDemoReadTime() const { return nextDemoReadTime; }
+
 	const std::string& GetSetupScript() const
 	{
 		return setupScript;
@@ -52,7 +55,7 @@ public:
 private:
 	std::ifstream playbackDemo;
 	float demoTimeOffset;
-	float nextDemoRead;
+	float nextDemoReadTime;
 	int bytesRemaining;
 	DemoStreamChunkHeader chunkHeader;
 	std::string setupScript;	// the original, unaltered version from script

@@ -81,11 +81,13 @@ const spring_duration playerInfoTime = spring_secs(2);
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
 const unsigned serverKeyframeIntervall = 16;
 
-const std::string commands[numCommands] = { "kick", "kickbynum", "setminspeed", "setmaxspeed",
-						"nopause", "nohelp", "cheat", "godmode", "globallos",
-						"nocost", "forcestart", "nospectatorchat", "nospecdraw",
-						"skip", "reloadcob", "devlua", "editdefs", "luagaia",
-						"singlestep" };
+const std::string commands[numCommands] = {
+	"kick", "kickbynum", "setminspeed", "setmaxspeed",
+	"nopause", "nohelp", "cheat", "godmode", "globallos",
+	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
+	"skip", "reloadcob", "devlua", "editdefs", "luagaia",
+	"singlestep"
+};
 using boost::format;
 
 namespace {
@@ -185,7 +187,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	if (setup->hostDemo)
 	{
 		Message(str( format(PlayingDemo) %setup->demoName ));
-		demoReader.reset(new CDemoReader(setup->demoName, modGameTime+0.1f));
+		demoReader.reset(new CDemoReader(setup->demoName, modGameTime + 0.1f));
 	}
 
 	players.resize(setup->playerStartingData.size());
@@ -300,30 +302,34 @@ void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 
 void CGameServer::SkipTo(int targetframe)
 {
-	if (targetframe > serverframenum && demoReader)
-	{
+	const bool wasPaused = isPaused;
+
+	if (targetframe > serverframenum && demoReader) {
 		CommandMessage msg(str( boost::format("skip start %d") %targetframe ), SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg.Pack()));
+
 		// fast-read and send demo data
-		while (serverframenum < targetframe && demoReader)
-		{
-			modGameTime = demoReader->GetNextReadTime()+0.1f; // skip time
+		// if SendDemoData reaches EOS, demoReader becomes NULL
+		while (serverframenum < targetframe && demoReader) {
+			modGameTime = demoReader->GetModGameTime() + 0.1f; // skip time
 			SendDemoData(true);
 			if (serverframenum % 20 == 0 && UDPNet)
 				UDPNet->Update(); // send some data (otherwise packets will grow too big)
 		}
+
 		CommandMessage msg2("skip end", SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg2.Pack()));
 
 		if (UDPNet)
 			UDPNet->Update();
+
 		lastUpdate = spring_gettime();
-		isPaused = true;
 	}
-	else
-	{
-		// allready passed
-	}
+
+	// note: unnecessary, pause-commands from
+	// demos are not broadcast anyway so /skip
+	// cannot change the state
+	isPaused = wasPaused;
 }
 
 std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
@@ -1762,34 +1768,38 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "singlestep")
 	{
-		if (isPaused && !demoReader)
+		if (isPaused) {
+			if (demoReader) {
+				// we only want to advance one frame at most, so
+				// the next time-index must be "close enough" not
+				// to move past more than 1 NETMSG_NEWFRAME
+				modGameTime = demoReader->GetModGameTime() + 0.001f;
+			}
+
 			CreateNewFrame(true, true);
+		}
 	}
 	else if (action.command == "adduser")
 	{
-		if (!action.extra.empty() && whiteListAdditionalPlayers)
-		{
+		if (!action.extra.empty() && whiteListAdditionalPlayers) {
 			// split string by whitespaces
 			const std::vector<std::string> tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.size() > 1) {
-				std::string name = tokens[0];
-				std::string password = tokens[1];
-				// search user in known user's list
-				std::vector<GameParticipant>::iterator partecipantIter = players.begin();
-				for ( ; partecipantIter != players.end(); partecipantIter++ ) {
-					if ( partecipantIter->name == name ) {
-						break;
-					}
-				}
-				if ( partecipantIter != players.end()) {
-					partecipantIter->SetValue( "password", password );
+				const std::string& name = tokens[0];
+				const std::string& password = tokens[1];
+
+				GameParticipant gp;
+					gp.name = name;
+				// note: this must only compare by name
+				std::vector<GameParticipant>::iterator participantIter = std::find(players.begin(), players.end(), gp);
+
+				if (participantIter != players.end()) {
+					participantIter->SetValue("password", password);
 					logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				} else {
-					if ( whiteListAdditionalPlayers ) {
-						AddAdditionalUser( name, password );
-						logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
-					}
+					AddAdditionalUser(name, password);
+					logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				}
 			} else {
 				logOutput.Print("Failed to add player/spectator password. usage: /adduser <player-name> <password>");
@@ -1875,8 +1885,8 @@ void CGameServer::CheckForGameEnd()
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-	if (!demoReader) // use NEWFRAME_MSGes from demo otherwise
-	{
+	if (!demoReader) {
+		// use NEWFRAME_MSGes from demo otherwise
 #if BOOST_VERSION >= 103500
 		if (!fromServerThread)
 			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
@@ -1888,7 +1898,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		CheckSync();
 		int newFrames = 1;
 
-		if(!fixedFrameTime){
+		if (!fixedFrameTime) {
 			spring_time currentTick = spring_gettime();
 			spring_duration timeElapsed = currentTick - lastTick;
 
@@ -1929,9 +1939,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 #endif
 			}
 		}
-	}
-	else
-	{
+	} else {
 		CheckSync();
 		SendDemoData();
 	}

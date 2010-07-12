@@ -2759,7 +2759,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 		else if (action.extra == "end") {
 			EndSkip();
-			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 	}
 	else if (gs->frameNum > 1) {
@@ -4902,6 +4901,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 }
 
 
+
 void CGame::StartSkip(int toFrame) {
 	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
@@ -4933,6 +4933,22 @@ void CGame::StartSkip(int toFrame) {
 	skipping = true;
 }
 
+void CGame::EndSkip() {
+	skipping = false;
+
+	gu->gameTime    += skipSeconds;
+	gu->modGameTime += skipSeconds;
+
+	gs->speedFactor     = skipOldSpeed;
+	gs->userSpeedFactor = skipOldUserSpeed;
+
+	if (!skipSoundmute)
+		sound->Mute(); // sounds back on
+
+	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
+}
+
+
 
 void CGame::DrawSkip(bool blackscreen) {
 	const int framesLeft = (skipEndFrame - gs->frameNum);
@@ -4956,21 +4972,6 @@ void CGame::DrawSkip(bool blackscreen) {
 	glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
 }
 
-
-void CGame::EndSkip() {
-	skipping = false;
-
-	gu->gameTime    += skipSeconds;
-	gu->modGameTime += skipSeconds;
-
-	gs->speedFactor     = skipOldSpeed;
-	gs->userSpeedFactor = skipOldUserSpeed;
-
-	if (!skipSoundmute)
-		sound->Mute(); // sounds back on
-
-	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
-}
 
 
 void CGame::ReloadCOB(const string& msg, int player)
