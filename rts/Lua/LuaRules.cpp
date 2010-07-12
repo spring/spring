@@ -41,8 +41,6 @@
 
 CLuaRules* luaRules = NULL;
 
-string CLuaRules::configString;
-
 static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
 static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 
@@ -72,12 +70,6 @@ void CLuaRules::LoadHandler()
 void CLuaRules::FreeHandler()
 {
 	delete luaRules;
-}
-
-
-void CLuaRules::SetConfigString(const string& cfg)
-{
-	configString = cfg;
 }
 
 
@@ -149,7 +141,6 @@ CLuaRules::~CLuaRules()
 bool CLuaRules::AddSyncedCode()
 {
 	lua_getglobal(L, "Script");
-	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
 	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
 	lua_pop(L, 1);
 
@@ -171,11 +162,6 @@ bool CLuaRules::AddUnsyncedCode()
 {
 	lua_pushstring(L, "UNSYNCED");
 	lua_gettable(L, LUA_REGISTRYINDEX);
-
-	lua_pushstring(L, "Script");
-	lua_rawget(L, -2);
-	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
-	lua_pop(L, 1); // Script
 
 	lua_pushstring(L, "Spring");
 	lua_rawget(L, -2);
@@ -1107,15 +1093,6 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 //
 // LuaRules Call-Outs
 //
-
-int CLuaRules::GetConfigString(lua_State* L)
-{
-	lua_pushlstring(L, configString.c_str(), configString.size());
-	return 1;
-}
-
-
-/******************************************************************************/
 
 int CLuaRules::PermitHelperAIs(lua_State* L)
 {

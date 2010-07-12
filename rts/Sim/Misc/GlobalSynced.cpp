@@ -92,8 +92,7 @@ void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
 	noHelperAIs = !!setup->noHelperAIs;
 
-	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
-	CLuaRules::SetConfigString(setup->luaRulesStr);
+	useLuaGaia  = setup->useLuaGaia;
 
 	// TODO: this call is unsynced, technically
 	playerHandler->LoadFromSetup(setup);
