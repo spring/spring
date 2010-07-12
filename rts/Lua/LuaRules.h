@@ -95,8 +95,6 @@ class CLuaRules : public CLuaHandleSynced
 	protected: // call-outs
 		static int PermitHelperAIs(lua_State* L);
 
-		static int SetRulesInfoMap(lua_State* L);
-
 		static int SetUnitRulesParam(lua_State* L);
 		static int CreateUnitRulesParams(lua_State* L);
 

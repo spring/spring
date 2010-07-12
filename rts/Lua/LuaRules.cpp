@@ -145,7 +145,6 @@ bool CLuaRules::AddSyncedCode()
 	lua_pop(L, 1);
 
 	lua_getglobal(L, "Spring");
-	LuaPushNamedCFunc(L, "SetRulesInfoMap",       SetRulesInfoMap);
 	LuaPushNamedCFunc(L, "SetUnitRulesParam",     SetUnitRulesParam);
 	LuaPushNamedCFunc(L, "SetTeamRulesParam",     SetTeamRulesParam);
 	LuaPushNamedCFunc(L, "SetGameRulesParam",     SetGameRulesParam);
@@ -1106,29 +1105,6 @@ int CLuaRules::PermitHelperAIs(lua_State* L)
 		logOutput.Print("LuaRules has Enabled helper AIs");
 	}
 	return 0;
-}
-
-
-/******************************************************************************/
-
-int CLuaRules::SetRulesInfoMap(lua_State* L)
-{
-	assert(luaRules != NULL);
-	if (!lua_istable(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetRulesInfoMap(teamID)");
-	}
-	map<string, string>& infoMap = luaRules->infoMap;
-	infoMap.clear();
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2) && lua_isstring(L, -1)) {
-			const string key = lua_tostring(L, -2);
-			const string value = lua_tostring(L, -1);
-			infoMap[key] = value;
-		}
-	}
-	lua_pushnumber(L, infoMap.size());
-	return 2;
 }
 
 
