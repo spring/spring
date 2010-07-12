@@ -15,6 +15,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/TeamStatistics.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
@@ -309,7 +310,7 @@ void CEndGameBox::Draw()
 		if(dispMode==1)
 			maxy=std::max(stats[stat1].max,stat2!=-1?stats[stat2].max:0);
 		else
-			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/CTeam::statsPeriod;
+			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/TeamStatistics::statsPeriod;
 
 		int numPoints=stats[0].values[0].size();
 
@@ -317,8 +318,8 @@ void CEndGameBox::Draw()
 			font->glPrint(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, FONT_SCALE | FONT_NORM,
 			                FloatToSmallString(maxy * 0.25f * a));
 			font->glFormat(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, FONT_SCALE | FONT_NORM, "%02i:%02i",
-			                int(a * 0.25f * numPoints * CTeam::statsPeriod / 60),
-			                int(a * 0.25f * (numPoints - 1) * CTeam::statsPeriod) % 60);
+			                int(a * 0.25f * numPoints * TeamStatistics::statsPeriod / 60),
+			                int(a * 0.25f * (numPoints - 1) * TeamStatistics::statsPeriod) % 60);
 		}
 
 		font->glPrint(box.x1+0.55f,box.y1+0.65f,0.8f, FONT_SCALE | FONT_NORM, stats[stat1].name);
@@ -356,7 +357,7 @@ void CEndGameBox::Draw()
 				if (dispMode == 1)
 					value = stats[stat1].values[team][a];
 				else if (a > 0)
-					value = (stats[stat1].values[team][a] - stats[stat1].values[team][a - 1]) / CTeam::statsPeriod;
+					value = (stats[stat1].values[team][a] - stats[stat1].values[team][a - 1]) / TeamStatistics::statsPeriod;
 
 				glVertex3f(box.x1 + 0.15f + a * scalex, box.y1 + 0.08f + value * scaley, 0.0f);
 			}
@@ -372,7 +373,7 @@ void CEndGameBox::Draw()
 					if(dispMode==1)
 						value=stats[stat2].values[team][a];
 					else if(a>0)
-						value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/CTeam::statsPeriod;
+						value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/TeamStatistics::statsPeriod;
 
 					glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
 				}
