@@ -14,6 +14,7 @@
 #include "Sim/Units/UnitSet.h"
 #include "ExternalAI/SkirmishAIKey.h"
 #include "Lua/LuaRulesParams.h"
+#include "Synced/SyncedPrimitive.h" //! SyncedFloat
 
 class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
 {

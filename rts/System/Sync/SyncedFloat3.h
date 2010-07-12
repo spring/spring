@@ -469,7 +469,7 @@ public:
 	{
 		// contrary to most other operations we can make this synced
 		// because the results are always written in the synced x,y,z components
-		const float len = SqLength();
+		const SyncedFloat len = SqLength();
 		if(len != 0.f){
 			const SyncedFloat invL = math::isqrt(len);
 			*this *= invL;
