@@ -93,8 +93,6 @@ class CLuaRules : public CLuaHandleSynced
 		                              LuaRulesParams::HashMap& paramsMap);
 
 	protected: // call-outs
-		static int GetConfigString(lua_State* L);
-
 		static int PermitHelperAIs(lua_State* L);
 
 		static int SetRulesInfoMap(lua_State* L);
