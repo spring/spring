@@ -7,7 +7,6 @@
 #include "mmgr.h"
 
 #include "Game/PlayerStatistics.h"
-#include "Sim/Misc/Team.h"
 #include "Net/RawPacket.h"
 #include "Net/PackPacket.h"
 #include "Net/ProtocolDef.h"

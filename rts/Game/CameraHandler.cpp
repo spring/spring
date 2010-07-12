@@ -327,10 +327,9 @@ void CCameraHandler::PushAction(const Action& action)
 	}
 
 	else if (cmd == "viewtaflip") {
-		COverheadController* taCam =
-				dynamic_cast<COverheadController*>(camControllers[1]);
-		SmoothController* smCam =
-				dynamic_cast<SmoothController*>(camControllers[5]);
+		COverheadController* taCam = dynamic_cast<COverheadController*>(camControllers[CAMERA_MODE_OVERHEAD]);
+		SmoothController* smCam = dynamic_cast<SmoothController*>(camControllers[CAMERA_MODE_SMOOTH]);
+
 		if (taCam) {
 			if (!action.extra.empty()) {
 				taCam->flipped = !!atoi(action.extra.c_str());
