@@ -475,21 +475,7 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 
 void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece)
 {
-	FlyingPiece* fp = new FlyingPiece();
-	fp->pos = pos;
-	fp->speed = speed;
-	fp->prim = piece;
-	fp->object = object;
-	fp->verts = NULL;
-
-	fp->rotAxis = gu->usRandVector();
-	fp->rotAxis.ANormalize();
-	fp->rotSpeed = gu->usRandFloat() * 0.1f;
-	fp->rot = 0;
-
-	fp->team = team;
-	fp->texture = 0;
-
+	FlyingPiece* fp = new FlyingPiece(team, pos, speed, object, piece);
 	flyingPieces3DO.insert(fp);
 }
 
@@ -498,21 +484,6 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	if (textureType <= 0)
 		return; // texture 0 means 3do
 
-	FlyingPiece* fp = new FlyingPiece();
-	fp->pos = pos;
-	fp->speed = speed;
-	fp->prim = NULL;
-	fp->object = NULL;
-	fp->verts = verts;
-
-	/* Duplicated with AddFlyingPiece. */
-	fp->rotAxis = gu->usRandVector();
-	fp->rotAxis.ANormalize();
-	fp->rotSpeed = gu->usRandFloat() * 0.1f;
-	fp->rot = 0;
-
-	fp->team = team;
-	fp->texture = textureType;
-
+	FlyingPiece* fp = new FlyingPiece(team, pos, speed, textureType, verts);
 	flyingPiecesS3O.insert(fp);
 }

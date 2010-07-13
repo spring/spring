@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <string.h>
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -31,37 +32,21 @@ CCamera::CCamera()
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
 {
-	viewport[0] = 0.0f;
-	viewport[1] = 0.0f;
-	viewport[2] = 0.0f;
-	viewport[3] = 0.0f;
+	memset(viewport, 0, 4*sizeof(int));
+
+	memset(viewMat,    0, 16*sizeof(double));
+	memset(viewMatInv, 0, 16*sizeof(double));
+	memset(projMat,    0, 16*sizeof(double));
+	memset(bboardMat,  0, 16*sizeof(double));
 
 	// stuff that will not change can be initialised here,
 	// so it does not need to be reinitialised every update
-	viewMat[ 3] =  0.0f;
-	viewMat[ 7] =  0.0f;
-	viewMat[11] =  0.0f;
-	viewMat[15] =  1.0f;
-
-	projMat[ 1] = 0.0f;
-	projMat[ 2] = 0.0f;
-	projMat[ 3] = 0.0f;
-
-	projMat[ 4] = 0.0f;
-	projMat[ 6] = 0.0f;
-	projMat[ 7] = 0.0f;
-
-	projMat[12] = 0.0f;
-	projMat[13] = 0.0f;
-	projMat[15] = 0.0f;
-
-	bboardMat[ 3] = bboardMat[ 7] = bboardMat[11] = 0.0;
-	bboardMat[12] = bboardMat[13] = bboardMat[14] = 0.0;
+	viewMat[15] = 1.0;
 	bboardMat[15] = 1.0;
 
 	SetFov(45.0f);
 
-	up      = UpVector;
+	up = UpVector;
 
 	if (billboardList == 0) {
 		billboardList = glGenLists(1);

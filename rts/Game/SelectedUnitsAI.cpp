@@ -639,8 +639,3 @@ float3 CSelectedUnitsAI::LastQueuePosition(CUnit* unit)
 	}
 	return unit->midPos;
 }
-
-
-void CSelectedUnitsAI::Update()
-{
-}

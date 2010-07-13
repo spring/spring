@@ -83,6 +83,7 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	leaveTracks(true),
 	hasDecal(false),
 	isBuilding(false),
+	isBlocking(true),
 	rotOffset(0.0f, 0.0f, 0.0f),
 	lastTrackUpdate(0),
 	oldPos(owner ? owner->pos:float3(0,0,0)),

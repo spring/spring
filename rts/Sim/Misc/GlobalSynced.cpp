@@ -22,7 +22,7 @@
  *
  * Global instance of CGlobalSynced
  */
-CGlobalSynced* gs;
+CGlobalSynced* gs = NULL;
 
 
 
@@ -58,8 +58,13 @@ CR_REG_METADATA(CGlobalSynced, (
  */
 CGlobalSynced::CGlobalSynced()
 {
-	hmapx = 256;
-	hmapy = 256;
+	mapx  = 512;
+	mapy  = 512;
+	mapSquares = mapx * mapy;
+	hmapx = mapx>>1;
+	hmapy = mapy>>1;
+	pwr2mapx = mapx; //next_power_of_2(mapx);
+	pwr2mapy = mapy; //next_power_of_2(mapy);
 	randSeed = 18655;
 	initRandSeed = randSeed;
 	frameNum = 0;
