@@ -2520,10 +2520,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float3 pos2 = float3(posx, pos.y, posz);
-				const UnitDef* ud = &unitDefHandler->unitDefs[a];
-				if (ud->valid) {
-					const CUnit* unit =
-						unitLoader.LoadUnit(ud, pos2, team, false, 0, NULL);
+				const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
+				if (ud) {
+					const CUnit* unit = unitLoader.LoadUnit(ud, pos2, team, false, 0, NULL);
 					if (unit) {
 						unitLoader.FlattenGround(unit);
 					}

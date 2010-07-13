@@ -1584,14 +1584,14 @@ void CAICallback::GetUnitDefList (const UnitDef** list)
 
 float CAICallback::GetUnitDefRadius(int def)
 {
-	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
 	S3DModel* mdl = ud->LoadModel();
 	return mdl->radius;
 }
 
 float CAICallback::GetUnitDefHeight(int def)
 {
-	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
 	S3DModel* mdl = ud->LoadModel();
 	return mdl->height;
 }
