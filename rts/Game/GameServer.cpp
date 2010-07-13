@@ -311,8 +311,15 @@ void CGameServer::SkipTo(int targetframe)
 		// fast-read and send demo data
 		// if SendDemoData reaches EOS, demoReader becomes NULL
 		while ((serverframenum < targetframe) && demoReader) {
+			float toSkipSecs = 0.1f; // ~ 3 frames
+			if ((targetframe - serverframenum) < 10) {
+				// we only want to advance one frame at most, so
+				// the next time-index must be "close enough" not
+				// to move past more than 1 NETMSG_NEWFRAME
+				toSkipSecs = (1.0f / (GAME_SPEED * 2)); // 1 frame
+			}
 			// skip time
-			modGameTime = demoReader->GetModGameTime() + 0.1f;
+			modGameTime += toSkipSecs;
 
 			SendDemoData(true);
 			if (((serverframenum % 20) == 0) && UDPNet) {
