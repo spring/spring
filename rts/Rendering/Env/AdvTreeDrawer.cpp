@@ -308,8 +308,13 @@ inline void DrawTreeVertexFar(CVertexArray* va, const float3& pos, const float3&
 
 struct CAdvTreeSquareDrawer: CReadMap::IQuadDrawer
 {
-	CAdvTreeSquareDrawer(): td(NULL) {
-	}
+	CAdvTreeSquareDrawer(CAdvTreeDrawer* _td, int _cx, int _cy, float _treeDistance, bool _drawDetailed)
+		: td(_td),
+		cx(_cx),
+		cy(_cy),
+		treeDistance(_treeDistance),
+		drawDetailed(_drawDetailed)
+	{}
 
 	void DrawQuad(int x, int y);
 
@@ -425,9 +430,6 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0]: treeGen->farTex[1];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
-	const int cx = int(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
-	const int cy = int(camera->pos.z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
-
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* treeShader = NULL;
 
@@ -472,13 +474,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	}
 
 
+	const int cx = int(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cy = int(camera->pos.z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
-	CAdvTreeSquareDrawer drawer;
-	drawer.td = this;
-	drawer.cx = cx;
-	drawer.cy = cy;
-	drawer.treeDistance = treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE;
-	drawer.drawDetailed = drawDetailed;
+	CAdvTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE, drawDetailed);
 
 	GML_STDMUTEX_LOCK(tree); // Draw
 

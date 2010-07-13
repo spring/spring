@@ -25,8 +25,6 @@ public:
 	float frontLength;
 	float addSpace;
 
-	void Update();
-
 private:
 	void CalculateGroupData(int player, bool queueing);
 	void MakeFrontMove(Command* c,int player);
