@@ -23,21 +23,21 @@ struct FlyingPiece {
 	#endif
 
 public:
-	FlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece)
+	FlyingPiece(int team, const float3& pos, const float3& speed, const S3DOPiece* _object, const S3DOPrimitive* piece)
 	{
 		Init(team, pos, speed);
 
 		//! 3D0
 		prim = piece;
-		object = object;
+		object = _object;
 	}
 
-	FlyingPiece(int team, float3 pos, float3 speed, int textureType, SS3OVertex* verts)
+	FlyingPiece(int team, const float3& pos, const float3& speed, int textureType, SS3OVertex* _verts)
 	{
 		Init(team, pos, speed);
 
 		//! S30
-		verts = verts;
+		verts = _verts;
 		texture = textureType;
 	}
 
@@ -61,7 +61,7 @@ public:
 	size_t team;
 
 private:
-	void Init(int _team, float3 _pos, float3 _speed)
+	void Init(int _team, const float3& _pos, const float3& _speed)
 	{
 		prim   = NULL;
 		object = NULL;
