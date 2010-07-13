@@ -304,24 +304,29 @@ void CGameServer::SkipTo(int targetframe)
 {
 	const bool wasPaused = isPaused;
 
-	if (targetframe > serverframenum && demoReader) {
+	if ((serverframenum < targetframe) && demoReader) {
 		CommandMessage msg(str( boost::format("skip start %d") %targetframe ), SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg.Pack()));
 
 		// fast-read and send demo data
 		// if SendDemoData reaches EOS, demoReader becomes NULL
-		while (serverframenum < targetframe && demoReader) {
-			modGameTime = demoReader->GetModGameTime() + 0.1f; // skip time
+		while ((serverframenum < targetframe) && demoReader) {
+			// skip time
+			modGameTime = demoReader->GetModGameTime() + 0.1f;
+
 			SendDemoData(true);
-			if (serverframenum % 20 == 0 && UDPNet)
-				UDPNet->Update(); // send some data (otherwise packets will grow too big)
+			if (((serverframenum % 20) == 0) && UDPNet) {
+				// send data every few frames, as otherwise packets would grow too big
+				UDPNet->Update();
+			}
 		}
 
 		CommandMessage msg2("skip end", SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg2.Pack()));
 
-		if (UDPNet)
+		if (UDPNet) {
 			UDPNet->Update();
+		}
 
 		lastUpdate = spring_gettime();
 	}
