@@ -500,7 +500,7 @@ public:
 						continue;
 				}
 
-				const float sqDist = (f->pos - camera->pos).SqLength2D();
+				const float sqDist = (f->pos - camera->pos).SqLength();
 				const float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
