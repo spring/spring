@@ -836,10 +836,16 @@ void CUnit::SlowUpdate()
 		if(!dontFire){
 			for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi){
 				CWeapon* w=*wi;
-				if(userTarget && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-					w->AttackUnit(userTarget,true);
-				else if(userAttackGround && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-					w->AttackGround(userAttackPos,true);
+				
+				if (!w->haveUserTarget) {
+					if (haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+						if (userTarget) {
+							w->AttackUnit(userTarget, true);
+						} else if (userAttackGround)
+							w->AttackGround(userAttackPos, true);
+						}
+					}
+				}
 
 				w->SlowUpdate();
 
@@ -1395,7 +1401,7 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
 		(*wi)->targetType = Target_None;
-		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
+		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
 			if ((*wi)->AttackUnit(unit, true))
 				r = true;
 	}
@@ -1415,7 +1421,7 @@ bool CUnit::AttackGround(const float3 &pos, bool dgun)
 	std::vector<CWeapon*>::iterator wi;
 	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
-		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
+		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
 			if ((*wi)->AttackGround(pos, true))
 				r = true;
 	}
