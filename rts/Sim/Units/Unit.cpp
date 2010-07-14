@@ -841,7 +841,7 @@ void CUnit::SlowUpdate()
 					if (haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
 						if (userTarget) {
 							w->AttackUnit(userTarget, true);
-						} else if (userAttackGround)
+						} else if (userAttackGround) {
 							w->AttackGround(userAttackPos, true);
 						}
 					}
