@@ -41,11 +41,19 @@ CR_REG_METADATA(CAirCAI, (
 				));
 
 CAirCAI::CAirCAI()
-: CMobileCAI(), lastPC1(-1), lastPC2(-1)
+	: CMobileCAI()
+	, activeCommand(0)
+	, targetAge(0)
+	, lastPC1(-1)
+	, lastPC2(-1)
 {}
 
 CAirCAI::CAirCAI(CUnit* owner)
-: CMobileCAI(owner), lastPC1(-1), lastPC2(-1)
+	: CMobileCAI(owner)
+	, activeCommand(0)
+	, targetAge(0)
+	, lastPC1(-1)
+	, lastPC2(-1)
 {
 	cancelDistance = 16000;
 	CommandDescription c;
@@ -77,10 +85,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 
 	basePos=owner->pos;
 	goalPos=owner->pos;
-	tempOrder=false;
-	targetAge=0;
-	commandPos1=ZeroVector;
-	commandPos2=ZeroVector;
 }
 
 CAirCAI::~CAirCAI(void)

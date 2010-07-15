@@ -77,6 +77,7 @@ CR_REG_METADATA(CCommandAI, (
 CCommandAI::CCommandAI():
 	stockpileWeapon(0),
 	lastUserCommand(-1000),
+	selfDCountdown(0),
 	lastFinishCommand(0),
 	owner(owner),
 	orderTarget(0),
@@ -92,6 +93,7 @@ CCommandAI::CCommandAI():
 CCommandAI::CCommandAI(CUnit* owner):
 	stockpileWeapon(0),
 	lastUserCommand(-1000),
+	selfDCountdown(0),
 	lastFinishCommand(0),
 	owner(owner),
 	orderTarget(0),
