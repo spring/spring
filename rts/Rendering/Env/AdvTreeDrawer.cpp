@@ -848,6 +848,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 	glBindTexture(GL_TEXTURE_2D, activeFarTex);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
+	glDisable(GL_CULL_FACE);
 
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -1005,6 +1006,7 @@ void CAdvTreeDrawer::DrawShadowPass(void)
 		po->Disable();
 	}
 
+	glEnable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
