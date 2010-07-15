@@ -81,7 +81,12 @@ CGlobalSynced::CGlobalSynced()
 
 	// TODO: put this somewhere else (playerHandler is unsynced, even)
 	playerHandler = new CPlayerHandler();
-	teamHandler = new CTeamHandler();
+	try {
+		teamHandler = new CTeamHandler();
+	} catch (...) {
+		delete playerHandler;
+		playerHandler = NULL;
+	}
 }
 
 
