@@ -42,17 +42,20 @@ CR_REG_METADATA(CTransportCAI, (
 				CR_RESERVED(16)
 				));
 
-CTransportCAI::CTransportCAI():
-	CMobileCAI(),
-	toBeTransportedUnitId(-1),
-	lastCall(0)
+CTransportCAI::CTransportCAI()
+	: CMobileCAI()
+	, unloadType(-1)
+	, toBeTransportedUnitId(-1)
+	, lastCall(0)
+	, isFirstIteration(true)
 {}
 
 
-CTransportCAI::CTransportCAI(CUnit* owner):
-	CMobileCAI(owner),
-	toBeTransportedUnitId(-1),
-	lastCall(0)
+CTransportCAI::CTransportCAI(CUnit* owner)
+	: CMobileCAI(owner)
+	, toBeTransportedUnitId(-1)
+	, lastCall(0)
+	, isFirstIteration(true)
 {
 	//for new transport methods
 	dropSpots.clear();
@@ -61,7 +64,6 @@ CTransportCAI::CTransportCAI(CUnit* owner):
 	startingDropPos = float3(-1,-1,-1);
 	lastDropPos = float3(-1,-1,-1);
 	endDropPos = float3(-1,-1,-1);
-	isFirstIteration = true;
 	//
 	CommandDescription c;
 	c.id=CMD_LOAD_UNITS;

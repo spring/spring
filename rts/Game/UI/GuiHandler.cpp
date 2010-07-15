@@ -77,9 +77,9 @@ CGuiHandler::CGuiHandler():
 	activePage(0),
 	defaultCmdMemory(-1),
 	explicitCommand(-1),
+	curIconCommand(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
-	curIconCommand(-1),
 	gatherMode(false)
 {
 	icons = new IconInfo[16];

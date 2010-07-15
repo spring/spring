@@ -99,6 +99,7 @@ private:
 
 public:
 	Command():
+		id(0),
 		options(0),
 		tag(0),
 		timeOut(INT_MAX) {}
@@ -153,6 +154,8 @@ private:
 
 public:
 	CommandDescription():
+		id(0),
+		type(CMDTYPE_ICON),
 		hidden(false),
 		disabled(false),
 		showUnique(false),
