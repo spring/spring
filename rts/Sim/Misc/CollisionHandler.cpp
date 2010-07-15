@@ -558,7 +558,6 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	}
 
 	float d = (b * b) - (4.0f * a * c);
-	float rd = 0.0f;
 	float dp = 0.0f, rdp = 0.0f;
 
 	// volume-space intersection points
@@ -567,8 +566,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 
 	bool b0 = false;
 	bool b1 = false;
-	float r0 = 0.0f, s0 = 0.0f, t0 = 0.0f;
-	float r1 = 0.0f, s1 = 0.0f, t1 = 0.0f;
+	float s0 = 0.0f, t0 = 0.0f;
+	float s1 = 0.0f, t1 = 0.0f;
 
 	// get the length of the ray segment in volume-space
 	const float segLenSq = (pi1 - pi0).SqLength();
@@ -581,7 +580,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			s0 = (p0 - pi0).SqLength();
 			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
 		} else {
-			rd = fastmath::apxsqrt(d);
+			const float rd = fastmath::apxsqrt(d);
 			t0 = (-b - rd) / (2.0f * a);
 			t1 = (-b + rd) / (2.0f * a);
 			p0 = (pii0 + (diir * t0)) * inv;
@@ -604,7 +603,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		t0 = -(n0.dot(pi0) - ahs[pAx]) * rdp;
 		p0 = pi0 + (dir * t0);
 		s0 = (p0 - pi0).SqLength();
-		r0 =
+		const float r0 =
 			(((p0[sAx0] * p0[sAx0]) / ahsq[sAx0]) +
 			 ((p0[sAx1] * p0[sAx1]) / ahsq[sAx1]));
 		b0 = (t0 >= 0.0f && r0 <= 1.0f && s0 <= segLenSq);
@@ -620,7 +619,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		t1 = -(n1.dot(pi0) - ahs[pAx]) * rdp;
 		p1 = pi0 + (dir * t1);
 		s1 = (p1 - pi0).SqLength();
-		r1 =
+		const float r1 =
 			(((p1[sAx0] * p1[sAx0]) / ahsq[sAx0]) +
 			 ((p1[sAx1] * p1[sAx1]) / ahsq[sAx1]));
 		b1 = (t1 >= 0.0f && r1 <= 1.0f && s1 <= segLenSq);
