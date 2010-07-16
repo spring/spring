@@ -7,7 +7,6 @@
 #include <SDL_timer.h>
 #include <set>
 #include <cfloat>
-#include <stdexcept> // for runtime_error
 
 #include "mmgr.h"
 
@@ -165,14 +164,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	assert(!gameServer);
 	ScopedOnceTimer startserver("Starting GameServer");
 	GameData* startupData = new GameData();
-	CGameSetup* setup = NULL;
-	try {
-		setup = new CGameSetup();
-	} catch (...) {
-		delete startupData;
-		startupData = NULL;
-		throw std::runtime_error("Failed to initialize CGameSetup");
-	}
+	CGameSetup* setup = new CGameSetup();
 	setup->Init(setupscript);
 
 	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
