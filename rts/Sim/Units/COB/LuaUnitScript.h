@@ -3,8 +3,10 @@
 #ifndef LUAUNITSCRIPT_H
 #define LUAUNITSCRIPT_H
 
+#include <map>
 #include "UnitScript.h"
 
+class CUnit;
 class CLuaHandle;
 struct lua_State;
 

@@ -1632,3 +1632,19 @@ void CUnitScript::BenchmarkScript(const string& unitname)
 }
 
 #endif
+
+/******************************************************************************/
+/******************************************************************************/
+
+int CUnitScript::ScriptToModel(int scriptnum) const {
+	const LocalModelPiece* p = GetLocalModelPiece(scriptnum);
+
+	if (p == NULL) return -1;
+
+	int i = 0;
+	const std::vector<LocalModelPiece*>& modelpieces = unit->localmodel->pieces;
+	for (std::vector<LocalModelPiece*>::const_iterator pm = modelpieces.begin(); pm != modelpieces.end(); pm++, i++) {
+		if (p == *pm) return i;
+	}
+	return -1;
+};

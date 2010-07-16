@@ -16,6 +16,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
