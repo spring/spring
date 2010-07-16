@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef WEAPONDEF_H
-#define WEAPONDEF_H
+#ifndef _WEAPON_DEF_H
+#define _WEAPON_DEF_H
 
 #include <map>
 
@@ -16,9 +16,252 @@ struct S3DModel;
 
 struct WeaponDef
 {
+private:
 	CR_DECLARE_STRUCT(WeaponDef);
-	WeaponDef():explosionGenerator(0) {}
-	WeaponDef(DamageArray damages) : damages(damages), explosionGenerator(0) {}
+
+public:
+	WeaponDef()
+		: range(0.0f)
+		, heightmod(0.0f)
+		, accuracy(0.0f)
+		, sprayAngle(0.0f)
+		, movingAccuracy(0.0f)
+		, ownerExpAccWeight(0.0f)
+		, targetMoveError(0.0f)
+		, leadLimit(0.0f)
+		, leadBonus(0.0f)
+		, predictBoost(0.0f)
+		, areaOfEffect(0.0f)
+		, noSelfDamage(false)
+		, fireStarter(0.0f)
+		, edgeEffectiveness(0.0f)
+		, size(0.0f)
+		, sizeGrowth(0.0f)
+		, collisionSize(0.0f)
+		, salvosize(0)
+		, salvodelay(0.0f)
+		, reload(0.0f)
+		, beamtime(0.0f)
+		, beamburst(false)
+		, waterBounce(false)
+		, groundBounce(false)
+		, bounceRebound(0.0f)
+		, bounceSlip(0.0f)
+		, numBounce(0)
+		, maxAngle(0.0f)
+		, restTime(0.0f)
+		, uptime(0.0f)
+		, flighttime(0)
+		, metalcost(0.0f)
+		, energycost(0.0f)
+		, supplycost(0.0f)
+		, projectilespershot(0)
+		, id(0)
+		, tdfId(0)
+		, turret(false)
+		, onlyForward(false)
+		, fixedLauncher(false)
+		, waterweapon(false)
+		, fireSubmersed(false)
+		, submissile(false)
+		, tracks(false)
+		, dropped(false)
+		, paralyzer(false)
+		, impactOnly(false)
+		, noAutoTarget(false)
+		, manualfire(false)
+		, interceptor(0)
+		, targetable(0)
+		, stockpile(false)
+		, coverageRange(0.0f)
+		, stockpileTime(0.0f)
+		, intensity(0.0f)
+		, thickness(0.0f)
+		, laserflaresize(0.0f)
+		, corethickness(0.0f)
+		, duration(0.0f)
+		, lodDistance(0)
+		, falloffRate(0.0f)
+		, graphicsType(0)
+		, soundTrigger(false)
+		, selfExplode(false)
+		, gravityAffected(false)
+		, highTrajectory(0)
+		, myGravity(0.0f)
+		, noExplode(false)
+		, startvelocity(0.0f)
+		, weaponacceleration(0.0f)
+		, turnrate(0.0f)
+		, maxvelocity(0.0f)
+		, projectilespeed(0.0f)
+		, explosionSpeed(0.0f)
+		, onlyTargetCategory(0)
+		, wobble(0.0f)
+		, dance(0.0f)
+		, trajectoryHeight(0.0f)
+		, largeBeamLaser(false)
+		, isShield(false)
+		, shieldRepulser(false)
+		, smartShield(false)
+		, exteriorShield(false)
+		, visibleShield(false)
+		, visibleShieldRepulse(false)
+		, visibleShieldHitFrames(0)
+		, shieldEnergyUse(0.0f)
+		, shieldRadius(0.0f)
+		, shieldForce(0.0f)
+		, shieldMaxSpeed(0.0f)
+		, shieldPower(0.0f)
+		, shieldPowerRegen(0.0f)
+		, shieldPowerRegenEnergy(0.0f)
+		, shieldStartingPower(0.0f)
+		, shieldRechargeDelay(0.0f)
+		, shieldGoodColor(ZeroVector)
+		, shieldBadColor(ZeroVector)
+		, shieldAlpha(0.0f)
+		, shieldInterceptType(0)
+		, interceptedByShieldType(0)
+		, avoidFriendly(false)
+		, avoidFeature(false)
+		, avoidNeutral(false)
+		, targetBorder(0.0f)
+		, cylinderTargetting(0.0f)
+		, minIntensity(0.0f)
+		, heightBoostFactor(0.0f)
+		, proximityPriority(0.0f)
+		, collisionFlags(0)
+		, explosionGenerator(NULL)
+		, bounceExplosionGenerator(NULL)
+		, sweepFire(false)
+		, canAttackGround(false)
+		, cameraShake(0.0f)
+		, dynDamageExp(0.0f)
+		, dynDamageMin(0.0f)
+		, dynDamageRange(0.0f)
+		, dynDamageInverted(false)
+	{}
+
+	WeaponDef(DamageArray damages)
+		: range(0.0f)
+		, heightmod(0.0f)
+		, accuracy(0.0f)
+		, sprayAngle(0.0f)
+		, movingAccuracy(0.0f)
+		, ownerExpAccWeight(0.0f)
+		, targetMoveError(0.0f)
+		, leadLimit(0.0f)
+		, leadBonus(0.0f)
+		, predictBoost(0.0f)
+		, damages(damages)
+		, areaOfEffect(0.0f)
+		, noSelfDamage(false)
+		, fireStarter(0.0f)
+		, edgeEffectiveness(0.0f)
+		, size(0.0f)
+		, sizeGrowth(0.0f)
+		, collisionSize(0.0f)
+		, salvosize(0)
+		, salvodelay(0.0f)
+		, reload(0.0f)
+		, beamtime(0.0f)
+		, beamburst(false)
+		, waterBounce(false)
+		, groundBounce(false)
+		, bounceRebound(0.0f)
+		, bounceSlip(0.0f)
+		, numBounce(0)
+		, maxAngle(0.0f)
+		, restTime(0.0f)
+		, uptime(0.0f)
+		, flighttime(0)
+		, metalcost(0.0f)
+		, energycost(0.0f)
+		, supplycost(0.0f)
+		, projectilespershot(0)
+		, id(0)
+		, tdfId(0)
+		, turret(false)
+		, onlyForward(false)
+		, fixedLauncher(false)
+		, waterweapon(false)
+		, fireSubmersed(false)
+		, submissile(false)
+		, tracks(false)
+		, dropped(false)
+		, paralyzer(false)
+		, impactOnly(false)
+		, noAutoTarget(false)
+		, manualfire(false)
+		, interceptor(0)
+		, targetable(0)
+		, stockpile(false)
+		, coverageRange(0.0f)
+		, stockpileTime(0.0f)
+		, intensity(0.0f)
+		, thickness(0.0f)
+		, laserflaresize(0.0f)
+		, corethickness(0.0f)
+		, duration(0.0f)
+		, lodDistance(0)
+		, falloffRate(0.0f)
+		, graphicsType(0)
+		, soundTrigger(false)
+		, selfExplode(false)
+		, gravityAffected(false)
+		, highTrajectory(0)
+		, myGravity(0.0f)
+		, noExplode(false)
+		, startvelocity(0.0f)
+		, weaponacceleration(0.0f)
+		, turnrate(0.0f)
+		, maxvelocity(0.0f)
+		, projectilespeed(0.0f)
+		, explosionSpeed(0.0f)
+		, onlyTargetCategory(0)
+		, wobble(0.0f)
+		, dance(0.0f)
+		, trajectoryHeight(0.0f)
+		, largeBeamLaser(false)
+		, isShield(false)
+		, shieldRepulser(false)
+		, smartShield(false)
+		, exteriorShield(false)
+		, visibleShield(false)
+		, visibleShieldRepulse(false)
+		, visibleShieldHitFrames(0)
+		, shieldEnergyUse(0.0f)
+		, shieldRadius(0.0f)
+		, shieldForce(0.0f)
+		, shieldMaxSpeed(0.0f)
+		, shieldPower(0.0f)
+		, shieldPowerRegen(0.0f)
+		, shieldPowerRegenEnergy(0.0f)
+		, shieldStartingPower(0.0f)
+		, shieldRechargeDelay(0.0f)
+		, shieldGoodColor(ZeroVector)
+		, shieldBadColor(ZeroVector)
+		, shieldAlpha(0.0f)
+		, shieldInterceptType(0)
+		, interceptedByShieldType(0)
+		, avoidFriendly(false)
+		, avoidFeature(false)
+		, avoidNeutral(false)
+		, targetBorder(0.0f)
+		, cylinderTargetting(0.0f)
+		, minIntensity(0.0f)
+		, heightBoostFactor(0.0f)
+		, proximityPriority(0.0f)
+		, collisionFlags(0)
+		, explosionGenerator(NULL)
+		, bounceExplosionGenerator(NULL)
+		, sweepFire(false)
+		, canAttackGround(false)
+		, cameraShake(0.0f)
+		, dynDamageExp(0.0f)
+		, dynDamageMin(0.0f)
+		, dynDamageRange(0.0f)
+		, dynDamageInverted(false)
+	{}
 
 	~WeaponDef();
 
@@ -28,21 +271,21 @@ struct WeaponDef
 	std::string type;
 	std::string description;
 	std::string filename;
-	std::string cegTag;        // tag of CEG that projectiles fired by this weapon should use
+	std::string cegTag;        ///< tag of CEG that projectiles fired by this weapon should use
 
 	GuiSoundSet firesound;
 	GuiSoundSet soundhit;
 
 	float range;
 	float heightmod;
-	float accuracy;            // inaccuracy of whole burst
-	float sprayAngle;          // inaccuracy of individual shots inside burst
-	float movingAccuracy;      // inaccuracy while owner moving
-	float ownerExpAccWeight;   // if 0, accuracy is not increased with owner experience (max. 1)
-	float targetMoveError;     // fraction of targets move speed that is used as error offset
-	float leadLimit;           // maximum distance the weapon will lead the target
-	float leadBonus;           // factor for increasing the leadLimit with experience
-	float predictBoost;        // replaces hardcoded behaviour for burnblow cannons
+	float accuracy;            ///< inaccuracy of whole burst
+	float sprayAngle;          ///< inaccuracy of individual shots inside burst
+	float movingAccuracy;      ///< inaccuracy while owner moving
+	float ownerExpAccWeight;   ///< if 0, accuracy is not increased with owner experience (max. 1)
+	float targetMoveError;     ///< fraction of targets move speed that is used as error offset
+	float leadLimit;           ///< maximum distance the weapon will lead the target
+	float leadBonus;           ///< factor for increasing the leadLimit with experience
+	float predictBoost;        ///< replaces hardcoded behaviour for burnblow cannons
 
 	DamageArray damages;
 	float areaOfEffect;
@@ -78,27 +321,27 @@ struct WeaponDef
 	int projectilespershot;
 
 	int id;
-	int tdfId;									// the id= tag in the tdf
+	int tdfId;                  ///< the id= tag in the tdf
 
 	bool turret;
 	bool onlyForward;
 	bool fixedLauncher;
 	bool waterweapon;
 	bool fireSubmersed;
-	bool submissile;            // Lets a torpedo travel above water like it does below water
+	bool submissile;            ///< Lets a torpedo travel above water like it does below water
 	bool tracks;
 	bool dropped;
-	bool paralyzer;             // weapon will only paralyze not do real damage
-	bool impactOnly;            // The weapon damages by impacting, not by exploding
+	bool paralyzer;             ///< weapon will only paralyze not do real damage
+	bool impactOnly;            ///< The weapon damages by impacting, not by exploding
 
-	bool noAutoTarget;          // cant target stuff (for antinuke,dgun)
-	bool manualfire;            // use dgun button
-	int interceptor;            // anti nuke
-	int targetable;             // nuke (can be shot by interceptor)
+	bool noAutoTarget;          ///< cant target stuff (for antinuke,dgun)
+	bool manualfire;            ///< use dgun button
+	int interceptor;            ///< anti nuke
+	int targetable;             ///< nuke (can be shot by interceptor)
 	bool stockpile;
-	float coverageRange;        // range of anti nuke
+	float coverageRange;        ///< range of anti nuke
 
-	float stockpileTime;        // builtime of a missile
+	float stockpileTime;        ///< builtime of a missile
 
 	float intensity;
 	float thickness;
@@ -113,7 +356,7 @@ struct WeaponDef
 
 	bool selfExplode;
 	bool gravityAffected;
-	int highTrajectory;         //Per-weapon high traj setting, 0=low, 1=high, 2=unit
+	int highTrajectory;         ///< Per-weapon high traj setting, 0=low, 1=high, 2=unit
 	float myGravity;
 	bool noExplode;
 	float startvelocity;
@@ -126,13 +369,37 @@ struct WeaponDef
 
 	unsigned int onlyTargetCategory;
 
-	float wobble;             // how much the missile will wobble around its course
-	float dance;              // how much the missile will dance
-	float trajectoryHeight;   // how high trajectory missiles will try to fly in
+	float wobble;             ///< how much the missile will wobble around its course
+	float dance;              ///< how much the missile will dance
+	float trajectoryHeight;   ///< how high trajectory missiles will try to fly in
 
 	struct Visuals
 	{
-		Visuals() : model(NULL) {};
+		Visuals()
+			: color(ZeroVector)
+			, color2(ZeroVector)
+			, model(NULL)
+			, colorMap(NULL)
+			, smokeTrail(false)
+			, beamweapon(false)
+			, hardStop(false)
+			, texture1(NULL)
+			, texture2(NULL)
+			, texture3(NULL)
+			, texture4(NULL)
+			, tilelength(0.0f)
+			, scrollspeed(0.0f)
+			, pulseSpeed(0.0f)
+			, beamttl(0)
+			, beamdecay(0.0f)
+			, stages(0)
+			, alphaDecay(0.0f)
+			, sizeDecay(0.0f)
+			, separation(0.0f)
+			, noGap(true)
+			, alwaysVisible(true)
+		{}
+
 		float3 color;
 		float3 color2;
 
@@ -145,7 +412,8 @@ struct WeaponDef
 
 		bool smokeTrail;
 		bool beamweapon;
-		bool hardStop;   // whether the shot should fade out or stop and contract at max range
+		/// whether the shot should fade out or stop and contract at max range
+		bool hardStop;
 
 		AtlasedTexture* texture1;
 		AtlasedTexture* texture2;
@@ -221,7 +489,7 @@ struct WeaponDef
 
 	unsigned int collisionFlags;
 
-	CExplosionGenerator* explosionGenerator;        // can be zero for default explosions
+	CExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
 	CExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
 
 	bool sweepFire;
@@ -237,4 +505,4 @@ struct WeaponDef
 	std::map<std::string, std::string> customParams;
 };
 
-#endif
+#endif // _WEAPON_DEF_H

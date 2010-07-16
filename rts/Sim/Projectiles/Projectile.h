@@ -26,7 +26,9 @@ class CVertexArray;
 class CProjectile: public CExpGenSpawnable
 {
 	CR_DECLARE(CProjectile);
-	CProjectile(); // default constructor is needed for creg
+
+	/// used only by creg
+	CProjectile();
 
 public:
 	static bool inArray;
