@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef SMFMAPFILE_H
 #define SMFMAPFILE_H
@@ -17,6 +17,8 @@ public:
 	CSmfMapFile(const std::string& mapname);
 
 	void ReadMinimap(void* data);
+	/// @return mipsize
+	int ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel);
 	void ReadHeightmap(unsigned short* heightmap);
 	void ReadHeightmap(float* heightmap, float base, float mod);
 	void ReadFeatureInfo();

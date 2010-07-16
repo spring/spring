@@ -1,14 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __SIMPLE_PARSER_H__
 #define __SIMPLE_PARSER_H__
-// SimpleParser.h: interface for the SimpleParser namespace.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
 
 #include "FileHandler.h"
-
 
 class CSimpleParser
 {
@@ -17,7 +15,7 @@ public:
 
 	CSimpleParser(CFileHandler& fh);
 
-	int GetLineNumber();
+	int GetLineNumber() const;
 	std::string GetLine();
 	std::string GetCleanLine();
 
@@ -27,5 +25,5 @@ private:
 	bool inComment;
 };
 
-
 #endif // __SIMPLE_PARSER_H__
+

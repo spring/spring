@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// InfoConsole.cpp: implementation of the CInfoConsole class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "Rendering/GL/myGL.h"
 #include <fstream>
 
@@ -80,10 +79,10 @@ void CInfoConsole::Draw()
 		glEnd();
 	}
 
-	const float fontHeight = fontSize * smallFont->GetLineHeight() * gu->pixelY;
+	const float fontHeight = fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
-	float curX = xpos + border * gu->pixelX;
-	float curY = ypos - border * gu->pixelY;
+	float curX = xpos + border * globalRendering->pixelX;
+	float curY = ypos - border * globalRendering->pixelY;
 
 	smallFont->Begin();
 	smallFont->SetColors(); // default
@@ -155,8 +154,8 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 		newLines++;
 	}
 
-	const float maxWidth  = width * gu->viewSizeX - border * 2;
-	const float maxHeight = height * gu->viewSizeY - border * 2;
+	const float maxWidth  = width * globalRendering->viewSizeX - border * 2;
+	const float maxHeight = height * globalRendering->viewSizeY - border * 2;
 	const unsigned int numLines = math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()));
 
 	std::list<std::string> lines = smallFont->Wrap(text,fontSize,maxWidth);

@@ -46,7 +46,7 @@ AAISector* AAIBrain::GetAttackDest(bool land, bool water)
 	float best_rating = 0, my_rating;
 	AAISector *dest = 0, *sector;
 
-	int side = ai->side-1;
+	//int side = ai->side-1;
 
 	float ground =  1.0f;
 	float air = 1.0f;
@@ -100,7 +100,7 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 	float best_rating = 0, my_rating, dist;
 	AAISector *dest = 0, *sector;
 
-	int side = ai->side-1;
+	//int side = ai->side-1;
 
 	float ground = 1.0f;
 	float air = 1.0f;
@@ -232,7 +232,7 @@ bool AAIBrain::EnergyForConstr(int unit, int wokertime)
 	// check energy
 	int energy =  bt->unitList[unit-1]->buildTime * (cb->GetEnergyIncome()-(cb->GetEnergyUsage()/2));
 
-	// FIXME: add code here
+	// TODO: FIXME: add code here
 
 	return true;
 }
@@ -294,10 +294,11 @@ void AAIBrain::RemoveSector(AAISector *sector)
 void AAIBrain::DefendCommander(int attacker)
 {
 	float3 pos = cb->GetUnitPos(ai->ut->cmdr);
-	float importance = 120;
+	//float importance = 120;
 	Command c;
 
 	// evacuate cmdr
+	// TODO: FIXME: check/fix?/implement me?
 	/*if(ai->cmdr->task != BUILDING)
 	{
 		AAISector *sector = GetSafestSector();
@@ -514,12 +515,12 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		// debug purposes:
 		if(sectorType == LAND_SECTOR)
 		{
-			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: %i", best_sector->x, best_sector->y, sectors[0].size());
+			fprintf(ai->file, "\nAdding land sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 		else
 		{
-			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: %i", best_sector->x, best_sector->y, sectors[0].size());
+			fprintf(ai->file, "\nAdding water sector %i,%i to base; base size: "_STPF_, best_sector->x, best_sector->y, sectors[0].size());
 			fprintf(ai->file, "\nNew land : water ratio within base: %f : %f\n\n", baseLandRatio, baseWaterRatio);
 		}
 
@@ -687,7 +688,7 @@ float AAIBrain::Affordable()
 
 void AAIBrain::BuildUnits()
 {
-	int side = ai->side-1;
+	//int side = ai->side-1;
 	bool urgent = false;
 	int k;
 	unsigned int allowed_move_type = 0;

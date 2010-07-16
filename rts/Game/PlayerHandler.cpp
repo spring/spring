@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 /* based on code from GlobalSynced.{cpp,h} */
 
@@ -53,21 +53,6 @@ int CPlayerHandler::Player(const std::string& name) const
 
 void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 {
-	const char *type = Player(player)->GetType();
-	switch (reason) {
-		case 1: {
-			logOutput.Print("%s %s left", type, Player(player)->name.c_str());
-			break;
-		}
-		case 2:
-			logOutput.Print("%s %s has been kicked", type, Player(player)->name.c_str());
-			break;
-		case 0:
-			logOutput.Print("%s %s dropped (connection lost)", type, Player(player)->name.c_str());
-			break;
-		default:
-			logOutput.Print("%s %s left the game (reason unknown: %i)", type, Player(player)->name.c_str(), reason);
-	}
 	Player(player)->active = false;
 	Player(player)->ping = 0;
 }

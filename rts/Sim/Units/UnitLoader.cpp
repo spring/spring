@@ -1,9 +1,6 @@
-// UnitLoader.cpp: implementation of the CUnitLoader class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
 #include "UnitLoader.h"
@@ -27,7 +24,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Platform/errorhandler.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
@@ -50,7 +47,8 @@
 #include "Sim/Weapons/StarburstLauncher.h"
 #include "Sim/Weapons/TorpedoLauncher.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sound/AudioChannel.h"
+#include "System/EventBatchHandler.h"
+#include "Sound/IEffectChannel.h"
 #include "myMath.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
@@ -184,6 +182,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->maxSpeed = ud->speed / GAME_SPEED;
 	unit->maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 	unit->decloakDistance = ud->decloakDistance;
+	unit->cloakTimeout = ud->cloakTimeout;
 
 	unit->flankingBonusMode        = ud->flankingBonusMode;
 	unit->flankingBonusDir         = ud->flankingBonusDir;
@@ -320,6 +319,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			unit->moveType = mt;
 		}
 	} else {
+		assert(ud->movedata == NULL);
 		unit->moveType = new CStaticMoveType(unit);
 		unit->upright = true;
 	}
@@ -379,6 +379,9 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	if (!build) {
 		unit->FinishedBuilding();
 	}
+
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
+
 	return unit;
 }
 
@@ -439,8 +442,8 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 			((CStarburstLauncher*) weapon)->tracking = 0;
 		((CStarburstLauncher*) weapon)->uptime = weapondef->uptime * GAME_SPEED;
 	} else {
+		weapon = new CNoWeapon(owner);
 		LogObject() << "Unknown weapon type " << weapondef->type.c_str() << "\n";
-		return 0;
 	}
 	weapon->weaponDef = weapondef;
 

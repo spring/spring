@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __DAMAGE_ARRAY_H__
 #define __DAMAGE_ARRAY_H__
 
@@ -11,6 +13,7 @@ struct DamageArray
 public:
 
 	DamageArray();
+	DamageArray(const float mul);
 	/**
 	 * This constructor is currently only used by C++ AIs
 	 * which use the legacy C++ wrapper around the C AI interface.
@@ -19,7 +22,7 @@ public:
 	DamageArray(const DamageArray& other);
 	~DamageArray();
 
-	void operator=(const DamageArray& other) {
+	DamageArray& operator=(const DamageArray& other) {
 		paralyzeDamageTime = other.paralyzeDamageTime;
 		impulseFactor = other.impulseFactor;
 		impulseBoost = other.impulseBoost;
@@ -27,6 +30,7 @@ public:
 		craterBoost = other.craterBoost;
 		numTypes = other.numTypes;
 		std::copy(other.damages, other.damages + numTypes, damages);
+		return *this;
 	}
 	float& operator[](int i) { return damages[i]; }
 	float operator[](int i) const { return damages[i]; }

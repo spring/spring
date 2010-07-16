@@ -1,6 +1,4 @@
-// Builder.h: interface for the CBuilder class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __BUILDER_H__
 #define __BUILDER_H__
@@ -41,7 +39,7 @@ public:
 	void SlowUpdate(void);
 	void DependentDied(CObject* o);
 
-	bool StartBuild(BuildInfo& buildInfo);
+	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
 	void StopBuild(bool callScript=true);
 	void SetRepairTarget(CUnit* target);

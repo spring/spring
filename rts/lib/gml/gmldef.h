@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 #undef glDisable
 #undef glEnable
@@ -286,6 +287,14 @@
 #undef glMultiTexCoord2i
 #undef glGetQueryiv
 #undef glGetBooleanv
+#undef glValidateProgram
+#undef glUniform2iv
+#undef glUniform3iv
+#undef glUniform4iv
+#undef glUniform2fv
+#undef glUniform3fv
+#undef glUniform4fv
+#undef glMapBufferRange
 
 // #####################################################################
 
@@ -569,3 +578,11 @@
 #define glMultiTexCoord2i gmlMultiTexCoord2i
 #define glGetQueryiv gmlGetQueryiv
 #define glGetBooleanv gmlGetBooleanv
+#define glValidateProgram gmlValidateProgram
+#define glUniform2iv gmlUniform2iv
+#define glUniform3iv gmlUniform3iv
+#define glUniform4iv gmlUniform4iv
+#define glUniform2fv gmlUniform2fv
+#define glUniform3fv gmlUniform3fv
+#define glUniform4fv gmlUniform4fv
+#define glMapBufferRange gmlMapBufferRange

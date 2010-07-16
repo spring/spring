@@ -1,29 +1,38 @@
-#include "StdAfx.h"
-#include "Rendering/Textures/Bitmap.h"
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef WIN32
-#  include "windows.h"
-#  include "MouseInput.h"
-typedef unsigned char byte;
-#elif defined(__APPLE__)
-	/*do nothing (duno how to create cursors on runtime on macs)*/
-#else
-#  include <X11/Xcursor/Xcursor.h>
+#include "StdAfx.h"
+#if !defined(HEADLESS)
+#include "Rendering/Textures/Bitmap.h"
 #endif
 
+#if defined(__APPLE__) || defined(HEADLESS)
+	// no hardware cursor support for mac's and headless build
+	// FIXME: duno how to create cursors at runtime on macs
+#elif defined(WIN32)
+	#include "windows.h"
+	#include "Input/MouseInput.h"
+	typedef unsigned char byte;
+#else
+	#include <X11/Xcursor/Xcursor.h>
+#endif
+
+#include "HwMouseCursor.h"
+
+#if !defined(__APPLE__) && !defined(HEADLESS)
 #include "mmgr.h"
 
 #include "Rendering/GL/myGL.h"
 #include "bitops.h"
 #include "MouseCursor.h"
-#include "HwMouseCursor.h"
 #include "CommandColors.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
 #include "myMath.h"
+#include <cstring> // for memset
 
 #include <SDL_syswm.h>
+#endif
 
 
 
@@ -33,8 +42,8 @@ typedef unsigned char byte;
 // Platform dependent classes
 //////////////////////////////////////////////////////////////////////
 
-#ifdef __APPLE__
-// no hardware cursor support for mac's
+#if defined(__APPLE__) || defined(HEADLESS)
+// no hardware cursor support for mac's and headless build
 class CHwDummyCursor : public IHwCursor {
 	public:
 		void PushImage(int xsize, int ysize, void* mem){};
@@ -131,10 +140,11 @@ class CHwX11Cursor : public IHwCursor {
 
 IHwCursor* GetNewHwCursor()
 {
-#ifdef WIN32
-	return new CHwWinCursor();
-#elif defined(__APPLE__)
+#if defined(__APPLE__) || defined(HEADLESS)
+	// no hardware cursor support for mac's and headless build
 	return new CHwDummyCursor();
+#elif defined(WIN32)
+	return new CHwWinCursor();
 #else
 	return new CHwX11Cursor();
 #endif
@@ -146,8 +156,8 @@ IHwCursor* GetNewHwCursor()
 //////////////////////////////////////////////////////////////////////
 
 
-#ifdef __APPLE__
-	// no hardware cursor support for mac's
+#if defined(__APPLE__) || defined(HEADLESS)
+	// no hardware cursor support for mac's and headless build
 #elif defined(WIN32)
 
 void CHwWinCursor::PushImage(int xsize, int ysize, void* mem)
@@ -399,6 +409,7 @@ CHwWinCursor::CHwWinCursor(void)
 	hotSpot= CMouseCursor::Center;
 	image_count = 0;
 	xmaxsize = ymaxsize = 0;
+	hotx = hoty = 0;
 }
 
 CHwWinCursor::~CHwWinCursor(void)

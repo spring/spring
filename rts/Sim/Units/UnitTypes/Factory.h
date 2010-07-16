@@ -1,6 +1,4 @@
-// Factory.h: interface for the CFactory class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __FACTORY_H__
 #define __FACTORY_H__
@@ -27,7 +25,7 @@ public:
 	float3 CalcBuildPos(int buildPiece=-1); // supply the build piece to speed up
 	int GetBuildPiece();
 
-	void UnitInit (const UnitDef* def, int team, const float3& position);
+	void UnitInit(const UnitDef* def, int team, const float3& position);
 
 	float buildSpeed;
 
@@ -38,9 +36,13 @@ public:
 	bool opening;
 
 	int lastBuild;						//last frame we wanted to build something
-	void SendToEmptySpot(CUnit* unit);
+
 	void SlowUpdate(void);
 	bool ChangeTeam(int newTeam, ChangeType type);
+
+private:
+	void SendToEmptySpot(CUnit* unit);
+	void AssignBuildeeOrders(CUnit* unit);
 };
 
 #endif // __FACTORY_H__

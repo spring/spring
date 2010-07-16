@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 #include "FeatureHandler.h"
@@ -6,7 +8,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaRules.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/FeatureDrawer.h" // FIXME -- sim shouldn't depend on rendering
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
@@ -78,10 +79,8 @@ CFeatureHandler::~CFeatureHandler()
 		// unsavory, but better than a memleak
 		FeatureDef* fd = (FeatureDef*) (*fi)->def;
 
-		if (fd->collisionVolume) {
-			delete fd->collisionVolume;
-			fd->collisionVolume = 0;
-		}
+		delete fd->collisionVolume;
+		fd->collisionVolume = NULL;
 		delete *fi;
 	}
 
@@ -93,11 +92,8 @@ CFeatureHandler::~CFeatureHandler()
 
 		FeatureDef* fd = (FeatureDef*) fi->second;
 
-		if (fd->collisionVolume) {
-			delete fd->collisionVolume;
-			fd->collisionVolume = 0;
-		}
-
+		delete fd->collisionVolume;
+		fd->collisionVolume = NULL;
 		delete fi->second;
 		featureDefs.erase(fi);
 	}
@@ -153,7 +149,7 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
 	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
-	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f);
+	fd->reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f));
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
@@ -167,20 +163,17 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 	}
 
 
-	// these take precedence over the old sphere tags as well as
-	// feature->radius (for feature <--> projectile interactions)
-	fd->collisionVolumeTypeStr = fdTable.GetString("collisionVolumeType", "");
-	fd->collisionVolumeScales  = fdTable.GetFloat3("collisionVolumeScales", ZeroVector);
-	fd->collisionVolumeOffsets = fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	fd->collisionVolumeTest    = fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT);
-
 	// initialize the (per-featuredef) collision-volume,
 	// all CFeature instances hold a copy of this object
+	//
+	// takes precedence over the old sphere tags as well
+	// as feature->radius (for feature <---> projectile
+	// interactions)
 	fd->collisionVolume = new CollisionVolume(
-		fd->collisionVolumeTypeStr,
-		fd->collisionVolumeScales,
-		fd->collisionVolumeOffsets,
-		fd->collisionVolumeTest
+		fdTable.GetString("collisionVolumeType", ""),
+		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
+		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
+		fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT)
 	);
 
 
@@ -201,12 +194,12 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 }
 
 
-const FeatureDef* CFeatureHandler::GetFeatureDef(const string mixedCase, const bool showError)
+const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showError)
 {
-	if (mixedCase.empty())
+	if (name.empty())
 		return NULL;
 
-	const string name = StringToLower(mixedCase);
+	StringToLowerInPlace(name);
 	map<string, const FeatureDef*>::iterator fi = featureDefs.find(name);
 
 	if (fi != featureDefs.end()) {
@@ -315,8 +308,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-	if (freeIDs.empty())
-	{ // alloc n new ids and randomly insert to freeIDs
+	if (freeIDs.empty()) {
+		// alloc n new ids and randomly insert to freeIDs
 		const unsigned n = 100;
 		std::vector<int> newIds(n);
 		for (unsigned i = 0; i < n; ++i)
@@ -333,20 +326,16 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	features[feature->id] = feature;
 	SetFeatureUpdateable(feature);
 
-	// FIXME -- sim shouldn't depend on rendering
-	featureDrawer->FeatureCreated(feature);
-
 	eventHandler.FeatureCreated(feature);
-
-	return feature->id ;
+	return feature->id;
 }
 
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	toBeRemoved.push_back(feature->id);
-
 	eventHandler.FeatureDestroyed(feature);
+
+	toBeRemoved.push_back(feature->id);
 }
 
 CFeature* CFeatureHandler::GetFeature(int id)
@@ -407,29 +396,34 @@ void CFeatureHandler::Update()
 			freeIDs.splice(freeIDs.end(), toBeFreedIDs, toBeFreedIDs.begin(), toBeFreedIDs.end());
 	}
 
-	if(!toBeRemoved.empty()) {
+	{
+		GML_STDMUTEX_LOCK(rfeat); // Update
 
-		GML_RECMUTEX_LOCK(feat); // Update
-		GML_RECMUTEX_LOCK(quad); // Update
+		if(!toBeRemoved.empty()) {
 
-		while (!toBeRemoved.empty()) {
-			CFeature* feature = GetFeature(toBeRemoved.back());
-			toBeRemoved.pop_back();
-			if (feature) {
-				toBeFreedIDs.push_back(feature->id);
-				activeFeatures.erase(feature);
-				features[feature->id] = 0;
+			GML_RECMUTEX_LOCK(feat); // Update
+			GML_RECMUTEX_LOCK(quad); // Update
 
-				// FIXME -- sim shouldn't depend on rendering
-				featureDrawer->FeatureDestroyed(feature);
+			eventHandler.DeleteSyncedFeatures();
 
-				if (feature->inUpdateQue) {
-					updateFeatures.erase(feature);
+			while (!toBeRemoved.empty()) {
+				CFeature* feature = GetFeature(toBeRemoved.back());
+				toBeRemoved.pop_back();
+				if (feature) {
+					toBeFreedIDs.push_back(feature->id);
+					activeFeatures.erase(feature);
+					features[feature->id] = 0;
+
+					if (feature->inUpdateQue) {
+						updateFeatures.erase(feature);
+					}
+
+					delete feature;
 				}
-
-				delete feature;
 			}
 		}
+
+		eventHandler.UpdateFeatures();
 	}
 
 	CFeatureSet::iterator fi = updateFeatures.begin();

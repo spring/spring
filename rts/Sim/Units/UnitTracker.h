@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNITTRACKER_H
 #define UNITTRACKER_H
 
@@ -18,7 +20,7 @@ class CUnitTracker
 
 		void SetCam();
 
-		int  GetMode();
+		int  GetMode() const;
 		void IncMode();
 		void SetMode(int);
 		enum TrackMode {

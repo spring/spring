@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef WEAPONDEFHANDLER_H
 #define WEAPONDEFHANDLER_H
 
@@ -21,7 +23,7 @@ public:
 	CWeaponDefHandler();
 	~CWeaponDefHandler();
 
-	const WeaponDef* GetWeapon(const std::string weaponname);
+	const WeaponDef* GetWeapon(const std::string& weaponname);
 	const WeaponDef* GetWeaponById(int weaponDefId);
 
 	void LoadSound(const LuaTable&, GuiSoundSet&, const std::string& name);

@@ -266,13 +266,21 @@ else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 	set(AI_TYPES_JAVA FALSE)
 endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 
+if    (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+	set(AI_TYPES_JAVA FALSE)
+endif (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+
 
 # Look for dependencies, but only if the user wants to build the interface
 if    (AI_TYPES_JAVA)
 	if    (NOT JAVA_FOUND)
 		set(JAVA_FIND_QUIETLY TRUE)
 		FIND_PACKAGE(JavaExtended) # Note: this is not the CMake built-in FindJava
-		SetGlobal(JAVA_COMPILE_FLAG_CONDITIONAL ${JAVA_COMPILE_FLAG_CONDITIONAL})
+		MakeGlobal(
+			JAVA_FOUND
+			JAVA_COMPILE
+			JAVA_ARCHIVE
+			JAVA_COMPILE_FLAG_CONDITIONAL)
 	endif (NOT JAVA_FOUND)
 	if    (MINGW)
 		set (JNI_FOUND TRUE)
@@ -327,6 +335,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	endif (MINGW)
 	include_directories(BEFORE ${rts}/lib/streflop)
 	add_library(${myTarget} MODULE ${myNativeSources} ${ai_common_SRC} ${CUtils_SRC})
+	FixLibName(${myTarget})
 	target_link_libraries(${myTarget} streflop)
 	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")

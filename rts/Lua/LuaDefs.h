@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_DEFS_H
 #define LUA_DEFS_H
-// LuaDefs.h: helper routines for creating definition tables
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <string>

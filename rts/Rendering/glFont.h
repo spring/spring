@@ -1,14 +1,17 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _GLFONT_H
 #define _GLFONT_H
 
-#include "GL/myGL.h"
-#include "GL/VertexArray.h"
-#include "float4.h"
 #include <string>
 #include <list>
 #include <limits.h> // for INT_MAX
+#include "GL/myGL.h"
+#include "GL/VertexArray.h"
+#include "float4.h"
 
 #undef GetCharWidth // winapi.h
+
 
 static const int FONT_LEFT     = 1 << 0;
 static const int FONT_RIGHT    = 1 << 1;
@@ -23,7 +26,7 @@ static const int FONT_DESCENDER= 1 << 8; //! align to face descender
 static const int FONT_OUTLINE     = 1 << 9;
 static const int FONT_SHADOW      = 1 << 10;
 static const int FONT_NORM        = 1 << 11; //! render in 0..1 space instead of 0..vsx|vsy
-static const int FONT_SCALE       = 1 << 12; //! given size argument should be treated as scaling and not absolute fontsize
+static const int FONT_SCALE       = 1 << 12; //! given size argument will be treated as scaling and not absolute fontsize
 
 static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
 
@@ -49,6 +52,7 @@ public:
 	 *                 FONT_NEAREST | FONT_OUTLINE | FONT_SHADOW
 	 */
 	void glPrint(GLfloat x, GLfloat y, float s, const int& options, const std::string& str);
+	void glPrintTable(GLfloat x, GLfloat y, float s, const int& options, const std::string& str);
 	void glFormat(GLfloat x, GLfloat y, float s, const int& options, const std::string& fmt, ...);
 	void glFormat(GLfloat x, GLfloat y, float s, const int& options, const char* fmt, ...);
 
@@ -86,6 +90,7 @@ public:
 	inline GLuint GetTexHeight() const { return texHeight; }
 
 	static const char ColorCodeIndicator = '\xFF'; //FIXME use a non-printable char? (<32)
+	static const char ColorResetIndicator = '\x08'; //! =: '\b'
 
 public:
 	typedef std::vector<float4> ColorMap;
@@ -121,6 +126,8 @@ private:
 
 private:
 	struct colorcode {
+		colorcode() : resetColor(false),pos(0) {};
+		bool resetColor;
 		float4 color;
 		unsigned int pos;
 	};
@@ -183,6 +190,10 @@ private:
 
 	float4 textColor;
 	float4 outlineColor;
+
+	//! ::ColorResetIndicator will reset to those (they are the colors set when glPrint was called)
+	float4 baseTextColor;
+	float4 baseOutlineColor;
 };
 
 extern CglFont* font;

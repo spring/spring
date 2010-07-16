@@ -1,12 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef KEYSET_H
 #define KEYSET_H
-// KeySet.h: interface for the CKeySet class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <map>
-
 
 class CKeySet {
 	public:

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -29,7 +31,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "EventHandler.h"
-#include "LoadSaveInterface.h"
+#include "LoadSave/LoadSaveInterface.h"
 #include "LogOutput.h"
 #include "myMath.h"
 #include "creg/STL_Set.h"
@@ -1354,7 +1356,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
 		lineDrawer.Break(endPos, dd->color);
 		glSurfaceCircle(endPos, radius, 20);
-		lineDrawer.RestartSameColor();
+		lineDrawer.RestartWithColor(dd->color);
 	}
 }
 

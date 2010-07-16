@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <boost/lexical_cast.hpp>
 #include "mmgr.h"
@@ -15,6 +17,7 @@
 #include "creg/STL_Deque.h"
 #include "creg/STL_Map.h"
 #include "Exceptions.h"
+#include "System/FileSystem/CRC.h"
 #include "System/Util.h"
 
 using std::min;
@@ -48,6 +51,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(maxBreaking),
 
 	CR_MEMBER(subMarine),
+	CR_MEMBER(tempOwner),
 
 	CR_RESERVED(16)
 ));
@@ -64,7 +68,7 @@ CMoveInfo* moveinfo;
 
 static float DegreesToMaxSlope(float degrees)
 {
-	return (float)(1.0 - cos(degrees * 1.5f * PI / 180.0f));
+	return (1.0f - cos(degrees * 1.5f * PI / 180.0f));
 }
 
 
@@ -79,7 +83,13 @@ CMoveInfo::CMoveInfo()
 	hoverMoveMath = new CHoverMoveMath();
 	seaMoveMath = new CShipMoveMath();
 
-	moveInfoChecksum = 0;
+	CRC crc;
+
+	for (int tt = 0; tt < CMapInfo::NUM_TERRAIN_TYPES; ++tt) {
+		const CMapInfo::TerrainType& terrType = mapInfo->terrainTypes[tt];
+		crc << terrType.tankSpeed << terrType.kbotSpeed
+			<< terrType.hoverSpeed << terrType.shipSpeed;
+	}
 
 	for (size_t num = 1; /* no test */; num++) {
 		const LuaTable moveTable = rootTable.SubTable(num);
@@ -128,8 +138,8 @@ CMoveInfo::CMoveInfo()
 		}
 
 		md->heatMapping = moveTable.GetBool("heatMapping", true);
-		md->heatMod = moveTable.GetFloat("heatMod", 0.05f);
-		md->heatProduced = moveTable.GetInt("heatProduced", 30);
+		md->heatMod = moveTable.GetFloat("heatMod", 50.0f);
+		md->heatProduced = moveTable.GetInt("heatProduced", 60);
 
 		// ground units hug the ocean floor when in water,
 		// ships stay at a "fixed" level (their waterline)
@@ -165,18 +175,17 @@ CMoveInfo::CMoveInfo()
 		// TA has only half our resolution, multiply size by 2
 		md->size = max(2, min(8, moveTable.GetInt("footprintX", 1) * 2));
 
-		moveInfoChecksum +=
-			(md->size         << 5) +
+		const unsigned int checksum =
+			(md->size         << 16) +
 			(md->followGround << 4) +
 			(md->subMarine    << 3) +
 			(b2               << 2) +
 			(b1               << 1) +
 			(b0               << 0);
-		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->maxSlope;
-		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->slopeMod;
-		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->depth;
-		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->depthMod;
-		moveInfoChecksum = moveInfoChecksum * 5 + *(unsigned int*) &md->crushStrength;
+		crc << checksum
+			<< md->maxSlope << md->slopeMod
+			<< md->depth << md->depthMod
+			<< md->crushStrength;
 
 		moveData.push_back(md);
 		name2moveData[md->name] = md->pathType;
@@ -191,6 +200,11 @@ CMoveInfo::CMoveInfo()
 	}
 
 	CHoverMoveMath::noWaterMove = (waterDamage >= 10000.0f);
+
+	crc << CGroundMoveMath::waterCost
+		<< CHoverMoveMath::noWaterMove;
+
+	moveInfoChecksum = crc.GetDigest();
 }
 
 

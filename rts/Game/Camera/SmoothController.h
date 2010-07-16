@@ -1,13 +1,15 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __SMOOTH_CONTROLLER_H__
 #define __SMOOTH_CONTROLLER_H__
 
 #include "CameraController.h"
 
 /**
-@brief Smooth Overview-Camera
-
-Behaves like the Overview(TA-style)-camera, but has an acceleration and breakrate to move smooth.
-*/
+ * @brief Smooth Overview-Camera
+ *
+ * Behaves like the Overview(TA-style)-camera, but has an acceleration and breakrate to move smooth.
+ */
 class SmoothController : public CCameraController
 {
 public:
@@ -38,6 +40,7 @@ public:
 private:
 	void Move(const float3& move, const unsigned timeDiff);
 	
+	float middleClickScrollSpeed;
 	float zscale;
 	float3 dir;
 	float height;

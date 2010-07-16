@@ -1,4 +1,4 @@
-# Copyright (C) 2006  Tobi Vollebregt
+# This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
 
 import os, re
 
@@ -120,7 +120,6 @@ def get_spring_source(env):
 			exclude1 += [
 				'rts/System/Platform/Linux',
 				'rts/Rendering/GL/GLXPBuffer.cpp']
-				#'rts/System/Platform/Win/DxSound.cpp']
 		else:
 			exclude1 += [
 				'rts/Rendering/GL/WinPBuffer.cpp', # why not in `System/Win/'?

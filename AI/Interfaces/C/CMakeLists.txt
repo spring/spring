@@ -46,6 +46,8 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 
 		# Compile the library
 		add_library(${myTarget} MODULE ${mySources} ${additionalSources})
+		FixLibName(${myTarget})
+
 		target_link_libraries(${myTarget} ${additionalLibraries})
 		set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${additionalCompileFlags}")
 		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
@@ -74,6 +76,10 @@ else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 	set(AI_TYPES_NATIVE FALSE)
 endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 
+if    (AI_TYPES_NATIVE AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+	set(AI_TYPES_NATIVE FALSE)
+endif (AI_TYPES_NATIVE AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+
 
 # Check dependencies of the interface are met
 if    (AI_TYPES_NATIVE)
@@ -99,6 +105,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	aux_source_directory(${mySourceDir} mySources)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC})
+	FixLibName(${myTarget})
+
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
 	# Install the data files

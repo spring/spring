@@ -1,12 +1,13 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "RadarHandler.h"
-#include "TimeProfiler.h"
 #include "LosHandler.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/TimeProfiler.h"
 
 
 CR_BIND(CRadarHandler, (false));
@@ -108,7 +109,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		if (unit->radarRadius) {
 			airRadarMaps[unit->allyteam].AddMapArea(newPos, unit->radarRadius, 1);
 			if (!circularRadar) {
-				radarAlgo.LosAdd(newPos, unit->radarRadius, unit->model->height, unit->radarSquares);
+				radarAlgo.LosAdd(newPos, unit->radarRadius, unit->height, unit->radarSquares);
 				radarMaps[unit->allyteam].AddMapSquares(unit->radarSquares, 1);
 			}
 		}

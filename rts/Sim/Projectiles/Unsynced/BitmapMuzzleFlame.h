@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef BITMAPMUZZLEFLAME_H
 #define BITMAPMUZZLEFLAME_H
 
@@ -13,7 +15,7 @@ public:
 	~CBitmapMuzzleFlame(void);
 	void Draw(void);
 	void Update(void);
-	virtual void Init(const float3 &pos, CUnit *owner GML_PARG_H);
+	virtual void Init(const float3 &pos, CUnit *owner);
 
 	AtlasedTexture *sideTexture;
 	AtlasedTexture *frontTexture;

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef WIND_H
 #define WIND_H
 
@@ -13,7 +15,7 @@ public:
 	CWind();
 	~CWind();
 
-	void LoadWind();
+	void LoadWind(float min, float max);
 	void Update();
 
 	float GetMaxWind() const { return maxWind; }

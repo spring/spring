@@ -188,7 +188,7 @@ bool CAttackHandler::PlaceIdleUnit(int unit) {
 	if (ai->cb->GetUnitDef(unit) != NULL) {
 		float3 moo = FindUnsafeArea(ai->cb->GetUnitPos(unit));
 
-		if (moo != ZEROVECTOR && moo != ERRORVECTOR) {
+		if (moo != ZeroVector && moo != ZeroVector) {
             ai->MyUnits[unit]->Move(moo);
 		}
 	}
@@ -778,7 +778,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 				if (ud) {
 					bool canFly = ud->canfly;
 					bool isCloaked = ud->canCloak && ud->startCloaked;
-					bool goodPos = !(ai->ccb->GetUnitPos(ai->unitIDs[i]) == ZEROVECTOR);
+					bool goodPos = !(ai->ccb->GetUnitPos(ai->unitIDs[i]) == ZeroVector);
 
 					if (!canFly && !isCloaked && goodPos) {
 						allEligibleEnemies.push_back(ai->unitIDs[i]);
@@ -826,10 +826,12 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		std::vector<float3> pathToTarget;
 		float3 groupPos = group_in->GetGroupPos();
 
-		ai->pather->micropather->SetMapData(ai->pather->MoveArrays[group_in->GetWorstMoveType()],
-											&ai->tm->ThreatArray.front(),
-											ai->tm->ThreatMapWidth,
-											ai->tm->ThreatMapHeight);
+		ai->pather->micropather->SetMapData(
+			ai->pather->MoveArrays[group_in->GetWorstMoveType()],
+			ai->tm->GetThreatArray(),
+			ai->tm->GetThreatMapWidth(),
+			ai->tm->GetThreatMapHeight()
+		);
 
 		// pick an enemy position and path to it
 		// KLOOTNOTE: should be more like KAI 0.23 by passing group DPS to FindBestPath()
@@ -923,7 +925,12 @@ void CAttackHandler::Update(int frameNr) {
 
 	// set map data here so it doesn't have to be done
 	// in each group (movement map PATHTOUSE is hack)
-	ai->pather->micropather->SetMapData(ai->pather->MoveArrays[PATHTOUSE], &ai->tm->ThreatArray.front(), ai->tm->ThreatMapWidth, ai->tm->ThreatMapHeight);
+	ai->pather->micropather->SetMapData(
+		ai->pather->MoveArrays[PATHTOUSE],
+		ai->tm->GetThreatArray(),
+		ai->tm->GetThreatMapWidth(),
+		ai->tm->GetThreatMapHeight()
+	);
 
 	// calculate and draw k-means for the base perimeters every 10 seconds
 	if (frameNr % frameSpread == 0) {

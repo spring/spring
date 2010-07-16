@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaSyncedCtrl.cpp: implementation of the CLuaSyncedCtrl class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <list>
@@ -31,12 +30,12 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/UnitModels/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AirMoveType.h"
@@ -81,12 +80,15 @@ bool LuaSyncedCtrl::inCreateFeature = false;
 bool LuaSyncedCtrl::inDestroyFeature = false;
 bool LuaSyncedCtrl::inGiveOrder = false;
 bool LuaSyncedCtrl::inHeightMap = false;
+bool LuaSyncedCtrl::inSmoothMesh = false;
 
 static int heightMapx1;
 static int heightMapx2;
 static int heightMapz1;
 static int heightMapz2;
 static float heightMapAmountChanged;
+
+static float smoothMeshAmountChanged;
 
 
 /******************************************************************************/
@@ -119,6 +121,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UseTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
+	REGISTER_LUA_CFUNC(ShareTeamResource);
 
 	REGISTER_LUA_CFUNC(CreateUnit);
 	REGISTER_LUA_CFUNC(DestroyUnit);
@@ -184,6 +187,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
 
+	REGISTER_LUA_CFUNC(SetProjectileMoveControl);
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
@@ -214,6 +218,14 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMap);
 	REGISTER_LUA_CFUNC(SetHeightMapFunc);
+
+	REGISTER_LUA_CFUNC(LevelSmoothMesh);
+	REGISTER_LUA_CFUNC(AdjustSmoothMesh);
+	REGISTER_LUA_CFUNC(RevertSmoothMesh);
+
+	REGISTER_LUA_CFUNC(AddSmoothMesh);
+	REGISTER_LUA_CFUNC(SetSmoothMesh);
+	REGISTER_LUA_CFUNC(SetSmoothMeshFunc);
 
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
@@ -391,7 +403,7 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): Bad projectile ID", caller);
 	}
-	const ProjectileMapPair* pmp = ph->GetMapPairByID(lua_toint(L, index));
+	const ProjectileMapPair* pmp = ph->GetMapPairBySyncedID(lua_toint(L, index));
 	if (pmp == NULL) {
 		return NULL;
 	}
@@ -575,6 +587,57 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	}
 	else if ((type == "e") || (type == "energy")) {
 		team->energyShare = max(0.0f, min(1.0f, value));
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
+{
+	const int teamID1 = luaL_checkint(L, 1);
+	if ((teamID1 < 0) || (teamID1 >= teamHandler->ActiveTeams())) {
+		luaL_error(L, "Incorrect arguments to ShareTeamResource(teamID1, teamID2, type, amount)");
+	}
+	if (!CanControlTeam(teamID1)) {
+		return 0;
+	}
+	CTeam* team1 = teamHandler->Team(teamID1);
+	if (team1 == NULL) {
+		return 0;
+	}
+
+	const int teamID2 = luaL_checkint(L, 2);
+	if ((teamID2 < 0) || (teamID2 >= teamHandler->ActiveTeams())) {
+		luaL_error(L, "Incorrect arguments to ShareTeamResource(teamID1, teamID2, type, amount)");
+	}
+	CTeam* team2 = teamHandler->Team(teamID2);
+	if (team2 == NULL) {
+		return 0;
+	}
+
+	const string type = luaL_checkstring(L, 3);
+	float amount = luaL_checkfloat(L, 4);
+
+	if (type == "metal") {
+		amount = std::min(amount, team1->metal);
+		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", amount)) {
+			team1->metal                       -= amount;
+			team1->metalSent                   += amount;
+			team1->currentStats->metalSent     += amount;
+			team2->metal                       += amount;
+			team2->metalReceived               += amount;
+			team2->currentStats->metalReceived += amount;
+		}
+	} else if (type == "energy") {
+		amount = std::min(amount, team1->energy);
+		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", amount)) {
+			team1->energy                       -= amount;
+			team1->energySent                   += amount;
+			team1->currentStats->energySent     += amount;
+			team2->energy                       += amount;
+			team2->energyReceived               += amount;
+			team2->currentStats->energyReceived += amount;
+		}
 	}
 	return 0;
 }
@@ -887,7 +950,7 @@ static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
 	//           use | make
 	//         metal | energy
 
-	value *= 0.25f;
+	value *= 0.5f;
 
 	if (name[0] == 'u') {
 		if (name[1] == 'u') {
@@ -1059,7 +1122,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 	const string key = lua_tostring(L, index);
 	const float value = lua_tofloat(L, index + 1);
 	// FIXME: KDR -- missing checks and updates?
-	if (key == "reloadState") {
+	if (key == "reloadState" || key == "reloadFrame") {
 		weapon->reloadStatus = (int)value;
 	}
 	else if (key == "reloadTime") {
@@ -1324,7 +1387,7 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 		return 0;
 	}
 
-	const float buildScale = (1.0f / 32.0f);
+	const float buildScale = (1.0f / (2.0f * (float)UNIT_SLOWUPDATE_RATE));
 	const float buildSpeed = buildScale * max(0.0f, luaL_checkfloat(L, 2));
 
 	CFactory* factory = dynamic_cast<CFactory*>(unit);
@@ -1848,8 +1911,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 		attacker = uh->units[attackerID];
 	}
 
-	// numWeaponDefs has an extra slot
-	if (weaponID > weaponDefHandler->numWeaponDefs) {
+	if (weaponID >= weaponDefHandler->numWeaponDefs) {
 		return 0;
 	}
 
@@ -2029,6 +2091,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		heading = lua_toint(L, 5);
 	}
 
+	int facing = GetFacingFromHeading(heading);
 	int team = CtrlTeam();
 	if (team < 0) {
 		team = -1; // default to global for AllAccessTeam
@@ -2057,7 +2120,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
 	CFeature* feature = new CFeature();
-	feature->Initialize(pos, featureDef, heading, 0, team, allyTeam, "");
+	feature->Initialize(pos, featureDef, heading, facing, team, allyTeam, "");
 	inCreateFeature = false;
 
 	lua_pushnumber(L, feature->id);
@@ -2236,6 +2299,21 @@ int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaSyncedCtrl::SetProjectileMoveControl(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
+		return 0;
+	}
+
+	if (!proj->weapon && !proj->piece) {
+		return 0;
+	}
+
+	proj->luaMoveCtrl = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+	return 0;
+}
+
 int LuaSyncedCtrl::SetProjectilePosition(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
@@ -2260,6 +2338,9 @@ int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
 	proj->speed.x = luaL_optfloat(L, 2, 0.0f);
 	proj->speed.y = luaL_optfloat(L, 3, 0.0f);
 	proj->speed.z = luaL_optfloat(L, 4, 0.0f);
+
+	proj->dir = proj->speed;
+	proj->dir.SafeNormalize();
 
 	return 0;
 }
@@ -2816,7 +2897,7 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 
 	if (error != 0) {
 		logOutput.Print("Spring.SetHeightMapFunc: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -2825,6 +2906,211 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	}
 
 	lua_pushnumber(L, heightMapAmountChanged);
+	return 1;
+}
+
+/******************************************************************************/
+/* smooth mesh manipulation                                                   */
+/******************************************************************************/
+
+static void ParseSmoothMeshParams(lua_State* L, const char* caller, float& factor,
+			   int& x1, int& z1, int& x2, int& z2)
+{
+	float fx1 = 0.0f;
+	float fz1 = 0.0f;
+	float fx2 = 0.0f;
+	float fz2 = 0.0f;
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args == 3) {
+		fx1 = fx2 = luaL_checkfloat(L, 1);
+		fz1 = fz2 = luaL_checkfloat(L, 2);
+		factor    = luaL_checkfloat(L, 3);
+	}
+	else if (args == 5) {
+		fx1    = luaL_checkfloat(L, 1);
+		fz1    = luaL_checkfloat(L, 2);
+		fx2    = luaL_checkfloat(L, 3);
+		fz2    = luaL_checkfloat(L, 4);
+		factor = luaL_checkfloat(L, 5);
+		if (fx1 > fx2) {
+			swap(fx1, fx2);
+		}
+		if (fz1 > fz2) {
+			swap(fz1, fz2);
+		}
+	}
+	else {
+		luaL_error(L, "Incorrect arguments to %s()", caller);
+	}
+
+	// quantize and clamp
+	x1 = (int)max(0 , min(smoothGround->GetMaxX(), (int)(fx1 / smoothGround->GetResolution())));
+	z1 = (int)max(0 , min(smoothGround->GetMaxY(), (int)(fz1 / smoothGround->GetResolution())));
+	x2 = (int)max(0 , min(smoothGround->GetMaxX(), (int)(fx2 / smoothGround->GetResolution())));
+	z2 = (int)max(0 , min(smoothGround->GetMaxY(), (int)(fz2 / smoothGround->GetResolution())));
+
+	return;
+}
+
+
+int LuaSyncedCtrl::LevelSmoothMesh(lua_State *L)
+{
+	float height;
+	int x1, x2, z1, z2;
+	ParseSmoothMeshParams(L, __FUNCTION__, height, x1, z1, x2, z2);
+
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
+			const int index = (z * smoothGround->GetMaxX()) + x;
+			smoothGround->SetHeight(index, height);
+		}
+	}
+	return 0;
+}
+
+int LuaSyncedCtrl::AdjustSmoothMesh(lua_State *L)
+{
+	float height;
+	int x1, x2, z1, z2;
+	ParseSmoothMeshParams(L, __FUNCTION__, height, x1, z1, x2, z2);
+
+	for (int z = z1; z <= z2; z++) {
+		for (int x = x1; x <= x2; x++) {
+			const int index = (z * smoothGround->GetMaxX()) + x;
+			smoothGround->AddHeight(index, height);
+		}
+	}
+
+	return 0;
+}
+
+int LuaSyncedCtrl::RevertSmoothMesh(lua_State *L)
+{
+	float origFactor;
+	int x1, x2, z1, z2;
+	ParseSmoothMeshParams(L, __FUNCTION__, origFactor, x1, z1, x2, z2);
+
+	const float* origMap = smoothGround->GetOriginalMeshData();
+	const float* currMap = smoothGround->GetMeshData();
+
+	if (origFactor == 1.0f) {
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
+				const int idx = (z * smoothGround->GetMaxX()) + x;
+				smoothGround->SetHeight(idx, origMap[idx]);
+			}
+		}
+	}
+	else {
+		const float currFactor = (1.0f - origFactor);
+		for (int z = z1; z <= z2; z++) {
+			for (int x = x1; x <= x2; x++) {
+				const int index = (z * smoothGround->GetMaxX()) + x;
+				const float ofh = origFactor * origMap[index];
+				const float cfh = currFactor * currMap[index];
+				smoothGround->SetHeight(index, ofh + cfh);
+			}
+		}
+	}
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
+{
+	if (!inSmoothMesh) {
+		luaL_error(L, "AddSmoothMesh() can only be called in SetSmoothMeshFunc()");
+	}
+
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+
+	// quantize
+	const int x = (int)(xl / smoothGround->GetResolution());
+	const int z = (int)(zl / smoothGround->GetResolution());
+
+	// discard invalid coordinates
+	if ((x < 0) || (x > smoothGround->GetMaxX()) ||
+	    (z < 0) || (z > smoothGround->GetMaxY())) {
+		return 0;
+	}
+
+	const int index = (z * smoothGround->GetMaxX()) + x;
+	const float oldHeight = smoothGround->GetMeshData()[index];
+	smoothMeshAmountChanged += streflop::fabsf(h);
+
+	smoothGround->AddHeight(index, h);
+	// push the new height
+	lua_pushnumber(L, oldHeight + h);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
+{
+	if (!inSmoothMesh) {
+		luaL_error(L, "SetSmoothMesh() can only be called in SetSmoothMeshFunc()");
+	}
+
+	const float xl = luaL_checkfloat(L, 1);
+	const float zl = luaL_checkfloat(L, 2);
+	const float h  = luaL_checkfloat(L, 3);
+
+	// quantize
+	const int x = (int)(xl / smoothGround->GetResolution());
+	const int z = (int)(zl / smoothGround->GetResolution());
+
+	// discard invalid coordinates
+	if ((x < 0) || (x > smoothGround->GetMaxX()) ||
+	    (z < 0) || (z > smoothGround->GetMaxY())) {
+		return 0;
+	}
+
+	const int index = (z * (smoothGround->GetMaxX())) + x;
+	const float oldHeight = smoothGround->GetMeshData()[index];
+	float height = oldHeight;
+
+	if (lua_israwnumber(L, 4)) {
+		const float t = lua_tofloat(L, 4);
+		height += (h - oldHeight) * t;
+	} else{
+		height = h;
+	}
+
+	const float heightDiff = (height - oldHeight);
+	smoothMeshAmountChanged += streflop::fabsf(heightDiff);
+
+	smoothGround->SetHeight(index, height);
+	lua_pushnumber(L, heightDiff);
+	return 1;
+}
+
+int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State *L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isfunction(L, 1)) {
+		luaL_error(L, "Incorrect arguments to Spring.SetSmoothMeshFunc(func, ...)");
+	}
+
+	if (inSmoothMesh) {
+		luaL_error(L, "SetHeightMapFunc() recursion is not permitted");
+	}
+
+	heightMapAmountChanged = 0.0f;
+
+	inSmoothMesh = true;
+	const int error = lua_pcall(L, (args - 1), 0, 0);
+	inSmoothMesh = false;
+
+	if (error != 0) {
+		logOutput.Print("Spring.SetSmoothMeshFunc: error(%i) = %s",
+				error, lua_tostring(L, -1));
+		lua_error(L);
+	}
+
+	lua_pushnumber(L, smoothMeshAmountChanged);
 	return 1;
 }
 
@@ -2865,10 +3151,10 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 	CMapInfo::TerrainType* tt = const_cast<CMapInfo::TerrainType*>(&mapInfo->terrainTypes[tti]);
 
-	if (args >= 2) { tt->tankSpeed  = luaL_checkfloat(L, 2); }
-	if (args >= 3) { tt->kbotSpeed  = luaL_checkfloat(L, 3); }
-	if (args >= 4) { tt->hoverSpeed = luaL_checkfloat(L, 4); }
-	if (args >= 5) { tt->shipSpeed  = luaL_checkfloat(L, 5); }
+	if (args >= 2 && lua_isnumber(L, 2)) { tt->tankSpeed  = lua_tofloat(L, 2); }
+	if (args >= 3 && lua_isnumber(L, 3)) { tt->kbotSpeed  = lua_tofloat(L, 3); }
+	if (args >= 4 && lua_isnumber(L, 4)) { tt->hoverSpeed = lua_tofloat(L, 4); }
+	if (args >= 5 && lua_isnumber(L, 5)) { tt->shipSpeed  = lua_tofloat(L, 5); }
 
 	/*
 	if (!mapDamage->disabled) {

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <assert.h>
@@ -41,10 +43,8 @@ void GameSetupDrawer::Enable()
 
 void GameSetupDrawer::Disable()
 {
-	if (instance) {
-		delete instance;
-		instance = NULL;
-	}
+	delete instance;
+	instance = NULL;
 }
 
 void GameSetupDrawer::StartCountdown(unsigned time)
@@ -83,9 +83,11 @@ void GameSetupDrawer::Draw()
 	if (readyCountdown > 0) {
 		readyCountdown -= (SDL_GetTicks() - lastTick);
 		lastTick = SDL_GetTicks();
-	}
-	else if (readyCountdown < 0) {
-		GameSetupDrawer::Disable();
+
+		if (readyCountdown <= 0) {
+			GameSetupDrawer::Disable();
+			return; // *this is deleted!
+		}
 	}
 
 	std::string state = "Unknown state.";
@@ -167,9 +169,9 @@ void GameSetupDrawer::Draw()
 		}
 		const float fontScale = 1.0f;
 		const float fontSize  = fontScale * font->GetSize();
-		const float yScale = fontSize * font->GetLineHeight() * gu->pixelY;
+		const float yScale = fontSize * font->GetLineHeight() * globalRendering->pixelY;
 		const float yPos = 0.5f - (0.5f * yScale * numPlayers) + (yScale * (float)a);
-		const float xPos = 10.0f * gu->pixelX;
+		const float xPos = 10.0f * globalRendering->pixelX;
 		font->SetColors(color, NULL);
 		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);
 	}

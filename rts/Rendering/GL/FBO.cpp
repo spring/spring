@@ -1,11 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file FBO.cpp
  * @brief EXT_framebuffer_object implementation
- *
  * EXT_framebuffer_object class implementation
- * Copyright (C) 2008.  Licensed under the terms of the
- * GNU GPL, v2 or later.
  */
+
 #include "StdAfx.h"
 #include <assert.h>
 #include <vector>
@@ -221,6 +220,8 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 	fboList.push_back(this);
+
+	valid = true;
 }
 
 
@@ -263,9 +264,9 @@ FBO::~FBO()
 /**
  * Tests whether or not if we have a valid framebuffer
  */
-bool FBO::IsValid()
+bool FBO::IsValid() const
 {
-	return (fboId!=0);
+	return (fboId!=0 && valid);
 }
 
 
@@ -296,6 +297,7 @@ bool FBO::CheckStatus(std::string name)
 	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	switch(status) {
 		case GL_FRAMEBUFFER_COMPLETE_EXT:
+			valid = true;
 			return true;
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
 			logOutput.Print("FBO-"+name+": has no images/buffers attached!");
@@ -322,6 +324,7 @@ bool FBO::CheckStatus(std::string name)
 			logOutput.Print(std::string("FBO-"+name+" error: 0x%X").c_str(),status);
 			break;
 	}
+	valid = false;
 	return false;
 }
 
@@ -360,11 +363,34 @@ void FBO::AttachRenderBuffer(const GLuint rboId, const GLenum attachment)
 
 
 /**
- * Unattaches an attachment from the framebuffer
+ * Deattaches an attachment from the framebuffer
  */
 void FBO::Unattach(const GLenum attachment)
 {
-	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
+	GLuint target;
+	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
+		GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT,
+		(GLint*)&target);
+
+	if (target==GL_RENDERBUFFER_EXT) {
+		//! check if the RBO was created via FBO::CreateRenderBuffer()
+		GLuint id;
+		glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
+			GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT,
+			(GLint*)&id);
+
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, 0);
+
+		for (std::vector<GLuint>::iterator ri=myRBOs.begin(); ri!=myRBOs.end(); ++ri) {
+			if (*ri == id) {
+				glDeleteRenderbuffersEXT(1, &(*ri));
+				myRBOs.erase(ri);
+				break;
+			}
+		}
+	} else {
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
+	}
 }
 
 

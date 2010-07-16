@@ -1,9 +1,7 @@
-//////////////////////////////////////
-//       CExtractorBuilding         //
-// Used for all metal-extractors.   //
-// Handles the metal-make-process.  //
-//////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+// Used for all metal-extractors.
+// Handles the metal-make-process.
 
 #include "StdAfx.h"
 #include <typeinfo>

@@ -1,12 +1,16 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "RepulseGfx.h"
-#include "Sim/Units/Unit.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Units/Unit.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL,NULL,0,float3(0,0,0)));
 
@@ -19,8 +23,8 @@ CR_REG_METADATA(CRepulseGfx,(
 	CR_RESERVED(8)
 	));
 
-CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, float3 color GML_PARG_C):
-	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false GML_PARG_P),
+CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, float3 color):
+	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false),
 	repulsed(repulsed),
 	sqMaxDist((maxDist * maxDist) + 100),
 	age(0),
@@ -67,7 +71,7 @@ void CRepulseGfx::Draw(void)
 	float3 dir=repulsed->pos-owner->pos;
 	dir.SafeANormalize();
 
-	pos=repulsed->pos-dir*10+repulsed->speed*gu->timeOffset;
+	pos=repulsed->pos-dir*10+repulsed->speed*globalRendering->timeOffset;
 
 	float3 dir1=dir.cross(UpVector);
 	dir1.SafeANormalize();
@@ -82,25 +86,28 @@ void CRepulseGfx::Draw(void)
 	col[3]=(unsigned char)(alpha*0.2f);
 	float drawsize=10;
 
-	AtlasedTexture& et=ph->repulsetex;
-	float txo=et.xstart;
-	float tyo=et.ystart;
-	float txs=et.xend-et.xstart;
-	float tys=et.yend-et.ystart;
+	const AtlasedTexture* et = projectileDrawer->repulsetex;
+	float txo = et->xstart;
+	float tyo = et->ystart;
+	float txs = et->xend - et->xstart;
+	float tys = et->yend - et->ystart;
 
 	const int loopCountY = 4;
 	const int loopCountX = 4;
 	va->EnlargeArrays(loopCountY * loopCountX * 4 + 16, 0, VA_SIZE_TC);
-	for(int y = 0; y < loopCountY; ++y) { //! CAUTION: loop count must match EnlargeArrays above
+	for (int y = 0; y < loopCountY; ++y) { //! CAUTION: loop count must match EnlargeArrays above
 		float dy = y - 2;
 		float ry = y * 0.25f;
-		for(int x = 0; x < loopCountX; ++x){
-			float dx = x - 2;
-			float rx = x * 0.25f;
-			va->AddVertexQTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+0)+dir*difs[y*5+x]			 ,txo+ry*txs				,tyo+(rx)*tys			,col);
-			va->AddVertexQTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,txo+(ry+0.25f)*txs	,tyo+(rx)*tys			,col);
-			va->AddVertexQTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],txo+(ry+0.25f)*txs	,tyo+(rx+0.25f)*tys,col);
-			va->AddVertexQTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+0)+dir*difs[y*5+x+1]		 ,txo+ry*txs				,tyo+(rx+0.25f)*tys,col);
+		for (int x = 0; x < loopCountX; ++x) {
+			const float dx = x - 2;
+			const float rx = x * 0.25f;
+			const float3 p = pos + dir1 * drawsize;
+			const float3 s = dir2 * drawsize;
+
+			va->AddVertexQTC(p * (dx + 0) + s * (dy + 0) + dir * difs[(y    ) * 5 + x    ], txo + (ry        ) * txs, tyo + (rx        ) * tys, col);
+			va->AddVertexQTC(p * (dx + 0) + s * (dy + 1) + dir * difs[(y + 1) * 5 + x    ], txo + (ry + 0.25f) * txs, tyo + (rx        ) * tys, col);
+			va->AddVertexQTC(p * (dx + 1) + s * (dy + 1) + dir * difs[(y + 1) * 5 + x + 1], txo + (ry + 0.25f) * txs, tyo + (rx + 0.25f) * tys, col);
+			va->AddVertexQTC(p * (dx + 1) + s * (dy + 0) + dir * difs[(y    ) * 5 + x + 1], txo + (ry        ) * txs, tyo + (rx + 0.25f) * tys, col);
 		}
 	}
 	drawsize=7;
@@ -110,9 +117,9 @@ void CRepulseGfx::Draw(void)
 	col[2]=(unsigned char)(color.z*alpha);
 	col[3]=(unsigned char)(alpha*0.4f);
 
-	AtlasedTexture& ct=ph->repulsegfxtex;
-	float tx=(ct.xend+ct.xstart)*0.5f;
-	float ty=(ct.yend+ct.ystart)*0.5f;
+	const AtlasedTexture* ct = projectileDrawer->repulsegfxtex;
+	const float tx = (ct->xend + ct->xstart) * 0.5f;
+	const float ty = (ct->yend + ct->ystart) * 0.5f;
 
 	unsigned char col2[4];
 	col2[0]=0;

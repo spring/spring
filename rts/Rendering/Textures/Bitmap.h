@@ -1,15 +1,15 @@
-// Bitmap.h: interface for the CBitmap class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __BITMAP_H__
 #define __BITMAP_H__
 
 #include <string>
+// We can not include gl.h here, cause sometimes glew.h has to be included
+// before gl.h, so we have to do this in before including this header.
+//#include <GL/gl.h> // for GLuint, GLenum
 
 #include "nv_dds.h"
-
-using std::string;
+#include "float3.h"
 
 class CBitmap  
 {
@@ -22,9 +22,9 @@ public:
 	virtual ~CBitmap();
 
 	void Alloc(int w,int h);
-	bool Load(string const& filename, unsigned char defaultAlpha=255);
-	bool LoadGrayscale(string const& filename);
-	bool Save(string const& filename, bool opaque = true);
+	bool Load(std::string const& filename, unsigned char defaultAlpha=255);
+	bool LoadGrayscale(std::string const& filename);
+	bool Save(std::string const& filename, bool opaque = true);
 
 	const GLuint CreateTexture(bool mipmaps=false);
 	const GLuint CreateDDSTexture(GLuint texID = 0);

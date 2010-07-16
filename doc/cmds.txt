@@ -1,0 +1,329 @@
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  REMOTE COMMANDS
+-- 
+--
+--
+
+-- the following can only be set by the host player
+/cheat [0|1]
+/kick      <player_name>
+/kickbynum <player_number>
+/nohelp  [0|1]
+/nopause [0|1]
+/nospectatorchat [0|1]
+/setmaxspeed <number>
+/setminspeed <number>
+/skip <[+|f]seconds>  -- requires /cheat if not in a replay
+/take                 -- requires /cheat when used by spectators
+/forcestart
+
+-- lua scripts
+/luagaia  < "reload" | "disable" | <custom command> >
+/luarules < "reload" | "disable" | <custom command> >
+/devlua   [0|1]  -- requires /cheat, allows loading non-archived scripts
+/editdefs [0|1]  -- requires /cheat,
+                 -- allows lua writing to UnitDefs, FeatureDefs, and WeaponDefs
+
+-- the following require /cheat
+/atm
+/team <number>
+/spectator
+/nocost
+/reloadcob <unit_name>
+/give [count] <unit_name | "all"> [team]   {{ @x,y,z }}
+/godmode [0|1]
+/globalLOS [0|1] (needs cheats on)
+
+-- debugging
+/crash
+/desync
+/divbyzero
+/exception
+/fakedesync
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  LOCAL COMMANDS
+--
+--
+--
+
+/commands
+
+/select <select_string> --select all units that matches <select_string> pattern ( see SelectionKeys doc for the syntax of select_string )
+/selectunits ["clear"] [+unitID] [-unitID] ...
+/selectcycle ["restore"]
+/deselect
+
+/info     [0|1|2|3|4|5]  -- disable, ally, team, name, cpu, ping  (sort modes)
+/tooltip  [0|1]
+/resbar   [0|1]
+/console  [0|1]
+/clock    [0|1]
+/fps      [0|1]
+/endgraph [0|1]
+/speed         [0|1]
+/teamhighlight [0|1]
+/speedcontrol  [-2|-1|0|1|2]  -- max (ignore votes), average (ignore votes), none/default, average, max 
+                              -- votes for server algorithm that controls game speed based on player CPU
+
+/mtinfo                      [0|1] -- these commands are for the multithreaded version only
+/multithread                 [0|1]
+/multithreadsim              [0|1]
+/multithreaddraw             [0|1]
+/multithreaddrawunit         [0|1]
+/multithreaddrawunitshadow   [0|1]
+/multithreaddrawground       [0|1]
+/multithreaddrawgroundshadow [0|1]
+
+/setf <name> <float value>		-- Set a config variable (.springrc linux, Registry windows)
+/seti <name> <integer value>
+/sets <name> <string value>
+
+/quit
+/quitwarn
+/pause
+
+/shadows [<0|1> [mapsize]]
+/water   [0|1|2|3|4]
+/vsync   [-1|0|1|2|...]  --  -1 will use default setting in windows,
+                        --  numbers higher then 1 will result in
+                        --  rendering every N frames.
+
+/say  <message>
+/echo <message>
+/w <playername> <message> -- Private Message
+
+/ally teamID [0|1]
+
+/drawinmap
+/drawlabel
+
+/mouse1
+/mouse2
+/mouse3
+/mouse4
+/mouse5
+
+/mousestate
+
+/fpshud [0|1]
+
+/viewfps
+/viewta
+/viewtw
+/viewrot
+/viewsave view_name
+/viewload view_name
+/viewselection
+
+/specteam <int>
+
+/group <int> [ "set" | "add" | "selectadd" | "selectclear" | "selecttoggle" ]
+
+/group0
+/group1
+/group2
+/group3
+/group4
+/group5
+/group6
+/group7
+/group8
+/group9
+
+/chat
+/chatall
+/chatally
+/chatspec
+/chatswitchall
+/chatswitchally
+/chatswitchspec
+
+/lastmsgpos
+/movewarnings [0|1]
+
+/track
+/trackoff
+/trackmode [0|1|2]
+
+/gameinfo
+/gameinfoclose
+
+/cross <size>  -- locked mouse cross size
+
+/volume <float>  -- 0.0 to 1.0
+/unitreplyvolume <float>  -- 0.0 to 1.0
+
+/toggleoverview
+/showhealthbars
+/singlestep
+/debug
+/nosound
+/savegame
+/createvideo
+/drawtrees
+/dynamicsky
+
+/hideinterface
+/increaseviewradius
+/decreaseviewradius
+/moretrees
+/lesstrees
+/moreclouds
+/lessclouds
+/speedup
+/slowdown
+/controlunit
+/showstandard
+/showelevation
+/showmetalmap
+/showpathmap
+/showheat
+/toggleradarandjammer
+/yardmap4
+/wiremap [0|1]
+/lodscale ["shadow"|"reflection"|"refraction"] <value>
+
+/mapmarks [0|1]
+/allmapmarks [0|1]
+
+/togglelos
+/sharedialog
+
+/incguiopacity
+/decguiopacity
+
+/screenshot ["png"]
+
+/grabinput
+/hardwarecursor [0|1]
+
+/bind
+/unbind
+/unbindall
+/unbindkeyset
+/unbindaction
+/fakemeta
+
+/keydebug
+/keyload
+/keyreload
+/keysave
+/keyprint
+/keysyms
+/keycodes
+
+/cmdcolors [filename]
+/ctrlpanel [filename]
+/font      <filename>
+
+/gathermode [0|1]
+
+/moveforward
+/moveback
+/moveleft
+/moveright
+/moveup
+/movedown
+/movefast
+/moveslow
+
+/minimap <"fullproxy">    [0|1]
+/minimap <"icons">        [0|1]
+/minimap <"drawcommands"> [0|1]
+/minimap <"drawprojectiles"> [0|1]
+/minimap <"simplecolors"> [0|1]
+/minimap <"min" | "minimize"> [0|1]
+/minimap <"max" | "maximize"> [0|1]
+/minimap <"maxspect"> [0|1]
+/minimap <"unitexp"> <float>
+/minimap <"unitsize"> <float>
+/minimap <"geo" | "geometry"> px py sx sy
+/minimap <"slavemode"> [0|1]
+/minimap <"draw">
+
+/luaui < "reload" | "disable" | <custom command> >
+/luamoduictrl [0|1] -- Enables LuaRules/LuaGaia access to many LuaUI callins/functions.
+/safegl [0|1]
+
+/pastetext  <text>  -- inserts the text into the text input  (ex: ctrl+v)
+/buffertext <text>  -- inserts the text into the console history
+
+/grounddecals [0|1]
+/maxparticles <number>
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--
+--  BIND-ONLY COMMANDS
+--
+--  Only avaible for binding  (can NOT be used as /slash commands)
+--
+--
+
+-- Only work when issuing build orders
+
+buildspacing <"inc" | "dec">
+buildfacing  <"inc" | "dec" | "north" | "south" | "east" | "west">
+
+
+-- Special orders
+
+buildiconsfirst
+firstmenu
+
+invqueuekey [0|1]
+
+hotbind
+hotunbind
+
+
+-- For Debugging
+
+showcommands
+
+
+-- Unit Commands
+
+dgun
+stop
+move
+attack
+areaattack
+fight
+patrol
+guard
+capture
+repair
+reclaim
+restore
+resurrect
+loadunits
+unloadunits
+
+cloak          [0|1]
+onoff          [0|1]
+repeat         [0|1]
+trajectory     [0|1]
+loopbackattack [0|1]
+
+firestate       [0|1|2]
+movestate       [0|1|2]
+autorepairlevel [0|1|2]
+
+selfd               ["queued"]
+wait                ["queued"]
+timewait  [seconds] ["queued"]
+deathwait           ["queued"]
+squadwait   [count] ["queued"]
+gatherwait          ["queued"]
+
+stockpile            ["+5" | "+20" | "+100" | "-1" | "-5" | "-20" | "-100"] 
+buildunit_<unitname> ["+5" | "+20" | "+100" | "-1" | "-5" | "-20" | "-100"]
+

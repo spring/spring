@@ -1,6 +1,4 @@
-// SmokeProjectile.cpp: implementation of the CSmokeProjectile2 class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -9,10 +7,12 @@
 
 #include "Game/Camera.h"
 #include "Map/Ground.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, );
 
@@ -51,9 +51,9 @@ CSmokeProjectile2::CSmokeProjectile2():
 	checkCol = false;
 }
 
-void CSmokeProjectile2::Init(const float3& pos, CUnit* owner GML_PARG_C)
+void CSmokeProjectile2::Init(const float3& pos, CUnit* owner)
 {
-	textureNum = (int) (gu->usRandInt() % ph->smoketex.size());
+	textureNum = (int) (gu->usRandInt() % projectileDrawer->smoketex.size());
 
 	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10)
 		useAirLos = true;
@@ -63,11 +63,11 @@ void CSmokeProjectile2::Init(const float3& pos, CUnit* owner GML_PARG_C)
 
 	wantedPos += pos;
 
-	CProjectile::Init(pos, owner GML_PARG_P);
+	CProjectile::Init(pos, owner);
 }
 
-CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color GML_PARG_C)
-: CProjectile(pos,speed,owner, false, false, false GML_PARG_P),
+CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color)
+: CProjectile(pos,speed,owner, false, false, false),
 	color(color),
 	age(0),
 	size(0),
@@ -81,7 +81,7 @@ CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,fl
 	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
 		useAirLos=true;
 	glowFalloff=4.5f+gu->usRandFloat()*6;
-	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
+	textureNum=(int)(gu->usRandInt() % projectileDrawer->smoketex.size());
 }
 
 CSmokeProjectile2::~CSmokeProjectile2()
@@ -111,7 +111,7 @@ void CSmokeProjectile2::Update()
 void CSmokeProjectile2::Draw()
 {
 	inArray=true;
-	float interAge=std::min(1.0f,age+ageSpeed*gu->timeOffset);
+	float interAge=std::min(1.0f,age+ageSpeed*globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
 	if(interAge<0.05f)
@@ -123,18 +123,21 @@ void CSmokeProjectile2::Draw()
 	col[0]=(unsigned char)(color*alpha+rglow);
 	col[1]=(unsigned char)(color*alpha+gglow);
 	col[2]=(unsigned char)std::max(0.f,color*alpha-gglow*0.5f);
-	col[3]=alpha/*-alphaFalloff*gu->timeOffset*/;
+	col[3]=alpha/*-alphaFalloff*globalRendering->timeOffset*/;
 	//int frame=textureNum;
 	//float xmod=0.125f+(float(int(frame%6)))/16.0f;
 	//float ymod=(int(frame/6))/16.0f;
 	//int smokenum = frame%12;
 
-	float3 interPos=pos+(wantedPos+speed*gu->timeOffset-pos)*0.1f*gu->timeOffset;
-	const float interSize=size+sizeExpansion*gu->timeOffset;
+	const float3 interPos = pos + (wantedPos + speed * globalRendering->timeOffset - pos) * 0.1f * globalRendering->timeOffset;
+	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
-	va->AddVertexTC(interPos-pos2,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(interPos+pos1,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].ystart,col);
-	va->AddVertexTC(interPos+pos2,ph->smoketex[textureNum].xend,ph->smoketex[textureNum].yend,col);
-	va->AddVertexTC(interPos-pos1,ph->smoketex[textureNum].xstart,ph->smoketex[textureNum].yend,col);
+
+	#define st projectileDrawer->smoketex[textureNum]
+	va->AddVertexTC(interPos - pos2, st->xstart, st->ystart, col);
+	va->AddVertexTC(interPos + pos1, st->xend,   st->ystart, col);
+	va->AddVertexTC(interPos + pos2, st->xend,   st->yend,   col);
+	va->AddVertexTC(interPos - pos1, st->xstart, st->yend,   col);
+	#undef st
 }

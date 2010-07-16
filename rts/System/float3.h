@@ -1,9 +1,5 @@
-/**
- * @file float3.h
- * @brief float3 header
- *
- * Declaration of float3 class
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
@@ -90,18 +86,18 @@ public:
 	 */
 	inline ~float3() {}
 
-
 	/**
 	 * @brief operator =
 	 * @param f float[3] to assign
 	 *
 	 * Sets the float3 to the given float[3].
 	 */
-	inline void operator= (const float f[3]) {
-
+	inline float3& operator= (const float f[3]) {
 		x = f[0];
 		y = f[1];
 		z = f[2];
+
+		return *this;
 	}
 
 

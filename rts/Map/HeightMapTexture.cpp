@@ -1,16 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// HeightMapTexture.cpp: implementation of the HeightMapTexture class.
-//
-//////////////////////////////////////////////////////////////////////
 #include "mmgr.h"
 
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
 #include "ConfigHandler.h"
-
-/******************************************************************************/
-/******************************************************************************/
 
 
 HeightMapTexture heightMapTexture;
@@ -63,8 +59,8 @@ void HeightMapTexture::Init()
 	const float* heightMap = readmap->GetHeightmap();
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE32F_ARB,
-	             xSize, ySize, 0,
-	             GL_LUMINANCE, GL_FLOAT, heightMap);
+		xSize, ySize, 0,
+		GL_LUMINANCE, GL_FLOAT, heightMap);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -85,18 +81,24 @@ void HeightMapTexture::UpdateArea(int x0, int z0, int x1, int z1)
 		return;
 	}
 	const float* heightMap = readmap->GetHeightmap();
+
+	const int sizeX = x1 - x0 + 1;
+	const int sizeZ = z1 - z0 + 1;
+
+	pbo.Bind();
+	pbo.Resize( sizeX * sizeZ * sizeof(float) );
+	float* buf = (float*)pbo.MapBuffer();
+		for (int z = 0; z < sizeZ; z++) {
+			void* dst = buf + z * sizeX;
+			const void* src = heightMap + x0 + (z + z0) * xSize;
+			memcpy(dst, src, sizeX * sizeof(float));
+		}
+	pbo.UnmapBuffer();
+
 	glBindTexture(GL_TEXTURE_2D, texID);
-
-	for (int z = z0; z <= z1; z++) {
-		glTexSubImage2D(GL_TEXTURE_2D, 0,
-										x0, z, (x1 - x0 + 1), 1,
-										GL_LUMINANCE, GL_FLOAT, heightMap + (x0 + (z * xSize)));
-	}
-	
-
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glTexSubImage2D(GL_TEXTURE_2D, 0,
+		x0, z0, sizeX, sizeZ,
+		GL_LUMINANCE, GL_FLOAT, pbo.GetPtr());
+	pbo.Unbind();
 }
 
-
-/******************************************************************************/
-/******************************************************************************/

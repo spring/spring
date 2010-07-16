@@ -1,6 +1,4 @@
-// TreeDrawer.h: interface for the CTreeDrawer class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __ADV_TREE_DRAWER_H__
 #define __ADV_TREE_DRAWER_H__
@@ -12,12 +10,17 @@
 class CVertexArray;
 class CGrassDrawer;
 
-class CAdvTreeDrawer : public CBaseTreeDrawer
+namespace Shader {
+	struct IProgramObject;
+}
+
+class CAdvTreeDrawer: public CBaseTreeDrawer
 {
 public:
 	CAdvTreeDrawer();
 	virtual ~CAdvTreeDrawer();
 
+	void LoadTreeShaders();
 	void Draw(float treeDistance,bool drawReflection);
 	void Update();
 	void ResetPos(const float3& pos);
@@ -32,27 +35,16 @@ public:
 	int lastListClean;
 	float oldTreeDistance;
 
-	struct TreeStruct{
+	struct TreeStruct {
 		float3 pos;
 		int type;
 	};
-
-	struct TreeSquareStruct {
-		unsigned int displist;
-		unsigned int farDisplist;
-		int lastSeen;
-		int lastSeenFar;
-		float3 viewVector;
-		std::map<int,TreeStruct> trees;
+	struct FadeTree {
+		float3 pos;
+		float relDist;
+		float deltaY;
+		int type;
 	};
-
-	TreeSquareStruct* trees;
-	int treesX;
-	int treesY;
-	int nTrees;
-
-	CGrassDrawer* grassDrawer;
-
 	struct FallingTree {
 		int type;
 		float3 pos;
@@ -61,8 +53,33 @@ public:
 		float fallPos;
 	};
 
+	struct TreeSquareStruct {
+		unsigned int displist;
+		unsigned int farDisplist;
+		int lastSeen;
+		int lastSeenFar;
+		float3 viewVector;
+		std::map<int, TreeStruct> trees;
+	};
+
+	int treesX;
+	int treesY;
+	int nTrees;
+
+	TreeSquareStruct* trees;
+
+private:
+	enum TreeShaderProgram {
+		TREE_PROGRAM_NEAR_BASIC  = 0, // near-tree shader (V) without self-shadowing
+		TREE_PROGRAM_NEAR_SHADOW = 1, // near-tree shader (V+F) with self-shadowing
+		TREE_PROGRAM_DIST_SHADOW = 2, // far-tree shader (V+F) with self-shadowing
+		TREE_PROGRAM_LAST        = 3
+	};
+
+	std::vector<Shader::IProgramObject*> treeShaders;
 	std::list<FallingTree> fallingTrees;
+
+	CGrassDrawer* grassDrawer;
 };
 
 #endif // __ADV_TREE_DRAWER_H__
-

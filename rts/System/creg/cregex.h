@@ -1,3 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _CREG_EX_H
+#define _CREG_EX_H
 
 #define CREX_REG_STATE_COLLECTOR(Name,RootClass) \
 static RootClass *Name##State;\
@@ -33,3 +37,6 @@ void Name##StateCollector::Serialize(creg::ISerializer *s)\
 	Name##StateCollector sc;\
 	oss.SavePackage(ofs, &sc, sc.GetClass());\
 	Name##State = 0;
+
+#endif // _CREG_EX_H
+

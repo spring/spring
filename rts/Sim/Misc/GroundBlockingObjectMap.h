@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GROUNDBLOCKINGOBJECTMAP_H
 #define GROUNDBLOCKINGOBJECTMAP_H
 
@@ -34,7 +36,7 @@ public:
 	// same as GroundBlocked(), but does not bounds-check mapSquare
 	CSolidObject* GroundBlockedUnsafe(int mapSquare, bool topMost = true);
 
-	const BlockingMapCell& GetCell(int mapSquare) { return groundBlockingMap[mapSquare]; }
+	const BlockingMapCell& GetCell(int mapSquare) const { return groundBlockingMap[mapSquare]; }
 
 private:
 	BlockingMap groundBlockingMap;

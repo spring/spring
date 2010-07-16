@@ -1,19 +1,4 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef _SKIRMISHAICALLBACK_H
 #define	_SKIRMISHAICALLBACK_H
@@ -237,7 +222,29 @@ int (CALLING_CONV *Clb_Game_getAiInterfaceVersion)(int teamId);
 int (CALLING_CONV *Clb_Game_getMyTeam)(int teamId);
 int (CALLING_CONV *Clb_Game_getMyAllyTeam)(int teamId);
 int (CALLING_CONV *Clb_Game_getPlayerTeam)(int teamId, int playerId);
+/**
+ * Returns the name of the side of a team in the game.
+ *
+ * This should not be used, as it may be "",
+ * and as the AI should rather rely on the units it has,
+ * which will lead to a more stable and versatile AI.
+ * @deprecated
+ *
+ * @return eg. "ARM" or "CORE"; may be "", depending on how the game was setup
+ */
 const char* (CALLING_CONV *Clb_Game_getTeamSide)(int teamId, int otherTeamId);
+/**
+ * Returns the color of a team in the game.
+ *
+ * This should only be used when drawing stuff,
+ * and not for team-identification.
+ * @return the RGB color of a team, with values in [0, 255]
+ */
+struct SAIFloat3 (CALLING_CONV *Clb_Game_getTeamColor)(int teamId, int otherTeamId);
+/// Returns the ally-team of a team
+int (CALLING_CONV *Clb_Game_getTeamAllyTeam)(int teamId, int otherTeamId);
+/// Returns true, if the two supplied ally-teams are currently allied
+bool (CALLING_CONV *Clb_Game_isAllied)(int teamId, int firstAllyTeamId, int secondAllyTeamId);
 bool (CALLING_CONV *Clb_Game_isExceptionHandlingEnabled)(int teamId);
 bool (CALLING_CONV *Clb_Game_isDebugModeEnabled)(int teamId);
 int (CALLING_CONV *Clb_Game_getMode)(int teamId);
@@ -349,8 +356,6 @@ float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getStorage)(
 		int teamId, int unitDefId, int resourceId);
 bool (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0isSquareResourceExtractor)(
 		int teamId, int unitDefId, int resourceId);
-bool (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker)(
-		int teamId, int unitDefId, int resourceId);
 float (CALLING_CONV *Clb_UnitDef_getBuildTime)(int teamId, int unitDefId);
 /** This amount of auto-heal will always be applied. */
 float (CALLING_CONV *Clb_UnitDef_getAutoHeal)(int teamId, int unitDefId);
@@ -375,7 +380,6 @@ float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceDistance)(int teamId, int unitDef
  * turnInPlace setting.
  */
 float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceSpeedLimit)(int teamId, int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_getMoveType)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isUpright)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isCollide)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getControlRadius)(int teamId, int unitDefId);
@@ -453,29 +457,6 @@ float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMin)(int teamId,
  */
 float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMobilityAdd)(int teamId,
 		int unitDefId);
-/**
- * The type of the collision volume's form.
- *
- * @return  "Ell"
- *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
- *          "Box"
- */
-const char* (CALLING_CONV *Clb_UnitDef_CollisionVolume_getType)(int teamId,
-		int unitDefId);
-/** The collision volume's full axis lengths. */
-struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_CollisionVolume_getScales)(
-		int teamId, int unitDefId);
-/** The collision volume's offset relative to the unit's center position */
-struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_CollisionVolume_getOffsets)(
-		int teamId, int unitDefId);
-/**
- * Collission test algorithm used.
- *
- * @return  0: discrete
- *          1: continuous
- */
-int (CALLING_CONV *Clb_UnitDef_CollisionVolume_getTest)(int teamId,
-		int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMaxWeaponRange)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getType)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getTooltip)(int teamId, int unitDefId);
@@ -485,8 +466,6 @@ const char* (CALLING_CONV *Clb_UnitDef_getDeathExplosion)(int teamId,
 const char* (CALLING_CONV *Clb_UnitDef_getSelfDExplosion)(int teamId,
 		int unitDefId);
 // this might be changed later for something better
-const char* (CALLING_CONV *Clb_UnitDef_getTedClassString)(int teamId,
-		int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getCategoryString)(int teamId,
 		int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isAbleToSelfD)(int teamId, int unitDefId);
@@ -931,7 +910,10 @@ float (CALLING_CONV *Clb_Unit_0REF1Resource2resourceId0getResourceUse)(
 		int teamId, int unitId, int resourceId);
 float (CALLING_CONV *Clb_Unit_0REF1Resource2resourceId0getResourceMake)(
 		int teamId, int unitId, int resourceId);
+
 struct SAIFloat3 (CALLING_CONV *Clb_Unit_getPos)(int teamId, int unitId);
+struct SAIFloat3 (CALLING_CONV *Clb_Unit_getVel)(int teamId, int unitId);
+
 bool (CALLING_CONV *Clb_Unit_isActivated)(int teamId, int unitId);
 /// Returns true if the unit is currently being built
 bool (CALLING_CONV *Clb_Unit_isBeingBuilt)(int teamId, int unitId);
@@ -991,14 +973,50 @@ bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
 // BEGINN OBJECT Mod
 
 /**
- * archive filename
+ * Returns the mod archive file name.
+ * CAUTION:
+ * Never use this as reference in eg. cache- or config-file names,
+ * as one and the same mod can be packaged in different ways.
+ * Use the human name instead.
+ * @see getHumanName()
+ * @deprecated
  */
 const char*       (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
-
 /**
- * archive filename
+ * Returns the archive hash of the mod.
+ * Use this for reference to the mod, eg. in a cache-file, wherever human
+ * readability does not matter.
+ * This value will never be the same for two mods not having equal content.
+ * Tip: convert to 64 Hex chars for use in file names.
+ * @see getHumanName()
+ */
+int (CALLING_CONV *Clb_Mod_getHash)(int teamId);
+/**
+ * Returns the human readable name of the mod, which includes the version.
+ * Use this for reference to the mod (including version), eg. in cache- or
+ * config-file names which are mod related, and wherever humans may come
+ * in contact with the reference.
+ * Be aware though, that this may contain special characters and spaces,
+ * and may not be used as a file name without checks and replaces.
+ * Alternatively, you may use the short name only, or the short name plus
+ * version. You should generally never use the file name.
+ * Tip: replace every char matching [^0-9a-zA-Z_-.] with '_'
+ * @see getHash()
+ * @see getShortName()
+ * @see getFileName()
+ * @see getVersion()
  */
 const char*       (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
+/**
+ * Returns the short name of the mod, which does not include the version.
+ * Use this for reference to the mod in general, eg. as version independent
+ * reference.
+ * Be aware though, that this still contain special characters and spaces,
+ * and may not be used as a file name without checks and replaces.
+ * Tip: replace every char matching [^0-9a-zA-Z_-.] with '_'
+ * @see getVersion()
+ * @see getHumanName()
+ */
 const char*       (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
 const char*       (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
 const char*       (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
@@ -1128,20 +1146,29 @@ struct SAIFloat3 (CALLING_CONV *Clb_Map_getStartPos)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Clb_Map_getMousePos)(int teamId);
 bool (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, struct SAIFloat3 pos,
 		float radius);
-/// Returns the maps width in full resolution
+/** Returns the maps center heightmap width 
+ * 
+ * @see getHeightMap()
+ */
 int (CALLING_CONV *Clb_Map_getWidth)(int teamId);
-/// Returns the maps height in full resolution
+/** Returns the maps center heightmap height 
+ * 
+ * @see getHeightMap()
+ */
 int (CALLING_CONV *Clb_Map_getHeight)(int teamId);
 /**
  * Returns the height for the center of the squares.
  * This differs slightly from the drawn map, since
  * that one uses the height at the corners.
+ * Note that the actual map is 8 times larger (in each dimension) and 
+ * all other maps (slope, los, resources, etc.) are relative to the 
+ * size of the heightmap.
  *
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 8*8 in size
- * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
- * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+ * - the value for the full resolution position (x, z) is at index (z * width + x)
+ * - the last value, bottom right, is at index (width * height - 1)
  *
  * @see getCornersHeightMap()
  */
@@ -1156,8 +1183,8 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - 4 points mark the edges of an area of 8*8 in size
- * - the value for upper left corner of the full resolution position (x, z) is at index (x/8 * width + z/8)
- * - the last value, bottom right, is at index ((width/8+1) * (height/8+1) - 1)
+ * - the value for upper left corner of the full resolution position (x, z) is at index (z * width + x)
+ * - the last value, bottom right, is at index ((width+1) * (height+1) - 1)
  *
  * @see getHeightMap()
  */
@@ -1173,7 +1200,7 @@ float (CALLING_CONV *Clb_Map_getMaxHeight)(int teamId);
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 2*2 in size
- * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+ * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
  * - the last value, bottom right, is at index (width/2 * height/2 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getSlopeMap)(int teamId);
@@ -1193,7 +1220,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getSlopeMap)(int teamId, float slopes[],
  *   	+ losMipLevel(2) -> res(4)
  *   	+ losMipLevel(3) -> res(8)
  * - each data position is res*res in size
- * - the value for the full resolution position (x, z) is at index (x/res * width + z/res)
+ * - the value for the full resolution position (x, z) is at index ((z * width + x) / res)
  * - the last value, bottom right, is at index (width/res * height/res - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getLosMap)(int teamId);
@@ -1206,7 +1233,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getLosMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 8*8 in size
- * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getRadarMap)(int teamId);
@@ -1219,7 +1246,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getRadarMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 8*8 in size
- * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getJammerMap)(int teamId);
@@ -1232,7 +1259,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getJammerMap)(int teamId,
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
  * - each data position is 2*2 in size
- * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+ * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
  * - the last value, bottom right, is at index (width/2 * height/2 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw)(
@@ -1261,7 +1288,32 @@ float (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMap
 struct SAIFloat3 (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(
 		int teamId, int resourceId, struct SAIFloat3 pos);
 
+/**
+ * Returns the archive hash of the map.
+ * Use this for reference to the map, eg. in a cache-file, wherever human
+ * readability does not matter.
+ * This value will never be the same for two maps not having equal content.
+ * Tip: convert to 64 Hex chars for use in file names.
+ * @see getName()
+ */
+int (CALLING_CONV *Clb_Map_getHash)(int teamId);
+
+/**
+ * Returns the name of the map.
+ * Use this for reference to the map, eg. in cache- or config-file names
+ * which are map related, wherever humans may come in contact with the reference.
+ * Be aware though, that this may contain special characters and spaces,
+ * and may not be used as a file name without checks and replaces.
+ * Tip: replace every char matching [^0-9a-zA-Z_-.] with '_'
+ * @see getHash()
+ * @see getHumanName()
+ */
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
+/**
+ * Returns the human readbale name of the map.
+ * @see getName()
+ */
+const char* (CALLING_CONV *Clb_Map_getHumanName)(int teamId);
 /// Gets the elevation of the map at position (x, z)
 float (CALLING_CONV *Clb_Map_getElevationAt)(int teamId, float x, float z);
 
@@ -1336,29 +1388,6 @@ float (CALLING_CONV *Clb_FeatureDef_getReclaimTime)(int teamId,
 		int featureDefId);
 /** Used to see if the object can be overrun by units of a certain heavyness */
 float (CALLING_CONV *Clb_FeatureDef_getMass)(int teamId, int featureDefId);
-/**
- * The type of the collision volume's form.
- *
- * @return  "Ell"
- *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
- *          "Box"
- */
-const char* (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getType)(int teamId,
-		int featureDefId);
-/** The collision volume's full axis lengths. */
-struct SAIFloat3 (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getScales)(
-		int teamId, int featureDefId);
-/** The collision volume's offset relative to the feature's center position */
-struct SAIFloat3 (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getOffsets)(
-		int teamId, int featureDefId);
-/**
- * Collission test algorithm used.
- *
- * @return  0: discrete
- *          1: continuous
- */
-int (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getTest)(int teamId,
-		int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isUpright)(int teamId, int featureDefId);
 int (CALLING_CONV *Clb_FeatureDef_getDrawType)(int teamId, int featureDefId);
 const char* (CALLING_CONV *Clb_FeatureDef_getModelName)(int teamId,
@@ -1745,6 +1774,8 @@ void (CALLING_CONV *Clb_WeaponDef_0MAP1KEYS0getCustomParams)(int teamId,
 void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
 		int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
+
+bool (CALLING_CONV *Clb_Debug_Drawer_isEnabled)(int teamId);
 
 };
 

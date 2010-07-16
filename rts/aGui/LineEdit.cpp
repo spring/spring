@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "LineEdit.h"
 
@@ -12,12 +14,18 @@ namespace agui
 LineEdit::LineEdit(GuiElement* parent) : GuiElement(parent)
 {
 	hasFocus = false;
+	crypt = false;
 	cursorPos = 0;
 }
 
 void LineEdit::SetFocus(bool focus)
 {
 	hasFocus = focus;
+}
+
+void LineEdit::SetCrypt(bool focus)
+{
+	crypt = focus;
 }
 
 void LineEdit::SetContent(const std::string& line, bool moveCursor)
@@ -45,14 +53,22 @@ void LineEdit::DrawSelf()
 		DrawBox(GL_LINE_LOOP);
 	}
 
+	std::string tempText;
+	if (crypt)
+	{
+		tempText.resize(content.size(), '*');
+	}
+	else
+		tempText = content;
+
 	const float textCenter = pos[1]+size[1]/2;
 	if (hasFocus)
 	{
 		// draw the caret
-		const std::string caretStr = content.substr(0, cursorPos);
+		const std::string caretStr = tempText.substr(0, cursorPos);
 		const float caretWidth = font->GetSize() * font->GetTextWidth(caretStr) / float(screensize[0]);
 
-		char c = content[cursorPos];
+		char c = tempText[cursorPos];
 		if (c == 0) { c = ' '; }
 
 		const float cursorHeight = font->GetSize() * font->GetLineHeight() / float(screensize[1]);
@@ -65,7 +81,7 @@ void LineEdit::DrawSelf()
 	}
 
 	font->SetTextColor(); //default
-	font->glPrint(pos[0]+0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM, content);
+	font->glPrint(pos[0]+0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM, tempText);
 }
 
 bool LineEdit::HandleEventSelf(const SDL_Event& ev)

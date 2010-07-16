@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LASERPROJECTILE_H
 #define LASERPROJECTILE_H
 
@@ -11,7 +13,7 @@ class CLaserProjectile :
 public:
 	CLaserProjectile(const float3& pos, const float3& speed, CUnit* owner,float length,
 		const float3& color, const float3& color2, float intensity, const WeaponDef *weaponDef,
-		int ttl = 1000 GML_PARG_H);
+		int ttl = 1000);
 	virtual ~CLaserProjectile();
 	void Draw(void);
 	void Update(void);
@@ -20,7 +22,6 @@ public:
 	void Collision();
 	int ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed);
 
-	float3 dir;
 	float intensity;
 	float3 color;
 	float3 color2;

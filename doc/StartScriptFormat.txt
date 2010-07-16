@@ -1,0 +1,134 @@
+// A minimal client example
+// If spring is started as client, it needs the following information to work properly
+
+[GAME]
+{
+	HostIP=xxx.xxx.xxx.xxx; // can also be IPv6, e.g. HostIP=fe80::1;
+	HostPort=xxx;       // standard is 8452
+	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select and should be prefered
+
+	MyPlayerName=somename;
+	MyPasswd=secretpassword;
+	IsHost=0;           // tell the engine this is a client
+}
+
+// A host example
+// note that the same values for clients also need to be set here
+[GAME]
+{
+	Mapname=;           //with .smf extension
+	Gametype=Balanced Annihilation V6.81; //the primary mod NAME (archive works too, but name is prefered)
+	Scriptname=Commanders;
+	StartPosType=x;     // 0 fixed, 1 random, 2 choose in game, 3 choose before game (see StartPosX)
+
+	Demofile=demo.sdf;  // if set this game is a multiplayer demo replay
+	Savefile=save.ssf;  // if set this game is a continuation of a saved game
+
+	HostIP=xxx.xxx.xxx.xxx; // no effect as host
+	HostPort=xxx;       // where clients are going to connet to, usually 8452
+	SourcePort=0;       // no effect for host
+	AutohostIP=xxx;     // communicate with spring, specify the ip you are listening (as host)
+	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
+
+	MyPlayerName=somename; // our ingame-name (needs to match one players Name= field)
+
+	IsHost=1;           // 0: no server will be started in this instance
+	                    // 1: start a server
+	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
+	NumTeams=y;         // same here, set this to check if the script is right
+	NumAllyTeams=z;     // see above
+
+	// A player (controlls a team, player 0 is the host only if IsHost is not set)
+	[PLAYER0]
+	{
+		Name=name;      // pure info, eg. the account name from the lobby server
+		Password=secretpassword; // player can only connect if he set MyPasswd accordingly
+		Spectator=0;
+		Team=number;    // the team this player controlls
+		IsFromDemo=0;   // use only in combination with Demofile (see above)
+		CountryCode=;   // country of the player, if known (nl/de/it etc.)
+		Rank=-1;
+	}
+	// more players
+
+	// A skirmish AI (controlls a team)
+	[AI0]
+	{
+		Name=name;     // [optional] pure info, eg. the name set in the lobby
+		               // the name actually used in game will be:
+		               // "${Name} (owner: ${player.Name})"
+		ShortName=RAI; // shortName of the Skirmish AI library or name of the
+		               // LUA AI that controlls this team.
+		               // see spring.exe --list-skirmish-ais for possible values
+		Team=number;   // the team this AI controlls
+		Host=number;   // the player whichs computer this AI runs on
+		               // eg. for [PLAYER0] above, this would be 0
+		Version=0.1;   // [optional] version of this Skirmish AI
+		[OPTIONS]      // [optional] contains AI specific options
+		{
+			difficultyLevel=1;
+		}
+	}
+	// more skirmish AIs
+
+	// players in this will share the same units (start with one commander etc.)
+	[TEAM0]
+	{
+		TeamLeader=x;   // player number that is the "leader"
+		                // if this is an AI controlled team, TeamLeader is the
+		                // player number of the AI controlling team
+		                // see AI.Host
+		AllyTeam=number;
+		RgbColor=red green blue;  // red green blue in range [0-1]
+		Side=Arm/Core;  // other sides possible with user mods i suppose
+		Handicap=0-100; // Percent bonus on all resources collected ?
+		StartPosX=0;    // Use these in combination with StartPosType=3
+		StartPosZ=0;    // range is in map coordinates as returned by unitsync (NOT like StartRectTop et al)
+		LuaAI=name;     // name of the LUA AI that controlls this team
+		// Either a [PLAYER] or an [AI] is controlling this team, or LuaAI is set.
+		// DEPRECATED: The TeamLeader field indicates which computer the Skirmish AI will run on.
+	}
+	//more teams
+
+	// teams in ally team share los etc and cant break alliance, every team must be in exactly one ally team
+	[ALLYTEAM0]
+	{
+		NumAllies=0;
+		Ally0=(AllyTeam number); //means that this team is allied with the other, not necesarily the reverse
+
+		StartRectTop=0;    // Use these in combination with StartPosType=2
+		StartRectLeft=0;   //   (ie. select in map)
+		StartRectBottom=1; // range is 0-1: 0 is left or top edge,
+		StartRectRight=1;  //   1 is right or bottom edge
+	}
+	//more ally teams
+
+	//something for selecting which unit files to disable or restrict
+
+	NumRestrictions=xx;
+
+	[RESTRICT]
+	{
+		Unit0=armah;
+		Limit0=0;       // use 0 for all units that should be completely disabled
+		Unit1=corvp;
+		Limit1=50;      // >0 can be used for limiting, like build restrictions in TA
+		//...
+	}
+	[MODOPTIONS]
+	{
+		StartMetal=1000;
+		StartEnergy=1000;
+		MaxUnits=500;       // per team
+		GameMode=x;         // 0 cmdr dead->game continues, 1 cmdr dead->game ends, 2 lineage, 3 openend
+		LimitDgun=0;        // limit dgun to fixed radius around startpos?
+		DisableMapDamage=0; // disable map craters?
+		GhostedBuildings=1; // ghost enemy buildings after losing los on them
+		NoHelperAIs=0;      // are GroupAIs and other helper AIs allowed?
+		LuaGaia=1;          // Use LuaGaia?
+		LuaRules=1;         // Use LuaRules?
+		FixedAllies=1;      // Are ingame alliances allowed?
+		MaxSpeed=3;         // speed limits at game start
+		MinSpeed=0.3;
+	}
+}

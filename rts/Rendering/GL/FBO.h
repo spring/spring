@@ -1,12 +1,5 @@
-/**
- * @file FBO.h
- * @brief EXT_framebuffer_object
- *
- * EXT_framebuffer_object class definition
- * Copyright (C) 2008.  Licensed under the terms of the
- * GNU GPL, v2 or later.
- *
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef FBO_H
 #define FBO_H
 
@@ -14,12 +7,12 @@
 
 #include "myGL.h"
 
-//todo: add multisample buffers
+// TODO: add multisample buffers
 
 /**
  * @brief FBO
  *
- * Framebuffer Object class.
+ * Framebuffer Object class (EXT_framebuffer_object).
  */
 class FBO
 {
@@ -69,7 +62,7 @@ public:
 	 * @brief IsValid
 	 * @return whether a valid framebuffer exists
 	 */
-	bool IsValid();
+	bool IsValid() const;
 
 	/**
 	 * @brief AttachTexture
@@ -132,6 +125,8 @@ public:
 
 
 private:
+	bool valid;
+
 	/**
 	 * @brief rbos
 	 *

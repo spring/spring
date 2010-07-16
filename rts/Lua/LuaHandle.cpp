@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaHandle.cpp: implementation of the CLuaHandle class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <SDL_keysym.h>
@@ -21,24 +20,25 @@
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
 #include "LuaUtils.h"
+#include "LuaZip.h"
 #include "Game/PlayerHandler.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
 #include "Rendering/InMapDraw.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#include "EventHandler.h"
-#include "LogOutput.h"
-#include "SpringApp.h"
-#include "FileSystem/FileHandler.h"
+#include "System/BaseNetProtocol.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/SpringApp.h"
+#include "System/FileSystem/FileHandler.h"
 
 #include "LuaInclude.h"
 
@@ -218,6 +218,9 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
+	//! limit gc just to the time the correct ActiveHandle is bound,
+	//! because some object could use __gc and try to access the ActiveHandle
+	//! outside of SetActiveHandle this can be an incorrect enviroment or even null -> crash
 	lua_gc(L,LUA_GCRESTART,0);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
 	lua_gc(L,LUA_GCSTOP,0);
@@ -263,24 +266,6 @@ int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errormessage)
 	return RunCallInTraceback(inArgs, outArgs, 0, errormessage);
 }
 
-
-bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
-{
-	return RunCallInTraceback(hs, inArgs, outArgs, 0);
-}
-
-
-
-inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs,
-                                          int inArgs, int outArgs)
-{
-	synced = false;
-	const bool retval = RunCallIn(hs, inArgs, outArgs);
-	synced = !userMode;
-	return retval;
-}
-
-
 /******************************************************************************/
 
 void CLuaHandle::Shutdown()
@@ -299,6 +284,28 @@ void CLuaHandle::Shutdown()
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 0, 0, errfunc);
+	return;
+}
+
+void CLuaHandle::Load(CArchiveBase* archive)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	int errfunc = SetupTraceback();
+
+	static const LuaHashString cmdStr("Load");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
+		return; // the call is not defined
+	}
+
+	// Load gets ZipFileReader userdatum as single argument
+	LuaZipFileReader::PushNew(L, "", archive);
+
+	// call the routine
+	RunCallInTraceback(cmdStr, 1, 0, errfunc);
 	return;
 }
 
@@ -808,28 +815,28 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 
 void CLuaHandle::UnitEnteredRadar(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitEnteredRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitEnteredLos(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitEnteredLos");
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitLeftRadar(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitLeftRadar");
 	LosCallIn(hs, unit, allyTeam);
 }
 
 
 void CLuaHandle::UnitLeftLos(const CUnit* unit, int allyTeam)
 {
-	static const LuaHashString hs(__FUNCTION__);
+	static const LuaHashString hs("UnitLeftLos");
 	LosCallIn(hs, unit, allyTeam);
 }
 
@@ -998,7 +1005,7 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 /******************************************************************************/
 
-void CLuaHandle::ProjectileCreated(const CProjectile* projectile)
+void CLuaHandle::ProjectileCreated(const CProjectile* p)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -1007,18 +1014,21 @@ void CLuaHandle::ProjectileCreated(const CProjectile* projectile)
 		return; // the call is not defined
 	}
 
-	const bool b = (projectile->owner() != NULL);
+	if (p->synced && (p->weapon || p->piece)) {
+		const CUnit* owner = p->owner();
 
-	lua_pushnumber(L, projectile->id);
-	lua_pushnumber(L, b ? projectile->owner()->id : -1);
+		lua_pushnumber(L, p->id);
+		lua_pushnumber(L, (owner? owner->id: -1));
 
-	// call the routine
-	RunCallIn(cmdStr, 2, 0);
+		// call the routine
+		RunCallIn(cmdStr, 2, 0);
+	}
+
 	return;
 }
 
 
-void CLuaHandle::ProjectileDestroyed(const CProjectile* projectile)
+void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -1027,10 +1037,13 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* projectile)
 		return; // the call is not defined
 	}
 
-	lua_pushnumber(L, projectile->id);
+	if (p->synced && (p->weapon || p->piece)) {
+		lua_pushnumber(L, p->id);
 
-	// call the routine
-	RunCallIn(cmdStr, 1, 0);
+		// call the routine
+		RunCallIn(cmdStr, 1, 0);
+	}
+
 	return;
 }
 
@@ -1190,6 +1203,30 @@ inline bool CLuaHandle::PushUnsyncedCallIn(const LuaHashString& hs)
 }
 
 
+void CLuaHandle::Save(zipFile archive)
+{
+	// LuaUI does not get this call-in
+	if (userMode) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+	static const LuaHashString cmdStr("Save");
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return;
+	}
+
+	// Save gets ZipFileWriter userdatum as single argument
+	LuaZipFileWriter::PushNew(L, "", archive);
+
+	// call the routine
+	RunCallInUnsynced(cmdStr, 1, 0);
+
+	return;
+}
+
+
 void CLuaHandle::Update()
 {
 	LUA_CALL_IN_CHECK(L);
@@ -1216,18 +1253,18 @@ void CLuaHandle::ViewResize()
 	}
 
 	lua_newtable(L);
-	LuaPushNamedNumber(L, "screenSizeX", gu->screenSizeX);
-	LuaPushNamedNumber(L, "screenSizeY", gu->screenSizeY);
+	LuaPushNamedNumber(L, "screenSizeX", globalRendering->screenSizeX);
+	LuaPushNamedNumber(L, "screenSizeY", globalRendering->screenSizeY);
 	LuaPushNamedNumber(L, "screenPosX",  0.0f);
 	LuaPushNamedNumber(L, "screenPosY",  0.0f);
-	LuaPushNamedNumber(L, "windowSizeX", gu->winSizeX);
-	LuaPushNamedNumber(L, "windowSizeY", gu->winSizeY);
-	LuaPushNamedNumber(L, "windowPosX",  gu->winPosX);
-	LuaPushNamedNumber(L, "windowPosY",  gu->winPosY);
-	LuaPushNamedNumber(L, "viewSizeX",   gu->viewSizeX);
-	LuaPushNamedNumber(L, "viewSizeY",   gu->viewSizeY);
-	LuaPushNamedNumber(L, "viewPosX",    gu->viewPosX);
-	LuaPushNamedNumber(L, "viewPosY",    gu->viewPosY);
+	LuaPushNamedNumber(L, "windowSizeX", globalRendering->winSizeX);
+	LuaPushNamedNumber(L, "windowSizeY", globalRendering->winSizeY);
+	LuaPushNamedNumber(L, "windowPosX",  globalRendering->winPosX);
+	LuaPushNamedNumber(L, "windowPosY",  globalRendering->winPosY);
+	LuaPushNamedNumber(L, "viewSizeX",   globalRendering->viewSizeX);
+	LuaPushNamedNumber(L, "viewSizeY",   globalRendering->viewSizeY);
+	LuaPushNamedNumber(L, "viewPosX",    globalRendering->viewPosX);
+	LuaPushNamedNumber(L, "viewPosY",    globalRendering->viewPosY);
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 1, 0);
@@ -1392,8 +1429,8 @@ void CLuaHandle::DrawScreen()
 		return;
 	}
 
-	lua_pushnumber(L, gu->viewSizeX);
-	lua_pushnumber(L, gu->viewSizeY);
+	lua_pushnumber(L, globalRendering->viewSizeX);
+	lua_pushnumber(L, globalRendering->viewSizeY);
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
@@ -1411,8 +1448,8 @@ void CLuaHandle::DrawScreenEffects()
 		return;
 	}
 
-	lua_pushnumber(L, gu->viewSizeX);
-	lua_pushnumber(L, gu->viewSizeY);
+	lua_pushnumber(L, globalRendering->viewSizeX);
+	lua_pushnumber(L, globalRendering->viewSizeY);
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
@@ -1553,8 +1590,8 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, x - gu->viewPosX);
-	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, x - globalRendering->viewPosX);
+	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
 	lua_pushnumber(L, button);
 
 	// call the function
@@ -1584,8 +1621,8 @@ int CLuaHandle::MouseRelease(int x, int y, int button)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, x - gu->viewPosX);
-	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, x - globalRendering->viewPosX);
+	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
 	lua_pushnumber(L, button);
 
 	// call the function
@@ -1615,8 +1652,8 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 		return false; // the call is not defined, do not take the event
 	}
 
-	lua_pushnumber(L, x - gu->viewPosX);
-	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, x - globalRendering->viewPosX);
+	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
 	lua_pushnumber(L, dx);
 	lua_pushnumber(L, -dy);
 	lua_pushnumber(L, button);
@@ -1706,8 +1743,8 @@ bool CLuaHandle::IsAbove(int x, int y)
 		return false; // the call is not defined
 	}
 
-	lua_pushnumber(L, x - gu->viewPosX);
-	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, x - globalRendering->viewPosX);
+	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 2, 1)) {
@@ -1736,8 +1773,8 @@ string CLuaHandle::GetTooltip(int x, int y)
 		return ""; // the call is not defined
 	}
 
-	lua_pushnumber(L, x - gu->viewPosX);
-	lua_pushnumber(L, gu->viewSizeY - y - 1);
+	lua_pushnumber(L, x - globalRendering->viewPosX);
+	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 2, 1)) {
@@ -1947,7 +1984,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 
 	lua_pushnumber(L, playerID);
 
-	if (type == CInMapDraw::NET_POINT) {
+	if (type == MAPDRAW_POINT) {
 		HSTR_PUSH(L, "point");
 		lua_pushnumber(L, pos0->x);
 		lua_pushnumber(L, pos0->y);
@@ -1955,7 +1992,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		lua_pushstring(L, label->c_str());
 		args = 6;
 	}
-	else if (type == CInMapDraw::NET_LINE) {
+	else if (type == MAPDRAW_LINE) {
 		HSTR_PUSH(L, "line");
 		lua_pushnumber(L, pos0->x);
 		lua_pushnumber(L, pos0->y);
@@ -1965,7 +2002,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		lua_pushnumber(L, pos1->z);
 		args = 8;
 	}
-	else if (type == CInMapDraw::NET_ERASE) {
+	else if (type == MAPDRAW_ERASE) {
 		HSTR_PUSH(L, "erase");
 		lua_pushnumber(L, pos0->x);
 		lua_pushnumber(L, pos0->y);
@@ -1974,7 +2011,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		args = 6;
 	}
 	else {
-		logOutput.Print("Unknown MapDrawCmd() type");
+		logOutput.Print("Unknown MapDrawCmd() type: %i", type);
 		lua_pop(L, 2); // pop the function and playerID
 		return false;
 	}

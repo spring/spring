@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Screenshot.h"
 
@@ -8,6 +10,7 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "ConfigHandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "GlobalUnsynced.h"
 #include "LogOutput.h"
@@ -40,9 +43,9 @@ public:
 		{
 			boost::mutex::scoped_lock mylock(myMutex);
 			tasks.push_back(arg);
+			Update();
 		}
 		
-		Update();
 		if (!myThread)
 		{
 			finished = false;
@@ -107,8 +110,8 @@ void TakeScreenshot(std::string type)
 	if (filesystem.CreateDirectory("screenshots"))
 	{
 		FunctionArgs args;
-		args.x = gu->dualScreenMode? gu->viewSizeX << 1: gu->viewSizeX;
-		args.y = gu->viewSizeY;
+		args.x = globalRendering->dualScreenMode? globalRendering->viewSizeX << 1: globalRendering->viewSizeX;
+		args.y = globalRendering->viewSizeY;
 
 		if (args.x % 4)
 			args.x += (4 - args.x % 4);

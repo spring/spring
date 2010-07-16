@@ -1,13 +1,13 @@
-/*
-Used by ground moving units.
-Ie. tanks and k-bots.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef GROUNDMOVEMATH_H
 #define GROUNDMOVEMATH_H
 
 #include "MoveMath.h"
 
+/**
+ * Used by ground moving units, ie. tanks and k-bots.
+ */
 class CGroundMoveMath :	public CMoveMath {
 	CR_DECLARE(CGroundMoveMath);
 public:

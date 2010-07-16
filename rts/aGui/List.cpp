@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "List.h"
 
@@ -5,6 +7,7 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/UI/MouseHandler.h"
 #include "Gui.h"
@@ -35,6 +38,7 @@ List::List(GuiElement* parent) :
 	itemHeight = 0.04f;
 	hasFocus = true;
 	topIndex = 0;
+	mx = my = 0;
 }
 
 List::~List()
@@ -124,7 +128,7 @@ void List::MouseRelease(int x, int y, int button)
 }
 
 float List::ScaleFactor() {
-	return (float)std::max(1, gu->winSizeY) * (size[1] - 2.0f * borderSpacing);
+	return (float)std::max(1, globalRendering->winSizeY) * (size[1] - 2.0f * borderSpacing);
 }
 
 void List::UpdateTopIndex()

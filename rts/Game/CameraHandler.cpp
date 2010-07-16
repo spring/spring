@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <cstdlib>
 
@@ -19,6 +21,7 @@
 #include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
+#include "Rendering/GlobalRendering.h"
 
 
 CCameraHandler* camHandler = NULL;
@@ -102,7 +105,7 @@ void CCameraHandler::UpdateCam()
 	}
 	else {
 		const float currTime = cameraTimeLeft;
-		cameraTimeLeft = std::max(0.0f, (cameraTimeLeft - gu->lastFrameTime));
+		cameraTimeLeft = std::max(0.0f, (cameraTimeLeft - globalRendering->lastFrameTime));
 		const float nextTime = cameraTimeLeft;
 		const float exp = cameraTimeExponent;
 		const float ratio = 1.0f - (float)pow((nextTime / currTime), exp);
@@ -113,7 +116,7 @@ void CCameraHandler::UpdateCam()
 		camera->SetFov(camera->GetFov() + (deltaFOV * ratio));
 		camera->pos     += deltaPos * ratio;
 		camera->forward += deltaDir * ratio;
-		camera->forward.ANormalize();
+		camera->forward.Normalize();
 	}
 }
 

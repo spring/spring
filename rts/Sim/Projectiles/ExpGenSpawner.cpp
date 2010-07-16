@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "ExpGenSpawner.h"
 #include "ExplosionGenerator.h"
@@ -18,7 +20,9 @@ CR_REG_METADATA(CExpGenSpawner,
 
 CExpGenSpawner::CExpGenSpawner(void) :
 	CProjectile(),
-	damage(0)
+	delay(1),
+	damage(0),
+	explosionGenerator(NULL)
 {
 	checkCol=false;
 	deleteMe=false;

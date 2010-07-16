@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef EXPGENSPAWNER_H
 #define EXPGENSPAWNER_H
 
@@ -5,13 +7,12 @@
 
 class CExplosionGenerator;
 
-//class used to spawn an explosiongenerator after a delay
+/// Spawn an explosiongenerator after a delay
 class CExpGenSpawner : public CProjectile
 {
 	CR_DECLARE(CExpGenSpawner);
 public:
 	int delay;
-	float3 dir;
 	float damage;
 	CExplosionGenerator* explosionGenerator;
 

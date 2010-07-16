@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file Main.cpp
- * @brief Main class
- *
  * Main application class that launches
  * everything else
  */
@@ -65,7 +64,7 @@ int Run(int argc, char* argv[])
 	}
 	catch (const content_error& e) {
 		SDL_Quit();
-		logOutput.RemoveAllSubscribers();
+		logOutput.SetSubscribersEnabled(false);
 		logOutput.Print("Content error: %s\n", e.what());
 		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 		return -1;
@@ -86,10 +85,10 @@ int Run(int argc, char* argv[])
 		SDL_Quit();
 	#ifdef _MSC_VER
 		logOutput.Print("Fatal error: %s\n", e.what());
-		logOutput.RemoveAllSubscribers();
+		logOutput.SetSubscribersEnabled(false);
 		throw; // let the error handler catch it
 	#else
-		logOutput.RemoveAllSubscribers();
+		logOutput.SetSubscribersEnabled(false);
 		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
 		return -1;
 	#endif
@@ -98,10 +97,10 @@ int Run(int argc, char* argv[])
 		SDL_Quit();
 	#ifdef _MSC_VER
 		logOutput.Print("Fatal error: %s\n", e);
-		logOutput.RemoveAllSubscribers();
+		logOutput.SetSubscribersEnabled(false);
 		throw; // let the error handler catch it
 	#else
-		logOutput.RemoveAllSubscribers();
+		logOutput.SetSubscribersEnabled(false);
 		handleerror(NULL, e, "Fatal Error", MBF_OK | MBF_EXCL);
 		return -1;
 	#endif

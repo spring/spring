@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MYGL_H
 #define MYGL_H
 
@@ -7,7 +9,11 @@
 #endif
 
 #include <string>
-#include <GL/glew.h>
+#ifndef HEADLESS
+	#include <GL/glew.h>
+#else
+	#include "lib/headlessStubs/glewstub.h"
+#endif
 #include "lib/gml/gml.h"
 
 // includes boost now!
@@ -16,22 +22,22 @@
 
 inline void glVertexf3(const float3 &v)
 {
-	glVertex3f(v.x,v.y,v.z);
+	glVertex3f(v.x, v.y, v.z);
 }
 
 inline void glColorf3(const float3& v)
 {
-	glColor3f(v.x,v.y,v.z);
+	glColor3f(v.x, v.y, v.z);
 }
 
 inline void glNormalf3(const float3 &v)
 {
-	glNormal3f(v.x,v.y,v.z);
+	glNormal3f(v.x, v.y, v.z);
 }
 
 inline void glTranslatef3(const float3 &v)
 {
-	glTranslatef(v.x,v.y,v.z);
+	glTranslatef(v.x, v.y, v.z);
 }
 
 inline void glSecondaryColorf3(const float3& v)
@@ -52,7 +58,7 @@ inline void glUniformf3(const GLint& location, const float3 &v)
 
 void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data);
 
-void SetTexGen(const float& scalex, const float& scaley, const float& offsetx, const float& offsety);
+void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
 
 void RandomStartPicture(const std::string& sidePref);
 void LoadStartPicture(const std::string& picture);
@@ -66,6 +72,8 @@ unsigned int LoadFragmentProgram(const char* filename);
 
 void glClearErrors();
 void glSafeDeleteProgram(GLuint program);
+
+void PrintAvailableResolutions();
 
 void LoadExtensions();
 void UnloadExtensions();

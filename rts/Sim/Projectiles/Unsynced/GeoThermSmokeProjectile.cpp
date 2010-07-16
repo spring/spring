@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -12,8 +14,8 @@ CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_RESERVED(8)
 	));
 
-CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos,const float3& speed,int ttl, CFeature* geo GML_PARG_C)
-: CSmokeProjectile(pos,speed,ttl,6,0.35f,0,0.8f GML_PARG_P), geo(geo)
+CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos,const float3& speed,int ttl, CFeature* geo)
+: CSmokeProjectile(pos,speed,ttl,6,0.35f,0,0.8f), geo(geo)
 {}
 
 void CGeoThermSmokeProjectile::Update()

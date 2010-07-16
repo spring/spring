@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FEATURE_HANDLER_H__
 #define __FEATURE_HANDLER_H__
 
@@ -36,7 +38,7 @@ public:
 	CFeature* GetFeature(int id);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
-	const FeatureDef* GetFeatureDef(const std::string name, const bool showError = true);
+	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true);
 	const FeatureDef* GetFeatureDefByID(int id);
 
 	void SetFeatureUpdateable(CFeature* feature);

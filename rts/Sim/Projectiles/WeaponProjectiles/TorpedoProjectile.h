@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TORPEDOPROJECTILE_H
 #define TORPEDOPROJECTILE_H
 
@@ -10,14 +12,13 @@ class CTorpedoProjectile :
 	CR_DECLARE(CTorpedoProjectile);
 public:
 	CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner, float areaOfEffect,
-		float maxSpeed, float tracking, int ttl, CUnit* target, const WeaponDef* weaponDef GML_PARG_H);
+		float maxSpeed, float tracking, int ttl, CUnit* target, const WeaponDef* weaponDef);
 	~CTorpedoProjectile(void);
 	void DependentDied(CObject* o);
 	void Collision(CUnit* unit);
 	void Collision();
 
 	float tracking;
-	float3 dir;
 	float maxSpeed;
 	float curSpeed;
 	float areaOfEffect;

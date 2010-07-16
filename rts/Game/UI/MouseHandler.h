@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MOUSEHANDLER_H
 #define MOUSEHANDLER_H
-// MouseHandler.h: interface for the CMouseHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -30,9 +29,9 @@ public:
 	void ToggleState(); // lock+hide (used by fps camera and middle click scrolling)
 	void WarpMouse(int x, int y);
 	void Draw(); // draw mousebox (selection box)
-	void MouseRelease(int x,int y,int button);
-	void MousePress(int x,int y,int button);
-	void MouseMove(int x,int y);
+	void MouseRelease(int x, int y, int button);
+	void MousePress(int x, int y, int button);
+	void MouseMove(int x, int y, int dx, int dy);
 	void MouseWheel(float delta);
 	CMouseHandler();
 	virtual ~CMouseHandler();
@@ -45,6 +44,10 @@ public:
 	bool invertMouse;
 	float doubleClickTime;
 	float scrollWheelSpeed;
+	float dragScrollThreshold;
+
+	/// locked mouse indicator size
+	float crossSize;
 
 	struct ButtonPressEvt {
 		bool pressed;
@@ -80,6 +83,9 @@ public:
 	                        const std::string& newName,
 	                        CMouseCursor::HotSpot hotSpot);
 	void SafeDeleteCursor(CMouseCursor* cursor);
+
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
 
 protected:
 	void LoadCursors();

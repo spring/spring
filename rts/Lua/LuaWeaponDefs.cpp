@@ -1,7 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaWeaponDefs.cpp: implementation of the LuaWeaponDefs class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <set>
 #include <string>
@@ -9,8 +9,6 @@
 #include <set>
 #include <map>
 #include <cctype>
-
-#include "mmgr.h"
 
 #include "LuaWeaponDefs.h"
 
@@ -231,7 +229,7 @@ static int WeaponDefNewIndex(lua_State* L)
 
 static int WeaponDefMetatable(lua_State* L)
 {
-	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
+	//const void* userData = lua_touserdata(L, lua_upvalueindex(1));
 	//const WeaponDef* wd = (const WeaponDef*)userData;
 	return 0;
 }

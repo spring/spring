@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -32,10 +34,14 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
-		CUnit* owner, float length, const float3& color, const float3& color2,
-		float intensity, const WeaponDef *weaponDef, int ttl GML_PARG_C)
-:	CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, ttl GML_PARG_P),
+CLaserProjectile::CLaserProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner, float length,
+	const float3& color, const float3& color2,
+	float intensity,
+	const WeaponDef* weaponDef, int ttl):
+
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	intensity(intensity),
 	color(color),
 	color2(color2),
@@ -44,19 +50,27 @@ CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 	intensityFalloff(weaponDef?intensity*weaponDef->falloffRate:0),
 	stayTime(0)
 {
-	dir=speed;
-	dir.Normalize();
-	speedf=speed.Length();
+	projectileType = WEAPON_LASER_PROJECTILE;
 
-	if (weaponDef) SetRadius(weaponDef->collisionSize);
-	drawRadius=length;
-	if (weaponDef)midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
+	speedf = speed.Length();
+	dir = speed / speedf;
+
+	if (weaponDef) {
+		SetRadius(weaponDef->collisionSize);
+
+		midtexx =
+			(weaponDef->visuals.texture2->xstart +
+			(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * 0.5f);
+	}
+
+	drawRadius = length;
+
 #ifdef TRACE_SYNC
 	tracefile << "New laser: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -67,7 +81,10 @@ CLaserProjectile::~CLaserProjectile(void)
 
 void CLaserProjectile::Update(void)
 {
-	pos += speed;
+	if (!luaMoveCtrl) {
+		pos += speed;
+	}
+
 	if (checkCol) {
 		// normal
 		curLength += speedf;
@@ -85,10 +102,9 @@ void CLaserProjectile::Update(void)
 		}
 	}
 
-	ttl--;
 
-	if (ttl > 0 && checkCol) {
-		if (cegTag.size() > 0) {
+	if (--ttl > 0 && checkCol) {
+		if (!cegTag.empty()) {
 			ceg.Explosion(pos, ttl, intensity, 0x0, 0.0f, 0x0, speed);
 		}
 	}
@@ -114,21 +130,25 @@ void CLaserProjectile::Update(void)
 		}
 	}
 
-	float3 tempSpeed = speed;
-	UpdateGroundBounce();
+	if (!luaMoveCtrl) {
+		float3 tempSpeed = speed;
+		UpdateGroundBounce();
 
-	if (tempSpeed != speed) {
-		dir = speed;
-		dir.Normalize();
+		if (tempSpeed != speed) {
+			dir = speed;
+			dir.Normalize();
+		}
 	}
 }
 
+
+
 void CLaserProjectile::Collision(CUnit* unit)
 {
-	float3 oldPos=pos;
+	float3 oldPos = pos;
 	CWeaponProjectile::Collision(unit);
 
-	deleteMe=false;	//we will fade out over some time
+	deleteMe = false;	// we will fade out over some time
 	if (!weaponDef->noExplode) {
 		checkCol = false;
 		speed = ZeroVector;
@@ -146,7 +166,7 @@ void CLaserProjectile::Collision(CUnit* unit)
 
 void CLaserProjectile::Collision(CFeature* feature)
 {
-	float3 oldPos=pos;
+	float3 oldPos = pos;
 	CWeaponProjectile::Collision(feature);
 
 	// we will fade out over some time
@@ -186,26 +206,13 @@ void CLaserProjectile::Collision()
 			stayTime = int(1 + (length - curLength) / speedf);
 		}
 	}
-
-	//CSimpleParticleSystem *ps = new CSimpleParticleSystem();
-	//ps->particleLife = 30*3;
-	//ps->particleLifeSpread = 30*3;
-	//ps->particleSize = 6;
-	//ps->particleSizeSpread = 2;
-	//ps->emitVector = float3(0,0,0);
-	//ps->emitSpread = float3(4,1,4).Normalize();
-	//ps->pos = pos;
-	//ps->numParticles = 2000;
-	//ps->airdrag = 0.85f;
-	//ps->speed = 30.0f;
-	//ps->speedSpread = 8.0f;
-	//ps->Init();
 }
+
 
 
 void CLaserProjectile::Draw(void)
 {
-	if(s3domodel)	//dont draw if a 3d model has been defined for us
+	if (model)	//dont draw if a 3d model has been defined for us
 		return;
 
 	inArray=true;
@@ -295,15 +302,18 @@ void CLaserProjectile::Draw(void)
 	}
 }
 
-int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield,float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
 {
-	float3 sdir=pos-shieldPos;
-	sdir.Normalize();
-	if(sdir.dot(speed)<0){
-		speed-=sdir*sdir.dot(speed)*2;
-		dir=speed;
-		dir.Normalize();
-		return 1;
+	if (!luaMoveCtrl) {
+		const float3 rdir = (pos - shieldPos).Normalize();
+
+		if (rdir.dot(speed) < 0.0f) {
+			speed -= (rdir * rdir.dot(speed) * 2.0f);
+			dir = speed;
+			dir.Normalize();
+			return 1;
+		}
 	}
+
 	return 0;
 }

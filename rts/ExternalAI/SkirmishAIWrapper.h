@@ -1,25 +1,9 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software {} you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation {} either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY {} without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef _SKIRMISHAIWRAPPER_H
 #define _SKIRMISHAIWRAPPER_H
 
 #include "Object.h"
-#include "GlobalAICallback.h"
 #include "SkirmishAIKey.h"
 #include "Platform/SharedLib.h"
 
@@ -27,6 +11,7 @@
 #include <string>
 
 class CAICallback;
+class CAICheats;
 struct SSkirmishAICallback;
 class CSkirmishAI;
 struct Command;
@@ -64,6 +49,8 @@ public:
 	virtual void UnitMoveFailed(int unitId);
 	virtual void UnitGiven(int unitId, int oldTeam, int newTeam);
 	virtual void UnitCaptured(int unitId, int oldTeam, int newTeam);
+	virtual void EnemyCreated(int unitId);
+	virtual void EnemyFinished(int unitId);
 	virtual void EnemyEnterLOS(int unitId);
 	virtual void EnemyLeaveLOS(int unitId);
 	virtual void EnemyEnterRadar(int unitId);
@@ -101,7 +88,8 @@ private:
 
 	CSkirmishAI* ai;
 	bool initialized, released;
-	CGlobalAICallback* callback;
+	CAICallback* callback;
+	CAICheats* cheats;
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
 	const struct InfoItem* info;

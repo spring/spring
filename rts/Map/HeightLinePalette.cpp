@@ -1,12 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "HeightLinePalette.h"
 
 #include "ConfigHandler.h"
 
-
-/** @brief Generates the height line palette.
-Based on the configuration variable "ColorElev" (default: 1), it either
-generates a colored palette or a grayscale palette. */
-
+/**
+ * @brief Generates the height line palette.
+ * Based on the configuration variable "ColorElev" (default: 1), it either
+ * generates a colored palette or a grayscale palette.
+ */
 CHeightLinePalette::CHeightLinePalette()
 {
 	if(configHandler->Get("ColorElev",1)){

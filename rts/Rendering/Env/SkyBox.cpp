@@ -1,36 +1,42 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "SkyBox.h"
-#include "float3.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
-#include "GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Exceptions.h"
+#include "System/Exceptions.h"
+#include "System/float3.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
 
-CSkyBox::CSkyBox(std::string texture)
+CSkyBox::CSkyBox(const std::string& texture)
 {
 	CBitmap btex;
-	if (!btex.Load(texture))
-		throw content_error("Could not load skybox texture from file " + texture);
-	tex = btex.CreateTexture(true);
+	if (!btex.Load(texture)) {
+		logOutput.Print("[CSkyBox] could not load skybox texture from file " + texture);
+		tex = 0;
+	} else {
+		tex = btex.CreateTexture(true);
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
 
 	cloudDensity = mapInfo->atmosphere.cloudDensity;
 	cloudColor = mapInfo->atmosphere.cloudColor;
 	skyColor = mapInfo->atmosphere.skyColor;
 	sunColor = mapInfo->atmosphere.sunColor;
 	fogStart = mapInfo->atmosphere.fogStart;
-	if (fogStart>0.99f) gu->drawFog = false;
+	globalRendering->drawFog = (fogStart <= 0.99f);
 }
 
 CSkyBox::~CSkyBox(void)
@@ -48,34 +54,38 @@ void CSkyBox::Draw()
 	glEnable(GL_TEXTURE_CUBE_MAP);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
 
-	float3 v1 = -camera->CalcPixelDir(0,0);
-	float3 v2 = -camera->CalcPixelDir(gu->viewSizeX,0);
-	float3 v3 = -camera->CalcPixelDir(gu->viewSizeX,gu->viewSizeY);
-	float3 v4 = -camera->CalcPixelDir(0,gu->viewSizeY);
-
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
-		gluOrtho2D(0,1,0,1);
+		gluOrtho2D(0, 1, 0, 1);
 
-	glBegin(GL_QUADS);
-		glTexCoord3f(v1.x,v1.y,v1.z);
-		glVertex2f(0.0f,1.0f);
+	GLfloat verts[] = {
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f
+	};
+	float3 texcoords[] = {
+		-camera->CalcPixelDir(                         0,                          0),
+		-camera->CalcPixelDir(globalRendering->viewSizeX,                          0),
+		-camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY),
+		-camera->CalcPixelDir(                         0, globalRendering->viewSizeY)
+	};
 
-		glTexCoord3f(v2.x,v2.y,v2.z);
-		glVertex2f(1.0f,1.0f);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-		glTexCoord3f(v3.x,v3.y,v3.z);
-		glVertex2f(1.0f,0.0f);
+	glTexCoordPointer(3, GL_FLOAT, 0, texcoords);
+	glVertexPointer(2, GL_FLOAT, 0, verts);
+	glDrawArrays(GL_QUADS, 0, 4);
 
-		glTexCoord3f(v4.x,v4.y,v4.z);
-		glVertex2f(0.0f,0.0f);
-	glEnd();
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	//glMatrixMode(GL_PROJECTION);
+	// glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
@@ -86,20 +96,13 @@ void CSkyBox::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-	glFogi(GL_FOG_MODE,GL_LINEAR);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
-	glFogf(GL_FOG_DENSITY,1.00f);
-	if (gu->drawFog) {
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	glFogi(GL_FOG_MODE, GL_LINEAR);
+	glFogf(GL_FOG_START, globalRendering->viewRange*fogStart);
+	glFogf(GL_FOG_END, globalRendering->viewRange);
+	glFogf(GL_FOG_DENSITY, 1.0f);
+
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	}
-}
-
-void CSkyBox::Update()
-{
-}
-
-void CSkyBox::DrawSun(void)
-{
 }

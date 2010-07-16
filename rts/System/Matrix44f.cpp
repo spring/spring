@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Matrix44f.h"
 #include <memory.h>
@@ -13,8 +15,7 @@ CMatrix44f::CMatrix44f()
 	LoadIdentity();
 }
 
-
-CMatrix44f::CMatrix44f(const float3& pos,const float3& x,const float3& y,const float3& z)
+CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z)
 {
 	m[0]  = x.x;   m[1]  = x.y;   m[2]  = x.z;   m[3]  = 0.0f;
 	m[4]  = y.x;   m[5]  = y.y;   m[6]  = y.z;   m[7]  = 0.0f;
@@ -344,4 +345,74 @@ CMatrix44f CMatrix44f::Invert() const
 	mInv[14] = t.x * mInv[2] + t.y * mInv[6] + t.z * mInv[10];
 
 	return mInv;
+}
+
+
+
+
+double CMatrix44f::CalculateCofactor(const double m[4][4], int ei, int ej)
+{
+	int ai, bi, ci;
+	switch (ei) {
+		case 0: { ai = 1; bi = 2; ci = 3; break; }
+		case 1: { ai = 0; bi = 2; ci = 3; break; }
+		case 2: { ai = 0; bi = 1; ci = 3; break; }
+		case 3: { ai = 0; bi = 1; ci = 2; break; }
+	}
+	int aj, bj, cj;
+	switch (ej) {
+		case 0: { aj = 1; bj = 2; cj = 3; break; }
+		case 1: { aj = 0; bj = 2; cj = 3; break; }
+		case 2: { aj = 0; bj = 1; cj = 3; break; }
+		case 3: { aj = 0; bj = 1; cj = 2; break; }
+	}
+
+	const double val =
+		(m[ai][aj] * ((m[bi][bj] * m[ci][cj]) - (m[ci][bj] * m[bi][cj]))) -
+		(m[ai][bj] * ((m[bi][aj] * m[ci][cj]) - (m[ci][aj] * m[bi][cj]))) +
+		(m[ai][cj] * ((m[bi][aj] * m[ci][bj]) - (m[ci][aj] * m[bi][bj])));
+
+	if (((ei + ej) & 1) == 0) {
+		return +val;
+	} else {
+		return -val;
+	}
+}
+
+// generalized inverse for non-orthonormal 4x4 matrices
+// A^-1 = (1 / det(A)) (C^T)_{ij} = (1 / det(A)) C_{ji}
+bool CMatrix44f::Invert(const double m[4][4], double mInv[4][4])
+{
+	double cofac[4][4];
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			cofac[i][j] = CMatrix44f::CalculateCofactor(m, i, j);
+		}
+	}
+
+	const double det =
+		(m[0][0] * cofac[0][0]) +
+		(m[0][1] * cofac[0][1]) +
+		(m[0][2] * cofac[0][2]) +
+		(m[0][3] * cofac[0][3]);
+
+	if (det <= 1.0e-9) {
+		// singular matrix, set to identity?
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				mInv[i][j] = (i == j) ? 1.0 : 0.0;
+			}
+		}
+		return false;
+	}
+
+	const double scale = 1.0 / det;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			mInv[i][j] = cofac[j][i] * scale; // (adjoint / determinant)
+			                                  // (note the transposition in 'cofac')
+		}
+	}
+
+	return true;
 }

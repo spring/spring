@@ -65,7 +65,7 @@
 		<property name="build.home"               location="${spring.home}"/>
 		<property name="build.dir"                location="${build.home}/AI/Skirmish/${skirmish.ai.name}"/>
 		<property name="build.classes.dir"        location="${build.dir}/classes"/>
-		<property name="dist.home"                location="${spring.home}/game"/>
+		<property name="dist.home"                location="${spring.home}/dist"/>
 		<property name="dist.dir"                 location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}"/>
 		<property name="doc.dir"                  location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}/doc/jdoc"/>
 		<property name="ai.interface.src.home"    location="${spring.home}/AI/Interfaces/Java"/>

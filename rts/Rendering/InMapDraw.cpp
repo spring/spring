@@ -1,9 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "SDL_mouse.h"
 #include "SDL_keyboard.h"
 #include "mmgr.h"
 
 #include "InMapDraw.h"
+#include "glFont.h"
+#include "GL/VertexArray.h"
+#include "Colors.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/PlayerHandler.h"
@@ -12,15 +17,15 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Net/UnpackPacket.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "glFont.h"
-#include "GL/VertexArray.h"
-#include "EventHandler.h"
-#include "NetProtocol.h"
-#include "LogOutput.h"
-#include "Sound/Sound.h"
-#include "Sound/AudioChannel.h"
-#include "creg/STL_List.h"
+#include "System/EventHandler.h"
+#include "System/BaseNetProtocol.h"
+#include "System/NetProtocol.h"
+#include "System/LogOutput.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/creg/STL_List.h"
 
 
 #define DRAW_QUAD_SIZE 32
@@ -41,8 +46,7 @@ CR_REG_METADATA_SUB(CInMapDraw, MapPoint, (
 	CR_MEMBER(label),
 	CR_MEMBER(senderAllyTeam),
 	CR_MEMBER(senderSpectator),
-	CR_RESERVED(4),
-	CR_SERIALIZER(Serialize)
+	CR_RESERVED(4)
 ));
 
 CR_BIND(CInMapDraw::MapLine, );
@@ -52,8 +56,7 @@ CR_REG_METADATA_SUB(CInMapDraw, MapLine, (
 	CR_MEMBER(pos2),
 	CR_MEMBER(senderAllyTeam),
 	CR_MEMBER(senderSpectator),
-	CR_RESERVED(4),
-	CR_SERIALIZER(Serialize)
+	CR_RESERVED(4)
 ));
 
 CR_BIND(CInMapDraw::DrawQuad, );
@@ -212,17 +215,6 @@ void SerializeColor(creg::ISerializer &s, unsigned char **color)
 	}
 }
 
-void CInMapDraw::MapPoint::Serialize(creg::ISerializer &s)
-{
-	SerializeColor(s,&color);
-}
-
-void CInMapDraw::MapLine::Serialize(creg::ISerializer &s)
-{
-	SerializeColor(s,&color);
-}
-
-
 bool CInMapDraw::MapPoint::MaySee(CInMapDraw* imd) const
 {
 	const int allyteam = senderAllyTeam;
@@ -345,7 +337,7 @@ void CInMapDraw::Draw(void)
 	// XXX hopeless drivers, retest in a year or so...
 	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 	// so redraw lines with width 1
-	if (gu->atiHacks) {
+	if (globalRendering->atiHacks) {
 		glLineWidth(1.f);
 		lineva->DrawArrayC(GL_LINES);
 	}
@@ -427,7 +419,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 
 float3 CInMapDraw::GetMouseMapPos(void)
 {
-	float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * gu->viewRange * 1.4f);
+	float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * globalRendering->viewRange * 1.4f);
 	if (dist < 0) {
 		return float3(-1, 1, -1);
 	}
@@ -455,43 +447,72 @@ bool CInMapDraw::AllowedMsg(const CPlayer* sender) const {
 	return true;
 }
 
-void CInMapDraw::GotNetMsg(const unsigned char* msg)
+int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 {
-	const int playerID = msg[2];
+	int playerID = -1;
 
-	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers())) {
-		return;
-	}
-	const CPlayer* sender = playerHandler->Player(playerID);
-	if (sender == NULL) {
-		return;
+	try {
+		netcode::UnpackPacket pckt(packet, 2);
+
+		unsigned char uPlayerID;
+		pckt >> uPlayerID;
+		if (uPlayerID >= playerHandler->ActivePlayers()) {
+			throw netcode::UnpackPacketException("Invalid player number");
+		}
+		playerID = uPlayerID;
+
+		const CPlayer* sender = playerHandler->Player(playerID);
+		if (sender == NULL)
+			throw netcode::UnpackPacketException("Invalid player number");
+
+		unsigned char drawType;
+		pckt >> drawType;
+
+		switch (drawType) {
+			case MAPDRAW_POINT: {
+				short int x,z;
+				pckt >> x;
+				pckt >> z;
+				const float3 pos(x, 0, z);
+				unsigned char fromLua;
+				pckt >> fromLua;
+				string label;
+				pckt >> label;
+				if (!fromLua || allowLuaMapDrawing) {
+					LocalPoint(pos, label, playerID);
+				}
+				break;
+			}
+			case MAPDRAW_LINE: {
+				short int x1,z1,x2,z2;
+				pckt >> x1;
+				pckt >> z1;
+				pckt >> x2;
+				pckt >> z2;
+				const float3 pos1(x1, 0, z1);
+				const float3 pos2(x2, 0, z2);
+				unsigned char fromLua;
+				pckt >> fromLua;
+				if (!fromLua || allowLuaMapDrawing) {
+					LocalLine(pos1, pos2, playerID);
+				}
+				break;
+			}
+			case MAPDRAW_ERASE: {
+				short int x,z;
+				pckt >> x;
+				pckt >> z;
+				float3 pos(x, 0, z);
+				LocalErase(pos, playerID);
+				break;
+			}
+		}
+	} catch (netcode::UnpackPacketException &e) {
+		logOutput.Print("Got invalid MapDraw: %s", e.err.c_str());
+		playerID = -1;
 	}
 
-	switch (msg[3]) {
-		case NET_POINT: {
-			const float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			const bool fromLua = msg[8];
-			const string label = (char*) &msg[9];
-			if (!fromLua || allowLuaMapDrawing) {
-				LocalPoint(pos, label, playerID);
-			}
-			break;
-		}
-		case NET_LINE: {
-			const float3 pos1(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			const float3 pos2(*(short*) &msg[8], 0, *(short*) &msg[10]);
-			const bool fromLua = msg[12];
-			if (!fromLua || allowLuaMapDrawing) {
-				LocalLine(pos1, pos2, playerID);
-			}
-			break;
-		}
-		case NET_ERASE: {
-			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			LocalErase(pos, playerID);
-			break;
-		}
-	}
+	return playerID;
 }
 
 void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
@@ -512,7 +533,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 
 	// event clients may process the point
 	// if their owner is allowed to see it
-	if (allowed && eventHandler.MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
+	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label)) {
 		return;
 	}
 
@@ -521,7 +542,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 	// rendering the quads)
 	MapPoint point;
 	point.pos = pos;
-	point.color = teamHandler->Team(sender->team)->color;
+	point.color = sender->spectator ? color4::white : teamHandler->Team(sender->team)->color;
 	point.label = label;
 	point.senderAllyTeam = teamHandler->AllyTeam(sender->team);
 	point.senderSpectator = sender->spectator;
@@ -557,14 +578,14 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 	pos1.y = ground->GetHeight(pos1.x, pos1.z) + 2.0f;
 	pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, NET_LINE, &pos1, &pos2, NULL)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, NULL)) {
 		return;
 	}
 
 	MapLine line;
 	line.pos  = pos1;
 	line.pos2 = pos2;
-	line.color = teamHandler->Team(sender->team)->color;
+	line.color = sender->spectator ? color4::white : teamHandler->Team(sender->team)->color;
 	line.senderAllyTeam = teamHandler->AllyTeam(sender->team);
 	line.senderSpectator = sender->spectator;
 
@@ -584,7 +605,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 	pos.CheckInBounds();
 	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
 
-	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, NULL, NULL)) {
 		return;
 	}
 

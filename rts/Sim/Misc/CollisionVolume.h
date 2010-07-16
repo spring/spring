@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef COLLISION_VOLUME_H
 #define COLLISION_VOLUME_H
 
@@ -76,14 +78,14 @@ private:
 	void SetAxisScales(float, float, float);
 	void SetBoundingRadius();
 
-	float3 axisScales;					// full-length axis scales
-	float3 axisHScales;					// half-length axis scales
-	float3 axisHScalesSq;				// half-length axis scales (squared)
-	float3 axisHIScales;				// half-length axis scales (inverted)
-	float3 axisOffsets;
+	float3 axisScales;                  // full-length axis scales
+	float3 axisHScales;                 // half-length axis scales
+	float3 axisHScalesSq;               // half-length axis scales (squared)
+	float3 axisHIScales;                // half-length axis scales (inverted)
+	float3 axisOffsets;                 // offsets wrt. the model's mid-position (world-space)
 
-	float volumeBoundingRadius;			// radius of minimally-bounding sphere around volume
-	float volumeBoundingRadiusSq;		// squared radius of minimally-bounding sphere
+	float volumeBoundingRadius;         // radius of minimally-bounding sphere around volume
+	float volumeBoundingRadiusSq;       // squared radius of minimally-bounding sphere
 	int volumeType;
 	int testType;
 	int primaryAxis;

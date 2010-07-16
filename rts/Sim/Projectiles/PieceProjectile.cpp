@@ -1,27 +1,31 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "GlobalUnsynced.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
-#include "System/Matrix44f.h"
-#include "System/myMath.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Rendering/Colors.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/UnitDrawer.h"
+#include "Rendering/Models/IModelParser.h"
+#include "Rendering/Models/3DOParser.h"
+#include "Rendering/Models/S3OParser.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/Colors.h"
-#include "Rendering/UnitModels/IModelParser.h"
-#include "Rendering/UnitModels/3DOParser.h"
-#include "Rendering/UnitModels/s3oParser.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
-#include "Sync/SyncTracer.h"
-#include "Util.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/Util.h"
 
 static const float Smoke_Time = 40;
 
@@ -32,10 +36,8 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_SERIALIZER(creg_Serialize), // numCallback, oldInfos
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),
-	// TODO what to do with the next three fields
+	// NOTE: what about this?
 	// CR_MEMBER(omp),
-	// CR_MEMBER(piece3do),
-	// CR_MEMBER(pieces3o),
 	CR_MEMBER(spinVec),
 	CR_MEMBER(spinSpeed),
 	CR_MEMBER(spinAngle),
@@ -59,10 +61,10 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 	}
 }
 
-CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int f, CUnit* owner, float radius GML_PARG_C):
-	CProjectile(pos, speed, owner, true, false, true GML_PARG_P),
+CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* lmp, int f, CUnit* owner, float radius):
+	CProjectile(pos, speed, owner, true, false, true),
 	flags(f),
-	dispList(piece? piece->displist: 0),
+	dispList(lmp? lmp->displist: 0),
 	omp(NULL),
 	spinAngle(0.0f),
 	alphaThreshold(0.1f),
@@ -96,7 +98,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 
 		/* If we're an S3O unit, this is where ProjectileHandler
 		   fetches our texture from. */
-		s3domodel = owner->model;
+		model = owner->model;
 		/* If we're part of an S3O unit, save this so we can
 		   draw with the right teamcolour. */
 		colorTeam = owner->team;
@@ -104,31 +106,10 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		alphaThreshold = owner->alphaThreshold;
 	}
 
-	/* Don't store piece; owner may be a dying unit, so piece could be freed. */
-
-	/* //if (piece->texturetype == 0) {
-	   Great. LocalPiece doesn't carry the texture name.
-
-	   HACK TODO PieceProjectile shouldn't need to know about
-	   different model formats; push it into Rendering/UnitModels.
-
-	   If this needs to change, also modify Sim/Units/COB/CobInstance.cpp::Explosion.
-
-	   Nothing else wants to draw just one part without PieceInfo, so this
-	   polymorphism can stay put for the moment.
-	   */
-	if (piece) {
-		if (piece->type == MODELTYPE_3DO) {
-			piece3do = (S3DOPiece*) piece->original;
-			pieces3o = NULL;
-		} else if (piece->type == MODELTYPE_S3O) {
-			piece3do = NULL;
-			pieces3o = (SS3OPiece*) piece->original;
-		}
-		omp = piece->original;
+	if (lmp) {
+		omp = lmp->original;
 	} else {
-		piece3do = NULL;
-		pieces3o = NULL;
+		omp = NULL;
 	}
 
 	castShadow = true;
@@ -196,7 +177,7 @@ void CPieceProjectile::Collision()
 		pos += norm * 0.1f;
 	} else {
 		if (flags & PF_Explode) {
-			helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner(), false, 1.0f, false, false, 0, 0, ZeroVector, -1);
+			helper->Explosion(pos, DamageArray(50), 5, 0, 10, owner(), false, 1.0f, false, false, 0, 0, ZeroVector, -1);
 		}
 		if (flags & PF_Smoke) {
 			if (flags & PF_NoCEGTrail) {
@@ -205,7 +186,7 @@ void CPieceProjectile::Collision()
 
 				CSmokeTrailProjectile* tp =
 					new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(),
-					false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
+					false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, projectileDrawer->smoketrailtex);
 				tp->creationTime += (8 - ((age) & 7));
 			}
 		}
@@ -220,7 +201,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 	if (unit == owner())
 		return;
 	if (flags & PF_Explode) {
-		helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner(), false, 1.0f, false, false, 0, unit, ZeroVector, -1);
+		helper->Explosion(pos, DamageArray(50), 5, 0, 10, owner(), false, 1.0f, false, false, 0, unit, ZeroVector, -1);
 	}
 	if (flags & PF_Smoke) {
 		if (flags & PF_NoCEGTrail) {
@@ -229,7 +210,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 
 			CSmokeTrailProjectile* tp =
 				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(),
-				false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
+				false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, projectileDrawer->smoketrailtex);
 			tp->creationTime += (8 - ((age) & 7));
 		}
 	}
@@ -241,32 +222,20 @@ void CPieceProjectile::Collision(CUnit* unit)
 
 bool CPieceProjectile::HasVertices(void)
 {
-	if (!piece3do && !pieces3o) return false;
-	if (piece3do != NULL) {
-		/* 3DO */
-		return !piece3do->vertices.empty();
-	}
-	else {
-		/* S3O */
-		return !pieces3o->vertexDrawOrder.empty();
-	}
+	if (omp == NULL)
+		return false;
+
+	return (omp->vertexCount > 0);
 }
 
 float3 CPieceProjectile::RandomVertexPos(void)
 {
-	if (!piece3do && !pieces3o) return float3(0, 0, 0);
-	float3 pos;
+	if (!HasVertices()) {
+		return ZeroVector;
+	}
 
-	if (piece3do != NULL) {
-		/* 3DO */
-		int vertexNum = (int) (gu->usRandFloat() * 0.99f * piece3do->vertices.size());
-		pos = piece3do->vertices[vertexNum].pos;
-	}
-	else {
-		/* S3O */
-		int vertexNum = (int) (gu->usRandFloat() * 0.99f * pieces3o->vertexDrawOrder.size());
-		pos = pieces3o->vertices[pieces3o->vertexDrawOrder[vertexNum]].pos;
-	}
+	const int vertexNum = (int) (gu->usRandFloat() * 0.99f * omp->vertexCount);
+	const float3& pos = omp->GetVertexPos(vertexNum);
 
 	return pos;
 }
@@ -274,12 +243,15 @@ float3 CPieceProjectile::RandomVertexPos(void)
 
 void CPieceProjectile::Update()
 {
-	if (flags & PF_Fall) {
-		speed.y += mygravity;
+	if (!luaMoveCtrl) {
+		if (flags & PF_Fall) {
+			speed.y += mygravity;
+		}
+
+		speed *= 0.997f;
+		pos += speed;
 	}
 
-	speed *= 0.997f;
-	pos += speed;
 	spinAngle += spinSpeed;
 
 	if (flags & PF_Fire && HasVertices()) {
@@ -310,7 +282,7 @@ void CPieceProjectile::Update()
 
 			curCallback =
 				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(),
-				age == 8, false, 14, Smoke_Time, 0.5f, drawTrail, this, &ph->smoketrailtex);
+				age == 8, false, 14, Smoke_Time, 0.5f, drawTrail, this, projectileDrawer->smoketrailtex);
 			useAirLos = curCallback->useAirLos;
 
 			oldSmoke = pos;
@@ -340,7 +312,7 @@ void CPieceProjectile::Draw()
 		if (flags & PF_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
 			inArray = true;
-			float age2 = (age & 7) + gu->timeOffset;
+			float age2 = (age & 7) + globalRendering->timeOffset;
 			float color = 0.5f;
 			unsigned char col[4];
 
@@ -379,33 +351,39 @@ void CPieceProjectile::Draw()
 				col2[2] = (unsigned char) (color * alpha);
 				col2[3] = (unsigned char) (alpha);
 
-				float size = 1.0f;
-				float size2 = 1 + (age2 * (1 / Smoke_Time)) * 14;
-				float txs = ph->smoketrailtex.xstart - (ph->smoketrailtex.xend - ph->smoketrailtex.xstart) * (age2 / 8.0f);
+				const float size = 1.0f;
+				const float size2 = 1 + (age2 * (1 / Smoke_Time)) * 14;
+				const float txs =
+					projectileDrawer->smoketrailtex->xstart -
+					(projectileDrawer->smoketrailtex->xend - projectileDrawer->smoketrailtex->xstart) *
+					(age2 / 8.0f);
 
-				va->AddVertexQTC(drawPos - dir1 * size, txs, ph->smoketrailtex.ystart, col);
-				va->AddVertexQTC(drawPos + dir1 * size, txs, ph->smoketrailtex.yend,   col);
-				va->AddVertexQTC(oldSmoke + dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.yend,   col2);
-				va->AddVertexQTC(oldSmoke - dir2 * size2, ph->smoketrailtex.xend, ph->smoketrailtex.ystart, col2);
+				va->AddVertexQTC(drawPos - dir1 * size, txs, projectileDrawer->smoketrailtex->ystart, col);
+				va->AddVertexQTC(drawPos + dir1 * size, txs, projectileDrawer->smoketrailtex->yend,   col);
+				va->AddVertexQTC(oldSmoke + dir2 * size2, projectileDrawer->smoketrailtex->xend, projectileDrawer->smoketrailtex->yend,   col2);
+				va->AddVertexQTC(oldSmoke - dir2 * size2, projectileDrawer->smoketrailtex->xend, projectileDrawer->smoketrailtex->ystart, col2);
 			} else {
 				// draw the trail as particles
-				float dist = pos.distance(oldSmoke);
-				float3 dirpos1 = pos - dir * dist * 0.33f;
-				float3 dirpos2 = oldSmoke + oldSmokeDir * dist * 0.33f;
+				const float dist = pos.distance(oldSmoke);
+				const float3 dirpos1 = pos - dir * dist * 0.33f;
+				const float3 dirpos2 = oldSmoke + oldSmokeDir * dist * 0.33f;
 
 				for (int a = 0; a < numParts; ++a) { //! CAUTION: loop count must match EnlargeArrays above
-					float alpha = 255;
+					float alpha = 255.0f;
 					col[0] = (unsigned char) (color * alpha);
 					col[1] = (unsigned char) (color * alpha);
 					col[2] = (unsigned char) (color * alpha);
 					col[3] = (unsigned char) (alpha);
-					float size = 1 + ((a) * (1 / Smoke_Time)) * 14;
-					float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
-					va->AddVertexQTC(pos1 + ( camera->up+camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
-					va->AddVertexQTC(pos1 + ( camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-					va->AddVertexQTC(pos1 + (-camera->up-camera->right) * size, ph->smoketex[0].xend,   ph->smoketex[0].ystart, col);
-					va->AddVertexQTC(pos1 + (-camera->up+camera->right) * size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
+					const float size = 1.0f + ((a) * (1.0f / Smoke_Time)) * 14.0f;
+					const float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
+
+					#define st projectileDrawer->smoketex[0]
+					va->AddVertexQTC(pos1 + ( camera->up+camera->right) * size, st->xstart, st->ystart, col);
+					va->AddVertexQTC(pos1 + ( camera->up-camera->right) * size, st->xend,   st->ystart, col);
+					va->AddVertexQTC(pos1 + (-camera->up-camera->right) * size, st->xend,   st->ystart, col);
+					va->AddVertexQTC(pos1 + (-camera->up+camera->right) * size, st->xstart, st->ystart, col);
+					#undef st
 				}
 			}
 		}
@@ -424,8 +402,8 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CPieceProjectile::DrawCallback(void)
 {
-	if (*numCallback != gu->drawFrame) {
-		*numCallback = gu->drawFrame;
+	if (*numCallback != globalRendering->drawFrame) {
+		*numCallback = globalRendering->drawFrame;
 		return;
 	}
 	*numCallback = 0;
@@ -447,38 +425,12 @@ void CPieceProjectile::DrawCallback(void)
 			col[3] = (unsigned char) (alpha * 50);
 			float drawsize = (0.5f + modage) * size;
 
-			va->AddVertexQTC(interPos - camera->right * drawsize-camera->up * drawsize, ph->explofadetex.xstart, ph->explofadetex.ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize-camera->up * drawsize, ph->explofadetex.xend,   ph->explofadetex.ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize+camera->up * drawsize, ph->explofadetex.xend,   ph->explofadetex.yend,   col);
-			va->AddVertexQTC(interPos - camera->right * drawsize+camera->up * drawsize, ph->explofadetex.xstart, ph->explofadetex.yend,   col);
+			#define eft projectileDrawer->explofadetex
+			va->AddVertexQTC(interPos - camera->right * drawsize-camera->up * drawsize, eft->xstart, eft->ystart, col);
+			va->AddVertexQTC(interPos + camera->right * drawsize-camera->up * drawsize, eft->xend,   eft->ystart, col);
+			va->AddVertexQTC(interPos + camera->right * drawsize+camera->up * drawsize, eft->xend,   eft->yend,   col);
+			va->AddVertexQTC(interPos - camera->right * drawsize+camera->up * drawsize, eft->xstart, eft->yend,   col);
+			#undef eft
 		}
 	}
-}
-
-
-void CPieceProjectile::DrawUnitPart(void)
-{
-	unitDrawer->SetTeamColour(colorTeam);
-
-	if (alphaThreshold != 0.1f) {
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-		glAlphaFunc(GL_GEQUAL, alphaThreshold);
-	}
-	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
-	glRotatef(spinAngle, spinVec.x, spinVec.y, spinVec.z);
-	glCallList(dispList);
-	glPopMatrix();
-
-	if (alphaThreshold != 0.1f) {
-		glPopAttrib();
-	}
-
-	*numCallback = 0;
-}
-
-void CPieceProjectile::DrawS3O(void)
-{
-	// copy of CWeaponProjectile::::DrawS3O()
-	DrawUnitPart();
 }

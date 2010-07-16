@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 /* based on code from GlobalSynced.{cpp,h} */
 
@@ -11,7 +11,7 @@
 #include "creg/creg_cond.h"
 #include "Player.h"
 
-#define PATHING_FLAG 0xFFFF
+#define PATHING_FLAG 0xFFFFFFFF
 
 class CGameSetup;
 

@@ -1,14 +1,21 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-#include <algorithm>
-#include <set>
 #include "mmgr.h"
 
 #include "VFSHandler.h"
+
+#include <algorithm>
+#include <set>
+#include <cstring>
+
 #include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
 #include "LogOutput.h"
-#include "FileSystem/FileSystem.h"
+#include "FileSystem.h"
+#include "ArchiveScanner.h"
+#include "Exceptions.h"
 #include "Util.h"
 
 
@@ -40,11 +47,11 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std
 		archives[arName] = ar;
 	}
 
-	int cur;
-	std::string name;
-	int size;
-
-	for (cur = ar->FindFiles(0, &name, &size); cur != 0; cur = ar->FindFiles(cur, &name, &size)) {
+	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid)
+	{
+		std::string name;
+		int size;
+		ar->FileInfo(fid, name, size);
 		StringToLowerInPlace(name);
 
 		if (!override) {
@@ -63,6 +70,20 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std
 		d.size = size;
 		d.dynamic = !!dynamic_cast<CArchiveDir*>(ar);
 		files[name] = d;
+	}
+	return true;
+}
+
+bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool override, const std::string& type)
+{
+	const std::vector<std::string> ars = archiveScanner->GetArchives(archiveName);
+	if (ars.empty())
+		throw content_error("Couldn't find any archives for '" + archiveName + "'.");
+	std::vector<std::string>::const_iterator it;
+	for (it = ars.begin(); it != ars.end(); ++it)
+	{
+		if (!AddArchive(*it, override, type))
+			throw content_error("Couldn't load archive '" + *it + "' for '" + archiveName + "'.");
 	}
 	return true;
 }
@@ -105,8 +126,7 @@ CVFSHandler::~CVFSHandler()
 	}
 }
 
-
-int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
+bool CVFSHandler::LoadFile(const std::string& rawName, std::vector<boost::uint8_t>& buffer)
 {
 	logOutput.Print(LOG_VFS, "LoadFile(rawName = \"%s\", )", rawName.c_str());
 
@@ -116,55 +136,17 @@ int CVFSHandler::LoadFile(const std::string& rawName, void* buffer)
 	std::map<std::string, FileData>::iterator fi = files.find(name);
 	if (fi == files.end()) {
 		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in VFS.", rawName.c_str());
-		return -1;
+		return false;
 	}
 	FileData& fd = fi->second;
 
-	int fh = fd.ar->OpenFile(name);
-	if (!fh) {
+	if (!fd.ar->GetFile(name, buffer))
+	{
 		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", rawName.c_str());
-		return -1;
+		return false;
 	}
-	const int fsize = fd.dynamic ? fd.ar->FileSize(fh) : fd.size;
-
-	fd.ar->ReadFile(fh, buffer, fsize);
-	fd.ar->CloseFile(fh);
-
-	return fsize;
+	return true;
 }
-
-
-int CVFSHandler::GetFileSize(const std::string& rawName)
-{
-	logOutput.Print(LOG_VFS, "GetFileSize(rawName = \"%s\")", rawName.c_str());
-
-	std::string name = StringToLower(rawName);
-	filesystem.ForwardSlashes(name);
-
-	std::map<std::string, FileData>::iterator fi = files.find(name);
-	if (fi == files.end()) {
-		logOutput.Print(LOG_VFS, "GetFileSize: File '%s' does not exist in VFS.", rawName.c_str());
-		return -1;
-	}
-
-	FileData& fd = fi->second;
-
-	if (!fd.dynamic) {
-		return fd.size;
-	}
-	else {
-		const int fh = fd.ar->OpenFile(name);
-		if (fh == 0) {
-			logOutput.Print(LOG_VFS, "GetFileSize: File '%s' does not exist in archive.", rawName.c_str());
-			return -1;
-		} else {
-			const int fsize = fd.ar->FileSize(fh);
-			fd.ar->CloseFile(fh);
-			return fsize;
-		}
-	}
-}
-
 
 // Returns all the files in the given (virtual) directory without the preceeding pathname
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)

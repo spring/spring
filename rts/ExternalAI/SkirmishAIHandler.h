@@ -1,21 +1,4 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-	@author	Robin Vobruba <hoijui.quaero@gmail.com>
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __SKIRMISH_AI_HANDLER_H
 #define __SKIRMISH_AI_HANDLER_H
@@ -54,7 +37,9 @@ public:
 
 	void LoadFromSetup(const CGameSetup& setup);
 	/**
-	 * Will be called when the Mods archives were loaded into the VFS.
+	 * Will be called when the Mods archives were loaded into the VFS,
+	 * and we received our player number (gu->myPlayerNum is set).
+	 * This loads the list of Lua AIs from the mod archives LuaAI.lua.
 	 */
 	void LoadPreGame();
 
@@ -86,21 +71,21 @@ public:
 
 	/**
 	 * @brief Skirmish AIs controlling a team
-	 * 
+	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
 	ids_t GetSkirmishAIsInTeam(const int teamId, const int playerId = -1);
 
 	/**
 	 * @brief Skirmish AIs hosted by a player
-	 * 
+	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
 	ids_t GetSkirmishAIsByPlayer(const int playerId);
 
 	/**
 	 * @brief All active Skirmish AIs
-	 * 
+	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
 	const id_ai_t& GetAllSkirmishAIs() const;
@@ -122,7 +107,7 @@ public:
 
 	/**
 	 * @brief Number of players the game was created for
-	 * 
+	 *
 	 * Constant at runtime
 	 */
 	size_t GetNumSkirmishAIs() const;

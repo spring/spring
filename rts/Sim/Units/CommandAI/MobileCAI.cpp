@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -200,17 +202,13 @@ CMobileCAI::~CMobileCAI()
 
 /** helper function for CMobileCAI::GiveCommandReal */
 template <typename T>
-static T* getAirMoveType(CUnit *owner)
+static T* GetAirMoveType(CUnit *owner)
 {
 	T* airMT;
 	if (owner->usingScriptMoveType) {
-		if (!dynamic_cast<T*>(owner->prevMoveType))
-			return 0;
-		airMT = (T*)owner->prevMoveType;
+		airMT = dynamic_cast<T*>(owner->prevMoveType);
 	} else {
-		if (!dynamic_cast<T*>(owner->moveType))
-			return 0;
-		airMT = (T*) owner->moveType;
+		airMT = dynamic_cast<T*>(owner->moveType);
 	}
 
 	return airMT;
@@ -226,7 +224,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 			return;
 		}
 
-		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
 		if (!airMT)
 			return;
 
@@ -254,7 +252,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		if (c.params.empty()) {
 			return;
 		}
-		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		AAirMoveType* airMT = GetAirMoveType<AAirMoveType>(owner);
 		if (!airMT)
 			return;
 
@@ -715,7 +713,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
-			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
+			if (legalTarget && targetUnit != NULL && targetUnit != owner) {
 				float3 fix = targetUnit->pos + owner->posErrorVector * 128;
 				float3 diff = float3(fix - owner->pos).Normalize();
 
@@ -731,7 +729,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				return;
 			}
 		}
-		else {
+		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
 			float3 pos(c.params[0], c.params[1], c.params[2]);
 			SetGoal(pos, owner->pos);
@@ -871,7 +869,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	}
 
 	// user is attacking ground
-	else {
+	else if (c.params.size() >= 3) {
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float3 diff = owner->pos - pos;
 
@@ -899,7 +897,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			} else {
 				const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
-				const bool inRange = diff.Length2D() < (w->range - (w->relWeaponPos).Length2D());
+				const bool inRange = diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D());
 
 				if (inAngle || inRange) {
 					StopMove();
@@ -995,14 +993,15 @@ void CMobileCAI::DrawCommands(void)
 			}
 			case CMD_ATTACK:
 			case CMD_DGUN:{
-				if(ci->params.size()==1){
+				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->units[int(ci->params[0])];
 					if((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos =
 							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
-				} else {
+				}
+				else if (ci->params.size() >= 3) {
 					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}

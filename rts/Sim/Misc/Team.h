@@ -1,26 +1,28 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TEAM_H
 #define TEAM_H
-// Team.h: interface for the CTeam class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
 #include <map>
 #include <list>
+#include <boost/utility.hpp> //! boost::noncopyable
 
 #include "TeamBase.h"
-#include "Platform/byteorder.h"
+#include "TeamStatistics.h"
 #include "Sim/Units/UnitSet.h"
 #include "ExternalAI/SkirmishAIKey.h"
+#include "Lua/LuaRulesParams.h"
 
-class CTeam : public TeamBase
+class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
 {
 	CR_DECLARE(CTeam);
-	CR_DECLARE_SUB(Statistics);
 public:
 	CTeam();
 	~CTeam();
+public:
+
 	/**
 	 * This has to be called for every team before SlowUpdates start,
 	 * otherwise values get overwritten.
@@ -35,16 +37,13 @@ public:
 	bool UseEnergyUpkeep(float amount);
 	bool UseMetalUpkeep(float amount);
 
-	void SetBaseMetalStorage(float storage) {metalStorage = storage;};
-	void SetBaseEnergyStorage(float storage) {energyStorage = storage;};
-
 	void GiveEverythingTo(const unsigned toTeam);
 
 	void Died();
 
 	void StartposMessage(const float3& pos);
 
-	void operator=(const TeamBase& base);
+	CTeam& operator=(const TeamBase& base);
 
 	std::string GetControllerName() const;
 
@@ -96,66 +95,24 @@ public:
 	float energySent;
 	float energyReceived;
 
-
-	struct Statistics {
-		CR_DECLARE_STRUCT(Statistics);
-		float metalUsed,     energyUsed;
-		float metalProduced, energyProduced;
-		float metalExcess,   energyExcess;
-		float metalReceived, energyReceived; ///< received from allies
-		float metalSent,     energySent;     ///< sent to allies
-
-		float damageDealt,   damageReceived; ///< Damage taken and dealt to enemy units
-
-		int unitsProduced;
-		int unitsDied;
-		int unitsReceived;
-		int unitsSent;
-		/// units captured from enemy by us
-		int unitsCaptured;
-		/// units captured from us by enemy
-		int unitsOutCaptured;
-		/// how many enemy units have been killed by this teams units
-		int unitsKilled;
-
-		/// Change structure from host endian to little endian or vice versa.
-		void swab() {
-			metalUsed        = swabfloat(metalUsed);
-			energyUsed       = swabfloat(energyUsed);
-			metalProduced    = swabfloat(metalProduced);
-			energyProduced   = swabfloat(energyProduced);
-			metalExcess      = swabfloat(metalExcess);
-			energyExcess     = swabfloat(energyExcess);
-			metalReceived    = swabfloat(metalReceived);
-			energyReceived   = swabfloat(energyReceived);
-			metalSent        = swabfloat(metalSent);
-			energySent       = swabfloat(energySent);
-			damageDealt      = swabfloat(damageDealt);
-			damageReceived   = swabfloat(damageReceived);
-			unitsProduced    = swabdword(unitsProduced);
-			unitsDied        = swabdword(unitsDied);
-			unitsReceived    = swabdword(unitsReceived);
-			unitsSent        = swabdword(unitsSent);
-			unitsCaptured    = swabdword(unitsCaptured);
-			unitsOutCaptured = swabdword(unitsOutCaptured);
-			unitsKilled      = swabdword(unitsKilled);
-		}
-	};
-	Statistics currentStats;
 	/// in intervalls of this many seconds, statistics are updated
-	static const int statsPeriod = 15;
+	static const int statsPeriod = 16;
+	int nextHistoryEntry;
+	TeamStatistics* currentStats;
+	std::list<TeamStatistics> statHistory;
+	typedef TeamStatistics Statistics; //! for easier access via CTeam::Statistics
 
-	int lastStatSave;
 	/// number of units with commander tag in team, if it reaches zero with cmd ends the team dies
 	int numCommanders;
-	std::list<Statistics> statHistory;
+
 	void CommanderDied(CUnit* commander);
 	void LeftLineage(CUnit* unit);
 
 	/// mod controlled parameters
-	std::vector<float>         modParams;
-	/// name map for mod parameters
-	std::map<std::string, int> modParamsMap;
+	LuaRulesParams::Params  modParams;
+	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
+
+	float highlight;
 };
 
 #endif /* TEAM_H */

@@ -1,19 +1,4 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "AIInterfaceLibrary.h"
 
@@ -24,30 +9,30 @@
 #include "SAIInterfaceCallbackImpl.h"
 
 #include "System/Util.h"
-#include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "IAILibraryManager.h"
 #include "LogOutput.h"
 
 
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
-		: interfaceId(-1), info(_info) {
+		: interfaceId(-1)
+		, initialized(false)
+		, info(_info)
+{
 
 	libFilePath = FindLibFile();
 
 	sharedLib = SharedLib::Instantiate(libFilePath);
 	if (sharedLib == NULL) {
-		static const int s_msg_sizeMax = 512;
-		char s_msg[s_msg_sizeMax];
-		SNPRINTF(s_msg, s_msg_sizeMax,
-				"Error while loading AI Interface Library from file \"%s\"",
+		logOutput.Print(
+				"ERROR: Loading AI Interface library from file \"%s\".",
 				libFilePath.c_str());
-		handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
+		return;
 	}
 
-	InitializeFromLib(libFilePath);
-
-	InitStatic();
+	if (InitializeFromLib(libFilePath) == 0) {
+		InitStatic();
+	}
 }
 
 CAIInterfaceLibrary::~CAIInterfaceLibrary() {
@@ -66,13 +51,15 @@ void CAIInterfaceLibrary::InitStatic() {
 		int ret = sAIInterfaceLibrary.initStatic(interfaceId, &callback);
 		if (ret != 0) {
 			// initializing the library failed!
-			static const int s_msg_sizeMax = 512;
-			char s_msg[s_msg_sizeMax];
-			SNPRINTF(s_msg, s_msg_sizeMax,
-					"Error initializing AI Interface library from file\n\"%s\".\n"
-					"The call to initStatic() returned unsuccessfuly.",
+			logOutput.Print(
+					"ERROR: Initializing AI Interface library from file \"%s\"."
+					" The call to initStatic() returned unsuccessfuly.",
 					libFilePath.c_str());
-			handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
+			aiInterfaceCallback_release(interfaceId);
+			interfaceId = -1;
+			initialized = false;
+		} else {
+			initialized = true;
 		}
 	}
 }
@@ -82,17 +69,17 @@ void CAIInterfaceLibrary::ReleaseStatic() {
 		int ret = sAIInterfaceLibrary.releaseStatic();
 		if (ret != 0) {
 			// releasing the library failed!
-			static const int s_msg_sizeMax = 512;
-			char s_msg[s_msg_sizeMax];
-			SNPRINTF(s_msg, s_msg_sizeMax,
-					"Error releasing AI Interface Library from file\n\"%s\".\n"
-					"The call to releaseStatic() returned unsuccessfuly.",
+			logOutput.Print(
+					"ERROR: Releasing AI Interface Library from file \"%s\"."
+					" The call to releaseStatic() returned unsuccessfuly.",
 					libFilePath.c_str());
-			handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
+		} else {
+			initialized = false;
 		}
 	}
 	if (interfaceId != -1) {
 		aiInterfaceCallback_release(interfaceId);
+		interfaceId = -1;
 	}
 }
 
@@ -123,7 +110,19 @@ int CAIInterfaceLibrary::GetLoadCount() const {
 	return totalSkirmishAILibraryLoadCount;
 }
 
-// used as fallback, when an AI could not be found
+bool CAIInterfaceLibrary::IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const {
+	return GetSkirmishAILibraryLoadCount(key) > 0;
+}
+
+const std::string& CAIInterfaceLibrary::GetLibraryFilePath() const {
+	return libFilePath;
+}
+
+const bool CAIInterfaceLibrary::IsInitialized() const {
+	return initialized;
+}
+
+/// used as fallback, when an AI could not be found
 static int CALLING_CONV handleEvent_empty(int teamId, int receiver, const void* data) {
 	return 0; // signaling: OK
 }
@@ -213,12 +212,10 @@ int CAIInterfaceLibrary::ReleaseAllSkirmishAILibraries() {
 void CAIInterfaceLibrary::reportInterfaceFunctionError(
 		const std::string* libFileName, const std::string* functionName) {
 
-	static const int s_msg_sizeMax = 512;
-	char s_msg[s_msg_sizeMax];
-	SNPRINTF(s_msg, s_msg_sizeMax,
-			"Error loading AI Interface Library from file \"%s\": no \"%s\" function exported",
+	logOutput.Print(
+			"ERROR: Loading AI Interface library from file \"%s\"."
+			" No \"%s\" function exported.",
 			libFileName->c_str(), functionName->c_str());
-	handleerror(NULL, s_msg, "AI Interface Error", MBF_OK | MBF_EXCL);
 }
 int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 
@@ -244,7 +241,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 	if (sAIInterfaceLibrary.releaseStatic == NULL) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
-		//return -1;
+		//return -2;
 	}
 
 /*
@@ -255,7 +252,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 	if (sAIInterfaceLibrary.getLevelOfSupportFor == NULL) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(&libFilePath, &funcName);
-		//return -2;
+		//return -3;
 	}
 */
 

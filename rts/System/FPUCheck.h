@@ -1,13 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file FPUCheck.h
  * @brief good_fpu_control_registers function
- * @author Tobi Vollebregt
  *
  * Assertions on floating point unit control registers.
  * For now it only defines the good_fpu_control_registers() function.
- *
- * Copyright (C) 2006.  Licensed under the terms of the
- * GNU GPL, v2 or later
  */
 
 #ifndef FPUCHECK_H

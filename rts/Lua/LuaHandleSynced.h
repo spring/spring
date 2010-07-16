@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_HANDLE_SYNCED
 #define LUA_HANDLE_SYNCED
-// LuaHandleSynced.h: interface for the CLuaHandleSynced class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <string>

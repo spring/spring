@@ -1,26 +1,32 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
-#include <cstdlib>
-#include "IPath.h"
-#include "Map/ReadMap.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include <queue>
 #include <list>
+#include <queue>
+#include <cstdlib>
 
+#include "IPath.h"
+
+
+
+void* PF_ALLOC(size_t n);
+void PF_FREE(void* p, size_t n);
+
+
+
+struct MoveData;
 class CPathFinderDef;
-
-void* pfAlloc(size_t n);
-void pfDealloc(void *p,size_t n);
 
 class CPathFinder : public IPath {
 public:
 	CPathFinder();
-	~CPathFinder();
+	virtual ~CPathFinder();
 
 #if !defined(USE_MMGR)
-	void* operator new(size_t size){return pfAlloc(size);};
-	inline void operator delete(void* p,size_t size){pfDealloc(p,size);};
+	void* operator new(size_t size);
+	void operator delete(void* p, size_t size);
 #endif
 
 	/**
@@ -67,33 +73,71 @@ public:
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
 	                     const CPathFinderDef& pfDef, Path& path, int ownerId = 0);
 
-	//Minimum distance between two waypoints.
-	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
+	static const float PATHCOST_INFINITY;
+	static const unsigned int PATH_RESOLUTION;
 
-	/** Enable/disable heat mapping.
+	enum PATH_OPTIONS {
+		PATHOPT_RIGHT     =   1,      //-x
+		PATHOPT_LEFT      =   2,      //+x
+		PATHOPT_UP        =   4,      //+z
+		PATHOPT_DOWN      =   8,      //-z
+		PATHOPT_DIRECTION = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN),
+		PATHOPT_START     =  16,
+		PATHOPT_OPEN      =  32,
+		PATHOPT_CLOSED    =  64,
+		PATHOPT_FORBIDDEN = 128,
+		PATHOPT_BLOCKED   = 256,
+	};
 
-	Heat mapping makes the pathfinder value unused paths more. Less path overlap should
-	make units behave more intelligently.
-
-	*/
+public:
+	/**
+	 * @brief Enable/disable heat mapping.
+	 *
+	 * Heat mapping makes the pathfinder value unused paths more. Less path overlap should
+	 * make units behave more intelligently.
+	 */
 	void InitHeatMap();
 	void SetHeatMapState(bool enabled);
 	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
 
-	void UpdateHeatValue(int x, int y, int value, int ownerId)
+	void UpdateHeatValue(const int& x, const int& y, const int& value, const int& ownerId)
 	{
-		assert(!heatmap.empty());
-
-		if (heatmap[x][y].value < value + heatMapOffset) {
-			heatmap[x][y].value = value + heatMapOffset;
-			heatmap[x][y].ownerId = ownerId;
+		const int i = GetHeatMapIndex(x, y);
+		if (heatmap[i].value < value + heatMapOffset) {
+			heatmap[i].value = value + heatMapOffset;
+			heatmap[i].ownerId = ownerId;
 		}
 	}
 
+	const int GetHeatOwner(const int& x, const int& y)
+	{
+		const int i = GetHeatMapIndex(x, y);
+		return heatmap[i].ownerId;
+	}
+
+	const int GetHeatValue(const int& x, const int& y)
+	{
+		const int i = GetHeatMapIndex(x, y);
+		return std::max(0, heatmap[i].value - heatMapOffset);
+	}
 
 private:
-	enum { MAX_SEARCHED_SQUARES = 10000 };
+	// Heat mapping
+	int GetHeatMapIndex(int x, int y);
+
+	struct HeatMapValue {
+		HeatMapValue(): value(0), ownerId(0) {}
+		int value;
+		int ownerId;
+	};
+
+	std::vector<HeatMapValue> heatmap; //! resolution is hmapx*hmapy
+	int heatMapOffset;  //! heatmap values are relative to this
+	bool heatMapping;
+
+private:
+	static const unsigned int MAX_SEARCHED_SQUARES = 10000U;
 
 	class OpenSquare {
 	public:
@@ -101,9 +145,9 @@ private:
 		float currentCost;
 		int2 square;
 		int sqr;
-		inline bool operator< (const OpenSquare& os){return cost < os.cost;};
-		inline bool operator> (const OpenSquare& os){return cost > os.cost;};
-		inline bool operator==(const OpenSquare& os){return sqr == os.sqr;};
+		inline bool operator< (const OpenSquare& os) const {return cost < os.cost;};
+		inline bool operator> (const OpenSquare& os) const {return cost > os.cost;};
+		inline bool operator== (const OpenSquare& os) const {return sqr == os.sqr;};
 	};
 
 	struct lessCost : public std::binary_function<OpenSquare*, OpenSquare*, bool> {
@@ -211,23 +255,8 @@ private:
 	// Statistic
 	unsigned int testedNodes;
 
-	OpenSquare *openSquareBufferPointer;
+	unsigned int openSquareBufferIndex;
 	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
-
-	// Heat mapping
-	struct HeatMapValue {
-		HeatMapValue(): value(0), ownerId(0) {
-		}
-		int value;
-		int ownerId;
-	};
-
-	bool heatMapping;
-	std::vector<std::vector<HeatMapValue> > heatmap;
-	int heatMapOffset;  // heatmap values are relative to this
-
-public:
-	void Draw(void);
 };
 
 class CPathFinderDef {
@@ -237,7 +266,6 @@ public:
 	float Heuristic(int xSquare, int zSquare) const;
 	bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
 	virtual bool WithinConstraints(int xSquare, int Square) const {return true;}
-	void Draw() const;
 	int2 GoalSquareOffset(int blockSize) const;
 
 	float3 goal;

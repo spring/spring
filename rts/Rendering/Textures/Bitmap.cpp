@@ -1,16 +1,17 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// Bitmap.cpp: implementation of the CBitmap class.
-//
-//////////////////////////////////////////////////////////////////////
 
 //#include <omp.h>
 #include <ostream>
 #include <fstream>
 #include <string.h>
 #include <IL/il.h>
-#include <IL/ilu.h>
+//#include <IL/ilu.h>
+#include <boost/thread.hpp>
 #include "mmgr.h"
 
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -18,7 +19,7 @@
 #include "Bitmap.h"
 #include "bitops.h"
 
-
+boost::mutex devilMutex; // devil functions, whilst expensive, aren'T thread-save
 
 static const float blurkernel[9] = {
 	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f,
@@ -34,7 +35,7 @@ static const float blurkernel[9] = {
 struct InitializeOpenIL {
 	InitializeOpenIL() {
 		ilInit();
-		iluInit();
+		//iluInit();
 	}
 	~InitializeOpenIL() {
 		ilShutDown();
@@ -110,7 +111,7 @@ void CBitmap::Alloc(int w,int h)
 }
 
 
-bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
+bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 {
 	bool noAlpha = true;
 
@@ -119,7 +120,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 
 	textype = GL_TEXTURE_2D;
 
-	if(filename.find(".dds")!=string::npos){
+	if (filename.find(".dds") != std::string::npos) {
 		ddsimage = new nv_dds::CDDSImage();
 		type = BitmapTypeDDS;
 		bool status = ddsimage->load(filename);
@@ -159,6 +160,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	unsigned char *buffer = new unsigned char[file.FileSize()+2];
 	file.Read(buffer, file.FileSize());
 
+	boost::mutex::scoped_lock lck(devilMutex);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -181,8 +183,6 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		mem[3] = 255; // Non Transparent
 		return false;
 	}
-
-
 
 	noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
 	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
@@ -207,7 +207,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 }
 
 
-bool CBitmap::LoadGrayscale (const string& filename)
+bool CBitmap::LoadGrayscale (const std::string& filename)
 {
 	type = BitmapTypeStandardAlpha;
 	channels = 1;
@@ -216,11 +216,12 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	if(!file.FileExists())
 		return false;
 
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
-	ilEnable(IL_ORIGIN_SET);
-
 	unsigned char *buffer = new unsigned char[file.FileSize()+1];
 	file.Read(buffer, file.FileSize());
+
+	boost::mutex::scoped_lock lck(devilMutex);
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
 
 	ILuint ImageName = 0;
 	ilGenImages(1, &ImageName);
@@ -246,13 +247,11 @@ bool CBitmap::LoadGrayscale (const string& filename)
 }
 
 
-bool CBitmap::Save(string const& filename, bool opaque)
+bool CBitmap::Save(std::string const& filename, bool opaque)
 {
 	if (type == BitmapTypeDDS) {
 		return ddsimage->save(filename);
 	}
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
-	ilEnable(IL_ORIGIN_SET);
 
 	unsigned char* buf = new unsigned char[xsize * ysize * 4];
 	const int ymax = (ysize - 1);
@@ -270,6 +269,10 @@ bool CBitmap::Save(string const& filename, bool opaque)
 		}
 	}
 
+	boost::mutex::scoped_lock lck(devilMutex);
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
+
 	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
 	ilSetInteger(IL_JPG_QUALITY, 80);
 
@@ -277,10 +280,9 @@ bool CBitmap::Save(string const& filename, bool opaque)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, NULL);
-	ilSetData(buf);
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf);
 
-	const string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
+	const std::string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
 	const bool success = ilSaveImage((char*)fullpath.c_str());
 
 	ilDeleteImages(1,&ImageName);
@@ -306,7 +308,7 @@ const GLuint CBitmap::CreateTexture(bool mipmaps)
 	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
 	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
-	if (!gu->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
+	if (!globalRendering->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
 	{
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
 		return bm.CreateTexture(mipmaps);

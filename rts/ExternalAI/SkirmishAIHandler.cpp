@@ -1,22 +1,4 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-	@author	Robin Vobruba <hoijui.quaero@gmail.com>
-*/
-
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SkirmishAIHandler.h"
 
@@ -294,9 +276,8 @@ bool CSkirmishAIHandler::IsLuaAI(const SkirmishAIData& aiData) const {
 
 void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAIId) {
 
-	if (gameInitialized) {
+	if (gameInitialized && IsLocalSkirmishAI(skirmishAIId)) {
 		IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
-		//std::map<const SkirmishAIKey, CSkirmishAILibraryInfo*>
 		const IAILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
 		const SkirmishAIKey* aiKey = GetLocalSkirmishAILibraryKey(skirmishAIId);
 		if (aiKey != NULL) {
@@ -328,7 +309,9 @@ void CSkirmishAIHandler::CompleteSkirmishAI(const size_t skirmishAIId) {
 		id_ai_t::iterator ai = id_ai.find(skirmishAIId);
 		if (ai != id_ai.end()) {
 			ai->second.isLuaAI = IsLuaAI(ai->second);
-			CompleteWithDefaultOptionValues(skirmishAIId);
+			if (!ai->second.isLuaAI) {
+				CompleteWithDefaultOptionValues(skirmishAIId);
+			}
 		}
 	}
 }

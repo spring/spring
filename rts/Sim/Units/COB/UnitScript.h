@@ -1,4 +1,5 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /* heavily based on CobInstance.h */
 
 #ifndef UNITSCRIPT_H
@@ -9,7 +10,7 @@
 #include <list>
 
 #include "Object.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 
 
 class CUnit;

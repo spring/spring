@@ -15,8 +15,8 @@ SPRINGFLAGS="--minimise --quit=600"
 
 # Binaries used for testing (don't use spaces in filenames!).
 # These can be overridden from environment / other script.
-[ -z "$SPRING_SERVER" ] && SPRING_SERVER="game/spring"
-[ -z "$SPRING_CLIENT" ] && SPRING_CLIENT="game/spring"
+[ -z "$SPRING_SERVER" ] && SPRING_SERVER="dist/spring"
+[ -z "$SPRING_CLIENT" ] && SPRING_CLIENT="dist/spring"
 
 # Where AIs are stored..
 AIDIR="AI/Skirmish/impls"
@@ -75,7 +75,7 @@ _start_spring()
 # Usage: _write_startscript [map] [mod] [AI] [script] [log]
 # Can be passed a map (*.smf, *.sm3), mod (*.sdd, *.sdz, *.sd7), AI (*.dll, *.so),
 # script (*.txt) and logfile (*.log) in any order.
-# See Documentation/Spring start.txt for a more complete sample startscript.
+# See doc/StartScriptFormat.txt for a more complete sample startscript.
 _write_startscript()
 {
 	EXEC="$1"  #binary

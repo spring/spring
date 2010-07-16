@@ -1,6 +1,4 @@
-/* Author: Tobi Vollebregt */
-
-/* based on code from GlobalSynced.{cpp,h} */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "TeamHandler.h"
@@ -15,8 +13,6 @@
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
-//#include "ExternalAI/SkirmishAIData.h"
-//#include "ExternalAI/IAILibraryManager.h"
 
 CR_BIND(CTeamHandler, );
 
@@ -41,6 +37,8 @@ CTeamHandler::CTeamHandler():
 
 CTeamHandler::~CTeamHandler()
 {
+	for (std::vector<CTeam*>::iterator it = teams.begin(); it != teams.end(); ++it)
+		delete *it;
 }
 
 
@@ -53,7 +51,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 	for (size_t i = 0; i < teams.size(); ++i) {
 		// TODO: this loop body could use some more refactoring
-		CTeam* team = Team(i);
+		CTeam* team = new CTeam();
+		teams[i] = team;
 		*team = setup->teamStartingData[i];
 		team->teamNum = i;
 		SetAllyTeam(i, team->teamAllyteam);
@@ -67,7 +66,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// Setup the gaia team
-		CTeam team;
+		CTeam& team = *(new CTeam());
 		team.color[0] = 255;
 		team.color[1] = 255;
 		team.color[2] = 255;
@@ -76,22 +75,22 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		team.teamNum = gaiaTeamID;
 		team.StartposMessage(float3(0.0, 0.0, 0.0));
 		team.teamAllyteam = gaiaAllyTeamID;
-		teams.push_back(team);
+		teams.push_back(&team);
 
 		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it)
 		{
 			it->allies.push_back(false); // enemy to everyone
 		}
 		::AllyTeam allyteam;
-		allyteam.allies.resize(allyTeams.size()+1,false); // everyones enemy
-		allyteam.allies[gaiaTeamID] = true; // peace with itself
+		allyteam.allies.resize(allyTeams.size() + 1, false); // everyones enemy
+		allyteam.allies[gaiaAllyTeamID] = true; // peace with itself
 		allyTeams.push_back(allyteam);
 	}
 }
 
 void CTeamHandler::GameFrame(int frameNum)
 {
-	if (!(frameNum & 31)) {
+	if (!(frameNum & (TEAM_SLOWUPDATE_RATE-1))) {
 		for (int a = 0; a < ActiveTeams(); ++a) {
 			Team(a)->ResetFrameVariables();
 		}

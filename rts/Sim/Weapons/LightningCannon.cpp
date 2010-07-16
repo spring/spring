@@ -1,9 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "Game/GameHelper.h"
 #include "LightningCannon.h"
 #include "Map/Ground.h"
 #include "PlasmaRepulser.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
 #include "Sim/Units/Unit.h"
@@ -85,14 +88,19 @@ void CLightningCannon::Init(void)
 
 void CLightningCannon::FireImpl()
 {
-	float3 dir = targetPos - weaponMuzzlePos;
-	dir.ANormalize();
-	dir += (gs->randVector() * sprayAngle + salvoError) * (1.0f - owner->limExperience * 0.5f);
-	dir.ANormalize();
+	float3 dir(targetPos - weaponMuzzlePos);
+	dir.Normalize();
+	dir +=
+		(gs->randVector() * sprayAngle + salvoError) *
+		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
+	dir.Normalize();
 
-	const CUnit* cu = NULL;
-	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags);
+	const CUnit* cu = 0;
+	const CFeature* cf = 0;
+	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags, &cf);
 	CUnit* u = (cu == NULL) ? NULL : uh->units[cu->id];
+	CFeature* f = cf ? featureHandler->GetFeature(cf->id) : 0;
+
 
 	float3 newDir;
 	CPlasmaRepulser* shieldHit = NULL;
@@ -143,7 +151,8 @@ void CLightningCannon::FireImpl()
 		weaponDef->explosionGenerator,
 		u,
 		dir,
-		weaponDef->id
+		weaponDef->id,
+		f
 	);
 
 	new CLightningProjectile(
@@ -162,8 +171,4 @@ void CLightningCannon::FireImpl()
 void CLightningCannon::SlowUpdate(void)
 {
 	CWeapon::SlowUpdate();
-	//We don't do hardcoded inaccuracies, use targetMoveError if you want inaccuracy!
-//	if(targetType==Target_Unit){
-//		predict=(gs->randFloat()-0.5f)*20*range/weaponPos.distance(targetUnit->midPos)*(1.2f-owner->limExperience);		//make the weapon somewhat less effecient against aircrafts hopefully
-//	}
 }

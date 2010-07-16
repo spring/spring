@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNITDEF_H
 #define UNITDEF_H
 
@@ -5,9 +7,9 @@
 #include <vector>
 #include <map>
 
-#include "float3.h"
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"
+#include "System/float3.h"
 
 struct MoveData;
 struct WeaponDef;
@@ -18,11 +20,13 @@ class CExplosionGenerator;
 
 struct UnitModelDef
 {
-	UnitModelDef():model(NULL) {};
+	UnitModelDef(): model(NULL) {}
+
 	S3DModel* model;
-	std::string modelpath;
-	std::string modelname;
-	std::map<std::string, std::string> textures;
+
+	std::string modelPath;
+	std::string modelName;
+	std::map<std::string, std::string> modelTextures;
 };
 
 struct UnitDef
@@ -63,7 +67,6 @@ public:
 	float energyStorage;
 
 	bool extractSquare;
-	bool isMetalMaker;
 
 	float autoHeal;     // amount autohealed
 	float idleAutoHeal; // amount autohealed only during idling
@@ -138,15 +141,12 @@ public:
 
 	UnitModelDef modelDef;
 
-	std::string scriptName;		// the name of the unit's script, e.g. "armjeth.cob"
-	std::string scriptPath;		// the path of the unit's script, e.g. "scripts/armjeth.cob"
+	std::string objectName;     // raw name of the unit's model without objects3d prefix, eg. "armjeth.s3o"
+	std::string scriptName;     // the name of the unit's script, e.g. "armjeth.cob"
+	std::string scriptPath;     // the path of the unit's script, e.g. "scripts/armjeth.cob"
 
-	float3 modelCenterOffset;	// offset from the unit model's default center point
+	float3 modelCenterOffset;	// offset from the unit model's default center point (unit-space)
 
-	std::string collisionVolumeTypeStr;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
-	float3 collisionVolumeScales;		// the collision volume's full axis lengths
-	float3 collisionVolumeOffsets;		// relative to the unit's center position
-	int collisionVolumeTest;			// 0: discrete, 1: continuous
 	bool usePieceCollisionVolumes;		// if true, collisions are checked per-piece
 
 
@@ -180,7 +180,6 @@ public:
 	std::string deathExplosion;
 	std::string selfDExplosion;
 
-	std::string TEDClassString;	// these might be changed later for something better
 	std::string categoryString;
 
 	std::string buildPicName;
@@ -283,9 +282,11 @@ public:
 	float decloakDistance;							// if enemy unit come within this range decloaking is forced
 	bool decloakSpherical;							// use a spherical test instead of a cylindrical test?
 	bool decloakOnFire;								// should the unit decloak upon firing
+	int cloakTimeout;								// minimum time between decloak and subsequent cloak
 
 	bool canKamikaze;								//self destruct if enemy come to close
 	float kamikazeDist;
+	bool kamikazeUseLOS;
 
 	bool targfac;
 	bool canDGun;
@@ -316,6 +317,7 @@ public:
 	SoundStruct sounds;
 
 	bool leaveTracks;
+	std::string trackTypeName;
 	float trackWidth;
 	float trackOffset;
 	float trackStrength;
@@ -336,6 +338,7 @@ public:
 	bool levelGround;								// only matters for buildings
 
 	bool useBuildingGroundDecal;
+	std::string buildingDecalTypeName;
 	int buildingDecalType;
 	int buildingDecalSizeX;
 	int buildingDecalSizeY;
@@ -349,7 +352,9 @@ public:
 	float refuelTime;								// time to fully refuel unit
 	float minAirBasePower;							// min build power for airbases that this aircraft can land on
 
+	std::vector<std::string> sfxExplGenNames;
 	std::vector<CExplosionGenerator*> sfxExplGens;	// list of explosion generators for use in scripts
+
 	std::string pieceTrailCEGTag;					// base tag (eg. "flame") of CEG attached to pieces of exploding units
 	int pieceTrailCEGRange;							// range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
 

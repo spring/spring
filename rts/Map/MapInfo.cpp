@@ -1,22 +1,20 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-#include <assert.h>
-#include <cstdio>
 #include "mmgr.h"
 
 #include "MapInfo.h"
+
+#include <assert.h>
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
 #include "Exceptions.h"
 
 
 using namespace std;
-
-
-static CLogSubsystem LOG_MAPINFO("mapinfo");
 
 
 // Before delete, the const is const_cast'ed away. There are
@@ -26,11 +24,11 @@ static CLogSubsystem LOG_MAPINFO("mapinfo");
 const CMapInfo* mapInfo;
 
 
-CMapInfo::CMapInfo(const string& mapName)
+CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : mapInfoFile(_mapInfoFile)
 {
 	map.name = mapName;
 
-	parser = new MapParser(mapName);
+	parser = new MapParser(mapInfoFile);
 	if (!parser->IsValid()) {
 		throw content_error("MapInfo: " + parser->GetErrorLog());
 	}
@@ -49,6 +47,8 @@ void CMapInfo::Load()
 	ReadGlobal();
 	ReadAtmosphere();
 	ReadGui();
+	ReadSplats();
+	ReadGrass();
 	ReadLight();
 	ReadWater();
 	ReadSmf();
@@ -73,7 +73,6 @@ void CMapInfo::ReadGlobal()
 
 	map.humanName    = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
-	map.wantedScript = topTable.GetString("script", "");
 
 	map.hardness      = topTable.GetFloat("maphardness", 100.0f);
 	map.notDeformable = topTable.GetBool("notDeformable", false);
@@ -126,6 +125,24 @@ void CMapInfo::ReadAtmosphere()
 }
 
 
+void CMapInfo::ReadSplats()
+{
+	const LuaTable splatsTable = parser->GetRoot().SubTable("splats");
+
+	splats.texScales = splatsTable.GetFloat4("texScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
+	splats.texMults = splatsTable.GetFloat4("texMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
+}
+
+void CMapInfo::ReadGrass()
+{
+	const LuaTable grassTable = parser->GetRoot().SubTable("grass");
+
+	grass.bladeWaveScale = grassTable.GetFloat("bladeWaveScale", 1.0f);
+	grass.bladeWidth     = grassTable.GetFloat("bladeWidth", 0.32f);
+	grass.bladeHeight    = grassTable.GetFloat("bladeHeight", 4.0f);
+	grass.bladeAngle     = grassTable.GetFloat("bladeAngle", 1.57f);
+}
+
 void CMapInfo::ReadLight()
 {
 	const LuaTable lightTable = parser->GetRoot().SubTable("lighting");
@@ -145,7 +162,7 @@ void CMapInfo::ReadLight()
 	                                                float3(0.4f, 0.4f, 0.4f));
 	light.unitSunColor      = lightTable.GetFloat3("unitDiffuseColor",
 	                                                float3(0.7f, 0.7f, 0.7f));
-	light.specularSunColor  = lightTable.GetFloat3("unitSpecularColor",
+	light.unitSpecularColor  = lightTable.GetFloat3("unitSpecularColor",
 	                                               light.unitSunColor);
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 }
@@ -257,15 +274,31 @@ void CMapInfo::ReadSmf()
 {
 	// SMF specific settings
 	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
-	smf.detailTexName = mapResTable.GetString("detailTex", "");
+
+	smf.detailTexName      = mapResTable.GetString("detailTex", "");
+	smf.specularTexName    = mapResTable.GetString("specularTex", "");
+	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
+	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
+
+	smf.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
+	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
+
+	smf.skyReflectModTexName = mapResTable.GetString("skyReflectModTex", "");
+
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
-	}
-	else {
+	} else {
 		const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
 		smf.detailTexName = resGfxMaps.GetString("detailtex", "detailtex2.bmp");
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
 	}
+
+	if (!smf.specularTexName.empty()) { smf.specularTexName = "maps/" + smf.specularTexName; }
+	if (!smf.splatDetailTexName.empty()) { smf.splatDetailTexName = "maps/" + smf.splatDetailTexName; }
+	if (!smf.splatDistrTexName.empty()) { smf.splatDistrTexName = "maps/" + smf.splatDistrTexName; }
+	if (!smf.grassBladeTexName.empty()) { smf.grassBladeTexName = "maps/" + smf.grassBladeTexName; }
+	if (!smf.grassShadingTexName.empty()) { smf.grassShadingTexName = "maps/" + smf.grassShadingTexName; }
+	if (!smf.skyReflectModTexName.empty()) { smf.skyReflectModTexName = "maps/" + smf.skyReflectModTexName; }
 
 	// height overrides
 	const LuaTable smfTable = parser->GetRoot().SubTable("smf");

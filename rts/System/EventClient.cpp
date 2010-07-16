@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// EventClient.cpp: implementation of the CEventClient class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "EventClient.h"
 using std::string;
@@ -28,6 +27,7 @@ CEventClient::~CEventClient()
 //  Synced
 //
 
+void CEventClient::Load(CArchiveBase* archive) { return; }
 void CEventClient::GamePreload() { return; }
 void CEventClient::GameStart() { return; }
 void CEventClient::GameOver() { return; }
@@ -69,13 +69,26 @@ void CEventClient::UnitUnloaded(const CUnit* unit, const CUnit* transport) { ret
 void CEventClient::UnitCloaked(const CUnit* unit) { return; }
 void CEventClient::UnitDecloaked(const CUnit* unit) { return; }
 
+void CEventClient::RenderUnitCreated(const CUnit* unit, int cloaked) { return; }
+void CEventClient::RenderUnitDestroyed(const CUnit* unit) { return; }
+void CEventClient::RenderUnitCloakChanged(const CUnit* unit, int cloaked) { return; }
+void CEventClient::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) { return; }
+
 void CEventClient::UnitMoveFailed(const CUnit* unit) { return; }
 
 void CEventClient::FeatureCreated(const CFeature* feature) { return; }
 void CEventClient::FeatureDestroyed(const CFeature* feature) { return; }
+void CEventClient::FeatureMoved(const CFeature* feature) { return; }
+
+void CEventClient::RenderFeatureCreated(const CFeature* feature) { return; }
+void CEventClient::RenderFeatureDestroyed(const CFeature* feature) { return; }
+void CEventClient::RenderFeatureMoved(const CFeature* feature) { return; }
 
 void CEventClient::ProjectileCreated(const CProjectile* proj) { return; }
 void CEventClient::ProjectileDestroyed(const CProjectile* proj) { return; }
+
+void CEventClient::RenderProjectileCreated(const CProjectile* proj) { return; }
+void CEventClient::RenderProjectileDestroyed(const CProjectile* proj) { return; }
 
 void CEventClient::StockpileChanged(const CUnit* unit,
                                     const CWeapon* weapon, int oldCount) { return; }
@@ -91,6 +104,8 @@ bool CEventClient::Explosion(int weaponID, const float3& pos, const CUnit* owner
 //
 //  Unsynced
 //
+
+void CEventClient::Save(zipFile archive) { return; }
 
 void CEventClient::Update() { return; }
 

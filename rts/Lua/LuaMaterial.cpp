@@ -1,7 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaMaterial.cpp: implementation of the CLuaMaterial class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <string>
 #include <vector>
@@ -9,8 +9,6 @@
 
 using std::string;
 using std::vector;
-
-#include "mmgr.h"
 
 #include "LuaMaterial.h"
 
@@ -262,7 +260,7 @@ void LuaMatTexture::Bind(const LuaMatTexture& prev) const
 		}
 	}
 	else if (type == LUATEX_REFLECTION) {
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetReflectionTextureID());
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
 		if (enable) {
 			glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		}
@@ -351,23 +349,23 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	if (cameraLoc >= 0) {
 		// FIXME: this is happening too much, just use floats?
 		GLfloat array[16];
-		const GLdouble* modelview = camera->GetModelview(); // GetMatrixData("camera")
+		const GLdouble* viewMat = camera->GetViewMat(); // GetMatrixData("camera")
 		for (int i = 0; i < 16; i += 4) {
-			array[i    ] = (GLfloat) modelview[i    ];
-			array[i + 1] = (GLfloat) modelview[i + 1];
-			array[i + 2] = (GLfloat) modelview[i + 2];
-			array[i + 3] = (GLfloat) modelview[i + 3];
+			array[i    ] = (GLfloat) viewMat[i    ];
+			array[i + 1] = (GLfloat) viewMat[i + 1];
+			array[i + 2] = (GLfloat) viewMat[i + 2];
+			array[i + 3] = (GLfloat) viewMat[i + 3];
 		}
 		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, array);
 	}
 	if (cameraInvLoc >= 0) {
 		GLfloat array[16];
-		const GLdouble* modelviewInv = camera->modelviewInverse; // GetMatrixData("caminv")
+		const GLdouble* viewMatInv = camera->GetViewMatInv(); // GetMatrixData("caminv")
 		for (int i = 0; i < 16; i += 4) {
-			array[i    ] = (GLfloat) modelviewInv[i    ];
-			array[i + 1] = (GLfloat) modelviewInv[i + 1];
-			array[i + 2] = (GLfloat) modelviewInv[i + 2];
-			array[i + 3] = (GLfloat) modelviewInv[i + 3];
+			array[i    ] = (GLfloat) viewMatInv[i    ];
+			array[i + 1] = (GLfloat) viewMatInv[i + 1];
+			array[i + 2] = (GLfloat) viewMatInv[i + 2];
+			array[i + 3] = (GLfloat) viewMatInv[i + 3];
 		}
 		glUniformMatrix4fv(cameraInvLoc, 1, GL_FALSE, array);
 	}
@@ -381,7 +379,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	}
 
 	if (shadowParamsLoc >= 0) {
-		glUniform4f(shadowParamsLoc, shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
+		glUniform4fv(shadowParamsLoc, 1, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
 	}
 
 	const int maxTex = std::max(texCount, prev.texCount);

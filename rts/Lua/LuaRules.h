@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_RULES_H
 #define LUA_RULES_H
-// LuaRules.h: interface for the CLuaRules class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 using std::string;
@@ -12,6 +11,7 @@ using std::vector;
 using std::map;
 
 #include "LuaHandleSynced.h"
+#include "LuaRulesParams.h"
 
 
 #define MAX_LUA_COB_ARGS 10
@@ -19,6 +19,8 @@ using std::map;
 
 class CUnit;
 class CFeature;
+class CProjectile;
+class CWeapon;
 struct UnitDef;
 struct FeatureDef;
 struct Command;
@@ -34,8 +36,8 @@ class CLuaRules : public CLuaHandleSynced
 		static void SetConfigString(const string& cfg);
 		static const string& GetConfigString() { return configString; }
 
-		static const vector<float>&    GetGameParams();
-		static const map<string, int>& GetGameParamsMap();
+		static const LuaRulesParams::Params&  GetGameParams();
+		static const LuaRulesParams::HashMap& GetGameParamsMap();
 
 		const map<string, string>& GetInfoMap() const { return infoMap; }
 
@@ -70,6 +72,8 @@ class CLuaRules : public CLuaHandleSynced
                              float damage, int weaponID, bool paralyzer,
                              float* newDamage, float* impulseMult);
 
+		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+
 		// unsynced
 		bool DrawUnit(int unitID);
 		const char* AICallIn(const char* data, int inSize, int* outSize);
@@ -85,11 +89,11 @@ class CLuaRules : public CLuaHandleSynced
 		int UnpackCobArg(lua_State* L);
 
 		static void SetRulesParam(lua_State* L, const char* caller, int offset,
-		                          vector<float>& params,
-		                          map<string, int>& paramsMap);
+		                          LuaRulesParams::Params& params,
+		                          LuaRulesParams::HashMap& paramsMap);
 		static void CreateRulesParams(lua_State* L, const char* caller, int offset,
-		                              vector<float>& params,
-		                              map<string, int>& paramsMap);
+		                              LuaRulesParams::Params& params,
+		                              LuaRulesParams::HashMap& paramsMap);
 
 	protected: // call-outs
 		static int GetConfigString(lua_State* L);
@@ -124,13 +128,16 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveDrawUnit;
 		bool haveAICallIn;
 		bool haveUnitPreDamaged;
+		bool haveShieldPreDamaged;
 
 		map<string, string> infoMap;
 
 	private:
 		static string configString;
-		static vector<float>    gameParams;
-		static map<string, int> gameParamsMap;
+
+		static LuaRulesParams::Params  gameParams;
+		static LuaRulesParams::HashMap gameParamsMap;
+
 		static const int* currentCobArgs;
 };
 

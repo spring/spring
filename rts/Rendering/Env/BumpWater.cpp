@@ -1,10 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /**
- * @file BumpWater.cpp
  * @brief extended bumpmapping water shader
- * @author jK
- *
- * Copyright (C) 2008.  Licensed under the terms of the
- * GNU GPL, v2 or later.
  */
 
 #include "StdAfx.h"
@@ -16,25 +13,29 @@
 #include "BaseSky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/FeatureDrawer.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/UnitDrawer.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Shaders/ShaderHandler.hpp"
+#include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
-#include "FileSystem/FileHandler.h"
-#include "FastMath.h"
-#include "myMath.h"
-#include "EventHandler.h"
-#include "ConfigHandler.h"
-#include "TimeProfiler.h"
-#include "LogOutput.h"
-#include "GlobalUnsynced.h"
-#include "Exceptions.h"
-#include "Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FastMath.h"
+#include "System/myMath.h"
+#include "System/EventHandler.h"
+#include "System/ConfigHandler.h"
+#include "System/TimeProfiler.h"
+#include "System/LogOutput.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Exceptions.h"
+#include "System/Util.h"
 
 using std::string;
 using std::vector;
@@ -45,61 +46,10 @@ using std::max;
 /// HELPER FUNCTIONS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void PrintShaderLog(GLuint obj, const string& type)
-{
-	/**  WAS COMPILATION SUCCESSFUL ?  **/
-	GLint compiled;
-	if(glIsShader(obj))
-		glGetShaderiv(obj,GL_COMPILE_STATUS,&compiled);
-	else
-		glGetProgramiv(obj,GL_LINK_STATUS,&compiled);
-
-	if (compiled) return;
-
-	/** GET INFOLOG **/
-	int infologLength = 0;
-	int maxLength;
-
-	if(glIsShader(obj))
-		glGetShaderiv(obj,GL_INFO_LOG_LENGTH,&maxLength);
-	else
-		glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&maxLength);
-
-	char* infoLog = new char[maxLength];
-
-	if (glIsShader(obj))
-		glGetShaderInfoLog(obj, maxLength, &infologLength, infoLog);
-	else
-		glGetProgramInfoLog(obj, maxLength, &infologLength, infoLog);
-
-	if (infologLength > 0) {
-		string str(infoLog, infologLength);
-		delete[] infoLog;
-		//! string size is limited with content_error()
-		logOutput.Print("BumpWater shader error (" + type  + "): " + str);
-		throw content_error(string("BumpWater shader error!"));
-	}
-	delete[] infoLog;
-}
-
-
-static string LoadShaderSource(const string& file)
-{
-	CFileHandler fh(file);
-	if (!fh.FileExists())
-		throw content_error("BumpWater: Can't load shader " + file);
-	string text;
-	text.resize(fh.FileSize());
-	fh.Read(&text[0], text.length());
-	return text;
-}
-
-
 static void GLSLDefineConst4f(string& str, const string& name, const float x, const float y, const float z, const float w)
 {
 	str += boost::str(boost::format(string("#define ")+name+" vec4(%1$.12f,%2$.12f,%3$.12f,%4$.12f)\n") % (x) % (y) % (z) % (w));
 }
-
 
 static void GLSLDefineConstf4(string& str, const string& name, const float3& v, const float& alpha)
 {
@@ -193,11 +143,11 @@ CBumpWater::CBumpWater()
 {
 	/** LOAD USER CONFIGS **/
 	reflTexSize  = next_power_of_2(configHandler->Get("BumpWaterTexSizeReflection", 512));
-	reflection   = !!configHandler->Get("BumpWaterReflection", 1);
+	reflection   = configHandler->Get("BumpWaterReflection", 1);
 	refraction   = configHandler->Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
 	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy", "0.0").c_str());
 	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
-	depthBits    = configHandler->Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
+	depthBits    = configHandler->Get("BumpWaterDepthBits", (globalRendering->atiHacks)?16:24);
 	blurRefl     = !!configHandler->Get("BumpWaterBlurReflection", 0);
 	shoreWaves   = (!!configHandler->Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
 	endlessOcean = (!!configHandler->Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
@@ -258,23 +208,26 @@ CBumpWater::CBumpWater()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5, gs->mapx, gs->mapy, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		//glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-		const string fsSource = LoadShaderSource("shaders/bumpWaterCoastBlurFS.glsl");
-		const GLchar* fsSourceStr = fsSource.c_str();
-		blurFP = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(blurFP, 1, &fsSourceStr, NULL);
-		glCompileShader(blurFP);
-		PrintShaderLog(blurFP, "blurFP");
 
-		blurShader = glCreateProgram();
-		glAttachShader(blurShader, blurFP);
-		glLinkProgram(blurShader);
-		PrintShaderLog(blurShader, "blurShader");
-		glUseProgram(blurShader);
-			GLuint tex0Loc = glGetUniformLocation(blurShader, "tex0");
-			GLuint tex1Loc = glGetUniformLocation(blurShader, "tex1");
-			glUniform1i(tex0Loc, 0);
-			glUniform1i(tex1Loc, 1);
-		glUseProgram(0);
+		{
+			blurShader = shaderHandler->CreateProgramObject("[BumpWater]", "CoastBlurShader", false);
+			blurShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterCoastBlurFS.glsl", "", GL_FRAGMENT_SHADER));
+			blurShader->Link();
+
+			if (!blurShader->IsValid()) {
+				//! string size is limited with content_error()
+				logOutput.Print("[BumpWater] shorewaves-shader compilation error: " + blurShader->GetLog());
+				throw content_error(string("[BumpWater] shorewaves-shader compilation error!"));
+			}
+
+			blurShader->SetUniformLocation("tex0"); // idx 0
+			blurShader->SetUniformLocation("tex1"); // idx 1
+			blurShader->Enable();
+			blurShader->SetUniform1i(0, 0);
+			blurShader->SetUniform1i(1, 1);
+			blurShader->Disable();
+		}
+
 
 		coastFBO.reloadOnAltTab = true;
 		coastFBO.Bind();
@@ -282,36 +235,37 @@ CBumpWater::CBumpWater()
 
 		if (coastFBO.CheckStatus("BUMPWATER(Coastmap)")) {
 			//! initialize texture
-			glClearColor(0.0f,0.0f,0.0f,0.0f);
+			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			//! fill with current heightmap/coastmap
 			HeightmapChanged(0, 0, gs->mapx, gs->mapy);
 			UploadCoastline(true);
 			UpdateCoastmap();
-		}else shoreWaves=false;
+		} else
+			shoreWaves = false;
 
-		//coastFBO.Unbind(); gets done below
+		// coastFBO.Unbind(); gets done below
 	}
 
 
 	/** CREATE TEXTURES **/
-	if ((refraction>0) || depthCopy) {
+	if ((refraction > 0) || depthCopy) {
 		//! ati's don't have glsl support for texrects
-		screenTextureX = gu->viewSizeX;
-		screenTextureY = gu->viewSizeY;
-		if (GLEW_ARB_texture_rectangle && !gu->atiHacks) {
+		screenTextureX = globalRendering->viewSizeX;
+		screenTextureY = globalRendering->viewSizeY;
+		if (GLEW_ARB_texture_rectangle && !globalRendering->atiHacks) {
 			target = GL_TEXTURE_RECTANGLE_ARB;
 		} else {
 			target = GL_TEXTURE_2D;
-			if (!gu->supportNPOTs) {
-				screenTextureX = next_power_of_2(gu->viewSizeX);
-				screenTextureY = next_power_of_2(gu->viewSizeY);
+			if (!globalRendering->supportNPOTs) {
+				screenTextureX = next_power_of_2(globalRendering->viewSizeX);
+				screenTextureY = next_power_of_2(globalRendering->viewSizeY);
 			}
 		}
 	}
 
-	if (refraction>0) {
+	if (refraction > 0) {
 		//! CREATE REFRACTION TEXTURE
 		glGenTextures(1, &refractTexture);
 		glBindTexture(target, refractTexture);
@@ -327,7 +281,7 @@ CBumpWater::CBumpWater()
 		glTexImage2D(target, 0, GL_RGBA8, screenTextureX, screenTextureY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	}
 
-	if (reflection) {
+	if (reflection > 0) {
 		//! CREATE REFLECTION TEXTURE
 		glGenTextures(1, &reflectTexture);
 		glBindTexture(GL_TEXTURE_2D, reflectTexture);
@@ -350,9 +304,9 @@ CBumpWater::CBumpWater()
 		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 		GLuint depthFormat = GL_DEPTH_COMPONENT; 
-		switch (gu->depthBufferBits) { /// use same depth as screen framebuffer
+		switch (globalRendering->depthBufferBits) { /// use same depth as screen framebuffer
 			case 16: depthFormat = GL_DEPTH_COMPONENT16; break;
-			case 24: if (!gu->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; break; } //ATIs fall through and use 32bit!
+			case 24: if (!globalRendering->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; break; } //ATIs fall through and use 32bit!
 			default: depthFormat = GL_DEPTH_COMPONENT32; break;
 		}
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -387,7 +341,7 @@ CBumpWater::CBumpWater()
 			case 32: depthRBOFormat = GL_DEPTH_COMPONENT32; break;
 		}
 
-		if (reflection) {
+		if (reflection>0) {
 			reflectFBO.Bind();
 			reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, reflTexSize, reflTexSize);
 			reflectFBO.AttachTexture(reflectTexture);
@@ -400,7 +354,7 @@ CBumpWater::CBumpWater()
 		}
 
 		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
-			reflection = false;
+			reflection = 0;
 		}
 		if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
 			refraction = 0;
@@ -420,18 +374,18 @@ CBumpWater::CBumpWater()
 
 	/** DEFINE SOME SHADER RUNTIME CONSTANTS (I don't use Uniforms for that, because the glsl compiler can't optimize those!) **/
 	string definitions;
-	if (reflection)   definitions += "#define opt_reflection\n";
+	if (reflection>0) definitions += "#define opt_reflection\n";
 	if (refraction>0) definitions += "#define opt_refraction\n";
 	if (shoreWaves)   definitions += "#define opt_shorewaves\n";
 	if (depthCopy)    definitions += "#define opt_depth\n";
 	if (blurRefl)     definitions += "#define opt_blurreflection\n";
 	if (endlessOcean) definitions += "#define opt_endlessocean\n";
-	if (target==GL_TEXTURE_RECTANGLE_ARB) definitions += "#define opt_texrect\n";
+	if (target == GL_TEXTURE_RECTANGLE_ARB) definitions += "#define opt_texrect\n";
 
-	GLSLDefineConstf3(definitions, "MapMid",         float3(readmap->width*SQUARE_SIZE*0.5f,0.0f,readmap->height*SQUARE_SIZE*0.5f) );
-	GLSLDefineConstf2(definitions, "ScreenInverse",  1.0f/gu->viewSizeX, 1.0f/gu->viewSizeY );
-	GLSLDefineConstf2(definitions, "ScreenTextureSizeInverse",  1.0f/screenTextureX, 1.0f/screenTextureY );
-	GLSLDefineConstf2(definitions, "ViewPos",        gu->viewPosX,gu->viewPosY );
+	GLSLDefineConstf3(definitions, "MapMid",                    float3(readmap->width * SQUARE_SIZE * 0.5f, 0.0f, readmap->height * SQUARE_SIZE * 0.5f) );
+	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY );
+	GLSLDefineConstf2(definitions, "ScreenTextureSizeInverse",  1.0f / screenTextureX, 1.0f / screenTextureY );
+	GLSLDefineConstf2(definitions, "ViewPos",                   globalRendering->viewPosX,globalRendering->viewPosY );
 
 	if (useUniforms) {
 		SetupUniforms(definitions);
@@ -449,7 +403,7 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "FresnelMax",     mapInfo->water.fresnelMax);
 		GLSLDefineConstf1(definitions, "FresnelPower",   mapInfo->water.fresnelPower);
 		GLSLDefineConstf1(definitions, "ReflDistortion", mapInfo->water.reflDistortion);
-		GLSLDefineConstf2(definitions, "BlurBase",       0.0f,mapInfo->water.blurBase/gu->viewSizeY);
+		GLSLDefineConstf2(definitions, "BlurBase",       0.0f,mapInfo->water.blurBase/globalRendering->viewSizeY);
 		GLSLDefineConstf1(definitions, "BlurExponent",   mapInfo->water.blurExponent);
 		GLSLDefineConstf1(definitions, "PerlinStartFreq",  mapInfo->water.perlinStartFreq);
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
@@ -465,73 +419,57 @@ CBumpWater::CBumpWater()
 		const float scaleX = (mapX > mapZ) ? (readmap->height/64)/16.0f * (float)mapX/mapZ : (readmap->width/64)/16.0f;
 		const float scaleZ = (mapX > mapZ) ? (readmap->height/64)/16.0f : (readmap->width/64)/16.0f * (float)mapZ/mapX;
 		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, scaleX/mapX, scaleZ/mapZ);
-		GLSLDefineConst4f(definitions, "ShadingPlane", shadingX/mapX, shadingZ/mapZ, shadingX,shadingZ);
+		GLSLDefineConst4f(definitions, "ShadingPlane", shadingX/mapX, shadingZ/mapZ, shadingX, shadingZ);
 	}
 
+
+
 	/** LOAD SHADERS **/
-	string vsSource = LoadShaderSource("shaders/bumpWaterVS.glsl");
-	string fsSource = LoadShaderSource("shaders/bumpWaterFS.glsl");
+	{
+		waterShader = shaderHandler->CreateProgramObject("[BumpWater]", "WaterShader", false);
+		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterVS.glsl", definitions, GL_VERTEX_SHADER));
+		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterFS.glsl", definitions, GL_FRAGMENT_SHADER));
+		waterShader->Link();
+		waterShader->SetUniformLocation("eyePos");      // idx  0
+		waterShader->SetUniformLocation("frame");       // idx  1
+		waterShader->SetUniformLocation("normalmap");   // idx  2
+		waterShader->SetUniformLocation("heightmap");   // idx  3
+		waterShader->SetUniformLocation("caustic");     // idx  4
+		waterShader->SetUniformLocation("foam");        // idx  5
+		waterShader->SetUniformLocation("reflection");  // idx  6
+		waterShader->SetUniformLocation("refraction");  // idx  7
+		waterShader->SetUniformLocation("depthmap");    // idx  8
+		waterShader->SetUniformLocation("coastmap");    // idx  9
+		waterShader->SetUniformLocation("waverand");    // idx 10
 
-	vector<GLint> lengths(2);
-	vector<const GLchar*> strings(2);
-	lengths[0] = definitions.length();
-	strings[0] = definitions.c_str();
+		if (!waterShader->IsValid()) {
+			//! string size is limited with content_error()
+			logOutput.Print("[BumpWater] water-shader compilation error: " + waterShader->GetLog());
+			throw content_error(string("[BumpWater] water-shader compilation error!"));
+		}
 
-	waterVP = glCreateShader(GL_VERTEX_SHADER);
-	lengths[1] = vsSource.length();
-	strings[1] = vsSource.c_str();
-	glShaderSource(waterVP, strings.size(), &strings.front(), &lengths.front());
-	glCompileShader(waterVP);
-	PrintShaderLog(waterVP, "waterVP");
+		if (useUniforms) {
+			GetUniformLocations();
+		}
 
-	waterFP = glCreateShader(GL_FRAGMENT_SHADER);
-	lengths[1] = fsSource.length();
-	strings[1] = fsSource.c_str();
-	glShaderSource(waterFP, strings.size(), &strings.front(), &lengths.front());
-	glCompileShader(waterFP);
-	PrintShaderLog(waterFP, "waterFP");
-
-	waterShader = glCreateProgram();
-	glAttachShader(waterShader, waterVP);
-	glAttachShader(waterShader, waterFP);
-	glLinkProgram(waterShader);
-	PrintShaderLog(waterShader, "waterShader");
-
-
-	/** BIND TEXTURE UNIFORMS **/
-	glUseProgram(waterShader);
-		eyePosLoc     = glGetUniformLocation(waterShader, "eyePos");
-		frameLoc      = glGetUniformLocation(waterShader, "frame");
-
-		if (useUniforms)
-			GetUniformLocations(waterShader);
-
-		//! Texture Uniform Locations
-		GLuint normalmapLoc  = glGetUniformLocation(waterShader, "normalmap");
-		GLuint heightmapLoc  = glGetUniformLocation(waterShader, "heightmap");
-		GLuint causticLoc    = glGetUniformLocation(waterShader, "caustic");
-		GLuint foamLoc       = glGetUniformLocation(waterShader, "foam");
-		GLuint reflectionLoc = glGetUniformLocation(waterShader, "reflection");
-		GLuint refractionLoc = glGetUniformLocation(waterShader, "refraction");
-		GLuint depthmapLoc   = glGetUniformLocation(waterShader, "depthmap");
-		GLuint coastmapLoc   = glGetUniformLocation(waterShader, "coastmap");
-		GLuint waverandLoc   = glGetUniformLocation(waterShader, "waverand");
-
-		glUniform1i(normalmapLoc, 0);
-		glUniform1i(heightmapLoc, 1);
-		glUniform1i(causticLoc, 2);
-		glUniform1i(foamLoc, 3);
-		glUniform1i(reflectionLoc, 4);
-		glUniform1i(refractionLoc, 5);
-		glUniform1i(coastmapLoc, 6);
-		glUniform1i(depthmapLoc, 7);
-		glUniform1i(waverandLoc, 8);
-	glUseProgram(0);
+		/** BIND TEXTURE UNIFORMS **/
+		waterShader->Enable();
+		waterShader->SetUniform1i( 2, 0);
+		waterShader->SetUniform1i( 3, 1);
+		waterShader->SetUniform1i( 4, 2);
+		waterShader->SetUniform1i( 5, 3);
+		waterShader->SetUniform1i( 6, 4);
+		waterShader->SetUniform1i( 7, 5);
+		waterShader->SetUniform1i( 8, 7);
+		waterShader->SetUniform1i( 9, 6);
+		waterShader->SetUniform1i(10, 8);
+		waterShader->Disable();
+	}
 
 
 	/** CREATE DISPLAYLIST **/
 	displayList = glGenLists(1);
-	glNewList(displayList,GL_COMPILE);
+	glNewList(displayList, GL_COMPILE);
 	if (endlessOcean) {
 		DrawRadialDisc();
 	}else{
@@ -560,7 +498,7 @@ CBumpWater::CBumpWater()
 
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
-	wasLastFrameVisible = false;
+	wasLastFrameVisible = true;
 	bool useOcclQuery  = (!!configHandler->Get("BumpWaterOcclusionQuery", 1));
 	if (useOcclQuery && GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
@@ -569,7 +507,7 @@ CBumpWater::CBumpWater()
 			glGenQueries(1,&occlusionQuery);
 	}
 
-	if (refraction>1)
+	if (refraction > 1)
 		drawSolid = true;
 }
 
@@ -589,18 +527,11 @@ CBumpWater::~CBumpWater()
 		glDeleteTextures(1, &caustTextures[i]);
 	}
 
-	glDeleteShader(waterVP);
-	glDeleteShader(waterFP);
-	glDeleteProgram(waterShader);
-
-	glDeleteLists(displayList,1);
+	glDeleteLists(displayList, 1);
 
 	if (shoreWaves) {
 		glDeleteTextures(1, &coastTexture);
 		glDeleteTextures(1, &waveRandTexture);
-
-		glDeleteShader(blurFP);
-		glDeleteProgram(blurShader);
 	}
 
 	if (dynWaves) {
@@ -609,7 +540,9 @@ CBumpWater::~CBumpWater()
 	}
 
 	if (occlusionQuery)
-		glDeleteQueries(1,&occlusionQuery);
+		glDeleteQueries(1, &occlusionQuery);
+
+	shaderHandler->ReleaseProgramObjects("[BumpWater]");
 }
 
 
@@ -636,27 +569,27 @@ void CBumpWater::SetupUniforms( string& definitions )
 	definitions += "uniform float WindSpeed;\n";
 }
 
-void CBumpWater::GetUniformLocations( GLuint& program )
+void CBumpWater::GetUniformLocations()
 {
-	uniforms[0]  = glGetUniformLocation( program, "SurfaceColor" );
-	uniforms[1]  = glGetUniformLocation( program, "PlaneColor" );
-	uniforms[2]  = glGetUniformLocation( program, "DiffuseColor" );
-	uniforms[3]  = glGetUniformLocation( program, "SpecularColor" );
-	uniforms[4]  = glGetUniformLocation( program, "SpecularPower" );
-	uniforms[5]  = glGetUniformLocation( program, "SpecularFactor" );
-	uniforms[6]  = glGetUniformLocation( program, "AmbientFactor" );
-	uniforms[7]  = glGetUniformLocation( program, "DiffuseFactor" );
-	uniforms[8]  = glGetUniformLocation( program, "SunDir" );
-	uniforms[9]  = glGetUniformLocation( program, "FresnelMin" );
-	uniforms[10] = glGetUniformLocation( program, "FresnelMax" );
-	uniforms[11] = glGetUniformLocation( program, "FresnelPower" );
-	uniforms[12] = glGetUniformLocation( program, "ReflDistortion" );
-	uniforms[13] = glGetUniformLocation( program, "BlurBase" );
-	uniforms[14] = glGetUniformLocation( program, "BlurExponent" );
-	uniforms[15] = glGetUniformLocation( program, "PerlinStartFreq" );
-	uniforms[16] = glGetUniformLocation( program, "PerlinLacunarity" );
-	uniforms[17] = glGetUniformLocation( program, "PerlinAmp" );
-	uniforms[18] = glGetUniformLocation( program, "WindSpeed" );
+	uniforms[ 0] = glGetUniformLocation( waterShader->GetObjID(), "SurfaceColor" );
+	uniforms[ 1] = glGetUniformLocation( waterShader->GetObjID(), "PlaneColor" );
+	uniforms[ 2] = glGetUniformLocation( waterShader->GetObjID(), "DiffuseColor" );
+	uniforms[ 3] = glGetUniformLocation( waterShader->GetObjID(), "SpecularColor" );
+	uniforms[ 4] = glGetUniformLocation( waterShader->GetObjID(), "SpecularPower" );
+	uniforms[ 5] = glGetUniformLocation( waterShader->GetObjID(), "SpecularFactor" );
+	uniforms[ 6] = glGetUniformLocation( waterShader->GetObjID(), "AmbientFactor" );
+	uniforms[ 7] = glGetUniformLocation( waterShader->GetObjID(), "DiffuseFactor" );
+	uniforms[ 8] = glGetUniformLocation( waterShader->GetObjID(), "SunDir" );
+	uniforms[ 9] = glGetUniformLocation( waterShader->GetObjID(), "FresnelMin" );
+	uniforms[10] = glGetUniformLocation( waterShader->GetObjID(), "FresnelMax" );
+	uniforms[11] = glGetUniformLocation( waterShader->GetObjID(), "FresnelPower" );
+	uniforms[12] = glGetUniformLocation( waterShader->GetObjID(), "ReflDistortion" );
+	uniforms[13] = glGetUniformLocation( waterShader->GetObjID(), "BlurBase" );
+	uniforms[14] = glGetUniformLocation( waterShader->GetObjID(), "BlurExponent" );
+	uniforms[15] = glGetUniformLocation( waterShader->GetObjID(), "PerlinStartFreq" );
+	uniforms[16] = glGetUniformLocation( waterShader->GetObjID(), "PerlinLacunarity" );
+	uniforms[17] = glGetUniformLocation( waterShader->GetObjID(), "PerlinAmp" );
+	uniforms[18] = glGetUniformLocation( waterShader->GetObjID(), "WindSpeed" );
 }
 
 
@@ -666,13 +599,10 @@ void CBumpWater::GetUniformLocations( GLuint& program )
 
 void CBumpWater::Update()
 {
-	if (!occlusionQuery)
-		DoUpdate();
-}
-
-void CBumpWater::DoUpdate()
-{
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
+		return;
+
+	if (!wasLastFrameVisible)
 		return;
 
 /*
@@ -724,10 +654,10 @@ void CBumpWater::UpdateWater(CGame* game)
 
 	glPushAttrib(GL_FOG_BIT);
 	if (refraction>1) DrawRefraction(game);
-	if (reflection)   DrawReflection(game);
+	if (reflection>0) DrawReflection(game);
 	if (reflection || refraction) {
 		FBO::Unbind();
-		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	}
 	glPopAttrib();
 }
@@ -993,7 +923,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 void CBumpWater::UpdateCoastmap()
 {
 	coastFBO.Bind();
-	glUseProgram(blurShader);
+	blurShader->Enable();
 
 	glDisable(GL_BLEND);
 	glDepthMask(GL_FALSE);
@@ -1070,20 +1000,25 @@ void CBumpWater::UpdateCoastmap()
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 
+	blurShader->Disable();
+	coastFBO.Unattach(GL_COLOR_ATTACHMENT1_EXT);
+	//coastFBO.Unbind();
+
+	//! generate mipmaps
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, coastTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-	glUseProgram(0);
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-
-	//coastFBO.Unattach(GL_COLOR_ATTACHMENT1_EXT);
-	coastFBO.Unbind();
-
+	//! delete UpdateAtlas
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glDeleteTextures(1, &coastUpdateTexture);
 	coastmapAtlasRects.clear();
+
+	//glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 
@@ -1111,11 +1046,14 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	}
 
 	dynWavesFBO.Bind();
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, normalTexture2);
 	glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
 	glBlendColor(1.0f,1.0f,1.0f, (initialize) ? 1.0f : (f + 1)/600.0f );
 	glColor4f(1.0f,1.0f,1.0f,1.0f);
 	glEnable(GL_BLEND);
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
 
 	glViewport(0,0, normalTextureX, normalTextureY);
 	glMatrixMode(GL_MODELVIEW);
@@ -1151,7 +1089,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 
 	dynWavesFBO.Unbind();
 
@@ -1166,20 +1104,20 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 void CBumpWater::SetUniforms()
 {
-	glUniform4f(uniforms[0],  mapInfo->water.surfaceColor.x*0.4, mapInfo->water.surfaceColor.y*0.4, mapInfo->water.surfaceColor.z*0.4, mapInfo->water.surfaceAlpha);
-	glUniform4f(uniforms[1],  mapInfo->water.planeColor.x*0.4, mapInfo->water.planeColor.y*0.4, mapInfo->water.planeColor.z*0.4, mapInfo->water.surfaceAlpha);
-	glUniform3f(uniforms[2],  mapInfo->water.diffuseColor.x, mapInfo->water.diffuseColor.y, mapInfo->water.diffuseColor.z);
-	glUniform3f(uniforms[3],  mapInfo->water.specularColor.x, mapInfo->water.specularColor.y, mapInfo->water.specularColor.z);
-	glUniform1f(uniforms[4],  mapInfo->water.specularPower);
-	glUniform1f(uniforms[5],  mapInfo->water.specularFactor);
-	glUniform1f(uniforms[6],  mapInfo->water.ambientFactor);
-	glUniform1f(uniforms[7],  mapInfo->water.diffuseFactor * 15.0f);
-	glUniform3f(uniforms[8],  mapInfo->light.sunDir.x,mapInfo->light.sunDir.y,mapInfo->light.sunDir.z );
-	glUniform1f(uniforms[9],  mapInfo->water.fresnelMin);
+	glUniform4f(uniforms[ 0], mapInfo->water.surfaceColor.x*0.4, mapInfo->water.surfaceColor.y*0.4, mapInfo->water.surfaceColor.z*0.4, mapInfo->water.surfaceAlpha);
+	glUniform4f(uniforms[ 1], mapInfo->water.planeColor.x*0.4, mapInfo->water.planeColor.y*0.4, mapInfo->water.planeColor.z*0.4, mapInfo->water.surfaceAlpha);
+	glUniform3f(uniforms[ 2], mapInfo->water.diffuseColor.x, mapInfo->water.diffuseColor.y, mapInfo->water.diffuseColor.z);
+	glUniform3f(uniforms[ 3], mapInfo->water.specularColor.x, mapInfo->water.specularColor.y, mapInfo->water.specularColor.z);
+	glUniform1f(uniforms[ 4], mapInfo->water.specularPower);
+	glUniform1f(uniforms[ 5], mapInfo->water.specularFactor);
+	glUniform1f(uniforms[ 6], mapInfo->water.ambientFactor);
+	glUniform1f(uniforms[ 7], mapInfo->water.diffuseFactor * 15.0f);
+	glUniform3f(uniforms[ 8], mapInfo->light.sunDir.x,mapInfo->light.sunDir.y,mapInfo->light.sunDir.z );
+	glUniform1f(uniforms[ 9], mapInfo->water.fresnelMin);
 	glUniform1f(uniforms[10], mapInfo->water.fresnelMax);
 	glUniform1f(uniforms[11], mapInfo->water.fresnelPower);
 	glUniform1f(uniforms[12], mapInfo->water.reflDistortion);
-	glUniform2f(uniforms[13], 0.0f,mapInfo->water.blurBase/gu->viewSizeY);
+	glUniform2f(uniforms[13], 0.0f,mapInfo->water.blurBase/globalRendering->viewSizeY);
 	glUniform1f(uniforms[14], mapInfo->water.blurExponent);
 	glUniform1f(uniforms[15], mapInfo->water.perlinStartFreq);
 	glUniform1f(uniforms[16], mapInfo->water.perlinLacunarity);
@@ -1199,13 +1137,13 @@ void CBumpWater::Draw()
 	if (refraction == 1) {
 		//! _SCREENCOPY_ REFRACT TEXTURE
 		glBindTexture(target, refractTexture);
-		glCopyTexSubImage2D(target, 0, 0, 0, gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+		glCopyTexSubImage2D(target, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	if (depthCopy) {
 		//! _SCREENCOPY_ DEPTH TEXTURE
 		glBindTexture(target, depthTexture);
-		glCopyTexSubImage2D(target, 0, 0, 0, gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+		glCopyTexSubImage2D(target, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	glDisable(GL_ALPHA_TEST);
@@ -1225,20 +1163,24 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
-	glUseProgram(waterShader);
-	glUniform1f(frameLoc,  (gs->frameNum+gu->timeOffset) / 15000.0f);
-	glUniformf3(eyePosLoc, camera->pos);
-	if (useUniforms) SetUniforms();
+
+	waterShader->Enable();
+	waterShader->SetUniform3fv(0, &camera->pos[0]);
+	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
+
+	if (useUniforms) {
+		SetUniforms();
+	}
 
 	glMultiTexCoord2f(GL_TEXTURE1, windVec.x, windVec.z);
-
 	glCallList(displayList);
 
-	glUseProgram(0);
+	waterShader->Disable();
 
-	if (refraction<2)
+
+	if (refraction < 2)
 		glDepthMask(1);
-	if (refraction>0)
+	if (refraction > 0)
 		glEnable(GL_BLEND);
 
 	if (occlusionQuery)
@@ -1252,7 +1194,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	refractFBO.Bind();
 
 	camera->Update(false);
-	glViewport(0,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(0,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG);
@@ -1263,7 +1205,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	unitDrawer->unitSunColor*=float3(0.5f,0.7f,0.9f);
 	unitDrawer->unitAmbientColor*=float3(0.6f,0.8f,1.0f);
 
-	game->SetDrawMode(CGame::refractionDraw);
+	game->SetDrawMode(CGame::gameRefractionDraw);
 	drawRefraction=true;
 
 	glEnable(GL_CLIP_PLANE2);
@@ -1273,13 +1215,13 @@ void CBumpWater::DrawRefraction(CGame* game)
 	readmap->GetGroundDrawer()->Draw();
 	unitDrawer->Draw(false,true);
 	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true);
-	ph->Draw(false,true);
+	unitDrawer->DrawCloakedUnits();
+	featureDrawer->DrawFadeFeatures();
+	projectileDrawer->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
 
 	glDisable(GL_CLIP_PLANE2);
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 	drawRefraction=false;
 
 	glEnable(GL_FOG);
@@ -1306,7 +1248,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	glViewport(0,0,reflTexSize,reflTexSize);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 	sky->Draw();
 
 	glEnable(GL_CLIP_PLANE2);
@@ -1314,15 +1256,16 @@ void CBumpWater::DrawReflection(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 
-	readmap->GetGroundDrawer()->Draw(true);
+	if (reflection>1)
+		readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(false,true);
-	featureDrawer->DrawFadeFeatures(false,true);
-	ph->Draw(true);
+	unitDrawer->DrawCloakedUnits(true);
+	featureDrawer->DrawFadeFeatures(true);
+	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
 
@@ -1351,6 +1294,7 @@ void CBumpWater::OcclusionQuery()
 	if (!wasLastFrameVisible) {
 		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		glDepthMask(GL_FALSE);
+		glEnable(GL_DEPTH_TEST);
 
 		glPushMatrix();
 			glTranslatef(0.0,10.0,0.0);
@@ -1361,10 +1305,5 @@ void CBumpWater::OcclusionQuery()
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDepthMask(GL_TRUE);
-	}
-
-	if (gs->frameNum != lastFrame) {
-		DoUpdate();
-		lastFrame = gs->frameNum;
 	}
 }

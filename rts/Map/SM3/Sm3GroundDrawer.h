@@ -1,3 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _SMF3_GROUND_DRAWER_H_
+#define _SMF3_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
 #include "terrain/TerrainBase.h"
@@ -12,7 +16,7 @@ public:
 	CSm3GroundDrawer(CSm3ReadMap *map);
 	~CSm3GroundDrawer();
 
-	void Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP);
+	void Draw(bool drawWaterReflection,bool drawUnitReflection);
 	void DrawShadowPass(void);
 	void Update();
 
@@ -29,7 +33,8 @@ protected:
 	terrain::Camera cam, shadowCam, reflectCam;
 	Frustum frustum;
 
-	unsigned int groundShadowVP;
 	friend class CSm3ReadMap;
 };
+
+#endif // _SMF3_GROUND_DRAWER_H_
 

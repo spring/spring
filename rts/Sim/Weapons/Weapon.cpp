@@ -1,6 +1,4 @@
-// Weapon.cpp: implementation of the CWeapon class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "creg/STL_List.h"
@@ -11,7 +9,6 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "myMath.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -25,7 +22,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "EventHandler.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
@@ -112,6 +109,7 @@ CR_REG_METADATA(CWeapon,(
 CWeapon::CWeapon(CUnit* owner):
 	owner(owner),
 	weaponDef(0),
+	weaponNum(-1),
 	haveUserTarget(false),
 	areaOfEffect(1),
 	relWeaponPos(0,1,0),
@@ -131,6 +129,7 @@ CWeapon::CWeapon(CUnit* owner):
 	sprayAngle(0),
 	salvoDelay(0),
 	salvoSize(1),
+	projectilesPerShot(1),
 	nextSalvo(0),
 	salvoLeft(0),
 	salvoError(0,0,0),

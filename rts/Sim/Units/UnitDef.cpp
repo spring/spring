@@ -1,8 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "UnitDef.h"
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/Command.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 #include "UnitDefHandler.h"
 
 UnitDef::UnitDefWeapon::UnitDefWeapon()
@@ -44,7 +46,9 @@ S3DModel* UnitDef::LoadModel() const
 	UnitDef* udef = const_cast<UnitDef*>(this);
 
 	if (udef->modelDef.model == NULL) {
-		udef->modelDef.model = modelParser->Load3DModel(udef->modelDef.modelpath, udef->modelCenterOffset);
+		udef->modelDef.model = modelParser->Load3DModel(udef->modelDef.modelPath, udef->modelCenterOffset);
+		udef->modelDef.modelTextures["tex1"] = udef->modelDef.model->tex1;
+		udef->modelDef.modelTextures["tex2"] = udef->modelDef.model->tex2;
 	}
 
 	return (udef->modelDef.model);

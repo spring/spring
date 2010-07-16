@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <algorithm>
 #include <cctype>
@@ -38,43 +40,62 @@ CCategoryHandler::~CCategoryHandler()
 
 unsigned int CCategoryHandler::GetCategory(std::string name)
 {
+	unsigned int cat = 0;
+
 	StringToLowerInPlace(name);
-	while(!name.empty() && *name.begin()==' ')
+	// remove leading spaces
+	while (!name.empty() && (*name.begin() == ' ')) {
 		name.erase(name.begin());
-	if(name.empty())
-		return 0;
-	// Remove some categories that we don't think we need since we have too few of them.
-	if (categories.find(name) == categories.end()) {
-		if(firstUnused > 31) {
-			logOutput.Print("WARNING: too many unit categories %i missed %s", ++firstUnused, name.c_str());
-			categories[name] = 0; // suppress further warnings about this category
-			return 0;
-		}
-		categories[name] = (1 << (firstUnused++));
-//		logOutput.Print("New cat %s #%i",name.c_str(),firstUnused);
 	}
-	return categories[name];
+
+	if (name.empty()) {
+		// the empty category
+		cat = 0;
+	} else if (categories.find(name) == categories.end()) {
+		// this category is yet unknown
+		if (firstUnused >= CCategoryHandler::GetMaxCategories()) {
+			// skip this category
+			logOutput.Print("WARNING: too many unit categories (%i), skipping %s", firstUnused, name.c_str());
+			cat = 0;
+		} else {
+			// create the category (bit field value)
+			cat = (1 << firstUnused);
+//			logOutput.Print("New cat %s #%i", name.c_str(), firstUnused);
+		}
+		// if (cat == 0), this will prevent further warnings for this category
+		categories[name] = cat;
+		firstUnused++;
+	} else {
+		// this category is already known
+		cat = categories[name];
+	}
+
+	return cat;
 }
 
 
 unsigned int CCategoryHandler::GetCategories(std::string names)
 {
-	StringToLowerInPlace(names);
 	unsigned int ret = 0;
 
-	while(!names.empty()) {
+	StringToLowerInPlace(names);
+
+	while (!names.empty()) {
 		std::string name = names;
 
-		if(names.find_first_of(' ') != std::string::npos)
+		if (names.find_first_of(' ') != std::string::npos) {
 			name.erase(name.find_first_of(' '), 5000);
+		}
 
-		if(names.find_first_of(' ') == std::string::npos)
+		if (names.find_first_of(' ') == std::string::npos) {
 			names.clear();
-		else
+		} else {
 			names.erase(0, names.find_first_of(' ') + 1);
+		}
 
 		ret |= GetCategory(name);
 	}
+
 	return ret;
 }
 
@@ -82,6 +103,7 @@ unsigned int CCategoryHandler::GetCategories(std::string names)
 std::vector<std::string> CCategoryHandler::GetCategoryNames(unsigned int bits) const
 {
 	std::vector<std::string> names;
+
 	unsigned int bit;
 	for (bit = 1; bit != 0; bit = (bit << 1)) {
 		if ((bit & bits) != 0) {
@@ -93,5 +115,6 @@ std::vector<std::string> CCategoryHandler::GetCategoryNames(unsigned int bits) c
 			}
 		}
 	}
+
 	return names;
 }

@@ -1,21 +1,38 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef AICALLBACK_H
 #define AICALLBACK_H
 
-#include "IAICallback.h"
+#include "ExternalAI/AILegacySupport.h"
+#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+#include "float3.h"
 
+#include <string>
+#include <vector>
+#include <map>
+
+struct Command;
+struct UnitDef;
+struct FeatureDef;
+struct WeaponDef;
+struct CommandDescription;
+class CCommandQueue;
 class CGroupHandler;
 class CGroup;
 
-class CAICallback: public IAICallback
+/** Generalized legacy callback interface */
+class CAICallback
 {
 	int team;
+public:
 	bool noMessages;
+private:
 	CGroupHandler* gh;
 
 	void verify();
 
 public:
-	CAICallback(int team, CGroupHandler* gh);
+	CAICallback(int teamId);
 	~CAICallback();
 
 	void SendStartPos(bool ready, float3 pos);
@@ -72,6 +89,7 @@ public:
 	bool UnitBeingBuilt(int unitId);
 	const UnitDef* GetUnitDef(int unitId);
 	float3 GetUnitPos(int unitId);
+	float3 GetUnitVelocity(int unitId);
 	int GetBuildingFacing(int unitId);
 	bool IsUnitCloaked(int unitId);
 	bool IsUnitParalyzed(int unitId);
@@ -83,19 +101,19 @@ private:
 	const UnitDef* GetUnitDefById(int unitDefId);
 public:
 
-	int InitPath(float3 start, float3 end, int pathType);
+	int InitPath(float3 start, float3 end, int pathType, float goalRadius);
 	float3 GetNextWaypoint(int pathId);
 	void FreePath(int pathId);
 
-	float GetPathLength(float3 start, float3 end, int pathType);
+	float GetPathLength(float3 start, float3 end, int pathType, float goalRadius);
 
-	int GetEnemyUnits(int* unitIds, int unitIds_max);
-	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
-	int GetFriendlyUnits(int* unitIds, int unitIds_max);
-	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
-	int GetNeutralUnits(int* unitIds, int unitIds_max);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
+	int GetFriendlyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
+	int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
 
 
 	int GetMapWidth();
@@ -106,12 +124,16 @@ public:
 	float GetMaxHeight();
 	const float* GetSlopeMap();
 	const unsigned short* GetLosMap();
-	int GetLosMapResolution();
+	int GetLosMapResolution() { return -1; }          // never called, implemented in CAIAICallback
 	const unsigned short* GetRadarMap();
 	const unsigned short* GetJammerMap();
 	const unsigned char* GetMetalMap();
-	const char* GetMapName ();
-	const char* GetModName();
+	int GetMapHash() { return 0; }                    // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetMapName() { return NULL; }         // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetMapHumanName() { return NULL; }    // never called, implemented in SSkirmishAICallbackImpl
+	int GetModHash() { return 0; }                    // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetModName() { return NULL; }         // never called, implemented in SSkirmishAICallbackImpl
+	const char* GetModHumanName() { return NULL; }    // never called, implemented in SSkirmishAICallbackImpl
 
 	float GetMaxMetal() const;
 	float GetExtractorRadius() const;
@@ -138,6 +160,25 @@ public:
 	void DeleteFigureGroup(int figureGroupId);
 
 	void DrawUnit(const char* unitName, float3 pos, float rotation, int lifetime, int teamId, bool transparent, bool drawBorder, int facing);
+
+
+	bool IsDebugDrawerEnabled() const;
+	// not implemented as members, but as commands via HandleCommand
+	void DebugDrawerAddGraphPoint(int, float, float) {}
+	void DebugDrawerDelGraphPoints(int, int) {}
+	void DebugDrawerSetGraphPos(float, float) {}
+	void DebugDrawerSetGraphSize(float, float) {}
+	void DebugDrawerSetGraphLineColor(int, const float3&) {}
+	void DebugDrawerSetGraphLineLabel(int, const char*) {}
+
+	// these are also not implemented as members
+	int DebugDrawerAddOverlayTexture(const float*, int, int) { return 0; }
+	void DebugDrawerUpdateOverlayTexture(int, const float*, int, int, int, int) {}
+	void DebugDrawerDelOverlayTexture(int) {}
+	void DebugDrawerSetOverlayTexturePos(int, float, float) {}
+	void DebugDrawerSetOverlayTextureSize(int, float, float) {}
+	void DebugDrawerSetOverlayTextureLabel(int, const char*) {}
+
 
 	bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
 	float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing);
@@ -174,7 +215,7 @@ public:
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);
 
-	int GetSelectedUnits(int* unitIds, int unitIds_max);
+	int GetSelectedUnits(int* unitIds, int unitIds_max = MAX_UNITS);
 	float3 GetMousePos();
 	int GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies);
 	int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies);
@@ -198,6 +239,10 @@ public:
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
 	const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL);
+
+	// never called, implemented in SSkirmishAICallbackImpl
+	std::map<std::string, std::string> GetMyInfo() { return std::map<std::string, std::string>(); }
+	std::map<std::string, std::string> GetMyOptionValues() { return std::map<std::string, std::string>(); }
 };
 
 #endif /* AICALLBACK_H */
