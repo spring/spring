@@ -6,15 +6,14 @@
 #include <assert.h>
 #include <cstring>
 
-#include "Game/GameSetup.h"
-#include "Game/PlayerHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
-#include "Team.h"
-#include "TeamHandler.h"
-#include "GlobalConstants.h"
-#include "Util.h"
+#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "System/Util.h"
 
 
 /**
@@ -79,21 +78,12 @@ CGlobalSynced::CGlobalSynced()
 	tempNum = 2;
 	useLuaGaia = true;
 
-	// TODO: put this somewhere else (playerHandler is unsynced, even)
-	playerHandler = new CPlayerHandler();
-	try {
-		teamHandler = new CTeamHandler();
-	} catch (...) {
-		delete playerHandler;
-		playerHandler = NULL;
-	}
+	teamHandler = new CTeamHandler();
 }
 
 
 CGlobalSynced::~CGlobalSynced()
 {
-	// TODO: put this somewhere else (playerHandler is unsynced, even)
-	SafeDelete(playerHandler);
 	SafeDelete(teamHandler);
 }
 
@@ -101,14 +91,9 @@ CGlobalSynced::~CGlobalSynced()
 void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
 	noHelperAIs = !!setup->noHelperAIs;
-
 	useLuaGaia  = setup->useLuaGaia;
 
-	// TODO: this call is unsynced, technically
-	playerHandler->LoadFromSetup(setup);
-
 	skirmishAIHandler.LoadFromSetup(*setup);
-
 	teamHandler->LoadFromSetup(setup);
 }
 

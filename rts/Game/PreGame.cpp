@@ -388,6 +388,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 			setupTextFile.close();
 		}
 		gameSetup = temp;
+		gu->LoadFromSetup(gameSetup);
 		gs->LoadFromSetup(gameSetup);
 		CPlayer::UpdateControlledTeams();
 	} else {

@@ -9,8 +9,7 @@
 
 #include "GlobalUnsynced.h"
 #include "Game/GameSetup.h"
-#include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Units/Unit.h"
+#include "Game/PlayerHandler.h"
 #include "System/mmgr.h"
 #include "System/ConfigHandler.h"
 #include "System/creg/creg_cond.h"
@@ -67,13 +66,20 @@ CGlobalUnsynced::CGlobalUnsynced()
 	buildWarnings = !!configHandler->Get("BuildWarnings", 0);
 
 	directControl = NULL;
+	playerHandler = new CPlayerHandler();
+}
+
+CGlobalUnsynced::~CGlobalUnsynced()
+{
+	SafeDelete(playerHandler);
 }
 
 
 
-void CGlobalUnsynced::PostInit() {
+void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
+{
+	playerHandler->LoadFromSetup(setup);
 }
-
 
 
 
