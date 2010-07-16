@@ -10,12 +10,14 @@
 #include "GlobalUnsynced.h"
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
+#include "Sim/Units/Unit.h"
 #include "System/mmgr.h"
 #include "System/ConfigHandler.h"
+#include "System/Util.h"
 #include "System/creg/creg_cond.h"
 
 #include <string>
-#include <assert.h>
+#include <cassert>
 #include <SDL_timer.h>
 
 
