@@ -62,11 +62,11 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos, int xpart,
 	texy = projectileDrawer->sphereparttex->ystart + (projectileDrawer->sphereparttex->yend - projectileDrawer->sphereparttex->ystart) * 0.5f;
 }
 
-CSpherePartProjectile::~CSpherePartProjectile(void)
+CSpherePartProjectile::~CSpherePartProjectile()
 {
 }
 
-void CSpherePartProjectile::Update(void)
+void CSpherePartProjectile::Update()
 {
 	age++;
 	if(age>=ttl)
@@ -75,7 +75,7 @@ void CSpherePartProjectile::Update(void)
 	pos=centerPos+vectors[12]*sphereSize;
 }
 
-void CSpherePartProjectile::Draw(void)
+void CSpherePartProjectile::Draw()
 {
 	unsigned char col[4];
 	va->EnlargeArrays(4*4*4,0,VA_SIZE_TC);
@@ -118,7 +118,11 @@ void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float
 }
 
 CSpherePartSpawner::CSpherePartSpawner()
-:	CProjectile()
+	: CProjectile()
+	, alpha(0.0f)
+	, ttl(0)
+	, expansionSpeed(0.0f)
+	, color(ZeroVector)
 {
 }
 
@@ -138,7 +142,7 @@ CR_REG_METADATA(CSpherePartSpawner,
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
-void CSpherePartSpawner::Init(const float3& pos, CUnit *owner)
+void CSpherePartSpawner::Init(const float3& pos, CUnit* owner)
 {
 	CProjectile::Init(pos, owner);
 	deleteMe = true;

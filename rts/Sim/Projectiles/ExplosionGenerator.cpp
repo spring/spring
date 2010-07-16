@@ -176,16 +176,11 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
                                        float radius, CUnit *owner,float gfxMod,
                                        CUnit *hit, const float3 &dir)
 {
-	float h2 = ground->GetHeight2(pos.x, pos.z);
-	float height = pos.y - h2;
+	const float h2 = ground->GetHeight2(pos.x, pos.z);
+	const float height = max(0.0f, pos.y - h2);
 
-	if (height < 0.0f) {
-		height = 0.0f;
-	}
-
-	bool waterExplosion = (h2 < -3.0f);
-	bool uwExplosion = (pos.y < -15.0f);
-	bool airExplosion = (pos.y - max(0.0f, h2) > 20.0f);
+	const bool waterExplosion = (h2 < -3.0f);
+	const bool uwExplosion = (pos.y < -15.0f);
 
 	damage = damage / 20.0f;
 
@@ -197,7 +192,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 
 
 	float3 camVect = camera->pos - pos;
-	float camLength = camVect.Length();
+	const float camLength = camVect.Length();
 	float moveLength = radius * 0.03f;
 
 	if (camLength > 0.0f) { camVect /= camLength; }
@@ -208,6 +203,8 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrt(damage) * 0.5f, 7 + damage * 2.8f, owner);
 
 	if (ph->particleSaturation < 1.0f) {
+		const bool airExplosion = (pos.y - max(0.0f, h2) > 20.0f);
+
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage = damage;
 

@@ -345,13 +345,13 @@ void CMissileProjectile::UpdateGroundBounce() {
 void CMissileProjectile::Draw(void)
 {
 	inArray = true;
-	float age2 = (age & 7) + globalRendering->timeOffset;
+	const float age2 = (age & 7) + globalRendering->timeOffset;
 
-	float color = 0.6f;
 	unsigned char col[4];
 
 	va->EnlargeArrays(8+4*numParts,0,VA_SIZE_TC);
 	if (weaponDef->visuals.smokeTrail) {
+		const float color = 0.6f;
 		if (drawTrail) {
 			// draw the trail as a single quad
 			float3 dif(drawPos - camera->pos);
@@ -365,11 +365,11 @@ void CMissileProjectile::Draw(void)
 
 			float a1 = (1.0f / (Smoke_Time)) * 255;
 			a1 *= 0.7f + fabs(dif.dot(dir));
-			float alpha = std::min(255.0f, std::max(0.0f, a1));
-			col[0] = (unsigned char) (color * alpha);
-			col[1] = (unsigned char) (color * alpha);
-			col[2] = (unsigned char) (color * alpha);
-			col[3] = (unsigned char) alpha;
+			const float alpha1 = std::min(255.0f, std::max(0.0f, a1));
+			col[0] = (unsigned char) (color * alpha1);
+			col[1] = (unsigned char) (color * alpha1);
+			col[2] = (unsigned char) (color * alpha1);
+			col[3] = (unsigned char) alpha1;
 
 			unsigned char col2[4];
 			float a2 = (1 - float(age2) / (Smoke_Time)) * 255;
@@ -378,15 +378,15 @@ void CMissileProjectile::Draw(void)
 				a2 = 0;
 
 			a2 *= 0.7f + fabs(dif2.dot(oldDir));
-			alpha = std::min(255.0f, std::max(0.0f, a2));
-			col2[0] = (unsigned char) (color * alpha);
-			col2[1] = (unsigned char) (color * alpha);
-			col2[2] = (unsigned char) (color * alpha);
-			col2[3] = (unsigned char) alpha;
+			const float alpha2 = std::min(255.0f, std::max(0.0f, a2));
+			col2[0] = (unsigned char) (color * alpha2);
+			col2[1] = (unsigned char) (color * alpha2);
+			col2[2] = (unsigned char) (color * alpha2);
+			col2[3] = (unsigned char) alpha2;
 
-			float size = 1.0f;
-			float size2 = (1 + (age2 * (1 / Smoke_Time)) * 7);
-			float txs = weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * (age2 / 8.0f);
+			const float size = 1.0f;
+			const float size2 = (1 + (age2 * (1 / Smoke_Time)) * 7);
+			const float txs = weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * (age2 / 8.0f);
 
 			va->AddVertexQTC(drawPos  - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
 			va->AddVertexQTC(drawPos  + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
@@ -394,18 +394,18 @@ void CMissileProjectile::Draw(void)
 			va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {
 			// draw the trail as particles
-			float dist = pos.distance(oldSmoke);
-			float3 dirpos1 = pos - dir * dist * 0.33f;
-			float3 dirpos2 = oldSmoke + oldDir * dist * 0.33f;
+			const float dist = pos.distance(oldSmoke);
+			const float3 dirpos1 = pos - dir * dist * 0.33f;
+			const float3 dirpos2 = oldSmoke + oldDir * dist * 0.33f;
 
 			for (int a = 0; a < numParts; ++a) { //! CAUTION: loop count must match EnlargeArrays above
-				float alpha = 255.0f;
+				const float alpha = 255.0f;
 				col[0] = (unsigned char) (color * alpha);
 				col[1] = (unsigned char) (color * alpha);
 				col[2] = (unsigned char) (color * alpha);
 				col[3] = (unsigned char) alpha;
 
-				float size = (1 + (a * (1 / Smoke_Time)) * 7);
+				const float size = (1 + (a * (1 / Smoke_Time)) * 7);
 				float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
 				#define st projectileDrawer->smoketex[0]
@@ -423,7 +423,7 @@ void CMissileProjectile::Draw(void)
 	col[1] = 210;
 	col[2] = 180;
 	col[3] = 1;
-	float fsize = radius * 0.4f;
+	const float fsize = radius * 0.4f;
 	va->AddVertexQTC(drawPos - camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
 	va->AddVertexQTC(drawPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
 	va->AddVertexQTC(drawPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
