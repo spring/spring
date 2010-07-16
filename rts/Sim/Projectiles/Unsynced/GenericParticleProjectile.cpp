@@ -26,12 +26,23 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_RESERVED(8)
 	));
 
-CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner) :
-	CProjectile(pos, speed, owner, false, false, false)
+CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner)
+	: CProjectile(pos, speed, owner, false, false, false)
+	, gravity(ZeroVector)
+	, texture(NULL)
+	, colorMap(NULL)
+	, directional(false)
+	, life(0.0f)
+	, decayrate(0.0f)
+	, size(0.0f)
+	, airdrag(0.0f)
+	, sizeGrowth(0.0f)
+	, sizeMod(0.0f)
 {
-	deleteMe  = false;
-	checkCol  = false;
+	// set fields from super-classes
 	useAirLos = true;
+	checkCol  = false;
+	deleteMe  = false;
 }
 
 CGenericParticleProjectile::~CGenericParticleProjectile(void)

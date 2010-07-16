@@ -307,17 +307,17 @@ void CStarburstProjectile::Draw(void)
 	inArray = true;
 	float age2 = (age & 7) + globalRendering->timeOffset;
 
-	float color=0.7f;
 	unsigned char col[4];
 	unsigned char col2[4];
 
 	if (weaponDef->visuals.smokeTrail) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-		int curNumParts = *(volatile int *)&numParts;
+		const int curNumParts = *(volatile int *)&numParts;
 #else
-		int curNumParts = numParts;
+		const int curNumParts = numParts;
 #endif
 		va->EnlargeArrays(4+4*curNumParts,0,VA_SIZE_TC);
+		const float color = 0.7f;
 		if(drawTrail){		//draw the trail as a single quad
 
 			float3 dif(drawPos-camera->pos);
@@ -332,21 +332,21 @@ void CStarburstProjectile::Draw(void)
 
 			float a1=(1-float(0)/(Smoke_Time))*255;
 			a1*=0.7f+fabs(dif.dot(dir));
-			int alpha = std::min(255, (int) std::max(0.f,a1));
-			col[0]=(unsigned char) (color*alpha);
-			col[1]=(unsigned char) (color*alpha);
-			col[2]=(unsigned char) (color*alpha);
-			col[3]=(unsigned char)alpha;
+			const int alpha1 = std::min(255, (int) std::max(0.f,a1));
+			col[0]=(unsigned char) (color*alpha1);
+			col[1]=(unsigned char) (color*alpha1);
+			col[2]=(unsigned char) (color*alpha1);
+			col[3]=(unsigned char)alpha1;
 
 			float a2=(1-float(age2)/(Smoke_Time))*255;
 			a2*=0.7f+fabs(dif2.dot(oldSmokeDir));
 			if(age<8)
 				a2=0;
-			alpha = std::min(255, (int) std::max(0.f,a2));
-			col2[0]=(unsigned char) (color*alpha);
-			col2[1]=(unsigned char) (color*alpha);
-			col2[2]=(unsigned char) (color*alpha);
-			col2[3]=(unsigned char)alpha;
+			const int alpha2 = std::min(255, (int) std::max(0.f,a2));
+			col2[0]=(unsigned char) (color*alpha2);
+			col2[1]=(unsigned char) (color*alpha2);
+			col2[2]=(unsigned char) (color*alpha2);
+			col2[3]=(unsigned char)alpha2;
 
 			const float size = 1.0f;
 			const float size2 = (1.0f + age2 * (1.0f / Smoke_Time) * 7.0f);
@@ -361,9 +361,9 @@ void CStarburstProjectile::Draw(void)
 			va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
 			va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 		} else {	//draw the trail as particles
-			float dist=pos.distance(oldSmoke);
-			float3 dirpos1=pos-dir*dist*0.33f;
-			float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33f;
+			const float dist = pos.distance(oldSmoke);
+			const float3 dirpos1 = pos-dir * dist * 0.33f;
+			const float3 dirpos2 = oldSmoke + oldSmokeDir * dist * 0.33f;
 
 			for (int a = 0; a < curNumParts; ++a) {
 				//! CAUTION: loop count must match EnlargeArrays above

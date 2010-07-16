@@ -66,30 +66,41 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
-: locked(false), activeButton(-1), wasLocked(false)
+	: hardwareCursor(false)
+	, lastx(300)
+	, lasty(200)
+	, hide(true)
+	, hwHide(true)
+	, locked(false)
+	, invertMouse(false)
+	, doubleClickTime(0.0f)
+	, scrollWheelSpeed(0.0f)
+	, dragScrollThreshold(0.0f)
+	, crossSize(0.0f)
+	, crossAlpha(0.0f)
+	, crossMoveScale(0.0f)
+	, activeButton(-1)
+	, dir(ZeroVector)
+	, soundMultiselID(0)
+	, cursorScale(1.0f)
+	, cursorText("")
+	, currentCursor(NULL)
+	, wasLocked(false)
+	, scrollx(0.0f)
+	, scrolly(0.0f)
 {
-	lastx = 300;
-	lasty = 200;
-	hide = true;
-	hwHide = true;
-	currentCursor = NULL;
-
 	for (int a = 1; a <= NUM_BUTTONS; a++) {
 		buttons[a].pressed = false;
 		buttons[a].lastRelease = -20;
 		buttons[a].movement = 0;
 	}
 
-	cursorScale = 1.0f;
-
 	LoadCursors();
 
 	//! hide the cursor until we are ingame (hide it during loading screen etc.)
 	SDL_ShowCursor(SDL_DISABLE);
 
-#ifdef __APPLE__
-	hardwareCursor = false;
-#else
+#ifndef __APPLE__
 	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
 #endif
 

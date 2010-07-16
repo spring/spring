@@ -70,7 +70,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	flyState(FLY_CRUISING),
 	dontCheckCol(false),
 	bankingAllowed(true),
-
+	orgWantedHeight(0.0f),
 	circlingPos(ZeroVector),
 	goalDistance(1),
 	waitCounter(0),
