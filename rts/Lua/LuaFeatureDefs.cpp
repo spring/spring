@@ -1,7 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaFeatureDefs.cpp: implementation of the LuaFeatureDefs class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <set>
 #include <string>
@@ -9,8 +9,6 @@
 #include <set>
 #include <map>
 #include <cctype>
-
-#include "mmgr.h"
 
 #include "LuaFeatureDefs.h"
 
@@ -20,11 +18,12 @@
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystem.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 
 using namespace std;
 
@@ -275,7 +274,7 @@ static int FeatureDefNewIndex(lua_State* L)
 
 static int FeatureDefMetatable(lua_State* L)
 {
-	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
+	/*const void* userData =*/ lua_touserdata(L, lua_upvalueindex(1));
 	//const FeatureDef* fd = (const FeatureDef*)userData;
 	return 0;
 }
@@ -409,15 +408,15 @@ static int ModelRadius(lua_State* L, const void* data)
 
 //TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
 //TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
-TYPE_MODEL_FUNC(Minx,   minx);
+TYPE_MODEL_FUNC(Minx,   mins.x);
 TYPE_MODEL_FUNC(Midx,   relMidPos.x);
-TYPE_MODEL_FUNC(Maxx,   maxx);
-TYPE_MODEL_FUNC(Miny,   miny);
+TYPE_MODEL_FUNC(Maxx,   maxs.x);
+TYPE_MODEL_FUNC(Miny,   mins.y);
 TYPE_MODEL_FUNC(Midy,   relMidPos.y);
-TYPE_MODEL_FUNC(Maxy,   maxy);
-TYPE_MODEL_FUNC(Minz,   minz);
+TYPE_MODEL_FUNC(Maxy,   maxs.y);
+TYPE_MODEL_FUNC(Minz,   mins.z);
 TYPE_MODEL_FUNC(Midz,   relMidPos.z);
-TYPE_MODEL_FUNC(Maxz,   maxz);
+TYPE_MODEL_FUNC(Maxz,   maxs.z);
 
 
 /******************************************************************************/

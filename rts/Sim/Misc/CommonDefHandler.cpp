@@ -1,8 +1,10 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "CommonDefHandler.h"
 
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "LogOutput.h"
 
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)

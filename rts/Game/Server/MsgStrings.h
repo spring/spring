@@ -1,5 +1,7 @@
-#ifndef SERVERMSGSTRINGS_H_
-#define SERVERMSGSTRINGS_H_
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef _SERVER_MSG_STRINGS_H_
+#define _SERVER_MSG_STRINGS_H_
 
 #include <string>
 
@@ -17,7 +19,7 @@ const std::string NoSyncResponse = "Error: Player %s did not send sync checksum 
 const std::string SyncError = "Sync error for %s in frame %d (%x)";
 const std::string NoSyncCheck = "Warning: Sync checking disabled!";
 
-const std::string ConnectionReject = "Connection attempt rejected (Message ID: %d Network version: %d Datalength: %d)";
+const std::string ConnectionReject = "Connection attempt rejected: %s (Message ID: %d Network version: %d Datalength: %d)";
 const std::string WrongPlayer = "Got message %d from %d claiming to be from %d";
 const std::string PlayerJoined = "%s %s finished loading and is now ingame";
 const std::string PlayerLeft = "%s %s left the game: %s";
@@ -33,4 +35,5 @@ const std::string UnknownNetmsg = "Unhandled net msg (%d) in server from %d";
 
 const std::string CommandNotAllowed = "Player %d is not allowed to execute command %s";
 
-#endif /*SERVERMSGSTRINGS_H_*/
+#endif // _SERVER_MSG_STRINGS_H_
+

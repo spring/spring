@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef _MSC_VER
 #	include "StdAfx.h"
 #elif defined(_WIN32)
@@ -21,11 +23,14 @@
 
 #include "Game/GameData.h"
 #include "LogOutput.h"
-#include "DemoRecorder.h"
 #include "GlobalUnsynced.h"
+#include "ConfigHandler.h"
+#include "LoadSave/DemoRecorder.h"
+#include "lib/gml/gml.h"
+#include "Net/UnpackPacket.h"
 
 
-CNetProtocol::CNetProtocol()
+CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
 {
 }
 
@@ -35,15 +40,33 @@ CNetProtocol::~CNetProtocol()
 	logOutput.Print(serverConn->Statistics());
 }
 
-void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
+void CNetProtocol::InitClient(const char *server_addr, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
+	int sourceport = configHandler->Get("SourcePort", 0);
+	
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sourceport, server_addr, portnum);
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);
 	
 	logOutput.Print("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
+}
+
+void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string& myPasswd, const std::string& myVersion) {
+	GML_STDMUTEX_LOCK(net); // AttemptReconnect
+
+	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
+	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, true));
+	conn->Flush(true);
+
+	logOutput.Print("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection &>(*serverConn).GetReconnectSecs());
+
+	delete conn;
+}
+
+bool CNetProtocol::NeedsReconnect() {
+	return serverConn->NeedsReconnect();
 }
 
 void CNetProtocol::InitLocalClient()
@@ -56,9 +79,8 @@ void CNetProtocol::InitLocalClient()
 	logOutput.Print("Connecting to local server");
 }
 
-bool CNetProtocol::Active() const
-{
-	return !serverConn->CheckTimeout();
+bool CNetProtocol::CheckTimeout(int nsecs, bool initial) const {
+	return serverConn->CheckTimeout(nsecs, initial);
 }
 
 bool CNetProtocol::Connected() const
@@ -88,12 +110,17 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 		if (record) {
 			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
 		}
-		else if (ret->data[0] == NETMSG_GAMEDATA) {
-			logOutput.Print("Starting demo recording");
-			GameData gd(ret);
-			record.reset(new CDemoRecorder());
-			record->WriteSetupText(gd.GetSetup());
-			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
+		else if (ret->data[0] == NETMSG_GAMEDATA && !disableDemo) {
+			try {
+				GameData gd(ret);
+
+				logOutput.Print("Starting demo recording");
+				record.reset(new CDemoRecorder());
+				record->WriteSetupText(gd.GetSetup());
+				record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
+			} catch (netcode::UnpackPacketException &e) {
+				logOutput.Print("Invalid GameData received: %s", e.err.c_str());
+			}
 		}
 	}
 
@@ -128,6 +155,11 @@ void CNetProtocol::Update()
 	GML_STDMUTEX_LOCK(net); // Update
 
 	serverConn->Update();
+}
+
+void CNetProtocol::DisableDemoRecording()
+{
+	disableDemo = true;
 }
 
 CNetProtocol* net=0;

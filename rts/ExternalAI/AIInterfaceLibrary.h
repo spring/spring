@@ -1,22 +1,7 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#ifndef _AIINTERFACELIBRARY_H
-#define	_AIINTERFACELIBRARY_H
+#ifndef _AI_INTERFACE_LIBRARY_H
+#define _AI_INTERFACE_LIBRARY_H
 
 #include "Platform/SharedLib.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"
@@ -38,11 +23,11 @@ class CSkirmishAILibraryInfo;
 class CAIInterfaceLibrary {
 public:
 	CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& info);
-	virtual ~CAIInterfaceLibrary();
+	~CAIInterfaceLibrary();
 
-	virtual AIInterfaceKey GetKey() const;
+	AIInterfaceKey GetKey() const;
 
-	virtual LevelOfSupport GetLevelOfSupportFor(
+	LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const;
 
 	/**
@@ -52,7 +37,7 @@ public:
 	 * Example: If we load one RAI and two AAIs over this interface,
 	 * the interface load counter will be three.
 	 */
-	virtual int GetLoadCount() const;
+	int GetLoadCount() const;
 
 	// Skirmish AI methods
 	/**
@@ -62,7 +47,7 @@ public:
 	 * For the C and C++ AI interface eg, this will load a shared library.
 	 * Increments the load counter.
 	 */
-	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo);
+	const CSkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo);
 	/**
 	 * @brief	unloads the Skirmish AI library
 	 * This unloads the Skirmish AI library.
@@ -71,28 +56,38 @@ public:
 	 * of that AI are still in use, as it will result in a crash.
 	 * Decrements the load counter.
 	 */
-	virtual int ReleaseSkirmishAILibrary(const SkirmishAIKey& sAISpecifier);
+	int ReleaseSkirmishAILibrary(const SkirmishAIKey& sAISpecifier);
 	/**
 	 * @brief	how many times is the Skirmish AI loaded
 	 * Thought the AI library may be loaded only once, it can be logically
 	 * loaded multiple times (load counter).
 	 */
-	virtual int GetSkirmishAILibraryLoadCount(const SkirmishAIKey& sAISpecifier) const;
+	int GetSkirmishAILibraryLoadCount(const SkirmishAIKey& sAISpecifier) const;
 	/**
 	 * @brief	is the Skirmish AI library loaded
 	 */
-	bool IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const {
-		return GetSkirmishAILibraryLoadCount(key) > 0;
-	}
+	bool IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const;
 	/**
 	 * @brief	unloads all AIs
 	 * Unloads all AI libraries currently loaded through this interface.
 	 */
-	virtual int ReleaseAllSkirmishAILibraries();
+	int ReleaseAllSkirmishAILibraries();
+
+	/**
+	 * @brief	path to the library file
+	 * Returns the path to the shared library file wrapped by this class.
+	 */
+	const std::string& GetLibraryFilePath() const;
+
+	/**
+	 * @brief	whether this interface is successfully initialized
+	 */
+	const bool IsInitialized() const;
 
 private:
 	int interfaceId;
 	struct SAIInterfaceCallback callback;
+	bool initialized;
 	void InitStatic();
 	void ReleaseStatic();
 
@@ -114,4 +109,4 @@ private:
 	std::string FindLibFile();
 };
 
-#endif // _AIINTERFACELIBRARY_H
+#endif // _AI_INTERFACE_LIBRARY_H

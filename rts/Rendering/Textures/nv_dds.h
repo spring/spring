@@ -1,4 +1,9 @@
-//Modified DDS class from NVIDIA SDK.
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+// This software contains source code provided by NVIDIA Corporation.
+// License: http://developer.download.nvidia.com/licenses/general_license.txt
+
+// Modified DDS class from NVIDIA SDK.
 
 #ifndef __NV_DDS_H__
 #define __NV_DDS_H__
@@ -332,13 +337,6 @@ namespace nv_dds
             bool m_valid;
 
             std::deque<CTexture> m_images;
-
-#ifndef __APPLE__
-            static PFNGLTEXIMAGE3DEXTPROC glTexImage3D;
-            static PFNGLCOMPRESSEDTEXIMAGE1DARBPROC glCompressedTexImage1DARB;
-            static PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB;
-            static PFNGLCOMPRESSEDTEXIMAGE3DARBPROC glCompressedTexImage3DARB;
-#endif
     };
 }
 

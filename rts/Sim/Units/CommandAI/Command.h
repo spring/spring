@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef COMMAND_H
 #define COMMAND_H
 
@@ -116,9 +118,13 @@ public:
 	unsigned int tag;
 
 	/**
-	 * Remove this command after this frame
-	 * can only be set locally, not sent over net
+	 * Remove this command after this frame (absolute).
+	 * This can only be set locally and is not sent over the network.
 	 * (used for temporary orders)
+	 * Examples:
+	 * - 0
+	 * - MAX_INT
+	 * - currenFrame + 60
 	 */
 	int timeOut;
 };

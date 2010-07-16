@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 #include "Sound.h"
@@ -7,13 +9,13 @@
 #include <alc.h>
 #include <boost/cstdint.hpp>
 
+#include "SoundLog.h"
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
-#include "AudioChannel.h"
-#include "Music.h"
+#include "IEffectChannel.h"
+#include "IMusicChannel.h"
 #include "ALShared.h"
-#include "Music.h"
 
 #include "LogOutput.h"
 #include "TimeProfiler.h"
@@ -23,9 +25,9 @@
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
 
-CSound* sound = NULL;
+#include "float3.h"
 
-CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL)
+CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
 {
 	boost::mutex::scoped_lock lck(soundMutex);
 	mute = false;
@@ -47,25 +49,25 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbor
 	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
 
-	if (maxSounds <= 0)
-	{
+	if (maxSounds <= 0) {
 		LogObject(LOG_SOUND) << "MaxSounds set to 0, sound is disabled";
-	}
-	else
+	} else {
 		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+	}
 
 	configHandler->NotifyOnChange(this);
 }
 
 CSound::~CSound()
 {
-	if (soundThread)
-	{
-		soundThread->interrupt();
+	soundThreadQuit = true;
+
+	if (soundThread) {
 		soundThread->join();
 		delete soundThread;
 		soundThread = 0;
 	}
+
 	sounds.clear();
 	SoundBuffer::Deinitialise();
 }
@@ -188,6 +190,11 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	{
 		Channels::BGMusic.SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
+	else if (key == "snd_airAbsorption")
+	{
+		const float airAbsorption = std::atof(value.c_str());
+		SoundSource::SetAirAbsorption(airAbsorption);
+	}
 	else if (key == "PitchAdjust")
 	{
 		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
@@ -259,101 +266,123 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::StartThread(int maxSounds)
 {
-	try
 	{
-		{
-			boost::mutex::scoped_lock lck(soundMutex);
-			//TODO: device choosing, like this:
-			//const ALchar* deviceName = "ALSA Software on SB Live 5.1 [SB0220] [Multichannel Playback]";
-			const ALchar* deviceName = NULL;
-			ALCdevice *device = alcOpenDevice(deviceName);
+		boost::mutex::scoped_lock lck(soundMutex);
 
-			if (device == NULL)
+		// NULL -> default device
+		const ALchar* deviceName = NULL;
+		std::string configDeviceName = "";
+
+		// we do not want to set a default for snd_device,
+		// so we do it like this ...
+		if (configHandler->IsSet("snd_device"))
+		{
+			configDeviceName = configHandler->GetString("snd_device", "YOU_SHOULD_NOT_EVER_SEE_THIS");
+			deviceName = configDeviceName.c_str();
+		}
+
+		ALCdevice* device = alcOpenDevice(deviceName);
+
+		if ((device == NULL) && (deviceName != NULL))
+		{
+			LogObject(LOG_SOUND) <<  "Could not open the sound device \""
+					<< deviceName << "\", trying the default device ...";
+			configDeviceName = "";
+			deviceName = NULL;
+			device = alcOpenDevice(deviceName);
+		}
+
+		if (device == NULL)
+		{
+			LogObject(LOG_SOUND) <<  "Could not open a sound device, disabling sounds";
+			CheckError("CSound::InitAL");
+			return;
+		}
+		else
+		{
+			ALCcontext *context = alcCreateContext(device, NULL);
+			if (context != NULL)
 			{
-				LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
-				CheckError("CSound::InitAL");
-				return;
+				alcMakeContextCurrent(context);
+				CheckError("CSound::CreateContext");
 			}
 			else
 			{
-				ALCcontext *context = alcCreateContext(device, NULL);
-				if (context != NULL)
-				{
-					alcMakeContextCurrent(context);
-					CheckError("CSound::CreateContext");
-				}
-				else
-				{
-					alcCloseDevice(device);
-					LogObject(LOG_SOUND) << "Could not create OpenAL audio context";
-					return;
-				}
+				alcCloseDevice(device);
+				LogObject(LOG_SOUND) << "Could not create OpenAL audio context";
+				return;
 			}
-
-			LogObject(LOG_SOUND) << "OpenAL info:\n";
-			LogObject(LOG_SOUND) << "  Vendor:     " << (const char*)alGetString(AL_VENDOR );
-			LogObject(LOG_SOUND) << "  Version:    " << (const char*)alGetString(AL_VERSION);
-			LogObject(LOG_SOUND) << "  Renderer:   " << (const char*)alGetString(AL_RENDERER);
-			LogObject(LOG_SOUND) << "  AL Extensions: " << (const char*)alGetString(AL_EXTENSIONS);
-			LogObject(LOG_SOUND) << "  ALC Extensions: " << (const char*)alcGetString(device, ALC_EXTENSIONS);
-			if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
-			{
-				LogObject(LOG_SOUND) << "  Device:     " << alcGetString(device, ALC_DEVICE_SPECIFIER);
-				const char *s = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
-				LogObject(LOG_SOUND) << "  Available Devices:  ";
-				while (*s != '\0')
-				{
-					LogObject(LOG_SOUND) << "                      " << s;
-					while (*s++ != '\0')
-						;
-				}
-			}
-
-			// Generate sound sources
-			for (int i = 0; i < maxSounds; i++)
-			{
-				SoundSource* thenewone = new SoundSource();
-				if (thenewone->IsValid())
-				{
-					sources.push_back(thenewone);
-				}
-				else
-				{
-					maxSounds = std::max(i-1,0);
-					LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
-					delete thenewone;
-					break;
-				}
-			}
-
-			// Set distance model (sound attenuation)
-			alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-			//alDopplerFactor(1.0);
-
-			alListenerf(AL_GAIN, masterVolume);
 		}
-		configHandler->Set("MaxSounds", maxSounds);
 
-		while (true)
+		const bool airAbsorptionSupported = alcIsExtensionPresent(device, "ALC_EXT_EFX");
+
+		LogObject(LOG_SOUND) << "OpenAL info:\n";
+		LogObject(LOG_SOUND) << "  Vendor:     " << (const char*)alGetString(AL_VENDOR );
+		LogObject(LOG_SOUND) << "  Version:    " << (const char*)alGetString(AL_VERSION);
+		LogObject(LOG_SOUND) << "  Renderer:   " << (const char*)alGetString(AL_RENDERER);
+		LogObject(LOG_SOUND) << "  AL Extensions: " << (const char*)alGetString(AL_EXTENSIONS);
+		LogObject(LOG_SOUND) << "  ALC Extensions: " << (const char*)alcGetString(device, ALC_EXTENSIONS);
+		LogObject(LOG_SOUND) << "                  ALC_EXT_EFX found (required for air absorption): " << (airAbsorptionSupported ? "yes" : "no");
+		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 		{
-			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
-			boost::mutex::scoped_lock lck(soundMutex); // lock
-			Update(); // call update
+			LogObject(LOG_SOUND) << "  Device:     " << alcGetString(device, ALC_DEVICE_SPECIFIER);
+			const char *s = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+			LogObject(LOG_SOUND) << "  Available Devices:  ";
+			while (*s != '\0')
+			{
+				LogObject(LOG_SOUND) << "                      " << s;
+				while (*s++ != '\0')
+					;
+			}
 		}
+
+		SoundSource::SetAirAbsorptionSupported(airAbsorptionSupported);
+		if (airAbsorptionSupported) {
+			const float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
+			SoundSource::SetAirAbsorption(airAbsorption);
+		}
+
+		// Generate sound sources
+		for (int i = 0; i < maxSounds; i++)
+		{
+			SoundSource* thenewone = new SoundSource();
+			if (thenewone->IsValid())
+			{
+				sources.push_back(thenewone);
+			}
+			else
+			{
+				maxSounds = std::max(i-1,0);
+				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				delete thenewone;
+				break;
+			}
+		}
+
+		// Set distance model (sound attenuation)
+		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+		//alDopplerFactor(1.0);
+
+		alListenerf(AL_GAIN, masterVolume);
 	}
-	catch(boost::thread_interrupted const&)
-	{
-		sources.clear(); // delete all sources
-		ALCcontext *curcontext = alcGetCurrentContext();
-		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
-		alcMakeContextCurrent(NULL);
-		alcDestroyContext(curcontext);
-		alcCloseDevice(curdevice);
+	configHandler->Set("MaxSounds", maxSounds);
+
+	while (!soundThreadQuit) {
+		boost::this_thread::sleep(boost::posix_time::millisec(50));
+		Update();
 	}
+
+	sources.clear(); // delete all sources
+	ALCcontext* curcontext = alcGetCurrentContext();
+	ALCdevice* curdevice = alcGetContextsDevice(curcontext);
+	alcMakeContextCurrent(NULL);
+	alcDestroyContext(curcontext);
+	alcCloseDevice(curdevice);
 }
 
 void CSound::Update()
 {
+	boost::mutex::scoped_lock lck(soundMutex); // lock
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");
@@ -412,18 +441,18 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 
-bool CSound::LoadSoundDefs(const std::string& filename)
+bool CSound::LoadSoundDefs(const std::string& fileName)
 {
 	//! can be called from LuaUnsyncedCtrl too
 	boost::mutex::scoped_lock lck(soundMutex);
 
-	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
+	LuaParser parser(fileName, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
 	parser.Execute();
 	if (!parser.IsValid())
 	{
-		LogObject(LOG_SOUND) << "Could not load " << filename << ": " << parser.GetErrorLog();
+		LogObject(LOG_SOUND) << "Could not load " << fileName << ": " << parser.GetErrorLog();
 		return false;
 	}
 	else
@@ -432,7 +461,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
 		if (!soundItemTable.IsValid())
 		{
-			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << filename;
+			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << fileName;
 			return false;
 		}
 		else
@@ -448,7 +477,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 				bufmap["name"] = name;
 				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
 				if (sit != soundItemDefs.end())
-					LogObject(LOG_SOUND) << "Sound " << name << " gets overwritten by " << filename;
+					LogObject(LOG_SOUND) << "Sound " << name << " gets overwritten by " << fileName;
 
 				soundItemDef::const_iterator inspec = bufmap.find("file");
 				if (inspec == bufmap.end())	// no file, drop
@@ -461,7 +490,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 					MakeItemFromDef(bufmap);
 				}
 			}
-			LogObject(LOG_SOUND) << " parsed " << keys.size() << " sounds from " << filename;
+			LogObject(LOG_SOUND) << " parsed " << keys.size() << " sounds from " << fileName;
 		}
 	}
 	return true;

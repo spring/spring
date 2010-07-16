@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef QUADFIELD_H
 #define QUADFIELD_H
-// QuadField.h: interface for the CQuadField class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <vector>

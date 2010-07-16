@@ -1,19 +1,4 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef _AISCOMMANDS_H
 #define	_AISCOMMANDS_H
@@ -139,8 +124,22 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
+	COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT           = 82,
+	COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS       = 83,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_POS             = 84,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE            = 85,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR      = 86,
+	COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL      = 87,
+
+	COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE       = 88,
+	COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE    = 89,
+	COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE       = 90,
+	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS   = 91,
+	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE  = 92,
+	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_LABEL = 93,
 };
-const unsigned int NUM_CMD_TOPICS                 = 82;
+
+const unsigned int NUM_CMD_TOPICS = 94;
 
 
 /**
@@ -245,6 +244,18 @@ enum UnitCommandOptions {
 		+ sizeof(struct SCustomUnitCommand) \
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
+		+ sizeof(struct SDebugDrawerAddGraphPointCommand) \
+		+ sizeof(struct SDebugDrawerDeleteGraphPointsCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphPositionCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphSizeCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphLineColorCommand) \
+		+ sizeof(struct SDebugDrawerSetGraphLineLabelCommand) \
+		+ sizeof(struct SDebugDrawerAddOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerUpdateOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerDelOverlayTextureCommand) \
+		+ sizeof(struct SDebugDrawerSetOverlayTexturePosCommand) \
+		+ sizeof(struct SDebugDrawerSetOverlayTextureSizeCommand) \
+		+ sizeof(struct SDebugDrawerSetOverlayTextureLabelCommand) \
 		)
 
 /**
@@ -346,8 +357,8 @@ struct SRemoveUnitFromGroupCommand {
 /**
  * The following functions allow the AI to use the built-in path-finder.
  *
- * - call InitPath and you get a pathid back
- * - use this to call GetNextWaypoint to get subsequent waypoints,
+ * - call InitPath and you get a pathId back
+ * - use this to call GetNextWaypoint to get subsequent waypoints;
  *   the waypoints are centered on 8*8 squares
  * - note that the pathfinder calculates the waypoints as needed,
  *   so do not retrieve them until they are needed
@@ -356,23 +367,40 @@ struct SRemoveUnitFromGroupCommand {
  *   y >= 0: worked ok
  *   y = -2: still thinking, call again
  *   y = -1: end of path reached or path is invalid
+ * - for pathType {Ground_Move=0, Hover_Move=1, Ship_Move=2},
+ *   @see UnitDef_MoveData_getMoveType()
+ * - goalRadius defines a goal area within which any square could be accepted as
+ *   path target. If a singular goal position is wanted, use 0.0f.
+ *   default: 8.0f
  */
 struct SInitPathCommand {
+	/// The starting location of the requested path
 	struct SAIFloat3 start;
+	/// The goal location of the requested path
 	struct SAIFloat3 end;
+	/// For what type of unit should the path be calculated
 	int pathType;
+	/// default: 8.0f
+	float goalRadius;
 	int ret_pathId;
 }; // COMMAND_PATH_INIT
 /**
- * Returns the approximate path cost between two points
- * This needs to calculate the complete path, so it is somewhat expensive.
- *
- * NOTE: currently disabled, always returns 0
+ * Returns the approximate path cost between two points.
+ * - for pathType {Ground_Move=0, Hover_Move=1, Ship_Move=2},
+ *   @see UnitDef_MoveData_getMoveType()
+ * - goalRadius defines a goal area within which any square could be accepted as
+ *   path target. If a singular goal position is wanted, use 0.0f.
+ *   default: 8.0f
  */
 struct SGetApproximateLengthPathCommand {
+	/// The starting location of the requested path
 	struct SAIFloat3 start;
+	/// The goal location of the requested path
 	struct SAIFloat3 end;
+	/// For what type of unit should the path be calculated
 	int pathType;
+	/// default: 8.0f
+	float goalRadius;
 	int ret_approximatePathLength;
 }; // COMMAND_PATH_GET_APPROXIMATE_LENGTH
 struct SGetNextWaypointPathCommand {
@@ -545,7 +573,7 @@ struct SBuildUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toBuildUnitDefId;
@@ -559,7 +587,7 @@ struct SStopUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_STOP
 
@@ -582,7 +610,7 @@ struct SWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_WAIT
 
@@ -591,7 +619,7 @@ struct STimeWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// the time in seconds to wait
@@ -603,7 +631,7 @@ struct SDeathWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// wait until this unit is dead
@@ -615,7 +643,7 @@ struct SSquadWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int numUnits;
@@ -626,7 +654,7 @@ struct SGatherWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_WAIT_GATHER
 
@@ -635,7 +663,7 @@ struct SMoveUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -646,7 +674,7 @@ struct SPatrolUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -657,7 +685,7 @@ struct SFightUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -668,7 +696,7 @@ struct SAttackUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toAttackUnitId;
@@ -680,7 +708,7 @@ struct SAttackAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toAttackPos;
@@ -692,7 +720,7 @@ struct SAttackAreaUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -701,7 +729,7 @@ struct SGuardUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toGuardUnitId;
@@ -712,7 +740,7 @@ struct SAiSelectUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_AI_SELECT
 
@@ -721,7 +749,7 @@ struct SAiSelectUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -730,7 +758,7 @@ struct SGroupAddUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toGroupId;
@@ -741,7 +769,7 @@ struct SGroupClearUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_GROUP_CLEAR
 
@@ -750,7 +778,7 @@ struct SRepairUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toRepairUnitId;
@@ -761,7 +789,7 @@ struct SSetFireStateUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// can be: 0=hold fire, 1=return fire, 2=fire at will
@@ -773,7 +801,7 @@ struct SSetMoveStateUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	/// 0=hold pos, 1=maneuvre, 2=roam
@@ -785,7 +813,7 @@ struct SSetBaseUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 basePos;
@@ -796,7 +824,7 @@ struct SSetBaseUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -805,7 +833,7 @@ struct SSelfDestroyUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_SELF_DESTROY
 
@@ -814,7 +842,7 @@ struct SSetWantedMaxSpeedUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	float wantedMaxSpeed;
@@ -836,7 +864,7 @@ struct SLoadUnitsAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -848,7 +876,7 @@ struct SLoadOntoUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int transporterUnitId;
@@ -859,7 +887,7 @@ struct SUnloadUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -871,7 +899,7 @@ struct SUnloadUnitsAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 toPos;
@@ -883,7 +911,7 @@ struct SSetOnOffUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	bool on;
@@ -894,9 +922,10 @@ struct SReclaimUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
+	/// if < maxUnits -> unitId, else -> featureId
 	int toReclaimUnitIdOrFeatureId;
 }; // COMMAND_UNIT_RECLAIM
 
@@ -905,7 +934,7 @@ struct SReclaimAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -917,7 +946,7 @@ struct SCloakUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	bool cloak;
@@ -928,7 +957,7 @@ struct SStockpileUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 }; // COMMAND_UNIT_STOCKPILE
 
@@ -937,7 +966,7 @@ struct SDGunUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toAttackUnitId;
@@ -948,7 +977,7 @@ struct SDGunPosUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -959,7 +988,7 @@ struct SRestoreAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -971,7 +1000,7 @@ struct SSetRepeatUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	bool repeat;
@@ -982,7 +1011,7 @@ struct SSetTrajectoryUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int trajectory;
@@ -993,7 +1022,7 @@ struct SResurrectUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toResurrectFeatureId;
@@ -1004,7 +1033,7 @@ struct SResurrectAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -1016,7 +1045,7 @@ struct SCaptureUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int toCaptureUnitId;
@@ -1027,7 +1056,7 @@ struct SCaptureAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	struct SAIFloat3 pos;
@@ -1039,7 +1068,7 @@ struct SSetAutoRepairLevelUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int autoRepairLevel;
@@ -1050,7 +1079,7 @@ struct SSetAutoRepairLevelUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	unsigned int options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	/// (frames) abort if it takes longer then this to start execution of the command
 //	int timeOut;
 //};
 
@@ -1059,7 +1088,7 @@ struct SSetIdleModeUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int idleMode;
@@ -1070,7 +1099,7 @@ struct SCustomUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	unsigned int options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/// (frames) abort if it takes longer then this to start execution of the command
 	int timeOut;
 
 	int cmdId;
@@ -1090,7 +1119,7 @@ struct STraceRayCommand {
 /**
  * Pause or unpauses the game.
  * This is meant for debugging purposes.
- * Keep in mind that pause does not happen immediatly.
+ * Keep in mind that pause does not happen immediately.
  * It can take 1-2 frames in single- and up to 10 frames in multiplayer matches.
  */
 struct SPauseCommand {
@@ -1098,6 +1127,79 @@ struct SPauseCommand {
 	/// reason for the (un-)pause, or NULL
 	const char* reason;
 }; // COMMAND_PAUSE
+
+
+
+struct SDebugDrawerAddGraphPointCommand {
+	float x;
+	float y;
+	int lineId;
+}; // COMMAND_DEBUG_DRAWER_ADD_GRAPH_POINT
+
+struct SDebugDrawerDeleteGraphPointsCommand {
+	int lineId;
+	int numPoints;
+}; // COMMAND_DEBUG_DRAWER_DELETE_GRAPH_POINTS
+
+struct SDebugDrawerSetGraphPositionCommand {
+	float x;
+	float y;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_POS
+
+struct SDebugDrawerSetGraphSizeCommand {
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_SIZE
+
+struct SDebugDrawerSetGraphLineColorCommand {
+	int lineId;
+	struct SAIFloat3 color;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_COLOR
+
+struct SDebugDrawerSetGraphLineLabelCommand {
+	int lineId;
+	const char* label;
+}; // COMMAND_DEBUG_DRAWER_SET_GRAPH_LINE_LABEL
+
+
+struct SDebugDrawerAddOverlayTextureCommand {
+	int texHandle;
+	const float* texData;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE
+
+struct SDebugDrawerUpdateOverlayTextureCommand {
+	int texHandle;
+	const float* texData;
+	int x;
+	int y;
+	int w;
+	int h;
+}; // COMMAND_DEBUG_DRAWER_UPDATE_OVERLAY_TEXTURE
+
+struct SDebugDrawerDelOverlayTextureCommand {
+	int texHandle;
+}; // COMMAND_DEBUG_DRAWER_DEL_OVERLAY_TEXTURE
+
+struct SDebugDrawerSetOverlayTexturePosCommand {
+	int texHandle;
+	float x;
+	float y;
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS
+
+struct SDebugDrawerSetOverlayTextureSizeCommand {
+	int texHandle;
+	float w;
+	float h;
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE
+
+struct SDebugDrawerSetOverlayTextureLabelCommand {
+	int texHandle;
+	const char* label;
+}; // COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_LABEL
+
+
 
 /**
  * @brief Sets default values

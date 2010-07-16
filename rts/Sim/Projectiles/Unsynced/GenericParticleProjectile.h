@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __GENERIC_PARTICLE_PROJECTILE_H__
 #define __GENERIC_PARTICLE_PROJECTILE_H__
 
@@ -9,7 +11,7 @@ class CGenericParticleProjectile : public CProjectile
 {
 	CR_DECLARE(CGenericParticleProjectile);
 public:
-	CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner GML_PARG_H);
+	CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner);
 	~CGenericParticleProjectile(void);
 
 	virtual void Update();

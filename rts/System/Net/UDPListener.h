@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef _UDPLISTENER 
 #define _UDPLISTENER
 
@@ -13,10 +15,10 @@ namespace netcode
 class UDPConnection;
 
 /**
-@brief Class for handling Connections on an UDPSocket
-Use this class if you want to use a UDPSocket to connect to more than one other clients. You can Listen for new connections, initiate new ones and send/recieve data to/from them.
-@author Karl-Robert Ernst
-*/
+ * @brief Class for handling Connections on an UDPSocket
+ * Use this class if you want to use a UDPSocket to connect to more than one other clients.
+ * You can Listen for new connections, initiate new ones and send/recieve data to/from them.
+ */
 class UDPListener : boost::noncopyable
 {
 public:

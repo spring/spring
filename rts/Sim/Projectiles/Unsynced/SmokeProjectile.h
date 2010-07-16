@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SMOKEPROJECTILE_H
 #define SMOKEPROJECTILE_H
-// SmokeProjectile.h: interface for the CSmokeProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Sim/Projectiles/Projectile.h"
 
@@ -13,9 +12,9 @@ public:
 
 	void Update();
 	void Draw();
-	void Init(const float3& pos, CUnit *owner GML_PARG_H);
+	void Init(const float3& pos, CUnit *owner);
 	CSmokeProjectile();
-	CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float color GML_PARG_H);
+	CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner,float color);
 	virtual ~CSmokeProjectile();
 
 	float color;

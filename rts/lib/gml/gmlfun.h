@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 #ifndef GMLFUN_H
 #define GMLFUN_H
@@ -12,6 +13,7 @@
 #include <set>
 #include <map>
 #include "LogOutput.h"
+#include <SDL_timer.h>
 #include <string.h>
 
 #define GML_ENABLE_DEBUG 0
@@ -315,21 +317,40 @@ EXTERN inline int gmlSizeOf(int datatype) {
 
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
+extern unsigned drawCallInTime;
 extern lua_State *gmlCurrentLuaState;
 class gmlCallDebugger {
 public:
 	bool set;
+	unsigned drawtime;
 	gmlCallDebugger(lua_State *L) { 
 		if(!gmlCurrentLuaState) {
 			gmlCurrentLuaState = L;
 			set=true;
+			if(gmlThreadNumber == 0)
+				drawtime = SDL_GetTicks();
+			else
+				drawtime = 0;
 		} 
 		else 
 			set = false;
 	}
 	~gmlCallDebugger() {
-		if(set)
+		if(set) {
 			gmlCurrentLuaState = NULL;
+			if(drawtime) {
+				drawCallInTime += (SDL_GetTicks() - drawtime);
+				drawtime = 0;
+			}
+		}
+	}
+	static unsigned getDrawCallInTime() {
+		extern volatile int gmlMultiThreadSim, gmlStartSim;
+		unsigned ret = 0;
+		if(gmlMultiThreadSim && gmlStartSim)
+			ret = drawCallInTime;
+		drawCallInTime = 0;
+		return ret;
 	}
 };
 #define GML_CURRENT_LUA() (gmlCurrentLuaState ? "LUA" : "Unknown")
@@ -343,47 +364,51 @@ public:
 #define GML_DUMMYRETVAL(rettype)\
 	rettype rdummy = (rettype)0;\
 	return rdummy;
-#define GML_DEBUG_RET(name)\
-	if(gmlThreadNumber == gmlThreadCount) {\
+#define GML_IF_SIM_THREAD_RET(thread,name)\
+	if(thread == gmlThreadCount) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRET())\
 	}
-#define GML_DEBUG_RETVAL(name, rettype)\
-	if(gmlThreadNumber == gmlThreadCount) {\
+#define GML_IF_SIM_THREAD_RETVAL(thread,name,rettype)\
+	if(thread == gmlThreadCount) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
 #define GML_ITEMLOG_PRINT() logOutput.Print("GML error: Sim thread called %s",GML_FUNCTION);
 #define GML_DUMMYRET()
 #define GML_DUMMYRETVAL(rettype)
-#define GML_DEBUG_RET(name)
-#define GML_DEBUG_RETVAL(name, rettype)
+#define GML_IF_SIM_THREAD_RET(thread,name)
+#define GML_IF_SIM_THREAD_RETVAL(thread,name,rettype)
 #endif
 
 #define GML_COND(name,...)\
-	GML_DEBUG_RET(name)\
-	GML_IF_SERVER_THREAD() {\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
 		gl##name(__VA_ARGS__);\
 		return;\
-	}
+	}\
+	GML_IF_SIM_THREAD_RET(threadnum,name)
 
 #define GML_COND0(name)\
-	GML_DEBUG_RET(name)\
-	GML_IF_SERVER_THREAD() {\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
 		gl##name();\
 		return;\
-	}
+	}\
+	GML_IF_SIM_THREAD_RET(threadnum,name)
 
 #define GML_COND_RET(name,rettype,...)\
-	GML_DEBUG_RETVAL(name,rettype)\
-	GML_IF_SERVER_THREAD() {\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
 		return gl##name(__VA_ARGS__);\
-	}
+	}\
+	GML_IF_SIM_THREAD_RETVAL(threadnum,name,rettype)
 
 #define GML_COND_RET0(name,rettype)\
-	GML_DEBUG_RETVAL(name,rettype)\
-	GML_IF_SERVER_THREAD() {\
+	int threadnum = gmlThreadNumber;\
+	GML_IF_SERVER_THREAD(threadnum) {\
 		return gl##name();\
-	}
+	}\
+	GML_IF_SIM_THREAD_RETVAL(threadnum,name,rettype)
 
 EXTERN inline void gmlSync(gmlQueue *qd) {
 	qd->SyncRequest();
@@ -404,19 +429,19 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 
 
 #if GML_ENABLE_ITEMSERVER_CHECK
-#define GML_ITEMSERVER_CHECK()\
-	if(gmlThreadNumber == gmlThreadCount) {\
+#define GML_ITEMSERVER_CHECK(thread)\
+	if(thread == gmlThreadCount) {\
 		GML_ITEMLOG_PRINT()\
 		GML_DUMMYRET()\
 	}
-#define GML_ITEMSERVER_CHECK_RET(rettype)\
-	if(gmlThreadNumber == gmlThreadCount) {\
+#define GML_ITEMSERVER_CHECK_RET(thread,rettype)\
+	if(thread == gmlThreadCount) {\
 		GML_ITEMLOG_PRINT()\
 		GML_DUMMYRETVAL(rettype)\
 	}
 #else
-#define GML_ITEMSERVER_CHECK()
-#define GML_ITEMSERVER_CHECK_RET(rettype)
+#define GML_ITEMSERVER_CHECK(thread)
+#define GML_ITEMSERVER_CHECK_RET(thread,rettype)
 #endif
 
 #define GML_MAKEFUN0(name)\
@@ -523,6 +548,18 @@ GML_FUN(void, name, tA A, tB B, tC C, tD D) {\
 	GML_MAKEASS_D()\
 	GML_UPD_POS()\
 	GML_SYNC_COND(__VA_ARGS__,)\
+}
+
+#define GML_MAKEFUN4R(name,tA,tB,tC,tD,tR)\
+	GML_MAKEDATA_D(name,tA,tB,tC,tD)\
+	GML_MAKEVAR_RET(tR)\
+GML_FUN(tR, name, tA A, tB B, tC C, tD D) {\
+	GML_COND_RET(name,tR,A,B,C,D)\
+	GML_PREP_FIXED(name)\
+	GML_MAKEASS_D()\
+	GML_UPD_POS()\
+	GML_SYNC();\
+	GML_RETVAL(tR)\
 }
 
 #define GML_MAKEFUN5(name,tA,tB,tC,tD,tE,...)\
@@ -1354,5 +1391,13 @@ GML_MAKEFUN1(ClientActiveTexture,GLenum)
 GML_MAKEFUN3(MultiTexCoord2i,GLenum,GLint,GLint,)
 GML_MAKEFUN3(GetQueryiv,GLenum,GLenum,GLint *,,GML_SYNC())
 GML_MAKEFUN2(GetBooleanv,GLenum, GLboolean *,,GML_SYNC())
+GML_MAKEFUN1(ValidateProgram,GLuint)
+GML_MAKEFUN3V(Uniform2iv,GLint,GLsizei,const GLint,GLint,2*B)
+GML_MAKEFUN3V(Uniform3iv,GLint,GLsizei,const GLint,GLint,3*B)
+GML_MAKEFUN3V(Uniform4iv,GLint,GLsizei,const GLint,GLint,4*B)
+GML_MAKEFUN3V(Uniform2fv,GLint,GLsizei,const GLfloat,GLfloat,2*B)
+GML_MAKEFUN3V(Uniform3fv,GLint,GLsizei,const GLfloat,GLfloat,3*B)
+GML_MAKEFUN3V(Uniform4fv,GLint,GLsizei,const GLfloat,GLfloat,4*B)
+GML_MAKEFUN4R(MapBufferRange,GLenum,GLintptr,GLsizeiptr,GLbitfield,GLvoid *)
 
 #endif

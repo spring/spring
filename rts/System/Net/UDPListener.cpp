@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef _MSC_VER
 #	include "StdAfx.h"
 #elif defined(_WIN32)
@@ -5,10 +7,6 @@
 #endif
 
 #include "UDPListener.h"
-
-#ifndef _MSC_VER
-#include "StdAfx.h"
-#endif
 
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -20,8 +18,10 @@
 #include "mmgr.h"
 
 #include "ProtocolDef.h"
+#include "LogOutput.h"
 #include "UDPConnection.h"
 #include "Socket.h"
+#include "Platform/errorhandler.h"
 
 namespace netcode
 {
@@ -29,25 +29,30 @@ using namespace boost::asio;
 
 UDPListener::UDPListener(int port)
 {
-	SocketPtr temp(new ip::udp::socket(netservice));
+	try {
+		SocketPtr temp(new ip::udp::socket(netservice));
 
-	boost::system::error_code err;
-	temp->open(ip::udp::v6(), err); // test v6
-	if (!err)
-	{
-		temp->bind(ip::udp::endpoint(ip::address_v6::any(), port));
-	}
-	else
-	{
-		// fallback to v4
-		temp->open(ip::udp::v4());
-		temp->bind(ip::udp::endpoint(ip::address_v4::any(), port));
-	}
-	boost::asio::socket_base::non_blocking_io command(true);
-	temp->io_control(command);
+		boost::system::error_code err;
+		temp->open(ip::udp::v6(), err); // test v6
+		if (!err)
+		{
+			temp->bind(ip::udp::endpoint(ip::address_v6::any(), port));
+		}
+		else
+		{
+			// fallback to v4
+			temp->open(ip::udp::v4());
+			temp->bind(ip::udp::endpoint(ip::address_v4::any(), port));
+		}
+		boost::asio::socket_base::non_blocking_io command(true);
+		temp->io_control(command);
 
-	mySocket = temp;
-	acceptNewConnections = true;
+		mySocket = temp;
+		acceptNewConnections = true;
+	}
+	catch(boost::system::system_error &) {
+		handleerror(NULL, "Error: Failed to initialize UDP.\nSpring may already be running.", "Network error", MBF_OK|MBF_EXCL);
+	}
 }
 
 UDPListener::~UDPListener()
@@ -109,7 +114,7 @@ void UDPListener::Update()
 			}
 			else
 			{
-				// throw it
+				LogObject() << "Dropping packet from unknown IP: [" << sender_endpoint.address() << "]:" << sender_endpoint.port();
 			}
 		}	
 	}

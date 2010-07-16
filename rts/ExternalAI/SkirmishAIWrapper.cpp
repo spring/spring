@@ -1,34 +1,20 @@
-/*
-	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-
-	This program is free software {} you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation {} either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY {} without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SkirmishAIWrapper.h"
 
 #include "System/StdAfx.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileSystemHandler.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/Util.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "ExternalAI/IGlobalAI.h"
+#include "ExternalAI/AICallback.h"
+#include "ExternalAI/AICheats.h"
 #include "ExternalAI/SkirmishAI.h"
-#include "ExternalAI/GlobalAICallback.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/SkirmishAILibraryInfo.h"
@@ -83,8 +69,9 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
 void CSkirmishAIWrapper::CreateCallback() {
 
 	if (c_callback == NULL) {
-		callback = new CGlobalAICallback(this);
-		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback);
+		callback = new CAICallback(teamId);
+		cheats = new CAICheats(this);
+		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback, cheats);
 	}
 }
 
@@ -121,7 +108,7 @@ void CSkirmishAIWrapper::PostLoad() {
 
 bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
-	ai = new CSkirmishAI(teamId, key, GetCallback());
+	ai = new CSkirmishAI(teamId, skirmishAIId, key, GetCallback());
 
 	// check if initialization went ok
 	if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId)) {
@@ -182,8 +169,6 @@ void CSkirmishAIWrapper::Init() {
 	if (ai == NULL) {
 		bool loadOk = LoadSkirmishAI(false);
 		if (!loadOk) {
-			delete ai;
-			ai = NULL;
 			return;
 		}
 	}
@@ -201,7 +186,10 @@ void CSkirmishAIWrapper::Init() {
 }
 
 void CSkirmishAIWrapper::Dieing() {
-	ai->Dieing();
+
+	if (ai != NULL) {
+		ai->Dieing();
+	}
 }
 
 void CSkirmishAIWrapper::Release(int reason) {
@@ -316,6 +304,17 @@ void CSkirmishAIWrapper::UnitGiven(int unitId, int oldTeam, int newTeam) {
 void CSkirmishAIWrapper::UnitCaptured(int unitId, int oldTeam, int newTeam) {
 	SUnitCapturedEvent evtData = {unitId, oldTeam, newTeam};
 	ai->HandleEvent(EVENT_UNIT_CAPTURED, &evtData);
+}
+
+
+void CSkirmishAIWrapper::EnemyCreated(int unitId) {
+	SEnemyCreatedEvent evtData = {unitId};
+	ai->HandleEvent(EVENT_ENEMY_CREATED, &evtData);
+}
+
+void CSkirmishAIWrapper::EnemyFinished(int unitId) {
+	SEnemyFinishedEvent evtData = {unitId};
+	ai->HandleEvent(EVENT_ENEMY_FINISHED, &evtData);
 }
 
 void CSkirmishAIWrapper::EnemyEnterLOS(int unitId) {

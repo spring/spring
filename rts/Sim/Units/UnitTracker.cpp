@@ -1,9 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "UnitTracker.h"
 #include "Unit.h"
 #include "UnitHandler.h"
+#include "Rendering/GlobalRendering.h"
 #include "Game/Camera/FPSController.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera.h"
@@ -55,7 +58,7 @@ void CUnitTracker::Disable()
 }
 
 
-int CUnitTracker::GetMode()
+int CUnitTracker::GetMode() const
 {
 	return trackMode;
 }
@@ -285,8 +288,8 @@ void CUnitTracker::SetCam()
 		return;
 	}
 
-	float deltaTime = gs->frameNum + gu->timeOffset - lastUpdateTime;
-	lastUpdateTime = gs->frameNum + gu->timeOffset;
+	float deltaTime = gs->frameNum + globalRendering->timeOffset - lastUpdateTime;
+	lastUpdateTime = gs->frameNum + globalRendering->timeOffset;
 
 	float3 modPlanePos = u->drawPos - (u->frontdir * u->radius * 3);
 	float minHeight = ground->GetHeight2(modPlanePos.x,modPlanePos.z) + (u->radius * 2);
@@ -300,7 +303,7 @@ void CUnitTracker::SetCam()
 
 	camera->pos=trackPos;
 
-	camera->forward = u->pos + (u->speed * gu->timeOffset) - camera->pos;
+	camera->forward = u->pos + (u->speed * globalRendering->timeOffset) - camera->pos;
 	camera->forward.ANormalize();
 	camera->forward += trackDir;
 	camera->forward.ANormalize();

@@ -1,13 +1,16 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "SoundBuffer.h"
 
 #include <ogg/ogg.h>
 #include <vorbis/vorbisfile.h>
 
-#include "LogOutput.h"
+#include "SoundLog.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
-#include "Platform/errorhandler.h"
-#include "Platform/byteorder.h"
+#include "System/LogOutput.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/byteorder.h"
 
 namespace
 {

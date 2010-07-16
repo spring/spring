@@ -1,11 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "System/StdAfx.h"
 
 #include "Game/Camera.h"
 #include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/HUDDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/UnitModels/3DModel.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/Weapon.h"
@@ -14,7 +17,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 
-HUDDrawer* HUDDrawer::Get()
+HUDDrawer* HUDDrawer::GetInstance()
 {
 	static HUDDrawer hud;
 	return &hud;
@@ -47,7 +50,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 	glPushMatrix();
 		glMatrixMode(GL_PROJECTION);
 			glTranslatef(-0.8f, -0.4f, 0.0f);
-			glMultMatrixd(camera->GetProjection());
+			glMultMatrixd(camera->GetProjMat());
 		glMatrixMode(GL_MODELVIEW);
 
 		glTranslatef(0.0f, 0.0f, -unit->radius);
@@ -76,7 +79,7 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
-			glScalef(0.33f, 0.33f * gu->aspectRatio, 0.33f);
+			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
 			glRotatef(unit->heading * 180.0f / 32768 + 180, 0.0f, 0.0f, 1.0f);
 
 			glColor4f(0.3f, 0.9f, 0.3f, 0.4f);
@@ -98,7 +101,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
-			glScalef(0.33f, 0.33f * gu->aspectRatio, 0.33f);
+			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
 
 			glRotatef(
 				GetHeadingFromVector(camera->forward.x, camera->forward.z) * 180.0f / 32768 + 180,
@@ -190,10 +193,10 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 	// draw the reticle in world coordinates
 	glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glMultMatrixd(camera->GetProjection());
+		glMultMatrixd(camera->GetProjMat());
 	glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glMultMatrixd(camera->GetModelview());
+		glMultMatrixd(camera->GetViewMat());
 
 	glPushMatrix();
 

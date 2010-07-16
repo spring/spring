@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 #undef glAccum
 #undef glActiveStencilFaceEXT
@@ -675,6 +676,7 @@
 #undef glMap2f
 #undef glMapBuffer
 #undef glMapBufferARB
+#undef glMapBufferRange
 #undef glMapControlPointsNV
 #undef glMapGrid1d
 #undef glMapGrid1f
@@ -2237,6 +2239,7 @@
 #define glMap2f GML_FUNCTION_NOT_IMPLEMENTED
 #define glMapBuffer GML_FUNCTION_NOT_IMPLEMENTED
 #define glMapBufferARB GML_FUNCTION_NOT_IMPLEMENTED
+#define glMapBufferRange GML_FUNCTION_NOT_IMPLEMENTED
 #define glMapControlPointsNV GML_FUNCTION_NOT_IMPLEMENTED
 #define glMapGrid1d GML_FUNCTION_NOT_IMPLEMENTED
 #define glMapGrid1f GML_FUNCTION_NOT_IMPLEMENTED

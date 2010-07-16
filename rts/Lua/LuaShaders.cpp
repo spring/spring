@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaShaders.cpp: implementation of the LuaShaders class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -798,13 +797,13 @@ int LuaShaders::UniformMatrix(lua_State* L)
 				}
 			}
 			else if (matName == "camera") {
-				UniformMatrix4dv(location, camera->GetModelview());
+				UniformMatrix4dv(location, camera->GetViewMat());
 			}
 			else if (matName == "caminv") {
-				UniformMatrix4dv(location, camera->modelviewInverse);
+				UniformMatrix4dv(location, camera->GetViewMatInv());
 			}
 			else if (matName == "camprj") {
-				UniformMatrix4dv(location, camera->GetProjection());
+				UniformMatrix4dv(location, camera->GetProjMat());
 			}
 			else {
 				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");

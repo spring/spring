@@ -1,8 +1,11 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "BitmapMuzzleFlame.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -42,7 +45,7 @@ CBitmapMuzzleFlame::~CBitmapMuzzleFlame(void)
 void CBitmapMuzzleFlame::Draw(void)
 {
 	inArray = true;
-	life = (gs->frameNum - createTime + gu->timeOffset) * invttl;
+	life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
 
 	unsigned char col[4];
 	colorMap->GetColor(col, life);
@@ -81,9 +84,9 @@ void CBitmapMuzzleFlame::Update(void)
 		deleteMe = true;
 }
 
-void CBitmapMuzzleFlame::Init(const float3 &pos, CUnit *owner GML_PARG_C)
+void CBitmapMuzzleFlame::Init(const float3 &pos, CUnit *owner)
 {
-	CProjectile::Init(pos, owner GML_PARG_P);
+	CProjectile::Init(pos, owner);
 	life = 0;
 	createTime = gs->frameNum;
 	invttl = 1.0f/(float)ttl;

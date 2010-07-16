@@ -1,6 +1,4 @@
-// WaitCommandsAI.cpp: implementation of the CWaitCommands class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -1056,7 +1054,7 @@ void CWaitCommandsAI::SquadWait::Update()
 			SendWaitCommand(unblockSet);
 			for (it = unblockSet.begin(); it != unblockSet.end(); ++it) {
 				DeleteDeathDependence(*it);
-				waitUnits.erase(it);
+				waitUnits.erase(*it);
 			}
 		}
 	}

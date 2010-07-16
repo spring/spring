@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaSyncedTable.cpp: implementation of the LuaSyncedTable class.
-//
-//////////////////////////////////////////////////////////////////////
 
 //  FIXME: it'd probably be faster overall to have a Script.NewSyncTable()
 //         available to the synced side, that checks data assignments in a
@@ -88,6 +87,20 @@ static bool WrapTable(lua_State* L)
 
 /******************************************************************************/
 
+inline static bool SafeType(lua_State* L, const int& index)
+{
+	const int t = lua_type(L, index);
+
+	return (
+		(t == LUA_TSTRING)
+	     || (t == LUA_TNUMBER)
+	     || (t == LUA_TBOOLEAN)
+	     || (t == LUA_TTABLE)
+	);
+}
+
+/******************************************************************************/
+
 static int SyncTableIndex(lua_State* L)
 {
 	lua_gettable(L, lua_upvalueindex(1));
@@ -149,19 +162,14 @@ static int Next(lua_State* L)
 	const int realTable = lua_gettop(L);
 
 	lua_pushvalue(L, 2); // push the key to the top
-	if (!lua_next(L, realTable)) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	// can not use tables as keys
-	while (lua_istable(L, -2)) {
+	lua_pushnil(L); // gets removed by lua_pop beneath!
+	do {
 		lua_pop(L, 1); // remove the value
 		if (!lua_next(L, realTable)) {
 			lua_pushnil(L);
 			return 1;
 		}
-	}
+	} while (lua_istable(L, -2) || !SafeType(L, -1));
 
 	if (lua_istable(L, -1)) {
 		WrapTable(L);
@@ -174,7 +182,7 @@ static int Next(lua_State* L)
 static int Pairs(lua_State* L)
 {
 	luaL_checktype(L, 1, LUA_TTABLE);
-	lua_pushcfunction(L, Next);	// iterator
+	lua_pushcfunction(L, Next); // iterator
 	lua_pushvalue(L, 1);        // state (table)
 	lua_pushnil(L);             // initial value
 	return 3;
@@ -195,16 +203,27 @@ static int IPairs(lua_State* L)
 		return 3;
 	}
 
-	// incrementing
-	i++;
-	lua_pushnumber(L, i);
-	lua_rawgeti(L, lua_upvalueindex(1), (int)i);
-	if (lua_isnil(L, -1)) {
-		return 0;
-	}
+	lua_pushnil(L);
+	lua_pushnil(L); // gets removed by lua_pop beneath!
+	do {
+		lua_pop(L, 2); // remove old i,v pair
+
+		// incrementing
+		i++;
+		lua_pushnumber(L, i);                        // key (i)
+		lua_rawgeti(L, lua_upvalueindex(1), (int)i); // value (v)
+
+		// no more elements left in the table
+		if (lua_isnil(L, -1)) {
+			return 1;
+		}
+	} while (!SafeType(L, -1));
+
+	// wrap tables
 	if (lua_istable(L, -1)) {
 		WrapTable(L);
 	}
+
 	return 2;
 }
 

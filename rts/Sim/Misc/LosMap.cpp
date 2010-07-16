@@ -1,4 +1,5 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 /* based on original los code in LosHandler.{cpp,h} and RadarHandler.{cpp,h} */
 
 #include "StdAfx.h"

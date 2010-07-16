@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
@@ -37,8 +39,12 @@ public:
 	virtual boost::shared_ptr<const RawPacket> GetData()=0;
 
 	virtual void Flush(const bool forced = false)=0;
-	virtual bool CheckTimeout() const = 0;
+	virtual bool CheckTimeout(int nsecs = 0, bool initial = false) const = 0;
 	
+	virtual void ReconnectTo(CConnection &conn) = 0;
+	virtual bool CanReconnect() const = 0;
+	virtual bool NeedsReconnect() = 0;
+
 	unsigned GetDataReceived() const;
 	
 	virtual std::string Statistics() const = 0;

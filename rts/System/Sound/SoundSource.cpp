@@ -1,19 +1,26 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "SoundSource.h"
 
 #include <climits>
 #include <alc.h>
 #include <SDL_timer.h>
 
+#include "SoundLog.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
 #include "OggStream.h"
 #include "ALShared.h"
 #include "float3.h"
+#include "Util.h"
 #include "LogOutput.h"
+#include "myMath.h"
 
 float SoundSource::globalPitch = 1.0;
 float SoundSource::heightAdjustedRolloffModifier = 1.0;
 float SoundSource::referenceDistance = 200.0f;
+float SoundSource::airAbsorption = AL_MIN_AIR_ABSORPTION_FACTOR;
+bool SoundSource::airAbsorptionSupported = false;
 
 struct SoundSource::StreamControl
 {
@@ -144,6 +151,9 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, item->GetGain() * volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
+	if (airAbsorptionSupported) {
+		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, airAbsorption);
+	}
 	velocity *= item->dopplerScale;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	if (item->loopTime > 0)
@@ -271,5 +281,28 @@ void SoundSource::SetVolume(float newVol)
 	if (curStream && curStream->current)
 	{
 		alSourcef(id, AL_GAIN, newVol * curStream->current->volume);
+	}
+}
+
+void SoundSource::SetAirAbsorptionSupported(bool supported)
+{
+	airAbsorptionSupported = supported;
+}
+
+void SoundSource::SetAirAbsorption(float factor)
+{
+	if (airAbsorptionSupported) {
+		airAbsorption = Clamp(factor, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);
+
+		if (airAbsorption == AL_MIN_AIR_ABSORPTION_FACTOR)
+		{
+			LogObject(LOG_SOUND) << "air absorption disabled";
+		}
+		else
+		{
+			LogObject(LOG_SOUND) << "air absorption enabled: " << airAbsorption;
+		}
+	} else {
+		LogObject(LOG_SOUND) << "air absorption not supported by the sound device in use";
 	}
 }

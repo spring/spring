@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef TEAM_BASE_H
 #define TEAM_BASE_H
 
@@ -24,6 +26,10 @@ public:
 	 * or an AI running on his computer does so.
 	 */
 	int leader;
+	/**
+	 * The team-color in RGB, with values in [0, 255].
+	 * The fourth channel (alpha) has to be 255, always.
+	 */
 	unsigned char color[4];
 	float handicap;
 	/**
@@ -33,9 +39,6 @@ public:
 	float3 startPos;
 	int teamStartNum;
 	int teamAllyteam;
-
-	float startMetal;
-	float startEnergy;
 
 	static unsigned char teamDefaultColor[10][4];
 

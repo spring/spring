@@ -69,7 +69,7 @@ FIND_PATH(OPENAL_INCLUDE_DIR al.h
 )
 
 FIND_LIBRARY(OPENAL_LIBRARY_RAW 
-  NAMES OpenAL al openal OpenAL32
+  NAMES OpenAL al openal OpenAL32 soft_oal
   HINTS
   $ENV{OPENALDIR}
   PATH_SUFFIXES lib64 lib libs64 libs libs/Win32 libs/Win64

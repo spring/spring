@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -63,10 +65,10 @@ void CTooltipConsole::Draw(void)
 		glRectf(x, y, (x + w), (y + h));
 	}
 
-	const float fontSize   = (h * gu->viewSizeY) * (smallFont->GetLineHeight() / 5.75f);
+	const float fontSize   = (h * globalRendering->viewSizeY) * (smallFont->GetLineHeight() / 5.75f);
 
 	float curX = x + 0.01f;
-	float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() / gu->viewSizeY;
+	float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() / globalRendering->viewSizeY;
 	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 
 	smallFont->Begin();
@@ -130,11 +132,7 @@ static void GetDecoyResources(const CUnit* unit,
 	}
 
 	if (active) {
-		if (ud->isMetalMaker) {
-			mMake += (ud->makesMetal * uh->metalMakerEfficiency);
-		} else {
-			mMake += ud->makesMetal;
-		}
+		mMake += ud->makesMetal;
 		if (ud->extractsMetal > 0.0f) {
 			if (rd->extractsMetal > 0.0f) {
 				mMake += unit->metalExtract * (ud->extractsMetal / rd->extractsMetal);
@@ -236,6 +234,8 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		SNPRINTF(buf, 32, DARKBLUE "  [TechLevel %i]", unit->unitDef->techLevel);
 		s += buf;
 	}
+
+	s += "\n\xff\xff\xff\xff" + teamHandler->Team(unit->team)->GetControllerName();
 
 	return s;
 }

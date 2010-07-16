@@ -1,6 +1,4 @@
-// Sky.cpp: implementation of the CAdvSky class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -10,6 +8,7 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
 #include "LogOutput.h"
@@ -66,7 +65,7 @@ CAdvSky::CAdvSky()
 	skyColor = mapInfo->atmosphere.skyColor;
 	sunColor = mapInfo->atmosphere.sunColor;
 	fogStart = mapInfo->atmosphere.fogStart;
-	if (fogStart>0.99f) gu->drawFog = false;
+	if (fogStart>0.99f) globalRendering->drawFog = false;
 
 	dynamicSky=true;
 	CreateClouds();
@@ -75,7 +74,7 @@ CAdvSky::CAdvSky()
 	InitSun();
 	oldCoverBaseX=-5;
 
-	cloudFP=LoadFragmentProgram("clouds.fp");
+	cloudFP=LoadFragmentProgram("ARB/clouds.fp");
 
 	glGetError();
 	displist=glGenLists(1);
@@ -212,11 +211,11 @@ void CAdvSky::Draw()
 	glDisable(GL_BLEND);
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
+	glFogf(GL_FOG_END,globalRendering->viewRange);
 	glFogf(GL_FOG_DENSITY,1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	} else {
 		glDisable(GL_FOG);
@@ -346,7 +345,7 @@ inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
 
 	int	yam2 = ydif[(ast - 2) & CLOUD_MASK];
 	int	yam1 = ydif[(ast - 1) & CLOUD_MASK];
-	int	yaa  = ydif[(ast) & CLOUD_MASK];
+	int	yaa  = ydif[(ast)     & CLOUD_MASK];
 	int	ap1 = (ast + 1) & CLOUD_MASK;
 
 	int	a3c = ast + a3cstart;
@@ -355,12 +354,19 @@ inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
 	for (int a = ast; a < aed; ++rc, ++ct) {
 		int yap1 = ydif[ap1] += (int) cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
 
-		int dif = (yam2 >> 2) +
-			((yam2 = yam1) >> 1) +
-			(yam1 = yaa) +
-			((yaa = yap1) >> 1) +
-			(ydif[(++ap1) &= CLOUD_MASK] >> 2);
+		ap1++;
+		ap1 = (ap1 & CLOUD_MASK);
+		int dif =
+			(yam2 >> 2) +
+			(yam1 >> 1) +
+			(yaa) +
+			(yap1 >> 1) +
+			(ydif[ap1] >> 2);
 		dif >>= 4;
+
+		yam2 = yam1;
+		yam1 = yaa;
+		yaa  = yap1;
 
 		*ct++ = 128 + dif;
 		*ct++ = thicknessTransform[(*rc) >> 7];
@@ -678,7 +684,7 @@ void CAdvSky::InitSun()
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
-		if (gu->drawFog) glEnable(GL_FOG);
+		if (globalRendering->drawFog) glEnable(GL_FOG);
 	glEndList();
 }
 
@@ -797,7 +803,7 @@ void CAdvSky::CreateDetailTex(void)
 //	SwapBuffers(hDC);
 //	SleepEx(500,true);
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	glEnable(GL_DEPTH_TEST);
 }
 

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_SCREAM_H
 #define LUA_SCREAM_H
-// LuaScream.h: interface for the LuaScream class.
-//
-//////////////////////////////////////////////////////////////////////
 
 struct lua_State;
 

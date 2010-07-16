@@ -1,6 +1,4 @@
-// Cannon.cpp: implementation of the CBombDropper class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "bombdropper.h"
@@ -119,12 +117,6 @@ void CBombDropper::FireImpl(void)
 		float size=dif.Length();
 		if(size>1.0f)
 			dif/=size*1.0f;
-		int ttl;
-		if(weaponDef->flighttime == 0) {
-			ttl = 1000;
-		} else {
-			ttl = weaponDef->flighttime;
-		}
 		new CExplosiveProjectile(weaponPos, owner->speed + dif, owner,
 				weaponDef, 1000, areaOfEffect,
 				weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity));

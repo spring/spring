@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __BUILDER_CAI_H__
 #define __BUILDER_CAI_H__
 
@@ -94,6 +96,7 @@ private:
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool ObjInBuildRange(const CWorldObject* obj) const;
 	bool OutOfImmobileRange(const Command& cmd) const;
+	void ReclaimFeature(CFeature* f);
 
 	// fix for patrolling cons repairing/resurrecting stuff that's being reclaimed
 	static void AddUnitToReclaimers(CUnit*);

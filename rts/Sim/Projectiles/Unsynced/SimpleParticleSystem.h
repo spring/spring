@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __SIMPLE_PARTICLE_SYSTEM_H__
 #define __SIMPLE_PARTICLE_SYSTEM_H__
 
@@ -16,7 +18,7 @@ public:
 
 	CSimpleParticleSystem(void);
 	virtual ~CSimpleParticleSystem(void);
-	virtual void Init(const float3& explosionPos, CUnit* owner GML_PARG_H);
+	virtual void Init(const float3& explosionPos, CUnit* owner);
 
 	float3 emitVector;
 	float3 emitMul;
@@ -70,7 +72,7 @@ public:
 	void Draw(){};
 	void Update(){};
 
-	virtual void Init(const float3& explosionPos, CUnit *owner GML_PARG_H);
+	virtual void Init(const float3& explosionPos, CUnit *owner);
 
 };
 

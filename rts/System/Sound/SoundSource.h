@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SOUNDSOURCE_H
 #define SOUNDSOURCE_H
 
@@ -9,7 +11,6 @@
 
 class float3;
 class SoundItem;
-class COggStream;
 
 /**
  * @brief One soundsource wich can play some sounds
@@ -51,6 +52,15 @@ public:
 		heightAdjustedRolloffModifier = mod > 0.0f ? mod : 0.0f;
 	};
 
+	static void SetAirAbsorptionSupported(bool supported);
+	/**
+	 * Sets the amount of air absorption.
+	 * Air absorption filters out high-frequency sounds, relative to distance.
+	 * Higher value -> filter out a lot on small distances already.
+	 * @param factor from 0.0f (disabled) till 10.0f
+	 */
+	static void SetAirAbsorption(float factor = 0.0f);
+
 private:
 	/// pitch shared by all sources
 	static float globalPitch;
@@ -63,6 +73,8 @@ private:
 	unsigned loopStop;
 	static float heightAdjustedRolloffModifier;
 	static float referenceDistance;
+	static float airAbsorption;
+	static bool airAbsorptionSupported;
 };
 
 #endif

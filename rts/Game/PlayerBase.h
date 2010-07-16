@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __PLAYER_BASE_H
 #define __PLAYER_BASE_H
 
@@ -40,21 +42,6 @@ public:
 
 private:
 	customOpts customValues;
-};
-
-/**
- * @brief Contains statistical data about a player concerning a single game.
- */
-class PlayerStatistics : public TeamControllerStatistics
-{
-public:
-	/// how many pixels the mouse has traversed in total
-	int mousePixels;
-	int mouseClicks;
-	int keyPresses;
-
-	/// Change structure from host endian to little endian or vice versa.
-	void swab();
 };
 
 #endif // __PLAYER_BASE_H

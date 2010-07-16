@@ -1,22 +1,4 @@
-/*
-	Copyright 2008  Nicolas Wu
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-	@author Nicolas Wu
-	@author Robin Vobruba <hoijui.quaero@gmail.com>
-*/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef _AISEVENTS_H
 #define _AISEVENTS_H
@@ -70,8 +52,10 @@ enum EventTopic {
 	EVENT_COMMAND_FINISHED             = 22,
 	EVENT_LOAD                         = 23,
 	EVENT_SAVE                         = 24,
+	EVENT_ENEMY_CREATED                = 25,
+	EVENT_ENEMY_FINISHED               = 26,
 };
-const unsigned int NUM_EVENTS          = 25;
+const unsigned int NUM_EVENTS          = 27;
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
@@ -99,6 +83,8 @@ const unsigned int NUM_EVENTS          = 25;
 		+ sizeof(struct SSeismicPingEvent) \
 		+ sizeof(struct SLoadEvent) \
 		+ sizeof(struct SSaveEvent) \
+		+ sizeof(struct SEnemyCreatedEvent) \
+		+ sizeof(struct SEnemyFinishedEvent) \
 		)
 
 /**
@@ -148,8 +134,8 @@ struct SMessageEvent {
 /**
  * This AI event is sent whenever a unit of this team is created, and contains
  * the created unit. Usually, the unit has only 1 HP at this time, and consists
- * only of a nano frame (-> will not accept commands yet);
- * see also the unit-finnished event.
+ * only of a nano frame (-> will not accept commands yet).
+ * See also the unit-finnished event.
  */
 struct SUnitCreatedEvent {
 	int unit;
@@ -159,7 +145,8 @@ struct SUnitCreatedEvent {
 /**
  * This AI event is sent whenever a unit is fully built, and contains the
  * finnished unit. Usually, the unit has full health at this time, and is ready
- * to accept commands; see also the unit-created event.
+ * to accept commands.
+ * See also the unit-created event.
  */
 struct SUnitFinishedEvent {
 	int unit;
@@ -192,33 +179,39 @@ struct SUnitMoveFailedEvent {
  * directly from the attacker to the attacked unit, while with artillery it will
  * rather be from somewhere up in the sky to the attacked unit.
  * See also the unit-destroyed event.
- * attacker may be 0, which means no attacker was directly involved.
- * If paralyzer is true, then damage is paralyzation damage,
- * otherwise it is real damage.
  */
 struct SUnitDamagedEvent {
 	int unit;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not visible and cheat events are off
+	 */
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
 	int weaponDefId;
+	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
 }; // EVENT_UNIT_DAMAGED
 
 /**
  * This AI event is sent when a unit was destroyed; see also the unit-damaged
  * event.
- * attacker may be 0, which means no attacker was directly involveld.
  */
 struct SUnitDestroyedEvent {
 	int unit;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not visible and cheat events are off
+	 */
 	int attacker;
 }; // EVENT_UNIT_DESTROYED
 
 /**
- * This AI event is sent when a unit changed from one team to an other either
- * because the old owner gave it to the new one, or because the new one took it
- * from the old one; see the /take command.
+ * This AI event is sent when a unit changed from one team to an other,
+ * either because the old owner gave it to the new one, or because the
+ * new one took it from the old one; see the /take command.
+ * Both giving and receiving team will get this event.
  */
 struct SUnitGivenEvent {
 	int unitId;
@@ -229,6 +222,7 @@ struct SUnitGivenEvent {
 /**
  * This AI event is sent when a unit changed from one team to an other through
  * capturing.
+ * Both giving and receiving team will get this event.
  */
 struct SUnitCapturedEvent {
 	int unitId;
@@ -273,30 +267,40 @@ struct SEnemyLeaveRadarEvent {
  * direction will point directly from the attacker to the attacked unit, while
  * with artillery it will rather be from somewhere up in the sky to the attacked
  * unit.
- * attacker may be 0, which means no attacker was directly involved.
  * See also the enemy-destroyed event.
  */
 struct SEnemyDamagedEvent {
 	int enemy;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not allied with the team receiving this event
+	 */
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
 	int weaponDefId;
+	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
 }; // EVENT_ENEMY_DAMAGED
 
 /**
  * This AI event is sent when an enemy unit was destroyed; see also the
  * enemy-damaged event.
- * attacker may be 0, which means no attacker was directly involveld.
  */
 struct SEnemyDestroyedEvent {
 	int enemy;
+	/**
+	 * may be -1, which means no attacker was directly involveld,
+	 * or the attacker is not allied with the team receiving this event
+	 */
 	int attacker;
 }; // EVENT_ENEMY_DESTROYED
 
 /**
- * This AI event is sent when a weapon is fired.
+ * This AI event is sent when certain weapons are fired.
+ * For performance reasons, it is not possible to send this event
+ * for all weapons. Therefore, it is currently only sent for manuall-fire
+ * weapons like for example the TA Commanders D-Gun or the Nuke.
  */
 struct SWeaponFiredEvent {
 	int unitId;
@@ -359,6 +363,25 @@ struct SSaveEvent {
 	/// Absolute file path, writeable
 	const char* file;
 }; // EVENT_SAVE
+
+/**
+ * This AI event is sent whenever a unit of an enemy team is created,
+ * and contains the created unit. Usually, the unit has only 1 HP at this time,
+ * and consists only of a nano frame.
+ * See also the enemy-finnished event.
+ */
+struct SEnemyCreatedEvent {
+	int enemy;
+}; // EVENT_ENEMY_CREATED
+
+/**
+ * This AI event is sent whenever an enemy unit is fully built, and contains the
+ * finnished unit. Usually, the unit has full health at this time.
+ * See also the unit-created event.
+ */
+struct SEnemyFinishedEvent {
+	int enemy;
+}; // EVENT_ENEMY_FINISHED
 
 #ifdef	__cplusplus
 } // extern "C"

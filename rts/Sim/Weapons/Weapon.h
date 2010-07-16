@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef WEAPON_H
 #define WEAPON_H
-// Weapon.h: interface for the CWeapon class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <list>
 

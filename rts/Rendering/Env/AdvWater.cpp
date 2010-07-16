@@ -1,25 +1,24 @@
-// DrawWater.cpp: implementation of the CAdvWater class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "AdvWater.h"
+#include "BaseSky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Map/ReadMap.h"
-#include "LogOutput.h"
 #include "Map/BaseGroundDrawer.h"
-#include "BaseSky.h"
-#include "Rendering/UnitModels/FeatureDrawer.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
-#include "EventHandler.h"
 #include "Map/MapInfo.h"
-#include "Exceptions.h"
+#include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/FeatureDrawer.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/UnitDrawer.h"
+#include "System/EventHandler.h"
+#include "System/Exceptions.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -90,7 +89,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	delete[] scrap;
 
 	if (loadShader)
-		waterFP=LoadFragmentProgram("water.fp");
+		waterFP=LoadFragmentProgram("ARB/water.fp");
 
 	waterSurfaceColor = mapInfo->water.surfaceColor;
 
@@ -124,9 +123,9 @@ void CAdvWater::Draw(bool useBlending)
 		return;
 
 	float3 dir,zpos;
-	float3 base=camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
-	float3 dv=camera->CalcPixelDir(gu->viewPosX,0)-camera->CalcPixelDir(gu->viewPosX,gu->viewSizeY);
-	float3 dh=camera->CalcPixelDir(gu->viewPosX+gu->viewSizeX,0)-camera->CalcPixelDir(gu->viewPosX,0);
+	float3 base=camera->CalcPixelDir(globalRendering->viewPosX,globalRendering->viewSizeY);
+	float3 dv=camera->CalcPixelDir(globalRendering->viewPosX,0)-camera->CalcPixelDir(globalRendering->viewPosX,globalRendering->viewSizeY);
+	float3 dh=camera->CalcPixelDir(globalRendering->viewPosX+globalRendering->viewSizeX,0)-camera->CalcPixelDir(globalRendering->viewPosX,0);
 
 	float3 xbase;
 	const int numDivs=20;
@@ -239,7 +238,6 @@ void CAdvWater::UpdateWater(CGame* game)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE,GL_ONE);
-	glColor3f(1,1,1);
 
 	bumpFBO.Bind();
 	glViewport(0,0,128,128);
@@ -253,43 +251,53 @@ void CAdvWater::UpdateWater(CGame* game)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	glColor3f(0.2f,0.2f,0.2f);
+
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(12, 0, VA_SIZE_T);
+
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
-	glBegin(GL_QUADS);
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0046f);glVertex3f(0,0,0);
-		glTexCoord2f(0,2+gs->frameNum*0.0046f);glVertex3f(0,1,0);
-		glTexCoord2f(2,2+gs->frameNum*0.0046f);glVertex3f(1,1,0);
-		glTexCoord2f(2,0+gs->frameNum*0.0046f);glVertex3f(1,0,0);
 
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0026f);glVertex3f(0,0,0);
-		glTexCoord2f(0,4+gs->frameNum*0.0026f);glVertex3f(0,1,0);
-		glTexCoord2f(2,4+gs->frameNum*0.0026f);glVertex3f(1,1,0);
-		glTexCoord2f(2,0+gs->frameNum*0.0026f);glVertex3f(1,0,0);
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0046f);
+	va->AddVertexQT(float3(0,1,0), 0,2+gs->frameNum*0.0046f);
+	va->AddVertexQT(float3(1,1,0), 2,2+gs->frameNum*0.0046f);
+	va->AddVertexQT(float3(1,0,0), 2,0+gs->frameNum*0.0046f);
 
-		glTexCoord2f(0,0+gs->frameNum*0.0012f);glVertex3f(0,0,0);
-		glTexCoord2f(0,8+gs->frameNum*0.0012f);glVertex3f(0,1,0);
-		glTexCoord2f(2,8+gs->frameNum*0.0012f);glVertex3f(1,1,0);
-		glTexCoord2f(2,0+gs->frameNum*0.0012f);glVertex3f(1,0,0);
-	glEnd();
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0026f);
+	va->AddVertexQT(float3(0,1,0), 0,4+gs->frameNum*0.0026f);
+	va->AddVertexQT(float3(1,1,0), 2,4+gs->frameNum*0.0026f);
+	va->AddVertexQT(float3(1,0,0), 2,0+gs->frameNum*0.0026f);
 
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0012f);
+	va->AddVertexQT(float3(0,1,0), 0,8+gs->frameNum*0.0012f);
+	va->AddVertexQT(float3(1,1,0), 2,8+gs->frameNum*0.0012f);
+	va->AddVertexQT(float3(1,0,0), 2,0+gs->frameNum*0.0012f);
+
+	va->DrawArrayT(GL_QUADS);
+
+	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
-	glBegin(GL_QUADS);
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0036f);glVertex3f(0,0,0);
-		glTexCoord2f(0,1+gs->frameNum*0.0036f);glVertex3f(0,1,0);
-		glTexCoord2f(1,1+gs->frameNum*0.0036f);glVertex3f(1,1,0);
-		glTexCoord2f(1,0+gs->frameNum*0.0036f);glVertex3f(1,0,0);
-	glEnd();
 
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0036f);
+	va->AddVertexQT(float3(0,1,0), 0,1+gs->frameNum*0.0036f);
+	va->AddVertexQT(float3(1,1,0), 1,1+gs->frameNum*0.0036f);
+	va->AddVertexQT(float3(1,0,0), 1,0+gs->frameNum*0.0036f);
+
+	va->DrawArrayT(GL_QUADS);
+
+	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
-	glBegin(GL_QUADS);
-		glColor3f(0.2f,0.2f,0.2f);
-		glTexCoord2f(0,0+gs->frameNum*0.0082f);glVertex3f(0,0,0);
-		glTexCoord2f(0,1+gs->frameNum*0.0082f);glVertex3f(0,1,0);
-		glTexCoord2f(1,1+gs->frameNum*0.0082f);glVertex3f(1,1,0);
-		glTexCoord2f(1,0+gs->frameNum*0.0082f);glVertex3f(1,0,0);
-	glEnd();
+
+	va->AddVertexQT(float3(0,0,0), 0,0+gs->frameNum*0.0082f);
+	va->AddVertexQT(float3(0,1,0), 0,1+gs->frameNum*0.0082f);
+	va->AddVertexQT(float3(1,1,0), 1,1+gs->frameNum*0.0082f);
+	va->AddVertexQT(float3(1,0,0), 1,0+gs->frameNum*0.0082f);
+
+	va->DrawArrayT(GL_QUADS);
+
+	// this fixes a memory leak on ATI cards
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glColor3f(1,1,1);
 
@@ -306,7 +314,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	glViewport(0, 0, 512, 512);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::reflectionDraw);
+	game->SetDrawMode(CGame::gameReflectionDraw);
 
 	sky->Draw();
 
@@ -318,19 +326,19 @@ void CAdvWater::UpdateWater(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(false,true);
-	featureDrawer->DrawFadeFeatures(false,true);
-	ph->Draw(true);
+	unitDrawer->DrawCloakedUnits(true);
+	featureDrawer->DrawFadeFeatures(true);
+	projectileDrawer->Draw(true);
 	eventHandler.DrawWorldReflection();
 
-	game->SetDrawMode(CGame::normalDraw);
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
 
 	FBO::Unbind();
 
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
 //	delete camera;

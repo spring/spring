@@ -1,30 +1,33 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "GlobalUnsynced.h"
 #include "ModInfo.h"
+
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
-#include "LogOutput.h"
-#include "ConfigHandler.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "Exceptions.h"
+#include "Rendering/GlobalRendering.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/Exceptions.h"
 
 
 CModInfo modInfo;
 
 
-void CModInfo::Init(const char* modname)
+void CModInfo::Init(const char* modArchive)
 {
-	filename = modname;
+	filename = modArchive;
 
-	humanName = archiveScanner->ModArchiveToModName(modname);
+	humanName = archiveScanner->NameFromArchive(modArchive);
 
-	const CArchiveScanner::ModData md = archiveScanner->ModArchiveToModData(modname);
+	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
 
 	shortName   = md.shortName;
 	version     = md.version;
@@ -54,7 +57,7 @@ void CModInfo::Init(const char* modname)
 	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);
 	if (allowTeamColors) {
 		// Load the users preference for team coloured nanospray
-		gu->teamNanospray = !!configHandler->Get("TeamNanoSpray", 1);
+		globalRendering->teamNanospray = !!configHandler->Get("TeamNanoSpray", 1);
 	}
 
 	// constructions

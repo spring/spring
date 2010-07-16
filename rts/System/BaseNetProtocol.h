@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef BASENETPROTOCOL_H
 #define BASENETPROTOCOL_H
 
@@ -10,7 +12,7 @@ namespace netcode
 {
 	class RawPacket;
 }
-class PlayerStatistics;
+struct PlayerStatistics;
 
 const unsigned char NETWORK_VERSION = 1;
 
@@ -38,6 +40,7 @@ enum NETMSG {
 	NETMSG_CHAT             = 7,  // uchar from, dest; std::string message;
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_GAMEID           = 9,  // uchar gameID[16];
+	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, boost::uint32_t checksum
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
@@ -83,13 +86,19 @@ enum NETMSG {
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
-	NETMSG_TEAMSTAT         = 60,
+	NETMSG_CUSTOM_DATA      = 55, // uchar myPlayerNum, uchar dataType, uchar dataValue
 
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
+
+	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
+	NETMSG_UNREGISTER_NETMSG= 74  // uchar myPlayerNum, uchar NETMSG
 };
 
-// action to do with NETMSG_TEAM 
+// Data types for NETMSG_CUSTOM_DATA
+#define CUSTOM_DATA_SPEEDCONTROL 0
+
+/// sub-action-types of NETMSG_TEAM
 enum TEAMMSG {
 //	TEAMMSG_NAME            = number    parameter1, ...
 	TEAMMSG_GIVEAWAY        = 1,     // team to give stuff to, team to take stuff from (player has to be leader of the team)
@@ -98,6 +107,13 @@ enum TEAMMSG {
 	TEAMMSG_TEAM_DIED       = 4,     // team which had died special note: this is sent by all players to prevent cheating
 //TODO: changing teams (to spectator, from spectator to specific team)
 //TODO: in-game allyteams
+};
+
+/// sub-action-types of NETMSG_MAPDRAW
+enum MapDrawAction {
+	MAPDRAW_POINT,
+	MAPDRAW_ERASE,
+	MAPDRAW_LINE
 };
 
 /**
@@ -111,7 +127,7 @@ public:
 	typedef unsigned char uchar;
 	typedef unsigned int uint;
 	typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
-	
+
 	static CBaseNetProtocol& Get();
 
 	PacketType SendKeyFrame(int frameNum);
@@ -122,6 +138,7 @@ public:
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	PacketType SendRandSeed(uint randSeed);
 	PacketType SendGameID(const uchar* buf);
+	PacketType SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum);
 	PacketType SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
@@ -132,9 +149,11 @@ public:
 	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);
 	PacketType SendInternalSpeed(float internalSpeed);
 	PacketType SendCPUUsage(float cpuUsage);
+	PacketType SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue);
+	PacketType SendSpeedControl(uchar myPlayerNum, int speedCtrl);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
-	PacketType SendAttemptConnect(const std::string name, const std::string& passwd, const std::string version);
+	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, bool reconnect = false);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	PacketType SendSendPlayerStat();
@@ -175,9 +194,12 @@ public:
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 
+	PacketType SendRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
+	PacketType SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
+
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);
-	PacketType SendSdCheckresponse(uchar myPlayerNum, uint64_t flop, std::vector<unsigned> checksums);
+	PacketType SendSdCheckresponse(uchar myPlayerNum, boost::uint64_t flop, std::vector<unsigned> checksums);
 	PacketType SendSdReset();
 	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
 	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);

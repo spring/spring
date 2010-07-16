@@ -1,6 +1,4 @@
-// Building.h: interface for the CBuilding class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef __BUILDING_H__
 #define __BUILDING_H__
@@ -15,7 +13,7 @@ public:
 	CR_DECLARE(CBuilding);
 
 	CBuilding();
-	virtual ~CBuilding();
+	virtual ~CBuilding() {}
 	void PostLoad();
 
 	void Init(const CUnit* builder);

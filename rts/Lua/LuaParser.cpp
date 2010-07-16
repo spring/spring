@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaParser.cpp: implementation of the LuaParser class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "LuaParser.h"
 
@@ -12,6 +11,7 @@
 #include "mmgr.h"
 
 #include "float3.h"
+#include "float4.h"
 #include "LuaInclude.h"
 
 #include "LuaIO.h"
@@ -90,7 +90,7 @@ LuaParser::LuaParser(const string& _textChunk,
 LuaParser::~LuaParser()
 {
 	if (L != NULL) {
-		lua_close(L);
+		lua_close(L); L = NULL;
 	}
 	set<LuaTable*>::iterator it;
 	for (it = tables.begin(); it != tables.end(); ++it) {
@@ -1052,9 +1052,15 @@ bool LuaTable::GetMap(map<int, string>& data) const
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isstring(L, -1)) {
-			const int    key   = lua_toint(L, -2);
-			const string value = lua_tostring(L, -1);
-			data[key] = value;
+			if (lua_isstring(L, -1)) {
+				const int    key   = lua_toint(L, -2);
+				const string value = lua_tostring(L, -1);
+				data[key] = value;
+			} else if (lua_isboolean(L, -1)) {
+				const int    key   = lua_toint(L, -2);
+				const string value = lua_toboolean(L, -1) ? "1" : "0";
+				data[key] = value;
+			}
 		}
 	}
 	return true;
@@ -1085,10 +1091,16 @@ bool LuaTable::GetMap(map<string, string>& data) const
 	}
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2) && lua_isstring(L, -1)) {
-			const string key   = lua_tostring(L, -2);
-			const string value = lua_tostring(L, -1);
-			data[key] = value;
+		if (lua_israwstring(L, -2)) {
+			if (lua_isstring(L, -1)) {
+				const string key   = lua_tostring(L, -2);
+				const string value = lua_tostring(L, -1);
+				data[key] = value;
+			} else if (lua_isboolean(L, -1)) {
+				const string key   = lua_tostring(L, -2);
+				const string value = lua_toboolean(L, -1) ? "1" : "0";
+				data[key] = value;
+			}
 		}
 	}
 	return true;
@@ -1116,6 +1128,7 @@ static bool ParseTableFloat(lua_State* L,
 }
 
 
+
 static bool ParseFloat3(lua_State* L, int index, float3& value)
 {
 	if (lua_istable(L, index)) {
@@ -1135,6 +1148,28 @@ static bool ParseFloat3(lua_State* L, int index, float3& value)
 	}
 	return false;
 }
+
+static bool ParseFloat4(lua_State* L, int index, float4& value)
+{
+	if (lua_istable(L, index)) {
+		const int table = (index > 0) ? index : lua_gettop(L) + index + 1;
+		if (ParseTableFloat(L, table, 1, value.x) &&
+		    ParseTableFloat(L, table, 2, value.y) &&
+		    ParseTableFloat(L, table, 3, value.z) &&
+		    ParseTableFloat(L, table, 4, value.w)) {
+			return true;
+		}
+	}
+	else if (lua_isstring(L, index)) {
+		const int count = sscanf(lua_tostring(L, index), "%f %f %f %f",
+		                         &value.x, &value.y, &value.z, &value.w);
+		if (count == 4) {
+			return true;
+		}
+	}
+	return false;
+}
+
 
 
 static bool ParseBoolean(lua_State* L, int index, bool& value)
@@ -1213,6 +1248,7 @@ float LuaTable::GetFloat(const string& key, float def) const
 }
 
 
+
 float3 LuaTable::GetFloat3(const string& key, const float3& def) const
 {
 	if (!PushValue(key)) {
@@ -1226,6 +1262,21 @@ float3 LuaTable::GetFloat3(const string& key, const float3& def) const
 	lua_pop(L, 1);
 	return value;
 }
+
+float4 LuaTable::GetFloat4(const string& key, const float4& def) const
+{
+	if (!PushValue(key)) {
+		return def;
+	}
+	float4 value;
+	if (!ParseFloat4(L, -1, value)) {
+		lua_pop(L, 1);
+		return def;
+	}
+	lua_pop(L, 1);
+	return value;
+}
+
 
 
 string LuaTable::GetString(const string& key, const string& def) const
@@ -1294,6 +1345,7 @@ float LuaTable::GetFloat(int key, float def) const
 }
 
 
+
 float3 LuaTable::GetFloat3(int key, const float3& def) const
 {
 	if (!PushValue(key)) {
@@ -1307,6 +1359,21 @@ float3 LuaTable::GetFloat3(int key, const float3& def) const
 	lua_pop(L, 1);
 	return value;
 }
+
+float4 LuaTable::GetFloat4(int key, const float4& def) const
+{
+	if (!PushValue(key)) {
+		return def;
+	}
+	float4 value;
+	if (!ParseFloat4(L, -1, value)) {
+		lua_pop(L, 1);
+		return def;
+	}
+	lua_pop(L, 1);
+	return value;
+}
+
 
 
 string LuaTable::GetString(int key, const string& def) const

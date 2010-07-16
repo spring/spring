@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <assert.h>
 #include "mmgr.h"
@@ -20,10 +22,8 @@ void ProfileDrawer::Enable()
 
 void ProfileDrawer::Disable()
 {
-	if (instance) {
-		delete instance;
-		instance = NULL;
-	}
+	delete instance;
+	instance = NULL;
 }
 
 static const float start_x = 0.6f;

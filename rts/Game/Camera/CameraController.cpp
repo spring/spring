@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -12,7 +14,6 @@ CCameraController::CCameraController() : pos(2000, 70, 1800)
 	// * 1.0 = 0 degree  = overview
 	// * 0.0 = 90 degree = first person
 	switchVal = configHandler->Get("UseDistToGroundForIcons", 0.95f);
-	mouseScale = configHandler->Get("FPSMouseScale", 0.01f);
 	scrollSpeed = 1;
 	fov = 45.0f;
 	enabled = true;

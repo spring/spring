@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef REPULSEGFX_H
 #define REPULSEGFX_H
 
@@ -10,7 +12,7 @@ class CRepulseGfx :
 {
 	CR_DECLARE(CRepulseGfx);
 public:
-	CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color GML_PARG_H);
+	CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color);
 	~CRepulseGfx(void);
 
 	void DependentDied(CObject* o);

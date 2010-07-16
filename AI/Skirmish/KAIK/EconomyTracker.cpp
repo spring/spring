@@ -423,10 +423,10 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 	// sum up what the builders spend
 	// find the builders that work on this unit, and sum up their spending
 
-	int unitUnderConstruction = bt->unitUnderConstruction;
+	const int unitUnderConstruction = bt->unitUnderConstruction;
 	const UnitDef* unitDef = ai->cb->GetUnitDef(unitUnderConstruction);
 	assert(unitDef != NULL);
-	int frame = ai->cb->GetCurrentFrame();
+	const int frame = ai->cb->GetCurrentFrame();
 	bt->economyUnitTracker->buildingTracker = bt;
 	// make the builder list
 	std::list<int>* builderList = 0;
@@ -607,8 +607,9 @@ void CEconomyTracker::UnitCreated(int unitID) {
 	}
 
 	const int frame = ai->cb->GetCurrentFrame();
+	const UnitDef* unitDef = ai->cb->GetUnitDef(unitID);
 
-	if (frame == 0) {
+	if (unitDef == NULL || unitDef->isCommander || unitDef->canDGun) {
 		// ignore the commander
 		return;
 	}
@@ -619,7 +620,7 @@ void CEconomyTracker::UnitCreated(int unitID) {
 	economyUnitTracker->createFrame = -frame;
 	economyUnitTracker->alive = true;
 	economyUnitTracker->category = GCAT(unitID);
-	economyUnitTracker->unitDef = ai->cb->GetUnitDef(unitID);
+	economyUnitTracker->unitDef = unitDef;
 
 	SetUnitDefDataInTracker(economyUnitTracker);
 	underConstructionEconomyUnitTrackers.push_back(economyUnitTracker);
@@ -709,9 +710,7 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker* economyUnitTra
 	energyProduction -= economyUnitTracker->unitDef->energyUpkeep;
 	metalProduction -= economyUnitTracker->unitDef->metalUpkeep;
 
-	if (economyUnitTracker->unitDef->isMetalMaker) {
-		metalProduction += economyUnitTracker->unitDef->makesMetal;
-	}
+	metalProduction += economyUnitTracker->unitDef->makesMetal;
 
 	if (economyUnitTracker->unitDef->extractsMetal) {
 		// it's a mex: must find out what it will make later on (look at the metalMap spot data?)
@@ -743,17 +742,18 @@ void CEconomyTracker::UnitFinished(int unit) {
 	if (trackerOff)
 		return;
 
-	int frame = ai->cb->GetCurrentFrame();
+	const int frame = ai->cb->GetCurrentFrame();
+	const UnitDef* unitDef = ai->cb->GetUnitDef(unit);
 
-	if (frame == 0) {
-		// add the commander to a EconomyUnitTracker
+	if (unitDef == NULL || unitDef->isCommander || unitDef->canDGun) {
+		// add the commander to an EconomyUnitTracker
 		EconomyUnitTracker * economyUnitTracker = new EconomyUnitTracker;
 		economyUnitTracker->clear();
 		economyUnitTracker->economyUnitId = unit;
 		economyUnitTracker->createFrame = frame;
 		economyUnitTracker->alive = true;
 		economyUnitTracker->category = GCAT(unit);
-		economyUnitTracker->unitDef = ai->cb->GetUnitDef(unit);
+		economyUnitTracker->unitDef = unitDef;
 		SetUnitDefDataInTracker(economyUnitTracker);
 		newEconomyUnitTrackers.push_back(economyUnitTracker);
 		return;
@@ -807,7 +807,7 @@ void CEconomyTracker::UnitDestroyed(int unit) {
 		return;
 
 	assert(ai->cb->GetUnitDef(unit) != NULL);
-	int frame = ai->cb->GetCurrentFrame();
+	const int frame = ai->cb->GetCurrentFrame();
 
 	// move the dead EconomyUnitTracker
 	bool found = false;

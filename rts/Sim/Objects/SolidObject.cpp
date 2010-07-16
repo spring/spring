@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -23,8 +25,12 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(heading),
 	CR_ENUM_MEMBER(physicalState),
 	CR_MEMBER(midPos),
+//	CR_MEMBER(drawPos),
+//	CR_MEMBER(drawMidPos),
 	CR_MEMBER(isMoving),
 	CR_MEMBER(residualImpulse),
+	CR_MEMBER(allyteam),
+	CR_MEMBER(team),
 	CR_MEMBER(mobility),
 	// can't get creg work on templates
 	CR_MEMBER(mapPos.x),
@@ -52,7 +58,9 @@ CSolidObject::CSolidObject():
 	isMarkedOnBlockingMap(false),
 	speed(0, 0, 0),
 	residualImpulse(0, 0, 0),
-	mobility(0),
+	allyteam(0),
+	team(0),
+	mobility(NULL),
 	midPos(pos),
 	curYardMap(0),
 	buildFacing(0)
@@ -61,11 +69,8 @@ CSolidObject::CSolidObject():
 }
 
 CSolidObject::~CSolidObject() {
-	if (mobility) {
-		delete mobility;
-	}
-
-	mobility = 0x0;
+	delete mobility;
+	mobility = NULL;
 	blocking = false;
 }
 

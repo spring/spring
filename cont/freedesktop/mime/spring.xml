@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+
+	<mime-type type="application/x-spring-startscript">
+		<sub-class-of type="text/plain"/>
+		<comment>Spring Start Script</comment>
+		<glob pattern="script.txt" weight="20"/>
+		<glob pattern="_script.txt" weight="20"/>
+		<magic>
+			<match value="[GAME]" type="string" offset="0"/>
+		</magic>
+	</mime-type>
+
+	<mime-type type="application/x-spring-demo">
+		<comment>Spring Demo</comment>
+		<glob pattern="*.sdf"/>
+		<magic>
+			<match value="spring demofile" type="string" offset="0:16"/>
+		</magic>
+	</mime-type>
+
+	<mime-type type="application/x-spring-sdz">
+		<sub-class-of type="application/zip"/>
+		<comment>Spring Archive</comment>
+		<glob pattern="*.sdz"/>
+	</mime-type>
+
+	<mime-type type="application/x-spring-sd7">
+		<sub-class-of type="application/x-7z-compressed"/>
+		<comment>Spring Archive</comment>
+		<glob pattern="*.sd7"/>
+	</mime-type>
+
+</mime-info>

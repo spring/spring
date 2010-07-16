@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <SDL_keysym.h>
 #include "mmgr.h"
@@ -10,7 +12,7 @@
 #include "QuitBox.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
-#include "LoadSaveHandler.h"
+#include "LoadSave/LoadSaveHandler.h"
 #include "TimeUtil.h"
 #include "FileSystem/FileSystem.h"
 #include "Sim/Misc/ModInfo.h"
@@ -257,10 +259,11 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 				saveFileName = "Saves/" + saveFileName + ".ssf";
 				if (filesystem.GetFilesize(saveFileName) == 0) {
 					logOutput.Print("Saving game to %s\n", saveFileName.c_str());
-					CLoadSaveHandler ls;
-					ls.mapName = gameSetup->mapName;
-					ls.modName = modInfo.filename;
-					ls.SaveGame(saveFileName);
+					ILoadSaveHandler* ls = ILoadSaveHandler::Create();
+					ls->mapName = gameSetup->mapName;
+					ls->modName = modInfo.filename;
+					ls->SaveGame(saveFileName);
+					delete ls;
 				} else {
 					logOutput.Print("Error: File %s already exists, game NOT saved!\n", saveFileName.c_str());
 				}

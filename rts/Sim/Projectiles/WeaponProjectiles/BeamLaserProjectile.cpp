@@ -1,11 +1,13 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "BeamLaserProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile,
@@ -27,11 +29,15 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_RESERVED(16)
 	));
 
-CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3& endPos,
-	float startAlpha, float endAlpha, const float3& color, const float3& color2,
-	CUnit* owner, float thickness, float corethickness, float flaresize,
-	const WeaponDef* weaponDef, int ttl, float decay GML_PARG_C)
-:	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
+CBeamLaserProjectile::CBeamLaserProjectile(
+	const float3& startPos, const float3& endPos,
+	float startAlpha, float endAlpha,
+	const float3& color, const float3& color2,
+	CUnit* owner,
+	float thickness, float corethickness, float flaresize,
+	const WeaponDef* weaponDef, int ttl, float decay):
+
+	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, ttl),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),
@@ -39,18 +45,20 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	flaresize(flaresize),
 	decay(decay)
 {
-	checkCol=false;
-	useAirLos=true;
+	projectileType = WEAPON_BEAMLASER_PROJECTILE;
+	checkCol = false;
+	useAirLos = true;
 
 	SetRadius(pos.distance(endPos));
 
 	if (weaponDef) {
-		midtexx = weaponDef->visuals.texture2->xstart
-				+ (weaponDef->visuals.texture2->xend
-						- weaponDef->visuals.texture2->xstart) * 0.5f;
+		midtexx =
+			(weaponDef->visuals.texture2->xstart +
+			(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * 0.5f);
 	} else {
 		midtexx=0;
 	}
+
 	corecolstart[0]=(unsigned char)(color2.x*startAlpha);
 	corecolstart[1]=(unsigned char)(color2.y*startAlpha);
 	corecolstart[2]=(unsigned char)(color2.z*startAlpha);
@@ -68,7 +76,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	kocolend[2]=(unsigned char)(color.z*endAlpha);
 	kocolend[3]=1;
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -90,7 +98,7 @@ void CBeamLaserProjectile::Update(void)
 			kocolend[i] = (unsigned char) (kocolend[i] * decay);
 		}
 
-		if (cegTag.size() > 0) {
+		if (!cegTag.empty()) {
 			ceg.Explosion(startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
 		}
 	}
@@ -102,11 +110,10 @@ void CBeamLaserProjectile::Draw(void)
 	float3 dif(pos-camera->pos);
 	float camDist=dif.Length();
 	dif/=camDist;
-	float3 dir=endPos-startPos;
-	dir.Normalize();
-	float3 dir1(dif.cross(dir));
-	dir1.Normalize();
-	float3 dir2(dif.cross(dir1));
+
+	const float3 ddir = (endPos - startPos).Normalize();
+	const float3 dir1 = (dif.cross(ddir)).Normalize();
+	const float3 dir2(dif.cross(dir1));
 
 	float size=thickness;
 	float coresize=size*corethickness;

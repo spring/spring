@@ -1,9 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_DISPLAY_LISTS_H
 #define LUA_DISPLAY_LISTS_H
-// LuaDisplayLists.h: interface for the CLuaDisplayLists class.
-//
-//////////////////////////////////////////////////////////////////////
-
 
 #include <vector>
 using std::vector;

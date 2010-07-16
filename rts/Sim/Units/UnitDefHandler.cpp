@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include <stdio.h>
 #include <algorithm>
@@ -18,10 +20,9 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "ConfigHandler.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/CategoryHandler.h"
@@ -30,7 +31,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/ISound.h"
 #include "Exceptions.h"
 
 CUnitDefHandler* unitDefHandler;
@@ -43,8 +44,6 @@ bool isblank(int c) {
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
-	weaponDefHandler = new CWeaponDefHandler();
-
 	PrintLoadMsg("Loading unit definitions");
 
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("UnitDefs");
@@ -128,25 +127,22 @@ CUnitDefHandler::~CUnitDefHandler(void)
 {
 	// delete any eventual yardmaps
 	for (int i = 1; i <= numUnitDefs; i++) {
-		UnitDef& ud = unitDefs[i];
+		UnitDef* ud = &unitDefs[i];
 		for (int u = 0; u < 4; u++) {
-			delete[] ud.yardmaps[u];
+			delete[] ud->yardmaps[u];
 		}
 
-		if (ud.buildPic) {
-			if (ud.buildPic->textureOwner) {
-				glDeleteTextures(1, &unitDefs[i].buildPic->textureID);
-			}
-			delete ud.buildPic;
-			ud.buildPic = NULL;
+		if (ud->buildPic) {
+			ud->buildPic->Free();
+			delete ud->buildPic;
+			ud->buildPic = NULL;
 		}
 
-		delete ud.collisionVolume;
-		ud.collisionVolume = NULL;
+		delete ud->collisionVolume;
+		ud->collisionVolume = NULL;
 	}
 
 	delete[] unitDefs;
-	delete weaponDefHandler;
 }
 
 
@@ -247,14 +243,8 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	ud.isCommander = udTable.GetBool("commander", false);
 
-	if (ud.isCommander) {
-		ud.metalStorage  = udTable.GetFloat("metalStorage",  gameSetup->startMetal);
-		ud.energyStorage = udTable.GetFloat("energyStorage", gameSetup->startEnergy);
-	}
-	else {
-		ud.metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
-		ud.energyStorage = udTable.GetFloat("energyStorage", 0.0f);
- 	}
+	ud.metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
+	ud.energyStorage = udTable.GetFloat("energyStorage", 0.0f);
 
 	ud.extractsMetal  = udTable.GetFloat("extractsMetal",  0.0f);
 	ud.windGenerator  = udTable.GetFloat("windGenerator",  0.0f);
@@ -272,8 +262,6 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.idleTime     = udTable.GetInt("idleTime", 600);
 
 	ud.buildangle = udTable.GetInt("buildAngle", 0);
-
-	ud.isMetalMaker = (ud.makesMetal >= 1 && ud.energyUpkeep > ud.makesMetal * 40);
 
 	ud.controlRadius = 32;
 	ud.losHeight = 20;
@@ -297,7 +285,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.losRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.losMul / (SQUARE_SIZE * (1 << modInfo.losMipLevel));
 	ud.airLosRadius = udTable.GetFloat("airSightDistance", -1.0f);
 	if (ud.airLosRadius == -1.0f) {
-		ud.airLosRadius=udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
+		ud.airLosRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	} else {
 		ud.airLosRadius = ud.airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	}
@@ -314,7 +302,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.canGuard    = udTable.GetBool("canGuard",    true);
 	ud.canRepeat   = udTable.GetBool("canRepeat",   true);
 
-	ud.builder = udTable.GetBool("builder", true);
+	ud.builder = udTable.GetBool("builder", false);
 
 	ud.canRestore = udTable.GetBool("canRestore", ud.builder);
 	ud.canRepair  = udTable.GetBool("canRepair",  ud.builder);
@@ -415,11 +403,13 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.decloakDistance  = udTable.GetFloat("minCloakDistance", 0.0f);
 	ud.decloakSpherical = udTable.GetBool("decloakSpherical", true);
 	ud.decloakOnFire    = udTable.GetBool("decloakOnFire",    true);
+	ud.cloakTimeout     = udTable.GetInt("cloakTimeout", 128);
 
 	ud.highTrajectoryType = udTable.GetInt("highTrajectory", 0);
 
 	ud.canKamikaze = udTable.GetBool("kamikaze", false);
 	ud.kamikazeDist = udTable.GetFloat("kamikazeDistance", -25.0f) + 25.0f; //we count 3d distance while ta count 2d distance so increase slightly
+	ud.kamikazeUseLOS = udTable.GetBool("kamikazeUseLOS", false);
 
 	ud.showNanoFrame = udTable.GetBool("showNanoFrame", true);
 	ud.showNanoSpray = udTable.GetBool("showNanoSpray", true);
@@ -429,7 +419,6 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	ud.floater = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
-	ud.builder = udTable.GetBool("builder", false);
 	if (ud.builder && !ud.buildSpeed) { // core anti is flagged as builder for some reason
 		ud.builder = false;
 	}
@@ -450,7 +439,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
 	ud.transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	ud.minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
-	ud.holdSteady        = udTable.GetBool("holdSteady",        true);
+	ud.holdSteady        = udTable.GetBool("holdSteady",        false);
 	ud.releaseHeld       = udTable.GetBool("releaseHeld",       false);
 	ud.cantBeTransported = udTable.GetBool("cantBeTransported", false);
 	ud.transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
@@ -496,7 +485,6 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	}
 
 	ud.categoryString = udTable.GetString("category", "");
-	ud.TEDClassString = udTable.GetString("TEDClass", "0");
 
 	ud.category = CCategoryHandler::Instance()->GetCategories(udTable.GetString("category", ""));
 	ud.noChaseCategory = CCategoryHandler::Instance()->GetCategories(udTable.GetString("noChaseCategory", ""));
@@ -603,7 +591,8 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.type = "Transport";
 	}
 	else if (ud.builder) {
-		if (ud.TEDClassString != "PLANT") {
+		if ((ud.speed > 0.0f) || ud.canfly || udTable.GetString("yardMap", "").empty()) {
+			// hubs and nano-towers need to be builders (for now)
 			ud.type = "Builder";
 		} else {
 			ud.type = "Factory";
@@ -629,7 +618,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.type = "Building";
 	}
 
-	ud.movedata = 0;
+	ud.movedata = NULL;
 	if (ud.canmove && !ud.canfly && (ud.type != "Factory")) {
 		string moveclass = StringToLower(udTable.GetString("movementClass", ""));
 		ud.movedata = moveinfo->GetMoveDataFromName(moveclass);
@@ -673,12 +662,12 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.drag = 0.005f;
 	}
 
-	std::string objectname = udTable.GetString("objectName", "");
-	if (objectname.find(".") == std::string::npos) {
-		objectname += ".3do";
+	ud.objectName = udTable.GetString("objectName", "");
+	if (ud.objectName.find(".") == std::string::npos) {
+		ud.objectName += ".3do"; // NOTE: get rid of this?
 	}
-	ud.modelDef.modelpath = "objects3d/" + objectname;
-	ud.modelDef.modelname = objectname;
+	ud.modelDef.modelPath = "objects3d/" + ud.objectName;
+	ud.modelDef.modelName = ud.objectName;
 
 	ud.scriptName = udTable.GetString("script", unitName + ".cob");
 	ud.scriptPath = "scripts/" + ud.scriptName;
@@ -715,21 +704,17 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 
 	ud.leaveTracks   = udTable.GetBool("leaveTracks", false);
+	ud.trackTypeName = udTable.GetString("trackType", "StdTank");
 	ud.trackWidth    = udTable.GetFloat("trackWidth",   32.0f);
 	ud.trackOffset   = udTable.GetFloat("trackOffset",   0.0f);
 	ud.trackStrength = udTable.GetFloat("trackStrength", 0.0f);
 	ud.trackStretch  = udTable.GetFloat("trackStretch",  1.0f);
-	if (ud.leaveTracks && groundDecals) {
-		ud.trackType = groundDecals->GetTrackType(udTable.GetString("trackType", "StdTank"));
-	}
 
 	ud.useBuildingGroundDecal = udTable.GetBool("useBuildingGroundDecal", false);
+	ud.buildingDecalTypeName = udTable.GetString("buildingGroundDecalType", "");
 	ud.buildingDecalSizeX = udTable.GetInt("buildingGroundDecalSizeX", 4);
 	ud.buildingDecalSizeY = udTable.GetInt("buildingGroundDecalSizeY", 4);
 	ud.buildingDecalDecaySpeed = udTable.GetFloat("buildingGroundDecalDecaySpeed", 0.1f);
-	if (ud.useBuildingGroundDecal && groundDecals) {
-		ud.buildingDecalType = groundDecals->GetBuildingDecalType(udTable.GetString("buildingGroundDecalType", ""));
-	}
 
 	ud.canDropFlare    = udTable.GetBool("canDropFlare", false);
 	ud.flareReloadTime = udTable.GetFloat("flareReload",     5.0f);
@@ -748,20 +733,15 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 
 	ud.modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
-
-	ud.collisionVolumeTypeStr   = udTable.GetString("collisionVolumeType", "");
-	ud.collisionVolumeScales    = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
-	ud.collisionVolumeOffsets   = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	ud.collisionVolumeTest      = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
 	ud.usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false);
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	ud.collisionVolume = new CollisionVolume(
-		ud.collisionVolumeTypeStr,
-		ud.collisionVolumeScales,
-		ud.collisionVolumeOffsets,
-		ud.collisionVolumeTest
+		udTable.GetString("collisionVolumeType", ""),
+		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
+		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
+		udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC)
 	);
 
 	if (ud.usePieceCollisionVolumes) {
@@ -792,12 +772,14 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	LuaTable sfxTable = udTable.SubTable("SFXTypes");
 	LuaTable expTable = sfxTable.SubTable("explosionGenerators");
+
 	for (int expNum = 1; expNum <= 1024; expNum++) {
-		string expsfx = expTable.GetString(expNum, "");
+		std::string expsfx = expTable.GetString(expNum, "");
+
 		if (expsfx == "") {
 			break;
 		} else {
-			ud.sfxExplGens.push_back(explGenHandler->LoadGenerator(expsfx));
+			ud.sfxExplGenNames.push_back(expsfx);
 		}
 	}
 
@@ -1003,9 +985,9 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       const std::string& texName)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = new UnitDefImage;
-	} else if (unitDef->buildPic->textureOwner) {
-		glDeleteTextures(1, &unitDef->buildPic->textureID);
+		unitDef->buildPic = new UnitDefImage();
+	} else {
+		unitDef->buildPic->Free();
 	}
 
 	CBitmap bitmap;
@@ -1026,7 +1008,6 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
-	unitImage->textureOwner = true;
 	unitImage->imageSizeX = bitmap.xsize;
 	unitImage->imageSizeY = bitmap.ysize;
 }
@@ -1036,14 +1017,13 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
                                       unsigned int texID, int xsize, int ysize)
 {
 	if (unitDef->buildPic == NULL) {
-		unitDef->buildPic = new UnitDefImage;
-	} else if (unitDef->buildPic->textureOwner) {
-		glDeleteTextures(1, &unitDef->buildPic->textureID);
+		unitDef->buildPic = new UnitDefImage();
+	} else {
+		unitDef->buildPic->Free();
 	}
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
-	unitImage->textureOwner = false;
 	unitImage->imageSizeX = xsize;
 	unitImage->imageSizeY = ysize;
 }

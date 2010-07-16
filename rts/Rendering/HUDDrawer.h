@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef HUD_DRAWER_HDR
 #define HUD_DRAWER_HDR
 
@@ -10,7 +12,7 @@ public:
 	void SetDraw(bool b) { draw = b; }
 	bool GetDraw() const { return draw; }
 
-	static HUDDrawer* Get();
+	static HUDDrawer* GetInstance();
 
 private:
 	void PushState();
@@ -25,6 +27,6 @@ private:
 	bool draw;
 };
 
-#define hudDrawer (HUDDrawer::Get())
+#define hudDrawer (HUDDrawer::GetInstance())
 
 #endif

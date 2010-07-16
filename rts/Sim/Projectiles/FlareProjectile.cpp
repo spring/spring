@@ -1,17 +1,20 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
 #include "FlareProjectile.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Game/Camera.h"
-#include "LogOutput.h"
-#include "ProjectileHandler.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponProjectiles/MissileProjectile.h"
-#include "GlobalUnsynced.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CFlareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0));
 
@@ -28,10 +31,10 @@ CR_REG_METADATA(CFlareProjectile,(
 				CR_RESERVED(8)
 				));
 
-CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame GML_PARG_C):
+CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame):
 	//! these are synced, but neither weapon nor piece
 	//! (only created by units that can drop flares)
-	CProjectile(pos, speed, owner, true, false, false GML_PARG_P),
+	CProjectile(pos, speed, owner, true, false, false),
 	activateFrame(activateFrame),
 	deathFrame(activateFrame + (owner? owner->unitDef->flareTime: 1)),
 	numSub(0),
@@ -114,12 +117,15 @@ void CFlareProjectile::Draw(void)
 
 	float rad=6.0;
 	va->EnlargeArrays(numSub*4,0,VA_SIZE_TC);
-	for(int a=0;a<numSub;++a){ //! CAUTION: loop count must match EnlargeArrays above
-		float3 interPos=subPos[a]+subSpeed[a]*gu->timeOffset;
+	for (int a = 0; a < numSub; ++a) {
+		//! CAUTION: loop count must match EnlargeArrays above
+		const float3 interPos = subPos[a] + subSpeed[a] * globalRendering->timeOffset;
 
-		va->AddVertexQTC(interPos-camera->right*rad-camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.ystart,col);
-		va->AddVertexQTC(interPos+camera->right*rad-camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.ystart,col);
-		va->AddVertexQTC(interPos+camera->right*rad+camera->up*rad,ph->flareprojectiletex.xend,ph->flareprojectiletex.yend,col);
-		va->AddVertexQTC(interPos-camera->right*rad+camera->up*rad,ph->flareprojectiletex.xstart,ph->flareprojectiletex.yend,col);
+		#define fpt projectileDrawer->flareprojectiletex
+		va->AddVertexQTC(interPos - camera->right * rad - camera->up * rad, fpt->xstart, fpt->ystart, col);
+		va->AddVertexQTC(interPos + camera->right * rad - camera->up * rad, fpt->xend,   fpt->ystart, col);
+		va->AddVertexQTC(interPos + camera->right * rad + camera->up * rad, fpt->xend,   fpt->yend,   col);
+		va->AddVertexQTC(interPos - camera->right * rad + camera->up * rad, fpt->xstart, fpt->yend,   col);
+		#undef fpt
 	}
 }

@@ -1,6 +1,6 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"     // ugh
+#include "StdAfx.h" // TODO: ugh
 #include <assert.h>
 #include "SmfMapFile.h"
 #include "mapfile.h"
@@ -11,7 +11,7 @@ using std::string;
 
 
 CSmfMapFile::CSmfMapFile(const string& mapname)
-	: ifs(string("maps/") + mapname), featureFileOffset(0)
+	: ifs(mapname), featureFileOffset(0)
 {
 	memset(&header, 0, sizeof(header));
 	memset(&featureHeader, 0, sizeof(featureHeader));
@@ -33,6 +33,24 @@ void CSmfMapFile::ReadMinimap(void* data)
 	ifs.Read(data, MINIMAP_SIZE);
 }
 
+int CSmfMapFile::ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel)
+{
+	int offset=0;
+	int mipsize = 1024;
+	for (unsigned i = 0; i < std::min((unsigned)MINIMAP_NUM_MIPMAP, miplevel); i++)
+	{
+		const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+		offset += size;
+		mipsize >>= 1;
+	}
+
+	const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
+	data.resize(size);
+	
+	ifs.Seek(header.minimapPtr + offset);
+	ifs.Read(&data[0], size);
+	return mipsize;
+}
 
 void CSmfMapFile::ReadHeightmap(unsigned short* heightmap)
 {

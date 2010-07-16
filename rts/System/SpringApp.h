@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef SPRING_APP
 #define SPRING_APP
 
@@ -7,6 +9,7 @@
 class BaseCmd;
 class CGameController;
 union SDL_Event;
+
 /**
  * @brief Spring App
  *
@@ -29,6 +32,7 @@ protected:
 	void UpdateOldConfigs();                        //!< Forces an update to new config defaults
 	void LoadFonts();                               //!< Initialize glFonts (font & smallFont)
 	bool SetSDLVideoMode();                         //!< Sets SDL video mode
+	void SetProcessAffinity(int) const;
 	void Shutdown();                                //!< Shuts down application
 	int Update();                                   //!< Run simulation and draw
 
@@ -69,14 +73,14 @@ protected:
 	/**
 	 * @brief window position - X
 	 *
-	 * Game window position from the left of the screen (if not fullscreen)
+	 * Game window position from the left of the screen (if not full-screen)
 	 */
 	int windowPosX;
 
 	/**
 	 * @brief window position - Y
 	 *
-	 * Game window position from the top of the screen (if not fullscreen)
+	 * Game window position from the top of the screen (if not full-screen)
 	 */
 	int windowPosY;
 
@@ -90,7 +94,7 @@ protected:
 	/**
 	 * @brief FSAA
 	 *
-	 * Level of fullscreen anti-aliasing
+	 * Level of full-screen anti-aliasing
 	 */
 	bool FSAA;
 
@@ -141,12 +145,5 @@ extern boost::uint8_t *keys;
  * Unicode character for the current KeyPressed or KeyReleased
  */
 extern boost::uint16_t currentUnicode;
-
-/**
- * @brief fullscreen
- *
- * Whether or not the game is running in fullscreen
- */
-extern bool fullscreen;
 
 #endif

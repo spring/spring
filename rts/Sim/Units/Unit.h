@@ -1,17 +1,19 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef UNIT_H
 #define UNIT_H
-// Unit.h: interface for the CUnit class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <vector>
 #include <string>
 
+#include "Lua/LuaRulesParams.h"
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Matrix44f.h"
 #include "Vec2.h"
+
+using std::string;
 
 class CCommandAI;
 class CGroup;
@@ -23,7 +25,6 @@ class CWeapon;
 class CUnitScript;
 struct DamageArray;
 struct LosInstance;
-struct S3DModel;
 struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
@@ -73,8 +74,8 @@ public:
 
 	virtual void UnitInit(const UnitDef* def, int team, const float3& position);
 
-	bool AttackGround(const float3&pos,bool dgun);
-	bool AttackUnit(CUnit* unit,bool dgun);
+	bool AttackGround(const float3& pos, bool dgun);
+	bool AttackUnit(CUnit* unit, bool dgun);
 
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
@@ -159,9 +160,6 @@ public:
 	virtual bool ChangeTeam(int team, ChangeType type);
 	virtual void StopAttackingAllyTeam(int ally);
 
-	// TODO: should not be here
-	void DrawS3O();
-
 	const UnitDef* unitDef;
 	CollisionVolume* collisionVolume;
 	std::string unitDefName;
@@ -174,12 +172,9 @@ public:
 	 * (which is the index in the vector).
 	 * Parameters may or may not have a name.
 	 */
-	std::vector<float>         modParams;
-	/// name map for mod parameters
-	std::map<std::string, int> modParamsMap;
+	LuaRulesParams::Params  modParams;
+	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
 
-	int team;
-	int allyteam;
 	/**
 	 * The unit's origin lies in this team.
 	 *
@@ -263,8 +258,6 @@ public:
 
 	/// the script has finished exectuting the killed function and the unit can be deleted
 	bool deathScriptFinished;
-	/// asserts a certain minimum time between death and deletion
-	int deathCountdown;
 	/// the wreck level the unit will eventually create when it has died
 	int delayedWreckLevel;
 
@@ -407,13 +400,10 @@ public:
 #endif
 	}
 
-	void UpdateDrawPos();
-	float3 drawPos;
-	float3 drawMidPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
-	S3DModel* model;
+
 	LocalModel* localmodel;
 	CUnitScript* script;
 
@@ -472,7 +462,6 @@ public:
 	int curCloakTimeout;
 	///true if the unit is currently cloaked (has enough energy etc)
 	bool isCloaked;
-	bool oldCloak;
 	float decloakDistance;
 
 	int lastTerrainType;
@@ -560,6 +549,8 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
+
+	static float empDecline;
 
 public:
 	void LogMessage(const char*, ...);

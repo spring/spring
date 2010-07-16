@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PLAYER_ROSTER
 #define PLAYER_ROSTER
-// PlayerRoster.h: interface for PlayerRoster class
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -25,7 +24,7 @@ class PlayerRoster {
 		bool SetSortTypeByName(const std::string& type);
 		bool SetSortTypeByCode(SortType type);
 
-		SortType GetSortType();
+		SortType GetSortType() const;
 		const char* GetSortName();
 
 	private:
@@ -37,13 +36,11 @@ class PlayerRoster {
 };
 
 
-inline PlayerRoster::SortType PlayerRoster::GetSortType()
+inline PlayerRoster::SortType PlayerRoster::GetSortType() const
 {
 	return compareType;
 }
 
-
 extern PlayerRoster playerRoster;
-
 
 #endif /* PLAYER_ROSTER */

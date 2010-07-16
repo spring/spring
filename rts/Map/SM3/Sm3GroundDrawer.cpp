@@ -1,17 +1,21 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 
-#include "Game/Camera.h"
 #include "Sm3GroundDrawer.h"
 #include "Sm3Map.h"
 #include "terrain/TerrainNode.h"
-#include "Rendering/ShadowHandler.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "Rendering/GL/myGL.h"
+
+#include "Game/Camera.h"
 #include "Map/MapInfo.h"
-#include "GlobalUnsynced.h"
-#include "ConfigHandler.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/ShadowHandler.h"
+#include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/GroundDecalHandler.h"
+#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/GL/myGL.h"
+#include "System/GlobalUnsynced.h"
+#include "System/ConfigHandler.h"
 
 #include <SDL_keysym.h>
 extern unsigned char *keys;
@@ -27,18 +31,14 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 
 	if (shadowHandler->canUseShadows) {
 		shadowrc = tr->AddRenderContext(&shadowCam,false);
-		groundShadowVP = LoadVertexProgram("groundshadow.vp");
-	}
-	else  {
+	} else  {
 		shadowrc = 0;
-		groundShadowVP = 0;
 	}
 	reflectrc = 0;
 }
 
 CSm3GroundDrawer::~CSm3GroundDrawer()
 {
-	glSafeDeleteProgram( groundShadowVP );
 	configHandler->Set("SM3TerrainDetail", int(tr->config.detailMod * 100));
 }
 
@@ -50,7 +50,7 @@ static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 	tc.right = sc.right;
 	tc.up = sc.up;
 	tc.pos = sc.pos;
-	tc.aspect = gu->aspectRatio;
+	tc.aspect = globalRendering->aspectRatio;
 
 	tc.right = tc.front.cross(tc.up);
 	tc.right.ANormalize();
@@ -67,7 +67,7 @@ void CSm3GroundDrawer::Update()
 	tr->CacheTextures();
 }
 
-void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
+void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 {
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -80,9 +80,10 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, u
 	if (shadowHandler->drawShadows) {
 		terrain::ShadowMapParams params;
 
-		shadowHandler->GetShadowMapSizeFactors(params.f_a, params.f_b);
-		params.mid [0] = shadowHandler->xmid;
-		params.mid [1] = shadowHandler->ymid;
+		params.mid[0] = shadowHandler->GetShadowParams().x;
+		params.mid[1] = shadowHandler->GetShadowParams().y;
+		params.f_a    = shadowHandler->GetShadowParams().z;
+		params.f_b    = shadowHandler->GetShadowParams().w;
 		params.shadowMap = shadowHandler->shadowTexture;
 
 		for (int a = 0; a < 16; a++)
@@ -185,25 +186,26 @@ void CSm3GroundDrawer::DrawShadowPass()
 	shadowCam.up = camera->up;
 	shadowCam.pos = camera->pos;
 	shadowCam.aspect = 1.0f;
-	
-	glPolygonOffset(1,1);
-	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	glBindProgramARB (GL_VERTEX_PROGRAM_ARB, groundShadowVP);
-	glEnable (GL_VERTEX_PROGRAM_ARB);
+	Shader::IProgramObject* po =
+		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
+
+	glPolygonOffset(1, 1);
+	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
-	tr->SetActiveContext (shadowrc);
-	tr->DrawSimple ();
+	po->Enable();
+	tr->SetActiveContext(shadowrc);
+	tr->DrawSimple();
 	tr->SetActiveContext(rc);
+	po->Disable();
 
 	glCullFace(GL_BACK);
 	glDisable(GL_CULL_FACE);
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable(GL_VERTEX_PROGRAM_ARB);
 }
 
 void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflection)
@@ -217,9 +219,9 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 //	if(drawWaterReflection)
 //		treeDistance*=0.5f;
 
-	if(groundDecals && !(drawWaterReflection || drawUnitReflection)) {
+	if (!(drawWaterReflection || drawUnitReflection)) {
 		groundDecals->Draw();
-		ph->DrawGroundFlashes();
+		projectileDrawer->DrawGroundFlashes();
 		glDepthMask(1);
 	}
 }

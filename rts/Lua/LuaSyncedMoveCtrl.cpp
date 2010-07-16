@@ -1,13 +1,11 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaSyncedMoveCtrl.cpp.cpp: implementation of the CLuaSyncedMoveCtrl class.
-//
-//////////////////////////////////////////////////////////////////////
+#include "mmgr.h"
 
 #include <set>
 #include <list>
 #include <cctype>
-
-#include "mmgr.h"
 
 #include "LuaSyncedMoveCtrl.h"
 

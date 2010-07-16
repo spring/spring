@@ -1,30 +1,30 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-
-#include <string>
-#include <ctype.h>
-using namespace std;
-
 #include "mmgr.h"
 
 #include "MapParser.h"
-#include "Lua/LuaSyncedRead.h"
-#include "FileSystem/FileHandler.h"
 
+#include <string>
+#include <ctype.h>
+
+#include "Lua/LuaSyncedRead.h"
+#include "FileSystem/FileSystem.h"
+
+using namespace std;
 
 string MapParser::GetMapConfigName(const string& mapName)
 {
-	if (mapName.length() < 3) {
+	if (mapName.length() < 3)
 		return "";
-	}
 
-	const string extension = mapName.substr(mapName.length() - 3);
+	const string extension = filesystem.GetExtension(mapName);
 
 	if (extension == "sm3") {
-		return string("maps/") + mapName;
+		return mapName;
 	}
 	else if (extension == "smf") {
-		return string("maps/") +
-		       mapName.substr(0, mapName.find_last_of('.')) + ".smd";
+		return mapName.substr(0, mapName.find_last_of('.')) + ".smd";
 	}
 	else {
 		return "";
@@ -38,8 +38,8 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 
 	parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	parser->GetTable("Map");
-	parser->AddString("fileName", mapName);
-	parser->AddString("fullName", "maps/" + mapName);
+	parser->AddString("fileName", filesystem.GetFilename(mapName));
+	parser->AddString("fullName", mapName);
 	parser->AddString("configFile", mapConfig);
 	parser->EndTable();
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
@@ -50,7 +50,8 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	parser->EndTable();
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
-	if (!parser->Execute()) {
+	if (!parser->Execute())
+	{
 		// do nothing
 	}
 }

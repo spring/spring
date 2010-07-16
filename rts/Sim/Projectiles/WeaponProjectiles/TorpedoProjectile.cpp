@@ -1,18 +1,20 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "TorpedoProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
-#include "myMath.h"
+#include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "TorpedoProjectile.h"
-#include "GlobalUnsynced.h"
+#include "System/myMath.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"
@@ -34,34 +36,41 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_RESERVED(16)
 	));
 
-CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner,
-		float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target,
-		const WeaponDef *weaponDef GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
+CTorpedoProjectile::CTorpedoProjectile(
+	const float3& pos, const float3& speed,
+	CUnit* owner,
+	float areaOfEffect, float maxSpeed,
+	float tracking, int ttl,
+	CUnit* target,
+	const WeaponDef* weaponDef):
+
+	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, ttl),
 	tracking(tracking),
-	dir(speed),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
 	target(target),
 	nextBubble(4)
 {
-	curSpeed=speed.Length();
-	dir.Normalize();
+	projectileType = WEAPON_TORPEDO_PROJECTILE;
+	curSpeed = speed.Length();
+	dir = speed / curSpeed;
+
 	if (target) {
 		AddDeathDependence(target);
 	}
 
 	SetRadius(0.0f);
-	drawRadius=maxSpeed*8;
-	float3 camDir=(pos-camera->pos).Normalize();
-	texx = ph->torpedotex.xstart - (ph->torpedotex.xend-ph->torpedotex.xstart)*0.5f;
-	texy = ph->torpedotex.ystart - (ph->torpedotex.yend-ph->torpedotex.ystart)*0.5f;
+	drawRadius = maxSpeed * 8;
+
+	const float3 camDir = (pos - camera->pos).Normalize();
+	texx = projectileDrawer->torpedotex->xstart - (projectileDrawer->torpedotex->xend - projectileDrawer->torpedotex->xstart) * 0.5f;
+	texy = projectileDrawer->torpedotex->ystart - (projectileDrawer->torpedotex->yend - projectileDrawer->torpedotex->ystart) * 0.5f;
 #ifdef TRACE_SYNC
 	tracefile << "New projectile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (cegTag.size() > 0) {
+	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
 	}
 }
@@ -72,8 +81,8 @@ CTorpedoProjectile::~CTorpedoProjectile(void)
 
 void CTorpedoProjectile::DependentDied(CObject* o)
 {
-	if(o==target)
-		target=0;
+	if (o == target)
+		target = 0;
 	CWeaponProjectile::DependentDied(o);
 }
 
@@ -91,74 +100,88 @@ void CTorpedoProjectile::Collision(CUnit *unit)
 
 void CTorpedoProjectile::Update(void)
 {
-	if (!(weaponDef->submissile) && pos.y > -3) {
+	if (!(weaponDef->submissile) && pos.y > -3.0f) {
 		// tracking etc only works when we are underwater
-		speed.y += mygravity;
-		if (dir.y > 0)
-			dir.y = 0;
-		dir = speed;
-		dir.Normalize();
-	} else {
-		if (!(weaponDef->submissile) && pos.y-speed.y > -3) {
-			// level out torpedo a bit when hitting water
-			dir.y *= 0.5f;
-			dir.Normalize();
-		}
-
-		ttl--;
-
-		if (ttl > 0) {
-			if (curSpeed < maxSpeed)
-				curSpeed += std::max(0.2f, tracking);
-			if (target) {
-				float3 targPos;
-				if ((target->midPos - pos).SqLength() < 150 * 150 || !owner())
-					targPos = target->midPos;
-				else
-					targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
-				if (!(weaponDef->submissile) && targPos.y > 0)
-					targPos.y = 0;
-
-				float dist = targPos.distance(pos);
-				float3 dif(targPos + target->speed * (dist / maxSpeed) * 0.7f - pos);
-				dif.Normalize();
-				float3 dif2 = dif - dir;
-
-				if (dif2.Length() < tracking) {
-					dir = dif;
-				} else {
-					dif2 -= dir * (dif2.dot(dir));
-					dif2.Normalize();
-					dir += dif2 * tracking;
-					dir.Normalize();
-				}
-			}
-
-			speed = dir * curSpeed;
-
-			if (cegTag.size() > 0) {
-				ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
-			}
-		} else {
-			speed *= 0.98f;
+		if (!luaMoveCtrl) {
 			speed.y += mygravity;
+			dir.y = std::min(dir.y, 0.0f);
 			dir = speed;
 			dir.Normalize();
 		}
+	} else {
+		if (!(weaponDef->submissile) && pos.y-speed.y > -3.0f) {
+			// level out torpedo a bit when hitting water
+			if (!luaMoveCtrl) {
+				dir.y *= 0.5f;
+				dir.Normalize();
+			}
+		}
+
+		if (--ttl > 0) {
+			if (!luaMoveCtrl) {
+				if (curSpeed < maxSpeed) {
+					curSpeed += std::max(0.2f, tracking);
+				}
+
+				if (target) {
+					float3 targPos;
+
+					if ((target->midPos - pos).SqLength() < 150 * 150 || !owner()) {
+						targPos = target->midPos;
+					} else {
+						targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
+					}
+
+					if (!(weaponDef->submissile) && targPos.y > 0) {
+						targPos.y = 0;
+					}
+
+					float dist = targPos.distance(pos);
+					float3 dif = (targPos + target->speed * (dist / maxSpeed) * 0.7f - pos).Normalize();
+					float3 dif2 = dif - dir;
+
+					if (dif2.Length() < tracking) {
+						dir = dif;
+					} else {
+						dif2 -= dir * (dif2.dot(dir));
+						dif2.Normalize();
+						dir += dif2 * tracking;
+						dir.Normalize();
+					}
+				}
+
+				speed = dir * curSpeed;
+			}
+
+			if (!cegTag.empty()) {
+				ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
+			}
+		} else {
+			if (!luaMoveCtrl) {
+				speed *= 0.98f;
+				speed.y += mygravity;
+				dir = speed;
+				dir.Normalize();
+			}
+		}
 	}
 
-	pos += speed;
+	if (!luaMoveCtrl) {
+		pos += speed;
+	}
 
-	if (pos.y < -2) {
+	if (pos.y < -2.0f) {
 		--nextBubble;
 
 		if (nextBubble == 0) {
 			nextBubble = 1 + (int) (gs->randFloat() * 1.5f);
 
-			float3 pspeed = gs->randVector() * 0.1f;
-			pspeed.y += 0.2f;
-			new CBubbleProjectile(pos + gs->randVector(), pspeed, 40 + gs->randFloat() * 30,
-				1 + gs->randFloat() * 2, 0.01f, owner(), 0.3f + gs->randFloat() * 0.3f);
+			const float3 pspeed = (gs->randVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
+
+			new CBubbleProjectile(
+				pos + gs->randVector(), pspeed, 40 + gs->randFloat() * 30,
+				1 + gs->randFloat() * 2, 0.01f, owner(), 0.3f + gs->randFloat() * 0.3f
+			);
 		}
 	}
 
@@ -167,7 +190,7 @@ void CTorpedoProjectile::Update(void)
 
 void CTorpedoProjectile::Draw(void)
 {
-	if(s3domodel)	//dont draw if a 3d model has been defined for us
+	if (model)	//dont draw if a 3d model has been defined for us
 		return;
 
 	inArray=true;

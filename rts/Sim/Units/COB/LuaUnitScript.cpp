@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #define DEBUG_LUA 0
 
@@ -1036,6 +1036,12 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 		delete unit->script;
 	}
 	unit->script = newScript;
+
+	// flush some caches (which store availability of certain script functions)
+	for (std::vector<CWeapon*>::iterator wi = unit->weapons.begin(); wi != unit->weapons.end(); ++wi) {
+		CWeapon* w = *wi;
+		w->SetWeaponNum(w->weaponNum);
+	}
 
 	LUA_TRACE("script replaced with CLuaUnitScript");
 

@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_HANDLE_H
 #define LUA_HANDLE_H
-// LuaHandle.h: interface for the CLuaHandle class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -94,6 +93,8 @@ class CLuaHandle : public CEventClient
 
 		void Shutdown();
 
+		void Load(CArchiveBase* archive);
+
 		void GamePreload();
 		void GameStart();
 		void GameOver();
@@ -150,6 +151,8 @@ class CLuaHandle : public CEventClient
 
 		// LuaHandleSynced wraps this to set allowChanges
 		virtual bool RecvLuaMsg(const string& msg, int playerID);
+
+		void Save(zipFile archive);
 
 		void Update();
 
@@ -344,6 +347,20 @@ inline void CLuaHandle::SetActiveHandle(CLuaHandle* lh)
 		activeFullRead     = lh->fullRead;
 		activeReadAllyTeam = lh->readAllyTeam;
 	}
+}
+
+inline bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
+{
+	return RunCallInTraceback(hs, inArgs, outArgs, 0);
+}
+
+
+inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs)
+{
+	synced = false;
+	const bool retval = RunCallIn(hs, inArgs, outArgs);
+	synced = !userMode;
+	return retval;
 }
 
 

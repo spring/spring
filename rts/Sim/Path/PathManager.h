@@ -1,9 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PATHMANAGER_H
 #define PATHMANAGER_H
 
 #include <map>
-#include "IPath.h"
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
+
+#include "IPath.h"
 
 class CSolidObject;
 class CPathFinder;
@@ -17,7 +20,7 @@ public:
 	CPathManager();
 	~CPathManager();
 
-	/*
+	/**
 	Generate a path from startPos to the target defined by either peDef or (goalPos, goalRadius).
 	If no complete path from startPos to the path target could be found, then a path getting as
 	"close" as possible to target is generated.
@@ -41,23 +44,33 @@ public:
 			Use goalRadius to define a goal area within any square could be accepted as path target.
 			If a singular goal position is wanted, then use goalRadius = 0.
 	*/
-	unsigned int RequestPath(const MoveData* moveData, float3 startPos,
-			float3 goalPos, float goalRadius = 8, CSolidObject* caller = 0);
+	unsigned int RequestPath(
+		const MoveData* moveData,
+		float3 startPos, float3 goalPos, float goalRadius = 8,
+		CSolidObject* caller = 0,
+		bool synced = true
+	);
 
-	unsigned int RequestPath(const MoveData* moveData, float3 startPos,
-			CPathFinderDef* peDef,float3 goalPos, CSolidObject* caller);
+	unsigned int RequestPath(
+		const MoveData* moveData,
+		float3 startPos,
+		CPathFinderDef* peDef,
+		float3 goalPos,
+		CSolidObject* caller,
+		bool synced = true
+	);
 
 
-	/*
+	/**
 	Gives the next waypoint of the path.
-	Gives (-1,-1,-1) in case no new waypoint could be found.
+	Returns (-1,-1,-1) in case no new waypoint could be found.
 	Param:
 		pathId
 			The path-id returned by RequestPath.
 
 		callerPos
 			The current position of the user of the path.
-			This extra information is needed to keep the path connected to it's user.
+			This extra information is needed to keep the path connected to its user.
 
 		minDistance
 			Could be used to set a minimum required distance between callerPos and
@@ -67,7 +80,7 @@ public:
 
 	*/
 	float3 NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance = 0,
-			int numRetries=0, int ownerId = 0) const;
+			int numRetries=0, int ownerId = 0, bool synced = true) const;
 
 
 	/**
@@ -94,7 +107,7 @@ public:
 	void GetDetailedPathSquares(unsigned pathId, std::vector<int2>& points) const;
 
 
-	/*
+	/**
 	Returns current estimated waypoints sorted by estimation levels
 	Param:
 		pathId
@@ -108,7 +121,7 @@ public:
 		std::vector<float3>& points, std::vector<int>& starts) const;
 
 
-	/*
+	/**
 	When a path are no longer used, please call this function to release it from memory.
 	Param:
 		pathId
@@ -117,7 +130,7 @@ public:
 	void DeletePath(unsigned int pathId);
 
 
-	/*
+	/**
 	Whenever there are any changes in the terrain (ex. explosions, new buildings, etc.)
 	this function need to be called to keep the estimator a jour.
 	Param:
@@ -130,27 +143,19 @@ public:
 	void TerrainChange(float3 upperCorner, float3 lowerCorner);
 	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 
-
-	/*
-	Shall be called every 1/30sec during runtime.
-	*/
 	void Update();
+	void UpdatePath(const CSolidObject*, unsigned int);
 
 
-	/*
-	Visualize all paths currently keept in the database.
-	*/
-	void Draw();
 
-
-	boost::uint32_t GetPathChecksum();
+	boost::uint32_t GetPathCheckSum();
 
 	/** Enable/disable heat mapping */
 	void SetHeatMappingEnabled(bool enabled);
 	bool GetHeatMappingEnabled();
 
 	void SetHeatOnSquare(int x, int y, int value, int ownerId);
-	void SetHeatOnPos(float3, int value, int ownerId);
+	const int GetHeatOnSquare(int x, int y);
 
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;
@@ -177,7 +182,7 @@ private:
 
 
 	unsigned int Store(MultiPath* path);
-	void Estimate2ToEstimate(MultiPath& path, float3 startPos, int ownerId) const;
+	void Estimate2ToEstimate(MultiPath& path, float3 startPos, int ownerId, bool synced) const;
 	void EstimateToDetailed(MultiPath& path, float3 startPos, int ownerId) const;
 
 
@@ -189,6 +194,6 @@ private:
 	unsigned int nextPathId;
 };
 
-extern CPathManager *pathManager;
+extern CPathManager* pathManager;
 
 #endif

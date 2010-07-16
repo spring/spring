@@ -1,6 +1,4 @@
-// SelectedUnits.cpp: implementation of the CSelectedUnits class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include <map>
@@ -22,7 +20,7 @@
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
 #include "LogOutput.h"
-#include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/GL/VertexArray.h"
 #include "SelectedUnitsAI.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
@@ -36,7 +34,7 @@
 #include "ConfigHandler.h"
 #include "PlayerHandler.h"
 #include "Camera.h"
-#include "Sound/AudioChannel.h"
+#include "Sound/IEffectChannel.h"
 #include "Util.h"
 
 extern boost::uint8_t *keys;
@@ -376,7 +374,9 @@ void CSelectedUnits::Draw()
 			unitSet = &selectedUnits;
 		}
 
-		glBegin(GL_QUADS);
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(unitSet->size()*4, 0, VA_SIZE_0);
 		CUnitSet::const_iterator ui;
 		for (ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
@@ -384,12 +384,12 @@ void CSelectedUnits::Draw()
 				continue;
 			}
 
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0,  unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0,  unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3(-unit->xsize * 4, 0, -unit->zsize * 4));
-			glVertexf3(unit->drawPos + float3( unit->xsize * 4, 0, -unit->zsize * 4));
+			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
+			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
 		}
-		glEnd();
+		va->DrawArray0(GL_QUADS);
 	}
 
 	// highlight queued build sites if we are about to build something
@@ -696,6 +696,10 @@ std::string CSelectedUnits::GetTooltip(void)
 	float exp = 0.0f, cost = 0.0f, range = 0.0f;
 	float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
 
+#define NO_TEAM -32
+#define MULTI_TEAM -64
+	int ctrlTeam = NO_TEAM;
+
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 		const CUnit* unit = *ui;
@@ -713,6 +717,10 @@ std::string CSelectedUnits::GetTooltip(void)
 		if (unit->unitDef->maxFuel > 0) {
 			numFuel++;
 		}
+		if(ctrlTeam == NO_TEAM)
+			ctrlTeam = unit->team;
+		else if(ctrlTeam != unit->team)
+			ctrlTeam = MULTI_TEAM;
 	}
 	if ((numFuel > 0) && (maxFuel > 0.0f)) {
 		curFuel = curFuel / numFuel;
@@ -727,12 +735,19 @@ std::string CSelectedUnits::GetTooltip(void)
 	       metalMake,  metalUse,
 	       energyMake, energyUse);
 
-  if (gs->cheatEnabled && (selectedUnits.size() == 1)) {
+  if (gs->cheatEnabled && (num == 1)) {
   	CUnit* unit = *selectedUnits.begin();
     SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
              unit->unitDef->techLevel);
     s += tmp;
 	}
+
+	std::string ctrlName = "";
+	if(ctrlTeam == MULTI_TEAM)
+		ctrlName = "(Multiple teams)";
+	else if(ctrlTeam != NO_TEAM)
+		ctrlName = teamHandler->Team(ctrlTeam)->GetControllerName();
+	s += "\n\xff\xff\xff\xff" + ctrlName;
 
 	return s;
 }

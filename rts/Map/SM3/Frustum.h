@@ -1,17 +1,14 @@
-/*---------------------------------------------------------------------
- Terrain Renderer using texture splatting and geomipmapping
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
- Copyright (2006) Jelmer Cnossen
- This code is released under GPL license (See LICENSE.html for info)
----------------------------------------------------------------------*/
-#ifndef FRUSTUM_H
-#define FRUSTUM_H
+#ifndef _FRUSTUM_H_
+#define _FRUSTUM_H_
 
 #include "Plane.h"
 
-/*
-The frustum clips the polygons against a certain convex space
-*/
+/**
+ * Terrain Renderer using texture splatting and geomipmapping.
+ * The frustum clips the polygons against a certain convex space.
+ */
 class Frustum
 {
 public:
@@ -19,7 +16,7 @@ public:
 	void InversePlanes ();
 
 	enum VisType { Inside, Outside, Partial };
-	VisType IsBoxVisible (const Vector3& min, const Vector3& max); // 3D test
+	VisType IsBoxVisible (const Vector3& min, const Vector3& max); ///<s 3D test
 	VisType IsPointVisible (const Vector3& pt);
 
 	std::vector<Plane> planes;
@@ -27,4 +24,4 @@ public:
 	void Draw ();
 };
 
-#endif
+#endif // _FRUSTUM_H_

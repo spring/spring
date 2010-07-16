@@ -3,8 +3,9 @@
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
-// to be used freely for any purpose, as
-// long as this notice remains unchanged
+// to be used, distributed and modified 
+// freely for any purpose, as long as 
+// this notice remains unchanged
 
 // GML works by "patching" all OpenGL calls. It is injected via a #include "gml.h" statement located in myGL.h.
 // All files that need GL should therefore include myGL.h. INCLUDING gl.h, glu.h, glext.h ... IS FORBIDDEN.
@@ -38,6 +39,7 @@
 #include "LogOutput.h"
 
 const char *gmlProfMutex = "lua";
+unsigned drawCallInTime = 0;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -216,7 +218,6 @@ boost::mutex inmapmutex;
 boost::mutex tempmutex;
 boost::mutex posmutex;
 boost::mutex runitmutex;
-boost::mutex simmutex;
 boost::mutex netmutex;
 boost::mutex histmutex;
 boost::mutex logmutex;
@@ -230,6 +231,7 @@ boost::mutex rprojmutex;
 boost::mutex rflashmutex;
 boost::mutex rpiecemutex;
 boost::mutex rfeatmutex;
+boost::mutex laycmdmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -243,6 +245,7 @@ boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
+boost::recursive_mutex simmutex;
 #endif
 
 // GMLqueue implementation
@@ -545,6 +548,10 @@ void gmlQueue::SyncRequest() {
 
 #define GML_MAKEHANDLER4(name)\
 	GML_EXEC(name,GML_DATA_D(name))\
+	GML_NEXT(name)
+
+#define GML_MAKEHANDLER4R(name)\
+	GML_EXEC_RET(name,GML_DATA_D(name))\
 	GML_NEXT(name)
 
 #define GML_MAKEHANDLER5(name)\
@@ -977,6 +984,14 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3(MultiTexCoord2i)
 		GML_MAKEHANDLER3(GetQueryiv)
 		GML_MAKEHANDLER2(GetBooleanv)
+		GML_MAKEHANDLER1(ValidateProgram)
+		GML_MAKEHANDLER3V(Uniform2iv)
+		GML_MAKEHANDLER3V(Uniform3iv)
+		GML_MAKEHANDLER3V(Uniform4iv)
+		GML_MAKEHANDLER3V(Uniform2fv)
+		GML_MAKEHANDLER3V(Uniform3fv)
+		GML_MAKEHANDLER3V(Uniform4fv)
+		GML_MAKEHANDLER4R(MapBufferRange)
 	}
 }
 

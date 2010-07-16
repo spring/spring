@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FEATURE_H__
 #define __FEATURE_H__
 
@@ -8,7 +10,6 @@
 
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Rendering/UnitModels/3DModel.h"
 #include "Matrix44f.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
@@ -72,11 +73,6 @@ public:
 		}
 	}
 
-	// should not be here
-	void DrawS3O();
-
-	S3DModel* model;
-
 	std::string createdFromUnit;
 	/** This flag is used to stop a potential exploit involving tripping a unit back and forth
 	across a chunk boundary to get unlimited resources. Basically, once a corspe has been a little bit
@@ -87,8 +83,6 @@ public:
 
 	float health;
 	float reclaimLeft;
-	int allyteam;
-	int team;
 
 	bool noSelect;
 

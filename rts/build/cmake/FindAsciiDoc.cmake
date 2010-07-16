@@ -1,3 +1,5 @@
+# This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
+
 # - Find AsciiDoc, XSLTProc and DocBook
 # These toolds are used to compile man pages
 #
@@ -34,7 +36,9 @@ find_program(XSLTPROC_BIN
 find_file(DOCBOOK_XSL
 	NAMES docbook.xsl
 	PATHS /usr /usr/share /usr/local /usr/local/share
-	PATH_SUFFIXES xml/docbook/stylesheet/nwalsh/manpages
+	PATH_SUFFIXES
+		xml/docbook/stylesheet/nwalsh/manpages
+		sgml/docbook/xsl-stylesheets/manpages
 	DOC "DocBook XSL Style-Sheet"
 	)
 

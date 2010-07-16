@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "HorizontalLayout.h"
 
 #include "Rendering/GL/myGL.h"
@@ -34,7 +36,11 @@ void HorizontalLayout::GeometryChangeSelf()
 		}
 	}
 
-	const float hspacePerObject = (size[0]-float(children.size()-1)*itemSpacing - 2*borderSpacing-totalFixedSize)/float(children.size()-numFixed);
+	unsigned weightedObjects = 0;
+	for (ChildList::iterator i = children.begin(); i != children.end(); ++i)
+		weightedObjects += (*i)->Weight();
+	
+	const float hspacePerObject = (size[0]-float(weightedObjects-1)*itemSpacing - 2*borderSpacing-totalFixedSize)/float(weightedObjects-numFixed);
 	float startX = pos[0] + borderSpacing;
 	for (ChildList::iterator i = children.begin(); i != children.end(); ++i)
 	{
@@ -46,8 +52,8 @@ void HorizontalLayout::GeometryChangeSelf()
 		}
 		else
 		{
-			(*i)->SetSize(hspacePerObject, size[1]- 2.0f*borderSpacing);
-			startX += hspacePerObject + itemSpacing;
+			(*i)->SetSize(hspacePerObject*float((*i)->Weight()), size[1]- 2.0f*borderSpacing);
+			startX += hspacePerObject*float((*i)->Weight()) + itemSpacing;
 		}
 	}
 }

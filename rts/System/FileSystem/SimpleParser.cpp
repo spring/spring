@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// SimpleParser.cpp: implementation of the SimpleParser class.
-//
-//////////////////////////////////////////////////////////////////////
 #include <sstream>
 #include "mmgr.h"
 
@@ -21,7 +20,7 @@ CSimpleParser::CSimpleParser(CFileHandler& fh) : file(fh)
 
 
 /** returns the current line number */
-int CSimpleParser::GetLineNumber()
+int CSimpleParser::GetLineNumber() const
 {
 	return lineNumber;
 }

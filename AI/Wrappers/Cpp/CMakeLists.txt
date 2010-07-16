@@ -57,13 +57,13 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AICallback.cpp
 		${myGeneratedSourceDir}/Camera.cpp
 		${myGeneratedSourceDir}/Cheats.cpp
-		${myGeneratedSourceDir}/ClbFeatureDefCollisionVolumeImpl.cpp
 		${myGeneratedSourceDir}/ClbGroupSupportedCommandImpl.cpp
-		${myGeneratedSourceDir}/ClbUnitDefCollisionVolumeImpl.cpp
 		${myGeneratedSourceDir}/ClbUnitSupportedCommandImpl.cpp
 		${myGeneratedSourceDir}/CurrentCommand.cpp
 		${myGeneratedSourceDir}/Damage.cpp
 		${myGeneratedSourceDir}/DataDirs.cpp
+		${myGeneratedSourceDir}/Debug.cpp
+		${myGeneratedSourceDir}/Drawer.cpp
 		${myGeneratedSourceDir}/Economy.cpp
 		${myGeneratedSourceDir}/Engine.cpp
 		${myGeneratedSourceDir}/Feature.cpp

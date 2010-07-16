@@ -1,14 +1,15 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Game/Camera.h"
-#include "Sim/Misc/GlobalConstants.h"
+#include "SimpleParticleSystem.h"
 #include "GenericParticleProjectile.h"
-#include "GlobalUnsynced.h"
+#include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "SimpleParticleSystem.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
 
@@ -55,16 +56,15 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 CSimpleParticleSystem::CSimpleParticleSystem(void)
 :	CProjectile()
 {
-	checkCol=false;
-	useAirLos=true;
-	particles=0;
+	checkCol = false;
+	useAirLos = true;
+	particles = NULL;
 	emitMul = float3(1,1,1);
 }
 
 CSimpleParticleSystem::~CSimpleParticleSystem(void)
 {
-	if(particles)
-		delete [] particles;
+	delete[] particles;
 }
 
 void CSimpleParticleSystem::Draw()
@@ -89,7 +89,7 @@ void CSimpleParticleSystem::Draw()
 				dir1.SafeANormalize();
 
 				const float3 dir2(dif.cross(dir1));
-				const float3 interPos = p->pos + p->speed * gu->timeOffset;
+				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
 				const float size = p->size;
 
 				unsigned char color[4];
@@ -109,7 +109,7 @@ void CSimpleParticleSystem::Draw()
 				unsigned char color[4];
 				colorMap->GetColor(color, p->life);
 
-				const float3 interPos = p->pos + p->speed * gu->timeOffset;
+				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
 				const float3 cameraRight = camera->right * p->size;
 				const float3 cameraUp    = camera->up * p->size;
 
@@ -141,9 +141,9 @@ void CSimpleParticleSystem::Update()
 
 }
 
-void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
+void CSimpleParticleSystem::Init(const float3& explosionPos, CUnit *owner)
 {
-	CProjectile::Init(explosionPos, owner GML_PARG_P);
+	CProjectile::Init(explosionPos, owner);
 
 	particles = new Particle[numParticles];
 
@@ -186,7 +186,7 @@ CSphereParticleSpawner::~CSphereParticleSpawner()
 {
 }
 
-void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
+void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 {
 	float3 up = emitVector;
 	float3 right = up.cross(float3(up.y, up.z, -up.x));

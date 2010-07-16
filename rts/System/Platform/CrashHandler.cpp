@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "CrashHandler.h"
 #ifdef __APPLE__
 #include <AvailabilityMacros.h>
@@ -19,20 +21,14 @@ namespace CrashHandler {
 		Win32::Remove();
 	}
 
-	void InstallHangHandler() {
-		Win32::InstallHangHandler();
-	}
+	void InstallHangHandler() { Win32::InstallHangHandler(); }
+	void UninstallHangHandler() { Win32::UninstallHangHandler(); }
 
-	void UninstallHangHandler() {
-		Win32::UninstallHangHandler();
-	}
+	void ClearDrawWDT(bool disable) { Win32::ClearDrawWDT(disable); }
+	void ClearSimWDT(bool disable) { Win32::ClearSimWDT(disable); }
 
-	void ClearDrawWDT(bool disable) {
-		Win32::ClearDrawWDT(disable);
-	}
-
-	void ClearSimWDT(bool disable) {
-		Win32::ClearSimWDT(disable);
+	void GameLoading(bool loading) {
+		Win32::GameLoading(loading);
 	}
 };
 
@@ -55,7 +51,7 @@ namespace CrashHandler {
 #include "errorhandler.h"
 #include "Game/GameVersion.h"
 #include "Platform/Misc.h"
-#include "FileSystem/FileSystem.h" // for FileSystemHandler::IsReadableFile(file)
+#include "FileSystem/FileSystemHandler.h"
 #include "maindefines.h" // for SNPRINTF
 
 /**
@@ -75,7 +71,7 @@ static std::string createAbsolutePath(const std::string& relativePath) {
 			// remove initial "./"
 			absolutePath = absolutePath.substr(2);
 		}
-		absolutePath = Platform::GetBinaryPath() + '/' + absolutePath;
+		absolutePath = Platform::GetModulePath() + '/' + absolutePath;
 	}
 
 	return absolutePath;
@@ -197,7 +193,7 @@ static void findBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 		paths_notFound.insert(bpbmai->first);
 	}
 
-	FILE* mapsFile = NULL; 
+	FILE* mapsFile = NULL;
 	// /proc/self/maps contains the base addresses for all loaded dynamic
 	// libaries of the current process + other stuff (which we are not interested in)
 	mapsFile = fopen("/proc/self/maps", "rb");
@@ -244,21 +240,26 @@ static void findBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 }
 
 
+
 namespace CrashHandler {
 
 	void HandleSignal(int signal)
 	{
 		static const std::string INVALID_LINE_INDICATOR = "#####";
-		const std::string logFileName = logOutput.GetFilename();
+		const std::string logFile = logOutput.GetFilePath();
 
 		std::string error;
 		std::queue<std::string> paths;
 		std::queue<uintptr_t> addresses;
 		std::map<std::string,uintptr_t> binPath_baseMemAddr;
 
-		logOutput.RemoveAllSubscribers();
+		bool keepRunning   = false;
+		bool containsOglSo = false; // OpenGL lib -> graphic problem
+		std::string containedAIInterfaceSo = "";
+		std::string containedSkirmishAISo  = "";
+
+		logOutput.SetSubscribersEnabled(false);
 		{
-			LogObject log;
 			if (signal == SIGSEGV) {
 				error = "Segmentation fault (SIGSEGV)";
 			} else if (signal == SIGILL) {
@@ -273,17 +274,20 @@ namespace CrashHandler {
 				// we should never get here
 				error = "Unknown signal";
 			}
-			log << error << " in spring " << SpringVersion::GetFull() << "\nStacktrace:\n";
+			logOutput.Print("%s in spring %s\n", error.c_str(), SpringVersion::GetFull().c_str());
+			logOutput.Print("Stacktrace:\n");
 
+			// process and analyse the raw stack trace
 			std::vector<void*> buffer(128);
 			const int numLines = backtrace(&buffer[0], buffer.size());    // stack pointers
 			char** lines       = backtrace_symbols(&buffer[0], numLines); // give them meaningfull names
 			if (lines == NULL) {
-				log << "Unable to create stacktrace\n";
+				logOutput.Print("Unable to create stacktrace\n");
 			} else {
 				for (int l = 0; l < numLines; l++) {
 					const std::string line(lines[l]);
-					log << line;
+					logOutput.Print("%s\n", line.c_str());
+					logOutput.Flush();
 
 					// example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
 					std::string path;
@@ -315,29 +319,62 @@ namespace CrashHandler {
 					}
 
 					if (path == "") {
-						log << " # NOTE: no path -> not translating";
+						logOutput.Print("# NOTE: above line shows no path -> not translating\n");
 					} else if ((path == INVALID_LINE_INDICATOR)
 							|| (addr == INVALID_LINE_INDICATOR)) {
-						log << " # NOTE: invalid stack-trace line -> not translating";
+						logOutput.Print("# NOTE: above line is invalid -> not translating\n");
 					} else {
+						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
+						containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
+						if (containedAIInterfaceSo.empty() && (absPath.find("Interfaces") != std::string::npos)) {
+							containedAIInterfaceSo = absPath;
+						}
+						if (containedSkirmishAISo.empty() && (absPath.find("Skirmish") != std::string::npos)) {
+							containedSkirmishAISo = absPath;
+						}
 						binPath_baseMemAddr[absPath] = 0;
 						paths.push(absPath);
 						const uintptr_t addr_num = hexToInt(addr.c_str());
 						addresses.push(addr_num);
 					}
-					log << "\n";
 				}
-				delete lines;
+				free(lines);
 				lines = NULL;
+
+				// if stack trace contains AI and AI Interface frames,
+				// it is very likely that the problem lies in the AI only
+				if (!containedSkirmishAISo.empty()) {
+					containedAIInterfaceSo = "";
+				}
+
+				if (containsOglSo) {
+					logOutput.Print("This stack trace indicates a problem with your graphic card driver. "
+					                "Please try upgrading or downgrading it. "
+					                "Specifically recommended is the latest driver, and one that is as old as your graphic card.\n");
+					logOutput.Flush();
+				}
+				if (!containedAIInterfaceSo.empty()) {
+					logOutput.Print("This stack trace indicates a problem with an AI Interface library.\n");
+					logOutput.Flush();
+					keepRunning = true;
+				}
+				if (!containedSkirmishAISo.empty()) {
+					logOutput.Print("This stack trace indicates a problem with a Skirmish AI library.\n");
+					logOutput.Flush();
+					keepRunning = true;
+				}
 			}
-			log << "Translated Stacktrace:\n";
+			logOutput.Flush();
 		}
-		logOutput.End(); // Stop writing to log.
 
+		// translate the stack trace, and write it to the log file
+		logOutput.Print("Translated Stacktrace:\n");
+		logOutput.Flush();
 		findBaseMemoryAddresses(binPath_baseMemAddr);
-
 		std::string lastPath;
+		const size_t line_sizeMax = 2048;
+		char line[line_sizeMax];
 		while (!paths.empty()) {
 			std::ostringstream buf;
 			lastPath = paths.front();
@@ -347,7 +384,7 @@ namespace CrashHandler {
 			// add addresses as long as the path stays the same
 			while (!paths.empty() && (lastPath == paths.front())) {
 				uintptr_t addr_num = addresses.front();
-				if (paths.front() != Platform::GetBinaryFile() && (addr_num > baseAddress)) {
+				if (paths.front() != Platform::GetModuleFile() && (addr_num > baseAddress)) {
 					// shift the stack trace address by the value of
 					// the libraries base address in process memory
 					// for all binaries that are not the processes main binary
@@ -359,13 +396,56 @@ namespace CrashHandler {
 				paths.pop();
 				addresses.pop();
 			}
-			buf << " >> " << logFileName; // pipe to infolog (which will be in CWD)
-			system(buf.str().c_str());
+
+			// execute command addr2line, read stdout and write to log-file
+			FILE* cmdOut = popen(buf.str().c_str(), "r");
+			if (cmdOut != NULL) {
+				while (fgets(line, line_sizeMax, cmdOut) != NULL) {
+					logOutput.Print("%s", line);
+				}
+				pclose(cmdOut);
+			}
 		}
 
-		ErrorMessageBox(error, "Spring crashed", 0);
+		// only try to keep on running for these signals
+		if (keepRunning &&
+		    (signal != SIGSEGV) &&
+		    (signal != SIGILL) &&
+		    (signal != SIGPIPE) &&
+		    (signal != SIGABRT)) {
+			keepRunning = false;
+		}
+
+		// try to clean up
+		if (keepRunning) {
+			bool cleanupOk = false;
+			{
+				// try to cleanup
+				if (!containedAIInterfaceSo.empty()) {
+					//logOutput.Print("Trying to kill AI Interface library only ...\n");
+					// TODO
+					//cleanupOk = true;
+				} else if (!containedSkirmishAISo.empty()) {
+					//logOutput.Print("Trying to kill Skirmish AI library only ...\n");
+					// TODO
+					//cleanupOk = true;
+				}
+			}
+
+			if (cleanupOk) {
+				logOutput.SetSubscribersEnabled(true);
+			} else {
+				keepRunning = false;
+			}
+		}
+
+		if (!keepRunning) {
+			logOutput.End();
+			// this also calls exit()
+			ErrorMessageBox(error, "Spring crashed", 0);
+		}
 	}
-	
+
 	void Install() {
 		signal(SIGSEGV, HandleSignal); // segmentation fault
 		signal(SIGILL,  HandleSignal); // illegal instruction
@@ -383,12 +463,12 @@ namespace CrashHandler {
 	}
 
 	void InstallHangHandler() {}
-
 	void UninstallHangHandler() {}
 
 	void ClearDrawWDT(bool disable) {}
-
 	void ClearSimWDT(bool disable) {}
+
+	void GameLoading(bool) {}
 };
 
 // ### Unix(compliant) CrashHandler END
@@ -403,6 +483,7 @@ namespace CrashHandler {
 	void UninstallHangHandler() {}
 	void ClearDrawWDT(bool disable) {}
 	void ClearSimWDT(bool disable) {}
+	void GameLoading(bool) {}
 };
 
 // ### Fallback CrashHandler (old Apple) END

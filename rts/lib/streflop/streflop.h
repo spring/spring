@@ -12,6 +12,17 @@
 #ifndef STREFLOP_H
 #define STREFLOP_H
 
+// protect against bad defines
+#if   defined(STREFLOP_SSE) && defined(STREFLOP_X87)
+#error You have to define exactly one of STREFLOP_SSE STREFLOP_X87 STREFLOP_SOFT, but you defined both STREFLOP_SSE and STREFLOP_X87
+#elif defined(STREFLOP_SSE) && defined(STREFLOP_SOFT)
+#error You have to define exactly one of STREFLOP_SSE STREFLOP_X87 STREFLOP_SOFT, but you defined both STREFLOP_SSE and STREFLOP_SOFT
+#elif defined(STREFLOP_X87) && defined(STREFLOP_SOFT)
+#error You have to define exactly one of STREFLOP_SSE STREFLOP_X87 STREFLOP_SOFT, but you defined both STREFLOP_X87 and STREFLOP_SOFT
+#elif !defined(STREFLOP_SSE) && !defined(STREFLOP_X87) && !defined(STREFLOP_SOFT)
+#error You have to define exactly one of STREFLOP_SSE STREFLOP_X87 STREFLOP_SOFT, but you defined none
+#endif
+
 // First, define the numerical types
 namespace streflop {
 
@@ -56,6 +67,24 @@ namespace streflop {
 #endif
 
 }
+
+#if defined(STREFLOP_SSE) && defined(_MSC_VER) 
+    // MSVC will not compile without the long double variants defined, so we either have to declare Extended:
+    //    typedef long double Extended;
+    //    #define Extended Extended
+    // or write some wrapper macros:
+    #define atan2l(a, b) atan2((double)a, (double)b)
+    #define cosl(a) cos((double)a)
+    #define expl(a) exp((double)a)
+    #define ldexpl(a, b) ldexp((double)a, (double)b)
+    #define logl(a) log((double)a)
+    #define powl(a,b) pow((double)a, (double)b)
+    #define sinl(a) sin((double)a)
+    #define sqrtl(a) sqrt((double)a)
+    #define tanl(a) tan((double)a)
+    #define frexpl(a, b) frexp((double)a, b)
+    // The wrappers are possibly the better choice for sync reasons.
+#endif
 
 // Include the FPU settings file, so the user can initialize the library
 #include "FPUSettings.h"

@@ -1,13 +1,4 @@
-/**
- * @file SharedLib.cpp
- * @brief shared library loader implementation
- * @author Christopher Han <xiphux@gmail.com>
- * @author Robin Vobruba <hoijui.quaero@gmail.com>
- *
- * Base shared library loading class implementation
- * Copyright (C) 2005.  Licensed under the terms of the
- * GNU GPL, v2 or later.
- */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #if defined BUILDING_AI
 #include "Util.h"

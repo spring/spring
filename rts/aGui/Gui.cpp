@@ -1,10 +1,12 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "Gui.h"
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
 
 #include "Rendering/GL/myGL.h"
-#include "System/InputHandler.h"
+#include "System/Input/InputHandler.h"
 #include "GuiElement.h"
 #include "LogOutput.h"
 
@@ -68,6 +70,8 @@ void Gui::Draw()
 
 void Gui::AddElement(GuiElement* elem, bool asBackground)
 {
+	if (elements.empty())
+		inputCon.unblock();
 	toBeAdded.push_back(GuiItem(elem,asBackground));
 }
 
@@ -79,14 +83,17 @@ void Gui::RmElement(GuiElement* elem)
 		if ((*it).element == elem)
 		{
 			toBeRemoved.push_back(GuiItem(elem,true));
-			return;
+			break;
 		}
 	}
+
+	if (elements.empty())
+		inputCon.block();
 }
 
-void Gui::UpdateScreenGeometry(int screenx, int screeny)
+void Gui::UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int screenOffsetY)
 {
-	GuiElement::UpdateDisplayGeo(screenx, screeny);
+	GuiElement::UpdateDisplayGeo(screenx, screeny, screenOffsetX, screenOffsetY);
 }
 
 bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const
@@ -106,9 +113,6 @@ bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const
 
 bool Gui::HandleEvent(const SDL_Event& ev)
 {
-	bool mouseEvent = false;
-	if  (ev.type == SDL_MOUSEMOTION || ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP)
-		mouseEvent = true;
 	ElList::iterator handler = elements.end();
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
 	{

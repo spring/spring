@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __OVERHEAD_CONTROLLER_H__
 #define __OVERHEAD_CONTROLLER_H__
 
@@ -31,6 +33,7 @@ public:
 	bool flipped;
 
 private:
+	float middleClickScrollSpeed;
 	float zscale;
 	float3 dir;
 	float height;

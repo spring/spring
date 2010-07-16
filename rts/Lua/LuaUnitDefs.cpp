@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// LuaUnitDefs.cpp: implementation of the LuaUnitDefs class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <set>
 #include <string>
@@ -26,7 +25,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
@@ -264,8 +263,9 @@ static int UnitDefNewIndex(lua_State* L)
 
 static int UnitDefMetatable(lua_State* L)
 {
-	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	//const UnitDef* ud = (const UnitDef*)userData;
+	lua_touserdata(L, lua_upvalueindex(1));
+	// const void* userData = lua_touserdata(L, lua_upvalueindex(1));
+	// const UnitDef* ud = (const UnitDef*)userData;
 	return 0;
 }
 
@@ -475,20 +475,21 @@ static int SoundsTable(lua_State* L, const void* data) {
 
 static int ModelDefTable(lua_State* L, const void* data) {
 	const UnitModelDef& md = *((const UnitModelDef*) data);
-	const char* type;
-	if (StringToLower(md.modelpath).find(".s3o") != string::npos) {
-		type = "s3o";
-	} else {
-		type = "3do";
-	}
+	const char* type = "???";
+
+	     if (StringToLower(md.modelName).find(".3do") != string::npos) { type = "3do"; }
+	else if (StringToLower(md.modelName).find(".s3o") != string::npos) { type = "s3o"; }
+	else if (StringToLower(md.modelName).find(".obj") != string::npos) { type = "obj"; }
+
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "type", type);
-	HSTR_PUSH_STRING(L, "path", md.modelpath);
-	HSTR_PUSH_STRING(L, "name", md.modelname);
+	HSTR_PUSH_STRING(L, "path", md.modelPath);
+	HSTR_PUSH_STRING(L, "name", md.modelName);
 	HSTR_PUSH(L, "textures");
+
 	lua_newtable(L);
 	map<string, string>::const_iterator it;
-	for (it = md.textures.begin(); it != md.textures.end(); ++it) {
+	for (it = md.modelTextures.begin(); it != md.modelTextures.end(); ++it) {
 		LuaPushNamedString(L, it->first, it->second);
 	}
 	lua_rawset(L, -3);
@@ -585,15 +586,15 @@ TYPE_STRING_FUNC(MetalExtractor);
 
 TYPE_MODEL_FUNC(ModelHeight, height);
 TYPE_MODEL_FUNC(ModelRadius, radius);
-TYPE_MODEL_FUNC(ModelMinx,   minx);
+TYPE_MODEL_FUNC(ModelMinx,   mins.x);
 TYPE_MODEL_FUNC(ModelMidx,   relMidPos.x);
-TYPE_MODEL_FUNC(ModelMaxx,   maxx);
-TYPE_MODEL_FUNC(ModelMiny,   miny);
+TYPE_MODEL_FUNC(ModelMaxx,   maxs.x);
+TYPE_MODEL_FUNC(ModelMiny,   mins.y);
 TYPE_MODEL_FUNC(ModelMidy,   relMidPos.y);
-TYPE_MODEL_FUNC(ModelMaxy,   maxy);
-TYPE_MODEL_FUNC(ModelMinz,   minz);
+TYPE_MODEL_FUNC(ModelMaxy,   maxs.y);
+TYPE_MODEL_FUNC(ModelMinz,   mins.z);
 TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z);
-TYPE_MODEL_FUNC(ModelMaxz,   maxz);
+TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
 
 
 /******************************************************************************/
@@ -670,8 +671,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_STRING("gaia", ud.gaia);
 
-	ADD_STRING("TEDClass", ud.TEDClassString);
-
 	ADD_STRING("wreckName", ud.wreckName);
 	ADD_STRING("deathExplosion", ud.deathExplosion);
 	ADD_STRING("selfDExplosion", ud.selfDExplosion);
@@ -700,7 +699,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("energyStorage",  ud.energyStorage);
 
 	ADD_BOOL("extractSquare", ud.extractSquare);
-	ADD_BOOL("isMetalMaker",  ud.isMetalMaker);
 
 	ADD_FLOAT("power", ud.power);
 
@@ -875,9 +873,11 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("decloakDistance",  ud.decloakDistance);
 	ADD_BOOL( "decloakSpherical", ud.decloakSpherical);
 	ADD_BOOL( "decloakOnFire",    ud.decloakOnFire);
+	ADD_INT(  "cloakTimeout",     ud.cloakTimeout);
 
-	ADD_BOOL( "canKamikaze",  ud.canKamikaze);
-	ADD_FLOAT("kamikazeDist", ud.kamikazeDist);
+	ADD_BOOL( "canKamikaze",    ud.canKamikaze);
+	ADD_FLOAT("kamikazeDist",   ud.kamikazeDist);
+	ADD_BOOL( "kamikazeUseLOS", ud.kamikazeUseLOS);
 
 	ADD_BOOL("targfac", ud.targfac);
 

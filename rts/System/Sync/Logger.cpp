@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 
@@ -127,7 +127,8 @@ void CLogger::FlushBuffer()
 		strncpy(buf2, buf1, sizeof(buf2));
 		if (len > 4 && buf2[len-4] == '.')
 			buf2[len-4] = 0;
-		strncat(buf2, ".dbg", sizeof(buf2));
+		// Note: strncat: 3rd param: maximum number of characters to append
+		STRNCAT(buf2, ".dbg", sizeof(buf2) - strlen(buf2) - 1);
 
 		fprintf(logfile, "trying debug symbols file: '%s'\n", buf2);
 

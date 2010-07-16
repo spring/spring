@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_HASH_STRING_H
 #define LUA_HASH_STRING_H
-// LuaHashString.h: lua utility routines
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 using std::string;
@@ -40,7 +39,7 @@ struct LuaHashString {
 
 		inline void GetGlobal(lua_State* L) const {
 			Push(L);
-			lua_gettable(L, LUA_GLOBALSINDEX);
+			lua_rawget(L, LUA_GLOBALSINDEX);
 		}
 		inline bool GetGlobalFunc(lua_State* L) const {
 			GetGlobal(L);
@@ -53,7 +52,7 @@ struct LuaHashString {
 
 		inline void GetRegistry(lua_State* L) const {
 			Push(L);
-			lua_gettable(L, LUA_REGISTRYINDEX);
+			lua_rawget(L, LUA_REGISTRYINDEX);
 		}
 		inline bool GetRegistryFunc(lua_State* L) const {
 			GetRegistry(L);

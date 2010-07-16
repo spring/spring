@@ -1,7 +1,6 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
-// Player.cpp: implementation of the CPlayer class.
-//
-//////////////////////////////////////////////////////////////////////
 #include <assert.h>
 #include <SDL_mouse.h>
 
@@ -57,9 +56,6 @@ CPlayer::CPlayer()
 	active   = false;
 	cpuUsage = 0;
 	ping     = 0;
-
-
-	dccs.playerControlledUnit = 0;
 
 	myControl.forward = 0;
 	myControl.back    = 0;
@@ -121,6 +117,10 @@ void CPlayer::UpdateControlledTeams()
 
 void CPlayer::StartSpectating()
 {
+	if (spectator) {
+		return;
+	}
+
 	spectator = true;
 	if (dccs.playerControlledUnit)
 		StopControllingUnit();

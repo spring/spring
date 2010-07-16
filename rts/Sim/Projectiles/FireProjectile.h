@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FIRE_PROJECTILE_H__
 #define __FIRE_PROJECTILE_H__
 
@@ -16,7 +18,7 @@ class CFireProjectile :
 	CR_DECLARE(CFireProjectile);
 	CR_DECLARE_SUB(SubParticle);
 public:
-	CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize GML_PARG_H);
+	CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize);
 	~CFireProjectile(void);
 
 	void Draw(void);

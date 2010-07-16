@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef GFXPROJECTILE_H
 #define GFXPROJECTILE_H
-// GfxProjectile.h: interface for the CGfxProjectile class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Sim/Projectiles/Projectile.h"
 
@@ -15,7 +14,7 @@ public:
 	void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	CGfxProjectile();
-	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color GML_PARG_H);
+	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color);
 	virtual ~CGfxProjectile();
 
 	int creationTime;

@@ -1,14 +1,14 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef PLAYER_H
 #define PLAYER_H
-// Player.h: interface for the CPlayer class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <set>
 
 #include "creg/creg_cond.h"
 #include "PlayerBase.h"
+#include "PlayerStatistics.h"
 #include "float3.h"
 
 class CPlayer;
@@ -34,6 +34,8 @@ struct DirectControlClientState {
 		oldHeading = 0;
 		oldState   = 255;
 		oldDCpos   = ZeroVector;
+
+		playerControlledUnit = NULL;
 	}
 
 	void SendStateUpdate(bool*);
@@ -64,7 +66,7 @@ public:
 	void StartSpectating();
 	void GameFrame(int frameNum);
 
-	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
+	CPlayer& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
 
 	bool active;
 

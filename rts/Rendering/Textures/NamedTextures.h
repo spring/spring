@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef NAMED_TEXTURES_H
 #define NAMED_TEXTURES_H
-// NamedTextures.h: interface for the CNamedTextures class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <map>
 #include <vector>
@@ -44,6 +43,5 @@ class CNamedTextures {
 		static map<string, TexInfo> texMap;
 		static vector<string> texWaiting;
 };
-
 
 #endif /* NAMED_TEXTURES_H */

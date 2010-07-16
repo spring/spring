@@ -1,18 +1,11 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef MYMATH_H
 #define MYMATH_H
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "Vec2.h"
 #include "float3.h"
-
-#ifndef __GNUC__
-	#define _const
-	#define _pure
-#else
-	#define _const __attribute__((const))
-	#define _pure __attribute__((pure))
-#endif
-
 
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
@@ -32,6 +25,12 @@ static const float TWOPI = 2*PI;
 #  error "HEADING_CHECKSUM not set, invalid NUM_HEADINGS?"
 #endif
 
+enum FacingMap {
+	FACING_NORTH = 2,
+	FACING_SOUTH = 0,
+	FACING_EAST  = 1,
+	FACING_WEST  = 3
+};
 
 class CMyMath {
 public:
@@ -41,18 +40,42 @@ public:
 
 
 
-inline short int _const GetHeadingFromFacing(int facing)
+//                  F(N=2) = H(-32768 / 32767)
+// 
+//                         ^
+//                         |
+//                         |
+// F(W=3) = H(-16384)  <---o--->  F(E=1) = H(16384)
+//                         |
+//                         |
+//                         v
+// 
+//                  F(S=0) = H(0)
+inline short int GetHeadingFromFacing(int facing)
 {
 	switch (facing) {
-		case 0: return      0;	// south
-		case 1: return  16384;	// east
-		case 2: return  32767;	// north == -32768
-		case 3: return -16384;	// west
+		case FACING_SOUTH: return      0;
+		case FACING_EAST:  return  16384;
+		case FACING_NORTH: return  32767;
+		case FACING_WEST:  return -16384;
 		default: return 0;
 	}
 }
 
-inline float _const GetHeadingFromVectorF(float dx, float dz)
+inline int GetFacingFromHeading(short int heading)
+{
+	if (heading >= 0) {
+		if (heading <  8192) { return FACING_SOUTH; }
+		if (heading < 24576) { return FACING_EAST; }
+		return FACING_NORTH;
+	} else {
+		if (heading >=  -8192) { return FACING_SOUTH; }
+		if (heading >= -24576) { return FACING_WEST; }
+		return FACING_NORTH;
+	}
+}
+
+inline float GetHeadingFromVectorF(float dx, float dz)
 {
 	float h = 0.0f;
 
@@ -83,7 +106,7 @@ inline float _const GetHeadingFromVectorF(float dx, float dz)
 	return h;
 }
 
-inline short int _const GetHeadingFromVector(float dx, float dz)
+inline short int GetHeadingFromVector(float dx, float dz)
 {
 	float h = GetHeadingFromVectorF(dx, dz);
 
@@ -111,7 +134,7 @@ struct shortint2 {
 };
 
 // vec should be normalized
-inline shortint2 _const GetHAndPFromVector(const float3& vec)
+inline shortint2 GetHAndPFromVector(const float3& vec)
 {
 	shortint2 ret;
 
@@ -131,7 +154,7 @@ inline shortint2 _const GetHAndPFromVector(const float3& vec)
 }
 
 // vec should be normalized
-inline float2 _const GetHAndPFromVectorF(const float3& vec)
+inline float2 GetHAndPFromVectorF(const float3& vec)
 {
 	float2 ret;
 
@@ -144,7 +167,7 @@ inline float2 _const GetHAndPFromVectorF(const float3& vec)
 	return ret;
 }
 
-inline float3 _pure GetVectorFromHeading(short int heading)
+inline float3 GetVectorFromHeading(short int heading)
 {
 	float2 v = CMyMath::headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
 	return float3(v.x, 0.0f, v.y);
@@ -163,16 +186,31 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
-inline float _const Square(const float x)
-{
-	return x * x;
-}
+
+#ifndef __GNUC__
+float Square(const float x);
+#else
+float Square(const float x) __attribute__((const));
+#endif
+
+inline float Square(const float x) { return x * x; }
 
 float smoothstep(const float edge0, const float edge1, const float value);
 float3 smoothstep(const float edge0, const float edge1, float3 vec);
 
 
-inline float _const Clamp(const float& v, const float& min, const float& max)
+inline float Clamp(const float& v, const float& min, const float& max)
+{
+	if (v>max) {
+		return max;
+	} else if (v<min) {
+		return min;
+	}
+	return v;
+}
+
+template<class T>
+inline T Clamp(const T& v, const T& min, const T& max)
 {
 	if (v>max) {
 		return max;
@@ -186,7 +224,13 @@ inline float _const Clamp(const float& v, const float& min, const float& max)
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
-inline float _const ClampRad(float f)
+#ifndef __GNUC__
+float ClampRad(float f);
+#else
+float ClampRad(float f) __attribute__((const));
+#endif
+
+inline float ClampRad(float f)
 {
 	f = fmod(f, TWOPI);
 	if (f < 0.0f) f += TWOPI;
@@ -199,7 +243,7 @@ inline float _const ClampRad(float f)
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
-inline void _const ClampRad(float* f)
+inline void ClampRad(float* f)
 {
 	*f = fmod(*f, TWOPI);
 	if (*f < 0.0f) *f += TWOPI;
@@ -212,12 +256,15 @@ inline void _const ClampRad(float* f)
  * @param f1 float* first compare value
  * @param f2 float* second compare value
  */
-inline bool _const RadsAreEqual(const float f1, const float f2)
+#ifndef __GNUC__
+bool RadsAreEqual(const float f1, const float f2);
+#else
+bool RadsAreEqual(const float f1, const float f2) __attribute__((const));
+#endif
+
+inline bool RadsAreEqual(const float f1, const float f2)
 {
 	return (fmod(f1 - f2, TWOPI) == 0.0f);
 }
-
-#undef _const
-#undef _pure
 
 #endif // MYMATH_H

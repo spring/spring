@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_FONTS_H
 #define LUA_FONTS_H
-// LuaFonts.h: interface for the LuaFonts class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
@@ -15,13 +14,8 @@ class LuaFonts {
 		LuaFonts();
 		~LuaFonts();
 
-		const void* GetMetatable() const { return metatable; }
-
 	public:
 		static bool PushEntries(lua_State* L);
-
-	private:
-		const void* metatable;
 
 	private: // helpers
 		static bool CreateMetatable(lua_State* L);

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -18,7 +20,6 @@
 #include "Game/GameHelper.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Rendering/UnitModels/3DOParser.h"
 #include "creg/STL_List.h"
 #include "GlobalUnsynced.h"
 #include "myMath.h"
@@ -941,8 +942,9 @@ void CTransportCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.load);
 					lineDrawer.Break(endPos, cmdColors.load);
+					glColor4fv(cmdColors.load);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
 					const CUnit* unit = uh->units[int(ci->params[0])];
 					if((unit != NULL) && isTrackable(unit)) {
@@ -958,8 +960,9 @@ void CTransportCAI::DrawCommands(void)
 					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
+					glColor4fv(cmdColors.unload);
 					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartSameColor();
+					lineDrawer.RestartWithColor(cmdColors.unload);
 				}
 				break;
 			}
@@ -1005,11 +1008,13 @@ bool CTransportCAI::LoadStillValid(CUnit* unit)
 		return false;
 
 	const Command& cmd = commandQue[1];
+
+	if (cmd.id != CMD_LOAD_UNITS || cmd.params.size() != 4)
+		return true;
+
 	const float3 cmdPos(cmd.params[0], cmd.params[1], cmd.params[2]);
 
-	return
-		!(cmd.id == CMD_LOAD_UNITS && cmd.params.size() == 4 &&
-		unit->pos.SqDistance2D(cmdPos) > Square(cmd.params[3] * 2));
+	return unit->pos.SqDistance2D(cmdPos) <= Square(cmd.params[3] * 2);
 }
 
 

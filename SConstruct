@@ -267,7 +267,7 @@ if env['strip']:
 ### Build unitsync shared object
 ################################################################################
 
-# HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
+# HACK   we should probably compile libraries from 7zip and minizip
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
 #
@@ -301,9 +301,7 @@ unitsync_fs_files       = usync_get_source('rts/System/FileSystem/', exclude_lis
 unitsync_lua_files      = usync_get_source('rts/lib/lua/src');
 unitsync_7zip_files     = usync_get_source('rts/lib/7z') ##+ usync_get_source('rts/lib/7z/Archive/7z')
 unitsync_minizip_files  = usync_get_source('rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
-unitsync_hpiutil2_files = usync_get_source('rts/lib/hpiutil2');
 unitsync_extra_files = [
-	'rts/ExternalAI/LuaAIImplHandler.cpp',
 	'rts/Game/GameVersion.cpp',
 	'rts/Lua/LuaUtils.cpp',
 	'rts/Lua/LuaIO.cpp',
@@ -323,7 +321,6 @@ unitsync_files.extend(unitsync_fs_files)
 unitsync_files.extend(unitsync_lua_files)
 unitsync_files.extend(unitsync_7zip_files)
 unitsync_files.extend(unitsync_minizip_files)
-unitsync_files.extend(unitsync_hpiutil2_files)
 unitsync_files.extend(unitsync_extra_files)
 
 unitsync_objects = []
@@ -380,7 +377,7 @@ ai_env = env.Clone(
 )
 remove_precompiled_header(ai_env)
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=env['builddir'])
-SConscript(['AI/SConscript'], exports=['env', 'ai_env', 'streflop_lib'])
+#SConscript(['AI/SConscript'], exports=['env', 'ai_env', 'streflop_lib'])
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=ai_env['builddir'])
 
 
@@ -410,6 +407,10 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 # in the respective directories doesn't work either because then the SConstript
 # ends up in the zip too... Bah. SCons sucks. Just like autoshit and everything else btw.
 base_dir = os.path.join(env['builddir'], 'base')
+if sys.platform == 'win32':
+	script_ext = '.bat'
+else:
+	script_ext = '.sh'
 springcontentArch = os.path.join(base_dir, 'springcontent.sdz')
 maphelperArch =     os.path.join(base_dir, 'maphelper.sdz')
 cursorsArch =       os.path.join(base_dir, 'cursors.sdz')
@@ -418,19 +419,14 @@ bitmapsArch =       os.path.join(base_dir, 'spring', 'bitmaps.sdz')
 #env.Zip(bitmapsArch, filelist.list_files(env, 'installer/builddata/bitmaps'))
 
 if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
-	if sys.platform != 'win32':
-		if env.GetOption('clean'):
-			if os.system("rm -f " + springcontentArch):
-				env.Exit(1)
-			if os.system("rm -f " + bitmapsArch):
-				env.Exit(1)
-			if os.system("rm -f " + maphelperArch):
-				env.Exit(1)
-			if os.system("rm -f " + cursorsArch):
-				env.Exit(1)
-		else:
-			if os.system("installer/make_gamedata_arch.sh " + base_dir):
-				env.Exit(1)
+	if env.GetOption('clean'):
+		os.remove(springcontentArch)
+		os.remove(bitmapsArch)
+		os.remove(maphelperArch)
+		os.remove(cursorsArch)
+	else:
+		if os.system(os.path.join('cont', 'base', 'make_gamedata_arch' + script_ext) + ' ' + base_dir):
+			env.Exit(1)
 
 inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base'), springcontentArch)
 Alias('install', inst)
@@ -442,14 +438,14 @@ inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'base/spri
 Alias('install', inst)
 
 # install fonts
-for font in os.listdir('game/fonts'):
-	if not os.path.isdir(os.path.join('game/fonts', font)):
-		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('game/fonts', font))
+for font in os.listdir('cont/fonts'):
+	if not os.path.isdir(os.path.join('cont/fonts', font)):
+		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('cont/fonts', font))
 		Alias('install', inst)
 
 # install some files from root of datadir
 for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'teamcolors.lua']:
-	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('cont', f))
 	Alias('install', inst)
 
 # install menu entry & icon
@@ -460,9 +456,9 @@ Alias('install', inst)
 
 # install LuaUI files
 for f in ['luaui.lua']:
-	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
+	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('cont', f))
 	Alias('install', inst)
-luaui_files=filelist.list_files_recursive(env, 'game/LuaUI')
+luaui_files=filelist.list_files_recursive(env, 'cont/LuaUI')
 for f in luaui_files:
 	if not os.path.isdir(f):
 		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], os.path.dirname(f)[5:]), f)

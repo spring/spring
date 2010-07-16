@@ -1,6 +1,5 @@
-// Sky.cpp: implementation of the CBasicSky class.
-//
-//////////////////////////////////////////////////////////////////////
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef _MSC_VER
 #pragma warning(disable:4258)
 #endif
@@ -14,6 +13,7 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "TimeProfiler.h"
 #include "ConfigHandler.h"
@@ -64,7 +64,7 @@ CBasicSky::CBasicSky()
 	skyColor = mapInfo->atmosphere.skyColor;
 	sunColor = mapInfo->atmosphere.sunColor;
 	fogStart = mapInfo->atmosphere.fogStart;
-	if (fogStart>0.99f) gu->drawFog = false;
+	if (fogStart>0.99f) globalRendering->drawFog = false;
 
 	for(int a=0;a<CLOUD_DETAIL;a++)
 		cloudDown[a]=false;
@@ -262,10 +262,10 @@ void CBasicSky::Draw()
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
-	glFogf(GL_FOG_START,gu->viewRange*fogStart);
-	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
+	glFogf(GL_FOG_END,globalRendering->viewRange);
 	glFogf(GL_FOG_DENSITY,1.00f);
-	if (gu->drawFog) {
+	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	} else {
 		glDisable(GL_FOG);
@@ -366,7 +366,7 @@ inline void CBasicSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) 
 
 	int yam2 = ydif[(ast - 2) & CLOUD_MASK];
 	int yam1 = ydif[(ast - 1) & CLOUD_MASK];
-	int yaa  = ydif[(ast) & CLOUD_MASK];
+	int yaa  = ydif[(ast)     & CLOUD_MASK];
 	int ap1 = (ast + 1) & CLOUD_MASK;
 
 	aed = aed * 4 + 3;
@@ -378,12 +378,19 @@ inline void CBasicSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) 
 	for (int a = ast; a < aed; ++rc, ++ct) {
 		int yap1 = ydif[ap1] += (int) cloudThickness[a3c += 4] - cloudThickness[a += 4] * 2 + cloudThickness[a4c += 4];
 
-		int dif = (yam2 >> 2) +
-			((yam2 = yam1) >> 1) +
-			(yam1 = yaa) +
-			((yaa = yap1) >> 1) +
-			(ydif[(++ap1) &= CLOUD_MASK] >> 2);
+		ap1++;
+		ap1 = (ap1 & CLOUD_MASK);
+		int dif =
+			(yam2 >> 2) +
+			(yam1 >> 1) +
+			(yaa) +
+			(yap1 >> 1) +
+			(ydif[ap1] >> 2);
 		dif >>= 4;
+
+		yam2 = yam1;
+		yam1 = yaa;
+		yaa  = yap1;
 
 		*ct++ = 128 + dif;
 		*ct++ = thicknessTransform[(*rc) >> 7];
@@ -522,7 +529,7 @@ void CBasicSky::Update()
 		for(int a=0; a<CLOUD_SIZE; ++a) {
 		cloudThickness[(a*CLOUD_SIZE+int(gs->frameNum*0.00009f*256+camera->pos.x*CLOUD_SIZE*0.000025f))*4+3]=0;
 		}
-		/**/
+		*/
 		glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 		glTexSubImage2D(GL_TEXTURE_2D,0, 0,0,CLOUD_SIZE, CLOUD_SIZE,GL_RGBA, GL_UNSIGNED_BYTE, cloudThickness);
 		break;
@@ -684,7 +691,7 @@ void CBasicSky::InitSun()
 			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
 		}
 		glEnd();
-		if (gu->drawFog) glEnable(GL_FOG);
+		if (globalRendering->drawFog) glEnable(GL_FOG);
 
 	glEndList();
 }

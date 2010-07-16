@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "CollisionVolume.h"
 #include "LogOutput.h"
@@ -26,7 +28,7 @@ CR_REG_METADATA(CollisionVolume, (
 std::pair<int, int> CollisionVolume::GetVolumeTypeForString(const std::string& volumeTypeStr) {
 	std::pair<int, int> p(COLVOL_TYPE_FOOTPRINT, COLVOL_AXIS_Z);
 
-	if (volumeTypeStr.size() > 0) {
+	if (!volumeTypeStr.empty()) {
 		std::string lcVolumeTypeStr(StringToLower(volumeTypeStr));
 
 		if (lcVolumeTypeStr.find("ell") != std::string::npos) {
@@ -100,7 +102,7 @@ CollisionVolume::CollisionVolume(const CollisionVolume* v, float defRadius)
 
 CollisionVolume::CollisionVolume(const std::string& typeStr, const float3& scales, const float3& offsets, int testType)
 {
-	std::pair<int, int> p = CollisionVolume::GetVolumeTypeForString(typeStr);
+	const std::pair<int, int>& p = CollisionVolume::GetVolumeTypeForString(typeStr);
 
 	switch (p.first) {
 		case COLVOL_TYPE_ELLIPSOID: { logOutput.Print(LOG_COLVOL, "New ellipsoid"); } break;
@@ -187,7 +189,7 @@ void CollisionVolume::SetBoundingRadius() {
 		case COLVOL_TYPE_BOX: {
 			// would be an over-estimation for cylinders
 			volumeBoundingRadiusSq = axisHScalesSq.x + axisHScalesSq.y + axisHScalesSq.z;
-			volumeBoundingRadius = streflop::sqrt(volumeBoundingRadiusSq);
+			volumeBoundingRadius = math::sqrt(volumeBoundingRadiusSq);
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
 			const float prhs = axisHScales[primaryAxis     ];   // primary axis half-scale
@@ -196,7 +198,7 @@ void CollisionVolume::SetBoundingRadius() {
 			const float mshs = std::max(sahs, sbhs);            // max. secondary axis half-scale
 
 			volumeBoundingRadiusSq = prhs * prhs + mshs * mshs;
-			volumeBoundingRadius = streflop::sqrtf(volumeBoundingRadiusSq);
+			volumeBoundingRadius = math::sqrt(volumeBoundingRadiusSq);
 		} break;
 		case COLVOL_TYPE_ELLIPSOID: {
 			volumeBoundingRadius = std::max(axisHScales.x, std::max(axisHScales.y, axisHScales.z));

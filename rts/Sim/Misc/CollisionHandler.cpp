@@ -1,19 +1,18 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "FastMath.h"
-#include "float3.h"
-#include "Matrix44f.h"
-
-#include "Sim/Units/Unit.h"
-#include "Sim/Features/Feature.h"
-#include "GroundBlockingObjectMap.h"
-
-#include "GlobalSynced.h"
-#include "GlobalConstants.h"
-
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
+#include "Rendering/Models/3DModel.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "System/FastMath.h"
+#include "System/Matrix44f.h"
 
 #define ZVEC ZeroVector
 
@@ -84,7 +83,7 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 			// (which is where the collision volume gets drawn) because
 			// GetTransformMatrix() only uses pos
 			CMatrix44f m = u->GetTransformMatrix(true);
-			m.Translate(u->relMidPos);
+			m.Translate(u->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 			m.Translate(v->GetOffsets());
 
 			return CCollisionHandler::Collision(v, m, p);
@@ -203,9 +202,10 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
 {
-	// note: use the piece tree?
+	// note: hit the piece tree if usePieceCollisionVolumes?
 	CMatrix44f m = u->GetTransformMatrix(false, true);
-	m.Translate(u->relMidPos + v->GetOffsets());
+	m.Translate(u->relMidPos * float3(-1.0f, 1.0f, 1.0f));
+	m.Translate(v->GetOffsets());
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
 }
@@ -218,14 +218,13 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	const float3& p1,
 	std::list<CollisionQuery>* hits)
 {
+	const CollisionVolume* vol = lmp->colvol;
+	const float3& offset = vol->GetOffsets();
+
 	mat.Translate(lmp->pos);
 	mat.RotateY(-lmp->rot[1]);
 	mat.RotateX(-lmp->rot[0]);
 	mat.RotateZ(-lmp->rot[2]);
-
-	const CollisionVolume* vol = lmp->colvol;
-	const float3& offset = vol->GetOffsets();
-
 	mat.Translate(offset);
 
 	if (lmp->visible && !vol->IsDisabled()) {
@@ -251,6 +250,8 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 
 	// this probably needs an early-out test
 	CMatrix44f mat = u->GetTransformMatrix(true);
+	mat.Translate(u->relMidPos * float3(-1.0f, 0.0f, 1.0f));
+
 	IntersectPieceTreeHelper(u->localmodel->pieces[0], mat, p0, p1, &hits);
 
 	float dstNearSq = 1e30f;
@@ -279,7 +280,7 @@ bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3
 	const CollisionVolume* v = u->collisionVolume;
 
 	CMatrix44f m = u->GetTransformMatrix(true);
-	m.Translate(u->relMidPos);
+	m.Translate(u->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 	m.Translate(v->GetOffsets());
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);

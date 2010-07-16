@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "OggStream.h"
 
 #include <SDL.h>
@@ -52,16 +54,18 @@ long VorbisStreamTell(void* datasource)
 
 }
 
-COggStream::COggStream(ALuint _source)
+COggStream::COggStream(ALuint source)
+	: vorbisInfo(NULL)
+	, source(source)
+	, format(AL_FORMAT_MONO16)
+	, stopped(true)
+	, paused(false)
+	, msecsPlayed(0)
+	, lastTick(0)
 {
-	source = _source;
-	vorbisInfo = NULL;
-
-	stopped = true;
-	paused = false;
-	
-	msecsPlayed = 0;
-	lastTick = 0;
+	for (size_t i = 0; i < sizeof(buffers); ++i) {
+		buffers[i] = 0;
+	}
 }
 
 COggStream::~COggStream()
@@ -136,7 +140,7 @@ float COggStream::GetTotalTime()
 	return time;
 }
 
-const COggStream::TagVector& COggStream::VorbisTags()
+const COggStream::TagVector& COggStream::VorbisTags() const
 {
 	return vorbisTags;
 }

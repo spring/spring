@@ -1,4 +1,4 @@
-// Thread safety is copyright 2007, Tobi Vollebregt.
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Copyright 2000, Paul Nettle. All rights reserved.
@@ -255,7 +255,7 @@ static	void	doCleanupLogOnFirstRun()
 
 static	const char	*sourceFileStripper(const char *sourceFile)
 {
-	char	*ptr = strrchr(sourceFile, '\\');
+	const char	*ptr = strrchr(sourceFile, '\\');
 	if (ptr) return ptr + 1;
 	ptr = strrchr(sourceFile, '/');
 	if (ptr) return ptr + 1;

@@ -1,4 +1,4 @@
-/* Author: Tobi Vollebregt */
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "lib/gml/gml.h"
@@ -21,7 +21,7 @@
 extern volatile int gmlMultiThreadSim;
 #endif
 
-HANDLE simthread = INVALID_HANDLE_VALUE;
+HANDLE simthread = INVALID_HANDLE_VALUE; // used in gmlsrv.h as well
 HANDLE drawthread = INVALID_HANDLE_VALUE;
 
 namespace CrashHandler {
@@ -33,7 +33,7 @@ volatile int keepRunning = 1;
 unsigned volatile simwdt = 0, drawwdt = 0;
 int hangTimeout = 0;
 
-		
+
 void SigAbrtHandler(int signal)
 {
 	// cause an exception if on windows
@@ -89,11 +89,10 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 
 	BOOL suspended = FALSE;
 	CONTEXT c;
-	if(e) {
+	if (e) {
 		c = *e->ContextRecord;
 		thread = GetCurrentThread();
-	}
-	else {
+	} else {
 		SuspendThread(hThread);
 		suspended = TRUE;
 		memset(&c, 0, sizeof(CONTEXT));
@@ -116,9 +115,11 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 
 	process = GetCurrentProcess();
 
-	char *printstrings = (char *)GlobalAlloc(GMEM_FIXED, 0); // use globalalloc to reduce risk for allocator related deadlock
+	// use globalalloc to reduce risk for allocator related deadlock
+	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
-	while(1) {
+	bool containsOglDll = false;
+	while (true) {
 		more = StackWalk(
 			IMAGE_FILE_MACHINE_I386, // TODO: fix this for 64 bit windows?
 			process,
@@ -130,13 +131,13 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 			SymGetModuleBase,
 			NULL
 		);
-		if(!more || sf.AddrFrame.Offset == 0) {
+		if (!more || sf.AddrFrame.Offset == 0) {
 			break;
 		}
 
 		dwModBase = SymGetModuleBase(process, sf.AddrPC.Offset);
 
-		if(dwModBase) {
+		if (dwModBase) {
 			GetModuleFileName((HINSTANCE)dwModBase, modname, MAX_PATH);
 		} else {
 			strcpy(modname, "Unknown");
@@ -150,21 +151,35 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		GlobalFree(printstrings);
 		printstrings = printstringsnew;
 
-		if(SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
+		if (SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
 			// This is the code path taken on VC if debugging syms are found.
 			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%s+%#0x) [0x%08X]", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
 			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08X]", count, modname, sf.AddrPC.Offset);
 		}
+
+		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
+		containsOglDll = containsOglDll || strstr(modname, "atiogl");
+		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
+		containsOglDll = containsOglDll || strstr(modname, "nvogl");
+
 		++count;
 	}
 
-	if(suspended)
-		ResumeThread(hThread);
+	if (containsOglDll) {
+		PRINT("This stack trace indicates a problem with your graphic card driver. "
+		      "Please try upgrading or downgrading it. "
+		      "Specifically recommended is the latest driver, and one that is as old as your graphic card.");
+	}
 
-	for(int i = 0; i < count; ++i)
+	if (suspended) {
+		ResumeThread(hThread);
+	}
+
+	for (int i = 0; i < count; ++i) {
 		PRINT("%s", printstrings + i * BUFFER_SIZE);
+	}
 
 	GlobalFree(printstrings);
 
@@ -178,19 +193,19 @@ static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userCo
 	PRINT("0x%08x\t%s", baseOfDll, moduleName);
 	return TRUE;
 }
-#else
+#else // _MSC_VER >= 1500
 static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
 {
 	PRINT("0x%08x\t%s", baseOfDll, moduleName);
 	return TRUE;
 }
-#endif
+#endif // _MSC_VER >= 1500
 
 /** Called by windows if an exception happens. */
 static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
-	logOutput.RemoveAllSubscribers();
+	logOutput.SetSubscribersEnabled(false);
 	PRINT("Spring %s has crashed.", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);
@@ -239,9 +254,9 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 }
 
 /** Print stack traces for relevant threads. */
-void HangHandler()
+void HangHandler(bool simhang)
 {
-	PRINT("Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
+	PRINT("Hang detection triggered %sfor Spring %s.", simhang ? "(in sim thread) " : "", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
@@ -254,14 +269,14 @@ void HangHandler()
 	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
 
 
-	if(drawthread != INVALID_HANDLE_VALUE) {
+	if (drawthread != INVALID_HANDLE_VALUE) {
 		// Record stacktrace.
 		PRINT("Stacktrace:");
 		Stacktrace(NULL, drawthread);
 	}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if(gmlMultiThreadSim && simthread != INVALID_HANDLE_VALUE) {
+	if (gmlMultiThreadSim && simthread != INVALID_HANDLE_VALUE) {
 		PRINT("Stacktrace (sim):");
 		Stacktrace(NULL, simthread);
 	}
@@ -274,56 +289,62 @@ void HangHandler()
 }
 
 void HangDetector() {
-	while(keepRunning) {
+	while (keepRunning) {
+		// increase multiplier during game load to prevent false positives e.g. during pathing
+		const int hangTimeMultiplier = CrashHandler::gameLoading? 3000 : 1000;
+
 		unsigned curwdt = SDL_GetTicks();
 #if defined(USE_GML) && GML_ENABLE_SIM
-		if(gmlMultiThreadSim) {
+		if (gmlMultiThreadSim) {
 			unsigned cursimwdt = simwdt;
-			if(cursimwdt && (curwdt - cursimwdt) > hangTimeout * 1000) {
-				HangHandler();
+			if (cursimwdt && curwdt > cursimwdt && (curwdt - cursimwdt) > hangTimeout * hangTimeMultiplier) {
+				HangHandler(true);
 				simwdt = curwdt;
 			}
 		}
 #endif
 		unsigned curdrawwdt = drawwdt;
-		if(curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * 1000) {
-			HangHandler();
+		if (curdrawwdt && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * hangTimeMultiplier) {
+			HangHandler(false);
 			drawwdt = curwdt;
 		}
 		SDL_Delay(1000);
 	}
 }
 
+
 void InstallHangHandler() {
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 	hangTimeout = configHandler->Get("HangTimeout", 0);
-#ifdef USE_GML
-	if(hangTimeout == 0) // HangTimeout = -1 to force disable hang detection in MT build
+	CrashHandler::gameLoading = false;
+	if (hangTimeout == 0) {
+		// HangTimeout = -1 to force disable hang detection
 		hangTimeout = 10;
-#endif
-	if(hangTimeout > 0)
+	}
+	if (hangTimeout > 0) {
 		hangdetectorthread = new boost::thread(&HangDetector);
+	}
 }
 
-void ClearDrawWDT(bool disable) {
-	drawwdt = disable ? 0 : SDL_GetTicks();
-}
+void ClearDrawWDT(bool disable) { drawwdt = disable ? 0 : SDL_GetTicks(); }
+void ClearSimWDT(bool disable) { simwdt = disable ? 0 : SDL_GetTicks(); }
 
-void ClearSimWDT(bool disable) {
-	simwdt = disable ? 0 : SDL_GetTicks();
-}
+void GameLoading(bool loading) { CrashHandler::gameLoading = loading; }
 
 void UninstallHangHandler() {
-	if(hangdetectorthread) {
+
+	if (hangdetectorthread) {
 		keepRunning = 0;
 		hangdetectorthread->join();
 		delete hangdetectorthread;
 	}
-	if(drawthread != INVALID_HANDLE_VALUE)
+	if (drawthread != INVALID_HANDLE_VALUE) {
 		CloseHandle(drawthread);
-	if(simthread != INVALID_HANDLE_VALUE)
+	}
+	if (simthread != INVALID_HANDLE_VALUE) {
 		CloseHandle(simthread);
+	}
 }
 
 /** Install crash handler. */
@@ -340,5 +361,5 @@ void Remove()
 	signal(SIGABRT, SIG_DFL);
 }
 
-};
-};
+	}; // namespace Win32
+}; // namespace CrashHandler

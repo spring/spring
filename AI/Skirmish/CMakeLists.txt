@@ -10,6 +10,7 @@ set(SKIRMISH_SRC            "${CMAKE_CURRENT_SOURCE_DIR}")
 set(SKIRMISH_AI_LIBS        "${AI_LIBS_DIR}/AI/Skirmish")
 set(SKIRMISH_AI_DATA        "${AI_DATA_DIR}/AI/Skirmish")
 set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
+MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
 
 
 # Print a message, but only if we are allowed to speak.
@@ -22,6 +23,9 @@ endmacro (SkirmishAIMessage typemsg)
 
 # Add all Skirmish AI submodules
 GetListOfSubModules(SKIRMISH_AI_DIRS)
+set(DEPS_AI_SKIRMISH )
 foreach    (skirmishAIDir ${SKIRMISH_AI_DIRS})
 	Add_Subdirectory(${skirmishAIDir})
+	list(APPEND DEPS_AI_SKIRMISH ${skirmishAIDir})
 endforeach (skirmishAIDir)
+MakeGlobal(DEPS_AI_SKIRMISH)

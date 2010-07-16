@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef RADARHANDLER_H
 #define RADARHANDLER_H
 
@@ -54,29 +56,32 @@ public:
 
 	bool InRadar(const CUnit* unit, int allyTeam) {
 		if (unit->isUnderWater) {
-			if (unit->sonarStealth) {
+			if (unit->sonarStealth && !unit->beingBuilt) {
 				return false;
 			}
 			const int square = GetSquare(unit->pos);
-			return !!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square];
+			return (!!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
 		}
 		else if (circularRadar && unit->useAirLos) {
-			if (unit->stealth) {
+			if (unit->stealth && !unit->beingBuilt) {
 				return false;
 			}
 			const int square = GetSquare(unit->pos);
-			return airRadarMaps[allyTeam][square] && !commonJammerMap[square];
+			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 		else {
 			const int square = GetSquare(unit->pos);
-			return (radarMaps[allyTeam][square]
-			        && !unit->stealth
-			        && !commonJammerMap[square])
-			       ||
-			       ((unit->pos.y <= 1.0f)
-			        && sonarMaps[allyTeam][square]
-			        && !unit->sonarStealth
-			        && !commonSonarJammerMap[square]);
+			const bool radarVisible =
+				radarMaps[allyTeam][square] &&
+				(!unit->stealth || unit->beingBuilt) &&
+				!commonJammerMap[square];
+			const bool sonarVisible = 
+				(unit->pos.y <= 1.0f) &&
+				sonarMaps[allyTeam][square] &&
+				(!unit->sonarStealth || unit->beingBuilt) &&
+				!commonSonarJammerMap[square];
+
+			return (radarVisible || sonarVisible);
 		}
 	}
 

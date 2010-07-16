@@ -1,9 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef __FPS_CONTROLLER_H__
 #define __FPS_CONTROLLER_H__
 
-
 #include "CameraController.h"
-
 
 class CFPSController : public CCameraController
 {
@@ -31,9 +31,9 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
+	float mouseScale;
 	float oldHeight;
 	float3 dir;
 };
-
 
 #endif

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef AAIRMOVETYPE_H_
 #define AAIRMOVETYPE_H_
 
@@ -27,6 +29,7 @@ public:
 	AAirMoveType(CUnit* unit);
 	~AAirMoveType();
 
+	bool UseSmoothMesh() const;
 	/// goalpos to resume flying to after landing
 	float3 oldGoalPos;
 	float3 oldpos;

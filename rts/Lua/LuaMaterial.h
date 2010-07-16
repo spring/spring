@@ -1,8 +1,7 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifndef LUA_MATERIAL_H
 #define LUA_MATERIAL_H
-// LuaMaterial.h: interface for the CLuaMatHandler class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include <string>
 #include <vector>
@@ -240,8 +239,8 @@ class LuaMatBin : public LuaMaterial {
 
 struct LuaMatBinPtrLessThan {
 	bool operator()(const LuaMatBin* a, const LuaMatBin* b) const {	
-		const LuaMaterial* ma = (LuaMaterial*) a;
-		const LuaMaterial* mb = (LuaMaterial*) b;
+		const LuaMaterial* ma = static_cast<const LuaMaterial*>(a);
+		const LuaMaterial* mb = static_cast<const LuaMaterial*>(b);
 		return (*ma < *mb);
 	}
 };

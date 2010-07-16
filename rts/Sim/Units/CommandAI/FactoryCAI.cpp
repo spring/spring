@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "mmgr.h"
 
@@ -11,9 +13,9 @@
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitHandler.h"

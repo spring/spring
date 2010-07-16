@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "TransportUnit.h"
 #include "Game/SelectedUnits.h"
@@ -11,9 +13,9 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "EventHandler.h"
-#include "LogOutput.h"
-#include "creg/STL_List.h"
+#include "System/EventHandler.h"
+#include "System/myMath.h"
+#include "System/creg/STL_List.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
@@ -52,30 +54,49 @@ void CTransportUnit::PostLoad()
 void CTransportUnit::Update()
 {
 	CUnit::Update();
-	std::list<TransportedUnit>::iterator ti;
 
-	if (!isDead) {
-		for (ti = transported.begin(); ti != transported.end(); ++ti) {
-			float3 relPos;
+	if (isDead) {
+		return;
+	}
+
+	for (std::list<TransportedUnit>::iterator ti = transported.begin(); ti != transported.end(); ++ti) {
+		CUnit* transportee = ti->unit;
+
+		float3 relPiecePos;
+
+		if (ti->piece >= 0) {
+			relPiecePos = script->GetPiecePos(ti->piece);
+		} else {
+			relPiecePos = float3(0.0f, -1000.0f, 0.0f);
+		}
+
+		transportee->pos = pos +
+			(frontdir * relPiecePos.z) +
+			(updir    * relPiecePos.y) +
+			(rightdir * relPiecePos.x);
+		transportee->UpdateMidPos();
+		transportee->mapSquare = mapSquare;
+
+		if (unitDef->holdSteady) {
+			// slave transportee orientation to piece
 			if (ti->piece >= 0) {
-				relPos = script->GetPiecePos(ti->piece);
-			} else {
-				relPos = float3(0.0f, -1000.0f, 0.0f);
-			}
-			float3 upos = this->pos + (frontdir * relPos.z) +
-						 (updir    * relPos.y) +
-						 (rightdir * relPos.x);
+				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
+				const float3 pieceDir =
+					frontdir *  pieceMat[10] +
+					updir    *  pieceMat[ 6] +
+					rightdir * -pieceMat[ 2];
 
-			ti->unit->pos = upos;
-			ti->unit->UpdateMidPos();
-			ti->unit->mapSquare = mapSquare;
-
-			if (unitDef->holdSteady) {
-				ti->unit->heading  = heading;
-				ti->unit->updir    = updir;
-				ti->unit->frontdir = frontdir;
-				ti->unit->rightdir = rightdir;
+				transportee->heading  = GetHeadingFromVector(pieceDir.x, pieceDir.z);
+				transportee->frontdir = pieceDir;
+				transportee->rightdir = transportee->frontdir.cross(UpVector);
+				transportee->updir    = transportee->rightdir.cross(transportee->frontdir);
 			}
+		} else {
+			// slave transportee orientation to body
+			transportee->heading  = heading;
+			transportee->updir    = updir;
+			transportee->frontdir = frontdir;
+			transportee->rightdir = rightdir;
 		}
 	}
 }
@@ -129,7 +150,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		if (!unitDef->releaseHeld) {
 			if (!selfDestruct) {
 				// we don't want it to leave a corpse
-				u->DoDamage(DamageArray() * 1000000, 0, ZeroVector);
+				u->DoDamage(DamageArray(1000000), 0, ZeroVector);
 			}
 			u->KillUnit(selfDestruct, reclaimed, attacker);
 		} else {

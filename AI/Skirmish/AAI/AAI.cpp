@@ -45,11 +45,11 @@ AAI::~AAI()
 		fprintf(file, "%-20s: %i / %i / %i\n", bt->GetCategoryString2((UnitCategory)i), ut->activeUnits[i], ut->futureUnits[i], ut->requestedUnits[i]);
 	}
 
-	fprintf(file, "\nGround Groups:    %i\n", group_list[GROUND_ASSAULT].size());
-	fprintf(file, "\nAir Groups:       %i\n", group_list[AIR_ASSAULT].size());
-	fprintf(file, "\nHover Groups:     %i\n", group_list[HOVER_ASSAULT].size());
-	fprintf(file, "\nSea Groups:       %i\n", group_list[SEA_ASSAULT].size());
-	fprintf(file, "\nSubmarine Groups: %i\n\n", group_list[SUBMARINE_ASSAULT].size());
+	fprintf(file, "\nGround Groups:    "_STPF_"\n", group_list[GROUND_ASSAULT].size());
+	fprintf(file, "\nAir Groups:       "_STPF_"\n", group_list[AIR_ASSAULT].size());
+	fprintf(file, "\nHover Groups:     "_STPF_"\n", group_list[HOVER_ASSAULT].size());
+	fprintf(file, "\nSea Groups:       "_STPF_"\n", group_list[SEA_ASSAULT].size());
+	fprintf(file, "\nSubmarine Groups: "_STPF_"\n\n", group_list[SUBMARINE_ASSAULT].size());
 
 	fprintf(file, "Future metal/energy request: %i / %i\n", (int)execute->futureRequestedMetal, (int)execute->futureRequestedEnergy);
 	fprintf(file, "Future metal/energy supply:  %i / %i\n\n", (int)execute->futureAvailableMetal, (int)execute->futureAvailableEnergy);
@@ -133,7 +133,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 	file = fopen(filename,"w");
 
-	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION(team), cb->GetModName());
+	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION(team), cb->GetModHumanName());
 
 	// load config file first
 	cfg->LoadConfig(this);
@@ -197,7 +197,8 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 		cat = UNKNOWN;
 
 	// assault grups may be ordered to retreat
-	if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT)
+	// (range check prevents a NaN)
+	if(cat >= GROUND_ASSAULT && cat <= SUBMARINE_ASSAULT && bt->units_static[def->id].range > 0.0f)
 			execute->CheckFallBack(damaged, def->id);
 
 	// known attacker
@@ -614,7 +615,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 				brain->expandable = true;
 
-				fprintf(file, "\nRemoving sector %i,%i from base; base size: %i \n", x, y, brain->sectors[0].size());
+				fprintf(file, "\nRemoving sector %i,%i from base; base size: "_STPF_" \n", x, y, brain->sectors[0].size());
 			}
 		}
 		else // finished unit has been killed
@@ -879,22 +880,37 @@ int AAI::HandleEvent(int msg, const void* data)
 	switch (msg)
 	{
 		case AI_EVENT_UNITGIVEN: // 1
-			{
-				const IGlobalAI::ChangeTeamEvent* cte =
-						(const IGlobalAI::ChangeTeamEvent*) data;
-				if(cte->newteam == cb->GetMyTeam())
-				{
-					UnitCreated(cte->unit, -1);
-					UnitFinished(cte->unit);
-				}
-				break;
-			}
 		case AI_EVENT_UNITCAPTURED: // 2
 			{
-				const IGlobalAI::ChangeTeamEvent* cte =
-						(const IGlobalAI::ChangeTeamEvent*) data;
-					if ((cte->oldteam) == (cb->GetMyTeam())) {
+				const IGlobalAI::ChangeTeamEvent* cte = (const IGlobalAI::ChangeTeamEvent*) data;
+
+				const int myAllyTeamId = cb->GetMyAllyTeam();
+				const bool oldEnemy = !cb->IsAllied(myAllyTeamId, cb->GetTeamAllyTeam(cte->oldteam));
+				const bool newEnemy = !cb->IsAllied(myAllyTeamId, cb->GetTeamAllyTeam(cte->newteam));
+
+				if (oldEnemy && !newEnemy) {
+					// unit changed from an enemy to an allied team
+					// we got a new friend! :)
+					EnemyDestroyed(cte->unit, -1);
+				} else if (!oldEnemy && newEnemy) {
+					// unit changed from an ally to an enemy team
+					// we lost a friend! :(
+					EnemyCreated(cte->unit);
+					if (!cb->UnitBeingBuilt(cte->unit)) {
+						EnemyFinished(cte->unit);
+					}
+				}
+
+				if (cte->oldteam == cb->GetMyTeam()) {
+					// we lost a unit
 					UnitDestroyed(cte->unit, -1);
+				} else if (cte->newteam == cb->GetMyTeam()) {
+					// we have a new unit
+					UnitCreated(cte->unit, -1);
+					if (!cb->UnitBeingBuilt(cte->unit)) {
+						UnitFinished(cte->unit);
+						UnitIdle(cte->unit);
+					}
 				}
 				break;
 			}
