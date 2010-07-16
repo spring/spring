@@ -114,8 +114,8 @@ void CUnitHandler::IdleUnitUpdate(int frame) {
 	}
 }
 
-void CUnitHandler::UnitMoveFailed(int unit) {
-	unit = unit;
+void CUnitHandler::UnitMoveFailed(int unitID) {
+	unitID = unitID;
 }
 
 // called when unit nanoframe first created
@@ -125,6 +125,9 @@ void CUnitHandler::UnitCreated(int unitID) {
 	const UnitDef* udef = ai->cb->GetUnitDef(unitID);
 
 	if (ucat != CAT_LAST) {
+		assert(ai->MyUnits[unitID]->isDead);
+		ai->MyUnits[unitID]->isDead = false;
+
 		AllUnitsByCat[ucat].push_back(unitID);
 		AllUnitsByType[udef->id].push_back(unitID);
 
@@ -169,30 +172,33 @@ void CUnitHandler::UnitCreated(int unitID) {
 	}
 }
 
-void CUnitHandler::UnitDestroyed(int unit) {
-	UnitCategory category = ai->ut->GetCategory(unit);
-	const UnitDef* unitDef = ai->cb->GetUnitDef(unit);
+void CUnitHandler::UnitDestroyed(int unitID) {
+	UnitCategory category = ai->ut->GetCategory(unitID);
+	const UnitDef* unitDef = ai->cb->GetUnitDef(unitID);
 
 	if (category != CAT_LAST) {
-		AllUnitsByType[unitDef->id].remove(unit);
-		AllUnitsByCat[category].remove(unit);
-		IdleUnitRemove(unit);
-		BuildTaskRemove(unit);
+		assert(!ai->MyUnits[unitID]->isDead);
+		ai->MyUnits[unitID]->isDead = true;
+
+		AllUnitsByType[unitDef->id].remove(unitID);
+		AllUnitsByCat[category].remove(unitID);
+		IdleUnitRemove(unitID);
+		BuildTaskRemove(unitID);
 
 		if (category == CAT_DEFENCE) {
-			ai->dm->RemoveDefense(ai->cb->GetUnitPos(unit), unitDef);
+			ai->dm->RemoveDefense(ai->cb->GetUnitPos(unitID), unitDef);
 		}
 		if (category == CAT_MMAKER) {
-			MMakerRemove(unit);
+			MMakerRemove(unitID);
 		}
 		if (category == CAT_FACTORY) {
-			FactoryRemove(unit);
+			FactoryRemove(unitID);
 		}
 
 		if (category == CAT_BUILDER) {
 			// remove the builder
 			for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
-				if ((*i)->builderID == unit) {
+				if ((*i)->builderID == unitID) {
 					if ((*i)->buildTaskId)
 						BuildTaskRemove(*i);
 					if ((*i)->taskPlanId)
@@ -209,10 +215,10 @@ void CUnitHandler::UnitDestroyed(int unit) {
 		}
 
 		if (category == CAT_MEX) {
-			MetalExtractorRemove(unit);
+			MetalExtractorRemove(unitID);
 		}
 		if (category == CAT_NUKE) {
-			NukeSiloRemove(unit);
+			NukeSiloRemove(unitID);
 		}
 	}
 }
@@ -746,16 +752,14 @@ void CUnitHandler::BuildTaskRemove(int id) {
 	}
 }
 
-BuilderTracker* CUnitHandler::GetBuilderTracker(int builder) {
+BuilderTracker* CUnitHandler::GetBuilderTracker(int builderID) {
 	for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
-		if ((*i)->builderID == builder) {
+		if ((*i)->builderID == builderID) {
 			return (*i);
 		}
 	}
 
-	// this better not happen
-	assert(false);
-	return 0;
+	return NULL;
 }
 
 void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {

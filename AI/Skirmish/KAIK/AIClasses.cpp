@@ -242,9 +242,8 @@ void AIClasses::Init() {
 	unitIDs.resize(MAX_UNITS, -1);
 
 	for (int i = 0; i < MAX_UNITS; i++) {
-		activeUnits[i]          = new CUNIT(this);
-		activeUnits[i]->myid    =  i;
-		activeUnits[i]->groupID = -1;
+		activeUnits[i]      = new CUNIT(this);
+		activeUnits[i]->uid =  i;
 	}
 
 	logHandler            = new CLogger(callbackHandler);
