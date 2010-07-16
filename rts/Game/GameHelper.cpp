@@ -622,8 +622,8 @@ struct EnemyAircraft : public Enemy_InLos
  */
 struct Friendly_All_Plus_Enemy_InLos_NOT_SYNCED
 {
-	bool Team(int) { return true; }
-	bool Unit(const CUnit* u) {
+	bool Team(int) const { return true; }
+	bool Unit(const CUnit* u) const {
 		return (u->allyteam == gu->myAllyTeam) ||
 		       (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
 		       gu->spectatingFullView;
