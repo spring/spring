@@ -6,6 +6,7 @@
 #include "float3.h"
 #include "creg/creg_cond.h"
 
+class CGameSetup;
 class CUnit;
 
 /**
@@ -17,14 +18,16 @@ class CGlobalUnsynced {
 	CR_DECLARE(CGlobalUnsynced);
 
 	CGlobalUnsynced();
+	~CGlobalUnsynced();
 
 public:
-	void PostInit();
+	void PostInit() {}
 
 	int    usRandInt();    //!< Unsynced random int
 	float  usRandFloat();  //!< Unsynced random float
 	float3 usRandVector(); //!< Unsynced random vector
 
+	void LoadFromSetup(const CGameSetup*);
 	void SetMyPlayer(const int mynumber);
 
 	/**
