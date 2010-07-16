@@ -3274,7 +3274,7 @@ bool CGame::Draw() {
 
 		if (showClock) {
 			char buf[32];
-			const int seconds = (gs->frameNum / 30);
+			const int seconds = (gs->frameNum / GAME_SPEED);
 			if (seconds < 3600) {
 				SNPRINTF(buf, sizeof(buf), "%02i:%02i", seconds / 60, seconds % 60);
 			} else {
@@ -3637,15 +3637,20 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 
 void CGame::ClientReadNet()
 {
-	if (gu->gameTime - lastCpuUsageTime >= 1) {
-		lastCpuUsageTime = gu->gameTime;
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+	if (playing) {
+		if (gu->gameTime - lastCpuUsageTime >= 1) {
+			lastCpuUsageTime = gu->gameTime;
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+		}
+	} else {
+		// the CPU-load percentage is undefined prior to SimFrame()
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
 	}
 
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
-	if(!gameServer){
+	if (!gameServer) {
 		const unsigned int currentFrame = SDL_GetTicks();
 
 		if (timeLeft > 1.0f)
@@ -4783,7 +4788,7 @@ void CGame::GameEnd()
 				}
 			}
 			// Finally pass it on to the CDemoRecorder.
-			record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+			record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
 			record->InitializeStats(numPlayers, numTeams, winner);
 			for (int i = 0; i < numPlayers; ++i) {
 				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
