@@ -17,19 +17,19 @@ void UnsyncedRNG::Seed(unsigned seed)
 unsigned UnsyncedRNG::operator()()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return randSeed & 0x7FFF;
+	return (randSeed >> 16) & 0x7FFF;
 }
 
 int UnsyncedRNG::RandInt()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return randSeed & 0x7FFF;
+	return (randSeed >> 16) & 0x7FFF;
 }
 
 float UnsyncedRNG::RandFloat()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return float(randSeed & 0x7FFF) / 0x7FFF;
+	return float((randSeed >> 16) & 0x7FFF) / 0x7FFF;
 }
 
 int UnsyncedRNG::operator()(int n)

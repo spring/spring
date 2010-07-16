@@ -105,7 +105,7 @@ void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 int CGlobalSynced::randInt()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return randSeed & RANDINT_MAX;
+	return (randSeed >> 16) & RANDINT_MAX;
 }
 
 /**
@@ -116,7 +116,7 @@ int CGlobalSynced::randInt()
 float CGlobalSynced::randFloat()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return float(randSeed & RANDINT_MAX)/RANDINT_MAX;
+	return float((randSeed >> 16) & RANDINT_MAX)/RANDINT_MAX;
 }
 
 /**
