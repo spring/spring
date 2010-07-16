@@ -104,18 +104,7 @@ public:
 		}
 	};
 
-	int ScriptToModel(int scriptnum) const {
-		LocalModelPiece* p = GetLocalModelPiece(scriptnum);
-
-		if (p == NULL) return -1;
-
-		int i = 0;
-		std::vector<LocalModelPiece*> *modelpieces = &unit->localmodel->pieces;
-		for(std::vector<LocalModelPiece*>::iterator pm=modelpieces->begin();pm!=modelpieces->end();pm++,i++) {
-			if (p == *pm) return i;
-		}
-		return -1;
-	};
+	int ScriptToModel(int scriptnum) const;
 
 	bool PieceExists(int scriptnum) const {
 		return GetLocalModelPiece(scriptnum) != NULL;

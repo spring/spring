@@ -9,9 +9,10 @@
 #include "CobInstance.h"
 #include "CobEngine.h"
 #include "Lua/LuaRules.h"
-#include "LogOutput.h"
-
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "System/LogOutput.h"
+
 
 CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)
 : script(script), owner(owner)
