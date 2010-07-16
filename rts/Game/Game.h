@@ -74,7 +74,6 @@ public:
 
 	LuaParser* defsParser;
 
-	unsigned int oldframenum;
 	unsigned int fps;
 	unsigned int thisFps;
 

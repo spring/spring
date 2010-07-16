@@ -179,7 +179,6 @@ CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
 //	CR_MEMBER(drawMode),
-	CR_MEMBER(oldframenum),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
 	CR_MEMBER(lastSimFrame),
@@ -215,7 +214,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(inputTextPosY),
 //	CR_MEMBER(inputTextSizeX),
 //	CR_MEMBER(inputTextSizeY),
-//	CR_MEMBER(lastCpuUsageTime),
 //	CR_MEMBER(skipping),
 	CR_MEMBER(playing),
 //	CR_MEMBER(lastFrameTime),
@@ -232,7 +230,6 @@ CR_REG_METADATA(CGame,(
 CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile):
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
-	oldframenum(0),
 	fps(0),
 	thisFps(0),
 	lastSimFrame(-1),
@@ -642,7 +639,7 @@ void CGame::LoadFinalize()
 	lastUpdate = lastframe;
 	lastMoveUpdate = lastframe;
 	lastUpdateRaw = lastframe;
-	lastCpuUsageTime = gu->gameTime + 10;
+	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
 #ifdef TRACE_SYNC
@@ -2778,10 +2775,13 @@ bool CGame::Update()
 	if (!gs->paused) {
 		gu->modGameTime += dif * gs->speedFactor;
 	}
+
 	gu->gameTime += dif;
+
 	if (playing && !gameOver) {
 		totalGameTime += dif;
 	}
+
 	lastModGameTimeMeasure = timeNow;
 
 	time(&fpstimer);
@@ -2791,7 +2791,6 @@ bool CGame::Update()
 		thisFps = 0;
 
 		starttime = fpstimer;
-		oldframenum = gs->frameNum;
 
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
@@ -3637,14 +3636,15 @@ void CGame::AddTraffic(int playerID, int packetCode, int length)
 
 void CGame::ClientReadNet()
 {
-	if (playing) {
-		if (gu->gameTime - lastCpuUsageTime >= 1) {
-			lastCpuUsageTime = gu->gameTime;
+	if (gu->gameTime - lastCpuUsageTime >= 1) {
+		lastCpuUsageTime = gu->gameTime;
+
+		if (playing) {
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+		} else {
+			// the CPU-load percentage is undefined prior to SimFrame()
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
 		}
-	} else {
-		// the CPU-load percentage is undefined prior to SimFrame()
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
 	}
 
 	boost::shared_ptr<const netcode::RawPacket> packet;
