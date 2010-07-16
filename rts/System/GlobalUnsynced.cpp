@@ -93,7 +93,7 @@ void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 int CGlobalUnsynced::usRandInt()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return usRandSeed & RANDINT_MAX;
+	return (usRandSeed >> 16) & RANDINT_MAX;
 }
 
 /**
@@ -104,7 +104,7 @@ int CGlobalUnsynced::usRandInt()
 float CGlobalUnsynced::usRandFloat()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return float(usRandSeed & RANDINT_MAX) / RANDINT_MAX;
+	return float((usRandSeed >> 16) & RANDINT_MAX) / RANDINT_MAX;
 }
 
 /**
