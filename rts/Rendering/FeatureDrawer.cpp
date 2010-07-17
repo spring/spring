@@ -410,6 +410,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int 
 
 void CFeatureDrawer::DrawShadowPass()
 {
+	glDisable(GL_CULL_FACE);
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -450,6 +451,7 @@ void CFeatureDrawer::DrawShadowPass()
 	po->Disable();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	glEnable(GL_CULL_FACE);
 }
 
 

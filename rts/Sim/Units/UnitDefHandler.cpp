@@ -19,15 +19,14 @@
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "ConfigHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
@@ -62,7 +61,6 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	numUnitDefs -= gameSetup->restrictedUnits.size();
 	*/
 
-	// This could be wasteful if there is a lot of restricted units, but that is not that likely
 	unitDefs = new UnitDef[numUnitDefs + 1];
 
 	// start at unitdef id 1
@@ -72,10 +70,12 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		const string unitName = unitDefNames[a];
 
 		if (std::find_if(unitName.begin(), unitName.end(), isblank) != unitName.end()) {
-			logOutput.Print("WARNING: UnitDef name \"%s\" contains white-spaces,"
-					"which will likely cause problems."
-					"Please contact the Game/Mod developpers.",
-					unitName.c_str());
+			logOutput.Print(
+				"WARNING: UnitDef name \"%s\" contains white-spaces, "
+				"which will likely cause problems. Please contact the "
+				"Game/Mod developers.",
+				unitName.c_str()
+			);
 		}
 
 		/*
