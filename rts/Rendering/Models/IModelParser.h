@@ -3,14 +3,16 @@
 #ifndef IMODELPARSER_H
 #define IMODELPARSER_H
 
+#include <map>
 #include <vector>
 #include <string>
 #include <set>
+
 #include "Matrix44f.h"
-#include "Sim/Units/Unit.h"
 #include "3DModel.h"
 
 
+class CUnit;
 class C3DOParser;
 class CS3OParser;
 class C3DModelLoader;
@@ -56,7 +58,7 @@ private:
 
 	void DeleteChilds(S3DModelPiece* o);
 
-	LocalModel* CreateLocalModel(S3DModel *model);
+	LocalModel* CreateLocalModel(S3DModel* model);
 	void CreateLocalModelPieces(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
 
 	void FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
