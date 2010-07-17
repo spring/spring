@@ -429,23 +429,18 @@ void CFeatureDrawer::DrawShadowPass()
 		//
 		// GetVisibleFeatures(1, false);
 
-		if (!globalRendering->atiHacks) {
-			// FIXME: why does texture alpha not work with shadows on ATI?
-			// need the alpha-mask for transparent features
-			glEnable(GL_TEXTURE_2D);
-			glPushAttrib(GL_COLOR_BUFFER_BIT);
-			glEnable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, 0.5f);
-		}
+		// need the alpha-mask for transparent features
+		glEnable(GL_TEXTURE_2D);
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.5f);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawOpaqueFeatures(modelType);
 		}
 
-		if (!globalRendering->atiHacks) {
-			glPopAttrib();
-			glDisable(GL_TEXTURE_2D);
-		}
+		glPopAttrib();
+		glDisable(GL_TEXTURE_2D);
 	}
 
 	po->Disable();

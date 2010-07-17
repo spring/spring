@@ -22,6 +22,7 @@ public:
 
 	int shadowMapSize;
 	unsigned int shadowTexture;
+	unsigned int dummyColorTexture;
 
 	static bool canUseShadows;
 	static bool useFPShadows;

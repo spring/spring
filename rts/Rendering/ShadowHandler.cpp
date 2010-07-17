@@ -41,6 +41,7 @@ CShadowHandler::CShadowHandler(void)
 	drawShadows   = false;
 	inShadowPass  = false;
 	shadowTexture = 0;
+	dummyColorTexture = 0;
 	drawTerrainShadow = true;
 
 	if (!tmpFirstInstance && !canUseShadows) {
@@ -102,6 +103,8 @@ CShadowHandler::CShadowHandler(void)
 		// free any resources allocated by InitDepthTarget()
 		glDeleteTextures(1, &shadowTexture);
 		shadowTexture = 0;
+		glDeleteTextures(1, &dummyColorTexture);
+		dummyColorTexture = 0;
 		return; // drawShadows is still false
 	}
 
@@ -112,6 +115,7 @@ CShadowHandler::~CShadowHandler(void)
 {
 	if (drawShadows) {
 		glDeleteTextures(1, &shadowTexture);
+		glDeleteTextures(1, &dummyColorTexture);
 	}
 
 	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
@@ -190,6 +194,7 @@ bool CShadowHandler::InitDepthTarget()
 		return false;
 	}
 	glGenTextures(1,&shadowTexture);
+
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
 	float one[4] = {1.0f,1.0f,1.0f,1.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
@@ -205,13 +210,26 @@ bool CShadowHandler::InitDepthTarget()
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
+
+	glGenTextures(1,&dummyColorTexture);
+	if (globalRendering->atiHacks) {
+		// ATI shadows fail without an attached color texture
+		glBindTexture(GL_TEXTURE_2D, dummyColorTexture);
+		// this dummy should be as small as possible not to waste memory
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA4, shadowMapSize, shadowMapSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
+	}
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 	fb.Bind();
-	if (useColorTexture)
+	if (useColorTexture) {
 		fb.AttachTexture(shadowTexture);
-	else
+	}
+	else {
+		if (globalRendering->atiHacks)
+			fb.AttachTexture(dummyColorTexture);
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
-	int buffer = useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE;
+	}
+	int buffer = (useColorTexture || globalRendering->atiHacks) ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE;
 	glDrawBuffer(buffer);
 	glReadBuffer(buffer);
 	bool status = fb.CheckStatus("SHADOW");
