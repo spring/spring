@@ -250,6 +250,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	leastQue(0),
 	timeLeft(0.0f),
 	consumeSpeed(1.0f),
+	luaDrawTime(0),
 
 	saveFile(saveFile)
 {
@@ -3301,15 +3302,14 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
 		}
 
-#ifdef USE_GML
-		if(showMTInfo) {
-			int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
-			static int luaDrawTime = 0;
-			if(cit > luaDrawTime)
-				++luaDrawTime;
-			else if(cit < luaDrawTime)
-				--luaDrawTime;
+#if defined(USE_GML) && GML_ENABLE_SIM
+		int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
+		if(cit > luaDrawTime)
+			++luaDrawTime;
+		else if(cit < luaDrawTime)
+			--luaDrawTime;
 
+		if(showMTInfo) {
 			float drawPercent = (float)luaDrawTime / 10.0f;
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
@@ -3538,7 +3538,7 @@ void CGame::StartPlaying()
 
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
-#ifdef USE_GML
+#if defined(USE_GML) && GML_ENABLE_SIM
 	if(showMTInfo) {
 		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
@@ -3642,6 +3642,9 @@ void CGame::ClientReadNet()
 
 		if (playing) {
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+#if defined(USE_GML) && GML_ENABLE_SIM
+			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaDrawTime));
+#endif
 		} else {
 			// the CPU-load percentage is undefined prior to SimFrame()
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));

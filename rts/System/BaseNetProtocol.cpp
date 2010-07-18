@@ -165,6 +165,10 @@ PacketType CBaseNetProtocol::SendSpeedControl(uchar myPlayerNum, int speedCtrl) 
 	return SendCustomData(myPlayerNum, CUSTOM_DATA_SPEEDCONTROL, speedCtrl);
 }
 
+PacketType CBaseNetProtocol::SendLuaDrawTime(uchar myPlayerNum, int mSec) {
+	return SendCustomData(myPlayerNum, CUSTOM_DATA_LUADRAWTIME, mSec);
+}
+
 PacketType CBaseNetProtocol::SendDirectControl(uchar myPlayerNum)
 {
 	PackPacket* packet = new PackPacket(2, NETMSG_DIRECT_CONTROL);
