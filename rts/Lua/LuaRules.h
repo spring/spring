@@ -11,8 +11,6 @@ using std::vector;
 using std::map;
 
 #include "LuaHandleSynced.h"
-#include "LuaRulesParams.h"
-
 
 #define MAX_LUA_COB_ARGS 10
 
@@ -32,11 +30,6 @@ class CLuaRules : public CLuaHandleSynced
 	public:
 		static void LoadHandler();
 		static void FreeHandler();
-
-		static const LuaRulesParams::Params&  GetGameParams();
-		static const LuaRulesParams::HashMap& GetGameParamsMap();
-
-		const map<string, string>& GetInfoMap() const { return infoMap; }
 
 	public: // call-ins
 		bool SyncedUpdateCallIn(const string& name);
@@ -85,16 +78,8 @@ class CLuaRules : public CLuaHandleSynced
 
 		int UnpackCobArg(lua_State* L);
 
-		static void SetRulesParam(lua_State* L, const char* caller, int offset,
-		                          LuaRulesParams::Params& params,
-		                          LuaRulesParams::HashMap& paramsMap);
-
 	protected: // call-outs
 		static int PermitHelperAIs(lua_State* L);
-
-		static int SetUnitRulesParam(lua_State* L);
-		static int SetTeamRulesParam(lua_State* L);
-		static int SetGameRulesParam(lua_State* L);
 
 	private:
 		bool haveCommandFallback;
@@ -115,12 +100,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveUnitPreDamaged;
 		bool haveShieldPreDamaged;
 
-		map<string, string> infoMap;
-
 	private:
-		static LuaRulesParams::Params  gameParams;
-		static LuaRulesParams::HashMap gameParamsMap;
-
 		static const int* currentCobArgs;
 };
 

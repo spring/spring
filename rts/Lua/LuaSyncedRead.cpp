@@ -758,9 +758,8 @@ int LuaSyncedRead::GetWind(lua_State* L)
 
 int LuaSyncedRead::GetGameRulesParams(lua_State* L)
 {
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const LuaRulesParams::Params&  params    = lr->GetGameParams();
-	const LuaRulesParams::HashMap& paramsMap = lr->GetGameParamsMap();
+	const LuaRulesParams::Params&  params    = CLuaHandleSynced::GetGameParams();
+	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
 
 	//! always readable for all
 	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
@@ -771,9 +770,8 @@ int LuaSyncedRead::GetGameRulesParams(lua_State* L)
 
 int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 {
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const LuaRulesParams::Params&  params    = lr->GetGameParams();
-	const LuaRulesParams::HashMap& paramsMap = lr->GetGameParamsMap();
+	const LuaRulesParams::Params&  params    = CLuaHandleSynced::GetGameParams();
+	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
 
 	//! always readable for all
 	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
@@ -787,7 +785,7 @@ int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 int LuaSyncedRead::GetMapOptions(lua_State* L)
 {
 	lua_newtable(L);
-	if (gameSetup == NULL) {
+	if (!gameSetup) {
 		return 1;
 	}
 	const map<string, string>& mapOpts = gameSetup->mapOptions;
@@ -804,7 +802,7 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 int LuaSyncedRead::GetModOptions(lua_State* L)
 {
 	lua_newtable(L);
-	if (gameSetup == NULL) {
+	if (!gameSetup) {
 		return 1;
 	}
 	const map<string, string>& modOpts = gameSetup->modOptions;
