@@ -51,6 +51,9 @@
 
 static const LuaHashString unsyncedStr("UNSYNCED");
 
+LuaRulesParams::Params  CLuaHandleSynced::gameParams;
+LuaRulesParams::HashMap CLuaHandleSynced::gameParamsMap;
+
 
 #if (LUA_VERSION_NUM < 500)
 #  define LUA_OPEN_LIB(L, lib) lib(L)

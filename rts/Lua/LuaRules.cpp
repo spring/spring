@@ -46,9 +46,6 @@ static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 
 const int* CLuaRules::currentCobArgs = NULL;
 
-LuaRulesParams::Params  CLuaRules::gameParams;
-LuaRulesParams::HashMap CLuaRules::gameParamsMap;
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -144,12 +141,6 @@ bool CLuaRules::AddSyncedCode()
 	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
 	lua_pop(L, 1);
 
-	lua_getglobal(L, "Spring");
-	LuaPushNamedCFunc(L, "SetUnitRulesParam",     SetUnitRulesParam);
-	LuaPushNamedCFunc(L, "SetTeamRulesParam",     SetTeamRulesParam);
-	LuaPushNamedCFunc(L, "SetGameRulesParam",     SetGameRulesParam);
-	lua_pop(L, 1);
-
 	return true;
 }
 
@@ -170,20 +161,6 @@ bool CLuaRules::AddUnsyncedCode()
 	lua_pop(L, 1); // UNSYNCED
 
 	return true;
-}
-
-
-/******************************************************************************/
-
-const LuaRulesParams::Params& CLuaRules::GetGameParams()
-{
-	return gameParams;
-}
-
-
-const LuaRulesParams::HashMap& CLuaRules::GetGameParamsMap()
-{
-	return gameParamsMap;
 }
 
 
@@ -1103,178 +1080,6 @@ int CLuaRules::PermitHelperAIs(lua_State* L)
 	}
 	return 0;
 }
-
-
-/******************************************************************************/
-
-void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
-				LuaRulesParams::Params& params,
-				LuaRulesParams::HashMap& paramsMap)
-{
-	const int index = offset + 1;
-	const int valIndex = offset + 2;
-	const int losIndex = offset + 3;
-	int pIndex = -1;
-
-	if (lua_israwnumber(L, index)) {
-		pIndex = lua_toint(L, index) - 1;
-	}
-	else if (lua_israwstring(L, index)) {
-		const string pName = lua_tostring(L, index);
-		map<string, int>::const_iterator it = paramsMap.find(pName);
-		if (it != paramsMap.end()) {
-			pIndex = it->second;
-		}
-		else {
-			// create a new parameter
-			pIndex = params.size();
-			paramsMap[pName] = pIndex;
-			params.push_back(LuaRulesParams::Param());
-		}
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	if ((pIndex < 0)
-		|| (pIndex >= (int)params.size())
-		|| !lua_isnumber(L, valIndex)
-	) {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	LuaRulesParams::Param& param = params[pIndex];
-
-	//! set the value of the parameter
-	param.value = lua_tofloat(L, valIndex);
-
-	//! set the los checking of the parameter
-	if (lua_istable(L, losIndex)) {
-		const int& table = losIndex;
-		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
-
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			//! ignore if the value is false
-			if (lua_isboolean(L, -1) && !lua_toboolean(L, -1)) {
-				continue;
-			}
-
-			//! read the losType from the key
-			if (lua_isstring(L, -2)) {
-				const string losType = lua_tostring(L, -2);
-
-				if (losType == "public") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_PUBLIC;
-				}
-				else if (losType == "inlos") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_INLOS;
-				}
-				else if (losType == "inradar") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR;
-				}
-				else if (losType == "allied") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED;
-				}
-				/*else if (losType == "private") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE; //! default
-				}*/
-			}
-		}
-
-		param.los = losMask;
-	} else {
-		param.los = luaL_optint(L, losIndex, param.los);
-	}
-
-	return;
-}
-
-
-/******************************************************************************/
-
-int CLuaRules::SetGameRulesParam(lua_State* L)
-{
-	CLuaRules* lr = (CLuaRules*)activeHandle;
-	SetRulesParam(L, __FUNCTION__, 0, lr->gameParams, lr->gameParamsMap);
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad teamID type\n", caller);
-	}
-	const int teamID = lua_toint(L, index);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
-		luaL_error(L, "%s(): Bad teamID: %i\n", teamID);
-	}
-	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
-		return NULL;
-	}
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
-	const int ctrlTeam = lh->GetCtrlTeam();
-	if (ctrlTeam < 0) {
-		return lh->GetFullCtrl() ? team : NULL;
-	}
-	if (ctrlTeam != teamID) {
-		luaL_error(L, "%s(): No permission to control team %i\n", caller, teamID);
-	}
-	return team;
-}
-
-
-int CLuaRules::SetTeamRulesParam(lua_State* L)
-{
-	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
-		return 0;
-	}
-	SetRulesParam(L, __FUNCTION__, 1, team->modParams, team->modParamsMap);
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static CUnit* ParseUnit(lua_State* L, const char* caller, int luaIndex)
-{
-	if (!lua_isnumber(L, luaIndex)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
-	}
-	const int unitID = lua_toint(L, luaIndex);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
-	}
-	CUnit* unit = uh->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
-	const int ctrlTeam = lh->GetCtrlTeam();
-	if (ctrlTeam < 0) {
-		return lh->GetFullCtrl() ? unit : NULL;
-	}
-	if (ctrlTeam != unit->team) {
-		luaL_error(L, "%s(): No permission to control unit %i\n", caller, unitID);
-	}
-	return unit;
-}
-
-
-int CLuaRules::SetUnitRulesParam(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	SetRulesParam(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
-	return 0;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/

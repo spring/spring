@@ -123,6 +123,10 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
 	REGISTER_LUA_CFUNC(ShareTeamResource);
 
+	REGISTER_LUA_CFUNC(SetUnitRulesParam);
+	REGISTER_LUA_CFUNC(SetTeamRulesParam);
+	REGISTER_LUA_CFUNC(SetGameRulesParam);
+
 	REGISTER_LUA_CFUNC(CreateUnit);
 	REGISTER_LUA_CFUNC(DestroyUnit);
 	REGISTER_LUA_CFUNC(TransferUnit);
@@ -431,6 +435,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	return team;
 }
 
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -641,6 +646,122 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	}
 	return 0;
 }
+
+
+
+/******************************************************************************/
+
+void SetRulesParam(lua_State* L, const char* caller, int offset,
+				LuaRulesParams::Params& params,
+				LuaRulesParams::HashMap& paramsMap)
+{
+	const int index = offset + 1;
+	const int valIndex = offset + 2;
+	const int losIndex = offset + 3;
+	int pIndex = -1;
+
+	if (lua_israwnumber(L, index)) {
+		pIndex = lua_toint(L, index) - 1;
+	}
+	else if (lua_israwstring(L, index)) {
+		const string pName = lua_tostring(L, index);
+		map<string, int>::const_iterator it = paramsMap.find(pName);
+		if (it != paramsMap.end()) {
+			pIndex = it->second;
+		}
+		else {
+			// create a new parameter
+			pIndex = params.size();
+			paramsMap[pName] = pIndex;
+			params.push_back(LuaRulesParams::Param());
+		}
+	}
+	else {
+		luaL_error(L, "Incorrect arguments to %s()", caller);
+	}
+
+	if ((pIndex < 0)
+		|| (pIndex >= (int)params.size())
+		|| !lua_isnumber(L, valIndex)
+	) {
+		luaL_error(L, "Incorrect arguments to %s()", caller);
+	}
+
+	LuaRulesParams::Param& param = params[pIndex];
+
+	//! set the value of the parameter
+	param.value = lua_tofloat(L, valIndex);
+
+	//! set the los checking of the parameter
+	if (lua_istable(L, losIndex)) {
+		const int& table = losIndex;
+		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
+
+		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+			//! ignore if the value is false
+			if (lua_isboolean(L, -1) && !lua_toboolean(L, -1)) {
+				continue;
+			}
+
+			//! read the losType from the key
+			if (lua_isstring(L, -2)) {
+				const string losType = lua_tostring(L, -2);
+
+				if (losType == "public") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_PUBLIC;
+				}
+				else if (losType == "inlos") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_INLOS;
+				}
+				else if (losType == "inradar") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR;
+				}
+				else if (losType == "allied") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED;
+				}
+				/*else if (losType == "private") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE; //! default
+				}*/
+			}
+		}
+
+		param.los = losMask;
+	} else {
+		param.los = luaL_optint(L, losIndex, param.los);
+	}
+
+	return;
+}
+
+
+int LuaSyncedCtrl::SetGameRulesParam(lua_State* L)
+{
+	SetRulesParam(L, __FUNCTION__, 0, CLuaHandleSynced::gameParams, CLuaHandleSynced::gameParamsMap);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetTeamRulesParam(lua_State* L)
+{
+	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+	if (team == NULL) {
+		return 0;
+	}
+	SetRulesParam(L, __FUNCTION__, 1, team->modParams, team->modParamsMap);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitRulesParam(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	SetRulesParam(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
+	return 0;
+}
+
 
 
 /******************************************************************************/

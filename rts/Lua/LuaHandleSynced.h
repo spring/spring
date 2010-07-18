@@ -8,15 +8,18 @@
 using std::map;
 using std::string;
 
-
 #include "LuaHandle.h"
-
+#include "LuaRulesParams.h"
 
 struct lua_State;
-
+class LuaSyncedCtrl;
 
 class CLuaHandleSynced : public CLuaHandle
 {
+	public:
+		static const LuaRulesParams::Params&  GetGameParams() {return gameParams;};
+		static const LuaRulesParams::HashMap& GetGameParamsMap() {return gameParamsMap;};
+
 	public:
 		bool Initialize(const string& syncData);
 		string GetSyncData();
@@ -91,6 +94,12 @@ class CLuaHandleSynced : public CLuaHandle
 
 		static int GetWatchWeapon(lua_State* L);
 		static int SetWatchWeapon(lua_State* L);
+
+	private:
+		//FIXME: add to CREG?
+		static LuaRulesParams::Params  gameParams;
+		static LuaRulesParams::HashMap gameParamsMap;
+		friend class LuaSyncedCtrl;
 };
 
 
