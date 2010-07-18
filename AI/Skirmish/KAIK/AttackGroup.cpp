@@ -86,12 +86,11 @@ void CAttackGroup::AddUnit(int unitID) {
 		// add to my structure
 		units.push_back(unitID);
 		// set its group ID:
-		ai->MyUnits[unitID]->groupID = this->groupID;
+		ai->GetUnit(unitID)->groupID = groupID;
 		// update the attack range properties of this group
-		this->lowestAttackRange = std::min(this->lowestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
-		this->highestAttackRange = std::max(this->highestAttackRange, this->ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
-	}
-	else {
+		lowestAttackRange = std::min(lowestAttackRange, ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
+		highestAttackRange = std::max(highestAttackRange, ai->ut->GetMaxRange(ai->cb->GetUnitDef(unitID)));
+	} else {
 		assert(false);
 	}
 }
@@ -111,9 +110,9 @@ bool CAttackGroup::RemoveUnit(int unitID) {
 		units.erase(it);
 
 		// attempt to reset the group ID of a removed unit
-		// for debugging, check ai->MyUnits[unitID]->stuckCounter
+		// for debugging, check unit->stuckCounter
 		if (ai->cb->GetUnitDef(unitID) != NULL) {
-			ai->MyUnits[unitID]->groupID = 0;
+			ai->GetUnit(unitID)->groupID = 0;
 		}
 	}
 
@@ -196,21 +195,22 @@ float CAttackGroup::Power() {
 int CAttackGroup::PopStuckUnit() {
 	// removes a stuck unit from the group if there is one, and puts a marker on the map
 	for (std::vector<int>::iterator it = units.begin(); it != units.end(); it++) {
-		if (ai->MyUnits[*it]->stuckCounter > UNIT_STUCK_COUNTER_LIMIT) {
-			int id = *it;
+		CUNIT* unit = ai->GetUnit(*it);
+
+		if (unit->stuckCounter > UNIT_STUCK_COUNTER_LIMIT) {
 			// mark it
 			/*
 			SNPRINTF(logMsg, logMsg_maxSize,
 					"stuck %i: %i, dropping from group: %i. isMoving = %i",
-					id, ai->MyUnits[*it]->stuckCounter, groupID, isMoving);
+					id, unit->stuckCounter, groupID, isMoving);
 			PRINTF("%s", logMsg);
 			SNPRINTF(logMsg, logMsg_maxSize, "humanName: %s",
-					ai->MyUnits[*it]->def()->humanName.c_str());
+					unit->def()->humanName.c_str());
 			PRINTF("%s", logMsg);
 			*/
-			ai->MyUnits[*it]->stuckCounter = 0;
+			unit->stuckCounter = 0;
 			units.erase(it);
-			return id;
+			return unit->uid;
 		}
 	}
 
@@ -494,31 +494,32 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 
 	assert(numUnits >= 0);
 	for (unsigned int i = 0; i < (unsigned int)numUnits; i++) {
-		int unit = units[i];
-		const UnitDef* udef = ai->cb->GetUnitDef(unit);
+		CUNIT* unit = ai->GetUnit(units[i]);
+		const UnitDef* udef = ai->cb->GetUnitDef(unit->uid);
 
 		// does our unit exist and is it not currently maneuvering?
-		if (udef && (ai->MyUnits[unit]->maneuverCounter-- <= 0)) {
+		if (udef != NULL && (unit->maneuverCounter-- <= 0)) {
 			// TODO: add a routine finding best (not just closest) target
 			// TODO: in some cases, force-fire on position
 			// TODO: add canAttack
-			ai->MyUnits[unit]->Attack(ai->unitIDs[enemySelected]);
+			unit->Attack(ai->unitIDs[enemySelected]);
 
 			// TODO: this should be the max-range of the lowest-ranged weapon
 			// the unit has assuming you want to rush in with the heavy stuff
-			assert(range >= ai->cb->GetUnitMaxRange(unit));
+			assert(range >= ai->cb->GetUnitMaxRange(unit->uid));
 
 			// SINGLE UNIT MANEUVERING: testing the possibility of retreating to max
 			// range if target is too close, EXCEPT FOR FLAMETHROWER-EQUIPPED units
-			float3 myPos = ai->cb->GetUnitPos(unit);
-			float maxRange = ai->ut->GetMaxRange(udef);
-			float losDiff = (maxRange - udef->losRadius);
-		//	float myRange = (losDiff > 0.0f)? (maxRange + udef->losRadius) * 0.5f: maxRange;
-			float myRange = (losDiff > 0.0f)? maxRange * 0.75f: maxRange;
+			float3 myPos = ai->cb->GetUnitPos(unit->uid);
 
-			bool b5 = udef->canfly;
-			bool b6 = myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25);
-			bool b7 = (myRange - UNIT_MIN_MANEUVER_RANGE_DELTA) > myPos.distance2D(enemyPos);
+			const float maxRange = ai->ut->GetMaxRange(udef);
+			const float losDiff = (maxRange - udef->losRadius);
+		//	const float myRange = (losDiff > 0.0f)? (maxRange + udef->losRadius) * 0.5f: maxRange;
+			const float myRange = (losDiff > 0.0f)? maxRange * 0.75f: maxRange;
+
+			const bool b5 = udef->canfly;
+			const bool b6 = myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25);
+			const bool b7 = (myRange - UNIT_MIN_MANEUVER_RANGE_DELTA) > myPos.distance2D(enemyPos);
 
 			// is it air, or air that's landed
 			if (!b5 || (b6 && b7)) {
@@ -545,15 +546,15 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 					float v2 = ai->cb->GetElevation((moveHere.x + enemyPos.x) / 2, (moveHere.z + enemyPos.z) / 2);
 					bool losHack = v1 > v2;
 					float a = (float) UNIT_MIN_MANEUVER_TIME / frameSpread;
-					float b = (dist / ai->MyUnits[unit]->def()->speed);
+					float b = (dist / unit->def()->speed);
 					float c = ceilf(std::max(a, b));
 
 					// assume the pathfinder returns correct Y values
 					// REMEMBER that this will suck for planes
 					if (dist > std::max((UNIT_MIN_MANEUVER_RANGE_PERCENTAGE * myRange), float(UNIT_MIN_MANEUVER_DISTANCE)) && losHack) {
 						debug2 = true;
-						ai->MyUnits[unit]->maneuverCounter = int(c);
-						ai->MyUnits[unit]->Move(moveHere);
+						unit->maneuverCounter = int(c);
+						unit->Move(moveHere);
 					}
 				}
 				if (debug1 && !debug2) {
@@ -589,19 +590,19 @@ void CAttackGroup::MoveAlongPath(float3& groupPosition, int numUnits) {
 		// TODO: give a group the order instead of each unit
 		assert(numUnits >= 0);
 		for (unsigned int i = 0; i < (unsigned int)numUnits; i++) {
-			int unit = units[i];
+			CUNIT* unit = ai->GetUnit(units[i]);
 
-			if (ai->cb->GetUnitDef(unit) != NULL) {
+			if (ai->cb->GetUnitDef(unit->uid) != NULL) {
 				// TODO: when they are near target, change this so they eg. line up
 				// while some are here and some aren't, there's also something that
 				// should be done with the units in front that are given the same
 				// order+shiftorder and skittle around back and forth meanwhile if
 				// the single unit isn't there yet
-				if (ai->cb->GetUnitPos(unit).distance2D(pathToTarget[pathMaxIndex]) > UNIT_DESTINATION_SLACK) {
-					ai->MyUnits[unit]->Move(moveToHereFirst);
+				if ((unit->pos()).distance2D(pathToTarget[pathMaxIndex]) > UNIT_DESTINATION_SLACK) {
+					unit->Move(moveToHereFirst);
 
 					if (moveToHere != moveToHereFirst) {
-						ai->MyUnits[unit]->MoveShift(moveToHere);
+						unit->MoveShift(moveToHere);
 					}
 				}
 			}

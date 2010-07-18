@@ -16,7 +16,6 @@
 
 // Shortcuts
 #define GCAT(a)         (ai->ut->GetCategory(a))
-#define GUG(a)          (ai->MyUnits[a]->groupID)
 
 // RNGs
 #define RANDINT         ai->math->RandInt()

@@ -64,6 +64,7 @@ public:
 	CLogger* GetLogHandler() { return logHandler; }
 	LuaParser* GetLuaParser() { return luaConfigParser; }
 
+	CUNIT* GetUnit(int id) const { return activeUnits[id]; }
 	std::vector<CUNIT*>& GetActiveUnits() { return activeUnits; }
 	std::vector<int>& GetUnitIDs() { return unitIDs; }
 
@@ -113,7 +114,6 @@ private:
 #define logger GetLogHandler()
 #define luaParser GetLuaParser()
 
-#define MyUnits GetActiveUnits()
 #define unitIDs GetUnitIDs()
 
 

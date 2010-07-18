@@ -125,8 +125,8 @@ void CUnitHandler::UnitCreated(int unitID) {
 	const UnitDef* udef = ai->cb->GetUnitDef(unitID);
 
 	if (ucat != CAT_LAST) {
-		assert(ai->MyUnits[unitID]->isDead);
-		ai->MyUnits[unitID]->isDead = false;
+		assert(ai->GetUnit(unitID)->isDead);
+		ai->GetUnit(unitID)->isDead = false;
 
 		AllUnitsByCat[ucat].push_back(unitID);
 		AllUnitsByType[udef->id].push_back(unitID);
@@ -168,7 +168,7 @@ void CUnitHandler::UnitCreated(int unitID) {
 	if (udef->isCommander && udef->canDGun) {
 		ai->dgunConHandler->AddController(unitID);
 	} else {
-		ai->MyUnits[unitID]->SetFireState(2);
+		ai->GetUnit(unitID)->SetFireState(2);
 	}
 }
 
@@ -177,8 +177,8 @@ void CUnitHandler::UnitDestroyed(int unitID) {
 	const UnitDef* unitDef = ai->cb->GetUnitDef(unitID);
 
 	if (category != CAT_LAST) {
-		assert(!ai->MyUnits[unitID]->isDead);
-		ai->MyUnits[unitID]->isDead = true;
+		assert(!ai->GetUnit(unitID)->isDead);
+		ai->GetUnit(unitID)->isDead = true;
 
 		AllUnitsByType[unitDef->id].remove(unitID);
 		AllUnitsByCat[category].remove(unitID);
@@ -393,9 +393,11 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		// TODO: remove all builders from this plan
 		if (reportError) {
 			std::list<BuilderTracker*> builderTrackers = taskPlan->builderTrackers;
-			for (std::list<BuilderTracker*>::iterator i = builderTrackers.begin(); i != builderTrackers.end(); i++) {
+			std::list<BuilderTracker*>::iterator i;
+
+			for (i = builderTrackers.begin(); i != builderTrackers.end(); i++) {
 				TaskPlanRemove(*i);
-				ai->MyUnits[(*i)->builderID]->Stop();
+				ai->GetUnit((*i)->builderID)->Stop();
 			}
 		} else {
 			TaskPlanRemove(builderTracker);
@@ -858,10 +860,11 @@ BuildTask* CUnitHandler::BuildTaskExist(float3 pos, const UnitDef* builtdef) {
 bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 	assert(category < CAT_LAST);
 	assert(builderID >= 0);
-	assert(ai->MyUnits[builderID] != NULL);
+	assert(ai->GetUnit(builderID) != NULL);
 
-	CUNIT* u = ai->MyUnits[builderID];
+	CUNIT* u = ai->GetUnit(builderID);
 	BuilderTracker* builderTracker = GetBuilderTracker(builderID);
+
 	const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
 	const int frame = ai->cb->GetCurrentFrame();
 
@@ -1193,9 +1196,9 @@ void CUnitHandler::FactoryRemove(int id) {
 }
 
 bool CUnitHandler::FactoryBuilderAdd(int builderID) {
-	bool b = (ai->MyUnits[builderID]->def())->canAssist;
+	CUNIT* unit = ai->GetUnit(builderID);
 	BuilderTracker* builderTracker = GetBuilderTracker(builderID);
-	return (b && FactoryBuilderAdd(builderTracker));
+	return ((unit->def()->canAssist) && FactoryBuilderAdd(builderTracker));
 }
 
 bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
@@ -1204,7 +1207,7 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 	assert(builderTracker->factoryId == 0);
 
 	for (std::list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
-		CUNIT* u = ai->MyUnits[i->id];
+		CUNIT* u = ai->GetUnit(i->id);
 
 		// don't assist hubs (or factories that cannot be assisted)
 		if ((u->def())->canBeAssisted && !u->isHub()) {
@@ -1213,7 +1216,7 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 			// HACK: get the sum of the heuristic costs of every
 			// builder that is already assisting this factory
 			for (std::list<int>::iterator j = i->supportbuilders.begin(); j != i->supportbuilders.end(); j++) {
-				if ((ai->MyUnits[*j]->def())->isCommander) {
+				if ((ai->GetUnit(*j)->def())->isCommander) {
 					continue;
 				}
 
@@ -1231,7 +1234,7 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 				builderTracker->factoryId = i->id;
 				i->supportbuilders.push_back(builderTracker->builderID);
 				i->supportBuilderTrackers.push_back(builderTracker);
-				ai->MyUnits[builderTracker->builderID]->Guard(i->id);
+				ai->GetUnit(builderTracker->builderID)->Guard(i->id);
 				return true;
 			}
 		}
@@ -1349,7 +1352,7 @@ void CUnitHandler::UpdateUpgradeTasks(int frame) {
 							msg << "\" to builder " << builderID << "\n";
 						L(ai, msg.str());
 
-						ai->MyUnits[builderID]->Build_ClosestSite(task->newBuildingDef, task->oldBuildingPos);
+						ai->GetUnit(builderID)->Build_ClosestSite(task->newBuildingDef, task->oldBuildingPos);
 					}
 				} else {
 					// give a reclaim order for the original structure
@@ -1360,7 +1363,7 @@ void CUnitHandler::UpdateUpgradeTasks(int frame) {
 							msg << "\" to builder " << builderID << "\n";
 						L(ai, msg.str());
 
-						ai->MyUnits[builderID]->Reclaim(oldBuildingID);
+						ai->GetUnit(builderID)->Reclaim(oldBuildingID);
 					}
 				}
 			}
