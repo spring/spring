@@ -149,6 +149,7 @@ Lua:
  - added a ShieldPreDamaged call-in to LuaRules, triggered before any engine shield-vs-projectile logic executes
  - UnitDefs[i].model.textures now actually contains the names of the model textures for unit-type i
  - fixed GetScreenGeometry on win32 platforms to return the proper screenSizeY, not screenSizeY - taskbarSizeY
+ - removed evaluator functions from LuaOpengl
 
 Engine / Unit Scripts:
  - LUS: SetSignalMask raises error now when called outside thread
