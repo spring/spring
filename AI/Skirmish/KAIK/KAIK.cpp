@@ -34,15 +34,17 @@ void CKAIK::PostLoad(void) {
 void CKAIK::Serialize(creg::ISerializer* s) {
 	if (ai->Initialized()) {
 		for (int i = 0; i < MAX_UNITS; i++) {
+			CUNIT* u = ai->GetUnit(i);
+
 			if (ai->ccb->GetUnitDef(i) != NULL) {
 				// do not save non-existing units
-				s->SerializeObjectInstance(ai->MyUnits[i], ai->MyUnits[i]->GetClass());
+				s->SerializeObjectInstance(u, u->GetClass());
 
 				if (!s->IsWriting()) {
-					ai->MyUnits[i]->uid = i;
+					u->uid = i;
 				}
 			} else if (!s->IsWriting()) {
-				ai->MyUnits[i]->uid = i;
+				u->uid = i;
 			}
 		}
 
@@ -98,7 +100,7 @@ void CKAIK::UnitDestroyed(int unitID, int attackerUnitID) {
 		attackerUnitID = attackerUnitID;
 		ai->econTracker->UnitDestroyed(unitID);
 
-		if (GUG(unitID) != -1) {
+		if (ai->GetUnit(unitID)->groupID != -1) {
 			ai->ah->UnitDestroyed(unitID);
 		}
 
@@ -108,7 +110,7 @@ void CKAIK::UnitDestroyed(int unitID, int attackerUnitID) {
 
 void CKAIK::UnitIdle(int unitID) {
 	if (ai->Initialized()) {
-		if (ai->MyUnits[unitID]->isDead) {
+		if (ai->GetUnit(unitID)->isDead) {
 			return;
 		}
 
@@ -126,7 +128,7 @@ void CKAIK::UnitIdle(int unitID) {
 		}
 
 		// AttackHandler handles cat_g_attack units
-		if (GCAT(unitID) == CAT_G_ATTACK && ai->MyUnits[unitID]->groupID != -1) {
+		if (GCAT(unitID) == CAT_G_ATTACK && ai->GetUnit(unitID)->groupID != -1) {
 			// attackHandler->UnitIdle(unit);
 		} else {
 			ai->uh->IdleUnitAdd(unitID, ai->cb->GetCurrentFrame());
@@ -135,7 +137,7 @@ void CKAIK::UnitIdle(int unitID) {
 }
 
 void CKAIK::UnitDamaged(int unitID, int attackerID, float damage, float3 dir) {
-	if (ai->MyUnits[unitID]->isDead) {
+	if (ai->GetUnit(unitID)->isDead) {
 		return;
 	}
 
