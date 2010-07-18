@@ -29,9 +29,10 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "LogOutput.h"
-#include "Sound/ISound.h"
-#include "Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Sound/ISound.h"
+#include "System/Exceptions.h"
 
 CUnitDefHandler* unitDefHandler;
 
@@ -318,7 +319,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.collide = udTable.GetBool("collide", true);
 	ud.onoffable = udTable.GetBool("onoffable", false);
 
-	ud.maxSlope = udTable.GetFloat("maxSlope", 0.0f);
+	ud.maxSlope = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
 	ud.maxHeightDif = 40 * tan(ud.maxSlope * (PI / 180));
 	ud.maxSlope = cos(ud.maxSlope * (PI / 180));
 	ud.minWaterDepth = udTable.GetFloat("minWaterDepth", -10e6f);
