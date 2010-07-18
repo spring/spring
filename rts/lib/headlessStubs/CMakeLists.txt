@@ -3,10 +3,14 @@ SET(headlessStubsSources
 		"glstub"
 		"glustub"
 		"glxextstub"
-		"wglstub"
 		"sdlstub"
 		"sdlstub_cppbit"
 	)
+IF    (WIN32)
+	SET(headlessStubsSources ${headlessStubsSources}
+			"wglstub"
+		)
+ENDIF (WIN32)
 
 IF    (MINGW)
 	# We still need these header files,

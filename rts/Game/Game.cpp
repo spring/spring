@@ -4171,7 +4171,7 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid size");
 					boost::uint8_t playerNum;
 					unpack >> playerNum;
-					if(playerNum < 0 || playerNum >= playerHandler->ActivePlayers())
+					if (playerNum >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 					boost::uint16_t script;
 					unpack >> script;

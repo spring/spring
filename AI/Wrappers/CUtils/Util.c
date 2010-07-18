@@ -503,7 +503,7 @@ static int util_fileSelector(const struct dirent* fileDesc) {
 
 static unsigned int util_listFilesU(const char* dir, struct dirent*** files) {
 
-	int foundDirs = scandir(dir, files, util_fileSelector, alphasort);
+	int foundDirs = scandir(dir, files, &util_fileSelector, alphasort);
 
 	if (foundDirs < 0) { // error, act as if no file found
 		foundDirs = 0;
