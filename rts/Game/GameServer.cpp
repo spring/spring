@@ -608,12 +608,13 @@ void CGameServer::Update()
 					if(players[a].isReconn && curPing < 2 * GAME_SPEED)
 						players[a].isReconn = false;
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, curPing));
+					float correctedCpu = std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaDrawTime, 1.0f));
 					if(demoReader ? !players[a].isFromDemo : !players[a].spectator)
 					{
-						if (!players[a].isReconn && players[a].cpuUsage > refCpu) {
-							refCpu = players[a].cpuUsage;
+						if (!players[a].isReconn && correctedCpu > refCpu) {
+							refCpu = correctedCpu;
 						}
-						cpu.push_back(players[a].cpuUsage);
+						cpu.push_back(correctedCpu);
 						ping.push_back(serverframenum - players[a].lastFrameResponse);
 					}
 				}
@@ -827,9 +828,18 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			unsigned playerNum = inbuf[1];
 			if(playerNum!=a) {
 				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
-			} else if(inbuf[2] == CUSTOM_DATA_SPEEDCONTROL) {
-				players[a].speedControl = *((int*)&inbuf[3]);
-				UpdateSpeedControl(speedControl);
+			} else {
+				switch(inbuf[2]) {
+					case CUSTOM_DATA_SPEEDCONTROL:
+						players[a].speedControl = *((int*)&inbuf[3]);
+						UpdateSpeedControl(speedControl);
+						break;
+					case CUSTOM_DATA_LUADRAWTIME:
+						players[a].luaDrawTime = *((int*)&inbuf[3]);
+						break;
+					default:
+						Message(str(format("Player %s sent invalid CustomData type %d") %players[a].name %inbuf[2]));
+				}
 			}
 			break;
 		}

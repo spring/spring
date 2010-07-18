@@ -197,6 +197,8 @@ private:
 	unsigned skipLastDraw;
 
 	int speedControl;
+	int luaDrawTime;
+
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
