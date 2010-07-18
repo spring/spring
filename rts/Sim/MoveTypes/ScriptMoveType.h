@@ -90,7 +90,6 @@ class CScriptMoveType : public AMoveType
 	protected:
 		bool hasDecal;
 		bool isBuilding;
-		bool isBlocking;
 
 		float3 rotOffset;
 
