@@ -572,12 +572,13 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 			int numBuildOpts = sAICallback->Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions(teamId, unitDefId);
 			int* buildOpts = new int[numBuildOpts];
 
-			numBuildOpts = sAICallback->Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions(teamId, unitDefId, bo, numBuildOpts);
+			numBuildOpts = sAICallback->Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions(teamId, unitDefId, buildOpts, numBuildOpts);
 
 			for (int b = 0; b < numBuildOpts; b++) {
 				unitDef->buildOptions[b] = sAICallback->Clb_UnitDef_getName(teamId, buildOpts[b]);
 			}
-			delete [] bo;
+
+			delete[] buildOpts;
 		}
 		{
 			int size = sAICallback->Clb_UnitDef_0MAP1SIZE0getCustomParams(teamId, unitDefId);
