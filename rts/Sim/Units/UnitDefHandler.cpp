@@ -69,7 +69,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 CUnitDefHandler::~CUnitDefHandler(void)
 {
 	for (std::vector<UnitDef*>::iterator it = unitDefs.begin(); it != unitDefs.end(); ++it) {
-		delete[] *it;
+		delete *it;
 	}
 }
 
@@ -85,27 +85,27 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 		);
 	}
 
-	UnitDef* new_ud = NULL;
+	UnitDef* newDef = NULL;
 	int defid = unitDefs.size();
 
 	try {
-		new_ud = new UnitDef(udTable, unitName, defid);
-		UnitDefLoadSounds(new_ud, udTable);
+		newDef = new UnitDef(udTable, unitName, defid);
+		UnitDefLoadSounds(newDef, udTable);
 
-		if (!new_ud->decoyName.empty()) {
-			decoyNameMap[unitName] = StringToLower(new_ud->decoyName);
+		if (!newDef->decoyName.empty()) {
+			decoyNameMap[unitName] = StringToLower(newDef->decoyName);
 		}
 
 		// force-initialize the real* members
-		new_ud->SetNoCost(true);
-		new_ud->SetNoCost(noCost);
-	} catch(content_error) {
-		delete new_ud;
+		newDef->SetNoCost(true);
+		newDef->SetNoCost(noCost);
+	} catch (content_error) {
+		delete newDef;
 		return 0;
 	}
 
 	unitDefIDsByName[unitName] = defid;
-	unitDefs.push_back(new_ud);
+	unitDefs.push_back(newDef);
 	return defid;
 }
 
