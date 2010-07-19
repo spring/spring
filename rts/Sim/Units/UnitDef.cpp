@@ -266,10 +266,6 @@ UnitDef::UnitDef()
 , realEnergyUpkeep(0.0f)
 , realBuildTime(0.0f)
 {
-	yardmaps[0] = NULL;
-	yardmaps[1] = NULL;
-	yardmaps[2] = NULL;
-	yardmaps[3] = NULL;
 }
 
 
@@ -675,12 +671,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	if (speed <= 0.0f) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
-	} else {
-		for (int u = 0; u < 4; u++) {
-			yardmaps[u] = NULL;
-		}
 	}
-
 
 	leaveTracks   = udTable.GetBool("leaveTracks", false);
 	trackTypeName = udTable.GetString("trackType", "StdTank");
@@ -775,7 +766,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 UnitDef::~UnitDef()
 {
 	for (int u = 0; u < 4; u++) {
-		delete[] yardmaps[u];
+		yardmaps[u].clear();
 	}
 
 	if (buildPic) {
@@ -897,7 +888,7 @@ void UnitDef::CreateYardMap(std::string yardmapStr)
 
 	// create the yardmaps for each build-facing
 	for (int u = 0; u < 4; u++) {
-		yardmaps[u] = new unsigned char[maxIdx];
+		yardmaps[u].resize(maxIdx);
 	}
 
 	// Spring resolution's is double that of TA's (so 4 times as much area)

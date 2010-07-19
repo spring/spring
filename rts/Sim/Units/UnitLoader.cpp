@@ -372,7 +372,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->updir = UpVector;
 	unit->rightdir = unit->frontdir.cross(unit->updir);
 
-	unit->curYardMap = ud->yardmaps[facing];
+	unit->curYardMap = (ud->yardmaps[facing].empty())? NULL: &ud->yardmaps[facing][0];
 
 	unit->Init(builder);
 
