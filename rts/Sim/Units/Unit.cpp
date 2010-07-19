@@ -824,36 +824,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if(!weapons.empty()){
-		haveTarget=false;
-		haveUserTarget=false;
-
-		// aircraft and ScriptMoveType do not want this
-		if (moveType->useHeading) {
-			SetDirectionFromHeading();
-		}
-
-		if(!dontFire){
-			for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi){
-				CWeapon* w=*wi;
-				
-				if (!w->haveUserTarget) {
-					if (haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
-						if (userTarget) {
-							w->AttackUnit(userTarget, true);
-						} else if (userAttackGround) {
-							w->AttackGround(userAttackPos, true);
-						}
-					}
-				}
-
-				w->SlowUpdate();
-
-				if(w->targetType==Target_None && fireState>0 && lastAttacker && lastAttack+200>gs->frameNum)
-					w->AttackUnit(lastAttacker,false);
-			}
-		}
-	}
+	SlowUpdateWeapons();
 
 	if (moveType->progressState == AMoveType::Active ) {
 		if (seismicSignature && !GetTransporter()) {
@@ -863,6 +834,41 @@ void CUnit::SlowUpdate()
 
 	CalculateTerrainType();
 	UpdateTerrainType();
+}
+
+void CUnit::SlowUpdateWeapons() {
+	if (weapons.empty()) {
+		return;
+	}
+
+	haveTarget = false;
+	haveUserTarget = false;
+
+	// aircraft and ScriptMoveType do not want this
+	if (moveType->useHeading) {
+		SetDirectionFromHeading();
+	}
+
+	if (!dontFire) {
+		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+			CWeapon* w = *wi;
+			
+			if (!w->haveUserTarget) {
+				if (haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+					if (userTarget) {
+						w->AttackUnit(userTarget, true);
+					} else if (userAttackGround) {
+						w->AttackGround(userAttackPos, true);
+					}
+				}
+			}
+
+			w->SlowUpdate();
+
+			if (w->targetType == Target_None && fireState > 0 && lastAttacker && (lastAttack + 200 > gs->frameNum))
+				w->AttackUnit(lastAttacker, false);
+		}
+	}
 }
 
 
@@ -1409,22 +1415,26 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 }
 
 
-bool CUnit::AttackGround(const float3 &pos, bool dgun)
+bool CUnit::AttackGround(const float3& pos, bool dgun)
 {
 	bool r = false;
+
 	haveDGunRequest = dgun;
 	SetUserTarget(0);
 	userAttackPos = pos;
 	userAttackGround = true;
 	commandShotCount = 0;
 
-	std::vector<CWeapon*>::iterator wi;
-	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
-		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
-			if ((*wi)->AttackGround(pos, true))
+
+		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+			if ((*wi)->AttackGround(pos, true)) {
 				r = true;
+			}
+		}
 	}
+
 	return r;
 }
 

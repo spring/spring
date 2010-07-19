@@ -449,18 +449,20 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 
 void CUnitScript::EmitSfx(int type, int piece)
 {
+	printf("[CUnitScript::EmitSfx(type=%d, piece=%d)]\n", type, piece);
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
 		ShowScriptError("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
-	if(ph->particleSaturation>1 && type<1024){		//skip adding particles when we have to many (make sure below can be unsynced)
+	if (ph->particleSaturation > 1 && type < 1024) {
+		// skip adding (unsynced!) particles when we have too many
 		return;
 	}
 
-	float3 relPos(0,0,0);
-	float3 relDir(0,1,0);
+	float3 relPos = ZeroVector;
+	float3 relDir = UpVector;
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
 		ShowScriptError("emit-sfx: GetEmitDirPos failed");
 		return;
@@ -471,12 +473,16 @@ void CUnitScript::EmitSfx(int type, int piece)
 		unit->frontdir * relPos.z +
 		unit->updir    * relPos.y +
 		unit->rightdir * relPos.x;
+	const float3 dir =
+		unit->frontdir * relDir.z +
+		unit->updir    * relDir.y +
+		unit->rightdir * relDir.x;
 
 	float alpha = 0.3f + gu->usRandFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
 	float fadeupTime = 4;
 
-	//Hovers need special care
+	// Hovers need special care
 	if (unit->unitDef->canhover) {
 		fadeupTime = 8.0f;
 		alpha = 0.15f + gu->usRandFloat() * 0.2f;
@@ -485,7 +491,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 
 	//Make sure wakes are only emitted on water
 	if ((type >= 2) && (type <= 5)) {
-		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0){
+		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0) {
 			return;
 		}
 	}
@@ -493,75 +499,108 @@ void CUnitScript::EmitSfx(int type, int piece)
 	switch (type) {
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
-			//float3 relDir = -GetPieceDirection(piece) * 0.2f;
 			relDir *= -0.2f;
-			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
+
+			new CWakeProjectile(
+				pos + gu->usRandVector() * 2.0f,
+				dir * 0.4f,
+				6.0f + gu->usRandFloat() * 4.0f,
+				0.15f + gu->usRandFloat() * 0.3f,
+				unit,
+				alpha, alphaFalloff, fadeupTime
+			);
 			break;
 		}
+
 		case SFX_WAKE_2:  //wake 2, in TA it lives longer..
 		case SFX_WAKE: {  //regular ship wake
-			//float3 relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
-			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
+
+			new CWakeProjectile(
+				pos + gu->usRandVector() * 2.0f,
+				dir * 0.4f,
+				6.0f + gu->usRandFloat() * 4.0f,
+				0.15f + gu->usRandFloat() * 0.3f,
+				unit,
+				alpha, alphaFalloff, fadeupTime
+			);
 			break;
 		}
+
 		case SFX_BUBBLE: {  //submarine bubble. does not provide direction through piece vertices..
-			float3 pspeed=gu->usRandVector()*0.1f;
-			pspeed.y+=0.2f;
-			new CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01f,unit,0.3f+gu->usRandFloat()*0.3f);
-			break;}
+			float3 pspeed = gu->usRandVector() * 0.1f;
+				pspeed.y += 0.2f;
+
+			new CBubbleProjectile(
+				pos + gu->usRandVector() * 2.0f,
+				pspeed,
+				40.0f + gu->usRandFloat() * 30.0f,
+				1.0f + gu->usRandFloat() * 2.0f,
+				0.01f,
+				unit,
+				0.3f + gu->usRandFloat() * 0.3f
+			);
+		} break;
+
 		case SFX_WHITE_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.5f);
-			// FIXME -- needs a 'break'?
+			new CSmokeProjectile(pos, gu->usRandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.5f);
+			break;
 		case SFX_BLACK_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
+			new CSmokeProjectile(pos, gu->usRandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.6f);
 			break;
 		case SFX_VTOL: {  //vtol
-			//relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
-			float3 dir = unit->frontdir * relDir.z + unit->updir * -fabs(relDir.y) + unit->rightdir * relDir.x;
-			CHeatCloudProjectile* hc=new CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
-			hc->size=3;
+
+			const float3 udir =
+				unit->frontdir * relDir.z +
+				unit->updir    * -fabs(relDir.y) +
+				unit->rightdir * relDir.x;
+
+			CHeatCloudProjectile* hc = new CHeatCloudProjectile(
+				pos,
+				unit->speed * 0.7f + udir * 0.5f,
+				10 + gu->usRandFloat() * 5,
+				3 + gu->usRandFloat() * 2,
+				unit
+			);
+			hc->size = 3;
 			break;
 		}
-		default:
-			//logOutput.Print("Unknown sfx: %d", type);
-			if (type & SFX_CEG)	//emit defined explosiongenerator
-			{
+		default: {
+			if (type & SFX_CEG) {
+				// emit defined explosiongenerator
 				const unsigned index = type - SFX_CEG;
 				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
 					ShowScriptError("Invalid explosion generator index for emit-sfx");
 					break;
 				}
-				//float3 relDir = -GetPieceDirection(piece) * 0.2f;
-				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-				dir.SafeNormalize();
-				unit->unitDef->sfxExplGens[index]->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, dir);
+
+				float3 ndir = dir; 
+
+				CExplosionGenerator* explGen = unit->unitDef->sfxExplGens[index];
+				explGen->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, ndir.SafeNormalize());
 			}
-			else if (type & SFX_FIRE_WEAPON)  //make a weapon fire from the piece
-			{
+			else if (type & SFX_FIRE_WEAPON) {
+				// make a weapon fire from the piece
 				const unsigned index = type - SFX_FIRE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
-				//this is very hackish and probably has a lot of side effects, but might be usefull for something
-				//float3 relDir =-GetPieceDirection(piece);
-				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-				dir.SafeNormalize();
 
-				const float3 targetPos = unit->weapons[index]->targetPos;
-				const float3 weaponMuzzlePos = unit->weapons[index]->weaponMuzzlePos;
+				CWeapon* weapon = unit->weapons[index];
 
-				unit->weapons[index]->targetPos = pos+dir;
-				unit->weapons[index]->weaponMuzzlePos = pos;
+				const float3 targetPos = weapon->targetPos;
+				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
 
-				unit->weapons[index]->Fire();
+				// don't override the weapon's target position
+				// weapon->targetPos = pos + dir.SafeNormalize();
+				weapon->weaponMuzzlePos = pos;
 
-				unit->weapons[index]->targetPos = targetPos;
-				unit->weapons[index]->weaponMuzzlePos = weaponMuzzlePos;
+				weapon->Fire();
+
+				weapon->targetPos = targetPos;
+				weapon->weaponMuzzlePos = weaponMuzzlePos;
 			}
 			else if (type & SFX_DETONATE_WEAPON) {
 				const unsigned index = type - SFX_DETONATE_WEAPON;
@@ -581,7 +620,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 					NULL, float3(0, 0, 0), weaponDef->id
 				);
 			}
-			break;
+		} break;
 	}
 
 
