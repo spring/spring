@@ -2500,9 +2500,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 		if (unitName == "all") {
 			// player entered ".give all"
-			int sqSize = (int) streflop::ceil(streflop::sqrt((float) unitDefHandler->numUnitDefs));
+			int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
 			int currentNumUnits = teamHandler->Team(team)->units.size();
-			int numRequestedUnits = unitDefHandler->numUnitDefs;
+			int sqSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
 
 			// make sure team unit-limit not exceeded
 			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {

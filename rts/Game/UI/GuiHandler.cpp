@@ -2578,13 +2578,8 @@ void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 
 bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 {
-	// UnitDefHandler's array size is (numUnitDefs + 1)
-	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		return false;
-	}
-
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud != NULL) {
+	if (ud) {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
@@ -2637,10 +2632,7 @@ static inline bool BindUnitTexByString(const std::string& str)
 	if (endPtr == startPtr) {
 		return false; // bad unitID spec
 	}
-	// UnitDefHandler's array size is (numUnitDefs + 1)
-	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		return false;
-	}
+
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return false;
@@ -2660,10 +2652,7 @@ static inline bool BindIconTexByString(const std::string& str)
 	if (endPtr == startPtr) {
 		return false; // bad unitID spec
 	}
-	// UnitDefHandler's array size is (numUnitDefs + 1)
-	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		return false;
-	}
+
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return false;

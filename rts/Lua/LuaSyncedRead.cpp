@@ -1642,7 +1642,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	if (IsAlliedTeam(teamID)) {
 		lua_newtable(L);
 		int defCount = 0;
-		for (int udID = 0; udID < (unitDefHandler->numUnitDefs + 1); udID++) {
+		for (int udID = 0; udID < unitDefHandler->unitDefs.size(); udID++) {
 			const int unitCount = uh->unitsByDefs[teamID][udID].size();
 			if (unitCount > 0) {
 				lua_pushnumber(L, udID);
@@ -4547,10 +4547,6 @@ int LuaSyncedRead::GetSmoothMeshHeight(lua_State *L)
 int LuaSyncedRead::TestBuildOrder(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		lua_pushboolean(L, 0);
-		return 1;
-	}
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (unitDef == NULL) {
 		lua_pushboolean(L, 0);

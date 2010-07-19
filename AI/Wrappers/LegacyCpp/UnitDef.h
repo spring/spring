@@ -12,15 +12,12 @@
 #include "System/float3.h"
 
 
-struct Command;
 struct MoveData;
 struct WeaponDef;
 struct S3DModel;
 struct UnitDefImage;
 struct CollisionVolume;
 class CExplosionGenerator;
-class LuaTable;
-
 
 struct UnitModelDef
 {
@@ -37,14 +34,12 @@ struct UnitModelDef
 struct UnitDef
 {
 public:
-	UnitDef(const LuaTable& udTable, const std::string& unitName, int id);
 	UnitDef();
 	~UnitDef();
 
-	S3DModel* LoadModel() const;
 	bool DontLand() const { return dlHoverFactor >= 0.0f; }
-	void SetNoCost(bool noCost);
 
+	bool valid;
 	std::string name;
 	std::string humanName;
 	std::string filename;
@@ -368,39 +363,11 @@ public:
 	std::map<std::string, std::string> customParams;
 
 private:
-	void ParseWeaponsTable(const LuaTable& weaponsTable);
-	void CreateYardMap(std::string yardmapStr);
-
 	float realMetalCost;
 	float realEnergyCost;
 	float realMetalUpkeep;
 	float realEnergyUpkeep;
 	float realBuildTime;
-};
-
-
-
-struct BuildInfo
-{
-	BuildInfo()
-		: def(NULL)
-		, pos(ZeroVector)
-		, buildFacing(0)
-	{}
-
-	BuildInfo(const UnitDef *def, const float3& p, int facing) :
-		def(def), pos(p), buildFacing(facing) {}
-	BuildInfo(const Command& c) { Parse(c); }
-	BuildInfo(const std::string& name, const float3& p, int facing);
-
-	int GetXSize() const { return (buildFacing&1)==0 ? def->xsize : def->zsize; }
-	int GetZSize() const { return (buildFacing&1)==1 ? def->xsize : def->zsize; }
-	bool Parse(const Command& c);
-	void FillCmd(Command& c) const;
-
-	const UnitDef* def;
-	float3 pos;
-	int buildFacing;
 };
 
 #endif /* UNITDEF_H */
