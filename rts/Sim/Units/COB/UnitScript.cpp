@@ -216,18 +216,12 @@ bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int 
  */
 int CUnitScript::Tick(int deltaTime)
 {
-	bool done;
-	std::list<struct AnimInfo *>::iterator it = anims.begin();
-	std::list<struct AnimInfo *>::iterator cur;
-	std::list<struct AnimInfo *> remove;
+	std::vector<struct AnimInfo *> remove;
 
-	while (it != anims.end()) {
-		//Advance it, so we can erase cur safely
-		cur = it++;
+	for (std::list<struct AnimInfo *>::iterator it = anims.begin(); it != anims.end(); ) {
+		struct AnimInfo *ai = *it;
 
-		struct AnimInfo *ai = *cur;
-
-		done = false;
+		bool done = false;
 		pieces[ai->piece]->updated = true;
 
 		switch (ai->type) {
@@ -244,13 +238,16 @@ int CUnitScript::Tick(int deltaTime)
 
 		// Queue for removal (UnblockAll may add new anims)
 		if (done) {
-			anims.erase(cur);
 			remove.push_back(ai);
+			it = anims.erase(it);
+		}
+		else {
+			++it;
 		}
 	}
 
 	//Tell listeners to unblock?
-	for (it = remove.begin(); it != remove.end(); ++it) {
+	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
 		UnblockAll(*it);
 		delete *it;
 	}
