@@ -2091,7 +2091,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	Message(str(format("%s attempt from %s") %(reconnect ? "Reconnection" : "Connection") %name));
 	Message(str(format(" -> Version: %s") %version));
 	Message(str(format(" -> Address: %s") %link->GetFullAddress()), false);
-	size_t hisNewNumber = players.size();
+	size_t newPlayerNumber = players.size();
 
 	if(link->CanReconnect())
 		canReconnect = true;
@@ -2104,7 +2104,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			if(!players[i].isFromDemo) {
 				if (!players[i].link) {
 					if(canReconnect || !GameHasStarted())
-						hisNewNumber = i;
+						newPlayerNumber = i;
 					else
 						errmsg = "Game has already started";
 					break;
@@ -2112,11 +2112,11 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 				else {
 					bool reconnectAllowed = canReconnect && GameHasStarted() && players[i].link->CheckTimeout(-1);
 					if(!reconnect && reconnectAllowed) {
-						hisNewNumber = i;
+						newPlayerNumber = i;
 						terminate = true;
 					}
 					else if(reconnect && reconnectAllowed && players[i].link->GetFullAddress() != link->GetFullAddress())
-						hisNewNumber = i;
+						newPlayerNumber = i;
 					else
 						errmsg = "User is already ingame";
 					break;
@@ -2128,7 +2128,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	if (hisNewNumber >= players.size() && errmsg == "") {
+	if (newPlayerNumber >= players.size() && errmsg == "") {
 		if (demoReader || allowAdditionalPlayers) {
 			AddAdditionalUser(name, passwd);
 		}
@@ -2139,9 +2139,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	// check for user's password
 	if(errmsg == "" && !isLocal) {
-		if ( hisNewNumber < players.size() )  {
-			GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("password");
-			bool passwdFound = (it != players[hisNewNumber].GetAllValues().end());
+		if ( newPlayerNumber < players.size() )  {
+			GameParticipant::customOpts::const_iterator it = players[newPlayerNumber].GetAllValues().find("password");
+			bool passwdFound = (it != players[newPlayerNumber].GetAllValues().end());
 			if (passwdFound) {
 				if (passwd != it->second) {
 					errmsg = "Incorrect password";
@@ -2150,36 +2150,36 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	if(hisNewNumber >= players.size() || errmsg != "") {
+	if(newPlayerNumber >= players.size() || errmsg != "") {
 		Message(str(format(" -> %s") %errmsg));
 		link->SendData(CBaseNetProtocol::Get().SendQuit(str(format("Connection rejected: %s") %errmsg)));
 		return 0;
 	}
 
-	GameParticipant& newGuy = players[hisNewNumber];
+	GameParticipant& newGuy = players[newPlayerNumber];
 
 	if(terminate) {
 		Message(str(format(PlayerLeft) %newGuy.GetType() %newGuy.name %" terminating existing connection"));
-		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(hisNewNumber, 0));
+		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(newPlayerNumber, 0));
 		newGuy.link.reset(); // prevent sending a quit message since this might kill the new connection
 		newGuy.Kill("Terminating connection");
 		UpdateSpeedControl(speedControl);
 		if(hostif)
-			hostif->SendPlayerLeft(hisNewNumber, 0);
+			hostif->SendPlayerLeft(newPlayerNumber, 0);
 	}
 
 	newGuy.isReconn = GameHasStarted();
 
 	if(newGuy.link) {
 		newGuy.link->ReconnectTo(*link);
-		Message(str(format(" -> Connection reestablished (id %i)") %hisNewNumber));
+		Message(str(format(" -> Connection reestablished (id %i)") %newPlayerNumber));
 		link->Flush(!GameHasStarted());
-		return hisNewNumber;
+		return newPlayerNumber;
 	}
 
 	newGuy.Connected(link, isLocal);
 	newGuy.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
-	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
+	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
 	// after gamedata and playernum, the player can start loading
 	for (std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > >::const_iterator lit = packetCache.begin(); lit != packetCache.end(); ++lit)
@@ -2187,21 +2187,21 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			newGuy.SendData(*vit); // throw at him all stuff he missed until now
 
 	if (!demoReader || setup->demoName.empty()) { // gamesetup from demo?
-		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
-		if (!players[hisNewNumber].spectator && !teams[hisTeam].active) { // create new team
-			players[hisNewNumber].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
-			teams[hisTeam].active = true;
+		const unsigned newPlayerTeam = setup->playerStartingData[newPlayerNumber].team;
+		if (!players[newPlayerNumber].spectator && !teams[newPlayerTeam].active) { // create new team
+			players[newPlayerNumber].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
+			teams[newPlayerTeam].active = true;
 		}
-		players[hisNewNumber].team = hisTeam;
+		players[newPlayerNumber].team = newPlayerTeam;
 
-		if (!players[hisNewNumber].spectator && !setup->playerStartingData[hisNewNumber].spectator)
-			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
+		if (!players[newPlayerNumber].spectator && !setup->playerStartingData[newPlayerNumber].spectator)
+			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(newPlayerNumber, newPlayerTeam));
 	}
 
-	Message(str(format(" -> Connection established (given id %i)") %hisNewNumber));
+	Message(str(format(" -> Connection established (given id %i)") %newPlayerNumber));
 
 	link->Flush(!GameHasStarted());
-	return hisNewNumber;
+	return newPlayerNumber;
 }
 
 void CGameServer::GotChatMessage(const ChatMessage& msg)
