@@ -8,8 +8,11 @@
 #include "Lua/LuaParser.h"
 #include "Sim/Objects/WorldObject.h"
 #include <map>
+#include <string>
+#include <vector>
+#include <boost/shared_ptr.hpp>
 
-
+class float3;
 class CUnit;
 class CExplosionGenerator;
 
@@ -131,14 +134,14 @@ protected:
 	std::map<string, CEGData>::iterator currentCEG;
 
 	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
-	void ExecuteExplosionCode (const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
+	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 public:
 	CCustomExplosionGenerator();
 	~CCustomExplosionGenerator();
 	static void OutputProjectileClassInfo();
 
-	void Load (CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
+	void Load(CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
 	void Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir);
 };
 
