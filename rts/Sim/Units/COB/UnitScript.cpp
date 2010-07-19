@@ -449,7 +449,6 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 
 void CUnitScript::EmitSfx(int type, int piece)
 {
-	printf("[CUnitScript::EmitSfx(type=%d, piece=%d)]\n", type, piece);
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
 		ShowScriptError("Invalid piecenumber for emit-sfx");
@@ -593,14 +592,20 @@ void CUnitScript::EmitSfx(int type, int piece)
 				const float3 targetPos = weapon->targetPos;
 				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
 
-				// don't override the weapon's target position
-				// weapon->targetPos = pos + dir.SafeNormalize();
-				weapon->weaponMuzzlePos = pos;
+				float3 ndir = dir;
 
+				// don't override the weapon's target position
+				// if it was not set internally (so that force-
+				// fire keeps working as expected)
+				if (!weapon->haveUserTarget) {
+					weapon->targetPos = pos + ndir.SafeNormalize();
+				}
+
+				weapon->weaponMuzzlePos = pos;
 				weapon->Fire();
+				weapon->weaponMuzzlePos = weaponMuzzlePos;
 
 				weapon->targetPos = targetPos;
-				weapon->weaponMuzzlePos = weaponMuzzlePos;
 			}
 			else if (type & SFX_DETONATE_WEAPON) {
 				const unsigned index = type - SFX_DETONATE_WEAPON;
@@ -608,8 +613,10 @@ void CUnitScript::EmitSfx(int type, int piece)
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
+
 				// detonate weapon from piece
 				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
+
 				if (weaponDef->soundhit.getID(0) > 0) {
 					Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
 				}
