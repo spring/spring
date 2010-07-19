@@ -155,6 +155,7 @@ Lua:
  - removed Spring.MakeFont
  - removed Spring.SetRulesInfoMap, Spring.GetRulesInfoMap, Script.GetConfigString
  - removed Spring.CreateUnitRulesParams, Spring.CreateTeamRulesParams, Spring.CreateGameRulesParams
+ - removed AllowUnsafeChanges("USE AT YOUR OWN PERIL"), it's always enabled now
 
 Engine / Unit Scripts:
  - LUS: SetSignalMask raises error now when called outside thread

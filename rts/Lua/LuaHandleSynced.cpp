@@ -70,7 +70,6 @@ LuaRulesParams::HashMap CLuaHandleSynced::gameParamsMap;
 CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
 : CLuaHandle(_name, _order, false),
   allowChanges(false),
-  allowUnsafeChanges(false),
   teamsLocked(false)
 {
 	printTracebacks = true;
@@ -142,6 +141,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	CLuaHandle* origHandle = activeHandle;
 	SetActiveHandle();
 
+	allowChanges = true;
 	synced = true;
 
 	const bool haveSynced = SetupSynced(syncedCode, syncedFile);
@@ -150,6 +150,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		return;
 	}
 
+	allowChanges = false;
 	synced = false;
 
 	const bool haveUnsynced = SetupUnsynced(unsyncedCode, unsyncedFile);
@@ -197,8 +198,6 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 
 	LuaPushNamedCFunc(L, "loadstring", LoadStringData);
 	LuaPushNamedCFunc(L, "CallAsTeam", CallAsTeam);
-
-	LuaPushNamedCFunc(L, "AllowUnsafeChanges", AllowUnsafeChanges);
 
 	LuaPushNamedNumber(L, "COBSCALE", COBSCALE);
 
@@ -715,9 +714,7 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 	lua_pushnumber(L, frameNumber); // 6 day roll-over
 
 	// call the routine
-	allowChanges = true;
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-	allowChanges = allowUnsafeChanges;
 
 	return;
 }
@@ -751,9 +748,7 @@ bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 	lua_pushnumber(L, playerID);
 
 	// call the routine
-	allowChanges = true;
 	RunCallIn(cmdStr, 2, 0);
-	allowChanges = allowUnsafeChanges;
 
 	return true;
 }
@@ -771,14 +766,13 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	lua_insert(L, 1); // place the function
 
 	// call the routine
-	const bool prevAllowChanges = allowChanges;
 	allowChanges = false;
 	synced = false;
 
 	RunCallIn(cmdStr, args, 0);
 
 	synced = true;
-	allowChanges = prevAllowChanges;
+	allowChanges = true;
 
 	return;
 }
@@ -786,6 +780,7 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 
 bool CLuaHandleSynced::RecvLuaMsg(const string& msg, int playerID)
 {
+	//FIXME: is there a reason to disallow gamestate changes in RecvLuaMsg?
 	const bool prevAllowChanges = allowChanges;
 	allowChanges = false;
 
@@ -1077,21 +1072,6 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	}
 
 	return lua_gettop(L) - 1;	// the teamID/table is still on the stack
-}
-
-
-int CLuaHandleSynced::AllowUnsafeChanges(lua_State* L)
-{
-	const int args = lua_gettop(L);
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to AllowUnsafeChanges()");
-	}
-	const string magic = lua_tostring(L, 1);
-	const bool value = (magic == "USE AT YOUR OWN PERIL");
-	CLuaHandleSynced* lhs = GetActiveHandle();
-	lhs->allowChanges = value;
-	lhs->allowUnsafeChanges = value;
-	return 0;
 }
 
 
