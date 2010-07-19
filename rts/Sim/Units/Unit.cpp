@@ -2112,7 +2112,7 @@ void CUnit::PostLoad()
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByName(unitDefName);
 
-	curYardMap = unitDef->yardmaps[buildFacing];
+	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
 
 	model = unitDef->LoadModel();
 	SetRadius(model->radius);

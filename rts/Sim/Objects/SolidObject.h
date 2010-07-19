@@ -73,7 +73,7 @@ public:
 	float3 drawPos;
 	float3 drawMidPos;
 
-	unsigned char* curYardMap;					///< Current active yardmap of this object. 0 means no active yardmap => all blocked.
+	const unsigned char* curYardMap;			///< Current active yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;							///< Orientation of footprint, 4 different states
 
 	int2 GetMapPos();
