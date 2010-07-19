@@ -106,6 +106,7 @@ public:
 	//void SetGoal(float3 pos);
 
 	virtual void SlowUpdate();
+	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
 	void SetDirectionFromHeading();

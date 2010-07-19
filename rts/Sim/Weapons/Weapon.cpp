@@ -237,15 +237,17 @@ void CWeapon::Update()
 		relWeaponPos = owner->script->GetPiecePos(piece);
 	}
 
-	if(targetType==Target_Unit){
-		if(lastErrorVectorUpdate<gs->frameNum-16){
+	if (targetType == Target_Unit) {
+		if (lastErrorVectorUpdate < gs->frameNum - UNIT_SLOWUPDATE_RATE) {
 			float3 newErrorVector(gs->randVector());
-			errorVectorAdd=(newErrorVector-errorVector)*(1.0f/16.0f);
-			lastErrorVectorUpdate=gs->frameNum;
+			errorVectorAdd = (newErrorVector - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
+			lastErrorVectorUpdate = gs->frameNum;
 		}
-		errorVector+=errorVectorAdd;
+		errorVector += errorVectorAdd;
 		if (predict > 50000) {
-			/* to prevent runaway prediction (happens sometimes when a missile is moving *away* from it's target), we may need to disable missiles in case they fly around too long */
+			// to prevent runaway prediction (happens sometimes when a missile
+			// is moving *away* from its target), we may need to disable missiles
+			// in case they fly around too long
 			predict = 50000;
 		}
 
@@ -255,9 +257,11 @@ void CWeapon::Update()
 			lead *= (weaponDef->leadLimit + weaponDef->leadBonus*owner->experience) / (lead.Length() + 0.01f);
 		}
 
-		targetPos = helper->GetUnitErrorPos(targetUnit, owner->allyteam) + lead;
-		targetPos += errorVector * (weaponDef->targetMoveError * 30 * targetUnit->speed.Length() * (1.0f - owner->limExperience));
-		float appHeight = ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2;
+		targetPos =
+			helper->GetUnitErrorPos(targetUnit, owner->allyteam) + lead +
+			errorVector * (weaponDef->targetMoveError * GAME_SPEED * targetUnit->speed.Length() * (1.0f - owner->limExperience));
+
+		const float appHeight = ground->GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f;
 
 		if (targetPos.y < appHeight)
 			targetPos.y = appHeight;
@@ -269,15 +273,14 @@ void CWeapon::Update()
 	if (weaponDef->interceptor) {
 		CheckIntercept();
 	}
-	if (targetType != Target_None){
+	if (targetType != Target_None) {
 		if (onlyForward) {
-			float3 goaldir = targetPos - owner->pos;
-			goaldir.Normalize();
+			float3 goaldir = (targetPos - owner->pos).Normalize();
 			angleGood = (owner->frontdir.dot(goaldir) > maxAngleDif);
-		} else if (lastRequestedDir.dot(wantedDir) < maxAngleDif || lastRequest + 15 < gs->frameNum) {
-			angleGood=false;
-			lastRequestedDir=wantedDir;
-			lastRequest=gs->frameNum;
+		} else if (lastRequestedDir.dot(wantedDir) < maxAngleDif || (lastRequest + 15 < gs->frameNum)) {
+			angleGood = false;
+			lastRequestedDir = wantedDir;
+			lastRequest = gs->frameNum;
 
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 			const float pitch = asin(wantedDir.dot(owner->updir));
@@ -337,8 +340,8 @@ void CWeapon::Update()
 
 			weaponDir.SafeNormalize();
 
-			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !CobBlockShot(targetUnit)) {
-				if(weaponDef->stockpile){
+			if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot(targetUnit)) {
+				if (weaponDef->stockpile) {
 					const int oldCount = numStockpiled;
 					numStockpiled--;
 					owner->commandAI->StockpileChanged(this);
@@ -348,21 +351,24 @@ void CWeapon::Update()
 					owner->UseMetal(metalFireCost);
 					owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 				}
-				reloadStatus=gs->frameNum+(int)(reloadTime/owner->reloadSpeed);
+				reloadStatus = gs->frameNum + (int)(reloadTime / owner->reloadSpeed);
 
-				salvoLeft=salvoSize;
-				nextSalvo=gs->frameNum;
-				salvoError=gs->randVector()*(owner->isMoving?weaponDef->movingAccuracy:accuracy);
-				if(targetType==Target_Pos || (targetType==Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS)))		//area firing stuff is to effective at radar firing...
-					salvoError*=1.3f;
+				salvoLeft = salvoSize;
+				nextSalvo = gs->frameNum;
+				salvoError = gs->randVector() * (owner->isMoving? weaponDef->movingAccuracy: accuracy);
 
-				owner->lastMuzzleFlameSize=muzzleFlareSize;
-				owner->lastMuzzleFlameDir=wantedDir;
+				if (targetType == Target_Pos || (targetType == Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS))) {
+					// area firing stuff is too effective at radar firing...
+					salvoError *= 1.3f;
+				}
+
+				owner->lastMuzzleFlameSize = muzzleFlareSize;
+				owner->lastMuzzleFlameDir = wantedDir;
 				owner->script->FireWeapon(weaponNum);
 			}
 		} else {
 			// FIXME  -- never reached?
-			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !weaponDef->stockpile) {
+			if (TryTarget(targetPos, haveUserTarget, targetUnit) && !weaponDef->stockpile) {
 				// update the energy and metal required counts
 				const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 				const float averageFactor = 1.0f / (float)minPeriod;
@@ -371,14 +377,14 @@ void CWeapon::Update()
 			}
 		}
 	}
-	if(salvoLeft && nextSalvo<=gs->frameNum ){
+	if (salvoLeft && nextSalvo <= gs->frameNum) {
 		salvoLeft--;
-		nextSalvo=gs->frameNum+salvoDelay;
-		owner->lastFireWeapon=gs->frameNum;
+		nextSalvo = gs->frameNum + salvoDelay;
+		owner->lastFireWeapon = gs->frameNum;
 
 		int projectiles = projectilesPerShot;
 
-		while(projectiles > 0) {
+		while (projectiles > 0) {
 			--projectiles;
 
 			// add to the commandShotCount if this is the last salvo,
@@ -450,62 +456,89 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	if (!weaponDef->waterweapon && (pos.y < 1.0f)) {
 		pos.y = 1.0f;
 	}
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
-		weaponMuzzlePos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
 
-	if(!TryTarget(pos,userTarget,0))
+	weaponMuzzlePos =
+		owner->pos +
+		owner->frontdir * relWeaponMuzzlePos.z +
+		owner->updir    * relWeaponMuzzlePos.y +
+		owner->rightdir * relWeaponMuzzlePos.x;
+
+	if (weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+		// hope that we are underground because we are a popup weapon and will come above ground later
+		weaponMuzzlePos = owner->pos + UpVector * 10;
+	}
+
+	if (!TryTarget(pos,userTarget, 0))
 		return false;
-	if(targetUnit){
+	if (targetUnit) {
 		DeleteDeathDependence(targetUnit);
 		targetUnit=0;
 	}
-	haveUserTarget=userTarget;
-	targetType=Target_Pos;
-	targetPos=pos;
+
+	haveUserTarget = userTarget;
+	targetType = Target_Pos;
+	targetPos = pos;
+
 	return true;
 }
 
-bool CWeapon::AttackUnit(CUnit *unit, bool userTarget)
+bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 {
-	if((!userTarget && weaponDef->noAutoTarget))
+	if ((!userTarget && weaponDef->noAutoTarget))
 		return false;
-	if(weaponDef->interceptor)
+	if (weaponDef->interceptor)
 		return false;
 
-	weaponPos= owner->pos + owner->frontdir * relWeaponPos.z
-		+ owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
-	weaponMuzzlePos= owner->pos + owner->frontdir * relWeaponMuzzlePos.z
-		+ owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
-	if(weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z))
+	weaponPos =
+		owner->pos +
+		owner->frontdir * relWeaponPos.z +
+		owner->updir    * relWeaponPos.y +
+		owner->rightdir * relWeaponPos.x;
+	weaponMuzzlePos =
+		owner->pos +
+		owner->frontdir * relWeaponMuzzlePos.z +
+		owner->updir    * relWeaponMuzzlePos.y +
+		owner->rightdir * relWeaponMuzzlePos.x;
+
+	if (weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
-	//hope that we are underground because we are a popup weapon and will come above ground later
+	}
 
-	if(!unit){
-		if(targetType!=Target_Unit)	//make the unit be more likely to keep the current target if user start to move it
-			targetType=Target_None;
-		haveUserTarget=false;
+	if (!unit) {
+		if (targetType != Target_Unit) {
+			// make the unit be more likely to keep the current target if user starts to move it
+			targetType = Target_None;
+		}
+
+		haveUserTarget = false;
 		return false;
 	}
-	float3 tempTargetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
-	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0f-owner->limExperience));
-	float appHeight=ground->GetApproximateHeight(tempTargetPos.x,tempTargetPos.z)+2;
-	if(tempTargetPos.y < appHeight)
-		tempTargetPos.y=appHeight;
 
-	if(!TryTarget(tempTargetPos,userTarget,unit))
+	float3 tempTargetPos =
+		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+
+	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
+
+	if (tempTargetPos.y < appHeight)
+		tempTargetPos.y = appHeight;
+
+	if (!TryTarget(tempTargetPos, userTarget, unit))
 		return false;
 
-	if(targetUnit){
+	if (targetUnit) {
 		DeleteDeathDependence(targetUnit);
-		targetUnit=0;
+		targetUnit = 0;
 	}
-	haveUserTarget=userTarget;
-	targetType=Target_Unit;
-	targetUnit=unit;
-	targetPos=tempTargetPos;
+
+	haveUserTarget = userTarget;
+	targetType = Target_Unit;
+	targetUnit = unit;
+	targetPos = tempTargetPos;
+
 	AddDeathDependence(targetUnit);
-	avoidTarget=false;
+	avoidTarget = false;
 	return true;
 }
 
@@ -575,55 +608,71 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	piece = owner->script->AimFromWeapon(weaponNum);
 	relWeaponPos = owner->script->GetPiecePos(piece);
 
-	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
+	weaponPos =
+		owner->pos +
+		owner->frontdir * relWeaponPos.z +
+		owner->updir    * relWeaponPos.y +
+		owner->rightdir * relWeaponPos.x;
 
-	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
-		weaponMuzzlePos=owner->pos+UpVector*10;		//hope that we are underground because we are a popup weapon and will come above ground later
+	if (weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+		// hope that we are underground because we are a popup weapon and will come above ground later
+		weaponMuzzlePos = owner->pos + UpVector * 10;
+	}
 
-	predictSpeedMod=1+(gs->randFloat()-0.5f)*2*(1-owner->limExperience);
+	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
 
-	if((targetPos-weaponPos).SqLength() < relWeaponPos.SqLength()*16)
-		hasCloseTarget=true;
+	if ((targetPos - weaponPos).SqLength() < relWeaponPos.SqLength() * 16)
+		hasCloseTarget = true;
 	else
-		hasCloseTarget=false;
+		hasCloseTarget = false;
 
-	if(targetType!=Target_None && !TryTarget(targetPos,haveUserTarget,targetUnit)){
+	if (targetType != Target_None && !TryTarget(targetPos, haveUserTarget, targetUnit)) {
 		HoldFire();
 	}
-	if(targetType==Target_Unit && targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
+
+	if (targetType == Target_Unit) {
+		if (targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
+			HoldFire();
+
+		if (!haveUserTarget && targetUnit->neutral && owner->fireState < 3)
+			HoldFire();
+	}
+
+	// this situation (unit keeps attacking its target if the
+	// target or the unit switches to an allied team) should
+	// be handled by /ally processing now
+	if (targetType == Target_Unit && !haveUserTarget && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
 		HoldFire();
 
-	if (targetType==Target_Unit && !haveUserTarget && targetUnit->neutral && owner->fireState < 3)
-		HoldFire();
-
-	//happens if the target or the unit has switched teams
-	//should be handled by /ally processing now
-	if (targetType==Target_Unit && !haveUserTarget && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
-		HoldFire();
-
-	if(slavedTo){	//use targets from the thing we are slaved to
-		if(targetUnit){
+	if (slavedTo) {
+		// use targets from the thing we are slaved to
+		if (targetUnit) {
 			DeleteDeathDependence(targetUnit);
-			targetUnit=0;
+			targetUnit = 0;
 		}
-		targetType=Target_None;
-		if(slavedTo->targetType==Target_Unit){
-			float3 tp=helper->GetUnitErrorPos(slavedTo->targetUnit,owner->allyteam);
-			tp+=errorVector*(weaponDef->targetMoveError*30*slavedTo->targetUnit->speed.Length()*(1.0f-owner->limExperience));
-			if(TryTarget(tp,false,slavedTo->targetUnit)){
-				targetType=Target_Unit;
-				targetUnit=slavedTo->targetUnit;
-				targetPos=tp;
+		targetType = Target_None;
+
+		if (slavedTo->targetType == Target_Unit) {
+			const float3 tp =
+				helper->GetUnitErrorPos(slavedTo->targetUnit,owner->allyteam) +
+				errorVector * (weaponDef->targetMoveError * GAME_SPEED * slavedTo->targetUnit->speed.Length() * (1.0f - owner->limExperience));
+
+			if (TryTarget(tp, false, slavedTo->targetUnit)) {
+				targetType = Target_Unit;
+				targetUnit = slavedTo->targetUnit;
+				targetPos = tp;
+
 				AddDeathDependence(targetUnit);
 			}
-		} else if(slavedTo->targetType==Target_Pos){
-			if(TryTarget(slavedTo->targetPos,false,0)){
-				targetType=Target_Pos;
-				targetPos=slavedTo->targetPos;
+		} else if (slavedTo->targetType == Target_Pos) {
+			if (TryTarget(slavedTo->targetPos, false, 0)) {
+				targetType = Target_Pos;
+				targetPos = slavedTo->targetPos;
 			}
 		}
 		return;
 	}
+
 
 /*		owner->fireState>=2 && !haveUserTarget &&
 	if (!weaponDef->noAutoTarget && !noAutoTargetOverride) {
@@ -633,6 +682,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		       (targetUnit->neutral && (owner->fireState < 3)))) ||
 		     (gs->frameNum > lastTargetRetry + 65))) {
 */
+
 	if (!noAutoTargetOverride && ShouldCheckForNewTarget()) {
 		lastTargetRetry = gs->frameNum;
 		std::map<float, CUnit*> targets;
@@ -645,9 +695,12 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			if (targetUnit && (ti->second->category & badTargetCategory)) {
 				continue;
 			}
-			float3 tp(ti->second->midPos);
-			tp+=errorVector*(weaponDef->targetMoveError*30*ti->second->speed.Length()*(1.0f-owner->limExperience));
-			float appHeight=ground->GetApproximateHeight(tp.x,tp.z)+2;
+
+			float3 tp =
+				ti->second->midPos +
+				errorVector * (weaponDef->targetMoveError * GAME_SPEED * ti->second->speed.Length() * (1.0f - owner->limExperience));
+			const float appHeight = ground->GetApproximateHeight(tp.x, tp.z) + 2.0f;
+
 			if (tp.y < appHeight) {
 				tp.y = appHeight;
 			}
@@ -659,17 +712,20 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 				targetType = Target_Unit;
 				targetUnit = ti->second;
 				targetPos = tp;
+
 				AddDeathDependence(targetUnit);
 				break;
 			}
 		}
 	}
+
 	if (targetType != Target_None) {
 		owner->haveTarget = true;
 		if (haveUserTarget) {
 			owner->haveUserTarget = true;
 		}
-	} else {	//if we cant target anything try switching aim point
+	} else {
+		// if we can't target anything, try switching aim point
 		if (useWeaponPosForAim && (useWeaponPosForAim == 1)) {
 			useWeaponPosForAim = 0;
 		} else {
@@ -680,17 +736,18 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 void CWeapon::DependentDied(CObject *o)
 {
-	if(o==targetUnit){
-		targetUnit=0;
-		if(targetType==Target_Unit){
-			targetType=Target_None;
-			haveUserTarget=false;
+	if (o == targetUnit) {
+		targetUnit = 0;
+		if (targetType == Target_Unit) {
+			targetType = Target_None;
+			haveUserTarget = false;
 		}
 	}
-	if(weaponDef->interceptor){
-		incoming.remove((CWeaponProjectile*)o);
+	if (weaponDef->interceptor) {
+		incoming.remove((CWeaponProjectile*) o);
 	}
-	if (o==interceptTarget)
+
+	if (o == interceptTarget)
 		interceptTarget = 0;
 }
 
@@ -780,27 +837,34 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
-bool CWeapon::TryTarget(CUnit* unit, bool userTarget){
-	float3 tempTargetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
-	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0f-owner->limExperience));
-	float appHeight=ground->GetApproximateHeight(tempTargetPos.x,tempTargetPos.z)+2;
-	if(tempTargetPos.y < appHeight){
-		tempTargetPos.y=appHeight;
+bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
+	float3 tempTargetPos =
+		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+
+	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
+
+	if (tempTargetPos.y < appHeight) {
+		tempTargetPos.y = appHeight;
 	}
-	return TryTarget(tempTargetPos,userTarget,unit);
+	return TryTarget(tempTargetPos, userTarget, unit);
 }
 
-bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget){
-	float3 tempTargetPos(helper->GetUnitErrorPos(unit,owner->allyteam));
-	tempTargetPos+=errorVector*(weaponDef->targetMoveError*30*unit->speed.Length()*(1.0f-owner->limExperience));
-	float appHeight=ground->GetApproximateHeight(tempTargetPos.x,tempTargetPos.z)+2;
-	if(tempTargetPos.y < appHeight){
-		tempTargetPos.y=appHeight;
+bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
+	float3 tempTargetPos =
+		helper->GetUnitErrorPos(unit, owner->allyteam) +
+		errorVector * (weaponDef->targetMoveError * GAME_SPEED * unit->speed.Length() * (1.0f - owner->limExperience));
+
+	const float appHeight = ground->GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f;
+
+	if (tempTargetPos.y < appHeight) {
+		tempTargetPos.y = appHeight;
 	}
-	short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
-	short enemyHeadding = GetHeadingFromVector(
-		tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
-	return TryTargetHeading(enemyHeadding - weaponHeadding, tempTargetPos,userTarget, unit);
+
+	const short weaponHeadding = GetHeadingFromVector(mainDir.x, mainDir.z);
+	const short enemyHeadding = GetHeadingFromVector(tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
+
+	return TryTargetHeading(enemyHeadding - weaponHeadding, tempTargetPos, userTarget, unit);
 }
 
 bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
@@ -881,20 +945,21 @@ void CWeapon::Fire()
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	FireImpl();
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
+	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 void CWeapon::CheckIntercept(void)
 {
-	targetType=Target_None;
+	targetType = Target_None;
 
-	for(std::list<CWeaponProjectile*>::iterator pi=incoming.begin();pi!=incoming.end();++pi){
-		if((*pi)->targeted)
+	for (std::list<CWeaponProjectile*>::iterator pi = incoming.begin(); pi != incoming.end(); ++pi) {
+		if ((*pi)->targeted)
 			continue;
-		targetType=Target_Intercept;
-		interceptTarget=*pi;
-		targetPos=(*pi)->pos;
+
+		targetType = Target_Intercept;
+		interceptTarget = *pi;
+		targetPos = (*pi)->pos;
 
 		break;
 	}
@@ -902,8 +967,8 @@ void CWeapon::CheckIntercept(void)
 
 float CWeapon::GetRange2D(float yDiff) const
 {
-	float root1 = range*range - yDiff*yDiff;
-	if(root1 < 0){
+	const float root1 = range * range - yDiff * yDiff;
+	if (root1 < 0) {
 		return 0;
 	} else {
 		return sqrt(root1);
