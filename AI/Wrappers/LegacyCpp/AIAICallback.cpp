@@ -362,7 +362,7 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		return NULL;
 	}
 
-	bool doRecreate = unitDefFrames[unitDefId] < 0;
+	const bool doRecreate = (unitDefFrames[unitDefId] < 0);
 
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
@@ -370,6 +370,7 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 
 		UnitDef* unitDef = new UnitDef();
 		unitDef->name = sAICallback->Clb_UnitDef_getName(teamId, unitDefId);
+
 		unitDef->humanName = sAICallback->Clb_UnitDef_getHumanName(teamId, unitDefId);
 		unitDef->filename = sAICallback->Clb_UnitDef_getFileName(teamId, unitDefId);
 		//unitDef->id = sAICallback->Clb_UnitDef_getId(teamId, unitDefId);
@@ -568,11 +569,13 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->stockpileWeaponDef = this->GetWeaponDefById(sAICallback->Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getStockpileDef(teamId, unitDefId));
 
 		{
-			int numBo = sAICallback->Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions(teamId, unitDefId);
-			int* bo = new int[numBo];
-			numBo = sAICallback->Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions(teamId, unitDefId, bo, numBo);
-			for (int b=0; b < numBo; b++) {
-				unitDef->buildOptions[b] = sAICallback->Clb_UnitDef_getName(teamId, bo[b]);
+			int numBuildOpts = sAICallback->Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions(teamId, unitDefId);
+			int* buildOpts = new int[numBuildOpts];
+
+			numBuildOpts = sAICallback->Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions(teamId, unitDefId, bo, numBuildOpts);
+
+			for (int b = 0; b < numBuildOpts; b++) {
+				unitDef->buildOptions[b] = sAICallback->Clb_UnitDef_getName(teamId, buildOpts[b]);
 			}
 			delete [] bo;
 		}
@@ -1141,11 +1144,13 @@ int CAIAICallback::GetNumUnitDefs() {
 }
 
 void CAIAICallback::GetUnitDefList(const UnitDef** list) {
-
 	int size = sAICallback->Clb_0MULTI1SIZE0UnitDef(teamId);
 	int* unitDefIds = new int[size];
+
+	// get actual number of IDs
 	size = sAICallback->Clb_0MULTI1VALS0UnitDef(teamId, unitDefIds, size);
-	for (int i=0; i < size; ++i) {
+
+	for (int i = 0; i < size; ++i) {
 		list[i] = this->GetUnitDefById(unitDefIds[i]);
 	}
 }
