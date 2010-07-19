@@ -74,7 +74,6 @@ class CLuaHandleSynced : public CLuaHandle
 
 	protected:
 		bool allowChanges;
-		bool allowUnsafeChanges;
 		bool teamsLocked; // disables CallAsTeam()
 		map<string, string> textCommands; // name, help
 

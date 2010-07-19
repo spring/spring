@@ -105,7 +105,6 @@ function gadget:GameStart()
 	-- spawn start units
 	local gaiaTeamID = Spring.GetGaiaTeamID()
 	local teams = Spring.GetTeamList()
-	getfenv(0).AllowUnsafeChanges("USE AT YOUR OWN PERIL")
 	for i = 1,#teams do
 		local teamID = teams[i]
 		-- don't spawn a start unit for the Gaia team
@@ -113,5 +112,4 @@ function gadget:GameStart()
 			SpawnStartUnit(teamID)
 		end
 	end
-	getfenv(0).AllowUnsafeChanges("Any string to turn it off")
 end
