@@ -16,24 +16,19 @@
 */
 
 #include "AIAICallback.h"
-
+#include "UnitDef.h"
 
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
 #include "creg/creg_cond.h"
-#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #ifdef USING_CREG
 creg::Class* CCommandQueue::GetClass() { return NULL; }
 #endif
 #include "Sim/MoveTypes/MoveInfo.h"
-UnitDef::~UnitDef() {
-	delete movedata;
-}
 CIcon::CIcon() {}
 CIcon::~CIcon() {}
-UnitDef::UnitDefWeapon::UnitDefWeapon() {}
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 WeaponDef::~WeaponDef() {}
@@ -374,7 +369,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		int currentFrame = 1;
 
 		UnitDef* unitDef = new UnitDef();
-		unitDef->valid = sAICallback->Clb_UnitDef_isValid(teamId, unitDefId);
 		unitDef->name = sAICallback->Clb_UnitDef_getName(teamId, unitDefId);
 		unitDef->humanName = sAICallback->Clb_UnitDef_getHumanName(teamId, unitDefId);
 		unitDef->filename = sAICallback->Clb_UnitDef_getFileName(teamId, unitDefId);

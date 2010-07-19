@@ -679,7 +679,7 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing)");
 	}
 	const int unitDefID = lua_toint(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
+	if (!unitDefHandler->IsValidUnitDefID(unitDefID)) {
 		return 0;
 	}
 	const float3 pos(lua_tofloat(L, 2),

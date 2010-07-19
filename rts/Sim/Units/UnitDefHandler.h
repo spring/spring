@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <vector>
 
 #include "Sim/Misc/CommonDefHandler.h"
 
@@ -17,8 +18,9 @@ struct GuiSoundSet;
 class CUnitDefHandler : CommonDefHandler
 {
 public:
-	CUnitDefHandler(void);
-	~CUnitDefHandler(void);
+	CUnitDefHandler();
+	~CUnitDefHandler();
+
 	void Init();
 	void ProcessDecoys();
 	void AssignTechLevels();
@@ -27,22 +29,28 @@ public:
 	const UnitDef* GetUnitDefByName(std::string name);
 	const UnitDef* GetUnitDefByID(int id);
 
+	bool IsValidUnitDefID(const int& id) const {
+		/// zero is not valid!
+		return (id > 0) && (id < unitDefs.size());
+	}
+
 	unsigned int GetUnitDefImage(const UnitDef* unitDef);
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     const std::string& texName);
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     unsigned int texID, int sizex, int sizey);
 
-	UnitDef* unitDefs;
-	int numUnitDefs;
-	std::map<std::string, int> unitDefIDsByName;
+	int PushNewUnitDef(const std::string& unitName, const LuaTable& udTable);
+
 	std::map<int, std::set<int> > decoyMap;
 	std::set<int> startUnitIDs;
 
-protected:
-	void ParseUnitDef(const LuaTable&, const std::string& name, int id);
-	void ParseUnitDefTable(const LuaTable&, const std::string& name, int id);
+//protected: //FIXME UnitDef::sfxExplGens,buildingDecalType,trackType are initialized in UnitDrawer.cpp
+	std::vector<UnitDef*> unitDefs;
+	std::map<std::string, int> unitDefIDsByName;
 
+protected:
+	void UnitDefLoadSounds(UnitDef*, const LuaTable&);
 	void LoadSounds(const LuaTable&, GuiSoundSet&, const std::string& soundName);
 	void LoadSound(GuiSoundSet&, const std::string& fileName, const float volume);
 
@@ -50,10 +58,9 @@ protected:
 
 	void FindStartUnits();
 
-	void AssignTechLevel(UnitDef& ud, int level);
+	void AssignTechLevel(UnitDef* ud, int level);
 
 private:
-	void CreateYardMap(UnitDef *def, std::string yardmap);
 	std::map<std::string, std::string> decoyNameMap;
 
 	bool noCost;

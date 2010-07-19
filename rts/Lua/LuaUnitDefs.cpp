@@ -606,10 +606,8 @@ static bool InitParamMap()
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 
 	// dummy UnitDef for address lookups
-	const UnitDef ud;
+	const UnitDef& ud = *unitDefHandler->unitDefs[0];
 	const char* start = ADDRESS(ud);
-
-//	ADD_BOOL(valid, ud.valid);
 
 // ADD_INT("weaponCount", weaponCount); // CUSTOM
 /*

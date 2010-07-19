@@ -107,7 +107,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	if (!serializing) {
 		airBaseHandler = new CAirBaseHandler;
 
-		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->numUnitDefs + 1));
+		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
 	}
 }
 

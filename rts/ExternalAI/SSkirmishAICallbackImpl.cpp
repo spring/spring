@@ -1811,9 +1811,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getRadius(int teamId, int unitDefId) {
 	return clb->GetUnitDefRadius(unitDefId);
 }
 
-EXPORT(bool) skirmishAiCallback_UnitDef_isValid(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->valid;
-}
 EXPORT(const char*) skirmishAiCallback_UnitDef_getName(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->name.c_str();
 }
@@ -3531,7 +3528,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef = &skirmishAiCallback_0MULTI1FETCH3UnitDefByName0UnitDef;
 	callback->Clb_UnitDef_getHeight = &skirmishAiCallback_UnitDef_getHeight;
 	callback->Clb_UnitDef_getRadius = &skirmishAiCallback_UnitDef_getRadius;
-	callback->Clb_UnitDef_isValid = &skirmishAiCallback_UnitDef_isValid;
 	callback->Clb_UnitDef_getName = &skirmishAiCallback_UnitDef_getName;
 	callback->Clb_UnitDef_getHumanName = &skirmishAiCallback_UnitDef_getHumanName;
 	callback->Clb_UnitDef_getFileName = &skirmishAiCallback_UnitDef_getFileName;
