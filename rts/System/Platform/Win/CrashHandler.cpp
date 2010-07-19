@@ -75,6 +75,14 @@ static const char *ExceptionName(DWORD exceptionCode)
 	return "Unknown exception";
 }
 
+static void initImageHlpDll() {
+
+	char userSearchPath[8];
+	STRCPY(userSearchPath, ".");
+	// Initialize IMAGEHLP.DLL
+	SymInitialize(GetCurrentProcess(), userSearchPath, TRUE);
+}
+
 /** Print out a stacktrace. */
 static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE) {
 	PIMAGEHLP_SYMBOL pSym;
@@ -153,10 +161,10 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 
 		if (SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
 			// This is the code path taken on VC if debugging syms are found.
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%s+%#0x) [0x%08X]", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%s+%#0lx) [0x%08lX]", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08X]", count, modname, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", count, modname, sf.AddrPC.Offset);
 		}
 
 		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
@@ -190,13 +198,13 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 #if _MSC_VER >= 1500
 static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
 {
-	PRINT("0x%08x\t%s", baseOfDll, moduleName);
+	PRINT("0x%08lx\t%s", baseOfDll, moduleName);
 	return TRUE;
 }
 #else // _MSC_VER >= 1500
 static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
 {
-	PRINT("0x%08x\t%s", baseOfDll, moduleName);
+	PRINT("0x%08lx\t%s", baseOfDll, moduleName);
 	return TRUE;
 }
 #endif // _MSC_VER >= 1500
@@ -210,12 +218,11 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
-	// Initialize IMAGEHLP.DLL.
-	SymInitialize(GetCurrentProcess(), ".", TRUE);
+	initImageHlpDll();
 
 	// Record exception info.
-	PRINT("Exception: %s (0x%08x)", ExceptionName(e->ExceptionRecord->ExceptionCode), e->ExceptionRecord->ExceptionCode);
-	PRINT("Exception Address: 0x%08x", e->ExceptionRecord->ExceptionAddress);
+	PRINT("Exception: %s (0x%08lx)", ExceptionName(e->ExceptionRecord->ExceptionCode), e->ExceptionRecord->ExceptionCode);
+	PRINT("Exception Address: 0x%08lx", (unsigned long int) (PVOID) e->ExceptionRecord->ExceptionAddress);
 
 	// Record list of loaded DLLs.
 	PRINT("DLL information:");
@@ -261,8 +268,7 @@ void HangHandler(bool simhang)
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
 
-	// Initialize IMAGEHLP.DLL.
-	SymInitialize(GetCurrentProcess(), ".", TRUE);
+	initImageHlpDll();
 
 	// Record list of loaded DLLs.
 	PRINT("DLL information:");
