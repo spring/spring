@@ -36,7 +36,7 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 	// "the LSB does not describe any mechanism by which a
 	// compressor can communicate the size required to the
 	// uncompressor" ==> we must reserve some fixed-length
-	// buffer (256K bytes to handle large scripts
+	// buffer (256K bytes to handle very large scripts)
 	static const unsigned long bufSize = 262144;
 	unsigned long rawSize = bufSize;
 
