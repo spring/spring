@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 
+#include <boost/format.hpp>
 #include <assert.h>
 #include <zlib.h>
 
@@ -31,12 +32,24 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 	packet >> compressedSize;
 	compressed.resize(compressedSize);
 	packet >> compressed;
-	long unsigned size = 40000;
-	std::vector<boost::uint8_t> buffer(size);
-	const int error = uncompress(&buffer[0], &size, &compressed[0], compressed.size());
-	if(error != Z_OK)
-		throw UnpackPacketException("Uncompress failed");
+
+	// "the LSB does not describe any mechanism by which a
+	// compressor can communicate the size required to the
+	// uncompressor" ==> we must reserve some fixed-length
+	// buffer (256K bytes to handle large scripts
+	static const unsigned long bufSize = 262144;
+	unsigned long rawSize = bufSize;
+
+	std::vector<boost::uint8_t> buffer(bufSize);
+
+	if (uncompress(&buffer[0], &rawSize, &compressed[0], compressed.size()) != Z_OK) {
+		static const std::string err = str(boost::format("unpacking game-data packet failed (%u bytes decompressed)") %rawSize);
+
+		throw UnpackPacketException(err.c_str());
+	}
+
 	setupText = reinterpret_cast<char*>(&buffer[0]);
+
 	packet >> mapChecksum;
 	packet >> modChecksum;
 	packet >> randomSeed;
