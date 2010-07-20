@@ -200,7 +200,7 @@ SectionGroup "Multiplayer battlerooms"
 	!undef INSTALL
 	SectionEnd
 
-	Section "Content downloader and fast-join lobby" SEC_SPRINGDOWNLOADER
+	Section "Fast-join lobby (SpringDownloader)" SEC_SPRINGDOWNLOADER
 		!define INSTALL
 			${!echonow} "Processing: springDownloader"
 			!include "sections\springDownloader.nsh"
