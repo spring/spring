@@ -1,73 +1,30 @@
-Function CheckTASClientRunning
-begin:
-  FindProcDLL::FindProc "TASClient.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Please close TASClient before installing." IDRETRY begin
-  Abort
-proceed:
-  Return
+
+Function CheckExecutableRunningFunc
+	Pop $R1 ; executable
+	Pop $R2 ; human-name
+
+	begin:
+		FindProcDLL::FindProc "$R1"
+		; $R0 == 1: process found
+		;        0: process not found
+		;       >1: some error, assume everything's ok
+		IntCmp $R0 1 do_abort proceed proceed
+	do_abort:
+		MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Please close application '$R2' ('$R1') before installing." IDRETRY begin
+		Abort
+	proceed:
+		Return
 FunctionEnd
 
 
-Function CheckSpringLobbyRunning
-begin:
-  FindProcDLL::FindProc "springlobby.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Please close Spring Lobby before installing." IDRETRY begin
-  Abort
-proceed:
-  Return
-FunctionEnd
+!macro Call_CheckExecutableRunningFunc _EXECUTABLE _HUMAN_NAME
+	Push "${_HUMAN_NAME}"
+	Push "${_EXECUTABLE}"
+	Call CheckExecutableRunningFunc
+!macroend
+!define CheckExecutableRunning "!insertmacro Call_CheckExecutableRunningFunc"
 
 
-Function CheckSpringDownloaderRunning
-begin:
-  FindProcDLL::FindProc "SpringDownloader.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Please close Spring Downloader before installing." IDRETRY begin
-  Abort
-proceed:
-  Return
-FunctionEnd
+; Usage:
+;${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 
-
-Function CheckCADownloaderRunning
-begin:
-  FindProcDLL::FindProc "CADownloader.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Please close CA Downloader before installing." IDRETRY begin
-  Abort
-proceed:
-  Return
-FunctionEnd
-
-
-Function CheckSpringSettingsRunning
-begin:
-  FindProcDLL::FindProc "springsettings.exe"
-  ; $R0 == 1: process found
-  ;        0: process not found
-  ;       >1: some error, assume everything's ok
-  IntCmp $R0 1 do_abort proceed proceed
-do_abort:
-  MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Please close Spring Settings before installing." IDRETRY begin
-  Abort
-proceed:
-  Return
-FunctionEnd

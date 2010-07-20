@@ -154,11 +154,11 @@ Function .onInit
 
 	!ifndef TEST_BUILD
 		; check if we need to exit some processes which may be using unitsync
-		call CheckTASClientRunning
-		call CheckSpringDownloaderRunning
-		call CheckCADownloaderRunning
-		call CheckSpringLobbyRunning
-		call CheckSpringSettingsRunning
+		${CheckExecutableRunning} "TASClient.exe" "TASClient"
+		${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
+		${CheckExecutableRunning} "SpringDownloader.exe" "Spring Downloader"
+		${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
+		${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	!endif
 
 	; The core cannot be deselected
