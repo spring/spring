@@ -179,13 +179,13 @@ SectionGroup /e "!Engine"
 		!undef INSTALL
 	SectionEnd
 
-	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-mt.exe"
+	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
 	!ifdef GML_BUILD_EXISTS
 		Section "Multi-threaded executable" SEC_GML
-			${!echonow} "Processing: spring-mt.exe"
+			${!echonow} "Processing: spring-multithreaded.exe"
 			SetOutPath "$INSTDIR"
 			SetOverWrite on
-			File "${BUILD_OR_DIST_DIR}\spring-mt.exe"
+			File "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
 		SectionEnd
 		!undef GML_BUILD_EXISTS
 	!endif
@@ -308,7 +308,7 @@ Section Uninstall
 
 	!include "sections\main.nsh"
 
-	Delete "$INSTDIR\spring-mt.exe"
+	Delete "$INSTDIR\spring-multithreaded.exe"
 
 	!include "sections\docs.nsh"
 	!include "sections\shortcuts.nsh"

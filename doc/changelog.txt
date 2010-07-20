@@ -7,7 +7,7 @@ Engine / General:
  - players in startscript may reconnect to a running game, even with changed IP address
  - players can choose server speed throttling algorithm by voting (/speedcontrol)
  - do not crash on AI Interface error
- - MT/GML: now a separate build target: make spring-mt
+ - MT/GML: now a separate build target: make spring-multithreaded
  - fix linking under Fedora 13
  - allow choosing between available sound devices through config (snd_device)
  - add missing /skip variants to word completion

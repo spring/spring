@@ -17,7 +17,7 @@
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	!ifdef SEC_GML
 		${If} ${SectionIsSelected} ${SEC_GML}
-			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk" "$INSTDIR\spring-mt.exe"
+			CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk" "$INSTDIR\spring-multithreaded.exe"
 		${EndIf}
 	!endif
 
