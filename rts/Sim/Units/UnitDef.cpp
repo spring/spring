@@ -272,11 +272,11 @@ UnitDef::UnitDef()
 UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 : name(unitName)
 , id(id)
-, buildangle(0)
-, buildPic(NULL)
+, collisionVolume(NULL)
 , decoyDef(NULL)
 , techLevel(-1)
-, collisionVolume(NULL)
+, buildPic(NULL)
+, buildangle(0)
 {
 	humanName = udTable.GetString("name", "");
 	if (humanName.empty()) {
