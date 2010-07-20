@@ -61,7 +61,7 @@ INSTALL(TARGETS spring DESTINATION ${BINDIR})
 #	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 #ENDIF (MINGW)
 
-# Only install spring-mt executable & dependencies
+# Only install spring (default) executable & dependencies
 # use case: make install-spring
 CreateEngineBuildInstallTarget(spring)
 
