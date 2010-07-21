@@ -2989,19 +2989,16 @@ bool CGame::DrawWorld()
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-
 	//reset fov
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glLoadIdentity();
 
 	// underwater overlay, part 2
 	if (camera->pos.y < 0.0f) {
@@ -3195,19 +3192,16 @@ bool CGame::Draw() {
 		DrawWorld();
 	}
 	else {
-		glLoadIdentity();
-		glDisable(GL_DEPTH_TEST);
-
 		//reset fov
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		gluOrtho2D(0,1,0,1);
 		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
 		glEnable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glLoadIdentity();
 	}
 
 	glDisable(GL_FOG);
