@@ -4375,9 +4375,11 @@ void CGame::ClientReadNet()
 					if (isLocal) {
 						const SkirmishAIData& aiData = *(skirmishAIHandler.GetLocalSkirmishAIInCreation(aiTeamId));
 						if (skirmishAIHandler.IsActiveSkirmishAI(skirmishAIId)) {
-							// we will end up here for AIs defined in the start script
-							const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-							assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
+							#ifdef DEBUG
+								// we will end up here for AIs defined in the start script
+								const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+								assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
+							#endif
 						} else {
 							// we will end up here for local AIs defined mid-game,
 							// eg. with /aicontrol
