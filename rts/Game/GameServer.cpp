@@ -2156,35 +2156,35 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		return 0;
 	}
 
-	GameParticipant& newGuy = players[newPlayerNumber];
+	GameParticipant& newPlayer = players[newPlayerNumber];
 
 	if(terminate) {
-		Message(str(format(PlayerLeft) %newGuy.GetType() %newGuy.name %" terminating existing connection"));
+		Message(str(format(PlayerLeft) %newPlayer.GetType() %newPlayer.name %" terminating existing connection"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(newPlayerNumber, 0));
-		newGuy.link.reset(); // prevent sending a quit message since this might kill the new connection
-		newGuy.Kill("Terminating connection");
+		newPlayer.link.reset(); // prevent sending a quit message since this might kill the new connection
+		newPlayer.Kill("Terminating connection");
 		UpdateSpeedControl(speedControl);
 		if(hostif)
 			hostif->SendPlayerLeft(newPlayerNumber, 0);
 	}
 
-	newGuy.isReconn = GameHasStarted();
+	newPlayer.isReconn = GameHasStarted();
 
-	if(newGuy.link) {
-		newGuy.link->ReconnectTo(*link);
+	if(newPlayer.link) {
+		newPlayer.link->ReconnectTo(*link);
 		Message(str(format(" -> Connection reestablished (id %i)") %newPlayerNumber));
 		link->Flush(!GameHasStarted());
 		return newPlayerNumber;
 	}
 
-	newGuy.Connected(link, isLocal);
-	newGuy.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
-	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
+	newPlayer.Connected(link, isLocal);
+	newPlayer.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
+	newPlayer.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
 	// after gamedata and playernum, the player can start loading
 	for (std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > >::const_iterator lit = packetCache.begin(); lit != packetCache.end(); ++lit)
 		for (std::vector<boost::shared_ptr<const netcode::RawPacket> >::const_iterator vit = lit->begin(); vit != lit->end(); ++vit)
-			newGuy.SendData(*vit); // throw at him all stuff he missed until now
+			newPlayer.SendData(*vit); // throw at him all stuff he missed until now
 
 	if (!demoReader || setup->demoName.empty()) { // gamesetup from demo?
 		const unsigned newPlayerTeam = setup->playerStartingData[newPlayerNumber].team;
