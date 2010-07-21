@@ -435,7 +435,8 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
 			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
-			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
+			if (p->checkCol) // already collided with unit?
+				CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
 		}
 	}
 }
