@@ -245,8 +245,9 @@ void CShadowHandler::DrawShadowPasses(void)
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
-		if (drawTerrainShadow)
+		if (drawTerrainShadow) {
 			readmap->GetGroundDrawer()->DrawShadowPass();
+		}
 
 		unitDrawer->DrawShadowPass();
 		modelDrawer->Draw();

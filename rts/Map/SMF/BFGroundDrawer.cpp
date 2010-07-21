@@ -1220,7 +1220,6 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glFrontFace(GL_CW);
 
 	po->Enable();
 
@@ -1238,7 +1237,6 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	po->Disable();
 
-	glFrontFace(GL_CCW);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
