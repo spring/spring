@@ -19,15 +19,15 @@ public:
 	const static int BLOCK_TERRAIN = 16;
 
 	// returns a speed-multiplier for given position or data
-	float SpeedMod(const MoveData& moveData, float3 pos);
+	float SpeedMod(const MoveData& moveData, const float3& pos);
 	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare);
 	virtual float SpeedMod(const MoveData& moveData, float height, float slope) = 0;
-	float SpeedMod(const MoveData& moveData, float3 pos,const float3& moveDir);
+	float SpeedMod(const MoveData& moveData, const float3& pos, const float3& moveDir);
 	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare,const float3& moveDir);
-	virtual float SpeedMod(const MoveData& moveData, float height, float slope,float moveSlope) = 0;
+	virtual float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) = 0;
 
 	// tells whether a position is blocked (inaccessable for a given object's movedata)
-	int IsBlocked(const MoveData& moveData, float3 pos, bool fromEst = false);
+	int IsBlocked(const MoveData& moveData, const float3& pos, bool fromEst = false);
 	int IsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst = false);
 	int IsBlocked2(const MoveData& moveData, int xSquare, int zSquare, bool fromEst = false);
 

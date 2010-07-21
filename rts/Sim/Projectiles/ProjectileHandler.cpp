@@ -394,14 +394,14 @@ void CProjectileHandler::CheckFeatureCollisions(
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
 
-		const bool raytraced =
-			(feature->collisionVolume &&
-			feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
-
 		// geothermals do not have a collision volume, skip them
 		if (!feature->blocking || feature->def->geoThermal) {
 			continue;
 		}
+
+		const bool raytraced =
+			(feature->collisionVolume &&
+			feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
 			const float3 pimpp =

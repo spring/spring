@@ -17,7 +17,7 @@ CMoveMath::~CMoveMath() {
 }
 
 /* Converts a point-request into a square-positional request. */
-float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos) {
+float CMoveMath::SpeedMod(const MoveData& moveData, const float3& pos) {
 	int x = int(pos.x / SQUARE_SIZE);
 	int z = int(pos.z / SQUARE_SIZE);
 	return SpeedMod(moveData, x, z);
@@ -33,11 +33,11 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) {
 
 	// Extract data.
 	const int square         = xSquare / 2 + zSquare / 2 * gs->hmapx;
-	const int squareTerrType = readmap->typemap[square];
 
 	const float height  = readmap->mipHeightmap[1][square];
 	const float slope   = readmap->slopemap[square];
 
+	const int squareTerrType = readmap->typemap[square];
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
 	switch (moveData.moveFamily) {
@@ -50,10 +50,10 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) {
 	return 0.0f;
 }
 
-float CMoveMath::SpeedMod(const MoveData& moveData, float3 pos, const float3& moveDir) {
+float CMoveMath::SpeedMod(const MoveData& moveData, const float3& pos, const float3& moveDir) {
 	int x = int(pos.x / SQUARE_SIZE);
 	int z = int(pos.z / SQUARE_SIZE);
-	return SpeedMod(moveData, x, z,moveDir);
+	return SpeedMod(moveData, x, z, moveDir);
 }
 
 
@@ -90,11 +90,12 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, co
 
 
 /* Converts a point-request into a square-positional request. */
-int CMoveMath::IsBlocked(const MoveData& moveData, float3 pos, bool fromEst) {
+int CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos, bool fromEst) {
 	int x = int(pos.x / SQUARE_SIZE);
 	int z = int(pos.z / SQUARE_SIZE);
 	return IsBlocked(moveData, x, z, fromEst);
 }
+
 
 /* Check if a given square-position is accessable by the movedata footprint. */
 int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst) {
@@ -112,6 +113,7 @@ int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare, boo
 
 	return ret;
 }
+
 
 /*
  * Check if a given square-position is accessable given the movedata footprint.
@@ -269,6 +271,7 @@ float CMoveMath::yLevel(const float3& pos) {
 	int z = int(pos.z / SQUARE_SIZE);
 	return yLevel(x, z);
 }
+
 
 /* Check if a single square is accessable (for any object which uses the given movedata). */
 int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare, bool fromEst) {
