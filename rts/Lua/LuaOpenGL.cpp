@@ -751,17 +751,7 @@ void LuaOpenGL::EnableDrawInMiniMap()
 	}
 	EnableCommon(DRAW_MINIMAP);
 	resetMatrixFunc = ResetMiniMapMatrices;
-	// CMiniMap::DrawForReal() does not setup the texture matrix
-	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	if (minimap) {
-		glScalef(1.0f / (float)minimap->GetSizeX(),
-		         1.0f / (float)minimap->GetSizeY(), 1.0f);
-	}
+	ResetMiniMapMatrices();
 }
 
 
@@ -769,6 +759,19 @@ void LuaOpenGL::DisableDrawInMiniMap()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP);
+
+		glMatrixMode(GL_TEXTURE); {
+			ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
+			glLoadIdentity();
+		}
+		glMatrixMode(GL_PROJECTION); {
+			ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
+			glLoadIdentity();
+		}
+		glMatrixMode(GL_MODELVIEW); {
+			ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
+			glLoadIdentity();
+		}
 	}
 	else {
 		if (safeMode) {
@@ -992,15 +995,16 @@ void LuaOpenGL::ResetMiniMapMatrices()
 	glMatrixMode(GL_PROJECTION); {
 		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
-		glOrtho(0.0, 1.0, 0.0, 1.0, -1.0e6, +1.0e6);
+		assert(minimap);
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
+		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
-		if (minimap) {
-			glScalef(1.0f / (float)minimap->GetSizeX(),
-			         1.0f / (float)minimap->GetSizeY(), 1.0f);
-		}
+		glScalef(1.0f / (float)minimap->GetSizeX(),
+		         1.0f / (float)minimap->GetSizeY(), 1.0f);
 	}
 }
 
