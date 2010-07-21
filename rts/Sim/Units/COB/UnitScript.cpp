@@ -43,6 +43,7 @@
 #include "Util.h"
 #include "Sound/IEffectChannel.h"
 #include "myMath.h"
+#include "FastMath.h"
 #include "Sync/SyncTracer.h"
 #include "CobDefines.h"
 
@@ -1195,7 +1196,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case KTAN:
 		return int(1024*streflop::tanf(TAANG2RAD*(float)p1));
 	case SQRT:
-		return int(streflop::sqrtf((float)p1));
+		return int(math::sqrt((float)p1));
 	case FLANK_B_MODE:
 		return unit->flankingBonusMode;
 	case FLANK_B_DIR:
