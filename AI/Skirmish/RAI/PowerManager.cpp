@@ -1,7 +1,5 @@
 #include "PowerManager.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-//#include "Sim/Units/UnitDef.h"
-//#include "LogFile.h"
 
 UnitInfoPower::UnitInfoPower(int UID, UnitInfo *UI, bool isActive, int listType)
 {

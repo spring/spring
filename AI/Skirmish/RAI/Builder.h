@@ -12,12 +12,8 @@ class cBuilder;
 
 #include "RAI.h"
 #include "PowerManager.h"
-//#include <map>
-//#include <set>
 #include <deque>
 #include <list>
-//#include "Sim/Units/UnitDef.h"
-//#include "ExternalAI/IAICallback.h"
 
 struct sBuildQuarry
 {
