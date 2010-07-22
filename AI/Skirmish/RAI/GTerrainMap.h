@@ -14,7 +14,7 @@
 #define RAI_GLOBAL_TERRAIN_MAP_H
 
 #include "LegacyCpp/IAICallback.h"
-#include "Sim/Units/UnitDef.h"
+#include "LegacyCpp/UnitDef.h"
 #include "LogFile.h"
 #include <map>
 #include <list>

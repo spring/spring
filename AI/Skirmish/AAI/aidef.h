@@ -18,7 +18,7 @@
 #include "LegacyCpp/IGlobalAICallback.h"
 #include "LegacyCpp/IAICallback.h"
 #include "LegacyCpp/aibase.h"
-#include "Sim/Units/UnitDef.h"
+#include "LegacyCpp/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "System/Vec2.h"
 #include "System/maindefines.h"

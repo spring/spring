@@ -1,7 +1,7 @@
 #include "RAI.h"
 #include "LegacyCpp/IGlobalAICallback.h"
 //#include "ExternalAI/IAICheats.h"
-#include "Sim/Units/UnitDef.h"
+#include "LegacyCpp/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "CUtils/Util.h"
