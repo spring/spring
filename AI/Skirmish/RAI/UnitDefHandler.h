@@ -12,11 +12,6 @@ struct sRAIUnitDef;
 struct sRAIBuildList;
 class cRAIUnitDefHandler;
 
-//#include "LogFile.h"
-//#include "Sim/Units/UnitDef.h"
-//#include "ExternalAI/IAICallback.h"
-//#include <map>
-//#include <set>
 #include "GResourceMap.h"
 #include "GTerrainMap.h"
 using std::map;
