@@ -758,7 +758,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	AddMetal(unitDef->metalMake*0.5f);
+	AddMetal(unitDef->metalMake * 0.5f);
 	if (activated) {
 		if (UseEnergy(unitDef->energyUpkeep * 0.5f)) {
 			AddMetal(unitDef->makesMetal * 0.5f);
@@ -1758,8 +1758,7 @@ void CUnit::FinishedBuilding(void)
 	ChangeLos(realLosRadius, realAirLosRadius);
 
 	if (unitDef->windGenerator > 0.0f) {
-		// start pointing in direction of wind
-		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
+		wind.AddUnit(this);
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -1820,10 +1819,15 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	this->SetGroup(NULL);
 
 	blockHeightChanges = false;
+
 	if (unitDef->isCommander) {
 		teamHandler->Team(team)->CommanderDied(this);
 	}
 	teamHandler->Team(this->lineage)->LeftLineage(this);
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.DelUnit(this);
+	}
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
 		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
@@ -2131,7 +2135,7 @@ void CUnit::PostLoad()
 	script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator > 0.0f) {
-		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
+		wind.AddUnit(this);
 	}
 
 	if (activated) {
