@@ -46,13 +46,16 @@ struct InitializeOpenIL {
 
 
 CBitmap::CBitmap()
-  : xsize(0), ysize(0), channels(4)
-{
-	mem = 0;
+	: mem(NULL)
+	, xsize(0)
+	, ysize(0)
+	, channels(4)
+	, type(BitmapTypeStandardRGBA)
 #ifndef BITMAP_NO_OPENGL
-	ddsimage = NULL;
+	, textype(GL_TEXTURE_2D)
+	, ddsimage(NULL)
 #endif // !BITMAP_NO_OPENGL
-	type = BitmapTypeStandardRGBA;
+{
 }
 
 
@@ -66,58 +69,67 @@ CBitmap::~CBitmap()
 
 
 CBitmap::CBitmap(const CBitmap& old)
+	: mem(NULL)
+	, xsize(old.xsize)
+	, ysize(old.ysize)
+	, channels(old.channels)
+	, type(old.type)
+#ifndef BITMAP_NO_OPENGL
+	, textype(old.textype)
+	, ddsimage(NULL)
+#endif // !BITMAP_NO_OPENGL
 {
 	assert(old.type != BitmapTypeDDS);
-#ifndef BITMAP_NO_OPENGL
-	ddsimage = NULL;
-#endif // !BITMAP_NO_OPENGL
-	type  = old.type;
-	xsize = old.xsize;
-	ysize = old.ysize;
-	channels = old.channels;
-	int size = xsize*ysize * channels;
 
-	mem=new unsigned char[size];
-	memcpy(mem,old.mem,size);
+	const int size = xsize*ysize * channels;
+	mem = new unsigned char[size];
+	memcpy(mem, old.mem, size);
 }
 
 
-CBitmap::CBitmap(const unsigned char *data, int xsize, int ysize)
-  : xsize(xsize), ysize(ysize), channels(4)
-{
-	type = BitmapTypeStandardRGBA;
+CBitmap::CBitmap(const unsigned char* data, int xsize, int ysize)
+	: mem(NULL)
+	, xsize(xsize)
+	, ysize(ysize)
+	, channels(4)
+	, type(BitmapTypeStandardRGBA)
 #ifndef BITMAP_NO_OPENGL
-	ddsimage = NULL;
+	, textype(GL_TEXTURE_2D)
+	, ddsimage(NULL)
 #endif // !BITMAP_NO_OPENGL
-	mem=new unsigned char[xsize*ysize*channels];
-	memcpy(mem,data,xsize*ysize*channels);
+{
+	const int size = xsize*ysize * channels;
+	mem = new unsigned char[size];
+	memcpy(mem, data, size);
 }
 
 
 CBitmap& CBitmap::operator=(const CBitmap& bm)
 {
-	if( this != &bm ){
-		delete[] mem;
+	if (this != &bm) {
 		type  = bm.type;
 		xsize = bm.xsize;
 		ysize = bm.ysize;
 		channels = bm.channels;
-		int size = xsize*ysize * channels;
 
-		mem=new unsigned char[size];
-		memcpy(mem,bm.mem,size);
+		const int size = xsize*ysize * channels;
+		delete[] mem;
+		mem = new unsigned char[size];
+		memcpy(mem, bm.mem, size);
 	}
+
 	return *this;
 }
 
 
-void CBitmap::Alloc(int w,int h)
+void CBitmap::Alloc(int w, int h)
 {
 	delete[] mem;
-	xsize=w;
-	ysize=h;
-	mem=new unsigned char[w*h*channels];
-	memset(mem, 0, w*h*channels);
+	xsize = w;
+	ysize = h;
+	const int size = w*h*channels;
+	mem = new unsigned char[size];
+	memset(mem, 0, size);
 }
 
 
@@ -168,13 +180,12 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	channels = 4;
 
 	CFileHandler file(filename);
-	if(file.FileExists() == false)
-	{
+	if (file.FileExists() == false) {
 		Alloc(1,1);
 		return false;
 	}
 
-	unsigned char *buffer = new unsigned char[file.FileSize()+2];
+	unsigned char* buffer = new unsigned char[file.FileSize() + 2];
 	file.Read(buffer, file.FileSize());
 
 	boost::mutex::scoped_lock lck(devilMutex);
@@ -189,11 +200,10 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilDisable(IL_ORIGIN_SET);
 	delete [] buffer;
 
-	if(success == false)
-	{
+	if (success == false) {
 		xsize = 1;
 		ysize = 1;
-		mem=new unsigned char[4];
+		mem = new unsigned char[4];
 		mem[0] = 255; // Red allows us to easily see textures that failed to load
 		mem[1] = 0;
 		mem[2] = 0;
@@ -201,20 +211,20 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 		return false;
 	}
 
-	noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
+	noAlpha = (ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL) != 4);
 	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
 	mem = new unsigned char[xsize * ysize * 4];
-	//	ilCopyPixels(0,0,0,xsize,ysize,0,IL_RGBA,IL_UNSIGNED_BYTE,mem);
+	//ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, mem);
 	memcpy(mem, ilGetData(), xsize * ysize * 4);
 
 	ilDeleteImages(1, &ImageName);
 
-	if (noAlpha){
-		for (int y=0; y<ysize; ++y) {
-			for (int x=0; x<xsize; ++x) {
+	if (noAlpha) {
+		for (int y=0; y < ysize; ++y) {
+			for (int x=0; x < xsize; ++x) {
 				mem[((y*xsize+x) * 4) + 3] = defaultAlpha;
 			}
 		}
@@ -230,10 +240,11 @@ bool CBitmap::LoadGrayscale (const std::string& filename)
 	channels = 1;
 
 	CFileHandler file(filename);
-	if(!file.FileExists())
+	if (!file.FileExists()) {
 		return false;
+	}
 
-	unsigned char *buffer = new unsigned char[file.FileSize()+1];
+	unsigned char* buffer = new unsigned char[file.FileSize() + 1];
 	file.Read(buffer, file.FileSize());
 
 	boost::mutex::scoped_lock lck(devilMutex);
@@ -246,10 +257,11 @@ bool CBitmap::LoadGrayscale (const std::string& filename)
 
 	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
 	ilDisable(IL_ORIGIN_SET);
-	delete [] buffer;
+	delete[] buffer;
 
-	if(success == false)
+	if (success == false) {
 		return false;
+	}
 
 	ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_BYTE);
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
@@ -306,7 +318,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque)
 	const std::string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
 	const bool success = ilSaveImage((char*)fullpath.c_str());
 
-	ilDeleteImages(1,&ImageName);
+	ilDeleteImages(1, &ImageName);
 	ilDisable(IL_ORIGIN_SET);
 	delete[] buf;
 
@@ -317,13 +329,13 @@ bool CBitmap::Save(std::string const& filename, bool opaque)
 #ifndef BITMAP_NO_OPENGL
 const GLuint CBitmap::CreateTexture(bool mipmaps)
 {
-	if(type == BitmapTypeDDS)
-	{
+	if (type == BitmapTypeDDS) {
 		return CreateDDSTexture();
 	}
 
-	if(mem==NULL)
+	if (mem == NULL) {
 		return 0;
+	}
 
 	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
@@ -345,20 +357,18 @@ const GLuint CBitmap::CreateTexture(bool mipmaps)
 
 	//FIXME add glPixelStorei(GL_UNPACK_ALIGNMENT, 1); for NPOTs
 
-	if(mipmaps)
-	{
+	if (mipmaps) {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
 		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
-	}
-	else
-	{
+	} else {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
 		//gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	}
+
 	return texture;
 }
 
@@ -367,10 +377,11 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
-	if (texID == 0)
+	if (texID == 0) {
 		glGenTextures(1, &texID);
+	}
 
-	switch(ddsimage->get_type())
+	switch (ddsimage->get_type())
 	{
 	case nv_dds::TextureNone:
 		glDeleteTextures(1, &texID);
@@ -379,8 +390,8 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 	case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texID);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-		if(!ddsimage->upload_texture2D()) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		if (!ddsimage->upload_texture2D()) {
 			glDeleteTextures(1, &texID);
 			texID = 0;
 		}
@@ -388,7 +399,7 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 	case nv_dds::Texture3D:
 		glEnable(GL_TEXTURE_3D);
 		glBindTexture(GL_TEXTURE_3D, texID);
-		if(!ddsimage->upload_texture3D()) {
+		if (!ddsimage->upload_texture3D()) {
 			glDeleteTextures(1, &texID);
 			texID = 0;
 		}
@@ -396,7 +407,7 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 	case nv_dds::TextureCubemap:
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texID);
-		if(!ddsimage->upload_textureCubemap()) {
+		if (!ddsimage->upload_textureCubemap()) {
 			glDeleteTextures(1, &texID);
 			texID = 0;
 		}
@@ -412,35 +423,42 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 #endif // !BITMAP_NO_OPENGL
 
 
-void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char blue)
+void CBitmap::CreateAlpha(unsigned char red, unsigned char green, unsigned char blue)
 {
 	float3 aCol;
-	for(int a=0;a<3;++a)
-	{
-		int cCol=0;
-		int numCounted=0;
-		for(int y=0;y<ysize;++y){
-			for(int x=0;x<xsize;++x){
-				if(mem[(y*xsize+x)*4+3]!=0 && !(mem[(y*xsize+x)*4+0]==red && mem[(y*xsize+x)*4+1]==green && mem[(y*xsize+x)*4+2]==blue)){
-					cCol+=mem[(y*xsize+x)*4+a];
+	for(int a=0; a < 3; ++a) {
+		int cCol = 0;
+		int numCounted = 0;
+		for (int y=0; y < ysize; ++y) {
+			for (int x=0; x < xsize; ++x) {
+				const int index = (y*xsize + x) * 4;
+				if ((mem[index + 3] != 0) &&
+					!(
+						(mem[index + 0] == red) &&
+						(mem[index + 1] == green) &&
+						(mem[index + 2] == blue)
+					))
+				{
+					cCol += mem[index + a];
 					++numCounted;
 				}
 			}
 		}
-		if ( numCounted != 0 )
-		{
-			aCol[a]=cCol/255.0f/numCounted;
+		if (numCounted != 0) {
+			aCol[a] = cCol / 255.0f / numCounted;
 		}
 	}
-	for(int y=0;y<ysize;++y)
-	{
-		for(int x=0;x<xsize;++x)
-		{
-			if(mem[(y*xsize+x)*4+0]==red && mem[(y*xsize+x)*4+1]==green && mem[(y*xsize+x)*4+2]==blue) {
-				mem[(y*xsize+x)*4+0]= (unsigned char) (aCol.x*255);
-				mem[(y*xsize+x)*4+1]= (unsigned char) (aCol.y*255);
-				mem[(y*xsize+x)*4+2]= (unsigned char) (aCol.z*255);
-				mem[(y*xsize+x)*4+3]=0;
+	for (int y=0; y < ysize; ++y) {
+		for (int x=0; x < xsize; ++x) {
+			const int index = (y*xsize + x) * 4;
+			if ((mem[index + 0] == red) &&
+				(mem[index + 1] == green) &&
+				(mem[index + 2] == blue))
+			{
+				mem[index + 0] = (unsigned char) (aCol.x * 255);
+				mem[index + 1] = (unsigned char) (aCol.y * 255);
+				mem[index + 2] = (unsigned char) (aCol.z * 255);
+				mem[index + 3] = 0;
 			}
 		}
 	}
@@ -448,19 +466,17 @@ void CBitmap::CreateAlpha(unsigned char red,unsigned char green,unsigned char bl
 
 
 // Depreciated (Only used by GUI which will be replaced by CEGUI anyway)
-void CBitmap::SetTransparent( unsigned char red, unsigned char green, unsigned char blue )
+void CBitmap::SetTransparent(unsigned char red, unsigned char green, unsigned char blue)
 {
-	for ( unsigned int y = 0; y < xsize; y++ )
-	{
-		for ( unsigned int x = 0; x < xsize; x++ )
-		{
-			unsigned int index = (y*xsize + x)*4;
-			if ( mem[index+0] == red &&
-				mem[index+1] == green &&
-				mem[index+2] == blue )
+	for (unsigned int y = 0; y < xsize; y++) {
+		for (unsigned int x = 0; x < xsize; x++) {
+			const unsigned int index = (y*xsize + x) * 4;
+			if ((mem[index + 0] == red) &&
+				(mem[index + 1] == green) &&
+				(mem[index + 2] == blue))
 			{
 				// set transparent
-				mem[index+3] = 0;
+				mem[index + 3] = 0;
 			}
 		}
 	}
@@ -474,20 +490,21 @@ void CBitmap::Renormalize(float3 newCol)
 
 	float3 colorDif;
 	//	float3 spreadMul;
-	for(int a=0;a<3;++a){
-		int cCol=0;
-		int numCounted=0;
-		for(int y=0;y<ysize;++y){
-			for(int x=0;x<xsize;++x){
-				if(mem[(y*xsize+x)*4+3]!=0){
-					cCol+=mem[(y*xsize+x)*4+a];
+	for (int a=0; a < 3; ++a) {
+		int cCol = 0;
+		int numCounted = 0;
+		for (int y=0; y < ysize; ++y) {
+			for (int x=0; x < xsize;++x) {
+				const unsigned int index = (y*xsize + x) * 4;
+				if (mem[index + 3] != 0) {
+					cCol += mem[index + a];
 					++numCounted;
 				}
 			}
 		}
-		aCol[a]=cCol/255.0f/numCounted;
-		cCol/=xsize*ysize;
-		colorDif[a]=newCol[a]-aCol[a];
+		aCol[a] = cCol / 255.0f / numCounted;
+		cCol /= xsize*ysize;
+		colorDif[a] = newCol[a] - aCol[a];
 
 /*		int spread=0;
         for(int y=0;y<ysize;++y){
@@ -501,12 +518,13 @@ void CBitmap::Renormalize(float3 newCol)
         aSpread.xyz[a]=spread/255.0f/numCounted;
         spreadMul.xyz[a]=(float)(newSpread[a]/aSpread[a]);*/
 	}
-	for(int a=0;a<3;++a){
-		for(int y=0;y<ysize;++y){
-			for(int x=0;x<xsize;++x){
-				float nc=float(mem[(y*xsize+x)*4+a])/255.0f+colorDif[a];
-				/*				float r=newCol.xyz[a]+(nc-newCol.xyz[a])*spreadMul.xyz[a];*/
-				mem[(y*xsize+x)*4+a]=(unsigned char)(std::min(255.f,std::max(0.f,nc*255)));
+	for (int a=0; a < 3; ++a) {
+		for (int y=0; y < ysize; ++y) {
+			for (int x=0; x < xsize; ++x) {
+				const unsigned int index = (y*xsize + x) * 4;
+				float nc = float(mem[index + a]) / 255.0f + colorDif[a];
+				//float r=newCol.xyz[a]+(nc-newCol.xyz[a])*spreadMul.xyz[a];
+				mem[index + a] = (unsigned char) (std::min(255.f, std::max(0.0f, nc*255)));
 			}
 		}
 	}
@@ -518,16 +536,16 @@ inline void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int y, int
 
 	const int pos = (x + y * dst->xsize) * dst->channels + channel;
 
-	for (int i=0; i<9; ++i) {
+	for (int i=0; i < 9; ++i) {
 		int yoffset = (i / 3) - 1;
 		int xoffset = (i - (yoffset + 1) * 3) - 1;
 
 		const int tx = x + xoffset;
 		const int ty = y + yoffset;
-		if (tx<0 || tx>=dst->xsize) {
+		if ((tx < 0) || (tx >= dst->xsize)) {
 			xoffset = 0;
 		}
-		if (ty<0 || ty>=dst->ysize) {
+		if ((ty < 0) || (ty >= dst->ysize)) {
 			yoffset = 0;
 		}
 		int offset = (xoffset + yoffset * dst->xsize) * dst->channels;
@@ -553,14 +571,14 @@ void CBitmap::Blur(int iterations, float weight)
 	dst->channels = src->channels;
 	dst->Alloc(xsize,ysize);
 
-	for (int i=0;i<iterations;++i){
+	for (int i=0; i < iterations; ++i){
 		#pragma omp parallel private(y,x,i)
 		{
 			#pragma omp for
-			for (int y=0;y<ysize;++y){
-				for (int x=0;x<xsize;++x){
-					for (int i=0;i<channels;++i){
-						kernelBlur(dst,src->mem,x,y,i,weight);
+			for (int y=0; y < ysize; ++y) {
+				for (int x=0; x < xsize; ++x) {
+					for (int i=0; i < channels; ++i) {
+						kernelBlur(dst, src->mem, x, y, i, weight);
 					}
 				}
 			}
@@ -586,16 +604,16 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 	CBitmap bm;
 
 	delete[] bm.mem;
-	bm.mem=new unsigned char[width*height*channels];
+	bm.mem = new unsigned char[width*height * channels];
 	bm.channels = channels;
 	bm.type = type;
 	bm.xsize = width;
 	bm.ysize = height;
 
-	for(int y=0;y<height;++y){
-		for(int x=0;x<width;++x){
-			for (int i=0; i<channels;++i) {
-				bm.mem[(y*width+x)*channels+i]=mem[((starty+y)*xsize+startx+x)*channels+i];
+	for (int y=0; y < height; ++y) {
+		for (int x=0; x < width; ++x) {
+			for (int i=0; i < channels; ++i) {
+				bm.mem[(y*width + x)*channels + i] = mem[((starty + y)*xsize + startx + x)*channels + i];
 			}
 		}
 	}
@@ -609,25 +627,27 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 	CBitmap bm;
 
 	delete[] bm.mem;
-	bm.xsize=xsize/2;
-	bm.ysize=ysize/2;
-	bm.mem=new unsigned char[bm.xsize*bm.ysize*4];
+	bm.xsize = xsize / 2;
+	bm.ysize = ysize / 2;
+	bm.mem = new unsigned char[bm.xsize*bm.ysize * 4];
 
-	for(int y=0;y<ysize/2;++y){
-		for(int x=0;x<xsize/2;++x){
-			float r=0,g=0,b=0,a=0;
-			for(int y2=0;y2<2;++y2){
-				for(int x2=0;x2<2;++x2){
-					r+=mem[((y*2+y2)*xsize+x*2+x2)*4+0];
-					g+=mem[((y*2+y2)*xsize+x*2+x2)*4+1];
-					b+=mem[((y*2+y2)*xsize+x*2+x2)*4+2];
-					a+=mem[((y*2+y2)*xsize+x*2+x2)*4+3];
+	for (int y=0; y < (ysize / 2); ++y) {
+		for (int x=0; x < (xsize / 2); ++x) {
+			float r=0, g=0, b=0, a=0;
+			for (int y2=0; y2 < 2; ++y2) {
+				for (int x2=0; x2 < 2; ++x2) {
+					const int index = ((y*2 + y2)*xsize + x*2 + x2) * 4;
+					r += mem[index + 0];
+					g += mem[index + 1];
+					b += mem[index + 2];
+					a += mem[index + 3];
 				}
 			}
-			bm.mem[(y*bm.xsize+x)*4]=(unsigned char)(r/4);
-			bm.mem[(y*bm.xsize+x)*4+1]=(unsigned char)(g/4);
-			bm.mem[(y*bm.xsize+x)*4+2]=(unsigned char)(b/4);
-			bm.mem[(y*bm.xsize+x)*4+3]=(unsigned char)(a/4);
+			const int index = (y*bm.xsize + x) * 4;
+			bm.mem[index]     = (unsigned char) (r / 4);
+			bm.mem[index + 1] = (unsigned char) (g / 4);
+			bm.mem[index + 2] = (unsigned char) (b / 4);
+			bm.mem[index + 3] = (unsigned char) (a / 4);
 		}
 	}
 
@@ -643,40 +663,45 @@ CBitmap CBitmap::CreateRescaled(int newx, int newy)
 	delete[] bm.mem;
 	bm.xsize = newx;
 	bm.ysize = newy;
-	bm.mem   = new unsigned char[bm.xsize*bm.ysize*4];
+	bm.mem   = new unsigned char[bm.xsize*bm.ysize * 4];
 
-	const float dx = float(xsize)/newx;
-	const float dy = float(ysize)/newy;
+	const float dx = (float) xsize / newx;
+	const float dy = (float) ysize / newy;
 
-	float cy=0;
-	for(int y=0;y<newy;++y){
-		const int sy = (int)cy;
-		cy+=dy;
-		int ey=(int)cy;
-		if(ey==sy)
-			ey=sy+1;
+	float cy = 0;
+	for (int y=0; y < newy; ++y) {
+		const int sy = (int) cy;
+		cy += dy;
+		int ey = (int) cy;
+		if (ey == sy) {
+			ey = sy+1;
+		}
 
-		float cx=0;
-		for(int x=0;x<newx;++x){
-			const int sx=(int)cx;
-			cx+=dx;
-			int ex=(int)cx;
-			if(ex==sx)
-				ex=sx+1;
+		float cx = 0;
+		for (int x=0; x < newx; ++x) {
+			const int sx = (int) cx;
+			cx += dx;
+			int ex = (int) cx;
+			if (ex == sx) {
+				ex = sx + 1;
+			}
 
-			int r=0,g=0,b=0,a=0;
-			for(int y2=sy;y2<ey;++y2){
-				for(int x2=sx;x2<ex;++x2){
-					r+=mem[(y2*xsize+x2)*4+0];
-					g+=mem[(y2*xsize+x2)*4+1];
-					b+=mem[(y2*xsize+x2)*4+2];
-					a+=mem[(y2*xsize+x2)*4+3];
+			int r=0, g=0, b=0, a=0;
+			for (int y2 = sy; y2 < ey; ++y2) {
+				for (int x2 = sx; x2 < ex; ++x2) {
+					const int index = (y2*xsize + x2) * 4;
+					r += mem[index + 0];
+					g += mem[index + 1];
+					b += mem[index + 2];
+					a += mem[index + 3];
 				}
 			}
-			bm.mem[(y*bm.xsize+x)*4+0]=r/((ex-sx)*(ey-sy));
-			bm.mem[(y*bm.xsize+x)*4+1]=g/((ex-sx)*(ey-sy));
-			bm.mem[(y*bm.xsize+x)*4+2]=b/((ex-sx)*(ey-sy));
-			bm.mem[(y*bm.xsize+x)*4+3]=a/((ex-sx)*(ey-sy));
+			const int index = (y*bm.xsize + x) * 4;
+			const int denom = (ex - sx) * (ey - sy);
+			bm.mem[index + 0] = r / denom;
+			bm.mem[index + 1] = g / denom;
+			bm.mem[index + 2] = b / denom;
+			bm.mem[index + 3] = a / denom;
 		}
 	}
 
@@ -689,8 +714,8 @@ void CBitmap::InvertColors()
 	if (type != BitmapTypeStandardRGBA) {
 		return;
 	}
-	for(int y = 0; y < ysize; ++y) {
-		for(int x = 0; x < xsize; ++x) {
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
 			mem[base + 0] = 0xFF - mem[base + 0];
 			mem[base + 1] = 0xFF - mem[base + 1];
@@ -706,8 +731,8 @@ void CBitmap::GrayScale()
 	if (type != BitmapTypeStandardRGBA) {
 		return;
 	}
-	for(int y = 0; y < ysize; ++y) {
-		for(int x = 0; x < xsize; ++x) {
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
 			const float illum =
 				(mem[base + 0] * 0.299f) +
@@ -751,15 +776,15 @@ void CBitmap::ReverseYAxis()
 {
 	//FIXME: optimize, so it doesn't alloc a new array
 
-	unsigned char* buf=new unsigned char[xsize*ysize*channels];
+	unsigned char* buf = new unsigned char[xsize*ysize*channels];
 
-	for(int y=0;y<ysize;++y){
-		for(int x=0;x<xsize;++x){
-			for (int i=0;i<channels;++i){
-				buf[((ysize-1-y)*xsize+x)*channels+i]=mem[((y)*xsize+x)*channels+i];
+	for (int y=0; y < ysize; ++y) {
+		for (int x=0; x < xsize; ++x) {
+			for (int i=0; i < channels; ++i) {
+				buf[((ysize-1-y)*xsize+x)*channels + i] = mem[((y)*xsize+x)*channels + i];
 			}
 		}
 	}
 	delete[] mem;
-	mem=buf;
+	mem = buf;
 }
