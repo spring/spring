@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _RESOURCEMAPANALYZER_H
-#define _RESOURCEMAPANALYZER_H
+#ifndef _RESOURCE_MAP_ANALYZER_H
+#define _RESOURCE_MAP_ANALYZER_H
 
 #include "float3.h"
 #include <vector>
@@ -11,7 +11,7 @@ struct UnitDef;
 
 class CResourceMapAnalyzer {
 	public:
-		CResourceMapAnalyzer(int ResourceId);
+		CResourceMapAnalyzer(int resourceId);
 		~CResourceMapAnalyzer();
 
 		float3 GetNearestSpot(float3 fromPos, int team, const UnitDef* extractor = NULL) const;
@@ -34,32 +34,31 @@ class CResourceMapAnalyzer {
 
 		std::string GetCacheFileName() const;
 
-		int ResourceId;
-		float ExtractorRadius;
-		int NumSpotsFound;
-		std::vector<float3> VectoredSpots;
-		float AverageIncome;
-		float3 BufferSpot;
-		bool StopMe;
-		int MaxSpots;
-		int MapHeight;
-		int MapWidth;
-		int TotalCells;
-		int SquareRadius;
-		int DoubleSquareRadius;
-		int TotalResources;
-		int MaxResource;
-		int TempResources;
+		int resourceId;
+		float extractorRadius;
+		int numSpotsFound;
+		std::vector<float3> vectoredSpots;
+		float averageIncome;
+		float3 bufferSpot;
+		bool stopMe;
+		int maxSpots;
+		int mapHeight;
+		int mapWidth;
+		int totalCells;
+		int squareRadius;
+		int doubleSquareRadius;
+		int totalResources;
+		int maxResource;
+		int tempResources;
 		int coordX;
 		int coordZ;
-		int MinRadius;
-		int MinIncomeForSpot;
-		int XtractorRadius;
-		int DoubleRadius;
-		unsigned char* RexArrayA;
-		unsigned char* RexArrayB;
-		unsigned char* RexArrayC;
-		int* TempAverage;
+		int minIncomeForSpot;
+		int xtractorRadius;
+		int doubleRadius;
+		unsigned char* rexArrayA;
+		unsigned char* rexArrayB;
+		unsigned char* rexArrayC;
+		int* tempAverage;
 };
 
-#endif // _RESOURCEMAPANALYZER_H
+#endif // _RESOURCE_MAP_ANALYZER_H
