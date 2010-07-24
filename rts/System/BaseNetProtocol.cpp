@@ -7,6 +7,7 @@
 #include "mmgr.h"
 
 #include "Game/PlayerStatistics.h"
+#include "Sim/Misc/TeamStatistics.h"
 #include "Net/RawPacket.h"
 #include "Net/PackPacket.h"
 #include "Net/ProtocolDef.h"
@@ -485,6 +486,8 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEDATA, -2);
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
+	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(TeamStatistics));
+	proto->AddType(NETMSG_REQUEST_TEAMSTAT, 4 );
 	proto->AddType(NETMSG_REGISTER_NETMSG, 3 );
 	proto->AddType(NETMSG_UNREGISTER_NETMSG, 3);
 
