@@ -1268,6 +1268,19 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			if (mouse && mouse->locked) {
 				mouse->ToggleState();
 			}
+
+			// simulate release all to prevent hung buttons
+			for (int i = 0; i < NUM_BUTTONS + 1; ++i) {
+				SDL_Event event;
+				event.type = event.button.type = SDL_MOUSEBUTTONUP;
+				event.button.which = 0;
+				event.button.button = i;
+				event.button.x = -1;
+				event.button.y = -1;
+				event.button.state = SDL_RELEASED;
+				input.PushEvent(event);
+			}
+
 			break;
 		}
 		case SDL_KEYDOWN: {
