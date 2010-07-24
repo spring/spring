@@ -31,7 +31,6 @@ public:
 	void Serialize(creg::ISerializer& s);
 	void PostLoad();
 	virtual ~CUnitHandler();
-	void UpdateWind(float x, float z, float strength);
 
 	///< test if a unit can be built at specified position
 	///<   return values for the following is

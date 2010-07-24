@@ -460,16 +460,6 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 
 
 
-void CUnitHandler::UpdateWind(float x, float z, float strength)
-{
-	//todo: save windgens in list (would be a little faster)
-	for(std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-		if((*usi)->unitDef->windGenerator)
-			(*usi)->UpdateWind(x,z,strength);
-	}
-}
-
-
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
