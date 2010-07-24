@@ -4795,6 +4795,9 @@ void CGame::GameEnd()
 			}
 			for (int i = 0; i < numTeams; ++i) {
 				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
+				net->Send(buf);
 			}
 		}
 	}
