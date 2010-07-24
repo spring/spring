@@ -148,6 +148,7 @@ public:
 
 			case WM_ACTIVATE:
 			{
+				wsdl::ResetMouseButtons();
 				// wsdl::OnActivate(wnd, LOWORD(wParam), NULL, HIWORD(lParam));
 				// FIXME: move to SpringApp somehow and use GLContext.h instead!
 				if (globalRendering->fullScreen) {
