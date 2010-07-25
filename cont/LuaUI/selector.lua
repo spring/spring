@@ -43,7 +43,7 @@ local fullWidgetsList = {}
 
 local vsx, vsy = widgetHandler:GetViewSizes()
 
-local maxEntries = 40
+local maxEntries = 20
 local startEntry = 1
 local pageStep  = math.floor(maxEntries / 2) - 1
 
@@ -76,6 +76,17 @@ local midy = vsy * 0.5
 local miny = vsy * 0.4
 local maxy = vsy * 0.6
 
+local sbposx = 0.0
+local sbposy = 0.0
+local sbsizex = 0.0
+local sbsizey = 0.0
+local sby1 = 0.0
+local sby2 = 0.0
+local sbsize = 0.0
+local sbheight = 0.0
+local activescrollbar = false
+local scrollbargrabpos = 0.0
+
 -------------------------------------------------------------------------------
 
 function widget:Initialize()
@@ -94,7 +105,7 @@ local function UpdateGeometry()
   maxx = floor(midx + halfWidth + borderx)
 
   local ySize = yStep * (#widgetsList)
-  miny = floor(midy - (0.5 * ySize) - bordery)
+  miny = floor(midy - (0.5 * ySize) - bordery - fontSize * 0.5)
   maxy = floor(midy + (0.5 * ySize) + bordery)
 end
 
@@ -241,6 +252,7 @@ function widget:DrawScreen()
   local pointedEnabled = false
   local pointedName = (nd and nd[1]) or nil
   local posy = maxy - yStep - bordery
+  sby1 = posy + fontSize + fontSpace * 0.5
   for _,namedata in ipairs(widgetsList) do
     local name = namedata[1]
     local data = namedata[2]
@@ -249,7 +261,7 @@ function widget:DrawScreen()
     local order = widgetHandler.orderList[name]
     local enabled = order and (order > 0)
     local active = data.active
-    if (pointed) then
+    if (pointed and not activescrollbar) then
       pointedY = posy
       pointedEnabled = data.active
       if (lmb or mmb or rmb) then
@@ -273,6 +285,108 @@ function widget:DrawScreen()
 
     gl.Text(color..tmpName, midx, posy + fontSize * 0.5, fontSize, "vc")
     posy = posy - yStep
+  end
+  
+  if #widgetsList < #fullWidgetsList then
+    sby2 = posy + yStep - fontSpace * 0.5
+    sbheight = sby1 - sby2
+    sbsize = sbheight * #widgetsList / #fullWidgetsList 
+    if activescrollbar then
+    	startEntry = math.max(0, math.min(
+    	math.floor(#fullWidgetsList * 
+    	((sby1 - sbsize) - 
+    	(my - math.min(scrollbargrabpos, sbsize)))
+    	 / sbheight + 0.5), 
+                         #fullWidgetsList - maxEntries)) + 1
+    end
+    local sizex = maxx - minx
+    sbposx = minx + sizex + 1.0
+    sbposy = sby1 - sbsize - sbheight * (startEntry - 1) / #fullWidgetsList
+    sbsizex = yStep
+    sbsizey = sbsize
+    
+    gl.Color(0.0, 0.0, 0.0, 0.8)
+    gl.Shape(GL.QUADS, {
+      { v = { sbposx, miny } }, { v = { sbposx, maxy } },
+      { v = { sbposx + sbsizex, maxy } }, { v = { sbposx + sbsizex, miny } }
+    })    
+
+    gl.Color(1.0, 1.0, 1.0, 0.8)
+    gl.Shape(GL.TRIANGLES, {
+      { v = { sbposx + sbsizex / 2, miny } }, { v = { sbposx, sby2 - 1 } },
+      { v = { sbposx + sbsizex, sby2 - 1 } }
+    })    
+
+    gl.Shape(GL.TRIANGLES, {
+      { v = { sbposx + sbsizex / 2, maxy } }, { v = { sbposx + sbsizex, sby2 + sbheight + 1 } },
+      { v = { sbposx, sby2 + sbheight + 1 } }
+    })
+    
+    if (sbposx < mx and mx < sbposx + sbsizex and miny < my and my < maxy) or activescrollbar then
+      gl.Color(0.2, 0.2, 1.0, 0.6)
+      gl.Blending(false)
+      gl.Shape(GL.LINE_LOOP, {
+        { v = { sbposx, miny } }, { v = { sbposx, maxy } },
+        { v = { sbposx + sbsizex, maxy } }, { v = { sbposx + sbsizex, miny } }
+      })    
+      gl.Blending(GL.SRC_ALPHA, GL.ONE)
+      gl.Shape(GL.QUADS, {
+        { v = { sbposx + 0.5, miny + 0.5 } }, { v = { sbposx + 0.5, maxy - 0.5 } },
+        { v = { sbposx + sbsizex - 0.5, maxy - 0.5 } }, { v = { sbposx + sbsizex - 0.5, miny + 0.5 } }
+      })
+      gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+    end      
+    
+    if (sbposx < mx and mx < sbposx + sbsizex and sby2 < my and my < sby2 + sbheight) then
+      gl.Color(0.2, 0.2, 1.0, 0.2)
+      gl.Blending(false)
+      gl.Shape(GL.LINE_LOOP, {
+        { v = { sbposx, sbposy } }, { v = { sbposx, sbposy + sbsizey } },
+        { v = { sbposx + sbsizex, sbposy + sbsizey } }, { v = { sbposx + sbsizex, sbposy } }
+      })    
+      gl.Blending(GL.SRC_ALPHA, GL.ONE)
+      gl.Shape(GL.QUADS, {
+        { v = { sbposx + 0.5, sbposy + 0.5 } }, { v = { sbposx + 0.5, sbposy + sbsizey - 0.5 } },
+        { v = { sbposx + sbsizex - 0.5, sbposy + sbsizey - 0.5 } }, { v = { sbposx + sbsizex - 0.5, sbposy + 0.5 } }
+      })
+      gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+    end    
+
+    gl.Color(0.25, 0.25, 0.25, 0.8)
+    gl.Shape(GL.QUADS, {
+      { v = { sbposx, sby2 } }, { v = { sbposx, sby2 + sbheight } },
+      { v = { sbposx + sbsizex, sby2 + sbheight } }, { v = { sbposx + sbsizex, sby2 } }
+    })    
+    gl.Color(1.0, 1.0, 1.0, 0.4)
+    gl.Shape(GL.LINE_LOOP, {
+      { v = { sbposx, sby2 } }, { v = { sbposx, sby2 + sbheight } },
+      { v = { sbposx + sbsizex, sby2 + sbheight } }, { v = { sbposx + sbsizex, sby2 } }
+    })    
+
+    gl.Color(0.8, 0.8, 0.8, 0.8)
+    gl.Shape(GL.QUADS, {
+      { v = { sbposx, sbposy } }, { v = { sbposx, sbposy + sbsizey } },
+      { v = { sbposx + sbsizex, sbposy + sbsizey } }, { v = { sbposx + sbsizex, sbposy } }
+    })    
+    if activescrollbar or (sbposx < mx and mx < sbposx + sbsizex and sbposy < my and my < sbposy + sbsizey) then
+      gl.Color(0.2, 0.2, 1.0, 0.2)
+      gl.Blending(false)
+      gl.Shape(GL.LINE_LOOP, {
+        { v = { sbposx, sbposy } }, { v = { sbposx, sbposy + sbsizey } },
+        { v = { sbposx + sbsizex, sbposy + sbsizey } }, { v = { sbposx + sbsizex, sbposy } }
+      })    
+      gl.Blending(GL.SRC_ALPHA, GL.ONE)
+      gl.Shape(GL.QUADS, {
+        { v = { sbposx + 0.5, sbposy + 0.5 } }, { v = { sbposx + 0.5, sbposy + sbsizey - 0.5 } },
+        { v = { sbposx + sbsizex - 0.5, sbposy + sbsizey - 0.5 } }, { v = { sbposx + sbsizex - 0.5, sbposy + 0.5 } }
+      })
+      gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+    end  
+  else
+    sbposx = 0.0
+    sbposy = 0.0
+    sbsizex = 0.0
+    sbsizey = 0.0
   end
 
 
@@ -339,12 +453,36 @@ function widget:MousePress(x, y, button)
 
   UpdateList()
 
-  if ((x >= minx) and (x <= maxx)) then
+  if button == 1 then
+    if sbposx < x and x < sbposx + sbsizex and sbposy < y and y < sbposy + sbsizey then
+      activescrollbar = true
+      scrollbargrabpos = y - sbposy
+      return true
+    elseif sbposx < x and x < sbposx + sbsizex and sby2 < y and y < sby2 + sbheight then
+      if y > sbposy + sbsizey then
+        startEntry = math.max(0, math.min(startEntry - maxEntries, #fullWidgetsList - maxEntries)) + 1
+      elseif y < sbposy then
+        startEntry = math.max(0, math.min(startEntry + maxEntries, #fullWidgetsList - maxEntries)) + 1
+      end
+      UpdateListScroll()
+      return false   
+    end
+  end
+
+  if ((x >= minx) and (x <= maxx + yStep)) then
     if ((y >= (maxy - bordery)) and (y <= maxy)) then
-      ScrollUp(pageStep)
+      if x > maxx then
+        ScrollUp(1)
+      else
+        ScrollUp(pageStep)
+      end
       return false
     elseif ((y >= miny) and (y <= miny + bordery)) then
-      ScrollDown(pageStep)
+      if x > maxx then
+        ScrollDown(1)
+      else
+        ScrollDown(pageStep)
+      end
       return false
     end
   end
@@ -360,6 +498,11 @@ end
 
 
 function widget:MouseMove(x, y, dx, dy, button)
+  if activescrollbar then
+    startEntry = math.max(0, math.min(math.floor((#fullWidgetsList * ((sby1 - sbsize) - (y - math.min(scrollbargrabpos, sbsize))) / sbheight) + 0.5), 
+    #fullWidgetsList - maxEntries)) + 1
+    UpdateListScroll()
+  end
   return false
 end
 
@@ -370,6 +513,12 @@ function widget:MouseRelease(x, y, button)
   end
 
   UpdateList()
+  
+  if button == 1 and activescrollbar then
+    activescrollbar = false
+    scrollbargrabpos = 0.0
+    return -1
+  end
   
   local namedata = self:AboveLabel(x, y)
   if (not namedata) then
