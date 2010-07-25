@@ -4,6 +4,7 @@
 
 #include "mmgr.h"
 
+#include <math.h>
 #include <algorithm>
 
 #include "MouseHandler.h"
@@ -765,9 +766,6 @@ void CMouseHandler::UpdateCursors()
 
 void CMouseHandler::DrawScrollCursor()
 {
-	const int screenCenterX = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
-	const int screenCenterY = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
-
 	const float scaleL = fabs(std::min(0.0f,scrollx)) * crossMoveScale + 1.0f;
 	const float scaleT = fabs(std::min(0.0f,scrolly)) * crossMoveScale + 1.0f;
 	const float scaleR = fabs(std::max(0.0f,scrollx)) * crossMoveScale + 1.0f;
@@ -1016,8 +1014,6 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 void CMouseHandler::ConfigNotify(const std::string& key, const std::string& value)
 {
 	if (key == "MouseDragScrollThreshold") {
-		// get the new value as float
-		// the default value here will never be used
-		dragScrollThreshold = configHandler->Get(key, 0.3f);
+		dragScrollThreshold = atof(value.c_str());
 	}
 }
