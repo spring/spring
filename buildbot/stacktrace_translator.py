@@ -16,7 +16,8 @@ SEVENZIP = r'/usr/bin/7za'
 
 # Everything before the first occurence of this is stripped
 # from paths returned by addr2line.
-PATH_STRIP_UNTIL='/build/'
+# First one is buildbot, second one is BuildServ.
+PATH_STRIP_UNTIL = ['/build/', '}.mingw32.cmake/']
 
 # Root of the directory tree with debugging symbols.
 # Must contain paths of the form config/branch/rev/...
@@ -277,10 +278,12 @@ def translate_module_addresses(module, debugfile, addresses):
 			fatal('%s exited with status %s' % (ADDR2LINE, addr2line.returncode))
 		log.info('\t\t[OK]')
 
-	def fixup(addr, func, line):
-		if PATH_STRIP_UNTIL in func:
-			func = func[func.index(PATH_STRIP_UNTIL)+len(PATH_STRIP_UNTIL):]
-		return module, addr, func, int(line)
+	def fixup(addr, file, line):
+		for psu in PATH_STRIP_UNTIL:
+			if psu in file:
+				file = file[file.index(psu)+len(psu):]
+				break
+		return module, addr, file, int(line)
 
 	return [fixup(addr, *line.split(':')) for addr, line in zip(addresses, stdout.splitlines())]
 
