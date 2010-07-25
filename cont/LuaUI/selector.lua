@@ -460,9 +460,9 @@ function widget:MousePress(x, y, button)
       return true
     elseif sbposx < x and x < sbposx + sbsizex and sby2 < y and y < sby2 + sbheight then
       if y > sbposy + sbsizey then
-        startEntry = math.max(0, math.min(startEntry - maxEntries, #fullWidgetsList - maxEntries)) + 1
+        startEntry = math.max(1, math.min(startEntry - maxEntries, #fullWidgetsList - maxEntries + 1))
       elseif y < sbposy then
-        startEntry = math.max(0, math.min(startEntry + maxEntries, #fullWidgetsList - maxEntries)) + 1
+        startEntry = math.max(1, math.min(startEntry + maxEntries, #fullWidgetsList - maxEntries + 1))
       end
       UpdateListScroll()
       return false   
