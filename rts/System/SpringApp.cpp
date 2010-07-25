@@ -1258,6 +1258,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		}
 		case SDL_ACTIVEEVENT: {
 			CrashHandler::ClearDrawWDT(true);
+
 			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {
 				globalRendering->active = !!event.active.gain;
 				if (ISound::IsInitialized()) {
@@ -1270,7 +1271,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			}
 
 			// simulate release all to prevent hung buttons
-			for (int i = 0; i < NUM_BUTTONS + 1; ++i) {
+			for (int i = 1; i < NUM_BUTTONS + 1; ++i) {
 				SDL_Event event;
 				event.type = event.button.type = SDL_MOUSEBUTTONUP;
 				event.button.which = 0;
@@ -1278,8 +1279,13 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				event.button.x = -1;
 				event.button.y = -1;
 				event.button.state = SDL_RELEASED;
-				input.PushEvent(event);
+				if(!mouse || mouse->buttons[i].pressed)
+					input.PushEvent(event);
 			}
+
+			if (!globalRendering->fullScreen && (event.active.state & SDL_APPINPUTFOCUS) && 
+				!event.active.gain && SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
+				SDL_WM_GrabInput(SDL_GRAB_OFF);
 
 			break;
 		}
