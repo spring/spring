@@ -160,6 +160,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 
 	synced = true;
+	allowChanges = true;
 
 	if (!haveSynced && !haveUnsynced) {
 		KillLua();
