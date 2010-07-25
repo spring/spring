@@ -1270,22 +1270,23 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				mouse->ToggleState();
 			}
 
-			// simulate release all to prevent hung buttons
-			for (int i = 1; i < NUM_BUTTONS + 1; ++i) {
-				SDL_Event event;
-				event.type = event.button.type = SDL_MOUSEBUTTONUP;
-				event.button.which = 0;
-				event.button.button = i;
-				event.button.x = -1;
-				event.button.y = -1;
-				event.button.state = SDL_RELEASED;
-				if(!mouse || mouse->buttons[i].pressed)
-					input.PushEvent(event);
+			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS)) && !event.active.gain) {
+				// simulate release all to prevent hung buttons
+				for (int i = 1; i <= NUM_BUTTONS; ++i) {
+					SDL_Event event;
+					event.type = event.button.type = SDL_MOUSEBUTTONUP;
+					event.button.which = 0;
+					event.button.button = i;
+					event.button.x = -1;
+					event.button.y = -1;
+					event.button.state = SDL_RELEASED;
+					if(!mouse || mouse->buttons[i].pressed)
+						input.PushEvent(event);
+				}
+				// and make sure to un-capture mouse
+				if(SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
+					SDL_WM_GrabInput(SDL_GRAB_OFF);
 			}
-
-			if (!globalRendering->fullScreen && (event.active.state & SDL_APPINPUTFOCUS) && 
-				!event.active.gain && SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
-				SDL_WM_GrabInput(SDL_GRAB_OFF);
 
 			break;
 		}
