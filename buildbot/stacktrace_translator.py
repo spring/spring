@@ -40,10 +40,15 @@ RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*[^\s])\s+\[(0x[\dA-Fa-f]+)
 
 # Match complete version string, capture `Additional' version string.
 RE_VERSION = r'Spring [^\(]+ \(([^\)]+)\)[\w\(\) ]*'
+RE_OLD_VERSION = r'Spring [^\(]+ \(([^\)]+)\{\@\}-cmake-mingw32\)[\w\(\) ]*'
 
 # Match complete line containing version string.
 RE_VERSION_LINES = [
 	re.compile(x % (RE_PREFIX, RE_VERSION, RE_SUFFIX), re.MULTILINE) for x in
+	[r'%s%s has crashed\.%s', r'%sHang detection triggered for %s\.%s']
+]
+RE_OLD_VERSION_LINES = [
+	re.compile(x % (RE_PREFIX, RE_OLD_VERSION, RE_SUFFIX), re.MULTILINE) for x in
 	[r'%s%s has crashed\.%s', r'%sHang detection triggered for %s\.%s']
 ]
 
@@ -52,6 +57,8 @@ RE_CONFIG = r'(?:\[(?P<config>\w+)\])?'
 RE_BRANCH = r'(?:\{(?P<branch>\w+)\})?'
 RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
 RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
+# Same regex is safe, but can't be used to detect config or branch in old version strings.
+RE_OLD_VERSION_DETAILS = RE_VERSION_DETAILS
 
 # Match filename of file with debugging symbols, capture module name.
 RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>\w+)_dbg.7z')
@@ -117,6 +124,52 @@ def best_matching_module(needle, haystack):
 	return best_match
 
 
+def detect_version_helper(infolog, re_version_lines, re_version_details):
+	log.info('Detecting version details...')
+
+	version = None
+	for re_version_line in re_version_lines:
+		match = re_version_line.search(infolog)
+		if match:
+			version = match.group(1)
+			break
+	else:
+		fatal('Unable to find detailed version in infolog')
+
+	# a space is added so the regex can check for (end of string | space) easily.
+	match = re_version_details.match(version + ' ')
+	if not match:
+		fatal('Unable to parse detailed version string "%s"' % version)
+
+	config, branch, rev = match.group('config', 'branch', 'rev')
+	if not config: config = 'default'
+	if not branch: branch = 'master'
+
+	log.info('\t[OK] config = %s, branch = %s, rev = %s', config, branch, rev)
+	return config, branch, rev
+
+
+def detect_old_version_details(infolog):
+	'''\
+	Detect config, branch, rev from BuildServ version string in infolog.
+
+	Detects at least the latest official releases from before the switch to buildbot:
+
+		>>> detect_old_version_details('Spring 0.81.2.1 (0.81.2.1-0-g884a107{@}-cmake-mingw32) has crashed.')
+		('default', 'master', '0.81.2.1-0-g884a107')
+		>>> detect_old_version_details('Spring 0.81.2.0 (0.81.2-0-g76e4cf5{@}-cmake-mingw32) has crashed.')
+		('default', 'master', '0.81.2-0-g76e4cf5')
+
+	It should not detect new-style version strings:
+
+		>>> detect_old_version_details('Spring 0.81+.0.0 (0.81.2.1-1059-g7937d00) has crashed.')
+		Traceback (most recent call last):
+			...
+		FatalError: Unable to find detailed version in infolog
+	'''
+	return detect_version_helper(infolog, RE_OLD_VERSION_LINES, RE_OLD_VERSION_DETAILS)
+
+
 def detect_version_details(infolog):
 	'''\
 	Detect config, branch, rev from version string(s) in infolog.
@@ -136,28 +189,7 @@ def detect_version_details(infolog):
 			...
 		FatalError: Unable to parse detailed version string "0.81.2.1-0-g884a107{@}-cmake-mingw32"
 	'''
-	log.info('Detecting version details...')
-
-	version = None
-	for re_version_line in RE_VERSION_LINES:
-		match = re_version_line.search(infolog)
-		if match:
-			version = match.group(1)
-			break
-	else:
-		fatal('Unable to find detailed version in infolog')
-
-	# a space is added so the regex can check for (end of string | space) easily.
-	match = RE_VERSION_DETAILS.match(version + ' ')
-	if not match:
-		fatal('Unable to parse detailed version string "%s"' % version)
-
-	config, branch, rev = match.groups()
-	if not config: config = 'default'
-	if not branch: branch = 'master'
-
-	log.info('\t[OK] config = %s, branch = %s, rev = %s', config, branch, rev)
-	return config, branch, rev
+	return detect_version_helper(infolog, RE_VERSION_LINES, RE_VERSION_DETAILS)
 
 
 def collect_stackframes(infolog):
@@ -181,14 +213,18 @@ def collect_stackframes(infolog):
 	return frames, frame_count
 
 
-def collect_modules(config, branch, rev):
+def collect_modules(config, branch, rev, buildserv):
 	'''\
 	Collect modules for which debug data is available.
 	Return dict which maps (simplified) module name to debug symbol filename.
 	'''
 	log.info('Checking debug data availability...')
 
-	dir = os.path.join(WWWROOT, config, branch, rev)
+	if buildserv:
+		dir = os.path.join(WWWROOT, 'buildserv', config, branch, rev)
+	else:
+		dir = os.path.join(WWWROOT, config, branch, rev)
+
 	if not os.path.isdir(dir):
 		fatal('No debugging symbols available')
 
@@ -332,10 +368,19 @@ def translate_stacktrace(infolog):
 	# 4) perform translation
 
 	try:
-		config, branch, rev = detect_version_details(infolog)
+		# Detected old style version string?
+		buildserv = False
+
+		try:
+			config, branch, rev = detect_version_details(infolog)
+		except FatalError:
+			# Try old version string, we might have debug symbols for some of them
+			config, branch, rev = detect_old_version_details(infolog)
+			buildserv = True
+
 		module_frames, frame_count = collect_stackframes(infolog)
 
-		modules = collect_modules(config, branch, rev)
+		modules = collect_modules(config, branch, rev, buildserv)
 
 		translated_stacktrace = translate_(module_frames, frame_count, modules)
 
