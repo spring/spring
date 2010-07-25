@@ -1043,7 +1043,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 			if (lua_istable(L, -1)) {
 				float color[3];
 				const int size = ParseFloatArray(L, -1, color, 3);
-				if (size>=3) {
+				if (size >= 3) {
 					if (key == "absorb") {
 						w.absorb = color;
 					} else if (key == "baseColor") {
@@ -1057,7 +1057,9 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 					} else if (key == "specularColor") {
 						w.specularColor = color;
  					} else if (key == "planeColor") {
-						w.planeColor = color;
+						w.planeColor.x = color[1];
+						w.planeColor.y = color[2];
+						w.planeColor.z = color[3];
 					}
 				}
 			}
