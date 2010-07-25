@@ -4,7 +4,6 @@
 
 #include "mmgr.h"
 
-#include <math.h>
 #include <algorithm>
 
 #include "MouseHandler.h"
