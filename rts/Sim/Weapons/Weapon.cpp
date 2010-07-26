@@ -550,19 +550,14 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 
 void CWeapon::HoldFire()
 {
-	if(targetUnit){
+	if (targetUnit) {
 		DeleteDeathDependence(targetUnit);
-		targetUnit=0;
+		targetUnit = 0;
 	}
-	targetType=Target_None;
-	haveUserTarget=false;
+	targetType = Target_None;
+	haveUserTarget = false;
 }
 
-
-void CWeapon::SlowUpdate()
-{
-	SlowUpdate(false);
-}
 
 
 inline bool CWeapon::ShouldCheckForNewTarget() const
@@ -588,6 +583,12 @@ inline bool CWeapon::ShouldCheckForNewTarget() const
 	return false;
 }
 
+
+
+void CWeapon::SlowUpdate()
+{
+	SlowUpdate(false);
+}
 
 void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 {
@@ -642,14 +643,15 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		HoldFire();
 	}
 
-	if (targetType == Target_Unit && targetUnit != NULL) {
+	if (targetType == Target_Unit) {
 		// stop firing at cloaked targets
-		if (targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
+		if (targetUnit != NULL && targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
 			HoldFire();
 
 		if (!haveUserTarget) {
 			// stop firing at neutral targets (unless in FAW mode)
-			if (targetUnit->neutral && owner->fireState < 3)
+			// note: HoldFire sets targetUnit to NULL, so recheck
+			if (targetUnit != NULL && targetUnit->neutral && owner->fireState < 3)
 				HoldFire();
 
 			// stop firing at allied targets
@@ -657,7 +659,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			// this situation (unit keeps attacking its target if the
 			// target or the unit switches to an allied team) should
 			// be handled by /ally processing now
-			if (teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
+			if (targetUnit != NULL && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
 				HoldFire();
 		}
 	}
