@@ -108,8 +108,6 @@ function printHeader(outFile_h, namespace_h, className_h,
 		print("") >> outFile_h;
 		print("#include \"IncludesSources.h\"") >> outFile_h;
 		print("") >> outFile_h;
-		print("#include \"IncludesSources.h\"") >> outFile_h;
-		print("") >> outFile_h;
 	}
 
 	if (className_h == "WrappOOAICallback") {
@@ -162,9 +160,16 @@ function printIncludesHeaders() {
 
 		print("") >> outH_h_inc;
 		print("#include <cstdio> // for NULL") >> outH_h_inc;
+		print("#include <climits> // for INT_MAX") >> outH_h_inc;
+		print("#include <stdexcept> // for runtime_error") >> outH_h_inc;
 		print("#include <string>") >> outH_h_inc;
 		print("#include <vector>") >> outH_h_inc;
 		print("#include <map>") >> outH_h_inc;
+		print("") >> outH_h_inc;
+		for (_fc in myFixedClasses) {
+			# Treat them all as value-types
+			print("#include \"" _fc ".h\"") >> outH_h_inc;
+		}
 		print("") >> outH_h_inc;
 		print("namespace " myNameSpace " {") >> outH_h_inc;
 		#print("class " myClass ";") >> outH_h_inc;
@@ -176,9 +181,9 @@ function printIncludesHeaders() {
 		#for (clsName in interfaces) {
 		#	print("class " clsName ";") >> outH_h_inc;
 		#}
-		for (_fc in myFixedClasses) {
-			print("class " _fc ";") >> outH_h_inc;
-		}
+		#for (_fc in myFixedClasses) {
+		#	print("class " _fc ";") >> outH_h_inc;
+		#}
 		c_size_pih = cls_id_name["*"];
 		for (c=0; c < c_size_pih; c++) {
 			cls_pih      = cls_id_name[c];
@@ -229,9 +234,10 @@ function getNullTypeValue(fRet_ntv) {
 		return "";
 	} else if (fRet_ntv == "std::string") {
 		return "\"\"";
-	} else if (fRet_ntv == "AIFloat3") {
-		#return "new AIFloat3(0.0f, 0.0f, 0.0f)";
-		return "NULL";
+	} else if (fRet_ntv == myNameSpace "::AIFloat3") {
+		return myNameSpace "::AIFloat3::NULL_VALUE";
+	} else if (fRet_ntv == myNameSpace "::AIColor") {
+		return myNameSpace "::AIColor::NULL_VALUE";
 	} else if (startsWithCapital(fRet_ntv)) {
 		# must be a class
 		return "NULL";
@@ -874,14 +880,16 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				# convert float[3] to AIFloat3
 				paNaNew = paNa;
 				sub(/_posF3/, "", paNaNew);
-				sub("float\\[\\] " paNa, "AIFloat3 " paNaNew, params);
-				conversionCode_pre = conversionCode_pre "\t\t" "float[] " paNa " = " paNaNew ".toFloatArray();" "\n";
+				sub("float\\* " paNa, "const " myNameSpace "::AIFloat3\\& " paNaNew, params);
+				conversionCode_pre = conversionCode_pre "\t\t" "float " paNa "[3];" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" paNaNew ".LoadInto(" paNa ");" "\n";
 			} else if (match(paNa, /_colorS3/)) {
 				# convert short[3] to springai::AIColor
 				paNaNew = paNa;
 				sub(/_colorS3/, "", paNaNew);
-				sub("short\\[\\] " paNa, "springai::Color " paNaNew, params);
-				conversionCode_pre = conversionCode_pre "\t\t" "short[] " paNa " = Util.toShort3Array(" paNaNew ");" "\n";
+				sub("short\\* " paNa, "const " myNameSpace "::AIColor\\& " paNaNew, params);
+				conversionCode_pre = conversionCode_pre "\t\t" "short " paNa "[3];" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" paNaNew ".LoadInto3(" paNa ");" "\n";
 			}
 		}
 	}
@@ -892,7 +900,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		errorRetValueOk_m = part_getErrorReturnValueOk(metaComment);
 
 		conversionCode_post = conversionCode_post "\t" "if (" retVar_out_m " != " errorRetValueOk_m ") {" "\n";
-		conversionCode_post = conversionCode_post "\t\t" "throw new CallbackAIException(\"" memName_m "\", " retVar_out_m ");" "\n";
+		conversionCode_post = conversionCode_post "\t\t" "throw CallbackAIException(\"" memName_m "\", " retVar_out_m ");" "\n";
 		conversionCode_post = conversionCode_post "\t" "}" "\n";
 		thrownExceptions = thrownExceptions ", CallbackAIException" thrownExceptions;
 
@@ -910,21 +918,21 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				hasRetParam = 1;
 				if (match(paNa, /_posF3/)) {
 					# convert float[3] to AIFloat3
-					retParamType = "springai::AIFloat3*";
+					retParamType = myNameSpace "::AIFloat3";
 					retVar_out_m = "_ret";
-					conversionCode_pre  = conversionCode_pre  "\t" "float* " paNa " = new float[3];" "\n";
-					conversionCode_post = conversionCode_post "\t" retVar_out_m " = new AIFloat3(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
-					conversionCode_post = conversionCode_post "\t" "delete [] " paNa ";" "\n";
-					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
+					conversionCode_pre  = conversionCode_pre  "\t\t" "float " paNa "[3];" "\n";
+					#conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = new " myNameSpace "::AIFloat3(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
+					#declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
+					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m "(" paNa "[0], " paNa "[1], " paNa "[2]);" "\n";
 					sub("(, )?float\\* " paNa, "", params);
 					retType = retParamType;
 				} else if (match(paNa, /_colorS3/)) {
-					retParamType = "springai::AIColor*";
+					retParamType = myNameSpace "::AIColor";
 					retVar_out_m = "_ret";
-					conversionCode_pre  = conversionCode_pre  "\t\t" "short* " paNa " = new short[3];" "\n";
-					conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = Util.toColor(" paNa ");" "\n";
-					conversionCode_post = conversionCode_post "\t" "delete [] " paNa ";" "\n";
-					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
+					conversionCode_pre  = conversionCode_pre  "\t\t" "short " paNa "[3];" "\n";
+					#conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = new " myNameSpace "::AIColor(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
+					#declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
+					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m "((unsigned char) " paNa "[0], (unsigned char) " paNa "[1], (unsigned char) " paNa "[2]);" "\n";
 					sub("(, )?short\\* " paNa, "", params);
 					retType = retParamType;
 				} else {
@@ -952,8 +960,8 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			sub(/^.*:/, "", _refRel);
 			_paNa = _refRel;           # example: resourceId
 			sub(/->.*$/, "", _paNa);
+			sub(/^.*->/, "", _refRel);
 			_refObj = _refRel"*";         # example: Resource*
-			sub(/^.*->/, "", _refObj);
 			_paNaNew = _paNa;
 			if (!sub(/Id$/, "", _paNaNew)) {
 				_paNaNew = "oo_" _paNaNew;
@@ -963,7 +971,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				_paNa_found = sub("int " _paNa, _refObj " " _paNaNew, params);
 				# it may not be found if it is an output parameter
 				if (_paNa_found) {
-					conversionCode_pre = conversionCode_pre "\t\t"  "int " _paNa " = " _paNaNew ".Get" _refObj "Id();" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t"  "int " _paNa " = " _paNaNew "->Get" _refRel "Id();" "\n";
 				}
 			} else {
 				print("note: ignoring meta comment: REF:" _ref);
@@ -1003,7 +1011,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				ommitMainCall = 1;
 			}
 			sub(/^, /, "", _wrappGetInst_params);
-			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = Wrapp" _fullClsName ".GetInstance(" _wrappGetInst_params ");" "\n";
+			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = Wrapp" _fullClsName "::GetInstance(" _wrappGetInst_params ");" "\n";
 			declaredVarsCode = "\t\t" _refObj " " _retVar_out_new ";" "\n" declaredVarsCode;
 			retVar_out_m = _retVar_out_new;
 			retType = _refObj;
@@ -1022,57 +1030,67 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		_mapVar_size      = "_size";
 		_mapVar_keys      = "keys";
 		_mapVar_values    = "values";
-		_mapType_key      = "std::string";
-		_mapType_value    = "std::string";
+		_mapType_key      = "const char*";
+		_mapType_value    = "const char*";
 		_mapType_oo_key   = "std::string";
 		_mapType_oo_value = "std::string";
 		_mapVar_oo        = "_map";
 		_mapType_int      = "std::map<"     _mapType_oo_key "," _mapType_oo_value ">";
 		_mapType_impl     = "std::map<" _mapType_oo_key "," _mapType_oo_value ">"; # TODO: should be unused, but needs check
 
-		sub("(, )?" _mapType_key   "\\[\\] " _mapVar_keys,   "", params);
-		sub("(, )?" _mapType_value "\\[\\] " _mapVar_values, "", params);
+		_mapType_key_regexEscaped = regexEscape(_mapType_key);
+		_mapType_value_regexEscaped = regexEscape(_mapType_value);
+		sub("(, )?" _mapType_key_regexEscaped "\\* " _mapVar_keys,   "", params);
+		sub("(, )?" _mapType_value_regexEscaped "\\* " _mapVar_values, "", params);
 		sub(/, $/                                      , "", params);
 
-		declaredVarsCode = "\t" "int " _mapVar_size ";" "\n" declaredVarsCode;
+		declaredVarsCode = "\t\t" "int " _mapVar_size ";" "\n" declaredVarsCode;
 		if (_isFetching) {
-			declaredVarsCode = "\t" _mapType_int " " _mapVar_oo ";" "\n" declaredVarsCode;
+			declaredVarsCode = "\t\t" _mapType_int " " _mapVar_oo ";" "\n" declaredVarsCode;
 		}
 		if (!_isRetSize) {
-			declaredVarsCode = "\t" _mapType_key   "[] " _mapVar_keys ";" "\n" declaredVarsCode;
-			declaredVarsCode = "\t" _mapType_value "[] " _mapVar_values ";" "\n" declaredVarsCode;
+			#declaredVarsCode = "\t\t" _mapType_key   "* " _mapVar_keys ";" "\n" declaredVarsCode;
+			#declaredVarsCode = "\t\t" _mapType_value "* " _mapVar_values ";" "\n" declaredVarsCode;
 			if (_isFetching) {
-				conversionCode_pre = conversionCode_pre "\t" _mapVar_keys   " = NULL;" "\n";
-				conversionCode_pre = conversionCode_pre "\t" _mapVar_values " = NULL;" "\n";
-				conversionCode_pre = conversionCode_pre "\t" _mapVar_size   " = " myBridgePrefix functionName_m "(" innerParams ");" "\n";
+				#conversionCode_pre = conversionCode_pre "\t\t" _mapVar_keys   " = NULL;" "\n";
+				#conversionCode_pre = conversionCode_pre "\t\t" _mapVar_values " = NULL;" "\n";
+				innerParams_sizeFetch = innerParams;
+				sub(_mapVar_keys, "NULL", innerParams_sizeFetch);
+				sub(_mapVar_values, "NULL", innerParams_sizeFetch);
+				conversionCode_pre = conversionCode_pre "\t\t" _mapVar_size   " = " myBridgePrefix functionName_m "(" innerParams_sizeFetch ");" "\n";
 			} else {
-				#conversionCode_pre = conversionCode_pre "\t" _arraySizeVar " = " _arrayListVar ".size();" "\n";
-				#conversionCode_pre = conversionCode_pre "\t" "int _size = " _arraySizeVar ";" "\n";
+				#conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " = " _arrayListVar ".size();" "\n";
+				#conversionCode_pre = conversionCode_pre "\t\t" "int _size = " _arraySizeVar ";" "\n";
 			}
 		}
 
 		if (_isRetSize) {
-			#conversionCode_post = conversionCode_post "\t" _arraySizeVar " = " retVar_out_m ";" "\n";
+			#conversionCode_post = conversionCode_post "\t\t" _arraySizeVar " = " retVar_out_m ";" "\n";
 			#_arraySizeMaxPaNa = _arraySizeVar;
 		} else {
-			conversionCode_pre = conversionCode_pre "\t" _mapVar_keys   " = new " _mapType_key   "[" _mapVar_size "];" "\n";
-			conversionCode_pre = conversionCode_pre "\t" _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
+			#conversionCode_pre = conversionCode_pre "\t\t" _mapVar_keys   " = new " _mapType_key   "[" _mapVar_size "];" "\n";
+			#conversionCode_pre = conversionCode_pre "\t\t" _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
+			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
+			#conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys ";" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_key   " " _mapVar_keys   "[" _mapVar_size "];" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" _mapType_value " " _mapVar_values "[" _mapVar_size "];" "\n";
 		}
 
 		if (_isFetching) {
 			# convert to a HashMap
-			conversionCode_post = conversionCode_post "\t" _mapVar_oo " = new " _mapType_impl "();" "\n";
-			conversionCode_post = conversionCode_post "\t" "for (int i=0; i < " _mapVar_size "; i++) {" "\n";
+			#conversionCode_post = conversionCode_post "\t\t" _mapVar_oo ".reserve(" _mapVar_size ");" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _mapVar_size "; i++) {" "\n";
 			if (_isObj) {
 				if (_isRetSize) {
-					conversionCode_post = conversionCode_post "\t\t" _mapVar_oo ".put(" _mapVar_keys "[i], " _mapVar_values "[i]);" "\n";
+					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
 				} else {
-					#conversionCode_post = conversionCode_post "\t\t" _mapVar_oo ".put(" myPkgA ".Wrapp" _refObj ".GetInstance(" myBridgePrefix _addWrappVars ", " _arrayPaNa "[i]));" "\n";
+					#conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" myNameSpace "::Wrapp" _refObj "::GetInstance(" myBridgePrefix _addWrappVars "] = " _arrayPaNa "[i]);" "\n";
+					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo "[" _mapVar_keys "[i]] = " _mapVar_values "[i];" "\n";
 				}
 			} else if (_isNative) {
-				#conversionCode_post = conversionCode_post "\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
 			}
-			conversionCode_post = conversionCode_post "\t" "}" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
 			retParamType = _mapType_int;
 			retVar_out_m = _mapVar_oo;
@@ -1131,7 +1149,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 		_arrayType = params;
 		sub("(\\[\\])|(\*)[ \t]*" _arrayPaNa ".*$", "", _arrayType);
-		sub("^.*[ \t]", "", _arrayType);
+		sub("^.*,[ \t]", "", _arrayType);
 		_arraySizeMaxPaNa = _arrayPaNa "_sizeMax";
 		_arraySizeVar     = _arrayPaNa "_size";
 
@@ -1161,84 +1179,86 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					exit(1);
 				}
 			}
+			_arrayType_regexEscaped = regexEscape(_arrayType);
 			if (_isFetching) {
-				sub(_arrayType "\\[\\] " _arrayPaNa, "", params);
+				sub(_arrayType_regexEscaped "\\* " _arrayPaNa, "", params);
 			} else {
-				sub(_arrayType "\\[\\] " _arrayPaNa, _arrListType " " _arrayListVar, params);
+				sub(_arrayType_regexEscaped "\\* " _arrayPaNa, _arrListType " " _arrayListVar, params);
 			}
 			sub(/^, /, "", params);
 			sub(/, $/, "", params);
 		}
 
-		declaredVarsCode = "\t" "int " _arraySizeVar ";" "\n" declaredVarsCode;
+		declaredVarsCode = "\t\t" "int " _arraySizeVar ";" "\n" declaredVarsCode;
 		if (_isFetching) {
-			declaredVarsCode = "\t" _arrListType " " _arrayListVar ";" "\n" declaredVarsCode;
+			declaredVarsCode = "\t\t" _arrListType " " _arrayListVar ";" "\n" declaredVarsCode;
 		}
 		if (!_isRetSize) {
-			declaredVarsCode = "\t" _arrayType "[] " _arrayPaNa ";" "\n" declaredVarsCode;
+			declaredVarsCode = "\t\t" _arrayType "* " _arrayPaNa ";" "\n" declaredVarsCode;
 			if (_isFetching) {
-				declaredVarsCode = "\t" "int " _arraySizeMaxPaNa ";" "\n" declaredVarsCode;
-				conversionCode_pre = conversionCode_pre "\t" _arraySizeMaxPaNa " = Integer.MAX_VALUE;" "\n";
-				conversionCode_pre = conversionCode_pre "\t" _arrayPaNa " = NULL;" "\n";
-				conversionCode_pre = conversionCode_pre "\t" _arraySizeVar " = " myBridgePrefix functionName_m "(" innerParams ");" "\n";
-				conversionCode_pre = conversionCode_pre "\t" _arraySizeMaxPaNa " = " _arraySizeVar ";" "\n";
+				declaredVarsCode = "\t\t" "int " _arraySizeMaxPaNa ";" "\n" declaredVarsCode;
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeMaxPaNa " = INT_MAX;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa " = NULL;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " = " myBridgePrefix functionName_m "(" innerParams ");" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeMaxPaNa " = " _arraySizeVar ";" "\n";
 				if (_isF3) {
-					conversionCode_pre = conversionCode_pre "\t" "if (" _arraySizeVar " % 3 != 0) {" "\n";
-					conversionCode_pre = conversionCode_pre "\t\t" "throw new RuntimeException(\"returned AIFloat3 array has incorrect size (\" + " _arraySizeVar "+ \"), should be a multiple of 3.\");" "\n";
-					conversionCode_pre = conversionCode_pre "\t" "}" "\n";
-					conversionCode_pre = conversionCode_pre "\t" _arraySizeVar " /= 3;" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t" "if (" _arraySizeVar " % 3 != 0) {" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t\t" "throw std::runtime_error(\"returned AIFloat3 array has incorrect size, should be a multiple of 3.\");" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " /= 3;" "\n";
 				}
 			} else {
-				conversionCode_pre = conversionCode_pre "\t" _arraySizeVar " = " _arrayListVar ".size();" "\n";
-				conversionCode_pre = conversionCode_pre "\t" "int _size = " _arraySizeVar ";" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " = " _arrayListVar ".size();" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" "int _size = " _arraySizeVar ";" "\n";
 				if (_isF3) {
-					conversionCode_pre = conversionCode_pre "\t" _arraySizeVar " *= 3;" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " *= 3;" "\n";
 				}
 			}
 		}
 
 		if (_isRetSize) {
-			conversionCode_post = conversionCode_post "\t" _arraySizeVar " = " retVar_out_m ";" "\n";
+			conversionCode_post = conversionCode_post "\t\t" _arraySizeVar " = " retVar_out_m ";" "\n";
 			_arraySizeMaxPaNa = _arraySizeVar;
 		} else {
-			conversionCode_pre = conversionCode_pre "\t" _arrayPaNa " = new " _arrayType "[" _arraySizeVar "];" "\n";
+			conversionCode_pre  = conversionCode_pre  "\t\t" _arrayPaNa " = new " _arrayType "[" _arraySizeVar "];" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "delete[] " _arrayPaNa ";" "\n";
 		}
 
 		if (_isFetching) {
 			# convert to an ArrayList
-			conversionCode_post = conversionCode_post "\t" _arrayListVar " = new " _arrListImplType "(" _arraySizeVar ");" "\n";
-			conversionCode_post = conversionCode_post "\t" "for (int i=0; i < " _arraySizeMaxPaNa "; i++) {" "\n";
+			conversionCode_post = conversionCode_post "\t\t" _arrayListVar ".reserve(" _arraySizeVar ");" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _arraySizeMaxPaNa "; i++) {" "\n";
 			if (_isF3) {
-				conversionCode_post = conversionCode_post "\t\t" _arrayListVar ".add(new AIFloat3(" _arrayPaNa "[i], " _arrayPaNa "[++i], " _arrayPaNa "[++i]));" "\n";
+				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(AIFloat3(" _arrayPaNa "[i], " _arrayPaNa "[++i], " _arrayPaNa "[++i]));" "\n";
 			} else if (_isObj) {
 				if (_isRetSize) {
-					conversionCode_post = conversionCode_post "\t\t" _arrayListVar ".add(" myPkgA ".Wrapp" _refObj ".GetInstance(" _addWrappVars ", i));" "\n";
+					conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(" myNameSpace "::Wrapp" _refObj "::GetInstance(" _addWrappVars ", i));" "\n";
 				} else {
-					conversionCode_post = conversionCode_post "\t\t" _arrayListVar ".add(" myPkgA ".Wrapp" _refObj ".GetInstance(" _addWrappVars ", " _arrayPaNa "[i]));" "\n";
+					conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(" myNameSpace "::Wrapp" _refObj "::GetInstance(" _addWrappVars ", " _arrayPaNa "[i]));" "\n";
 				}
 			} else if (_isNative) {
-				conversionCode_post = conversionCode_post "\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(" _arrayPaNa "[i]);" "\n";
 			}
-			conversionCode_post = conversionCode_post "\t" "}" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
 			retParamType = _arrListType;
 			retVar_out_m = _arrayListVar;
 			retType = retParamType;
 		} else {
 			# convert from an ArrayList
-			conversionCode_pre = conversionCode_pre "\t" "for (int i=0; i < _size; i++) {" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" "for (int i=0; i < _size; i++) {" "\n";
 			if (_isF3) {
-				conversionCode_pre = conversionCode_pre "\t\t" "int arrInd = i*3;" "\n";
-				conversionCode_pre = conversionCode_pre "\t\t" "AIFloat3 aif3 = " _arrayListVar ".get(i);" "\n";
-				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa "[arrInd]   = aif3.x;" "\n";
-				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa "[arrInd+1] = aif3.y;" "\n";
-				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa "[arrInd+2] = aif3.z;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" "int arrInd = i*3;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" "AIFloat3 aif3 = " _arrayListVar "[i];" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[arrInd]   = aif3.x;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[arrInd+1] = aif3.y;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[arrInd+2] = aif3.z;" "\n";
 			} else if (_isObj) {
-				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa "[i] = " _arrayListVar ".get(i).Get" _refObj "Id();" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i]->Get" _refObj "Id();" "\n";
 			} else if (_isNative) {
-				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa "[i] = " _arrayListVar ".get(i);" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i];" "\n";
 			}
-			conversionCode_pre = conversionCode_pre "\t" "}" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
 		}
 	}
 

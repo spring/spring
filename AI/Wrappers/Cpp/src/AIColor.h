@@ -29,12 +29,17 @@ public:
 	//AIColor(unsigned char* rgba);
 	//AIColor(float* rgba);
 
+	void LoadInto3(short* rgb) const;
+	void LoadInto4(short* rgba) const;
+
 	virtual std::string ToString() const;
 
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
 	unsigned char a;
+
+	static const AIColor NULL_VALUE;
 }; // class AIColor
 
 }  // namespace springai
