@@ -36,6 +36,7 @@ public:
 	
 	int lastFrameResponse;
 	int speedControl;
+	int luaDrawTime;
 
 	bool isLocal;
 	bool isReconn;

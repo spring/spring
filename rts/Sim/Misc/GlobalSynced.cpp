@@ -6,15 +6,14 @@
 #include <assert.h>
 #include <cstring>
 
-#include "Game/GameSetup.h"
-#include "Game/PlayerHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
-#include "Team.h"
-#include "TeamHandler.h"
-#include "GlobalConstants.h"
-#include "Util.h"
+#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "System/Util.h"
 
 
 /**
@@ -22,7 +21,7 @@
  *
  * Global instance of CGlobalSynced
  */
-CGlobalSynced* gs;
+CGlobalSynced* gs = NULL;
 
 
 
@@ -58,8 +57,13 @@ CR_REG_METADATA(CGlobalSynced, (
  */
 CGlobalSynced::CGlobalSynced()
 {
-	hmapx = 256;
-	hmapy = 256;
+	mapx  = 512;
+	mapy  = 512;
+	mapSquares = mapx * mapy;
+	hmapx = mapx>>1;
+	hmapy = mapy>>1;
+	pwr2mapx = mapx; //next_power_of_2(mapx);
+	pwr2mapy = mapy; //next_power_of_2(mapy);
 	randSeed = 18655;
 	initRandSeed = randSeed;
 	frameNum = 0;
@@ -74,16 +78,12 @@ CGlobalSynced::CGlobalSynced()
 	tempNum = 2;
 	useLuaGaia = true;
 
-	// TODO: put this somewhere else (playerHandler is unsynced, even)
-	playerHandler = new CPlayerHandler();
 	teamHandler = new CTeamHandler();
 }
 
 
 CGlobalSynced::~CGlobalSynced()
 {
-	// TODO: put this somewhere else (playerHandler is unsynced, even)
-	SafeDelete(playerHandler);
 	SafeDelete(teamHandler);
 }
 
@@ -91,15 +91,9 @@ CGlobalSynced::~CGlobalSynced()
 void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
 	noHelperAIs = !!setup->noHelperAIs;
-
-	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
-	CLuaRules::SetConfigString(setup->luaRulesStr);
-
-	// TODO: this call is unsynced, technically
-	playerHandler->LoadFromSetup(setup);
+	useLuaGaia  = setup->useLuaGaia;
 
 	skirmishAIHandler.LoadFromSetup(*setup);
-
 	teamHandler->LoadFromSetup(setup);
 }
 
@@ -111,7 +105,7 @@ void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 int CGlobalSynced::randInt()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return randSeed & RANDINT_MAX;
+	return (randSeed >> 16) & RANDINT_MAX;
 }
 
 /**
@@ -122,7 +116,7 @@ int CGlobalSynced::randInt()
 float CGlobalSynced::randFloat()
 {
 	randSeed = (randSeed * 214013L + 2531011L);
-	return float(randSeed & RANDINT_MAX)/RANDINT_MAX;
+	return float((randSeed >> 16) & RANDINT_MAX)/RANDINT_MAX;
 }
 
 /**

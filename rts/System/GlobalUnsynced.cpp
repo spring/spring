@@ -9,14 +9,15 @@
 
 #include "GlobalUnsynced.h"
 #include "Game/GameSetup.h"
-#include "Sim/Misc/GlobalConstants.h"
+#include "Game/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
 #include "System/mmgr.h"
 #include "System/ConfigHandler.h"
+#include "System/Util.h"
 #include "System/creg/creg_cond.h"
 
 #include <string>
-#include <assert.h>
+#include <cassert>
 #include <SDL_timer.h>
 
 
@@ -67,13 +68,20 @@ CGlobalUnsynced::CGlobalUnsynced()
 	buildWarnings = !!configHandler->Get("BuildWarnings", 0);
 
 	directControl = NULL;
+	playerHandler = new CPlayerHandler();
+}
+
+CGlobalUnsynced::~CGlobalUnsynced()
+{
+	SafeDelete(playerHandler);
 }
 
 
 
-void CGlobalUnsynced::PostInit() {
+void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
+{
+	playerHandler->LoadFromSetup(setup);
 }
-
 
 
 
@@ -85,7 +93,7 @@ void CGlobalUnsynced::PostInit() {
 int CGlobalUnsynced::usRandInt()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return usRandSeed & RANDINT_MAX;
+	return (usRandSeed >> 16) & RANDINT_MAX;
 }
 
 /**
@@ -96,7 +104,7 @@ int CGlobalUnsynced::usRandInt()
 float CGlobalUnsynced::usRandFloat()
 {
 	usRandSeed = (usRandSeed * 214013L + 2531011L);
-	return float(usRandSeed & RANDINT_MAX) / RANDINT_MAX;
+	return float((usRandSeed >> 16) & RANDINT_MAX) / RANDINT_MAX;
 }
 
 /**

@@ -48,6 +48,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${mySourceDir}/AIGlobalAICallback"
 		"${mySourceDir}/AIAICallback"
 		"${mySourceDir}/AIAICheats"
+		"${mySourceDir}/UnitDef"
 		"${rts}/ExternalAI/AISCommands"
 		"${rts}/System/float3"
 		"${rts}/Sim/Misc/DamageArray"

@@ -13,11 +13,6 @@ class cUnitManager;
 #include "RAI.h"
 using std::map;
 using std::set;
-//#include "LogFile.h"
-//#include "ExternalAI/IAICallback.h"
-//#include "Sim/Units/UnitDef.h"
-//#include "Sim/Weapons/WeaponDefHandler.h"
-//#include <map>
 
 struct sRAIGroupMilitary
 {

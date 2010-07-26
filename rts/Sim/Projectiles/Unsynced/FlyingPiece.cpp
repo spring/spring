@@ -17,27 +17,27 @@ FlyingPiece::~FlyingPiece() {
 }
 
 void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertexArray* va) {
+	if (team != *lastTeam) {
+		*lastTeam = team;
+
+		va->DrawArrayTN(GL_QUADS);
+		va->Initialize();
+		unitDrawer->SetTeamColour(team);
+	}
+
+	CMatrix44f m;
+	m.Rotate(rot, rotAxis);
+	float3 tp, tn;
+
+	const float3 interPos = pos + speed * globalRendering->timeOffset;
+
 	switch (modelType) {
 		case MODELTYPE_3DO: {
-			if (team != *lastTeam) {
-				*lastTeam = team;
-
-				va->DrawArrayTN(GL_QUADS);
-				va->Initialize();
-				unitDrawer->SetTeamColour(team);
-			}
-
-			CMatrix44f m;
-			m.Rotate(rot, rotAxis);
-			float3 tp, tn;
-
-			const float3 interPos = pos + speed * globalRendering->timeOffset;
 			const C3DOTextureHandler::UnitTexture* tex = prim->texture;
 
 			const std::vector<S3DOVertex>& vertices    = object->vertices;
 			const std::vector<int>&        verticesIdx = prim->vertices;
 
-			const S3DOVertex* v = NULL;
 			const float uvCoords[8] = {
 				tex->xstart, tex->ystart,
 				tex->xend,   tex->ystart,
@@ -46,9 +46,9 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 			};
 
 			for (int i = 0; i < 4; i++) {
-				v = &vertices[verticesIdx[i]];
-				tp = m.Mul(v->pos) + interPos;
-				tn = m.Mul(v->normal);
+				const S3DOVertex& v = vertices[verticesIdx[i]];
+				tp = m.Mul(v.pos) + interPos;
+				tn = m.Mul(v.normal);
 				va->AddVertexQTN(tp, uvCoords[i << 1], uvCoords[(i << 1) + 1], tn);
 			}
 		} break;
@@ -64,24 +64,12 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 				va->Initialize();
 				texturehandlerS3O->SetS3oTexture(texture);
 			}
-			if (team != *lastTeam) {
-				*lastTeam = team;
-
-				va->DrawArrayTN(GL_QUADS);
-				va->Initialize();
-				unitDrawer->SetTeamColour(team);
-			}
-
-			CMatrix44f m;
-			m.Rotate(rot, rotAxis);
-			float3 tp, tn;
-
-			const float3 interPos = pos + speed * globalRendering->timeOffset;
 
 			for (int i = 0; i < 4; i++) {
-				tp = m.Mul(verts[i].pos) + interPos;
-				tn = m.Mul(verts[i].normal);
-				va->AddVertexQTN(tp, verts[i].textureX, verts[i].textureY, tn);
+				const SS3OVertex& v = verts[i];
+				tp = m.Mul(v.pos) + interPos;
+				tn = m.Mul(v.normal);
+				va->AddVertexQTN(tp, v.textureX, v.textureY, tn);
 			}
 		} break;
 

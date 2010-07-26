@@ -30,7 +30,7 @@ public:
 	void RemoveUnit(CUnit* unit); ///< call unit.SetGroup(NULL) instead of calling this directly
 	bool AddUnit(CUnit* unit);    ///< dont call this directly call unit.SetGroup and let that call this
 	const std::vector<CommandDescription>& GetPossibleCommands();
-	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
+	int GetDefaultCmd(const CUnit* unit, const CFeature* feature) const;
 	void GiveCommand(Command c);
 	void ClearUnits(void);
 

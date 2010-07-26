@@ -38,6 +38,10 @@ public:
 	{
 		return size;
 	};
+	float* GetPos()
+	{
+		return pos;
+	};
 	void SetWeight(unsigned newWeight)
 	{
 		weight = newWeight;

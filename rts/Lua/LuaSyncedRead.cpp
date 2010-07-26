@@ -124,7 +124,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsGameOver);
 
 	REGISTER_LUA_CFUNC(GetGaiaTeamID);
-	REGISTER_LUA_CFUNC(GetRulesInfoMap);
 
 	REGISTER_LUA_CFUNC(GetGameSpeed);
 	REGISTER_LUA_CFUNC(GetGameFrame);
@@ -712,36 +711,6 @@ int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetRulesInfoMap(lua_State* L)
-{
-	if (luaRules == NULL) {
-		return 0;
-	}
-	const map<string, string>& infoMap = luaRules->GetInfoMap();
-	map<string, string>::const_iterator it;
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 1) {
-		if (!lua_isstring(L, 1)) {
-			luaL_error(L, "Incorrect arguments to GetRulesInfoMap");
-		}
-		const string key = lua_tostring(L, 1);
-		it = infoMap.find(key);
-		if (it == infoMap.end()) {
-			return 0;
-		}
-		lua_pushstring(L, it->second.c_str());
-		return 1;
-	}
-
-	lua_newtable(L);
-	for (it = infoMap.begin(); it != infoMap.end(); ++it) {
-		LuaPushNamedString(L, it->first.c_str(), it->second.c_str());
-	}
-	return 1;
-}
-
-
 int LuaSyncedRead::GetGameSpeed(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
@@ -789,9 +758,8 @@ int LuaSyncedRead::GetWind(lua_State* L)
 
 int LuaSyncedRead::GetGameRulesParams(lua_State* L)
 {
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const LuaRulesParams::Params&  params    = lr->GetGameParams();
-	const LuaRulesParams::HashMap& paramsMap = lr->GetGameParamsMap();
+	const LuaRulesParams::Params&  params    = CLuaHandleSynced::GetGameParams();
+	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
 
 	//! always readable for all
 	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
@@ -802,9 +770,8 @@ int LuaSyncedRead::GetGameRulesParams(lua_State* L)
 
 int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 {
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-	const LuaRulesParams::Params&  params    = lr->GetGameParams();
-	const LuaRulesParams::HashMap& paramsMap = lr->GetGameParamsMap();
+	const LuaRulesParams::Params&  params    = CLuaHandleSynced::GetGameParams();
+	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
 
 	//! always readable for all
 	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
@@ -818,7 +785,7 @@ int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 int LuaSyncedRead::GetMapOptions(lua_State* L)
 {
 	lua_newtable(L);
-	if (gameSetup == NULL) {
+	if (!gameSetup) {
 		return 1;
 	}
 	const map<string, string>& mapOpts = gameSetup->mapOptions;
@@ -835,7 +802,7 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 int LuaSyncedRead::GetModOptions(lua_State* L)
 {
 	lua_newtable(L);
-	if (gameSetup == NULL) {
+	if (!gameSetup) {
 		return 1;
 	}
 	const map<string, string>& modOpts = gameSetup->modOptions;
@@ -1675,7 +1642,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	if (IsAlliedTeam(teamID)) {
 		lua_newtable(L);
 		int defCount = 0;
-		for (int udID = 0; udID < (unitDefHandler->numUnitDefs + 1); udID++) {
+		for (int udID = 0; udID < unitDefHandler->unitDefs.size(); udID++) {
 			const int unitCount = uh->unitsByDefs[teamID][udID].size();
 			if (unitCount > 0) {
 				lua_pushnumber(L, udID);
@@ -4580,10 +4547,6 @@ int LuaSyncedRead::GetSmoothMeshHeight(lua_State *L)
 int LuaSyncedRead::TestBuildOrder(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		lua_pushboolean(L, 0);
-		return 1;
-	}
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (unitDef == NULL) {
 		lua_pushboolean(L, 0);

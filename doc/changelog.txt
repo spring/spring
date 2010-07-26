@@ -7,7 +7,7 @@ Engine / General:
  - players in startscript may reconnect to a running game, even with changed IP address
  - players can choose server speed throttling algorithm by voting (/speedcontrol)
  - do not crash on AI Interface error
- - MT/GML: now a separate build target: make spring-mt
+ - MT/GML: now a separate build target: make spring-multithreaded
  - fix linking under Fedora 13
  - allow choosing between available sound devices through config (snd_device)
  - add missing /skip variants to word completion
@@ -138,9 +138,9 @@ Lua:
  - improved Spring.GetTeamStatsHistory. It retuns now also the most recent data, not just the data of the cached stats which get updated only all 16 seconds.
  - fixed incorrect scaling in Spring.SetUnitResourceParam
  - fixed Spring.GetAIInfo, it returned incorrectly the given teamID as first argument
+ - fixed a bug in Script.RemoveSyncedActionFallback 
  - added missing `coroutines` module and missing `select` function to unsynced LuaGadgets
  - added os.setlocale to LuaUI
- - removed deprecated Spring.MakeFont
  - added Save/Load callins, both get a userdatum representing a save file as single argument
     Save is unsynced, Load is synced (both gadget only)
     Should allow implementing savegames mod side with less hacks
@@ -148,7 +148,14 @@ Lua:
  - modified base {armordefs|movedefs|sidedata}.lua to follow pattern of icontypes.lua
  - added a ShieldPreDamaged call-in to LuaRules, triggered before any engine shield-vs-projectile logic executes
  - UnitDefs[i].model.textures now actually contains the names of the model textures for unit-type i
+ - script.txt: Engine ignores GAME\\ModOptions\\LuaRules & interprets GAME\\ModOptions\\LuaGaia just as a boolean now
  - fixed GetScreenGeometry on win32 platforms to return the proper screenSizeY, not screenSizeY - taskbarSizeY
+ - moved Spring.SetUnitRulesParam, Spring.SetTeamRulesParam, Spring.SetGameRulesParam from LuaRules-only to LuaSyncedCtrl
+ - removed evaluator functions from LuaOpengl
+ - removed Spring.MakeFont
+ - removed Spring.SetRulesInfoMap, Spring.GetRulesInfoMap, Script.GetConfigString
+ - removed Spring.CreateUnitRulesParams, Spring.CreateTeamRulesParams, Spring.CreateGameRulesParams
+ - removed AllowUnsafeChanges("USE AT YOUR OWN PERIL"), it's always enabled now
 
 Engine / Unit Scripts:
  - LUS: SetSignalMask raises error now when called outside thread
@@ -164,6 +171,7 @@ Interface:
  - made it easier to select units in factories
  - added new command "/buildwarnings [0|1]", analogous to "/movewarnings [0|1]"
  - improved unit type mix in front moves
+ - new middle click scroll icon
 
 AIs:
  - added various new debug-draw callouts for profiling, state visualization, etc.

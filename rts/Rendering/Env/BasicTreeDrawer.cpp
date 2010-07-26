@@ -187,10 +187,16 @@ static void inline SetArrayQ(float t1,float t2,float3 v)
 
 struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
 {
-	CBasicTreeSquareDrawer() {td=0;}
-	void DrawQuad (int x,int y);
+	CBasicTreeSquareDrawer(CBasicTreeDrawer* td_, int cx_, int cy_, float treeDistance_)
+		: td(td_),
+		cx(cx_),
+		cy(cy_),
+		treeDistance(treeDistance_)
+	{}
 
-	CBasicTreeDrawer *td;
+	void DrawQuad(int x, int y);
+
+	CBasicTreeDrawer* td;
 	int cx,cy;
 	float treeDistance;
 };
@@ -389,14 +395,10 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	}
 	glColor4f(1,1,1,1);
 
-	int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
-	int cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
+	const int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
+	const int cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 
-	CBasicTreeSquareDrawer drawer;
-	drawer.td = this;
-	drawer.cx = cx;
-	drawer.cy = cy;
-	drawer.treeDistance = treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE;
+	CBasicTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE);
 
 	GML_STDMUTEX_LOCK(tree); // Draw
 

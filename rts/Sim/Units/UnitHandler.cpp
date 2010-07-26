@@ -107,7 +107,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	if (!serializing) {
 		airBaseHandler = new CAirBaseHandler;
 
-		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->numUnitDefs + 1));
+		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
 	}
 }
 
@@ -458,16 +458,6 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 	return ret;
 }
 
-
-
-void CUnitHandler::UpdateWind(float x, float z, float strength)
-{
-	//todo: save windgens in list (would be a little faster)
-	for(std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-		if((*usi)->unitDef->windGenerator)
-			(*usi)->UpdateWind(x,z,strength);
-	}
-}
 
 
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)

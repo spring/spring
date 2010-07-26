@@ -179,7 +179,6 @@ CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
 //	CR_MEMBER(drawMode),
-	CR_MEMBER(oldframenum),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
 	CR_MEMBER(lastSimFrame),
@@ -215,7 +214,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(inputTextPosY),
 //	CR_MEMBER(inputTextSizeX),
 //	CR_MEMBER(inputTextSizeY),
-//	CR_MEMBER(lastCpuUsageTime),
 //	CR_MEMBER(skipping),
 	CR_MEMBER(playing),
 //	CR_MEMBER(lastFrameTime),
@@ -232,7 +230,6 @@ CR_REG_METADATA(CGame,(
 CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile):
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
-	oldframenum(0),
 	fps(0),
 	thisFps(0),
 	lastSimFrame(-1),
@@ -253,6 +250,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	leastQue(0),
 	timeLeft(0.0f),
 	consumeSpeed(1.0f),
+	luaDrawTime(0),
 
 	saveFile(saveFile)
 {
@@ -642,7 +640,7 @@ void CGame::LoadFinalize()
 	lastUpdate = lastframe;
 	lastMoveUpdate = lastframe;
 	lastUpdateRaw = lastframe;
-	lastCpuUsageTime = gu->gameTime + 10;
+	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
 #ifdef TRACE_SYNC
@@ -1853,7 +1851,18 @@ bool CGame::ActionPressed(const Action& action,
 				mouse->crossSize = std::max(1.0f, -mouse->crossSize);
 			}
 		} else {
-			mouse->crossSize = atof(action.extra.c_str());
+			float size, alpha, scale;
+			const char* args = action.extra.c_str();
+			const int argcount = sscanf(args, "%f %f %f", &size, &alpha, &scale);
+			if (argcount > 1) {
+				mouse->crossAlpha = alpha;
+				configHandler->Set("CrossAlpha", alpha);
+			}
+			if (argcount > 2) {
+				mouse->crossMoveScale = scale;
+				configHandler->Set("CrossMoveScale", scale);
+			}
+			mouse->crossSize = size;
 		}
 		configHandler->Set("CrossSize", mouse->crossSize);
 	}
@@ -2491,9 +2500,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 		if (unitName == "all") {
 			// player entered ".give all"
-			int sqSize = (int) streflop::ceil(streflop::sqrt((float) unitDefHandler->numUnitDefs));
+			int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
 			int currentNumUnits = teamHandler->Team(team)->units.size();
-			int numRequestedUnits = unitDefHandler->numUnitDefs;
+			int sqSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
 
 			// make sure team unit-limit not exceeded
 			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
@@ -2509,10 +2518,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float3 pos2 = float3(posx, pos.y, posz);
-				const UnitDef* ud = &unitDefHandler->unitDefs[a];
-				if (ud->valid) {
-					const CUnit* unit =
-						unitLoader.LoadUnit(ud, pos2, team, false, 0, NULL);
+				const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
+				if (ud) {
+					const CUnit* unit = unitLoader.LoadUnit(ud, pos2, team, false, 0, NULL);
 					if (unit) {
 						unitLoader.FlattenGround(unit);
 					}
@@ -2748,7 +2756,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 		else if (action.extra == "end") {
 			EndSkip();
-			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 	}
 	else if (gs->frameNum > 1) {
@@ -2769,10 +2776,13 @@ bool CGame::Update()
 	if (!gs->paused) {
 		gu->modGameTime += dif * gs->speedFactor;
 	}
+
 	gu->gameTime += dif;
+
 	if (playing && !gameOver) {
 		totalGameTime += dif;
 	}
+
 	lastModGameTimeMeasure = timeNow;
 
 	time(&fpstimer);
@@ -2782,7 +2792,6 @@ bool CGame::Update()
 		thisFps = 0;
 
 		starttime = fpstimer;
-		oldframenum = gs->frameNum;
 
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
@@ -2931,7 +2940,7 @@ bool CGame::DrawWorld()
 	cursorIcons.Draw();
 	cursorIcons.Clear();
 
-	mouse->Draw();
+	mouse->DrawSelectionBox();
 
 	guihandler->DrawMapStuff(0);
 
@@ -2980,19 +2989,16 @@ bool CGame::DrawWorld()
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-
 	//reset fov
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glLoadIdentity();
 
 	// underwater overlay, part 2
 	if (camera->pos.y < 0.0f) {
@@ -3186,19 +3192,16 @@ bool CGame::Draw() {
 		DrawWorld();
 	}
 	else {
-		glLoadIdentity();
-		glDisable(GL_DEPTH_TEST);
-
 		//reset fov
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		gluOrtho2D(0,1,0,1);
 		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
 		glEnable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glLoadIdentity();
 	}
 
 	glDisable(GL_FOG);
@@ -3265,7 +3268,7 @@ bool CGame::Draw() {
 
 		if (showClock) {
 			char buf[32];
-			const int seconds = (gs->frameNum / 30);
+			const int seconds = (gs->frameNum / GAME_SPEED);
 			if (seconds < 3600) {
 				SNPRINTF(buf, sizeof(buf), "%02i:%02i", seconds / 60, seconds % 60);
 			} else {
@@ -3293,15 +3296,14 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
 		}
 
-#ifdef USE_GML
-		if(showMTInfo) {
-			int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
-			static int luaDrawTime = 0;
-			if(cit > luaDrawTime)
-				++luaDrawTime;
-			else if(cit < luaDrawTime)
-				--luaDrawTime;
+#if defined(USE_GML) && GML_ENABLE_SIM
+		int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
+		if(cit > luaDrawTime)
+			++luaDrawTime;
+		else if(cit < luaDrawTime)
+			--luaDrawTime;
 
+		if(showMTInfo) {
 			float drawPercent = (float)luaDrawTime / 10.0f;
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
@@ -3530,13 +3532,14 @@ void CGame::StartPlaying()
 
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
-#ifdef USE_GML
+#if defined(USE_GML) && GML_ENABLE_SIM
 	if(showMTInfo) {
 		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
 		logOutput.Print("");
 		logOutput.Print("************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		logOutput.Print("GRAPHICS WIDGETS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
+		logOutput.Print("LUA BASED GRAPHICS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
+		logOutput.Print("For best results disable LuaShaders in SpringSettings or the Edit Settings menu");
 		logOutput.Print("Press " + lskey + " and click to disable specific widgets (mouse wheel scrolls the list)");
 		logOutput.Print("The LUA-DRAW(MT) value in the upper right corner can be used for guidance");
 		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes");
@@ -3630,13 +3633,22 @@ void CGame::ClientReadNet()
 {
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
 		lastCpuUsageTime = gu->gameTime;
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+
+		if (playing) {
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+#if defined(USE_GML) && GML_ENABLE_SIM
+			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaDrawTime));
+#endif
+		} else {
+			// the CPU-load percentage is undefined prior to SimFrame()
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
+		}
 	}
 
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
-	if(!gameServer){
+	if (!gameServer) {
 		const unsigned int currentFrame = SDL_GetTicks();
 
 		if (timeLeft > 1.0f)
@@ -4157,7 +4169,7 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid size");
 					boost::uint8_t playerNum;
 					unpack >> playerNum;
-					if(playerNum < 0 || playerNum >= playerHandler->ActivePlayers())
+					if (playerNum >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 					boost::uint16_t script;
 					unpack >> script;
@@ -4367,9 +4379,11 @@ void CGame::ClientReadNet()
 					if (isLocal) {
 						const SkirmishAIData& aiData = *(skirmishAIHandler.GetLocalSkirmishAIInCreation(aiTeamId));
 						if (skirmishAIHandler.IsActiveSkirmishAI(skirmishAIId)) {
-							// we will end up here for AIs defined in the start script
-							const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-							assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
+							#ifdef DEBUG
+								// we will end up here for AIs defined in the start script
+								const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+								assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
+							#endif
 						} else {
 							// we will end up here for local AIs defined mid-game,
 							// eg. with /aicontrol
@@ -4778,13 +4792,16 @@ void CGame::GameEnd()
 				}
 			}
 			// Finally pass it on to the CDemoRecorder.
-			record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+			record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
 			record->InitializeStats(numPlayers, numTeams, winner);
 			for (int i = 0; i < numPlayers; ++i) {
 				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 			}
 			for (int i = 0; i < numTeams; ++i) {
 				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
+				net->Send(buf);
 			}
 		}
 	}
@@ -4895,6 +4912,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 }
 
 
+
 void CGame::StartSkip(int toFrame) {
 	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
@@ -4926,6 +4944,22 @@ void CGame::StartSkip(int toFrame) {
 	skipping = true;
 }
 
+void CGame::EndSkip() {
+	skipping = false;
+
+	gu->gameTime    += skipSeconds;
+	gu->modGameTime += skipSeconds;
+
+	gs->speedFactor     = skipOldSpeed;
+	gs->userSpeedFactor = skipOldUserSpeed;
+
+	if (!skipSoundmute)
+		sound->Mute(); // sounds back on
+
+	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
+}
+
+
 
 void CGame::DrawSkip(bool blackscreen) {
 	const int framesLeft = (skipEndFrame - gs->frameNum);
@@ -4949,21 +4983,6 @@ void CGame::DrawSkip(bool blackscreen) {
 	glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
 }
 
-
-void CGame::EndSkip() {
-	skipping = false;
-
-	gu->gameTime    += skipSeconds;
-	gu->modGameTime += skipSeconds;
-
-	gs->speedFactor     = skipOldSpeed;
-	gs->userSpeedFactor = skipOldUserSpeed;
-
-	if (!skipSoundmute)
-		sound->Mute(); // sounds back on
-
-	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
-}
 
 
 void CGame::ReloadCOB(const string& msg, int player)

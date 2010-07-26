@@ -1253,7 +1253,7 @@ void CBumpWater::DrawReflection(CGame* game)
 
 	glEnable(GL_CLIP_PLANE2);
 	const double plane[4]={0,1,0,1};
-	glClipPlane(GL_CLIP_PLANE2 ,plane);
+	glClipPlane(GL_CLIP_PLANE2, plane);
 	drawReflection=true;
 
 	if (reflection>1)

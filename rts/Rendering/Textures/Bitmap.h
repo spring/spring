@@ -8,7 +8,9 @@
 // before gl.h, so we have to do this in before including this header.
 //#include <GL/gl.h> // for GLuint, GLenum
 
+#ifndef BITMAP_NO_OPENGL
 #include "nv_dds.h"
+#endif // !BITMAP_NO_OPENGL
 #include "float3.h"
 
 class CBitmap  
@@ -26,8 +28,10 @@ public:
 	bool LoadGrayscale(std::string const& filename);
 	bool Save(std::string const& filename, bool opaque = true);
 
+#ifndef BITMAP_NO_OPENGL
 	const GLuint CreateTexture(bool mipmaps=false);
 	const GLuint CreateDDSTexture(GLuint texID = 0);
+#endif // !BITMAP_NO_OPENGL
 
 	void CreateAlpha(unsigned char red,unsigned char green,unsigned char blue);
 	void SetTransparent(unsigned char red, unsigned char green, unsigned char blue);
@@ -51,8 +55,10 @@ public:
 	};
 
 	int type;
-	GLenum textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ..
-	nv_dds::CDDSImage *ddsimage;
+#ifndef BITMAP_NO_OPENGL
+	GLenum textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
+	nv_dds::CDDSImage* ddsimage;
+#endif // !BITMAP_NO_OPENGL
 
 public:
 	CBitmap CreateRescaled(int newx, int newy);

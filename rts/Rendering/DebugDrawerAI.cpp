@@ -332,7 +332,7 @@ void DebugDrawerAI::Graph::Draw() {
 				const float ty = pos.y + ((lineNum * linePad * 2.0f) + linePad) * size.y;
 
 				font->SetTextColor(line.lineColor.x, line.lineColor.y, line.lineColor.z, 1.0f);
-				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%s", (line.lineLabel).c_str());
+				font->glPrint(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, line.lineLabel);
 
 				color[0] = line.lineColor.x * 255;
 				color[1] = line.lineColor.y * 255;
@@ -345,10 +345,10 @@ void DebugDrawerAI::Graph::Draw() {
 				for (ListIt pit = data.begin(); pit != data.end(); ++pit) {
 					ListIt npit = pit; ++npit;
 
-					const float px1 = (((*pit).x - minScale.x) / scale.x) * size.x;
-					const float py1 = (((*pit).y - minScale.y) / scale.y) * size.y;
-					const float px2 = ((npit == data.end() || px2 < px1)? px1: (((*npit).x - minScale.x) / scale.x) * size.x);
-					const float py2 = ((npit == data.end()             )? py1: (((*npit).y - minScale.y) / scale.y) * size.y);
+					const float px1 = ((pit->x - minScale.x) / scale.x) * size.x;
+					const float py1 = ((pit->y - minScale.y) / scale.y) * size.y;
+					const float px2 = (npit == data.end()) ? px1 : ((npit->x - minScale.x) / scale.x) * size.x;
+					const float py2 = (npit == data.end()) ? py1 : ((npit->y - minScale.y) / scale.y) * size.y;
 
 					va->AddVertexC(pos + float3(px1, py1, 0.0f), color);
 					va->AddVertexC(pos + float3(px2, py2, 0.0f), color);

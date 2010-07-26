@@ -16,24 +16,19 @@
 */
 
 #include "AIAICallback.h"
-
+#include "UnitDef.h"
 
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
 #include "creg/creg_cond.h"
-#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #ifdef USING_CREG
 creg::Class* CCommandQueue::GetClass() { return NULL; }
 #endif
 #include "Sim/MoveTypes/MoveInfo.h"
-UnitDef::~UnitDef() {
-	delete movedata;
-}
 CIcon::CIcon() {}
 CIcon::~CIcon() {}
-UnitDef::UnitDefWeapon::UnitDefWeapon() {}
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 WeaponDef::~WeaponDef() {}
@@ -396,7 +391,7 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		return NULL;
 	}
 
-	bool doRecreate = unitDefFrames[unitDefId] < 0;
+	const bool doRecreate = (unitDefFrames[unitDefId] < 0);
 
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
@@ -405,7 +400,7 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		float pos_cache[3];
 
 		UnitDef* unitDef = new UnitDef();
-		unitDef->valid = sAICallback->UnitDef_isValid(skirmishAIId, unitDefId);
+
 		unitDef->name = sAICallback->UnitDef_getName(skirmishAIId, unitDefId);
 		unitDef->humanName = sAICallback->UnitDef_getHumanName(skirmishAIId, unitDefId);
 		unitDef->filename = sAICallback->UnitDef_getFileName(skirmishAIId, unitDefId);
@@ -623,13 +618,16 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->stockpileWeaponDef = this->GetWeaponDefById(sAICallback->UnitDef_getStockpileDef(skirmishAIId, unitDefId));
 
 		{
-			int numBo = sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, NULL, 0);
-			int* bo = new int[numBo];
-			numBo = sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, bo, numBo);
-			for (int b=0; b < numBo; b++) {
-				unitDef->buildOptions[b] = sAICallback->UnitDef_getName(skirmishAIId, bo[b]);
+			int numBuildOpts = sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, NULL, 0);
+			int* buildOpts = new int[numBuildOpts];
+
+			numBuildOpts = sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, buildOpts, numBuildOpts);
+
+			for (int b=0; b < numBuildOpts; b++) {
+				unitDef->buildOptions[b] = sAICallback->UnitDef_getName(skirmishAIId, buildOpts[b]);
 			}
-			delete [] bo;
+
+			delete[] buildOpts;
 		}
 		{
 			const int size = sAICallback->UnitDef_getCustomParams(skirmishAIId, unitDefId, NULL, NULL);
@@ -1167,7 +1165,6 @@ const FeatureDef* CAIAICallback::GetFeatureDefById(int featureDefId) {
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
 		int currentFrame = 1;
-		float pos_cache[3];
 	FeatureDef* featureDef = new FeatureDef();
 featureDef->myName = sAICallback->FeatureDef_getName(skirmishAIId, featureDefId);
 featureDef->description = sAICallback->FeatureDef_getDescription(skirmishAIId, featureDefId);
@@ -1240,8 +1237,11 @@ void CAIAICallback::GetUnitDefList(const UnitDef** list) {
 
 	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
 	int* unitDefIds = new int[size];
+
+	// get actual number of IDs
 	size = sAICallback->getUnitDefs(skirmishAIId, unitDefIds, size);
-	for (int i=0; i < size; ++i) {
+
+	for (int i = 0; i < size; ++i) {
 		list[i] = this->GetUnitDefById(unitDefIds[i]);
 	}
 }

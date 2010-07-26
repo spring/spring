@@ -42,17 +42,20 @@ CR_REG_METADATA(CTransportCAI, (
 				CR_RESERVED(16)
 				));
 
-CTransportCAI::CTransportCAI():
-	CMobileCAI(),
-	toBeTransportedUnitId(-1),
-	lastCall(0)
+CTransportCAI::CTransportCAI()
+	: CMobileCAI()
+	, unloadType(-1)
+	, toBeTransportedUnitId(-1)
+	, lastCall(0)
+	, isFirstIteration(true)
 {}
 
 
-CTransportCAI::CTransportCAI(CUnit* owner):
-	CMobileCAI(owner),
-	toBeTransportedUnitId(-1),
-	lastCall(0)
+CTransportCAI::CTransportCAI(CUnit* owner)
+	: CMobileCAI(owner)
+	, toBeTransportedUnitId(-1)
+	, lastCall(0)
+	, isFirstIteration(true)
 {
 	//for new transport methods
 	dropSpots.clear();
@@ -61,7 +64,6 @@ CTransportCAI::CTransportCAI(CUnit* owner):
 	startingDropPos = float3(-1,-1,-1);
 	lastDropPos = float3(-1,-1,-1);
 	endDropPos = float3(-1,-1,-1);
-	isFirstIteration = true;
 	//
 	CommandDescription c;
 	c.id=CMD_LOAD_UNITS;
@@ -195,20 +197,24 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 		} else {
 			FinishCommand();
 		}
-	} else if(c.params.size()==4){		//load in radius
-		if(lastCall==gs->frameNum)	//avoid infinite loops
+	} else if (c.params.size() == 4) { // area-load
+		if (lastCall == gs->frameNum) //avoid infinite loops
 			return;
-		lastCall=gs->frameNum;
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		float radius=c.params[3];
-		CUnit* unit=FindUnitToTransport(pos,radius);
+
+		lastCall = gs->frameNum;
+
+		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float radius = c.params[3];
+
+		CUnit* unit = FindUnitToTransport(pos, radius);
+
 		if (unit && CanTransport(unit)) {
 			Command c2;
-			c2.id=CMD_LOAD_UNITS;
-			c2.params.push_back(unit->id);
-			c2.options=c.options | INTERNAL_ORDER;
+				c2.id = CMD_LOAD_UNITS;
+				c2.params.push_back(unit->id);
+				c2.options = c.options | INTERNAL_ORDER;
 			commandQue.push_front(c2);
-			inCommand=false;
+			inCommand = false;
 			SlowUpdate();
 			return;
 		} else {
@@ -216,19 +222,20 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 			return;
 		}
 	}
-	isFirstIteration=true;
-	startingDropPos = float3(-1,-1,-1);
+
+	isFirstIteration = true;
+	startingDropPos = float3(-1, -1, -1);
 
 	return;
 }
 
 
-void CTransportCAI::ExecuteUnloadUnits(Command &c)
+void CTransportCAI::ExecuteUnloadUnits(Command& c)
 {
 	CTransportUnit* transport = (CTransportUnit*) owner;
 
 	switch (unloadType) {
-		case UNLOAD_LAND: { UnloadUnits_Land(c,transport); } break;
+		case UNLOAD_LAND: { UnloadUnits_Land(c, transport); } break;
 		case UNLOAD_DROP: {
 			if (owner->unitDef->canfly) {
 				UnloadUnits_Drop(c, transport);
@@ -237,7 +244,7 @@ void CTransportCAI::ExecuteUnloadUnits(Command &c)
 			}
 		} break;
 
-		case UNLOAD_LANDFLOOD: { UnloadUnits_LandFlood(c,transport); } break;
+		case UNLOAD_LANDFLOOD: { UnloadUnits_LandFlood(c, transport); } break;
 		default: { UnloadUnits_Land(c, transport); } break;
 	}
 }
@@ -249,12 +256,12 @@ void CTransportCAI::ExecuteUnloadUnit(Command &c)
 	switch (unloadType) {
 		case UNLOAD_LAND: UnloadLand(c); break;
 
-		case UNLOAD_DROP:
-						if (owner->unitDef->canfly)
-							UnloadDrop(c);
-						else
-							UnloadLand(c);
-						break;
+		case UNLOAD_DROP: {
+			if (owner->unitDef->canfly)
+				UnloadDrop(c);
+			else
+				UnloadLand(c);
+		} break;
 
 		case UNLOAD_LANDFLOOD: UnloadLandFlood(c); break;
 
@@ -471,19 +478,19 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 	}
 
 	CUnit* u = ((CTransportUnit*) owner)->GetTransportedUnits().front().unit;
-	float3 pos(c.params[0],c.params[1],c.params[2]);
-	float radius = c.params[3];
-	float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
-	float3 found;
+	float3 unloadPos;
 
-	bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u);
+	const float3 pos(c.params[0], c.params[1], c.params[2]);
+	const float radius = c.params[3];
+	const float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
+	const bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u);
 
 	if (canUnload) {
 		Command c2;
 		c2.id = CMD_UNLOAD_UNIT;
-		c2.params.push_back(found.x);
-		c2.params.push_back(found.y);
-		c2.params.push_back(found.z);
+		c2.params.push_back(unloadPos.x);
+		c2.params.push_back(unloadPos.y);
+		c2.params.push_back(unloadPos.z);
 		c2.options = c.options | INTERNAL_ORDER;
 		commandQue.push_front(c2);
 		SlowUpdate();
@@ -961,6 +968,7 @@ void CTransportCAI::DrawCommands(void)
 			case CMD_UNLOAD_UNITS: {
 				if (ci->params.size() == 4) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
+
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
 					lineDrawer.Break(endPos, cmdColors.unload);
 					glColor4fv(cmdColors.unload);

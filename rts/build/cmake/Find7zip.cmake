@@ -13,6 +13,8 @@ IF    (7ZIP_BIN)
 	SET(7zip_FIND_QUIETLY TRUE)
 ENDIF (7ZIP_BIN)
 
+# 7zr(.exe) only supports 7z archives, while 7z(.exe) and 7za(.exe)
+# additionally support many other formats (eg zip)
 find_program(7ZIP_BIN
 	NAMES 7z 7za
 	HINTS "${MINGWDIR}" "${CMAKE_SOURCE_DIR}/installer"

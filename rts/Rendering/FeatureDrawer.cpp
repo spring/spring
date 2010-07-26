@@ -410,6 +410,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int 
 
 void CFeatureDrawer::DrawShadowPass()
 {
+	glDisable(GL_CULL_FACE);
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -428,28 +429,24 @@ void CFeatureDrawer::DrawShadowPass()
 		//
 		// GetVisibleFeatures(1, false);
 
-		if (!globalRendering->atiHacks) {
-			// FIXME: why does texture alpha not work with shadows on ATI?
-			// need the alpha-mask for transparent features
-			glEnable(GL_TEXTURE_2D);
-			glPushAttrib(GL_COLOR_BUFFER_BIT);
-			glEnable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, 0.5f);
-		}
+		// need the alpha-mask for transparent features
+		glEnable(GL_TEXTURE_2D);
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.5f);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawOpaqueFeatures(modelType);
 		}
 
-		if (!globalRendering->atiHacks) {
-			glPopAttrib();
-			glDisable(GL_TEXTURE_2D);
-		}
+		glPopAttrib();
+		glDisable(GL_TEXTURE_2D);
 	}
 
 	po->Disable();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	glEnable(GL_CULL_FACE);
 }
 
 
@@ -500,7 +497,7 @@ public:
 						continue;
 				}
 
-				const float sqDist = (f->pos - camera->pos).SqLength2D();
+				const float sqDist = (f->pos - camera->pos).SqLength();
 				const float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))

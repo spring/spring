@@ -238,20 +238,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTextWidth);
 	REGISTER_LUA_CFUNC(GetTextHeight);
 
-	REGISTER_LUA_CFUNC(Map1);
-	REGISTER_LUA_CFUNC(Map2);
-	REGISTER_LUA_CFUNC(MapGrid1);
-	REGISTER_LUA_CFUNC(MapGrid2);
-	REGISTER_LUA_CFUNC(Eval);
-	REGISTER_LUA_CFUNC(EvalEnable);
-	REGISTER_LUA_CFUNC(EvalDisable);
-	REGISTER_LUA_CFUNC(EvalMesh1);
-	REGISTER_LUA_CFUNC(EvalMesh2);
-	REGISTER_LUA_CFUNC(EvalCoord1);
-	REGISTER_LUA_CFUNC(EvalCoord2);
-	REGISTER_LUA_CFUNC(EvalPoint1);
-	REGISTER_LUA_CFUNC(EvalPoint2);
-
 	REGISTER_LUA_CFUNC(Unit);
 	REGISTER_LUA_CFUNC(UnitRaw);
 	REGISTER_LUA_CFUNC(UnitShape);
@@ -765,17 +751,7 @@ void LuaOpenGL::EnableDrawInMiniMap()
 	}
 	EnableCommon(DRAW_MINIMAP);
 	resetMatrixFunc = ResetMiniMapMatrices;
-	// CMiniMap::DrawForReal() does not setup the texture matrix
-	glMatrixMode(GL_TEXTURE); {
-		ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	if (minimap) {
-		glScalef(1.0f / (float)minimap->GetSizeX(),
-		         1.0f / (float)minimap->GetSizeY(), 1.0f);
-	}
+	ResetMiniMapMatrices();
 }
 
 
@@ -783,6 +759,19 @@ void LuaOpenGL::DisableDrawInMiniMap()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP);
+
+		glMatrixMode(GL_TEXTURE); {
+			ClearMatrixStack(GL_TEXTURE_STACK_DEPTH);
+			glLoadIdentity();
+		}
+		glMatrixMode(GL_PROJECTION); {
+			ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
+			glLoadIdentity();
+		}
+		glMatrixMode(GL_MODELVIEW); {
+			ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
+			glLoadIdentity();
+		}
 	}
 	else {
 		if (safeMode) {
@@ -1006,15 +995,16 @@ void LuaOpenGL::ResetMiniMapMatrices()
 	glMatrixMode(GL_PROJECTION); {
 		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
 		glLoadIdentity();
-		glOrtho(0.0, 1.0, 0.0, 1.0, -1.0e6, +1.0e6);
+		assert(minimap);
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
+		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
 		glLoadIdentity();
-		if (minimap) {
-			glScalef(1.0f / (float)minimap->GetSizeX(),
-			         1.0f / (float)minimap->GetSizeY(), 1.0f);
-		}
+		glScalef(1.0f / (float)minimap->GetSizeX(),
+		         1.0f / (float)minimap->GetSizeY(), 1.0f);
 	}
 }
 
@@ -1309,255 +1299,6 @@ int LuaOpenGL::GetTextHeight(lua_State* L)
 	lua_pushnumber(L, descender);
 	lua_pushnumber(L, lines);
 	return 3;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-//
-//  GL evaluators
-//
-
-static int evalDepth = 0;
-
-
-static int GetMap1TargetDataSize(GLenum target)
-{
-	switch (target) {
-		case GL_MAP1_COLOR_4:         { return 4; }
-		case GL_MAP1_INDEX:           { return 1; }
-		case GL_MAP1_NORMAL:          { return 3; }
-		case GL_MAP1_VERTEX_3:        { return 3; }
-		case GL_MAP1_VERTEX_4:        { return 4; }
-		case GL_MAP1_TEXTURE_COORD_1: { return 1; }
-		case GL_MAP1_TEXTURE_COORD_2: { return 2; }
-		case GL_MAP1_TEXTURE_COORD_3: { return 3; }
-		case GL_MAP1_TEXTURE_COORD_4: { return 4; }
-		default:                      { break; }
-	}
-	return 0;
-}
-
-static int GetMap2TargetDataSize(GLenum target)
-{
-	switch (target) {
-		case GL_MAP2_COLOR_4:         { return 4; }
-		case GL_MAP2_INDEX:           { return 1; }
-		case GL_MAP2_NORMAL:          { return 3; }
-		case GL_MAP2_VERTEX_3:        { return 3; }
-		case GL_MAP2_VERTEX_4:        { return 4; }
-		case GL_MAP2_TEXTURE_COORD_1: { return 1; }
-		case GL_MAP2_TEXTURE_COORD_2: { return 2; }
-		case GL_MAP2_TEXTURE_COORD_3: { return 3; }
-		case GL_MAP2_TEXTURE_COORD_4: { return 4; }
-		default:                      { break; }
-	}
-	return 0;
-}
-
-
-
-int LuaOpenGL::Eval(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	if (!lua_isfunction(L, 1)) {
-		return 0;
-	}
-
-	if (evalDepth == 0) { glPushAttrib(GL_EVAL_BIT); }
-	evalDepth++;
-	const int error = lua_pcall(L, lua_gettop(L) - 1, 0, 0);
-	evalDepth--;
-	if (evalDepth == 0) { glPopAttrib(); }
-
-	if (error != 0) {
-		logOutput.Print("gl.Eval: error(%i) = %s",
-		                error, lua_tostring(L, -1));
-		lua_error(L);
-	}
-	return 0;
-}
-
-
-int LuaOpenGL::EvalEnable(lua_State* L)
-{
-	if (evalDepth <= 0) {
-		luaL_error(L, "EvalState can only be used in Eval() blocks");
-	}
-	const GLenum target = (GLenum)luaL_checkint(L, 1);
-	if ((GetMap1TargetDataSize(target) > 0) ||
-	    (GetMap2TargetDataSize(target) > 0) ||
-	    (target == GL_AUTO_NORMAL)) {
-		glEnable(target);
-	}
-	return 0;
-}
-
-
-int LuaOpenGL::EvalDisable(lua_State* L)
-{
-	if (evalDepth <= 0) {
-		luaL_error(L, "EvalState can only be used in Eval() blocks");
-	}
-	const GLenum target = (GLenum)luaL_checkint(L, 1);
-	if ((GetMap1TargetDataSize(target) > 0) ||
-	    (GetMap2TargetDataSize(target) > 0) ||
-	    (target == GL_AUTO_NORMAL)) {
-		glDisable(target);
-	}
-	return 0;
-}
-
-
-int LuaOpenGL::Map1(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	if (lua_gettop(L) != 6) { // NOTE: required for ParseFloatArray()
-		return 0;
-	}
-	const GLenum  target = (GLenum)luaL_checkint(L, 1);
-	const GLfloat u1     = luaL_checkfloat(L, 2);
-	const GLfloat u2     = luaL_checkfloat(L, 3);
-	const GLint   stride = luaL_checkint(L, 4);
-	const GLint   order  = luaL_checkint(L, 5);
-
-	const int dataSize = GetMap1TargetDataSize(target);
-	if (dataSize <= 0) {
-		return 0;
-	}
-	if ((order <= 0) || (stride != dataSize)) {
-		return 0;
-	}
-	const int fullSize = (order * dataSize);
-	float* points = new float[fullSize];
-	if (ParseFloatArray(L, points, fullSize) == fullSize) {
-		glMap1f(target, u1, u2, stride, order, points);
-	}
-	delete[] points;
-	return 0;
-}
-
-
-int LuaOpenGL::Map2(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	if (lua_gettop(L) != 10) { // NOTE: required for ParseFloatArray()
-		return 0;
-	}
-
-	const GLenum  target  = (GLenum)luaL_checkint(L, 1);
-	const GLfloat u1      = luaL_checkfloat(L, 2);
-	const GLfloat u2      = luaL_checkfloat(L, 3);
-	const GLint   ustride = luaL_checkint(L, 4);
-	const GLint   uorder  = luaL_checkint(L, 5);
-	const GLfloat v1      = luaL_checkfloat(L, 6);
-	const GLfloat v2      = luaL_checkfloat(L, 7);
-	const GLint   vstride = luaL_checkint(L, 8);
-	const GLint   vorder  = luaL_checkint(L, 9);
-
-	const int dataSize = GetMap2TargetDataSize(target);
-	if (dataSize <= 0) {
-		return 0;
-	}
-	if ((uorder  <= 0) || (vorder  <= 0) ||
-	    (ustride != dataSize) || (vstride != (dataSize * uorder))) {
-		return 0;
-	}
-	const int fullSize = (uorder * vorder * dataSize);
-	float* points = new float[fullSize];
-	if (ParseFloatArray(L, points, fullSize) == fullSize) {
-		glMap2f(target, u1, u2, ustride, uorder,
-										v1, v2, vstride, vorder, points);
-	}
-	delete[] points;
-	return 0;
-}
-
-
-int LuaOpenGL::MapGrid1(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLint   un = luaL_checkint(L, 1);
-	const GLfloat u1 = luaL_checkfloat(L, 2);
-	const GLfloat u2 = luaL_checkfloat(L, 3);
-	glMapGrid1f(un, u1, u2);
-	return 0;
-}
-
-
-int LuaOpenGL::MapGrid2(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLint   un = luaL_checkint(L, 1);
-	const GLfloat u1 = luaL_checkfloat(L, 2);
-	const GLfloat u2 = luaL_checkfloat(L, 3);
-	const GLint   vn = luaL_checkint(L, 4);
-	const GLfloat v1 = luaL_checkfloat(L, 5);
-	const GLfloat v2 = luaL_checkfloat(L, 6);
-	glMapGrid2f(un, u1, u2, vn, v1, v2);
-	return 0;
-}
-
-
-int LuaOpenGL::EvalMesh1(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLenum mode = (GLenum)luaL_checkint(L, 1);
-	const GLint  i1   = luaL_checkint(L, 2);
-	const GLint  i2   = luaL_checkint(L, 3);
-	glEvalMesh1(mode, i1, i2);
-	return 0;
-}
-
-
-int LuaOpenGL::EvalMesh2(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLenum mode = (GLenum)luaL_checkint(L, 1);
-	const GLint  i1   = luaL_checkint(L, 2);
-	const GLint  i2   = luaL_checkint(L, 3);
-	const GLint  j1   = luaL_checkint(L, 4);
-	const GLint  j2   = luaL_checkint(L, 5);
-	glEvalMesh2(mode, i1, i2, j1, j2);
-	return 0;
-}
-
-
-int LuaOpenGL::EvalCoord1(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLfloat u = luaL_checkfloat(L, 1);
-	glEvalCoord1f(u);
-	return 0;
-}
-
-
-int LuaOpenGL::EvalCoord2(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLfloat u = luaL_checkfloat(L, 1);
-	const GLfloat v = luaL_checkfloat(L, 2);
-	glEvalCoord2f(u, v);
-	return 0;
-}
-
-
-int LuaOpenGL::EvalPoint1(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLint i = luaL_checkint(L, 1);
-	glEvalPoint1(i);
-	return 0;
-}
-
-
-int LuaOpenGL::EvalPoint2(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const GLint i = luaL_checkint(L, 1);
-	const GLint j = luaL_checkint(L, 1);
-	glEvalPoint2(i, j);
-	return 0;
 }
 
 

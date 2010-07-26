@@ -11,7 +11,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "float3.h"
 
@@ -87,7 +87,7 @@ private:
 	soundItemDefMap soundItemDefs;
 
 	boost::thread* soundThread;
-	boost::mutex soundMutex;
+	boost::recursive_mutex soundMutex;
 
 	volatile bool soundThreadQuit;
 };

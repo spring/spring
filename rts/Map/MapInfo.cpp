@@ -32,6 +32,8 @@ CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : map
 	if (!parser->IsValid()) {
 		throw content_error("MapInfo: " + parser->GetErrorLog());
 	}
+
+	resRoot = NULL;
 }
 
 void CMapInfo::Load()

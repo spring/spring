@@ -2,10 +2,10 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
+#include <cassert>
 
 #include "AirCAI.h"
 #include "LineDrawer.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"
@@ -14,15 +14,16 @@
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "myMath.h"
-#include "LogOutput.h"
-#include <assert.h>
-#include "GlobalUnsynced.h"
-#include "Util.h"
+#include "System/GlobalUnsynced.h"
+#include "System/myMath.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 CR_BIND_DERIVED(CAirCAI,CMobileCAI , );
@@ -40,11 +41,19 @@ CR_REG_METADATA(CAirCAI, (
 				));
 
 CAirCAI::CAirCAI()
-: CMobileCAI(), lastPC1(-1), lastPC2(-1)
+	: CMobileCAI()
+	, activeCommand(0)
+	, targetAge(0)
+	, lastPC1(-1)
+	, lastPC2(-1)
 {}
 
 CAirCAI::CAirCAI(CUnit* owner)
-: CMobileCAI(owner), lastPC1(-1), lastPC2(-1)
+	: CMobileCAI(owner)
+	, activeCommand(0)
+	, targetAge(0)
+	, lastPC1(-1)
+	, lastPC2(-1)
 {
 	cancelDistance = 16000;
 	CommandDescription c;
@@ -76,10 +85,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 
 	basePos=owner->pos;
 	goalPos=owner->pos;
-	tempOrder=false;
-	targetAge=0;
-	commandPos1=ZeroVector;
-	commandPos2=ZeroVector;
 }
 
 CAirCAI::~CAirCAI(void)

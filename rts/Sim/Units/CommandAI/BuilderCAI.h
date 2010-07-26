@@ -28,10 +28,11 @@ public:
 	bool FindReclaimTargetAndReclaim(const float3& pos, float radius,
 	                                      unsigned char options,
 	                                      bool noResCheck,  // no resources check
-	                                      bool recAnyTeam,  // allows self-reclamation
 	                                      bool recUnits,    // reclaims units and features
 	                                      bool recNonRez,   // reclaims non resurrectable only
-	                                      bool recEnemy);   // reclaims enemy units only
+	                                      bool recEnemy,    // reclaims enemy units
+	                                      bool recEnemyOnly,    // reclaims enemy units only
+	                                      bool recSpecial); // reclaims also non autoreclaimable, metal first 
 	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius,
 	                                          unsigned char options,
 											  bool freshOnly); // reclaims only corpses that have rez progress or all the metal left

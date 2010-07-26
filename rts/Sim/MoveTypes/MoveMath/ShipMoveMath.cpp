@@ -11,14 +11,16 @@ CR_BIND_DERIVED(CShipMoveMath, CMoveMath, );
 /*
 Calculate speed-multiplier for given height and slope data.
 */
-float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope) {
+float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope) const
+{
 	//Too ground?
 	if(-height < moveData.depth)
 		return 0.0f;
 	return 1.0f;
 }
 
-float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope,float moveSlope) {
+float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const
+{
 	if(-height < moveData.depth && moveSlope>0)
 		return 0.0f;
 	return 1.0f;
@@ -28,12 +30,13 @@ float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slop
 /*
 Ships are always in water level.
 */
-float CShipMoveMath::yLevel(int xSquare, int zSquare) {
+float CShipMoveMath::yLevel(int xSquare, int zSquare) const
+{
 	return 0.0f;
 }
 
 
-float CShipMoveMath::yLevel(const float3& pos)
+float CShipMoveMath::yLevel(const float3& pos) const
 {
 	return 0.0f;
 }

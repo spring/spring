@@ -156,7 +156,6 @@ private:
 	bool cheating;
 
 	std::vector<GameParticipant> players;
-	std::map<std::string, std::string> playerName_passwd;
 	size_t ReserveNextAvailableSkirmishAIId();
 	
 	std::map<size_t, GameSkirmishAI> ais;
@@ -197,6 +196,8 @@ private:
 	///////////////// internal stuff //////////////////
 	void InternalSpeedChange(float newSpeed);
 	void UserSpeedChange(float newSpeed, int player);
+
+	void AddAdditionalUser( const std::string& name, const std::string& passwd );
 
 	bool hasLocalClient;
 	unsigned localClientNumber;

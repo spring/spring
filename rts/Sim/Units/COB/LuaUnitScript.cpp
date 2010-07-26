@@ -12,6 +12,7 @@
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 
 
