@@ -6,13 +6,14 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "myMath.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
+#include "myMath.h"
+#include "FastMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CCannon, CWeapon, (NULL));
@@ -69,7 +70,7 @@ void CCannon::Init(void)
 	// useful properties: if rangeFactor == 1, heightBoostFactor == 1
 	// TODO find something better?
 	if (heightBoostFactor < 0.f)
-		heightBoostFactor = (2.f - rangeFactor)/sqrt(rangeFactor);
+		heightBoostFactor = (2.f - rangeFactor) / math::sqrt(rangeFactor);
 }
 
 CCannon::~CCannon()
@@ -166,7 +167,7 @@ void CCannon::FireImpl(void)
 	int ttl = 0;
 	float sqSpeed2D = dir.SqLength2D() * projectileSpeed * projectileSpeed;
 	int predict = (int)ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gravity)
-			: sqrt(diff.SqLength2D() / sqSpeed2D));
+			: math::sqrt(diff.SqLength2D() / sqSpeed2D));
 	if(weaponDef->flighttime > 0) {
 		ttl = weaponDef->flighttime;
 	} else if(selfExplode) {
@@ -220,19 +221,18 @@ float3 CCannon::GetWantedDir(const float3& diff)
 	float g = gravity;
 	float v = projectileSpeed;
 	float dy = diff.y;
-	float dxz = sqrt(DFsq);
+	float dxz = math::sqrt(DFsq);
 	float Vxz;
 	float Vy;
 	if(Dsq == 0) {
 		Vxz = 0;
 		Vy = highTrajectory ? v : -v;
 	} else {
-		float root1 = v*v*v*v + 2*v*v*g*dy-g*g*DFsq;
+		float root1 = v*v*v*v + 2*v*v*g*dy - g*g*DFsq;
 		if(root1 >= 0) {
-			float root2 = 2*DFsq*Dsq*(v*v + g*dy + (highTrajectory ? -1 : 1)
-				* sqrt(root1));
+			float root2 = 2 * DFsq * Dsq * ( v * v + g * dy + (highTrajectory ? -1 : 1) * math::sqrt(root1));
 			if(root2 >= 0) {
-				Vxz = sqrt(root2)/(2*Dsq);
+				Vxz = math::sqrt(root2) / (2 * Dsq);
 				Vy = (dxz == 0 || Vxz == 0) ? v : (Vxz*dy/dxz - dxz*g/(2*Vxz));
 			} else {
 				Vxz = 0;
@@ -271,6 +271,6 @@ float CCannon::GetRange2D(float yDiff) const
 	if(root1 < 0.f){
 		return 0.f;
 	} else {
-		return rangeFactor*(speed2dSq + speed2d*sqrt(root1))/(-gravity);
+		return rangeFactor * (speed2dSq + speed2d * math::sqrt(root1)) / (-gravity);
 	}
 }

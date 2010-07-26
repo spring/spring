@@ -162,6 +162,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	reversing(false),
 	skidRotSpeed(0.0f),
 
+	dropSpeed(0.0f),
 	dropHeight(0.0f),
 	skidRotVector(UpVector),
 	skidRotSpeed2(0.0f),

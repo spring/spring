@@ -77,6 +77,7 @@ CGuiHandler::CGuiHandler():
 	activePage(0),
 	defaultCmdMemory(-1),
 	explicitCommand(-1),
+	curIconCommand(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
 	gatherMode(false)
@@ -1049,6 +1050,14 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 	}
 	else if (AboveGui(x,y)) {
 		activeMousePress = true;
+		if ((curIconCommand < 0) && !game->hideInterface) {
+			const int iconPos = IconAtPos(x, y);
+			if (iconPos >= 0) {
+				curIconCommand = icons[iconPos].commandsID;
+			}
+		}
+		if (button == SDL_BUTTON_RIGHT)
+			inCommand = defaultCmdMemory = -1;
 		return true;
 	}
 	else if (minimap && minimap->IsAbove(x, y)) {
@@ -1079,8 +1088,13 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 
 void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
 {
+	GML_RECMUTEX_LOCK(gui); // MouseRelease
+
 	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 		return;
+
+	int lastIconCmd = curIconCommand;
+	curIconCommand = -1;
 
 	int iconCmd = -1;
 	explicitCommand = inCommand;
@@ -1101,10 +1115,12 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 		button = -button; // proxied click from the minimap
 	} else {
 		// setup iconCmd
-		if ((iconCmd < 0) && !game->hideInterface) {
+		if (!game->hideInterface) {
 			const int iconPos = IconAtPos(x, y);
 			if (iconPos >= 0) {
 				iconCmd = icons[iconPos].commandsID;
+				if(iconCmd != lastIconCmd)
+					iconCmd = -1; // mouse was pressed on one button and released on another one --> ignore the command
 			}
 		}
 	}
@@ -2562,13 +2578,8 @@ void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 
 bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 {
-	// UnitDefHandler's array size is (numUnitDefs + 1)
-	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		return false;
-	}
-
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud != NULL) {
+	if (ud) {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
 		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
@@ -2621,10 +2632,7 @@ static inline bool BindUnitTexByString(const std::string& str)
 	if (endPtr == startPtr) {
 		return false; // bad unitID spec
 	}
-	// UnitDefHandler's array size is (numUnitDefs + 1)
-	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		return false;
-	}
+
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return false;
@@ -2644,10 +2652,7 @@ static inline bool BindIconTexByString(const std::string& str)
 	if (endPtr == startPtr) {
 		return false; // bad unitID spec
 	}
-	// UnitDefHandler's array size is (numUnitDefs + 1)
-	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
-		return false;
-	}
+
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return false;
@@ -3392,7 +3397,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			}
 		}
 
-		if ((cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
+		if (mouse->buttons[button].pressed && (cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
 			const CommandDescription& cmdDesc = commands[cmdIndex];
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
@@ -4266,7 +4271,7 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 
 void CGuiHandler::PushLayoutCommand(const std::string& cmd) {
-	GML_STDMUTEX_LOCK(laycmd); // PushLayoutCommand
+	GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 	layoutCommands.push_back(cmd);
 }
@@ -4274,7 +4279,7 @@ void CGuiHandler::PushLayoutCommand(const std::string& cmd) {
 void CGuiHandler::RunLayoutCommands() {
 	if (!layoutCommands.empty()) {
 		GML_RECMUTEX_LOCK(sim); // Draw
-		GML_STDMUTEX_LOCK(laycmd); // Draw
+		GML_RECMUTEX_LOCK(laycmd); // Draw
 
 		//! RunLayoutCommand can add new commands
 		//! and because it is never good to change the vector you are iterating over, we swap it with a new one

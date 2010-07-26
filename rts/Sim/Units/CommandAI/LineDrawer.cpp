@@ -14,8 +14,15 @@ CLineDrawer lineDrawer;
 
 
 CLineDrawer::CLineDrawer()
+	: lineStipple(false)
+	, useColorRestarts(false)
+	, useRestartColor(false)
+	, restartAlpha(0.0f)
+	, restartColor(NULL)
+	, lastPos(ZeroVector)
+	, lastColor(NULL)
+	, stippleTimer(0.0f)
 {
-	stippleTimer = 0.0f;
 	lines.reserve(32);
 	stippled.reserve(32);
 }

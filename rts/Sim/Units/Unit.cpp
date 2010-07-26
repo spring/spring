@@ -758,7 +758,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	AddMetal(unitDef->metalMake*0.5f);
+	AddMetal(unitDef->metalMake * 0.5f);
 	if (activated) {
 		if (UseEnergy(unitDef->energyUpkeep * 0.5f)) {
 			AddMetal(unitDef->makesMetal * 0.5f);
@@ -824,30 +824,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if(!weapons.empty()){
-		haveTarget=false;
-		haveUserTarget=false;
-
-		// aircraft and ScriptMoveType do not want this
-		if (moveType->useHeading) {
-			SetDirectionFromHeading();
-		}
-
-		if(!dontFire){
-			for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi){
-				CWeapon* w=*wi;
-				if(userTarget && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-					w->AttackUnit(userTarget,true);
-				else if(userAttackGround && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-					w->AttackGround(userAttackPos,true);
-
-				w->SlowUpdate();
-
-				if(w->targetType==Target_None && fireState>0 && lastAttacker && lastAttack+200>gs->frameNum)
-					w->AttackUnit(lastAttacker,false);
-			}
-		}
-	}
+	SlowUpdateWeapons();
 
 	if (moveType->progressState == AMoveType::Active ) {
 		if (seismicSignature && !GetTransporter()) {
@@ -857,6 +834,41 @@ void CUnit::SlowUpdate()
 
 	CalculateTerrainType();
 	UpdateTerrainType();
+}
+
+void CUnit::SlowUpdateWeapons() {
+	if (weapons.empty()) {
+		return;
+	}
+
+	haveTarget = false;
+	haveUserTarget = false;
+
+	// aircraft and ScriptMoveType do not want this
+	if (moveType->useHeading) {
+		SetDirectionFromHeading();
+	}
+
+	if (!dontFire) {
+		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+			CWeapon* w = *wi;
+			
+			if (!w->haveUserTarget) {
+				if (haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+					if (userTarget) {
+						w->AttackUnit(userTarget, true);
+					} else if (userAttackGround) {
+						w->AttackGround(userAttackPos, true);
+					}
+				}
+			}
+
+			w->SlowUpdate();
+
+			if (w->targetType == Target_None && fireState > 0 && lastAttacker && (lastAttack + 200 > gs->frameNum))
+				w->AttackUnit(lastAttacker, false);
+		}
+	}
 }
 
 
@@ -1395,7 +1407,7 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
 		(*wi)->targetType = Target_None;
-		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
+		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
 			if ((*wi)->AttackUnit(unit, true))
 				r = true;
 	}
@@ -1403,22 +1415,26 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 }
 
 
-bool CUnit::AttackGround(const float3 &pos, bool dgun)
+bool CUnit::AttackGround(const float3& pos, bool dgun)
 {
 	bool r = false;
+
 	haveDGunRequest = dgun;
 	SetUserTarget(0);
 	userAttackPos = pos;
 	userAttackGround = true;
 	commandShotCount = 0;
 
-	std::vector<CWeapon*>::iterator wi;
-	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
-		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
-			if ((*wi)->AttackGround(pos, true))
+
+		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+			if ((*wi)->AttackGround(pos, true)) {
 				r = true;
+			}
+		}
 	}
+
 	return r;
 }
 
@@ -1742,8 +1758,7 @@ void CUnit::FinishedBuilding(void)
 	ChangeLos(realLosRadius, realAirLosRadius);
 
 	if (unitDef->windGenerator > 0.0f) {
-		// start pointing in direction of wind
-		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
+		wind.AddUnit(this);
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -1804,10 +1819,15 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	this->SetGroup(NULL);
 
 	blockHeightChanges = false;
+
 	if (unitDef->isCommander) {
 		teamHandler->Team(team)->CommanderDied(this);
 	}
 	teamHandler->Team(this->lineage)->LeftLineage(this);
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.DelUnit(this);
+	}
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
 		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
@@ -2096,7 +2116,7 @@ void CUnit::PostLoad()
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByName(unitDefName);
 
-	curYardMap = unitDef->yardmaps[buildFacing];
+	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
 
 	model = unitDef->LoadModel();
 	SetRadius(model->radius);
@@ -2115,7 +2135,7 @@ void CUnit::PostLoad()
 	script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator > 0.0f) {
-		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
+		wind.AddUnit(this);
 	}
 
 	if (activated) {

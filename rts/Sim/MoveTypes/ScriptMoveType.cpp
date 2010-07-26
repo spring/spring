@@ -47,7 +47,6 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(leaveTracks),
 	CR_MEMBER(hasDecal),
 	CR_MEMBER(isBuilding),
-	CR_MEMBER(isBlocking), // copy of CSolidObject::blocking (no longer used)
 	CR_MEMBER(rotOffset),
 	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(oldPos),

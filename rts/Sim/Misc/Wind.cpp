@@ -5,12 +5,12 @@
 
 #include "Wind.h"
 #include "GlobalSynced.h"
-#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/Unit.h"
+#include "System/creg/STL_Map.h"
 
 CR_BIND(CWind, );
 
 CR_REG_METADATA(CWind, (
-
 	CR_MEMBER(maxWind),
 	CR_MEMBER(minWind),
 
@@ -21,8 +21,10 @@ CR_REG_METADATA(CWind, (
 	CR_MEMBER(newWind),
 	CR_MEMBER(oldWind),
 	CR_MEMBER(status),
+
+	CR_MEMBER(windGens),
 	CR_RESERVED(12)
-	));
+));
 
 
 CWind wind;
@@ -30,54 +32,86 @@ CWind wind;
 
 CWind::CWind()
 {
-	curDir=float3(1,0,0);
-	curStrength=0;
-	curWind=float3(0,0,0);
-	newWind=curWind;
-	oldWind=curWind;
-	maxWind=100;
-	minWind=0;
-	status=0;
-}
+	curDir = float3(1.0f, 0.0f, 0.0f);
+	curStrength = 0.0f;
 
+	curWind = ZeroVector;
+	newWind = curWind;
+	oldWind = curWind;
+
+	maxWind = 100.0f;
+	minWind =   0.0f;
+
+	status = 0;
+}
 
 CWind::~CWind()
 {
+	windGens.clear();
 }
+
+
+
+bool CWind::AddUnit(CUnit* u) {
+	std::map<int, CUnit*>::iterator it = windGens.find(u->id);
+
+	if (it != windGens.end()) {
+		return false;
+	}
+
+	windGens[u->id] = u;
+	// start pointing in direction of wind
+	u->UpdateWind(curDir.x, curDir.z, curStrength);
+	return true;
+}
+
+bool CWind::DelUnit(CUnit* u) {
+	std::map<int, CUnit*>::iterator it = windGens.find(u->id);
+
+	if (it == windGens.end()) {
+		return false;
+	}
+
+	windGens.erase(it);
+	return true;
+}
+
 
 
 void CWind::LoadWind(float min, float max)
 {
 	minWind = min;
 	maxWind = max;
-	curWind = float3(minWind,0,0);
+	curWind = float3(minWind, 0.0f, 0.0f);
 }
 
 
 void CWind::Update()
 {
-	if(status==0){
-		oldWind=curWind;
-		float ns=gs->randFloat()*(maxWind-minWind)+minWind;
-		float nd=gs->randFloat()*2*PI;
+	if (status == 0) {
+		oldWind = curWind;
 
-		newWind=float3(sin(nd)*ns,0,cos(nd)*ns);
+		float ns = gs->randFloat() * (maxWind - minWind) + minWind;
+		float nd = gs->randFloat() * 2.0f * PI;
 
-		// TODO: decouple
-		uh->UpdateWind(newWind.x, newWind.z, newWind.Length());
+		newWind = float3(sin(nd) * ns, 0.0f, cos(nd) * ns);
+
+		for (std::map<int, CUnit*>::iterator it = windGens.begin(); it != windGens.end(); ++it) {
+			(it->second)->UpdateWind(newWind.x, newWind.z, newWind.Length());
+		}
 
 		status++;
-	} else if(status <= 900) {
-		float mod=status/900.0f;
-		curStrength = oldWind.Length()*(1.0-mod)+newWind.Length()*mod; // strength changes ~ mod
-		curWind=oldWind*(1.0-mod)+newWind*mod; // dir changes ~ arctan (mod)
+	} else if (status <= (GAME_SPEED * GAME_SPEED)) {
+		const float mod = status / float(GAME_SPEED * GAME_SPEED);
+
+		curStrength = oldWind.Length() * (1.0 - mod) + newWind.Length() * mod; // strength changes ~ mod
+		curWind = oldWind * (1.0 - mod) + newWind * mod; // dir changes ~ arctan (mod)
 		curWind.SafeNormalize();
-		curDir=curWind;
+		curDir = curWind;
 		curWind *= curStrength;
+
 		status++;
-	} else if(status > 900) {
-		status=0;
 	} else {
-		status++;
+		status = 0;
 	}
 }

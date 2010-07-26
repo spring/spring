@@ -125,10 +125,11 @@ int main(int argc, char *argv[])
 
 #if       defined(APPLE)
 /**
- * Required because of some SDL define.
- * As we are using headless stubs for SDL, we need to provide this here.
+ * Required because of OS X libs, declared in SDL_main.h
+ * As we are not linking to SDL (using headless stubs instead),
+ * we need to provide this here.
  */
-int _main(int argc, char* argv[])
+int SDL_main(int argc, char* argv[])
 {
 	return main(argc, argv);
 }

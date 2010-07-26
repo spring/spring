@@ -31,6 +31,12 @@ namespace wsdl
 {
 
 static HWND g_hWnd = (HWND)INVALID_HANDLE_VALUE;
+static int outstanding_press_events = 0;
+
+void ResetMouseButtons() {
+	outstanding_press_events = 0;
+}
+
 
 static void queue_event(SDL_Event& ev)
 {
@@ -242,7 +248,6 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 	if (!globalRendering->fullScreen) {
 		const POINT screen_pt = ScreenFromClient(client_x, client_y);
 
-		static int outstanding_press_events = 0;
 		static SDL_GrabMode oldMode;
 		static bool saveMode = false;
 		if(state == SDL_PRESSED) {

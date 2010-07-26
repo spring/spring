@@ -1060,20 +1060,22 @@ void CMiniMap::DrawForReal(bool use_geo)
 	glMatrixMode(GL_MODELVIEW);
 
 	// clip everything outside of the minimap box
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
-	glEnable(GL_CLIP_PLANE2);
-	glEnable(GL_CLIP_PLANE3);
+	{
+		const double plane0[4] = {0,-1,0,1};
+		const double plane1[4] = {0,1,0,0};
+		const double plane2[4] = {-1,0,0,1};
+		const double plane3[4] = {1,0,0,0};
 
-	const double plane0[4] = {0,-1,0,1};
-	const double plane1[4] = {0,1,0,0};
-	const double plane2[4] = {-1,0,0,1};
-	const double plane3[4] = {1,0,0,0};
+		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
+		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
+		glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
+		glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
 
-	glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
-	glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
-	glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
-	glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
+		glEnable(GL_CLIP_PLANE0);
+		glEnable(GL_CLIP_PLANE1);
+		glEnable(GL_CLIP_PLANE2);
+		glEnable(GL_CLIP_PLANE3);
+	}
 
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
 	glPushMatrix();
@@ -1246,9 +1248,9 @@ void CMiniMap::DrawForReal(bool use_geo)
 	if (resetTextureMatrix) {
 		glMatrixMode(GL_TEXTURE_MATRIX);
 		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
 	}
 	if (use_geo) {
-		glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 	}
 
@@ -1257,10 +1259,28 @@ void CMiniMap::DrawForReal(bool use_geo)
 	glPopAttrib();
 	glEnable(GL_TEXTURE_2D);
 
+	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+
+		const double plane0[4] = {0,-1,0,1};
+		const double plane1[4] = {0,1,0,0};
+		const double plane2[4] = {-1,0,0,1};
+		const double plane3[4] = {1,0,0,0};
+
+		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
+		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
+		glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
+		glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
+	}
+
 	// allow the LUA scripts to draw into the minimap
 	eventHandler.DrawInMiniMap();
 
-	//FIXME: Lua modifies the modelview matrix w/o reseting it! (quite complexe to fix because ClearMatrixStack() makes it impossible to use glPushMatrix)
+	//FIXME: Lua modifies the matrices w/o reseting it! (quite complexe to fix because ClearMatrixStack() makes it impossible to use glPushMatrix)
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 

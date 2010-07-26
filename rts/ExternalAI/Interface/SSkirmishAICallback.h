@@ -382,8 +382,6 @@ struct SSkirmishAICallback {
 	/** Forces loading of the unit model */
 	float             (CALLING_CONV *UnitDef_getRadius)(int skirmishAIId, int unitDefId);
 
-	bool              (CALLING_CONV *UnitDef_isValid)(int skirmishAIId, int unitDefId);
-
 	const char*       (CALLING_CONV *UnitDef_getName)(int skirmishAIId, int unitDefId);
 
 	const char*       (CALLING_CONV *UnitDef_getHumanName)(int skirmishAIId, int unitDefId);

@@ -12,12 +12,12 @@
 #include "S3OParser.h"
 #include "OBJParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "Rendering/FarTextureHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "Util.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
 
 
 C3DModelLoader* modelParser = NULL;

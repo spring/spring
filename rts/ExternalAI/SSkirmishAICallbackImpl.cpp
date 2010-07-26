@@ -1858,10 +1858,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getRadius(int skirmishAIId, int unitDef
 	return clb->GetUnitDefRadius(unitDefId);
 }
 
-EXPORT(bool) skirmishAiCallback_UnitDef_isValid(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->valid;
-}
-
 EXPORT(const char*) skirmishAiCallback_UnitDef_getName(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->name.c_str();
 }
@@ -2441,20 +2437,19 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxRudder(int skirmishAIId, int unit
 
 EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax) {
 
-	if (facing < 0 || facing >=4) {
+	if ((facing < 0) || (facing >= 4)) {
 		return 0;
 	}
 
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const int yardMap_sizeReal = (unitDef->yardmaps[facing] != NULL) ? (unitDef->xsize * unitDef->zsize) : 0;
+	const int yardMap_sizeReal = unitDef->yardmaps[facing].size();
 
 	int yardMap_size = yardMap_sizeReal;
 
 	if (yardMap != NULL) {
 		yardMap_size = min(yardMap_sizeReal, yardMap_sizeMax);
-		const unsigned char* const ym = unitDef->yardmaps[facing];
-		int i;
-		for (i = 0; i < yardMap_size; ++i) {
+		const std::vector<unsigned char>& ym = unitDef->yardmaps[facing];
+		for (int i = 0; i < yardMap_size; ++i) {
 			yardMap[i] = (short) ym[i];
 		}
 	}
@@ -4494,7 +4489,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->getUnitDefByName = &skirmishAiCallback_getUnitDefByName;
 	callback->UnitDef_getHeight = &skirmishAiCallback_UnitDef_getHeight;
 	callback->UnitDef_getRadius = &skirmishAiCallback_UnitDef_getRadius;
-	callback->UnitDef_isValid = &skirmishAiCallback_UnitDef_isValid;
 	callback->UnitDef_getName = &skirmishAiCallback_UnitDef_getName;
 	callback->UnitDef_getHumanName = &skirmishAiCallback_UnitDef_getHumanName;
 	callback->UnitDef_getFileName = &skirmishAiCallback_UnitDef_getFileName;

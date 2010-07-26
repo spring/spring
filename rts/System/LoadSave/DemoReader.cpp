@@ -49,7 +49,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	chunkHeader.swab();
 
 	demoTimeOffset = curTime - chunkHeader.modGameTime - 0.1f;
-	nextDemoRead = curTime - 0.01f;
+	nextDemoReadTime = curTime - 0.01f;
 
 	if (fileHeader.demoStreamSize != 0) {
 		bytesRemaining = fileHeader.demoStreamSize;
@@ -66,13 +66,15 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	}
 }
 
-netcode::RawPacket* CDemoReader::GetData(float curTime)
+netcode::RawPacket* CDemoReader::GetData(float readTime)
 {
 	if (ReachedEnd())
 		return 0;
 
-	// when paused, modGameTime wont increase so no seperate check needed
-	if (nextDemoRead < curTime) {
+	// when paused, modGameTime does not increase (ie. we
+	// always pass the same readTime value) so no seperate
+	// check needed
+	if (readTime > nextDemoReadTime) {
 		netcode::RawPacket* buf = new netcode::RawPacket(chunkHeader.length);
 		playbackDemo.read((char*)(buf->data), chunkHeader.length);
 		bytesRemaining -= chunkHeader.length;
@@ -81,7 +83,7 @@ netcode::RawPacket* CDemoReader::GetData(float curTime)
 			// read next chunk header
 			playbackDemo.read((char*)&chunkHeader, sizeof(chunkHeader));
 			chunkHeader.swab();
-			nextDemoRead = chunkHeader.modGameTime + demoTimeOffset;
+			nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
 			bytesRemaining -= sizeof(chunkHeader);
 		}
 
@@ -99,10 +101,7 @@ bool CDemoReader::ReachedEnd() const
 		return false;
 }
 
-float CDemoReader::GetNextReadTime() const
-{
-	return chunkHeader.modGameTime;
-}
+
 
 const std::vector<PlayerStatistics>& CDemoReader::GetPlayerStats() const
 {

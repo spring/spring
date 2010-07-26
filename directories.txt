@@ -5,10 +5,10 @@ rts/build/scons                   Scons build files (for Linux & Windows (MinGW)
 rts/build/vstudio8                Visual Studio 8 project files
 rts/build/vstudio9                Visual Studio 9 project files
 rts/builds                        build scripts for different builds of the engine (CMake)
-rts/default                       default engine (single threaded) build scripts (CMake)
-rts/GML                           MT graphics engine (GML) build scripts (CMake)
-rts/DS                            Dedicated Server build scripts (CMake)
-rts/HL                            Headless client (no graphics, no sound) build scripts (CMake)
+rts/builds/default                default engine (single threaded) build scripts (CMake)
+rts/builds/GML                    MT graphics engine (GML) build scripts (CMake)
+rts/builds/DS                     Dedicated Server build scripts (CMake)
+rts/builds/HL                     Headless client (no graphics, no sound) build scripts (CMake)
 rts/ExternalAI                    engine side AI interface
 rts/ExternalAI/Interface          AI side AI interface (also used by the engine)
 rts/Game                          General game code

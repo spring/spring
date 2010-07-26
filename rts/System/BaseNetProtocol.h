@@ -87,9 +87,12 @@ enum NETMSG {
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
 	NETMSG_CUSTOM_DATA      = 55, // uchar myPlayerNum, uchar dataType, uchar dataValue
+	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
 
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
+
+	NETMSG_REQUEST_TEAMSTAT = 72, // uchar teamNum, ushort statFrameNum                   # used by LadderBot #
 
 	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
 	NETMSG_UNREGISTER_NETMSG= 74, // uchar myPlayerNum, uchar NETMSG
@@ -99,6 +102,7 @@ enum NETMSG {
 
 // Data types for NETMSG_CUSTOM_DATA
 #define CUSTOM_DATA_SPEEDCONTROL 0
+#define CUSTOM_DATA_LUADRAWTIME 1
 
 /// sub-action-types of NETMSG_TEAM
 enum TEAMMSG {
@@ -153,6 +157,7 @@ public:
 	PacketType SendCPUUsage(float cpuUsage);
 	PacketType SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue);
 	PacketType SendSpeedControl(uchar myPlayerNum, int speedCtrl);
+	PacketType SendLuaDrawTime(uchar myPlayerNum, int mSec);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
 	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, bool reconnect = false);

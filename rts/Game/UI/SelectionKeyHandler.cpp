@@ -25,16 +25,16 @@
 #include "myMath.h"
 #include <boost/cstdint.hpp>
 
-CSelectionKeyHandler *selectionKeys;
+CSelectionKeyHandler* selectionKeys;
 
 extern boost::uint8_t *keys;
 
-CSelectionKeyHandler::CSelectionKeyHandler(void)
+CSelectionKeyHandler::CSelectionKeyHandler()
 {
 	LoadSelectionKeys();
 }
 
-CSelectionKeyHandler::~CSelectionKeyHandler(void)
+CSelectionKeyHandler::~CSelectionKeyHandler()
 {
 }
 

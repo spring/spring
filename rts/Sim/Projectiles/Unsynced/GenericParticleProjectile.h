@@ -7,20 +7,22 @@
 #include "Rendering/Textures/TextureAtlas.h"
 
 class CColorMap;
+
 class CGenericParticleProjectile : public CProjectile
 {
 	CR_DECLARE(CGenericParticleProjectile);
+
 public:
 	CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner);
-	~CGenericParticleProjectile(void);
+	~CGenericParticleProjectile();
 
-	virtual void Update();
 	virtual void Draw();
+	virtual void Update();
 
 	float3 gravity;
 
-	AtlasedTexture *texture;
-	CColorMap *colorMap;
+	AtlasedTexture* texture;
+	CColorMap* colorMap;
 	bool directional;
 
 	float life;
@@ -32,4 +34,4 @@ public:
 	float sizeMod;
 };
 
-#endif
+#endif // __GENERIC_PARTICLE_PROJECTILE_H__

@@ -3,7 +3,12 @@
 #ifndef READMAP_H
 #define READMAP_H
 
+#ifdef BITMAP_NO_OPENGL
+// FIXME: this is hacky. this class should not depend on OpenGL stuff
+typedef unsigned int GLuint;
+#else
 #include "Rendering/GL/myGL.h"
+#endif
 #include "creg/creg_cond.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -29,7 +34,7 @@ struct MapFeatureInfo
 
 struct MapBitmapInfo
 {
-	MapBitmapInfo() {}
+	MapBitmapInfo() : width(0), height(0) {}
 	MapBitmapInfo(int w, int h) : width(w), height(h) {}
 
 	int width;
@@ -37,13 +42,10 @@ struct MapBitmapInfo
 };
 
 struct HeightmapUpdate {
-	HeightmapUpdate(int x, int xx, int y, int yy) : x1(x), x2(xx), y1(y), y2(yy) {
-	}
+	HeightmapUpdate(int x, int xx, int y, int yy) : x1(x), x2(xx), y1(y), y2(yy) {}
 
-	int x1;
-	int x2;
-	int y1;
-	int y2;
+	int x1, x2;
+	int y1, y2;
 };
 
 class CReadMap

@@ -77,6 +77,7 @@ CR_REG_METADATA(CCommandAI, (
 CCommandAI::CCommandAI():
 	stockpileWeapon(0),
 	lastUserCommand(-1000),
+	selfDCountdown(0),
 	lastFinishCommand(0),
 	owner(owner),
 	orderTarget(0),
@@ -92,6 +93,7 @@ CCommandAI::CCommandAI():
 CCommandAI::CCommandAI(CUnit* owner):
 	stockpileWeapon(0),
 	lastUserCommand(-1000),
+	selfDCountdown(0),
 	lastFinishCommand(0),
 	owner(owner),
 	orderTarget(0),
@@ -356,9 +358,6 @@ static inline bool IsCommandInMap(const Command& c)
 	// TODO:
 	//   extend the check to commands for which
 	//   position is not stored in params[0..2]
-	//
-	// for the area variants of repair / reclaim / capture / resurrect,
-	// params[0..2] always holds the position and params[3] the radius
 	if (c.params.size() >= 3) {
 		return (float3(c.params[0], c.params[1], c.params[2]).IsInBounds());
 	}

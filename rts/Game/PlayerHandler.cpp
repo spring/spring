@@ -33,8 +33,7 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
 	players.resize(setup->playerStartingData.size());
 
-	for (size_t i = 0; i < setup->playerStartingData.size(); ++i)
-	{
+	for (size_t i = 0; i < setup->playerStartingData.size(); ++i) {
 		players[i] = setup->playerStartingData[i];
 		players[i].playerNum = (int)i;
 		players[i].myControl.myController = &players[i];

@@ -104,7 +104,7 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 	return myCommands;
 }
 
-int CGroup::GetDefaultCmd(const CUnit *unit, const CFeature* feature)
+int CGroup::GetDefaultCmd(const CUnit *unit, const CFeature* feature) const
 {
 	return CMD_STOP;
 }

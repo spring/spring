@@ -84,6 +84,8 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include "include\checkrunning.nsh"
 !include "include\aiHelpers.nsh"
 
+!include "sections\ensureDotNet.nsh"
+
 
 Function .onInit
 
@@ -153,59 +155,17 @@ Function .onInit
 
 	!ifndef TEST_BUILD
 		; check if we need to exit some processes which may be using unitsync
-		call CheckTASClientRunning
-		call CheckSpringDownloaderRunning
-		call CheckCADownloaderRunning
-		call CheckSpringLobbyRunning
-		call CheckSpringSettingsRunning
+		${CheckExecutableRunning} "TASClient.exe" "TASClient"
+		${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
+		${CheckExecutableRunning} "SpringDownloader.exe" "Spring Downloader"
+		${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
+		${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	!endif
 
 	; The core cannot be deselected
 	${IfNot} ${FileExists} "$INSTDIR\spring.exe"
 		!insertmacro SetSectionFlag 0 16 ; make the core section read only
 	${EndIf}
-FunctionEnd
-
-
-Function GetDotNETVersion
-	Push $0 ; Create variable 0 (version number).
-	Push $1 ; Create variable 1 (error).
-
-	; Request the version number from the Microsoft .NET Runtime Execution Engine DLL
-	System::Call "mscoree::GetCORVersion(w .r0, i ${NSIS_MAX_STRLEN}, *i) i .r1 ?u"
-
-	; If error, set "not found" as the top element of the stack. Otherwise, set the version number.
-	StrCmp $1 "error" 0 +2 ; If variable 1 is equal to "error", continue, otherwise skip the next couple of lines.
-	StrCpy $0 "not found"
-	Pop $1 ; Remove variable 1 (error).
-	Exch $0 ; Place variable  0 (version number) on top of the stack.
-FunctionEnd
-
-Function NoDotNet
-	MessageBox MB_YESNO \
-			"The .NET runtime library is not installed. v2.0 or newer is required for SpringDownloader. Do you wish to download and install it?" \
-			IDYES true IDNO false
-	true:
-		inetc::get "http://springrts.com/dl/dotnetfx.exe" "$INSTDIR\dotnetfx.exe"
-		ExecWait "$INSTDIR\dotnetfx.exe"
-		Delete   "$INSTDIR\dotnetfx.exe"
-		Goto next
-	false:
-	next:
-FunctionEnd
-
-Function OldDotNet
-	MessageBox MB_YESNO \
-			".NET runtime library v2.0 or newer is required for SpringDownloader. You have $0. Do you wish to download and install it?" \
-			IDYES true IDNO false
-	true:
-		inetc::get \
-				"http://springrts.com/dl/dotnetfx.exe" "$INSTDIR\dotnetfx.exe"
-		ExecWait "$INSTDIR\dotnetfx.exe"
-		Delete   "$INSTDIR\dotnetfx.exe"
-		Goto next
-	false:
-	next:
 FunctionEnd
 
 
@@ -220,13 +180,13 @@ SectionGroup /e "!Engine"
 		!undef INSTALL
 	SectionEnd
 
-	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-mt.exe"
+	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
 	!ifdef GML_BUILD_EXISTS
 		Section "Multi-threaded executable" SEC_GML
-			${!echonow} "Processing: spring-mt.exe"
+			${!echonow} "Processing: spring-multithreaded.exe"
 			SetOutPath "$INSTDIR"
 			SetOverWrite on
-			File "${BUILD_OR_DIST_DIR}\spring-mt.exe"
+			File "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
 		SectionEnd
 		!undef GML_BUILD_EXISTS
 	!endif
@@ -241,7 +201,7 @@ SectionGroup "Multiplayer battlerooms"
 	!undef INSTALL
 	SectionEnd
 
-	Section "Content downloader and fast-join lobby" SEC_SPRINGDOWNLOADER
+	Section "Fast-join lobby (SpringDownloader)" SEC_SPRINGDOWNLOADER
 		!define INSTALL
 			${!echonow} "Processing: springDownloader"
 			!include "sections\springDownloader.nsh"
@@ -340,7 +300,7 @@ Section Uninstall
 
 	!include "sections\main.nsh"
 
-	Delete "$INSTDIR\spring-mt.exe"
+	Delete "$INSTDIR\spring-multithreaded.exe"
 
 	!include "sections\docs.nsh"
 	!include "sections\shortcuts.nsh"

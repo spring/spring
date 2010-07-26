@@ -34,6 +34,10 @@ public:
 	 * This is either the human players nick or the Skirmish AIs instance nick.
 	 */
 	std::string name;
+
+	virtual bool operator == (const TeamController& tc) const {
+		return (name == tc.name);
+	}
 };
 
 /**

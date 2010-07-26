@@ -12,13 +12,28 @@ LIST(APPEND unitsync_libs ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost
 LIST(APPEND unitsync_libs 7zip minizip lua)
 LIST(APPEND unitsync_libs headlessStubs)
 
-# We still need these header files,
-# even if we are not going to link with SDL
-FIND_PACKAGE(SDL REQUIRED)
-INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+IF    (MINGW)
+	# We still need these header files,
+	# even if we are not going to link with SDL.
+	# We have them available anyway (mingwlibs).
+	FIND_PACKAGE(SDL REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+ELSE  (MINGW)
+	# Use a direct copy of the GL and SDL headers,
+	# as these may not be available on headless systems.
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
+ENDIF (MINGW)
 
-ADD_DEFINITIONS(-DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG} -DNOT_USING_CREG -DHEADLESS)
 
+ADD_DEFINITIONS(-DUNITSYNC)
+ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
+ADD_DEFINITIONS(${PIC_FLAG})
+ADD_DEFINITIONS(-DNOT_USING_CREG)
+ADD_DEFINITIONS(-DHEADLESS)
+ADD_DEFINITIONS(-DNO_SOUND)
+ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
+
+INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/lib/7zip)
 INCLUDE_DIRECTORIES(../../rts)
@@ -44,7 +59,6 @@ set(main_files
 	../../rts/Map/MapParser
 	../../rts/Map/SMF/SmfMapFile
 	../../rts/Rendering/Textures/Bitmap
-	../../rts/Rendering/Textures/nv_dds
 	)
 if (WIN32)
 	LIST(APPEND main_files ../../rts/System/Platform/Win/WinVersion)

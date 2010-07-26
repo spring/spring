@@ -7,18 +7,19 @@
 
 #include "EndGameBox.h"
 #include "MouseHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Game/PlayerHandler.h"
-#include "Rendering/glFont.h"
-#include "NetProtocol.h"
 #include "Game/Game.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Game/SelectedUnits.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/TeamStatistics.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
 
+using std::string;
 using std::sprintf;
 extern bool globalQuit;
 
@@ -132,9 +133,9 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
-	if(InBox(mx,my,box+exitBox)){
+	if (InBox(mx, my, box + exitBox)) {
 		delete this;
-		globalQuit=true;
+		globalQuit = true;
 		return;
 	}
 
@@ -167,11 +168,9 @@ bool CEndGameBox::IsAbove(int x, int y)
 	if (disabled)
 		return false;
 
-	float mx=MouseX(x);
-	float my=MouseY(y);
-	if(InBox(mx,my,box))
-		return true;
-	return false;
+	const float mx = MouseX(x);
+	const float my = MouseY(y);
+	return (InBox(mx, my, box));
 }
 
 void CEndGameBox::Draw()
@@ -226,7 +225,7 @@ void CEndGameBox::Draw()
 	font->glPrint(box.x1+sumBox.x1+0.015f,box.y1+sumBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Team stats");
 	font->glPrint(box.x1+difBox.x1+0.015f,box.y1+difBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Team delta stats");
 
-	if(teamHandler->Team(gu->myTeam)->isDead){
+	if (teamHandler->Team(gu->myTeam)->isDead) {
 		font->glPrint(box.x1+0.25f,box.y1+0.65f,1,FONT_SCALE | FONT_NORM,"You lost the game");
 	} else {
 		font->glPrint(box.x1+0.25f,box.y1+0.65f,1,FONT_SCALE | FONT_NORM,"You won the game");
@@ -311,7 +310,7 @@ void CEndGameBox::Draw()
 		if(dispMode==1)
 			maxy=std::max(stats[stat1].max,stat2!=-1?stats[stat2].max:0);
 		else
-			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/CTeam::statsPeriod;
+			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/TeamStatistics::statsPeriod;
 
 		int numPoints=stats[0].values[0].size();
 
@@ -319,8 +318,8 @@ void CEndGameBox::Draw()
 			font->glPrint(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, FONT_SCALE | FONT_NORM,
 			                FloatToSmallString(maxy * 0.25f * a));
 			font->glFormat(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, FONT_SCALE | FONT_NORM, "%02i:%02i",
-			                int(a * 0.25f * numPoints * CTeam::statsPeriod / 60),
-			                int(a * 0.25f * (numPoints - 1) * CTeam::statsPeriod) % 60);
+			                int(a * 0.25f * numPoints * TeamStatistics::statsPeriod / 60),
+			                int(a * 0.25f * (numPoints - 1) * TeamStatistics::statsPeriod) % 60);
 		}
 
 		font->glPrint(box.x1+0.55f,box.y1+0.65f,0.8f, FONT_SCALE | FONT_NORM, stats[stat1].name);
@@ -335,27 +334,32 @@ void CEndGameBox::Draw()
 		glLineStipple(3,0x5555);
 		glEnable(GL_LINE_STIPPLE);
 		glBegin(GL_LINES);
-				glVertex3f(box.x1+0.50f,box.y1+0.64f,0);
-				glVertex3f(box.x1+0.55f,box.y1+0.64f,0);
+				glVertex3f(box.x1 + 0.50f, box.y1 + 0.64f, 0.0f);
+				glVertex3f(box.x1 + 0.55f, box.y1 + 0.64f, 0.0f);
 		glEnd();
 		glDisable(GL_LINE_STIPPLE);
 
 		const float scalex = 0.54f / std::max(1.0f,numPoints-1.0f);
 		const float scaley = 0.54f / maxy;
 
-		for(int team=0; team<teamHandler->ActiveTeams(); team++){
-			if (teamHandler->Team(team)->gaia) continue;
-			glColor4ubv(teamHandler->Team(team)->color);
+		for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
+			const CTeam* pteam = teamHandler->Team(team);
+
+			if (pteam->gaia)
+				continue;
+
+			glColor4ubv(pteam->color);
 
 			glBegin(GL_LINE_STRIP);
-			for(int a=0;a<numPoints;++a){
-				float value=0;
-				if(dispMode==1)
-					value=stats[stat1].values[team][a];
-				else if(a>0)
-					value=(stats[stat1].values[team][a]-stats[stat1].values[team][a-1])/CTeam::statsPeriod;
+			for (int a = 0; a < numPoints; ++a) {
+				float value = 0.0f;
 
-				glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
+				if (dispMode == 1)
+					value = stats[stat1].values[team][a];
+				else if (a > 0)
+					value = (stats[stat1].values[team][a] - stats[stat1].values[team][a - 1]) / TeamStatistics::statsPeriod;
+
+				glVertex3f(box.x1 + 0.15f + a * scalex, box.y1 + 0.08f + value * scaley, 0.0f);
 			}
 			glEnd();
 
@@ -369,7 +373,7 @@ void CEndGameBox::Draw()
 					if(dispMode==1)
 						value=stats[stat2].values[team][a];
 					else if(a>0)
-						value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/CTeam::statsPeriod;
+						value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/TeamStatistics::statsPeriod;
 
 					glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
 				}
@@ -386,13 +390,20 @@ std::string CEndGameBox::GetTooltip(int x, int y)
 	if (disabled)
 		return "";
 
-	float mx=MouseX(x);
+	const float mx = MouseX(x);
 
-	if(dispMode==0){
-		if(mx>box.x1+0.02f && mx<box.x1+0.1f*6){
-			string tips[]={"Player Name","Mouse clicks per minute","Mouse movement in pixels per minute","Keyboard presses per minute","Unit commands per minute","Average command size (units affected per command)"};
+	if (dispMode == 0) {
+		if ((mx > box.x1 + 0.02f) && (mx < box.x1 + 0.1f * 6)) {
+			static const string tips[] = {
+				"Player Name",
+				"Mouse clicks per minute",
+				"Mouse movement in pixels per minute",
+				"Keyboard presses per minute",
+				"Unit commands per minute",
+				"Average command size (units affected per command)"
+			};
 
-			return tips[int((mx-box.x1-0.01f)*10)];
+			return tips[int((mx - box.x1 - 0.01f) * 10)];
 		}
 	}
 
@@ -433,10 +444,14 @@ void CEndGameBox::FillTeamStats()
 	stats.push_back(Stat("Damage Dealt"));
 	stats.push_back(Stat("Damage Received"));
 
-	for(int team=0; team<teamHandler->ActiveTeams(); team++){
-		if (teamHandler->Team(team)->gaia) continue;
-		for(std::list<CTeam::Statistics>::iterator si=teamHandler->Team(team)->statHistory.begin(); si!=teamHandler->Team(team)->statHistory.end(); si++){
-			stats[0].AddStat(team,0);
+	for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
+		const CTeam* pteam = teamHandler->Team(team);
+
+		if (pteam->gaia)
+			continue;
+
+		for (std::list<CTeam::Statistics>::const_iterator si = pteam->statHistory.begin(); si != pteam->statHistory.end(); si++) {
+			stats[0].AddStat(team, 0);
 
 			stats[1].AddStat(team, si->metalUsed);
 			stats[2].AddStat(team, si->energyUsed);
@@ -452,10 +467,10 @@ void CEndGameBox::FillTeamStats()
 			stats[9].AddStat(team, si->metalSent);
 			stats[10].AddStat(team, si->energySent);
 
-			stats[11].AddStat(team, si->metalProduced+si->metalReceived - (si->metalUsed+si->metalSent+si->metalExcess) );
-			stats[12].AddStat(team, si->energyProduced+si->energyReceived - (si->energyUsed+si->energySent+si->energyExcess) );
+			stats[11].AddStat(team, si->metalProduced+si->metalReceived - (si->metalUsed + si->metalSent+si->metalExcess) );
+			stats[12].AddStat(team, si->energyProduced+si->energyReceived - (si->energyUsed + si->energySent+si->energyExcess) );
 
-			stats[13].AddStat(team, si->unitsProduced+si->unitsReceived+si->unitsCaptured - (si->unitsDied+si->unitsSent+si->unitsOutCaptured) );
+			stats[13].AddStat(team, si->unitsProduced+si->unitsReceived + si->unitsCaptured - (si->unitsDied + si->unitsSent + si->unitsOutCaptured) );
 			stats[14].AddStat(team, si->unitsKilled);
 
 			stats[15].AddStat(team, si->unitsProduced);

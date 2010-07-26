@@ -394,14 +394,14 @@ void CProjectileHandler::CheckFeatureCollisions(
 	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 		CFeature* feature = *fi;
 
-		const bool raytraced =
-			(feature->collisionVolume &&
-			feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
-
 		// geothermals do not have a collision volume, skip them
 		if (!feature->blocking || feature->def->geoThermal) {
 			continue;
 		}
+
+		const bool raytraced =
+			(feature->collisionVolume &&
+			feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
 			const float3 pimpp =
@@ -435,7 +435,8 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
 			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
-			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
+			if (p->checkCol) // already collided with unit?
+				CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
 		}
 	}
 }
@@ -475,21 +476,7 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 
 void CProjectileHandler::AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece)
 {
-	FlyingPiece* fp = new FlyingPiece();
-	fp->pos = pos;
-	fp->speed = speed;
-	fp->prim = piece;
-	fp->object = object;
-	fp->verts = NULL;
-
-	fp->rotAxis = gu->usRandVector();
-	fp->rotAxis.ANormalize();
-	fp->rotSpeed = gu->usRandFloat() * 0.1f;
-	fp->rot = 0;
-
-	fp->team = team;
-	fp->texture = 0;
-
+	FlyingPiece* fp = new FlyingPiece(team, pos, speed, object, piece);
 	flyingPieces3DO.insert(fp);
 }
 
@@ -498,21 +485,6 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	if (textureType <= 0)
 		return; // texture 0 means 3do
 
-	FlyingPiece* fp = new FlyingPiece();
-	fp->pos = pos;
-	fp->speed = speed;
-	fp->prim = NULL;
-	fp->object = NULL;
-	fp->verts = verts;
-
-	/* Duplicated with AddFlyingPiece. */
-	fp->rotAxis = gu->usRandVector();
-	fp->rotAxis.ANormalize();
-	fp->rotSpeed = gu->usRandFloat() * 0.1f;
-	fp->rot = 0;
-
-	fp->team = team;
-	fp->texture = textureType;
-
+	FlyingPiece* fp = new FlyingPiece(team, pos, speed, textureType, verts);
 	flyingPiecesS3O.insert(fp);
 }

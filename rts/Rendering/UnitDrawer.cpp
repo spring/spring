@@ -116,8 +116,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 #endif
 
 	// load unit explosion generators
-	for (int unitDefID = 1; unitDefID <= unitDefHandler->numUnitDefs; unitDefID++) {
-		UnitDef* ud = &unitDefHandler->unitDefs[unitDefID];
+	for (int unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
+		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
 
 		for (std::vector<std::string>::const_iterator it = ud->sfxExplGenNames.begin(); it != ud->sfxExplGenNames.end(); ++it) {
 			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
@@ -2048,34 +2048,33 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	glTranslatef(interPos.x, interPos.y, interPos.z);
 	glCallList(CCamera::billboardList);
 
-	if (unit->health < unit->maxHealth) {
+	if (unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f) {
 		// black background for healthbar
 		glColor3f(0.0f, 0.0f, 0.0f);
 		glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
 
-		// healthbar
-		const float hpp = std::max(0.0f, unit->health / unit->maxHealth);
-		const float hEnd = hpp * 10.0f;
-
-		if (unit->stunned) {
-			glColor3f(0.0f, 0.0f, 1.0f);
-		} else {
-			if (hpp > 0.5f) {
-				glColor3f(1.0f - ((hpp - 0.5f) * 2.0f), 1.0f, 0.0f);
-			} else {
-				glColor3f(1.0f, hpp * 2.0f, 0.0f);
-			}
+		// health & stun level
+		const float health = std::max(0.0f, unit->health / unit->maxHealth);
+		const float stun = std::min(1.0f, unit->paralyzeDamage / unit->maxHealth);
+		float hsmin = std::min(health, stun);
+		const float colR = std::max(0.0f, 2.0f - 2.0f * health);
+		const float colG = std::min(2.0f * health, 1.0f);
+		if (hsmin > 0.0f) {
+			const float hscol = 0.8f - 0.5f * hsmin;
+			hsmin *= 10.0f;
+			glColor3f(colR * hscol, colG * hscol, 1.0f);
+			glRectf(-5.0f, 4.0f, hsmin - 5.0f, 6.0f);
 		}
-
-		glRectf(-5.0f, 4.0f, hEnd - 5.0f, 6.0f);
+		if (health > stun) {
+			glColor3f(colR, colG, 0.0f);
+			glRectf(hsmin - 5.0f, 4.0f, health * 10.0f - 5.0f, 6.0f);
+		}
+		if (health < stun) {
+			glColor3f(0.0f, 0.0f, 1.0f);
+			glRectf(hsmin - 5.0f, 4.0f, stun * 10.0f - 5.0f, 6.0f);
+		}
 	}
 
-	// stun level
-	if (!unit->stunned && (unit->paralyzeDamage > 0.0f)) {
-		const float pEnd = (unit->paralyzeDamage / unit->maxHealth) * 10.0f;
-		glColor3f(0.0f, 0.0f, 1.0f);
-		glRectf(-5.0f, 4.0f, pEnd - 5.0f, 6.0f);
-	}
 
 	// skip the rest of the indicators if it isn't a local unit
 	if ((gu->myTeam != unit->team) && !gu->spectatingFullView) {

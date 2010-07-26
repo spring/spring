@@ -5,6 +5,7 @@
 
 #include <map>
 #include "IModelParser.h"
+#include "System/Vec2.h"
 
 struct SOBJTriangle {
 	int vIndices[3];   // index of 1st/2nd/3rd vertex

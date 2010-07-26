@@ -25,11 +25,11 @@
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
-#include <SDL_syswm.h>
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
 #include "GlobalUnsynced.h"
 #ifdef _WIN32
+	#include <SDL_syswm.h>
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/wsdl.h"
 #endif
@@ -148,6 +148,7 @@ public:
 
 			case WM_ACTIVATE:
 			{
+				wsdl::ResetMouseButtons();
 				// wsdl::OnActivate(wnd, LOWORD(wParam), NULL, HIWORD(lParam));
 				// FIXME: move to SpringApp somehow and use GLContext.h instead!
 				if (globalRendering->fullScreen) {

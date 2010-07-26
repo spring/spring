@@ -189,6 +189,8 @@ Format: {
 --]]
 local sleepers = {}
 
+local numStartedThreads = 0
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -244,11 +246,11 @@ end
 -- Helper for MoveFinished and TurnFinished
 local function AnimFinished(waitingForAnim, piece, axis)
 	local index = piece * 3 + axis
-	local threads = waitingForAnim[index]
-	if threads then
+	local wthreads = waitingForAnim[index]
+	if wthreads then
 		waitingForAnim[index] = {}
-		for i=1,#threads do
-			WakeUp(threads[i])
+		for i=1,#wthreads do
+			WakeUp(wthreads[i])
 		end
 	end
 end
@@ -333,12 +335,16 @@ end
 function Spring.UnitScript.StartThread(fun, ...)
 	local co = co_create(fun)
 	local thread = {
+		threadID = numStartedThreads,
 		thread = co,
 		-- signal_mask is inherited from current thread, if any
 		signal_mask = (co_running() and activeUnit.threads[co_running()].signal_mask or 0),
 		unitID = activeUnit.unitID,
 	}
+
 	activeUnit.threads[co] = thread
+	numStartedThreads = numStartedThreads + 1
+
 	-- COB doesn't start thread immediately: it only sets up stack and
 	-- pushes parameters on it for first time the thread is scheduled.
 	-- Here it is easier however to start thread immediately, so we don't need
@@ -735,6 +741,7 @@ function gadget:GameFrame(n)
 		sleepers[n] = nil
 		-- Wake up the lazy bastards.
 		for i=1,#zzz do
+			local threadID = zzz[i].threadID
 			local unitID = zzz[i].unitID
 			activeUnit = units[unitID]
 			sp_CallAsUnit(unitID, WakeUp, zzz[i])

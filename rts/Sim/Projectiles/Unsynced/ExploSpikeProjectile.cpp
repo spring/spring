@@ -28,6 +28,14 @@ CR_REG_METADATA(CExploSpikeProjectile,
 ));
 
 CExploSpikeProjectile::CExploSpikeProjectile()
+	: CProjectile()
+	, length(0.0f)
+	, width(0.0f)
+	, alpha(0.0f)
+	, alphaDecay(0.0f)
+	, lengthGrowth(0.0f)
+	, dir(ZeroVector)
+	, color(1.0f, 0.8f, 0.5f)
 {
 }
 
@@ -48,23 +56,23 @@ CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& sp
 	SetRadius(length + lengthGrowth * alpha / alphaDecay);
 }
 
-CExploSpikeProjectile::~CExploSpikeProjectile(void)
+CExploSpikeProjectile::~CExploSpikeProjectile()
 {
 }
 
-void CExploSpikeProjectile::Update(void)
+void CExploSpikeProjectile::Update()
 {
-	pos+=speed;
-	length+=lengthGrowth;
-	alpha-=alphaDecay;
+	pos += speed;
+	length += lengthGrowth;
+	alpha -= alphaDecay;
 
-	if(alpha<=0){
-		alpha=0;
-		deleteMe=true;
+	if (alpha <= 0) {
+		alpha = 0;
+		deleteMe = true;
 	}
 }
 
-void CExploSpikeProjectile::Draw(void)
+void CExploSpikeProjectile::Draw()
 {
 	inArray=true;
 
@@ -91,7 +99,7 @@ void CExploSpikeProjectile::Draw(void)
 	#undef let
 }
 
-void CExploSpikeProjectile::Init(const float3& pos, CUnit *owner)
+void CExploSpikeProjectile::Init(const float3& pos, CUnit* owner)
 {
 	CProjectile::Init(pos, owner);
 

@@ -180,8 +180,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getHeight(int skirmishAIId,
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getRadius(int skirmishAIId, int unitDefId);
 
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isValid(int skirmishAIId, int unitDefId);
-
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getName(int skirmishAIId, int unitDefId);
 
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getHumanName(int skirmishAIId, int unitDefId);

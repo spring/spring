@@ -1577,26 +1577,28 @@ bool CAICallback::IsDebugDrawerEnabled() const
 
 int CAICallback::GetNumUnitDefs ()
 {
-	return unitDefHandler->numUnitDefs;
+	// defid=0 is not valid, that's why "-1"
+	return unitDefHandler->unitDefs.size() - 1;
 }
 
 void CAICallback::GetUnitDefList (const UnitDef** list)
 {
-	for (int a=0;a<unitDefHandler->numUnitDefs;a++)
-		list [a] = unitDefHandler->GetUnitDefByID (a+1);
+	for (int ud = 1; ud < unitDefHandler->unitDefs.size(); ud++) {
+		list[ud-1] = unitDefHandler->GetUnitDefByID(ud);
+	}
 }
 
 
 float CAICallback::GetUnitDefRadius(int def)
 {
-	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
 	S3DModel* mdl = ud->LoadModel();
 	return mdl->radius;
 }
 
 float CAICallback::GetUnitDefHeight(int def)
 {
-	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
 	S3DModel* mdl = ud->LoadModel();
 	return mdl->height;
 }
@@ -1609,7 +1611,8 @@ bool CAICallback::GetProperty(int unitId, int property, void *data)
 		const CUnit* unit = uh->units[unitId];
 		const int allyTeam = teamHandler->AllyTeam(team);
 		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) {
-			return false;  //return if the unit doesn't exist or cant be seen
+			// the unit does not exist or can not be seen
+			return false;  
 		}
 
 		switch (property) {

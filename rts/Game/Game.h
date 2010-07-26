@@ -74,7 +74,6 @@ public:
 
 	LuaParser* defsParser;
 
-	unsigned int oldframenum;
 	unsigned int fps;
 	unsigned int thisFps;
 
@@ -198,6 +197,8 @@ private:
 	unsigned skipLastDraw;
 
 	int speedControl;
+	int luaDrawTime;
+
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
