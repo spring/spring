@@ -221,20 +221,25 @@ static inline bool isBeingServicedOnPad(CUnit* u)
 void CWeapon::Update()
 {
 	if (hasCloseTarget) {
-		int piece;
-		// if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
-		if (useWeaponPosForAim) {
-			piece = owner->script->QueryWeapon(weaponNum);
-		} else {
-			piece = owner->script->AimFromWeapon(weaponNum);
-		}
-		relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
+		int weaponPiece = -1;
+		bool weaponAimed = (useWeaponPosForAim == 0);
 
-		//FIXME: this might be potential speedup?
-		// (AimFromWeapon may have been called already 3 lines ago)
-		//if (useWeaponPosForAim)
-		piece = owner->script->AimFromWeapon(weaponNum);
-		relWeaponPos = owner->script->GetPiecePos(piece);
+		// if we couldn't get a line of fire from the
+		// muzzle, try if we can get it from the aim
+		// piece
+		if (!weaponAimed) {
+			weaponPiece = owner->script->QueryWeapon(weaponNum);
+		} else {
+			weaponPiece = owner->script->AimFromWeapon(weaponNum);
+		}
+
+		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
+
+		if (!weaponAimed) {
+			weaponPiece = owner->script->AimFromWeapon(weaponNum);
+		}
+
+		relWeaponPos = owner->script->GetPiecePos(weaponPiece);
 	}
 
 	if (targetType == Target_Unit) {
@@ -590,59 +595,72 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	tracefile << "Weapon slow update: ";
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
-	//If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
-	int piece;
-	if (useWeaponPosForAim) {
-		piece = owner->script->QueryWeapon(weaponNum);
+
+	// If we can't get a line of fire from the muzzle, try
+	// the aim piece instead (since the weapon may just be
+	// turned in a wrong way)
+	int weaponPiece = -1;
+	bool weaponAimed = (useWeaponPosForAim == 0);
+
+	if (!weaponAimed) {
+		weaponPiece = owner->script->QueryWeapon(weaponNum);
+
 		if (useWeaponPosForAim > 1)
 			useWeaponPosForAim--;
 	} else {
-		piece = owner->script->AimFromWeapon(weaponNum);
+		weaponPiece = owner->script->AimFromWeapon(weaponNum);
 	}
-	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 
-	//FIXME: this might be potential speedup?
-	// (AimFromWeapon may have been called already 5 lines ago)
-	//if (useWeaponPosForAim)
-	piece = owner->script->AimFromWeapon(weaponNum);
-	relWeaponPos = owner->script->GetPiecePos(piece);
-
+	relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
+	weaponMuzzlePos =
+		owner->pos +
+		owner->frontdir * relWeaponMuzzlePos.z +
+		owner->updir    * relWeaponMuzzlePos.y +
+		owner->rightdir * relWeaponMuzzlePos.x;
 	weaponPos =
 		owner->pos +
 		owner->frontdir * relWeaponPos.z +
 		owner->updir    * relWeaponPos.y +
 		owner->rightdir * relWeaponPos.x;
 
-	if (weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (!weaponAimed) {
+		weaponPiece = owner->script->AimFromWeapon(weaponNum);
+	}
+
+	relWeaponPos = owner->script->GetPiecePos(weaponPiece);
+
+	if (weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
 	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
+	hasCloseTarget = ((targetPos - weaponPos).SqLength() < relWeaponPos.SqLength() * 16);
 
-	if ((targetPos - weaponPos).SqLength() < relWeaponPos.SqLength() * 16)
-		hasCloseTarget = true;
-	else
-		hasCloseTarget = false;
 
 	if (targetType != Target_None && !TryTarget(targetPos, haveUserTarget, targetUnit)) {
 		HoldFire();
 	}
 
-	if (targetType == Target_Unit) {
+	if (targetType == Target_Unit && targetUnit != NULL) {
+		// stop firing at cloaked targets
 		if (targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
 			HoldFire();
 
-		if (!haveUserTarget && targetUnit->neutral && owner->fireState < 3)
-			HoldFire();
-	}
+		if (!haveUserTarget) {
+			// stop firing at neutral targets (unless in FAW mode)
+			if (targetUnit->neutral && owner->fireState < 3)
+				HoldFire();
 
-	// this situation (unit keeps attacking its target if the
-	// target or the unit switches to an allied team) should
-	// be handled by /ally processing now
-	if (targetType == Target_Unit && !haveUserTarget && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
-		HoldFire();
+			// stop firing at allied targets
+			//
+			// this situation (unit keeps attacking its target if the
+			// target or the unit switches to an allied team) should
+			// be handled by /ally processing now
+			if (teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
+				HoldFire();
+		}
+	}
 
 	if (slavedTo) {
 		// use targets from the thing we are slaved to
@@ -654,7 +672,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
-				helper->GetUnitErrorPos(slavedTo->targetUnit,owner->allyteam) +
+				helper->GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam) +
 				errorVector * (weaponDef->targetMoveError * GAME_SPEED * slavedTo->targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
