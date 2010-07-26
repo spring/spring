@@ -99,15 +99,27 @@ function printCond(text_common, outFile__common, condotion_common) {
 
 # Searches an array (with strings as keys) with a regex pattern
 # returns 1 if the pattern matches at least one key, 0 otherwise
-function matchesAnyKey(toSearch, matchArray) {
+function matchesAnyKey(toSearch__common, matchArray__common) {
 
-	for (pattern in matchArray) {
-		if (match(toSearch, pattern)) {
+	for (pattern__common in matchArray__common) {
+		if (match(toSearch__common, pattern__common)) {
 			return 1;
 		}
 	}
 
 	return 0;
+}
+
+# Escapes all regex special chars in a string,
+# so you can for example search for the literal value of the string
+# with a regex search function.
+function regexEscape(str__common) {
+
+	strEscaped__common = str__common;
+
+	gsub(/\*/, "\\*", strEscaped__common);
+
+	return strEscaped__common;
 }
 
 ### END: Misc functions
