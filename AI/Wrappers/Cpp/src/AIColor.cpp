@@ -39,6 +39,22 @@ springai::AIColor::AIColor(float _r, float _g, float _b, float _a)
 }
 
 
+void springai::AIColor::LoadInto3(short* rgb) const
+{
+	rgb[0] = r;
+	rgb[1] = g;
+	rgb[2] = b;
+}
+
+void springai::AIColor::LoadInto4(short* rgba) const
+{
+	rgba[0] = r;
+	rgba[1] = g;
+	rgba[2] = b;
+	rgba[4] = a;
+}
+
+
 std::string springai::AIColor::ToString() const
 {
 	char resBuff[32];
@@ -46,3 +62,4 @@ std::string springai::AIColor::ToString() const
 	return std::string(resBuff);
 }
 
+const springai::AIColor springai::AIColor::NULL_VALUE;

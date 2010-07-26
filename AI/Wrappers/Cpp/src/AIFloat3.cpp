@@ -97,3 +97,5 @@ std::string springai::AIFloat3::ToString() const {
 		return true;
 	}
 }*/
+
+const springai::AIFloat3 springai::AIFloat3::NULL_VALUE;

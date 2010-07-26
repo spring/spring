@@ -27,6 +27,7 @@ public:
 //	virtual int HashCode() const;
 //	virtual bool Equals(const void* obj) const;
 
+	static const AIFloat3 NULL_VALUE;
 }; // class AIFloat3
 
 }  // namespace springai
