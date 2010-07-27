@@ -1111,8 +1111,6 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	// draw the projectiles
 	if (drawProjectiles) {
-		GML_STDMUTEX_LOCK(proj); // DrawForReal
-
 		projectileDrawer->DrawProjectilesMiniMap();
 	}
 
@@ -1121,15 +1119,13 @@ void CMiniMap::DrawForReal(bool use_geo)
 	// NOTE: this needlessly adds to the CursorIcons list, but at least
 	//       they are not drawn  (because the input receivers are drawn
 	//       after the command queues)
-	{
-		GML_RECMUTEX_LOCK(unit); // DrawForReal
 
-		LuaUnsyncedCtrl::DrawUnitCommandQueues();
-		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-			selectedUnits.DrawCommands();
-		}
-		lineDrawer.DrawAll();
+	LuaUnsyncedCtrl::DrawUnitCommandQueues();
+	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
+		selectedUnits.DrawCommands();
 	}
+
+	lineDrawer.DrawAll();
 
 	// draw the selection shape, and some ranges
 	if (drawCommands > 0) {

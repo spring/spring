@@ -631,6 +631,7 @@ void CSelectedUnits::DrawCommands()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
+	GML_RECMUTEX_LOCK(unit); // DrawCommands
 	GML_RECMUTEX_LOCK(grpsel); // DrawCommands
 	GML_STDMUTEX_LOCK(cai); // DrawCommands
 
