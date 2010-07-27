@@ -4358,6 +4358,10 @@ void CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
+
+			case NETMSG_TEAMSTAT: { /* LadderBot (dedicated client) only */ } break;
+			case NETMSG_REQUEST_TEAMSTAT: { /* LadderBot (dedicated client) only */ } break;
+
 			case NETMSG_AI_CREATED: {
 				try {
 					netcode::UnpackPacket pckt(packet, 2);
