@@ -541,6 +541,8 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
+	GML_STDMUTEX_LOCK(proj); // DrawProjectilesMiniMap
+
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
