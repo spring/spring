@@ -138,7 +138,7 @@ Lua:
  - improved Spring.GetTeamStatsHistory. It retuns now also the most recent data, not just the data of the cached stats which get updated only all 16 seconds.
  - fixed incorrect scaling in Spring.SetUnitResourceParam
  - fixed Spring.GetAIInfo, it returned incorrectly the given teamID as first argument
- - fixed a bug in Script.RemoveSyncedActionFallback 
+ - fixed a bug in Script.RemoveSyncedActionFallback
  - added missing `coroutines` module and missing `select` function to unsynced LuaGadgets
  - added os.setlocale to LuaUI
  - added Save/Load callins, both get a userdatum representing a save file as single argument
@@ -163,6 +163,7 @@ Engine / Unit Scripts:
  - LUS: _G in a Lua Unit Script points to the environment of that Lua Unit Script now
  - LUS: TargetWeight and BlockShot are actually called now
  - COB: Added KSIN (135, 1024*sin(x)), KCOS (136), KTAN (137) and SQRT (138) get constants.
+ - LUS: Fixed a desync bug.
 
 Interface:
  - fixed middle click scroll speed on linux
