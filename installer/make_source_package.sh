@@ -67,15 +67,13 @@ include=" \
  $dir/Doxyfile \
  $dir/cont/ \
  $dir/installer/ \
- $dir/LICENSE.html \
  $dir/README.* \
  $dir/rts/ \
  $dir/SConstruct \
  $dir/tools/SelectionEditor/ \
  $dir/CMakeLists.txt \
  $dir/tools/unitsync/ \
- $dir/tools/DemoTool/ \
- $dir/tools/DedicatedServer/"
+ $dir/tools/DemoTool/"
 
 # On linux, win32 executables are useless.
 exclude_from_all=""
