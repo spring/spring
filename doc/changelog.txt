@@ -193,7 +193,7 @@ AIs:
 
 Bugfixes:
  - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compability)
- - fixed a bug in LuaParser, so you can know use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
+ - fixed a bug in LuaParser, so you can now use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
  - fixed occasional bug where countdown time went into negative numbers and game never started
  - fixed impactOnly ignored features
  - improved error handling on network packet level
