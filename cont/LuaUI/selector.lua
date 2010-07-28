@@ -465,7 +465,7 @@ function widget:MousePress(x, y, button)
         startEntry = math.max(1, math.min(startEntry + maxEntries, #fullWidgetsList - maxEntries + 1))
       end
       UpdateListScroll()
-      return false   
+      return true   
     end
   end
 
@@ -476,14 +476,14 @@ function widget:MousePress(x, y, button)
       else
         ScrollUp(pageStep)
       end
-      return false
+      return true
     elseif ((y >= miny) and (y <= miny + bordery)) then
       if x > maxx then
         ScrollDown(1)
       else
         ScrollDown(pageStep)
       end
-      return false
+      return true
     end
   end
   
@@ -562,7 +562,7 @@ end
 
 function widget:IsAbove(x, y)
   UpdateList()
-  if ((x < minx) or (x > maxx) or
+  if ((x < minx) or (x > maxx + yStep) or
       (y < miny) or (y > maxy)) then
     return false
   end
