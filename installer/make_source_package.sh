@@ -65,14 +65,18 @@ include=" \
  $dir/AI/ \
  $dir/doc/ \
  $dir/cont/ \
+ $dir/include/ \
  $dir/installer/ \
  $dir/rts/ \
  $dir/SConstruct \
  $dir/tools/SelectionEditor/ \
- $dir/CMakeLists.txt \
  $dir/tools/unitsync/ \
+ $dir/tools/ArchiveMover/ \
  $dir/tools/DemoTool/ \
+ $dir/tools/CMakeLists.txt \
+ $dir/CMakeLists.txt \
  $dir/Doxyfile \
+ $dir/directories.txt \
  $dir/README.markdown \
  $dir/LICENSE \
  $dir/LICENSE.html \
