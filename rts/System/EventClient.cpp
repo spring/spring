@@ -3,15 +3,14 @@
 #include "StdAfx.h"
 
 #include "EventClient.h"
-using std::string;
 
 /******************************************************************************/
 /******************************************************************************/
 
-CEventClient::CEventClient(const string& _name, int _order, bool _synced)
-: name(_name),
-  order(_order),
-  synced(_synced)
+CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
+	: name(_name)
+	, order(_order)
+	, synced(_synced)
 {
 }
 
@@ -27,76 +26,73 @@ CEventClient::~CEventClient()
 //  Synced
 //
 
-void CEventClient::Load(CArchiveBase* archive) { return; }
-void CEventClient::GamePreload() { return; }
-void CEventClient::GameStart() { return; }
-void CEventClient::GameOver() { return; }
-void CEventClient::TeamDied(int teamID) { return; }
-void CEventClient::TeamChanged(int teamID) { return; }
-void CEventClient::PlayerChanged(int playerID) { return; }
-void CEventClient::PlayerRemoved(int playerID, int reason) { return; }
+void CEventClient::Load(CArchiveBase* archive) {}
+void CEventClient::GamePreload() {}
+void CEventClient::GameStart() {}
+void CEventClient::GameOver() {}
+void CEventClient::TeamDied(int teamID) {}
+void CEventClient::TeamChanged(int teamID) {}
+void CEventClient::PlayerChanged(int playerID) {}
+void CEventClient::PlayerRemoved(int playerID, int reason) {}
 
-void CEventClient::UnitCreated(const CUnit* unit, const CUnit* builder) { return; }
-void CEventClient::UnitFinished(const CUnit* unit) { return; }
+void CEventClient::UnitCreated(const CUnit* unit, const CUnit* builder) {}
+void CEventClient::UnitFinished(const CUnit* unit) {}
 void CEventClient::UnitFromFactory(const CUnit* unit, const CUnit* factory,
-                                   bool userOrders) { return; }
-void CEventClient::UnitDestroyed(const CUnit* unit, const CUnit* attacker) { return; }
-void CEventClient::UnitTaken(const CUnit* unit, int newTeam) { return; }
-void CEventClient::UnitGiven(const CUnit* unit, int oldTeam) { return; }
+                                   bool userOrders) {}
+void CEventClient::UnitDestroyed(const CUnit* unit, const CUnit* attacker) {}
+void CEventClient::UnitTaken(const CUnit* unit, int newTeam) {}
+void CEventClient::UnitGiven(const CUnit* unit, int oldTeam) {}
 
-void CEventClient::UnitIdle(const CUnit* unit) { return; }
-void CEventClient::UnitCommand(const CUnit* unit, const Command& command) { return; }
-void CEventClient::UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag) { return; }
+void CEventClient::UnitIdle(const CUnit* unit) {}
+void CEventClient::UnitCommand(const CUnit* unit, const Command& command) {}
+void CEventClient::UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag) {}
 void CEventClient::UnitDamaged(const CUnit* unit, const CUnit* attacker,
-                               float damage, int weaponID, bool paralyzer) { return; }
-void CEventClient::UnitExperience(const CUnit* unit, float oldExperience) { return; }
+                               float damage, int weaponID, bool paralyzer) {}
+void CEventClient::UnitExperience(const CUnit* unit, float oldExperience) {}
 
 void CEventClient::UnitSeismicPing(const CUnit* unit, int allyTeam,
-                             const float3& pos, float strength) { return; }
-void CEventClient::UnitEnteredRadar(const CUnit* unit, int allyTeam) { return; }
-void CEventClient::UnitEnteredLos(const CUnit* unit, int allyTeam) { return; }
-void CEventClient::UnitLeftRadar(const CUnit* unit, int allyTeam) { return; }
-void CEventClient::UnitLeftLos(const CUnit* unit, int allyTeam) { return; }
+                             const float3& pos, float strength) {}
+void CEventClient::UnitEnteredRadar(const CUnit* unit, int allyTeam) {}
+void CEventClient::UnitEnteredLos(const CUnit* unit, int allyTeam) {}
+void CEventClient::UnitLeftRadar(const CUnit* unit, int allyTeam) {}
+void CEventClient::UnitLeftLos(const CUnit* unit, int allyTeam) {}
 
-void CEventClient::UnitEnteredWater(const CUnit* unit) { return; }
-void CEventClient::UnitEnteredAir(const CUnit* unit) { return; }
-void CEventClient::UnitLeftWater(const CUnit* unit) { return; }
-void CEventClient::UnitLeftAir(const CUnit* unit) { return; }
+void CEventClient::UnitEnteredWater(const CUnit* unit) {}
+void CEventClient::UnitEnteredAir(const CUnit* unit) {}
+void CEventClient::UnitLeftWater(const CUnit* unit) {}
+void CEventClient::UnitLeftAir(const CUnit* unit) {}
 
-void CEventClient::UnitLoaded(const CUnit* unit, const CUnit* transport) { return; }
-void CEventClient::UnitUnloaded(const CUnit* unit, const CUnit* transport) { return; }
+void CEventClient::UnitLoaded(const CUnit* unit, const CUnit* transport) {}
+void CEventClient::UnitUnloaded(const CUnit* unit, const CUnit* transport) {}
 
-void CEventClient::UnitCloaked(const CUnit* unit) { return; }
-void CEventClient::UnitDecloaked(const CUnit* unit) { return; }
+void CEventClient::UnitCloaked(const CUnit* unit) {}
+void CEventClient::UnitDecloaked(const CUnit* unit) {}
 
-void CEventClient::RenderUnitCreated(const CUnit* unit, int cloaked) { return; }
-void CEventClient::RenderUnitDestroyed(const CUnit* unit) { return; }
-void CEventClient::RenderUnitCloakChanged(const CUnit* unit, int cloaked) { return; }
-void CEventClient::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) { return; }
+void CEventClient::RenderUnitCreated(const CUnit* unit, int cloaked) {}
+void CEventClient::RenderUnitDestroyed(const CUnit* unit) {}
+void CEventClient::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {}
+void CEventClient::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {}
 
-void CEventClient::UnitMoveFailed(const CUnit* unit) { return; }
+void CEventClient::UnitMoveFailed(const CUnit* unit) {}
 
-void CEventClient::FeatureCreated(const CFeature* feature) { return; }
-void CEventClient::FeatureDestroyed(const CFeature* feature) { return; }
-void CEventClient::FeatureMoved(const CFeature* feature) { return; }
+void CEventClient::FeatureCreated(const CFeature* feature) {}
+void CEventClient::FeatureDestroyed(const CFeature* feature) {}
+void CEventClient::FeatureMoved(const CFeature* feature) {}
 
-void CEventClient::RenderFeatureCreated(const CFeature* feature) { return; }
-void CEventClient::RenderFeatureDestroyed(const CFeature* feature) { return; }
-void CEventClient::RenderFeatureMoved(const CFeature* feature) { return; }
+void CEventClient::RenderFeatureCreated(const CFeature* feature) {}
+void CEventClient::RenderFeatureDestroyed(const CFeature* feature) {}
+void CEventClient::RenderFeatureMoved(const CFeature* feature) {}
 
-void CEventClient::ProjectileCreated(const CProjectile* proj) { return; }
-void CEventClient::ProjectileDestroyed(const CProjectile* proj) { return; }
+void CEventClient::ProjectileCreated(const CProjectile* proj) {}
+void CEventClient::ProjectileDestroyed(const CProjectile* proj) {}
 
-void CEventClient::RenderProjectileCreated(const CProjectile* proj) { return; }
-void CEventClient::RenderProjectileDestroyed(const CProjectile* proj) { return; }
+void CEventClient::RenderProjectileCreated(const CProjectile* proj) {}
+void CEventClient::RenderProjectileDestroyed(const CProjectile* proj) {}
 
 void CEventClient::StockpileChanged(const CUnit* unit,
-                                    const CWeapon* weapon, int oldCount) { return; }
+                                    const CWeapon* weapon, int oldCount) {}
 
-bool CEventClient::Explosion(int weaponID, const float3& pos, const CUnit* owner)
-{
-  return false;
-}
+bool CEventClient::Explosion(int weaponID, const float3& pos, const CUnit* owner) { return false; }
 
 
 /******************************************************************************/
@@ -105,26 +101,23 @@ bool CEventClient::Explosion(int weaponID, const float3& pos, const CUnit* owner
 //  Unsynced
 //
 
-void CEventClient::Save(zipFile archive) { return; }
+void CEventClient::Save(zipFile archive) {}
 
-void CEventClient::Update() { return; }
+void CEventClient::Update() {}
 
-void CEventClient::ViewResize() { return; }
+void CEventClient::ViewResize() {}
 
-bool CEventClient::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd)
-{
-  return false;
-}
+bool CEventClient::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) { return false; }
 
-void CEventClient::DrawGenesis() { return; }
-void CEventClient::DrawWorld() { return; }
-void CEventClient::DrawWorldPreUnit() { return; }
-void CEventClient::DrawWorldShadow() { return; }
-void CEventClient::DrawWorldReflection() { return; }
-void CEventClient::DrawWorldRefraction() { return; }
-void CEventClient::DrawScreenEffects() { return; }
-void CEventClient::DrawScreen() { return; }
-void CEventClient::DrawInMiniMap() { return; }
+void CEventClient::DrawGenesis() {}
+void CEventClient::DrawWorld() {}
+void CEventClient::DrawWorldPreUnit() {}
+void CEventClient::DrawWorldShadow() {}
+void CEventClient::DrawWorldReflection() {}
+void CEventClient::DrawWorldRefraction() {}
+void CEventClient::DrawScreenEffects() {}
+void CEventClient::DrawScreen() {}
+void CEventClient::DrawInMiniMap() {}
 
 // from LuaUI
 bool CEventClient::KeyPress(unsigned short key, bool isRepeat) { return false; }
@@ -135,25 +128,25 @@ int  CEventClient::MouseRelease(int x, int y, int button) { return -1; } // FIXM
 bool CEventClient::MouseWheel(bool up, float value) { return false; }
 bool CEventClient::JoystickEvent(const std::string& event, int val1, int val2) { return false; }
 bool CEventClient::IsAbove(int x, int y) { return false; }
-string CEventClient::GetTooltip(int x, int y) { return ""; }
+std::string CEventClient::GetTooltip(int x, int y) { return ""; }
 
 bool CEventClient::CommandNotify(const Command& cmd) { return false; }
 
-bool CEventClient::AddConsoleLine(const string& msg, const CLogSubsystem& subsystem) { return false; }
+bool CEventClient::AddConsoleLine(const std::string& msg, const CLogSubsystem& subsystem) { return false; }
 
 bool CEventClient::GroupChanged(int groupID) { return false; }
 
-bool CEventClient::GameSetup(const string& state, bool& ready,
-                             const map<int, string>& playerStates) { return false; }
+bool CEventClient::GameSetup(const std::string& state, bool& ready,
+                             const map<int, std::string>& playerStates) { return false; }
 
-string CEventClient::WorldTooltip(const CUnit* unit,
+std::string CEventClient::WorldTooltip(const CUnit* unit,
                                  const CFeature* feature,
                                  const float3* groundPos) { return false; }
 
 bool CEventClient::MapDrawCmd(int playerID, int type,
                         const float3* pos0,
                         const float3* pos1,
-                        const string* label) { return false; }
+                        const std::string* label) { return false; }
 
 /******************************************************************************/
 /******************************************************************************/
