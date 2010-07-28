@@ -1473,7 +1473,7 @@ int CLuaUnitScript::GetPieceTranslation(lua_State* L)
 int CLuaUnitScript::GetPieceRotation(lua_State* L)
 {
 	if (activeScript == NULL) {
-		return NULL;
+		return 0;
 	}
 	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
 	return ToLua(L, piece->rot);
@@ -1483,7 +1483,7 @@ int CLuaUnitScript::GetPieceRotation(lua_State* L)
 int CLuaUnitScript::GetPiecePosDir(lua_State* L)
 {
 	if (activeScript == NULL) {
-		return NULL;
+		return 0;
 	}
 	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
 	float3 pos, dir;

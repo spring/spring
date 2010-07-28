@@ -141,7 +141,7 @@ bool CEventClient::GameSetup(const std::string& state, bool& ready,
 
 std::string CEventClient::WorldTooltip(const CUnit* unit,
                                  const CFeature* feature,
-                                 const float3* groundPos) { return false; }
+                                 const float3* groundPos) { return ""; }
 
 bool CEventClient::MapDrawCmd(int playerID, int type,
                         const float3* pos0,

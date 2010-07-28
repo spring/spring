@@ -85,7 +85,7 @@ void PrintAvailableResolutions()
 		}
 		// remove last comma
 		if (n>=2) {
-			buffer[n-2] = NULL;
+			buffer[n-2] = '\0';
 		}
 		logOutput.Print("Supported Video modes: %s\n",buffer);
 	}

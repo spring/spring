@@ -1553,7 +1553,7 @@ EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(int
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetMaxMetal();
 	} else {
-		return NULL;
+		return -1.0f;
 	}
 }
 EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getExtractorRadius(int teamId,
@@ -1563,7 +1563,7 @@ EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getExtractorRadius
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetExtractorRadius();
 	} else {
-		return NULL;
+		return -1.0f;
 	}
 }
 
