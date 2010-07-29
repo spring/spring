@@ -134,8 +134,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		(piece->maxs - piece->goffset) +
 		(piece->mins - piece->goffset);
 
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
-	piece->colvol->Enable();
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT);
 
 
 	int childTableOffset = fp->childs;

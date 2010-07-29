@@ -557,7 +557,7 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		for (GML_VECTOR<CUnit*>::iterator ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
 			DrawIcon(*ui, false);
 		}
-		if(!gu->spectatingFullView) {
+		if (!gu->spectatingFullView) {
 			for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
 				DrawIcon(*ui, true);
 			}
@@ -1665,36 +1665,36 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
 {
 	switch (vol->GetVolumeType()) {
-		case COLVOL_TYPE_FOOTPRINT:
+		case CollisionVolume::COLVOL_TYPE_FOOTPRINT:
 			// fall through, this is too hard to render correctly so just render sphere :)
-		case COLVOL_TYPE_SPHERE:
+		case CollisionVolume::COLVOL_TYPE_SPHERE:
 			// fall through, sphere is special case of ellipsoid
-		case COLVOL_TYPE_ELLIPSOID: {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID: {
 			// scaled sphere: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
 			gluSphere(q, 1.0f, 20, 20);
 		} break;
-		case COLVOL_TYPE_CYLINDER: {
+		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			// scaled cylinder: base-radius, top-radius, height, slices, stacks
 			//
 			// (cylinder base is drawn at unit center by default so add offset
 			// by half major axis to visually match the mathematical situation,
 			// height of the cylinder equals the unit's full major axis)
 			switch (vol->GetPrimaryAxis()) {
-				case COLVOL_AXIS_X: {
+				case CollisionVolume::COLVOL_AXIS_X: {
 					glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
 					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 					glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
 					glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
 				} break;
-				case COLVOL_AXIS_Y: {
+				case CollisionVolume::COLVOL_AXIS_Y: {
 					glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
 					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 					glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
 					glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 				} break;
-				case COLVOL_AXIS_Z: {
+				case CollisionVolume::COLVOL_AXIS_Z: {
 					glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
 					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 					glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
@@ -1703,7 +1703,7 @@ void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
 
 			gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
 		} break;
-		case COLVOL_TYPE_BOX: {
+		case CollisionVolume::COLVOL_TYPE_BOX: {
 			// scaled cube: length, width, height
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));

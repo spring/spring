@@ -711,7 +711,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		udTable.GetString("collisionVolumeType", ""),
 		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC)
+		udTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_DISC)
 	);
 
 	if (usePieceCollisionVolumes) {

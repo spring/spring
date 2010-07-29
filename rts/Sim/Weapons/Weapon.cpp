@@ -794,37 +794,37 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		float3 difDir(dif);
 		difDir.Normalize();
 
+		{
+			CollisionVolume* cvOld = unit->collisionVolume;
+			CollisionVolume  cvNew = CollisionVolume(unit->collisionVolume);
+			CollisionQuery   cq;
 
-		CollisionVolume* cvOld = unit->collisionVolume;
-		CollisionVolume  cvNew = CollisionVolume(unit->collisionVolume);
-		CollisionQuery   cq;
+			cvNew.RescaleAxes(absTB, absTB, absTB);
+			cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_DISC);
 
-		cvNew.RescaleAxes(absTB, absTB, absTB);
-		cvNew.SetTestType(COLVOL_TEST_DISC);
+			unit->collisionVolume = &cvNew;
 
-		unit->collisionVolume = &cvNew;
+			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, ZeroVector, NULL)) {
+				// weapon inside target unit's volume, no
+				// real need to calculate penetration depth
+				dif = ZeroVector;
+			} else {
+				// raytrace to find the proper correction
+				// factor for non-spherical volumes based
+				// on ingress position
+				cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_CONT);
 
-		if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, ZeroVector, NULL)) {
-			// weapon inside target unit's volume, no
-			// real need to calculate penetration depth
-			dif = ZeroVector;
-		} else {
-			// raytrace to find the proper correction
-			// factor for non-spherical volumes based
-			// on ingress position
-			cvNew.SetTestType(COLVOL_TEST_CONT);
-
-			// intersection is not guaranteed if the
-			// volume has an offset, since here we're
-			// shooting at the target's midpoint
-			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos + (difDir * cvNew.GetBoundingRadius() * 2.0f), &cq)) {
-				if (targetBorder > 0.0f) { dif -= (difDir * ((pos - cq.p0).Length())); }
-				if (targetBorder < 0.0f) { dif += (difDir * ((cq.p1 - pos).Length())); }
+				// intersection is not guaranteed if the
+				// volume has an offset, since here we're
+				// shooting at the target's midpoint
+				if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos + (difDir * cvNew.GetBoundingRadius() * 2.0f), &cq)) {
+					if (targetBorder > 0.0f) { dif -= (difDir * ((pos - cq.p0).Length())); }
+					if (targetBorder < 0.0f) { dif += (difDir * ((cq.p1 - pos).Length())); }
+				}
 			}
+
+			unit->collisionVolume = cvOld;
 		}
-
-		unit->collisionVolume = cvOld;
-
 
 		heightDiff = (weaponPos.y + dif.y) - owner->pos.y;
 	} else {

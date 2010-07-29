@@ -343,12 +343,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	// unit->radius themselves are no longer altered)
 	unit->collisionVolume = new CollisionVolume(ud->collisionVolume, unit->model->radius * ((ud->canfly)? 0.5f: 1.0f));
 
-	if (unit->model->radius <= 60.0f) {
-		// the interval-based method fails too easily for units
-		// with small default volumes, force use of raytracing
-		unit->collisionVolume->SetTestType(COLVOL_TEST_CONT);
-	}
-
 
 	if (ud->floater) {
 		// restrict our depth to our waterline

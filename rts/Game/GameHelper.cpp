@@ -402,7 +402,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 					if (unit->isIcon) {
 						//! for iconified units, just pretend the collision
 						//! volume is a sphere of radius <unit->IconRadius>
-						cv.SetDefaultScale(unit->iconRadius);
+						cv.Init(unit->iconRadius);
 					}
 	
 					if (CCollisionHandler::MouseHit(unit, start, start + dir * length, &cv, &cq)) {
