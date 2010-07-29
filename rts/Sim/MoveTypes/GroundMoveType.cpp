@@ -40,6 +40,8 @@
 #include "System/myMath.h"
 #include "System/Vec2.h"
 
+#define DEBUG_OUTPUT 0
+
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
 CR_REG_METADATA(CGroundMoveType, (
@@ -112,7 +114,6 @@ const float MAX_OFF_PATH_FACTOR = 20;				// How far away from a waypoint a unit 
 
 const float MINIMUM_SPEED = 0.01f;					// Minimum speed a unit may move in.
 
-static const bool DEBUG_CONTROLLER = false;
 std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
 
 //////////////////////////////////////////////////////////////////////
@@ -236,13 +237,13 @@ void CGroundMoveType::Update()
 		owner->speed = ZeroVector;
 	} else {
 		bool wantReverse = false;
+
 		if (owner->directControl) {
 			wantReverse = UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
 			if (pathId || (currentSpeed != 0.0f)) {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
-				// Initial calculations.
 				ASSERT_SYNCED_FLOAT3(waypoint);
 				ASSERT_SYNCED_FLOAT3(owner->pos);
 
@@ -250,14 +251,18 @@ void CGroundMoveType::Update()
 
 				if (pathId && !atGoal) {
 					if (currentSpeed <= 0.0f) {
+						// note: the unit could just be turning in-place
+						// over several frames (eg. to maneuver around an
+						// obstacle), which unlike actual immobilization
+						// does not count as an ETA failure
 						etaFailures++;
 
-						if (DEBUG_CONTROLLER) {
-							logOutput.Print(
-								"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i, cd2wp < md2wp: %i)",
-								owner->id, pathId, atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint()
-							);
-						}
+						#if (DEBUG_OUTPUT == 1)
+						logOutput.Print(
+							"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i, cd2wp < md2wp: %i)",
+							owner->id, pathId, atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint()
+						);
+						#endif
 					}
 				}
 
@@ -359,13 +364,14 @@ void CGroundMoveType::SlowUpdate()
 		return;
 	}
 
-	if (progressState == Active && etaFailures > UNIT_SLOWUPDATE_RATE) {
-		if (owner->pos.SqDistance2D(goalPos) > (200 * 200)) {
+
+	if (progressState == Active && (etaFailures > UNIT_SLOWUPDATE_RATE * UNIT_SLOWUPDATE_RATE)) {
+		if (owner->pos.SqDistance2D(goalPos) > (200.0f * 200.0f)) {
 			// too many ETA failures and not within acceptable range of
-			// our goal, try get a new path from our current position
-			if (DEBUG_CONTROLLER) {
-				logOutput.Print("[CGMT::SU] ETA failure for unit %i", owner->id);
-			}
+			// our goal, request a new path from our current position
+			#if (DEBUG_OUTPUT == 1)
+			logOutput.Print("[CGMT::SU] ETA failure for unit %i", owner->id);
+			#endif
 
 			StopEngine();
 			StartEngine();
@@ -373,9 +379,10 @@ void CGroundMoveType::SlowUpdate()
 			// already reasonably close to our goal waypoint, but cannot
 			// get to it: trigger a UnitMoveFailed event so higher-level
 			// logic can deal with this
-			if (DEBUG_CONTROLLER) {
-				logOutput.Print("[CGMT::SU] goal-position clogged up for unit %i", owner->id);
-			}
+			#if (DEBUG_OUTPUT == 1)
+			logOutput.Print("[CGMT::SU] goal-position clogged up for unit %i", owner->id);
+			#endif
+
 			Fail();
 		}
 	}
@@ -383,9 +390,9 @@ void CGroundMoveType::SlowUpdate()
 	// If the action is active, but not the engine and the
 	// re-try-delay has passed, then start the engine.
 	if (progressState == Active && !pathId && gs->frameNum > restartDelay) {
-		if (DEBUG_CONTROLLER) {
-			logOutput.Print("[CGMT::SU] restart engine for unit %i", owner->id);
-		}
+		#if (DEBUG_OUTPUT == 1)
+		logOutput.Print("[CGMT::SU] restart engine for unit %i", owner->id);
+		#endif
 		StartEngine();
 	}
 
@@ -464,9 +471,9 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	useMainHeading = false;
 	progressState = Active;
 
-	if (DEBUG_CONTROLLER) {
-		logOutput.Print("[CGMT::StartMove] starting engine for unit %i", owner->id);
-	}
+	#if (DEBUG_OUTPUT == 1)
+	logOutput.Print("[CGMT::StartMove] starting engine for unit %i", owner->id);
+	#endif
 
 	StartEngine();
 
@@ -487,9 +494,9 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
-	if (DEBUG_CONTROLLER) {
-		logOutput.Print("[CGMT::StopMove] stopping engine for unit %i", owner->id);
-	}
+	#if (DEBUG_OUTPUT == 1)
+	logOutput.Print("[CGMT::StopMove] stopping engine for unit %i", owner->id);
+	#endif
 
 	StopEngine();
 
@@ -1033,9 +1040,9 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						// one of the potential avoidance squares is blocked
 						etaFailures++;
 
-						if (DEBUG_CONTROLLER) {
-							logOutput.Print("[CGMT::OA] path blocked for unit %i", owner->id);
-						}
+						#if (DEBUG_OUTPUT == 1)
+						logOutput.Print("[CGMT::OA] path blocked for unit %i", owner->id);
+						#endif
 						break;
 					}
 				}
@@ -1093,7 +1100,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 							// Avoid collision by turning the heading to left or right.
 							// Using the object thats needs the most adjustment.
 
-							#if D_DEBUG_CONTROLLER
+							#if (DEBUG_OUTPUT == 1)
 							GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
 
 							if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
@@ -1128,7 +1135,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			// Sum up avoidance.
 			avoidanceVec = (desiredDir.cross(UpVector) * (avoidRight - avoidLeft));
 
-#if D_DEBUG_CONTROLLER
+			#if (DEBUG_OUTPUT == 1)
 			GML_RECMUTEX_LOCK(sel); //ObstacleAvoidance
 
 			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
@@ -1138,7 +1145,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				a = geometricObjects->AddLine(owner->pos + UpVector * 20, owner->pos + UpVector * 20 + desiredDir * 40, 7, 1, 4);
 				geometricObjects->SetColor(a, 0.3f, 0.3f, 1, 0.6f);
 			}
-#endif
+			#endif
 		}
 
 		// Return the resulting recommended velocity.
@@ -1199,9 +1206,9 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 void CGroundMoveType::GetNewPath()
 {
 	if (owner->pos.SqDistance2D(lastGetPathPos) < 400) {
-		if (DEBUG_CONTROLLER) {
-			logOutput.Print("[CGMT::GNP] non-moving path failures for unit %i: %i", owner->id, nonMovingFailures);
-		}
+		#if (DEBUG_OUTPUT == 1)
+		logOutput.Print("[CGMT::GNP] non-moving path failures for unit %i: %i", owner->id, nonMovingFailures);
+		#endif
 
 		nonMovingFailures++;
 
@@ -1325,13 +1332,13 @@ void CGroundMoveType::StartEngine() {
 			owner->isMoving = true;
 			owner->script->StartMoving();
 
-			if (DEBUG_CONTROLLER) {
-				logOutput.Print("[CGMT::StartEngine] engine started for unit %i", owner->id);
-			}
+			#if (DEBUG_OUTPUT == 1)
+			logOutput.Print("[CGMT::StartEngine] engine started for unit %i", owner->id);
+			#endif
 		} else {
-			if (DEBUG_CONTROLLER) {
-				logOutput.Print("[CGMT::StartEngine] failed to start engine for unit %i", owner->id);
-			}
+			#if (DEBUG_OUTPUT == 1)
+			logOutput.Print("[CGMT::StartEngine] failed to start engine for unit %i", owner->id);
+			#endif
 
 			Fail();
 		}
@@ -1354,9 +1361,9 @@ void CGroundMoveType::StopEngine() {
 		// Stop animation.
 		owner->script->StopMoving();
 
-		if (DEBUG_CONTROLLER) {
-			logOutput.Print("[CGMT::StopEngine] engine stopped for unit %i", owner->id);
-		}
+		#if (DEBUG_OUTPUT == 1)
+		logOutput.Print("[CGMT::StopEngine] engine stopped for unit %i", owner->id);
+		#endif
 	}
 
 	owner->isMoving = false;
@@ -1387,9 +1394,9 @@ void CGroundMoveType::Arrived()
 		progressState = Done;
 		owner->commandAI->SlowUpdate();
 
-		if (DEBUG_CONTROLLER) {
-			logOutput.Print("[CGMT::Arrive] unit %i arrived", owner->id);
-		}
+		#if (DEBUG_OUTPUT == 1)
+		logOutput.Print("[CGMT::Arrive] unit %i arrived", owner->id);
+		#endif
 	}
 }
 
@@ -1399,9 +1406,9 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail()
 {
-	if (DEBUG_CONTROLLER) {
-		logOutput.Print("[CGMT::Fail] unit %i failed", owner->id);
-	}
+	#if (DEBUG_OUTPUT == 1)
+	logOutput.Print("[CGMT::Fail] unit %i failed", owner->id);
+	#endif
 
 	StopEngine();
 
@@ -1899,7 +1906,7 @@ void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressiv
 /**
 * @brief Orients owner so that weapon[0]'s arc includes mainHeadingPos
 */
-void CGroundMoveType::SetMainHeading(){
+void CGroundMoveType::SetMainHeading() {
 	if (useMainHeading && !owner->weapons.empty()) {
 		float3 dir1 = owner->weapons.front()->mainDir;
 		dir1.y = 0;
