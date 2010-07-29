@@ -66,7 +66,8 @@ class FileSystem
 				const std::string& relPath) const;
 
 		// metadata read functions
-		size_t GetFilesize(std::string path) const;
+		bool FileExists(std::string path) const;
+		size_t GetFileSize(std::string path) const;
 
 		// directory functions
 		bool CreateDirectory(std::string dir) const;

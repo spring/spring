@@ -101,8 +101,6 @@ ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources
 TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
 IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver-static ws2_32)
-ELSE  (MINGW)
-	SET_TARGET_PROPERTIES(springserver-static PROPERTIES COMPILE_FLAGS "-fvisibility=default")
 ENDIF (MINGW)
 
 ADD_LIBRARY(springserver SHARED ${ENGINE_SRC_ROOT_DIR}/Map/MapParser)
