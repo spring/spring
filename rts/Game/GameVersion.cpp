@@ -74,6 +74,12 @@ const char* const Additional = "" // Build-Bot will write in here before compili
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
+
+#if defined UNITSYNC
+	GV_ADD_SPACE "Unitsync"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
 	;
 
 /** Build date and time. */
