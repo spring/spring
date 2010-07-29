@@ -11,8 +11,6 @@
 #include <assert.h>
 #include <limits.h>
 #include <fstream>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include "FileHandler.h"
 #include "FileSystemHandler.h"
@@ -108,24 +106,28 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 	return regex;
 }
 
+bool FileSystem::FileExists(std::string file) const
+{
+	FixSlashes(file);
+	return FileSystemHandler::FileExists(file);
+}
+
 /**
  * @brief get filesize
  *
  * @return the filesize or 0 if the file doesn't exist.
  */
-size_t FileSystem::GetFilesize(std::string file) const
+size_t FileSystem::GetFileSize(std::string file) const
 {
-	if (!CheckFile(file))
+	if (!CheckFile(file)) {
 		return 0;
+	}
 	FixSlashes(file);
-	struct stat info;
-	if (stat(file.c_str(), &info) != 0)
-		return 0;
-	return info.st_size;
+	return FileSystemHandler::GetFileSize(file);
 }
 
 /**
- * @brief create a directory
+ * @brief creates a directory recursively
  *
  * Works like mkdir -p, ie. attempts to create parent directories too.
  * Operates on the current working directory.
