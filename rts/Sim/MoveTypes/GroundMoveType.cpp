@@ -251,13 +251,13 @@ void CGroundMoveType::Update()
 
 				if (pathId && !atGoal) {
 					if (currentSpeed != 0.0f) {
-						etaFailures = std::max(    0U, etaFailures - 1);
+						etaFailures = std::max(    0, int(etaFailures - 1));
 					} else {
 						// note: the unit could just be turning in-place
 						// over several frames (eg. to maneuver around an
 						// obstacle), which unlike actual immobilization
 						// does not count as an ETA failure
-						etaFailures = std::min(65536U, etaFailures + 1);
+						etaFailures = std::min(65536, int(etaFailures + 1));
 
 						#if (DEBUG_OUTPUT == 1)
 						logOutput.Print(
@@ -365,7 +365,6 @@ void CGroundMoveType::SlowUpdate()
 			StopEngine();
 		return;
 	}
-
 
 	if (progressState == Active && (etaFailures > (65536 / turnRate))) {
 		if (owner->pos.SqDistance2D(goalPos) > (200.0f * 200.0f)) {
