@@ -365,7 +365,7 @@ void CGroundMoveType::SlowUpdate()
 	}
 
 
-	if (progressState == Active && (etaFailures > UNIT_SLOWUPDATE_RATE * UNIT_SLOWUPDATE_RATE)) {
+	if (progressState == Active && (etaFailures > (65536 / turnRate))) {
 		if (owner->pos.SqDistance2D(goalPos) > (200.0f * 200.0f)) {
 			// too many ETA failures and not within acceptable range of
 			// our goal, request a new path from our current position
@@ -420,7 +420,7 @@ void CGroundMoveType::SlowUpdate()
 	if (owner->pos != oldSlowUpdatePos) {
 		oldSlowUpdatePos = owner->pos;
 
-		int newmapSquare = ground->GetSquare(owner->pos);
+		const int newmapSquare = ground->GetSquare(owner->pos);
 		if (newmapSquare != owner->mapSquare) {
 			owner->mapSquare = newmapSquare;
 
@@ -544,12 +544,12 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 				// If current waypoint is the last one and it's near,
 				// hit the brakes a bit more.
 				const float finalGoalSqDist = owner->pos.SqDistance2D(goalPos);
-				const float tipSqDist = owner->unitDef->turnInPlaceDistance*owner->unitDef->turnInPlaceDistance;
+				const float tipSqDist = owner->unitDef->turnInPlaceDistance * owner->unitDef->turnInPlaceDistance;
 				const bool unitdefInPlace = (owner->unitDef->turnInPlace
 						&& (tipSqDist > finalGoalSqDist
 						|| owner->unitDef->turnInPlaceDistance <= 0.0f));
 
-				if (unitdefInPlace || currentSpeed < owner->unitDef->turnInPlaceSpeedLimit/GAME_SPEED) {
+				if (unitdefInPlace || currentSpeed < owner->unitDef->turnInPlaceSpeedLimit / GAME_SPEED) {
 					// keep the turn mostly in-place
 					wSpeed = turnSpeed;
 				} else {
@@ -660,7 +660,7 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 
 void CGroundMoveType::ImpulseAdded(void)
 {
-	if(owner->beingBuilt || owner->unitDef->movedata->moveType==MoveData::Ship_Move)
+	if (owner->beingBuilt || owner->unitDef->movedata->moveType == MoveData::Ship_Move)
 		return;
 
 	float3& impulse = owner->residualImpulse;
@@ -718,28 +718,27 @@ void CGroundMoveType::UpdateSkid(void)
 		else
 			wh = ground->GetHeight2(midPos.x, midPos.z);
 
-		if(wh>midPos.y-owner->relMidPos.y){
-			flying=false;
-			skidRotSpeed+=(gs->randFloat()-0.5f)*1500;//*=0.5f+gs->randFloat();
-			midPos.y=wh+owner->relMidPos.y-speed.y*0.5f;
-			float impactSpeed = -speed.dot(ground->GetNormal(midPos.x,midPos.z));
-			if(impactSpeed > owner->unitDef->minCollisionSpeed
-				&& owner->unitDef->minCollisionSpeed >= 0)
-			{
-				owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
-					0, ZeroVector);
+		if (wh>midPos.y - owner->relMidPos.y) {
+			flying = false;
+			skidRotSpeed += (gs->randFloat() - 0.5f) * 1500; //*=0.5f+gs->randFloat();
+			midPos.y = wh + owner->relMidPos.y - speed.y * 0.5f;
+
+			const float impactSpeed = -speed.dot(ground->GetNormal(midPos.x, midPos.z));
+
+			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0.0f) {
+				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 			}
 		}
 	} else {
-		float speedf=speed.Length();
-		float speedReduction=0.35f;
-//		if(owner->unitDef->movedata->moveType==MoveData::Hover_Move)
-//			speedReduction=0.1f;
+		float speedf = speed.Length();
+		const float speedReduction = 0.35f;
+
 		// does not use OnSlope() because then it could stop on an invalid path
 		// location, and be teleported back.
-		bool onSlope = (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
-			owner->unitDef->movedata->maxSlope)
-			&& (!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0);
+		const bool onSlope =
+			(ground->GetSlope(owner->midPos.x, owner->midPos.z) > owner->unitDef->movedata->maxSlope) &&
+			(!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0.0f);
+
 		if (speedf < speedReduction && !onSlope) {
 			//stop skidding
 			currentSpeed = 0.0f;
@@ -748,50 +747,52 @@ void CGroundMoveType::UpdateSkid(void)
 			skidRotSpeed = 0.0f;
 			owner->physicalState = oldPhysState;
 			owner->moveType->useHeading = true;
-			float rp = floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
+
+			const float rp = floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
 			skidRotSpeed2 = (rp - skidRotPos2) * 0.5f;
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
 				float3 dir = ground->GetNormal(midPos.x, midPos.z);
-				float3 normalForce = dir*dir.dot(UpVector*mapInfo->map.gravity);
-				float3 newForce = UpVector*mapInfo->map.gravity - normalForce;
-				speed+=newForce;
+				float3 normalForce = dir * dir.dot(UpVector * mapInfo->map.gravity);
+				float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
+				speed += newForce;
 				speedf = speed.Length();
-				speed *= 1 - (.1*dir.y);
+				speed *= 1.0f - (0.1f * dir.y);
 			} else {
-				speed*=(speedf-speedReduction)/speedf;
+				speed *= (speedf - speedReduction) / speedf;
 			}
 
-			float remTime=speedf/speedReduction-1;
-			float rp=floor(skidRotPos2+skidRotSpeed2*remTime+0.5f);
-			skidRotSpeed2=(remTime+1 == 0 ) ? 0 : (rp-skidRotPos2)/(remTime+1);
+			float remTime = speedf / speedReduction - 1.0f;
+			float rp = floor(skidRotPos2 + skidRotSpeed2 * remTime + 0.5f);
 
-			if(floor(skidRotPos2)!=floor(skidRotPos2+skidRotSpeed2)){
-				skidRotPos2=0;
-				skidRotSpeed2=0;
+			skidRotSpeed2 = (remTime + 1.0f == 0.0f ) ? 0.0f : (rp - skidRotPos2) / (remTime + 1.0f);
+
+			if (floor(skidRotPos2) != floor(skidRotPos2 + skidRotSpeed2)) {
+				skidRotPos2 = 0.0f;
+				skidRotSpeed2 = 0.0f;
 			}
 		}
 
-		float wh;
-		if(floatOnWater)
+		float wh = 0.0f;
+		if (floatOnWater)
 			wh = ground->GetHeight(pos.x, pos.z);
 		else
 			wh = ground->GetHeight2(pos.x, pos.z);
 
-		if(wh-pos.y < speed.y + mapInfo->map.gravity){
+		if (wh-pos.y < speed.y + mapInfo->map.gravity) {
 			speed.y += mapInfo->map.gravity;
 			skidding = true; // flying requires skidding
 			flying = true;
-		} else if(wh-pos.y > speed.y){
+		} else if (wh-pos.y > speed.y) {
 			const float3& normal = ground->GetNormal(pos.x, pos.z);
-			float dot = speed.dot(normal);
-			if(dot > 0){
-				speed*=0.95f;
-			}
-			else {
-				speed += (normal*(fabs(speed.dot(normal)) + .1))*1.9f;
-				speed*=.8;
+			const float dot = speed.dot(normal);
+
+			if (dot > 0) {
+				speed *= 0.95f;
+			} else {
+				speed += (normal * (fabs(speed.dot(normal)) + 0.1f)) * 1.9f;
+				speed *= 0.8f;
 			}
 		}
 	}
@@ -1413,7 +1414,7 @@ void CGroundMoveType::Fail()
 	StopEngine();
 
 	// failure of finding a path means that
-	// this action has failed to reach it's goal.
+	// this action has failed to reach its goal.
 	progressState = Failed;
 
 	eventHandler.UnitMoveFailed(owner);
@@ -2062,14 +2063,14 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir) const
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
 	const float waypointDirDP = waypointDir.dot(owner->frontdir);
 	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
-	const float turnAngleDeg  = streflop::acosf(waypointAngle) * (180.0f / PI);                           // in degrees
+	const float turnAngleDeg  = streflop::acosf(waypointAngle) * (180.0f / PI);                 // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                             // in "headings"
 	const float revAngleSpr   = 32768.0f - turnAngleSpr;                                        // 180 deg - angle
 
 	// units start accelerating before finishing the turn, so subtract something
 	const float turnTimeMod   = 5.0f;
-	const float turnAngleTime = std::max(0.0f, (turnAngleSpr / owner->unitDef->turnRate) - turnTimeMod); // in frames
-	const float revAngleTime  = std::max(0.0f, (revAngleSpr  / owner->unitDef->turnRate) - turnTimeMod);
+	const float turnAngleTime = std::max(0.0f, (turnAngleSpr / turnRate) - turnTimeMod); // in frames
+	const float revAngleTime  = std::max(0.0f, (revAngleSpr  / turnRate) - turnTimeMod);
 
 	const float apxSpeedAfterTurn  = std::max(0.f, currentSpeed - 0.125f * (turnAngleTime * decRate));
 	const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed - 0.125f * (revAngleTime  * decRate));
