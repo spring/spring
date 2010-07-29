@@ -240,15 +240,15 @@ std::string FileSystem::GetBasename(const std::string& path) const
 /**
  * @brief get the extension of the filename part of the path
  * "/home/user/.spring/test.txt" -> "txt"
- * TODO check only in file-name, instead of in whole path
  */
 std::string FileSystem::GetExtension(const std::string& path) const
 {
-	size_t l = path.length();
+	const std::string fileName = GetFilename(path);
+	size_t l = fileName.length();
 //#ifdef WIN32
 	//! windows eats dots and spaces at the end of filenames
 	while (l > 0) {
-		const char prevChar = path[l-1];
+		const char prevChar = fileName[l-1];
 		if ((prevChar == '.') || (prevChar == ' ')) {
 			l--;
 		} else {
@@ -256,9 +256,9 @@ std::string FileSystem::GetExtension(const std::string& path) const
 		}
 	}
 //#endif
-	size_t dot = path.rfind('.', l);
+	size_t dot = fileName.rfind('.', l);
 	if (dot != std::string::npos) {
-		return StringToLower(path.substr(dot + 1));
+		return StringToLower(fileName.substr(dot + 1));
 	}
 
 	return "";
