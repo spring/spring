@@ -250,12 +250,14 @@ void CGroundMoveType::Update()
 				currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
 
 				if (pathId && !atGoal) {
-					if (currentSpeed <= 0.0f) {
+					if (currentSpeed != 0.0f) {
+						etaFailures = std::max(    0U, etaFailures - 1);
+					} else {
 						// note: the unit could just be turning in-place
 						// over several frames (eg. to maneuver around an
 						// obstacle), which unlike actual immobilization
 						// does not count as an ETA failure
-						etaFailures++;
+						etaFailures = std::min(65536U, etaFailures + 1);
 
 						#if (DEBUG_OUTPUT == 1)
 						logOutput.Print(
