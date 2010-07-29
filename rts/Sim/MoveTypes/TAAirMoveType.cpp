@@ -706,7 +706,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 	if (fabs(wh - h) > 2.0f) {
 		if (speed.y > ws) {
 			speed.y = std::max(ws, speed.y - accRate * 1.5f);
-		} else {
+		} else if(!owner->beingBuilt) {
 			// let them accelerate upward faster if close to ground
 			speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
 		}
