@@ -31,16 +31,17 @@ FileSystem filesystem;
  * @param c Character to test
  * @param str string currently being built
  *
- * Given a string str that we're assembling,
- * and an upcoming character c, will append
+ * Given an std::string str that we are assembling,
+ * and an upcoming char c, will append
  * an extra '\\' to quote the character if necessary.
+ * The do-while is used for legalizing the ';' in "QUOTE(c, regex);".
  */
 #define QUOTE(c,str)			\
 	do {					\
-		if (!(isalnum(c)||(c)=='_'))	\
-			str+='\\';		\
-		str+=c;				\
-} while (0)
+		if (!(isalnum(c) || (c) == '_'))	\
+			str += '\\';		\
+		str += c;				\
+	} while (0)
 
 /**
  * @brief glob to regex
@@ -57,40 +58,43 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 	for (std::string::const_iterator i = glob.begin(); i != glob.end(); ++i) {
 		char c = *i;
 #ifdef DEBUG
-		if (braces>=5)
+		if (braces >= 5) {
 			logOutput.Print("glob_to_regex warning: braces nested too deeply\n%s", glob.c_str());
+		}
 #endif
 		switch (c) {
 			case '*':
-				regex+=".*";
+				regex += ".*";
 				break;
 			case '?':
-				regex+='.';
+				regex += '.';
 				break;
 			case '{':
 				braces++;
-				regex+='(';
+				regex += '(';
 				break;
 			case '}':
 #ifdef DEBUG
-				if (!braces)
+				if (braces == 0) {
 					logOutput.Print("glob_to_regex warning: closing brace without an equivalent opening brace\n%s", glob.c_str());
+				}
 #endif
-				regex+=')';
+				regex += ')';
 				braces--;
 				break;
 			case ',':
-				if (braces)
-					regex+='|';
-				else
+				if (braces > 0) {
+					regex += '|';
+				} else {
 					QUOTE(c,regex);
+				}
 				break;
 			case '\\':
-#ifdef DEBUG
-				if (++i==glob.end())
-					logOutput.Print("glob_to_regex warning: pattern ends with backslash\n%s", glob.c_str());
-#else
 				++i;
+#ifdef DEBUG
+				if (i == glob.end()) {
+					logOutput.Print("glob_to_regex warning: pattern ends with backslash\n%s", glob.c_str());
+				}
 #endif
 				QUOTE(*i,regex);
 				break;
@@ -99,10 +103,15 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 				break;
 		}
 	}
+
 #ifdef DEBUG
-	if (braces)
+	if (braces > 0) {
 		logOutput.Print("glob_to_regex warning: unterminated brace expression\n%s", glob.c_str());
+	} else if (braces < 0) {
+		logOutput.Print("glob_to_regex warning: too many closing braces\n%s", glob.c_str());
+	}
 #endif
+
 	return regex;
 }
 
@@ -134,8 +143,9 @@ size_t FileSystem::GetFileSize(std::string file) const
  */
 bool FileSystem::CreateDirectory(std::string dir) const
 {
-	if (!CheckFile(dir))
+	if (!CheckFile(dir)) {
 		return false;
+	}
 
 	ForwardSlashes(dir);
 	size_t prev_slash = 0, slash;
@@ -170,8 +180,7 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
 
 	if (dir.empty()) {
 		dir = "./";
-	}
-	else {
+	} else {
 		const char lastChar = dir[dir.length() - 1];
 		if ((lastChar != '/') && (lastChar != '\\')) {
 			dir += '/';
@@ -190,28 +199,33 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
 
 /**
  * @brief get the directory part of a path
+ * "/home/user/.spring/test.txt" -> "/home/user/.spring"
  */
 std::string FileSystem::GetDirectory(const std::string& path) const
 {
 	size_t s = path.find_last_of("\\/");
-	if (s != std::string::npos)
+	if (s != std::string::npos) {
 		return path.substr(0, s + 1);
+	}
 	return path;
 }
 
 /**
  * @brief get the filename part of a path
+ * "/home/user/.spring/test.txt" -> "test.txt"
  */
 std::string FileSystem::GetFilename(const std::string& path) const
 {
 	size_t s = path.find_last_of("\\/");
-	if (s != std::string::npos)
+	if (s != std::string::npos) {
 		return path.substr(s + 1);
+	}
 	return path;
 }
 
 /**
  * @brief get the basename part of a path, ie. the filename without extension
+ * "/home/user/.spring/test.txt" -> "test"
  */
 std::string FileSystem::GetBasename(const std::string& path) const
 {
@@ -225,6 +239,8 @@ std::string FileSystem::GetBasename(const std::string& path) const
 
 /**
  * @brief get the extension of the filename part of the path
+ * "/home/user/.spring/test.txt" -> "txt"
+ * TODO check only in file-name, instead of in whole path
  */
 std::string FileSystem::GetExtension(const std::string& path) const
 {
@@ -232,17 +248,19 @@ std::string FileSystem::GetExtension(const std::string& path) const
 //#ifdef WIN32
 	//! windows eats dots and spaces at the end of filenames
 	while (l > 0) {
-		if (path[l-1]=='.') {
+		const char prevChar = path[l-1];
+		if ((prevChar == '.') || (prevChar == ' ')) {
 			l--;
-		} else if (path[l-1]==' ') {
-			l--;
-		} else break;
+		} else {
+			break;
+		}
 	}
 //#endif
 	size_t dot = path.rfind('.', l);
 	if (dot != std::string::npos) {
-		return StringToLower(path.substr(dot+1));
+		return StringToLower(path.substr(dot + 1));
 	}
+
 	return "";
 }
 
@@ -257,6 +275,7 @@ std::string& FileSystem::FixSlashes(std::string& path) const
 			path[i] = sep;
 		}
 	}
+
 	return path;
 }
 
@@ -270,6 +289,7 @@ std::string& FileSystem::ForwardSlashes(std::string& path) const
 			path[i] = '/';
 		}
 	}
+
 	return path;
 }
 
@@ -282,10 +302,9 @@ bool FileSystem::CheckFile(const std::string& file) const
 	// Note: this does NOT mean this is a SAFE fopen function:
 	// symlink-, hardlink-, you name it-attacks are all very well possible.
 	// The check is just ment to "enforce" certain coding behaviour.
-	if (file.find("..") != std::string::npos)
-		return false;
+	bool hasParentRef = (file.find("..") != std::string::npos);
 
-	return true;
+	return !hasParentRef;
 }
 // bool FileSystem::CheckDir(const std::string& dir) const {
 // 	return CheckFile(dir);
@@ -297,7 +316,7 @@ std::string FileSystem::LocateFile(std::string file, int flags) const
 		return "";
 	}
 
-	// if it's an absolute path, don't look for it in the data directories
+	// if it is an absolute path, do not look for it in the data directories
 	if (FileSystemHandler::IsAbsolutePath(file)) {
 		return file;
 	}
@@ -388,16 +407,14 @@ std::vector<std::string> FileSystem::FindDirsInDirectSubDirs(
 	// find all subdirectories in the rootDirs
 	std::vector<std::string>::const_iterator dir;
 	for (dir = rootDirs.begin(); dir != rootDirs.end(); ++dir) {
-		std::vector<std::string> localMainDirs =
-				CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
+		const std::vector<std::string>& localMainDirs = CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
 		mainDirs.insert(mainDirs.end(), localMainDirs.begin(), localMainDirs.end());
 	}
 	//found.insert(found.end(), mainDirs.begin(), mainDirs.end());
 
 	// and add all subdriectories of these
 	for (dir = mainDirs.begin(); dir != mainDirs.end(); ++dir) {
-		std::vector<std::string> subDirs =
-				CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
+		const std::vector<std::string>& subDirs = CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
 		found.insert(found.end(), subDirs.begin(), subDirs.end());
 	}
 
@@ -426,8 +443,9 @@ bool FileSystem::InWriteDir(const std::string& path, const std::string& prefix)
  */
 bool FileSystem::Remove(std::string file) const
 {
-	if (!CheckFile(file))
+	if (!CheckFile(file)) {
 		return false;
+	}
 	FixSlashes(file);
-	return ::remove(file.c_str()) == 0;
+	return FileSystemHandler::DeleteFile(file);
 }
