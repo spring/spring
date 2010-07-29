@@ -52,8 +52,10 @@ FileSystemHandler* FileSystemHandler::instance = NULL;
  */
 FileSystemHandler& FileSystemHandler::GetInstance()
 {
-	if (!instance)
+	if (!instance) {
 		Initialize(false);
+	}
+
 	return *instance;
 }
 
@@ -157,6 +159,14 @@ void FileSystemHandler::EnsurePathSepAtEnd(std::string& path) {
 	} else if (path[path.size() - 1] != cPS) {
 		path += cPS;
 	}
+}
+
+size_t FileSystemHandler::GetFileSize(const std::string& file)
+{
+	struct stat info;
+	if (stat(file.c_str(), &info) != 0)
+		return 0;
+	return info.st_size;
 }
 
 std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, int flags) const
