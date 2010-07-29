@@ -9,39 +9,37 @@
 
 const float EPS = 0.0000000001f;
 
-enum COLVOL_TYPES {
-	COLVOL_TYPE_DISABLED = -1,
-	COLVOL_TYPE_ELLIPSOID = 0,
-	COLVOL_TYPE_CYLINDER,
-	COLVOL_TYPE_BOX,
-	COLVOL_TYPE_SPHERE,
-	COLVOL_TYPE_FOOTPRINT, // intersection of sphere and footprint-prism
-	COLVOL_NUM_TYPES       // number of non-disabled collision volume types
-};
-
-enum COLVOL_AXES {
-	COLVOL_AXIS_X   = 0,
-	COLVOL_AXIS_Y   = 1,
-	COLVOL_AXIS_Z   = 2,
-	COLVOL_NUM_AXES = 3    // number of collision volume axes
-};
-enum COLVOL_TESTS {
-	COLVOL_TEST_DISC = 0,
-	COLVOL_TEST_CONT = 1,
-	COLVOL_NUM_TESTS = 2   // number of tests
-};
-
 struct CollisionVolume
 {
 	CR_DECLARE_STRUCT(CollisionVolume);
 
+	enum COLVOL_SHAPE_TYPES {
+		COLVOL_TYPE_DISABLED  = -1,
+		COLVOL_TYPE_ELLIPSOID =  0,
+		COLVOL_TYPE_CYLINDER  =  1,
+		COLVOL_TYPE_BOX       =  2,
+		COLVOL_TYPE_SPHERE    =  3,
+		COLVOL_TYPE_FOOTPRINT =  4, // intersection of sphere and footprint-prism
+		COLVOL_NUM_SHAPES     =  5, // number of non-disabled collision volume types
+	};
+
+	enum COLVOL_AXES {
+		COLVOL_AXIS_X   = 0,
+		COLVOL_AXIS_Y   = 1,
+		COLVOL_AXIS_Z   = 2,
+		COLVOL_NUM_AXES = 3         // number of collision volume axes
+	};
+	enum COLVOL_HITTEST_TYPES {
+		COLVOL_HITTEST_DISC = 0,
+		COLVOL_HITTEST_CONT = 1,
+		COLVOL_NUM_HITTESTS = 2     // number of hit-test types
+	};
+
 	CollisionVolume();
-	CollisionVolume(const CollisionVolume* v, float defRadius = 0.0f);
+	CollisionVolume(const CollisionVolume* v, float defaultRadius = 0.0f);
 	CollisionVolume(const std::string&, const float3&, const float3&, int);
 
-	static std::pair<int, int> GetVolumeTypeForString(const std::string&);
-
-	void SetDefaultScale(const float);
+	void Init(float);
 	void Init(const float3&, const float3&, int, int, int);
 
 	int GetVolumeType() const { return volumeType; }
@@ -71,6 +69,7 @@ struct CollisionVolume
 	void RescaleAxes(float, float, float);
 
 	bool IsDisabled() const { return disabled; }
+	bool DefaultScale() const { return defaultScale; }
 	bool IsSphere() const { return volumeType == COLVOL_TYPE_SPHERE; }
 	bool UseFootprint() const { return volumeType == COLVOL_TYPE_FOOTPRINT; }
 
@@ -90,7 +89,9 @@ private:
 	int testType;
 	int primaryAxis;
 	int secondaryAxes[2];
+
 	bool disabled;
+	bool defaultScale;
 };
 
 #endif

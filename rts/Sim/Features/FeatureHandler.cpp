@@ -173,7 +173,7 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 		fdTable.GetString("collisionVolumeType", ""),
 		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT)
+		fdTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_CONT)
 	);
 
 
@@ -248,7 +248,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				fd->myName = name;
 				fd->description = "Tree";
 				fd->mass = 20;
-				fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
+				fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
 				AddFeatureDef(name, fd);
 			}
 			else if (name.find("geovent") != string::npos) {

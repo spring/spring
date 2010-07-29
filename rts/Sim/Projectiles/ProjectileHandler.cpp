@@ -338,7 +338,7 @@ void CProjectileHandler::CheckUnitCollisions(
 		CUnit* unit = *ui;
 
 		const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
-		const bool raytraced = (unit->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
+		const bool raytraced = (unit->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
 		// if this unit fired this projectile or (this unit is in the
 		// same allyteam as the unit that shot this projectile and we
@@ -401,7 +401,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 		const bool raytraced =
 			(feature->collisionVolume &&
-			feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
+			feature->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
 			const float3 pimpp =

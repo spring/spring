@@ -375,9 +375,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 	piece->radius = math::sqrt(radiusSq);
 	piece->relMidPos = cvOffset * 0.5f;
-
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
-	piece->colvol->Enable();
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT);
 
 
 	if (me.OffsetToChildObject > 0) {
