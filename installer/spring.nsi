@@ -170,6 +170,8 @@ FunctionEnd
 
 SectionGroup /e "!Engine"
 	Section "Main application (req)" SEC_MAIN
+		; make this section read-only -> user can not deselect it
+		SectionIn RO
 
 		!define INSTALL
 			${!echonow} "Processing: main"
