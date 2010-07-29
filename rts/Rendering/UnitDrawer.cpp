@@ -557,8 +557,10 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		for (GML_VECTOR<CUnit*>::iterator ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
 			DrawIcon(*ui, false);
 		}
-		for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
-			DrawIcon(*ui, true);
+		if(!gu->spectatingFullView) {
+			for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
+				DrawIcon(*ui, true);
+			}
 		}
 
 		glDisable(GL_TEXTURE_2D);
