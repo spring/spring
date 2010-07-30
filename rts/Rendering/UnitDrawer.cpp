@@ -88,8 +88,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
-	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  200));
-	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 200));
+	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  1000));
+	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 10000));
 
 	LODScale           = GetLODFloat("LODScale",           1.0f);
 	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
