@@ -110,6 +110,7 @@ CR_REG_METADATA(CGroundMoveType, (
 
 static const unsigned int MAX_REPATH_FREQUENCY = 30;        // The minimum of frames between two full path-requests.
 static const float        MAX_OFF_PATH_FACTOR = 20;         // How far away from a waypoint a unit could be before a new path is requested.
+static const float        AVOIDANCE_STRENGTH = 2.0f;        // How strongly an object should be avoided. Raise this value to give some more margin.
 
 std::vector<int2> CGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 
@@ -997,10 +998,6 @@ void CGroundMoveType::CalcSkidRot(void)
 }
 
 
-// const float AVOIDANCE_DISTANCE = 1.0f;			// How far away a unit should start avoiding an obstacle. Multiplied with distance to waypoint.
-const float AVOIDANCE_STRENGTH = 2.0f;				// How strongly an object should be avoided. Raise this value to give some more margin.
-// const float FORCE_FIELD_DISTANCE = 50;			// How far away a unit may be affected by the force-field. Multiplied with speed of the unit.
-// const float FORCE_FIELD_STRENGTH = 0.4f;			// Maximum strenght of the force-field.
 
 /*
  * Dynamic obstacle avoidance, helps the unit to
