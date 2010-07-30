@@ -73,8 +73,8 @@ bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const
 
 CProjectileHandler::CProjectileHandler()
 {
-	maxParticles     = configHandler->Get("MaxParticles",      4000);
-	maxNanoParticles = configHandler->Get("MaxNanoParticles", 10000);
+	maxParticles     = configHandler->Get("MaxParticles",      1000);
+	maxNanoParticles = configHandler->Get("MaxNanoParticles", 2500);
 
 	currentParticles       = 0;
 	currentNanoParticles   = 0;
