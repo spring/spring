@@ -781,7 +781,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 	commandQue.push_back(c);
 
-	if (commandQue.size() == 1 && !owner->beingBuilt && !owner->stunned && !gs->paused) {
+	if (commandQue.size() == 1 && !owner->beingBuilt && !owner->stunned) {
 		SlowUpdate();
 	}
 }
@@ -822,6 +822,9 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 			eoh->UnitIdle(*owner);
 		}
 		eventHandler.UnitIdle(owner);
+	}
+	else {
+		SlowUpdate();
 	}
 
 	return;
@@ -1255,6 +1258,8 @@ void CCommandAI::ExecuteDGun(Command &c)
 
 void CCommandAI::SlowUpdate()
 {
+	if(gs->paused)
+		return;
 	if (commandQue.empty()) {
 		return;
 	}

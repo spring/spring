@@ -100,6 +100,8 @@ CTransportCAI::~CTransportCAI(void)
 
 void CTransportCAI::SlowUpdate(void)
 {
+	if(gs->paused)
+		return;
 	if(commandQue.empty()){
 		CMobileCAI::SlowUpdate();
 		return;
