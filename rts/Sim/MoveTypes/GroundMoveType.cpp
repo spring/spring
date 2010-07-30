@@ -90,6 +90,8 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(skidding),
 		CR_MEMBER(flying),
 		CR_MEMBER(reversing),
+		CR_MEMBER(canReverse),
+
 		CR_MEMBER(skidRotSpeed),
 		CR_MEMBER(dropSpeed),
 		CR_MEMBER(dropHeight),
@@ -106,15 +108,11 @@ CR_REG_METADATA(CGroundMoveType, (
 		));
 
 
-const unsigned int MAX_REPATH_FREQUENCY = 30;		// The minimum of frames between two full path-requests.
+static const unsigned int MAX_REPATH_FREQUENCY = 30;        // The minimum of frames between two full path-requests.
+static const float        MAX_OFF_PATH_FACTOR = 20;         // How far away from a waypoint a unit could be before a new path is requested.
 
-const float ETA_ESTIMATION = 1.5f;					// How much time the unit are given to reach the waypoint.
-const float MAX_WAYPOINT_DISTANCE_FACTOR = 2.0f;	// Used to tune how often new waypoints are requested. Multiplied with MinDistanceToWaypoint().
-const float MAX_OFF_PATH_FACTOR = 20;				// How far away from a waypoint a unit could be before a new path is requested.
+std::vector<int2> CGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 
-const float MINIMUM_SPEED = 0.01f;					// Minimum speed a unit may move in.
-
-std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -161,6 +159,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	skidding(false),
 	flying(false),
 	reversing(false),
+	canReverse(owner->unitDef->rSpeed > 0.0f),
 	skidRotSpeed(0.0f),
 
 	dropSpeed(0.0f),
@@ -210,11 +209,7 @@ void CGroundMoveType::Update()
 		return;
 	}
 
-	if (OnSlope() &&
-		(!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
-	{
-		skidding = true;
-	}
+	skidding = (OnSlope() && (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0));
 
 	if (skidding) {
 		UpdateSkid();
@@ -270,20 +265,24 @@ void CGroundMoveType::Update()
 
 				// Set direction to waypoint.
 				float3 waypointDir = waypoint - owner->pos;
+					waypointDir.y = 0;
+					waypointDir.SafeNormalize();
 
 				ASSERT_SYNCED_FLOAT3(waypointDir);
-
-				waypointDir.y = 0;
-				waypointDir.SafeNormalize();
 
 				const float3 wpDirInv = -waypointDir;
 				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
-				if (pathId && !atGoal && haveFinalWaypoint && currentDistanceToWaypoint < SQUARE_SIZE * 2) {
+				if (pathId && !atGoal && haveFinalWaypoint && (currentDistanceToWaypoint < SQUARE_SIZE * 2)) {
 					// no more waypoints to go, clear
 					// pathId and set wantedSpeed to 0
 					Arrived();
+				} else if ((currentDistanceToWaypoint < SQUARE_SIZE) && wpBehind && !canReverse) {
+					// waypoint is behind us (but very close, maybe even inside our footprint)
+					// and we cannot reverse, so we request the next one to prevent indefinite
+					// turning around in circles to get to it
+					GetNextWaypoint();
 				} else {
 					if (wpBehind) {
 						wantReverse = WantReverse(waypointDir);
@@ -1021,14 +1020,13 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			nextObstacleAvoidanceUpdate = gs->frameNum + 4;
 
 			// first check if the current waypoint is reachable
-			int wsx = (int) waypoint.x / (SQUARE_SIZE * 2);
-			int wsy = (int) waypoint.z / (SQUARE_SIZE * 2);
-			int ltx = wsx - moveSquareX + 5;
-			int lty = wsy - moveSquareY + 5;
+			const int wsx = (int) waypoint.x / (SQUARE_SIZE * 2);
+			const int wsy = (int) waypoint.z / (SQUARE_SIZE * 2);
+			const int ltx = wsx - moveSquareX + (LINETABLE_SIZE / 2);
+			const int lty = wsy - moveSquareY + (LINETABLE_SIZE / 2);
 
-			if (ltx >= 0 && ltx < 11 && lty >= 0 && lty < 11) {
-				std::vector<int2>::iterator li;
-				for (li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
+			if (ltx >= 0 && ltx < LINETABLE_SIZE && lty >= 0 && lty < LINETABLE_SIZE) {
+				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
 					const int x = (moveSquareX + li->x) * 2;
 					const int y = (moveSquareY + li->y) * 2;
 					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
@@ -1226,7 +1224,6 @@ void CGroundMoveType::GetNewPath()
 	}
 
 	pathManager->DeletePath(pathId);
-
 	RequestPath(owner->pos, goalPos, goalRadius);
 
 	nextWaypoint = owner->pos;
@@ -1251,14 +1248,18 @@ Sets waypoint to next in path.
 void CGroundMoveType::GetNextWaypoint()
 {
 	if (pathId) {
-		waypoint = nextWaypoint;
 		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
-		if (nextWaypoint.x != -1) {
+		if (waypoint.SqDistance2D(nextWaypoint) < (SQUARE_SIZE * SQUARE_SIZE)) {
+			// cannot get closer to goalPos
+			haveFinalWaypoint = true;
+		} else if (nextWaypoint.x != -1.0f) {
+			// at least one valid waypoint left
 			atGoal = false;
+			waypoint = nextWaypoint;
 		} else {
 			// no more waypoints
-			nextWaypoint = waypoint;
+			haveFinalWaypoint = true;
 		}
 
 		// If the waypoint is very close to the goal, then correct it into the goal.
@@ -1677,61 +1678,74 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 
 
-//creates the tables used to see if we should advance to next pathfinding waypoint
 void CGroundMoveType::CreateLineTable(void)
 {
-	lineTable = new std::vector<int2>[11][11];
+	// for every <xt, zt> pair, computes a set of regularly spaced
+	// grid sample-points (int2 offsets) along the line from <start>
+	// to <to>; <to> ranges from [x=-4.5, z=-4.5] to [x=+5.5, z=+5.5]
+	//
+	// TestNewTerrainSquare() and ObstacleAvoidance() check whether
+	// squares are blocked at these offsets to get a fast estimate
+	// of terrain passability
+	for (int yt = 0; yt < LINETABLE_SIZE; ++yt) {
+		for (int xt = 0; xt < LINETABLE_SIZE; ++xt) {
+			// center-point of grid-center cell
+			const float3 start(0.5f, 0.0f, 0.5f);
+			// center-point of target cell
+			const float3 to((xt - 5) + 0.5f, 0.0f, (yt - 5) + 0.5f);
 
-	for(int yt=0;yt<11;++yt){
-		for(int xt=0;xt<11;++xt){
-			float3 start(0.5f,0,0.5f);
-			float3 to((xt-5)+0.5f,0,(yt-5)+0.5f);
+			const float dx = to.x - start.x;
+			const float dz = to.z - start.z;
+			float xp = start.x;
+			float zp = start.z;
 
-			float dx=to.x-start.x;
-			float dz=to.z-start.z;
-			float xp=start.x;
-			float zp=start.z;
-
-			if(floor(start.x)==floor(to.x)){
-				if(dz>0)
-					for(int a=1;a<floor(to.z);++a)
-						lineTable[yt][xt].push_back(int2(0,a));
-				else
-					for(int a=-1;a>floor(to.z);--a)
-						lineTable[yt][xt].push_back(int2(0,a));
-			} else if(floor(start.z)==floor(to.z)){
-				if(dx>0)
-					for(int a=1;a<floor(to.x);++a)
-						lineTable[yt][xt].push_back(int2(a,0));
-				else
-					for(int a=-1;a>floor(to.x);--a)
-						lineTable[yt][xt].push_back(int2(a,0));
-			} else {
-				float xn,zn;
-				bool keepgoing=true;
-				while(keepgoing){
-					if(dx>0){
-						xn=(floor(xp)+1-xp)/dx;
-					} else {
-						xn=(floor(xp)-xp)/dx;
-					}
-					if(dz>0){
-						zn=(floor(zp)+1-zp)/dz;
-					} else {
-						zn=(floor(zp)-zp)/dz;
-					}
-
-					if(xn<zn){
-						xp+=(xn+0.0001f)*dx;
-						zp+=(xn+0.0001f)*dz;
-					} else {
-						xp+=(zn+0.0001f)*dx;
-						zp+=(zn+0.0001f)*dz;
-					}
-					keepgoing=fabs(xp-start.x)<fabs(to.x-start.x) && fabs(zp-start.z)<fabs(to.z-start.z);
-
-					lineTable[yt][xt].push_back(int2((int)(floor(xp)),(int)(floor(zp))));
+			if (floor(start.x) == floor(to.x)) {
+				if (dz > 0.0f) {
+					for (int a = 1; a < floor(to.z); ++a)
+						lineTable[yt][xt].push_back(int2(0, a));
+				} else {
+					for (int a = -1; a > floor(to.z); --a)
+						lineTable[yt][xt].push_back(int2(0, a));
 				}
+			} else if (floor(start.z) == floor(to.z)) {
+				if (dx > 0.0f) {
+					for (int a = 1; a < floor(to.x); ++a)
+						lineTable[yt][xt].push_back(int2(a, 0));
+				} else {
+					for (int a = -1; a > floor(to.x); --a)
+						lineTable[yt][xt].push_back(int2(a, 0));
+				}
+			} else {
+				float xn, zn;
+				bool keepgoing = true;
+
+				while (keepgoing) {
+					if (dx > 0.0f) {
+						xn = (floor(xp) + 1.0f - xp) / dx;
+					} else {
+						xn = (floor(xp)        - xp) / dx;
+					}
+					if (dz > 0.0f) {
+						zn = (floor(zp) + 1.0f - zp) / dz;
+					} else {
+						zn = (floor(zp)        - zp) / dz;
+					}
+
+					if (xn < zn) {
+						xp += (xn + 0.0001f) * dx;
+						zp += (xn + 0.0001f) * dz;
+					} else {
+						xp += (zn + 0.0001f) * dx;
+						zp += (zn + 0.0001f) * dz;
+					}
+
+					keepgoing =
+						fabs(xp - start.x) < fabs(to.x - start.x) &&
+						fabs(zp - start.z) < fabs(to.z - start.z);
+
+					lineTable[yt][xt].push_back( int2(int(floor(xp)), int(floor(zp))) );
+				}
+
 				lineTable[yt][xt].pop_back();
 				lineTable[yt][xt].pop_back();
 			}
@@ -1741,8 +1755,11 @@ void CGroundMoveType::CreateLineTable(void)
 
 void CGroundMoveType::DeleteLineTable(void)
 {
-	delete [] lineTable;
-	lineTable = 0;
+	for (int yt = 0; yt < LINETABLE_SIZE; ++yt) {
+		for (int xt = 0; xt < LINETABLE_SIZE; ++xt) {
+			lineTable[yt][xt].clear();
+		}
+	}
 }
 
 void CGroundMoveType::TestNewTerrainSquare(void)
@@ -1753,31 +1770,32 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
-		CMoveMath* movemath = owner->unitDef->movedata->moveMath;
-		float cmod = movemath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
+		const CMoveMath* movemath = owner->unitDef->movedata->moveMath;
+		const MoveData& md = *(owner->unitDef->movedata);
+		const float cmod = movemath->SpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 		if (fabs(owner->frontdir.x) < fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1785,13 +1803,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			}
 		} else {
 			if (newMoveSquareY > moveSquareY) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod>0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1799,13 +1817,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			}
 
 			if (newMoveSquareX > moveSquareX) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				float nmod = movemath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
+				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
@@ -1824,40 +1842,40 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
-			terrainSpeed = movemath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
+			terrainSpeed = movemath->SpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
-			// if we have moved check if we can get a new waypoint
+			// if we have moved, check if we can get to the next waypoint
 			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
 			int nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
 			int numIter = 0;
 
-			// lowered the original 6 absolute distance to slightly more than 4.5f euclidian distance
-			// to fix units getting stuck in buildings --tvo
-			// My first fix set it to 21, as the pathfinding was still considered broken by many I reduced it to 11 (arbitrarily)
-			// Does anyone know whether lowering this constant has any adverse side effects? Like e.g. more CPU usage? --tvo
-			while (nwsx*nwsx + nwsy*nwsy < 11 && !haveFinalWaypoint && pathId) {
-				int ltx = nwsx + 5;
-				int lty = nwsy + 5;
+			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !haveFinalWaypoint && pathId) {
+				const int ltx = nwsx + LINETABLE_SIZE / 2;
+				const int lty = nwsy + LINETABLE_SIZE / 2;
 				bool wpOk = true;
 
-				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
-					int x = (moveSquareX + li->x) * 2;
-					int y = (moveSquareY + li->y) * 2;
-					static const int blockMask =
-						(CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN |
-						CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY);
+				if (ltx >= 0 && ltx < LINETABLE_SIZE && lty >= 0 && lty < LINETABLE_SIZE) {
+					for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
+						const int x = (moveSquareX + li->x) * 2;
+						const int y = (moveSquareY + li->y) * 2;
+						static const int blockMask =
+							(CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN |
+							CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY);
 
-					if ((movemath->IsBlocked(*owner->unitDef->movedata, x, y) & blockMask) ||
-						movemath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
-						wpOk = false;
-						break;
+						if ((movemath->IsBlocked(md, x, y) & blockMask) ||
+							movemath->SpeedMod(md, x, y) <= 0.01f) {
+							wpOk = false;
+							break;
+						}
 					}
 				}
 
 				if (!wpOk || numIter > 6) {
 					break;
 				}
+
 				GetNextWaypoint();
+
 				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
 				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
 				++numIter;
@@ -2041,6 +2059,9 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 			}
 		}
 
+		// note: currentSpeed can be out of sync with
+		// owner->speed.Length(), eg. when in front of
+		// an obstacle
 		currentSpeed += deltaSpeed;
 		owner->pos += (flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f));
 
@@ -2054,7 +2075,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 bool CGroundMoveType::WantReverse(const float3& waypointDir) const
 {
-	if (owner->unitDef->rSpeed <= 0.0f) {
+	if (!canReverse) {
 		return false;
 	}
 

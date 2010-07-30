@@ -165,17 +165,18 @@ private:
 		MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData);
 		~MultiPath();
 
-		//Paths
+		// Paths
 		IPath::Path estimatedPath2;
 		IPath::Path estimatedPath;
 		IPath::Path detailedPath;
+		IPath::SearchResult searchResult;
 
 		//Request definition
 		const float3 start;
 		const CPathFinderDef* peDef;
 		const MoveData* moveData;
 
-		//Additional information.
+		// Additional information.
 		float3 finalGoal;
 		CSolidObject* caller;
 	};
