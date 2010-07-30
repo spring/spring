@@ -364,6 +364,8 @@ bool CMobileCAI::LandRepairIfNeeded()
 
 void CMobileCAI::SlowUpdate()
 {
+	if(gs->paused)
+		return;
 	bool wantToLand = false;
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
 		wantToLand = LandRepairIfNeeded();

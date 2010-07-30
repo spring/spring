@@ -344,6 +344,8 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 
 void CFactoryCAI::SlowUpdate()
 {
+	if(gs->paused)
+		return;
 	if (commandQue.empty() || owner->beingBuilt) {
 		return;
 	}

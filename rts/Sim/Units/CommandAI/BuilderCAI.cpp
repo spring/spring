@@ -356,6 +356,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 void CBuilderCAI::SlowUpdate()
 {
+	if(gs->paused)
+		return;
 	if (commandQue.empty()) {
 		CMobileCAI::SlowUpdate();
 		return;
