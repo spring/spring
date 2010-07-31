@@ -3540,7 +3540,7 @@ void CGame::StartPlaying()
 		logOutput.Print("************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
 		logOutput.Print("LUA BASED GRAPHICS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
 		logOutput.Print("For best results disable LuaShaders in SpringSettings or the Edit Settings menu");
-		logOutput.Print("Press " + lskey + " and click to disable specific widgets (mouse wheel scrolls the list)");
+		logOutput.Print("Press " + lskey + " to open the widget list, which allows specific widgets to be disabled");
 		logOutput.Print("The LUA-DRAW(MT) value in the upper right corner can be used for guidance");
 		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes");
 		logOutput.Print("");
