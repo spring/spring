@@ -100,7 +100,7 @@ CTransportCAI::~CTransportCAI(void)
 
 void CTransportCAI::SlowUpdate(void)
 {
-	if(gs->paused)
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	if(commandQue.empty()){
 		CMobileCAI::SlowUpdate();

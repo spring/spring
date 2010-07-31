@@ -344,7 +344,7 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 
 void CFactoryCAI::SlowUpdate()
 {
-	if(gs->paused)
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	if (commandQue.empty() || owner->beingBuilt) {
 		return;
