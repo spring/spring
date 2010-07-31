@@ -294,7 +294,9 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 
 			// de-stun in case it isFirePlatform=0
 			unit->stunned = (unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
+
 			loshandler->MoveUnit(unit, false);
+			qf->MovedUnit(unit);
 
 			transportCapacityUsed -= ti->size;
 			transportMassUsed -= ti->mass;
