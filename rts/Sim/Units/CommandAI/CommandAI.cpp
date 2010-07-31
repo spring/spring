@@ -1258,7 +1258,7 @@ void CCommandAI::ExecuteDGun(Command &c)
 
 void CCommandAI::SlowUpdate()
 {
-	if(gs->paused)
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	if (commandQue.empty()) {
 		return;

@@ -356,7 +356,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 void CBuilderCAI::SlowUpdate()
 {
-	if(gs->paused)
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	if (commandQue.empty()) {
 		CMobileCAI::SlowUpdate();
