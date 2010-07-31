@@ -1689,7 +1689,7 @@ void CGroundMoveType::CreateLineTable(void)
 			// center-point of grid-center cell
 			const float3 start(0.5f, 0.0f, 0.5f);
 			// center-point of target cell
-			const float3 to((xt - 5) + 0.5f, 0.0f, (yt - 5) + 0.5f);
+			const float3 to((xt - (LINETABLE_SIZE / 2)) + 0.5f, 0.0f, (yt - (LINETABLE_SIZE / 2)) + 0.5f);
 
 			const float dx = to.x - start.x;
 			const float dz = to.z - start.z;
