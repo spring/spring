@@ -330,8 +330,9 @@ void CTAAirMoveType::UpdateHovering()
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
+	// *** this behavior interferes with the loading procedure of transports ***
 	if (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands() &&
-		(l < 120) && (deltaDir.SqDistance(deltaVec) > 1.0f)) {
+		(l < 120) && (deltaDir.SqDistance(deltaVec) > 1.0f) && dynamic_cast<CTransportUnit*>(owner) == NULL) {
 		deltaDir = owner->frontdir;
 	}
 
