@@ -255,17 +255,20 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	}
 	unit->UnBlock();
 	loshandler->FreeInstance(unit->los);
-	unit->los=0;
+	unit->los = 0;
+	radarhandler->RemoveUnit(unit);
+
 	if (dynamic_cast<CTAAirMoveType*>(moveType)) {
-		unit->moveType->useHeading=false;
+		unit->moveType->useHeading = false;
 	}
+
 	TransportedUnit tu;
-	tu.unit=unit;
-	tu.piece=piece;
-	tu.size=unit->xsize/2;
-	tu.mass=unit->mass;
-	transportCapacityUsed+=tu.size;
-	transportMassUsed+=tu.mass;
+		tu.unit = unit;
+		tu.piece = piece;
+		tu.size = unit->xsize / 2;
+		tu.mass = unit->mass;
+	transportCapacityUsed += tu.size;
+	transportMassUsed += tu.mass;
 	transported.push_back(tu);
 
 	unit->CalculateTerrainType();
@@ -297,6 +300,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 
 			loshandler->MoveUnit(unit, false);
 			qf->MovedUnit(unit);
+			radarhandler->MoveUnit(unit);
 
 			transportCapacityUsed -= ti->size;
 			transportMassUsed -= ti->mass;

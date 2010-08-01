@@ -298,10 +298,7 @@ CUnit::~CUnit()
 	qf->RemoveUnit(this);
 	loshandler->DelayedFreeInstance(los);
 	los = 0;
-
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	if (script != &CNullUnitScript::value) {
 		delete script;
@@ -378,9 +375,7 @@ void CUnit::ForcedMove(const float3& newPos)
 
 	qf->MovedUnit(this);
 	loshandler->MoveUnit(this, false);
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 }
 
 
@@ -1140,24 +1135,19 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 
 void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 {
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	*valuePtr = newValue;
 
 	if (newValue != 0) {
 		hasRadarCapacity = true;
-	}
-	else if (hasRadarCapacity) {
-		hasRadarCapacity = radarRadius || jammerRadius   ||
-		                   sonarRadius || sonarJamRadius ||
-		                   seismicRadius;
+	} else if (hasRadarCapacity) {
+		hasRadarCapacity = (radarRadius   > 0.0f) || (jammerRadius   > 0.0f) ||
+		                   (sonarRadius   > 0.0f) || (sonarJamRadius > 0.0f) ||
+		                   (seismicRadius > 0.0f);
 	}
 
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 }
 
 
@@ -1267,9 +1257,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	loshandler->FreeInstance(los);
 	los = 0;
 	losStatus[allyteam] = 0;
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
@@ -1312,9 +1300,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 	qf->MovedUnit(this);
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 
 	SetLODCount(0);
 
@@ -1936,6 +1922,7 @@ void CUnit::AddEnergy(float energy, bool handicap)
 }
 
 
+
 void CUnit::Activate()
 {
 	if (activated)
@@ -1944,11 +1931,11 @@ void CUnit::Activate()
 	activated = true;
 	script->Activate();
 
-	if (unitDef->targfac){
+	if (unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
 	}
-	if (hasRadarCapacity)
-		radarhandler->MoveUnit(this);
+
+	radarhandler->MoveUnit(this);
 
 	int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -1958,7 +1945,6 @@ void CUnit::Activate()
 	}
 }
 
-
 void CUnit::Deactivate()
 {
 	if (!activated)
@@ -1967,11 +1953,11 @@ void CUnit::Deactivate()
 	activated = false;
 	script->Deactivate();
 
-	if (unitDef->targfac){
+	if (unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
 	}
-	if (hasRadarCapacity)
-		radarhandler->RemoveUnit(this);
+
+	radarhandler->RemoveUnit(this);
 
 	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -1980,6 +1966,7 @@ void CUnit::Deactivate()
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}
 }
+
 
 
 void CUnit::UpdateWind(float x, float z, float strength)

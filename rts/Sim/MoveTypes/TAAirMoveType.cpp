@@ -957,16 +957,16 @@ void CTAAirMoveType::SlowUpdate(void)
 	UpdateMoveRate();
 
 	// Update LOS stuff
-	int newmapSquare = ground->GetSquare(owner->pos);
+	const int newmapSquare = ground->GetSquare(owner->pos);
 	if (newmapSquare != owner->mapSquare) {
-		owner->mapSquare = newmapSquare;
-		float oldlh = owner->losHeight;
-		float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
-		owner->losHeight = h + 5;
-		loshandler->MoveUnit(owner, false);
+		const float oldlh = owner->losHeight;
+		const float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
 
-		if (owner->hasRadarCapacity)
-			radarhandler->MoveUnit(owner);
+		owner->mapSquare = newmapSquare;
+		owner->losHeight = h + 5;
+
+		loshandler->MoveUnit(owner, false);
+		radarhandler->MoveUnit(owner);
 
 		owner->losHeight = oldlh;
 	}

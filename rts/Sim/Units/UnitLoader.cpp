@@ -169,9 +169,9 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->sonarJamRadius   = ud->sonarJamRadius / (SQUARE_SIZE * 8);
 	unit->seismicRadius    = ud->seismicRadius  / (SQUARE_SIZE * 8);
 	unit->seismicSignature = ud->seismicSignature;
-	unit->hasRadarCapacity = unit->radarRadius  || unit->sonarRadius    ||
-	                         unit->jammerRadius || unit->sonarJamRadius ||
-	                         unit->seismicRadius;
+	unit->hasRadarCapacity = (unit->radarRadius   > 0.0f) || (unit->sonarRadius    > 0.0f) ||
+	                         (unit->jammerRadius  > 0.0f) || (unit->sonarJamRadius > 0.0f) ||
+	                         (unit->seismicRadius > 0.0f);
 	unit->stealth = ud->stealth;
 	unit->sonarStealth = ud->sonarStealth;
 	unit->category = ud->category;
