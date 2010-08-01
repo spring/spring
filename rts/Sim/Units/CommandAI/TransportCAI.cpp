@@ -160,12 +160,14 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 		if(unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))){
 			toBeTransportedUnitId=unit->id;
 			unit->toBeTransported=true;
+			const float sqDist = unit->pos.SqDistance2D(owner->pos);
+			const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
 			// subtracting 1 square to account for pathfinder/groundmovetype inaccuracy
-			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE)) {
+			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE) || 
+				(!inLoadingRadius && !owner->isMoving)) {
 				SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
 			}
-			const float sqDist = unit->pos.SqDistance2D(owner->pos);
-			if (sqDist <= Square(owner->unitDef->loadingRadius)) {
+			if (inLoadingRadius) {
 				if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
 					float3 wantedPos=unit->pos+UpVector*unit->model->height;
 					SetGoal(wantedPos,owner->pos);
@@ -1003,7 +1005,8 @@ void CTransportCAI::DrawCommands(void)
 
 void CTransportCAI::FinishCommand(void)
 {
-	if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType))
+	CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
+	if (am)
 		am->dontCheckCol = false;
 
 	if (toBeTransportedUnitId != -1) {
@@ -1016,6 +1019,9 @@ void CTransportCAI::FinishCommand(void)
 	}
 
 	CMobileCAI::FinishCommand();
+
+	if(am && commandQue.empty())
+		am->wantToStop = true;
 }
 
 
