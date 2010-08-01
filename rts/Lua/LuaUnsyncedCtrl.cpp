@@ -1623,6 +1623,12 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 	const std::string springFullName = (Platform::GetProcessExecutableFile());
 	// LogObject() << "Args: " << arguments;
+
+#ifdef _WIN32
+	//! else OpenAL soft crashs when using execlp
+	ISound::Shutdown();
+#endif
+
 	if (!script.empty())
 	{
 		const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir()+"script.txt";
