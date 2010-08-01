@@ -17,6 +17,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Features/Feature.h"
@@ -410,7 +411,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int 
 
 void CFeatureDrawer::DrawShadowPass()
 {
-	glDisable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE); //FIXME: enable culling for s3o models
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -434,6 +435,11 @@ void CFeatureDrawer::DrawShadowPass()
 		glPushAttrib(GL_COLOR_BUFFER_BIT);
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
+
+		// needed for 3do models (else they will use any currently bound texture)
+		// note: texture0 is by default a 1x1 texture with rgba(0,0,0,255)
+		// (we are just interested in the 255 alpha here)
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawOpaqueFeatures(modelType);
