@@ -210,7 +210,8 @@ void CGroundMoveType::Update()
 		return;
 	}
 
-	skidding = (OnSlope() && (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0));
+	if (OnSlope() && (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
+		skidding = true;
 
 	if (skidding) {
 		UpdateSkid();
