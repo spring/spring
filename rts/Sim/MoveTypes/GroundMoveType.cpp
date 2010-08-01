@@ -426,8 +426,7 @@ void CGroundMoveType::SlowUpdate()
 			owner->mapSquare = newmapSquare;
 
 			loshandler->MoveUnit(owner, false);
-			if (owner->hasRadarCapacity)
-				radarhandler->MoveUnit(owner);
+			radarhandler->MoveUnit(owner);
 
 		}
 		qf->MovedUnit(owner);
