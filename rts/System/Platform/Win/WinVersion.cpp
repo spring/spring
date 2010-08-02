@@ -72,7 +72,6 @@ std::string GetOSDisplayString()
     OSVERSIONINFOEX osvi;
     SYSTEM_INFO si;
     PGNSI pGNSI;
-    PGPI pGPI;
     BOOL bOsVersionInfoEx;
     DWORD dwType;
 
@@ -112,7 +111,7 @@ std::string GetOSDisplayString()
                else oss << "Windows Server 2008 R2 ";
             }
 
-            pGPI = (PGPI) GetProcAddress(
+            PGPI pGPI = (PGPI) GetProcAddress(
                        GetModuleHandle(TEXT("kernel32.dll")),
                        "GetProductInfo");
 
