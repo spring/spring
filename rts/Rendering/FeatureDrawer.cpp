@@ -5,6 +5,7 @@
 #include "FeatureDrawer.h"
 
 #include "Game/Camera.h"
+#include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
