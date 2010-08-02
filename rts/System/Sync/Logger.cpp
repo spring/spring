@@ -223,7 +223,7 @@ no_filtering:
  * underscores from the symbol before trying to demangle them, resulting
  * no demangling ever happening.
  */
-void CLogger::CppFilt(char* sym, int size)
+static void CLogger::CppFilt(char* sym, int size)
 {
 #ifdef __MINGW32__
 

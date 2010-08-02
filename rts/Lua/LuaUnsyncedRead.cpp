@@ -111,6 +111,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitNoDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
+	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
 
 	REGISTER_LUA_CFUNC(GetUnitTransformMatrix);
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
@@ -239,6 +240,24 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	}
 	return unit;
 }
+
+static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index)) {
+		luaL_error(L, "%s(): Bad featureID", caller);
+		return NULL;
+	}
+	const int featureID = lua_toint(L, index);
+	CFeature* feature = featureHandler->GetFeature(featureID);
+
+	if (fullRead) { return feature; }
+	if (readAllyTeam < 0) { return NULL; }
+	if (feature == NULL) { return NULL; }
+	if (feature->IsInLosForAllyTeam(readAllyTeam)) { return feature; }
+
+	return NULL;
+}
+
 
 
 static inline void CheckNoArgs(lua_State* L, const char* funcName)
@@ -530,7 +549,6 @@ int LuaUnsyncedRead::GetUnitLuaDraw(lua_State* L)
 	return 1;
 }
 
-
 int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -540,7 +558,6 @@ int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 	lua_pushboolean(L, unit->noDraw);
 	return 1;
 }
-
 
 int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
 {
@@ -552,7 +569,6 @@ int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
 	return 1;
 }
 
-
 int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -562,6 +578,18 @@ int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
 	lua_pushboolean(L, unit->noSelect);
 	return 1;
 }
+
+
+int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, feature->luaDraw);
+	return 1;
+}
+
 
 
 int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
@@ -2180,7 +2208,3 @@ int LuaUnsyncedRead::GetDrawSelectionInfo(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-
-
-
-

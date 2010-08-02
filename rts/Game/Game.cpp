@@ -39,6 +39,7 @@
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
+#include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -109,7 +110,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/UnitTracker.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"

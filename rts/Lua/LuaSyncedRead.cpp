@@ -404,9 +404,9 @@ static inline bool IsFeatureVisible(const CFeature* feature)
 {
 	if (fullRead)
 		return true;
-	if (readAllyTeam < 0) {
-		return fullRead;
-	}
+	if (readAllyTeam < 0)
+		return false;
+
 	return feature->IsInLosForAllyTeam(readAllyTeam);
 }
 
