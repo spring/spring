@@ -446,14 +446,8 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		if (pos.y < orgh - hdif && pos.y < h - hdif) { return 0; }
 	}
 
-	if (!unitdef->floater && groundheight < -unitdef->maxWaterDepth) {
-		// ground is deeper than our maxWaterDepth, cannot build here
+	if(!unitdef->IsTerrainHeightOK(groundheight))
 		return 0;
-	}
-	if (groundheight > -unitdef->minWaterDepth) {
-		// ground is shallower than our minWaterDepth, cannot build here
-		return 0;
-	}
 
 	return ret;
 }

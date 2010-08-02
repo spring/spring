@@ -137,10 +137,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		} else {
 			// immobile units can still be transported
 			// via script trickery, guard against this
-			if (u->unitDef->movedata != NULL && gh < -u->unitDef->movedata->depth) {
-				// always treat depth as maxWaterDepth (fails if
-				// the transportee is a ship, but so does using
-				// UnitDef::{min, max}WaterDepth)
+			if(!u->unitDef->IsTerrainHeightOK(gh)) {
 				u->KillUnit(false, false, NULL, false);
 				continue;
 			}
@@ -232,6 +229,9 @@ bool CTransportUnit::CanTransport(const CUnit *unit) const
 		return false;
 
 	if (unit->mass + transportMassUsed > unitDef->transportMass)
+		return false;
+
+	if (!IsLoadingAltitudeOK(unit->pos, unit))
 		return false;
 
 	// is unit already (in)directly transporting this?
@@ -361,4 +361,42 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 		c.params.push_back(pos.z);
 		unit->commandAI->GiveCommand(c);
 	}
+}
+
+bool CTransportUnit::IsLoadingAltitudeOK(const float3& wantedPos, const CUnit *unit) const {
+	bool isok;
+	float loadAlt = GetLoadingAltitude(wantedPos, unit, &isok);
+	if(dynamic_cast<CTAAirMoveType*>(moveType) && unit->transporter && 
+		!unitDef->canSubmerge && loadAlt < 5.0f) // dont drop it so deep that we cannot pick it up again
+		return false;
+	return isok;
+}
+
+float CTransportUnit::GetLoadingAltitude(const float3& wantedPos, const CUnit *unit, bool *ok) const {
+	float wantedYpos = unit->pos.y;
+	float adjustedYpos = wantedYpos;
+	bool isok = true;
+	if(unit->transporter) { // return unloading altitude
+		wantedYpos = ground->GetHeight2(wantedPos.x, wantedPos.z);
+		if(unit->unitDef->floater) {
+			if(unit->unitDef->GetAllowedTerrainHeight(wantedYpos) != wantedYpos)
+				isok = false;
+			wantedYpos = std::max(-unit->unitDef->waterline, wantedYpos);
+			adjustedYpos = wantedYpos;
+		}
+		else if(unit->unitDef->canhover) {
+			wantedYpos = std::max(0.0f, wantedYpos);
+			adjustedYpos = wantedYpos;
+		}
+		else
+			adjustedYpos = unit->unitDef->GetAllowedTerrainHeight(wantedYpos);
+	}
+
+	float terrainHeight = adjustedYpos + unit->model->height;
+	float adjustedTerrainHeight = terrainHeight;
+	if(dynamic_cast<CTAAirMoveType*>(moveType)) // check if transport can reach the loading altitude
+		adjustedTerrainHeight = unitDef->GetAllowedTerrainHeight(terrainHeight);
+	if(ok)
+		*ok = isok && (adjustedTerrainHeight == terrainHeight) && (adjustedYpos == wantedYpos);
+	return adjustedTerrainHeight;
 }

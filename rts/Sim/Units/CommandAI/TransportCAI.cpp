@@ -162,18 +162,21 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 			unit->toBeTransported=true;
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);
 			const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
+			
+			CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType);
 			// subtracting 1 square to account for pathfinder/groundmovetype inaccuracy
 			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE) || 
-				(!inLoadingRadius && !owner->isMoving)) {
+				(!inLoadingRadius && (!owner->isMoving || (am && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)))) {
 				SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
 			}
 			if (inLoadingRadius) {
-				if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
-					float3 wantedPos=unit->pos+UpVector*unit->model->height;
-					SetGoal(wantedPos,owner->pos);
+				if(am){		//handle air transports differently
+					float3 wantedPos = unit->pos;
+					wantedPos.y = ((CTransportUnit *)owner)->GetLoadingAltitude(wantedPos, unit);
+					SetGoal(wantedPos, owner->pos);
 					am->dontCheckCol=true;
 					am->ForceHeading(unit->heading);
-					am->SetWantedAltitude(unit->model->height);
+					am->SetWantedAltitude(wantedPos.y - ground->GetHeight(wantedPos.x, wantedPos.z));
 					am->maxDrift=1;
 					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
 					if(owner->pos.SqDistance(wantedPos)<Square(AIRTRANSPORT_DOCKING_RADIUS) && abs(owner->heading-unit->heading)<AIRTRANSPORT_DOCKING_ANGLE && owner->updir.dot(UpVector)>0.995f){
@@ -314,19 +317,17 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			float3 pos = center + delta * radius;
 			pos.y = ground->GetHeight(pos.x, pos.z);
 
-			float unloadPosHeight = ground->GetApproximateHeight(pos.x, pos.z);
-
-			if (unloadPosHeight < (0 - unitToUnload->unitDef->maxWaterDepth))
- 				continue;
-			if (unloadPosHeight > (0 - unitToUnload->unitDef->minWaterDepth))
+			if(!((CTransportUnit *)owner)->IsLoadingAltitudeOK(pos, unitToUnload))
 				continue;
 
 			// Don't unload anything on slopes
 			if (unitToUnload->unitDef->movedata
 					&& ground->GetSlope(pos.x, pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 				continue;
-			if (!qf->GetUnitsExact(pos, emptyRadius + 8).empty())
-				continue;
+			std::vector<CUnit*> units = qf->GetUnitsExact(pos, emptyRadius + 8);
+			for(std::vector<CUnit*>::iterator i = units.begin(); i != units.end(); ++i)
+				if((*i) != owner && (*i)->transporter != owner)
+					continue;
 
 			found = pos;
 			return true;
@@ -342,19 +343,15 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			rx = sqrt(rx);
 
 			for (float x = std::max(emptyRadius, center.x - rx); x < std::min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx); x += SQUARE_SIZE) {
-				float unloadPosHeight = ground->GetApproximateHeight(x, y);
+				const float3 pos(x, ground->GetApproximateHeight(x, y), y);
 
-				if (unloadPosHeight < (0 - unitToUnload->unitDef->maxWaterDepth))
- 					continue;
-				if (unloadPosHeight > (0 - unitToUnload->unitDef->minWaterDepth))
+				if(!((CTransportUnit *)owner)->IsLoadingAltitudeOK(pos, unitToUnload))
 					continue;
 
 				// Don't unload anything on slopes
 				if (unitToUnload->unitDef->movedata
 						&& ground->GetSlope(x, y) > unitToUnload->unitDef->movedata->maxSlope)
 					continue;
-
-				float3 pos(x, ground->GetApproximateHeight(x, y), y);
 
 				if (!qf->GetUnitsExact(pos, emptyRadius + 8).empty())
 					continue;
@@ -370,13 +367,9 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 
 bool CTransportCAI::SpotIsClear(float3 pos,CUnit* unitToUnload)
 {
-	float unloadPosHeight=ground->GetApproximateHeight(pos.x,pos.z);
-
-	if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
- 		return false;
-	if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
+	if(!((CTransportUnit *)owner)->IsLoadingAltitudeOK(pos, unitToUnload))
 		return false;
-	if(ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
+	if(unitToUnload->unitDef->movedata && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 		return false;
 	if(!qf->GetUnitsExact(pos,unitToUnload->radius+8).empty())
 		return false;
@@ -389,13 +382,9 @@ bool CTransportCAI::SpotIsClear(float3 pos,CUnit* unitToUnload)
 	units it carries. */
 bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload)
 {
-	float unloadPosHeight=ground->GetApproximateHeight(pos.x,pos.z);
-
-	if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
- 		return false;
-	if(unloadPosHeight>(0-unitToUnload->unitDef->minWaterDepth))
+	if(!((CTransportUnit *)owner)->IsLoadingAltitudeOK(pos, unitToUnload))
 		return false;
-	if(ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
+	if(unitToUnload->unitDef->movedata && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 		return false;
 
 	vector<CUnit*> units = qf->GetUnitsExact(pos,unitToUnload->radius+8);
@@ -660,20 +649,19 @@ void CTransportCAI::UnloadLand(Command& c)
 
 		if (pos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
 			CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
+			pos.y = ((CTransportUnit *)owner)->GetLoadingAltitude(pos, unit);
 			if (am != NULL) {
 				// handle air transports differently
-				pos.y = ground->GetHeight(pos.x, pos.z);
-				const float3 wantedPos = pos + UpVector * unit->model->height;
-				SetGoal(wantedPos, owner->pos);
-				am->SetWantedAltitude(unit->model->height);
+				SetGoal(pos, owner->pos);
+				am->SetWantedAltitude(pos.y - ground->GetHeight(pos.x, pos.z));
 				am->maxDrift = 1;
-				if ((owner->pos.SqDistance(wantedPos) < 64) &&
+				if ((owner->pos.SqDistance(pos) < 64) &&
 						(owner->updir.dot(UpVector) > 0.99f)) {
-					if (!SpotIsClearIgnoreSelf(wantedPos, unit)) {
+					if (!SpotIsClearIgnoreSelf(pos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
 						float3 newpos;
-						if (FindEmptySpot(wantedPos, std::max(128.f, unit->radius*4),
+						if (FindEmptySpot(pos, std::max(128.f, unit->radius*4),
 								unit->radius, newpos, unit)) {
 							c.params[0] = newpos.x;
 							c.params[1] = newpos.y;
@@ -1020,8 +1008,10 @@ void CTransportCAI::FinishCommand(void)
 
 	CMobileCAI::FinishCommand();
 
-	if(am && commandQue.empty())
+	if(am && commandQue.empty()) {
+		am->SetWantedAltitude(0);
 		am->wantToStop = true;
+	}
 }
 
 
@@ -1036,6 +1026,9 @@ bool CTransportCAI::LoadStillValid(CUnit* unit)
 		return true;
 
 	const float3 cmdPos(cmd.params[0], cmd.params[1], cmd.params[2]);
+
+	if(!((CTransportUnit *)owner)->IsLoadingAltitudeOK(cmdPos, unit))
+		return false;
 
 	return unit->pos.SqDistance2D(cmdPos) <= Square(cmd.params[3] * 2);
 }
