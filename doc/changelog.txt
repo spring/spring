@@ -1,5 +1,43 @@
 Spring change log
 
+0.82.1:
+Engine / General:
+ - fixed source package build
+ - fixed MT crash in DrawCommands
+ - prevent units from becoming immobile zombies while maneuvering
+ - base etaFailures limit on a unit's full-circle turning time
+ - decrease etaFailures every frame we are not standing still
+ - fixed radar blips seen by spectators
+ - fixed vibrating planes
+ - fixed dark metal spots in watert
+ - reduced default value of max particles
+ - increased default LOD/icon distances
+ - fixed nanoframe being spawned while game is paused
+ - fixed slow response when releasing wait command
+ - fixed the silly unit spinning ad-infinitum bug
+ - fixed unit occasionally not taking damage when it just left a transport
+ - fixed some awkward transport behaviour
+ - properly deal with radars/jammers being transported
+ - glFont::GetTextHeight & glFont::GetTextNumLines return now 0 lines for empty strings
+ - fixed 3do shadows
+ - fixed Spring.Restart with Win 2k and OpenAL-soft
+ - fixed minimap rendering in dualscreen modes
+ - fixed unit returning to pick up point when it dropped out of transport
+
+Engine / Lua:
+ - added a LuaRules DrawFeature call-in
+
+Engine / Dedicated server:
+ - use default visibility (hidden) for spring-dedicated under non-windows
+
+AI:
+ - RAI: log files are now under _log/_ sub-dir
+ - AAI: added config for BA 7.13
+ - E323AI: added config for BA 7.13
+
+Installer:
+ - made main part mandatory
+
 0.82:
 Engine / General:
  - added HeadLess version of the engine (no graphics, no sound) by hughperkins
