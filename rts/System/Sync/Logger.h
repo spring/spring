@@ -40,7 +40,7 @@ class CLogger {
 		CLogger(const CLogger&);
 		CLogger& operator=(const CLogger&);
 
-		void CppFilt(char* sym, int size);
+		static void CppFilt(char* sym, int size);
 
 		boost::mutex logmutex;
 		const char* filename;
