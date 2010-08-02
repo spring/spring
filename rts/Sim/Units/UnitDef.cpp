@@ -965,6 +965,25 @@ void UnitDef::SetNoCost(bool noCost)
 }
 
 
+bool UnitDef::IsTerrainHeightOK(const float height) const {
+	return GetAllowedTerrainHeight(height) == height;
+}
+
+float UnitDef::GetAllowedTerrainHeight(float height) const {
+	float maxwd = maxWaterDepth;
+	float minwd = minWaterDepth;
+	if(movedata) {
+		if(movedata->moveType == MoveData::Ship_Move)
+			minwd = movedata->depth;
+		else
+			maxwd = movedata->depth;
+	}
+	height = std::min(height, -minwd);
+	if(!floater && !canhover)
+		height = std::max(-maxwd, height);
+	return height;
+}
+
 /******************************************************************************/
 
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
