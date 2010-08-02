@@ -109,11 +109,13 @@ CLuaRules::CLuaRules()
 	haveMoveCtrlNotify         = HasCallIn("MoveCtrlNotify");
 	haveTerraformComplete      = HasCallIn("TerraformComplete");
 	haveDrawUnit               = HasCallIn("DrawUnit");
+	haveDrawFeature            = HasCallIn("DrawFeature");
 	haveAICallIn               = HasCallIn("AICallIn");
 	haveUnitPreDamaged         = HasCallIn("UnitPreDamaged");
 	haveShieldPreDamaged       = HasCallIn("ShieldPreDamaged");
 
 	SetupUnsyncedFunction("DrawUnit");
+	SetupUnsyncedFunction("DrawFeature");
 	SetupUnsyncedFunction("AICallIn");
 }
 
@@ -207,12 +209,10 @@ bool CLuaRules::SyncedUpdateCallIn(const string& name)
 
 bool CLuaRules::UnsyncedUpdateCallIn(const string& name)
 {
-	if (name == "DrawUnit") {
-		haveDrawUnit = HasCallIn("DrawUnit");
-	}
-	else if (name == "AICallIn") {
-		haveAICallIn = HasCallIn("AICallIn");
-	}
+	     if (name == "DrawUnit"   ) { haveDrawUnit    = HasCallIn("DrawUnit"   ); }
+	else if (name == "DrawFeature") { haveDrawFeature = HasCallIn("DrawFeature"); }
+	else if (name == "AICallIn"   ) { haveAICallIn    = HasCallIn("AICallIn"   ); }
+
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(name);
 }
 
@@ -909,6 +909,45 @@ bool CLuaRules::DrawUnit(int unitID)
 	lua_pop(L, 1);
 	return retval;
 }
+
+bool CLuaRules::DrawFeature(int featureID)
+{
+	if (!haveDrawFeature) {
+		return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("DrawFeature");
+	if (!cmdStr.GetRegistryFunc(L)) {
+		return false;
+	}
+
+	const bool oldGLState = LuaOpenGL::IsDrawingEnabled();
+	LuaOpenGL::SetDrawingEnabled(true);
+
+	lua_pushnumber(L, featureID);
+	lua_pushnumber(L, game->GetDrawMode());
+
+	const bool success = RunCallIn(cmdStr, 2, 1);
+
+	LuaOpenGL::SetDrawingEnabled(oldGLState);
+
+	if (!success) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
 
 
 const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
