@@ -306,7 +306,10 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 
 	unitDrawer->SetTeamColour(feature->team, feature->tempalpha);
 
-	feature->model->DrawStatic();
+	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature->id))) {
+		feature->model->DrawStatic();
+	}
+
 	glPopMatrix();
 
 	return true;

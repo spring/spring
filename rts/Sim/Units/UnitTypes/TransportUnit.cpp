@@ -179,9 +179,9 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			u->stunned = (u->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? u->maxHealth: u->health));
 			u->moveType->LeaveTransport();
 
-			// issue a move order so that unit wont try to return to pick-up pos in IdleCheck()
-			if(dynamic_cast<CTAAirMoveType*>(moveType)) {
-				const float3 &pos = u->pos;
+			// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
+			if (dynamic_cast<CTAAirMoveType*>(moveType)) {
+				const float3& pos = u->pos;
 				Command c;
 				c.id = CMD_MOVE;
 				c.params.push_back(pos.x);
@@ -190,7 +190,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 				u->commandAI->GiveCommand(c);
 			}
 
-			u->speed = speed*(0.5f + 0.5f*gs->randFloat());
+			u->speed = speed * (0.5f + 0.5f * gs->randFloat());
 
 			eventHandler.UnitUnloaded(u, this);
 		}

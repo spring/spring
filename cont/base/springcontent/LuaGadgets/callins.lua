@@ -64,6 +64,7 @@ CallInsList = {
   "DrawScreen",
   "DrawInMiniMap",
   "DrawUnit",
+  "DrawFeature",
 
   "Explosion",
   "ShockFront",
