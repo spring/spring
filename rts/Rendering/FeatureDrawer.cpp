@@ -24,6 +24,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Lua/LuaRules.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"
