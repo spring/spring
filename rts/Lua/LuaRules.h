@@ -66,6 +66,7 @@ class CLuaRules : public CLuaHandleSynced
 
 		// unsynced
 		bool DrawUnit(int unitID);
+		bool DrawFeature(int featureID);
 		const char* AICallIn(const char* data, int inSize, int* outSize);
 
 	private:
@@ -96,6 +97,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveMoveCtrlNotify;
 		bool haveTerraformComplete;
 		bool haveDrawUnit;
+		bool haveDrawFeature;
 		bool haveAICallIn;
 		bool haveUnitPreDamaged;
 		bool haveShieldPreDamaged;

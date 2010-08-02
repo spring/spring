@@ -152,6 +152,7 @@ local callInLists = {
   'TerraformComplete',
   -- unsynced
   'DrawUnit',
+  'DrawFeature',
   'AICallIn',
 
   -- COB CallIn  (FIXME?)
@@ -1062,6 +1063,14 @@ function gadgetHandler:DrawUnit(unitID, drawMode)
   return false
 end
 
+function gadgetHandler:DrawFeature(featureID, drawMode)
+  for _,g in ipairs(self.DrawFeatureList) do
+    if (g:DrawFeature(featureID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
 
 function gadgetHandler:AICallIn(dataStr)
   for _,g in ipairs(self.AICallInList) do
