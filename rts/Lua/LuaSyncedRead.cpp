@@ -2696,7 +2696,8 @@ int LuaSyncedRead::GetUnitExperience(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, unit->experience);
-	return 1;
+	lua_pushnumber(L, unit->limExperience);
+	return 2;
 }
 
 
