@@ -1659,11 +1659,6 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 
 void CBuilderCAI::DrawCommands(void)
 {
-	if (uh->limitDgun && owner->unitDef->isCommander) {
-		glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
-		glSurfaceCircle(teamHandler->Team(owner->team)->startPos, uh->dgunRadius, 40);
-	}
-
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {

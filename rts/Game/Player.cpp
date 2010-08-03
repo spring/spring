@@ -155,11 +155,6 @@ void CPlayer::GameFrame(int frameNum)
 	float dist = helper->TraceRayTeam(pos, dc->viewDir, unit->maxRange, hit, 1, unit, teamHandler->AllyTeam(team));
 	dc->target = hit;
 
-	// prevent dgunning using FPS view if outside dgun-limit
-	if (uh->limitDgun && unit->unitDef->isCommander && unit->pos.SqDistance(teamHandler->Team(unit->team)->startPos) > Square(uh->dgunRadius)) {
-		return;
-	}
-
 	if (hit) {
 		dc->targetDist = dist;
 		dc->targetPos = hit->pos;
