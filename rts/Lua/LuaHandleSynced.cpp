@@ -566,6 +566,7 @@ bool CLuaHandleSynced::HasCallIn(const string& name)
 
 	int tableIndex;
 	if ((name != "DrawUnit") &&
+	    (name != "DrawFeature") &&
 	    (name != "AICallIn") &&
 	    (name != "RecvFromSynced") &&
 	    !eventHandler.IsUnsynced(name)) {
