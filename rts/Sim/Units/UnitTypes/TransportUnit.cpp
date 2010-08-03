@@ -174,6 +174,9 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			}
 
 			u->stunned = (u->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? u->maxHealth: u->health));
+			loshandler->MoveUnit(u, false);
+			qf->MovedUnit(u);
+			radarhandler->MoveUnit(u);
 			u->moveType->LeaveTransport();
 
 			// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
@@ -231,7 +234,7 @@ bool CTransportUnit::CanTransport(const CUnit *unit) const
 	if (unit->mass + transportMassUsed > unitDef->transportMass)
 		return false;
 
-	if (!IsLoadingAltitudeOK(unit->pos, unit))
+	if (!CanLoadUnloadAtPos(unit->pos, unit))
 		return false;
 
 	// is unit already (in)directly transporting this?
@@ -269,6 +272,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	loshandler->FreeInstance(unit->los);
 	unit->los = 0;
 	radarhandler->RemoveUnit(unit);
+	qf->RemoveUnit(unit);
 
 	if (dynamic_cast<CTAAirMoveType*>(moveType)) {
 		unit->moveType->useHeading = false;
@@ -363,16 +367,16 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 	}
 }
 
-bool CTransportUnit::IsLoadingAltitudeOK(const float3& wantedPos, const CUnit *unit) const {
+bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit *unit) const {
 	bool isok;
-	float loadAlt = GetLoadingAltitude(wantedPos, unit, &isok);
+	float loadAlt = GetLoadUnloadHeight(wantedPos, unit, &isok);
 	if(dynamic_cast<CTAAirMoveType*>(moveType) && unit->transporter && 
 		!unitDef->canSubmerge && loadAlt < 5.0f) // dont drop it so deep that we cannot pick it up again
 		return false;
 	return isok;
 }
 
-float CTransportUnit::GetLoadingAltitude(const float3& wantedPos, const CUnit *unit, bool *ok) const {
+float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit *unit, bool *ok) const {
 	float wantedYpos = unit->pos.y;
 	float adjustedYpos = wantedYpos;
 	bool isok = true;
