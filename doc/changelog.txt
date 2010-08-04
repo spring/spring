@@ -4,36 +4,42 @@ Spring change log
 Engine / General:
  - fixed source package build
  - fixed MT crash in DrawCommands
- - prevent units from becoming immobile zombies while maneuvering
- - base etaFailures limit on a unit's full-circle turning time
- - decrease etaFailures every frame we are not standing still
  - fixed radar blips seen by spectators
- - fixed vibrating planes
  - fixed dark metal spots in watert
  - reduced default value of max particles
  - increased default LOD/icon distances
+ - glFont::GetTextHeight & glFont::GetTextNumLines return now 0 lines for empty strings
+ - fixed 3do shadows
+ - fixed minimap rendering in dualscreen modes
+ - fix laggy camera update with UnitTracker
+
+Engine / Simulation:
+ - prevent units from becoming immobile zombies while maneuvering
+ - base etaFailures limit on a unit's full-circle turning time
+ - decrease etaFailures every frame we are not standing still
+ - fixed vibrating planes
  - fixed nanoframe being spawned while game is paused
  - fixed slow response when releasing wait command
  - fixed the silly unit spinning ad-infinitum bug
  - fixed unit occasionally not taking damage when it just left a transport
  - fixed some awkward transport behaviour
  - properly deal with radars/jammers being transported
- - glFont::GetTextHeight & glFont::GetTextNumLines return now 0 lines for empty strings
- - fixed 3do shadows
- - fixed Spring.Restart with Win 2k and OpenAL-soft
- - fixed minimap rendering in dualscreen modes
  - fixed unit returning to pick up point when it dropped out of transport
 
 Engine / Lua:
  - added a LuaRules DrawFeature call-in
+ - fixed LuaUnsyncedCtrl::SetWaterParams
+ - fixed Spring.Restart with Win 2k and OpenAL-soft
+ - LuaSyncedRead::GetUnitExperience: also returns limExperience now
+ - removed obsolete engine options from EngineOptions.lua
 
 Engine / Dedicated server:
  - use default visibility (hidden) for spring-dedicated under non-windows
 
 AI:
  - RAI: log files are now under _log/_ sub-dir
- - AAI: added config for BA 7.13
- - E323AI: added config for BA 7.13
+ - AAI: added config for BA 7.14
+ - E323AI: added config for BA 7.14
 
 Installer:
  - made main part mandatory
@@ -64,6 +70,7 @@ Engine / General:
  - dropped modinfo.tdf support (only modinfo.lua is supported now)
  - clients now compare their path-cache CRCs and warn about differences instead of updating their running checksums with them
  - Spring's CPU affinity can now also be set on non-win32 platforms, use the SetCoreAffinity ~/.springrc parameter as a bitmask
+ - removed dimishing metalmakers option
 
 Engine / Simulation:
  - new unit tag: cloakTimeout, int, default 128 frames
@@ -75,9 +82,11 @@ Engine / Simulation:
  - changed the semantics of the holdSteady UnitDef tag
       true ==> slave transportees to orientation of transporter attachment piece
       false ==> slave transportees to orientation of transporter body (default)
+ - fixed canDGun+commandfire to properly reproduce commander-like DGun behavior without script hacks
 
 Engine / Rendering:
  - fixed alpha-masked shadows for S3O models
+ - fixed ATI alpha masked shadows (trees, features)
  - fixed far-textures (caused changing teamcolors and disappearing units)
  - support the OBJ model format (springrts.com/phpbb/viewtopic.php?f=9&t=22635)
  - support specular lighting, multiple blendable detail textures, and sky reflections on SMF maps ("SSMF")
