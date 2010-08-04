@@ -253,7 +253,7 @@ void CGroundMoveType::Update()
 				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(CPathManager::PATH_RESOLUTION));
 
 				if (!atGoal) {
-					if (currentSpeed != 0.0f) {
+					if ((owner->pos - oldPos).SqLength2D() > 1.0f) {
 						etaFailures = std::max(    0, int(etaFailures - 1));
 					} else {
 						// note: the unit could just be turning in-place
