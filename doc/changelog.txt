@@ -80,6 +80,7 @@ Engine / Simulation:
  - reduced frequency of units ending up in "can't reach destination" situations
  - fixed units not inheriting orders from factories and piling up (due to having their paths aborted)
  - removed the TEDclassString UnitDef parameter (side-effect: hub-like units will break if they have a yardmap)
+ - removed diminishing metal makers option
  - changed the semantics of the holdSteady UnitDef tag
       true ==> slave transportees to orientation of transporter attachment piece
       false ==> slave transportees to orientation of transporter body (default)
