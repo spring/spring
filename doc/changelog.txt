@@ -11,7 +11,8 @@ Engine / General:
  - glFont::GetTextHeight & glFont::GetTextNumLines return now 0 lines for empty strings
  - fixed 3do shadows
  - fixed minimap rendering in dualscreen modes
- - fix laggy camera update with UnitTracker
+ - fixed laggy camera update with UnitTracker
+ - fixed seismic pings with incorrect size
 
 Engine / Simulation:
  - prevent units from becoming immobile zombies while maneuvering
