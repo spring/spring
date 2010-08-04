@@ -446,12 +446,13 @@ void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
 */
 void CMobileCAI::ExecuteMove(Command &c)
 {
-	float3 pos = float3(c.params[0], c.params[1], c.params[2]);
-	if(pos != goalPos){
-		SetGoal(pos, owner->pos);
+	const float3 cmdPos(c.params[0], c.params[1], c.params[2]);
+
+	if (cmdPos != goalPos) {
+		SetGoal(cmdPos, owner->pos);
 	}
-	if((owner->pos - goalPos).SqLength2D() < cancelDistance ||
-			owner->moveType->progressState == AMoveType::Failed){
+	if ((owner->pos - goalPos).SqLength2D() < cancelDistance ||
+			owner->moveType->progressState == AMoveType::Failed) {
 		FinishCommand();
 	}
 	return;
@@ -1079,8 +1080,8 @@ void CMobileCAI::NonMoving(void)
 
 void CMobileCAI::FinishCommand(void)
 {
-	if(!(commandQue.front().options & INTERNAL_ORDER)){
-		lastUserGoal=owner->pos;
+	if (!(commandQue.front().options & INTERNAL_ORDER)) {
+		lastUserGoal = owner->pos;
 	}
 	StopSlowGuard();
 	CCommandAI::FinishCommand();

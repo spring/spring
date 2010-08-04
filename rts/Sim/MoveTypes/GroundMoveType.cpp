@@ -137,8 +137,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	pathId(0),
 	goalRadius(0),
 
-	waypoint(0.0f, 0.0f, 0.0f),
-	nextWaypoint(0.0f, 0.0f, 0.0f),
+	waypoint(ZeroVector),
+	nextWaypoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
 
@@ -147,7 +147,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	requestedTurnRate(0),
 	currentDistanceToWaypoint(0),
 	restartDelay(0),
-	lastGetPathPos(0.0f, 0.0f, 0.0f),
+	lastGetPathPos(ZeroVector),
 	etaFailures(0),
 	nonMovingFailures(0),
 
@@ -239,14 +239,20 @@ void CGroundMoveType::Update()
 			wantReverse = UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
-			if (pathId || (currentSpeed != 0.0f)) {
+			if (pathId == 0) {
+				wantedSpeed = 0.0f;
+
+				SetDeltaSpeed(false);
+				SetMainHeading();
+			} else {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
 				ASSERT_SYNCED_FLOAT3(waypoint);
 				ASSERT_SYNCED_FLOAT3(owner->pos);
 
 				currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
+				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(CPathManager::PATH_RESOLUTION));
 
-				if (pathId && !atGoal) {
+				if (!atGoal) {
 					if (currentSpeed != 0.0f) {
 						etaFailures = std::max(    0, int(etaFailures - 1));
 					} else {
@@ -276,19 +282,16 @@ void CGroundMoveType::Update()
 				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
-				if (pathId && !atGoal && haveFinalWaypoint && (currentDistanceToWaypoint < SQUARE_SIZE * 2)) {
-					// no more waypoints to go, clear
-					// pathId and set wantedSpeed to 0
-					Arrived();
-				} else if ((currentDistanceToWaypoint < SQUARE_SIZE) && wpBehind && !canReverse) {
-					// waypoint is behind us (but very close, maybe even inside our footprint)
-					// and we cannot reverse, so we request the next one to prevent indefinite
-					// turning around in circles to get to it
+				if (!haveFinalWaypoint /*|| (wpBehind && !canReverse)*/) {
 					GetNextWaypoint();
 				} else {
-					if (wpBehind) {
-						wantReverse = WantReverse(waypointDir);
+					if (atGoal) {
+						Arrived();
 					}
+				}
+
+				if (wpBehind) {
+					wantReverse = WantReverse(waypointDir);
 				}
 
 				// apply obstacle avoidance (steering)
@@ -309,11 +312,13 @@ void CGroundMoveType::Update()
 
 
 				if (nextDeltaSpeedUpdate <= gs->frameNum) {
-					wantedSpeed = pathId? requestedSpeed: 0.0f;
-					bool moreCommands = owner->commandAI->HasMoreMoveCommands();
+					wantedSpeed = requestedSpeed;
+
+					const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
+					const bool startBreaking = (currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE);
 
 					// If arriving at waypoint, then need to slow down, or may pass it.
-					if (!moreCommands && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
+					if (!moreCommands && startBreaking) {
 						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
 					}
 
@@ -329,9 +334,6 @@ void CGroundMoveType::Update()
 				}
 
 				pathManager->UpdatePath(owner, pathId);
-
-			} else {
-				SetMainHeading();
 			}
 		}
 
@@ -1223,14 +1225,13 @@ void CGroundMoveType::GetNewPath()
 	pathManager->DeletePath(pathId);
 	RequestPath(owner->pos, goalPos, goalRadius);
 
-	nextWaypoint = owner->pos;
-
 	// if new path received, can't be at waypoint
 	if (pathId) {
 		atGoal = false;
 		haveFinalWaypoint = false;
-		GetNextWaypoint();
-		GetNextWaypoint();
+
+		waypoint = owner->pos;
+		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 	}
 
 	// set limit for when next path-request can be made
@@ -1241,29 +1242,30 @@ void CGroundMoveType::GetNewPath()
 /*
 Sets waypoint to next in path.
 */
-
 void CGroundMoveType::GetNextWaypoint()
 {
-	if (pathId) {
+	if (pathId == 0) {
+		return;
+	}
+
+	if ((owner->pos - waypoint).SqLength2D() > Square(CPathManager::PATH_RESOLUTION)) {
+		// still too far away
+		return;
+	}
+
+	if (nextWaypoint.x != -1.0f && (nextWaypoint - waypoint).SqLength2D() > 0.1f) {
+		waypoint = nextWaypoint;
 		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
-		if (waypoint.SqDistance2D(nextWaypoint) < (SQUARE_SIZE * SQUARE_SIZE)) {
-			// cannot get closer to goalPos
-			haveFinalWaypoint = true;
-		} else if (nextWaypoint.x != -1.0f) {
-			// at least one valid waypoint left
-			atGoal = false;
-			waypoint = nextWaypoint;
-		} else {
-			// no more waypoints
-			haveFinalWaypoint = true;
-		}
-
-		// If the waypoint is very close to the goal, then correct it into the goal.
 		if (waypoint.SqDistance2D(goalPos) < Square(CPathManager::PATH_RESOLUTION)) {
 			waypoint = goalPos;
-			haveFinalWaypoint = true;
 		}
+	} else {
+		// trigger Arrived on the next Update
+		haveFinalWaypoint = true;
+
+		waypoint = goalPos;
+		nextWaypoint = goalPos;
 	}
 }
 
@@ -1371,14 +1373,13 @@ void CGroundMoveType::StopEngine() {
 }
 
 
-/* Called when the unit arrives at its waypoint. */
+
+/* Called when the unit arrives at its goal. */
 void CGroundMoveType::Arrived()
 {
 	// can only "arrive" if the engine is active
 	if (progressState == Active) {
-		// we have reached our waypoint
-		atGoal = true;
-
+		// we have reached our goal
 		StopEngine();
 
 		if (owner->team == gu->myTeam) {
@@ -1936,8 +1937,9 @@ void CGroundMoveType::SetMainHeading() {
 		ASSERT_SYNCED_FLOAT3(dir2);
 
 		if (dir2 != ZeroVector) {
-			short heading = GetHeadingFromVector(dir2.x, dir2.z)
-				- GetHeadingFromVector(dir1.x, dir1.z);
+			const short heading =
+				GetHeadingFromVector(dir2.x, dir2.z) -
+				GetHeadingFromVector(dir1.x, dir1.z);
 
 			ASSERT_SYNCED_PRIMITIVE(heading);
 
