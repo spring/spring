@@ -3,6 +3,10 @@
 #include "StdAfx.h"
 #include "myX11.h"
 
+#include <string.h>
+#include <string>
+#include <map>
+
 
 void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, int* out_top)
 {
@@ -133,7 +137,7 @@ void MyX11SetWindowState(Display* display, Window& window, int windowState)
 	xev.xclient.data.l[2] = 0;
 	xev.xclient.data.l[3] = 0;
 
-	Window* root = DefaultRootWindow(display);
+	Window root = XDefaultRootWindow(display);
 
 	static const int _NET_WM_STATE_REMOVE = 0;
 	static const int _NET_WM_STATE_ADD = 1;
