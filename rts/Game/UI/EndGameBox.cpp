@@ -305,7 +305,7 @@ void CEndGameBox::Draw()
 
 		if ((mx > box.x1 + 0.01f) && (mx < box.x1 + 0.12f) &&
 		    (my < box.y1 + 0.57f) && (my > box.y1 + 0.571f - (stats.size() * 0.02f))) {
-			int sel = -(int)floor(50 * (my - box.y1 - 0.57f));
+			const int sel = (int) floor(50 * -(my - box.y1 - 0.57f));
 
 			glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
 			glDisable(GL_TEXTURE_2D);
