@@ -121,6 +121,7 @@ protected:
 	bool skidding;
 	bool flying;
 	bool reversing;
+	bool idling;
 	bool canReverse;
 
 	float skidRotSpeed;

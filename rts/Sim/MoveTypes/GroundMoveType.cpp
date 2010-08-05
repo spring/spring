@@ -90,6 +90,7 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(skidding),
 		CR_MEMBER(flying),
 		CR_MEMBER(reversing),
+		CR_MEMBER(idling),
 		CR_MEMBER(canReverse),
 
 		CR_MEMBER(skidRotSpeed),
@@ -160,6 +161,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	skidding(false),
 	flying(false),
 	reversing(false),
+	idling(false),
 	canReverse(owner->unitDef->rSpeed > 0.0f),
 	skidRotSpeed(0.0f),
 
@@ -253,7 +255,7 @@ void CGroundMoveType::Update()
 				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(CPathManager::PATH_RESOLUTION));
 
 				if (!atGoal) {
-					if ((owner->pos - oldPos).SqLength2D() > 1.0f) {
+					if (!idling) {
 						etaFailures = std::max(    0, int(etaFailures - 1));
 					} else {
 						// note: the unit could just be turning in-place
@@ -349,6 +351,8 @@ void CGroundMoveType::Update()
 		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
 
+		// collision detection may have negated the position update
+		idling = (owner->speed.SqLength() < 1.0f);
 		oldPos = owner->pos;
 
 		if (owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
@@ -358,6 +362,7 @@ void CGroundMoveType::Update()
 		}
 	} else {
 		owner->speed = ZeroVector;
+		idling = true;
 	}
 }
 
