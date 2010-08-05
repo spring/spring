@@ -57,7 +57,7 @@ int MyX11GetWindowState(Display* display, Window& window)
 
 	Atom atom = XInternAtom(display, "_NET_WM_STATE", true);
 
-	const string windowStatesStr[8] = {
+	const std::string windowStatesStr[8] = {
 		"_NET_WM_STATE_STICKY",
 		"_NET_WM_STATE_MAXIMIZED_VERT",
 		"_NET_WM_STATE_MAXIMIZED_HORZ",
@@ -110,7 +110,7 @@ void MyX11SetWindowState(Display* display, Window& window, int windowState)
 	if (windowState <= 0)
 		return;
 
-	const string windowStatesStr[8] = {
+	const std::string windowStatesStr[8] = {
 		"_NET_WM_STATE_STICKY",
 		"_NET_WM_STATE_MAXIMIZED_VERT",
 		"_NET_WM_STATE_MAXIMIZED_HORZ",
