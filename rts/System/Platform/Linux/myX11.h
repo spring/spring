@@ -8,9 +8,9 @@
 #undef KeyRelease
 #undef GrayScale
 
-void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, int* out_top)
+void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, int* out_top);
 
-int MyX11GetWindowState(Display* display, Window& window)
-void MyX11SetWindowState(Display* display, Window& window, int windowState)
+int MyX11GetWindowState(Display* display, Window& window);
+void MyX11SetWindowState(Display* display, Window& window, int windowState);
 
 #endif // #ifndef MYX11_H
