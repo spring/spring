@@ -13,6 +13,7 @@ Engine / General:
  - fixed minimap rendering in dualscreen modes
  - fixed laggy camera update with UnitTracker
  - fixed seismic pings with incorrect size
+ - fixed incorrect highlight on end game screen
 
 Engine / Simulation:
  - prevent units from becoming immobile zombies while maneuvering
@@ -26,6 +27,7 @@ Engine / Simulation:
  - fixed some awkward transport behaviour
  - properly deal with radars/jammers being transported
  - fixed unit returning to pick up point when it dropped out of transport
+ - skip waypoints that are behind a unit but within its turning circle
 
 Engine / Lua:
  - added a LuaRules DrawFeature call-in
@@ -71,7 +73,6 @@ Engine / General:
  - dropped modinfo.tdf support (only modinfo.lua is supported now)
  - clients now compare their path-cache CRCs and warn about differences instead of updating their running checksums with them
  - Spring's CPU affinity can now also be set on non-win32 platforms, use the SetCoreAffinity ~/.springrc parameter as a bitmask
- - removed dimishing metalmakers option
 
 Engine / Simulation:
  - new unit tag: cloakTimeout, int, default 128 frames
