@@ -57,8 +57,8 @@ public:
 
 	bool atGoal;
 	bool haveFinalWaypoint;
-	float terrainSpeed;
 
+	float terrainSpeed;
 	float requestedSpeed;
 	short requestedTurnRate;
 
