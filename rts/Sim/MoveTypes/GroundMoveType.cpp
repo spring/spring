@@ -369,7 +369,7 @@ void CGroundMoveType::SlowUpdate()
 		return;
 	}
 
-	if (progressState == Active && (etaFailures > (65536 / turnRate))) {
+	if ((progressState == Active) && (pathId != 0) && (etaFailures > (65536 / turnRate))) {
 		if (owner->pos.SqDistance2D(goalPos) > (200.0f * 200.0f)) {
 			// too many ETA failures and not within acceptable range of
 			// our goal, request a new path from our current position
@@ -379,21 +379,12 @@ void CGroundMoveType::SlowUpdate()
 
 			StopEngine();
 			StartEngine();
-		} else {
-			// already reasonably close to our goal waypoint, but cannot
-			// get to it: trigger a UnitMoveFailed event so higher-level
-			// logic can deal with this
-			#if (DEBUG_OUTPUT == 1)
-			logOutput.Print("[CGMT::SU] goal-position clogged up for unit %i", owner->id);
-			#endif
-
-			Fail();
 		}
 	}
 
 	// If the action is active, but not the engine and the
 	// re-try-delay has passed, then start the engine.
-	if (progressState == Active && !pathId && gs->frameNum > restartDelay) {
+	if (progressState == Active && (pathId == 0) && (gs->frameNum > restartDelay)) {
 		#if (DEBUG_OUTPUT == 1)
 		logOutput.Print("[CGMT::SU] restart engine for unit %i", owner->id);
 		#endif
