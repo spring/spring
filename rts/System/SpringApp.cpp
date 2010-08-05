@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <SDL.h>
 #if !defined(HEADLESS)
-#include <SDL_syswm.h>
+	#include <SDL_syswm.h>
 #endif
 
 #include "mmgr.h"
@@ -70,6 +70,7 @@
 #else
 	#include <X11/Xlib.h>
 	#include <sched.h>
+	#include "Platform/Linux/myX11.h"
 #endif
 
 #ifdef USE_GML
@@ -463,48 +464,26 @@ bool SpringApp::SetSDLVideoMode()
 }
 
 
-
 // origin for our coordinates is the bottom left corner
 bool SpringApp::GetDisplayGeometry()
 {
 #if       defined(HEADLESS)
 	return false;
-#else  // defined(HEADLESS)
 
+#else  // defined(HEADLESS)
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 
 	if (!SDL_GetWMInfo(&info)) {
 		return false;
 	}
+  #if       defined(__APPLE__)
+	// TODO: implement this function & RestoreWindowPosition() on Mac
+	windowPosX = 30;
+	windowPosY = 30;
+	windowState = 0;
 
-#if       defined(__APPLE__)
-	// TODO: implement this function, RestoreWindowPosition() and SaveWindowPosition() on Mac
-	return false;
-#elif     !defined(WIN32)
-	info.info.x11.lock_func();
-	{
-		Display* display = info.info.x11.display;
-		Window   window  = info.info.x11.window;
-
-		XWindowAttributes attrs;
-		XGetWindowAttributes(display, window, &attrs);
-		const Screen* screen = attrs.screen;
-
-		globalRendering->screenSizeX = WidthOfScreen(screen);
-		globalRendering->screenSizeY = HeightOfScreen(screen);
-		globalRendering->winSizeX = attrs.width;
-		globalRendering->winSizeY = attrs.height;
-
-		Window tmp;
-		int xp, yp;
-		XTranslateCoordinates(display, window, attrs.root, 0, 0, &xp, &yp, &tmp);
-		windowPosX = xp;
-		windowPosY = yp;
-	}
-	info.info.x11.unlock_func();
-
-#else
+  #elif     defined(WIN32)
 	globalRendering->screenSizeX = GetSystemMetrics(SM_CXSCREEN);
 	globalRendering->screenSizeY = GetSystemMetrics(SM_CYSCREEN);
 
@@ -523,13 +502,62 @@ bool SpringApp::GetDisplayGeometry()
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 
 	// GetClientRect doesn't do the right thing for restoring window position
-	if (!globalRendering->fullScreen) {
+	if (globalRendering->fullScreen) {
 		GetWindowRect(info.window, &rect);
 	}
 
 	windowPosX = rect.left;
 	windowPosY = rect.top;
-#endif // defined(__APPLE__)
+
+	// Get WindowState
+	WINDOWPLACEMENT wp;
+	wp.length = sizeof(WINDOWPLACEMENT);
+	if (GetWindowPlacement(info.window, &wp)) {
+		switch (wp.showCmd) {
+			case SW_SHOWMAXIMIZED:
+				windowState = 1;
+				break;
+			case SW_SHOWMINIMIZED:
+				windowState = 2;
+				break;
+			default:
+				windowState = 0;
+		}
+	}
+
+  #else
+	info.info.x11.lock_func();
+	{
+		Display* display = info.info.x11.display;
+		Window   window  = info.info.x11.wmwindow;
+
+		XWindowAttributes attrs;
+		XGetWindowAttributes(display, window, &attrs);
+		const Screen* screen = attrs.screen;
+
+		globalRendering->screenSizeX = WidthOfScreen(screen);
+		globalRendering->screenSizeY = HeightOfScreen(screen);
+		globalRendering->winSizeX = attrs.width;
+		globalRendering->winSizeY = attrs.height;
+
+		Window tmp;
+		int xp, yp;
+		XTranslateCoordinates(display, window, attrs.root, 0, 0, &xp, &yp, &tmp);
+		windowPosX = xp;
+		windowPosY = yp;
+
+		if (!globalRendering->fullScreen) {
+			int frame_left, frame_top;
+			MyX11GetFrameBorderOffset(display, window, &frame_left, &frame_top);
+			windowPosX -= frame_left;
+			windowPosY -= frame_top;
+		}
+
+		windowState = MyX11GetWindowState(display, window);
+	}
+	info.info.x11.unlock_func();
+
+  #endif // defined(__APPLE__)
 
 	globalRendering->winPosX = windowPosX;
 	globalRendering->winPosY = globalRendering->screenSizeY - globalRendering->winSizeY - windowPosY; //! origin BOTTOMLEFT
@@ -538,6 +566,81 @@ bool SpringApp::GetDisplayGeometry()
 #endif // defined(HEADLESS)
 }
 
+
+/**
+ * Restores position of the window, if we are not in full-screen mode
+ */
+void SpringApp::RestoreWindowPosition()
+{
+#if       defined(HEADLESS)
+	return;
+
+#else  // defined(HEADLESS)
+	if (!globalRendering->fullScreen) {
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+
+		if (SDL_GetWMInfo(&info)) {
+  #if       defined(WIN32)
+			bool stateChanged = false;
+
+			if (windowState > 0) {
+				WINDOWPLACEMENT wp;
+				memset(&wp,0,sizeof(WINDOWPLACEMENT));
+				wp.length = sizeof(WINDOWPLACEMENT);
+				stateChanged = true;
+				int wState;
+				switch (windowState) {
+					case 1: wState = SW_SHOWMAXIMIZED; break;
+					case 2: wState = SW_SHOWMINIMIZED; break;
+					default: stateChanged = false;
+				}
+				if (stateChanged) {
+					ShowWindow(info.window, wState);
+					GetDisplayGeometry();
+				}
+			}
+
+			if (!stateChanged) {
+				MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
+			}
+
+  #elif     defined(__APPLE__)
+			// TODO: implement this function
+
+  #else
+			info.info.x11.lock_func();
+			{
+				XMoveWindow(info.info.x11.display, info.info.x11.wmwindow, windowPosX, windowPosY);
+				MyX11SetWindowState(info.info.x11.display, info.info.x11.wmwindow, windowState);
+			}
+			info.info.x11.unlock_func();
+
+  #endif // defined(WIN32)
+		}
+	}
+#endif // defined(HEADLESS)
+}
+
+
+/**
+ * Saves position of the window, if we are not in full-screen mode
+ */
+void SpringApp::SaveWindowPosition()
+{
+#if       defined(HEADLESS)
+	return;
+
+#else
+	if (!globalRendering->fullScreen) {
+		GetDisplayGeometry();
+		configHandler->Set("WindowPosX", windowPosX);
+		configHandler->Set("WindowPosY", windowPosY);
+		configHandler->Set("WindowState", windowState);
+
+	}
+#endif // defined(HEADLESS)
+}
 
 
 void SpringApp::SetupViewportGeometry()
@@ -589,7 +692,6 @@ void SpringApp::SetupViewportGeometry()
 
 	globalRendering->aspectRatio = (float)globalRendering->viewSizeX / (float)globalRendering->viewSizeY;
 }
-
 
 
 /**
@@ -667,6 +769,7 @@ void SpringApp::LoadFonts()
 		configHandler->SetString("SmallFontFile", *fi);
 	}
 }
+
 
 /**
  * @return whether commandline parsing was successful
@@ -1085,113 +1188,6 @@ int SpringApp::Run(int argc, char *argv[])
 	Shutdown();
 	return 0;
 }
-
-
-
-/**
- * Restores position of the window, if we are not in full-screen mode
- */
-void SpringApp::RestoreWindowPosition()
-{
-#if       defined(HEADLESS)
-	return;
-#elif     defined(__APPLE__)
-	// TODO: implement this function
-	return;
-#else  // defined(HEADLESS)
-	if (!globalRendering->fullScreen) {
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-
-		if (SDL_GetWMInfo(&info)) {
-#if       defined(WIN32)
-			bool stateChanged = false;
-
-			if (windowState > 0) {
-				WINDOWPLACEMENT wp;
-				memset(&wp,0,sizeof(WINDOWPLACEMENT));
-				wp.length = sizeof(WINDOWPLACEMENT);
-				stateChanged = true;
-				int wState;
-				switch (windowState) {
-					case 1: wState = SW_SHOWMAXIMIZED; break;
-					case 2: wState = SW_SHOWMINIMIZED; break;
-					default: stateChanged = false;
-				}
-				if (stateChanged) {
-					ShowWindow(info.window, wState);
-					RECT rect;
-					if (GetClientRect(info.window, &rect)) {
-						//! translate from client coords to screen coords
-						MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
-						screenWidth = rect.right - rect.left;
-						screenHeight = rect.bottom - rect.top;
-						windowPosX = rect.left;
-						windowPosY = rect.top;
-					}
-				}
-			}
-
-			if (!stateChanged) {
-				MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
-			}
-#else  // defined(WIN32)
-			info.info.x11.lock_func();
-
-			{
-				XMoveWindow(info.info.x11.display, info.info.x11.wmwindow, windowPosX, windowPosY);
-			}
-
-			info.info.x11.unlock_func();
-#endif // defined(WIN32)
-		}
-	}
-#endif // defined(HEADLESS)
-}
-
-/**
- * Saves position of the window, if we are not in full-screen mode
- */
-void SpringApp::SaveWindowPosition()
-{
-#if       defined(HEADLESS)
-	return;
-#elif     defined(__APPLE__)
-	// TODO: implement this function
-	return;
-#else
-	if (!globalRendering->fullScreen) {
-  #if defined(_WIN32)
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-
-		if (SDL_GetWMInfo(&info)) {
-			WINDOWPLACEMENT wp;
-			wp.length = sizeof(WINDOWPLACEMENT);
-			if (GetWindowPlacement(info.window, &wp)) {
-				switch (wp.showCmd) {
-					case SW_SHOWMAXIMIZED:
-						windowState = 1;
-						break;
-					case SW_SHOWMINIMIZED:
-						windowState = 2;
-						break;
-					default:
-						configHandler->Set("WindowPosX", windowPosX);
-						configHandler->Set("WindowPosY", windowPosY);
-						windowState = 0;
-				}
-			}
-		}
-		configHandler->Set("WindowState", windowState);
-  #else
-		configHandler->Set("WindowPosX", windowPosX);
-		configHandler->Set("WindowPosY", windowPosY);
-  #endif
-	}
-#endif // defined(HEADLESS)
-}
-
 
 
 /**
