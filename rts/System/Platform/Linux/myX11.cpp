@@ -1,14 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#ifndef HEADLESS
+
 #include "StdAfx.h"
 #include "myX11.h"
 
-#include <X11/Xutil.h>
-#include <X11/Xproto.h>
-#include <X11/Xatom.h>
 #include <string.h>
 #include <string>
 #include <map>
+
+#include <SDL.h>
+#if !defined(HEADLESS)
+	#include <SDL_syswm.h>
+#endif
 
 
 void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, int* out_top)
@@ -157,3 +161,5 @@ void MyX11SetWindowState(Display* display, Window& window, int windowState)
 		}
 	}
 }
+
+#endif // #ifndef HEADLESS
