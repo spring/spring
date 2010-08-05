@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include "lib/md5/md5.h"
 #include "lib/md5/base64.h"
+#include "lib/streflop/streflop_cond.h"
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;
@@ -39,6 +40,14 @@ void Connection::Connect(const std::string& server, int port)
 	using namespace boost::asio;
 	boost::system::error_code err;
 	ip::address tempAddr = ip::address::from_string(server, err);
+#ifdef STREFLOP_H
+	//! FIXME
+	//! it seems one of our precompiled window boost libs in the mingwlib git
+	//! was compiled with broken (=non syncing) compile flags, so we need to
+	//! reset the FPU flags here
+	//! remove this when the boost libs got recompiled (date of note: 08/05/10)
+	streflop_init<streflop::Simple>();
+#endif
 	if (err)
 	{
 		// error, maybe a hostname?
@@ -54,7 +63,6 @@ void Connection::Connect(const std::string& server, int port)
 		}
 		tempAddr = iter->endpoint().address();
 	}
-
 	ip::tcp::endpoint serverep(tempAddr, port);
 	sock.async_connect(serverep, boost::bind(&Connection::ConnectCallback, this, placeholders::error));
 }
