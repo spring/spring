@@ -284,8 +284,8 @@ void CGroundMoveType::Update()
 				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
-				if (!haveFinalWaypoint /*|| (wpBehind && !canReverse)*/) {
-					GetNextWaypoint();
+				if (!haveFinalWaypoint) {
+					GetNextWaypoint(wpBehind && !canReverse);
 				} else {
 					if (atGoal) {
 						Arrived();
@@ -557,7 +557,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 						wSpeed = std::max(turnSpeed, (turnSpeed + wSpeed) * 0.2f);
 					} else {
 						// just skip, assume close enough
-						GetNextWaypoint();
+						GetNextWaypoint(true);
 						wSpeed = (turnSpeed + wSpeed) * 0.625f;
 					}
 				}
@@ -1238,15 +1238,27 @@ void CGroundMoveType::GetNewPath()
 /*
 Sets waypoint to next in path.
 */
-void CGroundMoveType::GetNextWaypoint()
+void CGroundMoveType::GetNextWaypoint(bool override)
 {
 	if (pathId == 0) {
 		return;
 	}
 
-	if ((owner->pos - waypoint).SqLength2D() > Square(CPathManager::PATH_RESOLUTION)) {
-		// still too far away
-		return;
+	if (!override) {
+		// straight-line distance check
+		if ((owner->pos - waypoint).SqLength2D() > Square(CPathManager::PATH_RESOLUTION)) {
+			// waypoint still too far away
+			return;
+		}
+	} else {
+		// turn-radius check
+		const float turnFrames = 65536 / turnRate;
+		const float turnRadius = (currentSpeed * turnFrames) / (PI + PI);
+
+		if (currentDistanceToWaypoint > (turnRadius * 1.25f)) {
+			// waypoint not inside our turning circle
+			return;
+		}
 	}
 
 	if (nextWaypoint.x != -1.0f && (nextWaypoint - waypoint).SqLength2D() > 0.1f) {
@@ -1868,7 +1880,7 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 					break;
 				}
 
-				GetNextWaypoint();
+				GetNextWaypoint(false);
 
 				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
 				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
