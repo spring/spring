@@ -4,6 +4,7 @@
 #include "myX11.h"
 
 #include <X11/Xutil.h>
+#include <X11/Xproto.h>
 #include <X11/Xatom.h>
 #include <string.h>
 #include <string>
