@@ -41,11 +41,9 @@ void Connection::Connect(const std::string& server, int port)
 	boost::system::error_code err;
 	ip::address tempAddr = ip::address::from_string(server, err);
 #ifdef STREFLOP_H
-	//! FIXME
-	//! it seems one of our precompiled window boost libs in the mingwlib git
-	//! was compiled with broken (=non syncing) compile flags, so we need to
-	//! reset the FPU flags here
-	//! remove this when the boost libs got recompiled (date of note: 08/05/10)
+	//! (date of note: 08/05/10)
+	//! something in from_string() is invalidating the FPU flags
+	//! tested on win2k and linux (not happening there)
 	streflop_init<streflop::Simple>();
 #endif
 	if (err)
