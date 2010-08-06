@@ -713,6 +713,7 @@ int LuaUnitRendering::SetFeatureLuaDraw(lua_State* L)
 {
 	const int featureID = luaL_checkint(L, 1);
 	CFeature* feature = featureHandler->GetFeature(featureID);
+
 	if (feature == NULL) {
 		return 0;
 	}
