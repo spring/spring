@@ -166,7 +166,7 @@ private:
 	void DrawUnitBeingBuilt(CUnit*);
 	inline void DrawUnitModel(CUnit*);
 	void DrawUnitNow(CUnit*);
-	void DrawUnitStats(CUnit*);
+
 	void UpdateDrawPos(CUnit*);
 
 	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
