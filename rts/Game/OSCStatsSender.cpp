@@ -7,6 +7,7 @@
 #endif
 
 #include <boost/asio.hpp>
+#include "lib/streflop/streflop_cond.h"
 
 #ifndef _MSC_VER
 #include "StdAfx.h"
@@ -181,6 +182,13 @@ void COSCStatsSender::UpdateDestination() {
 	}
 	network->destination->address(boost::asio::ip::address::from_string(dstAddress));
 	network->destination->port(dstPort);
+
+#ifdef STREFLOP_H
+	//! (date of note: 08/05/10)
+	//! something in from_string() is invalidating the FPU flags
+	//! tested on win2k and linux (not happening there)
+	streflop_init<streflop::Simple>();
+#endif
 }
 
 bool COSCStatsSender::IsTimeToSend(int frameNum) {

@@ -9,6 +9,7 @@
 #include "Socket.h"
 
 #include <boost/system/error_code.hpp>
+#include "lib/streflop/streflop_cond.h"
 
 #include "LogOutput.h"
 
@@ -41,6 +42,12 @@ boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port)
 	using namespace boost::asio;
 	boost::system::error_code err;
 	ip::address tempAddr = ip::address::from_string(ip, err);
+#ifdef STREFLOP_H
+	//! (date of note: 08/05/10)
+	//! something in from_string() is invalidating the FPU flags
+	//! tested on win2k and linux (not happening there)
+	streflop_init<streflop::Simple>();
+#endif
 	if (err)
 	{
 		// error, maybe a hostname?
