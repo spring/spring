@@ -1945,7 +1945,7 @@ void CGroundMoveType::SetMainHeading() {
 		ASSERT_SYNCED_FLOAT3(dir2);
 
 		if (dir2 != ZeroVector) {
-			const short heading =
+			short heading =
 				GetHeadingFromVector(dir2.x, dir2.z) -
 				GetHeadingFromVector(dir1.x, dir1.z);
 
