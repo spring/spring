@@ -108,8 +108,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
 
-	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
-
 #ifdef USE_GML
 	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
 	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
@@ -421,10 +419,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					DrawUnitNow(unit);
 				}
 			}
-
-			if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
-				drawStat.push_back(unit);
-			}
 		}
 	} else if (losStatus & LOS_PREVLOS) {
 		if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
@@ -437,7 +431,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	drawStat.clear();
 	drawIcon.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -565,10 +558,6 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_ALPHA_TEST);
-
-		for (GML_VECTOR<CUnit*>::iterator ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
-			DrawUnitStats(*ui);
-		}
 	}
 }
 
