@@ -1499,20 +1499,6 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "trackmode") {
 		unitTracker.IncMode();
 	}
-	else if (cmd == "showhealthbars") {
-		if (action.extra.empty()) {
-			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
-		} else {
-			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
-		}
-	}
-	else if (cmd == "showrezbars") {
-		if (action.extra.empty()) {
-			featureDrawer->SetShowRezBars(!featureDrawer->GetShowRezBars());
-		} else {
-			featureDrawer->SetShowRezBars(!!atoi(action.extra.c_str()));
-		}
-	}
 	else if (cmd == "pause") {
 		// disallow pausing prior to start of game proper
 		if (playing) {
