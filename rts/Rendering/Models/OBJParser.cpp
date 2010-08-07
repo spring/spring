@@ -325,9 +325,6 @@ void COBJParser::BuildModelPieceTreeRec(
 	bool globalVertexOffsets,
 	bool localPieceOffsets
 ) {
-	assert(piece->GetVertexCount() == piece->GetNormalCount());
-	assert(piece->GetVertexCount() == piece->GetTxCoorCount());
-
 	const S3DModelPiece* parentPiece = piece->parent;
 
 	piece->isEmpty = (piece->GetVertexCount() == 0);
