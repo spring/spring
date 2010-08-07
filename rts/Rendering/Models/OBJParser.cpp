@@ -5,7 +5,9 @@
 #include <sstream>
 #include <boost/regex.hpp>
 
+#define private public
 #include "OBJParser.h"
+#undef private
 #include "Lua/LuaParser.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -105,7 +107,8 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		"[ ]*"
 		// do not allow spaces around the '/' separators or the
 		// stringstream >> operator will tokenize the wrong way
-		// (according to the OBJ spec they are illegal anyway)
+		// (according to the OBJ spec they are illegal anyway:
+		// "there is no space between numbers and the slashes")
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 1st vertex/texcoor/normal idx
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 2nd vertex/texcoor/normal idx
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 3rd vertex/texcoor/normal idx
@@ -116,7 +119,6 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 	PieceMap pieceMap;
 	SOBJPiece* piece = NULL;
-
 
 	std::string line, lineHeader;
 	std::stringstream lineStream;
@@ -194,11 +196,12 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						j = 0,
 						n = 0;
 
-					SOBJTriangle triangle;
+					SOBJTriangle triangle = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 
 					while (lineStream.good() && n < 3) {
 						std::string vtnIndices; lineStream >> vtnIndices;
 
+						// vIdx/tcIdx/nIdx ...
 						i = vtnIndices.find('/',     0); assert(i != std::string::npos);
 						j = vtnIndices.find('/', i + 1); assert(j != std::string::npos);
 
@@ -207,26 +210,26 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						nIdx = std::atoi(vtnIndices.substr(j + 1       ).c_str());
 
 						if (vIdx < 0) {
-							triangle.vIndices[n] = piece->vertexCount + vIdx;
+							triangle.vIndices[n] = piece->GetVertexCount() + vIdx;
 						} else {
 							triangle.vIndices[n] = vIdx - 1;
 						}
 
 						if (tIdx < 0) {
-							triangle.tIndices[n] = piece->vertexCount + tIdx;
+							triangle.tIndices[n] = piece->GetTxCoorCount() + tIdx;
 						} else {
 							triangle.tIndices[n] = tIdx - 1;
 						}
 
 						if (nIdx < 0) {
-							triangle.nIndices[n] = piece->vertexCount + nIdx;
+							triangle.nIndices[n] = piece->GetNormalCount() + nIdx;
 						} else {
 							triangle.nIndices[n] = nIdx - 1;
 						}
 
-						assert(triangle.vIndices[n] >= 0 && triangle.vIndices[n] < piece->vertexCount);
-						assert(triangle.tIndices[n] >= 0 && triangle.tIndices[n] < piece->vertexCount);
-						assert(triangle.nIndices[n] >= 0 && triangle.nIndices[n] < piece->vertexCount);
+						assert(triangle.vIndices[n] >= 0 && triangle.vIndices[n] < piece->GetVertexCount());
+						assert(triangle.tIndices[n] >= 0 && triangle.tIndices[n] < piece->GetTxCoorCount());
+						assert(triangle.nIndices[n] >= 0 && triangle.nIndices[n] < piece->GetNormalCount());
 						n += 1;
 					}
 
@@ -291,6 +294,7 @@ bool COBJParser::BuildModelPieceTree(
 		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
 			model->rootobject = rootPiece;
+
 			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;
 		}
@@ -304,6 +308,7 @@ bool COBJParser::BuildModelPieceTree(
 		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
 			model->rootobject = rootPiece;
+
 			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;
 		}
@@ -379,7 +384,6 @@ void COBJParser::BuildModelPieceTreeRec(
 		// we want vertices in piece-space
 		piece->SetVertex(i, vertexLocalPos);
 	}
-
 
 	model->mins.x = std::min(piece->mins.x, model->mins.x);
 	model->mins.y = std::min(piece->mins.y, model->mins.y);
@@ -513,6 +517,7 @@ void SOBJPiece::SetVertexTangents()
 	// set the triangle-level S- and T-tangents
 	for (int i = GetTriangleCount() - 1; i >= 0; i--) {
 		const SOBJTriangle& tri = GetTriangle(i);
+
 		const float3&
 			p0 = GetVertex(tri.vIndices[0]),
 			p1 = GetVertex(tri.vIndices[1]),
