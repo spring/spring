@@ -196,8 +196,8 @@ CGroundMoveType::~CGroundMoveType()
 void CGroundMoveType::PostLoad()
 {
 	// FIXME: HACK: re-initialize path after load
-	if (pathId) {
-		RequestPath(owner->pos, goalPos, goalRadius);
+	if (pathId != 0) {
+		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 	}
 }
 
@@ -1157,12 +1157,6 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 }
 
 
-unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos, float goalRadius)
-{
-	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
-	return pathId;
-}
-
 
 // Calculates an aproximation of the physical 2D-distance between given two objects.
 float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal)
@@ -1209,8 +1203,9 @@ void CGroundMoveType::GetNewPath()
 
 		if (nonMovingFailures > 10) {
 			nonMovingFailures = 0;
-			Fail();
 			pathId = 0;
+
+			Fail();
 			return;
 		}
 	} else {
@@ -1219,15 +1214,17 @@ void CGroundMoveType::GetNewPath()
 	}
 
 	pathManager->DeletePath(pathId);
-	RequestPath(owner->pos, goalPos, goalRadius);
+	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 
 	// if new path received, can't be at waypoint
-	if (pathId) {
+	if (pathId != 0) {
 		atGoal = false;
 		haveFinalWaypoint = false;
 
 		waypoint = owner->pos;
 		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+	} else {
+		Fail();
 	}
 
 	// set limit for when next path-request can be made
@@ -1336,21 +1333,11 @@ void CGroundMoveType::StartEngine() {
 		GetNewPath();
 
 		// activate "engine" only if a path was found
-		if (pathId) {
+		if (pathId != 0) {
 			pathManager->UpdatePath(owner, pathId);
 			etaFailures = 0;
 			owner->isMoving = true;
 			owner->script->StartMoving();
-
-			#if (DEBUG_OUTPUT == 1)
-			logOutput.Print("[CGMT::StartEngine] engine started for unit %i", owner->id);
-			#endif
-		} else {
-			#if (DEBUG_OUTPUT == 1)
-			logOutput.Print("[CGMT::StartEngine] failed to start engine for unit %i", owner->id);
-			#endif
-
-			Fail();
 		}
 	}
 
