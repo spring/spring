@@ -5,9 +5,7 @@
 #include <sstream>
 #include <boost/regex.hpp>
 
-#define private public
 #include "OBJParser.h"
-#undef private
 #include "Lua/LuaParser.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -114,11 +112,13 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 3rd vertex/texcoor/normal idx
 	);
 
-	bool match = false;
-
 
 	PieceMap pieceMap;
 	SOBJPiece* piece = NULL;
+
+	std::vector<float3> vertices; vertices.reserve(2048);
+	std::vector<float2> texcoors; texcoors.reserve(2048);
+	std::vector<float3> vnormals; vnormals.reserve(2048);
 
 	std::string line, lineHeader;
 	std::stringstream lineStream;
@@ -126,20 +126,23 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 	size_t prevReadIdx = 0;
 	size_t currReadIdx = 0;
 
+	bool regexMatch = false;
+
 	while ((currReadIdx = modelData.find_first_of('\n', prevReadIdx)) != std::string::npos) {
 		line = modelData.substr(prevReadIdx, (currReadIdx - prevReadIdx));
 
 		if (!line.empty()) {
-			              match = (boost::regex_match(line, commentPattern));
-			if (!match) { match = (boost::regex_match(line, objectPattern )); }
-			if (!match) { match = (boost::regex_match(line, vertexPattern )); }
-			if (!match) { match = (boost::regex_match(line, normalPattern )); }
-			if (!match) { match = (boost::regex_match(line, txcoorPattern )); }
-			if (!match) { match = (boost::regex_match(line, polygonPattern)); }
+			                   regexMatch = (boost::regex_match(line, commentPattern));
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, objectPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, vertexPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, normalPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, txcoorPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, polygonPattern)); }
 
-			if (!match) {
+			if (!regexMatch) {
 				// ignore groups ('g'), smoothing groups ('s'),
 				// and materials ("mtllib", "usemtl") for now
+				// (s-groups are obsolete with vertex normals)
 				logOutput.Print("[OBJParser] failed to parse line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
 
 				prevReadIdx = currReadIdx + 1;
@@ -178,9 +181,9 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						lineStream >> f3.z;
 					float2 f2(f3.x, f3.y);
 
-					     if (lineHeader == "v" ) { piece->AddVertex(f3             ); }
-					else if (lineHeader == "vn") { piece->AddNormal(f3.ANormalize()); }
-					else if (lineHeader == "vt") { piece->AddTxCoor(f2             ); }
+					     if (lineHeader == "v" ) { vertices.push_back(f3);   }
+					else if (lineHeader == "vt") { texcoors.push_back(f2);   }
+					else if (lineHeader == "vn") { vnormals.push_back(f3);   }
 				} break;
 
 				case 'f': {
@@ -201,7 +204,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 					while (lineStream.good() && n < 3) {
 						std::string vtnIndices; lineStream >> vtnIndices;
 
-						// vIdx/tcIdx/nIdx ...
+						// vIdx/tcIdx/nIdx triplet of indices into the global lists
 						i = vtnIndices.find('/',     0); assert(i != std::string::npos);
 						j = vtnIndices.find('/', i + 1); assert(j != std::string::npos);
 
@@ -210,26 +213,23 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						nIdx = std::atoi(vtnIndices.substr(j + 1       ).c_str());
 
 						if (vIdx < 0) {
-							triangle.vIndices[n] = piece->GetVertexCount() + vIdx;
+							triangle.vIndices[n] = vertices.size() + vIdx;
 						} else {
 							triangle.vIndices[n] = vIdx - 1;
 						}
 
 						if (tIdx < 0) {
-							triangle.tIndices[n] = piece->GetTxCoorCount() + tIdx;
+							triangle.tIndices[n] = texcoors.size() + tIdx;
 						} else {
 							triangle.tIndices[n] = tIdx - 1;
 						}
 
 						if (nIdx < 0) {
-							triangle.nIndices[n] = piece->GetNormalCount() + nIdx;
+							triangle.nIndices[n] = vnormals.size() + nIdx;
 						} else {
 							triangle.nIndices[n] = nIdx - 1;
 						}
 
-						assert(triangle.vIndices[n] >= 0 && triangle.vIndices[n] < piece->GetVertexCount());
-						assert(triangle.tIndices[n] >= 0 && triangle.tIndices[n] < piece->GetTxCoorCount());
-						assert(triangle.nIndices[n] >= 0 && triangle.nIndices[n] < piece->GetNormalCount());
 						n += 1;
 					}
 
@@ -246,6 +246,47 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		}
 
 		prevReadIdx = currReadIdx + 1;
+	}
+
+
+	for (PieceMap::iterator it = pieceMap.begin(); it != pieceMap.end(); ++it) {
+		SOBJPiece* piece = it->second;
+
+		piece->SetVertexCount(piece->GetTriangleCount() * 3);
+		piece->SetNormalCount(piece->GetTriangleCount() * 3);
+		piece->SetTxCoorCount(piece->GetTriangleCount() * 3);
+
+		for (int i = 0; i < piece->GetTriangleCount(); i++) {
+			SOBJTriangle tri = piece->GetTriangle(i); // copy
+
+			assert(tri.vIndices[0] < vertices.size() && tri.vIndices[1] < vertices.size() && tri.vIndices[2] < vertices.size());
+			assert(tri.tIndices[0] < texcoors.size() && tri.tIndices[1] < texcoors.size() && tri.tIndices[2] < texcoors.size());
+			assert(tri.nIndices[0] < vnormals.size() && tri.nIndices[1] < vnormals.size() && tri.nIndices[2] < vnormals.size());
+
+			float3 &v0 = vertices[tri.vIndices[0]], &v1 = vertices[tri.vIndices[1]], &v2 = vertices[tri.vIndices[2]];
+			float2 &t0 = texcoors[tri.tIndices[0]], &t1 = texcoors[tri.tIndices[1]], &t2 = texcoors[tri.tIndices[2]];
+			float3 &n0 = vnormals[tri.nIndices[0]], &n1 = vnormals[tri.nIndices[1]], &n2 = vnormals[tri.nIndices[2]];
+
+			const int
+				idx0 = (i * 3) + 0,
+				idx1 = (i * 3) + 1,
+				idx2 = (i * 3) + 2;
+
+			// convert to piece-local vtn indices
+			tri.vIndices[0] = idx0; piece->SetVertex(idx0, v0             );
+			tri.nIndices[0] = idx0; piece->SetNormal(idx0, n0.ANormalize());
+			tri.tIndices[0] = idx0; piece->SetTxCoor(idx0, t0             );
+
+			tri.vIndices[1] = idx1; piece->SetVertex(idx1, v1             );
+			tri.nIndices[1] = idx1; piece->SetNormal(idx1, n1.ANormalize());
+			tri.tIndices[1] = idx1; piece->SetTxCoor(idx1, t1             );
+
+			tri.vIndices[2] = idx2; piece->SetVertex(idx2, v2             );
+			tri.nIndices[2] = idx2; piece->SetNormal(idx2, n2.ANormalize());
+			tri.tIndices[2] = idx2; piece->SetTxCoor(idx2, t2             );
+
+			piece->SetTriangle(i, tri);
+		}
 	}
 
 

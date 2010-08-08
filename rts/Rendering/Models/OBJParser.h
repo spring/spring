@@ -40,12 +40,14 @@ public:
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 
-	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount += 1; }
-	void AddNormal(const float3& n) { vnormals.push_back(n);                   }
-	void AddTxCoor(const float2& t) { texcoors.push_back(t);                   }
+	void SetVertexCount(int n) { vertices.resize(n); vertexCount = n; }
+	void SetNormalCount(int n) { vnormals.resize(n); }
+	void SetTxCoorCount(int n) { texcoors.resize(n); }
 
 	void AddTriangle(const SOBJTriangle& t) { triangles.push_back(t); }
+	void SetTriangle(int idx, const SOBJTriangle& t) { triangles[idx] = t; }
 	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
+
 	int GetTriangleCount() const { return (triangles.size()); }
 	int GetVertexCount() const { return vertices.size(); }
 	int GetNormalCount() const { return vnormals.size(); }
