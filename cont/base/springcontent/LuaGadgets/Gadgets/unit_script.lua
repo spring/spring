@@ -390,7 +390,11 @@ end
 
 -- may be useful to other gadgets
 function Spring.UnitScript.GetScriptEnv(unitID)
-	return units[unitID].env
+	local unit = units[unitID]
+	if unit then
+		return unit.env
+	end
+	return nil
 end
 
 function Spring.UnitScript.GetLongestReloadTime(unitID)
