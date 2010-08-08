@@ -857,7 +857,8 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 	}
 	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
 	if (cob == NULL) {
-		luaL_error(L, "GetCOBScriptID(): unit is not running a COB script");
+		// no error - allows using this to determine whether unit runs COB or LUS
+		return 0;
 	}
 
 	const string funcName = lua_tostring(L, 2);
