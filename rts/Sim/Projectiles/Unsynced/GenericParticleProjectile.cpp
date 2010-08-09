@@ -52,7 +52,7 @@ CGenericParticleProjectile::~CGenericParticleProjectile(void)
 void CGenericParticleProjectile::Update()
 {
 	pos += speed;
-	life +=decayrate;
+	life += decayrate;
 	speed += gravity;
 	speed *= airdrag;
 	size = size * sizeMod + sizeGrowth;
@@ -64,10 +64,9 @@ void CGenericParticleProjectile::Update()
 
 void CGenericParticleProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 
-	if(directional)
-	{
+	if (directional) {
 		float3 dif(pos-camera->pos);
 		dif.ANormalize();
 		float3 dir1(dif.cross(speed));
@@ -82,9 +81,7 @@ void CGenericParticleProjectile::Draw()
 		va->AddVertexTC(drawPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
 		va->AddVertexTC(drawPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
 		va->AddVertexTC(drawPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
-	}
-	else
-	{
+	} else {
 		unsigned char color[4];
 
 		colorMap->GetColor(color, life);

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GFXPROJECTILE_H
-#define GFXPROJECTILE_H
+#ifndef GFX_PROJECTILE_H
+#define GFX_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
 
@@ -22,4 +22,4 @@ public:
 	unsigned char color[4];
 };
 
-#endif /* GFXPROJECTILE_H */
+#endif /* GFX_PROJECTILE_H */
