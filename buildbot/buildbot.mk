@@ -19,18 +19,18 @@ stop-master:
 
 start-slave:
 	##### Not using schroot
-	#env -i PATH=$$PATH nice -19 ionice -c3 buildbot start slaves/testslave
+	#env -i PATH=$$PATH nice -19 ionice -c3 buildslave start slaves/testslave
 	##### Using schroot
 	schroot --begin-session --chroot buildbot-lucid > ~/run/slave_schroot_session
 	## `ionice -c3' sets the process to idle IO priority.
 	## This is only useful when using CFQ IO scheduler on the relevant disk.
-	schroot --run-session --chroot `cat ~/run/slave_schroot_session` -- env -i PATH=/usr/local/bin:/usr/bin:/bin nice -19 ionice -c3 buildbot start /slave
+	schroot --run-session --chroot `cat ~/run/slave_schroot_session` -- env -i PATH=/usr/local/bin:/usr/bin:/bin nice -19 ionice -c3 buildslave start /slave
 
 stop-slave:
 	##### Not using schroot
 	#buildbot stop slaves/testslave
 	##### Using schroot
-	schroot --run-session --chroot `cat ~/run/slave_schroot_session` buildbot stop /slave
+	schroot --run-session --chroot `cat ~/run/slave_schroot_session` buildslave stop /slave
 	schroot --end-session --chroot `cat ~/run/slave_schroot_session`
 	rm ~/run/slave_schroot_session
 
@@ -41,17 +41,19 @@ start-github:
 	env -i PATH=$$PATH buildbot/contrib/github_buildbot.py -m localhost:9989 -p 9987 -l ~/log/github_buildbot.log -L debug --pidfile ~/run/github_buildbot.pid &
 
 stop-github:
-	kill `cat ~/run/github_buildbot.pid`
+	-[ -e ~/run/github_buildbot.pid ] && kill `cat ~/run/github_buildbot.pid`
+	rm -f ~/run/github_buildbot.pid
 
 start-stacktrace-translator:
 	spring/buildbot/stacktrace_translator.py >> ~/log/stacktrace_translator.log 2>&1 &
 
 stop-stacktrace-translator:
-	kill `cat ~/run/stacktrace_translator.pid`
+	-[ -e ~/run/stacktrace_translator.pid ] && kill `cat ~/run/stacktrace_translator.pid`
+	rm -f ~/run/stacktrace_translator.pid
 
-start: start-master start-slave start-github
+start: start-master start-slave start-github start-stacktrace-translator
 
-stop: stop-github stop-slave stop-master
+stop: stop-stacktrace-translator stop-github stop-slave stop-master
 
 reload:
 	buildbot sighup master
