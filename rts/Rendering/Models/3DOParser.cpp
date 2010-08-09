@@ -382,7 +382,6 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 		piece->childs.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
 	}
 
-	piece->vertexCount = piece->vertices.size();
 	piece->isEmpty = (piece->prims.size() < 1);
 
 	if (me.OffsetToSiblingObject > 0) {
