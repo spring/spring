@@ -233,8 +233,48 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						n += 1;
 					}
 
+					const bool b0 =
+						(triangle.vIndices[0] >= 0 && triangle.vIndices[1] >= 0 && triangle.vIndices[2] >= 0) &&
+						(triangle.tIndices[0] >= 0 && triangle.tIndices[1] >= 0 && triangle.tIndices[2] >= 0) &&
+						(triangle.nIndices[0] >= 0 && triangle.nIndices[1] >= 0 && triangle.nIndices[2] >= 0);
+					const bool b1 =
+						(triangle.vIndices[0] < vertices.size() && triangle.vIndices[1] < vertices.size() && triangle.vIndices[2] < vertices.size()) &&
+						(triangle.tIndices[0] < texcoors.size() && triangle.tIndices[1] < texcoors.size() && triangle.tIndices[2] < texcoors.size()) &&
+						(triangle.nIndices[0] < vnormals.size() && triangle.nIndices[1] < vnormals.size() && triangle.nIndices[2] < vnormals.size());
+
 					assert(n == 3);
-					piece->AddTriangle(triangle);
+					assert(b0 && b1);
+
+					if (b0 && b1) {
+						// note: this assumes face elements may not reference indices
+						// ahead of the current {vertices, texcoors, vnormals}.size()
+						// if this *is* allowed, the entire file must be parsed first
+						float3 &v0 = vertices[triangle.vIndices[0]], &v1 = vertices[triangle.vIndices[1]], &v2 = vertices[triangle.vIndices[2]];
+						float2 &t0 = texcoors[triangle.tIndices[0]], &t1 = texcoors[triangle.tIndices[1]], &t2 = texcoors[triangle.tIndices[2]];
+						float3 &n0 = vnormals[triangle.nIndices[0]], &n1 = vnormals[triangle.nIndices[1]], &n2 = vnormals[triangle.nIndices[2]];
+
+						const int
+							idx0 = (piece->GetTriangleCount() * 3) + 0,
+							idx1 = (piece->GetTriangleCount() * 3) + 1,
+							idx2 = (piece->GetTriangleCount() * 3) + 2;
+
+						// convert to piece-local vtn indices
+						triangle.vIndices[0] = idx0; piece->AddVertex(v0             );
+						triangle.nIndices[0] = idx0; piece->AddNormal(n0.ANormalize());
+						triangle.tIndices[0] = idx0; piece->AddTxCoor(t0             );
+
+						triangle.vIndices[1] = idx1; piece->AddVertex(v1             );
+						triangle.nIndices[1] = idx1; piece->AddNormal(n1.ANormalize());
+						triangle.tIndices[1] = idx1; piece->AddTxCoor(t1             );
+
+						triangle.vIndices[2] = idx2; piece->AddVertex(v2             );
+						triangle.nIndices[2] = idx2; piece->AddNormal(n2.ANormalize());
+						triangle.tIndices[2] = idx2; piece->AddTxCoor(t2             );
+
+						piece->AddTriangle(triangle);
+					} else {
+						logOutput.Print("[OBJParser] illegal face-element indices on line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
+					}
 				} break;
 
 				default: {
@@ -246,47 +286,6 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		}
 
 		prevReadIdx = currReadIdx + 1;
-	}
-
-
-	for (PieceMap::iterator it = pieceMap.begin(); it != pieceMap.end(); ++it) {
-		SOBJPiece* piece = it->second;
-
-		piece->SetVertexCount(piece->GetTriangleCount() * 3);
-		piece->SetNormalCount(piece->GetTriangleCount() * 3);
-		piece->SetTxCoorCount(piece->GetTriangleCount() * 3);
-
-		for (int i = 0; i < piece->GetTriangleCount(); i++) {
-			SOBJTriangle tri = piece->GetTriangle(i); // copy
-
-			assert(tri.vIndices[0] < vertices.size() && tri.vIndices[1] < vertices.size() && tri.vIndices[2] < vertices.size());
-			assert(tri.tIndices[0] < texcoors.size() && tri.tIndices[1] < texcoors.size() && tri.tIndices[2] < texcoors.size());
-			assert(tri.nIndices[0] < vnormals.size() && tri.nIndices[1] < vnormals.size() && tri.nIndices[2] < vnormals.size());
-
-			float3 &v0 = vertices[tri.vIndices[0]], &v1 = vertices[tri.vIndices[1]], &v2 = vertices[tri.vIndices[2]];
-			float2 &t0 = texcoors[tri.tIndices[0]], &t1 = texcoors[tri.tIndices[1]], &t2 = texcoors[tri.tIndices[2]];
-			float3 &n0 = vnormals[tri.nIndices[0]], &n1 = vnormals[tri.nIndices[1]], &n2 = vnormals[tri.nIndices[2]];
-
-			const int
-				idx0 = (i * 3) + 0,
-				idx1 = (i * 3) + 1,
-				idx2 = (i * 3) + 2;
-
-			// convert to piece-local vtn indices
-			tri.vIndices[0] = idx0; piece->SetVertex(idx0, v0             );
-			tri.nIndices[0] = idx0; piece->SetNormal(idx0, n0.ANormalize());
-			tri.tIndices[0] = idx0; piece->SetTxCoor(idx0, t0             );
-
-			tri.vIndices[1] = idx1; piece->SetVertex(idx1, v1             );
-			tri.nIndices[1] = idx1; piece->SetNormal(idx1, n1.ANormalize());
-			tri.tIndices[1] = idx1; piece->SetTxCoor(idx1, t1             );
-
-			tri.vIndices[2] = idx2; piece->SetVertex(idx2, v2             );
-			tri.nIndices[2] = idx2; piece->SetNormal(idx2, n2.ANormalize());
-			tri.tIndices[2] = idx2; piece->SetTxCoor(idx2, t2             );
-
-			piece->SetTriangle(i, tri);
-		}
 	}
 
 
