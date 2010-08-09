@@ -45,7 +45,7 @@ stop-github:
 	rm -f ~/run/github_buildbot.pid
 
 start-stacktrace-translator:
-	spring/buildbot/stacktrace_translator.py >> ~/log/stacktrace_translator.log 2>&1 &
+	spring/buildbot/stacktrace_translator/stacktrace_translator.py >> ~/log/stacktrace_translator.log 2>&1 &
 
 stop-stacktrace-translator:
 	-[ -e ~/run/stacktrace_translator.pid ] && kill `cat ~/run/stacktrace_translator.pid`
