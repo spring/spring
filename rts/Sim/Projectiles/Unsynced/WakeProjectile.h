@@ -1,17 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef WAKEPROJECTILE_H
-#define WAKEPROJECTILE_H
+#ifndef WAKE_PROJECTILE_H
+#define WAKE_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
 
-class CWakeProjectile :
-	public CProjectile
+class CWakeProjectile : public CProjectile
 {
 	CR_DECLARE(CWakeProjectile);
 public:
-	CWakeProjectile(const float3 pos,const float3 speed,float startSize,float sizeExpansion, CUnit* owner,float alpha,float alphaFalloff,float fadeupTime);
+	CWakeProjectile(const float3 pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime);
 	virtual ~CWakeProjectile();
+
 	void Update();
 	void Draw();
 
@@ -25,4 +25,4 @@ public:
 	float rotSpeed;
 };
 
-#endif /* WAKEPROJECTILE_H */
+#endif /* WAKE_PROJECTILE_H */

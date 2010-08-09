@@ -17,6 +17,7 @@ FlyingPiece::~FlyingPiece() {
 }
 
 void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertexArray* va) {
+
 	if (team != *lastTeam) {
 		*lastTeam = team;
 
@@ -57,8 +58,9 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 			if (texture != *lastTex) {
 				*lastTex = texture;
 
-				if (*lastTex == 0)
+				if (*lastTex == 0) {
 					return;
+				}
 
 				va->DrawArrayTN(GL_QUADS);
 				va->Initialize();

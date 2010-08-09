@@ -24,7 +24,7 @@ CR_REG_METADATA(CWreckProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWreckProjectile::CWreckProjectile(float3 pos,float3 speed,float temperature,CUnit* owner):
+CWreckProjectile::CWreckProjectile(float3 pos, float3 speed, float temperature, CUnit* owner):
 	CProjectile(pos,speed,owner, false, false, false)
 {
 	checkCol = false;
@@ -42,8 +42,9 @@ void CWreckProjectile::Update()
 	speed.x *= 0.994f;
 	speed.z *= 0.994f;
 
-	if (speed.y > 0)
+	if (speed.y > 0) {
 		speed.y *= 0.998f;
+	}
 
 	pos += speed;
 
@@ -51,11 +52,12 @@ void CWreckProjectile::Update()
 		CSmokeProjectile* hp = new CSmokeProjectile(pos, ZeroVector, 50, 4, 0.3f, owner(), 0.5f);
 		hp->size += 0.1f;
 	}
-	if (pos.y + 0.3f < ground->GetApproximateHeight(pos.x, pos.z))
+	if (pos.y + 0.3f < ground->GetApproximateHeight(pos.x, pos.z)) {
 		deleteMe = true;
+	}
 }
 
-void CWreckProjectile::Draw(void)
+void CWreckProjectile::Draw()
 {
 	inArray = true;
 	unsigned char col[4];

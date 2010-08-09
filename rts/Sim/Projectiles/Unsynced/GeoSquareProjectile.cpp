@@ -9,7 +9,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),0,0));
+CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (float3(0,0,0), float3(0,0,0), float3(0,0,0), float3(0,0,0), 0, 0));
 
 CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_MEMBER(p1),
@@ -25,8 +25,8 @@ CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_RESERVED(8)
 	));
 
-CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2)
-: CProjectile((p1+p2)*0.5f,ZeroVector,0, false, false, false),
+CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1, const float3& p2, const float3& v1, const float3& v2, float w1, float w2)
+: CProjectile((p1 + p2) * 0.5f, ZeroVector, 0, false, false, false),
 	p1(p1),
 	p2(p2),
 	v1(v1),
@@ -43,18 +43,18 @@ CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,con
 	SetRadius(p1.distance(p2) * 0.55f);
 }
 
-CGeoSquareProjectile::~CGeoSquareProjectile(void)
+CGeoSquareProjectile::~CGeoSquareProjectile()
 {
 }
 
-void CGeoSquareProjectile::Draw(void)
+void CGeoSquareProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	col[0]=(unsigned char) (r*a*255);
-	col[1]=(unsigned char) (g*a*255);
-	col[2]=(unsigned char) (b*a*255);
-	col[3]=(unsigned char) (a*255);
+	col[0] = (unsigned char) (r * a * 255);
+	col[1] = (unsigned char) (g * a * 255);
+	col[2] = (unsigned char) (b * a * 255);
+	col[3] = (unsigned char) (    a * 255);
 
 	float3 dif(p1-camera->pos);
 	dif.ANormalize();
@@ -83,6 +83,6 @@ void CGeoSquareProjectile::Draw(void)
 	}
 }
 
-void CGeoSquareProjectile::Update(void)
+void CGeoSquareProjectile::Update()
 {
 }
