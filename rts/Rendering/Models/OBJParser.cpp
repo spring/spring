@@ -548,8 +548,8 @@ void SOBJPiece::SetVertexTangents()
 		return;
 	}
 
-	sTangents.resize(vertexCount, ZeroVector);
-	tTangents.resize(vertexCount, ZeroVector);
+	sTangents.resize(GetVertexCount(), ZeroVector);
+	tTangents.resize(GetVertexCount(), ZeroVector);
 
 	// set the triangle-level S- and T-tangents
 	for (int i = GetTriangleCount() - 1; i >= 0; i--) {

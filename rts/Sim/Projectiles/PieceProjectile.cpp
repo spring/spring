@@ -225,7 +225,7 @@ bool CPieceProjectile::HasVertices(void)
 	if (omp == NULL)
 		return false;
 
-	return (omp->vertexCount > 0);
+	return (omp->GetVertexCount() > 0);
 }
 
 float3 CPieceProjectile::RandomVertexPos(void)
@@ -234,7 +234,7 @@ float3 CPieceProjectile::RandomVertexPos(void)
 		return ZeroVector;
 	}
 
-	const int vertexNum = (int) (gu->usRandFloat() * 0.99f * omp->vertexCount);
+	const int vertexNum = (int) (gu->usRandFloat() * 0.99f * omp->GetVertexCount());
 	const float3& pos = omp->GetVertexPos(vertexNum);
 
 	return pos;
