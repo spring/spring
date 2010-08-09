@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 . buildbot/slave/prepare.sh
 
 MINGWLIBS_PATH=${3}

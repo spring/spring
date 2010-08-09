@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 . buildbot/slave/prepare.sh
 
 REMOTE_HOST=localhost
