@@ -123,18 +123,6 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-#if       defined(APPLE)
-/**
- * Required because of OS X libs, declared in SDL_main.h
- * As we are not linking to SDL (using headless stubs instead),
- * we need to provide this here.
- */
-int SDL_main(int argc, char* argv[])
-{
-	return main(argc, argv);
-}
-#endif // defined(APPLE)
-
 #if defined(WIN32) && !defined(_MSC_VER)
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {

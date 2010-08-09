@@ -11,20 +11,24 @@ ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 REMOVE_DEFINITIONS(-DAVI_CAPTURING)
 
-IF    (MINGW)
+IF    (MINGW OR APPLE)
+	# Windows:
 	# We still need these header files,
 	# even if we are not going to link with gl, glu and SDL.
 	# We have them available anyway (mingwlibs).
+	# OS X:
+	# Cocoa requires the SDL libary, whenever the SDL headers are used,
+	# due to some #define magic, which is practically impossible to workaround.
 	FIND_PACKAGE(OpenGL REQUIRED)
 	FIND_PACKAGE(GLU REQUIRED)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-ELSE  (MINGW)
+ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL)
-ENDIF (MINGW)
+ENDIF (MINGW OR APPLE)
 
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
