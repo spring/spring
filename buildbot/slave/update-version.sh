@@ -1,5 +1,5 @@
 #!/bin/bash
-. buildbot/prepare.sh
+. buildbot/slave/prepare.sh
 
 FILE=rts/Game/GameVersion.cpp
 
