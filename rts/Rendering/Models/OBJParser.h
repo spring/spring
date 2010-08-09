@@ -17,7 +17,6 @@ struct SOBJPiece: public S3DModelPiece {
 public:
 	SOBJPiece() {
 		parent      = NULL;
-		vertexCount = 0;
 		displist    = 0;
 		isEmpty     = true;
 		type        = MODELTYPE_OBJ;
@@ -40,9 +39,9 @@ public:
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 
-	void SetVertexCount(int n) { vertices.resize(n); vertexCount = n; }
-	void SetNormalCount(int n) { vnormals.resize(n);                  }
-	void SetTxCoorCount(int n) { texcoors.resize(n);                  }
+	void SetVertexCount(int n) { vertices.resize(n); }
+	void SetNormalCount(int n) { vnormals.resize(n); }
+	void SetTxCoorCount(int n) { texcoors.resize(n); }
 
 	void AddTriangle(const SOBJTriangle& t) { triangles.push_back(t); }
 	void SetTriangle(int idx, const SOBJTriangle& t) { triangles[idx] = t; }
@@ -66,9 +65,9 @@ public:
 	void SetSTangent(int idx, const float3& v) { sTangents[idx] = v; }
 	void SetTTangent(int idx, const float3& v) { tTangents[idx] = v; }
 
-	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount = vertices.size(); }
-	void AddNormal(const float3& v) { vnormals.push_back(v);                                }
-	void AddTxCoor(const float2& v) { texcoors.push_back(v);                                }
+	void AddVertex(const float3& v) { vertices.push_back(v); }
+	void AddNormal(const float3& v) { vnormals.push_back(v); }
+	void AddTxCoor(const float2& v) { texcoors.push_back(v); }
 
 private:
 	std::vector<float3> vertices;

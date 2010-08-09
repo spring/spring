@@ -116,7 +116,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	}
 
 	piece->isEmpty = piece->vertexDrawOrder.empty();
-	piece->vertexCount = piece->vertices.size();
 	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
 	piece->SetVertexTangents();
@@ -240,8 +239,8 @@ void SS3OPiece::SetVertexTangents()
 		return;
 	}
 
-	sTangents.resize(vertexCount, ZeroVector);
-	tTangents.resize(vertexCount, ZeroVector);
+	sTangents.resize(GetVertexCount(), ZeroVector);
+	tTangents.resize(GetVertexCount(), ZeroVector);
 
 	unsigned stride = 0;
 
