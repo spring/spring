@@ -15,13 +15,14 @@
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/errorhandler.h"
-#include "System/TimeProfiler.h"
+#include "Game/LoadScreen.h"
+#include "System/Exceptions.h"
+#include "System/FastMath.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
-#include "System/FastMath.h"
+#include "System/TimeProfiler.h"
+#include "System/FileSystem/FileHandler.h"
 
 using std::sprintf;
 using std::string;
@@ -121,8 +122,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
 			char t[500];
 			sprintf(t, "[CBFGroundTextures] file \"%s\" does not match .smt format", tileFileName.c_str());
-			handleerror(0, t, "Error reading tile-file", 0);
-			exit(0);
+			throw content_error(t);
 		}
 
 		for (int b = 0; b < numSmallTiles; ++b) {

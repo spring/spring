@@ -8,7 +8,6 @@
 #include "Util.h"
 #include "Info.h"
 
-#include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
 

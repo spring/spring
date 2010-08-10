@@ -16,7 +16,6 @@
 #include "KeyAutoBinder.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Platform/errorhandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
