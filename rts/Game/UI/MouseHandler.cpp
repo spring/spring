@@ -5,6 +5,7 @@
 #include "mmgr.h"
 
 #include <algorithm>
+#include <boost/cstdint.hpp>
 
 #include "MouseHandler.h"
 #include "Game/CameraHandler.h"
@@ -27,7 +28,6 @@
 #include "Map/MapDamage.h"
 #include "Lua/LuaInputReceiver.h"
 #include "ConfigHandler.h"
-#include "Platform/errorhandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
@@ -41,11 +41,11 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "EventHandler.h"
-#include "Sound/ISound.h"
-#include "Sound/IEffectChannel.h"
+#include "Exceptions.h"
 #include "FastMath.h"
 #include "myMath.h"
-#include <boost/cstdint.hpp>
+#include "Sound/ISound.h"
+#include "Sound/IEffectChannel.h"
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
@@ -174,10 +174,9 @@ void CMouseHandler::LoadCursors()
 
 	// the default cursor must exist
 	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
-		handleerror(0,
+		throw content_error(
 			"Unable to load default cursor. Check that you have the required\n"
-			"content packages installed in your Spring \"base/\" directory.\n",
-			"Missing Dependency: \"cursornormal\"", 0);
+			"content packages installed in your Spring \"base/\" directory.\n");
 	}
 }
 
