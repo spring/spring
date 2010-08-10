@@ -148,8 +148,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->power = ud->power;
 	unit->maxHealth = ud->health;
 	unit->health = ud->health;
-	//unit->metalUpkeep = ud->metalUpkeep*16.0f/GAME_SPEED;
-	//unit->energyUpkeep = ud->energyUpkeep*16.0f/GAME_SPEED;
 	unit->controlRadius = (int)(ud->controlRadius / SQUARE_SIZE);
 	unit->losHeight = ud->losHeight;
 	unit->metalCost = ud->metalCost;
@@ -192,17 +190,17 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->flankingBonusDifDamage = (ud->flankingBonusMax - ud->flankingBonusMin) * 0.5f;
 
 
-	if(ud->highTrajectoryType==1)
-		unit->useHighTrajectory=true;
+	if (ud->highTrajectoryType == 1)
+		unit->useHighTrajectory = true;
 
-	if(ud->fireState >= 0)
+	if (ud->fireState >= 0)
 		unit->fireState = ud->fireState;
 
-	if(build){
-		unit->ChangeLos(1,1);
-		unit->health=0.1f;
+	if (build) {
+		unit->ChangeLos(1, 1);
+		unit->health = 0.1f;
 	} else {
-		unit->ChangeLos((int)(ud->losRadius),(int)(ud->airLosRadius));
+		unit->ChangeLos(int(ud->losRadius), int(ud->airLosRadius));
 	}
 
 	if (type == "GroundUnit") {
