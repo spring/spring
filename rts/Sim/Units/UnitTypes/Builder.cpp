@@ -116,7 +116,7 @@ void CBuilder::UnitInit(const UnitDef* def, int team, const float3& position)
 	range3D = def->buildRange3D;
 	buildDistance = def->buildDistance;
 
-	const float scale = (1.0f / 32.0f);
+	const float scale = (1.0f / TEAM_SLOWUPDATE_RATE);
 
 	buildSpeed     = scale * def->buildSpeed;
 	repairSpeed    = scale * def->repairSpeed;

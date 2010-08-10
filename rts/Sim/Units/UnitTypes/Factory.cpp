@@ -78,7 +78,7 @@ void CFactory::PostLoad()
 
 void CFactory::UnitInit (const UnitDef* def, int team, const float3& position)
 {
-	buildSpeed = def->buildSpeed / 32.0f;
+	buildSpeed = def->buildSpeed / TEAM_SLOWUPDATE_RATE;
 	CBuilding::UnitInit(def, team, position);
 }
 
