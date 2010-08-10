@@ -132,9 +132,9 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	cheating = false;
 	sentGameOverMsg = false;
 
-	spring_notime(gameStartTime);
-	spring_notime(gameEndTime);
-	spring_notime(readyTime);
+	gameStartTime = spring_notime;
+	gameEndTime = spring_notime;
+	readyTime = spring_notime;
 
 	medianCpu = 0.0f;
 	medianPing = 0;
