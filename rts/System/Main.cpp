@@ -10,8 +10,6 @@
 #endif
 #include <sstream>
 #include <boost/system/system_error.hpp>
-#include <boost/asio.hpp>
-#include <boost/version.hpp>
 
 #include "Platform/errorhandler.h"
 #ifndef _MSC_VER
@@ -23,13 +21,8 @@
 
 #include "SpringApp.h"
 
-#include <SDL.h>     // Must come after Game/UI/MouseHandler.h for ButtonPressEvt
-
 #ifdef WIN32
 #include "Platform/Win/win32.h"
-#include <winreg.h>
-#include <direct.h>
-#include "Platform/Win/seh.h"
 #endif
 
 
