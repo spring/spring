@@ -505,9 +505,9 @@ void UDPConnection::SetMTU(unsigned mtu2)
 
 void UDPConnection::Init()
 {
-	spring_notime(lastNakTime);
-	spring_notime(lastSendTime);
-	spring_notime(lastUnackResent);
+	lastNakTime = spring_notime;
+	lastSendTime = spring_notime;
+	lastUnackResent = spring_notime;
 	lastReceiveTime = spring_gettime();
 	lastInOrder=-1;
 	waitingPackets.clear();
