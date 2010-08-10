@@ -32,10 +32,6 @@ public:
 	 */
 	CTeam* Team(int i) const { return teams[i]; }
 
-	bool IsValidTeam(int id) const {
-		return ((id >= 0) && (id < teams.size()));
-	}
-
 	/**
 	 * @brief ally
 	 * @param a first allyteam
@@ -98,8 +94,12 @@ public:
 	int ActiveTeams() const { return teams.size(); }
 	int ActiveAllyTeams() const { return allyTeams.size(); }
 
-	bool IsActiveTeam(int id) const {
+	bool IsValidTeam(int id) const {
 		return ((id >= 0) && (id < ActiveTeams()));
+	}
+
+	bool IsActiveTeam(int id) const {
+		return IsValidTeam(id);
 	}
 
 	void GameFrame(int frameNum);
