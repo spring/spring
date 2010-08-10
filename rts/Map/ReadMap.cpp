@@ -19,7 +19,6 @@
 #include "System/LoadSave/LoadSaveInterface.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/Platform/errorhandler.h"
 
 using namespace std;
 
@@ -39,7 +38,7 @@ CR_REG_METADATA(CReadMap, (
 CReadMap* CReadMap::LoadMap(const std::string& mapname)
 {
 	if (mapname.length() < 3)
-		throw std::runtime_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
+		throw content_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
 
 	string extension = mapname.substr(mapname.length() - 3);
 

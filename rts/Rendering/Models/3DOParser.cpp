@@ -23,7 +23,6 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Platform/byteorder.h"
 #include <boost/cstdint.hpp>
 
