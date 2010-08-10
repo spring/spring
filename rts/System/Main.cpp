@@ -56,59 +56,31 @@ int Run(int argc, char* argv[])
 #	endif
 #endif
 
-// It's nice to be able to disable catching when you're debugging
-#ifndef NO_CATCH_EXCEPTIONS
+
 	try {
 		SpringApp app;
 		return app.Run(argc, argv);
 	}
 	catch (const content_error& e) {
-		SDL_Quit();
-		logOutput.SetSubscribersEnabled(false);
-		logOutput.Print("Content error: %s\n", e.what());
-		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
-		return -1;
+		ErrorMessageBox(e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 	}
+	}
+#ifndef NO_CATCH_EXCEPTIONS
 	catch (const boost::system::system_error& e) {
-		logOutput.Print("Fatal system error: %d: %s", e.code().value(), e.what());
-	#ifdef _MSC_VER
-		throw;
-	#else
 		std::stringstream ss;
 		ss << e.code().value() << ": " << e.what();
 		std::string tmp = ss.str();
-		handleerror(NULL, tmp.c_str(), "Fatal Error", MBF_OK | MBF_EXCL);
-		return -1;
-	#endif
+		ErrorMessageBox(tmp, "Fatal Error", MBF_OK | MBF_EXCL);
 	}
 	catch (const std::exception& e) {
-		SDL_Quit();
-	#ifdef _MSC_VER
-		logOutput.Print("Fatal error: %s\n", e.what());
-		logOutput.SetSubscribersEnabled(false);
-		throw; // let the error handler catch it
-	#else
-		logOutput.SetSubscribersEnabled(false);
-		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
-		return -1;
-	#endif
+		ErrorMessageBox(e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
 	}
 	catch (const char* e) {
-		SDL_Quit();
-	#ifdef _MSC_VER
-		logOutput.Print("Fatal error: %s\n", e);
-		logOutput.SetSubscribersEnabled(false);
-		throw; // let the error handler catch it
-	#else
-		logOutput.SetSubscribersEnabled(false);
-		handleerror(NULL, e, "Fatal Error", MBF_OK | MBF_EXCL);
-		return -1;
-	#endif
+		ErrorMessageBox(e, "Fatal Error", MBF_OK | MBF_EXCL);
 	}
-#else
-	SpringApp app;
-	return app.Run(argc, argv);
 #endif
+
+	return -1;
 }
 
 
