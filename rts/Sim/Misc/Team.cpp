@@ -301,6 +301,9 @@ void CTeam::SlowUpdate()
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
 			CTeam* team = teamHandler->Team(a);
+			if (team->isDead)
+				continue;
+
 			eShare += std::max(0.0f, (team->energyStorage * 0.99f) - team->energy);
 			mShare += std::max(0.0f, (team->metalStorage  * 0.99f) - team->metal);
 		}
@@ -324,6 +327,8 @@ void CTeam::SlowUpdate()
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
 			CTeam* team = teamHandler->Team(a);
+			if (team->isDead)
+				continue;
 
 			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
 			energy -= edif;
