@@ -19,7 +19,6 @@
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Util.h"
 
 #define SSMF_UNCOMPRESSED_NORMALS 0

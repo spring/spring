@@ -15,7 +15,6 @@
 #include "Map/ReadMap.h"
 #include "TimeProfiler.h"
 #include "LogOutput.h"
-#include "Platform/errorhandler.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_List.h"
 

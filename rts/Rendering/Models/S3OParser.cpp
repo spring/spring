@@ -21,7 +21,6 @@
 #include "System/Vec2.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
-#include "System/Platform/errorhandler.h"
 
 static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
 static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);

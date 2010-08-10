@@ -7,7 +7,6 @@
 
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
-#include "Platform/errorhandler.h"
 
 #ifndef _CONSOLE
 #  include "TimeProfiler.h"

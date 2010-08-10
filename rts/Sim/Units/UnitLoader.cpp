@@ -23,7 +23,6 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Platform/errorhandler.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/TeamHandler.h"

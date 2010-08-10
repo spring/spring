@@ -21,7 +21,6 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "Platform/errorhandler.h"
 #include "Util.h"
 #include "System/myTime.h"
 

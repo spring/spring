@@ -13,7 +13,6 @@
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
 #include "GlobalSynced.h"
-#include "Platform/errorhandler.h"
 
 CR_BIND(CTeamHandler, );
 
