@@ -1,40 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "CrashHandler.h"
-#ifdef __APPLE__
-#include <AvailabilityMacros.h>
-#endif
+#include "System/Platform/CrashHandler.h"
 
-#ifdef _WIN32
-// ### Windows CrashHandler START
-#include "Win/CrashHandler.h"
-#include "Platform/Win/seh.h"
-
-namespace CrashHandler {
-
-	void Install() {
-		Win32::Install();
-		InitializeSEH();
-	};
-
-	void Remove() {
-		Win32::Remove();
-	}
-
-	void InstallHangHandler() { Win32::InstallHangHandler(); }
-	void UninstallHangHandler() { Win32::UninstallHangHandler(); }
-
-	void ClearDrawWDT(bool disable) { Win32::ClearDrawWDT(disable); }
-	void ClearSimWDT(bool disable) { Win32::ClearSimWDT(disable); }
-
-	void GameLoading(bool loading) {
-		Win32::GameLoading(loading);
-	}
-};
-
-// ### Windows CrashHandler END
-#elif !defined(__APPLE__) || (MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4)
-// ### Unix(compliant) CrashHandler START
 #include <string>
 #include <vector>
 #include <queue>
@@ -470,21 +437,3 @@ namespace CrashHandler {
 
 	void GameLoading(bool) {}
 };
-
-// ### Unix(compliant) CrashHandler END
-#else
-// ### Fallback CrashHandler (old Apple) START
-
-namespace CrashHandler {
-	void HandleSignal(int signal) {}
-	void Install() {}
-	void Remove() {}
-	void InstallHangHandler() {}
-	void UninstallHangHandler() {}
-	void ClearDrawWDT(bool disable) {}
-	void ClearSimWDT(bool disable) {}
-	void GameLoading(bool) {}
-};
-
-// ### Fallback CrashHandler (old Apple) END
-#endif
