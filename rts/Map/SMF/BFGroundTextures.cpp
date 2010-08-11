@@ -15,7 +15,6 @@
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
-#include "Game/LoadScreen.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
 #include "System/GlobalUnsynced.h"
