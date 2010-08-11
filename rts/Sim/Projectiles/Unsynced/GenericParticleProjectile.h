@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __GENERIC_PARTICLE_PROJECTILE_H__
-#define __GENERIC_PARTICLE_PROJECTILE_H__
+#ifndef GENERIC_PARTICLE_PROJECTILE_H
+#define GENERIC_PARTICLE_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -34,4 +34,4 @@ public:
 	float sizeMod;
 };
 
-#endif // __GENERIC_PARTICLE_PROJECTILE_H__
+#endif // GENERIC_PARTICLE_PROJECTILE_H

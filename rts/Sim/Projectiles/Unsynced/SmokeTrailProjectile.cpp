@@ -16,7 +16,7 @@
 #include "System/myMath.h"
 #include "System/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,0,0,NULL,NULL));
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, NULL, 0, 0, 0, 0, 0, 0, NULL, NULL));
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),

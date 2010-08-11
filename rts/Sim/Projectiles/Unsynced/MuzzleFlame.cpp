@@ -11,7 +11,7 @@
 #include "System/GlobalUnsynced.h"
 
 
-CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),0));
+CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0));
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_SERIALIZER(creg_Serialize), // randSmokeDir
@@ -48,42 +48,42 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3&
 	}
 }
 
-CMuzzleFlame::~CMuzzleFlame(void)
+CMuzzleFlame::~CMuzzleFlame()
 {
 //	delete[] randSmokeDir;
 }
 
-void CMuzzleFlame::Update(void)
+void CMuzzleFlame::Update()
 {
 	age++;
-	if(age>4+size*30){
-		deleteMe=true;
+	if (age > (4 + size * 30)) {
+		deleteMe = true;
 	}
-	pos+=speed;
+	pos += speed;
 }
 
-void CMuzzleFlame::Draw(void)
+void CMuzzleFlame::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	float alpha=std::max(0.f,1-age/(4+size*30));
-	float modAge=fastmath::apxsqrt(static_cast<float>(age+2));
+	float alpha = std::max(0.0f, 1 - (age / (4 + size * 30)));
+	float modAge = fastmath::apxsqrt(static_cast<float>(age + 2));
 
-	va->EnlargeArrays(numSmoke*8,0,VA_SIZE_TC);
+	va->EnlargeArrays(numSmoke * 8, 0, VA_SIZE_TC);
 
 	for (int a = 0; a < numSmoke; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 		int tex = a % projectileDrawer->smoketex.size();
 		//float xmod=0.125f+(float(int(tex%6)))/16;
 		//float ymod=(int(tex/6))/16.0f;
 
-		float drawsize=modAge*3;
+		float drawsize = modAge * 3;
 		float3 interPos(pos+randSmokeDir[a]*(a+2)*modAge*0.4f);
-		float fade=std::max(0.f, std::min(1.f, (1-alpha)*(20+a)*0.1f));
+		float fade = std::max(0.0f, std::min(1.0f, (1 - alpha) * (20 + a) * 0.1f));
 
-		col[0]=(unsigned char) (180*alpha*fade);
-		col[1]=(unsigned char) (180*alpha*fade);
-		col[2]=(unsigned char) (180*alpha*fade);
-		col[3]=(unsigned char) (alpha*255*fade);
+		col[0] = (unsigned char) (180 * alpha * fade);
+		col[1] = (unsigned char) (180 * alpha * fade);
+		col[2] = (unsigned char) (180 * alpha * fade);
+		col[3] = (unsigned char) (255 * alpha * fade);
 
 		#define st projectileDrawer->smoketex[tex]
 		va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, st->xstart, st->ystart, col);
@@ -94,10 +94,10 @@ void CMuzzleFlame::Draw(void)
 
 		if (fade < 1.0f) {
 			float ifade = 1.0f - fade;
-			col[0] = (unsigned char)(ifade*255);
-			col[1] = (unsigned char)(ifade*255);
-			col[2] = (unsigned char)(ifade*255);
-			col[3] = (unsigned char)(1);
+			col[0] = (unsigned char) (ifade * 255);
+			col[1] = (unsigned char) (ifade * 255);
+			col[2] = (unsigned char) (ifade * 255);
+			col[3] = (unsigned char) (1);
 
 			#define mft projectileDrawer->muzzleflametex
 			va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, mft->xstart, mft->ystart, col);
