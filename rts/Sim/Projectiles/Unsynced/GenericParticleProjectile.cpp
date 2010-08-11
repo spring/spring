@@ -10,7 +10,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL));
+CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (ZeroVector, ZeroVector, NULL));
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
@@ -45,7 +45,7 @@ CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos, const 
 	deleteMe  = false;
 }
 
-CGenericParticleProjectile::~CGenericParticleProjectile(void)
+CGenericParticleProjectile::~CGenericParticleProjectile()
 {
 }
 
@@ -77,18 +77,18 @@ void CGenericParticleProjectile::Draw()
 
 		colorMap->GetColor(color, life);
 
-		va->AddVertexTC(drawPos-dir1*size-dir2*size,texture->xstart,texture->ystart,color);
-		va->AddVertexTC(drawPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
-		va->AddVertexTC(drawPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
-		va->AddVertexTC(drawPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
+		va->AddVertexTC(drawPos - dir1 * size - dir2 * size, texture->xstart, texture->ystart, color);
+		va->AddVertexTC(drawPos - dir1 * size + dir2 * size, texture->xend,   texture->ystart, color);
+		va->AddVertexTC(drawPos + dir1 * size + dir2 * size, texture->xend,   texture->yend,   color);
+		va->AddVertexTC(drawPos + dir1 * size - dir2 * size, texture->xstart, texture->yend,   color);
 	} else {
 		unsigned char color[4];
 
 		colorMap->GetColor(color, life);
 
-		va->AddVertexTC(drawPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
-		va->AddVertexTC(drawPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
-		va->AddVertexTC(drawPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
-		va->AddVertexTC(drawPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
+		va->AddVertexTC(drawPos - camera->right * size - camera->up * size, texture->xstart, texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->right * size - camera->up * size, texture->xend,   texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->right * size + camera->up * size, texture->xend,   texture->yend,   color);
+		va->AddVertexTC(drawPos - camera->right * size + camera->up * size, texture->xstart, texture->yend,   color);
 	}
 }

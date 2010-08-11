@@ -10,7 +10,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (float3(0,0,0),0,0,0,float3(0,0,0),0,NULL,NULL));
+CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (ZeroVector, 0, 0, 0, ZeroVector, 0, NULL, NULL));
 
 CR_REG_METADATA(CShieldPartProjectile,(
 	CR_MEMBER(centerPos),
@@ -62,19 +62,19 @@ CShieldPartProjectile::CShieldPartProjectile(
 	}
 }
 
-CShieldPartProjectile::~CShieldPartProjectile(void)
+CShieldPartProjectile::~CShieldPartProjectile()
 {
 	if (ph && usePerlin) {
 		ph->numPerlinProjectiles--;
 	}
 }
 
-void CShieldPartProjectile::Update(void)
+void CShieldPartProjectile::Update()
 {
 	pos = centerPos + vectors[12] * sphereSize;
 }
 
-void CShieldPartProjectile::Draw(void)
+void CShieldPartProjectile::Draw()
 {
 	if (baseAlpha <= 0.0f) {
 		return;
@@ -89,7 +89,7 @@ void CShieldPartProjectile::Draw(void)
 	col[2] = (unsigned char) (color.z * alpha);
 	col[3] = (unsigned char) (alpha);
 
-	va->EnlargeArrays(4*4*4,0,VA_SIZE_TC);
+	va->EnlargeArrays(4 * 4 * 4, 0, VA_SIZE_TC);
 	for (int y = 0; y < 4; ++y) { //! CAUTION: loop count must match EnlargeArrays above
 		for (int x = 0; x < 4; ++x) {
 			va->AddVertexQTC(centerPos + vectors[(y    ) * 5 + x    ] * sphereSize, texCoords[(y    ) * 5 + x    ].x, texCoords[(y    ) * 5 + x    ].y, col);
