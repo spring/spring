@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef EXPLOSION_GRAPHICS_H
-#define EXPLOSION_GRAPHICS_H
+#ifndef EXPLOSION_GENERATOR_H
+#define EXPLOSION_GENERATOR_H
 
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/DamageArray.h"
@@ -139,6 +139,7 @@ protected:
 public:
 	CCustomExplosionGenerator();
 	~CCustomExplosionGenerator();
+
 	static void OutputProjectileClassInfo();
 
 	void Load(CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
@@ -149,4 +150,4 @@ public:
 extern CExplosionGeneratorHandler* explGenHandler;
 
 
-#endif
+#endif // EXPLOSION_GENERATOR_H
