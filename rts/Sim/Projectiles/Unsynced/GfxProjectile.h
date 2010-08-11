@@ -7,15 +7,16 @@
 
 class CGfxProjectile : public CProjectile
 {
-public:
 	CR_DECLARE(CGfxProjectile);
+
+public:
+	CGfxProjectile();
+	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color);
+	virtual ~CGfxProjectile();
 
 	void Update();
 	void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
-	CGfxProjectile();
-	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color);
-	virtual ~CGfxProjectile();
 
 	int creationTime;
 	int lifeTime;

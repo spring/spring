@@ -9,7 +9,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (float3(0,0,0), float3(0,0,0), float3(0,0,0), float3(0,0,0), 0, 0));
+CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, 0, 0));
 
 CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_MEMBER(p1),
