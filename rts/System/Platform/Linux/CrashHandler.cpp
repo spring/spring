@@ -14,12 +14,12 @@
 #include <inttypes.h> // for uintptr_t
 #include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
 
-#include "LogOutput.h"
-#include "errorhandler.h"
-#include "Game/GameVersion.h"
-#include "Platform/Misc.h"
 #include "FileSystem/FileSystemHandler.h"
-#include "maindefines.h" // for SNPRINTF
+#include "Game/GameVersion.h"
+#include "System/LogOutput.h"
+#include "System/maindefines.h" // for SNPRINTF
+#include "System/Platform/Misc.h"
+#include "System/Platform/errorhandler.h"
 
 /**
  * Returns the absolute version of a supplied relative path.
