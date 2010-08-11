@@ -11,16 +11,19 @@
 #include "LogOutput.h"
 #include "Game/GameServer.h"
 
-#if !defined(DEDICATED) && !defined(HEADLESS)
+#ifndef DEDICATED
 	#include "Sound/ISound.h"
 	#include <SDL.h>
-  #ifdef WIN32
-	#include <windows.h>
-  #endif
 
+  #ifndef HEADLESS
+    #ifdef WIN32
+	#include <windows.h>
+    #else
 	// from X_MessageBox.cpp:
 	void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
-#endif // if !defined(DEDICATED) && !defined(HEADLESS)
+    #endif
+  #endif // ifndef HEADLESS
+#endif // ifndef DEDICATED
 
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
