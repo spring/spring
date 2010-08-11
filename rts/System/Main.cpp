@@ -57,7 +57,6 @@ int Run(int argc, char* argv[])
 	catch (const content_error& e) {
 		ErrorMessageBox(e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 	}
-	}
 #ifndef NO_CATCH_EXCEPTIONS
 	catch (const boost::system::system_error& e) {
 		std::stringstream ss;
