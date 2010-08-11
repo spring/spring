@@ -12,7 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL,NULL,0,float3(0,0,0)));
+CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL, NULL, 0, ZeroVector));
 
 CR_REG_METADATA(CRepulseGfx,(
 	CR_MEMBER(repulsed),
@@ -23,15 +23,16 @@ CR_REG_METADATA(CRepulseGfx,(
 	CR_RESERVED(8)
 	));
 
-CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, float3 color):
+CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, const float3& color):
 	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false),
 	repulsed(repulsed),
 	sqMaxDist((maxDist * maxDist) + 100),
 	age(0),
 	color(color)
 {
-	if (repulsed)
+	if (repulsed) {
 		AddDeathDependence(repulsed);
+	}
 
 	checkCol = false;
 	useAirLos = true;
@@ -43,14 +44,15 @@ CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, flo
 		for (int x = 0; x < 5; ++x) {
 			float xp = (x / 4.0f - 0.5f);
 			float d = 0;
-			if (xp != 0 || yp != 0)
+			if (xp != 0 || yp != 0) {
 				d = fastmath::apxsqrt2(xp * xp + yp * yp);
+			}
 			difs[y * 5 + x] = (1 - fastmath::cos(d * 2)) * 20;
 		}
 	}
 }
 
-CRepulseGfx::~CRepulseGfx(void)
+CRepulseGfx::~CRepulseGfx()
 {
 }
 
@@ -62,11 +64,12 @@ void CRepulseGfx::DependentDied(CObject* o)
 	}
 }
 
-void CRepulseGfx::Draw(void)
+void CRepulseGfx::Draw()
 {
 	const CUnit* owner = CProjectile::owner();
-	if (!owner || !repulsed)
+	if (!owner || !repulsed) {
 		return;
+	}
 
 	const float3 zdir = (repulsed->pos - owner->pos).SafeANormalize();
 	const float3 xdir = (zdir.cross(UpVector)).SafeANormalize();
@@ -81,10 +84,10 @@ void CRepulseGfx::Draw(void)
 	float drawsize = 10.0f;
 	float alpha = std::min(255.0f, age * 10.0f);
 	unsigned char col[4] = {
-		(unsigned char)(color.x * alpha),
-		(unsigned char)(color.y * alpha),
-		(unsigned char)(color.z * alpha),
-		(unsigned char)(alpha * 0.2f),
+		(unsigned char) (color.x * alpha),
+		(unsigned char) (color.y * alpha),
+		(unsigned char) (color.z * alpha),
+		(unsigned char) (0.2f    * alpha),
 	};
 
 	xdirDS = xdir * drawsize;
@@ -118,10 +121,10 @@ void CRepulseGfx::Draw(void)
 
 	drawsize = 7.0f;
 	alpha = std::min(10.0f, age / 2.0f);
-	col[0] = (unsigned char)(color.x * alpha);
-	col[1] = (unsigned char)(color.y * alpha);
-	col[2] = (unsigned char)(color.z * alpha);
-	col[3] = (unsigned char)(alpha * 0.4f);
+	col[0] = (unsigned char) (color.x * alpha);
+	col[1] = (unsigned char) (color.y * alpha);
+	col[2] = (unsigned char) (color.z * alpha);
+	col[3] = (unsigned char) (alpha * 0.4f);
 
 	const AtlasedTexture* ct = projectileDrawer->repulsegfxtex;
 	const float tx = (ct->xend + ct->xstart) * 0.5f;
@@ -153,10 +156,11 @@ void CRepulseGfx::Draw(void)
 	va->AddVertexQTC(       pos - xdirDS - ydirDS + zdir * difs[6],  tx, ty, col);
 }
 
-void CRepulseGfx::Update(void)
+void CRepulseGfx::Update()
 {
 	age++;
 
-	if (repulsed && owner() && (repulsed->pos - owner()->pos).SqLength() > sqMaxDist)
+	if (repulsed && owner() && (repulsed->pos - owner()->pos).SqLength() > sqMaxDist) {
 		deleteMe = true;
+	}
 }
