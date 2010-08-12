@@ -412,6 +412,7 @@ void CQuadField::RemoveUnit(CUnit* unit)
 			}
 		}
 	}
+	unit->quads.clear();
 }
 
 void CQuadField::AddFeature(CFeature* feature)
