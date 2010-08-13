@@ -44,6 +44,11 @@ list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
 # Assemble the creg sources
 aux_source_directory("${rts}/System/creg" creg_SRC)
 
+# Export Paths needed for the AIs
+set(SKIRMISH_AI_LIBS        "${AI_LIBS_DIR}/AI/Skirmish")
+set(SKIRMISH_AI_DATA        "${AI_DATA_DIR}/AI/Skirmish")
+
+MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA)
 
 # Wrappers have to come first cause the Interfaces use the CUtils Wrapper too
 Add_Subdirectory(Wrappers)
