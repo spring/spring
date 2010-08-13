@@ -48,7 +48,10 @@ aux_source_directory("${rts}/System/creg" creg_SRC)
 set(SKIRMISH_AI_LIBS        "${AI_LIBS_DIR}/AI/Skirmish")
 set(SKIRMISH_AI_DATA        "${AI_DATA_DIR}/AI/Skirmish")
 
-MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA)
+# Display messages on configure, which AIs are found
+set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
+
+MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
 
 # Wrappers have to come first cause the Interfaces use the CUtils Wrapper too
 Add_Subdirectory(Wrappers)
