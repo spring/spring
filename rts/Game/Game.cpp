@@ -2463,24 +2463,25 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 		int amount = 1;
 		int team = playerHandler->Player(playernum)->team;
+		int allyteam = -1;
 
-		int amountArg = -1;
-		int teamArg = -1;
+		int amountArgIdx = -1;
+		int teamArgIdx = -1;
 
 		if (args.size() == 5) {
-			amountArg = 1;
-			teamArg = 3;
+			amountArgIdx = 1;
+			teamArgIdx = 3;
 		}
 		else if (args.size() == 4) {
 			if (args[1].find_first_not_of("0123456789") == string::npos) {
-				amountArg = 1;
+				amountArgIdx = 1;
 			} else {
-				teamArg = 2;
+				teamArgIdx = 2;
 			}
 		}
 
-		if (amountArg >= 0) {
-			const string& amountStr = args[amountArg];
+		if (amountArgIdx >= 0) {
+			const string& amountStr = args[amountArgIdx];
 			amount = atoi(amountStr.c_str());
 			if ((amount < 0) || (amountStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give amount: %s", amountStr.c_str());
@@ -2488,8 +2489,8 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 
-		if (teamArg >= 0) {
-			const string& teamStr = args[teamArg];
+		if (teamArgIdx >= 0) {
+			const string& teamStr = args[teamArgIdx];
 			team = atoi(teamStr.c_str());
 			if ((team < 0) || (team >= teamHandler->ActiveTeams()) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give team: %s", teamStr.c_str());
@@ -2497,7 +2498,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 
-		const string unitName = (amountArg >= 0) ? args[2] : args[1];
+		const string unitName = (amountArgIdx >= 0) ? args[2] : args[1];
 
 		if (unitName == "all") {
 			// player entered ".give all"
@@ -2569,10 +2570,12 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 
 				logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
-			}
-			else {
-				if (teamArg < 0) {
+			} else {
+				if (teamArgIdx < 0) {
 					team = -1; // default to world features
+					allyteam = -1;
+				} else {
+					allyteam = teamHandler->AllyTeam(team);
 				}
 
 				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
@@ -2592,8 +2595,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
 							float minposy = ground->GetHeight2(minposx, minposz);
 							const float3 upos(minposx, minposy, minposz);
+
 							CFeature* feature = new CFeature();
-							feature->Initialize(upos, featureDef, 0, 0, team, teamHandler->AllyTeam(team), "");
+							feature->Initialize(upos, featureDef, 0, 0, team, allyteam, "");
 							--total;
 						}
 					}
