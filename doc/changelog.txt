@@ -1,5 +1,30 @@
 Spring change log
 
+0.82.2:
+Engine / General:
+ - miscellaneous OS X compile/link fixes
+ - fixed incorrect handling of negative references in OBJParser
+ - fixed misinterpretation of the OBJ spec
+ - reorganized WindowState saving on exit on X
+ - fixed source package build
+ - always print crash errors to infolog
+ - added i965_dri.so to OGL driver crash detection on Linux
+
+Engine / Simulation:
+ - fixed autosharing resources to dead teams
+ - fixed units disappearing from quadfield after load-unload in transport
+
+Engine / Lua:
+ - fixed invalid FPU flags after LuaLobby connection is made
+ - fixed DrawFeature event
+ - Spring.UnitScript.GetScriptEnv returns nil if the unit does not run a Lua script
+ - Spring.GetCOBScriptID returns nil if the unit does not run a COB script
+ - fixed typo in mapdefaults.lua
+ - possibly fixed GetPlayerInfo
+
+Engine / AI:
+ - updated E323AI to latest version
+
 0.82.1:
 Engine / General:
  - fixed source package build
