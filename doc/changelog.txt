@@ -1,5 +1,11 @@
 Spring change log
 
+0.82.3:
+Engine / General:
+ - rebuild because of stale base content packages
+   (different checksums between windows and linux)
+ - fix NullAI installing into /
+
 0.82.2:
 Engine / General:
  - miscellaneous OS X compile/link fixes
