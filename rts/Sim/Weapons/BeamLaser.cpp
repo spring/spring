@@ -76,13 +76,13 @@ void CBeamLaser::Update(void)
 			owner->UseMetal(metalFireCost / salvoSize);
 
 			const int piece = owner->script->QueryWeapon(weaponNum);
-			CMatrix44f weaponMat = owner->script->GetPieceMatrix(piece);
+			const CMatrix44f weaponMat = owner->script->GetPieceMatrix(piece);
 
 			const float3 relWeaponPos = weaponMat.GetPos();
 			const float3 dir =
-				owner->frontdir *  weaponMat[10] +
-				owner->updir    *  weaponMat[ 6] +
-				owner->rightdir * -weaponMat[ 2];
+				owner->frontdir * weaponMat[10] +
+				owner->updir    * weaponMat[ 6] +
+				owner->rightdir * weaponMat[ 2];
 
 			weaponPos =
 				owner->pos +
