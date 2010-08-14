@@ -31,7 +31,7 @@
 #include "Util.h"
 #include "GlobalUnsynced.h"
 
-
+#define BUGGER_OFF_TTL 200
 #define MAX_CLOSE_IN_RETRY_TICKS 30
 
 
@@ -72,7 +72,7 @@ CMobileCAI::CMobileCAI():
 	lastPC(-1),
 //	patrolTime(0),
 	maxWantedSpeed(0),
-	lastBuggerOffTime(-200),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
 	commandPos1(ZeroVector),
@@ -93,7 +93,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	lastPC(-1),
 //	patrolTime(0),
 	maxWantedSpeed(0),
-	lastBuggerOffTime(-200),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
 	commandPos1(ZeroVector),
@@ -1045,6 +1045,10 @@ void CMobileCAI::DrawCommands(void)
 
 void CMobileCAI::BuggerOff(float3 pos, float radius)
 {
+	if(radius < 0.0f) {
+		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
+		return;
+	}
 	lastBuggerOffTime = gs->frameNum;
 	buggerOffPos = pos;
 	buggerOffRadius = radius + owner->radius;
@@ -1055,7 +1059,7 @@ void CMobileCAI::NonMoving(void)
 	if (owner->usingScriptMoveType) {
 		return;
 	}
-	if(lastBuggerOffTime>gs->frameNum-200){
+	if(lastBuggerOffTime > gs->frameNum - BUGGER_OFF_TTL){
 		float3 dif=owner->pos-buggerOffPos;
 		dif.y=0;
 		float length=dif.Length();

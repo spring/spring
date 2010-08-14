@@ -530,3 +530,53 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 	}
 }
+
+void CUnitLoader::RestoreGround(const CUnit* unit)
+{
+	const UnitDef* unitDef = unit->unitDef;
+	const float groundheight = ground->GetHeight2(unit->pos.x, unit->pos.z);
+
+	if (!mapDamage->disabled && unitDef->levelGround &&
+		!(unitDef->floater && groundheight <= 0) &&
+		!(unitDef->canmove && (unitDef->speed > 0.0f))) {
+
+		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
+		bi.pos = helper->Pos2BuildPos(bi);
+		const float hss = 0.5f * SQUARE_SIZE;
+		const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
+		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
+		const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
+		const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+
+
+		const float* heightmap = readmap->GetHeightmap();
+		int num = 0;
+		float heightdiff = 0.0f;
+		for (int z = tz1; z <= tz2; z++) {
+			for (int x = tx1; x <= tx2; x++) {
+				int index = z * (gs->mapx + 1) + x;
+				heightdiff += heightmap[index] - readmap->orgheightmap[index];
+				++num;
+			}
+		}
+		// adjust the terrain profile to match orgheightmap
+		heightdiff /= (float)num;
+		heightdiff += unit->pos.y - bi.pos.y;
+		for (int z = tz1; z <= tz2; z++) {
+			for (int x = tx1; x <= tx2; x++) {
+				int index = z * (gs->mapx + 1) + x;
+				readmap->SetHeight(index, heightdiff + readmap->orgheightmap[index]);
+			}
+		}
+		// but without affecting the build height
+		heightdiff = bi.pos.y - helper->Pos2BuildPos(bi).y;
+		for (int z = tz1; z <= tz2; z++) {
+			for (int x = tx1; x <= tx2; x++) {
+				int index = z * (gs->mapx + 1) + x;
+				readmap->SetHeight(index, heightdiff + heightmap[index]);
+			}
+		}
+
+		mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
+	}
+}
