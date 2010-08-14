@@ -168,7 +168,6 @@ extern boost::mutex caimutex;
 extern boost::mutex decalmutex;
 extern boost::mutex treemutex;
 extern boost::mutex modelmutex;
-extern boost::mutex texmutex;
 extern boost::mutex mapmutex;
 extern boost::mutex inmapmutex;
 extern boost::mutex tempmutex;

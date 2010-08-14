@@ -212,7 +212,6 @@ boost::mutex caimutex;
 boost::mutex decalmutex;
 boost::mutex treemutex;
 boost::mutex modelmutex;
-boost::mutex texmutex;
 boost::mutex mapmutex;
 boost::mutex inmapmutex;
 boost::mutex tempmutex;
