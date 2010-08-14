@@ -1063,7 +1063,8 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 			if (!transpunits.empty()) {
 				if((c.id == CMD_UNLOAD_UNITS) && fromSynced) {
 					for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it)
-						it->unit->buildFacing = int(abs(c.params[4])) % 4;
+						if(CBuilding *building = dynamic_cast<CBuilding*>(it->unit))
+							building->buildFacing = int(abs(c.params[4])) % 4;
 				}
 				for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 					CUnit* u = it->unit;
