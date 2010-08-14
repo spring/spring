@@ -366,6 +366,7 @@ public:
 	int pieceTrailCEGRange;							// range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
 
 	int maxThisUnit;								// number of units of this type allowed simultaneously in the game
+	bool transportableBuilding;						// Can this building be transported?
 
 	std::map<std::string, std::string> customParams;
 

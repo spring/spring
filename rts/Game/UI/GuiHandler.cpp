@@ -1571,7 +1571,8 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 	// only process the build options while building
 	// (conserve the keybinding space where we can)
 	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) &&
-			(commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
+			((commands[inCommand].type == CMDTYPE_ICON_BUILDING) ||
+			(commands[inCommand].id == CMD_UNLOAD_UNITS))) {
 		if (ProcessBuildActions(action)) {
 			return true;
 		}
@@ -2292,6 +2293,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					c.params.push_back(pos.y);
 					c.params.push_back(pos.z);
 					c.params.push_back(0);//zero radius
+					if(c.id == CMD_UNLOAD_UNITS)
+						c.params.push_back((float)buildFacing);
 				}
 			} else {	//created area
 				float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
@@ -2308,6 +2311,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				}
 				float3 pos2=camerapos+mousedir*dist;
 				c.params.push_back(std::min(maxRadius,pos.distance2D(pos2)));
+				if(c.id == CMD_UNLOAD_UNITS)
+					c.params.push_back((float)buildFacing);
 			}
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}

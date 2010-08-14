@@ -10,6 +10,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
@@ -175,7 +176,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 					wantedPos.y = ((CTransportUnit *)owner)->GetLoadUnloadHeight(wantedPos, unit);
 					SetGoal(wantedPos, owner->pos);
 					am->dontCheckCol=true;
-					am->ForceHeading(unit->heading);
+					am->ForceHeading(((CTransportUnit *)owner)->GetLoadUnloadHeading(wantedPos, unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeight(wantedPos.x, wantedPos.z));
 					am->maxDrift=1;
 					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
@@ -317,6 +318,9 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			float3 pos = center + delta * radius;
 			pos.y = ground->GetHeight(pos.x, pos.z);
 
+			if(dynamic_cast<const CBuilding *>(unitToUnload))
+				pos = helper->Pos2BuildPos(BuildInfo(unitToUnload->unitDef, pos, unitToUnload->buildFacing));
+
 			if(!((CTransportUnit *)owner)->CanLoadUnloadAtPos(pos, unitToUnload))
 				continue;
 
@@ -342,7 +346,10 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			rx = sqrt(rx);
 
 			for (float x = std::max(emptyRadius, center.x - rx); x < std::min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx); x += SQUARE_SIZE) {
-				const float3 pos(x, ground->GetApproximateHeight(x, y), y);
+				float3 pos(x, ground->GetApproximateHeight(x, y), y);
+
+				if(dynamic_cast<const CBuilding *>(unitToUnload))
+					pos = helper->Pos2BuildPos(BuildInfo(unitToUnload->unitDef, pos, unitToUnload->buildFacing));
 
 				if(!((CTransportUnit *)owner)->CanLoadUnloadAtPos(pos, unitToUnload))
 					continue;
@@ -469,13 +476,18 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 		return;
 	}
 
-	CUnit* u = ((CTransportUnit*) owner)->GetTransportedUnits().front().unit;
+	bool canUnload = false;
 	float3 unloadPos;
-
-	const float3 pos(c.params[0], c.params[1], c.params[2]);
-	const float radius = c.params[3];
-	const float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
-	const bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u);
+	CUnit* u = NULL;
+	const std::list<CTransportUnit::TransportedUnit> &transpunits = ((CTransportUnit*) owner)->GetTransportedUnits();
+	for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
+		u = it->unit;
+		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float radius = c.params[3];
+		const float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
+		if(canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u))
+			break;
+	}
 
 	if (canUnload) {
 		Command c2;
@@ -483,6 +495,7 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 		c2.params.push_back(unloadPos.x);
 		c2.params.push_back(unloadPos.y);
 		c2.params.push_back(unloadPos.z);
+		c2.params.push_back(u->id);
 		c2.options = c.options | INTERNAL_ORDER;
 		commandQue.push_front(c2);
 		SlowUpdate();
@@ -653,9 +666,11 @@ void CTransportCAI::UnloadLand(Command& c)
 				// handle air transports differently
 				SetGoal(pos, owner->pos);
 				am->SetWantedAltitude(pos.y - ground->GetHeight(pos.x, pos.z));
+				float unloadHeading = ((CTransportUnit *)owner)->GetLoadUnloadHeading(pos, unit);
+				am->ForceHeading(unloadHeading);
 				am->maxDrift = 1;
 				if ((owner->pos.SqDistance(pos) < 64) &&
-						(owner->updir.dot(UpVector) > 0.99f)) {
+						(owner->updir.dot(UpVector) > 0.99f) && abs(owner->heading - unloadHeading) < AIRTRANSPORT_DOCKING_ANGLE) {
 					if (!SpotIsClearIgnoreSelf(pos, unit)) {
 						// chosen spot is no longer clear to land, choose a new one
 						// if a new spot cannot be found, don't unload at all
@@ -682,7 +697,7 @@ void CTransportCAI::UnloadLand(Command& c)
 			} else {
 				inCommand = true;
 				StopMove();
-				owner->script->TransportDrop(transList.front().unit, pos);
+				owner->script->TransportDrop(unit, pos);
 			}
 		}
 	}
@@ -957,7 +972,7 @@ void CTransportCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_UNLOAD_UNITS: {
-				if (ci->params.size() == 4) {
+				if (ci->params.size() == 5) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.unload);
@@ -1043,20 +1058,30 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_UNLOAD_UNITS: {
 			CTransportUnit* transport = (CTransportUnit*) owner;
 
+			const std::list<CTransportUnit::TransportedUnit> &transpunits = ((CTransportUnit*) owner)->GetTransportedUnits();
 			// allow unloading empty transports for easier setup of transport bridges
-			if (!transport->GetTransportedUnits().empty()) {
-				CUnit* u = transport->GetTransportedUnits().front().unit;
-
-				const float3 pos(c.params[0], c.params[1], c.params[2]);
-				const float radius = (c.id == CMD_UNLOAD_UNITS)? c.params[3]: 0.0f;
-				const float spread = u->radius * transport->unitDef->unloadSpread;
-				float3 found;
-
-				if (!FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u)) {
-					// cannot unload
-					return false;
+			if (!transpunits.empty()) {
+				if((c.id == CMD_UNLOAD_UNITS) && fromSynced) {
+					for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it)
+						it->unit->buildFacing = int(abs(c.params[4])) % 4;
 				}
+				for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
+					CUnit* u = it->unit;
+
+					const float3 pos(c.params[0], c.params[1], c.params[2]);
+					const float radius = (c.id == CMD_UNLOAD_UNITS)? c.params[3]: 0.0f;
+					const float spread = u->radius * transport->unitDef->unloadSpread;
+					float3 found;
+
+					if (FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u))
+						return true;
+					 // FIXME: support arbitrary unloading order for other unload types also
+					if(unloadType != UNLOAD_LAND)
+						return false;
+				}
+				return false;
 			}
+
 			break;
 		}
 	}
