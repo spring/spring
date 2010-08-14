@@ -86,9 +86,9 @@ void CTransportUnit::Update()
 			if (ti->piece >= 0) {
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
 				const float3 pieceDir =
-					frontdir *  pieceMat[10] +
-					updir    *  pieceMat[ 6] +
-					rightdir * -pieceMat[ 2];
+					frontdir * pieceMat[10] +
+					updir    * pieceMat[ 6] +
+					rightdir * pieceMat[ 2];
 
 				transportee->heading  = GetHeadingFromVector(pieceDir.x, pieceDir.z);
 				transportee->frontdir = pieceDir;
