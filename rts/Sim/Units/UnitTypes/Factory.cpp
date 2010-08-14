@@ -352,7 +352,8 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 
 void CFactory::SlowUpdate(void)
 {
-	helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius);
+	if(!transporter)
+		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius);
 	CBuilding::SlowUpdate();
 }
 

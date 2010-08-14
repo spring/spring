@@ -109,10 +109,12 @@ public:
 			id == CMD_RECLAIM ||
 			id == CMD_CAPTURE ||
 			id == CMD_RESURRECT ||
-			id == CMD_LOAD_UNITS ||
-			id == CMD_UNLOAD_UNITS) {
+			id == CMD_LOAD_UNITS) {
 			// params[0..2] always holds the position, params[3] the radius
 			return (params.size() == 4);
+		}
+		if (id == CMD_UNLOAD_UNITS) {
+			return (params.size() == 5);
 		}
 		if (id == CMD_AREA_ATTACK) {
 			return true;
