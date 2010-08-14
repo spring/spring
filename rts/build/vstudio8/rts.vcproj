@@ -1448,6 +1448,14 @@
 					RelativePath="..\..\Game\Ui\TooltipConsole.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\Game\UI\UnitTracker.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\UI\UnitTracker.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Camera"
@@ -2922,14 +2930,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Units\UnitSet.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Units\UnitTracker.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Units\UnitTracker.h"
 					>
 				</File>
 				<Filter
@@ -5238,77 +5238,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\Clipboard.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\CrashHandler.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\CrashHandler.h"
 					>
 				</File>
 				<File
