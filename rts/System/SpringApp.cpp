@@ -106,7 +106,7 @@ const int YRES_DEFAULT = 768;
  */
 SpringApp::SpringApp()
 {
-	cmdline = 0;
+	cmdline = NULL;
 	screenWidth = screenHeight = 0;
 	FSAA = false;
 	lastRequiredDraw = 0;
@@ -374,8 +374,8 @@ bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, globalRendering->fullScreen);
-	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN : 0;
+	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border and force a `window`-resize causing a lot of trouble
+	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -471,12 +471,25 @@ bool SpringApp::GetDisplayGeometry()
 	return false;
 
 #else  // defined(HEADLESS)
+	//! not really needed, but makes it safer against unknown windowmanager behaviours
+	if (globalRendering->fullScreen) {
+		windowPosX = 0;
+		windowPosY = 0;
+		globalRendering->screenSizeX = screenWidth;
+		globalRendering->screenSizeY = screenHeight;
+		globalRendering->winSizeX = globalRendering->screenSizeX;
+		globalRendering->winSizeY = globalRendering->screenSizeY;
+		return true;
+	}
+
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 
 	if (!SDL_GetWMInfo(&info)) {
 		return false;
 	}
+
+
   #if       defined(__APPLE__)
 	// TODO: implement this function & RestoreWindowPosition() on Mac
 	windowPosX = 30;
