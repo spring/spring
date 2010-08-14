@@ -222,9 +222,10 @@ SectionGroupEnd
 
 Section "Desktop shortcuts" SEC_DESKTOP
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
-		${!echonow} "Processing: springlobby shortcut"
-		SetOutPath "$INSTDIR"
-		CreateShortCut "$DESKTOP\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
+		!define INSTALL
+			${!echonow} "Processing: shortcuts - Desktop"
+			!include "sections\shortcuts_desktop.nsh"
+		!undef INSTALL
 	${EndIf}
 SectionEnd
 
@@ -247,8 +248,8 @@ SectionGroupEnd
 
 Section "Start menu shortcuts" SEC_START
 	!define INSTALL
-		${!echonow} "Processing: shortcuts"
-		!include "sections\shortcuts.nsh"
+		${!echonow} "Processing: shortcuts - Start menu"
+		!include "sections\shortcuts_startMenu.nsh"
 	!undef INSTALL
 SectionEnd
 
@@ -313,7 +314,8 @@ Section Uninstall
 	Delete "$INSTDIR\spring-multithreaded.exe"
 
 	!include "sections\docs.nsh"
-	!include "sections\shortcuts.nsh"
+	!include "sections\shortcuts_startMenu.nsh"
+	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\archivemover.nsh"
 	!include "sections\springDownloader.nsh"
 	!include "sections\tasServer.nsh"
@@ -323,8 +325,6 @@ Section Uninstall
 	!insertmacro DeleteSkirmishAI "E323AI"
 	!include "sections\springlobby.nsh"
 	!include "sections\luaui.nsh"
-
-	Delete "$DESKTOP\SpringLobby.lnk"
 
 	; All done
 	RMDir "$INSTDIR"
