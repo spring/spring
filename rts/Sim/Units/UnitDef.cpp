@@ -260,6 +260,7 @@ UnitDef::UnitDef()
 , minAirBasePower(0.0f)
 , pieceTrailCEGRange(-1)
 , maxThisUnit(0)
+, transportableBuilding(false)
 , realMetalCost(0.0f)
 , realEnergyCost(0.0f)
 , realMetalUpkeep(0.0f)
@@ -530,6 +531,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
 	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
+	transportableBuilding = udTable.GetBool("transportableBuilding", false);
 
 	const string lname = StringToLower(name);
 

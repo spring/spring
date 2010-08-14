@@ -2,13 +2,17 @@
 
 #include "StdAfx.h"
 #include "TransportUnit.h"
+#include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
+#include "Rendering/GroundDecalHandler.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -180,7 +184,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			u->moveType->LeaveTransport();
 
 			// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
-			if (dynamic_cast<CTAAirMoveType*>(moveType)) {
+			if (dynamic_cast<CTAAirMoveType*>(moveType) && u->unitDef->canmove) {
 				const float3& pos = u->pos;
 				Command c;
 				c.id = CMD_MOVE;
@@ -191,6 +195,11 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			}
 
 			u->speed = speed * (0.5f + 0.5f * gs->randFloat());
+
+			if (CBuilding* building = dynamic_cast<CBuilding*>(u)) {
+				// this building may end up in a strange position, so kill it
+				building->KillUnit(selfDestruct, reclaimed, attacker);
+			}
 
 			eventHandler.UnitUnloaded(u, this);
 		}
@@ -274,6 +283,11 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	radarhandler->RemoveUnit(unit);
 	qf->RemoveUnit(unit);
 
+	if (CBuilding* building = dynamic_cast<CBuilding*>(unit)) {
+		unitLoader.RestoreGround(unit);
+		groundDecals->RemoveBuilding(building, NULL);
+	}
+
 	if (dynamic_cast<CTAAirMoveType*>(moveType)) {
 		unit->moveType->useHeading = false;
 	}
@@ -291,6 +305,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->UpdateTerrainType();
 
 	eventHandler.UnitLoaded(unit, this);
+
+	commandAI->BuggerOff(pos, -1.0f); // make sure not to get buggered off :) by transportee
 }
 
 
@@ -317,6 +333,9 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			loshandler->MoveUnit(unit, false);
 			qf->MovedUnit(unit);
 			radarhandler->MoveUnit(unit);
+
+			if (CBuilding* building = dynamic_cast<CBuilding*>(unit))
+				building->ForcedMove(building->pos, building->buildFacing);
 
 			transportCapacityUsed -= ti->size;
 			transportMassUsed -= ti->mass;
@@ -358,12 +377,14 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 		unit->Drop(this->pos, this->frontdir, this);
 
 		//add an additional move command for after we land
-		Command c;
-		c.id = CMD_MOVE;
-		c.params.push_back(pos.x);
-		c.params.push_back(pos.y);
-		c.params.push_back(pos.z);
-		unit->commandAI->GiveCommand(c);
+		if(unit->unitDef->canmove) {
+			Command c;
+			c.id = CMD_MOVE;
+			c.params.push_back(pos.x);
+			c.params.push_back(pos.y);
+			c.params.push_back(pos.z);
+			unit->commandAI->GiveCommand(c);
+		}
 	}
 }
 
@@ -394,6 +415,13 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit *
 		}
 		else
 			adjustedYpos = unit->unitDef->GetAllowedTerrainHeight(wantedYpos);
+		if(dynamic_cast<const CBuilding *>(unit)) {
+			BuildInfo bi(unit->unitDef, wantedPos, unit->buildFacing);
+			bi.pos = helper->Pos2BuildPos(bi);
+			CFeature *f;
+			if(!uh->TestUnitBuildSquare(bi, f, -1) || f)
+				isok = false;
+		}
 	}
 
 	float terrainHeight = adjustedYpos + unit->model->height;
@@ -403,4 +431,16 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit *
 	if(ok)
 		*ok = isok && (adjustedTerrainHeight == terrainHeight) && (adjustedYpos == wantedYpos);
 	return adjustedTerrainHeight;
+}
+
+
+float CTransportUnit::GetLoadUnloadHeading(const float3& wantedPos, const CUnit *unit) const {
+	if(dynamic_cast<CTAAirMoveType*>(moveType)) {
+		if(unit->transporter) { // return unloading heading
+			if(dynamic_cast<const CBuilding *>(unit))
+				return GetHeadingFromFacing(unit->buildFacing);
+			return unit->heading;
+		}
+	}
+	return unit->heading;
 }

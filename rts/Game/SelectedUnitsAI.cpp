@@ -120,7 +120,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		// a single unit selected
 		CUnit* unit = uh->units[*netSelected.begin()];
 		if(unit) {
-			unit->commandAI->GiveCommand(c, false);
+			unit->commandAI->GiveCommand(c, true);
 			if (MayRequireSetMaxSpeedCommand(c)) {
 				AddUnitSetMaxSpeedCommand(unit, c.options);
 			}

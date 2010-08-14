@@ -1878,11 +1878,12 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "teamhighlight") {
 		if (action.extra.empty()) {
-			gc->teamHighlight = !gc->teamHighlight;
+			gc->teamHighlight = abs(gc->teamHighlight + 1) % 3;
 		} else {
-			gc->teamHighlight = !!atoi(action.extra.c_str());
+			gc->teamHighlight = abs(atoi(action.extra.c_str())) % 3;
 		}
-		configHandler->Set("TeamHighlight", gc->teamHighlight ? 1 : 0);
+		logOutput.Print("Team highlighting: %s", ((gc->teamHighlight == 1) ? "Players only" : ((gc->teamHighlight == 2) ? "Players and spectators" : "Disabled")));
+		configHandler->Set("TeamHighlight", gc->teamHighlight);
 	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {

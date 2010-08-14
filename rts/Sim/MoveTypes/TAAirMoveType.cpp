@@ -235,10 +235,12 @@ void CTAAirMoveType::ExecuteStop()
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF:
-			SetState(AIRCRAFT_LANDING);
-			// trick to land directly
-			waitCounter = 30;
-			break;
+			if(!dontLand && autoLand) {
+				SetState(AIRCRAFT_LANDING);
+				// trick to land directly
+				waitCounter = 30;
+				break;
+			} // let it fall through
 		case AIRCRAFT_FLYING:
 			if (owner->unitDef->DontLand()) {
 				goalPos = owner->pos;
