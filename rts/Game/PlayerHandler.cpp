@@ -31,7 +31,8 @@ CPlayerHandler::~CPlayerHandler()
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	players.resize(setup->playerStartingData.size());
+	int newSize = std::max( players.size(), setup->playerStartingData.size() );
+	players.resize(newSize);
 
 	for (size_t i = 0; i < setup->playerStartingData.size(); ++i) {
 		players[i] = setup->playerStartingData[i];
