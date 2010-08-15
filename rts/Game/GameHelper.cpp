@@ -289,8 +289,7 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 	CollisionQuery cq;
 
-	vector<int> quads;
-	quads.swap(qf->GetQuadsOnRay(start, dir, length));
+	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
 	std::list<CUnit*>::const_iterator ui;
 
@@ -379,8 +378,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	{
 		GML_RECMUTEX_LOCK(quad); //! GuiTraceRay
 
-		vector<int> quads;
-		quads.swap(qf->GetQuadsOnRay(start, dir, length));
+		vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 		vector<int>::iterator qi;
 		std::list<CUnit*>::const_iterator ui;
 
@@ -452,8 +450,7 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 
 	GML_RECMUTEX_LOCK(quad); // TraceRayTeam
 
-	vector<int> quads;
-	quads.swap(qf->GetQuadsOnRay(start, dir, length));
+	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	hit = 0;
 
 	vector<int>::iterator qi;
@@ -536,8 +533,7 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 {
 	GML_RECMUTEX_LOCK(qnum);
 
-	vector<int> quads;
-	quads.swap(qf->GetQuads(query.pos, query.radius));
+	vector<int> quads = qf->GetQuads(query.pos, query.radius);
 
 	const int tempNum = gs->tempNum++;
 	vector<int>::iterator qi;
@@ -822,8 +818,7 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 	float secDamage = weapon->weaponDef->damages[0] * weapon->salvoSize / weapon->reloadTime * 30;
 	bool paralyzer = !!weapon->weaponDef->damages.paralyzeDamageTime;
 
-	std::vector<int> quads;
-	quads.swap(qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->minheight)) * heightMod));
+	std::vector<int> quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->minheight)) * heightMod);
 
 	int tempNum = gs->tempNum++;
 	std::vector<int>::iterator qi;
@@ -978,8 +973,7 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 {
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
 
-	std::vector<int> quads;
-	quads.swap(qf->GetQuadsOnRay(start, dir, length));
+	std::vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	std::vector<int>::iterator qi;
 
 	CollisionQuery cq;
@@ -1011,8 +1005,7 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
 
-	std::vector<int> quads;
-	quads.swap(qf->GetQuadsOnRay(start, dir, length));
+	std::vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	std::vector<int>::iterator qi;
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
