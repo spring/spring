@@ -43,6 +43,7 @@
 #include "Exceptions.h"
 #include "TimeProfiler.h"
 #include "Net/UnpackPacket.h"
+#include "PlayerHandler.h"
 
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
@@ -224,6 +225,24 @@ void CPreGame::UpdateClientNet()
 			}
 			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.
 				GameDataReceived(packet);
+				break;
+			}
+			case NETMSG_CREATE_NEWPLAYER: { // server sends this second to let us know about clients not in script.txt, especially if it's ourself!, we'd crash if we'd not get it here
+				try {
+					netcode::UnpackPacket pckt(packet, 3);
+					unsigned char spectator;
+					CPlayer player;
+					pckt >> player.playerNum;
+					pckt >> spectator; // needed because spectator flat in player class has diff size
+					player.spectator = spectator;
+					pckt >> player.team;
+					pckt >> player.name;
+					// add the new player
+					playerHandler->AddPlayer(player);
+					// TODO: create new teams if necessary to let the player play, will need lua hooks to the mod
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
+				}
 				break;
 			}
 			case NETMSG_SETPLAYERNUM: { // this is sent afterwards to let us know which playernum we have

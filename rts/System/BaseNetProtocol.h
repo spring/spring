@@ -95,7 +95,9 @@ enum NETMSG {
 	NETMSG_REQUEST_TEAMSTAT = 72, // uchar teamNum, ushort statFrameNum                   # used by LadderBot #
 
 	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
-	NETMSG_UNREGISTER_NETMSG= 74  // uchar myPlayerNum, uchar NETMSG
+	NETMSG_UNREGISTER_NETMSG= 74, // uchar myPlayerNum, uchar NETMSG
+
+	NETMSG_CREATE_NEWPLAYER = 75 // uchar playerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
 };
 
 // Data types for NETMSG_CUSTOM_DATA
@@ -201,6 +203,8 @@ public:
 
 	PacketType SendRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
 	PacketType SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
+
+	PacketType SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName );
 
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);
