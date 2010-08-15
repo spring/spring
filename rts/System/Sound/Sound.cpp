@@ -338,7 +338,7 @@ void CSound::StartThread(int maxSounds)
 
 		SoundSource::SetAirAbsorptionSupported(airAbsorptionSupported);
 		if (airAbsorptionSupported) {
-			const float airAbsorption = configHandler->Get("snd_airAbsorption", 0.0f);
+			const float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
 			SoundSource::SetAirAbsorption(airAbsorption);
 		}
 
