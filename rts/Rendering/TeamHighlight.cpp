@@ -50,7 +50,8 @@ void CTeamHighlight::Update(int frameNum) {
 		for(int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
 			CTeam *t = teamHandler->Team(ti);
 			float teamhighlight = 0.0f;
-			if(!t->isDead && !t->units.empty() && teamHandler->AlliedTeams(gu->myTeam, ti) && 
+			if(!t->isDead && !t->units.empty() &&
+				(gu->spectatingFullView || teamHandler->AlliedTeams(gu->myTeam, ti)) && 
 				!t->gaia && skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) {
 					int minPing = INT_MAX;
 					bool hasPlayers = false;
