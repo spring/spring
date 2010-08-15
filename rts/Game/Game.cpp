@@ -4605,6 +4605,25 @@ void CGame::ClientReadNet()
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
+			case NETMSG_CREATE_NEWPLAYER: { // server sends this second to let us know about new clients that join midgame
+				try {
+					netcode::UnpackPacket pckt(packet, 3);
+					unsigned char spectator;
+					CPlayer player;
+					pckt >> player.playerNum;
+					pckt >> spectator; // needed because spectator flat in player class has diff size
+					player.spectator = spectator;
+					pckt >> player.team;
+					pckt >> player.name;
+					// add the new player
+					playerHandler->AddPlayer(player);
+					// TODO: create new teams if necessary to let the player play, will need lua hooks to the mod
+					AddTraffic(-1, packetCode, dataLength);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
+				}
+				break;
+			}
 			default: {
 #ifdef SYNCDEBUG
 				if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))

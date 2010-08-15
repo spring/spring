@@ -78,3 +78,21 @@ void CPlayerHandler::GameFrame(int frameNum)
 		it->GameFrame(frameNum);
 	}
 }
+
+void CPlayerHandler::AddPlayer( const CPlayer& player )
+{
+	int newSize = std::max( (int)players.size(), player.playerNum + 1 );
+	players.resize(newSize);
+	for ( unsigned int i = players.size(); i < player.playerNum; i++ ) // fill gap with stubs
+	{
+		CPlayer stub;
+		stub.name = "unknown";
+		stub.isFromDemo = false;
+		stub.spectator = true;
+		stub.team = 0;
+		stub.playerNum = (int)i;
+		players[i] = stub;
+	}
+	players[player.playerNum] = player;
+	players[player.playerNum].myControl.myController = &players[player.playerNum];
+}

@@ -2092,6 +2092,7 @@ void CGameServer::AddAdditionalUser( const std::string& name, const std::string&
 		buf.SetValue("password",passwd);
 	}
 	players.push_back(buf);
+	Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( players.size() -1, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
 }
 
 
