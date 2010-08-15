@@ -616,7 +616,7 @@ void CGameServer::Update()
 							refCpu = correctedCpu;
 						}
 						cpu.push_back(correctedCpu);
-						ping.push_back(serverframenum - players[a].lastFrameResponse);
+						ping.push_back(curPing);
 					}
 				}
 			}
