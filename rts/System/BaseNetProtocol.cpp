@@ -422,6 +422,15 @@ PacketType CBaseNetProtocol::SendSdBlockrequest(unsigned short begin, unsigned s
 	
 }
 
+PacketType CBaseNetProtocol::SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName )
+{
+	unsigned size = 1 + 1 + 1 + 1 + 2+playerName.size()+1;
+	PackPacket* packet = new PackPacket( size, NETMSG_CREATE_NEWPLAYER);
+	*packet << static_cast<boost::uint16_t>(size) << playerNum << (uchar)spectator << teamNum << playerName;
+	return PacketType(packet);
+
+}
+
 PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums)
 {
 	unsigned size = 1 + 2 + 1 + checksums.size() * 4;
@@ -490,6 +499,8 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_REQUEST_TEAMSTAT, 4 );
 	proto->AddType(NETMSG_REGISTER_NETMSG, 3 );
 	proto->AddType(NETMSG_UNREGISTER_NETMSG, 3);
+
+	proto->AddType(NETMSG_CREATE_NEWPLAYER, -2);
 
 	proto->AddType(NETMSG_AI_CREATED, -1);
 	proto->AddType(NETMSG_AI_STATE_CHANGED, 7);
