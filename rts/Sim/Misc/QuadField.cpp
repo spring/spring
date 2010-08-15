@@ -190,8 +190,7 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
 
 	std::vector<CUnit*> units;
-	std::vector<int> quads;
-	quads.swap(GetQuadsRectangle(mins, maxs));
+	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
 
 	int tempNum = gs->tempNum++;
 
@@ -353,8 +352,7 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 
 void CQuadField::MovedUnit(CUnit *unit)
 {
-	vector<int> newQuads;
-	newQuads.swap(GetQuads(unit->pos,unit->radius));
+	vector<int> newQuads=GetQuads(unit->pos,unit->radius);
 
 	//! compare if the quads have changed, if not stop here
 	if(newQuads.size()==unit->quads.size()){
@@ -421,8 +419,7 @@ void CQuadField::AddFeature(CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(quad); // AddFeature
 
-	vector<int> newQuads;
-	newQuads.swap(GetQuads(feature->pos,feature->radius));
+	vector<int> newQuads=GetQuads(feature->pos,feature->radius);
 
 	vector<int>::iterator qi;
 	for(qi=newQuads.begin();qi!=newQuads.end();++qi){
@@ -434,8 +431,7 @@ void CQuadField::RemoveFeature(CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(quad); // RemoveFeature
 
-	vector<int> quads;
-	quads.swap(GetQuads(feature->pos,feature->radius));
+	vector<int> quads=GetQuads(feature->pos,feature->radius);
 
 	std::vector<int>::iterator qi;
 	for(qi=quads.begin();qi!=quads.end();++qi){
@@ -448,8 +444,7 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
 
 	vector<CFeature*> features;
-	vector<int> quads;
-	quads.swap(GetQuads(pos,radius));
+	vector<int> quads=GetQuads(pos,radius);
 
 	int tempNum=gs->tempNum++;
 
@@ -473,8 +468,7 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const fl
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
 
 	std::vector<CFeature*> features;
-	std::vector<int> quads;
-	quads.swap(GetQuadsRectangle(mins, maxs));
+	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
 
 	int tempNum = gs->tempNum++;
 
@@ -502,8 +496,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float ra
 	GML_RECMUTEX_LOCK(qnum); // GetSolidsExact
 
 	std::vector<CSolidObject*> solids;
-	std::vector<int> quads;
-	quads.swap(GetQuads(pos,radius));
+	std::vector<int> quads = GetQuads(pos,radius);
 	int tempNum = gs->tempNum++;
 
 	std::vector<int>::iterator qi;
