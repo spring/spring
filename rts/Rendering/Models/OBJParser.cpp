@@ -130,6 +130,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 	while ((currReadIdx = modelData.find_first_of('\n', prevReadIdx)) != std::string::npos) {
 		line = modelData.substr(prevReadIdx, (currReadIdx - prevReadIdx));
+		line = StringReplaceInPlace(line, '\r', ' ');
 
 		if (!line.empty()) {
 			                   regexMatch = (boost::regex_match(line, commentPattern));
