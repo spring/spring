@@ -395,7 +395,7 @@ PacketType CBaseNetProtocol::SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msg
 
 PacketType CBaseNetProtocol::SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName )
 {
-	unsigned size = 1 + 1 + 1 + 1 + 2+playerName.size()+1;
+	unsigned size = 1 + sizeof(uchar) + sizeof(uchar) + sizeof(uchar) + sizeof (boost::uint16_t) +playerName.size()+1;
 	PackPacket* packet = new PackPacket( size, NETMSG_CREATE_NEWPLAYER);
 	*packet << static_cast<boost::uint16_t>(size) << playerNum << (uchar)spectator << teamNum << playerName;
 	return PacketType(packet);

@@ -230,13 +230,17 @@ void CPreGame::UpdateClientNet()
 			case NETMSG_CREATE_NEWPLAYER: { // server sends this second to let us know about clients not in script.txt, especially if it's ourself!, we'd crash if we'd not get it here
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
-					unsigned char spectator;
-					CPlayer player;
-					pckt >> player.playerNum;
+					unsigned char spectator, team, playerNum;
+					std::string name;
+					pckt >> playerNum;
 					pckt >> spectator; // needed because spectator flat in player class has diff size
+					pckt >> team;
+					pckt >> name;
+					CPlayer player;
+					player.name = name;
 					player.spectator = spectator;
-					pckt >> player.team;
-					pckt >> player.name;
+					player.team = team;
+					player.playerNum = playerNum;
 					// add the new player
 					playerHandler->AddPlayer(player);
 					// TODO: create new teams if necessary to let the player play, will need lua hooks to the mod
