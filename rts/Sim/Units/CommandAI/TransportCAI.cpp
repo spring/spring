@@ -485,8 +485,10 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float radius = c.params[3];
 		const float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
-		if(canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u))
+		canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u);
+		if (canUnload) {
 			break;
+		}
 	}
 
 	if (canUnload) {
@@ -499,11 +501,9 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 		c2.options = c.options | INTERNAL_ORDER;
 		commandQue.push_front(c2);
 		SlowUpdate();
-		return;
 	} else {
 		FinishCommand();
 	}
-	return;
 }
 
 
