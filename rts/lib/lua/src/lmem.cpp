@@ -7,7 +7,8 @@
 
 #include <stddef.h>
 
-#include "mmgr.h"
+// Spring
+#include "System/mmgr.h"
 
 #define lmem_c
 #define LUA_CORE
