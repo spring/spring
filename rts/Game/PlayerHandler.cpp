@@ -93,6 +93,7 @@ void CPlayerHandler::AddPlayer( const CPlayer& player )
 		stub.team = 0;
 		stub.playerNum = (int)i;
 		players[i] = stub;
+		players[i].myControl.myController = &players[i];
 	}
 	players[player.playerNum] = player;
 	players[player.playerNum].myControl.myController = &players[player.playerNum];
