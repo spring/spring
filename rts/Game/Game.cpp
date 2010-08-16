@@ -4593,8 +4593,10 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					unsigned char spectator, team, playerNum;
 					std::string name;
+					// since the >> operator uses dest size to extract data from the packet, we need to use temp variables
+					// of the same size of the packet, then convert to dest variable
 					pckt >> playerNum;
-					pckt >> spectator; // needed because spectator flat in player class has diff size
+					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
 					CPlayer player;
@@ -4605,7 +4607,7 @@ void CGame::ClientReadNet()
 					// add the new player
 					playerHandler->AddPlayer(player);
 					logOutput.Print("Added new player: %s", name.c_str());
-					// TODO: create new teams if necessary to let the player play, will need lua hooks to the mod
+					//TODO: perhaps add a lua hook, hook should be able to reassign the player to a team and/or create a new team/allyteam
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
