@@ -1962,7 +1962,7 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 #define RECTANGLE_TEST ; // no test, GetUnitsExact is sufficient
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2015,7 +2015,7 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 	}
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2069,7 +2069,7 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 	}                                           \
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2127,7 +2127,7 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 	}                                           \
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2323,7 +2323,7 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	vector<CFeature*> rectFeatures = qf->GetFeaturesExact(mins, maxs);
+	const vector<CFeature*> &rectFeatures = qf->GetFeaturesExact(mins, maxs);
 	const int rectFeatureCount = (int)rectFeatures.size();
 
 	lua_newtable(L);

@@ -100,13 +100,13 @@ void CFireProjectile::Update(void)
 		}
 		if(!(ttl&31)){
 			//! synced code
-			std::vector<CFeature*> f=qf->GetFeaturesExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
-			for(std::vector<CFeature*>::iterator fi=f.begin();fi!=f.end();++fi){
+			const std::vector<CFeature*> &f = qf->GetFeaturesExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
+			for(std::vector<CFeature*>::const_iterator fi = f.begin(); fi != f.end(); ++fi){
 				if(gs->randFloat()>0.8f)
 					(*fi)->StartFire();
 			}
-			std::vector<CUnit*> units=qf->GetUnitsExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
-			for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
+			const std::vector<CUnit*> &units=qf->GetUnitsExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
+			for(std::vector<CUnit*>::const_iterator ui=units.begin();ui!=units.end();++ui){
 				(*ui)->DoDamage(DamageArray(30),0,ZeroVector);
 			}
 		}

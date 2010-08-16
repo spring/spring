@@ -190,12 +190,11 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
 
 	std::vector<CUnit*> units;
-	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
+	const std::vector<int> &quads = GetQuadsRectangle(mins, maxs);
 
 	int tempNum = gs->tempNum++;
 
-	std::vector<int>::iterator qi;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		std::list<CUnit*>& quadUnits = baseQuads[*qi].units;
 		std::list<CUnit*>::iterator ui;
 		for (ui = quadUnits.begin(); ui != quadUnits.end(); ++ui) {
@@ -352,11 +351,11 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 
 void CQuadField::MovedUnit(CUnit *unit)
 {
-	vector<int> newQuads=GetQuads(unit->pos,unit->radius);
+	const vector<int> &newQuads = GetQuads(unit->pos,unit->radius);
 
 	//! compare if the quads have changed, if not stop here
 	if(newQuads.size()==unit->quads.size()){
-		vector<int>::iterator qi1,qi2;
+		vector<int>::const_iterator qi1, qi2;
 		qi1=unit->quads.begin();
 		for(qi2=newQuads.begin();qi2!=newQuads.end();++qi2){
 			if(*qi1!=*qi2)
@@ -369,23 +368,22 @@ void CQuadField::MovedUnit(CUnit *unit)
 
 	GML_RECMUTEX_LOCK(quad); // MovedUnit - possible performance hog
 
-	std::vector<int>::iterator qi;
-	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
+	for (std::vector<int>::const_iterator qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
 		std::list<CUnit*>::iterator ui;
 		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
-			if(*ui==unit){
+			if(*ui == unit){
 				baseQuads[*qi].units.erase(ui);
 				break;
 			}
 		}
-		for(ui=baseQuads[*qi].teamUnits[unit->allyteam].begin();ui!=baseQuads[*qi].teamUnits[unit->allyteam].end();++ui){
-			if(*ui==unit){
+		for(ui=baseQuads[*qi].teamUnits[unit->allyteam].begin(); ui != baseQuads[*qi].teamUnits[unit->allyteam].end(); ++ui){
+			if(*ui == unit){
 				baseQuads[*qi].teamUnits[unit->allyteam].erase(ui);
 				break;
 			}
 		}
 	}
-	for(qi=newQuads.begin();qi!=newQuads.end();++qi){
+	for(std::vector<int>::const_iterator qi = newQuads.begin();qi != newQuads.end(); ++qi){
 		baseQuads[*qi].units.push_front(unit);
 		baseQuads[*qi].teamUnits[unit->allyteam].push_front(unit);
 	}
@@ -419,10 +417,9 @@ void CQuadField::AddFeature(CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(quad); // AddFeature
 
-	vector<int> newQuads=GetQuads(feature->pos,feature->radius);
+	const vector<int> &newQuads = GetQuads(feature->pos,feature->radius);
 
-	vector<int>::iterator qi;
-	for(qi=newQuads.begin();qi!=newQuads.end();++qi){
+	for(vector<int>::const_iterator qi = newQuads.begin();qi != newQuads.end(); ++qi){
 		baseQuads[*qi].features.push_front(feature);
 	}
 }
@@ -431,10 +428,9 @@ void CQuadField::RemoveFeature(CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(quad); // RemoveFeature
 
-	vector<int> quads=GetQuads(feature->pos,feature->radius);
+	const vector<int> &quads = GetQuads(feature->pos,feature->radius);
 
-	std::vector<int>::iterator qi;
-	for(qi=quads.begin();qi!=quads.end();++qi){
+	for(std::vector<int>::const_iterator qi = quads.begin();qi != quads.end(); ++qi){
 		baseQuads[*qi].features.remove(feature);
 	}
 }
@@ -444,12 +440,11 @@ vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos,float radius)
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
 
 	vector<CFeature*> features;
-	vector<int> quads=GetQuads(pos,radius);
+	const vector<int> &quads = GetQuads(pos,radius);
 
 	int tempNum=gs->tempNum++;
 
-	std::vector<int>::iterator qi;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		std::list<CFeature*>::iterator fi;
 		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
 			float totRad=radius+(*fi)->radius;
@@ -468,12 +463,11 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const fl
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
 
 	std::vector<CFeature*> features;
-	std::vector<int> quads = GetQuadsRectangle(mins, maxs);
+	const std::vector<int> &quads = GetQuadsRectangle(mins, maxs);
 
 	int tempNum = gs->tempNum++;
 
-	std::vector<int>::iterator qi;
-	for(qi = quads.begin(); qi != quads.end(); ++qi) {
+	for(std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		std::list<CFeature*>& quadFeatures = baseQuads[*qi].features;
 		std::list<CFeature*>::iterator fi;
 		for (fi = quadFeatures.begin(); fi != quadFeatures.end(); ++fi) {
@@ -496,11 +490,10 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos,float ra
 	GML_RECMUTEX_LOCK(qnum); // GetSolidsExact
 
 	std::vector<CSolidObject*> solids;
-	std::vector<int> quads = GetQuads(pos,radius);
+	const std::vector<int> &quads = GetQuads(pos,radius);
 	int tempNum = gs->tempNum++;
 
-	std::vector<int>::iterator qi;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		std::list<CUnit*>::iterator ui;
 		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
 			if (!(*ui)->blocking)

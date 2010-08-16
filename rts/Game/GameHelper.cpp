@@ -208,11 +208,10 @@ void CGameHelper::Explosion(
 		float height = std::max(expPos.y - h2, 0.0f);
 
 		// damage all units within the explosion radius
-		vector<CUnit*> units = qf->GetUnitsExact(expPos, expRad);
-		vector<CUnit*>::iterator ui;
+		const vector<CUnit*> &units = qf->GetUnitsExact(expPos, expRad);
 		bool hitUnitDamaged = false;
 
-		for (ui = units.begin(); ui != units.end(); ++ui) {
+		for (vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			CUnit* unit = *ui;
 
 			if (unit == hit) {
@@ -231,11 +230,10 @@ void CGameHelper::Explosion(
 
 
 		// damage all features within the explosion radius
-		vector<CFeature*> features = qf->GetFeaturesExact(expPos, expRad);
-		vector<CFeature*>::iterator fi;
+		const vector<CFeature*> &features = qf->GetFeaturesExact(expPos, expRad);
 		bool hitFeatureDamaged = false;
 
-		for (fi = features.begin(); fi != features.end(); ++fi) {
+		for (vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 
 			if (hitfeature == feature) {
@@ -289,16 +287,14 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 	CollisionQuery cq;
 
-	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
-	vector<int>::iterator qi;
-	std::list<CUnit*>::const_iterator ui;
+	const vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
 
 	//! feature intersection
 	if (!ignoreFeatures) {
 		if (hitfeature)
 			*hitfeature = 0;
 
-		for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
 			for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
@@ -326,7 +322,7 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 	//! unit intersection
 	hit = NULL;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
 		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
@@ -378,12 +374,11 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	{
 		GML_RECMUTEX_LOCK(quad); //! GuiTraceRay
 
-		vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
-		vector<int>::iterator qi;
+		const vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
 		std::list<CUnit*>::const_iterator ui;
 
 		//! unit intersection
-		for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
 			for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
@@ -450,11 +445,10 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 
 	GML_RECMUTEX_LOCK(quad); // TraceRayTeam
 
-	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
+	const vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
 	hit = 0;
 
-	vector<int>::iterator qi;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		std::list<CUnit*>::const_iterator ui;
 
@@ -533,12 +527,11 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 {
 	GML_RECMUTEX_LOCK(qnum);
 
-	vector<int> quads = qf->GetQuads(query.pos, query.radius);
+	const vector<int> &quads = qf->GetQuads(query.pos, query.radius);
 
 	const int tempNum = gs->tempNum++;
-	vector<int>::iterator qi;
-
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	
+	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (!filter.Team(t)) {
@@ -818,11 +811,11 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 	float secDamage = weapon->weaponDef->damages[0] * weapon->salvoSize / weapon->reloadTime * 30;
 	bool paralyzer = !!weapon->weaponDef->damages.paralyzeDamageTime;
 
-	std::vector<int> quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->minheight)) * heightMod);
+	const std::vector<int> &quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->minheight)) * heightMod);
 
 	int tempNum = gs->tempNum++;
-	std::vector<int>::iterator qi;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	
+	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (teamHandler->Ally(attacker->allyteam, t)) {
 				continue;
@@ -973,12 +966,11 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 {
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
 
-	std::vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
-	std::vector<int>::iterator qi;
+	const std::vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
 
 	CollisionQuery cq;
 
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
 		for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
@@ -1005,10 +997,9 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
 
-	std::vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
-	std::vector<int>::iterator qi;
+	const std::vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
 
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 		std::list<CFeature*>::const_iterator ui;
 
@@ -1063,9 +1054,9 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 
 void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, CUnit* exclude)
 {
-	std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius + 8, spherical);
+	const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, radius + 8, spherical);
 
-	for (std::vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* u = *ui;
 		bool allied = true;
 

@@ -838,10 +838,9 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 {
 	verify();
 
-	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::const_iterator ui;
+	const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, radius);
 	int a = 0;
-	for (ui = units.begin(); ui != units.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))
@@ -888,10 +887,9 @@ int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius,
 {
 	verify();
 
-	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::const_iterator ui;
+	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		if (teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))) {
@@ -935,10 +933,9 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 {
 	verify();
 
-	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::const_iterator ui;
+	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
 		const CUnit* u = *ui;
 
 		// IsUnitNeutral does the LOS check
@@ -1250,7 +1247,7 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 	int featureIds_size = 0;
 
 	verify();
-	const std::vector<CFeature*> ft = qf->GetFeaturesExact(pos, radius);
+	const std::vector<CFeature*> &ft = qf->GetFeaturesExact(pos, radius);
 	const int allyteam = teamHandler->AllyTeam(team);
 
 	std::vector<CFeature*>::const_iterator it;
