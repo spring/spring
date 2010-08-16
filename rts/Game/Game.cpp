@@ -1255,7 +1255,6 @@ bool CGame::ActionPressed(const Action& action,
 		const bool cheating           = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
-		const std::vector<std::string> &args = _local_strSpaceTokenize(action.extra);
 
 		if (hasArgs) {
 			int         teamToControlId = -1;
@@ -1499,22 +1498,6 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "trackmode") {
 		unitTracker.IncMode();
 	}
-#ifdef USE_GML
-	else if (cmd == "showhealthbars") {
-		if (action.extra.empty()) {
-			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
-		} else {
-			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
-		}
-	}
-	else if (cmd == "showrezbars") {
-		if (action.extra.empty()) {
-			featureDrawer->SetShowRezBars(!featureDrawer->GetShowRezBars());
-		} else {
-			featureDrawer->SetShowRezBars(!!atoi(action.extra.c_str()));
-		}
-	}
-#endif
 	else if (cmd == "pause") {
 		// disallow pausing prior to start of game proper
 		if (playing) {
