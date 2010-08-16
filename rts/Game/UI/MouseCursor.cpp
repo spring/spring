@@ -101,7 +101,7 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 		if (line.empty()) {
 			break;
 		}
-		const std::vector<std::string> words = parser.Tokenize(line, 2);
+		const std::vector<std::string> &words = parser.Tokenize(line, 2);
 		const std::string command = StringToLower(words[0]);
 
 		if ((command == "frame") && (words.size() >= 2)) {

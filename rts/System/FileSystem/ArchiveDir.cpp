@@ -15,12 +15,12 @@ CArchiveDir::CArchiveDir(const std::string& archivename) :
 		CArchiveBase(archivename),
 		archiveName(archivename + '/')
 {
-	std::vector<std::string> found = filesystem.FindFiles(archiveName, "*", FileSystem::RECURSE);
+	const std::vector<std::string> &found = filesystem.FindFiles(archiveName, "*", FileSystem::RECURSE);
 
 	// because spring expects the contents of archives to be case independent,
 	// we convert filenames to lowercase in every function, and keep a std::map
 	// lcNameToOrigName to convert back from lowercase to original case.
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
+	for (std::vector<std::string>::const_iterator it = found.begin(); it != found.end(); ++it) {
 		// strip our own name off.. & convert to forward slashes
 		std::string origName(*it, archiveName.length());
 		filesystem.ForwardSlashes(origName);

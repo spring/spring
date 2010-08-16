@@ -1160,8 +1160,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						// may be the players team or a team controlled by one of his AIs
 						const unsigned fromTeam_g                = inbuf[4];
 						const int numPlayersInTeam_g             = countNumPlayersInTeam(players, fromTeam_g);
-						const std::vector<size_t> totAIsInTeam_g = getSkirmishAIIds(ais, fromTeam_g);
-						const std::vector<size_t> myAIsInTeam_g  = getSkirmishAIIds(ais, fromTeam_g, player);
+						const std::vector<size_t> &totAIsInTeam_g = getSkirmishAIIds(ais, fromTeam_g);
+						const std::vector<size_t> &myAIsInTeam_g  = getSkirmishAIIds(ais, fromTeam_g, player);
 						const size_t numControllersInTeam_g      = numPlayersInTeam_g + totAIsInTeam_g.size();
 						const bool isLeader_g                    = (teams[fromTeam_g].leader == player);
 						const bool isOwnTeam_g                   = (fromTeam_g == fromTeam);
@@ -1224,8 +1224,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						// actualize all teams of which the player is leader
 						for (size_t t = 0; t < teams.size(); ++t) {
 							if (teams[t].leader == player) {
-								const std::vector<int> teamPlayers = getPlayersInTeam(players, t);
-								const std::vector<size_t> teamAIs  = getSkirmishAIIds(ais, t);
+								const std::vector<int> &teamPlayers = getPlayersInTeam(players, t);
+								const std::vector<size_t> &teamAIs  = getSkirmishAIIds(ais, t);
 								if ((teamPlayers.size() + teamAIs.size()) == 0) {
 									// no controllers left in team
 									teams[t].active = false;
@@ -1839,7 +1839,7 @@ void CGameServer::PushAction(const Action& action)
 	{
 		if (!action.extra.empty() && whiteListAdditionalPlayers) {
 			// split string by whitespaces
-			const std::vector<std::string> tokens = CSimpleParser::Tokenize(action.extra);
+			const std::vector<std::string> &tokens = CSimpleParser::Tokenize(action.extra);
 
 			if (tokens.size() > 1) {
 				const std::string& name = tokens[0];

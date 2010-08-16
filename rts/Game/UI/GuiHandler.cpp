@@ -192,7 +192,7 @@ bool CGuiHandler::LoadConfig(const std::string& filename)
 			break;
 		}
 
-		std::vector<std::string> words = parser.Tokenize(line, 1);
+		const std::vector<std::string> &words = parser.Tokenize(line, 1);
 
 		const std::string command = StringToLower(words[0]);
 
@@ -364,7 +364,7 @@ void CGuiHandler::ParseFillOrder(const std::string& text)
 	}
 
 	// split the std::string into slot names
-	std::vector<std::string> slotNames = CSimpleParser::Tokenize(text, 0);
+	const std::vector<std::string> &slotNames = CSimpleParser::Tokenize(text, 0);
 	if ((int)slotNames.size() != iconsPerPage) {
 		return;
 	}

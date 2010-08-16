@@ -143,9 +143,9 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 	isDirty = true;
 
 	const int flags = (FileSystem::INCLUDE_DIRS | FileSystem::RECURSE);
-	std::vector<std::string> found = filesystem.FindFiles(curPath, "*", flags);
+	const std::vector<std::string> &found = filesystem.FindFiles(curPath, "*", flags);
 
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); ++it) {
+	for (std::vector<std::string>::const_iterator it = found.begin(); it != found.end(); ++it) {
 		std::string fullName = *it;
 
 		// Strip
@@ -711,7 +711,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 
 	// add depth-first
 	for (std::vector<std::string>::const_iterator i = aii->second.archiveData.dependencies.begin(); i != aii->second.archiveData.dependencies.end(); ++i) {
-		std::vector<std::string> dep = GetArchives(*i, depth + 1);
+		const std::vector<std::string> &dep = GetArchives(*i, depth + 1);
 
 		for (std::vector<std::string>::const_iterator j = dep.begin(); j != dep.end(); ++j) {
 			if (std::find(ret.begin(), ret.end(), *j) == ret.end()) {
@@ -770,7 +770,7 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) 
 
 unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name) const
 {
-	const std::vector<std::string> ars = GetArchives(name);
+	const std::vector<std::string> &ars = GetArchives(name);
 	unsigned int checksum = 0;
 
 	for (unsigned int a = 0; a < ars.size(); a++) {

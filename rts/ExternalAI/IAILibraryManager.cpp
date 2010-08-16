@@ -140,8 +140,8 @@ int IAILibraryManager::VersionCompare(
 		const std::string& version1,
 		const std::string& version2) {
 
-	std::vector<std::string> parts1 = split(version1, '.');
-	std::vector<std::string> parts2 = split(version2, '.');
+	const std::vector<std::string> &parts1 = split(version1, '.');
+	const std::vector<std::string> &parts2 = split(version2, '.');
 	unsigned int maxParts = parts1.size() > parts2.size() ? parts1.size() : parts2.size();
 
 	int diff = 0;

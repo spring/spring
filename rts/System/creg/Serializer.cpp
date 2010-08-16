@@ -315,10 +315,10 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	// Save until all the referenced objects have been stored
 	while (!pendingObjects.empty ())
 	{
-		std::vector <ObjectRef*> po = pendingObjects;
+		const std::vector <ObjectRef*> &po = pendingObjects;
 		pendingObjects.clear ();
 
-		for (std::vector <ObjectRef*> ::iterator i=po.begin();i!=po.end();++i)
+		for (std::vector <ObjectRef*> ::const_iterator i=po.begin();i!=po.end();++i)
 		{
 			ObjectRef* obj = *i;
 			unsigned objstart = stream->tellp();

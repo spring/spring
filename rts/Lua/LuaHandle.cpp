@@ -653,7 +653,7 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	lua_pushnumber(L, command.id);
 	lua_pushnumber(L, command.options);
 
-	const vector<float> params = command.params;
+	const vector<float> &params = command.params;
 	lua_createtable(L, params.size(), 0);
 	for (unsigned int i = 0; i < params.size(); i++) {
 		lua_pushnumber(L, i + 1);

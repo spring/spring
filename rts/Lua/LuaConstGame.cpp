@@ -165,7 +165,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	         archiveScanner->GetArchiveCompleteChecksum(modInfo.filename));
 	LuaPushNamedString(L, "modChecksum", buf);
 
-	const vector<string> cats =
+	const vector<string> &cats =
 		CCategoryHandler::Instance()->GetCategoryNames(~0);
 	lua_pushstring(L, "springCategories");
 	lua_newtable(L);

@@ -755,7 +755,7 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			else if (action.command == "edit_complete") {
 				string head = userInput.substr(0, writingPos);
 				string tail = userInput.substr(writingPos);
-				vector<string> partials = wordCompletion->Complete(head);
+				const vector<string> &partials = wordCompletion->Complete(head);
 				userInput = head + tail;
 				writingPos = (int)head.length();
 				if (!partials.empty()) {
@@ -1146,7 +1146,7 @@ bool CGame::ActionPressed(const Action& action,
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
 		const bool cheating           = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
-		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+		const std::vector<std::string> &args = _local_strSpaceTokenize(action.extra);
 		size_t skirmishAIId           = 0; // will only be used if !badArgs
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 		const std::string actionName  = cmd.substr(2);
@@ -1255,7 +1255,7 @@ bool CGame::ActionPressed(const Action& action,
 		const bool cheating           = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
-		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+		const std::vector<std::string> &args = _local_strSpaceTokenize(action.extra);
 
 		if (hasArgs) {
 			int         teamToControlId = -1;
@@ -1264,7 +1264,7 @@ bool CGame::ActionPressed(const Action& action,
 			std::string aiName          = "";
 			std::map<std::string, std::string> aiOptions;
 
-			std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+			const std::vector<std::string> &args = _local_strSpaceTokenize(action.extra);
 			if (args.size() >= 1) {
 				teamToControlId = atoi(args[0].c_str());
 			}
@@ -1499,6 +1499,22 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "trackmode") {
 		unitTracker.IncMode();
 	}
+#ifdef USE_GML
+	else if (cmd == "showhealthbars") {
+		if (action.extra.empty()) {
+			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
+		} else {
+			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "showrezbars") {
+		if (action.extra.empty()) {
+			featureDrawer->SetShowRezBars(!featureDrawer->GetShowRezBars());
+		} else {
+			featureDrawer->SetShowRezBars(!!atoi(action.extra.c_str()));
+		}
+	}
+#endif
 	else if (cmd == "pause") {
 		// disallow pausing prior to start of game proper
 		if (playing) {
@@ -2146,7 +2162,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "lodscale") {
 		if (!action.extra.empty()) {
-			vector<string> args = CSimpleParser::Tokenize(action.extra, 0);
+			const vector<string> &args = CSimpleParser::Tokenize(action.extra, 0);
 			if (args.size() == 1) {
 				const float value = (float)atof(args[0].c_str());
 				unitDrawer->LODScale = value;
@@ -2434,7 +2450,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		s += action.extra;
 
 		// .give [amount] <unitName> [team] <@x,y,z>
-		vector<string> args = CSimpleParser::Tokenize(s, 0);
+		const vector<string> &args = CSimpleParser::Tokenize(s, 0);
 
 		if (args.size() < 3) {
 			logOutput.Print("Someone is spoofing invalid .give messages!");
@@ -4299,8 +4315,8 @@ void CGame::ClientReadNet()
 						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
 							CTeam* team = teamHandler->Team(t);
 							if (team->leader == player) {
-								const std::vector<int> teamPlayers = playerHandler->ActivePlayersInTeam(t);
-								const std::vector<size_t> teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+								const std::vector<int> &teamPlayers = playerHandler->ActivePlayersInTeam(t);
+								const std::vector<size_t> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
 								if ((teamPlayers.size() + teamAIs.size()) == 0) {
 									// no controllers left in team
 									//team.active = false;
@@ -5045,7 +5061,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 
 void CGame::SelectUnits(const string& line)
 {
-	vector<string> args = CSimpleParser::Tokenize(line, 0);
+	const vector<string> &args = CSimpleParser::Tokenize(line, 0);
 	for (int i = 0; i < (int)args.size(); i++) {
 		const string& arg = args[i];
 		if (arg == "clear") {

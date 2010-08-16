@@ -760,8 +760,8 @@ void SpringApp::LoadFonts()
 	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 
 	if (!font || !smallFont) {
-		std::vector<std::string> fonts = CFileHandler::DirList("fonts/", "*.*tf", SPRING_VFS_RAW_FIRST);
-		std::vector<std::string>::iterator fi = fonts.begin();
+		const std::vector<std::string> &fonts = CFileHandler::DirList("fonts/", "*.*tf", SPRING_VFS_RAW_FIRST);
+		std::vector<std::string>::const_iterator fi = fonts.begin();
 		while (fi != fonts.end()) {
 			SafeDelete(font);
 			SafeDelete(smallFont);

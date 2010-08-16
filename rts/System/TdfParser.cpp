@@ -218,7 +218,7 @@ bool TdfParser::SGetValue(std::string &value, std::string const& location) const
 	std::string lowerd = StringToLower(location);
 	std::string searchpath; //for errormessages
 	//split the location string
-	std::vector<std::string> loclist = GetLocationVector(lowerd);
+	const std::vector<std::string> &loclist = GetLocationVector(lowerd);
 	std::map<std::string, TdfSection*>::const_iterator sit =
 		root_section.sections.find(loclist[0]);
 	if (sit == root_section.sections.end())
@@ -263,7 +263,7 @@ const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string co
 	static std::map<std::string, std::string> emptymap;
 	std::string lowerd = StringToLower(location);
 	std::string searchpath; //for errormessages
-	std::vector<std::string> loclist = GetLocationVector(lowerd);
+	const std::vector<std::string> &loclist = GetLocationVector(lowerd);
 	std::map<std::string, TdfSection*>::const_iterator sit =
 		root_section.sections.find(loclist[0]);
 	if(sit == root_section.sections.end())
@@ -292,7 +292,7 @@ const std::map<std::string, std::string>& TdfParser::GetAllValues(std::string co
 std::vector<std::string> TdfParser::GetSectionList(std::string const& location) const
 {
 	std::string lowerd = StringToLower(location);
-	std::vector<std::string> loclist = GetLocationVector(lowerd);
+	const std::vector<std::string> &loclist = GetLocationVector(lowerd);
 	std::vector<std::string> returnvec;
 	const std::map<std::string, TdfSection*>* sectionsptr = &root_section.sections;
 	if(loclist[0].compare("")!=0)
@@ -322,7 +322,7 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location) 
 bool TdfParser::SectionExist(std::string const& location) const
 {
 	std::string lowerd = StringToLower(location);
-	std::vector<std::string> loclist = GetLocationVector(lowerd);
+	const std::vector<std::string> &loclist = GetLocationVector(lowerd);
 	std::map<std::string, TdfSection*>::const_iterator sit =
 		root_section.sections.find(loclist[0]);
 	if(sit == root_section.sections.end())
