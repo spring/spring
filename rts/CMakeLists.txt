@@ -54,7 +54,6 @@ ENDIF (MINGW)
 
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
-ADD_SUBDIRECTORY(lib)
 LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
 
 IF    (UNIX)
