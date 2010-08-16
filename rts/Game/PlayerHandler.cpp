@@ -31,7 +31,8 @@ CPlayerHandler::~CPlayerHandler()
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	players.resize(setup->playerStartingData.size());
+	int newSize = std::max( players.size(), setup->playerStartingData.size() );
+	players.resize(newSize);
 
 	for (size_t i = 0; i < setup->playerStartingData.size(); ++i) {
 		players[i] = setup->playerStartingData[i];
@@ -77,4 +78,21 @@ void CPlayerHandler::GameFrame(int frameNum)
 	{
 		it->GameFrame(frameNum);
 	}
+}
+
+void CPlayerHandler::AddPlayer( const CPlayer& player )
+{
+	int newSize = std::max( (int)players.size(), player.playerNum + 1 );
+	players.resize(newSize);
+	for ( unsigned int i = players.size(); i < player.playerNum; i++ ) // fill gap with stubs
+	{
+		CPlayer& stub = players[i];
+		stub.name = "unknown";
+		stub.isFromDemo = false;
+		stub.spectator = true;
+		stub.team = 0;
+		stub.playerNum = (int)i;
+	}
+	players[player.playerNum] = player;
+	players[player.playerNum].myControl.myController = &players[player.playerNum];
 }
