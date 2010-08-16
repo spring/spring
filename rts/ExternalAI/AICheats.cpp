@@ -142,11 +142,10 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::iterator ui;
+	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
 
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
@@ -184,11 +183,10 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::iterator ui;
+	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
 
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {

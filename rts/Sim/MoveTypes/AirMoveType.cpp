@@ -316,10 +316,9 @@ EndNormalControl:
 		bool hitBuilding = false;
 
 		if (collide && (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING)) {
-			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
-			vector<CUnit*>::iterator ui;
+			const vector<CUnit*> &nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 
-			for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				float sqDist = (pos - (*ui)->pos).SqLength();
 				float totRad = owner->radius + (*ui)->radius;
 
@@ -1195,7 +1194,7 @@ void CAirMoveType::CheckForCollision(void)
 	SyncedFloat3& forward = owner->frontdir;
 	float3 midTestPos = pos + forward * 121;
 
-	std::vector<CUnit*> others = qf->GetUnitsExact(midTestPos, 115);
+	const std::vector<CUnit*> &others = qf->GetUnitsExact(midTestPos, 115);
 
 	float dist = 200;
 	if (lastColWarning) {
@@ -1204,7 +1203,7 @@ void CAirMoveType::CheckForCollision(void)
 		lastColWarningType = 0;
 	}
 
-	for (std::vector<CUnit*>::iterator ui = others.begin(); ui != others.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
 		if (*ui == owner || !(*ui)->unitDef->canfly)
 			continue;
 		SyncedFloat3& op = (*ui)->midPos;
@@ -1234,7 +1233,7 @@ void CAirMoveType::CheckForCollision(void)
 		AddDeathDependence(lastColWarning);
 		return;
 	}
-	for (std::vector<CUnit*>::iterator ui = others.begin(); ui != others.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
 		if (*ui == owner)
 			continue;
 		if (((*ui)->midPos - pos).SqLength() < dist * dist) {

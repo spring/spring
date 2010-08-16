@@ -328,7 +328,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			if (unitToUnload->unitDef->movedata
 					&& ground->GetSlope(pos.x, pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 				continue;
-			std::vector<CUnit*> units = qf->GetUnitsExact(pos, emptyRadius + 8);
+			const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, emptyRadius + 8);
 			if(units.size() > 1 || (units.size() == 1 && units[0] != owner))
 				continue;
 
@@ -393,9 +393,9 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload)
 	if(unitToUnload->unitDef->movedata && ground->GetSlope(pos.x,pos.z) > unitToUnload->unitDef->movedata->maxSlope)
 		return false;
 
-	vector<CUnit*> units = qf->GetUnitsExact(pos,unitToUnload->radius+8);
+	const vector<CUnit*> &units = qf->GetUnitsExact(pos,unitToUnload->radius+8);
 	CTransportUnit* me = (CTransportUnit*)owner;
-	for (vector<CUnit*>::iterator it = units.begin(); it != units.end(); ++it) {
+	for (vector<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
 		// check if the units are in the transport
 		bool found = false;
 		for (std::list<CTransportUnit::TransportedUnit>::const_iterator it2 = me->GetTransportedUnits().begin();
@@ -861,8 +861,8 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 {
 	CUnit* best=0;
 	float bestDist=100000000;
-	std::vector<CUnit*> units=qf->GetUnitsExact(center,radius);
-	for(std::vector<CUnit*>::iterator ui=units.begin();ui!=units.end();++ui){
+	const std::vector<CUnit*> &units = qf->GetUnitsExact(center,radius);
+	for(std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui){
 		CUnit* unit=(*ui);
 		float dist=unit->pos.SqDistance2D(owner->pos);
 		if(CanTransport(unit) && dist<bestDist && !unit->toBeTransported &&

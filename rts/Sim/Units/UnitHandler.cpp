@@ -338,9 +338,9 @@ int CUnitHandler::TestUnitBuildSquare(
 
 	if (buildInfo.def->needGeo) {
 		canBuild = 0;
-		std::vector<CFeature*> features = qf->GetFeaturesExact(pos, max(xsize, zsize) * 6);
+		const std::vector<CFeature*> &features = qf->GetFeaturesExact(pos, max(xsize, zsize) * 6);
 
-		for (std::vector<CFeature*>::iterator fi = features.begin(); fi != features.end(); ++fi) {
+		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			if ((*fi)->def->geoThermal
 				&& fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
 				&& fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {

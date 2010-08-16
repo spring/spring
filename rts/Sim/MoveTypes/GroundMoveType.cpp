@@ -847,8 +847,8 @@ void CGroundMoveType::CheckCollisionSkid(void)
 	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
 
-	vector<CUnit*> nearUnits = qf->GetUnitsExact(midPos, owner->radius);
-	for (vector<CUnit*>::iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+	const vector<CUnit*> &nearUnits = qf->GetUnitsExact(midPos, owner->radius);
+	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* u = (*ui);
 		float sqDist = (midPos - u->midPos).SqLength();
 		float totRad = owner->radius + u->radius;
@@ -920,8 +920,8 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			}
 		}
 	}
-	vector<CFeature*> nearFeatures=qf->GetFeaturesExact(midPos,owner->radius);
-	for(vector<CFeature*>::iterator fi=nearFeatures.begin();
+	const vector<CFeature*> &nearFeatures=qf->GetFeaturesExact(midPos,owner->radius);
+	for(vector<CFeature*>::const_iterator fi = nearFeatures.begin();
 		fi!=nearFeatures.end();++fi)
 	{
 		CFeature* u=(*fi);
@@ -1057,11 +1057,10 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			MoveData* moveData = owner->mobility;
 			moveData->tempOwner = owner;
 
-			vector<CSolidObject*> nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
+			const vector<CSolidObject*> &nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
-			vector<CSolidObject*>::iterator oi;
 
-			for (oi = nearbyObjects.begin(); oi != nearbyObjects.end(); oi++) {
+			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); oi++) {
 				CSolidObject* o = *oi;
 				CMoveMath* moveMath = moveData->moveMath;
 

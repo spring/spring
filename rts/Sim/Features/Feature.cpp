@@ -609,11 +609,11 @@ bool CFeature::Update(void)
 	if (def->geoThermal) {
 		if ((gs->frameNum + id % 5) % 5 == 0) {
 			// Find the unit closest to the geothermal
-			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);
+			const vector<CSolidObject*> &objs = qf->GetSolidsExact(pos, 0.0f);
 			float bestDist2 = 0;
 			CSolidObject* so = NULL;
 
-			for (vector<CSolidObject*>::iterator oi = objs.begin(); oi != objs.end(); ++oi) {
+			for (vector<CSolidObject*>::const_iterator oi = objs.begin(); oi != objs.end(); ++oi) {
 				float dist2 = ((*oi)->pos - pos).SqLength();
 				if (!so || dist2 < bestDist2)  {
 					bestDist2 = dist2;

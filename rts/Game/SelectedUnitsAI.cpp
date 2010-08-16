@@ -576,7 +576,7 @@ void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
 	}
 	const int allyTeam = teamHandler->AllyTeam(p->team);
 
-	vector<CUnit*> tmpUnits = qf->GetUnits(pos, radius);
+	const vector<CUnit*> &tmpUnits = qf->GetUnits(pos, radius);
 
 	const float radiusSqr = (radius * radius);
 	const int count = (int)tmpUnits.size();
@@ -613,7 +613,7 @@ void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	vector<CUnit*> tmpUnits = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &tmpUnits = qf->GetUnitsExact(mins, maxs);
 
 	const int count = (int)tmpUnits.size();
 	for (int i = 0; i < count; i++) {
