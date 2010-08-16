@@ -223,11 +223,11 @@ void CPreGame::UpdateClientNet()
 				}		
 				break;
 			}
-			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.
+			case NETMSG_GAMEDATA: { // server first ( not if we're joining midgame as extra players) sends this to let us know about teams, allyteams etc.
 				GameDataReceived(packet);
 				break;
 			}
-			case NETMSG_CREATE_NEWPLAYER: { // server sends this second to let us know about clients not in script.txt, especially if it's ourself!, we'd crash if we'd not get it here
+			case NETMSG_CREATE_NEWPLAYER: { // server sends this to let us know about clients not in script.txt, especially if it's ourself!, we'd crash if we'd not get it here
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
 					unsigned char spectator, team, playerNum;
@@ -243,6 +243,7 @@ void CPreGame::UpdateClientNet()
 					player.playerNum = playerNum;
 					// add the new player
 					playerHandler->AddPlayer(player);
+					logOutput.Print("Added new player: %s", name.c_str());
 					// TODO: create new teams if necessary to let the player play, will need lua hooks to the mod
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
