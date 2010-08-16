@@ -86,14 +86,12 @@ void CPlayerHandler::AddPlayer( const CPlayer& player )
 	players.resize(newSize);
 	for ( unsigned int i = players.size(); i < player.playerNum; i++ ) // fill gap with stubs
 	{
-		CPlayer stub;
+		CPlayer& stub = players[i];
 		stub.name = "unknown";
 		stub.isFromDemo = false;
 		stub.spectator = true;
 		stub.team = 0;
 		stub.playerNum = (int)i;
-		players[i] = stub;
-		players[i].myControl.myController = &players[i];
 	}
 	players[player.playerNum] = player;
 	players[player.playerNum].myControl.myController = &players[player.playerNum];
