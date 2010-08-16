@@ -1297,7 +1297,9 @@ function gadgetHandler:UnitPreDamaged(unitID, unitDefID, unitTeam,
     rDam, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
                   rDam, paralyzer, weaponID,
                   attackerID, attackerDefID, attackerTeam)
-    rImp = math.min(imp, rImp)
+    if (imp ~= nil) then
+      rImp = math.min(imp, rImp)
+    end
   end
 
   return rDam, rImp
