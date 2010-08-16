@@ -1,41 +1,10 @@
 ; See for documentation:
 ; http://www.blog.lcp.com.ar/coding/2007/06/07/how-to-detect-net-framework-with-nsis/
 
-!include "include/Registry.nsh"
+!include "include\Registry.nsh"
 
-; For all these functions:
+; For this functions:
 ; pushes 0 for true, -1 for false
-
-
-!macro IsDotNetVersionInstalled _DOT_NET_VERSION
-	!tempfile _TEMPFILE
-	!if _DOT_NET_VERSION == "1.0"
-		Call IsDotNet10Installed
-	!else if _DOT_NET_VERSION == "1.1"
-		Call IsDotNet11Installed
-	!else if _DOT_NET_VERSION == "2.0"
-		Call IsDotNet20Installed
-	!else if _DOT_NET_VERSION == "3.0"
-		Call IsDotNet30Installed
-	!else if _DOT_NET_VERSION == "3.5"
-		Call IsDotNet35Installed
-	!else
-		!error "The specified .Net version is not supported by this script: '${_DOT_NET_VERSION}'"
-	!endif
-!macroend
-
-
-Function IsDotNetInstalled
-	Call GetInstalledDotNetVersion
-	Pop $0
-
-	${If} $0 == "0.0" ; .Net is not installed
-		Push -1
-	${Else}
-		Push 0
-	${EndIf}
-FunctionEnd
-
 Function IsMinDotNetVersionInstalled
 	Pop $R0
 
@@ -44,81 +13,82 @@ Function IsMinDotNetVersionInstalled
 
 	${VersionCompare} $0 $R0 $1
 
-	${If} $1 == 1 ; $0 is newer then $R0 -> too old version is installed
-		Push -1
-	${Else}
+	${If} $1 < 2 ;Our version is equal or newer
 		Push 0
+	${Else}
+		Push -1
 	${EndIf}
 FunctionEnd
 
 Function GetInstalledDotNetVersion
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	Push $R1 ;Output
+	Push $R2 ;Version difference
 
-	Call IsDotNet10Installed
-	Pop $0
+	StrCpy $R2 0
 
-	Call IsDotNet11Installed
-	Pop $1
-
-	Call IsDotNet20Installed
-	Pop $2
-
-	Call IsDotNet30Installed
-	Pop $3
-
-	Call IsDotNet35Installed
+	ReadRegStr $4 HKEY_LOCAL_MACHINE \
+	"Software\Microsoft\.NETFramework" "InstallRoot"
+	; remove trailing back slash
+	Push $4
+	Exch $EXEDIR
+	Exch $EXEDIR
 	Pop $4
+	; if the root directory does not exist .NET is not installed
+	IfFileExists $4 0 done
 
-	${If} $0 == 0
-		Push "1.0"
-	${ElseIf} $1 == 0
-		Push "1.1"
-	${ElseIf} $2 == 0
-		Push "2.0"
-	${ElseIf} $3 == 0
-		Push "3.0"
-	${ElseIf} $4 == 0
-		Push "3.5"
-	${Else}
-		Push "0.0"
+	StrCpy $0 0
+
+	EnumStart:
+
+	EnumRegKey $2 HKEY_LOCAL_MACHINE \
+	"Software\Microsoft\.NETFramework\Policy" $0
+	IntOp $0 $0 + 1
+	StrCmp $2 "" done
+	StrCpy $1 0
+
+	EnumPolicy:
+
+	EnumRegValue $3 HKEY_LOCAL_MACHINE \
+	"Software\Microsoft\.NETFramework\Policy\$2" $1
+	IntOp $1 $1 + 1
+	StrCmp $3 "" EnumStart
+	IfFileExists "$4\$2.$3" foundDotNET EnumPolicy
+
+	StrCmp $R1 "" onNETNotFound
+	Goto onNETFound
+
+	foundDotNET:
+	StrCpy $2 $2 "" 1 ;strip 'v'
+	
+	DetailPrint "Found .NET v$2"
+	${VersionCompare} $2 $R1 $R2
+	${If} $R2 < 2
+		StrCpy $R1 $2
 	${EndIf}
+	Goto EnumPolicy
+
+	onNETFound:
+	DetailPrint "Highest version is .NET v$R1"
+	Goto done
+
+	onNETNotFound:
+	DetailPrint "Could not find any installed .NET"
+
+	done:
+	StrCpy $0 $R1
+
+	Pop $R2
+	Pop $R1
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Exch $0
 FunctionEnd
 
-
-!macro checkR1Hyphen
-	${If} $R1 == ''
-		Push -1
-	${Else}
-		Push 0
-	${EndIf}
-!macroend
-
-; Check if .Net 1.0 is installed
-Function IsDotNet10Installed
-	${registry::Read} "HKEY_LOCAL_MACHINE\Software\Microsoft\.NETFramework\Policy\v1.0\" "3705" $R0 $R1
-	!insertmacro checkR1Hyphen
-FunctionEnd
-
-; Check if .Net 1.1 is installed
-Function IsDotNet11Installed
-	${registry::Read} "HKEY_LOCAL_MACHINE\Software\Microsoft\NET Framework Setup\NDP\v1.1.4322\" "Install" $R0 $R1
-	!insertmacro checkR1Hyphen
-FunctionEnd
-
-; Check if .Net 2.0 is installed
-Function IsDotNet20Installed
-	${registry::Read} "HKEY_LOCAL_MACHINE\Software\Microsoft\NET Framework Setup\NDP\v2.0.50727" "SP" $R0 $R1
-	!insertmacro checkR1Hyphen
-FunctionEnd
-
-; Check if .Net 3.0 is installed
-Function IsDotNet30Installed
-	${registry::Read} "HKEY_LOCAL_MACHINE\Software\Microsoft\NET Framework Setup\NDP\v3.0\Setup\" "InstallSuccess" $R0 $R1
-	!insertmacro checkR1Hyphen
-FunctionEnd
-
-; Check if .Net 3.5 is installed
-Function IsDotNet35Installed
-	${registry::Read} "HKEY_LOCAL_MACHINE\Software\Microsoft\NET Framework Setup\NDP\v3.5" "SP" $R0 $R1
-	!insertmacro checkR1Hyphen
-FunctionEnd
 
