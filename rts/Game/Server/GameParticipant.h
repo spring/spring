@@ -40,6 +40,7 @@ public:
 
 	bool isLocal;
 	bool isReconn;
+	bool isMidgameJoin;
 	boost::shared_ptr<netcode::CConnection> link;
 	PlayerStatistics lastStats;
 #ifdef SYNCCHECK
