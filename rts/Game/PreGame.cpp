@@ -223,17 +223,15 @@ void CPreGame::UpdateClientNet()
 				}		
 				break;
 			}
-			case NETMSG_GAMEDATA: { // server first ( not if we're joining midgame as extra players) sends this to let us know about teams, allyteams etc.
-				GameDataReceived(packet);
-				break;
-			}
-			case NETMSG_CREATE_NEWPLAYER: { // server sends this to let us know about clients not in script.txt, especially if it's ourself!, we'd crash if we'd not get it here
+			case NETMSG_CREATE_NEWPLAYER: { // server will send this first if we're using midgame join feature, to let us know about ourself (we won't be in gamedata), otherwise skip to gamedata
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
 					unsigned char spectator, team, playerNum;
 					std::string name;
+					// since the >> operator uses dest size to extract data from the packet, we need to use temp variables
+					// of the same size of the packet, then convert to dest variable
 					pckt >> playerNum;
-					pckt >> spectator; // needed because spectator flat in player class has diff size
+					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
 					CPlayer player;
@@ -241,13 +239,17 @@ void CPreGame::UpdateClientNet()
 					player.spectator = spectator;
 					player.team = team;
 					player.playerNum = playerNum;
-					// add the new player
+					// add ourself, to avoid crashing if our player num gets queried
+					// we'll receive the same message later, in the game class, which is the global broadcast version
+					// the global broadcast will overwrite the user with the same values as here
 					playerHandler->AddPlayer(player);
-					logOutput.Print("Added new player: %s", name.c_str());
-					// TODO: create new teams if necessary to let the player play, will need lua hooks to the mod
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
 				}
+				break;
+			}
+			case NETMSG_GAMEDATA: { // server first ( not if we're joining midgame as extra players ) sends this to let us know about teams, allyteams etc.
+				GameDataReceived(packet);
 				break;
 			}
 			case NETMSG_SETPLAYERNUM: { // this is sent afterwards to let us know which playernum we have
