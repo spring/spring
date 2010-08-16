@@ -399,7 +399,7 @@ std::vector<std::string> FileSystem::FindDirsInDirectSubDirs(
 	static const std::string pattern = "*";
 
 	// list of all occurences of the relative path in the data directories
-	std::vector<std::string> rootDirs = LocateDirs(relPath);
+	const std::vector<std::string> &rootDirs = LocateDirs(relPath);
 
 	// list of subdirs in all occurences of the relative path in the data directories
 	std::vector<std::string> mainDirs;

@@ -210,7 +210,7 @@ bool CCommandColors::LoadConfig(const string& filename)
 			break;
 		}
 
-		vector<string> words = parser.Tokenize(line, 1);
+		const vector<string> &words = parser.Tokenize(line, 1);
 
 		const string command = StringToLower(words[0]);
 

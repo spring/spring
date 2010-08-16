@@ -300,7 +300,7 @@ void CMiniMap::SetSlaveMode(bool newMode)
 
 void CMiniMap::ConfigCommand(const std::string& line)
 {
-	const vector<string> words = CSimpleParser::Tokenize(line, 1);
+	const vector<string> &words = CSimpleParser::Tokenize(line, 1);
 	if (words.empty()) {
 		return;
 	}
