@@ -4588,6 +4588,32 @@ void CGame::ClientReadNet()
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
+			case NETMSG_CREATE_NEWPLAYER: { // server sends this second to let us know about new clients that join midgame
+				try {
+					netcode::UnpackPacket pckt(packet, 3);
+					unsigned char spectator, team, playerNum;
+					std::string name;
+					// since the >> operator uses dest size to extract data from the packet, we need to use temp variables
+					// of the same size of the packet, then convert to dest variable
+					pckt >> playerNum;
+					pckt >> spectator;
+					pckt >> team;
+					pckt >> name;
+					CPlayer player;
+					player.name = name;
+					player.spectator = spectator;
+					player.team = team;
+					player.playerNum = playerNum;
+					// add the new player
+					playerHandler->AddPlayer(player);
+					logOutput.Print("Added new player: %s", name.c_str());
+					//TODO: perhaps add a lua hook, hook should be able to reassign the player to a team and/or create a new team/allyteam
+					AddTraffic(-1, packetCode, dataLength);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
+				}
+				break;
+			}
 			default: {
 #ifdef SYNCDEBUG
 				if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))

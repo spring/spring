@@ -2086,10 +2086,12 @@ void CGameServer::AddAdditionalUser( const std::string& name, const std::string&
 	buf.name = name;
 	buf.spectator = true;
 	buf.team = 0;
+	buf.isMidgameJoin = true;
 	if (passwd.size() > 0) {
 		buf.SetValue("password",passwd);
 	}
 	players.push_back(buf);
+	Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( players.size() -1, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
 }
 
 
@@ -2173,6 +2175,10 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		UpdateSpeedControl(speedControl);
 		if(hostif)
 			hostif->SendPlayerLeft(newPlayerNumber, 0);
+	}
+
+	if (newPlayer.isMidgameJoin) {
+		link->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer( newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name )); // inform the player about himself if it's a midgame join
 	}
 
 	newPlayer.isReconn = GameHasStarted();

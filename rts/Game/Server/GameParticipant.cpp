@@ -12,6 +12,7 @@ GameParticipant::GameParticipant()
 , luaDrawTime(0)
 , isLocal(false)
 , isReconn(false)
+, isMidgameJoin(false)
 {
 }
 
