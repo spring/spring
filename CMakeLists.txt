@@ -193,8 +193,12 @@ if     (MINGW)
 	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
 endif  (MINGW)
 
+
 ### Where the other CMakeLists.txt are
-Add_Subdirectory(rts)
+
+# As the libs qre required by all the other sub-projects, we add them first
+Add_Subdirectory(rts/lib)
+
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 	Add_Subdirectory(AI)
 endif (NOT "${AI_TYPES}" STREQUAL "NONE")
@@ -214,4 +218,7 @@ Add_Subdirectory(doc)
 ### - Install freedesktop stuff
 ### - Install mingw DLLs
 Add_Subdirectory(cont)
+
+# As rts/builds/* depends on most other stuff, we add this one as last
+Add_Subdirectory(rts)
 
