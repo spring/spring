@@ -1856,7 +1856,7 @@ void CGameServer::PushAction(const Action& action)
 					participantIter->SetValue("password", password);
 					logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				} else {
-					AddAdditionalUser(name, password);
+					(name, password);
 					logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				}
 			} else {
@@ -2092,7 +2092,8 @@ void CGameServer::AddAdditionalUser( const std::string& name, const std::string&
 		buf.SetValue("password",passwd);
 	}
 	players.push_back(buf);
-	Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( players.size() -1, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
+	unsigned int playerNum = players.size() -1;
+	Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( playerNum, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
 }
 
 

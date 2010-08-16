@@ -4621,6 +4621,7 @@ void CGame::ClientReadNet()
 					player.playerNum = playerNum;
 					// add the new player
 					playerHandler->AddPlayer(player);
+					logOutput.Print("Added new player: %s", name.c_str());
 					// TODO: create new teams if necessary to let the player play, will need lua hooks to the mod
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (netcode::UnpackPacketException &e) {
