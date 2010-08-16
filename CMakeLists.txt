@@ -193,10 +193,13 @@ if     (MINGW)
 	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
 endif  (MINGW)
 
+IF (MINGW)
+	FIND_PACKAGE(Win32Libs REQUIRED)
+ENDIF (MINGW)
 
 ### Where the other CMakeLists.txt are
 
-# As the libs qre required by all the other sub-projects, we add them first
+# As the libs are required by all the other sub-projects, we add them first
 Add_Subdirectory(rts/lib)
 
 if    (NOT "${AI_TYPES}" STREQUAL "NONE")

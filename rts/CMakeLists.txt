@@ -48,7 +48,6 @@ LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
-	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
 ENDIF (MINGW)
 
