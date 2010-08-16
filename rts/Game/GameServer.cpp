@@ -1856,7 +1856,7 @@ void CGameServer::PushAction(const Action& action)
 					participantIter->SetValue("password", password);
 					logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				} else {
-					(name, password);
+					AddAdditionalUser(name, password);
 					logOutput.Print("Added player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				}
 			} else {
@@ -2088,12 +2088,12 @@ void CGameServer::AddAdditionalUser( const std::string& name, const std::string&
 	buf.name = name;
 	buf.spectator = true;
 	buf.team = 0;
+	buf.isMidgameJoin = true;
 	if (passwd.size() > 0) {
 		buf.SetValue("password",passwd);
 	}
 	players.push_back(buf);
-	unsigned int playerNum = players.size() -1;
-	Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( playerNum, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
+	Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( players.size() -1, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
 }
 
 
@@ -2177,6 +2177,10 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		UpdateSpeedControl(speedControl);
 		if(hostif)
 			hostif->SendPlayerLeft(newPlayerNumber, 0);
+	}
+
+	if (newPlayer.isMidgameJoin) {
+		link->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer( newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name )); // inform the player about himself if it's a midgame join
 	}
 
 	newPlayer.isReconn = GameHasStarted();
