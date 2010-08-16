@@ -300,7 +300,7 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 {
 	if (!camera->InView(feature->pos, feature->radius * 4.0f)) { return false; }
-	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam)) { return false; }
+	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
