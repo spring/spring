@@ -779,17 +779,17 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		// weapon-projectile
 		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
 
-		#define SET_TRANSFORM_VECTORS()              \
+		#define SET_TRANSFORM_VECTORS(dir)           \
 			float3 rightdir, updir;                  \
                                                      \
-			if (fabs(wp->dir.y) < 0.95f) {           \
-				rightdir = wp->dir.cross(UpVector);  \
+			if (fabs(dir.y) < 0.95f) {           \
+				rightdir = dir.cross(UpVector);  \
 				rightdir.SafeANormalize();           \
 			} else {                                 \
 				rightdir = float3(1.0f, 0.0f, 0.0f); \
 			}                                        \
                                                      \
-			updir = rightdir.cross(wp->dir);
+			updir = rightdir.cross(dir);
 
 		#define TRANSFORM_DRAW(mat)                          \
 			glPushMatrix();                                  \
@@ -798,12 +798,29 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			glPopMatrix();
 
 		switch (wp->GetProjectileType()) {
+			case CWeaponProjectile::WEAPON_BASE_PROJECTILE:
+			case CWeaponProjectile::WEAPON_EXPLOSIVE_PROJECTILE: 
+			case CWeaponProjectile::WEAPON_LASER_PROJECTILE:
+			case CWeaponProjectile::WEAPON_TORPEDO_PROJECTILE: {			
+				if (!shadowPass) {
+					unitDrawer->SetTeamColour(wp->colorTeam);
+				}
+
+				float3 dir(wp->speed);
+				dir.SafeANormalize();
+				SET_TRANSFORM_VECTORS(dir);
+
+				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, dir);
+
+				TRANSFORM_DRAW(transMatrix);
+			} break;
+
 			case CWeaponProjectile::WEAPON_MISSILE_PROJECTILE: {
 				if (!shadowPass) {
 					unitDrawer->SetTeamColour(wp->colorTeam);
 				}
 
-				SET_TRANSFORM_VECTORS();
+				SET_TRANSFORM_VECTORS(wp->dir);
 
 				CMatrix44f transMatrix(wp->drawPos + wp->dir * wp->radius * 0.9f, -rightdir, updir, wp->dir);
 
@@ -815,24 +832,13 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 					unitDrawer->SetTeamColour(wp->colorTeam);
 				}
 
-				SET_TRANSFORM_VECTORS();
+				SET_TRANSFORM_VECTORS(wp->dir);
 
 				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
 
 				TRANSFORM_DRAW(transMatrix);
 			} break;
 
-			case CWeaponProjectile::WEAPON_BASE_PROJECTILE: {
-				if (!shadowPass) {
-					unitDrawer->SetTeamColour(wp->colorTeam);
-				}
-
-				SET_TRANSFORM_VECTORS();
-
-				CMatrix44f transMatrix(wp->drawPos, -rightdir, updir, wp->dir);
-
-				TRANSFORM_DRAW(transMatrix);
-			} break;
 			default: {
 			} break;
 		}
