@@ -84,6 +84,7 @@ public:
 	float health;
 	float reclaimLeft;
 
+	bool luaDraw;
 	bool noSelect;
 
 	int tempNum;

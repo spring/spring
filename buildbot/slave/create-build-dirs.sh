@@ -18,3 +18,6 @@ echo "configuring ${DIR} with $@ ..."
 
 cd ${DIR}
 cmake .. $@
+
+echo "erasing old base content..."
+rm -r base

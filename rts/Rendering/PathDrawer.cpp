@@ -14,6 +14,7 @@
 #include "Sim/Path/PathManager.h"
 #undef private
 
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/PathDrawer.h"
@@ -143,8 +144,12 @@ void PathDrawer::Draw(const CPathEstimator* pe) const {
 		return;
 	}
 
-	if (!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata) {
-		md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+	if (!selectedUnits.selectedUnits.empty()) {
+		const CUnit* unit = (*selectedUnits.selectedUnits.begin());
+
+		if (unit->unitDef->movedata) {
+			md = unit->unitDef->movedata;
+		}
 	}
 
 	glDisable(GL_TEXTURE_2D);

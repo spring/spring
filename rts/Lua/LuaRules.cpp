@@ -41,15 +41,10 @@
 
 CLuaRules* luaRules = NULL;
 
-string CLuaRules::configString;
-
 static const char* LuaRulesSyncedFilename   = "LuaRules/main.lua";
 static const char* LuaRulesUnsyncedFilename = "LuaRules/draw.lua";
 
 const int* CLuaRules::currentCobArgs = NULL;
-
-LuaRulesParams::Params  CLuaRules::gameParams;
-LuaRulesParams::HashMap CLuaRules::gameParamsMap;
 
 
 /******************************************************************************/
@@ -75,17 +70,11 @@ void CLuaRules::FreeHandler()
 }
 
 
-void CLuaRules::SetConfigString(const string& cfg)
-{
-	configString = cfg;
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
 
 CLuaRules::CLuaRules()
-: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES, ".luarules ")
+: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
 	luaRules = this;
 
@@ -120,11 +109,13 @@ CLuaRules::CLuaRules()
 	haveMoveCtrlNotify         = HasCallIn("MoveCtrlNotify");
 	haveTerraformComplete      = HasCallIn("TerraformComplete");
 	haveDrawUnit               = HasCallIn("DrawUnit");
+	haveDrawFeature            = HasCallIn("DrawFeature");
 	haveAICallIn               = HasCallIn("AICallIn");
 	haveUnitPreDamaged         = HasCallIn("UnitPreDamaged");
 	haveShieldPreDamaged       = HasCallIn("ShieldPreDamaged");
 
 	SetupUnsyncedFunction("DrawUnit");
+	SetupUnsyncedFunction("DrawFeature");
 	SetupUnsyncedFunction("AICallIn");
 }
 
@@ -149,18 +140,7 @@ CLuaRules::~CLuaRules()
 bool CLuaRules::AddSyncedCode()
 {
 	lua_getglobal(L, "Script");
-	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
 	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
-	lua_pop(L, 1);
-
-	lua_getglobal(L, "Spring");
-	LuaPushNamedCFunc(L, "SetRulesInfoMap",       SetRulesInfoMap);
-	LuaPushNamedCFunc(L, "SetUnitRulesParam",     SetUnitRulesParam);
-	LuaPushNamedCFunc(L, "SetTeamRulesParam",     SetTeamRulesParam);
-	LuaPushNamedCFunc(L, "SetGameRulesParam",     SetGameRulesParam);
-	LuaPushNamedCFunc(L, "CreateUnitRulesParams", CreateUnitRulesParams);
-	LuaPushNamedCFunc(L, "CreateTeamRulesParams", CreateTeamRulesParams);
-	LuaPushNamedCFunc(L, "CreateGameRulesParams", CreateGameRulesParams);
 	lua_pop(L, 1);
 
 	return true;
@@ -171,11 +151,6 @@ bool CLuaRules::AddUnsyncedCode()
 {
 	lua_pushstring(L, "UNSYNCED");
 	lua_gettable(L, LUA_REGISTRYINDEX);
-
-	lua_pushstring(L, "Script");
-	lua_rawget(L, -2);
-	LuaPushNamedCFunc(L, "GetConfigString", GetConfigString);
-	lua_pop(L, 1); // Script
 
 	lua_pushstring(L, "Spring");
 	lua_rawget(L, -2);
@@ -188,20 +163,6 @@ bool CLuaRules::AddUnsyncedCode()
 	lua_pop(L, 1); // UNSYNCED
 
 	return true;
-}
-
-
-/******************************************************************************/
-
-const LuaRulesParams::Params& CLuaRules::GetGameParams()
-{
-	return gameParams;
-}
-
-
-const LuaRulesParams::HashMap& CLuaRules::GetGameParamsMap()
-{
-	return gameParamsMap;
 }
 
 
@@ -248,12 +209,10 @@ bool CLuaRules::SyncedUpdateCallIn(const string& name)
 
 bool CLuaRules::UnsyncedUpdateCallIn(const string& name)
 {
-	if (name == "DrawUnit") {
-		haveDrawUnit = HasCallIn("DrawUnit");
-	}
-	else if (name == "AICallIn") {
-		haveAICallIn = HasCallIn("AICallIn");
-	}
+	     if (name == "DrawUnit"   ) { haveDrawUnit    = HasCallIn("DrawUnit"   ); }
+	else if (name == "DrawFeature") { haveDrawFeature = HasCallIn("DrawFeature"); }
+	else if (name == "AICallIn"   ) { haveAICallIn    = HasCallIn("AICallIn"   ); }
+
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(name);
 }
 
@@ -951,6 +910,45 @@ bool CLuaRules::DrawUnit(int unitID)
 	return retval;
 }
 
+bool CLuaRules::DrawFeature(int featureID)
+{
+	if (!haveDrawFeature) {
+		return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	static const LuaHashString cmdStr("DrawFeature");
+	if (!cmdStr.GetRegistryFunc(L)) {
+		return false;
+	}
+
+	const bool oldGLState = LuaOpenGL::IsDrawingEnabled();
+	LuaOpenGL::SetDrawingEnabled(true);
+
+	lua_pushnumber(L, featureID);
+	lua_pushnumber(L, game->GetDrawMode());
+
+	const bool success = RunCallIn(cmdStr, 2, 1);
+
+	LuaOpenGL::SetDrawingEnabled(oldGLState);
+
+	if (!success) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
 
 const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
 {
@@ -1029,7 +1027,7 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 
 	const int top = lua_gettop(L);
 
-	if (!lua_checkstack(L, top + 1 + 3 + argsCount)) {
+	if (!lua_checkstack(L, 1 + 3 + argsCount)) {
 		logOutput.Print("CLuaRules::Cob2Lua() lua_checkstack() error: %s\n",
 		                name.GetString().c_str());
 		args[0] = 0; // failure
@@ -1108,15 +1106,6 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 // LuaRules Call-Outs
 //
 
-int CLuaRules::GetConfigString(lua_State* L)
-{
-	lua_pushlstring(L, configString.c_str(), configString.size());
-	return 1;
-}
-
-
-/******************************************************************************/
-
 int CLuaRules::PermitHelperAIs(lua_State* L)
 {
 	if (!lua_isboolean(L, 1)) {
@@ -1130,273 +1119,6 @@ int CLuaRules::PermitHelperAIs(lua_State* L)
 	}
 	return 0;
 }
-
-
-/******************************************************************************/
-
-int CLuaRules::SetRulesInfoMap(lua_State* L)
-{
-	assert(luaRules != NULL);
-	if (!lua_istable(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetRulesInfoMap(teamID)");
-	}
-	map<string, string>& infoMap = luaRules->infoMap;
-	infoMap.clear();
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2) && lua_isstring(L, -1)) {
-			const string key = lua_tostring(L, -2);
-			const string value = lua_tostring(L, -1);
-			infoMap[key] = value;
-		}
-	}
-	lua_pushnumber(L, infoMap.size());
-	return 2;
-}
-
-
-/******************************************************************************/
-
-void CLuaRules::SetRulesParam(lua_State* L, const char* caller, int offset,
-				LuaRulesParams::Params& params,
-				LuaRulesParams::HashMap& paramsMap)
-{
-	const int index = offset + 1;
-	const int valIndex = offset + 2;
-	const int losIndex = offset + 3;
-	int pIndex = -1;
-
-	if (lua_israwnumber(L, index)) {
-		pIndex = lua_toint(L, index) - 1;
-	}
-	else if (lua_israwstring(L, index)) {
-		const string pName = lua_tostring(L, index);
-		map<string, int>::const_iterator it = paramsMap.find(pName);
-		if (it != paramsMap.end()) {
-			pIndex = it->second;
-		}
-		else {
-			// create a new parameter
-			pIndex = params.size();
-			paramsMap[pName] = pIndex;
-			params.push_back(LuaRulesParams::Param());
-		}
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	if ((pIndex < 0)
-		|| (pIndex >= (int)params.size())
-		|| !lua_isnumber(L, valIndex)
-	) {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	LuaRulesParams::Param& param = params[pIndex];
-
-	//! set the value of the parameter
-	param.value = lua_tofloat(L, valIndex);
-
-	//! set the los checking of the parameter
-	if (lua_istable(L, losIndex)) {
-		const int& table = losIndex;
-		int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE;
-
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			//! ignore if the value is false
-			if (lua_isboolean(L, -1) && !lua_toboolean(L, -1)) {
-				continue;
-			}
-
-			//! read the losType from the key
-			if (lua_isstring(L, -2)) {
-				const string losType = lua_tostring(L, -2);
-
-				if (losType == "public") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_PUBLIC;
-				}
-				else if (losType == "inlos") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_INLOS;
-				}
-				else if (losType == "inradar") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR;
-				}
-				else if (losType == "allied") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED;
-				}
-				/*else if (losType == "private") {
-					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE;
-				}*/
-			}
-		}
-
-		param.los = losMask;
-	} else {
-		param.los = luaL_optint(L, losIndex, param.los);
-	}
-
-	return;
-}
-
-
-void CLuaRules::CreateRulesParams(lua_State* L, const char* caller, int offset,
-					LuaRulesParams::Params& params,
-					LuaRulesParams::HashMap& paramsMap)
-{
-	const int table = offset + 1;
-	if (!lua_istable(L, table)) {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	params.clear();
-	paramsMap.clear();
-
-	for (int i = 1; /* no test */; i++) {
-		lua_rawgeti(L, table, i);
-		if (lua_isnil(L, -1)) {
-			lua_pop(L, 1);
-			return;
-		}
-		else if (lua_israwnumber(L, -1)) {
-			params.push_back(LuaRulesParams::Param());
-			params.back().value = lua_tofloat(L, -1);
-		}
-		else if (lua_istable(L, -1)) {
-			lua_pushnil(L);
-			if (lua_next(L, -2)) {
-				if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-					const string name = lua_tostring(L, -2);
-					const float value = lua_tonumber(L, -1);
-					paramsMap[name] = params.size();
-					params.push_back(LuaRulesParams::Param());
-					params.back().value = value;
-				}
-				lua_pop(L, 2);
-			}
-		}
-		lua_pop(L, 1);
-	}
-
-	return;
-}
-
-
-/******************************************************************************/
-
-int CLuaRules::SetGameRulesParam(lua_State* L)
-{
-	CLuaRules* lr = (CLuaRules*)activeHandle;
-	SetRulesParam(L, __FUNCTION__, 0, lr->gameParams, lr->gameParamsMap);
-	return 0;
-}
-
-
-int CLuaRules::CreateGameRulesParams(lua_State* L)
-{
-	CLuaRules* lr = (CLuaRules*)activeHandle;
-	CreateRulesParams(L, __FUNCTION__, 0, lr->gameParams, lr->gameParamsMap);
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad teamID type\n", caller);
-	}
-	const int teamID = lua_toint(L, index);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
-		luaL_error(L, "%s(): Bad teamID: %i\n", teamID);
-	}
-	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
-		return NULL;
-	}
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
-	const int ctrlTeam = lh->GetCtrlTeam();
-	if (ctrlTeam < 0) {
-		return lh->GetFullCtrl() ? team : NULL;
-	}
-	if (ctrlTeam != teamID) {
-		luaL_error(L, "%s(): No permission to control team %i\n", caller, teamID);
-	}
-	return team;
-}
-
-
-int CLuaRules::SetTeamRulesParam(lua_State* L)
-{
-	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
-		return 0;
-	}
-	SetRulesParam(L, __FUNCTION__, 1, team->modParams, team->modParamsMap);
-	return 0;
-}
-
-
-int CLuaRules::CreateTeamRulesParams(lua_State* L)
-{
-	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
-		return 0;
-	}
-	CreateRulesParams(L, __FUNCTION__, 1, team->modParams, team->modParamsMap);
-	return 0;
-}
-
-
-/******************************************************************************/
-
-static CUnit* ParseUnit(lua_State* L, const char* caller, int luaIndex)
-{
-	if (!lua_isnumber(L, luaIndex)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
-	}
-	const int unitID = lua_toint(L, luaIndex);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
-	}
-	CUnit* unit = uh->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
-	const int ctrlTeam = lh->GetCtrlTeam();
-	if (ctrlTeam < 0) {
-		return lh->GetFullCtrl() ? unit : NULL;
-	}
-	if (ctrlTeam != unit->team) {
-		luaL_error(L, "%s(): No permission to control unit %i\n", caller, unitID);
-	}
-	return unit;
-}
-
-
-int CLuaRules::SetUnitRulesParam(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	SetRulesParam(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
-	return 0;
-}
-
-
-int CLuaRules::CreateUnitRulesParams(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	CreateRulesParams(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
-	return 0;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/

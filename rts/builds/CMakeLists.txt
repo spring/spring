@@ -7,14 +7,14 @@
 
 # Only install the given engine target executable & dependencies
 # example:
-# 	CreateEngineBuildInstallTarget(spring-hl)
+# 	CreateEngineBuildInstallTarget(spring-headless)
 # ->
-# 	make install-spring-hl
+# 	make install-spring-headless
 macro    (CreateEngineBuildInstallTarget targetName)
 	# relative source path, eg: "rts/builds/default"
 	file(RELATIVE_PATH relSrcDirPath ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
-	# Only install spring-hl executable & dependencies
+	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs
 			"${relSrcDirPath}"
 			"tools/unitsync"

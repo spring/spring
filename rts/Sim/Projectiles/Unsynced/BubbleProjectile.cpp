@@ -12,7 +12,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0,0,NULL,0));
+CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (ZeroVector, ZeroVector, 0, 0, 0, NULL, 0));
 
 CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER(ttl),
@@ -46,8 +46,9 @@ void CBubbleProjectile::Update()
 	pos+=speed;
 	--ttl;
 	size+=sizeExpansion;
-	if (size < startSize)
+	if (size < startSize) {
 		size += (startSize - size) * 0.2f;
+	}
 	drawRadius=size;
 
 	if (pos.y>-size * 0.7f) {

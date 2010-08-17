@@ -8,37 +8,38 @@
 #include <StdAfx.h>
 #include "errorhandler.h"
 
-#include "Game/GameServer.h"
-#ifndef DEDICATED
-#include "Sound/ISound.h"
-#endif
-
-#include <SDL.h>
-
-#if       !defined(DEDICATED) && !defined(HEADLESS)
-#if       defined(WIN32)
-#include <windows.h>
-#endif // defined(WIN32)
-
-// from X_MessageBox.cpp:
-void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
-#else  // !defined(DEDICATED) && !defined(HEADLESS)
 #include "LogOutput.h"
-#endif // !defined(DEDICATED) && !defined(HEADLESS)
+#include "Game/GameServer.h"
 
-void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
+#ifndef DEDICATED
+	#include "Sound/ISound.h"
+	#include <SDL.h>
+
+  #ifndef HEADLESS
+    #ifdef WIN32
+	#include <windows.h>
+    #else
+	// from X_MessageBox.cpp:
+	void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
+    #endif
+  #endif // ifndef HEADLESS
+#endif // ifndef DEDICATED
+
+
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
-	// Platform independent cleanup.
-	SDL_Quit();
+	logOutput.SetSubscribersEnabled(false);
+	LogObject() << caption << " " << msg;
+
 	// not exiting threads causes another exception
 	delete gameServer; gameServer = NULL;
 #ifndef DEDICATED
+	SDL_Quit();
 	ISound::Shutdown();
 #endif
 
-
-#if       !defined(DEDICATED) && !defined(HEADLESS)
-#if       defined(WIN32)
+#if !defined(DEDICATED) && !defined(HEADLESS)
+  #ifdef WIN32
 	// Windows implementation, using MessageBox.
 
 	// Translate spring flags to corresponding win32 dialog flags
@@ -49,16 +50,15 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 	if (flags & MBF_INFO)
 		winFlags |= MB_ICONINFORMATION;
 
-	MessageBox (GetActiveWindow(), msg, caption, winFlags);
-#else  // defined(WIN32)
-	// X implementation
-// TODO: write Mac OS X specific message box
+	MessageBox(GetActiveWindow(), msg.c_str(), caption.c_str(), winFlags);
 
-	X_MessageBox(msg, caption, flags);
-#endif // defined(WIN32)
-#else  // !defined(DEDICATED) && !defined(HEADLESS)
-	LogObject() << msg;
-#endif // !defined(DEDICATED) && !defined(HEADLESS)
+  #else  // ifdef WIN32
+	// X implementation
+	// TODO: write Mac OS X specific message box
+	X_MessageBox(msg.c_str(), caption.c_str(), flags);
+
+  #endif // ifdef WIN32
+#endif // if !defined(DEDICATED) && !defined(HEADLESS)
 
 	exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash
 }

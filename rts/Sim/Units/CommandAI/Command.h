@@ -99,9 +99,29 @@ private:
 
 public:
 	Command():
+		id(0),
 		options(0),
 		tag(0),
 		timeOut(INT_MAX) {}
+
+	bool IsAreaCommand() const {
+		if (id == CMD_REPAIR ||
+			id == CMD_RECLAIM ||
+			id == CMD_CAPTURE ||
+			id == CMD_RESURRECT ||
+			id == CMD_LOAD_UNITS) {
+			// params[0..2] always holds the position, params[3] the radius
+			return (params.size() == 4);
+		}
+		if (id == CMD_UNLOAD_UNITS) {
+			return (params.size() == 5);
+		}
+		if (id == CMD_AREA_ATTACK) {
+			return true;
+		}
+
+		return false;
+	}
 
 	/// CMD_xxx code  (custom codes can also be used)
 	int id;
@@ -136,6 +156,8 @@ private:
 
 public:
 	CommandDescription():
+		id(0),
+		type(CMDTYPE_ICON),
 		hidden(false),
 		disabled(false),
 		showUnique(false),

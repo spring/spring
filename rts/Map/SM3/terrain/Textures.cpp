@@ -14,7 +14,9 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "FileSystem/FileSystem.h"
 #include "float3.h"
-
+#if       defined(TERRAIN_USE_IL)
+#include <IL/il.h>
+#endif // defined(TERRAIN_USE_IL)
 
 namespace terrain {
 
@@ -336,23 +338,26 @@ namespace terrain {
 		return tex;
 	}
 
-	void SaveImage(const char *fn, int components, GLenum type, int w,int h, void *data)
+	void SaveImage(const char* fn, int components, GLenum type, int w, int h, void* data)
 	{
 		// We use the fact that DevIL has the same constants for component type as OpenGL
 		/// ( GL_UNSIGNED_BYTE = IL_UNSIGNED_BYTE for example )
-#ifdef TERRAIN_USE_IL
+#if       defined(TERRAIN_USE_IL)
 		// Save image
 		ILuint out;
-		ilGenImages(1,&out);
+		ilGenImages(1, &out);
 		ilBindImage(out);
-		ILenum fmt=IL_RGB;
-		if (components==4) fmt = IL_RGBA;
-		if (components==1) fmt = IL_LUMINANCE;
-		ilTexImage(w,h,1,components,fmt,type,data);
+		ILenum fmt = IL_RGB;
+		if (components == 4) {
+			fmt = IL_RGBA;
+		} else if (components == 1) {
+			fmt = IL_LUMINANCE;
+		}
+		ilTexImage(w, h, 1, components, fmt, type, data);
 		filesystem.Remove(fn);
-		ilSaveImage((ILstring)fn);
-		ilDeleteImages(1,&out);
-#endif
+		ilSaveImage((ILstring) fn);
+		ilDeleteImages(1, &out);
+#endif // defined(TERRAIN_USE_IL)
 	}
 
 };

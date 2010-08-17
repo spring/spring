@@ -9,61 +9,59 @@
 #include "ALShared.h"
 #include "VorbisShared.h"
 
-namespace
-{
-// 512KB buffer
-const int BUFFER_SIZE = (4096 * 128);
-
-size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
-{
-	CFileHandler* buffer = (CFileHandler*)datasource;
-	return buffer->Read(ptr, size * nmemb);
-}
-
-int	VorbisStreamClose(void* datasource)
-{
-	CFileHandler* buffer = (CFileHandler*)datasource;
-	delete buffer;
-	return 0;
-}
-
-int VorbisStreamSeek(void* datasource, ogg_int64_t offset, int whence)
-{
-	CFileHandler* buffer = (CFileHandler*)datasource;
-	if (whence == SEEK_SET)
+namespace VorbisCallbacks {
+	size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
 	{
-		buffer->Seek(offset, std::ios_base::beg);
-	}
-	else if (whence == SEEK_CUR)
-	{
-		buffer->Seek(offset, std::ios_base::cur);
-	}
-	else if (whence == SEEK_END)
-	{
-		buffer->Seek(offset, std::ios_base::end);
+		CFileHandler* buffer = (CFileHandler*)datasource;
+		return buffer->Read(ptr, size * nmemb);
 	}
 
-	return 0;
+	int VorbisStreamClose(void* datasource)
+	{
+		CFileHandler* buffer = (CFileHandler*)datasource;
+		delete buffer;
+		return 0;
+	}
+
+	int VorbisStreamSeek(void* datasource, ogg_int64_t offset, int whence)
+	{
+		CFileHandler* buffer = (CFileHandler*)datasource;
+		if (whence == SEEK_SET)
+		{
+			buffer->Seek(offset, std::ios_base::beg);
+		}
+		else if (whence == SEEK_CUR)
+		{
+			buffer->Seek(offset, std::ios_base::cur);
+		}
+		else if (whence == SEEK_END)
+		{
+			buffer->Seek(offset, std::ios_base::end);
+		}
+
+		return 0;
+	}
+
+	long VorbisStreamTell(void* datasource)
+	{
+		CFileHandler* buffer = (CFileHandler*)datasource;
+		return buffer->GetPos();
+	}
+
 }
 
-long VorbisStreamTell(void* datasource)
-{
-	CFileHandler* buffer = (CFileHandler*)datasource;
-	return buffer->GetPos();
-}
 
-}
 
-COggStream::COggStream(ALuint source)
+COggStream::COggStream(ALuint _source)
 	: vorbisInfo(NULL)
-	, source(source)
+	, source(_source)
 	, format(AL_FORMAT_MONO16)
 	, stopped(true)
 	, paused(false)
 	, msecsPlayed(0)
 	, lastTick(0)
 {
-	for (size_t i = 0; i < sizeof(buffers); ++i) {
+	for (unsigned i = 0; i < NUM_BUFFERS; ++i) {
 		buffers[i] = 0;
 	}
 }
@@ -87,10 +85,10 @@ void COggStream::Play(const std::string& path, float volume)
 	int result = 0;
 
 	ov_callbacks vorbisCallbacks;
-	vorbisCallbacks.read_func  = VorbisStreamRead;
-	vorbisCallbacks.close_func = VorbisStreamClose;
-	vorbisCallbacks.seek_func  = VorbisStreamSeek;
-	vorbisCallbacks.tell_func  = VorbisStreamTell;
+		vorbisCallbacks.read_func  = VorbisCallbacks::VorbisStreamRead;
+		vorbisCallbacks.close_func = VorbisCallbacks::VorbisStreamClose;
+		vorbisCallbacks.seek_func  = VorbisCallbacks::VorbisStreamSeek;
+		vorbisCallbacks.tell_func  = VorbisCallbacks::VorbisStreamTell;
 
 	CFileHandler* buf = new CFileHandler(path);
 	if ((result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0) {
@@ -98,17 +96,19 @@ void COggStream::Play(const std::string& path, float volume)
 		return;
 	}
 
+
 	vorbisInfo = ov_info(&oggStream, -1);
 	{
 		vorbis_comment* vorbisComment;
 		vorbisComment = ov_comment(&oggStream, -1);
 		vorbisTags.resize(vorbisComment->comments);
-		for (unsigned i = 0; i < vorbisComment->comments; ++i)
-		{
+
+		for (unsigned i = 0; i < vorbisComment->comments; ++i) {
 			vorbisTags[i] = std::string(vorbisComment->user_comments[i], vorbisComment->comment_lengths[i]);
 		}
+
 		vendor = std::string(vorbisComment->vendor);
-		//DisplayInfo();
+		// DisplayInfo();
 	}
 
 	if (vorbisInfo->channels == 1) {
@@ -125,19 +125,18 @@ void COggStream::Play(const std::string& path, float volume)
 		stopped = false;
 		paused = false;
 	}
+
 	CheckError("COggStream");
 }
 
-float COggStream::GetPlayTime()
+float COggStream::GetPlayTime() const
 {
-	float time = float(msecsPlayed)/1000.0f;
-	return time;
+	return (msecsPlayed / 1000.0f);
 }
 
 float COggStream::GetTotalTime()
 {
-	double time = ov_time_total(&oggStream,-1);
-	return time;
+	return ov_time_total(&oggStream, -1);
 }
 
 const COggStream::TagVector& COggStream::VorbisTags() const
@@ -177,7 +176,8 @@ void COggStream::ReleaseBuffers()
 
 	EmptyBuffers();
 
-	alDeleteBuffers(2, buffers); CheckError("COggStream");
+	alDeleteBuffers(2, buffers);
+	CheckError("COggStream");
 
 	ov_clear(&oggStream);
 }
@@ -190,11 +190,8 @@ bool COggStream::StartPlaying()
 	msecsPlayed = 0;
 	lastTick = SDL_GetTicks();
 
-	if (!DecodeStream(buffers[0]))
-		return false;
-
-	if (!DecodeStream(buffers[1]))
-		return false;
+	if (!DecodeStream(buffers[0])) { return false; }
+	if (!DecodeStream(buffers[1])) { return false; }
 
 	alSourceQueueBuffers(source, 2, buffers); CheckError("COggStream");
 	alSourcePlay(source); CheckError("COggStream");
@@ -215,12 +212,14 @@ bool COggStream::IsPlaying()
 // stops the currently playing stream
 void COggStream::Stop()
 {
-	if (!stopped) {
-		ReleaseBuffers();
-		msecsPlayed = 0;
-		vorbisInfo = NULL;
-		lastTick = SDL_GetTicks();
+	if (stopped) {
+		return;
 	}
+
+	ReleaseBuffers();
+	msecsPlayed = 0;
+	vorbisInfo = NULL;
+	lastTick = SDL_GetTicks();
 }
 
 bool COggStream::TogglePause()
@@ -228,6 +227,7 @@ bool COggStream::TogglePause()
 	if (!stopped) {
 		paused = !paused;
 	}
+
 	return paused;
 }
 
@@ -236,12 +236,12 @@ bool COggStream::TogglePause()
 // refill them, and push them back in line
 bool COggStream::UpdateBuffers()
 {
-	int processed = 0;
+	int buffersProcessed = 0;
 	bool active = true;
 
-	alGetSourcei(source, AL_BUFFERS_PROCESSED, &processed);
+	alGetSourcei(source, AL_BUFFERS_PROCESSED, &buffersProcessed);
 
-	while (processed-- > 0) {
+	while (buffersProcessed-- > 0) {
 		ALuint buffer;
 		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream");
 
@@ -257,30 +257,33 @@ bool COggStream::UpdateBuffers()
 
 void COggStream::Update()
 {
-	if (!stopped)
-	{
-		unsigned tick = SDL_GetTicks();
-		if (!paused)
-		{
-			if (UpdateBuffers()) {
-				if (!IsPlaying()) {
-					// source state changed
-					if (!StartPlaying()) {
-						// stream stopped
-						ReleaseBuffers();
-					} else {
-						// stream interrupted
-						ReleaseBuffers();
-					}
-				}
-			} else if (!IsPlaying()) {
-				// EOS and all chunks processed by OpenALs
-				ReleaseBuffers();
-			}
-			msecsPlayed += (tick - lastTick);
-		}
-		lastTick = tick;
+	if (stopped) {
+		return;
 	}
+
+	unsigned tick = SDL_GetTicks();
+
+	if (!paused) {
+		if (UpdateBuffers()) {
+			if (!IsPlaying()) {
+				// source state changed
+				if (!StartPlaying()) {
+					// stream stopped
+					ReleaseBuffers();
+				} else {
+					// stream interrupted
+					ReleaseBuffers();
+				}
+			}
+		} else if (!IsPlaying()) {
+			// EOS and all chunks processed by OpenALs
+			ReleaseBuffers();
+		}
+
+		msecsPlayed += (tick - lastTick);
+	}
+
+	lastTick = tick;
 }
 
 
@@ -320,10 +323,10 @@ bool COggStream::DecodeStream(ALuint buffer)
 // dequeue any buffers pending on source
 void COggStream::EmptyBuffers()
 {
-	int queued = 0;
-	alGetSourcei(source, AL_BUFFERS_QUEUED, &queued); CheckError("COggStream");
+	int queuedBuffers = 0;
+	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers); CheckError("COggStream");
 
-	while (queued-- > 0) {
+	while (queuedBuffers-- > 0) {
 		ALuint buffer;
 		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream");
 	}

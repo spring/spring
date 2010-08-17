@@ -323,7 +323,6 @@ int (CALLING_CONV *Clb_0MULTI1FETCH3UnitDefByName0UnitDef)(int teamId,
 float (CALLING_CONV *Clb_UnitDef_getHeight)(int teamId, int unitDefId);
 /// Forces loading of the unit model
 float (CALLING_CONV *Clb_UnitDef_getRadius)(int teamId, int unitDefId);
-bool (CALLING_CONV *Clb_UnitDef_isValid)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getName)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getHumanName)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getFileName)(int teamId, int unitDefId);

@@ -807,6 +807,12 @@ float CglFont::GetTextWidth(const std::string& text) const
 
 float CglFont::GetTextHeight(const std::string& text, float* descender, int* numLines) const
 {
+	if (text.empty()) {
+		if (descender) *descender = 0.0f;
+		if (numLines) *numLines = 0;
+		return 0.0f;
+	}
+
 	float h = 0.0f, d = lineHeight + fontDescender;
 	unsigned int multiLine = 1;
 
@@ -855,6 +861,9 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 
 int CglFont::GetTextNumLines(const std::string& text) const
 {
+	if (text.empty())
+		return 0;
+
 	int lines = 1;
 
 	for (int pos = 0 ; pos < text.length(); pos++) {

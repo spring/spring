@@ -26,7 +26,9 @@ class CVertexArray;
 class CProjectile: public CExpGenSpawnable
 {
 	CR_DECLARE(CProjectile);
-	CProjectile(); // default constructor is needed for creg
+
+	/// used only by creg
+	CProjectile();
 
 public:
 	static bool inArray;
@@ -43,9 +45,9 @@ public:
 	virtual void Update();
 	virtual void Init(const float3& pos, CUnit* owner);
 
-	bool synced; //! is this projectile part of the simulation?
-	bool weapon; //! is this a weapon projectile? (true implies synced true)
-	bool piece;  //! is this a piece projectile? (true implies synced true)
+	bool synced; ///< is this projectile part of the simulation?
+	bool weapon; ///< is this a weapon projectile? (true implies synced true)
+	bool piece;  ///< is this a piece projectile? (true implies synced true)
 
 	bool luaMoveCtrl;
 	bool checkCol;

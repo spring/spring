@@ -1,7 +1,7 @@
 #include "RAI.h"
 #include "LegacyCpp/IGlobalAICallback.h"
 //#include "ExternalAI/IAICheats.h"
-#include "Sim/Units/UnitDef.h"
+#include "LegacyCpp/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "CUtils/Util.h"
@@ -131,9 +131,7 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 	cb = callback->GetAICallback();
 	if( GRMap == 0 )
 		ClearLogFiles();
-	char c[3];
-	SNPRINTF(c, 3, "%i", cb->GetMyTeam());
-	l = new cLogFile(cb, "RAI"+string(c)+"_LastGame.log", false);
+	l = new cLogFile(cb, GetLogFileSubPath(cb->GetMyTeam()), false);
 
 /*	string test = (char*)cb->GetMyTeam(); // Crashes Spring?  Spring-Version(v0.76b1)
 	*l<<"cb->GetMyTeam()="<<test<<"\n";
@@ -1147,22 +1145,26 @@ void cRAI::RemoveLogFile(string relFileName) const {
 	}
 }
 
+std::string cRAI::GetLogFileSubPath(int teamId) const {
+
+	static const size_t logFileSubPath_sizeMax = 64;
+	char logFileSubPath[logFileSubPath_sizeMax];
+	SNPRINTF(logFileSubPath, logFileSubPath_sizeMax, "log/RAI%i_LastGame.log", teamId);
+	return std::string(logFileSubPath);
+}
+
 void cRAI::ClearLogFiles()
 {
-	string logDir = "";
-
-	for( int i=0; i<32; i++ )
+	for( int t=0; t < 255; t++ )
 	{
-		char c[3];
-		SNPRINTF(c, 3, "%i", i);
-		RemoveLogFile(logDir+"RAI"+string(c)+"_LastGame.log");
+		RemoveLogFile(GetLogFileSubPath(t));
 	}
 
-	RemoveLogFile(logDir+"RAIGlobal_LastGame.log");
-	RemoveLogFile(logDir+"TerrainMapDebug.log");
-//	RemoveLogFile(logDir+"PathfinderDebug.log");
-//	RemoveLogFile(logDir+"PathFinderAPNDebug.log");
-//	RemoveLogFile(logDir+"PathFinderNPNDebug.log");
-//	RemoveLogFile(logDir+"Prerequisite.log");
-//	RemoveLogFile(logDir+"Debug.log");
+	RemoveLogFile("log/RAIGlobal_LastGame.log");
+	RemoveLogFile("log/TerrainMapDebug.log");
+//	RemoveLogFile("log/PathfinderDebug.log");
+//	RemoveLogFile("log/PathFinderAPNDebug.log");
+//	RemoveLogFile("log/PathFinderNPNDebug.log");
+//	RemoveLogFile("log/Prerequisite.log");
+//	RemoveLogFile("log/Debug.log");
 }

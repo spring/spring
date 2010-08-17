@@ -23,7 +23,6 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Platform/byteorder.h"
 #include <boost/cstdint.hpp>
 
@@ -375,16 +374,13 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 	piece->radius = math::sqrt(radiusSq);
 	piece->relMidPos = cvOffset * 0.5f;
-
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
-	piece->colvol->Enable();
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT);
 
 
 	if (me.OffsetToChildObject > 0) {
 		piece->childs.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj));
 	}
 
-	piece->vertexCount = piece->vertices.size();
 	piece->isEmpty = (piece->prims.size() < 1);
 
 	if (me.OffsetToSiblingObject > 0) {

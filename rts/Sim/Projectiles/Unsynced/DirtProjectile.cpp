@@ -79,23 +79,24 @@ void CDirtProjectile::Update()
 
 void CDirtProjectile::Draw()
 {
-	float partAbove=(pos.y/(size*camera->up.y));
-	if(partAbove<-1)
+	float partAbove = (pos.y / (size * camera->up.y));
+	if (partAbove < -1) {
 		return;
-	else if(partAbove>1)
-		partAbove=1;
-	inArray=true;
+	} else if (partAbove > 1) {
+		partAbove = 1;
+	}
+	inArray = true;
 	unsigned char col[4];
-	col[0]=(unsigned char) (color.x*alpha);
-	col[1]=(unsigned char) (color.y*alpha);
-	col[2]=(unsigned char) (color.z*alpha);
-	col[3]=(unsigned char) (alpha)/*-globalRendering->timeOffset*alphaFalloff*/;
+	col[0] = (unsigned char) (color.x*alpha);
+	col[1] = (unsigned char) (color.y*alpha);
+	col[2] = (unsigned char) (color.z*alpha);
+	col[3] = (unsigned char) (alpha)/*-globalRendering->timeOffset*alphaFalloff*/;
 
 	const float interSize = size + globalRendering->timeOffset * sizeExpansion;
 	const float texx = texture->xstart + (texture->xend - texture->xstart) * ((1.0f - partAbove) * 0.5f);
 
-	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize * partAbove,texx, texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * interSize - camera->up * interSize * partAbove,texx, texture->yend,   col);
+	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize * partAbove, texx, texture->ystart, col);
+	va->AddVertexTC(drawPos + camera->right * interSize - camera->up * interSize * partAbove, texx, texture->yend,   col);
 	va->AddVertexTC(drawPos + camera->right * interSize + camera->up * interSize, texture->xend, texture->yend,   col);
 	va->AddVertexTC(drawPos - camera->right * interSize + camera->up * interSize, texture->xend, texture->ystart, col);
 }

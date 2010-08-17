@@ -5,6 +5,7 @@
 
 #include <map>
 #include "IModelParser.h"
+#include "System/Vec2.h"
 
 struct SOBJTriangle {
 	int vIndices[3];   // index of 1st/2nd/3rd vertex
@@ -16,7 +17,6 @@ struct SOBJPiece: public S3DModelPiece {
 public:
 	SOBJPiece() {
 		parent      = NULL;
-		vertexCount = 0;
 		displist    = 0;
 		isEmpty     = true;
 		type        = MODELTYPE_OBJ;
@@ -39,12 +39,14 @@ public:
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 
-	void AddVertex(const float3& v) { vertices.push_back(v); vertexCount += 1; }
-	void AddNormal(const float3& n) { vnormals.push_back(n);                   }
-	void AddTxCoor(const float2& t) { texcoors.push_back(t);                   }
+	void SetVertexCount(int n) { vertices.resize(n); }
+	void SetNormalCount(int n) { vnormals.resize(n); }
+	void SetTxCoorCount(int n) { texcoors.resize(n); }
 
 	void AddTriangle(const SOBJTriangle& t) { triangles.push_back(t); }
+	void SetTriangle(int idx, const SOBJTriangle& t) { triangles[idx] = t; }
 	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
+
 	int GetTriangleCount() const { return (triangles.size()); }
 	int GetVertexCount() const { return vertices.size(); }
 	int GetNormalCount() const { return vnormals.size(); }
@@ -62,6 +64,10 @@ public:
 	void SetTxCoor(int idx, const float2& v) { texcoors[idx] = v; }
 	void SetSTangent(int idx, const float3& v) { sTangents[idx] = v; }
 	void SetTTangent(int idx, const float3& v) { tTangents[idx] = v; }
+
+	void AddVertex(const float3& v) { vertices.push_back(v); }
+	void AddNormal(const float3& v) { vnormals.push_back(v); }
+	void AddTxCoor(const float2& v) { texcoors.push_back(v); }
 
 private:
 	std::vector<float3> vertices;

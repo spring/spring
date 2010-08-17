@@ -1220,7 +1220,6 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	glPolygonOffset(1, 1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glFrontFace(GL_CW);
 
 	po->Enable();
 
@@ -1238,7 +1237,6 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	po->Disable();
 
-	glFrontFace(GL_CCW);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
@@ -1281,8 +1279,12 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glActiveTexture(GL_TEXTURE2);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
+		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
+		if (drawMode == drawMetal) { // increased brightness for metal spots
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+		}
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
-		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
 
 		glActiveTexture(GL_TEXTURE3);
 		if (map->detailTex) {

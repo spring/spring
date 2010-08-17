@@ -421,8 +421,7 @@ void CAirMoveType::SlowUpdate(void)
 			float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
 			owner->losHeight = h + 5;
 			loshandler->MoveUnit(owner, false);
-			if (owner->hasRadarCapacity)
-				radarhandler->MoveUnit(owner);
+			radarhandler->MoveUnit(owner);
 
 			owner->losHeight = oldlh;
 		}

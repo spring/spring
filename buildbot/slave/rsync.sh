@@ -1,5 +1,6 @@
 #!/bin/bash
-. buildbot/prepare.sh
+set -e
+. buildbot/slave/prepare.sh
 
 REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www
@@ -25,7 +26,7 @@ function zip() {
 # one containing the exe/dll, and one containing debug symbols.
 cd ${BUILDDIR}
 7za u "${BASE_ARCHIVE}" base
-for tostripfile in spring.exe spring-dedicated.exe spring-mt.exe spring-hl.exe unitsync.dll; do
+for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
 done
 for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll); do

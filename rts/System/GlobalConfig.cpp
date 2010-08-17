@@ -15,7 +15,7 @@ GlobalConfig::GlobalConfig() {
 	READ_CONFIG(networkTimeout, "NetworkTimeout", 120, 0)
 	READ_CONFIG(reconnectTimeout, "ReconnectTimeout", 15, 0)
 	READ_CONFIG(mtu, "MaximumTransmissionUnit", 1400, 300)
-	teamHighlight = !!configHandler->Get("TeamHighlight", 1);
+	teamHighlight = configHandler->Get("TeamHighlight", 1);
 	READ_CONFIG(linkBandwidth, "LinkBandwidth", 64 * 1024, 0)
 }
 

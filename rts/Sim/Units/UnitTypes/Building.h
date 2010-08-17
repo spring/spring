@@ -18,6 +18,7 @@ public:
 
 	void Init(const CUnit* builder);
 	void UnitInit(const UnitDef* def, int team, const float3& position);
+	void ForcedMove(const float3& newPos, int facing);
 
 	BuildingGroundDecal* buildingDecal;
 };

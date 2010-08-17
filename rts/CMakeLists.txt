@@ -55,13 +55,11 @@ INCLUDE_DIRECTORIES(lib/streflop)
 
 ### Find include directories and add platform specific libraries
 IF (MINGW)
-	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
 ENDIF (MINGW)
 
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
-ADD_SUBDIRECTORY(lib)
 LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
 
 IF    (UNIX)

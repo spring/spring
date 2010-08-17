@@ -88,8 +88,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
-	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  200));
-	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 200));
+	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  1000));
+	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 10000));
 
 	LODScale           = GetLODFloat("LODScale",           1.0f);
 	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
@@ -108,16 +108,14 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
 
-	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
-
 #ifdef USE_GML
 	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
 	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
 
 	// load unit explosion generators
-	for (int unitDefID = 1; unitDefID <= unitDefHandler->numUnitDefs; unitDefID++) {
-		UnitDef* ud = &unitDefHandler->unitDefs[unitDefID];
+	for (int unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
+		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
 
 		for (std::vector<std::string>::const_iterator it = ud->sfxExplGenNames.begin(); it != ud->sfxExplGenNames.end(); ++it) {
 			ud->sfxExplGens.push_back(explGenHandler->LoadGenerator(*it));
@@ -421,10 +419,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					DrawUnitNow(unit);
 				}
 			}
-
-			if (showHealthBars && (sqDist < (unitDrawDistSqr * 500))) {
-				drawStat.push_back(unit);
-			}
 		}
 	} else if (losStatus & LOS_PREVLOS) {
 		if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
@@ -437,7 +431,6 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	drawStat.clear();
 	drawIcon.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -557,16 +550,14 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		for (GML_VECTOR<CUnit*>::iterator ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
 			DrawIcon(*ui, false);
 		}
-		for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
-			DrawIcon(*ui, true);
+		if (!gu->spectatingFullView) {
+			for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
+				DrawIcon(*ui, true);
+			}
 		}
 
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_ALPHA_TEST);
-
-		for (GML_VECTOR<CUnit*>::iterator ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
-			DrawUnitStats(*ui);
-		}
 	}
 }
 
@@ -1663,36 +1654,36 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
 {
 	switch (vol->GetVolumeType()) {
-		case COLVOL_TYPE_FOOTPRINT:
+		case CollisionVolume::COLVOL_TYPE_FOOTPRINT:
 			// fall through, this is too hard to render correctly so just render sphere :)
-		case COLVOL_TYPE_SPHERE:
+		case CollisionVolume::COLVOL_TYPE_SPHERE:
 			// fall through, sphere is special case of ellipsoid
-		case COLVOL_TYPE_ELLIPSOID: {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID: {
 			// scaled sphere: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
 			gluSphere(q, 1.0f, 20, 20);
 		} break;
-		case COLVOL_TYPE_CYLINDER: {
+		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			// scaled cylinder: base-radius, top-radius, height, slices, stacks
 			//
 			// (cylinder base is drawn at unit center by default so add offset
 			// by half major axis to visually match the mathematical situation,
 			// height of the cylinder equals the unit's full major axis)
 			switch (vol->GetPrimaryAxis()) {
-				case COLVOL_AXIS_X: {
+				case CollisionVolume::COLVOL_AXIS_X: {
 					glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
 					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 					glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
 					glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
 				} break;
-				case COLVOL_AXIS_Y: {
+				case CollisionVolume::COLVOL_AXIS_Y: {
 					glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
 					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 					glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
 					glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 				} break;
-				case COLVOL_AXIS_Z: {
+				case CollisionVolume::COLVOL_AXIS_Z: {
 					glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
 					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 					glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
@@ -1701,7 +1692,7 @@ void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
 
 			gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
 		} break;
-		case COLVOL_TYPE_BOX: {
+		case CollisionVolume::COLVOL_TYPE_BOX: {
 			// scaled cube: length, width, height
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
@@ -2033,79 +2024,6 @@ void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsign
 }
 
 
-void CUnitDrawer::DrawUnitStats(CUnit* unit)
-{
-	if ((gu->myAllyTeam != unit->allyteam) &&
-	    !gu->spectatingFullView && unit->unitDef->hideDamage) {
-		return;
-	}
-
-	float3 interPos = unit->drawPos;
-	interPos.y += unit->model->height + 5.0f;
-
-	// setup the billboard transformation
-	glPushMatrix();
-	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glCallList(CCamera::billboardList);
-
-	if (unit->health < unit->maxHealth) {
-		// black background for healthbar
-		glColor3f(0.0f, 0.0f, 0.0f);
-		glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
-
-		// healthbar
-		const float hpp = std::max(0.0f, unit->health / unit->maxHealth);
-		const float hEnd = hpp * 10.0f;
-
-		if (unit->stunned) {
-			glColor3f(0.0f, 0.0f, 1.0f);
-		} else {
-			if (hpp > 0.5f) {
-				glColor3f(1.0f - ((hpp - 0.5f) * 2.0f), 1.0f, 0.0f);
-			} else {
-				glColor3f(1.0f, hpp * 2.0f, 0.0f);
-			}
-		}
-
-		glRectf(-5.0f, 4.0f, hEnd - 5.0f, 6.0f);
-	}
-
-	// stun level
-	if (!unit->stunned && (unit->paralyzeDamage > 0.0f)) {
-		const float pEnd = (unit->paralyzeDamage / unit->maxHealth) * 10.0f;
-		glColor3f(0.0f, 0.0f, 1.0f);
-		glRectf(-5.0f, 4.0f, pEnd - 5.0f, 6.0f);
-	}
-
-	// skip the rest of the indicators if it isn't a local unit
-	if ((gu->myTeam != unit->team) && !gu->spectatingFullView) {
-		glPopMatrix();
-		return;
-	}
-
-	// experience bar
-	const float eEnd = (unit->limExperience * 0.8f) * 10.0f;
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
-
-	if (unit->beingBuilt) {
-		const float bEnd = (unit->buildProgress * 0.8f) * 10.0f;
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
-	}
-	else if (unit->stockpileWeapon) {
-		const float sEnd = (unit->stockpileWeapon->buildPercent * 0.8f) * 10.0f;
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
-	}
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	if (unit->group) {
-		font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
-	}
-
-	glPopMatrix();
-}
 
 void CUnitDrawer::UpdateDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();

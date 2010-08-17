@@ -17,8 +17,8 @@
 namespace SpringVersion
 {
 
-const char* const Major = "0.81+";
-const char* const Minor = "0";
+const char* const Major = "0.82+";
+const char* const Minor = "3";
 const char* const Patchset = "0";
 const char* const Additional = "" // Build-Bot will write in here before compiling
 
@@ -71,6 +71,12 @@ const char* const Additional = "" // Build-Bot will write in here before compili
 
 #if defined HEADLESS
 	GV_ADD_SPACE "Headless"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
+#if defined UNITSYNC
+	GV_ADD_SPACE "Unitsync"
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif

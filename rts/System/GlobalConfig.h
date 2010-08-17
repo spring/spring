@@ -45,7 +45,7 @@ public:
 	 *
 	 * Team highlighting for teams that are uncontrolled or have connection problems
 	 */
-	bool teamHighlight;
+	int teamHighlight;
 
 	/**
 	 * @brief linkBandwidth

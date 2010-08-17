@@ -1,5 +1,6 @@
 #!/bin/bash
-. buildbot/prepare.sh
+set -e
+. buildbot/slave/prepare.sh
 
 MINGWLIBS_PATH=${3}
 MINGW_HOST=i586-mingw32msvc-
@@ -9,7 +10,7 @@ echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
 
 #strip symbols and archive them
 cd ${BUILDDIR}
-for tostripfile in spring.exe spring-dedicated.exe spring-mt.exe spring-hl.exe unitsync.dll $(find AI/Skirmish -name SkirmishAI.dll); do
+for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll $(find AI/Skirmish -name SkirmishAI.dll); do
 	if [ -f ${tostripfile} ]; then
 		# dont strip binaries that we processed earlier
 		if ! ${MINGW_HOST}objdump -h ${tostripfile} | grep -q .gnu_debuglink; then

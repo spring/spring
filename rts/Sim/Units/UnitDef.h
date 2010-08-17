@@ -11,12 +11,16 @@
 #include "Sim/Misc/GuiSoundSet.h"
 #include "System/float3.h"
 
+
+struct Command;
 struct MoveData;
 struct WeaponDef;
 struct S3DModel;
 struct UnitDefImage;
 struct CollisionVolume;
 class CExplosionGenerator;
+class LuaTable;
+
 
 struct UnitModelDef
 {
@@ -29,20 +33,28 @@ struct UnitModelDef
 	std::map<std::string, std::string> modelTextures;
 };
 
+
 struct UnitDef
 {
 public:
-	UnitDef() : valid(false) {}
+	UnitDef(const LuaTable& udTable, const std::string& unitName, int id);
+	UnitDef();
 	~UnitDef();
-	S3DModel* LoadModel() const;
 
-	bool valid;
+	S3DModel* LoadModel() const;
+	bool DontLand() const { return dlHoverFactor >= 0.0f; }
+	void SetNoCost(bool noCost);
+	bool IsTerrainHeightOK(const float height) const;
+	float GetAllowedTerrainHeight(float height) const;
+
 	std::string name;
 	std::string humanName;
 	std::string filename;
 	int id;					// unique id for this type of unit
 
 	CollisionVolume* collisionVolume;
+
+	std::string decoyName;
 	const UnitDef* decoyDef;
 
 	int aihint;
@@ -115,13 +127,11 @@ public:
 	float mass;
 
 	bool pushResistant;
-	/// should the unit move sideways when it can't shoot?
-	bool strafeToAttack;
+	bool strafeToAttack;  /// should the unit move sideways when it can't shoot?
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxSlope;
-	/// maximum terraform height this building allows
-	float maxHeightDif;
+	float maxHeightDif;   /// maximum terraform height this building allows
 	float minWaterDepth;
 	float waterline;
 
@@ -160,8 +170,7 @@ public:
 		int slavedTo;
 		float3 mainDir;
 		float maxAngleDif;
-		/// How many seconds of fuel it costs for the owning unit to fire this weapon
-		float fuelUsage;
+		float fuelUsage; /// How many seconds of fuel it costs for the owning unit to fire this weapon
 		unsigned int badTargetCat;
 		unsigned int onlyTargetCat;
 	};
@@ -239,7 +248,6 @@ public:
 	bool hoverAttack;
 	bool airStrafe;
 	float dlHoverFactor; // < 0 means it can land, >= 0 indicates how much the unit will move during hovering on the spot
-	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	bool bankingAllowed;
 
 	float maxAcc;
@@ -250,8 +258,7 @@ public:
 	float crashDrag;
 
 	MoveData* movedata;
-//	unsigned char* yardmapLevels[6];
-	unsigned char* yardmaps[4];						// Iterations of the Ymap for building rotation
+	std::vector<unsigned char> yardmaps[4];         // Iterations of the Ymap for building rotation
 
 	int xsize;										// each size is 8 units
 	int zsize;										// each size is 8 units
@@ -298,7 +305,7 @@ public:
 
 	bool canResurrect;
 	bool canCapture;
-	int highTrajectoryType;							// 0 (default) = only low, 1 = only high, 2 = choose
+	int highTrajectoryType; // 0 (default) = only low, 1 = only high, 2 = choose
 
 	unsigned int noChaseCategory;
 
@@ -333,9 +340,9 @@ public:
 	int flareSalvoSize;
 	int flareSalvoDelay;
 
-	bool smoothAnim;								// True if the unit should use interpolated animation
-	bool canLoopbackAttack;							// only matters for fighter aircraft
-	bool levelGround;								// only matters for buildings
+	bool smoothAnim;         // True if the unit should use interpolated animation
+	bool canLoopbackAttack;  // only matters for fighter aircraft
+	bool levelGround;        // only matters for buildings
 
 	bool useBuildingGroundDecal;
 	std::string buildingDecalTypeName;
@@ -359,43 +366,31 @@ public:
 	int pieceTrailCEGRange;							// range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
 
 	int maxThisUnit;								// number of units of this type allowed simultaneously in the game
+	bool transportableBuilding;						// Can this building be transported?
 
 	std::map<std::string, std::string> customParams;
 
-	void SetNoCost(bool noCost) {
-		if (noCost) {
-			realMetalCost    = metalCost;
-			realEnergyCost   = energyCost;
-			realMetalUpkeep  = metalUpkeep;
-			realEnergyUpkeep = energyUpkeep;
-			realBuildTime    = buildTime;
-
-			metalCost    =  1.0f;
-			energyCost   =  1.0f;
-			buildTime    = 10.0f;
-			metalUpkeep  =  0.0f;
-			energyUpkeep =  0.0f;
-		} else {
-			metalCost    = realMetalCost;
-			energyCost   = realEnergyCost;
-			buildTime    = realBuildTime;
-			metalUpkeep  = realMetalUpkeep;
-			energyUpkeep = realEnergyUpkeep;
-		}
-	}
-
 private:
-	float realMetalCost,   realEnergyCost;
-	float realMetalUpkeep, realEnergyUpkeep;
+	void ParseWeaponsTable(const LuaTable& weaponsTable);
+	void CreateYardMap(std::string yardmapStr);
+
+	float realMetalCost;
+	float realEnergyCost;
+	float realMetalUpkeep;
+	float realEnergyUpkeep;
 	float realBuildTime;
 };
 
 
-struct Command;
 
 struct BuildInfo
 {
-	BuildInfo() { def=0; buildFacing=0; }
+	BuildInfo()
+		: def(NULL)
+		, pos(ZeroVector)
+		, buildFacing(0)
+	{}
+
 	BuildInfo(const UnitDef *def, const float3& p, int facing) :
 		def(def), pos(p), buildFacing(facing) {}
 	BuildInfo(const Command& c) { Parse(c); }

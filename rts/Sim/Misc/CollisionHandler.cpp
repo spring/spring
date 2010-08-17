@@ -35,8 +35,8 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 	if (!u->collisionVolume->IsDisabled()) {
 		switch (u->collisionVolume->GetTestType()) {
 			// Collision(CUnit*) does not need p1 or q
-			case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(u, p0       ); numCollisionTests    += 1; } break;
-			case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(u, p0, p1, q); numIntersectionTests += 1; } break;
+			case CollisionVolume::COLVOL_HITTEST_DISC: { r = CCollisionHandler::Collision(u, p0       ); numCollisionTests    += 1; } break;
+			case CollisionVolume::COLVOL_HITTEST_CONT: { r = CCollisionHandler::Intersect(u, p0, p1, q); numIntersectionTests += 1; } break;
 		}
 	}
 
@@ -50,8 +50,8 @@ bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const flo
 	if (!f->collisionVolume->IsDisabled()) {
 		switch (f->collisionVolume->GetTestType()) {
 			// Collision(CFeature*) does not need p1 or q
-			case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(f, p0       ); numCollisionTests    += 1; } break;
-			case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(f, p0, p1, q); numIntersectionTests += 1; } break;
+			case CollisionVolume::COLVOL_HITTEST_DISC: { r = CCollisionHandler::Collision(f, p0       ); numCollisionTests    += 1; } break;
+			case CollisionVolume::COLVOL_HITTEST_CONT: { r = CCollisionHandler::Intersect(f, p0, p1, q); numIntersectionTests += 1; } break;
 		}
 	}
 
@@ -72,10 +72,10 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 	}
 
 	switch (u->collisionVolume->GetVolumeType()) {
-		case COLVOL_TYPE_SPHERE: {
+		case CollisionVolume::COLVOL_TYPE_SPHERE: {
 			return true;
 		}
-		case COLVOL_TYPE_FOOTPRINT: {
+		case CollisionVolume::COLVOL_TYPE_FOOTPRINT: {
 			return CCollisionHandler::CollisionFootprint(u, p);
 		}
 		default: {
@@ -101,10 +101,10 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 	}
 
 	switch (f->collisionVolume->GetVolumeType()) {
-		case COLVOL_TYPE_SPHERE: {
+		case CollisionVolume::COLVOL_TYPE_SPHERE: {
 			return true;
 		}
-		case COLVOL_TYPE_FOOTPRINT: {
+		case CollisionVolume::COLVOL_TYPE_FOOTPRINT: {
 			return CCollisionHandler::CollisionFootprint(f, p);
 		}
 		default: {
@@ -154,33 +154,33 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 	bool hit = false;
 
 	switch (v->GetVolumeType()) {
-		case COLVOL_TYPE_SPHERE: {
+		case CollisionVolume::COLVOL_TYPE_SPHERE: {
 			// normally, this code is never executed, because the higher level
 			// Collision(CFeature*) and Collision(CUnit*) already optimize
-			// for volumeType == COLVOL_TYPE_SPHERE.
+			// for volumeType == CollisionVolume::COLVOL_TYPE_SPHERE.
 			hit = (pi.dot(pi) <= v->GetHScalesSq().x);
 		} break;
-		case COLVOL_TYPE_ELLIPSOID: {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID: {
 			const float f1 = (pi.x * pi.x) / v->GetHScalesSq().x;
 			const float f2 = (pi.y * pi.y) / v->GetHScalesSq().y;
 			const float f3 = (pi.z * pi.z) / v->GetHScalesSq().z;
 			hit = ((f1 + f2 + f3) <= 1.0f);
 		} break;
-		case COLVOL_TYPE_CYLINDER: {
+		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			switch (v->GetPrimaryAxis()) {
-				case COLVOL_AXIS_X: {
+				case CollisionVolume::COLVOL_AXIS_X: {
 					const bool xPass = (pi.x > -v->GetHScales().x  &&  pi.x < v->GetHScales().x);
 					const float yRat = (pi.y * pi.y) / v->GetHScalesSq().y;
 					const float zRat = (pi.z * pi.z) / v->GetHScalesSq().z;
 					hit = (xPass && (yRat + zRat <= 1.0f));
 				} break;
-				case COLVOL_AXIS_Y: {
+				case CollisionVolume::COLVOL_AXIS_Y: {
 					const bool yPass = (pi.y > -v->GetHScales().y  &&  pi.y < v->GetHScales().y);
 					const float xRat = (pi.x * pi.x) / v->GetHScalesSq().x;
 					const float zRat = (pi.z * pi.z) / v->GetHScalesSq().z;
 					hit = (yPass && (xRat + zRat <= 1.0f));
 				} break;
-				case COLVOL_AXIS_Z: {
+				case CollisionVolume::COLVOL_AXIS_Z: {
 					const bool zPass = (pi.z > -v->GetHScales().z  &&  pi.z < v->GetHScales().z);
 					const float xRat = (pi.x * pi.x) / v->GetHScalesSq().x;
 					const float yRat = (pi.y * pi.y) / v->GetHScalesSq().y;
@@ -188,7 +188,7 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 				} break;
 			}
 		} break;
-		case COLVOL_TYPE_BOX: {
+		case CollisionVolume::COLVOL_TYPE_BOX: {
 			const bool b1 = (pi.x > -v->GetHScales().x  &&  pi.x < v->GetHScales().x);
 			const bool b2 = (pi.y > -v->GetHScales().y  &&  pi.y < v->GetHScales().y);
 			const bool b3 = (pi.z > -v->GetHScales().z  &&  pi.z < v->GetHScales().z);
@@ -346,18 +346,18 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	if (rmaxz < vminz || rminz > vmaxz) { return false; }
 
 	switch (v->GetVolumeType()) {
-		case COLVOL_TYPE_FOOTPRINT:
+		case CollisionVolume::COLVOL_TYPE_FOOTPRINT:
 			// fall through, intersection with footprint collision volume
 			// is not supported yet, so only test against sphere/ellipsoid
-		case COLVOL_TYPE_SPHERE:
+		case CollisionVolume::COLVOL_TYPE_SPHERE:
 			// fall through, sphere is special case of ellipsoid
-		case COLVOL_TYPE_ELLIPSOID: {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID: {
 			intersect = CCollisionHandler::IntersectEllipsoid(v, pi0, pi1, q);
 		} break;
-		case COLVOL_TYPE_CYLINDER: {
+		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			intersect = CCollisionHandler::IntersectCylinder(v, pi0, pi1, q);
 		} break;
-		case COLVOL_TYPE_BOX: {
+		case CollisionVolume::COLVOL_TYPE_BOX: {
 			intersect = CCollisionHandler::IntersectBox(v, pi0, pi1, q);
 		} break;
 	}
@@ -501,7 +501,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	float c = 0.0f;
 
 	switch (pAx) {
-		case COLVOL_AXIS_X: {
+		case CollisionVolume::COLVOL_AXIS_X: {
 			pii0.y = pi0.y * v->GetHIScales().y;
 			pii0.z = pi0.z * v->GetHIScales().z;
 			pii1.y = pi1.y * v->GetHIScales().y;
@@ -519,7 +519,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			b = ((pii0.y * diir.y) + (pii0.z * diir.z)) * 2.0f;
 			c =  (pii0.y * pii0.y) + (pii0.z * pii0.z)  - 1.0f;
 		} break;
-		case COLVOL_AXIS_Y: {
+		case CollisionVolume::COLVOL_AXIS_Y: {
 			pii0.x = pi0.x * v->GetHIScales().x;
 			pii0.z = pi0.z * v->GetHIScales().z;
 			pii1.x = pi1.x * v->GetHIScales().x;
@@ -537,7 +537,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			b = ((pii0.x * diir.x) + (pii0.z * diir.z)) * 2.0f;
 			c =  (pii0.x * pii0.x) + (pii0.z * pii0.z)  - 1.0f;
 		} break;
-		case COLVOL_AXIS_Z: {
+		case CollisionVolume::COLVOL_AXIS_Z: {
 			pii0.x = pi0.x * v->GetHIScales().x;
 			pii0.y = pi0.y * v->GetHIScales().y;
 			pii1.x = pi1.x * v->GetHIScales().x;

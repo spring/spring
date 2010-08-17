@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef EXPGENSPAWNER_H
-#define EXPGENSPAWNER_H
+#ifndef EXP_GEN_SPAWNER_H
+#define EXP_GEN_SPAWNER_H
 
 #include "Projectile.h"
 
@@ -12,14 +12,15 @@ class CExpGenSpawner : public CProjectile
 {
 	CR_DECLARE(CExpGenSpawner);
 public:
+	CExpGenSpawner();
+	~CExpGenSpawner();
+
+	void Update();
+	void Draw() {};
+
 	int delay;
 	float damage;
 	CExplosionGenerator* explosionGenerator;
-
-	CExpGenSpawner(void);
-	~CExpGenSpawner(void);
-	void Update();
-	void Draw(){};
 };
 
-#endif
+#endif // EXP_GEN_SPAWNER_H

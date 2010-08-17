@@ -34,6 +34,7 @@ struct S3DOPiece: public S3DModelPiece {
 
 	void DrawList() const;
 	void SetMinMaxExtends();
+	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
 	void Shatter(float, int, int, const float3&, const float3&) const;
 

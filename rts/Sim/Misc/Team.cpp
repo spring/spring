@@ -301,6 +301,9 @@ void CTeam::SlowUpdate()
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
 			CTeam* team = teamHandler->Team(a);
+			if (team->isDead)
+				continue;
+
 			eShare += std::max(0.0f, (team->energyStorage * 0.99f) - team->energy);
 			mShare += std::max(0.0f, (team->metalStorage  * 0.99f) - team->metal);
 		}
@@ -324,6 +327,8 @@ void CTeam::SlowUpdate()
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
 			CTeam* team = teamHandler->Team(a);
+			if (team->isDead)
+				continue;
 
 			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
 			energy -= edif;
@@ -353,9 +358,9 @@ void CTeam::SlowUpdate()
 	}
 
 	//! make sure the stats update is always in a SlowUpdate
-	assert(((statsPeriod * GAME_SPEED) % TEAM_SLOWUPDATE_RATE) == 0);
+	assert(((TeamStatistics::statsPeriod * GAME_SPEED) % TEAM_SLOWUPDATE_RATE) == 0);
 
-	const int statsFrames = statsPeriod * GAME_SPEED;
+	const int statsFrames = TeamStatistics::statsPeriod * GAME_SPEED;
 	if (nextHistoryEntry <= gs->frameNum) {
 		currentStats->frame = gs->frameNum;
 		statHistory.push_back(*currentStats);

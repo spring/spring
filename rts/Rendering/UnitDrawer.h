@@ -109,8 +109,6 @@ public:
 		int team;
 	};
 
-	bool showHealthBars;
-
 	float3 camNorm; // used to draw far-textures
 
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
@@ -168,7 +166,7 @@ private:
 	void DrawUnitBeingBuilt(CUnit*);
 	inline void DrawUnitModel(CUnit*);
 	void DrawUnitNow(CUnit*);
-	void DrawUnitStats(CUnit*);
+
 	void UpdateDrawPos(CUnit*);
 
 	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
@@ -210,7 +208,6 @@ private:
 	// buildings that left LOS but are still alive
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
-	GML_VECTOR<CUnit*> drawStat;
 	GML_VECTOR<CUnit*> drawIcon;
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;

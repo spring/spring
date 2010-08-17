@@ -389,6 +389,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
+	GML_RECMUTEX_LOCK(unit); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
 
@@ -679,7 +680,7 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 			"Incorrect arguments to AddWorldUnit(unitDefID, x, y, z, team, facing)");
 	}
 	const int unitDefID = lua_toint(L, 1);
-	if ((unitDefID < 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
+	if (!unitDefHandler->IsValidUnitDefID(unitDefID)) {
 		return 0;
 	}
 	const float3 pos(lua_tofloat(L, 2),
@@ -1043,7 +1044,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 			if (lua_istable(L, -1)) {
 				float color[3];
 				const int size = ParseFloatArray(L, -1, color, 3);
-				if (size>=3) {
+				if (size >= 3) {
 					if (key == "absorb") {
 						w.absorb = color;
 					} else if (key == "baseColor") {
@@ -1057,7 +1058,9 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 					} else if (key == "specularColor") {
 						w.specularColor = color;
  					} else if (key == "planeColor") {
-						w.planeColor = color;
+						w.planeColor.x = color[0];
+						w.planeColor.y = color[1];
+						w.planeColor.z = color[2];
 					}
 				}
 			}
@@ -1620,6 +1623,12 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 	const std::string springFullName = (Platform::GetProcessExecutableFile());
 	// LogObject() << "Args: " << arguments;
+
+#ifdef _WIN32
+	//! else OpenAL soft crashs when using execlp
+	ISound::Shutdown();
+#endif
+
 	if (!script.empty())
 	{
 		const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir()+"script.txt";

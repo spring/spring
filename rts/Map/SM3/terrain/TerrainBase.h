@@ -10,7 +10,6 @@
 
 #include "LogOutput.h"
 
-#include <IL/il.h>
 #define TERRAIN_USE_IL
 
 typedef unsigned int uint;

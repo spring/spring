@@ -33,11 +33,17 @@ CR_REG_METADATA(CHeatCloudProjectile,
 //////////////////////////////////////////////////////////////////////
 
 CHeatCloudProjectile::CHeatCloudProjectile()
-:	CProjectile()
+	: CProjectile()
+	, heat(0.0f)
+	, maxheat(0.0f)
+	, heatFalloff(0.0f)
+	, size(0.0f)
+	, sizeGrowth(0.0f)
+	, sizemod(0.0f)
+	, sizemodmod(0.0f)
 {
-	heat=maxheat=heatFalloff=size=sizeGrowth=sizemod=sizemodmod=0.0f;
-	checkCol=false;
-	useAirLos=true;
+	checkCol = false;
+	useAirLos = true;
 	texture = projectileDrawer->heatcloudtex;
 }
 
@@ -45,15 +51,15 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos, const float3 speed,
 : CProjectile(pos, speed, owner, false, false, false),
 	heat(temperature),
 	maxheat(temperature),
-	heatFalloff(1),
-	size(0)
+	heatFalloff(1.0f),
+	size(0.0f),
+	sizemod(0.0f),
+	sizemodmod(0.0f)
 {
-	sizeGrowth=size/temperature;
-	checkCol=false;
-	useAirLos=true;
-	SetRadius(size+sizeGrowth*heat/heatFalloff);
-	sizemod=0;
-	sizemodmod=0;
+	sizeGrowth = size / temperature;
+	checkCol = false;
+	useAirLos = true;
+	SetRadius(size + sizeGrowth * heat / heatFalloff);
 	texture = projectileDrawer->heatcloudtex;
 }
 
@@ -65,28 +71,29 @@ CHeatCloudProjectile::~CHeatCloudProjectile()
 void CHeatCloudProjectile::Update()
 {
 //	speed.y+=GRAVITY*0.3f;
-	pos+=speed;
-	heat-=heatFalloff;
-	if(heat<=0){
-		deleteMe=true;
-		heat=0;
+	pos += speed;
+	heat -= heatFalloff;
+	if (heat <= 0) {
+		deleteMe = true;
+		heat = 0;
 	}
-	size+=sizeGrowth;
-	sizemod*=sizemodmod;
+	size += sizeGrowth;
+	sizemod *= sizemodmod;
 }
 
 void CHeatCloudProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	float dheat=heat-globalRendering->timeOffset;
-	if(dheat<0)
-		dheat=0;
-	float alpha=(dheat/maxheat)*255.0f;
-	col[0]=(unsigned char)alpha;
-	col[1]=(unsigned char)alpha;
-	col[2]=(unsigned char)alpha;
-	col[3]=1;//(dheat/maxheat)*255.0f;
+	float dheat = heat-globalRendering->timeOffset;
+	if (dheat < 0) {
+		dheat = 0;
+	}
+	float alpha = (dheat / maxheat) * 255.0f;
+	col[0] = (unsigned char) alpha;
+	col[1] = (unsigned char) alpha;
+	col[2] = (unsigned char) alpha;
+	col[3] = 1;//(dheat/maxheat)*255.0f;
 
 	const float drawsize = (size + sizeGrowth * globalRendering->timeOffset) * (1.0f - sizemod);
 

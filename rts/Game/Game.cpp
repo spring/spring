@@ -39,6 +39,7 @@
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
+#include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -109,7 +110,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/UnitTracker.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
@@ -179,7 +179,6 @@ CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
 //	CR_MEMBER(drawMode),
-	CR_MEMBER(oldframenum),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
 	CR_MEMBER(lastSimFrame),
@@ -215,7 +214,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(inputTextPosY),
 //	CR_MEMBER(inputTextSizeX),
 //	CR_MEMBER(inputTextSizeY),
-//	CR_MEMBER(lastCpuUsageTime),
 //	CR_MEMBER(skipping),
 	CR_MEMBER(playing),
 //	CR_MEMBER(lastFrameTime),
@@ -232,7 +230,6 @@ CR_REG_METADATA(CGame,(
 CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile):
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
-	oldframenum(0),
 	fps(0),
 	thisFps(0),
 	lastSimFrame(-1),
@@ -253,6 +250,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	leastQue(0),
 	timeLeft(0.0f),
 	consumeSpeed(1.0f),
+	luaDrawTime(0),
 
 	saveFile(saveFile)
 {
@@ -642,7 +640,7 @@ void CGame::LoadFinalize()
 	lastUpdate = lastframe;
 	lastMoveUpdate = lastframe;
 	lastUpdateRaw = lastframe;
-	lastCpuUsageTime = gu->gameTime + 10;
+	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
 #ifdef TRACE_SYNC
@@ -1501,20 +1499,6 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "trackmode") {
 		unitTracker.IncMode();
 	}
-	else if (cmd == "showhealthbars") {
-		if (action.extra.empty()) {
-			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
-		} else {
-			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
-		}
-	}
-	else if (cmd == "showrezbars") {
-		if (action.extra.empty()) {
-			featureDrawer->SetShowRezBars(!featureDrawer->GetShowRezBars());
-		} else {
-			featureDrawer->SetShowRezBars(!!atoi(action.extra.c_str()));
-		}
-	}
 	else if (cmd == "pause") {
 		// disallow pausing prior to start of game proper
 		if (playing) {
@@ -1853,7 +1837,18 @@ bool CGame::ActionPressed(const Action& action,
 				mouse->crossSize = std::max(1.0f, -mouse->crossSize);
 			}
 		} else {
-			mouse->crossSize = atof(action.extra.c_str());
+			float size, alpha, scale;
+			const char* args = action.extra.c_str();
+			const int argcount = sscanf(args, "%f %f %f", &size, &alpha, &scale);
+			if (argcount > 1) {
+				mouse->crossAlpha = alpha;
+				configHandler->Set("CrossAlpha", alpha);
+			}
+			if (argcount > 2) {
+				mouse->crossMoveScale = scale;
+				configHandler->Set("CrossMoveScale", scale);
+			}
+			mouse->crossSize = size;
 		}
 		configHandler->Set("CrossSize", mouse->crossSize);
 	}
@@ -1883,11 +1878,12 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "teamhighlight") {
 		if (action.extra.empty()) {
-			gc->teamHighlight = !gc->teamHighlight;
+			gc->teamHighlight = abs(gc->teamHighlight + 1) % 3;
 		} else {
-			gc->teamHighlight = !!atoi(action.extra.c_str());
+			gc->teamHighlight = abs(atoi(action.extra.c_str())) % 3;
 		}
-		configHandler->Set("TeamHighlight", gc->teamHighlight ? 1 : 0);
+		logOutput.Print("Team highlighting: %s", ((gc->teamHighlight == 1) ? "Players only" : ((gc->teamHighlight == 2) ? "Players and spectators" : "Disabled")));
+		configHandler->Set("TeamHighlight", gc->teamHighlight);
 	}
 	else if (cmd == "info") {
 		if (action.extra.empty()) {
@@ -2453,24 +2449,25 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 		int amount = 1;
 		int team = playerHandler->Player(playernum)->team;
+		int allyteam = -1;
 
-		int amountArg = -1;
-		int teamArg = -1;
+		int amountArgIdx = -1;
+		int teamArgIdx = -1;
 
 		if (args.size() == 5) {
-			amountArg = 1;
-			teamArg = 3;
+			amountArgIdx = 1;
+			teamArgIdx = 3;
 		}
 		else if (args.size() == 4) {
 			if (args[1].find_first_not_of("0123456789") == string::npos) {
-				amountArg = 1;
+				amountArgIdx = 1;
 			} else {
-				teamArg = 2;
+				teamArgIdx = 2;
 			}
 		}
 
-		if (amountArg >= 0) {
-			const string& amountStr = args[amountArg];
+		if (amountArgIdx >= 0) {
+			const string& amountStr = args[amountArgIdx];
 			amount = atoi(amountStr.c_str());
 			if ((amount < 0) || (amountStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give amount: %s", amountStr.c_str());
@@ -2478,8 +2475,8 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 
-		if (teamArg >= 0) {
-			const string& teamStr = args[teamArg];
+		if (teamArgIdx >= 0) {
+			const string& teamStr = args[teamArgIdx];
 			team = atoi(teamStr.c_str());
 			if ((team < 0) || (team >= teamHandler->ActiveTeams()) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give team: %s", teamStr.c_str());
@@ -2487,13 +2484,13 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 
-		const string unitName = (amountArg >= 0) ? args[2] : args[1];
+		const string unitName = (amountArgIdx >= 0) ? args[2] : args[1];
 
 		if (unitName == "all") {
 			// player entered ".give all"
-			int sqSize = (int) streflop::ceil(streflop::sqrt((float) unitDefHandler->numUnitDefs));
+			int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
 			int currentNumUnits = teamHandler->Team(team)->units.size();
-			int numRequestedUnits = unitDefHandler->numUnitDefs;
+			int sqSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
 
 			// make sure team unit-limit not exceeded
 			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
@@ -2509,10 +2506,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 				float3 pos2 = float3(posx, pos.y, posz);
-				const UnitDef* ud = &unitDefHandler->unitDefs[a];
-				if (ud->valid) {
-					const CUnit* unit =
-						unitLoader.LoadUnit(ud, pos2, team, false, 0, NULL);
+				const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
+				if (ud) {
+					const CUnit* unit = unitLoader.LoadUnit(ud, pos2, team, false, 0, NULL);
 					if (unit) {
 						unitLoader.FlattenGround(unit);
 					}
@@ -2560,10 +2556,12 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 
 				logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
-			}
-			else {
-				if (teamArg < 0) {
+			} else {
+				if (teamArgIdx < 0) {
 					team = -1; // default to world features
+					allyteam = -1;
+				} else {
+					allyteam = teamHandler->AllyTeam(team);
 				}
 
 				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
@@ -2583,8 +2581,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
 							float minposy = ground->GetHeight2(minposx, minposz);
 							const float3 upos(minposx, minposy, minposz);
+
 							CFeature* feature = new CFeature();
-							feature->Initialize(upos, featureDef, 0, 0, team, teamHandler->AllyTeam(team), "");
+							feature->Initialize(upos, featureDef, 0, 0, team, allyteam, "");
 							--total;
 						}
 					}
@@ -2748,7 +2747,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 		else if (action.extra == "end") {
 			EndSkip();
-			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 	}
 	else if (gs->frameNum > 1) {
@@ -2769,10 +2767,13 @@ bool CGame::Update()
 	if (!gs->paused) {
 		gu->modGameTime += dif * gs->speedFactor;
 	}
+
 	gu->gameTime += dif;
+
 	if (playing && !gameOver) {
 		totalGameTime += dif;
 	}
+
 	lastModGameTimeMeasure = timeNow;
 
 	time(&fpstimer);
@@ -2782,7 +2783,6 @@ bool CGame::Update()
 		thisFps = 0;
 
 		starttime = fpstimer;
-		oldframenum = gs->frameNum;
 
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
@@ -2931,7 +2931,7 @@ bool CGame::DrawWorld()
 	cursorIcons.Draw();
 	cursorIcons.Clear();
 
-	mouse->Draw();
+	mouse->DrawSelectionBox();
 
 	guihandler->DrawMapStuff(0);
 
@@ -2980,19 +2980,16 @@ bool CGame::DrawWorld()
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-
 	//reset fov
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0,1,0,1);
 	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glLoadIdentity();
 
 	// underwater overlay, part 2
 	if (camera->pos.y < 0.0f) {
@@ -3186,19 +3183,16 @@ bool CGame::Draw() {
 		DrawWorld();
 	}
 	else {
-		glLoadIdentity();
-		glDisable(GL_DEPTH_TEST);
-
 		//reset fov
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		gluOrtho2D(0,1,0,1);
 		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
 		glEnable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glLoadIdentity();
 	}
 
 	glDisable(GL_FOG);
@@ -3265,7 +3259,7 @@ bool CGame::Draw() {
 
 		if (showClock) {
 			char buf[32];
-			const int seconds = (gs->frameNum / 30);
+			const int seconds = (gs->frameNum / GAME_SPEED);
 			if (seconds < 3600) {
 				SNPRINTF(buf, sizeof(buf), "%02i:%02i", seconds / 60, seconds % 60);
 			} else {
@@ -3293,15 +3287,14 @@ bool CGame::Draw() {
 			smallFont->glPrint(0.99f, 0.90f, 1.0f, font_options, buf);
 		}
 
-#ifdef USE_GML
-		if(showMTInfo) {
-			int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
-			static int luaDrawTime = 0;
-			if(cit > luaDrawTime)
-				++luaDrawTime;
-			else if(cit < luaDrawTime)
-				--luaDrawTime;
+#if defined(USE_GML) && GML_ENABLE_SIM
+		int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
+		if(cit > luaDrawTime)
+			++luaDrawTime;
+		else if(cit < luaDrawTime)
+			--luaDrawTime;
 
+		if(showMTInfo) {
 			float drawPercent = (float)luaDrawTime / 10.0f;
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
@@ -3530,17 +3523,16 @@ void CGame::StartPlaying()
 
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
-#ifdef USE_GML
+#if defined(USE_GML) && GML_ENABLE_SIM
 	if(showMTInfo) {
 		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
-		logOutput.Print("");
-		logOutput.Print("************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		logOutput.Print("GRAPHICS WIDGETS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
-		logOutput.Print("Press " + lskey + " and click to disable specific widgets (mouse wheel scrolls the list)");
+		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
+		logOutput.Print("LUA BASED GRAPHICS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
+		logOutput.Print("For best results disable LuaShaders in SpringSettings or the Edit Settings menu");
+		logOutput.Print("Press " + lskey + " to open the widget list, which allows specific widgets to be disabled");
 		logOutput.Print("The LUA-DRAW(MT) value in the upper right corner can be used for guidance");
-		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes");
-		logOutput.Print("");
+		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes\n");
 	}
 #endif
 }
@@ -3630,13 +3622,22 @@ void CGame::ClientReadNet()
 {
 	if (gu->gameTime - lastCpuUsageTime >= 1) {
 		lastCpuUsageTime = gu->gameTime;
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+
+		if (playing) {
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+#if defined(USE_GML) && GML_ENABLE_SIM
+			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaDrawTime));
+#endif
+		} else {
+			// the CPU-load percentage is undefined prior to SimFrame()
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
+		}
 	}
 
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
-	if(!gameServer){
+	if (!gameServer) {
 		const unsigned int currentFrame = SDL_GetTicks();
 
 		if (timeLeft > 1.0f)
@@ -4153,7 +4154,7 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid size");
 					boost::uint8_t playerNum;
 					unpack >> playerNum;
-					if(playerNum < 0 || playerNum >= playerHandler->ActivePlayers())
+					if (playerNum >= playerHandler->ActivePlayers())
 						throw netcode::UnpackPacketException("Invalid player number");
 					boost::uint16_t script;
 					unpack >> script;
@@ -4346,6 +4347,10 @@ void CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
+
+			case NETMSG_TEAMSTAT: { /* LadderBot (dedicated client) only */ } break;
+			case NETMSG_REQUEST_TEAMSTAT: { /* LadderBot (dedicated client) only */ } break;
+
 			case NETMSG_AI_CREATED: {
 				try {
 					netcode::UnpackPacket pckt(packet, 2);
@@ -4363,9 +4368,11 @@ void CGame::ClientReadNet()
 					if (isLocal) {
 						const SkirmishAIData& aiData = *(skirmishAIHandler.GetLocalSkirmishAIInCreation(aiTeamId));
 						if (skirmishAIHandler.IsActiveSkirmishAI(skirmishAIId)) {
-							// we will end up here for AIs defined in the start script
-							const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-							assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
+							#ifdef DEBUG
+								// we will end up here for AIs defined in the start script
+								const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+								assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
+							#endif
 						} else {
 							// we will end up here for local AIs defined mid-game,
 							// eg. with /aicontrol
@@ -4581,6 +4588,32 @@ void CGame::ClientReadNet()
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
+			case NETMSG_CREATE_NEWPLAYER: { // server sends this second to let us know about new clients that join midgame
+				try {
+					netcode::UnpackPacket pckt(packet, 3);
+					unsigned char spectator, team, playerNum;
+					std::string name;
+					// since the >> operator uses dest size to extract data from the packet, we need to use temp variables
+					// of the same size of the packet, then convert to dest variable
+					pckt >> playerNum;
+					pckt >> spectator;
+					pckt >> team;
+					pckt >> name;
+					CPlayer player;
+					player.name = name;
+					player.spectator = spectator;
+					player.team = team;
+					player.playerNum = playerNum;
+					// add the new player
+					playerHandler->AddPlayer(player);
+					logOutput.Print("Added new player: %s", name.c_str());
+					//TODO: perhaps add a lua hook, hook should be able to reassign the player to a team and/or create a new team/allyteam
+					AddTraffic(-1, packetCode, dataLength);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
+				}
+				break;
+			}
 			default: {
 #ifdef SYNCDEBUG
 				if (!CSyncDebugger::GetInstance()->ClientReceived(inbuf))
@@ -4774,13 +4807,16 @@ void CGame::GameEnd()
 				}
 			}
 			// Finally pass it on to the CDemoRecorder.
-			record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+			record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
 			record->InitializeStats(numPlayers, numTeams, winner);
 			for (int i = 0; i < numPlayers; ++i) {
 				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 			}
 			for (int i = 0; i < numTeams; ++i) {
 				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
+				net->Send(buf);
 			}
 		}
 	}
@@ -4891,6 +4927,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 }
 
 
+
 void CGame::StartSkip(int toFrame) {
 	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
@@ -4922,6 +4959,22 @@ void CGame::StartSkip(int toFrame) {
 	skipping = true;
 }
 
+void CGame::EndSkip() {
+	skipping = false;
+
+	gu->gameTime    += skipSeconds;
+	gu->modGameTime += skipSeconds;
+
+	gs->speedFactor     = skipOldSpeed;
+	gs->userSpeedFactor = skipOldUserSpeed;
+
+	if (!skipSoundmute)
+		sound->Mute(); // sounds back on
+
+	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
+}
+
+
 
 void CGame::DrawSkip(bool blackscreen) {
 	const int framesLeft = (skipEndFrame - gs->frameNum);
@@ -4945,21 +4998,6 @@ void CGame::DrawSkip(bool blackscreen) {
 	glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
 }
 
-
-void CGame::EndSkip() {
-	skipping = false;
-
-	gu->gameTime    += skipSeconds;
-	gu->modGameTime += skipSeconds;
-
-	gs->speedFactor     = skipOldSpeed;
-	gs->userSpeedFactor = skipOldUserSpeed;
-
-	if (!skipSoundmute)
-		sound->Mute(); // sounds back on
-
-	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
-}
 
 
 void CGame::ReloadCOB(const string& msg, int player)
@@ -5219,7 +5257,7 @@ bool CGame::HasLag() const
 void CGame::SaveGame(const std::string& filename, bool overwrite)
 {
 	if (filesystem.CreateDirectory("Saves")) {
-		if (overwrite || filesystem.GetFilesize(filename) == 0) {
+		if (overwrite || !filesystem.FileExists(filename)) {
 			logOutput.Print("Saving game to %s\n", filename.c_str());
 			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 			ls->mapName = gameSetup->mapName;

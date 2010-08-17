@@ -1,4 +1,6 @@
 
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/rts/System)
+
 ADD_DEFINITIONS(-DUSE_GML)
 # USE_GML requires this
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")

@@ -120,7 +120,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		// a single unit selected
 		CUnit* unit = uh->units[*netSelected.begin()];
 		if(unit) {
-			unit->commandAI->GiveCommand(c, false);
+			unit->commandAI->GiveCommand(c, true);
 			if (MayRequireSetMaxSpeedCommand(c)) {
 				AddUnitSetMaxSpeedCommand(unit, c.options);
 			}
@@ -638,9 +638,4 @@ float3 CSelectedUnitsAI::LastQueuePosition(CUnit* unit)
 		}
 	}
 	return unit->midPos;
-}
-
-
-void CSelectedUnitsAI::Update()
-{
 }

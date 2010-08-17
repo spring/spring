@@ -392,16 +392,11 @@ bool CGameSetup::Init(const std::string& buf)
 
 	modName     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
-	luaGaiaStr  = file.SGetValueDef("1", "GAME\\ModOptions\\LuaGaia");
-	if (luaGaiaStr == "0")
-		useLuaGaia = false;
-	else
-		useLuaGaia = true;
-	luaRulesStr = file.SGetValueDef("1", "GAME\\ModOptions\\LuaRules");
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
 	hostDemo    = !demoName.empty();
 
+	file.GetDef(useLuaGaia,       "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(gameMode,         "0", "GAME\\ModOptions\\GameMode");
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");

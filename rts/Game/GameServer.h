@@ -183,6 +183,7 @@ private:
 	bool noHelperAIs;
 	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
+	bool whiteListAdditionalPlayers;
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////
@@ -195,6 +196,8 @@ private:
 	///////////////// internal stuff //////////////////
 	void InternalSpeedChange(float newSpeed);
 	void UserSpeedChange(float newSpeed, int player);
+
+	void AddAdditionalUser( const std::string& name, const std::string& passwd );
 
 	bool hasLocalClient;
 	unsigned localClientNumber;
