@@ -212,17 +212,19 @@ void CGrassDrawer::LoadGrassShaders() {
 
 
 	for (int i = GRASS_PROGRAM_NEAR_SHADOW; i < GRASS_PROGRAM_LAST; i++) {
-		grassShaders[i]->Link();
+		if(grassShaders[i]) {
+			grassShaders[i]->Link();
 
-		if (globalRendering->haveGLSL) {
-			for (int j = 0; j < NUM_UNIFORMS; j++) {
-				grassShaders[i]->SetUniformLocation(uniformNames[j]);
+			if (globalRendering->haveGLSL) {
+				for (int j = 0; j < NUM_UNIFORMS; j++) {
+					grassShaders[i]->SetUniformLocation(uniformNames[j]);
+				}
+
+				grassShaders[i]->Enable();
+				grassShaders[i]->SetUniform2f(0, 1.0f / (gs->pwr2mapx  * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
+				grassShaders[i]->SetUniform2f(1, 1.0f / (gs->mapx      * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
+				grassShaders[i]->Disable();
 			}
-
-			grassShaders[i]->Enable();
-			grassShaders[i]->SetUniform2f(0, 1.0f / (gs->pwr2mapx  * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-			grassShaders[i]->SetUniform2f(1, 1.0f / (gs->mapx      * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
-			grassShaders[i]->Disable();
 		}
 	}
 }
