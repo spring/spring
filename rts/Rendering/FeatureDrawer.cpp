@@ -5,6 +5,7 @@
 #include "FeatureDrawer.h"
 
 #include "Game/Camera.h"
+#include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -17,6 +18,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Features/Feature.h"
@@ -52,8 +54,6 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
-
-	showRezBars = !!configHandler->Get("ShowRezBars", 1);
 
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
@@ -213,8 +213,6 @@ void CFeatureDrawer::Draw()
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
-
-	DrawFeatureStats();
 }
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
@@ -247,54 +245,6 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	}
 }
 
-void CFeatureDrawer::DrawFeatureStats()
-{
-	if (!drawStat.empty()) {
-		if (!water->drawReflection) {
-			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi) {
-				DrawFeatureStatBars(*fi);
-			}
-		}
-
-		drawStat.clear();
-	}
-}
-
-void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
-{
-	float3 interPos = feature->pos;
-	interPos.y += feature->height + 5.0f;
-
-	glPushMatrix();
-	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glCallList(CCamera::billboardList);
-
-	const float recl = feature->reclaimLeft;
-	const float rezp = feature->resurrectProgress;
-
-	// black background for the bar
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
-
-	// rez/metalbar
-	const float rmin = std::min(recl, rezp) * 10.0f;
-	if (rmin > 0.0f) {
-		glColor3f(1.0f, 0.0f, 1.0f);
-		glRectf(-5.0f, 4.0f, rmin - 5.0f, 6.0f);
-	}
-	if (recl > rezp) {
-		float col = 0.8 - 0.3 * recl;
-		glColor3f(col, col, col);
-		glRectf(rmin - 5.0f, 4.0f, recl * 10.0f - 5.0f, 6.0f);
-	}
-	if (recl < rezp) {
-		glColor3f(0.5f, 0.0f, 1.0f);
-		glRectf(rmin - 5.0f, 4.0f, rezp * 10.0f - 5.0f, 6.0f);
-	}
-
-	glPopMatrix();
-}
-
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 {
 	if (!camera->InView(feature->pos, feature->radius * 4.0f)) { return false; }
@@ -305,7 +255,10 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 
 	unitDrawer->SetTeamColour(feature->team, feature->tempalpha);
 
-	feature->model->DrawStatic();
+	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature->id))) {
+		feature->model->DrawStatic();
+	}
+
 	glPopMatrix();
 
 	return true;
@@ -410,6 +363,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int 
 
 void CFeatureDrawer::DrawShadowPass()
 {
+	glDisable(GL_CULL_FACE); //FIXME: enable culling for s3o models
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -428,28 +382,29 @@ void CFeatureDrawer::DrawShadowPass()
 		//
 		// GetVisibleFeatures(1, false);
 
-		if (!globalRendering->atiHacks) {
-			// FIXME: why does texture alpha not work with shadows on ATI?
-			// need the alpha-mask for transparent features
-			glEnable(GL_TEXTURE_2D);
-			glPushAttrib(GL_COLOR_BUFFER_BIT);
-			glEnable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, 0.5f);
-		}
+		// need the alpha-mask for transparent features
+		glEnable(GL_TEXTURE_2D);
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.5f);
+
+		// needed for 3do models (else they will use any currently bound texture)
+		// note: texture0 is by default a 1x1 texture with rgba(0,0,0,255)
+		// (we are just interested in the 255 alpha here)
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawOpaqueFeatures(modelType);
 		}
 
-		if (!globalRendering->atiHacks) {
-			glPopAttrib();
-			glDisable(GL_TEXTURE_2D);
-		}
+		glPopAttrib();
+		glDisable(GL_TEXTURE_2D);
 	}
 
 	po->Disable();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	glEnable(GL_CULL_FACE);
 }
 
 
@@ -464,7 +419,6 @@ public:
 	bool farFeatures;
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
-	std::vector<CFeature*>* statFeatures;
 
 	void DrawQuad(int x, int y)
 	{
@@ -500,11 +454,8 @@ public:
 						continue;
 				}
 
-				const float sqDist = (f->pos - camera->pos).SqLength2D();
+				const float sqDist = (f->pos - camera->pos).SqLength();
 				const float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
-
-				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
-					statFeatures->push_back(f);
 
 				if (sqDist < farLength) {
 					float sqFadeDistE;
@@ -557,7 +508,6 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = drawFar;
-	drawer.statFeatures = showRezBars ? &drawStat : NULL;
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }

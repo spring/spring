@@ -135,6 +135,7 @@ CEventHandler::CEventHandler()
 
 	SetupEvent("AICallIn", NULL, UNSYNCED_BIT);
 	SetupEvent("DrawUnit", NULL, UNSYNCED_BIT);
+	SetupEvent("DrawFeature", NULL, UNSYNCED_BIT);
 
 	// LuaRules
 	SetupEvent("CommandFallback",        NULL, CONTROL_BIT);

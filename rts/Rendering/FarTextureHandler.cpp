@@ -112,8 +112,6 @@ float2 CFarTextureHandler::GetTextureCoords(const int& farTextureNum, const int&
  */
 void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 {
-	GML_STDMUTEX_LOCK(tex); // CreateFarTextures
-
 	const S3DModel* model = obj->model;
 
 	//! make space in the std::vectors

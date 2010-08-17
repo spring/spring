@@ -33,18 +33,18 @@ CCameraHandler::CCameraHandler()
 	cameraTimeLeft = 0.0f;
 
 	// FPS camera must always be the first one in the list
-	std::vector<CCameraController*>& camCtrls = camControllers;
-	camCtrls.push_back(new CFPSController());         // 0
-	camCtrls.push_back(new COverheadController());    // 1
-	camCtrls.push_back(new CTWController());          // 2
-	camCtrls.push_back(new CRotOverheadController()); // 3
-	camCtrls.push_back(new CFreeController());        // 4
-	camCtrls.push_back(new SmoothController());       // 5
-	camCtrls.push_back(new COrbitController());       // 6
-	camCtrls.push_back(new COverviewController());    // 7, needs to be last (ToggleOverviewCamera())
+	camControllers.resize(CAMERA_MODE_LAST);
+	camControllers[CAMERA_MODE_FIRSTPERSON] = new CFPSController();
+	camControllers[CAMERA_MODE_OVERHEAD   ] = new COverheadController();
+	camControllers[CAMERA_MODE_TOTALWAR   ] = new CTWController();
+	camControllers[CAMERA_MODE_ROTOVERHEAD] = new CRotOverheadController();
+	camControllers[CAMERA_MODE_FREE       ] = new CFreeController();
+	camControllers[CAMERA_MODE_SMOOTH     ] = new SmoothController();
+	camControllers[CAMERA_MODE_ORBIT      ] = new COrbitController();
+	camControllers[CAMERA_MODE_OVERVIEW   ] = new COverviewController();
 
-	for (unsigned int i = 0; i < camCtrls.size(); i++) {
-		nameMap[camCtrls[i]->GetName()] = i;
+	for (unsigned int i = 0; i < camControllers.size(); i++) {
+		nameMap[camControllers[i]->GetName()] = i;
 	}
 
 	int modeIndex;
@@ -54,8 +54,10 @@ CCameraHandler::CCameraHandler()
 	} else {
 		modeIndex = configHandler->Get("CamMode", 5);
 	}
+
 	const unsigned int mode =
-		(unsigned int)std::max(0, std::min(modeIndex, (int)camCtrls.size() - 1));
+		(unsigned int)std::max(0, std::min(modeIndex, (int)camControllers.size() - 1));
+
 	currCamCtrlNum = mode;
 	currCamCtrl = camControllers[currCamCtrlNum];
 
@@ -84,7 +86,7 @@ CCameraHandler::CCameraHandler()
 
 CCameraHandler::~CCameraHandler()
 {
-	while(!camControllers.empty()){
+	while (!camControllers.empty()){
 		delete camControllers.back();
 		camControllers.pop_back();
 	}
@@ -209,10 +211,9 @@ void CCameraHandler::ToggleState()
 
 void CCameraHandler::ToggleOverviewCamera()
 {
-	const unsigned int ovCamNum = camControllers.size() - 1;
 	if (controllerStack.empty()) {
 		PushMode();
-		SetCameraMode(ovCamNum);
+		SetCameraMode(CAMERA_MODE_OVERVIEW);
 	}
 	else {
 		PopMode();
@@ -301,35 +302,34 @@ void CCameraHandler::PushAction(const Action& action)
 	const std::string cmd = action.command;
 
 	if (cmd == "viewfps") {
-		SetCameraMode(0);
+		SetCameraMode(CAMERA_MODE_FIRSTPERSON);
 	}
 	else if (cmd == "viewta") {
-		SetCameraMode(1);
+		SetCameraMode(CAMERA_MODE_OVERHEAD);
 	}
 	else if (cmd == "viewtw") {
-		SetCameraMode(2);
+		SetCameraMode(CAMERA_MODE_TOTALWAR);
 	}
 	else if (cmd == "viewrot") {
-		SetCameraMode(3);
+		SetCameraMode(CAMERA_MODE_ROTOVERHEAD);
 	}
 	else if (cmd == "viewfree") {
-		SetCameraMode(4);
+		SetCameraMode(CAMERA_MODE_FREE);
 	}
 	else if (cmd == "viewov") {
-		SetCameraMode(5);
+		SetCameraMode(CAMERA_MODE_OVERVIEW);
 	}
 	else if (cmd == "viewlua") {
-		SetCameraMode(6);
+		SetCameraMode(CAMERA_MODE_SMOOTH); // ?
 	}
 	else if (cmd == "vieworbit") {
-		SetCameraMode(7);
+		SetCameraMode(CAMERA_MODE_ORBIT);
 	}
 
 	else if (cmd == "viewtaflip") {
-		COverheadController* taCam =
-				dynamic_cast<COverheadController*>(camControllers[1]);
-		SmoothController* smCam =
-				dynamic_cast<SmoothController*>(camControllers[5]);
+		COverheadController* taCam = dynamic_cast<COverheadController*>(camControllers[CAMERA_MODE_OVERHEAD]);
+		SmoothController* smCam = dynamic_cast<SmoothController*>(camControllers[CAMERA_MODE_SMOOTH]);
+
 		if (taCam) {
 			if (!action.extra.empty()) {
 				taCam->flipped = !!atoi(action.extra.c_str());

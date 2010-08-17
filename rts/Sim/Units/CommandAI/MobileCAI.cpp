@@ -31,7 +31,7 @@
 #include "Util.h"
 #include "GlobalUnsynced.h"
 
-
+#define BUGGER_OFF_TTL 200
 #define MAX_CLOSE_IN_RETRY_TICKS 30
 
 
@@ -72,7 +72,7 @@ CMobileCAI::CMobileCAI():
 	lastPC(-1),
 //	patrolTime(0),
 	maxWantedSpeed(0),
-	lastBuggerOffTime(-200),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
 	commandPos1(ZeroVector),
@@ -93,7 +93,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	lastPC(-1),
 //	patrolTime(0),
 	maxWantedSpeed(0),
-	lastBuggerOffTime(-200),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
 	commandPos1(ZeroVector),
@@ -364,6 +364,8 @@ bool CMobileCAI::LandRepairIfNeeded()
 
 void CMobileCAI::SlowUpdate()
 {
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+		return;
 	bool wantToLand = false;
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
 		wantToLand = LandRepairIfNeeded();
@@ -444,19 +446,22 @@ void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
 */
 void CMobileCAI::ExecuteMove(Command &c)
 {
-	float3 pos = float3(c.params[0], c.params[1], c.params[2]);
-	if(pos != goalPos){
-		SetGoal(pos, owner->pos);
+	const float3 cmdPos(c.params[0], c.params[1], c.params[2]);
+
+	if (cmdPos != goalPos) {
+		SetGoal(cmdPos, owner->pos);
 	}
-	if((owner->pos - goalPos).SqLength2D() < cancelDistance ||
-			owner->moveType->progressState == AMoveType::Failed){
+	if ((owner->pos - goalPos).SqLength2D() < cancelDistance ||
+			owner->moveType->progressState == AMoveType::Failed) {
 		FinishCommand();
 	}
 	return;
 }
 
 void CMobileCAI::ExecuteLoadUnits(Command &c) {
-	CTransportUnit* tran = dynamic_cast<CTransportUnit*>(uh->units[(int) c.params[0]]);
+	CUnit* unit = uh->GetUnit(c.params[0]);
+	CTransportUnit* tran = dynamic_cast<CTransportUnit*>(unit);
+
 	if (!tran) {
 		FinishCommand();
 		return;
@@ -476,7 +481,6 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 		return;
 	}
 
-	CUnit* unit = uh->units[(int) c.params[0]];
 	if (!unit) {
 		return;
 	}
@@ -619,15 +623,16 @@ void CMobileCAI::ExecuteGuard(Command &c)
 {
 	assert(owner->unitDef->canGuard);
 	assert(!c.params.empty());
-	if(int(c.params[0]) >= 0 && uh->units[int(c.params[0])] != NULL
-			&& UpdateTargetLostTimer(int(c.params[0]))){
-		CUnit* guarded = uh->units[int(c.params[0])];
-		if(owner->unitDef->canAttack && guarded->lastAttack + 40 < gs->frameNum
+
+	CUnit* guarded = uh->GetUnit(c.params[0]);
+
+	if (guarded != NULL && UpdateTargetLostTimer(guarded->id)) {
+		if (owner->unitDef->canAttack && guarded->lastAttack + 40 < gs->frameNum
 				&& IsValidTarget(guarded->lastAttacker))
 		{
 			StopSlowGuard();
 			Command nc;
-			nc.id=CMD_ATTACK;
+			nc.id = CMD_ATTACK;
 			nc.params.push_back(guarded->lastAttacker->id);
 			nc.options = c.options;
 			commandQue.push_front(nc);
@@ -708,12 +713,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			const unsigned int targetID = (unsigned int) c.params[0];
-			const bool legalTarget      = (targetID < uh->MaxUnits());
-			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
+			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
-			if (legalTarget && targetUnit != NULL && targetUnit != owner) {
+			if (targetUnit != NULL && targetUnit != owner) {
 				float3 fix = targetUnit->pos + owner->posErrorVector * 128;
 				float3 diff = float3(fix - owner->pos).Normalize();
 
@@ -972,60 +975,61 @@ void CMobileCAI::DrawCommands(void)
 	}
 
 	CCommandQueue::iterator ci;
-	for(ci=commandQue.begin();ci!=commandQue.end();++ci){
-		switch(ci->id){
-			case CMD_MOVE:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		switch (ci->id) {
+			case CMD_MOVE: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
 				break;
 			}
-			case CMD_PATROL:{
-				const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_PATROL: {
+				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
 				break;
 			}
-			case CMD_FIGHT:{
-				if(ci->params.size() != 1){
-					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+			case CMD_FIGHT: {
+				if (ci->params.size() != 1) {
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
 					break;
 				}
 			}
 			case CMD_ATTACK:
-			case CMD_DGUN:{
+			case CMD_DGUN: {
 				if (ci->params.size() == 1) {
-					const CUnit* unit = uh->units[int(ci->params[0])];
-					if((unit != NULL) && isTrackable(unit)) {
-						const float3 endPos =
-							helper->GetUnitErrorPos(unit, owner->allyteam);
+					const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+					if ((unit != NULL) && isTrackable(unit)) {
+						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				}
 				else if (ci->params.size() >= 3) {
-					const float3 endPos(ci->params[0],ci->params[1],ci->params[2]);
+					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 				}
 				break;
 			}
-			case CMD_GUARD:{
-				const CUnit* unit = uh->units[int(ci->params[0])];
-				if((unit != NULL) && isTrackable(unit)) {
+			case CMD_GUARD: {
+				const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+				if ((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos =
 						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
 			}
-			case CMD_LOAD_ONTO:{
-				const CUnit* unit = uh->units[int(ci->params[0])];
+			case CMD_LOAD_ONTO: {
+				const CUnit* unit = uh->GetUnitUnsafe(ci->params[0]);
 				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
 				break;
 			}
-			case CMD_WAIT:{
+			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
 				break;
 			}
-			case CMD_SELFD:{
+			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}
@@ -1041,6 +1045,10 @@ void CMobileCAI::DrawCommands(void)
 
 void CMobileCAI::BuggerOff(float3 pos, float radius)
 {
+	if(radius < 0.0f) {
+		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
+		return;
+	}
 	lastBuggerOffTime = gs->frameNum;
 	buggerOffPos = pos;
 	buggerOffRadius = radius + owner->radius;
@@ -1051,7 +1059,7 @@ void CMobileCAI::NonMoving(void)
 	if (owner->usingScriptMoveType) {
 		return;
 	}
-	if(lastBuggerOffTime>gs->frameNum-200){
+	if(lastBuggerOffTime > gs->frameNum - BUGGER_OFF_TTL){
 		float3 dif=owner->pos-buggerOffPos;
 		dif.y=0;
 		float length=dif.Length();
@@ -1076,8 +1084,8 @@ void CMobileCAI::NonMoving(void)
 
 void CMobileCAI::FinishCommand(void)
 {
-	if(!(commandQue.front().options & INTERNAL_ORDER)){
-		lastUserGoal=owner->pos;
+	if (!(commandQue.front().options & INTERNAL_ORDER)) {
+		lastUserGoal = owner->pos;
 	}
 	StopSlowGuard();
 	CCommandAI::FinishCommand();

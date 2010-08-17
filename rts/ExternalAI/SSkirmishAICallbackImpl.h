@@ -124,7 +124,6 @@ EXPORT(int              ) skirmishAiCallback_0MULTI1FETCH3UnitDefByName0UnitDef(
 //int) skirmishAiCallback_UnitDef_getId(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getHeight(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getRadius(int teamId, int unitDefId);
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isValid(int teamId, int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getName(int teamId, int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getHumanName(int teamId, int unitDefId);
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getFileName(int teamId, int unitDefId);

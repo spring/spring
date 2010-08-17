@@ -4,6 +4,9 @@
 
 #include "mmgr.h"
 
+#include <algorithm>
+#include <boost/cstdint.hpp>
+
 #include "MouseHandler.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
@@ -20,11 +23,11 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/PlayerHandler.h"
+#include "Game/UI/UnitTracker.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Lua/LuaInputReceiver.h"
 #include "ConfigHandler.h"
-#include "Platform/errorhandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
@@ -37,11 +40,12 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTracker.h"
 #include "EventHandler.h"
+#include "Exceptions.h"
+#include "FastMath.h"
+#include "myMath.h"
 #include "Sound/ISound.h"
 #include "Sound/IEffectChannel.h"
-#include <boost/cstdint.hpp>
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
@@ -62,30 +66,41 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
-: locked(false), activeButton(-1), wasLocked(false)
+	: hardwareCursor(false)
+	, lastx(300)
+	, lasty(200)
+	, hide(true)
+	, hwHide(true)
+	, locked(false)
+	, invertMouse(false)
+	, doubleClickTime(0.0f)
+	, scrollWheelSpeed(0.0f)
+	, dragScrollThreshold(0.0f)
+	, crossSize(0.0f)
+	, crossAlpha(0.0f)
+	, crossMoveScale(0.0f)
+	, activeButton(-1)
+	, dir(ZeroVector)
+	, soundMultiselID(0)
+	, cursorScale(1.0f)
+	, cursorText("")
+	, currentCursor(NULL)
+	, wasLocked(false)
+	, scrollx(0.0f)
+	, scrolly(0.0f)
 {
-	lastx = 300;
-	lasty = 200;
-	hide = true;
-	hwHide = true;
-	currentCursor = NULL;
-
 	for (int a = 1; a <= NUM_BUTTONS; a++) {
 		buttons[a].pressed = false;
 		buttons[a].lastRelease = -20;
 		buttons[a].movement = 0;
 	}
 
-	cursorScale = 1.0f;
-
 	LoadCursors();
 
-	// hide the cursor until we are ingame (not in loading screen etc.)
+	//! hide the cursor until we are ingame (hide it during loading screen etc.)
 	SDL_ShowCursor(SDL_DISABLE);
 
-#ifdef __APPLE__
-	hardwareCursor = false;
-#else
+#ifndef __APPLE__
 	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
 #endif
 
@@ -95,9 +110,11 @@ CMouseHandler::CMouseHandler()
 	doubleClickTime = configHandler->Get("DoubleClickTime", 200.0f) / 1000.0f;
 
 	scrollWheelSpeed = configHandler->Get("ScrollWheelSpeed", 25.0f);
-	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
+	scrollWheelSpeed = Clamp(scrollWheelSpeed,-255.f,255.f);
 
-	crossSize = configHandler->Get("CrossSize", 10.0f);
+	crossSize      = configHandler->Get("CrossSize", 12.0f);
+	crossAlpha     = configHandler->Get("CrossAlpha", 0.5f);
+	crossMoveScale = configHandler->Get("CrossMoveScale", 1.0f) * 0.005f;
 
 	dragScrollThreshold = configHandler->Get("MouseDragScrollThreshold", 0.3f);
 
@@ -157,10 +174,9 @@ void CMouseHandler::LoadCursors()
 
 	// the default cursor must exist
 	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
-		handleerror(0,
+		throw content_error(
 			"Unable to load default cursor. Check that you have the required\n"
-			"content packages installed in your Spring \"base/\" directory.\n",
-			"Missing Dependency: \"cursornormal\"", 0);
+			"content packages installed in your Spring \"base/\" directory.\n");
 	}
 }
 
@@ -169,22 +185,21 @@ void CMouseHandler::LoadCursors()
 
 void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 {
-	if(hide) {
-		lastx = x;
-		lasty = y;
-
-		float3 move;
-		move.x = dx;
-		move.y = dy;
-		move.z = invertMouse? -1.0f : 1.0f;
-		camHandler->GetCurrentController().MouseMove(move);
-		return;
-	}
-
 	lastx = x;
 	lasty = y;
 
+	const int screenCenterX = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
+	const int screenCenterY = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
+
+	scrollx += lastx - screenCenterX;
+	scrolly += lasty - screenCenterY;
+
 	dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
+
+	if (hide) {
+		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
+		return;
+	}
 
 	buttons[SDL_BUTTON_LEFT].movement  += (int)sqrt(float(dx*dx + dy*dy));
 	buttons[SDL_BUTTON_RIGHT].movement += (int)sqrt(float(dx*dx + dy*dy));
@@ -193,11 +208,11 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += (int)sqrt(float(dx*dx + dy*dy));
 	}
 
-	if(activeReceiver){
+	if (activeReceiver){
 		activeReceiver->MouseMove(x, y, dx, dy, activeButton);
 	}
 
-	if(inMapDrawer && inMapDrawer->keyPressed){
+	if (inMapDrawer && inMapDrawer->keyPressed){
 		inMapDrawer->MouseMove(x, y, dx, dy, activeButton);
 	}
 
@@ -305,12 +320,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 	if (activeReceiver) {
 		activeReceiver->MouseRelease(x, y, button);
-		int x, y;
-		const boost::uint8_t buttons = SDL_GetMouseState(&x, &y);
-		const boost::uint8_t mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
-		if ((buttons & mask) == 0) {
+		if(!buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_MIDDLE].pressed && !buttons[SDL_BUTTON_RIGHT].pressed)
 			activeReceiver = NULL;
-		}
 		return;
 	}
 
@@ -346,38 +357,32 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				dist=globalRendering->viewRange*1.4f;
 			float3 pos2=camera->pos+dir*dist;
 
-			float3 dir1=pos1-camera->pos;
+			float3 dir1 = pos1 - camera->pos;
 			dir1.ANormalize();
-			float3 dir2=pos2-camera->pos;
+			float3 dir2 = pos2 - camera->pos;
 			dir2.ANormalize();
 
-			float rl1=(dir1.dot(camera->right))/dir1.dot(camera->forward);
-			float ul1=(dir1.dot(camera->up))/dir1.dot(camera->forward);
+			float rl1 = dir1.dot(camera->right) / dir1.dot(camera->forward);
+			float ul1 = dir1.dot(camera->up) / dir1.dot(camera->forward);
 
-			float rl2=(dir2.dot(camera->right))/dir2.dot(camera->forward);
-			float ul2=(dir2.dot(camera->up))/dir2.dot(camera->forward);
+			float rl2 = dir2.dot(camera->right) / dir2.dot(camera->forward);
+			float ul2 = dir2.dot(camera->up) / dir2.dot(camera->forward);
 
-			if(rl1<rl2){
-				float t=rl1;
-				rl1=rl2;
-				rl2=t;
-			}
-			if(ul1<ul2){
-				float t=ul1;
-				ul1=ul2;
-				ul2=t;
-			}
+			if (rl1<rl2)
+				std::swap(rl1, rl2);
+			if (ul1<ul2)
+				std::swap(ul1, ul2);
 
 			float3 norm1,norm2,norm3,norm4;
 
-			if(ul1>0)
+			if (ul1>0)
 				norm1=-camera->forward+camera->up/fabs(ul1);
 			else if(ul1<0)
 				norm1=camera->forward+camera->up/fabs(ul1);
 			else
 				norm1=camera->up;
 
-			if(ul2>0)
+			if (ul2>0)
 				norm2=camera->forward-camera->up/fabs(ul2);
 			else if(ul2<0)
 				norm2=-camera->forward-camera->up/fabs(ul2);
@@ -495,7 +500,7 @@ void CMouseHandler::MouseWheel(float delta)
 }
 
 
-void CMouseHandler::Draw()
+void CMouseHandler::DrawSelectionBox()
 {
 	dir = hide ? camera->forward : camera->CalcPixelDir(lastx, lasty);
 	if (activeReceiver) {
@@ -526,11 +531,11 @@ void CMouseHandler::Draw()
 		float3 dir2=pos2-camera->pos;
 		dir2.Normalize();
 
-		float3 dir1S=camera->right*(dir1.dot(camera->right))/dir1.dot(camera->forward);
-		float3 dir1U=camera->up*(dir1.dot(camera->up))/dir1.dot(camera->forward);
+		float3 dir1S = camera->right * dir1.dot(camera->right) / dir1.dot(camera->forward);
+		float3 dir1U = camera->up * dir1.dot(camera->up) / dir1.dot(camera->forward);
 
-		float3 dir2S=camera->right*(dir2.dot(camera->right))/dir2.dot(camera->forward);
-		float3 dir2U=camera->up*(dir2.dot(camera->up))/dir2.dot(camera->forward);
+		float3 dir2S = camera->right * dir2.dot(camera->right) / dir2.dot(camera->forward);
+		float3 dir2U = camera->up * dir2.dot(camera->up) / dir2.dot(camera->forward);
 
 		glColor4fv(cmdColors.mouseBox);
 
@@ -573,6 +578,7 @@ void CMouseHandler::WarpMouse(int x, int y)
 		mouseInput->SetPos(int2(lastx, lasty));
 	}
 }
+
 
 // CALLINFO:
 // LuaUnsyncedRead::GetCurrentTooltip
@@ -645,6 +651,9 @@ void CMouseHandler::EmptyMsgQueUpdate()
 		return;
 	}
 
+	scrollx *= 0.5f;
+	scrolly *= 0.5f;
+
 	lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
 	lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
 
@@ -676,6 +685,8 @@ void CMouseHandler::HideMouse()
 		hwHide = true;
 		SDL_ShowCursor(SDL_DISABLE);
 		mouseInput->SetWMMouseCursor(NULL);
+		scrollx = 0.f;
+		scrolly = 0.f;
 		lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
 		lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
 		mouseInput->SetPos(int2(lastx, lasty));
@@ -751,23 +762,117 @@ void CMouseHandler::UpdateCursors()
 	}
 }
 
+void CMouseHandler::DrawScrollCursor()
+{
+	const float scaleL = fabs(std::min(0.0f,scrollx)) * crossMoveScale + 1.0f;
+	const float scaleT = fabs(std::min(0.0f,scrolly)) * crossMoveScale + 1.0f;
+	const float scaleR = fabs(std::max(0.0f,scrollx)) * crossMoveScale + 1.0f;
+	const float scaleB = fabs(std::max(0.0f,scrolly)) * crossMoveScale + 1.0f;
 
-void CMouseHandler::DrawCursor(void)
+	glDisable(GL_TEXTURE_2D);
+	glBegin(GL_TRIANGLES);
+		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
+			glVertex2f(   0.f * scaleT,  1.00f * scaleT);
+			glVertex2f( 0.33f * scaleT,  0.66f * scaleT);
+			glVertex2f(-0.33f * scaleT,  0.66f * scaleT);
+
+			glVertex2f(   0.f * scaleB, -1.00f * scaleB);
+			glVertex2f( 0.33f * scaleB, -0.66f * scaleB);
+			glVertex2f(-0.33f * scaleB, -0.66f * scaleB);
+
+			glVertex2f(-1.00f * scaleL,    0.f * scaleL);
+			glVertex2f(-0.66f * scaleL,  0.33f * scaleL);
+			glVertex2f(-0.66f * scaleL, -0.33f * scaleL);
+
+			glVertex2f( 1.00f * scaleR,    0.f * scaleR);
+			glVertex2f( 0.66f * scaleR,  0.33f * scaleR);
+			glVertex2f( 0.66f * scaleR, -0.33f * scaleR);
+
+		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
+			glVertex2f(-0.33f * scaleT,  0.66f * scaleT);
+			glVertex2f( 0.33f * scaleT,  0.66f * scaleT);
+		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
+			glVertex2f(   0.f,    0.f);
+
+		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
+			glVertex2f(-0.33f * scaleB, -0.66f * scaleB);
+			glVertex2f( 0.33f * scaleB, -0.66f * scaleB);
+		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
+			glVertex2f(   0.f,    0.f);
+
+		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
+			glVertex2f(-0.66f * scaleL,  0.33f * scaleL);
+			glVertex2f(-0.66f * scaleL, -0.33f * scaleL);
+		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
+			glVertex2f(   0.f,    0.f);
+
+		glColor4f(1.0f, 1.0f, 1.0f, crossAlpha);
+			glVertex2f( 0.66f * scaleR, -0.33f * scaleR);
+			glVertex2f( 0.66f * scaleR,  0.33f * scaleR);
+		glColor4f(0.2f, 0.2f, 0.2f, 0.f);
+			glVertex2f(   0.f,    0.f);
+	glEnd();
+
+	glEnable(GL_POINT_SMOOTH);
+
+	glPointSize(crossSize * 0.6f);
+	glBegin(GL_POINTS);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.2f * crossAlpha);
+		glVertex2f(0.f, 0.f);
+	glEnd();
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glPointSize(1.0f);
+}
+
+
+void CMouseHandler::DrawFPSCursor()
+{
+	glDisable(GL_TEXTURE_2D);
+
+	const float wingHalf = fastmath::PI / 9.0f;
+	const int stepNumHalf = 2;
+	const float step = wingHalf / stepNumHalf;
+
+	glBegin(GL_TRIANGLES);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+
+		for (float angle = 0.0f; angle < fastmath::PI2; angle += fastmath::PI2 / 3.f) {
+			for (int i = -stepNumHalf; i < stepNumHalf; i++) {
+				glVertex2f(0.1f * fastmath::sin(angle),                0.1f * fastmath::cos(angle));
+				glVertex2f(0.8f * fastmath::sin(angle +     i * step), 0.8f * fastmath::cos(angle +     i * step));
+				glVertex2f(0.8f * fastmath::sin(angle + (i+1) * step), 0.8f * fastmath::cos(angle + (i+1) * step));
+			}
+		}
+	glEnd();
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+
+void CMouseHandler::DrawCursor()
 {
 	if (guihandler)
 		guihandler->DrawCentroidCursor();
 
-	if (locked && (crossSize > 0.0f)) {
-		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-		glDisable(GL_TEXTURE_2D);
-		glLineWidth(1.49f);
-		glBegin(GL_LINES);
-			glVertex2f(0.5f - (crossSize / globalRendering->viewSizeX), 0.5f);
-			glVertex2f(0.5f + (crossSize / globalRendering->viewSizeX), 0.5f);
-			glVertex2f(0.5f, 0.5f - (crossSize / globalRendering->viewSizeY));
-			glVertex2f(0.5f, 0.5f + (crossSize / globalRendering->viewSizeY));
-		glEnd();
-		glLineWidth(1.0f);
+	if (locked) {
+		if (crossSize > 0.0f) {
+			const float xscale = (crossSize / globalRendering->viewSizeX);
+			const float yscale = (crossSize / globalRendering->viewSizeY);
+
+			glPushMatrix();
+			glTranslatef(0.5f - globalRendering->pixelX * 0.5f, 0.5f - globalRendering->pixelY * 0.5f, 0.f);
+			glScalef(xscale, yscale, 1.f);
+
+			if (gu->directControl) {
+				DrawFPSCursor();
+			} else {
+				DrawScrollCursor();
+			}
+
+			glPopMatrix();
+		}
+
 		glEnable(GL_TEXTURE_2D);
 		return;
 	}
@@ -784,6 +889,7 @@ void CMouseHandler::DrawCursor(void)
 		currentCursor->Draw(lastx, lasty, cursorScale);
 	}
 	else {
+		//! hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
 		CMouseCursor* nc = cursorFileMap["cursornormal"];
 		if (nc == NULL) {
 			currentCursor->Draw(lastx, lasty, -cursorScale);
@@ -906,8 +1012,6 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 void CMouseHandler::ConfigNotify(const std::string& key, const std::string& value)
 {
 	if (key == "MouseDragScrollThreshold") {
-		// get the new value as float
-		// the default value here will never be used
-		dragScrollThreshold = configHandler->Get(key, 0.3f);
+		dragScrollThreshold = atof(value.c_str());
 	}
 }

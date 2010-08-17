@@ -784,7 +784,6 @@ void CUnitTable::Init() {
 
 	ai->cb->GetUnitDefList(&unitDefs[0]);
 
-	// add units to UnitTable
 	for (int i = 1; i <= numDefs; i++) {
 		unitTypes[i].def      = unitDefs[i - 1];
 		unitTypes[i].category = CAT_LAST;

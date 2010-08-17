@@ -12,7 +12,7 @@
 #include "Util.h"
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
-#include "Platform/errorhandler.h"
+#include "GlobalSynced.h"
 
 CR_BIND(CTeamHandler, );
 
@@ -44,8 +44,6 @@ CTeamHandler::~CTeamHandler()
 
 void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	const bool useLuaGaia = CLuaGaia::SetConfigString(setup->luaGaiaStr);
-
 	assert(setup->teamStartingData.size() <= MAX_TEAMS);
 	teams.resize(setup->teamStartingData.size());
 
@@ -60,7 +58,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 	allyTeams = setup->allyStartingData;
 	assert(setup->allyStartingData.size() <= MAX_TEAMS);
-	if (useLuaGaia) {
+	if (gs->useLuaGaia) {
 		// Gaia adjustments
 		gaiaTeamID = static_cast<int>(teams.size());
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());

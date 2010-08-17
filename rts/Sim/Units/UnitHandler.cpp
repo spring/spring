@@ -107,7 +107,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	if (!serializing) {
 		airBaseHandler = new CAirBaseHandler;
 
-		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->numUnitDefs + 1));
+		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
 	}
 }
 
@@ -446,28 +446,12 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		if (pos.y < orgh - hdif && pos.y < h - hdif) { return 0; }
 	}
 
-	if (!unitdef->floater && groundheight < -unitdef->maxWaterDepth) {
-		// ground is deeper than our maxWaterDepth, cannot build here
+	if(!unitdef->IsTerrainHeightOK(groundheight))
 		return 0;
-	}
-	if (groundheight > -unitdef->minWaterDepth) {
-		// ground is shallower than our minWaterDepth, cannot build here
-		return 0;
-	}
 
 	return ret;
 }
 
-
-
-void CUnitHandler::UpdateWind(float x, float z, float strength)
-{
-	//todo: save windgens in list (would be a little faster)
-	for(std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-		if((*usi)->unitDef->windGenerator)
-			(*usi)->UpdateWind(x,z,strength);
-	}
-}
 
 
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)

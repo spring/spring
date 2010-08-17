@@ -165,6 +165,7 @@ public:
 	typedef pair<int,EnemyInfo*> iepPair;
 
 private:
+	std::string GetLogFileSubPath(int teamId) const;
 	void RemoveLogFile(string relFileName) const;
 	void UpdateEventRemove(UpdateEvent* e);
 	void UpdateEventReorderFirst();

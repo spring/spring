@@ -106,8 +106,9 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 
 	if (distanceToGoal < DETAILED_DISTANCE) {
 		// Get a detailed path.
-		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef,
-				newPath->detailedPath, true, false, 10000, true, ownerId);
+		IPath::SearchResult result =
+			pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath, true, false, 10000, true, ownerId);
+		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			retValue = Store(newPath);
@@ -117,6 +118,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 	} else if (distanceToGoal < ESTIMATE_DISTANCE) {
 		// Get an estimate path.
 		IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath, ownerId, synced);
+		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			// Turn a part of it into detailed path.
@@ -131,6 +133,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 				(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
 				((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
 				IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath, synced);
+				newPath->searchResult = result;
 
 				if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 					EstimateToDetailed(*newPath, startPos, ownerId);
@@ -145,6 +148,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 	} else {
 		// Get a low-res. estimate path.
 		IPath::SearchResult result = pe2->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath2, synced);
+		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			// Turn a part of it into hi-res. estimate path.
@@ -156,6 +160,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 		} else {
 			// sometimes the 32*32 squares can be wrong so if it fails to get a path also try with 8*8 squares
 			IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath, synced);
+			newPath->searchResult = result;
 
 			if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 				EstimateToDetailed(*newPath, startPos, ownerId);
@@ -294,22 +299,22 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 {
 	SCOPED_TIMER("PFS");
 
-	//0 indicate a no-path id.
+	// 0 indicates a no-path id
 	if (pathId == 0)
-		return float3(-1, -1, -1);
+		return float3(-1.0f, -1.0f, -1.0f);
 
 	if (numRetries > 4)
-		return float3(-1, -1, -1);
+		return float3(-1.0f, -1.0f, -1.0f);
 
 	//Find corresponding multipath.
 	std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
 	if (pi == pathMap.end())
-		return float3(-1, -1, -1);
+		return float3(-1.0f, -1.0f, -1.0f);
 	MultiPath* multiPath = pi->second;
 
 	if (callerPos == ZeroVector) {
 		if (!multiPath->detailedPath.path.empty())
-			callerPos=multiPath->detailedPath.path.back();
+			callerPos = multiPath->detailedPath.path.back();
 	}
 
 	// check if detailed path needs bettering
@@ -335,15 +340,23 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		}
 	}
 
-	//Repeat until a waypoint distant enought are found.
 	float3 waypoint;
 	do {
-		//Get next waypoint.
+		// get the next waypoint from the high-res path
+		//
+		// if this is not possible, then either we are
+		// at the goal OR the path could not reach all
+		// the way to it (ie. a GoalOutOfRange result)
 		if (multiPath->detailedPath.path.empty()) {
-			if (multiPath->estimatedPath2.path.empty() && multiPath->estimatedPath.path.empty())
-				return multiPath->finalGoal;
-			else
+			if (multiPath->estimatedPath2.path.empty() && multiPath->estimatedPath.path.empty()) {
+				if (multiPath->searchResult == IPath::Ok) {
+					return multiPath->finalGoal;
+				} else {
+					return float3(-1.0f, -1.0f, -1.0f);
+				}
+			} else {
 				return NextWaypoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
+			}
 		} else {
 			waypoint = multiPath->detailedPath.path.back();
 			multiPath->detailedPath.path.pop_back();

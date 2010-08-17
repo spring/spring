@@ -32,6 +32,7 @@ LIST(APPEND engineLibraries ${engineCommonLibraries})
 
 
 ### Assemble external incude dirs
+INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${OPENAL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
 
@@ -60,7 +61,7 @@ INSTALL(TARGETS spring DESTINATION ${BINDIR})
 #	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 #ENDIF (MINGW)
 
-# Only install spring-mt executable & dependencies
+# Only install spring (default) executable & dependencies
 # use case: make install-spring
 CreateEngineBuildInstallTarget(spring)
 

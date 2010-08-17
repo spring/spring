@@ -168,7 +168,6 @@ extern boost::mutex caimutex;
 extern boost::mutex decalmutex;
 extern boost::mutex treemutex;
 extern boost::mutex modelmutex;
-extern boost::mutex texmutex;
 extern boost::mutex mapmutex;
 extern boost::mutex inmapmutex;
 extern boost::mutex tempmutex;
@@ -187,7 +186,6 @@ extern boost::mutex rprojmutex;
 extern boost::mutex rflashmutex;
 extern boost::mutex rpiecemutex;
 extern boost::mutex rfeatmutex;
-extern boost::mutex laycmdmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -202,6 +200,7 @@ extern boost::recursive_mutex &qnummutex;
 extern boost::recursive_mutex &groupmutex;
 extern boost::recursive_mutex &grpselmutex;
 extern boost::recursive_mutex simmutex;
+extern boost::recursive_mutex laycmdmutex;
 
 #if GML_MUTEX_PROFILER
 #	include "System/TimeProfiler.h"

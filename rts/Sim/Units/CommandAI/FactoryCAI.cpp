@@ -344,32 +344,36 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 
 void CFactoryCAI::SlowUpdate()
 {
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+		return;
 	if (commandQue.empty() || owner->beingBuilt) {
 		return;
 	}
 
-	CFactory* fac=(CFactory*)owner;
+	CFactory* fac = (CFactory*) owner;
 
 	unsigned int oldSize;
 	do {
 		Command& c = commandQue.front();
 		oldSize = commandQue.size();
-		map<int,BuildOption>::iterator boi;
-		if ((boi=buildOptions.find(c.id))!=buildOptions.end()) {
-			const UnitDef *def = unitDefHandler->GetUnitDefByName(boi->second.name);
+		map<int, BuildOption>::iterator boi;
+
+		if ((boi = buildOptions.find(c.id)) != buildOptions.end()) {
+			const UnitDef* def = unitDefHandler->GetUnitDefByName(boi->second.name);
+
 			if (building) {
 				if (!fac->curBuild && !fac->quedBuild) {
-					building=false;
+					building = false;
 					if (!repeatOrders || c.options & DONT_REPEAT) {
 						boi->second.numQued--;
 					}
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();
 				}
+
 				// This can only be true if two factories started building
 				// the restricted unit in the same simulation frame
-				else if(uh->unitsByDefs[owner->team][def->id].size() > def->maxThisUnit){ //unit restricted?
-					CFactory* fac=(CFactory*)owner;
+				else if (uh->unitsByDefs[owner->team][def->id].size() > def->maxThisUnit) { //unit restricted?
 					building = false;
 					fac->StopBuild();
 					CancelRestrictedUnit(c, boi->second);
@@ -383,10 +387,10 @@ void CFactoryCAI::SlowUpdate()
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();
 				}
-				else if(uh->unitsByDefs[owner->team][def->id].size() >= def->maxThisUnit){ //unit restricted?
+				else if (uh->unitsByDefs[owner->team][def->id].size() >= def->maxThisUnit) { //unit restricted?
 					CancelRestrictedUnit(c, boi->second);
 				}
-				else if(uh->MaxUnitsPerTeam() > teamHandler->Team(owner->team)->units.size()){  //max unitlimit reached?
+				else if(uh->MaxUnitsPerTeam() > teamHandler->Team(owner->team)->units.size()) {  //max unitlimit reached?
 					fac->StartBuild(def);
 					building=true;
 				}
@@ -466,27 +470,27 @@ void CFactoryCAI::DrawCommands(void)
 	CCommandQueue::iterator ci;
 	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
 		switch(ci->id){
-			case CMD_MOVE:{
-				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+			case CMD_MOVE: {
+				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
 				break;
 			}
-			case CMD_FIGHT:{
-				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+			case CMD_FIGHT: {
+				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
 				break;
 			}
-			case CMD_PATROL:{
-				const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
+			case CMD_PATROL: {
+				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
 				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
 				break;
 			}
-			case CMD_ATTACK:{
-				if(ci->params.size()==1){
-					const CUnit* unit = uh->units[int(ci->params[0])];
-					if((unit != NULL) && isTrackable(unit)) {
-						const float3 endPos =
-							helper->GetUnitErrorPos(unit, owner->allyteam);
+			case CMD_ATTACK: {
+				if (ci->params.size() == 1) {
+					const CUnit* unit = uh->GetUnit(ci->params[0]);
+
+					if ((unit != NULL) && isTrackable(unit)) {
+						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
 					}
 				} else {
@@ -495,20 +499,20 @@ void CFactoryCAI::DrawCommands(void)
 				}
 				break;
 			}
-			case CMD_GUARD:{
-				const CUnit* unit = uh->units[int(ci->params[0])];
+			case CMD_GUARD: {
+				const CUnit* unit = uh->GetUnit(ci->params[0]);
+
 				if ((unit != NULL) && isTrackable(unit)) {
-					const float3 endPos =
-						helper->GetUnitErrorPos(unit, owner->allyteam);
+					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
 				}
 				break;
 			}
-			case CMD_WAIT:{
+			case CMD_WAIT: {
 				DrawWaitIcon(*ci);
 				break;
 			}
-			case CMD_SELFD:{
+			case CMD_SELFD: {
 				lineDrawer.DrawIconAtLastPos(ci->id);
 				break;
 			}

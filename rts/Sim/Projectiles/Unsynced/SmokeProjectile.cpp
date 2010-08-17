@@ -43,23 +43,25 @@ CSmokeProjectile::CSmokeProjectile()
 	sizeExpansion(0.0f),
 	textureNum(0)
 {
-	checkCol=false;
+	checkCol = false;
 }
 
-void CSmokeProjectile::Init(const float3& pos, CUnit *owner)
+void CSmokeProjectile::Init(const float3& pos, CUnit* owner)
 {
-	textureNum=(int)(gu->usRandInt() % projectileDrawer->smoketex.size());
+	textureNum = (int) (gu->usRandInt() % projectileDrawer->smoketex.size());
 
-	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10.0f)
-		useAirLos=true;
+	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10.0f) {
+		useAirLos = true;
+	}
 
-	if(!owner)
-		alwaysVisible=true;
+	if (!owner) {
+		alwaysVisible = true;
+	}
 
 	CProjectile::Init(pos, owner);
 }
 
-CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color):
+CSmokeProjectile::CSmokeProjectile(const float3& pos, const float3& speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float color):
 	CProjectile(pos, speed, owner, false, false, false),
 	color(color),
 	age(0),
@@ -67,16 +69,18 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float t
 	startSize(startSize),
 	sizeExpansion(sizeExpansion)
 {
-	ageSpeed=1.0f/ttl;
-	checkCol=false;
-	castShadow=true;
-	textureNum=(int)(gu->usRandInt() % projectileDrawer->smoketex.size());
+	ageSpeed = 1.0f / ttl;
+	checkCol = false;
+	castShadow = true;
+	textureNum = (int) (gu->usRandInt() % projectileDrawer->smoketex.size());
 
-	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
-		useAirLos=true;
+	if ((pos.y - ground->GetApproximateHeight(pos.x, pos.z)) > 10) {
+		useAirLos = true;
+	}
 
-	if (!owner)
-		alwaysVisible=true;
+	if (!owner) {
+		alwaysVisible = true;
+	}
 }
 
 CSmokeProjectile::~CSmokeProjectile()
@@ -87,33 +91,34 @@ CSmokeProjectile::~CSmokeProjectile()
 
 void CSmokeProjectile::Update()
 {
-	pos+=speed;
-	pos+=wind.GetCurrentWind()*age*0.05f;
-	age+=ageSpeed;
-	size+=sizeExpansion;
-	if(size<startSize)
-		size+=(startSize-size)*0.2f;
-	drawRadius=size;
-	if(age>1){
-		age=1;
-		deleteMe=true;
+	pos += speed;
+	pos += wind.GetCurrentWind() * age * 0.05f;
+	age += ageSpeed;
+	size += sizeExpansion;
+	if (size < startSize) {
+		size+=(startSize-size) * 0.2f;
+	}
+	drawRadius = size;
+	if (age > 1) {
+		age = 1;
+		deleteMe = true;
 	}
 }
 
 void CSmokeProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	unsigned char alpha=(unsigned char) ((1-age)*255);
-	col[0]=(unsigned char) (color*alpha);
-	col[1]=(unsigned char) (color*alpha);
-	col[2]=(unsigned char) (color*alpha);
-	col[3]=(unsigned char)alpha/*-alphaFalloff*globalRendering->timeOffset*/;
+	unsigned char alpha = (unsigned char) ((1 - age) * 255);
+	col[0] = (unsigned char) (color * alpha);
+	col[1] = (unsigned char) (color * alpha);
+	col[2] = (unsigned char) (color * alpha);
+	col[3] = (unsigned char) alpha/*-alphaFalloff*globalRendering->timeOffset*/;
 	//int frame=textureNum;
 	//float xmod=0.125f+(float(int(frame%6)))/16;
 	//float ymod=(int(frame/6))/16.0f;
 
-	const float interSize=size+sizeExpansion*globalRendering->timeOffset;
+	const float interSize = size + (sizeExpansion * globalRendering->timeOffset);
 	const float3 pos1 ((camera->right - camera->up) * interSize);
 	const float3 pos2 ((camera->right + camera->up) * interSize);
 

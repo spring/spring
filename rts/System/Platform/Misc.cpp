@@ -16,6 +16,7 @@
 #include <mach-o/dyld.h>
 #include <stdlib.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
+#include <climits> // for PATH_MAX
 
 #else
 

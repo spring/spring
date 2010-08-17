@@ -27,7 +27,6 @@ class LuaSyncedRead {
 		static int IsGameOver(lua_State* L);
 
 		static int GetGaiaTeamID(lua_State* L);
-		static int GetRulesInfoMap(lua_State* L);
 
 		static int GetGameSpeed(lua_State* L);
 		static int GetGameFrame(lua_State* L);

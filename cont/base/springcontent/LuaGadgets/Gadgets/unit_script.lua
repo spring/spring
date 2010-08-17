@@ -103,6 +103,7 @@ local default_return_values = {
 
 -- Localize often used methods.
 local pairs = pairs
+local table_remove = table.remove
 
 local co_create = coroutine.create
 local co_resume = coroutine.resume
@@ -193,12 +194,12 @@ local sleepers = {}
 --------------------------------------------------------------------------------
 
 -- Helper for Destroy and Signal.
+-- Must not change the relative order of all other elements!
 local function Remove(tab, item)
 	local n = #tab
 	for i = 1,n do
 		if (tab[i] == item) then
-			tab[i] = tab[n]
-			tab[n] = nil
+			table_remove(tab, i)
 			return
 		end
 	end
@@ -244,11 +245,11 @@ end
 -- Helper for MoveFinished and TurnFinished
 local function AnimFinished(waitingForAnim, piece, axis)
 	local index = piece * 3 + axis
-	local threads = waitingForAnim[index]
-	if threads then
+	local wthreads = waitingForAnim[index]
+	if wthreads then
 		waitingForAnim[index] = {}
-		for i=1,#threads do
-			WakeUp(threads[i])
+		for i=1,#wthreads do
+			WakeUp(wthreads[i])
 		end
 	end
 end
@@ -338,7 +339,9 @@ function Spring.UnitScript.StartThread(fun, ...)
 		signal_mask = (co_running() and activeUnit.threads[co_running()].signal_mask or 0),
 		unitID = activeUnit.unitID,
 	}
+
 	activeUnit.threads[co] = thread
+
 	-- COB doesn't start thread immediately: it only sets up stack and
 	-- pushes parameters on it for first time the thread is scheduled.
 	-- Here it is easier however to start thread immediately, so we don't need
@@ -387,7 +390,11 @@ end
 
 -- may be useful to other gadgets
 function Spring.UnitScript.GetScriptEnv(unitID)
-	return units[unitID].env
+	local unit = units[unitID]
+	if unit then
+		return unit.env
+	end
+	return nil
 end
 
 function Spring.UnitScript.GetLongestReloadTime(unitID)

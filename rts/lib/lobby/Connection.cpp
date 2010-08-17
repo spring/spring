@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include "lib/md5/md5.h"
 #include "lib/md5/base64.h"
+#include "lib/streflop/streflop_cond.h"
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;
@@ -39,6 +40,12 @@ void Connection::Connect(const std::string& server, int port)
 	using namespace boost::asio;
 	boost::system::error_code err;
 	ip::address tempAddr = ip::address::from_string(server, err);
+#ifdef STREFLOP_H
+	//! (date of note: 08/05/10)
+	//! something in from_string() is invalidating the FPU flags
+	//! tested on win2k and linux (not happening there)
+	streflop_init<streflop::Simple>();
+#endif
 	if (err)
 	{
 		// error, maybe a hostname?
@@ -54,7 +61,6 @@ void Connection::Connect(const std::string& server, int port)
 		}
 		tempAddr = iter->endpoint().address();
 	}
-
 	ip::tcp::endpoint serverep(tempAddr, port);
 	sock.async_connect(serverep, boost::bind(&Connection::ConnectCallback, this, placeholders::error));
 }

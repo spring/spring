@@ -7,11 +7,6 @@
 add_definitions(-DBUILDING_SKIRMISH_AI)
 
 set(SKIRMISH_SRC            "${CMAKE_CURRENT_SOURCE_DIR}")
-set(SKIRMISH_AI_LIBS        "${AI_LIBS_DIR}/AI/Skirmish")
-set(SKIRMISH_AI_DATA        "${AI_DATA_DIR}/AI/Skirmish")
-set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
-MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
-
 
 # Print a message, but only if we are allowed to speak.
 macro    (SkirmishAIMessage type msg)

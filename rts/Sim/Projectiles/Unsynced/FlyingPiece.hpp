@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef FLYING_PIECE_HDR
-#define FLYING_PIECE_HDR
+#ifndef FLYING_PIECE_H
+#define FLYING_PIECE_H
 
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
 #include "mmgr.h"
@@ -9,6 +9,7 @@
 #endif
 
 #include "System/float3.h"
+#include "System/GlobalUnsynced.h"
 
 class CVertexArray;
 struct S3DOPrimitive;
@@ -21,15 +22,35 @@ struct FlyingPiece {
 	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 	#endif
 
-	FlyingPiece(): prim(0), object(0), verts(0) {}
+public:
+	FlyingPiece(int team, const float3& pos, const float3& speed, const S3DOPiece* _object, const S3DOPrimitive* piece)
+	{
+		Init(team, pos, speed);
+
+		//! 3D0
+		prim = piece;
+		object = _object;
+	}
+
+	FlyingPiece(int team, const float3& pos, const float3& speed, int textureType, SS3OVertex* _verts)
+	{
+		Init(team, pos, speed);
+
+		//! S30
+		verts = _verts;
+		texture = textureType;
+	}
+
 	~FlyingPiece();
 
-	void Draw(int, size_t*, size_t*, CVertexArray*);
+	void Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertexArray* va);
 
+public:
 	const S3DOPrimitive* prim;
 	const S3DOPiece* object;
 
-	SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
+	SS3OVertex* verts;
+	size_t texture;
 
 	float3 pos;
 	float3 speed;
@@ -37,8 +58,25 @@ struct FlyingPiece {
 	float rot;
 	float rotSpeed;
 
-	size_t texture;
 	size_t team;
+
+private:
+	void Init(int _team, const float3& _pos, const float3& _speed)
+	{
+		prim   = NULL;
+		object = NULL;
+		verts  = NULL;
+
+		pos   = _pos;
+		speed = _speed;
+
+		texture = 0;
+		team    = _team;
+
+		rotAxis  = gu->usRandVector().ANormalize();
+		rotSpeed = gu->usRandFloat() * 0.1f;
+		rot = 0;
+	}
 };
 
-#endif
+#endif // FLYING_PIECE_H

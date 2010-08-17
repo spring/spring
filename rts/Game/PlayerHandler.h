@@ -49,7 +49,7 @@ public:
 	/**
 	 * @brief Number of players the game was created for
 	 * 
-	 * Constant at runtime
+	 * Will change during at runtime when a new spectator joins
 	 */
 	int ActivePlayers() const { return players.size(); };
 
@@ -62,6 +62,13 @@ public:
 	std::vector<int> ActivePlayersInTeam(int teamId) const;
 
 	void GameFrame(int frameNum);
+
+	/**
+	 * @brief Adds a new player for dynamic join
+	 *
+	 * This resizes the playerlist adding stubs if there's gaps to his playerNum
+	 */
+	void AddPlayer( const CPlayer& player );
 
 private:
 	typedef std::vector<CPlayer> playerVec;

@@ -29,7 +29,7 @@
 
 CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 128);
@@ -91,7 +91,7 @@ bool CSound::HasSoundItem(const std::string& name)
 
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 	if (sources.empty())
 		return 0;
@@ -156,14 +156,14 @@ SoundSource* CSound::GetNextBestSource(bool lock)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	if (pitchAdjust)
 		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	if (key == "snd_volmaster")
 	{
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
@@ -206,7 +206,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 
 bool CSound::Mute()
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = !mute;
 	if (mute)
 		alListenerf(AL_GAIN, 0.0);
@@ -222,7 +222,7 @@ bool CSound::IsMuted() const
 
 void CSound::Iconified(bool state)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	if (appIsIconified != state && !mute)
 	{
 		if (state == false)
@@ -235,7 +235,7 @@ void CSound::Iconified(bool state)
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 	if (sources.empty() || volume == 0.0f)
 		return;
@@ -267,7 +267,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 void CSound::StartThread(int maxSounds)
 {
 	{
-		boost::mutex::scoped_lock lck(soundMutex);
+		boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 		// NULL -> default device
 		const ALchar* deviceName = NULL;
@@ -382,7 +382,7 @@ void CSound::StartThread(int maxSounds)
 
 void CSound::Update()
 {
-	boost::mutex::scoped_lock lck(soundMutex); // lock
+	boost::recursive_mutex::scoped_lock lck(soundMutex); // lock
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");
@@ -406,7 +406,7 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 	if (sources.empty())
 		return;
@@ -429,7 +429,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 
 void CSound::PrintDebugInfo()
 {
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 	LogObject(LOG_SOUND) << "OpenAL Sound System:";
 	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
@@ -444,7 +444,7 @@ void CSound::PrintDebugInfo()
 bool CSound::LoadSoundDefs(const std::string& fileName)
 {
 	//! can be called from LuaUnsyncedCtrl too
-	boost::mutex::scoped_lock lck(soundMutex);
+	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
 	LuaParser parser(fileName, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);

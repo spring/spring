@@ -1,5 +1,83 @@
 Spring change log
 
+0.82.3:
+Engine / General:
+ - rebuild because of stale base content packages
+   (different checksums between windows and linux)
+ - fix NullAI installing into /
+
+0.82.2:
+Engine / General:
+ - miscellaneous OS X compile/link fixes
+ - fixed incorrect handling of negative references in OBJParser
+ - fixed misinterpretation of the OBJ spec
+ - reorganized WindowState saving on exit on X
+ - fixed source package build
+ - always print crash errors to infolog
+ - added i965_dri.so to OGL driver crash detection on Linux
+
+Engine / Simulation:
+ - fixed autosharing resources to dead teams
+ - fixed units disappearing from quadfield after load-unload in transport
+
+Engine / Lua:
+ - fixed invalid FPU flags after LuaLobby connection is made
+ - fixed DrawFeature event
+ - Spring.UnitScript.GetScriptEnv returns nil if the unit does not run a Lua script
+ - Spring.GetCOBScriptID returns nil if the unit does not run a COB script
+ - fixed typo in mapdefaults.lua
+ - possibly fixed GetPlayerInfo
+
+Engine / AI:
+ - updated E323AI to latest version
+
+0.82.1:
+Engine / General:
+ - fixed source package build
+ - fixed MT crash in DrawCommands
+ - fixed radar blips seen by spectators
+ - fixed dark metal spots in watert
+ - reduced default value of max particles
+ - increased default LOD/icon distances
+ - glFont::GetTextHeight & glFont::GetTextNumLines return now 0 lines for empty strings
+ - fixed 3do shadows
+ - fixed minimap rendering in dualscreen modes
+ - fixed laggy camera update with UnitTracker
+ - fixed seismic pings with incorrect size
+ - fixed incorrect highlight on end game screen
+
+Engine / Simulation:
+ - prevent units from becoming immobile zombies while maneuvering
+ - base etaFailures limit on a unit's full-circle turning time
+ - decrease etaFailures every frame we are not standing still
+ - fixed vibrating planes
+ - fixed nanoframe being spawned while game is paused
+ - fixed slow response when releasing wait command
+ - fixed the silly unit spinning ad-infinitum bug
+ - fixed unit occasionally not taking damage when it just left a transport
+ - fixed some awkward transport behaviour
+ - properly deal with radars/jammers being transported
+ - fixed unit returning to pick up point when it dropped out of transport
+ - skip waypoints that are behind a unit but within its turning circle
+
+Engine / Lua:
+ - added a LuaRules DrawFeature call-in
+ - fixed LuaUnsyncedCtrl::SetWaterParams
+ - fixed Spring.Restart with Win 2k and OpenAL-soft
+ - LuaSyncedRead::GetUnitExperience: also returns limExperience now
+ - removed obsolete engine options from EngineOptions.lua
+
+Engine / Dedicated server:
+ - use default visibility (hidden) for spring-dedicated under non-windows
+
+AI:
+ - RAI: log files are now under _log/_ sub-dir
+ - AAI: added config for BA 7.14
+ - E323AI: added config for BA 7.14
+
+Installer:
+ - made main part mandatory
+
 0.82:
 Engine / General:
  - added HeadLess version of the engine (no graphics, no sound) by hughperkins
@@ -7,7 +85,7 @@ Engine / General:
  - players in startscript may reconnect to a running game, even with changed IP address
  - players can choose server speed throttling algorithm by voting (/speedcontrol)
  - do not crash on AI Interface error
- - MT/GML: now a separate build target: make spring-mt
+ - MT/GML: now a separate build target: make spring-multithreaded
  - fix linking under Fedora 13
  - allow choosing between available sound devices through config (snd_device)
  - add missing /skip variants to word completion
@@ -34,12 +112,15 @@ Engine / Simulation:
  - reduced frequency of units ending up in "can't reach destination" situations
  - fixed units not inheriting orders from factories and piling up (due to having their paths aborted)
  - removed the TEDclassString UnitDef parameter (side-effect: hub-like units will break if they have a yardmap)
+ - removed diminishing metal makers option
  - changed the semantics of the holdSteady UnitDef tag
       true ==> slave transportees to orientation of transporter attachment piece
       false ==> slave transportees to orientation of transporter body (default)
+ - fixed canDGun+commandfire to properly reproduce commander-like DGun behavior without script hacks
 
 Engine / Rendering:
  - fixed alpha-masked shadows for S3O models
+ - fixed ATI alpha masked shadows (trees, features)
  - fixed far-textures (caused changing teamcolors and disappearing units)
  - support the OBJ model format (springrts.com/phpbb/viewtopic.php?f=9&t=22635)
  - support specular lighting, multiple blendable detail textures, and sky reflections on SMF maps ("SSMF")
@@ -138,9 +219,9 @@ Lua:
  - improved Spring.GetTeamStatsHistory. It retuns now also the most recent data, not just the data of the cached stats which get updated only all 16 seconds.
  - fixed incorrect scaling in Spring.SetUnitResourceParam
  - fixed Spring.GetAIInfo, it returned incorrectly the given teamID as first argument
+ - fixed a bug in Script.RemoveSyncedActionFallback
  - added missing `coroutines` module and missing `select` function to unsynced LuaGadgets
  - added os.setlocale to LuaUI
- - removed deprecated Spring.MakeFont
  - added Save/Load callins, both get a userdatum representing a save file as single argument
     Save is unsynced, Load is synced (both gadget only)
     Should allow implementing savegames mod side with less hacks
@@ -148,7 +229,14 @@ Lua:
  - modified base {armordefs|movedefs|sidedata}.lua to follow pattern of icontypes.lua
  - added a ShieldPreDamaged call-in to LuaRules, triggered before any engine shield-vs-projectile logic executes
  - UnitDefs[i].model.textures now actually contains the names of the model textures for unit-type i
+ - script.txt: Engine ignores GAME\\ModOptions\\LuaRules & interprets GAME\\ModOptions\\LuaGaia just as a boolean now
  - fixed GetScreenGeometry on win32 platforms to return the proper screenSizeY, not screenSizeY - taskbarSizeY
+ - moved Spring.SetUnitRulesParam, Spring.SetTeamRulesParam, Spring.SetGameRulesParam from LuaRules-only to LuaSyncedCtrl
+ - removed evaluator functions from LuaOpengl
+ - removed Spring.MakeFont
+ - removed Spring.SetRulesInfoMap, Spring.GetRulesInfoMap, Script.GetConfigString
+ - removed Spring.CreateUnitRulesParams, Spring.CreateTeamRulesParams, Spring.CreateGameRulesParams
+ - removed AllowUnsafeChanges("USE AT YOUR OWN PERIL"), it's always enabled now
 
 Engine / Unit Scripts:
  - LUS: SetSignalMask raises error now when called outside thread
@@ -156,6 +244,7 @@ Engine / Unit Scripts:
  - LUS: _G in a Lua Unit Script points to the environment of that Lua Unit Script now
  - LUS: TargetWeight and BlockShot are actually called now
  - COB: Added KSIN (135, 1024*sin(x)), KCOS (136), KTAN (137) and SQRT (138) get constants.
+ - LUS: Fixed a desync bug.
 
 Interface:
  - fixed middle click scroll speed on linux
@@ -164,6 +253,7 @@ Interface:
  - made it easier to select units in factories
  - added new command "/buildwarnings [0|1]", analogous to "/movewarnings [0|1]"
  - improved unit type mix in front moves
+ - new middle click scroll icon
 
 AIs:
  - added various new debug-draw callouts for profiling, state visualization, etc.
@@ -184,7 +274,7 @@ AIs:
 
 Bugfixes:
  - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compability)
- - fixed a bug in LuaParser, so you can know use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
+ - fixed a bug in LuaParser, so you can now use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
  - fixed occasional bug where countdown time went into negative numbers and game never started
  - fixed impactOnly ignored features
  - improved error handling on network packet level

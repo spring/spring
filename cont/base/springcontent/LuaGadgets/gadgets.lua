@@ -152,6 +152,7 @@ local callInLists = {
   'TerraformComplete',
   -- unsynced
   'DrawUnit',
+  'DrawFeature',
   'AICallIn',
 
   -- COB CallIn  (FIXME?)
@@ -1062,6 +1063,14 @@ function gadgetHandler:DrawUnit(unitID, drawMode)
   return false
 end
 
+function gadgetHandler:DrawFeature(featureID, drawMode)
+  for _,g in ipairs(self.DrawFeatureList) do
+    if (g:DrawFeature(featureID, drawMode)) then
+      return true
+    end
+  end
+  return false
+end
 
 function gadgetHandler:AICallIn(dataStr)
   for _,g in ipairs(self.AICallInList) do
@@ -1281,13 +1290,19 @@ end
 function gadgetHandler:UnitPreDamaged(unitID, unitDefID, unitTeam,
                                    damage, paralyzer, weaponID,
                                    attackerID, attackerDefID, attackerTeam)
-  local dam = damage
+  local rDam = damage
+  local rImp = 1.0
+
   for _,g in ipairs(self.UnitPreDamagedList) do
-    dam = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
-                  dam, paralyzer, weaponID,
+    rDam, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
+                  rDam, paralyzer, weaponID,
                   attackerID, attackerDefID, attackerTeam)
+    if (imp ~= nil) then
+      rImp = math.min(imp, rImp)
+    end
   end
-  return dam
+
+  return rDam, rImp
 end
 
 

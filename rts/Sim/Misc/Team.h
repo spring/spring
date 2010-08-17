@@ -14,6 +14,7 @@
 #include "Sim/Units/UnitSet.h"
 #include "ExternalAI/SkirmishAIKey.h"
 #include "Lua/LuaRulesParams.h"
+#include "System/Sync/SyncedPrimitive.h" //! SyncedFloat
 
 class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
 {
@@ -95,8 +96,6 @@ public:
 	float energySent;
 	float energyReceived;
 
-	/// in intervalls of this many seconds, statistics are updated
-	static const int statsPeriod = 16;
 	int nextHistoryEntry;
 	TeamStatistics* currentStats;
 	std::list<TeamStatistics> statHistory;

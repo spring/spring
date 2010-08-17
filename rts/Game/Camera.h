@@ -48,7 +48,7 @@ public:
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
 	
-	static unsigned int billboardList;
+	static GLuint billboardList;
 	
 	void SetFov(float fov); // in degree
 	
@@ -64,8 +64,6 @@ private:
 	float fov; // in degrees
 	float halfFov; // half the fov in radians
 	float tanHalfFov; // tan(halfFov)
-	
-	void operator=(const CCamera& c) {}; // don't use this
 };
 
 extern CCamera* camera;

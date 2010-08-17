@@ -1,40 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "CrashHandler.h"
-#ifdef __APPLE__
-#include <AvailabilityMacros.h>
-#endif
+#include "System/Platform/CrashHandler.h"
 
-#ifdef _WIN32
-// ### Windows CrashHandler START
-#include "Win/CrashHandler.h"
-#include "Platform/Win/seh.h"
-
-namespace CrashHandler {
-
-	void Install() {
-		Win32::Install();
-		InitializeSEH();
-	};
-
-	void Remove() {
-		Win32::Remove();
-	}
-
-	void InstallHangHandler() { Win32::InstallHangHandler(); }
-	void UninstallHangHandler() { Win32::UninstallHangHandler(); }
-
-	void ClearDrawWDT(bool disable) { Win32::ClearDrawWDT(disable); }
-	void ClearSimWDT(bool disable) { Win32::ClearSimWDT(disable); }
-
-	void GameLoading(bool loading) {
-		Win32::GameLoading(loading);
-	}
-};
-
-// ### Windows CrashHandler END
-#elif !defined(__APPLE__) || (MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4)
-// ### Unix(compliant) CrashHandler START
 #include <string>
 #include <vector>
 #include <queue>
@@ -47,12 +14,12 @@ namespace CrashHandler {
 #include <inttypes.h> // for uintptr_t
 #include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
 
-#include "LogOutput.h"
-#include "errorhandler.h"
-#include "Game/GameVersion.h"
-#include "Platform/Misc.h"
 #include "FileSystem/FileSystemHandler.h"
-#include "maindefines.h" // for SNPRINTF
+#include "Game/GameVersion.h"
+#include "System/LogOutput.h"
+#include "System/maindefines.h" // for SNPRINTF
+#include "System/Platform/Misc.h"
+#include "System/Platform/errorhandler.h"
 
 /**
  * Returns the absolute version of a supplied relative path.
@@ -326,6 +293,7 @@ namespace CrashHandler {
 					} else {
 						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
 						containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
+						containsOglSo = (containsOglSo || (path.find("i965_dri.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
 						if (containedAIInterfaceSo.empty() && (absPath.find("Interfaces") != std::string::npos)) {
 							containedAIInterfaceSo = absPath;
@@ -470,21 +438,3 @@ namespace CrashHandler {
 
 	void GameLoading(bool) {}
 };
-
-// ### Unix(compliant) CrashHandler END
-#else
-// ### Fallback CrashHandler (old Apple) START
-
-namespace CrashHandler {
-	void HandleSignal(int signal) {}
-	void Install() {}
-	void Remove() {}
-	void InstallHangHandler() {}
-	void UninstallHangHandler() {}
-	void ClearDrawWDT(bool disable) {}
-	void ClearSimWDT(bool disable) {}
-	void GameLoading(bool) {}
-};
-
-// ### Fallback CrashHandler (old Apple) END
-#endif

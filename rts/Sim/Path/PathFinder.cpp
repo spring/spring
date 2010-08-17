@@ -738,14 +738,9 @@ bool CPathFinderDef::IsGoal(int xSquare, int zSquare) const {
  */
 float CPathFinderDef::Heuristic(int xSquare, int zSquare) const
 {
-	int min=abs(xSquare-goalSquareX);
-	int max=abs(zSquare-goalSquareZ);
-	if(min>max){
-		int temp=min;
-		min=max;
-		max=temp;
-	}
-	return max*0.5f+min*0.2f;
+	const int x = abs(xSquare - goalSquareX);
+	const int z = abs(zSquare - goalSquareZ);
+	return std::max(x, z) * 0.5f + std::min(x, z) * 0.2f;
 }
 
 

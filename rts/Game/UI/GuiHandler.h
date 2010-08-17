@@ -5,17 +5,18 @@
 
 #include <vector>
 #include <map>
-#include "Sim/Units/CommandAI/Command.h"
-#include "Rendering/GL/myGL.h"
+#include <set>
 #include "KeySet.h"
-#include "KeyBindings.h"
 #include "InputReceiver.h"
-#include "Game/Camera.h"
 #include "MouseHandler.h"
+#include "Game/Camera.h"
 
 class CUnit;
 struct UnitDef;
 struct BuildInfo;
+class Action;
+struct Command;
+struct CommandDescription;
 
 class CGuiHandler : public CInputReceiver {
 public:
@@ -41,8 +42,7 @@ public:
 	Command GetOrderPreview();
 	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview, float3& camerapos=::camera->pos, float3& mousedir=::mouse->dir);
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
-		const BuildInfo& endInfo, float3& camerapos, float3& mousedir);
-										// start.def has to be end.def
+		const BuildInfo& endInfo, float3& camerapos, float3& mousedir); // startInfo.def has to be endInfo.def
 
 	bool ReloadConfig(const std::string& filename);
 
@@ -67,8 +67,8 @@ public:
 
 	bool SetActiveCommand(int cmdIndex, bool rmb);
 	bool SetActiveCommand(int cmdIndex,
-							int button, bool lmb, bool rmb,
-							bool alt, bool ctrl, bool meta, bool shift);
+		int button, bool lmb, bool rmb,
+		bool alt, bool ctrl, bool meta, bool shift);
 	bool SetActiveCommand(const Action& action, const CKeySet& ks, int actionIndex);
 
 	void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
@@ -95,8 +95,7 @@ private:
 	void ConvertCommands(std::vector<CommandDescription>&);
 
 	int  FindInCommandPage();
-	void RevertToCmdDesc(const CommandDescription& cmdDesc,
-							bool defaultCommand, bool samePage);
+	void RevertToCmdDesc(const CommandDescription& cmdDesc, bool defaultCommand, bool samePage);
 
 	void CreateOptions(Command& c,bool rmb);
 	void FinishCommand(int button);
@@ -111,8 +110,7 @@ private:
 	void DrawCustomButton(const IconInfo& icon, bool highlight);
 	bool DrawUnitBuildIcon(const IconInfo& icon, int unitDefID);
 	bool DrawTexture(const IconInfo& icon, const std::string& texName);
-	void DrawName(const IconInfo& icon, const std::string& text,
-					bool offsetForLEDs);
+	void DrawName(const IconInfo& icon, const std::string& text, bool offsetForLEDs);
 	void DrawNWtext(const IconInfo& icon, const std::string& text);
 	void DrawSWtext(const IconInfo& icon, const std::string& text);
 	void DrawNEtext(const IconInfo& icon, const std::string& text);
@@ -129,8 +127,7 @@ private:
 	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, float3& camerapos, float3& mousedir);
 	void DrawArea(float3 pos, float radius, const float* color);
 	void DrawSelectBox(const float3& start, const float3& end, float3& camerapos);
-	void DrawSelectCircle(const float3& pos, float radius,
-							const float* color);
+	void DrawSelectCircle(const float3& pos, float radius, const float* color);
 
 	void DrawStencilCone(const float3& pos, float radius, float height);
 	void DrawStencilRange(const float3& pos, float radius);
@@ -160,6 +157,7 @@ private:
 	int activePage;
 	int defaultCmdMemory;
 	int explicitCommand;
+	int curIconCommand;
 	//int fadein;
 
 	int actionOffset;

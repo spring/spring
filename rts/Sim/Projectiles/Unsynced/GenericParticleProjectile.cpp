@@ -10,7 +10,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL));
+CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (ZeroVector, ZeroVector, NULL));
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
@@ -26,22 +26,33 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_RESERVED(8)
 	));
 
-CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner) :
-	CProjectile(pos, speed, owner, false, false, false)
+CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner)
+	: CProjectile(pos, speed, owner, false, false, false)
+	, gravity(ZeroVector)
+	, texture(NULL)
+	, colorMap(NULL)
+	, directional(false)
+	, life(0.0f)
+	, decayrate(0.0f)
+	, size(0.0f)
+	, airdrag(0.0f)
+	, sizeGrowth(0.0f)
+	, sizeMod(0.0f)
 {
-	deleteMe  = false;
-	checkCol  = false;
+	// set fields from super-classes
 	useAirLos = true;
+	checkCol  = false;
+	deleteMe  = false;
 }
 
-CGenericParticleProjectile::~CGenericParticleProjectile(void)
+CGenericParticleProjectile::~CGenericParticleProjectile()
 {
 }
 
 void CGenericParticleProjectile::Update()
 {
 	pos += speed;
-	life +=decayrate;
+	life += decayrate;
 	speed += gravity;
 	speed *= airdrag;
 	size = size * sizeMod + sizeGrowth;
@@ -53,10 +64,9 @@ void CGenericParticleProjectile::Update()
 
 void CGenericParticleProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 
-	if(directional)
-	{
+	if (directional) {
 		float3 dif(pos-camera->pos);
 		dif.ANormalize();
 		float3 dir1(dif.cross(speed));
@@ -67,20 +77,18 @@ void CGenericParticleProjectile::Draw()
 
 		colorMap->GetColor(color, life);
 
-		va->AddVertexTC(drawPos-dir1*size-dir2*size,texture->xstart,texture->ystart,color);
-		va->AddVertexTC(drawPos-dir1*size+dir2*size,texture->xend ,texture->ystart,color);
-		va->AddVertexTC(drawPos+dir1*size+dir2*size,texture->xend ,texture->yend ,color);
-		va->AddVertexTC(drawPos+dir1*size-dir2*size,texture->xstart,texture->yend ,color);
-	}
-	else
-	{
+		va->AddVertexTC(drawPos - dir1 * size - dir2 * size, texture->xstart, texture->ystart, color);
+		va->AddVertexTC(drawPos - dir1 * size + dir2 * size, texture->xend,   texture->ystart, color);
+		va->AddVertexTC(drawPos + dir1 * size + dir2 * size, texture->xend,   texture->yend,   color);
+		va->AddVertexTC(drawPos + dir1 * size - dir2 * size, texture->xstart, texture->yend,   color);
+	} else {
 		unsigned char color[4];
 
 		colorMap->GetColor(color, life);
 
-		va->AddVertexTC(drawPos-camera->right*size-camera->up*size,texture->xstart,texture->ystart,color);
-		va->AddVertexTC(drawPos+camera->right*size-camera->up*size,texture->xend ,texture->ystart,color);
-		va->AddVertexTC(drawPos+camera->right*size+camera->up*size,texture->xend ,texture->yend ,color);
-		va->AddVertexTC(drawPos-camera->right*size+camera->up*size,texture->xstart,texture->yend ,color);
+		va->AddVertexTC(drawPos - camera->right * size - camera->up * size, texture->xstart, texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->right * size - camera->up * size, texture->xend,   texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->right * size + camera->up * size, texture->xend,   texture->yend,   color);
+		va->AddVertexTC(drawPos - camera->right * size + camera->up * size, texture->xstart, texture->yend,   color);
 	}
 }

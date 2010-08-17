@@ -1570,28 +1570,28 @@ bool CAICallback::IsDebugDrawerEnabled() const {
 
 
 
-int CAICallback::GetNumUnitDefs ()
+int CAICallback::GetNumUnitDefs()
 {
-	return unitDefHandler->numUnitDefs;
+	return unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid, that's why "-1"
 }
 
-void CAICallback::GetUnitDefList (const UnitDef** list)
+void CAICallback::GetUnitDefList(const UnitDef** list)
 {
-	for (int a=0;a<unitDefHandler->numUnitDefs;a++)
-		list [a] = unitDefHandler->GetUnitDefByID (a+1);
+	for (int a=1;a<unitDefHandler->unitDefs.size();a++)
+		list[a-1] = unitDefHandler->GetUnitDefByID(a);
 }
 
 
 float CAICallback::GetUnitDefRadius(int def)
 {
-	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
 	S3DModel* mdl = ud->LoadModel();
 	return mdl->radius;
 }
 
 float CAICallback::GetUnitDefHeight(int def)
 {
-	UnitDef *ud = &unitDefHandler->unitDefs[def];
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(def);
 	S3DModel* mdl = ud->LoadModel();
 	return mdl->height;
 }

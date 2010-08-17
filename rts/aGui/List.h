@@ -71,6 +71,10 @@ private:
 	bool hasFocus;
 	int topIndex;
 
+	GuiElement scrollbar;
+	bool activeScrollbar;
+	float scrollbarGrabPos;
+
 	// for filtering
 	std::string query;
 	std::vector<std::string>* filteredItems;

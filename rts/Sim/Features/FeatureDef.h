@@ -20,8 +20,10 @@ struct FeatureDef
 {
 	CR_DECLARE_STRUCT(FeatureDef);
 
-	FeatureDef():
-		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
+	FeatureDef()
+		: collisionVolume(NULL)
+		, id(-1)
+		, metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
 		upright(false), drawType(0), model(NULL),
 		resurrectable(false), smokeTime(0), destructable(false), reclaimable(true), autoreclaim(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),

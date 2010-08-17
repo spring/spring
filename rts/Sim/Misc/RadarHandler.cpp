@@ -84,9 +84,13 @@ CRadarHandler::~CRadarHandler()
 }
 
 
-//todo: add the optimizations that is in loshandler
+// todo: add the optimizations that is in loshandler
 void CRadarHandler::MoveUnit(CUnit* unit)
 {
+	if (!unit->hasRadarCapacity || !unit->activated) {
+		return;
+	}
+
 	int2 newPos;
 	newPos.x = (int) (unit->pos.x * invRadarDiv);
 	newPos.y = (int) (unit->pos.z * invRadarDiv);
@@ -128,6 +132,10 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 void CRadarHandler::RemoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("Radar");
+
+	if (!unit->hasRadarCapacity) {
+		return;
+	}
 
 	if (unit->hasRadarPos) {
 		if (unit->jammerRadius) {

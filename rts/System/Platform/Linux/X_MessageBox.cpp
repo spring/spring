@@ -59,17 +59,18 @@ void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 
 		case 0: /* child process */
 		{
-			const char* session = getenv("DESKTOP_SESSION");
+			const char* kde   = getenv("KDE_FULL_SESSION");
+			const char* gnome = getenv("GNOME_DESKTOP_SESSION_ID");
 			const char* type = "--error";
 
-			if (session && !strcasecmp(session, "gnome")) {
+			if (gnome) {
 				// --warning shows 2 buttons, so it should only be used with a true _warning_
 				// ie. one which allows you to continue/cancel execution
 // 				if (flags & MBF_EXCL) type = "--warning";
 				if (flags & MBF_INFO) type = "--info";
 				execlp("zenity", "zenity", "--title", caption2, type, "--text", msg2, (char*)NULL);
 			}
-			if (session && (strstr(session, "kde") || strstr(session, "KDE"))) {
+			if (kde && strstr(kde, "true")) {
 				if (flags & MBF_EXCL) type = "--sorry";
 				if (flags & MBF_INFO) type = "--msgbox";
 				execlp("kdialog", "kdialog", "--title", caption2, type, msg2, (char*)NULL);

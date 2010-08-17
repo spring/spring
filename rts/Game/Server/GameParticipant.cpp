@@ -9,8 +9,10 @@ GameParticipant::GameParticipant()
 : myState(UNCONNECTED)
 , lastFrameResponse(0)
 , speedControl(0)
+, luaDrawTime(0)
 , isLocal(false)
 , isReconn(false)
+, isMidgameJoin(false)
 {
 }
 

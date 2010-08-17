@@ -7,7 +7,7 @@
 #include <string>
 #include <set>
 #include "Matrix44f.h"
-#include "Sim/Units/Unit.h"
+
 
 
 const int
@@ -31,7 +31,6 @@ struct S3DModelPiece {
 	S3DModelPiece* parent;
 
 	bool isEmpty;
-	unsigned int vertexCount;
 	unsigned int displist;
 
 	//! MODELTYPE_*
@@ -48,7 +47,7 @@ struct S3DModelPiece {
 
 	virtual ~S3DModelPiece();
 	virtual void DrawList() const = 0;
-	virtual int GetVertexCount() const { return vertexCount; }
+	virtual int GetVertexCount() const { return 0; }
 	virtual int GetNormalCount() const { return 0; }
 	virtual int GetTxCoorCount() const { return 0; }
 	virtual void SetMinMaxExtends() {}

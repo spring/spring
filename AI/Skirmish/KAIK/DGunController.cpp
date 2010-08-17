@@ -60,7 +60,7 @@ void CDGunController::Init(int unitID) {
 
 	// set the commander to hold fire (we need this since
 	// FAW and RF interfere with dgun and reclaim orders)
-	ai->MyUnits[commanderID]->SetFireState(0);
+	ai->GetUnit(commanderID)->SetFireState(0);
 
 	std::vector<UnitDef::UnitDefWeapon>::const_iterator i = commanderUD->weapons.begin();
 

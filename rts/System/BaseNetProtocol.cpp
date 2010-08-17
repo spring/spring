@@ -7,7 +7,7 @@
 #include "mmgr.h"
 
 #include "Game/PlayerStatistics.h"
-#include "Sim/Misc/Team.h"
+#include "Sim/Misc/TeamStatistics.h"
 #include "Net/RawPacket.h"
 #include "Net/PackPacket.h"
 #include "Net/ProtocolDef.h"
@@ -164,6 +164,10 @@ PacketType CBaseNetProtocol::SendCustomData(uchar myPlayerNum, uchar dataType, i
 
 PacketType CBaseNetProtocol::SendSpeedControl(uchar myPlayerNum, int speedCtrl) {
 	return SendCustomData(myPlayerNum, CUSTOM_DATA_SPEEDCONTROL, speedCtrl);
+}
+
+PacketType CBaseNetProtocol::SendLuaDrawTime(uchar myPlayerNum, int mSec) {
+	return SendCustomData(myPlayerNum, CUSTOM_DATA_LUADRAWTIME, mSec);
 }
 
 PacketType CBaseNetProtocol::SendDirectControl(uchar myPlayerNum)
@@ -389,6 +393,16 @@ PacketType CBaseNetProtocol::SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msg
 }
 
 
+PacketType CBaseNetProtocol::SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName )
+{
+	unsigned size = 1 + sizeof(uchar) + sizeof(uchar) + sizeof(uchar) + sizeof (boost::uint16_t) +playerName.size()+1;
+	PackPacket* packet = new PackPacket( size, NETMSG_CREATE_NEWPLAYER);
+	*packet << static_cast<boost::uint16_t>(size) << playerNum << (uchar)spectator << teamNum << playerName;
+	return PacketType(packet);
+
+}
+
+
 #ifdef SYNCDEBUG
 PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
 {
@@ -417,6 +431,7 @@ PacketType CBaseNetProtocol::SendSdBlockrequest(unsigned short begin, unsigned s
 	return PacketType(packet);
 	
 }
+
 
 PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums)
 {
@@ -482,8 +497,12 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEDATA, -2);
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
+	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(TeamStatistics));
+	proto->AddType(NETMSG_REQUEST_TEAMSTAT, 4 );
 	proto->AddType(NETMSG_REGISTER_NETMSG, 3 );
 	proto->AddType(NETMSG_UNREGISTER_NETMSG, 3);
+
+	proto->AddType(NETMSG_CREATE_NEWPLAYER, -2);
 
 	proto->AddType(NETMSG_AI_CREATED, -1);
 	proto->AddType(NETMSG_AI_STATE_CHANGED, 7);

@@ -14,14 +14,15 @@ class COggStream
 {
 public:
 	typedef std::vector<std::string> TagVector;
-	COggStream(ALuint source);
+	COggStream(ALuint _source);
 	~COggStream();
 
 	void Play(const std::string& path, float volume);
 	void Stop();
 	bool TogglePause();
 	void Update();
-	float GetPlayTime();
+
+	float GetPlayTime() const;
 	float GetTotalTime();
 	const TagVector& VorbisTags() const;
 	bool Valid() const;
@@ -34,9 +35,9 @@ private:
 	bool DecodeStream(ALuint buffer);
 	void EmptyBuffers();
 	void ReleaseBuffers();
-	
+
 	/**
-	@brief Decode next part of the stream and queu it for playing
+	@brief Decode next part of the stream and queue it for playing
 	@return wheter it is the end of the stream (check for IsPlaying() wheter the complete stream was played)
 	*/
 	bool UpdateBuffers();
@@ -44,7 +45,10 @@ private:
 	OggVorbis_File oggStream;
 	vorbis_info* vorbisInfo;
 
-	ALuint buffers[2];
+	static const unsigned int BUFFER_SIZE = (4096 * 128); // 512KB
+	static const unsigned int NUM_BUFFERS = 2;
+
+	ALuint buffers[NUM_BUFFERS];
 	ALuint source;
 	ALenum format;
 

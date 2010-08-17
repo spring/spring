@@ -69,7 +69,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 }
 
 
-void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, unsigned char* yardMap, unsigned char mask)
+void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const unsigned char* yardMap, unsigned char mask)
 {
 	const int objID = GetObjectID(object);
 
@@ -198,7 +198,7 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos, bool to
   * Opens up a yard in a blocked area.
   * When a factory opens up, for example.
   */
-void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* yard, unsigned char* yardMap) {
+void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* yard, const unsigned char* yardMap) {
 	RemoveGroundBlockingObject(yard);
 	AddGroundBlockingObject(yard, yardMap, 2);
 }
@@ -207,7 +207,7 @@ void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* yard, unsigned cha
   * Closes a yard, blocking the area.
   * When a factory closes, for example.
   */
-void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* yard, unsigned char* yardMap) {
+void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* yard, const unsigned char* yardMap) {
 	RemoveGroundBlockingObject(yard);
 	AddGroundBlockingObject(yard, yardMap, 1);
 }

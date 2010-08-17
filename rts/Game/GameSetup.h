@@ -56,8 +56,6 @@ public:
 	std::string mapName;
 	std::string modName;
 	bool useLuaGaia;
-	std::string luaGaiaStr;
-	std::string luaRulesStr;
 
 	std::string gameSetupText;
 

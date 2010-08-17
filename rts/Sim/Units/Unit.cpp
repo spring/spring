@@ -298,10 +298,7 @@ CUnit::~CUnit()
 	qf->RemoveUnit(this);
 	loshandler->DelayedFreeInstance(los);
 	los = 0;
-
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	if (script != &CNullUnitScript::value) {
 		delete script;
@@ -378,9 +375,7 @@ void CUnit::ForcedMove(const float3& newPos)
 
 	qf->MovedUnit(this);
 	loshandler->MoveUnit(this, false);
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 }
 
 
@@ -758,7 +753,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	AddMetal(unitDef->metalMake*0.5f);
+	AddMetal(unitDef->metalMake * 0.5f);
 	if (activated) {
 		if (UseEnergy(unitDef->energyUpkeep * 0.5f)) {
 			AddMetal(unitDef->makesMetal * 0.5f);
@@ -801,11 +796,12 @@ void CUnit::SlowUpdate()
 				helper->GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
 			}
 
-			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it)
-			{
-				float3 dif = pos - uh->units[*it]->pos;
+			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it) {
+				const CUnit* victim = uh->GetUnitUnsafe(*it);
+				const float3 dif = pos - victim->pos;
+
 				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
-					if (uh->units[*it]->speed.dot(dif) <= 0) {
+					if (victim->speed.dot(dif) <= 0) {
 						//! self destruct when we start moving away from the target, this should maximize the damage
 						KillUnit(true, false, NULL);
 						return;
@@ -823,30 +819,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if(!weapons.empty()){
-		haveTarget=false;
-		haveUserTarget=false;
-
-		// aircraft and ScriptMoveType do not want this
-		if (moveType->useHeading) {
-			SetDirectionFromHeading();
-		}
-
-		if(!dontFire){
-			for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi){
-				CWeapon* w=*wi;
-				if(userTarget && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-					w->AttackUnit(userTarget,true);
-				else if(userAttackGround && !w->haveUserTarget && (haveDGunRequest || !unitDef->canDGun || !w->weaponDef->manualfire))
-					w->AttackGround(userAttackPos,true);
-
-				w->SlowUpdate();
-
-				if(w->targetType==Target_None && fireState>0 && lastAttacker && lastAttack+200>gs->frameNum)
-					w->AttackUnit(lastAttacker,false);
-			}
-		}
-	}
+	SlowUpdateWeapons();
 
 	if (moveType->progressState == AMoveType::Active ) {
 		if (seismicSignature && !GetTransporter()) {
@@ -856,6 +829,41 @@ void CUnit::SlowUpdate()
 
 	CalculateTerrainType();
 	UpdateTerrainType();
+}
+
+void CUnit::SlowUpdateWeapons() {
+	if (weapons.empty()) {
+		return;
+	}
+
+	haveTarget = false;
+	haveUserTarget = false;
+
+	// aircraft and ScriptMoveType do not want this
+	if (moveType->useHeading) {
+		SetDirectionFromHeading();
+	}
+
+	if (!dontFire) {
+		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+			CWeapon* w = *wi;
+			
+			if (!w->haveUserTarget) {
+				if (haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+					if (userTarget) {
+						w->AttackUnit(userTarget, true);
+					} else if (userAttackGround) {
+						w->AttackGround(userAttackPos, true);
+					}
+				}
+			}
+
+			w->SlowUpdate();
+
+			if (w->targetType == Target_None && fireState > 0 && lastAttacker && (lastAttack + 200 > gs->frameNum))
+				w->AttackUnit(lastAttacker, false);
+		}
+	}
 }
 
 
@@ -1127,24 +1135,19 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 
 void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 {
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	*valuePtr = newValue;
 
 	if (newValue != 0) {
 		hasRadarCapacity = true;
-	}
-	else if (hasRadarCapacity) {
-		hasRadarCapacity = radarRadius || jammerRadius   ||
-		                   sonarRadius || sonarJamRadius ||
-		                   seismicRadius;
+	} else if (hasRadarCapacity) {
+		hasRadarCapacity = (radarRadius   > 0.0f) || (jammerRadius   > 0.0f) ||
+		                   (sonarRadius   > 0.0f) || (sonarJamRadius > 0.0f) ||
+		                   (seismicRadius > 0.0f);
 	}
 
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 }
 
 
@@ -1254,9 +1257,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	loshandler->FreeInstance(los);
 	los = 0;
 	losStatus[allyteam] = 0;
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
@@ -1299,9 +1300,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 	qf->MovedUnit(this);
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 
 	SetLODCount(0);
 
@@ -1394,7 +1393,7 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
 		(*wi)->targetType = Target_None;
-		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
+		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
 			if ((*wi)->AttackUnit(unit, true))
 				r = true;
 	}
@@ -1402,22 +1401,26 @@ bool CUnit::AttackUnit(CUnit *unit,bool dgun)
 }
 
 
-bool CUnit::AttackGround(const float3 &pos, bool dgun)
+bool CUnit::AttackGround(const float3& pos, bool dgun)
 {
 	bool r = false;
+
 	haveDGunRequest = dgun;
 	SetUserTarget(0);
 	userAttackPos = pos;
 	userAttackGround = true;
 	commandShotCount = 0;
 
-	std::vector<CWeapon*>::iterator wi;
-	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		(*wi)->haveUserTarget = false;
-		if (dgun || !unitDef->canDGun || !(*wi)->weaponDef->manualfire)
-			if ((*wi)->AttackGround(pos, true))
+
+		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+			if ((*wi)->AttackGround(pos, true)) {
 				r = true;
+			}
+		}
 	}
+
 	return r;
 }
 
@@ -1741,8 +1744,7 @@ void CUnit::FinishedBuilding(void)
 	ChangeLos(realLosRadius, realAirLosRadius);
 
 	if (unitDef->windGenerator > 0.0f) {
-		// start pointing in direction of wind
-		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
+		wind.AddUnit(this);
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -1803,10 +1805,15 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	this->SetGroup(NULL);
 
 	blockHeightChanges = false;
+
 	if (unitDef->isCommander) {
 		teamHandler->Team(team)->CommanderDied(this);
 	}
 	teamHandler->Team(this->lineage)->LeftLineage(this);
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.DelUnit(this);
+	}
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
 		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
@@ -1851,7 +1858,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	}
 }
 
-bool CUnit::AllowedReclaim (CUnit *builder)
+bool CUnit::AllowedReclaim(CUnit* builder) const
 {
 	// Don't allow the reclaim if the unit is finished and we arent allowed to reclaim it
 	if (!beingBuilt) {
@@ -1915,6 +1922,7 @@ void CUnit::AddEnergy(float energy, bool handicap)
 }
 
 
+
 void CUnit::Activate()
 {
 	if (activated)
@@ -1923,11 +1931,11 @@ void CUnit::Activate()
 	activated = true;
 	script->Activate();
 
-	if (unitDef->targfac){
+	if (unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
 	}
-	if (hasRadarCapacity)
-		radarhandler->MoveUnit(this);
+
+	radarhandler->MoveUnit(this);
 
 	int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -1937,7 +1945,6 @@ void CUnit::Activate()
 	}
 }
 
-
 void CUnit::Deactivate()
 {
 	if (!activated)
@@ -1946,11 +1953,11 @@ void CUnit::Deactivate()
 	activated = false;
 	script->Deactivate();
 
-	if (unitDef->targfac){
+	if (unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
 	}
-	if (hasRadarCapacity)
-		radarhandler->RemoveUnit(this);
+
+	radarhandler->RemoveUnit(this);
 
 	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -1959,6 +1966,7 @@ void CUnit::Deactivate()
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}
 }
+
 
 
 void CUnit::UpdateWind(float x, float z, float strength)
@@ -2095,7 +2103,7 @@ void CUnit::PostLoad()
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByName(unitDefName);
 
-	curYardMap = unitDef->yardmaps[buildFacing];
+	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
 
 	model = unitDef->LoadModel();
 	SetRadius(model->radius);
@@ -2114,7 +2122,7 @@ void CUnit::PostLoad()
 	script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator > 0.0f) {
-		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
+		wind.AddUnit(this);
 	}
 
 	if (activated) {

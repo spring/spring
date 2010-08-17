@@ -31,7 +31,6 @@ public:
 	void Serialize(creg::ISerializer& s);
 	void PostLoad();
 	virtual ~CUnitHandler();
-	void UpdateWind(float x, float z, float strength);
 
 	///< test if a unit can be built at specified position
 	///<   return values for the following is
@@ -70,13 +69,19 @@ public:
 		return units.size();
 	};
 
-	std::vector< vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
 
-	std::list<CUnit*> activeUnits;               ///< used to get all active units
+	// note: negative ID's are implicitly converted
+	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
+	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: NULL); }
+
+
+	std::vector< std::vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
+
+	std::list<CUnit*> activeUnits;                    ///< used to get all active units
 	std::vector<int> freeIDs;
-	std::vector<CUnit*> units;                   ///< used to get units from IDs (0 if not created)
+	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
 
-	std::vector<CUnit*> toBeRemoved;             ///< units that will be removed at start of next update
+	std::vector<CUnit*> toBeRemoved;                  ///< units that will be removed at start of next update
 
 	std::list<CUnit*>::iterator slowUpdateIterator;
 
