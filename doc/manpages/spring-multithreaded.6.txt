@@ -1,25 +1,25 @@
-spring(6)
-=========
+spring-dedicated(6)
+===================
 :man source:  Spring package
 :man manual:  Games
 
 
 Name
 ----
-spring - An open source RTS game engine - Default Engine
+spring-multithreaded - An open source RTS game engine - Multi-Threaded Engine
 
 
 Synopsis
 --------
-*spring* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-n|--name 'STRING'] [-C|--config 'FILE']
+*spring-multithreaded* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-n|--name 'STRING'] [-C|--config 'FILE']
 
-*spring* --list-ai-interfaces
+*spring-multithreaded* --list-ai-interfaces
 
-*spring* --list-skirmish-ais
+*spring-multithreaded* --list-skirmish-ais
 
-*spring* [-h|--help]
+*spring-multithreaded* [-h|--help]
 
-*spring* [-V|--version]
+*spring-multithreaded* [-V|--version]
 
 
 Description
@@ -32,6 +32,11 @@ kind of games (mods).
 It is mainly designed around online multiplayer games but can also be played in
 single-player mode against AIs.
 
+This is the engine version which runs graphics and simulation
+in two separate threads. This may boost performance on multi-core systems.
+For more details, please reffer to:
+
+  man spring
 
 Options
 -------
@@ -80,38 +85,10 @@ Options
 *--list-skirmish-ais*::
   Dump a list of available Skirmish AIs to STDOUT
 
-
-DATA DIR
---------
-Data directories are searched for content, and among other things, may contain:
-*cache
-*mods
-*maps
-*AI
-
-When running the engine, it may use multiple data directories,
-but it will use only a single one of them as writeable, to write cache & log
-files to.
-
-Files
------
-
-  ~/.spring/
-
-The default data-directory (see section DATA DIR).
-
-  ~/.springrc
-
-Contains the users settings for the engine, for things like graphic and sound.
-
-  /etc/spring/datadir
-
-Contains the ':' separated paths to additional data-dirs (see section DATA DIR).
-
 See also
 --------
 
-spring-dedicated(6)
+spring(6)
 
 Homepage
 --------
