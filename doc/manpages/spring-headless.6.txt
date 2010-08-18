@@ -1,25 +1,25 @@
-spring(6)
-=========
+spring-dedicated(6)
+===================
 :man source:  Spring package
 :man manual:  Games
 
 
 Name
 ----
-spring - An open source RTS game engine - Default Engine
+spring-headless - An open source RTS game engine - Head-Less Engine
 
 
 Synopsis
 --------
-*spring* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-n|--name 'STRING'] [-C|--config 'FILE']
+*spring-headless* [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-n|--name 'STRING'] [-C|--config 'FILE']
 
-*spring* --list-ai-interfaces
+*spring-headless* --list-ai-interfaces
 
-*spring* --list-skirmish-ais
+*spring-headless* --list-skirmish-ais
 
-*spring* [-h|--help]
+*spring-headless* [-h|--help]
 
-*spring* [-V|--version]
+*spring-headless* [-V|--version]
 
 
 Description
@@ -32,6 +32,14 @@ kind of games (mods).
 It is mainly designed around online multiplayer games but can also be played in
 single-player mode against AIs.
 
+This is the engine version without graphics or sound output.
+It still runs the full simulation, while spring-dedicated basically
+only redirects network traffic.
+It is usefull for testing and simulating AI only games at high speeds
+on systems without graphics and sound output support.
+For more details, please reffer to:
+
+  man spring
 
 Options
 -------
@@ -41,21 +49,6 @@ Options
 *-V, --version*::
   Display program version and exit
 
-*-f, --fullscreen*::
-  Run in fullscreen mode
-
-*-w, --window*::
-  Run in windowed mode
-
-*-x, --xresolution*::'SIZE'
-  Set X resolution
-
-*-y, --yresolution*::'SIZE'
-  Set Y resolution
-
-*-m, --minimise*::
-  Start minimised
-
 *-s, --server*::
   Run as a server
 
@@ -64,9 +57,6 @@ Options
 
 *-p, --projectiledump*::
   Dump projectile class info into projectiles.txt
-
-*-t, --textureatlas*::
-  Dump each finalised textureatlas into textureatlasN.tga
 
 *-n, --name*::'NAME'
   Set your player name
@@ -80,37 +70,10 @@ Options
 *--list-skirmish-ais*::
   Dump a list of available Skirmish AIs to STDOUT
 
-
-DATA DIR
---------
-Data directories are searched for content, and among other things, may contain:
-*cache
-*mods
-*maps
-*AI
-
-When running the engine, it may use multiple data directories,
-but it will use only a single one of them as writeable, to write cache & log
-files to.
-
-Files
------
-
-  ~/.spring/
-
-The default data-directory (see section DATA DIR).
-
-  ~/.springrc
-
-Contains the users settings for the engine, for things like graphic and sound.
-
-  /etc/spring/datadir
-
-Contains the ':' separated paths to additional data-dirs (see section DATA DIR).
-
 See also
 --------
 
+spring(6)
 spring-dedicated(6)
 
 Homepage
