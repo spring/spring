@@ -129,7 +129,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 	file = fopen(filename, "r");
 	if (file == NULL) {
 		fprintf(ai->file, "Mod config file %s not found\n", filename);
-		fprintf(ai->file, "Now trying with legacy config file name ...\n");
+		fprintf(ai->file, "Now trying with legacy mod config file name ...\n");
 		STRCPY(buffer, MAIN_PATH);
 		STRCAT(buffer, MOD_CFG_PATH);
 		const std::string modName = MakeFileSystemCompatible(ai->cb->GetModName());
@@ -137,6 +137,24 @@ void AAIConfig::LoadConfig(AAI *ai)
 		ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 		file = fopen(filename, "r");
+	}
+	if (file == NULL) {
+		fprintf(ai->file, "Mod config file %s not found\n", filename);
+		fprintf(ai->file, "Now trying with version independent mod config file name ...\n");
+		STRCPY(buffer, MAIN_PATH);
+		STRCAT(buffer, MOD_CFG_PATH);
+		const std::string modShortName = MakeFileSystemCompatible(ai->cb->GetModShortName());
+		STRCAT(buffer, modShortName.c_str());
+		STRCAT(buffer, ".cfg");
+		STRCPY(filename, buffer);
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+		file = fopen(filename, "r");
+	}
+	if (file == NULL) {
+		fprintf(ai->file, "Mod config file %s not found\n", filename);
+		fprintf(ai->file, "Give up trying to find mod config file (required).\n");
+		initialized = false;
+		return;
 	}
 
 	char keyword[50];
@@ -149,6 +167,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 
 	if(file)
 	{
+		fprintf(ai->file, "Using mod config file %s\n", filename);
+
 		while(EOF != fscanf(file, "%s", keyword))
 		{
 			if(!strcmp(keyword,"SIDES"))
@@ -595,12 +615,6 @@ void AAIConfig::LoadConfig(AAI *ai)
 			fclose(file);
 			fprintf(ai->file, "Mod config file loaded\n");
 		}
-	}
-	else
-	{
-		fprintf(ai->file, "Mod config file %s not found\n", filename);
-		initialized = false;
-		return;
 	}
 
 
