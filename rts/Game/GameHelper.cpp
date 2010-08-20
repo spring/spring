@@ -289,6 +289,8 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 	CollisionQuery cq;
 
+	GML_RECMUTEX_LOCK(quad); // TraceRay
+
 	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
 	std::list<CUnit*>::const_iterator ui;
