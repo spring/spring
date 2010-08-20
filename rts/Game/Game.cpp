@@ -3826,6 +3826,9 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 2);
 					unsigned char player;
 					pckt >> player;
+					if (player >= playerHandler->ActivePlayers())
+						throw netcode::UnpackPacketException("Invalid player number");
+
 					pckt >> playerHandler->Player(player)->name;
 					playerHandler->Player(player)->readyToStart=(gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
 					playerHandler->Player(player)->active=true;
