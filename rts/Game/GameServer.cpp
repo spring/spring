@@ -616,7 +616,7 @@ void CGameServer::Update()
 							refCpu = correctedCpu;
 						}
 						cpu.push_back(correctedCpu);
-						ping.push_back(serverframenum - players[a].lastFrameResponse);
+						ping.push_back(curPing);
 					}
 				}
 			}
@@ -655,12 +655,14 @@ void CGameServer::Update()
 		}
 		else {
 			for (size_t a = 0; a < players.size(); ++a) {
-				if (players[a].myState == GameParticipant::CONNECTED) { // send pathing status
-					if(players[a].cpuUsage > 0)
-						Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, PATHING_FLAG));
-				}
-				else {
-					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset status
+				if (!players[a].isFromDemo) {
+					if (players[a].myState == GameParticipant::CONNECTED) { // send pathing status
+						if(players[a].cpuUsage > 0)
+							Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, PATHING_FLAG));
+					}
+					else {
+						Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset status
+					}
 				}
 			}
 		}
