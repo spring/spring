@@ -109,6 +109,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
 
 #ifdef USE_GML
+	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
 	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
 	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
@@ -419,6 +420,10 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					DrawUnitNow(unit);
 				}
 			}
+#if USE_GML
+			if (showHealthBars && (sqDist < (unitDrawDistSqr * 500)))
+				drawStat.push_back(unit);
+#endif
 		}
 	} else if (losStatus & LOS_PREVLOS) {
 		if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
@@ -431,6 +436,9 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
+#ifdef USE_GML
+	drawStat.clear();
+#endif
 	drawIcon.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -558,6 +566,12 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_ALPHA_TEST);
+
+#ifdef USE_GML
+		for (GML_VECTOR<CUnit*>::iterator ui = drawStat.begin(); ui != drawStat.end(); ++ui)
+			DrawUnitStats(*ui);
+#endif
+
 	}
 }
 
@@ -2023,7 +2037,80 @@ void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsign
 	glPopMatrix();
 }
 
+#ifdef USE_GML
+void CUnitDrawer::DrawUnitStats(CUnit* unit)
+{
+	if ((gu->myAllyTeam != unit->allyteam) &&
+	    !gu->spectatingFullView && unit->unitDef->hideDamage) {
+		return;
+	}
 
+	float3 interPos = unit->drawPos;
+	interPos.y += unit->model->height + 5.0f;
+
+	// setup the billboard transformation
+	glPushMatrix();
+	glTranslatef(interPos.x, interPos.y, interPos.z);
+	glCallList(CCamera::billboardList);
+
+	if (unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f) {
+		// black background for healthbar
+		glColor3f(0.0f, 0.0f, 0.0f);
+		glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
+
+		// health & stun level
+		const float health = std::max(0.0f, unit->health / unit->maxHealth);
+		const float stun = std::min(1.0f, unit->paralyzeDamage / unit->maxHealth);
+		float hsmin = std::min(health, stun);
+		const float colR = std::max(0.0f, 2.0f - 2.0f * health);
+		const float colG = std::min(2.0f * health, 1.0f);
+		if (hsmin > 0.0f) {
+			const float hscol = 0.8f - 0.5f * hsmin;
+			hsmin *= 10.0f;
+			glColor3f(colR * hscol, colG * hscol, 1.0f);
+			glRectf(-5.0f, 4.0f, hsmin - 5.0f, 6.0f);
+		}
+		if (health > stun) {
+			glColor3f(colR, colG, 0.0f);
+			glRectf(hsmin - 5.0f, 4.0f, health * 10.0f - 5.0f, 6.0f);
+		}
+		if (health < stun) {
+			glColor3f(0.0f, 0.0f, 1.0f);
+			glRectf(hsmin - 5.0f, 4.0f, stun * 10.0f - 5.0f, 6.0f);
+		}
+	}
+
+
+	// skip the rest of the indicators if it isn't a local unit
+	if ((gu->myTeam != unit->team) && !gu->spectatingFullView) {
+		glPopMatrix();
+		return;
+	}
+
+	// experience bar
+	const float eEnd = (unit->limExperience * 0.8f) * 10.0f;
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
+
+	if (unit->beingBuilt) {
+		const float bEnd = (unit->buildProgress * 0.8f) * 10.0f;
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
+	}
+	else if (unit->stockpileWeapon) {
+		const float sEnd = (unit->stockpileWeapon->buildPercent * 0.8f) * 10.0f;
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
+	}
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	if (unit->group) {
+		font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
+	}
+
+	glPopMatrix();
+}
+#endif
 
 void CUnitDrawer::UpdateDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();
