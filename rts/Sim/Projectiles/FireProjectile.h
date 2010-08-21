@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FIRE_PROJECTILE_H__
-#define __FIRE_PROJECTILE_H__
+#ifndef FIRE_PROJECTILE_H
+#define FIRE_PROJECTILE_H
 
 #include "Projectile.h"
 #include <list>
@@ -12,18 +12,17 @@
 #define SUBPARTICLE_LIST std::list<SubParticle>
 #endif
 
-class CFireProjectile :
-	public CProjectile
+class CFireProjectile : public CProjectile
 {
 	CR_DECLARE(CFireProjectile);
 	CR_DECLARE_SUB(SubParticle);
 public:
 	CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize);
-	~CFireProjectile(void);
+	~CFireProjectile();
 
-	void Draw(void);
-	void Update(void);
-	void StopFire(void);
+	void Draw();
+	void Update();
+	void StopFire();
 
 	int ttl;
 	float3 emitPos;
@@ -50,4 +49,4 @@ private:
 	virtual void FireImpl() {};
 };
 
-#endif // __FIRE_PROJECTILE_H__
+#endif // FIRE_PROJECTILE_H
