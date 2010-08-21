@@ -15,10 +15,9 @@
 
 #ifndef DEDICATED
 	#include "SpringApp.h"
-
-  #ifndef HEADLESS
 	#include "System/Platform/Threading.h"
 
+  #ifndef HEADLESS
     #ifdef WIN32
 	#include <windows.h>
     #else
