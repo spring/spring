@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "EventHandler.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
+#include "System/ConfigHandler.h"
 
 using std::string;
 using std::vector;
@@ -153,6 +154,10 @@ CEventHandler::CEventHandler()
 	SetupEvent("MoveCtrlNotify",         NULL, CONTROL_BIT);
 	SetupEvent("UnitPreDamaged",         NULL, CONTROL_BIT);
 	SetupEvent("ShieldPreDamaged",       NULL, CONTROL_BIT);
+
+#ifdef USE_GML
+	enableDrawCallIns = !!configHandler->Get("EnableDrawCallIns", 1);
+#endif
 }
 
 
@@ -398,9 +403,15 @@ void CEventHandler::Load(CArchiveBase* archive)
 	}
 }
 
+#ifdef USE_GML
+#define GML_DRAW_CALLIN_SELECTOR() if(!enableDrawCallIns) return;
+#else
+#define GML_DRAW_CALLIN_SELECTOR()
+#endif
 
 void CEventHandler::Update()
 {
+	GML_DRAW_CALLIN_SELECTOR()
 	const int count = listUpdate.size();
 
 	if (count <= 0)
@@ -430,6 +441,7 @@ void CEventHandler::ViewResize()
 #define DRAW_CALLIN(name)                         \
   void CEventHandler:: Draw ## name ()        \
   {                                               \
+    GML_DRAW_CALLIN_SELECTOR()                    \
     const int count = listDraw ## name.size();    \
     if (count <= 0) {                             \
       return;                                     \
