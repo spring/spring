@@ -50,7 +50,7 @@ using agui::Button;
 using agui::HorizontalLayout;
 
 extern boost::uint8_t* keys;
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 class ConnectWindow : public agui::Window
 {

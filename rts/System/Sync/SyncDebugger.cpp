@@ -37,7 +37,7 @@ extern "C" int backtrace (void **array, int size);
 
 
 // externals
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 
 /**

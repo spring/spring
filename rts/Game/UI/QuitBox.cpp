@@ -19,7 +19,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 CQuitBox::CQuitBox(void)
 {
