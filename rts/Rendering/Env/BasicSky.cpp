@@ -34,8 +34,6 @@
 
 CBasicSky::CBasicSky()
 {
-	PrintLoadMsg("Creating sky");
-
 	randMatrix=newmat3<int>(16,32,32);
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);

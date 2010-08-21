@@ -4,6 +4,7 @@
 #define __ADV_SKY_H__
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 #include "BaseSky.h"
 
 #define CLOUD_SIZE 256 // must be divisible by 4 and 8
@@ -27,7 +28,7 @@ public:
 	void DrawSun();
 	void Draw();
 	float3 GetCoord(int x,int y);
-	void CreateDetailTex(void);
+	void CreateDetailTex();
 
 	GLuint skyTex;
 	GLuint skyDot3Tex;
@@ -81,6 +82,9 @@ public:
 	float3 sunColor;
 	float3 cloudColor;
 	float fogStart;
+
+private:
+	FBO fbo;
 };
 
 #endif // __ADV_SKY_H__

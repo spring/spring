@@ -41,7 +41,6 @@ private:
 	void DrawPineTrunk(const float3& start, const float3& end, float size);
 	void DrawPineBranch(const float3& start, const float3& dir, float size);
 	void CreateGranTexBranch(const float3& start, const float3& end);
-	void CreateTex(unsigned char* data, unsigned int tex, int xsize, int ysize, bool fixAlpha, int maxMipLevel);
 	void CreateGranTex(unsigned char* data, int xpos, int ypos, int xsize);
 	void PineTree(int numBranch, float height);
 	float fRand(float size);

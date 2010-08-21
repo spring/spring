@@ -12,6 +12,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
@@ -30,11 +31,6 @@ CAdvTreeGenerator* treeGen;
 
 CAdvTreeGenerator::CAdvTreeGenerator()
 {
-	PrintLoadMsg("Generating 3D trees");
-
-	unsigned char(* tree)[2048][4] = new unsigned char[256][2048][4];
-	memset(tree[0][0], 128, 256 * 2048 * 4);
-
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
 		logOutput.Print(resourcesParser.GetErrorLog());
@@ -47,6 +43,19 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	if (!bm.Load(fn) || bm.xsize != 256 || bm.ysize != 256)
 		throw content_error("Could not load tree texture from file " + fn);
 
+	FBO fbo;
+	fbo.Bind();
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 256, 256);
+	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 256, 256);
+	if (!fbo.CheckStatus("ADVTREE")) {
+		fbo.Unbind();
+		throw content_error("Could not create FBO!");
+	}
+
+	glDisable(GL_CULL_FACE);
+
+	unsigned char(* tree)[2048][4] = new unsigned char[256][2048][4];
+	memset(tree[0][0], 128, 256 * 2048 * 4);
 	for (int y = 0; y < 256; y++) {
 		for (int x = 0; x < 256; x++) {
 			tree[y][x][0] = bm.mem[(y * 256 + x) * 4    ];
@@ -60,12 +69,16 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 		}
 	}
 
+
 	fn = "bitmaps/" + treesTable.GetString("leaf", "bleaf.bmp");
-	if (!bm.Load(fn))
+	if (!bm.Load(fn)) {
+		delete[] tree;
+		fbo.Unbind();
 		throw content_error("Could not load tree texture from file " + fn);
+	}
 
 	bm.CreateAlpha(0, 0, 0);
-	bm.Renormalize(float3(0.22f, 0.43f, 0.18f));
+	//bm.Renormalize(float3(0.22f, 0.43f, 0.18f));
 
 	GLuint leafTex;
 	glGenTextures(1, &leafTex);
@@ -86,10 +99,14 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	CreateGranTex(data, 1536,       0, 2048);
 
 	glGenTextures(1, &barkTex);
-	CreateTex(data, barkTex, 2048, 256, false, 10);
+	glBindTexture(GL_TEXTURE_2D, barkTex);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 2048, 256, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	delete[] tree;
+
+	fbo.Unbind();
 
 
 	leafDL = glGenLists(8);
@@ -101,11 +118,10 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 		barkva->Initialize();
 
 		glNewList(leafDL + a, GL_COMPILE);
-		float size = 0.65f + fRand(0.2f);
-		MainTrunk(10, size * MAX_TREE_HEIGHT, size * 0.05f * MAX_TREE_HEIGHT);
-		va->DrawArrayTN(GL_QUADS);
-		barkva->DrawArrayTN(GL_TRIANGLE_STRIP);
-
+			float size = 0.65f + fRand(0.2f);
+			MainTrunk(10, size * MAX_TREE_HEIGHT, size * 0.05f * MAX_TREE_HEIGHT);
+			va->DrawArrayTN(GL_QUADS);
+			barkva->DrawArrayTN(GL_TRIANGLE_STRIP);
 		glEndList();
 	}
 
@@ -116,10 +132,9 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 		va->Initialize();
 
 		glNewList(pineDL + a, GL_COMPILE);
-		float size = 0.7f + fRand(0.2f);
-		PineTree((int)(20 + fRand(10)), MAX_TREE_HEIGHT * size);
-		va->DrawArrayTN(GL_TRIANGLES);
-
+			float size = 0.7f + fRand(0.2f);
+			PineTree((int)(20 + fRand(10)), MAX_TREE_HEIGHT * size);
+			va->DrawArrayTN(GL_TRIANGLES);
 		glEndList();
 	}
 }
@@ -268,6 +283,15 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 
 void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 {
+	FBO fbo;
+	fbo.Bind();
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 64, 64);
+	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 64, 64);
+	if (!fbo.CheckStatus("ADVTREE")) {
+		FBO::Unbind();
+		throw content_error("Could not create FBO!");
+	}
+
 	unsigned char* data = new unsigned char[512 * 512 * 4];
 	unsigned char* data2 = new unsigned char[512 * 512 * 4];
 
@@ -383,11 +407,20 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 
 	glGenTextures(2, farTex);
 
-	CreateTex(data,  farTex[0], 512, 512, true, 4);
-	CreateTex(data2, farTex[1], 512, 512, true, 4);
+	glBindTexture(GL_TEXTURE_2D, farTex[0]);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	glBindTexture(GL_TEXTURE_2D, farTex[1]);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, data2);
 
 	delete[] data;
 	delete[] data2;
+
+	FBO::Unbind();
 }
 
 void CAdvTreeGenerator::CreateFarView(unsigned char* mem,int dx,int dy,unsigned int displist)
@@ -481,113 +514,15 @@ void CAdvTreeGenerator::FixAlpha2(unsigned char* data)
 	}
 }
 
-void CAdvTreeGenerator::CreateTex(unsigned char* data, unsigned int tex,int xsize,int ysize,bool fixAlpha,int maxMipLevel)
-{
-	unsigned char* mipmaps[12];
-	mipmaps[0]=data;
-	int mipnum=0;
-	int xs=xsize;
-	int ys=ysize;
-	while(xsize!=1 || ysize!=1){
-		if(xsize!=1)
-			xsize/=2;
-		if(ysize!=1)
-			ysize/=2;
-		mipnum++;
-		mipmaps[mipnum]=new unsigned char[max(2,xsize)*max(2,ysize)*4];
-		memset(mipmaps[mipnum],0,max(2,xsize)*max(2,ysize)*4);
-		for(int y=0;y<ysize;++y){
-			for(int x=0;x<xsize;++x){
-				int r=0,g=0,b=0,a=0;
-				for(int y2=0;y2<2;++y2){
-					for(int x2=0;x2<2;++x2){
-						int alpha=mipmaps[mipnum-1][((y*2+y2)*xsize*2+x*2+x2)*4+3];
-						r+=mipmaps[mipnum-1][((y*2+y2)*xsize*2+x*2+x2)*4+0]*alpha;
-						g+=mipmaps[mipnum-1][((y*2+y2)*xsize*2+x*2+x2)*4+1]*alpha;
-						b+=mipmaps[mipnum-1][((y*2+y2)*xsize*2+x*2+x2)*4+2]*alpha;
-						a+=alpha;
-					}
-				}
-				if(a!=0){
-					mipmaps[mipnum][((y)*xsize+x)*4+0]=(unsigned char)( (r+a*0.5f)/a );
-					mipmaps[mipnum][((y)*xsize+x)*4+1]=(unsigned char)( (g+a*0.5f)/a );
-					mipmaps[mipnum][((y)*xsize+x)*4+2]=(unsigned char)( (b+a*0.5f)/a );
-				} else {
-					mipmaps[mipnum][((y)*xsize+x)*4+0]=40;
-					mipmaps[mipnum][((y)*xsize+x)*4+1]=80;
-					mipmaps[mipnum][((y)*xsize+x)*4+2]=20;
-				}
-				mipmaps[mipnum][((y)*xsize+x)*4+3]=(unsigned char)( (a+2.0f)/4 );
-			}
-		}
-	}
-	xsize=xs*2;
-	ysize=ys*2;
-	mipnum=-1;
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-
-	while(xsize!=1 || ysize!=1){
-		if(xsize!=1)
-			xsize/=2;
-		if(ysize!=1)
-			ysize/=2;
-		mipnum++;
-		if(mipnum>0){
-			for(int y=0;y<ysize;++y){
-				int cumError=0;
-				for(int x=0;x<xsize;++x){
-					if(mipmaps[mipnum][(y*xsize+x)*4+3]+cumError>126){
-						cumError+=int(mipmaps[mipnum][(y*xsize+x)*4+3])-255;
-						mipmaps[mipnum][(y*xsize+x)*4+3]=255;
-					} else {
-						cumError+=mipmaps[mipnum][(y*xsize+x)*4+3];
-						mipmaps[mipnum][(y*xsize+x)*4+3]=0;
-						for(int c=0;c<3;++c){
-							int alpha=0,col=0;
-							for(int y2=max(0,y-1);y2<min(ysize,y+2);++y2){
-								for(int x2=max(0,x-1);x2<min(xsize,x+2);++x2){
-									if(abs(x2-x)+abs(y2-y)==1){
-										if(mipmaps[mipnum][(y2*xsize+x2)*4+3]>126){
-											col+=mipmaps[mipnum][(y2*xsize+x2)*4+c];
-											alpha+=1;
-										}
-									}
-								}
-							}
-							if(alpha!=0)
-								mipmaps[mipnum][(y*xsize+x)*4+c]=(unsigned char)( (col+alpha*0.5f)/alpha ); // !
-						}
-					}
-				}
-			}
-		}
-		if(mipnum>maxMipLevel){
-			for(int y=0;y<ysize;++y){
-				for(int x=0;x<xsize;++x){
-					mipmaps[mipnum][(y*xsize+x)*4+3]=0;
-				}
-			}
-		}
-		if(fixAlpha && mipnum==0)
-			FixAlpha(mipmaps[0]);
-		if(fixAlpha && mipnum==1)
-			FixAlpha2(mipmaps[1]);
-
-		glTexImage2D(GL_TEXTURE_2D,mipnum,GL_RGBA8 ,xsize, ysize,0, GL_RGBA, GL_UNSIGNED_BYTE, mipmaps[mipnum]);
-		if(mipnum!=0)
-			delete[] mipmaps[mipnum];
-	}
-}
 
 void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, int xsize)
 {
+	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glOrtho(-1,1,-1,1,-4,4);
+	glOrtho(0,1,0,1,-4,4);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
@@ -670,24 +605,24 @@ void CAdvTreeGenerator::PineTree(int numBranch, float height)
 	float3 orto2(0,0,1);
 	float baseAngle=fRand(2*PI);
 	for(int a=0;a<numBranch;++a){
-		float sh=0.2f+fRand(0.2f);
-		float h=pow(sh+float(a)/numBranch*(1-sh),(float)0.7f)*height;
-		float angle=baseAngle+(a*0.618f+fRand(0.1f))*2*PI;
-		float3 dir(orto1*sin(angle)+orto2*cos(angle));
-		dir.y=(a-numBranch)*0.01f-fRand(0.2f)-0.2f;
+		float sh = 0.2f + fRand(0.2f);
+		float h  = height * pow(sh + float(a)/numBranch * (1-sh), (float)0.7f);
+		float angle = baseAngle + (a * 0.618f + fRand(0.1f)) * 2 * PI;
+		float3 dir(orto1 * sin(angle) + orto2 * cos(angle));
+		dir.y = (a - numBranch) * 0.01f - (0.2f + fRand(0.2f));
 		dir.ANormalize();
-		float size=sqrt((float)numBranch-a+5)*0.08f*MAX_TREE_HEIGHT;
+		float size = sqrt((float)numBranch - a + 5) * 0.08f * MAX_TREE_HEIGHT;
 		DrawPineBranch(float3(0,h,0),dir,size);
 	}
 	//create the top
 	float col=0.55f+fRand(0.2f);
-	va->AddVertexTN(float3(0,height-0.09f*MAX_TREE_HEIGHT,0), 0.126f+0.5f,0.02f,float3(0,0,col));
-	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.249f+0.5f,0.02f,float3(0.05f*MAX_TREE_HEIGHT,0,col));
-	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.126f+0.5f,0.98f,float3(-0.05f*MAX_TREE_HEIGHT,0,col));
+	va->AddVertexTN(float3(0,height-0.09f*MAX_TREE_HEIGHT,0), 0.126f+0.5f, 0.02f, float3(0,0,col));
+	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.249f+0.5f, 0.02f, float3(0.05f*MAX_TREE_HEIGHT,0,col));
+	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.126f+0.5f, 0.98f, float3(-0.05f*MAX_TREE_HEIGHT,0,col));
 
-	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.249f+0.5f,0.02f,float3(0.05f*MAX_TREE_HEIGHT,0,col));
-	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.126f+0.5f,0.98f,float3(-0.05f*MAX_TREE_HEIGHT,0,col));
-	va->AddVertexTN(float3(0,height+0.03f*MAX_TREE_HEIGHT,0), 0.249f+0.5f,0.98f,float3(0,0,col));
+	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.249f+0.5f, 0.02f, float3(0.05f*MAX_TREE_HEIGHT,0,col));
+	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.126f+0.5f, 0.98f, float3(-0.05f*MAX_TREE_HEIGHT,0,col));
+	va->AddVertexTN(float3(0,height+0.03f*MAX_TREE_HEIGHT,0), 0.249f+0.5f, 0.98f, float3(0,0,col));
 }
 
 void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, float size)
@@ -704,27 +639,27 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 		float col=0.45f+(((orto1*sin(angle)+orto2*cos(angle)).dot(flatSun)))*0.3f;
 		float col2=0.45f+(((orto1*sin(angle2)+orto2*cos(angle2)).dot(flatSun)))*0.3f;
 
-		va->AddVertexTN(start+orto1*sin(angle)*size+orto2*cos(angle)*size, angle/PI*0.125f*0.5f+0.5f,0,float3(0,0,col));
-		va->AddVertexTN(end+orto1*sin(angle)*size*0.1f+orto2*cos(angle)*size*0.1f, angle/PI*0.125f*0.5f+0.5f,3,float3(0,0,col));
-		va->AddVertexTN(start+orto1*sin(angle2)*size+orto2*cos(angle2)*size, angle2/PI*0.125f*0.5f+0.5f,0,float3(0,0,col2));
+		va->AddVertexTN(start+orto1*sin(angle)*size+orto2*cos(angle)*size,           angle/PI*0.125f*0.5f+0.5f,  0, float3(0,0,col));
+		va->AddVertexTN(end+orto1*sin(angle)*size*0.1f+orto2*cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
+		va->AddVertexTN(start+orto1*sin(angle2)*size+orto2*cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
 
-		va->AddVertexTN(start+orto1*sin(angle2)*size+orto2*cos(angle2)*size, angle2/PI*0.125f*0.5f+0.5f,0,float3(0,0,col2));
-		va->AddVertexTN(end+orto1*sin(angle)*size*0.1f+orto2*cos(angle)*size*0.1f, angle/PI*0.125f*0.5f+0.5f,3,float3(0,0,col));
-		va->AddVertexTN(end+orto1*sin(angle2)*size*0.1f+orto2*cos(angle2)*size*0.1f, angle2/PI*0.125f*0.5f+0.5f,3,float3(0,0,col2));
+		va->AddVertexTN(start+orto1*sin(angle2)*size+orto2*cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
+		va->AddVertexTN(end+orto1*sin(angle)*size*0.1f+orto2*cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
+		va->AddVertexTN(end+orto1*sin(angle2)*size*0.1f+orto2*cos(angle2)*size*0.1f, angle2/PI*0.125f*0.5f+0.5f, 3, float3(0,0,col2));
 	}
 }
 
 void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, float size)
 {
-	float3 flatSun=mapInfo->light.sunDir;
-	flatSun.y=0;
+	float3 flatSun = mapInfo->light.sunDir;
+	flatSun.y = 0;
 
-	float3 orto1=dir.cross(UpVector);
+	float3 orto1 = dir.cross(UpVector);
 	orto1.ANormalize();
-	float3 orto2=dir.cross(orto1);
+	float3 orto2 = dir.cross(orto1);
 
-	float tex=float(int(rand()*3.0f/(float)RAND_MAX))*0.125f;
-	float baseCol=0.4f+dir.dot(flatSun)*0.3f+fRand(0.1f);
+	float tex = 0.0f;//int(rand() * 3.0f/RAND_MAX) * 0.125f;
+	float baseCol = 0.4f + 0.3f * dir.dot(flatSun) + fRand(0.1f);
 
 	float col1=baseCol+fRand(0.2f);
 	float col2=baseCol+fRand(0.2f);
@@ -732,26 +667,26 @@ void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, f
 	float col4=baseCol+fRand(0.2f);
 	float col5=baseCol+fRand(0.2f);
 
-	va->AddVertexTN(start, 0.126f+tex+0.5f,0.02f,float3(0,0,col1));
-	va->AddVertexTN(start+dir*size*0.5f+orto1*size*0.5f+orto2*size*0.2f, 0.249f+tex+0.5f,0.02f,float3(0,0,col2));
-	va->AddVertexTN(start+dir*size*0.5f, 0.1875f+tex+0.5f,0.50f,float3(0,0,col4));
+	va->AddVertexTN(start,                                               0.5f+0.126f+tex,  0.02f, float3(0,0,col1));
+	va->AddVertexTN(start+dir*size*0.5f+orto1*size*0.5f+orto2*size*0.2f, 0.5f+0.249f+tex,  0.02f, float3(0,0,col2));
+	va->AddVertexTN(start+dir*size*0.5f,                                 0.5f+0.1875f+tex, 0.50f, float3(0,0,col4));
 
-	va->AddVertexTN(start, 0.126f+tex+0.5f,0.02f,float3(0,0,col1));
-	va->AddVertexTN(start+dir*size*0.5f-orto1*size*0.5f+orto2*size*0.2f, 0.126f+tex+0.5f,0.98f,float3(0,0,col3));
-	va->AddVertexTN(start+dir*size*0.5f, 0.1875f+tex+0.5f,0.50f,float3(0,0,col4));
+	va->AddVertexTN(start,                                               0.5f+0.126f+tex,  0.02f, float3(0,0,col1));
+	va->AddVertexTN(start+dir*size*0.5f-orto1*size*0.5f+orto2*size*0.2f, 0.5f+0.126f+tex,  0.98f, float3(0,0,col3));
+	va->AddVertexTN(start+dir*size*0.5f,                                 0.5f+0.1875f+tex, 0.50f, float3(0,0,col4));
 
-	va->AddVertexTN(start+dir*size*0.5f, 0.1875f+tex+0.5f,0.50f,float3(0,0,col4));
-	va->AddVertexTN(start+dir*size*0.5f+orto1*size*0.5f+orto2*size*0.2f, 0.249f+tex+0.5f,0.02f,float3(0,0,col2));
-	va->AddVertexTN(start+dir*size+orto2*size*0.1f, 0.249f+tex+0.5f,0.98f,float3(0,0,col5));
+	va->AddVertexTN(start+dir*size*0.5f,                                 0.5f+0.1875f+tex, 0.50f, float3(0,0,col4));
+	va->AddVertexTN(start+dir*size*0.5f+orto1*size*0.5f+orto2*size*0.2f, 0.5f+0.249f+tex,  0.02f, float3(0,0,col2));
+	va->AddVertexTN(start+dir*size+orto2*size*0.1f,                      0.5f+0.249f+tex,  0.98f, float3(0,0,col5));
 
-	va->AddVertexTN(start+dir*size*0.5f, 0.1875f+tex+0.5f,0.50f,float3(0,0,col4));
-	va->AddVertexTN(start+dir*size*0.5f-orto1*size*0.5f+orto2*size*0.2f, 0.126f+tex+0.5f,0.98f,float3(0,0,col3));
-	va->AddVertexTN(start+dir*size+orto2*size*0.1f, 0.249f+tex+0.5f,0.98f,float3(0,0,col5));
+	va->AddVertexTN(start+dir*size*0.5f,                                 0.5f+0.1875f+tex, 0.50f, float3(0,0,col4));
+	va->AddVertexTN(start+dir*size*0.5f-orto1*size*0.5f+orto2*size*0.2f, 0.5f+0.126f+tex,  0.98f, float3(0,0,col3));
+	va->AddVertexTN(start+dir*size+orto2*size*0.1f,                      0.5f+0.249f+tex,  0.98f, float3(0,0,col5));
 }
 
 float CAdvTreeGenerator::fRand(float size)
 {
-	return float(rand())/RAND_MAX*size;
+	return float(rand()) / RAND_MAX * size;
 }
 
 void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,unsigned char buf[256][2048][4])

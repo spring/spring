@@ -11,8 +11,10 @@
 #include "SkyBox.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Exceptions.h"
+#include "LogOutput.h"
 
-CBaseSky* sky=0;
+CBaseSky* sky = NULL;
 
 CBaseSky::CBaseSky(void)
 {
@@ -28,10 +30,22 @@ CBaseSky::~CBaseSky(void)
 
 CBaseSky* CBaseSky::GetSky()
 {
-	if(!mapInfo->atmosphere.skyBox.empty())
-		return new CSkyBox("maps/" + mapInfo->atmosphere.skyBox);
-	else if(GLEW_ARB_fragment_program && configHandler->Get("AdvSky",1) && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"ARB/clouds.fp"))
-		return new CAdvSky();
-	else
-		return new CBasicSky();
+	CBaseSky* sky = NULL;
+
+	try {
+		if(!mapInfo->atmosphere.skyBox.empty())
+			sky = new CSkyBox("maps/" + mapInfo->atmosphere.skyBox);
+		else if(configHandler->Get("AdvSky",1))
+			sky = new CAdvSky();
+	} catch (content_error& e) {
+		if (e.what()[0] != '\0')
+			logOutput.Print("Error: %s", e.what());
+		logOutput.Print("Sky: Fallback to BasicSky.");
+		delete sky;
+	}
+
+	if (!sky)
+		sky = new CBasicSky();
+
+	return sky;
 }
