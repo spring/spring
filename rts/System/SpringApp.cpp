@@ -80,11 +80,13 @@
 
 using std::string;
 
-CGameController* activeController = 0;
-bool globalQuit = false;
-boost::uint8_t *keys = 0;
-boost::uint16_t currentUnicode = 0;
+volatile bool globalQuit = false;
+
+CGameController* activeController = NULL;
 ClientSetup* startsetup = NULL;
+
+boost::uint8_t* keys = 0;
+boost::uint16_t currentUnicode = 0;
 
 /**
  * @brief xres default
@@ -1195,6 +1197,8 @@ int SpringApp::Run(int argc, char *argv[])
 	delete gmlProcessor;
 #endif
 
+	SaveWindowPosition();
+
 	CrashHandler::UninstallHangHandler();
 
 	// Shutdown
@@ -1208,8 +1212,6 @@ int SpringApp::Run(int argc, char *argv[])
  */
 void SpringApp::Shutdown()
 {
-	SaveWindowPosition();
-
 	delete pregame;	//in case we exit during init
 	delete game;
 	delete gameSetup;

@@ -27,8 +27,6 @@
 
 
 
-// On msvc main() is declared as a non-throwing function.
-// Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
 int Run(int argc, char* argv[])
 {
 #ifdef __MINGW32__
@@ -42,35 +40,17 @@ int Run(int argc, char* argv[])
 
 #ifdef USE_GML
 	set_threadnum(0);
-#	if GML_ENABLE_TLS_CHECK
+  #if GML_ENABLE_TLS_CHECK
 	if (gmlThreadNumber != 0) {
 		handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
-#	endif
+  #endif
 #endif
-
 
 	try {
 		SpringApp app;
 		return app.Run(argc, argv);
-	}
-	catch (const content_error& e) {
-		ErrorMessageBox(e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
-	}
-#ifndef NO_CATCH_EXCEPTIONS
-	catch (const boost::system::system_error& e) {
-		std::stringstream ss;
-		ss << e.code().value() << ": " << e.what();
-		std::string tmp = ss.str();
-		ErrorMessageBox(tmp, "Fatal Error", MBF_OK | MBF_EXCL);
-	}
-	catch (const std::exception& e) {
-		ErrorMessageBox(e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
-	}
-	catch (const char* e) {
-		ErrorMessageBox(e, "Fatal Error", MBF_OK | MBF_EXCL);
-	}
-#endif
+	} CATCH_SPRING_ERRORS
 
 	return -1;
 }

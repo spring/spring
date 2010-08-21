@@ -26,4 +26,15 @@ public:
 	content_error(const std::string& msg) : std::runtime_error(msg) {};
 };
 
+
+/**
+ * opengl_error
+ *   thrown when an OpenGL function failed (FBO creation, Offscreen Context creation, ...).
+ */
+class opengl_error : public std::runtime_error
+{
+public:
+	opengl_error(const std::string& msg) : std::runtime_error(msg) {};
+};
+
 #endif

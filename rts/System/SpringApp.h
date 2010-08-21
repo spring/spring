@@ -22,6 +22,7 @@ public:
 	~SpringApp();
 
 	int Run(int argc, char *argv[]);                //!< Run game loop
+	static void Shutdown();                         //!< Shuts down application
 
 protected:
 	bool Initialize();                              //!< Initialize app
@@ -33,7 +34,6 @@ protected:
 	void LoadFonts();                               //!< Initialize glFonts (font & smallFont)
 	bool SetSDLVideoMode();                         //!< Sets SDL video mode
 	void SetProcessAffinity(int) const;
-	void Shutdown();                                //!< Shuts down application
 	int Update();                                   //!< Run simulation and draw
 
 #if defined(USE_GML) && GML_ENABLE_SIM
