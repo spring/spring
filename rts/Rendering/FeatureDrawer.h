@@ -40,6 +40,15 @@ public:
 	void RenderFeatureDestroyed(const CFeature* feature);
 	void RenderFeatureMoved(const CFeature* feature);
 
+#ifdef USE_GML
+	void DrawFeatureStats(); 	  	
+	void DrawFeatureStatBars(const CFeature*);
+	std::vector<CFeature*> drawStat;
+	bool showRezBars;
+	void SetShowRezBars(bool b) { showRezBars = b; }
+	bool GetShowRezBars() const { return showRezBars; }
+#endif
+
 private:
 	void UpdateDrawPos(CFeature* f);
 

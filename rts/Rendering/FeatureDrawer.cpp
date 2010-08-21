@@ -54,7 +54,9 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
-
+#ifdef USE_GML
+	showRezBars = !!configHandler->Get("ShowRezBars", 1);
+#endif
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
 
@@ -213,6 +215,9 @@ void CFeatureDrawer::Draw()
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
+#ifdef USE_GML
+	DrawFeatureStats();
+#endif
 }
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
@@ -244,6 +249,56 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 		}
 	}
 }
+
+#ifdef USE_GML
+void CFeatureDrawer::DrawFeatureStats()
+{
+	if (!drawStat.empty()) {
+		if (!water->drawReflection) {
+			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi) {
+				DrawFeatureStatBars(*fi);
+			}
+		}
+
+		drawStat.clear();
+	}
+}
+
+void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
+{
+	float3 interPos = feature->pos;
+	interPos.y += feature->height + 5.0f;
+
+	glPushMatrix();
+	glTranslatef(interPos.x, interPos.y, interPos.z);
+	glCallList(CCamera::billboardList);
+
+	const float recl = feature->reclaimLeft;
+	const float rezp = feature->resurrectProgress;
+
+	// black background for the bar
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
+
+	// rez/metalbar
+	const float rmin = std::min(recl, rezp) * 10.0f;
+	if (rmin > 0.0f) {
+		glColor3f(1.0f, 0.0f, 1.0f);
+		glRectf(-5.0f, 4.0f, rmin - 5.0f, 6.0f);
+	}
+	if (recl > rezp) {
+		float col = 0.8 - 0.3 * recl;
+		glColor3f(col, col, col);
+		glRectf(rmin - 5.0f, 4.0f, recl * 10.0f - 5.0f, 6.0f);
+	}
+	if (recl < rezp) {
+		glColor3f(0.5f, 0.0f, 1.0f);
+		glRectf(rmin - 5.0f, 4.0f, rezp * 10.0f - 5.0f, 6.0f);
+	}
+
+	glPopMatrix();
+}
+#endif
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 {
@@ -417,6 +472,9 @@ public:
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 	bool farFeatures;
+#ifdef USE_GML
+	std::vector<CFeature*>* statFeatures;
+#endif
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
 
@@ -456,6 +514,10 @@ public:
 
 				const float sqDist = (f->pos - camera->pos).SqLength();
 				const float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
+#ifdef USE_GML
+				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
+					statFeatures->push_back(f);
+#endif
 
 				if (sqDist < farLength) {
 					float sqFadeDistE;
@@ -508,6 +570,9 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = drawFar;
+#ifdef USE_GML
+	drawer.statFeatures = showRezBars ? &drawStat : NULL;
+#endif
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }
