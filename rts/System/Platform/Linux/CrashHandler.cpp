@@ -294,6 +294,7 @@ namespace CrashHandler {
 						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
 						containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
 						containsOglSo = (containsOglSo || (path.find("i965_dri.so") != std::string::npos));
+						containsOglSo = (containsOglSo || (path.find("fglrx_dri.so") != std::string::npos));
 						const std::string absPath = createAbsolutePath(path);
 						if (containedAIInterfaceSo.empty() && (absPath.find("Interfaces") != std::string::npos)) {
 							containedAIInterfaceSo = absPath;
