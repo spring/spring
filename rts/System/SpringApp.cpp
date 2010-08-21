@@ -481,6 +481,8 @@ bool SpringApp::GetDisplayGeometry()
 		globalRendering->screenSizeY = screenHeight;
 		globalRendering->winSizeX = globalRendering->screenSizeX;
 		globalRendering->winSizeY = globalRendering->screenSizeY;
+		globalRendering->winPosX = windowPosX;
+		globalRendering->winPosY = globalRendering->screenSizeY - globalRendering->winSizeY - windowPosY; //! origin BOTTOMLEFT
 		return true;
 	}
 
