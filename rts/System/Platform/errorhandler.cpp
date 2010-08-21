@@ -69,14 +69,13 @@ void ErrorMessageBox(const std::string msg, const std::string caption, unsigned 
 	}
 #endif
 
-	extern volatile bool globalQuit;
-	globalQuit = true;
-
 	//! exiting any possibly threads
 	//! (else they would still run while the error messagebox is shown)
 #ifdef DEDICATED
 	SafeDelete(gameServer);
 #else
+	globalQuit = true;
+
 	SpringApp::Shutdown();
 	SafeDelete(activeController);
 #endif
