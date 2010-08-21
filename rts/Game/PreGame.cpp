@@ -50,7 +50,7 @@ using netcode::RawPacket;
 using std::string;
 
 extern boost::uint8_t* keys;
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),

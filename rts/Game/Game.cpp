@@ -170,7 +170,7 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 extern boost::uint8_t *keys;
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 CGame* game = NULL;
 

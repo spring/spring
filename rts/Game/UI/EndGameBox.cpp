@@ -20,7 +20,7 @@
 #include "System/Exceptions.h"
 
 using std::sprintf;
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 
 static std::string FloatToSmallString(float num, float mul = 1) {
