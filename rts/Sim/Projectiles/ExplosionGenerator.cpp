@@ -186,8 +186,9 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 	damage = damage / 20.0f;
 
 	// limit the visual effects based on the radius
-	if (damage > radius * 1.5f)
+	if (damage > radius * 1.5f) {
 		damage = radius * 1.5f;
+	}
 
 	damage *= gfxMod;
 
@@ -209,10 +210,12 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage = damage;
 
-		if (uwExplosion)
+		if (uwExplosion) {
 			smokeDamage *= 0.3f;
-		if (airExplosion || waterExplosion)
+		}
+		if (airExplosion || waterExplosion) {
 			smokeDamage *= 0.6f;
+		}
 
 		float invSqrtsmokeDamage = 1.0f;
 		if (smokeDamage > 0.0f) {
@@ -230,8 +233,9 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 			const float time = (40 + sqrt(smokeDamage) * 15) * (0.8f + gu->usRandFloat() * 0.7f);
 
 			float3 npos(pos + gu->usRandVector() * (smokeDamage * 1.0f));
-			if (npos.y < h)
+			if (npos.y < h) {
 				npos.y = h;
+			}
 
 			new CSmokeProjectile2(pos, npos, speed, time, sqrt(smokeDamage) *4, 0.4f, owner, 0.6f);
 		}
@@ -529,8 +533,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	string vastr = script.substr(0, end);
 
 
-	if (vastr == "dir") {//first see if we can match any keywords
-		//if the user uses a keyword assume he knows that it is put on the right datatype for now
+	if (vastr == "dir") { // first see if we can match any keywords
+		// if the user uses a keyword assume he knows that it is put on the right datatype for now
 		code += OP_DIR;
 		boost::uint16_t ofs = offset;
 		code.append((char*) &ofs, (char*) &ofs + 2);

@@ -64,50 +64,51 @@ CFireProjectile::CFireProjectile(const float3& pos, const float3& speed, CUnit* 
 	castShadow = true;
 }
 
-CFireProjectile::~CFireProjectile(void)
+CFireProjectile::~CFireProjectile()
 {
 }
 
-void CFireProjectile::StopFire(void)
+void CFireProjectile::StopFire()
 {
-	ttl=0;
+	ttl = 0;
 }
 
-void CFireProjectile::Update(void)
+void CFireProjectile::Update()
 {
 	ttl--;
-	if(ttl>0){
+	if (ttl > 0) {
 		if (ph->particleSaturation < 0.8f || (ph->particleSaturation < 1 && (gs->frameNum & 1))) {
 			//! unsynced code
 			SubParticle sub;
-			sub.age=0;
-			sub.maxSize=(0.7f+gu->usRandFloat()*0.3f)*particleSize;
-			sub.posDif=gu->usRandVector()*emitRadius;
-			sub.pos=emitPos;
-			sub.pos.y+=sub.posDif.y;
-			sub.posDif.y=0;
-			sub.rotSpeed=(gu->usRandFloat()-0.5f)*4;
-			sub.smokeType=gu->usRandInt()% projectileDrawer->smoketex.size();
+			sub.age = 0;
+			sub.maxSize = (0.7f + gu->usRandFloat()*0.3f) * particleSize;
+			sub.posDif = gu->usRandVector() * emitRadius;
+			sub.pos = emitPos;
+			sub.pos.y += sub.posDif.y;
+			sub.posDif.y = 0;
+			sub.rotSpeed = (gu->usRandFloat() - 0.5f) * 4;
+			sub.smokeType = gu->usRandInt() % projectileDrawer->smoketex.size();
 			subParticles.push_front(sub);
 
-			sub.maxSize=(0.7f+gu->usRandFloat()*0.3f)*particleSize;
-			sub.posDif=gu->usRandVector()*emitRadius;
-			sub.pos=emitPos;
-			sub.pos.y+=sub.posDif.y-radius*0.3f;
-			sub.posDif.y=0;
-			sub.rotSpeed=(gu->usRandFloat()-0.5f)*4;
+			sub.maxSize = (0.7f + gu->usRandFloat()*0.3f) * particleSize;
+			sub.posDif = gu->usRandVector() * emitRadius;
+			sub.pos = emitPos;
+			sub.pos.y += sub.posDif.y - radius*0.3f;
+			sub.posDif.y = 0;
+			sub.rotSpeed=(gu->usRandFloat() - 0.5f) * 4;
 			subParticles2.push_front(sub);
 		}
-		if(!(ttl&31)){
+		if (!(ttl & 31)) {
 			//! synced code
-			const std::vector<CFeature*> &f = qf->GetFeaturesExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
-			for(std::vector<CFeature*>::const_iterator fi = f.begin(); fi != f.end(); ++fi){
-				if(gs->randFloat()>0.8f)
+			const std::vector<CFeature*>& f = qf->GetFeaturesExact(emitPos + wind.GetCurrentWind()*0.7f, emitRadius * 2);
+			for (std::vector<CFeature*>::const_iterator fi = f.begin(); fi != f.end(); ++fi) {
+				if (gs->randFloat() > 0.8f) {
 					(*fi)->StartFire();
+				}
 			}
-			const std::vector<CUnit*> &units=qf->GetUnitsExact(emitPos+wind.GetCurrentWind()*0.7f,emitRadius*2);
-			for(std::vector<CUnit*>::const_iterator ui=units.begin();ui!=units.end();++ui){
-				(*ui)->DoDamage(DamageArray(30),0,ZeroVector);
+			const std::vector<CUnit*>& units = qf->GetUnitsExact(emitPos + wind.GetCurrentWind()*0.7f, emitRadius * 2);
+			for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
+				(*ui)->DoDamage(DamageArray(30), 0, ZeroVector);
 			}
 		}
 	}
@@ -131,15 +132,16 @@ void CFireProjectile::Update(void)
 		pi->posDif*=0.9f;
 	}
 
-	if(subParticles.empty() && ttl<=0)
-		deleteMe=true;
+	if (subParticles.empty() && (ttl <= 0)) {
+		deleteMe = true;
+	}
 }
 
-void CFireProjectile::Draw(void)
+void CFireProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	col[3]=1;
+	col[3] = 1;
 	unsigned char col2[4];
 	size_t sz2 = subParticles2.size();
 	size_t sz = subParticles.size();
@@ -150,20 +152,20 @@ void CFireProjectile::Draw(void)
 #else
 	for(SUBPARTICLE_LIST::iterator pi = subParticles2.begin(); pi != subParticles2.end(); ++pi) {
 #endif
-		float age=pi->age+ageSpeed*globalRendering->timeOffset;
-		float size=pi->maxSize*(age);
-		float rot=pi->rotSpeed*age;
+		float age = pi->age+ageSpeed*globalRendering->timeOffset;
+		float size = pi->maxSize*(age);
+		float rot = pi->rotSpeed*age;
 
-		float sinRot=fastmath::sin(rot);
-		float cosRot=fastmath::cos(rot);
-		float3 dir1=(camera->right*cosRot+camera->up*sinRot)*size;
-		float3 dir2=(camera->right*sinRot-camera->up*cosRot)*size;
+		float sinRot = fastmath::sin(rot);
+		float cosRot = fastmath::cos(rot);
+		float3 dir1 = (camera->right*cosRot + camera->up*sinRot) * size;
+		float3 dir2 = (camera->right*sinRot - camera->up*cosRot) * size;
 
 		float3 interPos=pi->pos;
 
-		col[0]=(unsigned char)((1-age)*255);
-		col[1]=(unsigned char)((1-age)*255);
-		col[2]=(unsigned char)((1-age)*255);
+		col[0] = (unsigned char) ((1 - age) * 255);
+		col[1] = (unsigned char) ((1 - age) * 255);
+		col[2] = (unsigned char) ((1 - age) * 255);
 
 		va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
 		va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
@@ -172,31 +174,32 @@ void CFireProjectile::Draw(void)
 	}
 #if defined(USE_GML) && GML_ENABLE_SIM
 	temp = 0;
-	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); temp < sz; ++pi, ++temp) {
+	for (SUBPARTICLE_LIST::iterator pi = subParticles.begin(); temp < sz; ++pi, ++temp) {
 		int smokeType = *(volatile int *)&pi->smokeType;
-		if (smokeType < 0 || smokeType >= projectileDrawer->smoketex.size())
+		if (smokeType < 0 || smokeType >= projectileDrawer->smoketex.size()) {
 			continue;
+		}
 		AtlasedTexture *at = projectileDrawer->smoketex[smokeType];
 #else
-	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
+	for (SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
 		AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
 #endif
-		float age=pi->age+ageSpeed*globalRendering->timeOffset;
-		float size=pi->maxSize*fastmath::apxsqrt(age);
-		float rot=pi->rotSpeed*age;
+		float age = pi->age+ageSpeed * globalRendering->timeOffset;
+		float size = pi->maxSize * fastmath::apxsqrt(age);
+		float rot = pi->rotSpeed * age;
 
-		float sinRot=fastmath::sin(rot);
-		float cosRot=fastmath::cos(rot);
-		float3 dir1=(camera->right*cosRot+camera->up*sinRot)*size;
-		float3 dir2=(camera->right*sinRot-camera->up*cosRot)*size;
+		float sinRot = fastmath::sin(rot);
+		float cosRot = fastmath::cos(rot);
+		float3 dir1 = (camera->right*cosRot + camera->up*sinRot) * size;
+		float3 dir2 = (camera->right*sinRot - camera->up*cosRot) * size;
 
-		float3 interPos=pi->pos;
+		float3 interPos = pi->pos;
 
-		if(age < 1/1.31f){
-			col[0]=(unsigned char)((1-age*1.3f)*255);
-			col[1]=(unsigned char)((1-age*1.3f)*255);
-			col[2]=(unsigned char)((1-age*1.3f)*255);
-			col[3]=1;
+		if (age < 1/1.31f) {
+			col[0] = (unsigned char) ((1 - age * 1.3f) * 255);
+			col[1] = (unsigned char) ((1 - age * 1.3f) * 255);
+			col[2] = (unsigned char) ((1 - age * 1.3f) * 255);
+			col[3] = 1;
 
 			va->AddVertexQTC(interPos - dir1 - dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->ystart, col);
 			va->AddVertexQTC(interPos + dir1 - dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->ystart, col);
@@ -205,15 +208,15 @@ void CFireProjectile::Draw(void)
 		}
 
 		unsigned char c;
-		if(age<0.5f){
-			c=(unsigned char)(age*510);
+		if (age < 0.5f) {
+			c = (unsigned char)        (age * 510);
 		} else {
-			c=(unsigned char)(510-age*510);
+			c = (unsigned char) (510 - (age * 510));
 		}
-		col2[0]=(unsigned char)(c*0.6f);
-		col2[1]=(unsigned char)(c*0.6f);
-		col2[2]=(unsigned char)(c*0.6f);
-		col2[3]=c;
+		col2[0] = (unsigned char) (c * 0.6f);
+		col2[1] = (unsigned char) (c * 0.6f);
+		col2[2] = (unsigned char) (c * 0.6f);
+		col2[3] = c;
 
 		va->AddVertexQTC(interPos - dir1 - dir2, at->xstart, at->ystart, col2);
 		va->AddVertexQTC(interPos + dir1 - dir2, at->xend,   at->ystart, col2);

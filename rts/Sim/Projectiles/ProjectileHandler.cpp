@@ -103,7 +103,7 @@ CProjectileHandler::~CProjectileHandler()
 	syncedProjectileIDs.clear();
 	unsyncedProjectileIDs.clear();
 
-	ph = 0;
+	ph = NULL;
 }
 
 void CProjectileHandler::Serialize(creg::ISerializer* s)

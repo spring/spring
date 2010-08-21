@@ -155,7 +155,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 }
 
 
-CPieceProjectile::~CPieceProjectile(void)
+CPieceProjectile::~CPieceProjectile()
 {
 	delete numCallback;
 
@@ -198,8 +198,9 @@ void CPieceProjectile::Collision()
 
 void CPieceProjectile::Collision(CUnit* unit)
 {
-	if (unit == owner())
+	if (unit == owner()) {
 		return;
+	}
 	if (flags & PF_Explode) {
 		helper->Explosion(pos, DamageArray(50), 5, 0, 10, owner(), false, 1.0f, false, false, 0, unit, ZeroVector, -1);
 	}
@@ -220,10 +221,11 @@ void CPieceProjectile::Collision(CUnit* unit)
 }
 
 
-bool CPieceProjectile::HasVertices(void)
+bool CPieceProjectile::HasVertices() const
 {
-	if (omp == NULL)
+	if (omp == NULL) {
 		return false;
+	}
 
 	return (omp->GetVertexCount() > 0);
 }
@@ -277,8 +279,9 @@ void CPieceProjectile::Update()
 			float3 dir = speed;
 			dir.Normalize();
 
-			if (curCallback)
+			if (curCallback) {
 				curCallback->drawCallbacker = 0;
+			}
 
 			curCallback =
 				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(),
@@ -300,8 +303,9 @@ void CPieceProjectile::Update()
 		ceg.Explosion(pos, 100, 0.0f, 0x0, 0.0f, 0x0, speed);
 	}
 
-	if (age > 10)
+	if (age > 10) {
 		checkCol = true;
+	}
 }
 
 
@@ -400,7 +404,7 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 	points.AddVertexQC(pos, color4::red);
 }
 
-void CPieceProjectile::DrawCallback(void)
+void CPieceProjectile::DrawCallback()
 {
 	if (*numCallback != globalRendering->drawFrame) {
 		*numCallback = globalRendering->drawFrame;
@@ -412,7 +416,7 @@ void CPieceProjectile::DrawCallback(void)
 	unsigned char col[4];
 
 	if (flags & PF_Fire) {
-		va->EnlargeArrays(8*4,0,VA_SIZE_TC);
+		va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
 		for (int age = 0; age < 8; ++age) {
 			float modage = age;
 			float3 interPos = oldInfos[age]->pos;
