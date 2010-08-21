@@ -3,6 +3,8 @@ Steps taken for last few releases (0.82.X)
 
 What I had to do for last few releases:
 
+(Wrote this down quickly, I hope I didn't forget anything..)
+
 Binary packages
 ---------------
 
@@ -16,6 +18,9 @@ Binary packages
 8) write news post
 9) once 7) is finished, upload to SF
 10) post news post
+
+Note: packages should also be put in springrts.com/dl at some point, but this is less important.
+(it's the 'mirror' link on download page)
 
 Source packages
 ---------------
@@ -31,8 +36,8 @@ Portable package
 One way to make it is (really, *really* needs to be improved & automated):
 
 1) install in wine, do not touch the install (don't run anything in it)
-2) add springsettings.cfg and springlobby.conf in the dir (maybe .conf and .cfg swapped, look in previous portable package and update this file :-))
-3) then rename that dir to spring-VERSION (see previous portable package again)
+2) add empty springsettings.cfg and springlobby.conf in the dir
+3) then rename that dir to spring-VERSION (see previous portable package and update this file :-))
 4) zip that dir and upload
 
 Enforcing on server
