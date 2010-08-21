@@ -529,7 +529,26 @@ static void safe_strzcpy(char* dst, std::string src, size_t max)
 }
 
 
-static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+/**
+ * @brief map related meta-data
+ */
+struct InternalMapInfo
+{
+	std::string description;  ///< Description (max 255 chars)
+	std::string author;       ///< Creator of the map (max 200 chars)
+	int tidalStrength;        ///< Tidal strength
+	int gravity;              ///< Gravity
+	float maxMetal;           ///< Metal scale factor
+	int extractorRadius;      ///< Extractor radius (of metal extractors)
+	int minWind;              ///< Minimum wind speed
+	int maxWind;              ///< Maximum wind speed
+	int width;                ///< Width of the map
+	int height;               ///< Height of the map
+	std::vector<float> xPos;  ///< Start positions X coordinates defined by the map
+	std::vector<float> zPos;  ///< Start positions Z coordinates defined by the map
+};
+
+static bool internal_GetMapInfo(const char* name, InternalMapInfo* outInfo)
 {
 	CheckInit();
 	CheckNullOrEmpty(name);
@@ -540,7 +559,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 	ScopedMapLoader mapLoader(name);
 	const string mapName = archiveScanner->MapNameToMapFile(name);
 
-	string err("");
+	std::string err("");
 
 	MapParser mapParser(mapName);
 	if (!mapParser.IsValid()) {
@@ -550,7 +569,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 
 	// Retrieve the map header as well
 	if (err.empty()) {
-		const string extension = mapName.substr(mapName.length() - 3);
+		const std::string extension = mapName.substr(mapName.length() - 3);
 		if (extension == "smf") {
 			try {
 				CSmfMapFile file(mapName);
@@ -564,8 +583,8 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 			}
 		}
 		else {
-			int w = mapTable.GetInt("gameAreaW", 0);
-			int h = mapTable.GetInt("gameAreaW", 1);
+			const int w = mapTable.GetInt("gameAreaW", 0);
+			const int h = mapTable.GetInt("gameAreaW", 1);
 
 			outInfo->width  = w * SQUARE_SIZE;
 			outInfo->height = h * SQUARE_SIZE;
@@ -580,51 +599,89 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 		}
 	}
 
-	// If the map didn't parse, say so now
+	// If the map did not parse, say so now
 	if (!err.empty()) {
 		SetLastError(err);
-		safe_strzcpy(outInfo->description, err, 255);
-
-		// Fill in stuff so tasclient won't crash
-		outInfo->posCount = 0;
-		if (version >= 1) {
-			outInfo->author[0] = 0;
-		}
-		return 0;
+		outInfo->description = err;
+		return false;
 	}
 
-	const string desc = mapTable.GetString("description", "");
-	safe_strzcpy(outInfo->description, desc, 255);
+	outInfo->description = mapTable.GetString("description", "");
 
 	outInfo->tidalStrength   = mapTable.GetInt("tidalstrength", 0);
 	outInfo->gravity         = mapTable.GetInt("gravity", 0);
 	outInfo->extractorRadius = mapTable.GetInt("extractorradius", 0);
 	outInfo->maxMetal        = mapTable.GetFloat("maxmetal", 0.0f);
 
-	if (version >= 1) {
-		const string author = mapTable.GetString("author", "");
-		safe_strzcpy(outInfo->author, author, 200);
-	}
+	outInfo->author = mapTable.GetString("author", "");
 
 	const LuaTable atmoTable = mapTable.SubTable("atmosphere");
 	outInfo->minWind = atmoTable.GetInt("minWind", 0);
 	outInfo->maxWind = atmoTable.GetInt("maxWind", 0);
 
-	// Find the start positions
-	int curTeam;
-	for (curTeam = 0; curTeam < 16; ++curTeam) {
+	// Find as many start positions as there are defined by the map
+	for (size_t curTeam = 0; true; ++curTeam) {
 		float3 pos(-1.0f, -1.0f, -1.0f); // defaults
 		if (!mapParser.GetStartPos(curTeam, pos)) {
 			break; // position could not be parsed
 		}
-		outInfo->positions[curTeam].x = pos.x;
-		outInfo->positions[curTeam].z = pos.z;
+		outInfo->xPos.push_back(pos.x);
+		outInfo->zPos.push_back(pos.z);
 		logOutput.Print(LOG_UNITSYNC, "  startpos: %.0f, %.0f", pos.x, pos.z);
 	}
 
-	outInfo->posCount = curTeam;
+	return true;
+}
 
-	return 1;
+/** @deprecated */
+static bool _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+{
+	CheckInit();
+	CheckNullOrEmpty(name);
+	CheckNull(outInfo);
+
+	bool fetchOk;
+
+	InternalMapInfo internalMapInfo;
+	fetchOk = internal_GetMapInfo(name, &internalMapInfo);
+
+	if (fetchOk) {
+		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
+		outInfo->tidalStrength   = internalMapInfo.tidalStrength;
+		outInfo->gravity         = internalMapInfo.gravity;
+		outInfo->maxMetal        = internalMapInfo.maxMetal;
+		outInfo->extractorRadius = internalMapInfo.extractorRadius;
+		outInfo->minWind         = internalMapInfo.minWind;
+		outInfo->maxWind         = internalMapInfo.maxWind;
+
+		outInfo->width           = internalMapInfo.width;
+		outInfo->height          = internalMapInfo.height;
+		outInfo->posCount        = internalMapInfo.xPos.size();
+		if (outInfo->posCount > 16) {
+			// legacy interface does not support more then 16
+			outInfo->posCount = 16;
+		}
+		for (size_t curTeam = 0; curTeam < outInfo->posCount; ++curTeam) {
+			outInfo->positions[curTeam].x = internalMapInfo.xPos[curTeam];
+			outInfo->positions[curTeam].z = internalMapInfo.zPos[curTeam];
+		}
+
+		if (version >= 1) {
+			safe_strzcpy(outInfo->author, internalMapInfo.author, 200);
+		}
+	} else {
+		// contains the error message
+		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
+ 
+ 		// Fill in stuff so TASClient does not crash
+ 		outInfo->posCount = 0;
+		if (version >= 1) {
+			outInfo->author[0] = '\0';
+		}
+		return false;
+	}
+
+	return fetchOk;
 }
 
 
@@ -635,6 +692,7 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  * @param version this determines which fields of the MapInfo structure are filled
  * @return Zero on error; non-zero on success
  * @deprecated
+ * @see GetMapCount
  *
  * If version >= 1, then the author field is filled.
  *
@@ -653,19 +711,23 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  *		mi.description = description;
  *		mi.author = author;
  *		if (GetMapInfoEx("somemap.smf", &mi, 1)) {
- *			//now mi is contains map data
+ *			// now mi contains map data
  *		} else {
- *			//handle the error
+ *			// handle the error
  *		}
  *		@endcode
  */
 EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
+	int ret = 0;
+
 	try {
-		return _GetMapInfoEx(name, outInfo, version);
+		const bool fetchOk = _GetMapInfoEx(name, outInfo, version);
+		ret = fetchOk ? 1 : 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return ret;
 }
 
 
@@ -674,16 +736,20 @@ EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  * @param name name of the map, e.g. "SmallDivide.smf"
  * @param outInfo pointer to structure which is filled with map info
  * @return Zero on error; non-zero on success
- * @see GetMapInfoEx
  * @deprecated
+ * @see GetMapCount
  */
 EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
 {
+	int ret = 0;
+
 	try {
-		return _GetMapInfoEx(name, outInfo, 0);
+		const bool fetchOk = _GetMapInfoEx(name, outInfo, 0);
+		ret = fetchOk ? 1 : 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return ret;
 }
 
 
@@ -752,24 +818,19 @@ EXPORT(const char*) GetMapName(int index)
 }
 
 
-static std::map<int, MapInfo> mapInfos;
+static std::map<int, InternalMapInfo> mapInfos;
 
-static MapInfo* internal_getMapInfo(int index) {
+static InternalMapInfo* internal_getMapInfo(int index) {
 
 	if (index >= mapNames.size()) {
 		SetLastError("invalid map index");
 	} else {
 		if (mapInfos.find(index) == mapInfos.end()) {
 			try {
-				MapInfo mi;
-				mi.description = new char[255];
-				mi.author  = new char[200];
-				if (_GetMapInfoEx(mapNames[index].c_str(), &mi, 1) != 0) {
-					mapInfos[index] = mi;
+				InternalMapInfo imi;
+				if (internal_GetMapInfo(mapNames[index].c_str(), &imi)) {
+					mapInfos[index] = imi;
 					return &(mapInfos[index]);
-				} else {
-					delete [] mi.description;
-					delete [] mi.author;
 				}
 			}
 			UNITSYNC_CATCH_BLOCKS;
@@ -784,9 +845,7 @@ static MapInfo* internal_getMapInfo(int index) {
 static void internal_deleteMapInfos() {
 
 	while (!mapInfos.empty()) {
-		std::map<int, MapInfo>::iterator mi = mapInfos.begin();
-		delete [] mi->second.description;
-		delete [] mi->second.author;
+		std::map<int, InternalMapInfo>::iterator mi = mapInfos.begin();
 		mapInfos.erase(mi);
 	}
 }
@@ -798,9 +857,9 @@ static void internal_deleteMapInfos() {
  */
 EXPORT(const char*) GetMapDescription(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
-		return mapInfo->description;
+		return mapInfo->description.c_str();
 	}
 
 	return NULL;
@@ -812,9 +871,9 @@ EXPORT(const char*) GetMapDescription(int index) {
  */
 EXPORT(const char*) GetMapAuthor(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
-		return mapInfo->author;
+		return mapInfo->author.c_str();
 	}
 
 	return NULL;
@@ -826,7 +885,7 @@ EXPORT(const char*) GetMapAuthor(int index) {
  */
 EXPORT(int) GetMapWidth(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->width;
 	}
@@ -840,7 +899,7 @@ EXPORT(int) GetMapWidth(int index) {
  */
 EXPORT(int) GetMapHeight(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->height;
 	}
@@ -854,7 +913,7 @@ EXPORT(int) GetMapHeight(int index) {
  */
 EXPORT(int) GetMapTidalStrength(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->tidalStrength;
 	}
@@ -868,7 +927,7 @@ EXPORT(int) GetMapTidalStrength(int index) {
  */
 EXPORT(int) GetMapWindMin(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->minWind;
 	}
@@ -882,7 +941,7 @@ EXPORT(int) GetMapWindMin(int index) {
  */
 EXPORT(int) GetMapWindMax(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->maxWind;
 	}
@@ -896,7 +955,7 @@ EXPORT(int) GetMapWindMax(int index) {
  */
 EXPORT(int) GetMapGravity(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->gravity;
 	}
@@ -934,7 +993,7 @@ EXPORT(const char*) GetMapResourceName(int index, int resourceIndex) {
 EXPORT(float) GetMapResourceMax(int index, int resourceIndex) {
 
 	if (resourceIndex == 0) {
-		const MapInfo* mapInfo = internal_getMapInfo(index);
+		const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 		if (mapInfo) {
 			return mapInfo->maxMetal;
 		}
@@ -952,7 +1011,7 @@ EXPORT(float) GetMapResourceMax(int index, int resourceIndex) {
 EXPORT(int) GetMapResourceExtractorRadius(int index, int resourceIndex) {
 
 	if (resourceIndex == 0) {
-		const MapInfo* mapInfo = internal_getMapInfo(index);
+		const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 		if (mapInfo) {
 			return mapInfo->extractorRadius;
 		}
@@ -971,9 +1030,9 @@ EXPORT(int) GetMapResourceExtractorRadius(int index, int resourceIndex) {
  */
 EXPORT(int) GetMapPosCount(int index) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
-		return mapInfo->posCount;
+		return mapInfo->xPos.size();
 	}
 
 	return -1;
@@ -986,9 +1045,9 @@ EXPORT(int) GetMapPosCount(int index) {
  */
 EXPORT(float) GetMapPosX(int index, int posIndex) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
-		return mapInfo->positions[posIndex].x;
+		return mapInfo->xPos[posIndex];
 	}
 
 	return -1.0f;
@@ -1001,9 +1060,9 @@ EXPORT(float) GetMapPosX(int index, int posIndex) {
  */
 EXPORT(float) GetMapPosZ(int index, int posIndex) {
 
-	const MapInfo* mapInfo = internal_getMapInfo(index);
+	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
-		return mapInfo->positions[posIndex].z;
+		return mapInfo->zPos[posIndex];
 	}
 
 	return -1.0f;
@@ -2541,18 +2600,11 @@ static void LuaPushNamedNumber(lua_State* L, const string& key, float value)
 
 static int LuaGetMapInfo(lua_State* L)
 {
-	const string mapName = luaL_checkstring(L, 1);
+	const std::string mapName = luaL_checkstring(L, 1);
 
-	MapInfo mi;
-	char auth[256];
-	char desc[256];
-	mi.author = auth;
- 	mi.author[0] = 0;
-	mi.description = desc;
-	mi.description[0] = 0;
-
-	if (!GetMapInfoEx(mapName.c_str(), &mi, 1)) {
-		logOutput.Print(LOG_UNITSYNC, "LuaGetMapInfo: _GetMapInfoEx(\"%s\") failed", mapName.c_str());
+	InternalMapInfo mi;
+	if (!internal_GetMapInfo(mapName.c_str(), &mi)) {
+		logOutput.Print(LOG_UNITSYNC, "LuaGetMapInfo: internal_GetMapInfo(\"%s\") failed", mapName.c_str());
 		return 0;
 	}
 
@@ -2572,11 +2624,11 @@ static int LuaGetMapInfo(lua_State* L)
 
 	lua_pushstring(L, "startPos");
 	lua_newtable(L);
-	for (int i = 0; i < mi.posCount; i++) {
-		lua_pushnumber(L, i + 1);
+	for (size_t p = 0; p < mi.xPos.size(); p++) {
+		lua_pushnumber(L, p + 1);
 		lua_newtable(L);
-		LuaPushNamedNumber(L, "x", mi.positions[i].x);
-		LuaPushNamedNumber(L, "z", mi.positions[i].z);
+		LuaPushNamedNumber(L, "x", mi.xPos[p]);
+		LuaPushNamedNumber(L, "z", mi.zPos[p]);
 		lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);
