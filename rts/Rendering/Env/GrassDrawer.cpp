@@ -13,6 +13,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
@@ -874,6 +875,12 @@ void CGrassDrawer::CreateFarTex(void)
 	memset(buf,0,64*sizeMod*1024*sizeMod*4);
 	memset(buf2,0,256*sizeMod*256*sizeMod*4);
 
+	FBO fbo;
+	fbo.Bind();
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 256*sizeMod, 256*sizeMod);
+	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 256*sizeMod, 256*sizeMod);
+	fbo.CheckStatus("GRASSDRAWER");
+
 	glPushMatrix();
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
@@ -947,6 +954,8 @@ void CGrassDrawer::CreateFarTex(void)
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
+
+	fbo.Unbind();
 
 	glGenTextures(1, &farTex);
 	glBindTexture(GL_TEXTURE_2D, farTex);
