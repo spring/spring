@@ -154,10 +154,6 @@ CEventHandler::CEventHandler()
 	SetupEvent("MoveCtrlNotify",         NULL, CONTROL_BIT);
 	SetupEvent("UnitPreDamaged",         NULL, CONTROL_BIT);
 	SetupEvent("ShieldPreDamaged",       NULL, CONTROL_BIT);
-
-#ifdef USE_GML
-	enableDrawCallIns = !!configHandler->Get("EnableDrawCallIns", 1);
-#endif
 }
 
 
@@ -404,7 +400,7 @@ void CEventHandler::Load(CArchiveBase* archive)
 }
 
 #ifdef USE_GML
-#define GML_DRAW_CALLIN_SELECTOR() if(!enableDrawCallIns) return;
+#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return;
 #else
 #define GML_DRAW_CALLIN_SELECTOR()
 #endif

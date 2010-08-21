@@ -53,6 +53,10 @@ public:
 	 * Network link maximum bandwidth, per user, in bytes
 	 */
 	int linkBandwidth;
+
+#ifdef USE_GML
+	bool enableDrawCallIns;
+#endif
 };
 
 extern GlobalConfig* gc;
