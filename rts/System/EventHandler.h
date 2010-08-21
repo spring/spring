@@ -320,6 +320,9 @@ class CEventHandler
 		EventClientList listDrawScreenEffects;
 		EventClientList listDrawScreen;
 		EventClientList listDrawInMiniMap;
+#ifdef USE_GML
+		bool enableDrawCallIns;
+#endif
 };
 
 
