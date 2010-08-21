@@ -130,7 +130,7 @@ extern CGameController* activeController;
  * Global boolean indicating whether the user
  * wants to quit
  */
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 /**
  * @brief keys
