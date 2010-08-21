@@ -1,3 +1,53 @@
+Steps taken for last few releases (0.82.X)
+==========================================
+
+What I had to do for last few releases:
+
+Binary packages
+---------------
+
+1) cherry pick a whole lot of stuff / or ensure code I want to release is in some branch one way or another
+2) write / update changelog
+3) bump version
+4) tag
+5) post release version bump
+6) push
+7) trigger build of the tag in buildbot (can put tag name in revision field)
+8) write news post
+9) once 7) is finished, upload to SF
+10) post news post
+
+Source packages
+---------------
+
+Unfortunately they have to be made manually at this moment (that's what I did for 0.82.0-3).
+It's planned to have buildbot generate them.
+
+Build source package using installer/make_source_package.sh
+
+Portable package
+----------------
+
+One way to make it is (really, *really* needs to be improved & automated):
+
+1) install in wine, do not touch the install (don't run anything in it)
+2) add springsettings.cfg and springlobby.conf in the dir (maybe .conf and .cfg swapped, look in previous portable package and update this file :-))
+3) then rename that dir to spring-VERSION (see previous portable package again)
+4) zip that dir and upload
+
+Enforcing on server
+-------------------
+
+1) Ask aegis to do it
+Once done:
+2) Update download page to point to the new enforced version
+3) Update default downloads for each platform on SF (installer for Windows, .tar.gz for all other platforms)
+
+
+
+Old stuff, to be cleaned up later
+=================================
+
 Checklist of stuff that needs to be doing at release time,
 not necessarily in the optimal order, but I tried to make it pretty much right.
 
