@@ -8,22 +8,20 @@
 #include "mmgr.h"
 
 #include "myGL.h"
-#include "Rendering/glFont.h"
+#include "FBO.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
-#include "FileSystem/FileHandler.h"
-#include "Game/GameVersion.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Platform/errorhandler.h"
-#include "ConfigHandler.h"
-#include "LogOutput.h"
-#include "FPUCheck.h"
-#include "GlobalUnsynced.h"
-#include "Util.h"
-#include "Exceptions.h"
-#include "Platform/CrashHandler.h"
-#include "FBO.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/FPUCheck.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/CrashHandler.h"
+#include "System/Platform/errorhandler.h"
 
 using namespace std;
 
@@ -31,11 +29,6 @@ using namespace std;
 static CVertexArray* vertexArray1 = NULL;
 static CVertexArray* vertexArray2 = NULL;
 static CVertexArray* currentVertexArray = NULL;
-
-static GLuint     startupTexture = 0;
-static float      startupTexture_aspectRatio = 1.0; // x/y
-// make this var configurable if we need streching load-screens
-static const bool startupTexture_keepAspectRatio = true;
 
 #ifdef USE_GML
 static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
@@ -168,7 +161,6 @@ void LoadExtensions()
 				missingExts.c_str(), (const char*)glGetString(GL_RENDERER),
 				(const char*)glGetString(GL_RENDERER));
 		handleerror(0, errorMsg, "Update graphic drivers", 0);
-		exit(0);
 	}
 
 	vertexArray1 = new CVertexArray;
@@ -222,96 +214,6 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 		gluBuild2DMipmaps(target, internalFormat, width, height, format, type, data);
 }
 
-/******************************************************************************/
-
-static void AppendStringVec(vector<string>& dst, const vector<string>& src)
-{
-	for (int i = 0; i < (int)src.size(); i++) {
-		dst.push_back(src[i]);
-	}
-}
-
-
-static string SelectPicture(const std::string& dir, const std::string& prefix)
-{
-	vector<string> pics;
-
-	AppendStringVec(pics, CFileHandler::FindFiles(dir, prefix + "*.bmp"));
-	AppendStringVec(pics, CFileHandler::FindFiles(dir, prefix + "*.jpg"));
-
-	// add 'allside_' pictures if we have a prefix
-	if (!prefix.empty()) {
-		AppendStringVec(pics, CFileHandler::FindFiles(dir, "allside_*.bmp"));
-		AppendStringVec(pics, CFileHandler::FindFiles(dir, "allside_*.jpg"));
-	}
-
-	if (pics.empty()) {
-		return "";
-	}
-
-	return pics[gu->usRandInt() % pics.size()];
-}
-
-void RandomStartPicture(const std::string& sidePref)
-{
-	if (startupTexture)
-		return;
-	const string picDir = "bitmaps/loadpictures/";
-
-	string name = "";
-	if (!sidePref.empty()) {
-		name = SelectPicture(picDir, sidePref + "_");
-	}
-	if (name.empty()) {
-		name = SelectPicture(picDir, "");
-	}
-	if (name.empty()) {
-		return; // no valid pictures
-	}
-	LoadStartPicture(name);
-}
-
-void LoadStartPicture(const std::string& name)
-{
-	CBitmap bm;
-	if (!bm.Load(name)) {
-		throw content_error("Could not load startpicture from file " + name);
-	}
-
-	startupTexture_aspectRatio = (float) bm.xsize / bm.ysize;
-
-	// HACK Really big load pictures made GLU choke.
-	if ((bm.xsize > globalRendering->viewSizeX) || (bm.ysize > globalRendering->viewSizeY)) {
-		float newX = globalRendering->viewSizeX;
-		float newY = globalRendering->viewSizeY;
-
-		if (startupTexture_keepAspectRatio) {
-			// Make smaller but preserve aspect ratio.
-			// The resulting resolution will make it fill one axis of the
-			// screen, and be smaller or equal to the screen on the other axis.
-			const float screen_aspectRatio = globalRendering->aspectRatio;
-			const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
-			if (ratioComp > 1.0f) {
-				newX = newX / ratioComp;
-			} else {
-				newY = newY * ratioComp;
-			}
-		}
-
-		bm = bm.CreateRescaled((int) newX, (int) newY);
-	}
-
-	startupTexture = bm.CreateTexture(false);
-}
-
-void UnloadStartPicture()
-{
-	if (startupTexture) {
-		glDeleteTextures(1, &startupTexture);
-	}
-	startupTexture = 0;
-}
-
 
 /******************************************************************************/
 
@@ -332,78 +234,8 @@ void ClearScreen()
 	glColor3f(1,1,1);
 }
 
-void PrintLoadMsg(const char* text, bool swapbuffers)
-{
-	CrashHandler::ClearDrawWDT();
 
-	static char prevText[100];
-
-	// Stuff that needs to be done regularly while loading.
-	// Totally unrelated to the task the name of this function implies.
-
-	// Check to prevent infolog spam by CPreGame which uses this function
-	// to render the screen background each frame.
-	if (strcmp(prevText, text)) {
-		logOutput.Print("%s",text);
-		logOutput.Flush();
-		strncpy(prevText, text, sizeof(prevText));
-		prevText[sizeof(prevText) - 1] = 0;
-	}
-
-	good_fpu_control_registers(text);
-
-	float xDiv = 0.0f;
-	float yDiv = 0.0f;
-	if (startupTexture_keepAspectRatio) {
-		const float screen_aspectRatio = globalRendering->aspectRatio;
-		const float ratioComp = screen_aspectRatio / startupTexture_aspectRatio;
-		if ((ratioComp > 0.99f) && (ratioComp < 1.01f)) { // ~= 1
-			// show Load-Screen full screen
-			// nothing to do
-		} else if (ratioComp > 1.0f) {
-			// show Load-Screen on part of the screens X-Axis only
-			xDiv = (1 - (1 / ratioComp)) / 2;
-		} else {
-			// show Load-Screen on part of the screens Y-Axis only
-			yDiv = (1 - ratioComp) / 2;
-		}
-	}
-
-	// Draw loading screen & print load msg.
-	ClearScreen();
-	if (startupTexture) {
-		glBindTexture(GL_TEXTURE_2D,startupTexture);
-		glBegin(GL_QUADS);
-			glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f + xDiv, 0.0f + yDiv);
-			glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f + xDiv, 1.0f - yDiv);
-			glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f - xDiv, 1.0f - yDiv);
-			glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f - xDiv, 0.0f + yDiv);
-		glEnd();
-	}
-
-	font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
-	font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
-
-	font->glPrint(0.5f,0.5f,   globalRendering->viewSizeY / 15.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			text);
-#ifdef USE_GML
-	font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"Spring %s (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
-#else
-	font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"Spring %s", SpringVersion::GetFull().c_str());
-#endif
-	font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"This program is distributed under the GNU General Public License, see license.html for more info");
-
-	if (swapbuffers) {
-		SDL_GL_SwapBuffers();
-	}
-}
-
-
-
-
+/******************************************************************************/
 
 static unsigned int LoadProgram(GLenum, const char*, const char*);
 
