@@ -20,6 +20,7 @@
 #include "GameSetup.h"
 #include "ClientSetup.h"
 #include "GameData.h"
+#include "LoadScreen.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -256,20 +257,9 @@ void CPreGame::UpdateClientNet()
 				gu->SetMyPlayer(packet->data[1]);
 				logOutput.Print("User number %i (team %i, allyteam %i)", gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
-				// When calling this function, mod archives have to be loaded
-				// and gu->myPlayerNum has to be set.
-				skirmishAIHandler.LoadPreGame();
+				loadscreen = new CLoadScreen(gameSetup->MapFile(), modArchive, savefile);
 
-				std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
-				if (!mapStartMusic.empty())
-					Channels::BGMusic.Play(mapStartMusic);
-
-				game = new CGame(gameSetup->MapFile(), modArchive, savefile);
-
-
-				UnloadStartPicture();
-
-				pregame=0;
+				pregame = NULL;
 				delete this;
 				return;
 			}

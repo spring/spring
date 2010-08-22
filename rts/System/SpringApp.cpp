@@ -26,6 +26,7 @@
 #include "Menu/SelectMenu.h"
 #include "Game/PreGame.h"
 #include "Game/Game.h"
+#include "Game/LoadScreen.h"
 #include "Sim/Misc/Team.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
@@ -1215,6 +1216,7 @@ int SpringApp::Run(int argc, char *argv[])
 void SpringApp::Shutdown()
 {
 	delete pregame;	//in case we exit during init
+	delete loadscreen;
 	delete game;
 	delete gameSetup;
 	delete font;
