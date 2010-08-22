@@ -110,7 +110,8 @@ CReadMap::CReadMap():
 	facenormals(NULL),
 	centernormals(NULL),
 	typemap(NULL),
-	metalMap(NULL)
+	metalMap(NULL),
+	mapChecksum(0)
 {
 	memset(mipHeightmap, 0, sizeof(mipHeightmap));
 }

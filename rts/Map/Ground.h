@@ -16,8 +16,9 @@ public:
 	CGround();
 	virtual ~CGround();
 
-	float GetApproximateHeight(float x,float y) const;
 	float GetSlope(float x,float y) const;
+	// similar to GetHeight2, but uses nearest filtering instead of interpolating the heightmap
+	float GetApproximateHeight(float x,float y) const;
 	/// Returns the height at the specified position, cropped to a non-negative value
 	float GetHeight(float x,float y) const;
 	/// Returns the real height at the specified position, can be below 0

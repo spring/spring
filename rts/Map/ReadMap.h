@@ -58,7 +58,7 @@ public:
 	static CReadMap* LoadMap(const std::string& mapname);
 
 protected:
-	CReadMap(); //! uses LoadMap
+	CReadMap();
 	void Initialize(); //! called by implementations of CReadMap
 
 	std::vector<HeightmapUpdate> heightmapUpdates;

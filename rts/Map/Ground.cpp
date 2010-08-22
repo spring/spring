@@ -6,9 +6,10 @@
 #include "Ground.h"
 #include "ReadMap.h"
 #include "Game/Camera.h"
+#include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
-#include "Sim/Misc/GeometricObjects.h"
+#include "myMath.h"
 #include <assert.h>
 
 CGround* ground;
@@ -249,14 +250,8 @@ float CGround::GetApproximateHeight(float x, float y) const
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
 
-	if (xsquare < 0)
-		xsquare = 0;
-	else if (xsquare > gs->mapx - 1)
-		xsquare = gs->mapx - 1;
-	if (ysquare < 0)
-		ysquare = 0;
-	else if (ysquare > gs->mapy - 1)
-		ysquare = gs->mapy - 1;
+	xsquare = Clamp(x, 0, gs->mapx - 1);
+	ysquare = Clamp(y, 0, gs->mapy - 1);
 
 	return readmap->centerheightmap[xsquare + ysquare * gs->mapx];
 }
