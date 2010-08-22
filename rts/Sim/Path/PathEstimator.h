@@ -83,7 +83,7 @@ public:
 		float3 start,
 		const CPathFinderDef& peDef,
 		Path& path,
-		unsigned int maxSearchedBlocks = 10000,
+		unsigned int maxSearchedBlocks,
 		bool synced = true
 	);
 
@@ -107,6 +107,8 @@ public:
 	/// Return a checksum that can be used to check if every player has the same path data
 	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
 
+	static const unsigned int MAX_SEARCHED_BLOCKS = 10000U;
+
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
 	void InitVertices();
@@ -121,7 +123,6 @@ private:
 
 
 
-	static const unsigned int MAX_SEARCHED_BLOCKS = 10000U;
 	const unsigned int BLOCK_SIZE;
 	const unsigned int BLOCK_PIXEL_SIZE;
 	const unsigned int BLOCKS_TO_UPDATE;
