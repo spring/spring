@@ -54,6 +54,11 @@ void Connection::Connect(const std::string& server, int port)
 		portbuf << port;
 		ip::tcp::resolver::query query(server, portbuf.str());
 		ip::tcp::resolver::iterator iter = resolver.resolve(query, err);
+#ifdef STREFLOP_H
+		//! (date of note: 08/22/10)
+		//! something in resolve() is invalidating the FPU flags
+		streflop_init<streflop::Simple>();
+#endif
 		if (err)
 		{
 			DoneConnecting(false, err.message());
