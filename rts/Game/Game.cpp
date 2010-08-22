@@ -30,6 +30,7 @@
 #include "GameVersion.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
+#include "LoadScreen.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
@@ -179,6 +180,7 @@ CGame* game = NULL;
 CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
+//	CR_MEMBER(finishedLoading),
 //	CR_MEMBER(drawMode),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
@@ -230,6 +232,7 @@ CR_REG_METADATA(CGame,(
 
 
 CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile) :
+	finishedLoading(false),
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	fps(0),
@@ -257,8 +260,6 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	saveFile(saveFile)
 {
 	game = this;
-	CrashHandler::GameLoading(true);
-	boost::thread loadThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	memset(gameID, 0, sizeof(gameID));
 
@@ -297,25 +298,11 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
 	}
-
-	LoadGame(mapname);
-
-	loadThread.join();
-	CrashHandler::GameLoading(false);
-
-	// sending your playername to the server indicates that you are finished loading
-	const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
-	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
-
-	#ifdef SYNCCHECK
-	net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
-	#endif
-
-	mouse->ShowMouse();
 }
 
 CGame::~CGame()
 {
+	delete loadscreen; //! don't use SafeDelete here (the loadscreen pointer is used IN the destructor!)
 	SafeDelete(guihandler);
 
 	if (videoCapturing->IsCapturing()) {
@@ -664,8 +651,7 @@ void CGame::LoadFinalize()
 	tracefile.NewInterval();
 #endif
 
-	activeController = this;
-	net->loading = false;
+	finishedLoading = true;
 }
 
 

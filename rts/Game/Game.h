@@ -64,6 +64,8 @@ public:
 	
 	bool HasLag() const;
 
+	volatile bool finishedLoading;
+
 	enum GameDrawMode {
 		gameNotDrawing     = 0,
 		gameNormalDraw     = 1,

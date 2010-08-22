@@ -97,9 +97,6 @@ CMouseHandler::CMouseHandler()
 
 	LoadCursors();
 
-	//! hide the cursor until we are ingame (hide it during loading screen etc.)
-	SDL_ShowCursor(SDL_DISABLE);
-
 #ifndef __APPLE__
 	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
 #endif

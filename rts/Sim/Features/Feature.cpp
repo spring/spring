@@ -88,7 +88,7 @@ CFeature::~CFeature(void)
 
 	qf->RemoveFeature(this);
 
-	if (def->drawType >= DRAWTYPE_TREE) {
+	if (def->drawType >= DRAWTYPE_TREE && treeDrawer) {
 		treeDrawer->DeleteTree(pos);
 	}
 
@@ -101,7 +101,8 @@ CFeature::~CFeature(void)
 		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 	}
 
-	delete collisionVolume; collisionVolume = NULL;
+	delete collisionVolume;
+	collisionVolume = NULL;
 }
 
 void CFeature::PostLoad()
