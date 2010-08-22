@@ -23,7 +23,7 @@ public:
 	/// loads from a float vector
 	CColorMap(std::vector<float>& vec);
 	/// loads from a filename
-	CColorMap(std::string filename);
+	CColorMap(const std::string& filename);
 	/// loads from a char buffer as one dimensional array
 	CColorMap(const unsigned char* buf, int num);
 	~CColorMap();

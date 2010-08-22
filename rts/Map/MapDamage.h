@@ -8,19 +8,18 @@
 class IMapDamage
 {
 public:
-	IMapDamage(void);
-	virtual ~IMapDamage(void);
-
-	virtual void Explosion(const float3& pos, float strength,float radius) = 0;
-	virtual void RecalcArea(int x1, int x2, int y1, int y2) = 0;
-	virtual void Update(void) {};
-	
 	static IMapDamage* GetMapDamage();
 
-	bool disabled;
+public:
+	IMapDamage();
+	virtual ~IMapDamage();
 
-	/* Ground readouts: Game/UI/MouseHandler.cpp, Game/UI/MiniMap.cpp. */
-	float mapHardness; 
+	virtual void Explosion(const float3& pos, float strength, float radius) = 0;
+	virtual void RecalcArea(int x1, int x2, int y1, int y2) = 0;
+	virtual void Update() {};
+
+	bool disabled;
+	float mapHardness;
 };
 
 extern IMapDamage* mapDamage;

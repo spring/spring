@@ -38,10 +38,12 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	drawLineOfSight = false;
 	drawRadarAndJammer = true;
 	wireframe = false;
+	highResInfoTex = false;
+	updateTextureState = 0;
 
-	extraTex = 0;
-	extraTexPal = 0;
-	extractDepthMap = 0;
+	extraTex = NULL;
+	extraTexPal = NULL;
+	extractDepthMap = NULL;
 
 	extraTexPBO.Bind();
 	extraTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
@@ -49,7 +51,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 
 	highResInfoTexWanted = false;
 
-	highResLosTex = !!configHandler->Get("HighResLos", 0);
+	highResLosTex = configHandler->Get("HighResLos", false);
 	extraTextureUpdateRate = std::max(4, configHandler->Get("ExtraTextureUpdateRate", 45) - 1);
 
 	jamColor[0] = (int)(losColorScale * 0.25f);
