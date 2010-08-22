@@ -402,6 +402,7 @@ void CGame::LoadGame(const std::string& mapname)
 	if (!globalQuit) LoadFinalize();
 
 	if (!globalQuit && saveFile) {
+			loadscreen->SetLoadMessage("Loading game");
 			saveFile->LoadGame();
 	}
 }
@@ -410,11 +411,13 @@ void CGame::LoadGame(const std::string& mapname)
 void CGame::LoadDefs()
 {
 	{
+		loadscreen->SetLoadMessage("Loading Radar Icons");
 		iconHandler = new CIconHandler();
 	}
 
 	{
 		ScopedOnceTimer timer("Loading GameData Definitions");
+		loadscreen->SetLoadMessage("Loading GameData Definitions");
 
 		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 		// customize the defs environment
@@ -452,6 +455,7 @@ void CGame::LoadDefs()
 
 	{
 		ScopedOnceTimer timer("Loading Sound Definitions");
+		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
 		sound->LoadSoundDefs("gamedata/sounds.lua");
 		chatSound = sound->GetSoundId("IncomingChat", false);
@@ -464,13 +468,16 @@ void CGame::LoadSimulation(const std::string& mapname)
 	helper = new CGameHelper();
 	ground = new CGround();
 
+	loadscreen->SetLoadMessage("Parsing Map Information");
 
 	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap(mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 
+	loadscreen->SetLoadMessage("Creating Smooth Height Mesh");
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
+	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveinfo = new CMoveInfo();
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
@@ -480,19 +487,26 @@ void CGame::LoadSimulation(const std::string& mapname)
 		//! FIXME: these five need to be loaded before featureHandler
 		//! (maps with features have their models loaded at startup)
 		modelParser = new C3DModelLoader();
+
+		loadscreen->SetLoadMessage("Creating Unit Textures");
 		texturehandler3DO = new C3DOTextureHandler;
 		texturehandlerS3O = new CS3OTextureHandler;
+
 		farTextureHandler = new CFarTextureHandler();
 		featureDrawer = new CFeatureDrawer();
 	}
 
+	loadscreen->SetLoadMessage("Loading Weapon Definitions");
 	weaponDefHandler = new CWeaponDefHandler();
+	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler();
 
 	uh = new CUnitHandler();
 	ph = new CProjectileHandler();
 
+	loadscreen->SetLoadMessage("Loading Feature Definitions");
 	featureHandler = new CFeatureHandler();
+	loadscreen->SetLoadMessage("Initializing Map Features");
 	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
 
 	mapDamage = IMapDamage::GetMapDamage();
@@ -513,8 +527,12 @@ void CGame::LoadRendering()
 	shadowHandler = new CShadowHandler();
 	groundDecals = new CGroundDecalHandler();
 
+	loadscreen->SetLoadMessage("Creating GroundDrawer");
 	readmap->NewGroundDrawer();
+
+	loadscreen->SetLoadMessage("Creating TreeDrawer");
 	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
+
 	inMapDrawer = new CInMapDraw();
 
 	geometricObjects = new CGeometricObjects();
@@ -524,6 +542,7 @@ void CGame::LoadRendering()
 	unitDrawer = new CUnitDrawer();
 	modelDrawer = IModelDrawer::GetInstance();
 
+	loadscreen->SetLoadMessage("Creating Sky & Water");
 	sky = CBaseSky::GetSky();
 	water = CBaseWater::GetWater(NULL);
 
@@ -612,14 +631,16 @@ void CGame::LoadInterface()
 void CGame::LoadLua()
 {
 	// Lua components
+	loadscreen->SetLoadMessage("Loading LuaRules");
 	CLuaRules::LoadHandler();
 
 	if (gs->useLuaGaia) {
+		loadscreen->SetLoadMessage("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
-	{
-		CLuaUI::LoadHandler();
-	}
+
+	loadscreen->SetLoadMessage("Loading LuaUI");
+	CLuaUI::LoadHandler();
 
 	// last in, first served
 	luaInputReceiver = new LuaInputReceiver();
@@ -630,6 +651,7 @@ void CGame::LoadLua()
 
 void CGame::LoadFinalize()
 {
+	loadscreen->SetLoadMessage("Finalizing");
 	eventHandler.GamePreload();
 
 	lastframe = SDL_GetTicks();
