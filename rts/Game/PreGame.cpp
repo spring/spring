@@ -260,14 +260,6 @@ void CPreGame::UpdateClientNet()
 				// and gu->myPlayerNum has to be set.
 				skirmishAIHandler.LoadPreGame();
 
-				const CTeam* team = teamHandler->Team(gu->myTeam);
-				assert(team);
-				std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
-				if (mapStartPic.empty())
-					RandomStartPicture(team->side);
-				else
-					LoadStartPicture(mapStartPic);
-
 				std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 				if (!mapStartMusic.empty())
 					Channels::BGMusic.Play(mapStartMusic);
