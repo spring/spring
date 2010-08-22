@@ -46,44 +46,38 @@ CSm3ReadMap::CSm3ReadMap(const std::string& mapName)
 	minimapTexture = 0;
 	numFeatures = 0;
 
-	try {
-		std::string lmsg = "Loading " + mapName;
-		PrintLoadMsg(lmsg.c_str());
 
-		if (!mapInfo->sm3.minimap.empty()) {
-			CBitmap bmp;
-			if (bmp.Load(mapInfo->sm3.minimap)) {
-				minimapTexture = bmp.CreateTexture(true);
-			}
+	if (!mapInfo->sm3.minimap.empty()) {
+		CBitmap bmp;
+		if (bmp.Load(mapInfo->sm3.minimap)) {
+			minimapTexture = bmp.CreateTexture(true);
 		}
-
-
-		renderer = new terrain::Terrain();
-
-		{
-			// load the heightmap in advance
-			Sm3LoadCB cb;
-			renderer->LoadHeightMap(GetMapDefParser(), &cb);
-
-			width = renderer->GetHeightmapWidth() - 1;
-			height = renderer->GetHeightmapWidth() - 1; //! note: not height
-		}
-
-		CReadMap::Initialize();
-
-		if (GetMapDefParser().SectionExist("map\\featuretypes")) {
-			const int numTypes = atoi(GetMapDefParser().SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
-			for (int a = 0; a < numTypes; a++) {
-				char loc[100];
-				SNPRINTF(loc, 100, "map\\featuretypes\\type%d", a);
-				featureTypes.push_back (new std::string(GetMapDefParser().SGetValueDef("TreeType0", loc)));
-			}
-		}
-
-		LoadFeatureData();
-	} catch (content_error& e) {
-		ErrorMessageBox(e.what(), "Error:", MBF_OK);
 	}
+
+
+	renderer = new terrain::Terrain();
+
+	{
+		// load the heightmap in advance
+		Sm3LoadCB cb;
+		renderer->LoadHeightMap(GetMapDefParser(), &cb);
+
+		width = renderer->GetHeightmapWidth() - 1;
+		height = renderer->GetHeightmapWidth() - 1; //! note: not height
+	}
+
+	CReadMap::Initialize();
+
+	if (GetMapDefParser().SectionExist("map\\featuretypes")) {
+		const int numTypes = atoi(GetMapDefParser().SGetValueDef("0", "map\\featuretypes\\numtypes").c_str());
+		for (int a = 0; a < numTypes; a++) {
+			char loc[100];
+			SNPRINTF(loc, 100, "map\\featuretypes\\type%d", a);
+			featureTypes.push_back (new std::string(GetMapDefParser().SGetValueDef("TreeType0", loc)));
+			}
+	}
+
+	LoadFeatureData();
 }
 
 CSm3ReadMap::~CSm3ReadMap()

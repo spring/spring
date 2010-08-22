@@ -41,8 +41,6 @@ static int CompareTatex2( const void *arg1, const void *arg2 ){
 
 C3DOTextureHandler::C3DOTextureHandler()
 {
-	PrintLoadMsg("Creating unit textures");
-
 	CFileHandler file("unittextures/tatex/teamtex.txt");
 	CSimpleParser parser(file);
 

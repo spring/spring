@@ -30,7 +30,6 @@ CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
 
 CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 {
-	PrintLoadMsg("Loading SMF");
 
 	ConfigureAnisotropy();
 

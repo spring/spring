@@ -140,7 +140,6 @@ CReadMap::~CReadMap()
 
 void CReadMap::Initialize()
 {
-	PrintLoadMsg("Loading Map");
 
 	// set global map info
 	gs->mapx = width;

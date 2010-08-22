@@ -32,8 +32,12 @@ class CGame : public CGameController
 private:
 	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
 
+public:
+	void LoadGame(const std::string& mapname);
+
+private:
 	void LoadDefs();
-	void LoadSimulation(const std::string&);
+	void LoadSimulation(const std::string& mapname);
 	void LoadRendering();
 	void LoadInterface();
 	void LoadLua();
@@ -41,7 +45,7 @@ private:
 	void PostLoad();
 
 public:
-	CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile);
+	CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile);
 
 	bool Draw();
 	bool DrawMT();
