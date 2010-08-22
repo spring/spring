@@ -3,6 +3,7 @@
 #include "ProjectileDrawer.hpp"
 
 #include "Game/Camera.h"
+#include "Game/LoadScreen.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GroundFlash.h"
@@ -51,6 +52,7 @@ CProjectileDrawer* projectileDrawer = NULL;
 CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false) {
 	eventHandler.AddClient(this);
 
+	loadscreen->SetLoadMessage("Creating Projectile Textures");
 
 	textureAtlas = new CTextureAtlas(2048, 2048);
 

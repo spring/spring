@@ -12,6 +12,7 @@
 #include "MetalMap.h"
 #include "SM3/Sm3Map.h"
 #include "SMF/SmfReadMap.h"
+#include "Game/LoadScreen.h"
 #include "System/bitops.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -140,6 +141,7 @@ CReadMap::~CReadMap()
 
 void CReadMap::Initialize()
 {
+	loadscreen->SetLoadMessage("Loading Map");
 
 	// set global map info
 	gs->mapx = width;

@@ -15,6 +15,7 @@
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
+#include "Game/LoadScreen.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
 #include "System/GlobalUnsynced.h"
@@ -65,6 +66,8 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		}
 	}
 
+
+	loadscreen->SetLoadMessage("Loading Tile Files");
 
 	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
 		int numSmallTiles;
@@ -122,6 +125,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		}
 	}
 
+	loadscreen->SetLoadMessage("Loading Tile Map");
 
 	int count = (header->mapx * header->mapy) / 16;
 	ifs->Read(tileMap, count * sizeof(int));

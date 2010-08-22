@@ -13,6 +13,7 @@
 #include "PathCache.h"
 #include "PathFinder.h"
 #include "Map/ReadMap.h"
+#include "Game/LoadScreen.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
@@ -156,6 +157,9 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	InitVertices();
 	InitBlocks();
 
+	char calcMsg[512];
+	sprintf(calcMsg, "Reading Estimate PathCosts [%d]", BLOCK_SIZE);
+	loadscreen->SetLoadMessage(calcMsg);
 
 	if (!ReadFile(cacheFileName, map)) {
 		pathBarrier=new boost::barrier(numThreads);
@@ -177,7 +181,9 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 
 		delete pathBarrier;
 
+		loadscreen->SetLoadMessage("PathCosts: writing", true);
 		WriteFile(cacheFileName, map);
+		loadscreen->SetLoadMessage("PathCosts: written", true);
 	}
 }
 
@@ -246,6 +252,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 		char calcMsg[128];
 		sprintf(calcMsg, "PathCosts: precached %d of %d", idx, nbrOfBlocks);
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (idx<<8)));
+		loadscreen->SetLoadMessage(calcMsg, (idx != 0));
 	}
 
 	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)

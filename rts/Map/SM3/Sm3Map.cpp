@@ -8,6 +8,7 @@
 
 #include "Game/Camera.h"
 #include "Game/GameSetup.h"
+#include "Game/LoadScreen.h"
 #include "Map/MapInfo.h"
 #include "Map/MapParser.h"
 #include "Rendering/ShadowHandler.h"
@@ -46,6 +47,7 @@ CSm3ReadMap::CSm3ReadMap(const std::string& mapName)
 	minimapTexture = 0;
 	numFeatures = 0;
 
+	loadscreen->SetLoadMessage("Loading " + mapName);
 
 	if (!mapInfo->sm3.minimap.empty()) {
 		CBitmap bmp;
