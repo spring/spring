@@ -30,8 +30,6 @@ CIconData CIconHandler::safetyData;
 
 CIconHandler::CIconHandler()
 {
-	PrintLoadMsg("Parsing unit icons");
-
 	defTexID = 0;
 	defIconData = NULL;
 

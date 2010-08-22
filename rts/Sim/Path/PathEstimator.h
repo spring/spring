@@ -208,7 +208,7 @@ private:
 	boost::barrier* pathBarrier;
 	boost::detail::atomic_count offsetBlockNum, costBlockNum;
 
-	int lastOffsetMessage, lastCostMessage;
+	int nextOffsetMessage, nextCostMessage;
 };
 
 #endif

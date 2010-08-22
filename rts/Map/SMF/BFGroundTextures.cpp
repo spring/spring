@@ -49,7 +49,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	int curTile = 0;
 
 
-	char loadMsg[128] = {0};
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	bool smtHeaderOverride = false;
 
@@ -93,11 +92,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 			tileFileName = "maps/" + smf.smtFileNames[a];
 		}
 
-
-		logOutput.Print("Loading .smt tile-file \"%s\"", tileFileName.c_str());
-		SNPRINTF(loadMsg, 127, "Loading %d tiles from file %d/%d", numSmallTiles, a+1, tileHeader.numTileFiles);
-		PrintLoadMsg(loadMsg);
-
+		//logOutput.Print("Loading .smt tile-file \"%s\"", tileFileName.c_str());
 
 		CFileHandler tileFile(tileFileName);
 
@@ -111,9 +106,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 			curTile += numSmallTiles;
 			continue;
 		}
-
-
-		PrintLoadMsg("Reading tiles");
 
 		TileFileHeader tfh;
 		READ_TILEFILEHEADER(tfh, tileFile);
@@ -130,7 +122,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		}
 	}
 
-	PrintLoadMsg("Reading tile map");
 
 	int count = (header->mapx * header->mapy) / 16;
 	ifs->Read(tileMap, count * sizeof(int));

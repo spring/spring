@@ -52,8 +52,6 @@ CR_REG_METADATA(CFeatureHandler, (
 
 CFeatureHandler::CFeatureHandler()
 {
-	PrintLoadMsg("Loading feature definitions");
-
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("FeatureDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading FeatureDefs");
@@ -224,8 +222,6 @@ const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
-	PrintLoadMsg("Initializing map features");
-
 	//! add map's featureDefs
 	int numType = readmap->GetNumFeatureTypes ();
 	for (int a = 0; a < numType; ++a) {

@@ -143,6 +143,7 @@
 #include "System/myMath.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
+#include "System/SpringApp.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -227,7 +228,8 @@ CR_REG_METADATA(CGame,(
 ));
 
 
-CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile):
+
+CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile) :
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	fps(0),
@@ -290,36 +292,13 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 
 	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
 
-	{
-		ScopedOnceTimer timer("Loading sounds");
-
-		sound->LoadSoundDefs("gamedata/sounds.lua");
-		chatSound = sound->GetSoundId("IncomingChat", false);
-	}
-
-	{
-		ScopedOnceTimer timer("Camera and mouse");
-		camera = new CCamera();
-		cam2 = new CCamera();
-		mouse = new CMouseHandler();
-		camHandler = new CCameraHandler();
-	}
-
-	iconHandler = new CIconHandler();
-
-	selectedUnits.Init(playerHandler->ActivePlayers());
 	modInfo.Init(modName.c_str());
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
 	}
 
-	LoadDefs();
-	LoadSimulation(mapname);
-	LoadRendering();
-	LoadInterface();
-	LoadLua();
-	LoadFinalize();
+	LoadGame(mapname);
 
 	loadThread.join();
 	CrashHandler::GameLoading(false);
@@ -425,42 +404,70 @@ CGame::~CGame()
 	CColorMap::DeleteColormaps();
 }
 
+
+void CGame::LoadGame(const std::string& mapname)
+{
+	if (!globalQuit) LoadDefs();
+	if (!globalQuit) LoadSimulation(mapname);
+	if (!globalQuit) LoadRendering();
+	if (!globalQuit) LoadInterface();
+	if (!globalQuit) LoadLua();
+	if (!globalQuit) LoadFinalize();
+
+	if (!globalQuit && saveFile) {
+			saveFile->LoadGame();
+	}
+}
+
+
 void CGame::LoadDefs()
 {
-	ScopedOnceTimer timer("Loading GameData Definitions");
-	PrintLoadMsg("Loading GameData Definitions");
+	{
+		iconHandler = new CIconHandler();
+	}
 
-	defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	// customize the defs environment
-	defsParser->GetTable("Spring");
-	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
-	defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
-	defsParser->EndTable();
+	{
+		ScopedOnceTimer timer("Loading GameData Definitions");
 
-	// run the parser
-	if (!defsParser->Execute()) {
-		throw content_error(defsParser->GetErrorLog());
+		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		// customize the defs environment
+		defsParser->GetTable("Spring");
+		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+		defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
+		defsParser->EndTable();
+
+		// run the parser
+		if (!defsParser->Execute()) {
+			throw content_error(defsParser->GetErrorLog());
+		}
+		const LuaTable root = defsParser->GetRoot();
+		if (!root.IsValid()) {
+			throw content_error("Error loading gamedata definitions");
+		}
+		// bail now if any of these tables in invalid
+		// (makes searching for errors that much easier
+		if (!root.SubTable("UnitDefs").IsValid()) {
+			throw content_error("Error loading UnitDefs");
+		}
+		if (!root.SubTable("FeatureDefs").IsValid()) {
+			throw content_error("Error loading FeatureDefs");
+		}
+		if (!root.SubTable("WeaponDefs").IsValid()) {
+			throw content_error("Error loading WeaponDefs");
+		}
+		if (!root.SubTable("ArmorDefs").IsValid()) {
+			throw content_error("Error loading ArmorDefs");
+		}
+		if (!root.SubTable("MoveDefs").IsValid()) {
+			throw content_error("Error loading MoveDefs");
+		}
 	}
-	const LuaTable root = defsParser->GetRoot();
-	if (!root.IsValid()) {
-		throw content_error("Error loading gamedata definitions");
-	}
-	// bail now if any of these tables in invalid
-	// (makes searching for errors that much easier
-	if (!root.SubTable("UnitDefs").IsValid()) {
-		throw content_error("Error loading UnitDefs");
-	}
-	if (!root.SubTable("FeatureDefs").IsValid()) {
-		throw content_error("Error loading FeatureDefs");
-	}
-	if (!root.SubTable("WeaponDefs").IsValid()) {
-		throw content_error("Error loading WeaponDefs");
-	}
-	if (!root.SubTable("ArmorDefs").IsValid()) {
-		throw content_error("Error loading ArmorDefs");
-	}
-	if (!root.SubTable("MoveDefs").IsValid()) {
-		throw content_error("Error loading MoveDefs");
+
+	{
+		ScopedOnceTimer timer("Loading Sound Definitions");
+
+		sound->LoadSoundDefs("gamedata/sounds.lua");
+		chatSound = sound->GetSoundId("IncomingChat", false);
 	}
 }
 
@@ -470,18 +477,15 @@ void CGame::LoadSimulation(const std::string& mapname)
 	helper = new CGameHelper();
 	ground = new CGround();
 
-	PrintLoadMsg("Parsing Map Information");
 
 	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap(mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 
-	PrintLoadMsg("Calculating smooth height mesh");
 	smoothGround = new SmoothHeightMesh(ground, float3::maxxpos, float3::maxzpos, SQUARE_SIZE * 2, SQUARE_SIZE * 40);
 
 	moveinfo = new CMoveInfo();
 	qf = new CQuadField();
-
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
 
@@ -553,6 +557,16 @@ void CGame::LoadRendering()
 
 void CGame::LoadInterface()
 {
+	{
+		ScopedOnceTimer timer("Camera and mouse");
+		camera = new CCamera();
+		cam2 = new CCamera();
+		mouse = new CMouseHandler();
+		camHandler = new CCameraHandler();
+	}
+
+	selectedUnits.Init(playerHandler->ActivePlayers());
+
 	// interface components
 	ReColorTeams();
 	cmdColors.LoadConfig("cmdcolors.txt");
@@ -611,15 +625,12 @@ void CGame::LoadInterface()
 void CGame::LoadLua()
 {
 	// Lua components
-	PrintLoadMsg("Loading LuaRules");
 	CLuaRules::LoadHandler();
 
 	if (gs->useLuaGaia) {
-		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
 	{
-		PrintLoadMsg("Loading LuaUI");
 		CLuaUI::LoadHandler();
 	}
 
@@ -632,7 +643,6 @@ void CGame::LoadLua()
 
 void CGame::LoadFinalize()
 {
-	PrintLoadMsg("Finalizing...");
 	eventHandler.GamePreload();
 
 	lastframe = SDL_GetTicks();

@@ -51,7 +51,6 @@ CProjectileDrawer* projectileDrawer = NULL;
 CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false) {
 	eventHandler.AddClient(this);
 
-	PrintLoadMsg("Creating Projectile Textures");
 
 	textureAtlas = new CTextureAtlas(2048, 2048);
 

@@ -67,8 +67,10 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	openBlockBufferIndex(0),
 	moveMathOptions(mmOpt),
 	pathChecksum(0),
-	offsetBlockNum(nbrOfBlocks),costBlockNum(nbrOfBlocks),
-	lastOffsetMessage(-1),lastCostMessage(-1)
+	offsetBlockNum(nbrOfBlocks),
+	costBlockNum(nbrOfBlocks),
+	nextOffsetMessage(-1),
+	nextCostMessage(-1)
 {
 	// these give the changes in (x, z) coors
 	// when moving one step in given direction
@@ -154,13 +156,8 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	InitVertices();
 	InitBlocks();
 
-	PrintLoadMsg("Reading estimate path costs");
 
 	if (!ReadFile(cacheFileName, map)) {
-		char calcMsg[512];
-		sprintf(calcMsg, "Analyzing map accessibility [%d]", BLOCK_SIZE);
-		PrintLoadMsg(calcMsg);
-
 		pathBarrier=new boost::barrier(numThreads);
 
 		// Start threads if applicable
@@ -180,7 +177,6 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 
 		delete pathBarrier;
 
-		PrintLoadMsg("Writing path data file...");
 		WriteFile(cacheFileName, map);
 	}
 }
@@ -207,13 +203,16 @@ void CPathEstimator::InitBlocks() {
 
 
 void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
+	//! reset FPU state for synced computations
 	streflop_init<streflop::Simple>();
+
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot
 	// let thread i execute (A_i, B_i), but instead have to split the work such that every
 	// thread finishes its part of A before any starts B_i.
 	int nbr = nbrOfBlocks - 1;
 	int i;
+
 	while((i = --offsetBlockNum) >= 0)
 		CalculateBlockOffsets(nbr - i, thread);
 
@@ -229,12 +228,9 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread)
 	int x = idx % nbrOfBlocksX;
 	int z = idx / nbrOfBlocksX;
 
-	if (thread == 0 && (idx/1000)!=lastOffsetMessage) {
-		lastOffsetMessage=idx/1000;
-		char calcMsg[128];
-		sprintf(calcMsg, "Block offset: %d of %d (size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (lastOffsetMessage<<8)));
-		PrintLoadMsg(calcMsg);
+	if (thread == 0 && idx >= nextOffsetMessage) {
+		nextOffsetMessage = idx + nbrOfBlocks/16;
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (idx<<8)));
 	}
 
 	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
@@ -245,12 +241,11 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 	int x = idx % nbrOfBlocksX;
 	int z = idx / nbrOfBlocksX;
 
-	if (thread == 0 && (idx/1000)!=lastCostMessage) {
-		lastCostMessage=idx/1000;
+	if (thread == 0 && idx >= nextCostMessage) {
+		nextCostMessage = idx + nbrOfBlocks/16;
 		char calcMsg[128];
-		sprintf(calcMsg, "Path cost: %d of %d (size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (lastCostMessage<<8)));
-		PrintLoadMsg(calcMsg);
+		sprintf(calcMsg, "PathCosts: precached %d of %d", idx, nbrOfBlocks);
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (idx<<8)));
 	}
 
 	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
