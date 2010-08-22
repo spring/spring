@@ -250,8 +250,8 @@ float CGround::GetApproximateHeight(float x, float y) const
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
 
-	xsquare = Clamp(x, 0, gs->mapx - 1);
-	ysquare = Clamp(y, 0, gs->mapy - 1);
+	xsquare = Clamp(xsquare, 0, gs->mapx - 1);
+	ysquare = Clamp(ysquare, 0, gs->mapy - 1);
 
 	return readmap->centerheightmap[xsquare + ysquare * gs->mapx];
 }
