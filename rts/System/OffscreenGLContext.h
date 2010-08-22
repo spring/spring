@@ -3,7 +3,9 @@
 #ifndef _OFFSCREENGLCONTEXT_H
 #define _OFFSCREENGLCONTEXT_H
 
-#ifdef WIN32
+#ifdef HEADLESS
+	//! nothing
+#elif WIN32
 	#include "System/Platform/Win/win32.h"
 	#include <wingdi.h>
 #elif __APPLE__
@@ -27,7 +29,9 @@ public:
 
 private:
 
-#ifdef WIN32
+#ifdef HEADLESS
+	//! nothing
+#elif WIN32
 	HDC hdc;
 	HGLRC offscreenRC;
 #elif __APPLE__
