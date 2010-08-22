@@ -66,8 +66,8 @@ public:
 	*/
 	SearchResult GetPath(const MoveData& moveData, const float3 startPos,
 	                     const CPathFinderDef& pfDef, Path& path,
-	                     bool testMobile, bool exactPath = false,
-	                     unsigned int maxSearchedNodes = 10000, bool needPath = true,
+	                     bool testMobile, bool exactPath,
+	                     unsigned int maxSearchedNodes, bool needPath,
 	                     int ownerId = 0);
 
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
@@ -75,6 +75,7 @@ public:
 
 	static const float PATHCOST_INFINITY;
 	static const unsigned int PATH_RESOLUTION;
+	static const unsigned int MAX_SEARCHED_SQUARES = 10000U;
 
 	enum PATH_OPTIONS {
 		PATHOPT_RIGHT     =   1,      //-x
@@ -137,8 +138,6 @@ private:
 	bool heatMapping;
 
 private:
-	static const unsigned int MAX_SEARCHED_SQUARES = 10000U;
-
 	class OpenSquare {
 	public:
 		float cost;

@@ -349,7 +349,7 @@ void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX,
 	// use this thread's "private" CPathFinder instance
 	// (rather than locking pathFinder->GetPath()) if we
 	// are in one
-	result = pathFinders[thread]->GetPath(moveData, startPos, pfDef, path, false, true, 10000, false);
+	result = pathFinders[thread]->GetPath(moveData, startPos, pfDef, path, false, true, CPathFinder::MAX_SEARCHED_SQUARES, false);
 
 	// store the result
 	if (result == Ok)
@@ -879,18 +879,18 @@ float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, float3 pos)
 	CRangedGoalWithCircularConstraint rangedGoal(pos, pos, 0, 0, SQUARE_SIZE * BLOCK_SIZE * SQUARE_SIZE * BLOCK_SIZE * 4);
 	IPath::Path path;
 
-	std::vector<float3> startPos;
+	std::vector<float3> startPositions;
 
 	int xm = (int) (pos.x / (SQUARE_SIZE * BLOCK_SIZE));
 	int ym = (int) (pos.z / (SQUARE_SIZE * BLOCK_SIZE));
 
 	for (int y = std::max(0, ym - 1); y <= std::min(nbrOfBlocksZ - 1, ym + 1); ++y) {
 		for (int x = std::max(0, xm - 1); x <= std::min(nbrOfBlocksX - 1, xm + 1); ++x) {
-			startPos.push_back(float3(blockState[y * nbrOfBlocksX + x].sqrCenter[pathType].x * SQUARE_SIZE, 0, blockState[y * nbrOfBlocksX+x].sqrCenter[pathType].y * SQUARE_SIZE));
+			startPositions.push_back(float3(blockState[y * nbrOfBlocksX + x].sqrCenter[pathType].x * SQUARE_SIZE, 0, blockState[y * nbrOfBlocksX+x].sqrCenter[pathType].y * SQUARE_SIZE));
 		}
 	}
 
-	IPath::SearchResult result = pathFinder->GetPath(*moveData, startPos, rangedGoal, path);
+	IPath::SearchResult result = pathFinder->GetPath(*moveData, startPositions, rangedGoal, path);
 
 	if (result == IPath::Ok && !path.path.empty()) {
 		return path.path.back();

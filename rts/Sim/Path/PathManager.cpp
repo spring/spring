@@ -107,7 +107,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 	if (distanceToGoal < DETAILED_DISTANCE) {
 		// Get a detailed path.
 		IPath::SearchResult result =
-			pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath, true, false, 10000, true, ownerId);
+			pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath, true, false, CPathFinder::MAX_SEARCHED_SQUARES, true, ownerId);
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -117,7 +117,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 		}
 	} else if (distanceToGoal < ESTIMATE_DISTANCE) {
 		// Get an estimate path.
-		IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath, ownerId, synced);
+		IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath, CPathEstimator::MAX_SEARCHED_BLOCKS, synced);
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -132,7 +132,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 			if (sp.x != 0 &&
 				(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
 				((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
-				IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath, synced);
+				IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath, CPathEstimator::MAX_SEARCHED_BLOCKS, synced);
 				newPath->searchResult = result;
 
 				if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -147,7 +147,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 		}
 	} else {
 		// Get a low-res. estimate path.
-		IPath::SearchResult result = pe2->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath2, synced);
+		IPath::SearchResult result = pe2->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath2, CPathEstimator::MAX_SEARCHED_BLOCKS, synced);
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -159,7 +159,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 			retValue = Store(newPath);
 		} else {
 			// sometimes the 32*32 squares can be wrong so if it fails to get a path also try with 8*8 squares
-			IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath, synced);
+			IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath, CPathEstimator::MAX_SEARCHED_BLOCKS, synced);
 			newPath->searchResult = result;
 
 			if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -172,7 +172,7 @@ unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
 				if (sp.x != 0 &&
 					(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
 					((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
-					IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath, synced);
+					IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath, CPathEstimator::MAX_SEARCHED_BLOCKS, synced);
 
 					if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 						EstimateToDetailed(*newPath, startPos, ownerId);
@@ -236,13 +236,13 @@ void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos, int owne
 	//Perform the search.
 	//If this is the final improvement of the path, then use the original goal.
 	IPath::SearchResult result;
-	if(path.estimatedPath.path.empty() && path.estimatedPath2.path.empty())
-		result = pf->GetPath(*path.moveData, startPos, *path.peDef, path.detailedPath, true, false, 10000, true, ownerId);
+	if (path.estimatedPath.path.empty() && path.estimatedPath2.path.empty())
+		result = pf->GetPath(*path.moveData, startPos, *path.peDef, path.detailedPath, true, false, CPathFinder::MAX_SEARCHED_SQUARES, true, ownerId);
 	else
-		result = pf->GetPath(*path.moveData, startPos, rangedGoalPFD, path.detailedPath, true, false, 10000, true, ownerId);
+		result = pf->GetPath(*path.moveData, startPos, rangedGoalPFD, path.detailedPath, true, false, CPathFinder::MAX_SEARCHED_SQUARES, true, ownerId);
 
 	//If no refined path could be found, set goal as desired goal.
-	if(result == IPath::CantGetCloser || result == IPath::Error) {
+	if (result == IPath::CantGetCloser || result == IPath::Error) {
 		path.detailedPath.pathGoal = goalPos;
 	}
 }
