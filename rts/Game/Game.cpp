@@ -247,6 +247,10 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 
 	noSpectatorChat(false),
 
+	infoConsole(NULL),
+	consoleHistory(NULL),
+	wordCompletion(NULL),
+
 	skipping(false),
 	playing(false),
 	chatting(false),
@@ -269,6 +273,8 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	for (int a = 0; a < 8; ++a) { camMove[a] = false; }
 	for (int a = 0; a < 4; ++a) { camRot[a] = false; }
 
+
+	//FIXME move to MouseHandler!
 	windowedEdgeMove   = !!configHandler->Get("WindowedEdgeMove",   1);
 	fullscreenEdgeMove = !!configHandler->Get("FullscreenEdgeMove", 1);
 
@@ -318,22 +324,19 @@ CGame::~CGame()
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
 	heightMapTexture.Kill();
-
 	SafeDelete(gameServer);
 
 	eoh->PreDestroy();
 	CEngineOutHandler::Destroy();
 
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		delete grouphandlers[t];
-		grouphandlers[t] = NULL;
+	for (std::vector<CGroupHandler*>::iterator git = grouphandlers.begin(); git != grouphandlers.end(); ++git) {
+		delete *git;
 	}
 	grouphandlers.clear();
 
 	SafeDelete(water);
 	SafeDelete(sky);
 	SafeDelete(resourceBar);
-
 	SafeDelete(featureDrawer);
 	SafeDelete(unitDrawer);
 	SafeDelete(modelDrawer);
@@ -586,7 +589,7 @@ void CGame::LoadInterface()
 		}
 		// add the Skirmish AIs instance names to word completion,
 		// for various things, eg chatting
-		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
+		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
 		CSkirmishAIHandler::id_ai_t::const_iterator ai;
 		for (ai = ais.begin(); ai != ais.end(); ++ai) {
 			wordCompletion->AddWord(ai->second.name + " ", false, false, false);
@@ -5194,6 +5197,7 @@ static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char
 }
 
 
+//FIXME remove!
 void CGame::ReColorTeams()
 {
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
