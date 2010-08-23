@@ -1,5 +1,23 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "Threading.h"
+
+namespace Threading {
+	static bool haveMainThreadID = false;
+	static boost::thread::id mainThreadID;
+
+	void SetMainThreadID() {
+		if (!haveMainThreadID) {
+			haveMainThreadID = true;
+			mainThreadID = boost::this_thread::get_id();
+		}
+	}
+
+	bool IsMainThread() {
+		return (boost::this_thread::get_id() == Threading::mainThreadID);
+	}
+};
+
 //FIXME: use TLS? maybe extract the GML code?
 //NOTE: I already tried to use __thread, but it didn't worked, maybe it is limited to newer CPUs?
 
