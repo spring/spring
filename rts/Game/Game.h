@@ -116,7 +116,7 @@ public:
 
 	unsigned char gameID[16];
 
-	CInfoConsole *infoConsole;
+	CInfoConsole* infoConsole;
 
 	void MakeMemDump(void);
 
