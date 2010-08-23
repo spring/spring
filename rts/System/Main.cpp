@@ -11,13 +11,15 @@
 #include <sstream>
 #include <boost/system/system_error.hpp>
 
-#include "Platform/errorhandler.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
+
 #ifndef _MSC_VER
 #include "StdAfx.h"
 #endif
 #include "lib/gml/gml.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
 
 #include "SpringApp.h"
 
@@ -37,6 +39,8 @@ int Run(int argc, char* argv[])
 		stack_end = (void*) &here;
 	}
 #endif
+
+	Threading::SetMainThreadID();
 
 #ifdef USE_GML
 	set_threadnum(0);

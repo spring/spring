@@ -9,22 +9,22 @@
 #include <sstream>
 #include "errorhandler.h"
 
-#include "LogOutput.h"
 #include "Game/GameServer.h"
+#include "System/LogOutput.h"
 #include "System/Util.h"
 
 #ifndef DEDICATED
 	#include "SpringApp.h"
 	#include "System/Platform/Threading.h"
 
-  #ifndef HEADLESS
-    #ifdef WIN32
-	#include <windows.h>
-    #else
-	// from X_MessageBox.cpp:
-	void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
-    #endif
-  #endif // ifndef HEADLESS
+    #ifndef HEADLESS
+		#ifdef WIN32
+		#include <windows.h>
+		#else
+		// from X_MessageBox.cpp:
+		void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
+		#endif
+    #endif // ifndef HEADLESS
 #endif // ifndef DEDICATED
 
 
@@ -60,7 +60,7 @@ private:
 void ErrorMessageBox(const std::string msg, const std::string caption, unsigned int flags)
 {
 #ifndef DEDICATED
-	if (!IsMainThread()) {
+	if (!Threading::IsMainThread()) {
 		CGameController* origGameController = activeController;
 		activeController = new CShowErrorInMainThread(msg, caption, flags, origGameController);
 
