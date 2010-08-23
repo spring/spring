@@ -18,7 +18,6 @@
 #include "System/TdfParser.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Platform/byteorder.h"
 
 #include <stdexcept>
