@@ -19,9 +19,18 @@ class CLoadScreen : public CGameController
 public:
 	void SetLoadMessage(const std::string& text, bool replace_lastline = false);
 
-public:
 	CLoadScreen(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CLoadScreen();
+
+	/// Splitt off from the ctor, casue this already uses GetInstance().
+	void Init();
+
+public:
+	static CLoadScreen* GetInstance() {
+		return singleton;
+	}
+	static void CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
+	static void DeleteInstance();
 
 	bool Draw();
 	bool Update();
@@ -39,6 +48,9 @@ private:
 	void UnloadStartPicture();
 
 private:
+	static CLoadScreen* singleton;
+	bool initOk;
+
 	std::string oldLoadMessages;
 	std::string curLoadMessage;
 
@@ -57,7 +69,7 @@ private:
 };
 
 
-extern CLoadScreen* loadscreen;
+#define loadscreen CLoadScreen::GetInstance()
 
 
 #endif // __LOADSCREEN_H__

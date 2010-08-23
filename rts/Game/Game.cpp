@@ -308,7 +308,7 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 
 CGame::~CGame()
 {
-	delete loadscreen; //! don't use SafeDelete here (the loadscreen pointer is used IN the destructor!)
+	CLoadScreen::DeleteInstance();
 	SafeDelete(guihandler);
 
 	if (videoCapturing->IsCapturing()) {

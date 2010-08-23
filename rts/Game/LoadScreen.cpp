@@ -30,12 +30,11 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/IMusicChannel.h"
 
-CLoadScreen* loadscreen = NULL;
-
 
 /******************************************************************************/
 
 CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile) :
+	initOk(false),
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
@@ -45,7 +44,10 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	aspectRatio(1.0f),
 	last_draw(0)
 {
-	loadscreen = this;
+}
+
+void CLoadScreen::Init()
+{
 	activeController = this;
 
 	//! hide the cursor until we are ingame
@@ -96,7 +98,9 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	if (!mt_loading) {
 		Draw();
 		game->LoadGame(mapName);
-		delete this;
+		initOk = false;
+	} else {
+		initOk = true;
 	}
 }
 
@@ -125,10 +129,28 @@ CLoadScreen::~CLoadScreen()
 
 		activeController = game;
 	}
-
-	loadscreen = NULL;
 }
 
+
+CLoadScreen::CLoadScreen* CLoadScreen::singleton = NULL;
+
+void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) {
+
+	assert(singleton == NULL);
+
+	singleton = new CLoadScreen(mapName, modName, saveFile);
+	// Init() already requires GetInstance() to work.
+	singleton->Init();
+	if (!singleton->initOk) {
+		CLoadScreen::DeleteInstance();
+	}
+}
+
+void CLoadScreen::DeleteInstance() {
+
+	delete singleton;
+	singleton = NULL;
+}
 
 /******************************************************************************/
 
