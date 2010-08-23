@@ -6,19 +6,8 @@
 #include <boost/thread.hpp>
 
 namespace Threading {
-	static bool haveMainThreadID = false;
-	static boost::thread::id mainThreadID;
-
-	static void SetMainThreadID() {
-		if (!haveMainThreadID) {
-			haveMainThreadID = true;
-			mainThreadID = boost::this_thread::get_id();
-		}
-	}
-
-	static bool IsMainThread() {
-		return (boost::this_thread::get_id() == Threading::mainThreadID);
-	}
+	void SetMainThreadID();
+	bool IsMainThread();
 };
 
 #endif // _THREADING_H_
