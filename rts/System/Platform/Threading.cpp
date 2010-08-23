@@ -3,6 +3,7 @@
 //FIXME: use TLS? maybe extract the GML code?
 //NOTE: I already tried to use __thread, but it didn't worked, maybe it is limited to newer CPUs?
 
+/*
 #ifdef WIN32
 #include <windows.h>
 
@@ -45,3 +46,4 @@ bool IsMainThread()
 }
 
 #endif // WIN32
+*/
