@@ -65,6 +65,7 @@ void CLoadScreen::Init()
 		const CTeam* team = teamHandler->Team(gu->myTeam);
 		assert(team);
 		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
+
 		if (mapStartPic.empty())
 			RandomStartPicture(team->side);
 		else
@@ -352,7 +353,7 @@ void CLoadScreen::RandomStartPicture(const std::string& sidePref)
 	if (name.empty()) {
 		name = SelectPicture(picDir, "");
 	}
-	if (name.empty()) {
+	if (name.empty() || (name.rfind(".db") == name.size() - 3)) {
 		return; // no valid pictures
 	}
 	LoadStartPicture(name);
