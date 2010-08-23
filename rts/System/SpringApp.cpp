@@ -1215,7 +1215,7 @@ int SpringApp::Run(int argc, char *argv[])
 void SpringApp::Shutdown()
 {
 	delete pregame;	//in case we exit during init
-	delete loadscreen; // FIXME? (see ~CGame)
+	CLoadScreen::DeleteInstance(); // FIXME? (see ~CGame)
 	delete game;
 	delete gameSetup;
 	delete font;

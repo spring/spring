@@ -257,7 +257,7 @@ void CPreGame::UpdateClientNet()
 				gu->SetMyPlayer(packet->data[1]);
 				logOutput.Print("User number %i (team %i, allyteam %i)", gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
-				loadscreen = new CLoadScreen(gameSetup->MapFile(), modArchive, savefile);
+				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
 				pregame = NULL;
 				delete this;
