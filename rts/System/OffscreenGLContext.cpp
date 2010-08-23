@@ -199,7 +199,7 @@ void COffscreenGLContext::WorkerThreadFree()
 
 COffscreenGLThread::COffscreenGLThread(boost::function<void()> f) :
 	thread(NULL),
-	glOffscreenCtx() //! make trigger an opengl_error exception!
+	glOffscreenCtx() //! may trigger an opengl_error exception!
 {
 	thread = new boost::thread( boost::bind(&COffscreenGLThread::WrapFunc, this, f) );
 }

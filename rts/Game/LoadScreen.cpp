@@ -88,7 +88,7 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	} catch (opengl_error& gle) {
 		//! Offscreen GL Context creation failed,
 		//! fallback to singlethreaded loading.
-		logOutput.Print(gle.what());
+		logOutput.Print(std::string(gle.what()));
 		logOutput.Print("Fallback to singlethreaded loading.");
 		mt_loading = false;
 	}
