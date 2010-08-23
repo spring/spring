@@ -133,7 +133,7 @@ CLoadScreen::~CLoadScreen()
 }
 
 
-CLoadScreen::CLoadScreen* CLoadScreen::singleton = NULL;
+CLoadScreen* CLoadScreen::singleton = NULL;
 
 void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) {
 
