@@ -80,6 +80,7 @@ CGuiHandler::CGuiHandler():
 	curIconCommand(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
+	hasLuaUILayoutCommands(false),
 	gatherMode(false)
 {
 	icons = new IconInfo[16];
@@ -4270,22 +4271,33 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 /******************************************************************************/
 
 
-void CGuiHandler::PushLayoutCommand(const std::string& cmd) {
+void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luacmd) {
 	GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 	layoutCommands.push_back(cmd);
+	if(luacmd)
+		hasLuaUILayoutCommands = true;
 }
 
 void CGuiHandler::RunLayoutCommands() {
+	bool luacmd = false;
+	std::vector<std::string> layoutCmds;
+
 	if (!layoutCommands.empty()) {
-		GML_RECMUTEX_LOCK(sim); // Draw
-		GML_RECMUTEX_LOCK(laycmd); // Draw
+		GML_RECMUTEX_LOCK(laycmd); // RunLayoutCommands
 
-		//! RunLayoutCommand can add new commands
-		//! and because it is never good to change the vector you are iterating over, we swap it with a new one
-		std::vector<std::string> layoutCmds;
 		layoutCmds.swap(layoutCommands);
+		luacmd = hasLuaUILayoutCommands;
+		hasLuaUILayoutCommands = false;
+	}
 
+	if(luacmd) {
+		GML_RECMUTEX_LOCK(sim); // RunLayoutCommands
+
+		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
+			RunLayoutCommand(*cit);
+		}
+	} else {
 		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
 			RunLayoutCommand(*cit);
 		}

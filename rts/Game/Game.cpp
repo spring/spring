@@ -2306,7 +2306,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (!Console::Instance().ExecuteAction(action))
 		{
 			if (guihandler != NULL) // maybe a widget is interested?
-				guihandler->PushLayoutCommand(action.rawline);
+				guihandler->PushLayoutCommand(action.rawline, false);
 			return false;
 		}
 	}
