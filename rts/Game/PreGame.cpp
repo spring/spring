@@ -250,11 +250,20 @@ void CPreGame::UpdateClientNet()
 				break;
 			}
 			case NETMSG_GAMEDATA: { // server first ( not if we're joining midgame as extra players ) sends this to let us know about teams, allyteams etc.
+				if (gameSetup)
+					throw content_error("Duplicate game data received from server");
 				GameDataReceived(packet);
 				break;
 			}
 			case NETMSG_SETPLAYERNUM: { // this is sent afterwards to let us know which playernum we have
-				gu->SetMyPlayer(packet->data[1]);
+				if (!gameSetup)
+					throw content_error("No game data received from server");
+
+				unsigned char playerNum = packet->data[1];
+				if (gameSetup->playerStartingData.size() <= playerNum)
+					throw content_error("Invalid player number received from server");
+
+				gu->SetMyPlayer(playerNum);
 				logOutput.Print("User number %i (team %i, allyteam %i)", gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
