@@ -77,7 +77,7 @@ public:
 	void SetBuildFacing(int facing);
 	void SetBuildSpacing(int spacing);
 
-	void PushLayoutCommand(const std::string&);
+	void PushLayoutCommand(const std::string&, bool luacmd = true);
 	void RunLayoutCommands();
 
 public:
@@ -222,7 +222,7 @@ private:
 	int failedSound;
 
 	std::vector<std::string> layoutCommands;
-
+	bool hasLuaUILayoutCommands;
 };
 
 
