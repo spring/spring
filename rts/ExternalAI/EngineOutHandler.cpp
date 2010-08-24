@@ -293,9 +293,10 @@ void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 		const int allyT      = teamHandler->AllyTeam(t);
 		const bool alliedOld = teamHandler->Ally(allyT, oldAllyTeamId);
 		const bool alliedNew = teamHandler->Ally(allyT, newAllyTeamId);
-		// inform everyone except those allied with both
-		// the new and the old team
-		bool inform = ((t == newTeam) || (t == oldTeam) || !alliedOld || !alliedNew);
+		// inform the new team and its allies
+		// (except those also allied with the old team)
+		// the old team and its allies were already informed by UnitCaptured
+		bool inform = ((t == newTeam) || (alliedNew && !alliedOld));
 		// exclude enemies that know from nothing
 		if (inform && !alliedOld && !alliedNew &&
 				!ai->second->IsCheatEventsEnabled() &&
@@ -323,9 +324,10 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 		const int allyT      = teamHandler->AllyTeam(t);
 		const bool alliedOld = teamHandler->Ally(allyT, oldAllyTeamId);
 		const bool alliedNew = teamHandler->Ally(allyT, newAllyTeamId);
-		// inform everyone except those allied with both
-		// the new and the old team
-		bool inform = ((t == newTeam) || (t == oldTeam) || !alliedOld || !alliedNew);
+		// inform the old team and its allies
+		// (except those also allied with the new team)
+		// the new team and its allies will be informed by UnitGiven
+		bool inform = ((t == oldTeam) || (alliedOld && !alliedNew));
 		// exclude enemies that know from nothing
 		if (inform && !alliedOld && !alliedNew &&
 				!ai->second->IsCheatEventsEnabled() &&
