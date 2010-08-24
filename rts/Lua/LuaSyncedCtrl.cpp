@@ -117,6 +117,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+	REGISTER_LUA_CFUNC(KillTeam);
+
 	REGISTER_LUA_CFUNC(AddTeamResource);
 	REGISTER_LUA_CFUNC(UseTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamResource);
@@ -242,6 +244,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetNoPause);
 	REGISTER_LUA_CFUNC(SetUnitToFeature);
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
+
 
 	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
 		return false;
@@ -440,6 +443,22 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 //
 // The call-outs
 //
+
+
+int LuaSyncedCtrl::KillTeam(lua_State* L)
+{
+	const int teamID = luaL_checkint(L, 1);
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
+		return 0;
+	}
+	CTeam* team = teamHandler->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+	team->Died();
+	return 0;
+}
+
 
 int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 {
