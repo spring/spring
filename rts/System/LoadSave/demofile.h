@@ -67,7 +67,8 @@ struct DemoFileHeader
 	int teamStatSize;       ///< Size of the entire team statistics chunk.
 	int teamStatElemSize;   ///< sizeof(CTeam::Statistics)
 	int teamStatPeriod;     ///< Interval (in seconds) between team stats.
-	int winningAllyTeam;    ///< The ally team that won the game, -1 if unknown.
+	int winningAllyTeamsSize;    ///< The size of the vector of the winning ally teams
+
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab() {
@@ -85,7 +86,7 @@ struct DemoFileHeader
 		teamStatSize = swabdword(teamStatSize);
 		teamStatElemSize = swabdword(teamStatElemSize);
 		teamStatPeriod = swabdword(teamStatPeriod);
-		winningAllyTeam = swabdword(winningAllyTeam);
+		winningAllyTeamsSize = swabdword(winningAllyTeamsSize);
 	}
 };
 
