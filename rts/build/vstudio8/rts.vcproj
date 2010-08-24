@@ -983,6 +983,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\LoadScreen.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\LoadScreen.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\Messages.cpp"
 				>
 				<FileConfiguration
@@ -4386,18 +4394,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4467,6 +4463,18 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -4556,6 +4564,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\Object.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\OffscreenGLContext.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\OffscreenGLContext.h"
 				>
 			</File>
 			<File
