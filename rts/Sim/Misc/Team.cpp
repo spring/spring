@@ -212,8 +212,6 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
 		ui = next;
 	}
-
-	Died();
 }
 
 
@@ -405,10 +403,6 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 			currentStats->unitsOutCaptured++;
 			break;
 		}
-	}
-
-	if (units.empty() && !gaia) {
-		Died();
 	}
 }
 
