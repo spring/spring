@@ -28,37 +28,6 @@
 local options =
 {
   {
-    key    = 'GameMode',
-    name   = 'Game end condition',
-    desc   = 'Determines what condition triggers the defeat of a player',
-    type   = 'list',
-    def    = '0',
-    items  =
-    {
-      {
-        key  = '0',
-        name = 'Kill everything',
-        desc = 'The player will lose only after all units of the player will be killed',
-      },
-      {
-        key  = '1',
-        name = 'Commander ends',
-        desc = 'The player will lose when his commander will be dead',
-      },
-      {
-        key  = '2',
-        name = 'Commander lineage ends',
-        desc = 'This is a stricter form of commander ends\nevery unit will inherit the lineage from the player whom built it\neven if shared, when the commander dies the unit will still die',
-      },
-      {
-        key  = '3',
-        name = 'Infinite',
-        desc = 'Game will never end',
-      },
-    },
-  },
-
-  {
     key    = 'MaxUnits',
     name   = 'Max units',
     desc   = 'Maximum number of units (including buildings) for each team allowed at the same time',

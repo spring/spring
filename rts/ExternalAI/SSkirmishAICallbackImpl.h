@@ -65,7 +65,6 @@ EXPORT(int              ) skirmishAiCallback_Game_getTeamAllyTeam(int teamId, in
 EXPORT(bool             ) skirmishAiCallback_Game_isAllied(int teamId, int firstAllyTeamId, int secondAllyTeamId);
 EXPORT(bool             ) skirmishAiCallback_Game_isExceptionHandlingEnabled(int teamId);
 EXPORT(bool             ) skirmishAiCallback_Game_isDebugModeEnabled(int teamId);
-EXPORT(int              ) skirmishAiCallback_Game_getMode(int teamId);
 EXPORT(bool             ) skirmishAiCallback_Game_isPaused(int teamId);
 EXPORT(float            ) skirmishAiCallback_Game_getSpeedFactor(int teamId);
 EXPORT(const char*      ) skirmishAiCallback_Game_getSetupScript(int teamId);
@@ -446,7 +445,6 @@ EXPORT(float            ) skirmishAiCallback_Unit_ModParam_getValue(int teamId, 
 		int modParamId);
 EXPORT(int              ) skirmishAiCallback_Unit_getTeam(int teamId, int unitId);
 EXPORT(int              ) skirmishAiCallback_Unit_getAllyTeam(int teamId, int unitId);
-EXPORT(int              ) skirmishAiCallback_Unit_getLineage(int teamId, int unitId);
 EXPORT(int              ) skirmishAiCallback_Unit_getAiHint(int teamId, int unitId);
 EXPORT(int              ) skirmishAiCallback_Unit_getStockpile(int teamId, int unitId);
 EXPORT(int              ) skirmishAiCallback_Unit_getStockpileQueued(int teamId, int unitId);

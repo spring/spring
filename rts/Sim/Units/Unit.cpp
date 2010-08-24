@@ -329,7 +329,6 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	pos = position;
 	team = Team;
 	allyteam = teamHandler->AllyTeam(Team);
-	lineage = Team;
 	unitDef = def;
 	unitDefName = unitDef->name;
 
@@ -1263,13 +1262,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		airBaseHandler->DeregisterAirBase(this);
 	}
 
-	// Sharing commander in com ends game kills you.
-	// Note that this will kill the com too.
-	if (unitDef->isCommander) {
-		teamHandler->Team(oldteam)->CommanderDied(this);
-		// InstallChristmasHat(color4::red); // Ho-Ho-Ho merry christmas to all commiters
-	}
-
 	if (type == ChangeGiven) {
 		teamHandler->Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
 		teamHandler->Team(newteam)->AddUnit(this,    CTeam::AddGiven);
@@ -1806,11 +1798,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	blockHeightChanges = false;
 
-	if (unitDef->isCommander) {
-		teamHandler->Team(team)->CommanderDied(this);
-	}
-	teamHandler->Team(this->lineage)->LeftLineage(this);
-
 	if (unitDef->windGenerator > 0.0f) {
 		wind.DelUnit(this);
 	}
@@ -2224,7 +2211,6 @@ CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefName),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(lineage),
 	CR_MEMBER(aihint),
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),

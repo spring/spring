@@ -1902,43 +1902,10 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-	if (setup->gameMode == GameMode::OpenEnd)
-		return;
+	return; // do nothing for now, will be called by lua explicitly
 
-	int numActiveAllyTeams = 0;
-	std::vector<int> numActiveTeams(teams.size(), 0); // active teams per ally team
-
-	for (size_t a = 0; a < teams.size(); ++a)
-	{
-		bool hasController = false;
-		for (size_t b = 0; b < players.size() && !hasController; ++b) {
-			if (!players[b].spectator && players[b].team == (int)a) {
-				hasController = true;
-			}
-		}
-
-		for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end() && !hasController; ++ai) {
-			if (ai->second.team == a) {
-				hasController = true;
-			}
-		}
-
-		if (teams[a].active && hasController) {
-			++numActiveTeams[teams[a].teamAllyteam];
-		}
-	}
-
-	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
-		if (numActiveTeams[a] != 0) {
-			++numActiveAllyTeams;
-		}
-	}
-
-	if (numActiveAllyTeams <= 1)
-	{
-		gameEndTime = spring_gettime();
-		Broadcast(CBaseNetProtocol::Get().SendSendPlayerStat());
-	}
+	gameEndTime = spring_gettime();
+	Broadcast(CBaseNetProtocol::Get().SendSendPlayerStat());
 }
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)

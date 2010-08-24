@@ -176,17 +176,6 @@ public:
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
 
-	/**
-	 * The unit's origin lies in this team.
-	 *
-	 * example:
-	 * It was created by a factory that was created by a builder
-	 * from a factory built by a commander of this team.
-	 * It does not matter at all, to which team
-	 * the commander/builder/factories were shared.
-	 * Only capturing can break the chain.
-	 */
-	int lineage;
 	/// tells the units main function to the ai, eg "builder"
 	int aihint;
 
