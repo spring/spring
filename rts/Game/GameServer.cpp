@@ -130,7 +130,6 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	noHelperAIs = false;
 	allowSpecDraw = true;
 	cheating = false;
-	sentGameOverMsg = false;
 
 	gameStartTime = spring_notime;
 	gameEndTime = spring_notime;
@@ -239,21 +238,15 @@ CGameServer::~CGameServer()
 	delete thread;
 #ifdef DEDICATED
 	// TODO: move this to a method in CTeamHandler
-	// Figure out who won the game.
 	int numTeams = (int)setup->teamStartingData.size();
 	if (setup->useLuaGaia) {
 		--numTeams;
 	}
-	int winner = -1;
-	/*for (int i = 0; i < numTeams; ++i) {
-		if (teams[i] && !teamHandler->Team(i)->isDead) {
-			winner = teamHandler->AllyTeam(i);
-			break;
-		}
-	}*/ //TODO figure out who won
-	// Finally pass it on to the CDemoRecorder.
 	demoRecorder->SetTime(serverframenum / 30, spring_tomsecs(spring_gettime()-serverStartTime)/1000);
-	demoRecorder->InitializeStats(players.size(), numTeams, winner);
+	demoRecorder->InitializeStats(players.size(), numTeams );
+
+	// Pass the winners to the CDemoRecorder.
+	demoRecorder->SetWinningAllyTeams( winningAllyTeams );
 	for (size_t i = 0; i < players.size(); ++i) {
 		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
@@ -372,11 +365,6 @@ void CGameServer::SendDemoData(const bool skipping)
 				outstandingSyncFrames.push_back(serverframenum);
 			CheckSync();
 #endif
-			Broadcast(boost::shared_ptr<const RawPacket>(buf));
-		}
-		else if (msgCode == NETMSG_GAMEOVER)
-		{
-			sentGameOverMsg = true;
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
 		}
 		else if ( msgCode != NETMSG_GAMEDATA &&
@@ -675,8 +663,6 @@ void CGameServer::Update()
 	else if (serverframenum > 0 || demoReader)
 	{
 		CreateNewFrame(true, false);
-		if (serverframenum > GAME_SPEED && !sentGameOverMsg && !demoReader)
-			CheckForGameEnd();
 	}
 
 	if (hostif)
@@ -1487,6 +1473,27 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
+		case NETMSG_GAMEOVER: {
+			unsigned player = inbuf[1];
+			if (player != a) {
+				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
+			} else {
+				try {
+					netcode::UnpackPacket pckt(packet, 3);
+					pckt >> player;
+					std::vector<unsigned char> winningAllyTeams;
+					pckt >> winningAllyTeams;
+					if (hostif) {
+						hostif->SendGameOver( player, winningAllyTeams);
+					}
+					gameEndTime = spring_gettime();
+					} catch (netcode::UnpackPacketException &e) {
+						Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %e.err));
+					}
+				}
+			break;
+		}
+
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:
@@ -1886,26 +1893,6 @@ bool CGameServer::HasFinished() const
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	return quitServer;
-}
-
-void CGameServer::CheckForGameEnd()
-{
-	if (spring_istime(gameEndTime)) {
-		if (gameEndTime < spring_gettime() - spring_secs(2)) {
-			Message(GameEnd);
-			Broadcast(CBaseNetProtocol::Get().SendGameOver());
-			if (hostif) {
-				hostif->SendGameOver();
-			}
-			sentGameOverMsg = true;
-		}
-		return;
-	}
-
-	return; // do nothing for now, will be called by lua explicitly
-
-	gameEndTime = spring_gettime();
-	Broadcast(CBaseNetProtocol::Get().SendSendPlayerStat());
 }
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)

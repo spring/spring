@@ -101,7 +101,10 @@ bool CDemoReader::ReachedEnd() const
 		return false;
 }
 
-
+const std::vector<unsigned char>& CDemoReader::GetWinningAllyTeams() const
+{
+	return winningAllyTeams;
+}
 
 const std::vector<PlayerStatistics>& CDemoReader::GetPlayerStats() const
 {
@@ -122,6 +125,14 @@ void CDemoReader::LoadStats()
 
 	const int curPos = playbackDemo.tellg();
 	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
+
+	winningAllyTeams.clear();
+	for (int allyTeamNum = 0; allyTeamNum < fileHeader.winningAllyTeamsSize; ++allyTeamNum)
+	{
+		unsigned char winnerAllyTeam;
+		playbackDemo.read((char*)&winnerAllyTeam, sizeof(unsigned char) );
+		winningAllyTeams.push_back(winnerAllyTeam);
+	}
 
 	playerStats.clear();
 	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum)

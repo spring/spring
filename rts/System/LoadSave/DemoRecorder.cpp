@@ -43,13 +43,14 @@ CDemoRecorder::CDemoRecorder()
 	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
 	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
 	fileHeader.teamStatPeriod = TeamStatistics::statsPeriod;
-	fileHeader.winningAllyTeam = -1;
+	fileHeader.winningAllyTeamsSize = 0;
 
 	WriteFileHeader(false);
 }
 
 CDemoRecorder::~CDemoRecorder()
 {
+	WriteWinnerList();
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader();
@@ -133,11 +134,10 @@ void CDemoRecorder::SetTime(int gameTime, int wallclockTime)
 	fileHeader.wallclockTime = wallclockTime;
 }
 
-void CDemoRecorder::InitializeStats(int numPlayers, int numTeams, int winningAllyTeam)
+void CDemoRecorder::InitializeStats(int numPlayers, int numTeams )
 {
 	fileHeader.numPlayers = numPlayers;
 	fileHeader.numTeams = numTeams;
-	fileHeader.winningAllyTeam = winningAllyTeam;
 
 	playerStats.resize(numPlayers);
 	teamStats.resize(numTeams);
@@ -161,6 +161,14 @@ void CDemoRecorder::SetTeamStats(int teamNum, const std::list< TeamStatistics >&
 
 	for (std::list< TeamStatistics >::const_iterator it = stats.begin(); it != stats.end(); ++it)
 		teamStats[teamNum].push_back(*it);
+}
+
+
+/** @brief Set (overwrite) the list winning allyTeams */
+void CDemoRecorder::SetWinningAllyTeams( std::vector<unsigned char> winningAllyTeams )
+{
+	fileHeader.winningAllyTeamsSize = winningAllyTeams.size() * sizeof( unsigned char );
+	winningAllyTeams = winningAllyTeams;
 }
 
 /** @brief Write DemoFileHeader
@@ -197,6 +205,26 @@ void CDemoRecorder::WritePlayerStats()
 	playerStats.clear();
 
 	fileHeader.playerStatSize = (int)recordDemo.tellp() - pos;
+}
+
+
+
+/** @brief Write the winningAllyTeams at the current position in the file. */
+void CDemoRecorder::WriteWinnerList()
+{
+	if (fileHeader.numTeams == 0)
+		return;
+
+	int pos = recordDemo.tellp();
+
+	// Write the array of winningAllyTeams.
+	for (std::vector< unsigned char >::iterator it = winningAllyTeams.begin(); it != winningAllyTeams.end(); ++it) {
+			char winnerAllyTeam = *it;
+			recordDemo.write(&winnerAllyTeam,sizeof(unsigned char));
+	}
+	winningAllyTeams.clear();
+
+	fileHeader.winningAllyTeamsSize = (int)recordDemo.tellp() - pos;
 }
 
 /** @brief Write the TeamStatistics at the current position in the file. */

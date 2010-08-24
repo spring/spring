@@ -2855,7 +2855,8 @@ bool CGame::Update()
 
 	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
-		GameEnd();
+		std::vector<unsigned char> empty;
+		GameEnd(empty);
 	}
 
 	// send out new console lines
@@ -3719,8 +3720,10 @@ void CGame::ClientReadNet()
 					std::string message;
 					pckt >> message;
 					logOutput.Print(message);
-					if (!gameOver)
-						GameEnd();
+					if (!gameOver) {
+						std::vector<unsigned char> empty;
+						GameEnd( empty );
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
@@ -3756,12 +3759,6 @@ void CGame::ClientReadNet()
 				} else {
 					StartPlaying();
 				}
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
-			case NETMSG_GAMEOVER: {
-				GameEnd();
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -4817,7 +4814,7 @@ void CGame::MakeMemDump(void)
 
 
 
-void CGame::GameEnd()
+void CGame::GameEnd( std::vector<unsigned char> winningAllyTeams )
 {
 	if (!gameOver)
 	{
@@ -4833,21 +4830,14 @@ void CGame::GameEnd()
 			const int numPlayers = playerHandler->ActivePlayers();
 
 			// TODO: move this to a method in CTeamHandler
-			// Figure out who won the game.
 			int numTeams = teamHandler->ActiveTeams();
 			if (gs->useLuaGaia) {
 				--numTeams;
 			}
-			int winner = -1;
-			for (int i = 0; i < numTeams; ++i) {
-				if (!teamHandler->Team(i)->isDead) {
-					winner = teamHandler->AllyTeam(i);
-					break;
-				}
-			}
-			// Finally pass it on to the CDemoRecorder.
 			record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
-			record->InitializeStats(numPlayers, numTeams, winner);
+			record->InitializeStats(numPlayers, numTeams);
+			// pass the list of winners
+			record->SetWinningAllyTeams(winningAllyTeams);
 			for (int i = 0; i < numPlayers; ++i) {
 				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 			}
@@ -4858,6 +4848,8 @@ void CGame::GameEnd()
 				net->Send(buf);
 			}
 		}
+		// pass the winner info to the host in the case it's a dedicated server
+		net->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum,winningAllyTeams));
 	}
 }
 

@@ -118,6 +118,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(KillTeam);
+	REGISTER_LUA_CFUNC(GameOver);
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
 	REGISTER_LUA_CFUNC(UseTeamResource);
@@ -456,6 +457,29 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 		return 0;
 	}
 	team->Died();
+	return 0;
+}
+
+
+int LuaSyncedCtrl::GameOver(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GameOver()");
+	}
+	std::vector<unsigned char> winningAllyTeams;
+	const int table = 1;
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwnumber(L, -2)) {
+			continue;
+		}
+		unsigned char AllyTeamID;
+		if ( !teamHandler->ValidAllyTeam(AllyTeamID) ) {
+			continue;
+		}
+		winningAllyTeams.push_back( AllyTeamID );
+	}
+	game->GameEnd( winningAllyTeams );
 	return 0;
 }
 
