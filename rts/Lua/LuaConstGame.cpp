@@ -61,10 +61,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
 
-	LuaPushNamedNumber(L, "gameMode",      gameSetup->gameMode);
 	LuaPushNamedNumber(L, "startPosType",  startPosType);
 
-	LuaPushNamedBool(L,   "commEnds",         (gameSetup->gameMode >= 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 

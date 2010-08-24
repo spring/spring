@@ -1125,15 +1125,6 @@ EXPORT(bool) skirmishAiCallback_Game_isDebugModeEnabled(int teamId) {
 
 	return debugModeEnabled;
 }
-EXPORT(int) skirmishAiCallback_Game_getMode(int teamId) {
-	int mode;
-	CAICallback* clb = team_callback[teamId];
-	const bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
-	if (!fetchOk) {
-		mode = -1;
-	}
-	return mode;
-}
 EXPORT(bool) skirmishAiCallback_Game_isPaused(int teamId) {
 	bool paused;
 	CAICallback* clb = team_callback[teamId];
@@ -2488,14 +2479,6 @@ EXPORT(int) skirmishAiCallback_Unit_getAllyTeam(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitAllyTeam(unitId);
 	}
 }
-EXPORT(int) skirmishAiCallback_Unit_getLineage(int teamId, int unitId) {
-
-	const CUnit* unit = getUnit(unitId);
-	if (unit == NULL) {
-		return -1;
-	}
-	return unit->lineage;
-}
 EXPORT(int) skirmishAiCallback_Unit_getAiHint(int teamId, int unitId) {
 	CAICallback* clb = team_callback[teamId]; return clb->GetUnitAiHint(unitId);
 }
@@ -3500,7 +3483,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Game_isAllied = &skirmishAiCallback_Game_isAllied;
 	callback->Clb_Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
 	callback->Clb_Game_isDebugModeEnabled = &skirmishAiCallback_Game_isDebugModeEnabled;
-	callback->Clb_Game_getMode = &skirmishAiCallback_Game_getMode;
 	callback->Clb_Game_isPaused = &skirmishAiCallback_Game_isPaused;
 	callback->Clb_Game_getSpeedFactor = &skirmishAiCallback_Game_getSpeedFactor;
 	callback->Clb_Game_getSetupScript = &skirmishAiCallback_Game_getSetupScript;
@@ -3785,7 +3767,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Unit_ModParam_getValue = &skirmishAiCallback_Unit_ModParam_getValue;
 	callback->Clb_Unit_getTeam = &skirmishAiCallback_Unit_getTeam;
 	callback->Clb_Unit_getAllyTeam = &skirmishAiCallback_Unit_getAllyTeam;
-	callback->Clb_Unit_getLineage = &skirmishAiCallback_Unit_getLineage;
 	callback->Clb_Unit_getAiHint = &skirmishAiCallback_Unit_getAiHint;
 	callback->Clb_Unit_getStockpile = &skirmishAiCallback_Unit_getStockpile;
 	callback->Clb_Unit_getStockpileQueued = &skirmishAiCallback_Unit_getStockpileQueued;

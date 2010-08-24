@@ -23,7 +23,7 @@ struct WeaponDef;
 #define AIVAL_EXCEPTION_HANDLING		2 // bool
 #define AIVAL_MAP_CHECKSUM				3 // unsinged int
 #define AIVAL_DEBUG_MODE				4 // bool
-#define AIVAL_GAME_MODE					5 // int
+//#define AIVAL_GAME_MODE					5 // int // deprecated
 #define AIVAL_GAME_PAUSED				6 // bool
 #define AIVAL_GAME_SPEED_FACTOR			7 // float
 #define AIVAL_GUI_VIEW_RANGE			8 // float

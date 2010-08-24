@@ -5227,8 +5227,6 @@ void CGame::ReColorTeams()
 	luaParser.AddString("mapName",      mapInfo->map.name);
 	luaParser.AddString("mapHumanName", mapInfo->map.humanName);
 
-	luaParser.AddInt("gameMode", gameSetup->gameMode);
-
 	luaParser.GetTable("teams");
 	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		luaParser.GetTable(t); {

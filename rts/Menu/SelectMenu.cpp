@@ -135,7 +135,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	game->add_name_value("Gametype", mod);
 
 	TdfParser::TdfSection* modopts = game->construct_subsection("MODOPTIONS");
-	modopts->AddPair("GameMode", 3);
 	modopts->AddPair("MaxSpeed", 20);
 
 	game->AddPair("IsHost", 1);
