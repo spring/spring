@@ -356,36 +356,73 @@ std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 	return playerstring;
 }
 
+
+bool CGameServer::AdjustPlayerNumber(unsigned char &player) {
+	// spectators watching the demo will offset the demo spectators, compensate for this
+	unsigned char newplayer = player;
+	if(newplayer >= players.size()) {
+		Message(str(format("Invalid player number in demo")));
+		return false;
+	}
+	for(int i = newplayer; i >= 0; --i)
+		if(!players[i].isFromDemo)
+			++newplayer;
+	if(newplayer >= players.size()) {
+		Message(str(format("Invalid player number in demo")));
+		return false;
+	}
+	player = newplayer;
+	return true;
+}
+
+
 void CGameServer::SendDemoData(const bool skipping)
 {
 	netcode::RawPacket* buf = 0;
 	while ( (buf = demoReader->GetData(modGameTime)) )
 	{
 		unsigned msgCode = buf->data[0];
-		if (msgCode == NETMSG_NEWFRAME || msgCode == NETMSG_KEYFRAME)
-		{
-			// we can't use CreateNewFrame() here
-			lastTick = spring_gettime();
-			serverframenum++;
+		switch (msgCode) {
+			case NETMSG_NEWFRAME:
+			case NETMSG_KEYFRAME:
+				{
+					// we can't use CreateNewFrame() here
+					lastTick = spring_gettime();
+					serverframenum++;
 #ifdef SYNCCHECK
-			if (!skipping)
-				outstandingSyncFrames.push_back(serverframenum);
-			CheckSync();
+					if (!skipping)
+						outstandingSyncFrames.push_back(serverframenum);
+					CheckSync();
 #endif
-			Broadcast(boost::shared_ptr<const RawPacket>(buf));
-		}
-		else if (msgCode == NETMSG_GAMEOVER)
-		{
-			sentGameOverMsg = true;
-			Broadcast(boost::shared_ptr<const RawPacket>(buf));
-		}
-		else if ( msgCode != NETMSG_GAMEDATA &&
-						msgCode != NETMSG_SETPLAYERNUM &&
-						msgCode != NETMSG_USER_SPEED &&
-						msgCode != NETMSG_INTERNAL_SPEED &&
-						msgCode != NETMSG_PAUSE) // dont send these from demo
-		{
-			Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
+			case NETMSG_GAMEOVER:
+				{
+					sentGameOverMsg = true;
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
+			case NETMSG_PLAYERLEFT:
+				{	// TODO: more messages may need adjusted player numbers, or maybe there is a better solution
+					if (AdjustPlayerNumber(buf->data[1]))
+						Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
+			case NETMSG_GAMEDATA:
+			case NETMSG_SETPLAYERNUM:
+			case NETMSG_USER_SPEED:
+			case NETMSG_INTERNAL_SPEED:
+			case NETMSG_PAUSE: 
+				{
+					// dont send these from demo
+					break;
+				}
+			default:
+				{
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
 		}
 	}
 
