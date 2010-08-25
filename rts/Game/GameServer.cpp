@@ -1474,22 +1474,21 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 
 		case NETMSG_GAMEOVER: {
-			unsigned player = inbuf[1];
-			if (player != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
-			} else {
-				try {
-					netcode::UnpackPacket pckt(packet, 3);
-					pckt >> player;
-					std::vector<unsigned char> winningAllyTeams;
-					pckt >> winningAllyTeams;
-					if (hostif) {
-						hostif->SendGameOver( player, winningAllyTeams);
-					}
-					gameEndTime = spring_gettime();
-					} catch (netcode::UnpackPacketException &e) {
-						Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %e.err));
-					}
+			try {
+				netcode::UnpackPacket pckt(packet, 2);
+				pckt >> player;
+				if (player != a) {
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
+					break;
+				}
+				std::vector<unsigned char> winningAllyTeams;
+				pckt >> winningAllyTeams;
+				if (hostif) {
+					hostif->SendGameOver( player, winningAllyTeams);
+				}
+				gameEndTime = spring_gettime();
+				} catch (netcode::UnpackPacketException &e) {
+					Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %e.err));
 				}
 			break;
 		}
