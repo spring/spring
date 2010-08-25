@@ -4820,7 +4820,7 @@ void CGame::GameEnd( std::vector<unsigned char> winningAllyTeams )
 	{
 		gameOver=true;
 		eventHandler.GameOver();
-		new CEndGameBox();
+		new CEndGameBox( winningAllyTeams );
 #ifdef    HEADLESS
 		profiler.PrintProfilingInfo();
 #endif // HEADLESS
