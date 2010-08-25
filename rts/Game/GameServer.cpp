@@ -1475,6 +1475,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_GAMEOVER: {
 			try {
+				unsigned char player;
 				netcode::UnpackPacket pckt(packet, 2);
 				pckt >> player;
 				if (player != a) {
