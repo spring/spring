@@ -32,6 +32,14 @@ if (not gadgetHandler:IsSyncedCode()) then
 end
 
 local modOptions = Spring.GetModOptions()
+-- teamDeathMode possible values: "none", "teamzerounits" , "allyzerounits"
+local teamDeathMode = modOptions.teamdeathmode or "teamzerounits"
+-- sharedDynamicAllianceVictory is a C-like bool
+local sharedDynamicAllianceVictory = modOptions.shareddynamicalliancevictory or 0
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 local gaiaTeamID = Spring.GetGaiaTeamID()
 local KillTeam = Spring.KillTeam
 local GetAllyTeamList = Spring.GetAllyTeamList
@@ -39,18 +47,26 @@ local GetTeamList = Spring.GetTeamList
 local GameOver = Spring.GameOver
 local AreTeamsAllied = Spring.AreTeamsAllied
 
-local teamDeathMode = modOptions.teamDeathMode or "team"
-local sharedDynamicAllianceVictory = modOptions.sharedDynamicAllianceVictory or 0
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
+local allyTeams = GetAllyTeamList()
 local teamsUnitCount = {}
 local allyTeamUnitCount = {}
 local allyTeamAliveTeamsCount = {}
 local teamToAllyTeam = {}
 local aliveAllyTeamCount = 0
 
-local function CheckGameOver()
-	local allyTeams = GetAllyTeamList()
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
+
+function gadget:GameOver()
+	-- remove ourself after successful game over
+	gadgetHandler:RemoveGadget()
+end
+
+local function CheckGameOver()
 	if sharedDynamicAllianceVictory == 0 then
 		if aliveAllyTeamCount == 1 then
 		-- find the last remaining allyteam
@@ -72,11 +88,13 @@ local function CheckGameOver()
 			if firstTeamCount and firstAllyTeamID ~= gaiaTeamID then
 				if firstTeamCount ~= 0 then
 					checkedAlliances[firstAllyTeamID] = firstAllyTeamID -- we're obviously allied with ourself
+					local winners = {}
 					local crossAllianceCount = 0
 					for _,secondAllyTeamID in ipairs(allyTeams) do
 						if checkedAlliances[firstAllyTeamID] == secondAllyTeamID then
 							-- we already confirmed this alliance, don't check it twice, just bump the counter
 							crossAllianceCount = crossAllianceCount + 1
+							winners[#winners +1] =  secondAllyTeamID
 						else
 							local secondTeamCount = allyTeamAliveTeamsCount[secondAllyTeamID]
 							if secondTeamCount and secondAllyTeamID ~= gaiaTeamID then
@@ -87,6 +105,7 @@ local function CheckGameOver()
 										-- store both check directions
 										checkedAlliances[firstAllyTeamID] = secondAllyTeamID
 										checkedAlliances[secondAllyTeamID] = firstAllyTeamID
+										winners[#winners +1] =  firstAllyTeamID
 									end
 								end
 							end
@@ -94,7 +113,7 @@ local function CheckGameOver()
 					end
 					if crossAllianceCount == aliveAllyTeamCount then
 						-- only allyteams alive are all bidirectionally allied, they are all winners
-						GameOver(allyTeams)
+						GameOver(winners)
 						return
 					end
 				end
@@ -105,29 +124,30 @@ local function CheckGameOver()
 end
 
 function gadget:GameFrame(frame)
-	if (frame%32) == 0 then -- only do a check in slowupdate
+	if (frame%16) == 0 then -- only do a check in slowupdate
 		CheckGameOver()
 	end
 end
 
 function gadget:TeamDied(teamID)
 	local allyTeamID = teamToAllyTeam[teamID]
-	if allyTeamID then
-		local aliveTeamCount = allyTeamAliveTeamsCount[allyTeamID]
-		if aliveTeamCount then
-			aliveTeamCount = aliveTeamCount -1
-			allyTeamAliveTeamsCount[allyTeamID] = aliveTeamCount
-			if aliveTeamCount == 0 then -- one allyteam just died, check the others whenever we should declare gameover
-				aliveAllyTeamCount = aliveAllyTeamCount - 1
-				CheckGameOver()
-			end
+	local aliveTeamCount = allyTeamAliveTeamsCount[allyTeamID]
+	if aliveTeamCount then
+		aliveTeamCount = aliveTeamCount -1
+		allyTeamAliveTeamsCount[allyTeamID] = aliveTeamCount
+		if aliveTeamCount == 0 then -- one allyteam just died, check the others whenever we should declare gameover
+			aliveAllyTeamCount = aliveAllyTeamCount - 1
+			CheckGameOver()
 		end
 	end
 end
 
 function gadget:Initialize()
+	if teamDeathMode == "none" then
+		-- all our checks are useless if teams cannot die
+		gadgetHandler:RemoveGadget()
+	end
 	local allyTeamCount = 0
-	local allyTeams = GetAllyTeamList()
 	for _,allyTeamID in ipairs(allyTeams) do
 		local teamList = GetTeamList(allyTeamID)
 		local teamCount = 0
@@ -150,10 +170,9 @@ function gadget:UnitCreated(unitID, unitDefID, unitTeamID)
 	teamUnitCount = teamUnitCount + 1
 	teamsUnitCount[unitTeamID] = teamUnitCount
 	local allyTeamID = teamToAllyTeam[unitTeamID]
-		local unitCount = allyTeamUnitCount[allyTeamID] or 0
-		unitCount = unitCount + 1
-		allyTeamUnitCount[allyTeamID] = unitCount
-	end
+	local unitCount = allyTeamUnitCount[allyTeamID] or 0
+	unitCount = unitCount + 1
+	allyTeamUnitCount[allyTeamID] = unitCount
 end
 
 function gadget:UnitGiven(unitID, unitDefID, unitTeamID)
@@ -165,27 +184,29 @@ function gadget:UnitCaptured(unitID, unitDefID, unitTeamID)
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, unitTeamID)
+	if unitTeamID == gaiaTeamID then
+		-- skip gaia
+		return
+	end
 	local teamUnitCount = teamsUnitCount[unitTeamID]
 	if teamUnitCount then
 		teamUnitCount = teamUnitCount - 1
 		teamsUnitCount[unitTeamID] = teamUnitCount
-		if teamDeathMode == "team" and teamUnitCount == 0 then
+		if teamDeathMode == "teamzerounits" and teamUnitCount == 0 then
 			-- no more units in the team, and option is enabled -> kill the team
 			KillTeam( unitTeamID )
 		end
 	end
 	local allyTeamID = teamToAllyTeam[unitTeamID]
-	if allyTeamID then
-		local unitCount = allyTeamUnitCount[allyTeamID]
-		if unitCount then
-			unitCount = unitCount - 1
-			allyTeamUnitCount[allyTeamID] = unitCount
-			if teamDeathMode == "ally" and unitCount == 0 then
-				-- no more units in the allyteam and the option is enabled -> kill all the teams in the allyteam
-				local teamList = GetTeamList(allyTeamID)
-				for _,teamID in ipairs(teamList) do
-					KillTeam( teamID )
-				end
+	local unitCount = allyTeamUnitCount[allyTeamID]
+	if unitCount then
+		unitCount = unitCount - 1
+		allyTeamUnitCount[allyTeamID] = unitCount
+		if teamDeathMode == "allyzerounits" and unitCount == 0 then
+			-- no more units in the allyteam and the option is enabled -> kill all the teams in the allyteam
+			local teamList = GetTeamList(allyTeamID)
+			for _,teamID in ipairs(teamList) do
+				KillTeam( teamID )
 			end
 		end
 	end
