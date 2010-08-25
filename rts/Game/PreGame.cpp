@@ -260,7 +260,7 @@ void CPreGame::UpdateClientNet()
 					throw content_error("No game data received from server");
 
 				unsigned char playerNum = packet->data[1];
-				if (gameSetup->playerStartingData.size() <= playerNum)
+				if (playerHandler->ActivePlayers() <= playerNum)
 					throw content_error("Invalid player number received from server");
 
 				gu->SetMyPlayer(playerNum);
