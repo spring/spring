@@ -21,7 +21,7 @@ namespace std {
 class CEndGameBox : public CInputReceiver
 {
 public:
-	CEndGameBox();
+	CEndGameBox( std::vector<unsigned char> winningAllyTeams );
 	~CEndGameBox();
 
 	virtual bool MousePress(int x, int y, int button);
@@ -72,6 +72,8 @@ protected:
 
 		std::vector< std::vector<float> > values;
 	};
+
+	std::vector<unsigned char> winners;
 
 	std::vector<Stat> stats;
 	GLuint graphTex;

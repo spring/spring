@@ -46,13 +46,14 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 bool CEndGameBox::disabled = false;
 
 
-CEndGameBox::CEndGameBox()
+CEndGameBox::CEndGameBox(std::vector<unsigned char> winningAllyTeams)
 	: CInputReceiver()
 	, moveBox(false)
 	, dispMode(0)
 	, stat1(1)
 	, stat2(-1)
 	, graphTex(0)
+	, winners(winningAllyTeams)
 {
 	box.x1 = 0.14f;
 	box.y1 = 0.1f;
@@ -242,7 +243,19 @@ void CEndGameBox::Draw()
 	font->glPrint(box.x1 + sumBox.x1    + 0.015f, box.y1 + sumBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM, "Team stats");
 	font->glPrint(box.x1 + difBox.x1    + 0.015f, box.y1 + difBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM, "Team delta stats");
 
-	if (teamHandler->Team(gu->myTeam)->isDead) {
+	bool iWon = false;
+	bool undecidedEnd = winners.size() == 0;
+	if (!undecidedEnd) {
+		for ( std::vector<unsigned char>::iterator itor = winners.begin(); itor != winners.end(); itor++ ) {
+			if ( *itor == gu->myAllyTeam ) {
+				iWon = true;
+				break;
+			}
+		}
+	}
+	if (undecidedEnd) {
+		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Game result was undecided");
+	} else if (!iWon) {
 		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "You lost the game");
 	} else {
 		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "You won the game");
