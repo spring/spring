@@ -134,6 +134,8 @@ private:
 
 	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt);
 
+	bool AdjustPlayerNumber(unsigned char &player);
+
 	/////////////////// game status variables ///////////////////
 
 	volatile bool quitServer;
