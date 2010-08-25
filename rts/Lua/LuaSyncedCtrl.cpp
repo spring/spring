@@ -473,7 +473,7 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 		if (!lua_israwnumber(L, -2)) {
 			continue;
 		}
-		unsigned char AllyTeamID;
+		unsigned char AllyTeamID = lua_toint( L, -2 );
 		if ( !teamHandler->ValidAllyTeam(AllyTeamID) ) {
 			continue;
 		}
