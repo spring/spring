@@ -192,6 +192,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 
 	players.resize(setup->playerStartingData.size());
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
+	UpdatePlayerNumberMap();
 
 	for (size_t a = 0; a < setup->GetSkirmishAIs().size(); ++a) {
 		const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
@@ -357,22 +358,21 @@ std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 }
 
 
-bool CGameServer::AdjustPlayerNumber(unsigned char &player) {
+void CGameServer::UpdatePlayerNumberMap() {
+	unsigned char player = 0;
+	for (int i = 0; i < 256; ++i, ++player) {
+		if(i < players.size() && !players[i].isFromDemo)
+			++player;
+		playerNumberMap[i] = (i < 250) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
+	}
+}
+
+
+void CGameServer::AdjustPlayerNumber(const unsigned char msg, unsigned char &player) {
 	// spectators watching the demo will offset the demo spectators, compensate for this
-	unsigned char newplayer = player;
-	if(newplayer >= players.size()) {
-		Message(str(format("Invalid player number in demo")));
-		return false;
-	}
-	for(int i = newplayer; i >= 0; --i)
-		if(!players[i].isFromDemo)
-			++newplayer;
-	if(newplayer >= players.size()) {
-		Message(str(format("Invalid player number in demo")));
-		return false;
-	}
-	player = newplayer;
-	return true;
+	player = playerNumberMap[player];
+	if(player >= players.size() && player < 250) // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
+		Message(str(format("Warning: Invalid player number in demo msg id %d") %(int)msg));
 }
 
 
@@ -403,10 +403,69 @@ void CGameServer::SendDemoData(const bool skipping)
 					Broadcast(boost::shared_ptr<const RawPacket>(buf));
 					break;
 				}
+			case NETMSG_AI_STATE_CHANGED: /* many of these messages are not likely to be sent by a spec, but there are cheats */
+			case NETMSG_ALLIANCE:
+			case NETMSG_CUSTOM_DATA:
+			case NETMSG_DC_UPDATE:
+			case NETMSG_DIRECT_CONTROL:
+			case NETMSG_PATH_CHECKSUM:
+			case NETMSG_PLAYERINFO:
 			case NETMSG_PLAYERLEFT:
+			case NETMSG_PLAYERSTAT:
+			case NETMSG_SETSHARE:
+			case NETMSG_SHARE:
+			case NETMSG_STARTPOS:
+			case NETMSG_REGISTER_NETMSG:
+			case NETMSG_TEAM:
+			case NETMSG_UNREGISTER_NETMSG:
 				{	// TODO: more messages may need adjusted player numbers, or maybe there is a better solution
-					if (AdjustPlayerNumber(buf->data[1]))
-						Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					AdjustPlayerNumber(msgCode, buf->data[1]);
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
+			case NETMSG_AI_CREATED:
+			case NETMSG_MAPDRAW:
+			case NETMSG_PLAYERNAME:
+				{
+					AdjustPlayerNumber(msgCode, buf->data[2]);
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
+			case NETMSG_CHAT:
+				{
+					AdjustPlayerNumber(msgCode, buf->data[2]);
+					AdjustPlayerNumber(msgCode, buf->data[3]);
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
+			case NETMSG_AICOMMAND:
+			case NETMSG_AISHARE:
+			case NETMSG_COMMAND: 
+			case NETMSG_LUAMSG:
+			case NETMSG_SELECT:
+			case NETMSG_SYSTEMMSG:
+				{
+					AdjustPlayerNumber(msgCode, buf->data[3]);
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
+					break;
+				}
+			case NETMSG_CREATE_NEWPLAYER:
+				{
+					try {
+						netcode::UnpackPacket pckt(boost::shared_ptr<const RawPacket>(buf), 3);
+						unsigned char spectator, team, playerNum;
+						std::string name;
+						pckt >> playerNum;
+						pckt >> spectator;
+						pckt >> team;
+						pckt >> name;
+						buf->data[3] = players.size();
+						AddAdditionalUser(name, "", true); // even though this is a demo, keep the players vector properly updated
+					} catch (netcode::UnpackPacketException &e) {
+						logOutput.Print("Warning: Invalid new player in demo msg: %s", e.err.c_str());
+					}
+
+					Broadcast(boost::shared_ptr<const RawPacket>(buf));
 					break;
 				}
 			case NETMSG_GAMEDATA:
@@ -2118,10 +2177,10 @@ void CGameServer::KickPlayer(const int playerNum)
 }
 
 
-void CGameServer::AddAdditionalUser( const std::string& name, const std::string& passwd )
+void CGameServer::AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo )
 {
 	GameParticipant buf;
-	buf.isFromDemo = false;
+	buf.isFromDemo = fromDemo;
 	buf.name = name;
 	buf.spectator = true;
 	buf.team = 0;
@@ -2130,7 +2189,9 @@ void CGameServer::AddAdditionalUser( const std::string& name, const std::string&
 		buf.SetValue("password",passwd);
 	}
 	players.push_back(buf);
-	Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( players.size() -1, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
+	UpdatePlayerNumberMap();
+	if (!fromDemo)
+		Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer( players.size() -1, buf.spectator, buf.team, buf.name )); // inform all the players of the newcomer
 }
 
 

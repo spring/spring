@@ -134,10 +134,12 @@ private:
 
 	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt);
 
-	bool AdjustPlayerNumber(unsigned char &player);
+	void AdjustPlayerNumber(const unsigned char msg, unsigned char &player);
+	void UpdatePlayerNumberMap();
 
 	/////////////////// game status variables ///////////////////
 
+	unsigned char playerNumberMap[256];
 	volatile bool quitServer;
 	int serverframenum;
 
@@ -199,7 +201,7 @@ private:
 	void InternalSpeedChange(float newSpeed);
 	void UserSpeedChange(float newSpeed, int player);
 
-	void AddAdditionalUser( const std::string& name, const std::string& passwd );
+	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false );
 
 	bool hasLocalClient;
 	unsigned localClientNumber;
