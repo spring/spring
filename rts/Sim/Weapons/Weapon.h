@@ -51,7 +51,7 @@ public:
 
 	void AimReady(int value);
 
-	bool ShouldCheckForNewTarget() const;
+	bool AllowWeaponTargetCheck() const;
 
 	void Fire();
 

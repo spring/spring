@@ -154,6 +154,8 @@ CEventHandler::CEventHandler()
 	SetupEvent("MoveCtrlNotify",         NULL, CONTROL_BIT);
 	SetupEvent("UnitPreDamaged",         NULL, CONTROL_BIT);
 	SetupEvent("ShieldPreDamaged",       NULL, CONTROL_BIT);
+	SetupEvent("AllowWeaponTargetCheck", NULL, CONTROL_BIT);
+	SetupEvent("AllowWeaponTarget",      NULL, CONTROL_BIT);
 }
 
 
