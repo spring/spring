@@ -35,7 +35,7 @@ local modOptions = Spring.GetModOptions()
 -- teamDeathMode possible values: "none", "teamzerounits" , "allyzerounits"
 local teamDeathMode = modOptions.teamdeathmode or "teamzerounits"
 -- sharedDynamicAllianceVictory is a C-like bool
-local sharedDynamicAllianceVictory = modOptions.shareddynamicalliancevictory or 0
+local sharedDynamicAllianceVictory = tonumber(modOptions.shareddynamicalliancevictory) or 0
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
