@@ -85,112 +85,114 @@ gadgetHandler = {
 -- these call-ins are set to 'nil' if not used
 -- they are setup in UpdateCallIns()
 local callInLists = {
-  'Shutdown',
+	"Shutdown",
 
-  'GamePreload',
-  'GameStart',
-  'GameOver',
-  'TeamDied',
+	"GamePreload",
+	"GameStart",
+	"GameOver",
+	"TeamDied",
 
-  'GameFrame',
+	"GameFrame",
 
-  'ViewResize',  -- FIXME ?
+	"ViewResize",  -- FIXME ?
 
-  'TextCommand',  -- FIXME ?
-  'GotChatMsg',
-  'RecvLuaMsg',
+	"TextCommand",  -- FIXME ?
+	"GotChatMsg",
+	"RecvLuaMsg",
 
-  -- Unit CallIns
-  'UnitCreated',
-  'UnitFinished',
-  'UnitFromFactory',
-  'UnitDestroyed',
-  'UnitExperience',
-  'UnitIdle',
-  'UnitCmdDone',
-  'UnitPreDamaged',
-  'UnitDamaged',
-  'UnitTaken',
-  'UnitGiven',
-  'UnitEnteredRadar',
-  'UnitEnteredLos',
-  'UnitLeftRadar',
-  'UnitLeftLos',
-  'UnitSeismicPing',
-  'UnitLoaded',
-  'UnitUnloaded',
-  'UnitCloaked',
-  'UnitDecloaked',
-  'StockpileChanged',
+	-- Unit CallIns
+	"UnitCreated",
+	"UnitFinished",
+	"UnitFromFactory",
+	"UnitDestroyed",
+	"UnitExperience",
+	"UnitIdle",
+	"UnitCmdDone",
+	"UnitPreDamaged",
+	"UnitDamaged",
+	"UnitTaken",
+	"UnitGiven",
+	"UnitEnteredRadar",
+	"UnitEnteredLos",
+	"UnitLeftRadar",
+	"UnitLeftLos",
+	"UnitSeismicPing",
+	"UnitLoaded",
+	"UnitUnloaded",
+	"UnitCloaked",
+	"UnitDecloaked",
+	"StockpileChanged",
 
-  -- Feature CallIns
-  'FeatureCreated',
-  'FeatureDestroyed',
+	-- Feature CallIns
+	"FeatureCreated",
+	"FeatureDestroyed",
 
-  -- Projectile CallIns
-  'ProjectileCreated',
-  'ProjectileDestroyed',
+	-- Projectile CallIns
+	"ProjectileCreated",
+	"ProjectileDestroyed",
 
-  -- Shield CallIns
-  'ShieldPreDamaged',
+	-- Shield CallIns
+	"ShieldPreDamaged",
 
-  -- Misc Synced CallIns
-  'Explosion',
+	-- Misc Synced CallIns
+	"Explosion",
 
-  -- LuaRules CallIns
-  'CommandFallback',
-  'AllowCommand',
-  'AllowUnitCreation',
-  'AllowUnitTransfer',
-  'AllowUnitBuildStep',
-  'AllowFeatureBuildStep',
-  'AllowFeatureCreation',
-  'AllowResourceLevel',
-  'AllowResourceTransfer',
-  'AllowDirectUnitControl',
-  'MoveCtrlNotify',
-  'TerraformComplete',
-  -- unsynced
-  'DrawUnit',
-  'DrawFeature',
-  'AICallIn',
+	-- LuaRules CallIns (note: the *PreDamaged calls belong here too)
+	"CommandFallback",
+	"AllowCommand",
+	"AllowUnitCreation",
+	"AllowUnitTransfer",
+	"AllowUnitBuildStep",
+	"AllowFeatureBuildStep",
+	"AllowFeatureCreation",
+	"AllowResourceLevel",
+	"AllowResourceTransfer",
+	"AllowDirectUnitControl",
+	"MoveCtrlNotify",
+	"TerraformComplete",
+	"AllowWeaponTargetCheck",
+	"AllowWeaponTarget",
+	-- unsynced
+	"DrawUnit",
+	"DrawFeature",
+	"AICallIn",
 
-  -- COB CallIn  (FIXME?)
-  'CobCallback',
+	-- COB CallIn  (FIXME?)
+	"CobCallback",
 
-  -- Unsynced CallIns
-  'Update',
-  'DefaultCommand',
-  'DrawGenesis',
-  'DrawWorld',
-  'DrawWorldPreUnit',
-  'DrawWorldShadow',
-  'DrawWorldReflection',
-  'DrawWorldRefraction',
-  'DrawScreenEffects',
-  'DrawScreen',
-  'DrawInMiniMap',
-  'RecvFromSynced',
+	-- Unsynced CallIns
+	"Update",
+	"DefaultCommand",
+	"DrawGenesis",
+	"DrawWorld",
+	"DrawWorldPreUnit",
+	"DrawWorldShadow",
+	"DrawWorldReflection",
+	"DrawWorldRefraction",
+	"DrawScreenEffects",
+	"DrawScreen",
+	"DrawInMiniMap",
+	"RecvFromSynced",
 
-  -- moved from LuaUI
-  'KeyPress',
-  'KeyRelease',
-  'MousePress',
-  'MouseRelease',
-  'MouseMove',
-  'MouseWheel',
-  'IsAbove',
-  'GetTooltip',
+	-- moved from LuaUI
+	"KeyPress",
+	"KeyRelease",
+	"MousePress",
+	"MouseRelease",
+	"MouseMove",
+	"MouseWheel",
+	"IsAbove",
+	"GetTooltip",
 
-  -- FIXME -- not implemented  (more of these?)
-  'WorldTooltip',
-  'MapDrawCmd',
-  'GameSetup',
-  'DefaultCommand',
+	-- FIXME -- not implemented  (more of these?)
+	"WorldTooltip",
+	"MapDrawCmd",
+	"GameSetup",
+	"DefaultCommand",
 
-  -- Save/Load
-  'Save',
-  'Load',
+	-- Save/Load
+	"Save",
+	"Load",
 }
 
 
@@ -1221,6 +1223,33 @@ function gadgetHandler:TerraformComplete(unitID, unitDefID, unitTeam,
 end
 
 
+function gadgetHandler:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)
+	for _, g in ipairs(self.AllowWeaponTargetCheckList) do
+		if (g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)) then
+			return true
+		end
+	end
+
+	return false
+end
+
+function gadgetHandler:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID)
+	local allowed = false
+	local priority = 1.0
+
+	for _, g in ipairs(self.AllowWeaponTargetList) do
+		local targetAllowed, targetPriority = g:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID)
+
+		if (targetAllowed) then
+			priority = math.max(priority, targetPriority)
+			allowed = true
+		end
+	end
+
+	return allowed, priority
+end
+
+
 --------------------------------------------------------------------------------
 --
 --  Unit call-ins
@@ -1709,4 +1738,3 @@ gadgetHandler:Initialize()
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-

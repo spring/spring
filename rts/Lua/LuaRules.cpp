@@ -106,13 +106,17 @@ CLuaRules::CLuaRules()
 	haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
 	haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
 	haveAllowStartPosition     = HasCallIn("AllowStartPosition");
+
 	haveMoveCtrlNotify         = HasCallIn("MoveCtrlNotify");
 	haveTerraformComplete      = HasCallIn("TerraformComplete");
-	haveDrawUnit               = HasCallIn("DrawUnit");
-	haveDrawFeature            = HasCallIn("DrawFeature");
-	haveAICallIn               = HasCallIn("AICallIn");
+	haveAllowWeaponTargetCheck = HasCallIn("AllowWeaponTargetCheck");
+	haveAllowWeaponTarget      = HasCallIn("AllowWeaponTarget");
 	haveUnitPreDamaged         = HasCallIn("UnitPreDamaged");
 	haveShieldPreDamaged       = HasCallIn("ShieldPreDamaged");
+
+	haveDrawUnit    = HasCallIn("DrawUnit");
+	haveDrawFeature = HasCallIn("DrawFeature");
+	haveAICallIn    = HasCallIn("AICallIn");
 
 	SetupUnsyncedFunction("DrawUnit");
 	SetupUnsyncedFunction("DrawFeature");
@@ -174,35 +178,31 @@ bool CLuaRules::AddUnsyncedCode()
 
 bool CLuaRules::SyncedUpdateCallIn(const string& name)
 {
-	if (name == "CommandFallback") {
-		haveCommandFallback        = HasCallIn("CommandFallback");
-	} else if (name == "AllowCommand") {
-		haveAllowCommand           = HasCallIn("AllowCommand");
-	} else if (name == "AllowUnitCreation") {
-		haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
-	} else if (name == "AllowUnitTransfer") {
-		haveAllowUnitTransfer      = HasCallIn("AllowUnitTransfer");
-	} else if (name == "AllowUnitBuildStep") {
-		haveAllowUnitBuildStep     = HasCallIn("AllowUnitBuildStep");
-	} else if (name == "AllowFeatureCreation") {
-		haveAllowFeatureCreation   = HasCallIn("AllowFeatureCreation");
-	} else if (name == "AllowFeatureBuildStep") {
-		haveAllowFeatureBuildStep  = HasCallIn("AllowFeatureBuildStep");
-	} else if (name == "AllowResourceLevel") {
-		haveAllowResourceLevel     = HasCallIn("AllowResourceLevel");
-	} else if (name == "AllowResourceTransfer") {
-		haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
-	} else if (name == "AllowDirectUnitControl") {
-		haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
-	} else if (name == "AllowStartPosition") {
-		haveAllowStartPosition     = HasCallIn("AllowStartPosition");
-	} else if (name == "MoveCtrlNotify") {
-		haveMoveCtrlNotify         = HasCallIn("MoveCtrlNotify");
-	} else if (name == "TerraformComplete") {
-		haveTerraformComplete      = HasCallIn("TerraformComplete");
-	} else {
+	#define UPDATE_HAVE_CALLIN(callinName) \
+		have ## callinName = HasCallIn( #callinName );
+
+	     if (name == "CommandFallback"       ) { UPDATE_HAVE_CALLIN(CommandFallback); }
+	else if (name == "AllowCommand"          ) { UPDATE_HAVE_CALLIN(AllowCommand); }
+	else if (name == "AllowUnitCreation"     ) { UPDATE_HAVE_CALLIN(AllowUnitCreation); }
+	else if (name == "AllowUnitTransfer"     ) { UPDATE_HAVE_CALLIN(AllowUnitTransfer); }
+	else if (name == "AllowUnitBuildStep"    ) { UPDATE_HAVE_CALLIN(AllowUnitBuildStep); }
+	else if (name == "AllowFeatureCreation"  ) { UPDATE_HAVE_CALLIN(AllowFeatureCreation); }
+	else if (name == "AllowFeatureBuildStep" ) { UPDATE_HAVE_CALLIN(AllowFeatureBuildStep); }
+	else if (name == "AllowResourceLevel"    ) { UPDATE_HAVE_CALLIN(AllowResourceLevel); }
+	else if (name == "AllowResourceTransfer" ) { UPDATE_HAVE_CALLIN(AllowResourceTransfer); }
+	else if (name == "AllowDirectUnitControl") { UPDATE_HAVE_CALLIN(AllowDirectUnitControl); }
+	else if (name == "AllowStartPosition"    ) { UPDATE_HAVE_CALLIN(AllowStartPosition); }
+	else if (name == "MoveCtrlNotify"        ) { UPDATE_HAVE_CALLIN(MoveCtrlNotify); }
+	else if (name == "TerraformComplete"     ) { UPDATE_HAVE_CALLIN(TerraformComplete); }
+	else if (name == "UnitPreDamaged"        ) { UPDATE_HAVE_CALLIN(UnitPreDamaged); }
+	else if (name == "ShieldPreDamaged"      ) { UPDATE_HAVE_CALLIN(ShieldPreDamaged); }
+	else if (name == "AllowWeaponTargetCheck") { UPDATE_HAVE_CALLIN(AllowWeaponTargetCheck); }
+	else if (name == "AllowWeaponTarget"     ) { UPDATE_HAVE_CALLIN(AllowWeaponTarget); }
+	else {
 		return CLuaHandleSynced::SyncedUpdateCallIn(name);
 	}
+
+	#undef UPDATE_HAVE_CALLIN
 	return true;
 }
 
@@ -776,11 +776,11 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_checkstack(L, 11);
 
 	const int errfunc = SetupTraceback();
-
 	static const LuaHashString cmdStr("UnitPreDamaged");
+
 	if (!cmdStr.GetGlobalFunc(L)) {
 		// remove error handler
-		if (errfunc) lua_pop(L, 1);
+		if (errfunc) { lua_pop(L, 1); }
 		return false; // the call is not defined
 	}
 
@@ -841,9 +841,7 @@ bool CLuaRules::ShieldPreDamaged(
 	bool ret = false;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) {
-			lua_pop(L, 1);
-		}
+		if (errfunc) { lua_pop(L, 1); }
 
 		// undefined call-in
 		return ret;
@@ -871,6 +869,82 @@ bool CLuaRules::ShieldPreDamaged(
 
 
 /******************************************************************************/
+
+bool CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID)
+{
+	if (!haveAllowWeaponTargetCheck) {
+		return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3 + 1);
+
+	const int errfunc(SetupTraceback());
+	static const LuaHashString cmdStr("AllowWeaponTargetCheck");
+
+	bool ret = false;
+
+	if (!cmdStr.GetGlobalFunc(L)) {
+		if (errfunc) { lua_pop(L, 1); }
+		return ret;
+	}
+
+	lua_pushnumber(L, attackerID);
+	lua_pushnumber(L, attackerWeaponNum);
+	lua_pushnumber(L, attackerWeaponDefID);
+
+	RunCallInTraceback(cmdStr, 3, 1, errfunc);
+
+	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	lua_pop(L, -1);
+
+	return ret;
+}
+
+bool CLuaRules::AllowWeaponTarget(
+	unsigned int attackerID,
+	unsigned int targetID,
+	unsigned int attackerWeaponNum,
+	unsigned int attackerWeaponDefID,
+	float* targetPriority)
+{
+	if (!haveAllowWeaponTarget) {
+		return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4 + 2);
+
+	const int errfunc(SetupTraceback());
+	static const LuaHashString cmdStr("AllowWeaponTarget");
+
+	bool ret = false;
+
+	if (!cmdStr.GetGlobalFunc(L)) {
+		if (errfunc) { lua_pop(L, 1); }
+		return ret;
+	}
+
+	lua_pushnumber(L, attackerID);
+	lua_pushnumber(L, targetID);
+	lua_pushnumber(L, attackerWeaponNum);
+	lua_pushnumber(L, attackerWeaponDefID);
+
+	RunCallInTraceback(cmdStr, 4, 2, errfunc);
+
+	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+
+	if (targetPriority && lua_isnumber(L, -2)) {
+		*targetPriority = lua_tonumber(L, -2);
+	}
+
+	lua_pop(L, 2);
+	return ret;
+}
+
+/******************************************************************************/
+
+
 
 bool CLuaRules::DrawUnit(int unitID)
 {
