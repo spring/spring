@@ -686,7 +686,8 @@ void CGameServer::Update()
 {
 	if (!isPaused && spring_istime(gameStartTime))
 	{
-		modGameTime += float(spring_tomsecs(spring_gettime() - lastUpdate)) * 0.001f * internalSpeed;
+		if(!demoReader || !hasLocalClient || (serverframenum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
+			modGameTime += float(spring_tomsecs(spring_gettime() - lastUpdate)) * 0.001f * internalSpeed;
 	}
 	lastUpdate = spring_gettime();
 
