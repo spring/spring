@@ -87,6 +87,7 @@ CGuiHandler::CGuiHandler():
 	iconsSize = 16;
 	iconsCount = 0;
 
+	LoadDefaults();
 	LoadConfig("ctrlpanel.txt");
 
 	miniMapMarker = !!configHandler->Get("MiniMapMarker", 1);
@@ -177,8 +178,6 @@ static bool SafeAtoF(float& var, const std::string& value)
 
 bool CGuiHandler::LoadConfig(const std::string& filename)
 {
-	LoadDefaults();
-
 	CFileHandler ifs(filename);
 	CSimpleParser parser(ifs);
 
