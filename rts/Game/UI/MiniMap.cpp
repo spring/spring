@@ -1251,11 +1251,10 @@ void CMiniMap::DrawForReal(bool use_geo)
 	if (resetTextureMatrix) {
 		glMatrixMode(GL_TEXTURE_MATRIX);
 		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
 	}
+	glMatrixMode(GL_MODELVIEW);
 	if (use_geo) {
 		glPopMatrix();
-
 	}
 
 	// reset 2
@@ -1264,21 +1263,32 @@ void CMiniMap::DrawForReal(bool use_geo)
 	glEnable(GL_TEXTURE_2D);
 
 	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+		//! prepare ClipPlanes for Lua's DrawInMinimap Modelview matrix
 
-		const double plane0[4] = {0,-1,0,1};
+		//! quote from glClipPlane spec:
+		//! "When glClipPlane is called, equation is transformed by the inverse of the modelview matrix and stored in the resulting eye coordinates.
+		//!  Subsequent changes to the modelview matrix have no effect on the stored plane-equation components."
+		//! -> we have to use the same modelview matrix when calling glClipPlane and later draw calls
+
+		//! set the modelview matrix to the same as used in Lua's DrawInMinimap
+		glPushMatrix();
+		glLoadIdentity();
+		glScalef(1.0f / width, 1.0f / height, 1.0f);
+
+		const double plane0[4] = {0,-1,0,height};
 		const double plane1[4] = {0,1,0,0};
-		const double plane2[4] = {-1,0,0,1};
+		const double plane2[4] = {-1,0,0,width};
 		const double plane3[4] = {1,0,0,0};
 
 		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
 		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
 		glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
 		glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
+
+		glPopMatrix();
 	}
 
-	// allow the LUA scripts to draw into the minimap
+	//! allow the LUA scripts to draw into the minimap
 	eventHandler.DrawInMiniMap();
 
 	if (use_geo && globalRendering->dualScreenMode)
