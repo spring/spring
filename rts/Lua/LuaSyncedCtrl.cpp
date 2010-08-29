@@ -470,10 +470,10 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 	std::vector<unsigned char> winningAllyTeams;
 	const int table = 1;
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwnumber(L, -2)) {
+		if (!lua_israwnumber(L, -1)) {
 			continue;
 		}
-		unsigned char AllyTeamID = lua_toint( L, -2 );
+		unsigned char AllyTeamID = lua_toint( L, -1 );
 		if ( !teamHandler->ValidAllyTeam(AllyTeamID) ) {
 			continue;
 		}
