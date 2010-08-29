@@ -74,7 +74,9 @@ local function CheckGameOver()
 				local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
 				if firstTeamCount and firstAllyTeamID ~= gaiaTeamID then
 					if firstTeamCount ~= 0 then
-						GameOver({1=firstAllyTeamID})
+						local winners = {}
+						winners[1] = firstAllyTeamID
+						GameOver(winners)
 						return
 					end
 				end
