@@ -74,8 +74,7 @@ local function CheckGameOver()
 				local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
 				if firstTeamCount and firstAllyTeamID ~= gaiaTeamID then
 					if firstTeamCount ~= 0 then
-						Spring.Echo("winner: " .. firstAllyTeamID)
-						GameOver({firstAllyTeamID})
+						GameOver({1=firstAllyTeamID})
 						return
 					end
 				end
@@ -83,41 +82,33 @@ local function CheckGameOver()
 		end
 	else
 		-- otherwise we have to cross check all the alliances
-		local checkedAlliances = {} -- this is to avoid doing the check multiple times
 		for _,firstAllyTeamID in ipairs(allyTeams) do
 			local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
 			if firstTeamCount and firstAllyTeamID ~= gaiaTeamID then
 				if firstTeamCount ~= 0 then
-					checkedAlliances[firstAllyTeamID] = firstAllyTeamID -- we're obviously allied with ourself
 					local winners = {}
-					local crossAllianceCount = 0
+					local winnerCount = 0
 					for _,secondAllyTeamID in ipairs(allyTeams) do
-						if checkedAlliances[firstAllyTeamID] == secondAllyTeamID then
-							-- we already confirmed this alliance, don't check it twice, just bump the counter
-							crossAllianceCount = crossAllianceCount + 1
-							winners[#winners +1] =  secondAllyTeamID
-						else
-							local secondTeamCount = allyTeamAliveTeamsCount[secondAllyTeamID]
-							if secondTeamCount and secondAllyTeamID ~= gaiaTeamID then
-								if secondTeamCount ~= 0 then
-									-- we need to check for both directions of alliance
-									if AreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and AreTeamsAllied( secondAllyTeamID, firstAllyTeamID ) then
-										crossAllianceCount = crossAllianceCount + 1
-										-- store both check directions
-										checkedAlliances[firstAllyTeamID] = secondAllyTeamID
-										checkedAlliances[secondAllyTeamID] = firstAllyTeamID
-										winners[#winners +1] =  firstAllyTeamID
-									end
+						local secondTeamCount = allyTeamAliveTeamsCount[secondAllyTeamID]
+						if secondTeamCount and secondAllyTeamID ~= gaiaTeamID then
+							if secondTeamCount ~= 0 then
+								-- we need to check for both directions of alliance
+								if AreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and AreTeamsAllied( secondAllyTeamID, firstAllyTeamID ) then
+									-- store both check directions
+									-- since we're gonna check if we're allied against ourself, only secondAllyTeamID needs to be stored
+									winners[secondAllyTeamID] =  true
+									winnerCount = winnerCount +1
 								end
 							end
 						end
 					end
-					if crossAllianceCount == aliveAllyTeamCount then
+					if winnerCount == aliveAllyTeamCount then
 						-- only allyteams alive are all bidirectionally allied, they are all winners
-						for _,winner in ipairs(winners) do
-							Spring.Echo("winner: " .. winner)
+						local winnersCorrectFormat = {}
+						for winner in pairs(winners) do
+							winnersCorrectFormat[#winnersCorrectFormat+1] = winner
 						end
-						GameOver(winners)
+						GameOver(winnersCorrectFormat)
 						return
 					end
 				end
