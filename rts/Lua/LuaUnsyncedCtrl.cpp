@@ -568,10 +568,25 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			const float3 pos(lua_tofloat(L, 3),
 			                 lua_tofloat(L, 4),
 			                 lua_tofloat(L, 5));
-			if (args >= 8)
-			{
+			if (args >= 8) {
 				const float3 speed(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
-				Channels::General.PlaySample(soundID, pos, speed, volume);
+				if (args >= 9) {
+					const string channel = lua_tostring(L, 9);
+					if (channel == "general") {
+						Channels::General.PlaySample(soundID, pos, speed, volume);
+					}
+					else if (channel == "battle") {
+						Channels::Battle.PlaySample(soundID, pos, speed, volume);
+					}
+					else if (channel == "unitReply") {
+						Channels::UnitReply.PlaySample(soundID, pos, speed, volume);
+					}
+					else if (channel == "userInterface") {
+						Channels::UserInterface.PlaySample(soundID, pos, speed, volume);
+					}
+				}
+				else
+					Channels::General.PlaySample(soundID, pos, speed, volume);
 			}
 			else
 				Channels::General.PlaySample(soundID, pos, volume);
