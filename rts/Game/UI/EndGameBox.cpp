@@ -247,9 +247,9 @@ void CEndGameBox::Draw()
 	bool undecidedEnd = winners.size() == 0;
 	if (!undecidedEnd) {
 		for ( std::vector<unsigned char>::iterator itor = winners.begin(); itor != winners.end(); itor++ ) {
+			logOutput.Print( "spring winner: %i", *itor );
 			if ( *itor == gu->myAllyTeam ) {
 				iWon = true;
-				break;
 			}
 		}
 	}
