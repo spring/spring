@@ -1,5 +1,16 @@
 Spring change log
 
+0.82.4:
+Engine / General:
+ - fix FullScreen mode under Linux
+ - fix KDE/GNOME detection for error message box
+ - fix another FPU reset in LuaLobby
+ - don't reload defaults each time /ctrlpanel command is used (behaves now the same way as /cmdcolors)
+ - speed up reflection pass a little
+
+Lua
+ - fix incorrect ClipPlanes in DrawInMinimap if gl.SlaveMiniMap is used
+
 0.82.3:
 Engine / General:
  - rebuild because of stale base content packages
