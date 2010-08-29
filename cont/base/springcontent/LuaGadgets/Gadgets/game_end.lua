@@ -74,6 +74,7 @@ local function CheckGameOver()
 				local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
 				if firstTeamCount and firstAllyTeamID ~= gaiaTeamID then
 					if firstTeamCount ~= 0 then
+						Spring.Echo("winner: " .. firstAllyTeamID)
 						GameOver({firstAllyTeamID})
 						return
 					end
@@ -113,6 +114,9 @@ local function CheckGameOver()
 					end
 					if crossAllianceCount == aliveAllyTeamCount then
 						-- only allyteams alive are all bidirectionally allied, they are all winners
+						for _,winner in ipairs(winners) do
+							Spring.Echo("winner: " .. winner)
+						end
 						GameOver(winners)
 						return
 					end
