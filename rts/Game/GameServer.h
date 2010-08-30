@@ -77,7 +77,6 @@ public:
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
 	bool WaitsOnCon() const;
-	bool GameHasStarted() const;
 
 	void SetGamePausable(const bool arg);
 
@@ -134,6 +133,8 @@ private:
 
 	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt);
 
+	float GetDemoTime();
+
 	/////////////////// game status variables ///////////////////
 
 	volatile bool quitServer;
@@ -149,6 +150,8 @@ private:
 	spring_time lastPlayerInfo;
 	spring_time lastUpdate;
 	float modGameTime;
+	float gameTime;
+	float startTime;
 
 	bool isPaused;
 	float userSpeedFactor;
@@ -219,6 +222,7 @@ private:
 	MsgToForwardMap relayingMessagesMap;
 
 	bool canReconnect;
+	bool gameHasStarted;
 };
 
 extern CGameServer* gameServer;
