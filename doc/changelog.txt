@@ -2,6 +2,9 @@ Spring change log
 
 0.82.4:
 Engine / General:
+ - fix demo desyncs if commands were issued during pause
+ - fix abnormal demo speed (during reconnect and temporary lags)
+ - fix demo runs away from local user
  - fix mid-game join
  - fix FullScreen mode under Linux
  - fix KDE/GNOME detection for error message box
