@@ -3509,6 +3509,7 @@ void CGame::StartPlaying()
 	lastTick = clock();
 	lastframe = SDL_GetTicks();
 
+	gu->startTime = gu->gameTime;
 	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
 	gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
@@ -3706,7 +3707,7 @@ void CGame::ClientReadNet()
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
 	unsigned procstarttime = SDL_GetTicks();
 	// really process the messages
-	while (timeLeft > 0.0f && (SDL_GetTicks() - procstarttime) < 500 && (packet = net->GetData()))
+	while (timeLeft > 0.0f && (SDL_GetTicks() - procstarttime) < 500 && (packet = net->GetData(gs->frameNum)))
 	{
 		const unsigned char* inbuf = packet->data;
 		const unsigned dataLength = packet->length;

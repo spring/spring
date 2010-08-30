@@ -34,6 +34,7 @@ CR_BIND(CGlobalUnsynced, );
 CR_REG_METADATA(CGlobalUnsynced, (
 				CR_MEMBER(modGameTime),
 				CR_MEMBER(gameTime),
+				CR_MEMBER(startTime),
 				CR_MEMBER(myPlayerNum),
 				CR_MEMBER(myTeam),
 				CR_MEMBER(myAllyTeam),
@@ -55,6 +56,7 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 	modGameTime = 0;
 	gameTime = 0;
+	startTime = 0;
 
 	myPlayerNum = 0;
 	myTeam = 1;

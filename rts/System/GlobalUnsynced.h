@@ -47,6 +47,13 @@ public:
 	float gameTime;
 
 	/**
+	 * @brief start time
+	 *
+	 * The value of gameTime when the game was started
+	 */
+	float startTime;
+
+	/**
 	 * @brief my player num
 	 *
 	 * Local player's number

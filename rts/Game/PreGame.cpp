@@ -208,7 +208,7 @@ void CPreGame::UpdateClientNet()
 	}
 
 	boost::shared_ptr<const RawPacket> packet;
-	while ((packet = net->GetData()))
+	while ((packet = net->GetData(gs->frameNum)))
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
