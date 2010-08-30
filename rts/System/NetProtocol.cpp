@@ -28,6 +28,7 @@
 #include "LoadSave/DemoRecorder.h"
 #include "lib/gml/gml.h"
 #include "Net/UnpackPacket.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 
 CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
@@ -100,15 +101,16 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) c
 	return serverConn->Peek(ahead);
 }
 
-boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
+boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 {
 	GML_STDMUTEX_LOCK(net); // GetData
 
 	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
 	if (ret) {
+		float demoTime = (framenum == 0) ? gu->gameTime : gu->startTime + (float)framenum / (float)GAME_SPEED;
 		if (record) {
-			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
+			record->SaveToDemo(ret->data, ret->length, demoTime);
 		}
 		else if (ret->data[0] == NETMSG_GAMEDATA && !disableDemo) {
 			try {
@@ -117,7 +119,7 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 				logOutput.Print("Starting demo recording");
 				record.reset(new CDemoRecorder());
 				record->WriteSetupText(gd.GetSetup());
-				record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
+				record->SaveToDemo(ret->data, ret->length, demoTime);
 			} catch (netcode::UnpackPacketException &e) {
 				logOutput.Print("Invalid GameData received: %s", e.err.c_str());
 			}
