@@ -412,7 +412,7 @@ void CGameServer::SendDemoData(const bool skipping)
 			case NETMSG_DC_UPDATE:
 			case NETMSG_DIRECT_CONTROL:
 			case NETMSG_PATH_CHECKSUM:
-			case NETMSG_PAUSE:
+			case NETMSG_PAUSE: /* this is a synced message and must not be excluded */
 			case NETMSG_PLAYERINFO:
 			case NETMSG_PLAYERLEFT:
 			case NETMSG_PLAYERSTAT:
