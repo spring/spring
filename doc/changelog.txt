@@ -26,13 +26,16 @@ Engine / General:
 
 Lua
  - fix incorrect ClipPlanes in DrawInMinimap if gl.SlaveMiniMap is used
+ - fix metal-maker widget
 
 Engine / AI:
+ - fix crash on capture from/by AI
  - fix Python AI Interface
  - AAI support version independent mod config files, for example BA.cfg
 
 Engine / Dedicated server:
  - fix/re-add sync-check
+ - possibly fix crash when sending data to improperly-connected autohost socket
 
 Unitsync:
  - add support for more then 16 start positions
