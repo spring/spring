@@ -322,6 +322,8 @@ void CUnitDrawer::Update(void)
 					if (gameSetup->ghostedBuildings && unit->mobility == NULL) {
 						unit->isIcon = DrawAsIcon(unit, (unit->pos-camera->pos).SqLength());
 					}
+				} else {
+					unit->isIcon = false;
 				}
 
 				if (unit->isIcon) {
