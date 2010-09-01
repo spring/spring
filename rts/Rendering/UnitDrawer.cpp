@@ -1053,8 +1053,10 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 
 	if (!drawGhostBuildingsPass) {
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-			SetTeamColour(unit->team, cloakAlpha);
-			DrawUnitNow(unit);
+			if (!unit->isIcon) {
+				SetTeamColour(unit->team, cloakAlpha);
+				DrawUnitNow(unit);
+			}
 		}
 	} else {
 		// check for decoy models
