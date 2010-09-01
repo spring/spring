@@ -805,16 +805,16 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	// call the routine
 	RunCallInTraceback(cmdStr, argCount, 2, errfunc);
 
-	if (newDamage && lua_isnumber(L, -2)) {
-		*newDamage = lua_tonumber(L, -2);
-	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
+	if (newDamage && lua_isnumber(L, -1)) {
+		*newDamage = lua_tonumber(L, -1);
+	} else if (!lua_isnumber(L, -1) || lua_isnil(L, -1)) {
 		// first value is obligatory, so may not be nil
 		logOutput.Print("%s(): 1st value returned should be a number (newDamage)\n", cmdStr.GetString().c_str());
 	}
 
-	if (impulseMult && lua_isnumber(L, -1)) {
-		*impulseMult = lua_tonumber(L, -1);
-	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
+	if (impulseMult && lua_isnumber(L, -2)) {
+		*impulseMult = lua_tonumber(L, -2);
+	} else if (!lua_isnumber(L, -2) && !lua_isnil(L, -2)) {
 		// second value is optional, so nils are OK
 		logOutput.Print("%s(): 2nd value returned should be a number (impulseMult)\n", cmdStr.GetString().c_str());
 	}
