@@ -933,10 +933,10 @@ bool CLuaRules::AllowWeaponTarget(
 
 	RunCallInTraceback(cmdStr, 4, 2, errfunc);
 
-	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2));
 
-	if (targetPriority && lua_isnumber(L, -2)) {
-		*targetPriority = lua_tonumber(L, -2);
+	if (targetPriority && lua_isnumber(L, -1)) {
+		*targetPriority = lua_tonumber(L, -1);
 	}
 
 	lua_pop(L, 2);
