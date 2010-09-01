@@ -782,8 +782,8 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		#define SET_TRANSFORM_VECTORS(dir)           \
 			float3 rightdir, updir;                  \
                                                      \
-			if (fabs(dir.y) < 0.95f) {           \
-				rightdir = dir.cross(UpVector);  \
+			if (fabs(dir.y) < 0.95f) {               \
+				rightdir = dir.cross(UpVector);      \
 				rightdir.SafeANormalize();           \
 			} else {                                 \
 				rightdir = float3(1.0f, 0.0f, 0.0f); \
@@ -801,7 +801,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			case CWeaponProjectile::WEAPON_BASE_PROJECTILE:
 			case CWeaponProjectile::WEAPON_EXPLOSIVE_PROJECTILE: 
 			case CWeaponProjectile::WEAPON_LASER_PROJECTILE:
-			case CWeaponProjectile::WEAPON_TORPEDO_PROJECTILE: {			
+			case CWeaponProjectile::WEAPON_TORPEDO_PROJECTILE: {
 				if (!shadowPass) {
 					unitDrawer->SetTeamColour(wp->colorTeam);
 				}

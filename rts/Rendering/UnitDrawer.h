@@ -178,10 +178,10 @@ private:
 	void CleanupBasicS3OTexture0(void) const;
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int);
-	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int, bool);
+	void DrawCloakedUnit(CUnit*, int, bool);
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
+	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 
