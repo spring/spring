@@ -1294,9 +1294,12 @@ function gadgetHandler:UnitPreDamaged(unitID, unitDefID, unitTeam,
   local rImp = 1.0
 
   for _,g in ipairs(self.UnitPreDamagedList) do
-    rDam, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
+    dam, imp = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
                   rDam, paralyzer, weaponID,
                   attackerID, attackerDefID, attackerTeam)
+    if (dam ~= nil) then
+      rDam = dam
+    end
     if (imp ~= nil) then
       rImp = math.min(imp, rImp)
     end
