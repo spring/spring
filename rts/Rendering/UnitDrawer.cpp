@@ -327,7 +327,7 @@ void CUnitDrawer::Update(void)
 				if (unit->isIcon) {
 					drawIcon.push_back(unit);
 				}
-#if USE_GML
+#ifdef USE_GML
 				else {
 					if (showHealthBars && ((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f))) {
 						drawStat.push_back(unit);
