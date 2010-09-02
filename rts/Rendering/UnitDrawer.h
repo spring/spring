@@ -172,7 +172,8 @@ private:
 	inline void DrawUnitModel(CUnit*);
 	void DrawUnitNow(CUnit*);
 
-	void UpdateDrawPos(CUnit*);
+	void UpdateUnitIconState(CUnit*);
+	void UpdateUnitDrawPos(CUnit*);
 
 	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
 	void SetupBasicS3OTexture0(void) const;

@@ -313,32 +313,8 @@ void CUnitDrawer::Update(void)
 		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 
-			{
-				const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
-
-				if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-					unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
-				} else if (losStatus & LOS_PREVLOS) {
-					if (gameSetup->ghostedBuildings && unit->mobility == NULL) {
-						unit->isIcon = DrawAsIcon(unit, (unit->pos-camera->pos).SqLength());
-					}
-				} else {
-					unit->isIcon = false;
-				}
-
-				if (unit->isIcon) {
-					drawIcon.push_back(unit);
-				}
-#ifdef USE_GML
-				else {
-					if (showHealthBars && ((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f))) {
-						drawStat.push_back(unit);
-					}
-				}
-#endif
-			}
-
-			UpdateDrawPos(unit);
+			UpdateUnitIconState(unit);
+			UpdateUnitDrawPos(unit);
 		}
 	}
 
@@ -2130,7 +2106,35 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 }
 #endif
 
-void CUnitDrawer::UpdateDrawPos(CUnit* u) {
+
+
+inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
+	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
+
+	// reset
+	unit->isIcon = false;
+
+	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
+		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
+	} else if (losStatus & LOS_PREVLOS) {
+		if (gameSetup->ghostedBuildings && unit->mobility == NULL) {
+			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
+		}
+	}
+
+	if (unit->isIcon) {
+		drawIcon.push_back(unit);
+	}
+#ifdef USE_GML
+	else {
+		if (showHealthBars && ((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f))) {
+			drawStat.push_back(unit);
+		}
+	}
+#endif
+}
+
+inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 	const CTransportUnit* trans = u->GetTransporter();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
