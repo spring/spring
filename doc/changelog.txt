@@ -3,13 +3,14 @@ Spring change log
 0.82.5:
 Engine / General:
  - draw icons for cloaked units again
+ - fix NaNs if map hardness is zero
 
 Lua
  - fix UnitPreDamaged Lua CallIn
 
 Engine / AI:
  - AAI: do not crash on game end if mod did not spawn a commander in the first 450 frames
- - E323AI: lots of fixes & support for NOTA & Conflict Terra
+ - E323AI: lots of fixes & support for NOTA & Conflict Terra and AI options
 
 0.82.4:
 Engine / General:
