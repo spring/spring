@@ -1553,6 +1553,10 @@ void CGameServer::ServerReadNet()
 				netcode::UnpackPacket msg(packet, 3);
 				std::string name, passwd, version;
 				unsigned char reconnect;
+				unsigned short netversion;
+				msg >> netversion;
+				if(netversion != NETWORK_VERSION)
+					throw netcode::UnpackPacketException("Wrong network version");
 				msg >> name;
 				msg >> passwd;
 				msg >> version;
