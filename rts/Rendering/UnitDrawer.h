@@ -135,7 +135,6 @@ public:
 	const CUnit* volatile mt_excludeUnit;
 
 	bool showHealthBars;
-	GML_VECTOR<CUnit*> drawStat;
 
 	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
 		CUnitDrawer* const ud = (CUnitDrawer*) c;
