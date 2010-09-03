@@ -285,7 +285,7 @@ void CGroundMoveType::Update()
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
 				if (!haveFinalWaypoint) {
-					GetNextWaypoint(wpBehind && !canReverse);
+					GetNextWaypoint();
 				} else {
 					if (atGoal) {
 						Arrived();
@@ -557,7 +557,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 						wSpeed = std::max(turnSpeed, (turnSpeed + wSpeed) * 0.2f);
 					} else {
 						// just skip, assume close enough
-						GetNextWaypoint(true);
+						GetNextWaypoint();
 						wSpeed = (turnSpeed + wSpeed) * 0.625f;
 					}
 				}
@@ -1234,25 +1234,31 @@ void CGroundMoveType::GetNewPath()
 /*
 Sets waypoint to next in path.
 */
-void CGroundMoveType::GetNextWaypoint(bool override)
+void CGroundMoveType::GetNextWaypoint()
 {
+
 	if (pathId == 0) {
 		return;
 	}
 
-	if (!override) {
-		// straight-line distance check
-		if ((owner->pos - waypoint).SqLength2D() > Square(CPathManager::PATH_RESOLUTION)) {
-			// waypoint still too far away
-			return;
-		}
-	} else {
-		// turn-radius check
+	{
+		#if (DEBUG_OUTPUT == 1)
+		// plot the vector to the waypoint
+		const int figGroupID =
+			geometricObjects->AddLine(owner->pos + UpVector * 20, waypoint + UpVector * 20, 8.0f, 1, 4);
+		geometricObjects->SetColor(figGroupID, 1, 0.3f, 0.3f, 0.6f);
+		#endif
+
+		// perform a turn-radius check: if the waypoint
+		// lies outside our turning circle, don't skip
+		// it (since we can steer toward this waypoint
+		// and pass it without slowing down)
+		// note that we take the DIAMETER of the circle
+		// to prevent sine-like "snaking" trajectories
 		const float turnFrames = 65536 / turnRate;
 		const float turnRadius = (currentSpeed * turnFrames) / (PI + PI);
 
-		if (currentDistanceToWaypoint > (turnRadius * 1.25f)) {
-			// waypoint not inside our turning circle
+		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
 			return;
 		}
 	}
@@ -1866,7 +1872,7 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 					break;
 				}
 
-				GetNextWaypoint(false);
+				GetNextWaypoint();
 
 				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
 				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
