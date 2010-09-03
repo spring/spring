@@ -26,6 +26,8 @@ CPlayerHandler::CPlayerHandler()
 
 CPlayerHandler::~CPlayerHandler()
 {
+	for(playerVec::iterator pi = players.begin(); pi != players.end(); ++pi)
+		delete *pi;
 }
 
 
@@ -35,9 +37,10 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 	players.resize(newSize);
 
 	for (size_t i = 0; i < setup->playerStartingData.size(); ++i) {
-		players[i] = setup->playerStartingData[i];
-		players[i].playerNum = (int)i;
-		players[i].myControl.myController = &players[i];
+		players[i] = new CPlayer();
+		*players[i] = setup->playerStartingData[i];
+		players[i]->playerNum = (int)i;
+		players[i]->myControl.myController = players[i];
 	}
 }
 
@@ -45,8 +48,8 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 int CPlayerHandler::Player(const std::string& name) const
 {
 	for (playerVec::const_iterator it = players.begin(); it != players.end(); ++it) {
-		if (it->name == name)
-			return it->playerNum;
+		if ((*it)->name == name)
+			return (*it)->playerNum;
 	}
 	return -1;
 }
@@ -64,7 +67,7 @@ std::vector<int> CPlayerHandler::ActivePlayersInTeam(int teamId) const
 	size_t p = 0;
 	for(playerVec::const_iterator pi = players.begin(); pi != players.end(); ++pi, ++p) {
 		// do not count spectators, or demos will desync
-		if (pi->active && !pi->spectator && (pi->team == teamId)) {
+		if ((*pi)->active && !(*pi)->spectator && ((*pi)->team == teamId)) {
 			playersInTeam.push_back(p);
 		}
 	}
@@ -76,23 +79,25 @@ void CPlayerHandler::GameFrame(int frameNum)
 {
 	for(playerVec::iterator it = players.begin(); it != players.end(); ++it)
 	{
-		it->GameFrame(frameNum);
+		(*it)->GameFrame(frameNum);
 	}
 }
 
 void CPlayerHandler::AddPlayer( const CPlayer& player )
 {
+	int oldSize = players.size();
 	int newSize = std::max( (int)players.size(), player.playerNum + 1 );
 	players.resize(newSize);
-	for ( unsigned int i = players.size(); i < player.playerNum; i++ ) // fill gap with stubs
+	for ( unsigned int i = oldSize; i < newSize; ++i ) // fill gap with stubs
 	{
-		CPlayer& stub = players[i];
-		stub.name = "unknown";
-		stub.isFromDemo = false;
-		stub.spectator = true;
-		stub.team = 0;
-		stub.playerNum = (int)i;
+		players[i] = new CPlayer();
+		CPlayer* stub = players[i];
+		stub->name = "unknown";
+		stub->isFromDemo = false;
+		stub->spectator = true;
+		stub->team = 0;
+		stub->playerNum = (int)i;
 	}
-	players[player.playerNum] = player;
-	players[player.playerNum].myControl.myController = &players[player.playerNum];
+	*players[player.playerNum] = player;
+	players[player.playerNum]->myControl.myController = players[player.playerNum];
 }
