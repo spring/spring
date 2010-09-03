@@ -87,7 +87,7 @@ protected:
 	float Distance2D(CSolidObject *object1, CSolidObject *object2, float marginal = 0.0f);
 
 	void GetNewPath();
-	void GetNextWaypoint(bool);
+	void GetNextWaypoint();
 
 	float BreakingDistance(float speed);
 	float3 Here();
