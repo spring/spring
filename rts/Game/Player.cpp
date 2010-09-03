@@ -188,6 +188,9 @@ void CPlayer::GameFrame(int frameNum)
 
 void CPlayer::StopControllingUnit()
 {
+	if(!dccs.playerControlledUnit)
+		return
+
 	CUnit* unit = dccs.playerControlledUnit;
 	unit->directControl = 0;
 	unit->AttackUnit(0, true);
