@@ -212,8 +212,10 @@ private:
 	// buildings that left LOS but are still alive
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
-	GML_VECTOR<CUnit*> drawStat;
-	GML_VECTOR<CUnit*> drawIcon;
+	std::set<CUnit*> drawIcon;
+#ifdef USE_GML
+	std::set<CUnit*> drawStat;
+#endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 };

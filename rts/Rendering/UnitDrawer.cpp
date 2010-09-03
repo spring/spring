@@ -311,6 +311,10 @@ void CUnitDrawer::Update(void)
 	{
 		GML_RECMUTEX_LOCK(unit); // Update
 
+		drawIcon.clear();
+#ifdef USE_GML
+		drawStat.clear();
+#endif
 		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 
@@ -539,7 +543,7 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		for (GML_VECTOR<CUnit*>::iterator ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
+		for (std::set<CUnit*>::iterator ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
 			DrawIcon(*ui, false);
 		}
 		if (!gu->spectatingFullView) {
@@ -552,14 +556,11 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		glDisable(GL_ALPHA_TEST);
 
 #ifdef USE_GML
-		for (GML_VECTOR<CUnit*>::iterator ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
+		for (std::set<CUnit*>::iterator ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
 			DrawUnitStats(*ui);
 		}
-
-		drawStat.clear();
 #endif
-
-		drawIcon.clear();
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 }
 
@@ -2075,32 +2076,28 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 		}
 	}
 
-
 	// skip the rest of the indicators if it isn't a local unit
-	if ((gu->myTeam != unit->team) && !gu->spectatingFullView) {
-		glPopMatrix();
-		return;
-	}
-
-	// experience bar
-	const float eEnd = (unit->limExperience * 0.8f) * 10.0f;
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
-
-	if (unit->beingBuilt) {
-		const float bEnd = (unit->buildProgress * 0.8f) * 10.0f;
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
-	}
-	else if (unit->stockpileWeapon) {
-		const float sEnd = (unit->stockpileWeapon->buildPercent * 0.8f) * 10.0f;
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
-	}
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	if (unit->group) {
-		font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
+	if ((gu->myTeam == unit->team) || gu->spectatingFullView) {
+		// experience bar
+		if (unit->limExperience > 0.0f) {
+			const float eEnd = (unit->limExperience * 0.8f) * 10.0f;
+			glColor3f(1.0f, 1.0f, 1.0f);
+			glRectf(6.0f, -2.0f, 8.0f, eEnd - 2.0f);
+		}
+		if (unit->beingBuilt) {
+			const float bEnd = (unit->buildProgress * 0.8f) * 10.0f;
+			glColor3f(1.0f, 0.0f, 0.0f);
+			glRectf(-8.0f, -2.0f, -6.0f, bEnd - 2.0f);
+		}
+		else if (unit->stockpileWeapon) {
+			const float sEnd = (unit->stockpileWeapon->buildPercent * 0.8f) * 10.0f;
+			glColor3f(1.0f, 0.0f, 0.0f);
+			glRectf(-8.0f, -2.0f, -6.0f, sEnd - 2.0f);
+		}
+		if (unit->group) {
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
+		}
 	}
 
 	glPopMatrix();
@@ -2116,22 +2113,21 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
+#ifdef USE_GML
+		if (showHealthBars &&
+			(unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f || unit->limExperience > 0.0f ||
+			unit->beingBuilt || unit->stockpileWeapon || unit->group) && 
+			((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f)))
+			drawStat.insert(unit);
+#endif
 	} else if (losStatus & LOS_PREVLOS) {
 		if (gameSetup->ghostedBuildings && unit->mobility == NULL) {
 			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
 		}
 	}
 
-	if (unit->isIcon) {
-		drawIcon.push_back(unit);
-	}
-#ifdef USE_GML
-	else {
-		if (showHealthBars && ((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f))) {
-			drawStat.push_back(unit);
-		}
-	}
-#endif
+	if(unit->isIcon)
+		drawIcon.insert(unit);
 }
 
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
@@ -2349,6 +2345,10 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
 		(*it).erase(unit);
 	}
+#ifdef USE_GML
+	drawIcon.erase(unit);
+	drawStat.erase(unit);
+#endif
 }
 
 
