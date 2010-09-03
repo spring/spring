@@ -33,7 +33,7 @@ public:
 	 *
 	 * Accesses a CPlayer instance at a given index
 	 */
-	CPlayer* Player(int i) { assert(unsigned(i) < players.size()); return &players[i]; }
+	CPlayer* Player(int i) { assert(unsigned(i) < players.size()); return players[i]; }
 
 	/**
 	 * @brief Player
@@ -71,7 +71,7 @@ public:
 	void AddPlayer( const CPlayer& player );
 
 private:
-	typedef std::vector<CPlayer> playerVec;
+	typedef std::vector<CPlayer *> playerVec;
 	/**
 	 * @brief players
 	 *
