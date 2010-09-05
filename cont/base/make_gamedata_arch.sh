@@ -44,24 +44,32 @@ echo "Using build directory: ${BUILD_DIR}/ ..."
 
 cd cont/base/
 
-echo "Updating spring/bitmaps.sdz"
+echo "Creating spring/bitmaps.sdz"
 cd bitmaps/
-${CMD_7Z} ${BUILD_DIR}/spring/bitmaps.sdz * > /dev/null
+ARCHIVE_FILE=${BUILD_DIR}/spring/bitmaps.sdz
+rm ${ARCHIVE_FILE}
+${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
-echo "Updating springcontent.sdz"
+echo "Creating springcontent.sdz"
 cd springcontent/
-${CMD_7Z} ${BUILD_DIR}/springcontent.sdz * > /dev/null
+ARCHIVE_FILE=${BUILD_DIR}/springcontent.sdz
+rm ${ARCHIVE_FILE}
+${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
-echo "Updating maphelper.sdz"
+echo "Creating maphelper.sdz"
 cd maphelper/
-${CMD_7Z} ${BUILD_DIR}/maphelper.sdz * > /dev/null
+ARCHIVE_FILE=${BUILD_DIR}/maphelper.sdz
+rm ${ARCHIVE_FILE}
+${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
-echo "Updating cursors.sdz"
+echo "Creating cursors.sdz"
 cd cursors/
-${CMD_7Z} ${BUILD_DIR}/cursors.sdz * > /dev/null
+ARCHIVE_FILE=${BUILD_DIR}/cursors.sdz
+rm ${ARCHIVE_FILE}
+${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
 cd ${ORIG_DIR}
