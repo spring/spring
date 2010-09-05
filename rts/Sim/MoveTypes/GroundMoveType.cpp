@@ -374,27 +374,28 @@ void CGroundMoveType::SlowUpdate()
 		return;
 	}
 
-	if ((progressState == Active) && (pathId != 0) && (etaFailures > (65536 / turnRate))) {
-		if (owner->pos.SqDistance2D(goalPos) > (200.0f * 200.0f)) {
-			// too many ETA failures and not within acceptable range of
-			// our goal, request a new path from our current position
-			#if (DEBUG_OUTPUT == 1)
-			logOutput.Print("[CGMT::SU] ETA failure for unit %i", owner->id);
-			#endif
+	if (progressState == Active) {
+		if (pathId != 0) {
+			if (etaFailures > (65536 / turnRate)) {
+				// we have a path but are not moving (based on the ETA failure count)
+				#if (DEBUG_OUTPUT == 1)
+				logOutput.Print("[CGMT::SU] unit %i has path %i but %i ETA failures", owner->id, pathId, etaFailures);
+				#endif
 
-			StopEngine();
-			StartEngine();
+				StopEngine();
+				StartEngine();
+			}
+		} else {
+			if (gs->frameNum > restartDelay) {
+				// we want to be moving but don't have a path
+				#if (DEBUG_OUTPUT == 1)
+				logOutput.Print("[CGMT::SU] unit %i has no path", owner->id);
+				#endif
+				StartEngine();
+			}
 		}
 	}
 
-	// If the action is active, but not the engine and the
-	// re-try-delay has passed, then start the engine.
-	if (progressState == Active && (pathId == 0) && (gs->frameNum > restartDelay)) {
-		#if (DEBUG_OUTPUT == 1)
-		logOutput.Print("[CGMT::SU] restart engine for unit %i", owner->id);
-		#endif
-		StartEngine();
-	}
 
 	if (!flying) {
 		// just kindly move it into the map again instead of deleting
