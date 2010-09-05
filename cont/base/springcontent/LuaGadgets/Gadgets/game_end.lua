@@ -144,6 +144,10 @@ function gadget:Initialize()
 		-- all our checks are useless if teams cannot die
 		gadgetHandler:RemoveGadget()
 	end
+	if sharedDynamicAllianceVictory == 0 then
+		-- if dyanmic alliance is off, there's no point of checking gameover every slowupdate, since the hook for unit died is sufficient
+		gadgetHandler:RemoveGadgetCallin( "GameFrame", self )
+	end
 	local allyTeamCount = 0
 	for _,allyTeamID in ipairs(allyTeams) do
 		local teamList = GetTeamList(allyTeamID)
