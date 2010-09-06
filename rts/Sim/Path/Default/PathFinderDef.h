@@ -3,9 +3,7 @@
 #ifndef PATHFINDERDEF_HDR
 #define PATHFINDERDEF_HDR
 
-#include "Sim/Path/IPathFinderDef.h"
-
-class CPathFinderDef: public IPathFinderDef {
+class CPathFinderDef {
 public:
 	CPathFinderDef(float3 goalCenter, float goalRadius);
 	~CPathFinderDef();
