@@ -68,7 +68,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
-#include "Rendering/PathDrawer.h"
+#include "Rendering/IPathDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
@@ -101,7 +101,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/COB/CobEngine.h"
@@ -344,6 +344,7 @@ CGame::~CGame()
 	SafeDelete(geometricObjects);
 	SafeDelete(featureHandler);
 	SafeDelete(treeDrawer);
+	SafeDelete(pathDrawer);
 	SafeDelete(uh);
 	SafeDelete(ph);
 	SafeDelete(groundDecals);
@@ -516,7 +517,7 @@ void CGame::LoadSimulation(const std::string& mapname)
 	loshandler = new CLosHandler();
 	radarhandler = new CRadarHandler(false);
 
-	pathManager = new CPathManager();
+	pathManager = IPathManager::GetInstance();
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -537,6 +538,7 @@ void CGame::LoadRendering()
 	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
 
 	inMapDrawer = new CInMapDraw();
+	pathDrawer = IPathDrawer::GetInstance();
 
 	geometricObjects = new CGeometricObjects();
 

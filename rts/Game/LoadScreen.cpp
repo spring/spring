@@ -17,7 +17,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"

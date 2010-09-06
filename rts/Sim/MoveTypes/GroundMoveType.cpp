@@ -23,7 +23,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
@@ -252,7 +252,7 @@ void CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(owner->pos);
 
 				currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
-				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(CPathManager::PATH_RESOLUTION));
+				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(pathManager->GetPathResolution()));
 
 				if (!atGoal) {
 					if (!idling) {
@@ -1268,7 +1268,7 @@ void CGroundMoveType::GetNextWaypoint()
 		waypoint = nextWaypoint;
 		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
-		if (waypoint.SqDistance2D(goalPos) < Square(CPathManager::PATH_RESOLUTION)) {
+		if (waypoint.SqDistance2D(goalPos) < Square(pathManager->GetPathResolution())) {
 			waypoint = goalPos;
 		}
 	} else {
@@ -1317,7 +1317,7 @@ based on current speed.
 */
 float CGroundMoveType::MinDistanceToWaypoint()
 {
-	return BreakingDistance(owner->speed.Length2D()) + CPathManager::PATH_RESOLUTION;
+	return BreakingDistance(owner->speed.Length2D()) + pathManager->GetPathResolution();
 }
 
 /*
