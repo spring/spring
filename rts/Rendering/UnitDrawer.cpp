@@ -1136,38 +1136,34 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 	// buildings that died while ghosted
 	for (std::set<GhostBuilding*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
-		std::set<GhostBuilding*>::iterator itNext(it); itNext++;
-
 		if (loshandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
-			if ((*it)->decal) {
+			if ((*it)->decal)
 				(*it)->decal->gbOwner = 0;
-			}
 
 			delete *it;
-			deadGhostedBuildings.erase(it);
-			it = itNext;
+			deadGhostedBuildings.erase(it++);
 		} else {
 			if (camera->InView((*it)->pos, (*it)->model->radius * 2.0f)) {
 				glPushMatrix();
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
-				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
+				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ)
 					texturehandlerS3O->SetS3oTexture((*it)->model->textureType);
-				}
 
 				SetTeamColour((*it)->team, cloakAlpha1);
 				(*it)->model->DrawStatic();
 				glPopMatrix();
 			}
 
-			it++;
+			++it;
 		}
 	}
 
-	for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui) {
-		DrawCloakedUnit(*ui, modelType, true);
+	if(!gu->spectatingFullView) {
+		for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui)
+			DrawCloakedUnit(*ui, modelType, true);
 	}
 }
 
