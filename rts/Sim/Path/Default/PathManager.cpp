@@ -83,10 +83,8 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 Request a new multipath, store the result and return a handle-id to it.
 */
 unsigned int CPathManager::RequestPath(const MoveData* md, float3 startPos,
-		IPathFinderDef* ipfDef, float3 goalPos, CSolidObject* caller, bool synced) {
+		CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller, bool synced) {
 	SCOPED_TIMER("PFS");
-
-	CPathFinderDef* peDef = dynamic_cast<CPathFinderDef*>(ipfDef);
 
 	MoveData* moveData = moveinfo->moveData[md->pathType];
 	moveData->tempOwner = caller;

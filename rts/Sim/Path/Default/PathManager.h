@@ -12,7 +12,6 @@
 class CSolidObject;
 class CPathFinder;
 class CPathEstimator;
-class IPathFinderDef;
 class CPathFinderDef;
 struct MoveData;
 class CMoveMath;
@@ -92,15 +91,6 @@ public:
 		bool synced = true
 	);
 
-	unsigned int RequestPath(
-		const MoveData* moveData,
-		float3 startPos,
-		IPathFinderDef* peDef,
-		float3 goalPos,
-		CSolidObject* caller,
-		bool synced = true
-	);
-
 
 
 	/**
@@ -162,6 +152,15 @@ public:
 	static const unsigned int PATH_RESOLUTION;
 
 private:
+	unsigned int RequestPath(
+		const MoveData* moveData,
+		float3 startPos,
+		CPathFinderDef* peDef,
+		float3 goalPos,
+		CSolidObject* caller,
+		bool synced = true
+	);
+
 	struct MultiPath {
 		MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData);
 		~MultiPath();
@@ -182,11 +181,9 @@ private:
 		CSolidObject* caller;
 	};
 
-
 	unsigned int Store(MultiPath* path);
 	void Estimate2ToEstimate(MultiPath& path, float3 startPos, int ownerId, bool synced) const;
 	void EstimateToDetailed(MultiPath& path, float3 startPos, int ownerId) const;
-
 
 	CPathFinder* pf;
 	CPathEstimator* pe;

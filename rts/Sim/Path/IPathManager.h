@@ -8,7 +8,6 @@
 
 struct MoveData;
 class CSolidObject;
-class IPathFinderDef;
 
 class IPathManager {
 public:
@@ -39,15 +38,6 @@ public:
 		const MoveData* moveData,
 		float3 startPos, float3 goalPos, float goalRadius = 8.0f,
 		CSolidObject* caller = 0,
-		bool synced = true
-	) { return 0; }
-
-	virtual unsigned int RequestPath(
-		const MoveData* moveData,
-		float3 startPos,
-		IPathFinderDef* peDef,
-		float3 goalPos,
-		CSolidObject* caller,
 		bool synced = true
 	) { return 0; }
 
