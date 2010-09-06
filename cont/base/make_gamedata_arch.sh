@@ -47,28 +47,28 @@ cd cont/base/
 echo "Creating spring/bitmaps.sdz"
 cd bitmaps/
 ARCHIVE_FILE=${BUILD_DIR}/spring/bitmaps.sdz
-rm ${ARCHIVE_FILE}
+rm -f ${ARCHIVE_FILE}
 ${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
 echo "Creating springcontent.sdz"
 cd springcontent/
 ARCHIVE_FILE=${BUILD_DIR}/springcontent.sdz
-rm ${ARCHIVE_FILE}
+rm -f ${ARCHIVE_FILE}
 ${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
 echo "Creating maphelper.sdz"
 cd maphelper/
 ARCHIVE_FILE=${BUILD_DIR}/maphelper.sdz
-rm ${ARCHIVE_FILE}
+rm -f ${ARCHIVE_FILE}
 ${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
 echo "Creating cursors.sdz"
 cd cursors/
 ARCHIVE_FILE=${BUILD_DIR}/cursors.sdz
-rm ${ARCHIVE_FILE}
+rm -f ${ARCHIVE_FILE}
 ${CMD_7Z} ${ARCHIVE_FILE} * > /dev/null
 cd ..
 
