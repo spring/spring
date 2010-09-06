@@ -9,7 +9,7 @@
 #include "GlobalSynced.h"
 #include "GlobalConstants.h"
 #include "Sim/Objects/SolidObject.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "creg/STL_Map.h"
 
 CGroundBlockingObjectMap* groundBlockingObjectMap;

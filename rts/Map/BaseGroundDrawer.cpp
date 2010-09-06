@@ -12,18 +12,13 @@
 #include "HeightLinePalette.h"
 #include "ReadMap.h"
 #include "MapInfo.h"
+#include "Rendering/IPathDrawer.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "Sim/Path/PathManager.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/UnitHandler.h"
-#include "ConfigHandler.h"
-#include "FastMath.h"
-#include "myMath.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "System/ConfigHandler.h"
+#include "System/FastMath.h"
+#include "System/myMath.h"
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
@@ -280,7 +275,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 #endif
 
 	if (updateTextureState < extraTextureUpdateRate) {
-		const int pwr2mapx_half = gs->pwr2mapx / 2;
+		const int pwr2mapx_half = gs->pwr2mapx >> 1;
 
 		int starty;
 		int endy;
@@ -302,93 +297,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			infoTexMem = (GLbyte*)extraTexPBO.MapBuffer(offset, (endy - starty) * pwr2mapx_half * 4);
 		}
 
-#define COLOR_R 2
-#define COLOR_G 1
-#define COLOR_B 0
-#define COLOR_A 3
-
-		switch(drawMode) {
+		switch (drawMode) {
 			case drawPath: {
-				if (guihandler->inCommand > 0 &&
-				    static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
-				    guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING)
-				{
-					// use the current build order
-					for (int y = starty; y < endy; ++y) {
-						const int y_pwr2mapx_half = y*pwr2mapx_half;
-						const int y_16            = y*16;
-						for (int x = 0; x < gs->hmapx; ++x) {
-							float m;
-							if (!loshandler->InLos(float3(x*16+8, 0, y_16+8), gu->myAllyTeam)) {
-								m = 0.25f;
-							} else {
-								const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
-								CFeature* f;
-
-								GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield
-
-								if (uh->TestUnitBuildSquare(BuildInfo(unitdef, float3(x*16+8, 0, y_16+8), guihandler->buildFacing), f, gu->myAllyTeam)) {
-									if (f) {
-										m = 0.5f;
-									} else {
-										m = 1.0f;
-									}
-								} else {
-									m = 0.0f;
-								}
-							}
-							m = (int) (m*255.0f);
-							const int a = (y_pwr2mapx_half + x) * 4 - offset;
-							infoTexMem[a + COLOR_R] = 255 - m;
-							infoTexMem[a + COLOR_G] = m;
-							infoTexMem[a + COLOR_B] = 0;
-							infoTexMem[a + COLOR_A] = 255;
-						}
-					}
-				} else {
-					const MoveData* md = NULL;
-					{
-						GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
-						if (!selectedUnits.selectedUnits.empty()) {
-							md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
-						}
-					}
-
-					if (md != NULL) {
-						// use the first selected unit, if it has the ability to move
-						const bool showBlockedMap = (gs->cheatEnabled || gu->spectating);
-						for (int y = starty; y < endy; ++y) {
-							const int y_pwr2mapx_half = y*pwr2mapx_half;
-							const int y_2             = y*2;
-							for (int x = 0; x < gs->hmapx; ++x) {
-								float m = md->moveMath->SpeedMod(*md, x*2, y_2);
-								if (showBlockedMap && (md->moveMath->IsBlocked2(*md, x*2+1, y_2+1) & (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN))) {
-									m = 0.0f;
-								}
-								m = std::min(1.0f, fastmath::apxsqrt(m));
-								m = (int) (m*255.0f);
-								const int a = (y_pwr2mapx_half + x) * 4 - offset;
-								infoTexMem[a + COLOR_R] = 255 - m;
-								infoTexMem[a + COLOR_G] = m;
-								infoTexMem[a + COLOR_B] = 0;
-								infoTexMem[a + COLOR_A] = 255;
-							}
-						}
-					} else {
-						// we have nothing to show
-						// -> draw a dark red overlay
-						for (int y = starty; y < endy; ++y) {
-							const int y_pwr2mapx_half = y*pwr2mapx_half;
-							for (int x = 0; x < gs->hmapx; ++x) {
-								const int a = (y_pwr2mapx_half + x) * 4 - offset;
-								infoTexMem[a + COLOR_R] = 100;
-								infoTexMem[a + COLOR_G] = 0;
-								infoTexMem[a + COLOR_B] = 0;
-								infoTexMem[a + COLOR_A] = 255;
-							}
-						}
-					}
-				}
+				pathDrawer->UpdateExtraTexture(drawPath, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
 				break;
 			}
 			case drawMetal: {
@@ -414,16 +325,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				break;
 			}
 			case drawHeat: {
-				for (int y = starty; y < endy; ++y) {
-					const int y_pwr2hmapx = y * pwr2mapx_half;
-					for (int x = 0; x  < gs->hmapx; ++x) {
-						const int i = (y_pwr2hmapx + x) * 4 - offset;
-						infoTexMem[i + COLOR_R] = (unsigned char)Clamp(8*pathManager->GetHeatOnSquare(x<<1, y<<1), 32, 255);
-						infoTexMem[i + COLOR_G] = 32;
-						infoTexMem[i + COLOR_B] = 32;
-						infoTexMem[i + COLOR_A] = 255;
-					}
-				}
+				pathDrawer->UpdateExtraTexture(drawHeat, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
 				break;
 			}
 			case drawHeight: {
@@ -507,11 +409,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			case drawNormal:
 				break;
 		} // switch (drawMode)
-
-#undef COLOR_R
-#undef COLOR_G
-#undef COLOR_B
-#undef COLOR_A
 
 		extraTexPBO.UnmapBuffer();
 		/*

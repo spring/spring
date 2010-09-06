@@ -2,7 +2,6 @@
 
 #include "StdAfx.h"
 
-#include "Sim/Path/PathManager.h"
 #include <stdlib.h>
 #include <algorithm>
 
@@ -11,11 +10,10 @@
 using namespace std;
 
 #include "LuaPathFinder.h"
-
 #include "LuaInclude.h"
-
 #include "LuaHandle.h"
 #include "LuaUtils.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 
 
