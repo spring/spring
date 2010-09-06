@@ -1,5 +1,15 @@
 Spring change log
 
+0.82.5.1:
+Engine / General:
+ - fix FPS/direct controlling crash
+
+Engine / multi-threaded:
+ - fix unit icons/healthbars crash
+
+Engine / AI:
+ - E323AI: NOTA and XTA support enhanced & lots of improvements
+
 0.82.5:
 Engine / General:
  - draw icons for cloaked units again
