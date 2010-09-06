@@ -679,11 +679,6 @@ void CMobileCAI::ExecuteStop(Command &c)
 */
 void CMobileCAI::ExecuteDGun(Command &c)
 {
-	if (uh->limitDgun && owner->unitDef->isCommander
-			&& owner->pos.SqDistance(teamHandler->Team(owner->team)->startPos) > Square(uh->dgunRadius)) {
-		StopMove();
-		return FinishCommand();
-	}
 	ExecuteAttack(c);
 }
 
