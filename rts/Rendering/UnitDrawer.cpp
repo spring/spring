@@ -1160,7 +1160,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 		}
 	}
 
-	if(!gu->spectatingFullView) {
+	if (!gu->spectatingFullView) {
 		for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui)
 			DrawCloakedUnit(*ui, modelType, true);
 	}
@@ -2116,13 +2116,13 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 			((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f)))
 			drawStat.insert(unit);
 #endif
-	} else if (losStatus & LOS_PREVLOS) {
+	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
 		if (gameSetup->ghostedBuildings && unit->mobility == NULL) {
 			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
 		}
 	}
 
-	if(unit->isIcon)
+	if (unit->isIcon)
 		drawIcon.insert(unit);
 }
 
@@ -2279,7 +2279,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if(u->model && TEX_TYPE(u) < 0)
+	if (u->model && TEX_TYPE(u) < 0)
 		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model->tex1, u->model->tex2);
 #endif
 
