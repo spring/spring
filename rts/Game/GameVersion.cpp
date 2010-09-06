@@ -17,7 +17,7 @@
 namespace SpringVersion
 {
 
-const char* const Major = "0.82";
+const char* const Major = "0.82+";
 const char* const Minor = "5";
 const char* const Patchset = "1";
 const char* const Additional = "" // Build-Bot will write in here before compiling
