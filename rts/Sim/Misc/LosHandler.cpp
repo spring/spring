@@ -18,8 +18,6 @@
 #include "creg/STL_Deque.h"
 #include "creg/STL_List.h"
 
-static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;
-
 using std::min;
 using std::max;
 
@@ -100,9 +98,8 @@ CLosHandler::CLosHandler() :
 
 CLosHandler::~CLosHandler()
 {
-	std::list<LosInstance*>::iterator li;
 	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
-		for (li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
+		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
 			LosInstance* i = *li;
 			i->_DestructInstance(i);
 			mempool.Free(i, sizeof(LosInstance));
@@ -116,18 +113,14 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 {
 	SCOPED_TIMER("LOS");
 
+	if (unit->losRadius <= 0 && unit->airLosRadius <= 0) {
+		return;
+	}
+
 	const float3& losPos = unit->pos;
 	const int allyteam = unit->allyteam;
 
 	unit->lastLosUpdate = gs->frameNum;
-
-	// FIXME:
-	//     if losRadius <= 0 but airLosRadius > 0, we
-	//     should still create a LosInstance for this
-	//     unit
-	if (unit->losRadius <= 0) {
-		return;
-	}
 
 	const int baseX = max(0, min(losSizeX - 1, int(losPos.x * invLosDiv)));
 	const int baseY = max(0, min(losSizeY - 1, int(losPos.z * invLosDiv)));
@@ -195,8 +188,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 	losAlgo.LosAdd(instance->basePos, instance->losSize, instance->baseHeight, instance->losSquares);
 
-	losMap[instance->allyteam].AddMapSquares(instance->losSquares, 1);
-	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, 1);
+	if (instance->losSize > 0) { losMap[instance->allyteam].AddMapSquares(instance->losSquares, 1); }
+	if (instance->airLosSize > 0) { airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, 1); }
 }
 
 
@@ -215,7 +208,7 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 			toBeDeleted.push_back(instance);
 		}
 
-		if (instance->hashNum >= (LOSHANDLER_MAGIC_PRIME + 1) || instance->hashNum < 0) {
+		if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
 			logOutput.Print("[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)", instance->hashNum);
 		}
 
@@ -223,7 +216,7 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 			LosInstance* i = toBeDeleted.front();
 			toBeDeleted.pop_front();
 
-			if (i->hashNum >= (LOSHANDLER_MAGIC_PRIME + 1) || i->hashNum < 0) {
+			if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
 				logOutput.Print("[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)", i->hashNum);
 				return;
 			}
@@ -251,6 +244,7 @@ int CLosHandler::GetHashNum(CUnit* unit)
 {
 	unsigned int t = unit->mapSquare * unit->losRadius + unit->allyteam;
 	t ^= *(unsigned int*) &unit->losHeight;
+	//! hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
 	return (t % LOSHANDLER_MAGIC_PRIME);
 }
 
@@ -266,8 +260,8 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 
 void CLosHandler::CleanupInstance(LosInstance* instance)
 {
-	losMap[instance->allyteam].AddMapSquares(instance->losSquares, -1);
-	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, -1);
+	if (instance->losSize > 0) { losMap[instance->allyteam].AddMapSquares(instance->losSquares, -1); }
+	if (instance->airLosSize > 0) { airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, -1); }
 }
 
 
