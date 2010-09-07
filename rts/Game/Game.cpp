@@ -3067,6 +3067,7 @@ bool CGame::DrawMT() {
 #else
 bool CGame::Draw() {
 #endif
+	GML_STDMUTEX_LOCK(draw); //Draw
 
 	//! timings and frame interpolation
 	const unsigned currentTime = SDL_GetTicks();
