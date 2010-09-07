@@ -2,10 +2,9 @@
 !macro createemptyfile _FILE_NAME
 	ClearErrors
 	FileOpen $0 ${_FILE_NAME} w
-	IfErrors createemptyfile_done
+	IfErrors +3
 		FileWrite $0 ""
 		FileClose $0
-	createemptyfile_done:
 !macroend
 
 !ifdef INSTALL
