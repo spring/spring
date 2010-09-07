@@ -93,7 +93,6 @@ public:
 	bool upright;
 	bool collide;
 
-	float controlRadius;
 	float losRadius;
 	float airLosRadius;
 	float losHeight;

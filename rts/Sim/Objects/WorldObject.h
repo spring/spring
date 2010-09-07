@@ -39,11 +39,11 @@ public:
 	int id;
 
 	float3 pos;
-	float radius;     ///< used for collisions
+	float radius;       ///< used for collisions
 	float sqRadius;
 
-	float drawRadius; ///< used to see if in los
-	bool useAirLos;
+	float drawRadius;   ///< used to see if in los
+	bool useAirLos;     ///< if true, object's visibility is checked against airLosMap[allyteam]
 	bool alwaysVisible;
 
 	S3DModel* model;

@@ -167,7 +167,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit(in
 EXPORT(int              ) skirmishAiCallback_UnitDef_getMoveType(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isUpright(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isCollide(int teamId, int unitDefId);
-EXPORT(float            ) skirmishAiCallback_UnitDef_getControlRadius(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getLosRadius(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getAirLosRadius(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getLosHeight(int teamId, int unitDefId);
