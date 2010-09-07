@@ -404,7 +404,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->turnInPlace = sAICallback->Clb_UnitDef_isTurnInPlace(teamId, unitDefId);
 		unitDef->upright = sAICallback->Clb_UnitDef_isUpright(teamId, unitDefId);
 		unitDef->collide = sAICallback->Clb_UnitDef_isCollide(teamId, unitDefId);
-		unitDef->controlRadius = sAICallback->Clb_UnitDef_getControlRadius(teamId, unitDefId);
 		unitDef->losRadius = sAICallback->Clb_UnitDef_getLosRadius(teamId, unitDefId);
 		unitDef->airLosRadius = sAICallback->Clb_UnitDef_getAirLosRadius(teamId, unitDefId);
 		unitDef->losHeight = sAICallback->Clb_UnitDef_getLosHeight(teamId, unitDefId);

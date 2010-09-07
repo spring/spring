@@ -721,7 +721,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("losHeight",     ud.losHeight);
 	ADD_FLOAT("losRadius",     ud.losRadius);
 	ADD_FLOAT("airLosRadius",  ud.airLosRadius);
-	ADD_FLOAT("controlRadius", ud.controlRadius);
 
 	ADD_INT("radarRadius",    ud.radarRadius);
 	ADD_INT("sonarRadius",    ud.sonarRadius);
