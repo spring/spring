@@ -294,7 +294,6 @@ public:
 
 	int mapSquare;
 
-	int controlRadius;
 	int losRadius;
 	int airLosRadius;
 	float losHeight;

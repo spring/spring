@@ -381,7 +381,6 @@ float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceDistance)(int teamId, int unitDef
 float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceSpeedLimit)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isUpright)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isCollide)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_getControlRadius)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getLosRadius)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getAirLosRadius)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getLosHeight)(int teamId, int unitDefId);

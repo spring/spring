@@ -75,16 +75,10 @@ public:
 	inline bool InLos(const CWorldObject* object, int allyTeam) {
 		if (object->alwaysVisible || gs->globalLOS) {
 			return true;
-		}
-		else if (object->useAirLos) {
-			const int gx = (int)(object->pos.x * invAirDiv);
-			const int gz = (int)(object->pos.z * invAirDiv);
-			return !!airLosMap[allyTeam].At(gx, gz);
-		}
-		else {
-			const int gx = (int)(object->pos.x * invLosDiv);
-			const int gz = (int)(object->pos.z * invLosDiv);
-			return !!losMap[allyTeam].At(gx, gz);
+		} else if (object->useAirLos) {
+			return (InAirLos(object->pos, allyTeam));
+		} else {
+			return (InLos(object->pos, allyTeam));
 		}
 	}
 
@@ -95,41 +89,30 @@ public:
 		//          (when the requireSonarUnderWater variable is enabled)
 		if (unit->alwaysVisible || gs->globalLOS) {
 			return true;
-		}
-		else if (unit->isCloaked) {
+		} else if (unit->isCloaked) {
 			return false;
-		}
-		else if (unit->useAirLos) {
-			const int gx = (int)(unit->pos.x * invAirDiv);
-			const int gz = (int)(unit->pos.z * invAirDiv);
-			return !!airLosMap[allyTeam].At(gx, gz);
-		}
-		else {
+		} else if (unit->useAirLos) {
+			return (InAirLos(unit->pos, allyTeam));
+		} else {
 			if (unit->isUnderWater && requireSonarUnderWater &&
 			    !radarhandler->InRadar(unit, allyTeam)) {
 				return false;
 			}
-			const int gx = (int)(unit->pos.x * invLosDiv);
-			const int gz = (int)(unit->pos.z * invLosDiv);
-			return !!losMap[allyTeam].At(gx, gz);
+			return (InLos(unit->pos, allyTeam));
 		}
 	}
 
-	inline bool InLos(float3 pos, int allyTeam) {
-		if (gs->globalLOS) {
-			return true;
-		}
-		const int gx = (int)(pos.x * invLosDiv);
-		const int gz = (int)(pos.z * invLosDiv);
+	inline bool InLos(const float3& pos, int allyTeam) {
+		if (gs->globalLOS) { return true; }
+		const int gx = int(pos.x * invLosDiv);
+		const int gz = int(pos.z * invLosDiv);
 		return !!losMap[allyTeam].At(gx, gz);
 	}
 
-	inline bool InAirLos(float3 pos, int allyTeam) {
-		if (gs->globalLOS) {
-			return true;
-		}
-		const int gx = (int)(pos.x * invAirDiv);
-		const int gz = (int)(pos.z * invAirDiv);
+	inline bool InAirLos(const float3& pos, int allyTeam) {
+		if (gs->globalLOS) { return true; }
+		const int gx = int(pos.x * invAirDiv);
+		const int gz = int(pos.z * invAirDiv);
 		return !!airLosMap[allyTeam].At(gx, gz);
 	}
 
