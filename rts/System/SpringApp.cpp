@@ -1001,11 +1001,14 @@ int SpringApp::Sim()
 			gmlProcessor->ExpandAuxQueue();
 
 			{
-				GML_RECMUTEX_LOCK(sim); // Sim
+				GML_MSTMUTEX_LOCK(sim); // Sim
 
-				if (!activeController->Update()) {
+				bool ret = activeController->Update();
+
+				GML_MSTMUTEX_UNLOCK(sim); // Sim
+
+				if(!ret)
 					return 0;
-				}
 			}
 
 			gmlProcessor->GetQueue();
@@ -1036,17 +1039,21 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 			if (gmlMultiThreadSim) {
 				if (!gs->frameNum) {
-					GML_RECMUTEX_LOCK(sim); // Update
+					GML_MSTMUTEX_LOCK(sim); // Update
 
 					activeController->Update();
 					if (gs->frameNum) {
 						gmlStartSim = 1;
 					}
+
+					GML_MSTMUTEX_UNLOCK(sim); // Update
 				}
 			} else {
-				GML_RECMUTEX_LOCK(sim); // Update
+				GML_MSTMUTEX_LOCK(sim); // Update
 
 				activeController->Update();
+
+				GML_MSTMUTEX_UNLOCK(sim); // Update
 			}
 #else
 		if (!activeController->Update()) {
@@ -1237,7 +1244,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 	switch (event.type) {
 		case SDL_VIDEORESIZE: {
 
-			GML_RECMUTEX_LOCK(sim); // Run
+			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
 			CrashHandler::ClearDrawWDT(true);
 			screenWidth = event.resize.w;
@@ -1249,11 +1256,14 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 #endif
 			InitOpenGL();
 			activeController->ResizeEvent();
+
+			GML_MSTMUTEX_UNLOCK(sim); // MainEventHandler
+
 			break;
 		}
 		case SDL_VIDEOEXPOSE: {
 
-			GML_RECMUTEX_LOCK(sim); // Run
+			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
 			CrashHandler::ClearDrawWDT(true);
 			// re-initialize the stencil
@@ -1261,6 +1271,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			SetupViewportGeometry();
+
+			GML_MSTMUTEX_UNLOCK(sim); // MainEventHandler
+
 			break;
 		}
 		case SDL_QUIT: {

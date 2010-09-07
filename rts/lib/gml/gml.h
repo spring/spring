@@ -187,6 +187,7 @@ extern boost::mutex rprojmutex;
 extern boost::mutex rflashmutex;
 extern boost::mutex rpiecemutex;
 extern boost::mutex rfeatmutex;
+extern boost::mutex drawmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -200,8 +201,9 @@ extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
 extern boost::recursive_mutex &groupmutex;
 extern boost::recursive_mutex &grpselmutex;
-extern boost::recursive_mutex simmutex;
 extern boost::recursive_mutex laycmdmutex;
+
+extern gmlMutex simmutex;
 
 #if GML_MUTEX_PROFILER
 #	include "System/TimeProfiler.h"
@@ -235,6 +237,8 @@ extern boost::recursive_mutex laycmdmutex;
 #	define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
 #	define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)
 #endif
+#define GML_MSTMUTEX_LOCK(name) name##mutex.Lock()
+#define GML_MSTMUTEX_UNLOCK(name) name##mutex.Unlock()
 #define GML_STDMUTEX_LOCK_NOPROF(name) boost::mutex::scoped_lock name##lock(name##mutex)
 
 extern int gmlNextTickUpdate;
@@ -276,6 +280,8 @@ inline unsigned gmlGetTicks() {
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
+#define GML_MSTMUTEX_LOCK(name)
+#define GML_MSTMUTEX_UNLOCK(name)
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
@@ -294,6 +300,8 @@ inline unsigned gmlGetTicks() {
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
+#define GML_MSTMUTEX_LOCK(name)
+#define GML_MSTMUTEX_UNLOCK(name)
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
