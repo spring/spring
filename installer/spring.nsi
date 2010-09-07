@@ -254,6 +254,14 @@ Section "Start menu shortcuts" SEC_START
 SectionEnd
 
 
+Section /o "Portable" SEC_PORTABLE
+	!define INSTALL
+		${!echonow} "Processing: Portable"
+		!include "sections\portable.nsh"
+	!undef INSTALL
+SectionEnd
+
+
 !macro SkirmishAIInstSection skirAiName
 	Section "${skirAiName}" SEC_${skirAiName}
 		!define INSTALL
@@ -317,6 +325,7 @@ Section Uninstall
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\archivemover.nsh"
+	!include "sections\portable.nsh"
 	!include "sections\springDownloader.nsh"
 	!include "sections\tasServer.nsh"
 	!insertmacro DeleteSkirmishAI "AAI"
