@@ -136,6 +136,8 @@ public:
 	const bool requireSonarUnderWater;
 
 private:
+	static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;
+
 	void PostLoad();
 	void LosAdd(LosInstance* instance);
 	int GetHashNum(CUnit* unit);
@@ -144,7 +146,7 @@ private:
 
 	CLosAlgorithm losAlgo;
 
-	std::list<LosInstance*> instanceHash[2309+1];
+	std::list<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
 
 	std::deque<LosInstance*> toBeDeleted;
 
