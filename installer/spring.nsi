@@ -81,6 +81,7 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include "include\echo.nsh"
 !include "include\fileassoc.nsh"
 !include "include\fileExistChecks.nsh"
+!include "include\fileMisc.nsh"
 !include "include\checkrunning.nsh"
 
 !include "sections\ensureDotNet.nsh"
