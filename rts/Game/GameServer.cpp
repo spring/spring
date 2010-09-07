@@ -120,6 +120,8 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	serverframenum=0;
 	timeLeft=0;
 	modGameTime = 0.0f;
+	gameTime = 0.0f;
+	startTime = 0.0f;
 	quitServer=false;
 	hasLocalClient = false;
 	localClientNumber = 0;
@@ -132,7 +134,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	cheating = false;
 	sentGameOverMsg = false;
 
-	gameStartTime = spring_notime;
+	gameHasStarted = false;
 	gameEndTime = spring_notime;
 	readyTime = spring_notime;
 
@@ -209,7 +211,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	demoRecorder->SetName(setup->mapName, setup->modName);
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
-	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
+	demoRecorder->SaveToDemo(ret->data, ret->length, GetDemoTime());
 	delete ret;
 #endif
 	// AIs do not join in here, so just set their teams as active
@@ -320,6 +322,7 @@ void CGameServer::SkipTo(int targetframe)
 				toSkipSecs = (1.0f / (GAME_SPEED * 2)); // 1 frame
 			}
 			// skip time
+			gameTime += toSkipSecs;
 			modGameTime += toSkipSecs;
 
 			SendDemoData(true);
@@ -409,6 +412,7 @@ void CGameServer::SendDemoData(const bool skipping)
 			case NETMSG_DC_UPDATE:
 			case NETMSG_DIRECT_CONTROL:
 			case NETMSG_PATH_CHECKSUM:
+			case NETMSG_PAUSE: /* this is a synced message and must not be excluded */
 			case NETMSG_PLAYERINFO:
 			case NETMSG_PLAYERLEFT:
 			case NETMSG_PLAYERSTAT:
@@ -451,6 +455,7 @@ void CGameServer::SendDemoData(const bool skipping)
 				}
 			case NETMSG_CREATE_NEWPLAYER:
 				{
+					buf->data[3] = players.size();
 					try {
 						netcode::UnpackPacket pckt(boost::shared_ptr<const RawPacket>(buf), 3);
 						unsigned char spectator, team, playerNum;
@@ -459,7 +464,6 @@ void CGameServer::SendDemoData(const bool skipping)
 						pckt >> spectator;
 						pckt >> team;
 						pckt >> name;
-						buf->data[3] = players.size();
 						AddAdditionalUser(name, "", true); // even though this is a demo, keep the players vector properly updated
 					} catch (netcode::UnpackPacketException &e) {
 						logOutput.Print("Warning: Invalid new player in demo msg: %s", e.err.c_str());
@@ -472,7 +476,6 @@ void CGameServer::SendDemoData(const bool skipping)
 			case NETMSG_SETPLAYERNUM:
 			case NETMSG_USER_SPEED:
 			case NETMSG_INTERNAL_SPEED:
-			case NETMSG_PAUSE: 
 				{
 					// dont send these from demo
 					break;
@@ -498,13 +501,13 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 	{
 		players[p].SendData(packet);
 	}
-	if (canReconnect || allowAdditionalPlayers || !spring_istime(gameStartTime))
+	if (canReconnect || allowAdditionalPlayers || !gameHasStarted)
 	{
 		AddToPacketCache(packet);
 	}
 #ifdef DEDICATED
 	if (demoRecorder) {
-		demoRecorder->SaveToDemo(packet->data, packet->length, modGameTime);
+		demoRecorder->SaveToDemo(packet->data, packet->length, GetDemoTime());
 	}
 #endif
 }
@@ -641,7 +644,10 @@ void CGameServer::CheckSync()
 				//serverNet->SendPause(SERVER_PLAYER, true);
 #ifdef SYNCDEBUG
 				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverframenum);
-				Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+				if(demoReader) // pause is a synced message, thus demo spectators may not pause for real
+					Message(str(format("%s paused the demo") %players[gu->myPlayerNum].name));
+				else
+					Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 				isPaused = true;
 				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
 #endif
@@ -682,12 +688,18 @@ void CGameServer::CheckSync()
 #endif
 }
 
+float CGameServer::GetDemoTime() {
+	return !gameHasStarted ? gameTime : startTime + (float)serverframenum / (float)GAME_SPEED;
+}
+
 void CGameServer::Update()
 {
-	if (!isPaused && spring_istime(gameStartTime))
+	float tdif = float(spring_tomsecs(spring_gettime() - lastUpdate)) * 0.001f;
+	gameTime += tdif;
+	if (!isPaused && gameHasStarted)
 	{
 		if(!demoReader || !hasLocalClient || (serverframenum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
-			modGameTime += float(spring_tomsecs(spring_gettime() - lastUpdate)) * 0.001f * internalSpeed;
+			modGameTime += tdif * internalSpeed;
 	}
 	lastUpdate = spring_gettime();
 
@@ -765,7 +777,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (!spring_istime(gameStartTime))
+	if (!gameHasStarted)
 	{
 		CheckForGameStart();
 	}
@@ -798,7 +810,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (spring_gettime() > serverStartTime + spring_secs(gc->initialNetworkTimeout) || spring_istime(gameStartTime))
+	if (spring_gettime() > serverStartTime + spring_secs(gc->initialNetworkTimeout) || gameHasStarted)
 	{
 		bool hasPlayers = false;
 		for (size_t i = 0; i < players.size(); ++i)
@@ -899,10 +911,13 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					else
 					{
 						timeLeft=0;
-						if (isPaused != !!inbuf[2]) {
+						if ((isPaused != !!inbuf[2]) || demoReader) {
 							isPaused = !isPaused;
 						}
-						Broadcast(CBaseNetProtocol::Get().SendPause(a, inbuf[2]));
+						if(demoReader) // pause is a synced message, thus demo spectators may not pause for real
+							Message(str(format("%s %s the demo") %players[a].name %(isPaused ? "paused" : "unpaused")));
+						else
+							Broadcast(CBaseNetProtocol::Get().SendPause(a, inbuf[2]));
 					}
 				}
 			}
@@ -1235,7 +1250,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_STARTPLAYING:
 		{
-			if (players[a].isLocal && spring_istime(gameStartTime))
+			if (players[a].isLocal && gameHasStarted)
 				CheckForGameStart(true);
 			break;
 		}
@@ -1635,6 +1650,10 @@ void CGameServer::ServerReadNet()
 				netcode::UnpackPacket msg(packet, 3);
 				std::string name, passwd, version;
 				unsigned char reconnect;
+				unsigned short netversion;
+				msg >> netversion;
+				if(netversion != NETWORK_VERSION)
+					throw netcode::UnpackPacketException("Wrong network version");
 				msg >> name;
 				msg >> passwd;
 				msg >> version;
@@ -1661,7 +1680,7 @@ void CGameServer::ServerReadNet()
 	{
 		if (!players[a].link)
 			continue; // player not connected
-		if (players[a].link->CheckTimeout(0, !GameHasStarted()))
+		if (players[a].link->CheckTimeout(0, !gameHasStarted))
 		{
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" timeout")); //this must happen BEFORE the reset!
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 0));
@@ -1715,7 +1734,7 @@ void CGameServer::GenerateAndSendGameID()
 
 void CGameServer::CheckForGameStart(bool forced)
 {
-	assert(!spring_istime(gameStartTime));
+	assert(!gameHasStarted);
 	bool allReady = true;
 
 	for (size_t a = static_cast<size_t>(setup->numDemoPlayers); a < players.size(); a++)
@@ -1752,7 +1771,8 @@ void CGameServer::CheckForGameStart(bool forced)
 
 void CGameServer::StartGame()
 {
-	gameStartTime = spring_gettime();
+	gameHasStarted = true;
+	startTime = gameTime;
 	if (!canReconnect && !allowAdditionalPlayers)
 		packetCache.clear(); // free memory
 
@@ -1869,7 +1889,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "forcestart")
 	{
-		if (!spring_istime(gameStartTime))
+		if (!gameHasStarted)
 			CheckForGameStart(true);
 	}
 	else if (action.command == "skip")
@@ -2154,11 +2174,6 @@ bool CGameServer::WaitsOnCon() const
 	return (UDPNet && UDPNet->Listen());
 }
 
-bool CGameServer::GameHasStarted() const
-{
-	return (spring_istime(gameStartTime));
-}
-
 void CGameServer::KickPlayer(const int playerNum)
 {
 	if (players[playerNum].link) // only kick connected players
@@ -2213,14 +2228,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		if (name == players[i].name) {
 			if(!players[i].isFromDemo) {
 				if (!players[i].link) {
-					if(canReconnect || !GameHasStarted())
+					if(canReconnect || !gameHasStarted)
 						newPlayerNumber = i;
 					else
 						errmsg = "Game has already started";
 					break;
 				}
 				else {
-					bool reconnectAllowed = canReconnect && GameHasStarted() && players[i].link->CheckTimeout(-1);
+					bool reconnectAllowed = canReconnect && gameHasStarted && players[i].link->CheckTimeout(-1);
 					if(!reconnect && reconnectAllowed) {
 						newPlayerNumber = i;
 						terminate = true;
@@ -2282,12 +2297,12 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		link->SendData(CBaseNetProtocol::Get().SendCreateNewPlayer( newPlayerNumber, newPlayer.spectator, newPlayer.team, newPlayer.name )); // inform the player about himself if it's a midgame join
 	}
 
-	newPlayer.isReconn = GameHasStarted();
+	newPlayer.isReconn = gameHasStarted;
 
 	if(newPlayer.link) {
 		newPlayer.link->ReconnectTo(*link);
 		Message(str(format(" -> Connection reestablished (id %i)") %newPlayerNumber));
-		link->Flush(!GameHasStarted());
+		link->Flush(!gameHasStarted);
 		return newPlayerNumber;
 	}
 
@@ -2314,7 +2329,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	Message(str(format(" -> Connection established (given id %i)") %newPlayerNumber));
 
-	link->Flush(!GameHasStarted());
+	link->Flush(!gameHasStarted);
 	return newPlayerNumber;
 }
 

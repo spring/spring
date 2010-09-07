@@ -208,7 +208,7 @@ void CPreGame::UpdateClientNet()
 	}
 
 	boost::shared_ptr<const RawPacket> packet;
-	while ((packet = net->GetData()))
+	while ((packet = net->GetData(gs->frameNum)))
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
@@ -235,6 +235,10 @@ void CPreGame::UpdateClientNet()
 					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
+
+					if(team >= teamHandler->ActiveTeams())
+						throw netcode::UnpackPacketException("Invalid team");
+
 					CPlayer player;
 					player.name = name;
 					player.spectator = spectator;
@@ -406,6 +410,18 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		CPlayer::UpdateControlledTeams();
 	} else {
 		throw content_error("Server sent us incorrect script");
+	}
+
+	// some sanity checks
+	for(int p = 0; p < playerHandler->ActivePlayers(); ++p) {
+		CPlayer *player = playerHandler->Player(p);
+		if(player->playerNum >= playerHandler->ActivePlayers() || player->playerNum < 0)
+			throw content_error("Invalid player in game data");
+		if(player->team >= teamHandler->ActiveTeams() || player->team < 0)
+			throw content_error("Invalid team in game data");
+		int allyteam = teamHandler->AllyTeam(player->team);
+		if(allyteam >= teamHandler->ActiveAllyTeams() || allyteam < 0)
+			throw content_error("Invalid ally team in game data");
 	}
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);

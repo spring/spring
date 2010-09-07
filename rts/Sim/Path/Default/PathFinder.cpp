@@ -7,6 +7,7 @@
 
 #include "mmgr.h"
 #include "PathFinder.h"
+#include "PathFinderDef.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"

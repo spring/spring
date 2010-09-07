@@ -94,9 +94,6 @@ public:
 	int lastDamageWarning;
 	int lastCmdDamageWarning;
 
-	bool limitDgun;
-	float dgunRadius;
-
 	bool morphUnitToFeature;
 
 private:

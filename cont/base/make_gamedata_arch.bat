@@ -160,28 +160,32 @@ rem to unix style, if it is a text file.
 rem make sure the destination exists
 if not exist "%BUILD_DIR%\spring" mkdir "%BUILD_DIR%\spring"
 
-echo Updating bitmaps.sdz
-if exist "%BUILD_DIR%\spring\bitmaps.sdz" del "%BUILD_DIR%\spring\bitmaps.sdz"
+echo Creating bitmaps.sdz
+set ARCHIVE_FILE=%BUILD_DIR%\spring\bitmaps.sdz
 cd bitmaps
-%CMD_7Z% %BUILD_DIR%\spring\bitmaps.sdz * > NUL
+if exist "%ARCHIVE_FILE%" del "%ARCHIVE_FILE%"
+%CMD_7Z% %ARCHIVE_FILE% * > NUL
 cd ..
 
-echo Updating springcontent.sdz
-if exist "%BUILD_DIR%\springcontent.sdz" del "%BUILD_DIR%\springcontent.sdz"
+echo Creating springcontent.sdz
+set ARCHIVE_FILE=%BUILD_DIR%\springcontent.sdz
 cd springcontent
-%CMD_7Z% %BUILD_DIR%\springcontent.sdz * > NUL
+if exist "%ARCHIVE_FILE%" del "%ARCHIVE_FILE%"
+%CMD_7Z% %ARCHIVE_FILE% * > NUL
 cd ..
 
-echo Updating maphelper.sdz
-if exist "%BUILD_DIR%\maphelper.sdz" del "%BUILD_DIR%\maphelper.sdz"
+echo Creating maphelper.sdz
+set ARCHIVE_FILE=%BUILD_DIR%\maphelper.sdz
 cd maphelper
-%CMD_7Z% %BUILD_DIR%\maphelper.sdz * > NUL
+if exist "%ARCHIVE_FILE%" del "%ARCHIVE_FILE%"
+%CMD_7Z% %ARCHIVE_FILE% * > NUL
 cd ..
 
-echo Updating cursors.sdz
-if exist "%BUILD_DIR%\cursors.sdz" del "%BUILD_DIR%\cursors.sdz"
+echo Creating cursors.sdz
+set ARCHIVE_FILE=%BUILD_DIR%\cursors.sdz
 cd cursors
-%CMD_7Z% %BUILD_DIR%\cursors.sdz * > NUL
+if exist "%ARCHIVE_FILE%" del "%ARCHIVE_FILE%"
+%CMD_7Z% %ARCHIVE_FILE% * > NUL
 cd ..
 
 if not "%USE_TMP_DIR%" == "TRUE" goto theEnd

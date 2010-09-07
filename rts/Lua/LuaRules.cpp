@@ -761,8 +761,9 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
  * called after every damage modification (even HitByWeaponId)
  * but before the damage is applied
  *
- * expects a number returned by lua code; it is stored under *newDamage if
- * newDamage != NULL.
+ * expects two numbers returned by lua code:
+ * 1st is stored under *newDamage if newDamage != NULL
+ * 2nd is stored under *impulseMult if impulseMult != NULL
  */
 bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
                              float damage, int weaponID, bool paralyzer,
@@ -808,14 +809,14 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
-		logOutput.Print("%s(): 1st value returned should be a number\n", cmdStr.GetString().c_str());
+		logOutput.Print("%s(): 1st value returned should be a number (newDamage)\n", cmdStr.GetString().c_str());
 	}
 
 	if (impulseMult && lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
-		logOutput.Print("%s(): 2nd value returned should be a number\n", cmdStr.GetString().c_str());
+		logOutput.Print("%s(): 2nd value returned should be a number (impulseMult)\n", cmdStr.GetString().c_str());
 	}
 
 	lua_pop(L, 2);
@@ -932,10 +933,10 @@ bool CLuaRules::AllowWeaponTarget(
 
 	RunCallInTraceback(cmdStr, 4, 2, errfunc);
 
-	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2));
 
-	if (targetPriority && lua_isnumber(L, -2)) {
-		*targetPriority = lua_tonumber(L, -2);
+	if (targetPriority && lua_isnumber(L, -1)) {
+		*targetPriority = lua_tonumber(L, -1);
 	}
 
 	lua_pop(L, 2);

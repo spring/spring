@@ -10,9 +10,11 @@
 #include "GlobalUnsynced.h"
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "System/mmgr.h"
 #include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/creg/creg_cond.h"
 
@@ -34,6 +36,7 @@ CR_BIND(CGlobalUnsynced, );
 CR_REG_METADATA(CGlobalUnsynced, (
 				CR_MEMBER(modGameTime),
 				CR_MEMBER(gameTime),
+				CR_MEMBER(startTime),
 				CR_MEMBER(myPlayerNum),
 				CR_MEMBER(myTeam),
 				CR_MEMBER(myAllyTeam),
@@ -55,6 +58,7 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 	modGameTime = 0;
 	gameTime = 0;
+	startTime = 0;
 
 	myPlayerNum = 0;
 	myTeam = 1;
@@ -129,14 +133,13 @@ void CGlobalUnsynced::SetMyPlayer(const int mynumber)
 	myPlayerNum = mynumber;
 	CPlayer* Player = playerHandler->Player(myPlayerNum);
 	myTeam = Player->team;
-	myAllyTeam = gameSetup->teamStartingData[myTeam].teamAllyteam;
+	if(myTeam >= teamHandler->ActiveTeams() || myTeam < 0)
+		throw content_error("Invalid MyTeam in player setup");
+	myAllyTeam = teamHandler->AllyTeam(myTeam);
+	if(myAllyTeam >= teamHandler->ActiveAllyTeams() || myAllyTeam < 0)
+		throw content_error("Invalid MyAllyTeam in player setup");
 
 	spectating = Player->spectator;
 	spectatingFullView   = Player->spectator;
 	spectatingFullSelect = Player->spectator;
-
-	assert(myPlayerNum >= 0
-		&& playerHandler->ActivePlayers() >= static_cast<size_t>(myPlayerNum)
-		&& myTeam >= 0
-		&& gameSetup->teamStartingData.size() >= myTeam);
 }
