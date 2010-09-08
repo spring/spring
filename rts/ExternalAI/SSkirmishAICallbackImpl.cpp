@@ -561,13 +561,15 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				cCmdData->rayLen,
 				cCmdData->srcUID,
 				cCmdData->hitUID,
-				cCmdData->flags
+				cCmdData->flags,
+				cCmdData->hitFID,
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCTraceRayId, &cppCmdData);
 
 			cCmdData->rayLen = cppCmdData.rayLen;
 			cCmdData->hitUID = cppCmdData.hitUID;
+			cCmdData->hitFID = cppCmdData.hitFID;
 		} break;
 
 		case COMMAND_PAUSE: {
