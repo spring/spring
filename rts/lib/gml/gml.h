@@ -237,10 +237,16 @@ extern gmlMutex simmutex;
 #	define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
 #	define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)
 #endif
-#define GML_MSTMUTEX_LOCK(name) name##mutex.Lock()
-#define GML_MSTMUTEX_UNLOCK(name) name##mutex.Unlock()
+class gmlMutexLock {
+	gmlMutex &mtx;
+public:
+	gmlMutexLock(gmlMutex &m) : mtx(m) { mtx.Lock(); }
+	virtual ~gmlMutexLock() { mtx.Unlock(); }
+};
+#define GML_MSTMUTEX_LOCK(name) gmlMutexLock name##mutexlock(name##mutex)
+#define GML_MSTMUTEX_DOLOCK(name) name##mutex.Lock()
+#define GML_MSTMUTEX_DOUNLOCK(name) name##mutex.Unlock()
 #define GML_STDMUTEX_LOCK_NOPROF(name) boost::mutex::scoped_lock name##lock(name##mutex)
-
 extern int gmlNextTickUpdate;
 extern unsigned gmlCurrentTicks;
 
@@ -281,7 +287,8 @@ inline unsigned gmlGetTicks() {
 #define GML_RECMUTEX_LOCK(name)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
 #define GML_MSTMUTEX_LOCK(name)
-#define GML_MSTMUTEX_UNLOCK(name)
+#define GML_MSTMUTEX_DOLOCK(name)
+#define GML_MSTMUTEX_DOUNLOCK(name)
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
@@ -301,7 +308,8 @@ inline unsigned gmlGetTicks() {
 #define GML_RECMUTEX_LOCK(name)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
 #define GML_MSTMUTEX_LOCK(name)
-#define GML_MSTMUTEX_UNLOCK(name)
+#define GML_MSTMUTEX_DOLOCK(name)
+#define GML_MSTMUTEX_DOUNLOCK(name)
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
