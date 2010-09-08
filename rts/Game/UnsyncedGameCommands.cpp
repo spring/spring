@@ -1,102 +1,53 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 
-#include <stdlib.h>
-#include <time.h>
-#include <cctype>
-#include <locale>
-#include <sstream>
-
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
-
-#include <SDL_keyboard.h>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
 #include <SDL_events.h>
 
-#include "mmgr.h"
-
 #include "Game.h"
-#include "Camera.h"
 #include "CameraHandler.h"
-#include "ClientSetup.h"
 #include "ConsoleHistory.h"
-#include "GameHelper.h"
 #include "GameServer.h"
-#include "GameVersion.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
-#include "LoadScreen.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
-#include "ChatMessage.h"
 #include "TimeProfiler.h"
-#include "WaitCommandsAI.h"
-#include "WordCompletion.h"
-#include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
-#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Map/Ground.h"
-#include "Map/HeightMapTexture.h"
-#include "Map/MapDamage.h"
-#include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
-#include "Rendering/Env/CubeMapHandler.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/GlobalRendering.h"
-#include "Rendering/FeatureDrawer.h"
-#include "Rendering/ProjectileDrawer.hpp"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
-#include "Rendering/IPathDrawer.h"
-#include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/TeamHighlight.h"
 #include "Rendering/VerticalSync.h"
-#include "Rendering/Models/ModelDrawer.hpp"
-#include "Rendering/Models/IModelParser.h"
-#include "Rendering/Textures/ColorMap.h"
-#include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "UI/CommandColors.h"
-#include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
-#include "UI/GameSetupDrawer.h"
 #include "UI/GuiHandler.h"
 #include "UI/InfoConsole.h"
 #include "UI/KeyBindings.h"
-#include "UI/KeyCodes.h"
 #include "UI/LuaUI.h"
 #include "UI/MiniMap.h"
-#include "UI/MouseHandler.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
 #include "UI/SelectionKeyHandler.h"
@@ -105,22 +56,12 @@
 #include "UI/ProfileDrawer.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/Exceptions.h"
-#include "System/FPUCheck.h"
-#include "System/myMath.h"
 #include "System/NetProtocol.h"
-#include "System/Util.h"
 #include "System/SpringApp.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/LoadSave/LoadSaveHandler.h"
-#include "System/LoadSave/DemoRecorder.h"
-#include "System/Platform/CrashHandler.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/IEffectChannel.h"
 #include "System/Sound/IMusicChannel.h"
-
-#include <boost/cstdint.hpp>
-
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 
