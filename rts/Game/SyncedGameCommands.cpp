@@ -1,59 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 
 #include <stdlib.h>
-#include <time.h>
-#include <cctype>
-#include <locale>
-#include <sstream>
-
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
-
-#include <SDL_keyboard.h>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
-#include <SDL_events.h>
 
 #include "mmgr.h"
 
 #include "Game.h"
-#include "Camera.h"
-#include "CameraHandler.h"
-#include "ClientSetup.h"
-#include "ConsoleHistory.h"
-#include "GameHelper.h"
-#include "GameServer.h"
-#include "GameVersion.h"
 #include "CommandMessage.h"
-#include "GameSetup.h"
-#include "LoadScreen.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
-#include "PlayerRoster.h"
-#include "ChatMessage.h"
-#include "TimeProfiler.h"
-#include "WaitCommandsAI.h"
 #include "WordCompletion.h"
-#include "OSCStatsSender.h"
-#include "IVideoCapturing.h"
-#include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
-#include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/IAILibraryManager.h"
-#include "ExternalAI/SkirmishAIHandler.h"
-#include "Map/BaseGroundDrawer.h"
-#include "Map/Ground.h"
-#include "Map/HeightMapTexture.h"
-#include "Map/MapDamage.h"
-#include "Map/MapInfo.h"
-#include "Map/MetalMap.h"
-#include "Map/ReadMap.h"
 #include "Rendering/InMapDraw.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
@@ -65,79 +25,18 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Misc/GeometricObjects.h"
-#include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/ModInfo.h"
-#include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
-#include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/Wind.h"
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Path/IPathManager.h"
-#include "Sim/Projectiles/Projectile.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/COB/CobEngine.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sim/Units/COB/UnitScriptEngine.h"
-#include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
-#include "Sim/MoveTypes/MoveType.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "UI/CommandColors.h"
-#include "UI/CursorIcons.h"
-#include "UI/EndGameBox.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitLoader.h"
 #include "UI/GameInfo.h"
-#include "UI/GameSetupDrawer.h"
-#include "UI/GuiHandler.h"
-#include "UI/InfoConsole.h"
-#include "UI/KeyBindings.h"
-#include "UI/KeyCodes.h"
 #include "UI/LuaUI.h"
-#include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
-#include "UI/QuitBox.h"
-#include "UI/ResourceBar.h"
-#include "UI/SelectionKeyHandler.h"
-#include "UI/ShareBox.h"
-#include "UI/TooltipConsole.h"
-#include "UI/ProfileDrawer.h"
-#include "System/ConfigHandler.h"
-#include "System/EventHandler.h"
-#include "System/Exceptions.h"
 #include "System/FPUCheck.h"
-#include "System/myMath.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
 #include "System/SpringApp.h"
-#include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/LoadSave/LoadSaveHandler.h"
-#include "System/LoadSave/DemoRecorder.h"
-#include "System/Net/RawPacket.h"
-#include "System/Net/PackPacket.h"
-#include "System/Net/UnpackPacket.h"
-#include "System/Platform/CrashHandler.h"
-#include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
-#include "System/Sound/IMusicChannel.h"
-#include "System/Sync/SyncedPrimitiveIO.h"
-#include "System/Sync/SyncTracer.h"
-
-#include <boost/cstdint.hpp>
-
 
 void SetBoolArg(bool& value, const std::string& str)
 {
