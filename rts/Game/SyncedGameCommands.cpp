@@ -2,40 +2,25 @@
 
 #include "StdAfx.h"
 
-#include <stdlib.h>
-
-#include "mmgr.h"
-
 #include "Game.h"
 #include "CommandMessage.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
-#include "WordCompletion.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
+
 #include "Rendering/InMapDraw.h"
-#include "Lua/LuaInputReceiver.h"
-#include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
-#include "Lua/LuaOpenGL.h"
-#include "Lua/LuaParser.h"
-#include "Lua/LuaSyncedRead.h"
-#include "Sim/Misc/CategoryHandler.h"
-#include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "UI/GameInfo.h"
 #include "UI/LuaUI.h"
 #include "UI/MouseHandler.h"
 #include "System/FPUCheck.h"
-#include "System/NetProtocol.h"
-#include "System/Util.h"
-#include "System/SpringApp.h"
 #include "System/FileSystem/SimpleParser.h"
 
 void SetBoolArg(bool& value, const std::string& str)
