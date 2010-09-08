@@ -12,12 +12,6 @@
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 
-#include <SDL_keyboard.h>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
-#include <SDL_events.h>
-
 #include "mmgr.h"
 
 #include "Game.h"
@@ -48,13 +42,7 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/InMapDraw.h"
-#include "Lua/LuaInputReceiver.h"
-#include "Lua/LuaHandle.h"
-#include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
-#include "Lua/LuaOpenGL.h"
-#include "Lua/LuaParser.h"
-#include "Lua/LuaSyncedRead.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -69,19 +57,6 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/IPathManager.h"
-#include "Sim/Projectiles/Projectile.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/COB/CobEngine.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sim/Units/COB/UnitScriptEngine.h"
-#include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/Weapon.h"
@@ -97,11 +72,6 @@
 #include "System/NetProtocol.h"
 #include "System/Util.h"
 #include "System/SpringApp.h"
-#include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/FileSystem/SimpleParser.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/RawPacket.h"
@@ -109,8 +79,6 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
-#include "System/Sound/IMusicChannel.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Sync/SyncTracer.h"
 
