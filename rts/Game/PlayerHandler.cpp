@@ -90,7 +90,7 @@ void CPlayerHandler::GameFrame(int frameNum)
 
 void CPlayerHandler::AddPlayer( const CPlayer& player )
 {
-	GML_MSTMUTEX_UNLOCK(sim); // AddPlayer - temporarily unlock this mutex to prevent a deadlock
+	GML_MSTMUTEX_DOUNLOCK(sim); // AddPlayer - temporarily unlock this mutex to prevent a deadlock
 
 	int oldSize = players.size();
 	int newSize = std::max( (int)players.size(), player.playerNum + 1 );
@@ -114,5 +114,5 @@ void CPlayerHandler::AddPlayer( const CPlayer& player )
 		newplayer->myControl.myController = newplayer;
 	}
 
-	GML_MSTMUTEX_LOCK(sim); // AddPlayer - restore unlocked mutex
+	GML_MSTMUTEX_DOLOCK(sim); // AddPlayer - restore unlocked mutex
 }

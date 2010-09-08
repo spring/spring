@@ -1005,11 +1005,7 @@ int SpringApp::Sim()
 			{
 				GML_MSTMUTEX_LOCK(sim); // Sim
 
-				bool ret = activeController->Update();
-
-				GML_MSTMUTEX_UNLOCK(sim); // Sim
-
-				if(!ret)
+				if(!activeController->Update())
 					return 0;
 			}
 
@@ -1047,15 +1043,11 @@ int SpringApp::Update()
 					if (gs->frameNum) {
 						gmlStartSim = 1;
 					}
-
-					GML_MSTMUTEX_UNLOCK(sim); // Update
 				}
 			} else {
 				GML_MSTMUTEX_LOCK(sim); // Update
 
 				activeController->Update();
-
-				GML_MSTMUTEX_UNLOCK(sim); // Update
 			}
 #else
 		if (!activeController->Update()) {
@@ -1260,8 +1252,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			InitOpenGL();
 			activeController->ResizeEvent();
 
-			GML_MSTMUTEX_UNLOCK(sim); // MainEventHandler
-
 			break;
 		}
 		case SDL_VIDEOEXPOSE: {
@@ -1274,8 +1264,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			SetupViewportGeometry();
-
-			GML_MSTMUTEX_UNLOCK(sim); // MainEventHandler
 
 			break;
 		}
