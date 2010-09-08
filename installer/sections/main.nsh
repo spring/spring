@@ -94,6 +94,7 @@
 	${!echonow} "Processing: main: AI Interfaces"
 	!insertmacro InstallAIInterface "C"
 	!insertmacro InstallAIInterface "Java"
+	!insertmacro InstallAIInterface "Python"
 
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL
@@ -215,6 +216,7 @@
 !macroend
 	!insertmacro DeleteAIInterface "C"
 	!insertmacro DeleteAIInterface "Java"
+	!insertmacro DeleteAIInterface "Python"
 
 	; base content
 	Delete "$INSTDIR\base\spring\bitmaps.sdz"
