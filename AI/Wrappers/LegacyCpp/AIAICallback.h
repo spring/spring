@@ -45,8 +45,19 @@ public:
 	int GetMyTeam();
 	int GetMyAllyTeam();
 	int GetPlayerTeam(int player);
-	const char* GetTeamSide(int team);
+	const char* GetTeamSide(int teamId);
 	int GetTeamAllyTeam(int teamId);
+
+	float GetTeamMetalCurrent(int teamId);
+	float GetTeamMetalIncome(int teamId);
+	float GetTeamMetalUsage(int teamId);
+	float GetTeamMetalStorage(int teamId);
+
+	float GetTeamEnergyCurrent(int teamId);
+	float GetTeamEnergyIncome(int teamId);
+	float GetTeamEnergyUsage(int teamId);
+	float GetTeamEnergyStorage(int teamId);
+
 	bool IsAllied(int firstAllyTeamId, int secondAllyTeamId);
 
 	void* CreateSharedMemArea(char* name, int size);

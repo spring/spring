@@ -143,12 +143,52 @@ int CAIAICallback::GetPlayerTeam(int player) {
 	return sAICallback->Clb_Game_getPlayerTeam(teamId, player);
 }
 
-const char* CAIAICallback::GetTeamSide(int team) {
-	return sAICallback->Clb_Game_getTeamSide(teamId, team);
+const char* CAIAICallback::GetTeamSide(int otherTeamId) {
+	return sAICallback->Clb_Game_getTeamSide(teamId, otherTeamId);
 }
 
-int CAIAICallback::GetTeamAllyTeam(int team) {
-	return sAICallback->Clb_Game_getTeamAllyTeam(teamId, team);
+int CAIAICallback::GetTeamAllyTeam(int otherTeamId) {
+	return sAICallback->Clb_Game_getTeamAllyTeam(teamId, otherTeamId);
+}
+
+float CAIAICallback::GetTeamMetalCurrent(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceCurrent(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalIncome(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceIncome(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalUsage(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceUsage(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalStorage(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceStorage(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamEnergyCurrent(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceCurrent(teamId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyIncome(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceIncome(teamId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyUsage(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceUsage(teamId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyStorage(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceStorage(teamId, otherTeamId, e);
 }
 
 bool CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
