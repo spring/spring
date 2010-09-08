@@ -243,6 +243,34 @@ const char* (CALLING_CONV *Clb_Game_getTeamSide)(int teamId, int otherTeamId);
 struct SAIFloat3 (CALLING_CONV *Clb_Game_getTeamColor)(int teamId, int otherTeamId);
 /// Returns the ally-team of a team
 int (CALLING_CONV *Clb_Game_getTeamAllyTeam)(int teamId, int otherTeamId);
+/**
+ * Returns the current level of a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return current level of the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceCurrent)(int teamId, int otherTeamId, int resourceId);
+/**
+ * Returns the current income of a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return current income of the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceIncome)(int teamId, int otherTeamId, int resourceId);
+/**
+ * Returns the current usage of a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return current usage of the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceUsage)(int teamId, int otherTeamId, int resourceId);
+/**
+ * Returns the storage capacity for a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return storage capacity for the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceStorage)(int teamId, int otherTeamId, int resourceId);
 /// Returns true, if the two supplied ally-teams are currently allied
 bool (CALLING_CONV *Clb_Game_isAllied)(int teamId, int firstAllyTeamId, int secondAllyTeamId);
 bool (CALLING_CONV *Clb_Game_isExceptionHandlingEnabled)(int teamId);
