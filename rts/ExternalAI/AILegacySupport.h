@@ -123,6 +123,7 @@ struct AIHCTraceRay
 	int    srcUID;
 	int    hitUID;
 	int    flags;
+	int    hitFID;
 };
 
 struct AIHCPause
