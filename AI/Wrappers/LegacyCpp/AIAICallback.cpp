@@ -944,9 +944,6 @@ bool CAIAICallback::GetValue(int valueId, void *data)
 		}case AIVAL_DEBUG_MODE:{
 			*(bool*)data = sAICallback->Clb_Game_isDebugModeEnabled(teamId);
 			return true;
-		}case AIVAL_GAME_MODE:{
-			*(int*)data = sAICallback->Clb_Game_getMode(teamId);
-			return true;
 		}case AIVAL_GAME_PAUSED:{
 			*(bool*)data = sAICallback->Clb_Game_isPaused(teamId);
 			return true;

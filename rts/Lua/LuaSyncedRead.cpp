@@ -192,7 +192,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
-	REGISTER_LUA_CFUNC(GetUnitLineage);
 	REGISTER_LUA_CFUNC(GetUnitNeutral);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
 	REGISTER_LUA_CFUNC(GetUnitIsDead);
@@ -2577,25 +2576,6 @@ int LuaSyncedRead::GetUnitAllyTeam(lua_State* L)
 	}
 	lua_pushnumber(L, unit->allyteam);
 	return 1;
-}
-
-
-int LuaSyncedRead::GetUnitLineage(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->lineage);
-	if (IsEnemyUnit(unit)) {
-		return 1;
-	}
-	const CTeam* team = teamHandler->Team(unit->team);
-	if (team == NULL) {
-		return 1;
-	}
-	lua_pushboolean(L, team->lineageRoot == unit->id);
-	return 2;
 }
 
 

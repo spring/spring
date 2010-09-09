@@ -835,17 +835,6 @@ float (CALLING_CONV *Clb_Unit_ModParam_getValue)(int teamId, int unitId,
 int (CALLING_CONV *Clb_Unit_getTeam)(int teamId, int unitId);
 int (CALLING_CONV *Clb_Unit_getAllyTeam)(int teamId, int unitId);
 /**
- * The unit's origin lies in this team.
- *
- * example:
- * It was created by a factory that was created by a builder
- * from a factory built by a commander of this team.
- * It does not matter at all, to which team
- * the commander/builder/factories were shared.
- * Only capturing can break the chain.
- */
-int (CALLING_CONV *Clb_Unit_getLineage)(int teamId, int unitId);
-/**
  * Indicates the units main function.
  * This can be used as help for (skirmish) AIs.
  *

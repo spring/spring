@@ -66,7 +66,6 @@ public:
 	int teamNum;
 	bool isDead;
 	bool gaia;
-	int lineageRoot;
 
 	/// color info is unsynced
 	unsigned char origColor[4];
@@ -100,12 +99,6 @@ public:
 	TeamStatistics* currentStats;
 	std::list<TeamStatistics> statHistory;
 	typedef TeamStatistics Statistics; //! for easier access via CTeam::Statistics
-
-	/// number of units with commander tag in team, if it reaches zero with cmd ends the team dies
-	int numCommanders;
-
-	void CommanderDied(CUnit* commander);
-	void LeftLineage(CUnit* unit);
 
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;
