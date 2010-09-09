@@ -66,58 +66,63 @@ function gadget:GameOver()
 	gadgetHandler:RemoveGadget()
 end
 
-local function CheckGameOver()
-	if sharedDynamicAllianceVictory == 0 then
-		if aliveAllyTeamCount == 1 then
-		-- find the last remaining allyteam
-			for _,firstAllyTeamID in ipairs(allyTeams) do
-				local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
-				if firstTeamCount and firstAllyTeamID ~= gaiaTeamID then
-					if firstTeamCount ~= 0 then
-						local winners = {}
-						winners[1] = firstAllyTeamID
-						GameOver(winners)
-						return
+function CheckSingleAllyVictoryEnd()
+	if aliveAllyTeamCount ~= 1 then
+		return false
+	end
+	-- find the last remaining allyteam
+	for _,firstAllyTeamID in ipairs(allyTeams) do
+		local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
+		if firstTeamCount and firstTeamCount ~= 0 and firstAllyTeamID ~= gaiaTeamID then
+			return {firstAllyTeamID}
+		end
+	end
+	return false
+end
+
+function CheckSharedAllyVictoryEnd()
+	-- we have to cross check all the alliances
+	for _,firstAllyTeamID in ipairs(allyTeams) do
+		local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
+		if firstTeamCount and firstTeamCount ~= 0 and firstAllyTeamID ~= gaiaTeamID then
+			local winners = {}
+			local winnerCount = 0
+			for _,secondAllyTeamID in ipairs(allyTeams) do
+				local secondTeamCount = allyTeamAliveTeamsCount[secondAllyTeamID]
+				if secondTeamCount and secondTeamCount ~= 0 and secondAllyTeamID ~= gaiaTeamID then
+					-- we need to check for both directions of alliance
+					if AreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and AreTeamsAllied( secondAllyTeamID, firstAllyTeamID ) then
+						-- store both check directions
+						-- since we're gonna check if we're allied against ourself, only secondAllyTeamID needs to be stored
+						winners[secondAllyTeamID] =  true
+						winnerCount = winnerCount +1
 					end
 				end
 			end
-		end
-	else
-		-- otherwise we have to cross check all the alliances
-		for _,firstAllyTeamID in ipairs(allyTeams) do
-			local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
-			if firstTeamCount and firstAllyTeamID ~= gaiaTeamID then
-				if firstTeamCount ~= 0 then
-					local winners = {}
-					local winnerCount = 0
-					for _,secondAllyTeamID in ipairs(allyTeams) do
-						local secondTeamCount = allyTeamAliveTeamsCount[secondAllyTeamID]
-						if secondTeamCount and secondAllyTeamID ~= gaiaTeamID then
-							if secondTeamCount ~= 0 then
-								-- we need to check for both directions of alliance
-								if AreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and AreTeamsAllied( secondAllyTeamID, firstAllyTeamID ) then
-									-- store both check directions
-									-- since we're gonna check if we're allied against ourself, only secondAllyTeamID needs to be stored
-									winners[secondAllyTeamID] =  true
-									winnerCount = winnerCount +1
-								end
-							end
-						end
-					end
-					if winnerCount == aliveAllyTeamCount then
-						-- only allyteams alive are all bidirectionally allied, they are all winners
-						local winnersCorrectFormat = {}
-						for winner in pairs(winners) do
-							winnersCorrectFormat[#winnersCorrectFormat+1] = winner
-						end
-						GameOver(winnersCorrectFormat)
-						return
-					end
+			if winnerCount == aliveAllyTeamCount then
+				-- only allyteams alive are all bidirectionally allied, they are all winners
+				local winnersCorrectFormat = {}
+				for winner in pairs(winners) do
+					winnersCorrectFormat[#winnersCorrectFormat+1] = winner
 				end
+				return winnersCorrectFormat
 			end
 		end
 	end
+	-- couldn't find any winner
+	return false
+end
 
+local function CheckGameOver()
+	local winners
+	if sharedDynamicAllianceVictory == 0 then
+		winners = CheckSingleAllyVictoryEnd()
+	else
+		winners = CheckSharedAllyVictoryEnd()
+	end
+	if winners then
+		GameOver(winners)
+	end
 end
 
 function gadget:GameFrame(frame)
@@ -145,10 +150,11 @@ function gadget:Initialize()
 		gadgetHandler:RemoveGadget()
 	end
 	if sharedDynamicAllianceVictory == 0 then
-		-- if dyanmic alliance is off, there's no point of checking gameover every slowupdate, since the hook for unit died is sufficient
+		-- if dynamic alliance is off, there's no point of checking gameover every slowupdate, since the hook for unit died is sufficient
 		gadgetHandler:RemoveGadgetCallin( "GameFrame", self )
 	end
 	local allyTeamCount = 0
+	-- at start, fill in the table of all alive allyteams
 	for _,allyTeamID in ipairs(allyTeams) do
 		local teamList = GetTeamList(allyTeamID)
 		local teamCount = 0
