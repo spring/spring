@@ -776,8 +776,8 @@ void CGame::ClientReadNet()
 						playerHandler->Player(player)->team      = newTeam;
 						playerHandler->Player(player)->spectator = false;
 						if (player == gu->myPlayerNum) {
-							gu->myTeam = newTeam;
-							gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
+							gu->myPlayingTeam = gu->myTeam = newTeam;
+							gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 							gu->spectating           = false;
 							gu->spectatingFullView   = false;
 							gu->spectatingFullSelect = false;
