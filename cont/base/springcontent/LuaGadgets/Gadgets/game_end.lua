@@ -153,7 +153,7 @@ function gadget:Initialize()
 	end
 	if sharedDynamicAllianceVictory == 0 then
 		-- if dynamic alliance is off, there's no point of checking gameover every slowupdate, since the hook for unit died is sufficient
-		gadgetHandler:RemoveGadgetCallin( "GameFrame", self )
+		gadgetHandler:RemoveCallIn( "GameFrame", self )
 	end
 	local allyTeamCount = 0
 	-- at start, fill in the table of all alive allyteams
