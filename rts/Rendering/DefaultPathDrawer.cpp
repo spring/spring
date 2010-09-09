@@ -2,42 +2,50 @@
 #include "StdAfx.h"
 
 #include "Game/SelectedUnits.h"
+#include "Game/UI/GuiHandler.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 
 // FIXME
 #define private public
-#include "Sim/Path/IPath.h"
-#include "Sim/Path/PathFinder.h"
-#include "Sim/Path/PathEstimator.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/Default/IPath.h"
+#include "Sim/Path/Default/PathFinder.h"
+#include "Sim/Path/Default/PathFinderDef.h"
+#include "Sim/Path/Default/PathEstimator.h"
+#include "Sim/Path/Default/PathManager.h"
 #undef private
 
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/PathDrawer.h"
+#include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "System/GlobalUnsynced.h"
+#include "System/myMath.h"
 
-PathDrawer* PathDrawer::GetInstance() {
-	static PathDrawer pd;
-	return &pd;
+DefaultPathDrawer::DefaultPathDrawer() {
+	pm = dynamic_cast<CPathManager*>(pathManager);
 }
 
-void PathDrawer::Draw() const {
-	 // PathManager is not thread safe; making it
-	// so might be too costly (performance-wise)
+void DefaultPathDrawer::Draw() const {
+	// CPathManager is not thread-safe
 	#if !defined(USE_GML) || !GML_ENABLE_SIM
 	if (globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
-		Draw(pathManager);
 
-		Draw(pathManager->pf);
-		Draw(pathManager->pe);
-		Draw(pathManager->pe2);
+		Draw(pm);
+		Draw(pm->pf);
+		Draw(pm->pe);
+		Draw(pm->pe2);
+
 		glPopAttrib();
 	}
 	#endif
@@ -45,7 +53,125 @@ void PathDrawer::Draw() const {
 
 
 
-void PathDrawer::Draw(const CPathManager* pm) const {
+void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
+	switch (extraTex) {
+		case CBaseGroundDrawer::drawPath: {
+			bool useCurrentBuildOrder = true;
+
+			if (guihandler->inCommand <= 0) {
+				useCurrentBuildOrder = false;
+			}
+			if (guihandler->inCommand >= guihandler->commands.size()) {
+				useCurrentBuildOrder = false;
+			}
+			if (guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
+				useCurrentBuildOrder = false;
+			}
+
+			if (useCurrentBuildOrder) {
+				for (int y = starty; y < endy; ++y) {
+					for (int x = 0; x < gs->hmapx; ++x) {
+						const float3 pos(x * (SQUARE_SIZE << 1) + SQUARE_SIZE, 0.0f, y * (SQUARE_SIZE << 1) + SQUARE_SIZE);
+						const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+						float m = 0.0f;
+
+						if (!loshandler->InLos(pos, gu->myAllyTeam)) {
+							m = 0.25f;
+						} else {
+							const UnitDef* ud = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
+							const BuildInfo bi(ud, pos, guihandler->buildFacing);
+
+							CFeature* f = NULL;
+
+							GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield
+
+							if (uh->TestUnitBuildSquare(bi, f, gu->myAllyTeam)) {
+								if (f != NULL) {
+									m = 0.5f;
+								} else {
+									m = 1.0f;
+								}
+							} else {
+								m = 0.0f;
+							}
+						}
+
+						m = int(m * 255.0f);
+
+						texMem[idx + CBaseGroundDrawer::COLOR_R] = 255 - m;
+						texMem[idx + CBaseGroundDrawer::COLOR_G] = m;
+						texMem[idx + CBaseGroundDrawer::COLOR_B] = 0;
+						texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+					}
+				}
+			} else {
+				const MoveData* md = NULL;
+
+				const bool showBlockedMap = (gs->cheatEnabled || gu->spectating);
+				const unsigned int blockMask = (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN);
+
+				{
+					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
+
+					// use the first selected unit, if it has the ability to move
+					if (!selectedUnits.selectedUnits.empty()) {
+						md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+					}
+				}
+
+				for (int y = starty; y < endy; ++y) {
+					for (int x = 0; x < gs->hmapx; ++x) {
+						const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+
+						if (md != NULL) {
+							float m = md->moveMath->SpeedMod(*md, x << 1, y << 1);
+
+							if (showBlockedMap && (md->moveMath->IsBlocked2(*md, (x << 1) + 1, (y << 1) + 1) & blockMask)) {
+								m = 0.0f;
+							}
+
+							m = std::min(1.0f, fastmath::apxsqrt(m));
+							m = int(m * 255.0f);
+
+							texMem[idx + CBaseGroundDrawer::COLOR_R] = 255 - m;
+							texMem[idx + CBaseGroundDrawer::COLOR_G] = m;
+							texMem[idx + CBaseGroundDrawer::COLOR_B] = 0;
+							texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+						} else {
+							// we have nothing to show
+							// -> draw a dark red overlay
+							texMem[idx + CBaseGroundDrawer::COLOR_R] = 100;
+							texMem[idx + CBaseGroundDrawer::COLOR_G] = 0;
+							texMem[idx + CBaseGroundDrawer::COLOR_B] = 0;
+							texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+						}
+					}
+				}
+			}
+		} break;
+
+		case CBaseGroundDrawer::drawHeat: {
+			for (int y = starty; y < endy; ++y) {
+				for (int x = 0; x  < gs->hmapx; ++x) {
+					const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+
+					texMem[idx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * pm->GetHeatOnSquare(x << 1, y << 1), 32, 255);
+					texMem[idx + CBaseGroundDrawer::COLOR_G] = 32;
+					texMem[idx + CBaseGroundDrawer::COLOR_B] = 32;
+					texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+				}
+			}
+		} break;
+
+		default: {
+		} break;
+	}
+}
+
+
+
+
+void DefaultPathDrawer::Draw(const CPathManager* pm) const {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glLineWidth(3);
@@ -89,12 +215,12 @@ void PathDrawer::Draw(const CPathManager* pm) const {
 
 
 
-void PathDrawer::Draw(const CPathFinderDef* pfd) const {
+void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
 	glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
 	glSurfaceCircle(pfd->goal, sqrt(pfd->sqGoalRadius), 20);
 }
 
-void PathDrawer::Draw(const CPathFinder* pf) const {
+void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 	glColor3f(0.7f, 0.2f, 0.2f);
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
@@ -133,7 +259,7 @@ void PathDrawer::Draw(const CPathFinder* pf) const {
 
 
 
-void PathDrawer::Draw(const CPathEstimator* pe) const {
+void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	GML_RECMUTEX_LOCK(sel); // Draw
 
 	MoveData* md = NULL;

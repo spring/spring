@@ -160,7 +160,7 @@ private:
 		float cost;
 	};
 
-	class myVector{
+	class myVector {
 	public:
 		typedef OpenSquare* value_type;
 		typedef int size_type;
@@ -256,34 +256,6 @@ private:
 
 	unsigned int openSquareBufferIndex;
 	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
-};
-
-class CPathFinderDef {
-public:
-	CPathFinderDef(float3 goalCenter, float goalRadius);
-	bool IsGoal(int xSquare, int zSquare) const;
-	float Heuristic(int xSquare, int zSquare) const;
-	bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
-	virtual bool WithinConstraints(int xSquare, int Square) const {return true;}
-	int2 GoalSquareOffset(int blockSize) const;
-
-	float3 goal;
-	float sqGoalRadius;
-	int goalSquareX;
-	int goalSquareZ;
-	virtual ~CPathFinderDef();
-};
-
-class CRangedGoalWithCircularConstraint : public CPathFinderDef {
-public:
-	CRangedGoalWithCircularConstraint(float3 start, float3 goal, float goalRadius,float searchSize,int extraSize);
-	virtual bool WithinConstraints(int xSquare, int zSquare) const;
-	virtual ~CRangedGoalWithCircularConstraint();
-
-private:
-	int halfWayX;
-	int halfWayZ;
-	int searchRadiusSq;
 };
 
 #endif // PATHFINDER_H

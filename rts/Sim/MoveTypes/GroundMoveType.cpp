@@ -23,7 +23,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
@@ -252,7 +252,7 @@ void CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(owner->pos);
 
 				currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
-				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(CPathManager::PATH_RESOLUTION));
+				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(pathManager->GetPathResolution()));
 
 				if (!atGoal) {
 					if (!idling) {
@@ -285,7 +285,7 @@ void CGroundMoveType::Update()
 				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
 
 				if (!haveFinalWaypoint) {
-					GetNextWaypoint(wpBehind && !canReverse);
+					GetNextWaypoint();
 				} else {
 					if (atGoal) {
 						Arrived();
@@ -374,27 +374,28 @@ void CGroundMoveType::SlowUpdate()
 		return;
 	}
 
-	if ((progressState == Active) && (pathId != 0) && (etaFailures > (65536 / turnRate))) {
-		if (owner->pos.SqDistance2D(goalPos) > (200.0f * 200.0f)) {
-			// too many ETA failures and not within acceptable range of
-			// our goal, request a new path from our current position
-			#if (DEBUG_OUTPUT == 1)
-			logOutput.Print("[CGMT::SU] ETA failure for unit %i", owner->id);
-			#endif
+	if (progressState == Active) {
+		if (pathId != 0) {
+			if (etaFailures > (65536 / turnRate)) {
+				// we have a path but are not moving (based on the ETA failure count)
+				#if (DEBUG_OUTPUT == 1)
+				logOutput.Print("[CGMT::SU] unit %i has path %i but %i ETA failures", owner->id, pathId, etaFailures);
+				#endif
 
-			StopEngine();
-			StartEngine();
+				StopEngine();
+				StartEngine();
+			}
+		} else {
+			if (gs->frameNum > restartDelay) {
+				// we want to be moving but don't have a path
+				#if (DEBUG_OUTPUT == 1)
+				logOutput.Print("[CGMT::SU] unit %i has no path", owner->id);
+				#endif
+				StartEngine();
+			}
 		}
 	}
 
-	// If the action is active, but not the engine and the
-	// re-try-delay has passed, then start the engine.
-	if (progressState == Active && (pathId == 0) && (gs->frameNum > restartDelay)) {
-		#if (DEBUG_OUTPUT == 1)
-		logOutput.Print("[CGMT::SU] restart engine for unit %i", owner->id);
-		#endif
-		StartEngine();
-	}
 
 	if (!flying) {
 		// just kindly move it into the map again instead of deleting
@@ -557,7 +558,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 						wSpeed = std::max(turnSpeed, (turnSpeed + wSpeed) * 0.2f);
 					} else {
 						// just skip, assume close enough
-						GetNextWaypoint(true);
+						GetNextWaypoint();
 						wSpeed = (turnSpeed + wSpeed) * 0.625f;
 					}
 				}
@@ -1234,25 +1235,31 @@ void CGroundMoveType::GetNewPath()
 /*
 Sets waypoint to next in path.
 */
-void CGroundMoveType::GetNextWaypoint(bool override)
+void CGroundMoveType::GetNextWaypoint()
 {
+
 	if (pathId == 0) {
 		return;
 	}
 
-	if (!override) {
-		// straight-line distance check
-		if ((owner->pos - waypoint).SqLength2D() > Square(CPathManager::PATH_RESOLUTION)) {
-			// waypoint still too far away
-			return;
-		}
-	} else {
-		// turn-radius check
+	{
+		#if (DEBUG_OUTPUT == 1)
+		// plot the vector to the waypoint
+		const int figGroupID =
+			geometricObjects->AddLine(owner->pos + UpVector * 20, waypoint + UpVector * 20, 8.0f, 1, 4);
+		geometricObjects->SetColor(figGroupID, 1, 0.3f, 0.3f, 0.6f);
+		#endif
+
+		// perform a turn-radius check: if the waypoint
+		// lies outside our turning circle, don't skip
+		// it (since we can steer toward this waypoint
+		// and pass it without slowing down)
+		// note that we take the DIAMETER of the circle
+		// to prevent sine-like "snaking" trajectories
 		const float turnFrames = 65536 / turnRate;
 		const float turnRadius = (currentSpeed * turnFrames) / (PI + PI);
 
-		if (currentDistanceToWaypoint > (turnRadius * 1.25f)) {
-			// waypoint not inside our turning circle
+		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
 			return;
 		}
 	}
@@ -1261,7 +1268,7 @@ void CGroundMoveType::GetNextWaypoint(bool override)
 		waypoint = nextWaypoint;
 		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
-		if (waypoint.SqDistance2D(goalPos) < Square(CPathManager::PATH_RESOLUTION)) {
+		if (waypoint.SqDistance2D(goalPos) < Square(pathManager->GetPathResolution())) {
 			waypoint = goalPos;
 		}
 	} else {
@@ -1310,7 +1317,7 @@ based on current speed.
 */
 float CGroundMoveType::MinDistanceToWaypoint()
 {
-	return BreakingDistance(owner->speed.Length2D()) + CPathManager::PATH_RESOLUTION;
+	return BreakingDistance(owner->speed.Length2D()) + pathManager->GetPathResolution();
 }
 
 /*
@@ -1866,7 +1873,7 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 					break;
 				}
 
-				GetNextWaypoint(false);
+				GetNextWaypoint();
 
 				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
 				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;

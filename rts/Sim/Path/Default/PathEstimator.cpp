@@ -10,8 +10,10 @@
 
 #include "lib/minizip/zip.h"
 #include "mmgr.h"
+
 #include "PathCache.h"
 #include "PathFinder.h"
+#include "PathFinderDef.h"
 #include "Map/ReadMap.h"
 #include "Game/LoadScreen.h"
 #include "Sim/MoveTypes/MoveInfo.h"

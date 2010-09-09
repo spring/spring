@@ -983,6 +983,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\LoadScreen.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\LoadScreen.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\Messages.cpp"
 				>
 				<FileConfiguration
@@ -2022,6 +2030,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\DefaultPathDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\DefaultPathDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\FarTextureHandler.cpp"
 				>
 			</File>
@@ -2106,11 +2122,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\PathDrawer.cpp"
+				RelativePath="..\..\Rendering\IPathDrawer.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\PathDrawer.h"
+				RelativePath="..\..\Rendering\IPathDrawer.h"
 				>
 			</File>
 			<File
@@ -3641,45 +3657,120 @@
 				Name="Path"
 				>
 				<File
-					RelativePath="..\..\Sim\Path\IPath.h"
+					RelativePath="..\..\Sim\Path\IPathManager.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\Path\IPathFinder.h"
+					RelativePath="..\..\Sim\Path\IPathManager.h"
 					>
 				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathCache.cpp"
+				<Filter
+					Name="Default"
 					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathCache.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathEstimator.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathEstimator.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathFinder.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathFinder.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathManager.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Path\PathManager.h"
-					>
-				</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\IPath.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathCache.cpp"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="No debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Syncdebug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release+MT with error catching|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug+MT|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Dedicated Server (Release)|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\$(InputName)1.obj"
+								XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathCache.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathEstimator.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathEstimator.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathFinder.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathFinder.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathFinderDef.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathManager.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Path\Default\PathManager.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Objects"
@@ -4556,6 +4647,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\Object.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\OffscreenGLContext.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\OffscreenGLContext.h"
 				>
 			</File>
 			<File

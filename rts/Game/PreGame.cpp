@@ -208,7 +208,7 @@ void CPreGame::UpdateClientNet()
 	}
 
 	boost::shared_ptr<const RawPacket> packet;
-	while ((packet = net->GetData()))
+	while ((packet = net->GetData(gs->frameNum)))
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
@@ -235,6 +235,10 @@ void CPreGame::UpdateClientNet()
 					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
+
+					if(team >= teamHandler->ActiveTeams())
+						throw netcode::UnpackPacketException("Invalid team");
+
 					CPlayer player;
 					player.name = name;
 					player.spectator = spectator;
@@ -250,11 +254,20 @@ void CPreGame::UpdateClientNet()
 				break;
 			}
 			case NETMSG_GAMEDATA: { // server first ( not if we're joining midgame as extra players ) sends this to let us know about teams, allyteams etc.
+				if (gameSetup)
+					throw content_error("Duplicate game data received from server");
 				GameDataReceived(packet);
 				break;
 			}
 			case NETMSG_SETPLAYERNUM: { // this is sent afterwards to let us know which playernum we have
-				gu->SetMyPlayer(packet->data[1]);
+				if (!gameSetup)
+					throw content_error("No game data received from server");
+
+				unsigned char playerNum = packet->data[1];
+				if (playerHandler->ActivePlayers() <= playerNum)
+					throw content_error("Invalid player number received from server");
+
+				gu->SetMyPlayer(playerNum);
 				logOutput.Print("User number %i (team %i, allyteam %i)", gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
@@ -397,6 +410,18 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		CPlayer::UpdateControlledTeams();
 	} else {
 		throw content_error("Server sent us incorrect script");
+	}
+
+	// some sanity checks
+	for(int p = 0; p < playerHandler->ActivePlayers(); ++p) {
+		CPlayer *player = playerHandler->Player(p);
+		if(player->playerNum >= playerHandler->ActivePlayers() || player->playerNum < 0)
+			throw content_error("Invalid player in game data");
+		if(player->team >= teamHandler->ActiveTeams() || player->team < 0)
+			throw content_error("Invalid team in game data");
+		int allyteam = teamHandler->AllyTeam(player->team);
+		if(allyteam >= teamHandler->ActiveAllyTeams() || allyteam < 0)
+			throw content_error("Invalid ally team in game data");
 	}
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);

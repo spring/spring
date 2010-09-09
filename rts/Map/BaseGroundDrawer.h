@@ -13,6 +13,13 @@ class CHeightLinePalette;
 class CBaseGroundDrawer
 {
 public:
+	enum {
+		COLOR_R = 2,
+		COLOR_G = 1,
+		COLOR_B = 0,
+		COLOR_A = 3,
+	};
+
 	CBaseGroundDrawer(void);
 	virtual ~CBaseGroundDrawer(void);
 

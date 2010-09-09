@@ -34,7 +34,7 @@ void CPathCache::AddPath(IPath::Path* path, IPath::SearchResult result, int2 sta
 	unsigned int hash=(unsigned int)(((((goalBlock.y)*blocksX+goalBlock.x)*blocksZ+startBlock.y)*blocksX)+startBlock.x*(pathType+1)*max(1.0f,goalRadius));
 
 	if(cachedPaths.find(hash)!=cachedPaths.end()){
-		return;		
+		return;
 	}
 
 	CacheItem* ci=new CacheItem;

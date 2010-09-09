@@ -14,7 +14,7 @@ namespace netcode
 }
 struct PlayerStatistics;
 
-const unsigned char NETWORK_VERSION = 1;
+const unsigned short NETWORK_VERSION = 2;
 
 /*
 Comment behind NETMSG enumeration constant gives the extra data belonging to
@@ -57,7 +57,6 @@ enum NETMSG {
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
 	NETMSG_DIRECT_CONTROL   = 22, // uchar myPlayerNum;
 	NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
-	NETMSG_ATTEMPTCONNECT   = 25, // ushort msgsize, string playername, string passwd, string VERSION_STRING_DETAILED
 	NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
 	NETMSG_SETSHARE         = 27, // uchar myPlayerNum, uchar myTeam; float metalShareFraction, energyShareFraction;
 	NETMSG_SENDPLAYERSTAT   = 28, //
@@ -88,6 +87,8 @@ enum NETMSG {
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
 	NETMSG_CUSTOM_DATA      = 55, // uchar myPlayerNum, uchar dataType, uchar dataValue
 	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
+
+	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
 
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState

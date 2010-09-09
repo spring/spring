@@ -44,7 +44,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	// FIXME  --  this is getting silly, convert to userdata?
 
 	const float gravity = -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
-	const bool limitDGun        = gameSetup ? gameSetup->limitDgun        : false;
 	const bool ghostedBuildings = gameSetup ? gameSetup->ghostedBuildings : false;
 	const int  startPosType     = gameSetup ? gameSetup->startPosType     : 0;
 
@@ -63,7 +62,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedNumber(L, "startPosType",  startPosType);
 
-	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
 	const CMapInfo* mi = mapInfo;

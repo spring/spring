@@ -71,7 +71,6 @@ public:
 	int maxUnits;
 
 	bool ghostedBuildings;
-	bool limitDgun;
 	bool disableMapDamage;
 
 	float maxSpeed;
