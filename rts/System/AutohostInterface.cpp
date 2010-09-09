@@ -6,7 +6,7 @@
 #	include <windows.h>
 #endif
 
-#include "Net/Socket.h" 
+#include "Net/Socket.h"
 
 #ifndef _MSC_VER
 #	include "StdAfx.h"
@@ -28,28 +28,28 @@ enum EVENT
 {
 	/// Server has started ()
 	SERVER_STARTED = 0,
- 
+
 	/// Server is about to exit ()
 	SERVER_QUIT = 1,
 
 	/// Game starts ()
 	SERVER_STARTPLAYING = 2,
- 
+
 	/// Game has ended ()
 	SERVER_GAMEOVER = 3,
-	
+
 	/// An information message from server (string message)
 	SERVER_MESSAGE = 4,
-	
+
 	/// Server gave out a warning (string warningmessage)
 	SERVER_WARNING = 5,
-	
+
 	/// Player has joined the game (uchar playernumber, string name)
 	PLAYER_JOINED = 10,
- 
+
 	/// Player has left (uchar playernumber, uchar reason (0: lost connection, 1: left, 2: kicked) )
 	PLAYER_LEFT = 11,
- 
+
 	/// Player has updated its ready-state (uchar playernumber, uchar state (0: not ready, 1: ready, 2: state not changed) )
 	PLAYER_READY = 12,
 
@@ -62,17 +62,17 @@ enum EVENT
 	(copied from Game/ChatMessage.h)
 	*/
 	PLAYER_CHAT = 13,
- 
+
 	/// Player has been defeated (uchar playernumber)
 	PLAYER_DEFEATED = 14,
 
 	/**
 	 * @brief Message sent by lua script
-	 * 
+	 *
 	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data) (X = space left in packet)
 	 * */
 	GAME_LUAMSG = 20,
-	
+
 	/// team statistics, see CTeam::Statistics for reference how to read them
 	/**
 	* (uchar teamnumber), CTeam::Statistics(in binary form)
@@ -149,12 +149,18 @@ void AutohostInterface::SendStartPlaying()
 	}
 }
 
-void AutohostInterface::SendGameOver()
+void AutohostInterface::SendGameOver( uchar playerNum, std::vector<uchar> winningAllyTeams )
 {
-	uchar msg = SERVER_GAMEOVER;
-
+	const unsigned char msgsize = 1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar);
+	std::vector<boost::uint8_t> buffer(msgsize);
+	buffer[0] = SERVER_GAMEOVER;
+	buffer[1] = msgsize;
+	buffer[2] = playerNum;
+	for ( unsigned int i = 0; i < winningAllyTeams.size(); i++ ) {
+		buffer[3+i] = winningAllyTeams[i];
+	}
 	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
+		autohost.send(boost::asio::buffer(buffer));
 	}
 }
 

@@ -63,6 +63,8 @@ CGlobalUnsynced::CGlobalUnsynced()
 	myPlayerNum = 0;
 	myTeam = 1;
 	myAllyTeam = 1;
+	myPlayingTeam = -1;
+	myPlayingAllyTeam = -1;
 
 	spectating           = false;
 	spectatingFullView   = false;

@@ -180,9 +180,6 @@ void CGameInfo::Draw()
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);
 
-	labels.push_back("Commander Ends:");
-	values.push_back(gameSetup->gameMode > 0 ? true : false);
-
 	labels.push_back("Gravity:");
 	values.push_back(-(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED));
 

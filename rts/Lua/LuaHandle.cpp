@@ -347,7 +347,7 @@ void CLuaHandle::GameStart()
 	return;
 }
 
-void CLuaHandle::GameOver()
+void CLuaHandle::GameOver(std::vector<unsigned char> winningAllyTeams)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
@@ -361,8 +361,15 @@ void CLuaHandle::GameOver()
 		return; // the call is not defined
 	}
 
+	lua_createtable(L, winningAllyTeams.size(), 0);
+	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
+		lua_pushnumber(L, i + 1);
+		lua_pushnumber(L, winningAllyTeams[i]);
+		lua_rawset(L, -3);
+	}
+
 	// call the routine
-	RunCallInTraceback(cmdStr, 0, 0, errfunc);
+	RunCallInTraceback(cmdStr, 1, 0, errfunc);
 	return;
 }
 

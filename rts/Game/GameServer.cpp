@@ -132,7 +132,6 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	noHelperAIs = false;
 	allowSpecDraw = true;
 	cheating = false;
-	sentGameOverMsg = false;
 
 	gameHasStarted = false;
 	gameEndTime = spring_notime;
@@ -157,7 +156,7 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 
 	std::string autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
 	int autohostport = configHandler->Get("AutohostPort", 0);
-	
+
 	if (autohostport > 0) {
 		AddAutohostInterface(autohostip, autohostport);
 	}
@@ -242,21 +241,15 @@ CGameServer::~CGameServer()
 	delete thread;
 #ifdef DEDICATED
 	// TODO: move this to a method in CTeamHandler
-	// Figure out who won the game.
 	int numTeams = (int)setup->teamStartingData.size();
 	if (setup->useLuaGaia) {
 		--numTeams;
 	}
-	int winner = -1;
-	/*for (int i = 0; i < numTeams; ++i) {
-		if (teams[i] && !teamHandler->Team(i)->isDead) {
-			winner = teamHandler->AllyTeam(i);
-			break;
-		}
-	}*/ //TODO figure out who won
-	// Finally pass it on to the CDemoRecorder.
 	demoRecorder->SetTime(serverframenum / 30, spring_tomsecs(spring_gettime()-serverStartTime)/1000);
-	demoRecorder->InitializeStats(players.size(), numTeams, winner);
+	demoRecorder->InitializeStats(players.size(), numTeams );
+
+	// Pass the winners to the CDemoRecorder.
+	demoRecorder->SetWinningAllyTeams( winningAllyTeams );
 	for (size_t i = 0; i < players.size(); ++i) {
 		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
@@ -400,12 +393,6 @@ void CGameServer::SendDemoData(const bool skipping)
 					Broadcast(boost::shared_ptr<const RawPacket>(buf));
 					break;
 				}
-			case NETMSG_GAMEOVER:
-				{
-					sentGameOverMsg = true;
-					Broadcast(boost::shared_ptr<const RawPacket>(buf));
-					break;
-				}
 			case NETMSG_AI_STATE_CHANGED: /* many of these messages are not likely to be sent by a spec, but there are cheats */
 			case NETMSG_ALLIANCE:
 			case NETMSG_CUSTOM_DATA:
@@ -444,7 +431,7 @@ void CGameServer::SendDemoData(const bool skipping)
 				}
 			case NETMSG_AICOMMAND:
 			case NETMSG_AISHARE:
-			case NETMSG_COMMAND: 
+			case NETMSG_COMMAND:
 			case NETMSG_LUAMSG:
 			case NETMSG_SELECT:
 			case NETMSG_SYSTEMMSG:
@@ -717,7 +704,7 @@ void CGameServer::Update()
 					if(players[a].isReconn && curPing < 2 * GAME_SPEED)
 						players[a].isReconn = false;
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, curPing));
-					float correctedCpu = players[a].isLocal ? players[a].cpuUsage : 
+					float correctedCpu = players[a].isLocal ? players[a].cpuUsage :
 						std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaDrawTime, 1.0f));
 					if(demoReader ? !players[a].isFromDemo : !players[a].spectator)
 					{
@@ -784,8 +771,6 @@ void CGameServer::Update()
 	else if (serverframenum > 0 || demoReader)
 	{
 		CreateNewFrame(true, false);
-		if (serverframenum > GAME_SPEED && !sentGameOverMsg && !demoReader)
-			CheckForGameEnd();
 	}
 
 	if (hostif)
@@ -992,7 +977,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				}
 			} catch (netcode::UnpackPacketException &e) {
 				Message(str(format("Player %d sent invalid PlayerName: %s") %a %e.err));
-			}	
+			}
 			break;
 		}
 
@@ -1035,7 +1020,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				}
 			} catch (netcode::UnpackPacketException &e) {
 				Message(str(format("Player %d sent invalid SystemMessage: %s") %a %e.err));
-			}	
+			}
 			break;
 
 		case NETMSG_STARTPOS: {
@@ -1116,7 +1101,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			} catch (netcode::UnpackPacketException &e) {
 				Message(str(format("Player %s sent invalid AICommand: %s") %players[a].name %e.err));
 			}
-		} 
+		}
 		break;
 
 		case NETMSG_AICOMMANDS: {
@@ -1599,6 +1584,27 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
+		case NETMSG_GAMEOVER: {
+			try {
+				unsigned char player;
+				netcode::UnpackPacket pckt(packet, 2);
+				pckt >> player;
+				if (player != a) {
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
+					break;
+				}
+				std::vector<unsigned char> winningAllyTeams;
+				pckt >> winningAllyTeams;
+				if (hostif) {
+					hostif->SendGameOver( player, winningAllyTeams);
+				}
+				gameEndTime = spring_gettime();
+				} catch (netcode::UnpackPacketException &e) {
+					Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %e.err));
+				}
+			break;
+		}
+
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:
@@ -2003,59 +2009,6 @@ bool CGameServer::HasFinished() const
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	return quitServer;
-}
-
-void CGameServer::CheckForGameEnd()
-{
-	if (spring_istime(gameEndTime)) {
-		if (gameEndTime < spring_gettime() - spring_secs(2)) {
-			Message(GameEnd);
-			Broadcast(CBaseNetProtocol::Get().SendGameOver());
-			if (hostif) {
-				hostif->SendGameOver();
-			}
-			sentGameOverMsg = true;
-		}
-		return;
-	}
-
-	if (setup->gameMode == GameMode::OpenEnd)
-		return;
-
-	int numActiveAllyTeams = 0;
-	std::vector<int> numActiveTeams(teams.size(), 0); // active teams per ally team
-
-	for (size_t a = 0; a < teams.size(); ++a)
-	{
-		bool hasController = false;
-		for (size_t b = 0; b < players.size() && !hasController; ++b) {
-			if (!players[b].spectator && players[b].team == (int)a) {
-				hasController = true;
-			}
-		}
-
-		for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end() && !hasController; ++ai) {
-			if (ai->second.team == a) {
-				hasController = true;
-			}
-		}
-
-		if (teams[a].active && hasController) {
-			++numActiveTeams[teams[a].teamAllyteam];
-		}
-	}
-
-	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
-		if (numActiveTeams[a] != 0) {
-			++numActiveAllyTeams;
-		}
-	}
-
-	if (numActiveAllyTeams <= 1)
-	{
-		gameEndTime = spring_gettime();
-		Broadcast(CBaseNetProtocol::Get().SendSendPlayerStat());
-	}
 }
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)

@@ -999,7 +999,8 @@ bool CGame::Update()
 
 	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
-		GameEnd();
+		std::vector<unsigned char> empty;
+		GameEnd(empty);
 	}
 
 	// send out new console lines
@@ -1944,13 +1945,13 @@ void CGame::MakeMemDump(void)
 
 
 
-void CGame::GameEnd()
+void CGame::GameEnd( std::vector<unsigned char> winningAllyTeams )
 {
 	if (!gameOver)
 	{
 		gameOver=true;
-		eventHandler.GameOver();
-		new CEndGameBox();
+		eventHandler.GameOver( winningAllyTeams );
+		new CEndGameBox( winningAllyTeams );
 #ifdef    HEADLESS
 		profiler.PrintProfilingInfo();
 #endif // HEADLESS
@@ -1960,21 +1961,14 @@ void CGame::GameEnd()
 			const int numPlayers = playerHandler->ActivePlayers();
 
 			// TODO: move this to a method in CTeamHandler
-			// Figure out who won the game.
 			int numTeams = teamHandler->ActiveTeams();
 			if (gs->useLuaGaia) {
 				--numTeams;
 			}
-			int winner = -1;
-			for (int i = 0; i < numTeams; ++i) {
-				if (!teamHandler->Team(i)->isDead) {
-					winner = teamHandler->AllyTeam(i);
-					break;
-				}
-			}
-			// Finally pass it on to the CDemoRecorder.
 			record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
-			record->InitializeStats(numPlayers, numTeams, winner);
+			record->InitializeStats(numPlayers, numTeams);
+			// pass the list of winners
+			record->SetWinningAllyTeams(winningAllyTeams);
 			for (int i = 0; i < numPlayers; ++i) {
 				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 			}
@@ -1985,6 +1979,8 @@ void CGame::GameEnd()
 				net->Send(buf);
 			}
 		}
+		// pass the winner info to the host in the case it's a dedicated server
+		net->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum,winningAllyTeams));
 	}
 }
 
@@ -2353,8 +2349,6 @@ void CGame::ReColorTeams()
 
 	luaParser.AddString("mapName",      mapInfo->map.name);
 	luaParser.AddString("mapHumanName", mapInfo->map.humanName);
-
-	luaParser.AddInt("gameMode", gameSetup->gameMode);
 
 	luaParser.GetTable("teams");
 	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {

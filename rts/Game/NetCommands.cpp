@@ -101,8 +101,10 @@ void CGame::ClientReadNet()
 					std::string message;
 					pckt >> message;
 					logOutput.Print(message);
-					if (!gameOver)
-						GameEnd();
+					if (!gameOver) {
+						std::vector<unsigned char> empty;
+						GameEnd(empty);
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
@@ -139,12 +141,6 @@ void CGame::ClientReadNet()
 				} else {
 					StartPlaying();
 				}
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
-			case NETMSG_GAMEOVER: {
-				GameEnd();
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -780,8 +776,8 @@ void CGame::ClientReadNet()
 						playerHandler->Player(player)->team      = newTeam;
 						playerHandler->Player(player)->spectator = false;
 						if (player == gu->myPlayerNum) {
-							gu->myTeam = newTeam;
-							gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
+							gu->myPlayingTeam = gu->myTeam = newTeam;
+							gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 							gu->spectating           = false;
 							gu->spectatingFullView   = false;
 							gu->spectatingFullSelect = false;
@@ -1098,5 +1094,3 @@ void CGame::ClientReadNet()
 
 	return;
 }
-
-

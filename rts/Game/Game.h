@@ -66,6 +66,9 @@ public:
 
 	volatile bool finishedLoading;
 
+	/// show GameEnd-window, calculate mouse movement etc.
+	void GameEnd( std::vector<unsigned char> winningAllyTeams );
+
 	enum GameDrawMode {
 		gameNotDrawing     = 0,
 		gameNormalDraw     = 1,
@@ -130,8 +133,6 @@ private:
 	void SaveGame(const std::string& filename, bool overwrite);
 	/// Re-load the game.
 	void ReloadGame();
-	/// show GameEnd-window, calculate mouse movement etc.
-	void GameEnd();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
 	void SendNetChat(std::string message, int destination = -1);
 	/// Format and display a chat message received over network
