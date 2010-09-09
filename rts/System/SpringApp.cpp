@@ -985,17 +985,16 @@ void SpringApp::Startup()
 
 #ifdef WIN32
 #include <wingdi.h>
+HGLRC mainRC = NULL;
+HWND mainWnd = NULL;
+//PIXELFORMATDESCRIPTOR pfd;
+//int iPixelFormat;
 #else
 #include <X11/Xlib.h>
 #include <GL/glx.h>
 #endif
 
 boost::barrier barr(2);
-//HDC mainDC = NULL;
-HGLRC mainRC = NULL;
-HWND mainWnd = NULL;
-//PIXELFORMATDESCRIPTOR pfd;
-//int iPixelFormat;
 
 bool gmlInitShareListsDraw() {
 	try {
