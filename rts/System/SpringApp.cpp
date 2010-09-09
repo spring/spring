@@ -1019,8 +1019,9 @@ bool gmlInitShareListsDraw() {
 		if(!wglMakeCurrent(mainDC, mainRC)) 
 			throw opengl_error("Render context enable failed");
 #else
+/*
 		mainRC = glXGetCurrentContext();
-
+*/
 		barr.wait(); //
 
 		barr.wait(); //
@@ -1061,7 +1062,7 @@ bool gmlInitShareListsSim() {
 		barr.wait(); //
 #else
 		barr.wait(); //
-
+/*
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 		if(!SDL_GetWMInfo(&info))
@@ -1081,7 +1082,7 @@ bool gmlInitShareListsSim() {
 			throw opengl_error("Create worker rendering context failed");
 		if(!glXMakeCurrent(dpy, pbuf, workerRC))
 			throw opengl_error("Render context setup failed");
-
+*/
 		barr.wait(); //
 #endif
 	} catch(opengl_error &e) {
@@ -1104,6 +1105,7 @@ bool gmlCleanupShareListsSim() {
 		if(mainWnd && curDC && !ReleaseDC(mainWnd, curDC))
 			throw opengl_error("Device context release failed");
 #else
+/*
 		GLXContext curRC = glXGetCurrentContext();
 		if(dpy && !glXMakeCurrent(dpy, None, NULL))
 			throw opengl_error("Render context disable failed");
@@ -1111,6 +1113,7 @@ bool gmlCleanupShareListsSim() {
 			throw opengl_error("Render context cleanup failed");
 		if(dpy && pbuf && !glXDestroyPbuffer(dpy, pbuf))
 			throw opengl_error("Off-screen buffer cleanup failed");
+*/
 #endif
 	} catch(opengl_error &e) {
 		Threading::SetThreadError(e.what());
