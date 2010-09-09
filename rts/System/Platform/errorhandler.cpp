@@ -45,6 +45,7 @@ public:
 
 	bool Update() {
 		ErrorMessageBox(msg, caption, flags);
+		return true;
 	}
 
 private:

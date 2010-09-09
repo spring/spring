@@ -234,10 +234,15 @@ void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 #endif
 
 	try {
-		f();
+		try {
+			f();
+		} CATCH_SPRING_ERRORS
 	} catch(boost::thread_interrupted const&) {
+		//! CATCH_SPRING_ERRORS may retrow a thread_interrupted,
+		//! so it needs an own try..catch block
+
 		//! do nothing
-	} CATCH_SPRING_ERRORS
+	}
 
 
 	glOffscreenCtx.WorkerThreadFree();

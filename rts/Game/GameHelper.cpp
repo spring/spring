@@ -1,15 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include "mmgr.h"
 
-#include "GlobalUnsynced.h"
 #include "Camera.h"
 #include "GameSetup.h"
 #include "GameHelper.h"
 #include "UI/LuaUI.h"
-#include "LogOutput.h"
+#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
@@ -35,9 +33,10 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sync/SyncTracer.h"
-#include "EventHandler.h"
-#include "myMath.h"
+#include "System/GlobalUnsynced.h"
+#include "System/EventHandler.h"
+#include "System/myMath.h"
+#include "System/Sync/SyncTracer.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -55,9 +54,9 @@ CGameHelper::~CGameHelper()
 {
 	delete stdExplosionGenerator;
 
-	for(int a=0;a<128;++a){
-		std::list<WaitingDamage*>* wd=&waitingDamages[a];
-		while(!wd->empty()){
+	for (int a = 0; a < 128; ++a) {
+		std::list<WaitingDamage*>* wd = &waitingDamages[a];
+		while (!wd->empty()) {
 			delete wd->back();
 			wd->pop_back();
 		}
@@ -132,9 +131,9 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	DamageArray damageDone = damages * mod2;
 	float3 addedImpulse = dif * (damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
 
-	if (expDist2 < (expSpeed * 4.0f)) { //damage directly
+	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
 		unit->DoDamage(damageDone, owner, addedImpulse, weaponId);
-	} else { //damage later
+	} else { // damage later
 		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
 		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
 	}
@@ -277,7 +276,7 @@ void CGameHelper::Explosion(
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
 float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/,
 			    const CUnit* owner, const CUnit*& hit, int collisionFlags,
-			    const CFeature** hitfeature)
+			    const CFeature** hitFeature)
 {
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
 	const bool ignoreFeatures = !!(collisionFlags & COLLISION_NOFEATURE);
@@ -292,8 +291,9 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 	//! feature intersection
 	if (!ignoreFeatures) {
-		if (hitfeature)
-			*hitfeature = 0;
+		if (hitFeature) {
+			*hitFeature = NULL;
+		}
 
 		for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
@@ -313,8 +313,9 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 					//! we want the closest feature (intersection point) on the ray
 					if (lenSq < lengthSq) {
 						lengthSq = lenSq;
-						if(hitfeature)
-							*hitfeature = f;
+						if (hitFeature) {
+							*hitFeature = f;
+						}
 					}
 				}
 			}
@@ -798,99 +799,122 @@ public:
 
 
 
-void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
-                                  std::map<float,CUnit*> &targets)
+void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, CUnit* lastTarget, std::multimap<float, CUnit*>& targets)
 {
 	GML_RECMUTEX_LOCK(qnum); // GenerateTargets
 
-	CUnit* attacker = weapon->owner;
-	float radius = weapon->range;
-	float3 pos = attacker->pos;
-	float heightMod = weapon->heightMod;
-	float aHeight = weapon->weaponPos.y;
-	// how much damage the weapon deals over 1 second
-	float secDamage = weapon->weaponDef->damages[0] * weapon->salvoSize / weapon->reloadTime * 30;
-	bool paralyzer = !!weapon->weaponDef->damages.paralyzeDamageTime;
+	const CUnit* attacker = weapon->owner;
+	const float radius    = weapon->range;
+	const float3& pos     = attacker->pos;
+	const float heightMod = weapon->heightMod;
+	const float aHeight   = weapon->weaponPos.y;
 
-	const std::vector<int> &quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->minheight)) * heightMod);
+	// how much damage the weapon deals over 1 second
+	const float secDamage = weapon->weaponDef->damages[0] * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
+	const bool paralyzer  = !!weapon->weaponDef->damages.paralyzeDamageTime;
+
+	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->minheight)) * heightMod);
 
 	int tempNum = gs->tempNum++;
+
+	typedef std::vector<int>::const_iterator VectorIt;
+	typedef std::list<CUnit*>::const_iterator ListIt;
 	
-	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (VectorIt qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (teamHandler->Ally(attacker->allyteam, t)) {
 				continue;
 			}
-			std::list<CUnit*>::const_iterator ui;
+
 			const std::list<CUnit*>& allyTeamUnits = qf->GetQuad(*qi).teamUnits[t];
-			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
-				CUnit* unit = *ui;
-				if (unit->tempNum != tempNum && (unit->category & weapon->onlyTargetCategory)) {
-					unit->tempNum = tempNum;
-					if (unit->isUnderWater && !weapon->weaponDef->waterweapon) {
+
+			for (ListIt ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
+				CUnit* targetUnit = *ui;
+				float targetPriority = 1.0f;
+
+				if (luaRules && luaRules->AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weapon->weaponDef->id, &targetPriority)) {
+					targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
+					continue;
+				}
+
+
+				if (targetUnit->tempNum != tempNum && (targetUnit->category & weapon->onlyTargetCategory)) {
+					targetUnit->tempNum = tempNum;
+
+					if (targetUnit->isUnderWater && !weapon->weaponDef->waterweapon) {
 						continue;
 					}
-					if (unit->isDead) {
+					if (targetUnit->isDead) {
 						continue;
 					}
+
 					float3 targPos;
-					float value = 1.0f;
-					unsigned short unitLos = unit->losStatus[attacker->allyteam];
-					if (unitLos & LOS_INLOS) {
-						targPos = unit->midPos;
-					} else if (unitLos & LOS_INRADAR) {
-						const float radErr = radarhandler->radarErrorSize[attacker->allyteam];
-						targPos = unit->midPos + (unit->posErrorVector * radErr);
-						value *= 10.0f;
+					const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
+
+					if (targetLOSState & LOS_INLOS) {
+						targPos = targetUnit->midPos;
+					} else if (targetLOSState & LOS_INRADAR) {
+						targPos = targetUnit->midPos + (targetUnit->posErrorVector * radarhandler->radarErrorSize[attacker->allyteam]);
+						targetPriority *= 10.0f;
 					} else {
 						continue;
 					}
+
 					const float modRange = radius + (aHeight - targPos.y) * heightMod;
-					if ((pos - targPos).SqLength2D() <= modRange * modRange){
+
+					if ((pos - targPos).SqLength2D() <= modRange * modRange) {
 						float dist2d = (pos - targPos).Length2D();
-						value *= (dist2d * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-						if (unitLos & LOS_INLOS) {
-							value *= (secDamage + unit->health);
-							if (unit == lastTarget) {
-								value *= weapon->avoidTarget ? 10.0f : 0.4f;
+						targetPriority *= (dist2d * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+
+						if (targetLOSState & LOS_INLOS) {
+							targetPriority *= (secDamage + targetUnit->health);
+
+							if (targetUnit == lastTarget) {
+								targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
 							}
 
-							if (paralyzer && unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health)) {
-								value *= 4.0f;
+							if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
+								targetPriority *= 4.0f;
 							}
 
 							if (weapon->hasTargetWeight) {
-								value *= weapon->TargetWeight(unit);
+								targetPriority *= weapon->TargetWeight(targetUnit);
 							}
 						} else {
-							value *= (secDamage + 10000.0f);
+							targetPriority *= (secDamage + 10000.0f);
 						}
-						if (unitLos & LOS_PREVLOS) {
-							value /= weapon->weaponDef->damages[unit->armorType]
-											 * unit->curArmorMultiple
-									 * unit->power * (0.7f + gs->randFloat() * 0.6f);
-							if (unit->category & weapon->badTargetCategory) {
-								value *= 100.0f;
+
+						if (targetLOSState & LOS_PREVLOS) {
+							targetPriority /=
+								weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple *
+								targetUnit->power * (0.7f + gs->randFloat() * 0.6f);
+
+							if (targetUnit->category & weapon->badTargetCategory) {
+								targetPriority *= 100.0f;
 							}
-							if (unit->crashing) {
-								value *= 1000.0f;
+							if (targetUnit->crashing) {
+								targetPriority *= 1000.0f;
 							}
 						}
-						targets.insert(std::pair<float, CUnit*>(value, unit));
+
+						targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
 					}
 				}
 			}
 		}
 	}
-/*
+
 #ifdef TRACE_SYNC
-	tracefile << "TargetList: " << attacker->id << " " << radius << " ";
-	std::map<float,CUnit*>::iterator ti;
-	for(ti=targets.begin();ti!=targets.end();++ti)
-		tracefile << (ti->first) <<  " " << (ti->second)->id <<  " ";
-	tracefile << "\n";
+	{
+		tracefile << "[GenerateWeaponTargets] attackerID, attackRadius: " << attacker->id << ", " << radius << " ";
+
+		for (std::multimap<float, CUnit*>::const_iterator ti = targets.begin(); ti != targets.end(); ++ti)
+			tracefile << "\tpriority: " << (ti->first) <<  ", targetID: " << (ti->second)->id <<  " ";
+
+		tracefile << "\n";
+	}
 #endif
-*/
+
 }
 
 CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float searchRadius)
@@ -1115,17 +1139,17 @@ static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 	if (size > searchOffsets.size()) {
 		searchOffsets.resize (size);
 
-		for (int y=0;y<radius*2;y++)
-			for (int x=0;x<radius*2;x++)
+		for (int y = 0; y < radius*2; y++)
+			for (int x = 0; x < radius*2; x++)
 			{
-				SearchOffset& i = searchOffsets[y*radius*2+x];
+				SearchOffset& i = searchOffsets[y*radius*2 + x];
 
-				i.dx = x-radius;
-				i.dy = y-radius;
-				i.qdist = i.dx*i.dx+i.dy*i.dy;
+				i.dx = x - radius;
+				i.dy = y - radius;
+				i.qdist = i.dx*i.dx + i.dy*i.dy;
 			}
 
-		std::sort (searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
+		std::sort(searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
 	}
 
 	return searchOffsets;

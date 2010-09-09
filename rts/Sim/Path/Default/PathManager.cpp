@@ -9,6 +9,7 @@
 #include <boost/cstdint.hpp>
 
 #include "PathFinder.h"
+#include "PathFinderDef.h"
 #include "PathEstimator.h"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -26,8 +27,6 @@ const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 const unsigned int CPathManager::PATH_RESOLUTION = CPathFinder::PATH_RESOLUTION;
 
 
-
-CPathManager* pathManager = 0;
 
 CPathManager::CPathManager()
 {
@@ -387,13 +386,6 @@ void CPathManager::DeletePath(unsigned int pathId) {
 }
 
 
-/*
-Convert a 2xfloat3-defined rectangle into a square-based rectangle.
-*/
-void CPathManager::TerrainChange(float3 upperCorner, float3 lowerCorner) {
-	TerrainChange((unsigned int)(upperCorner.x / SQUARE_SIZE), (unsigned int)(upperCorner.z / SQUARE_SIZE), (unsigned int)(lowerCorner.x / SQUARE_SIZE), (int)(lowerCorner.z / SQUARE_SIZE));
-}
-
 
 /*
 Tells estimators about changes in or on the map.
@@ -528,7 +520,7 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 
 
 
-boost::uint32_t CPathManager::GetPathCheckSum()
+boost::uint32_t CPathManager::GetPathCheckSum() const
 {
 	return (pe->GetPathChecksum() + pe2->GetPathChecksum());
 }

@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+#include "mmgr.h"
 #include "creg/STL_List.h"
-#include "float3.h"
-#include "Game/Camera.h"
+#include "WeaponDefHandler.h"
+#include "Weapon.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
-#include "LogOutput.h"
+#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
-#include "myMath.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -16,17 +16,16 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
-#include "Sync/SyncTracer.h"
-#include "Sound/IEffectChannel.h"
-#include "EventHandler.h"
-#include "WeaponDefHandler.h"
-#include "Weapon.h"
-#include "mmgr.h"
+#include "System/EventHandler.h"
+#include "System/float3.h"
+#include "System/myMath.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/Sound/IEffectChannel.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
@@ -415,8 +414,6 @@ void CWeapon::Update()
 			weaponDir = owner->frontdir * weaponDir.z + owner->updir * weaponDir.y + owner->rightdir * weaponDir.x;
 			weaponDir.SafeNormalize();
 
-	//		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
-
 			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
 				if (owner->isCloaked) {
 					owner->isCloaked = false;
@@ -560,14 +557,17 @@ void CWeapon::HoldFire()
 
 
 
-inline bool CWeapon::ShouldCheckForNewTarget() const
+inline bool CWeapon::AllowWeaponTargetCheck() const
 {
+	if (luaRules && luaRules->AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id)) {
+		return true;
+	}
+
 	if (weaponDef->noAutoTarget) { return false; }
 	if (owner->fireState < 2)    { return false; }
 	if (haveUserTarget)          { return false; }
 
 	if (targetType == Target_None) { return true; }
-
 	if (avoidTarget)             { return true; }
 
 	if (targetType == Target_Unit) {
@@ -694,44 +694,41 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 
 
-/*		owner->fireState>=2 && !haveUserTarget &&
-	if (!weaponDef->noAutoTarget && !noAutoTargetOverride) {
-		    ((targetType == Target_None) ||
-		     ((targetType == Target_Unit) &&
-		      ((targetUnit->category & badTargetCategory) ||
-		       (targetUnit->neutral && (owner->fireState < 3)))) ||
-		     (gs->frameNum > lastTargetRetry + 65))) {
-*/
-
-	if (!noAutoTargetOverride && ShouldCheckForNewTarget()) {
+	if (!noAutoTargetOverride && AllowWeaponTargetCheck()) {
 		lastTargetRetry = gs->frameNum;
-		std::map<float, CUnit*> targets;
-		helper->GenerateTargets(this, targetUnit, targets);
 
-		for (std::map<float,CUnit*>::iterator ti=targets.begin();ti!=targets.end();++ti) {
-			if (ti->second->neutral && (owner->fireState < 3)) {
+		std::multimap<float, CUnit*> targets;
+		helper->GenerateWeaponTargets(this, targetUnit, targets);
+
+		for (std::multimap<float, CUnit*>::const_iterator ti = targets.begin(); ti != targets.end(); ++ti) {
+			CUnit* nextTarget = ti->second;
+
+			if (nextTarget->neutral && (owner->fireState < 3)) {
 				continue;
 			}
-			if (targetUnit && (ti->second->category & badTargetCategory)) {
+			if (targetUnit && (nextTarget->category & badTargetCategory)) {
 				continue;
 			}
 
-			float3 tp =
-				ti->second->midPos +
-				errorVector * (weaponDef->targetMoveError * GAME_SPEED * ti->second->speed.Length() * (1.0f - owner->limExperience));
-			const float appHeight = ground->GetApproximateHeight(tp.x, tp.z) + 2.0f;
+			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTarget->speed.Length();
+			const float weaponError = weaponLead * (1.0f - owner->limExperience);
 
-			if (tp.y < appHeight) {
-				tp.y = appHeight;
+			float3 nextTargetPos = nextTarget->midPos + (errorVector * weaponError);
+
+			const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
+
+			if (nextTargetPos.y < appHeight) {
+				nextTargetPos.y = appHeight;
 			}
 
-			if (TryTarget(tp, false, ti->second)) {
+			if (TryTarget(nextTargetPos, false, nextTarget)) {
 				if (targetUnit) {
 					DeleteDeathDependence(targetUnit);
 				}
+
 				targetType = Target_Unit;
-				targetUnit = ti->second;
-				targetPos = tp;
+				targetUnit = nextTarget;
+				targetPos = nextTargetPos;
 
 				AddDeathDependence(targetUnit);
 				break;

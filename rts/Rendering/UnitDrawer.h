@@ -135,7 +135,6 @@ public:
 	const CUnit* volatile mt_excludeUnit;
 
 	bool showHealthBars;
-	GML_VECTOR<CUnit*> drawStat;
 
 	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
 		CUnitDrawer* const ud = (CUnitDrawer*) c;
@@ -172,7 +171,8 @@ private:
 	inline void DrawUnitModel(CUnit*);
 	void DrawUnitNow(CUnit*);
 
-	void UpdateDrawPos(CUnit*);
+	void UpdateUnitIconState(CUnit*);
+	void UpdateUnitDrawPos(CUnit*);
 
 	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
 	void SetupBasicS3OTexture0(void) const;
@@ -181,10 +181,10 @@ private:
 	void CleanupBasicS3OTexture0(void) const;
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int);
-	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int, bool);
+	void DrawCloakedUnit(CUnit*, int, bool);
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
+	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 
@@ -213,7 +213,10 @@ private:
 	// buildings that left LOS but are still alive
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
-	GML_VECTOR<CUnit*> drawIcon;
+	std::set<CUnit*> drawIcon;
+#ifdef USE_GML
+	std::set<CUnit*> drawStat;
+#endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 };

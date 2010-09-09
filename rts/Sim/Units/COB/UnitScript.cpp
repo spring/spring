@@ -1147,11 +1147,11 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return 0;
 	}
 	case SET_WEAPON_UNIT_TARGET: {
-		const int weaponID = p1 - 1;
-		const int targetID = p2;
+		const unsigned int weaponID = p1 - 1;
+		const unsigned int targetID = p2;
 		const bool userTarget = !!p3;
 
-		if ((weaponID < 0) || (static_cast<size_t>(weaponID) >= unit->weapons.size())) {
+		if (weaponID >= unit->weapons.size()) {
 			return 0;
 		}
 
@@ -1161,13 +1161,10 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		}
 
-		CUnit* target = uh->GetUnit(targetID);
-
-		if (target != NULL) {
-			return weapon->AttackUnit(target, userTarget) ? 1 : 0;
-		}
-
-		return 0;
+		//! if targetID is 0, just sets weapon->haveUserTarget
+		//! to false (and targetType to None) without attacking
+		CUnit* target = (targetID > 0)? uh->GetUnit(targetID): NULL;
+		return (weapon->AttackUnit(target, userTarget) ? 1 : 0);
 	}
 	case SET_WEAPON_GROUND_TARGET: {
 		const int weaponID = p1 - 1;
@@ -1200,7 +1197,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case FLANK_B_MODE:
 		return unit->flankingBonusMode;
 	case FLANK_B_DIR:
-		switch(p1){
+		switch (p1) {
 			case 1: return int(unit->flankingBonusDir.x * COBSCALE);
 			case 2: return int(unit->flankingBonusDir.y * COBSCALE);
 			case 3: return int(unit->flankingBonusDir.z * COBSCALE);
@@ -1217,7 +1214,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case FLANK_B_MIN_DAMAGE:
 		return int((unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage) * COBSCALE);
 	case KILL_UNIT: {
-		CUnit* u = uh->GetUnit(p1);
+		//! ID 0 is reserved for the script's owner
+		CUnit* u = (p1 > 0)? uh->GetUnit(p1): this->unit;
 
 		if (u == NULL) {
 			return 0;

@@ -143,12 +143,52 @@ int CAIAICallback::GetPlayerTeam(int player) {
 	return sAICallback->Clb_Game_getPlayerTeam(teamId, player);
 }
 
-const char* CAIAICallback::GetTeamSide(int team) {
-	return sAICallback->Clb_Game_getTeamSide(teamId, team);
+const char* CAIAICallback::GetTeamSide(int otherTeamId) {
+	return sAICallback->Clb_Game_getTeamSide(teamId, otherTeamId);
 }
 
-int CAIAICallback::GetTeamAllyTeam(int team) {
-	return sAICallback->Clb_Game_getTeamAllyTeam(teamId, team);
+int CAIAICallback::GetTeamAllyTeam(int otherTeamId) {
+	return sAICallback->Clb_Game_getTeamAllyTeam(teamId, otherTeamId);
+}
+
+float CAIAICallback::GetTeamMetalCurrent(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceCurrent(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalIncome(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceIncome(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalUsage(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceUsage(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalStorage(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceStorage(teamId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamEnergyCurrent(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceCurrent(teamId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyIncome(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceIncome(teamId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyUsage(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceUsage(teamId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyStorage(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, teamId);
+	return sAICallback->Clb_Game_getTeamResourceStorage(teamId, otherTeamId, e);
 }
 
 bool CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
@@ -404,7 +444,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->turnInPlace = sAICallback->Clb_UnitDef_isTurnInPlace(teamId, unitDefId);
 		unitDef->upright = sAICallback->Clb_UnitDef_isUpright(teamId, unitDefId);
 		unitDef->collide = sAICallback->Clb_UnitDef_isCollide(teamId, unitDefId);
-		unitDef->controlRadius = sAICallback->Clb_UnitDef_getControlRadius(teamId, unitDefId);
 		unitDef->losRadius = sAICallback->Clb_UnitDef_getLosRadius(teamId, unitDefId);
 		unitDef->airLosRadius = sAICallback->Clb_UnitDef_getAirLosRadius(teamId, unitDefId);
 		unitDef->losHeight = sAICallback->Clb_UnitDef_getLosHeight(teamId, unitDefId);
@@ -1673,13 +1712,15 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 				cppCmdData->rayLen,
 				cppCmdData->srcUID,
 				cppCmdData->hitUID,
-				cppCmdData->flags
+				cppCmdData->flags,
+				cppCmdData->hitFID
 			};
 
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY, &cCmdData);
 
 			cppCmdData->rayLen = cCmdData.rayLen;
 			cppCmdData->hitUID = cCmdData.hitUID;
+			cppCmdData->hitFID = cCmdData.hitFID;
 			break;
 		}
 

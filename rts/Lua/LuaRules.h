@@ -58,6 +58,17 @@ class CLuaRules : public CLuaHandleSynced
 		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
 		             int& argsCount, int args[MAX_LUA_COB_ARGS]);
 
+		bool AllowWeaponTargetCheck(
+			unsigned int attackerID,
+			unsigned int attackerWeaponNum,
+			unsigned int attackerWeaponDefID);
+		bool AllowWeaponTarget(
+			unsigned int attackerID,
+			unsigned int targetID,
+			unsigned int attackerWeaponNum,
+			unsigned int attackerWeaponDefID,
+			float* targetPriority);
+
 		bool UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
                              float damage, int weaponID, bool paralyzer,
                              float* newDamage, float* impulseMult);
@@ -96,11 +107,14 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveAllowStartPosition;
 		bool haveMoveCtrlNotify;
 		bool haveTerraformComplete;
+		bool haveUnitPreDamaged;
+		bool haveShieldPreDamaged;
+		bool haveAllowWeaponTargetCheck;
+		bool haveAllowWeaponTarget;
+
 		bool haveDrawUnit;
 		bool haveDrawFeature;
 		bool haveAICallIn;
-		bool haveUnitPreDamaged;
-		bool haveShieldPreDamaged;
 
 	private:
 		static const int* currentCobArgs;

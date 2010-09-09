@@ -40,7 +40,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"

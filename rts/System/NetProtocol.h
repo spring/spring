@@ -62,7 +62,7 @@ public:
 	
 	Receives only one message at a time (even if there are more in the recieve buffer), so call this until you get a 0 in return. When a demo recorder is present it will be recorded.
 	 */
-	boost::shared_ptr<const netcode::RawPacket> GetData();
+	boost::shared_ptr<const netcode::RawPacket> GetData(int framenum);
 	
 	/**
 	@brief Send a message to the server

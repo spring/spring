@@ -1114,6 +1114,7 @@ struct STraceRayCommand {
 	int srcUID;
 	int hitUID;
 	int flags;
+	int hitFID;
 }; // COMMAND_TRACE_RAY
 
 /**

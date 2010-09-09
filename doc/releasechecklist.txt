@@ -35,7 +35,7 @@ Portable package
 
 One way to make it is (really, *really* needs to be improved & automated):
 
-1) install in wine, do not touch the install (don't run anything in it)
+1) install in wine (might use installer.exe /S, unattended install mode), do not touch the install (don't run anything in it)
 2) add empty springsettings.cfg and springlobby.conf in the dir
 3) then rename that dir to spring-VERSION (see previous portable package and update this file :-))
 4) zip that dir and upload

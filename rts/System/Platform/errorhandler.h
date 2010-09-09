@@ -17,9 +17,15 @@
 #define MBF_EXCL  4
 
 #if defined __GNUC__ && (__GNUC__ >= 4)
-	#define NO_RETURN __attribute__ ((noreturn))
+	#define NO_RETURN_POSTFIX __attribute__ ((noreturn))
 #else
-	#define NO_RETURN
+	#define NO_RETURN_POSTFIX
+#endif
+
+#if defined _MSC_VER
+	#define NO_RETURN_PREFIX __declspec(noreturn)
+#else
+	#define NO_RETURN_PREFIX
 #endif
 
 // legacy support define
@@ -34,7 +40,7 @@
  *                 - MB_EXCL : Warning
  *                 - MB_INFO : Info
  */
-void ErrorMessageBox(const std::string msg, const std::string caption, unsigned int flags = MBF_OK) NO_RETURN;
+NO_RETURN_PREFIX void ErrorMessageBox(const std::string msg, const std::string caption, unsigned int flags = MBF_OK) NO_RETURN_POSTFIX;
 
 
 /**

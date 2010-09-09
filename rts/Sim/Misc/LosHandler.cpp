@@ -8,13 +8,13 @@
 #include <cstring>
 
 #include "LosHandler.h"
-
 #include "ModInfo.h"
+
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Map/ReadMap.h"
-#include "TimeProfiler.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
+#include "System/TimeProfiler.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_List.h"
 
@@ -42,11 +42,13 @@ CR_REG_METADATA(LosInstance,(
 
 void CLosHandler::PostLoad()
 {
-	for (int a = 0; a < 2309; ++a)
-		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li)
+	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
+		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
 			if ((*li)->refCount) {
 				LosAdd(*li);
 			}
+		}
+	}
 }
 
 CR_REG_METADATA(CLosHandler,(
@@ -60,11 +62,6 @@ CR_REG_METADATA(CLosHandler,(
 CR_REG_METADATA_SUB(CLosHandler,DelayedInstance,(
 		CR_MEMBER(instance),
 		CR_MEMBER(timeoutTime)));
-/*
-CR_REG_METADATA_SUB(CLosHandler,CPoint,(
-		CR_MEMBER(x),
-		CR_MEMBER(y)));
-*/
 
 
 //////////////////////////////////////////////////////////////////////
@@ -101,9 +98,8 @@ CLosHandler::CLosHandler() :
 
 CLosHandler::~CLosHandler()
 {
-	std::list<LosInstance*>::iterator li;
-	for(int a=0;a<2309;++a){
-		for(li=instanceHash[a].begin();li!=instanceHash[a].end();++li){
+	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
+		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
 			LosInstance* i = *li;
 			i->_DestructInstance(i);
 			mempool.Free(i, sizeof(LosInstance));
@@ -113,25 +109,26 @@ CLosHandler::~CLosHandler()
 }
 
 
-void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
+void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 {
-	SCOPED_TIMER("Los");
-	const float3& losPos = unit->pos;
+	SCOPED_TIMER("LOS");
 
-	const int allyteam = unit->allyteam;
-	unit->lastLosUpdate = gs->frameNum;
-
-	if (unit->losRadius <= 0) {
+	if (unit->losRadius <= 0 && unit->airLosRadius <= 0) {
 		return;
 	}
 
-	const int baseX = max(0, min(losSizeX - 1, (int)(losPos.x * invLosDiv)));
-	const int baseY = max(0, min(losSizeY - 1, (int)(losPos.z * invLosDiv)));
-	const int baseSquare = baseY * losSizeX + baseX;
-	const int baseAirX = max(0, min(airSizeX - 1, (int)(losPos.x * invAirDiv)));
-	const int baseAirY = max(0, min(airSizeY - 1, (int)(losPos.z * invAirDiv)));
+	const float3& losPos = unit->pos;
+	const int allyteam = unit->allyteam;
 
-	LosInstance* instance;
+	unit->lastLosUpdate = gs->frameNum;
+
+	const int baseX = max(0, min(losSizeX - 1, int(losPos.x * invLosDiv)));
+	const int baseY = max(0, min(losSizeY - 1, int(losPos.z * invLosDiv)));
+	const int baseSquare = baseY * losSizeX + baseX;
+	const int baseAirX = max(0, min(airSizeX - 1, int(losPos.x * invAirDiv)));
+	const int baseAirY = max(0, min(airSizeY - 1, int(losPos.z * invAirDiv)));
+
+	LosInstance* instance = NULL;
 	if (redoCurrent) {
 		if (!unit->los) {
 			return;
@@ -148,8 +145,10 @@ void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 		if (unit->los && (unit->los->baseSquare == baseSquare)) {
 			return;
 		}
+
 		FreeInstance(unit->los);
-		int hash = GetHashNum(unit);
+		const int hash = GetHashNum(unit);
+
 		std::list<LosInstance*>::iterator lii;
 		for (lii = instanceHash[hash].begin(); lii != instanceHash[hash].end(); ++lii) {
 			if ((*lii)->baseSquare == baseSquare         &&
@@ -162,9 +161,19 @@ void CLosHandler::MoveUnit(CUnit *unit, bool redoCurrent)
 				return;
 			}
 		}
-		instance=new(mempool.Alloc(sizeof(LosInstance))) LosInstance(unit->losRadius, unit->airLosRadius, allyteam, int2(baseX,baseY), baseSquare, int2(baseAirX, baseAirY), hash, unit->losHeight);
+
+		instance = new(mempool.Alloc(sizeof(LosInstance))) LosInstance(
+			unit->losRadius,
+			unit->airLosRadius,
+			allyteam,
+			int2(baseX,baseY),
+			baseSquare,
+			int2(baseAirX, baseAirY),
+			hash, unit->losHeight
+		);
+
 		instanceHash[hash].push_back(instance);
-		unit->los=instance;
+		unit->los = instance;
 	}
 
 	LosAdd(instance);
@@ -179,41 +188,49 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 	losAlgo.LosAdd(instance->basePos, instance->losSize, instance->baseHeight, instance->losSquares);
 
-	losMap[instance->allyteam].AddMapSquares(instance->losSquares, 1);
-	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, 1);
+	if (instance->losSize > 0) { losMap[instance->allyteam].AddMapSquares(instance->losSquares, 1); }
+	if (instance->airLosSize > 0) { airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, 1); }
 }
 
 
 void CLosHandler::FreeInstance(LosInstance* instance)
 {
-	if(instance==0)
+	if (instance == 0)
 		return;
+
 	instance->refCount--;
-	if(instance->refCount==0){
+
+	if (instance->refCount == 0) {
 		CleanupInstance(instance);
-		if(!instance->toBeDeleted){
-			instance->toBeDeleted=true;
+
+		if (!instance->toBeDeleted) {
+			instance->toBeDeleted = true;
 			toBeDeleted.push_back(instance);
 		}
-		if(instance->hashNum>=2310 || instance->hashNum<0){
-			logOutput.Print("bad los");
+
+		if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
+			logOutput.Print("[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)", instance->hashNum);
 		}
-		if(toBeDeleted.size()>500){
-			LosInstance* i=toBeDeleted.front();
+
+		if (toBeDeleted.size() > 500) {
+			LosInstance* i = toBeDeleted.front();
 			toBeDeleted.pop_front();
-//			logOutput.Print("del %i",i->hashNum);
-			if(i->hashNum>=2310 || i->hashNum<0){
-				logOutput.Print("bad los 2");
+
+			if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
+				logOutput.Print("[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)", i->hashNum);
 				return;
 			}
-			i->toBeDeleted=false;
-			if(i->refCount==0){
+
+			i->toBeDeleted = false;
+
+			if (i->refCount == 0) {
 				std::list<LosInstance*>::iterator lii;
-				for(lii=instanceHash[i->hashNum].begin();lii!=instanceHash[i->hashNum].end();++lii){
-					if((*lii)==i){
+
+				for (lii = instanceHash[i->hashNum].begin(); lii != instanceHash[i->hashNum].end(); ++lii) {
+					if ((*lii) == i) {
 						instanceHash[i->hashNum].erase(lii);
 						i->_DestructInstance(i);
-						mempool.Free(i,sizeof(LosInstance));
+						mempool.Free(i, sizeof(LosInstance));
 						break;
 					}
 				}
@@ -225,9 +242,10 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 
 int CLosHandler::GetHashNum(CUnit* unit)
 {
-	unsigned int t=unit->mapSquare*unit->losRadius+unit->allyteam;
-	t^=*(unsigned int*)&unit->losHeight;
-	return t%2309;
+	unsigned int t = unit->mapSquare * unit->losRadius + unit->allyteam;
+	t ^= *(unsigned int*) &unit->losHeight;
+	//! hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
+	return (t % LOSHANDLER_MAGIC_PRIME);
 }
 
 
@@ -242,14 +260,14 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 
 void CLosHandler::CleanupInstance(LosInstance* instance)
 {
-	losMap[instance->allyteam].AddMapSquares(instance->losSquares, -1);
-	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, -1);
+	if (instance->losSize > 0) { losMap[instance->allyteam].AddMapSquares(instance->losSquares, -1); }
+	if (instance->airLosSize > 0) { airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, -1); }
 }
 
 
 void CLosHandler::Update(void)
 {
-	while(!delayQue.empty() && delayQue.front().timeoutTime<gs->frameNum){
+	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
 		FreeInstance(delayQue.front().instance);
 		delayQue.pop_front();
 	}
@@ -259,8 +277,8 @@ void CLosHandler::Update(void)
 void CLosHandler::DelayedFreeInstance(LosInstance* instance)
 {
 	DelayedInstance di;
-	di.instance=instance;
-	di.timeoutTime=gs->frameNum+45;
+	di.instance = instance;
+	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
 
 	delayQue.push_back(di);
 }

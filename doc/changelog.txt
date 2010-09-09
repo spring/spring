@@ -1,5 +1,57 @@
 Spring change log
 
+0.82.4:
+Engine / General:
+ - fix demo desyncs if commands were issued during pause
+ - fix abnormal demo speed (during reconnect and temporary lags)
+ - fix demo runs away from local user
+ - fix mid-game join
+ - fix FullScreen mode under Linux
+ - fix KDE/GNOME detection for error message box
+ - fix another FPU reset in LuaLobby
+ - don't reload defaults each time /ctrlpanel command is used (behaves now the same way as /cmdcolors)
+ - speed up reflection pass a little
+ - disable heatmapping by default
+ - fix COB's KILL_UNIT for self-kills
+ - fix bugged default-argument passing in path-follower
+ - fix broken return-value handling for UnitPreDamaged
+ - OBJParser: deal with carriage returns
+ - fix holdSteady (and sweeping beamlaser) rotations
+ - fix SEGV when /give'ing features
+ - fix crash when linking grass shaders on non GLSL system
+ - fix specs do not see all features
+ - fix Projectiles do not show up for missile weapons or torpedoes
+ - fix crash on bad playername message
+ - disable team highlighting for spectators by default
+
+Lua
+ - fix incorrect ClipPlanes in DrawInMinimap if gl.SlaveMiniMap is used
+ - fix metal-maker widget
+
+Engine / AI:
+ - fix crash on capture from/by AI
+ - fix Python AI Interface
+ - AAI support version independent mod config files, for example BA.cfg
+
+Engine / Dedicated server:
+ - fix/re-add sync-check
+ - possibly fix crash when sending data to improperly-connected autohost socket
+
+Unitsync:
+ - add support for more then 16 start positions
+
+Installer:
+ - fix checks for installed .Net version
+ - add SpringDownloader desktop shortcut
+
+CMake:
+ - fix _make install-spring_ to work after initial configure
+ - fix windows linking (related to -lws2_32)
+
+Documentation:
+ - updated man pages: spring & spring-dedicated
+ - new man pages: spring-headless & spring-multithreaded
+
 0.82.3:
 Engine / General:
  - rebuild because of stale base content packages
