@@ -245,16 +245,26 @@ void CEndGameBox::Draw()
 
 	bool iWon = false;
 	bool undecidedEnd = winners.size() == 0;
+	bool neverplayed = gu->myPlayingAllyTeam < 0;
+	std::string winnersText = "Game Over, winning allyTeams are:";
 	if (!undecidedEnd) {
 		for ( std::vector<unsigned char>::iterator itor = winners.begin(); itor != winners.end(); itor++ ) {
-			if ( *itor == gu->myPlayingAllyTeam ) {
+			const int winner = (int)*itor;
+			if ( !neverplayed && winner == gu->myPlayingAllyTeam ) {
+				// we actually played and won!
 				iWon = true;
 				break;
 			}
+			char buffer [30];
+			int lenght = sprintf(buffer, " %d", winner);
+			std::string winnerString( buffer, lenght );
+			winnersText += winnerString;
 		}
 	}
 	if (undecidedEnd) {
 		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Game result was undecided");
+	} else if (neverplayed) {
+		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, winnersText.c_str());
 	} else if (!iWon) {
 		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "You lost the game");
 	} else {
