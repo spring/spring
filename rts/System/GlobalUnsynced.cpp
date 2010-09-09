@@ -63,6 +63,8 @@ CGlobalUnsynced::CGlobalUnsynced()
 	myPlayerNum = 0;
 	myTeam = 1;
 	myAllyTeam = 1;
+	myPlayingTeam = -1;
+	myPlayingAllyTeam = -1;
 
 	spectating           = false;
 	spectatingFullView   = false;
@@ -132,10 +134,10 @@ void CGlobalUnsynced::SetMyPlayer(const int mynumber)
 {
 	myPlayerNum = mynumber;
 	CPlayer* Player = playerHandler->Player(myPlayerNum);
-	myPlayingTeam = myTeam = Player->team;
+	myTeam = Player->team;
 	if(myTeam >= teamHandler->ActiveTeams() || myTeam < 0)
 		throw content_error("Invalid MyTeam in player setup");
-	myPlayingAllyTeam = myAllyTeam = teamHandler->AllyTeam(myTeam);
+	myAllyTeam = teamHandler->AllyTeam(myTeam);
 	if(myAllyTeam >= teamHandler->ActiveAllyTeams() || myAllyTeam < 0)
 		throw content_error("Invalid MyAllyTeam in player setup");
 
