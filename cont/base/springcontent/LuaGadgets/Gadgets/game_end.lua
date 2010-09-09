@@ -80,6 +80,8 @@ function CheckSingleAllyVictoryEnd()
 	return false
 end
 
+--FIXME: this code seems to ignore bots when this option is used
+-- I suspect a spring bug in AreTeamsAllied when handling bots
 function CheckSharedAllyVictoryEnd()
 	-- we have to cross check all the alliances
 	for _,firstAllyTeamID in ipairs(allyTeams) do
