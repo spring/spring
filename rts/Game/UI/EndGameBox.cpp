@@ -247,7 +247,7 @@ void CEndGameBox::Draw()
 	bool undecidedEnd = winners.size() == 0;
 	if (!undecidedEnd) {
 		for ( std::vector<unsigned char>::iterator itor = winners.begin(); itor != winners.end(); itor++ ) {
-			if ( *itor == gu->myAllyTeam ) {
+			if ( *itor == gu->myPlayingAllyTeam ) {
 				iWon = true;
 				break;
 			}

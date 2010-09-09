@@ -62,6 +62,7 @@ public:
 
 	/**
 	 * @brief my team
+	 * @note changes when changing spectated team
 	 *
 	 * Local player's team
 	 */
@@ -69,10 +70,27 @@ public:
 
 	/**
 	 * @brief my ally team
+	 * @note changes when changing spectated team
 	 *
 	 * Local player's ally team
 	 */
 	int myAllyTeam;
+
+	/**
+	 * @brief my team used when playing
+	 * @note changes only from TEAMMSG_JOIN_TEAM and SetMyPlayer
+	 *
+	 * Local player's team
+	 */
+	int myPlayingTeam;
+
+	/**
+	 * @brief my ally team
+	 * @note changes only from TEAMMSG_JOIN_TEAM and SetMyPlayer
+	 *
+	 * Local player's ally team
+	 */
+	int myPlayingAllyTeam;
 
 
 	/**
