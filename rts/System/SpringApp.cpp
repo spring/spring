@@ -992,6 +992,8 @@ HWND mainWnd = NULL;
 #else
 #include <X11/Xlib.h>
 #include <GL/glx.h>
+GLXContext mainRC = NULL;
+Display* dpy = NULL;
 #endif
 
 boost::barrier barr(2);
@@ -1017,7 +1019,11 @@ bool gmlInitShareListsDraw() {
 		if(!wglMakeCurrent(mainDC, mainRC)) 
 			throw opengl_error("Render context enable failed");
 #else
-		// TODO
+		mainRC = glXGetCurrentContext();
+
+		barr.wait(); //
+
+		barr.wait(); //
 #endif
 	} catch(opengl_error &e) {
 		gmlProcessor->threads[GML_SIM_THREAD_NUM]->interrupt();
@@ -1054,7 +1060,29 @@ bool gmlInitShareListsSim() {
 
 		barr.wait(); //
 #else
-		// TODO
+		barr.wait(); //
+
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if(!SDL_GetWMInfo(&info))
+			throw opengl_error("Get main window failed");
+		dpy = info.gfxdisplay;
+		int nelements;
+		const int fbattrib[] = {None};
+		GLXFBConfig* fbcfg = glXChooseFBConfig(dpy, DefaultScreen(dpy), (const int*)fbattrib, &nelements);
+		if (!fbcfg)
+			throw opengl_error("Choose framebuffer config failed");
+		const int pbuf_attrib[] = {GLX_PBUFFER_WIDTH, 1, GLX_PBUFFER_HEIGHT, 1,	GLX_PRESERVED_CONTENTS, 0, None};
+		GLXPbuffer pbuf = glXCreatePbuffer(dpy, *fbcfg, (const int*)pbuf_attrib);
+		if(!pbuf)
+			throw opengl_error("Create off-screen buffer failed");
+		GLXContext workerRC = glXCreateNewContext(dpy, *fbcfg, GLX_RGBA_BIT, mainRC, true);
+		if(!workerRC)
+			throw opengl_error("Create worker rendering context failed");
+		if(!glXMakeCurrent(dpy, pbuf, workerRC))
+			throw opengl_error("Render context setup failed");
+
+		barr.wait(); //
 #endif
 	} catch(opengl_error &e) {
 		Threading::SetThreadError(e.what());
@@ -1076,7 +1104,13 @@ bool gmlCleanupShareListsSim() {
 		if(mainWnd && curDC && !ReleaseDC(mainWnd, curDC))
 			throw opengl_error("Device context release failed");
 #else
-		// TODO
+		GLXContext curRC = glXGetCurrentContext();
+		if(dpy && !glXMakeCurrent(dpy, None, NULL))
+			throw opengl_error("Render context disable failed");
+		if(dpy && curRC && !glXDestroyContext(dpy, curRC))
+			throw opengl_error("Render context cleanup failed");
+		if(dpy && pbuf && !glXDestroyPbuffer(dpy, pbuf))
+			throw opengl_error("Off-screen buffer cleanup failed");
 #endif
 	} catch(opengl_error &e) {
 		Threading::SetThreadError(e.what());
