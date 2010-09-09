@@ -47,9 +47,11 @@ COffscreenGLContext::COffscreenGLContext()
 
 
 	//! share the GL resources (textures,DLists,shaders,...)
-	wglMakeCurrent(NULL, NULL);
-	bool status = wglShareLists(mainRC, offscreenRC);
-	wglMakeCurrent(hdc, mainRC); 
+	if(!wglMakeCurrent(NULL, NULL))
+		throw opengl_error("Could not deactivate rendering context");
+	int status = wglShareLists(mainRC, offscreenRC);
+	if(!wglMakeCurrent(hdc, mainRC))
+		throw opengl_error("Could not activate rendering context");
 
 	if (!status) {
 		DWORD err = GetLastError();
@@ -63,15 +65,18 @@ COffscreenGLContext::COffscreenGLContext()
 void COffscreenGLContext::WorkerThreadPost()
 {
 	//! activate the offscreen GL context in the worker thread
-	wglMakeCurrent(hdc, offscreenRC);
+	if(!wglMakeCurrent(hdc, offscreenRC))
+		throw opengl_error("Could not activate worker rendering context");
 }
 
 
 void COffscreenGLContext::WorkerThreadFree()
 {
 	//! must run in the same thread as the offscreen GL context!
-	wglMakeCurrent(NULL, NULL); 
-	wglDeleteContext(offscreenRC);
+	if(!wglMakeCurrent(NULL, NULL))
+		throw opengl_error("Could not deactivate worker rendering context");
+	if(!wglDeleteContext(offscreenRC))
+		throw opengl_error("Could not delete off-screen rendering context");
 }
 
 

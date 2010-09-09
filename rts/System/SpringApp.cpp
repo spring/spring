@@ -982,155 +982,14 @@ void SpringApp::Startup()
 }
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-
-#ifdef WIN32
-#include <wingdi.h>
-HGLRC mainRC = NULL;
-HWND mainWnd = NULL;
-//PIXELFORMATDESCRIPTOR pfd;
-//int iPixelFormat;
-#else
-#include <X11/Xlib.h>
-#include <GL/glx.h>
-GLXContext mainRC = NULL;
-Display* dpy = NULL;
-#endif
-
-boost::barrier barr(2);
-
-bool gmlInitShareListsDraw() {
-	try {
-#ifdef WIN32
-		HDC mainDC = wglGetCurrentDC();
-		if(!mainDC)
-			throw opengl_error("Empty main device context");
-		//	iPixelFormat = GetPixelFormat(mainDC, &pfd);
-
-		mainRC = wglGetCurrentContext();
-		if(!mainRC)
-			throw opengl_error("Empty main rendering context");
-		if(!wglMakeCurrent(mainDC, NULL))
-			throw opengl_error("Render context disable failed");
-
-		barr.wait(); //
-
-		barr.wait(); //
-
-		if(!wglMakeCurrent(mainDC, mainRC)) 
-			throw opengl_error("Render context enable failed");
-#else
-/*
-		mainRC = glXGetCurrentContext();
-*/
-		barr.wait(); //
-
-		barr.wait(); //
-#endif
-	} catch(opengl_error &e) {
-		gmlProcessor->threads[GML_SIM_THREAD_NUM]->interrupt();
-		throw e;
-		return false;
-	}
-	return true;
-}
-
-
-bool gmlInitShareListsSim() {
-	try {
-#ifdef WIN32
-		barr.wait(); //
-
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		if ( SDL_GetWMInfo(&info) < 0 )
-			throw opengl_error("Get main window failed");
-		mainWnd = info.window;
-		HDC workerDC = GetDC(mainWnd);
-		if(!workerDC)
-			throw opengl_error("Create device context failed");
-		//	if(!SetPixelFormat(workerDC,iPixelFormat,&pfd))
-		//		throw opengl_error("Pixel format setup failed");
-
-		HGLRC workerRC = wglCreateContext(workerDC);
-		if(!workerRC)
-			throw opengl_error("Create worker rendering context failed");
-		if(!wglShareLists(mainRC, workerRC))
-			throw opengl_error("GL list sharing failed");
-		if(!wglMakeCurrent(workerDC, workerRC))
-			throw opengl_error("Render context setup failed");
-
-		barr.wait(); //
-#else
-		barr.wait(); //
-/*
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-		if(!SDL_GetWMInfo(&info))
-			throw opengl_error("Get main window failed");
-		dpy = info.gfxdisplay;
-		int nelements;
-		const int fbattrib[] = {None};
-		GLXFBConfig* fbcfg = glXChooseFBConfig(dpy, DefaultScreen(dpy), (const int*)fbattrib, &nelements);
-		if (!fbcfg)
-			throw opengl_error("Choose framebuffer config failed");
-		const int pbuf_attrib[] = {GLX_PBUFFER_WIDTH, 1, GLX_PBUFFER_HEIGHT, 1,	GLX_PRESERVED_CONTENTS, 0, None};
-		GLXPbuffer pbuf = glXCreatePbuffer(dpy, *fbcfg, (const int*)pbuf_attrib);
-		if(!pbuf)
-			throw opengl_error("Create off-screen buffer failed");
-		GLXContext workerRC = glXCreateNewContext(dpy, *fbcfg, GLX_RGBA_BIT, mainRC, true);
-		if(!workerRC)
-			throw opengl_error("Create worker rendering context failed");
-		if(!glXMakeCurrent(dpy, pbuf, workerRC))
-			throw opengl_error("Render context setup failed");
-*/
-		barr.wait(); //
-#endif
-	} catch(opengl_error &e) {
-		Threading::SetThreadError(e.what());
-		Threading::GetMainThread()->interrupt();
-		return false;
-	}
-	return true;
-}
-
-bool gmlCleanupShareListsSim() {
-	try {
-#ifdef WIN32
-		HDC curDC = wglGetCurrentDC();
-		HGLRC curRC = wglGetCurrentContext();
-		if(curDC && !wglMakeCurrent(curDC, NULL))
-			throw opengl_error("Render context disable failed");
-		if(curRC && !wglDeleteContext(curRC))
-			throw opengl_error("Render context cleanup failed");
-		if(mainWnd && curDC && !ReleaseDC(mainWnd, curDC))
-			throw opengl_error("Device context release failed");
-#else
-/*
-		GLXContext curRC = glXGetCurrentContext();
-		if(dpy && !glXMakeCurrent(dpy, None, NULL))
-			throw opengl_error("Render context disable failed");
-		if(dpy && curRC && !glXDestroyContext(dpy, curRC))
-			throw opengl_error("Render context cleanup failed");
-		if(dpy && pbuf && !glXDestroyPbuffer(dpy, pbuf))
-			throw opengl_error("Off-screen buffer cleanup failed");
-*/
-#endif
-	} catch(opengl_error &e) {
-		Threading::SetThreadError(e.what());
-		Threading::GetMainThread()->interrupt();
-		return false;
-	}
-	return true;
-}
-
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
 
 int SpringApp::Sim()
 {
 	try {
-		if(GML_SHARE_LISTS && !gmlInitShareListsSim())
-			throw 0;
+		if(GML_SHARE_LISTS)
+			ogc->WorkerThreadPost();
 
 		while(gmlKeepRunning && !gmlStartSim)
 			SDL_Delay(100);
@@ -1149,19 +1008,23 @@ int SpringApp::Sim()
 					GML_MSTMUTEX_LOCK(sim); // Sim
 
 					if(!activeController->Update())
-						throw 0;
+						return 0;
 				}
 
 				gmlProcessor->GetQueue();
 			}
 			boost::thread::yield();
 		}
-		throw 1;
-	} catch(int i) {
-		if(GML_SHARE_LISTS && !gmlCleanupShareListsSim())
-			return 0;
-		return i;
+
+		if(GML_SHARE_LISTS)
+			ogc->WorkerThreadFree();
+	} catch(opengl_error &e) {
+		Threading::SetThreadError(e.what());
+		Threading::GetMainThread()->interrupt();
+		return 0;
 	}
+
+	return 1;
 }
 #endif
 
@@ -1310,9 +1173,9 @@ int SpringApp::Run(int argc, char *argv[])
 #	if GML_ENABLE_SIM
 	gmlKeepRunning=1;
 	gmlStartSim=0;
+	if(GML_SHARE_LISTS)
+		ogc = new COffscreenGLContext();
 	gmlProcessor->AuxWork(&SpringApp::Simcb,this); // start sim thread
-	if(GML_SHARE_LISTS && !gmlInitShareListsDraw())
-		return -1;
 #	endif
 #endif
 	while (true) // end is handled by globalQuit
@@ -1344,6 +1207,8 @@ int SpringApp::Run(int argc, char *argv[])
 	gmlKeepRunning=0; // wait for sim to finish
 	while(!gmlProcessor->PumpAux())
 		boost::thread::yield();
+	if(GML_SHARE_LISTS)
+		delete ogc;
 	#endif
 	delete gmlProcessor;
 #endif

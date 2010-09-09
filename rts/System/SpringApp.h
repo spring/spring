@@ -5,6 +5,7 @@
 
 #include <string>
 #include <boost/cstdint.hpp>
+#include "System/OffscreenGLContext.h"
 
 class BaseCmd;
 class CGameController;
@@ -111,6 +112,8 @@ protected:
 	 * sim frame after which the last required draw was conducted
 	 */
 	int lastRequiredDraw;
+
+	COffscreenGLContext *ogc;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
