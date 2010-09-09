@@ -59,6 +59,7 @@
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/Threading.h"
 #include "System/Sound/ISound.h"
 
 #include "mmgr.h"
@@ -980,40 +981,151 @@ void SpringApp::Startup()
 	}
 }
 
-
-
-
 #if defined(USE_GML) && GML_ENABLE_SIM
+
+#ifdef WIN32
+#include <wingdi.h>
+#else
+#include <X11/Xlib.h>
+#include <GL/glx.h>
+#endif
+
+boost::barrier barr(2);
+//HDC mainDC = NULL;
+HGLRC mainRC = NULL;
+HWND mainWnd = NULL;
+//PIXELFORMATDESCRIPTOR pfd;
+//int iPixelFormat;
+
+bool gmlInitShareListsDraw() {
+	try {
+#ifdef WIN32
+		HDC mainDC = wglGetCurrentDC();
+		if(!mainDC)
+			throw opengl_error("Empty main device context");
+		//	iPixelFormat = GetPixelFormat(mainDC, &pfd);
+
+		mainRC = wglGetCurrentContext();
+		if(!mainRC)
+			throw opengl_error("Empty main rendering context");
+		if(!wglMakeCurrent(mainDC, NULL))
+			throw opengl_error("Render context disable failed");
+
+		barr.wait(); //
+
+		barr.wait(); //
+
+		if(!wglMakeCurrent(mainDC, mainRC)) 
+			throw opengl_error("Render context enable failed");
+#else
+		// TODO
+#endif
+	} catch(opengl_error &e) {
+		gmlProcessor->threads[GML_SIM_THREAD_NUM]->interrupt();
+		throw e;
+		return false;
+	}
+	return true;
+}
+
+
+bool gmlInitShareListsSim() {
+	try {
+#ifdef WIN32
+		barr.wait(); //
+
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if ( SDL_GetWMInfo(&info) < 0 )
+			throw opengl_error("Get main window failed");
+		mainWnd = info.window;
+		HDC workerDC = GetDC(mainWnd);
+		if(!workerDC)
+			throw opengl_error("Create device context failed");
+		//	if(!SetPixelFormat(workerDC,iPixelFormat,&pfd))
+		//		throw opengl_error("Pixel format setup failed");
+
+		HGLRC workerRC = wglCreateContext(workerDC);
+		if(!workerRC)
+			throw opengl_error("Create worker rendering context failed");
+		if(!wglShareLists(mainRC, workerRC))
+			throw opengl_error("GL list sharing failed");
+		if(!wglMakeCurrent(workerDC, workerRC))
+			throw opengl_error("Render context setup failed");
+
+		barr.wait(); //
+#else
+		// TODO
+#endif
+	} catch(opengl_error &e) {
+		Threading::SetThreadError(e.what());
+		Threading::GetMainThread()->interrupt();
+		return false;
+	}
+	return true;
+}
+
+bool gmlCleanupShareListsSim() {
+	try {
+#ifdef WIN32
+		HDC curDC = wglGetCurrentDC();
+		HGLRC curRC = wglGetCurrentContext();
+		if(curDC && !wglMakeCurrent(curDC, NULL))
+			throw opengl_error("Render context disable failed");
+		if(curRC && !wglDeleteContext(curRC))
+			throw opengl_error("Render context cleanup failed");
+		if(mainWnd && curDC && !ReleaseDC(mainWnd, curDC))
+			throw opengl_error("Device context release failed");
+#else
+		// TODO
+#endif
+	} catch(opengl_error &e) {
+		Threading::SetThreadError(e.what());
+		Threading::GetMainThread()->interrupt();
+		return false;
+	}
+	return true;
+}
+
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
 
 int SpringApp::Sim()
 {
-	while(gmlKeepRunning && !gmlStartSim)
-		SDL_Delay(100);
+	try {
+		if(GML_SHARE_LISTS && !gmlInitShareListsSim())
+			throw 0;
 
-	while(gmlKeepRunning) {
-		if(!gmlMultiThreadSim) {
-			CrashHandler::ClearSimWDT(true);
-			while(!gmlMultiThreadSim && gmlKeepRunning)
-				SDL_Delay(200);
-		}
-		else if (activeController) {
-			CrashHandler::ClearSimWDT();
-			gmlProcessor->ExpandAuxQueue();
+		while(gmlKeepRunning && !gmlStartSim)
+			SDL_Delay(100);
 
-			{
-				GML_MSTMUTEX_LOCK(sim); // Sim
-
-				if(!activeController->Update())
-					return 0;
+		while(gmlKeepRunning) {
+			if(!gmlMultiThreadSim) {
+				CrashHandler::ClearSimWDT(true);
+				while(!gmlMultiThreadSim && gmlKeepRunning)
+					SDL_Delay(200);
 			}
+			else if (activeController) {
+				CrashHandler::ClearSimWDT();
+				gmlProcessor->ExpandAuxQueue();
 
-			gmlProcessor->GetQueue();
+				{
+					GML_MSTMUTEX_LOCK(sim); // Sim
+
+					if(!activeController->Update())
+						throw 0;
+				}
+
+				gmlProcessor->GetQueue();
+			}
+			boost::thread::yield();
 		}
-		boost::thread::yield();
+		throw 1;
+	} catch(int i) {
+		if(GML_SHARE_LISTS && !gmlCleanupShareListsSim())
+			return 0;
+		return i;
 	}
-	return 1;
 }
 #endif
 
@@ -1163,6 +1275,8 @@ int SpringApp::Run(int argc, char *argv[])
 	gmlKeepRunning=1;
 	gmlStartSim=0;
 	gmlProcessor->AuxWork(&SpringApp::Simcb,this); // start sim thread
+	if(GML_SHARE_LISTS && !gmlInitShareListsDraw())
+		return -1;
 #	endif
 #endif
 	while (true) // end is handled by globalQuit
