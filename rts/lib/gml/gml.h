@@ -265,7 +265,7 @@ inline unsigned gmlGetTicks() {
 #if GML_CALL_DEBUG
 #define GML_EXPGEN_CHECK() \
 	extern volatile int gmlMultiThreadSim, gmlStartSim;\
-	if(gmlThreadNumber!=gmlThreadCount && gmlMultiThreadSim && gmlStartSim) {\
+	if(gmlThreadNumber != GML_SIM_THREAD_NUM && gmlMultiThreadSim && gmlStartSim) {\
 		logOutput.Print("GML error: Draw thread created ExpGenSpawnable (%s)", GML_CURRENT_LUA());\
 		if(gmlCurrentLuaState) luaL_error(gmlCurrentLuaState,"Invalid call");\
 	}

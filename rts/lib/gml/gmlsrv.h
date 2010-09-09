@@ -157,7 +157,7 @@ public:
 		if(inited) {
 			GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
 			BOOL_ dowait=TRUE;
-			for(int i=1; i<gmlThreadCount; ++i) {
+			for(int i=2; i<=gmlThreadCount; ++i) {
 				if(!threads[i]->joinable() || threads[i]->timed_join(boost::posix_time::milliseconds(10)))
 					dowait=FALSE;
 			}
@@ -165,7 +165,7 @@ public:
 			dorun=FALSE;
 			if(dowait)
 				Barrier.wait();
-			for(int i=1; i<gmlThreadCount; ++i) {
+			for(int i=2; i<=gmlThreadCount; ++i) {
 				if(threads[i]->joinable()) {
 					if(dowait)
 						threads[i]->join();
@@ -176,18 +176,19 @@ public:
 			}
 		}
 		if(auxinited) {
-			BOOL_ dowait=threads[gmlThreadCount]->joinable() && !threads[gmlThreadCount]->timed_join(boost::posix_time::milliseconds(10));
+			boost::thread *simthread = threads[GML_SIM_THREAD_NUM];
+			BOOL_ dowait=simthread->joinable() && !simthread->timed_join(boost::posix_time::milliseconds(10));
 			auxworker=NULL;
 			dorun=FALSE;
 			if(dowait)
 				AuxBarrier.wait();
-			if(threads[gmlThreadCount]->joinable()) {
+			if(simthread->joinable()) {
 				if(dowait)
-					threads[gmlThreadCount]->join();
-				else if(!threads[gmlThreadCount]->timed_join(boost::posix_time::milliseconds(100)))
-					threads[gmlThreadCount]->interrupt();
+					simthread->join();
+				else if(!simthread->timed_join(boost::posix_time::milliseconds(100)))
+					simthread->interrupt();
 			}
-			delete threads[gmlThreadCount];
+			delete simthread;
 		}
 	}
 
@@ -220,7 +221,7 @@ public:
 						gmlUpdateServers();
 					BOOL_ processed=FALSE;
 
-					for(int i=1; i<gmlThreadCount; ++i) {
+					for(int i=2; i<=gmlThreadCount; ++i) {
 						gmlQueue *qd=&gmlQueues[i];
 						if(qd->Reloc)
 							qd->Realloc();
@@ -261,12 +262,12 @@ public:
 //		set_threadnum(0);
 		gmlInit();
 
-		for(int i=1; i<gmlThreadCount; ++i)
+		for(int i=2; i<=gmlThreadCount; ++i)
 			threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
 #if GML_ENABLE_TLS_CHECK
 		for(int i=0; i<GML_MAX_NUM_THREADS; ++i)
 			boost::thread::yield();
-		if(gmlThreadNumber!=0) {
+		if(gmlThreadNumber != GML_DRAW_THREAD_NUM) {
 			handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 		}
 #endif
@@ -351,7 +352,7 @@ public:
 	}
 
 	void gmlClient() {
-		set_threadnum(++threadcnt);
+		set_threadnum(++threadcnt + 1);
 		streflop_init<streflop::Simple>();
 		while(dorun) {
 			gmlClientSub();
@@ -359,7 +360,7 @@ public:
 	}
 
 	void GetQueue() {
-		gmlQueue *qd=&gmlQueues[gmlThreadCount];
+		gmlQueue *qd=&gmlQueues[GML_SIM_THREAD_NUM];
 
 		if(!qd->WasSynced && qd->Write==qd->WritePos)
 			return;
@@ -384,7 +385,7 @@ public:
 			gmlUpdateServers();
 
 		while(AuxClientsReady<=3) {
-			gmlQueue *qd=&gmlQueues[gmlThreadCount];
+			gmlQueue *qd=&gmlQueues[GML_SIM_THREAD_NUM];
 			if(qd->Reloc)
 				qd->Realloc();
 			if(qd->GetRead()) {
@@ -409,7 +410,7 @@ public:
 		if(!auxinited) {
 			if(!inited)
 				WorkInit();
-			threads[gmlThreadCount]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClientAux, this));
+			threads[GML_SIM_THREAD_NUM]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClientAux, this));
 			auxinited=TRUE;
 		}
 		AuxBarrier.wait();
@@ -422,7 +423,7 @@ public:
 		if(!auxworker)
 			return;
 		
-		gmlQueue *qd=&gmlQueues[gmlThreadCount];
+		gmlQueue *qd=&gmlQueues[GML_SIM_THREAD_NUM];
 
 		qd->GetWrite(TRUE); 
 
@@ -440,7 +441,7 @@ public:
 		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 						&simthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 #endif
-		set_threadnum(gmlThreadCount);
+		set_threadnum(GML_SIM_THREAD_NUM);
 		streflop_init<streflop::Simple>();
 		while(dorun) {
 			gmlClientAuxSub();
