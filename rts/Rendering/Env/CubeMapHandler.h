@@ -20,8 +20,6 @@ public:
 	unsigned int GetReflectionTextureSize() const { return reflTexSize; }
 	unsigned int GetSpecularTextureSize() const { return specTexSize; }
 
-	static CubeMapHandler* GetInstance();
-
 private:
 	void CreateReflectionFace(unsigned int, const float3&, bool);
 	void CreateSpecularFace(unsigned int, int, const float3&, const float3&, const float3&, float);
@@ -39,6 +37,6 @@ private:
 	FBO reflectionCubeFBO;
 };
 
-#define cubeMapHandler (CubeMapHandler::GetInstance())
+extern CubeMapHandler *cubeMapHandler;
 
 #endif

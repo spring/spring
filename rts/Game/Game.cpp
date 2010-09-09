@@ -377,6 +377,7 @@ CGame::~CGame()
 
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
+	SafeDelete(cubeMapHandler);
 }
 
 
@@ -512,6 +513,7 @@ void CGame::LoadSimulation(const std::string& mapname)
 void CGame::LoadRendering()
 {
 	// rendering components
+	cubeMapHandler = new CubeMapHandler();
 	shadowHandler = new CShadowHandler();
 	groundDecals = new CGroundDecalHandler();
 

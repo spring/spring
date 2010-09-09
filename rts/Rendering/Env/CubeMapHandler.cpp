@@ -13,11 +13,7 @@
 #include "System/ConfigHandler.h"
 
 static char cameraMemBuf[sizeof(CCamera)];
-
-CubeMapHandler* CubeMapHandler::GetInstance() {
-	static CubeMapHandler cmh;
-	return &cmh;
-}
+CubeMapHandler *cubeMapHandler = NULL;
 
 CubeMapHandler::CubeMapHandler() {
 	envReflectionTexID = 0;
