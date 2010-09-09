@@ -6,7 +6,10 @@
 #include <boost/thread.hpp>
 
 namespace Threading {
-	void SetMainThreadID();
+	void SetMainThread(boost::thread *mt);
+	boost::thread *GetMainThread();
+	void SetThreadError(const std::string &s);
+	std::runtime_error GetThreadError();
 	bool IsMainThread();
 };
 

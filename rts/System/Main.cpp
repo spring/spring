@@ -27,10 +27,13 @@
 #include "Platform/Win/win32.h"
 #endif
 
+boost::thread *mainthread = NULL;
+int g_argc = 0;
+char** g_argv = NULL;
+int g_ret = 0;
 
 
-int Run(int argc, char* argv[])
-{
+void MainFunc() {
 #ifdef __MINGW32__
 	// For the MinGW backtrace() implementation we need to know the stack end.
 	{
@@ -40,23 +43,41 @@ int Run(int argc, char* argv[])
 	}
 #endif
 
-	Threading::SetMainThreadID();
+	Threading::SetMainThread(mainthread);
 
 #ifdef USE_GML
-	set_threadnum(0);
+	set_threadnum(GML_DRAW_THREAD_NUM);
   #if GML_ENABLE_TLS_CHECK
-	if (gmlThreadNumber != 0) {
+	if (gmlThreadNumber != GML_DRAW_THREAD_NUM) {
 		handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
   #endif
 #endif
 
-	try {
-		SpringApp app;
-		return app.Run(argc, argv);
-	} CATCH_SPRING_ERRORS
+	try  {
+		try {
+			SpringApp app;
+			g_ret = app.Run(g_argc, g_argv);
+		} CATCH_SPRING_ERRORS
+	} catch(boost::thread_interrupted const&) {
+		handleerror(NULL, Threading::GetThreadError().what(), "Thread error:", MBF_OK | MBF_EXCL);
+	}
 
-	return -1;
+	g_ret = -1;
+}
+
+
+
+int Run(int argc, char* argv[])
+{
+	g_argc = argc;
+	g_argv = argv;
+
+	mainthread = new boost::thread(&MainFunc);
+	mainthread->join();
+	delete mainthread;
+
+	return g_ret;
 }
 
 
