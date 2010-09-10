@@ -449,8 +449,13 @@ function store_classNamesAncestors() {
 	}
 
 	# store the root class
-	cls_implId_indicesArgs[myRootClass] = "";
-	cls_name_indicesArgs[myRootClass]   = "";
+	# These two may be set differently by scripts using this script.
+	if (!(myRootClass in cls_implId_indicesArgs)) {
+		cls_implId_indicesArgs[myRootClass] = "";
+	}
+	if (!(myRootClass in cls_name_indicesArgs)) {
+		cls_name_indicesArgs[myRootClass] = "";
+	}
 	cls_name_implIds[myRootClass ",*"]  = 1;
 	cls_name_implIds[myRootClass "," 0] = myRootClass;
 

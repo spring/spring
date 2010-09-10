@@ -32,7 +32,7 @@ BEGIN {
 	myNameSpace = "springai";
 	myClass = "AICallback";
 	myClassVar = "clb";
-	myWrapClass = "SSkirmishAICallback*";
+	myWrapClass = "SSkirmishAICallback";
 	myWrapVar = "innerCallback";
 	myBridgePrefix = "bridged__";
 	myAbstractAIClass = "AbstractAI";
@@ -89,6 +89,10 @@ function printHeader(outFile_h, namespace_h, className_h,
 			print("#include \"" implementsClass_h ".h\"") >> outFile_h;
 		}
 		print("") >> outFile_h;
+		if (className_h == "Wrapp" myRootClass) {
+			print("struct " myWrapClass ";") >> outFile_h;
+			print("") >> outFile_h;
+		}
 		print("namespace " myNameSpace " {") >> outFile_h;
 		print("") >> outFile_h;
 		print("/**") >> outFile_h;
@@ -108,11 +112,10 @@ function printHeader(outFile_h, namespace_h, className_h,
 		print("") >> outFile_h;
 		print("#include \"IncludesSources.h\"") >> outFile_h;
 		print("") >> outFile_h;
-	}
-
-	if (className_h == "WrappOOAICallback") {
-		print("struct SSkirmishAICallback;") >> outFile_h;
-		print("") >> outFile_h;
+		if (className_h == "Wrapp" myRootClass) {
+			print("struct " myWrapClass ";") >> outFile_h;
+			print("") >> outFile_h;
+		}
 	}
 }
 
@@ -283,7 +286,7 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 
 		outFile_stb_cpp_tr = createSourceFileName(outFile_stb_h_tr);
 		isSimpleGetter_tr = ((fRet_tr != "void") && (fParams_tr == "") && match(fName_tr, /^(Get|Is)/));
-		if ((fName_tr == "IsEnabled") && match(outFile_int_h_tr, /Cheats\.java$/)) {
+		if ((fName_tr == "IsEnabled") && match(outFile_int_h_tr, /Cheats\.h$/)) {
 			# an exception, because this has a setter anyway
 			isSimpleGetter_tr = 0;
 		}
@@ -382,7 +385,7 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 		noInterfaceIndices_c = 0;
 	}
 	clsName_wrp_c = "Wrapp" _fullClsName;
-	isClbRootCls_c = (clsName_int_c == "OOAICallback");
+	isClbRootCls_c = (clsName_int_c == myRootClass);
 
 	if (printIntAndStb_c) {
 		outFile_int_h_c   = createFileName(clsName_int_c, 1);
@@ -411,13 +414,11 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 		addInds_c[ai] = trim(addInds_c[ai]);
 	}
 
-	myInnerClb = myClassVar ".GetInnerCallback()";
-
 
 	# print private vars
 	print("private:") >> outFile_wrp_h_c;
 	if (isClbRootCls_c) {
-		print("\t" myWrapClass " " myWrapVar ";") >> outFile_wrp_h_c;
+		print("\t" "const struct " myWrapClass "* " myWrapVar ";") >> outFile_wrp_h_c;
 	}
 	# print additionalVars
 	for (ai=1; ai <= addInds_size_c; ai++) {
@@ -426,16 +427,16 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 	print("") >> outFile_wrp_h_c;
 
 
-	# assemble ctor params
+	# assemble constructor params
 	ctorParams   = "";
 	if (isClbRootCls_c) {
-		ctorParams   = myWrapClass " " myWrapVar;
+		ctorParams   = ctorParams ", const struct " myWrapClass "* " myWrapVar;
 	}
 	addIndPars_c = "";
 	for (ai=1; ai <= addInds_size_c; ai++) {
 		addIndPars_c = addIndPars_c ", int " addInds_c[ai];
 	}
-	ctorParams          = ctorParams addIndPars_c;
+	ctorParams   = ctorParams addIndPars_c;
 	sub(/^, /, "", ctorParams);
 
 	ctorParamsNoTypes   = removeParamTypes(ctorParams);
@@ -567,48 +568,58 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 	if (printIntAndStb_c) {
 		# print CompareTo(other) method
 		{
+			cai_c = 0;
+			for (ai=1; ai <= addInds_size_c; ai++) {
+				addIndName = addInds_c[ai];
+				if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
+					compareAddInds_c[cai_c] = addIndName;
+					cai_c++;
+				}
+			}
+
 			print("\t" "// @Override") >> outFile_abs_h_c;
 			print("public:") >> outFile_abs_h_c;
 			print("\t" "virtual " "int "                                  "CompareTo(const " clsName_c "& other)" ";") >> outFile_abs_h_c;
 			print("\t"            "int " myNameSpace"::"clsName_abs_c"::" "CompareTo(const " clsName_c "& other)" " {") >> outFile_abs_cpp_c;
-			print("\t\t" "const int BEFORE = -1;") >> outFile_abs_cpp_c;
-			print("\t\t" "const int EQUAL  =  0;") >> outFile_abs_cpp_c;
-			print("\t\t" "const int AFTER  =  1;") >> outFile_abs_cpp_c;
+			print("\t\t" "static const int EQUAL  =  0;") >> outFile_abs_cpp_c;
+			if (cai_c > 0) {
+				print("\t\t" "static const int BEFORE = -1;") >> outFile_abs_cpp_c;
+				print("\t\t" "static const int AFTER  =  1;") >> outFile_abs_cpp_c;
+			}
 			print("") >> outFile_abs_cpp_c;
 			print("\t\t" "if ((" clsName_c "*)this == &other) return EQUAL;") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 
-			if (isClbRootCls) {
-				print("\t\t" "if (this->skirmishAIId < other.skirmishAIId) return BEFORE;") >> outFile_abs_cpp_c;
-				print("\t\t" "if (this->skirmishAIId > other.skirmishAIId) return AFTER;") >> outFile_abs_cpp_c;
-				print("\t\t" "return EQUAL;") >> outFile_abs_cpp_c;
-			} else {
-				for (ai=1; ai <= addInds_size_c; ai++) {
-					addIndName = addInds_c[ai];
-					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
-						print("\t\t" "if (this->Get" capitalize(addIndName) "() < other.Get" capitalize(addIndName) "()) return BEFORE;") >> outFile_abs_cpp_c;
-						print("\t\t" "if (this->Get" capitalize(addIndName) "() > other.Get" capitalize(addIndName) "()) return AFTER;") >> outFile_abs_cpp_c;
-					}
+			#if (isClbRootCls_c) {
+			#	print("\t\t" "if (this->GetSkirmishAIId() < other.GetSkirmishAIId()) return BEFORE;") >> outFile_abs_cpp_c;
+			#	print("\t\t" "if (this->GetSkirmishAIId() > other.GetSkirmishAIId()) return AFTER;") >> outFile_abs_cpp_c;
+			#	print("\t\t" "return EQUAL;") >> outFile_abs_cpp_c;
+			#} else {
+				for (ai=0; ai < cai_c; ai++) {
+					addIndName = capitalize(compareAddInds_c[ai]);
+					print("\t\t" "if (this->Get" addIndName "() < other.Get" addIndName "()) return BEFORE;") >> outFile_abs_cpp_c;
+					print("\t\t" "if (this->Get" addIndName "() > other.Get" addIndName "()) return AFTER;")  >> outFile_abs_cpp_c;
 				}
-				print("\t\t" "return 0;") >> outFile_abs_cpp_c;
-			}
+				print("\t\t" "return EQUAL;") >> outFile_abs_cpp_c;
+			#}
 			print("\t" "}") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 		}
 
 
 		# print Equals(other) method
-		if (!isClbRootCls) {
+		#if (!isClbRootCls_c)
+		{
 			print("\t" "// @Override") >> outFile_abs_h_c;
 			print("public:") >> outFile_abs_h_c;
 			print("\t" "virtual " "bool "                                  "Equals(const " clsName_c "& other)" ";")  >> outFile_abs_h_c;
 			print(                "bool " myNameSpace"::"clsName_abs_c"::" "Equals(const " clsName_c "& other)" " {") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 
-			if (isClbRootCls) {
-				print("\t" "if (this->skirmishAIId != other.skirmishAIId) return false;") >> outFile_abs_cpp_c;
-				print("\t" "return true;") >> outFile_abs_cpp_c;
-			} else {
+			#if (isClbRootCls_c) {
+			#	print("\t" "if (this->GetSkirmishAIId() != other.GetSkirmishAIId()) return false;") >> outFile_abs_cpp_c;
+			#	print("\t" "return true;") >> outFile_abs_cpp_c;
+			#} else {
 				for (ai=1; ai <= addInds_size_c; ai++) {
 					addIndName = addInds_c[ai];
 					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
@@ -616,25 +627,26 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 					}
 				}
 				print("\t" "return true;") >> outFile_abs_cpp_c;
-			}
+			#}
 			print("}") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 		}
 
 
 		# print HashCode() method
-		if (!isClbRootCls) {
+		#if (!isClbRootCls_c)
+		{
 			print("\t" "// @Override") >> outFile_abs_h_c;
 			print("public:") >> outFile_abs_h_c;
 			print("\t" "virtual " "int "                                  "HashCode()" ";")  >> outFile_abs_h_c;
 			print(                "int " myNameSpace"::"clsName_abs_c"::" "HashCode()" " {") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 
-			if (isClbRootCls) {
-				print("\t" "int _res = 0;") >> outFile_abs_cpp_c;
-				print("") >> outFile_abs_cpp_c;
-				print("\t" "_res += this->skirmishAIId * 10E8;") >> outFile_abs_cpp_c;
-			} else {
+			#if (isClbRootCls_c) {
+			#	print("\t" "int _res = 0;") >> outFile_abs_cpp_c;
+			#	print("") >> outFile_abs_cpp_c;
+			#	print("\t" "_res += this->GetSkirmishAIId() * 10E8;") >> outFile_abs_cpp_c;
+			#} else {
 				print("\t" "int _res = 23;") >> outFile_abs_cpp_c;
 				print("") >> outFile_abs_cpp_c;
 				# NOTE: This could go wrong if we have more then 7 additional indices
@@ -650,7 +662,7 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 						print("\t" "_res += this->Get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_abs_cpp_c;
 					}
 				}
-			}
+			#}
 			print("") >> outFile_abs_cpp_c;
 			print("\t" "return _res;") >> outFile_abs_cpp_c;
 			print("}") >> outFile_abs_cpp_c;
@@ -668,7 +680,7 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			print("\t" "std::string _res = \"" clsName_c "\";") >> outFile_abs_cpp_c;
 			print("") >> outFile_abs_cpp_c;
 
-			#if (isClbRootCls) { # NO FOLD
+			#if (isClbRootCls_c) { # NO FOLD
 			#	print("\t\t" "_res = _res + \"(skirmishAIId=\" + this->skirmishAIId + \", \";") >> outFile_abs_cpp_c;
 			#} else { # NO FOLD
 			#	print("\t\t" "_res = _res + \"(clbHash=\" + " myBridgePrefix "hashCode() + \", \";") >> outFile_abs_cpp_c;
@@ -765,6 +777,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	clsName_int_m     = clsName_int_c;
 	clsName_stb_m     = clsName_stb_c;
 	clsName_wrp_m     = clsName_wrp_c;
+	isClbRootCls_m    = isClbRootCls_c;
 	outFile_int_h_m   = outFile_int_h_c;
 	outFile_stb_h_m   = outFile_stb_h_c;
 	outFile_wrp_h_m   = outFile_wrp_h_c;
@@ -778,8 +791,12 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	indent_m            = "\t";
 	memId_m             = clsName_m "," memName_m;
 	retType             = cls_memberId_retType[memId_m]; # this may be changed
-	retType_int         = retType;                       # this is a const var
-	params              = cls_memberId_params[memId_m];
+	retType_int         = retType;     
+	params              = cls_memberId_params[memId_m];                  # this is a const var
+	#if (isClbRootCls_m) {
+	#	params = "int skirmishAIId, " params;
+	#	sub(/, $/, "", params);
+	#}
 	isFetcher           = cls_memberId_isFetcher[memId_m];
 	metaComment         = cls_memberId_metaComment[memId_m];
 	memName             = fullName_m;
@@ -845,6 +862,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		if (!_removed && !part_isStatic(memName_m, metaComment)) {
 			addIndName = addInds_m[ai];
 			print("ERROR: failed removing additional indices " addIndName " from method " memName_m " in class " clsName_int_m);
+			exit(1);
 		}
 	}
 
@@ -992,6 +1010,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = "";
+			if (clsName_m == myRootClass || (clsName_m == "WeaponMount" && _fullClsName == "WeaponDef")) {
+				_wrappGetInst_params = "skirmishAIId"; # FIXME: HACK; do not know why needed :/ (should use parents list of params instead of self,or vice-versa?)
+			}
 			_hasRetInd = 0;
 			_refObj = _refObj"*";
 			if (retType != "void") {
@@ -1010,8 +1031,15 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			} else {
 				ommitMainCall = 1;
 			}
+
+			if (clsName_m == myRootClass) {
+				sub(/^skirmishAIId, skirmishAIId/, "skirmishAIId", _wrappGetInst_params); # FIXME: HACK; do not know why needed :/ (should use parents list of params instead of self,or vice-versa?)
+				if (_fullClsName == "Engine") {
+					sub(/^skirmishAIId(, )?/, "", _wrappGetInst_params); # FIXME: HACK; do not know why needed :/ (should use parents list of params instead of self,or vice-versa?)
+				}
+			}
 			sub(/^, /, "", _wrappGetInst_params);
-			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = Wrapp" _fullClsName "::GetInstance(" _wrappGetInst_params ");" "\n";
+			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = " myNameSpace "::Wrapp" _fullClsName "::GetInstance(" _wrappGetInst_params ");" "\n";
 			declaredVarsCode = "\t\t" _refObj " " _retVar_out_new ";" "\n" declaredVarsCode;
 			retVar_out_m = _retVar_out_new;
 			retType = _refObj;
@@ -1132,9 +1160,6 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			_addWrappVars = cls_implId_indicesArgs[_implId];
 			sub(/(,)?[^,]*$/, "", _addWrappVars); # remove last index
 			_addWrappVars = trim(removeParamTypes(_addWrappVars));
-			if (_addWrappVars != "") {
-				_addWrappVars = ", " _addWrappVars;
-			}
 		}
 		sub(/^, /, "", _addWrappVars);
 
@@ -1221,15 +1246,15 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			_arraySizeMaxPaNa = _arraySizeVar;
 		} else {
 			conversionCode_pre  = conversionCode_pre  "\t\t" _arrayPaNa " = new " _arrayType "[" _arraySizeVar "];" "\n";
-			conversionCode_post = conversionCode_post "\t\t" "delete[] " _arrayPaNa ";" "\n";
 		}
 
 		if (_isFetching) {
 			# convert to an ArrayList
 			conversionCode_post = conversionCode_post "\t\t" _arrayListVar ".reserve(" _arraySizeVar ");" "\n";
-			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _arraySizeMaxPaNa "; i++) {" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _arraySizeMaxPaNa "; ++i) {" "\n";
 			if (_isF3) {
-				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(AIFloat3(" _arrayPaNa "[i], " _arrayPaNa "[++i], " _arrayPaNa "[++i]));" "\n";
+				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(AIFloat3(" _arrayPaNa "[i], " _arrayPaNa "[i+1], " _arrayPaNa "[i+2]));" "\n";
+				conversionCode_post = conversionCode_post "\t\t\t" "i += 2;" "\n";
 			} else if (_isObj) {
 				if (_isRetSize) {
 					conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".push_back(" myNameSpace "::Wrapp" _refObj "::GetInstance(" _addWrappVars ", i));" "\n";
@@ -1246,7 +1271,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			retType = retParamType;
 		} else {
 			# convert from an ArrayList
-			conversionCode_pre = conversionCode_pre "\t\t" "for (int i=0; i < _size; i++) {" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" "for (int i=0; i < _size; ++i) {" "\n";
 			if (_isF3) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" "int arrInd = i*3;" "\n";
 				conversionCode_pre = conversionCode_pre "\t\t\t" "AIFloat3 aif3 = " _arrayListVar "[i];" "\n";
@@ -1259,6 +1284,10 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar "[i];" "\n";
 			}
 			conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
+		}
+
+		if (!_isRetSize) {
+			conversionCode_post = conversionCode_post "\t\t" "delete[] " _arrayPaNa ";" "\n";
 		}
 	}
 
@@ -1416,7 +1445,11 @@ function wrappFunctionPointerDef(funcDef) {
 
 END {
 	# finalize things
+
+	cls_implId_indicesArgs[myRootClass] = "int skirmishAIId";
+	cls_name_indicesArgs[myRootClass]   = "int skirmishAIId";
 	store_everything();
+
 	printClasses();
 	printIncludesHeaders();
 }

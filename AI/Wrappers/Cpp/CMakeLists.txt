@@ -47,7 +47,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(springSourceDir            "${PROJECT_SOURCE_DIR}")
 	set(springAIInterfaceSourceDir "${springSourceDir}/rts/ExternalAI/Interface")
 
-	SetGlobal(${myName}_AIWRAPPER_GENERATED_SRC_DIR "${myGeneratedSourceDir}")
+	set(${myName}_AIWRAPPER_INCLUDE_DIRS "${mySourceDir}" "${myGeneratedSourceDir}")
+	MakeGlobal(${myName}_AIWRAPPER_INCLUDE_DIRS)
 
 	set(mySources
 		"${mySourceDir}/AIEvent.cpp"
