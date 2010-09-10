@@ -46,25 +46,27 @@ public:
 		return setupScript;
 	};
 	
-	const std::vector<PlayerStatistics>& GetPlayerStats() const;
-	const std::vector< std::vector<TeamStatistics> >& GetTeamStats() const;
-	const std::vector< unsigned char >& GetWinningAllyTeams() const;
+	const std::vector<PlayerStatistics>& GetPlayerStats() const { return playerStats; }
+	const std::vector< std::vector<TeamStatistics> >& GetTeamStats() const { return teamStats; }
+	const std::vector< unsigned char >& GetWinningAllyTeams() const { return winningAllyTeams; }
 
 	/// Not needed for normal demo watching
 	void LoadStats();
 
 private:
 	std::ifstream playbackDemo;
+
 	float demoTimeOffset;
 	float nextDemoReadTime;
 	int bytesRemaining;
+
 	DemoStreamChunkHeader chunkHeader;
+
 	std::string setupScript;	// the original, unaltered version from script
 
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
-	std::vector< unsigned char> winningAllyTeams;
+	std::vector<unsigned char> winningAllyTeams;
 };
 
 #endif
-

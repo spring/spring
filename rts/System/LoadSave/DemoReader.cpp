@@ -101,20 +101,6 @@ bool CDemoReader::ReachedEnd() const
 		return false;
 }
 
-const std::vector<unsigned char>& CDemoReader::GetWinningAllyTeams() const
-{
-	return winningAllyTeams;
-}
-
-const std::vector<PlayerStatistics>& CDemoReader::GetPlayerStats() const
-{
-	return playerStats;
-}
-
-const std::vector< std::vector<TeamStatistics> >& CDemoReader::GetTeamStats() const
-{
-	return teamStats;
-}
 
 void CDemoReader::LoadStats()
 {
@@ -127,35 +113,32 @@ void CDemoReader::LoadStats()
 	playbackDemo.seekg(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);
 
 	winningAllyTeams.clear();
-	for (int allyTeamNum = 0; allyTeamNum < fileHeader.winningAllyTeamsSize; ++allyTeamNum)
-	{
+	playerStats.clear();
+	teamStats.clear();
+
+	for (int allyTeamNum = 0; allyTeamNum < fileHeader.winningAllyTeamsSize; ++allyTeamNum) {
 		unsigned char winnerAllyTeam;
-		playbackDemo.read((char*)&winnerAllyTeam, sizeof(unsigned char) );
+		playbackDemo.read((char*) &winnerAllyTeam, sizeof(unsigned char));
 		winningAllyTeams.push_back(winnerAllyTeam);
 	}
 
-	playerStats.clear();
-	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum)
-	{
+	for (int playerNum = 0; playerNum < fileHeader.numPlayers; ++playerNum) {
 		PlayerStatistics buf;
-		playbackDemo.read((char*)&buf, sizeof(buf));
+		playbackDemo.read((char*) &buf, sizeof(buf));
 		buf.swab();
 		playerStats.push_back(buf);
 	}
 
 	{ // Team statistics follow player statistics.
-		teamStats.clear();
 		teamStats.resize(fileHeader.numTeams);
 		// Read the array containing the number of team stats for each team.
 		std::vector<int> numStatsPerTeam(fileHeader.numTeams, 0);
-		playbackDemo.read((char*)(&numStatsPerTeam[0]), numStatsPerTeam.size());
+		playbackDemo.read((char*) (&numStatsPerTeam[0]), numStatsPerTeam.size());
 
-		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum)
-		{
-			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i)
-			{
+		for (int teamNum = 0; teamNum < fileHeader.numTeams; ++teamNum) {
+			for (int i = 0; i < numStatsPerTeam[teamNum]; ++i) {
 				TeamStatistics buf;
-				playbackDemo.read((char*)&buf, sizeof(buf));
+				playbackDemo.read((char*) &buf, sizeof(buf));
 				buf.swab();
 				teamStats[teamNum].push_back(buf);
 			}
@@ -164,4 +147,3 @@ void CDemoReader::LoadStats()
 
 	playbackDemo.seekg(curPos);
 }
-

@@ -221,9 +221,9 @@ PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStati
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendGameOver( uchar myPlayerNum, std::vector<uchar> winningAllyTeams )
+PacketType CBaseNetProtocol::SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams)
 {
-	const unsigned size = 1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar);
+	const unsigned size = (3 * sizeof(uchar)) + (winningAllyTeams.size() * sizeof(uchar));
 	PackPacket* packet = new PackPacket(size, NETMSG_GAMEOVER);
 	*packet << static_cast<uchar>(size) << myPlayerNum << winningAllyTeams;
 	return PacketType(packet);

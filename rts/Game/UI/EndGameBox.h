@@ -21,7 +21,7 @@ namespace std {
 class CEndGameBox : public CInputReceiver
 {
 public:
-	CEndGameBox( std::vector<unsigned char> winningAllyTeams );
+	CEndGameBox(const std::vector<unsigned char>& winningAllyTeams);
 	~CEndGameBox();
 
 	virtual bool MousePress(int x, int y, int button);
