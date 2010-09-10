@@ -36,6 +36,8 @@ local modOptions = Spring.GetModOptions()
 local teamDeathMode = modOptions.teamdeathmode or "teamzerounits"
 -- sharedDynamicAllianceVictory is a C-like bool
 local sharedDynamicAllianceVictory = tonumber(modOptions.shareddynamicalliancevictory) or 0
+-- ignoreGaia is a C-like bool
+local ignoreGaia = tonumber(modOptions.ignoregaiawinner) or 1
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -69,7 +71,8 @@ end
 
 local function IsCandidateWinner(allyTeamID)
 	local allyTeamUnitCount = allyTeamAliveTeamsCount[allyTeamID]
-	return allyTeamUnitCount and allyTeamUnitCount ~= 0 and allyTeamID ~= gaiaAllyTeamID
+	local gaiaCheck = ignoreGaia == 0 or allyTeamID ~= gaiaAllyTeamID
+	return allyTeamUnitCount and allyTeamUnitCount ~= 0 and gaiaCheck
 end
 
 local function CheckSingleAllyVictoryEnd()
@@ -165,10 +168,13 @@ function gadget:Initialize()
 		local teamCount = 0
 		for _,teamID in ipairs(teamList) do
 			teamToAllyTeam[teamID] = allyTeamID
-			if teamID ~= gaiaTeamID then
-				teamCount = teamCount + 1
-			else
+			if teamID == gaiaTeamID then
+				if ignoreGaia == 0 then
+					teamCount = teamCount + 1
+				end
 				gaiaAllyTeamID = allyTeamID
+			else
+				teamCount = teamCount + 1
 			end
 		end
 		allyTeamAliveTeamsCount[allyTeamID] = teamCount
@@ -198,7 +204,7 @@ function gadget:UnitCaptured(unitID, unitDefID, unitTeamID)
 end
 
 function gadget:UnitDestroyed(unitID, unitDefID, unitTeamID)
-	if unitTeamID == gaiaTeamID then
+	if unitTeamID == gaiaTeamID and ignoreGaia ~= 0 then
 		-- skip gaia
 		return
 	end
