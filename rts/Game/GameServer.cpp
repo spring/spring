@@ -1586,14 +1586,18 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_GAMEOVER: {
 			try {
-				unsigned char player;
-				netcode::UnpackPacket pckt(packet, 2);
+				unsigned char size, player;
+				netcode::UnpackPacket pckt(packet, 1);
+				pckt >> size;
 				pckt >> player;
 				if (player != a) {
 					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
 					break;
 				}
-				std::vector<unsigned char> winningAllyTeams;
+				int wtsize = (int)size - 3;
+				if(wtsize < 0)
+					throw netcode::UnpackPacketException("Invalid size");
+				winningAllyTeams.resize(wtsize);
 				pckt >> winningAllyTeams;
 				if (hostif) {
 					hostif->SendGameOver( player, winningAllyTeams);
