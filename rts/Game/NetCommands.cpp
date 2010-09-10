@@ -102,8 +102,7 @@ void CGame::ClientReadNet()
 					pckt >> message;
 					logOutput.Print(message);
 					if (!gameOver) {
-						std::vector<unsigned char> empty;
-						GameEnd(empty);
+						GameEnd(std::vector<unsigned char>());
 					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (netcode::UnpackPacketException &e) {

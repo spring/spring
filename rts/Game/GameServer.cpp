@@ -1504,23 +1504,31 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_GAMEOVER: {
 			try {
-				unsigned char size, player;
+				// msgCode + msgSize + playerNum (all uchar's)
+				const unsigned char fixedSize = 3 * sizeof(unsigned char);
+
 				netcode::UnpackPacket pckt(packet, 1);
-				pckt >> size;
-				pckt >> player;
-				if (player != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
+
+				unsigned char totalSize; pckt >> totalSize;
+				unsigned char playerNum; pckt >> playerNum;
+
+				if (playerNum != a) {
+					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
 					break;
 				}
-				int wtsize = (int)size - 3;
-				if (wtsize < 0)
-					throw netcode::UnpackPacketException("Invalid size");
-				winningAllyTeams.resize(wtsize);
+
+				if (totalSize <= fixedSize) {
+					throw netcode::UnpackPacketException("invalid size for NETMSG_GAMEOVER (no winning allyteams received)");
+				}
+
+				winningAllyTeams.resize(totalSize - fixedSize);
 				pckt >> winningAllyTeams;
+
 				if (hostif)
-					hostif->SendGameOver(player, winningAllyTeams);
+					hostif->SendGameOver(playerNum, winningAllyTeams);
+
 				gameEndTime = spring_gettime();
-			} catch (netcode::UnpackPacketException &e) {
+			} catch (netcode::UnpackPacketException& e) {
 				Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %e.err));
 			}
 			break;
