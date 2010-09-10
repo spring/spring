@@ -226,6 +226,7 @@ private:
 
 	bool canReconnect;
 	bool gameHasStarted;
+	std::vector<unsigned char> winningAllyTeams;
 };
 
 extern CGameServer* gameServer;
