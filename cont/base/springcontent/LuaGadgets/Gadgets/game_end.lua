@@ -50,6 +50,7 @@ local AreTeamsAllied = Spring.AreTeamsAllied
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local gaiaAllyTeamID
 local allyTeams = GetAllyTeamList()
 local teamsUnitCount = {}
 local allyTeamUnitCount = {}
@@ -66,50 +67,52 @@ function gadget:GameOver()
 	gadgetHandler:RemoveGadget()
 end
 
-function CheckSingleAllyVictoryEnd()
+local function IsCandidateWinner(allyTeamID)
+	local allyTeamUnitCount = allyTeamAliveTeamsCount[allyTeamID]
+	return allyTeamUnitCount and allyTeamUnitCount ~= 0 and allyTeamID ~= gaiaAllyTeamID
+end
+
+local function CheckSingleAllyVictoryEnd()
 	if aliveAllyTeamCount ~= 1 then
 		return false
 	end
 	-- find the last remaining allyteam
-	for _,firstAllyTeamID in ipairs(allyTeams) do
-		local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
-		if firstTeamCount and firstTeamCount ~= 0 and firstAllyTeamID ~= gaiaTeamID then
-			return {firstAllyTeamID}
+	for _,candidateWinner in ipairs(allyTeams) do
+		if IsCandidateWinner(candidateWinner) then
+			return {candidateWinner}
 		end
 	end
 	return false
 end
 
---FIXME: this code seems to ignore bots when this option is used
--- I suspect a spring bug in AreTeamsAllied when handling bots
-function CheckSharedAllyVictoryEnd()
+local function AreAllyTeamsDoubleAllied( firstAllyTeamID,  secondAllyTeamID )
+	-- we need to check for both directions of alliance
+	return AreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and AreTeamsAllied( secondAllyTeamID, firstAllyTeamID )
+end
+
+local function CheckSharedAllyVictoryEnd()
 	-- we have to cross check all the alliances
+	local candidateWinners = {}
+	local winnerCountSquared = 0
 	for _,firstAllyTeamID in ipairs(allyTeams) do
-		local firstTeamCount = allyTeamAliveTeamsCount[firstAllyTeamID]
-		if firstTeamCount and firstTeamCount ~= 0 and firstAllyTeamID ~= gaiaTeamID then
-			local winners = {}
-			local winnerCount = 0
+		if IsCandidateWinner(firstAllyTeamID) then
 			for _,secondAllyTeamID in ipairs(allyTeams) do
-				local secondTeamCount = allyTeamAliveTeamsCount[secondAllyTeamID]
-				if secondTeamCount and secondTeamCount ~= 0 and secondAllyTeamID ~= gaiaTeamID then
-					-- we need to check for both directions of alliance
-					if AreTeamsAllied( firstAllyTeamID,  secondAllyTeamID ) and AreTeamsAllied( secondAllyTeamID, firstAllyTeamID ) then
-						-- store both check directions
-						-- since we're gonna check if we're allied against ourself, only secondAllyTeamID needs to be stored
-						winners[secondAllyTeamID] =  true
-						winnerCount = winnerCount +1
-					end
+				if IsCandidateWinner(secondAllyTeamID) and AreAllyTeamsDoubleAllied( firstAllyTeamID,  secondAllyTeamID ) then
+					-- store both check directions
+					-- since we're gonna check if we're allied against ourself, only secondAllyTeamID needs to be stored
+					candidateWinners[secondAllyTeamID] =  true
+					winnerCountSquared = winnerCountSquared +1
 				end
-			end
-			if winnerCount == aliveAllyTeamCount then
-				-- only allyteams alive are all bidirectionally allied, they are all winners
-				local winnersCorrectFormat = {}
-				for winner in pairs(winners) do
-					winnersCorrectFormat[#winnersCorrectFormat+1] = winner
-				end
-				return winnersCorrectFormat
 			end
 		end
+	end
+	if winnerCountSquared == (aliveAllyTeamCount*aliveAllyTeamCount) then
+		-- all the allyteams alive are bidirectionally allied against eachother, they are all winners
+		local winnersCorrectFormat = {}
+		for winner in pairs(candidateWinners) do
+			winnersCorrectFormat[#winnersCorrectFormat+1] = winner
+		end
+		return winnersCorrectFormat
 	end
 	-- couldn't find any winner
 	return false
@@ -164,6 +167,8 @@ function gadget:Initialize()
 			teamToAllyTeam[teamID] = allyTeamID
 			if teamID ~= gaiaTeamID then
 				teamCount = teamCount + 1
+			else
+				gaiaAllyTeamID = allyTeamID
 			end
 		end
 		allyTeamAliveTeamsCount[allyTeamID] = teamCount
@@ -219,4 +224,8 @@ function gadget:UnitDestroyed(unitID, unitDefID, unitTeamID)
 			end
 		end
 	end
+end
+
+function gadget:UnitTaken(unitID, unitDefID, unitTeamID)
+	gadget:UnitDestroyed(unitID, unitDefID, unitTeamID)
 end
