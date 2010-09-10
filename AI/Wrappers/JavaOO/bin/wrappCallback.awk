@@ -447,10 +447,12 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			print("\t\t" clsName_c " other = (" clsName_c ") otherObject;") >> outFile_abs_c;
 			print("") >> outFile_abs_c;
 
-			if (isClbRootCls) {
-				print("\t\t" "if (this.skirmishAIId != other.skirmishAIId) return false;") >> outFile_abs_c;
-				print("\t\t" "return true;") >> outFile_abs_c;
-			} else {
+			#if (isClbRootCls) {
+			#	print("\t\t" "if (this.skirmishAIId != other.skirmishAIId) return false;") >> outFile_abs_c;
+			#	print("\t\t" "return true;") >> outFile_abs_c;
+			#}
+			#else
+			{
 				for (ai=1; ai <= addInds_size_c; ai++) {
 					addIndName = addInds_c[ai];
 					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {

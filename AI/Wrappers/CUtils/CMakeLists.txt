@@ -5,7 +5,7 @@
 #
 
 set(myName         "CUtils")
-set(mySourceDirRel "")
+set(mySourceDirRel ".")
 
 # Assemble the sources
 set(mySourceDir ${CMAKE_CURRENT_SOURCE_DIR}/${mySourceDirRel})
