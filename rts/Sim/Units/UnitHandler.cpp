@@ -51,8 +51,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(waterDamage),
 	CR_MEMBER(unitsPerTeam),
 	CR_MEMBER(maxUnitRadius),
-	CR_MEMBER(lastDamageWarning),
-	CR_MEMBER(lastCmdDamageWarning),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
 //	CR_MEMBER(toBeRemoved),
@@ -78,8 +76,6 @@ void CUnitHandler::PostLoad()
 CUnitHandler::CUnitHandler(bool serializing)
 :
 	maxUnitRadius(0.0f),
-	lastDamageWarning(0),
-	lastCmdDamageWarning(0),
 	morphUnitToFeature(true)
 {
 	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);

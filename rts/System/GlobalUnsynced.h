@@ -118,9 +118,6 @@ public:
 	 */
 	bool spectatingFullSelect;
 
-	bool moveWarnings;
-	bool buildWarnings;
-
 	/**
 	 * @brief direct control
 	 *
