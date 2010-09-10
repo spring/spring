@@ -144,4 +144,9 @@ void CGlobalUnsynced::SetMyPlayer(const int mynumber)
 	spectating = Player->spectator;
 	spectatingFullView   = Player->spectator;
 	spectatingFullSelect = Player->spectator;
+
+	if (!spectating) {
+		myPlayingTeam = myTeam;
+		myPlayingAllyTeam = myAllyTeam;
+	}
 }
