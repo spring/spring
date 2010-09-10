@@ -1204,7 +1204,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						(isSpec ||
 						(!isOwnTeam_g && !isLeader_g) ||
 						(hasAIs_g && !isAllied_g && !cheating))) {
-							Message(str(boost::format("%s %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %playerType %players[player].name), true);
+							Message(str(boost::format("%s %s sent invalid team giveaway") %playerType %players[player].name), true);
 							break;
 					}
 					Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, fromTeam_g));
@@ -1242,7 +1242,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					const bool isSinglePlayer = (players.size() <= 1);
 
 					if (isSpec && !isSinglePlayer) {
-						Message(str(boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_RESIGN)") %players[player].name), true);
+						Message(str(boost::format("Spectator %s sent invalid team resign") %players[player].name), true);
 						break;
 					}
 					Broadcast(CBaseNetProtocol::Get().SendResign(player));
@@ -2093,7 +2093,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	// check for user's password
 	if (errmsg == "" && !isLocal) {
-		if (newPlayerNumber < players.size())  {
+		if (newPlayerNumber < players.size()) {
 			GameParticipant::customOpts::const_iterator it = players[newPlayerNumber].GetAllValues().find("password");
 			bool passwdFound = (it != players[newPlayerNumber].GetAllValues().end());
 			if (passwdFound) {
