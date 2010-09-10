@@ -1420,21 +1420,6 @@ void CGroundMoveType::Fail()
 
 	eventHandler.UnitMoveFailed(owner);
 	eoh->UnitMoveFailed(*owner);
-
-
-	if (gu->moveWarnings && (owner->team == gu->myTeam)) {
-		const int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
-		if (soundIdx >= 0) {
-			Channels::UnitReply.PlaySample(
-				owner->unitDef->sounds.cant.getID(soundIdx), owner,
-				owner->unitDef->sounds.cant.getVolume(soundIdx));
-		}
-		if (!owner->commandAI->unimportantMove &&
-		    (owner->pos.SqDistance(goalPos) > Square(goalRadius + 150.0f))) {
-			logOutput.Print(owner->unitDef->humanName + ": Can't reach destination!");
-			logOutput.SetLastMsgPos(owner->pos);
-		}
-	}
 }
 
 

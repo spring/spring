@@ -43,8 +43,6 @@ CR_REG_METADATA(CGlobalUnsynced, (
 				CR_MEMBER(spectating),
 				CR_MEMBER(spectatingFullView),
 				CR_MEMBER(spectatingFullSelect),
-				CR_MEMBER(moveWarnings),
-				CR_MEMBER(buildWarnings),
 				CR_MEMBER(directControl),
 				CR_MEMBER(usRandSeed),
 				CR_RESERVED(64)
@@ -69,9 +67,6 @@ CGlobalUnsynced::CGlobalUnsynced()
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
-
-	moveWarnings  = !!configHandler->Get("MoveWarnings", 0);
-	buildWarnings = !!configHandler->Get("BuildWarnings", 0);
 
 	directControl = NULL;
 	playerHandler = new CPlayerHandler();
