@@ -1715,14 +1715,30 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 				cppCmdData->rayLen,
 				cppCmdData->srcUID,
 				cppCmdData->hitUID,
-				cppCmdData->flags,
-				cppCmdData->hitFID
+				cppCmdData->flags
 			};
 
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY, &cCmdData);
 
 			cppCmdData->rayLen = cCmdData.rayLen;
 			cppCmdData->hitUID = cCmdData.hitUID;
+			break;
+		}
+
+		case AIHCFeatureTraceRayId: {
+			AIHCFeatureTraceRay* cppCmdData = (AIHCFeatureTraceRay*) data;
+			SFeatureTraceRayCommand cCmdData = {
+				cppCmdData->rayPos.toSAIFloat3(),
+				cppCmdData->rayDir.toSAIFloat3(),
+				cppCmdData->rayLen,
+				cppCmdData->srcUID,
+				cppCmdData->hitFID,
+				cppCmdData->flags
+			};
+
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY_FEATURE, &cCmdData);
+
+			cppCmdData->rayLen = cCmdData.rayLen;
 			cppCmdData->hitFID = cCmdData.hitFID;
 			break;
 		}

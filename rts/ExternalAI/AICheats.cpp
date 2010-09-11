@@ -386,7 +386,7 @@ bool CAICheats::GetValue(int id, void* data) const
 	return false;
 }
 
-int CAICheats::HandleCommand(int commandId, void *data)
+int CAICheats::HandleCommand(int commandId, void* data)
 {
 	switch (commandId) {
 		case AIHCQuerySubVersionId:
@@ -398,19 +398,35 @@ int CAICheats::HandleCommand(int commandId, void *data)
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
 				const CUnit* hitUnit = NULL;
+
+				if (srcUnit != NULL) {
+					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
+				}
+			}
+
+			return 1;
+		} break;
+
+		case AIHCFeatureTraceRayId: {
+			AIHCFeatureTraceRay* cmdData = (AIHCFeatureTraceRay*) data;
+
+			if (CHECK_UNITID(cmdData->srcUID)) {
+				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* hitUnit = NULL;
 				const CFeature* hitFeature = NULL;
 
 				if (srcUnit != NULL) {
 					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
-					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
 					cmdData->hitFID = (hitFeature != NULL)? hitFeature->id: -1;
 				}
 			}
 
 			return 1;
-		}
+		} break;
 
-		default:
+		default: {
 			return 0;
+		}
 	}
 }

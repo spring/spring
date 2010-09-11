@@ -561,14 +561,29 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				cCmdData->rayLen,
 				cCmdData->srcUID,
 				cCmdData->hitUID,
-				cCmdData->flags,
-				cCmdData->hitFID,
+				cCmdData->flags
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCTraceRayId, &cppCmdData);
 
 			cCmdData->rayLen = cppCmdData.rayLen;
 			cCmdData->hitUID = cppCmdData.hitUID;
+		} break;
+
+		case COMMAND_TRACE_RAY_FEATURE: {
+			SFeatureTraceRayCommand* cCmdData = (SFeatureTraceRayCommand*) commandData;
+			AIHCFeatureTraceRay cppCmdData = {
+				cCmdData->rayPos,
+				cCmdData->rayDir,
+				cCmdData->rayLen,
+				cCmdData->srcUID,
+				cCmdData->hitFID,
+				cCmdData->flags
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCFeatureTraceRayId, &cppCmdData);
+
+			cCmdData->rayLen = cppCmdData.rayLen;
 			cCmdData->hitFID = cppCmdData.hitFID;
 		} break;
 
@@ -668,7 +683,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
- 
+
 
 		case COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE: {
 			SDebugDrawerAddOverlayTextureCommand* cCmdData = (SDebugDrawerAddOverlayTextureCommand*) commandData;
@@ -2525,7 +2540,7 @@ EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int teamId, int unitId,
 		}
 
 		const LuaRulesParams::Param param = unit->modParams[modParamId];
-		if (param.los & losMask) { 
+		if (param.los & losMask) {
 			return param.value;
 		} else {
 			return 0.0f;

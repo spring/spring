@@ -73,6 +73,7 @@ struct LineMarker {
 #define AIHCPauseId             9
 #define AIHCGetDataDirId        10
 #define AIHCDebugDrawId         11
+#define AIHCFeatureTraceRayId   12
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -123,7 +124,16 @@ struct AIHCTraceRay
 	int    srcUID;
 	int    hitUID;
 	int    flags;
+};
+
+struct AIHCFeatureTraceRay
+{
+	float3 rayPos;
+	float3 rayDir;
+	float  rayLen;
+	int    srcUID;
 	int    hitFID;
+	int    flags;
 };
 
 struct AIHCPause
