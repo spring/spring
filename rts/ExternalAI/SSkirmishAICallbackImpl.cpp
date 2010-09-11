@@ -1104,9 +1104,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceCurrent(int teamId, int oth
 	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(teamId)->metal;
+			res = teamHandler->Team(otherTeamId->metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(teamId)->energy;
+			res = teamHandler->Team(otherTeamId)->energy;
 		}
 	}
 
@@ -1120,9 +1120,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceIncome(int teamId, int othe
 	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(teamId)->prevMetalIncome;
+			res = teamHandler->Team(otherTeamId)->prevMetalIncome;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(teamId)->prevEnergyIncome;
+			res = teamHandler->Team(otherTeamId)->prevEnergyIncome;
 		}
 	}
 
@@ -1136,9 +1136,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceUsage(int teamId, int other
 	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(teamId)->prevMetalExpense;
+			res = teamHandler->Team(otherTeamId)->prevMetalExpense;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(teamId)->prevEnergyExpense;
+			res = teamHandler->Team(otherTeamId)->prevEnergyExpense;
 		}
 	}
 
@@ -1152,9 +1152,9 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceStorage(int teamId, int oth
 	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(teamId)->metalStorage;
+			res = teamHandler->Team(otherTeamId)->metalStorage;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
-			res = teamHandler->Team(teamId)->energyStorage;
+			res = teamHandler->Team(otherTeamId)->energyStorage;
 		}
 	}
 
