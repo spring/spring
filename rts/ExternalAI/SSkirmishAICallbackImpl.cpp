@@ -1104,7 +1104,7 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceCurrent(int teamId, int oth
 	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
 	if (fetchOk) {
 		if (resourceId == resourceHandler->GetMetalId()) {
-			res = teamHandler->Team(otherTeamId->metal;
+			res = teamHandler->Team(otherTeamId)->metal;
 		} else if (resourceId == resourceHandler->GetEnergyId()) {
 			res = teamHandler->Team(otherTeamId)->energy;
 		}
