@@ -273,7 +273,7 @@ void CGameHelper::Explosion(
 // Raytracing
 //////////////////////////////////////////////////////////////////////
 
-// called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
+// called by {CRifle, CBeamLaser, CLightningCannon}::Fire() and Skirmish AIs
 float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/,
 			    const CUnit* owner, const CUnit*& hit, int collisionFlags,
 			    const CFeature** hitFeature)

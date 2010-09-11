@@ -1159,29 +1159,6 @@ bool CGame::ActionPressed(const Action& action,
 		logOutput.Print("SkirmishAI debug drawing %s", (debugDrawerAI->GetDraw()? "enabled": "disabled"));
 	}
 
-	else if (cmd == "movewarnings") {
-		if (action.extra.empty()) {
-			gu->moveWarnings = !gu->moveWarnings;
-		} else {
-			gu->moveWarnings = !!atoi(action.extra.c_str());
-		}
-
-		configHandler->Set("MoveWarnings", gu->moveWarnings? 1: 0);
-		logOutput.Print(string("movewarnings ") +
-		                (gu->moveWarnings ? "enabled" : "disabled"));
-	}
-	else if (cmd == "buildwarnings") {
-		if (action.extra.empty()) {
-			gu->buildWarnings = !gu->buildWarnings;
-		} else {
-			gu->buildWarnings = !!atoi(action.extra.c_str());
-		}
-
-		configHandler->Set("BuildWarnings", gu->buildWarnings? 1: 0);
-		logOutput.Print(string("buildwarnings ") +
-		                (gu->buildWarnings ? "enabled" : "disabled"));
-	}
-
 	else if (cmd == "mapmarks") {
 		if (action.extra.empty()) {
 			globalRendering->drawMapMarks = !globalRendering->drawMapMarks;

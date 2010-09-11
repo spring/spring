@@ -38,7 +38,7 @@ public:
 	void InitializeStats(int numPlayers, int numTeams );
 	void SetPlayerStats(int playerNum, const PlayerStatistics& stats);
 	void SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats);
-	void SetWinningAllyTeams( std::vector<unsigned char> winningAllyTeams );
+	void SetWinningAllyTeams(const std::vector<unsigned char>& winningAllyTeams);
 
 private:
 	void WriteFileHeader(bool updateStreamLength = true);

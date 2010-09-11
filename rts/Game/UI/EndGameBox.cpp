@@ -46,7 +46,7 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 bool CEndGameBox::disabled = false;
 
 
-CEndGameBox::CEndGameBox(std::vector<unsigned char> winningAllyTeams)
+CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	: CInputReceiver()
 	, moveBox(false)
 	, dispMode(0)
@@ -243,32 +243,33 @@ void CEndGameBox::Draw()
 	font->glPrint(box.x1 + sumBox.x1    + 0.015f, box.y1 + sumBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM, "Team stats");
 	font->glPrint(box.x1 + difBox.x1    + 0.015f, box.y1 + difBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM, "Team delta stats");
 
-	bool iWon = false;
-	bool undecidedEnd = winners.size() == 0;
-	bool neverplayed = gu->myPlayingAllyTeam < 0;
-	std::string winnersText = "Game Over, winning allyTeams are:";
-	if (!undecidedEnd) {
-		for ( std::vector<unsigned char>::iterator itor = winners.begin(); itor != winners.end(); itor++ ) {
-			const int winner = (int)*itor;
-			if ( !neverplayed && winner == gu->myPlayingAllyTeam ) {
-				// we actually played and won!
-				iWon = true;
-				break;
-			}
-			char buffer [30];
-			int lenght = sprintf(buffer, " %d", winner);
-			std::string winnerString( buffer, lenght );
-			winnersText += winnerString;
-		}
-	}
-	if (undecidedEnd) {
+	if (winners.empty()) {
 		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Game result was undecided");
-	} else if (neverplayed) {
-		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, winnersText.c_str());
-	} else if (!iWon) {
-		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "You lost the game");
 	} else {
-		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "You won the game");
+		std::stringstream winnersText("Game Over, winning AllyTeams are: ");
+
+		const bool neverPlayed = (gu->myPlayingAllyTeam < 0);
+		      bool playedAndWon = false;
+
+		for (unsigned int i = 0; i < winners.size(); i++) {
+			const int winner = winners[i];
+
+			if (!neverPlayed && winner == gu->myPlayingAllyTeam) {
+				// we actually played and won!
+				playedAndWon = true; break;
+			}
+
+			winnersText << winner;
+
+			if (i < (winners.size() - 1))
+				winnersText << ", ";
+		}
+
+		if (neverPlayed) {
+			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (winnersText.str()).c_str());
+		} else {
+			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (playedAndWon? "You won the game": "You lost the game"));
+		}
 	}
 
 	if (gs->frameNum <= 0) {

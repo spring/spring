@@ -161,14 +161,15 @@ private:
 	float internalSpeed;
 	bool cheating;
 
-	std::vector<GameParticipant> players;
 	size_t ReserveNextAvailableSkirmishAIId();
 	
 	std::map<size_t, GameSkirmishAI> ais;
 	std::list<size_t> usedSkirmishAIIds;
 	void FreeSkirmishAIId(const size_t skirmishAIId);
-	
+
+	std::vector<GameParticipant> players;	
 	std::vector<GameTeam> teams;
+	std::vector<unsigned char> winningAllyTeams;
 
 	float medianCpu;
 	int medianPing;
@@ -226,7 +227,6 @@ private:
 
 	bool canReconnect;
 	bool gameHasStarted;
-	std::vector<unsigned char> winningAllyTeams;
 };
 
 extern CGameServer* gameServer;

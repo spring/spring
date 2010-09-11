@@ -149,15 +149,16 @@ void AutohostInterface::SendStartPlaying()
 	}
 }
 
-void AutohostInterface::SendGameOver( uchar playerNum, std::vector<uchar> winningAllyTeams )
+void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
 {
-	const unsigned char msgsize = 1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar);
+	const unsigned char msgsize = 1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar));
 	std::vector<boost::uint8_t> buffer(msgsize);
 	buffer[0] = SERVER_GAMEOVER;
 	buffer[1] = msgsize;
 	buffer[2] = playerNum;
-	for ( unsigned int i = 0; i < winningAllyTeams.size(); i++ ) {
-		buffer[3+i] = winningAllyTeams[i];
+
+	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
+		buffer[3 + i] = winningAllyTeams[i];
 	}
 	if (autohost.is_open()) {
 		autohost.send(boost::asio::buffer(buffer));

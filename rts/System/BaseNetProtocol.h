@@ -168,7 +168,7 @@ public:
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	PacketType SendSendPlayerStat();
 	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
-	PacketType SendGameOver( uchar myPlayerNum, std::vector<uchar> winningAllyTeams );
+	PacketType SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams);
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
 	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool);
 	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label, bool);

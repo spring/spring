@@ -136,8 +136,9 @@ enum CommandTopic {
 	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS   = 92,
 	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE  = 93,
 	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL = 94,
+	COMMAND_TRACE_RAY_FEATURE                     = 95,
 };
-const int NUM_CMD_TOPICS                          = 95;
+const int NUM_CMD_TOPICS = 96;
 
 
 /**
@@ -253,6 +254,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SSetPositionOverlayTextureDrawerDebugCommand) \
 		+ sizeof(struct SSetSizeOverlayTextureDrawerDebugCommand) \
 		+ sizeof(struct SSetLabelOverlayTextureDrawerDebugCommand) \
+		+ sizeof(struct SFeatureTraceRayCommand) \
 		)
 
 /**
@@ -1465,8 +1467,16 @@ struct STraceRayCommand {
 	int srcUnitId;
 	int ret_hitUnitId;
 	int flags;
+}; //$ COMMAND_TRACE_RAY Map_Drawer_traceRay REF:srcUnitId->Unit REF:ret_hitUnitId->Unit
+
+struct SFeatureTraceRayCommand {
+	float* rayPos_posF3;
+	float* rayDir_posF3;
+	float rayLen; // would also be ret, but we want only one ret per command
+	int srcUnitId;
 	int ret_hitFeatureId;
-}; //$ COMMAND_TRACE_RAY Map_Drawer_traceRay REF:srcUnitId->Unit REF:ret_hitUnitId->Unit REF:ret_hitFeatureId->Feature
+	int flags;
+}; //$ COMMAND_TRACE_RAY_FEATURE Map_Drawer_traceRayFeature REF:srcUnitId->Unit REF:ret_hitFeatureId->Feature
 
 /**
  * Pause or unpauses the game.
