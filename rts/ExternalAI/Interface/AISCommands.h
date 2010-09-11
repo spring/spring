@@ -137,9 +137,10 @@ enum CommandTopic {
 	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_POS   = 91,
 	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_SIZE  = 92,
 	COMMAND_DEBUG_DRAWER_SET_OVERLAY_TEXTURE_LABEL = 93,
+	COMMAND_TRACE_RAY_FEATURE                      = 94,
 };
 
-const unsigned int NUM_CMD_TOPICS = 94;
+const unsigned int NUM_CMD_TOPICS = 95;
 
 
 /**
@@ -256,6 +257,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SDebugDrawerSetOverlayTexturePosCommand) \
 		+ sizeof(struct SDebugDrawerSetOverlayTextureSizeCommand) \
 		+ sizeof(struct SDebugDrawerSetOverlayTextureLabelCommand) \
+		+ sizeof(struct SFeatureTraceRayCommand) \
 		)
 
 /**
@@ -1114,8 +1116,16 @@ struct STraceRayCommand {
 	int srcUID;
 	int hitUID;
 	int flags;
-	int hitFID;
 }; // COMMAND_TRACE_RAY
+
+struct SFeatureTraceRayCommand {
+	struct SAIFloat3 rayPos;
+	struct SAIFloat3 rayDir;
+	float rayLen;
+	int srcUID;
+	int hitFID;
+	int flags;
+}; // COMMAND_TRACE_RAY_FEATURE
 
 /**
  * Pause or unpauses the game.
