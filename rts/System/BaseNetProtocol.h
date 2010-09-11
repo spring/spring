@@ -14,7 +14,7 @@ namespace netcode
 }
 struct PlayerStatistics;
 
-const unsigned char NETWORK_VERSION = 1;
+const unsigned short NETWORK_VERSION = 2;
 
 /*
 Comment behind NETMSG enumeration constant gives the extra data belonging to
@@ -57,12 +57,11 @@ enum NETMSG {
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
 	NETMSG_DIRECT_CONTROL   = 22, // uchar myPlayerNum;
 	NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
-	NETMSG_ATTEMPTCONNECT   = 25, // ushort msgsize, string playername, string passwd, string VERSION_STRING_DETAILED
 	NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
 	NETMSG_SETSHARE         = 27, // uchar myPlayerNum, uchar myTeam; float metalShareFraction, energyShareFraction;
 	NETMSG_SENDPLAYERSTAT   = 28, //
 	NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
-	NETMSG_GAMEOVER         = 30, //
+	NETMSG_GAMEOVER         = 30, // uchar myPlayerNum; std::vector<uchar> winningAllyTeams
 	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z;
 	                              // uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
 	                              // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
@@ -89,6 +88,8 @@ enum NETMSG {
 	NETMSG_CUSTOM_DATA      = 55, // uchar myPlayerNum, uchar dataType, uchar dataValue
 	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
 
+	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
+
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
 
@@ -97,7 +98,9 @@ enum NETMSG {
 	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
 	NETMSG_UNREGISTER_NETMSG= 74, // uchar myPlayerNum, uchar NETMSG
 
-	NETMSG_AICOMMAND_TRACKED= 75  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
+	NETMSG_CREATE_NEWPLAYER = 75, // uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
+
+	NETMSG_AICOMMAND_TRACKED= 76  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
 };
 
 // Data types for NETMSG_CUSTOM_DATA
@@ -165,7 +168,7 @@ public:
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	PacketType SendSendPlayerStat();
 	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
-	PacketType SendGameOver();
+	PacketType SendGameOver( uchar myPlayerNum, std::vector<uchar> winningAllyTeams );
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
 	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool);
 	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label, bool);
@@ -203,6 +206,8 @@ public:
 
 	PacketType SendRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
 	PacketType SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
+
+	PacketType SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName );
 
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);

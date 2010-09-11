@@ -91,7 +91,6 @@ UnitDef::UnitDef()
 , turnInPlaceSpeedLimit(0.0f)
 , upright(false)
 , collide(false)
-, controlRadius(0.0f)
 , losRadius(0.0f)
 , airLosRadius(0.0f)
 , losHeight(0.0f)
@@ -260,6 +259,7 @@ UnitDef::UnitDef()
 , minAirBasePower(0.0f)
 , pieceTrailCEGRange(-1)
 , maxThisUnit(0)
+, transportableBuilding(false)
 , realMetalCost(0.0f)
 , realEnergyCost(0.0f)
 , realMetalUpkeep(0.0f)
@@ -316,7 +316,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	buildangle = udTable.GetInt("buildAngle", 0);
 
-	controlRadius = 32;
 	losHeight = 20;
 	metalCost = udTable.GetFloat("buildCostMetal", 0.0f);
 	if (metalCost < 1.0f) {
@@ -530,6 +529,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
 	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
+	transportableBuilding = udTable.GetBool("transportableBuilding", false);
 
 	const string lname = StringToLower(name);
 
@@ -711,7 +711,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		udTable.GetString("collisionVolumeType", ""),
 		udTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		udTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC)
+		udTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_DISC)
 	);
 
 	if (usePieceCollisionVolumes) {
@@ -964,6 +964,25 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
+
+bool UnitDef::IsTerrainHeightOK(const float height) const {
+	return GetAllowedTerrainHeight(height) == height;
+}
+
+float UnitDef::GetAllowedTerrainHeight(float height) const {
+	float maxwd = maxWaterDepth;
+	float minwd = minWaterDepth;
+	if(movedata) {
+		if(movedata->moveType == MoveData::Ship_Move)
+			minwd = movedata->depth;
+		else
+			maxwd = movedata->depth;
+	}
+	height = std::min(height, -minwd);
+	if(!floater && !canhover)
+		height = std::max(-maxwd, height);
+	return height;
+}
 
 /******************************************************************************/
 

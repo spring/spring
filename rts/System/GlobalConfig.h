@@ -45,7 +45,7 @@ public:
 	 *
 	 * Team highlighting for teams that are uncontrolled or have connection problems
 	 */
-	bool teamHighlight;
+	int teamHighlight;
 
 	/**
 	 * @brief linkBandwidth
@@ -53,6 +53,10 @@ public:
 	 * Network link maximum bandwidth, per user, in bytes
 	 */
 	int linkBandwidth;
+
+#ifdef USE_GML
+	bool enableDrawCallIns;
+#endif
 };
 
 extern GlobalConfig* gc;

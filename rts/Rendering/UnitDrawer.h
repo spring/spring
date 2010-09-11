@@ -109,8 +109,6 @@ public:
 		int team;
 	};
 
-	bool showHealthBars;
-
 	float3 camNorm; // used to draw far-textures
 
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
@@ -136,6 +134,8 @@ public:
 	volatile bool mt_drawRefraction;
 	const CUnit* volatile mt_excludeUnit;
 
+	bool showHealthBars;
+
 	static void DrawOpaqueUnitMT(void* c, CUnit* unit) {
 		CUnitDrawer* const ud = (CUnitDrawer*) c;
 		ud->DrawOpaqueUnit(unit, ud->mt_excludeUnit, ud->mt_drawReflection, ud->mt_drawRefraction);
@@ -144,6 +144,8 @@ public:
 	static void DrawOpaqueUnitShadowMT(void* c, CUnit* unit) {
 		((CUnitDrawer*) c)->DrawOpaqueUnitShadow(unit);
 	}
+
+	void DrawUnitStats(CUnit* unit);
 #endif
 
 private:
@@ -168,8 +170,9 @@ private:
 	void DrawUnitBeingBuilt(CUnit*);
 	inline void DrawUnitModel(CUnit*);
 	void DrawUnitNow(CUnit*);
-	void DrawUnitStats(CUnit*);
-	void UpdateDrawPos(CUnit*);
+
+	void UpdateUnitIconState(CUnit*);
+	void UpdateUnitDrawPos(CUnit*);
 
 	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
 	void SetupBasicS3OTexture0(void) const;
@@ -178,10 +181,10 @@ private:
 	void CleanupBasicS3OTexture0(void) const;
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int);
-	void DrawCloakedUnitsSet(const std::set<CUnit*>&, int, bool);
+	void DrawCloakedUnit(CUnit*, int, bool);
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
+	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 
@@ -210,8 +213,10 @@ private:
 	// buildings that left LOS but are still alive
 	std::vector<std::set<CUnit*> > liveGhostBuildings;
 
-	GML_VECTOR<CUnit*> drawStat;
-	GML_VECTOR<CUnit*> drawIcon;
+	std::set<CUnit*> drawIcon;
+#ifdef USE_GML
+	std::set<CUnit*> drawStat;
+#endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 };

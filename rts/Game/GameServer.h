@@ -77,7 +77,6 @@ public:
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
 	bool WaitsOnCon() const;
-	bool GameHasStarted() const;
 
 	void SetGamePausable(const bool arg);
 
@@ -134,8 +133,14 @@ private:
 
 	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt);
 
+	void AdjustPlayerNumber(const unsigned char msg, unsigned char &player);
+	void UpdatePlayerNumberMap();
+
+	float GetDemoTime();
+
 	/////////////////// game status variables ///////////////////
 
+	unsigned char playerNumberMap[256];
 	volatile bool quitServer;
 	int serverframenum;
 
@@ -143,12 +148,13 @@ private:
 	spring_time readyTime;
 	spring_time gameStartTime;
 	spring_time gameEndTime;	///< Tick when game end was detected
-	bool sentGameOverMsg;
 	spring_time lastTick;
 	float timeLeft;
 	spring_time lastPlayerInfo;
 	spring_time lastUpdate;
 	float modGameTime;
+	float gameTime;
+	float startTime;
 
 	bool isPaused;
 	float userSpeedFactor;
@@ -197,7 +203,7 @@ private:
 	void InternalSpeedChange(float newSpeed);
 	void UserSpeedChange(float newSpeed, int player);
 
-	void AddAdditionalUser( const std::string& name, const std::string& passwd );
+	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false );
 
 	bool hasLocalClient;
 	unsigned localClientNumber;
@@ -219,6 +225,8 @@ private:
 	MsgToForwardMap relayingMessagesMap;
 
 	bool canReconnect;
+	bool gameHasStarted;
+	std::vector<unsigned char> winningAllyTeams;
 };
 
 extern CGameServer* gameServer;

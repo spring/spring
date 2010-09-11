@@ -15,7 +15,7 @@ public:
 
 	unsigned char p[256][4];
 
-	int NumTeamColors() { return 10; }
+	int NumTeamColors() const { return 10; }
 	void Init(void);
 };
 extern CTAPalette palette;

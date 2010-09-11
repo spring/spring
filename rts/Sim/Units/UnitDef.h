@@ -44,6 +44,8 @@ public:
 	S3DModel* LoadModel() const;
 	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	void SetNoCost(bool noCost);
+	bool IsTerrainHeightOK(const float height) const;
+	float GetAllowedTerrainHeight(float height) const;
 
 	std::string name;
 	std::string humanName;
@@ -104,7 +106,6 @@ public:
 	bool upright;
 	bool collide;
 
-	float controlRadius;
 	float losRadius;
 	float airLosRadius;
 	float losHeight;
@@ -373,6 +374,7 @@ public:
 	int pieceTrailCEGRange;							//< range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
 
 	int maxThisUnit;								///< number of units of this type allowed simultaneously in the game
+	bool transportableBuilding;						///< Can this building be transported?
 
 	std::map<std::string, std::string> customParams;
 

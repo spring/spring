@@ -5,6 +5,7 @@
 #include "FeatureDrawer.h"
 
 #include "Game/Camera.h"
+#include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -17,6 +18,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Features/Feature.h"
@@ -52,9 +54,9 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
-
+#ifdef USE_GML
 	showRezBars = !!configHandler->Get("ShowRezBars", 1);
-
+#endif
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
 
@@ -213,8 +215,9 @@ void CFeatureDrawer::Draw()
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
-
+#ifdef USE_GML
 	DrawFeatureStats();
+#endif
 }
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
@@ -247,6 +250,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	}
 }
 
+#ifdef USE_GML
 void CFeatureDrawer::DrawFeatureStats()
 {
 	if (!drawStat.empty()) {
@@ -294,18 +298,22 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 	glPopMatrix();
 }
+#endif
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 {
 	if (!camera->InView(feature->pos, feature->radius * 4.0f)) { return false; }
-	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam)) { return false; }
+	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
 
 	unitDrawer->SetTeamColour(feature->team, feature->tempalpha);
 
-	feature->model->DrawStatic();
+	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature->id))) {
+		feature->model->DrawStatic();
+	}
+
 	glPopMatrix();
 
 	return true;
@@ -410,7 +418,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int 
 
 void CFeatureDrawer::DrawShadowPass()
 {
-	glDisable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE); //FIXME: enable culling for s3o models
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -434,6 +442,11 @@ void CFeatureDrawer::DrawShadowPass()
 		glPushAttrib(GL_COLOR_BUFFER_BIT);
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
+
+		// needed for 3do models (else they will use any currently bound texture)
+		// note: texture0 is by default a 1x1 texture with rgba(0,0,0,255)
+		// (we are just interested in the 255 alpha here)
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawOpaqueFeatures(modelType);
@@ -459,9 +472,11 @@ public:
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 	bool farFeatures;
+#ifdef USE_GML
+	std::vector<CFeature*>* statFeatures;
+#endif
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
-	std::vector<CFeature*>* statFeatures;
 
 	void DrawQuad(int x, int y)
 	{
@@ -499,9 +514,10 @@ public:
 
 				const float sqDist = (f->pos - camera->pos).SqLength();
 				const float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
-
+#ifdef USE_GML
 				if (statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
 					statFeatures->push_back(f);
+#endif
 
 				if (sqDist < farLength) {
 					float sqFadeDistE;
@@ -554,7 +570,9 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = drawFar;
+#ifdef USE_GML
 	drawer.statFeatures = showRezBars ? &drawStat : NULL;
+#endif
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }

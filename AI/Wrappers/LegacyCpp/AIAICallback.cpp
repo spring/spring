@@ -166,12 +166,52 @@ int CAIAICallback::GetPlayerTeam(int player) {
 	return sAICallback->Game_getPlayerTeam(skirmishAIId, player);
 }
 
-const char* CAIAICallback::GetTeamSide(int team) {
-	return sAICallback->Game_getTeamSide(skirmishAIId, team);
+const char* CAIAICallback::GetTeamSide(int otherTeamId) {
+	return sAICallback->Game_getTeamSide(skirmishAIId, otherTeamId);
 }
 
-int CAIAICallback::GetTeamAllyTeam(int team) {
-	return sAICallback->Game_getTeamAllyTeam(skirmishAIId, team);
+int CAIAICallback::GetTeamAllyTeam(int otherTeamId) {
+	return sAICallback->Game_getTeamAllyTeam(skirmishAIId, otherTeamId);
+}
+
+float CAIAICallback::GetTeamMetalCurrent(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceCurrent(skirmishAIId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalIncome(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceIncome(skirmishAIId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalUsage(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceUsage(skirmishAIId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamMetalStorage(int otherTeamId) {
+	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceStorage(skirmishAIId, otherTeamId, m);
+}
+
+float CAIAICallback::GetTeamEnergyCurrent(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceCurrent(skirmishAIId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyIncome(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceIncome(skirmishAIId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyUsage(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceUsage(skirmishAIId, otherTeamId, e);
+}
+
+float CAIAICallback::GetTeamEnergyStorage(int otherTeamId) {
+	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
+	return sAICallback->Game_getTeamResourceStorage(skirmishAIId, otherTeamId, e);
 }
 
 bool CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
@@ -435,7 +475,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->turnInPlace = sAICallback->UnitDef_isTurnInPlace(skirmishAIId, unitDefId);
 		unitDef->upright = sAICallback->UnitDef_isUpright(skirmishAIId, unitDefId);
 		unitDef->collide = sAICallback->UnitDef_isCollide(skirmishAIId, unitDefId);
-		unitDef->controlRadius = sAICallback->UnitDef_getControlRadius(skirmishAIId, unitDefId);
 		unitDef->losRadius = sAICallback->UnitDef_getLosRadius(skirmishAIId, unitDefId);
 		unitDef->airLosRadius = sAICallback->UnitDef_getAirLosRadius(skirmishAIId, unitDefId);
 		unitDef->losHeight = sAICallback->UnitDef_getLosHeight(skirmishAIId, unitDefId);
@@ -983,9 +1022,6 @@ bool CAIAICallback::GetValue(int valueId, void *data)
 			return true;
 		}case AIVAL_DEBUG_MODE:{
 			*(bool*)data = sAICallback->Game_isDebugModeEnabled(skirmishAIId);
-			return true;
-		}case AIVAL_GAME_MODE:{
-			*(int*)data = sAICallback->Game_getMode(skirmishAIId);
 			return true;
 		}case AIVAL_GAME_PAUSED:{
 			*(bool*)data = sAICallback->Game_isPaused(skirmishAIId);
@@ -1908,13 +1944,15 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 				myData->rayLen,
 				myData->srcUID,
 				myData->hitUID,
-				myData->flags
+				myData->flags,
+				myData->hitFID
 			};
 
 			ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY, &cCmdData);
 
 			myData->rayLen = cCmdData.rayLen;
 			myData->hitUID = cCmdData.ret_hitUnitId;
+			myData->hitFID = cCmdData.ret_hitFeatureId;
 			break;
 		}
 

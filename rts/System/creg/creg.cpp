@@ -138,7 +138,7 @@ std::vector<Class*> Class::GetImplementations()
 		if (!dc->IsAbstract())
 			classes.push_back(dc);
 
-		std::vector<Class*> impl = dc->GetImplementations();
+		const std::vector<Class*> &impl = dc->GetImplementations();
 		classes.insert(classes.end(), impl.begin(), impl.end());
 	}
 

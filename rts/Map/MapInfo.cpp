@@ -76,7 +76,7 @@ void CMapInfo::ReadGlobal()
 	map.humanName    = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
 
-	map.hardness      = topTable.GetFloat("maphardness", 100.0f);
+	map.hardness      = std::max(0.001f, topTable.GetFloat("maphardness", 100.0f));
 	map.notDeformable = topTable.GetBool("notDeformable", false);
 
 	map.gravity = topTable.GetFloat("gravity", 130.0f);

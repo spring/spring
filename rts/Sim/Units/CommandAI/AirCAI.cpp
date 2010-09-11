@@ -208,6 +208,8 @@ void CAirCAI::GiveCommandReal(const Command &c)
 
 void CAirCAI::SlowUpdate()
 {
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+		return;
 	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		FinishCommand();
 		return;

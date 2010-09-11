@@ -64,6 +64,17 @@ public:
 	 */
 	virtual const char* GetTeamSide(int teamId) = 0;
 	virtual int GetTeamAllyTeam(int teamId) = 0;
+
+	virtual float GetTeamMetalCurrent(int teamId) = 0;
+	virtual float GetTeamMetalIncome(int teamId) = 0;
+	virtual float GetTeamMetalUsage(int teamId) = 0;
+	virtual float GetTeamMetalStorage(int teamId) = 0;
+
+	virtual float GetTeamEnergyCurrent(int teamId) = 0;
+	virtual float GetTeamEnergyIncome(int teamId) = 0;
+	virtual float GetTeamEnergyUsage(int teamId) = 0;
+	virtual float GetTeamEnergyStorage(int teamId) = 0;
+
 	/// Returns true, if the two supplied ally-teams are currently allied
 	virtual bool IsAllied(int firstAllyTeamId, int secondAllyTeamId) = 0;
 

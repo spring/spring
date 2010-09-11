@@ -57,8 +57,8 @@ public:
 
 	bool atGoal;
 	bool haveFinalWaypoint;
-	float terrainSpeed;
 
+	float terrainSpeed;
 	float requestedSpeed;
 	short requestedTurnRate;
 
@@ -76,6 +76,7 @@ public:
 
 	int moveSquareX;
 	int moveSquareY;
+
 protected:
 	int nextDeltaSpeedUpdate;
 	int nextObstacleAvoidanceUpdate;
@@ -114,12 +115,14 @@ protected:
 	void UpdateOwnerPos(bool);
 	bool WantReverse(const float3&) const;
 
-	unsigned int RequestPath(float3 startPos, float3 goalPos, float goalRadius = 8);
 	void UpdateHeatMap();
 
 	bool skidding;
 	bool flying;
 	bool reversing;
+	bool idling;
+	bool canReverse;
+
 	float skidRotSpeed;
 	float dropSpeed;
 	float dropHeight;
@@ -132,7 +135,9 @@ protected:
 	bool CheckColH(int x, int y1, int y2, float xmove, int squareTestX);
 	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
 
-	static std::vector<int2> (*lineTable)[11];
+	// number of grid-cells along each dimension; should be an odd number
+	static const int LINETABLE_SIZE = 11;
+	static std::vector<int2> lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 
 	float3 mainHeadingPos;
 	bool useMainHeading;
@@ -141,6 +146,7 @@ protected:
 public:
 	static void CreateLineTable(void);
 	static void DeleteLineTable(void);
+
 	void TestNewTerrainSquare(void);
 	virtual void LeaveTransport(void);
 

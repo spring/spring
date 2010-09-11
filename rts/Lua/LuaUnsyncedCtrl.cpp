@@ -389,6 +389,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
+	GML_RECMUTEX_LOCK(unit); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
 
@@ -1057,9 +1058,9 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 					} else if (key == "specularColor") {
 						w.specularColor = color;
  					} else if (key == "planeColor") {
-						w.planeColor.x = color[1];
-						w.planeColor.y = color[2];
-						w.planeColor.z = color[3];
+						w.planeColor.x = color[0];
+						w.planeColor.y = color[1];
+						w.planeColor.z = color[2];
 					}
 				}
 			}
@@ -1622,6 +1623,12 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 	const std::string springFullName = (Platform::GetProcessExecutableFile());
 	// LogObject() << "Args: " << arguments;
+
+#ifdef _WIN32
+	//! else OpenAL soft crashs when using execlp
+	ISound::Shutdown();
+#endif
+
 	if (!script.empty())
 	{
 		const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir()+"script.txt";

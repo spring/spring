@@ -17,7 +17,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "LogOutput.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitDef.h"
@@ -113,8 +113,8 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 	// calculate how much to offset the buildings in the explosion radius with
 	// (while still keeping the ground under them flat)
-	std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
-	for (std::vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
+	const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, radius);
+	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 		if ((*ui)->blockHeightChanges && (*ui)->isMarkedOnBlockingMap) {
 			CUnit* unit = *ui;
 			float totalDif = 0.0f;

@@ -137,7 +137,6 @@ CUnit::CUnit():
 	los(0),
 	tempNum(0),
 	lastSlowUpdate(0),
-	controlRadius(2),
 	losRadius(0),
 	airLosRadius(0),
 	losHeight(0),
@@ -298,10 +297,7 @@ CUnit::~CUnit()
 	qf->RemoveUnit(this);
 	loshandler->DelayedFreeInstance(los);
 	los = 0;
-
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	if (script != &CNullUnitScript::value) {
 		delete script;
@@ -332,7 +328,6 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	pos = position;
 	team = Team;
 	allyteam = teamHandler->AllyTeam(Team);
-	lineage = Team;
 	unitDef = def;
 	unitDefName = unitDef->name;
 
@@ -378,9 +373,7 @@ void CUnit::ForcedMove(const float3& newPos)
 
 	qf->MovedUnit(this);
 	loshandler->MoveUnit(this, false);
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 }
 
 
@@ -1140,24 +1133,19 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 
 void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
 {
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	*valuePtr = newValue;
 
 	if (newValue != 0) {
 		hasRadarCapacity = true;
-	}
-	else if (hasRadarCapacity) {
-		hasRadarCapacity = radarRadius || jammerRadius   ||
-		                   sonarRadius || sonarJamRadius ||
-		                   seismicRadius;
+	} else if (hasRadarCapacity) {
+		hasRadarCapacity = (radarRadius   > 0.0f) || (jammerRadius   > 0.0f) ||
+		                   (sonarRadius   > 0.0f) || (sonarJamRadius > 0.0f) ||
+		                   (seismicRadius > 0.0f);
 	}
 
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 }
 
 
@@ -1267,19 +1255,10 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	loshandler->FreeInstance(los);
 	los = 0;
 	losStatus[allyteam] = 0;
-	if (hasRadarCapacity) {
-		radarhandler->RemoveUnit(this);
-	}
+	radarhandler->RemoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
-	}
-
-	// Sharing commander in com ends game kills you.
-	// Note that this will kill the com too.
-	if (unitDef->isCommander) {
-		teamHandler->Team(oldteam)->CommanderDied(this);
-		// InstallChristmasHat(color4::red); // Ho-Ho-Ho merry christmas to all commiters
 	}
 
 	if (type == ChangeGiven) {
@@ -1312,9 +1291,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 	qf->MovedUnit(this);
-	if (hasRadarCapacity) {
-		radarhandler->MoveUnit(this);
-	}
+	radarhandler->MoveUnit(this);
 
 	SetLODCount(0);
 
@@ -1820,11 +1797,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	blockHeightChanges = false;
 
-	if (unitDef->isCommander) {
-		teamHandler->Team(team)->CommanderDied(this);
-	}
-	teamHandler->Team(this->lineage)->LeftLineage(this);
-
 	if (unitDef->windGenerator > 0.0f) {
 		wind.DelUnit(this);
 	}
@@ -1936,6 +1908,7 @@ void CUnit::AddEnergy(float energy, bool handicap)
 }
 
 
+
 void CUnit::Activate()
 {
 	if (activated)
@@ -1944,11 +1917,11 @@ void CUnit::Activate()
 	activated = true;
 	script->Activate();
 
-	if (unitDef->targfac){
+	if (unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
 	}
-	if (hasRadarCapacity)
-		radarhandler->MoveUnit(this);
+
+	radarhandler->MoveUnit(this);
 
 	int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -1958,7 +1931,6 @@ void CUnit::Activate()
 	}
 }
 
-
 void CUnit::Deactivate()
 {
 	if (!activated)
@@ -1967,11 +1939,11 @@ void CUnit::Deactivate()
 	activated = false;
 	script->Deactivate();
 
-	if (unitDef->targfac){
+	if (unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
 	}
-	if (hasRadarCapacity)
-		radarhandler->RemoveUnit(this);
+
+	radarhandler->RemoveUnit(this);
 
 	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -1980,6 +1952,7 @@ void CUnit::Deactivate()
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}
 }
+
 
 
 void CUnit::UpdateWind(float x, float z, float strength)
@@ -2237,7 +2210,6 @@ CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefName),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(lineage),
 	CR_MEMBER(aihint),
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
@@ -2291,7 +2263,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(tempNum),
 	CR_MEMBER(lastSlowUpdate),
 	CR_MEMBER(mapSquare),
-	CR_MEMBER(controlRadius),
 	CR_MEMBER(losRadius),
 	CR_MEMBER(airLosRadius),
 	CR_MEMBER(losHeight),

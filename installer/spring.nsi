@@ -81,6 +81,7 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include "include\echo.nsh"
 !include "include\fileassoc.nsh"
 !include "include\fileExistChecks.nsh"
+!include "include\fileMisc.nsh"
 !include "include\checkrunning.nsh"
 !include "include\aiHelpers.nsh"
 
@@ -171,6 +172,8 @@ FunctionEnd
 
 SectionGroup /e "!Engine"
 	Section "Main application (req)" SEC_MAIN
+		; make this section read-only -> user can not deselect it
+		SectionIn RO
 
 		!define INSTALL
 			${!echonow} "Processing: main"
@@ -221,9 +224,10 @@ SectionGroupEnd
 
 Section "Desktop shortcuts" SEC_DESKTOP
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
-		${!echonow} "Processing: springlobby shortcut"
-		SetOutPath "$INSTDIR"
-		CreateShortCut "$DESKTOP\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
+		!define INSTALL
+			${!echonow} "Processing: shortcuts - Desktop"
+			!include "sections\shortcuts_desktop.nsh"
+		!undef INSTALL
 	${EndIf}
 SectionEnd
 
@@ -246,8 +250,16 @@ SectionGroupEnd
 
 Section "Start menu shortcuts" SEC_START
 	!define INSTALL
-		${!echonow} "Processing: shortcuts"
-		!include "sections\shortcuts.nsh"
+		${!echonow} "Processing: shortcuts - Start menu"
+		!include "sections\shortcuts_startMenu.nsh"
+	!undef INSTALL
+SectionEnd
+
+
+Section /o "Portable" SEC_PORTABLE
+	!define INSTALL
+		${!echonow} "Processing: Portable"
+		!include "sections\portable.nsh"
 	!undef INSTALL
 SectionEnd
 
@@ -303,8 +315,10 @@ Section Uninstall
 	Delete "$INSTDIR\spring-multithreaded.exe"
 
 	!include "sections\docs.nsh"
-	!include "sections\shortcuts.nsh"
+	!include "sections\shortcuts_startMenu.nsh"
+	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\archivemover.nsh"
+	!include "sections\portable.nsh"
 	!include "sections\springDownloader.nsh"
 	!include "sections\tasServer.nsh"
 	!insertmacro DeleteSkirmishAI "AAI"
@@ -313,8 +327,6 @@ Section Uninstall
 	!insertmacro DeleteSkirmishAI "E323AI"
 	!include "sections\springlobby.nsh"
 	!include "sections\luaui.nsh"
-
-	Delete "$DESKTOP\SpringLobby.lnk"
 
 	; All done
 	RMDir "$INSTDIR"

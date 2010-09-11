@@ -14,27 +14,28 @@
 #include "AAI.h"
 
 
-AAI::AAI()
+AAI::AAI() :
+	cb(NULL),
+	aicb(NULL),
+	side(0),
+	aai_instance(-1),
+	brain(NULL),
+	execute(NULL),
+	ut(NULL),
+	bt(NULL),
+	map(NULL),
+	af(NULL),
+	am(NULL),
+	initialized(false),
+	file(NULL)
 {
 	// initialize random numbers generator
 	srand (time(NULL));
-
-	brain = 0;
-	execute = 0;
-	bt = 0;
-	ut = 0;
-	map = 0;
-	af = 0;
-	am = 0;
-
-	side = 0;
-
-	initialized = false;
 }
 
 AAI::~AAI()
 {
-	if(!cfg->initialized)
+	if(!initialized)
 		return;
 
 	// save several ai data
@@ -721,7 +722,7 @@ void AAI::EnemyDestroyed(int enemy, int attacker)
 
 	if(attacker)
 	{
-		// get unit�s id
+		// get unit's id
 		const UnitDef *def = cb->GetUnitDef(enemy);
 		const UnitDef *def_att = cb->GetUnitDef(attacker);
 

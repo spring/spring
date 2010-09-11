@@ -60,11 +60,7 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 
 void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
 
-void RandomStartPicture(const std::string& sidePref);
-void LoadStartPicture(const std::string& picture);
 void ClearScreen();
-void PrintLoadMsg(const char* text, bool swapbuffers = true);
-void UnloadStartPicture();
 
 bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);

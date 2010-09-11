@@ -6,7 +6,7 @@ spring(6)
 
 Name
 ----
-spring - An open source RTS with similar gameplay to TA
+spring - An open source RTS game engine - Default Engine
 
 
 Synopsis
@@ -24,12 +24,13 @@ Synopsis
 
 Description
 -----------
-Spring is a free Real Time Strategy (RTS) game engine originally designed to
-play Total Annihilation ((C) 1997 Cavedog) content which has evolved into a general RTS
-engine capable of running various kinds of games (mods).
+Spring is a free Real Time Strategy (RTS) game engine, originally designed to
+play Total Annihilation ((C) 1997 Cavedog) content.
+It has since evolved into a general RTS engine, capable of running various
+kind of games (mods).
 
-It is mainly designed around online multiplayer games but can be played in
-single-player mode against an AI.
+It is mainly designed around online multiplayer games but can also be played in
+single-player mode against AIs.
 
 
 Options
@@ -79,12 +80,33 @@ Options
 *--list-skirmish-ais*::
   Dump a list of available Skirmish AIs to STDOUT
 
+
+DATA DIR
+--------
+Data directories are searched for content, and among other things, may contain:
+*cache
+*mods
+*maps
+*AI
+
+When running the engine, it may use multiple data directories,
+but it will use only a single one of them as writeable, to write cache & log
+files to.
+
 Files
 -----
 
+  ~/.spring/
+
+The default data-directory (see section DATA DIR).
+
+  ~/.springrc
+
+Contains the users settings for the engine, for things like graphic and sound.
+
   /etc/spring/datadir
 
-Contains the path used by spring and springlobby to save downloaded files and temporary data.
+Contains the ':' separated paths to additional data-dirs (see section DATA DIR).
 
 See also
 --------

@@ -9,7 +9,6 @@
 #include "mmgr.h"
 
 #include "3DOTextureHandler.h"
-#include "Platform/errorhandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -42,8 +41,6 @@ static int CompareTatex2( const void *arg1, const void *arg2 ){
 
 C3DOTextureHandler::C3DOTextureHandler()
 {
-	PrintLoadMsg("Creating unit textures");
-
 	CFileHandler file("unittextures/tatex/teamtex.txt");
 	CSimpleParser parser(file);
 
@@ -57,7 +54,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 	int numfiles = 0;
 	int totalSize = 0;
 
-	std::vector<std::string> filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
+	const std::vector<std::string> &filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
 	std::vector<std::string> files    = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
 	files.insert(files.end(),filesBMP.begin(),filesBMP.end());
 
@@ -124,7 +121,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 	} else {
 		bigTexX=2048;
 		bigTexY=2048;
-		handleerror(0,"Too many/large unit textures to fit in 2048*2048","Error",0);
+		throw content_error("Too many/large texture in 3do textureatlas to fit in 2048*2048");
 	}
 
 	qsort(texfiles,numfiles,sizeof(TexFile*),CompareTatex2);
@@ -161,7 +158,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 					cury=maxy;
 					maxy+=curtex1->ysize;
 					if(maxy>bigTexY){
-						handleerror(0,"Too many/large unit textures","Error",0);
+						throw content_error("Too many/large texture in 3do textureatlas to fit in 2048*2048");
 						break;
 					}
 					thisSub.push_back(int2(0,cury));

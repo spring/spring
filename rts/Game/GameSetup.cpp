@@ -33,13 +33,11 @@ CGameSetup::CGameSetup()
 	, startPosType(StartPos_Fixed)
 	, maxUnits(1500)
 	, ghostedBuildings(true)
-	, limitDgun(false)
 	, disableMapDamage(false)
 	, maxSpeed(0.0f)
 	, minSpeed(0.0f)
 	, hostDemo(false)
 	, numDemoPlayers(0)
-	, gameMode(0)
 	, noHelperAIs(0)
 {}
 
@@ -397,10 +395,8 @@ bool CGameSetup::Init(const std::string& buf)
 	hostDemo    = !demoName.empty();
 
 	file.GetDef(useLuaGaia,       "1", "GAME\\ModOptions\\LuaGaia");
-	file.GetDef(gameMode,         "0", "GAME\\ModOptions\\GameMode");
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
-	file.GetDef(limitDgun,        "0", "GAME\\ModOptions\\LimitDgun");
 	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");
 	file.GetDef(ghostedBuildings, "1", "GAME\\ModOptions\\GhostedBuildings");
 

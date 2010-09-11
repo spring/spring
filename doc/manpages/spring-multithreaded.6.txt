@@ -1,0 +1,104 @@
+spring-dedicated(6)
+===================
+:man source:  Spring package
+:man manual:  Games
+
+
+Name
+----
+spring-multithreaded - An open source RTS game engine - Multi-Threaded Engine
+
+
+Synopsis
+--------
+*spring-multithreaded* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [[-c|--client] | [-s|--server]] [-p|--projectiledump] [-t|--textureatlas] [-n|--name 'STRING'] [-C|--config 'FILE']
+
+*spring-multithreaded* --list-ai-interfaces
+
+*spring-multithreaded* --list-skirmish-ais
+
+*spring-multithreaded* [-h|--help]
+
+*spring-multithreaded* [-V|--version]
+
+
+Description
+-----------
+Spring is a free Real Time Strategy (RTS) game engine, originally designed to
+play Total Annihilation ((C) 1997 Cavedog) content.
+It has since evolved into a general RTS engine, capable of running various
+kind of games (mods).
+
+It is mainly designed around online multiplayer games but can also be played in
+single-player mode against AIs.
+
+This is the engine version which runs graphics and simulation
+in two separate threads. This may boost performance on multi-core systems.
+For more details, please reffer to:
+
+  man spring
+
+Options
+-------
+*-h, --help*::
+  Print the options help message and exit
+
+*-V, --version*::
+  Display program version and exit
+
+*-f, --fullscreen*::
+  Run in fullscreen mode
+
+*-w, --window*::
+  Run in windowed mode
+
+*-x, --xresolution*::'SIZE'
+  Set X resolution
+
+*-y, --yresolution*::'SIZE'
+  Set Y resolution
+
+*-m, --minimise*::
+  Start minimised
+
+*-s, --server*::
+  Run as a server
+
+*-c, --client*::
+  Run as a client
+
+*-p, --projectiledump*::
+  Dump projectile class info into projectiles.txt
+
+*-t, --textureatlas*::
+  Dump each finalised textureatlas into textureatlasN.tga
+
+*-n, --name*::'NAME'
+  Set your player name
+
+ *-C, --config*::'FILE'
+  Configuration file
+
+*--list-ai-interfaces*::
+  Dump a list of available AI Interfaces to STDOUT
+
+*--list-skirmish-ais*::
+  Dump a list of available Skirmish AIs to STDOUT
+
+See also
+--------
+
+spring(6)
+
+Homepage
+--------
+
+More information about Spring can be found at
+link:http://springrts.com
+
+Author
+------
+Spring was written by the Spring developers.
+
+This manual page was written by Marco Amadori <marco.amadori@gmail.com>,
+for the Debian project (and may be used by others).

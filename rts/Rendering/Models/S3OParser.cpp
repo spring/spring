@@ -21,7 +21,6 @@
 #include "System/Vec2.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
-#include "System/Platform/errorhandler.h"
 
 static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
 static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
@@ -116,7 +115,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	}
 
 	piece->isEmpty = piece->vertexDrawOrder.empty();
-	piece->vertexCount = piece->vertices.size();
 	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
 	piece->SetVertexTangents();
@@ -134,8 +132,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		(piece->maxs - piece->goffset) +
 		(piece->mins - piece->goffset);
 
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
-	piece->colvol->Enable();
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT);
 
 
 	int childTableOffset = fp->childs;
@@ -241,8 +238,8 @@ void SS3OPiece::SetVertexTangents()
 		return;
 	}
 
-	sTangents.resize(vertexCount, ZeroVector);
-	tTangents.resize(vertexCount, ZeroVector);
+	sTangents.resize(GetVertexCount(), ZeroVector);
+	tTangents.resize(GetVertexCount(), ZeroVector);
 
 	unsigned stride = 0;
 

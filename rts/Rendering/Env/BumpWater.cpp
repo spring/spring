@@ -442,7 +442,9 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("coastmap");    // idx  9
 		waterShader->SetUniformLocation("waverand");    // idx 10
 
-		if (!waterShader->IsValid()) {
+		if (!waterShader->IsValid() && 
+			(!globalRendering->atiHacks || !strstr(waterShader->GetLog().c_str(), 
+			"Different sampler types for same sample texture unit in fragment shader"))) {
 			//! string size is limited with content_error()
 			logOutput.Print("[BumpWater] water-shader compilation error: " + waterShader->GetLog());
 			throw content_error(string("[BumpWater] water-shader compilation error!"));

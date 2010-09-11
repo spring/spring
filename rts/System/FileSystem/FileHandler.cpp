@@ -298,7 +298,7 @@ bool CFileHandler::InsertRawFiles(set<string>& fileSet,
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
 	                          boost::regex::icase);
 
-	vector<string> found = filesystem.FindFiles(path, pattern);
+	const vector<string> &found = filesystem.FindFiles(path, pattern);
 	vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {
@@ -325,7 +325,7 @@ bool CFileHandler::InsertModFiles(set<string>& fileSet,
 
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
 
-	vector<string> found = vfsHandler->GetFilesInDir(path);
+	const vector<string> &found = vfsHandler->GetFilesInDir(path);
 	vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {
@@ -388,7 +388,7 @@ bool CFileHandler::InsertRawDirs(set<string>& dirSet,
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
 	                          boost::regex::icase);
 
-	vector<string> found = filesystem.FindFiles(path, pattern,
+	const vector<string> &found = filesystem.FindFiles(path, pattern,
 	                                            FileSystem::ONLY_DIRS);
 	vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
@@ -417,7 +417,7 @@ bool CFileHandler::InsertModDirs(set<string>& dirSet,
 
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
 
-	vector<string> found = vfsHandler->GetDirsInDir(path);
+	const vector<string> &found = vfsHandler->GetDirsInDir(path);
 	vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {

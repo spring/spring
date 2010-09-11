@@ -20,6 +20,7 @@
 #include "GameSetup.h"
 #include "ClientSetup.h"
 #include "GameData.h"
+#include "LoadScreen.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -43,13 +44,14 @@
 #include "Exceptions.h"
 #include "TimeProfiler.h"
 #include "Net/UnpackPacket.h"
+#include "PlayerHandler.h"
 
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
 using std::string;
 
 extern boost::uint8_t* keys;
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),
@@ -206,7 +208,7 @@ void CPreGame::UpdateClientNet()
 	}
 
 	boost::shared_ptr<const RawPacket> packet;
-	while ((packet = net->GetData()))
+	while ((packet = net->GetData(gs->frameNum)))
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
@@ -222,40 +224,55 @@ void CPreGame::UpdateClientNet()
 				}		
 				break;
 			}
-			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.
+			case NETMSG_CREATE_NEWPLAYER: { // server will send this first if we're using midgame join feature, to let us know about ourself (we won't be in gamedata), otherwise skip to gamedata
+				try {
+					netcode::UnpackPacket pckt(packet, 3);
+					unsigned char spectator, team, playerNum;
+					std::string name;
+					// since the >> operator uses dest size to extract data from the packet, we need to use temp variables
+					// of the same size of the packet, then convert to dest variable
+					pckt >> playerNum;
+					pckt >> spectator;
+					pckt >> team;
+					pckt >> name;
+
+					if(team >= teamHandler->ActiveTeams())
+						throw netcode::UnpackPacketException("Invalid team");
+
+					CPlayer player;
+					player.name = name;
+					player.spectator = spectator;
+					player.team = team;
+					player.playerNum = playerNum;
+					// add ourself, to avoid crashing if our player num gets queried
+					// we'll receive the same message later, in the game class, which is the global broadcast version
+					// the global broadcast will overwrite the user with the same values as here
+					playerHandler->AddPlayer(player);
+				} catch (netcode::UnpackPacketException &e) {
+					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
+				}
+				break;
+			}
+			case NETMSG_GAMEDATA: { // server first ( not if we're joining midgame as extra players ) sends this to let us know about teams, allyteams etc.
+				if (gameSetup)
+					throw content_error("Duplicate game data received from server");
 				GameDataReceived(packet);
 				break;
 			}
 			case NETMSG_SETPLAYERNUM: { // this is sent afterwards to let us know which playernum we have
-				gu->SetMyPlayer(packet->data[1]);
+				if (!gameSetup)
+					throw content_error("No game data received from server");
+
+				unsigned char playerNum = packet->data[1];
+				if (playerHandler->ActivePlayers() <= playerNum)
+					throw content_error("Invalid player number received from server");
+
+				gu->SetMyPlayer(playerNum);
 				logOutput.Print("User number %i (team %i, allyteam %i)", gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
-				// When calling this function, mod archives have to be loaded
-				// and gu->myPlayerNum has to be set.
-				skirmishAIHandler.LoadPreGame();
+				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
-				const CTeam* team = teamHandler->Team(gu->myTeam);
-				assert(team);
-				std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
-				if (mapStartPic.empty())
-					RandomStartPicture(team->side);
-				else
-					LoadStartPicture(mapStartPic);
-
-				std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
-				if (!mapStartMusic.empty())
-					Channels::BGMusic.Play(mapStartMusic);
-
-				game = new CGame(gameSetup->MapFile(), modArchive, savefile);
-
-				if (savefile) {
-					PrintLoadMsg("Loading game");
-					savefile->LoadGame();
-				}
-
-				UnloadStartPicture();
-
-				pregame=0;
+				pregame = NULL;
 				delete this;
 				return;
 			}
@@ -393,6 +410,18 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		CPlayer::UpdateControlledTeams();
 	} else {
 		throw content_error("Server sent us incorrect script");
+	}
+
+	// some sanity checks
+	for(int p = 0; p < playerHandler->ActivePlayers(); ++p) {
+		CPlayer *player = playerHandler->Player(p);
+		if(player->playerNum >= playerHandler->ActivePlayers() || player->playerNum < 0)
+			throw content_error("Invalid player in game data");
+		if(player->team >= teamHandler->ActiveTeams() || player->team < 0)
+			throw content_error("Invalid team in game data");
+		int allyteam = teamHandler->AllyTeam(player->team);
+		if(allyteam >= teamHandler->ActiveAllyTeams() || allyteam < 0)
+			throw content_error("Invalid ally team in game data");
 	}
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);

@@ -100,8 +100,6 @@ EXPORT(bool             ) skirmishAiCallback_Game_isExceptionHandlingEnabled(int
 
 EXPORT(bool             ) skirmishAiCallback_Game_isDebugModeEnabled(int skirmishAIId);
 
-EXPORT(int              ) skirmishAiCallback_Game_getMode(int skirmishAIId);
-
 EXPORT(bool             ) skirmishAiCallback_Game_isPaused(int skirmishAIId);
 
 EXPORT(float            ) skirmishAiCallback_Game_getSpeedFactor(int skirmishAIId);
@@ -243,8 +241,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit(in
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isUpright(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isCollide(int skirmishAIId, int unitDefId);
-
-EXPORT(float            ) skirmishAiCallback_UnitDef_getControlRadius(int skirmishAIId, int unitDefId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getLosRadius(int skirmishAIId, int unitDefId);
 
@@ -662,8 +658,6 @@ EXPORT(float            ) skirmishAiCallback_Unit_ModParam_getValue(int skirmish
 EXPORT(int              ) skirmishAiCallback_Unit_getTeam(int skirmishAIId, int unitId);
 
 EXPORT(int              ) skirmishAiCallback_Unit_getAllyTeam(int skirmishAIId, int unitId);
-
-EXPORT(int              ) skirmishAiCallback_Unit_getLineage(int skirmishAIId, int unitId);
 
 EXPORT(int              ) skirmishAiCallback_Unit_getAiHint(int skirmishAIId, int unitId);
 

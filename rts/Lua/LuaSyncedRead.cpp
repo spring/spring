@@ -46,7 +46,7 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/MoveTypes/StaticMoveType.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -192,7 +192,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitDefID);
 	REGISTER_LUA_CFUNC(GetUnitTeam);
 	REGISTER_LUA_CFUNC(GetUnitAllyTeam);
-	REGISTER_LUA_CFUNC(GetUnitLineage);
 	REGISTER_LUA_CFUNC(GetUnitNeutral);
 	REGISTER_LUA_CFUNC(GetUnitHealth);
 	REGISTER_LUA_CFUNC(GetUnitIsDead);
@@ -404,9 +403,9 @@ static inline bool IsFeatureVisible(const CFeature* feature)
 {
 	if (fullRead)
 		return true;
-	if (readAllyTeam < 0) {
-		return fullRead;
-	}
+	if (readAllyTeam < 0)
+		return false;
+
 	return feature->IsInLosForAllyTeam(readAllyTeam);
 }
 
@@ -1962,7 +1961,7 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 #define RECTANGLE_TEST ; // no test, GetUnitsExact is sufficient
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2015,7 +2014,7 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 	}
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2069,7 +2068,7 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 	}                                           \
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2127,7 +2126,7 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 	}                                           \
 
 	vector<CUnit*>::const_iterator it;
-	vector<CUnit*> units = qf->GetUnitsExact(mins, maxs);
+	const vector<CUnit*> &units = qf->GetUnitsExact(mins, maxs);
 
 	lua_newtable(L);
 	int count = 0;
@@ -2323,7 +2322,7 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	vector<CFeature*> rectFeatures = qf->GetFeaturesExact(mins, maxs);
+	const vector<CFeature*> &rectFeatures = qf->GetFeaturesExact(mins, maxs);
 	const int rectFeatureCount = (int)rectFeatures.size();
 
 	lua_newtable(L);
@@ -2580,25 +2579,6 @@ int LuaSyncedRead::GetUnitAllyTeam(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetUnitLineage(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->lineage);
-	if (IsEnemyUnit(unit)) {
-		return 1;
-	}
-	const CTeam* team = teamHandler->Team(unit->team);
-	if (team == NULL) {
-		return 1;
-	}
-	lua_pushboolean(L, team->lineageRoot == unit->id);
-	return 2;
-}
-
-
 int LuaSyncedRead::GetUnitNeutral(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -2696,7 +2676,8 @@ int LuaSyncedRead::GetUnitExperience(lua_State* L)
 		return 0;
 	}
 	lua_pushnumber(L, unit->experience);
-	return 1;
+	lua_pushnumber(L, unit->limExperience);
+	return 2;
 }
 
 

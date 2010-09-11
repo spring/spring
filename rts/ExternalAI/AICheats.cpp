@@ -10,6 +10,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/GameServer.h"
@@ -145,11 +146,10 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::iterator ui;
+	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
 
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
@@ -193,11 +193,10 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::iterator ui;
+	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
 
-	for (ui = unit.begin(); ui != unit.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
@@ -409,10 +408,12 @@ int CAICheats::HandleCommand(int commandId, void *data)
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
 				const CUnit* hitUnit = NULL;
+				const CFeature* hitFeature = NULL;
 
 				if (srcUnit != NULL) {
-					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
 					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
+					cmdData->hitFID = (hitFeature != NULL)? hitFeature->id: -1;
 				}
 			}
 

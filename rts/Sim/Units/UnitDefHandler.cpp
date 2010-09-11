@@ -37,8 +37,6 @@ bool isblank(int c) {
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
-	PrintLoadMsg("Loading unit definitions");
-
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("UnitDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading UnitDefs");

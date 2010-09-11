@@ -13,6 +13,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
@@ -103,7 +104,7 @@ CGrassDrawer::CGrassDrawer()
 	{
 		CBitmap grassBladeTexBM;
 		if (!grassBladeTexBM.Load(mapInfo->smf.grassBladeTexName)) {
-			//! map didn't defined a grasstex, so generate one
+			//! map didn't define a grasstex, so generate one
 			grassBladeTexBM.Alloc(256,64);
 
 			for (int a = 0; a < 16; ++a) {
@@ -182,31 +183,21 @@ void CGrassDrawer::LoadGrassShaders() {
 	CShaderHandler* sh = shaderHandler;
 
 	if (!globalRendering->haveGLSL) {
-		grassShaders[GRASS_PROGRAM_DIST_BASIC] =
-			sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_BASIC] + "ARB", true);
-		grassShaders[GRASS_PROGRAM_DIST_BASIC]->AttachShaderObject(
-			sh->CreateShaderObject("ARB/grassFarNS.vp", "", GL_VERTEX_PROGRAM_ARB)
-		);
+		grassShaders[GRASS_PROGRAM_DIST_BASIC] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_BASIC] + "ARB", true);
+		grassShaders[GRASS_PROGRAM_DIST_BASIC]->AttachShaderObject(sh->CreateShaderObject("ARB/grassFarNS.vp", "", GL_VERTEX_PROGRAM_ARB));
+
+		// these remain stubs if !canUseShadows
+		grassShaders[GRASS_PROGRAM_NEAR_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_NEAR_SHADOW] + "ARB", true);
+		grassShaders[GRASS_PROGRAM_DIST_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_SHADOW] + "ARB", true);
 
 		if (shadowHandler->canUseShadows) {
-			grassShaders[GRASS_PROGRAM_NEAR_SHADOW] =
-				sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_NEAR_SHADOW] + "ARB", true);
-			grassShaders[GRASS_PROGRAM_NEAR_SHADOW]->AttachShaderObject(
-				sh->CreateShaderObject("ARB/grass.vp", "", GL_VERTEX_PROGRAM_ARB)
-			);
-
-			grassShaders[GRASS_PROGRAM_DIST_SHADOW] =
-				sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_SHADOW] + "ARB", true);
-			grassShaders[GRASS_PROGRAM_DIST_SHADOW]->AttachShaderObject(
-				sh->CreateShaderObject("ARB/grassFar.vp", "", GL_VERTEX_PROGRAM_ARB)
-			);
+			grassShaders[GRASS_PROGRAM_NEAR_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/grass.vp", "", GL_VERTEX_PROGRAM_ARB));
+			grassShaders[GRASS_PROGRAM_DIST_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/grassFar.vp", "", GL_VERTEX_PROGRAM_ARB));
 		}
 	} else {
 		for (int i = GRASS_PROGRAM_NEAR_SHADOW; i < GRASS_PROGRAM_LAST; i++) {
 			grassShaders[i] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[i] + "GLSL", false);
-			grassShaders[i]->AttachShaderObject(
-				sh->CreateShaderObject("GLSL/GrassVertProg.glsl", shaderDefines[i] + extraDefs, GL_VERTEX_SHADER)
-			);
+			grassShaders[i]->AttachShaderObject(sh->CreateShaderObject("GLSL/GrassVertProg.glsl", shaderDefines[i] + extraDefs, GL_VERTEX_SHADER));
 		}
 	}
 
@@ -884,6 +875,12 @@ void CGrassDrawer::CreateFarTex(void)
 	memset(buf,0,64*sizeMod*1024*sizeMod*4);
 	memset(buf2,0,256*sizeMod*256*sizeMod*4);
 
+	FBO fbo;
+	fbo.Bind();
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 256*sizeMod, 256*sizeMod);
+	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 256*sizeMod, 256*sizeMod);
+	fbo.CheckStatus("GRASSDRAWER");
+
 	glPushMatrix();
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
@@ -957,6 +954,8 @@ void CGrassDrawer::CreateFarTex(void)
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
+
+	fbo.Unbind();
 
 	glGenTextures(1, &farTex);
 	glBindTexture(GL_TEXTURE_2D, farTex);

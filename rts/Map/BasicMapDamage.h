@@ -13,8 +13,15 @@ class CUnit;
 class CBasicMapDamage : public IMapDamage
 {
 public:
-	CBasicMapDamage(void);
-	~CBasicMapDamage(void);
+	CBasicMapDamage();
+	~CBasicMapDamage();
+
+	void Explosion(const float3& pos, float strength, float radius);
+	void RecalcArea(int x1, int x2, int y1, int y2);
+	void Update();
+
+private:
+	void UpdateLos();
 
 	struct ExploBuilding {
 		int id;			//searching for building pointers inside these on dependentdied could be messy so we use the id
@@ -49,12 +56,6 @@ public:
 
 	float craterTable[10000];
 	float invHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];
-
-	void Explosion(const float3& pos, float strength,float radius);
-	void RecalcArea(int x1, int x2, int y1, int y2);
-	void Update(void);
-
-	void UpdateLos(void);
 };
 
 #endif /* BASICMAPDAMAGE_H */

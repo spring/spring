@@ -35,19 +35,22 @@ public:
 	void SetGameID(const unsigned char* buf);
 	void SetTime(int gameTime, int wallclockTime);
 
-	void InitializeStats(int numPlayers, int numTeams, int winningAllyTeam);
+	void InitializeStats(int numPlayers, int numTeams );
 	void SetPlayerStats(int playerNum, const PlayerStatistics& stats);
 	void SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats);
+	void SetWinningAllyTeams( std::vector<unsigned char> winningAllyTeams );
 
 private:
 	void WriteFileHeader(bool updateStreamLength = true);
 	void WritePlayerStats();
 	void WriteTeamStats();
+	void WriteWinnerList();
 
 	std::ofstream recordDemo;
 	std::string wantedName;
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
+	std::vector<unsigned char> winningAllyTeams;
 };
 
 

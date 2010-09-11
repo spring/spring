@@ -19,7 +19,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 CQuitBox::CQuitBox(void)
 {
@@ -257,7 +257,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 				std::string timeStr = CTimeUtil::GetCurrentTimeStr();
 				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + gameSetup->mapName);
 				saveFileName = "Saves/" + saveFileName + ".ssf";
-				if (filesystem.GetFilesize(saveFileName) == 0) {
+				if (!filesystem.FileExists(saveFileName)) {
 					logOutput.Print("Saving game to %s\n", saveFileName.c_str());
 					ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 					ls->mapName = gameSetup->mapName;

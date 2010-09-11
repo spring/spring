@@ -1,5 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
+#include "StdAfx.h"
 #include "FileSystemHandler.h"
 
 #include <cassert>
@@ -37,8 +37,9 @@
 
 std::string StripTrailingSlashes(std::string path)
 {
-	while (!path.empty() && (path.at(path.length()-1) == '\\' || path.at(path.length()-1) == '/'))
+	while (!path.empty() && (path.at(path.length()-1) == '\\' || path.at(path.length()-1) == '/')) {
 		path = path.substr(0, path.length()-1);
+	}
 	return path;
 }
 
@@ -52,8 +53,10 @@ FileSystemHandler* FileSystemHandler::instance = NULL;
  */
 FileSystemHandler& FileSystemHandler::GetInstance()
 {
-	if (!instance)
+	if (!instance) {
 		Initialize(false);
+	}
+
 	return *instance;
 }
 
@@ -66,13 +69,11 @@ void FileSystemHandler::Initialize(bool verbose)
 		instance = new FileSystemHandler();
 		try {
 			instance->locater.LocateDataDirs();
+			// TODO: move these two out of here; this class is for low level file system abstraction only
 			archiveScanner = new CArchiveScanner();
 			vfsHandler = new CVFSHandler();
-		}
-		catch (...) {
-			FileSystemHandler* tmp = instance;
-			instance = NULL;
-			delete tmp;
+		} catch (...) {
+			FileSystemHandler::Cleanup();
 			throw;
 		}
 	}
@@ -128,15 +129,15 @@ static std::string RemoveLocalPathPrefix(const std::string& path)
 
 bool FileSystemHandler::IsFSRoot(const std::string& p)
 {
-#ifdef WIN32
-	if (p.length() >= 2 && p[1] == ':' && ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) && (p.length() == 2 || (p.length() == 3 && (p[2] == '\\' || p[2] == '/')))) {
-#else
-	if (p.length() == 1 && p[0] == '/') {
-#endif
-		return true;
-	}
+	bool isRootFs = false;
 
-	return false;
+#ifdef WIN32
+	isRootFs = (p.length() >= 2 && p[1] == ':' && ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) && (p.length() == 2 || (p.length() == 3 && (p[2] == '\\' || p[2] == '/'))));
+#else
+	isRootFs = (p.length() == 1 && p[0] == '/');
+#endif
+
+	return isRootFs;
 }
 
 // sPS/cPS (depending on OS): "\\" & '\\' or "/" & '/'
@@ -157,6 +158,18 @@ void FileSystemHandler::EnsurePathSepAtEnd(std::string& path) {
 	} else if (path[path.size() - 1] != cPS) {
 		path += cPS;
 	}
+}
+
+size_t FileSystemHandler::GetFileSize(const std::string& file)
+{
+	size_t fileSize = 0;
+
+	struct stat info;
+	if (stat(file.c_str(), &info) == 0) {
+		fileSize = info.st_size;
+	}
+
+	return fileSize;
 }
 
 std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, int flags) const
@@ -270,19 +283,21 @@ std::string FileSystemHandler::LocateFile(const std::string& file) const
 			return fn;
 		}
 	}
+
 	return file;
 }
 
 
 std::vector<std::string> FileSystemHandler::GetDataDirectories() const
 {
-	std::vector<std::string> f;
+	std::vector<std::string> dataDirPaths;
 
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		f.push_back(d->path);
+		dataDirPaths.push_back(d->path);
 	}
-	return f;
+
+	return dataDirPaths;
 }
 
 
@@ -316,57 +331,54 @@ bool FileSystemHandler::mkdir(const std::string& dir)
 		return true;
 	}
 
+	bool dirCreated = false;
+
 	// If it doesn't exist we try to mkdir it and return success if that succeeds.
 #ifndef _WIN32
-	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
+	dirCreated = (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0);
 #else
-	if (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0)
+	dirCreated = (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0);
 #endif
-	{
-		return true;
-	}
-	else
-	{
+
+	if (!dirCreated) {
 		logOutput.Print("Could not create directory %s: %s", dir.c_str(), strerror(errno));
-		// Otherwise we return false.
-		return false;
 	}
+
+	return dirCreated;
 }
 
 bool FileSystemHandler::DeleteFile(const std::string& file)
 {
-	if (remove(file.c_str()) == 0)
-	{
-		return true;
-	}
-	else
-	{
+	bool fileDeleted = (remove(file.c_str()) == 0);
+
+	if (!fileDeleted) {
 		logOutput.Print("Could not delete file %s: %s", file.c_str(), strerror(errno));
-		// Otherwise we return false.
-		return false;
 	}
+
+	return fileDeleted;
 }
 
 bool FileSystemHandler::FileExists(const std::string& file)
 {
+	bool fileExists = false;
+
 #ifdef _WIN32
 	struct _stat info;
 	const int ret = _stat(StripTrailingSlashes(file).c_str(), &info);
-	if ((ret == 0 && (info.st_mode & _S_IFREG)))
+	fileExists = ((ret == 0 && (info.st_mode & _S_IFREG)));
 #else
 	struct stat info;
 	const int ret = stat(file.c_str(), &info);
-	if ((ret == 0 && !S_ISDIR(info.st_mode)))
+	fileExists = ((ret == 0 && !S_ISDIR(info.st_mode)));
 #endif
-	{
-		return true;
-	}
-	else
-		return false;
+
+	return fileExists;
 }
 
 bool FileSystemHandler::DirExists(const std::string& dir)
 {
+	bool dirExists = false;
+
 #ifdef _WIN32
 	struct _stat info;
 	std::string myDir = dir;
@@ -382,22 +394,21 @@ bool FileSystemHandler::DirExists(const std::string& dir)
 		myDir = StripTrailingSlashes(myDir);
 	}
 	const int ret = _stat(myDir.c_str(), &info);
-	if ((ret == 0) && (info.st_mode & _S_IFDIR))
+	dirExists = ((ret == 0) && (info.st_mode & _S_IFDIR));
 #else
 	struct stat info;
 	const int ret = stat(dir.c_str(), &info);
-	if ((ret == 0) && S_ISDIR(info.st_mode))
+	dirExists = ((ret == 0) && S_ISDIR(info.st_mode));
 #endif
-		return true;
-	else
-		return false;
+
+	return dirExists;
 }
 
 
 bool FileSystemHandler::DirIsWritable(const std::string& dir)
 {
 #ifdef _WIN32
-	// this exists because _access doesn't do the right thing
+	// this exists because _access does not do the right thing
 	// see http://msdn.microsoft.com/en-us/library/1w06ktdy(VS.71).aspx
 	// for now, try to create a temporary file in a directory and open it
 	// to rule out the possibility of it being created in the virtual store
@@ -405,16 +416,18 @@ bool FileSystemHandler::DirIsWritable(const std::string& dir)
 
 	std::string testfile = dir + "\\__$testfile42$.test";
 	std::ofstream os(testfile.c_str());
-	if (os.fail())
+	if (os.fail()) {
 		return false;
-	const char *testdata = "THIS IS A TEST";
+	}
+	const char* testdata = "THIS IS A TEST";
 	os << testdata;
 	os.close();
 
-	// this part should only be needed when there's no manifest embedded
+	// this part should only be needed when there is no manifest embedded
 	std::ifstream is(testfile.c_str());
-	if (is.fail())
+	if (is.fail()) {
 		return false; // the file most likely exists in the virtual store
+	}
 	std::string input;
 	getline(is, input);
 	if (input != testdata) {
@@ -455,8 +468,10 @@ void FileSystemHandler::Chdir(const std::string& dir)
 #else
 	const int err = _chdir(StripTrailingSlashes(dir).c_str());
 #endif
-	if (err)
+
+	if (err) {
 		throw content_error("Could not chdir into SPRING_DATADIR");
+	}
 }
 
 static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const boost::regex &regexpattern, int flags)
@@ -474,8 +489,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 							matches.push_back(dir + wfd.cFileName);
 						}
 					}
-				}
-				else {
+				} else {
 					if (flags & FileSystem::INCLUDE_DIRS) {
 						if (boost::regex_match(wfd.cFileName, regexpattern)) {
 							matches.push_back(dir + wfd.cFileName + "\\");
@@ -493,8 +507,9 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 	DIR* dp;
 	struct dirent* ep;
 
-	if (!(dp = opendir((datadir + dir).c_str())))
+	if (!(dp = opendir((datadir + dir).c_str()))) {
 		return;
+	}
 
 	while ((ep = readdir(dp))) {
 		// exclude hidden files
@@ -509,8 +524,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 							matches.push_back(dir + ep->d_name);
 						}
 					}
-				}
-				else {
+				} else {
 					// or a directory?
 					if (flags & FileSystem::INCLUDE_DIRS) {
 						if (boost::regex_match(ep->d_name, regexpattern)) {

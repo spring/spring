@@ -28,37 +28,6 @@
 local options =
 {
   {
-    key    = 'GameMode',
-    name   = 'Game end condition',
-    desc   = 'Determines what condition triggers the defeat of a player',
-    type   = 'list',
-    def    = '0',
-    items  =
-    {
-      {
-        key  = '0',
-        name = 'Kill everything',
-        desc = 'The player will lose only after all units of the player will be killed',
-      },
-      {
-        key  = '1',
-        name = 'Commander ends',
-        desc = 'The player will lose when his commander will be dead',
-      },
-      {
-        key  = '2',
-        name = 'Commander lineage ends',
-        desc = 'This is a stricter form of commander ends\nevery unit will inherit the lineage from the player whom built it\neven if shared, when the commander dies the unit will still die',
-      },
-      {
-        key  = '3',
-        name = 'Infinite',
-        desc = 'Game will never end',
-      },
-    },
-  },
-
-  {
     key    = 'MaxUnits',
     name   = 'Max units',
     desc   = 'Maximum number of units (including buildings) for each team allowed at the same time',
@@ -137,71 +106,13 @@ local options =
 -- the following options can create problems and were never used by interface programs, thus are commented out for the moment
 
   {
-    key    = 'LuaGaia',
-    name   = 'Enables gaia',
-    desc   = 'Enables gaia player',
-    type   = 'bool',
-    def    = true,
-  },
-
-  {
     key    = 'NoHelperAIs',
     name   = 'Disable helper AIs',
-    desc   = 'Disables luaui and group ai usage for all players',
+    desc   = 'Disables luaui ai usage for all players',
     type   = 'bool',
     def    = false,
   },
-
-  {
-    key    = 'LuaRules',
-    name   = 'Enable LuaRules',
-    desc   = 'Enable mod usage of LuaRules',
-    type   = 'bool',
-    def    = true,
-  },
-
--- If you add this to your mods EngineOptions.lua then hosts can set the startscript
--- Remove any scripts that don't work with your mod
-  {
-    key    = 'ScriptName',
-    name   = 'Start Script',
-    desc   = 'Changes game behaviour and/or starting conditions',
-    type   = 'list',
-    def    = 'Commanders',
-    items  = {
-      {
-        key  = 'Air combat test',
-        name = 'Air Combat Test',
-        desc = 'Loads some planes on start.',
-      },
-      {
-        key  = 'Commanders',
-        name = 'Commanders',
-        desc = 'Each player gets a command unit.',
-      },
-      {
-        key  = 'Cmds 1000 res',
-        name = 'Commanders + 1000 res',
-        desc = 'Each player gets a commander and 1000 units of metal and energy.',
-      },
-      {
-        key  = 'EmptyScript',
-        name = 'Empty Script',
-        desc = 'Do nothing special on game start.',
-      },
-      {
-        key  = 'Random enemies',
-        name = 'Random Enemies',
-        desc = 'Spawns random enemies',
-      },
-      {
-        key  = 'Random enemies 2',
-        name = 'Random Enemies (Autonomous)',
-        desc = 'Spawns random enemies',
-      },
-    },
-  },
 --]]
-
 }
+
 return options

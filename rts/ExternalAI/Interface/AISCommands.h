@@ -1465,7 +1465,8 @@ struct STraceRayCommand {
 	int srcUnitId;
 	int ret_hitUnitId;
 	int flags;
-}; //$ COMMAND_TRACE_RAY Map_Drawer_traceRay REF:srcUnitId->Unit REF:ret_hitUnitId->Unit
+	int ret_hitFeatureId;
+}; //$ COMMAND_TRACE_RAY Map_Drawer_traceRay REF:srcUnitId->Unit REF:ret_hitUnitId->Unit REF:ret_hitFeatureId->Feature
 
 /**
  * Pause or unpauses the game.

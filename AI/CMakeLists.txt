@@ -48,6 +48,19 @@ list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
 aux_source_directory("${rts}/System/creg" creg_SRC)
 
 
+# Set some Skirmish AI stuff here already,
+# cause it is used by NullPythonAI in Interfaces/Python
+
+# Export Paths needed for the AIs
+set(SKIRMISH_AI_LIBS        "${AI_LIBS_DIR}/AI/Skirmish")
+set(SKIRMISH_AI_DATA        "${AI_DATA_DIR}/AI/Skirmish")
+
+# Display messages on configure, which AIs are found
+set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
+
+MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
+
+
 # Print a message, but only if we are allowed to speak.
 macro    (AIMessage type msg)
 	if    (NOT AI_FIND_QUIETLY)

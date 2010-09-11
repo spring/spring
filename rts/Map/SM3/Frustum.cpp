@@ -50,7 +50,7 @@ void Frustum::CalcCameraPlanes (Vector3 *cbase, Vector3 *cright, Vector3* cup, V
 	planes[1].MakePlane (base, pos[2], pos[3]); // left
 	planes[2].MakePlane (base, pos[3], pos[0]); // up
 	planes[3].MakePlane (base, pos[0], pos[1]); // right
-	planes[4].MakePlane (base, pos[1], pos[2]);// down
+	planes[4].MakePlane (base, pos[1], pos[2]); // down
 
 	right.ANormalize();
 	up.ANormalize();

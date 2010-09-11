@@ -57,6 +57,9 @@
 #define GML_MSC_TLS_OPT 1 // use the Win32 TIB for TLS in MSVC (possibly faster)
 #define GML_64BIT_USE_GS 1 // 64-bit OS will use the GS register for TLS (untested feature)
 #define GML_LOCKED_GMLCOUNT_ASSIGNMENT 0 // experimental feature, probably not needed
+#define GML_SHARE_LISTS 1 // use glShareLists to allow opengl calls in sim thread
+#define GML_DRAW_THREAD_NUM 0 // thread number of draw thread
+#define GML_SIM_THREAD_NUM 1 // thread number of sim thread
 //#define BOOST_AC_USE_PTHREADS
 
 // memory barriers for different platforms
@@ -200,7 +203,7 @@ extern unsigned gmlCPUCount();
 #	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : gmlCPUCount() )
 #endif
 #define GML_MAX_NUM_THREADS (32+1) // one extra for the aux (Sim) thread
-#define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || thread == 0)
+#define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || ((GML_SHARE_LISTS && thread <= GML_SIM_THREAD_NUM) || (!GML_SHARE_LISTS && thread == GML_DRAW_THREAD_NUM)))
 extern int gmlItemsConsumed;
 
 typedef unsigned char BYTE;

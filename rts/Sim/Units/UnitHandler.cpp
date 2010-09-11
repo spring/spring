@@ -53,8 +53,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(lastDamageWarning),
 	CR_MEMBER(lastCmdDamageWarning),
-	CR_MEMBER(limitDgun),
-	CR_MEMBER(dgunRadius),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
 //	CR_MEMBER(toBeRemoved),
@@ -82,7 +80,6 @@ CUnitHandler::CUnitHandler(bool serializing)
 	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
-	limitDgun(false),
 	morphUnitToFeature(true)
 {
 	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
@@ -100,10 +97,6 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 	waterDamage = mapInfo->water.damage;
 
-	if (gameSetup->limitDgun) {
-		limitDgun = true;
-		dgunRadius = gs->mapx * 3;
-	}
 	if (!serializing) {
 		airBaseHandler = new CAirBaseHandler;
 
@@ -338,9 +331,9 @@ int CUnitHandler::TestUnitBuildSquare(
 
 	if (buildInfo.def->needGeo) {
 		canBuild = 0;
-		std::vector<CFeature*> features = qf->GetFeaturesExact(pos, max(xsize, zsize) * 6);
+		const std::vector<CFeature*> &features = qf->GetFeaturesExact(pos, max(xsize, zsize) * 6);
 
-		for (std::vector<CFeature*>::iterator fi = features.begin(); fi != features.end(); ++fi) {
+		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			if ((*fi)->def->geoThermal
 				&& fabs((*fi)->pos.x - pos.x) < (xsize * 4 - 4)
 				&& fabs((*fi)->pos.z - pos.z) < (zsize * 4 - 4)) {
@@ -446,14 +439,8 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		if (pos.y < orgh - hdif && pos.y < h - hdif) { return 0; }
 	}
 
-	if (!unitdef->floater && groundheight < -unitdef->maxWaterDepth) {
-		// ground is deeper than our maxWaterDepth, cannot build here
+	if(!unitdef->IsTerrainHeightOK(groundheight))
 		return 0;
-	}
-	if (groundheight > -unitdef->minWaterDepth) {
-		// ground is shallower than our minWaterDepth, cannot build here
-		return 0;
-	}
 
 	return ret;
 }

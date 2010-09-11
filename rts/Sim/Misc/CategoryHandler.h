@@ -15,10 +15,9 @@ class CCategoryHandler : public boost::noncopyable
 
 public:
 	static inline unsigned int GetMaxCategories() {
-		// as categories work as bitfields,
-		// we can not support more then 32
-		// due to (sizeof(unsigned int) == 32) on 32bit systems
-		return 32;
+		// categories work as bitfields, so
+		// we can not support more than this
+		return (sizeof(unsigned int) * 8);
 	}
 
 	static CCategoryHandler* Instance() {
@@ -46,7 +45,7 @@ private:
 	CCategoryHandler();
 	~CCategoryHandler();
 
-	std::map<std::string,unsigned int> categories;
+	std::map<std::string, unsigned int> categories;
 	unsigned int firstUnused;
 };
 

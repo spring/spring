@@ -78,7 +78,7 @@ void CFactory::PostLoad()
 
 void CFactory::UnitInit (const UnitDef* def, int team, const float3& position)
 {
-	buildSpeed = def->buildSpeed / 32.0f;
+	buildSpeed = def->buildSpeed / TEAM_SLOWUPDATE_RATE;
 	CBuilding::UnitInit(def, team, position);
 }
 
@@ -118,7 +118,6 @@ void CFactory::Update()
 			quedBuild = false;
 			CUnit* b = unitLoader.LoadUnit(nextBuild, buildPos + float3(0.01f, 0.01f, 0.01f), team,
 											true, buildFacing, this);
-			b->lineage = this->lineage;
 
 			if (!unitDef->canBeAssisted) {
 				b->soloBuilder = this;
@@ -352,7 +351,8 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 
 void CFactory::SlowUpdate(void)
 {
-	helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius);
+	if(!transporter)
+		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius);
 	CBuilding::SlowUpdate();
 }
 

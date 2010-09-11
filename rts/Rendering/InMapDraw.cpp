@@ -462,8 +462,6 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 		playerID = uPlayerID;
 
 		const CPlayer* sender = playerHandler->Player(playerID);
-		if (sender == NULL)
-			throw netcode::UnpackPacketException("Invalid player number");
 
 		unsigned char drawType;
 		pckt >> drawType;
@@ -567,6 +565,9 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
                            int playerID)
 {
+	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
+		return;
+
 	GML_STDMUTEX_LOCK(inmap); // LocalLine
 
 	const CPlayer* sender = playerHandler->Player(playerID);
@@ -597,6 +598,9 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 
 void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 {
+	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
+		return;
+
 	GML_STDMUTEX_LOCK(inmap); // LocalErase
 
 	const CPlayer* sender = playerHandler->Player(playerID);

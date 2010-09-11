@@ -12,7 +12,6 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
-#include "Platform/errorhandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"

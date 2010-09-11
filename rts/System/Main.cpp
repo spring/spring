@@ -10,34 +10,30 @@
 #endif
 #include <sstream>
 #include <boost/system/system_error.hpp>
-#include <boost/asio.hpp>
-#include <boost/version.hpp>
 
-#include "Platform/errorhandler.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
+
 #ifndef _MSC_VER
 #include "StdAfx.h"
 #endif
 #include "lib/gml/gml.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
 
 #include "SpringApp.h"
 
-#include <SDL.h>     // Must come after Game/UI/MouseHandler.h for ButtonPressEvt
-
 #ifdef WIN32
 #include "Platform/Win/win32.h"
-#include <winreg.h>
-#include <direct.h>
-#include "Platform/Win/seh.h"
 #endif
 
+boost::thread *mainthread = NULL;
+int g_argc = 0;
+char** g_argv = NULL;
+int g_ret = 0;
 
 
-// On msvc main() is declared as a non-throwing function.
-// Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
-int Run(int argc, char* argv[])
-{
+void MainFunc() {
 #ifdef __MINGW32__
 	// For the MinGW backtrace() implementation we need to know the stack end.
 	{
@@ -47,68 +43,41 @@ int Run(int argc, char* argv[])
 	}
 #endif
 
+	Threading::SetMainThread(mainthread);
+
 #ifdef USE_GML
-	set_threadnum(0);
-#	if GML_ENABLE_TLS_CHECK
-	if (gmlThreadNumber != 0) {
+	set_threadnum(GML_DRAW_THREAD_NUM);
+  #if GML_ENABLE_TLS_CHECK
+	if (gmlThreadNumber != GML_DRAW_THREAD_NUM) {
 		handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
-#	endif
+  #endif
 #endif
 
-// It's nice to be able to disable catching when you're debugging
-#ifndef NO_CATCH_EXCEPTIONS
-	try {
-		SpringApp app;
-		return app.Run(argc, argv);
+	try  {
+		try {
+			SpringApp app;
+			g_ret = app.Run(g_argc, g_argv);
+		} CATCH_SPRING_ERRORS
+	} catch(boost::thread_interrupted const&) {
+		handleerror(NULL, Threading::GetThreadError().what(), "Thread error:", MBF_OK | MBF_EXCL);
 	}
-	catch (const content_error& e) {
-		SDL_Quit();
-		logOutput.SetSubscribersEnabled(false);
-		logOutput.Print("Content error: %s\n", e.what());
-		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
-		return -1;
-	}
-	catch (const boost::system::system_error& e) {
-		logOutput.Print("Fatal system error: %d: %s", e.code().value(), e.what());
-	#ifdef _MSC_VER
-		throw;
-	#else
-		std::stringstream ss;
-		ss << e.code().value() << ": " << e.what();
-		std::string tmp = ss.str();
-		handleerror(NULL, tmp.c_str(), "Fatal Error", MBF_OK | MBF_EXCL);
-		return -1;
-	#endif
-	}
-	catch (const std::exception& e) {
-		SDL_Quit();
-	#ifdef _MSC_VER
-		logOutput.Print("Fatal error: %s\n", e.what());
-		logOutput.SetSubscribersEnabled(false);
-		throw; // let the error handler catch it
-	#else
-		logOutput.SetSubscribersEnabled(false);
-		handleerror(NULL, e.what(), "Fatal Error", MBF_OK | MBF_EXCL);
-		return -1;
-	#endif
-	}
-	catch (const char* e) {
-		SDL_Quit();
-	#ifdef _MSC_VER
-		logOutput.Print("Fatal error: %s\n", e);
-		logOutput.SetSubscribersEnabled(false);
-		throw; // let the error handler catch it
-	#else
-		logOutput.SetSubscribersEnabled(false);
-		handleerror(NULL, e, "Fatal Error", MBF_OK | MBF_EXCL);
-		return -1;
-	#endif
-	}
-#else
-	SpringApp app;
-	return app.Run(argc, argv);
-#endif
+
+	g_ret = -1;
+}
+
+
+
+int Run(int argc, char* argv[])
+{
+	g_argc = argc;
+	g_argv = argv;
+
+	mainthread = new boost::thread(&MainFunc);
+	mainthread->join();
+	delete mainthread;
+
+	return g_ret;
 }
 
 

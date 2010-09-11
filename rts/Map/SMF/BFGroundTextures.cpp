@@ -15,13 +15,14 @@
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/Platform/errorhandler.h"
-#include "System/TimeProfiler.h"
+#include "Game/LoadScreen.h"
+#include "System/Exceptions.h"
+#include "System/FastMath.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
-#include "System/FastMath.h"
+#include "System/TimeProfiler.h"
+#include "System/FileSystem/FileHandler.h"
 
 using std::sprintf;
 using std::string;
@@ -49,7 +50,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	int curTile = 0;
 
 
-	char loadMsg[128] = {0};
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	bool smtHeaderOverride = false;
 
@@ -66,6 +66,8 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		}
 	}
 
+
+	loadscreen->SetLoadMessage("Loading Tile Files");
 
 	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
 		int numSmallTiles;
@@ -93,11 +95,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 			tileFileName = "maps/" + smf.smtFileNames[a];
 		}
 
-
-		logOutput.Print("Loading .smt tile-file \"%s\"", tileFileName.c_str());
-		SNPRINTF(loadMsg, 127, "Loading %d tiles from file %d/%d", numSmallTiles, a+1, tileHeader.numTileFiles);
-		PrintLoadMsg(loadMsg);
-
+		//logOutput.Print("Loading .smt tile-file \"%s\"", tileFileName.c_str());
 
 		CFileHandler tileFile(tileFileName);
 
@@ -112,17 +110,13 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 			continue;
 		}
 
-
-		PrintLoadMsg("Reading tiles");
-
 		TileFileHeader tfh;
 		READ_TILEFILEHEADER(tfh, tileFile);
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
 			char t[500];
 			sprintf(t, "[CBFGroundTextures] file \"%s\" does not match .smt format", tileFileName.c_str());
-			handleerror(0, t, "Error reading tile-file", 0);
-			exit(0);
+			throw content_error(t);
 		}
 
 		for (int b = 0; b < numSmallTiles; ++b) {
@@ -131,7 +125,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		}
 	}
 
-	PrintLoadMsg("Reading tile map");
+	loadscreen->SetLoadMessage("Loading Tile Map");
 
 	int count = (header->mapx * header->mapy) / 16;
 	ifs->Read(tileMap, count * sizeof(int));

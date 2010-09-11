@@ -356,6 +356,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 void CBuilderCAI::SlowUpdate()
 {
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+		return;
 	if (commandQue.empty()) {
 		CMobileCAI::SlowUpdate();
 		return;
@@ -1341,7 +1343,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 	int rid = -1;
 
 	if(recUnits || recEnemy || recEnemyOnly) {
-		const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
+		const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, radius);
 		for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* u = *ui;
 			if (u != owner
@@ -1375,7 +1377,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 	if((!best || !stationary) && !recEnemyOnly) {
 		const CTeam* team = teamHandler->Team(owner->team);
 		best = NULL;
-		const std::vector<CFeature*> features = qf->GetFeaturesExact(pos, radius);
+		const std::vector<CFeature*> &features = qf->GetFeaturesExact(pos, radius);
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
 			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) && 
@@ -1436,13 +1438,12 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
                                                        unsigned char options,
 													   bool freshOnly)
 {
-	const std::vector<CFeature*> features = qf->GetFeaturesExact(pos, radius);
-	std::vector<CFeature*>::const_iterator fi;
+	const std::vector<CFeature*> &features = qf->GetFeaturesExact(pos, radius);
 
 	const CFeature* best = NULL;
 	float bestDist = 1.0e30f;
 
-	for (fi = features.begin(); fi != features.end(); ++fi) {
+	for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 		const CFeature* f = *fi;
 		if (f->def->destructable && f->createdFromUnit != "") {
 			if (!f->IsInLosForAllyTeam(owner->allyteam)) {
@@ -1483,7 +1484,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
                                               unsigned char options,
 											  bool healthyOnly)
 {
-	const std::vector<CUnit*> cu = qf->GetUnits(pos, radius);
+	const std::vector<CUnit*> &cu = qf->GetUnits(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
 
 	const CUnit* best = NULL;
@@ -1535,8 +1536,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
                                             bool attackEnemy,
 											bool builtOnly)
 {
-	const std::vector<CUnit*> cu = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::const_iterator ui;
+	const std::vector<CUnit*> &cu = qf->GetUnitsExact(pos, radius);
 
 	const CUnit* best = NULL;
 	float bestDist = 1.0e30f;
@@ -1544,7 +1544,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	bool trySelfRepair = false;
 	bool stationary = false;
 
-	for (ui = cu.begin(); ui != cu.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
 		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
@@ -1657,11 +1657,6 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 
 void CBuilderCAI::DrawCommands(void)
 {
-	if (uh->limitDgun && owner->unitDef->isCommander) {
-		glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
-		glSurfaceCircle(teamHandler->Team(owner->team)->startPos, uh->dgunRadius, 40);
-	}
-
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {

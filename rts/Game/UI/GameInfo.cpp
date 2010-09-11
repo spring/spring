@@ -180,9 +180,6 @@ void CGameInfo::Draw()
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);
 
-	labels.push_back("Commander Ends:");
-	values.push_back(gameSetup->gameMode > 0 ? true : false);
-
 	labels.push_back("Gravity:");
 	values.push_back(-(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED));
 
@@ -194,9 +191,6 @@ void CGameInfo::Draw()
 
 	labels.push_back("Max Wind:");
 	values.push_back(wind.GetMaxWind());
-
-	labels.push_back("Limited DGun:");
-	values.push_back(gameSetup->limitDgun);
 
 	labels.push_back("Map Size:");
 	sprintf(buf, "%ix%i", readmap->width / 64, readmap->height / 64);

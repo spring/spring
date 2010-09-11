@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GEOMETRICOBJECTS_H
-#define GEOMETRICOBJECTS_H
+#ifndef GEOMETRIC_OBJECTS_H
+#define GEOMETRIC_OBJECTS_H
 
 #include <map>
 #include <vector>
@@ -24,23 +24,23 @@ private:
 	};
 
 public:
-	CGeometricObjects(void);
-	~CGeometricObjects(void);
+	CGeometricObjects();
+	~CGeometricObjects();
 
-	int AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime=-1, int group=0);
+	int AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime = -1, int group = 0);
 	void DeleteGroup(int group);
 	void SetColor(int group, float r, float g, float b, float a);
 	float3 CalcSpline(float pos, const float3& p1, const float3& p2, const float3& p3, const float3& p4);
-	int AddLine(float3 start, float3 end, float width, int arrow, int lifetime=-1, int group=0);
-	void Update(void);
+	int AddLine(float3 start, float3 end, float width, int arrow, int lifetime = -1, int group = 0);
+	void Update();
 	void MarkSquare(int mapSquare);
 
 private:
-	std::map<int,GeoGroup> geoGroups;
-	std::multimap<int,int> toBeDeleted;
+	std::map<int, GeoGroup> geoGroups;
+	std::multimap<int, int> toBeDeleted;
 	int firstFreeGroup;
 };
 
 extern CGeometricObjects* geometricObjects;
 
-#endif /* GEOMETRICOBJECTS_H */
+#endif /* GEOMETRIC_OBJECTS_H */

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef PIECEPROJECTILE_H
-#define PIECEPROJECTILE_H
+#ifndef PIECE_PROJECTILE_H
+#define PIECE_PROJECTILE_H
 
 #include "Projectile.h"
 #include "Sim/Misc/DamageArray.h"
@@ -28,6 +28,23 @@ class CPieceProjectile: public CProjectile
 
 	void creg_Serialize(creg::ISerializer& s);
 
+public:
+	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius);
+	virtual ~CPieceProjectile();
+
+	void Update();
+	void Draw();
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void Collision();
+	void Collision(CUnit* unit);
+
+	void DrawCallback();
+
+private:
+	bool HasVertices() const;
+	float3 RandomVertexPos();
+
+public:
 	int flags;
 	int dispList;
 	const S3DModelPiece* omp;
@@ -50,22 +67,6 @@ class CPieceProjectile: public CProjectile
 	};
 	OldInfo* oldInfos[8];
 	int colorTeam;
-
-public:
-	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius);
-	virtual ~CPieceProjectile(void);
-	void Update();
-	void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
-	void Collision();
-	void Collision(CUnit* unit);
-
-	void DrawCallback(void);
-
-private:
-	bool HasVertices();
-	float3 RandomVertexPos();
 };
 
-
-#endif /* PIECEPROJECTILE_H */
+#endif /* PIECE_PROJECTILE_H */

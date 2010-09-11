@@ -33,8 +33,6 @@ CWeaponDefHandler* weaponDefHandler = NULL;
 
 CWeaponDefHandler::CWeaponDefHandler()
 {
-	PrintLoadMsg("Loading weapon definitions");
-
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("WeaponDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading WeaponDefs");

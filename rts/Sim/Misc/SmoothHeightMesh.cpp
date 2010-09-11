@@ -102,7 +102,7 @@ float SmoothHeightMesh::SetMaxHeight(int index, float h)
 
 void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 {
-	ScopedOnceTimer timer("Calculating smooth mesh");
+	ScopedOnceTimer timer("Creating Smooth Mesh");
 	if (!mesh) {
 		size_t size = (size_t)((this->maxx+1) * (this->maxy + 1));
 		mesh = new float[size];

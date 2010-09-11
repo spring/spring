@@ -64,7 +64,7 @@ function widget:Initialize()
   for _,uid in ipairs(units) do
     local udid = spGetUnitDefID(uid)
     local ud = UnitDefs[udid]
-    if (ud.isMetalMaker) then
+    if (ud.isBuilding) and (ud.onOffable) and (ud.makesMetal > 0) and (ud.energyUpkeep > 0) then
       metalMakers[uid] = true
       print("Added metal maker: "..uid)
     end
@@ -96,7 +96,7 @@ function widget:UnitFinished(unitID, unitDefID, unitTeam)
     return
   end
   local ud = UnitDefs[unitDefID]
-  if (ud.isMetalMaker) then
+  if (ud.isBuilding) and (ud.onOffable) and (ud.makesMetal > 0) and (ud.energyUpkeep > 0) then
     print("Added metal maker: "..unitID)
     metalMakers[unitID] = true
     -- set the new unit to our currentState
