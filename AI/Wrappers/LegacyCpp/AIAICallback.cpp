@@ -1944,14 +1944,34 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 				myData->rayLen,
 				myData->srcUID,
 				myData->hitUID,
-				myData->flags,
-				myData->hitFID
+				myData->flags
 			};
 
 			ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY, &cCmdData);
 
 			myData->rayLen = cCmdData.rayLen;
 			myData->hitUID = cCmdData.ret_hitUnitId;
+			break;
+		}
+
+		case AIHCFeatureTraceRayId: {
+			AIHCFeatureTraceRay* myData = (AIHCFeatureTraceRay*) data;
+			float rayPos[3];
+			myData->rayPos.copyInto(rayPos);
+			float rayDir[3];
+			myData->rayDir.copyInto(rayDir);
+			SFeatureTraceRayCommand cCmdData = {
+				rayPos,
+				rayDir,
+				myData->rayLen,
+				myData->srcUID,
+				myData->hitFID,
+				myData->flags
+			};
+
+			ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY_FEATURE, &cCmdData);
+
+			myData->rayLen = cCmdData.rayLen;
 			myData->hitFID = cCmdData.ret_hitFeatureId;
 			break;
 		}

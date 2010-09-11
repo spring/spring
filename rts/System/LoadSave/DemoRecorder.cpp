@@ -38,7 +38,7 @@ CDemoRecorder::CDemoRecorder()
 	__time64_t currtime = CTimeUtil::GetCurrentTime();
 	fileHeader.unixTime = currtime;
 
-	recordDemo.write((char*)&fileHeader, sizeof(fileHeader));
+	recordDemo.write((char*) &fileHeader, sizeof(fileHeader));
 
 	fileHeader.playerStatElemSize = sizeof(PlayerStatistics);
 	fileHeader.teamStatElemSize = sizeof(TeamStatistics);
@@ -89,8 +89,8 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 	chunkHeader.modGameTime = modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
-	recordDemo.write((char*)&chunkHeader, sizeof(chunkHeader));
-	recordDemo.write((char*)buf, length);
+	recordDemo.write((char*) &chunkHeader, sizeof(chunkHeader));
+	recordDemo.write((char*) buf, length);
 	fileHeader.demoStreamSize += length + sizeof(chunkHeader);
 	recordDemo.flush();
 }
@@ -164,11 +164,11 @@ void CDemoRecorder::SetTeamStats(int teamNum, const std::list< TeamStatistics >&
 }
 
 
-/** @brief Set (overwrite) the list winning allyTeams */
-void CDemoRecorder::SetWinningAllyTeams( std::vector<unsigned char> winningAllyTeams )
+/** @brief Set (overwrite) the list of winning allyTeams */
+void CDemoRecorder::SetWinningAllyTeams(const std::vector<unsigned char>& winningAllyTeamIDs)
 {
-	fileHeader.winningAllyTeamsSize = winningAllyTeams.size() * sizeof( unsigned char );
-	winningAllyTeams = winningAllyTeams;
+	fileHeader.winningAllyTeamsSize = (winningAllyTeamIDs.size() * sizeof(unsigned char));
+	winningAllyTeams = winningAllyTeamIDs;
 }
 
 /** @brief Write DemoFileHeader
@@ -185,7 +185,7 @@ void CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 	if (!updateStreamLength)
 		tmpHeader.demoStreamSize = 0;
 	tmpHeader.swab(); // to little endian
-	recordDemo.write((char*)&tmpHeader, sizeof(tmpHeader));
+	recordDemo.write((char*) &tmpHeader, sizeof(tmpHeader));
 	recordDemo.seekp(pos);
 }
 
@@ -200,7 +200,7 @@ void CDemoRecorder::WritePlayerStats()
 	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
 		PlayerStatistics& stats = *it;
 		stats.swab();
-		recordDemo.write((char*)&stats, sizeof(PlayerStatistics));
+		recordDemo.write((char*) &stats, sizeof(PlayerStatistics));
 	}
 	playerStats.clear();
 
@@ -215,16 +215,16 @@ void CDemoRecorder::WriteWinnerList()
 	if (fileHeader.numTeams == 0)
 		return;
 
-	int pos = recordDemo.tellp();
+	const int pos = recordDemo.tellp();
 
 	// Write the array of winningAllyTeams.
-	for (std::vector< unsigned char >::iterator it = winningAllyTeams.begin(); it != winningAllyTeams.end(); ++it) {
-			char winnerAllyTeam = *it;
-			recordDemo.write(&winnerAllyTeam,sizeof(unsigned char));
+	for (std::vector<unsigned char>::const_iterator it = winningAllyTeams.begin(); it != winningAllyTeams.end(); ++it) {
+		recordDemo.write((char*) &(*it), sizeof(unsigned char));
 	}
+
 	winningAllyTeams.clear();
 
-	fileHeader.winningAllyTeamsSize = (int)recordDemo.tellp() - pos;
+	fileHeader.winningAllyTeamsSize = int(recordDemo.tellp()) - pos;
 }
 
 /** @brief Write the TeamStatistics at the current position in the file. */

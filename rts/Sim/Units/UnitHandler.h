@@ -91,9 +91,6 @@ public:
 
 	float maxUnitRadius; ///< largest radius seen so far
 
-	int lastDamageWarning;
-	int lastCmdDamageWarning;
-
 	bool morphUnitToFeature;
 
 private:

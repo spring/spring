@@ -67,7 +67,7 @@ public:
 	volatile bool finishedLoading;
 
 	/// show GameEnd-window, calculate mouse movement etc.
-	void GameEnd( std::vector<unsigned char> winningAllyTeams );
+	void GameEnd(const std::vector<unsigned char>& winningAllyTeams);
 
 	enum GameDrawMode {
 		gameNotDrawing     = 0,

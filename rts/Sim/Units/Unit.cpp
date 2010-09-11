@@ -1019,35 +1019,11 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 	if (damage > 0.0f) {
 		recentDamage += damage;
+
 		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			attacker->AddExperience(0.1f * experienceMod
 			                             * (power / attacker->power)
 			                             * (damage + std::min(0.0f, health)) / maxHealth);
-			const int warnFrame = (gs->frameNum - 100);
-			if ((team == gu->myTeam)
-			    && ((!unitDef->isCommander && (uh->lastDamageWarning < warnFrame)) ||
-			        ( unitDef->isCommander && (uh->lastCmdDamageWarning < warnFrame)))
-					&& !camera->InView(midPos, radius + 50) && !gu->spectatingFullView) {
-				logOutput.Print("%s is being attacked", unitDef->humanName.c_str());
-				logOutput.SetLastMsgPos(pos);
-
-				if (unitDef->isCommander || uh->lastDamageWarning + 150 < gs->frameNum) {
-					const int soundIdx = unitDef->sounds.underattack.getRandomIdx();
-					if (soundIdx >= 0) {
-						Channels::UserInterface.PlaySample(
-							unitDef->sounds.underattack.getID(soundIdx),
-							unitDef->isCommander ? 4 : 2);
-					}
-				}
-
-				minimap->AddNotification(pos, float3(1.0f, 0.3f, 0.3f),
-				                         unitDef->isCommander ? 1.0f : 0.5f);
-
-				uh->lastDamageWarning = gs->frameNum;
-				if (unitDef->isCommander) {
-					uh->lastCmdDamageWarning = gs->frameNum;
-				}
-			}
 		}
 	}
 

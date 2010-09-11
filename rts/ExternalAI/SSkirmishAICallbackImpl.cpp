@@ -515,14 +515,29 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 				cCmdData->rayLen,
 				cCmdData->srcUnitId,
 				cCmdData->ret_hitUnitId,
-				cCmdData->flags,
-				cCmdData->ret_hitFeatureId
+				cCmdData->flags
 			};
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCTraceRayId, &cppCmdData);
 
 			cCmdData->rayLen = cppCmdData.rayLen;
 			cCmdData->ret_hitUnitId = cppCmdData.hitUID;
+		} break;
+
+		case COMMAND_TRACE_RAY_FEATURE: {
+			SFeatureTraceRayCommand* cCmdData = (SFeatureTraceRayCommand*) commandData;
+			AIHCFeatureTraceRay cppCmdData = {
+				cCmdData->rayPos_posF3,
+				cCmdData->rayDir_posF3,
+				cCmdData->rayLen,
+				cCmdData->srcUnitId,
+				cCmdData->ret_hitFeatureId,
+				cCmdData->flags
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCFeatureTraceRayId, &cppCmdData);
+
+			cCmdData->rayLen = cppCmdData.rayLen;
 			cCmdData->ret_hitFeatureId = cppCmdData.hitFID;
 		} break;
 

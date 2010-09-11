@@ -999,8 +999,7 @@ bool CGame::Update()
 
 	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
-		std::vector<unsigned char> empty;
-		GameEnd(empty);
+		GameEnd(std::vector<unsigned char>());
 	}
 
 	// send out new console lines
@@ -1945,13 +1944,13 @@ void CGame::MakeMemDump(void)
 
 
 
-void CGame::GameEnd( std::vector<unsigned char> winningAllyTeams )
+void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams )
 {
-	if (!gameOver)
-	{
-		gameOver=true;
-		eventHandler.GameOver( winningAllyTeams );
-		new CEndGameBox( winningAllyTeams );
+	if (!gameOver) {
+		gameOver = true;
+		eventHandler.GameOver(winningAllyTeams);
+
+		new CEndGameBox(winningAllyTeams);
 #ifdef    HEADLESS
 		profiler.PrintProfilingInfo();
 #endif // HEADLESS
@@ -1969,6 +1968,7 @@ void CGame::GameEnd( std::vector<unsigned char> winningAllyTeams )
 			record->InitializeStats(numPlayers, numTeams);
 			// pass the list of winners
 			record->SetWinningAllyTeams(winningAllyTeams);
+
 			for (int i = 0; i < numPlayers; ++i) {
 				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 			}
@@ -1979,8 +1979,9 @@ void CGame::GameEnd( std::vector<unsigned char> winningAllyTeams )
 				net->Send(buf);
 			}
 		}
+
 		// pass the winner info to the host in the case it's a dedicated server
-		net->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum,winningAllyTeams));
+		net->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum, winningAllyTeams));
 	}
 }
 

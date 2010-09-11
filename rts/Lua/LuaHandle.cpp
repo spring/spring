@@ -347,7 +347,7 @@ void CLuaHandle::GameStart()
 	return;
 }
 
-void CLuaHandle::GameOver(std::vector<unsigned char> winningAllyTeams)
+void CLuaHandle::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
