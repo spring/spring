@@ -13,11 +13,7 @@
 #include "System/ConfigHandler.h"
 
 static char cameraMemBuf[sizeof(CCamera)];
-
-CubeMapHandler* CubeMapHandler::GetInstance() {
-	static CubeMapHandler cmh;
-	return &cmh;
-}
+CubeMapHandler *cubeMapHandler = NULL;
 
 CubeMapHandler::CubeMapHandler() {
 	envReflectionTexID = 0;
@@ -119,7 +115,7 @@ void CubeMapHandler::Free() {
 
 
 
-void CubeMapHandler::UpdateReflectionTexture(void)
+void CubeMapHandler::UpdateReflectionTexture()
 {
 	if (!unitDrawer->advShading) {
 		return;
@@ -127,37 +123,41 @@ void CubeMapHandler::UpdateReflectionTexture(void)
 
 	switch (currReflectionFace++) {
 		case 0: {
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, float3( 1.0f, 0.0f, 0.0f), false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1.0f, 0.0f, 0.0f), false);
+			reflectionCubeFBO.Bind();
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0.0f, 0.0f, -1.0f), false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector, false);
 
 			if (mapSkyReflections) {
 				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, float3( 1.0f, 0.0f, 0.0f), true);
 				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1.0f, 0.0f, 0.0f), true);
 			}
 		} break;
-		case 1: {
-		} break;
-		case 2: {
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector, false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector, false);
+		case 1: {} break;
+		case 2: {} break;
+		case 3: {
+			reflectionCubeFBO.Bind();
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, float3( 1.0f, 0.0f, 0.0f), false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1.0f, 0.0f, 0.0f), false);
 
 			if (mapSkyReflections) {
 				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector, true);
 				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector, true);
 			}
 		} break;
-		case 3: {
-		} break;
-		case 4: {
+		case 4: {} break;
+		case 5: {} break;
+		case 6: {
+			reflectionCubeFBO.Bind();
 			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, float3(0.0f, 0.0f,  1.0f), false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0.0f, 0.0f, -1.0f), false);
+			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector, false);
 
 			if (mapSkyReflections) {
 				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, float3(0.0f, 0.0f,  1.0f), true);
 				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0.0f, 0.0f, -1.0f), true);
 			}
 		} break;
-		case 5: {
+		case 7: {} break;
+		case 8: {
 			currReflectionFace = 0;
 		} break;
 		default: {
@@ -168,12 +168,18 @@ void CubeMapHandler::UpdateReflectionTexture(void)
 
 void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& camDir, bool skyOnly)
 {
-	reflectionCubeFBO.Bind();
 	reflectionCubeFBO.AttachTexture((skyOnly? skyReflectionTexID: envReflectionTexID), glType);
 
-	glPushAttrib(GL_FOG_BIT);
+	glPushAttrib(GL_FOG_BIT | GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, reflTexSize, reflTexSize);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	if (skyOnly) {
+		glDepthMask(GL_FALSE);
+		glDisable(GL_DEPTH_TEST);
+	} else {
+		glClear(GL_DEPTH_BUFFER_BIT);
+		glDepthMask(GL_TRUE);
+		glEnable(GL_DEPTH_TEST);
+	}
 
 	new (cameraMemBuf) CCamera(*camera); // anti-crash workaround for multithreading
 

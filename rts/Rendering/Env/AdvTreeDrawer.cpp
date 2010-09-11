@@ -15,11 +15,13 @@
 #include "Sim/Features/Feature.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/ShadowHandler.h"
+#include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/GlobalUnsynced.h"
@@ -47,6 +49,9 @@ static const float DOUBLE_MAX_TREE_HEIGHT = MAX_TREE_HEIGHT * 2.0f;
 
 CAdvTreeDrawer::CAdvTreeDrawer(): CBaseTreeDrawer()
 {
+	if (!(GLEW_ARB_vertex_program && FBO::IsSupported()))
+		throw content_error("ADVTREE: missing OpenGL features!");
+
 	LoadTreeShaders();
 
 	treeGen = new CAdvTreeGenerator();

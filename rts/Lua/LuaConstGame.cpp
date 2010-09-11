@@ -44,7 +44,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	// FIXME  --  this is getting silly, convert to userdata?
 
 	const float gravity = -(mapInfo->map.gravity * GAME_SPEED * GAME_SPEED);
-	const bool limitDGun        = gameSetup ? gameSetup->limitDgun        : false;
 	const bool ghostedBuildings = gameSetup ? gameSetup->ghostedBuildings : false;
 	const int  startPosType     = gameSetup ? gameSetup->startPosType     : 0;
 
@@ -61,11 +60,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
 
-	LuaPushNamedNumber(L, "gameMode",      gameSetup->gameMode);
 	LuaPushNamedNumber(L, "startPosType",  startPosType);
 
-	LuaPushNamedBool(L,   "commEnds",         (gameSetup->gameMode >= 1));
-	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
 
 	const CMapInfo* mi = mapInfo;
@@ -165,7 +161,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	         archiveScanner->GetArchiveCompleteChecksum(modInfo.filename));
 	LuaPushNamedString(L, "modChecksum", buf);
 
-	const vector<string> cats =
+	const vector<string> &cats =
 		CCategoryHandler::Instance()->GetCategoryNames(~0);
 	lua_pushstring(L, "springCategories");
 	lua_newtable(L);

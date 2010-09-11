@@ -32,8 +32,12 @@ class CGame : public CGameController
 private:
 	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
 
+public:
+	void LoadGame(const std::string& mapname);
+
+private:
 	void LoadDefs();
-	void LoadSimulation(const std::string&);
+	void LoadSimulation(const std::string& mapname);
 	void LoadRendering();
 	void LoadInterface();
 	void LoadLua();
@@ -41,7 +45,7 @@ private:
 	void PostLoad();
 
 public:
-	CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFile);
+	CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile);
 
 	bool Draw();
 	bool DrawMT();
@@ -59,6 +63,11 @@ public:
 	bool ActionReleased(const Action&);
 	
 	bool HasLag() const;
+
+	volatile bool finishedLoading;
+
+	/// show GameEnd-window, calculate mouse movement etc.
+	void GameEnd( std::vector<unsigned char> winningAllyTeams );
 
 	enum GameDrawMode {
 		gameNotDrawing     = 0,
@@ -110,7 +119,7 @@ public:
 
 	unsigned char gameID[16];
 
-	CInfoConsole *infoConsole;
+	CInfoConsole* infoConsole;
 
 	void MakeMemDump(void);
 
@@ -124,8 +133,6 @@ private:
 	void SaveGame(const std::string& filename, bool overwrite);
 	/// Re-load the game.
 	void ReloadGame();
-	/// show GameEnd-window, calculate mouse movement etc.
-	void GameEnd();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
 	void SendNetChat(std::string message, int destination = -1);
 	/// Format and display a chat message received over network

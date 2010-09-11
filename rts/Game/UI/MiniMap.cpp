@@ -22,6 +22,7 @@
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
+#include "Game/UI/UnitTracker.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
@@ -41,7 +42,6 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitTracker.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/ConfigHandler.h"
@@ -300,7 +300,7 @@ void CMiniMap::SetSlaveMode(bool newMode)
 
 void CMiniMap::ConfigCommand(const std::string& line)
 {
-	const vector<string> words = CSimpleParser::Tokenize(line, 1);
+	const vector<string> &words = CSimpleParser::Tokenize(line, 1);
 	if (words.empty()) {
 		return;
 	}
@@ -993,6 +993,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
 	glDisable(GL_TEXTURE_2D);
+	glMatrixMode(GL_MODELVIEW);
 
 	if (minimized) {
 		if (!slaveDrawMode) {
@@ -1004,7 +1005,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 	}
 
 	// draw the frameborder
-	if (!slaveDrawMode) {
+	if (!slaveDrawMode && !globalRendering->dualScreenMode && !maximized) {
 		glEnable(GL_BLEND);
 		DrawFrame();
 		glDisable(GL_BLEND);
@@ -1014,10 +1015,16 @@ void CMiniMap::DrawForReal(bool use_geo)
 	bool resetTextureMatrix = false;
 
 	if (use_geo) {
-		// switch to normalized minimap coords
 		glPushMatrix();
-		glTranslatef(xpos * globalRendering->pixelX, ypos * globalRendering->pixelY, 0.0f);
-		glScalef(width * globalRendering->pixelX, height * globalRendering->pixelY, 1.0f);
+
+		// switch to normalized minimap coords
+		if (globalRendering->dualScreenMode) {
+			glViewport(xpos, ypos, width, height);
+			glScalef(width * globalRendering->pixelX, height * globalRendering->pixelY, 1.0f);
+		} else {
+			glTranslatef(xpos * globalRendering->pixelX, ypos * globalRendering->pixelY, 0.0f);
+			glScalef(width * globalRendering->pixelX, height * globalRendering->pixelY, 1.0f);
+		}
 
 		/* FIXME: fix mouse handling too and make it fully customizable, so Lua can rotate the minimap to any angle
 		CCameraController* camController = &camHandler->GetCurrentController();
@@ -1111,8 +1118,6 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	// draw the projectiles
 	if (drawProjectiles) {
-		GML_STDMUTEX_LOCK(proj); // DrawForReal
-
 		projectileDrawer->DrawProjectilesMiniMap();
 	}
 
@@ -1121,15 +1126,13 @@ void CMiniMap::DrawForReal(bool use_geo)
 	// NOTE: this needlessly adds to the CursorIcons list, but at least
 	//       they are not drawn  (because the input receivers are drawn
 	//       after the command queues)
-	{
-		GML_RECMUTEX_LOCK(unit); // DrawForReal
 
-		LuaUnsyncedCtrl::DrawUnitCommandQueues();
-		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-			selectedUnits.DrawCommands();
-		}
-		lineDrawer.DrawAll();
+	LuaUnsyncedCtrl::DrawUnitCommandQueues();
+	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
+		selectedUnits.DrawCommands();
 	}
+
+	lineDrawer.DrawAll();
 
 	// draw the selection shape, and some ranges
 	if (drawCommands > 0) {
@@ -1248,8 +1251,8 @@ void CMiniMap::DrawForReal(bool use_geo)
 	if (resetTextureMatrix) {
 		glMatrixMode(GL_TEXTURE_MATRIX);
 		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
 	}
+	glMatrixMode(GL_MODELVIEW);
 	if (use_geo) {
 		glPopMatrix();
 	}
@@ -1260,22 +1263,36 @@ void CMiniMap::DrawForReal(bool use_geo)
 	glEnable(GL_TEXTURE_2D);
 
 	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+		//! prepare ClipPlanes for Lua's DrawInMinimap Modelview matrix
 
-		const double plane0[4] = {0,-1,0,1};
+		//! quote from glClipPlane spec:
+		//! "When glClipPlane is called, equation is transformed by the inverse of the modelview matrix and stored in the resulting eye coordinates.
+		//!  Subsequent changes to the modelview matrix have no effect on the stored plane-equation components."
+		//! -> we have to use the same modelview matrix when calling glClipPlane and later draw calls
+
+		//! set the modelview matrix to the same as used in Lua's DrawInMinimap
+		glPushMatrix();
+		glLoadIdentity();
+		glScalef(1.0f / width, 1.0f / height, 1.0f);
+
+		const double plane0[4] = {0,-1,0,height};
 		const double plane1[4] = {0,1,0,0};
-		const double plane2[4] = {-1,0,0,1};
+		const double plane2[4] = {-1,0,0,width};
 		const double plane3[4] = {1,0,0,0};
 
 		glClipPlane(GL_CLIP_PLANE0, plane0); // clip bottom
 		glClipPlane(GL_CLIP_PLANE1, plane1); // clip top
 		glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
 		glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
+
+		glPopMatrix();
 	}
 
-	// allow the LUA scripts to draw into the minimap
+	//! allow the LUA scripts to draw into the minimap
 	eventHandler.DrawInMiniMap();
+
+	if (use_geo && globalRendering->dualScreenMode)
+		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 
 	//FIXME: Lua modifies the matrices w/o reseting it! (quite complexe to fix because ClearMatrixStack() makes it impossible to use glPushMatrix)
 	glMatrixMode(GL_PROJECTION);

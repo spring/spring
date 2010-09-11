@@ -277,6 +277,38 @@ struct SSkirmishAICallback {
 	/// Returns the ally-team of a team
 	int               (CALLING_CONV *Game_getTeamAllyTeam)(int skirmishAIId, int otherTeamId);
 
+	/**
+	 * Returns the current level of a resource of an other team.
+	 * Allways works for allied teams.
+	 * Works for all teams when cheating is enabled.
+	 * @return current level of the requested resource of the other team, or -1.0 on an invalid request
+	 */
+	float             (CALLING_CONV *Game_getTeamResourceCurrent)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	/**
+	 * Returns the current income of a resource of an other team.
+	 * Allways works for allied teams.
+	 * Works for all teams when cheating is enabled.
+	 * @return current income of the requested resource of the other team, or -1.0 on an invalid request
+	 */
+	float             (CALLING_CONV *Game_getTeamResourceIncome)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	/**
+	 * Returns the current usage of a resource of an other team.
+	 * Allways works for allied teams.
+	 * Works for all teams when cheating is enabled.
+	 * @return current usage of the requested resource of the other team, or -1.0 on an invalid request
+	 */
+	float             (CALLING_CONV *Game_getTeamResourceUsage)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	/**
+	 * Returns the storage capacity for a resource of an other team.
+	 * Allways works for allied teams.
+	 * Works for all teams when cheating is enabled.
+	 * @return storage capacity for the requested resource of the other team, or -1.0 on an invalid request
+	 */
+	float             (CALLING_CONV *Game_getTeamResourceStorage)(int skirmishAIId, int otherTeamId, int resourceId);
+
 	/// Returns true, if the two supplied ally-teams are currently allied
 	bool              (CALLING_CONV *Game_isAllied)(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
 
@@ -460,8 +492,6 @@ struct SSkirmishAICallback {
 	bool              (CALLING_CONV *UnitDef_isUpright)(int skirmishAIId, int unitDefId);
 
 	bool              (CALLING_CONV *UnitDef_isCollide)(int skirmishAIId, int unitDefId);
-
-	float             (CALLING_CONV *UnitDef_getControlRadius)(int skirmishAIId, int unitDefId);
 
 	float             (CALLING_CONV *UnitDef_getLosRadius)(int skirmishAIId, int unitDefId);
 
@@ -1039,18 +1069,6 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getTeam)(int skirmishAIId, int unitId);
 
 	int               (CALLING_CONV *Unit_getAllyTeam)(int skirmishAIId, int unitId);
-
-	/**
-	 * The unit's origin lies in this team.
-	 *
-	 * example:
-	 * It was created by a factory that was created by a builder
-	 * from a factory built by a commander of this team.
-	 * It does not matter at all, to which team
-	 * the commander/builder/factories were shared.
-	 * Only capturing can break the chain.
-	 */
-	int               (CALLING_CONV *Unit_getLineage)(int skirmishAIId, int unitId);
 
 	/**
 	 * Indicates the units main function.

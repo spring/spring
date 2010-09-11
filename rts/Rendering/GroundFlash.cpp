@@ -195,7 +195,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	fade(fade),
 	ttl(ttl)
 {
-	size = size;
+	this->size = size;
 
 	alwaysVisible = true;
 

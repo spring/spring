@@ -36,7 +36,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -843,7 +843,7 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 	int a = 0;
 
 	const int myAllyTeam = teamHandler->AllyTeam(team);
-	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
 	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
@@ -895,7 +895,7 @@ int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 	int a = 0;
 
 	const int myAllyTeam = teamHandler->AllyTeam(team);
-	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
 	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
@@ -942,7 +942,7 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 	verify();
 	int a = 0;
 
-	const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
 	std::vector<CUnit*>::const_iterator ui;
 	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
@@ -1257,7 +1257,7 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 	int featureIds_size = 0;
 
 	verify();
-	const std::vector<CFeature*> ft = qf->GetFeaturesExact(pos, radius);
+	const std::vector<CFeature*>& ft = qf->GetFeaturesExact(pos, radius);
 	const int allyteam = teamHandler->AllyTeam(team);
 
 	std::vector<CFeature*>::const_iterator it;
@@ -1366,9 +1366,6 @@ bool CAICallback::GetValue(int id, void *data)
 		}case AIVAL_DEBUG_MODE:{
 			*(bool*)data = globalRendering->drawdebug;
 			return true;
-		}case AIVAL_GAME_MODE:{
-			*(int*)data = gameSetup->gameMode;
-			return true;
 		}case AIVAL_GAME_PAUSED:{
 			*(bool*)data = gs->paused;
 			return true;
@@ -1460,20 +1457,31 @@ int CAICallback::HandleCommand(int commandId, void* data)
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
-				const CUnit* hitUnit = NULL;
-				bool   haveHit = false;
-				bool   visible = true;
 
 				if (srcUnit != NULL) {
-					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					const CUnit* hitUnit = NULL;
+					const CFeature* hitFeature = NULL;
+					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
+
+					bool visible = false;
 
 					if (hitUnit != NULL) {
-						haveHit = true;
-						visible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
+						bool isUnitVisible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
+						if (isUnitVisible) {
+							visible = true;
+							cmdData->hitUID = hitUnit->id;
+						}
 					}
 
-					cmdData->rayLen = (           visible)? realLen:     cmdData->rayLen;
-					cmdData->hitUID = (haveHit && visible)? hitUnit->id: cmdData->hitUID;
+					if (hitFeature != NULL) {
+						bool isFeatureVisible = hitFeature->IsInLosForAllyTeam(teamHandler->AllyTeam(team));
+						if (isFeatureVisible) {
+							visible = true;
+							cmdData->hitFID = hitFeature->id;
+						}
+					}
+
+					cmdData->rayLen = visible? realLen: cmdData->rayLen;
 				}
 			}
 

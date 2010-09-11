@@ -5,6 +5,7 @@
 
 #include <string>
 #include <boost/cstdint.hpp>
+#include "System/OffscreenGLContext.h"
 
 class BaseCmd;
 class CGameController;
@@ -22,6 +23,7 @@ public:
 	~SpringApp();
 
 	int Run(int argc, char *argv[]);                //!< Run game loop
+	static void Shutdown();                         //!< Shuts down application
 
 protected:
 	bool Initialize();                              //!< Initialize app
@@ -33,7 +35,6 @@ protected:
 	void LoadFonts();                               //!< Initialize glFonts (font & smallFont)
 	bool SetSDLVideoMode();                         //!< Sets SDL video mode
 	void SetProcessAffinity(int) const;
-	void Shutdown();                                //!< Shuts down application
 	int Update();                                   //!< Run simulation and draw
 
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -112,6 +113,8 @@ protected:
 	 */
 	int lastRequiredDraw;
 
+	COffscreenGLContext *ogc;
+
 private:
 	bool MainEventHandler(const SDL_Event& ev);
 };
@@ -130,7 +133,7 @@ extern CGameController* activeController;
  * Global boolean indicating whether the user
  * wants to quit
  */
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 /**
  * @brief keys

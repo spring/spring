@@ -61,10 +61,10 @@ void SelectionWidget::ShowModList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMod, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
-	std::vector<CArchiveScanner::ArchiveData> found = archiveScanner->GetPrimaryMods();
+	const std::vector<CArchiveScanner::ArchiveData> &found = archiveScanner->GetPrimaryMods();
 
 	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
-	for (std::vector<CArchiveScanner::ArchiveData>::iterator it = found.begin(); it != found.end(); ++it) {
+	for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
 		modMap[it->name] = it->description;
 	}
 
@@ -83,10 +83,10 @@ void SelectionWidget::ShowMapList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMap, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
-	std::vector<std::string> arFound = archiveScanner->GetMaps();
+	const std::vector<std::string> &arFound = archiveScanner->GetMaps();
 
 	std::set<std::string> mapSet; // use a set to sort them
-	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++) {
+	for (std::vector<std::string>::const_iterator it = arFound.begin(); it != arFound.end(); it++) {
 		mapSet.insert((*it).c_str());
 	}
 

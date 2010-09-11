@@ -155,7 +155,7 @@ EXPORT(void) aiInterfaceCallback_Log_exception(int interfaceId, const char* cons
 			(die ? "AI Interface shutting down" : "AI Interface still running"), msg);
 	if (die) {
 		// TODO: FIXME: unload all skirmish AIs of this interface plus the interface itsself
-// 		std::vector<int> teamIds = IAILibraryManager::GetInstance()->GetAllTeamIdsAccociatedWithInterface(info->GetKey());
+// 		const std::vector<int> &teamIds = IAILibraryManager::GetInstance()->GetAllTeamIdsAccociatedWithInterface(info->GetKey());
 // 		std::vector<int>::const_iterator teamId;
 // 		for (teamId = teamIds.begin(); teamId != teamIds.end(); ++teamId) {
 // 			eoh->DestroySkirmishAI(*teamId);
@@ -171,13 +171,13 @@ EXPORT(char) aiInterfaceCallback_DataDirs_getPathSeparator(int UNUSED_interfaceI
 }
 EXPORT(int) aiInterfaceCallback_DataDirs_Roots_getSize(int UNUSED_interfaceId) {
 
-	const std::vector<std::string> dds =
+	const std::vector<std::string> &dds =
 			FileSystemHandler::GetInstance().GetDataDirectories();
 	return dds.size();
 }
 EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, char* path, int path_sizeMax, int dirIndex) {
 
-	const std::vector<std::string> dds =
+	const std::vector<std::string> &dds =
 			FileSystemHandler::GetInstance().GetDataDirectories();
 	size_t numDataDirs = dds.size();
 	if (dirIndex >= 0 && (size_t)dirIndex < numDataDirs) {

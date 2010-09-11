@@ -9,7 +9,6 @@
 #include "Info.h"
 #include "Option.h"
 
-#include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
 

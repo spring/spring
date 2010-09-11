@@ -3,7 +3,6 @@
 #include "SkirmishAIWrapper.h"
 
 #include "System/StdAfx.h"
-#include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/LogOutput.h"

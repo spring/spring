@@ -12,16 +12,17 @@
 
 IMapDamage* mapDamage;
 
-IMapDamage::IMapDamage()
+IMapDamage::IMapDamage() :
+	disabled(true),
+	mapHardness(0.0f)
 {
-	disabled = true;
 }
 
 IMapDamage::~IMapDamage()
 {
 }
 
-IMapDamage * IMapDamage::GetMapDamage()
+IMapDamage* IMapDamage::GetMapDamage()
 {
 	bool disable = false;
 	

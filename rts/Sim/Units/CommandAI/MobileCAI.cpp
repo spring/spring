@@ -31,7 +31,7 @@
 #include "Util.h"
 #include "GlobalUnsynced.h"
 
-
+#define BUGGER_OFF_TTL 200
 #define MAX_CLOSE_IN_RETRY_TICKS 30
 
 
@@ -72,7 +72,7 @@ CMobileCAI::CMobileCAI():
 	lastPC(-1),
 //	patrolTime(0),
 	maxWantedSpeed(0),
-	lastBuggerOffTime(-200),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
 	commandPos1(ZeroVector),
@@ -93,7 +93,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	lastPC(-1),
 //	patrolTime(0),
 	maxWantedSpeed(0),
-	lastBuggerOffTime(-200),
+	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
 	commandPos1(ZeroVector),
@@ -364,6 +364,8 @@ bool CMobileCAI::LandRepairIfNeeded()
 
 void CMobileCAI::SlowUpdate()
 {
+	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+		return;
 	bool wantToLand = false;
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
 		wantToLand = LandRepairIfNeeded();
@@ -444,12 +446,13 @@ void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
 */
 void CMobileCAI::ExecuteMove(Command &c)
 {
-	float3 pos = float3(c.params[0], c.params[1], c.params[2]);
-	if(pos != goalPos){
-		SetGoal(pos, owner->pos);
+	const float3 cmdPos(c.params[0], c.params[1], c.params[2]);
+
+	if (cmdPos != goalPos) {
+		SetGoal(cmdPos, owner->pos);
 	}
-	if((owner->pos - goalPos).SqLength2D() < cancelDistance ||
-			owner->moveType->progressState == AMoveType::Failed){
+	if ((owner->pos - goalPos).SqLength2D() < cancelDistance ||
+			owner->moveType->progressState == AMoveType::Failed) {
 		FinishCommand();
 	}
 	return;
@@ -676,11 +679,6 @@ void CMobileCAI::ExecuteStop(Command &c)
 */
 void CMobileCAI::ExecuteDGun(Command &c)
 {
-	if (uh->limitDgun && owner->unitDef->isCommander
-			&& owner->pos.SqDistance(teamHandler->Team(owner->team)->startPos) > Square(uh->dgunRadius)) {
-		StopMove();
-		return FinishCommand();
-	}
 	ExecuteAttack(c);
 }
 
@@ -1042,6 +1040,10 @@ void CMobileCAI::DrawCommands(void)
 
 void CMobileCAI::BuggerOff(float3 pos, float radius)
 {
+	if(radius < 0.0f) {
+		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
+		return;
+	}
 	lastBuggerOffTime = gs->frameNum;
 	buggerOffPos = pos;
 	buggerOffRadius = radius + owner->radius;
@@ -1052,7 +1054,7 @@ void CMobileCAI::NonMoving(void)
 	if (owner->usingScriptMoveType) {
 		return;
 	}
-	if(lastBuggerOffTime>gs->frameNum-200){
+	if(lastBuggerOffTime > gs->frameNum - BUGGER_OFF_TTL){
 		float3 dif=owner->pos-buggerOffPos;
 		dif.y=0;
 		float length=dif.Length();
@@ -1077,8 +1079,8 @@ void CMobileCAI::NonMoving(void)
 
 void CMobileCAI::FinishCommand(void)
 {
-	if(!(commandQue.front().options & INTERNAL_ORDER)){
-		lastUserGoal=owner->pos;
+	if (!(commandQue.front().options & INTERNAL_ORDER)) {
+		lastUserGoal = owner->pos;
 	}
 	StopSlowGuard();
 	CCommandAI::FinishCommand();

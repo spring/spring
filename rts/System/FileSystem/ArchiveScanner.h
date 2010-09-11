@@ -46,8 +46,8 @@ public:
 		std::vector<std::string> replaces;			// This archive obsoletes these ones
 	};
 
-	CArchiveScanner(void);
-	~CArchiveScanner(void);
+	CArchiveScanner();
+	~CArchiveScanner();
 
 	const std::string& GetFilename() const;
 
@@ -102,6 +102,10 @@ private:
 	std::map<std::string, BrokenArchive> brokenArchives;
 	ArchiveData GetArchiveData(const LuaTable& archiveTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
+	/**
+	 * Get CRC of the data in the specified archive.
+     * Returns 0 if file could not be opened.
+	 */
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;
 	std::string cachefile;

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef EXPLOSION_GRAPHICS_H
-#define EXPLOSION_GRAPHICS_H
+#ifndef EXPLOSION_GENERATOR_H
+#define EXPLOSION_GENERATOR_H
 
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/DamageArray.h"
@@ -19,11 +19,12 @@ class CExplosionGenerator;
 
 class CExpGenSpawnable: public CWorldObject
 {
-public:
 	CR_DECLARE(CExpGenSpawnable);
+public:
 	CExpGenSpawnable(): CWorldObject(){ GML_EXPGEN_CHECK() };
 	CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() };
 	virtual ~CExpGenSpawnable() {};
+
 	virtual void Init(const float3& pos, CUnit* owner) = 0;
 };
 
@@ -36,6 +37,7 @@ public:
 	void Load(const LuaTable&);
 	creg::Class* GetClass(const std::string& name);
 	std::string FindAlias(const std::string& className);
+
 protected:
 	std::map<std::string, std::string> aliases;
 };
@@ -50,6 +52,7 @@ public:
 	const LuaTable& GetTable() const { return luaTable; }
 
 	ClassAliasList projectileClasses, generatorClasses;
+
 protected:
 	std::map<std::string, CExplosionGenerator*> generators;
 	LuaParser luaParser;
@@ -59,9 +62,9 @@ protected:
 
 class CExplosionGenerator
 {
-public:
 	CR_DECLARE(CExplosionGenerator);
 
+public:
 	CExplosionGenerator();
 	virtual ~CExplosionGenerator();
 
@@ -72,9 +75,9 @@ public:
 
 class CStdExplosionGenerator: public CExplosionGenerator
 {
-public:
 	CR_DECLARE(CStdExplosionGenerator);
 
+public:
 	CStdExplosionGenerator();
 	virtual ~CStdExplosionGenerator();
 
@@ -83,7 +86,7 @@ public:
 };
 
 
-/* Defines the result of an explosion as a series of new projectiles */
+/** Defines the result of an explosion as a series of new projectiles */
 class CCustomExplosionGenerator: public CStdExplosionGenerator
 {
 	CR_DECLARE(CCustomExplosionGenerator);
@@ -139,6 +142,7 @@ protected:
 public:
 	CCustomExplosionGenerator();
 	~CCustomExplosionGenerator();
+
 	static void OutputProjectileClassInfo();
 
 	void Load(CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
@@ -149,4 +153,4 @@ public:
 extern CExplosionGeneratorHandler* explGenHandler;
 
 
-#endif
+#endif // EXPLOSION_GENERATOR_H

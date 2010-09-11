@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+#include "mmgr.h"
 #include "creg/STL_List.h"
-#include "float3.h"
-#include "Game/Camera.h"
+#include "WeaponDefHandler.h"
+#include "Weapon.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
-#include "LogOutput.h"
+#include "Lua/LuaRules.h"
 #include "Map/Ground.h"
-#include "myMath.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -16,17 +16,16 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
-#include "Sync/SyncTracer.h"
-#include "Sound/IEffectChannel.h"
-#include "EventHandler.h"
-#include "WeaponDefHandler.h"
-#include "Weapon.h"
-#include "mmgr.h"
+#include "System/EventHandler.h"
+#include "System/float3.h"
+#include "System/myMath.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/Sound/IEffectChannel.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
@@ -221,20 +220,25 @@ static inline bool isBeingServicedOnPad(CUnit* u)
 void CWeapon::Update()
 {
 	if (hasCloseTarget) {
-		int piece;
-		// if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
-		if (useWeaponPosForAim) {
-			piece = owner->script->QueryWeapon(weaponNum);
-		} else {
-			piece = owner->script->AimFromWeapon(weaponNum);
-		}
-		relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
+		int weaponPiece = -1;
+		bool weaponAimed = (useWeaponPosForAim == 0);
 
-		//FIXME: this might be potential speedup?
-		// (AimFromWeapon may have been called already 3 lines ago)
-		//if (useWeaponPosForAim)
-		piece = owner->script->AimFromWeapon(weaponNum);
-		relWeaponPos = owner->script->GetPiecePos(piece);
+		// if we couldn't get a line of fire from the
+		// muzzle, try if we can get it from the aim
+		// piece
+		if (!weaponAimed) {
+			weaponPiece = owner->script->QueryWeapon(weaponNum);
+		} else {
+			weaponPiece = owner->script->AimFromWeapon(weaponNum);
+		}
+
+		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
+
+		if (!weaponAimed) {
+			weaponPiece = owner->script->AimFromWeapon(weaponNum);
+		}
+
+		relWeaponPos = owner->script->GetPiecePos(weaponPiece);
 	}
 
 	if (targetType == Target_Unit) {
@@ -410,8 +414,6 @@ void CWeapon::Update()
 			weaponDir = owner->frontdir * weaponDir.z + owner->updir * weaponDir.y + owner->rightdir * weaponDir.x;
 			weaponDir.SafeNormalize();
 
-	//		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
-
 			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
 				if (owner->isCloaked) {
 					owner->isCloaked = false;
@@ -545,29 +547,27 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 
 void CWeapon::HoldFire()
 {
-	if(targetUnit){
+	if (targetUnit) {
 		DeleteDeathDependence(targetUnit);
-		targetUnit=0;
+		targetUnit = 0;
 	}
-	targetType=Target_None;
-	haveUserTarget=false;
+	targetType = Target_None;
+	haveUserTarget = false;
 }
 
 
-void CWeapon::SlowUpdate()
-{
-	SlowUpdate(false);
-}
 
-
-inline bool CWeapon::ShouldCheckForNewTarget() const
+inline bool CWeapon::AllowWeaponTargetCheck() const
 {
+	if (luaRules && luaRules->AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id)) {
+		return true;
+	}
+
 	if (weaponDef->noAutoTarget) { return false; }
 	if (owner->fireState < 2)    { return false; }
 	if (haveUserTarget)          { return false; }
 
 	if (targetType == Target_None) { return true; }
-
 	if (avoidTarget)             { return true; }
 
 	if (targetType == Target_Unit) {
@@ -584,65 +584,85 @@ inline bool CWeapon::ShouldCheckForNewTarget() const
 }
 
 
+
+void CWeapon::SlowUpdate()
+{
+	SlowUpdate(false);
+}
+
 void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 {
 #ifdef TRACE_SYNC
 	tracefile << "Weapon slow update: ";
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
-	//If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
-	int piece;
-	if (useWeaponPosForAim) {
-		piece = owner->script->QueryWeapon(weaponNum);
+
+	// If we can't get a line of fire from the muzzle, try
+	// the aim piece instead (since the weapon may just be
+	// turned in a wrong way)
+	int weaponPiece = -1;
+	bool weaponAimed = (useWeaponPosForAim == 0);
+
+	if (!weaponAimed) {
+		weaponPiece = owner->script->QueryWeapon(weaponNum);
+
 		if (useWeaponPosForAim > 1)
 			useWeaponPosForAim--;
 	} else {
-		piece = owner->script->AimFromWeapon(weaponNum);
+		weaponPiece = owner->script->AimFromWeapon(weaponNum);
 	}
-	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
-	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 
-	//FIXME: this might be potential speedup?
-	// (AimFromWeapon may have been called already 5 lines ago)
-	//if (useWeaponPosForAim)
-	piece = owner->script->AimFromWeapon(weaponNum);
-	relWeaponPos = owner->script->GetPiecePos(piece);
-
+	relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
+	weaponMuzzlePos =
+		owner->pos +
+		owner->frontdir * relWeaponMuzzlePos.z +
+		owner->updir    * relWeaponMuzzlePos.y +
+		owner->rightdir * relWeaponMuzzlePos.x;
 	weaponPos =
 		owner->pos +
 		owner->frontdir * relWeaponPos.z +
 		owner->updir    * relWeaponPos.y +
 		owner->rightdir * relWeaponPos.x;
 
-	if (weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (!weaponAimed) {
+		weaponPiece = owner->script->AimFromWeapon(weaponNum);
+	}
+
+	relWeaponPos = owner->script->GetPiecePos(weaponPiece);
+
+	if (weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
 
 	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
+	hasCloseTarget = ((targetPos - weaponPos).SqLength() < relWeaponPos.SqLength() * 16);
 
-	if ((targetPos - weaponPos).SqLength() < relWeaponPos.SqLength() * 16)
-		hasCloseTarget = true;
-	else
-		hasCloseTarget = false;
 
 	if (targetType != Target_None && !TryTarget(targetPos, haveUserTarget, targetUnit)) {
 		HoldFire();
 	}
 
 	if (targetType == Target_Unit) {
-		if (targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
+		// stop firing at cloaked targets
+		if (targetUnit != NULL && targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
 			HoldFire();
 
-		if (!haveUserTarget && targetUnit->neutral && owner->fireState < 3)
-			HoldFire();
+		if (!haveUserTarget) {
+			// stop firing at neutral targets (unless in FAW mode)
+			// note: HoldFire sets targetUnit to NULL, so recheck
+			if (targetUnit != NULL && targetUnit->neutral && owner->fireState < 3)
+				HoldFire();
+
+			// stop firing at allied targets
+			//
+			// this situation (unit keeps attacking its target if the
+			// target or the unit switches to an allied team) should
+			// be handled by /ally processing now
+			if (targetUnit != NULL && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
+				HoldFire();
+		}
 	}
-
-	// this situation (unit keeps attacking its target if the
-	// target or the unit switches to an allied team) should
-	// be handled by /ally processing now
-	if (targetType == Target_Unit && !haveUserTarget && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
-		HoldFire();
 
 	if (slavedTo) {
 		// use targets from the thing we are slaved to
@@ -654,7 +674,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 		if (slavedTo->targetType == Target_Unit) {
 			const float3 tp =
-				helper->GetUnitErrorPos(slavedTo->targetUnit,owner->allyteam) +
+				helper->GetUnitErrorPos(slavedTo->targetUnit, owner->allyteam) +
 				errorVector * (weaponDef->targetMoveError * GAME_SPEED * slavedTo->targetUnit->speed.Length() * (1.0f - owner->limExperience));
 
 			if (TryTarget(tp, false, slavedTo->targetUnit)) {
@@ -674,44 +694,41 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 
 
-/*		owner->fireState>=2 && !haveUserTarget &&
-	if (!weaponDef->noAutoTarget && !noAutoTargetOverride) {
-		    ((targetType == Target_None) ||
-		     ((targetType == Target_Unit) &&
-		      ((targetUnit->category & badTargetCategory) ||
-		       (targetUnit->neutral && (owner->fireState < 3)))) ||
-		     (gs->frameNum > lastTargetRetry + 65))) {
-*/
-
-	if (!noAutoTargetOverride && ShouldCheckForNewTarget()) {
+	if (!noAutoTargetOverride && AllowWeaponTargetCheck()) {
 		lastTargetRetry = gs->frameNum;
-		std::map<float, CUnit*> targets;
-		helper->GenerateTargets(this, targetUnit, targets);
 
-		for (std::map<float,CUnit*>::iterator ti=targets.begin();ti!=targets.end();++ti) {
-			if (ti->second->neutral && (owner->fireState < 3)) {
+		std::multimap<float, CUnit*> targets;
+		helper->GenerateWeaponTargets(this, targetUnit, targets);
+
+		for (std::multimap<float, CUnit*>::const_iterator ti = targets.begin(); ti != targets.end(); ++ti) {
+			CUnit* nextTarget = ti->second;
+
+			if (nextTarget->neutral && (owner->fireState < 3)) {
 				continue;
 			}
-			if (targetUnit && (ti->second->category & badTargetCategory)) {
+			if (targetUnit && (nextTarget->category & badTargetCategory)) {
 				continue;
 			}
 
-			float3 tp =
-				ti->second->midPos +
-				errorVector * (weaponDef->targetMoveError * GAME_SPEED * ti->second->speed.Length() * (1.0f - owner->limExperience));
-			const float appHeight = ground->GetApproximateHeight(tp.x, tp.z) + 2.0f;
+			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTarget->speed.Length();
+			const float weaponError = weaponLead * (1.0f - owner->limExperience);
 
-			if (tp.y < appHeight) {
-				tp.y = appHeight;
+			float3 nextTargetPos = nextTarget->midPos + (errorVector * weaponError);
+
+			const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
+
+			if (nextTargetPos.y < appHeight) {
+				nextTargetPos.y = appHeight;
 			}
 
-			if (TryTarget(tp, false, ti->second)) {
+			if (TryTarget(nextTargetPos, false, nextTarget)) {
 				if (targetUnit) {
 					DeleteDeathDependence(targetUnit);
 				}
+
 				targetType = Target_Unit;
-				targetUnit = ti->second;
-				targetPos = tp;
+				targetUnit = nextTarget;
+				targetPos = nextTargetPos;
 
 				AddDeathDependence(targetUnit);
 				break;
@@ -774,37 +791,37 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		float3 difDir(dif);
 		difDir.Normalize();
 
+		{
+			CollisionVolume* cvOld = unit->collisionVolume;
+			CollisionVolume  cvNew = CollisionVolume(unit->collisionVolume);
+			CollisionQuery   cq;
 
-		CollisionVolume* cvOld = unit->collisionVolume;
-		CollisionVolume  cvNew = CollisionVolume(unit->collisionVolume);
-		CollisionQuery   cq;
+			cvNew.RescaleAxes(absTB, absTB, absTB);
+			cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_DISC);
 
-		cvNew.RescaleAxes(absTB, absTB, absTB);
-		cvNew.SetTestType(COLVOL_TEST_DISC);
+			unit->collisionVolume = &cvNew;
 
-		unit->collisionVolume = &cvNew;
+			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, ZeroVector, NULL)) {
+				// weapon inside target unit's volume, no
+				// real need to calculate penetration depth
+				dif = ZeroVector;
+			} else {
+				// raytrace to find the proper correction
+				// factor for non-spherical volumes based
+				// on ingress position
+				cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_CONT);
 
-		if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, ZeroVector, NULL)) {
-			// weapon inside target unit's volume, no
-			// real need to calculate penetration depth
-			dif = ZeroVector;
-		} else {
-			// raytrace to find the proper correction
-			// factor for non-spherical volumes based
-			// on ingress position
-			cvNew.SetTestType(COLVOL_TEST_CONT);
-
-			// intersection is not guaranteed if the
-			// volume has an offset, since here we're
-			// shooting at the target's midpoint
-			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos + (difDir * cvNew.GetBoundingRadius() * 2.0f), &cq)) {
-				if (targetBorder > 0.0f) { dif -= (difDir * ((pos - cq.p0).Length())); }
-				if (targetBorder < 0.0f) { dif += (difDir * ((cq.p1 - pos).Length())); }
+				// intersection is not guaranteed if the
+				// volume has an offset, since here we're
+				// shooting at the target's midpoint
+				if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos + (difDir * cvNew.GetBoundingRadius() * 2.0f), &cq)) {
+					if (targetBorder > 0.0f) { dif -= (difDir * ((pos - cq.p0).Length())); }
+					if (targetBorder < 0.0f) { dif += (difDir * ((cq.p1 - pos).Length())); }
+				}
 			}
+
+			unit->collisionVolume = cvOld;
 		}
-
-		unit->collisionVolume = cvOld;
-
 
 		heightDiff = (weaponPos.y + dif.y) - owner->pos.y;
 	} else {

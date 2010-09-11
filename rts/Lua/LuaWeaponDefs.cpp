@@ -353,7 +353,7 @@ static inline int BuildCategorySet(lua_State* L, const vector<string>& cats)
 static int CategorySetFromBits(lua_State* L, const void* data)
 {
 	const int bits = *((const int*)data);
-	const vector<string> cats =
+	const vector<string> &cats =
 		CCategoryHandler::Instance()->GetCategoryNames(bits);
 	return BuildCategorySet(L, cats);
 }
@@ -363,7 +363,7 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 {
 	const string& str = *((const string*)data);
 	const string lower = StringToLower(str);
-	const vector<string> cats = CSimpleParser::Tokenize(lower, 0);
+	const vector<string> &cats = CSimpleParser::Tokenize(lower, 0);
 	return BuildCategorySet(L, cats);
 }*/
 

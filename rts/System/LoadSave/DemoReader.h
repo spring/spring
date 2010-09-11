@@ -48,6 +48,7 @@ public:
 	
 	const std::vector<PlayerStatistics>& GetPlayerStats() const;
 	const std::vector< std::vector<TeamStatistics> >& GetTeamStats() const;
+	const std::vector< unsigned char >& GetWinningAllyTeams() const;
 
 	/// Not needed for normal demo watching
 	void LoadStats();
@@ -62,6 +63,7 @@ private:
 
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
+	std::vector< unsigned char> winningAllyTeams;
 };
 
 #endif

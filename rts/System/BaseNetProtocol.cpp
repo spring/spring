@@ -196,9 +196,9 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 
 PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, bool reconnect)
 {
-	boost::uint16_t size = 7 + name.size() + passwd.size() + version.size();
+	boost::uint16_t size = 9 + name.size() + passwd.size() + version.size();
 	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);
-	*packet << size << name << passwd << version << uchar(reconnect);
+	*packet << size << NETWORK_VERSION << name << passwd << version << uchar(reconnect);
 	return PacketType(packet);
 }
 
@@ -230,9 +230,12 @@ PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStati
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendGameOver()
+PacketType CBaseNetProtocol::SendGameOver( uchar myPlayerNum, std::vector<uchar> winningAllyTeams )
 {
-	return PacketType(new PackPacket(1, NETMSG_GAMEOVER));
+	const unsigned size = 1 + 1 + 1 + winningAllyTeams.size() * sizeof(uchar);
+	PackPacket* packet = new PackPacket(size, NETMSG_GAMEOVER);
+	*packet << static_cast<uchar>(size) << myPlayerNum << winningAllyTeams;
+	return PacketType(packet);
 }
 
 
@@ -402,6 +405,16 @@ PacketType CBaseNetProtocol::SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msg
 }
 
 
+PacketType CBaseNetProtocol::SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName )
+{
+	unsigned size = 1 + sizeof(uchar) + sizeof(uchar) + sizeof(uchar) + sizeof (boost::uint16_t) +playerName.size()+1;
+	PackPacket* packet = new PackPacket( size, NETMSG_CREATE_NEWPLAYER);
+	*packet << static_cast<boost::uint16_t>(size) << playerNum << (uchar)spectator << teamNum << playerName;
+	return PacketType(packet);
+
+}
+
+
 #ifdef SYNCDEBUG
 PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
 {
@@ -430,6 +443,7 @@ PacketType CBaseNetProtocol::SendSdBlockrequest(unsigned short begin, unsigned s
 	return PacketType(packet);
 
 }
+
 
 PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums)
 {
@@ -484,7 +498,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_SETSHARE, 11);
 	proto->AddType(NETMSG_SENDPLAYERSTAT, 1);
 	proto->AddType(NETMSG_PLAYERSTAT, 2 + sizeof(PlayerStatistics));
-	proto->AddType(NETMSG_GAMEOVER, 1);
+	proto->AddType(NETMSG_GAMEOVER, -1);
 	proto->AddType(NETMSG_MAPDRAW, -1);
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
 	proto->AddType(NETMSG_SYSTEMMSG, -2);
@@ -500,6 +514,8 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_REQUEST_TEAMSTAT, 4 );
 	proto->AddType(NETMSG_REGISTER_NETMSG, 3 );
 	proto->AddType(NETMSG_UNREGISTER_NETMSG, 3);
+
+	proto->AddType(NETMSG_CREATE_NEWPLAYER, -2);
 
 	proto->AddType(NETMSG_AI_CREATED, -1);
 	proto->AddType(NETMSG_AI_STATE_CHANGED, 7);

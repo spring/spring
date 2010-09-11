@@ -365,11 +365,11 @@ public:
 	rettype rdummy = (rettype)0;\
 	return rdummy;
 #define GML_IF_SIM_THREAD_RET(thread,name)\
-	if(thread == gmlThreadCount) {\
+	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRET())\
 	}
 #define GML_IF_SIM_THREAD_RETVAL(thread,name,rettype)\
-	if(thread == gmlThreadCount) {\
+	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
@@ -430,12 +430,12 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 
 #if GML_ENABLE_ITEMSERVER_CHECK
 #define GML_ITEMSERVER_CHECK(thread)\
-	if(thread == gmlThreadCount) {\
+	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
 		GML_ITEMLOG_PRINT()\
 		GML_DUMMYRET()\
 	}
 #define GML_ITEMSERVER_CHECK_RET(thread,rettype)\
-	if(thread == gmlThreadCount) {\
+	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
 		GML_ITEMLOG_PRINT()\
 		GML_DUMMYRETVAL(rettype)\
 	}

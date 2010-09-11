@@ -133,10 +133,10 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	extractionDepth = depth;
 
 	// find any neighbouring extractors
-	std::vector<CUnit*> cu = qf->GetUnits(pos, extractionRange + maxExtractionRange);
+	const std::vector<CUnit*> &cu = qf->GetUnits(pos, extractionRange + maxExtractionRange);
 	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
-	for (std::vector<CUnit*>::iterator ui = cu.begin(); ui != cu.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		if (typeid(**ui) == typeid(CExtractorBuilding) && *ui != this) {
 			CExtractorBuilding* eb = (CExtractorBuilding*) *ui;
 

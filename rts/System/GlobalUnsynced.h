@@ -47,6 +47,13 @@ public:
 	float gameTime;
 
 	/**
+	 * @brief start time
+	 *
+	 * The value of gameTime when the game was started
+	 */
+	float startTime;
+
+	/**
 	 * @brief my player num
 	 *
 	 * Local player's number
@@ -55,6 +62,7 @@ public:
 
 	/**
 	 * @brief my team
+	 * @note changes when changing spectated team
 	 *
 	 * Local player's team
 	 */
@@ -62,10 +70,29 @@ public:
 
 	/**
 	 * @brief my ally team
+	 * @note changes when changing spectated team
 	 *
 	 * Local player's ally team
 	 */
 	int myAllyTeam;
+
+	/**
+	 * @brief my team used when playing
+	 * @note changes only from TEAMMSG_JOIN_TEAM
+	 * @note if we never joined any team, it's set to -1
+	 *
+	 * Local player's team
+	 */
+	int myPlayingTeam;
+
+	/**
+	 * @brief my ally team
+	 * @note changes only from TEAMMSG_JOIN_TEAM
+	 * @note if we never joined any team, it's set to -1
+	 *
+	 * Local player's ally team
+	 */
+	int myPlayingAllyTeam;
 
 
 	/**

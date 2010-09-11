@@ -44,20 +44,20 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos, int xpart,
 	age(0),
 	ttl(ttl)
 {
-	deleteMe=false;
-	checkCol=false;
+	deleteMe = false;
+	checkCol = false;
 
-	for(int y=0;y<5;++y){
-		float yp=(y+ypart)/16.0f*PI-PI/2;
-		for(int x=0;x<5;++x){
-			float xp=(x+xpart)/32.0f*2*PI;
-			vectors[y*5+x]=float3(sin(xp)*cos(yp),sin(yp),cos(xp)*cos(yp));
+	for(int y = 0; y < 5; ++y) {
+		const float yp = (y + ypart) / 16.0f*PI - PI/2;
+		for (int x = 0; x < 5; ++x) {
+			float xp = (x + xpart) / 32.0f*2*PI;
+			vectors[y*5 + x] = float3(sin(xp)*cos(yp), sin(yp), cos(xp)*cos(yp));
 		}
 	}
-	pos=centerPos+vectors[12]*sphereSize;
+	pos = centerPos+vectors[12] * sphereSize;
 
-	drawRadius=60;
-	alwaysVisible=true;
+	drawRadius = 60;
+	alwaysVisible = true;
 	texx = projectileDrawer->sphereparttex->xstart + (projectileDrawer->sphereparttex->xend - projectileDrawer->sphereparttex->xstart) * 0.5f;
 	texy = projectileDrawer->sphereparttex->ystart + (projectileDrawer->sphereparttex->yend - projectileDrawer->sphereparttex->ystart) * 0.5f;
 }
@@ -69,16 +69,17 @@ CSpherePartProjectile::~CSpherePartProjectile()
 void CSpherePartProjectile::Update()
 {
 	age++;
-	if(age>=ttl)
-		deleteMe=true;
-	sphereSize+=expansionSpeed;
-	pos=centerPos+vectors[12]*sphereSize;
+	if (age >= ttl) {
+		deleteMe = true;
+	}
+	sphereSize += expansionSpeed;
+	pos = centerPos+vectors[12] * sphereSize;
 }
 
 void CSpherePartProjectile::Draw()
 {
 	unsigned char col[4];
-	va->EnlargeArrays(4*4*4,0,VA_SIZE_TC);
+	va->EnlargeArrays(4*4*4, 0, VA_SIZE_TC);
 
 	const float interSize = sphereSize + expansionSpeed * globalRendering->timeOffset;
 
@@ -89,20 +90,20 @@ void CSpherePartProjectile::Draw()
 				(1.0f - min(1.0f, float(age + globalRendering->timeOffset) / (float) ttl)) *
 				(1.0f - fabs(y + ybase - 8.0f) / 8.0f * 1.0f);
 
-			col[0]=(unsigned char) (color.x*255.0f*alpha);
-			col[1]=(unsigned char) (color.y*255.0f*alpha);
-			col[2]=(unsigned char) (color.z*255.0f*alpha);
-			col[3]=((unsigned char) (40*alpha))+1;
-			va->AddVertexQTC(centerPos+vectors[y*5+x]*interSize,texx,texy,col);
-			va->AddVertexQTC(centerPos+vectors[y*5+x+1]*interSize,texx,texy,col);
-			alpha=baseAlpha*(1.0f-min(float(1.0f),float(age+globalRendering->timeOffset)/(float)ttl))*(1-fabs(y+1+ybase-8.0f)/8.0f*1.0f);
+			col[0] = (unsigned char) (color.x * 255.0f * alpha);
+			col[1] = (unsigned char) (color.y * 255.0f * alpha);
+			col[2] = (unsigned char) (color.z * 255.0f * alpha);
+			col[3] = ((unsigned char) (40 * alpha)) + 1;
+			va->AddVertexQTC(centerPos + vectors[y*5 + x]     * interSize, texx, texy, col);
+			va->AddVertexQTC(centerPos + vectors[y*5 + x + 1] * interSize, texx, texy, col);
+			alpha = baseAlpha * (1.0f - min(1.0f, (float)(age + globalRendering->timeOffset) / (float) ttl)) * (1 - fabs(y + 1 + ybase - 8.0f) / 8.0f*1.0f);
 
-			col[0]=(unsigned char) (color.x*255.0f*alpha);
-			col[1]=(unsigned char) (color.y*255.0f*alpha);
-			col[2]=(unsigned char) (color.z*255.0f*alpha);
-			col[3]=((unsigned char) (40*alpha))+1;
-			va->AddVertexQTC(centerPos+vectors[(y+1)*5+x+1]*interSize,texx,texy,col);
-			va->AddVertexQTC(centerPos+vectors[(y+1)*5+x]*interSize,texx,texy,col);
+			col[0] = (unsigned char) (color.x * 255.0f * alpha);
+			col[1] = (unsigned char) (color.y * 255.0f * alpha);
+			col[2] = (unsigned char) (color.z * 255.0f * alpha);
+			col[3] = ((unsigned char) (40 * alpha)) + 1;
+			va->AddVertexQTC(centerPos+vectors[(y + 1)*5 + x + 1] * interSize, texx, texy, col);
+			va->AddVertexQTC(centerPos+vectors[(y + 1)*5 + x]     * interSize, texx, texy, col);
 		}
 	}
 }
@@ -110,9 +111,9 @@ void CSpherePartProjectile::Draw()
 
 void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner, float3 color)
 {
-	for(int y=0;y<16;y+=4){
-		for(int x=0;x<32;x+=4){
-			new CSpherePartProjectile(pos,x,y,expansionSpeed,alpha,ttl,owner,color);
+	for (int y = 0; y < 16; y += 4) {
+		for (int x = 0; x < 32; x += 4) {
+			new CSpherePartProjectile(pos, x, y, expansionSpeed, alpha, ttl, owner, color);
 		}
 	}
 }

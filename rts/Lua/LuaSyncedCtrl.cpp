@@ -40,7 +40,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/Path/PathManager.h"
+#include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -117,6 +117,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+	REGISTER_LUA_CFUNC(KillTeam);
+	REGISTER_LUA_CFUNC(GameOver);
+
 	REGISTER_LUA_CFUNC(AddTeamResource);
 	REGISTER_LUA_CFUNC(UseTeamResource);
 	REGISTER_LUA_CFUNC(SetTeamResource);
@@ -158,7 +161,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitTravel);
 	REGISTER_LUA_CFUNC(SetUnitFuel);
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
-	REGISTER_LUA_CFUNC(SetUnitLineage);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
@@ -243,6 +245,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetNoPause);
 	REGISTER_LUA_CFUNC(SetUnitToFeature);
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
+
 
 	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
 		return false;
@@ -441,6 +444,45 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 //
 // The call-outs
 //
+
+
+int LuaSyncedCtrl::KillTeam(lua_State* L)
+{
+	const int teamID = luaL_checkint(L, 1);
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
+		return 0;
+	}
+	CTeam* team = teamHandler->Team(teamID);
+	if (team == NULL) {
+		return 0;
+	}
+	team->Died();
+	return 0;
+}
+
+
+int LuaSyncedCtrl::GameOver(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GameOver()");
+	}
+	std::vector<unsigned char> winningAllyTeams;
+	const int table = 1;
+	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+		if (!lua_israwnumber(L, -1)) {
+			continue;
+		}
+		unsigned char AllyTeamID = lua_toint( L, -1 );
+		if ( !teamHandler->ValidAllyTeam(AllyTeamID) ) {
+			continue;
+		}
+		winningAllyTeams.push_back( AllyTeamID );
+	}
+	game->GameEnd( winningAllyTeams );
+	return 0;
+}
+
 
 int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 {
@@ -857,7 +899,8 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 	}
 	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
 	if (cob == NULL) {
-		luaL_error(L, "GetCOBScriptID(): unit is not running a COB script");
+		// no error - allows using this to determine whether unit runs COB or LUS
+		return 0;
 	}
 
 	const string funcName = lua_tostring(L, 2);
@@ -1508,7 +1551,7 @@ int LuaSyncedCtrl::SetUnitBuildSpeed(lua_State* L)
 		return 0;
 	}
 
-	const float buildScale = (1.0f / (2.0f * (float)UNIT_SLOWUPDATE_RATE));
+	const float buildScale = (1.0f / TEAM_SLOWUPDATE_RATE);
 	const float buildSpeed = buildScale * max(0.0f, luaL_checkfloat(L, 2));
 
 	CFactory* factory = dynamic_cast<CFactory*>(unit);
@@ -1666,27 +1709,6 @@ int LuaSyncedCtrl::SetUnitFuel(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitLineage(lua_State* L)
-{
-	if (!FullCtrl()) {
-		return 0;
-	}
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	CTeam* team = ParseTeam(L, __FUNCTION__, 2);
-	if (team == NULL) {
-		return 0;
-	}
-	unit->lineage = team->teamNum;
-	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
-		team->lineageRoot = unit->id;
-	}
-	return 0;
-}
-
-
 int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1802,7 +1824,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		// affects this unit only
 		if (enableLocal) {
 			if (argc == 14) {
-				lmp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+				lmp->colvol->Init(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
 			}
 			lmp->colvol->Enable();
 		} else {
@@ -1814,7 +1836,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		// affects all future units with this model
 		if (enableGlobal) {
 			if (argc == 14) {
-				omp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+				omp->colvol->Init(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
 			}
 			omp->colvol->Enable();
 		} else {

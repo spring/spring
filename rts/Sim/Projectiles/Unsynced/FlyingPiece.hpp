@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef FLYING_PIECE_HDR
-#define FLYING_PIECE_HDR
+#ifndef FLYING_PIECE_H
+#define FLYING_PIECE_H
 
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
 #include "mmgr.h"
@@ -43,7 +43,7 @@ public:
 
 	~FlyingPiece();
 
-	void Draw(int, size_t*, size_t*, CVertexArray*);
+	void Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertexArray* va);
 
 public:
 	const S3DOPrimitive* prim;
@@ -79,4 +79,4 @@ private:
 	}
 };
 
-#endif
+#endif // FLYING_PIECE_H

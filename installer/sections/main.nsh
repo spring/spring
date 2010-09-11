@@ -77,6 +77,7 @@
 	${!echonow} "Processing: main: AI Interfaces"
 	!insertmacro InstallAIInterface "C"
 	!insertmacro InstallAIInterface "Java"
+	!insertmacro InstallAIInterface "Python"
 
 	${!echonow} "Processing: main: Null Skirmish AIs"
 	!insertmacro InstallSkirmishAI "NullAI"
@@ -162,6 +163,7 @@
   ; AI Interfaces
 	!insertmacro DeleteAIInterface "C"
 	!insertmacro DeleteAIInterface "Java"
+	!insertmacro DeleteAIInterface "Python"
 
 	RmDir /r "$INSTDIR\AI"
 

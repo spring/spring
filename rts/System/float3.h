@@ -596,17 +596,17 @@ public:
  * @brief upwards vector
  *
  * Defines constant upwards vector
- * (0,1,0)
+ * (0, 1, 0)
  */
-const float3 UpVector(0,1,0);
+const float3 UpVector(0.0f, 1.0f, 0.0f);
 
 /**
  * @brief zero vector
  *
  * Defines constant zero vector
- * (0,0,0)
+ * (0, 0, 0)
  */
-const float3 ZeroVector(0,0,0);
+const float3 ZeroVector(0.0f, 0.0f, 0.0f);
 
 
 #endif /* FLOAT3_H */

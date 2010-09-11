@@ -64,18 +64,26 @@ tgz="spring_${branch}_src.tar.gz"
 include=" \
  $dir/AI/ \
  $dir/doc/ \
- $dir/Doxyfile \
  $dir/cont/ \
+ $dir/include/ \
  $dir/installer/ \
- $dir/LICENSE.html \
- $dir/README.* \
  $dir/rts/ \
  $dir/SConstruct \
  $dir/tools/SelectionEditor/ \
- $dir/CMakeLists.txt \
  $dir/tools/unitsync/ \
+ $dir/tools/ArchiveMover/ \
  $dir/tools/DemoTool/ \
- $dir/tools/DedicatedServer/"
+ $dir/tools/CMakeLists.txt \
+ $dir/CMakeLists.txt \
+ $dir/Doxyfile \
+ $dir/directories.txt \
+ $dir/README.markdown \
+ $dir/LICENSE \
+ $dir/LICENSE.html \
+ $dir/THANKS \
+ $dir/AUTHORS \
+ $dir/FAQ \
+ $dir/COPYING"
 
 # On linux, win32 executables are useless.
 exclude_from_all=""

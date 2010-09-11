@@ -19,25 +19,26 @@
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
-using std::string;
 using std::sprintf;
-extern bool globalQuit;
+extern volatile bool globalQuit;
 
 
-static string FloatToSmallString(float num,float mul=1){
+static std::string FloatToSmallString(float num, float mul = 1) {
+
 	char c[50];
 
 	if (num == 0) {
-		return "0";
+		sprintf(c, "0");
 	} else if (fabs(num) < 10 * mul) {
-		sprintf(c,"%.1f",num);
+		sprintf(c, "%.1f",  num);
 	} else if (fabs(num) < 10000 * mul) {
-		sprintf(c,"%.0f",num);
+		sprintf(c, "%.0f",  num);
 	} else if (fabs(num) < 10000000 * mul) {
-		sprintf(c,"%.0fk", num / 1000);
+		sprintf(c, "%.0fk", num / 1000);
 	} else {
-		sprintf(c,"%.0fM", num / 1000000);
+		sprintf(c, "%.0fM", num / 1000000);
 	}
+
 	return c;
 };
 
@@ -45,82 +46,94 @@ static string FloatToSmallString(float num,float mul=1){
 bool CEndGameBox::disabled = false;
 
 
-CEndGameBox::CEndGameBox(void) : moveBox(false)
+CEndGameBox::CEndGameBox(std::vector<unsigned char> winningAllyTeams)
+	: CInputReceiver()
+	, moveBox(false)
+	, dispMode(0)
+	, stat1(1)
+	, stat2(-1)
+	, graphTex(0)
+	, winners(winningAllyTeams)
 {
 	box.x1 = 0.14f;
 	box.y1 = 0.1f;
 	box.x2 = 0.86f;
 	box.y2 = 0.8f;
 
-	exitBox.x1=0.31f;
-	exitBox.y1=0.02f;
-	exitBox.x2=0.41f;
-	exitBox.y2=0.06f;
+	exitBox.x1 = 0.31f;
+	exitBox.y1 = 0.02f;
+	exitBox.x2 = 0.41f;
+	exitBox.y2 = 0.06f;
 
-	playerBox.x1=0.05f;
-	playerBox.y1=0.62f;
-	playerBox.x2=0.15f;
-	playerBox.y2=0.65f;
+	playerBox.x1 = 0.05f;
+	playerBox.y1 = 0.62f;
+	playerBox.x2 = 0.15f;
+	playerBox.y2 = 0.65f;
 
-	sumBox.x1=0.16f;
-	sumBox.y1=0.62f;
-	sumBox.x2=0.26f;
-	sumBox.y2=0.65f;
+	sumBox.x1 = 0.16f;
+	sumBox.y1 = 0.62f;
+	sumBox.x2 = 0.26f;
+	sumBox.y2 = 0.65f;
 
-	difBox.x1=0.27f;
-	difBox.y1=0.62f;
-	difBox.x2=0.38f;
-	difBox.y2=0.65f;
+	difBox.x1 = 0.27f;
+	difBox.y1 = 0.62f;
+	difBox.x2 = 0.38f;
+	difBox.y2 = 0.65f;
 
-	dispMode=0;
-	stat1=1;
-	stat2=-1;
-
-	if (!bm.Load("bitmaps/graphPaper.bmp"))
+	if (!bm.Load("bitmaps/graphPaper.bmp")) {
 		throw content_error("Could not load bitmaps/graphPaper.bmp");
-	graphTex=0;
+	}
 }
 
-CEndGameBox::~CEndGameBox(void)
+CEndGameBox::~CEndGameBox()
 {
-	if(graphTex)
+	if (graphTex) {
 		glDeleteTextures(1,&graphTex);
+	}
 }
 
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
-	if (disabled)
+	if (disabled) {
 		return false;
+	}
 
-	float mx=MouseX(x);
-	float my=MouseY(y);
-	if(InBox(mx,my,box)){
-		moveBox=true;
-		if(InBox(mx,my,box+exitBox))
-			moveBox=false;
-		if(InBox(mx,my,box+playerBox))
-			moveBox=false;
-		if(InBox(mx,my,box+sumBox))
-			moveBox=false;
-		if(InBox(mx,my,box+difBox))
-			moveBox=false;
-		if(dispMode>0 && mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f)
-			moveBox=false;
+	float mx = MouseX(x);
+	float my = MouseY(y);
+	if (InBox(mx, my, box)) {
+		moveBox = true;
+		if (InBox(mx, my, box + exitBox)) {
+			moveBox = false;
+		}
+		if (InBox(mx, my, box + playerBox)) {
+			moveBox = false;
+		}
+		if (InBox(mx, my, box + sumBox)) {
+			moveBox = false;
+		}
+		if (InBox(mx, my, box + difBox)) {
+			moveBox = false;
+		}
+		if (dispMode>0 && mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f) {
+			moveBox = false;
+		}
 		return true;
 	}
+
 	return false;
 }
 
-void CEndGameBox::MouseMove(int x, int y, int dx,int dy, int button)
+void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (disabled)
+	if (disabled) {
 		return;
+	}
 
-	if(moveBox){
-		box.x1+=MouseMoveX(dx);
-		box.x2+=MouseMoveX(dx);
-		box.y1+=MouseMoveY(dy);
-		box.y2+=MouseMoveY(dy);
+	if (moveBox) {
+		box.x1 += MouseMoveX(dx);
+		box.x2 += MouseMoveX(dx);
+		box.y1 += MouseMoveY(dy);
+		box.y2 += MouseMoveY(dy);
 	}
 }
 
@@ -130,8 +143,8 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	float mx=MouseX(x);
-	float my=MouseY(y);
+	float mx = MouseX(x);
+	float my = MouseY(y);
 
 	if (InBox(mx, my, box + exitBox)) {
 		delete this;
@@ -139,25 +152,27 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if(InBox(mx,my,box+playerBox)){
-		dispMode=0;
+	if (InBox(mx, my, box + playerBox)) {
+		dispMode = 0;
 	}
-	if(InBox(mx,my,box+sumBox)){
-		dispMode=1;
+	if (InBox(mx, my, box + sumBox)) {
+		dispMode = 1;
 	}
-	if(InBox(mx,my,box+difBox)){
-		dispMode=2;
+	if (InBox(mx, my, box + difBox)) {
+		dispMode = 2;
 	}
 
-	if(dispMode>0){
-		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f){
-			int sel=(int)floor(-(my-box.y1-0.57f)*50);
+	if (dispMode > 0 ) {
+		if ((mx > (box.x1 + 0.01f)) && (mx < (box.x1 + 0.12f)) &&
+		    (my < (box.y1 + 0.57f)) && (my > (box.y1 + 0.571f - stats.size()*0.02f))) {
+			int sel = (int) floor(-(my - box.y1 - 0.57f) * 50);
 
-			if(button==1) {
-				stat1=sel;
-				stat2=-1;
-			} else
-				stat2=sel;
+			if (button == 1) {
+				stat1 = sel;
+				stat2 = -1;
+			} else {
+				stat2 = sel;
+			}
 		}
 	}
 
@@ -165,8 +180,9 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 bool CEndGameBox::IsAbove(int x, int y)
 {
-	if (disabled)
+	if (disabled) {
 		return false;
+	}
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
@@ -175,163 +191,192 @@ bool CEndGameBox::IsAbove(int x, int y)
 
 void CEndGameBox::Draw()
 {
-	if(!graphTex)
-		graphTex=bm.CreateTexture();
+	if (!graphTex) {
+		graphTex = bm.CreateTexture();
+	}
 
-	if (disabled)
+	if (disabled) {
 		return;
+	}
 
-	float mx=MouseX(mouse->lastx);
-	float my=MouseY(mouse->lasty);
+	float mx = MouseX(mouse->lastx);
+	float my = MouseY(mouse->lasty);
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
 	// Large Box
-	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+	glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
 	DrawBox(box);
 
-	glColor4f(0.2f,0.2f,0.7f,guiAlpha);
-	if(dispMode==0){
-		DrawBox(box+playerBox);
-	} else if(dispMode==1){
-		DrawBox(box+sumBox);
+	glColor4f(0.2f, 0.2f, 0.7f, guiAlpha);
+	if (dispMode == 0) {
+		DrawBox(box + playerBox);
+	} else if (dispMode == 1) {
+		DrawBox(box + sumBox);
 	} else {
-		DrawBox(box+difBox);
+		DrawBox(box + difBox);
 	}
 
-	if(InBox(mx,my,box+exitBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
-		DrawBox(box+exitBox);
+	if (InBox(mx, my, box+exitBox)) {
+		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
+		DrawBox(box + exitBox);
 	}
-	if(InBox(mx,my,box+playerBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
-		DrawBox(box+playerBox);
+	if (InBox(mx,my,box+playerBox)) {
+		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
+		DrawBox(box + playerBox);
 	}
-	if(InBox(mx,my,box+sumBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
-		DrawBox(box+sumBox);
+	if (InBox(mx,my,box+sumBox)) {
+		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
+		DrawBox(box + sumBox);
 	}
-	if(InBox(mx,my,box+difBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
-		DrawBox(box+difBox);
+	if (InBox(mx,my,box+difBox)) {
+		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
+		DrawBox(box + difBox);
 	}
 
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,1,0.8f);
-	font->glPrint(box.x1+exitBox.x1+0.025f,box.y1+exitBox.y1+0.005f,1,FONT_SCALE | FONT_NORM,"Exit");
-	font->glPrint(box.x1+playerBox.x1+0.015f,box.y1+playerBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Player stats");
-	font->glPrint(box.x1+sumBox.x1+0.015f,box.y1+sumBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Team stats");
-	font->glPrint(box.x1+difBox.x1+0.015f,box.y1+difBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Team delta stats");
+	glColor4f(1, 1, 1, 0.8f);
+	font->glPrint(box.x1 + exitBox.x1   + 0.025f, box.y1 + exitBox.y1   + 0.005f, 1.0f, FONT_SCALE | FONT_NORM, "Exit");
+	font->glPrint(box.x1 + playerBox.x1 + 0.015f, box.y1 + playerBox.y1 + 0.005f, 0.7f, FONT_SCALE | FONT_NORM, "Player stats");
+	font->glPrint(box.x1 + sumBox.x1    + 0.015f, box.y1 + sumBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM, "Team stats");
+	font->glPrint(box.x1 + difBox.x1    + 0.015f, box.y1 + difBox.y1    + 0.005f, 0.7f, FONT_SCALE | FONT_NORM, "Team delta stats");
 
-	if (teamHandler->Team(gu->myTeam)->isDead) {
-		font->glPrint(box.x1+0.25f,box.y1+0.65f,1,FONT_SCALE | FONT_NORM,"You lost the game");
+	bool iWon = false;
+	bool undecidedEnd = winners.size() == 0;
+	bool neverplayed = gu->myPlayingAllyTeam < 0;
+	std::string winnersText = "Game Over, winning allyTeams are:";
+	if (!undecidedEnd) {
+		for ( std::vector<unsigned char>::iterator itor = winners.begin(); itor != winners.end(); itor++ ) {
+			const int winner = (int)*itor;
+			if ( !neverplayed && winner == gu->myPlayingAllyTeam ) {
+				// we actually played and won!
+				iWon = true;
+				break;
+			}
+			char buffer [30];
+			int lenght = sprintf(buffer, " %d", winner);
+			std::string winnerString( buffer, lenght );
+			winnersText += winnerString;
+		}
+	}
+	if (undecidedEnd) {
+		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Game result was undecided");
+	} else if (neverplayed) {
+		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, winnersText.c_str());
+	} else if (!iWon) {
+		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "You lost the game");
 	} else {
-		font->glPrint(box.x1+0.25f,box.y1+0.65f,1,FONT_SCALE | FONT_NORM,"You won the game");
+		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "You won the game");
 	}
 
-	if(gs->frameNum <= 0)
+	if (gs->frameNum <= 0) {
 		return;
+	}
 
-	if(dispMode==0){
-		float xpos=0.01f;
+	if (dispMode == 0) {
+		float xpos = 0.01f;
 
-		string headers[]={"Name","MC/m","MP/m","KP/m","Cmds/m","ACS"};
+		std::string headers[] = {"Name", "MC/m", "MP/m", "KP/m", "Cmds/m", "ACS"};
 
-		for(int a=0;a<6;++a){
-			font->glPrint(box.x1+xpos,box.y1+0.55f,0.8f,FONT_SCALE | FONT_NORM,headers[a].c_str());
-			xpos+=0.1f;
+		for (int a = 0; a < 6; ++a) {
+			font->glPrint(box.x1 + xpos, box.y1 + 0.55f, 0.8f, FONT_SCALE | FONT_NORM,headers[a].c_str());
+			xpos += 0.1f;
 		}
 
 		float ypos=0.5f;
-		for(int a=0;a<playerHandler->ActivePlayers();++a){
-			if(playerHandler->Player(a)->currentStats.mousePixels==0)
+		for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
+			if (playerHandler->Player(a)->currentStats.mousePixels == 0) {
 				continue;
+			}
 			char values[6][100];
 
-			sprintf(values[0],"%s",	playerHandler->Player(a)->name.c_str());
-			sprintf(values[1],"%i",(int)(playerHandler->Player(a)->currentStats.mouseClicks*60/game->totalGameTime));
-			sprintf(values[2],"%i",(int)(playerHandler->Player(a)->currentStats.mousePixels*60/game->totalGameTime));
-			sprintf(values[3],"%i",(int)(playerHandler->Player(a)->currentStats.keyPresses*60/game->totalGameTime));
-			sprintf(values[4],"%i",(int)(playerHandler->Player(a)->currentStats.numCommands*60/game->totalGameTime));
-			sprintf(values[5],"%i",(int)
+			sprintf(values[0], "%s",	playerHandler->Player(a)->name.c_str());
+			sprintf(values[1], "%i", (int)(playerHandler->Player(a)->currentStats.mouseClicks * 60 / game->totalGameTime));
+			sprintf(values[2], "%i", (int)(playerHandler->Player(a)->currentStats.mousePixels * 60 / game->totalGameTime));
+			sprintf(values[3], "%i", (int)(playerHandler->Player(a)->currentStats.keyPresses  * 60 / game->totalGameTime));
+			sprintf(values[4], "%i", (int)(playerHandler->Player(a)->currentStats.numCommands * 60 / game->totalGameTime));
+			sprintf(values[5], "%i", (int)
 				( playerHandler->Player(a)->currentStats.numCommands != 0 ) ?
 				( playerHandler->Player(a)->currentStats.unitCommands/playerHandler->Player(a)->currentStats.numCommands) :
 				( 0 ));
 
-			float xpos=0.01f;
-			for(int a=0;a<6;++a){
-				font->glPrint(box.x1+xpos,box.y1+ypos,0.8f,FONT_SCALE | FONT_NORM, values[a]);
-				xpos+=0.1f;
+			float xpos = 0.01f;
+			for (int a = 0; a < 6; ++a) {
+				font->glPrint(box.x1 + xpos, box.y1 + ypos, 0.8f, FONT_SCALE | FONT_NORM, values[a]);
+				xpos += 0.1f;
 			}
 
-			ypos-=0.02f;
+			ypos -= 0.02f;
 		}
 	} else {
-		if(stats.empty())
+		if (stats.empty()) {
 			FillTeamStats();
+		}
 
 		glBindTexture(GL_TEXTURE_2D, graphTex);
 		CVertexArray* va=GetVertexArray();
 		va->Initialize();
 
-		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.08f, 0),0,0);
-		va->AddVertexT(float3(box.x1+0.69f, box.y1+0.08f, 0),4,0);
-		va->AddVertexT(float3(box.x1+0.69f, box.y1+0.62f, 0),4,4);
-		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.62f, 0),0,4);
+		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.08f, 0), 0, 0);
+		va->AddVertexT(float3(box.x1+0.69f, box.y1+0.08f, 0), 4, 0);
+		va->AddVertexT(float3(box.x1+0.69f, box.y1+0.62f, 0), 4, 4);
+		va->AddVertexT(float3(box.x1+0.15f, box.y1+0.62f, 0), 0, 4);
 
 		va->DrawArrayT(GL_QUADS);
 
-		if(mx>box.x1+0.01f && mx<box.x1+0.12f && my<box.y1+0.57f && my>box.y1+0.571f-stats.size()*0.02f) {
-			int sel=-(int)floor(50 * (my - box.y1 - 0.57f));
+		if ((mx > box.x1 + 0.01f) && (mx < box.x1 + 0.12f) &&
+		    (my < box.y1 + 0.57f) && (my > box.y1 + 0.571f - (stats.size() * 0.02f))) {
+			const int sel = (int) floor(50 * -(my - box.y1 - 0.57f));
 
-			glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+			glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);
 			glDisable(GL_TEXTURE_2D);
-			CVertexArray* va=GetVertexArray();
+			CVertexArray* va = GetVertexArray();
 			va->Initialize();
 
-			va->AddVertex0(float3(box.x1+0.01f, box.y1+0.55f-sel*0.02f , 0));
-			va->AddVertex0(float3(box.x1+0.01f, box.y1+0.55f-sel*0.02f+0.02f , 0));
-			va->AddVertex0(float3(box.x1+0.12f, box.y1+0.55f-sel*0.02f+0.02f , 0));
-			va->AddVertex0(float3(box.x1+0.12f, box.y1+0.55f-sel*0.02f , 0));
+			va->AddVertex0(float3(box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f)         , 0));
+			va->AddVertex0(float3(box.x1 + 0.01f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0));
+			va->AddVertex0(float3(box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f) + 0.02f , 0));
+			va->AddVertex0(float3(box.x1 + 0.12f, box.y1 + 0.55f - (sel * 0.02f)         , 0));
 
 			va->DrawArray0(GL_QUADS);
 			glEnable(GL_TEXTURE_2D);
-			glColor4f(1,1,1,0.8f);
+			glColor4f(1, 1, 1, 0.8f);
 		}
-		float ypos=0.55f;
-		for(size_t a=0;a<stats.size();++a){
-			font->glPrint(box.x1+0.01f,box.y1+ypos,0.8f,FONT_SCALE | FONT_NORM,stats[a].name);
-			ypos-=0.02f;
+		float ypos = 0.55f;
+		for (size_t a = 0; a < stats.size(); ++a) {
+			font->glPrint(box.x1 + 0.01f, box.y1 + ypos, 0.8f, FONT_SCALE | FONT_NORM, stats[a].name);
+			ypos -= 0.02f;
 		}
-		float maxy=1;
+		float maxy = 1;
 
-		if(dispMode==1)
-			maxy=std::max(stats[stat1].max,stat2!=-1?stats[stat2].max:0);
-		else
-			maxy=std::max(stats[stat1].maxdif,stat2!=-1?stats[stat2].maxdif:0)/TeamStatistics::statsPeriod;
+		if (dispMode == 1) {
+			maxy = std::max(stats[stat1].max,    (stat2 != -1) ? stats[stat2].max    : 0);
+		} else {
+			maxy = std::max(stats[stat1].maxdif, (stat2 != -1) ? stats[stat2].maxdif : 0) / TeamStatistics::statsPeriod;
+		}
 
-		int numPoints=stats[0].values[0].size();
+		int numPoints = stats[0].values[0].size();
 
 		for (int a = 0; a < 5; ++a) {
 			font->glPrint(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, FONT_SCALE | FONT_NORM,
 			                FloatToSmallString(maxy * 0.25f * a));
 			font->glFormat(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, FONT_SCALE | FONT_NORM, "%02i:%02i",
-			                int(a * 0.25f * numPoints * TeamStatistics::statsPeriod / 60),
-			                int(a * 0.25f * (numPoints - 1) * TeamStatistics::statsPeriod) % 60);
+			                (int) (a * 0.25f * numPoints * TeamStatistics::statsPeriod / 60),
+			                (int) (a * 0.25f * (numPoints - 1) * TeamStatistics::statsPeriod) % 60);
 		}
 
-		font->glPrint(box.x1+0.55f,box.y1+0.65f,0.8f, FONT_SCALE | FONT_NORM, stats[stat1].name);
-		font->glPrint(box.x1+0.55f,box.y1+0.63f,0.8f, FONT_SCALE | FONT_NORM, stat2!=-1?stats[stat2].name:"");
+		font->glPrint(box.x1 + 0.55f, box.y1 + 0.65f, 0.8f, FONT_SCALE | FONT_NORM, stats[stat1].name);
+		font->glPrint(box.x1 + 0.55f, box.y1 + 0.63f, 0.8f, FONT_SCALE | FONT_NORM, (stat2 != -1) ? stats[stat2].name : "");
 
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
-				glVertex3f(box.x1+0.50f,box.y1+0.66f,0);
-				glVertex3f(box.x1+0.55f,box.y1+0.66f,0);
+				glVertex3f(box.x1+0.50f, box.y1+0.66f, 0);
+				glVertex3f(box.x1+0.55f, box.y1+0.66f, 0);
 		glEnd();
 
-		glLineStipple(3,0x5555);
+		glLineStipple(3, 0x5555);
 		glEnable(GL_LINE_STIPPLE);
 		glBegin(GL_LINES);
 				glVertex3f(box.x1 + 0.50f, box.y1 + 0.64f, 0.0f);
@@ -339,14 +384,15 @@ void CEndGameBox::Draw()
 		glEnd();
 		glDisable(GL_LINE_STIPPLE);
 
-		const float scalex = 0.54f / std::max(1.0f,numPoints-1.0f);
+		const float scalex = 0.54f / std::max(1.0f, numPoints - 1.0f);
 		const float scaley = 0.54f / maxy;
 
 		for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
 			const CTeam* pteam = teamHandler->Team(team);
 
-			if (pteam->gaia)
+			if (pteam->gaia) {
 				continue;
+			}
 
 			glColor4ubv(pteam->color);
 
@@ -354,28 +400,30 @@ void CEndGameBox::Draw()
 			for (int a = 0; a < numPoints; ++a) {
 				float value = 0.0f;
 
-				if (dispMode == 1)
+				if (dispMode == 1) {
 					value = stats[stat1].values[team][a];
-				else if (a > 0)
+				} else if (a > 0) {
 					value = (stats[stat1].values[team][a] - stats[stat1].values[team][a - 1]) / TeamStatistics::statsPeriod;
+				}
 
 				glVertex3f(box.x1 + 0.15f + a * scalex, box.y1 + 0.08f + value * scaley, 0.0f);
 			}
 			glEnd();
 
-			if (stat2!=-1) {
-				glLineStipple(3,0x5555);
+			if (stat2 != -1) {
+				glLineStipple(3, 0x5555);
 				glEnable(GL_LINE_STIPPLE);
 
 				glBegin(GL_LINE_STRIP);
-				for(int a=0;a<numPoints;++a){
-					float value=0;
-					if(dispMode==1)
-						value=stats[stat2].values[team][a];
-					else if(a>0)
-						value=(stats[stat2].values[team][a]-stats[stat2].values[team][a-1])/TeamStatistics::statsPeriod;
+				for (int a = 0; a < numPoints; ++a) {
+					float value = 0;
+					if (dispMode == 1) {
+						value = stats[stat2].values[team][a];
+					} else if (a > 0) {
+						value = (stats[stat2].values[team][a]-stats[stat2].values[team][a-1]) / TeamStatistics::statsPeriod;
+					}
 
-					glVertex3f(box.x1+0.15f+a*scalex,box.y1+0.08f+value*scaley,0);
+					glVertex3f(box.x1+0.15f+a*scalex, box.y1+0.08f+value*scaley, 0);
 				}
 				glEnd();
 
@@ -387,14 +435,15 @@ void CEndGameBox::Draw()
 
 std::string CEndGameBox::GetTooltip(int x, int y)
 {
-	if (disabled)
+	if (disabled) {
 		return "";
+	}
 
 	const float mx = MouseX(x);
 
 	if (dispMode == 0) {
 		if ((mx > box.x1 + 0.02f) && (mx < box.x1 + 0.1f * 6)) {
-			static const string tips[] = {
+			static const std::string tips[] = {
 				"Player Name",
 				"Mouse clicks per minute",
 				"Mouse movement in pixels per minute",
@@ -447,8 +496,9 @@ void CEndGameBox::FillTeamStats()
 	for (int team = 0; team < teamHandler->ActiveTeams(); team++) {
 		const CTeam* pteam = teamHandler->Team(team);
 
-		if (pteam->gaia)
+		if (pteam->gaia) {
 			continue;
+		}
 
 		for (std::list<CTeam::Statistics>::const_iterator si = pteam->statHistory.begin(); si != pteam->statHistory.end(); si++) {
 			stats[0].AddStat(team, 0);

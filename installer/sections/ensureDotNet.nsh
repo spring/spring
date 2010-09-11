@@ -1,5 +1,4 @@
-
-!include "include/checkDotNetInstalled.nsh"
+!include "include\checkDotNetInstalled.nsh"
 
 Function EnsureSpringDownloaderDotNetVersion
 	StrCpy $R7 "3.5"
@@ -22,14 +21,9 @@ Function InsufficientDotNet
 	Call GetInstalledDotNetVersion
 	Pop $0
 
-	Call IsDotNetInstalled
-	Pop $0
-
-	${If} $0 != 0 ; .Net is not installed
-		StrCpy $1 "You do not have it installed"
+	${If} $0 == "" ; .Net is not installed
+		StrCpy $1 "You do not have .NET installed"
 	${Else}
-		Call GetInstalledDotNetVersion
-		Pop $0
 		StrCpy $1 "You have only v$0 installed"
 	${EndIf}
 

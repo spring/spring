@@ -37,6 +37,7 @@ CR_REG_METADATA(CFeature, (
 				CR_MEMBER(resurrectProgress),
 				CR_MEMBER(health),
 				CR_MEMBER(reclaimLeft),
+				CR_MEMBER(luaDraw),
 				CR_MEMBER(noSelect),
 				CR_MEMBER(tempNum),
 				CR_MEMBER(lastReclaim),
@@ -59,6 +60,7 @@ CFeature::CFeature():
 	resurrectProgress(0),
 	health(0),
 	reclaimLeft(1),
+	luaDraw(false),
 	noSelect(false),
 	tempNum(0),
 	lastReclaim(0),
@@ -86,7 +88,7 @@ CFeature::~CFeature(void)
 
 	qf->RemoveFeature(this);
 
-	if (def->drawType >= DRAWTYPE_TREE) {
+	if (def->drawType >= DRAWTYPE_TREE && treeDrawer) {
 		treeDrawer->DeleteTree(pos);
 	}
 
@@ -99,7 +101,8 @@ CFeature::~CFeature(void)
 		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 	}
 
-	delete collisionVolume; collisionVolume = NULL;
+	delete collisionVolume;
+	collisionVolume = NULL;
 }
 
 void CFeature::PostLoad()
@@ -607,11 +610,11 @@ bool CFeature::Update(void)
 	if (def->geoThermal) {
 		if ((gs->frameNum + id % 5) % 5 == 0) {
 			// Find the unit closest to the geothermal
-			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);
+			const vector<CSolidObject*> &objs = qf->GetSolidsExact(pos, 0.0f);
 			float bestDist2 = 0;
 			CSolidObject* so = NULL;
 
-			for (vector<CSolidObject*>::iterator oi = objs.begin(); oi != objs.end(); ++oi) {
+			for (vector<CSolidObject*>::const_iterator oi = objs.begin(); oi != objs.end(); ++oi) {
 				float dist2 = ((*oi)->pos - pos).SqLength();
 				if (!so || dist2 < bestDist2)  {
 					bestDist2 = dist2;

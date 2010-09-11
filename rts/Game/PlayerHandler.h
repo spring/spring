@@ -33,7 +33,7 @@ public:
 	 *
 	 * Accesses a CPlayer instance at a given index
 	 */
-	CPlayer* Player(int i) { assert(unsigned(i) < players.size()); return &players[i]; }
+	CPlayer* Player(int i) { assert(unsigned(i) < players.size()); return players[i]; }
 
 	/**
 	 * @brief Player
@@ -49,7 +49,7 @@ public:
 	/**
 	 * @brief Number of players the game was created for
 	 * 
-	 * Constant at runtime
+	 * Will change during at runtime when a new spectator joins
 	 */
 	int ActivePlayers() const { return players.size(); };
 
@@ -63,8 +63,15 @@ public:
 
 	void GameFrame(int frameNum);
 
+	/**
+	 * @brief Adds a new player for dynamic join
+	 *
+	 * This resizes the playerlist adding stubs if there's gaps to his playerNum
+	 */
+	void AddPlayer( const CPlayer& player );
+
 private:
-	typedef std::vector<CPlayer> playerVec;
+	typedef std::vector<CPlayer *> playerVec;
 	/**
 	 * @brief players
 	 *

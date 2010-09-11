@@ -34,9 +34,9 @@ class SideParser
 
 	private:
 		struct Data {
-			std::string caseName;  // full  case
-			std::string sideName;  // lower case
-			std::string startUnit; // lower case
+			std::string caseName;  ///< full  case
+			std::string sideName;  ///< lower case
+			std::string startUnit; ///< lower case
 		};
 		typedef std::vector<Data> DataVec;
 

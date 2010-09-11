@@ -125,8 +125,10 @@ void CTAAirMoveType::SetState(AircraftState newState)
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
+		owner->useAirLos = false;
 	} else {
 		owner->dontUseWeapons = false;
+		owner->useAirLos = true;
 	}
 
 	aircraftState = newState;
@@ -235,10 +237,12 @@ void CTAAirMoveType::ExecuteStop()
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF:
-			SetState(AIRCRAFT_LANDING);
-			// trick to land directly
-			waitCounter = 30;
-			break;
+			if(!dontLand && autoLand) {
+				SetState(AIRCRAFT_LANDING);
+				// trick to land directly
+				waitCounter = 30;
+				break;
+			} // let it fall through
 		case AIRCRAFT_FLYING:
 			if (owner->unitDef->DontLand()) {
 				goalPos = owner->pos;
@@ -330,8 +334,9 @@ void CTAAirMoveType::UpdateHovering()
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
+	// *** this behavior interferes with the loading procedure of transports ***
 	if (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands() &&
-		(l < 120) && (deltaDir.SqDistance(deltaVec) > 1.0f)) {
+		(l < 120) && (deltaDir.SqDistance(deltaVec) > 1.0f) && dynamic_cast<CTransportUnit*>(owner) == NULL) {
 		deltaDir = owner->frontdir;
 	}
 
@@ -706,7 +711,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 	if (fabs(wh - h) > 2.0f) {
 		if (speed.y > ws) {
 			speed.y = std::max(ws, speed.y - accRate * 1.5f);
-		} else {
+		} else if(!owner->beingBuilt) {
 			// let them accelerate upward faster if close to ground
 			speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
 		}
@@ -882,10 +887,9 @@ void CTAAirMoveType::Update()
 		oldpos = pos;
 
 		if (!dontCheckCol && collide) {
-			vector<CUnit*> nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
-			vector<CUnit*>::iterator ui;
+			const vector<CUnit*> &nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 
-			for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				if ((*ui)->transporter)
 					continue;
 
@@ -956,16 +960,16 @@ void CTAAirMoveType::SlowUpdate(void)
 	UpdateMoveRate();
 
 	// Update LOS stuff
-	int newmapSquare = ground->GetSquare(owner->pos);
+	const int newmapSquare = ground->GetSquare(owner->pos);
 	if (newmapSquare != owner->mapSquare) {
-		owner->mapSquare = newmapSquare;
-		float oldlh = owner->losHeight;
-		float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
-		owner->losHeight = h + 5;
-		loshandler->MoveUnit(owner, false);
+		const float oldlh = owner->losHeight;
+		const float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
 
-		if (owner->hasRadarCapacity)
-			radarhandler->MoveUnit(owner);
+		owner->mapSquare = newmapSquare;
+		owner->losHeight = h + 5;
+
+		loshandler->MoveUnit(owner, false);
+		radarhandler->MoveUnit(owner);
 
 		owner->losHeight = oldlh;
 	}
@@ -1032,7 +1036,7 @@ void CTAAirMoveType::CheckForCollision(void)
 	forward.Normalize();
 	float3 midTestPos = pos + forward * 121;
 
-	std::vector<CUnit*> others = qf->GetUnitsExact(midTestPos, 115);
+	const std::vector<CUnit*> &others = qf->GetUnitsExact(midTestPos, 115);
 	float dist = 200;
 
 	if (lastColWarning) {
@@ -1041,7 +1045,7 @@ void CTAAirMoveType::CheckForCollision(void)
 		lastColWarningType = 0;
 	}
 
-	for (std::vector<CUnit*>::iterator ui = others.begin(); ui != others.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
 		if (*ui == owner || !(*ui)->unitDef->canfly)
 			continue;
 
@@ -1067,7 +1071,7 @@ void CTAAirMoveType::CheckForCollision(void)
 		AddDeathDependence(lastColWarning);
 		return;
 	}
-	for (std::vector<CUnit*>::iterator ui = others.begin(); ui != others.end(); ++ui) {
+	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
 		if (*ui == owner)
 			continue;
 		if (((*ui)->midPos - pos).SqLength() < dist * dist) {

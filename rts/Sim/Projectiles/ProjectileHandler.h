@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef PROJECTILEHANDLER_H
-#define PROJECTILEHANDLER_H
+#ifndef PROJECTILE_HANDLER_H
+#define PROJECTILE_HANDLER_H
 
 #include <list>
 #include <set>
@@ -40,8 +40,9 @@ typedef ThreadListSimRender<std::set<FlyingPiece*, piececmp>, void, FlyingPiece*
 
 class CProjectileHandler
 {
-public:
 	CR_DECLARE(CProjectileHandler);
+
+public:
 	CProjectileHandler();
 	virtual ~CProjectileHandler();
 	void Serialize(creg::ISerializer* s);
@@ -105,4 +106,4 @@ public:
 
 extern CProjectileHandler* ph;
 
-#endif /* PROJECTILEHANDLER_H */
+#endif /* PROJECTILE_HANDLER_H */

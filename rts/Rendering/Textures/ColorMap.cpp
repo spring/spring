@@ -19,14 +19,18 @@ std::map<std::string, CColorMap *> CColorMap::colorMapsMap;
 
 CR_BIND(CColorMap, );
 
-CColorMap::CColorMap(void)
+CColorMap::CColorMap()
 {
-	map = 0;
+	map = NULL;
+	xsize = 0;
+	ysize = 0;
+	nxsize = 0;
+	nysize = 0;
 }
 
 CColorMap::CColorMap(std::vector<float> &vec)
 {
-	map=0;
+	map = NULL;
 
 	if(vec.size()<8) //needs at least two colors
 		throw content_error("Too few colors in colormap.");
@@ -45,9 +49,9 @@ CColorMap::CColorMap(std::vector<float> &vec)
 	delete [] lmap;
 }
 
-CColorMap::CColorMap(std::string filename)
+CColorMap::CColorMap(const std::string& filename)
 {
-	map=0;
+	map = NULL;
 
 	CBitmap bitmap;
 
@@ -65,9 +69,9 @@ CColorMap::CColorMap(std::string filename)
 	LoadMap(bitmap.mem, xsize*ysize*4);
 }
 
-CColorMap::CColorMap(const unsigned char *buf, int num)
+CColorMap::CColorMap(const unsigned char* buf, int num)
 {
-	map=0;
+	map = NULL;
 	xsize = num/4;
 	ysize = 1;
 	LoadMap(buf, num);
@@ -75,9 +79,9 @@ CColorMap::CColorMap(const unsigned char *buf, int num)
 	nysize = ysize-1;
 }
 
-CColorMap::~CColorMap(void)
+CColorMap::~CColorMap()
 {
-	delete [] map;
+	delete[] map;
 }
 
 void CColorMap::DeleteColormaps()

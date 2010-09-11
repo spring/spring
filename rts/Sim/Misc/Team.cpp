@@ -40,7 +40,6 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(teamNum),
 				CR_MEMBER(isDead),
 				CR_MEMBER(gaia),
-				CR_MEMBER(lineageRoot),
 				CR_MEMBER(origColor),
 				CR_MEMBER(units),
 				CR_MEMBER(metal),
@@ -73,7 +72,6 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(energyReceived),
 				//CR_MEMBER(currentStats),
 				CR_MEMBER(nextHistoryEntry),
-				CR_MEMBER(numCommanders),
 				//CR_MEMBER(statHistory),
 				CR_MEMBER(modParams),
 				CR_MEMBER(modParamsMap),
@@ -88,7 +86,6 @@ CR_REG_METADATA(CTeam, (
 CTeam::CTeam()
 : isDead(false),
   gaia(false),
-  lineageRoot(-1),
   metal(0),
   energy(0),
   metalPull(0),     prevMetalPull(0),
@@ -110,7 +107,6 @@ CTeam::CTeam()
   energySent(0),
   energyReceived(0),
   nextHistoryEntry(0),
-  numCommanders(0),
   highlight(0.0f)
 {
 	statHistory.push_back(TeamStatistics());
@@ -216,8 +212,6 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
 		ui = next;
 	}
-
-	Died();
 }
 
 
@@ -301,6 +295,9 @@ void CTeam::SlowUpdate()
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
 			CTeam* team = teamHandler->Team(a);
+			if (team->isDead)
+				continue;
+
 			eShare += std::max(0.0f, (team->energyStorage * 0.99f) - team->energy);
 			mShare += std::max(0.0f, (team->metalStorage  * 0.99f) - team->metal);
 		}
@@ -324,6 +321,8 @@ void CTeam::SlowUpdate()
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
 			CTeam* team = teamHandler->Team(a);
+			if (team->isDead)
+				continue;
 
 			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
 			energy -= edif;
@@ -365,20 +364,6 @@ void CTeam::SlowUpdate()
 		currentStats->frame = nextHistoryEntry;
 	}
 
-	/* Kill the player on 'com dies = game ends' games.  This can't be done in
-	CTeam::CommanderDied anymore, because that function is called in
-	CUnit::ChangeTeam(), hence it'd cause a random amount of the shared units
-	to be killed if the commander is among them. Also, ".take" would kill all
-	units once it transfered the commander. */
-	if (gameSetup->gameMode == GameMode::ComEnd && numCommanders<=0 && !gaia){
-		for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-			if ((*ui)->team==teamNum && !(*ui)->unitDef->isCommander) {
-				(*ui)->KillUnit(true, false, NULL);
-			}
-		}
-		// Set to 1 to prevent above loop from being done every update.
-		numCommanders = 1;
-	}
 }
 
 
@@ -398,9 +383,6 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 			currentStats->unitsCaptured++;
 			break;
 		}
-	}
-	if (unit->unitDef->isCommander) {
-		numCommanders++;
 	}
 }
 
@@ -422,32 +404,7 @@ void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
 			break;
 		}
 	}
-
-	if (units.empty() && !gaia) {
-		Died();
-	}
 }
-
-
-void CTeam::CommanderDied(CUnit* commander)
-{
-	assert(commander->unitDef->isCommander);
-	--numCommanders;
-}
-
-
-void CTeam::LeftLineage(CUnit* unit)
-{
-	if (gameSetup->gameMode == GameMode::Lineage && unit->id == this->lineageRoot) {
-		for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
-			if ((*ui)->lineage == this->teamNum) {
-				(*ui)->KillUnit(true, false, NULL);
-			}
-		}
-	}
-}
-
-
 
 std::string CTeam::GetControllerName() const {
 	std::string s;

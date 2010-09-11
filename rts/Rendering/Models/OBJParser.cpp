@@ -105,18 +105,20 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		"[ ]*"
 		// do not allow spaces around the '/' separators or the
 		// stringstream >> operator will tokenize the wrong way
-		// (according to the OBJ spec they are illegal anyway)
+		// (according to the OBJ spec they are illegal anyway:
+		// "there is no space between numbers and the slashes")
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 1st vertex/texcoor/normal idx
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 2nd vertex/texcoor/normal idx
 		// "[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+[ ]*/[ ]*-?[0-9]+"      // 3rd vertex/texcoor/normal idx
 	);
 
-	bool match = false;
-
 
 	PieceMap pieceMap;
 	SOBJPiece* piece = NULL;
 
+	std::vector<float3> vertices; vertices.reserve(2048);
+	std::vector<float2> texcoors; texcoors.reserve(2048);
+	std::vector<float3> vnormals; vnormals.reserve(2048);
 
 	std::string line, lineHeader;
 	std::stringstream lineStream;
@@ -124,20 +126,24 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 	size_t prevReadIdx = 0;
 	size_t currReadIdx = 0;
 
+	bool regexMatch = false;
+
 	while ((currReadIdx = modelData.find_first_of('\n', prevReadIdx)) != std::string::npos) {
 		line = modelData.substr(prevReadIdx, (currReadIdx - prevReadIdx));
+		line = StringReplaceInPlace(line, '\r', ' ');
 
 		if (!line.empty()) {
-			              match = (boost::regex_match(line, commentPattern));
-			if (!match) { match = (boost::regex_match(line, objectPattern )); }
-			if (!match) { match = (boost::regex_match(line, vertexPattern )); }
-			if (!match) { match = (boost::regex_match(line, normalPattern )); }
-			if (!match) { match = (boost::regex_match(line, txcoorPattern )); }
-			if (!match) { match = (boost::regex_match(line, polygonPattern)); }
+			                   regexMatch = (boost::regex_match(line, commentPattern));
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, objectPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, vertexPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, normalPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, txcoorPattern )); }
+			if (!regexMatch) { regexMatch = (boost::regex_match(line, polygonPattern)); }
 
-			if (!match) {
+			if (!regexMatch) {
 				// ignore groups ('g'), smoothing groups ('s'),
 				// and materials ("mtllib", "usemtl") for now
+				// (s-groups are obsolete with vertex normals)
 				logOutput.Print("[OBJParser] failed to parse line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
 
 				prevReadIdx = currReadIdx + 1;
@@ -176,9 +182,9 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						lineStream >> f3.z;
 					float2 f2(f3.x, f3.y);
 
-					     if (lineHeader == "v" ) { piece->AddVertex(f3             ); }
-					else if (lineHeader == "vn") { piece->AddNormal(f3.ANormalize()); }
-					else if (lineHeader == "vt") { piece->AddTxCoor(f2             ); }
+					     if (lineHeader == "v" ) { vertices.push_back(f3);   }
+					else if (lineHeader == "vt") { texcoors.push_back(f2);   }
+					else if (lineHeader == "vn") { vnormals.push_back(f3);   }
 				} break;
 
 				case 'f': {
@@ -194,11 +200,12 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						j = 0,
 						n = 0;
 
-					SOBJTriangle triangle;
+					SOBJTriangle triangle = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 
 					while (lineStream.good() && n < 3) {
 						std::string vtnIndices; lineStream >> vtnIndices;
 
+						// vIdx/tcIdx/nIdx triplet of indices into the global lists
 						i = vtnIndices.find('/',     0); assert(i != std::string::npos);
 						j = vtnIndices.find('/', i + 1); assert(j != std::string::npos);
 
@@ -207,31 +214,68 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 						nIdx = std::atoi(vtnIndices.substr(j + 1       ).c_str());
 
 						if (vIdx < 0) {
-							triangle.vIndices[n] = piece->vertexCount + vIdx;
+							triangle.vIndices[n] = vertices.size() + vIdx;
 						} else {
 							triangle.vIndices[n] = vIdx - 1;
 						}
 
 						if (tIdx < 0) {
-							triangle.tIndices[n] = piece->vertexCount + tIdx;
+							triangle.tIndices[n] = texcoors.size() + tIdx;
 						} else {
 							triangle.tIndices[n] = tIdx - 1;
 						}
 
 						if (nIdx < 0) {
-							triangle.nIndices[n] = piece->vertexCount + nIdx;
+							triangle.nIndices[n] = vnormals.size() + nIdx;
 						} else {
 							triangle.nIndices[n] = nIdx - 1;
 						}
 
-						assert(triangle.vIndices[n] >= 0 && triangle.vIndices[n] < piece->vertexCount);
-						assert(triangle.tIndices[n] >= 0 && triangle.tIndices[n] < piece->vertexCount);
-						assert(triangle.nIndices[n] >= 0 && triangle.nIndices[n] < piece->vertexCount);
 						n += 1;
 					}
 
+					const bool b0 =
+						(triangle.vIndices[0] >= 0 && triangle.vIndices[1] >= 0 && triangle.vIndices[2] >= 0) &&
+						(triangle.tIndices[0] >= 0 && triangle.tIndices[1] >= 0 && triangle.tIndices[2] >= 0) &&
+						(triangle.nIndices[0] >= 0 && triangle.nIndices[1] >= 0 && triangle.nIndices[2] >= 0);
+					const bool b1 =
+						(triangle.vIndices[0] < vertices.size() && triangle.vIndices[1] < vertices.size() && triangle.vIndices[2] < vertices.size()) &&
+						(triangle.tIndices[0] < texcoors.size() && triangle.tIndices[1] < texcoors.size() && triangle.tIndices[2] < texcoors.size()) &&
+						(triangle.nIndices[0] < vnormals.size() && triangle.nIndices[1] < vnormals.size() && triangle.nIndices[2] < vnormals.size());
+
 					assert(n == 3);
-					piece->AddTriangle(triangle);
+					assert(b0 && b1);
+
+					if (b0 && b1) {
+						// note: this assumes face elements may not reference indices
+						// ahead of the current {vertices, texcoors, vnormals}.size()
+						// if this *is* allowed, the entire file must be parsed first
+						float3 &v0 = vertices[triangle.vIndices[0]], &v1 = vertices[triangle.vIndices[1]], &v2 = vertices[triangle.vIndices[2]];
+						float2 &t0 = texcoors[triangle.tIndices[0]], &t1 = texcoors[triangle.tIndices[1]], &t2 = texcoors[triangle.tIndices[2]];
+						float3 &n0 = vnormals[triangle.nIndices[0]], &n1 = vnormals[triangle.nIndices[1]], &n2 = vnormals[triangle.nIndices[2]];
+
+						const int
+							idx0 = (piece->GetTriangleCount() * 3) + 0,
+							idx1 = (piece->GetTriangleCount() * 3) + 1,
+							idx2 = (piece->GetTriangleCount() * 3) + 2;
+
+						// convert to piece-local vtn indices
+						triangle.vIndices[0] = idx0; piece->AddVertex(v0             );
+						triangle.nIndices[0] = idx0; piece->AddNormal(n0.ANormalize());
+						triangle.tIndices[0] = idx0; piece->AddTxCoor(t0             );
+
+						triangle.vIndices[1] = idx1; piece->AddVertex(v1             );
+						triangle.nIndices[1] = idx1; piece->AddNormal(n1.ANormalize());
+						triangle.tIndices[1] = idx1; piece->AddTxCoor(t1             );
+
+						triangle.vIndices[2] = idx2; piece->AddVertex(v2             );
+						triangle.nIndices[2] = idx2; piece->AddNormal(n2.ANormalize());
+						triangle.tIndices[2] = idx2; piece->AddTxCoor(t2             );
+
+						piece->AddTriangle(triangle);
+					} else {
+						logOutput.Print("[OBJParser] illegal face-element indices on line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
+					}
 				} break;
 
 				default: {
@@ -291,6 +335,7 @@ bool COBJParser::BuildModelPieceTree(
 		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
 			model->rootobject = rootPiece;
+
 			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;
 		}
@@ -304,6 +349,7 @@ bool COBJParser::BuildModelPieceTree(
 		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
 			model->rootobject = rootPiece;
+
 			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;
 		}
@@ -320,9 +366,6 @@ void COBJParser::BuildModelPieceTreeRec(
 	bool globalVertexOffsets,
 	bool localPieceOffsets
 ) {
-	assert(piece->GetVertexCount() == piece->GetNormalCount());
-	assert(piece->GetVertexCount() == piece->GetTxCoorCount());
-
 	const S3DModelPiece* parentPiece = piece->parent;
 
 	piece->isEmpty = (piece->GetVertexCount() == 0);
@@ -380,7 +423,6 @@ void COBJParser::BuildModelPieceTreeRec(
 		piece->SetVertex(i, vertexLocalPos);
 	}
 
-
 	model->mins.x = std::min(piece->mins.x, model->mins.x);
 	model->mins.y = std::min(piece->mins.y, model->mins.y);
 	model->mins.z = std::min(piece->mins.z, model->mins.z);
@@ -393,8 +435,7 @@ void COBJParser::BuildModelPieceTreeRec(
 		(piece->maxs - (localPieceOffsets? piece->goffset: piece->offset)) +
 		(piece->mins - (localPieceOffsets? piece->goffset: piece->offset));
 
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, COLVOL_TEST_CONT);
-	piece->colvol->Enable();
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT);
 
 
 	std::vector<int> childPieceNumbers;
@@ -508,12 +549,13 @@ void SOBJPiece::SetVertexTangents()
 		return;
 	}
 
-	sTangents.resize(vertexCount, ZeroVector);
-	tTangents.resize(vertexCount, ZeroVector);
+	sTangents.resize(GetVertexCount(), ZeroVector);
+	tTangents.resize(GetVertexCount(), ZeroVector);
 
 	// set the triangle-level S- and T-tangents
 	for (int i = GetTriangleCount() - 1; i >= 0; i--) {
 		const SOBJTriangle& tri = GetTriangle(i);
+
 		const float3&
 			p0 = GetVertex(tri.vIndices[0]),
 			p1 = GetVertex(tri.vIndices[1]),

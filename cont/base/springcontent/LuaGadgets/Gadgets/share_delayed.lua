@@ -36,7 +36,9 @@ end
 
 -- Only active in comm-ends games
 
-if (Game.gameMode ~= 1) then
+local gameMode = Game.gameMode or 4
+
+if (gameMode ~= 1) then
   return false
 end
 
@@ -138,7 +140,7 @@ function gadget:Initialize()
   _G.shareFrames = frames
 
   local cmd, help
-  
+
   cmd  = "sharedelay"
   help = " [0|1]:  delayed unit sharing, useful for comm ends games"
   gadgetHandler:AddChatAction(cmd, ChatControl, help)

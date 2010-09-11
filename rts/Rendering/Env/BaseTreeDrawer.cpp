@@ -11,6 +11,9 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
 
 CBaseTreeDrawer* treeDrawer = 0;
 
@@ -45,18 +48,18 @@ CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
 {
 	CBaseTreeDrawer* td = NULL;
 
-	if (GLEW_ARB_vertex_program && configHandler->Get("3DTrees", 1)) {
-		GLint maxTexel;
-		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &maxTexel);
-
-		if (maxTexel >= 4) {
+	try {
+		if(configHandler->Get("3DTrees", 1))
 			td = new CAdvTreeDrawer();
-		}
+	} catch (content_error& e) {
+		if (e.what()[0] != '\0')
+			logOutput.Print("Error: %s", e.what());
+		logOutput.Print("TreeDrawer: Fallback to BasicTreeDrawer.");
+		delete td;
 	}
 
-	if (td == NULL) {
+	if (!td)
 		td = new CBasicTreeDrawer();
-	}
 
 	AddTrees(td);
 	return td;
@@ -73,13 +76,10 @@ void CBaseTreeDrawer::DrawShadowPass(void)
 {
 }
 
-void CBaseTreeDrawer::Draw (bool drawReflection)
+void CBaseTreeDrawer::Draw(bool drawReflection)
 {
-	float zoom = 45.0f / camera->GetFov();
-	float treeDistance=baseTreeDistance*fastmath::apxsqrt(zoom);
-	treeDistance = std::max(1.0f, std::min(treeDistance, (float)MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE)));
-
-	Draw (treeDistance, drawReflection);
+	const float treeDistance = Clamp(baseTreeDistance, 1.0f, (float)MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	Draw(treeDistance, drawReflection);
 }
 
 void CBaseTreeDrawer::Update() {

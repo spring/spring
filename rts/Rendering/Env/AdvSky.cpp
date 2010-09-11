@@ -9,8 +9,10 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
+#include "Exceptions.h"
+#include "FastMath.h"
 #include "LogOutput.h"
 #include "TimeProfiler.h"
 #include "ConfigHandler.h"
@@ -23,14 +25,12 @@
 #define CLOUD_DETAIL 6
 #define CLOUD_MASK (CLOUD_SIZE-1)
 
-//static unsigned int cdtex;
-
-using std::max;
-using std::min;
 
 CAdvSky::CAdvSky()
 {
-	PrintLoadMsg("Creating sky");
+	if (!(FBO::IsSupported() && GLEW_ARB_fragment_program && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"ARB/clouds.fp"))) {
+		throw content_error("ADVSKY: missing OpenGL features!");
+	}
 
 	randMatrix=newmat3<int>(16,32,32);
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
@@ -38,8 +38,8 @@ CAdvSky::CAdvSky()
 
 	updatecounter=0;
 
-	domeheight=cos(PI/16)*1.01f;
-	domeWidth=sin(2*PI/32)*400*1.7f;
+	domeheight = cos(PI/16)*1.01f;
+	domeWidth = sin(2*PI/32)*400*1.7f;
 
 	sundir2=mapInfo->light.sunDir;
 	sundir2.y=0;
@@ -48,9 +48,9 @@ CAdvSky::CAdvSky()
 	sundir2.ANormalize();
 	sundir1=sundir2.cross(UpVector);
 
-	modSunDir.y=mapInfo->light.sunDir.y;
-	modSunDir.x=0;
-	modSunDir.z=sqrt(mapInfo->light.sunDir.x*mapInfo->light.sunDir.x+mapInfo->light.sunDir.z*mapInfo->light.sunDir.z);
+	modSunDir.y = mapInfo->light.sunDir.y;
+	modSunDir.x = 0;
+	modSunDir.z = math::sqrt(mapInfo->light.sunDir.x*mapInfo->light.sunDir.x+mapInfo->light.sunDir.z*mapInfo->light.sunDir.z);
 
 	sunTexCoordX=0.5f;
 	sunTexCoordY=GetTexCoordFromDir(modSunDir);
@@ -67,14 +67,23 @@ CAdvSky::CAdvSky()
 	fogStart = mapInfo->atmosphere.fogStart;
 	if (fogStart>0.99f) globalRendering->drawFog = false;
 
-	dynamicSky=true;
+	dynamicSky = true;
 	CreateClouds();
-	dynamicSky=!!configHandler->Get("DynamicSky",0);
+	dynamicSky = !!configHandler->Get("DynamicSky",0);
 
 	InitSun();
 	oldCoverBaseX=-5;
 
-	cloudFP=LoadFragmentProgram("ARB/clouds.fp");
+	cloudFP = LoadFragmentProgram("ARB/clouds.fp");
+
+	fbo.reloadOnAltTab = true;
+	fbo.Bind();
+	fbo.AttachTexture(cdtex);
+	bool status = fbo.CheckStatus("ADVSKY");
+	FBO::Unbind();
+	if (!status) {
+		throw content_error("");
+	}
 
 	glGetError();
 	displist=glGenLists(1);
@@ -224,14 +233,14 @@ void CAdvSky::Draw()
 
 float3 CAdvSky::GetCoord(int x, int y)
 {
-	float3 c;
-	float fy=((float)y/Y_PART)*2*PI;
-	float fx=((float)x/X_PART)*2*PI;
+	float fy = ((float)y/Y_PART) * 2 * PI;
+	float fx = ((float)x/X_PART) * 2 * PI;
 
-	c.x=sin(fy/32)*sin(fx)*400;
-	c.y=(cos(fy/32)-domeheight)*400;
-	c.z=sin(fy/32)*cos(fx)*400;
-	return c;
+	return float3(
+		fastmath::sin(fy/32) * fastmath::sin(fx),
+		fastmath::cos(fy/32) - domeheight,
+		fastmath::sin(fy/32) * fastmath::cos(fx)
+	) * 400;
 }
 
 void CAdvSky::CreateClouds()
@@ -243,23 +252,18 @@ void CAdvSky::CreateClouds()
 	glGenTextures(1, &skyDot3Tex);
 	glGenTextures(1, &cloudDot3Tex);
 
-	unsigned char (* skytex)[512][4]=new unsigned char[512][512][4]; // this is too big for the stack
+	unsigned char (* skytex)[512][4] = new unsigned char[512][512][4]; // this is too big for the stack
 
 	glGenTextures(1, &cdtex);
-//	CBitmap pic("bitmaps/clouddetail.bmp");
-	unsigned char mem[256*256];
-//	for(int a=0;a<256*256;++a){
-//		mem[a]=pic.mem[a*4];
-//	}
 	glBindTexture(GL_TEXTURE_2D, cdtex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR/*_MIPMAP_NEAREST*/);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_LUMINANCE ,256, 256, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	unsigned char randDetailMatrix[32*32];
 	glGenTextures(12, detailTextures);
-	for(int a=0;a<6;++a){
-		int size=min(32,256>>a);
+	for (int a=0; a<6; ++a) {
+		int size = std::min(32,256>>a);
 		CreateRandDetailMatrix(randDetailMatrix,size);
 		glBindTexture(GL_TEXTURE_2D, detailTextures[a]);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -273,8 +277,8 @@ void CAdvSky::CreateClouds()
 		glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE, size, size,0,GL_LUMINANCE, GL_UNSIGNED_BYTE, randDetailMatrix);
 	}
 
-	for(int y=0;y<512;y++){
-		for(int x=0;x<512;x++){
+	for (int y=0; y<512 ;y++) {
+		for(int x=0; x<512; x++) {
 			float3 dir=GetDirFromTexCoord(x/512.0f,y/512.0f);
 			float sunDist=acos(dir.dot(modSunDir))*70;
 			float sunMod=12.0f/(12+sunDist);
@@ -282,12 +286,9 @@ void CAdvSky::CreateClouds()
 			float red=(skyColor.x+sunMod*sunColor.x);
 			float green=(skyColor.y+sunMod*sunColor.y);
 			float blue=(skyColor.z+sunMod*sunColor.z);
-			if(red>1)
-				red=1;
-			if(green>1)
-				green=1;
-			if(blue>1)
-				blue=1;
+			red   = std::min(red,1.0f);
+			green = std::min(green,1.0f);
+			blue  = std::min(blue,1.0f);
 			skytex[y][x][0]=(unsigned char)(red*255);
 			skytex[y][x][1]=(unsigned char)(green*255);
 			skytex[y][x][2]=(unsigned char)(blue*255);
@@ -301,14 +302,14 @@ void CAdvSky::CreateClouds()
 	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
 	delete [] skytex;
 
-	unsigned char (* skytex2)[256][4]=new unsigned char[256][256][4];
+	unsigned char (* skytex2)[256][4] = new unsigned char[256][256][4];
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
-			float3 dir=GetDirFromTexCoord(x/256.0f,y/256.0f);
-			float sunDist=acos(dir.dot(modSunDir))*50;
-			float sunMod=0.3f/sqrt(sunDist)+3.0f/(1+sunDist);
-			float green=min(1.0f,(0.55f+sunMod));
-			float blue=203-(40.0f/(3+sunDist));
+			float3 dir = GetDirFromTexCoord(x/256.0f,y/256.0f);
+			float sunDist = acos(dir.dot(modSunDir))*50;
+			float sunMod = 0.3f/math::sqrt(sunDist)+3.0f/(1+sunDist);
+			float green = std::min(1.0f,(0.55f+sunMod));
+			float blue = 203-(40.0f/(3+sunDist));
 			skytex2[y][x][0]=(unsigned char)(255-y/2);				//sun on borders
 			skytex2[y][x][1]=(unsigned char)(green*255);			//sun light through
 			skytex2[y][x][2]=(unsigned char) blue;						//ambient
@@ -327,12 +328,10 @@ void CAdvSky::CreateClouds()
 		CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
 	}
 
-	char *scrap=new char[CLOUD_SIZE*CLOUD_SIZE*4];
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, scrap);
-  delete [] scrap;
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	CreateTransformVectors();
 	for(int i=0; i<CLOUD_DETAIL+7; ++i)
@@ -343,13 +342,13 @@ inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
 	int* rc = *rawClouds + ast;
 	unsigned char* ct = cloudTexMem + 4 * ast;
 
-	int	yam2 = ydif[(ast - 2) & CLOUD_MASK];
-	int	yam1 = ydif[(ast - 1) & CLOUD_MASK];
-	int	yaa  = ydif[(ast)     & CLOUD_MASK];
-	int	ap1 = (ast + 1) & CLOUD_MASK;
+	int yam2 = ydif[(ast - 2) & CLOUD_MASK];
+	int yam1 = ydif[(ast - 1) & CLOUD_MASK];
+	int yaa  = ydif[(ast)     & CLOUD_MASK];
+	int ap1  = (ast + 1) & CLOUD_MASK;
 
-	int	a3c = ast + a3cstart;
-	int	a4c = ast + a4cstart;
+	int a3c  = ast + a3cstart;
+	int a4c  = ast + a4cstart;
 
 	for (int a = ast; a < aed; ++rc, ++ct) {
 		int yap1 = ydif[ap1] += (int) cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
@@ -390,10 +389,10 @@ void CAdvSky::Update()
 	switch(updatepart) { // smoothen out the workload across draw frames
 	case 0: {
 		for(int a=0; a<CLOUD_DETAIL; a++) {
-			float fade=(gs->frameNum/(70.0f*(2<<(CLOUD_DETAIL-1-a))));
-			fade-=floor(fade/2)*2;
+			float fade = gs->frameNum / (70.0f * (2<<(CLOUD_DETAIL-1-a)));
+			fade -= floor(fade/2)*2;
 			if(fade>1) {
-				fade=2-fade;
+				fade = 2 - fade;
 				if(!cloudDown[a]) {
 					cloudDown[a]=true;
 					CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
@@ -452,7 +451,7 @@ void CAdvSky::Update()
 			int blend=bm[by&31][31&31], **prcy=prc, *pkernel=kernel;
 			for(int y2=0; y2<cs4a; ++y2, ++prcy, pkernel+=CLOUD_SIZE/4) {
 				int *prcx=(*prcy)+cmcs8a, *pkrn=pkernel;
-				for(int x2=cmcs8a; x2<std::min(CLOUD_SIZE, cs4a+cmcs8a); ++x2)
+				for(int x2=cmcs8a; x2 < std::min(CLOUD_SIZE, cs4a+cmcs8a); ++x2)
 					(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2+cmcs8a], x2<CLOUD_SIZE
 				prcx-=CLOUD_SIZE;
 				for(int x2=std::max(CLOUD_SIZE,cmcs8a); x2<cs4a+cmcs8a; ++x2)
@@ -622,14 +621,14 @@ void CAdvSky::DrawShafts()
 
 void CAdvSky::InitSun()
 {
-	unsigned char* mem=new unsigned char[128*128*4];
+	unsigned char* mem = new unsigned char[128*128*4];
 
 	for(int y=0;y<128;++y){
 		for(int x=0;x<128;++x){
 			mem[(y*128+x)*4+0]=255;
 			mem[(y*128+x)*4+1]=255;
 			mem[(y*128+x)*4+2]=255;
-			float dist=sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
+			float dist = math::sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
 			if(dist>60)
 				mem[(y*128+x)*4+3]=0;
 			else
@@ -675,8 +674,8 @@ void CAdvSky::InitSun()
 		glBlendFunc(GL_ONE_MINUS_DST_COLOR,GL_ONE);
 		glBegin(GL_TRIANGLE_STRIP);
 		for(int x=0;x<257;++x){
-			float dx=sin(x*2*PI/256.0f);
-			float dy=cos(x*2*PI/256.0f);
+			float dx = sin(x*2*PI/256.0f);
+			float dy = cos(x*2*PI/256.0f);
 
 			glTexCoord2f(x/256.0f,0.125f);
 			glVertexf3(modSunDir*5+ldir*dx*0.0014f+udir*dy*0.0014f);
@@ -732,8 +731,10 @@ void CAdvSky::CreateCover(int baseX, int baseY, float *buf)
 	}
 }
 
-void CAdvSky::CreateDetailTex(void)
+void CAdvSky::CreateDetailTex()
 {
+	fbo.Bind(); //! render to cdtex
+
 	glViewport(0,0,256,256);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
@@ -752,9 +753,9 @@ void CAdvSky::CreateDetailTex(void)
 	static unsigned char randDetailMatrix[32*32];
 
 	for(int a=0;a<5;++a){
-		float fade=(gs->frameNum/float(30<<a));
-		fade-=floor(fade/2)*2;
-		int size=min(32,256>>a);
+		float fade = gs->frameNum / float(30<<a);
+		fade -= floor(fade/2)*2;
+		int size = std::min(32,256>>a);
 
 		if(fade>1){
 			fade=2-fade;
@@ -773,10 +774,9 @@ void CAdvSky::CreateDetailTex(void)
 			}
 
 		}
-		float tSize=max(1,8>>a);
-		float c=pow(2.0f,a)*6/255.0f;
-//		logOutput.Print("%f",c);
-		CVertexArray* va=GetVertexArray();
+		float tSize = std::max(1,8>>a);
+		float c = pow(2.0f,a)*6/255.0f;
+		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->CheckInitSize(4*VA_SIZE_T);
 		va->AddVertexQT(ZeroVector,0,0);
@@ -784,7 +784,7 @@ void CAdvSky::CreateDetailTex(void)
 		va->AddVertexQT(float3(1,1,0),tSize,tSize);
 		va->AddVertexQT(UpVector,0,tSize);
 
-		float ifade=fade*fade*(3-2*fade);
+		float ifade = fade*fade*(3-2*fade);
 
 		glBindTexture(GL_TEXTURE_2D, detailTextures[a+6]);
 		glColor4f(c,c,c,1-ifade);
@@ -798,12 +798,10 @@ void CAdvSky::CreateDetailTex(void)
 	CBitmap bm(buf,256,256);
 	bm.Save("dc.bmp");
 */
-	glBindTexture(GL_TEXTURE_2D, cdtex);
-	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,256,256);
-//	SwapBuffers(hDC);
-//	SleepEx(500,true);
 
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+	fbo.Unbind();
+
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -811,12 +809,12 @@ float3 CAdvSky::GetDirFromTexCoord(float x, float y)
 {
 	float3 dir;
 
-	dir.x=(x-0.5f)*domeWidth;
-	dir.z=(y-0.5f)*domeWidth;
+	dir.x = (x-0.5f) * domeWidth;
+	dir.z = (y-0.5f) * domeWidth;
 
-	float hdist=sqrt(dir.x*dir.x+dir.z*dir.z);
-	float fy=asin(hdist/400);
-	dir.y=(cos(fy)-domeheight)*400;
+	float hdist = math::sqrt(dir.x*dir.x+dir.z*dir.z);
+	float fy = asin(hdist/400);
+	dir.y = (fastmath::cos(fy) - domeheight) * 400;
 
 	dir.ANormalize();
 

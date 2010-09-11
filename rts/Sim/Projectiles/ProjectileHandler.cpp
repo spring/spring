@@ -73,8 +73,8 @@ bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const
 
 CProjectileHandler::CProjectileHandler()
 {
-	maxParticles     = configHandler->Get("MaxParticles",      4000);
-	maxNanoParticles = configHandler->Get("MaxNanoParticles", 10000);
+	maxParticles     = configHandler->Get("MaxParticles",      1000);
+	maxNanoParticles = configHandler->Get("MaxNanoParticles", 2500);
 
 	currentParticles       = 0;
 	currentNanoParticles   = 0;
@@ -103,7 +103,7 @@ CProjectileHandler::~CProjectileHandler()
 	syncedProjectileIDs.clear();
 	unsyncedProjectileIDs.clear();
 
-	ph = 0;
+	ph = NULL;
 }
 
 void CProjectileHandler::Serialize(creg::ISerializer* s)
@@ -338,7 +338,7 @@ void CProjectileHandler::CheckUnitCollisions(
 		CUnit* unit = *ui;
 
 		const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
-		const bool raytraced = (unit->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
+		const bool raytraced = (unit->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
 		// if this unit fired this projectile or (this unit is in the
 		// same allyteam as the unit that shot this projectile and we
@@ -401,7 +401,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 		const bool raytraced =
 			(feature->collisionVolume &&
-			feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
+			feature->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
 		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
 			const float3 pimpp =

@@ -16,7 +16,6 @@
 #include "KeyAutoBinder.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Platform/errorhandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
@@ -195,7 +194,9 @@ defaultBindings[] = {
 	{ "Any+f6",  "NoSound"        },
 	{ "Any+f7",  "dynamicSky"     },
 	{ "Ctrl+Shift+f8", "savegame" },
+#ifdef USE_GML
 	{ "Any+f9",  "showhealthbars" },
+#endif
 	{ "Ctrl+Shift+f10", "createvideo" },
 	{ "Any+f11", "screenshot"     },
 	{ "Any+f12", "screenshot"     },

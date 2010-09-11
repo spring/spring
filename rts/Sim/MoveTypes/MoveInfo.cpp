@@ -137,7 +137,7 @@ CMoveInfo::CMoveInfo()
 			}
 		}
 
-		md->heatMapping = moveTable.GetBool("heatMapping", true);
+		md->heatMapping = moveTable.GetBool("heatMapping", false);
 		md->heatMod = moveTable.GetFloat("heatMod", 50.0f);
 		md->heatProduced = moveTable.GetInt("heatProduced", 60);
 

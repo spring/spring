@@ -9,7 +9,7 @@
 
 // Spring
 #include "streflop_cond.h"
-#include "FastMath.h"
+#include "System/FastMath.h"
 
 
 #define lmathlib_c

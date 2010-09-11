@@ -60,6 +60,7 @@ bool LuaUnitRendering::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitUniform);
 
 	REGISTER_LUA_CFUNC(SetUnitLuaDraw);
+	REGISTER_LUA_CFUNC(SetFeatureLuaDraw);
 
 	REGISTER_LUA_CFUNC(Debug);
 
@@ -708,6 +709,21 @@ int LuaUnitRendering::SetUnitLuaDraw(lua_State* L)
 	return 0;
 }
 
+int LuaUnitRendering::SetFeatureLuaDraw(lua_State* L)
+{
+	const int featureID = luaL_checkint(L, 1);
+	CFeature* feature = featureHandler->GetFeature(featureID);
+
+	if (feature == NULL) {
+		return 0;
+	}
+
+	if (!lua_isboolean(L, 2)) {
+		return 0;
+	}
+	feature->luaDraw = lua_toboolean(L, 2);
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/

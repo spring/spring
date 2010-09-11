@@ -115,7 +115,7 @@ static void PrintSize(const char *txt, int size)
 
 void CCregLoadSaveHandler::SaveGame(const std::string& file)
 {
-	PrintLoadMsg("Saving game");
+	logOutput.Print("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
 		if (ofs.bad() || !ofs.is_open()) {

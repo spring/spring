@@ -40,15 +40,15 @@ CWakeProjectile::CWakeProjectile(const float3 pos, const float3 speed, float sta
 	size(startSize),
 	sizeExpansion(sizeExpansion)
 {
-	this->pos.y=0;
-	this->speed.y=0;
-	rotation=gu->usRandFloat()*PI*2;
-	rotSpeed=(gu->usRandFloat()-0.5f)*PI*2*0.01f;
-	checkCol=false;
-	if(water->noWakeProjectiles){
-		alpha=0;
-		alphaAddTime=0;
-		size=0;
+	this->pos.y = 0;
+	this->speed.y = 0;
+	rotation = gu->usRandFloat() * PI*2;
+	rotSpeed = (gu->usRandFloat() - 0.5f) * PI*2*0.01f;
+	checkCol = false;
+	if (water->noWakeProjectiles) {
+		alpha = 0;
+		alphaAddTime = 0;
+		size = 0;
 	}
 }
 
@@ -60,34 +60,34 @@ CWakeProjectile::~CWakeProjectile()
 
 void CWakeProjectile::Update()
 {
-	pos+=speed;
-	rotation+=rotSpeed;
-	alpha-=alphaFalloff;
-	size+=sizeExpansion;
-	drawRadius=size;
+	pos += speed;
+	rotation += rotSpeed;
+	alpha -= alphaFalloff;
+	size += sizeExpansion;
+	drawRadius = size;
 
-	if(alphaAddTime!=0){
-		alpha+=alphaAdd;
+	if (alphaAddTime != 0) {
+		alpha += alphaAdd;
 		--alphaAddTime;
-	} else if(alpha<0){
-		alpha=0;
-		deleteMe=true;
+	} else if (alpha < 0) {
+		alpha = 0;
+		deleteMe = true;
 	}
 }
 
 void CWakeProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	col[0]=(unsigned char) (255*alpha);
-	col[1]=(unsigned char) (255*alpha);
-	col[2]=(unsigned char) (255*alpha);
-	col[3]=(unsigned char) (255*alpha)/*-alphaFalloff*globalRendering->timeOffset*/;
+	col[0] = (unsigned char) (255*alpha);
+	col[1] = (unsigned char) (255*alpha);
+	col[2] = (unsigned char) (255*alpha);
+	col[3] = (unsigned char) (255*alpha)/*-alphaFalloff*globalRendering->timeOffset*/;
 
-	float interSize=size+sizeExpansion*globalRendering->timeOffset;
-	float interRot=rotation+rotSpeed*globalRendering->timeOffset;
+	float interSize = size+sizeExpansion * globalRendering->timeOffset;
+	float interRot = rotation+rotSpeed * globalRendering->timeOffset;
 
-	const float3 dir1 = float3(cos(interRot),0,sin(interRot))*interSize;
+	const float3 dir1 = float3(cos(interRot), 0, sin(interRot)) * interSize;
 	const float3 dir2 = dir1.cross(UpVector);
 
 	#define wt projectileDrawer->waketex

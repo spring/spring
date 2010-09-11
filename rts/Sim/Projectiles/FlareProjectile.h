@@ -1,20 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef FLAREPROJECTILE_H
-#define FLAREPROJECTILE_H
+#ifndef FLARE_PROJECTILE_H
+#define FLARE_PROJECTILE_H
 
 #include "Projectile.h"
 #include <vector>
 
-class CFlareProjectile :
-	public CProjectile
+class CFlareProjectile : public CProjectile
 {
-public:
 	CR_DECLARE(CFlareProjectile);
-	CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame);
+
+public:
+	CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame);
 	~CFlareProjectile();
-	void Update(void);
-	void Draw(void);
+
+	void Update();
+	void Draw();
 
 	int activateFrame;
 	int deathFrame;
@@ -26,4 +27,4 @@ public:
 	float alphaFalloff;
 };
 
-#endif
+#endif // FLARE_PROJECTILE_H

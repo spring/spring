@@ -30,9 +30,6 @@ public:
 
 	void DrawFadeFeatures(bool noAdvShading = false);
 
-	void SetShowRezBars(bool b) { showRezBars = b; }
-	bool GetShowRezBars() const { return showRezBars; }
-
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "RenderFeatureMoved");
 	}
@@ -43,13 +40,20 @@ public:
 	void RenderFeatureDestroyed(const CFeature* feature);
 	void RenderFeatureMoved(const CFeature* feature);
 
+#ifdef USE_GML
+	void DrawFeatureStats(); 	  	
+	void DrawFeatureStatBars(const CFeature*);
+	std::vector<CFeature*> drawStat;
+	bool showRezBars;
+	void SetShowRezBars(bool b) { showRezBars = b; }
+	bool GetShowRezBars() const { return showRezBars; }
+#endif
+
 private:
 	void UpdateDrawPos(CFeature* f);
 
 	void DrawOpaqueFeatures(int);
 	void DrawFarFeatures();
-	void DrawFeatureStats();
-	void DrawFeatureStatBars(const CFeature*);
 	bool DrawFeatureNow(const CFeature*);
 	void DrawFadeFeaturesHelper(int);
 	void DrawFadeFeaturesSet(std::set<CFeature*>&, int);
@@ -73,10 +77,6 @@ private:
 
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
-
-	std::vector<CFeature*> drawStat;
-
-	bool showRezBars;
 
 	friend class CFeatureQuadDrawer;
 };

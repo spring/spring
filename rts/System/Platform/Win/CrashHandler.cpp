@@ -7,13 +7,17 @@
 #include <imagehlp.h>
 #include <signal.h>
 #include <SDL.h> // for SDL_Quit
-#include "CrashHandler.h"
-#include "Game/GameVersion.h"
-#include "LogOutput.h"
-#include "NetProtocol.h"
-#include "Util.h"
-#include "ConfigHandler.h"
 #include <boost/thread/thread.hpp>
+
+#include "System/Platform/CrashHandler.h"
+
+#include "ConfigHandler.h"
+#include "LogOutput.h"
+#include "myTime.h"
+#include "NetProtocol.h"
+#include "seh.h"
+#include "Util.h"
+#include "Game/GameVersion.h"
 
 #define BUFFER_SIZE 2048
 
@@ -24,15 +28,15 @@ extern volatile int gmlMultiThreadSim;
 HANDLE simthread = INVALID_HANDLE_VALUE; // used in gmlsrv.h as well
 HANDLE drawthread = INVALID_HANDLE_VALUE;
 
+
 namespace CrashHandler {
-	namespace Win32 {
 
 boost::thread* hangdetectorthread = NULL;
 volatile int keepRunning = 1;
 // watchdog timers
-unsigned volatile simwdt = 0, drawwdt = 0;
-int hangTimeout = 0;
-
+volatile spring_time simwdt = spring_notime, drawwdt = spring_notime;
+spring_time hangTimeout = spring_msecs(0);
+volatile bool gameLoading = false;
 
 void SigAbrtHandler(int signal)
 {
@@ -178,7 +182,8 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	if (containsOglDll) {
 		PRINT("This stack trace indicates a problem with your graphic card driver. "
 		      "Please try upgrading or downgrading it. "
-		      "Specifically recommended is the latest driver, and one that is as old as your graphic card.");
+		      "Specifically recommended is the latest driver, and one that is as old as your graphic card. "
+		      "Make sure to use a driver removal utility, before installing other drivers.");
 	}
 
 	if (suspended) {
@@ -297,24 +302,26 @@ void HangHandler(bool simhang)
 void HangDetector() {
 	while (keepRunning) {
 		// increase multiplier during game load to prevent false positives e.g. during pathing
-		const int hangTimeMultiplier = CrashHandler::gameLoading? 3000 : 1000;
+		const int hangTimeMultiplier = CrashHandler::gameLoading? 3 : 1;
+		const spring_time hangtimeout = spring_msecs(spring_tomsecs(hangTimeout) * hangTimeMultiplier);
 
-		unsigned curwdt = SDL_GetTicks();
+		spring_time curwdt = spring_gettime();
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (gmlMultiThreadSim) {
-			unsigned cursimwdt = simwdt;
-			if (cursimwdt && curwdt > cursimwdt && (curwdt - cursimwdt) > hangTimeout * hangTimeMultiplier) {
+			spring_time cursimwdt = simwdt;
+			if (spring_istime(cursimwdt) && curwdt > cursimwdt && (curwdt - cursimwdt) > hangtimeout) {
 				HangHandler(true);
 				simwdt = curwdt;
 			}
 		}
 #endif
-		unsigned curdrawwdt = drawwdt;
-		if (curdrawwdt && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * hangTimeMultiplier) {
+		spring_time curdrawwdt = drawwdt;
+		if (spring_istime(curdrawwdt) && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangtimeout) {
 			HangHandler(false);
 			drawwdt = curwdt;
 		}
-		SDL_Delay(1000);
+
+		spring_sleep(spring_secs(1));
 	}
 }
 
@@ -322,24 +329,26 @@ void HangDetector() {
 void InstallHangHandler() {
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
-	hangTimeout = configHandler->Get("HangTimeout", 0);
+	int hangTimeoutMS = configHandler->Get("HangTimeout", 0);
 	CrashHandler::gameLoading = false;
-	if (hangTimeout == 0) {
-		// HangTimeout = -1 to force disable hang detection
-		hangTimeout = 10;
-	}
-	if (hangTimeout > 0) {
+	// HangTimeout = -1 to force disable hang detection
+	if (hangTimeoutMS >= 0) {
+		if (hangTimeoutMS == 0) {
+			hangTimeoutMS = 10;
+		}
+		hangTimeout = spring_secs(hangTimeoutMS);
 		hangdetectorthread = new boost::thread(&HangDetector);
 	}
+	InitializeSEH();
 }
 
-void ClearDrawWDT(bool disable) { drawwdt = disable ? 0 : SDL_GetTicks(); }
-void ClearSimWDT(bool disable) { simwdt = disable ? 0 : SDL_GetTicks(); }
+void ClearDrawWDT(bool disable) { drawwdt = disable ? spring_notime : spring_gettime(); }
+void ClearSimWDT(bool disable) { simwdt = disable ? spring_notime : spring_gettime(); }
 
 void GameLoading(bool loading) { CrashHandler::gameLoading = loading; }
 
-void UninstallHangHandler() {
-
+void UninstallHangHandler()
+{
 	if (hangdetectorthread) {
 		keepRunning = 0;
 		hangdetectorthread->join();
@@ -367,5 +376,4 @@ void Remove()
 	signal(SIGABRT, SIG_DFL);
 }
 
-	}; // namespace Win32
 }; // namespace CrashHandler

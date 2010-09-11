@@ -889,7 +889,7 @@ void CWaitCommandsAI::DeathWait::SelectAreaUnits(
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	std::vector<CUnit*> tmpUnits = qf->GetUnitsExact(mins, maxs);
+	const std::vector<CUnit*> &tmpUnits = qf->GetUnitsExact(mins, maxs);
 
 	const int count = (int)tmpUnits.size();
 	for (int i = 0; i < count; i++) {

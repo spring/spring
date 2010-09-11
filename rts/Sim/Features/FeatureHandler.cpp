@@ -52,8 +52,6 @@ CR_REG_METADATA(CFeatureHandler, (
 
 CFeatureHandler::CFeatureHandler()
 {
-	PrintLoadMsg("Loading feature definitions");
-
 	const LuaTable rootTable = game->defsParser->GetRoot().SubTable("FeatureDefs");
 	if (!rootTable.IsValid()) {
 		throw content_error("Error loading FeatureDefs");
@@ -173,7 +171,7 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 		fdTable.GetString("collisionVolumeType", ""),
 		fdTable.GetFloat3("collisionVolumeScales", ZeroVector),
 		fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector),
-		fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT)
+		fdTable.GetInt("collisionVolumeTest", CollisionVolume::COLVOL_HITTEST_CONT)
 	);
 
 
@@ -224,8 +222,6 @@ const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 {
-	PrintLoadMsg("Initializing map features");
-
 	//! add map's featureDefs
 	int numType = readmap->GetNumFeatureTypes ();
 	for (int a = 0; a < numType; ++a) {
@@ -248,7 +244,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				fd->myName = name;
 				fd->description = "Tree";
 				fd->mass = 20;
-				fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
+				fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, CollisionVolume::COLVOL_HITTEST_DISC);
 				AddFeatureDef(name, fd);
 			}
 			else if (name.find("geovent") != string::npos) {
@@ -452,10 +448,10 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	vector<int> quads = qf->GetQuadsRectangle(float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
+	const vector<int> &quads = qf->GetQuadsRectangle(float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
 		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE));
 
-	for (vector<int>::iterator qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 		list<CFeature*>::const_iterator fi;
 		const list<CFeature*>& features = qf->GetQuad(*qi).features;
 

@@ -47,20 +47,18 @@ endif (NO_SOUND)
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 
 ### Find include directories and add platform specific libraries
-IF (MINGW)
-	FIND_PACKAGE(Win32Libs REQUIRED)
-	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
-ENDIF (MINGW)
-
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
-ADD_SUBDIRECTORY(lib)
 LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
 
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineCommonLibraries dl)
 ENDIF (UNIX)
+
+IF (MINGW)
+	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES} mingw32)
+ENDIF (MINGW)
 
 
 ### Assemble engine sources
@@ -69,7 +67,6 @@ AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/Camera game_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/Server game_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/StartScripts game_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/UI game_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Menu game_files)
 
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Lua lua_files)
 
@@ -89,6 +86,7 @@ AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Textures render_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Models render_files)
 
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/aGui render_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Menu render_files)
 
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim sim_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Features sim_files)
@@ -96,7 +94,8 @@ AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Misc sim_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/MoveTypes sim_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/MoveTypes/MoveMath sim_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Objects sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Path sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Path/ sim_files)
+AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Path/Default sim_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles sim_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles/WeaponProjectiles sim_files)
 AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles/Unsynced sim_files)
