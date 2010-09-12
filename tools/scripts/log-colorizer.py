@@ -6,10 +6,10 @@ import random
 import re
 import sys
 
-LOG_LINE_PREFIX  = "[b][color=#%s]%s[/color][/b]"
+LOG_LINE_PREFIX  = "[b][color=#%s]<%s>[/color][/b]"
 DEV_NAME_PATTERN = re.compile("<[a-zA-Z0-9\[\]_]*>")
-DEV_NAME_LIST    = ["abma", "hoijui", "jK", "Kloot", "Tobi", "zerver"]
-DEV_NAME_COLORS  = ["000000", "FFFFFF", "FF0000", "00FF00", "0000FF", "FF00FF", "FFFF00", "00FFFF"]
+DEV_NAME_LIST    = ["abma", "BrainDamage", "hoijui", "jK", "Kloot", "Tobi", "zerver"]
+DEV_NAME_COLORS  = ["000000", "FF0000", "00FF00", "0000FF", "FF00FF", "FFFF00", "00FFFF"]
 
 def ReadLines(logName):
 	try:
