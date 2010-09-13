@@ -6,6 +6,10 @@
 #  7ZIP_BIN   - will be set to the 7zip executable (eg. 7z.exe)
 #  7ZIP_FOUND - TRUE if 7zip was found
 
+# Suppress warning about 7zip name starting with a number
+CMAKE_POLICY (SET CMP0011 NEW)
+CMAKE_POLICY (SET CMP0012 OLD)
+
 IF    (7ZIP_BIN)
 	# Already in cache, be silent
 	SET(7zip_FIND_QUIETLY TRUE)
