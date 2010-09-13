@@ -113,4 +113,11 @@ public:
 	void PopRenderState();
 };
 
+class WorldObjectModelRendererASS: public IWorldObjectModelRenderer {
+public:
+	WorldObjectModelRendererASS(): IWorldObjectModelRenderer(MODELTYPE_ASS) {}
+	void PushRenderState();
+	void PopRenderState();
+};
+
 #endif

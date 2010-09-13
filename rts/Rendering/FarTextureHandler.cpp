@@ -181,7 +181,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 
-	if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ) {
+	if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {
 		// FIXME for some strange reason we need to invert the culling, why?
 		if (model->type == MODELTYPE_S3O) {
 			glCullFace(GL_FRONT);
