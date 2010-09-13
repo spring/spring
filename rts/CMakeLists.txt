@@ -46,6 +46,13 @@ endif (NO_SOUND)
 
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 
+SET(ASSIMP_DIR lib/assimp)
+INCLUDE_DIRECTORIES(${ASSIMP_DIR}/include)
+#LINK_DIRECTORIES(${ASSIMP_DIR}/lib)
+LIST(APPEND engineCommonLibraries assimp)
+
+INCLUDE_DIRECTORIES(lib/streflop)
+
 ### Find include directories and add platform specific libraries
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 

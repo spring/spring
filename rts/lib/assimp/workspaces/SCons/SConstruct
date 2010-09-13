@@ -1,0 +1,44 @@
+#------------------------------------------------------------------------------
+# ASSIMP scons build file
+#
+#------------------------------------------------------------------------------
+import sys
+
+#------------------------------------------------------------------------------
+g_LibPath = Split("""
+	./
+	/usr/lib/
+	/usr/local/lib/
+""")
+#------------------------------------------------------------------------------
+g_IncPath = Split("""
+	../../code/
+	/usr/include/
+	/usr/local/include/
+""")
+#------------------------------------------------------------------------------
+g_assimp_lib_Source =  Glob(r"../../code/*.cpp") +     Glob(r"../../contrib/irrXML/*.cpp") + Glob(r"../../contrib/zlib/*.c") + Glob(r"../../code/extra/*.cpp") 
+
+#------------------------------------------------------------------------------
+# don't reset CC/CXX-variable, other users might have set it to something special
+#------------------------------------------------------------------------------
+ccflags = '-pipe'
+
+if ARGUMENTS.get('debug', 0):
+	print "Using Debug Build!"
+	ccflags = ccflags + ' -g -pg -Wall -pedantic '
+else:
+	ccflags = ccflags + ' -Os -fno-strict-aliasing -msse -Wall -pedantic'
+	
+env = Environment(CCFLAGS = ccflags, CPPPATH = g_IncPath, LIBPATH=g_LibPath)
+conf = Configure( env )
+
+#if not conf.CheckCHeader( "boost/thread/thread.hpp" ):
+#	print "Boost must be installed!"
+#	Exit( 1 )
+env = conf.Finish()
+
+# Build library
+env.StaticLibrary(target = "assimp", source = g_assimp_lib_Source, 
+		LIBPATH = g_LibPath)
+

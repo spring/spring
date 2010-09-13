@@ -14,13 +14,14 @@ const int
 	MODELTYPE_3DO   = 0,
 	MODELTYPE_S3O   = 1,
 	MODELTYPE_OBJ   = 2,
-	MODELTYPE_OTHER = 3;
+	MODELTYPE_OTHER = 3; // Model loaded by Assimp library
 
 struct CollisionVolume;
 struct S3DModel;
 struct S3DModelPiece;
 struct LocalModel;
 struct LocalModelPiece;
+struct aiScene;
 
 
 struct S3DModelPiece {
@@ -77,6 +78,8 @@ struct S3DModel
 	float3 relMidPos;
 
 	S3DModelPiece* rootobject;
+
+	const aiScene* scene; // For Assimp models. Contains imported data. NULL for s3o/3do.
 
 	inline void DrawStatic() const { rootobject->DrawStatic(); };
 };

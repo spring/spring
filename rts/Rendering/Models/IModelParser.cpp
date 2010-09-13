@@ -11,7 +11,10 @@
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "OBJParser.h"
+#include "AssParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "AssParser.h"
+#include "assimp.hpp"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "System/FileSystem/FileSystem.h"
@@ -33,6 +36,23 @@ C3DModelLoader::C3DModelLoader(void)
 	AddParser("3do", new C3DOParser());
 	AddParser("s3o", new CS3OParser());
 	AddParser("obj", new COBJParser());
+
+	// assimp library
+	CAssParser* unitassparser = new CAssParser();
+	std::string extensionlist;
+	Assimp::Importer importer;
+	importer.GetExtensionList(extensionlist); // get a ";" separated list of wildcards
+	char* charextensionlist = new char[extensionlist.size() +1];
+	strcpy (charextensionlist, extensionlist.c_str());
+	char* extensionchar = strtok( charextensionlist, ";" );
+	while( extensionchar )
+	{
+		std::string extension = extensionchar;
+		extension = extension.substr( 2 ); // strip wildcard and dot
+		AddParser(extension,unitassparser); // register extension
+		extensionchar = strtok( NULL, ";" );
+	}
+	delete charextensionlist;
 }
 
 
@@ -47,11 +67,15 @@ C3DModelLoader::~C3DModelLoader(void)
 	cache.clear();
 
 	// delete parsers
+	std::set<IModelParser*> dedupe_parsers; // this is to avoid deleting the same parser twice, if it's assigned to multiple model formats
 	std::map<std::string, IModelParser*>::iterator pi;
 	for (pi = parsers.begin(); pi != parsers.end(); ++pi) {
+		if ( dedupe_parsers.count( pi->second ) != 0 ) continue;
+		dedupe_parsers.insert( pi->second );
 		delete pi->second;
 	}
 	parsers.clear();
+	dedupe_parsers.clear();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	createLists.clear();
@@ -147,6 +171,8 @@ void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
+	logOutput.Print("C3DModelLoader::CreateLocalModel(CUnit* unit)");
+
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // CreateLocalModel
 
@@ -156,29 +182,40 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 	unit->localmodel = CreateLocalModel(unit->model);
 	// FixLocalModel(unit);
 #endif
+
+	logOutput.Print("Finished C3DModelLoader::CreateLocalModel(CUnit* unit)");
 }
 
 
 LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 {
+	logOutput.Print("CreateLocalModel(model '%s' type %d objects %d)", model->name.c_str(), model->type, model->numobjects);
+
 	LocalModel* lmodel = new LocalModel;
 	lmodel->type = model->type;
 	lmodel->pieces.reserve(model->numobjects);
 
 	for (unsigned int i = 0; i < model->numobjects; i++) {
+		logOutput.Print("Adding object %d", i);
 		lmodel->pieces.push_back(new LocalModelPiece);
 	}
 	lmodel->pieces[0]->parent = NULL;
 
 	int piecenum = 0;
 	CreateLocalModelPieces(model->rootobject, lmodel, &piecenum);
+
+	logOutput.Print("Finished CreateLocalModel(model)");
 	return lmodel;
 }
 
 
 void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
 {
+	logOutput.Print("C3DModelLoader::CreateLocalModelPieces (piece '%s' num %d)", piece->name.c_str(), *piecenum);
+
+
 	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
+
 	lmp.original  =  piece;
 	lmp.name      =  piece->name;
 	lmp.type      =  piece->type;
@@ -187,15 +224,22 @@ void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lm
 	lmp.updated   =  false;
 	lmp.pos       =  piece->offset;
 	lmp.rot       =  float3(0.0f, 0.0f, 0.0f);
+
+	logOutput.Print("Create CollisionVolume");
 	lmp.colvol    = new CollisionVolume(piece->colvol);
 
+	logOutput.Print("Setup childs (childs %d)", piece->childs.size());
 	lmp.childs.reserve(piece->childs.size());
 	for (unsigned int i = 0; i < piece->childs.size(); i++) {
 		(*piecenum)++;
+		logOutput.Print("Setup child piece (num %d)", *piecenum);
 		lmp.childs.push_back(lmodel->pieces[*piecenum]);
 		lmodel->pieces[*piecenum]->parent = &lmp;
 		CreateLocalModelPieces(piece->childs[i], lmodel, piecenum);
+		logOutput.Print("Finished child piece (num %d)", *piecenum);
 	}
+
+	logOutput.Print("Finished CreateLocalModelPieces (piece '%s')", piece->name.c_str());
 }
 
 
@@ -208,6 +252,8 @@ void C3DModelLoader::FixLocalModel(CUnit* unit)
 
 void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
 {
+	logOutput.Print("C3DModelLoader::FixLocalModel");
+
 	lmodel->pieces[*piecenum]->displist = model->displist;
 
 	for (unsigned int i = 0; i < model->childs.size(); i++) {
@@ -219,6 +265,7 @@ void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
+	logOutput.Print("C3DModelLoader::CreateListsNow");
 	o->displist = glGenLists(1);
 	glNewList(o->displist, GL_COMPILE);
 	o->DrawList();
@@ -227,6 +274,8 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); bs++) {
 		CreateListsNow(*bs);
 	}
+
+	logOutput.Print("Finished C3DModelLoader::CreateListsNow");
 }
 
 
@@ -236,6 +285,8 @@ void C3DModelLoader::CreateLists(S3DModelPiece* o) {
 #else
 	CreateListsNow(o);
 #endif
+
+	logOutput.Print("Finished C3DModelLoader::CreateLists");
 }
 
 /******************************************************************************/
