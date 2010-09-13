@@ -55,7 +55,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 // We need boost::common_factor to compute the lcm/gcd of a number
-#include <boost/math/common_factor_rt.hpp>
+#include "boost/math/common_factor_rt.hpp"
 
 using namespace Assimp;
 using namespace irr;
