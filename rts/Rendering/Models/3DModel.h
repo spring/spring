@@ -14,7 +14,7 @@ const int
 	MODELTYPE_3DO   = 0,
 	MODELTYPE_S3O   = 1,
 	MODELTYPE_OBJ   = 2,
-	MODELTYPE_ASS	= 3; // Model loaded by Assimp library
+	MODELTYPE_ASS	= 3, // Model loaded by Assimp library
 	MODELTYPE_OTHER	= 4; // For future use. Still used in some parts of code.
 
 struct CollisionVolume;
