@@ -23,7 +23,10 @@ else  (UNIX AND NOT MINGW)
 	set (LIBDIR  "." CACHE STRING "Where to install libraries")
 	set (DATADIR "." CACHE STRING "Where to install game content")
 
-	set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
+	#Mingw Win32 libs
+	if (NOT MINGWLIBS) 
+		set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
+	endif (NOT MINGWLIBS)
 	if    (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
 		MESSAGE(FATAL_ERROR "MINGWLIBS is not a valid directory")
 	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
