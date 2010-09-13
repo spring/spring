@@ -9,7 +9,7 @@ ADD_SUBDIRECTORY(streflop)
 ADD_SUBDIRECTORY(md5)
 ADD_SUBDIRECTORY(lobby)
 ADD_SUBDIRECTORY(headlessStubs)
-
+ADD_SUBDIRECTORY(assimp)
 if    (NOT HEADLESS_SYSTEM)
 	Add_Subdirectory(gml)
 endif (NOT HEADLESS_SYSTEM)
