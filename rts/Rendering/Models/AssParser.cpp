@@ -215,8 +215,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 	// collision volume for piece
 	const float3 cvScales(1.0f, 1.0f, 1.0f);
 	const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
-	piece->colvol->Enable();
+	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, CollisionVolume::COLVOL_HITTEST_CONT);
 
 	// Recursively process all child pieces
 	for (unsigned int i = 0; i < node->mNumChildren; ++i) {

@@ -14,6 +14,7 @@ IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 		case MODELTYPE_3DO: { return (new WorldObjectModelRenderer3DO()); } break;
 		case MODELTYPE_S3O: { return (new WorldObjectModelRendererS3O()); } break;
 		case MODELTYPE_OBJ: { return (new WorldObjectModelRendererOBJ()); } break;
+		case MODELTYPE_ASS: { return (new WorldObjectModelRendererASS()); } break;
 		default: { return (new IWorldObjectModelRenderer(MODELTYPE_OTHER)); } break;
 	}
 }
@@ -197,7 +198,18 @@ void WorldObjectModelRendererOBJ::PopRenderState()
 	// WRITEME
 }
 
-
+void WorldObjectModelRendererASS::PushRenderState()
+{
+	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
+	#endif
+	// WRITEME
+}
+void WorldObjectModelRendererASS::PopRenderState()
+{
+	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
+	#endif
+	// WRITEME
+}
 
 void WorldObjectModelRendererS3O::DrawModel(const CUnit* u)
 {
