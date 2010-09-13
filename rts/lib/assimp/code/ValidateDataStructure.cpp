@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -74,7 +74,7 @@ bool ValidateDSProcess::IsActive( unsigned int pFlags) const
 	return (pFlags & aiProcess_ValidateDataStructure) != 0;
 }
 // ------------------------------------------------------------------------------------------------
-void ValidateDSProcess::ReportError(const char* msg,...)
+AI_WONT_RETURN void ValidateDSProcess::ReportError(const char* msg,...)
 {
 	ai_assert(NULL != msg);
 
@@ -87,9 +87,9 @@ void ValidateDSProcess::ReportError(const char* msg,...)
 
 	va_end(args);
 #ifdef _DEBUG
-	aiAssert( false,szBuffer,__LINE__,__FILE__ );
+	aiAssert( szBuffer,__LINE__,__FILE__ );
 #endif
-	throw new ImportErrorException("Validation failed: " + std::string(szBuffer,iLen));
+	throw DeadlyImportError("Validation failed: " + std::string(szBuffer,iLen));
 }
 // ------------------------------------------------------------------------------------------------
 void ValidateDSProcess::ReportWarning(const char* msg,...)
@@ -209,13 +209,8 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 	// validate the node graph of the scene
 	Validate(pScene->mRootNode);
 	
-	// At least one of the mXXX arrays must be non-empty or we'll flag 
-	// the scene as invalid
-	bool has = false;
-
 	// validate all meshes
 	if (pScene->mNumMeshes) {
-		// has = true;
 		DoValidation(pScene->mMeshes,pScene->mNumMeshes,"mMeshes","mNumMeshes");
 	}
 	else if (!(mScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE))	{
@@ -227,7 +222,6 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 	
 	// validate all animations
 	if (pScene->mNumAnimations) {
-		// has = true;
 		DoValidation(pScene->mAnimations,pScene->mNumAnimations,
 			"mAnimations","mNumAnimations");
 	}
@@ -237,7 +231,6 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 
 	// validate all cameras
 	if (pScene->mNumCameras) {
-		// has = true;
 		DoValidationWithNameCheck(pScene->mCameras,pScene->mNumCameras,
 			"mCameras","mNumCameras");
 	}
@@ -247,17 +240,24 @@ void ValidateDSProcess::Execute( aiScene* pScene)
 
 	// validate all lights
 	if (pScene->mNumLights) {
-		// has = true;
 		DoValidationWithNameCheck(pScene->mLights,pScene->mNumLights,
 			"mLights","mNumLights");
 	}
 	else if (pScene->mLights)	{
 		ReportError("aiScene::mLights is non-null although there are no lights");
 	}
+
+	// validate all textures
+	if (pScene->mNumTextures) {
+		DoValidation(pScene->mTextures,pScene->mNumTextures,
+			"mTextures","mNumTextures");
+	}
+	else if (pScene->mTextures)	{
+		ReportError("aiScene::mTextures is non-null although there are no textures");
+	}
 	
 	// validate all materials
 	if (pScene->mNumMaterials) {
-		// has = true;
 		DoValidation(pScene->mMaterials,pScene->mNumMaterials,"mMaterials","mNumMaterials");
 	}
 #if 0
@@ -364,7 +364,7 @@ void ValidateDSProcess::Validate( const aiMesh* pMesh)
 	}
 
 	// positions must always be there ...
-	if (!pMesh->mNumVertices || !pMesh->mVertices && !mScene->mFlags)	{
+	if (!pMesh->mNumVertices || (!pMesh->mVertices && !mScene->mFlags))	{
 		ReportError("The mesh contains no vertices");
 	}
 
@@ -374,7 +374,7 @@ void ValidateDSProcess::Validate( const aiMesh* pMesh)
 	}
 
 	// faces, too
-	if (!pMesh->mNumFaces || !pMesh->mFaces && !mScene->mFlags)	{
+	if (!pMesh->mNumFaces || (!pMesh->mFaces && !mScene->mFlags))	{
 		ReportError("The mesh contains no faces");
 	}
 
@@ -672,13 +672,18 @@ void ValidateDSProcess::Validate( const aiMaterial* pMaterial)
 		}
 		// check all predefined types
 		if (aiPTI_String == prop->mType)	{
-			// FIX: strings are now stored in a less expensive way ...
-			if (prop->mDataLength < sizeof(size_t) + ((const aiString*)prop->mData)->length + 1)	{
+			// FIX: strings are now stored in a less expensive way, but we can't use the
+			// validation routine for 'normal' aiStrings
+			uint32_t len;
+			if (prop->mDataLength < 5 || prop->mDataLength < 4 + (len=*reinterpret_cast<uint32_t*>(prop->mData)) + 1)	{
 				ReportError("aiMaterial::mProperties[%i].mDataLength is "
 					"too small to contain a string (%i, needed: %i)",
 					i,prop->mDataLength,sizeof(aiString));
 			}
-			Validate((const aiString*)prop->mData);
+			if(prop->mData[prop->mDataLength-1]) {
+				ReportError("Missing null-terminator in string material property");
+			}
+		//	Validate((const aiString*)prop->mData);
 		}
 		else if (aiPTI_Float == prop->mType)	{
 			if (prop->mDataLength < sizeof(float))	{
@@ -767,11 +772,11 @@ void ValidateDSProcess::Validate( const aiTexture* pTexture)
 	}
 
 	const char* sz = pTexture->achFormatHint;
- 	if (sz[0] >= 'A' && sz[0] <= 'Z' ||
-		sz[1] >= 'A' && sz[1] <= 'Z' ||
-		sz[2] >= 'A' && sz[2] <= 'Z' ||
-		sz[3] >= 'A' && sz[3] <= 'Z')	{
-		ReportError("aiTexture::achFormatHint contains non-lowercase characters");
+ 	if ((sz[0] >= 'A' && sz[0] <= 'Z') ||
+		(sz[1] >= 'A' && sz[1] <= 'Z') ||
+		(sz[2] >= 'A' && sz[2] <= 'Z') ||
+		(sz[3] >= 'A' && sz[3] <= 'Z'))	{
+		ReportError("aiTexture::achFormatHint contains non-lowercase letters");
 	}
 }
 
@@ -795,8 +800,10 @@ void ValidateDSProcess::Validate( const aiAnimation* pAnimation,
 		double dLast = -10e10;
 		for (unsigned int i = 0; i < pNodeAnim->mNumPositionKeys;++i)
 		{
-			// ScenePreprocessor will compute the duration if still teh default value
-			if (pAnimation->mDuration > 0. && pNodeAnim->mPositionKeys[i].mTime > pAnimation->mDuration)
+			// ScenePreprocessor will compute the duration if still the default value
+			// (Aramis) Add small epsilon, comparison tended to fail if max_time == duration,
+			//  seems to be due the compilers register usage/width.
+			if (pAnimation->mDuration > 0. && pNodeAnim->mPositionKeys[i].mTime > pAnimation->mDuration+0.001)
 			{
 				ReportError("aiNodeAnim::mPositionKeys[%i].mTime (%.5f) is larger "
 					"than aiAnimation::mDuration (which is %.5f)",i,
@@ -824,7 +831,7 @@ void ValidateDSProcess::Validate( const aiAnimation* pAnimation,
 		double dLast = -10e10;
 		for (unsigned int i = 0; i < pNodeAnim->mNumRotationKeys;++i)
 		{
-			if (pAnimation->mDuration > 0. && pNodeAnim->mRotationKeys[i].mTime > pAnimation->mDuration)
+			if (pAnimation->mDuration > 0. && pNodeAnim->mRotationKeys[i].mTime > pAnimation->mDuration+0.001)
 			{
 				ReportError("aiNodeAnim::mRotationKeys[%i].mTime (%.5f) is larger "
 					"than aiAnimation::mDuration (which is %.5f)",i,
@@ -851,7 +858,7 @@ void ValidateDSProcess::Validate( const aiAnimation* pAnimation,
 		double dLast = -10e10;
 		for (unsigned int i = 0; i < pNodeAnim->mNumScalingKeys;++i)
 		{
-			if (pAnimation->mDuration > 0. && pNodeAnim->mScalingKeys[i].mTime > pAnimation->mDuration)
+			if (pAnimation->mDuration > 0. && pNodeAnim->mScalingKeys[i].mTime > pAnimation->mDuration+0.001)
 			{
 				ReportError("aiNodeAnim::mScalingKeys[%i].mTime (%.5f) is larger "
 					"than aiAnimation::mDuration (which is %.5f)",i,

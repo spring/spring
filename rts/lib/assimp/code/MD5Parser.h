@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -424,7 +424,8 @@ private:
 	bool SkipSpacesAndLineEnd( const char* in, const char** out)
 	{
 		bool bHad = false;
-		while (true)	{
+		bool running = true;
+		while (running)	{
 			if( *in == '\r' || *in == '\n')	{
 				 // we open files in binary mode, so there could be \r\n sequences ...
 				if (!bHad)	{

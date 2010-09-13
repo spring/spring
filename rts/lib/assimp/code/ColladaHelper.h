@@ -4,7 +4,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -225,6 +225,7 @@ struct Node
 {
 	std::string mName;
 	std::string mID;
+  std::string mSID;
 	Node* mParent;
 	std::vector<Node*> mChildren;
 
@@ -270,6 +271,7 @@ struct Data
 struct Accessor
 {
 	size_t mCount;   // in number of objects
+	size_t mSize;    // size of an object, in elements (floats or strings, mostly 1)
 	size_t mOffset;  // in number of values
 	size_t mStride;  // Stride in number of values
 	std::vector<std::string> mParams; // names of the data streams in the accessors. Empty string tells to ignore. 
@@ -280,7 +282,7 @@ struct Accessor
 
 	Accessor() 
 	{ 
-		mCount = 0; mOffset = 0; mStride = 0; mData = NULL; 
+		mCount = 0; mSize = 0; mOffset = 0; mStride = 0; mData = NULL; 
 		mSubOffset[0] = mSubOffset[1] = mSubOffset[2] = mSubOffset[3] = 0;
 	}
 };
@@ -369,6 +371,9 @@ struct Controller
 
 	// accessor URL of the joint names
 	std::string mJointNameSource;
+
+  ///< The bind shape matrix, as array of floats. I'm not sure what this matrix actually describes, but it can't be ignored in all cases
+  float mBindShapeMatrix[16];
 
 	// accessor URL of the joint inverse bind matrices
 	std::string mJointOffsetMatrixSource;
@@ -493,7 +498,7 @@ struct Effect
 		mTexTransparent, mTexBump, mTexReflective;
 
 	// Scalar factory
-	float mShininess, mRefractIndex;
+	float mShininess, mRefractIndex, mReflectivity;
 	float mTransparency;
 
 	// local params referring to each other by their SID
@@ -514,6 +519,7 @@ struct Effect
 		, mTransparent	( 0, 0, 0, 1)
 		, mShininess    (10.0f)
 		, mRefractIndex (1.f)
+		, mReflectivity (1.f)
 		, mTransparency (0.f)
 		, mDoubleSided	(false)
 		, mWireframe    (false)
@@ -570,6 +576,23 @@ struct Animation
 		for( std::vector<Animation*>::iterator it = mSubAnims.begin(); it != mSubAnims.end(); ++it)
 			delete *it;
 	}
+};
+
+/** Description of a collada animation channel which has been determined to affect the current node */
+struct ChannelEntry
+{
+	const Collada::AnimationChannel* mChannel; ///> the source channel
+	std::string mTransformId;   // the ID of the transformation step of the node which is influenced
+	size_t mTransformIndex; // Index into the node's transform chain to apply the channel to
+	size_t mSubElement; // starting index inside the transform data
+
+	// resolved data references
+	const Collada::Accessor* mTimeAccessor; ///> Collada accessor to the time values
+	const Collada::Data* mTimeData; ///> Source data array for the time values
+	const Collada::Accessor* mValueAccessor; ///> Collada accessor to the key value values
+	const Collada::Data* mValueData; ///> Source datat array for the key value values
+
+	ChannelEntry() { mChannel = NULL; mSubElement = 0; }
 };
 
 } // end of namespace Collada

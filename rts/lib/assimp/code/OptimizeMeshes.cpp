@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -103,6 +103,10 @@ void OptimizeMeshesProcess::Execute( aiScene* pScene)
 	DefaultLogger::get()->debug("OptimizeMeshesProcess begin");
 	mScene = pScene;
 
+	// need to clear persistent members from previous runs
+	merge_list.clear();
+	output.clear();
+
 	merge_list.reserve(pScene->mNumMeshes);
 	output.reserve(pScene->mNumMeshes);
 
@@ -125,7 +129,7 @@ void OptimizeMeshesProcess::Execute( aiScene* pScene)
 	// and process all nodes in the scenegraoh recursively
 	ProcessNode(pScene->mRootNode);
 	if (!output.size()) {
-		throw new ImportErrorException("OptimizeMeshes: No meshes remaining; there's definitely something wrong");
+		throw DeadlyImportError("OptimizeMeshes: No meshes remaining; there's definitely something wrong");
 	}
 
 	meshes.clear();
@@ -202,8 +206,8 @@ bool OptimizeMeshesProcess::CanJoin ( unsigned int a, unsigned int b, unsigned i
 
 	aiMesh* ma = mScene->mMeshes[a], *mb = mScene->mMeshes[b];
 
-	if (0xffffffff != max_verts && verts+mb->mNumVertices > max_verts ||
-		0xffffffff != max_faces && faces+mb->mNumFaces    > max_faces) {
+	if ((0xffffffff != max_verts && verts+mb->mNumVertices > max_verts) ||
+		(0xffffffff != max_faces && faces+mb->mNumFaces    > max_faces)) {
 		return false;
 	}
 

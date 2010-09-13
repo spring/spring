@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -140,9 +140,10 @@ bool LWSImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler,bool c
 
 // ------------------------------------------------------------------------------------------------
 // Get list of file extensions
-void LWSImporter::GetExtensionList(std::string& append)
+void LWSImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.lws;*.mot");
+	extensions.insert("lws");
+	extensions.insert("mot");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -469,13 +470,13 @@ void LWSImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile, "rb"));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open LWS file " + pFile + ".");
+	if( file.get() == NULL) {
+		throw DeadlyImportError( "Failed to open LWS file " + pFile + ".");
+	}
 
 	// Allocate storage and copy the contents of the file to a memory buffer
-	const size_t fileSize = file->FileSize();
-	std::vector< char > mBuffer(fileSize);
-	file->Read( &mBuffer[0], 1, fileSize);
+	std::vector< char > mBuffer;
+	TextFileToBuffer(file.get(),mBuffer);
 	
 	// Parse the file structure
 	LWS::Element root; const char* dummy = &mBuffer[0];
@@ -499,7 +500,7 @@ void LWSImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 		motion_file = true;
 
 	if ((*it).tokens[0] != "LWSC" && !motion_file)
-		throw new ImportErrorException("LWS: Not a LightWave scene, magic tag LWSC not found");
+		throw DeadlyImportError("LWS: Not a LightWave scene, magic tag LWSC not found");
 
 	// get file format version and print to log
 	++it;
@@ -807,7 +808,7 @@ void LWSImporter::InternReadFile( const std::string& pFile, aiScene* pScene,
 			++ no_parent;
 	}
 	if (!no_parent)
-		throw new ImportErrorException("LWS: Unable to find scene root node");
+		throw DeadlyImportError("LWS: Unable to find scene root node");
 
 
 	// Load all subsequent files

@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -101,9 +101,9 @@ bool DXFImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 
 // ------------------------------------------------------------------------------------------------
 // Get a list of all supported file extensions
-void DXFImporter::GetExtensionList(std::string& append)
+void DXFImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.dxf");
+	extensions.insert("dxf");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -161,22 +161,21 @@ void DXFImporter::InternReadFile( const std::string& pFile,
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open DXF file " + pFile + "");
+	if( file.get() == NULL) {
+		throw DeadlyImportError( "Failed to open DXF file " + pFile + "");
+	}
 
 	// read the contents of the file in a buffer
-	size_t m = file->FileSize();
-	std::vector<char> buffer2(m+1);
+	std::vector<char> buffer2;
+	TextFileToBuffer(file.get(),buffer2);
 	buffer = &buffer2[0];
-	file->Read( &buffer2[0], m,1);
-	buffer2[m] = '\0';
 
 	bRepeat = false;
 	mDefaultLayer = NULL;
 
 	// check whether this is a binaray DXF file - we can't read binary DXF files :-(
 	if (!strncmp(AI_DXF_BINARY_IDENT,buffer,AI_DXF_BINARY_IDENT_LEN))
-		throw new ImportErrorException("DXF: Binary files are not supported at the moment");
+		throw DeadlyImportError("DXF: Binary files are not supported at the moment");
 
 	// now get all lines of the file
 	while (GetNextToken())	{
@@ -213,10 +212,10 @@ void DXFImporter::InternReadFile( const std::string& pFile,
 	}
 
 	if (!pScene->mNumMeshes)
-		throw new ImportErrorException("DXF: this file contains no 3d data");
+		throw DeadlyImportError("DXF: this file contains no 3d data");
 
 	pScene->mMeshes = new aiMesh*[ pScene->mNumMeshes ];
-	m = 0;
+	unsigned int m = 0;
 	for (std::vector<LayerInfo>::const_iterator it = mLayers.begin(),end = mLayers.end();it != end;++it) {
 		if ((*it).vPositions.empty()) {
 			continue;
@@ -288,7 +287,7 @@ void DXFImporter::InternReadFile( const std::string& pFile,
 		for (m = 0; m < pScene->mRootNode->mNumChildren;++m)	{
 			aiNode* p = pScene->mRootNode->mChildren[m] = new aiNode();
 			p->mName.length = ::strlen( mLayers[m].name );
-			::strcpy(p->mName.data, mLayers[m].name);
+			strcpy(p->mName.data, mLayers[m].name);
 
 			p->mMeshes = new unsigned int[p->mNumMeshes = 1];
 			p->mMeshes[0] = m;
@@ -327,14 +326,18 @@ bool DXFImporter::ParseEntities()
 {
 	while (GetNextToken())	{
 		if (!groupCode)	{			
-			if (!::strcmp(cursor,"3DFACE") || !::strcmp(cursor,"LINE") || !::strcmp(cursor,"3DLINE"))
-				if (!Parse3DFace()) return false; else bRepeat = true;
-
-			if (!::strcmp(cursor,"POLYLINE") || !::strcmp(cursor,"LWPOLYLINE"))
-				if (!ParsePolyLine()) return false; else bRepeat = true;
-
-			if (!::strcmp(cursor,"ENDSEC"))
+			if (!::strcmp(cursor,"3DFACE") || !::strcmp(cursor,"LINE") || !::strcmp(cursor,"3DLINE")){
+				//http://sourceforge.net/tracker/index.php?func=detail&aid=2970566&group_id=226462&atid=1067632
+				Parse3DFace();
+				bRepeat = true;
+			}
+			if (!::strcmp(cursor,"POLYLINE") || !::strcmp(cursor,"LWPOLYLINE")){
+				ParsePolyLine();
+				bRepeat = true;
+			}
+			if (!::strcmp(cursor,"ENDSEC")) {
 				return true;
+			}
 		}
 	}
 	return false;

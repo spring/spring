@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -203,7 +203,7 @@ evil_jump_outside:
 			// (famous last words)
 
 			// OK ... bad idea.
-			throw new ImportErrorException("Mesh is empty after removal of degenerated primitives ... WTF!?");
+			throw DeadlyImportError("Mesh is empty after removal of degenerated primitives ... WTF!?");
 		}
 	}
 

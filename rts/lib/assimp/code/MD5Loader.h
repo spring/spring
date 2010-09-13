@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -85,7 +85,7 @@ protected:
 	/** Called by Importer::GetExtensionList() for each loaded importer.
 	 * See BaseImporter::GetExtensionList() for details
 	 */
-	void GetExtensionList(std::string& append);
+	void GetExtensionList(std::set<std::string>& extensions);
 
 	// -------------------------------------------------------------------
 	/** Called prior to ReadFile().

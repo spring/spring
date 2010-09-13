@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -303,7 +303,7 @@ void Q3Shader::ConvertShaderToMaterial(MaterialHelper* out, const ShaderDataBloc
 				type  = aiTextureType_EMISSIVE;
 			}
 		}
-		else if ((*it).blend_src == Q3Shader::BLEND_GL_DST_COLOR && Q3Shader::BLEND_GL_ZERO) {
+		else if ((*it).blend_src == Q3Shader::BLEND_GL_DST_COLOR && (*it).blend_dest == Q3Shader::BLEND_GL_ZERO) {
 			index = cur_lm++;
 			type  = aiTextureType_LIGHTMAP;
 		}
@@ -365,7 +365,7 @@ void MD3Importer::ValidateHeaderOffsets()
 	// Check magic number
 	if (pcHeader->IDENT != AI_MD3_MAGIC_NUMBER_BE &&
 		pcHeader->IDENT != AI_MD3_MAGIC_NUMBER_LE)
-			throw new ImportErrorException( "Invalid MD3 file: Magic bytes not found");
+			throw DeadlyImportError( "Invalid MD3 file: Magic bytes not found");
 
 	// Check file format version
 	if (pcHeader->VERSION > 15)
@@ -373,15 +373,15 @@ void MD3Importer::ValidateHeaderOffsets()
 
 	// Check some offset values whether they are valid
 	if (!pcHeader->NUM_SURFACES)
-		throw new ImportErrorException( "Invalid md3 file: NUM_SURFACES is 0");
+		throw DeadlyImportError( "Invalid md3 file: NUM_SURFACES is 0");
 
 	if (pcHeader->OFS_FRAMES >= fileSize || pcHeader->OFS_SURFACES >= fileSize || 
 		pcHeader->OFS_EOF > fileSize) {
-		throw new ImportErrorException("Invalid MD3 header: some offsets are outside the file");
+		throw DeadlyImportError("Invalid MD3 header: some offsets are outside the file");
 	}
 
 	if (pcHeader->NUM_FRAMES <= configFrameID )
-		throw new ImportErrorException("The requested frame is not existing the file");
+		throw DeadlyImportError("The requested frame is not existing the file");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -396,25 +396,32 @@ void MD3Importer::ValidateSurfaceHeaderOffsets(const MD3::Surface* pcSurf)
 		pcSurf->OFS_ST + ofs + pcSurf->NUM_VERTICES * sizeof(MD3::TexCoord) > fileSize          ||
 		pcSurf->OFS_XYZNORMAL + ofs + pcSurf->NUM_VERTICES * sizeof(MD3::Vertex) > fileSize)	{
 
-		throw new ImportErrorException("Invalid MD3 surface header: some offsets are outside the file");
+		throw DeadlyImportError("Invalid MD3 surface header: some offsets are outside the file");
 	}
 
 	// Check whether all requirements for Q3 files are met. We don't
 	// care, but probably someone does.
-	if (pcSurf->NUM_TRIANGLES > AI_MD3_MAX_TRIANGLES)
+	if (pcSurf->NUM_TRIANGLES > AI_MD3_MAX_TRIANGLES) {
 		DefaultLogger::get()->warn("MD3: Quake III triangle limit exceeded");
-	if (pcSurf->NUM_SHADER > AI_MD3_MAX_SHADERS)
+	}
+
+	if (pcSurf->NUM_SHADER > AI_MD3_MAX_SHADERS) {
 		DefaultLogger::get()->warn("MD3: Quake III shader limit exceeded");
-	if (pcSurf->NUM_VERTICES > AI_MD3_MAX_VERTS)
+	}
+
+	if (pcSurf->NUM_VERTICES > AI_MD3_MAX_VERTS) {
 		DefaultLogger::get()->warn("MD3: Quake III vertex limit exceeded");
-	if (pcSurf->NUM_FRAMES > AI_MD3_MAX_FRAMES)
+	}
+
+	if (pcSurf->NUM_FRAMES > AI_MD3_MAX_FRAMES) {
 		DefaultLogger::get()->warn("MD3: Quake III frame limit exceeded");
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
-void MD3Importer::GetExtensionList(std::string& append)
+void MD3Importer::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.md3");
+	extensions.insert("md3");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -539,9 +546,9 @@ bool MD3Importer::ReadMultipartFile()
 
 		// now read these three files
 		BatchLoader batch(mIOHandler);
-		unsigned int _lower = batch.AddLoadRequest(lower,0,&props);
-		unsigned int _upper = batch.AddLoadRequest(upper,0,&props);
-		unsigned int _head  = batch.AddLoadRequest(head,0,&props);
+		const unsigned int _lower = batch.AddLoadRequest(lower,0,&props);
+		const unsigned int _upper = batch.AddLoadRequest(upper,0,&props);
+		const unsigned int _head  = batch.AddLoadRequest(head,0,&props);
 		batch.LoadAll();
 
 		// now construct a dummy scene to place these three parts in
@@ -627,7 +634,7 @@ error_cleanup:
 		delete master;
 
 		if (failure == mod_filename) {
-			throw new ImportErrorException("MD3: failure to read multipart host file");
+			throw DeadlyImportError("MD3: failure to read multipart host file");
 		}
 	}
 	return false;
@@ -702,12 +709,12 @@ void MD3Importer::InternReadFile( const std::string& pFile,
 
 	// Check whether we can read from the file
 	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open MD3 file " + pFile + ".");
+		throw DeadlyImportError( "Failed to open MD3 file " + pFile + ".");
 
 	// Check whether the md3 file is large enough to contain the header
 	fileSize = (unsigned int)file->FileSize();
 	if( fileSize < sizeof(MD3::Header))
-		throw new ImportErrorException( "MD3 File is too small.");
+		throw DeadlyImportError( "MD3 File is too small.");
 
 	// Allocate storage and copy the contents of the file to a memory buffer
 	std::vector<unsigned char> mBuffer2 (fileSize);
@@ -948,7 +955,7 @@ void MD3Importer::InternReadFile( const std::string& pFile,
 			pcMesh->mFaces[i].mIndices = new unsigned int[3];
 			pcMesh->mFaces[i].mNumIndices = 3;
 
-			unsigned int iTemp = iCurrent;
+			//unsigned int iTemp = iCurrent;
 			for (unsigned int c = 0; c < 3;++c,++iCurrent)	{
 				pcMesh->mFaces[i].mIndices[c] = iCurrent;
 
@@ -987,7 +994,7 @@ void MD3Importer::InternReadFile( const std::string& pFile,
 	}
 
 	if (!pScene->mNumMeshes)
-		throw new ImportErrorException( "MD3: File contains no valid mesh");
+		throw DeadlyImportError( "MD3: File contains no valid mesh");
 	pScene->mNumMaterials = iNumMaterials;
 
 	// Now we need to generate an empty node graph

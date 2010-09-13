@@ -1,5 +1,88 @@
+SET( LIBRARY_VERSION "1.0.0" )
+SET( LIBRARY_SOVERSION "1" )
 
-SET( HEADER_PATH ../include/ )
+IF ( ENABLE_BOOST_WORKAROUND )
+	INCLUDE_DIRECTORIES( BoostWorkaround )
+	ADD_DEFINITIONS( -DASSIMP_BUILD_BOOST_WORKAROUND )
+	MESSAGE( STATUS "Building a non-boost version of Assimp." )
+ELSE ( ENABLE_BOOST_WORKAROUND )
+	FIND_PACKAGE( Boost 1.35 )
+
+	IF ( NOT Boost_FOUND )
+		MESSAGE( FATAL_ERROR
+			"Boost libraries (http://www.boost.org/) not found. "
+			"You can build a non-boost version of Assimp with slightly reduced "
+			"functionality by specifying -DENABLE_BOOST_WORKAROUND=ON."
+		)
+	ENDIF ( NOT Boost_FOUND )
+
+	INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIRS} )
+ENDIF ( ENABLE_BOOST_WORKAROUND )
+
+
+#
+# Listing and grouping of all the source files for use with IDE project
+# generators.
+#
+SET( HEADER_PATH ../include )
+
+SET( COMPILER_HEADERS
+	${HEADER_PATH}/Compiler/pushpack1.h
+	${HEADER_PATH}/Compiler/poppack1.h
+	pstdint.h
+)
+
+SET( PUBLIC_HEADERS
+	${HEADER_PATH}/aiAnim.h
+	${HEADER_PATH}/aiAssert.h
+	${HEADER_PATH}/aiCamera.h
+	${HEADER_PATH}/aiColor4D.h
+	${HEADER_PATH}/aiColor4D.inl
+	${HEADER_PATH}/aiConfig.h
+	${HEADER_PATH}/aiDefines.h
+	${HEADER_PATH}/aiFileIO.h
+	${HEADER_PATH}/aiLight.h
+	${HEADER_PATH}/aiMaterial.h
+	${HEADER_PATH}/aiMaterial.inl
+	${HEADER_PATH}/aiMatrix3x3.h
+	${HEADER_PATH}/aiMatrix3x3.inl
+	${HEADER_PATH}/aiMatrix4x4.h
+	${HEADER_PATH}/aiMatrix4x4.inl
+	${HEADER_PATH}/aiMesh.h
+	${HEADER_PATH}/aiPostProcess.h
+	${HEADER_PATH}/aiQuaternion.h
+	${HEADER_PATH}/aiScene.h
+	${HEADER_PATH}/aiTexture.h
+	${HEADER_PATH}/aiTypes.h
+	${HEADER_PATH}/aiVector2D.h
+	${HEADER_PATH}/aiVector3D.h
+	${HEADER_PATH}/aiVector3D.inl
+	${HEADER_PATH}/aiVersion.h
+	${HEADER_PATH}/assimp.h
+	${HEADER_PATH}/assimp.hpp
+	${HEADER_PATH}/DefaultLogger.h
+	${HEADER_PATH}/IOStream.h
+	${HEADER_PATH}/IOSystem.h
+	${HEADER_PATH}/Logger.h
+	${HEADER_PATH}/LogStream.h
+	${HEADER_PATH}/NullLogger.h
+)
+
+SOURCE_GROUP( Compiler FILES	${HEADER_PATH}/Compiler/pushpack1.h
+	${HEADER_PATH}/Compiler/poppack1.h
+)
+
+SOURCE_GROUP( Boost FILES
+	BoostWorkaround/boost/math/common_factor_rt.hpp
+	BoostWorkaround/boost/foreach.hpp
+	BoostWorkaround/boost/format.hpp
+	BoostWorkaround/boost/scoped_array.hpp
+	BoostWorkaround/boost/scoped_ptr.hpp
+	BoostWorkaround/boost/shared_array.hpp
+	BoostWorkaround/boost/shared_ptr.hpp
+	BoostWorkaround/boost/static_assert.hpp
+	BoostWorkaround/boost/tuple/tuple.hpp
+)
 
 SOURCE_GROUP( Logging FILES 
 	${HEADER_PATH}/DefaultLogger.h 
@@ -11,6 +94,7 @@ SOURCE_GROUP( Logging FILES
 	DefaultLogger.cpp
 	FileLogStream.h
 )
+
 SOURCE_GROUP( Common FILES 
 	aiAssert.cpp
 	fast_atof.h	
@@ -52,6 +136,11 @@ SOURCE_GROUP( Common FILES
 	TargetAnimation.h
 	RemoveComments.cpp
 	RemoveComments.h
+	Subdivision.cpp
+	Subdivision.h
+	Vertex.h
+	LineSplitter.h
+	TinyFormatter.h
 )
 
 SOURCE_GROUP( 3DS FILES 
@@ -82,7 +171,7 @@ SOURCE_GROUP( BVH FILES
 	BVHLoader.h
 )
 
-SOURCE_GROUP(Collada FILES
+SOURCE_GROUP( Collada FILES
 	ColladaHelper.h
 	ColladaLoader.cpp
 	ColladaLoader.h
@@ -90,24 +179,24 @@ SOURCE_GROUP(Collada FILES
 	ColladaParser.h
 )
 
-SOURCE_GROUP(DXF FILES
+SOURCE_GROUP( DXF FILES
 	DXFLoader.cpp
 	DXFLoader.h
 )
 
-SOURCE_GROUP(CSM FILES
+SOURCE_GROUP( CSM FILES
 	CSMLoader.cpp
 	CSMLoader.h
 )
 
-SOURCE_GROUP(HMP FILES
+SOURCE_GROUP( HMP FILES
 	HMPFileData.h
 	HMPLoader.cpp
 	HMPLoader.h
 	HalfLifeFileData.h
 )
 
-SOURCE_GROUP(Irr FILES
+SOURCE_GROUP( Irr FILES
 	IRRLoader.cpp
 	IRRLoader.h
 	IRRMeshLoader.cpp
@@ -116,7 +205,7 @@ SOURCE_GROUP(Irr FILES
 	IRRShared.h
 )
 
-SOURCE_GROUP(LWO FILES
+SOURCE_GROUP( LWO FILES
 	LWOAnimation.cpp
 	LWOAnimation.h
 	LWOBLoader.cpp
@@ -126,12 +215,12 @@ SOURCE_GROUP(LWO FILES
 	LWOMaterial.cpp
 )
 
-SOURCE_GROUP(LWS FILES
+SOURCE_GROUP( LWS FILES
 	LWSLoader.cpp
 	LWSLoader.h
 )
 
-SOURCE_GROUP(MD2 FILES
+SOURCE_GROUP( MD2 FILES
 	MD2FileData.h
 	MD2Loader.cpp
 	MD2Loader.h
@@ -192,11 +281,28 @@ SOURCE_GROUP( Obj FILES
 	ObjTools.h
 )
 
+SOURCE_GROUP( Ogre FILES
+	OgreImporter.h
+	OgreImporter.cpp
+	OgreImporterMaterial.cpp
+)
+
 SOURCE_GROUP( Ply FILES
 	PlyLoader.cpp
 	PlyLoader.h
 	PlyParser.cpp
 	PlyParser.h
+)
+
+SOURCE_GROUP(MS3D FILES
+	MS3DLoader.cpp
+	MS3DLoader.h
+)
+
+SOURCE_GROUP(COB FILES
+	COBLoader.cpp
+	COBLoader.h
+	COBScene.h
 )
 
 SOURCE_GROUP( PostProcessing FILES
@@ -253,6 +359,13 @@ SOURCE_GROUP( Q3D FILES
 	Q3DLoader.h
 )
 
+#SOURCE_GROUP( Q3BSP FILES
+	#Q3BSPFileParser.h
+	#Q3BSPFileParser.cpp
+	#Q3BSPFileImporter.h
+	#Q3BSPFileImporter.cpp
+#)
+
 SOURCE_GROUP( Raw FILES
 	RawLoader.cpp
 	RawLoader.h
@@ -282,9 +395,9 @@ SOURCE_GROUP( XFile FILES
 )
 
 SOURCE_GROUP( Extra FILES
-	extra/MakeVerboseFormat.cpp
-	extra/MakeVerboseFormat.h
-	extra/MD4FileData.h
+	MakeVerboseFormat.cpp
+	MakeVerboseFormat.h
+	MD4FileData.h
 )
 
 SOURCE_GROUP( IrrXML FILES
@@ -296,6 +409,11 @@ SOURCE_GROUP( IrrXML FILES
 	../contrib/irrXML/irrTypes.h
 	../contrib/irrXML/irrXML.cpp
 	../contrib/irrXML/irrXML.h
+)
+
+SOURCE_GROUP( ConvertUTF FILES
+	../contrib/ConvertUTF/ConvertUTF.h
+	../contrib/ConvertUTF/ConvertUTF.c
 )
 
 SOURCE_GROUP( zlib FILES
@@ -321,35 +439,7 @@ SOURCE_GROUP( zlib FILES
 	../contrib/zlib/zutil.h
 )
 
-ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
-	${HEADER_PATH}/DefaultLogger.h
-	${HEADER_PATH}/IOStream.h
-	${HEADER_PATH}/IOSystem.h
-	${HEADER_PATH}/LogStream.h
-	${HEADER_PATH}/Logger.h
-	${HEADER_PATH}/NullLogger.h
-#	${HEADER_PATH}/TDepGraphNode.h
-	${HEADER_PATH}/aiAnim.h
-	${HEADER_PATH}/aiAssert.h
-	${HEADER_PATH}/aiCamera.h
-	${HEADER_PATH}/aiConfig.h
-	${HEADER_PATH}/aiDefines.h
-	${HEADER_PATH}/aiFileIO.h
-	${HEADER_PATH}/aiLight.h
-	${HEADER_PATH}/aiMaterial.h
-	${HEADER_PATH}/aiMatrix3x3.h
-	${HEADER_PATH}/aiMatrix4x4.h
-	${HEADER_PATH}/aiMesh.h
-	${HEADER_PATH}/aiPostProcess.h
-	${HEADER_PATH}/aiQuaternion.h
-	${HEADER_PATH}/aiScene.h
-	${HEADER_PATH}/aiTexture.h
-	${HEADER_PATH}/aiTypes.h
-	${HEADER_PATH}/aiVector2D.h
-	${HEADER_PATH}/aiVector3D.h
-	${HEADER_PATH}/aiVersion.h
-	${HEADER_PATH}/assimp.h
-
+ADD_LIBRARY( assimp SHARED
 	3DSConverter.cpp
 	3DSHelper.h
 	3DSLoader.cpp
@@ -468,6 +558,9 @@ ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	ObjFileParser.cpp
 	ObjFileParser.h
 	ObjTools.h
+	OgreImporter.h
+	OgreImporter.cpp
+	OgreImporterMaterial.cpp
 	OptimizeGraph.cpp
 	OptimizeGraph.h
 	OptimizeMeshes.cpp
@@ -482,6 +575,10 @@ ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	ProcessHelper.h
 	Q3DLoader.cpp
 	Q3DLoader.h
+#	Q3BSPFileParser.h
+#	Q3BSPFileParser.cpp
+#	Q3BSPFileImporter.h
+#	Q3BSPFileImporter.cpp
 	RawLoader.cpp
 	RawLoader.h
 	RemoveComments.cpp
@@ -538,9 +635,9 @@ ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	fast_atof.h
 	irrXMLWrapper.h
 	qnan.h
-	extra/MakeVerboseFormat.cpp
-	extra/MakeVerboseFormat.h
-	extra/MD4FileData.h
+	MakeVerboseFormat.cpp
+	MakeVerboseFormat.h
+	MD4FileData.h
 	../contrib/irrXML/CXMLReaderImpl.h
 	../contrib/irrXML/heapsort.h
 	../contrib/irrXML/irrArray.h
@@ -568,12 +665,47 @@ ADD_LIBRARY( assimp STATIC EXCLUDE_FROM_ALL
 	../contrib/zlib/zlib.h
 	../contrib/zlib/zutil.c
 	../contrib/zlib/zutil.h
-)
-ADD_DEFINITIONS(-DASSIMP_BUILD_DLL_EXPORT)
+	../contrib/ConvertUTF/ConvertUTF.c
+	Subdivision.cpp
+	Subdivision.h
+	Vertex.h
+	MS3DLoader.h
+	MS3DLoader.cpp
+	COBLoader.cpp
+	COBLoader.h
+	COBScene.h
+	TinyFormatter.h
+	LineSplitter.h
 
-if (WIN32)
-	if ( MSVC80 )
+	# Necessary to show the headers in the project when using the VC++ generator:
+	BoostWorkaround/boost/math/common_factor_rt.hpp
+	BoostWorkaround/boost/foreach.hpp
+	BoostWorkaround/boost/format.hpp
+	BoostWorkaround/boost/scoped_array.hpp
+	BoostWorkaround/boost/scoped_ptr.hpp
+	BoostWorkaround/boost/shared_array.hpp
+	BoostWorkaround/boost/shared_ptr.hpp
+	BoostWorkaround/boost/static_assert.hpp
+	BoostWorkaround/boost/tuple/tuple.hpp
+	${PUBLIC_HEADERS}
+	${COMPILER_HEADERS}
+)
+
+ADD_DEFINITIONS( -DASSIMP_BUILD_DLL_EXPORT )
+
+if ( WIN32 )
+	if ( MSVC80 OR MSVC90 )
 		ADD_DEFINITIONS( -D_SCL_SECURE_NO_WARNINGS )
 		ADD_DEFINITIONS( -D_CRT_SECURE_NO_WARNINGS )
-	endif( MSVC80 )
-endif (WIN32)
+	endif ( MSVC80 OR MSVC90 )
+endif ( WIN32 )
+ 
+SET_TARGET_PROPERTIES( assimp PROPERTIES
+	VERSION ${LIBRARY_VERSION}
+	SOVERSION ${LIBRARY_SOVERSION}
+)
+
+# Not needed? (SpliFF)
+#INSTALL( TARGETS assimp DESTINATION ${LIB_INSTALL_DIR} )
+#INSTALL( FILES ${PUBLIC_HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR}/assimp )
+#INSTALL( FILES ${COMPILER_HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR}/assimp/Compiler )

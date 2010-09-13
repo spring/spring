@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -43,7 +43,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "AssimpPCH.h"
+
 #include "Hash.h"
+#include "fast_atof.h"
+#include "ParsingUtils.h"
 
 using namespace Assimp;
 
@@ -61,14 +64,14 @@ aiReturn aiGetMaterialProperty(const aiMaterial* pMat,
 
 	/*  Just search for a property with exactly this name ..
 	 *  could be improved by hashing, but it's possibly 
-	 *  no worth the effort.
-	 */
+	 *  no worth the effort (we're bound to C structures,
+	 *  thus std::map or derivates are not applicable. */
 	for (unsigned int i = 0; i < pMat->mNumProperties;++i) {
 		aiMaterialProperty* prop = pMat->mProperties[i];
 
 		if (prop /* just for safety ... */
-			&& 0 == ::strcmp( prop->mKey.data, pKey ) 
-			&& (0xffffffff == type  || prop->mSemantic == type) /* 0xffffffff is a wildcard */ 
+			&& 0 == strcmp( prop->mKey.data, pKey ) 
+			&& (0xffffffff == type  || prop->mSemantic == type) /* 0xffffffff is a wildcard, but this is undocumented :-) */ 
 			&& (0xffffffff == index || prop->mIndex == index))
 		{
 			*pPropOut = pMat->mProperties[i];
@@ -89,36 +92,64 @@ aiReturn aiGetMaterialFloatArray(const aiMaterial* pMat,
 	unsigned int* pMax)
 {
 	ai_assert (pOut != NULL);
+	ai_assert (pMat != NULL);
 
-	aiMaterialProperty* prop;
+	const aiMaterialProperty* prop;
 	aiGetMaterialProperty(pMat,pKey,type,index, (const aiMaterialProperty**) &prop);
-	if (!prop)
+	if (!prop) {
 		return AI_FAILURE;
+	}
 
 	// data is given in floats, simply copy it
+	unsigned int iWrite;
 	if( aiPTI_Float == prop->mType || aiPTI_Buffer == prop->mType)	{
-		unsigned int iWrite = prop->mDataLength / sizeof(float);
-
-		if (pMax)iWrite = *pMax < iWrite ? *pMax : iWrite;
-		::memcpy (pOut, prop->mData, iWrite * sizeof (float));
-
-		if (pMax)*pMax = iWrite;
+		iWrite = prop->mDataLength / sizeof(float);
+		if (pMax) {
+			iWrite = std::min(*pMax,iWrite); ;
+		}
+		for (unsigned int a = 0; a < iWrite;++a)	{
+			pOut[a] = static_cast<float> ( reinterpret_cast<float*>(prop->mData)[a] );
+		}
+		if (pMax) {
+			*pMax = iWrite;
+		}
 	}
 	// data is given in ints, convert to float
 	else if( aiPTI_Integer == prop->mType)	{
-		unsigned int iWrite = prop->mDataLength / sizeof(int);
-
-		if (pMax)iWrite = *pMax < iWrite ? *pMax : iWrite;
-		for (unsigned int a = 0; a < iWrite;++a)	{
-			pOut[a] = (float) ((int*)prop->mData)[a];
+		iWrite = prop->mDataLength / sizeof(int32_t);
+		if (pMax) {
+			iWrite = std::min(*pMax,iWrite); ;
 		}
-		if (pMax)*pMax = iWrite;
+		for (unsigned int a = 0; a < iWrite;++a)	{
+			pOut[a] = static_cast<float> ( reinterpret_cast<int32_t*>(prop->mData)[a] );
+		}
+		if (pMax) {
+			*pMax = iWrite;
+		}
 	}
-	// it is a string ... no way to read something out of this
-	else	{
-		DefaultLogger::get()->error("Material property" + std::string(pKey) + " was found, but is not an float array");	
-		if (pMax)*pMax = 0;
-		return AI_FAILURE;
+	// a string ... read floats separated by spaces
+	else {
+		if (pMax) {
+			iWrite = *pMax;
+		}
+		// strings are zero-terminated with a 32 bit length prefix, so this is safe
+		const char* cur =  prop->mData+4;
+		ai_assert(prop->mDataLength>=5 && !prop->mData[prop->mDataLength-1]);
+		for (unsigned int a = 0; ;++a) {	
+			cur = fast_atof_move(cur,pOut[a]);
+			if(a==iWrite-1) {
+				break;
+			}
+			if(!IsSpace(*cur)) {
+				DefaultLogger::get()->error("Material property" + std::string(pKey) + 
+					" is a string; failed to parse a float array out of it.");
+				return AI_FAILURE;
+			}
+		}
+
+		if (pMax) {
+			*pMax = iWrite;
+		}
 	}
 	return AI_SUCCESS;
 
@@ -134,36 +165,64 @@ aiReturn aiGetMaterialIntegerArray(const aiMaterial* pMat,
 	unsigned int* pMax)
 {
 	ai_assert (pOut != NULL);
+	ai_assert (pMat != NULL);
 
-	aiMaterialProperty* prop;
+	const aiMaterialProperty* prop;
 	aiGetMaterialProperty(pMat,pKey,type,index,(const aiMaterialProperty**) &prop);
-	if (!prop)
+	if (!prop) {
 		return AI_FAILURE;
+	}
 
 	// data is given in ints, simply copy it
+	unsigned int iWrite;
 	if( aiPTI_Integer == prop->mType || aiPTI_Buffer == prop->mType)	{
-
-		unsigned int iWrite = prop->mDataLength / sizeof(int);
-
-		if (pMax)iWrite = *pMax < iWrite ? *pMax : iWrite;
-		::memcpy (pOut, prop->mData, iWrite * sizeof (int));
-		if (pMax)*pMax = iWrite;
-	}
-	// data is given in floats convert to int (lossy!)
-	else if( aiPTI_Float == prop->mType)	{
-		unsigned int iWrite = prop->mDataLength / sizeof(float);
-
-		if (pMax)iWrite = *pMax < iWrite ? *pMax : iWrite;
-		for (unsigned int a = 0; a < iWrite;++a) {
-			pOut[a] = (int) ((float*)prop->mData)[a];
+		iWrite = prop->mDataLength / sizeof(int32_t);
+		if (pMax) {
+			iWrite = std::min(*pMax,iWrite); ;
 		}
-		if (pMax)*pMax = iWrite;
+		for (unsigned int a = 0; a < iWrite;++a) {
+			pOut[a] = static_cast<int>(reinterpret_cast<int32_t*>(prop->mData)[a]);
+		}
+		if (pMax) {
+			*pMax = iWrite;
+		}
+	}
+	// data is given in floats convert to int 
+	else if( aiPTI_Float == prop->mType)	{
+		iWrite = prop->mDataLength / sizeof(float);
+		if (pMax) {
+			iWrite = std::min(*pMax,iWrite); ;
+		}
+		for (unsigned int a = 0; a < iWrite;++a) {
+			pOut[a] = static_cast<int>(reinterpret_cast<float*>(prop->mData)[a]);
+		}
+		if (pMax) {
+			*pMax = iWrite;
+		}
 	}
 	// it is a string ... no way to read something out of this
 	else	{
-		DefaultLogger::get()->error("Material property" + std::string(pKey) + " was found, but is not an integer array");	
-		if (pMax)*pMax = 0;
-		return AI_FAILURE;
+		if (pMax) {
+			iWrite = *pMax;
+		}
+		// strings are zero-terminated with a 32 bit length prefix, so this is safe
+		const char* cur =  prop->mData+4;
+		ai_assert(prop->mDataLength>=5 && !prop->mData[prop->mDataLength-1]);
+		for (unsigned int a = 0; ;++a) {	
+			pOut[a] = strtol10s(cur,&cur);
+			if(a==iWrite-1) {
+				break;
+			}
+			if(!IsSpace(*cur)) {
+				DefaultLogger::get()->error("Material property" + std::string(pKey) + 
+					" is a string; failed to parse an integer array out of it.");
+				return AI_FAILURE;
+			}
+		}
+
+		if (pMax) {
+			*pMax = iWrite;
+		}
 	}
 	return AI_SUCCESS;
 }
@@ -177,11 +236,13 @@ aiReturn aiGetMaterialColor(const aiMaterial* pMat,
 	aiColor4D* pOut)
 {
 	unsigned int iMax = 4;
-	aiReturn eRet = aiGetMaterialFloatArray(pMat,pKey,type,index,(float*)pOut,&iMax);
+	const aiReturn eRet = aiGetMaterialFloatArray(pMat,pKey,type,index,(float*)pOut,&iMax);
 
 	// if no alpha channel is defined: set it to 1.0
-	if (3 == iMax)
+	if (3 == iMax) {
 		pOut->a = 1.0f;
+	}
+
 	return eRet;
 }
 
@@ -195,272 +256,50 @@ aiReturn aiGetMaterialString(const aiMaterial* pMat,
 {
 	ai_assert (pOut != NULL);
 
-	aiMaterialProperty* prop;
+	const aiMaterialProperty* prop;
 	aiGetMaterialProperty(pMat,pKey,type,index,(const aiMaterialProperty**)&prop);
-	if (!prop)
+	if (!prop) {
 		return AI_FAILURE;
+	}
 
 	if( aiPTI_String == prop->mType) {
+		ai_assert(prop->mDataLength>=5);
 
-		// WARN: There's not the whole string stored ..
-		const aiString* pcSrc = (const aiString*)prop->mData; 
-		::memcpy (pOut->data, pcSrc->data, (pOut->length = pcSrc->length)+1);
+		// The string is stored as 32 but length prefix followed by zero-terminated UTF8 data
+		pOut->length = static_cast<unsigned int>(*reinterpret_cast<uint32_t*>(prop->mData));
+
+		ai_assert(pOut->length+1+4==prop->mDataLength && !prop->mData[prop->mDataLength-1]);
+		memcpy(pOut->data,prop->mData+4,pOut->length+1);
 	}
-	// Wrong type
 	else {
-		DefaultLogger::get()->error("Material property" + std::string(pKey) + " was found, but is no string" );	
+		// TODO - implement lexical cast as well
+		DefaultLogger::get()->error("Material property" + std::string(pKey) + 
+			" was found, but is no string" );	
 		return AI_FAILURE;
 	}
 	return AI_SUCCESS;
 }
 
 // ------------------------------------------------------------------------------------------------
-// Construction. Actually the one and only way to get an aiMaterial instance
-MaterialHelper::MaterialHelper()
+// Get the number of textures on a particular texture stack
+ASSIMP_API unsigned int aiGetMaterialTextureCount(const C_STRUCT aiMaterial* pMat,  
+	C_ENUM aiTextureType type)
 {
-	// Allocate 5 entries by default
-	mNumProperties = 0;
-	mNumAllocated = 5;
-	mProperties = new aiMaterialProperty*[5];
-}
+	ai_assert (pMat != NULL);
 
-// ------------------------------------------------------------------------------------------------
-MaterialHelper::~MaterialHelper()
-{
-	_InternDestruct();
-}
+	/* Textures are always stored with ascending indices (ValidateDS provides a check, so we don't need to do it again) */
+	unsigned int max = 0;
+	for (unsigned int i = 0; i < pMat->mNumProperties;++i) {
+		aiMaterialProperty* prop = pMat->mProperties[i];
 
-// ------------------------------------------------------------------------------------------------
-aiMaterial::~aiMaterial()
-{
-	// HACK (Aramis): This is safe: aiMaterial has a private constructor,
-	// so instances must be created indirectly via MaterialHelper. We can't
-	// use a virtual d'tor because we need to preserve binary compatibility
-	// with good old C ...
-	((MaterialHelper*)this)->_InternDestruct();
-}
-
-// ------------------------------------------------------------------------------------------------
-// Manual destructor
-void MaterialHelper::_InternDestruct()
-{
-	// First clean up all properties
-	Clear();
-
-	// Then delete the array that stored them
-	delete[] mProperties;
-	AI_DEBUG_INVALIDATE_PTR(mProperties);
-
-	// Update members
-	mNumAllocated = 0;
-}
-
-// ------------------------------------------------------------------------------------------------
-void MaterialHelper::Clear()
-{
-	for (unsigned int i = 0; i < mNumProperties;++i)
-	{
-		// delete this entry
-		delete mProperties[i];
-		AI_DEBUG_INVALIDATE_PTR(mProperties[i]);
-	}
-	mNumProperties = 0;
-
-	// The array remains allocated, we just invalidated its contents
-}
-
-// ------------------------------------------------------------------------------------------------
-uint32_t MaterialHelper::ComputeHash(bool includeMatName /*= false*/)
-{
-	uint32_t hash = 1503; // magic start value, choosen to be my birthday :-)
-	for (unsigned int i = 0; i < this->mNumProperties;++i)
-	{
-		aiMaterialProperty* prop;
-
-		// Exclude all properties whose first character is '?' from the hash
-		// See doc for aiMaterialProperty.
-		if ((prop = mProperties[i]) && (includeMatName || prop->mKey.data[0] != '?'))
-		{
-			hash = SuperFastHash(prop->mKey.data,(unsigned int)prop->mKey.length,hash);
-			hash = SuperFastHash(prop->mData,prop->mDataLength,hash);
-
-			// Combine the semantic and the index with the hash
-			hash = SuperFastHash((const char*)&prop->mSemantic,sizeof(unsigned int),hash);
-			hash = SuperFastHash((const char*)&prop->mIndex,sizeof(unsigned int),hash);
+		if (prop /* just a sanity check ... */ 
+			&& 0 == strcmp( prop->mKey.data, _AI_MATKEY_TEXTURE_BASE )
+			&& prop->mSemantic == type) {
+	
+			max = std::max(max,prop->mIndex+1);
 		}
 	}
-	return hash;
-}
-
-// ------------------------------------------------------------------------------------------------
-aiReturn MaterialHelper::RemoveProperty (const char* pKey,unsigned int type,
-    unsigned int index
-	)
-{
-	ai_assert(NULL != pKey);
-
-	for (unsigned int i = 0; i < mNumProperties;++i) {
-		aiMaterialProperty* prop = mProperties[i];
-
-		if (prop && !::strcmp( prop->mKey.data, pKey ) &&
-			prop->mSemantic == type && prop->mIndex == index)
-		{
-			// Delete this entry
-			delete mProperties[i];
-
-			// collapse the array behind --.
-			--mNumProperties;
-			for (unsigned int a = i; a < mNumProperties;++a)	{
-				mProperties[a] = mProperties[a+1];
-			}
-			return AI_SUCCESS;
-		}
-	}
-
-	return AI_FAILURE;
-}
-
-// ------------------------------------------------------------------------------------------------
-aiReturn MaterialHelper::AddBinaryProperty (const void* pInput,
-	unsigned int pSizeInBytes,
-	const char* pKey,
-	unsigned int type,
-    unsigned int index,
-	aiPropertyTypeInfo pType
-	)
-{
-	ai_assert (pInput != NULL);
-	ai_assert (pKey != NULL);
-	ai_assert (0 != pSizeInBytes);
-
-	// first search the list whether there is already an entry with this key
-	unsigned int iOutIndex = 0xffffffff;
-	for (unsigned int i = 0; i < mNumProperties;++i)	{
-		aiMaterialProperty* prop = mProperties[i];
-
-		if (prop /* just for safety */
-			&& !::strcmp( prop->mKey.data, pKey ) 
-			&& prop->mSemantic == type 
-			&& prop->mIndex == index)
-		{
-			// delete this entry
-			delete mProperties[i];
-			iOutIndex = i;
-		}
-	}
-
-	// Allocate a new material property
-	aiMaterialProperty* pcNew = new aiMaterialProperty();
-
-	// Fill this
-	pcNew->mType = pType;
-	pcNew->mSemantic = type;
-	pcNew->mIndex = index;
-
-	pcNew->mDataLength = pSizeInBytes;
-	pcNew->mData = new char[pSizeInBytes];
-	::memcpy (pcNew->mData,pInput,pSizeInBytes);
-
-	pcNew->mKey.length = ::strlen(pKey);
-	ai_assert ( MAXLEN > pcNew->mKey.length);
-	::strcpy( pcNew->mKey.data, pKey );
-
-	if (0xffffffff != iOutIndex)	{
-		mProperties[iOutIndex] = pcNew;
-		return AI_SUCCESS;
-	}
-
-	// resize the array ... double the storage allocated
-	if (mNumProperties == mNumAllocated)	{
-		const unsigned int iOld = mNumAllocated;
-		mNumAllocated *= 2;
-
-		aiMaterialProperty** ppTemp;
-		try {
-		ppTemp = new aiMaterialProperty*[mNumAllocated];
-		} catch (std::bad_alloc&) {
-			return AI_OUTOFMEMORY;
-		}
-
-		// just copy all items over; then replace the old array
-		::memcpy (ppTemp,mProperties,iOld * sizeof(void*));
-
-		delete[] mProperties;
-		mProperties = ppTemp;
-	}
-	// push back ...
-	mProperties[mNumProperties++] = pcNew;
-	return AI_SUCCESS;
-}
-
-// ------------------------------------------------------------------------------------------------
-aiReturn MaterialHelper::AddProperty (const aiString* pInput,
-	const char* pKey,
-	unsigned int type,
-    unsigned int index)
-{
-	// We don't want to add the whole buffer .. 
-	return AddBinaryProperty(pInput,
-		(unsigned int)pInput->length+1+
-		(unsigned int)(((uint8_t*)&pInput->data - (uint8_t*)&pInput->length)),
-		pKey,
-		type,
-		index, 
-		aiPTI_String);
-}
-
-// ------------------------------------------------------------------------------------------------
-void MaterialHelper::CopyPropertyList(MaterialHelper* pcDest, 
-	const MaterialHelper* pcSrc
-	)
-{
-	ai_assert(NULL != pcDest);
-	ai_assert(NULL != pcSrc);
-
-	unsigned int iOldNum = pcDest->mNumProperties;
-	pcDest->mNumAllocated += pcSrc->mNumAllocated;
-	pcDest->mNumProperties += pcSrc->mNumProperties;
-
-	aiMaterialProperty** pcOld = pcDest->mProperties;
-	pcDest->mProperties = new aiMaterialProperty*[pcDest->mNumAllocated];
-
-	if (iOldNum && pcOld)	{
-		for (unsigned int i = 0; i < iOldNum;++i)
-			pcDest->mProperties[i] = pcOld[i];
-
-		delete[] pcOld;
-	}
-	for (unsigned int i = iOldNum; i< pcDest->mNumProperties;++i)	{
-		aiMaterialProperty* propSrc = pcSrc->mProperties[i];
-
-		// search whether we have already a property with this name -> if yes, overwrite it
-		aiMaterialProperty* prop;
-		for (unsigned int q = 0; q < iOldNum;++q) {
-			prop = pcDest->mProperties[q];
-			if (prop /* just for safety */ 
-				&& prop->mKey == propSrc->mKey 
-				&& prop->mSemantic == propSrc->mSemantic
-				&& prop->mIndex == propSrc->mIndex)	{
-				delete prop;
-
-				// collapse the whole array ...
-				::memmove(&pcDest->mProperties[q],&pcDest->mProperties[q+1],i-q);
-				i--;pcDest->mNumProperties--;
-			}
-		}
-
-		// Allocate the output property and copy the source property
-		prop = pcDest->mProperties[i] = new aiMaterialProperty();
-		prop->mKey = propSrc->mKey;
-		prop->mDataLength = propSrc->mDataLength;
-		prop->mType = propSrc->mType;
-		prop->mSemantic = propSrc->mSemantic;
-		prop->mIndex = propSrc->mIndex;
-
-		prop->mData = new char[propSrc->mDataLength];
-		::memcpy(prop->mData,propSrc->mData,prop->mDataLength);
-	}
-	return;
+	return max;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -510,5 +349,264 @@ aiReturn aiGetMaterialTexture(const C_STRUCT aiMaterial* mat,
 		aiGetMaterialInteger(mat,AI_MATKEY_TEXFLAGS(type,index),(int*)flags);
 	}
 	return AI_SUCCESS;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Construction. Actually the one and only way to get an aiMaterial instance
+MaterialHelper::MaterialHelper()
+{
+	// Allocate 5 entries by default
+	mNumProperties = 0;
+	mNumAllocated = 5;
+	mProperties = new aiMaterialProperty*[5];
+}
+
+// ------------------------------------------------------------------------------------------------
+MaterialHelper::~MaterialHelper()
+{
+	_InternDestruct();
+}
+
+// ------------------------------------------------------------------------------------------------
+aiMaterial::~aiMaterial()
+{
+	// HACK (Aramis): This is safe: aiMaterial has a private constructor,
+	// so instances must be created indirectly via MaterialHelper. We can't
+	// use a virtual d'tor because we need to preserve binary compatibility
+	// with good old C ...
+	((MaterialHelper*)this)->_InternDestruct();
+}
+
+// ------------------------------------------------------------------------------------------------
+// Manual destructor
+void MaterialHelper::_InternDestruct()
+{
+	// First clean up all properties
+	Clear();
+
+	// Then delete the array that stored them
+	delete[] mProperties;
+	AI_DEBUG_INVALIDATE_PTR(mProperties);
+
+	// Update members
+	mNumAllocated = 0;
+}
+
+// ------------------------------------------------------------------------------------------------
+void MaterialHelper::Clear()
+{
+	for (unsigned int i = 0; i < mNumProperties;++i)	{
+		// delete this entry
+		delete mProperties[i];
+		AI_DEBUG_INVALIDATE_PTR(mProperties[i]);
+	}
+	mNumProperties = 0;
+
+	// The array remains allocated, we just invalidated its contents
+}
+
+// ------------------------------------------------------------------------------------------------
+uint32_t MaterialHelper::ComputeHash(bool includeMatName /*= false*/)
+{
+	uint32_t hash = 1503; // magic start value, choosen to be my birthday :-)
+	for (unsigned int i = 0; i < mNumProperties;++i)	{
+		aiMaterialProperty* prop;
+
+		// Exclude all properties whose first character is '?' from the hash
+		// See doc for aiMaterialProperty.
+		if ((prop = mProperties[i]) && (includeMatName || prop->mKey.data[0] != '?'))	{
+
+			hash = SuperFastHash(prop->mKey.data,(unsigned int)prop->mKey.length,hash);
+			hash = SuperFastHash(prop->mData,prop->mDataLength,hash);
+
+			// Combine the semantic and the index with the hash
+			hash = SuperFastHash((const char*)&prop->mSemantic,sizeof(unsigned int),hash);
+			hash = SuperFastHash((const char*)&prop->mIndex,sizeof(unsigned int),hash);
+		}
+	}
+	return hash;
+}
+
+// ------------------------------------------------------------------------------------------------
+aiReturn MaterialHelper::RemoveProperty (const char* pKey,unsigned int type,
+    unsigned int index
+	)
+{
+	ai_assert(NULL != pKey);
+
+	for (unsigned int i = 0; i < mNumProperties;++i) {
+		aiMaterialProperty* prop = mProperties[i];
+
+		if (prop && !strcmp( prop->mKey.data, pKey ) &&
+			prop->mSemantic == type && prop->mIndex == index)
+		{
+			// Delete this entry
+			delete mProperties[i];
+
+			// collapse the array behind --.
+			--mNumProperties;
+			for (unsigned int a = i; a < mNumProperties;++a)	{
+				mProperties[a] = mProperties[a+1];
+			}
+			return AI_SUCCESS;
+		}
+	}
+
+	return AI_FAILURE;
+}
+
+// ------------------------------------------------------------------------------------------------
+aiReturn MaterialHelper::AddBinaryProperty (const void* pInput,
+	unsigned int pSizeInBytes,
+	const char* pKey,
+	unsigned int type,
+    unsigned int index,
+	aiPropertyTypeInfo pType
+	)
+{
+	ai_assert (pInput != NULL);
+	ai_assert (pKey != NULL);
+	ai_assert (0 != pSizeInBytes);
+
+	// first search the list whether there is already an entry with this key
+	unsigned int iOutIndex = 0xffffffff;
+	for (unsigned int i = 0; i < mNumProperties;++i)	{
+		aiMaterialProperty* prop = mProperties[i];
+
+		if (prop /* just for safety */ && !strcmp( prop->mKey.data, pKey ) &&
+			prop->mSemantic == type && prop->mIndex == index){
+
+			delete mProperties[i];
+			iOutIndex = i;
+		}
+	}
+
+	// Allocate a new material property
+	aiMaterialProperty* pcNew = new aiMaterialProperty();
+
+	// .. and fill it
+	pcNew->mType = pType;
+	pcNew->mSemantic = type;
+	pcNew->mIndex = index;
+
+	pcNew->mDataLength = pSizeInBytes;
+	pcNew->mData = new char[pSizeInBytes];
+	memcpy (pcNew->mData,pInput,pSizeInBytes);
+
+	pcNew->mKey.length = ::strlen(pKey);
+	ai_assert ( MAXLEN > pcNew->mKey.length);
+	strcpy( pcNew->mKey.data, pKey );
+
+	if (0xffffffff != iOutIndex)	{
+		mProperties[iOutIndex] = pcNew;
+		return AI_SUCCESS;
+	}
+
+	// resize the array ... double the storage allocated
+	if (mNumProperties == mNumAllocated)	{
+		const unsigned int iOld = mNumAllocated;
+		mNumAllocated *= 2;
+
+		aiMaterialProperty** ppTemp;
+		try {
+		ppTemp = new aiMaterialProperty*[mNumAllocated];
+		} catch (std::bad_alloc&) {
+			return AI_OUTOFMEMORY;
+		}
+
+		// just copy all items over; then replace the old array
+		memcpy (ppTemp,mProperties,iOld * sizeof(void*));
+
+		delete[] mProperties;
+		mProperties = ppTemp;
+	}
+	// push back ...
+	mProperties[mNumProperties++] = pcNew;
+	return AI_SUCCESS;
+}
+
+// ------------------------------------------------------------------------------------------------
+aiReturn MaterialHelper::AddProperty (const aiString* pInput,
+	const char* pKey,
+	unsigned int type,
+    unsigned int index)
+{
+	// We don't want to add the whole buffer .. write a 32 bit length
+	// prefix followed by the zero-terminated UTF8 string.
+	// (HACK) I don't want to break the ABI now, but we definitely
+	// ought to change aiString::mLength to uint32_t one day.
+	if (sizeof(size_t) == 8) {
+		aiString copy = *pInput;
+		uint32_t* s = reinterpret_cast<uint32_t*>(&copy.length);
+		s[1] = static_cast<uint32_t>(pInput->length);
+
+		return AddBinaryProperty(s+1,
+			pInput->length+1+4,
+			pKey,
+			type,
+			index, 
+			aiPTI_String);
+	}
+	ai_assert(sizeof(size_t)==4);
+	return AddBinaryProperty(pInput,
+		pInput->length+1+4,
+		pKey,
+		type,
+		index, 
+		aiPTI_String);
+}
+
+// ------------------------------------------------------------------------------------------------
+void MaterialHelper::CopyPropertyList(MaterialHelper* pcDest, 
+	const MaterialHelper* pcSrc
+	)
+{
+	ai_assert(NULL != pcDest);
+	ai_assert(NULL != pcSrc);
+
+	unsigned int iOldNum = pcDest->mNumProperties;
+	pcDest->mNumAllocated += pcSrc->mNumAllocated;
+	pcDest->mNumProperties += pcSrc->mNumProperties;
+
+	aiMaterialProperty** pcOld = pcDest->mProperties;
+	pcDest->mProperties = new aiMaterialProperty*[pcDest->mNumAllocated];
+
+	if (iOldNum && pcOld)	{
+		for (unsigned int i = 0; i < iOldNum;++i) {
+			pcDest->mProperties[i] = pcOld[i];
+		}
+
+		delete[] pcOld;
+	}
+	for (unsigned int i = iOldNum; i< pcDest->mNumProperties;++i)	{
+		aiMaterialProperty* propSrc = pcSrc->mProperties[i];
+
+		// search whether we have already a property with this name -> if yes, overwrite it
+		aiMaterialProperty* prop;
+		for (unsigned int q = 0; q < iOldNum;++q) {
+			prop = pcDest->mProperties[q];
+			if (prop /* just for safety */ && prop->mKey == propSrc->mKey && prop->mSemantic == propSrc->mSemantic
+				&& prop->mIndex == propSrc->mIndex)	{
+				delete prop;
+
+				// collapse the whole array ...
+				memmove(&pcDest->mProperties[q],&pcDest->mProperties[q+1],i-q);
+				i--;
+				pcDest->mNumProperties--;
+			}
+		}
+
+		// Allocate the output property and copy the source property
+		prop = pcDest->mProperties[i] = new aiMaterialProperty();
+		prop->mKey = propSrc->mKey;
+		prop->mDataLength = propSrc->mDataLength;
+		prop->mType = propSrc->mType;
+		prop->mSemantic = propSrc->mSemantic;
+		prop->mIndex = propSrc->mIndex;
+
+		prop->mData = new char[propSrc->mDataLength];
+		memcpy(prop->mData,propSrc->mData,prop->mDataLength);
+	}
+	return;
 }
 

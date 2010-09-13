@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -54,14 +54,15 @@ using namespace Assimp;
 void LWOImporter::LoadLWOBFile()
 {
 	LE_NCONST uint8_t* const end = mFileBuffer + fileSize;
-	while (true)
+	bool running = true;
+	while (running)
 	{
 		if (mFileBuffer + sizeof(IFF::ChunkHeader) > end)break;
 		LE_NCONST IFF::ChunkHeader* const head = IFF::LoadChunk(mFileBuffer);
 
 		if (mFileBuffer + head->length > end)
 		{
-			throw new ImportErrorException("LWOB: Invalid chunk length");
+			throw DeadlyImportError("LWOB: Invalid chunk length");
 			break;
 		}
 		uint8_t* const next = mFileBuffer+head->length;
@@ -229,7 +230,8 @@ void LWOImporter::LoadLWOBSurface(unsigned int size)
 	LWO::Texture* pTex = NULL;
 
 	GetS0(surf.mName,size);
-	while (true)	{
+	bool runnning = true;
+	while (runnning)	{
 		if (mFileBuffer + 6 >= end)
 			break;
 
@@ -244,7 +246,7 @@ void LWOImporter::LoadLWOBSurface(unsigned int size)
 		 */
 		if (mFileBuffer + head->length > end) {
 			DefaultLogger::get()->error("LWOB: Invalid surface chunk length. Trying to continue.");
-			head->length = end - mFileBuffer;
+			head->length = (uint16_t) (end - mFileBuffer);
 		}
 
 		uint8_t* const next = mFileBuffer+head->length;

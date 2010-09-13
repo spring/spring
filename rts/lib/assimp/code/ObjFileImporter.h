@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -81,7 +81,7 @@ public:
 private:
 
 	//! \brief	Appends the supported extention.
-	void GetExtensionList(std::string& append);
+	void GetExtensionList(std::set<std::string>& extensions);
 
 	//!	\brief	File import implementation.
 	void InternReadFile(const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler);
@@ -90,7 +90,7 @@ private:
 	void CreateDataFromImport(const ObjFile::Model* pModel, aiScene* pScene);
 	
 	//!	\brief	Creates all nodes stored in imported content.
-	aiNode *createNodes(const ObjFile::Model* pModel, const ObjFile::Object* pData, 
+	aiNode *createNodes(const ObjFile::Model* pModel, const ObjFile::Object* pData, unsigned int uiMeshIndex,
 		aiNode *pParent, aiScene* pScene, std::vector<aiMesh*> &MeshArray);
 
 	//!	\brief	Creates topology data like faces and meshes for the geometry.
@@ -105,8 +105,7 @@ private:
 	void countObjects(const std::vector<ObjFile::Object*> &rObjects, int &iNumMeshes);
 
 	//!	\brief	Material creation.
-	void createMaterial(const ObjFile::Model* pModel, const ObjFile::Object* pData, 
-		aiScene* pScene);
+	void createMaterials(const ObjFile::Model* pModel, aiScene* pScene);
 
 	//!	\brief	Appends a child node to a parentnode and updates the datastructures.
 	void appendChildToParentNode(aiNode *pParent, aiNode *pChild);
@@ -125,9 +124,9 @@ private:
 
 // ------------------------------------------------------------------------------------------------
 //	
-inline void ObjFileImporter::GetExtensionList(std::string& append)
+inline void ObjFileImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.obj");
+	extensions.insert("obj");
 }
 
 // ------------------------------------------------------------------------------------------------

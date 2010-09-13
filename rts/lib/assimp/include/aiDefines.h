@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -119,11 +119,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #		define ASSIMP_API 
 #	endif
 
-	/* Force the compiler to inline a function, if supported
+	/* Force the compiler to inline a function, if possible
 	 */
 #	define AI_FORCE_INLINE __forceinline
 
+	/* Tells the compiler that a function never returns. Used in code analysis
+	 * to skip dead paths (e.g. after an assertion evaluated false).
+	 */
+#	define AI_WONT_RETURN __declspec(noreturn)
 #else
+	
+#	define AI_WONT_RETURN
+
 #	define ASSIMP_API
 #	define AI_FORCE_INLINE inline
 #endif // (defined _MSC_VER)
@@ -208,15 +215,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #	define ASSIMP_BUILD_DEBUG
 #endif
 
-/* This is PI. Hi PI.
- */
-#define AI_MATH_PI		(3.1415926538)
-#define AI_MATH_TWO_PI	(AI_MATH_PI * 2.0)
-#define AI_MATH_HALF_PI	(AI_MATH_PI * 0.5)
+/* This is PI. Hi PI. */
+#define AI_MATH_PI			(3.141592653589793238462643383279 )
+#define AI_MATH_TWO_PI		(AI_MATH_PI * 2.0)
+#define AI_MATH_HALF_PI		(AI_MATH_PI * 0.5)
 
-/* Tiny macro to convert from radians to degrees and the opposite
- */
+/* And this is to avoid endless casts to float */
+#define AI_MATH_PI_F		(3.1415926538f)
+#define AI_MATH_TWO_PI_F	(AI_MATH_PI_F * 2.0f)
+#define AI_MATH_HALF_PI_F	(AI_MATH_PI_F * 0.5f)
+
+/* Tiny macro to convert from radians to degrees and back */
 #define AI_DEG_TO_RAD(x) (x*0.0174532925f)
 #define AI_RAD_TO_DEG(x) (x*57.2957795f)
+
+/* Support for big-endian builds on Mac OS X. */
+#if defined(__APPLE__) && defined(__BIG_ENDIAN__)
+#define AI_BUILD_BIG_ENDIAN
+#endif
 
 #endif // !! INCLUDED_AI_DEFINES_H

@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -100,9 +100,10 @@ protected:
 	/** Called by Importer::GetExtensionList() for each loaded importer.
 	 * See BaseImporter::GetExtensionList() for details
 	 */
-	void GetExtensionList(std::string& append)
+	void GetExtensionList(std::set<std::string>& extensions)
 	{
-		append.append("*.lwo;*.lxo");
+		extensions.insert("lxo");
+		extensions.insert("lwo");
 	}
 
 	// -------------------------------------------------------------------
@@ -361,6 +362,9 @@ protected:
 
 	/** true if the file is a LWO2 file*/
 	bool mIsLWO2;
+
+	/** true if the file is a LXOB file*/
+	bool mIsLXOB;
 
 	/** Temporary list of layers from the file */
 	LayerList* mLayers;

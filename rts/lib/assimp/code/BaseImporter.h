@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -42,6 +42,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef INCLUDED_AI_BASEIMPORTER_H
 #define INCLUDED_AI_BASEIMPORTER_H
 
+#include "Exceptional.h"
+
 #include <string>
 #include "./../include/aiTypes.h"
 
@@ -56,34 +58,15 @@ class Importer;
 #define AI_MAKE_MAGIC(string) ((uint32_t)((string[0] << 24) + \
 	(string[1] << 16) + (string[2] << 8) + string[3]))
 
-// ---------------------------------------------------------------------------
-/** Simple exception class to be thrown if an error occurs while importing. */
-class ASSIMP_API ImportErrorException 
-{
-public:
-	/** Constructor with arguments */
-	ImportErrorException( const std::string& pErrorText)
-	{
-		mErrorText = pErrorText;
-	}
 
-	// -------------------------------------------------------------------
-	/** Returns the error text provided when throwing the exception */
-	inline const std::string& GetErrorText() const 
-	{ return mErrorText; }
-
-private:
-	std::string mErrorText;
-};
-
+//! @cond never
 // ---------------------------------------------------------------------------
 /** @brief Internal PIMPL implementation for Assimp::Importer
  *
  *  Using this idiom here allows us to drop the dependency from
  *  std::vector and std::map in the public headers. Furthermore we are dropping
  *  any STL interface problems caused by mismatching STL settings. All
- *  size calculation are now done by us, not the app heap.
- */
+ *  size calculation are now done by us, not the app heap. */
 class ASSIMP_API ImporterPimpl 
 {
 public:
@@ -131,10 +114,11 @@ public:
 	/** Used by post-process steps to share data */
 	SharedPostProcessInfo* mPPShared;
 };
+//! @endcond
 
 // ---------------------------------------------------------------------------
-/** The BaseImporter defines a common interface for all importer worker 
- *  classes.
+/** FOR IMPORTER PLUGINS ONLY: The BaseImporter defines a common interface 
+ *  for all importer worker classes.
  *
  * The interface defines two functions: CanRead() is used to check if the 
  * importer can handle the format of the given file. If an implementation of 
@@ -162,7 +146,7 @@ public:
 	 * the file extension is enough. If no suitable loader is found with
 	 * this strategy, CanRead() is called again, the 'checkSig' parameter
 	 * set to true this time. Now the implementation is expected to
-	 * perform a full check of the file format, possibly searching the
+	 * perform a full check of the file structure, possibly searching the
 	 * first bytes of the file for magic identifiers or keywords.
 	 *
 	 * @param pFile Path and file name of the file to be examined.
@@ -172,14 +156,12 @@ public:
 	 *   contents of the file to be loaded for magic bytes, keywords, etc
 	 *   to be able to load files with unknown/not existent file extensions.
 	 * @return true if the class can read this file, false if not.
-	 *
-	 * @note Sometimes ASSIMP uses this method to determine whether a
-	 * a given file extension is generally supported. In this case the
-	 * file extension is passed in the pFile parameter, pIOHandler is NULL
 	 */
-	virtual bool CanRead( const std::string& pFile, 
-		IOSystem* pIOHandler, bool checkSig) const = 0;
-
+	virtual bool CanRead( 
+		const std::string& pFile, 
+		IOSystem* pIOHandler, 
+		bool checkSig
+		) const = 0;
 
 	// -------------------------------------------------------------------
 	/** Imports the given file and returns the imported data.
@@ -199,8 +181,10 @@ public:
 	 * in InternReadFile(), this function will catch it and transform it into
 	 *  a suitable response to the caller.
 	 */
-	aiScene* ReadFile( const std::string& pFile, IOSystem* pIOHandler);
-
+	aiScene* ReadFile(
+		const std::string& pFile, 
+		IOSystem* pIOHandler
+		);
 
 	// -------------------------------------------------------------------
 	/** Returns the error description of the last error that occured. 
@@ -211,29 +195,28 @@ public:
 		return mErrorText;
 	}
 
-
 	// -------------------------------------------------------------------
 	/** Called prior to ReadFile().
 	 * The function is a request to the importer to update its configuration
 	 * basing on the Importer's configuration property list.
 	 * @param pImp Importer instance
-	 * @param ppFlags Post-processing steps to be executed on the data
-	 *  returned by the loaders. This value is provided to allow some
-	 * internal optimizations.
 	 */
-	virtual void SetupProperties(const Importer* pImp /*,
-		unsigned int ppFlags*/);
+	virtual void SetupProperties(
+		const Importer* pImp
+		);
 
 protected:
 
 	// -------------------------------------------------------------------
 	/** Called by Importer::GetExtensionList() for each loaded importer.
-	 *  Importer implementations should append all file extensions
-	 *  which they supported to the passed string.
-	 *  Example: "*.blabb;*.quak;*.gug;*.foo" (no delimiter after the last!)
-	 * @param append Output string
-	 */
-	virtual void GetExtensionList(std::string& append) = 0;
+	 *  Implementations are expected to insert() all file extensions
+	 *  handled by them into the extension set. A loader capable of
+	 *  reading certain files with the extension BLA would place the
+	 *  string bla (lower-case!) in the output set.
+	 * @param extensions Output set. */
+	virtual void GetExtensionList(
+		std::set<std::string>& extensions
+		) = 0;
 
 	// -------------------------------------------------------------------
 	/** Imports the given file into the given scene structure. The 
@@ -278,11 +261,14 @@ protected:
 	 * @param pScene The scene object to hold the imported data.
 	 * NULL is not a valid parameter.
 	 * @param pIOHandler The IO handler to use for any file access.
-	 * NULL is not a valid parameter.
-	 */
-	virtual void InternReadFile( const std::string& pFile, 
-		aiScene* pScene, IOSystem* pIOHandler) = 0;
+	 * NULL is not a valid parameter. */
+	virtual void InternReadFile( 
+		const std::string& pFile, 
+		aiScene* pScene, 
+		IOSystem* pIOHandler
+		) = 0;
 
+public: // static utilities
 
 	// -------------------------------------------------------------------
 	/** A utility for CanRead().
@@ -298,11 +284,12 @@ protected:
 	 *  @param numTokens Size of the token array
 	 *  @param searchBytes Number of bytes to be searched for the tokens.
 	 */
-	static bool SearchFileHeaderForToken(IOSystem* pIOSystem, 
+	static bool SearchFileHeaderForToken(
+		IOSystem* pIOSystem, 
 		const std::string&	file,
-		const char**		tokens, 
-		unsigned int		numTokens,
-		unsigned int		searchBytes = 200);
+		const char** tokens, 
+		unsigned int numTokens,
+		unsigned int searchBytes = 200);
 
 
 	// -------------------------------------------------------------------
@@ -313,7 +300,8 @@ protected:
 	 *  @param ext2 Optional third extension
 	 *  @note Case-insensitive
 	 */
-	static bool SimpleExtensionCheck (const std::string& pFile, 
+	static bool SimpleExtensionCheck (
+		const std::string& pFile, 
 		const char* ext0,
 		const char* ext1 = NULL,
 		const char* ext2 = NULL);
@@ -323,7 +311,8 @@ protected:
 	 *  @param pFile Input file
 	 *  @return Extension without trailing dot, all lowercase
 	 */
-	static std::string GetExtension (const std::string& pFile);
+	static std::string GetExtension (
+		const std::string& pFile);
 
 	// -------------------------------------------------------------------
 	/** @brief Check whether a file starts with one or more magic tokens
@@ -339,26 +328,34 @@ protected:
 	 *  byte-swapped variant of all tokens (big endian). Only for
 	 *  tokens of size 2,4.
 	 */
-	static bool CheckMagicToken(IOSystem* pIOHandler, const std::string& pFile, 
+	static bool CheckMagicToken(
+		IOSystem* pIOHandler, 
+		const std::string& pFile, 
 		const void* magic,
 		unsigned int num,
 		unsigned int offset = 0,
 		unsigned int size   = 4);
 
-#if 0 /** TODO **/
 	// -------------------------------------------------------------------
 	/** An utility for all text file loaders. It converts a file to our
-	*  ASCII/UTF8 character set. Special unicode characters are lost.
-	*
-	*  @param buffer Input buffer. Needn't be terminated with zero.
-	 *  @param length Length of the input buffer, in bytes. Receives the
-	 *    number of output characters, excluding the terminal char.
-	 *  @return true if the source format did not match our internal
-	 *    format so it was converted.
-	 */
-	static bool ConvertToUTF8(const char* buffer, 
-		unsigned int& length);
-#endif
+	 *   UTF8 character set. Errors are reported, but ignored.
+	 *
+	 *  @param data File buffer to be converted to UTF8 data. The buffer 
+	 *  is resized as appropriate. */
+	static void ConvertToUTF8(
+		std::vector<char>& data);
+
+	// -------------------------------------------------------------------
+	/** Utility for text file loaders which copies the contents of the
+	 *  file into a memory buffer and converts it to our UTF8
+	 *  representation.
+	 *  @param stream Stream to read from. 
+	 *  @param data Output buffer to be resized and filled with the
+	 *   converted text file data. The buffer is terminated with
+	 *   a binary 0. */
+	static void TextFileToBuffer(
+		IOStream* stream,
+		std::vector<char>& data);
 
 protected:
 
@@ -369,25 +366,23 @@ protected:
 struct BatchData;
 
 // ---------------------------------------------------------------------------
-/** A helper class that can be used by importers which need to load many
- *  extern meshes recursively.
+/** FOR IMPORTER PLUGINS ONLY: A helper class for the pleasure of importers 
+ *  which need to load many extern meshes recursively.
  *
  *  The class uses several threads to load these meshes (or at least it
  *  could, this has not yet been implemented at the moment).
  *
- *  @note The class may not be used by more than one thread
- */
-class ASSIMP_API BatchLoader
+ *  @note The class may not be used by more than one thread*/
+class ASSIMP_API BatchLoader 
 {
 	// friend of Importer
 
 public:
 
-	/** Represents a full list of configuration properties
-	 *  for the importer.
-	 *
-	 *  Properties can be set using SetGenericProperty
-	 */
+	//! @cond never
+	// -------------------------------------------------------------------
+	/** Wraps a full list of configuration properties for an importer.
+	 *  Properties can be set using SetGenericProperty */
 	struct PropertyMap
 	{
 		ImporterPimpl::IntPropertyMap     ints;
@@ -403,43 +398,50 @@ public:
 			return ints.empty() && floats.empty() && strings.empty();
 		}
 	};
+	//! @endcond
 
 public:
 	
 
-	/** Construct a batch loader from a given IO system
-	 */
+	// -------------------------------------------------------------------
+	/** Construct a batch loader from a given IO system to be used 
+	 *  to acess external files */
 	BatchLoader(IOSystem* pIO);
 	~BatchLoader();
 
 
+	// -------------------------------------------------------------------
 	/** Add a new file to the list of files to be loaded.
-	 *
 	 *  @param file File to be loaded
-	 *  @param steps Steps to be executed on the file
+	 *  @param steps Post-processing steps to be executed on the file
 	 *  @param map Optional configuration properties
 	 *  @return 'Load request channel' - an unique ID that can later
 	 *    be used to access the imported file data.
-	 */
-	unsigned int AddLoadRequest	(const std::string& file,
-		unsigned int steps = 0, const PropertyMap* map = NULL);
+	 *  @see GetImport */
+	unsigned int AddLoadRequest	(
+		const std::string& file,
+		unsigned int steps = 0, 
+		const PropertyMap* map = NULL
+		);
 
 
+	// -------------------------------------------------------------------
 	/** Get an imported scene.
-	 *
 	 *  This polls the import from the internal request list.
 	 *  If an import is requested several times, this function
 	 *  can be called several times, too.
 	 *
 	 *  @param which LRWC returned by AddLoadRequest().
 	 *  @return NULL if there is no scene with this file name
-	 *  in the queue of the scene hasn't been loaded yet.
-	 */
-	aiScene* GetImport		(unsigned int which);
+	 *  in the queue of the scene hasn't been loaded yet. */
+	aiScene* GetImport(
+		unsigned int which
+		);
 
 
-	/** Waits until all scenes have been loaded.
-	 */
+	// -------------------------------------------------------------------
+	/** Waits until all scenes have been loaded. This returns
+	 *  immediately if no scenes are queued.*/
 	void LoadAll();
 
 private:

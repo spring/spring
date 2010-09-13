@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -56,12 +56,12 @@ using namespace Assimp::MD5;
 
 // ------------------------------------------------------------------------------------------------
 // Parse the segment structure fo a MD5 file
-MD5Parser::MD5Parser(char* _buffer, unsigned int _fileSize)
+MD5Parser::MD5Parser(char* _buffer, unsigned int _fileSize )
 {
 	ai_assert(NULL != _buffer && 0 != _fileSize);
 
 	buffer = _buffer;
-	fileSize = fileSize;
+	fileSize = _fileSize;
 	lineNumber = 0;
 
 	DefaultLogger::get()->debug("MD5Parser begin");
@@ -70,7 +70,8 @@ MD5Parser::MD5Parser(char* _buffer, unsigned int _fileSize)
 	ParseHeader();
 
 	// and read all sections until we're finished
-	while (1)	{
+	bool running = true;
+	while (running)	{
 		mSections.push_back(Section());
 		Section& sec = mSections.back();
 		if(!ParseSection(sec))	{
@@ -91,7 +92,7 @@ MD5Parser::MD5Parser(char* _buffer, unsigned int _fileSize)
 {
 	char szBuffer[1024];
 	::sprintf(szBuffer,"[MD5] Line %i: %s",line,error);
-	throw new ImportErrorException(szBuffer);
+	throw DeadlyImportError(szBuffer);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -140,11 +141,13 @@ bool MD5Parser::ParseSection(Section& out)
 	out.mName = std::string(sz,(uintptr_t)(buffer-sz));
 	SkipSpaces();
 
-	while (1)	{
+	bool running = true;
+	while (running)	{
 		if ('{' == *buffer)	{
 			// it is a normal section so read all lines
 			buffer++;
-			while (true)
+			bool run = true;
+			while (run)
 			{
 				if (!SkipSpacesAndLineEnd()) {
 					return false; // seems this was the last section

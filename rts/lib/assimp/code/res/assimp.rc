@@ -1,7 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-#include "..\..\mkutil\revision.h"
+#include "..\..\revision.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -30,11 +30,9 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 // Version
 //
 
-#if (!defined ASSIMP_JNI_EXPORT)
-
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,SVNRevision, 0
- PRODUCTVERSION 1,0,SVNRevision,0
+ FILEVERSION 1,1,SVNRevision, 0
+ PRODUCTVERSION 1,1,SVNRevision,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -52,12 +50,12 @@ BEGIN
             VALUE "Comments", "Licensed under a 3-clause BSD license"
             VALUE "CompanyName", "ASSIMP Development Team"
             VALUE "FileDescription", "Open Asset Import Library"
-            VALUE "FileVersion", 1,0,SVNRevision,0
+            VALUE "FileVersion", 1,1,SVNRevision,0
             VALUE "InternalName", "assimp "
-            VALUE "LegalCopyright", "Copyright (C) 2008"
+            VALUE "LegalCopyright", "Copyright (C) 2006-2010"
             VALUE "OriginalFilename", "assimpNN.dll"
             VALUE "ProductName", "Open Asset Import Library"
-            VALUE "ProductVersion", 1,0,SVNRevision,0
+            VALUE "ProductVersion", 1,1,SVNRevision,0
 		,0
         END
     END
@@ -67,12 +65,8 @@ BEGIN
     END
 END
 
-
-#endif // !!ASSIMP_JNI_EXPORT 
-
 #endif    // Deutsch (Deutschland) resources
 /////////////////////////////////////////////////////////////////////////////
-
 
 
 #ifndef APSTUDIO_INVOKED
@@ -80,7 +74,6 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED

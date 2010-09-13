@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -63,6 +63,25 @@ BaseImporter::~BaseImporter()
 	// nothing to do here
 }
 
+template <typename T>
+struct tinyguard
+{
+	tinyguard(T* obj) : obj(obj), mdismiss() {}
+	~tinyguard () throw() {if (!mdismiss) {delete obj;} obj = NULL;} 
+
+	void dismiss() {
+		mdismiss=true;
+	}
+
+	operator T*() {
+		return obj;
+	}
+
+private:
+	T* obj;
+	bool mdismiss;
+};
+
 // ------------------------------------------------------------------------------------------------
 // Imports the given file and returns the imported data.
 aiScene* BaseImporter::ReadFile( const std::string& pFile, IOSystem* pIOHandler)
@@ -71,28 +90,23 @@ aiScene* BaseImporter::ReadFile( const std::string& pFile, IOSystem* pIOHandler)
 	FileSystemFilter filter(pFile,pIOHandler);
 
 	// create a scene object to hold the data
-	aiScene* scene = new aiScene();
+	tinyguard<aiScene> sc(new aiScene());
 
 	// dispatch importing
 	try
 	{
-		InternReadFile( pFile, scene, &filter);
-	} catch( ImportErrorException* exception)
-	{
+		InternReadFile( pFile, sc, &filter);
+
+	} catch( const std::exception& err )	{
 		// extract error description
-		mErrorText = exception->GetErrorText();
-
+		mErrorText = err.what();
 		DefaultLogger::get()->error(mErrorText);
-
-		delete exception;
-
-		// and kill the partially imported data
-		delete scene;
-		scene = NULL;
+		return NULL;
 	}
 
 	// return what we gathered from the import. 
-	return scene;
+	sc.dismiss();
+	return sc;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -195,10 +209,15 @@ void BaseImporter::SetupProperties(const Importer* pImp)
 {
 	ai_assert(size <= 16 && _magic);
 
-	if (!pIOHandler)
+	if (!pIOHandler) {
 		return false;
-
-	const char* magic = (const char*)_magic;
+	}
+	union {
+		const char* magic;
+		const uint16_t* magic_u16;
+		const uint32_t* magic_u32;
+	};
+	magic = reinterpret_cast<const char*>(_magic);
 	boost::scoped_ptr<IOStream> pStream (pIOHandler->Open(pFile));
 	if (pStream.get() )	{
 
@@ -206,30 +225,38 @@ void BaseImporter::SetupProperties(const Importer* pImp)
 		pStream->Seek(offset,aiOrigin_SET);
 
 		// read 'size' characters from the file
-		char data[16];
-		if(size != pStream->Read(data,1,size))
+		union {
+			char data[16];
+			uint16_t data_u16[8];
+			uint32_t data_u32[4];
+		};
+		if(size != pStream->Read(data,1,size)) {
 			return false;
+		}
 
 		for (unsigned int i = 0; i < num; ++i) {
 			// also check against big endian versions of tokens with size 2,4
 			// that's just for convinience, the chance that we cause conflicts
 			// is quite low and it can save some lines and prevent nasty bugs
 			if (2 == size) {
-				int16_t rev = *((int16_t*)magic);
+				uint16_t rev = *magic_u16; 
 				ByteSwap::Swap(&rev);
-				if (*((int16_t*)data) == ((int16_t*)magic)[i] || *((int16_t*)data) == rev)
+				if (data_u16[0] == *magic_u16 || data_u16[0] == rev) {
 					return true;
+				}
 			}
 			else if (4 == size) {
-				int32_t rev = *((int32_t*)magic);
+				uint32_t rev = *magic_u32;
 				ByteSwap::Swap(&rev);
-				if (*((int32_t*)data) == ((int32_t*)magic)[i] || *((int32_t*)data) == rev)
+				if (data_u32[0] == *magic_u32 || data_u32[0] == rev) {
 					return true;
+				}
 			}
 			else {
 				// any length ... just compare
-				if(!::memcmp(magic,data,size))
+				if(!memcmp(magic,data,size)) {
 					return true;
+				}
 			}
 			magic += size;
 		}
@@ -237,34 +264,149 @@ void BaseImporter::SetupProperties(const Importer* pImp)
 	return false;
 }
 
+#include "../contrib/ConvertUTF/ConvertUTF.h"
+
 // ------------------------------------------------------------------------------------------------
-// Represents an import request
-struct LoadRequest
+void ReportResult(ConversionResult res)
 {
-	LoadRequest(const std::string& _file, unsigned int _flags,const BatchLoader::PropertyMap* _map, unsigned int _id)
-		:	file	(_file)
-		,	flags	(_flags)
-		,	refCnt	(1)
-		,	scene	(NULL)            
-		,	loaded	(false)
-		,	id		(_id)
+	if(res == sourceExhausted) {
+		DefaultLogger::get()->error("Source ends with incomplete character sequence, transformation to UTF-8 fails");
+	}
+	else if(res == sourceIllegal) {
+		DefaultLogger::get()->error("Source contains illegal character sequence, transformation to UTF-8 fails");
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// Convert to UTF8 data
+void BaseImporter::ConvertToUTF8(std::vector<char>& data)
+{
+	ConversionResult result;
+	if(data.size() < 8) {
+		throw DeadlyImportError("File is too small");
+	}
+
+	// UTF 8 with BOM
+	if((uint8_t)data[0] == 0xEF && (uint8_t)data[1] == 0xBB && (uint8_t)data[2] == 0xBF) {
+		DefaultLogger::get()->debug("Found UTF-8 BOM ...");
+
+		std::copy(data.begin()+3,data.end(),data.begin());
+		data.resize(data.size()-3);
+		return;
+	}
+
+	// UTF 32 BE with BOM
+	if(*((uint32_t*)&data.front()) == 0xFFFE0000) {
+	
+		// swap the endianess ..
+		for(uint32_t* p = (uint32_t*)&data.front(), *end = (uint32_t*)&data.back(); p <= end; ++p) {
+			AI_SWAP4P(p);
+		}
+	}
+	
+	// UTF 32 LE with BOM
+	if(*((uint32_t*)&data.front()) == 0x0000FFFE) {
+		DefaultLogger::get()->debug("Found UTF-32 BOM ...");
+
+		const uint32_t* sstart = (uint32_t*)&data.front()+1, *send = (uint32_t*)&data.back()+1;
+		char* dstart,*dend;
+		std::vector<char> output;
+		do {
+			output.resize(output.size()?output.size()*3/2:data.size()/2);
+			dstart = &output.front(),dend = &output.back()+1;
+
+			result = ConvertUTF32toUTF8((const UTF32**)&sstart,(const UTF32*)send,(UTF8**)&dstart,(UTF8*)dend,lenientConversion);
+		} while(result == targetExhausted);
+
+		ReportResult(result);
+
+		// copy to output buffer. 
+		const size_t outlen = (size_t)(dstart-&output.front());
+		data.assign(output.begin(),output.begin()+outlen);
+		return;
+	}
+
+	// UTF 16 BE with BOM
+	if(*((uint16_t*)&data.front()) == 0xFFFE) {
+	
+		// swap the endianess ..
+		for(uint16_t* p = (uint16_t*)&data.front(), *end = (uint16_t*)&data.back(); p <= end; ++p) {
+			ByteSwap::Swap2(p);
+		}
+	}
+	
+	// UTF 16 LE with BOM
+	if(*((uint16_t*)&data.front()) == 0xFEFF) {
+		DefaultLogger::get()->debug("Found UTF-16 BOM ...");
+
+		const uint16_t* sstart = (uint16_t*)&data.front()+1, *send = (uint16_t*)&data.back()+1;
+		char* dstart,*dend;
+		std::vector<char> output;
+		do {
+			output.resize(output.size()?output.size()*3/2:data.size()*3/4);
+			dstart = &output.front(),dend = &output.back()+1;
+
+			result = ConvertUTF16toUTF8((const UTF16**)&sstart,(const UTF16*)send,(UTF8**)&dstart,(UTF8*)dend,lenientConversion);
+		} while(result == targetExhausted);
+
+		ReportResult(result);
+
+		// copy to output buffer.
+		const size_t outlen = (size_t)(dstart-&output.front());
+		data.assign(output.begin(),output.begin()+outlen);
+		return;
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+void BaseImporter::TextFileToBuffer(IOStream* stream,
+	std::vector<char>& data)
+{
+	ai_assert(NULL != stream);
+
+	const size_t fileSize = stream->FileSize();
+	if(!fileSize) {
+		throw DeadlyImportError("File is empty");
+	}
+
+	data.reserve(fileSize+1); 
+	data.resize(fileSize); 
+	if(fileSize != stream->Read( &data[0], 1, fileSize)) {
+		throw DeadlyImportError("File read error");
+	}
+
+	ConvertToUTF8(data);
+
+	// append a binary zero to simplify string parsing
+	data.push_back(0);
+}
+
+// ------------------------------------------------------------------------------------------------
+namespace Assimp
+{
+	// Represents an import request
+	struct LoadRequest
 	{
-		if (_map)
-			map = *_map;
-	}
+		LoadRequest(const std::string& _file, unsigned int _flags,const BatchLoader::PropertyMap* _map, unsigned int _id)
+			: file(_file), flags(_flags), refCnt(1),scene(NULL), loaded(false), id(_id)
+		{
+			if (_map)
+				map = *_map;
+		}
 
-	const std::string file;
-	unsigned int flags;
-	unsigned int refCnt;
-	aiScene* scene;
-	bool loaded;
-	BatchLoader::PropertyMap map;
-	unsigned int id;
+		const std::string file;
+		unsigned int flags;
+		unsigned int refCnt;
+		aiScene* scene;
+		bool loaded;
+		BatchLoader::PropertyMap map;
+		unsigned int id;
 
-	bool operator== (const std::string& f) {
-		return file == f;
-	}
-};
+		bool operator== (const std::string& f) {
+			return file == f;
+		}
+	};
+}
 
 // ------------------------------------------------------------------------------------------------
 // BatchLoader::pimpl data structure

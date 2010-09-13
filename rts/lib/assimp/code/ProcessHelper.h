@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -366,11 +366,31 @@ inline void FindMeshCenterTransformed (aiMesh* mesh, aiVector3D& out,
 // Compute a good epsilon value for position comparisons on a mesh
 inline float ComputePositionEpsilon(const aiMesh* pMesh)
 {
-	const float epsilon = 1e-5f;
+	const float epsilon = 1e-4f;
 
 	// calculate the position bounds so we have a reliable epsilon to check position differences against 
 	aiVector3D minVec, maxVec;
 	ArrayBounds(pMesh->mVertices,pMesh->mNumVertices,minVec,maxVec);
+	return (maxVec - minVec).Length() * epsilon;
+}
+
+// -------------------------------------------------------------------------------
+// Compute a good epsilon value for position comparisons on a array of meshes
+inline float ComputePositionEpsilon(const aiMesh* const* pMeshes, size_t num)
+{
+	const float epsilon = 1e-4f;
+
+	// calculate the position bounds so we have a reliable epsilon to check position differences against 
+	aiVector3D minVec, maxVec, mi, ma;
+	MinMaxChooser<aiVector3D>()(minVec,maxVec);
+
+	for (size_t a = 0; a < num; ++a) {
+		const aiMesh* pMesh = pMeshes[a];
+		ArrayBounds(pMesh->mVertices,pMesh->mNumVertices,mi,ma);
+
+		minVec = std::min(minVec,mi);
+		maxVec = std::max(maxVec,ma);
+	}
 	return (maxVec - minVec).Length() * epsilon;
 }
 

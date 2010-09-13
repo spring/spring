@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -81,12 +81,12 @@ struct NodeDesc
 		:	number	(0)
 		,	parent	(0)
 		,	name	("")
-		,	parent_resolved (NULL)
-		,	lightIntensity (1.f)
 		,	lightColor (1.f,1.f,1.f)
+		,	lightIntensity (1.f)
 		,	lightType (0)
 		,	lightFalloffType (0)
 		,	lightConeAngle (45.f)
+		,	parent_resolved (NULL)
 	{}
 
 	enum {
@@ -151,7 +151,7 @@ struct NodeDesc
 			return false;
 		unsigned int _type = num >> 28u;
 		
-		return _type == type && (num & AI_LWS_MASK) == number;
+		return _type == static_cast<unsigned int>(type) && (num & AI_LWS_MASK) == number;
 	}
 };
 
@@ -186,7 +186,7 @@ protected:
 
 	// -------------------------------------------------------------------
 	// Get list of supported extensions
-	void GetExtensionList(std::string& append);
+	void GetExtensionList(std::set<std::string>& extensions);
 
 	// -------------------------------------------------------------------
 	// Import file into given scene data structure

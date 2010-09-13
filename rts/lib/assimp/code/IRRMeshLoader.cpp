@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -88,10 +88,10 @@ bool IRRMeshImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, b
 
 // ------------------------------------------------------------------------------------------------
 // Get a list of all file extensions which are handled by this class
-void IRRMeshImporter::GetExtensionList(std::string& append)
+void IRRMeshImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	// fixme: consider cleaner handling of xml extension
-	append.append("*.xml;*.irrmesh");
+	extensions.insert("xml");
+	extensions.insert("irrmesh");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ void IRRMeshImporter::InternReadFile( const std::string& pFile,
 
 	// Check whether we can read from the file
 	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open IRRMESH file " + pFile + "");
+		throw DeadlyImportError( "Failed to open IRRMESH file " + pFile + "");
 
 	// Construct the irrXML parser
 	CIrrXML_IOStreamReader st(file.get());
@@ -227,7 +227,7 @@ void IRRMeshImporter::InternReadFile( const std::string& pFile,
 			else if (!ASSIMP_stricmp(reader->getNodeName(),"indices"))	{
 				if (curVertices.empty() && curMat)	{
 					delete curMat;
-					throw new ImportErrorException("IRRMESH: indices must come after vertices");
+					throw DeadlyImportError("IRRMESH: indices must come after vertices");
 				}
 
 				textMeaning = 2;
@@ -468,7 +468,7 @@ void IRRMeshImporter::InternReadFile( const std::string& pFile,
 	}
 
 	if (materials.empty())
-		throw new ImportErrorException("IRRMESH: Unable to read a mesh from this file");
+		throw DeadlyImportError("IRRMESH: Unable to read a mesh from this file");
 
 
 	// now generate the output scene

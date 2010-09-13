@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -101,7 +101,8 @@ aiColor4D MDLImporter::ReplaceTextureWithColor(const aiTexture* pcTexture)
 	{
 		if (*pcTexel != *(pcTexel-1))
 		{
-			pcTexel = NULL;break;
+			pcTexel = NULL;
+			break;
 		}
 		++pcTexel;
 	}
@@ -206,7 +207,10 @@ void MDLImporter::CreateTexture_3DGS_MDL4(const unsigned char* szData,
 			delete[] pc;
 		}
 	}
-	else delete pcNew;
+	else {
+		pcNew->pcData = NULL;
+		delete pcNew;
+	}
 	return;
 }
 
@@ -455,7 +459,10 @@ void MDLImporter::CreateTexture_3DGS_MDL5(const unsigned char* szData,
 			delete[] pc;
 		}
 	}
-	else delete pcNew;
+	else {
+		pcNew->pcData = NULL;
+		delete pcNew;
+	}
 	return;
 }
 
@@ -540,13 +547,11 @@ void MDLImporter::ParseSkinLump_3DGS_MDL7(
 			{
 				for (unsigned int y = 0; y < 8;++y)
 				{
-					bool bSet = false;
-					if (0 == x % 2 && 0 != y % 2 ||
-						0 != x % 2 && 0 == y % 2)bSet = true;
+					const bool bSet = ((0 == x % 2 && 0 != y % 2) ||
+						(0 != x % 2 && 0 == y % 2));
 				
 					aiTexel* pc = &pcNew->pcData[y * 8 + x];
-					if (bSet)pc->r = pc->b = pc->g = 0xFF;
-					else pc->r = pc->b = pc->g = 0;
+					pc->r = pc->b = pc->g = (bSet?0xFF:0);
 					pc->a = 0xFF;
 				}
 			}
@@ -637,7 +642,9 @@ void MDLImporter::ParseSkinLump_3DGS_MDL7(
 		// opacity like this .... ARRRGGHH!
 		clrTemp.r = pcMatIn->Ambient.a;
 		AI_SWAP4(clrTemp.r);  
-		if (is_not_qnan(clrTexture.r))clrTemp.r *= clrTexture.a;
+		if (is_not_qnan(clrTexture.r)) {
+			clrTemp.r *= clrTexture.a;
+		}
 		pcMatOut->AddProperty<float>(&clrTemp.r,1,AI_MATKEY_OPACITY);
 
 		// read phong power

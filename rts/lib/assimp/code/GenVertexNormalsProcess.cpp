@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -88,7 +88,7 @@ void GenVertexNormalsProcess::Execute( aiScene* pScene)
 	DefaultLogger::get()->debug("GenVertexNormalsProcess begin");
 
 	if (pScene->mFlags & AI_SCENE_FLAGS_NON_VERBOSE_FORMAT)
-		throw new ImportErrorException("Post-processing order mismatch: expecting pseudo-indexed (\"verbose\") vertices here");
+		throw DeadlyImportError("Post-processing order mismatch: expecting pseudo-indexed (\"verbose\") vertices here");
 
 	bool bHas = false;
 	for( unsigned int a = 0; a < pScene->mNumMeshes; a++)

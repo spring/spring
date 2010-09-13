@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -47,10 +47,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../include/aiTypes.h"
 
 struct aiMesh;
-class JoinVerticesTest;
 
 namespace Assimp
 {
+
+class JoinVerticesTest;
 
 // ---------------------------------------------------------------------------
 /** The JoinVerticesProcess unites identical vertices in all imported meshes. 
@@ -63,7 +64,7 @@ namespace Assimp
 class ASSIMP_API JoinVerticesProcess : public BaseProcess
 {
 	friend class Importer;
-	friend class ::JoinVerticesTest;
+	friend class JoinVerticesTest;
 
 protected:
 	/** Constructor to be privately used by Importer */

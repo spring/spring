@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -132,6 +132,8 @@ void AnimResolver::ClearAnimRangeSetup()
 // Insert additional keys to match LWO's pre& post behaviours.
 void AnimResolver::UpdateAnimRangeSetup()
 {
+	// XXX doesn't work yet (hangs if more than one envelope channels needs to be interpolated)
+
 	for (std::list<LWO::Envelope>::iterator it = envelopes.begin(); it != envelopes.end(); ++it) {
 		if ((*it).keys.empty()) continue;
 	
@@ -151,7 +153,7 @@ void AnimResolver::UpdateAnimRangeSetup()
 			case LWO::PrePostBehaviour_OffsetRepeat:
 			case LWO::PrePostBehaviour_Repeat:
 			case LWO::PrePostBehaviour_Oscillate:
-
+				{
 				const double start_time = delta - fmod(my_first-first,delta);
 				std::vector<LWO::Key>::iterator n = std::find_if((*it).keys.begin(),(*it).keys.end(), 
 					std::bind1st(std::greater<double>(),start_time)),m;
@@ -195,6 +197,10 @@ void AnimResolver::UpdateAnimRangeSetup()
 					}
 				}
 				break;
+				}
+			default:
+				// silence compiler warning
+				break;
 		}
 
 		// process post behaviour
@@ -204,6 +210,10 @@ void AnimResolver::UpdateAnimRangeSetup()
 			case LWO::PrePostBehaviour_Repeat:
 			case LWO::PrePostBehaviour_Oscillate:
 
+				break;
+
+			default:
+				// silence compiler warning
 				break;
 		}
 	}
@@ -307,7 +317,10 @@ void AnimResolver::DoInterpolation2(std::vector<LWO::Key>::const_iterator beg,
 			// no interpolation at all - take the value of the last key
 			fill = (*beg).value;
 			return;
+		default:
 
+			// silence compiler warning
+			break;
 	}
 	// linear interpolation - default
 	fill = (*beg).value + ((*end).value - (*beg).value)*(float)(((time - (*beg).time) / ((*end).time - (*beg).time)));
@@ -315,10 +328,10 @@ void AnimResolver::DoInterpolation2(std::vector<LWO::Key>::const_iterator beg,
 
 // ------------------------------------------------------------------------------------------------
 // Subsample animation track by given key values
-void AnimResolver::SubsampleAnimTrack(std::vector<aiVectorKey>& out,
-	double time,double sample_delta)
+void AnimResolver::SubsampleAnimTrack(std::vector<aiVectorKey>& /*out*/,
+	double /*time*/ ,double /*sample_delta*/ )
 {
-	ai_assert(out.empty() && sample_delta);
+	//ai_assert(out.empty() && sample_delta);
 
 	//const double time_start = out.back().mTime;
 //	for ()
@@ -383,9 +396,9 @@ void AnimResolver::GetKeys(std::vector<aiVectorKey>& out,
 	LWO::Envelope def_x, def_y, def_z;
 	LWO::Key key_dummy;
 	key_dummy.time = 0.f;
-	if (envl_x && envl_x->type == LWO::EnvelopeType_Scaling_X ||
-		envl_y && envl_y->type == LWO::EnvelopeType_Scaling_Y || 
-		envl_z && envl_z->type == LWO::EnvelopeType_Scaling_Z) {
+	if ((envl_x && envl_x->type == LWO::EnvelopeType_Scaling_X) ||
+		(envl_y && envl_y->type == LWO::EnvelopeType_Scaling_Y) || 
+		(envl_z && envl_z->type == LWO::EnvelopeType_Scaling_Z)) {
 		key_dummy.value = 1.f;
 	}
 	else key_dummy.value = 0.f;
@@ -507,6 +520,11 @@ void AnimResolver::ExtractAnimChannel(aiNodeAnim** out, unsigned int flags /*= 0
 {
 	*out = NULL;
 
+
+	//FIXME: crashes if more than one component is animated at different timings, to be resolved.
+	return;
+
+#if 0
 	// If we have no envelopes, return NULL
 	if (envelopes.empty()) {
 		return;
@@ -560,6 +578,7 @@ void AnimResolver::ExtractAnimChannel(aiNodeAnim** out, unsigned int flags /*= 0
 		anim->mScalingKeys = new aiVectorKey[ anim->mNumScalingKeys = keys.size() ];
 		std::copy(keys.begin(),keys.end(),anim->mScalingKeys);
 	}
+#endif
 }
 
 

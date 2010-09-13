@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -82,20 +82,20 @@ struct LogStreamInfo
 	// Destructor
 	~LogStreamInfo()
 	{
-		// empty
+		delete m_pStream;
 	}
 };
 
 // ----------------------------------------------------------------------------------
 // Construct a default log stream
-LogStream* LogStream::createDefaultStream(DefaultLogStreams	streams,
+LogStream* LogStream::createDefaultStream(aiDefaultLogStream	streams,
 	const char* name /*= "AssimpLog.txt"*/,
 	IOSystem* io		    /*= NULL*/)
 {
 	switch (streams)	
 	{
 		// This is a platform-specific feature
-	case DLS_DEBUGGER:
+	case aiDefaultLogStream_DEBUGGER:
 #ifdef WIN32
 		return new Win32DebugLogStream();
 #else
@@ -103,11 +103,11 @@ LogStream* LogStream::createDefaultStream(DefaultLogStreams	streams,
 #endif
 
 		// Platform-independent default streams
-	case DLS_CERR:
+	case aiDefaultLogStream_STDERR:
 		return new StdOStreamLogStream(std::cerr);
-	case DLS_COUT:
+	case aiDefaultLogStream_STDOUT:
 		return new StdOStreamLogStream(std::cout);
-	case DLS_FILE:
+	case aiDefaultLogStream_FILE:
 		return (name && *name ? new FileLogStream(name,io) : NULL);
 	default:
 		// We don't know this default log stream, so raise an assertion
@@ -123,7 +123,7 @@ LogStream* LogStream::createDefaultStream(DefaultLogStreams	streams,
 //	Creates the only singleton instance
 Logger *DefaultLogger::create(const char* name /*= "AssimpLog.txt"*/,
 	LogSeverity severity                       /*= NORMAL*/,
-	unsigned int defStreams                    /*= DLS_DEBUGGER | DLS_FILE*/,
+	unsigned int defStreams                    /*= aiDefaultLogStream_DEBUGGER | aiDefaultLogStream_FILE*/,
 	IOSystem* io		                       /*= NULL*/)
 {
 	// enter the mutex here to avoid concurrency problems
@@ -138,20 +138,20 @@ Logger *DefaultLogger::create(const char* name /*= "AssimpLog.txt"*/,
 
 	// Attach default log streams
 	// Stream the log to the MSVC debugger?
-	if (defStreams & DLS_DEBUGGER)
-		m_pLogger->attachStream( LogStream::createDefaultStream(DLS_DEBUGGER));
+	if (defStreams & aiDefaultLogStream_DEBUGGER)
+		m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_DEBUGGER));
 
 	// Stream the log to COUT?
-	if (defStreams & DLS_COUT)
-		m_pLogger->attachStream( LogStream::createDefaultStream(DLS_COUT));
+	if (defStreams & aiDefaultLogStream_STDOUT)
+		m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_STDOUT));
 
 	// Stream the log to CERR?
-	if (defStreams & DLS_CERR)
-		 m_pLogger->attachStream( LogStream::createDefaultStream(DLS_CERR));
+	if (defStreams & aiDefaultLogStream_STDERR)
+		 m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_STDERR));
 	
 	// Stream the log to a file
-	if (defStreams & DLS_FILE && name && *name)
-		m_pLogger->attachStream( LogStream::createDefaultStream(DLS_FILE,name,io));
+	if (defStreams & aiDefaultLogStream_FILE && name && *name)
+		m_pLogger->attachStream( LogStream::createDefaultStream(aiDefaultLogStream_FILE,name,io));
 
 	return m_pLogger;
 }
@@ -237,7 +237,7 @@ void DefaultLogger::kill()
 	boost::mutex::scoped_lock lock(loggerMutex);
 #endif
 
-	if (m_pLogger != &s_pNullLogger)return;
+	if (m_pLogger == &s_pNullLogger)return;
 	delete m_pLogger;
 	m_pLogger = &s_pNullLogger;
 }
@@ -332,6 +332,9 @@ bool DefaultLogger::detatchStream( LogStream *pStream, unsigned int severity )
 			(*it)->m_uiErrorSeverity &= ~severity;
 			if ( (*it)->m_uiErrorSeverity == 0 )
 			{
+				// don't delete the underlying stream 'cause the caller gains ownership again
+				(**it).m_pStream = NULL;
+				delete *it;
 				m_StreamArray.erase( it );
 				break;
 			}
@@ -356,8 +359,10 @@ DefaultLogger::DefaultLogger(LogSeverity severity)
 //	Destructor
 DefaultLogger::~DefaultLogger()
 {
-	for ( StreamIt it = m_StreamArray.begin(); it != m_StreamArray.end(); ++it )
+	for ( StreamIt it = m_StreamArray.begin(); it != m_StreamArray.end(); ++it ) {
+		// also frees the underlying stream, we are its owner.
 		delete *it;
+	}
 }
 
 // ----------------------------------------------------------------------------------

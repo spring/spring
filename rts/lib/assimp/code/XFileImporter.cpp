@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -78,9 +78,9 @@ bool XFileImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, boo
 }
 
 // ------------------------------------------------------------------------------------------------
-void XFileImporter::GetExtensionList(std::string& append)
+void XFileImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.x");
+	extensions.insert("x");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -90,14 +90,20 @@ void XFileImporter::InternReadFile( const std::string& pFile, aiScene* pScene, I
 	// read file into memory
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile));
 	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open file " + pFile + ".");
+		throw DeadlyImportError( "Failed to open file " + pFile + ".");
 
 	size_t fileSize = file->FileSize();
 	if( fileSize < 16)
-		throw new ImportErrorException( "XFile is too small.");
+		throw DeadlyImportError( "XFile is too small.");
 
+	// need to clear members - this method might be called multiple
+	// times on a single XFileImporter instance.
+	mImportedMats.clear();
+
+	// in the hope that binary files will never start with a BOM ...
 	mBuffer.resize( fileSize);
 	file->Read( &mBuffer.front(), 1, fileSize);
+	ConvertToUTF8(mBuffer);
 
 	// parse the file into a temporary representation
 	XFileParser parser( mBuffer);
@@ -107,7 +113,7 @@ void XFileImporter::InternReadFile( const std::string& pFile, aiScene* pScene, I
 
 	// if nothing came from it, report it as error
 	if( !pScene->mRootNode)
-		throw new ImportErrorException( "XFile is ill-formatted - no content imported.");
+		throw DeadlyImportError( "XFile is ill-formatted - no content imported.");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -502,6 +508,7 @@ void XFileImporter::CreateAnimations( aiScene* pScene, const XFile::Scene* pData
 
 					nbone->mRotationKeys[c].mTime = bone->mRotKeys[c].mTime;
 					nbone->mRotationKeys[c].mValue = aiQuaternion( rotmat);
+					nbone->mRotationKeys[c].mValue.w *= -1.0f; // needs quat inversion
 				}
 
 				// scaling
@@ -607,7 +614,7 @@ void XFileImporter::ConvertMaterials( aiScene* pScene, const std::vector<XFile::
 
 
 				// find the file name
-				const size_t iLen = sz.length();
+				//const size_t iLen = sz.length();
 				std::string::size_type s = sz.find_last_of("\\/");
 				if (std::string::npos == s)
 					s = 0;

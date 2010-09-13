@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -72,9 +72,9 @@ bool RAWImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 
 // ------------------------------------------------------------------------------------------------
 // Get the list of all supported file extensions
-void RAWImporter::GetExtensionList(std::string& append)
+void RAWImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.raw");
+	extensions.insert("raw");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -85,17 +85,14 @@ void RAWImporter::InternReadFile( const std::string& pFile,
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile, "rb"));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open RAW file " + pFile + ".");
-
-	unsigned int fileSize = (unsigned int)file->FileSize();
+	if( file.get() == NULL) {
+		throw DeadlyImportError( "Failed to open RAW file " + pFile + ".");
+	}
 
 	// allocate storage and copy the contents of the file to a memory buffer
 	// (terminate it with zero)
-	std::vector<char> mBuffer2(fileSize+1);
-	
-	file->Read(&mBuffer2[0], 1, fileSize);
-	mBuffer2[fileSize] = '\0';
+	std::vector<char> mBuffer2;
+	TextFileToBuffer(file.get(),mBuffer2);
 	const char* buffer = &mBuffer2[0];
 
 	// list of groups loaded from the file
@@ -221,7 +218,7 @@ void RAWImporter::InternReadFile( const std::string& pFile,
 
 	if (!pScene->mNumMeshes)
 	{
-		throw new ImportErrorException("RAW: No meshes loaded. The file seems to be corrupt or empty.");
+		throw DeadlyImportError("RAW: No meshes loaded. The file seems to be corrupt or empty.");
 	}
 
 	pScene->mMeshes = new aiMesh*[pScene->mNumMeshes];

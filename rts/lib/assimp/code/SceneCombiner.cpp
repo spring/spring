@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -41,9 +41,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // ----------------------------------------------------------------------------
 /** @file Implements Assimp::SceneCombiner. This is a smart utility
- *    class that can be used to combine several scenes, meshes, ...
- *    in one. Currently these utilities are used by the IRR and LWS
- *    loaders and by the OptimizeGraph step.
+ *    class that combines multiple scenes, meshes, ... into one. Currently 
+ *    these utilities are used by the IRR and LWS loaders and the
+ *    OptimizeGraph step.
  */
 // ----------------------------------------------------------------------------
 #include "AssimpPCH.h"
@@ -51,26 +51,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fast_atof.h"
 #include "Hash.h"
 #include "time.h"
-
-// ----------------------------------------------------------------------------
-// We need boost::random here. The workaround uses rand() instead of a proper
-// Mersenne twister, but I think it should still be 'random' enough for our
-// purposes. 
-// ----------------------------------------------------------------------------
-#ifdef ASSIMP_BUILD_BOOST_WORKAROUND
-
-#	include "../include/BoostWorkaround/boost/random/uniform_int.hpp"
-#	include "../include/BoostWorkaround/boost/random/variate_generator.hpp"
-#	include "../include/BoostWorkaround/boost/random/mersenne_twister.hpp"
-
-#else
-
-#	include <boost/random/uniform_int.hpp>
-#	include <boost/random/variate_generator.hpp>
-#	include <boost/random/mersenne_twister.hpp>
-
-#endif
-
 
 namespace Assimp	{
 
@@ -81,6 +61,12 @@ inline void PrefixString(aiString& string,const char* prefix, unsigned int len)
 	// If the string is already prefixed, we won't prefix it a second time
 	if (string.length >= 1 && string.data[0] == '$')
 		return;
+
+	if (len+string.length>=MAXLEN-1) {
+		DefaultLogger::get()->debug("Can't add an unique prefix because the string is too long");
+		ai_assert(false);
+		return;
+	}
 
 	// Add the prefix
 	::memmove(string.data+len,string.data,string.length+1);
@@ -299,11 +285,12 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 	// Generate unique names for all named stuff?
 	if (flags & AI_INT_MERGE_SCENE_GEN_UNIQUE_NAMES)
 	{
+#if 0
 		// Construct a proper random number generator
-		boost::mt19937 rng( ::clock() );
+		boost::mt19937 rng(  );
 		boost::uniform_int<> dist(1u,1 << 24u);
 		boost::variate_generator<boost::mt19937&, boost::uniform_int<> > rndGen(rng, dist);   
-
+#endif
 		for (unsigned int i = 1; i < src.size();++i)
 		{
 			//if (i != duplicates[i]) 
@@ -315,8 +302,7 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 			//	continue;
 			//}
 
-			const unsigned int random = rndGen();
-			src[i].idlen = ::sprintf(src[i].id,"$%.6X$_",random);
+			src[i].idlen = ::sprintf(src[i].id,"$%.6X$_",i);
 
 			if (flags & AI_INT_MERGE_SCENE_GEN_UNIQUE_NAMES_IF_NECESSARY) {
 				
@@ -496,7 +482,7 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 		aiNode* node;
 
 		// To offset or not to offset, this is the question
-		if (n != duplicates[n])
+		if (n != (int)duplicates[n])
 		{
 			// Get full scenegraph copy
 			Copy( &node, (*cur)->mRootNode );
@@ -543,7 +529,7 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 		// Copy light sources
 		for (unsigned int i = 0; i < (*cur)->mNumLights;++i,++ppLights)
 		{
-			if (n != duplicates[n]) // duplicate scene? 
+			if (n != (int)duplicates[n]) // duplicate scene? 
 			{
 				Copy(ppLights, (*cur)->mLights[i]);
 			}
@@ -564,7 +550,7 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 		// --------------------------------------------------------------------
 		// Copy cameras
 		for (unsigned int i = 0; i < (*cur)->mNumCameras;++i,++ppCameras)	{
-			if (n != duplicates[n]) // duplicate scene? 
+			if (n != (int)duplicates[n]) // duplicate scene? 
 			{
 				Copy(ppCameras, (*cur)->mCameras[i]);
 			}
@@ -584,7 +570,7 @@ void SceneCombiner::MergeScenes(aiScene** _dest, aiScene* master,
 		// --------------------------------------------------------------------
 		// Copy animations
 		for (unsigned int i = 0; i < (*cur)->mNumAnimations;++i,++ppAnims)	{
-			if (n != duplicates[n]) // duplicate scene? 
+			if (n != (int)duplicates[n]) // duplicate scene? 
 			{
 				Copy(ppAnims, (*cur)->mAnimations[i]);
 			}
