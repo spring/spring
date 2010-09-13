@@ -36,7 +36,7 @@
 	aiProcess_SortByPType					| \
 	aiProcess_JoinIdenticalVertices
 
-//aiProcess_ImproveCacheLocality		| \
+//aiProcess_ImproveCacheLocality
 
 class AssLogStream : public Assimp::LogStream
 {
@@ -80,11 +80,11 @@ S3DModel* CAssParser::Load(const std::string& name)
 	if (scene != NULL) {
 		logOutput.Print("Processing scene for model: %s (%d meshes / %d materials / %d textures)", name.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumTextures );
 		model->name = name;
-		model->type = MODELTYPE_OTHER;
+		model->type = MODELTYPE_ASS;
 		model->scene = scene;
 		model->numobjects = 0;
-		model->tex1 = "network_packet.tga";
-		model->tex2 = "";
+		model->tex1 = "weapons1.png";
+		model->tex2 = "faketex2.png";
 		texturehandlerS3O->LoadS3OTexture(model);
 
 		logOutput.Print("Loading root node '%s'", scene->mRootNode->mName.data);
@@ -125,13 +125,16 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 
 	SAssPiece* piece = new SAssPiece;
 	piece->name = std::string(node->mName.data);
-	piece->type = MODELTYPE_OTHER;
+	piece->type = MODELTYPE_ASS;
 	piece->node = node;
 	piece->isEmpty = node->mNumMeshes == 0;
 
 	aiVector3D scale, position;
  	aiQuaternion rotation;
 	node->mTransformation.Decompose(scale,rotation,position);
+
+	piece->mins = float3(0.0f,0.0f,0.0f);
+	piece->maxs = float3(1.0f,1.0f,1.0f);
 
 	piece->offset.x = position.x;
 	piece->offset.y = position.y;

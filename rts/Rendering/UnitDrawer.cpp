@@ -488,7 +488,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	UnitSet::const_iterator unitSetIt;
 
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {
+		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
 		}
 
@@ -1007,7 +1007,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 		// cloaked units
 		for (UnitRenderBinIt it = unitBin.begin(); it != unitBin.end(); ++it) {
-			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {
+			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 
@@ -1064,7 +1064,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		glTranslatef3(unit->pos);
 		glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {
+		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 			// the units in liveGhostedBuildings[modelType] are not
 			// sorted by textureType, but we cannot merge them with
 			// cloakedModelRenderers[modelType] since they are not
@@ -1148,7 +1148,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
-				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || model->type == MODELTYPE_ASS)
+				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS)
 					texturehandlerS3O->SetS3oTexture((*it)->model->textureType);
 
 				SetTeamColour((*it)->team, cloakAlpha1);
