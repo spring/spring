@@ -62,14 +62,17 @@ ENDIF (WIN32)
 
 
 ### Build the executable
-ADD_EXECUTABLE(spring-multithreaded ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
-TARGET_LINK_LIBRARIES(spring-multithreaded gml ${engineLibraries})
+ADD_EXECUTABLE(engine-multithreaded ${engineSources} ${ENGINE_ICON_GML} ${engineHeaders})
+TARGET_LINK_LIBRARIES(engine-multithreaded gml ${engineLibraries})
+SET_TARGET_PROPERTIES(engine-multithreaded PROPERTIES OUTPUT_NAME "spring-multithreaded")
 
 
 ### Install the executable
-INSTALL(TARGETS spring-multithreaded DESTINATION ${BINDIR})
+INSTALL(TARGETS engine-multithreaded DESTINATION ${BINDIR})
 
-# Only install spring-multithreaded executable & dependencies
-# use case: make install-spring-multithreaded
-CreateEngineBuildInstallTarget(spring-multithreaded)
+# Only build & install spring-multithreaded executable & dependencies
+# use cases:
+# * make spring-multithreaded
+# * make install-spring-multithreaded
+CreateEngineBuildAndInstallTarget(multithreaded)
 
