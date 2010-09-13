@@ -1,3 +1,0 @@
-"MotionCaptureROM.ase" - Recorded using Vicon IQ. 
-
-NOTE: The errors in the middle of the animation are caused by problems during recording.

@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -58,13 +58,15 @@ using namespace Assimp;
 // - Reads the current chunk and validates it
 // - computes its length
 #define ASSIMP_3DS_BEGIN_CHUNK()                                         \
-	if (stream->GetRemainingSizeToLimit() < sizeof(Discreet3DS::Chunk))  \
+	while (true) {                                                       \
+	if (stream->GetRemainingSizeToLimit() < sizeof(Discreet3DS::Chunk)){ \
 		return;                                                          \
+	}                                                                    \
 	Discreet3DS::Chunk chunk;                                            \
 	ReadChunk(&chunk);                                                   \
 	int chunkSize = chunk.Size-sizeof(Discreet3DS::Chunk);	             \
 	const int oldReadLimit = stream->GetReadLimit();                     \
-	stream->SetReadLimit(stream->GetCurrentPos() + chunkSize);		 
+	stream->SetReadLimit(stream->GetCurrentPos() + chunkSize);           \
 	
 
 // ------------------------------------------------------------------------------------------------
@@ -74,7 +76,8 @@ using namespace Assimp;
 	stream->SkipToReadLimit();                  \
 	stream->SetReadLimit(oldReadLimit);         \
 	if (stream->GetRemainingSizeToLimit() == 0) \
-		return;
+		return;                                 \
+	}
 
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
@@ -106,9 +109,10 @@ bool Discreet3DSImporter::CanRead( const std::string& pFile, IOSystem* pIOHandle
 
 // ------------------------------------------------------------------------------------------------
 // Get list of all extension supported by this loader
-void Discreet3DSImporter::GetExtensionList(std::string& append)
+void Discreet3DSImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.3ds;*.prj");
+	extensions.insert("3ds");
+	extensions.insert("prj");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -127,8 +131,9 @@ void Discreet3DSImporter::InternReadFile( const std::string& pFile,
 	this->stream = &stream;
 
 	// We should have at least one chunk
-	if (stream.GetRemainingSize() < 16)
-		throw new ImportErrorException("3DS file is either empty or corrupt: " + pFile);
+	if (stream.GetRemainingSize() < 16) {
+		throw DeadlyImportError("3DS file is either empty or corrupt: " + pFile);
+	}
 
 	// Allocate our temporary 3DS representation
 	mScene = new D3DS::Scene();
@@ -215,7 +220,7 @@ void Discreet3DSImporter::ReadChunk(Discreet3DS::Chunk* pcOut)
 	pcOut->Size = stream->GetI4();
 
 	if (pcOut->Size - sizeof(Discreet3DS::Chunk) > stream->GetRemainingSize())
-		throw new ImportErrorException("Chunk is too large");
+		throw DeadlyImportError("Chunk is too large");
 	
 	if (pcOut->Size - sizeof(Discreet3DS::Chunk) > stream->GetRemainingSizeToLimit())
 		DefaultLogger::get()->error("3DS: Chunk overflow");
@@ -284,8 +289,6 @@ void Discreet3DSImporter::ParseEditorChunk()
 		break;
 	};
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseEditorChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -348,8 +351,6 @@ void Discreet3DSImporter::ParseObjectChunk()
 		break;
 	};
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseObjectChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -443,18 +444,17 @@ void Discreet3DSImporter::ParseChunk(const char* name, unsigned int num)
 
 		// Read the lense angle
 		camera->mHorizontalFOV = AI_DEG_TO_RAD ( stream->GetF4() );
-		if (camera->mHorizontalFOV < 0.001f)
+		if (camera->mHorizontalFOV < 0.001f)  {
 			camera->mHorizontalFOV = AI_DEG_TO_RAD(45.f);
 		}
 
 		// Now check for further subchunks 
-		if (!bIsPrj) /* fixme */
+		if (!bIsPrj) /* fixme */ {
 			ParseCameraChunk();
+		}}
 		break;
 	};
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseChunk(name,num);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -503,8 +503,6 @@ void Discreet3DSImporter::ParseLightChunk()
 	};
 
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseLightChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -524,8 +522,6 @@ void Discreet3DSImporter::ParseCameraChunk()
 	}
 
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseCameraChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -549,9 +545,6 @@ void Discreet3DSImporter::ParseKeyframeChunk()
 	};
 
 	ASSIMP_3DS_END_CHUNK();
-
-	// recursively continue processing this hierarchy level
-	return ParseKeyframeChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -564,9 +557,9 @@ void Discreet3DSImporter::InverseNodeSearch(D3DS::Node* pcNode,D3DS::Node* pcCur
 	}
 
 	if (pcCurrent->mHierarchyPos == pcNode->mHierarchyPos)	{
-		if(pcCurrent->mParent)
+		if(pcCurrent->mParent) {
 			pcCurrent->mParent->push_back(pcNode);
-
+		}
 		else pcCurrent->push_back(pcNode);
 		return;
 	}
@@ -609,16 +602,21 @@ void Discreet3DSImporter::SkipTCBInfo()
 		DefaultLogger::get()->warn("3DS: Skipping TCB animation info");
 	}
 
-	if (flags & Discreet3DS::KEY_USE_TENS)
+	if (flags & Discreet3DS::KEY_USE_TENS) {
 		stream->IncPtr(4);
-	if (flags & Discreet3DS::KEY_USE_BIAS)
+	}
+	if (flags & Discreet3DS::KEY_USE_BIAS) {
 		stream->IncPtr(4);
-	if (flags & Discreet3DS::KEY_USE_CONT)
+	}
+	if (flags & Discreet3DS::KEY_USE_CONT) {
 		stream->IncPtr(4);
-	if (flags & Discreet3DS::KEY_USE_EASE_FROM)
+	}
+	if (flags & Discreet3DS::KEY_USE_EASE_FROM) {
 		stream->IncPtr(4);
-	if (flags & Discreet3DS::KEY_USE_EASE_TO)
+	}
+	if (flags & Discreet3DS::KEY_USE_EASE_TO) {
 		stream->IncPtr(4);
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -664,20 +662,19 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		pcNode->mHierarchyIndex = mLastNodeIndex;
 
 		// And find a proper position in the graph for it
-		if (mCurrentNode && mCurrentNode->mHierarchyPos == hierarchy) 
-		{
+		if (mCurrentNode && mCurrentNode->mHierarchyPos == hierarchy)	{
+
 			// add to the parent of the last touched node
 			mCurrentNode->mParent->push_back(pcNode);
 			mLastNodeIndex++;	
 		}
-		else if(hierarchy >= mLastNodeIndex)
-		{
+		else if(hierarchy >= mLastNodeIndex)	{
+
 			// place it at the current position in the hierarchy
 			mCurrentNode->push_back(pcNode);
 			mLastNodeIndex = hierarchy;
 		}
-		else
-		{
+		else	{
 			// need to go back to the specified position in the hierarchy.
 			InverseNodeSearch(pcNode,mCurrentNode);
 			mLastNodeIndex++;	
@@ -729,15 +726,13 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		// This could also be meant as the target position for
 		// (targeted) lights and cameras
 		std::vector<aiVectorKey>* l;
-		if ( Discreet3DS::CHUNK_TRACKCAMTGT == parent || Discreet3DS::CHUNK_TRACKLIGTGT == parent)
-		{
+		if ( Discreet3DS::CHUNK_TRACKCAMTGT == parent || Discreet3DS::CHUNK_TRACKLIGTGT == parent)	{
 			l = & mCurrentNode->aTargetPositionKeys;
 		}
 		else l = & mCurrentNode->aPositionKeys;
 
 		l->reserve(numFrames);
-		for (unsigned int i = 0; i < numFrames;++i)
-		{
+		for (unsigned int i = 0; i < numFrames;++i)	{
 			const unsigned int fidx = stream->GetI4();
 
 			// Setup a new position key
@@ -758,8 +753,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		}
 
 		// Sort all keys with ascending time values and remove duplicates?
-		if (sortKeys)
-		{
+		if (sortKeys)	{
 			std::stable_sort(l->begin(),l->end());
 			l->erase ( std::unique (l->begin(),l->end(),&KeyUniqueCompare<aiVectorKey>), l->end() );
 		}}
@@ -771,8 +765,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 	case Discreet3DS::CHUNK_TRACKROLL:
 		{
 		// roll keys are accepted for cameras only
-		if (parent != Discreet3DS::CHUNK_TRACKCAMERA)
-		{
+		if (parent != Discreet3DS::CHUNK_TRACKCAMERA)	{
 			DefaultLogger::get()->warn("3DS: Ignoring roll track for non-camera object");
 			break;
 		}
@@ -782,8 +775,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		stream->IncPtr(10);
 		const unsigned int numFrames = stream->GetI4();
 		l->reserve(numFrames);
-		for (unsigned int i = 0; i < numFrames;++i)
-		{
+		for (unsigned int i = 0; i < numFrames;++i)	{
 			const unsigned int fidx = stream->GetI4();
 
 			// Setup a new position key
@@ -803,8 +795,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		}
 
 		// Sort all keys with ascending time values and remove duplicates?
-		if (sortKeys)
-		{
+		if (sortKeys)	{
 			std::stable_sort(l->begin(),l->end());
 			l->erase ( std::unique (l->begin(),l->end(),&KeyUniqueCompare<aiFloatKey>), l->end() );
 		}}
@@ -832,8 +823,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		std::vector<aiQuatKey>* l = &mCurrentNode->aRotationKeys;
 		l->reserve(numFrames);
 
-		for (unsigned int i = 0; i < numFrames;++i)
-		{
+		for (unsigned int i = 0; i < numFrames;++i)	{
 			const unsigned int fidx = stream->GetI4();
 			SkipTCBInfo();
 
@@ -861,8 +851,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 			l->push_back(v);
 		}
 		// Sort all keys with ascending time values and remove duplicates?
-		if (sortKeys)
-		{
+		if (sortKeys)	{
 			std::stable_sort(l->begin(),l->end());
 			l->erase ( std::unique (l->begin(),l->end(),&KeyUniqueCompare<aiQuatKey>), l->end() );
 		}}
@@ -880,8 +869,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 		std::vector<aiVectorKey>* l = &mCurrentNode->aScalingKeys;
 		l->reserve(numFrames);
 
-		for (unsigned int i = 0; i < numFrames;++i)
-		{
+		for (unsigned int i = 0; i < numFrames;++i)	{
 			const unsigned int fidx = stream->GetI4();
 			SkipTCBInfo();
 
@@ -898,16 +886,15 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 			if (!l->empty() && v.mTime <= l->back().mTime)
 				sortKeys = true;
 			
-			// Remove zero-scalings
-			if (!v.mValue.x)v.mValue.x = 1.f;
-			if (!v.mValue.y)v.mValue.y = 1.f;
-			if (!v.mValue.z)v.mValue.z = 1.f;
+			// Remove zero-scalings on singular axes - they've been reported to be there erroneously in some strange files
+			if (!v.mValue.x) v.mValue.x = 1.f;
+			if (!v.mValue.y) v.mValue.y = 1.f;
+			if (!v.mValue.z) v.mValue.z = 1.f;
 
 			l->push_back(v);
 		}
 		// Sort all keys with ascending time values and remove duplicates?
-		if (sortKeys)
-		{
+		if (sortKeys)	{
 			std::stable_sort(l->begin(),l->end());
 			l->erase ( std::unique (l->begin(),l->end(),&KeyUniqueCompare<aiVectorKey>), l->end() );
 		}}
@@ -915,8 +902,6 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 	};
 
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseHierarchyChunk(parent);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -975,8 +960,6 @@ void Discreet3DSImporter::ParseFaceChunk()
 		break;
 	};
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseFaceChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1059,14 +1042,12 @@ void Discreet3DSImporter::ParseMeshChunk()
 
 		// Larger 3DS files could have multiple FACE chunks here
 		chunkSize = stream->GetRemainingSizeToLimit();
-		if (chunkSize > sizeof(Discreet3DS::Chunk))
+		if ( chunkSize > (int) sizeof(Discreet3DS::Chunk ) )
 			ParseFaceChunk();
 		}
 		break;
 	};
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseMeshChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1225,8 +1206,6 @@ void Discreet3DSImporter::ParseMaterialChunk()
 		break;
 	};
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseMaterialChunk();
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1311,8 +1290,6 @@ void Discreet3DSImporter::ParseTextureChunk(D3DS::Texture* pcOut)
 	};
 
 	ASSIMP_3DS_END_CHUNK();
-	// recursively continue processing this hierarchy level
-	return ParseTextureChunk(pcOut);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1353,8 +1330,7 @@ void Discreet3DSImporter::ParseColorChunk(aiColor3D* out,
 		bGamma = true;
 
 	case Discreet3DS::CHUNK_RGBF:
-		if (sizeof(float) * 3 > diff)
-		{
+		if (sizeof(float) * 3 > diff)	{
 			*out = clrError;
 			return;
 		}
@@ -1366,8 +1342,7 @@ void Discreet3DSImporter::ParseColorChunk(aiColor3D* out,
 	case Discreet3DS::CHUNK_LINRGBB:
 		bGamma = true;
 	case Discreet3DS::CHUNK_RGBB:
-		if (sizeof(char) * 3 > diff)
-		{
+		if (sizeof(char) * 3 > diff)	{
 			*out = clrError;
 			return;
 		}
@@ -1378,8 +1353,7 @@ void Discreet3DSImporter::ParseColorChunk(aiColor3D* out,
 
 	// Percentage chunks are accepted, too.
 	case Discreet3DS::CHUNK_PERCENTF:
-		if (acceptPercent && 4 <= diff)
-		{
+		if (acceptPercent && 4 <= diff)	{
 			out->g = out->b = out->r = stream->GetF4();
 			break;
 		}
@@ -1387,8 +1361,7 @@ void Discreet3DSImporter::ParseColorChunk(aiColor3D* out,
 		return;
 
 	case Discreet3DS::CHUNK_PERCENTW:
-		if (acceptPercent && 1 <= diff)
-		{
+		if (acceptPercent && 1 <= diff)	{
 			out->g = out->b = out->r = (float)(uint8_t)stream->GetI1() / 255.0f;
 			break;
 		}

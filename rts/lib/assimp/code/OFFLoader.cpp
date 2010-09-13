@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -82,33 +82,33 @@ bool OFFImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 }
 
 // ------------------------------------------------------------------------------------------------
-void OFFImporter::GetExtensionList(std::string& append)
+void OFFImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.off");
+	extensions.insert("off");
 }
 
 // ------------------------------------------------------------------------------------------------
 // Imports the given file into the given scene structure. 
 void OFFImporter::InternReadFile( const std::string& pFile, 
-								 aiScene* pScene, IOSystem* pIOHandler)
+	aiScene* pScene, IOSystem* pIOHandler)
 {
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile, "rb"));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open OFF file " + pFile + ".");
-
-	unsigned int fileSize = (unsigned int)file->FileSize();
-
+	if( file.get() == NULL) {
+		throw DeadlyImportError( "Failed to open OFF file " + pFile + ".");
+	}
+	
 	// allocate storage and copy the contents of the file to a memory buffer
-	std::vector<char> mBuffer2(fileSize+1);
-	file->Read(&mBuffer2[0], 1, fileSize);
-	mBuffer2[fileSize] = '\0';
+	std::vector<char> mBuffer2;
+	TextFileToBuffer(file.get(),mBuffer2);
 	const char* buffer = &mBuffer2[0];
 
 	char line[4096];
 	GetNextLine(buffer,line);
-	if ('O' == line[0])GetNextLine(buffer,line); // skip the 'OFF' line
+	if ('O' == line[0]) {
+		GetNextLine(buffer,line); // skip the 'OFF' line
+	}
 
 	const char* sz = line; SkipSpaces(&sz);
 	const unsigned int numVertices = strtol10(sz,&sz);SkipSpaces(&sz);
@@ -158,7 +158,7 @@ void OFFImporter::InternReadFile( const std::string& pFile,
 	}
 
 	if (!mesh->mNumVertices)
-		throw new ImportErrorException("OFF: There are no valid faces");
+		throw DeadlyImportError("OFF: There are no valid faces");
 
 	// allocate storage for the output vertices
 	aiVector3D* verts = mesh->mVertices = new aiVector3D[mesh->mNumVertices];

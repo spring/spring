@@ -11,16 +11,16 @@
 
 namespace Assimp {
 
-//!	\brief	ASSIMP specific assertion test, just works in debug mode
+//!	\brief	ASSIMP specific assertion test, only works in debug mode
 //!	\param	uiLine	Line in file
 //!	\param	file	Source file
-void aiAssert (bool expression, const std::string &message, unsigned int uiLine, const std::string &file);
+AI_WONT_RETURN void aiAssert(const std::string &message, unsigned int uiLine, const std::string &file);
 
 
 //!	\def	ai_assert
-//!	\brief	ASSIM specific assertion test
+//!	\brief	ASSIMP specific assertion test
 #ifdef DEBUG  
-#  define	ai_assert(expression) Assimp::aiAssert (expression, #expression, __LINE__, __FILE__);
+#  define	ai_assert(expression) if( !(expression)) Assimp::aiAssert( #expression, __LINE__, __FILE__);
 #else
 #  define	ai_assert(expression)
 #endif

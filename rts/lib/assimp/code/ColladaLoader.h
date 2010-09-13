@@ -4,7 +4,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -96,7 +96,7 @@ protected:
 	/** Called by Importer::GetExtensionList() for each loaded importer.
 	 * See BaseImporter::GetExtensionList() for details
 	 */
-	void GetExtensionList( std::string& append);
+	void GetExtensionList( std::set<std::string>& extensions);
 
 	/** Imports the given file into the given scene structure. 
 	 * See BaseImporter::InternReadFile() for details
@@ -200,7 +200,12 @@ protected:
 	void CollectNodes( const aiNode* pNode, std::vector<const aiNode*>& poNodes) const;
 
 	/** Finds a node in the collada scene by the given name */
-	const Collada::Node* FindNode( const Collada::Node* pNode, const std::string& pName);
+	const Collada::Node* FindNode( const Collada::Node* pNode, const std::string& pName) const;
+  /** Finds a node in the collada scene by the given SID */
+  const Collada::Node* FindNodeBySID( const Collada::Node* pNode, const std::string& pSID) const;
+
+  /** Finds a proper name for a node derived from the collada-node's properties */
+  std::string FindNameForNode( const Collada::Node* pNode) const;
 
 protected:
 	/** Filename, for a verbose error message */

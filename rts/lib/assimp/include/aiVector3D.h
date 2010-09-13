@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -90,32 +90,27 @@ public:
 	/** @brief Set the components of a vector
 	 *  @param pX X component
 	 *  @param pY Y component
-	 *  @param pZ Z component
-	 */
+	 *  @param pZ Z component  */
 	void Set( float pX, float pY, float pZ = 0.f);
 
 	/** @brief Get the squared length of the vector
-	 *  @return Square length
-	 */
+	 *  @return Square length */
 	float SquareLength() const;
 
 
 	/** @brief Get the length of the vector
-	 *  @return length
-	 */
+	 *  @return length */
 	float Length() const;
 
 
-	/** @brief Normalize the vector
-	 */
+	/** @brief Normalize the vector */
 	aiVector3D& Normalize();
 
 	
 	/** @brief Componentwise multiplication of two vectors
 	 *  
 	 *  Note that vec*vec yields the dot product.
-	 *  @param o Second factor
-	 */
+	 *  @param o Second factor */
 	const aiVector3D SymMul(const aiVector3D& o);
 
 #endif // __cplusplus

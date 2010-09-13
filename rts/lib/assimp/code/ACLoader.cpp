@@ -4,7 +4,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -50,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ACLoader.h"
 #include "ParsingUtils.h"
 #include "fast_atof.h"
-//#include "Subdivision.h"
+#include "Subdivision.h"
 
 using namespace Assimp;
 
@@ -137,9 +137,11 @@ bool AC3DImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool
 
 // ------------------------------------------------------------------------------------------------
 // Get list of file extensions handled by this loader
-void AC3DImporter::GetExtensionList(std::string& append)
+void AC3DImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.ac;*.acc;*.ac3d");
+	extensions.insert("ac");
+	extensions.insert("acc");
+	extensions.insert("ac3d");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -176,7 +178,8 @@ void AC3DImporter::LoadObjectSection(std::vector<Object>& objects)
 		light->mAttenuationConstant = 1.f;
 
 		// Generate a default name for both the light source and the node
-		light->mName.length = ::sprintf(light->mName.data,"ACLight_%i",mLights->size()-1);
+		// FIXME - what's the right way to print a size_t? Is 'zu' universally available? stick with the safe version.
+		light->mName.length = ::sprintf(light->mName.data,"ACLight_%i",static_cast<unsigned int>(mLights->size())-1);
 		obj.name = std::string( light->mName.data );
 
 		DefaultLogger::get()->debug("AC3D: Light source encountered");
@@ -250,6 +253,11 @@ void AC3DImporter::LoadObjectSection(std::vector<Object>& objects)
 		{
 			SkipSpaces(&buffer);
 			obj.subDiv = strtol10(buffer,&buffer);
+		}
+		else if (TokenMatch(buffer,"crease",6))
+		{
+			SkipSpaces(&buffer);
+			obj.crease = fast_atof(buffer);
 		}
 		else if (TokenMatch(buffer,"numvert",7))
 		{
@@ -388,8 +396,7 @@ void AC3DImporter::ConvertMaterial(const Object& object,
 			aiUVTransform transform;
 			transform.mScaling = object.texRepeat;
 			transform.mTranslation = object.texOffset;
-			matDest.AddProperty<float>((float*)&transform,sizeof(aiUVTransform),
-				AI_MATKEY_UVTRANSFORM_DIFFUSE(0));
+			matDest.AddProperty(&transform,1,AI_MATKEY_UVTRANSFORM_DIFFUSE(0));
 		}
 	}
 
@@ -529,6 +536,7 @@ aiNode* AC3DImporter::ConvertObjectSection(Object& object,
 			}
 			unsigned int* pip = node->mMeshes = new unsigned int[node->mNumMeshes];
 			unsigned int mat = 0;
+			const size_t oldm = meshes.size();
 			for (MatTable::const_iterator cit = needMat.begin(), cend = needMat.end();
 				cit != cend; ++cit, ++mat)
 			{
@@ -621,6 +629,7 @@ aiNode* AC3DImporter::ConvertObjectSection(Object& object,
 									++uv;
 								}
 
+
 								if (0x1 == type && tmp-1 == m)
 								{
 									// if this is a closed line repeat its beginning now
@@ -641,20 +650,26 @@ aiNode* AC3DImporter::ConvertObjectSection(Object& object,
 						}
 					}
 				}
-#if 0
-				// Now apply catmull clark subdivision if necessary. However, this is
-				// not *absolutely* correct: it might be we split a mesh up into 
-				// multiple sub meshes, one for each material. AC3D doesn't do that
-				// in its subdivision implementation, so our output *could* look
-				// different in some cases.
+			}
 
-				if (object.subDiv)
-				{
-					Subdivider* div = Subdivider::Create(Subdivider::CATMULL_CLARKE);
-					div->Subdivide(mesh,object.subDiv);
-					delete div;
+			// Now apply catmull clark subdivision if necessary. We split meshes into
+			// materials which is not done by AC3D during smoothing, so we need to
+			// collect all meshes using the same material group.
+			if (object.subDiv)	{
+				if (configEvalSubdivision) {
+					boost::scoped_ptr<Subdivider> div(Subdivider::Create(Subdivider::CATMULL_CLARKE));
+					DefaultLogger::get()->info("AC3D: Evaluating subdivision surface: "+object.name);
+
+					std::vector<aiMesh*> cpy(meshes.size()-oldm,NULL);
+					div->Subdivide(&meshes[oldm],cpy.size(),&cpy.front(),object.subDiv,true);
+					std::copy(cpy.begin(),cpy.end(),meshes.begin()+oldm);
+
+					// previous meshes are deleted vy Subdivide().
 				}
-#endif
+				else {
+					DefaultLogger::get()->info("AC3D: Letting the subdivision surface untouched due to my configuration: "
+						+object.name);
+				}
 			}
 		}
 	}
@@ -713,6 +728,7 @@ aiNode* AC3DImporter::ConvertObjectSection(Object& object,
 void AC3DImporter::SetupProperties(const Importer* pImp)
 {
 	configSplitBFCull = pImp->GetPropertyInteger(AI_CONFIG_IMPORT_AC_SEPARATE_BFCULL,1) ? true : false;
+	configEvalSubdivision =  pImp->GetPropertyInteger(AI_CONFIG_IMPORT_AC_EVAL_SUBDIVISION,1) ? true : false;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -724,21 +740,20 @@ void AC3DImporter::InternReadFile( const std::string& pFile,
 
 	// Check whether we can read from the file
 	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open AC3D file " + pFile + ".");
-
-	const unsigned int fileSize = (unsigned int)file->FileSize();
+		throw DeadlyImportError( "Failed to open AC3D file " + pFile + ".");
 
 	// allocate storage and copy the contents of the file to a memory buffer
-	std::vector<char> mBuffer2(fileSize+1);
-	file->Read(&mBuffer2[0], 1, fileSize);
-	mBuffer2[fileSize] = '\0';
+	std::vector<char> mBuffer2;
+	TextFileToBuffer(file.get(),mBuffer2);
+
 	buffer = &mBuffer2[0];
 	mNumMeshes = 0;
 
 	lights = polys = worlds = groups = 0;
 
-	if (::strncmp(buffer,"AC3D",4))
-		throw new ImportErrorException("AC3D: No valid AC3D file, magic sequence not found");
+	if (::strncmp(buffer,"AC3D",4)) {
+		throw DeadlyImportError("AC3D: No valid AC3D file, magic sequence not found");
+	}
 
 	// print the file format version to the console
 	unsigned int version = HexDigitToDecimal( buffer[4] );
@@ -784,7 +799,7 @@ void AC3DImporter::InternReadFile( const std::string& pFile,
 
 	if (rootObjects.empty() || !mNumMeshes)
 	{
-		throw new ImportErrorException("AC3D: No meshes have been loaded");
+		throw DeadlyImportError("AC3D: No meshes have been loaded");
 	}
 	if (materials.empty())
 	{
@@ -818,7 +833,7 @@ void AC3DImporter::InternReadFile( const std::string& pFile,
 	// copy meshes
 	if (meshes.empty())
 	{
-		throw new ImportErrorException("An unknown error occured during converting");
+		throw DeadlyImportError("An unknown error occured during converting");
 	}
 	pScene->mNumMeshes = (unsigned int)meshes.size();
 	pScene->mMeshes = new aiMesh*[pScene->mNumMeshes];

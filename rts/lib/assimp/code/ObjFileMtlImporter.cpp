@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -52,7 +52,7 @@ namespace Assimp	{
 // -------------------------------------------------------------------
 //	Constructor
 ObjFileMtlImporter::ObjFileMtlImporter( std::vector<char> &buffer, 
-									   const std::string &strAbsPath,
+									   const std::string & /*strAbsPath*/,
 									   ObjFile::Model *pModel ) :
 	m_DataIt( buffer.begin() ),
 	m_DataItEnd( buffer.end() ),
@@ -62,7 +62,7 @@ ObjFileMtlImporter::ObjFileMtlImporter( std::vector<char> &buffer,
 	ai_assert( NULL != m_pModel );
 	if ( NULL == m_pModel->m_pDefaultMaterial )
 	{
-		m_pModel->m_pDefaultMaterial = new ObjFile::Material();
+		m_pModel->m_pDefaultMaterial = new ObjFile::Material;
 		m_pModel->m_pDefaultMaterial->MaterialName.Set( "default" );
 	}
 	load();
@@ -77,15 +77,14 @@ ObjFileMtlImporter::~ObjFileMtlImporter()
 
 // -------------------------------------------------------------------
 //	Private copy constructor
-ObjFileMtlImporter::ObjFileMtlImporter(const ObjFileMtlImporter &rOther)
+ObjFileMtlImporter::ObjFileMtlImporter(const ObjFileMtlImporter & /* rOther */ )
 {
 	// empty
 }
 	
 // -------------------------------------------------------------------
 //	Private copy constructor
-ObjFileMtlImporter &ObjFileMtlImporter::operator = (
-	const ObjFileMtlImporter &rOther)
+ObjFileMtlImporter &ObjFileMtlImporter::operator = ( const ObjFileMtlImporter & /*rOther */ )
 {
 	return *this;
 }
@@ -220,7 +219,7 @@ void ObjFileMtlImporter::getFloatValue( float &value )
 //	Creates a material from loaded data.
 void ObjFileMtlImporter::createMaterial()
 {	
-	std::string strName;
+	std::string strName( "" );
 	m_DataIt = getName<DataArrayIt>( m_DataIt, m_DataItEnd, strName );
 	if ( m_DataItEnd == m_DataIt )
 		return;
@@ -245,7 +244,7 @@ void ObjFileMtlImporter::createMaterial()
 //	Gets a texture name from data.
 void ObjFileMtlImporter::getTexture()
 {
-	aiString* out = NULL;
+	aiString *out = NULL;
 
 	// FIXME: just a quick'n'dirty hack, consider cleanup later
 
@@ -285,9 +284,6 @@ void ObjFileMtlImporter::getTexture()
 
 	std::string strTexture;
 	m_DataIt = getName<DataArrayIt>( m_DataIt, m_DataItEnd, strTexture );
-	if ( m_DataItEnd == m_DataIt )
-		return;
-
 	out->Set( strTexture );
 }
 

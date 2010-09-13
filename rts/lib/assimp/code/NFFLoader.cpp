@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -72,9 +72,10 @@ bool NFFImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 
 // ------------------------------------------------------------------------------------------------
 // Get the list of all supported file extensions
-void NFFImporter::GetExtensionList(std::string& append)
+void NFFImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.nff;*.enff");
+	extensions.insert("enff");
+	extensions.insert("nff");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -117,8 +118,7 @@ void NFFImporter::LoadNFF2MaterialTable(std::vector<ShadingInfo>& output,
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( path, "rb"));
 
 	// Check whether we can read from the file
-	if( !file.get())
-	{
+	if( !file.get())	{
 		DefaultLogger::get()->error("NFF2: Unable to open material library " + path + ".");
 		return;
 	}
@@ -129,16 +129,14 @@ void NFFImporter::LoadNFF2MaterialTable(std::vector<ShadingInfo>& output,
 	// allocate storage and copy the contents of the file to a memory buffer
 	// (terminate it with zero)
 	std::vector<char> mBuffer2(m+1);
-	file->Read(&mBuffer2[0],m,1);
+	TextFileToBuffer(file.get(),mBuffer2);
 	const char* buffer = &mBuffer2[0];
-	mBuffer2[m] = '\0';
 
 	// First of all: remove all comments from the file
 	CommentRemover::RemoveLineComments("//",&mBuffer2[0]);
 
 	// The file should start with the magic sequence "mat"
-	if (!TokenMatch(buffer,"mat",3))
-	{
+	if (!TokenMatch(buffer,"mat",3))	{
 		DefaultLogger::get()->error("NFF2: Not a valid material library " + path + ".");
 		return;
 	}
@@ -223,19 +221,17 @@ void NFFImporter::InternReadFile( const std::string& pFile,
 
 	// Check whether we can read from the file
 	if( !file.get())
-		throw new ImportErrorException( "Failed to open NFF file " + pFile + ".");
+		throw DeadlyImportError( "Failed to open NFF file " + pFile + ".");
 
 	unsigned int m = (unsigned int)file->FileSize();
 
 	// allocate storage and copy the contents of the file to a memory buffer
 	// (terminate it with zero)
-	std::vector<char> mBuffer2(m+1);
-	file->Read(&mBuffer2[0],m,1);
+	std::vector<char> mBuffer2;
+	TextFileToBuffer(file.get(),mBuffer2);
 	const char* buffer = &mBuffer2[0];
-	mBuffer2[m] = '\0';
 
-	// mesh arrays - separate here to make the handling of
-	// the pointers below easier.
+	// mesh arrays - separate here to make the handling of the pointers below easier.
 	std::vector<MeshInfo> meshes;
 	std::vector<MeshInfo> meshesWithNormals;
 	std::vector<MeshInfo> meshesWithUVCoords;
@@ -432,7 +428,7 @@ void NFFImporter::InternReadFile( const std::string& pFile,
 				}
 
 				AI_NFF2_GET_NEXT_TOKEN();
-				if (!num)throw new ImportErrorException("NFF2: There are zero vertices");
+				if (!num)throw DeadlyImportError("NFF2: There are zero vertices");
 				num = ::strtol10(sz,&sz);
 
 				std::vector<unsigned int> tempIdx;
@@ -641,7 +637,7 @@ void NFFImporter::InternReadFile( const std::string& pFile,
 						}
 					}
 				}
-				if (!num)throw new ImportErrorException("NFF2: There are zero faces");
+				if (!num)throw DeadlyImportError("NFF2: There are zero faces");
 			}
 		}
 		camLookAt = camLookAt + camPos;
@@ -1112,7 +1108,7 @@ void NFFImporter::InternReadFile( const std::string& pFile,
 		}
 	}
 
-	if (!pScene->mNumMeshes)throw new ImportErrorException("NFF: No meshes loaded");
+	if (!pScene->mNumMeshes)throw DeadlyImportError("NFF: No meshes loaded");
 	pScene->mMeshes = new aiMesh*[pScene->mNumMeshes];
 	pScene->mMaterials = new aiMaterial*[pScene->mNumMaterials = pScene->mNumMeshes];
 	for (it = meshes.begin(), m = 0; it != end;++it)

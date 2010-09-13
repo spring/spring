@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -127,6 +127,9 @@ protected:
 
 	/** Reads an effect entry into the given effect*/
 	void ReadEffect( Collada::Effect& pEffect);
+
+	/** Reads an COMMON effect profile */
+	void ReadEffectProfileCommon( Collada::Effect& pEffect);
 
 	/** Read sampler properties */
 	void ReadSamplerProperties( Collada::Sampler& pSampler);

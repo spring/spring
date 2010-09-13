@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -131,7 +131,7 @@ inline bool GetNextLine(const char_t*& buffer, char_t out[4096])
 template <class char_t>
 AI_FORCE_INLINE bool IsNumeric( char_t in)
 {
-	return in >= '0' && in <= '9' || '-' == in || '+' == in;
+	return ( in >= '0' && in <= '9' ) || '-' == in || '+' == in;
 }
 // ---------------------------------------------------------------------------------
 AI_FORCE_INLINE bool TokenMatch(char*& in, const char* token, unsigned int len)

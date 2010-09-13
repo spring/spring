@@ -1,3 +1,5 @@
+### USE OF THIS MAKEFILE IS NOT RECOMMENDED.
+### It is no longer maintained. Use CMAKE instead.
 
 # ---------------------------------------------------------------------------
 # Makefile for Open Asset Import Library (MinGW32-make)
@@ -23,8 +25,9 @@ OBJECTS   := $(patsubst %.cpp,%.o,  $(wildcard *.cpp))
 OBJECTS   += $(patsubst %.cpp,%.o,  $(wildcard extra/*.cpp)) 
 OBJECTS   += $(patsubst %.cpp,%.o,  $(wildcard ./../contrib/irrXML/*.cpp)) 
 
-# C object files (mainly from zlib)
+# C object files 
 OBJECTSC  := $(patsubst %.c,%.oc,   $(wildcard ./../contrib/zlib/*.c))
+OBJECTSC  += $(patsubst %.c,%.oc,   $(wildcard ./../contrib/ConvertUTF/*.c))
 
 # Include flags for gcc
 INCLUDEFLAGS =
@@ -44,12 +47,14 @@ CPPFLAGS=-Wall
 # Setup environment for noboost build
 ifeq ($(NOBOOST),1)
 	SINGLETHREADED = 1
-	INCLUDEFLAGS  += -I../include/BoostWorkaround/
+	INCLUDEFLAGS  += -I./BoostWorkaround/
 	DEFINEFLAGS   += -DASSIMP_BUILD_BOOST_WORKAROUND 
 #	NAMESUFFIX    += -noboost
 else
 	# adjust this manually if your boost is stored elsewhere
 	INCLUDEFLAGS  += -I"C:/Program Files/boost/boost_1_38"
+	#INCLUDEFLAGS  += -I"$(BOOST_DIR)"
+
 endif
 
 # Setup environment for st build
@@ -63,7 +68,7 @@ ifeq ($(DEBUG),1)
 	DEFINEFLAGS   += -D_DEBUG -DDEBUG
 #	NAMESUFFIX    += -debug
 else
-	CPPFLAGS      += -o3 -s
+	CPPFLAGS      += -O3 -s
 	DEFINEFLAGS   += -DNDEBUG -D_NDEBUG
 endif
 

@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -179,7 +179,7 @@ void Parser::LogError(const char* szWarn)
 #endif
 
 	// throw an exception
-	throw new ImportErrorException(szTemp);
+	throw DeadlyImportError(szTemp);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1285,8 +1285,8 @@ void Parser::ParseLV2NodeTransformBlock(ASE::BaseNode& mesh)
 					mesh.mName == temp.substr(0,s))
 				{
 					// This should be either a target light or a target camera
-					if ( mesh.mType == BaseNode::Light &&  ((ASE::Light&)mesh) .mLightType  == ASE::Light::TARGET ||
-						 mesh.mType == BaseNode::Camera && ((ASE::Camera&)mesh).mCameraType == ASE::Camera::TARGET)
+					if ( (mesh.mType == BaseNode::Light &&  ((ASE::Light&)mesh) .mLightType  == ASE::Light::TARGET) ||
+						 (mesh.mType == BaseNode::Camera && ((ASE::Camera&)mesh).mCameraType == ASE::Camera::TARGET))
 					{
 						mode = 2;
 					}

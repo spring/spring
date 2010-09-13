@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -78,7 +78,7 @@ struct Face
 	//!	\param	pVertices	Pointer to assigned vertex indexbuffer
 	//!	\param	pNormals	Pointer to assigned normals indexbuffer
 	//!	\param	pTexCoords	Pointer to assigned texture indexbuffer
-	Face(std::vector<unsigned int> *pVertices, 
+	Face( std::vector<unsigned int> *pVertices, 
 			std::vector<unsigned int> *pNormals, 
 			std::vector<unsigned int> *pTexCoords) : 
 		m_PrimitiveType( 2 ), 
@@ -93,18 +93,12 @@ struct Face
 	//!	\brief	Destructor	
 	~Face()
 	{	
-		if(m_pVertices) {
-			delete m_pVertices;
-			m_pVertices = NULL;
-		}
-		if(m_pNormals) {
-			delete m_pNormals;
-			m_pNormals = NULL;
-		}
-		if(m_pTexturCoords) {
-			delete m_pTexturCoords;
-			m_pTexturCoords = NULL;
-		}
+		delete m_pVertices;
+		m_pVertices = NULL;
+		delete m_pNormals;
+		m_pNormals = NULL;
+		delete m_pTexturCoords;
+		m_pTexturCoords = NULL;
 	}
 };
 
@@ -175,10 +169,10 @@ struct Material
 	//!	Constructor
 	Material()
 		:	diffuse (0.6f,0.6f,0.6f)
-		,	ior		(1.f)
 		,	alpha	(1.f)
 		,	shineness (0.0f)
 		,	illumination_model (1)
+		,	ior		(1.f)
 	{
 		// empty
 	}
@@ -205,7 +199,7 @@ struct Mesh
 	unsigned int m_uiUVCoordinates[ AI_MAX_NUMBER_OF_TEXTURECOORDS ];
 	///	Material index.
 	unsigned int m_uiMaterialIndex;
-
+	///	True, if normals are stored.
 	bool m_hasNormals;
 	///	Constructor
 	Mesh() :

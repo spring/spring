@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -79,9 +79,10 @@ bool UnrealImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bo
 
 // ------------------------------------------------------------------------------------------------
 // Build a string of all file extensions supported
-void UnrealImporter::GetExtensionList(std::string& append)
+void UnrealImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.3d;*.uc");
+	extensions.insert("3d");
+	extensions.insert("uc");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -116,7 +117,7 @@ void UnrealImporter::InternReadFile( const std::string& pFile,
 		// jjjj_a.3d
 		pos = pFile.find_last_of('_');
 		if (std::string::npos == pos) {
-			throw new ImportErrorException("UNREAL: Unexpected naming scheme");
+			throw DeadlyImportError("UNREAL: Unexpected naming scheme");
 		}
 		extension = pFile.substr(0,pos);
 	}
@@ -136,14 +137,14 @@ void UnrealImporter::InternReadFile( const std::string& pFile,
 	// and open the files ... we can't live without them
 	IOStream* p = pIOHandler->Open(d_path);
 	if (!p)
-		throw new ImportErrorException("UNREAL: Unable to open _d file");
+		throw DeadlyImportError("UNREAL: Unable to open _d file");
 	StreamReaderLE d_reader(pIOHandler->Open(d_path));
 
 	const uint16_t numTris = d_reader.GetI2();
 	const uint16_t numVert = d_reader.GetI2();
 	d_reader.IncPtr(44);
 	if (!numTris || numVert < 3)
-		throw new ImportErrorException("UNREAL: Invalid number of vertices/triangles");
+		throw DeadlyImportError("UNREAL: Invalid number of vertices/triangles");
 
 	// maximum texture index
 	unsigned int maxTexIdx = 0;
@@ -184,17 +185,17 @@ void UnrealImporter::InternReadFile( const std::string& pFile,
 
 	p = pIOHandler->Open(a_path);
 	if (!p)
-		throw new ImportErrorException("UNREAL: Unable to open _a file");
+		throw DeadlyImportError("UNREAL: Unable to open _a file");
 	StreamReaderLE a_reader(pIOHandler->Open(a_path));
 
 	// read number of frames
 	const uint32_t numFrames = a_reader.GetI2();
 	if (configFrameID >= numFrames)
-		throw new ImportErrorException("UNREAL: The requested frame does not exist");
+		throw DeadlyImportError("UNREAL: The requested frame does not exist");
 
 	uint32_t st = a_reader.GetI2(); 
 	if (st != numVert*4)
-		throw new ImportErrorException("UNREAL: Unexpected aniv file length");
+		throw DeadlyImportError("UNREAL: Unexpected aniv file length");
 
 	// skip to our frame
 	a_reader.IncPtr(configFrameID *numVert*4);
@@ -217,11 +218,8 @@ void UnrealImporter::InternReadFile( const std::string& pFile,
 	boost::scoped_ptr<IOStream> pb (pIOHandler->Open(uc_path));
 	if (pb.get())	{
 
-		size_t s = pb->FileSize();
-		std::vector<char> _data(s+1);
-		pb->Read(&_data[0],s,1);
-
-		_data[s] = 0;
+		std::vector<char> _data;
+		TextFileToBuffer(pb.get(),_data);
 		const char* data = &_data[0];
 
 		std::vector< std::pair< std::string,std::string > > tempTextures;
@@ -325,13 +323,14 @@ void UnrealImporter::InternReadFile( const std::string& pFile,
 			++pScene->mNumMeshes;
 		}
 		else {
-			tri.matIndex = nt-materials.begin();
+			tri.matIndex = static_cast<unsigned int>(nt-materials.begin());
 			++nt->numFaces;
 		}
 	}
 
-	if (!pScene->mNumMeshes)
-		throw new  ImportErrorException("UNREAL: Unable to find valid mesh data");
+	if (!pScene->mNumMeshes) {
+		throw DeadlyImportError("UNREAL: Unable to find valid mesh data");
+	}
 
 	// allocate meshes and bind them to the node graph
 	pScene->mMeshes = new aiMesh*[pScene->mNumMeshes];

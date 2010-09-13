@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -140,7 +140,7 @@ bool UpdateNodeGraph(aiNode* node,std::list<aiNode*>& childsOfParent,bool root)
 void RemoveVCProcess::Execute( aiScene* pScene)
 {
 	DefaultLogger::get()->debug("RemoveVCProcess begin");
-	bool bHas = false,bMasked = false;
+	bool bHas = false; //,bMasked = false;
 
 	mScene = pScene;
 

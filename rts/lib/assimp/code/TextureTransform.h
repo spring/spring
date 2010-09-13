@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -61,9 +61,9 @@ namespace Assimp	{
 */
 struct TTUpdateInfo
 {
-	TTUpdateInfo()
-		:	mat				(NULL)
-		,	directShortcut	(NULL)
+	TTUpdateInfo() :
+			directShortcut	(NULL)
+		,	mat				(NULL)
 		,	semantic		(0)
 		,	index			(0)
 	{}
@@ -72,7 +72,7 @@ struct TTUpdateInfo
 	unsigned int* directShortcut;
 
 	//! Material 
-	MaterialHelper* mat;
+	MaterialHelper *mat;
 
 	//! Texture type and index
 	unsigned int semantic, index;

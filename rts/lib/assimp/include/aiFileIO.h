@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -40,18 +40,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /** @file aiFileIO.h
- *  @brief Defines generic routines to access memory-mapped files
+ *  @brief Defines generic C routines to access memory-mapped files
  */
-
 #ifndef AI_FILEIO_H_INC
 #define AI_FILEIO_H_INC
 
 #include "aiTypes.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 struct aiFileIO;
 struct aiFile;
 
@@ -60,77 +57,79 @@ typedef size_t   (*aiFileWriteProc) (C_STRUCT aiFile*,   const char*, size_t, si
 typedef size_t   (*aiFileReadProc)  (C_STRUCT aiFile*,   char*, size_t,size_t);
 typedef size_t   (*aiFileTellProc)  (C_STRUCT aiFile*);
 typedef void     (*aiFileFlushProc) (C_STRUCT aiFile*);
-typedef aiReturn (*aiFileSeek)(aiFile*, size_t, aiOrigin);
+typedef aiReturn (*aiFileSeek)(C_STRUCT aiFile*, size_t, aiOrigin);
 
-// aiFileIO callbackss
+// aiFileIO callbacks
 typedef aiFile* (*aiFileOpenProc)  (C_STRUCT aiFileIO*, const char*, const char*);
 typedef void    (*aiFileCloseProc) (C_STRUCT aiFileIO*, C_STRUCT aiFile*);
 
-// represents user-defined data
+// Represents user-defined data
 typedef char* aiUserData;
 
 // ----------------------------------------------------------------------------------
-/** @class aiFileIO
- *  @brief Defines Assimp's way of accessing files.
+/** @brief C-API: File system callbacks
  *
  *  Provided are functions to open and close files. Supply a custom structure to
- *  the import function. If you don't, a default implementation is used. Use this
- *  to enable reading from other sources, such as ZIPs or memory locations.
-*/
+ *  the import function. If you don't, a default implementation is used. Use custom
+ *  file systems to enable reading from other sources, such as ZIPs 
+ *  or memory locations. */
 struct aiFileIO
 {
-	//! Function used to open a new file
+	/** Function used to open a new file
+	 */
 	aiFileOpenProc OpenProc;
 
-	//! Function used to close an existing file
+	/** Function used to close an existing file
+	 */
 	aiFileCloseProc CloseProc;
 
-	//! User-defined data
+	/** User-defined, opaque data */
 	aiUserData UserData;
 };
 
 // ----------------------------------------------------------------------------------
-/** @class aiFile
- *  @brief Represents a read/write file
+/** @brief C-API: File callbacks
  *
- *  Actually, it is a data structure to wrap a set of fXXXX (e.g fopen) 
- *  replacement functions
+ *  Actually, it's a data structure to wrap a set of fXXXX (e.g fopen) 
+ *  replacement functions.
  *
  *  The default implementation of the functions utilizes the fXXX functions from 
  *  the CRT. However, you can supply a custom implementation to Assimp by
- *  also supplying a custom aiFileIO. Use this to enable reading from other sources, 
- *  such as ZIPs or memory locations.
- */
+ *  delivering a custom aiFileIO. Use this to enable reading from other sources, 
+ *  such as ZIP archives or memory locations. */
 struct aiFile
 {
-	//! Function used to read from a file
+	/** Callback to read from a file */
 	aiFileReadProc ReadProc;
 
-	//! Function used to write to a file
+	/** Callback to write to a file */
 	aiFileWriteProc WriteProc;
 
-	//! Function used to retrieve the current
-	//! position of the file cursor (ftell())
+	/** Callback to retrieve the current position of 
+	 *  the file cursor (ftell())
+	 */
 	aiFileTellProc TellProc;
 
-	//! Function used to retrieve the size of the file, in bytes
+	/** Callback to retrieve the size of the file, 
+	 *  in bytes
+	 */
 	aiFileTellProc FileSizeProc;
 
-	//! Function used to set the current position
-	//! of the file cursor (fseek())
+	/** Callback to set the current position
+	 * of the file cursor (fseek())
+	 */
 	aiFileSeek SeekProc;
 
-	//! Function used to flush the file contents
+	/** Callback to flush the file contents
+	 */
 	aiFileFlushProc FlushProc;
 
-	//! User-defined data
+	/** User-defined, opaque data
+	 */
 	aiUserData UserData;
 };
-
 
 #ifdef __cplusplus
 }
 #endif
-
-
 #endif // AI_FILEIO_H_INC

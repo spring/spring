@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -70,7 +70,7 @@ enum aiPostProcessSteps
 	 * such as normal mapping  applied to the meshes. There's a config setting,
 	 * <tt>#AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE</tt>, which allows you to specify
 	 * a maximum smoothing angle for the algorithm. However, usually you'll
-	 * want to let the default value. Thanks.
+	 * want to leave it at the default value. Thanks.
 	 */
 	aiProcess_CalcTangentSpace = 0x1,
 
@@ -98,7 +98,7 @@ enum aiPostProcessSteps
 	 *
 	 * You'll probably want to consider this flag if you use Direct3D for
 	 * rendering. The #aiProcess_ConvertToLeftHanded flag supersedes this
-	 * setting and boundles all conversions typically required for D3D-based
+	 * setting and bundles all conversions typically required for D3D-based
 	 * applications.
 	 */
 	aiProcess_MakeLeftHanded = 0x4,
@@ -134,7 +134,7 @@ enum aiPostProcessSteps
 	 * they're already there (loaded from the source asset). By using this 
 	 * step you can make sure they are NOT there.
 	 *
-	 * This flag is a poor one, mainly because it's purpose is usually
+	 * This flag is a poor one, mainly because its purpose is usually
      * misunderstood. Consider the following case: a 3d model has been exported
 	 * from a CAD app, it has per-face vertex colors. Vertex positions can't be
 	 * shared, thus the #aiProcess_JoinIdenticalVertices step fails to
@@ -203,12 +203,15 @@ enum aiPostProcessSteps
 	* each mesh referencing one material. For rendering, you can
 	* simply render all meshes in order, you don't need to pay
 	* attention to local transformations and the node hierarchy.
-	* Animations are removed during this step. 
-	* This step is intended for applications that have no scenegraph.
+	* Animations are removed during this step.
+	* This step is intended for applications without a scenegraph.
 	* The step CAN cause some problems: if e.g. a mesh of the asset
 	* contains normals and another, using the same material index, does not, 
 	* they will be brought together, but the first meshes's part of
-	* the normal list will be zeroed.
+	* the normal list is zeroed. However, these artifacts are rare.
+	* @note The <tt>#AI_CONFIG_PP_PTV_NORMALIZE</tt> configuration property
+	* can be set to normalize the scene's spatial dimension to the -1...1
+	* range. 
 	*/
 	aiProcess_PreTransformVertices = 0x100,
 
@@ -286,7 +289,7 @@ enum aiPostProcessSteps
 	 * Several material settings not contributing to the final appearance of
 	 * a surface are ignored in all comparisons ... the material name is
 	 * one of them. So, if you're passing additional information through the
-	 * content pipeline (probably using using *magic* material names), don't 
+	 * content pipeline (probably using *magic* material names), don't 
 	 * specify this flag. Alternatively take a look at the
 	 * <tt>#AI_CONFIG_PP_RRM_EXCLUDE_LIST</tt> setting.
 	 */ 
@@ -358,18 +361,22 @@ enum aiPostProcessSteps
 
 	// -------------------------------------------------------------------------
 	/** <hr>This step searches all meshes for invalid data, such as zeroed
-	 *  normal vectors or invalid UV coords and removes them.
+	 *  normal vectors or invalid UV coords and removes/fixes them. This is
+	 *  intended to get rid of some common exporter errors.
 	 *
 	 * This is especially useful for normals. If they are invalid, and
 	 * the step recognizes this, they will be removed and can later
-	 * be computed by one of the other steps.<br>
-	 * The step will also remove meshes that are infinitely small.
+	 * be recomputed, i.e. by the #aiProcess_GenSmoothNormals flag.<br>
+	 * The step will also remove meshes that are infinitely small and reduce
+	 * animation tracks consisting of hundreds if redundant keys to a single
+	 * key. The <tt>AI_CONFIG_PP_FID_ANIM_ACCURACY</tt> config property decides
+	 * the accuracy of the check for duplicate animation tracks.
 	*/
 	aiProcess_FindInvalidData = 0x20000,
 
 	// -------------------------------------------------------------------------
 	/** <hr>This step converts non-UV mappings (such as spherical or
-	 *  cylindrical apping) to proper texture coordinate channels.
+	 *  cylindrical mapping) to proper texture coordinate channels.
 	 *
 	 * Most applications will support UV mapping only, so you will
 	 * probably want to specify this step in every case. Note tha Assimp is not
@@ -379,7 +386,7 @@ enum aiPostProcessSteps
 	 * lightwave, modo, ... are able to achieve this.
 	 *
 	 * @note If this step is not requested, you'll need to process the
-	 * <tt>#AI_MATKEY_MAPPING<7tt> material property in order to display all assets
+	 * <tt>#AI_MATKEY_MAPPING</tt> material property in order to display all assets
 	 * properly.
 	 */
 	aiProcess_GenUVCoords = 0x40000,
@@ -406,7 +413,7 @@ enum aiPostProcessSteps
 	 *  with references to the first mesh.
 	 *
 	 *  This step takes a while, don't use it if you have no time.
-	 *  It's main purpose is to workaround the limitation that many export
+	 *  Its main purpose is to workaround the limitation that many export
 	 *  file formats don't support instanced meshes, so exporters need to
 	 *  duplicate meshes. This step removes the duplicates again. Please 
  	 *  note that Assimp does currently not support per-node material
@@ -436,7 +443,7 @@ enum aiPostProcessSteps
 	 *
 	 *  Node names can be lost during this step. If you use special 'tag nodes'
 	 *  to pass additional information through your content pipeline, use the
-	 *  <tt>#AI_CONFIG_PP_OG_EXCLUDE_LIST<7tt> setting to specify a list of node 
+	 *  <tt>#AI_CONFIG_PP_OG_EXCLUDE_LIST</tt> setting to specify a list of node 
 	 *  names you want to be kept. Nodes matching one of the names in this list won't
 	 *  be touched or modified.
 	 *
@@ -470,7 +477,7 @@ enum aiPostProcessSteps
 	 *
 	 * You'll probably want to consider this flag if you use Direct3D for
 	 * rendering. The #aiProcess_ConvertToLeftHanded flag supersedes this
-	 * setting and boundles all conversions typically required for D3D-based
+	 * setting and bundles all conversions typically required for D3D-based
 	 * applications.
 	*/
 	aiProcess_FlipUVs = 0x800000, 
@@ -500,6 +507,7 @@ enum aiPostProcessSteps
  *  @brief Shortcut flag for Direct3D-based applications. 
  *
  *  Supersedes the #aiProcess_MakeLeftHanded and #aiProcess_FlipUVs and
+ *  #aiProcess_FlipWindingOrder flags.
  *  The output data matches Direct3D's conventions: left-handed geometry, upper-left
  *  origin for UV coordinates and finally clockwise face order, suitable for CCW culling.
  *
@@ -572,7 +580,7 @@ enum aiPostProcessSteps
   *
   *  This preset enables almost every optimization step to achieve perfectly
   *  optimized data. It's your choice for level editor environments where import speed 
-  *  doesn't care.
+  *  is not important.
   *  
   *  If you're using DirectX, don't forget to combine this value with
   *  the #aiProcess_ConvertToLeftHanded step. If you don't support UV transformations

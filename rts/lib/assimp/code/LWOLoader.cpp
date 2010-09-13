@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -105,10 +105,10 @@ void LWOImporter::InternReadFile( const std::string& pFile,
 
 	// Check whether we can read from the file
 	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open LWO file " + pFile + ".");
+		throw DeadlyImportError( "Failed to open LWO file " + pFile + ".");
 
 	if((this->fileSize = (unsigned int)file->FileSize()) < 12)
-		throw new ImportErrorException("LWO: The file is too small to contain the IFF header");
+		throw DeadlyImportError("LWO: The file is too small to contain the IFF header");
 
 	// Allocate storage and copy the contents of the file to a memory buffer
 	std::vector< uint8_t > mBuffer(fileSize);
@@ -118,7 +118,7 @@ void LWOImporter::InternReadFile( const std::string& pFile,
 	// Determine the type of the file
 	uint32_t fileType;
 	const char* sz = IFF::ReadHeader(&mBuffer[0],fileType);
-	if (sz)throw new ImportErrorException(sz);
+	if (sz)throw DeadlyImportError(sz);
 
 	mFileBuffer = &mBuffer[0] + 12;
 	fileSize -= 12;
@@ -149,15 +149,17 @@ void LWOImporter::InternReadFile( const std::string& pFile,
 		DefaultLogger::get()->info("LWO file format: LWOB (<= LightWave 5.5)");
 
 		mIsLWO2 = false;
+        mIsLXOB = false;
 		LoadLWOBFile();
 	}
-
 	// New lightwave format
 	else if (AI_LWO_FOURCC_LWO2 == fileType)	{
+        mIsLXOB = false;
 		DefaultLogger::get()->info("LWO file format: LWO2 (>= LightWave 6)");
 	}
 	// MODO file format
 	else if (AI_LWO_FOURCC_LXOB == fileType)	{
+        mIsLXOB = true;
 		DefaultLogger::get()->info("LWO file format: LXOB (Modo)");
 	}
 	// we don't know this format
@@ -168,7 +170,8 @@ void LWOImporter::InternReadFile( const std::string& pFile,
 		szBuff[1] = (char)(fileType >> 16u);
 		szBuff[2] = (char)(fileType >> 8u);
 		szBuff[3] = (char)(fileType);
-		throw new ImportErrorException(std::string("Unknown LWO sub format: ") + szBuff);
+		szBuff[4] = '\0';
+		throw DeadlyImportError(std::string("Unknown LWO sub format: ") + szBuff);
 	}
 
 	if (AI_LWO_FOURCC_LWOB != fileType)	{
@@ -179,10 +182,10 @@ void LWOImporter::InternReadFile( const std::string& pFile,
 		// loader that just one layer is used. If this is the case
 		// we need to check now whether the requested layer has been found.
 		if (0xffffffff != configLayerIndex && configLayerIndex > mLayers->size())
-			throw new ImportErrorException("LWO2: The requested layer was not found");
+			throw DeadlyImportError("LWO2: The requested layer was not found");
 
 		if (configLayerName.length() && !hasNamedLayer)	{
-			throw new ImportErrorException("LWO2: Unable to find the requested layer: " 
+			throw DeadlyImportError("LWO2: Unable to find the requested layer: " 
 				+ configLayerName);
 		}
 	}
@@ -213,7 +216,8 @@ void LWOImporter::InternReadFile( const std::string& pFile,
 			unsigned int i = 0;
 			for (FaceList::iterator it = layer.mFaces.begin(), end = layer.mFaces.end();it != end;++it,++i)	{
 				// Check whether we support this face's type
-				if ((*it).type != AI_LWO_FACE && (*it).type != AI_LWO_PTCH) {
+				if ((*it).type != AI_LWO_FACE && (*it).type != AI_LWO_PTCH &&
+				    (*it).type != AI_LWO_BONE && (*it).type != AI_LWO_SUBD) {
 					continue;
 				}
 
@@ -388,7 +392,7 @@ void LWOImporter::InternReadFile( const std::string& pFile,
 	}
 
 	if (apcNodes.empty() || apcMeshes.empty())
-		throw new ImportErrorException("LWO: No meshes loaded");
+		throw DeadlyImportError("LWO: No meshes loaded");
 
 	// The RemoveRedundantMaterials step will clean this up later
 	pScene->mMaterials = new aiMaterial*[pScene->mNumMaterials = (unsigned int)mSurfaces->size()];
@@ -586,7 +590,7 @@ void LWOImporter::GenerateNodeGraph(std::vector<aiNode*>& apcNodes)
 		root->mNumChildren = newSize;
 	}
 	if (!pScene->mRootNode->mNumChildren)
-		throw new ImportErrorException("LWO: Unable to build a valid node graph");
+		throw DeadlyImportError("LWO: Unable to build a valid node graph");
 
 	// Remove a single root node with no meshes assigned to it ... 
 	if (1 == pScene->mRootNode->mNumChildren)	{
@@ -727,9 +731,6 @@ void LWOImporter::LoadLWO2Polygons(unsigned int length)
 	switch (type)
 	{
 		// read unsupported stuff too (although we wont process it)
-	case  AI_LWO_BONE:
-		DefaultLogger::get()->warn("LWO2: Encountered unsupported primitive chunk (BONE)");
-		break;
 	case  AI_LWO_MBAL:
 		DefaultLogger::get()->warn("LWO2: Encountered unsupported primitive chunk (METABALL)");
 		break;
@@ -740,6 +741,8 @@ void LWOImporter::LoadLWO2Polygons(unsigned int length)
 		// These are ok with no restrictions
 	case  AI_LWO_PTCH:
 	case  AI_LWO_FACE:
+	case  AI_LWO_BONE:
+	case  AI_LWO_SUBD:
 		break;
 	default:
 
@@ -800,7 +803,7 @@ void LWOImporter::CopyFaceIndicesLWO2(FaceList::iterator& it,
 				}
 			}
 		}
-		else throw new ImportErrorException("LWO2: Encountered invalid face record with zero indices");
+		else throw DeadlyImportError("LWO2: Encountered invalid face record with zero indices");
 	}
 }
 
@@ -973,6 +976,9 @@ void LWOImporter::LoadLWO2VertexMap(unsigned int length, bool perPoly)
 		return;
 
 	default: 
+		if (name == "APS.Level") {
+			// XXX handle this (seems to be subdivision-related).
+		}
 		DefaultLogger::get()->warn("LWO2: Skipping unknown VMAP/VMAD channel \'" + name + "\'"); 
 		return;
 	};
@@ -1141,6 +1147,18 @@ void LWOImporter::LoadLWO2Envelope(unsigned int length)
 	// Get the index of the envelope
 	envelope.index = ReadVSizedIntLWO2(mFileBuffer);
 
+	// It looks like there might be an extra U4 right after the index,
+	// at least in modo (LXOB) files: we'll ignore it if it's zero,
+	// otherwise it represents the start of a subchunk, so we backtrack.
+	if (mIsLXOB)
+	{
+        uint32_t extra = GetU4();
+        if (extra)
+        {
+            mFileBuffer -= 4;
+        }
+	}
+
 	// ... and read all subchunks
 	while (true)
 	{
@@ -1148,7 +1166,7 @@ void LWOImporter::LoadLWO2Envelope(unsigned int length)
 		LE_NCONST IFF::SubChunkHeader* const head = IFF::LoadSubChunk(mFileBuffer);
 
 		if (mFileBuffer + head->length > end)
-			throw new ImportErrorException("LWO2: Invalid envelope chunk length");
+			throw DeadlyImportError("LWO2: Invalid envelope chunk length");
 
 		uint8_t* const next = mFileBuffer+head->length;
 		switch (head->type)
@@ -1241,7 +1259,7 @@ void LWOImporter::LoadLWO2File()
 
 		if (mFileBuffer + head->length > end)
 		{
-			throw new ImportErrorException("LWO2: Chunk length points behind the file");
+			throw DeadlyImportError("LWO2: Chunk length points behind the file");
 			break;
 		}
 		uint8_t* const next = mFileBuffer+head->length;

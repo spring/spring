@@ -1,25 +1,23 @@
-
-
 ===============================================================
 Open Asset Import Library (Assimp)
 Developers and Contributors
 ===============================================================
 
-The following is the list of all constributors.
+The following is the list of all constributors.  
 Thanks for your help!
 
 - Alexander Gessler,
-3DS-, ASE-, DXF-, HMP-, MDL-, MD2-, MD3-, MD5-, MDC-, NFF-, PLY-, STL-, RAW-, OFF- and LWO-Loader, 
-Configuration-Interface, AssImp-Viewer (Win32), Website (Admin and Design), admin.
+3DS-, ASE-, DXF-, HMP-, MDL-, MD2-, MD3-, MD5-, MDC-, NFF-, PLY-, STL-, RAW-, OFF-, MS3D-, Q3D- and LWO-Loader, 
+AssImp-Viewer (Win32), noboost, Website (Admin and Design).
 
--Thomas Schulze,
+- Thomas Schulze,
 X-, Collada-, BVH-Loader, Postprocessing framework. Data structure & Interface design, documentation.
 
--R.Schmidt,
-Linux build, eclipse support.
+- Kim Kulling,
+Obj-Loader, Logging system, Scons-build environment, CMake build environment, Linux build.
 
-- Kim Kulling:
-Obj-Loader, Logging, SCons-build environment.
+- R.Schmidt,
+Linux build, eclipse support.
 
 - Matthias Gubisch,
 Assimp.net
@@ -29,29 +27,29 @@ Visual Studio 9 support, bugfixes.
 B3D-Loader, Assimp testing
 
 - Sebastian Hempel,
-PyAssimp
+PyAssimp (first version)
 Compile-Bugfixes for mingw, add enviroment for static library support in make.
 
 - Jonathan Pokrass
-supplied a bugfix concerning the scaling in the md3 loader.
+Supplied a bugfix concerning the scaling in the md3 loader.
 
 - Andrew Galante,
-submitted patches to make Assimp compile with GCC-4, a makefile and the xcode3 workspace.
+Submitted patches to make Assimp compile with GCC-4, a makefile and the xcode3 workspace.
 
 - Andreas Nagel
-tested Assimp under Windows Vista 64 Bit.
+First Assimp testing & verification under Windows Vista 64 Bit.
 
 - Marius Schröder
-allowed us to use many of his models for screenshots and testing.
+Allowed us to use many of his models for screenshots and testing.
 
 - Christian Schubert
-supplied various XFiles for testing purposes.
+Supplied various XFiles for testing purposes.
 
 - Tizian Wieland
-searched the web for several thousands of test models for internal use
+Searched the web for hundreds of test models for internal use
 
 - John Connors
-supplied patches for linux and SCons.
+Supplied patches for linux and SCons.
 
 - T. R.
 The GUY who performed some of the CSM mocaps.
@@ -61,3 +59,27 @@ Contributed fixes for the documentation and the doxygen markup
 
 - Zhao Lei
 Contributed several bugfixes fixing memory leaks and improving float parsing 
+
+- sueastside
+Updated PyAssimp to the latest Assimp data structures and provided a script to keep the Python binding up-to-date.
+
+- Tobias Rittig
+Collada testing with Cinema 4D
+
+- Brad Grantham
+Improvements in OpenGL-Sample.
+
+- Robert Ramirez
+Add group loading feature to Obj-Loader.
+
+- Chris Maiwald
+Many bugreports, improving Assimp's portability, regular testing & feedback.
+
+- Stepan Hrbek
+Bugreport and fix for a obj-materialloader crash.
+
+- David Nadlinger
+D bindings, CMake install support. 
+
+- Dario Accornero
+Contributed several patches regarding Mac OS/XCode targets, bug reports.

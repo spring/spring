@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -55,16 +55,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 // We need boost::common_factor to compute the lcm/gcd of a number
-#ifdef ASSIMP_BUILD_BOOST_WORKAROUND
-#	include "../include/BoostWorkaround/boost/common_factor_rt.hpp"
-#else
-#	include	<boost/math/common_factor_rt.hpp> 
-#endif
+#include <boost/math/common_factor_rt.hpp>
 
 using namespace Assimp;
 using namespace irr;
 using namespace irr::io;
-using namespace boost::math;
 
 
 // ------------------------------------------------------------------------------------------------
@@ -103,13 +98,10 @@ bool IRRImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 }
 
 // ------------------------------------------------------------------------------------------------
-void IRRImporter::GetExtensionList(std::string& append)
+void IRRImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	/*  NOTE: The file extenxsion .xml is too generic. We'll 
-	*  need to open the file in CanRead() and check whether it is 
-	*  a real irrlicht file
-	*/
-	append.append("*.xml;*.irr");
+	extensions.insert("irr");
+	extensions.insert("xml");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -298,6 +290,10 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 {
 	ai_assert(NULL != root && NULL != real);
 
+	// XXX totally WIP - doesn't produce proper results, need to evaluate
+	// whether there's any use for Irrlicht's proprietary scene format
+	// outside Irrlicht ...
+
 	if (root->animators.empty()) {
 		return;
 	}
@@ -404,7 +400,7 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 				// find out how many time units we'll need for the finest
 				// track (in seconds) - this defines the number of output
 				// keys (fps * seconds)
-				float max ;
+				float max  = 0.f;
 				if (angles[0])
 					max = (float)lcm / angles[0];
 				if (angles[1])
@@ -554,6 +550,9 @@ void IRRImporter::ComputeAnimations(Node* root, aiNode* real, std::vector<aiNode
 					key.mTime  = (double) i;
 				}
 			}
+			break;
+		default:
+			// UNKNOWN , OTHER
 			break;
 		};
 		if (anim)	{
@@ -813,6 +812,9 @@ void IRRImporter::GenerateGraph(Node* root,aiNode* rootOut ,aiScene* scene,
 			DefaultLogger::get()->error("IRR: Unsupported node - TERRAIN");
 		}
 		break;
+	default:
+		// DUMMY
+		break;
 	};
 
 	// Check whether we added a mesh (or more than one ...). In this case 
@@ -881,7 +883,7 @@ void IRRImporter::InternReadFile( const std::string& pFile,
 
 	// Check whether we can read from the file
 	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open IRR file " + pFile + "");
+		throw DeadlyImportError( "Failed to open IRR file " + pFile + "");
 
 	// Construct the irrXML parser
 	CIrrXML_IOStreamReader st(file.get());
@@ -1182,8 +1184,8 @@ void IRRImporter::InternReadFile( const std::string& pFile,
 								}
 								// radius of the sphere to be generated -
 								// or alternatively, size of the cube
-								else if (Node::SPHERE == curNode->type && prop.name == "Radius" 
-									|| Node::CUBE == curNode->type   && prop.name == "Size" )	{
+								else if ((Node::SPHERE == curNode->type && prop.name == "Radius") 
+									|| (Node::CUBE == curNode->type   && prop.name == "Size" ))	{
 									
 										curNode->sphereRadius = prop.value;
 								}
@@ -1248,7 +1250,7 @@ void IRRImporter::InternReadFile( const std::string& pFile,
 										DefaultLogger::get()->error("Ignoring light of unknown type: " + prop.value);
 									}
 								}
-								else if (prop.name == "Mesh" && Node::MESH == curNode->type ||
+								else if ((prop.name == "Mesh" && Node::MESH == curNode->type) ||
 									Node::ANIMMESH == curNode->type)
 								{
 									/*  This is the file name of the mesh - either

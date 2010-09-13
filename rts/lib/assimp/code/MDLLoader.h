@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms, 
@@ -114,7 +114,7 @@ protected:
 	/** Called by Importer::GetExtensionList() for each loaded importer.
 	 * See BaseImporter::GetExtensionList() for details
 	 */
-	void GetExtensionList(std::string& append);
+	void GetExtensionList(std::set<std::string>& extensions);
 
 	// -------------------------------------------------------------------
 	/** Imports the given file into the given scene structure. 
@@ -147,7 +147,7 @@ protected:
 
 	// -------------------------------------------------------------------
 	/** Check whether a given position is inside the valid range
-	 *  Throw a new ImportErrorException if it is not
+	 *  Throw a DeadlyImportError if it is not
 	 * \param szPos Cursor position
 	 * \param szFile Name of the source file from which the function was called
 	 * \param iLine Source code line from which the function was called

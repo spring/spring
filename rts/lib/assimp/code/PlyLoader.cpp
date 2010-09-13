@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -80,40 +80,33 @@ bool PLYImporter::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 }
 
 // ------------------------------------------------------------------------------------------------
-void PLYImporter::GetExtensionList(std::string& append)
+void PLYImporter::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.ply");
+	extensions.insert("ply");
 }
 
 // ------------------------------------------------------------------------------------------------
 // Imports the given file into the given scene structure. 
-void PLYImporter::InternReadFile( 
-								 const std::string& pFile, aiScene* pScene, IOSystem* pIOHandler)
+void PLYImporter::InternReadFile( const std::string& pFile, 
+	aiScene* pScene, IOSystem* pIOHandler)
 {
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)
-		throw new ImportErrorException( "Failed to open PLY file " + pFile + ".");
-
-	// check whether the ply file is large enough to contain
-	// at least the file header
-	size_t fileSize = file->FileSize();
-	if( fileSize < 10)
-		throw new ImportErrorException( "PLY File is too small.");
+	if( file.get() == NULL) {
+		throw DeadlyImportError( "Failed to open PLY file " + pFile + ".");
+	}
 
 	// allocate storage and copy the contents of the file to a memory buffer
-	// (terminate it with zero)
-	std::vector<unsigned char> mBuffer2(fileSize+1);
-	file->Read( &mBuffer2[0], 1, fileSize);
-	mBuffer = &mBuffer2[0];
-	mBuffer[fileSize] = '\0';
+	std::vector<char> mBuffer2;
+	TextFileToBuffer(file.get(),mBuffer2);
+	mBuffer = (unsigned char*)&mBuffer2[0];
 
 	// the beginning of the file must be PLY - magic, magic
-	if (mBuffer[0] != 'P' && mBuffer[0] != 'p' ||
-		mBuffer[1] != 'L' && mBuffer[1] != 'l' ||
-		mBuffer[2] != 'Y' && mBuffer[2] != 'y')	{
-		throw new ImportErrorException( "Invalid .ply file: Magic number \'ply\' is no there");
+	if ((mBuffer[0] != 'P' && mBuffer[0] != 'p') ||
+		(mBuffer[1] != 'L' && mBuffer[1] != 'l') ||
+		(mBuffer[2] != 'Y' && mBuffer[2] != 'y'))	{
+		throw DeadlyImportError( "Invalid .ply file: Magic number \'ply\' is no there");
 	}
 
 	char* szMe = (char*)&this->mBuffer[3];
@@ -127,7 +120,7 @@ void PLYImporter::InternReadFile(
 		{
 			SkipLine(szMe,(const char**)&szMe);
 			if(!PLY::DOM::ParseInstance(szMe,&sPlyDom))
-				throw new ImportErrorException( "Invalid .ply file: Unable to build DOM (#1)");
+				throw DeadlyImportError( "Invalid .ply file: Unable to build DOM (#1)");
 		}
 		else if (!::strncmp(szMe,"binary_",7))
 		{
@@ -145,15 +138,15 @@ void PLYImporter::InternReadFile(
 			// skip the line, parse the rest of the header and build the DOM
 			SkipLine(szMe,(const char**)&szMe);
 			if(!PLY::DOM::ParseInstanceBinary(szMe,&sPlyDom,bIsBE))
-				throw new ImportErrorException( "Invalid .ply file: Unable to build DOM (#2)");
+				throw DeadlyImportError( "Invalid .ply file: Unable to build DOM (#2)");
 		}
-		else throw new ImportErrorException( "Invalid .ply file: Unknown file format");
+		else throw DeadlyImportError( "Invalid .ply file: Unknown file format");
 	}
 	else
 	{
 		delete[] this->mBuffer;
 		AI_DEBUG_INVALIDATE_PTR(this->mBuffer);
-		throw new ImportErrorException( "Invalid .ply file: Missing format specification");
+		throw DeadlyImportError( "Invalid .ply file: Missing format specification");
 	}
 	this->pcDOM = &sPlyDom;
 
@@ -162,7 +155,7 @@ void PLYImporter::InternReadFile(
 	this->LoadVertices(&avPositions,false);
 
 	if (avPositions.empty())
-		throw new ImportErrorException( "Invalid .ply file: No vertices found. "
+		throw DeadlyImportError( "Invalid .ply file: No vertices found. "
 			"Unable to parse the data format of the PLY file.");
 
 	// now load a list of normals. 
@@ -179,7 +172,7 @@ void PLYImporter::InternReadFile(
 	{
 		if (avPositions.size() < 3)
 		{
-			throw new ImportErrorException( "Invalid .ply file: Not enough "
+			throw DeadlyImportError( "Invalid .ply file: Not enough "
 				"vertices to build a proper face list. ");
 		}
 
@@ -218,7 +211,7 @@ void PLYImporter::InternReadFile(
 		&avColors,&avTexCoords,&avMaterials,&avMeshes);
 
 	if (avMeshes.empty())
-		throw new ImportErrorException( "Invalid .ply file: Unable to extract mesh data ");
+		throw DeadlyImportError( "Invalid .ply file: Unable to extract mesh data ");
 
 	// now generate the output scene object. Fill the material list
 	pScene->mNumMaterials = (unsigned int)avMaterials.size();
@@ -380,7 +373,7 @@ void PLYImporter::LoadTextureCoordinates(std::vector<aiVector2D>* pvOut)
 	ai_assert(NULL != pvOut);
 
 	unsigned int aiPositions[2] = {0xFFFFFFFF,0xFFFFFFFF};
-	PLY::EDataType aiTypes[2];
+	PLY::EDataType aiTypes[2] = {EDT_Char,EDT_Char};
 	PLY::ElementInstanceList* pcList = NULL;
 	unsigned int cnt = 0;
 
@@ -448,7 +441,7 @@ void PLYImporter::LoadVertices(std::vector<aiVector3D>* pvOut, bool p_bNormals)
 	ai_assert(NULL != pvOut);
 
 	unsigned int aiPositions[3] = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF};
-	PLY::EDataType aiTypes[3];
+	PLY::EDataType aiTypes[3] = {EDT_Char,EDT_Char,EDT_Char};
 	PLY::ElementInstanceList* pcList = NULL;
 	unsigned int cnt = 0;
 
@@ -594,7 +587,7 @@ void PLYImporter::LoadVertexColor(std::vector<aiColor4D>* pvOut)
 	ai_assert(NULL != pvOut);
 
 	unsigned int aiPositions[4] = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF};
-	PLY::EDataType aiTypes[4];
+	PLY::EDataType aiTypes[4] = {EDT_Char, EDT_Char, EDT_Char, EDT_Char}; // silencing gcc
 	unsigned int cnt = 0;
 	PLY::ElementInstanceList* pcList = NULL;
 
@@ -696,12 +689,12 @@ void PLYImporter::LoadFaces(std::vector<PLY::Face>* pvOut)
 
 	// index of the vertex index list
 	unsigned int iProperty = 0xFFFFFFFF;
-	PLY::EDataType eType;
+	PLY::EDataType eType = EDT_Char;
 	bool bIsTristrip = false;
 
 	// index of the material index property
 	unsigned int iMaterialIndex = 0xFFFFFFFF;
-	PLY::EDataType eType2;
+	PLY::EDataType eType2 = EDT_Char;
 
 	// serach in the DOM for a face entry
 	unsigned int _i = 0;
@@ -794,38 +787,39 @@ void PLYImporter::LoadFaces(std::vector<PLY::Face>* pvOut)
 		{
 			// normally we have only one triangle strip instance where
 			// a value of -1 indicates a restart of the strip
-			for (std::vector<ElementInstance>::const_iterator i =  pcList->alInstances.begin();
-				i != pcList->alInstances.end();++i)
-			{
+			bool flip = false;
+			for (std::vector<ElementInstance>::const_iterator i = pcList->alInstances.begin();i != pcList->alInstances.end();++i) {
 				const std::vector<PLY::PropertyInstance::ValueUnion>& quak = (*i).alProperties[iProperty].avList;
 				pvOut->reserve(pvOut->size() + quak.size() + (quak.size()>>2u));
 
 				int aiTable[2] = {-1,-1};
 				for (std::vector<PLY::PropertyInstance::ValueUnion>::const_iterator a =  quak.begin();a != quak.end();++a)	{
 					const int p = PLY::PropertyInstance::ConvertTo<int>(*a,eType);
-					if (-1 == p)
-					{
+
+					if (-1 == p)	{
 						// restart the strip ...
 						aiTable[0] = aiTable[1] = -1;
+						flip = false;
 						continue;
 					}
-					if (-1 == aiTable[0])
-					{
+					if (-1 == aiTable[0]) {
 						aiTable[0] = p;
 						continue;
 					}
-					if (-1 == aiTable[1])
-					{
+					if (-1 == aiTable[1]) {
 						aiTable[1] = p;
 						continue;
 					}
 				
 					pvOut->push_back(PLY::Face());
 					PLY::Face& sFace = pvOut->back();
-					sFace.mIndices.push_back((unsigned int)aiTable[0]);
-					sFace.mIndices.push_back((unsigned int)aiTable[1]);
-					sFace.mIndices.push_back((unsigned int)p);
-		
+					sFace.mIndices[0] = aiTable[0];
+					sFace.mIndices[1] = aiTable[1];
+					sFace.mIndices[2] = p;
+					if ((flip = !flip)) {
+						std::swap(sFace.mIndices[0],sFace.mIndices[1]);
+					}
+					
 					aiTable[0] = aiTable[1];
 					aiTable[1] = p;
 				}
@@ -888,15 +882,18 @@ void PLYImporter::LoadMaterial(std::vector<MaterialHelper*>* pvOut)
 		{0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF},
 	};
 
-	// dto.
-	PLY::EDataType aaiTypes[3][4];
+	PLY::EDataType aaiTypes[3][4] = {
+		{EDT_Char,EDT_Char,EDT_Char,EDT_Char},
+		{EDT_Char,EDT_Char,EDT_Char,EDT_Char},
+		{EDT_Char,EDT_Char,EDT_Char,EDT_Char}
+	};
 	PLY::ElementInstanceList* pcList = NULL;
 
 	unsigned int iPhong = 0xFFFFFFFF;
-	PLY::EDataType ePhong;
+	PLY::EDataType ePhong = EDT_Char;
 
 	unsigned int iOpacity = 0xFFFFFFFF;
-	PLY::EDataType eOpacity;
+	PLY::EDataType eOpacity = EDT_Char;
 
 	// serach in the DOM for a vertex entry
 	unsigned int _i = 0;
@@ -984,7 +981,7 @@ void PLYImporter::LoadMaterial(std::vector<MaterialHelper*>* pvOut)
 				}
 				else if (PLY::EST_AmbientBlue == (*a).Semantic)
 				{
-					aaiPositions[22][2]	= _a;
+					aaiPositions[2][2]	= _a;
 					aaiTypes[2][2]		= (*a).eType;
 				}
 				else if (PLY::EST_AmbientAlpha == (*a).Semantic)

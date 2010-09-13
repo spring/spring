@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ObjTools.h"
 #include "ObjFileData.h"
 #include "fast_atof.h"
-
+#include "../include/aiTypes.h"
 #include "DefaultIOSystem.h"
 
 namespace Assimp	{
@@ -57,15 +57,12 @@ const std::string ObjFileParser::DEFAULT_MATERIAL = AI_DEFAULT_MATERIAL_NAME;
 
 // -------------------------------------------------------------------
 //	Constructor with loaded data and directories.
-ObjFileParser::ObjFileParser(std::vector<char> &Data, 
-							 const std::string &strAbsPath, 
-							 const std::string &strModelName, IOSystem* _io) :
-	m_strAbsPath(strAbsPath),
+ObjFileParser::ObjFileParser(std::vector<char> &Data,const std::string &strModelName, IOSystem *io ) :
 	m_DataIt(Data.begin()),
 	m_DataItEnd(Data.end()),
 	m_pModel(NULL),
 	m_uiLine(0),
-	io(_io)
+	m_pIO( io )
 {
 	// Create the model instance to store all the data
 	m_pModel = new ObjFile::Model();
@@ -186,7 +183,7 @@ void ObjFileParser::copyNextWord(char *pBuffer, size_t length)
 {
 	size_t index = 0;
 	m_DataIt = getNextWord<DataArrayIt>(m_DataIt, m_DataItEnd);
-	while (!isSpace(*m_DataIt) && m_DataIt != m_DataItEnd)
+	while ( !isSeparator(*m_DataIt) && m_DataIt != m_DataItEnd )
 	{
 		pBuffer[index] = *m_DataIt;
 		index++;
@@ -204,9 +201,10 @@ void ObjFileParser::copyNextLine(char *pBuffer, size_t length)
 	size_t index = 0;
 	while (m_DataIt != m_DataItEnd)
 	{
-		if (*m_DataIt == '\n' || *m_DataIt == '\r')
+		// (Aramis) removed assertion (index<length-1) in favour of an explicit check
+		if (*m_DataIt == '\n' || *m_DataIt == '\r' || index == length-1)
 			break;
-		assert (index+1 <= length);
+
 		pBuffer[ index ] = *m_DataIt;
 		++index;
 		++m_DataIt;
@@ -293,7 +291,7 @@ void ObjFileParser::getFace()
 			}
 			iPos++;
 		}
-		else if (isSpace(*pPtr))
+		else if ( isSeparator(*pPtr) )
 		{
 			iPos = 0;
 		}
@@ -302,10 +300,10 @@ void ObjFileParser::getFace()
 			//OBJ USES 1 Base ARRAYS!!!!
 			const int iVal = atoi( pPtr );
 			int tmp = iVal;
-			while ((tmp = tmp / 10)!=0)
+			while ( ( tmp = tmp / 10 )!=0 )
 				++iStep;
 
-			if ( 0 != iVal )
+			if ( iVal > 0 )
 			{
 				// Store parsed index
 				if ( 0 == iPos )
@@ -374,7 +372,7 @@ void ObjFileParser::getMaterialDesc()
 		return;
 
 	char *pStart = &(*m_DataIt);
-	while ( !isSpace(*m_DataIt) && m_DataIt != m_DataItEnd )
+	while ( !isSeparator(*m_DataIt) && m_DataIt != m_DataItEnd )
 		++m_DataIt;
 
 	// Get name
@@ -388,18 +386,11 @@ void ObjFileParser::getMaterialDesc()
 	{
 		// Not found, use default material
 		m_pModel->m_pCurrentMaterial = m_pModel->m_pDefaultMaterial;
-		m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
-		m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
-		m_pModel->m_pCurrentMesh->m_uiMaterialIndex = getMaterialIndex( DEFAULT_MATERIAL );
 	}
 	else
 	{
 		// Found, using detected material
 		m_pModel->m_pCurrentMaterial = (*it).second;
-
-		// Create a new mesh for a new material
-		m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
-		m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
 		m_pModel->m_pCurrentMesh->m_uiMaterialIndex = getMaterialIndex( strName );
 	}
 
@@ -411,9 +402,10 @@ void ObjFileParser::getMaterialDesc()
 //	Get a comment, values will be skipped
 void ObjFileParser::getComment()
 {
-	while (true)
+	bool running = true;
+	while (running)
 	{
-		if ('\n' == (*m_DataIt) || m_DataIt == m_DataItEnd) 
+		if ( '\n' == (*m_DataIt) || m_DataIt == m_DataItEnd ) 
 		{
 			++m_DataIt;
 			break;
@@ -439,25 +431,23 @@ void ObjFileParser::getMaterialLib()
 		m_DataIt++;
 
 	// Check for existence
-	std::string strMatName(pStart, &(*m_DataIt));
-	std::string absName = m_strAbsPath + io->getOsSeparator() + strMatName;
-	IOStream *pFile = io->Open(absName.c_str());
+	const std::string strMatName(pStart, &(*m_DataIt));
+	IOStream *pFile = m_pIO->Open(strMatName);
 
 	if (!pFile )
 	{
-		DefaultLogger::get()->error("OBJ: Unable to locate material file " + absName);
+		DefaultLogger::get()->error("OBJ: Unable to locate material file " + strMatName);
 		m_DataIt = skipLine<DataArrayIt>( m_DataIt, m_DataItEnd, m_uiLine );
 		return;
 	}
 
 	// Import material library data from file
-	size_t size = pFile->FileSize();
-	std::vector<char> buffer(size);
-	pFile->Read( &buffer[ 0 ], sizeof( char ), size );
-	io->Close( pFile );
+	std::vector<char> buffer;
+	BaseImporter::TextFileToBuffer(pFile,buffer);
+	m_pIO->Close( pFile );
 
 	// Importing the material library 
-	ObjFileMtlImporter mtlImporter( buffer, absName, m_pModel );			
+	ObjFileMtlImporter mtlImporter( buffer, strMatName, m_pModel );			
 }
 
 // -------------------------------------------------------------------
@@ -471,7 +461,7 @@ void ObjFileParser::getNewMaterial()
 
 	char *pStart = &(*m_DataIt);
 	std::string strMat(pStart, *m_DataIt);
-	while (isSpace(*m_DataIt))
+	while ( isSeparator( *m_DataIt ) )
 		m_DataIt++;
 	std::map<std::string, ObjFile::Material*>::iterator it = m_pModel->m_MaterialMap.find( strMat );
 	if (it == m_pModel->m_MaterialMap.end())
@@ -496,14 +486,14 @@ int ObjFileParser::getMaterialIndex( const std::string &strMaterialName )
 	int mat_index = -1;
 	if ( strMaterialName.empty() )
 		return mat_index;
-		for (size_t index = 0; index < m_pModel->m_MaterialLib.size(); ++index)
+	for (size_t index = 0; index < m_pModel->m_MaterialLib.size(); ++index)
+	{
+		if ( strMaterialName == m_pModel->m_MaterialLib[ index ])
 		{
-			if ( strMaterialName == m_pModel->m_MaterialLib[ index ])
-			{
-				mat_index = (int)index;
-				break;
-			}
+			mat_index = (int)index;
+			break;
 		}
+	}
 	return mat_index;
 }
 
@@ -514,12 +504,12 @@ void ObjFileParser::getGroupName()
 	// Get next word from data buffer
 	m_DataIt = getNextToken<DataArrayIt>(m_DataIt, m_DataItEnd);
 	m_DataIt = getNextWord<DataArrayIt>(m_DataIt, m_DataItEnd);
-	if ( m_DataIt == m_DataItEnd )
+	if ( isEndOfBuffer( m_DataIt, m_DataItEnd ) )
 		return;
 
 	// Store groupname in group library 
 	char *pStart = &(*m_DataIt);
-	while (!isSpace(*m_DataIt))
+	while ( !isSeparator(*m_DataIt) )
 		m_DataIt++;
 	std::string strGroupName(pStart, &(*m_DataIt));
 
@@ -529,8 +519,11 @@ void ObjFileParser::getGroupName()
 		// Search for already existing entry
 		ObjFile::Model::ConstGroupMapIt it = m_pModel->m_Groups.find(&strGroupName);
 		
+		// We are mapping groups into the object structure
+		/// TODO: Is this the right way to do it????
+		createObject( strGroupName );
+		
 		// New group name, creating a new entry
-		//ObjFile::Object *pObject = m_pModel->m_pCurrent;
 		if (it == m_pModel->m_Groups.end())
 		{
 			std::vector<unsigned int> *pFaceIDArray = new std::vector<unsigned int>;
@@ -564,7 +557,7 @@ void ObjFileParser::getObjectName()
 	if (m_DataIt == m_DataItEnd)
 		return;
 	char *pStart = &(*m_DataIt);
-	while (!isSpace(*m_DataIt))
+	while (!isSeparator(*m_DataIt))
 		m_DataIt++;
 
 	std::string strObjectName(pStart, &(*m_DataIt));
@@ -586,13 +579,8 @@ void ObjFileParser::getObjectName()
 		}
 
 		// Allocate a new object, if current one wasn´t found before
-		if (m_pModel->m_pCurrent == NULL)
-		{
+		if ( NULL == m_pModel->m_pCurrent )
 			createObject(strObjectName);
-			/*m_pModel->m_pCurrent = new ObjFile::Object();
-			m_pModel->m_pCurrent->m_strObjName = strObjectName;
-			m_pModel->m_Objects.push_back(m_pModel->m_pCurrent);*/
-		}
 	}
 	m_DataIt = skipLine<DataArrayIt>( m_DataIt, m_DataItEnd, m_uiLine );
 }
@@ -605,7 +593,17 @@ void ObjFileParser::createObject(const std::string &strObjectName)
 
 	m_pModel->m_pCurrent = new ObjFile::Object();
 	m_pModel->m_pCurrent->m_strObjName = strObjectName;
-	m_pModel->m_Objects.push_back(m_pModel->m_pCurrent);
+	m_pModel->m_Objects.push_back( m_pModel->m_pCurrent );
+	
+	m_pModel->m_pCurrentMesh = new ObjFile::Mesh();
+	m_pModel->m_Meshes.push_back( m_pModel->m_pCurrentMesh );
+
+	if( m_pModel->m_pCurrentMaterial )
+	{
+		m_pModel->m_pCurrentMesh->m_uiMaterialIndex = 
+			getMaterialIndex( m_pModel->m_pCurrentMaterial->MaterialName.data );
+		m_pModel->m_pCurrentMesh->m_pMaterial = m_pModel->m_pCurrentMaterial;
+	}		
 }
 
 // -------------------------------------------------------------------

@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -89,9 +89,11 @@ bool MD5Importer::CanRead( const std::string& pFile, IOSystem* pIOHandler, bool 
 
 // ------------------------------------------------------------------------------------------------
 // Get list of all supported extensions
-void MD5Importer::GetExtensionList(std::string& append)
+void MD5Importer::GetExtensionList(std::set<std::string>& extensions)
 {
-	append.append("*.md5mesh;*.md5anim;*.md5camera");
+	extensions.insert("md5anim");
+	extensions.insert("md5mesh");
+	extensions.insert("md5camera");
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -137,14 +139,15 @@ void MD5Importer::InternReadFile( const std::string& pFile,
 			LoadMD5AnimFile();
 		}
 	}
-	catch ( ImportErrorException* ex) {
+	catch ( std::exception&) {
+		// XXX use more idiomatic RAII solution
 		UnloadFileFromMemory();
-		throw ex;
+		throw;
 	}
 
 	// make sure we have at least one file
 	if (!bHadMD5Mesh && !bHadMD5Anim && !bHadMD5Camera)
-		throw new ImportErrorException("Failed to read valid contents from this MD5* file");
+		throw DeadlyImportError("Failed to read valid contents from this MD5* file");
 
 	// Now rotate the whole scene 90 degrees around the x axis to convert to internal coordinate system
 	pScene->mRootNode->mTransformation = aiMatrix4x4(1.f,0.f,0.f,0.f,
@@ -205,7 +208,7 @@ void MD5Importer::MakeDataUnique (MD5::MeshDesc& meshSrc)
 		const aiFace& face = *iter;
 		for (unsigned int i = 0; i < 3;++i) {
 			if (face.mIndices[0] >= meshSrc.mVertices.size())
-				throw new ImportErrorException("MD5MESH: Invalid vertex index");
+				throw DeadlyImportError("MD5MESH: Invalid vertex index");
 
 			if (abHad[face.mIndices[i]])	{
 				// generate a new vertex
@@ -245,6 +248,9 @@ void MD5Importer::AttachChilds_Mesh(int iParentID,aiNode* piParent, BoneList& bo
 				// get the transformation matrix from rotation and translational components
 				aiQuaternion quat; 
 				MD5::ConvertQuaternion ( bones[i].mRotationQuat, quat );
+
+				// FIX to get to Assimp's quaternion conventions
+				quat.w *= -1.f;
 
 				bones[i].mTransform = aiMatrix4x4 ( quat.GetMatrix());
 				bones[i].mTransform.a4 = bones[i].mPositionXYZ.x;
@@ -450,7 +456,7 @@ void MD5Importer::LoadMD5MeshFile ()
 				// process bone weights
 				for (unsigned int jub = (*iter).mFirstWeight, w = jub; w < jub + (*iter).mNumWeights;++w)	{
 					if (w >= meshSrc.mWeights.size())
-						throw new ImportErrorException("MD5MESH: Invalid weight index");
+						throw DeadlyImportError("MD5MESH: Invalid weight index");
 
 					MD5::WeightDesc& desc = meshSrc.mWeights[w];
 					if ( desc.mWeight < AI_MD5_WEIGHT_EPSILON && desc.mWeight >= -AI_MD5_WEIGHT_EPSILON)
@@ -581,15 +587,16 @@ void MD5Importer::LoadMD5AnimFile ()
 				for (AnimBoneList::const_iterator iter2	= animParser.mAnimatedBones.begin(); iter2 != animParser.mAnimatedBones.end();++iter2,
 					++pcAnimNode,++pcBaseFrame)
 				{
-					const float* fpCur;
 					if((*iter2).iFirstKeyIndex >= (*iter).mValues.size()) {
 
 						// Allow for empty frames
 						if ((*iter2).iFlags != 0) {
-							throw new ImportErrorException("MD5: Keyframe index is out of range");
+							throw DeadlyImportError("MD5: Keyframe index is out of range");
+						
 						}
+						continue;
 					}
-					else fpCur = &(*iter).mValues[(*iter2).iFirstKeyIndex];
+					const float* fpCur = &(*iter).mValues[(*iter2).iFirstKeyIndex];
 					aiNodeAnim* pcCurAnimBone = *pcAnimNode;
 
 					aiVectorKey* vKey = &pcCurAnimBone->mPositionKeys[pcCurAnimBone->mNumPositionKeys++];
@@ -612,6 +619,9 @@ void MD5Importer::LoadMD5AnimFile ()
 
 					MD5::ConvertQuaternion(vTemp, qKey->mValue);
 					qKey->mTime = vKey->mTime = dTime;
+
+					// we need this to get to Assimp quaternion conventions
+					qKey->mValue.w *= -1.f;
 				}
 			}
 
@@ -646,7 +656,7 @@ void MD5Importer::LoadMD5CameraFile ()
 
 	// Check whether we can read from the file
 	if( file.get() == NULL)	{
-		throw new ImportErrorException("Failed to read MD5CAMERA file: " + pFile);
+		throw DeadlyImportError("Failed to read MD5CAMERA file: " + pFile);
 	}
 	bHadMD5Camera = true;
 	LoadFileIntoMemory(file.get());
@@ -658,7 +668,7 @@ void MD5Importer::LoadMD5CameraFile ()
 	MD5::MD5CameraParser cameraParser(parser.mSections);
 
 	if (cameraParser.frames.empty())
-		throw new ImportErrorException("MD5CAMERA: No frames parsed");
+		throw DeadlyImportError("MD5CAMERA: No frames parsed");
 
 	std::vector<unsigned int>& cuts = cameraParser.cuts;
 	std::vector<MD5::CameraAnimFrameDesc>& frames = cameraParser.frames;
@@ -695,7 +705,7 @@ void MD5Importer::LoadMD5CameraFile ()
 	for (std::vector<unsigned int>::const_iterator it = cuts.begin(); it != cuts.end()-1; ++it) {
 	
 		aiAnimation* anim = *tmp++ = new aiAnimation();
-		anim->mName.length = ::sprintf(anim->mName.data,"anim%i_from_%i_to_%i",it-cuts.begin(),(*it),*(it+1));
+		anim->mName.length = ::sprintf(anim->mName.data,"anim%u_from_%u_to_%u",(unsigned int)(it-cuts.begin()),(*it),*(it+1));
 		
 		anim->mTicksPerSecond = cameraParser.fFrameRate;
 		anim->mChannels = new aiNodeAnim*[anim->mNumChannels = 1];

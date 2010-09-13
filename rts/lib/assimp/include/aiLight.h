@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -79,7 +79,9 @@ enum aiLightSourceType
 	/** This value is not used. It is just there to force the
 	 *  compiler to map this enum to a 32 Bit integer.
 	 */
+#ifndef SWIG
 	_aiLightSource_Force32Bit = 0x9fffffff
+#endif
 };
 
 // ---------------------------------------------------------------------------

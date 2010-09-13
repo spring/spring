@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -61,13 +61,13 @@ using namespace Assimp::XFile;
 
 // ------------------------------------------------------------------------------------------------
 // Dummy memory wrappers for use with zlib
-void* dummy_alloc (void* opaque, unsigned int items, unsigned int size)	{
+void* dummy_alloc (void* /*opaque*/, unsigned int items, unsigned int size)	{
 
 	// we're using calloc to make it easier to debug the whole stuff
 	return ::calloc(items,size);
 }
 
-void  dummy_free  (void* opaque, void* address)	{
+void  dummy_free  (void* /*opaque*/, void* address)	{
 	return ::free(address);
 }
 
@@ -93,7 +93,7 @@ XFileParser::XFileParser( const std::vector<char>& pBuffer)
 
 	// check header
 	if( strncmp( P, "xof ", 4) != 0)
-		throw new ImportErrorException( "Header mismatch, file is not an XFile.");
+		throw DeadlyImportError( "Header mismatch, file is not an XFile.");
 
 	// read version. It comes in a four byte format such as "0302"
 	mMajorVersion = (unsigned int)(P[4] - 48) * 10 + (unsigned int)(P[5] - 48);
@@ -140,7 +140,7 @@ XFileParser::XFileParser( const std::vector<char>& pBuffer)
 	if (compressed)
 	{
 #ifdef ASSIMP_BUILD_NO_COMPRESSED_X
-		throw new ImportErrorException("Assimp was built without compressed X support");
+		throw DeadlyImportError("Assimp was built without compressed X support");
 #else
 		/* ///////////////////////////////////////////////////////////////////////  
 		 * COMPRESSED X FILE FORMAT
@@ -185,14 +185,14 @@ XFileParser::XFileParser( const std::vector<char>& pBuffer)
 			AI_SWAP2(ofs); P1 += 2;
 
 			if (ofs >= MSZIP_BLOCK)
-				throw new ImportErrorException("X: Invalid offset to next MSZIP compressed block");
+				throw DeadlyImportError("X: Invalid offset to next MSZIP compressed block");
 
 			// check magic word
 			uint16_t magic = *((uint16_t*)P1);
 			AI_SWAP2(magic); P1 += 2;
 
 			if (magic != MSZIP_MAGIC)
-				throw new ImportErrorException("X: Unsupported compressed format, expected MSZIP header");
+				throw DeadlyImportError("X: Unsupported compressed format, expected MSZIP header");
 
 			// and advance to the next offset
 			P1 += ofs;
@@ -217,7 +217,7 @@ XFileParser::XFileParser( const std::vector<char>& pBuffer)
 			// and decompress the data ....
 			int ret = ::inflate( &stream, Z_SYNC_FLUSH );
 			if (ret != Z_OK && ret != Z_STREAM_END)
-				throw new ImportErrorException("X: Failed to decompress MSZIP-compressed data");
+				throw DeadlyImportError("X: Failed to decompress MSZIP-compressed data");
 
 			::inflateReset( &stream );
 			::inflateSetDictionary( &stream, (const Bytef*)out , MSZIP_BLOCK - stream.avail_out );
@@ -249,8 +249,9 @@ XFileParser::XFileParser( const std::vector<char>& pBuffer)
 	ParseFile();
 
 	// filter the imported hierarchy for some degenerated cases
-	if( mScene->mRootNode)
+	if( mScene->mRootNode) {
 		FilterHierarchy( mScene->mRootNode);
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -264,7 +265,8 @@ XFileParser::~XFileParser()
 // ------------------------------------------------------------------------------------------------
 void XFileParser::ParseFile()
 {
-	while( 1)
+	bool running = true;
+	while( running )
 	{
 		// read name of next object
 		std::string objectName = GetNextToken();
@@ -322,7 +324,8 @@ void XFileParser::ParseDataObjectTemplate()
 	std::string guid = GetNextToken();
 
 	// read and ignore data members
-	while(true)
+	bool running = true;
+	while ( running )
 	{
 		std::string s = GetNextToken();
 
@@ -377,7 +380,8 @@ void XFileParser::ParseDataObjectFrame( Node* pParent)
 
 	// Now inside a frame.
 	// read tokens until closing brace is reached.
-	while(true)
+	bool running = true;
+	while ( running )
 	{
 		std::string objectName = GetNextToken();
 		if (objectName.size() == 0)
@@ -457,7 +461,8 @@ void XFileParser::ParseDataObjectMesh( Mesh* pMesh)
 	}
 
 	// here, other data objects may follow
-	while(true)
+	bool running = true;
+	while ( running )
 	{
 		std::string objectName = GetNextToken();
 
@@ -537,7 +542,7 @@ void XFileParser::ParseDataObjectSkinWeights( Mesh *pMesh)
 }
 
 // ------------------------------------------------------------------------------------------------
-void XFileParser::ParseDataObjectSkinMeshHeader( Mesh* pMesh)
+void XFileParser::ParseDataObjectSkinMeshHeader( Mesh* /*pMesh*/ )
 {
 	readHeadOfDataObject();
 
@@ -661,7 +666,8 @@ void XFileParser::ParseDataObjectMeshMaterialList( Mesh* pMesh)
 		pMesh->mFaceMaterials.push_back( pMesh->mFaceMaterials.front());
 
 	// read following data objects
-	while(true)
+	bool running = true;
+	while ( running )
 	{
 		std::string objectName = GetNextToken();
 		if( objectName.size() == 0)
@@ -712,7 +718,8 @@ void XFileParser::ParseDataObjectMaterial( Material* pMaterial)
 	pMaterial->mEmissive = ReadRGB(); 
 
 	// read other data objects
-	while(true)
+	bool running = true;
+	while ( running )
 	{
 		std::string objectName = GetNextToken();
 		if( objectName.size() == 0)
@@ -760,7 +767,8 @@ void XFileParser::ParseDataObjectAnimationSet()
 	mScene->mAnims.push_back( anim);
 	anim->mName = animName;
 
-	while(true)
+	bool running = true;
+	while ( running )
 	{
 		std::string objectName = GetNextToken();
 		if( objectName.length() == 0)
@@ -786,7 +794,8 @@ void XFileParser::ParseDataObjectAnimation( Animation* pAnim)
 	AnimBone* banim = new AnimBone;
 	pAnim->mAnims.push_back( banim);
 
-	while(true)
+	bool running = true;
+	while( running )
 	{
 		std::string objectName = GetNextToken();
 
@@ -929,7 +938,8 @@ void XFileParser::ParseDataObjectTextureFilename( std::string& pName)
 void XFileParser::ParseUnknownDataObject()
 {
 	// find opening delimiter
-	while( true)
+	bool running = true;
+	while( running )
 	{
 		std::string t = GetNextToken();
 		if( t.length() == 0)
@@ -1127,7 +1137,8 @@ void XFileParser::FindNextNoneWhiteSpace()
 	if( mIsBinaryFormat)
 		return;
 
-	while( true)
+	bool running = true;
+	while( running )
 	{
 		while( P < End && isspace( (unsigned char) *P))
 		{
@@ -1366,9 +1377,9 @@ aiColor3D XFileParser::ReadRGB()
 void XFileParser::ThrowException( const std::string& pText)
 {
 	if( mIsBinaryFormat)
-		throw new ImportErrorException( pText);
+		throw DeadlyImportError( pText);
 	else
-		throw new ImportErrorException( boost::str( boost::format( "Line %d: %s") % mLineNumber % pText));
+		throw DeadlyImportError( boost::str( boost::format( "Line %d: %s") % mLineNumber % pText));
 }
 
 

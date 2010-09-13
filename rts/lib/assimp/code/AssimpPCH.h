@@ -3,7 +3,7 @@
 Open Asset Import Library (ASSIMP)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2008, ASSIMP Development Team
+Copyright (c) 2006-2010, ASSIMP Development Team
 
 All rights reserved.
 
@@ -57,7 +57,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Include our stdint.h replacement header for MSVC, take the global header for gcc/mingw
  */
 #ifdef _MSC_VER
-#	include "../include/Compiler/pstdint.h"
+#	include "pstdint.h"
 #else
 #	include <stdint.h>
 #endif
@@ -100,7 +100,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * the MSVC STL but it's necessary for proper build with STLport.
  */
 #include <ctype.h>
-#include <stdio.h>
 
 // Runtime/STL headers
 #include <vector>
@@ -117,6 +116,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <numeric>
 #include <new>
+#include <cstdio>
 
 // Public ASSIMP headers
 #include "../include/DefaultLogger.h"
@@ -134,28 +134,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "qnan.h"
 
 // ----------------------------------------------------------------------------------------
-/* boost headers - if -noboost is enabled, take it from the workaround directory
- * using hardcoded paths. This has the advantage that the user doesn't need to specify
- * 'include/BoostWorkaround' as additional include path.
- */
-// ----------------------------------------------------------------------------------------
-#ifdef ASSIMP_BUILD_BOOST_WORKAROUND
+#include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
+#include <boost/format.hpp>
+#include <boost/foreach.hpp>
+#include <boost/static_assert.hpp>
 
-#	include "../include/BoostWorkaround/boost/scoped_ptr.hpp"
-#	include "../include/BoostWorkaround/boost/scoped_array.hpp"
-#	include "../include/BoostWorkaround/boost/format.hpp"
-#	include "../include/BoostWorkaround/boost/foreach.hpp"
-#	include "../include/BoostWorkaround/boost/static_assert.hpp"
-
-#else
-
-#	include <boost/scoped_ptr.hpp>
-#	include <boost/scoped_array.hpp>
-#	include <boost/format.hpp>
-#	include <boost/foreach.hpp>
-#	include <boost/static_assert.hpp>
-
-#endif // ! ASSIMP_BUILD_BOOST_WORKAROUND
 #endif // !! ASSIMP_PCH_INCLUDED
-
-
