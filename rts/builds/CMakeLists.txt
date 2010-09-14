@@ -1,18 +1,37 @@
 ### builds
 #
 # Macros and fucntions defined in this file:
-# * CreateEngineBuildInstallTarget
+# * CreateEngineBuildAndInstallTarget
 #
 
 
 # Only install the given engine target executable & dependencies
 # example:
-# 	CreateEngineBuildInstallTarget(spring-headless)
+# 	CreateEngineBuildAndInstallTarget(headless)
 # ->
+# 	make spring-headless
 # 	make install-spring-headless
-macro    (CreateEngineBuildInstallTarget targetName)
+macro    (CreateEngineBuildAndInstallTarget targetName)
 	# relative source path, eg: "rts/builds/default"
 	file(RELATIVE_PATH relSrcDirPath ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+
+	set(myBuildTarget spring-${targetName})
+	set(${targetName}-Deps
+			engine-${targetName}
+			gamedata
+			unitsync
+			${DEPS_AI_ALL}
+			ArchiveMover
+		)
+	# Create a custom meta build target
+	add_custom_target(${myBuildTarget}
+		WORKING_DIRECTORY
+			"${CMAKE_BINARY_DIR}"
+		COMMENT
+			"  ${myBuildTarget}: Building all dependencies ..." VERBATIM
+		)
+	# This also works for custom targets
+	add_dependencies(${myBuildTarget} ${${targetName}-Deps})
 
 	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs
@@ -21,15 +40,8 @@ macro    (CreateEngineBuildInstallTarget targetName)
 			"cont"
 			"AI"
 		)
-	set(${targetName}-InstallDeps
-			${targetName}
-			gamedata
-			unitsync
-			${DEPS_AI_ALL}
-			ArchiveMover
-		)
-	CreateInstallTarget(${targetName} ${targetName}-InstallDeps ${targetName}-InstallDirs)
-endmacro (CreateEngineBuildInstallTarget targetName)
+	CreateInstallTarget(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
+endmacro (CreateEngineBuildAndInstallTarget targetName)
 
 
 if    (NOT HEADLESS_SYSTEM)

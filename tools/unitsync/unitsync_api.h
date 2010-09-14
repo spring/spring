@@ -1,8 +1,15 @@
 #ifndef UNITSYNC_API_H
 #define UNITSYNC_API_H
 
-#include "unitsync.h"
-#include "System/exportdefines.h"
+#ifdef PLAIN_API_STRUCTURE
+	// This is useful when parsing/wrapping this file with preprocessor support.
+	// Do NOT use this when compiling!
+	#define EXPORT(type) type
+	#warning PLAIN_API_STRUCTURE is defined -> functions will NOT be properly exported!
+#else
+	#include "unitsync.h"
+	#include "System/exportdefines.h"
+#endif
 
 
 // from unitsync.cpp:
@@ -160,6 +167,7 @@ EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
  */
 EXPORT(const char* ) GetArchivePath(const char* arname);
 
+#if       !defined(PLAIN_API_STRUCTURE)
 /**
  * @brief Retrieve map info
  * @param name name of the map, e.g. "SmallDivide.smf"
@@ -202,6 +210,7 @@ EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int versio
  * @see GetMapCount
  */
 EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+#endif // !defined(PLAIN_API_STRUCTURE)
 
 /**
  * @brief Get the number of maps available
