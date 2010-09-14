@@ -237,13 +237,6 @@ SectionGroup "Tools"
 			!include "sections\archivemover.nsh"
 		!undef INSTALL
 	SectionEnd
-
-	Section "Selection Editor" SEC_SELECTIONEDITOR
-		!define INSTALL
-			${!echonow} "Processing: selectionEditor"
-			!include "sections\selectionEditor.nsh"
-		!undef INSTALL
-	SectionEnd
 SectionGroupEnd
 
 
