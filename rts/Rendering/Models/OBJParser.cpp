@@ -51,13 +51,14 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->radius = modelTable.GetFloat("radius", 0.0f);
 		model->height = modelTable.GetFloat("height", 0.0f);
 		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
-		model->tex1 = modelTable.GetString("tex1", "");
-		model->tex2 = modelTable.GetString("tex2", "");
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
 
-	// basic S3O-style texturing
-	texturehandlerS3O->LoadS3OTexture(model);
+		// basic S3O-style texturing
+		model->tex1 = modelTable.GetString("tex1", "");
+		model->tex2 = modelTable.GetString("tex2", "");
+		model->invertAlpha = modelTable.GetBool("invertteamcolor", true);
+		texturehandlerS3O->LoadS3OTexture(model);
 
 	std::string modelData;
 	modelFile.LoadStringData(modelData);

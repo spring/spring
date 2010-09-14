@@ -44,8 +44,10 @@ S3DModel* CS3OParser::Load(const std::string& name)
 		model->numobjects = 0;
 		model->tex1 = (char*) &fileBuf[header.texture1];
 		model->tex2 = (char*) &fileBuf[header.texture2];
+		model->invertAlpha = false;
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
+
 	texturehandlerS3O->LoadS3OTexture(model);
 
 	SS3OPiece* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPiece);

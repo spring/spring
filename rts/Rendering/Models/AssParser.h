@@ -36,7 +36,7 @@ public:
 class CAssParser: public IModelParser
 {
 public:
-	S3DModel* Load(const std::string& name); ///< Load a model
+	S3DModel* Load(const std::string& modelFileName); ///< Load a model
 	void Draw( const S3DModelPiece* o) const; ///< Build displaylist for loaded model
 
 private:
