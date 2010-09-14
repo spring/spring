@@ -8,21 +8,18 @@
 #include <cstdlib>
 
 #include "IPath.h"
-
-
-
-void* PF_ALLOC(size_t n);
-void PF_FREE(void* p, size_t n);
+#include "PathConstants.h"
+#include "PathDataTypes.h"
 
 
 
 struct MoveData;
 class CPathFinderDef;
 
-class CPathFinder : public IPath {
+class CPathFinder {
 public:
 	CPathFinder();
-	virtual ~CPathFinder();
+	~CPathFinder();
 
 #if !defined(USE_MMGR)
 	void* operator new(size_t size);
@@ -64,18 +61,14 @@ public:
 			The maximum number of nodes/squares the search are allowed to analyze.
 			This restriction could be used in cases where CPU-consumption are critical.
 	*/
-	SearchResult GetPath(const MoveData& moveData, const float3 startPos,
-	                     const CPathFinderDef& pfDef, Path& path,
+	IPath::SearchResult GetPath(const MoveData& moveData, const float3 startPos,
+	                     const CPathFinderDef& pfDef, IPath::Path& path,
 	                     bool testMobile, bool exactPath,
 	                     unsigned int maxSearchedNodes, bool needPath,
 	                     int ownerId = 0);
 
-	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
-	                     const CPathFinderDef& pfDef, Path& path, int ownerId = 0);
-
-	static const float PATHCOST_INFINITY;
-	static const unsigned int PATH_RESOLUTION;
-	static const unsigned int MAX_SEARCHED_SQUARES = 10000U;
+	IPath::SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
+	                     const CPathFinderDef& pfDef, IPath::Path& path, int ownerId = 0);
 
 	enum PATH_OPTIONS {
 		PATHOPT_RIGHT     =   1,      //-x
@@ -138,107 +131,37 @@ private:
 	bool heatMapping;
 
 private:
-	class OpenSquare {
-	public:
-		float cost;
-		float currentCost;
-		int2 square;
-		int sqr;
-		inline bool operator< (const OpenSquare& os) const {return cost < os.cost;};
-		inline bool operator> (const OpenSquare& os) const {return cost > os.cost;};
-		inline bool operator== (const OpenSquare& os) const {return sqr == os.sqr;};
-	};
-
-	struct lessCost : public std::binary_function<OpenSquare*, OpenSquare*, bool> {
-		inline bool operator()(const OpenSquare* x, const OpenSquare* y) const {
-			return x->cost > y->cost;
-		}
-	};
-
 	struct SquareState {
+		SquareState(): status(0), cost(PATHCOST_INFINITY) {
+		}
+
 		unsigned int status;
 		float cost;
 	};
 
-	class myVector {
-	public:
-		typedef OpenSquare* value_type;
-		typedef int size_type;
-		typedef OpenSquare* reference;
-		typedef const OpenSquare* const_reference;
-		typedef OpenSquare** iterator;
-		typedef const OpenSquare* const* const_iterator;
 
-		// gcc 4.3 requires concepts, so give them to it
-		value_type& operator[](size_type idx) { return buf[idx]; }
-		const value_type& operator[](size_type idx) const { return buf[idx]; }
-
-		typedef iterator pointer;
-		typedef const_iterator const_pointer;
-		typedef int difference_type;
-
-		// XXX don't use this
-		// FIXME write proper versions of those
-		typedef OpenSquare** reverse_iterator;
-		typedef const OpenSquare* const* const_reverse_iterator;
-		reverse_iterator rbegin() { return 0; }
-		reverse_iterator rend() { return 0; }
-		const_reverse_iterator rbegin() const { return 0; }
-		const_reverse_iterator rend() const { return 0; }
-		myVector(int, const value_type&) { abort(); }
-		myVector(iterator, iterator) { abort(); }
-		void insert(iterator, const value_type&) { abort(); }
-		void insert(iterator, const size_type&, const value_type&) { abort(); }
-		void insert(iterator, iterator, iterator) { abort(); }
-		void erase(iterator, iterator) { abort(); }
-		void erase(iterator) { abort(); }
-		void erase(iterator, iterator, iterator) { abort(); }
-		void swap(myVector&) { abort(); }
-		// end of concept hax
-
-		int bufPos;
-		OpenSquare* buf[MAX_SEARCHED_SQUARES];
-
-		myVector() {bufPos=-1;}
-
-		inline void push_back(OpenSquare* os)	{buf[++bufPos]=os;}
-		inline void pop_back()			{--bufPos;}
-		inline OpenSquare* back() const		{return buf[bufPos];}
-		inline const value_type& front() const	{return buf[0];}
-		inline value_type& front()		{return buf[0];}
-		inline bool empty() const		{return (bufPos<0);}
-		inline size_type size() const		{return bufPos+1;}
-		inline size_type max_size() const	{return 1<<30;}
-		inline iterator begin()			{return &buf[0];}
-		inline iterator end()			{return &buf[bufPos+1];}
-		inline const_iterator begin() const	{return &buf[0];}
-		inline const_iterator end() const	{return &buf[bufPos+1];}
-		inline void clear()			{bufPos=-1;}
-	};
-
-	class myPQ : public std::priority_queue<OpenSquare*,myVector,lessCost>{
-	public:
-		void DeleteAll();
-	};
 
 	void ResetSearch();
-	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
-	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
-	bool TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare,
-			unsigned int enterDirection, int ownerId);
-	void FinishSearch(const MoveData& moveData, Path& path);
-	void AdjustFoundPath(const MoveData& moveData, Path& path, float3& nextPoint,
+	IPath::SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
+	IPath::SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
+	bool TestSquare(
+		const MoveData& moveData,
+		const CPathFinderDef& pfDef,
+		const PathNode* parentOpenSquare,
+		unsigned int enterDirection,
+		int ownerId
+	);
+	void FinishSearch(const MoveData& moveData, IPath::Path& path);
+	void AdjustFoundPath(const MoveData& moveData, IPath::Path& path, float3& nextPoint,
 			std::deque<int2>& previous, int2 square);
 
 	unsigned int maxNodesToBeSearched;
-	myPQ openSquares;
 
-	SquareState* squareState;			///< Map of all squares on map.
-	// std::list<int> dirtySquares;		///< Squares tested by search.
-	std::vector<int> dirtySquares;
+	std::vector<SquareState> squareStates;			///< Map of all squares on map.
+	std::vector<int> dirtySquares;					///< Squares tested by search.
 
-	int2 directionVector[16];		///< Unit square-movement in given direction.
-	float moveCost[16];				///< The cost of moving in given direction.
+	int2 directionVector[16];						///< Unit square-movement in given direction.
+	float moveCost[16];								///< The cost of moving in given direction.
 
 	float3 start;
 	int startxSqr, startzSqr;
@@ -254,8 +177,8 @@ private:
 	// Statistic
 	unsigned int testedNodes;
 
-	unsigned int openSquareBufferIndex;
-	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
+	PathNodeBuffer openSquareBuffer;
+	PathPriorityQueue openSquares;
 };
 
 #endif // PATHFINDER_H
