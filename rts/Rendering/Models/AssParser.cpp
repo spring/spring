@@ -9,6 +9,7 @@
 #include "System/Exceptions.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "FileSystem/FileHandler.h"
+#include "Lua/LuaParser.h"
 #include "3DModel.h"
 #include "S3OParser.h"
 #include "AssIO.h"
@@ -22,14 +23,16 @@
 #include "DefaultLogger.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 
+#define IS_QNAN(f) (f != f)
+static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
+
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
 #define ASS_POSTPROCESS_OPTIONS \
 	aiProcess_FindInvalidData				| \
 	aiProcess_CalcTangentSpace				| \
 	aiProcess_GenSmoothNormals				| \
-	aiProcess_LimitBoneWeights				| \
-	aiProcess_RemoveRedundantMaterials		| \
 	aiProcess_SplitLargeMeshes				| \
 	aiProcess_Triangulate					| \
 	aiProcess_GenUVCoords             		| \
@@ -51,43 +54,72 @@ public:
 
 
 
-S3DModel* CAssParser::Load(const std::string& name)
+S3DModel* CAssParser::Load(const std::string& modelFileName)
 {
-	logOutput.Print ("Loading model: %s\n", name.c_str() );
+	logOutput.Print ("[AssParser] Loading model: %s\n", modelFileName.c_str() );
 
-	// Check if the file exists
-	CFileHandler file(name);
-	if (!file.FileExists()) {
-		throw content_error("File not found: "+name);
+	// Load the lua metafile. This contains properties unique to Spring models
+	LuaTable modelTable;
+	std::string metaFileName = modelFileName.substr(0, modelFileName.find_last_of('.')) + ".lua";
+	CFileHandler metaFile(metaFileName);
+	if (metaFile.FileExists()) {
+		LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		metaFileParser.Execute();
+		if (metaFileParser.IsValid()) {
+			logOutput.Print("[AssParser] Using meta-file \"" + metaFileName + "\"");
+			modelTable = metaFileParser.GetRoot(); // got settings from metadata file
+		} else {
+			logOutput.Print("[AssParser] Error: failed to parse meta-file \"" + metaFileName + "\"");
+		}
 	}
 
+	// Create a model importer instance
  	Assimp::Importer importer;
 
-	// give the importer an IO class that handles Spring's VFS
+	// Give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler( new AssVFSSystem() );
 
-	// Select the kinds of messages you want to receive on this log stream
+	// Create a logger for debugging model loading issues
 	Assimp::DefaultLogger::create("",Assimp::Logger::VERBOSE);
 	const unsigned int severity = Assimp::Logger::DEBUGGING|Assimp::Logger::INFO|Assimp::Logger::ERR|Assimp::Logger::WARN;
 	Assimp::DefaultLogger::get()->attachStream( new AssLogStream(), severity );
 
-	// read the model and texture files to build an assimp scene
-	logOutput.Print("Reading model file: %s\n", name.c_str() );
-	const aiScene* scene = importer.ReadFile( name, ASS_POSTPROCESS_OPTIONS );
+	// Read the model file to build a scene object
+	logOutput.Print("[AssParser] Reading model file: %s\n", modelFileName.c_str() );
+	const aiScene* scene = importer.ReadFile( modelFileName, ASS_POSTPROCESS_OPTIONS );
 
-	// convert to Spring model format
+	// Convert to Spring model format
 	S3DModel* model = new S3DModel;
 	if (scene != NULL) {
-		logOutput.Print("Processing scene for model: %s (%d meshes / %d materials / %d textures)", name.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumTextures );
-		model->name = name;
+		logOutput.Print("[AssParser] Processing scene for model: %s (%d meshes / %d materials / %d textures)", modelFileName.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumTextures );
+		model->name = modelFileName;
 		model->type = MODELTYPE_ASS;
 		model->scene = scene;
 		model->numobjects = 0;
-		model->tex1 = "weapons1.png";
-		model->tex2 = "faketex2.png";
-		texturehandlerS3O->LoadS3OTexture(model);
 
-		logOutput.Print("Loading root node '%s'", scene->mRootNode->mName.data);
+		// Simplified dimensions used for rough calculations
+		model->radius = modelTable.GetFloat("radius", 0.0f);
+		model->height = modelTable.GetFloat("height", 0.0f);
+		model->relMidPos = modelTable.GetFloat3("midpos", float3(0.0f,0.0f,0.0f));
+		model->mins = modelTable.GetFloat3("mins", DEF_MIN_SIZE);
+		model->maxs = modelTable.GetFloat3("maxs", DEF_MAX_SIZE);
+
+		// Assign textures
+		// The S3O texture handler uses two textures.
+		// The first contains diffuse color (RGB) and teamcolor (A)
+		// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
+		model->tex1 = modelTable.GetString("tex1", "");
+		model->tex2 = modelTable.GetString("tex2", "");
+		model->invertAlpha = modelTable.GetBool("invertteamcolor", true);
+		logOutput.Print("[AssParser] Extracted lua data");
+
+		texturehandlerS3O->LoadS3OTexture(model);
+		logOutput.Print("[AssParser] Finsished loading texture");
+		// Identify and load the root object in the model.
+
+		//const aiString hitboxName( std::string("hitbox") );
+
+		logOutput.Print("[AssParser] Loading root node '%s'", scene->mRootNode->mName.data);
 		SAssPiece* rootPiece = LoadPiece( scene->mRootNode, model );
 		model->rootobject = rootPiece;
 
@@ -101,25 +133,23 @@ S3DModel* CAssParser::Load(const std::string& name)
 		//}
 
 		// Default collision volume
-		model->radius = 1.0f;
-		model->height = 1.0f;
+		model->radius = 2.0f;
+		model->height = 2.0f;
 		model->relMidPos = float3(0.0f,0.0f,0.0f);
 
 		model->mins = float3(0.0f,0.0f,0.0f);
 		model->maxs = float3(1.0f,1.0f,1.0f);
 
-		logOutput.Print ("Model Imported.\n");
+		logOutput.Print ("[AssParser] Model Imported.\n");
 	} else {
-		logOutput.Print ("Model Import Error: %s\n",  importer.GetErrorString());
+		logOutput.Print ("[AssParser] Model Import Error: %s\n",  importer.GetErrorString());
 	}
 	return model;
 }
 
-#define IS_QNAN(f) (f != f)
-
 SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 {
-	logOutput.Print("Converting node '%s' to a piece (%d meshes).", node->mName.data, node->mNumMeshes);
+	logOutput.Print("[AssParser] Converting node '%s' to a piece (%d meshes).", node->mName.data, node->mNumMeshes);
 
 	model->numobjects++;
 
@@ -131,7 +161,7 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 
 	aiVector3D scale, position;
  	aiQuaternion rotation;
-	node->mTransformation.Decompose(scale,rotation,position);
+	node->mTransformation.Decompose(scale,rotation,position); // convert local to global transform
 
 	piece->mins = float3(0.0f,0.0f,0.0f);
 	piece->maxs = float3(1.0f,1.0f,1.0f);
@@ -155,13 +185,24 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 		);
 		for ( unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; vertexIndex++) {
 			SAssVertex vertex;
+
 			// vertex coordinates
 			//logOutput.Print("Fetching vertex %d from mesh", vertexIndex );
 			aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
 			vertex.pos.x = aiVertex.x;
 			vertex.pos.y = aiVertex.y;
 			vertex.pos.z = aiVertex.z;
-			//logOutput.Print("vertex %d: %f %f %f",vertexIndex, vertex.pos.x, vertex.pos.y,vertex.pos.z );
+
+			// update piece min/max extents
+			piece->mins.x = std::min(piece->mins.x, aiVertex.x);
+			piece->mins.y = std::min(piece->mins.y, aiVertex.y);
+			piece->mins.z = std::min(piece->mins.z, aiVertex.z);
+			piece->maxs.x = std::max(piece->maxs.x, aiVertex.x);
+			piece->maxs.y = std::max(piece->maxs.y, aiVertex.y);
+			piece->maxs.z = std::max(piece->maxs.z, aiVertex.z);
+
+			logOutput.Print("vertex %d: %f %f %f",vertexIndex, vertex.pos.x, vertex.pos.y,vertex.pos.z );
+
 			// vertex normal
 			//logOutput.Print("Fetching normal for vertex %d", vertexIndex );
 			aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
@@ -170,8 +211,9 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 				vertex.normal.x = aiNormal.x;
 				vertex.normal.y = aiNormal.y;
 				vertex.normal.z = aiNormal.z;
-				//logOutput.Print("vertex normal %d: %f %f %f",vertexIndex, vertex.normal.x, vertex.normal.y,vertex.normal.z );
+				logOutput.Print("vertex normal %d: %f %f %f",vertexIndex, vertex.normal.x, vertex.normal.y,vertex.normal.z );
 			}
+
 			// vertex tangent, x is positive in texture axis
 			if (mesh->HasTangentsAndBitangents()) {
 				//logOutput.Print("Fetching tangent for vertex %d", vertexIndex );
@@ -182,26 +224,35 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 					tangent.x = aiTangent.x;
 					tangent.y = aiTangent.y;
 					tangent.z = aiTangent.z;
-					//logOutput.Print("vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z );
+					logOutput.Print("vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z );
 					piece->sTangents.push_back(tangent);
 					// bitangent is cross product of tangent and normal
 					float3 bitangent;
 					if ( vertex.hasNormal ) {
 						bitangent = tangent.cross(vertex.normal);
-						//logOutput.Print("vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z );
+						logOutput.Print("vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z );
 						piece->tTangents.push_back(bitangent);
 					}
 				}
 			} else {
 				vertex.hasTangent = false;
 			}
+
+			// vertex texcoords
+			if (mesh->HasTextureCoords(0)) {
+				vertex.textureX = mesh->mTextureCoords[0][vertexIndex].x;
+				vertex.textureY = mesh->mTextureCoords[0][vertexIndex].y;
+				logOutput.Print("vertex texcoords %d: %f %f", vertexIndex, vertex.textureX, vertex.textureY );
+			}
+
 			mesh_vertex_mapping.push_back(piece->vertices.size());
 			piece->vertices.push_back(vertex);
-			logOutput.Print("Finished vertex %d", vertexIndex );
+			//logOutput.Print("Finished vertex %d", vertexIndex );
 		}
+
 		// extract face data
-		logOutput.Print("Processing faces for mesh %d (%d faces)", meshIndex, mesh->mNumFaces);
 		if ( mesh->HasFaces() ) {
+			logOutput.Print("Processing faces for mesh %d (%d faces)", meshIndex, mesh->mNumFaces);
 			for ( unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; faceIndex++ ) {
 					aiFace& face = mesh->mFaces[faceIndex];
 					// get the vertex belonging to the mesh
@@ -214,10 +265,18 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 		}
 	}
 
+	// update model min/max extents
+	model->mins.x = std::min(piece->mins.x, model->mins.x);
+	model->mins.y = std::min(piece->mins.y, model->mins.y);
+	model->mins.z = std::min(piece->mins.z, model->mins.z);
+	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
+	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
+	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
 
-	// collision volume for piece
-	const float3 cvScales(1.0f, 1.0f, 1.0f);
-	const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
+	// collision volume for piece (not sure about these coords)
+	const float3 cvScales = piece->maxs - piece->mins;
+	const float3 cvOffset = (piece->maxs - piece->offset) + (piece->mins - piece->offset);
+	//const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
 	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, CollisionVolume::COLVOL_HITTEST_CONT);
 
 	// Recursively process all child pieces
@@ -226,40 +285,9 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 		piece->childs.push_back(childPiece);
 	}
 
-	logOutput.Print ("Loaded model piece: %s with %d meshes\n", piece->name.c_str(), node->mNumMeshes );
+	logOutput.Print ("[AssParser] Loaded model piece: %s with %d meshes\n", piece->name.c_str(), node->mNumMeshes );
 	return piece;
 }
-
-
-/* Walks a nodes children retreiving all transformed child meshes as an array
-void GetNodeVertices( aiNode node, Matrix4x4 accTransform)
-{
-  SceneObject parent;
-  Matrix4x4 transform;
-
-  // if node has meshes, create a new scene object for it
-  if( node.mNumMeshes > 0)
-  {
-    SceneObjekt newObject = new SceneObject;
-    targetParent.addChild( newObject);
-    // copy the meshes
-    CopyMeshes( node, newObject);
-
-    // the new object is the parent for all child nodes
-    parent = newObject;
-    transform.SetUnity();
-  } else
-  {
-    // if no meshes, skip the node, but keep its transformation
-    parent = targetParent;
-    transform = node.mTransformation * accTransform;
-  }
-
-  // continue for all child nodes
-  for( all node.mChildren)
-    CopyNodesWithMeshes( node.mChildren[a], parent, transform);
-}
-*/
 
 void DrawPiecePrimitive( const S3DModelPiece* o)
 {

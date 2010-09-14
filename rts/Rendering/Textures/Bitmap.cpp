@@ -726,6 +726,20 @@ void CBitmap::InvertColors()
 }
 
 
+void CBitmap::InvertAlpha()
+{
+	if (type != BitmapTypeStandardRGBA) {
+		return;
+	}
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
+			const int base = ((y * xsize) + x) * 4;
+			mem[base + 3] = 0xFF - mem[base + 3];
+		}
+	}
+}
+
+
 void CBitmap::GrayScale()
 {
 	if (type != BitmapTypeStandardRGBA) {

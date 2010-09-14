@@ -30,7 +30,7 @@ public:
 
 	void Update();
 	void LoadS3OTexture(S3DModel* model);
-	int LoadS3OTextureNow(const std::string& tex1, const std::string& tex2);
+	int LoadS3OTextureNow(const std::string& tex1, const std::string& tex2, bool invertAlpha);
 	void SetS3oTexture(int num);
 
 	const S3oTex* GetS3oTex(int num) {

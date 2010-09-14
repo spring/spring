@@ -20,6 +20,10 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 
+// The S3O texture handler uses two textures.
+// The first contains diffuse color (RGB) and teamcolor (A)
+// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -43,20 +47,24 @@ CS3OTextureHandler::~CS3OTextureHandler()
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 #if defined(USE_GML) && GML_ENABLE_SIM
+	logOutput.Print("[Texture Handler] GML load S3O " + model->name);
 	model->textureType=-1;
 #else
-	model->textureType=LoadS3OTextureNow(model->tex1, model->tex2);
+	logOutput.Print("[Texture Handler] Load S3O " + model->name);
+	model->textureType=LoadS3OTextureNow(model->tex1, model->tex2, model->invertAlpha);
 #endif
 }
 
 void CS3OTextureHandler::Update() {
 }
 
-int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2)
+int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2, bool invertAlpha)
 {
 	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
+	logOutput.Print("[Texture Handler] Load S3O texture now");
 
 	string totalName=tex1+tex2;
+	logOutput.Print("[Texture Handler] Loading texture " + tex1);
 
 	if(s3oTextureNames.find(totalName)!=s3oTextureNames.end()){
 		return s3oTextureNames[totalName];
@@ -66,8 +74,16 @@ int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::st
 	tex.num=newNum;
 
 	CBitmap bm;
+	if (tex1 == "")
+		logOutput.Print("No S3O texture 1 defined, falling back to unittextures/default.png");
 	if (!bm.Load(string("unittextures/"+tex1)))
 		throw content_error("Could not load S3O texture from file unittextures/" + tex1);
+	// invert alpha/teamcolor
+	logOutput.Print("Test Inverting alpha channel");
+	if (invertAlpha) {
+		logOutput.Print("Inverting alpha channel");
+		bm.InvertAlpha();
+	}
 	tex.tex1 = bm.CreateTexture(true);
 	tex.tex1SizeX = bm.xsize;
 	tex.tex1SizeY = bm.ysize;
