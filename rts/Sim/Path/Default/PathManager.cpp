@@ -124,7 +124,7 @@ unsigned int CPathManager::RequestPath(
 			retValue = Store(newPath);
 		} else {
 			// if we fail see if it can work find a better block to start from
-			float3 sp = medResPE->FindBestBlockCenter(moveData, startPos);
+			float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
 
 			if (sp.x != 0 &&
 				(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
@@ -165,7 +165,7 @@ unsigned int CPathManager::RequestPath(
 				retValue = Store(newPath);
 			} else {
 				// 8*8 can also fail rarely, so see if we can find a better 8*8 to start from
-				float3 sp = medResPE->FindBestBlockCenter(moveData, startPos);
+				float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
 
 				if (sp.x != 0 &&
 					(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||

@@ -871,7 +871,7 @@ unsigned int CPathEstimator::Hash() const
 
 
 
-float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, const float3& pos)
+float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, const float3& pos, bool synced)
 {
 	CRangedGoalWithCircularConstraint rangedGoal(pos, pos, 0, 0, SQUARE_SIZE * BLOCK_SIZE * SQUARE_SIZE * BLOCK_SIZE * 4);
 	IPath::Path path;
@@ -893,7 +893,7 @@ float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, const float
 		}
 	}
 
-	IPath::SearchResult result = pathFinder->GetPath(*moveData, startPositions, rangedGoal, path, 0, true);
+	IPath::SearchResult result = pathFinder->GetPath(*moveData, startPositions, rangedGoal, path, 0, synced);
 
 	if (result == IPath::Ok && !path.path.empty()) {
 		return path.path.back();

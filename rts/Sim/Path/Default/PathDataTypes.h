@@ -36,6 +36,9 @@ struct PathNodeState {
 	// may not be read in synced context, because AI's and
 	// unsynced Lua have write-access to it (thus allowing
 	// synced changes makes no sense either)
+	// NOTE: if more than one local AI instance is active,
+	// each must undo its changes or they will be visible
+	// to the other AI's
 	float extraCost;
 
 	// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
