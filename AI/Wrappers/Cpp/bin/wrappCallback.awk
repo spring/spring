@@ -84,6 +84,8 @@ function printHeader(outFile_h, namespace_h, className_h,
 		print("#ifndef " hg_h) >> outFile_h;
 		print("#define " hg_h) >> outFile_h;
 		print("") >> outFile_h;
+		print("#include <climits> // for INT_MAX (required by unit-command wrapping functions)") >> outFile_h;
+		print("") >> outFile_h;
 		print("#include \"IncludesHeaders.h\"") >> outFile_h;
 		if (implementsClass_h != 0) {
 			print("#include \"" implementsClass_h ".h\"") >> outFile_h;
@@ -280,8 +282,11 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 	}
 
 	if (printIntAndStb_tr) {
+		_funcHdr_int_h_tr = _funcHdr_h_tr;
+		# add default values for unit-command wrapping functions
+		sub(/short options, int timeOut/, "short options = 0, int timeOut = INT_MAX", _funcHdr_int_h_tr);
 		print("public:") >> outFile_int_h_tr;
-		print("\t" _funcHdr_h_tr " = 0;") >> outFile_int_h_tr;
+		print("\t" _funcHdr_int_h_tr " = 0;") >> outFile_int_h_tr;
 		print("") >> outFile_int_h_tr;
 
 		outFile_stb_cpp_tr = createSourceFileName(outFile_stb_h_tr);
