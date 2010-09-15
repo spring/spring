@@ -59,7 +59,7 @@ function doWrappOO(funcFullName_dw, params_dw, metaComment_dw) {
 
 	doWrapp_dw = 1;
 
-	doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/);
+	#doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/);
 
 	return doWrapp_dw;
 }
@@ -935,6 +935,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	hasRetParam = 0;
 	for (prm = 1; prm <= paramTypeNames_size; prm++) {
 		paNa = extractParamName(paramTypeNames[prm]);
+		paTy = extractParamType(paramTypeNames[prm]);
 		if (isRetParamName(paNa)) {
 			if (retType == "void") {
 				paTy = extractParamType(paramTypeNames[prm]);
@@ -957,6 +958,13 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					#declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
 					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m "((unsigned char) " paNa "[0], (unsigned char) " paNa "[1], (unsigned char) " paNa "[2]);" "\n";
 					sub("(, )?short\\* " paNa, "", params);
+					retType = retParamType;
+				} else if (match(paTy, /const char\*/)) {
+					retParamType = "std::string";
+					retVar_out_m = "_ret";
+					conversionCode_pre  = conversionCode_pre  "\t\t" "char " paNa "[10240];" "\n";
+					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m "(" paNa ");" "\n";
+					sub("(, )?const char\\* " paNa, "", params);
 					retType = retParamType;
 				} else {
 					print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);

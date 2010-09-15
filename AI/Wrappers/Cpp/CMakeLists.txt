@@ -82,6 +82,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractInfo.cpp
 		${myGeneratedSourceDir}/AbstractLine.cpp
 		${myGeneratedSourceDir}/AbstractLog.cpp
+		${myGeneratedSourceDir}/AbstractLua.cpp
 		${myGeneratedSourceDir}/AbstractMap.cpp
 		${myGeneratedSourceDir}/AbstractMod.cpp
 		${myGeneratedSourceDir}/AbstractModParam.cpp
@@ -124,6 +125,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubInfo.cpp
 		${myGeneratedSourceDir}/StubLine.cpp
 		${myGeneratedSourceDir}/StubLog.cpp
+		${myGeneratedSourceDir}/StubLua.cpp
 		${myGeneratedSourceDir}/StubMap.cpp
 		${myGeneratedSourceDir}/StubMod.cpp
 		${myGeneratedSourceDir}/StubModParam.cpp
@@ -166,6 +168,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappInfo.cpp
 		${myGeneratedSourceDir}/WrappLine.cpp
 		${myGeneratedSourceDir}/WrappLog.cpp
+		${myGeneratedSourceDir}/WrappLua.cpp
 		${myGeneratedSourceDir}/WrappMap.cpp
 		${myGeneratedSourceDir}/WrappMod.cpp
 		${myGeneratedSourceDir}/WrappModParam.cpp
