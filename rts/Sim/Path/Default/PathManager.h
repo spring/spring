@@ -73,8 +73,8 @@ public:
 	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 
 	//! TODO: array-forms
-	bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost);
-	float GetNodeExtraCost(unsigned int x, unsigned int z) const;
+	bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced);
+	float GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const;
 
 
 	/** Enable/disable heat mapping */

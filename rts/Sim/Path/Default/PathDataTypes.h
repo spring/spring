@@ -26,20 +26,23 @@ struct PathNode {
 };
 
 struct PathNodeState {
-	PathNodeState(): pathCost(PATHCOST_INFINITY), extraCost(0.0f), pathMask(0) {
+	PathNodeState(): pathCost(PATHCOST_INFINITY), extraCostSynced(0.0f), extraCostUnsynced(0.0f), pathMask(0) {
 		parentNodePos.x = -1;
 		parentNodePos.y = -1;
 	}
 
 	float pathCost;
-	// overlay-cost modifier for nodes
-	// may not be read in synced context, because AI's and
-	// unsynced Lua have write-access to it (thus allowing
-	// synced changes makes no sense either)
+	// overlay-cost modifiers for nodes
+	//
+	// <extraCostUnsynced> may not be read in synced context,
+	// because AI's and unsynced Lua have write-access to it
+	// <extraCostSynced> may not be written in unsynced context
+	//
 	// NOTE: if more than one local AI instance is active,
 	// each must undo its changes or they will be visible
 	// to the other AI's
-	float extraCost;
+	float extraCostSynced;
+	float extraCostUnsynced;
 
 	// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
 	unsigned int pathMask;

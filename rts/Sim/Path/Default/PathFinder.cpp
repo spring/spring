@@ -405,7 +405,10 @@ bool CPathFinder::TestSquare(
 
 
 	const float dirMoveCost = (heatCostMod * moveCost[enterDirection]);
-	const float nCost = (dirMoveCost / squareSpeedMod) + (synced? 0.0f: squareStates[sqrIdx].extraCost);
+	const float nCost = (dirMoveCost / squareSpeedMod) +
+		(synced?
+		squareStates[sqrIdx].extraCostSynced:
+		squareStates[sqrIdx].extraCostUnsynced);
 
 	const float gCost = parentOpenSquare->gCost + nCost;     // g
 	const float hCost = pfDef.Heuristic(square.x, square.y); // h

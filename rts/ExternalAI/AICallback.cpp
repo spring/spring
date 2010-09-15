@@ -786,8 +786,8 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	return pathLen;
 }
 
-bool CAICallback::SetPathNodeCost(unsigned int x, unsigned int z, float cost) { return pathManager->SetNodeExtraCost(x, z, cost); }
-float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) { return pathManager->GetNodeExtraCost(x, z); }
+bool CAICallback::SetPathNodeCost(unsigned int x, unsigned int z, float cost) { return pathManager->SetNodeExtraCost(x, z, cost, false); }
+float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) { return pathManager->GetNodeExtraCost(x, z, false); }
 
 
 
