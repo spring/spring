@@ -9,7 +9,7 @@
 #define VA_INIT_VERTEXES 1000 // please don't change this, some files rely on specific initial sizes
 #define VA_INIT_STRIPS 100
 
-// number of elements (bytes / 4) per vertex
+// number of elements (bytes / sizeof(float)) per vertex
 #define VA_SIZE_2D0  2
 #define VA_SIZE_0    3
 #define VA_SIZE_C    4
@@ -44,17 +44,17 @@ public:
 	inline void AddVertexT2(const float3& p, float t1x, float t1y, float t2x, float t2y);
 	inline void AddVertex2dT(float x, float y, float tx, float ty);
 
-	void DrawArray0(const int drawType, unsigned int stride = 4 * VA_SIZE_0);
-	void DrawArray2d0(const int drawType, unsigned int stride = 4 * VA_SIZE_2D0);
-	void DrawArrayN(const int drawType, unsigned int stride = 4 * VA_SIZE_N);
-	void DrawArrayT(const int drawType, unsigned int stride = 4 * VA_SIZE_T);
-	void DrawArrayC(const int drawType, unsigned int stride = 4 * VA_SIZE_C);
-	void DrawArrayTC(const int drawType, unsigned int stride = 4 * VA_SIZE_TC);
-	void DrawArrayTN(const int drawType, unsigned int stride = 4 * VA_SIZE_TN);
-	void DrawArrayTNT(const int drawType, unsigned int stride = 4 * VA_SIZE_TNT);
-	void DrawArrayT2(const int drawType, unsigned int stride = 4 * VA_SIZE_T2);
-	void DrawArray2dT(const int drawType, unsigned int stride = 4 * VA_SIZE_2DT);
-	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = 4 * VA_SIZE_2DT);
+	void DrawArray0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_0);
+	void DrawArray2d0(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2D0);
+	void DrawArrayN(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_N);
+	void DrawArrayT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_T);
+	void DrawArrayC(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_C);
+	void DrawArrayTC(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_TC);
+	void DrawArrayTN(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_TN);
+	void DrawArrayTNT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_TNT);
+	void DrawArrayT2(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_T2);
+	void DrawArray2dT(const int drawType, unsigned int stride = sizeof(float) * VA_SIZE_2DT);
+	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = sizeof(float) * VA_SIZE_2DT);
 
 	//! same as the AddVertex... functions just without automated CheckEnlargeDrawArray
 	inline void AddVertexQ0(float x, float y, float z);
