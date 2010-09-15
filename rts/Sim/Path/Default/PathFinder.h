@@ -61,29 +61,32 @@ public:
 			The maximum number of nodes/squares the search are allowed to analyze.
 			This restriction could be used in cases where CPU-consumption are critical.
 	*/
-	IPath::SearchResult GetPath(const MoveData& moveData, const float3 startPos,
-	                     const CPathFinderDef& pfDef, IPath::Path& path,
-	                     bool testMobile, bool exactPath,
-	                     unsigned int maxSearchedNodes, bool needPath,
-	                     int ownerId = 0);
+	IPath::SearchResult GetPath(
+		const MoveData& moveData,
+		const float3& startPos,
+		const CPathFinderDef&,
+		IPath::Path&,
+		bool testMobile,
+		bool exactPath,
+		unsigned int maxSearchedNodes,
+		bool needPath,
+		int ownerId,
+		bool synced
+	);
 
-	IPath::SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
-	                     const CPathFinderDef& pfDef, IPath::Path& path, int ownerId = 0);
+	IPath::SearchResult GetPath(
+		const MoveData&,
+		const std::vector<float3>&,
+		const CPathFinderDef&,
+		IPath::Path&,
+		int ownerId,
+		bool synced
+	);
 
-	enum PATH_OPTIONS {
-		PATHOPT_RIGHT     =   1,      //-x
-		PATHOPT_LEFT      =   2,      //+x
-		PATHOPT_UP        =   4,      //+z
-		PATHOPT_DOWN      =   8,      //-z
-		PATHOPT_DIRECTION = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN),
-		PATHOPT_START     =  16,
-		PATHOPT_OPEN      =  32,
-		PATHOPT_CLOSED    =  64,
-		PATHOPT_FORBIDDEN = 128,
-		PATHOPT_BLOCKED   = 256,
-	};
+	std::vector<PathNodeState>& GetNodeStates() { return squareStates; }
 
-public:
+
+
 	/**
 	 * @brief Enable/disable heat mapping.
 	 *
@@ -116,6 +119,8 @@ public:
 		return std::max(0, heatmap[i].value - heatMapOffset);
 	}
 
+
+
 private:
 	// Heat mapping
 	int GetHeatMapIndex(int x, int y);
@@ -130,20 +135,26 @@ private:
 	int heatMapOffset;  //! heatmap values are relative to this
 	bool heatMapping;
 
-private:
+
 	void ResetSearch();
-	IPath::SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
-	IPath::SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
+	IPath::SearchResult InitSearch(const MoveData&, const CPathFinderDef&, int ownerId, bool synced);
+	IPath::SearchResult DoSearch(const MoveData&, const CPathFinderDef&, int ownerId, bool synced);
 	bool TestSquare(
 		const MoveData& moveData,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
 		unsigned int enterDirection,
-		int ownerId
+		int ownerId,
+		bool synced
 	);
-	void FinishSearch(const MoveData& moveData, IPath::Path& path);
-	void AdjustFoundPath(const MoveData& moveData, IPath::Path& path, float3& nextPoint,
-			std::deque<int2>& previous, int2 square);
+	void FinishSearch(const MoveData&, IPath::Path&);
+	void AdjustFoundPath(
+		const MoveData&,
+		IPath::Path&,
+		float3& nextPoint,
+		std::deque<int2>& previous,
+		int2 square
+	);
 
 	unsigned int maxNodesToBeSearched;
 

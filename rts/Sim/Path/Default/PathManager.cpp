@@ -6,7 +6,6 @@
 #include "PathManager.h"
 #include "PathConstants.h"
 #include "PathFinder.h"
-#include "PathFinderDef.h"
 #include "PathEstimator.h"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -105,7 +104,7 @@ unsigned int CPathManager::RequestPath(
 	if (distanceToGoal < DETAILED_DISTANCE) {
 		// Get a detailed path.
 		IPath::SearchResult result =
-			maxResPF->GetPath(*moveData, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId);
+			maxResPF->GetPath(*moveData, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -120,7 +119,7 @@ unsigned int CPathManager::RequestPath(
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			// Turn a part of it into detailed path.
-			MedRes2MaxRes(*newPath, startPos, ownerId);
+			MedRes2MaxRes(*newPath, startPos, ownerId, synced);
 			// Store the path.
 			retValue = Store(newPath);
 		} else {
@@ -134,7 +133,7 @@ unsigned int CPathManager::RequestPath(
 				newPath->searchResult = result;
 
 				if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-					MedRes2MaxRes(*newPath, startPos, ownerId);
+					MedRes2MaxRes(*newPath, startPos, ownerId, synced);
 					retValue = Store(newPath);
 				} else {
 					delete newPath;
@@ -152,7 +151,7 @@ unsigned int CPathManager::RequestPath(
 			// Turn a part of it into hi-res. estimate path.
 			LowRes2MedRes(*newPath, startPos, ownerId, synced);
 			// And estimate into detailed.
-			MedRes2MaxRes(*newPath, startPos, ownerId);
+			MedRes2MaxRes(*newPath, startPos, ownerId, synced);
 
 			// Store the path.
 			retValue = Store(newPath);
@@ -162,7 +161,7 @@ unsigned int CPathManager::RequestPath(
 			newPath->searchResult = result;
 
 			if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-				MedRes2MaxRes(*newPath, startPos, ownerId);
+				MedRes2MaxRes(*newPath, startPos, ownerId, synced);
 				retValue = Store(newPath);
 			} else {
 				// 8*8 can also fail rarely, so see if we can find a better 8*8 to start from
@@ -174,7 +173,7 @@ unsigned int CPathManager::RequestPath(
 					IPath::SearchResult result = medResPE->GetPath(*moveData, sp, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
 
 					if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-						MedRes2MaxRes(*newPath, startPos, ownerId);
+						MedRes2MaxRes(*newPath, startPos, ownerId, synced);
 						retValue = Store(newPath);
 					} else {
 						delete newPath;
@@ -206,7 +205,7 @@ unsigned int CPathManager::Store(MultiPath* path)
 
 
 // converts part of a med-res path into a high-res path
-void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, int ownerId) const
+void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, int ownerId, bool synced) const
 {
 	IPath::Path& maxResPath = multiPath.maxResPath;
 	IPath::Path& medResPath = multiPath.medResPath;
@@ -240,9 +239,9 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, i
 	IPath::SearchResult result;
 
 	if (medResPath.path.empty() && lowResPath.path.empty()) {
-		result = maxResPF->GetPath(*multiPath.moveData, startPos, *multiPath.peDef, maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId);
+		result = maxResPF->GetPath(*multiPath.moveData, startPos, *multiPath.peDef, maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
 	} else {
-		result = maxResPF->GetPath(*multiPath.moveData, startPos, rangedGoalPFD, maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId);
+		result = maxResPF->GetPath(*multiPath.moveData, startPos, rangedGoalPFD, maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
 	}
 
 	// If no refined path could be found, set goal as desired goal.
@@ -347,7 +346,7 @@ float3 CPathManager::NextWaypoint(
 			multiPath->caller->UnBlock();
 		}
 
-		MedRes2MaxRes(*multiPath, callerPos, ownerId);
+		MedRes2MaxRes(*multiPath, callerPos, ownerId, synced);
 
 		if (multiPath->caller) {
 			multiPath->caller->Block();
@@ -535,14 +534,29 @@ unsigned int CPathManager::GetPathResolution() const { return PATH_RESOLUTION; }
 
 
 
-CPathManager::MultiPath::MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData):
-	start(start),
-	peDef(peDef),
-	moveData(moveData)
-{
+bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost) {
+	if (x >= gs->mapx) { return false; }
+	if (z >= gs->mapy) { return false; }
+
+	std::vector<PathNodeState>& vMaxRes = maxResPF->GetNodeStates();
+	std::vector<PathNodeState>& vMedRes = medResPE->GetNodeStates();
+	std::vector<PathNodeState>& vLowRes = lowResPE->GetNodeStates();
+
+	const unsigned int mrbs = medResPE->GetBlockSize(), mrnx = medResPE->GetNumBlocksX();
+	const unsigned int lrbs = lowResPE->GetBlockSize(), lrnx = lowResPE->GetNumBlocksX();
+
+	vMaxRes[ z         * gs->mapx +  x        ].extraCost = cost;
+	vMedRes[(z / mrbs) *     mrnx + (x / mrbs)].extraCost = cost;
+	vLowRes[(z / lrbs) *     lrnx + (x / lrbs)].extraCost = cost;
+
+	return true;
 }
 
-CPathManager::MultiPath::~MultiPath()
-{
-	delete peDef;
+float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z) const {
+	if (x >= gs->mapx) { return 0.0f; }
+	if (z >= gs->mapy) { return 0.0f; }
+
+	std::vector<PathNodeState>& v = maxResPF->GetNodeStates();
+
+	return (v[z * gs->mapx + x].extraCost);
 }

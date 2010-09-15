@@ -55,8 +55,12 @@ public:
 	 *     waypoint could be found.
 	 */
 	virtual float3 NextWaypoint(
-		unsigned int pathId, float3 callerPos, float minDistance = 0.0f,
-		int numRetries = 0, int ownerId = 0, bool synced = true
+		unsigned int pathId,
+		float3 callerPos,
+		float minDistance = 0.0f,
+		int numRetries = 0,
+		int ownerId = 0,
+		bool synced = true
 	) const { return ZeroVector; }
 
 	//! NOTE: should not be in the interface
@@ -130,6 +134,9 @@ public:
 	 *     affected by the changes.
 	 */
 	virtual void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {}
+
+	virtual bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost) { return false; }
+	virtual float GetNodeExtraCost(unsigned int x, unsigned int z) const { return 0.0f; }
 };
 
 extern IPathManager* pathManager;

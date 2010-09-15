@@ -11,29 +11,35 @@
 
 // represents either a single square (PF) or a block of squares (PE)
 struct PathNode {
-	PathNode(): cost(0.0f), currentCost(0.0f), nodeNum(0), nodePos(0, 0) {
+	PathNode(): fCost(0.0f), gCost(0.0f), nodeNum(0), nodePos(0, 0) {
 	}
 
-	float cost;
-	float currentCost;
+	float fCost; // f
+	float gCost; // g
 
 	int nodeNum;
 	int2 nodePos;
 
-	inline bool operator <  (const PathNode& pn) const { return (cost < pn.cost); }
-	inline bool operator >  (const PathNode& pn) const { return (cost > pn.cost); }
+	inline bool operator <  (const PathNode& pn) const { return (fCost < pn.fCost); }
+	inline bool operator >  (const PathNode& pn) const { return (fCost > pn.fCost); }
 	inline bool operator == (const PathNode& pn) const { return (nodeNum == pn.nodeNum); }
 };
 
 struct PathNodeState {
-	PathNodeState(): cost(PATHCOST_INFINITY), mask(0) {
+	PathNodeState(): pathCost(PATHCOST_INFINITY), extraCost(0.0f), pathMask(0) {
 		parentNodePos.x = -1;
 		parentNodePos.y = -1;
 	}
 
-	float cost;
-	// combination of PATHOPT_* flags
-	unsigned int mask;
+	float pathCost;
+	// overlay-cost modifier for nodes
+	// may not be read in synced context, because AI's and
+	// unsynced Lua have write-access to it (thus allowing
+	// synced changes makes no sense either)
+	float extraCost;
+
+	// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
+	unsigned int pathMask;
 
 	// needed for the PE to back-track path to goal
 	int2 parentNodePos;
@@ -46,7 +52,7 @@ struct PathNodeState {
 // functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {
-		return (x->cost > y->cost);
+		return (x->fCost > y->fCost);
 	}
 };
 

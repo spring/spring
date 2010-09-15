@@ -27,6 +27,8 @@ const unsigned int PATHESTIMATOR_VERSION = 44;
 const unsigned int SQUARES_TO_UPDATE = 600;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 
+
+// PE-only flags
 const unsigned int PATHDIR_LEFT       = 0; // +x
 const unsigned int PATHDIR_LEFT_UP    = 1; // +x+z
 const unsigned int PATHDIR_UP         = 2; // +z
@@ -36,11 +38,19 @@ const unsigned int PATHDIR_RIGHT_DOWN = 5; // -x-z
 const unsigned int PATHDIR_DOWN       = 6; // -z
 const unsigned int PATHDIR_LEFT_DOWN  = 7; // +x-z
 
-const unsigned int PATHOPT_OPEN      =   8;
-const unsigned int PATHOPT_CLOSED    =  16;
-const unsigned int PATHOPT_FORBIDDEN =  32;
-const unsigned int PATHOPT_BLOCKED   =  64;
-const unsigned int PATHOPT_OBSOLETE  = 128;
-const unsigned int PATHOPT_SEARCHRELATED = (PATHOPT_OPEN | PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED);
+// PF-only flags
+const unsigned int PATHOPT_RIGHT     =   1;      //-x
+const unsigned int PATHOPT_LEFT      =   2;      //+x
+const unsigned int PATHOPT_UP        =   4;      //+z
+const unsigned int PATHOPT_DOWN      =   8;      //-z
+const unsigned int PATHOPT_DIRECTION = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
+
+// PF and PE flags
+const unsigned int PATHOPT_START     =  16;
+const unsigned int PATHOPT_OPEN      =  32;
+const unsigned int PATHOPT_CLOSED    =  64;
+const unsigned int PATHOPT_FORBIDDEN = 128;
+const unsigned int PATHOPT_BLOCKED   = 256;
+const unsigned int PATHOPT_OBSOLETE  = 512;
 
 #endif

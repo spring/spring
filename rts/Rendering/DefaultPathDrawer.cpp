@@ -230,7 +230,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
 
-		if (pf->squareStates[square].mask & CPathFinder::PATHOPT_START)
+		if (pf->squareStates[square].pathMask & PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -239,7 +239,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int dir = pf->squareStates[square].mask & CPathFinder::PATHOPT_DIRECTION;
+		const int dir = pf->squareStates[square].pathMask & PATHOPT_DIRECTION;
 		const int obx = sqr.x - pf->directionVector[dir].x;
 		const int obz = sqr.y - pf->directionVector[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;
