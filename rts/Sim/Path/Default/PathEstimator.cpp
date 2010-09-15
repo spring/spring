@@ -652,7 +652,10 @@ void CPathEstimator::TestBlock(
 	}
 
 	// evaluate this node
-	const float nCost = vertices[vertexIdx] + (synced? 0.0f: blockStates[blockIdx].extraCost);
+	const float nCost = vertices[vertexIdx] +
+		(synced?
+		blockStates[blockIdx].extraCostSynced:
+		blockStates[blockIdx].extraCostUnsynced);
 
 	const float gCost = parentOpenBlock.gCost + nCost;     // g
 	const float hCost = peDef.Heuristic(xSquare, zSquare); // h

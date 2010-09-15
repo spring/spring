@@ -219,15 +219,11 @@ int LuaPathFinder::RequestPath(lua_State* L)
 
 int LuaPathFinder::SetPathNodeCost(lua_State* L)
 {
-	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
-		return 0;
-	}
-
 	const unsigned int x = luaL_checkint(L, 1);
 	const unsigned int z = luaL_checkint(L, 2);
 	const float cost = luaL_checkint(L, 3);
 
-	const bool r = pathManager->SetNodeExtraCost(x, z, cost);
+	const bool r = pathManager->SetNodeExtraCost(x, z, cost, CLuaHandle::GetActiveHandle()->GetSynced());
 
 	lua_pushboolean(L, r);
 	return 1;
@@ -235,13 +231,9 @@ int LuaPathFinder::SetPathNodeCost(lua_State* L)
 
 int LuaPathFinder::GetPathNodeCost(lua_State* L)
 {
-	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
-		return 0;
-	}
-
 	const unsigned int x = luaL_checkint(L, 1);
 	const unsigned int z = luaL_checkint(L, 2);
-	const float cost = pathManager->GetNodeExtraCost(x, z);
+	const float cost = pathManager->GetNodeExtraCost(x, z, CLuaHandle::GetActiveHandle()->GetSynced());
 
 	lua_pushnumber(L, cost);
 	return 1;

@@ -534,7 +534,7 @@ unsigned int CPathManager::GetPathResolution() const { return PATH_RESOLUTION; }
 
 
 
-bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost) {
+bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced) {
 	if (x >= gs->mapx) { return false; }
 	if (z >= gs->mapy) { return false; }
 
@@ -545,18 +545,28 @@ bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost) 
 	const unsigned int mrbs = medResPE->GetBlockSize(), mrnx = medResPE->GetNumBlocksX();
 	const unsigned int lrbs = lowResPE->GetBlockSize(), lrnx = lowResPE->GetNumBlocksX();
 
-	vMaxRes[ z         * gs->mapx +  x        ].extraCost = cost;
-	vMedRes[(z / mrbs) *     mrnx + (x / mrbs)].extraCost = cost;
-	vLowRes[(z / lrbs) *     lrnx + (x / lrbs)].extraCost = cost;
+	if (synced) {
+		vMaxRes[ z         * gs->mapx +  x        ].extraCostSynced = cost;
+		vMedRes[(z / mrbs) *     mrnx + (x / mrbs)].extraCostSynced = cost;
+		vLowRes[(z / lrbs) *     lrnx + (x / lrbs)].extraCostSynced = cost;
+	} else {
+		vMaxRes[ z         * gs->mapx +  x        ].extraCostUnsynced = cost;
+		vMedRes[(z / mrbs) *     mrnx + (x / mrbs)].extraCostUnsynced = cost;
+		vLowRes[(z / lrbs) *     lrnx + (x / lrbs)].extraCostUnsynced = cost;
+	}
 
 	return true;
 }
 
-float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z) const {
+float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const {
 	if (x >= gs->mapx) { return 0.0f; }
 	if (z >= gs->mapy) { return 0.0f; }
 
 	std::vector<PathNodeState>& v = maxResPF->GetNodeStates();
 
-	return (v[z * gs->mapx + x].extraCost);
+	if (synced) {
+		return (v[z * gs->mapx + x].extraCostSynced);
+	} else {
+		return (v[z * gs->mapx + x].extraCostUnsynced);
+	}
 }
