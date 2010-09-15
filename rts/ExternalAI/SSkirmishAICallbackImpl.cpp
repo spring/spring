@@ -380,8 +380,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		case COMMAND_CALL_LUA_RULES:
 		{
 			SCallLuaRulesCommand* cmd = (SCallLuaRulesCommand*) commandData;
-			cmd->ret_outData = clb->CallLuaRules(cmd->data, cmd->inSize,
-					cmd->outSize);
+			// TODO: FIXME: should strcpy() this
+			cmd->ret_outData = clb->CallLuaRules(cmd->data, cmd->inSize);
 			break;
 		}
 

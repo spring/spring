@@ -2012,8 +2012,9 @@ bool CAIAICallback::ReadFile(const char* filename, void* buffer, int bufferLen) 
 
 const char* CAIAICallback::CallLuaRules(const char* data, int inSize, int* outSize) {
 
-	SCallLuaRulesCommand cmd = {data, inSize, outSize};
+	SCallLuaRulesCommand cmd = {data, inSize};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_RULES, &cmd);
+	*outSize = strlen(cmd.ret_outData);
 	return cmd.ret_outData;
 }
 
