@@ -401,12 +401,11 @@ struct SFreePathCommand {
 }; //$ COMMAND_PATH_FREE Pathing_freePath REF:pathId->Path
 
 struct SCallLuaRulesCommand {
-	/// Can be setup to NULL to skip passing in a string
+	/// Can be set to NULL to skip passing in a string
 	const char* data;
 	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
-	int* outSize;
-	/// this is subject to lua garbage collection, copy it if you wish to continue using it
+	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
 	const char* ret_outData;
 }; //$ COMMAND_CALL_LUA_RULES Lua_callRules
 

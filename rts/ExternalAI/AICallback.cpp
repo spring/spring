@@ -1876,10 +1876,10 @@ const float3 *CAICallback::GetStartPos()
 }
 
 
-const char* CAICallback::CallLuaRules(const char* data, int inSize, int* outSize)
+const char* CAICallback::CallLuaRules(const char* data, int inSize)
 {
 	if (luaRules == NULL) {
 		return NULL;
 	}
-	return luaRules->AICallIn(data, inSize, outSize);
+	return luaRules->AICallIn(data, inSize);
 }
