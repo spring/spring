@@ -704,7 +704,9 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 	return isNeutral;
 }
 
-int CAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius)
+
+
+int CAICallback::InitPath(const float3& start, const float3& end, int pathType, float goalRadius)
 {
 	assert(((size_t)pathType) < moveinfo->moveData.size());
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end, goalRadius, NULL, false);
@@ -783,6 +785,9 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	FreePath(pathID);
 	return pathLen;
 }
+
+bool CAICallback::SetPathNodeCost(unsigned int x, unsigned int z, float cost) { return pathManager->SetNodeExtraCost(x, z, cost); }
+float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) { return pathManager->GetNodeExtraCost(x, z); }
 
 
 

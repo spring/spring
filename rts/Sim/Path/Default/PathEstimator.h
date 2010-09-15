@@ -102,11 +102,16 @@ public:
 	void Update();
 
 	/// find the best block to use for this pos
-	float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
+	float3 FindBestBlockCenter(const MoveData*, const float3&);
 
 	/// Return a checksum that can be used to check if every player has the same path data
 	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
 
+	unsigned int GetBlockSize() const { return BLOCK_SIZE; }
+	unsigned int GetNumBlocksX() const { return nbrOfBlocksX; }
+	unsigned int GetNumBlocksZ() const { return nbrOfBlocksZ; }
+
+	std::vector<PathNodeState>& GetNodeStates() { return blockStates; }
 
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
@@ -132,10 +137,9 @@ private:
 	void CalculateVertices(const MoveData&, int, int, int thread = 0);
 	void CalculateVertex(const MoveData&, int, int, unsigned int, int thread = 0);
 
-	IPath::SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& peDef);
-	IPath::SearchResult StartSearch(const MoveData& moveData, const CPathFinderDef& peDef);
-	IPath::SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& peDef);
-	void TestBlock(const MoveData& moveData, const CPathFinderDef& peDef, PathNode& parentOpenBlock, unsigned int direction);
+	IPath::SearchResult InitSearch(const MoveData&, const CPathFinderDef&, bool);
+	IPath::SearchResult DoSearch(const MoveData&, const CPathFinderDef&, bool);
+	void TestBlock(const MoveData&, const CPathFinderDef&, PathNode&, unsigned int, bool);
 	void FinishSearch(const MoveData& moveData, IPath::Path& path);
 	void ResetSearch();
 

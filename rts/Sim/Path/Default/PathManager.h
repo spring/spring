@@ -8,6 +8,7 @@
 
 #include "Sim/Path/IPathManager.h"
 #include "IPath.h"
+#include "PathFinderDef.h"
 
 class CSolidObject;
 class CPathFinder;
@@ -31,8 +32,12 @@ public:
 
 
 	float3 NextWaypoint(
-		unsigned int pathId, float3 callerPos, float minDistance = 0.0f,
-		int numRetries = 0, int ownerId = 0, bool synced = true
+		unsigned int pathId,
+		float3 callerPos,
+		float minDistance = 0.0f,
+		int numRetries = 0,
+		int ownerId = 0,
+		bool synced = true
 	) const;
 
 	unsigned int RequestPath(
@@ -67,6 +72,10 @@ public:
 
 	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 
+	//! TODO: array-forms
+	bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost);
+	float GetNodeExtraCost(unsigned int x, unsigned int z) const;
+
 
 	/** Enable/disable heat mapping */
 	void SetHeatMappingEnabled(bool enabled);
@@ -86,8 +95,13 @@ private:
 	);
 
 	struct MultiPath {
-		MultiPath(const float3 start, const CPathFinderDef* peDef, const MoveData* moveData);
-		~MultiPath();
+		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveData* moveData):
+			start(pos),
+			peDef(def),
+			moveData(moveData) {
+		}
+
+		~MultiPath() { delete peDef; }
 
 		// Paths
 		IPath::Path lowResPath;
@@ -107,7 +121,7 @@ private:
 
 	unsigned int Store(MultiPath* path);
 	void LowRes2MedRes(MultiPath& path, const float3& startPos, int ownerId, bool synced) const;
-	void MedRes2MaxRes(MultiPath& path, const float3& startPos, int ownerId) const;
+	void MedRes2MaxRes(MultiPath& path, const float3& startPos, int ownerId, bool synced) const;
 
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;
