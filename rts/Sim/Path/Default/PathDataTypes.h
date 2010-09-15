@@ -25,6 +25,24 @@ struct PathNode {
 	inline bool operator == (const PathNode& pn) const { return (nodeNum == pn.nodeNum); }
 };
 
+struct PathNodeState {
+	PathNodeState(): cost(PATHCOST_INFINITY), mask(0) {
+		parentNodePos.x = -1;
+		parentNodePos.y = -1;
+	}
+
+	float cost;
+	// combination of PATHOPT_* flags
+	unsigned int mask;
+
+	// needed for the PE to back-track path to goal
+	int2 parentNodePos;
+	// for the PE, each node (block) maintains the
+	// best accessible offset (from its own center
+	// position) with respect to each movetype
+	std::vector<int2> nodeOffsets;
+};
+
 // functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {

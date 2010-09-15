@@ -121,17 +121,6 @@ private:
 	const unsigned int BLOCKS_TO_UPDATE;
 
 
-	struct BlockInfo {
-		BlockInfo(): cost(PATHCOST_INFINITY), options(0) {
-			parentBlock.x = -1;
-			parentBlock.y = -1;
-		}
-
-		std::vector<int2> sqrCenters;
-		int2 parentBlock;
-		float cost;
-		unsigned int options;
-	};
 
 	struct SingleBlock {
 		int2 block;
@@ -160,7 +149,7 @@ private:
 	PathPriorityQueue openBlocks;													// The priority-queue used to select next block to be searched.
 
 	std::vector<float> vertices;
-	std::vector<BlockInfo> blockStates;
+	std::vector<PathNodeState> blockStates;
 	std::list<int> dirtyBlocks;														// List of blocks changed in last search.
 	std::list<SingleBlock> needUpdate;												// Blocks that may need an update due to map changes.
 

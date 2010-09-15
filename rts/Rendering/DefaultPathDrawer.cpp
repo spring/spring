@@ -230,7 +230,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
 
-		if (pf->squareStates[square].status & CPathFinder::PATHOPT_START)
+		if (pf->squareStates[square].mask & CPathFinder::PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -239,7 +239,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int dir = pf->squareStates[square].status & CPathFinder::PATHOPT_DIRECTION;
+		const int dir = pf->squareStates[square].mask & CPathFinder::PATHOPT_DIRECTION;
 		const int obx = sqr.x - pf->directionVector[dir].x;
 		const int obz = sqr.y - pf->directionVector[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;
@@ -373,18 +373,18 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 		const int blocknr = ob->nodeNum;
 
 		float3 p1;
-			p1.x = (pe->blockStates[blocknr].sqrCenters[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (pe->blockStates[blocknr].sqrCenters[md->pathType].y) * SQUARE_SIZE;
+			p1.x = (pe->blockStates[blocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
+			p1.z = (pe->blockStates[blocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int obx = pe->blockStates[ob->nodeNum].parentBlock.x;
-		const int obz = pe->blockStates[ob->nodeNum].parentBlock.y;
+		const int obx = pe->blockStates[ob->nodeNum].parentNodePos.x;
+		const int obz = pe->blockStates[ob->nodeNum].parentNodePos.y;
 		const int obblocknr = obz * pe->nbrOfBlocksX + obx;
 
 		if (obblocknr >= 0) {
-			p2.x = (pe->blockStates[obblocknr].sqrCenters[md->pathType].x) * SQUARE_SIZE;
-			p2.z = (pe->blockStates[obblocknr].sqrCenters[md->pathType].y) * SQUARE_SIZE;
+			p2.x = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
+			p2.z = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
 			p2.y = ground->GetHeight(p2.x, p2.z) + 15;
 
 			glVertexf3(p1);

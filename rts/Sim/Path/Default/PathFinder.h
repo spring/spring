@@ -131,16 +131,6 @@ private:
 	bool heatMapping;
 
 private:
-	struct SquareState {
-		SquareState(): status(0), cost(PATHCOST_INFINITY) {
-		}
-
-		unsigned int status;
-		float cost;
-	};
-
-
-
 	void ResetSearch();
 	IPath::SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
 	IPath::SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
@@ -157,7 +147,7 @@ private:
 
 	unsigned int maxNodesToBeSearched;
 
-	std::vector<SquareState> squareStates;			///< Map of all squares on map.
+	std::vector<PathNodeState> squareStates;		///< Map of all squares on map.
 	std::vector<int> dirtySquares;					///< Squares tested by search.
 
 	int2 directionVector[16];						///< Unit square-movement in given direction.
