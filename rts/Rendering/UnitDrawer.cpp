@@ -2122,7 +2122,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 		}
 	}
 
-	if (unit->isIcon)
+	if (unit->isIcon && !unit->noDraw)
 		drawIcon.insert(unit);
 }
 
