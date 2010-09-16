@@ -27,13 +27,11 @@
 #include "Platform/Win/win32.h"
 #endif
 
-boost::thread *mainthread = NULL;
-int g_argc = 0;
-char** g_argv = NULL;
 int g_ret = 0;
 
 
-void MainFunc() {
+
+void MainFunc(int argc, char** argv) {
 #ifdef __MINGW32__
 	// For the MinGW backtrace() implementation we need to know the stack end.
 	{
@@ -43,7 +41,7 @@ void MainFunc() {
 	}
 #endif
 
-	Threading::SetMainThread(mainthread);
+	while (Threading::GetMainThread() == NULL);
 
 #ifdef USE_GML
 	set_threadnum(GML_DRAW_THREAD_NUM);
@@ -57,9 +55,9 @@ void MainFunc() {
 	try  {
 		try {
 			SpringApp app;
-			g_ret = app.Run(g_argc, g_argv);
+			g_ret = app.Run(argc, argv);
 		} CATCH_SPRING_ERRORS
-	} catch(boost::thread_interrupted const&) {
+	} catch (boost::thread_interrupted const&) {
 		handleerror(NULL, Threading::GetThreadError().what(), "Thread error:", MBF_OK | MBF_EXCL);
 	}
 
@@ -70,12 +68,10 @@ void MainFunc() {
 
 int Run(int argc, char* argv[])
 {
-	g_argc = argc;
-	g_argv = argv;
-
-	mainthread = new boost::thread(&MainFunc);
-	mainthread->join();
-	delete mainthread;
+	boost::thread* mainThread = new boost::thread(boost::bind(&MainFunc, argc, argv));
+	Threading::SetMainThread(mainThread);
+	mainThread->join();
+	delete mainThread;
 
 	return g_ret;
 }
