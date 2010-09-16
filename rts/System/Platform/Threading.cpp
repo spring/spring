@@ -12,7 +12,7 @@ namespace Threading {
 		if (!haveMainThreadID) {
 			haveMainThreadID = true;
 			mainThread = mt;
-			mainThreadID = boost::this_thread::get_id();
+			mainThreadID = mainThread->get_id();
 		}
 	}
 
