@@ -774,6 +774,7 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	const float sqDist = (unit->pos - camera->pos).SqLength();
 	const float farLength = unit->sqRadius * unitDrawDistSqr;
 
+	if (unit->noDraw) { return; }
 	if (sqDist >= farLength) { return; }
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
