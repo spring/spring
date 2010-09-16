@@ -118,7 +118,6 @@ void CFactory::Update()
 			quedBuild = false;
 			CUnit* b = unitLoader.LoadUnit(nextBuild, buildPos + float3(0.01f, 0.01f, 0.01f), team,
 											true, buildFacing, this);
-			b->lineage = this->lineage;
 
 			if (!unitDef->canBeAssisted) {
 				b->soloBuilder = this;

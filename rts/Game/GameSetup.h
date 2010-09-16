@@ -15,14 +15,6 @@
 
 class TdfParser;
 
-namespace GameMode
-{
-	const int ComContinue = 0;
-	const int ComEnd = 1;
-	const int Lineage = 2;
-	const int OpenEnd = 3;
-};
-
 class CGameSetup
 {
 public:
@@ -90,7 +82,6 @@ public:
 
 	std::string saveName;
 
-	int gameMode;
 	int noHelperAIs;
 
 private:

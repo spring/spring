@@ -148,7 +148,6 @@ private:
 	spring_time readyTime;
 	spring_time gameStartTime;
 	spring_time gameEndTime;	///< Tick when game end was detected
-	bool sentGameOverMsg;
 	spring_time lastTick;
 	float timeLeft;
 	spring_time lastPlayerInfo;
@@ -162,14 +161,15 @@ private:
 	float internalSpeed;
 	bool cheating;
 
-	std::vector<GameParticipant> players;
 	size_t ReserveNextAvailableSkirmishAIId();
 	
 	std::map<size_t, GameSkirmishAI> ais;
 	std::list<size_t> usedSkirmishAIIds;
 	void FreeSkirmishAIId(const size_t skirmishAIId);
-	
+
+	std::vector<GameParticipant> players;	
 	std::vector<GameTeam> teams;
+	std::vector<unsigned char> winningAllyTeams;
 
 	float medianCpu;
 	int medianPing;

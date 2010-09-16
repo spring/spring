@@ -243,6 +243,34 @@ const char* (CALLING_CONV *Clb_Game_getTeamSide)(int teamId, int otherTeamId);
 struct SAIFloat3 (CALLING_CONV *Clb_Game_getTeamColor)(int teamId, int otherTeamId);
 /// Returns the ally-team of a team
 int (CALLING_CONV *Clb_Game_getTeamAllyTeam)(int teamId, int otherTeamId);
+/**
+ * Returns the current level of a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return current level of the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceCurrent)(int teamId, int otherTeamId, int resourceId);
+/**
+ * Returns the current income of a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return current income of the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceIncome)(int teamId, int otherTeamId, int resourceId);
+/**
+ * Returns the current usage of a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return current usage of the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceUsage)(int teamId, int otherTeamId, int resourceId);
+/**
+ * Returns the storage capacity for a resource of an other team.
+ * Allways works for allied teams.
+ * Works for all teams when cheating is enabled.
+ * @return storage capacity for the requested resource of the other team, or -1.0 on an invalid request
+ */
+float (CALLING_CONV *Clb_Game_getTeamResourceStorage)(int teamId, int otherTeamId, int resourceId);
 /// Returns true, if the two supplied ally-teams are currently allied
 bool (CALLING_CONV *Clb_Game_isAllied)(int teamId, int firstAllyTeamId, int secondAllyTeamId);
 bool (CALLING_CONV *Clb_Game_isExceptionHandlingEnabled)(int teamId);
@@ -381,7 +409,6 @@ float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceDistance)(int teamId, int unitDef
 float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceSpeedLimit)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isUpright)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isCollide)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_getControlRadius)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getLosRadius)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getAirLosRadius)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getLosHeight)(int teamId, int unitDefId);
@@ -807,17 +834,6 @@ float (CALLING_CONV *Clb_Unit_ModParam_getValue)(int teamId, int unitId,
 		int modParamId);
 int (CALLING_CONV *Clb_Unit_getTeam)(int teamId, int unitId);
 int (CALLING_CONV *Clb_Unit_getAllyTeam)(int teamId, int unitId);
-/**
- * The unit's origin lies in this team.
- *
- * example:
- * It was created by a factory that was created by a builder
- * from a factory built by a commander of this team.
- * It does not matter at all, to which team
- * the commander/builder/factories were shared.
- * Only capturing can break the chain.
- */
-int (CALLING_CONV *Clb_Unit_getLineage)(int teamId, int unitId);
 /**
  * Indicates the units main function.
  * This can be used as help for (skirmish) AIs.

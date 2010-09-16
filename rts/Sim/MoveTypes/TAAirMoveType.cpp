@@ -125,8 +125,10 @@ void CTAAirMoveType::SetState(AircraftState newState)
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
+		owner->useAirLos = false;
 	} else {
 		owner->dontUseWeapons = false;
+		owner->useAirLos = true;
 	}
 
 	aircraftState = newState;

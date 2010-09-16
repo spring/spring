@@ -570,6 +570,23 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			cCmdData->hitUID = cppCmdData.hitUID;
 		} break;
 
+		case COMMAND_TRACE_RAY_FEATURE: {
+			SFeatureTraceRayCommand* cCmdData = (SFeatureTraceRayCommand*) commandData;
+			AIHCFeatureTraceRay cppCmdData = {
+				cCmdData->rayPos,
+				cCmdData->rayDir,
+				cCmdData->rayLen,
+				cCmdData->srcUID,
+				cCmdData->hitFID,
+				cCmdData->flags
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCFeatureTraceRayId, &cppCmdData);
+
+			cCmdData->rayLen = cppCmdData.rayLen;
+			cCmdData->hitFID = cppCmdData.hitFID;
+		} break;
+
 		case COMMAND_PAUSE: {
 			const SPauseCommand* cmd = (SPauseCommand*) commandData;
 			AIHCPause cppCmdData = {
@@ -666,7 +683,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 			wrapper_HandleCommand(clb, clbCheat, AIHCDebugDrawId, &cppCmdData);
 		} break;
- 
+
 
 		case COMMAND_DEBUG_DRAWER_ADD_OVERLAY_TEXTURE: {
 			SDebugDrawerAddOverlayTextureCommand* cCmdData = (SDebugDrawerAddOverlayTextureCommand*) commandData;
@@ -1080,6 +1097,70 @@ EXPORT(int) skirmishAiCallback_Game_getTeamAllyTeam(int teamId, int otherTeamId)
 	return teamHandler->AllyTeam(otherTeamId);
 }
 
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceCurrent(int teamId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->metal;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->energy;
+		}
+	}
+
+	return res;
+}
+
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceIncome(int teamId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->prevMetalIncome;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->prevEnergyIncome;
+		}
+	}
+
+	return res;
+}
+
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceUsage(int teamId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->prevMetalExpense;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->prevEnergyExpense;
+		}
+	}
+
+	return res;
+}
+
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceStorage(int teamId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(teamId, otherTeamId) || skirmishAiCallback_Cheats_isEnabled(teamId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->metalStorage;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->energyStorage;
+		}
+	}
+
+	return res;
+}
+
 EXPORT(bool) skirmishAiCallback_Game_isAllied(int teamId, int firstAllyTeamId, int secondAllyTeamId) {
 	return teamHandler->Ally(firstAllyTeamId, secondAllyTeamId);
 }
@@ -1124,15 +1205,6 @@ EXPORT(bool) skirmishAiCallback_Game_isDebugModeEnabled(int teamId) {
 	}
 
 	return debugModeEnabled;
-}
-EXPORT(int) skirmishAiCallback_Game_getMode(int teamId) {
-	int mode;
-	CAICallback* clb = team_callback[teamId];
-	const bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
-	if (!fetchOk) {
-		mode = -1;
-	}
-	return mode;
 }
 EXPORT(bool) skirmishAiCallback_Game_isPaused(int teamId) {
 	bool paused;
@@ -1985,9 +2057,6 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isUpright(int teamId, int unitDefId) {
 EXPORT(bool) skirmishAiCallback_UnitDef_isCollide(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->collide;
 }
-EXPORT(float) skirmishAiCallback_UnitDef_getControlRadius(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->controlRadius;
-}
 EXPORT(float) skirmishAiCallback_UnitDef_getLosRadius(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->losRadius;
 }
@@ -2462,7 +2531,7 @@ EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int teamId, int unitId,
 		}
 
 		const LuaRulesParams::Param param = unit->modParams[modParamId];
-		if (param.los & losMask) { 
+		if (param.los & losMask) {
 			return param.value;
 		} else {
 			return 0.0f;
@@ -2487,14 +2556,6 @@ EXPORT(int) skirmishAiCallback_Unit_getAllyTeam(int teamId, int unitId) {
 	} else {
 		return team_callback[teamId]->GetUnitAllyTeam(unitId);
 	}
-}
-EXPORT(int) skirmishAiCallback_Unit_getLineage(int teamId, int unitId) {
-
-	const CUnit* unit = getUnit(unitId);
-	if (unit == NULL) {
-		return -1;
-	}
-	return unit->lineage;
 }
 EXPORT(int) skirmishAiCallback_Unit_getAiHint(int teamId, int unitId) {
 	CAICallback* clb = team_callback[teamId]; return clb->GetUnitAiHint(unitId);
@@ -3497,10 +3558,13 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Game_getTeamSide = &skirmishAiCallback_Game_getTeamSide;
 	callback->Clb_Game_getTeamColor = &skirmishAiCallback_Game_getTeamColor;
 	callback->Clb_Game_getTeamAllyTeam = &skirmishAiCallback_Game_getTeamAllyTeam;
+	callback->Clb_Game_getTeamResourceCurrent = &skirmishAiCallback_Game_getTeamResourceCurrent;
+	callback->Clb_Game_getTeamResourceIncome = &skirmishAiCallback_Game_getTeamResourceIncome;
+	callback->Clb_Game_getTeamResourceUsage = &skirmishAiCallback_Game_getTeamResourceUsage;
+	callback->Clb_Game_getTeamResourceStorage = &skirmishAiCallback_Game_getTeamResourceStorage;
 	callback->Clb_Game_isAllied = &skirmishAiCallback_Game_isAllied;
 	callback->Clb_Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
 	callback->Clb_Game_isDebugModeEnabled = &skirmishAiCallback_Game_isDebugModeEnabled;
-	callback->Clb_Game_getMode = &skirmishAiCallback_Game_getMode;
 	callback->Clb_Game_isPaused = &skirmishAiCallback_Game_isPaused;
 	callback->Clb_Game_getSpeedFactor = &skirmishAiCallback_Game_getSpeedFactor;
 	callback->Clb_Game_getSetupScript = &skirmishAiCallback_Game_getSetupScript;
@@ -3559,7 +3623,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_UnitDef_getTurnInPlaceSpeedLimit = &skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit;
 	callback->Clb_UnitDef_isUpright = &skirmishAiCallback_UnitDef_isUpright;
 	callback->Clb_UnitDef_isCollide = &skirmishAiCallback_UnitDef_isCollide;
-	callback->Clb_UnitDef_getControlRadius = &skirmishAiCallback_UnitDef_getControlRadius;
 	callback->Clb_UnitDef_getLosRadius = &skirmishAiCallback_UnitDef_getLosRadius;
 	callback->Clb_UnitDef_getAirLosRadius = &skirmishAiCallback_UnitDef_getAirLosRadius;
 	callback->Clb_UnitDef_getLosHeight = &skirmishAiCallback_UnitDef_getLosHeight;
@@ -3785,7 +3848,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Unit_ModParam_getValue = &skirmishAiCallback_Unit_ModParam_getValue;
 	callback->Clb_Unit_getTeam = &skirmishAiCallback_Unit_getTeam;
 	callback->Clb_Unit_getAllyTeam = &skirmishAiCallback_Unit_getAllyTeam;
-	callback->Clb_Unit_getLineage = &skirmishAiCallback_Unit_getLineage;
 	callback->Clb_Unit_getAiHint = &skirmishAiCallback_Unit_getAiHint;
 	callback->Clb_Unit_getStockpile = &skirmishAiCallback_Unit_getStockpile;
 	callback->Clb_Unit_getStockpileQueued = &skirmishAiCallback_Unit_getStockpileQueued;

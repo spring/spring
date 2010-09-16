@@ -59,6 +59,7 @@
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/Threading.h"
 #include "System/Sound/ISound.h"
 
 #include "mmgr.h"
@@ -980,40 +981,49 @@ void SpringApp::Startup()
 	}
 }
 
-
-
-
 #if defined(USE_GML) && GML_ENABLE_SIM
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
 
 int SpringApp::Sim()
 {
-	while(gmlKeepRunning && !gmlStartSim)
-		SDL_Delay(100);
+	try {
+		if(GML_SHARE_LISTS)
+			ogc->WorkerThreadPost();
 
-	while(gmlKeepRunning) {
-		if(!gmlMultiThreadSim) {
-			CrashHandler::ClearSimWDT(true);
-			while(!gmlMultiThreadSim && gmlKeepRunning)
-				SDL_Delay(200);
-		}
-		else if (activeController) {
-			CrashHandler::ClearSimWDT();
-			gmlProcessor->ExpandAuxQueue();
+		while(gmlKeepRunning && !gmlStartSim)
+			SDL_Delay(100);
 
-			{
-				GML_RECMUTEX_LOCK(sim); // Sim
-
-				if (!activeController->Update()) {
-					return 0;
-				}
+		while(gmlKeepRunning) {
+			if(!gmlMultiThreadSim) {
+				CrashHandler::ClearSimWDT(true);
+				while(!gmlMultiThreadSim && gmlKeepRunning)
+					SDL_Delay(200);
 			}
+			else if (activeController) {
+				CrashHandler::ClearSimWDT();
+				gmlProcessor->ExpandAuxQueue();
 
-			gmlProcessor->GetQueue();
+				{
+					GML_MSTMUTEX_LOCK(sim); // Sim
+
+					if(!activeController->Update())
+						return 0;
+				}
+
+				gmlProcessor->GetQueue();
+			}
+			boost::thread::yield();
 		}
-		boost::thread::yield();
+
+		if(GML_SHARE_LISTS)
+			ogc->WorkerThreadFree();
+	} catch(opengl_error &e) {
+		Threading::SetThreadError(e.what());
+		Threading::GetMainThread()->interrupt();
+		return 0;
 	}
+
 	return 1;
 }
 #endif
@@ -1038,7 +1048,7 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 			if (gmlMultiThreadSim) {
 				if (!gs->frameNum) {
-					GML_RECMUTEX_LOCK(sim); // Update
+					GML_MSTMUTEX_LOCK(sim); // Update
 
 					activeController->Update();
 					if (gs->frameNum) {
@@ -1046,7 +1056,7 @@ int SpringApp::Update()
 					}
 				}
 			} else {
-				GML_RECMUTEX_LOCK(sim); // Update
+				GML_MSTMUTEX_LOCK(sim); // Update
 
 				activeController->Update();
 			}
@@ -1163,6 +1173,8 @@ int SpringApp::Run(int argc, char *argv[])
 #	if GML_ENABLE_SIM
 	gmlKeepRunning=1;
 	gmlStartSim=0;
+	if(GML_SHARE_LISTS)
+		ogc = new COffscreenGLContext();
 	gmlProcessor->AuxWork(&SpringApp::Simcb,this); // start sim thread
 #	endif
 #endif
@@ -1195,6 +1207,8 @@ int SpringApp::Run(int argc, char *argv[])
 	gmlKeepRunning=0; // wait for sim to finish
 	while(!gmlProcessor->PumpAux())
 		boost::thread::yield();
+	if(GML_SHARE_LISTS)
+		delete ogc;
 	#endif
 	delete gmlProcessor;
 #endif
@@ -1240,7 +1254,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 	switch (event.type) {
 		case SDL_VIDEORESIZE: {
 
-			GML_RECMUTEX_LOCK(sim); // Run
+			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
 			CrashHandler::ClearDrawWDT(true);
 			screenWidth = event.resize.w;
@@ -1252,11 +1266,12 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 #endif
 			InitOpenGL();
 			activeController->ResizeEvent();
+
 			break;
 		}
 		case SDL_VIDEOEXPOSE: {
 
-			GML_RECMUTEX_LOCK(sim); // Run
+			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
 			CrashHandler::ClearDrawWDT(true);
 			// re-initialize the stencil
@@ -1264,6 +1279,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 			SetupViewportGeometry();
+
 			break;
 		}
 		case SDL_QUIT: {

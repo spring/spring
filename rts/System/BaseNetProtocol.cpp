@@ -221,9 +221,12 @@ PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStati
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendGameOver()
+PacketType CBaseNetProtocol::SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams)
 {
-	return PacketType(new PackPacket(1, NETMSG_GAMEOVER));
+	const unsigned size = (3 * sizeof(uchar)) + (winningAllyTeams.size() * sizeof(uchar));
+	PackPacket* packet = new PackPacket(size, NETMSG_GAMEOVER);
+	*packet << static_cast<uchar>(size) << myPlayerNum << winningAllyTeams;
+	return PacketType(packet);
 }
 
 
@@ -485,7 +488,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_SETSHARE, 11);
 	proto->AddType(NETMSG_SENDPLAYERSTAT, 1);
 	proto->AddType(NETMSG_PLAYERSTAT, 2 + sizeof(PlayerStatistics));
-	proto->AddType(NETMSG_GAMEOVER, 1);
+	proto->AddType(NETMSG_GAMEOVER, -1);
 	proto->AddType(NETMSG_MAPDRAW, -1);
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
 	proto->AddType(NETMSG_SYSTEMMSG, -2);

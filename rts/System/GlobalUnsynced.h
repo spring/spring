@@ -62,6 +62,7 @@ public:
 
 	/**
 	 * @brief my team
+	 * @note changes when changing spectated team
 	 *
 	 * Local player's team
 	 */
@@ -69,10 +70,29 @@ public:
 
 	/**
 	 * @brief my ally team
+	 * @note changes when changing spectated team
 	 *
 	 * Local player's ally team
 	 */
 	int myAllyTeam;
+
+	/**
+	 * @brief my team used when playing
+	 * @note changes only from TEAMMSG_JOIN_TEAM and SetMyPlayer
+	 * @note if we never joined any team, it's set to -1
+	 *
+	 * Local player's team
+	 */
+	int myPlayingTeam;
+
+	/**
+	 * @brief my ally team
+	 * @note changes only from TEAMMSG_JOIN_TEAM and SetMyPlayer
+	 * @note if we never joined any team, it's set to -1
+	 *
+	 * Local player's ally team
+	 */
+	int myPlayingAllyTeam;
 
 
 	/**
@@ -97,9 +117,6 @@ public:
 	 * Can all units be selected when spectating?
 	 */
 	bool spectatingFullSelect;
-
-	bool moveWarnings;
-	bool buildWarnings;
 
 	/**
 	 * @brief direct control

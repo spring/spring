@@ -704,7 +704,9 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 	return isNeutral;
 }
 
-int CAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius)
+
+
+int CAICallback::InitPath(const float3& start, const float3& end, int pathType, float goalRadius)
 {
 	assert(((size_t)pathType) < moveinfo->moveData.size());
 	return pathManager->RequestPath(moveinfo->moveData.at(pathType), start, end, goalRadius, NULL, false);
@@ -783,6 +785,9 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	FreePath(pathID);
 	return pathLen;
 }
+
+bool CAICallback::SetPathNodeCost(unsigned int x, unsigned int z, float cost) { return pathManager->SetNodeExtraCost(x, z, cost, false); }
+float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) { return pathManager->GetNodeExtraCost(x, z, false); }
 
 
 
@@ -1355,9 +1360,6 @@ bool CAICallback::GetValue(int id, void *data)
 		}case AIVAL_DEBUG_MODE:{
 			*(bool*)data = globalRendering->drawdebug;
 			return true;
-		}case AIVAL_GAME_MODE:{
-			*(int*)data = gameSetup->gameMode;
-			return true;
 		}case AIVAL_GAME_PAUSED:{
 			*(bool*)data = gs->paused;
 			return true;
@@ -1452,20 +1454,42 @@ int CAICallback::HandleCommand(int commandId, void* data)
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
-				const CUnit* hitUnit = NULL;
-				bool   haveHit = false;
-				bool   visible = true;
 
 				if (srcUnit != NULL) {
+					const CUnit* hitUnit = NULL;
 					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
 
 					if (hitUnit != NULL) {
-						haveHit = true;
-						visible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
+						const bool isUnitVisible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
+						if (isUnitVisible) {
+							cmdData->rayLen = realLen;
+							cmdData->hitUID = hitUnit->id;
+						}
 					}
+				}
+			}
 
-					cmdData->rayLen = (           visible)? realLen:     cmdData->rayLen;
-					cmdData->hitUID = (haveHit && visible)? hitUnit->id: cmdData->hitUID;
+			return 1;
+		} break;
+
+		case AIHCFeatureTraceRayId: {
+			AIHCFeatureTraceRay* cmdData = (AIHCFeatureTraceRay*) data;
+
+			if (CHECK_UNITID(cmdData->srcUID)) {
+				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+
+				if (srcUnit != NULL) {
+					const CUnit* hitUnit = NULL;
+					const CFeature* hitFeature = NULL;
+					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
+
+					if (hitFeature != NULL) {
+						const bool isFeatureVisible = hitFeature->IsInLosForAllyTeam(teamHandler->AllyTeam(team));
+						if (isFeatureVisible) {
+							cmdData->rayLen = realLen;
+							cmdData->hitFID = hitFeature->id;
+						}
+					}
 				}
 			}
 

@@ -137,7 +137,6 @@ CUnit::CUnit():
 	los(0),
 	tempNum(0),
 	lastSlowUpdate(0),
-	controlRadius(2),
 	losRadius(0),
 	airLosRadius(0),
 	losHeight(0),
@@ -329,7 +328,6 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	pos = position;
 	team = Team;
 	allyteam = teamHandler->AllyTeam(Team);
-	lineage = Team;
 	unitDef = def;
 	unitDefName = unitDef->name;
 
@@ -1021,35 +1019,11 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 	if (damage > 0.0f) {
 		recentDamage += damage;
+
 		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			attacker->AddExperience(0.1f * experienceMod
 			                             * (power / attacker->power)
 			                             * (damage + std::min(0.0f, health)) / maxHealth);
-			const int warnFrame = (gs->frameNum - 100);
-			if ((team == gu->myTeam)
-			    && ((!unitDef->isCommander && (uh->lastDamageWarning < warnFrame)) ||
-			        ( unitDef->isCommander && (uh->lastCmdDamageWarning < warnFrame)))
-					&& !camera->InView(midPos, radius + 50) && !gu->spectatingFullView) {
-				logOutput.Print("%s is being attacked", unitDef->humanName.c_str());
-				logOutput.SetLastMsgPos(pos);
-
-				if (unitDef->isCommander || uh->lastDamageWarning + 150 < gs->frameNum) {
-					const int soundIdx = unitDef->sounds.underattack.getRandomIdx();
-					if (soundIdx >= 0) {
-						Channels::UserInterface.PlaySample(
-							unitDef->sounds.underattack.getID(soundIdx),
-							unitDef->isCommander ? 4 : 2);
-					}
-				}
-
-				minimap->AddNotification(pos, float3(1.0f, 0.3f, 0.3f),
-				                         unitDef->isCommander ? 1.0f : 0.5f);
-
-				uh->lastDamageWarning = gs->frameNum;
-				if (unitDef->isCommander) {
-					uh->lastCmdDamageWarning = gs->frameNum;
-				}
-			}
 		}
 	}
 
@@ -1261,13 +1235,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
-	}
-
-	// Sharing commander in com ends game kills you.
-	// Note that this will kill the com too.
-	if (unitDef->isCommander) {
-		teamHandler->Team(oldteam)->CommanderDied(this);
-		// InstallChristmasHat(color4::red); // Ho-Ho-Ho merry christmas to all commiters
 	}
 
 	if (type == ChangeGiven) {
@@ -1806,11 +1773,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	blockHeightChanges = false;
 
-	if (unitDef->isCommander) {
-		teamHandler->Team(team)->CommanderDied(this);
-	}
-	teamHandler->Team(this->lineage)->LeftLineage(this);
-
 	if (unitDef->windGenerator > 0.0f) {
 		wind.DelUnit(this);
 	}
@@ -2224,7 +2186,6 @@ CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefName),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(lineage),
 	CR_MEMBER(aihint),
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
@@ -2278,7 +2239,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(tempNum),
 	CR_MEMBER(lastSlowUpdate),
 	CR_MEMBER(mapSquare),
-	CR_MEMBER(controlRadius),
 	CR_MEMBER(losRadius),
 	CR_MEMBER(airLosRadius),
 	CR_MEMBER(losHeight),

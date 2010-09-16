@@ -68,6 +68,14 @@ void ErrorMessageBox(const std::string msg, const std::string caption, unsigned 
 		//! terminate thread
 		throw boost::thread_interrupted();
 	}
+	else {
+		std::string fullmsg = caption + " " + msg;
+		LogObject() << fullmsg; // to give a clue, in case other error handling fails
+		Threading::SetThreadError(fullmsg);
+		Threading::GetMainThread()->interrupt();
+
+		throw boost::thread_interrupted();
+	}
 #endif
 
 	//! exiting any possibly threads

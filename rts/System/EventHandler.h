@@ -42,7 +42,7 @@ class CEventHandler
 
 		void GamePreload();
 		void GameStart();
-		void GameOver();
+		void GameOver( std::vector<unsigned char> winningAllyTeams );
 
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);

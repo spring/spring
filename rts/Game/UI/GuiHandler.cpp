@@ -4296,7 +4296,7 @@ void CGuiHandler::RunLayoutCommands() {
 	}
 
 	if(luacmd) {
-		GML_RECMUTEX_LOCK(sim); // RunLayoutCommands
+		GML_MSTMUTEX_LOCK(sim); // RunLayoutCommands
 
 		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
 			RunLayoutCommand(*cit);

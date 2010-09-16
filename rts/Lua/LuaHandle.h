@@ -97,7 +97,7 @@ class CLuaHandle : public CEventClient
 
 		void GamePreload();
 		void GameStart();
-		void GameOver();
+		void GameOver(const std::vector<unsigned char>& winningAllyTeams);
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
 		void PlayerChanged(int playerID);

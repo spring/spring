@@ -3,6 +3,8 @@
 /* based on code from GlobalSynced.{cpp,h} */
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "PlayerHandler.h"
 #include "LogOutput.h"
 #include "Game/GameSetup.h"
@@ -33,14 +35,17 @@ CPlayerHandler::~CPlayerHandler()
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
+	int oldSize = players.size();
 	int newSize = std::max( players.size(), setup->playerStartingData.size() );
-	players.resize(newSize);
+	
+	for ( unsigned int i = oldSize; i < newSize; ++i )
+		players.push_back(new CPlayer());
 
 	for (size_t i = 0; i < setup->playerStartingData.size(); ++i) {
-		players[i] = new CPlayer();
-		*players[i] = setup->playerStartingData[i];
-		players[i]->playerNum = (int)i;
-		players[i]->myControl.myController = players[i];
+		CPlayer *player = players[i];
+		*player = setup->playerStartingData[i];
+		player->playerNum = (int)i;
+		player->myControl.myController = player;
 	}
 }
 
@@ -85,19 +90,29 @@ void CPlayerHandler::GameFrame(int frameNum)
 
 void CPlayerHandler::AddPlayer( const CPlayer& player )
 {
+	GML_MSTMUTEX_DOUNLOCK(sim); // AddPlayer - temporarily unlock this mutex to prevent a deadlock
+
 	int oldSize = players.size();
 	int newSize = std::max( (int)players.size(), player.playerNum + 1 );
-	players.resize(newSize);
-	for ( unsigned int i = oldSize; i < newSize; ++i ) // fill gap with stubs
+
 	{
-		players[i] = new CPlayer();
-		CPlayer* stub = players[i];
-		stub->name = "unknown";
-		stub->isFromDemo = false;
-		stub->spectator = true;
-		stub->team = 0;
-		stub->playerNum = (int)i;
+		GML_STDMUTEX_LOCK(draw); // AddPlayer - rendering accesses Player(x) in too many places, lock the entire draw thread
+
+		for ( unsigned int i = oldSize; i < newSize; ++i ) // fill gap with stubs
+		{
+			CPlayer *stub = new CPlayer();
+			stub->name = "unknown";
+			stub->isFromDemo = false;
+			stub->spectator = true;
+			stub->team = 0;
+			stub->playerNum = (int)i;
+			players.push_back(stub);
+		}
+
+		CPlayer *newplayer = players[player.playerNum];
+		*newplayer = player;
+		newplayer->myControl.myController = newplayer;
 	}
-	*players[player.playerNum] = player;
-	players[player.playerNum]->myControl.myController = players[player.playerNum];
+
+	GML_MSTMUTEX_DOLOCK(sim); // AddPlayer - restore unlocked mutex
 }

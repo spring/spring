@@ -10,7 +10,9 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 
 // FIXME
@@ -22,8 +24,6 @@
 #include "Sim/Path/Default/PathManager.h"
 #undef private
 
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
@@ -42,9 +42,9 @@ void DefaultPathDrawer::Draw() const {
 		glPushAttrib(GL_ENABLE_BIT);
 
 		Draw(pm);
-		Draw(pm->pf);
-		Draw(pm->pe);
-		Draw(pm->pe2);
+		Draw(pm->maxResPF);
+		Draw(pm->medResPE);
+		Draw(pm->lowResPE);
 
 		glPopAttrib();
 	}
@@ -55,7 +55,7 @@ void DefaultPathDrawer::Draw() const {
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPath: {
+		case CBaseGroundDrawer::drawPathSquares: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {
@@ -150,15 +150,60 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawHeat: {
+		case CBaseGroundDrawer::drawPathHeat: {
 			for (int y = starty; y < endy; ++y) {
-				for (int x = 0; x  < gs->hmapx; ++x) {
+				for (int x = 0; x < gs->hmapx; ++x) {
 					const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
 
 					texMem[idx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * pm->GetHeatOnSquare(x << 1, y << 1), 32, 255);
 					texMem[idx + CBaseGroundDrawer::COLOR_G] = 32;
 					texMem[idx + CBaseGroundDrawer::COLOR_B] = 32;
 					texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+				}
+			}
+		} break;
+
+		case CBaseGroundDrawer::drawPathCost: {
+			const PathNodeStateBuffer& maxResStates = pm->maxResPF->squareStates;
+			const PathNodeStateBuffer& medResStates = pm->medResPE->blockStates;
+			const PathNodeStateBuffer& lowResStates = pm->lowResPE->blockStates;
+
+			const unsigned int medResBlockSize = pm->medResPE->BLOCK_SIZE, medResBlocksX = pm->medResPE->nbrOfBlocksX;
+			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->nbrOfBlocksX;
+
+			const float maxResMaxNodeCost = std::max(1.0f, pm->maxResPF->maxNodeCost);
+			const float medResMaxNodeCost = std::max(1.0f, pm->medResPE->maxNodeCost);
+			const float lowResMaxNodeCost = std::max(1.0f, pm->lowResPE->maxNodeCost);
+
+			for (int ty = starty; ty < endy; ++ty) {
+				for (int tx = 0; tx < gs->hmapx; ++tx) {
+					const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+					// NOTE:
+					//    tx is in [0, gs->hmapx>
+					//    ty is in [0, gs->hmapy> (highResInfoTexWanted == false)
+					const unsigned int hx = tx << 1;
+					const unsigned int hy = ty << 1;
+
+					const PathNodeState& maxResNode = maxResStates[hy * gs->mapx + hx];
+					const PathNodeState& medResNode = medResStates[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)];
+					const PathNodeState& lowResNode = lowResStates[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)];
+
+					float maxResNodeCost = maxResNode.pathCost;
+					float medResNodeCost = medResNode.pathCost;
+					float lowResNodeCost = lowResNode.pathCost;
+
+					if (std::isinf(maxResNodeCost)) { maxResNodeCost = 255.0f; }
+					if (std::isinf(medResNodeCost)) { medResNodeCost = 255.0f; }
+					if (std::isinf(lowResNodeCost)) { lowResNodeCost = 255.0f; }
+
+					// NOTE:
+					//     the normalisation means each extraTextureUpdate block
+					//     of rows gets assigned different colors when units are
+					//     moving (so view it while paused)
+					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (maxResNodeCost / maxResMaxNodeCost) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (medResNodeCost / medResMaxNodeCost) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (lowResNodeCost / lowResMaxNodeCost) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
 				}
 			}
 		} break;
@@ -188,19 +233,19 @@ void DefaultPathDrawer::Draw(const CPathManager* pm) const {
 
 			// draw estimatePath2 (green)
 			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-			for (PathIt pvi = path->estimatedPath2.path.begin(); pvi != path->estimatedPath2.path.end(); pvi++) {
+			for (PathIt pvi = path->lowResPath.path.begin(); pvi != path->lowResPath.path.end(); pvi++) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw estimatePath (blue)
 			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->estimatedPath.path.begin(); pvi != path->estimatedPath.path.end(); pvi++) {
+			for (PathIt pvi = path->medResPath.path.begin(); pvi != path->medResPath.path.end(); pvi++) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw detailPath (red)
 			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->detailedPath.path.begin(); pvi != path->detailedPath.path.end(); pvi++) {
+			for (PathIt pvi = path->maxResPath.path.begin(); pvi != path->maxResPath.path.end(); pvi++) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
@@ -225,12 +270,12 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 
-	for (unsigned int idx = 0; idx < pf->openSquareBufferIndex; idx++) {
-		const CPathFinder::OpenSquare* os = &pf->openSquareBuffer[idx];
-		const int2 sqr = os->square;
-		const int square = os->sqr;
+	for (unsigned int idx = 0; idx < pf->openSquareBuffer.GetSize(); idx++) {
+		const PathNode* os = pf->openSquareBuffer.GetNode(idx);
+		const int2 sqr = os->nodePos;
+		const int square = os->nodeNum;
 
-		if (pf->squareState[square].status & CPathFinder::PATHOPT_START)
+		if (pf->squareStates[square].pathMask & PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -239,7 +284,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int dir = pf->squareState[square].status & CPathFinder::PATHOPT_DIRECTION;
+		const int dir = pf->squareStates[square].pathMask & PATHOPT_DIRECTION;
 		const int obx = sqr.x - pf->directionVector[dir].x;
 		const int obz = sqr.y - pf->directionVector[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;
@@ -368,23 +413,23 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 
-	for (unsigned int idx = 0; idx < pe->openBlockBufferIndex; idx++) {
-		const CPathEstimator::OpenBlock* ob = &pe->openBlockBuffer[idx];
-		const int blocknr = ob->blocknr;
+	for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
+		const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
+		const int blocknr = ob->nodeNum;
 
 		float3 p1;
-			p1.x = (pe->blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (pe->blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
+			p1.x = (pe->blockStates[blocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
+			p1.z = (pe->blockStates[blocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int obx = pe->blockState[ob->blocknr].parentBlock.x;
-		const int obz = pe->blockState[ob->blocknr].parentBlock.y;
+		const int obx = pe->blockStates[ob->nodeNum].parentNodePos.x;
+		const int obz = pe->blockStates[ob->nodeNum].parentNodePos.y;
 		const int obblocknr = obz * pe->nbrOfBlocksX + obx;
 
 		if (obblocknr >= 0) {
-			p2.x = (pe->blockState[obblocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p2.z = (pe->blockState[obblocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
+			p2.x = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
+			p2.z = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
 			p2.y = ground->GetHeight(p2.x, p2.z) + 15;
 
 			glVertexf3(p1);

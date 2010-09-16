@@ -43,8 +43,6 @@ CR_REG_METADATA(CGlobalUnsynced, (
 				CR_MEMBER(spectating),
 				CR_MEMBER(spectatingFullView),
 				CR_MEMBER(spectatingFullSelect),
-				CR_MEMBER(moveWarnings),
-				CR_MEMBER(buildWarnings),
 				CR_MEMBER(directControl),
 				CR_MEMBER(usRandSeed),
 				CR_RESERVED(64)
@@ -63,13 +61,12 @@ CGlobalUnsynced::CGlobalUnsynced()
 	myPlayerNum = 0;
 	myTeam = 1;
 	myAllyTeam = 1;
+	myPlayingTeam = -1;
+	myPlayingAllyTeam = -1;
 
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
-
-	moveWarnings  = !!configHandler->Get("MoveWarnings", 0);
-	buildWarnings = !!configHandler->Get("BuildWarnings", 0);
 
 	directControl = NULL;
 	playerHandler = new CPlayerHandler();
@@ -142,4 +139,9 @@ void CGlobalUnsynced::SetMyPlayer(const int mynumber)
 	spectating = Player->spectator;
 	spectatingFullView   = Player->spectator;
 	spectatingFullSelect = Player->spectator;
+
+	if (!spectating) {
+		myPlayingTeam = myTeam;
+		myPlayingAllyTeam = myAllyTeam;
+	}
 }

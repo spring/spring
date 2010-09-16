@@ -14,6 +14,8 @@ class LuaPathFinder {
 
 	private:
 		static int RequestPath(lua_State* L);
+		static int SetPathNodeCost(lua_State* L);
+		static int GetPathNodeCost(lua_State* L);
 };
 
 

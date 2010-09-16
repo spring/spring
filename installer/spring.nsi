@@ -81,6 +81,7 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include "include\echo.nsh"
 !include "include\fileassoc.nsh"
 !include "include\fileExistChecks.nsh"
+!include "include\fileMisc.nsh"
 !include "include\checkrunning.nsh"
 
 !include "sections\ensureDotNet.nsh"
@@ -236,13 +237,6 @@ SectionGroup "Tools"
 			!include "sections\archivemover.nsh"
 		!undef INSTALL
 	SectionEnd
-
-	Section "Selection Editor" SEC_SELECTIONEDITOR
-		!define INSTALL
-			${!echonow} "Processing: selectionEditor"
-			!include "sections\selectionEditor.nsh"
-		!undef INSTALL
-	SectionEnd
 SectionGroupEnd
 
 
@@ -250,6 +244,14 @@ Section "Start menu shortcuts" SEC_START
 	!define INSTALL
 		${!echonow} "Processing: shortcuts - Start menu"
 		!include "sections\shortcuts_startMenu.nsh"
+	!undef INSTALL
+SectionEnd
+
+
+Section /o "Portable" SEC_PORTABLE
+	!define INSTALL
+		${!echonow} "Processing: Portable"
+		!include "sections\portable.nsh"
 	!undef INSTALL
 SectionEnd
 
@@ -317,6 +319,7 @@ Section Uninstall
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\archivemover.nsh"
+	!include "sections\portable.nsh"
 	!include "sections\springDownloader.nsh"
 	!include "sections\tasServer.nsh"
 	!insertmacro DeleteSkirmishAI "AAI"

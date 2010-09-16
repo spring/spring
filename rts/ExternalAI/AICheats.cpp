@@ -10,6 +10,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/GameServer.h"
@@ -383,7 +384,7 @@ bool CAICheats::GetValue(int id, void* data) const
 	return false;
 }
 
-int CAICheats::HandleCommand(int commandId, void *data)
+int CAICheats::HandleCommand(int commandId, void* data)
 {
 	switch (commandId) {
 		case AIHCQuerySubVersionId:
@@ -403,9 +404,27 @@ int CAICheats::HandleCommand(int commandId, void *data)
 			}
 
 			return 1;
-		}
+		} break;
 
-		default:
+		case AIHCFeatureTraceRayId: {
+			AIHCFeatureTraceRay* cmdData = (AIHCFeatureTraceRay*) data;
+
+			if (CHECK_UNITID(cmdData->srcUID)) {
+				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* hitUnit = NULL;
+				const CFeature* hitFeature = NULL;
+
+				if (srcUnit != NULL) {
+					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
+					cmdData->hitFID = (hitFeature != NULL)? hitFeature->id: -1;
+				}
+			}
+
+			return 1;
+		} break;
+
+		default: {
 			return 0;
+		}
 	}
 }

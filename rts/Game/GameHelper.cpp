@@ -54,9 +54,9 @@ CGameHelper::~CGameHelper()
 {
 	delete stdExplosionGenerator;
 
-	for(int a=0;a<128;++a){
-		std::list<WaitingDamage*>* wd=&waitingDamages[a];
-		while(!wd->empty()){
+	for (int a = 0; a < 128; ++a) {
+		std::list<WaitingDamage*>* wd = &waitingDamages[a];
+		while (!wd->empty()) {
 			delete wd->back();
 			wd->pop_back();
 		}
@@ -131,9 +131,9 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	DamageArray damageDone = damages * mod2;
 	float3 addedImpulse = dif * (damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
 
-	if (expDist2 < (expSpeed * 4.0f)) { //damage directly
+	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
 		unit->DoDamage(damageDone, owner, addedImpulse, weaponId);
-	} else { //damage later
+	} else { // damage later
 		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
 		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
 	}
@@ -273,10 +273,10 @@ void CGameHelper::Explosion(
 // Raytracing
 //////////////////////////////////////////////////////////////////////
 
-// called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
+// called by {CRifle, CBeamLaser, CLightningCannon}::Fire() and Skirmish AIs
 float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/,
 			    const CUnit* owner, const CUnit*& hit, int collisionFlags,
-			    const CFeature** hitfeature)
+			    const CFeature** hitFeature)
 {
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
 	const bool ignoreFeatures = !!(collisionFlags & COLLISION_NOFEATURE);
@@ -291,8 +291,9 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 	//! feature intersection
 	if (!ignoreFeatures) {
-		if (hitfeature)
-			*hitfeature = 0;
+		if (hitFeature) {
+			*hitFeature = NULL;
+		}
 
 		for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
 			const CQuadField::Quad& quad = qf->GetQuad(*qi);
@@ -312,8 +313,9 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 					//! we want the closest feature (intersection point) on the ray
 					if (lenSq < lengthSq) {
 						lengthSq = lenSq;
-						if(hitfeature)
-							*hitfeature = f;
+						if (hitFeature) {
+							*hitFeature = f;
+						}
 					}
 				}
 			}
@@ -1137,17 +1139,17 @@ static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 	if (size > searchOffsets.size()) {
 		searchOffsets.resize (size);
 
-		for (int y=0;y<radius*2;y++)
-			for (int x=0;x<radius*2;x++)
+		for (int y = 0; y < radius*2; y++)
+			for (int x = 0; x < radius*2; x++)
 			{
-				SearchOffset& i = searchOffsets[y*radius*2+x];
+				SearchOffset& i = searchOffsets[y*radius*2 + x];
 
-				i.dx = x-radius;
-				i.dy = y-radius;
-				i.qdist = i.dx*i.dx+i.dy*i.dy;
+				i.dx = x - radius;
+				i.dy = y - radius;
+				i.qdist = i.dx*i.dx + i.dy*i.dy;
 			}
 
-		std::sort (searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
+		std::sort(searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
 	}
 
 	return searchOffsets;

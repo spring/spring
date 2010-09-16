@@ -100,7 +100,6 @@ public:
 	bool upright;
 	bool collide;
 
-	float controlRadius;
 	float losRadius;
 	float airLosRadius;
 	float losHeight;
@@ -300,12 +299,12 @@ public:
 	bool needGeo;
 	bool isFeature;
 	bool hideDamage;
-	bool isCommander;
+	bool isCommander;								//! deprecated, has no meaning to the engine (AI's and gadgets should not rely on it)
 	bool showPlayerName;
 
 	bool canResurrect;
 	bool canCapture;
-	int highTrajectoryType; // 0 (default) = only low, 1 = only high, 2 = choose
+	int highTrajectoryType;							// 0 (default) = only low, 1 = only high, 2 = choose
 
 	unsigned int noChaseCategory;
 
