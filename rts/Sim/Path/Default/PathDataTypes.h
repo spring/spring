@@ -32,8 +32,8 @@ struct PathNodeState {
 	}
 
 	float pathCost;
-	// overlay-cost modifiers for nodes (while these are active,
-	// calls to GetPath and GetNextWaypoint behave differently)
+	// overlay-cost modifiers for nodes (when non-zero, these
+	// modify the behavior of GetPath() and GetNextWaypoint())
 	//
 	// <extraCostUnsynced> may not be read in synced context,
 	// because AI's and unsynced Lua have write-access to it
