@@ -516,6 +516,8 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 		ob->nodeNum = startBlocknr;
 	openBlocks.push(ob);
 
+	maxNodeCost = 0.0f;
+
 	// mark starting point as best found position
 	goalBlock = startBlock;
 	goalHeuristic = peDef.Heuristic(xSquare, zSquare);
@@ -679,8 +681,9 @@ void CPathEstimator::TestBlock(
 		ob->gCost   = gCost;
 		ob->nodePos = block;
 		ob->nodeNum = blockIdx;
-
 	openBlocks.push(ob);
+
+	maxNodeCost = std::max(maxNodeCost, fCost);
 
 	// Mark the block as open, and its parent.
 	blockStates[blockIdx].pathCost = fCost;

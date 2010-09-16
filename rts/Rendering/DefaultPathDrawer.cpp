@@ -55,7 +55,7 @@ void DefaultPathDrawer::Draw() const {
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPath: {
+		case CBaseGroundDrawer::drawPathSquares: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {
@@ -150,15 +150,60 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawHeat: {
+		case CBaseGroundDrawer::drawPathHeat: {
 			for (int y = starty; y < endy; ++y) {
-				for (int x = 0; x  < gs->hmapx; ++x) {
+				for (int x = 0; x < gs->hmapx; ++x) {
 					const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
 
 					texMem[idx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * pm->GetHeatOnSquare(x << 1, y << 1), 32, 255);
 					texMem[idx + CBaseGroundDrawer::COLOR_G] = 32;
 					texMem[idx + CBaseGroundDrawer::COLOR_B] = 32;
 					texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+				}
+			}
+		} break;
+
+		case CBaseGroundDrawer::drawPathCost: {
+			const PathNodeStateBuffer& maxResStates = pm->maxResPF->squareStates;
+			const PathNodeStateBuffer& medResStates = pm->medResPE->blockStates;
+			const PathNodeStateBuffer& lowResStates = pm->lowResPE->blockStates;
+
+			const unsigned int medResBlockSize = pm->medResPE->BLOCK_SIZE, medResBlocksX = pm->medResPE->nbrOfBlocksX;
+			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->nbrOfBlocksX;
+
+			const float maxResMaxNodeCost = std::max(1.0f, pm->maxResPF->maxNodeCost);
+			const float medResMaxNodeCost = std::max(1.0f, pm->medResPE->maxNodeCost);
+			const float lowResMaxNodeCost = std::max(1.0f, pm->lowResPE->maxNodeCost);
+
+			for (int ty = starty; ty < endy; ++ty) {
+				for (int tx = 0; tx < gs->hmapx; ++tx) {
+					const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+					// NOTE:
+					//    tx is in [0, gs->hmapx>
+					//    ty is in [0, gs->hmapy> (highResInfoTexWanted == false)
+					const unsigned int hx = tx << 1;
+					const unsigned int hy = ty << 1;
+
+					const PathNodeState& maxResNode = maxResStates[hy * gs->mapx + hx];
+					const PathNodeState& medResNode = medResStates[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)];
+					const PathNodeState& lowResNode = lowResStates[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)];
+
+					float maxResNodeCost = maxResNode.pathCost;
+					float medResNodeCost = medResNode.pathCost;
+					float lowResNodeCost = lowResNode.pathCost;
+
+					if (std::isinf(maxResNodeCost)) { maxResNodeCost = 255.0f; }
+					if (std::isinf(medResNodeCost)) { medResNodeCost = 255.0f; }
+					if (std::isinf(lowResNodeCost)) { lowResNodeCost = 255.0f; }
+
+					// NOTE:
+					//     the normalisation means each extraTextureUpdate block
+					//     of rows gets assigned different colors when units are
+					//     moving (so view it while paused)
+					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (maxResNodeCost / maxResMaxNodeCost) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (medResNodeCost / medResMaxNodeCost) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (lowResNodeCost / lowResMaxNodeCost) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
 				}
 			}
 		} break;

@@ -156,8 +156,6 @@ private:
 		int2 square
 	);
 
-	unsigned int maxNodesToBeSearched;
-
 
 	int2 directionVector[16];						///< Unit square-movement in given direction.
 	float moveCost[16];								///< The cost of moving in given direction.
@@ -173,8 +171,9 @@ private:
 	bool testMobile;
 	bool needPath;
 
-
+	unsigned int maxSquaresToBeSearched;
 	unsigned int testedNodes;
+	float maxNodeCost;
 
 	PathNodeBuffer openSquareBuffer;
 	PathNodeStateBuffer squareStates;

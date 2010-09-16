@@ -148,83 +148,98 @@ void CBaseGroundDrawer::SetHeightTexture()
 		DisableExtraTexture();
 	else {
 		SetDrawMode (drawHeight);
-		highResInfoTexWanted=true;
-		extraTex=0;
-		updateTextureState=0;
-		while(!UpdateExtraTexture());
+
+		highResInfoTexWanted = true;
+		extraTex = 0;
+		updateTextureState = 0;
+		while (!UpdateExtraTexture());
 	}
 }
 
 
-void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes)
+void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex, float* extractMap, unsigned char* pal, bool highRes)
 {
 	if (drawMode == drawMetal)
 		DisableExtraTexture();
 	else {
 		SetDrawMode (drawMetal);
 
-		highResInfoTexWanted=false;
-		extraTex=tex;
-		extraTexPal=pal;
-		extractDepthMap=extractMap;
-		updateTextureState=0;
-		while(!UpdateExtraTexture());
+		highResInfoTexWanted = false;
+		extraTex = tex;
+		extraTexPal = pal;
+		extractDepthMap = extractMap;
+		updateTextureState = 0;
+		while (!UpdateExtraTexture());
 	}
 }
 
 
-void CBaseGroundDrawer::SetPathMapTexture()
+void CBaseGroundDrawer::TogglePathSquaresTexture()
 {
-	if (drawMode == drawPath) {
+	if (drawMode == drawPathSquares) {
 		DisableExtraTexture();
 	} else {
-		SetDrawMode(drawPath);
+		SetDrawMode(drawPathSquares);
 		extraTex = 0;
 		highResInfoTexWanted = false;
 		updateTextureState = 0;
-		while(!UpdateExtraTexture());
+		while (!UpdateExtraTexture());
 	}
 }
+
+void CBaseGroundDrawer::TogglePathHeatTexture()
+{
+	if (drawMode == drawPathHeat) {
+		DisableExtraTexture();
+	} else {
+		SetDrawMode(drawPathHeat);
+		extraTex = 0;
+		highResInfoTexWanted = false;
+		updateTextureState = 0;
+		while (!UpdateExtraTexture());
+	}
+}
+
+void CBaseGroundDrawer::TogglePathCostTexture()
+{
+	if (drawMode == drawPathCost) {
+		DisableExtraTexture();
+	} else {
+		SetDrawMode(drawPathCost);
+		extraTex = 0;
+		highResInfoTexWanted = false;
+		updateTextureState = 0;
+		while (!UpdateExtraTexture());
+	}
+}
+
 
 
 void CBaseGroundDrawer::ToggleLosTexture()
 {
-	if (drawMode==drawLos) {
-		drawLineOfSight=false;
+	if (drawMode == drawLos) {
+		drawLineOfSight = false;
 		DisableExtraTexture();
 	} else {
-		drawLineOfSight=true;
+		drawLineOfSight = true;
 		SetDrawMode(drawLos);
-		extraTex=0;
-		highResInfoTexWanted=highResLosTex;
-		updateTextureState=0;
-		while(!UpdateExtraTexture());
+		extraTex = 0;
+		highResInfoTexWanted = highResLosTex;
+		updateTextureState = 0;
+		while (!UpdateExtraTexture());
 	}
 }
 
 
 void CBaseGroundDrawer::ToggleRadarAndJammer()
 {
-	drawRadarAndJammer=!drawRadarAndJammer;
-	if (drawMode==drawLos){
-		updateTextureState=0;
-		while(!UpdateExtraTexture());
-	}
-}
-
-
-void CBaseGroundDrawer::ToggleHeatMapTexture()
-{
-	if (drawMode == drawHeat) {
-		DisableExtraTexture();
-	} else {
-		SetDrawMode(drawHeat);
-		extraTex = 0;
-		highResInfoTexWanted = false;
+	drawRadarAndJammer = !drawRadarAndJammer;
+	if (drawMode == drawLos) {
 		updateTextureState = 0;
-		while(!UpdateExtraTexture());
+		while (!UpdateExtraTexture());
 	}
 }
+
 
 
 static inline int InterpolateLos(const unsigned short* p, int xsize, int ysize,
@@ -283,6 +298,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		GLbyte* infoTexMem;
 
 		extraTexPBO.Bind();
+
 		if (highResInfoTexWanted) {
 			starty = updateTextureState * gs->mapy / extraTextureUpdateRate;
 			endy = (updateTextureState + 1) * gs->mapy / extraTextureUpdateRate;
@@ -298,10 +314,12 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		}
 
 		switch (drawMode) {
-			case drawPath: {
-				pathDrawer->UpdateExtraTexture(drawPath, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
-				break;
-			}
+			case drawPathSquares:
+			case drawPathHeat:
+			case drawPathCost:
+				pathDrawer->UpdateExtraTexture(drawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
+			} break;
+
 			case drawMetal: {
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx_half = y*pwr2mapx_half;
@@ -324,10 +342,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				}
 				break;
 			}
-			case drawHeat: {
-				pathDrawer->UpdateExtraTexture(drawHeat, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
-				break;
-			}
+
 			case drawHeight: {
 				extraTexPal = heightLinePal->GetData();
 				for (int y = starty; y < endy; ++y) {
@@ -406,6 +421,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				}
 				break;
 			}
+
 			case drawNormal:
 				break;
 		} // switch (drawMode)
