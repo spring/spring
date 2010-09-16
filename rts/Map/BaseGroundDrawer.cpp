@@ -316,7 +316,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		switch (drawMode) {
 			case drawPathSquares:
 			case drawPathHeat:
-			case drawPathCost:
+			case drawPathCost: {
 				pathDrawer->UpdateExtraTexture(drawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
 			} break;
 
@@ -325,6 +325,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 					const int y_pwr2mapx_half = y*pwr2mapx_half;
 					const int y_2 = y*2;
 					const int y_hmapx = y * gs->hmapx;
+
 					for (int x = 0; x < gs->hmapx; ++x) {
 						const int a   = (y_pwr2mapx_half + x) * 4 - offset;
 						const int alx = ((x*2) >> loshandler->airMipLevel);
