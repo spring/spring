@@ -36,9 +36,8 @@ void* CPathEstimator::operator new(size_t size) { return PathAllocator::Alloc(si
 void CPathEstimator::operator delete(void* p, size_t size) { PathAllocator::Free(p, size); }
 #endif
 
-/**
- * Constructor, loads precalculated data if it exists
- */
+
+
 CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, const std::string& cacheFileName, const std::string& map):
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
@@ -51,7 +50,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	nextOffsetMessage(-1),
-	nextCostMessage(-1)
+	nextCostMessage(-1),
+	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy))
 {
 	// these give the changes in (x, z) coors
 	// when moving one step in given direction
@@ -75,9 +75,9 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	goalSqrOffset.x = BLOCK_SIZE / 2;
 	goalSqrOffset.y = BLOCK_SIZE / 2;
 
-	blockStates.resize(nbrOfBlocksX * nbrOfBlocksZ, PathNodeState());
-	vertices.resize(moveinfo->moveData.size() * blockStates.size() * PATH_DIRECTION_VERTICES, 0.0f);
+	vertices.resize(moveinfo->moveData.size() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, 0.0f);
 
+	// load precalculated data if it exists
 	InitEstimator(cacheFileName, map);
 
 	// As all vertexes are bidirectional and have equal values
@@ -96,18 +96,14 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	pathCache = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
 }
 
-
-/**
- * Free all used memory
- */
 CPathEstimator::~CPathEstimator()
 {
-	for (int i = 0; i < blockStates.size(); i++)
+	for (int i = 0; i < blockStates.GetSize(); i++)
 		blockStates[i].nodeOffsets.clear();
 
 	delete pathCache;
 
-	blockStates.clear();
+	blockStates.Clear();
 	vertices.clear();
 }
 
@@ -174,7 +170,7 @@ void CPathEstimator::InitVertices() {
 }
 
 void CPathEstimator::InitBlocks() {
-	for (int idx = 0; idx < blockStates.size(); idx++) {
+	for (int idx = 0; idx < blockStates.GetSize(); idx++) {
 		const int x = idx % nbrOfBlocksX;
 		const int z = idx / nbrOfBlocksX;
 		const int blockNr = z * nbrOfBlocksX + x;
@@ -192,7 +188,7 @@ void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	// A must be completely finished before B_i can be safely called. This means we cannot
 	// let thread i execute (A_i, B_i), but instead have to split the work such that every
 	// thread finishes its part of A before any starts B_i.
-	int nbr = blockStates.size() - 1;
+	const int nbr = blockStates.GetSize() - 1;
 	int i;
 
 	while((i = --offsetBlockNum) >= 0)
@@ -211,7 +207,7 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread)
 	const int z = idx / nbrOfBlocksX;
 
 	if (thread == 0 && idx >= nextOffsetMessage) {
-		nextOffsetMessage = idx + blockStates.size() / 16;
+		nextOffsetMessage = idx + blockStates.GetSize() / 16;
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (idx<<8)));
 	}
 
@@ -224,9 +220,9 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 	const int z = idx / nbrOfBlocksX;
 
 	if (thread == 0 && idx >= nextCostMessage) {
-		nextCostMessage = idx + blockStates.size() / 16;
+		nextCostMessage = idx + blockStates.GetSize() / 16;
 		char calcMsg[128];
-		sprintf(calcMsg, "PathCosts: precached %d of %d", idx, blockStates.size());
+		sprintf(calcMsg, "PathCosts: precached %d of %d", idx, blockStates.GetSize());
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (idx<<8)));
 		loadscreen->SetLoadMessage(calcMsg, (idx != 0));
 	}
@@ -300,7 +296,7 @@ void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX,
 	const int parentBlocknr = parentBlockZ * nbrOfBlocksX + parentBlockX;
 	const int childBlockX = parentBlockX + directionVector[direction].x;
 	const int childBlockZ = parentBlockZ + directionVector[direction].y;
-	const int vertexNbr = moveData.pathType * blockStates.size() * PATH_DIRECTION_VERTICES + parentBlocknr * PATH_DIRECTION_VERTICES + direction;
+	const int vertexNbr = moveData.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES + parentBlocknr * PATH_DIRECTION_VERTICES + direction;
 
 	// outside map?
 	if (childBlockX < 0 || childBlockZ < 0 ||
@@ -555,10 +551,10 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 			continue;
 
 		// no, check if the goal is already reached
-		int xBSquare = blockStates[ob->nodeNum].nodeOffsets[moveData.pathType].x;
-		int zBSquare = blockStates[ob->nodeNum].nodeOffsets[moveData.pathType].y;
-		int xGSquare = ob->nodePos.x * BLOCK_SIZE + goalSqrOffset.x;
-		int zGSquare = ob->nodePos.y * BLOCK_SIZE + goalSqrOffset.y;
+		const int xBSquare = blockStates[ob->nodeNum].nodeOffsets[moveData.pathType].x;
+		const int zBSquare = blockStates[ob->nodeNum].nodeOffsets[moveData.pathType].y;
+		const int xGSquare = ob->nodePos.x * BLOCK_SIZE + goalSqrOffset.x;
+		const int zGSquare = ob->nodePos.y * BLOCK_SIZE + goalSqrOffset.y;
 
 		if (peDef.IsGoal(xBSquare, zBSquare) || peDef.IsGoal(xGSquare, zGSquare)) {
 			goalBlock = ob->nodePos;
@@ -619,7 +615,7 @@ void CPathEstimator::TestBlock(
 		block.x = parentOpenBlock.nodePos.x + directionVector[direction].x;
 		block.y = parentOpenBlock.nodePos.y + directionVector[direction].y;
 	const int vertexIdx =
-		moveData.pathType * blockStates.size() * PATH_DIRECTION_VERTICES +
+		moveData.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentOpenBlock.nodeNum * PATH_DIRECTION_VERTICES +
 		directionVertex[direction];
 	const int blockIdx = block.y * nbrOfBlocksX + block.x;
@@ -651,13 +647,11 @@ void CPathEstimator::TestBlock(
 		return;
 	}
 
-	// evaluate this node
-	const float nCost = vertices[vertexIdx] +
-		(synced?
-		blockStates[blockIdx].extraCostSynced:
-		blockStates[blockIdx].extraCostUnsynced);
+	// evaluate this node (NOTE the max-res. indexing for extraCost)
+	const float extraCost = blockStates.GetNodeExtraCost(xSquare, zSquare, synced);
+	const float nodeCost = vertices[vertexIdx] + extraCost;
 
-	const float gCost = parentOpenBlock.gCost + nCost;     // g
+	const float gCost = parentOpenBlock.gCost + nodeCost;  // g
 	const float hCost = peDef.Heuristic(xSquare, zSquare); // h
 	const float fCost = gCost + hCost;                     // f
 
@@ -788,10 +782,10 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 
 		// Read block-center-offset data.
 		const unsigned blockSize = moveinfo->moveData.size() * sizeof(int2);
-		if (buffer.size() < pos + blockSize * blockStates.size())
+		if (buffer.size() < pos + blockSize * blockStates.GetSize())
 			return false;
 
-		for (int blocknr = 0; blocknr < blockStates.size(); blocknr++) {
+		for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++) {
 			std::memcpy(&blockStates[blocknr].nodeOffsets[0], &buffer[pos], blockSize);
 			pos += blockSize;
 		}
@@ -836,7 +830,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 		zipWriteInFileInZip(file, (void*) &hash, 4);
 
 		// Write block-center-offsets.
-		for (int blocknr = 0; blocknr < blockStates.size(); blocknr++)
+		for (int blocknr = 0; blocknr < blockStates.GetSize(); blocknr++)
 			zipWriteInFileInZip(file, (void*) &blockStates[blocknr].nodeOffsets[0], moveinfo->moveData.size() * sizeof(int2));
 
 		// Write vertices.

@@ -135,8 +135,10 @@ public:
 	 */
 	virtual void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {}
 
+	virtual bool SetNodeExtraCosts(const float* costs, unsigned int sizex, unsigned int sizez, bool synced) { return false; }
 	virtual bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced) { return false; }
 	virtual float GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const { return 0.0f; }
+	virtual const float* GetNodeExtraCosts(bool synced) const { return NULL; }
 };
 
 extern IPathManager* pathManager;

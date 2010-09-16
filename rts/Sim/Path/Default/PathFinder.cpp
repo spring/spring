@@ -24,17 +24,11 @@ void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p,
 #endif
 
 
-/**
- * Constructor.
- * Building tables and precalculating data.
- */
-CPathFinder::CPathFinder()
+
+CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
 {
 	heatMapping = true;
 	InitHeatMap();
-
-	// Creates and init all square states.
-	squareStates.resize(gs->mapSquares, PathNodeState());
 
 	// Precalculated vectors.
 	directionVector[PATHOPT_RIGHT].x = -2;
@@ -65,15 +59,10 @@ CPathFinder::CPathFinder()
 	moveCost[(PATHOPT_LEFT  | PATHOPT_DOWN)] = 1.42f;
 }
 
-
-/**
- * Destructor.
- * Free used memory.
- */
 CPathFinder::~CPathFinder()
 {
 	ResetSearch();
-	squareStates.clear();
+	squareStates.Clear();
 }
 
 
@@ -404,13 +393,12 @@ bool CPathFinder::TestSquare(
 	}
 
 
-	const float dirMoveCost = (heatCostMod * moveCost[enterDirection]);
-	const float nCost = (dirMoveCost / squareSpeedMod) +
-		(synced?
-		squareStates[sqrIdx].extraCostSynced:
-		squareStates[sqrIdx].extraCostUnsynced);
 
-	const float gCost = parentOpenSquare->gCost + nCost;     // g
+	const float dirMoveCost = (heatCostMod * moveCost[enterDirection]);
+	const float extraCost = squareStates.GetNodeExtraCost(square.x, square.y, synced);
+	const float nodeCost = (dirMoveCost / squareSpeedMod) + extraCost;
+
+	const float gCost = parentOpenSquare->gCost + nodeCost;  // g
 	const float hCost = pfDef.Heuristic(square.x, square.y); // h
 	const float fCost = gCost + hCost;                       // f
 
