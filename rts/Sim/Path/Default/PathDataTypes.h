@@ -138,6 +138,15 @@ struct PathNodeStateBuffer {
 			return extraCostsUnsynced;
 		}
 	}
+
+	void SetNodeExtraCost(unsigned int xhm, unsigned int zhm, float cost, bool synced) {
+		if (synced) {
+			buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostSynced = cost;
+		} else {
+			buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostUnsynced = cost;
+		}
+	}
+
 	void SetNodeExtraCosts(const float* costs, unsigned int sx, unsigned int sz, bool synced) {
 		if (synced) {
 			extraCostsSynced = costs;
