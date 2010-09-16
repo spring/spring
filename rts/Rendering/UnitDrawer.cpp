@@ -2111,7 +2111,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
 #ifdef USE_GML
-		if (showHealthBars &&
+		if (showHealthBars && !unit->noDraw &&
 			(unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f || unit->limExperience > 0.0f ||
 			unit->beingBuilt || unit->stockpileWeapon || unit->group) && 
 			((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f)))
