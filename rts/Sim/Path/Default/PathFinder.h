@@ -83,8 +83,6 @@ public:
 		bool synced
 	);
 
-	std::vector<PathNodeState>& GetNodeStates() { return squareStates; }
-
 
 
 	/**
@@ -120,6 +118,8 @@ public:
 	}
 
 
+
+	PathNodeStateBuffer& GetNodeStateBuffer() { return squareStates; }
 
 private:
 	// Heat mapping
@@ -158,8 +158,6 @@ private:
 
 	unsigned int maxNodesToBeSearched;
 
-	std::vector<PathNodeState> squareStates;		///< Map of all squares on map.
-	std::vector<int> dirtySquares;					///< Squares tested by search.
 
 	int2 directionVector[16];						///< Unit square-movement in given direction.
 	float moveCost[16];								///< The cost of moving in given direction.
@@ -168,18 +166,21 @@ private:
 	int startxSqr, startzSqr;
 	int startSquare;
 
-	int goalSquare;					///< Is sat during the search as the square closest to the goal.
-	float goalHeuristic;			///< The heuristic value of goalSquare.
+	int goalSquare;									///< Is sat during the search as the square closest to the goal.
+	float goalHeuristic;							///< The heuristic value of goalSquare.
 
 	bool exactPath;
 	bool testMobile;
 	bool needPath;
 
-	// Statistic
+
 	unsigned int testedNodes;
 
 	PathNodeBuffer openSquareBuffer;
+	PathNodeStateBuffer squareStates;
 	PathPriorityQueue openSquares;
+
+	std::vector<int> dirtySquares;					///< Squares tested by search.
 };
 
 #endif // PATHFINDER_H

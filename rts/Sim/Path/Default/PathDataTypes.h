@@ -32,7 +32,8 @@ struct PathNodeState {
 	}
 
 	float pathCost;
-	// overlay-cost modifiers for nodes
+	// overlay-cost modifiers for nodes (while these are active,
+	// calls to GetPath and GetNextWaypoint behave differently)
 	//
 	// <extraCostUnsynced> may not be read in synced context,
 	// because AI's and unsynced Lua have write-access to it
@@ -55,6 +56,8 @@ struct PathNodeState {
 	std::vector<int2> nodeOffsets;
 };
 
+
+
 // functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {
@@ -62,25 +65,106 @@ struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	}
 };
 
+
+
 struct PathNodeBuffer {
 public:
 	PathNodeBuffer(): idx(0) {
 		for (int i = 0; i < MAX_SEARCHED_NODES; ++i) {
-			nodeBuffer[i] = PathNode();
+			buffer[i] = PathNode();
 		}
 	}
 
 	void SetSize(unsigned int i) { idx = i; }
 	unsigned int GetSize() const { return idx; }
 
-	const PathNode* GetNode(unsigned int i) const { return &nodeBuffer[i]; }
-	PathNode* GetNode(unsigned int i) { return &nodeBuffer[i]; }
+	const PathNode* GetNode(unsigned int i) const { return &buffer[i]; }
+	      PathNode* GetNode(unsigned int i)       { return &buffer[i]; }
 
 private:
 	// index of the most recently added node
 	unsigned int idx;
 
-	PathNode nodeBuffer[MAX_SEARCHED_NODES];
+	PathNode buffer[MAX_SEARCHED_NODES];
+};
+
+struct PathNodeStateBuffer {
+	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes) {
+		extraCostsSynced = NULL;
+		extraCostsUnsynced = NULL;
+
+		br.x = bufRes.x; ps.x = mapRes.x / bufRes.x;
+		br.y = bufRes.y; ps.y = mapRes.y / bufRes.y;
+
+		buffer.resize(br.x * br.y, PathNodeState());
+	}
+
+	void Clear() { buffer.clear(); }
+	unsigned int GetSize() const { return buffer.size(); }
+
+	const std::vector<PathNodeState>& GetBuffer() const { return buffer; }
+	      std::vector<PathNodeState>& GetBuffer()       { return buffer; }
+
+	const PathNodeState& operator [] (unsigned int idx) const { return buffer[idx]; }
+	      PathNodeState& operator [] (unsigned int idx)       { return buffer[idx]; }
+
+	// <xhm> and <zhm> are always passed in heightmap-coordinates
+	float GetNodeExtraCost(unsigned int xhm, unsigned int zhm, bool synced) const {
+		float c = 0.0f;
+
+		if (synced) {
+			if (extraCostsSynced != NULL) {
+				// (mr / sr) is the synced downsample-factor
+				c = extraCostsSynced[ (zhm / (mr.y / sr.y)) * sr.x  +  (xhm / (mr.x / sr.x)) ];
+			} else {
+				c = buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostSynced;
+			}
+		} else {
+			if (extraCostsUnsynced != NULL) {
+				// (mr / ur) is the unsynced downsample-factor
+				c = extraCostsUnsynced[ (zhm / (mr.y / ur.y)) * ur.x  +  (xhm / (mr.x / ur.x)) ];
+			} else {
+				c = buffer[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ].extraCostUnsynced;
+			}
+		}
+
+		return c;
+	}
+
+	const float* GetNodeExtraCosts(bool synced) const {
+		if (synced) {
+			return extraCostsSynced;
+		} else {
+			return extraCostsUnsynced;
+		}
+	}
+	void SetNodeExtraCosts(const float* costs, unsigned int sx, unsigned int sz, bool synced) {
+		if (synced) {
+			extraCostsSynced = costs;
+
+			sr.x = sx;
+			sr.y = sz;
+		} else {
+			extraCostsUnsynced = costs;
+
+			ur.x = sx;
+			ur.y = sz;
+		}
+	}
+
+private:
+	std::vector<PathNodeState> buffer;
+
+	// if non-NULL, these override PathNodeState::extraCost{Synced, Unsynced}
+	// (NOTE: they can have arbitrary resolutions between 1 and gs->map{x,y})
+	const float* extraCostsSynced;
+	const float* extraCostsUnsynced;
+
+	int2 ps; // patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
+	int2 br; // buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
+	int2 mr; // heightmap resolution (equal to gs->map{x,y})
+	int2 sr; // extraCostsSynced resolution
+	int2 ur; // extraCostsUnsynced resolution
 };
 
 

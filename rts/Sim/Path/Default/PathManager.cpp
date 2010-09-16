@@ -538,23 +538,37 @@ bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost, 
 	if (x >= gs->mapx) { return false; }
 	if (z >= gs->mapy) { return false; }
 
-	std::vector<PathNodeState>& vMaxRes = maxResPF->GetNodeStates();
-	std::vector<PathNodeState>& vMedRes = medResPE->GetNodeStates();
-	std::vector<PathNodeState>& vLowRes = lowResPE->GetNodeStates();
+	PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
+	PathNodeStateBuffer& medResBuf = medResPE->GetNodeStateBuffer();
+	PathNodeStateBuffer& lowResBuf = lowResPE->GetNodeStateBuffer();
 
 	const unsigned int mrbs = medResPE->GetBlockSize(), mrnx = medResPE->GetNumBlocksX();
 	const unsigned int lrbs = lowResPE->GetBlockSize(), lrnx = lowResPE->GetNumBlocksX();
 
 	if (synced) {
-		vMaxRes[ z         * gs->mapx +  x        ].extraCostSynced = cost;
-		vMedRes[(z / mrbs) *     mrnx + (x / mrbs)].extraCostSynced = cost;
-		vLowRes[(z / lrbs) *     lrnx + (x / lrbs)].extraCostSynced = cost;
+		maxResBuf[ z         * gs->mapx +  x        ].extraCostSynced = cost;
+		medResBuf[(z / mrbs) *     mrnx + (x / mrbs)].extraCostSynced = cost;
+		lowResBuf[(z / lrbs) *     lrnx + (x / lrbs)].extraCostSynced = cost;
 	} else {
-		vMaxRes[ z         * gs->mapx +  x        ].extraCostUnsynced = cost;
-		vMedRes[(z / mrbs) *     mrnx + (x / mrbs)].extraCostUnsynced = cost;
-		vLowRes[(z / lrbs) *     lrnx + (x / lrbs)].extraCostUnsynced = cost;
+		maxResBuf[ z         * gs->mapx +  x        ].extraCostUnsynced = cost;
+		medResBuf[(z / mrbs) *     mrnx + (x / mrbs)].extraCostUnsynced = cost;
+		lowResBuf[(z / lrbs) *     lrnx + (x / lrbs)].extraCostUnsynced = cost;
 	}
 
+	return true;
+}
+
+bool CPathManager::SetNodeExtraCosts(const float* costs, unsigned int sizex, unsigned int sizez, bool synced) {
+	if (sizex < 1 || sizex > gs->mapx) { return false; }
+	if (sizez < 1 || sizez > gs->mapy) { return false; }
+
+	PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
+	PathNodeStateBuffer& medResBuf = medResPE->GetNodeStateBuffer();
+	PathNodeStateBuffer& lowResBuf = lowResPE->GetNodeStateBuffer();
+
+	maxResBuf.SetNodeExtraCosts(costs, sizex, sizez, synced);
+	medResBuf.SetNodeExtraCosts(costs, sizex, sizez, synced);
+	lowResBuf.SetNodeExtraCosts(costs, sizex, sizez, synced);
 	return true;
 }
 
@@ -562,11 +576,16 @@ float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z, bool synced
 	if (x >= gs->mapx) { return 0.0f; }
 	if (z >= gs->mapy) { return 0.0f; }
 
-	std::vector<PathNodeState>& v = maxResPF->GetNodeStates();
+	PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
 
 	if (synced) {
-		return (v[z * gs->mapx + x].extraCostSynced);
+		return (maxResBuf[z * gs->mapx + x].extraCostSynced);
 	} else {
-		return (v[z * gs->mapx + x].extraCostUnsynced);
+		return (maxResBuf[z * gs->mapx + x].extraCostUnsynced);
 	}
+}
+
+const float* CPathManager::GetNodeExtraCosts(bool synced) const {
+	const PathNodeStateBuffer& buf = maxResPF->GetNodeStateBuffer();
+	return (buf.GetNodeExtraCosts(synced));
 }

@@ -111,7 +111,7 @@ public:
 	unsigned int GetNumBlocksX() const { return nbrOfBlocksX; }
 	unsigned int GetNumBlocksZ() const { return nbrOfBlocksZ; }
 
-	std::vector<PathNodeState>& GetNodeStates() { return blockStates; }
+	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
 
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
@@ -150,10 +150,10 @@ private:
 	int nbrOfBlocksX, nbrOfBlocksZ;													// Number of blocks on map.
 
 	PathNodeBuffer openBlockBuffer;
+	PathNodeStateBuffer blockStates;
 	PathPriorityQueue openBlocks;													// The priority-queue used to select next block to be searched.
 
 	std::vector<float> vertices;
-	std::vector<PathNodeState> blockStates;
 	std::list<int> dirtyBlocks;														// List of blocks changed in last search.
 	std::list<SingleBlock> needUpdate;												// Blocks that may need an update due to map changes.
 
@@ -171,7 +171,7 @@ private:
 	float goalHeuristic;
 	int2 goalSqrOffset;
 
-	int testedBlocks;
+	unsigned int testedBlocks;
 
 	std::vector<CPathFinder*> pathFinders;
 	std::vector<boost::thread*> threads;
