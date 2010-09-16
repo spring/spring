@@ -162,7 +162,6 @@ private:
 	int2 directionVector[PATH_DIRECTIONS];
 	int directionVertex[PATH_DIRECTIONS];
 
-	unsigned int maxBlocksToBeSearched;
 	unsigned int moveMathOptions;
 
 	float3 start;
@@ -171,7 +170,9 @@ private:
 	float goalHeuristic;
 	int2 goalSqrOffset;
 
+	unsigned int maxBlocksToBeSearched;
 	unsigned int testedBlocks;
+	float maxNodeCost;
 
 	std::vector<CPathFinder*> pathFinders;
 	std::vector<boost::thread*> threads;

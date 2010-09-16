@@ -914,16 +914,23 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "showmetalmap") {
 		gd->SetMetalTexture(readmap->metalMap->metalMap,&readmap->metalMap->extractionMap.front(),readmap->metalMap->metalPal,false);
 	}
-	else if (cmd == "showpathmap") {
-		gd->SetPathMapTexture();
+
+	else if (cmd == "showpathsquares") {
+		gd->TogglePathSquaresTexture();
 	}
+	else if (cmd == "showpathheat") {
+		if (gs->cheatEnabled) {
+			gd->TogglePathHeatTexture();
+		}
+	}
+	else if (cmd == "showpathcost") {
+		if (gs->cheatEnabled) {
+			gd->TogglePathCostTexture();
+		}
+	}
+
 	else if (cmd == "togglelos") {
 		gd->ToggleLosTexture();
-	}
-	else if (cmd == "showheat") {
-		if (gs->cheatEnabled) {
-			gd->ToggleHeatMapTexture();
-		}
 	}
 	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
