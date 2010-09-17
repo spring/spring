@@ -26,12 +26,14 @@ struct PathNode {
 };
 
 struct PathNodeState {
-	PathNodeState(): pathCost(PATHCOST_INFINITY), extraCostSynced(0.0f), extraCostUnsynced(0.0f), pathMask(0) {
+	PathNodeState(): fCost(PATHCOST_INFINITY), gCost(PATHCOST_INFINITY), extraCostSynced(0.0f), extraCostUnsynced(0.0f), nodeMask(0) {
 		parentNodePos.x = -1;
 		parentNodePos.y = -1;
 	}
 
-	float pathCost;
+	float fCost;
+	float gCost;
+
 	// overlay-cost modifiers for nodes (when non-zero, these
 	// modify the behavior of GetPath() and GetNextWaypoint())
 	//
@@ -46,7 +48,7 @@ struct PathNodeState {
 	float extraCostUnsynced;
 
 	// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	unsigned int pathMask;
+	unsigned int nodeMask;
 
 	// needed for the PE to back-track path to goal
 	int2 parentNodePos;
@@ -89,7 +91,7 @@ private:
 };
 
 struct PathNodeStateBuffer {
-	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes) {
+	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes): fCostMax(0.0f), gCostMax(0.0f) {
 		extraCostsSynced = NULL;
 		extraCostsUnsynced = NULL;
 
@@ -107,6 +109,11 @@ struct PathNodeStateBuffer {
 
 	const PathNodeState& operator [] (unsigned int idx) const { return buffer[idx]; }
 	      PathNodeState& operator [] (unsigned int idx)       { return buffer[idx]; }
+
+	void SetMaxFCost(float c) { fCostMax = c; }
+	void SetMaxGCost(float c) { gCostMax = c; }
+	float GetMaxFCost() const { return fCostMax; }
+	float GetMaxGCost() const { return gCostMax; }
 
 	// <xhm> and <zhm> are always passed in heightmap-coordinates
 	float GetNodeExtraCost(unsigned int xhm, unsigned int zhm, bool synced) const {
@@ -163,6 +170,9 @@ struct PathNodeStateBuffer {
 
 private:
 	std::vector<PathNodeState> buffer;
+
+	float fCostMax;
+	float gCostMax;
 
 	// if non-NULL, these override PathNodeState::extraCost{Synced, Unsynced}
 	// (NOTE: they can have arbitrary resolutions between 1 and gs->map{x,y})
