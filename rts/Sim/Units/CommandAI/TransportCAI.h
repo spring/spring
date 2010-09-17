@@ -17,7 +17,7 @@
 class CTransportUnit;
 class CUnit;
 class CFeature;
-class Command;
+struct Command;
 
 class CTransportCAI : public CMobileCAI
 {
