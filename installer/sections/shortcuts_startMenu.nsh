@@ -12,7 +12,6 @@
 	${If} ${SectionIsSelected} ${SEC_SPRINGDOWNLOADER}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk" "$INSTDIR\SpringDownloader.exe"
 	${EndIf}
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk" "$INSTDIR\SelectionEditor.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	!ifdef SEC_GML
@@ -32,7 +31,6 @@
 	; Shortcuts
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringLobby.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"

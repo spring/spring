@@ -4,18 +4,17 @@
 #define __COMMAND_AI_H__
 
 #include <vector>
-#include <deque>
 #include <set>
 
 #include "Object.h"
-#include "Command.h"
 #include "CommandQueue.h"
-#include "float3.h"
+#include "System/float3.h"
 
 class CUnit;
 class CFeature;
 class CWeapon;
 class CLoadSaveInterface;
+struct Command;
 
 class CCommandAI : public CObject
 {
@@ -24,7 +23,7 @@ class CCommandAI : public CObject
 public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
-	virtual ~CCommandAI(void);
+	virtual ~CCommandAI();
 	void PostLoad();
 
 	void DependentDied(CObject* o);
@@ -34,26 +33,26 @@ public:
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
-	virtual void DrawCommands(void);
-	virtual void FinishCommand(void);
+	virtual void DrawCommands();
+	virtual void FinishCommand();
 	virtual void WeaponFired(CWeapon* weapon);
 	virtual void BuggerOff(float3 pos, float radius);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
-	virtual bool WillCancelQueued(Command &c);
+	virtual bool WillCancelQueued(Command& c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
 	virtual bool HasMoreMoveCommands();
 	virtual void StopAttackingAllyTeam(int ally);
 
-	int CancelCommands(const Command &c, CCommandQueue& queue, bool& first);
-	CCommandQueue::iterator GetCancelQueued(const Command &c,
+	int CancelCommands(const Command& c, CCommandQueue& queue, bool& first);
+	CCommandQueue::iterator GetCancelQueued(const Command& c,
 	                                        CCommandQueue& queue);
-	std::vector<Command> GetOverlapQueued(const Command &c);
-	std::vector<Command> GetOverlapQueued(const Command &c,
+	std::vector<Command> GetOverlapQueued(const Command& c);
+	std::vector<Command> GetOverlapQueued(const Command& c,
 	                                      CCommandQueue& queue);
-	virtual void ExecuteAttack(Command &c);
-	virtual void ExecuteDGun(Command &c);
-	virtual void ExecuteStop(Command &c);
+	virtual void ExecuteAttack(Command& c);
+	virtual void ExecuteDGun(Command& c);
+	virtual void ExecuteStop(Command& c);
 
 	void SetCommandDescParam0(const Command& c);
 	bool ExecuteStateCommand(const Command& c);
@@ -63,8 +62,9 @@ public:
 
 	void AddStockpileWeapon(CWeapon* weapon);
 	void StockpileChanged(CWeapon* weapon);
-	void UpdateStockpileIcon(void);
+	void UpdateStockpileIcon();
 	bool CanChangeFireState();
+
 	CWeapon* stockpileWeapon;
 
 	std::vector<CommandDescription> possibleCommands;
@@ -91,7 +91,7 @@ public:
 protected:
 	bool isTrackable(const CUnit* unit) const;
 	bool isAttackCapable() const;
-	virtual bool AllowedCommand(const Command &c, bool fromSynced);
+	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 	bool SkipParalyzeTarget(const CUnit* target);
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);

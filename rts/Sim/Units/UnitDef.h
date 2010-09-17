@@ -7,6 +7,8 @@
 #include <vector>
 #include <map>
 
+#include "BuildInfo.h"
+
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "System/float3.h"
@@ -387,31 +389,6 @@ private:
 	float realMetalUpkeep;
 	float realEnergyUpkeep;
 	float realBuildTime;
-};
-
-
-
-struct BuildInfo
-{
-	BuildInfo()
-		: def(NULL)
-		, pos(ZeroVector)
-		, buildFacing(0)
-	{}
-
-	BuildInfo(const UnitDef *def, const float3& p, int facing) :
-		def(def), pos(p), buildFacing(facing) {}
-	BuildInfo(const Command& c) { Parse(c); }
-	BuildInfo(const std::string& name, const float3& p, int facing);
-
-	int GetXSize() const { return (buildFacing&1)==0 ? def->xsize : def->zsize; }
-	int GetZSize() const { return (buildFacing&1)==1 ? def->xsize : def->zsize; }
-	bool Parse(const Command& c);
-	void FillCmd(Command& c) const;
-
-	const UnitDef* def;
-	float3 pos;
-	int buildFacing;
 };
 
 #endif /* UNITDEF_H */

@@ -57,7 +57,7 @@ void CLoadScreen::Init()
 	//! and gu->myPlayerNum has to be set.
 	skirmishAIHandler.LoadPreGame();
 
-	//! Disable HangDetection
+	//! Increase hang detection trigger threshold, to prevent false positives during load
 	CrashHandler::GameLoading(true);
 
 	//FIXME: remove when LuaLoadScreen was added
@@ -116,6 +116,8 @@ CLoadScreen::~CLoadScreen()
 
 	UnloadStartPicture();
 
+	CrashHandler::ClearDrawWDT();
+	//! Set hang detection trigger threshold back to normal
 	CrashHandler::GameLoading(false);
 
 	extern volatile bool globalQuit;

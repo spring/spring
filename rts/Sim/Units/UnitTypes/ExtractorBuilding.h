@@ -5,7 +5,7 @@
 
 #include "Building.h"
 
-class CExtractorBuilding: public CBuilding {
+class CExtractorBuilding : public CBuilding {
 public:
 	CR_DECLARE(CExtractorBuilding);
 	CR_DECLARE_SUB(MetalSquareOfControl);
