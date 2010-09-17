@@ -370,7 +370,7 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	// bi-directional vertices
 	for (int z = upperZ; z >= lowerZ; z--) {
 		for (int x = upperX; x >= lowerX; x--) {
-			if (!(blockStates[z * nbrOfBlocksX + x].pathMask & PATHOPT_OBSOLETE)) {
+			if (!(blockStates[z * nbrOfBlocksX + x].nodeMask & PATHOPT_OBSOLETE)) {
 				vector<MoveData*>::iterator mi;
 
 				for (mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); mi++) {
@@ -379,7 +379,7 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 						sb.block.y = z;
 						sb.moveData = *mi;
 					needUpdate.push_back(sb);
-					blockStates[z * nbrOfBlocksX + x].pathMask |= PATHOPT_OBSOLETE;
+					blockStates[z * nbrOfBlocksX + x].nodeMask |= PATHOPT_OBSOLETE;
 				}
 			}
 		}
@@ -402,7 +402,7 @@ void CPathEstimator::Update() {
 		const int blocknr = sb.block.y * nbrOfBlocksX + sb.block.x;
 
 		// check if it's already updated
-		if (!(blockStates[blocknr].pathMask & PATHOPT_OBSOLETE))
+		if (!(blockStates[blocknr].nodeMask & PATHOPT_OBSOLETE))
 			continue;
 
 		// no, update the block
@@ -411,7 +411,7 @@ void CPathEstimator::Update() {
 
 		// mark it as updated
 		if (sb.moveData == moveinfo->moveData.back()) {
-			blockStates[blocknr].pathMask &= ~PATHOPT_OBSOLETE;
+			blockStates[blocknr].nodeMask &= ~PATHOPT_OBSOLETE;
 		}
 
 		// one block updated
@@ -487,9 +487,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 }
 
 
-/**
- * Make some initial calculations and preparations
- */
+// set up the starting point of the search
 IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const CPathFinderDef& peDef, bool synced) {
 	// is starting square inside goal area?
 	const int xSquare = blockStates[startBlocknr].nodeOffsets[moveData.pathType].x;
@@ -502,8 +500,11 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 	ResetSearch();
 
 	// mark and store the start-block
-	blockStates[startBlocknr].pathMask |= PATHOPT_OPEN;
-	blockStates[startBlocknr].pathCost = 0.0f;
+	blockStates[startBlocknr].nodeMask |= PATHOPT_OPEN;
+	blockStates[startBlocknr].fCost = 0.0f;
+	blockStates[startBlocknr].gCost = 0.0f;
+	blockStates.SetMaxFCost(0.0f);
+	blockStates.SetMaxGCost(0.0f);
 
 	dirtyBlocks.push_back(startBlocknr);
 
@@ -515,8 +516,6 @@ IPath::SearchResult CPathEstimator::InitSearch(const MoveData& moveData, const C
 		ob->nodePos = startBlock;
 		ob->nodeNum = startBlocknr;
 	openBlocks.push(ob);
-
-	maxNodeCost = 0.0f;
 
 	// mark starting point as best found position
 	goalBlock = startBlock;
@@ -549,7 +548,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		openBlocks.pop();
 
 		// check if the block has been marked as unaccessible during its time in the queue
-		if (blockStates[ob->nodeNum].pathMask & (PATHOPT_BLOCKED | PATHOPT_CLOSED | PATHOPT_FORBIDDEN))
+		if (blockStates[ob->nodeNum].nodeMask & (PATHOPT_BLOCKED | PATHOPT_CLOSED | PATHOPT_FORBIDDEN))
 			continue;
 
 		// no, check if the goal is already reached
@@ -578,7 +577,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		TestBlock(moveData, peDef, *ob, PATHDIR_LEFT_DOWN,  synced);
 
 		// mark this block as closed
-		blockStates[ob->nodeNum].pathMask |= PATHOPT_CLOSED;
+		blockStates[ob->nodeNum].nodeMask |= PATHOPT_CLOSED;
 	}
 
 	// we found our goal
@@ -636,7 +635,7 @@ void CPathEstimator::TestBlock(
 		return;
 
 	// check if the block is unavailable
-	if (blockStates[blockIdx].pathMask & (PATHOPT_FORBIDDEN | PATHOPT_BLOCKED | PATHOPT_CLOSED))
+	if (blockStates[blockIdx].nodeMask & (PATHOPT_FORBIDDEN | PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return;
 
 	const int xSquare = blockStates[blockIdx].nodeOffsets[moveData.pathType].x;
@@ -644,7 +643,7 @@ void CPathEstimator::TestBlock(
 
 	// check if the block is blocked or out of constraints
 	if (!peDef.WithinConstraints(xSquare, zSquare)) {
-		blockStates[blockIdx].pathMask |= PATHOPT_BLOCKED;
+		blockStates[blockIdx].nodeMask |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(blockIdx);
 		return;
 	}
@@ -658,12 +657,12 @@ void CPathEstimator::TestBlock(
 	const float fCost = gCost + hCost;                     // f
 
 
-	if (blockStates[blockIdx].pathMask & PATHOPT_OPEN) {
+	if (blockStates[blockIdx].nodeMask & PATHOPT_OPEN) {
 		// already in the open set
-		if (blockStates[blockIdx].pathCost <= fCost)
+		if (blockStates[blockIdx].fCost <= fCost)
 			return;
 
-		blockStates[blockIdx].pathMask &= ~PATHOPT_DIRECTION;
+		blockStates[blockIdx].nodeMask &= ~PATHOPT_DIRECTION;
 	}
 
 	// look for improvements
@@ -683,11 +682,13 @@ void CPathEstimator::TestBlock(
 		ob->nodeNum = blockIdx;
 	openBlocks.push(ob);
 
-	maxNodeCost = std::max(maxNodeCost, fCost);
+	blockStates.SetMaxFCost(std::max(blockStates.GetMaxFCost(), fCost));
+	blockStates.SetMaxGCost(std::max(blockStates.GetMaxGCost(), gCost));
 
-	// Mark the block as open, and its parent.
-	blockStates[blockIdx].pathCost = fCost;
-	blockStates[blockIdx].pathMask |= (direction | PATHOPT_OPEN);
+	// mark this block as open
+	blockStates[blockIdx].fCost = fCost;
+	blockStates[blockIdx].gCost = gCost;
+	blockStates[blockIdx].nodeMask |= (direction | PATHOPT_OPEN);
 	blockStates[blockIdx].parentNodePos = parentOpenBlock.nodePos;
 
 	dirtyBlocks.push_back(blockIdx);
@@ -721,7 +722,7 @@ void CPathEstimator::FinishSearch(const MoveData& moveData, IPath::Path& foundPa
 	}
 
 	// set some additional information
-	foundPath.pathCost = blockStates[goalBlock.y * nbrOfBlocksX + goalBlock.x].pathCost - goalHeuristic;
+	foundPath.pathCost = blockStates[goalBlock.y * nbrOfBlocksX + goalBlock.x].fCost - goalHeuristic;
 }
 
 
@@ -732,10 +733,12 @@ void CPathEstimator::ResetSearch() {
 	openBlocks.Clear();
 
 	while (!dirtyBlocks.empty()) {
-		blockStates[dirtyBlocks.back()].pathCost = PATHCOST_INFINITY;
-		blockStates[dirtyBlocks.back()].pathMask &= PATHOPT_OBSOLETE;
-		blockStates[dirtyBlocks.back()].parentNodePos.x = -1;
-		blockStates[dirtyBlocks.back()].parentNodePos.y = -1;
+		PathNodeState& ns = blockStates[dirtyBlocks.back()];
+			ns.fCost = PATHCOST_INFINITY;
+			ns.gCost = PATHCOST_INFINITY;
+			ns.nodeMask &= PATHOPT_OBSOLETE;
+			ns.parentNodePos.x = -1;
+			ns.parentNodePos.y = -1;
 		dirtyBlocks.pop_back();
 	}
 
