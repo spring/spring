@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitSet.h"
 
 class CUnit;
@@ -32,7 +31,7 @@ public:
 	const std::vector<CommandDescription>& GetPossibleCommands();
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature) const;
 	void GiveCommand(Command c);
-	void ClearUnits(void);
+	void ClearUnits();
 
 	int id;
 
