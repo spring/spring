@@ -4,6 +4,7 @@
 #define __BUILDING_H__
 
 #include "Sim/Units/Unit.h"
+#include "System/float3.h"
 
 struct BuildingGroundDecal;
 

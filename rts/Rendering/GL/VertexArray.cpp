@@ -195,6 +195,7 @@ void CVertexArray::DrawArray0(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, stride, drawArray);
@@ -206,6 +207,7 @@ void CVertexArray::DrawArray2d0(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(2, GL_FLOAT, stride, drawArray);
@@ -217,6 +219,7 @@ void CVertexArray::DrawArrayN(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
@@ -228,10 +231,11 @@ void CVertexArray::DrawArrayN(const int drawType, unsigned int stride)
 }
 
 
-void CVertexArray::DrawArrayC(const int drawType,unsigned int stride)
+void CVertexArray::DrawArrayC(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
@@ -243,10 +247,11 @@ void CVertexArray::DrawArrayC(const int drawType,unsigned int stride)
 }
 
 
-void CVertexArray::DrawArrayT(const int drawType,unsigned int stride)
+void CVertexArray::DrawArrayT(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -262,6 +267,7 @@ void CVertexArray::DrawArray2dT(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -277,6 +283,7 @@ void CVertexArray::DrawArray2dT(const int drawType, StripCallback callback, void
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -288,10 +295,11 @@ void CVertexArray::DrawArray2dT(const int drawType, StripCallback callback, void
 }
 
 
-void CVertexArray::DrawArrayT2(const int drawType,unsigned int stride)
+void CVertexArray::DrawArrayT2(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -316,6 +324,7 @@ void CVertexArray::DrawArrayTN(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -335,6 +344,7 @@ void CVertexArray::DrawArrayTNT(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 
 	#define SET_ENABLE_ACTIVE_TEX(texUnit)            \
@@ -374,6 +384,7 @@ void CVertexArray::DrawArrayTC(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);

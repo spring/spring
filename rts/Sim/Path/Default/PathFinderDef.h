@@ -3,15 +3,20 @@
 #ifndef PATHFINDERDEF_HDR
 #define PATHFINDERDEF_HDR
 
+#include "System/float3.h"
+#include "System/Vec2.h"
+
+struct MoveData;
 class CPathFinderDef {
 public:
-	CPathFinderDef(float3 goalCenter, float goalRadius);
-	~CPathFinderDef();
+	CPathFinderDef(const float3& goalCenter, float goalRadius);
+	virtual ~CPathFinderDef() {}
+
+	virtual bool WithinConstraints(int xSquare, int Square) const { return true; }
 
 	bool IsGoal(int xSquare, int zSquare) const;
 	float Heuristic(int xSquare, int zSquare) const;
 	bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
-	virtual bool WithinConstraints(int xSquare, int Square) const {return true;}
 	int2 GoalSquareOffset(int blockSize) const;
 
 	float3 goal;
@@ -20,11 +25,14 @@ public:
 	int goalSquareZ;
 };
 
+
+
 class CRangedGoalWithCircularConstraint : public CPathFinderDef {
 public:
-	CRangedGoalWithCircularConstraint(float3 start, float3 goal, float goalRadius, float searchSize, int extraSize);
-	virtual bool WithinConstraints(int xSquare, int zSquare) const;
-	virtual ~CRangedGoalWithCircularConstraint();
+	CRangedGoalWithCircularConstraint(const float3& start, const float3& goal, float goalRadius, float searchSize, int extraSize);
+	~CRangedGoalWithCircularConstraint() {}
+
+	bool WithinConstraints(int xSquare, int zSquare) const;
 
 private:
 	int halfWayX;

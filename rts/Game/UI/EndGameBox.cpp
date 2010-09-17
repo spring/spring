@@ -52,8 +52,8 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	, dispMode(0)
 	, stat1(1)
 	, stat2(-1)
-	, graphTex(0)
 	, winners(winningAllyTeams)
+	, graphTex(0)
 {
 	box.x1 = 0.14f;
 	box.y1 = 0.1f;
