@@ -21,6 +21,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "CommandAI/Command.h"
 #include "System/EventBatchHandler.h"
 #include "System/GlobalUnsynced.h"

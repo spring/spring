@@ -4,15 +4,21 @@
 #define __FACTORY_AI_H__
 
 #include "CommandAI.h"
+#include "CommandQueue.h"
+
 #include <string>
 #include <map>
 
-class CFactoryCAI :
-	public CCommandAI
+class CUnit;
+class CFeature;
+struct Command;
+
+class CFactoryCAI : public CCommandAI
 {
 public:
 	CR_DECLARE(CFactoryCAI);
 	CR_DECLARE_SUB(BuildOption);
+
 	struct BuildOption {
 		CR_DECLARE_STRUCT(BuildOption)
 		std::string name;
@@ -22,7 +28,7 @@ public:
 
 	CFactoryCAI(CUnit* owner);
 	CFactoryCAI();
-	~CFactoryCAI(void);
+	~CFactoryCAI();
 	void PostLoad();
 
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
@@ -35,8 +41,8 @@ public:
 
 	void ExecuteStop(Command &c);
 
-	void DrawCommands(void);
-	void UpdateIconName(int id,BuildOption& bo);
+	void DrawCommands();
+	void UpdateIconName(int id, BuildOption& bo);
 
 	CCommandQueue newUnitCommands;
 
