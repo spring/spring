@@ -192,9 +192,9 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					float medResNodeCost = medResNode.pathCost;
 					float lowResNodeCost = lowResNode.pathCost;
 
-					if (math::isinf(maxResNodeCost)) { maxResNodeCost = 255.0f; }
-					if (math::isinf(medResNodeCost)) { medResNodeCost = 255.0f; }
-					if (math::isinf(lowResNodeCost)) { lowResNodeCost = 255.0f; }
+					if (math::isinf(maxResNodeCost)) { maxResNodeCost = maxResMaxNodeCost; }
+					if (math::isinf(medResNodeCost)) { medResNodeCost = medResMaxNodeCost; }
+					if (math::isinf(lowResNodeCost)) { lowResNodeCost = lowResMaxNodeCost; }
 
 					// NOTE:
 					//     the normalisation means each extraTextureUpdate block
