@@ -66,6 +66,7 @@ class CEventClient
 		virtual void TeamDied(int teamID);
 		virtual void TeamChanged(int teamID);
 		virtual void PlayerChanged(int playerID);
+		virtual void PlayerAdded(int playerID);
 		virtual void PlayerRemoved(int playerID, int reason);
 
 		virtual void UnitCreated(const CUnit* unit, const CUnit* builder);

@@ -108,6 +108,7 @@ local flexCallIns = {
   'TeamDied',
   'TeamChanged',
   'PlayerChanged',
+  'PlayerAdded',
   'ShockFront',
   'WorldTooltip',
   'MapDrawCmd',
@@ -1535,6 +1536,14 @@ end
 function widgetHandler:PlayerChanged(playerID)
   for _,w in ipairs(self.PlayerChangedList) do
     w:PlayerChanged(playerID)
+  end
+  return
+end
+
+
+function widgetHandler:PlayerAdded(playerID)
+  for _,w in ipairs(self.PlayerAddedList) do
+    w:PlayerAdded(playerID)
   end
   return
 end
