@@ -529,8 +529,9 @@ void CPathManager::GetEstimatedPath(
 
 
 
-boost::uint32_t CPathManager::GetPathCheckSum() const { return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum()); }
-unsigned int CPathManager::GetPathResolution() const { return PATH_RESOLUTION; }
+boost::uint32_t CPathManager::GetPathCheckSum() const {
+	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
+}
 
 
 
