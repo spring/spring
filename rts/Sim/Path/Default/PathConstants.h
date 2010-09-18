@@ -7,8 +7,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 static const float PATHCOST_INFINITY = std::numeric_limits<float>::infinity();
-// minimum distance between two waypoints
-static const unsigned int PATH_RESOLUTION = SQUARE_SIZE * 2;
 
 // NOTE:
 //     PF and PE both use a PathNodeBuffer of size MAX_SEARCHED_NODES,

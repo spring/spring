@@ -16,7 +16,6 @@ public:
 	virtual ~IPathManager() {}
 
 	virtual boost::uint32_t GetPathCheckSum() const { return 0; }
-	virtual unsigned int GetPathResolution() const { return 0; }
 
 	virtual void Update() {}
 	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathId) {}
