@@ -30,6 +30,7 @@ void CEventClient::Load(CArchiveBase* archive) {}
 void CEventClient::GamePreload() {}
 void CEventClient::GameStart() {}
 void CEventClient::GameOver(std::vector<unsigned char> winningAllyTeams) {}
+void CEventClient::GamePaused(int playerI, bool pausedD) {}
 void CEventClient::TeamDied(int teamID) {}
 void CEventClient::TeamChanged(int teamID) {}
 void CEventClient::PlayerChanged(int playerID) {}
