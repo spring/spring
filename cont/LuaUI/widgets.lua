@@ -103,6 +103,7 @@ local flexCallIns = {
   'GamePreload',
   'GameStart',
   'GameOver',
+  'GamePaused',
   'GameFrame',
   'GameSetup',
   'TeamDied',
@@ -1511,6 +1512,14 @@ end
 function widgetHandler:GameOver()
   for _,w in ipairs(self.GameOverList) do
     w:GameOver()
+  end
+  return
+end
+
+
+function widgetHandler:GamePaused(playerID, paused)
+  for _,w in ipairs(self.GamePausedList) do
+    w:GamePaused(playerID, paused)
   end
   return
 end
