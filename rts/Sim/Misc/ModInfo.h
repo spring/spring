@@ -157,5 +157,4 @@ public:
 
 extern CModInfo modInfo;
 
-
-#endif
+#endif // MOD_INFO_H
