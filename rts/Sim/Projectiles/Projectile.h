@@ -9,11 +9,9 @@
 #pragma warning(disable:4291)
 #endif
 
-class CProjectileHandler;
-class CBuilding;
-
 #include "ExplosionGenerator.h"
 #include "Sim/Units/UnitHandler.h"
+#include "System/float3.h"
 
 class CUnit;
 class CFeature;
@@ -67,9 +65,9 @@ public:
 	float3 speed;
 	float mygravity;
 
-	virtual void DrawCallback(void) {}
+	virtual void DrawCallback() {}
 
-	float tempdist; // temp distance used for sorting when rendering
+	float tempdist; ///< temp distance used for sorting when rendering
 	
 protected:
 	int ownerId;
