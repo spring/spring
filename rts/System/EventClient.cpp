@@ -33,6 +33,7 @@ void CEventClient::GameOver(std::vector<unsigned char> winningAllyTeams) {}
 void CEventClient::TeamDied(int teamID) {}
 void CEventClient::TeamChanged(int teamID) {}
 void CEventClient::PlayerChanged(int playerID) {}
+void CEventClient::PlayerAdded(int playerID) {}
 void CEventClient::PlayerRemoved(int playerID, int reason) {}
 
 void CEventClient::UnitCreated(const CUnit* unit, const CUnit* builder) {}
