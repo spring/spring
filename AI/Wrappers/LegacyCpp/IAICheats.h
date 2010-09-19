@@ -68,7 +68,6 @@ public:
 	virtual bool IsUnitCloaked(int unitid) = 0;
 	virtual bool IsUnitParalyzed(int unitid) = 0;
 
-	virtual bool OnlyPassiveCheats() = 0;
 	virtual void EnableCheatEvents(bool enable) = 0;
 
 	virtual bool GetProperty(int id, int property, void* dst) = 0;
