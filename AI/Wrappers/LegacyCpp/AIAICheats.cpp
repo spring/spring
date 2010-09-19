@@ -69,9 +69,7 @@ void CAIAICheats::SetCheatsEnabled(bool enabled) {
 
 void CAIAICheats::EnableCheatEvents(bool enable) {
 	// registers an AI as recipient of EnemyCreated, etc. events
-	SetCheatsEnabled(true);
 	sAICallback->Clb_Cheats_setEventsEnabled(teamId, enable);
-	SetCheatsEnabled(false);
 }
 
 
