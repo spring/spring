@@ -151,6 +151,9 @@ AIClasses::AIClasses(IGlobalAICallback* gcb):
 
 	initialized = false;
 	initFrame = callbackHandler->GetCurrentFrame();
+
+	// register for EnemyCreated, etc.
+	ccallbackHandler->EnableCheatEvents(true);
 }
 
 AIClasses::~AIClasses() {
