@@ -1,13 +1,18 @@
 
 project(Spring)
 
+# CMake 2.4:
+# - lacks some cross-compiling features and fails on windows
+# CMake 2.6:
+# - Windows command line is limited to 32k length commands
+# CMake 2.6.3:
+# + support for SOURCES attribute of add_custom_target(), which is required for AI stuff
+# CMake 2.8
+# + works around command line length limited by using an @objectFilesList.txt parameter when linking
 if    (WIN32)
-	### Windows command line is limited to 32k length commands
-	### CMake 2.8 works around this by using an @objectFilesList.txt parameter when linking
 	set(MIN_CMAKE_VERSION 2.8)
 else  (WIN32)
-	### CMake 2.4 lacks some cross-compiling features and fails on windows
-	set(MIN_CMAKE_VERSION 2.6)
+	set(MIN_CMAKE_VERSION 2.6.3)
 endif (WIN32)
 cmake_minimum_required(VERSION ${MIN_CMAKE_VERSION})
 
