@@ -266,21 +266,17 @@ inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
-	float height = heightData[y * heightDataX + x];
-	if (waterDrawn && height < 0.0f) {
-		height *= 2;
-	}
-
 	//! don't send the normals as vertex attributes
 	//! (DLOD'ed triangles mess with interpolation)
 	//! const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
-	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
+
+	DrawVertexAQ(ma, x, y, heightData[y * heightDataX + x]);
 }
 
 inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
 {
 	if (waterDrawn && height < 0.0f) {
-		height *= 2;
+		height *= 2.0f;
 	}
 
 	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
@@ -392,8 +388,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 			ex = (int) x0;
 	}
 
-	float cx2 = cam2->pos.x / SQUARE_SIZE;
-	float cy2 = cam2->pos.z / SQUARE_SIZE;
+	const float cx2 = cam2->pos.x / SQUARE_SIZE;
+	const float cy2 = cam2->pos.z / SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
 		ma->Initialize();
@@ -402,13 +398,13 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 			float oldcamxpart = 0.0f;
 			float oldcamypart = 0.0f;
 
-			int hlod = lod >> 1;
-			int dlod = lod << 1;
+			const int hlod = lod >> 1;
+			const int dlod = lod << 1;
 
-			int cx = (int)cx2;
-			int cy = (int)cy2;
+			int cx = cx2;
+			int cy = cy2;
 
-			if(lod>1) {
+			if (lod>1) {
 				int cxo = (cx / hlod) * hlod;
 				int cyo = (cy / hlod) * hlod;
 				float cx2o = (cxo / lod) * lod;
@@ -419,48 +415,38 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 			cx = (cx / lod) * lod;
 			cy = (cy / lod) * lod;
-			int ysquaremod = (cy % dlod) / lod;
-			int xsquaremod = (cx % dlod) / lod;
 
-			float camxpart = (cx2 - ((cx / dlod) * dlod)) / dlod;
-			float camypart = (cy2 - ((cy / dlod) * dlod)) / dlod;
+			const int ysquaremod = (cy % dlod) / lod;
+			const int xsquaremod = (cx % dlod) / lod;
 
-			float mcxp=1.0f-camxpart;
-			float hcxp=0.5f*camxpart;
-			float hmcxp=0.5f*mcxp;
+			const float camxpart = (cx2 - ((cx / dlod) * dlod)) / dlod;
+			const float camypart = (cy2 - ((cy / dlod) * dlod)) / dlod;
 
-			float mcyp=1.0f-camypart;
-			float hcyp=0.5f*camypart;
-			float hmcyp=0.5f*mcyp;
+			const float mcxp  = 1.0f - camxpart, mcyp  = 1.0f - camypart;
+			const float hcxp  = 0.5f * camxpart, hcyp  = 0.5f * camypart;
+			const float hmcxp = 0.5f * mcxp,     hmcyp = 0.5f * mcyp;
 
-			float mocxp=1.0f-oldcamxpart;
-			float hocxp=0.5f*oldcamxpart;
-			float hmocxp=0.5f*mocxp;
+			const float mocxp  = 1.0f - oldcamxpart, mocyp  = 1.0f - oldcamypart;
+			const float hocxp  = 0.5f * oldcamxpart, hocyp  = 0.5f * oldcamypart;
+			const float hmocxp = 0.5f * mocxp,       hmocyp = 0.5f * mocyp;
 
-			float mocyp=1.0f-oldcamypart;
-			float hocyp=0.5f*oldcamypart;
-			float hmocyp=0.5f*mocyp;
+			const int minty = bty * bigSquareSize, maxty = minty + bigSquareSize;
+			const int mintx = btx * bigSquareSize, maxtx = mintx + bigSquareSize;
 
-			int minty = bty * bigSquareSize;
-			int maxty = minty + bigSquareSize;
-			int mintx = btx * bigSquareSize;
-			int maxtx = mintx + bigSquareSize;
+			const int minly = cy + (-viewRadius + 3 - ysquaremod) * lod;
+			const int maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
+			const int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod;
+			const int maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
 
-			int minly = cy + (-viewRadius + 3 - ysquaremod) * lod;
-			int maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
-			int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod;
-			int maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
+			const int xstart = std::max(minlx, mintx), xend = std::min(maxlx, maxtx);
+			const int ystart = std::max(minly, minty), yend = std::min(maxly, maxty);
 
-			int xstart = max(minlx, mintx);
-			int xend   = min(maxlx, maxtx);
-			int ystart = max(minly, minty);
-			int yend   = min(maxly, maxty);
-
-			int vrhlod = viewRadius * hlod;
+			const int vrhlod = viewRadius * hlod;
 
 			for (y = ystart; y < yend; y += lod) {
 				int xs = xstart;
 				int xe = xend;
+
 				FindRange(/*inout*/ xs, /*inout*/ xe, left, right, y, lod);
 
 				// If FindRange modifies (xs, xe) to a (less then) empty range,
@@ -803,6 +789,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	viewRadius  = max(max(numBigTexY,numBigTexX), viewRadius);
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
 	neededLod   = int((globalRendering->viewRange * 0.125f) / viewRadius) << 1;
+	neededLod   = std::max(1, std::min(gs->mapx, gs->mapy));
 
 	UpdateCamRestraints();
 
