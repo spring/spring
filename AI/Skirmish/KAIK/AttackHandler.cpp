@@ -327,13 +327,13 @@ float3 CAttackHandler::FindSafeArea(float3 pos) {
 float3 CAttackHandler::FindVerySafeArea(float3 pos) {
 	float min = 0.9f;
 	float max = 1.0f;
-	return (FindSafeSpot(pos, min, max));
+	return (this->FindSafeSpot(pos, min, max));
 }
 
 float3 CAttackHandler::FindUnsafeArea(float3 pos) {
 	float min = 0.1f;
 	float max = 0.3f;
-	return (FindSafeSpot(pos, min, max));
+	return (this->FindSafeSpot(pos, min, max));
 }
 
 
@@ -629,8 +629,8 @@ void CAttackHandler::AirPatrol(int currentFrame) {
 	}
 
 	for (std::list<int>::iterator it = armedAirUnits.begin(); it != armedAirUnits.end(); it++) {
-		CUNIT* u = ai->GetUnit(*it);
-
+		CUNIT* u = ai->GetUnit(*it)
+;
 		// do this first in case we are in the enemy base
 		u->Move(outerMeans[0] + float3(0, 50, 0));
 

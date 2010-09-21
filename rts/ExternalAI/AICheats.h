@@ -63,7 +63,8 @@ public:
 	bool IsUnitCloaked(int unitId);
 	bool IsUnitParalyzed(int unitId);
 
-	static bool OnlyPassiveCheats();
+	bool OnlyPassiveCheats();
+	static bool IsPassive();
 	void EnableCheatEvents(bool enable);
 
 	bool GetProperty(int unit, int property, void* dst);

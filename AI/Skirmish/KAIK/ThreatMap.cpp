@@ -7,8 +7,7 @@
 
 CR_BIND(CThreatMap, (NULL))
 CR_REG_METADATA(CThreatMap, (
-	CR_MEMBER(threatCellsRaw),
-	CR_MEMBER(threatCellsVis),
+	CR_MEMBER(threatCells),
 	CR_MEMBER(ai),
 	CR_RESERVED(8),
 	CR_POSTLOAD(PostLoad)
@@ -16,7 +15,11 @@ CR_REG_METADATA(CThreatMap, (
 
 CThreatMap::CThreatMap(AIClasses* aic): ai(aic) {
 	if (ai) {
-		PostLoad();
+		width  = ai->cb->GetMapWidth()  / THREATRES;
+		height = ai->cb->GetMapHeight() / THREATRES;
+
+		area = width * height;
+		threatCells.resize(area);
 
 		#if (LUA_THREATMAP_DEBUG == 1)
 		std::stringstream luaDataStream;
@@ -55,47 +58,10 @@ CThreatMap::CThreatMap(AIClasses* aic): ai(aic) {
 	currAvgThreat = 0.0f; // average threat over all cells
 }
 
-CThreatMap::~CThreatMap() {
-	threatCellsRaw.clear();
-	threatCellsVis.clear();
-
-	if (threatMapTexID >= 0) {
-		ai->cb->DebugDrawerDelOverlayTexture(threatMapTexID);
-	}
-}
-
 void CThreatMap::PostLoad() {
-	width  = ai->cb->GetMapWidth() / THREATRES;
+	width = ai->cb->GetMapWidth() / THREATRES;
 	height = ai->cb->GetMapHeight() / THREATRES;
-	area   = width * height;
-
-	threatCellsRaw.resize(area, 0.0f);
-	threatCellsVis.resize(area, 0.0f);
-
-	threatMapTexID = -1;
-}
-
-void CThreatMap::ToggleVisOverlay() {
-	if (threatMapTexID < 0) {
-		std::stringstream threatMapLabel;
-			threatMapLabel << "[KAIK][";
-			threatMapLabel << ai->cb->GetMyTeam();
-			threatMapLabel << "][ThreatMap]";
-
-		// /cheat
-		// /debugdrawai
-		// /team N
-		// /spectator
-		// "KAIK::ThreatMap::DBG"
-		threatMapTexID = ai->cb->DebugDrawerAddOverlayTexture(&threatCellsVis[0], width, height);
-
-		ai->cb->DebugDrawerSetOverlayTexturePos(threatMapTexID, 0.50f, 0.25f);
-		ai->cb->DebugDrawerSetOverlayTextureSize(threatMapTexID, 0.40f, 0.40f);
-		ai->cb->DebugDrawerSetOverlayTextureLabel(threatMapTexID, (threatMapLabel.str()).c_str());
-	} else {
-		ai->cb->DebugDrawerDelOverlayTexture(threatMapTexID);
-		threatMapTexID = -1;
-	}
+	area = width * height;
 }
 
 
@@ -160,8 +126,7 @@ void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float s) {
 			}
 
 			if (((posx - myx) * (posx - myx) + (posy - myy) * (posy - myy) - 0.5) <= rangeSq) {
-				threatCellsRaw[myy * width + myx] += threat;
-				threatCellsVis[myy * width + myx] += threat;
+				threatCells[myy * width + myx] += threat;
 				currSumThreat += threat;
 			}
 		}
@@ -177,6 +142,7 @@ void CThreatMap::DelEnemyUnit(const EnemyUnit& e) {
 
 
 void CThreatMap::Update() {
+	// reset every frame
 	currMaxThreat = 0.0f;
 
 	// account for moving units
@@ -192,33 +158,25 @@ void CThreatMap::Update() {
 	}
 
 
-	// TODO: staggered updates
-	if (threatMapTexID >= 0) {
-		if (currMaxThreat > 0.0f) {
-			for (int i = 0; i < area; i++) {
-				threatCellsVis[i] = threatCellsRaw[i] / currMaxThreat;
-			}
-
-			ai->cb->DebugDrawerUpdateOverlayTexture(threatMapTexID, &threatCellsVis[0], 0, 0, width, height);
-		}
-	}
-
-
 	#if (LUA_THREATMAP_DEBUG == 1)
 	std::string luaDataStr;
 	std::stringstream luaDataStream;
 		luaDataStream << "local threatMapArray = GG.AIThreatMap;\n";
+	#endif
 
 	// just copy the entire map
 	for (int i = 0; i < area; i++) {
+		#if (LUA_THREATMAP_DEBUG == 1)
 		luaDataStream << "threatMapArray[" << i << "]";
 		luaDataStream << " = ";
-		luaDataStream << threatCellsRaw[i];
+		luaDataStream << threatCells[i];
 		luaDataStream << " / ";
 		luaDataStream << currMaxThreat;
 		luaDataStream << ";\n";
+		#endif
 	}
 
+	#if (LUA_THREATMAP_DEBUG == 1)
 	luaDataStr = luaDataStream.str();
 
 	ai->cb->CallLuaRules("[AI::KAIK::ThreatMap::Update]", -1, NULL);
@@ -236,8 +194,12 @@ float CThreatMap::GetEnemyUnitThreat(const EnemyUnit& e) const {
 		return 0.0f;
 	}
 
-	const float dps = std::min(ai->ut->GetDPS(ud), 2000.0f);
-	const float dpsMod = ai->ccb->GetUnitHealth(e.id) / ai->ccb->GetUnitMaxHealth(e.id);
+	float dps = ai->ut->GetDPS(ud);
+	float dpsMod = ai->ccb->GetUnitHealth(e.id) / ai->ccb->GetUnitMaxHealth(e.id);
+
+	if (dps > 2000.0f) {
+		dps = 2000.0f;
+	}
 
 	return (dps * dpsMod);
 }
@@ -245,5 +207,5 @@ float CThreatMap::GetEnemyUnitThreat(const EnemyUnit& e) const {
 float CThreatMap::ThreatAtThisPoint(const float3& pos) const {
 	const int z = int(pos.z / (SQUARE_SIZE * THREATRES));
 	const int x = int(pos.x / (SQUARE_SIZE * THREATRES));
-	return threatCellsRaw[z * width + x];
+	return threatCells[z * width + x];
 }
