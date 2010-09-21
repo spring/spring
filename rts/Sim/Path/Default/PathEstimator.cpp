@@ -621,12 +621,10 @@ void CPathEstimator::TestBlock(
 		directionVertex[direction];
 	const int blockIdx = block.y * nbrOfBlocksX + block.x;
 
-	/*
 	if (block.x < 0 || block.x >= nbrOfBlocksX || block.y < 0 || block.y >= nbrOfBlocksZ) {
 		// blocks should never be able to lie outside map to the infinite vertices at the edges
 		return;
 	}
-	*/
 
 	if (vertexIdx < 0 || (unsigned int)vertexIdx >= vertices.size())
 		return;
