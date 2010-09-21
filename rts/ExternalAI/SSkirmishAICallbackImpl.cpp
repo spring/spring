@@ -1048,9 +1048,14 @@ EXPORT(bool) skirmishAiCallback_Cheats_setEnabled(int teamId, bool enable) {
 }
 
 EXPORT(bool) skirmishAiCallback_Cheats_setEventsEnabled(int teamId, bool enable) {
-	// enable directly; can only be called from AIAICheats (or another Cheats wrapper)
-	teamCPPCheatCallbacks[teamId]->EnableCheatEvents(enable);
-	return true;
+	bool success = false;
+
+	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
+		teamCPPCheatCallbacks[teamId]->EnableCheatEvents(enable);
+		success = true;
+	}
+
+	return success;
 }
 
 EXPORT(bool) skirmishAiCallback_Cheats_isOnlyPassive(int teamId) {
