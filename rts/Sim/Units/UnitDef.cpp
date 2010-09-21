@@ -25,7 +25,7 @@
 
 /******************************************************************************/
 
-UnitDef::UnitDefWeapon::UnitDefWeapon()
+UnitDefWeapon::UnitDefWeapon()
 : name("NOWEAPON")
 , def(NULL)
 , slavedTo(0)
@@ -37,7 +37,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon()
 {
 }
 
-UnitDef::UnitDefWeapon::UnitDefWeapon(
+UnitDefWeapon::UnitDefWeapon(
 	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
 	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
 : name(name)
@@ -828,7 +828,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 				                "to be present as a placeholder for missing weapons");
 				break;
 			} else {
-				weapons.push_back(UnitDef::UnitDefWeapon());
+				weapons.push_back(UnitDefWeapon());
 				weapons.back().def = noWeaponDef;
 			}
 		}
@@ -851,7 +851,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 		const float fuelUse = wTable.GetFloat("fuelUsage", 0.0f);
 
-		UnitDef::UnitDefWeapon weapon(name, wd, slaveTo, mainDir, angleDif, btc, otc, fuelUse);
+		UnitDefWeapon weapon(name, wd, slaveTo, mainDir, angleDif, btc, otc, fuelUse);
 		weapons.push_back(weapon);
 
 		maxWeaponRange = std::max(maxWeaponRange, wd->range);

@@ -36,6 +36,22 @@ struct UnitModelDef
 };
 
 
+struct UnitDefWeapon {
+	UnitDefWeapon();
+	UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,
+	              float3 mainDir, float maxAngleDif, unsigned int badTargetCat,
+	              unsigned int onlyTargetCat, float fuelUse);
+	std::string name;
+	const WeaponDef* def;
+	int slavedTo;
+	float3 mainDir;
+	float maxAngleDif;
+	float fuelUsage; /// How many seconds of fuel it costs for the owning unit to fire this weapon
+	unsigned int badTargetCat;
+	unsigned int onlyTargetCat;
+};
+
+
 struct UnitDef
 {
 public:
@@ -169,21 +185,6 @@ public:
 
 	bool usePieceCollisionVolumes;		///< if true, collisions are checked per-piece
 
-
-	struct UnitDefWeapon {
-		UnitDefWeapon();
-		UnitDefWeapon(std::string name, const WeaponDef* def, int slavedTo,
-		              float3 mainDir, float maxAngleDif, unsigned int badTargetCat,
-		              unsigned int onlyTargetCat, float fuelUse);
-		std::string name;
-		const WeaponDef* def;
-		int slavedTo;
-		float3 mainDir;
-		float maxAngleDif;
-		float fuelUsage; /// How many seconds of fuel it costs for the owning unit to fire this weapon
-		unsigned int badTargetCat;
-		unsigned int onlyTargetCat;
-	};
 	std::vector<UnitDefWeapon> weapons;
 	const WeaponDef* shieldWeaponDef;
 	const WeaponDef* stockpileWeaponDef;

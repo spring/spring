@@ -37,10 +37,14 @@ struct CollisionVolume
 
 	CollisionVolume();
 	CollisionVolume(const CollisionVolume* v, float defaultRadius = 0.0f);
-	CollisionVolume(const std::string&, const float3&, const float3&, int);
+	CollisionVolume(const std::string& volTypeStr, const float3& scales, const float3& offsets, int hitTestType);
 
-	void Init(float);
-	void Init(const float3&, const float3&, int, int, int);
+	/**
+	 * Called if a unit or feature does not define a custom volume.
+	 * @param r the object's default radius
+	 */
+	void Init(float r);
+	void Init(const float3& scales, const float3& offsets, int vType, int tType, int pAxis);
 
 	int GetVolumeType() const { return volumeType; }
 	int GetTestType() const { return testType; }
@@ -66,7 +70,7 @@ struct CollisionVolume
 	const float3& GetHScalesSq() const { return axisHScalesSq; }
 	const float3& GetHIScales() const { return axisHIScales; }
 
-	void RescaleAxes(float, float, float);
+	void RescaleAxes(float xs, float ys, float zs);
 
 	bool IsDisabled() const { return disabled; }
 	bool DefaultScale() const { return defaultScale; }
@@ -74,17 +78,17 @@ struct CollisionVolume
 	bool UseFootprint() const { return volumeType == COLVOL_TYPE_FOOTPRINT; }
 
 private:
-	void SetAxisScales(float, float, float);
+	void SetAxisScales(float xs, float ys, float zs);
 	void SetBoundingRadius();
 
-	float3 axisScales;                  // full-length axis scales
-	float3 axisHScales;                 // half-length axis scales
-	float3 axisHScalesSq;               // half-length axis scales (squared)
-	float3 axisHIScales;                // half-length axis scales (inverted)
-	float3 axisOffsets;                 // offsets wrt. the model's mid-position (world-space)
+	float3 axisScales;                  ///< full-length axis scales
+	float3 axisHScales;                 ///< half-length axis scales
+	float3 axisHScalesSq;               ///< half-length axis scales (squared)
+	float3 axisHIScales;                ///< half-length axis scales (inverted)
+	float3 axisOffsets;                 ///< offsets wrt. the model's mid-position (world-space)
 
-	float volumeBoundingRadius;         // radius of minimally-bounding sphere around volume
-	float volumeBoundingRadiusSq;       // squared radius of minimally-bounding sphere
+	float volumeBoundingRadius;         ///< radius of minimally-bounding sphere around volume
+	float volumeBoundingRadiusSq;       ///< squared radius of minimally-bounding sphere
 	int volumeType;
 	int testType;
 	int primaryAxis;
