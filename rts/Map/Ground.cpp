@@ -397,7 +397,7 @@ float3 CGround::GetSmoothNormal(float x, float y) const
 	return norm1;
 }
 
-float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic) const
+float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic) const
 {
 	from.CheckInBounds();
 

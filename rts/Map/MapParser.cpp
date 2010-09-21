@@ -8,17 +8,17 @@
 #include <string>
 #include <ctype.h>
 
+#include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "FileSystem/FileSystem.h"
 
-using namespace std;
 
-string MapParser::GetMapConfigName(const string& mapName)
+std::string MapParser::GetMapConfigName(const std::string& mapName)
 {
 	if (mapName.length() < 3)
 		return "";
 
-	const string extension = filesystem.GetExtension(mapName);
+	const std::string extension = filesystem.GetExtension(mapName);
 
 	if (extension == "sm3") {
 		return mapName;
@@ -32,9 +32,9 @@ string MapParser::GetMapConfigName(const string& mapName)
 }
 
 
-MapParser::MapParser(const string& mapName) : parser(NULL)
+MapParser::MapParser(const std::string& mapName) : parser(NULL)
 {
-	const string mapConfig = GetMapConfigName(mapName);
+	const std::string mapConfig = GetMapConfigName(mapName);
 
 	parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	parser->GetTable("Map");
