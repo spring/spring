@@ -15,10 +15,8 @@
 
 #include "mmgr.h"
 
-using std::vector;
 
-SmoothHeightMesh *smoothGround = 0;
-
+SmoothHeightMesh* smoothGround = NULL;
 
 /// lifted from Ground.cpp
 static float Interpolate(float x, float y, int maxx, int maxy, float res, const float* heightmap)
@@ -66,6 +64,27 @@ static float Interpolate(float x, float y, int maxx, int maxy, float res, const 
 	return 0; // can not be reached
 }
 
+SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float maxx, float maxy, float resolution, float smoothRadius)
+		: fmaxx(maxx)
+		, fmaxy(maxy)
+		, resolution(resolution)
+		, smoothRadius(smoothRadius)
+		, mesh(NULL)
+		, origMesh(NULL)
+		, drawEnabled(false)
+{
+	maxx = fmaxx/resolution + 1;
+	maxy = fmaxy/resolution + 1;
+	MakeSmoothMesh(ground);
+}
+
+SmoothHeightMesh::~SmoothHeightMesh() {
+
+	delete[] mesh;
+	mesh = NULL;
+	delete[] origMesh;
+	origMesh = NULL;
+}
 
 float SmoothHeightMesh::GetHeight(float x, float y)
 {
@@ -100,7 +119,7 @@ float SmoothHeightMesh::SetMaxHeight(int index, float h)
 	return mesh[index];
 }
 
-void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
+void  SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 {
 	ScopedOnceTimer timer("Creating Smooth Mesh");
 	if (!mesh) {
@@ -115,10 +134,10 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 		smoothRadius = 1;
 
 	// sliding window of maximums to reduce computational complexity
-	const int intrad = smoothRadius/resolution;
+	const int intrad = smoothRadius / resolution;
 
-	vector<float> maximums;
-	vector<int> rows;
+	std::vector<float> maximums;
+	std::vector<int> rows;
 
 	maximums.resize(maxx+1);
 	rows.resize(maxx+1);
@@ -140,7 +159,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 		}
 	}
 
-	for (int y = 0; y<=maxy; ++y) {
+	for (int y = 0; y <= maxy; ++y) {
 		float cury = y*resolution;
 		// try to advance rows if they're equal to current maximum but are further away
 		for (int x = 0; x <= maxx; ++x) {
@@ -259,7 +278,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 	// actually smooth
 	const size_t smoothsize = (size_t)((this->maxx+1) * (this->maxy + 1));
 	const int smoothrad = 3;
-	float *smoothed = new float[smoothsize];
+	float* smoothed = new float[smoothsize];
 	/*
 	for (int y = 0; y <= maxy; ++y) {
 		for (int x = 0; x <= maxx; ++x) {
@@ -279,7 +298,7 @@ void  SmoothHeightMesh::MakeSmoothMesh(const CGround *ground)
 	*/
 
 	float n = 2*smoothrad + 1;
-	float recipn = 1.f/n;
+	float recipn = 1.f / n;
 
 	// approximate gaussian blur
 	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {

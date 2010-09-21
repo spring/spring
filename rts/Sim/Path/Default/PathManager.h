@@ -23,7 +23,6 @@ public:
 	~CPathManager();
 
 	boost::uint32_t GetPathCheckSum() const;
-	unsigned int GetPathResolution() const;
 
 	void Update();
 	void UpdatePath(const CSolidObject*, unsigned int);

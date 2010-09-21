@@ -92,9 +92,6 @@ protected:
 	float BreakingDistance(float speed);
 	float3 Here();
 
-	float MinDistanceToWaypoint();
-	float MaxDistanceToWaypoint();
-
 	void StartEngine();
 	void StopEngine();
 

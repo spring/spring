@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef AIRBASEHANDLER_H
-#define AIRBASEHANDLER_H
+#ifndef AIR_BASE_HANDLER_H
+#define AIR_BASE_HANDLER_H
 
 #include <list>
 #include <set>
@@ -12,7 +12,7 @@
 
 class CUnit;
 
-class CAirBaseHandler: public boost::noncopyable
+class CAirBaseHandler : public boost::noncopyable
 {
 	CR_DECLARE(CAirBaseHandler);
 	CR_DECLARE_SUB(LandingPad);
@@ -23,7 +23,7 @@ private:
 
 public:
 
-	class LandingPad: public CObject,  public boost::noncopyable {
+	class LandingPad: public CObject, public boost::noncopyable {
 		CR_DECLARE(LandingPad);
 
 	public:
@@ -45,21 +45,30 @@ private:
 	struct AirBase: public boost::noncopyable {
 		CR_DECLARE_STRUCT(AirBase);
 		AirBase(CUnit* u) : unit(u) {}
+
 		CUnit* unit;
 		std::list<LandingPad*> freePads;
 		std::list<LandingPad*> pads;
 	};
 
 public:
-	CAirBaseHandler(void);
-	~CAirBaseHandler(void);
+	CAirBaseHandler();
+	~CAirBaseHandler();
 
 	void RegisterAirBase(CUnit* base);
 	void DeregisterAirBase(CUnit* base);
 
+	/**
+	 * @brief Try to find an airbase and reserve it if one can be found
+	 * Caller must call LeaveLandingPad() if it gets one
+	 * and is finished with it or dies.
+	 * It is the callers responsibility to detect if the base dies
+	 * while its reserved.
+	 */
 	LandingPad* FindAirBase(CUnit* unit, float minPower);
 	void LeaveLandingPad(LandingPad* pad);
 
+	/** @brief Try to find the closest airbase even if it's reserved */
 	float3 FindClosestAirBasePos(CUnit* unit, float minPower);
 
 private:
@@ -68,12 +77,13 @@ private:
 	typedef std::list<LandingPad*> PadLst;
 	typedef std::list<LandingPad*>::iterator PadLstIt;
 
-	std::vector< AirBaseLst > freeBases;
-	std::vector< AirBaseLst > bases;
+	std::vector<AirBaseLst> freeBases;
+	std::vector<AirBaseLst> bases;
 
 	// IDs of units registered as airbases
 	std::set<int> airBaseIDs;
 };
 
 extern CAirBaseHandler* airBaseHandler;
-#endif /* AIRBASEHANDLER_H */
+
+#endif /* AIR_BASE_HANDLER_H */

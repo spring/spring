@@ -394,15 +394,15 @@ static int CategorySetFromString(lua_State* L, const void* data)
 
 static int WeaponsTable(lua_State* L, const void* data)
 {
-	const vector<UnitDef::UnitDefWeapon>& weapons =
-		*((const vector<UnitDef::UnitDefWeapon>*)data);
+	const vector<UnitDefWeapon>& weapons =
+		*((const vector<UnitDefWeapon>*)data);
 
 	const int weaponCount = (int)weapons.size();
 
 	lua_newtable(L);
 
 	for (int i = 0; i < weaponCount; i++) {
-		const UnitDef::UnitDefWeapon& udw = weapons[i];
+		const UnitDefWeapon& udw = weapons[i];
 		const WeaponDef* weapon = udw.def;
 		lua_pushnumber(L, i + 1);
 		lua_newtable(L); {

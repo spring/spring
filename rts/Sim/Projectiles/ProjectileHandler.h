@@ -22,6 +22,7 @@ struct FlyingPiece;
 struct S3DOPrimitive;
 struct S3DOPiece;
 struct SS3OVertex;
+
 struct piececmp {
 	bool operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const;
 };
