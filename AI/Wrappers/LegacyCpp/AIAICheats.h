@@ -72,6 +72,7 @@ public:
 	bool IsUnitCloaked(int unitid);
 	bool IsUnitParalyzed(int unitid);
 
+	bool OnlyPassiveCheats();
 	void EnableCheatEvents(bool enable);
 
 	bool GetProperty(int id, int property, void* dst);
@@ -82,8 +83,7 @@ private:
 	int teamId;
 	const SSkirmishAICallback* sAICallback;
 	CAIAICallback* aiCallback;
-
-	void SetCheatsEnabled(bool enable);
+	void setCheatsEnabled(bool enable);
 };
 
 #endif // _AIAICHEATS_H

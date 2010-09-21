@@ -11,7 +11,7 @@ public:
 	CR_DECLARE(CThreatMap);
 
 	CThreatMap(AIClasses* ai);
-	~CThreatMap();
+	~CThreatMap() {}
 
 	void PostLoad();
 	void Update();
@@ -24,11 +24,9 @@ public:
 	float GetAverageThreat() const { return (currAvgThreat + 1.0f); }
 	float ThreatAtThisPoint(const float3&) const;
 
-	float* GetThreatArray() { return &threatCellsRaw[0]; }
+	float* GetThreatArray() { return &threatCells[0]; }
 	int GetThreatMapWidth() const { return width; }
 	int GetThreatMapHeight() const { return height; }
-
-	void ToggleVisOverlay();
 
 private:
 	struct EnemyUnit {
@@ -54,11 +52,9 @@ private:
 	int width;
 	int height;
 
-	int threatMapTexID;
 
 	std::map<int, EnemyUnit> enemyUnits;
-	std::vector<float> threatCellsRaw;
-	std::vector<float> threatCellsVis;
+	std::vector<float> threatCells;
 
 	AIClasses* ai;
 };

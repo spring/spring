@@ -31,30 +31,30 @@ CAICheats::CAICheats(CSkirmishAIWrapper* ai): ai(ai)
 CAICheats::~CAICheats(void)
 {}
 
-
-
 bool CAICheats::OnlyPassiveCheats()
 {
-	// returns whether cheats will desync (this is
-	// always the case unless we are both the host
-	// and the only client) if used by an AI
+	return IsPassive();
+}
+bool CAICheats::IsPassive()
+{
 	if (!gameServer) {
+		// if we are NOT server, cheats will cause desync
 		return true;
-	} else if (gameSetup && (gameSetup->playerStartingData.size() == 1)) {
-		// assumes AI's dont count toward numPlayers
+	}
+	else if (gameSetup && (gameSetup->playerStartingData.size() == 1)) {
+		// assuming AI's dont count on numPlayers
 		return false;
-	} else {
+	}
+	else {
+		// disable it in case we are not sure
 		return true;
 	}
 }
 
 void CAICheats::EnableCheatEvents(bool enable)
 {
-	// enable sending of EnemyCreated, etc. events
 	ai->SetCheatEventsEnabled(enable);
 }
-
-
 
 void CAICheats::SetMyHandicap(float handicap)
 {
