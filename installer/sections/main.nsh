@@ -83,7 +83,7 @@
 	${!echonow} "Processing: main: AI Interfaces"
 	!insertmacro InstallAIInterface "C"
 	!insertmacro InstallAIInterface "Java"
-	!insertmacro InstallAIInterface "Python"
+	;!insertmacro InstallAIInterface "Python"
 
 	${!echonow} "Processing: main: Null Skirmish AIs"
 	!insertmacro InstallSkirmishAI "NullAI"
