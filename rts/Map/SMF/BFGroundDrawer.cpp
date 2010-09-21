@@ -615,8 +615,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				}
 			} //for (y = ystart; y < yend; y += lod)
 
-			int yst = max(ystart - lod, minty);
-			int yed = min(yend + lod, maxty);
+			const int yst = std::max(ystart - lod, minty);
+			const int yed = std::min(yend + lod, maxty);
 			int nloop = (yed - yst) / lod + 1;
 
 			if (nloop > 0)
@@ -676,8 +676,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 			if (maxly < maxty && maxly > minty) {
 				y = maxly;
-				int xs = max(xstart - lod, mintx);
-				int xe = min(xend + lod,   maxtx);
+				int xs = std::max(xstart - lod, mintx);
+				int xe = std::min(xend + lod,   maxtx);
 				FindRange(xs, xe, left, right, y, lod);
 
 				if (xs < xe) {
@@ -714,8 +714,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 			if (minly > minty && minly < maxty) {
 				y = minly - lod;
-				int xs = max(xstart - lod, mintx);
-				int xe = min(xend + lod,   maxtx);
+				int xs = std::max(xstart - lod, mintx);
+				int xe = std::min(xend + lod,   maxtx);
 				FindRange(xs, xe, left, right, y, lod);
 
 				if (xs < xe) {
@@ -772,24 +772,23 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	waterDrawn = drawWaterReflection;
 
 
-	const int baseViewRadius = max(4, viewRadius);
+	const int baseViewRadius = std::max(4, viewRadius);
 
 	if (drawUnitReflection) {
-		viewRadius = ((int)(viewRadius * LODScaleUnitReflection)) & 0xfffffe;
+		viewRadius = (int(viewRadius * LODScaleUnitReflection)) & 0xfffffe;
 	}
 	if (drawWaterReflection) {
-		viewRadius = ((int)(viewRadius * LODScaleReflection)) & 0xfffffe;
+		viewRadius = (int(viewRadius * LODScaleReflection)) & 0xfffffe;
 	}
 	//if (drawWaterRefraction) {
-	//	viewRadius = ((int)(viewRadius * LODScaleRefraction)) & 0xfffffe;
+	//	viewRadius = (int(viewRadius * LODScaleRefraction)) & 0xfffffe;
 	//}
 
-	float zoom  = 45.0f / camera->GetFov();
-	viewRadius  = (int) (viewRadius * fastmath::apxsqrt(zoom));
-	viewRadius  = max(max(numBigTexY,numBigTexX), viewRadius);
+	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetFov()));
+	viewRadius  = std::max(std::max(numBigTexY, numBigTexX), viewRadius);
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
-	neededLod   = int((globalRendering->viewRange * 0.125f) / viewRadius) << 1;
-	neededLod   = std::max(1, std::min(gs->mapx, gs->mapy));
+	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
+	neededLod   = std::min(neededLod, std::min(gs->mapx, gs->mapy));
 
 	UpdateCamRestraints();
 
@@ -808,14 +807,14 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	}
 
 #ifdef USE_GML
-	if(multiThreadDrawGround) {
+	if (multiThreadDrawGround) {
 		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
 	}
 	else
 #endif
 	{
-		int camBty = (int)math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
-		camBty = std::max(0,std::min(numBigTexY-1, camBty ));
+		int camBty = math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
+		camBty = std::max(0, std::min(numBigTexY - 1, camBty));
 
 		//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
 		for (int bty = camBty; bty >= 0; --bty) {
@@ -883,48 +882,34 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 	cx = (cx / lod) * lod;
 	cy = (cy / lod) * lod;
-	int ysquaremod = (cy % dlod) / lod;
-	int xsquaremod = (cx % dlod) / lod;
+	const int ysquaremod = (cy % dlod) / lod;
+	const int xsquaremod = (cx % dlod) / lod;
 
-	float camxpart = (cx2 - (cx / dlod) * dlod) / dlod;
-	float camypart = (cy2 - (cy / dlod) * dlod) / dlod;
+	const float camxpart = (cx2 - (cx / dlod) * dlod) / dlod;
+	const float camypart = (cy2 - (cy / dlod) * dlod) / dlod;
 
-	int minty = 0;
-	int maxty = gs->mapy;
-	int mintx = 0;
-	int maxtx = gs->mapx;
+	const int minty = 0, maxty = gs->mapy;
+	const int mintx = 0, maxtx = gs->mapx;
 
-	int minly = cy + (-viewRadius + 3 - ysquaremod) * lod;
-	int maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
-	int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod;
-	int maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
+	const int minly = cy + (-viewRadius + 3 - ysquaremod) * lod, maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
+	const int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod, maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
 
-	int xstart = max(minlx, mintx);
-	int xend   = min(maxlx, maxtx);
-	int ystart = max(minly, minty);
-	int yend   = min(maxly, maxty);
+	const int xstart = std::max(minlx, mintx), xend   = std::min(maxlx, maxtx);
+	const int ystart = std::max(minly, minty), yend   = std::min(maxly, maxty);
 
-	int lhdx=lod*heightDataX;
-	int hhdx=hlod*heightDataX;
-	int dhdx=dlod*heightDataX;
+	const int lhdx = lod * heightDataX;
+	const int hhdx = hlod * heightDataX;
+	const int dhdx = dlod * heightDataX;
 
-	float mcxp=1.0f-camxpart;
-	float hcxp=0.5f*camxpart;
-	float hmcxp=0.5f*mcxp;
+	const float mcxp  = 1.0f - camxpart, mcyp  = 1.0f - camypart;
+	const float hcxp  = 0.5f * camxpart, hcyp  = 0.5f * camypart;
+	const float hmcxp = 0.5f * mcxp,     hmcyp = 0.5f * mcyp;
 
-	float mcyp=1.0f-camypart;
-	float hcyp=0.5f*camypart;
-	float hmcyp=0.5f*mcyp;
+	const float mocxp  = 1.0f - oldcamxpart, mocyp  = 1.0f - oldcamypart;
+	const float hocxp  = 0.5f * oldcamxpart, hocyp  = 0.5f * oldcamypart;
+	const float hmocxp = 0.5f * mocxp,       hmocyp = 0.5f * mocyp;
 
-	float mocxp=1.0f-oldcamxpart;
-	float hocxp=0.5f*oldcamxpart;
-	float hmocxp=0.5f*mocxp;
-
-	float mocyp=1.0f-oldcamypart;
-	float hocyp=0.5f*oldcamypart;
-	float hmocyp=0.5f*mocyp;
-
-	int vrhlod = viewRadius * hlod;
+	const int vrhlod = viewRadius * hlod;
 
 	for (y = ystart; y < yend; y += lod) {
 		int xs = xstart;
@@ -1070,9 +1055,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		}
 	}
 
-	int yst=max(ystart - lod, minty);
-	int yed=min(yend + lod, maxty);
-	int nloop=(yed-yst)/lod+1;
+	int yst = std::max(ystart - lod, minty);
+	int yed = std::min(yend + lod, maxty);
+	int nloop = (yed - yst) / lod + 1;
 
 	if (nloop > 0)
 		ma->EnlargeArrays((8 * nloop), 2 * nloop);
@@ -1122,8 +1107,8 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	}
 	if(maxly<maxty && maxly>minty){
 		y=maxly;
-		int xs=max(xstart-lod,mintx);
-		int xe=min(xend+lod,maxtx);
+		int xs = std::max(xstart -lod, mintx);
+		int xe = std::min(xend + lod, maxtx);
 		if (xs < xe) {
 			x = xs;
 			int ylod = y + lod;
@@ -1157,8 +1142,8 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	}
 	if(minly>minty && minly<maxty){
 		y=minly-lod;
-		int xs=max(xstart-lod,mintx);
-		int xe=min(xend+lod,maxtx);
+		int xs = std::max(xstart - lod, mintx);
+		int xe = std::min(xend + lod, maxtx);
 		if(xs<xe){
 			x=xs;
 			int ylod = y + lod;
