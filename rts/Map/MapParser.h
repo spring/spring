@@ -4,8 +4,9 @@
 #define MAP_PARSER_H
 
 #include <string>
-#include "float3.h"
+
 #include "Lua/LuaParser.h"
+#include "System/float3.h"
 
 
 class MapParser
@@ -28,6 +29,5 @@ class MapParser
 	private:
 		LuaParser* parser;
 };
-
 
 #endif // MAP_PARSER_H

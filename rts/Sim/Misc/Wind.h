@@ -6,9 +6,10 @@
 #include <map>
 #include <boost/noncopyable.hpp>
 
-#include "float3.h"
+#include "System/float3.h"
 
 class CUnit;
+
 class CWind : public boost::noncopyable
 {
 	CR_DECLARE(CWind);
@@ -20,8 +21,8 @@ public:
 	void LoadWind(float min, float max);
 	void Update();
 
-	bool AddUnit(CUnit*);
-	bool DelUnit(CUnit*);
+	bool AddUnit(CUnit* u);
+	bool DelUnit(CUnit* u);
 
 	float GetMaxWind() const { return maxWind; }
 	float GetMinWind() const { return minWind; }
