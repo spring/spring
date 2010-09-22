@@ -805,6 +805,8 @@ void CWaitCommandsAI::DeathWait::Update()
 		return;
 	}
 
+	unitPos.clear();
+
 	if (!deathUnits.empty()) {
 		return; // more must die
 	}
@@ -845,14 +847,14 @@ void CWaitCommandsAI::DeathWait::Draw() const
 
 	float3 midPos(0.0f, 0.0f, 0.0f);
 	for (size_t i = 0; i < unitPos.size(); i++) {
-		midPos += unitPos[i];
+		midPos += unitPos.at(i);
 	}
 	midPos /= (float)unitPos.size();
 
 	cursorIcons.AddIcon(CMD_DEATHWAIT, midPos);
 
 	for (size_t i = 0; i < unitPos.size(); i++) {
-		lineDrawer.StartPath(unitPos[i], cmdColors.start);
+		lineDrawer.StartPath(unitPos.at(i), cmdColors.start);
 		lineDrawer.DrawLine(midPos, cmdColors.deathWait);
 		lineDrawer.FinishPath();
 	}
@@ -867,12 +869,10 @@ void CWaitCommandsAI::DeathWait::Draw() const
 			lineDrawer.FinishPath();
 		}
 	}
-
-	unitPos.clear();
 }
 
 
-void CWaitCommandsAI::DeathWait::AddUnitPosition(const float3& pos) const
+void CWaitCommandsAI::DeathWait::AddUnitPosition(const float3& pos)
 {
 	unitPos.push_back(pos);
 }
