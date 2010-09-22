@@ -52,7 +52,10 @@ void CAIAICheats::SetCheatsEnabled(bool enabled) {
 }
 
 void CAIAICheats::EnableCheatEvents(bool enable) {
+
+	SetCheatsEnabled(true);
 	sAICallback->Cheats_setEventsEnabled(skirmishAIId, enable);
+	SetCheatsEnabled(false);
 }
 
 
