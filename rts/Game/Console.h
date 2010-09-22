@@ -14,13 +14,13 @@ class Action;
 class CommandReceiver
 {
 public:
-	CommandReceiver() {};
-	virtual ~CommandReceiver() {};
+	CommandReceiver() {}
+	virtual ~CommandReceiver() {}
 	
 	/**
 	@brief callback function for all registered commands
 	*/
-	virtual void PushAction(const Action&) = 0;
+	virtual void PushAction(const Action& action) = 0;
 
 protected:
 	/**
@@ -57,4 +57,4 @@ private:
 	std::map<const std::string, CommandReceiver*> commandMap;
 };
 
-#endif
+#endif // CONSOLE_H

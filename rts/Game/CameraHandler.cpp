@@ -250,13 +250,12 @@ bool CCameraHandler::LoadView(const std::string& name)
 	GetState(current);
 
 	if (saved == current) { // load a view twice to return to old settings
-		 if (name != "__old_view") { // safety: should not happen, but who knows?
-			 return LoadView("__old_view");
-		 } else {
-			 return false;
-			}
-	}
-	else {
+		if (name != "__old_view") { // safety: should not happen, but who knows?
+			return LoadView("__old_view");
+		} else {
+			return false;
+		}
+	} else {
 		if (name != "__old_view") {
 			SaveView("__old_view");
 		}
