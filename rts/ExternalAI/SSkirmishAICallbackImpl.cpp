@@ -1031,7 +1031,7 @@ EXPORT(bool) skirmishAiCallback_Cheats_setEventsEnabled(int skirmishAIId, bool e
 }
 
 EXPORT(bool) skirmishAiCallback_Cheats_isOnlyPassive(int skirmishAIId) {
-	return CAICheats::IsPassive();
+	return CAICheats::OnlyPassiveCheats();
 }
 
 EXPORT(int) skirmishAiCallback_Game_getAiInterfaceVersion(int skirmishAIId) {
