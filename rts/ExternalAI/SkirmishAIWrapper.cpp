@@ -207,9 +207,9 @@ void CSkirmishAIWrapper::Release(int reason) {
 static void streamCopy(std::istream* in, std::ostream* out)
 {
 	static const size_t buffer_size = 128;
-	char* buffer;
 
-	buffer = new char[buffer_size];
+	// have to use _new_ here for VS compatibility (no C99 support)
+	char* buffer = new char[buffer_size];
 
 	in->read(buffer, buffer_size);
 	while (in->good()) {
@@ -225,6 +225,8 @@ static std::string createTempFileName(const char* action, int teamId,
 		int skirmishAIId) {
 
 	static const size_t tmpFileName_size = 1024;
+
+	// have to use _new_ here for VS compatibility (no C99 support)
 	char* tmpFileName = new char[tmpFileName_size];
 	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team%i_id%i.tmp", action,
 			teamId, skirmishAIId);
