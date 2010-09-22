@@ -13,6 +13,7 @@
 
 class float3;
 class CObject;
+class CUnit;
 struct Command;
 class CCommandQueue;
 
@@ -37,10 +38,10 @@ class CWaitCommandsAI {
 		void AddSquadWait(const Command& cmd);
 		void AddGatherWait(const Command& cmd);
 
-		// acknowledge a command received from the network
+		/// acknowledge a command received from the network
 		void AcknowledgeCommand(const Command& cmd);
 
-		// search a new unit's queue and add it to its wait commands
+		/// search a new unit's queue and add it to its wait commands
 		void AddLocalUnit(CUnit* unit, const CUnit* builder);
 
 		void ClearUnitQueue(CUnit* unit, const CCommandQueue& queue);
@@ -50,8 +51,8 @@ class CWaitCommandsAI {
 
 	private:
 		class Wait;
-		bool InsertWaitObject(Wait*);
-		void RemoveWaitObject(Wait*);
+		bool InsertWaitObject(Wait* wait);
+		void RemoveWaitObject(Wait* wait);
 
 	private:
 		typedef int KeyType;
@@ -69,8 +70,8 @@ class CWaitCommandsAI {
 				virtual void AddUnit(CUnit* unit) = 0;
 				virtual void RemoveUnit(CUnit* unit) = 0;
 				virtual void Update() = 0;
-				virtual void Draw() const { return; }
-				virtual void AddUnitPosition(const float3& pos) const { return; }
+				virtual void Draw() const {}
+				virtual void AddUnitPosition(const float3& pos) const {}
 				virtual const std::string& GetStateText() const { return noText; }
 			public:
 				time_t GetDeadTime() const { return deadTime; }
@@ -88,7 +89,8 @@ class CWaitCommandsAI {
 				bool IsWaitingOn(const CUnit* unit) const;
 				void SendCommand(const Command& cmd, const CUnitSet& unitSet);
 				void SendWaitCommand(const CUnitSet& unitSet);
-				CUnitSet::iterator RemoveUnitFromSet(CUnitSet::iterator, CUnitSet&);
+				/// removes the pointed at unit and returns an iterator to the next unit in the set
+				CUnitSet::iterator RemoveUnitFromSet(CUnitSet::iterator it, CUnitSet& unitSet);
 			protected:
 				float code;
 				KeyType key;

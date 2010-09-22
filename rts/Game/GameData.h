@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GAMEDATA_H
-#define GAMEDATA_H
+#ifndef GAME_DATA_H
+#define GAME_DATA_H
 
 #include <string>
 #include <vector>
@@ -16,7 +16,7 @@ class GameData
 {
 public:
 	GameData();
-	GameData(boost::shared_ptr<const netcode::RawPacket>);
+	GameData(boost::shared_ptr<const netcode::RawPacket> pckt);
 	
 	const netcode::RawPacket* Pack() const;
 	
@@ -25,10 +25,10 @@ public:
 	void SetModChecksum(const unsigned checksum);
 	void SetRandomSeed(const unsigned seed);
 	
-	const std::string& GetSetup() const {return setupText;};
-	unsigned GetMapChecksum() const {return mapChecksum;};
-	unsigned GetModChecksum() const {return modChecksum;};
-	unsigned GetRandomSeed() const {return randomSeed;};
+	const std::string& GetSetup() const { return setupText; }
+	unsigned GetMapChecksum() const { return mapChecksum; }
+	unsigned GetModChecksum() const { return modChecksum; }
+	unsigned GetRandomSeed() const { return randomSeed; }
 
 private:
 	std::string setupText;
@@ -39,4 +39,4 @@ private:
 	unsigned randomSeed;
 };
 
-#endif
+#endif // GAME_DATA_H
