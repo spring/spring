@@ -72,6 +72,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 		set(myBinJarArgs "cf")
 	endif (myManifestFile)
 
+	# remove deprecated sub-package from build dir, if it exists
+	# (required for build dirs of git:master from before 21. September 2010)
+	file(REMOVE_RECURSE "${myGeneratedSourceDir}/${myPkg}/oo")
+
 
 	# Generate sources
 	# ----------------
