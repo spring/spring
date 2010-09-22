@@ -242,10 +242,10 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 	else if (c.id == CMD_DEATHWAIT) {
-		if (teamHandler->ActiveAllyTeams() <= 2) {
+		if (teamHandler->ActiveAllyTeams() <= 3) { // 3rd ally team is Gaia -> do not count
 			waitCommandsAI.AddDeathWait(c);
 		} else {
-			logOutput.Print("DeathWait can only be used when there are 2 Ally Teams");
+			logOutput.Print("DeathWait can not be used with more then 2 Ally Teams, to prevent cheating");
 		}
 		return;
 	}
