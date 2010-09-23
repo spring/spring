@@ -394,6 +394,8 @@ bool CGameSetup::Init(const std::string& buf)
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
 	hostDemo    = !demoName.empty();
 
+	file.GetTDef(gameStartDelay, (unsigned int) 4, "GAME\\GameStartDelay");
+
 	file.GetDef(useLuaGaia,       "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
