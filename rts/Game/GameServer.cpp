@@ -72,9 +72,6 @@ const unsigned SYNCCHECK_TIMEOUT = 300;
 /// used to prevent msg spam
 const unsigned SYNCCHECK_MSG_TIMEOUT = 400;
 
-///msecs to wait until the game starts after all players are ready
-const spring_duration gameStartDelay = spring_secs(4);
-
 /// The time intervall in msec for sending player statistics to each client
 const spring_duration playerInfoTime = spring_secs(2);
 
@@ -1675,6 +1672,9 @@ void CGameServer::CheckForGameStart(bool forced)
 			break;
 		}
 	}
+
+	// msecs to wait until the game starts after all players are ready
+	const spring_duration gameStartDelay = spring_secs(setup->gameStartDelay);
 
 	if (allReady || forced) {
 		if (!spring_istime(readyTime)) {
