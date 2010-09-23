@@ -66,11 +66,6 @@ public:
 	 * is handled internally/automatically.
 	 */
 	virtual void ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) = 0;
-	/** Unloads all currently Skirmish loaded AIs. */
-	virtual void ReleaseAllSkirmishAILibraries() = 0;
-
-	/** Unloads all currently loaded AIs and interfaces. */
-	virtual void ReleaseEverything() = 0;
 
 public:
 	/** Guaranteed to not return NULL. */

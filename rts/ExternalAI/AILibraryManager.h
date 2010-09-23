@@ -41,25 +41,14 @@ public:
 
 	virtual std::vector<SkirmishAIKey> FittingSkirmishAIKeys(
 			const SkirmishAIKey& skirmishAIKey) const;
-	/**
-	 * A Skirmish AI (its library) is only really loaded
-	 * when it is not yet loaded.
-	 */
 	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(
 			const SkirmishAIKey& skirmishAIKey);
-	/**
-	 * A Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
-	 * as many times as GetSkirmishAILibrary() was loading and unloading
-	 * of the interfaces is handled internally/automatically.
-	 */
 	virtual void ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey);
-	/** Unloads all currently Skirmish loaded AIs. */
-	virtual void ReleaseAllSkirmishAILibraries();
-
-	/** Unloads all currently loaded AIs and interfaces. */
-	virtual void ReleaseEverything();
 
 private:
+	/** Unloads all currently loaded AIs and interfaces. */
+	void ReleaseEverything();
+
 	typedef std::map<const AIInterfaceKey, CAIInterfaceLibrary*>
 			T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
