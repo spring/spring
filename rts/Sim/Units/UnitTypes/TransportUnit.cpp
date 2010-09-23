@@ -10,6 +10,7 @@
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitTypes/Building.h"

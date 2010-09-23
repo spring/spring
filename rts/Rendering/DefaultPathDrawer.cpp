@@ -10,6 +10,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
