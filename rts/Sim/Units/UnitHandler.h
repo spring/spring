@@ -17,6 +17,7 @@ class CUnit;
 class CBuilderCAI;
 class CFeature;
 class CLoadSaveInterface;
+struct BuildInfo;
 
 class CUnitHandler
 {

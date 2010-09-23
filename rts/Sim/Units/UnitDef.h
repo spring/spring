@@ -7,8 +7,6 @@
 #include <vector>
 #include <map>
 
-#include "BuildInfo.h"
-
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "System/float3.h"
