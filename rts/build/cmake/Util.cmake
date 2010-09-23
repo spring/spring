@@ -19,6 +19,7 @@
 # * GetListOfSubModules
 # * GetVersionFromFile
 # * GetLastPathPart
+# * CheckMinCMakeVersion
 #
 
 
@@ -171,6 +172,25 @@ function    (MakeAbsolute absDir_var baseDir relDir)
 endfunction (MakeAbsolute)
 
 
+# Gets the version from a text file (${CMAKE_CURRENT_SOURCE_DIR}/VERSION),
+# and prepare a file for dependency tracking.
+# The project will reconfigure whenever the VERSION file gets touched.
+macro    (GetVersionPlusDepFile vers_var versDepFile_var)
+	set(myVersionFile    "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+	set(myVersionDepFile "${CMAKE_CURRENT_BINARY_DIR}/VERSION")
+	if    (EXISTS ${myVersionFile})
+		GetVersionFromFile(${vers_var} "${myVersionFile}")
+		configure_file("${myVersionFile}" "${myVersionDepFile}" COPYONLY)
+		set_source_files_properties("${myVersionDepFile}" PROPERTIES HEADER_FILE_ONLY TRUE)
+		set_source_files_properties("${myVersionDepFile}" PROPERTIES GENERATED TRUE)
+		set(${versDepFile_var} "${myVersionDepFile}")
+	else  (EXISTS ${myVersionFile})
+		set(${vers_var}        "UNKNOWN_VERSION")
+		set(${versDepFile_var} "${myVersionFile}")
+	endif (EXISTS ${myVersionFile})
+endmacro (GetVersionPlusDepFile vers_var versDepFile_var)
+
+
 # Recursively lists all native source files in a given directory,
 # relative to _relDir, or absolut, if _relDir == "".
 macro    (GetNativeSourcesRecursive _var _dir _relDir)
@@ -190,4 +210,23 @@ macro    (GetNativeSourcesRecursive _var _dir _relDir)
 		endif ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
 	endforeach (_ext)
 endmacro (GetNativeSourcesRecursive _var _dir _relDir)
+
+
+
+macro    (CheckMinCMakeVersion res_var major minor patch)
+	SET(${res_var} FALSE)
+	IF     (${CMAKE_MAJOR_VERSION} GREATER ${major})
+		SET(${res_var} TRUE)
+	ELSEIF (${CMAKE_MAJOR_VERSION} EQUAL ${major})
+		IF     (${CMAKE_MINOR_VERSION} GREATER ${minor})
+			SET(${res_var} TRUE)
+		ELSEIF (${CMAKE_MINOR_VERSION} EQUAL ${minor})
+			IF     (${CMAKE_PATCH_VERSION} GREATER ${patch})
+				SET(${res_var} TRUE)
+			ELSEIF (${CMAKE_PATCH_VERSION} EQUAL ${patch})
+				SET(${res_var} TRUE)
+			ENDIF  ()
+		ENDIF  ()
+	ENDIF  ()
+endmacro (CheckMinCMakeVersion res_var major minor patch)
 

@@ -1,10 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __NOMAPDAMAGE_H__
-#define __NOMAPDAMAGE_H__
+#ifndef __NO_MAP_DAMAGE_H__
+#define __NO_MAP_DAMAGE_H__
 
 #include "MapDamage.h"
 
+/** Do no deformation. */
 class CNoMapDamage : public IMapDamage
 {
 public:
@@ -16,4 +17,4 @@ public:
 	void Update();
 };
 
-#endif // __NOMAPDAMAGE_H__
+#endif // __NO_MAP_DAMAGE_H__

@@ -2,8 +2,8 @@
 
 /* based on original los code in LosHandler.{cpp,h} and RadarHandler.{cpp,h} */
 
-#ifndef LOSMAP_H
-#define LOSMAP_H
+#ifndef LOS_MAP_H
+#define LOS_MAP_H
 
 #include <vector>
 #include "Vec2.h"
@@ -31,7 +31,7 @@ public:
 		return map[y * size.x + x];
 	}
 
-	// temp fix for CBaseGroundDrawer and AI interface, which need raw data
+	// FIXME temp fix for CBaseGroundDrawer and AI interface, which need raw data
 	unsigned short& front() { return map.front(); }
 
 protected:
@@ -60,4 +60,4 @@ private:
 	const float* const heightmap;
 };
 
-#endif
+#endif // LOS_MAP_H

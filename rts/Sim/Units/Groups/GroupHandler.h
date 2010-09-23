@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef	_GROUPHANDLER_H
-#define	_GROUPHANDLER_H
+#ifndef	_GROUP_HANDLER_H
+#define	_GROUP_HANDLER_H
 
 #include <map>
 #include <string>
@@ -45,7 +45,6 @@ protected:
 	int firstUnusedGroup;
 };
 
-//extern CGroupHandler* grouphandler;
 extern std::vector<CGroupHandler*> grouphandlers;
 
-#endif	// _GROUPHANDLER_H
+#endif	// _GROUP_HANDLER_H

@@ -48,9 +48,17 @@ public:
 	// speed)
 	virtual int GetCurrentFrame() = 0;
 
+	virtual int GetMySkirmishAIId() = 0;
 	virtual int GetMyTeam() = 0;
 	virtual int GetMyAllyTeam() = 0;
 	virtual int GetPlayerTeam(int playerId) = 0;
+	/**
+	 * Returns the number of active teams participating
+	 * in the currently running game.
+	 * A return value of 6 for example, would mean that teams 0 till 5
+	 * take part in the game.
+	 */
+	virtual int GetTeams() = 0;
 	/**
 	 * Returns the name of the side of a team in the game.
 	 *

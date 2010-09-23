@@ -47,8 +47,8 @@ enum NETMSG {
 
 	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
 	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
-	                              // short unitIDCount;  unitIDCount X short(unitID)
-	                              // short commandCount; commandCount X { int id; uchar options; std::vector<float> params }
+	                              // short unitIDCount;  unitIDCount * short(unitID)
+	                              // short commandCount; commandCount * { int id; uchar options; std::vector<float> params }
 	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs
 
 	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
@@ -98,7 +98,9 @@ enum NETMSG {
 	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
 	NETMSG_UNREGISTER_NETMSG= 74, // uchar myPlayerNum, uchar NETMSG
 
-	NETMSG_CREATE_NEWPLAYER = 75 // uchar playerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
+	NETMSG_CREATE_NEWPLAYER = 75, // uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
+
+	NETMSG_AICOMMAND_TRACKED= 76  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
 };
 
 // Data types for NETMSG_CUSTOM_DATA
@@ -150,7 +152,7 @@ public:
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
 
-	PacketType SendAICommand(uchar myPlayerNum, short unitID, int id, uchar options, const std::vector<float>& params);
+	PacketType SendAICommand(uchar myPlayerNum, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params);
 	PacketType SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
 
 	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);

@@ -45,7 +45,7 @@ std::string MakeFileSystemCompatible(const std::string& str);
 #ifndef AIDEF_H
 #define AIDEF_H
 
-#define AAI_VERSION(team) aiexport_getVersion(team)
+#define AAI_VERSION aiexport_getVersion()
 #define MAP_CACHE_VERSION "MAP_DATA_0_89"
 #define MAP_LEARN_VERSION "MAP_LEARN_0_89"
 #define MOD_LEARN_VERSION "MOD_LEARN_0_90"

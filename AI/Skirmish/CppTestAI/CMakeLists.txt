@@ -6,5 +6,10 @@ set(additionalSources      ${CUtils_SRC})
 set(additionalCompileFlags "")
 set(additionalLibraries    ${Cpp_AIWRAPPER_TARGET})
 
-include_directories(BEFORE ${Cpp_AIWRAPPER_GENERATED_SRC_DIR})
-ConfigureNativeSkirmishAI(mySourceDirRel additionalSources additionalCompileFlags additionalLibraries)
+
+if    (BUILD_Cpp_AIWRAPPER)
+	include_directories(BEFORE ${Cpp_AIWRAPPER_INCLUDE_DIRS})
+	ConfigureNativeSkirmishAI(mySourceDirRel additionalSources additionalCompileFlags additionalLibraries)
+else  (BUILD_Cpp_AIWRAPPER)
+	message ("warning: (New) C++ Test AI will not be built! (missing Cpp Wrapper)")
+endif (BUILD_Cpp_AIWRAPPER)

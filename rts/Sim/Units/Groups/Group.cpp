@@ -50,10 +50,9 @@ void CGroup::PostLoad()
 {
 	CUnitSet unitBackup = units;
 
-	for(CUnitSet::iterator ui=unitBackup.begin();ui!=unitBackup.end();++ui)
-	{
+	for(CUnitSet::iterator ui = unitBackup.begin(); ui != unitBackup.end(); ++ui) {
 		units.erase(*ui);
-		(*ui)->group=0;
+		(*ui)->group = NULL;
 	}
 }
 
@@ -124,7 +123,7 @@ void CGroup::ClearUnits(void)
 	GML_RECMUTEX_LOCK(group); // ClearUnits
 
 	eventHandler.GroupChanged(id);
-	while(!units.empty()){
+	while (!units.empty()) {
 		(*units.begin())->SetGroup(0);
 	}
 }

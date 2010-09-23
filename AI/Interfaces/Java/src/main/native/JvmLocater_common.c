@@ -31,6 +31,7 @@
 #define CURRENT_DATA_MODEL (CHAR_BIT * sizeof(void*))
 
 #include "CUtils/SimpleLog.h"
+#include "System/maindefines.h"
 
 // implemented in the OS specific files
 const char* GetArchPath();

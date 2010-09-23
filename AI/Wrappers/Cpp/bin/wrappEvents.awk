@@ -79,7 +79,6 @@ function printAIHeader(outFile, clsName) {
 		print("#include \"WeaponDef.h\"") >> outFile;
 		print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile;
 		print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile;
-		print("#include \"ExternalAI/Interface/SAIFloat3.h\"") >> outFile;
 		print("") >> outFile;
 		print("#include <string>") >> outFile;
 		print("#include <vector>") >> outFile;
@@ -120,7 +119,6 @@ function printAIFactoryHeader(outFile) {
 	printGPLHeader(outFile);
 	print("") >> outFile;
 	print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile;
-	print("#include \"ExternalAI/Interface/SAIFloat3.h\"") >> outFile;
 	print("") >> outFile;
 	print("#include <string>") >> outFile;
 	print("#include <map>") >> outFile;
@@ -139,12 +137,12 @@ function printAIFactoryHeader(outFile) {
 	print("	std::map<int, AI*> ais;") >> outFile;
 	print("	std::map<int, AICallback*> clbs;") >> outFile;
 	print("") >> outFile;
-	print("	AI* GetAI(int teamId, bool remove = false) {") >> outFile;
+	print("	AI* GetAI(int skirmishAIId, bool remove = false) {") >> outFile;
 	print("") >> outFile;
 	print("		AI* ai = NULL;") >> outFile;
 	print("") >> outFile;
 	print("		std::map<int, AI*>::iterator ai_it;") >> outFile;
-	print("		ai_it = ais.find(teamId);") >> outFile;
+	print("		ai_it = ais.find(skirmishAIId);") >> outFile;
 	print("		if (ai_it != ais.end()) {") >> outFile;
 	print("			ai = *ai_it;") >> outFile;
 	print("		}") >> outFile;
@@ -152,12 +150,12 @@ function printAIFactoryHeader(outFile) {
 	print("			ais.remove(ai_it);") >> outFile;
 	print("		}") >> outFile;
 	print("") >> outFile;
-	print("	AICallback* GetAICallback(int teamId, bool remove = false) {") >> outFile;
+	print("	AICallback* GetAICallback(int skirmishAIId, bool remove = false) {") >> outFile;
 	print("") >> outFile;
 	print("		AICallback* ai = NULL;") >> outFile;
 	print("") >> outFile;
 	print("		std::map<int, AICallback*>::iterator ai_it;") >> outFile;
-	print("		clb_it = clbs.find(teamId);") >> outFile;
+	print("		clb_it = clbs.find(skirmishAIId);") >> outFile;
 	print("		if (clb_it != ais.end()) {") >> outFile;
 	print("			clb = *clb_it;") >> outFile;
 	print("		}") >> outFile;
@@ -172,31 +170,31 @@ function printAIFactoryHeader(outFile) {
 	print("") >> outFile;
 	print("	typedef std::map<std::string, std::string> Properties;") >> outFile;
 	print("") >> outFile;
-	print("	int Init(int teamId, Properties info, Properties options) {") >> outFile;
+	print("	int Init(int skirmishAIId, Properties info, Properties options) {") >> outFile;
 	print("") >> outFile;
-	print("		AI* ai = CreateAI(teamId, info, options);") >> outFile;
+	print("		AI* ai = CreateAI(skirmishAIId, info, options);") >> outFile;
 	print("		if (ai != NULL) {") >> outFile;
-	print("			ais[teamId] = ai);") >> outFile;
+	print("			ais[skirmishAIId] = ai);") >> outFile;
 	print("		}") >> outFile;
 	print("		return (ai == NULL) ? -1 : 0;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
-	print("	int Release(int teamId) {") >> outFile;
+	print("	int Release(int skirmishAIId) {") >> outFile;
 	print("") >> outFile;
-	print("		AI* ai = GetAI(teamId, true);") >> outFile;
-	print("		AICallback* clb = GetAICallback(teamId, true);") >> outFile;
+	print("		AI* ai = GetAI(skirmishAIId, true);") >> outFile;
+	print("		AICallback* clb = GetAICallback(skirmishAIId, true);") >> outFile;
 	print("		int ret = (ai == NULL) ? -1 : 0;") >> outFile;
 	print("		delete ai;") >> outFile;
 	print("		delete clb;") >> outFile;
 	print("		return ret;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
-	print("	int HandleEvent(int teamId, int topic, const void* event) {") >> outFile;
+	print("	int HandleEvent(int skirmishAIId, int topic, const void* event) {") >> outFile;
 	print("") >> outFile;
 	print("		int _ret = -1;") >> outFile;
 	print("") >> outFile;
-	print("		AI* ai = GetAI(teamId);") >> outFile;
-	print("		AICallback* clb = GetAICallback(teamId);") >> outFile;
+	print("		AI* ai = GetAI(skirmishAIId);") >> outFile;
+	print("		AICallback* clb = GetAICallback(skirmishAIId);") >> outFile;
 	print("") >> outFile;
 	print("		if (ai != NULL) {") >> outFile;
 	print("			try {") >> outFile;
@@ -217,7 +215,7 @@ function printAIFactoryEnd(outFile) {
 	print("		return _ret;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
-	print("	virtual AI* CreateAI(int teamId, Properties info, Properties options) = 0;") >> outFile;
+	print("	virtual AI* CreateAI(int skirmishAIId, Properties info, Properties options) = 0;") >> outFile;
 	print("}; // end of class") >> outFile;
 	print("} // end of namespace") >> outFile;
 	print("") >> outFile;
@@ -261,8 +259,8 @@ function printEventOO(evtIndex) {
 	sub(/evt.weaponDefId/, "WeaponDef.getInstance(ooClb, evt.weaponDefId)", paramsEvt);
 
 	if (eName == "Init") {
-		paramsTypes = "int teamId, OOAICallback callback";
-		paramsEvt = "evt.team, ooClb";
+		paramsTypes = "int skirmishAIId, OOAICallback callback";
+		paramsEvt = "evt.skirmishAIId, ooClb";
 	} else if (eNameLowerized == "playerCommand") {
 		paramsTypes = "std::vector<Unit> units, AICommand command, int playerId";
 		paramsEvt = "units, command, evt.playerId";
@@ -281,8 +279,8 @@ function printEventOO(evtIndex) {
 	print("\t\t\t\t\t" "case " eCls ": {") >> myAIFactoryFile_h;
 	print("\t\t\t\t\t\t" eCls " evt = (" eCls ") event;") >> myAIFactoryFile_h;
 	if (eName == "Init") {
-		print("\t\t\t\t\t\t" "clb = AICallback.getInstance(evt.callback, evt.team);") >> myAIFactoryFile_h;
-		print("\t\t\t\t\t\t" "clbs.put(teamId, clb);") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "clb = AICallback.getInstance(evt.callback, evt.skirmishAIId);") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "clbs.put(skirmishAIId, clb);") >> myAIFactoryFile_h;
 	} else if (eName == "PlayerCommand") {
 		print("\t\t\t\t\t\t" "std::vector<Unit> units;") >> myAIFactoryFile_h;
 		print("\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myAIFactoryFile_h;

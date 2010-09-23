@@ -6,6 +6,8 @@
 #  7ZIP_BIN   - will be set to the 7zip executable (eg. 7z.exe)
 #  7ZIP_FOUND - TRUE if 7zip was found
 
+INCLUDE(FindPackageHandleStandardArgs)
+
 IF    (7ZIP_BIN)
 	# Already in cache, be silent
 	SET(7zip_FIND_QUIETLY TRUE)
@@ -22,7 +24,6 @@ find_program(7ZIP_BIN
 
 # handle the QUIETLY and REQUIRED arguments and set 7ZIP_FOUND to TRUE if
 # all listed variables are TRUE
-INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(7zip DEFAULT_MSG 7ZIP_BIN)
 
 MARK_AS_ADVANCED(7ZIP_BIN)

@@ -5,9 +5,9 @@
 
 namespace Threading {
 	static bool haveMainThreadID = false;
-	static boost::thread *mainThread = NULL;
+	static boost::thread* mainThread = NULL;
 	static boost::thread::id mainThreadID;
-	static std::runtime_error *threadError = NULL;
+	static std::runtime_error* threadError = NULL;
 #ifdef USE_GML
 	static int const noThreadID = -1;
 	static int simThreadID = noThreadID;
@@ -16,7 +16,7 @@ namespace Threading {
 	static boost::thread::id simThreadID;
 #endif	
 
-	void SetMainThread(boost::thread *mt) {
+	void SetMainThread(boost::thread* mt) {
 		if (!haveMainThreadID) {
 			haveMainThreadID = true;
 			mainThread = mt;
@@ -24,7 +24,7 @@ namespace Threading {
 		}
 	}
 
-	boost::thread *GetMainThread() {
+	boost::thread* GetMainThread() {
 		return mainThread;
 	}
 
@@ -43,7 +43,7 @@ namespace Threading {
 #endif
 	}
 
-	void SetThreadError(const std::string &s) {
+	void SetThreadError(const std::string& s) {
 		threadError = new std::runtime_error(s);
 	}
 	std::runtime_error GetThreadError() {

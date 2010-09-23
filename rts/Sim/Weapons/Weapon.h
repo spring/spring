@@ -12,7 +12,6 @@
 class CUnit;
 class CWeaponProjectile;
 struct WeaponDef;
-class UnitDefWeapon;
 
 enum TargetType {
 	Target_None,

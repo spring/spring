@@ -21,6 +21,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "CommandAI/Command.h"
 #include "System/EventBatchHandler.h"
 #include "System/GlobalUnsynced.h"
@@ -465,12 +466,11 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 
 
 /**
-* returns a build Command that intersects the ray described by pos and dir from the command queues of the
-* units units on team number team
-* @brief returns a build Command that intersects the ray described by pos and dir
-* @return the build Command, or 0 if one is not found
-*/
-
+ * Returns a build Command that intersects the ray described by pos and dir from
+ * the command queues of the units 'units' on team number 'team'.
+ * @brief returns a build Command that intersects the ray described by pos and dir
+ * @return the build Command, or a Command wiht id 0 if none is found
+ */
 Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	float3 tempF1 = pos;
 

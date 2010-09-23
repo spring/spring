@@ -27,7 +27,7 @@ class CBaseGroundDrawer;
 struct MapFeatureInfo
 {
 	float3 pos;
-	int featureType;	//index to one of the strings above
+	int featureType;	///< index to one of the strings above
 	float rotation;
 };
 
@@ -103,8 +103,8 @@ public:
 
 public:
 	void UpdateDraw();
-	virtual void Update(){};
-	virtual void Explosion(float x,float y,float strength){};
+	virtual void Update() {};
+	virtual void Explosion(float x,float y,float strength) {};
 
 	static inline unsigned char EncodeHeight(const float h) { return std::max(0, 255+(int)(10.0f*h)); }
 
