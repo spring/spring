@@ -249,7 +249,9 @@ function printNativeJNI() {
 
 					print("\t" "if (" jni_paramNames[p] " != NULL) {") >> outFile_nc;
 					if (_isPrimitive) {
-						print("\t\t" "(*__env)->Release" capArrType "ArrayElements(__env, " jni_paramNames[p] ", " c_paramNames[p] ", 0 /* copy back changes and release */);") >> outFile_nc;
+						_elementJNativeType = jni_paramTypes[p];
+						sub(/Array$/, "", _elementJNativeType); # jfloatArray -> jfloat
+						print("\t\t" "(*__env)->Release" capArrType "ArrayElements(__env, " jni_paramNames[p] ", (" _elementJNativeType "*) " c_paramNames[p] ", 0 /* copy back changes and release */);") >> outFile_nc;
 					} else if (_isString) {
 						print("\t\t" "const int " c_paramNames[p] "_size = (int) (*__env)->GetArrayLength(__env, " jni_paramNames[p] ");") >> outFile_nc;
 						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") calloc(sizeof(char*), " c_paramNames[p] "_size);") >> outFile_nc;
