@@ -1055,6 +1055,10 @@ EXPORT(int) skirmishAiCallback_Game_getPlayerTeam(int skirmishAIId, int player) 
 	return skirmishAIId_callback[skirmishAIId]->GetPlayerTeam(player);
 }
 
+EXPORT(int) skirmishAiCallback_Game_getTeams(int skirmishAIId) {
+	return teamHandler->ActiveTeams();
+}
+
 EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int skirmishAIId, int otherTeamId) {
 	return skirmishAIId_callback[skirmishAIId]->GetTeamSide(otherTeamId);
 }
@@ -4517,6 +4521,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getMyTeam = &skirmishAiCallback_Game_getMyTeam;
 	callback->Game_getMyAllyTeam = &skirmishAiCallback_Game_getMyAllyTeam;
 	callback->Game_getPlayerTeam = &skirmishAiCallback_Game_getPlayerTeam;
+	callback->Game_getTeams = &skirmishAiCallback_Game_getTeams;
 	callback->Game_getTeamSide = &skirmishAiCallback_Game_getTeamSide;
 	callback->Game_getTeamColor = &skirmishAiCallback_Game_getTeamColor;
 	callback->Game_getTeamAllyTeam = &skirmishAiCallback_Game_getTeamAllyTeam;

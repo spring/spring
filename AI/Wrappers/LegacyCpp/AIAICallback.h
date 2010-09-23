@@ -46,6 +46,7 @@ public:
 	int GetMyTeam();
 	int GetMyAllyTeam();
 	int GetPlayerTeam(int player);
+	int GetTeams();
 	const char* GetTeamSide(int teamId);
 	int GetTeamAllyTeam(int teamId);
 
