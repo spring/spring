@@ -993,20 +993,25 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getMax)(int skirmishAIId); //$ STATIC
 
 	/**
-	 * Returns all units that are not in this teams ally-team nor neutral and are
-	 * in LOS.
+	 * Returns all units that are not in this teams ally-team nor neutral
+	 * and are in LOS.
+	 * If cheats are enabled, this will return all enemies on the map.
 	 */
 	int               (CALLING_CONV *getEnemyUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
-	 * Returns all units that are not in this teams ally-team nor neutral and are
-	 * in LOS plus they have to be located in the specified area of the map.
+	 * Returns all units that are not in this teams ally-team nor neutral
+	 * and are in LOS plus they have to be located in the specified area
+	 * of the map.
+	 * If cheats are enabled, this will return all enemies
+	 * in the specified area.
 	 */
 	int               (CALLING_CONV *getEnemyUnitsIn)(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
 	/**
-	 * Returns all units that are not in this teams ally-team nor neutral and are in
-	 * some way visible (sight or radar).
+	 * Returns all units that are not in this teams ally-team nor neutral
+	 * and are in under sensor coverage (sight or radar).
+	 * If cheats are enabled, this will return all enemies on the map.
 	 */
 	int               (CALLING_CONV *getEnemyUnitsInRadarAndLos)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); //$ FETCHER:MULTI:IDs:Unit:unitIds
 
