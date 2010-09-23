@@ -1652,8 +1652,8 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
-static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
+#define fullRead CLuaHandle::GetActiveFullRead()
+#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
 
 
 static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)

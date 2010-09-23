@@ -402,14 +402,15 @@ void CEventHandler::Load(CArchiveBase* archive)
 }
 
 #ifdef USE_GML
-#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return;
+#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return
 #else
 #define GML_DRAW_CALLIN_SELECTOR()
 #endif
 
 void CEventHandler::Update()
 {
-	GML_DRAW_CALLIN_SELECTOR()
+	GML_DRAW_CALLIN_SELECTOR();
+
 	const int count = listUpdate.size();
 
 	if (count <= 0)
@@ -439,7 +440,7 @@ void CEventHandler::ViewResize()
 #define DRAW_CALLIN(name)                         \
   void CEventHandler:: Draw ## name ()        \
   {                                               \
-    GML_DRAW_CALLIN_SELECTOR()                    \
+    GML_DRAW_CALLIN_SELECTOR();                   \
     const int count = listDraw ## name.size();    \
     if (count <= 0) {                             \
       return;                                     \

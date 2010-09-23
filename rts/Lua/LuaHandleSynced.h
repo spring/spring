@@ -24,24 +24,26 @@ class CLuaHandleSynced : public CLuaHandle
 		bool Initialize(const string& syncData);
 		string GetSyncData();
 
-		bool GetAllowChanges() const { return allowChanges; }
+		inline bool GetAllowChanges() const { return IsDrawCallIn() ? false : allowChanges; }
+		inline void SetAllowChanges(bool ac, bool all = false) { if(!IsDrawCallIn() || all) allowChanges = ac; }
 
 	public: // call-ins
-		bool HasCallIn(const string& name);
-		virtual bool SyncedUpdateCallIn(const string& name);
-		virtual bool UnsyncedUpdateCallIn(const string& name);
+		bool HasCallIn(lua_State *L, const string& name);
+		virtual bool SyncedUpdateCallIn(lua_State *L, const string& name);
+		virtual bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
 
 		void GameFrame(int frameNumber);
 		bool GotChatMsg(const string& msg, int playerID);
 		bool RecvLuaMsg(const string& msg, int playerID);
-		void RecvFromSynced(int args); // not an engine call-in
+		void DelayRecvFromSynced(lua_State* srcState, int args);
+		virtual void RecvFromSynced(int args); // not an engine call-in
 
 		bool SyncedActionFallback(const string& line, int playerID);
 
 	public: // custom call-in
 		bool HasSyncedXCall(const string& funcName);
 		bool HasUnsyncedXCall(const string& funcName);
-		int XCall(lua_State* srcState, const string& funcName);
+		int XCall(lua_State* L, lua_State* srcState, const string& funcName);
 		int SyncedXCall(lua_State* srcState, const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
 
@@ -51,29 +53,30 @@ class CLuaHandleSynced : public CLuaHandle
 		void Init(const string& syncedFile,
 		          const string& unsyncedFile,
 		          const string& modes);
-		bool SetupSynced(const string& code, const string& filename);
-		bool SetupUnsynced(const string& code, const string& filename);
+		bool SetupSynced(lua_State *L, const string& code, const string& filename);
+		bool SetupUnsynced(lua_State *L, const string& code, const string& filename);
 
 		// hooks to add code during initialization
-		virtual bool AddSyncedCode() = 0;
-		virtual bool AddUnsyncedCode() = 0;
+		virtual bool AddSyncedCode(lua_State *L) = 0;
+		virtual bool AddUnsyncedCode(lua_State *L) = 0;
 
 		string LoadFile(const string& filename, const string& modes) const;
 
-		bool CopyGlobalToUnsynced(const char* name);
-		bool SetupUnsyncedFunction(const char* funcName);
-		bool LoadUnsyncedCode(const string& code, const string& debug);
-		bool SyncifyRandomFuncs();
-		bool CopyRealRandomFuncs();
-		bool LightCopyTable(int dstIndex, int srcIndex);
+		bool CopyGlobalToUnsynced(lua_State *L, const char* name);
+		bool SetupUnsyncedFunction(lua_State *L, const char* funcName);
+		bool LoadUnsyncedCode(lua_State *L, const string& code, const string& debug);
+		bool SyncifyRandomFuncs(lua_State *L);
+		bool CopyRealRandomFuncs(lua_State *L);
+		bool LightCopyTable(lua_State *L, int dstIndex, int srcIndex);
 
 	protected:
 		static CLuaHandleSynced* GetActiveHandle() {
-			return dynamic_cast<CLuaHandleSynced*>(activeHandle);
+			return dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle());
 		}
 
-	protected:
+	private:
 		bool allowChanges;
+	protected:
 		bool teamsLocked; // disables CallAsTeam()
 		map<string, string> textCommands; // name, help
 
