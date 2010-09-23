@@ -166,6 +166,10 @@ int CAIAICallback::GetPlayerTeam(int player) {
 	return sAICallback->Game_getPlayerTeam(skirmishAIId, player);
 }
 
+int CAIAICallback::GetTeams() {
+	return sAICallback->Game_getTeams(skirmishAIId);
+}
+
 const char* CAIAICallback::GetTeamSide(int otherTeamId) {
 	return sAICallback->Game_getTeamSide(skirmishAIId, otherTeamId);
 }

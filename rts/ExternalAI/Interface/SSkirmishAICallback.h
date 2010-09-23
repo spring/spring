@@ -254,6 +254,14 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Game_getPlayerTeam)(int skirmishAIId, int playerId);
 
 	/**
+	 * Returns the number of active teams participating
+	 * in the currently running game.
+	 * A return value of 6 for example, would mean that teams 0 till 5
+	 * take part in the game.
+	 */
+	int               (CALLING_CONV *Game_getTeams)(int skirmishAIId);
+
+	/**
 	 * Returns the name of the side of a team in the game.
 	 *
 	 * This should not be used, as it may be "",
