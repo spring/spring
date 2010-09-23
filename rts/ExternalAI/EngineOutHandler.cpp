@@ -5,6 +5,7 @@
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
@@ -99,7 +100,8 @@ void CEngineOutHandler::Destroy() {
 		CEngineOutHandler* tmp = singleton;
 		singleton = NULL;
 		delete tmp;
-		tmp = NULL;
+
+		IAILibraryManager::Destroy();
 	}
 }
 
