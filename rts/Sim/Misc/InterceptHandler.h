@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef INTERCEPTHANDLER_H
-#define INTERCEPTHANDLER_H
+#ifndef INTERCEPT_HANDLER_H
+#define INTERCEPT_HANDLER_H
 
 #include "Object.h"
 
@@ -19,15 +19,15 @@ class CInterceptHandler : public boost::noncopyable
 	CR_DECLARE(CInterceptHandler)
 
 public:
-	CInterceptHandler(void);
-	~CInterceptHandler(void);
+	CInterceptHandler();
+	~CInterceptHandler();
 
 	void AddInterceptorWeapon(CWeapon* weapon);
 	void RemoveInterceptorWeapon(CWeapon* weapon);
-	void AddInterceptTarget(CWeaponProjectile* target, float3 destination);
+	void AddInterceptTarget(CWeaponProjectile* target, const float3& destination);
 
 	void AddShieldInterceptableProjectile(CWeaponProjectile* p);
-	float AddShieldInterceptableBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy);
+	float AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy);
 	void AddPlasmaRepulser(CPlasmaRepulser* r);
 	void RemovePlasmaRepulser(CPlasmaRepulser* r);
 
@@ -38,4 +38,4 @@ private:
 
 extern CInterceptHandler interceptHandler;
 
-#endif /* INTERCEPTHANDLER_H */
+#endif /* INTERCEPT_HANDLER_H */

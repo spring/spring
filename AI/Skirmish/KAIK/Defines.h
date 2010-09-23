@@ -5,11 +5,11 @@
 
 #include "AIExport.h" // for aiexport_getVersion()
 
-#define AI_VERSION_NUMBER(team)  aiexport_getVersion(team)
-#define AI_NAME(team)            std::string("KAIK ") + AI_VERSION_NUMBER(team) + " Unofficial"
-#define AI_DATE                  __DATE__
-#define AI_VERSION(team)         AI_NAME(team) + " (built " + AI_DATE + ")"
-#define AI_CREDITS               "(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
+#define AI_VERSION_NUMBER	aiexport_getVersion()
+#define AI_NAME				std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
+#define AI_DATE				__DATE__
+#define AI_VERSION			AI_NAME + " (built " + AI_DATE + ")"
+#define AI_CREDITS			"(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
 
 // Logger
 #define L(ai, msg)      (ai->logger->Log(msg));

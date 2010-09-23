@@ -83,6 +83,7 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include "include\fileExistChecks.nsh"
 !include "include\fileMisc.nsh"
 !include "include\checkrunning.nsh"
+!include "include\aiHelpers.nsh"
 
 !include "sections\ensureDotNet.nsh"
 
@@ -255,15 +256,6 @@ Section /o "Portable" SEC_PORTABLE
 	!undef INSTALL
 SectionEnd
 
-
-!macro SkirmishAIInstSection skirAiName
-	Section "${skirAiName}" SEC_${skirAiName}
-		!define INSTALL
-			${!echonow} "Processing: Skirmish AI install: ${skirAiName}"
-			!insertmacro InstallSkirmishAI ${skirAiName}
-		!undef INSTALL
-	SectionEnd
-!macroend
 
 SectionGroup "Skirmish AI plugins (Bots)"
 	!insertmacro SkirmishAIInstSection "AAI"

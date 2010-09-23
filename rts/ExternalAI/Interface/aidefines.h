@@ -22,7 +22,6 @@
 // the real ABI.
 // Files that have ot be included when using this define:
 // * ExternalAI/Interface/ELevelOfSupport.h
-// * ExternalAI/Interface/SAIFloat3.h
 // * ExternalAI/Interface/SSkirmishAILibrary.h
 // * ExternalAI/Interface/SSkirmishAICallback.h
 // * ExternalAI/Interface/SAIInterfaceLibrary.h
@@ -38,7 +37,6 @@
  */
 #define AIINTERFACE_ABI_VERSION_FAIL ( \
 	  sizeof(enum LevelOfSupport) \
-	+ sizeof(struct SAIFloat3) \
 	+ sizeof(struct SSkirmishAILibrary) \
 	+ sizeof(struct SSkirmishAICallback) \
 	+ sizeof(struct SAIInterfaceLibrary) \
@@ -69,10 +67,10 @@
  *
  * Defines the maximum number of skirmish AIs.
  * As there can not be more then spring allows teams, this is the upper limit.
- * (currently (July 2008) 16 real teams)
+ * (currently (February 2010) 255 real teams)
  */
 //const unsigned int MAX_SKIRMISH_AIS = MAX_TEAMS - 1;
-#define MAX_SKIRMISH_AIS 16
+#define MAX_SKIRMISH_AIS 255
 
 //const char* const AI_INTERFACES_DATA_DIR = "AI/Interfaces";
 #define AI_INTERFACES_DATA_DIR "AI/Interfaces"

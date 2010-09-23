@@ -100,6 +100,7 @@ private:
 public:
 	Command():
 		id(0),
+		aiCommandId(-1),
 		options(0),
 		tag(0),
 		timeOut(INT_MAX) {}
@@ -125,6 +126,11 @@ public:
 
 	/// CMD_xxx code  (custom codes can also be used)
 	int id;
+	/**
+	 * AI Command callback id (passed in on handleCommand, returned
+	 * in CommandFinished event)
+	 */
+	int aiCommandId;
 	/// option bits
 	unsigned char options;
 	/// command parameters

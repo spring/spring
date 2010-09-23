@@ -56,14 +56,3 @@ bool float3::CheckInBounds()
 
 	return in;
 }
-
-SAIFloat3 float3::toSAIFloat3() const {
-
-	SAIFloat3 sAIFloat3;
-
-	sAIFloat3.x = x;
-	sAIFloat3.y = y;
-	sAIFloat3.z = z;
-
-	return  sAIFloat3;
-}

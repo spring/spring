@@ -1029,7 +1029,7 @@ bool CLuaRules::DrawFeature(int featureID)
 
 
 
-const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
+const char* CLuaRules::AICallIn(const char* data, int inSize)
 {
 	if (!haveAICallIn) {
 		return NULL;
@@ -1060,11 +1060,7 @@ const char* CLuaRules::AICallIn(const char* data, int inSize, int* outSize)
 		return NULL;
 	}
 
-	size_t len;
-	const char* outData = lua_tolstring(L, -1, &len);
-	if (outSize != NULL) {
-		*outSize = len;
-	}
+	const char* outData = lua_tolstring(L, -1, NULL);
 
 	lua_pop(L, 1);
 

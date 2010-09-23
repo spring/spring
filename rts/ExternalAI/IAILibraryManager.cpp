@@ -21,6 +21,13 @@ IAILibraryManager* IAILibraryManager::GetInstance() {
 	return myAILibraryManager;
 }
 
+void IAILibraryManager::Destroy() {
+
+	IAILibraryManager* tmp = myAILibraryManager;
+	myAILibraryManager = NULL;
+	delete tmp;
+}
+
 std::string fillUpTo(const std::string& str, unsigned int numChars) {
 
 	std::string filler = "";

@@ -21,7 +21,11 @@ public:
 	}
 
 	static CCategoryHandler* Instance() {
-		if (instance == NULL) instance = new CCategoryHandler();
+
+		if (instance == NULL) {
+			instance = new CCategoryHandler();
+		}
+
 		return instance;
 	}
 	static void RemoveInstance();

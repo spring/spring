@@ -441,7 +441,8 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_AICOMMAND: {
+			case NETMSG_AICOMMAND:
+			case NETMSG_AICOMMAND_TRACKED: {
 				try {
 					netcode::UnpackPacket pckt(packet, 1);
 					short int psize;
@@ -460,6 +461,9 @@ void CGame::ClientReadNet()
 					Command c;
 					pckt >> c.id;
 					pckt >> c.options;
+					if (packetCode == NETMSG_AICOMMAND_TRACKED) {
+						pckt >> c.aiCommandId;
+					}
 
 					// insert the command parameters
 					for (int a = 0; a < ((psize - 11) / 4); ++a) {
@@ -893,10 +897,10 @@ void CGame::ClientReadNet()
 						}
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(playerId);
-						logOutput.Print("Skirmish AI \"%s\", which controlled team %i is now dead", aiInstanceName.c_str(), aiTeamId);
+						logOutput.Print("Skirmish AI \"%s\" (ID:%i), which controlled team %i is now dead", aiInstanceName.c_str(), skirmishAIId, aiTeamId);
 					}
 				} else if (newState == SKIRMAISTATE_ALIVE) {
-					logOutput.Print("Skirmish AI \"%s\" took over control of team %i", aiData->name.c_str(), aiTeamId);
+					logOutput.Print("Skirmish AI %s (ID:%i) took over control of team %i", aiData->name.c_str(), skirmishAIId, aiTeamId);
 				}
 				break;
 			}
