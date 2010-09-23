@@ -329,7 +329,8 @@ void CAILibraryManager::ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAI
 	}
 }
 
-void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
+
+void CAILibraryManager::ReleaseEverything() {
 	T_loadedInterfaces::const_iterator lil;
 
 	for (lil = loadedAIInterfaceLibraries.begin(); lil != loadedAIInterfaceLibraries.end(); lil++) {
@@ -380,13 +381,6 @@ void CAILibraryManager::ReleaseInterface(const AIInterfaceKey& interfaceKey) {
 			interfaceLib = NULL;
 		}
 	}
-}
-
-
-/** unloads all interfaces and AIs */
-void CAILibraryManager::ReleaseEverything() {
-
-	ReleaseAllSkirmishAILibraries();
 }
 
 
