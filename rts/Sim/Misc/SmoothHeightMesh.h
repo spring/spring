@@ -23,7 +23,7 @@ protected:
 public:
 	bool drawEnabled;
 
-	SmoothHeightMesh(const CGround* ground, float maxx, float maxy, float resolution, float smoothRadius);
+	SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad);
 	~SmoothHeightMesh();
 
 	void MakeSmoothMesh(const CGround* ground);
