@@ -256,7 +256,7 @@ CGameServer::~CGameServer()
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	assert(!hasLocalClient);
 	hasLocalClient = true;
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
@@ -273,7 +273,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostip, const int 
 
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 #if SPRING_TIME
 	lastTick = newlastTick;
 #else
@@ -1896,7 +1896,7 @@ void CGameServer::PushAction(const Action& action)
 
 bool CGameServer::HasFinished() const
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	return quitServer;
 }
 
@@ -1904,13 +1904,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
 	if (!demoReader) {
 		// use NEWFRAME_MSGes from demo otherwise
-#if BOOST_VERSION >= 103500
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
-		if (!fromServerThread)
-			scoped_lock.lock();
-#else
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, !fromServerThread);
-#endif
+		Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
 
 		CheckSync();
 		int newFrames = 1;
@@ -1998,7 +1992,7 @@ void CGameServer::UpdateLoop()
 		if (UDPNet)
 			UDPNet->Update();
 
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+		Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 		ServerReadNet();
 		Update();
 	}
