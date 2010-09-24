@@ -3,6 +3,7 @@
 #ifndef _SYNCHRO_H_
 #define _SYNCHRO_H_
 
+#include <boost/version.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 namespace Threading {
