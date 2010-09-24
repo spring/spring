@@ -774,6 +774,7 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	const float sqDist = (unit->pos - camera->pos).SqLength();
 	const float farLength = unit->sqRadius * unitDrawDistSqr;
 
+	if (unit->noDraw) { return; }
 	if (sqDist >= farLength) { return; }
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
@@ -2110,7 +2111,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
 #ifdef USE_GML
-		if (showHealthBars &&
+		if (showHealthBars && !unit->noDraw &&
 			(unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f || unit->limExperience > 0.0f ||
 			unit->beingBuilt || unit->stockpileWeapon || unit->group) && 
 			((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f)))
@@ -2122,7 +2123,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 		}
 	}
 
-	if (unit->isIcon)
+	if (unit->isIcon && !unit->noDraw)
 		drawIcon.insert(unit);
 }
 

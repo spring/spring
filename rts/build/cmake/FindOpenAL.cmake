@@ -48,65 +48,66 @@
 # OPENAL_LIBRARY to override this selection or set the CMake environment
 # CMAKE_INCLUDE_PATH to modify the search paths.
 
+INCLUDE(FindPackageHandleStandardArgs)
+
 if (OPENAL_INCLUDE_DIR AND OPENAL_LIBRARY)
-	set (OpenAL_FIND_QUIETLY TRUE)
+	# Already in cache, be silent
+	set(OpenAL_FIND_QUIETLY TRUE)
 endif (OPENAL_INCLUDE_DIR AND OPENAL_LIBRARY)
 
 FIND_PATH(OPENAL_INCLUDE_DIR al.h
-  HINTS
-  $ENV{OPENALDIR}
-  PATH_SUFFIXES include/AL include/OpenAL include AL
-  PATHS
-  ~/Library/Frameworks
-  /Library/Frameworks
-  /usr/local
-  /usr
-  /sw # Fink
-  /opt/local # DarwinPorts
-  /opt/csw # Blastwave
-  /opt
-  [HKEY_LOCAL_MACHINE\\SOFTWARE\\Creative\ Labs\\OpenAL\ 1.1\ Software\ Development\ Kit\\1.00.0000;InstallDir]
-)
+	HINTS
+		$ENV{OPENALDIR}
+	PATH_SUFFIXES
+		include/AL
+		include/OpenAL
+		include
+		AL
+	PATHS
+		~/Library/Frameworks
+		/Library/Frameworks
+		/usr/local
+		/usr
+		/sw # Fink
+		/opt/local # DarwinPorts
+		/opt/csw # Blastwave
+		/opt
+		[HKEY_LOCAL_MACHINE\\SOFTWARE\\Creative\ Labs\\OpenAL\ 1.1\ Software\ Development\ Kit\\1.00.0000;InstallDir]
+	)
 
-FIND_LIBRARY(OPENAL_LIBRARY_RAW 
-  NAMES OpenAL al openal OpenAL32 soft_oal
-  HINTS
-  $ENV{OPENALDIR}
-  PATH_SUFFIXES lib64 lib libs64 libs libs/Win32 libs/Win64
-  PATHS
-  ~/Library/Frameworks
-  /Library/Frameworks
-  /usr/local
-  /usr
-  /dll
-  /sw
-  /opt/local
-  /opt/csw
-  /opt
-  [HKEY_LOCAL_MACHINE\\SOFTWARE\\Creative\ Labs\\OpenAL\ 1.1\ Software\ Development\ Kit\\1.00.0000;InstallDir]
-)
+FIND_LIBRARY(OPENAL_LIBRARY_RAW
+	NAMES
+		OpenAL
+		al
+		openal
+		OpenAL32
+		soft_oal
+	HINTS
+		$ENV{OPENALDIR}
+	PATH_SUFFIXES
+		lib64
+		lib
+		libs64
+		libs
+		libs/Win32
+		libs/Win64
+	PATHS
+		~/Library/Frameworks
+		/Library/Frameworks
+		/usr/local
+		/usr
+		/dll
+		/sw
+		/opt/local
+		/opt/csw
+		/opt
+		[HKEY_LOCAL_MACHINE\\SOFTWARE\\Creative\ Labs\\OpenAL\ 1.1\ Software\ Development\ Kit\\1.00.0000;InstallDir]
+	)
 
-IF(OPENAL_LIBRARY_RAW)
+IF    (OPENAL_LIBRARY_RAW)
 #	string(REGEX REPLACE "\\.([Dd][Ll][Ll])" "" OPENAL_LIBRARY ${OPENAL_LIBRARY_RAW})
 	SET(OPENAL_LIBRARY ${OPENAL_LIBRARY_RAW})
-ENDIF(OPENAL_LIBRARY_RAW)
+ENDIF (OPENAL_LIBRARY_RAW)
 
-IF(OPENAL_LIBRARY AND OPENAL_INCLUDE_DIR)
-  SET(OPENAL_FOUND TRUE)
-ELSE(OPENAL_LIBRARY AND OPENAL_INCLUDE_DIR)
-  SET(OPENAL_FOUND FALSE)
-ENDIF(OPENAL_LIBRARY AND OPENAL_INCLUDE_DIR)
-
-IF(OPENAL_FOUND)
-  if (NOT OpenAL_FIND_QUIETLY)
-    message(STATUS "Found OpenAL: ${OPENAL_LIBRARY}")
-  endif (NOT OpenAL_FIND_QUIETLY)
-ELSE(OPENAL_FOUND)
-   if (OpenAL_FIND_REQUIRED)
-      message(FATAL_ERROR "Could NOT find OpenAL libraries")
-   endif (OpenAL_FIND_REQUIRED)
-   if (NOT OpenAL_FIND_QUITELY)
-      message(STATUS "Could NOT find OpenAL libraries")
-   endif (NOT OpenAL_FIND_QUITELY)
-ENDIF(OPENAL_FOUND)
-
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenAL DEFAULT_MSG OPENAL_LIBRARY OPENAL_INCLUDE_DIR)
+MARK_AS_ADVANCED(OPENAL_LIBRARY OPENAL_INCLUDE_DIR)

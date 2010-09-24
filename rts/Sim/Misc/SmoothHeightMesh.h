@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SMOOTHHEIGHTMESH_H
-#define SMOOTHHEIGHTMESH_H
+#ifndef SMOOTH_HEIGHT_MESH_H
+#define SMOOTH_HEIGHT_MESH_H
 
-#include "Map/Ground.h"
+class CGround;
 
 /**
  * This class requires that BaseMesh objects support GetHeight(float x, float y) method.
@@ -17,24 +17,14 @@ protected:
 	float resolution;
 	float smoothRadius;
 
-	float *mesh;
-	float *origMesh;
+	float* mesh;
+	float* origMesh;
 
 public:
 	bool drawEnabled;
 
-	SmoothHeightMesh(const CGround* ground, float maxx_, float maxy_, float resolution_,
-			 float smoothRadius_):
-			fmaxx(maxx_), fmaxy(maxy_), resolution(resolution_),
-			smoothRadius(smoothRadius_),
-			mesh(0), origMesh(0),
-			drawEnabled(false)
-	{
-		maxx = fmaxx/resolution + 1;
-		maxy = fmaxy/resolution + 1;
-		MakeSmoothMesh(ground);
-	};
-	~SmoothHeightMesh() { delete[] mesh; mesh = 0; delete[] origMesh; origMesh = 0; }
+	SmoothHeightMesh(const CGround* ground, float maxx, float maxy, float resolution, float smoothRadius);
+	~SmoothHeightMesh();
 
 	void MakeSmoothMesh(const CGround* ground);
 
@@ -54,7 +44,6 @@ public:
 	void DrawWireframe(float yoffset);
 };
 
+extern SmoothHeightMesh* smoothGround;
 
-extern SmoothHeightMesh *smoothGround;
-
-#endif // SMOOTHHEIGHTMESH_H
+#endif // SMOOTH_HEIGHT_MESH_H

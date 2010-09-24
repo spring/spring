@@ -5,6 +5,7 @@
 
 #include "UnitLoader.h"
 #include "Unit.h"
+#include "UnitDef.h"
 #include "UnitDefHandler.h"
 #include "UnitTypes/Builder.h"
 #include "UnitTypes/ExtractorBuilding.h"
@@ -375,7 +376,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	return unit;
 }
 
-CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const UnitDef::UnitDefWeapon* udw)
+CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const UnitDefWeapon* udw)
 {
 	CWeapon* weapon;
 

@@ -896,11 +896,13 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "controlunit") {
-		Command c;
-		c.id=CMD_STOP;
-		c.options=0;
-		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
+		if (!gu->spectating) {
+			Command c;
+			c.id=CMD_STOP;
+			c.options=0;
+			selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
+			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
+		}
 	}
 	else if (cmd == "showstandard") {
 		gd->DisableExtraTexture();

@@ -7,6 +7,7 @@
 #  ZLIB_LIBRARIES   - List of libraries when using zlib.
 #  ZLIB_FOUND       - True if zlib found.
 
+INCLUDE(FindPackageHandleStandardArgs)
 
 IF (ZLIB_INCLUDE_DIR)
   # Already in cache, be silent
@@ -20,7 +21,6 @@ FIND_LIBRARY(ZLIB_LIBRARY NAMES ${ZLIB_NAMES} )
 
 # handle the QUIETLY and REQUIRED arguments and set ZLIB_FOUND to TRUE if
 # all listed variables are TRUE
-INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(ZLIB DEFAULT_MSG ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
 
 IF(ZLIB_FOUND)

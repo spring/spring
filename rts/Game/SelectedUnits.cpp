@@ -242,11 +242,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 	else if (c.id == CMD_DEATHWAIT) {
-		if (teamHandler->ActiveAllyTeams() <= 2) {
-			waitCommandsAI.AddDeathWait(c);
-		} else {
-			logOutput.Print("DeathWait can only be used when there are 2 Ally Teams");
-		}
+		waitCommandsAI.AddDeathWait(c);
 		return;
 	}
 	else if (c.id == CMD_SQUADWAIT) {

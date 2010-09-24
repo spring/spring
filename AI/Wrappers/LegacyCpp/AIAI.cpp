@@ -20,8 +20,7 @@
 #include "IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAIAI::CAIAI(int teamId, IGlobalAI* gAI):
-	team(teamId),
+CAIAI::CAIAI(IGlobalAI* gAI):
 	ai(gAI),
 	globalAICallback(NULL) {
 }
@@ -108,6 +107,7 @@ int CAIAI::handleEvent(int topic, const void* data) {
 						*((const SUnitCapturedEvent*) data));
 				break;
 			}
+
 			case EVENT_ENEMY_ENTER_LOS: {
 				e = new CAIEnemyEnterLOSEvent(
 						*((const SEnemyEnterLOSEvent*) data));

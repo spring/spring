@@ -1,6 +1,7 @@
+// Property keys are case insensitive
+
 // A minimal client example
 // If spring is started as client, it needs the following information to work properly
-
 [GAME]
 {
 	HostIP=xxx.xxx.xxx.xxx; // can also be IPv6, e.g. HostIP=fe80::1;
@@ -16,13 +17,16 @@
 // note that the same values for clients also need to be set here
 [GAME]
 {
-	Mapname=;           //with .smf extension
-	Gametype=Balanced Annihilation V6.81; //the primary mod NAME (archive works too, but name is prefered)
-	Scriptname=Commanders;
+	MapName=;           // with .smf extension
+	GameType=Balanced Annihilation V6.81; // the primary mod NAME (archive works too, but name is prefered)
+	GameStartDelay=4;   // optional, in seconds (unsigned int), default: 4
+	                    // The number of seconds till the game starts,
+	                    // counting from the moment when all players are connected and ready.
+	ScriptName=Commanders;
 	StartPosType=x;     // 0 fixed, 1 random, 2 choose in game, 3 choose before game (see StartPosX)
 
-	Demofile=demo.sdf;  // if set this game is a multiplayer demo replay
-	Savefile=save.ssf;  // if set this game is a continuation of a saved game
+	DemoFile=demo.sdf;  // if set this game is a multiplayer demo replay
+	SaveFile=save.ssf;  // if set this game is a continuation of a saved game
 
 	HostIP=xxx.xxx.xxx.xxx; // no effect as host
 	HostPort=xxx;       // where clients are going to connet to, usually 8452
@@ -94,16 +98,16 @@
 	[ALLYTEAM0]
 	{
 		NumAllies=0;
-		Ally0=(AllyTeam number); //means that this team is allied with the other, not necesarily the reverse
+		Ally0=(AllyTeam number); // means that this team is allied with the other, not necesarily the reverse
 
 		StartRectTop=0;    // Use these in combination with StartPosType=2
 		StartRectLeft=0;   //   (ie. select in map)
 		StartRectBottom=1; // range is 0-1: 0 is left or top edge,
 		StartRectRight=1;  //   1 is right or bottom edge
 	}
-	//more ally teams
+	// more ally teams
 
-	//something for selecting which unit files to disable or restrict
+	// something for selecting which unit files to disable or restrict
 
 	NumRestrictions=xx;
 
@@ -121,7 +125,7 @@
 		StartEnergy=1000;
 		MaxUnits=500;       // per team
 		GameMode=x;         // 0 cmdr dead->game continues, 1 cmdr dead->game ends, 2 lineage, 3 openend
-		LimitDgun=0;        // limit dgun to fixed radius around startpos?
+		LimitDGun=0;        // limit dgun to fixed radius around startpos?
 		DisableMapDamage=0; // disable map craters?
 		GhostedBuildings=1; // ghost enemy buildings after losing los on them
 		NoHelperAIs=0;      // are GroupAIs and other helper AIs allowed?

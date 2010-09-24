@@ -19,6 +19,8 @@
 
 #include "Util.h"
 
+#include "System/maindefines.h"
+
 #include <stdio.h>	// for file IO
 #include <stdlib.h>	// calloc(), exit()
 #include <string.h>	// strlen(), strcpy()

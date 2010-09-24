@@ -22,6 +22,8 @@
 
 #include "Util.h"
 
+#include "System/maindefines.h"
+
 #include <string.h>
 #include <stdlib.h>
 

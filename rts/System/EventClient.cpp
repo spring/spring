@@ -10,7 +10,7 @@
 CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 	: name(_name)
 	, order(_order)
-	, synced(_synced)
+	, synced_(_synced)
 {
 }
 

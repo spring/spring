@@ -10,6 +10,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
@@ -171,9 +172,11 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			const unsigned int medResBlockSize = pm->medResPE->BLOCK_SIZE, medResBlocksX = pm->medResPE->nbrOfBlocksX;
 			const unsigned int lowResBlockSize = pm->lowResPE->BLOCK_SIZE, lowResBlocksX = pm->lowResPE->nbrOfBlocksX;
 
-			const float maxResMaxNodeCost = std::max(1.0f, pm->maxResPF->maxNodeCost);
-			const float medResMaxNodeCost = std::max(1.0f, pm->medResPE->maxNodeCost);
-			const float lowResMaxNodeCost = std::max(1.0f, pm->lowResPE->maxNodeCost);
+			const float gCostMax[3] = {
+				std::max(1.0f, maxResStates.GetMaxGCost()),
+				std::max(1.0f, medResStates.GetMaxGCost()),
+				std::max(1.0f, lowResStates.GetMaxGCost()),
+			};
 
 			for (int ty = starty; ty < endy; ++ty) {
 				for (int tx = 0; tx < gs->hmapx; ++tx) {
@@ -188,21 +191,23 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					const PathNodeState& medResNode = medResStates[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)];
 					const PathNodeState& lowResNode = lowResStates[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)];
 
-					float maxResNodeCost = maxResNode.pathCost;
-					float medResNodeCost = medResNode.pathCost;
-					float lowResNodeCost = lowResNode.pathCost;
+					float gCost[3] = {
+						maxResNode.gCost,
+						medResNode.gCost,
+						lowResNode.gCost,
+					};
 
-					if (std::isinf(maxResNodeCost)) { maxResNodeCost = 255.0f; }
-					if (std::isinf(medResNodeCost)) { medResNodeCost = 255.0f; }
-					if (std::isinf(lowResNodeCost)) { lowResNodeCost = 255.0f; }
+					if (math::isinf(gCost[0])) { gCost[0] = gCostMax[0]; }
+					if (math::isinf(gCost[1])) { gCost[1] = gCostMax[1]; }
+					if (math::isinf(gCost[2])) { gCost[2] = gCostMax[2]; }
 
 					// NOTE:
 					//     the normalisation means each extraTextureUpdate block
 					//     of rows gets assigned different colors when units are
 					//     moving (so view it while paused)
-					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (maxResNodeCost / maxResMaxNodeCost) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (medResNodeCost / medResMaxNodeCost) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (lowResNodeCost / lowResMaxNodeCost) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (gCost[0] / gCostMax[0]) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (gCost[1] / gCostMax[1]) * 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (gCost[2] / gCostMax[2]) * 255;
 					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
 				}
 			}
@@ -275,7 +280,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		const int2 sqr = os->nodePos;
 		const int square = os->nodeNum;
 
-		if (pf->squareStates[square].pathMask & PATHOPT_START)
+		if (pf->squareStates[square].nodeMask & PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -284,7 +289,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int dir = pf->squareStates[square].pathMask & PATHOPT_DIRECTION;
+		const int dir = pf->squareStates[square].nodeMask & PATHOPT_DIRECTION;
 		const int obx = sqr.x - pf->directionVector[dir].x;
 		const int obz = sqr.y - pf->directionVector[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;

@@ -28,25 +28,28 @@
 class CAIInitEvent : public CAIEvent {
 public:
 	CAIInitEvent(const SInitEvent& event)
-			: event(event), wrappedGlobalAICallback(
-			new CAIGlobalAICallback(event.callback, event.team)) {}
+		: event(event)
+		, wrappedClb(new CAIGlobalAICallback(event.callback, event.skirmishAIId))
+		{}
 
 	~CAIInitEvent() {
-		// do not delete wrappedGlobalAICallback here.
+		// do not delete wrappedClb here.
 		// it should be deleted in AIAI.cpp
 	}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.InitAI(wrappedGlobalAICallback, event.team);
+
+		const int teamId = wrappedClb->GetInnerCallback()->SkirmishAI_getTeamId(event.skirmishAIId);
+		ai.InitAI(wrappedClb, teamId);
 	}
 
 	IGlobalAICallback* GetWrappedGlobalAICallback() {
-		return wrappedGlobalAICallback;
+		return wrappedClb;
 	}
 
 private:
 	SInitEvent event;
-	IGlobalAICallback* wrappedGlobalAICallback;
+	CAIGlobalAICallback* wrappedClb;
 };
 
 #endif // _AIINITEVENT_H

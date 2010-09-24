@@ -43,6 +43,7 @@
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/Factory.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -337,7 +338,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -5;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->id, c->options, c->params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->id, c->aiCommandId, c->options, c->params));
 
 	return 0;
 }
@@ -611,9 +612,10 @@ const UnitDef* CAICallback::GetUnitDef(const char* unitName)
 {
 	return unitDefHandler->GetUnitDefByName(unitName);
 }
-const UnitDef* CAICallback::GetUnitDefById (int unitDefId)
+const UnitDef* CAICallback::GetUnitDefById(int unitDefId)
 {
-	return unitDefHandler->GetUnitDefByID(unitDefId);
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
 }
 
 
@@ -795,19 +797,20 @@ float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) { return path
 int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
-
-	std::list<CUnit*>::const_iterator ui;
 	int a = 0;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+
+	const int myAllyTeam = teamHandler->AllyTeam(team);
+	std::list<CUnit*>::const_iterator ui;
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
-		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team)) &&
-		    (u->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
+		if (!teamHandler->Ally(u->allyteam, myAllyTeam) &&
+		    (u->losStatus[myAllyTeam] & LOS_INLOS)) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
-				if (a >= unitIds_max) {
-					break;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
 				}
+				a++;
 			}
 		}
 	}
@@ -818,19 +821,20 @@ int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 {
 	verify();
-
-	std::list<CUnit*>::const_iterator ui;
 	int a = 0;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+
+	const int myAllyTeam = teamHandler->AllyTeam(team);
+	std::list<CUnit*>::const_iterator ui;
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
-		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))
-				&& (u->losStatus[teamHandler->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
+		if (!teamHandler->Ally(u->allyteam, myAllyTeam)
+				&& (u->losStatus[myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
-				if (a >= unitIds_max) {
-					break;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
 				}
+				a++;
 			}
 		}
 	}
@@ -842,19 +846,21 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-
-	const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, radius);
 	int a = 0;
-	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
+
+	const int myAllyTeam = teamHandler->AllyTeam(team);
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	std::vector<CUnit*>::const_iterator ui;
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
-		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))
-				&& (u->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
+		if (!teamHandler->Ally(u->allyteam, myAllyTeam)
+				&& (u->losStatus[myAllyTeam] & LOS_INLOS)) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
-				if (a >= unitIds_max) {
-					break;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
 				}
+				a++;
 			}
 		}
 	}
@@ -863,23 +869,24 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 }
 
 
-int CAICallback::GetFriendlyUnits(int *unitIds, int unitIds_max)
+int CAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
-
-	std::list<CUnit*>::const_iterator ui;
 	int a = 0;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+
+	const int myAllyTeam = teamHandler->AllyTeam(team);
+	std::list<CUnit*>::const_iterator ui;
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
-		if (teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))) {
+		if (teamHandler->Ally(u->allyteam, myAllyTeam)) {
 			// IsUnitNeutral does a LOS check, but inconsequential
 			// since we can always see friendly units anyway
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
-				if (a >= unitIds_max) {
-					break;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
 				}
+				a++;
 			}
 		}
 	}
@@ -887,24 +894,26 @@ int CAICallback::GetFriendlyUnits(int *unitIds, int unitIds_max)
 	return a;
 }
 
-int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius,
+int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-
-	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
-	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
+
+	const int myAllyTeam = teamHandler->AllyTeam(team);
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	std::vector<CUnit*>::const_iterator ui;
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
-		if (teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))) {
+		if (teamHandler->Ally(u->allyteam, myAllyTeam)) {
 			// IsUnitNeutral does a LOS check, but inconsequential
 			// since we can always see friendly units anyway
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
-				if (a >= unitIds_max) {
-					break;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
 				}
+				a++;
 			}
 		}
 	}
@@ -916,18 +925,18 @@ int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius,
 int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	verify();
+	int a = 0;
 
 	std::list<CUnit*>::const_iterator ui;
-	int a = 0;
-	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		// IsUnitNeutral does the LOS check
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
-			if (a >= unitIds_max) {
-				break;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
 			}
+			a++;
 		}
 	}
 
@@ -937,18 +946,19 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	verify();
-
-	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
 	int a = 0;
-	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
+
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	std::vector<CUnit*>::const_iterator ui;
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		const CUnit* u = *ui;
 
 		// IsUnitNeutral does the LOS check
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
-			if (a >= unitIds_max) {
-				break;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
 			}
+			a++;
 		}
 	}
 
@@ -1125,10 +1135,11 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 
 bool CAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing)
 {
-	CFeature* f;
+	CFeature* blockingF = NULL;
 	BuildInfo bi(unitDef, pos, facing);
 	bi.pos = helper->Pos2BuildPos(bi);
-	return !!uh->TestUnitBuildSquare(bi,f,teamHandler->AllyTeam(team));
+	const int canBuildState = uh->TestUnitBuildSquare(bi, blockingF, teamHandler->AllyTeam(team));
+	return (canBuildState != 0);
 }
 
 
@@ -1252,7 +1263,7 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 	int featureIds_size = 0;
 
 	verify();
-	const std::vector<CFeature*> &ft = qf->GetFeaturesExact(pos, radius);
+	const std::vector<CFeature*>& ft = qf->GetFeaturesExact(pos, radius);
 	const int allyteam = teamHandler->AllyTeam(team);
 
 	std::vector<CFeature*>::const_iterator it;
@@ -1287,7 +1298,8 @@ const FeatureDef* CAICallback::GetFeatureDef(int featureId)
 }
 const FeatureDef* CAICallback::GetFeatureDefById(int featureDefId)
 {
-	return featureHandler->GetFeatureDefByID(featureDefId);
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
 }
 
 float CAICallback::GetFeatureHealth(int featureId)
@@ -1434,19 +1446,16 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			return 1;
 		} break;
 		case AIHCGetUnitDefByIdId: {
-			AIHCGetUnitDefById* cmdData = (AIHCGetUnitDefById*) data;
-			cmdData->ret = GetUnitDefById(cmdData->unitDefId);
-			return 1;
+			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
+			return 0;
 		} break;
 		case AIHCGetWeaponDefByIdId: {
-			AIHCGetWeaponDefById* cmdData = (AIHCGetWeaponDefById*) data;
-			cmdData->ret = GetWeaponDefById(cmdData->weaponDefId);
-			return 1;
+			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
+			return 0;
 		} break;
 		case AIHCGetFeatureDefByIdId: {
-			AIHCGetFeatureDefById* cmdData = (AIHCGetFeatureDefById*) data;
-			cmdData->ret = GetFeatureDefById(cmdData->featureDefId);
-			return 1;
+			// NOTE: this command should never arrive, handled in SSkirmishAICallbackImpl
+			return 0;
 		} break;
 
 		case AIHCTraceRayId: {
@@ -1583,23 +1592,25 @@ int CAICallback::HandleCommand(int commandId, void* data)
 	}
 }
 
-
-
-bool CAICallback::IsDebugDrawerEnabled() const {
-	return (debugDrawerAI->GetDraw());
+bool CAICallback::IsDebugDrawerEnabled() const
+{
+	// this function will never be called,
+	// as it is handled in the C layer directly
+	// see eg. Debug_Drawer_isEnabled in rts/ExternalAI/Interface/SSkirmishAICallback.h
+	return debugDrawerAI->GetDraw();
 }
 
-
-
-int CAICallback::GetNumUnitDefs()
+int CAICallback::GetNumUnitDefs ()
 {
-	return unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid, that's why "-1"
+	// defid=0 is not valid, that's why "-1"
+	return unitDefHandler->unitDefs.size() - 1;
 }
 
-void CAICallback::GetUnitDefList(const UnitDef** list)
+void CAICallback::GetUnitDefList (const UnitDef** list)
 {
-	for (int a=1;a<unitDefHandler->unitDefs.size();a++)
-		list[a-1] = unitDefHandler->GetUnitDefByID(a);
+	for (int ud = 1; ud < unitDefHandler->unitDefs.size(); ud++) {
+		list[ud-1] = unitDefHandler->GetUnitDefByID(ud);
+	}
 }
 
 
@@ -1625,7 +1636,8 @@ bool CAICallback::GetProperty(int unitId, int property, void *data)
 		const CUnit* unit = uh->units[unitId];
 		const int allyTeam = teamHandler->AllyTeam(team);
 		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) {
-			return false;  //return if the unit doesn't exist or cant be seen
+			// the unit does not exist or can not be seen
+			return false;  
 		}
 
 		switch (property) {
@@ -1721,7 +1733,7 @@ bool CAICallback::ReadFile (const char *filename, const char* modes,
 
 
 // Additions to the interface by Alik
-int CAICallback::GetSelectedUnits(int *unitIds, int unitIds_max)
+int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	int a = 0;
@@ -1731,11 +1743,11 @@ int CAICallback::GetSelectedUnits(int *unitIds, int unitIds_max)
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {
 		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
-				ui != selectedUnits.selectedUnits.end(); ++ui) {
-			unitIds[a++] = (*ui)->id;
-			if (a >= unitIds_max) {
-				break;
+				(ui != selectedUnits.selectedUnits.end()) && (a < unitIds_max); ++ui) {
+			if (unitIds != NULL) {
+				unitIds[a] = (*ui)->id;
 			}
+			a++;
 		}
 	}
 
@@ -1849,7 +1861,8 @@ const WeaponDef* CAICallback::GetWeapon(const char* weaponName)
 }
 const WeaponDef* CAICallback::GetWeaponDefById(int weaponDefId)
 {
-	return weaponDefHandler->GetWeaponById(weaponDefId);
+	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
+	return NULL;
 }
 
 
@@ -1869,10 +1882,10 @@ const float3 *CAICallback::GetStartPos()
 }
 
 
-const char* CAICallback::CallLuaRules(const char* data, int inSize, int* outSize)
+const char* CAICallback::CallLuaRules(const char* data, int inSize)
 {
 	if (luaRules == NULL) {
 		return NULL;
 	}
-	return luaRules->AICallIn(data, inSize, outSize);
+	return luaRules->AICallIn(data, inSize);
 }

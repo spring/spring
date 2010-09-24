@@ -20,12 +20,12 @@
 #include "AIAICheats.h"
 
 CAIGlobalAICallback::CAIGlobalAICallback()
-	: IGlobalAICallback(), sAICallback(NULL), teamId(-1),
+	: IGlobalAICallback(), sAICallback(NULL), skirmishAIId(-1),
 		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
 CAIGlobalAICallback::CAIGlobalAICallback(const SSkirmishAICallback* sAICallback,
-		int teamId) :
-		IGlobalAICallback(), sAICallback(sAICallback), teamId(teamId),
+		int skirmishAIId) :
+		IGlobalAICallback(), sAICallback(sAICallback), skirmishAIId(skirmishAIId),
 		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
 CAIGlobalAICallback::~CAIGlobalAICallback() {}
@@ -34,7 +34,7 @@ CAIGlobalAICallback::~CAIGlobalAICallback() {}
 IAICallback* CAIGlobalAICallback::GetAICallback() {
 
 	if (wrappedAICallback == NULL) {
-		wrappedAICallback = new CAIAICallback(teamId, sAICallback);
+		wrappedAICallback = new CAIAICallback(skirmishAIId, sAICallback);
 	}
 
 	return wrappedAICallback;
@@ -46,8 +46,12 @@ IAICheats* CAIGlobalAICallback::GetCheatInterface() {
 		// to initialize
 		this->GetAICallback();
 		wrappedAICheats =
-				new CAIAICheats(teamId, sAICallback, wrappedAICallback);
+				new CAIAICheats(skirmishAIId, sAICallback, wrappedAICallback);
 	}
 
 	return wrappedAICheats;
+}
+
+const SSkirmishAICallback* CAIGlobalAICallback::GetInnerCallback() const {
+	return sAICallback;
 }

@@ -134,7 +134,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 	file = fopen(filename,"w");
 
-	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION(team), cb->GetModHumanName());
+	fprintf(file, "AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModHumanName());
 
 	// load config file first
 	cfg->LoadConfig(this);
