@@ -6,7 +6,7 @@
 
 	@author: Robin Vobruba <hoijui.quaero@gmail.com>
 -->
-<project name="Java" basedir="../" default="pack">
+<project name="JavaOO" basedir="../" default="pack">
 	<!--
 		This file does:
 			* generate-src:  generate java sources
@@ -14,11 +14,10 @@
 			* doc:           generate javadoc
 			* pack:          pack java classes and sources into jar files
 			* dist:          install these two jar files
-			* sdk:           create the Java AI SDK in a dir specified through a parameter
+			* sdk:           create the OO Java AI SDK in a dir specified through a parameter
 	-->
 
-	<loadfile property="interface.version" srcFile="VERSION"/>
-	<property name="interface.name" value="${ant.project.name}"/>
+	<property name="wrapper.name" value="${ant.project.name}"/>
 
 
 	<target name="init">
@@ -33,30 +32,34 @@
 		<property name="spring.home"            location="../../.."/>
 		<property name="awk.common.scripts.dir" location="${spring.home}/AI/Wrappers/CUtils/bin"/>
 		<property name="build.home"             location="${spring.home}/build"/>
-		<property name="build.dir"              location="${build.home}/AI/Interfaces/${interface.name}"/>
+		<property name="build.dir"              location="${build.home}/AI/Wrappers/${wrapper.name}"/>
 		<property name="classes.dir"            location="${build.dir}/classes"/>
 		<property name="dist.home"              location="${spring.home}/dist"/>
-		<property name="dist.dir"               location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
-		<property name="doc.dir"                location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}/doc/jdoc"/>
+		<property name="dist.dir"               location="${dist.home}/AI/Wrappers/${wrapper.name}"/>
+		<property name="doc.dir"                location="${dist.home}/AI/Wrappers/${wrapper.name}/doc/jdoc"/>
 		<property name="src.generated"          location="${build.dir}/src-generated/main"/>
 		<property name="src.generated.java"     location="${src.generated}/java"/>
-		<property name="src.generated.native"   location="${src.generated}/native"/>
 
-		<property name="jar.file.name"     value="AIInterface"/>
+		<property name="jar.file.name"     value="AIWrapper"/>
 		<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
 		<property name="jar.file.name.src" value="${jar.file.name}-src.jar"/>
 		<property name="java.pkg.dir"      value="com/springrts/ai"/>
+		<property name="java.pkg.oo.dir"   value="${java.pkg.dir}/oo"/>
 
-		<property name="spring.ai.interface.home" location="${spring.home}/rts/ExternalAI/Interface"/>
-		<property name="src.java"                 location="src/main/java"/>
-		<property name="bin.dir"                  location="bin"/>
+		<property name="spring.ai.interface.src.home"           location="${spring.home}/AI/Interfaces/Java"/>
+		<property name="spring.ai.interface.src.dir"            location="${spring.ai.interface.src.home}/src/main/java"/>
+		<property name="spring.ai.interface.build.home"         location="${build.home}/AI/Interfaces/Java"/>
+		<property name="spring.ai.interface.src.generated.dir"  location="${spring.ai.interface.build.home}/src-generated/main/java"/>
+		<property name="src.java"                               location="src/main/java"/>
+		<property name="bin.dir"                                location="bin"/>
 		<path id="source.path.id">
 			<pathelement path="${src.java}"/>
 			<pathelement path="${src.generated.java}"/>
 		</path>
 		<path id="class.path.id">
-			<fileset dir="data">
-				<include name="jlib/**/*.jar"/>
+			<pathelement path="${spring.ai.interface.build.home}/classes"/>
+			<fileset dir="jlib">
+				<include name="**/*.jar"/>
 			</fileset>
 		</path>
 
@@ -69,86 +72,53 @@
 	</target>
 
 
+
 	<target name="generate-init" depends="init">
 		<mkdir dir="${src.generated}"/>
-		<mkdir dir="${src.generated.native}"/>
-		<mkdir dir="${src.generated.java}/${java.pkg.dir}"/>
+		<mkdir dir="${src.generated.java}/${java.pkg.oo.dir}"/>
 	</target>
 
-	<target name="generate-src-native" depends="generate-init">
+
+	<target name="generate-src-callback" depends="generate-init">
+
+		<delete dir="${src.generated.java}/${java.pkg.oo.dir}/clb"/>
+		<mkdir  dir="${src.generated.java}/${java.pkg.oo.dir}/clb"/>
+
 		<exec dir="${bin.dir}" executable="${awk.bin}"
 				failonerror="true" resolveexecutable="true" searchpath="true">
-			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
-			<arg value="-v"/><arg value="NATIVE_GENERATED_SOURCE_DIR=${src.generated.native}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${spring.ai.interface.src.dir}"/>
+			<arg value="-v"/><arg value="INTERFACE_GENERATED_SOURCE_DIR=${spring.ai.interface.src.generated.dir}"/>
 			<arg value="-v"/><arg value="JAVA_GENERATED_SOURCE_DIR=${src.generated.java}"/>
 
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
-			<arg value="-f"/><arg value="native_wrappCallback.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonOOCallback.awk"/>
+			<arg value="-f"/><arg value="wrappCallback.awk"/>
 
-			<arg value="${spring.ai.interface.home}/SSkirmishAICallback.h"/>
-		</exec>
-
-		<exec dir="${bin.dir}" executable="${awk.bin}"
-				failonerror="true" resolveexecutable="true" searchpath="true">
-			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
-			<arg value="-v"/><arg value="NATIVE_GENERATED_SOURCE_DIR=${src.generated.native}"/>
-			<arg value="-v"/><arg value="JAVA_GENERATED_SOURCE_DIR=${src.generated.java}"/>
-
-			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
-			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
-
-			<arg value="-f"/><arg value="native_wrappCommands.awk"/>
-
-			<arg value="${spring.ai.interface.home}/AISCommands.h"/>
+			<arg value="${spring.ai.interface.src.generated.dir}/${java.pkg.dir}/AICallback.java"/>
 		</exec>
 	</target>
-
-
-
-
-	<target name="generate-src-callback" depends="generate-src-native">
-		<exec dir="${bin.dir}" executable="${awk.bin}"
-				failonerror="true" resolveexecutable="true" searchpath="true">
-			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
-			<arg value="-v"/><arg value="NATIVE_GENERATED_SOURCE_DIR=${src.generated.native}"/>
-			<arg value="-v"/><arg value="JAVA_GENERATED_SOURCE_DIR=${src.generated.java}"/>
-
-			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
-			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
-
-			<arg value="-f"/><arg value="jni_wrappCallback.awk"/>
-
-			<arg value="${src.generated.native}/CallbackFunctionPointerBridge.h"/>
-		</exec>
-	</target>
-
-
 
 
 	<target name="generate-src-events" depends="generate-init">
+
+		<delete dir="${src.generated.java}/${java.pkg.oo.dir}/evt"/>
+		<mkdir  dir="${src.generated.java}/${java.pkg.oo.dir}/evt"/>
+
 		<exec dir="${bin.dir}" executable="${awk.bin}"
 				failonerror="true" resolveexecutable="true" searchpath="true">
-			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
-			<arg value="-v"/><arg value="NATIVE_GENERATED_SOURCE_DIR=${src.generated.native}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${spring.ai.interface.src.dir}"/>
+			<arg value="-v"/><arg value="INTERFACE_GENERATED_SOURCE_DIR=${spring.ai.interface.src.generated.dir}"/>
 			<arg value="-v"/><arg value="JAVA_GENERATED_SOURCE_DIR=${src.generated.java}"/>
 
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
+			<arg value="-f"/><arg value="wrappEvents.awk"/>
 
-			<arg value="-f"/><arg value="jni_wrappEvents.awk"/>
-
-			<arg value="${spring.ai.interface.home}/AISEvents.h"/>
+			<arg value="${spring.ai.interface.src.generated.dir}/${java.pkg.dir}/AI.java"/>
 		</exec>
 	</target>
+
 
 	<target name="generate-src"
 			depends="generate-src-events, generate-src-callback"/>
@@ -168,7 +138,7 @@
 				destdir="${doc.dir}"
 				sourcepathref="source.path.id"
 				classpathref="class.path.id"
-				Windowtitle="Sprint RTS Java AI Interface javadoc"/>
+				Windowtitle="Sprint RTS Java OO AI Wrapper javadoc"/>
 	</target>
 
 
@@ -199,14 +169,10 @@
 		<mkdir dir="${dist.dir}/jlib"/>
 		<copy file="${build.dir}/${jar.file.name.bin}" todir="${dist.dir}" overwrite="true"/>
 		<copy file="${build.dir}/${jar.file.name.src}" todir="${dist.dir}/jlib" overwrite="true"/>
-		<copy todir="${dist.dir}" overwrite="true">
-			<fileset dir="data"/>
-		</copy>
 	</target>
 
 	<target name="clean" depends="init">
 		<delete dir="${src.generated.java}"/>
-		<delete dir="${src.generated.native}"/>
 		<delete dir="${src.generated}"/>
 		<delete dir="${classes.dir}"/>
 		<delete dir="${build.dir}"/>
@@ -229,7 +195,6 @@
 		<property name="doc.dir"    location="${dist.home}/doc/jdoc"/>
 		<property name="src.generated"        location="${build.dir}/src-generated/main"/>
 		<property name="src.generated.java"   location="${src.generated}/java"/>
-		<property name="src.generated.native" location="${src.generated}/native"/>
 	</target>
 
 	<target name="sdk" depends="sdk-init, init, dist, doc">
