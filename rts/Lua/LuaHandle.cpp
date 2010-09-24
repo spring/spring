@@ -199,7 +199,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-	GML_RECMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
+	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
 
 	ExecuteRecvFromSynced();
 

@@ -3,6 +3,8 @@
 #ifndef LUA_CALL_IN_CHECK_H
 #define LUA_CALL_IN_CHECK_H
 
+#include "System/Platform/Synchro.h"
+
 struct lua_State;
 
 
@@ -17,7 +19,6 @@ class LuaCallInCheck {
 		const char* funcName;
 };
 
-
 #define DUAL_LUA_STATES 1
 
 #if DUAL_LUA_STATES
@@ -29,7 +30,7 @@ class LuaCallInCheck {
 #define SELECT_LUA_STATE()
 #endif
 #if defined(USE_GML) && GML_ENABLE_SIM
-#define GML_DRCMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(Threading::IsSimThread() ? name##simmutex : name##drawmutex )
+#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(name##drawmutex, !Threading::IsSimThread())
 #else
 #define GML_DRCMUTEX_LOCK(name)
 #endif
