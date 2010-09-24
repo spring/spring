@@ -64,11 +64,11 @@ static float Interpolate(float x, float y, int maxx, int maxy, float res, const 
 	return 0; // can not be reached
 }
 
-SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float maxx, float maxy, float resolution, float smoothRadius)
-		: fmaxx(maxx)
-		, fmaxy(maxy)
-		, resolution(resolution)
-		, smoothRadius(smoothRadius)
+SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad)
+		: fmaxx(mx)
+		, fmaxy(my)
+		, resolution(res)
+		, smoothRadius(smoothRad)
 		, mesh(NULL)
 		, origMesh(NULL)
 		, drawEnabled(false)
