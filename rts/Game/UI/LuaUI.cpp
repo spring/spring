@@ -297,13 +297,13 @@ bool CLuaUI::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 void CLuaUI::UpdateTeams()
 {
 	if (luaUI) {
-		luaUI->SetFullCtrl(gs->godMode);
+		luaUI->SetFullCtrl(gs->godMode, true);
 		luaUI->SetCtrlTeam(gs->godMode ? AllAccessTeam :
-		                  (gu->spectating ? NoAccessTeam : gu->myTeam));
-		luaUI->SetFullRead(gu->spectatingFullView);
-		luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam);
-		luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam);
-		luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam);
+		                  (gu->spectating ? NoAccessTeam : gu->myTeam), true);
+		luaUI->SetFullRead(gu->spectatingFullView, true);
+		luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam, true);
+		luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam, true);
+		luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam, true);
 	}
 }
 
