@@ -2141,15 +2141,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			newPlayer.SendData(*vit); // throw at him all stuff he missed until now
 
 	if (!demoReader || setup->demoName.empty()) { // gamesetup from demo?
-		const unsigned newPlayerTeam = setup->playerStartingData[newPlayerNumber].team;
-		if (!players[newPlayerNumber].spectator && !teams[newPlayerTeam].active) { // create new team
-			players[newPlayerNumber].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
-			teams[newPlayerTeam].active = true;
-		}
-		players[newPlayerNumber].team = newPlayerTeam;
-
-		if (!players[newPlayerNumber].spectator && !setup->playerStartingData[newPlayerNumber].spectator)
+		if (!newPlayer.spectator) {
+			unsigned newPlayerTeam = newPlayer.team;
+			if (!teams[newPlayerTeam].active) { // create new team
+				newPlayer.readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
+				teams[newPlayerTeam].active = true;
+			}
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(newPlayerNumber, newPlayerTeam));
+		}
 	}
 
 	Message(str(format(" -> Connection established (given id %i)") %newPlayerNumber));
