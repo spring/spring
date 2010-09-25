@@ -50,7 +50,7 @@ void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 	logOutput.Print("[Texture Handler] GML load S3O " + model->name);
 	model->textureType=-1;
 #else
-	logOutput.Print("[Texture Handler] Load S3O " + model->name);
+	logOutput.Print("Texture: Load S3O " + model->name);
 	model->textureType=LoadS3OTextureNow(model->tex1, model->tex2, model->invertAlpha);
 #endif
 }
@@ -61,8 +61,8 @@ void CS3OTextureHandler::Update() {
 int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2, bool invertAlpha)
 {
 	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
-	logOutput.Print("[Texture Handler] Load S3O texture now");
-
+	logOutput.Print("Texture: Load S3O texture now");
+	
 	string totalName=tex1+tex2;
 	logOutput.Print("[Texture Handler] Loading texture " + tex1);
 
@@ -74,14 +74,11 @@ int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::st
 	tex.num=newNum;
 
 	CBitmap bm;
-	if (tex1 == "")
-		logOutput.Print("No S3O texture 1 defined, falling back to unittextures/default.png");
 	if (!bm.Load(string("unittextures/"+tex1)))
 		throw content_error("Could not load S3O texture from file unittextures/" + tex1);
 	// invert alpha/teamcolor
-	logOutput.Print("Test Inverting alpha channel");
 	if (invertAlpha) {
-		logOutput.Print("Inverting alpha channel");
+		logOutput.Print("Texture: Inverting alpha channel");
 		bm.InvertAlpha();
 	}
 	tex.tex1 = bm.CreateTexture(true);
