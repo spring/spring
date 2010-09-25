@@ -12,9 +12,8 @@
 #include "S3OParser.h"
 #include "OBJParser.h"
 #include "AssParser.h"
-#include "Sim/Misc/CollisionVolume.h"
-#include "AssParser.h"
 #include "assimp.hpp"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "System/FileSystem/FileSystem.h"
@@ -171,7 +170,7 @@ void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
-	logOutput.Print("C3DModelLoader::CreateLocalModel(CUnit* unit)");
+	//logOutput.Print("C3DModelLoader::CreateLocalModel(CUnit* unit)");
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // CreateLocalModel
@@ -183,13 +182,13 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 	// FixLocalModel(unit);
 #endif
 
-	logOutput.Print("Finished C3DModelLoader::CreateLocalModel(CUnit* unit)");
+	//logOutput.Print("Finished C3DModelLoader::CreateLocalModel(CUnit* unit)");
 }
 
 
 LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 {
-	logOutput.Print("CreateLocalModel(model '%s' type %d objects %d)", model->name.c_str(), model->type, model->numobjects);
+	//logOutput.Print("CreateLocalModel(model '%s' type %d objects %d)", model->name.c_str(), model->type, model->numobjects);
 
 	LocalModel* lmodel = new LocalModel;
 	lmodel->type = model->type;
@@ -204,14 +203,14 @@ LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 	int piecenum = 0;
 	CreateLocalModelPieces(model->rootobject, lmodel, &piecenum);
 
-	logOutput.Print("Finished CreateLocalModel(model)");
+	//logOutput.Print("Finished CreateLocalModel(model)");
 	return lmodel;
 }
 
 
 void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
 {
-	logOutput.Print("C3DModelLoader::CreateLocalModelPieces (piece '%s' num %d)", piece->name.c_str(), *piecenum);
+	//logOutput.Print("C3DModelLoader::CreateLocalModelPieces (piece '%s' num %d)", piece->name.c_str(), *piecenum);
 
 
 	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
@@ -232,14 +231,14 @@ void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lm
 	lmp.childs.reserve(piece->childs.size());
 	for (unsigned int i = 0; i < piece->childs.size(); i++) {
 		(*piecenum)++;
-		logOutput.Print("Setup child piece (num %d)", *piecenum);
+		//logOutput.Print("Setup child piece (num %d)", *piecenum);
 		lmp.childs.push_back(lmodel->pieces[*piecenum]);
 		lmodel->pieces[*piecenum]->parent = &lmp;
 		CreateLocalModelPieces(piece->childs[i], lmodel, piecenum);
-		logOutput.Print("Finished child piece (num %d)", *piecenum);
+		//logOutput.Print("Finished child piece (num %d)", *piecenum);
 	}
 
-	logOutput.Print("Finished CreateLocalModelPieces (piece '%s')", piece->name.c_str());
+	//logOutput.Print("Finished CreateLocalModelPieces (piece '%s')", piece->name.c_str());
 }
 
 
@@ -252,7 +251,7 @@ void C3DModelLoader::FixLocalModel(CUnit* unit)
 
 void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
 {
-	logOutput.Print("C3DModelLoader::FixLocalModel");
+	//logOutput.Print("C3DModelLoader::FixLocalModel");
 
 	lmodel->pieces[*piecenum]->displist = model->displist;
 
@@ -265,7 +264,7 @@ void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
-	logOutput.Print("C3DModelLoader::CreateListsNow");
+	//logOutput.Print("C3DModelLoader::CreateListsNow");
 	o->displist = glGenLists(1);
 	glNewList(o->displist, GL_COMPILE);
 	o->DrawList();
@@ -275,7 +274,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 		CreateListsNow(*bs);
 	}
 
-	logOutput.Print("Finished C3DModelLoader::CreateListsNow");
+	//logOutput.Print("Finished C3DModelLoader::CreateListsNow");
 }
 
 
@@ -286,7 +285,7 @@ void C3DModelLoader::CreateLists(S3DModelPiece* o) {
 	CreateListsNow(o);
 #endif
 
-	logOutput.Print("Finished C3DModelLoader::CreateLists");
+	//logOutput.Print("Finished C3DModelLoader::CreateLists");
 }
 
 /******************************************************************************/
