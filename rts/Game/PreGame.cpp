@@ -236,9 +236,6 @@ void CPreGame::UpdateClientNet()
 					pckt >> team;
 					pckt >> name;
 
-					if(team >= teamHandler->ActiveTeams())
-						throw netcode::UnpackPacketException("Invalid team");
-
 					CPlayer player;
 					player.name = name;
 					player.spectator = spectator;
