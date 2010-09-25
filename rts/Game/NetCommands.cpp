@@ -201,7 +201,7 @@ void CGame::ClientReadNet()
 				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
 				const unsigned char player = inbuf[1];
-				if(player >= playerHandler->ActivePlayers()) {
+				if(player >= playerHandler->ActivePlayers() && player != SERVER_PLAYER) {
 					logOutput.Print("Got invalid player num %i in user speed msg", player);
 					break;
 				}
@@ -277,7 +277,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_STARTPOS:{
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (player >= playerHandler->ActivePlayers() && player != SERVER_PLAYER) {
 					logOutput.Print("Got invalid player num %i in start pos msg", player);
 					break;
 				}
