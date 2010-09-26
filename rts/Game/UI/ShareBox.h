@@ -1,27 +1,27 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SHAREBOX_H
-#define SHAREBOX_H
+#ifndef SHARE_BOX_H
+#define SHARE_BOX_H
 
 #include "InputReceiver.h"
 
-class CShareBox :
-	public CInputReceiver
+class CShareBox : public CInputReceiver
 {
 public:
-	CShareBox(void);
-	~CShareBox(void);
+	CShareBox();
+	~CShareBox();
 
-	void Draw(void);
+	void Draw();
 
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 
 	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x,int y,int button);
-	void MouseMove(int x, int y, int dx,int dy, int button);
+	void MouseRelease(int x, int y, int button);
+	void MouseMove(int x, int y, int dx, int dy, int button);
 	bool KeyPressed(unsigned short key, bool isRepeat);
 
+private:
 	ContainerBox box;
 
 	ContainerBox okBox;
@@ -31,7 +31,7 @@ public:
 	ContainerBox unitBox;
 	ContainerBox metalBox;
 	ContainerBox energyBox;
-	
+
 	int shareTeam;
 	static int lastShareTeam;
 
@@ -44,5 +44,4 @@ public:
 	bool moveBox;
 };
 
-
-#endif /* SHAREBOX_H */
+#endif /* SHARE_BOX_H */

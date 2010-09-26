@@ -11,7 +11,8 @@
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Units/Unit.h"
+#include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
+#include "Sim/Units/Unit.h" // required by CREG
 #include "System/mmgr.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -125,20 +126,25 @@ float3 CGlobalUnsynced::usRandVector()
 	return ret;
 }
 
-void CGlobalUnsynced::SetMyPlayer(const int mynumber)
+void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
-	myPlayerNum = mynumber;
-	CPlayer* Player = playerHandler->Player(myPlayerNum);
-	myTeam = Player->team;
-	if(myTeam >= teamHandler->ActiveTeams() || myTeam < 0)
-		throw content_error("Invalid MyTeam in player setup");
-	myAllyTeam = teamHandler->AllyTeam(myTeam);
-	if(myAllyTeam >= teamHandler->ActiveAllyTeams() || myAllyTeam < 0)
-		throw content_error("Invalid MyAllyTeam in player setup");
+	myPlayerNum = myNumber;
 
-	spectating = Player->spectator;
-	spectatingFullView   = Player->spectator;
-	spectatingFullSelect = Player->spectator;
+	const CPlayer* myPlayer = playerHandler->Player(myPlayerNum);
+
+	myTeam = myPlayer->team;
+	if (myTeam >= teamHandler->ActiveTeams() || myTeam < 0) {
+		throw content_error("Invalid MyTeam in player setup");
+	}
+
+	myAllyTeam = teamHandler->AllyTeam(myTeam);
+	if (myAllyTeam >= teamHandler->ActiveAllyTeams() || myAllyTeam < 0) {
+		throw content_error("Invalid MyAllyTeam in player setup");
+	}
+
+	spectating           = myPlayer->spectator;
+	spectatingFullView   = myPlayer->spectator;
+	spectatingFullSelect = myPlayer->spectator;
 
 	if (!spectating) {
 		myPlayingTeam = myTeam;

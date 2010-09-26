@@ -8,7 +8,7 @@
 #define	_OPTION_H
 
 #include "System/FileSystem/VFSModes.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 #include <string>
 #include <vector>
@@ -55,7 +55,7 @@ struct Option {
 	std::string section;
 	std::string style;
 
-	std::string type; // "bool", "number", "string", "list", "section"
+	std::string type; ///< "bool", "number", "string", "list", "section"
 
 	OptionType typeCode;
 
@@ -64,7 +64,7 @@ struct Option {
 	float  numberDef;
 	float  numberMin;
 	float  numberMax;
-	float  numberStep; // aligned to numberDef
+	float  numberStep; ///< aligned to numberDef
 
 	std::string stringDef;
 	int         stringMaxLen;
