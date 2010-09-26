@@ -44,6 +44,7 @@
 // Enabling the "Model" log subsystem will provide general model output. "Model-detail" is extremely verbose.
 static CLogSubsystem LOG_MODEL("Model");
 static CLogSubsystem LOG_MODEL_DETAIL("Model-detail");
+static CLogSubsystem LOG_PIECE("Piece");
 static CLogSubsystem LOG_PIECE_DETAIL("Piece-detail");
 
 class AssLogStream : public Assimp::LogStream
@@ -118,7 +119,8 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 		// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
 		model->tex1 = modelTable.GetString("tex1", "default.png");
 		model->tex2 = modelTable.GetString("tex2", "");
-		model->invertAlpha = modelTable.GetBool("invertteamcolor", true);
+		model->flipTexY = modelTable.GetBool("fliptextures", true); // Flip texture upside down
+		model->invertAlpha = modelTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
 		
 		// Load textures
 		logOutput.Print(LOG_MODEL, "AssParser: Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
@@ -157,7 +159,7 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 
 SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 {
-	logOutput.Print(LOG_MODEL_DETAIL, "AssParser: Converting node '%s' to a piece (%d meshes).", node->mName.data, node->mNumMeshes);
+	logOutput.Print(LOG_PIECE, "AssParser: Converting node '%s' to a piece (%d meshes).", node->mName.data, node->mNumMeshes);
 
 	model->numobjects++;
 
@@ -169,8 +171,13 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 
 	aiVector3D scale, position;
  	aiQuaternion rotation;
-	node->mTransformation.Decompose(scale,rotation,position); // convert local to global transform
-
+	node->mTransformation.Decompose(scale,rotation,position);
+	logOutput.Print(LOG_PIECE, "(%d:%s) Relative pos (%f,%f,%f), rot(%f,%f,%f), scale(%f,%f,%f)", model->numobjects, node->mName.data,
+		position.x, position.y, position.z,
+		rotation.x, rotation.y, rotation.z,
+		scale.x, scale.y, scale.z
+	);
+	
 	piece->mins = float3(0.0f,0.0f,0.0f);
 	piece->maxs = float3(1.0f,1.0f,1.0f);
 

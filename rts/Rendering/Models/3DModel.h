@@ -65,6 +65,7 @@ struct S3DModel
 
 	int type;               //! MODELTYPE_*
 	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	int flipTexY;			// Turn both textures upside down before use
 	int invertAlpha;		// Invert teamcolor alpha channel in S3O texture 1
 
 	std::string name;

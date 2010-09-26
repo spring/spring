@@ -20,6 +20,8 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 
+static CLogSubsystem LOG_TEXTURE("Texture");
+
 // The S3O texture handler uses two textures.
 // The first contains diffuse color (RGB) and teamcolor (A)
 // The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
@@ -47,24 +49,27 @@ CS3OTextureHandler::~CS3OTextureHandler()
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-	logOutput.Print("[Texture Handler] GML load S3O " + model->name);
+	logOutput.Print(LOG_TEXTURE, "GML load S3O %s", model->name.c_str());
 	model->textureType=-1;
 #else
-	logOutput.Print("Texture: Load S3O " + model->name);
-	model->textureType=LoadS3OTextureNow(model->tex1, model->tex2, model->invertAlpha);
+	logOutput.Print(LOG_TEXTURE, "Load S3O %s", model->name.c_str());
+	model->textureType=LoadS3OTextureNow(model->tex1, model->tex2, model->flipTexY, model->invertAlpha);
 #endif
 }
 
 void CS3OTextureHandler::Update() {
 }
 
-int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2, bool invertAlpha)
+int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2, bool flipY, bool invertAlpha)
 {
 	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
-	logOutput.Print("Texture: Load S3O texture now");
-	
+	logOutput.Print(LOG_TEXTURE, "Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)", 
+		flipY ? "yes" : "no",
+		invertAlpha ? "yes" : "no"
+	);
+
 	string totalName=tex1+tex2;
-	logOutput.Print("[Texture Handler] Loading texture " + tex1);
+	logOutput.Print(LOG_TEXTURE, "Loading texture 1: %s", tex1.c_str());
 
 	if(s3oTextureNames.find(totalName)!=s3oTextureNames.end()){
 		return s3oTextureNames[totalName];
@@ -74,16 +79,22 @@ int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::st
 	tex.num=newNum;
 
 	CBitmap bm;
-	if (!bm.Load(string("unittextures/"+tex1)))
-		throw content_error("Could not load S3O texture from file unittextures/" + tex1);
-	// invert alpha/teamcolor
-	if (invertAlpha) {
-		logOutput.Print("Texture: Inverting alpha channel");
-		bm.InvertAlpha();
+	if (!bm.Load(string("unittextures/"+tex1))) {
+		logOutput.Print("Error: Could not load S3O texture from file unittextures/%s. Using default.", tex1.c_str());
+		if (!bm.Load(string("unittextures/"+tex1))) {
+			logOutput.Print("Error: Could not load S3O texture from file unittextures/%s.", tex1.c_str());
+			bm.Alloc(1,1);
+			bm.mem[0] = 255; // file not found, make unit red
+		}
 	}
+		
+	if (flipY) bm.ReverseYAxis();
+	if (invertAlpha) bm.InvertAlpha();
 	tex.tex1 = bm.CreateTexture(true);
 	tex.tex1SizeX = bm.xsize;
 	tex.tex1SizeY = bm.ysize;
+	
+	logOutput.Print(LOG_TEXTURE, "Loading texture 2: %s", tex2.c_str());
 	tex.tex2=0;
 	tex.tex2SizeX = 0;
 	tex.tex2SizeY = 0;
@@ -98,6 +109,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::st
 			bm.Alloc(1,1);
 			bm.mem[3] = 255;//file not found, set alpha to white so unit is visible
 		}
+		if (flipY) bm.ReverseYAxis();
 		tex.tex2 = bm.CreateTexture(true);
 		tex.tex2SizeX = bm.xsize;
 		tex.tex2SizeY = bm.ysize;

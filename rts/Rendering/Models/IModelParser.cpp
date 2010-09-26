@@ -34,15 +34,17 @@ C3DModelLoader::C3DModelLoader(void)
 	// file-extension should be lowercase
 	AddParser("3do", new C3DOParser());
 	AddParser("s3o", new CS3OParser());
-	AddParser("obj", new COBJParser());
+	//AddParser("obj", new COBJParser()); // replaced by Assimp
 
 	// assimp library
 	CAssParser* unitassparser = new CAssParser();
 	std::string extensionlist;
+	
 	Assimp::Importer importer;
 	importer.GetExtensionList(extensionlist); // get a ";" separated list of wildcards
 	char* charextensionlist = new char[extensionlist.size() +1];
 	strcpy (charextensionlist, extensionlist.c_str());
+	logOutput.Print("Assimp: Supported model formats: %s", extensionlist.c_str());
 	char* extensionchar = strtok( charextensionlist, ";" );
 	while( extensionchar )
 	{
@@ -118,7 +120,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 		return model;
 	}
 
-	logOutput.Print("couldn't find a parser for model named \"" + name + "\"");
+	logOutput.Print("Error: Couldn't find a parser for model named \"" + name + "\"");
 	return NULL;
 }
 
@@ -224,10 +226,10 @@ void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lm
 	lmp.pos       =  piece->offset;
 	lmp.rot       =  float3(0.0f, 0.0f, 0.0f);
 
-	logOutput.Print("Create CollisionVolume");
+	//logOutput.Print("Create CollisionVolume");
 	lmp.colvol    = new CollisionVolume(piece->colvol);
 
-	logOutput.Print("Setup childs (childs %d)", piece->childs.size());
+	//logOutput.Print("Setup childs (childs %d)", piece->childs.size());
 	lmp.childs.reserve(piece->childs.size());
 	for (unsigned int i = 0; i < piece->childs.size(); i++) {
 		(*piecenum)++;
