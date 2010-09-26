@@ -57,7 +57,8 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		// basic S3O-style texturing
 		model->tex1 = modelTable.GetString("tex1", "");
 		model->tex2 = modelTable.GetString("tex2", "");
-		model->invertAlpha = modelTable.GetBool("invertteamcolor", true);
+		model->flipTexY = modelTable.GetBool("fliptextures", false); // Flip texture upside down
+		model->invertAlpha = modelTable.GetBool("invertteamcolor", false); // Reverse teamcolor levels
 		texturehandlerS3O->LoadS3OTexture(model);
 
 	std::string modelData;

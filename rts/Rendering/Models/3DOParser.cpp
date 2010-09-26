@@ -138,6 +138,8 @@ S3DModel* C3DOParser::Load(const string& name)
 		model->name = name;
 		model->type = MODELTYPE_3DO;
 		model->textureType = 0;
+		model->flipTexY = false; // unused by 3DO
+		model->invertAlpha = false; // unused by 3DO
 		model->numobjects  = 0;
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
