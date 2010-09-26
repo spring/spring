@@ -14,18 +14,24 @@ CInputReceiver* CInputReceiver::activeReceiver = NULL;
 
 std::deque<CInputReceiver*>& GetInputReceivers()
 {
-	//This construct fixes order of initialization between different
-	//compilation units using inputReceivers. (mantis # 34)
+	// This construct fixes order of initialization between different
+	// compilation units using inputReceivers. (mantis # 34)
 	static std::deque<CInputReceiver*> s_inputReceivers;
 	return s_inputReceivers;
 }
 
 CInputReceiver::CInputReceiver(Where w)
 {
-	if (w == FRONT)
-		GetInputReceivers().push_front(this);
-	else if (w == BACK)
-		GetInputReceivers().push_back(this);
+	switch (w) {
+		case FRONT: {
+			GetInputReceivers().push_front(this);
+			break;
+		}
+		case BACK: {
+			GetInputReceivers().push_back(this);
+			break;
+		}
+	}
 }
 
 CInputReceiver::~CInputReceiver()
@@ -35,8 +41,8 @@ CInputReceiver::~CInputReceiver()
 	}
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		if(*ri==this){
+	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
+		if (*ri == this) {
 			// we may be deleted while there are still iterators active
 			//inputReceivers.erase(ri);
 			*ri = NULL;
@@ -51,7 +57,7 @@ void CInputReceiver::CollectGarbage()
 	// called once every sec from CGame::Update
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
+	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
 		if (*ri == NULL) {
 			inputReceivers.erase(ri);
 			break;
@@ -63,25 +69,28 @@ CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 {
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
-	for(ri=inputReceivers.begin();ri!=inputReceivers.end();++ri){
-		CInputReceiver* recv= *ri;
-		if(recv && recv->IsAbove(x,y))
+	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
+		CInputReceiver* recv = *ri;
+		if (recv && recv->IsAbove(x,y)) {
 			return recv;
+		}
 	}
-	return 0;
+	return NULL;
 }
 
-bool CInputReceiver::InBox(float x, float y,const ContainerBox& box)
+bool CInputReceiver::InBox(float x, float y, const ContainerBox& box)
 {
-	if(x>box.x1 && x<box.x2 && y>box.y1 && y<box.y2)
-		return true;
-	return false;
+	return ((x > box.x1) &&
+			(x < box.x2) &&
+			(y > box.y1) &&
+			(y < box.y2));
 }
 
 void CInputReceiver::DrawBox(const ContainerBox& box, int how)
 {
-	if (how == -1)
+	if (how == -1) {
 		how = GL_QUADS;
+	}
 	glBegin(how);
 	glVertex2f(box.x1, box.y1);
 	glVertex2f(box.x1, box.y2);
@@ -91,19 +100,19 @@ void CInputReceiver::DrawBox(const ContainerBox& box, int how)
 }
 
 CInputReceiver::ContainerBox::ContainerBox()
-: x1(0),
-	y1(0),
-	x2(0),
-	y2(0)
+	: x1(0.0f)
+	, y1(0.0f)
+	, x2(0.0f)
+	, y2(0.0f)
 {
 }
 
 CInputReceiver::ContainerBox CInputReceiver::ContainerBox::operator+(CInputReceiver::ContainerBox other)
 {
 	ContainerBox b;
-	b.x1=x1+other.x1;
-	b.x2=x1+other.x2;
-	b.y1=y1+other.y1;
-	b.y2=y1+other.y2;
+	b.x1 = x1 + other.x1;
+	b.x2 = x1 + other.x2;
+	b.y1 = y1 + other.y1;
+	b.y2 = y1 + other.y2;
 	return b;
 }
