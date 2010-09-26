@@ -349,7 +349,7 @@ void CGameServer::UpdatePlayerNumberMap() {
 	for (int i = 0; i < 256; ++i, ++player) {
 		if (i < players.size() && !players[i].isFromDemo)
 			++player;
-		playerNumberMap[i] = (i < 250) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
+		playerNumberMap[i] = (i < MAX_PLAYERS) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
 	}
 }
 

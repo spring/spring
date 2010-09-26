@@ -349,6 +349,13 @@ void CLuaUI::Shutdown()
 
 void CLuaUI::GameFrame(int frameNumber)
 {
+#if DUAL_LUA_STATES
+	if (Threading::IsSimThread())
+		return;
+
+	GML_RECMUTEX_LOCK(unit); // GameFrame
+	GML_RECMUTEX_LOCK(feat); // GameFrame
+#endif
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 	static const LuaHashString cmdStr("GameFrame");
