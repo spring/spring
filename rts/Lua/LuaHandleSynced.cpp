@@ -783,10 +783,12 @@ void CLuaHandleSynced::DelayRecvFromSynced(lua_State* srcState, int args) {
 				break;
 			}
 			case LUA_TSTRING: {
-				size_t len;
+				size_t len = 0;
 				const char* data = lua_tolstring(srcState, i, &len);
-				ddata.str.resize(len);
-				memcpy(&ddata.str[0], data, len);
+				if (len > 0) {
+					ddata.str.resize(len);
+					memcpy(&ddata.str[0], data, len);
+				}
 				break;
 			}
 			case LUA_TNIL: {
