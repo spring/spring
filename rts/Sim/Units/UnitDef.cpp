@@ -103,7 +103,7 @@ UnitDef::UnitDef()
 , stealth(false)
 , sonarStealth(false)
 , buildRange3D(false)
-, buildDistance(0.0f)
+, buildDistance(16.0f)
 , buildSpeed(0.0f)
 , reclaimSpeed(0.0f)
 , repairSpeed(0.0f)
@@ -410,8 +410,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	moveState = std::min(moveState,2);
 
 	buildRange3D = udTable.GetBool("buildRange3D", false);
-	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
-	buildDistance = std::max(128.0f, buildDistance);
+	buildDistance = udTable.GetFloat("buildDistance", 16.0f);
+	buildDistance = std::max(16.0f, buildDistance);
 	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
 
 	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
