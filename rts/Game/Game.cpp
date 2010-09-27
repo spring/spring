@@ -244,7 +244,6 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	timeLeft(0.0f),
 	consumeSpeed(1.0f),
 	luaDrawTime(0),
-	luaUIDrawFrame(0),
 
 	saveFile(saveFile)
 {
@@ -1212,10 +1211,6 @@ bool CGame::Draw() {
 #endif
 	GML_STDMUTEX_LOCK(draw); //Draw
 
-#if DUAL_LUA_STATES
-	while(luaUIDrawFrame < gs->frameNum)
-		luaUI->GameFrame(luaUIDrawFrame++);
-#endif
 	//! timings and frame interpolation
 	const unsigned currentTime = SDL_GetTicks();
 

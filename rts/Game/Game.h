@@ -205,7 +205,6 @@ private:
 
 	int speedControl;
 	int luaDrawTime;
-	int luaUIDrawFrame;
 
 
 	/// for reloading the savefile

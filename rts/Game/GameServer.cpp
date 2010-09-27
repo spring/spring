@@ -256,7 +256,7 @@ CGameServer::~CGameServer()
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	assert(!hasLocalClient);
 	hasLocalClient = true;
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
@@ -273,7 +273,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostip, const int 
 
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 #if SPRING_TIME
 	lastTick = newlastTick;
 #else
@@ -349,7 +349,7 @@ void CGameServer::UpdatePlayerNumberMap() {
 	for (int i = 0; i < 256; ++i, ++player) {
 		if (i < players.size() && !players[i].isFromDemo)
 			++player;
-		playerNumberMap[i] = (i < MAX_PLAYERS) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
+		playerNumberMap[i] = (i < 250) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
 	}
 }
 
@@ -1896,7 +1896,7 @@ void CGameServer::PushAction(const Action& action)
 
 bool CGameServer::HasFinished() const
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	return quitServer;
 }
 
@@ -1904,7 +1904,13 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
 	if (!demoReader) {
 		// use NEWFRAME_MSGes from demo otherwise
-		Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
+#if BOOST_VERSION >= 103500
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
+		if (!fromServerThread)
+			scoped_lock.lock();
+#else
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, !fromServerThread);
+#endif
 
 		CheckSync();
 		int newFrames = 1;
@@ -1992,7 +1998,7 @@ void CGameServer::UpdateLoop()
 		if (UDPNet)
 			UDPNet->Update();
 
-		Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 		ServerReadNet();
 		Update();
 	}

@@ -3,8 +3,6 @@
 #ifndef LUA_CALL_IN_CHECK_H
 #define LUA_CALL_IN_CHECK_H
 
-#include "System/Platform/Synchro.h"
-
 struct lua_State;
 
 
@@ -19,38 +17,11 @@ class LuaCallInCheck {
 		const char* funcName;
 };
 
-#define DUAL_LUA_STATES 1
-
-#if DUAL_LUA_STATES
-#define BEGIN_ITERATE_LUA_STATES() lua_State *L_Cur = L_Sim; do { lua_State * const L = L_Cur
-#define END_ITERATE_LUA_STATES() if(L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
-#ifndef LUA_SYNCED_ONLY
-#define SELECT_LUA_STATE() lua_State * const L = Threading::IsSimThread() ? L_Sim : L_Draw
-#else
-#define SELECT_LUA_STATE()
-#endif
-#if defined(USE_GML) && GML_ENABLE_SIM
-#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(name##drawmutex, !Threading::IsSimThread())
-#else
-#define GML_DRCMUTEX_LOCK(name)
-#endif
-
-#else
-
-#define BEGIN_ITERATE_LUA_STATES() lua_State * const L = L_Sim
-#define END_ITERATE_LUA_STATES()
-#ifndef LUA_SYNCED_ONLY
-#define SELECT_LUA_STATE() lua_State * const L = L_Sim
-#else
-#define SELECT_LUA_STATE()
-#endif
-#define GML_DRCMUTEX_LOCK(name) GML_RECMUTEX_LOCK(name)
-#endif
 
 #if DEBUG_LUA
-#  define LUA_CALL_IN_CHECK(L) SELECT_LUA_STATE(); LuaCallInCheck ciCheck((L), __FUNCTION__)
+#  define LUA_CALL_IN_CHECK(L) LuaCallInCheck ciCheck((L), __FUNCTION__);
 #else
-#  define LUA_CALL_IN_CHECK(L) SELECT_LUA_STATE()
+#  define LUA_CALL_IN_CHECK(L)
 #endif
 
 #ifdef USE_GML // hack to add some degree of thread safety to LUA
@@ -59,9 +30,9 @@ class LuaCallInCheck {
 #	if GML_ENABLE_SIM
 #		undef LUA_CALL_IN_CHECK
 #		if DEBUG_LUA
-#			define LUA_CALL_IN_CHECK(L) GML_DRCMUTEX_LOCK(lua); SELECT_LUA_STATE(); GML_CALL_DEBUGGER(); LuaCallInCheck ciCheck((L), __FUNCTION__);
+#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua); GML_CALL_DEBUGGER(); LuaCallInCheck ciCheck((L), __FUNCTION__);
 #		else
-#			define LUA_CALL_IN_CHECK(L) GML_DRCMUTEX_LOCK(lua); SELECT_LUA_STATE(); GML_CALL_DEBUGGER();
+#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua); GML_CALL_DEBUGGER();
 #		endif
 #	endif
 #endif
