@@ -1,12 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef PLAYERSTATISTICS_H
-#define PLAYERSTATISTICS_H
+#ifndef PLAYER_STATISTICS_H
+#define PLAYER_STATISTICS_H
 
 #pragma pack(push, 1)
 
 /**
  * @brief Contains statistical data about a player concerning a single game.
+ * In the future, this should be inheriting TeamControllerStatistics.
  */
 struct PlayerStatistics
 {
@@ -31,4 +32,4 @@ public:
 
 #pragma pack(pop)
 
-#endif
+#endif // PLAYER_STATISTICS_H

@@ -18,18 +18,19 @@ PlayerBase::PlayerBase() :
 
 void PlayerBase::SetValue(const std::string& key, const std::string& value)
 {
-	if (key == "team")
+	if (key == "team") {
 		team = std::atoi(value.c_str());
-	else if (key == "name")
+	} else if (key == "name") {
 		name = value;
-	else if (key == "rank")
+	} else if (key == "rank") {
 		rank = std::atoi(value.c_str());
-	else if (key == "countrycode")
+	} else if (key == "countrycode") {
 		countryCode = value;
-	else if (key == "spectator")
+	} else if (key == "spectator") {
 		spectator = static_cast<bool>(std::atoi(value.c_str()));
-	else if (key == "isfromdemo")
+	} else if (key == "isfromdemo") {
 		isFromDemo = static_cast<bool>(std::atoi(value.c_str()));
-	else
+	} else {
 		customValues[key] = value;
+	}
 }
