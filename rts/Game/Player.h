@@ -15,6 +15,9 @@ class CPlayer;
 class CUnit;
 
 struct DirectControlStruct {
+
+	DirectControlStruct();
+
 	bool forward;
 	bool back;
 	bool left;

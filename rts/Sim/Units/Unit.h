@@ -13,8 +13,6 @@
 #include "Matrix44f.h"
 #include "Vec2.h"
 
-using std::string;
-
 class CCommandAI;
 class CGroup;
 class CLoadSaveInterface;

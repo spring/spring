@@ -49,25 +49,27 @@ CR_REG_METADATA(CPlayer, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CPlayer::CPlayer()
+DirectControlStruct::DirectControlStruct()
+	: forward(false)
+	, back(false)
+	, left(false)
+	, right(false)
+	, mouse1(false)
+	, mouse2(false)
+	, viewDir(float3(0.0f, 0.0f, 1.0f))
+	, targetPos(float3(0.0f, 0.0f, 1.0f))
+	, targetDist(1000)
+	, target(NULL)
+	, myController(NULL)
 {
-	memset(&currentStats, 0, sizeof(Statistics));
+}
 
-	active   = false;
-	cpuUsage = 0;
-	ping     = 0;
-
-	myControl.forward = false;
-	myControl.back    = false;
-	myControl.left    = false;
-	myControl.right   = false;
-
-	myControl.mouse1       = false;
-	myControl.mouse2       = false;
-	myControl.viewDir      = float3(0.0f, 0.0f, 1.0f);
-	myControl.targetPos    = float3(0.0f, 0.0f, 1.0f);
-	myControl.targetDist   = 1000;
-	myControl.target       = NULL;
+CPlayer::CPlayer()
+	: PlayerBase()
+	, active(false)
+	, playerNum(-1)
+	, ping(0)
+{
 	myControl.myController = this;
 }
 
