@@ -16,8 +16,8 @@ class CLuaGaia : public CLuaHandleSynced
 		static void FreeHandler();
 
 	protected:
-		bool AddSyncedCode(lua_State *L);
-		bool AddUnsyncedCode(lua_State *L);
+		bool AddSyncedCode();
+		bool AddUnsyncedCode();
 
 	private:
 		CLuaGaia();

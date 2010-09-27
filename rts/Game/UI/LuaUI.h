@@ -43,8 +43,8 @@ class CLuaUI : public CLuaHandle
 		};
 
 	public: // call-ins
-		bool HasCallIn(lua_State *L, const string& name);
-		bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
+		bool HasCallIn(const string& name);
+		bool UnsyncedUpdateCallIn(const string& name);
 
 		void GameFrame(int frameNum);
 

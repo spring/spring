@@ -26,8 +26,8 @@ class CKeyAutoBinder : public CLuaHandle
 
 	private:
 		string LoadFile(const string& filename) const;
-		bool LoadCode(lua_State *L, const string& code, const string& debug);
-		bool LoadCompareFunc(lua_State *L);
+		bool LoadCode(const string& code, const string& debug);
+		bool LoadCompareFunc();
 		string MakeRequirementCall(const vector<string>& requirements);
 		string MakeSortCriteriaCall(const vector<string>& sortCriteria);
 		string AddUnitDefPrefix(const string& text, const string& pre) const;

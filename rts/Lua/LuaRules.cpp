@@ -58,7 +58,7 @@ void CLuaRules::LoadHandler()
 
 	new CLuaRules();
 
-	if (!luaRules->IsValid()) {
+	if (luaRules->L == NULL) {
 		delete luaRules;
 	}
 }
@@ -78,59 +78,55 @@ CLuaRules::CLuaRules()
 {
 	luaRules = this;
 
-	if (!IsValid()) {
+	if (L == NULL) {
 		return;
 	}
 
-	SetFullCtrl(true, true);
-	SetFullRead(true, true);
-	SetCtrlTeam(AllAccessTeam, true);
-	SetReadTeam(AllAccessTeam, true);
-	SetReadAllyTeam(AllAccessTeam, true);
-	SetSelectTeam(AllAccessTeam, true);
+	fullCtrl = true;
+	fullRead = true;
+	ctrlTeam = AllAccessTeam;
+	readTeam = AllAccessTeam;
+	readAllyTeam = AllAccessTeam;
+	selectTeam = AllAccessTeam;
 
 	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD);
 
-	if (!IsValid()) {
+	if (L == NULL) {
 		return;
 	}
 
-	BEGIN_ITERATE_LUA_STATES();
+	haveCommandFallback        = HasCallIn("CommandFallback");
+	haveAllowCommand           = HasCallIn("AllowCommand");
+	haveAllowUnitCreation      = HasCallIn("AllowUnitCreation");
+	haveAllowUnitTransfer      = HasCallIn("AllowUnitTransfer");
+	haveAllowUnitBuildStep     = HasCallIn("AllowUnitBuildStep");
+	haveAllowFeatureCreation   = HasCallIn("AllowFeatureCreation");
+	haveAllowFeatureBuildStep  = HasCallIn("AllowFeatureBuildStep");
+	haveAllowResourceLevel     = HasCallIn("AllowResourceLevel");
+	haveAllowResourceTransfer  = HasCallIn("AllowResourceTransfer");
+	haveAllowDirectUnitControl = HasCallIn("AllowDirectUnitControl");
+	haveAllowStartPosition     = HasCallIn("AllowStartPosition");
 
-	haveCommandFallback        = HasCallIn(L, "CommandFallback");
-	haveAllowCommand           = HasCallIn(L, "AllowCommand");
-	haveAllowUnitCreation      = HasCallIn(L, "AllowUnitCreation");
-	haveAllowUnitTransfer      = HasCallIn(L, "AllowUnitTransfer");
-	haveAllowUnitBuildStep     = HasCallIn(L, "AllowUnitBuildStep");
-	haveAllowFeatureCreation   = HasCallIn(L, "AllowFeatureCreation");
-	haveAllowFeatureBuildStep  = HasCallIn(L, "AllowFeatureBuildStep");
-	haveAllowResourceLevel     = HasCallIn(L, "AllowResourceLevel");
-	haveAllowResourceTransfer  = HasCallIn(L, "AllowResourceTransfer");
-	haveAllowDirectUnitControl = HasCallIn(L, "AllowDirectUnitControl");
-	haveAllowStartPosition     = HasCallIn(L, "AllowStartPosition");
+	haveMoveCtrlNotify         = HasCallIn("MoveCtrlNotify");
+	haveTerraformComplete      = HasCallIn("TerraformComplete");
+	haveAllowWeaponTargetCheck = HasCallIn("AllowWeaponTargetCheck");
+	haveAllowWeaponTarget      = HasCallIn("AllowWeaponTarget");
+	haveUnitPreDamaged         = HasCallIn("UnitPreDamaged");
+	haveShieldPreDamaged       = HasCallIn("ShieldPreDamaged");
 
-	haveMoveCtrlNotify         = HasCallIn(L, "MoveCtrlNotify");
-	haveTerraformComplete      = HasCallIn(L, "TerraformComplete");
-	haveAllowWeaponTargetCheck = HasCallIn(L, "AllowWeaponTargetCheck");
-	haveAllowWeaponTarget      = HasCallIn(L, "AllowWeaponTarget");
-	haveUnitPreDamaged         = HasCallIn(L, "UnitPreDamaged");
-	haveShieldPreDamaged       = HasCallIn(L, "ShieldPreDamaged");
+	haveDrawUnit    = HasCallIn("DrawUnit");
+	haveDrawFeature = HasCallIn("DrawFeature");
+	haveAICallIn    = HasCallIn("AICallIn");
 
-	haveDrawUnit    = HasCallIn(L, "DrawUnit");
-	haveDrawFeature = HasCallIn(L, "DrawFeature");
-	haveAICallIn    = HasCallIn(L, "AICallIn");
-
-	SetupUnsyncedFunction(L, "DrawUnit");
-	SetupUnsyncedFunction(L, "DrawFeature");
-	SetupUnsyncedFunction(L, "AICallIn");
-
-	END_ITERATE_LUA_STATES();
+	SetupUnsyncedFunction("DrawUnit");
+	SetupUnsyncedFunction("DrawFeature");
+	SetupUnsyncedFunction("AICallIn");
 }
 
 
 CLuaRules::~CLuaRules()
 {
-	if (L_Sim != NULL || L_Draw != NULL) {
+	if (L != NULL) {
 		Shutdown();
 		KillLua();
 	}
@@ -145,7 +141,7 @@ CLuaRules::~CLuaRules()
 }
 
 
-bool CLuaRules::AddSyncedCode(lua_State *L)
+bool CLuaRules::AddSyncedCode()
 {
 	lua_getglobal(L, "Script");
 	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
@@ -155,7 +151,7 @@ bool CLuaRules::AddSyncedCode(lua_State *L)
 }
 
 
-bool CLuaRules::AddUnsyncedCode(lua_State *L)
+bool CLuaRules::AddUnsyncedCode()
 {
 	lua_pushstring(L, "UNSYNCED");
 	lua_gettable(L, LUA_REGISTRYINDEX);
@@ -180,10 +176,10 @@ bool CLuaRules::AddUnsyncedCode(lua_State *L)
 // LuaRules Call-Ins
 //
 
-bool CLuaRules::SyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaRules::SyncedUpdateCallIn(const string& name)
 {
 	#define UPDATE_HAVE_CALLIN(callinName) \
-		have ## callinName = HasCallIn( L, #callinName );
+		have ## callinName = HasCallIn( #callinName );
 
 	     if (name == "CommandFallback"       ) { UPDATE_HAVE_CALLIN(CommandFallback); }
 	else if (name == "AllowCommand"          ) { UPDATE_HAVE_CALLIN(AllowCommand); }
@@ -203,7 +199,7 @@ bool CLuaRules::SyncedUpdateCallIn(lua_State *L, const string& name)
 	else if (name == "AllowWeaponTargetCheck") { UPDATE_HAVE_CALLIN(AllowWeaponTargetCheck); }
 	else if (name == "AllowWeaponTarget"     ) { UPDATE_HAVE_CALLIN(AllowWeaponTarget); }
 	else {
-		return CLuaHandleSynced::SyncedUpdateCallIn(L, name);
+		return CLuaHandleSynced::SyncedUpdateCallIn(name);
 	}
 
 	#undef UPDATE_HAVE_CALLIN
@@ -211,13 +207,13 @@ bool CLuaRules::SyncedUpdateCallIn(lua_State *L, const string& name)
 }
 
 
-bool CLuaRules::UnsyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaRules::UnsyncedUpdateCallIn(const string& name)
 {
-	     if (name == "DrawUnit"   ) { haveDrawUnit    = HasCallIn(L, "DrawUnit"   ); }
-	else if (name == "DrawFeature") { haveDrawFeature = HasCallIn(L, "DrawFeature"); }
-	else if (name == "AICallIn"   ) { haveAICallIn    = HasCallIn(L, "AICallIn"   ); }
+	     if (name == "DrawUnit"   ) { haveDrawUnit    = HasCallIn("DrawUnit"   ); }
+	else if (name == "DrawFeature") { haveDrawFeature = HasCallIn("DrawFeature"); }
+	else if (name == "AICallIn"   ) { haveAICallIn    = HasCallIn("AICallIn"   ); }
 
-	return CLuaHandleSynced::UnsyncedUpdateCallIn(L, name);
+	return CLuaHandleSynced::UnsyncedUpdateCallIn(name);
 }
 
 
@@ -780,7 +776,7 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 11);
 
-	const int errfunc = SetupTraceback(L);
+	const int errfunc = SetupTraceback();
 	static const LuaHashString cmdStr("UnitPreDamaged");
 
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -795,7 +791,7 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
-	if (GetFullRead()) {
+	if (fullRead) {
 		lua_pushnumber(L, weaponID);
 		argCount += 1;
 		if (attacker != NULL) {
@@ -840,7 +836,7 @@ bool CLuaRules::ShieldPreDamaged(
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5 + 1);
 
-	const int errfunc(SetupTraceback(L));
+	const int errfunc(SetupTraceback());
 	static const LuaHashString cmdStr("ShieldPreDamaged");
 
 	bool ret = false;
@@ -884,7 +880,7 @@ bool CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int att
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3 + 1);
 
-	const int errfunc(SetupTraceback(L));
+	const int errfunc(SetupTraceback());
 	static const LuaHashString cmdStr("AllowWeaponTargetCheck");
 
 	bool ret = false;
@@ -920,7 +916,7 @@ bool CLuaRules::AllowWeaponTarget(
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4 + 2);
 
-	const int errfunc(SetupTraceback(L));
+	const int errfunc(SetupTraceback());
 	static const LuaHashString cmdStr("AllowWeaponTarget");
 
 	bool ret = false;

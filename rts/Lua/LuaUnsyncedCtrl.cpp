@@ -90,8 +90,8 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 CUnitSet LuaUnsyncedCtrl::drawCmdQueueUnits;
 
-#define fullRead CLuaHandle::GetActiveFullRead()
-#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
+static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
+static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
 
 
 /******************************************************************************/

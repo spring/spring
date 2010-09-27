@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #define DEBUG_LUA 0
-#define LUA_SYNCED_ONLY
 
 #include "LuaUnitScript.h"
 
@@ -168,7 +167,7 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, unit->localmodel->pieces)
-	, handle(CLuaHandle::GetActiveHandle()), L(L)
+	, handle(CLuaHandle::activeHandle), L(L)
 	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
 {
@@ -295,7 +294,7 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 void CLuaUnitScript::ShowScriptError(const string& msg)
 {
 	// if we are in the same handle, we can truely raise an error
-	if (CLuaHandle::GetActiveHandle() == handle) {
+	if (CLuaHandle::activeHandle == handle) {
 		luaL_error(L, "Lua UnitScript error: %s", msg.c_str());
 	}
 	else {

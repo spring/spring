@@ -69,9 +69,9 @@ LuaRulesParams::HashMap CLuaHandleSynced::gameParamsMap;
 
 CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
 : CLuaHandle(_name, _order, false),
+  allowChanges(false),
   teamsLocked(false)
 {
-	SetAllowChanges(false, true);
 	printTracebacks = true;
 }
 
@@ -89,11 +89,11 @@ void CLuaHandleSynced::Init(const string& syncedFile,
                             const string& unsyncedFile,
                             const string& modes)
 {
-	if (!IsValid()) {
+	if (L == NULL) {
 		return;
 	}
 
-	if (GetFullCtrl()) {
+	if (fullCtrl) {
 		for (int w = 0; w < weaponDefHandler->numWeaponDefs; w++) {
 			watchWeapons.push_back(false);
 		}
@@ -105,8 +105,6 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		KillLua();
 		return;
 	}
-
-	BEGIN_ITERATE_LUA_STATES();
 
 	// load the standard libraries
 	LUA_OPEN_LIB(L, luaopen_base);
@@ -135,37 +133,34 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 
 	// use gs->randFloat() for the synchronized code, and disable randomseed()
 	// (this first copies the original functions to the registry for unsynced)
-	if (!SyncifyRandomFuncs(L)) {
+	if (!SyncifyRandomFuncs()) {
 		KillLua();
 		return;
 	}
 
-	CLuaHandle* origHandle = GetActiveHandle();
+	CLuaHandle* origHandle = activeHandle;
 	SetActiveHandle();
 
-	SetAllowChanges(true, true);
-	SetSynced(true, true);
+	allowChanges = true;
+	synced = true;
 
-	const bool haveSynced = SetupSynced(L, syncedCode, syncedFile);
-	if (!IsValid()) {
+	const bool haveSynced = SetupSynced(syncedCode, syncedFile);
+	if (L == NULL) {
 		SetActiveHandle(origHandle);
 		return;
 	}
 
-	SetAllowChanges(false, true);
-	SetSynced(false, true);
+	allowChanges = false;
+	synced = false;
 
-	// FIXME: for the split lua state, we currently add synced AND unsynced code to both states
-	// to make sure HasCallIn et al do not return different results depending on active state.
-	// The problem is that synchronization is needed if HasCallIn would query both states.
-	const bool haveUnsynced = SetupUnsynced(L, unsyncedCode, unsyncedFile);
-	if (!IsValid()) {
+	const bool haveUnsynced = SetupUnsynced(unsyncedCode, unsyncedFile);
+	if (L == NULL) {
 		SetActiveHandle(origHandle);
 		return;
 	}
 
-	SetSynced(true, true);
-	SetAllowChanges(true, true);
+	synced = true;
+	allowChanges = true;
 
 	if (!haveSynced && !haveUnsynced) {
 		KillLua();
@@ -177,20 +172,18 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	eventHandler.AddClient(this);
 
 	SetActiveHandle(origHandle);
-
-	END_ITERATE_LUA_STATES();
 }
 
 
-bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 {
-	if (!IsValid() || code.empty()) {
+	if ((L == NULL) || code.empty()) {
 		return false;
 	}
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
-	AddBasicCalls(L); // into Global
+	AddBasicCalls(); // into Global
 
 	lua_pushstring(L, "Script");
 	lua_rawget(L, -2);
@@ -230,14 +223,14 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 	}
 
 	// add code from the sub-class
-	if (!AddSyncedCode(L)) {
+	if (!AddSyncedCode()) {
 		KillLua();
 		return false;
 	}
 
 	lua_settop(L, 0);
 
-	if (!LoadCode(L, code, filename)) {
+	if (!LoadCode(code, filename)) {
 		KillLua();
 		return false;
 	}
@@ -246,9 +239,9 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 }
 
 
-bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const string& filename)
+bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 {
-	if (!IsValid() || code.empty()) {
+	if ((L == NULL) || code.empty()) {
 		return false;
 	}
 
@@ -259,7 +252,7 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 
 	unsyncedStr.GetRegistry(L);
 
-	AddBasicCalls(L); // into UNSYNCED
+	AddBasicCalls(); // into UNSYNCED
 
 	// remove Script.Kill()
 	lua_pushstring(L, "Script");
@@ -300,22 +293,22 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 	}
 
 	lua_pushstring(L, "math"); lua_newtable(L);
-	lua_getglobal(L, "math"); LightCopyTable(L, -2, -1); lua_pop(L, 1);
+	lua_getglobal(L, "math"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
 	lua_pushstring(L, "table"); lua_newtable(L);
-	lua_getglobal(L, "table"); LightCopyTable(L, -2, -1); lua_pop(L, 1);
+	lua_getglobal(L, "table"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
 	lua_pushstring(L, "string"); lua_newtable(L);
-	lua_getglobal(L, "string"); LightCopyTable(L, -2, -1); lua_pop(L, 1);
+	lua_getglobal(L, "string"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
 	lua_pushstring(L, "coroutine"); lua_newtable(L);
-	lua_getglobal(L, "coroutine"); LightCopyTable(L, -2, -1); lua_pop(L, 1);
+	lua_getglobal(L, "coroutine"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
-	if (!CopyRealRandomFuncs(L)) {
+	if (!CopyRealRandomFuncs()) {
 		KillLua();
 		return false;
 	}
@@ -338,33 +331,33 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 		NULL
 	};
 	for (const char** l = labels; *l != NULL; l++) {
-		CopyGlobalToUnsynced(L, *l);
+		CopyGlobalToUnsynced(*l);
 	}
 
 	// add code from the sub-class
 	unsyncedStr.GetRegistry(L);
-	if (!AddUnsyncedCode(L)) {
+	if (!AddUnsyncedCode()) {
 		KillLua();
 		return false;
 	}
 	lua_settop(L, 0);
 
-	if (!LoadUnsyncedCode(L, code, filename)) {
+	if (!LoadUnsyncedCode(code, filename)) {
 		KillLua();
 		return false;
 	}
 
-	if (!SetupUnsyncedFunction(L, "RecvFromSynced")      ||
-	    !SetupUnsyncedFunction(L, "Update")              ||
-	    !SetupUnsyncedFunction(L, "DrawGenesis")         ||
-	    !SetupUnsyncedFunction(L, "DrawWorld")           ||
-	    !SetupUnsyncedFunction(L, "DrawWorldPreUnit")    ||
-	    !SetupUnsyncedFunction(L, "DrawWorldShadow")     ||
-	    !SetupUnsyncedFunction(L, "DrawWorldReflection") ||
-	    !SetupUnsyncedFunction(L, "DrawWorldRefraction") ||
-	    !SetupUnsyncedFunction(L, "DrawScreenEffects")   ||
-	    !SetupUnsyncedFunction(L, "DrawScreen")          ||
-	    !SetupUnsyncedFunction(L, "DrawInMiniMap")) {
+	if (!SetupUnsyncedFunction("RecvFromSynced")      ||
+	    !SetupUnsyncedFunction("Update")              ||
+	    !SetupUnsyncedFunction("DrawGenesis")         ||
+	    !SetupUnsyncedFunction("DrawWorld")           ||
+	    !SetupUnsyncedFunction("DrawWorldPreUnit")    ||
+	    !SetupUnsyncedFunction("DrawWorldShadow")     ||
+	    !SetupUnsyncedFunction("DrawWorldReflection") ||
+	    !SetupUnsyncedFunction("DrawWorldRefraction") ||
+	    !SetupUnsyncedFunction("DrawScreenEffects")   ||
+	    !SetupUnsyncedFunction("DrawScreen")          ||
+	    !SetupUnsyncedFunction("DrawInMiniMap")) {
 		return false;
 	}
 
@@ -372,7 +365,7 @@ bool CLuaHandleSynced::SetupUnsynced(lua_State *L, const string& code, const str
 }
 
 
-bool CLuaHandleSynced::SyncifyRandomFuncs(lua_State *L)
+bool CLuaHandleSynced::SyncifyRandomFuncs()
 {
 	// adjust the math.random() and math.randomseed() calls
 	lua_getglobal(L, "math");
@@ -409,7 +402,7 @@ bool CLuaHandleSynced::SyncifyRandomFuncs(lua_State *L)
 }
 
 
-bool CLuaHandleSynced::CopyRealRandomFuncs(lua_State *L)
+bool CLuaHandleSynced::CopyRealRandomFuncs()
 {
 	lua_pushstring(L, "math");
 	lua_rawget(L, -2);
@@ -430,7 +423,7 @@ bool CLuaHandleSynced::CopyRealRandomFuncs(lua_State *L)
 }
 
 
-bool CLuaHandleSynced::SetupUnsyncedFunction(lua_State *L, const char* funcName)
+bool CLuaHandleSynced::SetupUnsyncedFunction(const char* funcName)
 {
 	// copy the function from UNSYNCED into
 	// the registry, and setfenv() it to UNSYNCED
@@ -467,7 +460,7 @@ bool CLuaHandleSynced::SetupUnsyncedFunction(lua_State *L, const char* funcName)
 }
 
 
-bool CLuaHandleSynced::CopyGlobalToUnsynced(lua_State *L, const char* name)
+bool CLuaHandleSynced::CopyGlobalToUnsynced(const char* name)
 {
 	lua_settop(L, 0);
 	unsyncedStr.GetRegistry(L);
@@ -482,7 +475,7 @@ bool CLuaHandleSynced::CopyGlobalToUnsynced(lua_State *L, const char* name)
 }
 
 
-bool CLuaHandleSynced::LightCopyTable(lua_State *L, int dstIndex, int srcIndex)
+bool CLuaHandleSynced::LightCopyTable(int dstIndex, int srcIndex)
 {
 	// use positive indices
 	if (dstIndex < 0) { dstIndex = lua_gettop(L) + dstIndex + 1; }
@@ -510,7 +503,7 @@ bool CLuaHandleSynced::LightCopyTable(lua_State *L, int dstIndex, int srcIndex)
 }
 
 
-bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const string& debug)
+bool CLuaHandleSynced::LoadUnsyncedCode(const string& code, const string& debug)
 {
 	lua_settop(L, 0);
 
@@ -530,7 +523,7 @@ bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const 
 	}
 	lua_setfenv(L, -2);
 
-	CLuaHandle* orig = GetActiveHandle();
+	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
 	error = lua_pcall(L, 0, 0, 0);
 	SetActiveHandle(orig);
@@ -565,9 +558,9 @@ string CLuaHandleSynced::LoadFile(const string& filename,
 }
 
 
-bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
+bool CLuaHandleSynced::HasCallIn(const string& name)
 {
-	if (!IsValid()) {
+	if (L == NULL) {
 		return false;
 	}
 
@@ -595,13 +588,13 @@ bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
 }
 
 
-bool CLuaHandleSynced::SyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaHandleSynced::SyncedUpdateCallIn(const string& name)
 {
 	if ((name == "RecvFromSynced") ||
 	    eventHandler.IsUnsynced(name)) {
 		return false;
 	}
-	if (HasCallIn(L, name)) {
+	if (HasCallIn(name)) {
 		eventHandler.InsertEvent(this, name);
 	} else {
 		eventHandler.RemoveEvent(this, name);
@@ -610,20 +603,20 @@ bool CLuaHandleSynced::SyncedUpdateCallIn(lua_State *L, const string& name)
 }
 
 
-bool CLuaHandleSynced::UnsyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaHandleSynced::UnsyncedUpdateCallIn(const string& name)
 {
 	if ((name != "RecvFromSynced") &&
 	    !eventHandler.IsUnsynced(name)) {
 		  return false;
 	}
 	if (name != "RecvFromSynced") {
-		if (HasCallIn(L, name)) {
+		if (HasCallIn(name)) {
 			eventHandler.InsertEvent(this, name);
 		} else {
 			eventHandler.RemoveEvent(this, name);
 		}
 	}
-	SetupUnsyncedFunction(L, name.c_str());
+	SetupUnsyncedFunction(name.c_str());
 	return true;
 }
 
@@ -643,7 +636,7 @@ bool CLuaHandleSynced::Initialize(const string& syncData)
 		return true;
 	}
 
-	int errfunc = SetupTraceback(L) ? -2 : 0;
+	int errfunc = SetupTraceback() ? -2 : 0;
 	logOutput.Print("Initialize errfunc=%d\n", errfunc);
 
 	lua_pushlstring(L, syncData.c_str(), syncData.size());
@@ -712,7 +705,7 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 
-	int errfunc = SetupTraceback(L);
+	int errfunc = SetupTraceback();
 
 	static const LuaHashString cmdStr("GameFrame");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -765,87 +758,37 @@ bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 
 /******************************************************************************/
 
-
-
-void CLuaHandleSynced::DelayRecvFromSynced(lua_State* srcState, int args) {
-	std::vector<DelayData> ddvec;
-	for(int i = 1; i <= args; ++i) {
-		const int type = lua_type(srcState, i);
-		DelayData ddata;
-		ddata.type = type;
-		switch (type) {
-			case LUA_TBOOLEAN: {
-				ddata.bol = lua_toboolean(srcState, i);
-				break;
-			}
-			case LUA_TNUMBER: {
-				ddata.num = lua_tonumber(srcState, i);
-				break;
-			}
-			case LUA_TSTRING: {
-				size_t len = 0;
-				const char* data = lua_tolstring(srcState, i, &len);
-				if (len > 0) {
-					ddata.str.resize(len);
-					memcpy(&ddata.str[0], data, len);
-				}
-				break;
-			}
-			case LUA_TNIL: {
-				break;
-			}
-			default: {
-				logOutput.Print("RecvFromSynced (delay): Invalid type for argument %d", i);
-				break; // nil
-			}
-		}
-		ddvec.push_back(ddata);
-	}
-
-	GML_STDMUTEX_LOCK(recv);
-
-	delayedRecvFromSynced.push_back(ddvec);
-}
-
-
 void CLuaHandleSynced::RecvFromSynced(int args)
 {
-	SELECT_LUA_STATE();
-
-	static const LuaHashString cmdStr("RecvFromSynced");
 	//LUA_CALL_IN_CHECK(L); -- not valid here
-
-#if DUAL_LUA_STATES
-	if(L == L_Sim) { // Sim thread sends to unsynced --> delay it
-		DelayRecvFromSynced(L, args);
-		return;
-	}
-	// Draw thread, delayed already, execute it
-#endif
-	if (!cmdStr.GetRegistryFunc(L))
+	static const LuaHashString cmdStr("RecvFromSynced");
+	if (!cmdStr.GetRegistryFunc(L)) {
 		return; // the call is not defined
+	}
 	lua_insert(L, 1); // place the function
 
 	// call the routine
-	SetAllowChanges(false);
-	SetSynced(false);
+	allowChanges = false;
+	synced = false;
 
 	RunCallIn(cmdStr, args, 0);
 
-	SetSynced(true);
-	SetAllowChanges(true);
+	synced = true;
+	allowChanges = true;
+
+	return;
 }
 
 
 bool CLuaHandleSynced::RecvLuaMsg(const string& msg, int playerID)
 {
 	//FIXME: is there a reason to disallow gamestate changes in RecvLuaMsg?
-	const bool prevAllowChanges = GetAllowChanges();
-	SetAllowChanges(false);
+	const bool prevAllowChanges = allowChanges;
+	allowChanges = false;
 
 	const bool retval = CLuaHandle::RecvLuaMsg(msg, playerID);
 
-	SetAllowChanges(prevAllowChanges);
+	allowChanges = prevAllowChanges;
 
 	return retval;
 }
@@ -859,8 +802,6 @@ bool CLuaHandleSynced::RecvLuaMsg(const string& msg, int playerID)
 
 bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 {
-	SELECT_LUA_STATE();
-
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 	if (!lua_istable(L, -1)) {
 		lua_pop(L, 1);
@@ -876,8 +817,6 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 
 bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 {
-	SELECT_LUA_STATE();
-
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
 	if (!lua_istable(L, -1)) {
 		lua_pop(L, 1);
@@ -891,7 +830,7 @@ bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 }
 
 
-int CLuaHandleSynced::XCall(lua_State* L, lua_State* srcState, const string& funcName)
+int CLuaHandleSynced::XCall(lua_State* srcState, const string& funcName)
 {
 	// expecting an environment table
 	if (!lua_istable(L, -1)) {
@@ -947,38 +886,19 @@ int CLuaHandleSynced::XCall(lua_State* L, lua_State* srcState, const string& fun
 
 int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 {
-	SELECT_LUA_STATE();
-
-	if (L != L_Sim)
-		return 0;
-
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
-	const int retval = XCall(L, srcState, funcName);
+	const int retval = XCall(srcState, funcName);
 	return retval;
 }
 
 
 int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
-	SELECT_LUA_STATE();
-
-#if DUAL_LUA_STATES
-	if (L == L_Sim) {
-		GML_RECMUTEX_LOCK(luadraw); // Called from Sim, need to lock draw thread during XCall
-
-		const bool prevSynced = GetSynced();
-		SetSynced(false);
-		unsyncedStr.GetRegistry(L_Draw); // push the UNSYNCED table
-		const int retval = XCall(L_Draw, srcState, funcName);
-		SetSynced(prevSynced);
-		return retval;
-	}
-#endif
-	const bool prevSynced = GetSynced();
-	SetSynced(false);
+	const bool prevSynced = synced;
+	synced = false;
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
-	const int retval = XCall(L, srcState, funcName);
-	SetSynced(prevSynced);
+	const int retval = XCall(srcState, funcName);
+	synced = prevSynced;
 	return retval;
 }
 
@@ -1058,7 +978,6 @@ int CLuaHandleSynced::SendToUnsynced(lua_State* L)
 	}
 	CLuaHandleSynced* lhs = GetActiveHandle();
 	lhs->RecvFromSynced(args);
-
 	return 0;
 }
 
@@ -1075,12 +994,12 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	}
 
 	// save the current access
-	const bool prevFullCtrl    = lhs->GetFullCtrl();
-	const bool prevFullRead    = lhs->GetFullRead();
-	const int prevCtrlTeam     = lhs->GetCtrlTeam();
-	const int prevReadTeam     = lhs->GetReadTeam();
-	const int prevReadAllyTeam = lhs->GetReadAllyTeam();
-	const int prevSelectTeam   = lhs->GetSelectTeam();
+	const bool prevFullCtrl    = lhs->fullCtrl;
+	const bool prevFullRead    = lhs->fullRead;
+	const int prevCtrlTeam     = lhs->ctrlTeam;
+	const int prevReadTeam     = lhs->readTeam;
+	const int prevReadAllyTeam = lhs->readAllyTeam;
+	const int prevSelectTeam   = lhs->selectTeam;
 
 	// parse the new access
 	if (lua_isnumber(L, 1)) {
@@ -1089,16 +1008,16 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			luaL_error(L, "Bad teamID in SetCtrlTeam");
 		}
 		// ctrl
-		lhs->SetCtrlTeam(teamID);
-		lhs->SetFullCtrl(lhs->GetCtrlTeam() == CEventClient::AllAccessTeam);
+		lhs->ctrlTeam = teamID;
+		lhs->fullCtrl = (lhs->ctrlTeam == CEventClient::AllAccessTeam);
 		// read
-		lhs->SetReadTeam(teamID);
-		lhs->SetReadAllyTeam((teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
-		lhs->SetFullRead(lhs->GetReadAllyTeam() == CEventClient::AllAccessTeam);
-		SetActiveFullRead(lhs->GetFullRead());
-		SetActiveReadAllyTeam(lhs->GetReadAllyTeam());
+		lhs->readTeam = teamID;
+		lhs->readAllyTeam = (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID);
+		lhs->fullRead = (lhs->readAllyTeam == CEventClient::AllAccessTeam);
+		activeFullRead     = lhs->fullRead;
+		activeReadAllyTeam = lhs->readAllyTeam;
 		// select
-		lhs->SetSelectTeam(teamID);
+		lhs->selectTeam = teamID;
 	}
 	else if (lua_istable(L, 1)) {
 		const int table = 1;
@@ -1113,18 +1032,18 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 			}
 
 			if (key == "ctrl") {
-				lhs->SetCtrlTeam(teamID);
-				lhs->SetFullCtrl(lhs->GetCtrlTeam() == CEventClient::AllAccessTeam);
+				lhs->ctrlTeam = teamID;
+				lhs->fullCtrl = (lhs->ctrlTeam == CEventClient::AllAccessTeam);
 			}
 			else if (key == "read") {
-				lhs->SetReadTeam(teamID);
-				lhs->SetReadAllyTeam((teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
-				lhs->SetFullRead(lhs->GetReadAllyTeam() == CEventClient::AllAccessTeam);
-				SetActiveFullRead(lhs->GetFullRead());
-				SetActiveReadAllyTeam(lhs->GetReadAllyTeam());
+				lhs->readTeam = teamID;
+				lhs->readAllyTeam = (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID);
+				lhs->fullRead = (lhs->readAllyTeam == CEventClient::AllAccessTeam);
+				activeFullRead     = lhs->fullRead;
+				activeReadAllyTeam = lhs->readAllyTeam;
 			}
 			else if (key == "select") {
-				lhs->SetSelectTeam(teamID);
+				lhs->selectTeam = teamID;
 			}
 		}
 	}
@@ -1136,17 +1055,17 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	const int funcArgs = lua_gettop(L) - 2;
 
 	// protected call so that the permissions are always reverted
-	const int error = lua_pcall(lhs->GetActiveState(), funcArgs, LUA_MULTRET, 0);
+	const int error = lua_pcall(lhs->L, funcArgs, LUA_MULTRET, 0);
 
 	// revert the permissions
-	lhs->SetFullCtrl(prevFullCtrl);
-	lhs->SetFullRead(prevFullRead);
-	lhs->SetCtrlTeam(prevCtrlTeam);
-	lhs->SetReadTeam(prevReadTeam);
-	lhs->SetReadAllyTeam(prevReadAllyTeam);
-	lhs->SetSelectTeam(prevSelectTeam);
-	SetActiveFullRead(prevFullRead);
-	SetActiveReadAllyTeam(prevReadAllyTeam);
+	lhs->fullCtrl      = prevFullCtrl;
+	lhs->fullRead      = prevFullRead;
+	lhs->ctrlTeam      = prevCtrlTeam;
+	lhs->readTeam      = prevReadTeam;
+	lhs->readAllyTeam  = prevReadAllyTeam;
+	lhs->selectTeam    = prevSelectTeam;
+	activeFullRead     = prevFullRead;
+	activeReadAllyTeam = prevReadAllyTeam;
 
 	if (error != 0) {
 		logOutput.Print("error = %i, %s, %s\n",
