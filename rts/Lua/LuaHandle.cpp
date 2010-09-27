@@ -213,10 +213,15 @@ void CLuaHandle::CheckStack()
 
 
 void CLuaHandle::ExecuteRecvFromSynced() {
-	GML_STDMUTEX_LOCK(recv);
+	std::vector< std::vector<DelayData> > drfs;
+	{
+		GML_STDMUTEX_LOCK(recv); // ExecuteRecvFromSynced
 
-	for(int i = 0; i < delayedRecvFromSynced.size(); ++i) {
-		std::vector<DelayData> &ddv = delayedRecvFromSynced[i];
+		delayedRecvFromSynced.swap(drfs);
+	}
+
+	for(int i = 0; i < drfs.size(); ++i) {
+		std::vector<DelayData> &ddv = drfs[i];
 
 		LUA_CALL_IN_CHECK(L);
 		lua_checkstack(L, ddv.size() + 2);
@@ -250,8 +255,6 @@ void CLuaHandle::ExecuteRecvFromSynced() {
 
 		RecvFromSynced(ddv.size());
 	}
-
-	delayedRecvFromSynced.clear();
 }
 
 
