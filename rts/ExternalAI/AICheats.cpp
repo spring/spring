@@ -57,10 +57,10 @@ void CAICheats::EnableCheatEvents(bool enable)
 
 
 
-void CAICheats::SetMyHandicap(float handicap)
+void CAICheats::SetMyIncomeMultiplier(float incomeMultiplier)
 {
 	if (!OnlyPassiveCheats()) {
-		teamHandler->Team(ai->GetTeamId())->handicap = 1 + handicap / 100;
+		teamHandler->Team(ai->GetTeamId())->SetIncomeMultiplier(incomeMultiplier);
 	}
 }
 

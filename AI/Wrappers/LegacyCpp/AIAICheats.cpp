@@ -61,9 +61,9 @@ void CAIAICheats::EnableCheatEvents(bool enable) {
 
 void CAIAICheats::SetMyHandicap(float handicap) {
 	SetCheatsEnabled(true);
-	SSetMyHandicapCheatCommand cmd = {handicap};
+	SSetMyIncomeMultiplierCheatCommand cmd = { (handicap / 100.0f) + 1.0f };
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1,
-			COMMAND_CHEATS_SET_MY_HANDICAP, &cmd);
+			COMMAND_CHEATS_SET_MY_INCOME_MULTIPLIER, &cmd);
 	SetCheatsEnabled(false);
 }
 void CAIAICheats::GiveMeMetal(float amount) {

@@ -25,7 +25,7 @@ unsigned char TeamBase::teamDefaultColor[10][4] =
 
 TeamBase::TeamBase() :
 leader(-1),
-handicap(1),
+incomeMultiplier(1.0f),
 startPos(-100,-100,-100),
 teamStartNum(-1),
 teamAllyteam(-1)
@@ -39,7 +39,16 @@ teamAllyteam(-1)
 void TeamBase::SetValue(const std::string& key, const std::string& value)
 {
 	if (key == "handicap") {
-		handicap = std::atof(value.c_str()) / 100 + 1;
+		// handicap is used for backwards compatibility only
+		// it was renamed to advantage and is now a direct factor, not % anymore
+		// see SetAdvantage()
+		SetAdvantage(std::atof(value.c_str()) / 100.0f);
+	}
+	else if (key == "advantage") {
+		SetAdvantage(std::atof(value.c_str()));
+	}
+	else if (key == "incomemultiplier") {
+		SetIncomeMultiplier(std::atof(value.c_str()));
 	}
 	else if (key == "teamleader") {
 		leader = std::atoi(value.c_str());
@@ -70,4 +79,16 @@ void TeamBase::SetValue(const std::string& key, const std::string& value)
 	else {
 		customValues[key] = value;
 	}
+}
+
+
+void TeamBase::SetAdvantage(float advantage) {
+
+	advantage = std::max(0.0f, advantage);
+
+	SetIncomeMultiplier(advantage + 1.0f);
+}
+
+void TeamBase::SetIncomeMultiplier(float incomeMultiplier) {
+	this->incomeMultiplier = std::max(0.0f, incomeMultiplier);
 }

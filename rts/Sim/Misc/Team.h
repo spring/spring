@@ -31,8 +31,8 @@ public:
 	void ResetFrameVariables();
 	void SlowUpdate();
 
-	void AddMetal(float amount, bool handicap = true);
-	void AddEnergy(float amount, bool handicap = true);
+	void AddMetal(float amount, bool useIncomeMultiplier = true);
+	void AddEnergy(float amount, bool useIncomeMultiplier = true);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
 	bool UseEnergyUpkeep(float amount);
@@ -62,6 +62,7 @@ public:
 
 	void AddUnit(CUnit* unit, AddType type);
 	void RemoveUnit(CUnit* unit, RemoveType type);
+
 
 	int teamNum;
 	bool isDead;

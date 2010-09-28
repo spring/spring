@@ -198,12 +198,12 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 
 	switch (commandTopic) {
 
-		case COMMAND_CHEATS_SET_MY_HANDICAP:
+		case COMMAND_CHEATS_SET_MY_INCOME_MULTIPLIER:
 		{
-			const SSetMyHandicapCheatCommand* cmd =
-					(SSetMyHandicapCheatCommand*) commandData;
+			const SSetMyIncomeMultiplierCheatCommand* cmd =
+					(SSetMyIncomeMultiplierCheatCommand*) commandData;
 			if (clbCheat != NULL) {
-				clbCheat->SetMyHandicap(cmd->handicap);
+				clbCheat->SetMyIncomeMultiplier(cmd->factor);
 				ret = 0;
 			} else {
 				ret = -1;
