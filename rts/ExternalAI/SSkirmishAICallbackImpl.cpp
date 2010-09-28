@@ -1071,6 +1071,10 @@ EXPORT(void) skirmishAiCallback_Game_getTeamColor(int skirmishAIId, int otherTea
 	return_colorS3_out[2] = color[2];
 }
 
+EXPORT(float) skirmishAiCallback_Game_getTeamIncomeMultiplier(int skirmishAIId, int otherTeamId) {
+	return teamHandler->Team(otherTeamId)->GetIncomeMultiplier();
+}
+
 EXPORT(int) skirmishAiCallback_Game_getTeamAllyTeam(int skirmishAIId, int otherTeamId) {
 	return teamHandler->AllyTeam(otherTeamId);
 }
@@ -4524,6 +4528,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getTeams = &skirmishAiCallback_Game_getTeams;
 	callback->Game_getTeamSide = &skirmishAiCallback_Game_getTeamSide;
 	callback->Game_getTeamColor = &skirmishAiCallback_Game_getTeamColor;
+	callback->Game_getTeamIncomeMultiplier = &skirmishAiCallback_Game_getTeamIncomeMultiplier;
 	callback->Game_getTeamAllyTeam = &skirmishAiCallback_Game_getTeamAllyTeam;
 	callback->Game_getTeamResourceCurrent = &skirmishAiCallback_Game_getTeamResourceCurrent;
 	callback->Game_getTeamResourceIncome = &skirmishAiCallback_Game_getTeamResourceIncome;
