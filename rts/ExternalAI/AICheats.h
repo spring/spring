@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef AICHEATS_H
-#define AICHEATS_H
+#ifndef AI_CHEATS_H
+#define AI_CHEATS_H
 
 #include "ExternalAI/AILegacySupport.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
@@ -26,7 +26,7 @@ class CAICheats
 	CSkirmishAIWrapper* ai;
 public:
 	CAICheats(CSkirmishAIWrapper* ai);
-	~CAICheats(void);
+	~CAICheats();
 
 	void SetMyIncomeMultiplier(float incomeMultiplier);
 
@@ -71,4 +71,4 @@ public:
 	int HandleCommand(int commandId, void* data);
 };
 
-#endif
+#endif // AI_CHEATS_H
