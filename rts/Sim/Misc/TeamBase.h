@@ -12,13 +12,14 @@ class TeamBase
 {
 public:
 	typedef std::map<std::string, std::string> customOpts;
+
 	TeamBase();
+	virtual ~TeamBase();
 
 	void SetValue(const std::string& key, const std::string& value);
-	const customOpts& GetAllValues() const
-	{
+	const customOpts& GetAllValues() const {
 		return customValues;
-	};
+	}
 
 	/**
 	 * Sets the (dis-)advantage.
@@ -42,6 +43,7 @@ public:
 	void SetIncomeMultiplier(float incomeMultiplier);
 	/// @see incomeMultiplier
 	float GetIncomeMultiplier() const { return incomeMultiplier; }
+
 
 	/**
 	 * Player ID of the player in charge of this team.

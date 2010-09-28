@@ -28,7 +28,7 @@ CAICheats::CAICheats(CSkirmishAIWrapper* ai): ai(ai)
 {
 }
 
-CAICheats::~CAICheats(void)
+CAICheats::~CAICheats()
 {}
 
 
