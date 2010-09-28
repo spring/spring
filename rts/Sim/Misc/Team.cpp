@@ -30,7 +30,7 @@ CR_REG_METADATA(CTeam, (
 // from CTeamBase
 				CR_MEMBER(leader),
 				CR_MEMBER(color),
-				CR_MEMBER(handicap),
+				CR_MEMBER(incomeMultiplier),
 				CR_MEMBER(side),
 				CR_MEMBER(startPos),
 				CR_MEMBER(teamStartNum),
@@ -165,9 +165,9 @@ bool CTeam::UseEnergyUpkeep(float amount)
 }
 
 
-void CTeam::AddMetal(float amount, bool hc)
+void CTeam::AddMetal(float amount, bool useIncomeMultiplier)
 {
-	if (hc) { amount *= handicap; }
+	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
 	metal += amount;
 	metalIncome += amount;
 	if (metal > metalStorage) {
@@ -177,9 +177,9 @@ void CTeam::AddMetal(float amount, bool hc)
 }
 
 
-void CTeam::AddEnergy(float amount, bool hc)
+void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 {
-	if (hc) { amount *= handicap; }
+	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
 	energy += amount;
 	energyIncome += amount;
 	if (energy > energyStorage) {

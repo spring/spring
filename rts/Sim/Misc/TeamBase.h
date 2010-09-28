@@ -21,6 +21,29 @@ public:
 	};
 
 	/**
+	 * Sets the (dis-)advantage.
+	 * The default is 0.0 -> no advantage, no disadvantage.
+	 * Common values are [-1.0, 1.0].
+	 * Valid values are [-1.0, FLOAT_MAX].
+	 * Advantage is a meta value. It can be used
+	 * to set multiple (dis-)advantage values simultaneously.
+	 * As of now, the incomeMultiplier is the only means of giving an advantage.
+	 * Possible extensions: buildTimeMultiplier, losMultiplier, ...
+	 *
+	 * Note: former handicap/bonus
+	 * In lobbies, you will often be able to define this through
+	 * a value called handicap or bonus in %.
+	 *
+	 * @see incomeMultiplier
+	 */
+	void SetAdvantage(float advantage);
+
+	/// @see incomeMultiplier
+	void SetIncomeMultiplier(float incomeMultiplier);
+	/// @see incomeMultiplier
+	float GetIncomeMultiplier() const { return incomeMultiplier; }
+
+	/**
 	 * Player ID of the player in charge of this team.
 	 * The player either controls this team directly,
 	 * or an AI running on his computer does so.
@@ -31,7 +54,15 @@ public:
 	 * The fourth channel (alpha) has to be 255, always.
 	 */
 	unsigned char color[4];
-	float handicap;
+protected:
+	/**
+	 * All the teams resource income is multiplied by this factor.
+	 * The default value is 1.0f, the valid range is [0.0, FLOAT_MAX].
+	 *
+	 * @see #SetAdvantage()
+	 */
+	float incomeMultiplier;
+public:
 	/**
 	 * Side/Factions name, eg. "ARM" or "CORE".
 	 */

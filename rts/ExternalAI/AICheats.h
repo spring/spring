@@ -28,7 +28,7 @@ public:
 	CAICheats(CSkirmishAIWrapper* ai);
 	~CAICheats(void);
 
-	void SetMyHandicap(float handicap);
+	void SetMyIncomeMultiplier(float incomeMultiplier);
 
 	void GiveMeMetal(float amount);
 	void GiveMeEnergy(float amount);

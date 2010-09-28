@@ -39,7 +39,7 @@ enum CommandTopic {
 	COMMAND_DRAWER_LINE_ADD                       =  2,
 	COMMAND_DRAWER_POINT_REMOVE                   =  3,
 	COMMAND_SEND_START_POS                        =  4,
-	COMMAND_CHEATS_SET_MY_HANDICAP                =  5,
+	COMMAND_CHEATS_SET_MY_INCOME_MULTIPLIER       =  5,
 	COMMAND_SEND_TEXT_MESSAGE                     =  6,
 	COMMAND_SET_LAST_POS_MESSAGE                  =  7,
 	COMMAND_SEND_RESOURCES                        =  8,
@@ -164,7 +164,7 @@ enum UnitCommandOptions {
 
 
 #define AIINTERFACE_COMMANDS_ABI_VERSION     ( \
-		  sizeof(struct SSetMyHandicapCheatCommand) \
+		  sizeof(struct SSetMyIncomeMultiplierCheatCommand) \
 		+ sizeof(struct SGiveMeResourceCheatCommand) \
 		+ sizeof(struct SGiveMeNewUnitCheatCommand) \
 		+ sizeof(struct SSendTextMessageCommand) \
@@ -258,13 +258,15 @@ enum UnitCommandOptions {
 		)
 
 /**
- * This function has the same effect as setting a handicap value
- * in the GameSetup script (currently gives a bonus on collected
- * resources)
+ * Allows to give an income (dis-)advantage to the team
+ * controlled by the Skimrish AI.
+ * This value can also be set through the GameSetup script,
+ * with the difference that it causes an instant desync when set here.
  */
-struct SSetMyHandicapCheatCommand {
-	float handicap;
-}; //$ COMMAND_CHEATS_SET_MY_HANDICAP Cheats_setMyHandicap
+struct SSetMyIncomeMultiplierCheatCommand {
+	/// default: 1.0; common: [0.0, 2.0]; valid: [0.0, FLOAT_MAX]
+	float factor;
+}; //$ COMMAND_CHEATS_SET_MY_INCOME_MULTIPLIER Cheats_setMyIncomeMultiplier
 
 /**
  * The AI team receives the specified amount of units of the specified resource.

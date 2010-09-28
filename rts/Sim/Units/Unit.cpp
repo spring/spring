@@ -1848,14 +1848,14 @@ bool CUnit::UseMetal(float metal)
 }
 
 
-void CUnit::AddMetal(float metal, bool handicap)
+void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 {
 	if (metal < 0) {
 		UseMetal(-metal);
 		return;
 	}
 	metalMakeI += metal;
-	teamHandler->Team(team)->AddMetal(metal, handicap);
+	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
 
 
@@ -1873,14 +1873,14 @@ bool CUnit::UseEnergy(float energy)
 }
 
 
-void CUnit::AddEnergy(float energy, bool handicap)
+void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 {
 	if (energy < 0) {
 		UseEnergy(-energy);
 		return;
 	}
 	energyMakeI += energy;
-	teamHandler->Team(team)->AddEnergy(energy, handicap);
+	teamHandler->Team(team)->AddEnergy(energy, useIncomeMultiplier);
 }
 
 
