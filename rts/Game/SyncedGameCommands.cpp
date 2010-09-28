@@ -198,7 +198,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		if (teamArgIdx >= 0) {
 			const string& teamStr = args[teamArgIdx];
 			team = atoi(teamStr.c_str());
-			if ((team < 0) || (team >= teamHandler->ActiveTeams()) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
+			if ((!teamHandler->IsValidTeam(team)) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give team: %s", teamStr.c_str());
 				return;
 			}
