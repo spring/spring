@@ -243,7 +243,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				logger.AddLine("Server: received checksum response of %d instead of %d bytes", *(short*)&inbuf[1], HISTORY_SIZE * 4 + 12);
 			} else {
 				int player = inbuf[3];
-				if(player >= playerHandler->ActivePlayers() || player < 0) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logger.AddLine("Server: got invalid playernum %d in checksum response", player);
 				} else {
 					logger.AddLine("Server: got checksum response from %d", player);
@@ -268,7 +268,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				logger.AddLine("Server: received block response of %d instead of %d bytes", *(short*)&inbuf[1], BLOCK_SIZE * 4 + 4);
 			} else {
 				int player = inbuf[3];
-				if(player >= playerHandler->ActivePlayers() || player < 0) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logger.AddLine("Server: got invalid playernum %d in block response", player);
 				} else {
 					const unsigned* begin = (unsigned*)&inbuf[4];
