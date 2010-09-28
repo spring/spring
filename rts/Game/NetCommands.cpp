@@ -113,7 +113,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERLEFT: {
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 					break;
 				}
@@ -155,7 +155,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERSTAT: {
 				const unsigned char player = inbuf[1];
-				if(player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num %i in playerstat msg",player);
 					break;
 				}
@@ -172,7 +172,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PAUSE: {
 				const unsigned char player = inbuf[1];
-				if(player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num %i in pause msg",player);
 					break;
 				}
@@ -201,7 +201,7 @@ void CGame::ClientReadNet()
 				gs->userSpeedFactor = *((float*) &inbuf[2]);
 
 				const unsigned char player = inbuf[1];
-				if(player >= playerHandler->ActivePlayers() && player != SERVER_PLAYER) {
+				if (!playerHandler->IsValidPlayer(player) && player != SERVER_PLAYER) {
 					logOutput.Print("Got invalid player num %i in user speed msg", player);
 					break;
 				}
@@ -220,7 +220,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERINFO: {
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 					break;
 				}
@@ -236,7 +236,7 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 2);
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers())
+					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					pckt >> playerHandler->Player(player)->name;
@@ -277,7 +277,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_STARTPOS:{
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers() && player != SERVER_PLAYER) {
+				if (!playerHandler->IsValidPlayer(player) && player != SERVER_PLAYER) {
 					logOutput.Print("Got invalid player num %i in start pos msg", player);
 					break;
 				}
@@ -330,7 +330,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PATH_CHECKSUM: {
 				const unsigned char playerNum = inbuf[1];
-				if (playerNum >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(playerNum)) {
 					logOutput.Print("Got invalid player num %i in path checksum msg", playerNum);
 					break;
 				}
@@ -389,7 +389,7 @@ void CGame::ClientReadNet()
 					pckt >> psize;
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers())
+					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					Command c;
@@ -415,7 +415,7 @@ void CGame::ClientReadNet()
 					pckt >> psize;
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers())
+					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					vector<int> selected;
@@ -450,7 +450,7 @@ void CGame::ClientReadNet()
 					unsigned char player;
 					pckt >> player;
 
-					if (player >= playerHandler->ActivePlayers())
+					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					short int unitid;
@@ -485,7 +485,7 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers())
+					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					// parse the unit list
@@ -534,7 +534,7 @@ void CGame::ClientReadNet()
 					pckt >> numBytes;
 					unsigned char player;
 					pckt >> player;
-					if (player >= playerHandler->ActivePlayers())
+					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					// total message length
@@ -590,7 +590,7 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid size");
 					boost::uint8_t playerNum;
 					unpack >> playerNum;
-					if (playerNum >= playerHandler->ActivePlayers())
+					if (!playerHandler->IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
 					boost::uint16_t script;
 					unpack >> script;
@@ -609,7 +609,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SHARE: {
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num %i in share msg", player);
 					break;
 				}
@@ -662,7 +662,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SETSHARE: {
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num %i in setshare msg", player);
 					break;
 				}
@@ -691,7 +691,7 @@ void CGame::ClientReadNet()
 			}
 			case NETMSG_TEAM: {
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num %i in team msg", player);
 					break;
 				}
@@ -859,7 +859,7 @@ void CGame::ClientReadNet()
 			}
 			case NETMSG_AI_STATE_CHANGED: {
 				const unsigned char playerId     = inbuf[1];
-				if (playerId >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(playerId)) {
 					logOutput.Print("Got invalid player num %i in ai state changed msg", playerId);
 					break;
 				}
@@ -906,7 +906,7 @@ void CGame::ClientReadNet()
 			}
 			case NETMSG_ALLIANCE: {
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Got invalid player num %i in alliance msg", player);
 					break;
 				}
@@ -964,7 +964,7 @@ void CGame::ClientReadNet()
 			case NETMSG_DIRECT_CONTROL: {
 				const unsigned char player = inbuf[1];
 
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Invalid player number (%i) in NETMSG_DIRECT_CONTROL", player);
 					break;
 				}
@@ -1019,7 +1019,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_DC_UPDATE: {
 				const unsigned char player = inbuf[1];
-				if (player >= playerHandler->ActivePlayers()) {
+				if (!playerHandler->IsValidPlayer(player)) {
 					logOutput.Print("Invalid player number (%i) in NETMSG_DC_UPDATE", player);
 					break;
 				}

@@ -261,7 +261,7 @@ void CPreGame::UpdateClientNet()
 					throw content_error("No game data received from server");
 
 				unsigned char playerNum = packet->data[1];
-				if (playerHandler->ActivePlayers() <= playerNum)
+				if (!playerHandler->IsValidPlayer(playerNum))
 					throw content_error("Invalid player number received from server");
 
 				gu->SetMyPlayer(playerNum);
@@ -412,7 +412,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	// some sanity checks
 	for (int p = 0; p < playerHandler->ActivePlayers(); ++p) {
 		const CPlayer* player = playerHandler->Player(p);
-		if (player->playerNum >= playerHandler->ActivePlayers() || player->playerNum < 0) {
+		if (!playerHandler->IsValidPlayer(player->playerNum)) {
 			throw content_error("Invalid player in game data");
 		}
 		if (!teamHandler->IsValidTeam(player->team)) {
