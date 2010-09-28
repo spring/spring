@@ -686,12 +686,12 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 	const float3 pos(lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3),
 	                 lua_tofloat(L, 4));
-	const int team = lua_toint(L, 5);
-	if ((team < 0) || (team >= teamHandler->ActiveTeams())) {
+	const int teamId = lua_toint(L, 5);
+	if (!teamHandler->IsValidTeam(teamId)) {
 		return 0;
 	}
 	const int facing = lua_toint(L, 6);
-	cursorIcons.AddBuildIcon(-unitDefID, pos, team, facing);
+	cursorIcons.AddBuildIcon(-unitDefID, pos, teamId, facing);
 	return 0;
 }
 
@@ -851,7 +851,7 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
+	if (!teamHandler->IsValidTeam(teamID)) {
 		return 0;
 	}
 	CTeam* team = teamHandler->Team(teamID);
@@ -2118,7 +2118,7 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 		luaL_error(L, "Incorrect arguments to ShareResources()");
 	}
 	const int teamID = lua_toint(L, 1);
-	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
+	if (!teamHandler->IsValidTeam(teamID)) {
 		return 0;
 	}
 	const CTeam* team = teamHandler->Team(teamID);

@@ -281,9 +281,9 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in start pos msg", player);
 					break;
 				}
-				int team = inbuf[2];
-				if (team >= teamHandler->ActiveTeams() || team < 0) {
-					logOutput.Print("Got invalid team num %i in startpos msg",team);
+				const int team = inbuf[2];
+				if (!teamHandler->IsValidTeam(team)) {
+					logOutput.Print("Got invalid team num %i in startpos msg", team);
 				} else {
 					float3 pos(*(float*)&inbuf[4],
 					           *(float*)&inbuf[8],
@@ -667,7 +667,7 @@ void CGame::ClientReadNet()
 					break;
 				}
 				const unsigned char team = inbuf[2];
-				if (team >= teamHandler->ActiveTeams()) {
+				if (!teamHandler->IsValidTeam(team)) {
 					logOutput.Print("Got invalid team num %i in setshare msg", team);
 					break;
 				}
@@ -704,7 +704,7 @@ void CGame::ClientReadNet()
 					case TEAMMSG_GIVEAWAY: {
 						const unsigned char toTeam = inbuf[3];
 						const unsigned char fromTeam_g = inbuf[4];
-						if (toTeam >= teamHandler->ActiveTeams() || fromTeam_g >= teamHandler->ActiveTeams()) {
+						if (!teamHandler->IsValidTeam(toTeam) || !teamHandler->IsValidTeam(fromTeam_g)) {
 							logOutput.Print("Got invalid team nums %i %i in team giveaway msg", toTeam, fromTeam_g);
 							break;
 						}
@@ -771,7 +771,7 @@ void CGame::ClientReadNet()
 					}
 					case TEAMMSG_JOIN_TEAM: {
 						const unsigned char newTeam = inbuf[3];
-						if (newTeam >= teamHandler->ActiveTeams()) {
+						if (!teamHandler->IsValidTeam(newTeam)) {
 							logOutput.Print("Got invalid team num %i in team join msg", newTeam);
 							break;
 						}
@@ -914,7 +914,7 @@ void CGame::ClientReadNet()
 				const unsigned char whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
 				const unsigned char fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
-				if (whichAllyTeam < teamHandler->ActiveAllyTeams() && fromAllyTeam != whichAllyTeam) {
+				if (teamHandler->IsValidAllyTeam(whichAllyTeam) && fromAllyTeam != whichAllyTeam) {
 					// FIXME - need to reset unit allyTeams
 					//       - need a call-in for AIs
 					teamHandler->SetAlly(fromAllyTeam, whichAllyTeam, allied);
