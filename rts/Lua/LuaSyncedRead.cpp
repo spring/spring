@@ -5049,7 +5049,7 @@ int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
 int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 {
 	const int allyTeamID = luaL_checkint(L, 1);
-	if ((allyTeamID < 0) || (allyTeamID >= teamHandler->ActiveTeams())) {
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
 		return 0;
 	}
 	if (!IsAlliedAllyTeam(allyTeamID)) {
