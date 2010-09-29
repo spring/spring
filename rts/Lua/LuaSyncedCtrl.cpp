@@ -958,14 +958,6 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
-	if (teamHandler->IsValidAllyTeam(teamHandler->AllyTeam(teamID))) {
-		// FIXME: there's a segv in CLosHandler::LosAddAir,
-		//        this is a dirty hack to avoid it
-		// looks like above comment is old -> this condition could be removed
-		luaL_error(L, "CreateUnit(): inactive team: %d", teamID);
-		return 0;
-	}
-
 	if (!FullCtrl() && (CtrlTeam() != teamID)) {
 		luaL_error(L, "CreateUnit(): bad team %d", teamID);
 		return 0;
