@@ -529,7 +529,7 @@ void CLuaHandle::GamePaused(int playerID, bool paused)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	int errfunc = SetupTraceback();
+	int errfunc = SetupTraceback(L);
 
 	static const LuaHashString cmdStr("GamePaused");
 	if (!cmdStr.GetGlobalFunc(L)) {
@@ -619,7 +619,7 @@ void CLuaHandle::PlayerAdded(int playerID)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 
-	int errfunc = SetupTraceback();
+	int errfunc = SetupTraceback(L);
 
 	static const LuaHashString cmdStr("PlayerAdded");
 	if (!cmdStr.GetGlobalFunc(L)) {
