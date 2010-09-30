@@ -125,9 +125,9 @@ public:
 
 	bool AllowedReclaim(CUnit* builder) const;
 	bool UseMetal(float metal);
-	void AddMetal(float metal, bool handicap = true);
+	void AddMetal(float metal, bool useIncomeMultiplier = true);
 	bool UseEnergy(float energy);
-	void AddEnergy(float energy, bool handicap = true);
+	void AddEnergy(float energy, bool useIncomeMultiplier = true);
 	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
 	void SetMetalStorage(float newStorage);

@@ -112,9 +112,11 @@ class CLuaHandle : public CEventClient
 		void GamePreload();
 		void GameStart();
 		void GameOver(const std::vector<unsigned char>& winningAllyTeams);
+		void GamePaused(int playerID, bool paused);
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
 		void PlayerChanged(int playerID);
+		void PlayerAdded(int playerID);
 		void PlayerRemoved(int playerID, int reason);
 
 		void UnitCreated(const CUnit* unit, const CUnit* builder);

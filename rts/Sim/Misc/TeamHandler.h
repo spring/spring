@@ -97,9 +97,15 @@ public:
 	bool IsValidTeam(int id) const {
 		return ((id >= 0) && (id < ActiveTeams()));
 	}
-
 	bool IsActiveTeam(int id) const {
 		return IsValidTeam(id);
+	}
+
+	bool IsValidAllyTeam(int id) const {
+		return ((id >= 0) && (id < ActiveAllyTeams()));
+	}
+	bool IsActiveAllyTeam(int id) const {
+		return IsValidAllyTeam(id);
 	}
 
 	void GameFrame(int frameNum);

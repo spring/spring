@@ -133,12 +133,12 @@ void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 	const CPlayer* myPlayer = playerHandler->Player(myPlayerNum);
 
 	myTeam = myPlayer->team;
-	if (myTeam >= teamHandler->ActiveTeams() || myTeam < 0) {
+	if (!teamHandler->IsValidTeam(myTeam)) {
 		throw content_error("Invalid MyTeam in player setup");
 	}
 
 	myAllyTeam = teamHandler->AllyTeam(myTeam);
-	if (myAllyTeam >= teamHandler->ActiveAllyTeams() || myAllyTeam < 0) {
+	if (!teamHandler->IsValidAllyTeam(myAllyTeam)) {
 		throw content_error("Invalid MyAllyTeam in player setup");
 	}
 

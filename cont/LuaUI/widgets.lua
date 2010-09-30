@@ -103,11 +103,14 @@ local flexCallIns = {
   'GamePreload',
   'GameStart',
   'GameOver',
+  'GamePaused',
   'GameFrame',
   'GameSetup',
   'TeamDied',
   'TeamChanged',
   'PlayerChanged',
+  'PlayerAdded',
+  'PlayerRemoved',
   'ShockFront',
   'WorldTooltip',
   'MapDrawCmd',
@@ -1534,6 +1537,14 @@ function widgetHandler:GameOver()
 end
 
 
+function widgetHandler:GamePaused(playerID, paused)
+  for _,w in ipairs(self.GamePausedList) do
+    w:GamePaused(playerID, paused)
+  end
+  return
+end
+
+
 function widgetHandler:TeamDied(teamID)
   for _,w in ipairs(self.TeamDiedList) do
     w:TeamDied(teamID)
@@ -1553,6 +1564,22 @@ end
 function widgetHandler:PlayerChanged(playerID)
   for _,w in ipairs(self.PlayerChangedList) do
     w:PlayerChanged(playerID)
+  end
+  return
+end
+
+
+function widgetHandler:PlayerAdded(playerID)
+  for _,w in ipairs(self.PlayerAddedList) do
+    w:PlayerAdded(playerID)
+  end
+  return
+end
+
+
+function widgetHandler:PlayerRemoved(playerID, reason)
+  for _,w in ipairs(self.PlayerRemovedList) do
+    w:PlayerRemoved(playerID, reason)
   end
   return
 end

@@ -118,7 +118,7 @@ bool CAICallback::SendResources(float mAmount, float eAmount, int receivingTeamI
 	bool ret = false;
 
 	if (team != receivingTeamId) {
-		if (receivingTeamId >= 0 && receivingTeamId < teamHandler->ActiveTeams()) {
+		if (teamHandler->IsValidTeam(receivingTeamId)) {
 			if (teamHandler->Team(receivingTeamId) && teamHandler->Team(team)) {
 				if (!teamHandler->Team(receivingTeamId)->isDead && !teamHandler->Team(team)->isDead) {
 					// note: we can't use the existing SendShare()
@@ -148,7 +148,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 	std::vector<short> sentUnitIDs;
 
 	if (team != receivingTeamId) {
-		if (receivingTeamId >= 0 && receivingTeamId < teamHandler->ActiveTeams()) {
+		if (teamHandler->IsValidTeam(receivingTeamId)) {
 			if (teamHandler->Team(receivingTeamId) && teamHandler->Team(team)) {
 				if (!teamHandler->Team(receivingTeamId)->isDead && !teamHandler->Team(team)->isDead) {
 					// we must iterate over the ID's to check if
@@ -225,7 +225,7 @@ int CAICallback::GetPlayerTeam(int playerId)
 
 const char* CAICallback::GetTeamSide(int teamId)
 {
-	if (teamId < teamHandler->ActiveTeams()) {
+	if (teamHandler->IsValidTeam(teamId)) {
 		return (teamHandler->Team(teamId)->side.c_str());
 	} else {
 		return NULL;

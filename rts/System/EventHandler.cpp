@@ -39,9 +39,11 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(GamePreload,   MANAGED_BIT);
 	SETUP_EVENT(GameStart,     MANAGED_BIT);
 	SETUP_EVENT(GameOver,      MANAGED_BIT);
+	SETUP_EVENT(GamePaused,    MANAGED_BIT);
 	SETUP_EVENT(TeamDied,      MANAGED_BIT);
 	SETUP_EVENT(TeamChanged,   MANAGED_BIT);
 	SETUP_EVENT(PlayerChanged, MANAGED_BIT);
+	SETUP_EVENT(PlayerAdded,   MANAGED_BIT);
 	SETUP_EVENT(PlayerRemoved, MANAGED_BIT);
 
 	SETUP_EVENT(UnitCreated,     MANAGED_BIT);
@@ -347,6 +349,16 @@ void CEventHandler::GameOver( std::vector<unsigned char> winningAllyTeams )
 }
 
 
+void CEventHandler::GamePaused(int playerID, bool paused)
+{
+	const int count = listGamePaused.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listGamePaused[i];
+		ec->GamePaused(playerID, paused);
+	}
+}
+
+
 void CEventHandler::TeamDied(int teamID)
 {
 	const int count = listTeamDied.size();
@@ -373,6 +385,16 @@ void CEventHandler::PlayerChanged(int playerID)
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listPlayerChanged[i];
 		ec->PlayerChanged(playerID);
+	}
+}
+
+
+void CEventHandler::PlayerAdded(int playerID)
+{
+	const int count = listPlayerAdded.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listPlayerAdded[i];
+		ec->PlayerAdded(playerID);
 	}
 }
 

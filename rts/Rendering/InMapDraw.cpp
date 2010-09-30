@@ -456,7 +456,7 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 
 		unsigned char uPlayerID;
 		pckt >> uPlayerID;
-		if (uPlayerID >= playerHandler->ActivePlayers()) {
+		if (!playerHandler->IsValidPlayer(uPlayerID)) {
 			throw netcode::UnpackPacketException("Invalid player number");
 		}
 		playerID = uPlayerID;
@@ -516,7 +516,7 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
                             int playerID)
 {
-	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
+	if (!playerHandler->IsValidPlayer(playerID))
 		return;
 
 	GML_STDMUTEX_LOCK(inmap); // LocalPoint
@@ -565,7 +565,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
                            int playerID)
 {
-	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
+	if (!playerHandler->IsValidPlayer(playerID))
 		return;
 
 	GML_STDMUTEX_LOCK(inmap); // LocalLine
@@ -598,7 +598,7 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 
 void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 {
-	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
+	if (!playerHandler->IsValidPlayer(playerID))
 		return;
 
 	GML_STDMUTEX_LOCK(inmap); // LocalErase
