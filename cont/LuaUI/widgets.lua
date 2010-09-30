@@ -178,6 +178,7 @@ local callInLists = {
   'TweakMouseWheel',
   'TweakIsAbove',
   'TweakGetTooltip',
+  'RecvFromSynced',
 
 -- these use mouseOwner instead of lists
 --  'MouseMove',
@@ -478,6 +479,7 @@ function widgetHandler:NewWidget()
     for k,v in pairs(System) do
       widget[k] = v
     end
+    widget["SendToUnsynced"] = Spring.SendToUnsynced
   else
     -- use metatable redirection
     setmetatable(widget, {
@@ -522,6 +524,13 @@ function widgetHandler:NewWidget()
     return self.actionHandler:RemoveAction(widget, cmd, types)
   end
 
+  wh.AddSyncAction = function(_, cmd, func, help)
+    return self.actionHandler:AddSyncAction(widget, cmd, func, help)
+  end
+  wh.RemoveSyncAction = function(_, cmd)
+    return self.actionHandler:RemoveSyncAction(widget, cmd)
+  end
+
   wh.AddLayoutCommand = function (_, cmd)
     if (self.inCommandsChanged) then
       table.insert(self.customCommands, cmd)
@@ -543,6 +552,15 @@ function widgetHandler:NewWidget()
   wh.ConfigLayoutHandler = function(_, d) self:ConfigLayoutHandler(d) end
 
   return widget
+end
+
+
+function widgetHandler:AddWidgetSyncAction(widget, cmd, func, help)
+  return self.actionHandler:AddSyncAction(widget, cmd, func, help)
+end
+
+function widgetHandler:RemoveWidgetSyncAction(widget, cmd)
+  return self.actionHandler:RemoveSyncAction(widget, cmd)
 end
 
 
@@ -761,7 +779,7 @@ function widgetHandler:UpdateCallIn(name)
   if ((#self[listName] > 0) or
       (not flexCallInMap[name]) or
       ((name == 'GotChatMsg')     and actionHandler.HaveChatAction()) or
-      ((name == 'RecvFromSynced') and actionHandler.HaveSyncAction())) then
+      ((name == 'RecvFromSynced'))) then
     -- always assign these call-ins
     local selffunc = self[name]
     _G[name] = function(...)
@@ -1815,6 +1833,20 @@ function widgetHandler:RecvLuaMsg(msg, playerID)
     end
   end
   return retval  --  FIXME  --  another actionHandler type?
+end
+
+
+function widgetHandler:RecvFromSynced(...)
+  local retval = false
+  if (self.actionHandler:RecvFromSynced(...)) then
+    retval = true
+  end
+  for _,w in ipairs(self.RecvFromSyncedList) do
+    if (w:RecvFromSynced(...)) then
+      retval = true
+    end
+  end
+  return retval
 end
 
 

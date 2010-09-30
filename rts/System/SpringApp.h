@@ -36,6 +36,7 @@ protected:
 	bool SetSDLVideoMode();                         //!< Sets SDL video mode
 	void SetProcessAffinity(int) const;
 	int Update();                                   //!< Run simulation and draw
+	bool UpdateSim(CGameController *ac);
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	int Sim();                                      //!< Simulation  loop
