@@ -11,7 +11,7 @@ struct LuaHashString;
 
 class LuaLobby : public Connection
 {
-	LuaLobby(lua_State* L);
+	LuaLobby(lua_State* _L_Sim);
 	~LuaLobby();
 
 public:
@@ -26,11 +26,12 @@ private: // metatable
 	static int meta_newindex(lua_State* L);
 
 private:
-	lua_State* L;
+	lua_State* L_Sim;
+	lua_State* L_Draw;
 	int luaRef; // saves userdata
 	int luaRefEvents; // saves table with callin lua functions
 
-	bool PushCallIn(const LuaHashString& name);
+	bool PushCallIn(lua_State *L, const LuaHashString& name);
 
 private:
 	static int CreateLobby(lua_State* L);
