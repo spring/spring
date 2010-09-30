@@ -43,10 +43,12 @@ class CEventHandler
 		void GamePreload();
 		void GameStart();
 		void GameOver( std::vector<unsigned char> winningAllyTeams );
+		void GamePaused(int playerID, bool paused);
 
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
 		void PlayerChanged(int playerID);
+		void PlayerAdded(int playerID);
 		void PlayerRemoved(int playerID, int reason);
 
 		void UnitCreated(const CUnit* unit, const CUnit* builder);
@@ -225,9 +227,11 @@ class CEventHandler
 		EventClientList listGamePreload;
 		EventClientList listGameStart;
 		EventClientList listGameOver;
+		EventClientList listGamePaused;
 		EventClientList listTeamDied;
 		EventClientList listTeamChanged;
 		EventClientList listPlayerChanged;
+		EventClientList listPlayerAdded;
 		EventClientList listPlayerRemoved;
 
 		EventClientList listUnitCreated;

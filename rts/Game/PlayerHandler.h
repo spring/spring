@@ -33,7 +33,7 @@ public:
 	 *
 	 * Accesses a CPlayer instance at a given index
 	 */
-	CPlayer* Player(int i) { assert(unsigned(i) < players.size()); return players[i]; }
+	CPlayer* Player(int id) { assert(unsigned(id) < players.size()); return players[id]; }
 
 	/**
 	 * @brief Player
@@ -49,9 +49,9 @@ public:
 	/**
 	 * @brief Number of players the game was created for
 	 * 
-	 * Will change during at runtime when a new spectator joins
+	 * Will change at runtime, for example if a new spectator joins
 	 */
-	int ActivePlayers() const { return players.size(); };
+	int ActivePlayers() const { return players.size(); }
 
 	/**
 	 * @brief Number of players in a team
@@ -61,6 +61,15 @@ public:
 	 */
 	std::vector<int> ActivePlayersInTeam(int teamId) const;
 
+	/**
+	 * @brief is the supplied id a valid playerId?
+	 * 
+	 * Will change during at runtime when a new spectator joins
+	 */
+	bool IsValidPlayer(int id) const {
+		return ((id >= 0) && (id < ActivePlayers()));
+	}
+
 	void GameFrame(int frameNum);
 
 	/**
@@ -68,7 +77,7 @@ public:
 	 *
 	 * This resizes the playerlist adding stubs if there's gaps to his playerNum
 	 */
-	void AddPlayer( const CPlayer& player );
+	void AddPlayer(const CPlayer& player);
 
 private:
 	typedef std::vector<CPlayer *> playerVec;

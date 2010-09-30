@@ -223,7 +223,7 @@ bool CQuitBox::MousePress(int x, int y, int button)
 			int team=(int)((box.y1+teamBox.y2-my)/0.025f);
 			if(team>=gu->myTeam)
 				team++;
-			if(team<teamHandler->ActiveTeams() && !teamHandler->Team(team)->isDead){
+			if(teamHandler->IsValidTeam(team) && !teamHandler->Team(team)->isDead){
 				// we don't want to give everything to the enemy if there are allies left
 				if(noAlliesLeft || (!noAlliesLeft && teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(team)))){
 					shareTeam=team;
@@ -297,7 +297,7 @@ void CQuitBox::MouseMove(int x, int y, int dx,int dy, int button)
 		int team=(int)((box.y1+teamBox.y2-my)/0.025f);
 		if(team>=gu->myTeam)
 			team++;
-		if(team<teamHandler->ActiveTeams() && !teamHandler->Team(team)->isDead){
+		if(teamHandler->IsValidTeam(team) && !teamHandler->Team(team)->isDead){
 			// we don't want to give everything to the enemy if there are allies left
 			if(noAlliesLeft || (!noAlliesLeft && teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(team)))){
 				shareTeam=team;

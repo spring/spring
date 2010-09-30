@@ -282,6 +282,13 @@ struct SSkirmishAICallback {
 	 */
 	void              (CALLING_CONV *Game_getTeamColor)(int skirmishAIId, int otherTeamId, short* return_colorS3_out);
 
+	/**
+	 * Returns the income multiplier of a team in the game.
+	 * All the teams resource income is multiplied by this factor.
+	 * The default value is 1.0f, the valid range is [0.0, FLOAT_MAX].
+	 */
+	float             (CALLING_CONV *Game_getTeamIncomeMultiplier)(int skirmishAIId, int otherTeamId);
+
 	/// Returns the ally-team of a team
 	int               (CALLING_CONV *Game_getTeamAllyTeam)(int skirmishAIId, int otherTeamId);
 

@@ -85,7 +85,9 @@
 		AllyTeam=number;
 		RgbColor=red green blue;  // red green blue in range [0-1]
 		Side=Arm/Core;  // other sides possible with user mods i suppose
-		Handicap=0-100; // Percent bonus on all resources collected ?
+		Handicap=0;         // DEPRECATED, see Advantage (below). Advantage as percentage, common: [-100, 100], valid: [-100, FLOAT_MAX]
+		Advantage=0;        // Advantage factor (meta value). Currently only affects IncomeMultiplier (below), common: [-1.0, 1.0], valid: [-1.0, FLOAT_MAX]
+		IncomeMultiplier=1; // multiplication factor for collected resources, common: [0.0, 2.0], valid: [0.0, FLOAT_MAX]
 		StartPosX=0;    // Use these in combination with StartPosType=3
 		StartPosZ=0;    // range is in map coordinates as returned by unitsync (NOT like StartRectTop et al)
 		LuaAI=name;     // name of the LUA AI that controlls this team
