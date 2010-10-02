@@ -71,6 +71,7 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
 : CLuaHandle(_name, _order, false),
   teamsLocked(false)
 {
+	isunsynced = false;
 	SetAllowChanges(false, true);
 	printTracebacks = true;
 }
