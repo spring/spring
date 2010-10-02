@@ -13,6 +13,7 @@ using std::set;
 
 #include "EventClient.h"
 //FIXME#include "LuaArrays.h"
+#include "LuaCallInCheck.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
@@ -247,13 +248,11 @@ class CLuaHandle : public CEventClient
 
 		inline void SetActiveHandle(bool draw = IsDrawCallIn());
 		inline void SetActiveHandle(CLuaHandle* lh, bool draw = IsDrawCallIn());
+		bool isunsynced;
+		inline bool SingleState() { return UNSYNCED_SINGLE_LUA_STATE && isunsynced; }
 
 		inline lua_State *GetActiveState() {
-#if DUAL_LUA_STATES
-			return Threading::IsSimThread() ? L_Sim : L_Draw;
-#else
-			return L_Sim;
-#endif
+			return (!DUAL_LUA_STATES || SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
 		}
 
 		bool AddBasicCalls(lua_State *L);
