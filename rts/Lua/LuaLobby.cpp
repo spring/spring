@@ -14,6 +14,7 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
+#define SingleState() luaUI->SingleState()
 
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \

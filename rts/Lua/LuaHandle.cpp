@@ -65,6 +65,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 #endif
   callinErrors(0)
 {
+	isunsynced = true;
 	SetSynced(false, true);
 	L_Sim = lua_open();
 	luaopen_debug(L_Sim);
@@ -218,7 +219,7 @@ void CLuaHandle::RecvFromSynced(int args) {
 	static const LuaHashString cmdStr("RecvFromSynced");
 	//LUA_CALL_IN_CHECK(L); -- not valid here
 
-#if DUAL_LUA_STATES
+#if DUAL_LUA_STATES && !UNSYNCED_SINGLE_LUA_STATE
 	if(L == L_Sim) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(L, args);
 		return;

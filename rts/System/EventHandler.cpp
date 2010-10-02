@@ -442,7 +442,7 @@ void CEventHandler::Update()
 
 	GML_RECMUTEX_LOCK(unit); // Update
 	GML_RECMUTEX_LOCK(feat); // Update
-	GML_DRCMUTEX_LOCK(lua); // Update
+/*	GML_DRCMUTEX_LOCK(lua); // Update*/
 
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUpdate[i];
@@ -472,7 +472,7 @@ void CEventHandler::ViewResize()
                                                   \
     GML_RECMUTEX_LOCK(unit); /* DRAW_CALLIN */    \
     GML_RECMUTEX_LOCK(feat); /* DRAW_CALLIN */    \
-    GML_DRCMUTEX_LOCK(lua); /* DRAW_CALLIN */     \
+    /*GML_DRCMUTEX_LOCK(lua);  DRAW_CALLIN */     \
                                                   \
     LuaOpenGL::EnableDraw ## name ();             \
     listDraw ## name [0]->Draw ## name ();        \
