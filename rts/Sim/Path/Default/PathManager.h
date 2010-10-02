@@ -13,6 +13,8 @@
 class CSolidObject;
 class CPathFinder;
 class CPathEstimator;
+class PathFlowMap;
+class PathHeatMap;
 class CPathFinderDef;
 struct MoveData;
 class CMoveMath;
@@ -76,14 +78,6 @@ public:
 	float GetNodeExtraCost(unsigned int, unsigned int, bool) const;
 	const float* GetNodeExtraCosts(bool) const;
 
-
-	/** Enable/disable heat mapping */
-	void SetHeatMappingEnabled(bool enabled);
-	bool GetHeatMappingEnabled();
-
-	void SetHeatOnSquare(int x, int y, int value, int ownerId);
-	const int GetHeatOnSquare(int x, int y);
-
 private:
 	unsigned int RequestPath(
 		const MoveData* moveData,
@@ -126,6 +120,9 @@ private:
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;
 	CPathEstimator* lowResPE;
+
+	PathFlowMap* pathFlowMap;
+	PathHeatMap* pathHeatMap;
 
 	std::map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathId;

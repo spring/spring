@@ -9,6 +9,8 @@
 #include "PathAllocator.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
+#include "PathFlowMap.hpp"
+#include "PathHeatMap.hpp"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -27,32 +29,23 @@ void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p,
 
 CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
 {
-	heatMapping = true;
-	InitHeatMap();
+	directionVectors[PATHOPT_LEFT ] = int2(-1,  0);
+	directionVectors[PATHOPT_RIGHT] = int2(+1,  0);
+	directionVectors[PATHOPT_UP   ] = int2( 0, -1);
+	directionVectors[PATHOPT_DOWN ] = int2( 0, +1);
+	directionVectors[(PATHOPT_LEFT  | PATHOPT_UP  )].x = directionVectors[PATHOPT_LEFT ].x + directionVectors[PATHOPT_UP  ].x;
+	directionVectors[(PATHOPT_LEFT  | PATHOPT_UP  )].y = directionVectors[PATHOPT_LEFT ].y + directionVectors[PATHOPT_UP  ].y;
+	directionVectors[(PATHOPT_RIGHT | PATHOPT_UP  )].x = directionVectors[PATHOPT_RIGHT].x + directionVectors[PATHOPT_UP  ].x;
+	directionVectors[(PATHOPT_RIGHT | PATHOPT_UP  )].y = directionVectors[PATHOPT_RIGHT].y + directionVectors[PATHOPT_UP  ].y;
+	directionVectors[(PATHOPT_RIGHT | PATHOPT_DOWN)].x = directionVectors[PATHOPT_RIGHT].x + directionVectors[PATHOPT_DOWN].x;
+	directionVectors[(PATHOPT_RIGHT | PATHOPT_DOWN)].y = directionVectors[PATHOPT_RIGHT].y + directionVectors[PATHOPT_DOWN].y;
+	directionVectors[(PATHOPT_LEFT  | PATHOPT_DOWN)].x = directionVectors[PATHOPT_LEFT ].x + directionVectors[PATHOPT_DOWN].x;
+	directionVectors[(PATHOPT_LEFT  | PATHOPT_DOWN)].y = directionVectors[PATHOPT_LEFT ].y + directionVectors[PATHOPT_DOWN].y;
 
-	// Precalculated vectors.
-	directionVector[PATHOPT_RIGHT].x = -2;
-	directionVector[PATHOPT_LEFT ].x =  2;
-	directionVector[PATHOPT_UP   ].x =  0;
-	directionVector[PATHOPT_DOWN ].x =  0;
-	directionVector[(PATHOPT_RIGHT | PATHOPT_UP  )].x = directionVector[PATHOPT_RIGHT].x + directionVector[PATHOPT_UP  ].x;
-	directionVector[(PATHOPT_LEFT  | PATHOPT_UP  )].x = directionVector[PATHOPT_LEFT ].x + directionVector[PATHOPT_UP  ].x;
-	directionVector[(PATHOPT_RIGHT | PATHOPT_DOWN)].x = directionVector[PATHOPT_RIGHT].x + directionVector[PATHOPT_DOWN].x;
-	directionVector[(PATHOPT_LEFT  | PATHOPT_DOWN)].x = directionVector[PATHOPT_LEFT ].x + directionVector[PATHOPT_DOWN].x;
-
-	directionVector[PATHOPT_RIGHT].y =  0;
-	directionVector[PATHOPT_LEFT ].y =  0;
-	directionVector[PATHOPT_UP   ].y =  2;
-	directionVector[PATHOPT_DOWN ].y = -2;
-	directionVector[(PATHOPT_RIGHT | PATHOPT_UP  )].y = directionVector[PATHOPT_RIGHT].y + directionVector[PATHOPT_UP  ].y;
-	directionVector[(PATHOPT_LEFT  | PATHOPT_UP  )].y = directionVector[PATHOPT_LEFT ].y + directionVector[PATHOPT_UP  ].y;
-	directionVector[(PATHOPT_RIGHT | PATHOPT_DOWN)].y = directionVector[PATHOPT_RIGHT].y + directionVector[PATHOPT_DOWN].y;
-	directionVector[(PATHOPT_LEFT  | PATHOPT_DOWN)].y = directionVector[PATHOPT_LEFT ].y + directionVector[PATHOPT_DOWN].y;
-
-	moveCost[PATHOPT_RIGHT] = 1;
-	moveCost[PATHOPT_LEFT ] = 1;
-	moveCost[PATHOPT_UP   ] = 1;
-	moveCost[PATHOPT_DOWN ] = 1;
+	moveCost[PATHOPT_RIGHT] = 1.0f;
+	moveCost[PATHOPT_LEFT ] = 1.0f;
+	moveCost[PATHOPT_UP   ] = 1.0f;
+	moveCost[PATHOPT_DOWN ] = 1.0f;
 	moveCost[(PATHOPT_RIGHT | PATHOPT_UP  )] = 1.42f;
 	moveCost[(PATHOPT_LEFT  | PATHOPT_UP  )] = 1.42f;
 	moveCost[(PATHOPT_RIGHT | PATHOPT_DOWN)] = 1.42f;
@@ -64,6 +57,7 @@ CPathFinder::~CPathFinder()
 	ResetSearch();
 	squareStates.Clear();
 }
+
 
 
 /**
@@ -333,7 +327,7 @@ bool CPathFinder::TestSquare(
 	const MoveData& moveData,
 	const CPathFinderDef& pfDef,
 	const PathNode* parentOpenSquare,
-	unsigned int enterDirection,
+	unsigned int pathDir,
 	int ownerId,
 	bool synced
 ) {
@@ -341,8 +335,8 @@ bool CPathFinder::TestSquare(
 
 	// Calculate the new square.
 	int2 square;
-		square.x = parentOpenSquare->nodePos.x + directionVector[enterDirection].x;
-		square.y = parentOpenSquare->nodePos.y + directionVector[enterDirection].y;
+		square.x = parentOpenSquare->nodePos.x + directionVectors[pathDir].x;
+		square.y = parentOpenSquare->nodePos.y + directionVectors[pathDir].y;
 
 	// Inside map?
 	if (square.x < 0 || square.y < 0 || square.x >= gs->mapx || square.y >= gs->mapy) {
@@ -389,15 +383,10 @@ bool CPathFinder::TestSquare(
 			squareSpeedMod *= 0.10f;
 	}
 
-	// Include heatmap cost adjustment.
-	float heatCostMod = 1.0f;
-	if (heatMapping && moveData.heatMapping && GetHeatOwner(square.x, square.y) != ownerId) {
-		heatCostMod += (moveData.heatMod * GetHeatValue(square.x,square.y));
-	}
+	const float heatCost = (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveData, ownerId);
+	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveData, directionVectors[pathDir]);
 
-
-
-	const float dirMoveCost = (heatCostMod * moveCost[enterDirection]);
+	const float dirMoveCost = (heatCost + flowCost) * moveCost[pathDir];
 	const float extraCost = squareStates.GetNodeExtraCost(square.x, square.y, synced);
 	const float nodeCost = (dirMoveCost / squareSpeedMod) + extraCost;
 
@@ -411,7 +400,7 @@ bool CPathFinder::TestSquare(
 		if (squareStates[sqrIdx].fCost <= fCost)
 			return true;
 
-		squareStates[sqrIdx].nodeMask &= ~PATHOPT_DIRECTION;
+		squareStates[sqrIdx].nodeMask &= ~PATHOPT_AXIS_DIRS;
 	}
 
 	// Look for improvements.
@@ -437,7 +426,7 @@ bool CPathFinder::TestSquare(
 	// mark this square as open
 	squareStates[sqrIdx].fCost = os->fCost;
 	squareStates[sqrIdx].gCost = os->gCost;
-	squareStates[sqrIdx].nodeMask |= (PATHOPT_OPEN | enterDirection);
+	squareStates[sqrIdx].nodeMask |= (PATHOPT_OPEN | pathDir);
 	dirtySquares.push_back(sqrIdx);
 	return true;
 }
@@ -489,8 +478,8 @@ void CPathFinder::FinishSearch(const MoveData& moveData, IPath::Path& foundPath)
 				oldSquare.x = square.x;
 				oldSquare.y = square.y;
 
-			square.x -= directionVector[squareStates[sqrIdx].nodeMask & PATHOPT_DIRECTION].x;
-			square.y -= directionVector[squareStates[sqrIdx].nodeMask & PATHOPT_DIRECTION].y;
+			square.x -= directionVectors[squareStates[sqrIdx].nodeMask & PATHOPT_AXIS_DIRS].x;
+			square.y -= directionVectors[squareStates[sqrIdx].nodeMask & PATHOPT_AXIS_DIRS].y;
 		}
 
 		if (!foundPath.path.empty()) {
@@ -646,38 +635,4 @@ void CPathFinder::ResetSearch()
 		squareStates[lsquare].gCost = PATHCOST_INFINITY;
 	}
 	testedNodes = 0;
-}
-
-
-
-
-
-
-
-// heat mapping
-void CPathFinder::SetHeatMapState(bool enabled)
-{
-	heatMapping = enabled;
-}
-
-void CPathFinder::InitHeatMap()
-{
-	heatmap.resize(gs->hmapx * gs->hmapy, HeatMapValue());
-	heatMapOffset = 0;
-}
-
-void CPathFinder::UpdateHeatMap()
-{
-	++heatMapOffset;
-}
-
-int CPathFinder::GetHeatMapIndex(int x, int y)
-{
-	assert(!heatmap.empty());
-
-	//! x & y are given in gs->mapi coords (:= gs->hmapi * 2)
-	x >>= 1;
-	y >>= 1;
-
-	return y * gs->hmapx + x;
 }

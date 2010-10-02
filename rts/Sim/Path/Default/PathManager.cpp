@@ -7,6 +7,8 @@
 #include "PathConstants.h"
 #include "PathFinder.h"
 #include "PathEstimator.h"
+#include "PathFlowMap.hpp"
+#include "PathHeatMap.hpp"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -19,9 +21,12 @@
 
 CPathManager::CPathManager(): nextPathId(0)
 {
+	pathFlowMap = PathFlowMap::GetInstance();
+	pathHeatMap = PathHeatMap::GetInstance();
+
 	maxResPF = new CPathFinder();
-	medResPE = new CPathEstimator(maxResPF,  8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe",  mapInfo->map.name);
-	lowResPE = new CPathEstimator(maxResPF, 32, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2", mapInfo->map.name);
+	medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe",  mapInfo->map.name);
+	lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2", mapInfo->map.name);
 
 	logOutput.Print("[CPathManager] pathing data checksum: %08x\n", GetPathCheckSum());
 
@@ -40,6 +45,9 @@ CPathManager::~CPathManager()
 	delete lowResPE;
 	delete medResPE;
 	delete maxResPF;
+
+	PathHeatMap::FreeInstance(pathHeatMap);
+	PathFlowMap::FreeInstance(pathFlowMap);
 }
 
 
@@ -58,10 +66,6 @@ unsigned int CPathManager::RequestPath(
 ) {
 	float3 sp(startPos); sp.CheckInBounds();
 	float3 gp(goalPos); gp.CheckInBounds();
-
-	// ?
-	// if (sp.x > (gs->mapx * SQUARE_SIZE - 5)) { sp.x = gs->mapx * SQUARE_SIZE - 5; }
-	// if (gp.z > (gs->mapy * SQUARE_SIZE - 5)) { gp.z = gs->mapy * SQUARE_SIZE - 5; }
 
 	// Create an estimator definition.
 	CRangedGoalWithCircularConstraint* rangedGoalPED = new CRangedGoalWithCircularConstraint(sp, gp, goalRadius, 3.0f, 2000);
@@ -95,7 +99,7 @@ unsigned int CPathManager::RequestPath(
 		caller->UnBlock();
 	}
 
-	const int ownerId = caller? caller->id: 0;
+	const unsigned int ownerId = caller? caller->id: 0;
 	unsigned int retValue = 0;
 
 	// choose the PF or the PE depending on the goal-distance
@@ -114,7 +118,8 @@ unsigned int CPathManager::RequestPath(
 		}
 	} else if (distanceToGoal < ESTIMATE_DISTANCE) {
 		// Get an estimate path.
-		IPath::SearchResult result = medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
+		IPath::SearchResult result =
+			medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -124,11 +129,13 @@ unsigned int CPathManager::RequestPath(
 			retValue = Store(newPath);
 		} else {
 			// if we fail see if it can work find a better block to start from
-			float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
+			const float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
+			const unsigned int ss = SQUARE_SIZE * medResPE->GetBlockSize();
 
-			if (sp.x != 0 &&
-				(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
-				((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
+			if (sp.x != 0.0f &&
+				(int(sp.x) / ss != int(startPos.x) / ss) ||
+				(int(sp.z) / ss != int(startPos.z) / ss)) {
+
 				IPath::SearchResult result = medResPE->GetPath(*moveData, sp, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
 				newPath->searchResult = result;
 
@@ -144,7 +151,8 @@ unsigned int CPathManager::RequestPath(
 		}
 	} else {
 		// Get a low-res. estimate path.
-		IPath::SearchResult result = lowResPE->GetPath(*moveData, startPos, *pfDef, newPath->lowResPath, MAX_SEARCHED_NODES_PE, synced);
+		IPath::SearchResult result =
+			lowResPE->GetPath(*moveData, startPos, *pfDef, newPath->lowResPath, MAX_SEARCHED_NODES_PE, synced);
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -156,8 +164,10 @@ unsigned int CPathManager::RequestPath(
 			// Store the path.
 			retValue = Store(newPath);
 		} else {
-			// sometimes the 32*32 squares can be wrong (admissibility...) so if it fails to get a path also try with 8*8 squares
-			IPath::SearchResult result = medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
+			// sometimes the 32*32 squares can be wrong (admissibility...)
+			// so if it fails to get a path also try with 8*8 squares
+			IPath::SearchResult result =
+				medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
 			newPath->searchResult = result;
 
 			if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -165,12 +175,15 @@ unsigned int CPathManager::RequestPath(
 				retValue = Store(newPath);
 			} else {
 				// 8*8 can also fail rarely, so see if we can find a better 8*8 to start from
-				float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
+				const float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
+				const unsigned int ss = SQUARE_SIZE * medResPE->GetBlockSize();
 
-				if (sp.x != 0 &&
-					(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
-					((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
-					IPath::SearchResult result = medResPE->GetPath(*moveData, sp, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
+				if (sp.x != 0.0f &&
+					(int(sp.x) / ss != int(startPos.x) / ss) ||
+					(int(sp.z) / ss != int(startPos.z) / ss)) {
+
+					IPath::SearchResult result =
+						medResPE->GetPath(*moveData, sp, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
 
 					if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 						MedRes2MaxRes(*newPath, startPos, ownerId, synced);
@@ -409,7 +422,10 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 void CPathManager::Update()
 {
 	SCOPED_TIMER("PFS Update");
-	maxResPF->UpdateHeatMap();
+
+	pathFlowMap->Update();
+	pathHeatMap->Update();
+
 	medResPE->Update();
 	lowResPE->Update();
 }
@@ -417,33 +433,30 @@ void CPathManager::Update()
 // used to deposit heat on the heat-map as a unit moves along its path
 void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
 {
-	if (!pathId) {
-		return;
-	}
+	pathFlowMap->AddFlow(owner);
 
-#ifndef USE_GML
-	static std::vector<int2> points;
-#else
-	std::vector<int2> points;
-#endif
+	if (pathId != 0) {
+		#ifndef USE_GML
+		static std::vector<int2> points;
+		#else
+		std::vector<int2> points;
+		#endif
 
-	GetDetailedPathSquares(pathId, points);
+		GetDetailedPathSquares(pathId, points);
 
-	float scale = 1.0f / points.size();
-	unsigned int i = points.size();
+		const float scale = 1.0f / points.size();
+		const float heat = scale * owner->mobility->heatProduced;
 
-	for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
-		SetHeatOnSquare(it->x, it->y, i * scale * owner->mobility->heatProduced, owner->id); i--;
+		unsigned int i = points.size();
+
+		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
+			pathHeatMap->UpdateHeatValue(it->x, it->y, i * heat, owner->id);
+
+			// decrease contribution from further-away points
+			i--;
+		}
 	}
 }
-
-
-
-void CPathManager::SetHeatMappingEnabled(bool enabled) { maxResPF->SetHeatMapState(enabled); }
-bool CPathManager::GetHeatMappingEnabled() { return maxResPF->GetHeatMapState(); }
-
-void CPathManager::SetHeatOnSquare(int x, int y, int value, int ownerId) { maxResPF->UpdateHeatValue(x, y, value, ownerId); }
-const int CPathManager::GetHeatOnSquare(int x, int y) { return maxResPF->GetHeatValue(x, y); }
 
 
 

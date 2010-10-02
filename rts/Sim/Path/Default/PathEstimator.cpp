@@ -15,6 +15,7 @@
 #include "PathCache.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
+#include "PathFlowMap.hpp"
 #include "Map/ReadMap.h"
 #include "Game/LoadScreen.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -38,9 +39,9 @@ void CPathEstimator::operator delete(void* p, size_t size) { PathAllocator::Free
 
 
 
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, const std::string& cacheFileName, const std::string& map):
-	BLOCK_SIZE(BSIZE),
-	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
+CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int blockSize, unsigned int mmOpt, const std::string& cacheFileName, const std::string& map):
+	BLOCK_SIZE(blockSize),
+	BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
 	pathFinder(pf),
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
@@ -55,25 +56,17 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 {
 	// these give the changes in (x, z) coors
 	// when moving one step in given direction
-	directionVector[PATHDIR_LEFT      ].x =  1;
-	directionVector[PATHDIR_LEFT      ].y =  0;
-	directionVector[PATHDIR_LEFT_UP   ].x =  1;
-	directionVector[PATHDIR_LEFT_UP   ].y =  1;
-	directionVector[PATHDIR_UP        ].x =  0;
-	directionVector[PATHDIR_UP        ].y =  1;
-	directionVector[PATHDIR_RIGHT_UP  ].x = -1;
-	directionVector[PATHDIR_RIGHT_UP  ].y =  1;
-	directionVector[PATHDIR_RIGHT     ].x = -1;
-	directionVector[PATHDIR_RIGHT     ].y =  0;
-	directionVector[PATHDIR_RIGHT_DOWN].x = -1;
-	directionVector[PATHDIR_RIGHT_DOWN].y = -1;
-	directionVector[PATHDIR_DOWN      ].x =  0;
-	directionVector[PATHDIR_DOWN      ].y = -1;
-	directionVector[PATHDIR_LEFT_DOWN ].x =  1;
-	directionVector[PATHDIR_LEFT_DOWN ].y = -1;
+	directionVectors[PATHDIR_LEFT      ] = int2(-1,  0);
+	directionVectors[PATHDIR_RIGHT     ] = int2(+1,  0);
+	directionVectors[PATHDIR_UP        ] = int2( 0, -1);
+	directionVectors[PATHDIR_DOWN      ] = int2( 0, +1);
+	directionVectors[PATHDIR_LEFT_UP   ] = int2(-1, -1);
+	directionVectors[PATHDIR_RIGHT_UP  ] = int2(+1, -1);
+	directionVectors[PATHDIR_RIGHT_DOWN] = int2(+1, +1);
+	directionVectors[PATHDIR_LEFT_DOWN ] = int2(-1, +1);
 
-	goalSqrOffset.x = BLOCK_SIZE / 2;
-	goalSqrOffset.y = BLOCK_SIZE / 2;
+	goalSqrOffset.x = BLOCK_SIZE >> 1;
+	goalSqrOffset.y = BLOCK_SIZE >> 1;
 
 	vertices.resize(moveinfo->moveData.size() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, 0.0f);
 
@@ -141,7 +134,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		pathBarrier = new boost::barrier(numThreads);
 
 		// Start threads if applicable
-		for(size_t i=1; i<numThreads; ++i) {
+		for (size_t i = 1; i < numThreads; ++i) {
 			pathFinders[i] = new CPathFinder();
 			threads[i] = new boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, i));
 		}
@@ -149,7 +142,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		// Use the current thread as thread zero
 		CalcOffsetsAndPathCosts(0);
 
-		for(size_t i=1; i<numThreads; ++i) {
+		for (size_t i = 1; i < numThreads; ++i) {
 			threads[i]->join();
 			delete threads[i];
 			delete pathFinders[i];
@@ -294,8 +287,8 @@ void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int
 void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction, int thread) {
 	// initial calculations
 	const int parentBlocknr = parentBlockZ * nbrOfBlocksX + parentBlockX;
-	const int childBlockX = parentBlockX + directionVector[direction].x;
-	const int childBlockZ = parentBlockZ + directionVector[direction].y;
+	const int childBlockX = parentBlockX + directionVectors[direction].x;
+	const int childBlockZ = parentBlockZ + directionVectors[direction].y;
 	const int vertexNbr = moveData.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES + parentBlocknr * PATH_DIRECTION_VERTICES + direction;
 
 	// outside map?
@@ -392,6 +385,7 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
  */
 void CPathEstimator::Update() {
 	pathCache->Update();
+
 	unsigned int counter = 0;
 
 	while (!needUpdate.empty() && counter < BLOCKS_TO_UPDATE) {
@@ -399,7 +393,7 @@ void CPathEstimator::Update() {
 		SingleBlock sb = needUpdate.front();
 		needUpdate.pop_front();
 
-		const int blocknr = sb.block.y * nbrOfBlocksX + sb.block.x;
+		const unsigned int blocknr = sb.block.y * nbrOfBlocksX + sb.block.x;
 
 		// check if it's already updated
 		if (!(blockStates[blocknr].nodeMask & PATHOPT_OBSOLETE))
@@ -606,19 +600,19 @@ void CPathEstimator::TestBlock(
 	const MoveData& moveData,
 	const CPathFinderDef& peDef,
 	PathNode& parentOpenBlock,
-	unsigned int direction,
+	unsigned int pathDir,
 	bool synced
 ) {
 	testedBlocks++;
 
 	// initial calculations of the new block
 	int2 block;
-		block.x = parentOpenBlock.nodePos.x + directionVector[direction].x;
-		block.y = parentOpenBlock.nodePos.y + directionVector[direction].y;
+		block.x = parentOpenBlock.nodePos.x + directionVectors[pathDir].x;
+		block.y = parentOpenBlock.nodePos.y + directionVectors[pathDir].y;
 	const int vertexIdx =
 		moveData.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentOpenBlock.nodeNum * PATH_DIRECTION_VERTICES +
-		directionVertex[direction];
+		directionVertex[pathDir];
 	const int blockIdx = block.y * nbrOfBlocksX + block.x;
 
 	if (block.x < 0 || block.x >= nbrOfBlocksX || block.y < 0 || block.y >= nbrOfBlocksZ) {
@@ -646,9 +640,11 @@ void CPathEstimator::TestBlock(
 		return;
 	}
 
+
 	// evaluate this node (NOTE the max-res. indexing for extraCost)
+	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(xSquare, zSquare, moveData, directionVectors[pathDir]);
 	const float extraCost = blockStates.GetNodeExtraCost(xSquare, zSquare, synced);
-	const float nodeCost = vertices[vertexIdx] + extraCost;
+	const float nodeCost = vertices[vertexIdx] + flowCost + extraCost;
 
 	const float gCost = parentOpenBlock.gCost + nodeCost;  // g
 	const float hCost = peDef.Heuristic(xSquare, zSquare); // h
@@ -660,7 +656,7 @@ void CPathEstimator::TestBlock(
 		if (blockStates[blockIdx].fCost <= fCost)
 			return;
 
-		blockStates[blockIdx].nodeMask &= ~PATHOPT_DIRECTION;
+		blockStates[blockIdx].nodeMask &= ~PATHOPT_AXIS_DIRS;
 	}
 
 	// look for improvements
@@ -686,7 +682,7 @@ void CPathEstimator::TestBlock(
 	// mark this block as open
 	blockStates[blockIdx].fCost = fCost;
 	blockStates[blockIdx].gCost = gCost;
-	blockStates[blockIdx].nodeMask |= (direction | PATHOPT_OPEN);
+	blockStates[blockIdx].nodeMask |= (pathDir | PATHOPT_OPEN);
 	blockStates[blockIdx].parentNodePos = parentOpenBlock.nodePos;
 
 	dirtyBlocks.push_back(blockIdx);
