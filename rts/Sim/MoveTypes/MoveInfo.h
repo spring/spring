@@ -35,9 +35,12 @@ struct MoveData {
 		followGround    = udefMD? udefMD->followGround:            true;
 		subMarine       = udefMD? udefMD->subMarine:               false;
 		name            = udefMD? udefMD->name:                    "tank";
-		heatMapping     = udefMD? udefMD->heatMapping:             true;
+
+		heatMapping     = udefMD? udefMD->heatMapping:             false;
 		heatMod	        = udefMD? udefMD->heatMod:                 0.05f;
 		heatProduced    = udefMD? udefMD->heatProduced:            30;
+		flowMapping     = udefMD? udefMD->flowMapping:             true;
+		flowMod	        = udefMD? udefMD->flowMod:                 1.0f;
 
 		tempOwner       = NULL;
 	}
@@ -96,10 +99,13 @@ struct MoveData {
 
 	/// heatmap this unit
 	bool heatMapping;
-	/// heatmap path cost modifier
+	/// heatmap path-cost modifier
 	float heatMod;
 	/// heat produced by a path
 	int heatProduced;
+
+	bool flowMapping;
+	float flowMod;
 
 	CSolidObject* tempOwner;
 };

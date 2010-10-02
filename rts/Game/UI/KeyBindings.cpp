@@ -187,7 +187,7 @@ defaultBindings[] = {
 	{ "Ctrl+f5", "viewfree" },
 
 	{ "Any+f1",  "showElevation"  },
-	{ "Any+f2",  "ShowPathMap"    },
+	{ "Any+f2",  "ShowPathSquares"},
 	{ "Any+f3",  "LastMsgPos"     },
 	{ "Any+f4",  "ShowMetalMap"   },
 	{ "Any+f5",  "hideinterface"  },

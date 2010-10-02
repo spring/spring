@@ -327,9 +327,9 @@ void CGroundMoveType::Update()
 
 					SetDeltaSpeed(wantReverse);
 				}
-
-				pathManager->UpdatePath(owner, pathId);
 			}
+
+			pathManager->UpdatePath(owner, pathId);
 		}
 
 		UpdateOwnerPos(wantReverse);

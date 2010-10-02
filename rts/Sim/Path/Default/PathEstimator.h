@@ -31,7 +31,7 @@ public:
 	 * @param pathFinder
 	 *		The pathfinder to be used for exact cost-calculation of vertices.
 	 *
-	 * @param BLOCK_SIZE
+	 * @param blockSize
 	 *		The resolution of the estimator, given in mapsquares.
 	 *
 	 * @param moveMathOpt
@@ -44,7 +44,7 @@ public:
 	 *		name of the corresponding map.
 	 *		Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, unsigned int moveMathOpt, const std::string& cacheFileName, const std::string& map);
+	CPathEstimator(CPathFinder*, unsigned int blockSize, unsigned int moveMathOpt, const std::string&, const std::string&);
 	~CPathEstimator();
 
 #if !defined(USE_MMGR)
@@ -157,9 +157,7 @@ private:
 	std::list<int> dirtyBlocks;														// List of blocks changed in last search.
 	std::list<SingleBlock> needUpdate;												// Blocks that may need an update due to map changes.
 
-	static const int PATH_DIRECTIONS = 8;
-	static const int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS / 2;
-	int2 directionVector[PATH_DIRECTIONS];
+	int2 directionVectors[PATH_DIRECTIONS];
 	int directionVertex[PATH_DIRECTIONS];
 
 	unsigned int moveMathOptions;

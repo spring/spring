@@ -84,58 +84,9 @@ public:
 	);
 
 
-
-	/**
-	 * @brief Enable/disable heat mapping.
-	 *
-	 * Heat mapping makes the pathfinder value unused paths more. Less path overlap should
-	 * make units behave more intelligently.
-	 */
-	void InitHeatMap();
-	void SetHeatMapState(bool enabled);
-	bool GetHeatMapState() { return heatMapping; }
-	void UpdateHeatMap();
-
-	void UpdateHeatValue(const int& x, const int& y, const int& value, const int& ownerId)
-	{
-		const int i = GetHeatMapIndex(x, y);
-		if (heatmap[i].value < value + heatMapOffset) {
-			heatmap[i].value = value + heatMapOffset;
-			heatmap[i].ownerId = ownerId;
-		}
-	}
-
-	const int GetHeatOwner(const int& x, const int& y)
-	{
-		const int i = GetHeatMapIndex(x, y);
-		return heatmap[i].ownerId;
-	}
-
-	const int GetHeatValue(const int& x, const int& y)
-	{
-		const int i = GetHeatMapIndex(x, y);
-		return std::max(0, heatmap[i].value - heatMapOffset);
-	}
-
-
-
 	PathNodeStateBuffer& GetNodeStateBuffer() { return squareStates; }
 
 private:
-	// Heat mapping
-	int GetHeatMapIndex(int x, int y);
-
-	struct HeatMapValue {
-		HeatMapValue(): value(0), ownerId(0) {}
-		int value;
-		int ownerId;
-	};
-
-	std::vector<HeatMapValue> heatmap; //! resolution is hmapx*hmapy
-	int heatMapOffset;  //! heatmap values are relative to this
-	bool heatMapping;
-
-
 	void ResetSearch();
 	IPath::SearchResult InitSearch(const MoveData&, const CPathFinderDef&, int ownerId, bool synced);
 	IPath::SearchResult DoSearch(const MoveData&, const CPathFinderDef&, int ownerId, bool synced);
@@ -157,8 +108,8 @@ private:
 	);
 
 
-	int2 directionVector[16];						///< Unit square-movement in given direction.
-	float moveCost[16];								///< The cost of moving in given direction.
+	int2 directionVectors[PATH_DIRECTIONS << 1];	///< Unit square-movement in given direction.
+	float moveCost[PATH_DIRECTIONS << 1];			///< The cost of moving in given direction.
 
 	float3 start;
 	int startxSqr, startzSqr;

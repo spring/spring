@@ -23,6 +23,7 @@
 #include "Sim/Path/Default/PathFinderDef.h"
 #include "Sim/Path/Default/PathEstimator.h"
 #include "Sim/Path/Default/PathManager.h"
+#include "Sim/Path/Default/PathHeatMap.hpp"
 #undef private
 
 #include "Rendering/GlobalRendering.h"
@@ -73,7 +74,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				for (int y = starty; y < endy; ++y) {
 					for (int x = 0; x < gs->hmapx; ++x) {
 						const float3 pos(x * (SQUARE_SIZE << 1) + SQUARE_SIZE, 0.0f, y * (SQUARE_SIZE << 1) + SQUARE_SIZE);
-						const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+						const unsigned int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
 						float m = 0.0f;
 
 						if (!loshandler->InLos(pos, gu->myAllyTeam)) {
@@ -122,7 +123,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 				for (int y = starty; y < endy; ++y) {
 					for (int x = 0; x < gs->hmapx; ++x) {
-						const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+						const unsigned int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
 
 						if (md != NULL) {
 							float m = md->moveMath->SpeedMod(*md, x << 1, y << 1);
@@ -152,11 +153,13 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		} break;
 
 		case CBaseGroundDrawer::drawPathHeat: {
+			const PathHeatMap* phm = pm->pathHeatMap;
+
 			for (int y = starty; y < endy; ++y) {
 				for (int x = 0; x < gs->hmapx; ++x) {
-					const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+					const unsigned int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
 
-					texMem[idx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * pm->GetHeatOnSquare(x << 1, y << 1), 32, 255);
+					texMem[idx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * phm->GetHeatValue(x << 1, y << 1), 32, 255);
 					texMem[idx + CBaseGroundDrawer::COLOR_G] = 32;
 					texMem[idx + CBaseGroundDrawer::COLOR_B] = 32;
 					texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
@@ -286,18 +289,18 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		float3 p1;
 			p1.x = sqr.x * SQUARE_SIZE;
 			p1.z = sqr.y * SQUARE_SIZE;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
+			p1.y = ground->GetHeight(p1.x, p1.z) + 15.0f;
 		float3 p2;
 
-		const int dir = pf->squareStates[square].nodeMask & PATHOPT_DIRECTION;
-		const int obx = sqr.x - pf->directionVector[dir].x;
-		const int obz = sqr.y - pf->directionVector[dir].y;
-		const int obsquare =  obz * gs->mapx + obx;
+		const unsigned int dir = pf->squareStates[square].nodeMask & PATHOPT_AXIS_DIRS;
+		const unsigned int obx = sqr.x - pf->directionVectors[dir].x;
+		const unsigned int obz = sqr.y - pf->directionVectors[dir].y;
+		const unsigned int obsquare =  obz * gs->mapx + obx;
 
 		if (obsquare >= 0) {
 			p2.x = obx * SQUARE_SIZE;
 			p2.z = obz * SQUARE_SIZE;
-			p2.y = ground->GetHeight(p2.x, p2.z) + 15;
+			p2.y = ground->GetHeight(p2.x, p2.z) + 15.0f;
 
 			glVertexf3(p1);
 			glVertexf3(p2);

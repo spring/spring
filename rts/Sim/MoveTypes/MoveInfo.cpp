@@ -53,6 +53,12 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(subMarine),
 	CR_MEMBER(tempOwner),
 
+	CR_MEMBER(heatMapping),
+	CR_MEMBER(heatMod),
+	CR_MEMBER(heatProduced),
+	CR_MEMBER(flowMapping),
+	CR_MEMBER(flowMod),
+
 	CR_RESERVED(16)
 ));
 
@@ -137,9 +143,11 @@ CMoveInfo::CMoveInfo()
 			}
 		}
 
-		md->heatMapping = moveTable.GetBool("heatMapping", false);
-		md->heatMod = moveTable.GetFloat("heatMod", 50.0f);
+		md->heatMapping  = moveTable.GetBool("heatMapping", false);
+		md->heatMod      = moveTable.GetFloat("heatMod", 50.0f);
 		md->heatProduced = moveTable.GetInt("heatProduced", 60);
+		md->flowMapping  = moveTable.GetBool("flowMapping", true);
+		md->flowMod      = moveTable.GetFloat("flowMod", 1.0f);
 
 		// ground units hug the ocean floor when in water,
 		// ships stay at a "fixed" level (their waterline)
@@ -192,14 +200,13 @@ CMoveInfo::CMoveInfo()
 	}
 
 
-	const float waterDamage = mapInfo->water.damage;
-	if (waterDamage >= 1000.0f) {
+	if (mapInfo->water.damage >= 1000.0f) {
 		CGroundMoveMath::waterCost = 0.0f;
 	} else {
-		CGroundMoveMath::waterCost = 1.0f / (1.0f + waterDamage * 0.1f);
+		CGroundMoveMath::waterCost = 1.0f / (1.0f + mapInfo->water.damage * 0.1f);
 	}
 
-	CHoverMoveMath::noWaterMove = (waterDamage >= 10000.0f);
+	CHoverMoveMath::noWaterMove = (mapInfo->water.damage >= 10000.0f);
 
 	crc << CGroundMoveMath::waterCost
 		<< CHoverMoveMath::noWaterMove;
