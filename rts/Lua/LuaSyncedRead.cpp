@@ -93,8 +93,8 @@ enum UnitAllegiance {
 /******************************************************************************/
 /******************************************************************************/
 
-static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
-static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
+#define fullRead CLuaHandle::GetActiveFullRead()
+#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
 
 
 /******************************************************************************/
