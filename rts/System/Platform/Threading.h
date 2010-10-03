@@ -8,8 +8,6 @@
 namespace Threading {
 	void SetMainThread(boost::thread *mt);
 	boost::thread *GetMainThread();
-	void SetSimThread(bool set);
-	bool IsSimThread();
 	void SetThreadError(const std::string &s);
 	std::runtime_error GetThreadError();
 	bool IsMainThread();
