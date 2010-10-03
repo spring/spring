@@ -90,8 +90,8 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 CUnitSet LuaUnsyncedCtrl::drawCmdQueueUnits;
 
-#define fullRead CLuaHandle::GetActiveFullRead()
-#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
+static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
+static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
 
 
 /******************************************************************************/
@@ -1720,7 +1720,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 	const string texName = lua_tostring(L, 2);
 
 	if (texName[0] == LuaTextures::prefix) { // '!'
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+		LuaTextures& textures = CLuaHandle::GetActiveTextures();
 		const LuaTextures::Texture* tex = textures.GetInfo(texName);
 		if (tex == NULL) {
 			return 0;

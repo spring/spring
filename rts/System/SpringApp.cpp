@@ -981,16 +981,6 @@ void SpringApp::Startup()
 	}
 }
 
-bool SpringApp::UpdateSim(CGameController *ac)
-{
-	GML_MSTMUTEX_LOCK(sim); // UpdateSim
-
-	Threading::SetSimThread(true);
-	bool ret = ac->Update();
-	Threading::SetSimThread(false);
-	return ret;
-}
-
 #if defined(USE_GML) && GML_ENABLE_SIM
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
@@ -1014,8 +1004,12 @@ int SpringApp::Sim()
 				CrashHandler::ClearSimWDT();
 				gmlProcessor->ExpandAuxQueue();
 
-				if(!UpdateSim(activeController))
-					return 0;
+				{
+					GML_MSTMUTEX_LOCK(sim); // Sim
+
+					if(!activeController->Update())
+						return 0;
+				}
 
 				gmlProcessor->GetQueue();
 			}
@@ -1054,16 +1048,20 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 			if (gmlMultiThreadSim) {
 				if (!gs->frameNum) {
-					UpdateSim(activeController);
+					GML_MSTMUTEX_LOCK(sim); // Update
+
+					activeController->Update();
 					if (gs->frameNum) {
 						gmlStartSim = 1;
 					}
 				}
 			} else {
-				UpdateSim(activeController);
+				GML_MSTMUTEX_LOCK(sim); // Update
+
+				activeController->Update();
 			}
 #else
-		if (!UpdateSim(activeController)) {
+		if (!activeController->Update()) {
 			ret = 0;
 		} else {
 #endif

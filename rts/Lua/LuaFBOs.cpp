@@ -118,7 +118,7 @@ void LuaFBOs::FBO::Free(lua_State* L)
 	glDeleteFramebuffersEXT(1, &id);
 	id = 0;
 
-	CLuaHandle::GetActiveFBOs(L).fbos.erase(this);
+	CLuaHandle::GetActiveFBOs().fbos.erase(this);
 }
 
 
@@ -266,7 +266,7 @@ bool LuaFBOs::AttachObject(lua_State* L, int index,
 	else if (lua_israwstring(L, index)) {
 		// custom texture
 		const string texName = lua_tostring(L, index);
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+		LuaTextures& textures = CLuaHandle::GetActiveTextures();
 		const LuaTextures::Texture* tex = textures.GetInfo(texName);
 		if (tex == NULL) {
 			return false;
@@ -428,7 +428,7 @@ int LuaFBOs::CreateFBO(lua_State* L)
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
 
 	if (fboPtr->luaRef != LUA_NOREF) {
-		CLuaHandle::GetActiveFBOs(L).fbos.insert(fboPtr);
+		CLuaHandle::GetActiveFBOs().fbos.insert(fboPtr);
 	}
 
 	return 1;

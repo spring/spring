@@ -170,7 +170,7 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 	unsigned int dlist = 0;
 	if (lua_isnumber(L, 4)) {
 		const unsigned int ilist = (unsigned int)luaL_checknumber(L, 4);
-		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
+		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
 		dlist = displayLists.GetDList(ilist);
 	} else {
 		dlist = localPiece->displist; // set to the default
@@ -229,7 +229,7 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 	const int luaType = lua_type(L, index);
 	if (luaType == LUA_TNUMBER) {
 		const unsigned int ishdr = (unsigned int)luaL_checknumber(L, index);
-		const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+		const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
 		const unsigned int id = shaders.GetProgramName(ishdr);
 		if (id == 0) {
 			shader.openglID = 0;
@@ -323,7 +323,7 @@ static GLuint ParseUnitTexture(const string& texture)
 }
 
 
-static void ParseTextureImage(lua_State *L, LuaMatTexture& texUnit, const string& image)
+static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 {
 	GLuint texID = 0;
 
@@ -346,7 +346,7 @@ static void ParseTextureImage(lua_State *L, LuaMatTexture& texUnit, const string
 	}
 	else if (image[0] == LuaTextures::prefix) {
 		// dynamic texture
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+		LuaTextures& textures = CLuaHandle::GetActiveTextures();
 		const LuaTextures::Texture* texInfo = textures.GetInfo(image);
 		if (texInfo != NULL) {
 			texID = texInfo->id;
@@ -397,7 +397,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 
 	if (lua_isstring(L, index)) {
 		const string texName = lua_tostring(L, index);
-		ParseTextureImage(L, texUnit, texName);
+		ParseTextureImage(texUnit, texName);
 		texUnit.enable = true;
 		return;
 	}
@@ -414,7 +414,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 		const string key = StringToLower(lua_tostring(L, -2));
 		if (key == "tex") {
 			const string texName = lua_tostring(L, -1);
-			ParseTextureImage(L, texUnit, texName);
+			ParseTextureImage(texUnit, texName);
 		}
 		else if (key == "enable") {
 			if (lua_isboolean(L, -1)) {
@@ -429,7 +429,7 @@ static GLuint ParseDisplayList(lua_State* L, const char* caller, int index)
 {
 	if (lua_isnumber(L, index)) {
 		const unsigned int ilist = (unsigned int)luaL_checknumber(L, index);
-		const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
+		const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
 		return displayLists.GetDList(ilist);
 	}
 	return 0;

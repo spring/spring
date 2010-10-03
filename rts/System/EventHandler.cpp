@@ -2,10 +2,8 @@
 
 #include "StdAfx.h"
 #include "EventHandler.h"
-#include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
 #include "System/ConfigHandler.h"
-#include "System/Platform/Threading.h"
 
 using std::string;
 using std::vector;
@@ -426,15 +424,14 @@ void CEventHandler::Load(CArchiveBase* archive)
 }
 
 #ifdef USE_GML
-#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return
+#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return;
 #else
 #define GML_DRAW_CALLIN_SELECTOR()
 #endif
 
 void CEventHandler::Update()
 {
-	GML_DRAW_CALLIN_SELECTOR();
-
+	GML_DRAW_CALLIN_SELECTOR()
 	const int count = listUpdate.size();
 
 	if (count <= 0)
@@ -442,7 +439,7 @@ void CEventHandler::Update()
 
 	GML_RECMUTEX_LOCK(unit); // Update
 	GML_RECMUTEX_LOCK(feat); // Update
-/*	GML_DRCMUTEX_LOCK(lua); // Update*/
+	GML_RECMUTEX_LOCK(lua); // Update
 
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUpdate[i];
@@ -464,7 +461,7 @@ void CEventHandler::ViewResize()
 #define DRAW_CALLIN(name)                         \
   void CEventHandler:: Draw ## name ()        \
   {                                               \
-    GML_DRAW_CALLIN_SELECTOR();                   \
+    GML_DRAW_CALLIN_SELECTOR()                    \
     const int count = listDraw ## name.size();    \
     if (count <= 0) {                             \
       return;                                     \
@@ -472,7 +469,7 @@ void CEventHandler::ViewResize()
                                                   \
     GML_RECMUTEX_LOCK(unit); /* DRAW_CALLIN */    \
     GML_RECMUTEX_LOCK(feat); /* DRAW_CALLIN */    \
-    /*GML_DRCMUTEX_LOCK(lua);  DRAW_CALLIN */     \
+    GML_RECMUTEX_LOCK(lua); /* DRAW_CALLIN */     \
                                                   \
     LuaOpenGL::EnableDraw ## name ();             \
     listDraw ## name [0]->Draw ## name ();        \
