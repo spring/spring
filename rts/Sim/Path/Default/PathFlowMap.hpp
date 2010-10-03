@@ -37,8 +37,8 @@ public:
 	unsigned int GetFrontBufferIdx() const { return fBufferIdx; }
 	unsigned int GetBackBufferIdx() const { return bBufferIdx; }
 
-	const std::vector<FlowCell>& GetFBuffer() { return buffers[fBufferIdx]; }
-	const std::vector<FlowCell>& GetBBuffer() { return buffers[bBufferIdx]; }
+	const std::vector<FlowCell>& GetFrontBuffer() { return buffers[fBufferIdx]; }
+	const std::vector<FlowCell>& GetBackBuffer() { return buffers[bBufferIdx]; }
 
 private:
 	std::vector<FlowCell> buffers[2];

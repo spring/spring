@@ -42,7 +42,9 @@ PathFlowMap::~PathFlowMap() {
 
 void PathFlowMap::Update() {
 	std::vector<FlowCell>& fCells = buffers[fBufferIdx];
+	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 	std::set<unsigned int>& fIndices = indices[fBufferIdx];
+	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
 	for (std::set<unsigned int>::iterator it = fIndices.begin(); it != fIndices.end(); ++it) {
 		FlowCell& fCell = fCells[*it];
@@ -52,8 +54,20 @@ void PathFlowMap::Update() {
 		fCell.numObjects = 0;
 	}
 
+	for (std::set<unsigned int>::iterator it = bIndices.begin(); it != bIndices.end(); ++it) {
+		FlowCell& bCell = bCells[*it];
+
+		if (bCell.flowVector.SqLength2D() > 0.01f) {
+			const float flowLen = bCell.flowVector.Length2D();
+
+			bCell.flowVector.x /= flowLen;
+			bCell.flowVector.z /= flowLen;
+		}
+	}
+
 	fIndices.clear();
 
+	// swap the buffers
 	fBufferIdx = (fBufferIdx + 1) & 1;
 	bBufferIdx = (bBufferIdx + 1) & 1;
 }
@@ -76,12 +90,12 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
-	FlowCell& cell = bCells[icell];
+	FlowCell& bCell = bCells[icell];
 
-	cell.flowVector.x += (o->speed.x);
-	cell.flowVector.z += (o->speed.z);
-	cell.flowVector.y += (o->mass * o->mobility->flowMod);
-	cell.numObjects   += 1;
+	bCell.flowVector.x += (o->speed.x);
+	bCell.flowVector.z += (o->speed.z);
+	bCell.flowVector.y += (o->mass * o->mobility->flowMod);
+	bCell.numObjects   += 1;
 
 	bIndices.insert(icell);
 }
@@ -89,11 +103,10 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 
 
 const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const {
-	// read from the front-buffer
-	const std::vector<FlowCell>& buf = buffers[fBufferIdx];
-	const unsigned int idx = (hmz / zscale) * xsize + (hmx / xscale);
+	const std::vector<FlowCell>& fCells = buffers[fBufferIdx];
+	const unsigned int fCellIdx = (hmz / zscale) * xsize + (hmx / xscale);
 
-	return buf[idx].flowVector;
+	return (fCells[fCellIdx].flowVector);
 }
 
 float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveData& md, const int2& dir) const {
