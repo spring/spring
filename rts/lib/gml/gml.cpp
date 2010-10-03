@@ -231,7 +231,6 @@ boost::mutex rflashmutex;
 boost::mutex rpiecemutex;
 boost::mutex rfeatmutex;
 boost::mutex drawmutex;
-boost::mutex recvmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -246,8 +245,6 @@ boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
 boost::recursive_mutex laycmdmutex;
-boost::recursive_mutex luasimmutex;
-boost::recursive_mutex luadrawmutex;
 
 gmlMutex simmutex;
 #endif

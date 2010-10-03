@@ -15,8 +15,7 @@ local actionHandler = {
   textActions       = {},
   keyPressActions   = {},
   keyRepeatActions  = {},
-  keyReleaseActions = {},
-  syncActions = {}
+  keyReleaseActions = {}
 }
 
 --------------------------------------------------------------------------------
@@ -85,22 +84,6 @@ function actionHandler:AddAction(widget, cmd, func, data, types)
 end
 
 
-local function AddMapAction(map, widget, cmd, func, data)
-  local callInfoList = map[cmd]
-  if (callInfoList == nil) then
-    callInfoList = {}
-    map[cmd] = callInfoList
-  end
-  return InsertCallInfo(callInfoList, widget, func, data)
-end
-
-
-function actionHandler:AddSyncAction(widget, cmd, func, data)
-  return AddMapAction(self.syncActions, widget, cmd, func, data)
-end
-
-
-
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
@@ -145,24 +128,6 @@ function actionHandler:RemoveAction(widget, cmd, types)
   if (keyRelease) then rSuccess = remove(self.keyReleaseActions) end
   
   return tSuccess, pSuccess, RSuccess, rSuccess
-end
-
-
-local function RemoveMapAction(map, widget, cmd)
-  local callInfoList = map[cmd]
-  if (callInfoList == nil) then
-    return false
-  end
-  local count = RemoveCallInfo(callInfoList, widget)
-  if (#callInfoList <= 0) then
-    map[cmd] = nil
-  end
-  return (count > 0)
-end
-
-
-function actionHandler:RemoveSyncAction(widget, cmd)
-  return RemoveMapAction(self.syncActions, widget, cmd)
 end
 
 
@@ -260,41 +225,8 @@ function actionHandler:TextAction(line)
 end
 
 
-function actionHandler:RecvFromSynced(...)
-  local arg1, arg2 = ...
-  if (type(arg1) == 'string') then
-    -- a raw sync msg
-    local callInfoList = self.syncActions[arg1]
-    if (callInfoList == nil) then
-      return false
-    end
-    
-    for i,callInfo in ipairs(callInfoList) do
-      -- local widget = callInfo[1]
-      local func = callInfo[2]
-      if (func(...)) then
-        return true
-      end
-    end
-    return false
-  end
-
-  if (type(arg1) == 'number') then
-    -- a proxied chat msg
-    if (type(arg2) == 'string') then
-      return GotChatMsg(arg2, arg1)
-    end
-    return false
-  end
-  
-  return false -- unknown type
-end
-
-
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-
-actionHandler.HaveSyncAction = function() return (next(self.syncActions) ~= nil) end
 
 return actionHandler
 

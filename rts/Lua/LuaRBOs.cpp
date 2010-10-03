@@ -85,7 +85,7 @@ void LuaRBOs::RBO::Init()
 }
 
 
-void LuaRBOs::RBO::Free(lua_State *L)
+void LuaRBOs::RBO::Free()
 {
 	if (id == 0) {
 		return;
@@ -94,7 +94,7 @@ void LuaRBOs::RBO::Free(lua_State *L)
 	glDeleteRenderbuffersEXT(1, &id);
 	id = 0;
 
-	CLuaHandle::GetActiveRBOs(L).rbos.erase(this);
+	CLuaHandle::GetActiveRBOs().rbos.erase(this);
 }
 
 
@@ -104,7 +104,7 @@ void LuaRBOs::RBO::Free(lua_State *L)
 int LuaRBOs::meta_gc(lua_State* L)
 {
 	RBO* rbo = (RBO*)luaL_checkudata(L, 1, "RBO");
-	rbo->Free(L);
+	rbo->Free();
 	return 0;
 }
 
@@ -175,7 +175,7 @@ int LuaRBOs::CreateRBO(lua_State* L)
 	lua_setmetatable(L, -2);
 
 	if (rboPtr->id != 0) {
-		CLuaHandle::GetActiveRBOs(L).rbos.insert(rboPtr);
+		CLuaHandle::GetActiveRBOs().rbos.insert(rboPtr);
 	}
 
 	return 1;
@@ -188,7 +188,7 @@ int LuaRBOs::DeleteRBO(lua_State* L)
 		return 0;
 	}
 	RBO* rbo = (RBO*)luaL_checkudata(L, 1, "RBO");
-	rbo->Free(L);
+	rbo->Free();
 	return 0;
 }
 
