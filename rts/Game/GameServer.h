@@ -3,7 +3,6 @@
 #ifndef __GAME_SERVER_H__
 #define __GAME_SERVER_H__
 
-#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <string>
@@ -18,6 +17,8 @@
 #include "UnsyncedRNG.h"
 #include "float3.h"
 #include "System/myTime.h"
+#include "System/Platform/Synchro.h"
+
 
 namespace netcode
 {
@@ -220,7 +221,7 @@ private:
 	boost::scoped_ptr<AutohostInterface> hostif;
 	UnsyncedRNG rng;
 	boost::thread* thread;
-	mutable boost::recursive_mutex gameServerMutex;
+	mutable Threading::RecursiveMutex gameServerMutex;
 	typedef std::set<unsigned char> PlayersToForwardMsgvec;
 	typedef std::map<unsigned char, PlayersToForwardMsgvec> MsgToForwardMap;
 	MsgToForwardMap relayingMessagesMap;
