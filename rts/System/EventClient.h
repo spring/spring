@@ -34,7 +34,7 @@ class CEventClient
 	public:
 		inline const std::string& GetName()   const { return name;   }
 		inline int                GetOrder()  const { return order;  }
-		inline bool               GetSynced() const { return synced_; }
+		inline bool               GetSynced() const { return synced; }
 
 		// used by the eventHandler to register
 		// call-ins when an EventClient is being added
@@ -50,7 +50,7 @@ class CEventClient
 	private:
 		const std::string name;
 		const int         order;
-		const bool        synced_;
+		const bool        synced;
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);

@@ -11,7 +11,6 @@
 #include "KeyBindings.h"
 #include "Game/GameSetup.h"
 #include "Sim/Misc/Team.h"
-#include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaConstGame.h"
 #include "Lua/LuaUnitDefs.h"
 #include "Lua/LuaWeaponDefs.h"
@@ -55,12 +54,11 @@ static const string endlStr = "\r\n";
 CKeyAutoBinder::CKeyAutoBinder()
 : CLuaHandle("KeyAutoBinder", 1234, false)
 {
-	if (!IsValid())
+	if (L == NULL) {
 		return;
+	}
 
-	BEGIN_ITERATE_LUA_STATES();
-
-	LoadCompareFunc(L);
+	LoadCompareFunc();
 
 	// load the standard libraries
 	LUA_OPEN_LIB(L, luaopen_base);
@@ -79,10 +77,7 @@ CKeyAutoBinder::CKeyAutoBinder()
 	    !AddEntriesToTable(L, "WeaponDefs", LuaWeaponDefs::PushEntries)) {
 		logOutput.Print("KeyAutoBinder: error loading lua libraries\n");
 	}
-
-	lua_settop(L, 0);
-
-	END_ITERATE_LUA_STATES();
+  lua_settop(L, 0);
 }
 
 
@@ -103,10 +98,11 @@ string CKeyAutoBinder::LoadFile(const string& filename) const
 }
 
 
-bool CKeyAutoBinder::LoadCode(lua_State *L, const string& code, const string& debug)
+bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 {
-	if (!IsValid())
+	if (L == NULL) {
 		return false;
+	}
 
 	lua_settop(L, 0);
 
@@ -130,7 +126,7 @@ bool CKeyAutoBinder::LoadCode(lua_State *L, const string& code, const string& de
 }
 
 
-bool CKeyAutoBinder::LoadCompareFunc(lua_State *L)
+bool CKeyAutoBinder::LoadCompareFunc()
 {
 	string code = endlStr;
 
@@ -153,7 +149,7 @@ bool CKeyAutoBinder::LoadCompareFunc(lua_State *L)
 		logOutput.Print(code);
 	}
 
-	if (!LoadCode(L, code, "Compare()")) {
+	if (!LoadCode(code, "Compare()")) {
 		return false;
 	}
 
@@ -181,10 +177,9 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
                                    const vector<string>& sortCriteria,
                                    const vector<string>& chords)
 {
-	if (!IsValid())
+	if (L == NULL) {
 		return false;
-
-	SELECT_LUA_STATE();
+	}
 
 	lua_settop(L, 0);
 
@@ -198,8 +193,8 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 		logOutput.Print(sortCall);
 	}
 
-	if (!LoadCode(L, reqCall,  keystr + ":HasReqs()") ||
-	    !LoadCode(L, sortCall, keystr + ":IsBetter()")) {
+	if (!LoadCode(reqCall,  keystr + ":HasReqs()") ||
+	    !LoadCode(sortCall, keystr + ":IsBetter()")) {
 		return false;
 	}
 
