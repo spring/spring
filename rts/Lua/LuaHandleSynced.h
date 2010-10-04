@@ -32,7 +32,7 @@ class CLuaHandleSynced : public CLuaHandle
 		virtual bool SyncedUpdateCallIn(lua_State *L, const string& name);
 		virtual bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
 
-		void GameFrame(int frameNumber);
+		virtual void GameFrame(int frameNumber);
 		bool GotChatMsg(const string& msg, int playerID);
 		bool RecvLuaMsg(const string& msg, int playerID);
 		virtual void RecvFromSynced(int args); // not an engine call-in

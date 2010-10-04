@@ -7,6 +7,8 @@
 #include "System/Platform/Synchro.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Projectiles/Projectile.h"
 
 struct lua_State;
 
@@ -56,7 +58,18 @@ enum UnitEvent {
 	UNIT_CLOAKED,
 	UNIT_DECLOAKED,
 	UNIT_MOVE_FAILED,
-	UNIT_EXPLOSION
+	UNIT_EXPLOSION,
+	UNIT_STOCKPILE_CHANGED
+};
+
+enum FeatEvent {
+	FEAT_CREATED,
+	FEAT_DESTROYED
+};
+
+enum ProjEvent {
+	PROJ_CREATED,
+	PROJ_DESTROYED
 };
 
 struct LuaUnitEvent {
@@ -77,17 +90,53 @@ struct LuaUnitEvent {
 	LuaUnitEvent(UnitEvent i, const CUnit *u1, float f1) : id(i), unit1(u1), float1(f1) {}
 	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1, const float3& p1, float f1) : id(i), unit1(u1), int1(i1), pos1(p1), float1(f1)  {}
 	LuaUnitEvent(UnitEvent i, int i1, const float3& p1, const CUnit *u1) : id(i), int1(i1), pos1(p1), unit1(u1) {}
+	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CWeapon *u2, int i1) : id(i), unit1(u1), unit2((CUnit *)u2), int1(i1) {}
+};
+
+struct LuaFeatEvent {
+	FeatEvent id;
+	const CFeature *feat1;
+	LuaFeatEvent(FeatEvent i, const CFeature *f1) : id(i), feat1(f1) {}
+};
+
+struct LuaProjEvent {
+	ProjEvent id;
+	const CProjectile *proj1;
+	LuaProjEvent(ProjEvent i, const CProjectile *p1) : id(i), proj1(p1) {}
 };
 
 #if DUAL_LUA_STATES && UNSYNCED_SINGLE_LUA_STATE
-#define LUA_UNIT_BATCH_PUSH(...)\
-	if(Threading::IsSimThread()) {\
+#define LUA_UNIT_BATCH_PUSH_X(r,...)\
+	if(SingleState() && !execUnitBatch && Threading::IsSimThread()) {\
+		GML_STDMUTEX_LOCK(ulbatch);\
 		luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__));\
-		if(SingleState())\
-			return;\
+		return r;\
+	}
+#define LUA_UNIT_BATCH_PUSH(...) LUA_UNIT_BATCH_PUSH_X(,__VA_ARGS__)
+#define LUA_UNIT_BATCH_PUSH_RET(r,...) LUA_UNIT_BATCH_PUSH_X(r,__VA_ARGS__)
+#define LUA_FEAT_BATCH_PUSH(...)\
+	if(SingleState() && !execFeatBatch && Threading::IsSimThread()) {\
+		GML_STDMUTEX_LOCK(flbatch);\
+		luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
+		return;\
+	}
+#define LUA_PROJ_BATCH_PUSH(...)\
+	if(SingleState() && !execProjBatch && Threading::IsSimThread()) {\
+		GML_STDMUTEX_LOCK(plbatch);\
+		luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__));\
+		return;\
+	}
+#define LUA_FRAME_BATCH_PUSH(...)\
+	if(SingleState() && Threading::IsSimThread()) {\
+		luaFrameEventBatch = __VA_ARGS__;\
+		return;\
 	}
 #else
 #define LUA_UNIT_BATCH_PUSH(...)
+#define LUA_UNIT_BATCH_PUSH_RET(r,...)
+#define LUA_FEAT_BATCH_PUSH(...)
+#define LUA_PROJ_BATCH_PUSH(...)
+#define LUA_FRAME_BATCH_PUSH(...)
 #endif
 
 
@@ -106,6 +155,7 @@ struct LuaUnitEvent {
 #else
 #define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##drawlock(name##drawmutex, !SingleState() && !Threading::IsSimThread());\
 								Threading::RecursiveScopedLock name##lock(name##mutex, SingleState())
+								//GML_PROFMUTEX_LOCK(name, Threading::RecursiveScopedLock name##lock(name##mutex, SingleState()), __LINE__)
 #endif
 
 #else
