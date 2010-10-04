@@ -23,6 +23,8 @@ void PathFlowMap::FreeInstance(PathFlowMap* pfm) {
 
 
 PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
+	const float s = 1.0f / math::sqrt(2.0f);
+
 	fBufferIdx = 0;
 	bBufferIdx = 1;
 
@@ -33,11 +35,26 @@ PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
 
 	buffers[fBufferIdx].resize(xsize * zsize, FlowCell());
 	buffers[bBufferIdx].resize(xsize * zsize, FlowCell());
+
+	pathOptDirs.resize(PATH_DIRECTIONS << 1);
+
+	pathOptDirs[PATHOPT_LEFT                ] = float3(-1.0f, 0.0f,  0.0f);
+	pathOptDirs[PATHOPT_RIGHT               ] = float3( 1.0f, 0.0f,  0.0f);
+	pathOptDirs[PATHOPT_UP                  ] = float3( 0.0f, 0.0f, -1.0f);
+	pathOptDirs[PATHOPT_DOWN                ] = float3( 0.0f, 0.0f,  1.0f);
+	pathOptDirs[PATHOPT_LEFT  | PATHOPT_UP  ] = float3(-1.0f, 0.0f, -1.0f) * s;
+	pathOptDirs[PATHOPT_RIGHT | PATHOPT_UP  ] = float3( 1.0f, 0.0f, -1.0f) * s;
+	pathOptDirs[PATHOPT_RIGHT | PATHOPT_DOWN] = float3( 1.0f, 0.0f,  1.0f) * s;
+	pathOptDirs[PATHOPT_LEFT  | PATHOPT_DOWN] = float3(-1.0f, 0.0f,  1.0f) * s;
 }
 
 PathFlowMap::~PathFlowMap() {
 	buffers[fBufferIdx].clear();
 	buffers[bBufferIdx].clear();
+	indices[fBufferIdx].clear();
+	indices[bBufferIdx].clear();
+
+	pathOptDirs.clear();
 }
 
 void PathFlowMap::Update() {
@@ -109,9 +126,9 @@ const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const 
 	return (fCells[fCellIdx].flowVector);
 }
 
-float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveData& md, const int2& dir) const {
+float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveData& md, unsigned int pathOpt) const {
 	const float3& flowVec = GetFlowVec(x, z);
-	const float3  pathDir = float3(dir.x, 0.0f, dir.y);
+	const float3& pathDir = pathOptDirs[pathOpt];
 
 	const float flowScale = ((flowVec.dot(pathDir) * -1.0f) + 1.0f) * 0.5f;
 	const float flowCost = flowVec.y * flowScale;

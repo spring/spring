@@ -139,7 +139,7 @@ private:
 
 	IPath::SearchResult InitSearch(const MoveData&, const CPathFinderDef&, bool);
 	IPath::SearchResult DoSearch(const MoveData&, const CPathFinderDef&, bool);
-	void TestBlock(const MoveData&, const CPathFinderDef&, PathNode&, unsigned int, bool);
+	void TestBlock(const MoveData&, const CPathFinderDef&, PathNode&, unsigned int pathDir, bool synced);
 	void FinishSearch(const MoveData& moveData, IPath::Path& path);
 	void ResetSearch();
 

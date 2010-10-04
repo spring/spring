@@ -32,7 +32,7 @@ public:
 	void AddFlow(const CSolidObject*);
 
 	const float3& GetFlowVec(unsigned int hmx, unsigned int hmz) const;
-	float GetFlowCost(unsigned int x, unsigned int z, const MoveData&, const int2& dir) const;
+	float GetFlowCost(unsigned int x, unsigned int z, const MoveData&, unsigned int opt) const;
 
 	unsigned int GetFrontBufferIdx() const { return fBufferIdx; }
 	unsigned int GetBackBufferIdx() const { return bBufferIdx; }
@@ -43,6 +43,8 @@ public:
 private:
 	std::vector<FlowCell> buffers[2];
 	std::set<unsigned int> indices[2];
+
+	std::vector<float3> pathOptDirs;
 
 	unsigned int fBufferIdx;
 	unsigned int bBufferIdx;

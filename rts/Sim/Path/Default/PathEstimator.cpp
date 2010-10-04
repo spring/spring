@@ -609,18 +609,19 @@ void CPathEstimator::TestBlock(
 	int2 block;
 		block.x = parentOpenBlock.nodePos.x + directionVectors[pathDir].x;
 		block.y = parentOpenBlock.nodePos.y + directionVectors[pathDir].y;
-	const int vertexIdx =
+
+	const unsigned int vertexIdx =
 		moveData.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentOpenBlock.nodeNum * PATH_DIRECTION_VERTICES +
 		directionVertex[pathDir];
-	const int blockIdx = block.y * nbrOfBlocksX + block.x;
+	const unsigned int blockIdx = block.y * nbrOfBlocksX + block.x;
 
 	if (block.x < 0 || block.x >= nbrOfBlocksX || block.y < 0 || block.y >= nbrOfBlocksZ) {
 		// blocks should never be able to lie outside map to the infinite vertices at the edges
 		return;
 	}
 
-	if (vertexIdx < 0 || (unsigned int)vertexIdx >= vertices.size())
+	if (vertexIdx >= vertices.size())
 		return;
 
 	if (vertices[vertexIdx] >= PATHCOST_INFINITY)
@@ -641,8 +642,8 @@ void CPathEstimator::TestBlock(
 	}
 
 
-	// evaluate this node (NOTE the max-res. indexing for extraCost)
-	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(xSquare, zSquare, moveData, directionVectors[pathDir]);
+	// evaluate this node (NOTE the max-resolution indexing for {flow,extra}Cost)
+	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(xSquare, zSquare, moveData, PathDir2PathOpt(pathDir));
 	const float extraCost = blockStates.GetNodeExtraCost(xSquare, zSquare, synced);
 	const float nodeCost = vertices[vertexIdx] + flowCost + extraCost;
 
