@@ -5,15 +5,6 @@
 #include <set>
 #include <list>
 #include <cctype>
-#ifndef _WIN32
-	#include <unistd.h>
-	#define EXECLP execlp
-#else
-	#include <process.h>
-	#define EXECLP _execlp
-#endif
-
-#include <errno.h>
 
 #include <fstream>
 
@@ -1614,43 +1605,48 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
-		luaL_error(L,
-			"Incorrect arguments to Restart(arguments, script)");
+		luaL_error(L, "Incorrect arguments to Restart(arguments, script)");
 	}
 
-	const string arguments = luaL_checkstring(L, 1);
-	const string script = luaL_checkstring(L, 2);
+	const std::string arguments = luaL_checkstring(L, 1);
+	// LogObject() << "Args: " << arguments;
+	const std::string script = luaL_checkstring(L, 2);
 
 	const std::string springFullName = (Platform::GetProcessExecutableFile());
-	// LogObject() << "Args: " << arguments;
 
-#ifdef _WIN32
-	//! else OpenAL soft crashs when using execlp
-	ISound::Shutdown();
-#endif
+	std::vector<std::string> processArgs;
 
-	if (!script.empty())
-	{
-		const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir()+"script.txt";
+	// Arguments given by Lua code, if any
+	if (!arguments.empty()) {
+		processArgs.push_back(arguments);
+	}
+
+	// script.txt, if content for it is given by Lua code
+	const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir() + "script.txt";
+	if (!script.empty()) {
 		// LogObject() << "Writing script to: " << scriptFullName;
 		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;
 		scriptfile.close();
-		//FIXME: ugly
-		if (arguments.empty())
-			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), Quote(scriptFullName).c_str(), NULL);
-		else
-			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), arguments.c_str(), Quote(scriptFullName).c_str(), NULL);
+
+		processArgs.push_back(Quote(scriptFullName));
 	}
-	else
-	{
-		if (arguments.empty())
-			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), NULL);
-		else
-			EXECLP(springFullName.c_str(), Quote(springFullName).c_str(), arguments.c_str(), NULL);
+
+#ifdef _WIN32
+		//! else OpenAL soft crashes when using execvp
+		ISound::Shutdown();
+#endif
+
+	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
+	const bool execOk = execError.empty();
+
+	if (execOk) {
+		LogObject() << "The game should restart";
+	} else {
+		LogObject() << "Error in Restart: " << execError;
 	}
-	LogObject() << "Error in Restart: " << strerror(errno);
-	lua_pushboolean(L, false);
+
+	lua_pushboolean(L, execOk);
 	return 1;
 }
 
