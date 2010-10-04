@@ -209,6 +209,12 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 	set_source_files_properties(${myGeneratedSources} PROPERTIES GENERATED TRUE)
 
+	set(jAiIntJavaGeneratedSources
+		"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AI.java"
+		"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
+		)
+	set_source_files_properties(${jAiIntJavaGeneratedSources} PROPERTIES GENERATED TRUE)
+
 
 	# Assemble project generated targets (and their libraries) we depend on
 	set(myDependTargets  "${Java_AIINTERFACE_TARGET}")
