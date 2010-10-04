@@ -75,7 +75,7 @@ void CLoadScreen::Init()
 			Channels::BGMusic.Play(mapStartMusic);
 	}
 
-	mt_loading = configHandler->Get("LoadingMT", false);
+	mt_loading = configHandler->Get("LoadingMT", true);
 
 	//! Create a Thread that pings the host/server, so it knows that this client is still alive
 	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
@@ -257,11 +257,11 @@ bool CLoadScreen::Draw()
 	}
 
 	font->Begin();
-		font->SetTextColor(0.7f,0.7f,0.7f,0.7f);
+		font->SetTextColor(0.5f,0.5f,0.5f,0.9f);
 		font->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
 			oldLoadMessages);
 
-		font->SetTextColor(0.9f,0.9f,0.9f,0.8f);
+		font->SetTextColor(0.9f,0.9f,0.9f,0.9f);
 		float posy = font->GetTextNumLines(oldLoadMessages) * font->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
 		font->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
 			curLoadMessage);
