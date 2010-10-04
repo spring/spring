@@ -8,11 +8,13 @@
 
 #elif WIN32
 #include <io.h>
+#include <process.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 #include "System/Platform/Win/WinVersion.h"
 
 #elif __APPLE__
+#include <unistd.h>
 #include <mach-o/dyld.h>
 #include <stdlib.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
@@ -22,9 +24,12 @@
 
 #endif
 
+#include <cstring>
+#include <cerrno>
+
+#include "System/Util.h"
 #include "System/LogOutput.h"
 #include "FileSystem/FileSystem.h"
-
 
 #if       defined WIN32
 /**
@@ -270,5 +275,46 @@ bool Is32BitEmulation()
 }
 #endif
 
+std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
+{
+	std::string execError = "";
+
+	// "The first argument, by convention, should point to
+	// the filename associated with the file being executed."
+	args.insert(args.begin(), Quote(file));
+
+	char** processArgs = new char*[args.size() + 1];
+
+	for (size_t a = 0; a < args.size(); ++a) {
+		const std::string& arg = args.at(a);
+		const size_t arg_size = arg.length() + 1;
+		processArgs[a] = new char[arg_size];
+		STRCPYS(processArgs[a], arg_size, arg.c_str());
+	}
+
+	// "The array of pointers must be terminated by a NULL pointer."
+	processArgs[args.size()] = NULL;
+
+	{
+		// Execute
+#ifdef WIN32
+	#define EXECVP _execvp
+#else
+	#define EXECVP execvp
+#endif
+		const int ret = EXECVP(file.c_str(), processArgs);
+
+		if (ret == -1) {
+			execError = strerror(errno);
+		}
+	}
+
+	for (size_t a = 0; a < args.size(); ++a) {
+		delete[] processArgs[a];
+	}
+	delete[] processArgs;
+
+	return execError;
 }
 
+} // namespace Platform
