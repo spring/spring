@@ -197,12 +197,15 @@ int CLoadScreen::KeyReleased(unsigned short k)
 
 bool CLoadScreen::Update()
 {
+	//! cause of `curLoadMessage`
+	boost::recursive_mutex::scoped_lock lck(mutex);
+
 	//! Stuff that needs to be done regularly while loading.
 	good_fpu_control_registers(curLoadMessage.c_str());
 	CrashHandler::ClearDrawWDT();
 
 	if (game->finishedLoading) {
-		delete this;
+		CLoadScreen::DeleteInstance();
 	}
 
 	return true;
