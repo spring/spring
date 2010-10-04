@@ -66,6 +66,12 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
   callinErrors(0)
 {
 	isunsynced = true;
+	execUnitBatch = false;
+	execFeatBatch = false;
+	execProjBatch = false;
+	luaFrameEventBatch = -1;
+	luaLastFrameEventBatch = -1;
+
 	SetSynced(false, true);
 	L_Sim = lua_open();
 	luaopen_debug(L_Sim);
@@ -203,6 +209,10 @@ void CLuaHandle::CheckStack()
 	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
 
 	ExecuteRecvFromSynced();
+	ExecuteUnitEventBatch();
+	ExecuteProjEventBatch();
+	ExecuteFeatEventBatch();
+	ExecuteFrameEventBatch();
 
 	SELECT_LUA_STATE();
 	const int top = lua_gettop(L);
@@ -1189,6 +1199,7 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 
 void CLuaHandle::FeatureCreated(const CFeature* feature)
 {
+	LUA_FEAT_BATCH_PUSH(FEAT_CREATED, feature);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
@@ -1212,6 +1223,7 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 
 void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 {
+	LUA_FEAT_BATCH_PUSH(FEAT_DESTROYED, feature);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
@@ -1237,6 +1249,7 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 void CLuaHandle::ProjectileCreated(const CProjectile* p)
 {
+	LUA_PROJ_BATCH_PUSH(PROJ_CREATED, p);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("ProjectileCreated");
@@ -1260,6 +1273,7 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 
 void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 {
+	LUA_PROJ_BATCH_PUSH(PROJ_DESTROYED, p);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("ProjectileDestroyed");
@@ -1288,7 +1302,7 @@ bool CLuaHandle::Explosion(int weaponID, const float3& pos, const CUnit* owner)
 		return false;
 	}
 
-//	LUA_UNIT_BATCH_PUSH(UNIT_EXPLOSION, weaponID, pos, owner);
+	LUA_UNIT_BATCH_PUSH_RET(false, UNIT_EXPLOSION, weaponID, pos, owner);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("Explosion");
@@ -1323,6 +1337,7 @@ bool CLuaHandle::Explosion(int weaponID, const float3& pos, const CUnit* owner)
 void CLuaHandle::StockpileChanged(const CUnit* unit,
                                   const CWeapon* weapon, int oldCount)
 {
+	LUA_UNIT_BATCH_PUSH(UNIT_STOCKPILE_CHANGED, unit, weapon, oldCount);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 8);
 	static const LuaHashString cmdStr("StockpileChanged");
@@ -1341,6 +1356,175 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 	RunCallIn(cmdStr, 6, 0);
 
 	return;
+}
+
+
+void CLuaHandle::ExecuteUnitEventBatch() {
+	if(!UNSYNCED_SINGLE_LUA_STATE) return;
+	GML_STDMUTEX_LOCK(ulbatch);
+	execUnitBatch = true;
+	for(std::vector<LuaUnitEvent>::iterator i = luaUnitEventBatch.begin(); i != luaUnitEventBatch.end(); ++i) {
+		LuaUnitEvent &e = *i;
+		switch(e.id) {
+			case UNIT_FINISHED:
+				UnitFinished(e.unit1);
+				break;
+			case UNIT_CREATED:
+				UnitCreated(e.unit1, e.unit2);
+				break;
+			case UNIT_FROM_FACTORY:
+				UnitFromFactory(e.unit1, e.unit2, e.bool1);
+				break;
+			case UNIT_DESTROYED:
+				UnitDestroyed(e.unit1, e.unit2);
+				break;
+			case UNIT_TAKEN:
+				UnitTaken(e.unit1, e.int1);
+				break;
+			case UNIT_GIVEN:
+				UnitGiven(e.unit1, e.int1);
+				break;
+			case UNIT_IDLE:
+				UnitIdle(e.unit1);
+				break;
+			case UNIT_COMMAND:
+				UnitCommand(e.unit1, e.cmd1);
+				break;
+			case UNIT_CMD_DONE:
+				UnitCmdDone(e.unit1, e.int1, e.int2);
+				break;
+			case UNIT_DAMAGED:
+				UnitDamaged(e.unit1, e.unit2, e.float1, e.int1, e.bool1);
+				break;
+			case UNIT_EXPERIENCE:
+				UnitExperience(e.unit1, e.float1);
+				break;
+			case UNIT_SEISMIC_PING:
+				UnitSeismicPing(e.unit1, e.int1, e.pos1, e.float1);
+				break;
+			case UNIT_ENTERED_RADAR:
+				UnitEnteredRadar(e.unit1, e.int1);
+				break;
+			case UNIT_ENTERED_LOS:
+				UnitEnteredLos(e.unit1, e.int1);
+				break;
+			case UNIT_LEFT_RADAR:
+				UnitLeftRadar(e.unit1, e.int1);
+				break;
+			case UNIT_LEFT_LOS:
+				UnitLeftLos(e.unit1, e.int1);
+				break;
+			case UNIT_LOADED:
+				UnitLoaded(e.unit1, e.unit2);
+				break;
+			case UNIT_UNLOADED:
+				UnitUnloaded(e.unit1, e.unit2);
+				break;
+			case UNIT_ENTERED_WATER:
+				UnitEnteredWater(e.unit1);
+				break;
+			case UNIT_ENTERED_AIR:
+				UnitEnteredAir(e.unit1);
+				break;
+			case UNIT_LEFT_WATER:
+				UnitLeftWater(e.unit1);
+				break;
+			case UNIT_LEFT_AIR:
+				UnitLeftAir(e.unit1);
+				break;
+			case UNIT_CLOAKED:
+				UnitCloaked(e.unit1);
+				break;
+			case UNIT_DECLOAKED:
+				UnitDecloaked(e.unit1);
+				break;
+			case UNIT_MOVE_FAILED:
+				UnitMoveFailed(e.unit1);
+				break;
+			case UNIT_EXPLOSION:
+				Explosion(e.int1, e.pos1, e.unit1);
+				break;
+			case UNIT_STOCKPILE_CHANGED:
+				StockpileChanged(e.unit1, (CWeapon *)e.unit2, e.int1);
+				break;
+			default:
+				logOutput.Print("%s: Invalid Event %d", __FUNCTION__, e.id);
+				break;
+		}
+	}
+	execUnitBatch = false;
+	luaUnitEventBatch.clear();
+}
+
+
+void CLuaHandle::ExecuteFeatEventBatch() {
+	if(!UNSYNCED_SINGLE_LUA_STATE) return;
+	GML_STDMUTEX_LOCK(flbatch);
+	execFeatBatch = true;
+	for(std::vector<LuaFeatEvent>::iterator i = luaFeatEventBatch.begin(); i != luaFeatEventBatch.end(); ++i) {
+		LuaFeatEvent &e = *i;
+		switch(e.id) {
+			case FEAT_CREATED:
+				FeatureCreated(e.feat1);
+				break;
+			case FEAT_DESTROYED:
+				FeatureDestroyed(e.feat1);
+				break;
+			default:
+				logOutput.Print("%s: Invalid Event %d", __FUNCTION__, e.id);
+				break;
+		}
+	}
+	execFeatBatch = false;
+	luaFeatEventBatch.clear();
+}
+
+
+void CLuaHandle::ExecuteProjEventBatch() {
+	if(!UNSYNCED_SINGLE_LUA_STATE) return;
+	GML_STDMUTEX_LOCK(plbatch);
+	execProjBatch = true;
+	for(std::vector<LuaProjEvent>::iterator i = luaProjEventBatch.begin(); i != luaProjEventBatch.end(); ++i) {
+		LuaProjEvent &e = *i;
+		switch(e.id) {
+			case PROJ_CREATED:
+				ProjectileCreated(e.proj1);
+				break;
+			case PROJ_DESTROYED:
+				ProjectileDestroyed(e.proj1);
+				break;
+			default:
+				logOutput.Print("%s: Invalid Event %d", __FUNCTION__, e.id);
+				break;
+		}
+	}
+	execProjBatch = false;
+	luaProjEventBatch.clear();
+}
+
+
+void CLuaHandle::GameFrame(int frameNumber)
+{
+	LUA_FRAME_BATCH_PUSH(frameNumber);
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+	static const LuaHashString cmdStr("GameFrame");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return;
+	}
+
+	lua_pushnumber(L, frameNumber);
+
+	// call the routine
+	RunCallIn(cmdStr, 1, 0);
+
+	return;
+}
+
+
+void CLuaHandle::ExecuteFrameEventBatch() {
+	while(luaLastFrameEventBatch < luaFrameEventBatch)
+		GameFrame(++luaLastFrameEventBatch);
 }
 
 

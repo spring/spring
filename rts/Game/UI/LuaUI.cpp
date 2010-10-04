@@ -348,24 +348,6 @@ void CLuaUI::Shutdown()
 }
 
 
-void CLuaUI::GameFrame(int frameNumber)
-{
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr("GameFrame");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
-
-	lua_pushnumber(L, frameNumber);
-
-	// call the routine
-	RunCallIn(cmdStr, 1, 0);
-
-	return;
-}
-
-
 bool CLuaUI::ConfigCommand(const string& command)
 {
 	LUA_CALL_IN_CHECK(L);

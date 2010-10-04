@@ -9,6 +9,7 @@
 
 #include "EventClient.h"
 #include "EventBatchHandler.h"
+#include "Game/UI/LuaUI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -516,7 +517,10 @@ inline void CEventHandler::UnitDecloaked(const CUnit* unit)
 
 inline void CEventHandler::UpdateUnits(void) { eventBatchHandler->UpdateUnits(); }
 inline void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
-inline void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
+inline void CEventHandler::DeleteSyncedUnits() {
+	eventBatchHandler->DeleteSyncedUnits(); 
+	if(luaUI) luaUI->ExecuteUnitEventBatch();
+}
 
 
 
@@ -703,7 +707,10 @@ inline void CEventHandler::RenderFeatureMoved(const CFeature* feature)
 
 inline void CEventHandler::UpdateFeatures(void) { eventBatchHandler->UpdateFeatures(); }
 inline void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
-inline void CEventHandler::DeleteSyncedFeatures() { eventBatchHandler->DeleteSyncedFeatures(); }
+inline void CEventHandler::DeleteSyncedFeatures() {
+	eventBatchHandler->DeleteSyncedFeatures();
+	if(luaUI) luaUI->ExecuteFeatEventBatch();
+}
 
 
 
@@ -776,7 +783,10 @@ inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
 
 inline void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
 inline void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
-inline void CEventHandler::DeleteSyncedProjectiles() { eventBatchHandler->DeleteSyncedProjectiles(); }
+inline void CEventHandler::DeleteSyncedProjectiles() {
+	eventBatchHandler->DeleteSyncedProjectiles();
+	if(luaUI) luaUI->ExecuteProjEventBatch();
+}
 
 inline void CEventHandler::UpdateObjects() {
 	eventBatchHandler->UpdateObjects();
