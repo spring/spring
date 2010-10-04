@@ -69,6 +69,25 @@ inline unsigned int PathDir2PathOpt(unsigned int pathDir) {
 	return pathOpt;
 }
 
+// costs between vertices are bi-directional (cost(A-->B) == cost(A<--B))
+// so we only need to store (PATH_DIRECTIONS >> 1) values
+inline int GetBlockVertexOffset(unsigned int pathDir, unsigned int numBlocks) {
+	int bvo = 0;
+
+	switch (pathDir) {
+		case PATHDIR_LEFT:       { bvo = PATHDIR_LEFT;      } break;
+		case PATHDIR_LEFT_UP:    { bvo = PATHDIR_LEFT_UP;   } break;
+		case PATHDIR_UP:         { bvo = PATHDIR_UP;        } break;
+		case PATHDIR_RIGHT_UP:   { bvo = PATHDIR_RIGHT_UP;  } break;
+		case PATHDIR_RIGHT:      { bvo = int(PATHDIR_LEFT    ) -                                         PATH_DIRECTION_VERTICES; } break;
+		case PATHDIR_RIGHT_DOWN: { bvo = int(PATHDIR_LEFT_UP ) - (numBlocks * PATH_DIRECTION_VERTICES) - PATH_DIRECTION_VERTICES; } break;
+		case PATHDIR_DOWN:       { bvo = int(PATHDIR_UP      ) - (numBlocks * PATH_DIRECTION_VERTICES);                           } break;
+		case PATHDIR_LEFT_DOWN:  { bvo = int(PATHDIR_RIGHT_UP) - (numBlocks * PATH_DIRECTION_VERTICES) + PATH_DIRECTION_VERTICES; } break;
+	}
+
+	return bvo;
+}
+
 // PF and PE flags
 const unsigned int PATHOPT_START     =  16;
 const unsigned int PATHOPT_OPEN      =  32;
