@@ -115,7 +115,6 @@ public:
 
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
-	void InitVertices();
 	void InitBlocks();
 	void CalcOffsetsAndPathCosts(int thread);
 	void CalculateBlockOffsets(int, int);
@@ -153,12 +152,11 @@ private:
 	PathNodeStateBuffer blockStates;
 	PathPriorityQueue openBlocks;													// The priority-queue used to select next block to be searched.
 
-	std::vector<float> vertices;
+	std::vector<float> vertexCosts;
 	std::list<int> dirtyBlocks;														// List of blocks changed in last search.
 	std::list<SingleBlock> needUpdate;												// Blocks that may need an update due to map changes.
 
 	int2 directionVectors[PATH_DIRECTIONS];
-	int directionVertex[PATH_DIRECTIONS];
 
 	unsigned int moveMathOptions;
 

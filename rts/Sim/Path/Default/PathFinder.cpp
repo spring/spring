@@ -42,14 +42,14 @@ CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx
 	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].x = directionVectors[PATHOPT_LEFT ].x;
 	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].y = directionVectors[PATHOPT_DOWN ].y;
 
-	moveCost[PATHOPT_RIGHT               ] = 1.0f;
-	moveCost[PATHOPT_LEFT                ] = 1.0f;
-	moveCost[PATHOPT_UP                  ] = 1.0f;
-	moveCost[PATHOPT_DOWN                ] = 1.0f;
-	moveCost[PATHOPT_RIGHT | PATHOPT_UP  ] = 1.42f;
-	moveCost[PATHOPT_LEFT  | PATHOPT_UP  ] = 1.42f;
-	moveCost[PATHOPT_RIGHT | PATHOPT_DOWN] = 1.42f;
-	moveCost[PATHOPT_LEFT  | PATHOPT_DOWN] = 1.42f;
+	directionCosts[PATHOPT_RIGHT               ] = 1.0f;
+	directionCosts[PATHOPT_LEFT                ] = 1.0f;
+	directionCosts[PATHOPT_UP                  ] = 1.0f;
+	directionCosts[PATHOPT_DOWN                ] = 1.0f;
+	directionCosts[PATHOPT_RIGHT | PATHOPT_UP  ] = 1.4142f;
+	directionCosts[PATHOPT_LEFT  | PATHOPT_UP  ] = 1.4142f;
+	directionCosts[PATHOPT_RIGHT | PATHOPT_DOWN] = 1.4142f;
+	directionCosts[PATHOPT_LEFT  | PATHOPT_DOWN] = 1.4142f;
 }
 
 CPathFinder::~CPathFinder()
@@ -386,7 +386,7 @@ bool CPathFinder::TestSquare(
 	const float heatCost = (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveData, ownerId);
 	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveData, pathOpt);
 
-	const float dirMoveCost = (heatCost + flowCost) * moveCost[pathOpt];
+	const float dirMoveCost = (heatCost + flowCost) * directionCosts[pathOpt];
 	const float extraCost = squareStates.GetNodeExtraCost(square.x, square.y, synced);
 	const float nodeCost = (dirMoveCost / squareSpeedMod) + extraCost;
 

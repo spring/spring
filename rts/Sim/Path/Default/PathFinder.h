@@ -108,8 +108,8 @@ private:
 	);
 
 
-	int2 directionVectors[PATH_DIRECTIONS << 1];	///< Unit square-movement in given direction.
-	float moveCost[PATH_DIRECTIONS << 1];			///< The cost of moving in given direction.
+	int2 directionVectors[PATH_DIRECTIONS << 1];
+	float directionCosts[PATH_DIRECTIONS << 1];
 
 	float3 start;
 	int startxSqr, startzSqr;
