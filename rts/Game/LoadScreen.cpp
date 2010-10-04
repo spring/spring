@@ -34,7 +34,6 @@
 /******************************************************************************/
 
 CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile) :
-	initOk(false),
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
@@ -99,9 +98,6 @@ void CLoadScreen::Init()
 	if (!mt_loading) {
 		Draw();
 		game->LoadGame(mapName);
-		initOk = false;
-	} else {
-		initOk = true;
 	}
 }
 
@@ -135,25 +131,29 @@ CLoadScreen::~CLoadScreen()
 }
 
 
+/******************************************************************************/
+
 CLoadScreen* CLoadScreen::singleton = NULL;
 
-void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) {
-
+void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+{
 	assert(singleton == NULL);
 
 	singleton = new CLoadScreen(mapName, modName, saveFile);
 	// Init() already requires GetInstance() to work.
 	singleton->Init();
-	if (!singleton->initOk) {
+	if (!singleton->mt_loading) {
 		CLoadScreen::DeleteInstance();
 	}
 }
 
-void CLoadScreen::DeleteInstance() {
 
+void CLoadScreen::DeleteInstance()
+{
 	delete singleton;
 	singleton = NULL;
 }
+
 
 /******************************************************************************/
 
