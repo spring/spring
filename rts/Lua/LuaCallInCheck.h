@@ -24,8 +24,6 @@ class LuaCallInCheck {
 		const char* funcName;
 };
 
-#define UNSYNCED_SINGLE_LUA_STATE 1
-
 #if defined(USE_GML) && GML_ENABLE_SIM
 #define DUAL_LUA_STATES 1
 #else
@@ -105,7 +103,7 @@ struct LuaProjEvent {
 	LuaProjEvent(ProjEvent i, const CProjectile *p1) : id(i), proj1(p1) {}
 };
 
-#if DUAL_LUA_STATES && UNSYNCED_SINGLE_LUA_STATE
+#if DUAL_LUA_STATES
 #define LUA_UNIT_BATCH_PUSH_X(r,...)\
 	if(SingleState() && !execUnitBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(ulbatch);\
@@ -127,8 +125,9 @@ struct LuaProjEvent {
 		return;\
 	}
 #define LUA_FRAME_BATCH_PUSH(...)\
-	if(SingleState() && Threading::IsSimThread()) {\
-		luaFrameEventBatch = __VA_ARGS__;\
+	if(SingleState() && !execFrameBatch && Threading::IsSimThread()) {\
+		GML_STDMUTEX_LOCK(glbatch);\
+		luaFrameEventBatch.push_back(__VA_ARGS__);\
 		return;\
 	}
 #else
@@ -150,7 +149,7 @@ struct LuaProjEvent {
 #endif
 #if defined(USE_GML) && GML_ENABLE_SIM
 
-#if defined(LUA_SYNCED_ONLY) || !UNSYNCED_SINGLE_LUA_STATE
+#if defined(LUA_SYNCED_ONLY)
 #define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##drawlock(name##drawmutex, !Threading::IsSimThread())
 #else
 #define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##drawlock(name##drawmutex, !SingleState() && !Threading::IsSimThread());\

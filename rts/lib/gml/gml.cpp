@@ -235,6 +235,7 @@ boost::mutex recvmutex;
 boost::mutex ulbatchmutex;
 boost::mutex flbatchmutex;
 boost::mutex plbatchmutex;
+boost::mutex glbatchmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;

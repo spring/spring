@@ -71,7 +71,7 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
 : CLuaHandle(_name, _order, false),
   teamsLocked(false)
 {
-	isunsynced = false;
+	singleState = false;
 	SetAllowChanges(false, true);
 	printTracebacks = true;
 }
@@ -923,7 +923,7 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	SELECT_LUA_STATE();
 
 #if DUAL_LUA_STATES
-	if (L == L_Sim) {
+	if (L == L_Sim && !SingleState()) {
 		GML_RECMUTEX_LOCK(luadraw); // Called from Sim, need to lock draw thread during XCall
 
 		const bool prevSynced = GetSynced();

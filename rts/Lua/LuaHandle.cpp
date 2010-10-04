@@ -11,6 +11,7 @@
 
 #include "LuaHandle.h"
 
+#include "ConfigHandler.h"
 #include "Game/UI/LuaUI.h"
 #include "LuaGaia.h"
 #include "LuaRules.h"
@@ -65,12 +66,11 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 #endif
   callinErrors(0)
 {
-	isunsynced = true;
+	singleState = (gc->multiThreadLua == 0);
 	execUnitBatch = false;
 	execFeatBatch = false;
 	execProjBatch = false;
-	luaFrameEventBatch = gs->frameNum - 1;
-	luaLastFrameEventBatch = gs->frameNum - 1;
+	execFrameBatch = false;
 
 	SetSynced(false, true);
 	L_Sim = lua_open();
@@ -206,13 +206,13 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
-
 	ExecuteRecvFromSynced();
 	ExecuteUnitEventBatch();
 	ExecuteProjEventBatch();
 	ExecuteFeatEventBatch();
 	ExecuteFrameEventBatch();
+
+	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
 
 	SELECT_LUA_STATE();
 	const int top = lua_gettop(L);
@@ -229,8 +229,8 @@ void CLuaHandle::RecvFromSynced(int args) {
 	static const LuaHashString cmdStr("RecvFromSynced");
 	//LUA_CALL_IN_CHECK(L); -- not valid here
 
-#if DUAL_LUA_STATES && !UNSYNCED_SINGLE_LUA_STATE
-	if(L == L_Sim) { // Sim thread sends to unsynced --> delay it
+#if DUAL_LUA_STATES
+	if(L == L_Sim && !SingleState()) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(L, args);
 		return;
 	}
@@ -1360,10 +1360,14 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 
 
 void CLuaHandle::ExecuteUnitEventBatch() {
-	if(!UNSYNCED_SINGLE_LUA_STATE) return;
-	GML_STDMUTEX_LOCK(ulbatch);
+	if(!SingleState()) return;
+	std::vector<LuaUnitEvent> lueb;
+	{
+		GML_STDMUTEX_LOCK(ulbatch);
+		luaUnitEventBatch.swap(lueb);
+	}
 	execUnitBatch = true;
-	for(std::vector<LuaUnitEvent>::iterator i = luaUnitEventBatch.begin(); i != luaUnitEventBatch.end(); ++i) {
+	for(std::vector<LuaUnitEvent>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
 		LuaUnitEvent &e = *i;
 		switch(e.id) {
 			case UNIT_FINISHED:
@@ -1453,15 +1457,18 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 		}
 	}
 	execUnitBatch = false;
-	luaUnitEventBatch.clear();
 }
 
 
 void CLuaHandle::ExecuteFeatEventBatch() {
-	if(!UNSYNCED_SINGLE_LUA_STATE) return;
-	GML_STDMUTEX_LOCK(flbatch);
+	if(!SingleState()) return;
+	std::vector<LuaFeatEvent> lfeb;
+	{
+		GML_STDMUTEX_LOCK(flbatch);
+		luaFeatEventBatch.swap(lfeb);
+	}
 	execFeatBatch = true;
-	for(std::vector<LuaFeatEvent>::iterator i = luaFeatEventBatch.begin(); i != luaFeatEventBatch.end(); ++i) {
+	for(std::vector<LuaFeatEvent>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
 		LuaFeatEvent &e = *i;
 		switch(e.id) {
 			case FEAT_CREATED:
@@ -1476,15 +1483,18 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 		}
 	}
 	execFeatBatch = false;
-	luaFeatEventBatch.clear();
 }
 
 
 void CLuaHandle::ExecuteProjEventBatch() {
-	if(!UNSYNCED_SINGLE_LUA_STATE) return;
-	GML_STDMUTEX_LOCK(plbatch);
+	if(!SingleState()) return;
+	std::vector<LuaProjEvent> lpeb;
+	{
+		GML_STDMUTEX_LOCK(plbatch);
+		luaProjEventBatch.swap(lpeb);
+	}
 	execProjBatch = true;
-	for(std::vector<LuaProjEvent>::iterator i = luaProjEventBatch.begin(); i != luaProjEventBatch.end(); ++i) {
+	for(std::vector<LuaProjEvent>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
 		LuaProjEvent &e = *i;
 		switch(e.id) {
 			case PROJ_CREATED:
@@ -1499,7 +1509,6 @@ void CLuaHandle::ExecuteProjEventBatch() {
 		}
 	}
 	execProjBatch = false;
-	luaProjEventBatch.clear();
 }
 
 
@@ -1523,9 +1532,17 @@ void CLuaHandle::GameFrame(int frameNumber)
 
 
 void CLuaHandle::ExecuteFrameEventBatch() {
-	if(!UNSYNCED_SINGLE_LUA_STATE) return;
-	while(luaLastFrameEventBatch < luaFrameEventBatch)
-		GameFrame(++luaLastFrameEventBatch);
+	if(!SingleState()) return;
+	std::vector<int> lgeb;
+	{
+		GML_STDMUTEX_LOCK(glbatch);
+		luaFrameEventBatch.swap(lgeb);
+	}
+	execFrameBatch = true;
+	for(std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
+		GameFrame(*i);
+	}
+	execFrameBatch = false;
 }
 
 

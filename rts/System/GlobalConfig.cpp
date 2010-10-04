@@ -19,6 +19,7 @@ GlobalConfig::GlobalConfig() {
 	READ_CONFIG(linkBandwidth, "LinkBandwidth", 64 * 1024, 0)
 #ifdef USE_GML
 	enableDrawCallIns = !!configHandler->Get("EnableDrawCallIns", 1);
+	multiThreadLua = configHandler->Get("MultiThreadLua", 0);
 #endif
 }
 
