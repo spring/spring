@@ -684,6 +684,8 @@ void CUnit::SlowUpdate()
 		}
 	}
 
+	UpdateResources();
+
 	if (stunned) {
 		// de-stun only if we are not (still) inside a non-firebase transport
 		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
@@ -692,7 +694,6 @@ void CUnit::SlowUpdate()
 		}
 
 		SlowUpdateCloak(true);
-		UpdateResources();
 		return;
 	}
 
@@ -722,9 +723,7 @@ void CUnit::SlowUpdate()
 			if (health < 0.0f) {
 				KillUnit(false, true, NULL);
 			}
-			UpdateResources();
 		}
-
 		ScriptDecloak(false);
 		return;
 	}
@@ -735,8 +734,6 @@ void CUnit::SlowUpdate()
 
 	commandAI->SlowUpdate();
 	moveType->SlowUpdate();
-
-	UpdateResources();
 
 	// FIXME: scriptMakeMetal ...?
 	AddMetal(uncondMakeMetal);
