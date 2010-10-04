@@ -29,27 +29,27 @@ void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p,
 
 CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
 {
-	directionVectors[PATHOPT_LEFT ] = int2(-1,  0);
-	directionVectors[PATHOPT_RIGHT] = int2(+1,  0);
-	directionVectors[PATHOPT_UP   ] = int2( 0, -1);
-	directionVectors[PATHOPT_DOWN ] = int2( 0, +1);
-	directionVectors[(PATHOPT_LEFT  | PATHOPT_UP  )].x = directionVectors[PATHOPT_LEFT ].x + directionVectors[PATHOPT_UP  ].x;
-	directionVectors[(PATHOPT_LEFT  | PATHOPT_UP  )].y = directionVectors[PATHOPT_LEFT ].y + directionVectors[PATHOPT_UP  ].y;
-	directionVectors[(PATHOPT_RIGHT | PATHOPT_UP  )].x = directionVectors[PATHOPT_RIGHT].x + directionVectors[PATHOPT_UP  ].x;
-	directionVectors[(PATHOPT_RIGHT | PATHOPT_UP  )].y = directionVectors[PATHOPT_RIGHT].y + directionVectors[PATHOPT_UP  ].y;
-	directionVectors[(PATHOPT_RIGHT | PATHOPT_DOWN)].x = directionVectors[PATHOPT_RIGHT].x + directionVectors[PATHOPT_DOWN].x;
-	directionVectors[(PATHOPT_RIGHT | PATHOPT_DOWN)].y = directionVectors[PATHOPT_RIGHT].y + directionVectors[PATHOPT_DOWN].y;
-	directionVectors[(PATHOPT_LEFT  | PATHOPT_DOWN)].x = directionVectors[PATHOPT_LEFT ].x + directionVectors[PATHOPT_DOWN].x;
-	directionVectors[(PATHOPT_LEFT  | PATHOPT_DOWN)].y = directionVectors[PATHOPT_LEFT ].y + directionVectors[PATHOPT_DOWN].y;
+	directionVectors[PATHOPT_LEFT                ] = int2(-1,  0);
+	directionVectors[PATHOPT_RIGHT               ] = int2(+1,  0);
+	directionVectors[PATHOPT_UP                  ] = int2( 0, -1);
+	directionVectors[PATHOPT_DOWN                ] = int2( 0, +1);
+	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ].x = directionVectors[PATHOPT_LEFT ].x;
+	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ].y = directionVectors[PATHOPT_UP   ].y;
+	directionVectors[PATHOPT_RIGHT | PATHOPT_UP  ].x = directionVectors[PATHOPT_RIGHT].x;
+	directionVectors[PATHOPT_RIGHT | PATHOPT_UP  ].y = directionVectors[PATHOPT_UP   ].y;
+	directionVectors[PATHOPT_RIGHT | PATHOPT_DOWN].x = directionVectors[PATHOPT_RIGHT].x;
+	directionVectors[PATHOPT_RIGHT | PATHOPT_DOWN].y = directionVectors[PATHOPT_DOWN ].y;
+	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].x = directionVectors[PATHOPT_LEFT ].x;
+	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].y = directionVectors[PATHOPT_DOWN ].y;
 
-	moveCost[PATHOPT_RIGHT] = 1.0f;
-	moveCost[PATHOPT_LEFT ] = 1.0f;
-	moveCost[PATHOPT_UP   ] = 1.0f;
-	moveCost[PATHOPT_DOWN ] = 1.0f;
-	moveCost[(PATHOPT_RIGHT | PATHOPT_UP  )] = 1.42f;
-	moveCost[(PATHOPT_LEFT  | PATHOPT_UP  )] = 1.42f;
-	moveCost[(PATHOPT_RIGHT | PATHOPT_DOWN)] = 1.42f;
-	moveCost[(PATHOPT_LEFT  | PATHOPT_DOWN)] = 1.42f;
+	moveCost[PATHOPT_RIGHT               ] = 1.0f;
+	moveCost[PATHOPT_LEFT                ] = 1.0f;
+	moveCost[PATHOPT_UP                  ] = 1.0f;
+	moveCost[PATHOPT_DOWN                ] = 1.0f;
+	moveCost[PATHOPT_RIGHT | PATHOPT_UP  ] = 1.42f;
+	moveCost[PATHOPT_LEFT  | PATHOPT_UP  ] = 1.42f;
+	moveCost[PATHOPT_RIGHT | PATHOPT_DOWN] = 1.42f;
+	moveCost[PATHOPT_LEFT  | PATHOPT_DOWN] = 1.42f;
 }
 
 CPathFinder::~CPathFinder()
@@ -327,7 +327,7 @@ bool CPathFinder::TestSquare(
 	const MoveData& moveData,
 	const CPathFinderDef& pfDef,
 	const PathNode* parentOpenSquare,
-	unsigned int pathDir,
+	unsigned int pathOpt,
 	int ownerId,
 	bool synced
 ) {
@@ -335,8 +335,8 @@ bool CPathFinder::TestSquare(
 
 	// Calculate the new square.
 	int2 square;
-		square.x = parentOpenSquare->nodePos.x + directionVectors[pathDir].x;
-		square.y = parentOpenSquare->nodePos.y + directionVectors[pathDir].y;
+		square.x = parentOpenSquare->nodePos.x + directionVectors[pathOpt].x;
+		square.y = parentOpenSquare->nodePos.y + directionVectors[pathOpt].y;
 
 	// Inside map?
 	if (square.x < 0 || square.y < 0 || square.x >= gs->mapx || square.y >= gs->mapy) {
@@ -384,9 +384,9 @@ bool CPathFinder::TestSquare(
 	}
 
 	const float heatCost = (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveData, ownerId);
-	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveData, directionVectors[pathDir]);
+	const float flowCost = (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveData, pathOpt);
 
-	const float dirMoveCost = (heatCost + flowCost) * moveCost[pathDir];
+	const float dirMoveCost = (heatCost + flowCost) * moveCost[pathOpt];
 	const float extraCost = squareStates.GetNodeExtraCost(square.x, square.y, synced);
 	const float nodeCost = (dirMoveCost / squareSpeedMod) + extraCost;
 
@@ -426,7 +426,7 @@ bool CPathFinder::TestSquare(
 	// mark this square as open
 	squareStates[sqrIdx].fCost = os->fCost;
 	squareStates[sqrIdx].gCost = os->gCost;
-	squareStates[sqrIdx].nodeMask |= (PATHOPT_OPEN | pathDir);
+	squareStates[sqrIdx].nodeMask |= (PATHOPT_OPEN | pathOpt);
 	dirtySquares.push_back(sqrIdx);
 	return true;
 }

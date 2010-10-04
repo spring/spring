@@ -94,7 +94,7 @@ private:
 		const MoveData& moveData,
 		const CPathFinderDef& pfDef,
 		const PathNode* parentOpenSquare,
-		unsigned int enterDirection,
+		unsigned int pathOpt,
 		int ownerId,
 		bool synced
 	);

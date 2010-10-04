@@ -46,11 +46,28 @@ const unsigned int PATHDIR_DOWN       = 6; // +z
 const unsigned int PATHDIR_LEFT_DOWN  = 7; // -x+z
 
 // PF-only flags
-const unsigned int PATHOPT_RIGHT     =   1; //+x
-const unsigned int PATHOPT_LEFT      =   2; //-x
+const unsigned int PATHOPT_LEFT      =   1; //-x
+const unsigned int PATHOPT_RIGHT     =   2; //+x
 const unsigned int PATHOPT_UP        =   4; //-z
 const unsigned int PATHOPT_DOWN      =   8; //+z
 const unsigned int PATHOPT_AXIS_DIRS = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
+
+inline unsigned int PathDir2PathOpt(unsigned int pathDir) {
+	unsigned int pathOpt = 0;
+
+	switch (pathDir) {
+		case PATHDIR_LEFT:       { pathOpt |= PATHOPT_LEFT;                   } break;
+		case PATHDIR_RIGHT:      { pathOpt |= PATHOPT_RIGHT;                  } break;
+		case PATHDIR_UP:         { pathOpt |= PATHOPT_UP;                     } break;
+		case PATHDIR_DOWN:       { pathOpt |= PATHOPT_DOWN;                   } break;
+		case PATHDIR_LEFT_UP:    { pathOpt |= (PATHOPT_LEFT  | PATHOPT_UP);   } break;
+		case PATHDIR_RIGHT_UP:   { pathOpt |= (PATHOPT_RIGHT | PATHOPT_UP);   } break;
+		case PATHDIR_RIGHT_DOWN: { pathOpt |= (PATHOPT_RIGHT | PATHOPT_DOWN); } break;
+		case PATHDIR_LEFT_DOWN:  { pathOpt |= (PATHOPT_LEFT  | PATHOPT_DOWN); } break;
+	}
+
+	return pathOpt;
+}
 
 // PF and PE flags
 const unsigned int PATHOPT_START     =  16;
