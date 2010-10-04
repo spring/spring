@@ -69,8 +69,8 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	execUnitBatch = false;
 	execFeatBatch = false;
 	execProjBatch = false;
-	luaFrameEventBatch = -1;
-	luaLastFrameEventBatch = -1;
+	luaFrameEventBatch = gs->frameNum - 1;
+	luaLastFrameEventBatch = gs->frameNum - 1;
 
 	SetSynced(false, true);
 	L_Sim = lua_open();
@@ -1523,6 +1523,7 @@ void CLuaHandle::GameFrame(int frameNumber)
 
 
 void CLuaHandle::ExecuteFrameEventBatch() {
+	if(!UNSYNCED_SINGLE_LUA_STATE) return;
 	while(luaLastFrameEventBatch < luaFrameEventBatch)
 		GameFrame(++luaLastFrameEventBatch);
 }
