@@ -249,8 +249,8 @@ class CLuaHandle : public CEventClient
 
 		inline void SetActiveHandle(bool draw = IsDrawCallIn());
 		inline void SetActiveHandle(CLuaHandle* lh, bool draw = IsDrawCallIn());
-		bool isunsynced;
-		inline bool SingleState() { return UNSYNCED_SINGLE_LUA_STATE && isunsynced; }
+		bool singleState;
+		inline bool SingleState() { return singleState; }
 
 		inline lua_State *GetActiveState() {
 			return (!DUAL_LUA_STATES || SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
@@ -390,11 +390,11 @@ class CLuaHandle : public CEventClient
 		std::vector<LuaUnitEvent>luaUnitEventBatch;
 		std::vector<LuaFeatEvent>luaFeatEventBatch;
 		std::vector<LuaProjEvent>luaProjEventBatch;
-		int luaFrameEventBatch;
-		int luaLastFrameEventBatch;
+		std::vector<int>luaFrameEventBatch;
 		bool execUnitBatch;
 		bool execFeatBatch;
 		bool execProjBatch;
+		bool execFrameBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
 		friend class CLuaUnitScript;

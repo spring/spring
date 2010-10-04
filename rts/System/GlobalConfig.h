@@ -54,6 +54,13 @@ public:
 	 */
 	int linkBandwidth;
 
+	/**
+	 * @brief multiThreadLua
+	 *
+	 * Fully multithreaded LuaUI (some locking related performance benefits, but incompatible with many widgets)
+	 */
+	int multiThreadLua;
+
 #ifdef USE_GML
 	bool enableDrawCallIns;
 #endif
