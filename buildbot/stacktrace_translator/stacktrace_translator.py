@@ -267,7 +267,7 @@ def translate_module_addresses(module, debugfile, addresses):
 		log.info('\t\t[OK]')
 
 		log.info('\tTranslating addresses for module %s...' % module)
-		addr2line = Popen([ADDR2LINE, '-e', tempfile.name], stdin = PIPE, stdout = PIPE, stderr = PIPE)
+		addr2line = Popen([ADDR2LINE, '-j', '.text', '-e', tempfile.name], stdin = PIPE, stdout = PIPE, stderr = PIPE)
 		if addr2line.poll() == None:
 			stdout, stderr = addr2line.communicate('\n'.join(addresses))
 		else:
