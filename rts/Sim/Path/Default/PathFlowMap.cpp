@@ -6,6 +6,9 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Objects/SolidObject.h"
 
+#define FLOW_DECAY_ENABLED 0
+#define FLOW_DECAY_FACTOR  0.86f
+
 PathFlowMap* PathFlowMap::GetInstance() {
 	static PathFlowMap* pfm = NULL;
 
@@ -63,15 +66,38 @@ void PathFlowMap::Update() {
 	std::set<unsigned int>& fIndices = indices[fBufferIdx];
 	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
-	for (std::set<unsigned int>::iterator it = fIndices.begin(); it != fIndices.end(); ++it) {
-		FlowCell& fCell = fCells[*it];
+	std::set<unsigned int>::iterator it;
+	std::set<unsigned int>::iterator nit;
 
-		// TODO: decay the flow
-		fCell.flowVector = ZeroVector;
-		fCell.numObjects = 0;
-	}
+	#if (FLOW_DECAY_ENABLED == 0)
+		for (it = fIndices.begin(); it != fIndices.end(); ++it) {
+			FlowCell& fCell = fCells[*it];
 
-	for (std::set<unsigned int>::iterator it = bIndices.begin(); it != bIndices.end(); ++it) {
+			fCell.flowVector = ZeroVector;
+			fCell.numObjects = 0;
+		}
+
+		fIndices.clear();
+	#else
+		for (it = fIndices.begin(); it != fIndices.end(); ) {
+			nit = it; ++nit;
+
+			FlowCell& fCell = fCells[*it];
+
+			if (fCell.flowVector.y > 0.01f) {
+				fCell.flowVector.y *= FLOW_DECAY_FACTOR;
+			} else {
+				fCell.flowVector = ZeroVector;
+				fCell.numObjects = 0;
+
+				fIndices.erase(it);
+			}
+
+			it = nit;
+		}
+	#endif
+
+	for (it = bIndices.begin(); it != bIndices.end(); ++it) {
 		FlowCell& bCell = bCells[*it];
 
 		if (bCell.flowVector.SqLength2D() > 0.01f) {
@@ -81,8 +107,6 @@ void PathFlowMap::Update() {
 			bCell.flowVector.z /= flowLen;
 		}
 	}
-
-	fIndices.clear();
 
 	// swap the buffers
 	fBufferIdx = (fBufferIdx + 1) & 1;
