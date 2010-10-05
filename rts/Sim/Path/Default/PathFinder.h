@@ -112,11 +112,12 @@ private:
 	float directionCosts[PATH_DIRECTIONS << 1];
 
 	float3 start;
-	int startxSqr, startzSqr;
-	int startSquare;
 
-	int goalSquare;									///< Is sat during the search as the square closest to the goal.
-	float goalHeuristic;							///< The heuristic value of goalSquare.
+	unsigned int startxSqr;
+	unsigned int startzSqr;
+	unsigned int startSquareIdx;
+	unsigned int goalSquareIdx;						///< set during each search as the square closest to the goal
+	float goalHeuristic;							///< heuristic value of goalSquareIdx
 
 	bool exactPath;
 	bool testMobile;
@@ -130,7 +131,7 @@ private:
 	PathNodeStateBuffer squareStates;
 	PathPriorityQueue openSquares;
 
-	std::vector<int> dirtySquares;					///< Squares tested by search.
+	std::vector<unsigned int> dirtySquares;			///< Squares tested by search.
 };
 
 #endif // PATHFINDER_H

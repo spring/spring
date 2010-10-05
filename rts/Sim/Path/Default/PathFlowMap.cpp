@@ -79,6 +79,17 @@ void PathFlowMap::Update() {
 
 		fIndices.clear();
 	#else
+		/*
+		// FIXME:
+		//     if a unit is not moving, it will be added
+		//     to the same cell every frame and cause the
+		//     y-component to increase faster than it can
+		//     decay
+		//
+		//     if each cell maintains a set of unitID's,
+		//     then a non-moving unit would instead cause
+		//     the flow to decay entirely (since the cell
+		//     would not have its flow refreshed)
 		for (it = fIndices.begin(); it != fIndices.end(); ) {
 			nit = it; ++nit;
 
@@ -95,6 +106,7 @@ void PathFlowMap::Update() {
 
 			it = nit;
 		}
+		*/
 	#endif
 
 	for (it = bIndices.begin(); it != bIndices.end(); ++it) {
@@ -124,24 +136,29 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 		return;
 	}
 
-	const unsigned int xcell = o->pos.x / (SQUARE_SIZE * xscale);
-	const unsigned int zcell = o->pos.z / (SQUARE_SIZE * zscale);
-	const unsigned int icell = zcell * xsize + xcell;
+	const unsigned int cellIdx = GetCellIdx(o);
 
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
-	FlowCell& bCell = bCells[icell];
+	FlowCell& bCell = bCells[cellIdx];
 
 	bCell.flowVector.x += (o->speed.x);
 	bCell.flowVector.z += (o->speed.z);
 	bCell.flowVector.y += (o->mass * o->mobility->flowMod);
 	bCell.numObjects   += 1;
 
-	bIndices.insert(icell);
+	bIndices.insert(cellIdx);
 }
 
 
+
+unsigned int PathFlowMap::GetCellIdx(const CSolidObject* o) const {
+	const unsigned int xcell = o->pos.x / (SQUARE_SIZE * xscale);
+	const unsigned int zcell = o->pos.z / (SQUARE_SIZE * zscale);
+
+	return (zcell * xsize + xcell);
+}
 
 const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const {
 	const std::vector<FlowCell>& fCells = buffers[fBufferIdx];
