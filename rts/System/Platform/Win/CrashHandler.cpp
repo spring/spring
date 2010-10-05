@@ -92,7 +92,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	PIMAGEHLP_SYMBOL pSym;
 	STACKFRAME sf;
 	HANDLE process, thread;
-	DWORD dwModBase, Disp;
+	DWORD dwModBase, Disp, dwModRelAddr;
 	BOOL more = FALSE;
 	int count = 0;
 	char modname[MAX_PATH];
@@ -168,7 +168,8 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%s+%#0lx) [0x%08lX]", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", count, modname, sf.AddrPC.Offset);
+			dwModRelAddr = sf.AddrPC.Offset - dwModBase;
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", count, modname, dwModRelAddr);
 		}
 
 		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
