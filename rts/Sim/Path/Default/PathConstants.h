@@ -36,14 +36,14 @@ const unsigned int PATH_DIRECTIONS = 8;
 const unsigned int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS >> 1;
 
 // PE-only flags
-const unsigned int PATHDIR_LEFT       = 0; // -x
-const unsigned int PATHDIR_LEFT_UP    = 1; // -x-z
-const unsigned int PATHDIR_UP         = 2; // -z
-const unsigned int PATHDIR_RIGHT_UP   = 3; // +x-z
-const unsigned int PATHDIR_RIGHT      = 4; // +x
-const unsigned int PATHDIR_RIGHT_DOWN = 5; // +x+z
-const unsigned int PATHDIR_DOWN       = 6; // +z
-const unsigned int PATHDIR_LEFT_DOWN  = 7; // -x+z
+const unsigned int PATHDIR_LEFT       = 0; // +x
+const unsigned int PATHDIR_LEFT_UP    = 1; // +x+z
+const unsigned int PATHDIR_UP         = 2; // +z
+const unsigned int PATHDIR_RIGHT_UP   = 3; // -x+z
+const unsigned int PATHDIR_RIGHT      = 4; // -x
+const unsigned int PATHDIR_RIGHT_DOWN = 5; // -x-z
+const unsigned int PATHDIR_DOWN       = 6; // -z
+const unsigned int PATHDIR_LEFT_DOWN  = 7; // +x-z
 
 // PF-only flags
 const unsigned int PATHOPT_LEFT      =   1; //-x
@@ -69,8 +69,9 @@ inline unsigned int PathDir2PathOpt(unsigned int pathDir) {
 	return pathOpt;
 }
 
-// costs between vertices are bi-directional (cost(A-->B) == cost(A<--B))
-// so we only need to store (PATH_DIRECTIONS >> 1) values
+// transition costs between vertices are bi-directional
+// (cost(A-->B) == cost(A<--B)) so we only need to store
+// (PATH_DIRECTIONS >> 1) values
 inline int GetBlockVertexOffset(unsigned int pathDir, unsigned int numBlocks) {
 	int bvo = 0;
 

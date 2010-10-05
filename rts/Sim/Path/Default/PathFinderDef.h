@@ -12,32 +12,32 @@ public:
 	CPathFinderDef(const float3& goalCenter, float goalRadius);
 	virtual ~CPathFinderDef() {}
 
-	virtual bool WithinConstraints(int xSquare, int Square) const { return true; }
+	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const { return true; }
 
-	bool IsGoal(int xSquare, int zSquare) const;
-	float Heuristic(int xSquare, int zSquare) const;
+	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
+	float Heuristic(unsigned int xSquare, unsigned int zSquare) const;
 	bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
-	int2 GoalSquareOffset(int blockSize) const;
+	int2 GoalSquareOffset(unsigned int blockSize) const;
 
 	float3 goal;
 	float sqGoalRadius;
-	int goalSquareX;
-	int goalSquareZ;
+	unsigned int goalSquareX;
+	unsigned int goalSquareZ;
 };
 
 
 
 class CRangedGoalWithCircularConstraint : public CPathFinderDef {
 public:
-	CRangedGoalWithCircularConstraint(const float3& start, const float3& goal, float goalRadius, float searchSize, int extraSize);
+	CRangedGoalWithCircularConstraint(const float3& start, const float3& goal, float goalRadius, float searchSize, unsigned int extraSize);
 	~CRangedGoalWithCircularConstraint() {}
 
-	bool WithinConstraints(int xSquare, int zSquare) const;
+	bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const;
 
 private:
-	int halfWayX;
-	int halfWayZ;
-	int searchRadiusSq;
+	unsigned int halfWayX;
+	unsigned int halfWayZ;
+	unsigned int searchRadiusSq;
 };
 
 #endif

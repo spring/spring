@@ -41,6 +41,8 @@ public:
 	const std::vector<FlowCell>& GetBackBuffer() { return buffers[bBufferIdx]; }
 
 private:
+	unsigned int GetCellIdx(const CSolidObject*) const;
+
 	std::vector<FlowCell> buffers[2];
 	std::set<unsigned int> indices[2];
 
