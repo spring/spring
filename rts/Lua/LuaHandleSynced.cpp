@@ -775,13 +775,12 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	static const LuaHashString cmdStr("RecvFromSynced");
 	//LUA_CALL_IN_CHECK(L); -- not valid here
 
-#if DUAL_LUA_STATES
-	if(L == L_Sim) { // Sim thread sends to unsynced --> delay it
+	if(DUAL_LUA_STATES && L == L_Sim) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(L, args);
 		return;
 	}
 	// Draw thread, delayed already, execute it
-#endif
+
 	if (!cmdStr.GetRegistryFunc(L))
 		return; // the call is not defined
 	lua_insert(L, 1); // place the function
@@ -922,8 +921,7 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
 
-#if DUAL_LUA_STATES
-	if (L == L_Sim && !SingleState()) {
+	if (DUAL_LUA_STATES && L == L_Sim && !SingleState()) {
 		GML_RECMUTEX_LOCK(luadraw); // Called from Sim, need to lock draw thread during XCall
 
 		const bool prevSynced = GetSynced();
@@ -933,7 +931,7 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		SetSynced(prevSynced);
 		return retval;
 	}
-#endif
+
 	const bool prevSynced = GetSynced();
 	SetSynced(false);
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
