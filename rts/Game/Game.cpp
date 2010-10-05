@@ -322,6 +322,7 @@ CGame::CGame(std::string mapname, std::string modName, ILoadSaveHandler *saveFil
 	LoadFinalize();
 
 	loadThread.join();
+	CrashHandler::ClearDrawWDT();
 	CrashHandler::GameLoading(false);
 
 	// sending your playername to the server indicates that you are finished loading
