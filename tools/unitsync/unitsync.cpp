@@ -50,7 +50,7 @@ static CLogSubsystem LOG_UNITSYNC("unitsync", true);
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer* syncer;
 
-static bool logOutputInitialised=false;
+static bool logOutputInitialised = false;
 // I'd rather not include globalstuff
 #define SQUARE_SIZE 8
 
