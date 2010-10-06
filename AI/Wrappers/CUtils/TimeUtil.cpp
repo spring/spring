@@ -24,13 +24,8 @@ using namespace std;
 	#define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
 #endif
 
-struct timezone {
-	int  tz_minuteswest; ///< minutes W of Greenwich
-	int  tz_dsttime;     ///< type of dst correction
-};
-
 /// Definition of a gettimeofday function
-static int gettimeofday(struct timeval* tv, struct timezone* tz) {
+int gettimeofday(struct timeval* tv, struct timezone* tz) {
 	// Define a structure to receive the current Windows filetime
 	FILETIME ft;
 
