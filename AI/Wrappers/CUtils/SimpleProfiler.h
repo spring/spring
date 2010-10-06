@@ -56,7 +56,7 @@ char*         simpleProfiler_getSummaryString();
 
 #if       defined PROFILING_ENABLED
 	#define SCOPED_TIMER(part, profiler) ScopedTimer myScopedTimerFromMakro(part, profiler);
-#elif  // defined PROFILING_ENABLED
+#else  // defined PROFILING_ENABLED
 	#define SCOPED_TIMER(part, profiler)
 #endif // defined PROFILING_ENABLED
 
