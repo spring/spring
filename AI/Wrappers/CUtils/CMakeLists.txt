@@ -14,6 +14,7 @@ set(mySources
 	"${mySourceDir}/SimpleLog.c"
 	"${mySourceDir}/SSkirmishAISpecifier.cpp"
 	"${mySourceDir}/Util.c"
+	"${mySourceDir}/TimeUtil.cpp"
 	)
 SetGlobal(${myName}_SRC "${mySources}")
 
