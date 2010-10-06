@@ -13,6 +13,9 @@
 
 #include "AAI.h"
 
+#include "CUtils/SimpleProfiler.h"
+#define AAI_SCOPED_TIMER(part) SCOPED_TIMER(part, profiler);
+
 AAI::AAI() :
 	cb(NULL),
 	aicb(NULL),
@@ -26,7 +29,8 @@ AAI::AAI() :
 	af(NULL),
 	am(NULL),
 	initialized(false),
-	file(NULL)
+	file(NULL),
+	profiler(NULL)
 {
 	// initialize random numbers generator
 	srand (time(NULL));
@@ -39,6 +43,9 @@ AAI::~AAI()
 
 	// save several AI data
 	fprintf(file, "\nShutting down....\n\n");
+
+	fprintf(file, "\nProfiling summary:\n");
+	fprintf(file, "%s\n", profiler->ToString().c_str());
 
 	fprintf(file, "Unit category	active / under construction / requested\n");
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
@@ -95,13 +102,14 @@ AAI::~AAI()
 	}
 
 
-	delete am;
-	delete brain;
-	delete execute;
-	delete ut;
-	delete af;
-	delete map;
-	delete bt;
+	delete am; am = NULL;
+	delete brain; brain = NULL;
+	delete execute; execute = NULL;
+	delete ut; ut = NULL;
+	delete af; af = NULL;
+	delete map; map = NULL;
+	delete bt; bt = NULL;
+	delete profiler; profiler = NULL;
 
 	fclose(file);
 }
@@ -113,6 +121,11 @@ void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 
 void AAI::InitAI(IGlobalAICallback* callback, int team)
 {
+	char profilerName[16];
+	SNPRINTF(profilerName, sizeof(profilerName), "%s:%i", "AAI", team);
+	profiler = new Profiler(profilerName);
+
+	AAI_SCOPED_TIMER("InitAI")
 	aicb = callback;
 	cb = callback->GetAICallback();
 
@@ -180,6 +193,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 {
+	AAI_SCOPED_TIMER("UnitDamaged")
 	const UnitDef* def;
 	const UnitDef* att_def;
 	UnitCategory att_cat, cat;
@@ -267,6 +281,7 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 
 void AAI::UnitCreated(int unit, int builder)
 {
+	AAI_SCOPED_TIMER("UnitCreated")
 	if (!cfg->initialized)
 		return;
 
@@ -340,6 +355,7 @@ void AAI::UnitCreated(int unit, int builder)
 
 void AAI::UnitFinished(int unit)
 {
+	AAI_SCOPED_TIMER("UnitFinished")
 	if (!initialized)
 		return;
 
@@ -451,6 +467,7 @@ void AAI::UnitFinished(int unit)
 
 void AAI::UnitDestroyed(int unit, int attacker)
 {
+	AAI_SCOPED_TIMER("UnitDestroyed")
 	// get unit's id
 	const UnitDef* def = cb->GetUnitDef(unit);
 
@@ -658,6 +675,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 
 void AAI::UnitIdle(int unit)
 {
+	AAI_SCOPED_TIMER("UnitIdle")
 	// if factory is idle, start construction of further units
 	if (ut->units[unit].cons)
 	{
@@ -687,6 +705,7 @@ void AAI::UnitIdle(int unit)
 
 void AAI::UnitMoveFailed(int unit)
 {
+	AAI_SCOPED_TIMER("UnitMoveFailed")
 	if (ut->units[unit].cons)
 	{
 		if (ut->units[unit].cons->task == BUILDING && ut->units[unit].cons->construction_unit_id == -1)
@@ -718,6 +737,7 @@ void AAI::EnemyLeaveRadar(int enemy) {}
 
 void AAI::EnemyDestroyed(int enemy, int attacker)
 {
+	AAI_SCOPED_TIMER("EnemyDestroyed")
 	// remove enemy from unittable
 	ut->EnemyKilled(enemy);
 
@@ -764,17 +784,20 @@ void AAI::Update()
 	// scouting
 	if (!(tick % cfg->SCOUT_UPDATE_FREQUENCY))
 	{
+		AAI_SCOPED_TIMER("Scouting_1")
 		map->UpdateRecon();
 	}
 
 	if (!((tick + 5) % cfg->SCOUT_UPDATE_FREQUENCY))
 	{
+		AAI_SCOPED_TIMER("Scouting_2")
 		map->UpdateEnemyScoutingData();
 	}
 
 	// update groups
 	if (!(tick % 169))
 	{
+		AAI_SCOPED_TIMER("Groups")
 		for(list<UnitCategory>::const_iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
 		{
 			for(list<AAIGroup*>::iterator group = group_list[*category].begin(); group != group_list[*category].end(); ++group)
@@ -789,6 +812,7 @@ void AAI::Update()
 	// unit management
 	if (!(tick % 649))
 	{
+		AAI_SCOPED_TIMER("Unit-Management")
 		execute->CheckBuildqueues();
 		brain->BuildUnits();
 		execute->BuildScouts();
@@ -796,6 +820,7 @@ void AAI::Update()
 
 	if (!(tick % 911))
 	{
+		AAI_SCOPED_TIMER("Check-Attack")
 		// check attack
 		am->Update();
 		af->BombBestUnit(2, 2);
@@ -805,12 +830,14 @@ void AAI::Update()
 	// ressource management
 	if (!(tick % 199))
 	{
+		AAI_SCOPED_TIMER("Resource-Management")
 		execute->CheckRessources();
 	}
 
 	// update sectors
 	if (!(tick % 423))
 	{
+		AAI_SCOPED_TIMER("Update-Sectors")
 		brain->UpdateAttackedByValues();
 		map->UpdateSectors();
 
@@ -827,24 +854,28 @@ void AAI::Update()
 	// builder management
 	if (!(tick % 917))
 	{
+		AAI_SCOPED_TIMER("Builder-Management")
 		brain->UpdateDefenceCapabilities();
 	}
 
 	// update income
 	if (!(tick % 45))
 	{
+		AAI_SCOPED_TIMER("Update-Income")
 		execute->UpdateRessources();
 	}
 
 	// building management
 	if (!(tick % 97))
 	{
+		AAI_SCOPED_TIMER("Building-Management")
 		execute->CheckConstruction();
 	}
 
 	// builder/factory management
 	if (!(tick % 677))
 	{
+		AAI_SCOPED_TIMER("BuilderAndFactory-Management")
 		for (set<int>::iterator builder = ut->constructors.begin(); builder != ut->constructors.end(); ++builder)
 		{
 			ut->units[(*builder)].cons->Update();
@@ -853,11 +884,13 @@ void AAI::Update()
 
 	if (!(tick % 337))
 	{
+		AAI_SCOPED_TIMER("Check-Factories")
 		execute->CheckFactories();
 	}
 
 	if (!(tick % 1079))
 	{
+		AAI_SCOPED_TIMER("Check-Defenses")
 		execute->CheckDefences();
 	}
 
@@ -873,6 +906,7 @@ void AAI::Update()
 	// upgrade mexes
 	if (!(tick % 1573))
 	{
+		AAI_SCOPED_TIMER("Upgrade-Mexes")
 		if (brain->enemy_pressure_estimation < 0.05f)
 		{
 			execute->CheckMexUpgrade();
@@ -884,6 +918,7 @@ void AAI::Update()
 	// recheck rally points
 	if (!(tick % 1877))
 	{
+		AAI_SCOPED_TIMER("Recheck-Rally-Points")
 		for (list<UnitCategory>::const_iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
 		{
 			for (list<AAIGroup*>::iterator group = group_list[*category].begin(); group != group_list[*category].end(); ++group)
@@ -896,6 +931,7 @@ void AAI::Update()
 	// recalculate efficiency stats
 	if (!(tick % 2927))
 	{
+		AAI_SCOPED_TIMER("Recalculate-Efficiency-Stats")
 		if (aai_instance == 1)
 		{
 			bt->UpdateMinMaxAvgEfficiency();
@@ -905,6 +941,7 @@ void AAI::Update()
 
 int AAI::HandleEvent(int msg, const void* data)
 {
+	AAI_SCOPED_TIMER("HandleEvent")
 	switch (msg)
 	{
 		case AI_EVENT_UNITGIVEN: // 1
@@ -944,4 +981,9 @@ int AAI::HandleEvent(int msg, const void* data)
 			}
 	}
 	return 0;
+}
+
+Profiler* AAI::GetProfiler()
+{
+	return profiler;
 }
