@@ -13,35 +13,35 @@
 #include "FileSystem/FileSystem.h"
 
 
-std::string MapParser::GetMapConfigName(const std::string& mapName)
+string MapParser::GetMapConfigName(const std::string& mapFileName)
 {
-	if (mapName.length() < 3)
-		return "";
-
-	const std::string extension = filesystem.GetExtension(mapName);
+	const std::string directory = filesystem.GetDirectory(mapFileName);
+	const std::string filename  = filesystem.GetBasename(mapFileName);
+	const std::string extension = filesystem.GetExtension(mapFileName);
 
 	if (extension == "sm3") {
-		return mapName;
+		return mapFileName;
 	}
 	else if (extension == "smf") {
-		return mapName.substr(0, mapName.find_last_of('.')) + ".smd";
+		return directory + filename + ".smd";
 	}
 	else {
-		return "";
+		return mapFileName;
 	}
 }
 
 
-MapParser::MapParser(const std::string& mapName) : parser(NULL)
+MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 {
-	const std::string mapConfig = GetMapConfigName(mapName);
+	const std::string mapConfig = GetMapConfigName(mapFileName);
 
 	parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	parser->GetTable("Map");
-	parser->AddString("fileName", filesystem.GetFilename(mapName));
-	parser->AddString("fullName", mapName);
+	parser->AddString("fileName", filesystem.GetFilename(mapFileName));
+	parser->AddString("fullName", mapFileName);
 	parser->AddString("configFile", mapConfig);
 	parser->EndTable();
+
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	// this should not be included with unitsync:
 	// 1. avoids linkage with LuaSyncedRead
@@ -50,6 +50,7 @@ MapParser::MapParser(const std::string& mapName) : parser(NULL)
 	parser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	parser->EndTable();
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
+
 	if (!parser->Execute())
 	{
 		// do nothing
