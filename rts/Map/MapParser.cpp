@@ -13,7 +13,7 @@
 #include "FileSystem/FileSystem.h"
 
 
-string MapParser::GetMapConfigName(const std::string& mapFileName)
+std::string MapParser::GetMapConfigName(const std::string& mapFileName)
 {
 	const std::string directory = filesystem.GetDirectory(mapFileName);
 	const std::string filename  = filesystem.GetBasename(mapFileName);
