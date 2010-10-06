@@ -27,6 +27,7 @@
 using namespace std;
 
 class AAIExecute;
+class Profiler;
 
 class AAI : public IGlobalAI
 {
@@ -59,6 +60,10 @@ public:
 	// called every frame
 	void Update();
 
+
+	Profiler* GetProfiler();
+
+
 	// callbacks
 	IAICallback* cb;
 	IGlobalAICallback* aicb;
@@ -85,4 +90,7 @@ public:
 	bool initialized;
 
 	FILE *file;
+
+private:
+	Profiler* profiler;
 };
