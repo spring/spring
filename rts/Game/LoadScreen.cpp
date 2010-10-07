@@ -37,6 +37,7 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
+	netHeartbeatThread(NULL),
 	gameLoadThread(NULL),
 	mt_loading(true),
 	startupTexture(0),

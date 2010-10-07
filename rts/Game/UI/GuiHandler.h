@@ -72,7 +72,7 @@ public:
 	bool SetActiveCommand(const Action& action, const CKeySet& ks, int actionIndex);
 
 	void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
-	bool GetDrawSelectionInfo() { return drawSelectionInfo; }
+	bool GetDrawSelectionInfo() const { return drawSelectionInfo; }
 
 	void SetBuildFacing(int facing);
 	void SetBuildSpacing(int spacing);
