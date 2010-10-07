@@ -110,7 +110,8 @@ struct LuaProjEvent {
 struct LuaMiscEvent {
 	MiscEvent id;
 	std::string str1;
-	LuaMiscEvent(MiscEvent i, const std::string &s1) : id(i), str1(s1) {}
+	void *ptr;
+	LuaMiscEvent(MiscEvent i, const std::string &s1, void *p) : id(i), str1(s1), ptr(p) {}
 };
 
 #if DUAL_LUA_STATES

@@ -1626,7 +1626,7 @@ void CLuaHandle::ExecuteMiscEventBatch() {
 		LuaMiscEvent &e = *i;
 		switch(e.id) {
 			case ADD_CONSOLE_LINE:
-				AddConsoleLine(e.str1, *(CLogSubsystem *)NULL); // FIXME
+				AddConsoleLine(e.str1, *(CLogSubsystem *)e.ptr);
 				break;
 			default:
 				logOutput.Print("%s: Invalid Event %d", __FUNCTION__, e.id);
@@ -2387,12 +2387,12 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 }
 
 
-bool CLuaHandle::AddConsoleLine(const string& msg, const CLogSubsystem& /**/)
+bool CLuaHandle::AddConsoleLine(const string& msg, const CLogSubsystem& sys)
 {
 	if (!CheckModUICtrl()) {
 		return true; // FIXME?
 	}
-	LUA_MISC_BATCH_PUSH(true, ADD_CONSOLE_LINE, msg);
+	LUA_MISC_BATCH_PUSH(true, ADD_CONSOLE_LINE, msg, (void *)&sys);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("AddConsoleLine");
