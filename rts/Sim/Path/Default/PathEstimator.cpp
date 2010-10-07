@@ -60,15 +60,17 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int blockSize, unsigned
 	//
 	// NOTE: the choices of +1 for LEFT and UP
 	// are not arbitrary (they are related to
-	// GetBlockVertexOffset)
+	// GetBlockVertexOffset) and also need to
+	// be consistent with the PATHOPT_* flags
+	// (because of PathDir2PathOpt)
 	directionVectors[PATHDIR_LEFT      ] = int2(+1,  0);
 	directionVectors[PATHDIR_RIGHT     ] = int2(-1,  0);
 	directionVectors[PATHDIR_UP        ] = int2( 0, +1);
 	directionVectors[PATHDIR_DOWN      ] = int2( 0, -1);
-	directionVectors[PATHDIR_LEFT_UP   ] = int2(+1, +1);
-	directionVectors[PATHDIR_RIGHT_UP  ] = int2(-1, +1);
-	directionVectors[PATHDIR_RIGHT_DOWN] = int2(-1, -1);
-	directionVectors[PATHDIR_LEFT_DOWN ] = int2(+1, -1);
+	directionVectors[PATHDIR_LEFT_UP   ] = int2(directionVectors[PATHDIR_LEFT ].x, directionVectors[PATHDIR_UP  ].y);
+	directionVectors[PATHDIR_RIGHT_UP  ] = int2(directionVectors[PATHDIR_RIGHT].x, directionVectors[PATHDIR_UP  ].y);
+	directionVectors[PATHDIR_RIGHT_DOWN] = int2(directionVectors[PATHDIR_RIGHT].x, directionVectors[PATHDIR_DOWN].y);
+	directionVectors[PATHDIR_LEFT_DOWN ] = int2(directionVectors[PATHDIR_LEFT ].x, directionVectors[PATHDIR_DOWN].y);
 
 	mGoalSqrOffset.x = BLOCK_SIZE >> 1;
 	mGoalSqrOffset.y = BLOCK_SIZE >> 1;

@@ -32,10 +32,10 @@ CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx
 	static const int   dirScale = 2;
 	static const float dirCost  = math::sqrt(2.0f);
 
-	directionVectors[PATHOPT_LEFT                ] = int2(-1 * dirScale,  0           );
-	directionVectors[PATHOPT_RIGHT               ] = int2(+1 * dirScale,  0           );
-	directionVectors[PATHOPT_UP                  ] = int2( 0,            -1 * dirScale);
-	directionVectors[PATHOPT_DOWN                ] = int2( 0,            +1 * dirScale);
+	directionVectors[PATHOPT_LEFT                ] = int2(+1 * dirScale,  0           );
+	directionVectors[PATHOPT_RIGHT               ] = int2(-1 * dirScale,  0           );
+	directionVectors[PATHOPT_UP                  ] = int2( 0,            +1 * dirScale);
+	directionVectors[PATHOPT_DOWN                ] = int2( 0,            -1 * dirScale);
 	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ].x = directionVectors[PATHOPT_LEFT ].x;
 	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ].y = directionVectors[PATHOPT_UP   ].y;
 	directionVectors[PATHOPT_RIGHT | PATHOPT_UP  ].x = directionVectors[PATHOPT_RIGHT].x;
@@ -45,10 +45,10 @@ CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx
 	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].x = directionVectors[PATHOPT_LEFT ].x;
 	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].y = directionVectors[PATHOPT_DOWN ].y;
 
-	directionCosts[PATHOPT_LEFT                ] = 1.0f * dirScale;
-	directionCosts[PATHOPT_RIGHT               ] = 1.0f * dirScale;
-	directionCosts[PATHOPT_UP                  ] = 1.0f * dirScale;
-	directionCosts[PATHOPT_DOWN                ] = 1.0f * dirScale;
+	directionCosts[PATHOPT_LEFT                ] =    1.0f * dirScale;
+	directionCosts[PATHOPT_RIGHT               ] =    1.0f * dirScale;
+	directionCosts[PATHOPT_UP                  ] =    1.0f * dirScale;
+	directionCosts[PATHOPT_DOWN                ] =    1.0f * dirScale;
 	directionCosts[PATHOPT_LEFT  | PATHOPT_UP  ] = dirCost * dirScale;
 	directionCosts[PATHOPT_RIGHT | PATHOPT_UP  ] = dirCost * dirScale;
 	directionCosts[PATHOPT_RIGHT | PATHOPT_DOWN] = dirCost * dirScale;

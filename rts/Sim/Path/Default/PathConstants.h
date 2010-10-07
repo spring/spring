@@ -46,10 +46,10 @@ const unsigned int PATHDIR_DOWN       = 6; // -z
 const unsigned int PATHDIR_LEFT_DOWN  = 7; // +x-z
 
 // PF-only flags
-const unsigned int PATHOPT_LEFT      =   1; //-x
-const unsigned int PATHOPT_RIGHT     =   2; //+x
-const unsigned int PATHOPT_UP        =   4; //-z
-const unsigned int PATHOPT_DOWN      =   8; //+z
+const unsigned int PATHOPT_LEFT      =   1; // +x
+const unsigned int PATHOPT_RIGHT     =   2; // -x
+const unsigned int PATHOPT_UP        =   4; // +z
+const unsigned int PATHOPT_DOWN      =   8; // -z
 const unsigned int PATHOPT_AXIS_DIRS = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
 
 inline unsigned int PathDir2PathOpt(unsigned int pathDir) {
