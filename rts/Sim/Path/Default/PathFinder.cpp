@@ -36,14 +36,10 @@ CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx
 	directionVectors[PATHOPT_RIGHT               ] = int2(-1 * dirScale,  0           );
 	directionVectors[PATHOPT_UP                  ] = int2( 0,            +1 * dirScale);
 	directionVectors[PATHOPT_DOWN                ] = int2( 0,            -1 * dirScale);
-	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ].x = directionVectors[PATHOPT_LEFT ].x;
-	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ].y = directionVectors[PATHOPT_UP   ].y;
-	directionVectors[PATHOPT_RIGHT | PATHOPT_UP  ].x = directionVectors[PATHOPT_RIGHT].x;
-	directionVectors[PATHOPT_RIGHT | PATHOPT_UP  ].y = directionVectors[PATHOPT_UP   ].y;
-	directionVectors[PATHOPT_RIGHT | PATHOPT_DOWN].x = directionVectors[PATHOPT_RIGHT].x;
-	directionVectors[PATHOPT_RIGHT | PATHOPT_DOWN].y = directionVectors[PATHOPT_DOWN ].y;
-	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].x = directionVectors[PATHOPT_LEFT ].x;
-	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN].y = directionVectors[PATHOPT_DOWN ].y;
+	directionVectors[PATHOPT_LEFT  | PATHOPT_UP  ] = int2(directionVectors[PATHOPT_LEFT ].x, directionVectors[PATHOPT_UP   ].y);
+	directionVectors[PATHOPT_RIGHT | PATHOPT_UP  ] = int2(directionVectors[PATHOPT_RIGHT].x, directionVectors[PATHOPT_UP   ].y);
+	directionVectors[PATHOPT_RIGHT | PATHOPT_DOWN] = int2(directionVectors[PATHOPT_RIGHT].x, directionVectors[PATHOPT_DOWN ].y);
+	directionVectors[PATHOPT_LEFT  | PATHOPT_DOWN] = int2(directionVectors[PATHOPT_LEFT ].x, directionVectors[PATHOPT_DOWN ].y);
 
 	directionCosts[PATHOPT_LEFT                ] =    1.0f * dirScale;
 	directionCosts[PATHOPT_RIGHT               ] =    1.0f * dirScale;
