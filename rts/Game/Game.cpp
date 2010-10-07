@@ -3486,6 +3486,7 @@ void CGame::DrawInputText()
 
 void CGame::StartPlaying()
 {
+	assert(!playing);
 	playing = true;
 	GameSetupDrawer::Disable();
 	lastTick = clock();

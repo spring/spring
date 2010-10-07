@@ -1662,17 +1662,19 @@ void CGameServer::CheckForGameStart(bool forced)
 		if (!spring_istime(readyTime)) {
 			readyTime = spring_gettime();
 			rng.Seed(spring_tomsecs(readyTime-serverStartTime));
-			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(spring_tomsecs(gameStartDelay)));
+			// we have to wait at least 1 msec, because 0 is a special case
+			const unsigned countdown = std::max(1, spring_tomsecs(gameStartDelay));
+			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(countdown));
 		}
 	}
-	if (spring_istime(readyTime) && (spring_gettime() - readyTime) > gameStartDelay)
-	{
+	if (spring_istime(readyTime) && ((spring_gettime() - readyTime) > gameStartDelay)) {
 		StartGame();
 	}
 }
 
 void CGameServer::StartGame()
 {
+	assert(!gameHasStarted);
 	gameHasStarted = true;
 	startTime = gameTime;
 	if (!canReconnect && !allowAdditionalPlayers)
