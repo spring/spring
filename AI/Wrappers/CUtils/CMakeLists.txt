@@ -12,8 +12,10 @@ set(mySourceDir ${CMAKE_CURRENT_SOURCE_DIR}/${mySourceDirRel})
 set(mySources
 	"${mySourceDir}/SharedLibrary.c"
 	"${mySourceDir}/SimpleLog.c"
+	"${mySourceDir}/SimpleProfiler.cpp"
 	"${mySourceDir}/SSkirmishAISpecifier.cpp"
 	"${mySourceDir}/Util.c"
+	"${mySourceDir}/TimeUtil.cpp"
 	)
 SetGlobal(${myName}_SRC "${mySources}")
 

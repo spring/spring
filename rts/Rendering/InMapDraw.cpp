@@ -461,8 +461,6 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 		}
 		playerID = uPlayerID;
 
-		const CPlayer* sender = playerHandler->Player(playerID);
-
 		unsigned char drawType;
 		pckt >> drawType;
 

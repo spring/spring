@@ -42,7 +42,7 @@ public:
 		float x2;
 		float y2;
 	};
-	bool InBox(float x, float y, const ContainerBox& box);
+	bool InBox(float x, float y, const ContainerBox& box) const;
 	void DrawBox(const ContainerBox& b, int how = -1);
 
 	/// Transform from mouse X to OpenGL X value in screen pixels.
