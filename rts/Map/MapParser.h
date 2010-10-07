@@ -11,10 +11,10 @@
 class MapParser
 {
 	public:
-		static std::string GetMapConfigName(const std::string& mapName);
+		static std::string GetMapConfigName(const std::string& mapFileName);
 
 	public:
-		MapParser(const std::string& mapName);
+		MapParser(const std::string& mapFileName);
 		~MapParser();
 
 		LuaParser* GetParser() { return parser; }

@@ -80,15 +80,15 @@ void parseOptions(
 		const std::string& fileName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		const std::string& mapName = "",
 		std::set<std::string>* optionsSet = NULL,
 		CLogSubsystem* logSubsystem = &(CLogOutput::GetDefaultLogSubsystem()));
 
-std::vector<Option> parseOptions(
+void parseMapOptions(
+		std::vector<Option>& options,
 		const std::string& fileName,
+		const std::string& mapName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		const std::string& mapName = "",
 		std::set<std::string>* optionsSet = NULL,
 		CLogSubsystem* logSubsystem = &(CLogOutput::GetDefaultLogSubsystem()));
 
