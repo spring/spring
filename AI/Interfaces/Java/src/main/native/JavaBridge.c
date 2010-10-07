@@ -732,14 +732,13 @@ static JNIEnv* java_reattachCurrentThread() {
 	JNIEnv* env = NULL;
 
 	simpleLog_logL(SIMPLELOG_LEVEL_FINEST, "Reattaching current thread...");
-	//jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm, (void**) &env, NULL);
-	jint res = (*g_jvm)->AttachCurrentThread(g_jvm, (void**) &env, NULL);
-	bool failure = (res < 0);
-	if (failure) {
+	//const jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm, (void**) &env, NULL);
+	const jint res = (*g_jvm)->AttachCurrentThread(g_jvm, (void**) &env, NULL);
+	if (res != 0) {
 		env = NULL;
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed attaching jvm to current thread,"
-				" error code(2): %i", (int) res);
+				"Failed attaching JVM to current thread(2): %i - %s",
+				res, jniUtil_getJniRetValDescription(res));
 	}
 
 	return env;
@@ -782,7 +781,8 @@ static JNIEnv* java_getJNIEnv() {
 		if (res != 0) {
 			jvm = NULL;
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed fetching list of running JVMs, error code: %i", res);
+					"Failed fetching list of running JVMs: %i - %s",
+					res, jniUtil_getJniRetValDescription(res));
 			goto end;
 		}
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "number of existing JVMs: %i", numJVMsFound);
@@ -794,7 +794,8 @@ static JNIEnv* java_getJNIEnv() {
 			res = JNI_CreateJavaVM_f(&jvm, (void**) &env, &vm_args);
 			if (res != 0 || (*env)->ExceptionCheck(env)) {
 				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-						"Can not create Java VM, error code: %i", res);
+						"Failed to create Java VM: %i - %s",
+						res, jniUtil_getJniRetValDescription(res));
 				goto end;
 			}
 		}
@@ -813,8 +814,8 @@ static JNIEnv* java_getJNIEnv() {
 				(*env)->ExceptionDescribe(env);
 			}
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Could not attach JVM to current thread,"
-					" error code: %i", res);
+					"Failed to attach JVM to current thread: %i - %s",
+					res, jniUtil_getJniRetValDescription(res));
 			goto end;
 		}
 
@@ -861,15 +862,16 @@ bool java_unloadJNIEnv() {
 				(*g_jniEnv)->ExceptionDescribe(g_jniEnv);
 			}
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"JVM: Can not Attach to the current thread,"
-					" error code: %i", res);
+					"JVM: Can not Attach to the current thread: %i - %s",
+					res, jniUtil_getJniRetValDescription(res));
 			return false;
 		}*/
 
-		jint res = (*g_jvm)->DetachCurrentThread(g_jvm);
+		const jint res = (*g_jvm)->DetachCurrentThread(g_jvm);
 		if (res != 0) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"JVM: Failed detaching current thread, error code: %i", res);
+					"JVM: Failed detaching current thread: %i - %s",
+					res, jniUtil_getJniRetValDescription(res));
 			return false;
 		}
 
@@ -880,7 +882,8 @@ bool java_unloadJNIEnv() {
 		/*res = (*g_jvm)->DestroyJavaVM(g_jvm);
 		if (res != 0) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"JVM: Failed destroying, error code: %i", res);
+					"JVM: Failed destroying: %i - %s",
+					res, jniUtil_getJniRetValDescription(res));
 			return false;
 		} else {
 			simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
