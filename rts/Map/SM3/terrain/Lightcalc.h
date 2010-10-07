@@ -14,8 +14,8 @@ namespace terrain
 		Lightmap (Heightmap *hm, int level, int shadowLevelDif, LightingInfo *li);
 		~Lightmap ();
 
-		uint GetShadowTexture() { return shadowTex; }
-		uint GetShadingTexture() { return shadingTex; }
+		uint GetShadowTexture() { return shadowTex; } const
+		uint GetShadingTexture() { return shadingTex; } const
 
 	protected:
 		void CalculateShadows (uchar *dst, int dstw, float lightX,float lightY, float lightH, float *centerhm, int hmw, int hmscale, bool directional);

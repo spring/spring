@@ -78,7 +78,7 @@ CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 	return NULL;
 }
 
-bool CInputReceiver::InBox(float x, float y, const ContainerBox& box)
+bool CInputReceiver::InBox(float x, float y, const ContainerBox& box) const
 {
 	return ((x > box.x1) &&
 			(x < box.x2) &&
