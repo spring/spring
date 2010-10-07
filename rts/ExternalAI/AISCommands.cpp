@@ -895,6 +895,7 @@ int toInternalUnitCommandTopic(int aiCmdTopic, const void* sUnitCommandData) {
 		case COMMAND_UNIT_CLOAK:
 		{
 			internalUnitCommandTopic = CMD_CLOAK;
+			break;
 		}
 		case COMMAND_UNIT_STOCKPILE:
 		{
@@ -1127,6 +1128,7 @@ int extractAICommandTopic(const Command* engineCmd, int maxUnits) {
 		case CMD_CLOAK:
 		{
 			aiCommandTopic = COMMAND_UNIT_CLOAK;
+			break;
 		}
 		case CMD_STOCKPILE:
 		{
