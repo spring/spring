@@ -91,6 +91,13 @@ public:
 
 	std::string saveName;
 
+	/**
+	 * The number of seconds till the game starts,
+	 * counting from the moment when all players are connected and ready.
+	 * Default: 4 (seconds)
+	 */
+	unsigned int gameStartDelay;
+
 	int gameMode;
 	int noHelperAIs;
 
