@@ -1005,13 +1005,14 @@ bool java_initStatic(int _interfaceId,
 
 	java_establishJavaEnv();
 	JNIEnv* env = java_getJNIEnv();
-	const int res = eventsJniBridge_initStatic(env, skirmishAIId_sizeMax);
-	java_establishSpringEnv();
-	if (res != 0) {
-		return false;
+	bool success = (env != NULL);
+	if (success) {
+		const int res = eventsJniBridge_initStatic(env, skirmishAIId_sizeMax);
+		success = (res == 0);
 	}
+	java_establishSpringEnv();
 
-	return true;
+	return success;
 }
 
 static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallback* aiCallback, int skirmishAIId) {
