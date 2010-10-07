@@ -6,6 +6,7 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Objects/SolidObject.h"
 
+#define FLOW_EPSILON       0.01f
 #define FLOW_DECAY_ENABLED 0
 #define FLOW_DECAY_FACTOR  0.86f
 
@@ -79,25 +80,27 @@ void PathFlowMap::Update() {
 
 		fIndices.clear();
 	#else
-		/*
-		// FIXME:
-		//     if a unit is not moving, it will be added
-		//     to the same cell every frame and cause the
-		//     y-component to increase faster than it can
-		//     decay
-		//
-		//     if each cell maintains a set of unitID's,
-		//     then a non-moving unit would instead cause
-		//     the flow to decay entirely (since the cell
-		//     would not have its flow refreshed)
 		for (it = fIndices.begin(); it != fIndices.end(); ) {
 			nit = it; ++nit;
 
 			FlowCell& fCell = fCells[*it];
+			float3& fCellFlow = fCell.flowVector;
 
-			if (fCell.flowVector.y > 0.01f) {
-				fCell.flowVector.y *= FLOW_DECAY_FACTOR;
+			bool fCellReset = false;
+
+			if (bIndices.find(*it) == bIndices.end()) {
+				// if the cell at index <*it> was NOT written to
+				// during any AddFlow call last frame (meaning no
+				// units were projected into it), start decaying
+				// its flow-strength contribution
+				fCellFlow.y *= FLOW_DECAY_FACTOR;
+				fCellReset = (fCellFlow.y < FLOW_EPSILON);
 			} else {
+				// otherwise, force a cell reset
+				fCellReset = true;
+			}
+
+			if (fCellReset) {
 				fCell.flowVector = ZeroVector;
 				fCell.numObjects = 0;
 
@@ -106,13 +109,12 @@ void PathFlowMap::Update() {
 
 			it = nit;
 		}
-		*/
 	#endif
 
 	for (it = bIndices.begin(); it != bIndices.end(); ++it) {
 		FlowCell& bCell = bCells[*it];
 
-		if (bCell.flowVector.SqLength2D() > 0.01f) {
+		if (bCell.flowVector.SqLength2D() > FLOW_EPSILON) {
 			const float flowLen = bCell.flowVector.Length2D();
 
 			bCell.flowVector.x /= flowLen;
