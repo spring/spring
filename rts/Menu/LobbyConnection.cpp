@@ -75,7 +75,7 @@ void LobbyConnection::Denied(const std::string& reason)
 	upwin->ServerLabel(reason);
 }
 
-void LobbyConnection::Aggreement(const std::string text)
+void LobbyConnection::Aggreement(const std::string& text)
 {
 	upwin->ShowAggreement(text);
 }
