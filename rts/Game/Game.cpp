@@ -19,6 +19,7 @@
 #include "Game.h"
 #include "Camera.h"
 #include "CameraHandler.h"
+#include "ChatMessage.h"
 #include "ClientSetup.h"
 #include "ConsoleHistory.h"
 #include "GameHelper.h"
@@ -30,7 +31,6 @@
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
-#include "ChatMessage.h"
 #include "TimeProfiler.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
@@ -2417,6 +2417,7 @@ bool CGame::HasLag() const
 	}
 }
 
+
 void CGame::SaveGame(const std::string& filename, bool overwrite)
 {
 	if (filesystem.CreateDirectory("Saves")) {
@@ -2433,6 +2434,7 @@ void CGame::SaveGame(const std::string& filename, bool overwrite)
 		}
 	}
 }
+
 
 void CGame::ReloadGame()
 {

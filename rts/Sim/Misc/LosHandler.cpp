@@ -183,8 +183,7 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 void CLosHandler::LosAdd(LosInstance* instance)
 {
 	assert(instance);
-	assert(instance->allyteam < teamHandler->ActiveAllyTeams());
-	assert(instance->allyteam >= 0);
+	assert(teamHandler->IsValidAllyTeam(instance->allyteam));
 
 	losAlgo.LosAdd(instance->basePos, instance->losSize, instance->baseHeight, instance->losSquares);
 

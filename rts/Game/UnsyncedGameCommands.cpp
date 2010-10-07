@@ -514,12 +514,11 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("<There are no active Skirmish AIs in this game>");
 		}
 	}
-	else if (cmd == "team"){
-		if (gs->cheatEnabled)
-		{
-			int team=atoi(action.extra.c_str());
-			if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
-				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, team));
+	else if (cmd == "team") {
+		if (gs->cheatEnabled) {
+			const int teamId = atoi(action.extra.c_str());
+			if (teamHandler->IsValidTeam(teamId)) {
+				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 			}
 		}
 	}
@@ -528,10 +527,10 @@ bool CGame::ActionPressed(const Action& action,
 			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 	}
 	else if ((cmd == "specteam") && gu->spectating) {
-		const int team = atoi(action.extra.c_str());
-		if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
-			gu->myTeam = team;
-			gu->myAllyTeam = teamHandler->AllyTeam(team);
+		const int teamId = atoi(action.extra.c_str());
+		if (teamHandler->IsValidTeam(teamId)) {
+			gu->myTeam = teamId;
+			gu->myAllyTeam = teamHandler->AllyTeam(teamId);
 		}
 		CLuaUI::UpdateTeams();
 	}

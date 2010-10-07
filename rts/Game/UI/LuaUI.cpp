@@ -97,7 +97,7 @@ void CLuaUI::LoadHandler()
 
 	new CLuaUI();
 
-	if (!luaUI->IsValid()) {
+	if (luaUI->L == NULL) {
 		delete luaUI;
 	}
 }
@@ -121,9 +121,7 @@ CLuaUI::CLuaUI()
 {
 	luaUI = this;
 
-	BEGIN_ITERATE_LUA_STATES();
-
-	if (!IsValid()) {
+	if (L == NULL) {
 		return;
 	}
 
@@ -174,7 +172,7 @@ CLuaUI::CLuaUI()
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
-	AddBasicCalls(L); // into Global
+	AddBasicCalls(); // into Global
 
 	lua_pushstring(L, "Script");
 	lua_rawget(L, -2);
@@ -205,7 +203,7 @@ CLuaUI::CLuaUI()
 	}
 
 	lua_settop(L, 0);
-	if (!LoadCode(L, code, "luaui.lua")) {
+	if (!LoadCode(code, "luaui.lua")) {
 		KillLua();
 		return;
 	}
@@ -214,18 +212,16 @@ CLuaUI::CLuaUI()
 	eventHandler.AddClient(this);
 
 	// update extra call-ins
-	UnsyncedUpdateCallIn(L, "WorldTooltip");
-	UnsyncedUpdateCallIn(L, "MapDrawCmd");
+	UnsyncedUpdateCallIn("WorldTooltip");
+	UnsyncedUpdateCallIn("MapDrawCmd");
 
 	lua_settop(L, 0);
-
-	END_ITERATE_LUA_STATES();
 }
 
 
 CLuaUI::~CLuaUI()
 {
-	if (L_Sim != NULL || L_Draw != NULL) {
+	if (L != NULL) {
 		Shutdown();
 		KillLua();
 	}
@@ -257,9 +253,9 @@ string CLuaUI::LoadFile(const string& filename) const
 }
 
 
-bool CLuaUI::HasCallIn(lua_State *L, const string& name)
+bool CLuaUI::HasCallIn(const string& name)
 {
-	if (!IsValid()) {
+	if (L == NULL) {
 		return false;
 	}
 
@@ -278,14 +274,14 @@ bool CLuaUI::HasCallIn(lua_State *L, const string& name)
 }
 
 
-bool CLuaUI::UnsyncedUpdateCallIn(lua_State *L, const string& name)
+bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 {
 	// never allow this call-in
 	if (name == "Explosion") {
 		return false;
 	}
 
-	if (HasCallIn(L, name)) {
+	if (HasCallIn(name)) {
 		eventHandler.InsertEvent(this, name);
 	} else {
 		eventHandler.RemoveEvent(this, name);
@@ -297,13 +293,13 @@ bool CLuaUI::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 void CLuaUI::UpdateTeams()
 {
 	if (luaUI) {
-		luaUI->SetFullCtrl(gs->godMode);
-		luaUI->SetCtrlTeam(gs->godMode ? AllAccessTeam :
-		                  (gu->spectating ? NoAccessTeam : gu->myTeam));
-		luaUI->SetFullRead(gu->spectatingFullView);
-		luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam);
-		luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam);
-		luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam);
+		luaUI->fullCtrl = gs->godMode;
+		luaUI->ctrlTeam = gs->godMode ? AllAccessTeam :
+		                  (gu->spectating ? NoAccessTeam : gu->myTeam);
+		luaUI->fullRead = gu->spectatingFullView;
+		luaUI->readTeam = luaUI->fullRead ? AllAccessTeam : gu->myTeam;
+		luaUI->readAllyTeam = luaUI->fullRead ? AllAccessTeam : gu->myAllyTeam;
+		luaUI->selectTeam = gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam;
 	}
 }
 
@@ -479,7 +475,6 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 bool CLuaUI::HasLayoutButtons()
 {
 	GML_RECMUTEX_LOCK(lua); // HasLayoutButtons
-	SELECT_LUA_STATE();
 
 	lua_checkstack(L, 2);
 
@@ -838,8 +833,6 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 
 bool CLuaUI::HasUnsyncedXCall(const string& funcName)
 {
-	SELECT_LUA_STATE();
-
 	lua_getglobal(L, funcName.c_str());
 	const bool haveFunc = lua_isfunction(L, -1);
 	lua_pop(L, 1);

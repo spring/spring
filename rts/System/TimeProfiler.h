@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef TIMEPROFILER_H
-#define TIMEPROFILER_H
+#ifndef TIME_PROFILER_H
+#define TIME_PROFILER_H
 
 #include <string>
 #include <map>
@@ -83,4 +83,4 @@ private:
 
 extern CTimeProfiler profiler;
 
-#endif // TIMEPROFILER_H
+#endif // TIME_PROFILER_H

@@ -47,7 +47,7 @@ void CLuaGaia::LoadHandler()
 
 	new CLuaGaia();
 
-	if (!luaGaia->IsValid()) {
+	if (luaGaia->L == NULL) {
 		delete luaGaia;
 	}
 }
@@ -67,18 +67,18 @@ CLuaGaia::CLuaGaia()
 {
 	luaGaia = this;
 
-	if (!IsValid()) {
+	if (L == NULL) {
 		return;
 	}
 
 	teamsLocked = true;
 
-	SetFullCtrl(true, true);
-	SetFullRead(true, true);
-	SetCtrlTeam(AllAccessTeam, true); //teamHandler->GaiaTeamID();
-	SetReadTeam(AllAccessTeam, true);
-	SetReadAllyTeam(AllAccessTeam, true);
-	SetSelectTeam(teamHandler->GaiaTeamID(), true);
+	fullCtrl = true;
+	fullRead = true;
+	ctrlTeam = AllAccessTeam; //teamHandler->GaiaTeamID();
+	readTeam = AllAccessTeam;
+	readAllyTeam = AllAccessTeam;
+	selectTeam = teamHandler->GaiaTeamID();
 
 	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP);
 }
@@ -86,7 +86,7 @@ CLuaGaia::CLuaGaia()
 
 CLuaGaia::~CLuaGaia()
 {
-	if (L_Sim != NULL || L_Draw != NULL) {
+	if (L != NULL) {
 		Shutdown();
 		KillLua();
 	}
@@ -94,13 +94,13 @@ CLuaGaia::~CLuaGaia()
 }
 
 
-bool CLuaGaia::AddSyncedCode(lua_State *L)
+bool CLuaGaia::AddSyncedCode()
 {
 	return true;
 }
 
 
-bool CLuaGaia::AddUnsyncedCode(lua_State *L)
+bool CLuaGaia::AddUnsyncedCode()
 {
 	/*lua_pushstring(L, "UNSYNCED");
 	lua_gettable(L, LUA_REGISTRYINDEX);*/

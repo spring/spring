@@ -50,7 +50,7 @@ static CLogSubsystem LOG_UNITSYNC("unitsync", true);
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer* syncer;
 
-static bool logOutputInitialised=false;
+static bool logOutputInitialised = false;
 // I'd rather not include globalstuff
 #define SQUARE_SIZE 8
 
@@ -131,13 +131,45 @@ static void _SetLastError(string err)
 //////////////////////////
 //////////////////////////
 
-// Helper class for loading a map archive temporarily
+static std::string GetMapFile(const std::string& mapname)
+{
+	std::string mapFile = archiveScanner->MapNameToMapFile(mapname);
+
+	if (mapFile != mapname) {
+		//! translation finished fine
+		return mapFile;
+	}
+
+	/*CFileHandler f(mapFile);
+	if (f.FileExists()) {
+		return mapFile;
+	}
+
+	CFileHandler f = CFileHandler(map);
+	if (f.FileExists()) {
+		return map;
+	}
+
+	f = CFileHandler("maps/" + map);
+	if (f.FileExists()) {
+		return "maps/" + map;
+	}*/
+
+	throw std::invalid_argument("Couldn't find a map named \"" + mapname + "\"");
+	return "";
+}
+
 
 class ScopedMapLoader {
 	public:
-		ScopedMapLoader(const string& mapName) : oldHandler(vfsHandler)
+		/**
+		 * @brief Helper class for loading a map archive temporarily
+		 * @param mapName the name of the to be loaded map
+		 * @param mapFile checks if this file already exists in the current VFS, if so skip reloading
+		 */
+		ScopedMapLoader(const string& mapName, const string& mapFile) : oldHandler(vfsHandler)
 		{
-			CFileHandler f("maps/" + mapName);
+			CFileHandler f(mapFile);
 			if (f.FileExists()) {
 				return;
 			}
@@ -412,20 +444,21 @@ struct InternalMapInfo
 	std::vector<float> zPos;  ///< Start positions Z coordinates defined by the map
 };
 
-static bool internal_GetMapInfo(const char* name, InternalMapInfo* outInfo)
+static bool internal_GetMapInfo(const char* mapname, InternalMapInfo* outInfo)
 {
 	CheckInit();
-	CheckNullOrEmpty(name);
+	CheckNullOrEmpty(mapname);
 	CheckNull(outInfo);
 
-	logOutput.Print(LOG_UNITSYNC, "get map info: %s", name);
+	logOutput.Print(LOG_UNITSYNC, "get map info: %s", mapname);
 
-	ScopedMapLoader mapLoader(name);
-	const string mapName = archiveScanner->MapNameToMapFile(name);
+	const std::string mapFile = GetMapFile(mapname);
+
+	ScopedMapLoader mapLoader(mapname, mapFile);
 
 	std::string err("");
 
-	MapParser mapParser(mapName);
+	MapParser mapParser(mapFile);
 	if (!mapParser.IsValid()) {
 		err = mapParser.GetErrorLog();
 	}
@@ -433,10 +466,10 @@ static bool internal_GetMapInfo(const char* name, InternalMapInfo* outInfo)
 
 	// Retrieve the map header as well
 	if (err.empty()) {
-		const std::string extension = mapName.substr(mapName.length() - 3);
+		const std::string extension = filesystem.GetExtension(mapFile);
 		if (extension == "smf") {
 			try {
-				CSmfMapFile file(mapName);
+				CSmfMapFile file(mapFile);
 				const SMFHeader& mh = file.GetHeader();
 
 				outInfo->width  = mh.mapx * SQUARE_SIZE;
@@ -498,16 +531,16 @@ static bool internal_GetMapInfo(const char* name, InternalMapInfo* outInfo)
 }
 
 /** @deprecated */
-static bool _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+static bool _GetMapInfoEx(const char* mapname, MapInfo* outInfo, int version)
 {
 	CheckInit();
-	CheckNullOrEmpty(name);
+	CheckNullOrEmpty(mapname);
 	CheckNull(outInfo);
 
 	bool fetchOk;
 
 	InternalMapInfo internalMapInfo;
-	fetchOk = internal_GetMapInfo(name, &internalMapInfo);
+	fetchOk = internal_GetMapInfo(mapname, &internalMapInfo);
 
 	if (fetchOk) {
 		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
@@ -548,12 +581,12 @@ static bool _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 	return fetchOk;
 }
 
-EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
+EXPORT(int) GetMapInfoEx(const char* mapname, MapInfo* outInfo, int version)
 {
 	int ret = 0;
 
 	try {
-		const bool fetchOk = _GetMapInfoEx(name, outInfo, version);
+		const bool fetchOk = _GetMapInfoEx(mapname, outInfo, version);
 		ret = fetchOk ? 1 : 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -562,12 +595,12 @@ EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 }
 
 
-EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
+EXPORT(int) GetMapInfo(const char* mapname, MapInfo* outInfo)
 {
 	int ret = 0;
 
 	try {
-		const bool fetchOk = _GetMapInfoEx(name, outInfo, 0);
+		const bool fetchOk = _GetMapInfoEx(mapname, outInfo, 0);
 		ret = fetchOk ? 1 : 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -584,18 +617,12 @@ EXPORT(int) GetMapCount()
 	try {
 		CheckInit();
 
-		//vector<string> files = CFileHandler::FindFiles("{maps/*.smf,maps/*.sm3}");
-		vector<string> files = CFileHandler::FindFiles("maps/", "{*.smf,*.sm3}");
-		vector<string> ars = archiveScanner->GetMaps();
-
 		mapNames.clear();
-		for (vector<string>::iterator i = files.begin(); i != files.end(); ++i) {
-			string mn = *i;
-			mn = mn.substr(mn.find_last_of('/') + 1);
-			mapNames.push_back(mn);
-		}
+
+		vector<string> ars = archiveScanner->GetMaps();
 		for (vector<string>::iterator i = ars.begin(); i != ars.end(); ++i)
 			mapNames.push_back(*i);
+
 		sort(mapNames.begin(), mapNames.end());
 
 		return mapNames.size();
@@ -611,6 +638,23 @@ EXPORT(const char*) GetMapName(int index)
 		CheckBounds(index, mapNames.size());
 
 		return GetStr(mapNames[index]);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}
+
+
+/**
+ * @brief Get the filename (+ VFS-path) of a map
+ * @return NULL on error; the filename of the map (e.g. "maps/SmallDivide.smf") on success
+ */
+EXPORT(const char*) GetMapFileName(int index)
+{
+	try {
+		CheckInit();
+		CheckBounds(index, mapNames.size());
+
+		return GetStr(archiveScanner->MapNameToMapFile(mapNames[index]));
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -783,6 +827,7 @@ EXPORT(int) GetMapPosCount(int index) {
 	return -1;
 }
 
+//FIXME: rename to GetMapStartPosX ?
 EXPORT(float) GetMapPosX(int index, int posIndex) {
 
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
@@ -804,11 +849,12 @@ EXPORT(float) GetMapPosZ(int index, int posIndex) {
 }
 
 
-EXPORT(float) GetMapMinHeight(const char* name) {
+EXPORT(float) GetMapMinHeight(const char* mapname) {
 	try {
-		ScopedMapLoader loader(name);
-		CSmfMapFile file(name);
-		MapParser parser(name);
+		const std::string mapFile = GetMapFile(mapname);
+		ScopedMapLoader loader(mapname, mapFile);
+		CSmfMapFile file(mapFile);
+		MapParser parser(mapFile);
 
 		const SMFHeader& header = file.GetHeader();
 		const LuaTable rootTable = parser.GetRoot();
@@ -825,11 +871,12 @@ EXPORT(float) GetMapMinHeight(const char* name) {
 	return 0.0f;
 }
 
-EXPORT(float) GetMapMaxHeight(const char* name) {
+EXPORT(float) GetMapMaxHeight(const char* mapname) {
 	try {
-		ScopedMapLoader loader(name);
-		CSmfMapFile file(name);
-		MapParser parser(name);
+		const std::string mapFile = GetMapFile(mapname);
+		ScopedMapLoader loader(mapname, mapFile);
+		CSmfMapFile file(mapFile);
+		MapParser parser(mapFile);
 
 		const SMFHeader& header = file.GetHeader();
 		const LuaTable rootTable = parser.GetRoot();
@@ -901,7 +948,7 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName)
 }
 
 
-#define RM	0x0000F800
+#define RM  0x0000F800
 #define GM  0x000007E0
 #define BM  0x0000001F
 
@@ -913,9 +960,9 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName)
 // Used to return the image
 static unsigned short imgbuf[1024*1024];
 
-static unsigned short* GetMinimapSM3(string mapName, int miplevel)
+static unsigned short* GetMinimapSM3(string mapFileName, int miplevel)
 {
-	MapParser mapParser(mapName);
+	MapParser mapParser(mapFileName);
 	const string minimapFile = mapParser.GetRoot().GetString("minimap", "");
 
 	if (minimapFile.empty()) {
@@ -930,7 +977,7 @@ static unsigned short* GetMinimapSM3(string mapName, int miplevel)
 	}
 
 	if (1024 >> miplevel != bm.xsize || 1024 >> miplevel != bm.ysize)
-		bm = bm.CreateRescaled (1024 >> miplevel, 1024 >> miplevel);
+		bm = bm.CreateRescaled(1024 >> miplevel, 1024 >> miplevel);
 
 	unsigned short* dst = (unsigned short*)imgbuf;
 	unsigned char* src = bm.mem;
@@ -950,9 +997,9 @@ static unsigned short* GetMinimapSM3(string mapName, int miplevel)
 	return imgbuf;
 }
 
-static unsigned short* GetMinimapSMF(string mapName, int miplevel)
+static unsigned short* GetMinimapSMF(string mapFileName, int miplevel)
 {
-	CSmfMapFile in(mapName);
+	CSmfMapFile in(mapFileName);
 	std::vector<uint8_t> buffer;
 	const int mipsize = in.ReadMinimap(buffer, miplevel);
 
@@ -1010,26 +1057,24 @@ static unsigned short* GetMinimapSMF(string mapName, int miplevel)
 	return colors;
 }
 
-EXPORT(unsigned short*) GetMinimap(const char* filename, int miplevel)
+EXPORT(unsigned short*) GetMinimap(const char* mapname, int miplevel)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(filename);
+		CheckNullOrEmpty(mapname);
 
 		if (miplevel < 0 || miplevel > 8)
 			throw std::out_of_range("Miplevel must be between 0 and 8 (inclusive) in GetMinimap.");
 
-		ScopedMapLoader mapLoader(filename);
-		const string mapName = archiveScanner->MapNameToMapFile(filename);
-
-		const string extension = mapName.substr(mapName.length() - 3);
+		const std::string mapFile = GetMapFile(mapname);
+		ScopedMapLoader mapLoader(mapname, mapFile);
 
 		unsigned short* ret = NULL;
-
+		const string extension = filesystem.GetExtension(mapFile);
 		if (extension == "smf") {
-			ret = GetMinimapSMF(mapName, miplevel);
+			ret = GetMinimapSMF(mapFile, miplevel);
 		} else if (extension == "sm3") {
-			ret = GetMinimapSM3(mapName, miplevel);
+			ret = GetMinimapSM3(mapFile, miplevel);
 		}
 
 		return ret;
@@ -1039,17 +1084,19 @@ EXPORT(unsigned short*) GetMinimap(const char* filename, int miplevel)
 }
 
 
-EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, int* height)
+EXPORT(int) GetInfoMapSize(const char* mapname, const char* name, int* width, int* height)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(filename);
+		CheckNullOrEmpty(mapname);
 		CheckNullOrEmpty(name);
 		CheckNull(width);
 		CheckNull(height);
 
-		ScopedMapLoader mapLoader(filename);
-		CSmfMapFile file(archiveScanner->MapNameToMapFile(filename));
+		const std::string mapFile = GetMapFile(mapname);
+		ScopedMapLoader mapLoader(mapname, mapFile);
+		CSmfMapFile file(mapFile);
+
 		MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
 
 		*width = bmInfo.width;
@@ -1066,17 +1113,19 @@ EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, i
 }
 
 
-EXPORT(int) GetInfoMap(const char* filename, const char* name, unsigned char* data, int typeHint)
+EXPORT(int) GetInfoMap(const char* mapname, const char* name, unsigned char* data, int typeHint)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(filename);
+		CheckNullOrEmpty(mapname);
 		CheckNullOrEmpty(name);
 		CheckNull(data);
 
-		string n = name;
-		ScopedMapLoader mapLoader(filename);
-		CSmfMapFile file(archiveScanner->MapNameToMapFile(filename));
+		const std::string mapFile = GetMapFile(mapname);
+		ScopedMapLoader mapLoader(mapname, mapFile);
+		CSmfMapFile file(mapFile);
+
+		const string n = name;
 		int actualType = (n == "height" ? bm_grayscale_16 : bm_grayscale_8);
 
 		if (actualType == typeHint) {
@@ -1354,10 +1403,18 @@ static std::set<std::string> optionsSet;
 
 static void ParseOptions(const string& fileName,
                          const string& fileModes,
-                         const string& accessModes,
-                         const string& mapName = "")
+                         const string& accessModes)
 {
-	parseOptions(options, fileName, fileModes, accessModes, mapName,
+	parseOptions(options, fileName, fileModes, accessModes, &optionsSet, &LOG_UNITSYNC);
+}
+
+
+static void ParseMapOptions(const string& fileName,
+                         const string& mapName,
+                         const string& fileModes,
+                         const string& accessModes)
+{
+	parseMapOptions(options, fileName, mapName, fileModes, accessModes,
 			&optionsSet, &LOG_UNITSYNC);
 }
 
@@ -1383,12 +1440,13 @@ EXPORT(int) GetMapOptionCount(const char* name)
 		CheckInit();
 		CheckNullOrEmpty(name);
 
-		ScopedMapLoader mapLoader(name);
+		const std::string mapFile = GetMapFile(name);
+		ScopedMapLoader mapLoader(name, mapFile);
 
 		options.clear();
 		optionsSet.clear();
 
-		ParseOptions("MapOptions.lua", SPRING_VFS_MAP, SPRING_VFS_MAP, name);
+		ParseMapOptions("MapOptions.lua", name, SPRING_VFS_MAP, SPRING_VFS_MAP);
 
 		optionsSet.clear();
 

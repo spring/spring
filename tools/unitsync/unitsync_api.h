@@ -170,7 +170,7 @@ EXPORT(const char* ) GetArchivePath(const char* arname);
 #if       !defined(PLAIN_API_STRUCTURE)
 /**
  * @brief Retrieve map info
- * @param name name of the map, e.g. "SmallDivide.smf"
+ * @param mapName name of the map, e.g. "SmallDivide"
  * @param outInfo pointer to structure which is filled with map info
  * @param version this determines which fields of the MapInfo structure are filled
  * @return Zero on error; non-zero on success
@@ -200,16 +200,16 @@ EXPORT(const char* ) GetArchivePath(const char* arname);
  *		}
  *		@endcode
  */
-EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
+EXPORT(int         ) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version);
 /**
  * @brief Retrieve map info, equivalent to GetMapInfoEx(name, outInfo, 0)
- * @param name name of the map, e.g. "SmallDivide.smf"
+ * @param mapName name of the map, e.g. "SmallDivide"
  * @param outInfo pointer to structure which is filled with map info
  * @return Zero on error; non-zero on success
  * @deprecated
  * @see GetMapCount
  */
-EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(int         ) GetMapInfo(const char* mapName, MapInfo* outInfo);
 #endif // !defined(PLAIN_API_STRUCTURE)
 
 /**
@@ -233,9 +233,14 @@ EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
 EXPORT(int         ) GetMapCount();
 /**
  * @brief Get the name of a map
- * @return NULL on error; the name of the map (e.g. "SmallDivide.smf") on success
+ * @return NULL on error; the name of the map (e.g. "SmallDivide") on success
  */
 EXPORT(const char* ) GetMapName(int index);
+/**
+ * @brief Get the filename of a map
+ * @return NULL on error; the filename of the map (e.g. "maps/SmallDivide.smf") on success
+ */
+EXPORT(const char* ) GetMapFileName(int index);
 /**
  * @brief Get the description of a map
  * @return NULL on error; the description of the map
@@ -319,7 +324,7 @@ EXPORT(float       ) GetMapPosZ(int index, int posIndex);
 
 /**
  * @brief return the map's minimum height
- * @param name name of the map, e.g. "SmallDivide.smf"
+ * @param mapName name of the map, e.g. "SmallDivide"
  *
  * Together with maxHeight, this determines the
  * range of the map's height values in-game. The
@@ -328,20 +333,20 @@ EXPORT(float       ) GetMapPosZ(int index, int posIndex);
  *
  *    <code>minHeight + (h * (maxHeight - minHeight) / 65536.0f)</code>
  */
-EXPORT(float       ) GetMapMinHeight(const char* name);
+EXPORT(float       ) GetMapMinHeight(const char* mapName);
 /**
  * @brief return the map's maximum height
- * @param name name of the map, e.g. "SmallDivide.smf"
+ * @param mapName name of the map, e.g. "SmallDivide"
  *
  * Together with minHeight, this determines the
  * range of the map's height values in-game. See
  * GetMapMinHeight() for the conversion formula.
  */
-EXPORT(float       ) GetMapMaxHeight(const char* name);
+EXPORT(float       ) GetMapMaxHeight(const char* mapName);
 
 /**
  * @brief Retrieves the number of archives a map requires
- * @param mapName name of the map, e.g. "SmallDivide.smf"
+ * @param mapName name of the map, e.g. "SmallDivide"
  * @return Zero on error; the number of archives on success
  *
  * Must be called before GetMapArchiveName()
@@ -367,7 +372,7 @@ EXPORT(const char* ) GetMapArchiveName(int index);
 EXPORT(unsigned int) GetMapChecksum(int index);
 /**
  * @brief Get map checksum given a map name
- * @param mapName name of the map, e.g. "SmallDivide.smf"
+ * @param mapName name of the map, e.g. "SmallDivide"
  * @return Zero on error; the checksum on success
  * @see GetMapChecksum
  */
@@ -383,23 +388,23 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
  * packed RGB-565 (MSB to LSB: 5 bits red, 6 bits green, 5 bits blue) linear
  * bitmap on success; NULL on error.
  *
- * An example usage would be GetMinimap("SmallDivide.smf", 2).
+ * An example usage would be GetMinimap("SmallDivide", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
 EXPORT(unsigned short*) GetMinimap(const char* filename, int miplevel);
 /**
  * @brief Retrieves dimensions of infomap for a map.
- * @param filename The name of the map, including extension.
+ * @param mapName  The name of the map, e.g. "SmallDivide".
  * @param name     Of which infomap to retrieve the dimensions.
  * @param width    This is set to the width of the infomap, or 0 on error.
  * @param height   This is set to the height of the infomap, or 0 on error.
  * @return Non-zero when the infomap was found with a non-zero size; zero on error.
  * @see GetInfoMap
  */
-EXPORT(int         ) GetInfoMapSize(const char* filename, const char* name, int* width, int* height);
+EXPORT(int         ) GetInfoMapSize(const char* mapName, const char* name, int* width, int* height);
 /**
  * @brief Retrieves infomap data of a map.
- * @param filename The name of the map, including extension.
+ * @param mapName  The name of the map, e.g. "SmallDivide".
  * @param name     Which infomap to extract from the file.
  * @param data     Pointer to memory location with enough room to hold the infomap data.
  * @param typeHint One of bm_grayscale_8 (or 1) and bm_grayscale_16 (or 2).
@@ -413,7 +418,7 @@ EXPORT(int         ) GetInfoMapSize(const char* filename, const char* name, int*
  * this function to convert from one format to another. Currently only the
  * conversion from 16 bpp to 8 bpp is implemented.
  */
-EXPORT(int         ) GetInfoMap(const char* filename, const char* name, unsigned char* data, int typeHint);
+EXPORT(int         ) GetInfoMap(const char* mapName, const char* name, unsigned char* data, int typeHint);
 
 // TODO documentation
 EXPORT(int         ) GetSkirmishAICount();
@@ -577,10 +582,10 @@ EXPORT(const char* ) GetSideStartUnit(int side);
 
 /**
  * @brief Retrieve the number of map options available
- * @param name the name of the map
+ * @param mapName  the name of the map, e.g. "SmallDivide"
  * @return Zero on error; the number of map options available on success
  */
-EXPORT(int         ) GetMapOptionCount(const char* name);
+EXPORT(int         ) GetMapOptionCount(const char* mapName);
 /**
  * @brief Retrieve the number of mod options available
  * @return Zero on error; the number of mod options available on success

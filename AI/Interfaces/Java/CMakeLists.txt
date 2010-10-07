@@ -619,6 +619,12 @@ if    (BUILD_${myName}_AIINTERFACE)
 		"${myNativeGeneratedSourceDir}/EventsJNIBridge.c"
 		)
 	set_source_files_properties(${myNativeGeneratedSources} PROPERTIES GENERATED TRUE)
+	set(myNativeGeneratedHeaders
+		"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
+		"${myNativeGeneratedSourceDir}/CallbackJNIBridge.h"
+		"${myNativeGeneratedSourceDir}/EventsJNIBridge.h"
+		)
+	set_source_files_properties(${myNativeGeneratedHeaders} PROPERTIES GENERATED TRUE)
 
 	set(myJavaSources
 		"${myJavaSourceDir}/${myPkg}/Util.java"

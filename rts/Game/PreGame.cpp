@@ -236,9 +236,6 @@ void CPreGame::UpdateClientNet()
 					pckt >> team;
 					pckt >> name;
 
-					if(team >= teamHandler->ActiveTeams())
-						throw netcode::UnpackPacketException("Invalid team");
-
 					CPlayer player;
 					player.name = name;
 					player.spectator = spectator;
@@ -264,7 +261,7 @@ void CPreGame::UpdateClientNet()
 					throw content_error("No game data received from server");
 
 				unsigned char playerNum = packet->data[1];
-				if (playerHandler->ActivePlayers() <= playerNum)
+				if (!playerHandler->IsValidPlayer(playerNum))
 					throw content_error("Invalid player number received from server");
 
 				gu->SetMyPlayer(playerNum);
@@ -413,15 +410,17 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	}
 
 	// some sanity checks
-	for(int p = 0; p < playerHandler->ActivePlayers(); ++p) {
-		CPlayer *player = playerHandler->Player(p);
-		if(player->playerNum >= playerHandler->ActivePlayers() || player->playerNum < 0)
+	for (int p = 0; p < playerHandler->ActivePlayers(); ++p) {
+		const CPlayer* player = playerHandler->Player(p);
+		if (!playerHandler->IsValidPlayer(player->playerNum)) {
 			throw content_error("Invalid player in game data");
-		if(player->team >= teamHandler->ActiveTeams() || player->team < 0)
+		}
+		if (!teamHandler->IsValidTeam(player->team)) {
 			throw content_error("Invalid team in game data");
-		int allyteam = teamHandler->AllyTeam(player->team);
-		if(allyteam >= teamHandler->ActiveAllyTeams() || allyteam < 0)
+		}
+		if (!teamHandler->IsValidAllyTeam(teamHandler->AllyTeam(player->team))) { // TODO: seems not to make sense really
 			throw content_error("Invalid ally team in game data");
+		}
 	}
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);

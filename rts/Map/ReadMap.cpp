@@ -18,8 +18,9 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/LoadSave/LoadSaveInterface.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 
 using namespace std;
 
@@ -41,7 +42,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	if (mapname.length() < 3)
 		throw content_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
 
-	string extension = mapname.substr(mapname.length() - 3);
+	const string extension = filesystem.GetExtension(mapname);
 
 	CReadMap* rm = 0;
 

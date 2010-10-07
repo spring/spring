@@ -153,6 +153,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappCurrentCommand.cpp
 		${myGeneratedSourceDir}/WrappDamage.cpp
 		${myGeneratedSourceDir}/WrappDataDirs.cpp
+		${myGeneratedSourceDir}/WrappDebug.cpp
 		${myGeneratedSourceDir}/WrappDrawer.cpp
 		${myGeneratedSourceDir}/WrappEconomy.cpp
 		${myGeneratedSourceDir}/WrappEngine.cpp
@@ -162,6 +163,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappFile.cpp
 		${myGeneratedSourceDir}/WrappFlankingBonus.cpp
 		${myGeneratedSourceDir}/WrappGame.cpp
+		${myGeneratedSourceDir}/WrappGraphDrawer.cpp
+		${myGeneratedSourceDir}/WrappGraphLine.cpp
 		${myGeneratedSourceDir}/WrappGroup.cpp
 		${myGeneratedSourceDir}/WrappGroupSupportedCommand.cpp
 		${myGeneratedSourceDir}/WrappGui.cpp

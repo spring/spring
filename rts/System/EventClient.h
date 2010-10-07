@@ -34,7 +34,7 @@ class CEventClient
 	public:
 		inline const std::string& GetName()   const { return name;   }
 		inline int                GetOrder()  const { return order;  }
-		inline bool               GetSynced() const { return synced_; }
+		inline bool               GetSynced() const { return synced; }
 
 		// used by the eventHandler to register
 		// call-ins when an EventClient is being added
@@ -50,7 +50,7 @@ class CEventClient
 	private:
 		const std::string name;
 		const int         order;
-		const bool        synced_;
+		const bool        synced;
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);
@@ -63,9 +63,11 @@ class CEventClient
 		virtual void GamePreload();
 		virtual void GameStart();
 		virtual void GameOver(std::vector<unsigned char> winningAllyTeams);
+		virtual void GamePaused(int playerID, bool paused);
 		virtual void TeamDied(int teamID);
 		virtual void TeamChanged(int teamID);
 		virtual void PlayerChanged(int playerID);
+		virtual void PlayerAdded(int playerID);
 		virtual void PlayerRemoved(int playerID, int reason);
 
 		virtual void UnitCreated(const CUnit* unit, const CUnit* builder);

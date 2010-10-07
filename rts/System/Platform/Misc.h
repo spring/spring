@@ -4,6 +4,7 @@
 #define PLATFORM_MISC_H
 
 #include <string>
+#include <vector>
 
 namespace Platform
 {
@@ -60,6 +61,15 @@ std::string GetModulePath(const std::string& moduleName = "");
 std::string GetOS();
 bool Is64Bit();
 bool Is32BitEmulation();
+
+/**
+ * Executes a native binary.
+ * http://linux.die.net/man/3/execvp
+ * @param  file path to an executable, eg. "/usr/bin/games/spring"
+ * @param  args arguments to the executable, eg. {"-f". "/tmp/test.txt"}
+ * @return error message, or "" on success
+ */
+std::string ExecuteProcess(const std::string& file, std::vector<std::string> args);
 }
 
 #endif // PLATFORM_MISC_H
