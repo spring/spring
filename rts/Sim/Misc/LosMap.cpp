@@ -241,6 +241,8 @@ int CLosTables::Round(float Num)
 
 void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
 {
+	if (radius <= 0) { return; }
+
 	pos.x = std::max(0, std::min(size.x - 1, pos.x));
 	pos.y = std::max(0, std::min(size.y - 1, pos.y));
 
