@@ -153,6 +153,8 @@ public:
 	/// feature visibility style: 0 - no LOS for features, 1 - gaia features visible
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
+	// lua threading model: 1 = single states, 2 = dual states for synced, 3 = dual states for all
+	int luaThreadingModel;
 };
 
 extern CModInfo modInfo;

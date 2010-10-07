@@ -24,6 +24,8 @@ class CLuaHandleSynced : public CLuaHandle
 		bool Initialize(const string& syncData);
 		string GetSyncData();
 
+		void UpdateThreading();
+
 		inline bool GetAllowChanges() const { return IsDrawCallIn() ? false : allowChanges; }
 		inline void SetAllowChanges(bool ac, bool all = false) { if(!IsDrawCallIn() || all) allowChanges = ac; }
 

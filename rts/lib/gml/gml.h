@@ -181,7 +181,6 @@ extern boost::mutex watermutex;
 extern boost::mutex dquemutex;
 extern boost::mutex scarmutex;
 extern boost::mutex trackmutex;
-extern boost::mutex projmutex;
 extern boost::mutex rprojmutex;
 extern boost::mutex rflashmutex;
 extern boost::mutex rpiecemutex;
@@ -192,6 +191,7 @@ extern boost::mutex ulbatchmutex;
 extern boost::mutex flbatchmutex;
 extern boost::mutex plbatchmutex;
 extern boost::mutex glbatchmutex;
+extern boost::mutex mlbatchmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -208,6 +208,7 @@ extern boost::recursive_mutex &grpselmutex;
 extern boost::recursive_mutex laycmdmutex;
 extern boost::recursive_mutex luasimmutex;
 extern boost::recursive_mutex luadrawmutex;
+extern boost::recursive_mutex projmutex;
 
 extern gmlMutex simmutex;
 

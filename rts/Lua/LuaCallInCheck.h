@@ -70,6 +70,10 @@ enum ProjEvent {
 	PROJ_DESTROYED
 };
 
+enum MiscEvent {
+	ADD_CONSOLE_LINE
+};
+
 struct LuaUnitEvent {
 	UnitEvent id;
 	const CUnit *unit1, *unit2;
@@ -103,39 +107,49 @@ struct LuaProjEvent {
 	LuaProjEvent(ProjEvent i, const CProjectile *p1) : id(i), proj1(p1) {}
 };
 
+struct LuaMiscEvent {
+	MiscEvent id;
+	std::string str1;
+	LuaMiscEvent(MiscEvent i, const std::string &s1) : id(i), str1(s1) {}
+};
+
 #if DUAL_LUA_STATES
-#define LUA_UNIT_BATCH_PUSH_X(r,...)\
-	if(SingleState() && !execUnitBatch && Threading::IsSimThread()) {\
+#define LUA_UNIT_BATCH_PUSH(r,...)\
+	if(UseEventBatch() && !execUnitBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(ulbatch);\
 		luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__));\
 		return r;\
 	}
-#define LUA_UNIT_BATCH_PUSH(...) LUA_UNIT_BATCH_PUSH_X(,__VA_ARGS__)
-#define LUA_UNIT_BATCH_PUSH_RET(r,...) LUA_UNIT_BATCH_PUSH_X(r,__VA_ARGS__)
 #define LUA_FEAT_BATCH_PUSH(...)\
-	if(SingleState() && !execFeatBatch && Threading::IsSimThread()) {\
+	if(UseEventBatch() && !execFeatBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(flbatch);\
 		luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
 		return;\
 	}
 #define LUA_PROJ_BATCH_PUSH(...)\
-	if(SingleState() && !execProjBatch && Threading::IsSimThread()) {\
+	if(UseEventBatch() && !execProjBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(plbatch);\
 		luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__));\
 		return;\
 	}
 #define LUA_FRAME_BATCH_PUSH(...)\
-	if(SingleState() && !execFrameBatch && Threading::IsSimThread()) {\
+	if(UseEventBatch() && !execFrameBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(glbatch);\
 		luaFrameEventBatch.push_back(__VA_ARGS__);\
 		return;\
 	}
+#define LUA_MISC_BATCH_PUSH(r,...)\
+	if(UseEventBatch() && !execMiscBatch && Threading::IsSimThread()) {\
+		GML_STDMUTEX_LOCK(mlbatch);\
+		luaMiscEventBatch.push_back(LuaMiscEvent(__VA_ARGS__));\
+		return r;\
+	}
 #else
-#define LUA_UNIT_BATCH_PUSH(...)
-#define LUA_UNIT_BATCH_PUSH_RET(r,...)
+#define LUA_UNIT_BATCH_PUSH(r,...)
 #define LUA_FEAT_BATCH_PUSH(...)
 #define LUA_PROJ_BATCH_PUSH(...)
 #define LUA_FRAME_BATCH_PUSH(...)
+#define LUA_MISC_BATCH_PUSH(r,...)
 #endif
 
 
@@ -150,11 +164,9 @@ struct LuaProjEvent {
 #if defined(USE_GML) && GML_ENABLE_SIM
 
 #if defined(LUA_SYNCED_ONLY)
-#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##drawlock(name##drawmutex, !Threading::IsSimThread())
+#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(!CLuaHandle::UseDualStates() ? name##mutex : name##drawmutex, !CLuaHandle::UseDualStates() || !Threading::IsSimThread())
 #else
-#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##drawlock(name##drawmutex, !SingleState() && !Threading::IsSimThread());\
-								Threading::RecursiveScopedLock name##lock(name##mutex, SingleState())
-								//GML_PROFMUTEX_LOCK(name, Threading::RecursiveScopedLock name##lock(name##mutex, SingleState()), __LINE__)
+#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(SingleState() ? name##mutex : name##drawmutex, SingleState() || !SingleState() && !Threading::IsSimThread())
 #endif
 
 #else
@@ -171,6 +183,7 @@ struct LuaProjEvent {
 #define SELECT_LUA_STATE()
 #endif
 #define GML_DRCMUTEX_LOCK(name) GML_RECMUTEX_LOCK(name)
+
 #endif
 
 #if DEBUG_LUA

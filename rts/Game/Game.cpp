@@ -284,6 +284,8 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
 
 	modInfo.Init(modName.c_str());
+	if(gc->GetMultiThreadLua() >= 2)
+		showMTInfo = false;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());

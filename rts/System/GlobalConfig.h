@@ -54,16 +54,20 @@ public:
 	 */
 	int linkBandwidth;
 
+#ifdef USE_GML
 	/**
 	 * @brief multiThreadLua
 	 *
-	 * Fully multithreaded LuaUI (some locking related performance benefits, but incompatible with many widgets)
+	 * LuaHandle threading mode for Spring MT:
+	 * 0: Use setting from mod
+	 * 1: Single Lua state (fully backwards compatible but slow)
+	 * 2: Dual Lua states, except for LuaUI (communication via _G.EXPORT --> SYNCED.EXPORT)
+	 * 3: Dual Lua states throughout (best performance, communication only via SendToUnsynced)
 	 */
 	int multiThreadLua;
-
-#ifdef USE_GML
 	bool enableDrawCallIns;
 #endif
+	int GetMultiThreadLua();
 };
 
 extern GlobalConfig* gc;
