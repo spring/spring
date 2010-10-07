@@ -215,7 +215,7 @@ void CProjectileHandler::Update()
 			GML_STDMUTEX_LOCK(rproj); // Update
 
 			if (syncedProjectiles.can_delete_synced()) {
-				GML_STDMUTEX_LOCK(proj); // Update
+				GML_RECMUTEX_LOCK(proj); // Update
 
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were

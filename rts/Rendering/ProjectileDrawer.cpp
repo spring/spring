@@ -542,7 +542,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	GML_STDMUTEX_LOCK(proj); // DrawProjectilesMiniMap
+	GML_RECMUTEX_LOCK(proj); // DrawProjectilesMiniMap
 
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
@@ -666,7 +666,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	Update();
 
 	{
-		GML_STDMUTEX_LOCK(proj); // Draw
+		GML_RECMUTEX_LOCK(proj); // Draw
 
 		unitDrawer->SetupForUnitDrawing();
 
@@ -742,7 +742,7 @@ void CProjectileDrawer::DrawShadowPass(void)
 	CProjectile::va->Initialize();
 
 	{
-		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
+		GML_RECMUTEX_LOCK(proj); // DrawShadowPass
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawProjectilesShadow(modelType);

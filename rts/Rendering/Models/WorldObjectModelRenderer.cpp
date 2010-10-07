@@ -54,7 +54,7 @@ void IWorldObjectModelRenderer::Draw()
 		}
 	}
 	{
-		GML_STDMUTEX_LOCK(proj); // Draw
+		GML_RECMUTEX_LOCK(proj); // Draw
 
 		for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
 			DrawModels(projectiles[pIt->first]);

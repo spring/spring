@@ -33,6 +33,7 @@
 #include "LuaVFS.h"
 #include "LuaZip.h"
 
+#include "ConfigHandler.h"
 #include "Game/Game.h"
 #include "Game/WordCompletion.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -71,7 +72,8 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
 : CLuaHandle(_name, _order, false),
   teamsLocked(false)
 {
-	singleState = false;
+	UpdateThreading();
+	syncedHandle = true;
 	SetAllowChanges(false, true);
 	printTracebacks = true;
 }
@@ -85,6 +87,14 @@ CLuaHandleSynced::~CLuaHandleSynced()
 
 
 /******************************************************************************/
+
+
+void CLuaHandleSynced::UpdateThreading() {
+	CLuaHandle::UpdateThreading();
+	singleState = (gc->GetMultiThreadLua() <= 1);
+	useEventBatch = singleState && useDualStates;
+}
+
 
 void CLuaHandleSynced::Init(const string& syncedFile,
                             const string& unsyncedFile,
@@ -711,6 +721,8 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 	}
 
 	LUA_CALL_IN_CHECK(L);
+	if(!SingleState() && CopyExportTable())
+		DelayRecvFromSynced(L, 0); // Copy _G.EXPORT --> SYNCED.EXPORT once a game frame
 	lua_checkstack(L, 4);
 
 	int errfunc = SetupTraceback(L);
@@ -775,7 +787,7 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	static const LuaHashString cmdStr("RecvFromSynced");
 	//LUA_CALL_IN_CHECK(L); -- not valid here
 
-	if(DUAL_LUA_STATES && L == L_Sim) { // Sim thread sends to unsynced --> delay it
+	if(!SingleState() && L == L_Sim) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(L, args);
 		return;
 	}
@@ -921,7 +933,7 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
 
-	if (DUAL_LUA_STATES && L == L_Sim && !SingleState()) {
+	if (!SingleState() && L == L_Sim) {
 		GML_RECMUTEX_LOCK(luadraw); // Called from Sim, need to lock draw thread during XCall
 
 		const bool prevSynced = GetSynced();

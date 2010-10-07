@@ -18,6 +18,7 @@ using std::set;
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
+#include "LuaUtils.h"
 //FIXME#include "LuaVBOs.h"
 #include "LuaDisplayLists.h"
 #include "System/Platform/Threading.h"
@@ -234,12 +235,19 @@ class CLuaHandle : public CEventClient
 			float num;
 			bool bol;
 		};
+		struct DelayDataDump {
+			std::vector<DelayData> dd;
+			std::vector<LuaUtils::DataDump> com;
+		};
+
 		void ExecuteRecvFromSynced();
 		virtual void RecvFromSynced(int args);
 		void RecvFromSim(int args);
 		void DelayRecvFromSynced(lua_State* srcState, int args);
-		std::vector< std::vector<DelayData> > delayedRecvFromSynced;
+		std::vector<DelayDataDump> delayedRecvFromSynced;
 		static int SendToUnsynced(lua_State* L);
+
+		void UpdateThreading();
 
 	protected:
 		CLuaHandle(const string& name, int order, bool userMode);
@@ -250,10 +258,19 @@ class CLuaHandle : public CEventClient
 		inline void SetActiveHandle(bool draw = IsDrawCallIn());
 		inline void SetActiveHandle(CLuaHandle* lh, bool draw = IsDrawCallIn());
 		bool singleState;
-		inline bool SingleState() { return singleState; }
+		// DUAL_LUA_STATES inserted below mainly so that compiler can optimize code if DUAL_LUA_STATES = 0
+		inline bool SingleState() { return !DUAL_LUA_STATES || singleState; } // Is this handle using a single Lua state?
+		bool copyExportTable;
+		inline bool CopyExportTable() { return DUAL_LUA_STATES && copyExportTable; } // Copy the table _G.EXPORT --> SYNCED.EXPORT between dual states?
+		static bool useDualStates;
+		static inline bool UseDualStates() { return DUAL_LUA_STATES && useDualStates; } // Is Lua handle splitting enabled (globally)?
+		bool useEventBatch;
+		inline bool UseEventBatch() { return DUAL_LUA_STATES && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
+		bool syncedHandle;
+		inline bool SyncedHandle() { return syncedHandle; } // Is this Lua handle synced?
 
 		inline lua_State *GetActiveState() {
-			return (!DUAL_LUA_STATES || SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
+			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
 		}
 
 		bool AddBasicCalls(lua_State *L);
@@ -382,6 +399,7 @@ class CLuaHandle : public CEventClient
 		void ExecuteFeatEventBatch();
 		void ExecuteProjEventBatch();
 		void ExecuteFrameEventBatch();
+		void ExecuteMiscEventBatch();
 
 	protected: // static
 		static bool devMode; // allows real file access
@@ -391,10 +409,12 @@ class CLuaHandle : public CEventClient
 		std::vector<LuaFeatEvent>luaFeatEventBatch;
 		std::vector<LuaProjEvent>luaProjEventBatch;
 		std::vector<int>luaFrameEventBatch;
+		std::vector<LuaMiscEvent>luaMiscEventBatch;
 		bool execUnitBatch;
 		bool execFeatBatch;
 		bool execProjBatch;
 		bool execFrameBatch;
+		bool execMiscBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
 		friend class CLuaUnitScript;

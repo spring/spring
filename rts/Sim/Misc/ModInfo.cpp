@@ -143,4 +143,7 @@ void CModInfo::Init(const char* modArchive)
 		                    "The minimum value is 0. The maximum value is 30.");
 	}
 	airLosMul = los.GetFloat("airLosMul", 1.0f);
+
+	const LuaTable system = root.SubTable("system");
+	luaThreadingModel = system.GetInt("luaThreadingModel", 2);
 }
