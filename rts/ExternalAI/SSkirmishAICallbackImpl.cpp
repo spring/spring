@@ -1206,7 +1206,7 @@ EXPORT(bool) skirmishAiCallback_Game_isDebugModeEnabled(int teamId) {
 }
 EXPORT(int) skirmishAiCallback_Game_getMode(int teamId) {
 	int mode;
-	CAICallback* clb = team_callback[teamId];
+	CAICallback* clb = teamCPPCallbacks[teamId];
 	const bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
 	if (!fetchOk) {
 		mode = -1;
