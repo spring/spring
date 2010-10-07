@@ -147,7 +147,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->power = ud->power;
 	unit->maxHealth = ud->health;
 	unit->health = ud->health;
-	unit->controlRadius = (int)(ud->controlRadius / SQUARE_SIZE);
 	unit->losHeight = ud->losHeight;
 	unit->metalCost = ud->metalCost;
 	unit->energyCost = ud->energyCost;

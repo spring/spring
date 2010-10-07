@@ -91,7 +91,6 @@ UnitDef::UnitDef()
 , turnInPlaceSpeedLimit(0.0f)
 , upright(false)
 , collide(false)
-, controlRadius(0.0f)
 , losRadius(0.0f)
 , airLosRadius(0.0f)
 , losHeight(0.0f)
@@ -316,7 +315,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	buildangle = udTable.GetInt("buildAngle", 0);
 
-	controlRadius = 32;
 	losHeight = 20;
 	metalCost = udTable.GetFloat("buildCostMetal", 0.0f);
 	if (metalCost < 1.0f) {
