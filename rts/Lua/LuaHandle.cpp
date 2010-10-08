@@ -67,7 +67,6 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
   callinErrors(0)
 {
 	UpdateThreading();
-	syncedHandle = false;
 	execUnitBatch = false;
 	execFeatBatch = false;
 	execProjBatch = false;
@@ -100,8 +99,8 @@ CLuaHandle::~CLuaHandle()
 
 void CLuaHandle::UpdateThreading() {
 	useDualStates = (gc->GetMultiThreadLua() >= 2);
-	singleState = (gc->GetMultiThreadLua() <= 2);
-	copyExportTable = (gc->GetMultiThreadLua() <= 2);
+	singleState = (gc->GetMultiThreadLua() <= 3);
+	copyExportTable = false;
 	useEventBatch = singleState && useDualStates;
 }
 
@@ -258,7 +257,7 @@ void CLuaHandle::RecvFromSynced(int args) {
 void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 	DelayDataDump ddmp;
 
-	if(!SingleState() && SyncedHandle() && CopyExportTable()) {
+	if(CopyExportTable()) {
 		HSTR_PUSH(srcState, "UNSYNCED");
 		lua_rawget(srcState, LUA_REGISTRYINDEX);
 
@@ -355,7 +354,7 @@ void CLuaHandle::ExecuteRecvFromSynced() {
 
 		LUA_CALL_IN_CHECK(L);
 
-		if(!SingleState() && SyncedHandle() && CopyExportTable() && ddp.com.size() > 0) {
+		if(CopyExportTable() && ddp.com.size() > 0) {
 			HSTR_PUSH(L, "UNSYNCED");
 			lua_rawget(L, LUA_REGISTRYINDEX);
 
