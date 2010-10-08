@@ -28,7 +28,7 @@ GlobalConfig::GlobalConfig() {
 
 int GlobalConfig::GetMultiThreadLua() {
 #if defined(USE_GML) && GML_ENABLE_SIM
-	return std::max(1, std::min((multiThreadLua == 0) ? modInfo.luaThreadingModel : multiThreadLua, 3));
+	return std::max(1, std::min((multiThreadLua == 0) ? modInfo.luaThreadingModel : multiThreadLua, 4));
 #else
 	return 0;
 #endif

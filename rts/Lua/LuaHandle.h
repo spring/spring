@@ -266,8 +266,6 @@ class CLuaHandle : public CEventClient
 		static inline bool UseDualStates() { return DUAL_LUA_STATES && useDualStates; } // Is Lua handle splitting enabled (globally)?
 		bool useEventBatch;
 		inline bool UseEventBatch() { return DUAL_LUA_STATES && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
-		bool syncedHandle;
-		inline bool SyncedHandle() { return syncedHandle; } // Is this Lua handle synced?
 
 		inline lua_State *GetActiveState() {
 			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;

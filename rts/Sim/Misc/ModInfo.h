@@ -153,7 +153,11 @@ public:
 	/// feature visibility style: 0 - no LOS for features, 1 - gaia features visible
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
-	// lua threading model: 1 = single states, 2 = dual states for synced, 3 = dual states for all
+	// Lua threading model:
+	// 1: Single state
+	// 2: Dual states for synced, synced/unsynced communication via EXPORT table and SendToUnsynced, 
+	// 3: Dual states for synced, synced/unsynced communication via SendToUnsynced only
+	// 4: Dual states for all, all synced/unsynced communication (widgets included) via SendToUnsynced only
 	int luaThreadingModel;
 };
 

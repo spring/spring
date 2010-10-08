@@ -59,10 +59,11 @@ public:
 	 * @brief multiThreadLua
 	 *
 	 * LuaHandle threading mode for Spring MT:
-	 * 0: Use setting from mod
+	 * 0: Use 'luaThreadingModel' setting from modInfo (default)
 	 * 1: Single Lua state (fully backwards compatible but slow)
-	 * 2: Dual Lua states, except for LuaUI (communication via _G.EXPORT --> SYNCED.EXPORT)
-	 * 3: Dual Lua states throughout (best performance, communication only via SendToUnsynced)
+	 * 2: Dual Lua states for synced, synced/unsynced gadget communication via EXPORT table and SendToUnsynced, 
+	 * 3: Dual Lua states for synced, synced/unsynced gadget communication via SendToUnsynced only
+	 * 4: Dual Lua states for all, all synced/unsynced communication (widgets included) via SendToUnsynced only
 	 */
 	int multiThreadLua;
 	bool enableDrawCallIns;

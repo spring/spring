@@ -73,7 +73,6 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order)
   teamsLocked(false)
 {
 	UpdateThreading();
-	syncedHandle = true;
 	SetAllowChanges(false, true);
 	printTracebacks = true;
 }
@@ -90,9 +89,10 @@ CLuaHandleSynced::~CLuaHandleSynced()
 
 
 void CLuaHandleSynced::UpdateThreading() {
-	CLuaHandle::UpdateThreading();
+	useDualStates = (gc->GetMultiThreadLua() >= 2);
 	singleState = (gc->GetMultiThreadLua() <= 1);
-	useEventBatch = singleState && useDualStates;
+	copyExportTable = (gc->GetMultiThreadLua() == 2);
+	useEventBatch = false;
 }
 
 
@@ -721,7 +721,7 @@ void CLuaHandleSynced::GameFrame(int frameNumber)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	if(!SingleState() && CopyExportTable())
+	if(CopyExportTable())
 		DelayRecvFromSynced(L, 0); // Copy _G.EXPORT --> SYNCED.EXPORT once a game frame
 	lua_checkstack(L, 4);
 
