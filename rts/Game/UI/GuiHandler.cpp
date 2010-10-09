@@ -656,7 +656,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	CSelectedUnits::AvailableCommandsStruct ac;
 	ac = selectedUnits.GetAvailableCommands();
 	std::vector<CommandDescription> cmds = ac.commands;
-	if (cmds.size() > 0) {
+	if (!cmds.empty()) {
 		ConvertCommands(cmds);
 		AppendPrevAndNext(cmds);
 	}
@@ -3711,7 +3711,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						for (; ui != selectedUnits.selectedUnits.end(); ++ui) {
 							temp = (*ui)->commandAI->GetOverlapQueued(c);
 							std::vector<Command>::iterator ti = temp.begin();
-							for (; ti != temp.end(); ti++) {
+							for (; ti != temp.end(); ++ti) {
 								cv.insert(cv.end(),*ti);
 							}
 						}

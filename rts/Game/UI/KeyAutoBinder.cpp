@@ -202,7 +202,7 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 
 	const std::map<std::string, int>& udMap = unitDefHandler->unitDefIDsByName;
 	std::map<std::string, int>::const_iterator udIt;
-	for (udIt = udMap.begin(); udIt != udMap.end(); udIt++) {
+	for (udIt = udMap.begin(); udIt != udMap.end(); ++udIt) {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByID(udIt->second);
 		if (ud == NULL) {
 	  	continue;

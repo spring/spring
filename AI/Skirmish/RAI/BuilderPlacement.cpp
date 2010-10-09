@@ -636,7 +636,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 				if( RAIDEBUGGING && cb->GetMyTeam() == 0 ) // Debug Lines
 				{
 					vector<float3> *path = &RSD->pathDebug;
-					if( path->size() == 0 )
+					if( path->empty() )
 					{
 						path->push_back(Resources[bestRLI->index]->S->position);
 						path->push_back(Resources[bestRLI->bestI]->S->position);
@@ -718,7 +718,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 				if( Resources[iR1]->Linked.find(iR2) != Resources[iR1]->Linked.end() )
 				{
 					vector<float3> *path = &Resources[iR1]->S->siteDistance.find(Resources[iR2]->S)->second.pathDebug;
-					if( path->size() == 0 )
+					if( path->empty() )
 					{
 						path->push_back(Resources[iR1]->S->position);
 						path->push_back(Resources[iR2]->S->position);

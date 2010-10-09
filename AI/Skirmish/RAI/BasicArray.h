@@ -21,8 +21,8 @@ struct basicArray
 		elementSize = 0;
 	};
 	~basicArray()
-	{	if( elementList != 0 )
-			delete [] elementList;
+	{
+		delete [] elementList;
 	};
 	basicArrayType* operator[] (int index) { return &elementList[index]; };
 	void begin() { elementIndex = -1; };

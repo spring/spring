@@ -3,6 +3,8 @@
 #ifndef _TERRAIN_TEX_ENV_COMBINE_H_
 #define _TERRAIN_TEX_ENV_COMBINE_H_
 
+#include "TerrainTexture.h" // for IShaderSetup
+
 namespace terrain {
 
 //-----------------------------------------------------------------------
@@ -38,15 +40,17 @@ namespace terrain {
 	/// each TQuad has an instance of this class
 	struct NodeTexEnvSetup : public IShaderSetup
 	{
-		NodeTexEnvSetup () {
-			usedTexUnits=0;
-		}
+		NodeTexEnvSetup()
+			: IShaderSetup()
+			, usedTexUnits(0)
+			{}
+
+		std::string GetDebugDesc();
+		uint GetVertexDataRequirements();
+		void GetTextureUnits(BaseTexture* tex, int &imageUnit, int& coordUnit);
+
 		int usedTexUnits;
 		std::vector <TexEnvStage> stages;
-
-		std::string GetDebugDesc ();
-		uint GetVertexDataRequirements ();
-		void GetTextureUnits(BaseTexture* tex, int &imageUnit, int& coordUnit);
 	};
 
 	/// Texenv setup

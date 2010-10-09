@@ -153,7 +153,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 				if (!teamHandler->Team(receivingTeamId)->isDead && !teamHandler->Team(team)->isDead) {
 					// we must iterate over the ID's to check if
 					// all of them really belong to the AI's team
-					for (std::vector<int>::const_iterator it = unitIds.begin(); it != unitIds.end(); it++ ) {
+					for (std::vector<int>::const_iterator it = unitIds.begin(); it != unitIds.end(); ++it) {
 						const int unitID = *it;
 
 						if (unitID > 0 && (size_t)unitID < uh->MaxUnits()) {
@@ -172,7 +172,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 						}
 					}
 
-					if (sentUnitIDs.size() > 0) {
+					if (!sentUnitIDs.empty()) {
 						// we can't use SendShare() here either, since
 						// AI's don't have a notion of "selected units"
 						net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeamId), 0.0f, 0.0f, sentUnitIDs));

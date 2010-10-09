@@ -1575,7 +1575,7 @@ EXPORT(int) GetSkirmishAICount() {
 			const std::string& possibleDataDir = *i;
 			vector<std::string> infoFile = CFileHandler::FindFiles(
 					possibleDataDir, "AIInfo.lua");
-			if (infoFile.size() > 0) {
+			if (!infoFile.empty()) {
 				skirmishAIDataDirs.push_back(possibleDataDir);
 			}
 		}

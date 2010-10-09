@@ -164,7 +164,7 @@ bool List::MouseUpdate(int x, int y)
 	float sbX = b.GetPos()[0];
 	float sbY1 = b.GetPos()[1] + (itemHeight + itemSpacing);
 
-	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
+	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii)
 	{
 		if (b.MouseOver(mx, my))
 		{
@@ -225,7 +225,7 @@ void List::DrawSelf()
 	// Skip to current selection - 3; ie: scroll
 	UpdateTopIndex();
 
-	while (nCurIndex < topIndex) { ii++; nCurIndex++; }
+	while (nCurIndex < topIndex) { ++ii; nCurIndex++; }
 
 	const int numDisplay = NumDisplay();
 
@@ -236,7 +236,7 @@ void List::DrawSelf()
 	float sbX = b.GetPos()[0];
 	float sbY1 = b.GetPos()[1] + (itemHeight + itemSpacing);
 
-	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
+	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii)
 	{
 		glColor4f(1,1,1,opacity/4.f);
 		b.DrawBox(GL_LINE_LOOP);

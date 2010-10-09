@@ -779,8 +779,7 @@ GlobalResourceMap::~GlobalResourceMap()
 		fclose(resourceFile_w);
 	}
 
-	if( sector != 0 )
-		delete [] sector;
+	delete [] sector;
 	for( int iT=0; iT<2; iT++ )
 	{
 		for(int iR=0; iR<RSize[iT]; iR++)

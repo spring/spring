@@ -1443,7 +1443,7 @@ int CglFont::WrapInPlace(std::string& text, float _fontSize, const float maxWidt
 	//! create the wrapped string
 	text = "";
 	unsigned int numlines = 0;
-	if (words.size() > 0) {
+	if (!words.empty()) {
 		numlines++;
 		for (std::list<word>::iterator wi = words.begin(); wi != words.end(); ++wi) {
 			if (wi->isSpace) {
@@ -1484,7 +1484,7 @@ std::list<std::string> CglFont::Wrap(const std::string& text, float _fontSize, c
 	//! create the string lines of the wrapped text
 	std::list<word>::iterator lastColorCode = words.end();
 	std::list<std::string> strlines;
-	if (words.size() > 0) {
+	if (!words.empty()) {
 		strlines.push_back("");
 		std::string* sl = &strlines.back();
 		for (std::list<word>::iterator wi = words.begin(); wi != words.end(); ++wi) {
