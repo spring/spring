@@ -201,6 +201,10 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
+	HSTR_PUSH(L, "EXPORT");
+	lua_newtable(L);
+	lua_rawset(L, -3);
+
 	AddBasicCalls(L); // into Global
 
 	lua_pushstring(L, "Script");
