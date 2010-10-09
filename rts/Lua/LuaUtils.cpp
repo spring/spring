@@ -16,7 +16,7 @@
 
 
 static const int maxDepth = 256;
-static const int maxDepthD = 2;
+int backupSize = 0;
 
 
 /******************************************************************************/
@@ -116,6 +116,7 @@ static bool RestoreTable(const LuaUtils::DataDump &d, lua_State* dst, int depth)
 
 
 static bool BackupData(LuaUtils::DataDump &d, lua_State* src, int index, int depth) {
+	++backupSize;
 	const int type = lua_type(src, index);
 	d.type = type;
 	switch (type) {
@@ -177,7 +178,7 @@ static bool RestoreData(const LuaUtils::DataDump &d, lua_State* dst, int depth) 
 }
 
 static bool BackupTable(LuaUtils::DataDump &d, lua_State* src, int index, int depth) {
-	if (depth++ > maxDepthD)
+	if (depth++ > maxDepth)
 		return false;
 
 	const int table = PosLuaIndex(src, index);
@@ -192,7 +193,7 @@ static bool BackupTable(LuaUtils::DataDump &d, lua_State* src, int index, int de
 }
 
 static bool RestoreTable(const LuaUtils::DataDump &d, lua_State* dst, int depth) {
-	if (depth++ > maxDepthD) {
+	if (depth++ > maxDepth) {
 		lua_pushnil(dst);
 		return false;
 	}

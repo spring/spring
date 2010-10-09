@@ -113,7 +113,7 @@ public:
 	bool showFPS;
 	bool showClock;
 	bool showSpeed;
-	bool showMTInfo;
+	int showMTInfo;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 
@@ -205,6 +205,7 @@ private:
 
 	int speedControl;
 	int luaDrawTime;
+	int luaExportSize;
 
 
 	/// for reloading the savefile

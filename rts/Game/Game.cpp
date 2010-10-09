@@ -244,6 +244,7 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	timeLeft(0.0f),
 	consumeSpeed(1.0f),
 	luaDrawTime(0),
+	luaExportSize(0),
 
 	saveFile(saveFile)
 {
@@ -284,8 +285,7 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
 
 	modInfo.Init(modName.c_str());
-	if(gc->GetMultiThreadLua() >= 2)
-		showMTInfo = false;
+	showMTInfo = (showMTInfo && gc->GetMultiThreadLua() <= 2) ? gc->GetMultiThreadLua() : 0;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -965,7 +965,11 @@ bool CGame::Update()
 		thisFps = 0;
 
 		starttime = fpstimer;
-
+#if defined(USE_GML) && GML_ENABLE_SIM
+		extern int backupSize;
+		luaExportSize = backupSize;
+		backupSize = 0;
+#endif
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
 			leastQue = 10000;
@@ -1477,12 +1481,21 @@ bool CGame::Draw() {
 		else if(cit < luaDrawTime)
 			--luaDrawTime;
 
-		if(showMTInfo) {
+		if(showMTInfo == 1) {
 			float drawPercent = (float)luaDrawTime / 10.0f;
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
 			float4 warncol(drawPercent >= 10.0f && (currentTime & 128) ?
 				0.5f : std::max(0.0f, std::min(drawPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - drawPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
+			smallFont->SetColors(&warncol, NULL);
+			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+		}
+		else if(showMTInfo == 2) {
+			int ek = luaExportSize / 1000;
+			char buf[32];
+			SNPRINTF(buf, sizeof(buf), "LUA-EXPORT(MT): %dK", ek);
+			float4 warncol(ek >= 10 && (currentTime & 128) ?
+				0.5f : std::max(0.0f, std::min(ek / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - ek / 5.0f, 1.0f)), 0.0f, 1.0f);
 			smallFont->SetColors(&warncol, NULL);
 			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
 		}
@@ -1709,15 +1722,22 @@ void CGame::StartPlaying()
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if(showMTInfo) {
+	if(showMTInfo == 1) {
 		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
 		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		logOutput.Print("LUA BASED GRAPHICS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
+		logOutput.Print("Engine or mod settings have forced Spring MT to use compatibility mode 1");
+		logOutput.Print("If your mod uses lua based rendering, it may run very slow with Spring MT");
 		logOutput.Print("For best results disable LuaShaders in SpringSettings or the Edit Settings menu");
 		logOutput.Print("Press " + lskey + " to open the widget list, which allows specific widgets to be disabled");
 		logOutput.Print("The LUA-DRAW(MT) value in the upper right corner can be used for guidance");
 		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes\n");
+	}
+	else if(showMTInfo == 2) {
+		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
+		logOutput.Print("Engine or mod settings have forced Spring MT to use compatibility mode 2");
+		logOutput.Print("If your mod exports too much synced data, it may run slow with Spring MT");
+		logOutput.Print("The LUA-EXPORT(MT) value in the upper right corner can be used for guidance\n");
 	}
 #endif
 }
