@@ -114,32 +114,30 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 	float3 spotCoords = ERRORVECTOR;
 	float3 bestSpot = ERRORVECTOR;
 
-	if (vectoredSpots.size()) {
-		for (size_t i = 0; i != vectoredSpots.size(); i++) {
-			if (extractor != NULL) {
-				spotCoords = helper->ClosestBuildSite(team, extractor, vectoredSpots[i], maxDivergence, 2);
-			} else {
-				spotCoords = vectoredSpots[i];
-			}
+	for (size_t i = 0; i < vectoredSpots.size(); ++i) {
+		if (extractor != NULL) {
+			spotCoords = helper->ClosestBuildSite(team, extractor, vectoredSpots[i], maxDivergence, 2);
+		} else {
+			spotCoords = vectoredSpots[i];
+		}
 
-			if (spotCoords.x >= 0.0f) {
-				float distance = spotCoords.distance2D(fromPos) + 150;
-				//float myThreat = ai->tm->ThreatAtThisPoint(vectoredSpots[i]);
-				float spotScore = vectoredSpots[i].y / distance/* / (myThreat + 10)*/;
-				//int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], vectoredSpots[i], xtractorRadius * 2);
+		if (spotCoords.x >= 0.0f) {
+			float distance = spotCoords.distance2D(fromPos) + 150;
+			//float myThreat = ai->tm->ThreatAtThisPoint(vectoredSpots[i]);
+			float spotScore = vectoredSpots[i].y / distance/* / (myThreat + 10)*/;
+			//int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], vectoredSpots[i], xtractorRadius * 2);
 
-				// NOTE: threat at vectoredSpots[i] is determined
-				// by presence of ARMED enemy units or buildings
-				bool b1 = (tempScore < spotScore);
-// 				bool b2 = (numEnemies == 0);
-// 				bool b3 = (myThreat <= (ai->tm->GetAverageThreat() * 1.5));
-// 				bool b4 = (ai->uh->TaskPlanExist(spotCoords, extractor));
+			// NOTE: threat at vectoredSpots[i] is determined
+			// by presence of ARMED enemy units or buildings
+			bool b1 = (tempScore < spotScore);
+// 			bool b2 = (numEnemies == 0);
+// 			bool b3 = (myThreat <= (ai->tm->GetAverageThreat() * 1.5));
+// 			bool b4 = (ai->uh->TaskPlanExist(spotCoords, extractor));
 
-				if (b1/* && b2 && b3 && !b4*/) {
-					tempScore = spotScore;
-					bestSpot = spotCoords;
-					bestSpot.y = vectoredSpots[i].y;
-				}
+			if (b1/* && b2 && b3 && !b4*/) {
+				tempScore = spotScore;
+				bestSpot = spotCoords;
+				bestSpot.y = vectoredSpots[i].y;
 			}
 		}
 	}

@@ -87,13 +87,13 @@ private:
 	bool cheatEvents;
 
 	CSkirmishAI* ai;
-	bool initialized, released;
+	bool initialized;
+	bool released;
 	CAICallback* callback;
 	CAICheats* cheats;
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
 	const struct InfoItem* info;
-	unsigned int size_info;
 
 private:
 	bool LoadSkirmishAI(bool postLoad);

@@ -679,7 +679,7 @@ void CGameServer::Update()
 
 			medianCpu = 0.0f;
 			medianPing = 0;
-			if (curSpeedCtrl > 0 && cpu.size() > 0) {
+			if (curSpeedCtrl > 0 && !cpu.empty()) {
 				std::sort(cpu.begin(), cpu.end());
 				std::sort(ping.begin(), ping.end());
 
@@ -1559,7 +1559,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find(msgCode);
 	if (toRelay != relayingMessagesMap.end()) {
 		PlayersToForwardMsgvec& toRelaySet = toRelay->second;
-		for (PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); playerToRelay++) {
+		for (PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); ++playerToRelay) {
 			if (*playerToRelay < playersSize)
 				players[*playerToRelay].SendData(packet);
 		}

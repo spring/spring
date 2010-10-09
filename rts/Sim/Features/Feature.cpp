@@ -80,7 +80,7 @@ CFeature::CFeature():
 	physicalState = OnGround;
 }
 
-CFeature::~CFeature(void)
+CFeature::~CFeature()
 {
 	if (blocking) {
 		UnBlock();
@@ -585,7 +585,7 @@ bool CFeature::UpdatePosition()
 	return finishedUpdate;
 }
 
-bool CFeature::Update(void)
+bool CFeature::Update()
 {
 	bool finishedUpdate = true;
 	finishedUpdate = UpdatePosition();
@@ -650,7 +650,7 @@ bool CFeature::Update(void)
 }
 
 
-void CFeature::StartFire(void)
+void CFeature::StartFire()
 {
 	if (fireTime || !def->burnable)
 		return;

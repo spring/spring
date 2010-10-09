@@ -34,6 +34,16 @@ LISTEN_ADDR = ('', 8000)
 RE_PREFIX = r'^(?:\[\s*\d+\]\s+)?'
 RE_SUFFIX = '\r?$'
 
+
+<curtana> you can't just use a virtual memory address--you need the offset of the address from the start of the .text section, and then you need to say addr2line -j .text -e foo.dll address
+<curtana> it has to be the offset from the start of the .text section -- but you can work that out at run time or probably by hand by looking at objdump
+<curtana> objdump -h foo.dll
+<curtana> 6th column is offset. so try address - that - base
+<curtana> if you compile with -fomit-frame-pointer then your stack trace might contain garbage, btw
+<curtana> i wish you could use gdb as a JIT debugger on windows
+works if:
+addr2line -j .text -e SkirmishAI.dbg $(frameaddr - baseaddr)
+
 # Match stackframe lines, captures the module name and the address.
 # Example: '[      0] (0) C:\Program Files\Spring\spring.exe [0x0080F268]'
 #          -> ('C:\\Program Files\\Spring\\spring.exe', '0x0080F268')
@@ -267,7 +277,7 @@ def translate_module_addresses(module, debugfile, addresses):
 		log.info('\t\t[OK]')
 
 		log.info('\tTranslating addresses for module %s...' % module)
-		addr2line = Popen([ADDR2LINE, '-j', '.text', '-e', tempfile.name], stdin = PIPE, stdout = PIPE, stderr = PIPE)
+		addr2line = Popen([ADDR2LINE, '-e', tempfile.name], stdin = PIPE, stdout = PIPE, stderr = PIPE)
 		if addr2line.poll() == None:
 			stdout, stderr = addr2line.communicate('\n'.join(addresses))
 		else:

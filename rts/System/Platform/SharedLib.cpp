@@ -32,6 +32,7 @@ SharedLib* SharedLib::Instantiate(const char* fileName)
 
 	if (lib == NULL || lib->LoadFailed()) {
 		// loading failed
+		delete lib;
 		lib = NULL;
 	}
 

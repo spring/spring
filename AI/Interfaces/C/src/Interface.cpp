@@ -110,7 +110,7 @@ const SSkirmishAILibrary* CInterface::LoadSkirmishAILibrary(
 			myLoadedSkirmishAILibs[spec] = lib;
 		} else {
 			// failure
-			free(ai);
+			delete ai;
 			ai = NULL;
 		}
 	} else {
@@ -143,7 +143,7 @@ int CInterface::UnloadSkirmishAILibrary(
 }
 int CInterface::UnloadAllSkirmishAILibraries() {
 
-	while (myLoadedSkirmishAIs.size() > 0) {
+	while (!myLoadedSkirmishAIs.empty()) {
 		T_skirmishAISpecifiers::const_iterator ai =
 				mySkirmishAISpecifiers.begin();
 		UnloadSkirmishAILibrary((*ai).shortName, (*ai).version);
