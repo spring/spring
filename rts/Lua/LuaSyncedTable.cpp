@@ -40,10 +40,6 @@ bool LuaSyncedTable::PushEntries(lua_State* L)
 	HSTR_PUSH(L, "SYNCED");
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
-	HSTR_PUSH(L, "EXPORT");
-	lua_newtable(L);
-	lua_rawset(L, -3);
-
 	WrapTable(L); // replace the GLOBAL table with a proxy
 	lua_rawset(L, -3);
 
