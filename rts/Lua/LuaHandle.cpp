@@ -258,21 +258,12 @@ void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 	DelayDataDump ddmp;
 
 	if(CopyExportTable()) {
-		HSTR_PUSH(srcState, "UNSYNCED");
-		lua_rawget(srcState, LUA_REGISTRYINDEX);
-
-		HSTR_PUSH(srcState, "SYNCED");
-		lua_rawget(srcState, -2);
-		if (lua_getmetatable(srcState, -1) == 0) return;
-
-		HSTR_PUSH(srcState, "realTable");
-		lua_rawget(srcState, -2);
-		if (!lua_istable(srcState, -1))	return;
-
 		HSTR_PUSH(srcState, "EXPORT");
-		lua_rawget(srcState, -2);
-		LuaUtils::Backup(ddmp.com, srcState, 1);
-		lua_pop(srcState, 5);
+		lua_rawget(srcState, LUA_GLOBALSINDEX);
+
+		if (lua_istable(srcState, -1))
+			LuaUtils::Backup(ddmp.com, srcState, 1);
+		lua_pop(srcState, 1);
 	}
 
 	for(int i = 1; i <= args; ++i) {
@@ -360,16 +351,17 @@ void CLuaHandle::ExecuteRecvFromSynced() {
 
 			HSTR_PUSH(L, "SYNCED");
 			lua_rawget(L, -2);
-			if (lua_getmetatable(L, -1) == 0) return;
-
-			HSTR_PUSH(L, "realTable");
-			lua_rawget(L, -2);
-			if (!lua_istable(L, -1)) return;
-
-			HSTR_PUSH(L, "EXPORT");
-			LuaUtils::Restore(ddp.com, L);
-			lua_rawset(L, -3);
-			lua_pop(L, 4);
+			if (lua_getmetatable(L, -1)) {
+				HSTR_PUSH(L, "realTable");
+				lua_rawget(L, -2);
+				if (lua_istable(L, -1)) {
+					HSTR_PUSH(L, "EXPORT");
+					LuaUtils::Restore(ddp.com, L);
+					lua_rawset(L, -3);
+				}
+				lua_pop(L, 2);
+			}
+			lua_pop(L, 2);
 		}
 
 		int ddsize = ddp.dd.size();
