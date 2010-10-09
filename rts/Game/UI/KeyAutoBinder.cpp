@@ -35,7 +35,6 @@
      lua_pcall((L), 0, 0, 0);
 #endif
 
-// FIXME -- use 'em
 static const string UnitDefsName    = "UnitDefs";
 static const string ReqFuncName     = "HasReqs";
 static const string SortFuncName    = "IsBetter";
@@ -52,7 +51,7 @@ static const string endlStr = "\r\n";
 /******************************************************************************/
 
 CKeyAutoBinder::CKeyAutoBinder()
-: CLuaHandle("KeyAutoBinder", 1234, false)
+	: CLuaHandle("KeyAutoBinder", 1234, false)
 {
 	if (L == NULL) {
 		return;
@@ -72,9 +71,9 @@ CKeyAutoBinder::CKeyAutoBinder()
 
 	// load the spring libraries
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
-	if (!AddEntriesToTable(L, "Game",       LuaConstGame::PushEntries)  ||
-	    !AddEntriesToTable(L, "UnitDefs",   LuaUnitDefs::PushEntries)   ||
-	    !AddEntriesToTable(L, "WeaponDefs", LuaWeaponDefs::PushEntries)) {
+	if (!AddEntriesToTable(L, "Game",               LuaConstGame::PushEntries)  ||
+	    !AddEntriesToTable(L, UnitDefsName.c_str(), LuaUnitDefs::PushEntries)   ||
+	    !AddEntriesToTable(L, "WeaponDefs",         LuaWeaponDefs::PushEntries)) {
 		logOutput.Print("KeyAutoBinder: error loading lua libraries\n");
 	}
   lua_settop(L, 0);
@@ -128,28 +127,30 @@ bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 
 bool CKeyAutoBinder::LoadCompareFunc()
 {
-	string code = endlStr;
+	std::stringstream code(endlStr);
 
 	// handy sorting comparison routine
-	code += "function Compare(a, b)"                     + endlStr;
-	code += "  if (type(a) == \"number\") then"          + endlStr;
-	code += "    if (a > b) then return  1.0; end"       + endlStr;
-	code += "    if (a < b) then return -1.0; end"       + endlStr;
-	code += "  elseif (type(a) == \"boolean\") then"     + endlStr;
-	code += "    if (a and not b) then return  1.0; end" + endlStr;
-	code += "    if (not a and b) then return -1.0; end" + endlStr;
-	code += "  elseif (type(a) == \"string\") then"      + endlStr;
-	code += "    if (a > b) then return  1.0; end"       + endlStr;
-	code += "    if (a < b) then return -1.0; end"       + endlStr;
-	code += "  end"                                      + endlStr;
-	code += "  return 0.0"                               + endlStr;
-	code += "end"                                        + endlStr;
+	code << "function " << CompareFuncName << "(a, b)"   << endlStr;
+	code << "  if (type(a) == \"number\") then"          << endlStr;
+	code << "    if (a > b) then return  1.0; end"       << endlStr;
+	code << "    if (a < b) then return -1.0; end"       << endlStr;
+	code << "  elseif (type(a) == \"boolean\") then"     << endlStr;
+	code << "    if (a and not b) then return  1.0; end" << endlStr;
+	code << "    if (not a and b) then return -1.0; end" << endlStr;
+	code << "  elseif (type(a) == \"string\") then"      << endlStr;
+	code << "    if (a > b) then return  1.0; end"       << endlStr;
+	code << "    if (a < b) then return -1.0; end"       << endlStr;
+	code << "  end"                                      << endlStr;
+	code << "  return 0.0"                               << endlStr;
+	code << "end"                                        << endlStr;
+
+	const std::string codeStr = code.str();
 
 	if (keyBindings->GetDebug() > 1) {
-		logOutput.Print(code);
+		logOutput.Print(codeStr);
 	}
 
-	if (!LoadCode(code, "Compare()")) {
+	if (!LoadCode(codeStr, CompareFuncName + "()")) {
 		return false;
 	}
 
@@ -193,8 +194,8 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 		logOutput.Print(sortCall);
 	}
 
-	if (!LoadCode(reqCall,  keystr + ":HasReqs()") ||
-	    !LoadCode(sortCall, keystr + ":IsBetter()")) {
+	if (!LoadCode(reqCall,  keystr + ":" + ReqFuncName + "()") ||
+	    !LoadCode(sortCall, keystr + ":" + SortFuncName + "()")) {
 		return false;
 	}
 
@@ -208,9 +209,7 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	  	continue;
 		}
 		if (HasRequirements(L, ud->id)) {
-			UnitDefHolder udh;
-			udh.ud = ud;
-			udh.udID = ud->id;
+			UnitDefHolder udh(ud->id, ud);
 			defs.push_back(udh);
 		}
 	}
@@ -221,8 +220,8 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	sort(defs.begin(), defs.end());
 
 	// add the bindings
+	const string bindStr = "bind";
 	for (unsigned int i = 0; i < defs.size(); i++) {
-		const string bindStr = "bind";
 		const string lowerName = StringToLower(defs[i].ud->name);
 		const string action = string("buildunit_") + lowerName;
 		keyBindings->Command(bindStr + " " + keystr + " " + action);
@@ -230,8 +229,7 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 			keyBindings->Command(bindStr + " " + chords[i] + " " + action);
 		}
 		if (keyBindings->GetDebug() > 0) {
-			string msg = "auto-";
-			msg += bindStr + " " + keystr + " " + action;
+			const string msg = "auto-" + bindStr + " " + keystr + " " + action;
 			logOutput.Print(msg);
 		}
 	}
@@ -253,13 +251,13 @@ string CKeyAutoBinder::ConvertBooleanSymbols(const string& text) const
 string CKeyAutoBinder::AddUnitDefPrefix(const string& text,
                                         const string& prefix) const
 {
-	string result;
+	std::stringstream result("");
 	const char* end = text.c_str();
 
 	while (end[0] != 0) {
 		const char* c = end;
 		while ((c[0] != 0) && !isalpha(c[0]) && (c[0] != '_')) { c++; }
-		result += string(end, c - end);
+		result << string(end, c - end).c_str();
 		if (c[0] == 0) {
 			break;
 		}
@@ -267,106 +265,106 @@ string CKeyAutoBinder::AddUnitDefPrefix(const string& text,
 		while ((c[0] != 0) && (isalnum(c[0]) || (c[0] == '_'))) { c++; }
 		string word(start, c - start);
 		if (LuaUnitDefs::IsDefaultParam(word)) {
-			result += prefix + "." + word;
+			result << prefix << "." << word;
 		} else if ((word == "custom") && (c[0] == '.')) {
-			result += prefix;
+			result << prefix;
 		} else {
-			result += word;
+			result << word;
 		}
 		end = c;
 	}
 
-	return result;
+	return result.str();
 }
 
 
 string CKeyAutoBinder::MakeRequirementCall(const vector<string>& requirements)
 {
-	string code = "";
+	std::stringstream code("");
 
-	code += "function HasReqs(thisID)" + endlStr;
+	code << "function " << ReqFuncName << "(thisID)" << endlStr;
 
 	const int count = (int)requirements.size();
 
 	if (count <= 0) {
-		code += "return false" + endlStr;
-		code += "end" + endlStr;
-		return code;
+		code << "return false" << endlStr;
+		code << "end" << endlStr;
+		return code.str();
 	}
 
-	code += "local this = UnitDefs[thisID]" + endlStr;
+	code << "local this = " << UnitDefsName << "[thisID]" << endlStr;
 
 	if (StringToLower(requirements[0]) == "rawlua") {
 		for (int i = 1; i < count; i++) {
-			code += requirements[i] + endlStr;
+			code << requirements[i] << endlStr;
 		}
-		code += "end" + endlStr;
-		return code;
+		code << "end" << endlStr;
+		return code.str();
 	}
 
-	code += "return ";
+	code << "return ";
 	const int lastReq = (count - 1);
 	for (int i = 0; i < count; i++) {
-		code += "(";
-		code += requirements[i];
-		code += ")";
+		code << "(";
+		code << requirements[i];
+		code << ")";
 		if (i != lastReq) {
-			code += " and ";
+			code << " and ";
 		}
 	}
-	code += endlStr + "end" + endlStr;
+	code << endlStr << "end" << endlStr;
 
-	return ConvertBooleanSymbols(AddUnitDefPrefix(code, "this"));
+	return ConvertBooleanSymbols(AddUnitDefPrefix(code.str(), "this"));
 }
 
 
 string CKeyAutoBinder::MakeSortCriteriaCall(const vector<string>& sortCriteria)
 {
-	string code = "";
+	std::stringstream code("");
 
-	code += "function IsBetter(thisID, thatID)" + endlStr;
+	code << "function " << SortFuncName << "(thisID, thatID)" << endlStr;
 
 	const int count = (int)sortCriteria.size();
 
 	if (count <= 0) {
-		code += "return false" + endlStr;
-		code += "end" + endlStr;
-		return code;
+		code << "return false" << endlStr;
+		code << "end" << endlStr;
+		return code.str();
 	}
 
-	code += "local this = UnitDefs[thisID]" + endlStr;
-	code += "local that = UnitDefs[thatID]" + endlStr;
+	code << "local this = " << UnitDefsName << "[thisID]" << endlStr;
+	code << "local that = " << UnitDefsName << "[thatID]" << endlStr;
 
 	if (StringToLower(sortCriteria[0]) == "rawlua") {
 		for (int i = 1; i < count; i++) {
-			code += sortCriteria[i] + endlStr;
+			code << sortCriteria[i] << endlStr;
 		}
-		code += "end" + endlStr;
-		return code;
+		code << "end" << endlStr;
+		return code.str();
 	}
 
 	for (int i = 0; i < count; i++) {
 		const string natural = ConvertBooleanSymbols(sortCriteria[i]);
 		const string thisStr = AddUnitDefPrefix(natural, "this");
 		const string thatStr = AddUnitDefPrefix(natural, "that");
-		code += "local test = Compare(" + thisStr + ", " + thatStr + ")" + endlStr;
-		code += "if (test ~= 0.0) then return (test > 0.0) end" + endlStr;
+		code << "local test = " << CompareFuncName << "(" << thisStr << ", " << thatStr << ")" << endlStr;
+		code << "if (test ~= 0.0) then return (test > 0.0) end" << endlStr;
 	}
-	code += "return false" + endlStr;
-	code += "end" + endlStr;
+	code << "return false" << endlStr;
+	code << "end" << endlStr;
 
-	return ConvertBooleanSymbols(code);
+	return ConvertBooleanSymbols(code.str());
 }
 
 
 bool CKeyAutoBinder::HasRequirements(lua_State* L, int unitDefID)
 {
-	lua_getglobal(L, "HasReqs");
+	lua_getglobal(L, ReqFuncName.c_str());
 	lua_pushnumber(L, unitDefID);
 	const int error = lua_pcall(L, 1, 1, 0);
 	if (error != 0) {
-		logOutput.Print("ERROR: KeyAutoBinder: Running HasReqs(%i)\n  %s\n",
-		                unitDefID, lua_tostring(L, -1));
+		logOutput.Print("ERROR: KeyAutoBinder: Running %s(%i)\n  %s\n",
+		                ReqFuncName.c_str(), unitDefID, lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -378,13 +376,13 @@ bool CKeyAutoBinder::HasRequirements(lua_State* L, int unitDefID)
 
 bool CKeyAutoBinder::IsBetter(lua_State* L, int thisDefID, int thatDefID)
 {
-	lua_getglobal(L, "IsBetter");
+	lua_getglobal(L, SortFuncName.c_str());
 	lua_pushnumber(L, thisDefID);
 	lua_pushnumber(L, thatDefID);
 	const int error = lua_pcall(L, 2, 1, 0);
 	if (error != 0) {
-		logOutput.Print("ERROR: KeyAutoBinder: Running IsBetter(%i, %i)\n  %s\n",
-		                thisDefID, thatDefID, lua_tostring(L, -1));
+		logOutput.Print("ERROR: KeyAutoBinder: Running %s(%i, %i)\n  %s\n",
+		                SortFuncName.c_str(), thisDefID, thatDefID, lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
