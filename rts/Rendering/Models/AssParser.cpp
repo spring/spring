@@ -11,6 +11,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Lua/LuaParser.h"
 #include "3DModel.h"
+#include "3DModelLog.h"
 #include "S3OParser.h"
 #include "AssIO.h"
 #include "AssParser.h"
@@ -41,11 +42,7 @@
 
 //aiProcess_ImproveCacheLocality
 
-// Enabling the "Model" log subsystem will provide general model output. "Model-detail" is extremely verbose.
-static CLogSubsystem LOG_MODEL("Model");
-static CLogSubsystem LOG_MODEL_DETAIL("Model-detail");
-static CLogSubsystem LOG_PIECE("Piece");
-static CLogSubsystem LOG_PIECE_DETAIL("Piece-detail");
+
 
 class AssLogStream : public Assimp::LogStream
 {
@@ -78,7 +75,7 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 	} else {
 		logOutput.Print(LOG_MODEL, "AssParser: Using model meta-file '%s'", metaFileName.c_str());
 	}
-	
+
 	// Get the (root-level) model table
 	const LuaTable modelTable = metaFileParser.GetRoot();
 
@@ -121,11 +118,11 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 		model->tex2 = modelTable.GetString("tex2", "");
 		model->flipTexY = modelTable.GetBool("fliptextures", true); // Flip texture upside down
 		model->invertAlpha = modelTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
-		
+
 		// Load textures
 		logOutput.Print(LOG_MODEL, "AssParser: Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
 		texturehandlerS3O->LoadS3OTexture(model);
-		
+
 		// Identify and load the root object in the model.
 		//const aiString hitboxName( std::string("hitbox") );
 
@@ -141,7 +138,7 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 		//if (!hitbox) {
 		//	hitbox = scene->mRootNode;
 		//}
-		
+
 		// Verbose logging of model properties
 		logOutput.Print(LOG_MODEL_DETAIL, "AssParser: model->name: %s", model->name.c_str());
 		logOutput.Print(LOG_MODEL_DETAIL, "AssParser: model->numobjects: %d", model->numobjects);
@@ -149,7 +146,7 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 		logOutput.Print(LOG_MODEL_DETAIL, "AssParser: model->height: %f", model->height);
 		logOutput.Print(LOG_MODEL_DETAIL, "AssParser: model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
 		logOutput.Print(LOG_MODEL_DETAIL, "AssParser: model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
-				
+
 		logOutput.Print (LOG_MODEL, "AssParser: Model %s Imported.", model->name.c_str());
 	} else {
 		logOutput.Print (LOG_MODEL, "AssParser: Model Import Error: %s\n",  importer.GetErrorString());
@@ -177,13 +174,11 @@ SAssPiece* CAssParser::LoadPiece(aiNode* node, S3DModel* model)
 		rotation.x, rotation.y, rotation.z,
 		scale.x, scale.y, scale.z
 	);
-	
+
 	piece->mins = float3(0.0f,0.0f,0.0f);
 	piece->maxs = float3(1.0f,1.0f,1.0f);
 
-	piece->offset.x = position.x;
-	piece->offset.y = position.y;
-	piece->offset.z = position.z;
+	piece->offset.x = position.x; piece->offset.y = position.y; piece->offset.z = position.z;
 
 	// for all meshes
 	for ( unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++ ) {

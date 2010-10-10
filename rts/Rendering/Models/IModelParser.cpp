@@ -8,6 +8,7 @@
 
 #include "IModelParser.h"
 #include "3DModel.h"
+#include "3DModelLog.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "OBJParser.h"
@@ -21,9 +22,7 @@
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
-
 C3DModelLoader* modelParser = NULL;
-
 
 //////////////////////////////////////////////////////////////////////
 // C3DModelLoader
@@ -39,7 +38,7 @@ C3DModelLoader::C3DModelLoader(void)
 	// assimp library
 	CAssParser* unitassparser = new CAssParser();
 	std::string extensionlist;
-	
+
 	Assimp::Importer importer;
 	importer.GetExtensionList(extensionlist); // get a ";" separated list of wildcards
 	char* charextensionlist = new char[extensionlist.size() +1];
