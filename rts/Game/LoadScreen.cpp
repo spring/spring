@@ -151,8 +151,10 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
-	delete singleton;
-	singleton = NULL;
+	if (singleton) {
+		delete singleton;
+		singleton = NULL;
+	}
 }
 
 
