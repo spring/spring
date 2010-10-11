@@ -29,7 +29,8 @@ Engine / AI:
  - EnableCheatEvents() was a no-op because it did not enable cheats temporarily
  - IsUnitInLosOrRadarOfAllyTeam() now considers gs->globalLOS
    -> UnitCreated now may trigger EnemyCreated for non-cheating AI's
- - new E323AI version: 3.22.4
+ - E323AI: new version: 3.22.4
+ - Python AI Interface: removed a few memory leaks
 
 Unitsync:
  - fix mapname/mapfilename conflicts
