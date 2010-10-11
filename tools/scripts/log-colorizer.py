@@ -15,7 +15,7 @@ DEV_NAME_PATTERN = re.compile("<[a-zA-Z0-9\[\]_]*>")
 ## (server messages have to be cleaned by hand)
 #DEV_NAME_PATTERN = re.compile(" [a-zA-Z0-9\[\]_]*: ")
 DEV_NAME_LIST    = ["abma", "BrainDamage", "hoijui", "jK", "Kloot", "Tobi", "zerver"]
-DEV_NAME_COLORS  = ["000000", "FF0000", "00FF00", "0000FF", "FF00FF", "FFFF00", "00FFFF"]
+DEV_NAME_COLORS  = ["000000", "CC0000", "00BF40", "0040BF", "CC00CC", "DD6000", "00BFFF"]
 
 def ReadLines(logName):
 	try:
