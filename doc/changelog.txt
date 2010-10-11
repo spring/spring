@@ -1,5 +1,46 @@
 Spring change log
 
+0.82.6:
+Engine / General:
+ - fix various bugs related to mid-game join
+ - fix LosHandler ignoring units with losRadius <= 0 but airLosRadius > 0
+ - fix a leftover icon bug
+ - fix BFGroundDrawer crash at extreme view-distances
+ - fix death-wait
+ - allow death-wait in games with more then 2 ally teams
+ - reduce risk for deadlock during stack trace
+ - allow to specify game-start-delay in the start script (GameStartDelay)
+
+Engine / Simulation:
+ - prevent SEGV when updating skidding units
+ - improve turnInPlace=0 path-following (#2072)
+ - units ignored ETA failures when <= 200 elmos from goal, even if goal unreachable
+
+Engine / Rendering:
+ - update the displayed resource production for inbuilt units too
+ - fix spectators see ghosted buildings
+ - do not draw icons for noDraw units
+ - do not cast shadows for noDraw units
+ - do not draw healthbars for noDraw units either
+
+Engine / AI:
+ - add feature-ID trace-ray command
+ - allow fetching of other teams resources (current, income, usage, storage)
+ - EnableCheatEvents() was a no-op because it did not enable cheats temporarily
+ - IsUnitInLosOrRadarOfAllyTeam() now considers gs->globalLOS
+   -> UnitCreated now may trigger EnemyCreated for non-cheating AI's
+ - new E323AI version: 3.22.4
+
+Unitsync:
+ - fix mapname/mapfilename conflicts
+
+Installer:
+ - add portable install option (default: disabled)
+ - add Python AI Interface to the windows installer
+
+Repository:
+ - remove SelectionEditor
+
 0.82.5.1:
 Engine / General:
  - fix FPS/direct controlling crash
