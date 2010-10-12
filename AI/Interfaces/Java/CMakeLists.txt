@@ -368,6 +368,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	# We have to create these directories, cause otherwise the AWK scripts
 	# for generating the source code will not work
+	file(REMOVE_RECURSE "${myJavaGeneratedSourceDir}")
 	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/event")
 	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/command")
 	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/oo")
