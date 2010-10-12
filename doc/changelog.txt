@@ -15,6 +15,7 @@ Engine / Simulation:
  - prevent SEGV when updating skidding units
  - improve turnInPlace=0 path-following (#2072)
  - units ignored ETA failures when <= 200 elmos from goal, even if goal unreachable
+ - make pushResistant (allied) units still move out of the way of constructions
 
 Engine / Rendering:
  - update the displayed resource production for inbuilt units too
