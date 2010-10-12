@@ -18,8 +18,6 @@
 package nulloojavaai;
 
 
-//import com.springrts.ai.AICommand;
-//import com.springrts.ai.command.*;
 import com.springrts.ai.AI;
 import com.springrts.ai.oo.AIFloat3;
 import com.springrts.ai.oo.OOAI;
@@ -36,7 +34,6 @@ import java.util.logging.*;
  * Serves as Interface for a Java Skirmish AIs for the Spring engine.
  *
  * @author	hoijui
- * @version	0.1
  */
 public class NullOOJavaAI extends OOAI implements AI {
 
@@ -312,6 +309,16 @@ public class NullOOJavaAI extends OOAI implements AI {
 
 	@Override
 	public int save(String file) {
+		return 0; // signaling: OK
+	}
+
+	@Override
+	public int enemyCreated(Unit enemy) {
+		return 0; // signaling: OK
+	}
+
+	@Override
+	public int enemyFinished(Unit enemy) {
 		return 0; // signaling: OK
 	}
 
