@@ -204,15 +204,8 @@ void CKAIK::EnemyFinished(int enemyUnitID) { ai->tm->EnemyFinished(enemyUnitID);
 
 void CKAIK::GotChatMsg(const char* msg, int player) {
 	if (ai->Initialized()) {
+		msg = msg;
 		player = player;
-
-		if ((msg = strstr(msg, "KAIK::")) == NULL) {
-			return;
-		}
-
-		if ((msg = strstr(msg, "ThreatMap::DBG")) != NULL) {
-			ai->tm->ToggleVisOverlay();
-		}
 	}
 }
 
@@ -272,17 +265,22 @@ void CKAIK::Update() {
 	if (ai->Initialized()) {
 		const int frame = ai->cb->GetCurrentFrame();
 
+		// call economy tracker update routine
 		ai->econTracker->frameUpdate(frame);
 		ai->dgunConHandler->Update(frame);
 
 		if ((frame - ai->InitFrame()) == 1) {
-			// ai->tm->Init();
+			// init defense matrix
 			ai->dm->Init();
 		}
 
-		ai->bu->Update(frame);
-		ai->uh->IdleUnitUpdate(frame);
+		if ((frame - ai->InitFrame()) > 60) {
+			// call buildup manager and unit handler (idle) update routine
+			ai->bu->Update(frame);
+			ai->uh->IdleUnitUpdate(frame);
+		}
 
+		// call attack handler and unit handler (metal maker) update routines
 		ai->ah->Update(frame);
 		ai->uh->MMakerUpdate(frame);
 		ai->ct->Update(frame);
