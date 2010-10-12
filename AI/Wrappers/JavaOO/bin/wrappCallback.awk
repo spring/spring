@@ -542,7 +542,7 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 		if (doWrappMember(fullName_c)) {
 			printMember(fullName_c, memName_c, addInds_size_c);
 		} else {
-			print("JavaOO: NOTE: intentionally not wrapped: " fullName_c);
+			print("JavaOO-AIWrapper: NOTE: intentionally not wrapped: " fullName_c);
 		}
 	}
 

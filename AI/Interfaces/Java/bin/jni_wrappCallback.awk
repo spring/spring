@@ -57,8 +57,8 @@ function doWrapp(funcIndex_dw) {
 	paramListJava_dw = funcParamList[funcIndex_dw];
 	doWrapp_dw = 1;
 
+	fullName_dw = funcFullName[funcIndex_dw];
 	if (doWrapp_dw) {
-		fullName_dw = funcFullName[funcIndex_dw];
 		metaInf_dw  = funcMetaInf[funcIndex_dw];
 		
 		if (match(metaInf_dw, /ARRAY:/)) {
@@ -70,6 +70,8 @@ function doWrapp(funcIndex_dw) {
 		if (match(fullName_dw, "^" bridgePrefix "File_")) {
 			doWrapp_dw = 0;
 		}
+	} else {
+		print("Java-AIInterface: NOTE: JNI level: Callback: intentionally not wrapped: " fullName_dw);
 	}
 
 	return doWrapp_dw;
