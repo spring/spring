@@ -265,7 +265,7 @@ function printNativeFP2F() {
 				print("}") >> outFile_nc;
 			}
 		} else {
-			print("Note: The following command is intentionally not wrapped: " fullName);
+			print("Java-AIInterface: NOTE: native level: Commands: intentionally not wrapped: " fullName);
 		}
 	}
 
