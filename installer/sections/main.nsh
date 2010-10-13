@@ -197,7 +197,7 @@
 	MessageBox MB_YESNO|MB_ICONQUESTION "Do you want me to completely remove all spring related files?$\n\
 			All maps, mods, screenshots and your settings will be removed. $\n\
 			CAREFULL: ALL CONTENTS OF YOUR SPRING INSTALLATION DIRECTORY WILL BE REMOVED!" \
-			IDNO skip_purge
+			/SD IDNO IDNO skip_purge
 		RmDir /r "$INSTDIR"
 		Delete "$LOCALAPPDATA\springsettings.cfg"
 		Delete "$APPDATA\springlobby.conf"
