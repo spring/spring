@@ -29,7 +29,7 @@ Function InsufficientDotNet
 
 	MessageBox MB_YESNO \
 			"The .NET runtime library v$R5 or newer is required for $R6. $1. Do you wish to download and install it?" \
-			IDYES true IDNO false
+			/SD IDNO IDYES true IDNO false
 	true:
 		Call DownloadAndInstallLatestDotNet
 		Goto next
