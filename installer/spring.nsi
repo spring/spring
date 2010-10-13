@@ -158,7 +158,7 @@ Function .onInit
 		; check if we need to exit some processes which may be using unitsync
 		${CheckExecutableRunning} "TASClient.exe" "TASClient"
 		${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
-		${CheckExecutableRunning} "SpringDownloader.exe" "Spring Downloader"
+		${CheckExecutableRunning} "Zero-K.exe" "Zero-K Lobby"
 		${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
 		${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	!endif
@@ -204,10 +204,10 @@ SectionGroup "Multiplayer battlerooms"
 	!undef INSTALL
 	SectionEnd
 
-	Section "Fast-join lobby (SpringDownloader)" SEC_SPRINGDOWNLOADER
+	Section "Zero-K lobby" SEC_ZERO_K_LOBBY
 		!define INSTALL
-			${!echonow} "Processing: springDownloader"
-			!include "sections\springDownloader.nsh"
+			${!echonow} "Processing: zeroK"
+			!include "sections\zeroK.nsh"
 		!undef INSTALL
 	SectionEnd
 SectionGroupEnd
@@ -312,7 +312,7 @@ Section Uninstall
 	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\archivemover.nsh"
 	!include "sections\portable.nsh"
-	!include "sections\springDownloader.nsh"
+	!include "sections\zeroK.nsh"
 	!include "sections\tasServer.nsh"
 	!insertmacro DeleteSkirmishAI "AAI"
 	!insertmacro DeleteSkirmishAI "KAIK"
