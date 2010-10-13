@@ -303,7 +303,7 @@ void HangHandler(bool simhang)
 void HangDetector() {
 	while (keepRunning) {
 		// increase multiplier during game load to prevent false positives e.g. during pathing
-		const int hangTimeMultiplier = CrashHandler::gameLoading? 3 : 1;
+		const int hangTimeMultiplier = CrashHandler::gameLoading ? 3 : 1;
 		const spring_time hangtimeout = spring_msecs(spring_tomsecs(hangTimeout) * hangTimeMultiplier);
 
 		spring_time curwdt = spring_gettime();
@@ -330,14 +330,13 @@ void HangDetector() {
 void InstallHangHandler() {
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
-	int hangTimeoutMS = configHandler->Get("HangTimeout", 0);
+	int hangTimeoutSecs = configHandler->Get("HangTimeout", 0);
 	CrashHandler::gameLoading = false;
 	// HangTimeout = -1 to force disable hang detection
-	if (hangTimeoutMS >= 0) {
-		if (hangTimeoutMS == 0) {
-			hangTimeoutMS = 10;
-		}
-		hangTimeout = spring_secs(hangTimeoutMS);
+	if (hangTimeoutSecs >= 0) {
+		if (hangTimeoutSecs == 0)
+			hangTimeoutSecs = 10;
+		hangTimeout = spring_secs(hangTimeoutSecs);
 		hangdetectorthread = new boost::thread(&HangDetector);
 	}
 	InitializeSEH();
