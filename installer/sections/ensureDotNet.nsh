@@ -1,6 +1,6 @@
 !include "include\checkDotNetInstalled.nsh"
 
-Function EnsureSpringDownloaderDotNetVersion
+Function EnsureZeroKDotNetVersion
 	StrCpy $R7 "3.5"
 
 	Push "$R7"
@@ -8,7 +8,7 @@ Function EnsureSpringDownloaderDotNetVersion
 
 	Pop $0
 	${If} $0 != 0 ; required or newer version is not installed
-		Push "SpringDownloader"
+		Push "Zero-K Lobby"
 		Push "$R7"
 		Call InsufficientDotNet
 	${EndIf}
