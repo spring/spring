@@ -300,6 +300,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		OUTPUT
 			${myClassesStubFile}
 		COMMAND "${CMAKE_COMMAND}"
+			"-E" "remove_directory" "${myJavaBuildDir}"
+		COMMAND "${CMAKE_COMMAND}"
 			"-E" "make_directory" "${myJavaBuildDir}"
 		COMMAND "${JAVA_COMPILE}"
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
