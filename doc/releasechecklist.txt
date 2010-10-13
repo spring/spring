@@ -10,11 +10,11 @@ Binary packages
 
 1) cherry pick a whole lot of stuff / or ensure code I want to release is in some branch one way or another
 2) write / update changelog
-3) bump version
-4) tag
-5) post release version bump
-6) push
-7) trigger build of the tag in buildbot (can put tag name in revision field)
+3) "bump version to 0.82.6" (rts/Game/GameVersion.cpp)
+4) `git tag -a -m "0.82.6 release" 0.82.6`
+5) "post release version bump" (rts/Game/GameVersion.cpp)
+6) `git push --tags origin 0.82-branch`
+7) trigger build of the tag in buildbot (can put tag name in revision field, do not set branch (as it is currently an issue for buildbot when translating stack trace))
 8) write news post
 9) once 7) is finished, upload to SF
 10) post news post
@@ -28,17 +28,21 @@ Source packages
 Unfortunately they have to be made manually at this moment (that's what I did for 0.82.0-3).
 It's planned to have buildbot generate them.
 
-Build source package using installer/make_source_package.sh
+Build source packages:
+git checkout 0.82.6
+./installer/make_source_package.sh
 
 Portable package
 ----------------
 
 One way to make it is (really, *really* needs to be improved & automated):
 
-1) install in wine (might use installer.exe /S, unattended install mode), do not touch the install (don't run anything in it)
-2) add empty springsettings.cfg and springlobby.conf in the dir
+1) install in wine (might use installer.exe /S, unattended install mode), do not touch the install (don't run anything in it), use dir: "C:\Program Files\spring-0.82.6\"
+2) add empty springsettings.cfg and springlobby.conf in the dir, if you did not choose portable option in the installer
 3) then rename that dir to spring-VERSION (see previous portable package and update this file :-))
-4) zip that dir and upload
+4) zip that dir and upload:
+	cd ~/.wine/drive_c/Program\ Files/
+	7z a spring_0.82.6_portable.7z spring-0.82.6
 
 Enforcing on server
 -------------------
