@@ -1,7 +1,7 @@
 !ifdef INSTALL
 	SetOutPath "$INSTDIR"
 
-	File /r "..\installer\downloads\Zero-K.exe"
+	File "/oname=Zero-K.exe" "..\installer\downloads\setup.exe"
 
 	Call EnsureZeroKDotNetVersion
 

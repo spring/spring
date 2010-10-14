@@ -197,7 +197,7 @@ SectionGroupEnd
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
 	!define INSTALL
-		${!echonow} "Processing section: springlobby"
+		${!echonow} "Processing: springlobby"
 		!include "sections\springlobby.nsh"
 	!undef INSTALL
 	SectionEnd
