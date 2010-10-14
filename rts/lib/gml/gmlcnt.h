@@ -1,5 +1,5 @@
 // GML - OpenGL Multithreading Library
-// for Spring http://spring.clan-sy.com
+// for Spring http://springrts.com
 // Author: Mattias "zerver" Radeskog
 // (C) Ware Zerver Tech. http://zerver.net
 // Ware Zerver Tech. licenses this library
