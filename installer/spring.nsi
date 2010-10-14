@@ -14,7 +14,7 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro VersionCompare
 
 ; HM NIS Edit Wizard helper defines
-!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\Spring.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
@@ -74,7 +74,7 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
-InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
+InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" "Path"
 ;ShowInstDetails show ;fix graphical glitch
 ;ShowUnInstDetails show ;fix graphical glitch
 
@@ -285,7 +285,8 @@ SectionEnd
 Section -Post
 	${!echonow} "Processing: Registry entries"
 	WriteUninstaller "$INSTDIR\uninst.exe"
-	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\springclient.exe"
+	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\Spring.exe"
+	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\spring.exe"
