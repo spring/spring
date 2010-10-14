@@ -69,7 +69,7 @@ setup (
 	description = 'TODO',
 	author = 'Clan SY',
 	author_email = 'taspring-linux@lolut.utbm.info',
-	url = 'http://spring.clan-sy.com/',
+	url = 'http://springrts.com/',
 	long_description = '''TODO''',
 	ext_modules = [unitsync]
 )

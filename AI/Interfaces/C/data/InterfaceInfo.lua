@@ -35,7 +35,7 @@ local infos = {
 	},
 	{
 		key    = 'url',
-		value  = 'http://spring.clan-sy.com/wiki/AIInterface:C',
+		value  = 'http://springrts.com/wiki/AIInterface:C',
 		desc   = 'URL with more detailed info about the AI',
 	},
 	{

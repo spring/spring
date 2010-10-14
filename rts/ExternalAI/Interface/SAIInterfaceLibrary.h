@@ -56,7 +56,7 @@ extern "C" {
 
 /**
  * [string]
- * example: "http://spring.clan-sy.com/wiki/AIInterface:C"
+ * example: "http://springrts.com/wiki/AIInterface:C"
  */
 #define AI_INTERFACE_PROPERTY_URL                    "url"
 
