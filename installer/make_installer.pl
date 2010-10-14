@@ -89,7 +89,7 @@ system("sh", "installer/springlobby_download.sh");
 chdir("$installerDir/downloads");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
 system("wget", "-N", "http://www.springlobby.info/installer/springsettings.exe");
-system("wget", "-N", "-O", "Zero-K.exe", "http://zero-k.info/lobby/setup.exe");
+system("wget", "-N", "http://zero-k.info/lobby/setup.exe");
 chdir("$installerDir/..");
 
 
