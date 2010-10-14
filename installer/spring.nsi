@@ -14,7 +14,7 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro VersionCompare
 
 ; HM NIS Edit Wizard helper defines
-!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\Spring.exe"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\spring.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
@@ -86,7 +86,6 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" "Path"
 !include "include\aiHelpers.nsh"
 
 !include "sections\ensureDotNet.nsh"
-
 
 Function .onInit
 
@@ -277,7 +276,7 @@ SectionEnd
 Section -Post
 	${!echonow} "Processing: Registry entries"
 	WriteUninstaller "$INSTDIR\uninst.exe"
-	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\Spring.exe"
+	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\spring.exe"
 	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
