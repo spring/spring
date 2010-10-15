@@ -346,7 +346,7 @@ void CInMapDraw::Draw(void)
 	glEnable(GL_TEXTURE_2D);
 	va->DrawArrayTC(GL_QUADS); //! draw point markers 
 
-	if (visibleLabels.size() > 0) {
+	if (!visibleLabels.empty()) {
 		font->SetColors(); //! default
 
 		//! draw point labels

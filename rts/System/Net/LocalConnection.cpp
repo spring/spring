@@ -5,6 +5,8 @@
 #include <boost/format.hpp>
 
 #include "Exception.h"
+#include "ProtocolDef.h"
+#include "System/LogOutput.h"
 
 namespace netcode {
 
@@ -30,6 +32,11 @@ CLocalConnection::~CLocalConnection()
 
 void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> data)
 {
+	if (!ProtocolDef::instance()->IsValidPacket(data->data, data->length)) {
+		logOutput.Print("ERROR: Discarding invalid packet: ID %d, LEN %d", (data->length > 0) ? (int)data->data[0] : -1, data->length);
+		return; // having this check here makes it easier to find networking bugs also when testing locally
+	}
+
 	dataSent += data->length;
 	boost::mutex::scoped_lock scoped_lock(Mutex[OtherInstance()]);
 	Data[OtherInstance()].push_back(data);

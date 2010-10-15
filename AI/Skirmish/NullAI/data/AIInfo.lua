@@ -35,7 +35,7 @@ local infos = {
 	},
 	{
 		key    = 'url',
-		value  = 'http://spring.clan-sy.com/wiki/AI:NullAI',
+		value  = 'http://springrts.com/wiki/AI:NullAI',
 		desc   = 'URL with more detailed info about the AI',
 	},
 	{

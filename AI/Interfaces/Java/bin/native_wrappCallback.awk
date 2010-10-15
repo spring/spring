@@ -47,8 +47,8 @@ function doWrapp(funcIndex_dw) {
 	paramListC_dw = funcParamListC[funcIndex_dw];
 	doWrapp_dw = 1;
 
+	fullName_dw = funcFullName[funcIndex_dw];
 	if (doWrapp_dw) {
-		fullName_dw = funcFullName[funcIndex_dw];
 		metaInf_dw  = funcMetaInf[funcIndex_dw];
 		
 		if (match(metaInf_dw, /ARRAY:/)) {
@@ -63,6 +63,8 @@ function doWrapp(funcIndex_dw) {
 		if (fullName_dw == "Engine_handleCommand") {
 			doWrapp_dw = 0;
 		}
+	} else {
+		print("Java-AIInterface: NOTE: native level: Callback: intentionally not wrapped: " fullName_dw);
 	}
 
 	return doWrapp_dw;

@@ -65,10 +65,11 @@ protected:
 	terrain::Terrain *renderer;
 
 	struct InfoMap {
-		InfoMap ();
-		~InfoMap ();
-		int w,h;
-		unsigned char *data;
+		InfoMap();
+		~InfoMap();
+		int w;
+		int h;
+		unsigned char* data;
 	};
 
 	GLuint minimapTexture;

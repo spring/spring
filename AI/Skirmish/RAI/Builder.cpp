@@ -92,8 +92,7 @@ cBuilder::~cBuilder()
 //			*l<<"\n ERROR!";
 	}
 
-	if( BP != 0 )
-		delete BP;
+	delete BP;
 	delete PM;
 }
 
@@ -440,13 +439,13 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				for(set<TerrainMapMobileType*>::iterator iM=UDR->RBMobile.begin(); iM!=UDR->RBMobile.end(); iM++)
 					if( G->TM->GetAlternativeSector(U->area,iS,*iM)->S->position.distance2D(G->TM->sector[iS].position) < 700.0 )
 						deletion.insert(*iM);
-				while( deletion.size() > 0 )
+				while( !deletion.empty() )
 				{
 					UDR->RBMobile.erase(*deletion.begin());
 					deletion.erase(*deletion.begin());
 				}
 			}
-			if( UDR->RBImmobile.size() > 0 )
+			if( !(UDR->RBImmobile.empty()) )
 			{
 				float3 position = cb->GetUnitPos(unit);
 				G->CorrectPosition(position);
@@ -455,7 +454,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				for(set<TerrainMapImmobileType*>::iterator iM=UDR->RBImmobile.begin(); iM!=UDR->RBImmobile.end(); iM++)
 					if( G->TM->GetClosestSector(*iM,iS)->position.distance2D(G->TM->sector[iS].position) < 700.0 )
 						deletion.insert(*iM);
-				while( deletion.size() > 0 )
+				while( !deletion.empty() )
 				{
 					UDR->RBImmobile.erase(*deletion.begin());
 					deletion.erase(*deletion.begin());

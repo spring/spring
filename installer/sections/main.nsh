@@ -22,6 +22,12 @@
 	File "${MINGWLIBS_DIR}\dll\vorbis.dll"
 	File "${MINGWLIBS_DIR}\dll\ogg.dll"
 	File "${MINGWLIBS_DIR}\dll\libgcc_s_dw2-1.dll"
+
+	; http://msdn.microsoft.com/en-us/library/abx4dbyh(VS.71).aspx
+	; on that page, see:
+	; "What is the difference between msvcrt.dll and msvcr71.dll?"
+	File "${MINGWLIBS_DIR}\dll\MSVCR71.dll"
+
 	; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
 	File "${MINGWLIBS_DIR}\dll\SDL.dll"
 
@@ -76,7 +82,6 @@
 	; Remove SelectionEditor, it has been integrated into SpringLobby and SpringSettings
 	Delete "$INSTDIR\SelectionEditor.exe"
 	Delete "$INSTDIR\MSVCP71.dll"
-	Delete "$INSTDIR\MSVCR71.dll"
 	Delete "$INSTDIR\zlibwapi.dll"
 
   ; AI Interfaces
@@ -148,6 +153,7 @@
 	Delete "$INSTDIR\ogg.dll"
 
 	Delete "$INSTDIR\libgcc_s_dw2-1.dll"
+	Delete "$INSTDIR\MSVCR71.dll"
 
 
 	Delete "$INSTDIR\PALETTE.PAL"
@@ -197,7 +203,7 @@
 	MessageBox MB_YESNO|MB_ICONQUESTION "Do you want me to completely remove all spring related files?$\n\
 			All maps, mods, screenshots and your settings will be removed. $\n\
 			CAREFULL: ALL CONTENTS OF YOUR SPRING INSTALLATION DIRECTORY WILL BE REMOVED!" \
-			IDNO skip_purge
+			/SD IDNO IDNO skip_purge
 		RmDir /r "$INSTDIR"
 		Delete "$LOCALAPPDATA\springsettings.cfg"
 		Delete "$APPDATA\springlobby.conf"

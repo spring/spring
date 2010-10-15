@@ -9,8 +9,8 @@
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
 	${EndIf}
-	${If} ${SectionIsSelected} ${SEC_SPRINGDOWNLOADER}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk" "$INSTDIR\SpringDownloader.exe"
+	${If} ${SectionIsSelected} ${SEC_ZERO_K_LOBBY}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk" "$INSTDIR\Zero-K.exe"
 	${EndIf}
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
@@ -30,7 +30,7 @@
 
 	; Shortcuts
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringLobby.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"

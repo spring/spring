@@ -27,6 +27,15 @@ extern "C" {
 #include <jni.h>
 
 /**
+ * Takes a JNI function return value, and returns a short description for it.
+ * This can be used for getting a human readable string describing the
+ * return value of functions like AttachCurrentThread() and CreateJavaVM().
+ *
+ * @return  a short description for a JNI function return value
+ */
+const char* jniUtil_getJniRetValDescription(const jint retVal);
+
+/**
  * Handles a possible JNI/Java exception.
  * In case an exception is present, the supplied error message is written to
  * the log file, and the whole exception info is written to stderr.

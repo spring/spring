@@ -178,8 +178,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/LoadSaveAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/CommandFinishedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyCreatedAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyDamagedAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyDestroyedAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyFinishedAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyEnterLOSAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyEnterRadarAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/EnemyLeaveLOSAIEvent.java"
@@ -297,6 +299,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 	add_custom_command(
 		OUTPUT
 			${myClassesStubFile}
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "make_directory" "${myJavaBuildDir}"
 		COMMAND "${JAVA_COMPILE}"

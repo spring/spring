@@ -19,7 +19,7 @@ void LuaTable::Print(int depth) const {
 		tabs += "\t";
 	}
 
-	for (std::map<LuaTable*, LuaTable*>::const_iterator it = TblTblPairs.begin(); it != TblTblPairs.end(); it++) {
+	for (std::map<LuaTable*, LuaTable*>::const_iterator it = TblTblPairs.begin(); it != TblTblPairs.end(); ++it) {
 		std::cout << tabs << "k<tbl>: ";
 		std::cout << std::endl;
 			it->first->Print(depth + 1);
@@ -27,14 +27,14 @@ void LuaTable::Print(int depth) const {
 		std::cout << std::endl;
 			it->second->Print(depth + 1);
 	}
-	for (std::map<LuaTable*, std::string>::const_iterator it = TblStrPairs.begin(); it != TblStrPairs.end(); it++) {
+	for (std::map<LuaTable*, std::string>::const_iterator it = TblStrPairs.begin(); it != TblStrPairs.end(); ++it) {
 		std::cout << tabs << "k<tbl>: ";
 		std::cout << std::endl;
 			it->first->Print(depth + 1);
 		std::cout << tabs << "v<str>: " << it->second;
 		std::cout << std::endl;
 	}
-	for (std::map<LuaTable*, int>::const_iterator it = TblIntPairs.begin(); it != TblIntPairs.end(); it++) {
+	for (std::map<LuaTable*, int>::const_iterator it = TblIntPairs.begin(); it != TblIntPairs.end(); ++it) {
 		std::cout << tabs << "k<tbl>: ";
 		std::cout << std::endl;
 			it->first->Print(depth + 1);
@@ -42,35 +42,35 @@ void LuaTable::Print(int depth) const {
 		std::cout << std::endl;
 	}
 
-	for (std::map<std::string, LuaTable*>::const_iterator it = StrTblPairs.begin(); it != StrTblPairs.end(); it++) {
+	for (std::map<std::string, LuaTable*>::const_iterator it = StrTblPairs.begin(); it != StrTblPairs.end(); ++it) {
 		std::cout << tabs << "k<str>: " << it->first;
 		std::cout << ", v<tbl>: ";
 		std::cout << std::endl;
 			it->second->Print(depth + 1);
 	}
-	for (std::map<std::string, std::string>::const_iterator it = StrStrPairs.begin(); it != StrStrPairs.end(); it++) {
+	for (std::map<std::string, std::string>::const_iterator it = StrStrPairs.begin(); it != StrStrPairs.end(); ++it) {
 		std::cout << tabs << "k<str>: " << it->first;
 		std::cout << ", v<str>: " << it->second;
 		std::cout << std::endl;
 	}
-	for (std::map<std::string, int>::const_iterator it = StrIntPairs.begin(); it != StrIntPairs.end(); it++) {
+	for (std::map<std::string, int>::const_iterator it = StrIntPairs.begin(); it != StrIntPairs.end(); ++it) {
 		std::cout << tabs << "k<str>: " << it->first;
 		std::cout << ", v<int>: " << it->second;
 		std::cout << std::endl;
 	}
 
-	for (std::map<int, LuaTable*>::const_iterator it = IntTblPairs.begin(); it != IntTblPairs.end(); it++) {
+	for (std::map<int, LuaTable*>::const_iterator it = IntTblPairs.begin(); it != IntTblPairs.end(); ++it) {
 		std::cout << tabs << "k<int>: " << it->first;
 		std::cout << ", v<tbl>: ";
 		std::cout << std::endl;
 			it->second->Print(depth + 1);
 	}
-	for (std::map<int, std::string>::const_iterator it = IntStrPairs.begin(); it != IntStrPairs.end(); it++) {
+	for (std::map<int, std::string>::const_iterator it = IntStrPairs.begin(); it != IntStrPairs.end(); ++it) {
 		std::cout << tabs << "k<int>: " << it->first;
 		std::cout << ", v<str>: " << it->second;
 		std::cout << std::endl;
 	}
-	for (std::map<int, int>::const_iterator it = IntIntPairs.begin(); it != IntIntPairs.end(); it++) {
+	for (std::map<int, int>::const_iterator it = IntIntPairs.begin(); it != IntIntPairs.end(); ++it) {
 		std::cout << tabs << "k<int>: " << it->first;
 		std::cout << ", v<int>: " << it->second;
 		std::cout << std::endl;
@@ -215,7 +215,7 @@ LuaParser::LuaParser(): luaState(lua_open()), root(NULL) {
 	luaL_openlibs(luaState);
 }
 LuaParser::~LuaParser() {
-	for (std::map<std::string, LuaTable*>::iterator it = tables.begin(); it != tables.end(); it++) {
+	for (std::map<std::string, LuaTable*>::iterator it = tables.begin(); it != tables.end(); ++it) {
 		delete it->second;
 	}
 

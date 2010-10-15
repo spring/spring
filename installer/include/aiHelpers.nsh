@@ -18,11 +18,11 @@
 			!ifdef AI_INT_BUILT
 				SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
 				!ifdef USE_BUILD_DIR
-					${!echonow} "Processing: AI Interface - ${aiIntName}: installing from '${BUILD_DIR}\AI\Interfaces\${aiIntName}\'"
+					${!echonow} "Processing: AI Interface - ${aiIntName}: installing from $\'${BUILD_DIR}\AI\Interfaces\${aiIntName}\$\'"
 					File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
 					File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
 				!else
-					${!echonow} "Processing: AI Interface - ${aiIntName}: installing from '${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\'"
+					${!echonow} "Processing: AI Interface - ${aiIntName}: installing from $\'${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\$\'"
 					File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
 				!endif
 				!undef AI_INT_BUILT
@@ -72,11 +72,11 @@
 			!ifdef SKIRM_AI_BUILT
 				SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
 				!ifdef USE_BUILD_DIR
-					${!echonow} "Processing: Skirmish AI - ${skirAiName}: installing from '${BUILD_DIR}\AI\Skirmish\${skirAiName}\'"
+					${!echonow} "Processing: Skirmish AI - ${skirAiName}: installing from $\'${BUILD_DIR}\AI\Skirmish\${skirAiName}\$\'"
 					File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Skirmish\${skirAiName}\*.*"
 					File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
 				!else
-					${!echonow} "Processing: Skirmish AI - ${skirAiName}: installing from '${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\'"
+					${!echonow} "Processing: Skirmish AI - ${skirAiName}: installing from $\'${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\$\'"
 					File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
 				!endif
 				!undef SKIRM_AI_BUILT

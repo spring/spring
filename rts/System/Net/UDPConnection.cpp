@@ -96,8 +96,11 @@ Packet::Packet(const unsigned char* data, unsigned length)
 		naks.reserve(nakType);
 		for (int i = 0; i != nakType; ++i)
 		{
-			if (buf.Remaining() >= sizeof(naks[i]))
+			if (buf.Remaining() >= sizeof(naks[i])) {
+				if(naks.size() <= i)
+					naks.push_back(0);
 				buf.Unpack(naks[i]);
+			}
 			else
 				break;
 		}
@@ -320,66 +323,21 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		std::copy(wpi->second->data, wpi->second->data+wpi->second->length, std::back_inserter(buf));
 		waitingPackets.erase(wpi);
 
-		for (unsigned pos = 0; pos < buf.size();)
-		{
-			char msgid = buf[pos];
-			ProtocolDef* proto = ProtocolDef::instance();
-			if (proto->IsAllowed(msgid))
-			{
-				unsigned msglength = 0;
-				if (proto->HasFixedLength(msgid))
-				{
-					msglength = proto->GetLength(msgid);
-				}
-				else
-				{
-					int length_t = proto->GetLength(msgid);
+		for (unsigned pos = 0; pos < buf.size();) {
+			unsigned char *bufp = &buf[pos];
+			unsigned msglength = buf.size() - pos;
 
-					// got enough data in the buffer to read the length of the message?
-					if (buf.size() > pos - length_t)
-					{
-						// yes => read the length (as byte or word)
-						if (length_t == -1)
-						{
-							msglength = buf[pos+1];
-						}
-						else if (length_t == -2)
-						{
-							msglength = *(uint16_t*)(&buf[pos+1]);
-						}
-					}
-					else
-					{
-						// no => store the fragment and break
-						fragmentBuffer = new RawPacket(&buf[pos], buf.size() - pos);
-						break;
-					}
-				}
-
-				// if this isn't true we'll loop infinitely while filling up memory
-				assert(msglength != 0);
-
-				// got the complete message in the buffer?
-				if (buf.size() >= pos + msglength)
-				{
-					// yes => add to msgQueue and keep going
-					if(proto->IsComplete(&buf[pos], msglength))
-						msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(&buf[pos], msglength)));
-					else
-						logOutput.Print("ERROR: Discarding incoming incomplete packet: ID %d, LEN %d", (msglength > 0) ? (int)buf[pos] : -1, msglength);
-					pos += msglength;
-				}
-				else
-				{
-					// no => store the fragment and break
-					fragmentBuffer = new RawPacket(&buf[pos], buf.size() - pos);
+			int pktlength = ProtocolDef::instance()->PacketLength(bufp, msglength);
+			if (ProtocolDef::instance()->IsValidLength(pktlength, msglength)) { // this returns false for zero/invalid pktlength
+				msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(bufp, pktlength)));
+				pos += pktlength;
+			} else {
+				if (pktlength >= 0) { // partial packet in buffer
+					fragmentBuffer = new RawPacket(bufp, msglength);
 					break;
 				}
-			}
-			else
-			{
-				// error
-				pos++;
+				logOutput.Print("ERROR: Discarding incoming invalid packet: ID %d, LEN %d", (int)*bufp, pktlength);
+				++pos; // if the packet is invalid, skip a single byte until we encounter a good packet
 			}
 		}
 	}
@@ -413,8 +371,8 @@ void UDPConnection::Flush(const bool forced)
 			sendMore = outgoing.GetAverage(true) <= gc->linkBandwidth || gc->linkBandwidth <= 0 || partialPacket || forced;
 			if (!outgoingData.empty() && sendMore) {
 				packetList::iterator it = outgoingData.begin();
-				if(!partialPacket && !ProtocolDef::instance()->IsComplete((*it)->data, (*it)->length)) {
-					logOutput.Print("ERROR: Discarding outgoing incomplete packet: ID %d, LEN %d", ((*it)->length > 0) ? (int)(*it)->data[0] : -1, (*it)->length);
+				if(!partialPacket && !ProtocolDef::instance()->IsValidPacket((*it)->data, (*it)->length)) {
+					logOutput.Print("ERROR: Discarding outgoing invalid packet: ID %d, LEN %d", ((*it)->length > 0) ? (int)(*it)->data[0] : -1, (*it)->length);
 					outgoingData.pop_front();
 				}
 				else {

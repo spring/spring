@@ -14,7 +14,7 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro VersionCompare
 
 ; HM NIS Edit Wizard helper defines
-!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SpringClient.exe"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\spring.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
@@ -74,7 +74,7 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
-InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
+InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" "Path"
 ;ShowInstDetails show ;fix graphical glitch
 ;ShowUnInstDetails show ;fix graphical glitch
 
@@ -86,7 +86,6 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 !include "include\aiHelpers.nsh"
 
 !include "sections\ensureDotNet.nsh"
-
 
 Function .onInit
 
@@ -158,7 +157,7 @@ Function .onInit
 		; check if we need to exit some processes which may be using unitsync
 		${CheckExecutableRunning} "TASClient.exe" "TASClient"
 		${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
-		${CheckExecutableRunning} "SpringDownloader.exe" "Spring Downloader"
+		${CheckExecutableRunning} "Zero-K.exe" "Zero-K Lobby"
 		${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
 		${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	!endif
@@ -199,15 +198,15 @@ SectionGroupEnd
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
 	!define INSTALL
-		${!echonow} "Processing section: springlobby"
+		${!echonow} "Processing: springlobby"
 		!include "sections\springlobby.nsh"
 	!undef INSTALL
 	SectionEnd
 
-	Section "Fast-join lobby (SpringDownloader)" SEC_SPRINGDOWNLOADER
+	Section "Zero-K lobby" SEC_ZERO_K_LOBBY
 		!define INSTALL
-			${!echonow} "Processing: springDownloader"
-			!include "sections\springDownloader.nsh"
+			${!echonow} "Processing: zeroK"
+			!include "sections\zeroK.nsh"
 		!undef INSTALL
 	SectionEnd
 SectionGroupEnd
@@ -277,7 +276,8 @@ SectionEnd
 Section -Post
 	${!echonow} "Processing: Registry entries"
 	WriteUninstaller "$INSTDIR\uninst.exe"
-	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\springclient.exe"
+	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\spring.exe"
+	WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\spring.exe"
@@ -312,7 +312,7 @@ Section Uninstall
 	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\archivemover.nsh"
 	!include "sections\portable.nsh"
-	!include "sections\springDownloader.nsh"
+	!include "sections\zeroK.nsh"
 	!include "sections\tasServer.nsh"
 	!insertmacro DeleteSkirmishAI "AAI"
 	!insertmacro DeleteSkirmishAI "KAIK"

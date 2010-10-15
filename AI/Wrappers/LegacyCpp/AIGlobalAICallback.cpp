@@ -28,7 +28,11 @@ CAIGlobalAICallback::CAIGlobalAICallback(const SSkirmishAICallback* sAICallback,
 		IGlobalAICallback(), sAICallback(sAICallback), skirmishAIId(skirmishAIId),
 		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
-CAIGlobalAICallback::~CAIGlobalAICallback() {}
+CAIGlobalAICallback::~CAIGlobalAICallback() {
+
+	delete wrappedAICallback;
+	delete wrappedAICheats;
+}
 
 
 IAICallback* CAIGlobalAICallback::GetAICallback() {
