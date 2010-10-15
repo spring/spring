@@ -295,12 +295,14 @@ void CSm3ReadMap::LoadFeatureData()
 	}*/
 }
 
-CSm3ReadMap::InfoMap::InfoMap () {
-	w = h = 0;
-	data = 0;
+CSm3ReadMap::InfoMap::InfoMap() :
+	  w(0)
+	, h(0)
+	, data(NULL)
+{
 }
-CSm3ReadMap::InfoMap::~InfoMap () {
-	if(data) delete[] data;
+CSm3ReadMap::InfoMap::~InfoMap() {
+	delete[] data;
 }
 
 // Bitmaps (such as metal map, grass map, ...), handling them with a string as type seems flexible...

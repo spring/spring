@@ -17,13 +17,13 @@
 
 CBaseTreeDrawer* treeDrawer = 0;
 
-CBaseTreeDrawer::CBaseTreeDrawer(void)
+CBaseTreeDrawer::CBaseTreeDrawer()
+	: drawTrees(true)
 {
-	drawTrees = true;
 	baseTreeDistance = configHandler->Get("TreeRadius", (unsigned int) (5.5f * 256)) / 256.0f;
 }
 
-CBaseTreeDrawer::~CBaseTreeDrawer(void) {
+CBaseTreeDrawer::~CBaseTreeDrawer() {
 	configHandler->Set("TreeRadius", (unsigned int) (baseTreeDistance * 256));
 }
 
@@ -44,22 +44,26 @@ static void AddTrees(CBaseTreeDrawer* td)
 	}
 }
 
-CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
+CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer()
 {
 	CBaseTreeDrawer* td = NULL;
 
 	try {
-		if(configHandler->Get("3DTrees", 1))
+		if (configHandler->Get("3DTrees", 1)) {
 			td = new CAdvTreeDrawer();
+		}
 	} catch (content_error& e) {
-		if (e.what()[0] != '\0')
+		if (e.what()[0] != '\0') {
 			logOutput.Print("Error: %s", e.what());
+		}
 		logOutput.Print("TreeDrawer: Fallback to BasicTreeDrawer.");
-		delete td;
+		// td can not be != NULL here
+		//delete td;
 	}
 
-	if (!td)
+	if (!td) {
 		td = new CBasicTreeDrawer();
+	}
 
 	AddTrees(td);
 	return td;
@@ -72,7 +76,7 @@ int CBaseTreeDrawer::AddFallingTree(float3 pos, float3 dir, int type)
 	return 0;
 }
 
-void CBaseTreeDrawer::DrawShadowPass(void)
+void CBaseTreeDrawer::DrawShadowPass()
 {
 }
 
@@ -86,8 +90,10 @@ void CBaseTreeDrawer::Update() {
 
 	GML_STDMUTEX_LOCK(tree); // Update
 
-	for(std::vector<GLuint>::iterator i=delDispLists.begin(); i!=delDispLists.end(); ++i)
+	std::vector<GLuint>::iterator i;
+	for (i = delDispLists.begin(); i != delDispLists.end(); ++i) {
 		glDeleteLists(*i, 1);
+	}
 	delDispLists.clear();
 }
 

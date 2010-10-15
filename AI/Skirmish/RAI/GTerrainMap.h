@@ -76,10 +76,8 @@ struct TerrainMapMobileType
 	};
 	~TerrainMapMobileType()
 	{
-//		if( PF != 0 )
-//			delete PF;
-		if( sector != 0 )
-			delete [] sector;
+//		delete PF;
+		delete [] sector;
 		for(int i=0; i<areaSize; i++)
 			delete area[i];
 	};

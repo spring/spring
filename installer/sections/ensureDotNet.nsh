@@ -1,6 +1,6 @@
 !include "include\checkDotNetInstalled.nsh"
 
-Function EnsureSpringDownloaderDotNetVersion
+Function EnsureZeroKDotNetVersion
 	StrCpy $R7 "3.5"
 
 	Push "$R7"
@@ -8,7 +8,7 @@ Function EnsureSpringDownloaderDotNetVersion
 
 	Pop $0
 	${If} $0 != 0 ; required or newer version is not installed
-		Push "SpringDownloader"
+		Push "Zero-K Lobby"
 		Push "$R7"
 		Call InsufficientDotNet
 	${EndIf}
@@ -29,7 +29,7 @@ Function InsufficientDotNet
 
 	MessageBox MB_YESNO \
 			"The .NET runtime library v$R5 or newer is required for $R6. $1. Do you wish to download and install it?" \
-			IDYES true IDNO false
+			/SD IDNO IDYES true IDNO false
 	true:
 		Call DownloadAndInstallLatestDotNet
 		Goto next

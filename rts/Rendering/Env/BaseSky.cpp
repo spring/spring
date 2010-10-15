@@ -16,15 +16,15 @@
 
 CBaseSky* sky = NULL;
 
-CBaseSky::CBaseSky(void)
+CBaseSky::CBaseSky()
+	: dynamicSky(false)
+	, cloudDensity(0)
+	, wireframe(false)
+	, fogStart(0)
 {
-	wireframe = false;
-	dynamicSky = false;
-	cloudDensity = 0;
-	fogStart = 0;
 }
 
-CBaseSky::~CBaseSky(void)
+CBaseSky::~CBaseSky()
 {
 }
 
@@ -33,19 +33,23 @@ CBaseSky* CBaseSky::GetSky()
 	CBaseSky* sky = NULL;
 
 	try {
-		if(!mapInfo->atmosphere.skyBox.empty())
+		if(!mapInfo->atmosphere.skyBox.empty()) {
 			sky = new CSkyBox("maps/" + mapInfo->atmosphere.skyBox);
-		else if(configHandler->Get("AdvSky",1))
+		} else if(configHandler->Get("AdvSky", 1)) {
 			sky = new CAdvSky();
+		}
 	} catch (content_error& e) {
-		if (e.what()[0] != '\0')
+		if (e.what()[0] != '\0') {
 			logOutput.Print("Error: %s", e.what());
+		}
 		logOutput.Print("Sky: Fallback to BasicSky.");
-		delete sky;
+		// sky can not be != NULL here
+		//delete sky;
 	}
 
-	if (!sky)
+	if (!sky) {
 		sky = new CBasicSky();
+	}
 
 	return sky;
 }

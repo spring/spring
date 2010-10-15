@@ -38,6 +38,7 @@ CGameSetup::CGameSetup()
 	, minSpeed(0.0f)
 	, hostDemo(false)
 	, numDemoPlayers(0)
+	, gameStartDelay(0)
 	, noHelperAIs(0)
 {}
 

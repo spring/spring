@@ -46,15 +46,24 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 		ai(NULL),
 		initialized(false),
 		released(false),
-		c_callback(NULL) {}
+		callback(NULL),
+		cheats(NULL),
+		c_callback(NULL),
+		info(NULL)
+{
+}
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
 		skirmishAIId(skirmishAIId),
+		teamId(-1),
 		cheatEvents(false),
 		ai(NULL),
 		initialized(false),
 		released(false),
-		c_callback(NULL)
+		callback(NULL),
+		cheats(NULL),
+		c_callback(NULL),
+		info(NULL)
 {
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 

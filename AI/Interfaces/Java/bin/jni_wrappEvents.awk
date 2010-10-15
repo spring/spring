@@ -481,6 +481,8 @@ function saveMember(ind_mem_s, member_s) {
 	if (doWrapp) {
 		sub(",", "", $4);
 		evtsTopicNameValue[$2] = $4;
+	} else {
+		print("Java-AIInterface: NOTE: JNI level: Events: intentionally not wrapped: " $2);
 	}
 }
 

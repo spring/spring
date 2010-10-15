@@ -21,9 +21,8 @@ package com.springrts.ai.oo;
  * An exception of this type may be thrown while from an AI callback method.
  *
  * @author  hoijui
- * @version 0.1
  */
-public class CallbackAIException extends Exception implements AIException {
+public class CallbackAIException extends RuntimeException implements AIException {
 
 	private String methodName;
 	private int    errorNumber;

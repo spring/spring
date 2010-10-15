@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 ## author:  Kloot
 ## date:    September 12, 2010
 ## purpose: UBB-colorizes lines from IRC/lobby logs
@@ -8,8 +10,12 @@ import sys
 
 LOG_LINE_PREFIX  = "[b][color=#%s]<%s>[/color][/b]"
 DEV_NAME_PATTERN = re.compile("<[a-zA-Z0-9\[\]_]*>")
+## Pattern for pidgin, this is an example line:
+## (16:07:52) user: hello world!
+## (server messages have to be cleaned by hand)
+#DEV_NAME_PATTERN = re.compile(" [a-zA-Z0-9\[\]_]*: ")
 DEV_NAME_LIST    = ["abma", "BrainDamage", "hoijui", "jK", "Kloot", "Tobi", "zerver"]
-DEV_NAME_COLORS  = ["000000", "FF0000", "00FF00", "0000FF", "FF00FF", "FFFF00", "00FFFF"]
+DEV_NAME_COLORS  = ["000000", "CC0000", "00BF40", "0040BF", "CC00CC", "DD6000", "00BFFF"]
 
 def ReadLines(logName):
 	try:
@@ -58,7 +64,6 @@ def ProcessLines(lines):
 		color = (npair[0] < len(DEV_NAME_COLORS) and DEV_NAME_COLORS[ npair[0] ]) or "F00F00"
 		nname = npair[1]
 		nline = (LOG_LINE_PREFIX % (color, nname)) + line[match.span()[1]: ] + '\n'
-
 		nlines += nline
 
 	return nlines
@@ -68,6 +73,7 @@ def Main(argc, argv):
 		WriteLines(argv[1], ProcessLines(ReadLines(argv[1])))
 	else:
 		print "usage: python %s <log.txt>" % argv[0]
+		print "writes to <log.txt>.colorized"
 
 if (__name__ == "__main__"):
 	Main(len(sys.argv), sys.argv)

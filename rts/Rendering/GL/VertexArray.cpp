@@ -32,8 +32,8 @@ CVertexArray::~CVertexArray()
 
 void CVertexArray::Initialize()
 {
-	drawArrayPos=drawArray;
-	stripArrayPos=stripArray;
+	drawArrayPos  = drawArray;
+	stripArrayPos = stripArray;
 }
 
 bool CVertexArray::IsReady() const
@@ -43,8 +43,9 @@ bool CVertexArray::IsReady() const
 
 void CVertexArray::EndStrip()
 {
-	if((char*)stripArrayPos > (char*)stripArraySize - 4 * sizeof(unsigned int))
+	if ((char*)stripArrayPos > ((char*)stripArraySize - 4 * sizeof(unsigned int))) {
 		EnlargeStripArray();
+	}
 
 	*stripArrayPos++ = ((char*)drawArrayPos - (char*)drawArray);
 }

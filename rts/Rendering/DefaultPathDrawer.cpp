@@ -232,7 +232,7 @@ void DefaultPathDrawer::Draw(const CPathManager* pm) const {
 	const std::map<unsigned int, CPathManager::MultiPath*>& pathMap = pm->pathMap;
 	std::map<unsigned int, CPathManager::MultiPath*>::const_iterator pi;
 
-	for (pi = pathMap.begin(); pi != pathMap.end(); pi++) {
+	for (pi = pathMap.begin(); pi != pathMap.end(); ++pi) {
 		const CPathManager::MultiPath* path = pi->second;
 
 		glBegin(GL_LINE_STRIP);

@@ -372,7 +372,7 @@ struct SSaveEvent {
  */
 struct SEnemyCreatedEvent {
 	int enemy;
-}; // EVENT_ENEMY_CREATED INTERFACES:Unit(enemy),Enemy(enemy)
+}; //$ EVENT_ENEMY_CREATED INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent whenever an enemy unit is fully built, and contains the
@@ -381,7 +381,7 @@ struct SEnemyCreatedEvent {
  */
 struct SEnemyFinishedEvent {
 	int enemy;
-}; // EVENT_ENEMY_FINISHED INTERFACES:Unit(enemy),Enemy(enemy)
+}; //$ EVENT_ENEMY_FINISHED INTERFACES:Unit(enemy),Enemy(enemy)
 
 #ifdef	__cplusplus
 } // extern "C"
