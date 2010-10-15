@@ -1,5 +1,16 @@
 Spring change log
 
+0.82.6.1:
+Engine / General:
+ - prevent false hang detection trigger
+
+Engine / Rendering:
+ - fix occasional ATI crash
+
+Installer:
+ - rename SpringDownloader to Zero-K Lobby
+ - re-add MSVCR71.dll
+
 0.82.6:
 Engine / General:
  - fix various bugs related to mid-game join
