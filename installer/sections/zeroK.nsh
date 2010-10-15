@@ -7,7 +7,6 @@
 
 !else
 
-	ExecWait "$INSTDIR\Zero-K.exe -uninstall"
 	Delete "$INSTDIR\Zero-K.exe"
 
 !endif ; !INSTALL
