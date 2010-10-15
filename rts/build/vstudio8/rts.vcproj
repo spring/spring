@@ -630,7 +630,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="sdlmain.lib dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="../../../game/spring.exe"
+				OutputFile="..\..\..\dist\spring-dedicated.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -722,7 +722,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="sdlmain.lib dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
-				OutputFile="..\..\..\dist\spring.exe"
+				OutputFile="..\..\..\dist\spring-dedicated.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
 				IgnoreDefaultLibraryNames="libc.lib;msvcrt.lib"
@@ -4785,26 +4785,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4883,6 +4863,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
