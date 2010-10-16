@@ -1240,6 +1240,9 @@ void SpringApp::Shutdown()
 	UnloadExtensions();
 	delete mouseInput;
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
+#if !defined(HEADLESS)
+	SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_JOYSTICK);
+#endif
 	SDL_Quit();
 	delete gs;
 	delete gu;
