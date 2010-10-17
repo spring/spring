@@ -5,6 +5,9 @@
 # * AI_FIND_QUIETLY
 # * DEPS_AI_ALL
 #
+# Functions and macros defined in this file:
+# * AIMessage
+#
 
 add_definitions(-DBUILDING_AI)
 
@@ -58,9 +61,22 @@ set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
 MakeGlobal(SKIRMISH_AI_LIBS SKIRMISH_AI_DATA SKIRMISHAI_FIND_QUIETLY)
 
 
-# Wrappers have to come first cause the Interfaces use the CUtils Wrapper too
-Add_Subdirectory(Wrappers)
+# Print a message, but only if we are allowed to speak.
+macro    (AIMessage type msg)
+	if    (NOT AI_FIND_QUIETLY)
+		message(${type} "${msg}")
+	endif (NOT AI_FIND_QUIETLY)
+endmacro (AIMessage type msg)
+
+
+find_package(AWK)
+
+# CUtils has to come first, because the Interfaces use it too
+if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
+	Add_Subdirectory(Wrappers/CUtils)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
 Add_Subdirectory(Interfaces)
+Add_Subdirectory(Wrappers)
 Add_Subdirectory(Skirmish)
 
 set(DEPS_AI_ALL

@@ -19,6 +19,10 @@
 
 #include "InterfaceDefines.h"
 #include "JavaBridge.h"
+
+// generated at build time
+#include "CallbackFunctionPointerBridge.h"
+
 #include "CUtils/Util.h"
 #include "CUtils/SimpleLog.h"
 
@@ -207,49 +211,46 @@ static struct SSkirmishAILibrary* mySSkirmishAILibrary = NULL;
 
 
 enum LevelOfSupport CALLING_CONV proxy_skirmishAI_getLevelOfSupportFor(
-		int teamId,
+		const char* aiShortName, const char* aiVersion,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
 	return LOS_Unknown;
 }
 
-int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallback* aiCallback) {
+int CALLING_CONV proxy_skirmishAI_init(int skirmishAIId, const struct SSkirmishAICallback* aiCallback) {
 
 	int ret = -1;
 
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 0);
-	const char* const shortName = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
-			SKIRMISH_AI_PROPERTY_SHORT_NAME);
-	const char* const version = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
-			SKIRMISH_AI_PROPERTY_VERSION);
-	const char* const className = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
-			JAVA_SKIRMISH_AI_PROPERTY_CLASS_NAME);
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 1);
+	const char* const shortName = aiCallback->SkirmishAI_Info_getValueByKey(
+			skirmishAIId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
+	const char* const version = aiCallback->SkirmishAI_Info_getValueByKey(
+			skirmishAIId, SKIRMISH_AI_PROPERTY_VERSION);
+	const char* const className = aiCallback->SkirmishAI_Info_getValueByKey(
+			skirmishAIId, JAVA_SKIRMISH_AI_PROPERTY_CLASS_NAME);
 
 	if (className != NULL) {
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 2);
-		ret = java_initSkirmishAIClass(shortName, version, className, teamId) ? 0 : 1;
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 3);
+		ret = java_initSkirmishAIClass(shortName, version, className, skirmishAIId) ? 0 : 1;
 	}
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 4);
 	bool ok = (ret == 0);
 	if (ok) {
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 5);
-		ret = java_skirmishAI_init(teamId, aiCallback);
+		funcPntBrdg_addCallback(skirmishAIId, aiCallback);
+		ret = java_skirmishAI_init(skirmishAIId, aiCallback);
 	}
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 6);
 
 	return ret;
 }
 
-int CALLING_CONV proxy_skirmishAI_release(int teamId) {
-	return java_skirmishAI_release(teamId);
+int CALLING_CONV proxy_skirmishAI_release(int skirmishAIId) {
+
+	int failure = java_skirmishAI_release(skirmishAIId);
+	funcPntBrdg_removeCallback(skirmishAIId);
+	return failure;
 }
 
 int CALLING_CONV proxy_skirmishAI_handleEvent(
-		int teamId, int topic, const void* data) {
-	return java_skirmishAI_handleEvent(teamId, topic, data);
+		int skirmishAIId, int topicId, const void* data) {
+	return java_skirmishAI_handleEvent(skirmishAIId, topicId, data);
 }
 
 
@@ -257,7 +258,6 @@ EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
 		const char* const shortName,
 		const char* const version) {
 
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary %u", 0);
 	if (mySSkirmishAILibrary == NULL) {
 		mySSkirmishAILibrary =
 				(struct SSkirmishAILibrary*) malloc(sizeof(struct SSkirmishAILibrary));
@@ -272,7 +272,6 @@ EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
 		mySSkirmishAILibrary->release = &proxy_skirmishAI_release;
 		mySSkirmishAILibrary->handleEvent = &proxy_skirmishAI_handleEvent;
 	}
-//simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary %u", 10);
 
 	return mySSkirmishAILibrary;
 }

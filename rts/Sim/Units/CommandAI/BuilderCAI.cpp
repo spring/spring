@@ -444,7 +444,7 @@ void CBuilderCAI::SlowUpdate()
 								// tell everything within the radius of the soon-to-be buildee
 								// to get out of the way; using the model radius is not correct
 								// because this can be shorter than half the footprint diagonal
-								helper->BuggerOff(build.pos, std::max(radius, fpRadius), false);
+								helper->BuggerOff(build.pos, std::max(radius, fpRadius), false, true, NULL);
 								NonMoving();
 							}
 						}

@@ -187,7 +187,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 
 	if( waterIsAVoid )
 	{
-		if( mobileType.size() == 0 ) // Work-Around(Mod FF): buildings use canFloat instead of canFly to represent their ability to fly in space
+		if( mobileType.empty() ) // Work-Around(Mod FF): buildings use canFloat instead of canFly to represent their ability to fly in space
 			waterIsAVoid = false;
 		else
 			waterIsHarmful = true; // If there is no water then this will prevent water units from being used

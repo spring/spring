@@ -28,7 +28,7 @@ struct SSkirmishAICallback;
 class CAIAICallback : public IAICallback {
 public:
 	CAIAICallback();
-	CAIAICallback(int teamId, const SSkirmishAICallback* sAICallback);
+	CAIAICallback(int skirmishAIId, const SSkirmishAICallback* sAICallback);
 
 	void SendTextMsg(const char* text, int zone);
 	void SetLastMsgPos(float3 pos);
@@ -42,9 +42,11 @@ public:
 
 	int GetCurrentFrame();
 
+	int GetMySkirmishAIId();
 	int GetMyTeam();
 	int GetMyAllyTeam();
 	int GetPlayerTeam(int player);
+	int GetTeams();
 	const char* GetTeamSide(int teamId);
 	int GetTeamAllyTeam(int teamId);
 
@@ -247,7 +249,7 @@ public:
 	std::map<std::string, std::string> GetMyOptionValues();
 
 private:
-	int teamId;
+	int skirmishAIId;
 	const SSkirmishAICallback* sAICallback;
 
 	void init();
@@ -265,6 +267,7 @@ private:
 	CCommandQueue** unitCurrentCommandQueues;
 	FeatureDef** featureDefs;
 	int* featureDefFrames;
+	float3 startPos;
 };
 
 #endif // _AIAICALLBACK_H

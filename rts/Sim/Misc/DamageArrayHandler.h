@@ -14,16 +14,15 @@ class CDamageArrayHandler : public boost::noncopyable
 	CR_DECLARE(CDamageArrayHandler);
 
 public:
-	CDamageArrayHandler(void);
-	~CDamageArrayHandler(void);
+	CDamageArrayHandler();
+	~CDamageArrayHandler();
 
-	int GetTypeFromName(std::string name);
+	int GetTypeFromName(std::string name) const;
 
-	int GetNumTypes() const { return numTypes; }
+	int GetNumTypes() const { return typeList.size(); }
 	const std::vector<std::string>& GetTypeList() const { return typeList; }
 
 private:
-	int numTypes;
 	std::map<std::string, int> name2type;
 	std::vector<std::string> typeList;
 };

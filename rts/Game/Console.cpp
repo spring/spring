@@ -23,8 +23,9 @@ Console& Console::Instance()
 
 void Console::AddCommandReceiver(const std::string& name, CommandReceiver* rec)
 {
-	if (commandMap.find(name) != commandMap.end())
+	if (commandMap.find(name) != commandMap.end()) {
 		logOutput.Print("Overwriting command: %s", name.c_str());
+	}
 	commandMap[name] = rec;
 }
 
@@ -39,12 +40,11 @@ bool Console::ExecuteAction(const Action& action)
 		}
 		return true;
 	}
-	
+
 	std::map<const std::string, CommandReceiver*>::iterator it = commandMap.find(action.command);
-	if (it == commandMap.end())
+	if (it == commandMap.end()) {
 		return false;
-	else
-	{
+	} else {
 		it->second->PushAction(action);
 		return true;
 	}

@@ -514,12 +514,11 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("<There are no active Skirmish AIs in this game>");
 		}
 	}
-	else if (cmd == "team"){
-		if (gs->cheatEnabled)
-		{
-			int team=atoi(action.extra.c_str());
-			if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
-				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, team));
+	else if (cmd == "team") {
+		if (gs->cheatEnabled) {
+			const int teamId = atoi(action.extra.c_str());
+			if (teamHandler->IsValidTeam(teamId)) {
+				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 			}
 		}
 	}
@@ -528,10 +527,10 @@ bool CGame::ActionPressed(const Action& action,
 			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 	}
 	else if ((cmd == "specteam") && gu->spectating) {
-		const int team = atoi(action.extra.c_str());
-		if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
-			gu->myTeam = team;
-			gu->myAllyTeam = teamHandler->AllyTeam(team);
+		const int teamId = atoi(action.extra.c_str());
+		if (teamHandler->IsValidTeam(teamId)) {
+			gu->myTeam = teamId;
+			gu->myAllyTeam = teamHandler->AllyTeam(teamId);
 		}
 		CLuaUI::UpdateTeams();
 	}
@@ -896,11 +895,13 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "controlunit") {
-		Command c;
-		c.id=CMD_STOP;
-		c.options=0;
-		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
-		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
+		if (!gu->spectating) {
+			Command c;
+			c.id=CMD_STOP;
+			c.options=0;
+			selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
+			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
+		}
 	}
 	else if (cmd == "showstandard") {
 		gd->DisableExtraTexture();
@@ -914,16 +915,23 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "showmetalmap") {
 		gd->SetMetalTexture(readmap->metalMap->metalMap,&readmap->metalMap->extractionMap.front(),readmap->metalMap->metalPal,false);
 	}
-	else if (cmd == "showpathmap") {
-		gd->SetPathMapTexture();
+
+	else if (cmd == "showpathsquares") {
+		gd->TogglePathSquaresTexture();
 	}
+	else if (cmd == "showpathheat") {
+		if (gs->cheatEnabled) {
+			gd->TogglePathHeatTexture();
+		}
+	}
+	else if (cmd == "showpathcost") {
+		if (gs->cheatEnabled) {
+			gd->TogglePathCostTexture();
+		}
+	}
+
 	else if (cmd == "togglelos") {
 		gd->ToggleLosTexture();
-	}
-	else if (cmd == "showheat") {
-		if (gs->cheatEnabled) {
-			gd->ToggleHeatMapTexture();
-		}
 	}
 	else if (cmd == "sharedialog") {
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)

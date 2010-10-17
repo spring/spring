@@ -522,7 +522,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	commands.clear();
 	forceLayoutUpdate = false;
 
-	if ((luaUI != NULL) && luaUI->HasLayoutButtons()) {
+	if (luaUI && luaUI->HasLayoutButtons()) {
 		if (LayoutCustomIcons(useSelectionPage)) {
 			if (validInCommand) {
 				RevertToCmdDesc(cmdDesc, defCmd, samePage);
@@ -656,7 +656,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	CSelectedUnits::AvailableCommandsStruct ac;
 	ac = selectedUnits.GetAvailableCommands();
 	std::vector<CommandDescription> cmds = ac.commands;
-	if (cmds.size() > 0) {
+	if (!cmds.empty()) {
 		ConvertCommands(cmds);
 		AppendPrevAndNext(cmds);
 	}
@@ -1648,7 +1648,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
-	if (command.find("reload") == 0) {
+	if (command == "reload") {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
 			// NOTE: causes a SEGV through RunCallIn()
 			logOutput.Print("Can not reload from within LuaUI, yet");
@@ -1670,6 +1670,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 				logOutput.Print("Reloading failed\n");
 			}
 		}
+		LayoutIcons(false);
 	}
 	else if (command == "disable") {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
@@ -1682,6 +1683,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 			LoadConfig("ctrlpanel.txt");
 			logOutput.Print("Disabled LuaUI\n");
 		}
+		LayoutIcons(false);
 	}
 	else {
 		if (luaUI != NULL) {
@@ -1690,8 +1692,6 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 			logOutput.Print("LuaUI is not loaded\n");
 		}
 	}
-
-	LayoutIcons(false);
 
 	return;
 }
@@ -3711,7 +3711,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						for (; ui != selectedUnits.selectedUnits.end(); ++ui) {
 							temp = (*ui)->commandAI->GetOverlapQueued(c);
 							std::vector<Command>::iterator ti = temp.begin();
-							for (; ti != temp.end(); ti++) {
+							for (; ti != temp.end(); ++ti) {
 								cv.insert(cv.end(),*ti);
 							}
 						}

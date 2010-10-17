@@ -53,19 +53,30 @@ ENDIF (WIN32)
 
 
 ### Build the executable
-ADD_EXECUTABLE(spring ${engineSources} ${ENGINE_ICON} ${engineHeaders})
-TARGET_LINK_LIBRARIES(spring ${engineLibraries})
+ADD_EXECUTABLE(engine-default ${engineSources} ${ENGINE_ICON} ${engineHeaders})
+TARGET_LINK_LIBRARIES(engine-default ${engineLibraries})
+SET_TARGET_PROPERTIES(engine-default PROPERTIES OUTPUT_NAME "spring")
 
 
 ### Install the executable
-INSTALL(TARGETS spring DESTINATION ${BINDIR})
+INSTALL(TARGETS engine-default DESTINATION ${BINDIR})
 
 #IF    (MINGW)
-#	SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
+#	SET_TARGET_PROPERTIES(engine-default PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
 #	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 #ENDIF (MINGW)
 
-# Only install spring (default) executable & dependencies
-# use case: make install-spring
-CreateEngineBuildInstallTarget(spring)
+# Only build & install spring (default) executable & dependencies
+# use cases:
+# * make spring-default
+# * make install-spring-default
+CreateEngineBuildAndInstallTarget(default)
 
+# Create shortcuts
+# * make spring
+# * make install-spring
+add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+add_dependencies(spring spring-default) # This also works for custom targets
+
+add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+add_dependencies(install-spring install-spring-default) # This also works for custom targets

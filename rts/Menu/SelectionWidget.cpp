@@ -86,7 +86,7 @@ void SelectionWidget::ShowMapList()
 	const std::vector<std::string> &arFound = archiveScanner->GetMaps();
 
 	std::set<std::string> mapSet; // use a set to sort them
-	for (std::vector<std::string>::const_iterator it = arFound.begin(); it != arFound.end(); it++) {
+	for (std::vector<std::string>::const_iterator it = arFound.begin(); it != arFound.end(); ++it) {
 		mapSet.insert((*it).c_str());
 	}
 

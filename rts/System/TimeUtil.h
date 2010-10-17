@@ -1,11 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef TIMEUTIL_H
-#define TIMEUTIL_H
+#ifndef TIME_UTIL_H
+#define TIME_UTIL_H
 
-#include "Util.h"
-#include <string.h>
-#include <time.h>
+#include <string>
+#include <ctime>
 
 #ifdef __GNUC__
 #define __time64_t time_t
@@ -33,4 +32,4 @@ public:
 	static std::string GetCurrentTimeStr();
 };
 
-#endif // TIMEUTIL_H
+#endif // TIME_UTIL_H

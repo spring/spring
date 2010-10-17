@@ -2881,7 +2881,7 @@ Unitsync:
 - Adds support for using arbitary team colors, teamcolor textures for 3do need to be slightly changed to accomendate this (see the base texture archive to see how its done)
 - Increased max camera zoom out (zooming to far can cause slowdowns/graphical glitches)
 - Added Radar group AI from colorblind: It notifies the player of incoming enemy units.
-- Added custom explosion generator: It can be enabled using "explosiongenerator=custom:SomeExplosionGeneratorName" in the weapon TDF. See the wiki page http://spring.clan-sy.com/wiki/CustomExplosionGenerators for more info.
+- Added custom explosion generator: It can be enabled using "explosiongenerator=custom:SomeExplosionGeneratorName" in the weapon TDF. See the wiki page http://springrts.com/wiki/CustomExplosionGenerators for more info.
 - Tab will now bring zoom out to show all map in any camera mode, tab again zooms back to the mouse cursor.
 - Added GetGravity(), GetUnitDefHeight() and GetUnitDefRadius() to AI interface
 - Mod can now be selected in the single player menu.

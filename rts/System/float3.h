@@ -8,7 +8,6 @@
 #include "BranchPrediction.h"
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg_cond.h"
-#include "ExternalAI/Interface/SAIFloat3.h"
 #include "FastMath.h"
 
 
@@ -56,28 +55,12 @@ public:
 	inline float3(const float x,const float y,const float z) : x(x),y(y),z(z) {};
 
 	/**
-	 * @brief Constructor
-	 * @param sAIFloat3 SAIFLoat3 sAIFLoat3
+	 * @brief float[3] Constructor
+	 * @param f float[3] to assign
 	 *
-	 * With parameters, initializes x/y/z to the given SAIFLoat3.
+	 * With parameters, initializes x/y/z to the given float[3].
 	 */
-	inline float3(const SAIFloat3& sAIFloat3) : x(sAIFloat3.x), y(sAIFloat3.y), z(sAIFloat3.z) {};
-
-	/**
-	 * @brief operator =
-	 * @param sAIFloat3 to copy the values from
-	 * @return const float3
-	 *
-	 * Simple default assignment operator
-	 */
-	inline float3& operator= (const SAIFloat3& sAIFloat3) {
-
-		x = sAIFloat3.x;
-		y = sAIFloat3.y;
-		z = sAIFloat3.z;
-
-		return *this;
-	}
+	inline float3(const float f[3]) : x(f[0]), y(f[1]), z(f[2]) {};
 
 	/**
 	 * @brief Destructor
@@ -98,6 +81,19 @@ public:
 		z = f[2];
 
 		return *this;
+	}
+
+	/**
+	 * @brief Copy x, y, z into float[3]
+	 * @param f float[3] to copy values into
+	 *
+	 * Sets the float[3] to this float3.
+	 */
+	inline void copyInto(float f[3]) const {
+
+		f[0] = x;
+		f[1] = y;
+		f[2] = z;
 	}
 
 
@@ -590,8 +586,6 @@ public:
 
 	bool IsInBounds() const; //!< Check if this vector is in bounds without clamping x and z
 	bool CheckInBounds(); //!< Check if this vector is in bounds and clamp x and z if not
-
-	SAIFloat3 toSAIFloat3() const;
 
 	float x; ///< x component
 	float y; ///< y component

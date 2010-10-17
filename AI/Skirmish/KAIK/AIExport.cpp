@@ -23,7 +23,7 @@
 // AI interface stuff
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
-#include "LegacyCpp/AIGlobalAI.h"
+#include "LegacyCpp/AIAI.h"
 #include "Game/GameVersion.h"
 
 // KAIK stuff
@@ -31,19 +31,19 @@
 
 #include <map>
 
-// teamId -> AI map
-static std::map<int, CAIGlobalAI*> myAIs;
+// skirmishAIId -> AI map
+static std::map<int, CAIAI*> myAIs;
 
-// callbacks for all the teams controlled by this Skirmish AI
-static std::map<int, const struct SSkirmishAICallback*> teamId_callback;
+// callbacks for all the instances controlled by this Skirmish AI
+static std::map<int, const struct SSkirmishAICallback*> skirmishAIId_callback;
 
 
 
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
-	int teamId,
-	const char* engineVersionString, int engineVersionNumber,
-	const char* aiInterfaceShortName, const char* aiInterfaceVersion
-) {
+		const char* aiShortName, const char* aiVersion,
+		const char* engineVersionString, int engineVersionNumber,
+		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
+
 	const char* springVersion = SpringVersion::GetFull().c_str();
 	const int cmp = strcmp(engineVersionString, springVersion);
 
@@ -54,50 +54,52 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 	return LOS_None;
 }
 
-EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
+EXPORT(int) init(int skirmishAIId, const struct SSkirmishAICallback* callback) {
 
-	if (myAIs.count(teamId) > 0) {
-		// the map already has an AI for this team.
-		// raise an error, since it's probably a mistake if we're trying
-		// to reinitialise a team that already had init() called on it.
+	if (myAIs.count(skirmishAIId) > 0) {
+		// the map has no AI for this skirmishAIId.
+		// raise an error, since it's probably a mistake if we are trying to
+		// release a skirmishAIId that's not initialized.
 		return -1;
 	}
 
-	teamId_callback[teamId] = callback;
+	skirmishAIId_callback[skirmishAIId] = callback;
 
-	// CAIGlobalAI is the Legacy C++ wrapper
-	myAIs[teamId] = new CAIGlobalAI(teamId, new CKAIK());
+	// CAIAI is the Legacy C++ wrapper
+	myAIs[skirmishAIId] = new CAIAI(new CKAIK());
 
 	// signal: everything went ok
 	return 0;
 }
 
-EXPORT(int) release(int teamId) {
+EXPORT(int) release(int skirmishAIId) {
 
-	if (myAIs.count(teamId) == 0) {
-		// no AI for this team, raise an error
+	if (myAIs.count(skirmishAIId) == 0) {
+		// no AI for this skirmishAIId, raise an error
 		return -1;
 	}
 
-	delete myAIs[teamId];
-	myAIs[teamId] = NULL;
-	myAIs.erase(teamId);
+	delete myAIs[skirmishAIId];
+	myAIs[skirmishAIId] = NULL;
+	myAIs.erase(skirmishAIId);
+
+	skirmishAIId_callback.erase(skirmishAIId);
 
 	// signal: everything went ok
 	return 0;
 }
 
-EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
+EXPORT(int) handleEvent(int skirmishAIId, int topic, const void* data) {
 
-	if (teamId < 0) {
-		// events sent to team -1 will always be to the AI object itself,
-		// not to a particular team.
-	} else if (myAIs.count(teamId) > 0) {
+	if (skirmishAIId < 0) {
+		// events sent to skirmishAIId -1 will allways be to the AI object itself,
+		// not to a particular skirmishAIId.
+	} else if (myAIs.count(skirmishAIId) > 0) {
 		// allow the AI instance to handle the event.
-		return myAIs[teamId]->handleEvent(topic, data);
+		return myAIs[skirmishAIId]->handleEvent(topic, data);
 	}
 
-	// no AI for that team, so return error.
+	// no AI for that skirmishAIId, so return error.
 	return -1;
 }
 
@@ -107,6 +109,10 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 // methods from here on are for AI internal use only //
 ///////////////////////////////////////////////////////
 
-const char* aiexport_getVersion(int teamId) {
-	return teamId_callback[teamId]->Clb_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_VERSION);
+const char* aiexport_getVersion() {
+
+	// this is a bit unclean, but should not be a problem
+	const int skirmishAIId = skirmishAIId_callback.begin()->first;
+
+	return skirmishAIId_callback[skirmishAIId]->SkirmishAI_Info_getValueByKey(skirmishAIId, SKIRMISH_AI_PROPERTY_VERSION);
 }

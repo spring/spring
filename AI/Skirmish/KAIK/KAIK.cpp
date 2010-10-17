@@ -56,7 +56,7 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 	ai = new AIClasses(callback); ai->Init();
 
 	std::string verMsg =
-		std::string(AI_VERSION(team)) + (ai->Initialized()? " initialized successfully!": " failed to initialize");
+		std::string(AI_VERSION) + (ai->Initialized()? " initialized successfully!": " failed to initialize");
 	std::string logMsg =
 		ai->Initialized()? ("logging events to " + ai->logger->GetLogName()): "not logging events";
 
@@ -204,8 +204,15 @@ void CKAIK::EnemyFinished(int enemyUnitID) { ai->tm->EnemyFinished(enemyUnitID);
 
 void CKAIK::GotChatMsg(const char* msg, int player) {
 	if (ai->Initialized()) {
-		msg = msg;
 		player = player;
+
+		if ((msg = strstr(msg, "KAIK::")) == NULL) {
+			return;
+		}
+
+		if ((msg = strstr(msg, "ThreatMap::DBG")) != NULL) {
+			ai->tm->ToggleVisOverlay();
+		}
 	}
 }
 
@@ -265,22 +272,17 @@ void CKAIK::Update() {
 	if (ai->Initialized()) {
 		const int frame = ai->cb->GetCurrentFrame();
 
-		// call economy tracker update routine
 		ai->econTracker->frameUpdate(frame);
 		ai->dgunConHandler->Update(frame);
 
 		if ((frame - ai->InitFrame()) == 1) {
-			// init defense matrix
+			// ai->tm->Init();
 			ai->dm->Init();
 		}
 
-		if ((frame - ai->InitFrame()) > 60) {
-			// call buildup manager and unit handler (idle) update routine
-			ai->bu->Update(frame);
-			ai->uh->IdleUnitUpdate(frame);
-		}
+		ai->bu->Update(frame);
+		ai->uh->IdleUnitUpdate(frame);
 
-		// call attack handler and unit handler (metal maker) update routines
 		ai->ah->Update(frame);
 		ai->uh->MMakerUpdate(frame);
 		ai->ct->Update(frame);

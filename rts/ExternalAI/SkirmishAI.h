@@ -18,8 +18,7 @@ struct SSkirmishAICallback;
  */
 class CSkirmishAI {
 public:
-	CSkirmishAI(int teamId, int skirmishAIId,
-		const SkirmishAIKey& skirmishAIKey,
+	CSkirmishAI(int skirmishAIId, int teamId, const SkirmishAIKey& skirmishAIKey,
 		const SSkirmishAICallback* c_callback);
 	~CSkirmishAI();
 
@@ -27,6 +26,12 @@ public:
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
 	 */
 	int HandleEvent(int topic, const void* data) const;
+
+	/**
+	 * Initialize the AI instance.
+	 * This calls the native init() method, the InitAIEvent is sent afterwards.
+	 */
+	void Init();
 
 	/**
 	 * No events are forwarded to the Skirmish AI plugin
@@ -38,9 +43,10 @@ public:
 	void Dieing();
 
 private:
-	int teamId;
+	int skirmishAIId;
 	const SkirmishAIKey key;
 	const CSkirmishAILibrary* library;
+	const SSkirmishAICallback* callback;
 	const std::string timerName;
 	bool initOk;
 	bool dieing;

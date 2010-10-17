@@ -38,6 +38,7 @@ CGameSetup::CGameSetup()
 	, minSpeed(0.0f)
 	, hostDemo(false)
 	, numDemoPlayers(0)
+	, gameStartDelay(0)
 	, noHelperAIs(0)
 {}
 
@@ -393,6 +394,8 @@ bool CGameSetup::Init(const std::string& buf)
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
 	hostDemo    = !demoName.empty();
+
+	file.GetTDef(gameStartDelay, (unsigned int) 4, "GAME\\GameStartDelay");
 
 	file.GetDef(useLuaGaia,       "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");

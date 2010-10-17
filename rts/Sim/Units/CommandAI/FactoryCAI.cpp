@@ -18,6 +18,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"

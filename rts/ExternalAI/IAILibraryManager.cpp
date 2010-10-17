@@ -21,6 +21,13 @@ IAILibraryManager* IAILibraryManager::GetInstance() {
 	return myAILibraryManager;
 }
 
+void IAILibraryManager::Destroy() {
+
+	IAILibraryManager* tmp = myAILibraryManager;
+	myAILibraryManager = NULL;
+	delete tmp;
+}
+
 std::string fillUpTo(const std::string& str, unsigned int numChars) {
 
 	std::string filler = "";
@@ -42,7 +49,7 @@ void IAILibraryManager::OutputAIInterfacesInfo() {
 	std::cout << "# [Name]              [Version]" << std::endl;
 
 	T_interfaceSpecs::const_iterator key;
-	for (key=keys.begin(); key != keys.end(); key++) {
+	for (key = keys.begin(); key != keys.end(); ++key) {
 		std::cout << "  ";
 		std::cout << key->GetShortName() << fillUpTo(key->GetShortName(), 20);
 		std::cout << key->GetVersion() << fillUpTo(key->GetVersion(), 20)
@@ -57,7 +64,7 @@ SkirmishAIKey IAILibraryManager::ResolveSkirmishAIKey(
 
 	std::vector<SkirmishAIKey> fittingKeys
 			= FittingSkirmishAIKeys(skirmishAIKey);
-	if (fittingKeys.size() > 0) {
+	if (!fittingKeys.empty()) {
 		// look for the one with the highest version number,
 		// in case there are multiple fitting ones.
 		size_t bestIndex = 0;
@@ -87,7 +94,7 @@ void IAILibraryManager::OutputSkirmishAIInfo() {
 			"[Interface-name]    [Interface-version]" << std::endl;
 
 	T_skirmishAIKeys::const_iterator key;
-	for (key=keys.begin(); key != keys.end(); key++) {
+	for (key = keys.begin(); key != keys.end(); ++key) {
 		std::cout << "  ";
 		std::cout << key->GetShortName() << fillUpTo(key->GetShortName(), 20);
 		std::cout << key->GetVersion() << fillUpTo(key->GetVersion(), 20);

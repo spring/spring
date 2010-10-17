@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "Map/Ground.h"
 #include "System/myMath.h"
+#include "System/float3.h"
 #include "System/Matrix44f.h"
 #include "System/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
@@ -205,7 +206,7 @@ bool CCamera::InView(const float3& mins, const float3& maxs)
 	return false;
 }
 
-bool CCamera::InView(const float3 &p, float radius)
+bool CCamera::InView(const float3& p, float radius)
 {
 	const float3 t   = (p - pos);
 	const float  lsq = t.SqLength();
@@ -237,17 +238,17 @@ void CCamera::UpdateForward()
 }
 
 
-float3 CCamera::CalcPixelDir(int x, int y)
+float3 CCamera::CalcPixelDir(int x, int y) const
 {
-	float dx = float(x-globalRendering->viewPosX-globalRendering->viewSizeX/2)/globalRendering->viewSizeY * tanHalfFov * 2;
-	float dy = float(y-globalRendering->viewSizeY/2)/globalRendering->viewSizeY * tanHalfFov * 2;
+	float dx = float(x - globalRendering->viewPosX - globalRendering->viewSizeX / 2) / globalRendering->viewSizeY * tanHalfFov * 2;
+	float dy = float(y - globalRendering->viewSizeY / 2)                             / globalRendering->viewSizeY * tanHalfFov * 2;
 	float3 dir = forward - up * dy + right * dx;
 	dir.Normalize();
 	return dir;
 }
 
 
-float3 CCamera::CalcWindowCoordinates(const float3& objPos)
+float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 {
 	double winPos[3];
 	gluProject((GLdouble)objPos.x, (GLdouble)objPos.y, (GLdouble)objPos.z,

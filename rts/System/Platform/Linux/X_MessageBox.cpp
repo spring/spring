@@ -37,13 +37,14 @@ void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 	caption2[sizeof(caption2) - 2] = 0;
 	msg2[sizeof(msg2) - 2] = 0;
 
-   /* xmessage interprets some strings beginning with '-' as command-line
-	* options. To avoid this we make sure all strings we pass to it have
-	* newlines on the end. This is also useful for the fputs() case.
-	*
-	* kdialog and zenity always treat the argument after --error or --text
-	* as a non-option argument.
-    */
+	/*
+	 * xmessage interprets some strings beginning with '-' as command-line
+	 * options. To avoid this, we make sure all strings we pass to it have
+	 * newlines on the end. This is also useful for the fputs() case.
+	 *
+	 * kdialog and zenity always treat the argument after --error or --text
+	 * as a non-option argument.
+	 */
 
 	len = strlen(caption2);
 	if (len == 0 || caption2[len - 1] != '\n')
@@ -53,11 +54,10 @@ void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 	if (len == 0 || msg2[len - 1] != '\n')
 		strcat(msg2, "\n");
 
-	/* fork a child */
+	// fork a child
 	pid = fork();
 	switch (pid) {
-
-		case 0: /* child process */
+		case 0: // child process
 		{
 			const char* kde   = getenv("KDE_FULL_SESSION");
 			const char* gnome = getenv("GNOME_DESKTOP_SESSION_ID");
@@ -66,42 +66,51 @@ void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 			if (gnome) {
 				// --warning shows 2 buttons, so it should only be used with a true _warning_
 				// ie. one which allows you to continue/cancel execution
-// 				if (flags & MBF_EXCL) type = "--warning";
-				if (flags & MBF_INFO) type = "--info";
+//				if (flags & MBF_EXCL) {
+//					type = "--warning";
+//				}
+				if (flags & MBF_INFO) {
+					type = "--info";
+				}
 				execlp("zenity", "zenity", "--title", caption2, type, "--text", msg2, (char*)NULL);
 			}
 			if (kde && strstr(kde, "true")) {
-				if (flags & MBF_EXCL) type = "--sorry";
-				if (flags & MBF_INFO) type = "--msgbox";
+				if (flags & MBF_EXCL) {
+					type = "--sorry";
+				}
+				if (flags & MBF_INFO) {
+					type = "--msgbox";
+				}
 				execlp("kdialog", "kdialog", "--title", caption2, type, msg2, (char*)NULL);
 			}
 			execlp("xmessage", "xmessage", "-title", caption2, "-buttons", "OK:0", "-default", "OK", "-center", msg2, (char*)NULL);
 
-			/* if execution reaches here, it means execlp failed */
+			// if execution reaches here, it means execlp failed
 			_exit(EXIT_FAILURE);
 			break;
 		}
-		default: /* parent process */
+		default: // parent process
 		{
 			waitpid(pid, &status, 0);
-			if ((!WIFEXITED(status)) || (WEXITSTATUS(status) != 0)) /* ok button */
-			{
-
-			case -1: /* fork error */
-
-				/* I kept this basically the same as the original
-				console-only error reporting. */
-				if (flags & MBF_INFO)
-					fputs("Info: ", stderr);
-				else if (flags & MBF_EXCL)
-					fputs("Warning: ", stderr);
-				else
-					fputs("Error: ", stderr);
-				fputs(caption2, stderr);
-				fputs("  ", stderr);
-				fputs(msg2, stderr);
+			const bool okButton = (!WIFEXITED(status) || (WEXITSTATUS(status) != 0));
+			if (!okButton) {
+				break;
 			}
-
+		}
+		case -1: // fork error
+		{
+			// I kept this basically the same as the original
+			// console-only error reporting.
+			if (flags & MBF_INFO) {
+				fputs("Info: ", stderr);
+			} else if (flags & MBF_EXCL) {
+				fputs("Warning: ", stderr);
+			} else {
+				fputs("Error: ", stderr);
+			}
+			fputs(caption2, stderr);
+			fputs("  ", stderr);
+			fputs(msg2, stderr);
 			break;
 		}
 	}

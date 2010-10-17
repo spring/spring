@@ -40,6 +40,7 @@
 #include "System/myMath.h"
 #include "System/Vec2.h"
 
+#define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define DEBUG_OUTPUT 0
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
@@ -109,16 +110,8 @@ CR_REG_METADATA(CGroundMoveType, (
 		));
 
 
-static const unsigned int MAX_REPATH_FREQUENCY = 30;        // The minimum of frames between two full path-requests.
-static const float        MAX_OFF_PATH_FACTOR = 20;         // How far away from a waypoint a unit could be before a new path is requested.
-static const float        AVOIDANCE_STRENGTH = 2.0f;        // How strongly an object should be avoided. Raise this value to give some more margin.
 
 std::vector<int2> CGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
-
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 CGroundMoveType::CGroundMoveType(CUnit* owner):
 	AMoveType(owner),
@@ -175,8 +168,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	useMainHeading(false)
 {
 	if (owner) {
-		moveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
-		moveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
+		moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
+		moveSquareY = owner->pos.z / MIN_WAYPOINT_DISTANCE;
 	} else {
 		moveSquareX = 0;
 		moveSquareY = 0;
@@ -252,7 +245,7 @@ void CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(owner->pos);
 
 				currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
-				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(pathManager->GetPathResolution()));
+				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
 
 				if (!atGoal) {
 					if (!idling) {
@@ -266,8 +259,8 @@ void CGroundMoveType::Update()
 
 						#if (DEBUG_OUTPUT == 1)
 						logOutput.Print(
-							"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i, cd2wp < md2wp: %i)",
-							owner->id, pathId, atGoal, currentDistanceToWaypoint < MinDistanceToWaypoint()
+							"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i)",
+							owner->id, pathId, atGoal
 						);
 						#endif
 					}
@@ -351,7 +344,8 @@ void CGroundMoveType::Update()
 		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
 
-		// collision detection may have negated the position update
+		// CheckCollision() may have negated UpdateOwnerPos()
+		// (so that owner->pos is again equal to oldPos)
 		idling = (owner->speed.SqLength() < 1.0f);
 		oldPos = owner->pos;
 
@@ -703,29 +697,36 @@ void CGroundMoveType::ImpulseAdded(void)
 
 void CGroundMoveType::UpdateSkid(void)
 {
-	float3& speed = owner->speed;
-	float3& pos = owner->pos;
-	SyncedFloat3& midPos = owner->midPos;
+	ASSERT_SYNCED_FLOAT3(owner->midPos);
+
+	float3& speed  = owner->speed;
+	float3& pos    = owner->pos;
+	float3  midPos = owner->midPos;
+
+	const UnitDef* ud = owner->unitDef;
 
 	if (flying) {
 		speed.y += mapInfo->map.gravity;
-		if (midPos.y < 0)
+		if (midPos.y < 0.0f)
 			speed *= 0.95f;
 
-		float wh;
-		if(floatOnWater)
+		float wh = 0.0f;
+
+		if (floatOnWater)
 			wh = ground->GetHeight(midPos.x, midPos.z);
 		else
 			wh = ground->GetHeight2(midPos.x, midPos.z);
 
-		if (wh>midPos.y - owner->relMidPos.y) {
+		if (wh > (midPos.y - owner->relMidPos.y)) {
 			flying = false;
 			skidRotSpeed += (gs->randFloat() - 0.5f) * 1500; //*=0.5f+gs->randFloat();
 			midPos.y = wh + owner->relMidPos.y - speed.y * 0.5f;
 
-			const float impactSpeed = -speed.dot(ground->GetNormal(midPos.x, midPos.z));
+			const float impactSpeed = midPos.IsInBounds()?
+				-speed.dot(ground->GetNormal(midPos.x, midPos.z)):
+				-speed.dot(UpVector);
 
-			if (impactSpeed > owner->unitDef->minCollisionSpeed && owner->unitDef->minCollisionSpeed >= 0.0f) {
+			if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0.0f) {
 				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 			}
 		}
@@ -736,29 +737,33 @@ void CGroundMoveType::UpdateSkid(void)
 		// does not use OnSlope() because then it could stop on an invalid path
 		// location, and be teleported back.
 		const bool onSlope =
-			(ground->GetSlope(owner->midPos.x, owner->midPos.z) > owner->unitDef->movedata->maxSlope) &&
+			midPos.IsInBounds() &&
+			(ground->GetSlope(midPos.x, midPos.z) > ud->movedata->maxSlope) &&
 			(!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0.0f);
 
 		if (speedf < speedReduction && !onSlope) {
-			//stop skidding
+			// stop skidding
 			currentSpeed = 0.0f;
 			speed = ZeroVector;
 			skidding = false;
 			skidRotSpeed = 0.0f;
+
 			owner->physicalState = oldPhysState;
 			owner->moveType->useHeading = true;
 
 			const float rp = floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
 			skidRotSpeed2 = (rp - skidRotPos2) * 0.5f;
+
 			ChangeHeading(owner->heading);
 		} else {
 			if (onSlope) {
-				float3 dir = ground->GetNormal(midPos.x, midPos.z);
-				float3 normalForce = dir * dir.dot(UpVector * mapInfo->map.gravity);
-				float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
+				const float3 normal = ground->GetNormal(midPos.x, midPos.z);
+				const float3 normalForce = normal * normal.dot(UpVector * mapInfo->map.gravity);
+				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
+
 				speed += newForce;
 				speedf = speed.Length();
-				speed *= 1.0f - (0.1f * dir.y);
+				speed *= 1.0f - (0.1f * normal.y);
 			} else {
 				speed *= (speedf - speedReduction) / speedf;
 			}
@@ -780,15 +785,15 @@ void CGroundMoveType::UpdateSkid(void)
 		else
 			wh = ground->GetHeight2(pos.x, pos.z);
 
-		if (wh-pos.y < speed.y + mapInfo->map.gravity) {
+		if ((wh - pos.y) < (speed.y + mapInfo->map.gravity)) {
 			speed.y += mapInfo->map.gravity;
 			skidding = true; // flying requires skidding
 			flying = true;
-		} else if (wh-pos.y > speed.y) {
-			const float3& normal = ground->GetNormal(pos.x, pos.z);
+		} else if ((wh - pos.y) > speed.y) {
+			const float3& normal = (pos.IsInBounds())? ground->GetNormal(pos.x, pos.z): UpVector;
 			const float dot = speed.dot(normal);
 
-			if (dot > 0) {
+			if (dot > 0.0f) {
 				speed *= 0.95f;
 			} else {
 				speed += (normal * (fabs(speed.dot(normal)) + 0.1f)) * 1.9f;
@@ -799,10 +804,14 @@ void CGroundMoveType::UpdateSkid(void)
 	CalcSkidRot();
 
 	midPos += speed;
-	pos = midPos - owner->frontdir * owner->relMidPos.z
-			- owner->updir * owner->relMidPos.y
-			- owner->rightdir * owner->relMidPos.x;
+	pos = midPos -
+		owner->frontdir * owner->relMidPos.z -
+		owner->updir    * owner->relMidPos.y -
+		owner->rightdir * owner->relMidPos.x;
+	owner->midPos = midPos;
+
 	CheckCollisionSkid();
+	ASSERT_SYNCED_FLOAT3(owner->midPos);
 }
 
 void CGroundMoveType::UpdateControlledDrop(void)
@@ -848,7 +857,9 @@ void CGroundMoveType::CheckCollisionSkid(void)
 	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
 
+	const UnitDef* ud = owner->unitDef;
 	const vector<CUnit*> &nearUnits = qf->GetUnitsExact(midPos, owner->radius);
+
 	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* u = (*ui);
 		float sqDist = (midPos - u->midPos).SqLength();
@@ -871,8 +882,8 @@ void CGroundMoveType::CheckCollisionSkid(void)
 						owner->rightdir * owner->relMidPos.x;
 					owner->speed += dif * (impactSpeed * 1.8f);
 
-					if (impactSpeed > owner->unitDef->minCollisionSpeed
-						&& owner->unitDef->minCollisionSpeed >= 0) {
+					if (impactSpeed > ud->minCollisionSpeed
+						&& ud->minCollisionSpeed >= 0) {
 						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 					}
 					if (impactSpeed > u->unitDef->minCollisionSpeed
@@ -902,15 +913,15 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
 						mt->skidding = true;
 					}
-					if (impactSpeed > owner->unitDef->minCollisionSpeed
-						&& owner->unitDef->minCollisionSpeed >= 0) {
+					if (impactSpeed > ud->minCollisionSpeed
+						&& ud->minCollisionSpeed >= 0.0f) {
 						owner->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
 							0, dif * impactSpeed * (owner->mass * (1 - part)));
 					}
 
 					if (impactSpeed > u->unitDef->minCollisionSpeed
-						&& u->unitDef->minCollisionSpeed >= 0) {
+						&& u->unitDef->minCollisionSpeed >= 0.0f) {
 						u->DoDamage(
 							DamageArray(impactSpeed * owner->mass * 0.2f * part),
 							0, dif * -impactSpeed * (u->mass * part));
@@ -941,8 +952,8 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					- owner->updir*owner->relMidPos.y
 					- owner->rightdir*owner->relMidPos.x;
 				owner->speed+=dif*(impactSpeed*1.8f);
-				if(impactSpeed > owner->unitDef->minCollisionSpeed
-					&& owner->unitDef->minCollisionSpeed >= 0)
+				if(impactSpeed > ud->minCollisionSpeed
+					&& ud->minCollisionSpeed >= 0)
 				{
 					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
 						0, ZeroVector);
@@ -1003,6 +1014,9 @@ void CGroundMoveType::CalcSkidRot(void)
  * follow the path even when it's not perfect.
  */
 float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
+	// multiplier for how strongly an object should be avoided
+	static const float AVOIDANCE_STRENGTH = 2.0f;
+
 	// NOTE: based on the requirement that all objects have symetrical footprints.
 	// If this is false, then radius has to be calculated in a different way!
 
@@ -1016,8 +1030,8 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			nextObstacleAvoidanceUpdate = gs->frameNum + 4;
 
 			// first check if the current waypoint is reachable
-			const int wsx = (int) waypoint.x / (SQUARE_SIZE * 2);
-			const int wsy = (int) waypoint.z / (SQUARE_SIZE * 2);
+			const int wsx = waypoint.x / (MIN_WAYPOINT_DISTANCE);
+			const int wsy = waypoint.z / (MIN_WAYPOINT_DISTANCE);
 			const int ltx = wsx - moveSquareX + (LINETABLE_SIZE / 2);
 			const int lty = wsy - moveSquareY + (LINETABLE_SIZE / 2);
 
@@ -1227,8 +1241,8 @@ void CGroundMoveType::GetNewPath()
 		Fail();
 	}
 
-	// set limit for when next path-request can be made
-	restartDelay = gs->frameNum + MAX_REPATH_FREQUENCY;
+	// limit path-requests to one per second
+	restartDelay = gs->frameNum + GAME_SPEED;
 }
 
 
@@ -1268,7 +1282,7 @@ void CGroundMoveType::GetNextWaypoint()
 		waypoint = nextWaypoint;
 		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
-		if (waypoint.SqDistance2D(goalPos) < Square(pathManager->GetPathResolution())) {
+		if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 			waypoint = goalPos;
 		}
 	} else {
@@ -1311,23 +1325,6 @@ float3 CGroundMoveType::Here()
 }
 
 
-/*
-Gives the minimum distance to next waypoint that should be used,
-based on current speed.
-*/
-float CGroundMoveType::MinDistanceToWaypoint()
-{
-	return BreakingDistance(owner->speed.Length2D()) + pathManager->GetPathResolution();
-}
-
-/*
-Gives the maximum distance from it's waypoint a unit could be
-before a new path is requested.
-*/
-float CGroundMoveType::MaxDistanceToWaypoint()
-{
-	return MinDistanceToWaypoint() * MAX_OFF_PATH_FACTOR;
-}
 
 
 
@@ -1555,7 +1552,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, owner);
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner);
 			}
 
 			owner->pos += posDelta;
@@ -1645,7 +1642,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, owner);
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner);
 			}
 
 			owner->pos += posDelta;
@@ -1749,8 +1746,9 @@ void CGroundMoveType::DeleteLineTable(void)
 void CGroundMoveType::TestNewTerrainSquare(void)
 {
 	// first make sure we don't go into any terrain we cant get out of
-	int newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
-	int newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
+	int newMoveSquareX = owner->pos.x / (MIN_WAYPOINT_DISTANCE);
+	int newMoveSquareY = owner->pos.z / (MIN_WAYPOINT_DISTANCE);
+
 	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
@@ -1762,26 +1760,26 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareX > moveSquareX) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
+					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
+					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareY = moveSquareY;
 				}
 			}
@@ -1789,13 +1787,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareY > moveSquareY) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod>0.01f && nmod <= 0.01f) {
-					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
+					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareY = moveSquareY;
 				}
 			}
@@ -1803,22 +1801,22 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareX > moveSquareX) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
+					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 		}
 		// do not teleport units. if the unit is too far away from old position,
 		// reset the pathfinder instead of teleporting it.
-		if (newpos.SqDistance2D(owner->pos) > 4*SQUARE_SIZE*SQUARE_SIZE) {
-			newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
-			newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
+		if (newpos.SqDistance2D(owner->pos) > (MIN_WAYPOINT_DISTANCE * MIN_WAYPOINT_DISTANCE)) {
+			newMoveSquareX = (int) owner->pos.x / (MIN_WAYPOINT_DISTANCE);
+			newMoveSquareY = (int) owner->pos.z / (MIN_WAYPOINT_DISTANCE);
 		} else {
 			owner->pos = newpos;
 		}
@@ -1829,8 +1827,8 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			terrainSpeed = movemath->SpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 			// if we have moved, check if we can get to the next waypoint
-			int nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
-			int nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
+			int nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+			int nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 			int numIter = 0;
 
 			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !haveFinalWaypoint && pathId) {
@@ -1860,8 +1858,8 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 
 				GetNextWaypoint();
 
-				nwsx = (int) nextWaypoint.x / (SQUARE_SIZE * 2) - moveSquareX;
-				nwsy = (int) nextWaypoint.z / (SQUARE_SIZE * 2) - moveSquareY;
+				nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+				nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 				++numIter;
 			}
 		}
@@ -1961,10 +1959,14 @@ void CGroundMoveType::SetMaxSpeed(float speed)
 	requestedSpeed = speed * 2.0f;
 }
 
-bool CGroundMoveType::OnSlope(){
-	return owner->unitDef->slideTolerance >= 1
-		&& (ground->GetSlope(owner->midPos.x, owner->midPos.z) >
-		owner->unitDef->movedata->maxSlope*owner->unitDef->slideTolerance);
+bool CGroundMoveType::OnSlope() {
+	const UnitDef* ud = owner->unitDef;
+	const float3& mp = owner->midPos;
+
+	return
+		(ud->slideTolerance >= 1.0f) &&
+		(mp.IsInBounds()) &&
+		(ground->GetSlope(mp.x, mp.z) > (ud->movedata->maxSlope * ud->slideTolerance));
 }
 
 void CGroundMoveType::StartSkidding() {

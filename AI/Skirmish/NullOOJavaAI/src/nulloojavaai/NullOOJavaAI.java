@@ -18,10 +18,10 @@
 package nulloojavaai;
 
 
-import com.springrts.ai.AICommand;
-import com.springrts.ai.command.*;
-import com.springrts.ai.AIFloat3;
-import com.springrts.ai.oo.*;
+import com.springrts.ai.AI;
+import com.springrts.ai.oo.AIFloat3;
+import com.springrts.ai.oo.OOAI;
+import com.springrts.ai.oo.clb.*;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -34,9 +34,8 @@ import java.util.logging.*;
  * Serves as Interface for a Java Skirmish AIs for the Spring engine.
  *
  * @author	hoijui
- * @version	0.1
  */
-public class NullOOJavaAI extends AbstractOOAI implements OOAI {
+public class NullOOJavaAI extends OOAI implements AI {
 
 	private static class MyCustomLogFormatter extends Formatter {
 
@@ -74,6 +73,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 		}
 	}
 
+	private int skirmishAIId = -1;
 	private int teamId = -1;
 	private Properties info = null;
 	private Properties optionValues = null;
@@ -84,10 +84,37 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	private static final int DEFAULT_ZONE = 0;
 
 
-	NullOOJavaAI(int teamId, OOAICallback callback) {
+	public NullOOJavaAI() {}
 
-		this.teamId = teamId;
+	/*private int handleEngineCommand(AICommand command) {
+		return clb.getEngine().handleCommand(
+				com.springrts.ai.AICommandWrapper.COMMAND_TO_ID_ENGINE,
+				-1, command);
+	}*/
+	private int sendTextMsg(String msg) {
+
+		try {
+			clb.getGame().sendTextMessage(msg, 0);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return 1;
+		}
+
+		return 0;
+	}
+	public boolean isDebugging() {
+		return true;
+	}
+
+	@Override
+	public int init(int skirmishAIId, OOAICallback callback) {
+
+		int ret = -1;
+
+		this.skirmishAIId = skirmishAIId;
 		this.clb = callback;
+
+		this.teamId = clb.getSkirmishAI().getTeamId();
 
 		info = new Properties();
 		Info inf = clb.getSkirmishAI().getInfo();
@@ -106,26 +133,6 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 			String value = opVals.getValue(i);
 			optionValues.setProperty(key, value);
 		}
-	}
-
-	private int handleEngineCommand(AICommand command) {
-		return clb.getEngine().handleCommand(
-				com.springrts.ai.AICommandWrapper.COMMAND_TO_ID_ENGINE,
-				-1, command);
-	}
-	private int sendTextMsg(String msg) {
-
-		SendTextMessageAICommand msgCmd
-				= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
-		return handleEngineCommand(msgCmd);
-	}
-
-	@Override
-	public int init(int teamId, OOAICallback callback) {
-
-		int ret = -1;
-
-		this.clb = callback;
 
 		// initialize the log
 		try {
@@ -135,7 +142,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 			fileLogger.setLevel(Level.ALL);
 			log = Logger.getLogger("nulloojavaai");
 			log.addHandler(fileLogger);
-			if (NullOOJavaAIFactory.isDebugging()) {
+			if (isDebugging()) {
 				log.setLevel(Level.ALL);
 			} else {
 				log.setLevel(Level.INFO);
@@ -145,8 +152,6 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 			ex.printStackTrace();
 			ret = -2;
 		}
-
-		this.clb = callback;
 
 		try {
 			log.info("initializing team " + teamId);
@@ -164,6 +169,11 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 		}
 
 		return ret;
+	}
+
+	@Override
+	public int release(int reason) {
+		return 0; // signaling: OK
 	}
 
 	@Override
@@ -278,7 +288,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	}
 
 	@Override
-	public int playerCommand(List<Unit> units, AICommand command, int playerId) {
+	public int playerCommand(java.util.List<Unit> units, int commandTopicId, int playerId) {
 		return 0; // signaling: OK
 	}
 
@@ -289,6 +299,26 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 
 	@Override
 	public int seismicPing(AIFloat3 pos, float strength) {
+		return 0; // signaling: OK
+	}
+
+	@Override
+	public int load(String file) {
+		return 0; // signaling: OK
+	}
+
+	@Override
+	public int save(String file) {
+		return 0; // signaling: OK
+	}
+
+	@Override
+	public int enemyCreated(Unit enemy) {
+		return 0; // signaling: OK
+	}
+
+	@Override
+	public int enemyFinished(Unit enemy) {
 		return 0; // signaling: OK
 	}
 

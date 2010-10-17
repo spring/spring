@@ -1,11 +1,36 @@
-### Cmake 2.4 lacks some cross-compiling features and fails on windows
-cmake_minimum_required(VERSION 2.6)
+
 project(Spring)
+
+# CMake 2.4:
+# - lacks some cross-compiling features and fails on windows
+# CMake 2.6:
+# - Windows command line is limited to 32k length commands
+# CMake 2.6.3:
+# + support for SOURCES attribute of add_custom_target(), which is required for AI stuff
+# CMake 2.8
+# + works around command line length limited by using an @objectFilesList.txt parameter when linking
+if    (WIN32)
+	set(MIN_CMAKE_VERSION 2.8)
+else  (WIN32)
+	set(MIN_CMAKE_VERSION 2.6.3)
+endif (WIN32)
+cmake_minimum_required(VERSION ${MIN_CMAKE_VERSION})
 
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
 # includes rts/build/cmake/Util.cmake
 INCLUDE(Util)
+
+CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
+IF     (NOT CUSTOM_TARGET_SOURCES_SUPPORT)
+	MESSAGE(
+		"warning: ADD_CUSTOM_TARGET() support for the SOURCES attribute "
+		"was added in CMake 2.6.3, you are using CMake "
+		"${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}. "
+		"Some parts of ${CMAKE_PROJECT_NAME} require this feature, "
+		"and will consequently not be configured/built. "
+		"You will get separate warnings for all parts that will not be built.")
+ENDIF  ()
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
@@ -144,7 +169,7 @@ else  ($ENV{CXX} MATCHES "icpc")
 	endif (MARCH_FLAG)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 	if    (MINGW)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads") # SSE1
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
 	endif (MINGW)
 
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "")

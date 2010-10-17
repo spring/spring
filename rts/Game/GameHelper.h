@@ -51,11 +51,11 @@ public:
 	void Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner, bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly, CExplosionGenerator* explosionGraphics, CUnit* hit, const float3& impactDir, int weaponId, CFeature* hitfeature = NULL);
 
 	float TraceRayTeam(const float3& start, const float3& dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude, int allyteam);
-	void BuggerOff(float3 pos, float radius, bool spherical = true, CUnit* exclude = NULL);
+	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, CUnit* exclude);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo);
 	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud);
 	/**
-	 * @param minDist messured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
+	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
 	 */
 	float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 	void Update();

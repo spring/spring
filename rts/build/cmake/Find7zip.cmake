@@ -12,7 +12,7 @@ IF (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 2.7)
 	CMAKE_POLICY (SET CMP0012 OLD)
 ENDIF (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 2.7)
 
-
+INCLUDE(FindPackageHandleStandardArgs)
 
 IF    (7ZIP_BIN)
 	# Already in cache, be silent
@@ -30,7 +30,6 @@ find_program(7ZIP_BIN
 
 # handle the QUIETLY and REQUIRED arguments and set 7ZIP_FOUND to TRUE if
 # all listed variables are TRUE
-INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(7zip DEFAULT_MSG 7ZIP_BIN)
 
 MARK_AS_ADVANCED(7ZIP_BIN)

@@ -16,7 +16,6 @@ using std::sprintf;
 #include "ExternalAI/AIInterfaceLibraryInfo.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"     // for ABI version
-#include "ExternalAI/Interface/SAIFloat3.h"           // for ABI version
 #include "ExternalAI/Interface/AISEvents.h"           // for ABI version
 #include "ExternalAI/Interface/AISCommands.h"         // for ABI version
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"  // for ABI version
@@ -282,7 +281,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 		static const unsigned int sizeMax = 1024;
 		char tmpRes[sizeMax];
 		static const char* const rootPath = "";
-		bool exists = aiInterfaceCallback_DataDirs_locatePath(interfaceId,
+		const bool exists = aiInterfaceCallback_DataDirs_locatePath(interfaceId,
 				tmpRes, sizeMax, rootPath, true, true, true, false);
 		writeableDataDirs[interfaceId] = tmpRes;
 		if (!exists) {

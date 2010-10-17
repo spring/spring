@@ -21,6 +21,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "CommandAI/Command.h"
 #include "System/EventBatchHandler.h"
 #include "System/GlobalUnsynced.h"
@@ -126,7 +127,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	// randomize the unitID assignment so that lua widgets can
 	// not easily determine enemy unit counts from unitIDs alone
-	assert(freeIDs.size() > 0);
+	assert(!freeIDs.empty());
 	const unsigned int freeSlot = gs->randInt() % freeIDs.size();
 	const unsigned int freeMax  = freeIDs.size() - 1;
 	unit->id = freeIDs[freeSlot]; // set the unit ID
@@ -348,7 +349,7 @@ int CUnitHandler::TestUnitBuildSquare(
 				if (tbs) {
 					std::vector<Command>::const_iterator ci = commands->begin();
 
-					for (; ci != commands->end() && tbs; ci++) {
+					for (; ci != commands->end() && tbs; ++ci) {
 						BuildInfo bc(*ci);
 
 						if (std::max(bc.pos.x - x - SQUARE_SIZE, x - bc.pos.x) * 2 < bc.GetXSize() * SQUARE_SIZE &&
@@ -465,12 +466,11 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 
 
 /**
-* returns a build Command that intersects the ray described by pos and dir from the command queues of the
-* units units on team number team
-* @brief returns a build Command that intersects the ray described by pos and dir
-* @return the build Command, or 0 if one is not found
-*/
-
+ * Returns a build Command that intersects the ray described by pos and dir from
+ * the command queues of the units 'units' on team number 'team'.
+ * @brief returns a build Command that intersects the ray described by pos and dir
+ * @return the build Command, or a Command wiht id 0 if none is found
+ */
 Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	float3 tempF1 = pos;
 
@@ -480,7 +480,7 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	for(std::list<CUnit*>::iterator ui = this->activeUnits.begin(); ui != this->activeUnits.end(); ++ui){
 		if((*ui)->team == gu->myTeam){
 			ci = (*ui)->commandAI->commandQue.begin();
-			for(; ci != (*ui)->commandAI->commandQue.end(); ci++){
+			for(; ci != (*ui)->commandAI->commandQue.end(); ++ci){
 				if((*ci).id < 0 && (*ci).params.size() >= 3){
 					BuildInfo bi(*ci);
 					tempF1 = pos + dir*((bi.pos.y - pos.y)/dir.y) - bi.pos;

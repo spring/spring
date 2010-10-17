@@ -25,7 +25,7 @@
 
 /******************************************************************************/
 
-UnitDef::UnitDefWeapon::UnitDefWeapon()
+UnitDefWeapon::UnitDefWeapon()
 : name("NOWEAPON")
 , def(NULL)
 , slavedTo(0)
@@ -37,7 +37,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon()
 {
 }
 
-UnitDef::UnitDefWeapon::UnitDefWeapon(
+UnitDefWeapon::UnitDefWeapon(
 	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
 	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
 : name(name)
@@ -828,7 +828,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 				                "to be present as a placeholder for missing weapons");
 				break;
 			} else {
-				weapons.push_back(UnitDef::UnitDefWeapon());
+				weapons.push_back(UnitDefWeapon());
 				weapons.back().def = noWeaponDef;
 			}
 		}
@@ -851,7 +851,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 		const float fuelUse = wTable.GetFloat("fuelUsage", 0.0f);
 
-		UnitDef::UnitDefWeapon weapon(name, wd, slaveTo, mainDir, angleDif, btc, otc, fuelUse);
+		UnitDefWeapon weapon(name, wd, slaveTo, mainDir, angleDif, btc, otc, fuelUse);
 		weapons.push_back(weapon);
 
 		maxWeaponRange = std::max(maxWeaponRange, wd->range);
@@ -938,6 +938,8 @@ void UnitDef::CreateYardMap(std::string yardmapStr)
 			yardmaps[3][          mh * (x + 1) - (y + 1)     ] = orgMapChar;
 		}
 	}
+
+	delete[] originalMap;
 }
 
 
@@ -983,45 +985,5 @@ float UnitDef::GetAllowedTerrainHeight(float height) const {
 		height = std::max(-maxwd, height);
 	return height;
 }
-
-/******************************************************************************/
-
-BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
-{
-	def = unitDefHandler->GetUnitDefByName(name);
-	pos = p;
-	buildFacing = abs(facing) % 4;
-}
-
-
-void BuildInfo::FillCmd(Command& c) const
-{
-	c.id = -def->id;
-	c.params.resize(4);
-	c.params[0] = pos.x;
-	c.params[1] = pos.y;
-	c.params[2] = pos.z;
-	c.params[3] = (float) buildFacing;
-}
-
-
-bool BuildInfo::Parse(const Command& c)
-{
-	if (c.params.size() >= 3) {
-		pos = float3(c.params[0],c.params[1],c.params[2]);
-
-		if(c.id < 0) {
-			def = unitDefHandler->GetUnitDefByID(-c.id);
-			buildFacing = 0;
-
-			if (c.params.size() == 4)
-				buildFacing = int(abs(c.params[3])) % 4;
-
-			return true;
-		}
-	}
-	return false;
-}
-
 
 /******************************************************************************/

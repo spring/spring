@@ -2,7 +2,11 @@
 
 #include "TimeUtil.h"
 
+#include "Util.h"
 #include "Exceptions.h"
+
+#include <string>
+#include <ctime>
 
 std::string CTimeUtil::GetCurrentTimeStr()
 {

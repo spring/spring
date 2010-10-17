@@ -683,6 +683,8 @@ void CUnit::SlowUpdate()
 		}
 	}
 
+	UpdateResources();
+
 	if (stunned) {
 		// de-stun only if we are not (still) inside a non-firebase transport
 		if ((paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health)) &&
@@ -691,7 +693,6 @@ void CUnit::SlowUpdate()
 		}
 
 		SlowUpdateCloak(true);
-		UpdateResources();
 		return;
 	}
 
@@ -721,9 +722,7 @@ void CUnit::SlowUpdate()
 			if (health < 0.0f) {
 				KillUnit(false, true, NULL);
 			}
-			UpdateResources();
 		}
-
 		ScriptDecloak(false);
 		return;
 	}
@@ -734,8 +733,6 @@ void CUnit::SlowUpdate()
 
 	commandAI->SlowUpdate();
 	moveType->SlowUpdate();
-
-	UpdateResources();
 
 	// FIXME: scriptMakeMetal ...?
 	AddMetal(uncondMakeMetal);
@@ -1848,14 +1845,14 @@ bool CUnit::UseMetal(float metal)
 }
 
 
-void CUnit::AddMetal(float metal, bool handicap)
+void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 {
 	if (metal < 0) {
 		UseMetal(-metal);
 		return;
 	}
 	metalMakeI += metal;
-	teamHandler->Team(team)->AddMetal(metal, handicap);
+	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
 
 
@@ -1873,14 +1870,14 @@ bool CUnit::UseEnergy(float energy)
 }
 
 
-void CUnit::AddEnergy(float energy, bool handicap)
+void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 {
 	if (energy < 0) {
 		UseEnergy(-energy);
 		return;
 	}
 	energyMakeI += energy;
-	teamHandler->Team(team)->AddEnergy(energy, handicap);
+	teamHandler->Team(team)->AddEnergy(energy, useIncomeMultiplier);
 }
 
 

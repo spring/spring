@@ -22,6 +22,12 @@
 	File "${MINGWLIBS_DIR}\dll\vorbis.dll"
 	File "${MINGWLIBS_DIR}\dll\ogg.dll"
 	File "${MINGWLIBS_DIR}\dll\libgcc_s_dw2-1.dll"
+
+	; http://msdn.microsoft.com/en-us/library/abx4dbyh(VS.71).aspx
+	; on that page, see:
+	; "What is the difference between msvcrt.dll and msvcr71.dll?"
+	File "${MINGWLIBS_DIR}\dll\MSVCR71.dll"
+
 	; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
 	File "${MINGWLIBS_DIR}\dll\SDL.dll"
 
@@ -73,47 +79,18 @@
 	Delete "$INSTDIR\Luxi.ttf"
 	Delete "$INSTDIR\fonts\Luxi.ttf"
 
+	; Remove SelectionEditor, it has been integrated into SpringLobby and SpringSettings
+	Delete "$INSTDIR\SelectionEditor.exe"
+	Delete "$INSTDIR\MSVCP71.dll"
+	Delete "$INSTDIR\zlibwapi.dll"
+
   ; AI Interfaces
-!macro InstallAIInterface aiIntName
-!ifdef INSTALL
-  ;This is only supported in NSIS 2.39+
-  ;!define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
-  ;So we have to use this, which has to be supplied to us on the cmd-line
-  !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
-  SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  !ifdef USE_BUILD_DIR
-	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
-	File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
-  !else
-	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
-  !endif
-  ;buildbot creates 7z, and those get included in installer, fix here until buildserv got fixed
-  !undef AI_INT_VERS
-!endif
-!macroend
 	${!echonow} "Processing: main: AI Interfaces"
 	!insertmacro InstallAIInterface "C"
 	!insertmacro InstallAIInterface "Java"
-	!insertmacro InstallAIInterface "Python"
+	;!insertmacro InstallAIInterface "Python"
 
-!macro InstallSkirmishAI skirAiName
-!ifdef INSTALL
-  ;This is only supported in NSIS 2.39+
-  ;!define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
-  ;So we have to use this, which has to be supplied to us on the cmd-line
-  !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
-  SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  !ifdef USE_BUILD_DIR
-	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Skirmish\${skirAiName}\*.*"
-	File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
-  !else
-	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
-  !endif
-  !undef SKIRM_AI_VERS
-!endif
-!macroend
 	${!echonow} "Processing: main: Null Skirmish AIs"
-	;TODO: Fix the vc projects to use the same names.
 	!insertmacro InstallSkirmishAI "NullAI"
 	!insertmacro InstallSkirmishAI "NullOOJavaAI"
 
@@ -144,7 +121,6 @@
 	Delete "$INSTDIR\spring.def"
 	Delete "$INSTDIR\unitsync.dll"
 	Delete "$INSTDIR\PALETTE.PAL"
-	Delete "$INSTDIR\SelectionEditor.exe"
 	Delete "$INSTDIR\selectkeys.txt"
 	Delete "$INSTDIR\uikeys.txt"
 	Delete "$INSTDIR\cmdcolors.txt"
@@ -177,6 +153,7 @@
 	Delete "$INSTDIR\ogg.dll"
 
 	Delete "$INSTDIR\libgcc_s_dw2-1.dll"
+	Delete "$INSTDIR\MSVCR71.dll"
 
 
 	Delete "$INSTDIR\PALETTE.PAL"
@@ -185,38 +162,21 @@
 	Delete "$INSTDIR\fonts\FreeSansBold.otf"
 	RmDir "$INSTDIR\fonts"
 
-!macro DeleteSkirmishAI skirAiName
-!ifndef INSTALL
-  ;This is only supported in NSIS 2.39+
-  ;!define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
-  ;So we have to use this, which has to be supplied to us on the cmd-line
-  !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
-  RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  !undef SKIRM_AI_VERS
-!endif
-!macroend
+	; Old AI stuff
+	RmDir /r "$INSTDIR\AI\Global"
+	RmDir /r "$INSTDIR\AI\Skirmish"
+	RmDir /r "$INSTDIR\AI\Helper-libs"
+
+	; Skirmish AIs
 	!insertmacro DeleteSkirmishAI "NullAI"
 	!insertmacro DeleteSkirmishAI "NullOOJavaAI"
-	RmDir "$INSTDIR\AI\Global"
-	RmDir "$INSTDIR\AI\Skirmish"
-
-	RmDir "$INSTDIR\AI\Helper-libs"
-	RmDir /r "$INSTDIR\AI"
 
   ; AI Interfaces
-!macro DeleteAIInterface aiIntName
-!ifndef INSTALL
-  ;This is only supported in NSIS 2.39+
-  ;!define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
-  ;So we have to use this, which has to be supplied to us on the cmd-line
-  !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
-  RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  !undef AI_INT_VERS
-!endif
-!macroend
 	!insertmacro DeleteAIInterface "C"
 	!insertmacro DeleteAIInterface "Java"
 	!insertmacro DeleteAIInterface "Python"
+
+	RmDir /r "$INSTDIR\AI"
 
 	; base content
 	Delete "$INSTDIR\base\spring\bitmaps.sdz"
@@ -243,7 +203,7 @@
 	MessageBox MB_YESNO|MB_ICONQUESTION "Do you want me to completely remove all spring related files?$\n\
 			All maps, mods, screenshots and your settings will be removed. $\n\
 			CAREFULL: ALL CONTENTS OF YOUR SPRING INSTALLATION DIRECTORY WILL BE REMOVED!" \
-			IDNO skip_purge
+			/SD IDNO IDNO skip_purge
 		RmDir /r "$INSTDIR"
 		Delete "$LOCALAPPDATA\springsettings.cfg"
 		Delete "$APPDATA\springlobby.conf"
