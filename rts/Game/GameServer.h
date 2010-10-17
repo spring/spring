@@ -133,7 +133,7 @@ private:
 
 	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt);
 
-	void AdjustPlayerNumber(const unsigned char msg, unsigned char &player);
+	bool AdjustPlayerNumber(netcode::RawPacket *buf, int pos, int val = -1);
 	void UpdatePlayerNumberMap();
 
 	float GetDemoTime();
