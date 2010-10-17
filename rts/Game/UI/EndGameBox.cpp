@@ -52,8 +52,8 @@ CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
 	, dispMode(0)
 	, stat1(1)
 	, stat2(-1)
-	, graphTex(0)
 	, winners(winningAllyTeams)
+	, graphTex(0)
 {
 	box.x1 = 0.14f;
 	box.y1 = 0.1f;
@@ -501,7 +501,7 @@ void CEndGameBox::FillTeamStats()
 			continue;
 		}
 
-		for (std::list<CTeam::Statistics>::const_iterator si = pteam->statHistory.begin(); si != pteam->statHistory.end(); si++) {
+		for (std::list<CTeam::Statistics>::const_iterator si = pteam->statHistory.begin(); si != pteam->statHistory.end(); ++si) {
 			stats[0].AddStat(team, 0);
 
 			stats[1].AddStat(team, si->metalUsed);

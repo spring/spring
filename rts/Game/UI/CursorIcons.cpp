@@ -176,7 +176,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_WAIT:            cursorName = "Wait";         break;
 		case CMD_TIMEWAIT:        cursorName = "TimeWait";     break;
 		case CMD_SQUADWAIT:       cursorName = "SquadWait";    break;
-		case CMD_DEATHWAIT:       cursorName = "DeathWait";    break;
+		case CMD_DEATHWAIT:       cursorName = "Wait";         break; // there is a "DeathWait" cursor, but to prevent cheating, we have to use the same like for CMD_WAIT
 		case CMD_GATHERWAIT:      cursorName = "GatherWait";   break;
 		case CMD_MOVE:            cursorName = "Move";         break;
 		case CMD_PATROL:          cursorName = "Patrol";       break;

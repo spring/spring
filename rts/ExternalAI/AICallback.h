@@ -101,11 +101,13 @@ private:
 	const UnitDef* GetUnitDefById(int unitDefId);
 public:
 
-	int InitPath(float3 start, float3 end, int pathType, float goalRadius);
+	int InitPath(const float3& start, const float3& end, int pathType, float goalRadius);
 	float3 GetNextWaypoint(int pathId);
 	void FreePath(int pathId);
 
 	float GetPathLength(float3 start, float3 end, int pathType, float goalRadius);
+	bool SetPathNodeCost(unsigned int, unsigned int, float);
+	float GetPathNodeCost(unsigned int, unsigned int);
 
 	int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
 	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = MAX_UNITS);
@@ -238,7 +240,7 @@ public:
 	// 2. if inSize is less than 0, the data size is calculated using strlen()
 	// 3. the return data is subject to lua garbage collection,
 	//    copy it if you wish to continue using it
-	const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL);
+	const char* CallLuaRules(const char* data, int inSize = -1);
 
 	// never called, implemented in SSkirmishAICallbackImpl
 	std::map<std::string, std::string> GetMyInfo() { return std::map<std::string, std::string>(); }

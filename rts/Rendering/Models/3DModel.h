@@ -124,7 +124,7 @@ struct LocalModelPiece
 
 struct LocalModel
 {
-	LocalModel() : lodCount(0) {};
+	LocalModel() : type(-1), lodCount(0) {};
 	~LocalModel();
 
 	int type;  //! MODELTYPE_*

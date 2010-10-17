@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SSAILIBRARY_H
-#define _SSAILIBRARY_H
+#ifndef _S_SKIRMISH_AI_LIBRARY_H
+#define _S_SKIRMISH_AI_LIBRARY_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,6 +14,7 @@ extern "C" {
  * example: "/home/john/spring/AI/Skirmish/RAI/0.601"
  */
 #define SKIRMISH_AI_PROPERTY_DATA_DIR                "dataDir"
+
 /**
  * [string]
  * Absolute, version independent data dir.
@@ -21,45 +22,54 @@ extern "C" {
  * example: "/home/john/spring/AI/Skirmish/RAI/common"
  */
 #define SKIRMISH_AI_PROPERTY_DATA_DIR_COMMON         "dataDirCommon"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * example: "RAI"
  */
 #define SKIRMISH_AI_PROPERTY_SHORT_NAME              "shortName"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * example: "0.601"
  */
 #define SKIRMISH_AI_PROPERTY_VERSION                 "version"
+
 /**
  * [string]
  * example: "Reth's Skirmish AI"
  */
 #define SKIRMISH_AI_PROPERTY_NAME                    "name"
+
 /**
  * [string]
  * example: "no config files required, works well with TA based mods and more"
  */
 #define SKIRMISH_AI_PROPERTY_DESCRIPTION             "description"
+
 /**
  * [string]
- * example: "http://spring.clan-sy.com/wiki/AI:RAI"
+ * example: "http://springrts.com/wiki/AI:RAI"
  */
 #define SKIRMISH_AI_PROPERTY_URL                     "url"
+
 /** [bool: "yes" | "no"] */
 #define SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED          "loadSupported"
+
 /**
  * [int]
  * The engine version number the AI was compiled for,
  * though it may work with newer or older engine versions too.
  */
 #define SKIRMISH_AI_PROPERTY_ENGINE_VERSION          "engineVersion"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * This AI Interface has to be used to load the AI.
  * example: "C"
  */
 #define SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME    "interfaceShortName"
+
 /**
  * [string: [a-zA-Z0-9_.]*]
  * The AI Interface version number the AI was written for.
@@ -105,10 +115,16 @@ struct SSkirmishAILibrary {
 	 * [optional]
 	 * An AI not exporting this function is still valid.
 	 *
-	 * @return	the level of support for the supplied engine and AI interface
-	 *			versions
+	 * @param  aiShortName  this is indisposable for non-native interfaces,
+	 *                      as they need a means of redirecting from
+	 *                      one wrapper function to the respective non-native
+	 *                      libraries
+	 * @param  aiVersion  see aiShortName
+	 * @return the level of support for the supplied engine and AI interface
+	 *         versions
 	 */
-	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(int teamId,
+	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
+			const char* aiShortName, const char* aiVersion,
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
 
@@ -116,8 +132,9 @@ struct SSkirmishAILibrary {
 	// team instance functions
 
 	/**
-	 * This function is called, when an AI instance shall be created for teamId.
-	 * It is called before the first call to handleEvent() for teamId.
+	 * This function is called, when an AI instance shall be created
+	 * for skirmishAIId. It is called before the first call to handleEvent()
+	 * for that AI instance.
 	 *
 	 * A typical series of events (engine point of view, conceptual):
 	 * [code]
@@ -139,16 +156,17 @@ struct SSkirmishAILibrary {
 	 * [optional]
 	 * An AI not exporting this function is still valid.
 	 *
-	 * @param	teamId        the teamId this library shall create an instance for
-	 * @param	callback      the callback for this Skirmish AI
+	 * @param skirmishAIId  the ID this library shall create an instance for
+	 * @param callback      the callback for this Skirmish AI
 	 * @return     0: ok
 	 *          != 0: error
 	 */
-	int (CALLING_CONV *init)(int teamId, const struct SSkirmishAICallback* callback);
+	int (CALLING_CONV *init)(int skirmishAIId,
+			const struct SSkirmishAICallback* callback);
 
 	/**
 	 * This function is called, when an AI instance shall be deleted.
-	 * It is called after the last call to handleEvent() for teamId.
+	 * It is called after the last call to handleEvent() for that AI instance.
 	 *
 	 * A typical series of events (engine point of view, conceptual):
 	 * [code]
@@ -170,35 +188,36 @@ struct SSkirmishAILibrary {
 	 * [optional]
 	 * An AI not exporting this function is still valid.
 	 *
-	 * @param	teamId	the teamId the library shall release the instance of
+	 * @param skirmishAIId  the ID the library shall release the instance of
 	 * @return     0: ok
 	 *          != 0: error
 	 */
-	int (CALLING_CONV *release)(int teamId);
+	int (CALLING_CONV *release)(int skirmishAIId);
 
 	/**
 	 * Through this function, the AI receives events from the engine.
 	 * For details about events that may arrive here, see file AISEvents.h.
 	 *
-	 * @param	teamId	the instance of the AI that the event is addressed to
-//	 * @param	fromId	the id of the AI the event comes from, or FROM_ENGINE_ID
-//	 *					if it comes from spring
-//	 * @param	eventId	used on asynchronous events. this allows the AI to
-//	 *					identify a possible result message, which was sent with
-//	 *					the same eventId
-	 * @param	topic	unique identifyer of a message
-	 *					(see EVENT_* defines in AISEvents.h)
-	 * @param	data	an topic specific struct, which contains the data
-	 *					associatedwith the event
-	 *					(see S*Event structs in AISEvents.h)
+	 * @param skirmishAIId  the AI instance the event is addressed to
+//	 * @param fromId        the id of the AI the event comes from,
+//	 *                      or FROM_ENGINE_ID if it comes from the engine
+//	 * @param eventId       used on asynchronous events. this allows the AI to
+//	 *                      identify a possible result message, which was sent
+//	 *                      with the same eventId
+	 * @param topicId       unique identifier of a message
+	 *                      (see EVENT_* defines in AISEvents.h)
+	 * @param data          an topic specific struct, which contains the data
+	 *                      associatedwith the event
+	 *                      (see S*Event structs in AISEvents.h)
 	 * @return     0: ok
 	 *          != 0: error
 	 */
-	int (CALLING_CONV *handleEvent)(int teamId, int topic, const void* data);
+	int (CALLING_CONV *handleEvent)(int skirmishAIId, int topicId,
+			const void* data);
 };
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif // _SSAILIBRARY_H
+#endif // _S_SKIRMISH_AI_LIBRARY_H

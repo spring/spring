@@ -28,24 +28,22 @@ CAICheats::CAICheats(CSkirmishAIWrapper* ai): ai(ai)
 {
 }
 
-CAICheats::~CAICheats(void)
+CAICheats::~CAICheats()
 {}
+
+
 
 bool CAICheats::OnlyPassiveCheats()
 {
-	return IsPassive();
-}
-bool CAICheats::IsPassive()
-{
+	// returns whether cheats will desync (this is
+	// always the case unless we are both the host
+	// and the only client) if used by an AI
 	if (!gameServer) {
-		// if we are NOT server, cheats will cause desync
 		return true;
-	}
-	else if (gameSetup && (gameSetup->playerStartingData.size() == 1)) {
-		// assuming AI's dont count on numPlayers
+	} else if (gameSetup && (gameSetup->playerStartingData.size() == 1)) {
+		// assumes AI's dont count toward numPlayers
 		return false;
-	}
-	else {
+	} else {
 		// disable it in case we are not sure
 		return true;
 	}
@@ -53,13 +51,16 @@ bool CAICheats::IsPassive()
 
 void CAICheats::EnableCheatEvents(bool enable)
 {
+	// enable sending of EnemyCreated, etc. events
 	ai->SetCheatEventsEnabled(enable);
 }
 
-void CAICheats::SetMyHandicap(float handicap)
+
+
+void CAICheats::SetMyIncomeMultiplier(float incomeMultiplier)
 {
 	if (!OnlyPassiveCheats()) {
-		teamHandler->Team(ai->GetTeamId())->handicap = 1 + handicap / 100;
+		teamHandler->Team(ai->GetTeamId())->SetIncomeMultiplier(incomeMultiplier);
 	}
 }
 
@@ -130,7 +131,10 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -151,7 +155,10 @@ int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int 
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -172,7 +179,10 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
 			if (a >= unitIds_max) {
 				break;
 			}
@@ -191,7 +201,10 @@ int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, in
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
 			if (a >= unitIds_max) {
 				break;
 			}

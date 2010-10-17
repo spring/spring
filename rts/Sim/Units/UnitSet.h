@@ -1,11 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef UNITSET_H
-#define UNITSET_H
+#ifndef UNIT_SET_H
+#define UNIT_SET_H
 
 #include <set>
 
 class CUnit;
+
 class UnitComparator
 {
 public:
@@ -14,4 +15,4 @@ public:
 
 typedef std::set<CUnit*, UnitComparator> CUnitSet;
 
-#endif // !defined(UNITSET_H)
+#endif // UNIT_SET_H

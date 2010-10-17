@@ -159,7 +159,7 @@ private:
 	std::deque<DelayedInstance> delayQue;
 
 public:
-	void Update(void);
+	void Update();
 	void DelayedFreeInstance(LosInstance* instance);
 };
 

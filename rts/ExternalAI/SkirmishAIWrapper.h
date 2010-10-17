@@ -61,7 +61,7 @@ public:
 	virtual void GotChatMsg(const char* msg, int fromPlayerId);
 	virtual void WeaponFired(int unitId, int weaponDefId);
 	virtual void PlayerCommandGiven(const std::vector<int>& selectedUnits, const Command& c, int playerId);
-	virtual void CommandFinished(int unitId, int commandTopicId);
+	virtual void CommandFinished(int unitId, int commandId, int commandTopicId);
 	virtual void SeismicPing(int allyTeam, int unitId, const float3& pos, float strength);
 
 	/** Called just before all the units are destroyed. */
@@ -87,13 +87,13 @@ private:
 	bool cheatEvents;
 
 	CSkirmishAI* ai;
-	bool initialized, released;
+	bool initialized;
+	bool released;
 	CAICallback* callback;
 	CAICheats* cheats;
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
 	const struct InfoItem* info;
-	unsigned int size_info;
 
 private:
 	bool LoadSkirmishAI(bool postLoad);

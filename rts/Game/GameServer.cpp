@@ -72,9 +72,6 @@ const unsigned SYNCCHECK_TIMEOUT = 300;
 /// used to prevent msg spam
 const unsigned SYNCCHECK_MSG_TIMEOUT = 400;
 
-///msecs to wait until the game starts after all players are ready
-const spring_duration gameStartDelay = spring_secs(4);
-
 /// The time intervall in msec for sending player statistics to each client
 const spring_duration playerInfoTime = spring_secs(2);
 
@@ -682,7 +679,7 @@ void CGameServer::Update()
 
 			medianCpu = 0.0f;
 			medianPing = 0;
-			if (curSpeedCtrl > 0 && cpu.size() > 0) {
+			if (curSpeedCtrl > 0 && !cpu.empty()) {
 				std::sort(cpu.begin(), cpu.end());
 				std::sort(ping.begin(), ping.end());
 
@@ -1562,7 +1559,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find(msgCode);
 	if (toRelay != relayingMessagesMap.end()) {
 		PlayersToForwardMsgvec& toRelaySet = toRelay->second;
-		for (PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); playerToRelay++) {
+		for (PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); ++playerToRelay) {
 			if (*playerToRelay < playersSize)
 				players[*playerToRelay].SendData(packet);
 		}
@@ -1676,20 +1673,26 @@ void CGameServer::CheckForGameStart(bool forced)
 		}
 	}
 
+	// msecs to wait until the game starts after all players are ready
+	const spring_duration gameStartDelay = spring_secs(setup->gameStartDelay);
+
 	if (allReady || forced) {
 		if (!spring_istime(readyTime)) {
 			readyTime = spring_gettime();
 			rng.Seed(spring_tomsecs(readyTime-serverStartTime));
-			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(spring_tomsecs(gameStartDelay)));
+			// we have to wait at least 1 msec, because 0 is a special case
+			const unsigned countdown = std::max(1, spring_tomsecs(gameStartDelay));
+			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(countdown));
 		}
 	}
-	if (spring_istime(readyTime) && (spring_gettime() - readyTime) > gameStartDelay) {
+	if (spring_istime(readyTime) && ((spring_gettime() - readyTime) > gameStartDelay)) {
 		StartGame();
 	}
 }
 
 void CGameServer::StartGame()
 {
+	assert(!gameHasStarted);
 	gameHasStarted = true;
 	startTime = gameTime;
 	if (!canReconnect && !allowAdditionalPlayers)
@@ -2144,15 +2147,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			newPlayer.SendData(*vit); // throw at him all stuff he missed until now
 
 	if (!demoReader || setup->demoName.empty()) { // gamesetup from demo?
-		const unsigned newPlayerTeam = setup->playerStartingData[newPlayerNumber].team;
-		if (!players[newPlayerNumber].spectator && !teams[newPlayerTeam].active) { // create new team
-			players[newPlayerNumber].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
-			teams[newPlayerTeam].active = true;
-		}
-		players[newPlayerNumber].team = newPlayerTeam;
-
-		if (!players[newPlayerNumber].spectator && !setup->playerStartingData[newPlayerNumber].spectator)
+		if (!newPlayer.spectator) {
+			unsigned newPlayerTeam = newPlayer.team;
+			if (!teams[newPlayerTeam].active) { // create new team
+				newPlayer.readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
+				teams[newPlayerTeam].active = true;
+			}
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(newPlayerNumber, newPlayerTeam));
+		}
 	}
 
 	Message(str(format(" -> Connection established (given id %i)") %newPlayerNumber));

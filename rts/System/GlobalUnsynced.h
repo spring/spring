@@ -3,8 +3,8 @@
 #ifndef _GLOBAL_UNSYNCED_H
 #define _GLOBAL_UNSYNCED_H
 
-#include "float3.h"
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
+#include "System/float3.h"
 
 class CGameSetup;
 class CUnit;
@@ -27,8 +27,8 @@ public:
 	float  usRandFloat();  //!< Unsynced random float
 	float3 usRandVector(); //!< Unsynced random vector
 
-	void LoadFromSetup(const CGameSetup*);
-	void SetMyPlayer(const int mynumber);
+	void LoadFromSetup(const CGameSetup* setup);
+	void SetMyPlayer(const int myNumber);
 
 	/**
 	 * @brief mod game time

@@ -15,17 +15,20 @@ BEGIN {
 ### BEGIN: Trim functions
 
 # left trim: removes leading white spaces (at the beginning of a string)
-function ltrim(str__common) { sub(/^[ \t]+/, "", str__common); return str__common; }
+function ltrim(str__common) { sub(/^[ \t\f\n\r\v]+/, "", str__common); return str__common; }
 
 # right trim: removes trailing white spaces (at the end of a string)
-function rtrim(str__common) { sub(/[ \t]+$/, "", str__common); return str__common; }
+function rtrim(str__common) { sub(/[ \t\f\n\r\v]+$/, "", str__common); return str__common; }
 
 # trim: removes leading and trailing white spaces
 # (at the beginning and the end of a string)
 function trim(str__common) { return rtrim(ltrim(str__common)); }
 
 # removes all white spaces from a string
-function noSpaces(str__common) { gsub(/[ \t]/, "", str__common); return str__common; }
+function noSpaces(str__common) { gsub(/[ \t\f\n\r\v]/, "", str__common); return str__common; }
+
+# returns a string containing only spaces with the same lenght as the input string
+function lengtAsSpaces(str__common) { gsub(/./, " ", str__common); return str__common; }
 
 ### END: Trim functions
 ################################################################################
@@ -42,11 +45,11 @@ function capitalize(str__common) { return toupper(substr(str__common, 1, 1)) sub
 function lowerize(str__common) { return tolower(substr(str__common, 1, 1)) substr(str__common, 2); }
 
 # returns 1 if the first char of a string is uppercase, 0 otherwise
-function startsWithCapital(str__common) { return match(str__common, /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/); }
+function startsWithCapital(str__common) { return match(str__common, /^[ABCDEFGHIJKLMNOPQRSTUVWXYZ]/); }
 #function startsWithCapital(str__common) { return match(str__common, /^[A-Z]/); } # this seems not to work in all awk flavours? :/
 
 # returns 1 if the first char of a string is lowercase, 0 otherwise
-function startsWithLower(str__common) { return match(str__common, /^[abcdefghijklmnopqrdtuvwxyz]/); }
+function startsWithLower(str__common) { return match(str__common, /^[abcdefghijklmnopqrstuvwxyz]/); }
 #function startsWithLower(str__common) { return match(str__common, /^[a-z]/); } # this seems not to work in all awk flavours? :/
 
 ### END: Case functions
@@ -72,50 +75,51 @@ function mySort(array__common, size__common, temp__common, i__common, j__common)
 	}
 }
 
-function printGeneratedWarningHeader(outFile__common) {
-
-	print("// WARNING: This file is machine generated,") > outFile__common;
-	print("// please do not edit directly!") >> outFile__common;
+function printGPLHeader(outFile__common) {
+	print("/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */") > outFile__common;
 }
 
-function printGPLHeader(outFile__common) {
-
-	print("/*") >> outFile__common;
-	print("	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile__common;
-	print("") >> outFile__common;
-	print("	This program is free software; you can redistribute it and/or modify") >> outFile__common;
-	print("	it under the terms of the GNU General Public License as published by") >> outFile__common;
-	print("	the Free Software Foundation; either version 2 of the License, or") >> outFile__common;
-	print("	(at your option) any later version.") >> outFile__common;
-	print("") >> outFile__common;
-	print("	This program is distributed in the hope that it will be useful,") >> outFile__common;
-	print("	but WITHOUT ANY WARRANTY; without even the implied warranty of") >> outFile__common;
-	print("	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the") >> outFile__common;
-	print("	GNU General Public License for more details.") >> outFile__common;
-	print("") >> outFile__common;
-	print("	You should have received a copy of the GNU General Public License") >> outFile__common;
-	print("	along with this program.  If not, see <http://www.gnu.org/licenses/>.") >> outFile__common;
-	print("*/") >> outFile__common;
+function printGeneratedNoteHeader(outFile__common) {
+	print("/* Note: This file is machine generated, do not edit directly! */") >> outFile__common;
 }
 
 function printCommentsHeader(outFile__common) {
 
-	printGeneratedWarningHeader(outFile__common);
-	print("") >> outFile__common;
 	printGPLHeader(outFile__common);
+	print("") >> outFile__common;
+	printGeneratedNoteHeader(outFile__common);
+}
+
+function printCond(text_common, outFile__common, condotion_common) {
+
+	if (condotion_common) {
+		print(text_common) >> outFile__common;
+	}
 }
 
 # Searches an array (with strings as keys) with a regex pattern
 # returns 1 if the pattern matches at least one key, 0 otherwise
-function matchesAnyKey(toSearch, matchArray) {
+function matchesAnyKey(toSearch__common, matchArray__common) {
 
-	for (pattern in matchArray) {
-		if (match(toSearch, pattern)) {
+	for (pattern__common in matchArray__common) {
+		if (match(toSearch__common, pattern__common)) {
 			return 1;
 		}
 	}
 
 	return 0;
+}
+
+# Escapes all regex special chars in a string,
+# so you can for example search for the literal value of the string
+# with a regex search function.
+function regexEscape(str__common) {
+
+	strEscaped__common = str__common;
+
+	gsub(/\*/, "\\*", strEscaped__common);
+
+	return strEscaped__common;
 }
 
 ### END: Misc functions
@@ -170,6 +174,18 @@ function extractParamType(param__common) {
 	paramType__common = trim(paramType__common);
 
 	return paramType__common;
+}
+
+# Awaits this format:	"float* []"
+# Returns this format:	"float**"
+function cleanupCType(cType__common) {
+
+	cTypeClean__common = cType__common;
+
+	gsub(/[ \t]*\[\]/, "*", cTypeClean__common);
+	cTypeClean__common = trim(cTypeClean__common);
+
+	return cTypeClean__common;
 }
 
 # Awaits this format:	"int teamId, const char* name, std::map<int, std::string> idNameMap"
@@ -249,7 +265,118 @@ function convertJavaNameFormAToD(javaNameFormA__common) {
 	return javaNameFormD__common;
 }
 
+# Awaits this format:	com.springrts.ai
+# Returns this format:	com_springrts_ai
+function convertJavaNameFormAToC(javaNameFormA__common) {
+
+	javaNameFormC__common = javaNameFormA__common;
+
+	gsub(/\./, "_", javaNameFormC__common);
+
+	return javaNameFormC__common;
+}
+
 ### END: Java functions
+################################################################################
+
+
+
+################################################################################
+### BEGIN: JNI functions
+
+# Awaits this format:	jint / jfloat / jbooleanArray / jstring
+# Returns this format:	I / F / B[ / Ljava/lang/String;
+function convertJNIToSignatureType(jniType__common) {
+
+	signatureType__common = jniType__common;
+
+	isArray = sub(/Array/, "", signatureType__common);
+	
+	sub(/void/, "V", signatureType__common);
+
+	sub(/jboolean/, "Z", signatureType__common);
+	sub(/jfloat/,   "F", signatureType__common);
+	sub(/jbyte/,    "B", signatureType__common);
+	sub(/jchar/,    "C", signatureType__common);
+	sub(/jdouble/,  "D", signatureType__common);
+	sub(/jint/,     "I",  signatureType__common);
+	sub(/jlong/,    "J", signatureType__common);
+	sub(/jshort/,   "S", signatureType__common);
+
+	sub(/jstring/, "Ljava/lang/String;", signatureType__common);
+
+	if (isArray) {
+		signatureType__common = "[" signatureType__common;
+	}
+
+	return signatureType__common;
+}
+
+# Awaits this format:	int / float / bool[] / char*
+# Returns this format:	jint / jfloat / jbooleanArray / jstring
+function convertCToJNIType(cType__common) {
+
+	jniType__common = cType__common;
+
+	# remove some stuff we do not need and cleanup
+	gsub(/const/, "", jniType__common);
+	sub(/unsigned int/, "int", jniType__common);
+	sub(/unsigned short/, "short", jniType__common);
+	gsub(/[ \t]+\*/, "* ", jniType__common);
+	jniType__common = trim(jniType__common);
+
+	isComplex__common = 0;
+	isComplex__common += sub(/^char\*/,  "jstring",   jniType__common);
+
+	isPrimitive__common = 0;
+	isPrimitive__common += sub(/bool/,          "jboolean", jniType__common);
+	isPrimitive__common += sub(/byte/,          "jbyte",    jniType__common);
+	isPrimitive__common += sub(/unsigned char/, "jbyte",    jniType__common);
+	isPrimitive__common += sub(/^char/,         "jchar",    jniType__common);
+	isPrimitive__common += sub(/short/,         "jshort",   jniType__common);
+	isPrimitive__common += sub(/int/,           "jint",     jniType__common);
+	isPrimitive__common += sub(/float/,         "jfloat",   jniType__common);
+	#isPrimitive__common += sub(/double/, "jdouble", jniType__common);
+
+	# convert possible array length specifiers ("[]" or "[2]")
+	gsub(/\*/, "[]", jniType__common);
+	arrDims__common = gsub(/\[[^\]]*\]/, "[]", jniType__common);
+	arrDims__common = gsub(/\[\]/, "Array", jniType__common);
+
+	# there is no jstringArray type
+	sub(/jstringArray/, "jobjectArray", jniType__common);
+
+	jniType__common = noSpaces(jniType__common);
+
+	return jniType__common;
+}
+
+# Awaits this format:	jint / jfloat / jbooleanArray / jstring
+# Returns this format:	int / float / boolean[] / String
+function convertJNIToJavaType(jniType__common) {
+
+	javaType__common = jniType__common;
+
+	sub(/Array/, "[]", javaType__common);
+	
+	sub(/void/, "void", javaType__common);
+
+	sub(/jboolean/, "boolean", javaType__common);
+	sub(/jfloat/,   "float",   javaType__common);
+	sub(/jbyte/,    "byte",    javaType__common);
+	sub(/jchar/,    "char",    javaType__common);
+	sub(/jdouble/,  "double",  javaType__common);
+	sub(/jint/,     "int",     javaType__common);
+	sub(/jlong/,    "long",    javaType__common);
+	sub(/jshort/,   "short",   javaType__common);
+
+	sub(/jstring/, "String", javaType__common);
+	sub(/jobject/, "String", javaType__common);
+
+	return javaType__common;
+}
+
+### END: JNI functions
 ################################################################################
 
 
@@ -285,20 +412,19 @@ function convertCToJNAType(cType__common) {
 	jnaType__common = trim(cType__common);
 
 	sub(/const/, "", jnaType__common);
-	sub(/unsigned/, "", jnaType__common);
+	sub(/unsigned int/, "int", jnaType__common);
+	sub(/unsigned short/, "short", jnaType__common);
 	gsub(/[ \t]+\*/, "* ", jnaType__common);
 
 	isComplex__common = 0;
 	isComplex__common += sub(/char\*\*/, "Pointer", jnaType__common);
-	isComplex__common += sub(/char\*( const)?/, "String", jnaType__common);
-	isComplex__common += sub(/struct SAIFloat3\*/, "AIFloat3[]", jnaType__common);
-	isComplex__common += sub(/struct SAIFloat3/, "AIFloat3", jnaType__common);
+	isComplex__common += sub(/^char\*( const)?/, "String", jnaType__common);
 	isComplex__common += sub(/struct SSkirmishAICallback(\*)?/, "AICallback", jnaType__common);
 	isComplex__common += sub(/struct [0-9a-zA-Z_]*/, "Structure", jnaType__common);
 
 	isPrimitive__common = 0;
 	isPrimitive__common += sub(/bool/, "boolean", jnaType__common);
-	isPrimitive__common += sub(/char/, "byte", jnaType__common);
+	isPrimitive__common += sub(/(unsigned )?char/, "byte", jnaType__common);
 	#isPrimitive__common += sub(/wchar_t/, "char", jnaType__common);
 	isPrimitive__common += sub(/short/, "short", jnaType__common);
 	isPrimitive__common += sub(/int/, "int", jnaType__common);

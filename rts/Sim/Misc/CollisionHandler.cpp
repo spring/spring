@@ -141,8 +141,6 @@ bool CCollisionHandler::CollisionFootprint(const CSolidObject* o, const float3& 
 }
 
 
-// test if point <p> (in world-coors) lies inside the
-// volume whose transformation matrix is given by <m>
 bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m, const float3& p)
 {
 	// get the inverse volume transformation matrix and
@@ -315,9 +313,6 @@ bool CCollisionHandler::IntersectAlt(const collisionVolume* d, const CMatrix44f&
 */
 
 
-
-// test if ray from <p0> to <p1> (in world-coors) intersects
-// the volume whose transformation matrix is given by <m>
 bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q)
 {
 	if (q) {

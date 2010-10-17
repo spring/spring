@@ -6,6 +6,7 @@
 #include "Building.h"
 #include "Game/GameHelper.h"
 #include "Map/ReadMap.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/myMath.h"

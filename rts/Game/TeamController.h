@@ -25,6 +25,10 @@ public:
 		team(0),
 		name("no name") {}
 
+	virtual bool operator == (const TeamController& tc) const {
+		return (name == tc.name);
+	}
+
 	/**
 	 * Id of the controlled team.
 	 */
@@ -34,10 +38,6 @@ public:
 	 * This is either the human players nick or the Skirmish AIs instance nick.
 	 */
 	std::string name;
-
-	virtual bool operator == (const TeamController& tc) const {
-		return (name == tc.name);
-	}
 };
 
 /**
@@ -46,9 +46,15 @@ public:
  *
  * Note: This class should be seen as abstract,
  * even though it is not, C++ technically speaking.
+ *
+ * This should be the base class of PlayerStatistics and SkirmishAIStatistics,
+ * which it is not yet.
  */
 class TeamControllerStatistics {
 public:
+	TeamControllerStatistics()
+		: numCommands(0)
+		, unitCommands(0) {}
 
 	int numCommands;
 	/**

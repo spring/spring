@@ -20,7 +20,7 @@ ADD_DEPENDENCIES(lua2php unitsync)
 #INSTALL(TARGETS lua2php DESTINATION ${BINDIR})
 
 ADD_EXECUTABLE(unitsyncTest EXCLUDE_FROM_ALL test)
-TARGET_LINK_LIBRARIES(unitsyncTest unitsync)
+TARGET_LINK_LIBRARIES(unitsyncTest unitsync ${CMAKE_DL_LIBS})
 ADD_DEPENDENCIES(unitsyncTest unitsync)
 #INSTALL(TARGETS unitsyncTest DESTINATION ${BINDIR})
 

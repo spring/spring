@@ -4,10 +4,14 @@
 #define __BUILDER_H__
 
 #include <string>
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
 
+#include "Sim/Units/Unit.h"
+#include "System/float3.h"
+
+struct UnitDef;
+struct BuildInfo;
 class CFeature;
+class CSolidObject;
 
 class CBuilder : public CUnit
 {
@@ -36,12 +40,12 @@ public:
 	void PostLoad();
 
 	void Update();
-	void SlowUpdate(void);
+	void SlowUpdate();
 	void DependentDied(CObject* o);
 
 	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
-	void StopBuild(bool callScript=true);
+	void StopBuild(bool callScript = true);
 	void SetRepairTarget(CUnit* target);
 	void SetReclaimTarget(CSolidObject* object);
 	void StartRestore(float3 centerPos, float radius);
@@ -53,7 +57,7 @@ public:
 	void SetCaptureTarget(CUnit* unit);
 
 public:
-	bool range3D; // spheres instead of infinite cylinders for range tests
+	bool range3D; ///< spheres instead of infinite cylinders for range tests
 
 	float buildDistance;
 	float buildSpeed;

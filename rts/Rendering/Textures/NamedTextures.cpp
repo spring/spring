@@ -246,7 +246,7 @@ void CNamedTextures::Update()
 		return;
 	}
 	glPushAttrib(GL_TEXTURE_BIT);
-	for (std::vector<string>::iterator it = texWaiting.begin(); it != texWaiting.end(); it++) {
+	for (std::vector<string>::iterator it = texWaiting.begin(); it != texWaiting.end(); ++it) {
 		map<string, TexInfo>::iterator mit = texMap.find(*it);
 		if (mit != texMap.end()) {
 			Load(*it,mit->second.id);

@@ -11,7 +11,6 @@
 extern "C" {
 #endif
 
-#include "SAIFloat3.h"
 #include "SSkirmishAICallback.h"
 
 /**
@@ -55,7 +54,7 @@ enum EventTopic {
 	EVENT_ENEMY_CREATED                = 25,
 	EVENT_ENEMY_FINISHED               = 26,
 };
-const unsigned int NUM_EVENTS          = 27;
+const int NUM_EVENTS          = 27;
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
@@ -92,9 +91,9 @@ const unsigned int NUM_EVENTS          = 27;
  * It is sent only once per AI instance and game, as the very first event.
  */
 struct SInitEvent {
-	int team;
+	int skirmishAIId;
 	const struct SSkirmishAICallback* callback;
-}; // EVENT_INIT
+}; //$ EVENT_INIT
 
 /**
  * This AI event tells a Skirmish AI instance, that it is no longer needed. It
@@ -112,7 +111,7 @@ struct SInitEvent {
  */
 struct SReleaseEvent {
 	int reason;
-}; // EVENT_RELEASE
+}; //$ EVENT_RELEASE
 
 /**
  * This AI event is sent once per game frame, which is about 30 times per second
@@ -120,7 +119,7 @@ struct SReleaseEvent {
  */
 struct SUpdateEvent {
 	int frame;
-}; // EVENT_UPDATE
+}; //$ EVENT_UPDATE
 
 /**
  * This AI event is a notification about a chat message sent by one of the
@@ -129,7 +128,7 @@ struct SUpdateEvent {
 struct SMessageEvent {
 	int player;
 	const char* message;
-}; // EVENT_MESSAGE
+}; //$ EVENT_MESSAGE
 
 /**
  * This AI event is sent whenever a unit of this team is created, and contains
@@ -140,7 +139,7 @@ struct SMessageEvent {
 struct SUnitCreatedEvent {
 	int unit;
 	int builder;
-}; // EVENT_UNIT_CREATED
+}; //$ EVENT_UNIT_CREATED INTERFACES:Unit(unit),UnitLifeState()
 
 /**
  * This AI event is sent whenever a unit is fully built, and contains the
@@ -150,7 +149,7 @@ struct SUnitCreatedEvent {
  */
 struct SUnitFinishedEvent {
 	int unit;
-}; // EVENT_UNIT_FINISHED
+}; //$ EVENT_UNIT_FINISHED INTERFACES:Unit(unit),UnitLifeState()
 
 /**
  * This AI event is sent when a unit finnished processing a command or just
@@ -158,7 +157,7 @@ struct SUnitFinishedEvent {
  */
 struct SUnitIdleEvent {
 	int unit;
-}; // EVENT_UNIT_IDLE
+}; //$ EVENT_UNIT_IDLE INTERFACES:Unit(unit)
 
 /**
  * This AI event is sent when a unit received a move command and is not able to
@@ -170,7 +169,7 @@ struct SUnitIdleEvent {
  */
 struct SUnitMoveFailedEvent {
 	int unit;
-}; // EVENT_UNIT_MOVE_FAILED
+}; //$ EVENT_UNIT_MOVE_FAILED INTERFACES:Unit(unit)
 
 /**
  * This AI event is sent when a unit was damaged. It contains the attacked unit,
@@ -188,11 +187,11 @@ struct SUnitDamagedEvent {
 	 */
 	int attacker;
 	float damage;
-	struct SAIFloat3 dir;
+	float* dir_posF3;
 	int weaponDefId;
 	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
-}; // EVENT_UNIT_DAMAGED
+}; //$ EVENT_UNIT_DAMAGED INTERFACES:Unit(unit)
 
 /**
  * This AI event is sent when a unit was destroyed; see also the unit-damaged
@@ -205,7 +204,7 @@ struct SUnitDestroyedEvent {
 	 * or the attacker is not visible and cheat events are off
 	 */
 	int attacker;
-}; // EVENT_UNIT_DESTROYED
+}; //$ EVENT_UNIT_DESTROYED INTERFACES:Unit(unit),UnitLifeState()
 
 /**
  * This AI event is sent when a unit changed from one team to an other,
@@ -217,7 +216,7 @@ struct SUnitGivenEvent {
 	int unitId;
 	int oldTeamId;
 	int newTeamId;
-}; // EVENT_UNIT_GIVEN
+}; //$ EVENT_UNIT_GIVEN INTERFACES:Unit(unitId),UnitLifeState(),UnitTeamChange(oldTeamId,newTeamId)
 
 /**
  * This AI event is sent when a unit changed from one team to an other through
@@ -228,21 +227,21 @@ struct SUnitCapturedEvent {
 	int unitId;
 	int oldTeamId;
 	int newTeamId;
-}; // EVENT_UNIT_CAPTURED
+}; //$ EVENT_UNIT_CAPTURED INTERFACES:Unit(unitId),UnitLifeState(),UnitTeamChange(oldTeamId,newTeamId)
 
 /**
  * This AI event is sent when an enemy unit entered the LOS of this team.
  */
 struct SEnemyEnterLOSEvent {
 	int enemy;
-}; // EVENT_ENEMY_ENTER_LOS
+}; //$ EVENT_ENEMY_ENTER_LOS INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent when an enemy unit left the LOS of this team.
  */
 struct SEnemyLeaveLOSEvent {
 	int enemy;
-}; // EVENT_ENEMY_LEAVE_LOS
+}; //$ EVENT_ENEMY_LEAVE_LOS INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent when an enemy unit entered the radar covered area of
@@ -250,7 +249,7 @@ struct SEnemyLeaveLOSEvent {
  */
 struct SEnemyEnterRadarEvent {
 	int enemy;
-}; // EVENT_ENEMY_ENTER_RADAR
+}; //$ EVENT_ENEMY_ENTER_RADAR INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent when an enemy unit left the radar covered area of this
@@ -258,7 +257,7 @@ struct SEnemyEnterRadarEvent {
  */
 struct SEnemyLeaveRadarEvent {
 	int enemy;
-}; // EVENT_ENEMY_LEAVE_RADAR
+}; //$ EVENT_ENEMY_LEAVE_RADAR INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent when an enemy unit was damaged. It contains the
@@ -277,11 +276,11 @@ struct SEnemyDamagedEvent {
 	 */
 	int attacker;
 	float damage;
-	struct SAIFloat3 dir;
+	float* dir_posF3;
 	int weaponDefId;
 	/// if true, then damage is paralyzation damage, otherwise it is real damage
 	bool paralyzer;
-}; // EVENT_ENEMY_DAMAGED
+}; //$ EVENT_ENEMY_DAMAGED INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent when an enemy unit was destroyed; see also the
@@ -294,7 +293,7 @@ struct SEnemyDestroyedEvent {
 	 * or the attacker is not allied with the team receiving this event
 	 */
 	int attacker;
-}; // EVENT_ENEMY_DESTROYED
+}; //$ EVENT_ENEMY_DESTROYED INTERFACES:Unit(enemy),Enemy(enemy),UnitLifeState()
 
 /**
  * This AI event is sent when certain weapons are fired.
@@ -305,21 +304,22 @@ struct SEnemyDestroyedEvent {
 struct SWeaponFiredEvent {
 	int unitId;
 	int weaponDefId;
-}; // EVENT_WEAPON_FIRED
+}; //$ EVENT_WEAPON_FIRED INTERFACES:Unit(unitId)
 
 /**
  * This AI event is sent when a user gives a command to one or multiple units
  * belonging to a team controlled by the AI.
+ * For more info about the given commands, please use the
+ * Unit.getCurrentCommands() method of the callback.
  */
 struct SPlayerCommandEvent {
 	int* unitIds;
-	int numUnitIds;
-	/// see AISCommands.h COMMAND_* defines
-	int commandTopic;
-	/// see AISCommands.h S*Command structs
-	void* commandData;
+	int unitIds_size;
+	/// see COMMAND_* defines in AISCommands.h
+	int commandTopicId;
+	/// Id of the player that issued the command
 	int playerId;
-}; // EVENT_PLAYER_COMMAND
+}; //$ EVENT_PLAYER_COMMAND
 
 /**
  * This AI event is sent when a unit finished processing a command.
@@ -334,7 +334,7 @@ struct SCommandFinishedEvent {
 	int unitId;
 	int commandId;
 	int commandTopicId;
-}; // EVENT_COMMAND_FINISHED
+}; //$ EVENT_COMMAND_FINISHED INTERFACES:Unit(unitId)
 
 /**
  * This AI event is sent when a unit movement is detected by means of a seismic
@@ -343,9 +343,9 @@ struct SCommandFinishedEvent {
  * building in Balanced Annihilation.
  */
 struct SSeismicPingEvent {
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	float strength;
-}; // EVENT_SEISMIC_PING
+}; //$ EVENT_SEISMIC_PING
 
 /**
  * This AI event is sent when the AI should be loading its full state from a
@@ -354,7 +354,7 @@ struct SSeismicPingEvent {
 struct SLoadEvent {
 	/// Absolute file path, should be treated read-only
 	const char* file;
-}; // EVENT_LOAD
+}; //$ EVENT_LOAD INTERFACES:LoadSave(file)
 
 /**
  * This AI event is sent when the AI should be saving its full state to a file.
@@ -362,7 +362,7 @@ struct SLoadEvent {
 struct SSaveEvent {
 	/// Absolute file path, writeable
 	const char* file;
-}; // EVENT_SAVE
+}; //$ EVENT_SAVE INTERFACES:LoadSave(file)
 
 /**
  * This AI event is sent whenever a unit of an enemy team is created,
@@ -372,7 +372,7 @@ struct SSaveEvent {
  */
 struct SEnemyCreatedEvent {
 	int enemy;
-}; // EVENT_ENEMY_CREATED
+}; //$ EVENT_ENEMY_CREATED INTERFACES:Unit(enemy),Enemy(enemy)
 
 /**
  * This AI event is sent whenever an enemy unit is fully built, and contains the
@@ -381,7 +381,7 @@ struct SEnemyCreatedEvent {
  */
 struct SEnemyFinishedEvent {
 	int enemy;
-}; // EVENT_ENEMY_FINISHED
+}; //$ EVENT_ENEMY_FINISHED INTERFACES:Unit(enemy),Enemy(enemy)
 
 #ifdef	__cplusplus
 } // extern "C"

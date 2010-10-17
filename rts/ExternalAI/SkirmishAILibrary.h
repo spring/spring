@@ -26,13 +26,13 @@ public:
 	 * Level of Support for a specific engine version and ai interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
-	LevelOfSupport GetLevelOfSupportFor(int teamId,
+	LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber,
 			const AIInterfaceKey& interfaceKey) const;
 
-	bool Init(int teamId, const SSkirmishAICallback* c_callback) const;
-	bool Release(int teamId) const;
-	int HandleEvent(int teamId, int topic, const void* data) const;
+	bool Init(int skirmishAIId, const SSkirmishAICallback* c_callback) const;
+	bool Release(int skirmishAIId) const;
+	int HandleEvent(int skirmishAIId, int topic, const void* data) const;
 
 private:
 	SSkirmishAILibrary sSAI;

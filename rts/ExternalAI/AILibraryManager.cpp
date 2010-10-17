@@ -68,6 +68,19 @@ static std::string noSlashAtEnd(const std::string& dir) {
 	return resDir;
 }
 
+static std::string removeLastPathPart(const std::string& path) {
+
+	std::string resDir = noSlashAtEnd(path);
+
+	const std::string::size_type slashPos = resDir.find_last_of("/\\");
+	if (slashPos != std::string::npos) {
+		resDir = resDir.substr(0, slashPos+1);
+	}
+
+	return resDir;
+}
+
+
 CAILibraryManager::CAILibraryManager() {
 
 	GetAllInfosFromCache();
@@ -94,7 +107,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 		const std::string& possibleDataDir = *dir;
 		T_dirs infoFile =
 				CFileHandler::FindFiles(possibleDataDir, "InterfaceInfo.lua");
-		if (infoFile.size() > 0) { // interface info is available
+		if (!infoFile.empty()) { // interface info is available
 
 			// generate and store the interface info
 			CAIInterfaceLibraryInfo* interfaceInfo =
@@ -102,7 +115,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 			interfaceInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
 			interfaceInfo->SetDataDirCommon(
-					std::string(possibleDataDir) + "common");
+					removeLastPathPart(possibleDataDir) + "common");
 
 			AIInterfaceKey interfaceKey = interfaceInfo->GetKey();
 
@@ -144,11 +157,11 @@ void CAILibraryManager::GetAllInfosFromCache() {
 		const std::string& possibleDataDir = *dir;
 		T_dirs infoFile = CFileHandler::FindFiles(possibleDataDir,
 				"AIInfo.lua");
-		if (infoFile.size() > 0) { // skirmish AI info is available
+		if (!infoFile.empty()) { // skirmish AI info is available
 			std::string optionFileName = "";
 			T_dirs optionFile = CFileHandler::FindFiles(possibleDataDir,
 					"AIOptions.lua");
-			if (optionFile.size() > 0) {
+			if (!optionFile.empty()) {
 				optionFileName = optionFile.at(0);
 			}
 			// generate and store the ai info
@@ -157,7 +170,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 			skirmishAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
 			skirmishAIInfo->SetDataDirCommon(
-					std::string(possibleDataDir) + "common");
+					removeLastPathPart(possibleDataDir) + "common");
 			skirmishAIInfo->SetLuaAI(false);
 
 			SkirmishAIKey aiKey = skirmishAIInfo->GetKey();
@@ -201,13 +214,13 @@ void CAILibraryManager::GetAllInfosFromCache() {
 void CAILibraryManager::ClearAllInfos() {
 
 	IAILibraryManager::T_interfaceInfos::iterator iii;
-	for (iii=interfaceInfos.begin(); iii!=interfaceInfos.end(); iii++) {
+	for (iii = interfaceInfos.begin(); iii != interfaceInfos.end(); ++iii) {
 		delete iii->second;
 		iii->second = NULL;
 	}
 
 	IAILibraryManager::T_skirmishAIInfos::iterator sai;
-	for (sai=skirmishAIInfos.begin(); sai!=skirmishAIInfos.end(); sai++) {
+	for (sai = skirmishAIInfos.begin(); sai != skirmishAIInfos.end(); ++sai) {
 		delete sai->second;
 		sai->second = NULL;
 	}
@@ -261,7 +274,7 @@ std::vector<SkirmishAIKey> CAILibraryManager::FittingSkirmishAIKeys(
 	}
 
 	std::set<SkirmishAIKey>::const_iterator sasi;
-	for (sasi=skirmishAIKeys.begin(); sasi!=skirmishAIKeys.end(); sasi++) {
+	for (sasi = skirmishAIKeys.begin(); sasi != skirmishAIKeys.end(); ++sasi) {
 
 		// check if the ai name fits
 		if (skirmishAIKey.GetShortName() != sasi->GetShortName()) {
@@ -316,10 +329,11 @@ void CAILibraryManager::ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAI
 	}
 }
 
-void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
+
+void CAILibraryManager::ReleaseEverything() {
 	T_loadedInterfaces::const_iterator lil;
 
-	for (lil = loadedAIInterfaceLibraries.begin(); lil != loadedAIInterfaceLibraries.end(); lil++) {
+	for (lil = loadedAIInterfaceLibraries.begin(); lil != loadedAIInterfaceLibraries.end(); ++lil) {
 		CAIInterfaceLibrary* interfaceLib = FetchInterface(lil->first);
 		if ((interfaceLib != NULL) && interfaceLib->IsInitialized()) {
 			interfaceLib->ReleaseAllSkirmishAILibraries();
@@ -370,13 +384,6 @@ void CAILibraryManager::ReleaseInterface(const AIInterfaceKey& interfaceKey) {
 }
 
 
-/** unloads all interfaces and AIs */
-void CAILibraryManager::ReleaseEverything() {
-
-	ReleaseAllSkirmishAILibraries();
-}
-
-
 AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 		const std::string& shortName,
 		const std::string& minVersion,
@@ -385,7 +392,7 @@ AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 	std::set<AIInterfaceKey>::const_iterator key;
 	int minDiff = INT_MAX;
 	AIInterfaceKey fittingKey = AIInterfaceKey(); // unspecified key
-	for (key=keys.begin(); key!=keys.end(); key++) {
+	for (key = keys.begin(); key != keys.end(); ++key) {
 		if (shortName == key->GetShortName()) {
 			int diff = IAILibraryManager::VersionCompare(key->GetVersion(), minVersion);
 			if (diff >= 0 && diff < minDiff) {

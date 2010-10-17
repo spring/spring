@@ -12,7 +12,7 @@
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
 
-CAirBaseHandler* airBaseHandler = 0;
+CAirBaseHandler* airBaseHandler = NULL;
 
 CR_BIND(CAirBaseHandler, )
 CR_REG_METADATA(CAirBaseHandler,(
@@ -39,12 +39,12 @@ CR_REG_METADATA_SUB(CAirBaseHandler, AirBase, (
 	));
 
 
-CAirBaseHandler::CAirBaseHandler(void) : freeBases(teamHandler->ActiveAllyTeams()), bases(teamHandler->ActiveAllyTeams())
+CAirBaseHandler::CAirBaseHandler() : freeBases(teamHandler->ActiveAllyTeams()), bases(teamHandler->ActiveAllyTeams())
 {
 }
 
 
-CAirBaseHandler::~CAirBaseHandler(void)
+CAirBaseHandler::~CAirBaseHandler()
 {
 	// should not be any bases left here...
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
@@ -118,9 +118,7 @@ void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 	airBaseIDs.erase(base->id);
 }
 
-/** @brief Try to find an airbase and reserve it if one can be found
-Caller must call LeaveLandingPad if it gets one and is finished with it or dies
-it's the callers responsibility to detect if the base dies while its reserved. */
+
 CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
 	float closest = 1e30f;
@@ -131,7 +129,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 		CUnit* baseUnit = (*bi)->unit;
 
 		if (unit == baseUnit) {
-			// don't pick ourselves as a landing pad
+			// do not pick ourselves as a landing pad
 			continue;
 		}
 
@@ -153,7 +151,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 		return found;
 	}
 
-	return 0;
+	return NULL;
 }
 
 
@@ -163,7 +161,6 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 }
 
 
-/** @brief Try to find the closest airbase even if it's reserved */
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
 	float closest = 1e30f;
@@ -173,7 +170,7 @@ float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 		CUnit* baseUnit = (*bi)->unit;
 
 		if (unit == baseUnit) {
-			// don't pick ourselves as a landing pad
+			// do not pick ourselves as a landing pad
 			continue;
 		}
 

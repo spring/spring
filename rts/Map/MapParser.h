@@ -4,17 +4,18 @@
 #define MAP_PARSER_H
 
 #include <string>
-#include "float3.h"
+
 #include "Lua/LuaParser.h"
+#include "System/float3.h"
 
 
 class MapParser
 {
 	public:
-		static std::string GetMapConfigName(const std::string& mapName);
+		static std::string GetMapConfigName(const std::string& mapFileName);
 
 	public:
-		MapParser(const std::string& mapName);
+		MapParser(const std::string& mapFileName);
 		~MapParser();
 
 		LuaParser* GetParser() { return parser; }
@@ -28,6 +29,5 @@ class MapParser
 	private:
 		LuaParser* parser;
 };
-
 
 #endif // MAP_PARSER_H

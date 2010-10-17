@@ -46,15 +46,24 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 		ai(NULL),
 		initialized(false),
 		released(false),
-		c_callback(NULL) {}
+		callback(NULL),
+		cheats(NULL),
+		c_callback(NULL),
+		info(NULL)
+{
+}
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
 		skirmishAIId(skirmishAIId),
+		teamId(-1),
 		cheatEvents(false),
 		ai(NULL),
 		initialized(false),
 		released(false),
-		c_callback(NULL)
+		callback(NULL),
+		cheats(NULL),
+		c_callback(NULL),
+		info(NULL)
 {
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
@@ -70,7 +79,7 @@ void CSkirmishAIWrapper::CreateCallback() {
 	if (c_callback == NULL) {
 		callback = new CAICallback(teamId);
 		cheats = new CAICheats(this);
-		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback, cheats);
+		c_callback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback, cheats);
 	}
 }
 
@@ -87,7 +96,7 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 		delete ai;
 		ai = NULL;
 
-		skirmishAiCallback_release(teamId);
+		skirmishAiCallback_release(skirmishAIId);
 		c_callback = NULL;
 
 		delete callback;
@@ -107,7 +116,8 @@ void CSkirmishAIWrapper::PostLoad() {
 
 bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
-	ai = new CSkirmishAI(teamId, skirmishAIId, key, GetCallback());
+	ai = new CSkirmishAI(skirmishAIId, teamId, key, GetCallback());
+	ai->Init();
 
 	// check if initialization went ok
 	if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId)) {
@@ -172,7 +182,7 @@ void CSkirmishAIWrapper::Init() {
 		}
 	}
 
-	SInitEvent evtData = {teamId, GetCallback()};
+	SInitEvent evtData = {skirmishAIId, GetCallback()};
 	int error = ai->HandleEvent(EVENT_INIT, &evtData);
 	if (error != 0) {
 		// init failed
@@ -206,9 +216,9 @@ void CSkirmishAIWrapper::Release(int reason) {
 static void streamCopy(std::istream* in, std::ostream* out)
 {
 	static const size_t buffer_size = 128;
-	char* buffer;
 
-	buffer = new char[buffer_size];
+	// have to use _new_ here for VS compatibility (no C99 support)
+	char* buffer = new char[buffer_size];
 
 	in->read(buffer, buffer_size);
 	while (in->good()) {
@@ -220,14 +230,24 @@ static void streamCopy(std::istream* in, std::ostream* out)
 	delete[] buffer;
 }
 
-void CSkirmishAIWrapper::Load(std::istream* load_s)
-{
+static std::string createTempFileName(const char* action, int teamId,
+		int skirmishAIId) {
+
 	static const size_t tmpFileName_size = 1024;
+
+	// have to use _new_ here for VS compatibility (no C99 support)
 	char* tmpFileName = new char[tmpFileName_size];
-	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team_%i.tmp", "load", teamId);
+	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team%i_id%i.tmp", action,
+			teamId, skirmishAIId);
 	std::string tmpFile = filesystem.LocateFile(tmpFileName,
 			FileSystem::WRITE | FileSystem::CREATE_DIRS);
 	delete[] tmpFileName;
+	return tmpFile;
+}
+
+void CSkirmishAIWrapper::Load(std::istream* load_s)
+{
+	const std::string tmpFile = createTempFileName("load", teamId, skirmishAIId);
 
 	std::ofstream tmpFile_s;
 	tmpFile_s.open(tmpFile.c_str(), std::ios::binary);
@@ -242,12 +262,7 @@ void CSkirmishAIWrapper::Load(std::istream* load_s)
 
 void CSkirmishAIWrapper::Save(std::ostream* save_s)
 {
-	static const size_t tmpFileName_size = 1024;
-	char* tmpFileName = new char[tmpFileName_size];
-	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team_%i.tmp", "save", teamId);
-	std::string tmpFile = filesystem.LocateFile(tmpFileName,
-			FileSystem::WRITE | FileSystem::CREATE_DIRS);
-	delete[] tmpFileName;
+	const std::string tmpFile = createTempFileName("save", teamId, skirmishAIId);
 
 	SSaveEvent evtData = {tmpFile.c_str()};
 	ai->HandleEvent(EVENT_SAVE, &evtData);
@@ -286,8 +301,10 @@ void CSkirmishAIWrapper::UnitDamaged(int unitId, int attackerUnitId,
 		float damage, const float3& dir, int weaponDefId, bool paralyzer) {
 
 	SUnitDamagedEvent evtData = {unitId, attackerUnitId, damage,
-			dir.toSAIFloat3(), weaponDefId, paralyzer};
+			new float[3], weaponDefId, paralyzer};
+	dir.copyInto(evtData.dir_posF3);
 	ai->HandleEvent(EVENT_UNIT_DAMAGED, &evtData);
+	delete [] evtData.dir_posF3;
 }
 
 void CSkirmishAIWrapper::UnitMoveFailed(int unitId) {
@@ -345,8 +362,10 @@ void CSkirmishAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId,
 		float damage, const float3& dir, int weaponDefId, bool paralyzer) {
 
 	SEnemyDamagedEvent evtData = {enemyUnitId, attackerUnitId, damage,
-			dir.toSAIFloat3(), weaponDefId, paralyzer};
+			new float[3], weaponDefId, paralyzer};
+	dir.copyInto(evtData.dir_posF3);
 	ai->HandleEvent(EVENT_ENEMY_DAMAGED, &evtData);
+	delete [] evtData.dir_posF3;
 }
 
 void CSkirmishAIWrapper::Update(int frame) {
@@ -367,26 +386,19 @@ void CSkirmishAIWrapper::WeaponFired(int unitId, int weaponDefId) {
 void CSkirmishAIWrapper::PlayerCommandGiven(
 		const std::vector<int>& selectedUnits, const Command& c, int playerId) {
 
-	unsigned int numUnits = selectedUnits.size();
-	int* unitIds = new int[numUnits];
-
-	for (unsigned int i = 0; i < numUnits; ++i) {
+	const int unitIds_size = selectedUnits.size();
+	int* unitIds = new int[unitIds_size];
+	for (int i = 0; i < unitIds_size; ++i) {
 		unitIds[i] = selectedUnits.at(i);
 	}
+	const int cCommandId = extractAICommandTopic(&c, uh->MaxUnits());
 
-	int sCommandId;
-	void* sCommandData = mallocSUnitCommand(-1, -1, &c, &sCommandId);
-
-	SPlayerCommandEvent evtData = {unitIds, numUnits, sCommandId, sCommandData,
-			playerId};
+	SPlayerCommandEvent evtData = {unitIds, unitIds_size, cCommandId, playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
 	delete [] unitIds;
 }
 
-void CSkirmishAIWrapper::CommandFinished(int unitId, int commandTopicId) {
-	// TODO: add support for commandIds:
-	// each issued command would have its own id
-	const int commandId = -1;
+void CSkirmishAIWrapper::CommandFinished(int unitId, int commandId, int commandTopicId) {
 	SCommandFinishedEvent evtData = {unitId, commandId, commandTopicId};
 	ai->HandleEvent(EVENT_COMMAND_FINISHED, &evtData);
 }
@@ -394,14 +406,24 @@ void CSkirmishAIWrapper::CommandFinished(int unitId, int commandTopicId) {
 void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,
 		const float3& pos, float strength) {
 
-	SSeismicPingEvent evtData = {pos.toSAIFloat3(), strength};
+	SSeismicPingEvent evtData = {new float[3], strength};
+	pos.copyInto(evtData.pos_posF3);
 	ai->HandleEvent(EVENT_SEISMIC_PING, &evtData);
+	delete [] evtData.pos_posF3;
 }
 
 
-int CSkirmishAIWrapper::GetTeamId() const { return teamId; }
-const SkirmishAIKey& CSkirmishAIWrapper::GetKey() const { return key; }
-const SSkirmishAICallback* CSkirmishAIWrapper::GetCallback() const { return c_callback; }
+int CSkirmishAIWrapper::GetTeamId() const {
+	return teamId;
+}
+
+const SkirmishAIKey& CSkirmishAIWrapper::GetKey() const {
+	return key;
+}
+
+const SSkirmishAICallback* CSkirmishAIWrapper::GetCallback() const {
+	return c_callback;
+}
 
 void CSkirmishAIWrapper::SetCheatEventsEnabled(bool enable) {
 	cheatEvents = enable;

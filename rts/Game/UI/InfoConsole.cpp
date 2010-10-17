@@ -27,14 +27,17 @@
 const size_t CInfoConsole::maxRawLines   = 1024;
 const size_t CInfoConsole::maxLastMsgPos = 10;
 
-CInfoConsole::CInfoConsole():
-	disabled(false), lastMsgIter(lastMsgPositions.begin()), newLines(0),
-	rawId(0)
+CInfoConsole::CInfoConsole() :
+	  fontScale(1.0f)
+	, disabled(false)
+	, lastMsgIter(lastMsgPositions.begin())
+	, newLines(0)
+	, rawId(0)
+	, lastTime(0)
 {
 	data.clear();
 
-	lastTime=0;
-	lifetime     = configHandler->Get("InfoMessageTime", 400);
+	lifetime = configHandler->Get("InfoMessageTime", 400);
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry",
                                                   "0.26 0.96 0.41 0.205");
@@ -47,7 +50,6 @@ CInfoConsole::CInfoConsole():
 		height = 0.205f;
 	}
 
-	fontScale = 1.0f;
 	fontSize = fontScale * smallFont->GetSize();
 
 	logOutput.AddSubscriber(this);
@@ -91,7 +93,7 @@ void CInfoConsole::Draw()
 		fontOptions |= FONT_OUTLINE;
 
 	std::deque<InfoLine>::iterator ili;
-	for (ili = data.begin(); ili != data.end(); ili++) {
+	for (ili = data.begin(); ili != data.end(); ++ili) {
 		curY -= fontHeight;
 		smallFont->glPrint(curX, curY, fontSize, fontOptions, ili->text);
 	}
@@ -103,12 +105,14 @@ void CInfoConsole::Draw()
 void CInfoConsole::Update()
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-	if(lastTime>0)
+	if (lastTime > 0) {
 		lastTime--;
-	if(!data.empty()){
+	}
+	if (!data.empty()) {
 		data.begin()->time--;
-		if(data[0].time<=0)
+		if (data[0].time <= 0) {
 			data.pop_front();
+		}
 	}
 }
 
@@ -161,7 +165,7 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 	std::list<std::string> lines = smallFont->Wrap(text,fontSize,maxWidth);
 
 	std::list<std::string>::iterator il;
-	for (il = lines.begin(); il != lines.end(); il++) {
+	for (il = lines.begin(); il != lines.end(); ++il) {
 		//! add the line to the console
 		InfoLine l;
 		data.push_back(l);

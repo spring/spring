@@ -805,6 +805,8 @@ void CWaitCommandsAI::DeathWait::Update()
 		return;
 	}
 
+	unitPos.clear();
+
 	if (!deathUnits.empty()) {
 		return; // more must die
 	}
@@ -839,45 +841,40 @@ void CWaitCommandsAI::DeathWait::Update()
 
 void CWaitCommandsAI::DeathWait::Draw() const
 {
-	CUnitSet drawSet;
-	CUnitSet::const_iterator it;
-
 	if (unitPos.empty()) {
 		return;
 	}
 
 	float3 midPos(0.0f, 0.0f, 0.0f);
-	for (int i = 0; i < (int)unitPos.size(); i++) {
-		midPos += unitPos[i];
+	for (size_t i = 0; i < unitPos.size(); i++) {
+		midPos += unitPos.at(i);
 	}
 	midPos /= (float)unitPos.size();
 
 	cursorIcons.AddIcon(CMD_DEATHWAIT, midPos);
 
-	for (int i = 0; i < (int)unitPos.size(); i++) {
-		lineDrawer.StartPath(unitPos[i], cmdColors.start);
+	for (size_t i = 0; i < unitPos.size(); i++) {
+		lineDrawer.StartPath(unitPos.at(i), cmdColors.start);
 		lineDrawer.DrawLine(midPos, cmdColors.deathWait);
 		lineDrawer.FinishPath();
 	}
 
+	CUnitSet::const_iterator it;
 	for (it = deathUnits.begin(); it != deathUnits.end(); ++it) {
 		const CUnit* unit = *it;
 		if (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) {
-			cursorIcons.AddIcon(CMD_SELFD, (*it)->midPos);
+			cursorIcons.AddIcon(CMD_SELFD, unit->midPos);
 			lineDrawer.StartPath(midPos, cmdColors.start);
 			lineDrawer.DrawLine(unit->midPos, cmdColors.deathWait);
 			lineDrawer.FinishPath();
 		}
 	}
-
-	unitPos.clear();
 }
 
 
-void CWaitCommandsAI::DeathWait::AddUnitPosition(const float3& pos) const
+void CWaitCommandsAI::DeathWait::AddUnitPosition(const float3& pos)
 {
 	unitPos.push_back(pos);
-	return;
 }
 
 

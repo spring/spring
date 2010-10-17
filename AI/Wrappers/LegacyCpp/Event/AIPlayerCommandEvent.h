@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -18,10 +18,11 @@
 */
 
 #ifndef _AIPLAYERCOMMANDEVENT_H
-#define	_AIPLAYERCOMMANDEVENT_H
+#define _AIPLAYERCOMMANDEVENT_H
 
 #include "AIEvent.h"
 #include "ExternalAI/Interface/AISCommands.h"
+#include "Sim/Units/CommandAI/CommandQueue.h"
 
 class CAIPlayerCommandEvent : public CAIEvent {
 public:
@@ -30,16 +31,24 @@ public:
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		int evtId = AI_EVENT_PLAYER_COMMAND;
+
 		std::vector<int> unitIds;
 		int i;
-		for (i=0; i < event.numUnitIds; i++) {
+		for (i=0; i < event.unitIds_size; i++) {
 			unitIds.push_back(event.unitIds[i]);
 		}
-		Command* c = (Command*) newCommand(event.commandData,
-				event.commandTopic);
-		IGlobalAI::PlayerCommandEvent evt = {unitIds, *c, event.playerId};
+		
+		// this workaround is a bit ugly, but as only ray use this event anyway,
+		// this should suffice
+		const CCommandQueue* curCommands = globalAICallback->GetAICallback()
+				->GetCurrentUnitCommands(event.unitIds[0]);
+		const Command& lastCommand = curCommands->front();
+		//Command* c = (Command*) newCommand(event.commandData,
+		//		event.commandTopicId);
+
+		IGlobalAI::PlayerCommandEvent evt = {unitIds, lastCommand, event.playerId};
 		ai.HandleEvent(evtId, &evt);
-		delete c;
+		//delete c;
 	}
 
 private:

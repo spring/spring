@@ -232,14 +232,14 @@ FBO::~FBO()
 {
 	if (!IsSupported()) return;
 
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-	if (fboId)
-		glDeleteFramebuffersEXT(1, &fboId);
-
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
 	for (std::vector<GLuint>::iterator ri=myRBOs.begin(); ri!=myRBOs.end(); ++ri) {
 		glDeleteRenderbuffersEXT(1, &(*ri));
 	}
+
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	if (fboId)
+		glDeleteFramebuffersEXT(1, &fboId);
 
 	for (std::vector<FBO*>::iterator fi=fboList.begin(); fi!=fboList.end(); ++fi) {
 		if (*fi==this) {

@@ -5,6 +5,7 @@
 
 use strict;
 use File::Basename;
+use File::Copy;
 use Cwd 'abs_path';
 use File::Spec::Functions;
 
@@ -87,11 +88,8 @@ $nsisDefines="$nsisDefines -DVERSION_TAG=\"$tag\"";
 system("sh", "installer/springlobby_download.sh");
 chdir("$installerDir/downloads");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
-system("wget", "-N", "http://springrts.com/dl/SelectionEditor.zip");
-system("mkdir", "-p", "./SelectionEditor/");
-system("unzip", "-o", "SelectionEditor.zip", "-d", "./SelectionEditor/");
 system("wget", "-N", "http://www.springlobby.info/installer/springsettings.exe");
-system("wget", "-N", "http://files.caspring.org/caupdater/SpringDownloader.exe");
+system("wget", "-N", "http://zero-k.info/lobby/setup.exe");
 chdir("$installerDir/..");
 
 

@@ -199,7 +199,7 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
 
 /**
  * @brief get the directory part of a path
- * "/home/user/.spring/test.txt" -> "/home/user/.spring"
+ * "/home/user/.spring/test.txt" -> "/home/user/.spring/"
  */
 std::string FileSystem::GetDirectory(const std::string& path) const
 {

@@ -20,4 +20,4 @@ cd ${DIR}
 cmake .. $@
 
 echo "erasing old base content..."
-rm -r base
+rm -rf base

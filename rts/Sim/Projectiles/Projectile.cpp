@@ -38,7 +38,7 @@ CR_REG_METADATA(CProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 bool CProjectile::inArray = false;
-CVertexArray* CProjectile::va = 0;
+CVertexArray* CProjectile::va = NULL;
 
 CProjectile::CProjectile():
 	synced(false),

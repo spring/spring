@@ -34,10 +34,10 @@
 /******************************************************************************/
 
 CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile) :
-	initOk(false),
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
+	netHeartbeatThread(NULL),
 	gameLoadThread(NULL),
 	mt_loading(true),
 	startupTexture(0),
@@ -76,7 +76,7 @@ void CLoadScreen::Init()
 			Channels::BGMusic.Play(mapStartMusic);
 	}
 
-	mt_loading = configHandler->Get("LoadingMT", false);
+	mt_loading = configHandler->Get("LoadingMT", true);
 
 	//! Create a Thread that pings the host/server, so it knows that this client is still alive
 	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
@@ -99,9 +99,6 @@ void CLoadScreen::Init()
 	if (!mt_loading) {
 		Draw();
 		game->LoadGame(mapName);
-		initOk = false;
-	} else {
-		initOk = true;
 	}
 }
 
@@ -135,25 +132,29 @@ CLoadScreen::~CLoadScreen()
 }
 
 
+/******************************************************************************/
+
 CLoadScreen* CLoadScreen::singleton = NULL;
 
-void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) {
-
+void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
+{
 	assert(singleton == NULL);
 
 	singleton = new CLoadScreen(mapName, modName, saveFile);
 	// Init() already requires GetInstance() to work.
 	singleton->Init();
-	if (!singleton->initOk) {
+	if (!singleton->mt_loading) {
 		CLoadScreen::DeleteInstance();
 	}
 }
 
-void CLoadScreen::DeleteInstance() {
 
+void CLoadScreen::DeleteInstance()
+{
 	delete singleton;
 	singleton = NULL;
 }
+
 
 /******************************************************************************/
 
@@ -197,12 +198,15 @@ int CLoadScreen::KeyReleased(unsigned short k)
 
 bool CLoadScreen::Update()
 {
-	//! Stuff that needs to be done regularly while loading.
-	good_fpu_control_registers(curLoadMessage.c_str());
-	CrashHandler::ClearDrawWDT();
+	{
+		//! cause of `curLoadMessage`
+		boost::recursive_mutex::scoped_lock lck(mutex);
+		//! Stuff that needs to be done regularly while loading.
+		good_fpu_control_registers(curLoadMessage.c_str());
+	}
 
 	if (game->finishedLoading) {
-		delete this;
+		CLoadScreen::DeleteInstance();
 	}
 
 	return true;
@@ -254,11 +258,11 @@ bool CLoadScreen::Draw()
 	}
 
 	font->Begin();
-		font->SetTextColor(0.7f,0.7f,0.7f,0.7f);
+		font->SetTextColor(0.5f,0.5f,0.5f,0.9f);
 		font->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
 			oldLoadMessages);
 
-		font->SetTextColor(0.9f,0.9f,0.9f,0.8f);
+		font->SetTextColor(0.9f,0.9f,0.9f,0.9f);
 		float posy = font->GetTextNumLines(oldLoadMessages) * font->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
 		font->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
 			curLoadMessage);
@@ -276,8 +280,6 @@ bool CLoadScreen::Draw()
 		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"This program is distributed under the GNU General Public License, see license.html for more info");
 	font->End();
-
-	SDL_GL_SwapBuffers();
 
 	return true;
 }

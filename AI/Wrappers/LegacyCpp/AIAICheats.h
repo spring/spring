@@ -29,7 +29,7 @@ class CAIAICallback;
 class CAIAICheats : public IAICheats {
 public:
 	CAIAICheats();
-	CAIAICheats(int teamId, const SSkirmishAICallback* sAICallback,
+	CAIAICheats(int skirmishAIId, const SSkirmishAICallback* sAICallback,
 			CAIAICallback* aiCallback);
 
 
@@ -72,7 +72,6 @@ public:
 	bool IsUnitCloaked(int unitid);
 	bool IsUnitParalyzed(int unitid);
 
-	bool OnlyPassiveCheats();
 	void EnableCheatEvents(bool enable);
 
 	bool GetProperty(int id, int property, void* dst);
@@ -80,10 +79,15 @@ public:
 	int HandleCommand(int commandId, void* data);
 
 private:
-	int teamId;
+	int skirmishAIId;
 	const SSkirmishAICallback* sAICallback;
 	CAIAICallback* aiCallback;
-	void setCheatsEnabled(bool enable);
+
+	/**
+	 * Used to temporarily enable cheating for regular callbacks
+	 * that require (extra) priviledges.
+	 */
+	void SetCheatsEnabled(bool enable);
 };
 
 #endif // _AIAICHEATS_H

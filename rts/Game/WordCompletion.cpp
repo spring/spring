@@ -171,7 +171,7 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 
 	// make a list of valid possible matches
 	std::map<std::string, WordProperties>::const_iterator it;
-	for (it = start; it != words.end(); it++) {
+	for (it = start; it != words.end(); ++it) {
 		const int cmp = it->first.compare(0, fragLen, fragment);
 		if (cmp < 0) continue;
 		if (cmp > 0) break;

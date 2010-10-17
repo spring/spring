@@ -118,8 +118,7 @@ namespace terrain {
 
 	Blendmap::~Blendmap ()
 	{
-		if (generatorInfo)
-			delete generatorInfo;
+		delete generatorInfo;
 	}
 
 	void Blendmap::Load(const std::string& name, const std::string& section, Heightmap *heightmap, ILoadCallback *cb, const TdfParser *tdf)

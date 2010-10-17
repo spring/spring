@@ -27,6 +27,7 @@ struct SAIInterfaceCallback {
 	 * added or removed.
 	 */
 	int               (CALLING_CONV *Engine_AIInterface_ABIVersion_getFailPart)(int interfaceId);
+
 	/**
 	 * Returns the Application Binary Interface version, warning part.
 	 * Interface and engine will try to run/work together,
@@ -39,19 +40,25 @@ struct SAIInterfaceCallback {
 
 	/// Returns the major engine revision number (e.g. 0.77)
 	const char*       (CALLING_CONV *Engine_Version_getMajor)(int interfaceId);
+
 	/// Returns the minor engine revision
 	const char*       (CALLING_CONV *Engine_Version_getMinor)(int interfaceId);
+
 	/**
 	 * Clients that only differ in patchset can still play together.
 	 * Also demos should be compatible between patchsets.
 	 */
 	const char*       (CALLING_CONV *Engine_Version_getPatchset)(int interfaceId);
+
 	/// additional information (compiler flags, svn revision etc.)
 	const char*       (CALLING_CONV *Engine_Version_getAdditional)(int interfaceId);
+
 	/// time of build
 	const char*       (CALLING_CONV *Engine_Version_getBuildTime)(int interfaceId);
+
 	/// Major.Minor
 	const char*       (CALLING_CONV *Engine_Version_getNormal)(int interfaceId);
+
 	/// Major.Minor.Patchset (Additional)
 	const char*       (CALLING_CONV *Engine_Version_getFull)(int interfaceId);
 
@@ -60,39 +67,47 @@ struct SAIInterfaceCallback {
 	 * for this interface.
 	 */
 	int               (CALLING_CONV *AIInterface_Info_getSize)(int interfaceId);
+
 	/**
 	 * Returns the key at index infoIndex in the info map
 	 * for this interface, or NULL if the infoIndex is invalid.
 	 */
 	const char*       (CALLING_CONV *AIInterface_Info_getKey)(int interfaceId, int infoIndex);
+
 	/**
 	 * Returns the value at index infoIndex in the info map
 	 * for this interface, or NULL if the infoIndex is invalid.
 	 */
 	const char*       (CALLING_CONV *AIInterface_Info_getValue)(int interfaceId, int infoIndex);
+
 	/**
 	 * Returns the description of the key at index infoIndex in the info map
 	 * for this interface, or NULL if the infoIndex is invalid.
 	 */
 	const char*       (CALLING_CONV *AIInterface_Info_getDescription)(int interfaceId, int infoIndex);
+
 	/**
 	 * Returns the value associated with the given key in the info map
 	 * for this interface, or NULL if not found.
 	 */
 	const char*       (CALLING_CONV *AIInterface_Info_getValueByKey)(int interfaceId, const char* const key);
 
+
 	/// the number of teams in this game
 	int               (CALLING_CONV *Teams_getSize)(int interfaceId);
 
 	/// the number of skirmish AIs in this game
 	int               (CALLING_CONV *SkirmishAIs_getSize)(int interfaceId);
+
 	/// the maximum number of skirmish AIs in any game
 	int               (CALLING_CONV *SkirmishAIs_getMax)(int interfaceId);
+
 	/// Returns the value accosiated to the given key from the skirmish AIs info map
 	const char*       (CALLING_CONV *SkirmishAIs_Info_getValueByKey)(int interfaceId, const char* const shortName, const char* const version, const char* const key);
 
 	/// This will end up in infolog
 	void              (CALLING_CONV *Log_log)(int interfaceId, const char* const msg);
+
 	/**
 	 * Inform the engine of an error that happend in the interface.
 	 * @param   msg       error message
@@ -105,18 +120,21 @@ struct SAIInterfaceCallback {
 
 	/// Basically returns '/' on posix and '\\' on windows
 	char (CALLING_CONV *DataDirs_getPathSeparator)(int interfaceId);
+
 	/**
 	 * This interfaces main data dir, which is where the shared library
 	 * and the InterfaceInfo.lua file are located, e.g.:
 	 * /usr/share/games/spring/AI/Interfaces/C/0.1/
 	 */
 	const char*       (CALLING_CONV *DataDirs_getConfigDir)(int interfaceId);
+
 	/**
 	 * This interfaces writeable data dir, which is where eg logs, caches
 	 * and learning data should be stored, e.g.:
 	 * /home/userX/.spring/AI/Interfaces/C/0.1/
 	 */
 	const char*       (CALLING_CONV *DataDirs_getWriteableDir)(int interfaceId);
+
 	/**
 	 * Returns an absolute path which consists of:
 	 * data-dir + AI-Interface-path + relative-path.
@@ -143,14 +161,18 @@ struct SAIInterfaceCallback {
 	 *          -> the path exists and is stored in an absolute form in path
 	 */
 	bool              (CALLING_CONV *DataDirs_locatePath)(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common);
+
 	/**
 	 * @see     locatePath()
 	 */
 	char*             (CALLING_CONV *DataDirs_allocatePath)(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir, bool common);
+
 	/// Returns the number of springs data dirs.
 	int               (CALLING_CONV *DataDirs_Roots_getSize)(int interfaceId);
+
 	/// Returns the data dir at dirIndex, which is valid between 0 and (DataDirs_Roots_getSize() - 1).
 	bool              (CALLING_CONV *DataDirs_Roots_getDir)(int interfaceId, char* path, int path_sizeMax, int dirIndex);
+
 	/**
 	 * Returns an absolute path which consists of:
 	 * data-dir + relative-path.
@@ -175,7 +197,9 @@ struct SAIInterfaceCallback {
 	 *          -> the path exists and is stored in an absolute form in path
 	 */
 	bool              (CALLING_CONV *DataDirs_Roots_locatePath)(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
+
 	char*             (CALLING_CONV *DataDirs_Roots_allocatePath)(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir);
+
 	// Reading the file is better done directly by the interface, eg with fopen()
 	//int               (CALLING_CONV *DataDirs_File_getSize)(int interfaceId, const char* const filePath);
 	//int               (CALLING_CONV *DataDirs_File_getContent)(int interfaceId, void* buffer, int buffer_sizeMax, const char* const filePath);

@@ -567,7 +567,7 @@ void CSelectedUnitsAI::SelectCircleUnits(const float3& pos, float radius,
 {
 	units.clear();
 
-	if ((player < 0) || (player >= playerHandler->ActivePlayers())) {
+	if (!playerHandler->IsValidPlayer(player)) {
 		return;
 	}
 	const CPlayer* p = playerHandler->Player(player);
@@ -601,7 +601,7 @@ void CSelectedUnitsAI::SelectRectangleUnits(const float3& pos0,
 {
 	units.clear();
 
-	if ((player < 0) || (player >= playerHandler->ActivePlayers())) {
+	if (!playerHandler->IsValidPlayer(player)) {
 		return;
 	}
 	const CPlayer* p = playerHandler->Player(player);

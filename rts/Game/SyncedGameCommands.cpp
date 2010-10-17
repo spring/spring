@@ -198,7 +198,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		if (teamArgIdx >= 0) {
 			const string& teamStr = args[teamArgIdx];
 			team = atoi(teamStr.c_str());
-			if ((team < 0) || (team >= teamHandler->ActiveTeams()) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
+			if ((!teamHandler->IsValidTeam(team)) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
 				logOutput.Print("Bad give team: %s", teamStr.c_str());
 				return;
 			}
@@ -303,6 +303,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 							const float3 upos(minposx, minposy, minposz);
 
 							CFeature* feature = new CFeature();
+							// Initialize() adds the feature to the FeatureHandler -> no memory-leak
 							feature->Initialize(upos, featureDef, 0, 0, team, allyteam, "");
 							--total;
 						}

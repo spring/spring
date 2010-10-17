@@ -111,25 +111,37 @@ ADD_LIBRARY(springserver SHARED ${ENGINE_SRC_ROOT_DIR}/Map/MapParser)
 TARGET_LINK_LIBRARIES(springserver springserver-static)
 
 # Compile dedicated server executable
-ADD_EXECUTABLE(spring-dedicated ${ENGINE_SRC_ROOT_DIR}/Map/MapParser main)
-TARGET_LINK_LIBRARIES(spring-dedicated springserver-static)
+ADD_EXECUTABLE(engine-dedicated ${ENGINE_SRC_ROOT_DIR}/Map/MapParser main)
+TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 
 
 ### Install the executable
 INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
-INSTALL(TARGETS spring-dedicated DESTINATION ${BINDIR})
+INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
+SET_TARGET_PROPERTIES(engine-dedicated PROPERTIES OUTPUT_NAME "spring-dedicated")
 
-# Only install spring-ds executable & dependencies
-# use case: make install-spring-ds
+
+# Only build & install spring-dedicated executable & dependencies
+# use cases:
+# * make spring-dedicated
+# * make install-spring-dedicated
+set(springDsDeps
+		engine-dedicated
+		springserver
+		gamedata
+		unitsync
+	)
+add_custom_target(spring-dedicated
+	WORKING_DIRECTORY
+		"${CMAKE_BINARY_DIR}"
+	COMMENT
+		"  spring-dedicated: Building all dependencies ..." VERBATIM
+	)
+add_dependencies(spring-dedicated ${springDsDeps}) # This also works for custom targets
+
 set(springDsInstallDirs
 		"rts/builds/DS"
 		"tools/unitsync"
 		"cont"
 	)
-set(springDsInstallDeps
-		spring-dedicated
-		springserver
-		gamedata
-		unitsync
-	)
-CreateInstallTarget(spring-dedicated springDsInstallDeps springDsInstallDirs)
+CreateInstallTarget(spring-dedicated springDsDeps springDsInstallDirs)

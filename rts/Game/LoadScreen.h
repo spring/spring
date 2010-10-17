@@ -49,7 +49,6 @@ private:
 
 private:
 	static CLoadScreen* singleton;
-	bool initOk;
 
 	std::string oldLoadMessages;
 	std::string curLoadMessage;

@@ -10,8 +10,8 @@ Each target has an equivalent install target. E.g. `NullAI' has
 
 [default]
 AIInterfaces
-	C
-	Java
+	C-AIInterface
+	Java-AIInterface
 SkirmishAI
 	RAI
 	NTAI
@@ -509,6 +509,7 @@ for baseName in aiinterfaces_toBuild:
 
 
 
+	# Build the native sources
 	cwdPrev = os.getcwd()
 	os.chdir(myEnv['sourcedir'])
 	mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
@@ -526,7 +527,9 @@ for baseName in aiinterfaces_toBuild:
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
 		awkCommonScriptsDir = os.path.join(springSrcDir, 'AI', 'Wrappers', 'CUtils', 'bin')
-		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'src-generated', 'main', 'java'))
+		interfaceGeneratedSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'src-generated', 'main'))
+		interfaceGeneratedJavaSrcDir = os.path.join(interfaceGeneratedSrcDir, 'java')
+		interfaceGeneratedNativeSrcDir = os.path.join(interfaceGeneratedSrcDir, 'native')
 		interfaceJavaClassesDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'classes'))
 		javaPkg = 'com/springrts/ai'
 		jarFileBase = 'AIInterface'
@@ -540,7 +543,7 @@ for baseName in aiinterfaces_toBuild:
 		awkVars = []
 		awkVars += ['SPRING_SOURCE_DIR=' + filelist.getAbsDir(env, springSrcDir)]
 		awkVars += ['INTERFACE_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceJavaSrcDir)]
-		awkVars += ['GENERATED_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)]
+		awkVars += ['GENERATED_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceGeneratedSrcDir)]
 		# gawk doesn't like backslashes on windows
 		if os.name == 'nt':
 			for i, e in enumerate(awkVars):
@@ -576,10 +579,13 @@ for baseName in aiinterfaces_toBuild:
 		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
 		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
 		awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
-		awkOutput = [os.path.join(genSrcPkgDir, 'AICallback.java')]
+		awkOutput =  [os.path.join(genSrcPkgDir, 'AICallback.java')]
+		awkOutput += [os.path.join(interfaceGeneratedNativeSrcDir, 'FunctionPointerBridge.c')]
+		awkOutput += [os.path.join(interfaceGeneratedNativeSrcDir, 'FunctionPointerBridge.h')]
 		wrapp_callback = AWKExecutor(myEnv, 'wrapp_callback', awkScripts, awkVars, awkInputFile, awkOutput, workDir = awkScriptsDir)
 		wrapp_callback_cmd = wrapp_callback.createExecuteCommand()
-		myEnv.AddPreAction(wrapp_commands_cmd, ensureDirExists_action(os.path.join(genSrcPkgDir)))
+		myEnv.AddPreAction(wrapp_callback_cmd, ensureDirExists_action(os.path.join(interfaceGeneratedNativeSrcDir)))
+		myEnv.AddPreAction(wrapp_callback_cmd, ensureDirExists_action(os.path.join(genSrcPkgDir)))
 
 		# wrapp the Callback in an OO layer
 		awkScripts = []
@@ -600,6 +606,12 @@ for baseName in aiinterfaces_toBuild:
 
 		wrapp_all = [wrapp_events_cmd, wrapp_commands_cmd, wrapp_callback_cmd, wrapp_callbackOO_cmd]
 
+		# Build the generated native sources
+		myGeneratedNativeSourceFiles = [os.path.join(interfaceGeneratedNativeSrcDir, 'FunctionPointerBridge')]
+		mySourceFiles += myGeneratedNativeSourceFiles
+		myGeneratedSourceObjs = [myEnv.SharedObject(source=myGeneratedNativeSourceFiles[0], target=os.path.join(env['builddir'], 'generated__' + 'FunctionPointerBridge' + myEnv['SHARED_OBJ_EXT']))]
+		myObjs += myGeneratedSourceObjs
+		myEnv['CPPPATH'] += [interfaceGeneratedNativeSrcDir]
 
 		# compile the Java part
 		aiInterfaceProj = JavaProject(myEnv, 'aiInterfaceProj', [interfaceJLibDir], [filelist.getAbsDir(env, interfaceJavaSrcDir)], [filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)], interfaceJavaClassesDir, jarFileBin_build, jarFileSrc_build)
@@ -616,7 +628,7 @@ for baseName in aiinterfaces_toBuild:
 		myJarSrc = aiInterfaceProj_packSrc_cmd
 
 		allBuilds = [wrapp_all, myClasses, myJarBin, myJarSrc]
-		Alias(baseName, allBuilds)
+		Alias(baseName + '-AIInterface', allBuilds)
 		Alias('AIInterfaces', allBuilds)
 		Default(allBuilds)
 		instList += [myEnv.Install(myEnv['installprefix'], jarFileBin_build)]
@@ -626,7 +638,7 @@ for baseName in aiinterfaces_toBuild:
 	if env['platform'] != 'windows':
 		targetName = 'lib' + targetName
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), myObjs)
-	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
+	Alias(baseName + '-AIInterface', lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
 	Default(lib)
 	instList += [myEnv.Install(myEnv['installprefix'], lib)]
@@ -639,7 +651,7 @@ for baseName in aiinterfaces_toBuild:
 
 	Alias('install', instList)
 	Alias('install-AIInterfaces', instList)
-	Alias('install-' + baseName, instList)
+	Alias('install-' + baseName + '-AIInterface', instList)
 
 
 

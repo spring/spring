@@ -55,22 +55,25 @@ ENDIF (MINGW)
 
 
 ### Build the executable
-ADD_EXECUTABLE(spring-headless ${engineSources} ${ENGINE_ICON_HL})
-TARGET_LINK_LIBRARIES(spring-headless ${engineHeadlessLibraries})
+ADD_EXECUTABLE(engine-headless ${engineSources} ${ENGINE_ICON_HL})
+TARGET_LINK_LIBRARIES(engine-headless ${engineHeadlessLibraries})
+SET_TARGET_PROPERTIES(engine-headless PROPERTIES OUTPUT_NAME "spring-headless")
 
 IF    (MINGW)
 	# To enable console output/force a console window to open
-	SET_TARGET_PROPERTIES(spring-headless PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
+	SET_TARGET_PROPERTIES(engine-headless PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 
-	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
+	#SET_TARGET_PROPERTIES(engine-headless PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
 	#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
 
 ### Install the executable
-INSTALL(TARGETS spring-headless DESTINATION ${BINDIR})
+INSTALL(TARGETS engine-headless DESTINATION ${BINDIR})
 
-# Only install spring-headless executable & dependencies
-# use case: make install-spring-headless
-CreateEngineBuildInstallTarget(spring-headless)
+# Only build & install spring-headless executable & dependencies
+# use cases:
+# * make spring-headless
+# * make install-spring-headless
+CreateEngineBuildAndInstallTarget(headless)
 

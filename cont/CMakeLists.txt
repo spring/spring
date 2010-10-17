@@ -25,8 +25,10 @@ install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ DESTINATION ${DATADIR}
 		PATTERN "freedesktop" EXCLUDE
 		PATTERN "CMakeLists.txt" EXCLUDE
 		PATTERN "CMakeCache" EXCLUDE
+		PATTERN "CMakeFiles" EXCLUDE
+		PATTERN "Makefile" EXCLUDE
+		PATTERN "cmake_install.cmake" EXCLUDE
 	)
-
 
 ### Install content
 install (DIRECTORY ${CMAKE_BINARY_DIR}/base DESTINATION ${DATADIR})
