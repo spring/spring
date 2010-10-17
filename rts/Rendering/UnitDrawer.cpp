@@ -265,7 +265,7 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, const_cast<float*>(&mapInfo->light.sunDir[0]));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &mapInfo->light.sunDir[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, unitShadowDensity);
@@ -1191,10 +1191,10 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 
 		if (globalRendering->haveGLSL && shadowHandler->drawShadows) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(7, false, const_cast<double*>(camera->GetViewMat()));
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, const_cast<double*>(camera->GetViewMatInv()));
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(7, false, camera->GetViewMat());
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, camera->GetViewMatInv());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
@@ -1299,8 +1299,8 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
 	if (advShading && !water->drawReflection) {
-		CTeam* t = teamHandler->Team(team);
-		float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
+		const CTeam* t = teamHandler->Team(team);
+		const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
 		if (globalRendering->haveGLSL && shadowHandler->drawShadows) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(9, &c[0]);
