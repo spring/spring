@@ -76,11 +76,11 @@ else (PANDOC_FOUND)
 	#use static file from source package, as pandoc isn't found
 	add_custom_command(
 		OUTPUT  "${DOC_BUILD_DIR}/README.html"
-		COMMAND "cmake -E copy" "generated/README.html" "${DOC_BUILD_DIR}/README.html"
+		COMMAND "cmake" "-E" "copy" "generated/README.html" "${DOC_BUILD_DIR}/README.html"
 		COMMENT	"copying static docs" VERBATIM
 		DEPENDS "generated/README.html"
 	)
-	add_custom_target(readme ALL DEPENDS "generated/README.html")
+	add_custom_target(readme ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
 
 endif (PANDOC_FOUND)
 
