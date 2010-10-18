@@ -132,6 +132,7 @@
 #include "System/FPUCheck.h"
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"
+#include "System/Util.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"

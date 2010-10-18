@@ -35,6 +35,7 @@
 #include "Rendering/InMapDraw.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Lua/LuaOpenGL.h"
 #include "Sim/Misc/TeamHandler.h"
