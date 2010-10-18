@@ -54,3 +54,33 @@ if    (UNIX)
 	endif (CREATE_MAN_PAGES)
 endif (UNIX)
 
+FIND_PACKAGE(Pandoc)
+
+set(DOC_BUILD_DIR  "${CMAKE_BINARY_DIR}/userdocs")
+#create destination directory
+file(MAKE_DIRECTORY ${DOC_BUILD_DIR})
+
+if (PANDOC_FOUND)
+	#generate file from README.markdown
+	message(STATUS "Found Pandoc: ${PANDOC_BIN}" )
+	#command to run pandoc
+	add_custom_command(
+		OUTPUT "${DOC_BUILD_DIR}/README.html"
+		COMMAND ${PANDOC_BIN} "--from=markdown" "--to=html" "-o" "${DOC_BUILD_DIR}/README.html" "-s" "../README.markdown"
+		COMMENT "Creating userdocs" VERBATIM
+		DEPENDS "../README.markdown"
+	)
+	#add target readme
+	add_custom_target(readme ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
+else (PANDOC_FOUND)
+	#use static file from source package, as pandoc isn't found
+	add_custom_command(
+		OUTPUT  "${DOC_BUILD_DIR}/README.html"
+		COMMAND "cmake -E copy" "generated/README.html" "${DOC_BUILD_DIR}/README.html"
+		COMMENT	"copying static docs" VERBATIM
+		DEPENDS "generated/README.html"
+	)
+	add_custom_target(readme ALL DEPENDS "generated/README.html")
+
+endif (PANDOC_FOUND)
+
