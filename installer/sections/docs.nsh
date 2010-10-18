@@ -4,12 +4,7 @@
 	File "..\doc\changelog.txt"
 	File "..\doc\cmds.txt"
 	File "..\doc\SelectionKeys.txt"
-
-	${If} ${FileExists} "${BUILD_OR_DIST_DIR}\userdocs\README.html"
-		File "${BUILD_OR_DIST_DIR}\userdocs\README.html"
-	${Else}
-		${!echonow} "Warning: ${BUILD_OR_DIST_DIR}\userdocs\README.htm does not exist"
-	${EndIf}
+	File /nonfatal "${BUILD_OR_DIST_DIR}\userdocs\README.html"
 
 !else
 	; Documentation
