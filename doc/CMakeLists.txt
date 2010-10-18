@@ -72,15 +72,6 @@ if (PANDOC_FOUND)
 	)
 	#add target readme
 	add_custom_target(readme ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
-else (PANDOC_FOUND)
-	#use static file from source package, as pandoc isn't found
-	add_custom_command(
-		OUTPUT  "${DOC_BUILD_DIR}/README.html"
-		COMMAND "cmake" "-E" "copy" "generated/README.html" "${DOC_BUILD_DIR}/README.html"
-		COMMENT	"Copying in-source userdocs" VERBATIM
-		DEPENDS "generated/README.html"
-	)
-	add_custom_target(readme ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
 endif (PANDOC_FOUND)
 
 install(FILES "${DOC_BUILD_DIR}/README.html" DESTINATION "userdocs")

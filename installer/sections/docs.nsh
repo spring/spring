@@ -5,7 +5,12 @@
 	File "..\doc\cmds.txt"
 	File "..\doc\SelectionKeys.txt"
 
-	File "${BUILD_OR_DIST_DIR}\userdocs\README.html"
+	${If} ${FileExists} "${BUILD_OR_DIST_DIR}\userdocs\README.html"
+		File "${BUILD_OR_DIST_DIR}\userdocs\README.html"
+	${Else}
+		${!echonow} "Warning: ${BUILD_OR_DIST_DIR}\userdocs\README.htm does not exist"
+	${EndIf}
+
 !else
 	; Documentation
 	Delete "$INSTDIR\docs\readme.html"
