@@ -150,7 +150,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 }
 
-CUnitDrawer::~CUnitDrawer(void)
+CUnitDrawer::~CUnitDrawer()
 {
 	eventHandler.RemoveClient(this);
 
@@ -292,7 +292,7 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 	iconLength = 750 * unitIconDist * unitIconDist;
 }
 
-void CUnitDrawer::Update(void)
+void CUnitDrawer::Update()
 {
 	{
 		GML_STDMUTEX_LOCK(temp); // Update
@@ -802,7 +802,7 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	#undef POP_SHADOW_TEXTURE_STATE
 }
 
-void CUnitDrawer::DrawShadowPass(void)
+void CUnitDrawer::DrawShadowPass()
 {
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glPolygonOffset(1.0f, 1.0f);
@@ -1171,7 +1171,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 
 
-void CUnitDrawer::SetupForUnitDrawing(void)
+void CUnitDrawer::SetupForUnitDrawing()
 {
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -1257,7 +1257,7 @@ void CUnitDrawer::SetupForUnitDrawing(void)
 	}
 }
 
-void CUnitDrawer::CleanUpUnitDrawing(void) const
+void CUnitDrawer::CleanUpUnitDrawing() const
 {
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_ALPHA_TEST);
@@ -1339,7 +1339,7 @@ void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
  * - call SetBasicTeamColour to set the team colour to transform to.
  * - Replace the output alpha channel. If not, only the team-coloured bits will show, if that. Or something.
  */
-void CUnitDrawer::SetupBasicS3OTexture0(void) const
+void CUnitDrawer::SetupBasicS3OTexture0() const
 {
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -1365,7 +1365,7 @@ void CUnitDrawer::SetupBasicS3OTexture0(void) const
  * - Leaves glActivateTextureARB at the first unit.
  * - This doesn't tinker with the output alpha, either.
  */
-void CUnitDrawer::SetupBasicS3OTexture1(void) const
+void CUnitDrawer::SetupBasicS3OTexture1() const
 {
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
@@ -1385,7 +1385,7 @@ void CUnitDrawer::SetupBasicS3OTexture1(void) const
 }
 
 
-void CUnitDrawer::CleanupBasicS3OTexture1(void) const
+void CUnitDrawer::CleanupBasicS3OTexture1() const
 {
 	// reset texture1 state
 	glActiveTexture(GL_TEXTURE1);
@@ -1395,7 +1395,7 @@ void CUnitDrawer::CleanupBasicS3OTexture1(void) const
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
 
-void CUnitDrawer::CleanupBasicS3OTexture0(void) const
+void CUnitDrawer::CleanupBasicS3OTexture0() const
 {
 	// reset texture0 state
 	glActiveTexture(GL_TEXTURE0);

@@ -729,7 +729,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	ph->nanoParticleSaturation = ph->currentNanoParticles / float(ph->maxNanoParticles);
 }
 
-void CProjectileDrawer::DrawShadowPass(void)
+void CProjectileDrawer::DrawShadowPass()
 {
 	Shader::IProgramObject* po =
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
@@ -875,7 +875,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 	return true;
 }
 
-void CProjectileDrawer::DrawGroundFlashes(void)
+void CProjectileDrawer::DrawGroundFlashes()
 {
 	static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
