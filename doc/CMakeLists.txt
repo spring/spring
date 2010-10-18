@@ -56,10 +56,10 @@ endif (UNIX)
 
 FIND_PACKAGE(Pandoc)
 
-set(DOC_BUILD_DIR "${CMAKE_BINARY_DIR}/dist/userdocs")
-message(STATUS "Creating README.html in ${DOC_BUILD_DIR}")
+set(DOC_BUILD_DIR "${CMAKE_BINARY_DIR}/userdocs")
 #create destination directory
 file(MAKE_DIRECTORY ${DOC_BUILD_DIR})
+
 if (PANDOC_FOUND)
 	#generate file from README.markdown
 	message(STATUS "Found Pandoc: ${PANDOC_BIN}" )
@@ -74,12 +74,13 @@ if (PANDOC_FOUND)
 	add_custom_target(readme ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
 else (PANDOC_FOUND)
 	#use static file from source package, as pandoc isn't found
-	add_custom_command(
+	add_custom_target(readme ALL
 		OUTPUT  "${DOC_BUILD_DIR}/README.html"
 		COMMAND "cmake" "-E" "copy" "generated/README.html" "${DOC_BUILD_DIR}/README.html"
 		COMMENT	"Copying in-source userdocs" VERBATIM
 		DEPENDS "generated/README.html"
 	)
-	add_custom_target(readme ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
 endif (PANDOC_FOUND)
+
+install(FILES "${DOC_BUILD_DIR}/README.html" DESTINATION "userdocs")
 
