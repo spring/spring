@@ -26,6 +26,14 @@ namespace Shader {
 	struct IProgramObject;
 }
 
+struct GhostBuilding {
+	BuildingGroundDecal* decal;
+	float3 pos;
+	S3DModel* model;
+	int facing;
+	int team;
+};
+
 class CUnitDrawer: public CEventClient
 {
 public:
@@ -100,14 +108,6 @@ public:
 	};
 	std::multimap<int, TempDrawUnit> tempDrawUnits;
 	std::multimap<int, TempDrawUnit> tempTransparentDrawUnits;
-
-	struct GhostBuilding {
-		BuildingGroundDecal* decal;
-		float3 pos;
-		S3DModel* model;
-		int facing;
-		int team;
-	};
 
 	float3 camNorm; // used to draw far-textures
 

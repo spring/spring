@@ -1,21 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GROUNDDECALHANDLER_H
-#define GROUNDDECALHANDLER_H
+#ifndef GROUND_DECAL_HANDLER_H
+#define GROUND_DECAL_HANDLER_H
 
 #include <set>
 #include <list>
 #include <vector>
 #include <string>
 
-// FIXME: get rid of the inlined SafeDelete() calls and kill these
-#include "Rendering/UnitDrawer.h"
-#include "Rendering/GL/VertexArray.h"
-#include "System/Util.h"
+#include "System/float3.h"
+#include "Rendering/GL/myGL.h"
 
 class CUnit;
 class CBuilding;
 class CVertexArray;
+struct GhostBuilding;
 
 struct TrackPart {
 	float3 pos1;
@@ -30,30 +29,31 @@ struct UnitTrackStruct {
 	int lifeTime;
 	int trackAlpha;
 	float alphaFalloff;
-	TrackPart *lastAdded;
-	std::list<TrackPart *> parts;
+	TrackPart* lastAdded;
+	std::list<TrackPart*> parts;
 };
 
 struct TrackToAdd {
-	TrackPart *tp;
-	CUnit *unit;
+	TrackPart* tp;
+	CUnit* unit;
 	UnitTrackStruct* ts;
 };
 
 struct TrackToClean {
 	TrackToClean() {}
-	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*> *ts): track(t),tracks(ts) {}
+	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*>* ts)
+		: track(t), tracks(ts) {}
 	UnitTrackStruct* track;
-	std::set<UnitTrackStruct*> *tracks;
+	std::set<UnitTrackStruct*>* tracks;
 };
 
 struct BuildingGroundDecal {
 	BuildingGroundDecal(): va(NULL), owner(NULL), gbOwner(NULL), alpha(1.0f) {}
-	~BuildingGroundDecal() { SafeDelete(va); }
+	~BuildingGroundDecal();
 
 	CVertexArray* va;
 	CBuilding* owner;
-	CUnitDrawer::GhostBuilding* gbOwner;
+	GhostBuilding* gbOwner;
 	int posx, posy;
 	int xsize, ysize;
 	int facing;
@@ -69,10 +69,10 @@ struct BuildingGroundDecal {
 class CGroundDecalHandler
 {
 public:
-	CGroundDecalHandler(void);
-	virtual ~CGroundDecalHandler(void);
-	void Draw(void);
-	void Update(void);
+	CGroundDecalHandler();
+	virtual ~CGroundDecalHandler();
+	void Draw();
+	void Update();
 
 	void UnitMoved(CUnit* unit);
 	void UnitMovedNow(CUnit* unit);
@@ -82,7 +82,7 @@ public:
 	void AddExplosion(float3 pos, float damage, float radius);
 
 	void AddBuilding(CBuilding* building);
-	void RemoveBuilding(CBuilding* building, CUnitDrawer::GhostBuilding* gb);
+	void RemoveBuilding(CBuilding* building, GhostBuilding* gb);
 	void ForceRemoveBuilding(CBuilding* building);
 	int GetBuildingDecalType(const std::string& name);
 
@@ -110,7 +110,7 @@ private:
 
 	struct Scar {
 		Scar(): va(NULL) {}
-		~Scar() { SafeDelete(va); }
+		~Scar();
 
 		float3 pos;
 		float radius;
@@ -139,9 +139,9 @@ private:
 
 	std::vector<TrackToAdd> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
-	std::vector<UnitTrackStruct *> tracksToBeDeleted;
+	std::vector<UnitTrackStruct*> tracksToBeDeleted;
 
-	std::vector<CUnit *> moveUnits;
+	std::vector<CUnit*> moveUnits;
 
 	int lastTest;
 	float maxOverlap;
@@ -163,10 +163,10 @@ private:
 	void TestOverlaps(Scar* scar);
 	void RemoveScar(Scar* scar, bool removeFromScars);
 	unsigned int LoadTexture(const std::string& name);
-	void LoadScar(const std::string& file, unsigned char* buf,
-	              int xoffset, int yoffset);
+	void LoadScar(const std::string& file, unsigned char* buf, int xoffset,
+			int yoffset);
 };
 
 extern CGroundDecalHandler* groundDecals;
 
-#endif
+#endif // GROUND_DECAL_HANDLER_H
