@@ -54,25 +54,27 @@ if    (UNIX)
 	endif (CREATE_MAN_PAGES)
 endif (UNIX)
 
+
+set(Pandoc_FIND_QUIETLY TRUE)
 FIND_PACKAGE(Pandoc)
 
-set(DOC_BUILD_DIR "${CMAKE_BINARY_DIR}/userdocs")
-#create destination directory
-file(MAKE_DIRECTORY ${DOC_BUILD_DIR})
+if    (PANDOC_FOUND)
+	set(DOC_BUILD_DIR "${CMAKE_BINARY_DIR}/userdocs")
+	file(MAKE_DIRECTORY ${DOC_BUILD_DIR})
 
-if (PANDOC_FOUND)
-	#generate file from README.markdown
-	message(STATUS "Found Pandoc: ${PANDOC_BIN}" )
-	#command to run pandoc
+	# generate README.html from README.markdown
 	add_custom_command(
 		OUTPUT "${DOC_BUILD_DIR}/README.html"
-		COMMAND ${PANDOC_BIN} "--from=markdown" "--to=html" "-o" "${DOC_BUILD_DIR}/README.html" "-s" "../README.markdown"
+		COMMAND ${PANDOC_BIN} "--from=markdown" "--to=html" "-o" "${DOC_BUILD_DIR}/README.html" "-s" "${CMAKE_SOURCE_DIR}/README.markdown"
 		COMMENT "Creating userdocs" VERBATIM
-		DEPENDS "../README.markdown"
+		DEPENDS "${CMAKE_SOURCE_DIR}/README.markdown"
 	)
-	#add target readme
-	add_custom_target(readme ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
-endif (PANDOC_FOUND)
 
-install(FILES "${DOC_BUILD_DIR}/README.html" DESTINATION "userdocs")
+	add_custom_target(userdocs ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
+
+	install(FILES "${DOC_BUILD_DIR}/README.html" DESTINATION "userdocs")
+	message(STATUS "userdocs will be installed to {INSTALL_PREFIX}/userdocs")
+else  (PANDOC_FOUND)
+	message(STATUS "userdocs will not be generated/installed; missing utility: pandoc")
+endif (PANDOC_FOUND)
 
