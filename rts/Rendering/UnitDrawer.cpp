@@ -2281,7 +2281,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	if (u->model && TEX_TYPE(u) < 0)
-		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model->tex1, u->model->tex2);
+		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
 #endif
 
 	if (building)
