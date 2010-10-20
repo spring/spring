@@ -254,7 +254,10 @@ def translate_module_addresses(module, debugfile, addresses):
 		log.info('\t\t[OK]')
 
 		log.info('\tTranslating addresses for module %s...' % module)
-		cmd = [ADDR2LINE, '-j', '.text', '-e', tempfile.name]
+		if module.endswith('.dll'):
+			cmd = [ADDR2LINE, '-j', '.text', '-e', tempfile.name]
+		else:
+			cmd = [ADDR2LINE, '-e', tempfile.name]
 		log.debug('\tCommand line: ' + ' '.join(cmd))
 		addr2line = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE)
 		if addr2line.poll() == None:
