@@ -37,7 +37,7 @@ RE_SUFFIX = '\r?$'
 # Match stackframe lines, captures the module name and the address.
 # Example: '[      0] (0) C:\Program Files\Spring\spring.exe [0x0080F268]'
 #          -> ('C:\\Program Files\\Spring\\spring.exe', '0x0080F268')
-RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*[^\s])\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX, re.MULTILINE)
+RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX, re.MULTILINE)
 
 # Match complete version string, capture `Additional' version string.
 RE_VERSION = r'Spring [^\(]+ \(([^\)]+)\)[\w\(\) ]*'
@@ -62,7 +62,7 @@ RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
 RE_OLD_VERSION_DETAILS = RE_VERSION_DETAILS
 
 # Match filename of file with debugging symbols, capture module name.
-RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>\w+)_dbg.7z')
+RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>[-\w]+)_dbg.7z')
 
 # Set up application log.
 log = logging.getLogger('stacktrace_translator')
@@ -372,6 +372,15 @@ def translate_stacktrace(infolog):
 			buildserv = True
 
 		module_frames, frame_count = collect_stackframes(infolog)
+
+		# Hack to be able to translate symbols from Spring 0.82.6 and 0.82.6.1
+		# These symbols have had 0x400000 subtracted from them (within spring)
+		# module_frames = {'spring.exe': [(0, '0x1234'), (1, '0x2345')]
+		if rev == '0.82.6' or rev == '0.82.6.0' or rev == '0.82.6.1':
+			log.debug('Applying workaround for Spring 0.82.6 and 0.82.6.1')
+			for module, frames in module_frames.iteritems():
+				if re.search(r'spring(-.*)?.exe', module, re.IGNORECASE):
+					module_frames[module] = [(i, hex(int(addr, 16) + 0x400000)) for i, addr in frames]
 
 		modules = collect_modules(config, branch, rev, buildserv)
 
