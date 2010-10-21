@@ -88,32 +88,32 @@ float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_S
 
 
 CUnit::CUnit():
-	unitDef(0),
-	collisionVolume(0),
-	frontdir(0,0,1),
-	rightdir(-1,0,0),
-	updir(0,1,0),
+	unitDef(NULL),
+	collisionVolume(NULL),
+	frontdir(0.0f, 0.0f, 1.0f),
+	rightdir(-1.0f, 0.0f, 0.0f),
+	updir(0.0f, 1.0f, 0.0f),
 	upright(true),
-	relMidPos(0,0,0),
+	relMidPos(0.0f, 0.0f, 0.0f),
 	travel(0.0f),
 	travelPeriod(0.0f),
-	power(100),
-	maxHealth(100),
-	health(100),
-	paralyzeDamage(0),
-	captureProgress(0),
-	experience(0),
-	limExperience(0),
+	power(100.0f),
+	maxHealth(100.0f),
+	health(100.0f),
+	paralyzeDamage(0.0f),
+	captureProgress(0.0f),
+	experience(0.0f),
+	limExperience(0.0f),
 	neutral(false),
 	soloBuilder(NULL),
 	beingBuilt(true),
 	lastNanoAdd(gs->frameNum),
 	repairAmount(0.0f),
-	transporter(0),
+	transporter(NULL),
 	toBeTransported(false),
-	buildProgress(0),
+	buildProgress(0.0f),
 	groundLevelled(true),
-	terraformLeft(0),
+	terraformLeft(0.0f),
 	realLosRadius(0),
 	realAirLosRadius(0),
 	losStatus(teamHandler->ActiveAllyTeams(), 0),
@@ -124,32 +124,37 @@ CUnit::CUnit():
 	deathScriptFinished(false),
 	delayedWreckLevel(-1),
 	restTime(0),
-	shieldWeapon(0),
-	stockpileWeapon(0),
-	reloadSpeed(1),
-	maxRange(0),
+	shieldWeapon(NULL),
+	stockpileWeapon(NULL),
+	reloadSpeed(1.0f),
+	maxRange(0.0f),
 	haveTarget(false),
+	haveUserTarget(false),
 	haveDGunRequest(false),
-	lastMuzzleFlameSize(0),
-	lastMuzzleFlameDir(0,1,0),
+	lastMuzzleFlameSize(0.0f),
+	lastMuzzleFlameDir(0.0f, 1.0f, 0.0f),
 	armorType(0),
 	category(0),
-	los(0),
+	los(NULL),
 	tempNum(0),
 	lastSlowUpdate(0),
 	losRadius(0),
 	airLosRadius(0),
-	losHeight(0),
+	losHeight(0.0f),
 	lastLosUpdate(0),
 	radarRadius(0),
 	sonarRadius(0),
 	jammerRadius(0),
 	sonarJamRadius(0),
+	seismicRadius(0),
+	seismicSignature(0.0f),
 	hasRadarCapacity(false),
+	oldRadarPos(0, 0),
+	moveType(NULL),
 	prevMoveType(NULL),
 	usingScriptMoveType(false),
-	commandAI(0),
-	group(0),
+	commandAI(NULL),
+	group(NULL),
 	condUseMetal(0.0f),
 	condUseEnergy(0.0f),
 	condMakeMetal(0.0f),
@@ -158,43 +163,45 @@ CUnit::CUnit():
 	uncondUseEnergy(0.0f),
 	uncondMakeMetal(0.0f),
 	uncondMakeEnergy(0.0f),
-	metalUse(0),
-	energyUse(0),
-	metalMake(0),
-	energyMake(0),
-	metalUseI(0),
-	energyUseI(0),
-	metalMakeI(0),
-	energyMakeI(0),
-	metalUseold(0),
-	energyUseold(0),
-	metalMakeold(0),
-	energyMakeold(0),
-	energyTickMake(0),
-	metalExtract(0),
-	metalCost(100),
-	energyCost(0),
-	buildTime(100),
-	metalStorage(0),
-	energyStorage(0),
-	lastAttacker(0),
-	lastAttackedPiece(0),
+	metalUse(0.0f),
+	energyUse(0.0f),
+	metalMake(0.0f),
+	energyMake(0.0f),
+	metalUseI(0.0f),
+	energyUseI(0.0f),
+	metalMakeI(0.0f),
+	energyMakeI(0.0f),
+	metalUseold(0.0f),
+	energyUseold(0.0f),
+	metalMakeold(0.0f),
+	energyMakeold(0.0f),
+	energyTickMake(0.0f),
+	metalExtract(0.0f),
+	metalCost(100.0f),
+	energyCost(0.0f),
+	buildTime(100.0f),
+	metalStorage(0.0f),
+	energyStorage(0.0f),
+	lastAttacker(NULL),
+	lastAttackedPiece(NULL),
 	lastAttackedPieceFrame(-1),
 	lastAttack(-200),
 	lastFireWeapon(0),
-	recentDamage(0),
-	userTarget(0),
-	userAttackPos(0,0,0),
+	recentDamage(0.0f),
+	userTarget(NULL),
+	userAttackPos(ZeroVector),
 	userAttackGround(false),
 	commandShotCount(-1),
 	fireState(2),
 	dontFire(false),
 	moveState(0),
+	activated(false),
+	localmodel(NULL),
 	script(NULL),
 	crashing(false),
 	isDead(false),
 	falling(false),
-	fallSpeed(0.2),
+	fallSpeed(0.2f),
 	inAir(false),
 	inWater(false),
 	flankingBonusMode(0),
@@ -204,9 +211,10 @@ CUnit::CUnit():
 	flankingBonusAvgDamage(1.4f),
 	flankingBonusDifDamage(0.5f),
 	armoredState(false),
-	armoredMultiple(1),
-	curArmorMultiple(1),
-	posErrorDelta(0,0,0),
+	armoredMultiple(1.0f),
+	curArmorMultiple(1.0f),
+	posErrorVector(ZeroVector),
+	posErrorDelta(ZeroVector),
 	nextPosErrorUpdate(1),
 	hasUWWeapons(false),
 	wantCloak(false),
@@ -218,15 +226,18 @@ CUnit::CUnit():
 	lastTerrainType(-1),
 	curTerrainType(0),
 	selfDCountdown(0),
-	myTrack(0),
+	directControl(NULL),
+	myTrack(NULL),
 	lastFlareDrop(0),
-	currentFuel(0),
+	currentFuel(0.0f),
 	luaDraw(false),
 	noDraw(false),
 	noSelect(false),
 	noMinimap(false),
 	isIcon(false),
-	iconRadius(0),
+	iconRadius(0.0f),
+	maxSpeed(0.0f),
+	maxReverseSpeed(0.0f),
 	lodCount(0),
 	currentLOD(0),
 	alphaThreshold(0.1f),
@@ -235,8 +246,6 @@ CUnit::CUnit():
 	, lastDrawFrame(-30)
 #endif
 {
-	directControl = NULL;
-	activated = false;
 	GML_GET_TICKS(lastUnitUpdate);
 }
 
@@ -430,17 +439,18 @@ void CUnit::UpdateMidPos()
 }
 
 
-void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent)
+void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent)
 {
-	//drop unit from position
+	// drop unit from position
 	fallSpeed = unitDef->unitFallSpeed > 0 ? unitDef->unitFallSpeed : parent->unitDef->fallSpeed;
 	falling = true;
 	pos.y = parentPos.y - height;
 	frontdir = parentDir;
-	frontdir.y = 0;
-	speed.y = 0;
+	frontdir.y = 0.0f;
+	speed.y = 0.0f;
 
-	script->Falling(); //start parachute animation
+	// start parachute animation
+	script->Falling();
 }
 
 
@@ -862,7 +872,7 @@ void CUnit::SlowUpdateWeapons() {
 }
 
 
-void CUnit::SetDirectionFromHeading(void)
+void CUnit::SetDirectionFromHeading()
 {
 	if (GetTransporter() == NULL) {
 		frontdir = GetVectorFromHeading(heading);
@@ -1691,7 +1701,7 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 }
 
 
-void CUnit::FinishedBuilding(void)
+void CUnit::FinishedBuilding()
 {
 	beingBuilt = false;
 	buildProgress = 1.0f;
@@ -1971,14 +1981,14 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 }
 
 
-void CUnit::TempHoldFire(void)
+void CUnit::TempHoldFire()
 {
 	dontFire = true;
 	AttackUnit(0, true);
 }
 
 
-void CUnit::ReleaseTempHoldFire(void)
+void CUnit::ReleaseTempHoldFire()
 {
 	dontFire = false;
 }
@@ -2087,22 +2097,6 @@ void CUnit::PostLoad()
 	if (activated) {
 		script->Activate();
 	}
-}
-
-
-
-void CUnit::LogMessage(const char *fmt, ...)
-{
-#ifdef DEBUG
-	va_list argp;
-	int l = strlen(fmt) + unitDefName.size() + 15;
-	char tmp[l];
-	SNPRINTF(tmp, l, "%s(%d): %s", unitDefName.c_str(), id, fmt);
-
-	va_start(argp, fmt);
-	logOutput.Printv(LOG_UNIT, tmp, argp);
-	va_end(argp);
-#endif
 }
 
 
