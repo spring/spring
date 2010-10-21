@@ -243,7 +243,7 @@ void CFactory::StopBuild()
 			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
 			curBuild->KillUnit(false, true, NULL);
 		}
-		DeleteDeathDependence(curBuild);
+		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
 	}
 	curBuild = 0;
 	quedBuild = false;

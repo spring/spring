@@ -1404,8 +1404,8 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 	if (teamHandler->AlliedTeams(team, attacker->team)) {
 		return;
 	}
-	if (lastAttacker && lastAttacker != userTarget)
-		DeleteDeathDependence(lastAttacker);
+	if (lastAttacker)
+		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
 
 	lastAttack = gs->frameNum;
 	lastAttacker = attacker;
@@ -1429,9 +1429,8 @@ void CUnit::DependentDied(CObject* o)
 
 void CUnit::SetUserTarget(CUnit* target)
 {
-	if (userTarget && (lastAttacker != userTarget)) {
-		DeleteDeathDependence(userTarget);
-	}
+	if (userTarget)
+		DeleteDeathDependence(userTarget, DEPENDENCE_TARGET);
 
 	userTarget=target;
 	for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi) {
@@ -1707,7 +1706,7 @@ void CUnit::FinishedBuilding()
 	buildProgress = 1.0f;
 
 	if (soloBuilder) {
-		DeleteDeathDependence(soloBuilder);
+		DeleteDeathDependence(soloBuilder, DEPENDENCE_BUILDER);
 		soloBuilder = NULL;
 	}
 
@@ -2169,6 +2168,33 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 			curCloakTimeout = gs->frameNum + cloakTimeout;
 		}
 	}
+}
+
+
+void CUnit::DeleteDeathDependence(CObject* o, DependenceType dep) {
+	switch(dep) {
+		case DEPENDENCE_BUILD:
+		case DEPENDENCE_CAPTURE:
+		case DEPENDENCE_RECLAIM:
+		case DEPENDENCE_TERRAFORM:
+		case DEPENDENCE_TRANSPORTEE:
+		case DEPENDENCE_TRANSPORTER:
+			if(o == lastAttacker || o == soloBuilder || o == userTarget) return;
+			break;
+		case DEPENDENCE_ATTACKER:
+			if(o == soloBuilder || o == userTarget) return;
+			break;
+		case DEPENDENCE_BUILDER:
+			if(o == lastAttacker || o == userTarget) return;
+			break;
+		case DEPENDENCE_RESURRECT:
+			// feature
+			break;
+		case DEPENDENCE_TARGET:
+			if(o == lastAttacker || o == soloBuilder) return;
+			break;
+	}
+	CObject::DeleteDeathDependence(o);
 }
 
 
