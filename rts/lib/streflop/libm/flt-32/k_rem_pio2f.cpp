@@ -91,6 +91,8 @@ twon8  =  3.9062500000e-03f; /* 0x3b800000 */
 
 	bool recompute = true;
 	while (recompute) {
+		recompute = false;
+
 		/* distill q[] into iq[] reversingly */
 		for(i=0,j=jz,z=q[jz];j>0;i++,j--) {
 			fw    =  (Simple)((int32_t)(twon8* z));
@@ -149,8 +151,7 @@ twon8  =  3.9062500000e-03f; /* 0x3b800000 */
 				q[i] = fw;
 			}
 			jz += k;
-			} else {
-				recompute = false;
+				recompute = true;
 			}
 		}
 	}
