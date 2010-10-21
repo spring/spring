@@ -332,11 +332,13 @@ void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {
-	if(o==interceptTarget)
-		interceptTarget=0;
+	if (o == interceptTarget) {
+		interceptTarget = NULL;
+	}
 
-	if(o==target)
-		target=0;
+	if (o == target) {
+		target = NULL;
+	}
 }
 
 void CWeaponProjectile::PostLoad()
