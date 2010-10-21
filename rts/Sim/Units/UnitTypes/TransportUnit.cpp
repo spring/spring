@@ -126,7 +126,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		const float gh = ground->GetHeight2(u->pos.x, u->pos.z);
 
 		u->transporter = 0;
-		u->DeleteDeathDependence(this);
+		u->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
 
 		// prevent a position teleport on the next movetype update if
 		// the transport died in a place that the unit being carried
@@ -303,8 +303,8 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 	std::list<TransportedUnit>::iterator ti;
 	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		if (ti->unit == unit) {
-			this->DeleteDeathDependence(unit);
-			unit->DeleteDeathDependence(this);
+			this->DeleteDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
+			unit->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
 			unit->transporter = NULL;
 
 			if (dynamic_cast<CTAAirMoveType*>(moveType)) {

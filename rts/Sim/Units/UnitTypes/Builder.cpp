@@ -256,7 +256,7 @@ void CBuilder::Update()
 				helpTerraform->terraformHelp += terraformSpeed;
 				CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
 			} else {
-				DeleteDeathDependence(helpTerraform);
+				DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
 				helpTerraform=0;
 				StopBuild(true);
 			}
@@ -510,15 +510,15 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 void CBuilder::StopBuild(bool callScript)
 {
 	if(curBuild)
-		DeleteDeathDependence(curBuild);
+		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
 	if(curReclaim)
-		DeleteDeathDependence(curReclaim);
+		DeleteDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
 	if(helpTerraform)
-		DeleteDeathDependence(helpTerraform);
+		DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
 	if(curResurrect)
-		DeleteDeathDependence(curResurrect);
+		DeleteDeathDependence(curResurrect, DEPENDENCE_RESURRECT);
 	if(curCapture)
-		DeleteDeathDependence(curCapture);
+		DeleteDeathDependence(curCapture, DEPENDENCE_CAPTURE);
 	curBuild=0;
 	curReclaim=0;
 	helpTerraform=0;
@@ -746,4 +746,33 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 			new CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
 		}
 	}
+}
+
+
+void CBuilder::DeleteDeathDependence(CObject* o, DependenceType dep) {
+	switch(dep) {
+		case DEPENDENCE_ATTACKER:
+		case DEPENDENCE_BUILDER:
+		case DEPENDENCE_TARGET:
+		case DEPENDENCE_TRANSPORTEE:
+		case DEPENDENCE_TRANSPORTER:
+			if(o == curBuild || o == curCapture || o == curReclaim || o == curResurrect || o == helpTerraform) return;
+			break;
+		case DEPENDENCE_BUILD:
+			if(o == curCapture || o == curReclaim || o == helpTerraform) return;
+			break;
+		case DEPENDENCE_CAPTURE:
+			if(o == curBuild || o == curReclaim || o == helpTerraform) return;
+			break;
+		case DEPENDENCE_RECLAIM:
+			if(o == curBuild || o == curCapture || o == curResurrect || o == helpTerraform) return;
+			break;
+		case DEPENDENCE_RESURRECT:
+			if(o == curReclaim) return;
+			break;
+		case DEPENDENCE_TERRAFORM:
+			if(o == curBuild || o == curCapture || o == curReclaim) return;
+			break;
+	}
+	CUnit::DeleteDeathDependence(o, dep);
 }
