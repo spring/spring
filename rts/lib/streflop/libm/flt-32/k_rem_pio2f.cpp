@@ -88,72 +88,67 @@ twon8  =  3.9062500000e-03f; /* 0x3b800000 */
 	}
 
 	jz = jk;
+recompute:
+    /* distill q[] into iq[] reversingly */
+	for(i=0,j=jz,z=q[jz];j>0;i++,j--) {
+	    fw    =  (Simple)((int32_t)(twon8* z));
+	    iq[i] =  (int32_t)(z-two8*fw);
+	    z     =  q[j-1]+fw;
+	}
 
-	bool recompute = true;
-	while (recompute) {
-		recompute = false;
+    /* compute n */
+	z  = __scalbnf(z,q0);		/* actual value of z */
+	z -= (Simple)8.0f*__floorf(z*(Simple)0.125f);	/* trim off integer >= 8 */
+	n  = (int32_t) z;
+	z -= (Simple)n;
+	ih = 0;
+	if(q0>0) {	/* need iq[jz-1] to determine n */
+	    i  = (iq[jz-1]>>(8-q0)); n += i;
+	    iq[jz-1] -= i<<(8-q0);
+	    ih = iq[jz-1]>>(7-q0);
+	} 
+	else if(q0==0) ih = iq[jz-1]>>8;
+	else if(z>=(Simple)0.5f) ih=2;
 
-		/* distill q[] into iq[] reversingly */
-		for(i=0,j=jz,z=q[jz];j>0;i++,j--) {
-			fw    =  (Simple)((int32_t)(twon8* z));
-			iq[i] =  (int32_t)(z-two8*fw);
-			z     =  q[j-1]+fw;
+	if(ih>0) {	/* q > 0.5f */
+	    n += 1; carry = 0;
+	    for(i=0;i<jz ;i++) {	/* compute 1-q */
+		j = iq[i];
+		if(carry==0) {
+		    if(j!=0) {
+			carry = 1; iq[i] = 0x100- j;
+		    }
+		} else  iq[i] = 0xff - j;
+	    }
+	    if(q0>0) {		/* rare case: chance is 1 in 12 */
+	        switch(q0) {
+	        case 1:
+	    	   iq[jz-1] &= 0x7f; break;
+	    	case 2:
+	    	   iq[jz-1] &= 0x3f; break;
+	        }
+	    }
+	    if(ih==2) {
+		z = one - z;
+		if(carry!=0) z -= __scalbnf(one,q0);
+	    }
+	}
+
+    /* check if recomputation is needed */
+	if(z==zero) {
+	    j = 0;
+	    for (i=jz-1;i>=jk;i--) j |= iq[i];
+	    if(j==0) { /* need recomputation */
+		for(k=1;iq[jk-k]==0;k++);   /* k = no. of terms needed */
+
+		for(i=jz+1;i<=jz+k;i++) {   /* add q[jz+1] to q[jz+k] */
+		    f[jx+i] = (Simple) ipio2[jv+i];
+		    for(j=0,fw=0.0f;j<=jx;j++) fw += x[j]*f[jx+i-j];
+		    q[i] = fw;
 		}
-
-		/* compute n */
-		z  = __scalbnf(z,q0);		/* actual value of z */
-		z -= (Simple)8.0f*__floorf(z*(Simple)0.125f);	/* trim off integer >= 8 */
-		n  = (int32_t) z;
-		z -= (Simple)n;
-		ih = 0;
-		if(q0>0) {	/* need iq[jz-1] to determine n */
-			i  = (iq[jz-1]>>(8-q0)); n += i;
-			iq[jz-1] -= i<<(8-q0);
-			ih = iq[jz-1]>>(7-q0);
-		} 
-		else if(q0==0) ih = iq[jz-1]>>8;
-		else if(z>=(Simple)0.5f) ih=2;
-
-		if(ih>0) {	/* q > 0.5f */
-			n += 1; carry = 0;
-			for(i=0;i<jz ;i++) {	/* compute 1-q */
-			j = iq[i];
-			if(carry==0) {
-				if(j!=0) {
-				carry = 1; iq[i] = 0x100- j;
-				}
-			} else  iq[i] = 0xff - j;
-			}
-			if(q0>0) {		/* rare case: chance is 1 in 12 */
-			    switch(q0) {
-			    case 1:
-				   iq[jz-1] &= 0x7f; break;
-				case 2:
-				   iq[jz-1] &= 0x3f; break;
-			    }
-			}
-			if(ih==2) {
-			z = one - z;
-			if(carry!=0) z -= __scalbnf(one,q0);
-			}
-		}
-
-		/* check if recomputation is needed */
-		if(z==zero) {
-			j = 0;
-			for (i=jz-1;i>=jk;i--) j |= iq[i];
-			if(j==0) { /* need recomputation */
-			for(k=1;iq[jk-k]==0;k++);   /* k = no. of terms needed */
-
-			for(i=jz+1;i<=jz+k;i++) {   /* add q[jz+1] to q[jz+k] */
-				f[jx+i] = (Simple) ipio2[jv+i];
-				for(j=0,fw=0.0f;j<=jx;j++) fw += x[j]*f[jx+i-j];
-				q[i] = fw;
-			}
-			jz += k;
-				recompute = true;
-			}
-		}
+		jz += k;
+		goto recompute;
+	    }
 	}
 
     /* chop off zero terms */
