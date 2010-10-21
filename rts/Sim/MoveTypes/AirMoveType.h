@@ -109,6 +109,10 @@ public:
 	float inefficientAttackTime;
 	/// used by fighters to turn away when closing in on ground targets
 	float3 exitVector;
+
+private:
+
+	void HandleCollisions();
 };
 
 #endif // _AIR_MOVE_TYPE_H_

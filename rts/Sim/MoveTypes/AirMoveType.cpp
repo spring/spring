@@ -159,7 +159,8 @@ void CAirMoveType::Update()
 
 	if (owner->stunned || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
-		goto EndNormalControl;
+		HandleCollisions();
+		return;
 	}
 
 	// note: this is only set to false after
@@ -193,7 +194,8 @@ void CAirMoveType::Update()
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 			maneuver = 0;
 
-			goto EndNormalControl; // bad
+			HandleCollisions();
+			return;
 		}
 	}
 
@@ -314,11 +316,16 @@ void CAirMoveType::Update()
 			break;
 	}
 
-EndNormalControl:
+	HandleCollisions();
+	return;
+}
 
 
 
-	// handle collisions
+void CAirMoveType::HandleCollisions() {
+
+	float3& pos = owner->pos;
+
 	if (pos != oldpos) {
 		oldpos = pos;
 		bool hitBuilding = false;
