@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef AAIRMOVETYPE_H_
-#define AAIRMOVETYPE_H_
+#ifndef A_AIR_MOVE_TYPE_H_
+#define A_AIR_MOVE_TYPE_H_
 
 #include "MoveType.h"
 #include "Sim/Misc/AirBaseHandler.h"
@@ -29,7 +29,14 @@ public:
 	AAirMoveType(CUnit* unit);
 	~AAirMoveType();
 
+	virtual bool IsFighter() const = 0;
+	virtual void Takeoff() = 0;
+	void ReservePad(CAirBaseHandler::LandingPad* lp);
+	void DependentDied(CObject* o);
+
 	bool UseSmoothMesh() const;
+
+
 	/// goalpos to resume flying to after landing
 	float3 oldGoalPos;
 	float3 oldpos;
@@ -48,13 +55,8 @@ public:
 
 	bool autoLand;
 
-	virtual bool IsFighter() = 0;
-	virtual void Takeoff() = 0;
-	void ReservePad(CAirBaseHandler::LandingPad* lp);
-	void DependentDied(CObject* o);
-
 protected:
 	virtual void SetState(AircraftState state) = 0;
 };
 
-#endif // AAIRMOVETYPE_H_
+#endif // A_AIR_MOVE_TYPE_H_

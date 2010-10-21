@@ -97,7 +97,7 @@ CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	}
 }
 
-CTAAirMoveType::~CTAAirMoveType(void)
+CTAAirMoveType::~CTAAirMoveType()
 {
 }
 
@@ -114,14 +114,17 @@ void CTAAirMoveType::SetGoal(float3 newPos, float distance)
 
 void CTAAirMoveType::SetState(AircraftState newState)
 {
-	if (newState == aircraftState)
+	if (newState == aircraftState) {
 		return;
+	}
 
 	// Perform cob animation
-	if (aircraftState == AIRCRAFT_LANDED)
+	if (aircraftState == AIRCRAFT_LANDED) {
 		owner->script->StartMoving();
-	if (newState == AIRCRAFT_LANDED)
+	}
+	if (newState == AIRCRAFT_LANDED) {
 		owner->script->StopMoving();
+	}
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
@@ -157,8 +160,9 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	}
 
 	// Cruise as default
-	if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_HOVERING)
+	if (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_HOVERING) {
 		flyState = FLY_CRUISING;
+	}
 
 	owner->isMoving = (aircraftState != AIRCRAFT_LANDED);
 	waitCounter = 0;
@@ -291,10 +295,11 @@ void CTAAirMoveType::UpdateLanded()
 
 	// dont place on ground if we are on a repair pad
 	if (padStatus == 0) {
-		if (owner->unitDef->canSubmerge)
+		if (owner->unitDef->canSubmerge) {
 			pos.y = ground->GetApproximateHeight(pos.x, pos.z);
-		else
+		} else {
 			pos.y = ground->GetHeight(pos.x, pos.z);
+		}
 	}
 
 	owner->speed = ZeroVector;
@@ -324,13 +329,13 @@ void CTAAirMoveType::UpdateTakeoff()
 // Move the unit around a bit..
 void CTAAirMoveType::UpdateHovering()
 {
-	#define NOZERO(x) std::max(x,0.0001f)
+	#define NOZERO(x) std::max(x, 0.0001f)
 
 	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos;
 	float3 deltaDir = float3(deltaVec.x, 0, deltaVec.z);
 	float l = NOZERO(deltaDir.Length2D());
-	deltaDir *= smoothstep(0.0f,20.0f,l) / l;
+	deltaDir *= smoothstep(0.0f, 20.0f, l) / l;
 
 	// move towards goal position if it's not immediately
 	// behind us when we have more waypoints to get to
@@ -342,7 +347,7 @@ void CTAAirMoveType::UpdateHovering()
 
 	deltaDir -= owner->speed;
 	l = deltaDir.SqLength2D();
-	if (l>(maxSpeed*maxSpeed)) {
+	if (l > (maxSpeed * maxSpeed)) {
 		deltaDir *= maxSpeed / NOZERO(sqrt(l));
 	}
 	wantedSpeed = owner->speed + deltaDir;
@@ -383,8 +388,9 @@ void CTAAirMoveType::UpdateFlying()
 	bool closeToGoal = (dir.SqLength2D() < maxDrift * maxDrift)
 			&& (fabs(gHeight - pos.y + wantedHeight) < maxDrift);
 
-	if (flyState == FLY_ATTACKING)
+	if (flyState == FLY_ATTACKING) {
 		closeToGoal = (dir.SqLength2D() < 400);
+	}
 
 	if (closeToGoal) {
 		// pretty close
@@ -422,9 +428,10 @@ void CTAAirMoveType::UpdateFlying()
 				if (waitCounter > 100) {
 					if (owner->unitDef->airStrafe) {
 						float3 relPos = pos - circlingPos;
-						if (relPos.x < 0.0001f && relPos.x > -0.0001f)
+						if (relPos.x < 0.0001f && relPos.x > -0.0001f) {
 							relPos.x = 0.0001f;
-						relPos.y = 0;
+						}
+						relPos.y = 0.0f;
 						relPos.Normalize();
 						static CMatrix44f rot(0.0f,fastmath::PI/4.0f,0.0f);
 						float3 newPos = rot.Mul(relPos);
@@ -432,7 +439,7 @@ void CTAAirMoveType::UpdateFlying()
 						// Make sure the point is on the circle
 						newPos = newPos * goalDistance;
 
-						//Go there in a straight line
+						// Go there in a straight line
 						goalPos = circlingPos + newPos;
 					}
 					waitCounter = 0;
@@ -441,15 +448,17 @@ void CTAAirMoveType::UpdateFlying()
 			case FLY_ATTACKING:{
 				if (owner->unitDef->airStrafe) {
 					float3 relPos = pos - circlingPos;
-					if (relPos.x < 0.0001f && relPos.x > -0.0001f)
+					if (relPos.x < 0.0001f && relPos.x > -0.0001f) {
 						relPos.x = 0.0001f;
+					}
 					relPos.y = 0;
 					relPos.Normalize();
 					CMatrix44f rot;
-					if (gs->randFloat() > 0.5f)
+					if (gs->randFloat() > 0.5f) {
 						rot.RotateY(0.6f + gs->randFloat() * 0.6f);
-					else
+					} else {
 						rot.RotateY(-(0.6f + gs->randFloat() * 0.6f));
+					}
 					float3 newPos = rot.Mul(relPos);
 					newPos = newPos * goalDistance;
 
@@ -478,7 +487,7 @@ void CTAAirMoveType::UpdateFlying()
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
 	}
 
-	wantedSpeed = (dir/dist) * realMax;
+	wantedSpeed = (dir / dist) * realMax;
 	UpdateAirPhysics();
 
 	// Point toward goal or forward - unless we just passed it to get to another goal
@@ -492,8 +501,8 @@ void CTAAirMoveType::UpdateFlying()
 	}
 
 	if (dir.SqLength2D() > 1) {
-		int h = GetHeadingFromVector(dir.x, dir.z);
-		wantedHeading = (h == 0)? wantedHeading: h;
+		const int h = GetHeadingFromVector(dir.x, dir.z);
+		wantedHeading = (h == 0)? wantedHeading : h;
 	}
 }
 
@@ -542,7 +551,7 @@ void CTAAirMoveType::UpdateLanding()
 	}
 
 	// We have stopped, time to land
-	float gah = ground->GetApproximateHeight(pos.x, pos.z);
+	const float gah = ground->GetApproximateHeight(pos.x, pos.z);
 	float h = 0.0f;
 
 	// if aircraft submergible and above water we want height of ocean floor
@@ -609,17 +618,19 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	float wantedBank = 0.0f;
 	if (!noBanking && bankingAllowed) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5f;
 
-	float limit = std::min(1.0f,goalPos.SqDistance2D(owner->pos)*Square(0.15f));
-	if(Square(wantedBank)>limit)
+	const float limit = std::min(1.0f,goalPos.SqDistance2D(owner->pos)*Square(0.15f));
+	if (Square(wantedBank) > limit) {
 		wantedBank =  math::sqrt(limit);
-	else if(Square(wantedBank)<-limit)
+	} else if (Square(wantedBank) < -limit) {
 		wantedBank = -math::sqrt(limit);
+	}
 
 	//Adjust our banking to the desired value
-	if (currentBank > wantedBank)
+	if (currentBank > wantedBank) {
 		currentBank -= std::min(0.03f, currentBank - wantedBank);
-	else
+	} else {
 		currentBank += std::min(0.03f, wantedBank - currentBank);
+	}
 
 	// Calculate a suitable upvector
 	updir = rightdir.cross(frontdir);
@@ -637,17 +648,17 @@ void CTAAirMoveType::UpdateAirPhysics()
 		CheckForCollision();
 	}
 
-	float yspeed = speed.y;
+	const float yspeed = speed.y;
 	speed.y = 0.0f;
 
 	float3 delta = wantedSpeed - speed;
-	float deltaDotSpeed = (speed != ZeroVector)? delta.dot(speed): 1.0f;
+	const float deltaDotSpeed = (speed != ZeroVector)? delta.dot(speed): 1.0f;
 
 	if (deltaDotSpeed == 0.0f) {
 		// we have the wanted speed
 	} else if (deltaDotSpeed > 0.0f) {
 		// accelerate
-		float sqdl = delta.SqLength();
+		const float sqdl = delta.SqLength();
 		if (sqdl < Square(accRate)) {
 			speed = wantedSpeed;
 		} else {
@@ -655,7 +666,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 		}
 	} else {
 		// break
-		float sqdl = delta.SqLength();
+		const float sqdl = delta.SqLength();
 		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
@@ -700,12 +711,14 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 	if (h < wh) {
 		ws = altitudeRate;
-		if (speed.y > 0.0001f && (wh - h) / speed.y * accRate * 1.5f < speed.y)
+		if (speed.y > 0.0001f && (wh - h) / speed.y * accRate * 1.5f < speed.y) {
 			ws = 0.0f;
+		}
 	} else {
 		ws = -altitudeRate;
-		if (speed.y < -0.0001f && (wh - h) / speed.y * accRate * 0.7f < -speed.y)
+		if (speed.y < -0.0001f && (wh - h) / speed.y * accRate * 0.7f < -speed.y) {
 			ws = 0.0f;
+		}
 	}
 
 	if (fabs(wh - h) > 2.0f) {
@@ -719,8 +732,9 @@ void CTAAirMoveType::UpdateAirPhysics()
 		speed.y = speed.y * 0.95;
 	}
 
-	if (modInfo.allowAirPlanesToLeaveMap || (pos+speed).CheckInBounds())
+	if (modInfo.allowAirPlanesToLeaveMap || (pos+speed).CheckInBounds()) {
 		pos += speed;
+	}
 }
 
 
@@ -736,10 +750,12 @@ void CTAAirMoveType::UpdateMoveRate()
 		float curSpeed = owner->speed.Length();
 		curRate = (int) ((curSpeed / maxSpeed) * 3);
 
-		if (curRate < 0)
+		if (curRate < 0) {
 			curRate = 0;
-		if (curRate > 2)
+		}
+		if (curRate > 2) {
 			curRate = 2;
+		}
 	}
 
 	if (curRate != lastMoveRate) {
@@ -761,8 +777,9 @@ void CTAAirMoveType::Update()
 	}
 
 	// Allow us to stop if wanted
-	if (wantToStop)
+	if (wantToStop) {
 		ExecuteStop();
+	}
 
 	float3 lastSpeed = speed;
 
@@ -799,13 +816,12 @@ void CTAAirMoveType::Update()
 
 			UpdateAirPhysics();
 			wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
-		} else
-		{
+		} else {
 
 			if (reservedPad) {
 				CUnit* unit = reservedPad->GetUnit();
-				float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
-				float3 pos = unit->pos + unit->frontdir * relPos.z
+				const float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
+				const float3 pos = unit->pos + unit->frontdir * relPos.z
 						+ unit->updir * relPos.y + unit->rightdir * relPos.x;
 
 				if (padStatus == 0) {
@@ -818,8 +834,9 @@ void CTAAirMoveType::Update()
 						padStatus = 1;
 					}
 				} else if (padStatus == 1) {
-					if (aircraftState != AIRCRAFT_FLYING)
+					if (aircraftState != AIRCRAFT_FLYING) {
 						SetState(AIRCRAFT_FLYING);
+					}
 					flyState = FLY_LANDING;
 
 					goalPos = pos;
@@ -842,7 +859,7 @@ void CTAAirMoveType::Update()
 					if (owner->health >= owner->maxHealth - 1
 							&& owner->currentFuel >= owner->unitDef->maxFuel) {
 						airBaseHandler->LeaveLandingPad(reservedPad);
-						reservedPad = 0;
+						reservedPad = NULL;
 						padStatus = 0;
 						goalPos = oldGoalPos;
 						SetState(AIRCRAFT_TAKEOFF);
@@ -893,10 +910,10 @@ void CTAAirMoveType::Update()
 				if ((*ui)->transporter)
 					continue;
 
-				float sqDist = (pos-(*ui)->pos).SqLength();
-				float totRad = owner->radius + (*ui)->radius;
+				const float sqDist = (pos-(*ui)->pos).SqLength();
+				const float totRad = owner->radius + (*ui)->radius;
 				if (sqDist < totRad * totRad && sqDist != 0) {
-					float dist = sqrt(sqDist);
+					const float dist = sqrt(sqDist);
 					float3 dif = pos - (*ui)->pos;
 
 					if (dist > 0.0f) {
@@ -908,13 +925,13 @@ void CTAAirMoveType::Update()
 						owner->UpdateMidPos();
 						owner->speed *= 0.99f;
 					} else {
-						float part = owner->mass / (owner->mass + (*ui)->mass);
+						const float part = owner->mass / (owner->mass + (*ui)->mass);
 						pos -= dif * (dist - totRad) * (1 - part);
 						owner->UpdateMidPos();
 						CUnit* u = (CUnit*) (*ui);
 						u->pos += dif * (dist - totRad) * (part);
 						u->UpdateMidPos();
-						float colSpeed = -owner->speed.dot(dif) + u->speed.dot(dif);
+						const float colSpeed = -owner->speed.dot(dif) + u->speed.dot(dif);
 						owner->speed += dif * colSpeed * (1 - part);
 						u->speed -= dif * colSpeed * (part);
 					}
@@ -939,10 +956,11 @@ void CTAAirMoveType::Update()
 	}
 }
 
-void CTAAirMoveType::SlowUpdate(void)
+void CTAAirMoveType::SlowUpdate()
 {
-	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0)
+	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0) {
 		owner->currentFuel = std::max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
+	}
 
 	if (!reservedPad && aircraftState == AIRCRAFT_FLYING
 			&& owner->health < owner->maxHealth * repairBelowHealth) {
@@ -978,32 +996,37 @@ void CTAAirMoveType::SlowUpdate(void)
 	owner->isUnderWater = (owner->pos.y + owner->model->height < 0.0f);
 }
 
-//Returns true if indicated position is a suitable landing spot
-bool CTAAirMoveType::CanLandAt(float3 pos)
+/// Returns true if indicated position is a suitable landing spot
+bool CTAAirMoveType::CanLandAt(const float3& pos) const
 {
-	if (dontLand)
+	if (dontLand) {
 		return false;
+	}
 
-	if (!autoLand)
+	if (!autoLand) {
 		return false;
+	}
 
-	if (!pos.IsInBounds())
+	if (!pos.IsInBounds()) {
 		return false;
+	}
 
-	float h = ground->GetApproximateHeight(pos.x, pos.z);
-	if ((h < 0) && !(owner -> unitDef -> floater || owner -> unitDef -> canSubmerge))
+	const float h = ground->GetApproximateHeight(pos.x, pos.z);
+	if ((h < 0) && !(owner -> unitDef -> floater || owner -> unitDef -> canSubmerge)) {
 		return false;
+	}
 
-	int2 mp = owner->GetMapPos(pos);
+	const int2 mp = owner->GetMapPos(pos);
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
-			CObject* o = groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x);
+			const CObject* o = groundBlockingObjectMap->GroundBlockedUnsafe(z * gs->mapx + x);
 			if (o && o != owner) {
 				return false;
 			}
 		}
 	}
+
 	return true;
 }
 
@@ -1024,10 +1047,11 @@ void CTAAirMoveType::SetWantedAltitude(float altitude)
 
 void CTAAirMoveType::SetDefaultAltitude(float altitude)
 {
-	wantedHeight = orgWantedHeight = altitude;
+	wantedHeight =  altitude;
+	orgWantedHeight = altitude;
 }
 
-void CTAAirMoveType::CheckForCollision(void)
+void CTAAirMoveType::CheckForCollision()
 {
 	if (!collide) return;
 
@@ -1036,8 +1060,8 @@ void CTAAirMoveType::CheckForCollision(void)
 	forward.Normalize();
 	float3 midTestPos = pos + forward * 121;
 
-	const std::vector<CUnit*> &others = qf->GetUnitsExact(midTestPos, 115);
-	float dist = 200;
+	const std::vector<CUnit*>& others = qf->GetUnitsExact(midTestPos, 115);
+	float dist = 200.0f;
 
 	if (lastColWarning) {
 		DeleteDeathDependence(lastColWarning);
@@ -1054,11 +1078,11 @@ void CTAAirMoveType::CheckForCollision(void)
 		float3 forwardDif = forward * (forward.dot(dif));
 
 		if (forwardDif.SqLength() < dist * dist) {
-			float frontLength = forwardDif.Length();
-			float3 ortoDif = dif - forwardDif;
+			const float frontLength = forwardDif.Length();
+			const float3 ortoDif = dif - forwardDif;
 			// note: the radius is multiplied by two since we rely on aircraft
 			// having small spheres (see unitloader)
-			float minOrtoDif = ((*ui)->radius + owner->radius) * 2 + frontLength * 0.05f + 5;
+			const float minOrtoDif = ((*ui)->radius + owner->radius) * 2 + frontLength * 0.05f + 5;
 
 			if (ortoDif.SqLength() < minOrtoDif * minOrtoDif) {
 				dist = frontLength;
@@ -1088,12 +1112,12 @@ void CTAAirMoveType::CheckForCollision(void)
 void CTAAirMoveType::DependentDied(CObject* o)
 {
 	if (o == reservedPad) {
-		reservedPad = 0;
+		reservedPad = NULL;
 		SetState(AIRCRAFT_FLYING);
 		goalPos = oldGoalPos;
 	}
 	if (o == lastColWarning) {
-		lastColWarning = 0;
+		lastColWarning = NULL;
 		lastColWarningType = 0;
 	}
 
@@ -1102,7 +1126,7 @@ void CTAAirMoveType::DependentDied(CObject* o)
 
 void CTAAirMoveType::Takeoff()
 {
-	if(aircraftState==AAirMoveType::AIRCRAFT_LANDED) {
+	if (aircraftState == AAirMoveType::AIRCRAFT_LANDED) {
 		SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
 	}
 	if (aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
@@ -1110,7 +1134,7 @@ void CTAAirMoveType::Takeoff()
 	}
 }
 
-bool CTAAirMoveType::IsFighter()
+bool CTAAirMoveType::IsFighter() const
 {
 	return false;
 }
