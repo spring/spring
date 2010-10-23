@@ -11,6 +11,14 @@
 #define AI_VERSION			AI_NAME + " (built " + AI_DATE + ")"
 #define AI_CREDITS			"(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
 
+// as of (at least) 58f99d175e79c02b1abc9be50d48325447cf7015
+// float3::max{x,z}pos do not have their proper values when
+// accessed in AI code, so float3::{Check,Is}InBounds() are
+// both unreliable
+#define MAPPOS_IN_BOUNDS(pos) \
+	((pos.x >= 0) && (pos.x < ai->cb->GetMapWidth()  * SQUARE_SIZE)  && \
+	 (pos.z >= 0) && (pos.z < ai->cb->GetMapHeight() * SQUARE_SIZE))
+
 // Logger
 #define L(ai, msg)      (ai->logger->Log(msg));
 

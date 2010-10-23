@@ -180,44 +180,44 @@ void CPathFinder::CreateDefenseMatrix() {
 		int reruns = 35;
 
 		micropather->SetMapData(MoveArrays[m], &ai->dm->ChokeMapsByMovetype[m][0], PathMapXSize, PathMapYSize);
-		double pathCostSum = 0.0;
 
 		for (int i = 0; i < totalcells; i++) {
 			ai->dm->ChokeMapsByMovetype[m][i] = 1;
 		}
 
-		int runcounter = 0;
-
 		// HACK
 		if (numberofenemyplayers > 0 && m == PATHTOUSE) {
 			for (int r = 0; r < reruns; r++) {
 				for (int startpos = 0; startpos < numberofenemyplayers; startpos++) {
-					if (micropather->Solve(Pos2Node(enemyposes[startpos]), Pos2Node(mypos), &path, &totalcost) == MicroPather::SOLVED) {
-						for (int i = 12; i < int(path.size() - 12); i++) {
-							if (i % 2) {
-								int x, y;
-								Node2XY(path[i], &x, &y);
-
-								for (int myx = -Range; myx <= Range; myx++) {
-									int actualx = x + myx;
-
-									if (actualx >= 0 && actualx < PathMapXSize) {
-										for (int myy = -Range; myy <= Range; myy++) {
-											int actualy = y + myy;
-
-											if (actualy >= 0 && actualy < PathMapYSize){
-												ai->dm->ChokeMapsByMovetype[m][actualy * PathMapXSize + actualx] += costmask[(myy + Range) * maskwidth + (myx+Range)];
-											}
-										}
-									}
-								}
-							}
-						}
-
-						runcounter++;
+					if (micropather->Solve(Pos2Node(enemyposes[startpos]), Pos2Node(mypos), &path, &totalcost) != MicroPather::SOLVED) {
+						continue;
 					}
 
-					pathCostSum += totalcost;
+					for (int i = 12; i < int(path.size() - 12); i++) {
+						if ((i % 2) == 0) { continue; }
+
+						int x, y;
+						Node2XY(path[i], &x, &y);
+
+						for (int myx = -Range; myx <= Range; myx++) {
+							const int actualx = x + myx;
+
+							if (actualx < 0 || actualx >= PathMapXSize) {
+								continue;
+							}
+
+							for (int myy = -Range; myy <= Range; myy++) {
+								const int actualy = y + myy;
+
+								if (actualy < 0 || actualy >= PathMapYSize) {
+									continue;
+								}
+
+								ai->dm->ChokeMapsByMovetype[m][actualy * PathMapXSize + actualx] += costmask[(myy + Range) * maskwidth + (myx+Range)];
+							}
+
+						}
+					}
 				}
 			}
 		}
@@ -395,6 +395,7 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 
 		for (unsigned i = 0; i < path.size(); i++) {
 			int x, y;
+
 			Node2XY(path[i], &x, &y);
 			float3 mypos = Node2Pos(path[i]);
 			mypos.y = ai->cb->GetElevation(mypos.x, mypos.z);
@@ -419,7 +420,7 @@ bool CPathFinder::IsPositionReachable(const MoveData* md, const float3& pos) con
 		// aircraft or building
 		return true;
 	}
-	if (!pos.IsInBounds()) {
+	if (!MAPPOS_IN_BOUNDS(pos)) {
 		return false;
 	}
 
