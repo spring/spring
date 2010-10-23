@@ -42,7 +42,7 @@ void CDefenseMatrix::Init() {
 }
 
 void CDefenseMatrix::MaskBadBuildSpot(float3 pos) {
-	if (pos.IsInBounds()) {
+	if (MAPPOS_IN_BOUNDS(pos)) {
 		const int f3multiplier = 8 * THREATRES;
 		const int x = (int) (pos.x / f3multiplier);
 		const int y = (int) (pos.z / f3multiplier);
@@ -53,6 +53,7 @@ void CDefenseMatrix::MaskBadBuildSpot(float3 pos) {
 
 float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos) {
 	ai->ut->UpdateChokePointArray();
+
 	int f3multiplier = 8 * THREATRES;
 	int Range = int(ai->ut->GetMaxRange(def) / f3multiplier);
 	int bestspotx = 0;

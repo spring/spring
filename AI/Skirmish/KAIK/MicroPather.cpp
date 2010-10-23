@@ -47,7 +47,7 @@
 #include "MicroPather.h"
 
 #define USE_NODEATINDEX100
-// #define USE_ASSERTIONS
+#define USE_ASSERTIONS
 // #define DEBUG_PATH
 // #define DEBUG_PATH_DEEP
 // #define USE_LIST
@@ -67,11 +67,12 @@ class OpenQueueBH {
 
 	void Push(PathNode* pNode) {
 		pNode->inOpen = 1;
-		// L("Push: " << size);
-		if (size) {
+
+		if (size > 0) {
 			size++;
 			heapArray[size] = pNode;
 			pNode->myIndex =  size;
+
 			int i = size;
 
 			while((i > 1) && (heapArray[i >> 1]->totalCost > heapArray[i]->totalCost)) {
@@ -85,9 +86,8 @@ class OpenQueueBH {
 
 				i >>= 1;
 			}
-		}
-		else {
-			// L("The tree was empty: " );
+		} else {
+			// tree was empty
 			size++;
 			heapArray[1] = pNode;
 			pNode->myIndex = size;
@@ -96,13 +96,11 @@ class OpenQueueBH {
 
 
 	void Update(PathNode* pNode) {
-		// L("Update: " << size);
-
 		if (size > 1) {
 			// heapify now
 			int i = pNode->myIndex;
 
-			while(i > 1 && ((heapArray[i >> 1]->totalCost) > (heapArray[i]->totalCost))) {
+			while (i > 1 && ((heapArray[i >> 1]->totalCost) > (heapArray[i]->totalCost))) {
 				// swap them
 				PathNode* temp = heapArray[i >> 1];
 				heapArray[i >> 1] = heapArray[i];
@@ -117,8 +115,6 @@ class OpenQueueBH {
 
 
 	PathNode* Pop() {
-		// L("Pop: " << size);
-
 		// get the first one
 		PathNode* min = heapArray[1];
 		min->inOpen = 0;
@@ -170,6 +166,7 @@ class OpenQueueBH {
 		return min;
 	}
 
+	int Size() const { return size; }
 	bool Empty() {
 		return (size == 0);
 	}
@@ -318,12 +315,12 @@ void MicroPather::GoalReached(PathNode* node, void* start, void* end, std::vecto
 }
 
 float MicroPather::LeastCostEstimateLocal(int nodeStartIndex) {
-	int yStart = nodeStartIndex / mapSizeX;
-	int xStart = nodeStartIndex - yStart * mapSizeX;
+	const int yStart = nodeStartIndex / mapSizeX;
+	const int xStart = nodeStartIndex - yStart * mapSizeX;
 
-	int dx = abs(xStart - xEndNode);
-	int dy = abs(yStart - yEndNode);
-	int strait = abs(dx - dy);
+	const int dx = abs(xStart - xEndNode);
+	const int dy = abs(yStart - yEndNode);
+	const int strait = abs(dx - dy);
 
 	return (strait + 1.41f * std::min(dx, dy));
 }
@@ -423,8 +420,9 @@ int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path,
 	OpenQueueBH open(ai, heapArrayMem);
 
 	{
+		const float estToGoal = LeastCostEstimateLocal( (size_t) startNode);
+
 		PathNode* tempStartNode = &pathNodeMem[(size_t) startNode];
-		float estToGoal = LeastCostEstimateLocal( (size_t) startNode);
 		tempStartNode->Reuse(frame);
 		tempStartNode->costFromStart = 0;
 		tempStartNode->totalCost = estToGoal;
@@ -447,8 +445,8 @@ int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path,
 			int indexStart = (((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode);
 
 			#ifdef USE_ASSERTIONS
-			int ystart = indexStart / mapSizeX;
-			int xstart = indexStart - ystart * mapSizeX;
+			const int ystart = indexStart / mapSizeX;
+			const int xstart = indexStart - ystart * mapSizeX;
 
 			// no node can be at the edge!
 			assert(xstart != 0 && xstart != mapSizeX);
@@ -470,8 +468,8 @@ int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path,
 					directNode->Reuse(frame);
 
 				#ifdef USE_ASSERTIONS
-				int yend = indexEnd / mapSizeX;
-				int xend = indexEnd - yend * mapSizeX;
+				const int yend = indexEnd / mapSizeX;
+				const int xend = indexEnd - yend * mapSizeX;
 
 				// we can move to that spot
 				assert(canMoveArray[yend * mapSizeX + xend]);
@@ -504,8 +502,7 @@ int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path,
 
 				if (directNode->inOpen) {
 					open.Update(directNode);
-				}
-				else {
+				} else {
 					directNode->inClosed = 0;
 					open.Push(directNode);
 				}
@@ -560,12 +557,13 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*>
 	OpenQueueBH open(ai, heapArrayMem);
 
 	{
+		const float estToGoal = LeastCostEstimateLocal( (size_t) startNode);
+
 		PathNode* tempStartNode = &pathNodeMem[(size_t) startNode];
-		float estToGoal = LeastCostEstimateLocal( (size_t) startNode);
 		tempStartNode->Reuse(frame);
 		tempStartNode->costFromStart = 0;
 		tempStartNode->totalCost = estToGoal;
-		open.Push( tempStartNode );
+		open.Push(tempStartNode);
 	}
 
 	// mark the endNodes
@@ -580,6 +578,7 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*>
 
 		if (node->isEndNode) {
 			void* theEndNode = (void*) ((((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode));
+
 			GoalReached(node, startNode, theEndNode, path);
 			*cost = node->costFromStart;
 			hasStartedARun = false;
@@ -591,24 +590,23 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*>
 			}
 
 			return SOLVED;
-		}
-		else {
+		} else {
 			// we have not reached the goal, add the neighbors (emulate GetNodeNeighbors)
-			int indexStart = (((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode);
+			const int indexStart = (((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode);
 
 			#ifdef USE_ASSERTIONS
-			int ystart = indexStart / mapSizeX;
-			int xstart = indexStart - ystart * mapSizeX;
+			const int ystart = indexStart / mapSizeX;
+			const int xstart = indexStart - ystart * mapSizeX;
 
 			// no node can be at the edge!
-			assert(xstart != 0 && xstart != mapSizeX);
-			assert(ystart != 0 && ystart != mapSizeY);
+			assert(xstart > 0 && xstart < (mapSizeX - 1));
+			assert(ystart > 0 && ystart < (mapSizeY - 1));
 			#endif
 
-			float nodeCostFromStart = node->costFromStart;
+			const float nodeCostFromStart = node->costFromStart;
 
 			for (int i = 0; i < 8; ++i) {
-				int indexEnd = offsets[i] + indexStart;
+				const int indexEnd = offsets[i] + indexStart;
 
 				if (!canMoveArray[indexEnd]) {
 					continue;
@@ -620,24 +618,24 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*>
 					directNode->Reuse(frame);
 
 				#ifdef USE_ASSERTIONS
-				int yend = indexEnd / mapSizeX;
-				int xend = indexEnd - yend * mapSizeX;
+				const int yend = indexEnd / mapSizeX;
+				const int xend = indexEnd - yend * mapSizeX;
+
+				// no node can be at the edge!
+				assert(xend > 0 && (xend < mapSizeX - 1));
+				assert(yend > 0 && (yend < mapSizeY - 1));
 
 				// we can move to that spot
 				assert(canMoveArray[yend * mapSizeX + xend]);
-
-				// no node can be at the edge!
-				assert(xend != 0 && xend != mapSizeX);
-				assert(yend != 0 && yend != mapSizeY);
 				#endif
 
 				float newCost = nodeCostFromStart;
 
 				if (i > 3) {
-					newCost += costArray[indexEnd] * 1.41f;
-				}
-				else
+					newCost += costArray[indexEnd] * 1.41f; // sqrt(2)
+				} else {
 					newCost += costArray[indexEnd];
+				}
 
 				if (directNode->costFromStart <= newCost) {
 					// do nothing, this path is not better than existing one
@@ -655,8 +653,7 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*>
 
 				if (directNode->inOpen) {
 					open.Update(directNode);
-				}
-				else {
+				} else {
 					directNode->inClosed = 0;
 					open.Push(directNode);
 				}
@@ -751,6 +748,7 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, std
 				// L("Its a hit: " << counter);
 
 				GoalReached(node, startNode, (void*) (indexStart), path);
+
 				*cost = node->costFromStart;
 				hasStartedARun = false;
 				return SOLVED;
@@ -761,11 +759,12 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, std
 			// we have not reached the goal, add the neighbors.
 			#ifdef USE_ASSERTIONS
 			// no node can be at the edge!
-			assert(xstart != 0 && xstart != mapSizeX);
-			assert(ystart != 0 && ystart != mapSizeY);
+			assert(xstart > 0 && (xstart != mapSizeX - 1));
+			assert(ystart > 0 && (ystart != mapSizeY - 1));
 			#endif
 
-			float nodeCostFromStart = node->costFromStart;
+			const float nodeCostFromStart = node->costFromStart;
+
 			for (int i = 0; i < 8; ++i) {
 				int indexEnd = offsets[i] + indexStart;
 
@@ -814,8 +813,7 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, std
 
 				if (directNode->inOpen) {
 					open.Update(directNode);
-				}
-				else {
+				} else {
 					directNode->inClosed = 0;
 					open.Push(directNode);
 				}

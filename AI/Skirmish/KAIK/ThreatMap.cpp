@@ -159,9 +159,15 @@ void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float s) {
 				continue;
 			}
 
-			if (((posx - myx) * (posx - myx) + (posy - myy) * (posy - myy) - 0.5) <= rangeSq) {
-				threatCellsRaw[myy * width + myx] += threat;
-				threatCellsVis[myy * width + myx] += threat;
+			const int dxSq = (posx - myx) * (posx - myx);
+			const int dySq = (posy - myy) * (posy - myy);
+
+			if ((dxSq + dySq - 0.5) <= rangeSq) {
+				// MicroPather cannot deal with negative costs
+				// (which may arise due to floating-point drift)
+				threatCellsRaw[myy * width + myx] = std::max(threatCellsRaw[myy * width + myx] + threat, 0.0f);
+				threatCellsVis[myy * width + myx] = std::max(threatCellsVis[myy * width + myx] + threat, 0.0f);
+
 				currSumThreat += threat;
 			}
 		}
