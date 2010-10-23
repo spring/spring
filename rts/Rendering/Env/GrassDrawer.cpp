@@ -486,9 +486,9 @@ void CGrassDrawer::Draw(void)
 
 		if (globalRendering->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
-			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+			grassShader->SetUniform4fv(7, &(shadowHandler->GetShadowParams().x));
 			grassShader->SetUniform1f(8, gs->frameNum);
-			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
+			grassShader->SetUniform3fv(9, &(windSpeed.x));
 		} else {
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -586,9 +586,9 @@ void CGrassDrawer::Draw(void)
 
 		if (globalRendering->haveGLSL) {
 			grassShader->SetUniformMatrix4fv(6, false, &shadowHandler->shadowMatrix.m[0]);
-			grassShader->SetUniform4fv(7, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+			grassShader->SetUniform4fv(7, &(shadowHandler->GetShadowParams().x));
 			grassShader->SetUniform1f(8, gs->frameNum);
-			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
+			grassShader->SetUniform3fv(9, &(windSpeed.x));
 		}
 	} else {
 		grassShader = grassShaders[GRASS_PROGRAM_DIST_BASIC];
@@ -599,7 +599,7 @@ void CGrassDrawer::Draw(void)
 			grassShader->SetUniform2f(12, 1.0f / (gs->mapx     * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
 		} else {
 			grassShader->SetUniform1f(8, gs->frameNum);
-			grassShader->SetUniform3fv(9, const_cast<float*>(&(windSpeed.x)));
+			grassShader->SetUniform3fv(9, &(windSpeed.x));
 		}
 
 		glBindTexture(GL_TEXTURE_2D, farTex);

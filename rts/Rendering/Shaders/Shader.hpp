@@ -62,28 +62,28 @@ namespace Shader {
 		virtual void SetUniformTarget(int) {}
 		virtual void SetUniformLocation(const std::string&) {}
 
-		virtual void SetUniform1i(int, int) {}
-		virtual void SetUniform2i(int, int, int) {}
-		virtual void SetUniform3i(int, int, int, int) {}
-		virtual void SetUniform4i(int, int, int, int, int) {}
-		virtual void SetUniform1f(int, float) {}
-		virtual void SetUniform2f(int, float, float) {}
-		virtual void SetUniform3f(int, float, float, float) {}
-		virtual void SetUniform4f(int, float, float, float, float) {}
+		virtual void SetUniform1i(int idx, int   v0) {}
+		virtual void SetUniform2i(int idx, int   v0, int   v1) {}
+		virtual void SetUniform3i(int idx, int   v0, int   v1, int   v2) {}
+		virtual void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) {}
+		virtual void SetUniform1f(int idx, float v0) {}
+		virtual void SetUniform2f(int idx, float v0, float v1) {}
+		virtual void SetUniform3f(int idx, float v0, float v1, float v2) {}
+		virtual void SetUniform4f(int idx, float v0, float v1, float v2, float v3) {}
 
-		virtual void SetUniform2iv(int, int*) {}
-		virtual void SetUniform3iv(int, int*) {}
-		virtual void SetUniform4iv(int, int*) {}
-		virtual void SetUniform2fv(int, float*) {}
-		virtual void SetUniform3fv(int, float*) {}
-		virtual void SetUniform4fv(int, float*) {}
+		virtual void SetUniform2iv(int idx, const int*   v) {}
+		virtual void SetUniform3iv(int idx, const int*   v) {}
+		virtual void SetUniform4iv(int idx, const int*   v) {}
+		virtual void SetUniform2fv(int idx, const float* v) {}
+		virtual void SetUniform3fv(int idx, const float* v) {}
+		virtual void SetUniform4fv(int idx, const float* v) {}
 
-		virtual void SetUniformMatrix2fv(int, bool, float*) {}
-		virtual void SetUniformMatrix3fv(int, bool, float*) {}
-		virtual void SetUniformMatrix4fv(int, bool, float*) {}
-		virtual void SetUniformMatrix2dv(int, bool, double*) {}
-		virtual void SetUniformMatrix3dv(int, bool, double*) {}
-		virtual void SetUniformMatrix4dv(int, bool, double*) {}
+		virtual void SetUniformMatrix2fv(int idx, bool transp, const float* v) {}
+		virtual void SetUniformMatrix3fv(int idx, bool transp, const float* v) {}
+		virtual void SetUniformMatrix4fv(int idx, bool transp, const float* v) {}
+		virtual void SetUniformMatrix2dv(int idx, bool transp, const double* v) {}
+		virtual void SetUniformMatrix3dv(int idx, bool transp, const double* v) {}
+		virtual void SetUniformMatrix4dv(int idx, bool transp, const double* v) {}
 
 		typedef std::vector<const IShaderObject*> SOVec;
 		typedef std::vector<const IShaderObject*>::const_iterator SOVecIt;
@@ -114,21 +114,21 @@ namespace Shader {
 
 		void SetUniformTarget(int target) { uniformTarget = target; }
 
-		void SetUniform1i(int, int);
-		void SetUniform2i(int, int, int);
-		void SetUniform3i(int, int, int, int);
-		void SetUniform4i(int, int, int, int, int);
-		void SetUniform1f(int, float);
-		void SetUniform2f(int, float, float);
-		void SetUniform3f(int, float, float, float);
-		void SetUniform4f(int, float, float, float, float);
+		void SetUniform1i(int idx, int   v0);
+		void SetUniform2i(int idx, int   v0, int   v1);
+		void SetUniform3i(int idx, int   v0, int   v1, int   v2);
+		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3);
+		void SetUniform1f(int idx, float v0);
+		void SetUniform2f(int idx, float v0, float v1);
+		void SetUniform3f(int idx, float v0, float v1, float v2);
+		void SetUniform4f(int idx, float v0, float v1, float v2, float v3);
 
-		void SetUniform2iv(int, int*);
-		void SetUniform3iv(int, int*);
-		void SetUniform4iv(int, int*);
-		void SetUniform2fv(int, float*);
-		void SetUniform3fv(int, float*);
-		void SetUniform4fv(int, float*);
+		void SetUniform2iv(int idx, const int*   v);
+		void SetUniform3iv(int idx, const int*   v);
+		void SetUniform4iv(int idx, const int*   v);
+		void SetUniform2fv(int idx, const float* v);
+		void SetUniform3fv(int idx, const float* v);
+		void SetUniform4fv(int idx, const float* v);
 
 		void AttachShaderObject(const IShaderObject*);
 
@@ -146,28 +146,28 @@ namespace Shader {
 
 		void SetUniformLocation(const std::string&);
 
-		void SetUniform1i(int, int);
-		void SetUniform2i(int, int, int);
-		void SetUniform3i(int, int, int, int);
-		void SetUniform4i(int, int, int, int, int);
-		void SetUniform1f(int, float);
-		void SetUniform2f(int, float, float);
-		void SetUniform3f(int, float, float, float);
-		void SetUniform4f(int, float, float, float, float);
+		void SetUniform1i(int idx, int   v0);
+		void SetUniform2i(int idx, int   v0, int   v1);
+		void SetUniform3i(int idx, int   v0, int   v1, int   v2);
+		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3);
+		void SetUniform1f(int idx, float v0);
+		void SetUniform2f(int idx, float v0, float v1);
+		void SetUniform3f(int idx, float v0, float v1, float v2);
+		void SetUniform4f(int idx, float v0, float v1, float v2, float v3);
 
-		void SetUniform2iv(int, int*);
-		void SetUniform3iv(int, int*);
-		void SetUniform4iv(int, int*);
-		void SetUniform2fv(int, float*);
-		void SetUniform3fv(int, float*);
-		void SetUniform4fv(int, float*);
+		void SetUniform2iv(int idx, const int*   v);
+		void SetUniform3iv(int idx, const int*   v);
+		void SetUniform4iv(int idx, const int*   v);
+		void SetUniform2fv(int idx, const float* v);
+		void SetUniform3fv(int idx, const float* v);
+		void SetUniform4fv(int idx, const float* v);
 
-		void SetUniformMatrix2fv(int, bool, float*);
-		void SetUniformMatrix3fv(int, bool, float*);
-		void SetUniformMatrix4fv(int, bool, float*);
-		void SetUniformMatrix2dv(int, bool, double*);
-		void SetUniformMatrix3dv(int, bool, double*);
-		void SetUniformMatrix4dv(int, bool, double*);
+		void SetUniformMatrix2fv(int idx, bool transp, const float* v);
+		void SetUniformMatrix3fv(int idx, bool transp, const float* v);
+		void SetUniformMatrix4fv(int idx, bool transp, const float* v);
+		void SetUniformMatrix2dv(int idx, bool transp, const double* v);
+		void SetUniformMatrix3dv(int idx, bool transp, const double* v);
+		void SetUniformMatrix4dv(int idx, bool transp, const double* v);
 
 		void AttachShaderObject(const IShaderObject*);
 

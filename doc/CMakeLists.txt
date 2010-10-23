@@ -54,3 +54,27 @@ if    (UNIX)
 	endif (CREATE_MAN_PAGES)
 endif (UNIX)
 
+
+set(Pandoc_FIND_QUIETLY TRUE)
+FIND_PACKAGE(Pandoc)
+
+if    (PANDOC_FOUND)
+	set(DOC_BUILD_DIR "${CMAKE_BINARY_DIR}/userdocs")
+	file(MAKE_DIRECTORY ${DOC_BUILD_DIR})
+
+	# generate README.html from README.markdown
+	add_custom_command(
+		OUTPUT "${DOC_BUILD_DIR}/README.html"
+		COMMAND ${PANDOC_BIN} "--from=markdown" "--to=html" "-o" "${DOC_BUILD_DIR}/README.html" "-s" "${CMAKE_SOURCE_DIR}/README.markdown"
+		COMMENT "Creating userdocs" VERBATIM
+		DEPENDS "${CMAKE_SOURCE_DIR}/README.markdown"
+	)
+
+	add_custom_target(userdocs ALL DEPENDS "${DOC_BUILD_DIR}/README.html")
+
+	install(FILES "${DOC_BUILD_DIR}/README.html" DESTINATION "userdocs")
+	message(STATUS "userdocs will be installed to {INSTALL_PREFIX}/userdocs")
+else  (PANDOC_FOUND)
+	message(STATUS "userdocs will not be generated/installed; missing utility: pandoc")
+endif (PANDOC_FOUND)
+

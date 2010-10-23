@@ -118,12 +118,12 @@ namespace Shader {
 	void ARBProgramObject::SetUniform3f(int idx, float v0, float v1, float v2          ) { glPEP4f(uniformTarget, idx, v0,   v1,   v2, 0.0f); }
 	void ARBProgramObject::SetUniform4f(int idx, float v0, float v1, float v2, float v3) { glPEP4f(uniformTarget, idx, v0,   v1,   v2,   v3); }
 
-	void ARBProgramObject::SetUniform2iv(int idx, int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] =    0; vv[3] =    0; glPEP4fv(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform3iv(int idx, int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] =    0; glPEP4fv(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform4iv(int idx, int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glPEP4fv(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform2fv(int idx, float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = 0.0f; vv[3] = 0.0f; glPEP4fv(uniformTarget, idx,          vv); }
-	void ARBProgramObject::SetUniform3fv(int idx, float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = 0.0f; glPEP4fv(uniformTarget, idx,          vv); }
-	void ARBProgramObject::SetUniform4fv(int idx, float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glPEP4fv(uniformTarget, idx,          vv); }
+	void ARBProgramObject::SetUniform2iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] =    0; vv[3] =    0; glPEP4fv(uniformTarget, idx, (float*) vv); }
+	void ARBProgramObject::SetUniform3iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] =    0; glPEP4fv(uniformTarget, idx, (float*) vv); }
+	void ARBProgramObject::SetUniform4iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glPEP4fv(uniformTarget, idx, (float*) vv); }
+	void ARBProgramObject::SetUniform2fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = 0.0f; vv[3] = 0.0f; glPEP4fv(uniformTarget, idx,          vv); }
+	void ARBProgramObject::SetUniform3fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = 0.0f; glPEP4fv(uniformTarget, idx,          vv); }
+	void ARBProgramObject::SetUniform4fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glPEP4fv(uniformTarget, idx,          vv); }
 	#undef glPEP4f
 	#undef glPEP4fv
 
@@ -195,16 +195,16 @@ namespace Shader {
 	void GLSLProgramObject::SetUniform3f(int idx, float v0, float v1, float v2          ) { glUniform3f(uniformLocs[idx], v0, v1, v2    ); }
 	void GLSLProgramObject::SetUniform4f(int idx, float v0, float v1, float v2, float v3) { glUniform4f(uniformLocs[idx], v0, v1, v2, v3); }
 
-	void GLSLProgramObject::SetUniform2iv(int idx, int*   v) { glUniform2iv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform3iv(int idx, int*   v) { glUniform3iv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform4iv(int idx, int*   v) { glUniform4iv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform2fv(int idx, float* v) { glUniform2fv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform3fv(int idx, float* v) { glUniform3fv(uniformLocs[idx], 1, v); }
-	void GLSLProgramObject::SetUniform4fv(int idx, float* v) { glUniform4fv(uniformLocs[idx], 1, v); }
+	void GLSLProgramObject::SetUniform2iv(int idx, const int*   v) { glUniform2iv(uniformLocs[idx], 1, v); }
+	void GLSLProgramObject::SetUniform3iv(int idx, const int*   v) { glUniform3iv(uniformLocs[idx], 1, v); }
+	void GLSLProgramObject::SetUniform4iv(int idx, const int*   v) { glUniform4iv(uniformLocs[idx], 1, v); }
+	void GLSLProgramObject::SetUniform2fv(int idx, const float* v) { glUniform2fv(uniformLocs[idx], 1, v); }
+	void GLSLProgramObject::SetUniform3fv(int idx, const float* v) { glUniform3fv(uniformLocs[idx], 1, v); }
+	void GLSLProgramObject::SetUniform4fv(int idx, const float* v) { glUniform4fv(uniformLocs[idx], 1, v); }
 
-	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, float* v) { glUniformMatrix2fv(uniformLocs[idx], 1, transp, v); }
-	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, float* v) { glUniformMatrix3fv(uniformLocs[idx], 1, transp, v); }
-	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, float* v) { glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, const float* v) { glUniformMatrix2fv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, const float* v) { glUniformMatrix3fv(uniformLocs[idx], 1, transp, v); }
+	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, const float* v) { glUniformMatrix4fv(uniformLocs[idx], 1, transp, v); }
 
 	#define M22(m, v)                           \
 		m[0] = float(v[0]); m[1] = float(v[1]); \
@@ -218,9 +218,9 @@ namespace Shader {
 		m[ 4] = float(v[ 4]); m[ 5] = float(v[ 5]); m[ 6] = float(v[ 6]); m[ 7] = float(v[ 7]); \
 		m[ 8] = float(v[ 8]); m[ 9] = float(v[ 9]); m[10] = float(v[10]); m[11] = float(v[11]); \
 		m[12] = float(v[12]); m[13] = float(v[13]); m[14] = float(v[14]); m[15] = float(v[15]);
-	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, double* v) { float m[2 * 2]; M22(m, v); SetUniformMatrix2fv(idx, transp, m); }
-	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, double* v) { float m[3 * 3]; M33(m, v); SetUniformMatrix3fv(idx, transp, m); }
-	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, double* v) { float m[4 * 4]; M44(m, v); SetUniformMatrix4fv(idx, transp, m); }
+	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, const double* v) { float m[2 * 2]; M22(m, v); SetUniformMatrix2fv(idx, transp, m); }
+	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, const double* v) { float m[3 * 3]; M33(m, v); SetUniformMatrix3fv(idx, transp, m); }
+	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, const double* v) { float m[4 * 4]; M44(m, v); SetUniformMatrix4fv(idx, transp, m); }
 	#undef M22
 	#undef M33
 	#undef M44

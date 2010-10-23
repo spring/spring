@@ -54,7 +54,7 @@ endif  ()
 
 
 # This is needed because CMake, or at least some versions of it (eg. 2.8),
-# falsely use the ".so" suffix unde Mac OS X for MODULE's
+# falsely use the ".so" suffix under Mac OS X for MODULE's
 macro    (FixLibName targetName)
 	IF    (UNIX)
 		SET_TARGET_PROPERTIES(${targetName} PROPERTIES PREFIX "lib")

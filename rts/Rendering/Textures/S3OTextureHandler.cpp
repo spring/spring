@@ -45,18 +45,18 @@ void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	model->textureType=-1;
 #else
-	model->textureType=LoadS3OTextureNow(model->tex1, model->tex2);
+	model->textureType = LoadS3OTextureNow(model);
 #endif
 }
 
 void CS3OTextureHandler::Update() {
 }
 
-int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::string& tex2)
+int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
 	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
 
-	string totalName=tex1+tex2;
+	string totalName = model->tex1 + model->tex2;
 
 	if(s3oTextureNames.find(totalName)!=s3oTextureNames.end()){
 		return s3oTextureNames[totalName];
@@ -66,8 +66,9 @@ int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::st
 	tex.num=newNum;
 
 	CBitmap bm;
-	if (!bm.Load(string("unittextures/"+tex1)))
-		throw content_error("Could not load S3O texture from file unittextures/" + tex1);
+	if (!bm.Load(std::string("unittextures/" + model->tex1))) {
+		throw content_error("Could not load texture unittextures/" + model->tex1 + " from S3O model " + model->name);
+	}
 	tex.tex1 = bm.CreateTexture(true);
 	tex.tex1SizeX = bm.xsize;
 	tex.tex1SizeY = bm.ysize;
@@ -81,7 +82,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const std::string& tex1, const std::st
 		// being generated if it couldn't be loaded.
 		// Also many map features specify a tex2 but don't ship it with the map,
 		// so throwing here would cause maps to break.
-		if(!bm.Load(string("unittextures/"+tex2))) {
+		if (!bm.Load(std::string("unittextures/" + model->tex2))) {
 			bm.Alloc(1,1);
 			bm.mem[3] = 255;//file not found, set alpha to white so unit is visible
 		}

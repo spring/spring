@@ -92,7 +92,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	PIMAGEHLP_SYMBOL pSym;
 	STACKFRAME sf;
 	HANDLE process, thread;
-	DWORD dwModBase, Disp, dwModRelAddr;
+	DWORD dwModBase, Disp, dwModAddrToPrint;
 	BOOL more = FALSE;
 	int count = 0;
 	char modname[MAX_PATH];
@@ -158,7 +158,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
 		pSym->MaxNameLength = MAX_PATH;
 
-		char *printstringsnew = (char *)GlobalAlloc(GMEM_FIXED, (count + 1) * BUFFER_SIZE);
+		char* printstringsnew = (char*) GlobalAlloc(GMEM_FIXED, (count + 1) * BUFFER_SIZE);
 		memcpy(printstringsnew, printstrings, count * BUFFER_SIZE);
 		GlobalFree(printstrings);
 		printstrings = printstringsnew;
@@ -168,8 +168,14 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%s+%#0lx) [0x%08lX]", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
-			dwModRelAddr = sf.AddrPC.Offset - dwModBase;
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", count, modname, dwModRelAddr);
+			if (strstr(modname, ".exe")) {
+				// for the .exe, we need the absolute address
+				dwModAddrToPrint = sf.AddrPC.Offset;
+			} else {
+				// for DLLs, we need the module-internal/relative address
+				dwModAddrToPrint = sf.AddrPC.Offset - dwModBase;
+			}
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", count, modname, dwModAddrToPrint);
 		}
 
 		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"

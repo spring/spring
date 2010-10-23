@@ -79,14 +79,14 @@ public:
 	                      const float3& impulse, int weaponId = -1);
 	virtual void DoWaterDamage();
 	virtual void Kill(float3& impulse);
-	virtual void FinishedBuilding(void);
+	virtual void FinishedBuilding();
 
 	int GetBlockingMapID() const { return id; }
 
 	void ChangeLos(int l, int airlos);
 	void ChangeSensorRadius(int* valuePtr, int newValue);
 	/// negative amount=reclaim, return= true -> build power was successfully applied
-	bool AddBuildPower(float amount,CUnit* builder);
+	bool AddBuildPower(float amount, CUnit* builder);
 	/// turn the unit on
 	void Activate();
 	/// turn the unit off
@@ -119,6 +119,10 @@ public:
 	}
 
 	void DependentDied(CObject* o);
+	enum DependenceType { DEPENDENCE_ATTACKER, DEPENDENCE_BUILD, DEPENDENCE_BUILDER, DEPENDENCE_CAPTURE, DEPENDENCE_RECLAIM, 
+						DEPENDENCE_RESURRECT, DEPENDENCE_TARGET, DEPENDENCE_TERRAFORM, DEPENDENCE_TRANSPORTEE, DEPENDENCE_TRANSPORTER };
+	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
+
 	void SetUserTarget(CUnit* target);
 	virtual void Init(const CUnit* builder);
 	bool SetGroup(CGroup* group);
@@ -172,7 +176,7 @@ public:
 	 * Parameters may or may not have a name.
 	 */
 	LuaRulesParams::Params  modParams;
-	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
+	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
 	/// tells the units main function to the ai, eg "builder"
 	int aihint;
@@ -219,7 +223,7 @@ public:
 	/// How much reapir power has been added to this recently
 	float repairAmount;
 	/// transport that the unit is currently in
-	CTransportUnit *transporter;
+	CTransportUnit* transporter;
 	/// unit is about to be picked up by a transport
 	bool toBeTransported;
 	/// 0.0-1.0
@@ -378,7 +382,7 @@ public:
 	/// if the unit is in it's 'on'-state
 	bool activated;
 
-	inline CTransportUnit *GetTransporter() const {
+	inline CTransportUnit* GetTransporter() const {
 #if defined(USE_GML) && GML_ENABLE_SIM
 		// transporter may suddenly be changed to NULL by sim
 		return *(CTransportUnit * volatile *)&transporter;
@@ -487,7 +491,7 @@ public:
 	unsigned int lodCount;
 	unsigned int currentLOD;
 	/// length-per-pixel
-	vector<float> lodLengths;
+	std::vector<float> lodLengths;
 	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
 	/// minimum alpha value for a texel to be drawn
@@ -504,23 +508,22 @@ protected:
 	void UpdateLosStatus(int allyTeam);
 
 public:
-	virtual void KillUnit(bool SelfDestruct,bool reclaimed, CUnit *attacker, bool showDeathSequence = true);
+	virtual void KillUnit(bool SelfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence = true);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
 	virtual void IncomingMissile(CMissileProjectile* missile);
-	void TempHoldFire(void);
-	void ReleaseTempHoldFire(void);
-	/// start this unit in freefall from parent unit
-	void Drop(float3 parentPos,float3 parentDir,CUnit* parent);
+	void TempHoldFire();
+	void ReleaseTempHoldFire();
+	/// start this unit in free fall from parent unit
+	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
 	void PostLoad();
-	static void hitByWeaponIdCallback(int retCode, void *p1, void *p2);
 
 public:
-	static void SetLODFactor(float);
+	static void SetLODFactor(float value);
 
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static float GetExpMultiplier()     { return expMultiplier; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
-	static float GetExpPowerScale()    { return expPowerScale; }
+	static float GetExpPowerScale()     { return expPowerScale; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }
 	static float GetExpHealthScale()     { return expHealthScale; }
 	static void  SetExpReloadScale(float value) { expReloadScale = value; }
@@ -538,9 +541,6 @@ private:
 	static float expGrade;
 
 	static float empDecline;
-
-public:
-	void LogMessage(const char*, ...);
 };
 
 #endif // UNIT_H
