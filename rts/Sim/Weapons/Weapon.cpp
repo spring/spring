@@ -754,7 +754,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 void CWeapon::DependentDied(CObject *o)
 {
 	if (o == targetUnit) {
-		targetUnit = 0;
+		targetUnit = NULL;
 		if (targetType == Target_Unit) {
 			targetType = Target_None;
 			haveUserTarget = false;
@@ -764,8 +764,9 @@ void CWeapon::DependentDied(CObject *o)
 		incoming.remove((CWeaponProjectile*) o);
 	}
 
-	if (o == interceptTarget)
-		interceptTarget = 0;
+	if (o == interceptTarget) {
+		interceptTarget = NULL;
+	}
 }
 
 bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)

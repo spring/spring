@@ -14,7 +14,9 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -24,6 +26,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Util.h"
 
 using std::list;
 using std::min;
@@ -32,7 +35,7 @@ using std::max;
 CGroundDecalHandler* groundDecals = NULL;
 
 
-CGroundDecalHandler::CGroundDecalHandler(void)
+CGroundDecalHandler::CGroundDecalHandler()
 {
 	drawDecals = false;
 	decalLevel = std::max(0, configHandler->Get("GroundDecals", 1));
@@ -84,7 +87,7 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 }
 
 
-CGroundDecalHandler::~CGroundDecalHandler(void)
+CGroundDecalHandler::~CGroundDecalHandler()
 {
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ++ti) {
@@ -403,7 +406,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 }
 
 
-void CGroundDecalHandler::Draw(void)
+void CGroundDecalHandler::Draw()
 {
 	if (!drawDecals) {
 		return;
@@ -731,7 +734,7 @@ void CGroundDecalHandler::Draw(void)
 }
 
 
-void CGroundDecalHandler::Update(void)
+void CGroundDecalHandler::Update()
 {
 	for(std::vector<CUnit *>::iterator i=moveUnits.begin(); i!=moveUnits.end(); ++i)
 		UnitMovedNow(*i);
@@ -1093,7 +1096,7 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 }
 
 
-void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::GhostBuilding* gb)
+void CGroundDecalHandler::RemoveBuilding(CBuilding* building, GhostBuilding* gb)
 {
 	if (!building->unitDef->useBuildingGroundDecal)
 		return;
@@ -1167,4 +1170,12 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 	buildingDecalTypes.push_back(tt);
 
 	return (buildingDecalTypes.size() - 1);
+}
+
+BuildingGroundDecal::~BuildingGroundDecal() {
+	SafeDelete(va);
+}
+
+CGroundDecalHandler::Scar::~Scar() {
+	SafeDelete(va);
 }

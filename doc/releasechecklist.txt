@@ -8,16 +8,28 @@ What I had to do for last few releases:
 Binary packages
 ---------------
 
-1) cherry pick a whole lot of stuff / or ensure code I want to release is in some branch one way or another
-2) write / update changelog
-3) "bump version to 0.82.6" (rts/Game/GameVersion.cpp)
+1) cherry pick a whole lot of stuff / or ensure code we want to release is in some branch one way or another
+2) write / update change-log (doc/changelog.txt)
+3) git commit: "bump version to 0.82.6" (rts/Game/GameVersion.cpp)
 4) `git tag -a -m "0.82.6 release" 0.82.6`
-5) "post release version bump" (rts/Game/GameVersion.cpp)
-6) `git push --tags origin 0.82-branch`
-7) trigger build of the tag in buildbot (can put tag name in revision field, do not set branch (as it is currently an issue for buildbot when translating stack trace))
-8) write news post
-9) once 7) is finished, upload to SF
-10) post news post
+5) git commit: "post release version bump" (rts/Game/GameVersion.cpp)
+6) create source-packages:
+		git checkout 0.82.6
+		./installer/make_source_package.sh
+7) `git push --tags origin 0.82-branch`
+8) trigger build of the tag in buildbot (can put tag name in revision field, do not set branch (as it is currently an issue for buildbot when translating stack trace))
+9) write news post
+10) once 8) is finished, create portable archive:
+		wget http://springrts.com/dl/buildbot/default/master/0.82.6/spring_0.82.6.exe
+		installer/make_portable_archive.sh spring_0.82.6.exe
+11) you should now have these files:
+	* spring_0.82.6.exe
+	* spring_0.82.6_portable.7z
+	* spring_0.82.6_src.tar.gz
+	* spring_0.82.6_src.tar.lzma
+	Upload them to SF (replace USER with your SF account name):
+		rsync -e ssh spring_0.82.6* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-0.82.6/
+12) post news post
 
 Note: packages should also be put in springrts.com/dl at some point, but this is less important.
 (it's the 'mirror' link on download page)

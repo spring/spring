@@ -176,16 +176,11 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in pause msg",player);
 					break;
 				}
-				if (!skipping) {
-					gs->paused=!!inbuf[2];
-					if(gs->paused){
-						logOutput.Print("%s paused the game",playerHandler->Player(player)->name.c_str());
-					} else {
-						logOutput.Print("%s unpaused the game",playerHandler->Player(player)->name.c_str());
-					}
-					eventHandler.GamePaused(player, gs->paused);
-					lastframe = SDL_GetTicks();
-				}
+				gs->paused=!!inbuf[2];
+				logOutput.Print(gs->paused ? "%s paused the game" : "%s unpaused the game" ,
+											playerHandler->Player(player)->name.c_str());
+				eventHandler.GamePaused(player, gs->paused);
+				lastframe = SDL_GetTicks();
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}

@@ -679,6 +679,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	target_link_libraries(${myTarget} streflop)
 	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
+	FixLibName(${myTarget})
 
 
 	# Build the java part

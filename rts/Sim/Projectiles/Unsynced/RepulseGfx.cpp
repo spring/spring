@@ -59,7 +59,7 @@ CRepulseGfx::~CRepulseGfx()
 void CRepulseGfx::DependentDied(CObject* o)
 {
 	if (o == repulsed) {
-		repulsed = 0;
+		repulsed = NULL;
 		deleteMe = true;
 	}
 }

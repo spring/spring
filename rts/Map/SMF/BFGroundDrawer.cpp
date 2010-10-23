@@ -170,18 +170,18 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
 			smfShaderGLSL->SetUniform2f(5, (gs->pwr2mapx * SQUARE_SIZE), (gs->pwr2mapy * SQUARE_SIZE));
 			smfShaderGLSL->SetUniform2f(6, (gs->mapx * SQUARE_SIZE), (gs->mapy * SQUARE_SIZE));
-			smfShaderGLSL->SetUniform4fv(9, const_cast<float*>(&mapInfo->light.sunDir[0]));
-			smfShaderGLSL->SetUniform3fv(14, const_cast<float*>(&mapInfo->light.groundAmbientColor[0]));
-			smfShaderGLSL->SetUniform3fv(15, const_cast<float*>(&mapInfo->light.groundSunColor[0]));
-			smfShaderGLSL->SetUniform3fv(16, const_cast<float*>(&mapInfo->light.groundSpecularColor[0]));
+			smfShaderGLSL->SetUniform4fv(9, &mapInfo->light.sunDir[0]);
+			smfShaderGLSL->SetUniform3fv(14, &mapInfo->light.groundAmbientColor[0]);
+			smfShaderGLSL->SetUniform3fv(15, &mapInfo->light.groundSunColor[0]);
+			smfShaderGLSL->SetUniform3fv(16, &mapInfo->light.groundSpecularColor[0]);
 			smfShaderGLSL->SetUniform1f(17, mapInfo->light.groundShadowDensity);
-			smfShaderGLSL->SetUniform3fv(18, const_cast<float*>(&mapInfo->water.minColor[0]));
-			smfShaderGLSL->SetUniform3fv(19, const_cast<float*>(&mapInfo->water.baseColor[0]));
-			smfShaderGLSL->SetUniform3fv(20, const_cast<float*>(&mapInfo->water.absorb[0]));
+			smfShaderGLSL->SetUniform3fv(18, &mapInfo->water.minColor[0]);
+			smfShaderGLSL->SetUniform3fv(19, &mapInfo->water.baseColor[0]);
+			smfShaderGLSL->SetUniform3fv(20, &mapInfo->water.absorb[0]);
 			smfShaderGLSL->SetUniform1i(21, 7); // splatDetailTex (idx 21, texunit 7)
 			smfShaderGLSL->SetUniform1i(22, 8); // splatDistrTex (idx 22, texunit 8)
-			smfShaderGLSL->SetUniform4fv(23, const_cast<float*>(&mapInfo->splats.texScales[0]));
-			smfShaderGLSL->SetUniform4fv(24, const_cast<float*>(&mapInfo->splats.texMults[0]));
+			smfShaderGLSL->SetUniform4fv(23, &mapInfo->splats.texScales[0]);
+			smfShaderGLSL->SetUniform4fv(24, &mapInfo->splats.texMults[0]);
 			smfShaderGLSL->SetUniform1i(25,  9); // skyReflectTex (idx 25, texunit 9)
 			smfShaderGLSL->SetUniform1i(26, 10); // skyReflectModTex (idx 26, texunit 10)
 
@@ -1342,7 +1342,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
-			smfShaderGLSL->SetUniform4fv(13, const_cast<float*>(&(shadowHandler->GetShadowParams().x)));
+			smfShaderGLSL->SetUniform4fv(13, &(shadowHandler->GetShadowParams().x));
 
 			glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
 			glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());

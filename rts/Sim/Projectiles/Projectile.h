@@ -29,12 +29,6 @@ class CProjectile: public CExpGenSpawnable
 	CProjectile();
 
 public:
-	static bool inArray;
-	static CVertexArray* va;
-	static int DrawArray();
-
-	virtual void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
@@ -42,6 +36,18 @@ public:
 	virtual ~CProjectile();
 	virtual void Update();
 	virtual void Init(const float3& pos, CUnit* owner);
+
+	virtual void Draw();
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	virtual void DrawCallback() {}
+
+	CUnit* owner() const { return uh->units[ownerId]; }
+	int GetProjectileType() const { return projectileType; }
+
+
+	static bool inArray;
+	static CVertexArray* va;
+	static int DrawArray();
 
 	bool synced; ///< is this projectile part of the simulation?
 	bool weapon; ///< is this a weapon projectile? (true implies synced true)
@@ -58,14 +64,9 @@ public:
 	unsigned lastProjUpdate;
 #endif
 
-	CUnit* owner() const { return uh->units[ownerId]; }
-	int GetProjectileType() const { return projectileType; }
-
 	float3 dir;
 	float3 speed;
 	float mygravity;
-
-	virtual void DrawCallback() {}
 
 	float tempdist; ///< temp distance used for sorting when rendering
 	
