@@ -914,11 +914,11 @@ bool CGame::ActionPressed(const Action& action,
 		gd->ToggleRadarAndJammer();
 	}
 	else if (cmd == "showmetalmap") {
-		gd->SetMetalTexture(readmap->metalMap->metalMap,&readmap->metalMap->extractionMap.front(),readmap->metalMap->metalPal,false);
+		gd->SetMetalTexture(readmap->metalMap);
 	}
 
-	else if (cmd == "showpathsquares") {
-		gd->TogglePathSquaresTexture();
+	else if (cmd == "showpathtraversability") {
+		gd->TogglePathTraversabilityTexture();
 	}
 	else if (cmd == "showpathheat") {
 		if (gs->cheatEnabled) {

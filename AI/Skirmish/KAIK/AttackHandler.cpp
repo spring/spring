@@ -13,7 +13,7 @@
 //#define SAFE_SPOT_DISTANCE_SLACK 700
 #define KMEANS_ENEMY_MAX_K 32
 #define KMEANS_BASE_MAX_K 32
-#define KMEANS_MINIMUM_LINE_LENGTH (8 * THREATRES)
+#define KMEANS_MINIMUM_LINE_LENGTH (THREATRES * SQUARE_SIZE)
 
 
 
@@ -46,8 +46,8 @@ CR_REG_METADATA(CAttackHandler, (
 CAttackHandler::CAttackHandler(AIClasses* aic): ai(aic) {
 	if (ai) {
 		// setting a position to the middle of the map
-		float mapWidth = ai->cb->GetMapWidth() * 8.0f;
-		float mapHeight = ai->cb->GetMapHeight() * 8.0f;
+		float mapWidth = ai->cb->GetMapWidth() * SQUARE_SIZE;
+		float mapHeight = ai->cb->GetMapHeight() * SQUARE_SIZE;
 		newGroupID = GROUND_GROUP_ID_START;
 
 		this->kMeansK = 1;
@@ -240,8 +240,6 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		float3 pos = kMeansBase[startIndex] + float3((RANDINT % SAFE_SPOT_DISTANCE), 0, (RANDINT % SAFE_SPOT_DISTANCE));
 		pos.y = ai->cb->GetElevation(pos.x, pos.z);
 
-		// SNPRINTF(logMsg, logMsg_maxSize, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
-		// PRINTF("%s", logMsg);
 		return pos;
 	}
 
@@ -276,7 +274,7 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		//	if (size > (int)kMeansBase.size())
 		//		size = kMeansBase.size();
 
-		float dist = ai->pather->MakePath(posPath, subset[whichPath], subset[whichPath + 1], THREATRES * 8);
+		float dist = ai->pather->MakePath(posPath, subset[whichPath], subset[whichPath + 1], THREATRES * SQUARE_SIZE);
 		float3 res;
 
 		if (dist > 0) {
@@ -288,24 +286,10 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 			res = subset[whichPath];
 		}
 
-		/*
-		SNPRINTF(logMsg, logMsg_maxSize,
-				"AH::FSA-2 path:minS: %3.2f, maxS: %3.2f, pos:x: %f5.1 y: %f5.1 z: %f5.1",
-				minSafety, maxSafety, res.x, res.y, res.z);
-		PRINTF("%s", logMsg);
-		*/
 		return res;
-	}
-	else {
+	} else {
 		assert(whichPath < (int) subset.size());
-		float3 res = subset[whichPath];
-		/*
-		SNPRINTF(logMsg, logMsg_maxSize,
-				"AH::FSA-3 minS: %f, maxS: %f, pos:x: %f y: %f z: %f",
-				minSafety, maxSafety, res.x, res.y, res.z);
-		PRINTF("%s", logMsg);
-		*/
-		return res;
+		return (subset[whichPath]);
 	}
 }
 
@@ -461,7 +445,7 @@ void CAttackHandler::UpdateKMeans(void) {
 				friendlyPositions.push_back(unit->pos());
 			} else {
 				// when everything is dead
-				friendlyPositions.push_back(float3(RANDINT % (ai->cb->GetMapWidth() * 8), 1000, RANDINT % (ai->cb->GetMapHeight() * 8)));
+				friendlyPositions.push_back(float3(RANDINT % (ai->cb->GetMapWidth() * SQUARE_SIZE), 1000, RANDINT % (ai->cb->GetMapHeight() * SQUARE_SIZE)));
 			}
 		}
 
@@ -493,7 +477,7 @@ void CAttackHandler::UpdateKMeans(void) {
 		}
 		else {
 			// when everything is dead
-			enemyPositions.push_back(float3(RANDINT % (ai->cb->GetMapWidth() * 8), 1000, RANDINT % (ai->cb->GetMapHeight() * 8)));
+			enemyPositions.push_back(float3(RANDINT % (ai->cb->GetMapWidth() * SQUARE_SIZE), 1000, RANDINT % (ai->cb->GetMapHeight() * SQUARE_SIZE)));
 		}
 	}
 
@@ -506,7 +490,7 @@ void CAttackHandler::UpdateKMeans(void) {
 	// base k-means and enemy base k-means are updated
 	// approach: add up (max - distance) to enemies
 	std::vector<float> proximity(kMeansK, 0.0000001f);
-	const float mapDiagonal = sqrt(pow((float) ai->cb->GetMapHeight() * 8,2) + pow((float) ai->cb->GetMapWidth() * 8, 2) + 1.0f);
+	const float mapDiagonal = sqrt(pow((float) ai->cb->GetMapHeight() * SQUARE_SIZE, 2) + pow((float) ai->cb->GetMapWidth() * SQUARE_SIZE, 2) + 1.0f);
 
 	for (int f = 0; f < kMeansK; f++) {
 		for (int e = 0; e < kMeansEnemyK; e++) {
@@ -845,14 +829,16 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 			ai->tm->GetThreatMapHeight()
 		);
 
+
 		// pick an enemy position and path to it
 		// KLOOTNOTE: should be more like KAI 0.23 by passing group DPS to FindBestPath()
-		ai->pather->FindBestPath(pathToTarget, groupPos, THREATRES * 8, enemyPositions);
+		ai->pather->FindBestPath(pathToTarget, groupPos, THREATRES * SQUARE_SIZE, enemyPositions);
+
+
 
 		if (pathToTarget.size() > 2) {
 			const int ATTACKED_AREA_RADIUS = 800;
-			int lastIndex = pathToTarget.size() - 1;
-			float3 endPos = pathToTarget[lastIndex];
+			const float3 endPos = pathToTarget[pathToTarget.size() - 1];
 
 			// get all enemies surrounding endpoint of found path
 			int enemiesInArea = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], endPos, ATTACKED_AREA_RADIUS);
