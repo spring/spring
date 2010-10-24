@@ -1271,7 +1271,7 @@ void CGroundMoveType::GetNextWaypoint()
 		// note that we take the DIAMETER of the circle
 		// to prevent sine-like "snaking" trajectories
 		const float turnFrames = 65536 / turnRate;
-		const float turnRadius = (currentSpeed * turnFrames) / (PI + PI);
+		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
 
 		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
 			return;
@@ -2048,7 +2048,9 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		// note: currentSpeed can be out of sync with
 		// owner->speed.Length(), eg. when in front of
-		// an obstacle
+		// an obstacle ==> bad for MANY reasons, such
+		// as too-quick consumption of waypoints when
+		// a new path is requested
 		currentSpeed += deltaSpeed;
 		owner->pos += (flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f));
 
