@@ -57,7 +57,7 @@ void DefaultPathDrawer::Draw() const {
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathSquares: {
+		case CBaseGroundDrawer::drawPathTraversability: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {
@@ -66,7 +66,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			if (guihandler->inCommand >= guihandler->commands.size()) {
 				useCurrentBuildOrder = false;
 			}
-			if (guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
+			if (useCurrentBuildOrder && guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
 				useCurrentBuildOrder = false;
 			}
 
@@ -115,9 +115,11 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				{
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
 
+					const CUnitSet& selUnits = selectedUnits.selectedUnits;
+
 					// use the first selected unit, if it has the ability to move
-					if (!selectedUnits.selectedUnits.empty()) {
-						md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+					if (!selUnits.empty()) {
+						md = (*selUnits.begin())->unitDef->movedata;
 					}
 				}
 
