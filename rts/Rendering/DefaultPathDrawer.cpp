@@ -65,7 +65,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			if (guihandler->inCommand >= guihandler->commands.size()) {
 				useCurrentBuildOrder = false;
 			}
-			if (guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
+			if (useCurrentBuildOrder && guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
 				useCurrentBuildOrder = false;
 			}
 
