@@ -903,17 +903,16 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 void CGuiHandler::SetShowingMetal(bool show)
 {
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+
 	if (!show) {
 		if (showingMetal) {
 			gd->DisableExtraTexture();
 			showingMetal = false;
 		}
-	}
-	else {
+	} else {
 		if (autoShowMetal) {
 			if (gd->drawMode != CBaseGroundDrawer::drawMetal) {
-				CMetalMap* mm = readmap->metalMap;
-				gd->SetMetalTexture(mm->metalMap, &mm->extractionMap.front(), mm->metalPal, false);
+				gd->SetMetalTexture(readmap->metalMap);
 				showingMetal = true;
 			}
 		}
