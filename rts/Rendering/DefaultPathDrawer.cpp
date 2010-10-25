@@ -172,16 +172,17 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 		case CBaseGroundDrawer::drawPathFlow: {
 			const PathFlowMap* pfm = pm->pathFlowMap;
+			const float maxFlow = pfm->GetMaxFlow();
 
-			if (pfm->GetMaxFlow() > 0.0f) {
+			if (maxFlow > 0.0f) {
 				for (int ty = starty; ty < endy; ++ty) {
 					for (int tx = 0; tx < gs->hmapx; ++tx) {
 						const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
 						const float3& flow = pfm->GetFlowVec(tx << 1, ty << 1);
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (flow.x * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (flow.y / pfm->GetMaxFlow()) * 255;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (flow.z * 255);
+						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (((flow.x + 1.0f) * 0.5f) * 255);
+						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (((flow.z + 1.0f) * 0.5f) * 255);
+						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (( flow.y /      maxFlow) * 255);
 						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
 					}
 				}
