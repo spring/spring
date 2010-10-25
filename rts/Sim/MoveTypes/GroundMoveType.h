@@ -48,6 +48,7 @@ public:
 	short int deltaHeading;
 
 	float3 flatFrontDir;
+	float3 waypointDir;
 
 	unsigned int pathId;
 	float goalRadius;
