@@ -299,6 +299,10 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		return;
 	}
 
+	if (unit->unitDef->canfly) {
+		return;
+	}
+
 	// HACK: when a factory has a rallypoint set far enough away
 	// to trigger the non-admissable path estimators, we want to
 	// avoid units getting stuck inside by issuing them an extra
@@ -329,17 +333,6 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		c.params.push_back(tmpPos.y);
 		c.params.push_back(tmpPos.z);
 	unit->commandAI->GiveCommand(c);
-
-	/*
-	const float3 tmpWaypoint = curBuild->pos + frontdir * (this->radius * 2.5f);
-
-	Command c;
-		c.id = CMD_MOVE;
-		c.params.push_back(tmpWaypoint.x);
-		c.params.push_back(tmpWaypoint.y);
-		c.params.push_back(tmpWaypoint.z);
-	unit->commandAI->GiveCommand(c);
-	*/
 
 	for (CCommandQueue::const_iterator ci = newUnitCmds.begin(); ci != newUnitCmds.end(); ++ci) {
 		c = *ci;
