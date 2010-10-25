@@ -8,6 +8,7 @@
 #include "Rendering/GL/PBO.h"
 #include "float3.h"
 
+class CMetalMap;
 class CHeightLinePalette;
 
 class CBaseGroundDrawer
@@ -45,7 +46,7 @@ public:
 		drawLos,
 		drawMetal,
 		drawHeight,
-		drawPathSquares,
+		drawPathTraversability,
 		drawPathHeat,
 		drawPathCost,
 	};
@@ -54,19 +55,19 @@ protected:
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
 
 public:
-	void DrawTrees(bool drawReflection=false) const;
+	void DrawTrees(bool drawReflection = false) const;
 
 	// Everything that deals with drawing extra textures on top
 	void DisableExtraTexture();
 	void SetHeightTexture();
-	void SetMetalTexture(unsigned char* tex,float* extractMap,unsigned char* pal,bool highRes);
-	void TogglePathSquaresTexture();
+	void SetMetalTexture(const CMetalMap*);
+	void TogglePathTraversabilityTexture();
 	void TogglePathHeatTexture();
 	void TogglePathCostTexture();
 	void ToggleLosTexture();
 	void ToggleRadarAndJammer();
 	bool UpdateExtraTexture();
-	bool DrawExtraTex() const { return drawMode!=drawNormal; };
+	bool DrawExtraTex() const { return drawMode != drawNormal; }
 
 	bool wireframe;
 
@@ -88,7 +89,7 @@ public:
 
 	const unsigned char* extraTex;
 	const unsigned char* extraTexPal;
-	float* extractDepthMap;
+	const float* extractDepthMap;
 
 	float infoTexAlpha;
 

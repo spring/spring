@@ -938,6 +938,8 @@ void UnitDef::CreateYardMap(std::string yardmapStr)
 			yardmaps[3][          mh * (x + 1) - (y + 1)     ] = orgMapChar;
 		}
 	}
+
+	delete[] originalMap;
 }
 
 

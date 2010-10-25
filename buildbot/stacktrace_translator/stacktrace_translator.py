@@ -37,7 +37,7 @@ RE_SUFFIX = '\r?$'
 # Match stackframe lines, captures the module name and the address.
 # Example: '[      0] (0) C:\Program Files\Spring\spring.exe [0x0080F268]'
 #          -> ('C:\\Program Files\\Spring\\spring.exe', '0x0080F268')
-RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*[^\s])\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX, re.MULTILINE)
+RE_STACKFRAME = re.compile(RE_PREFIX + r'\(\d+\)\s+(.*(?:\.exe|\.dll))(?:\([^)]*\))?\s+\[(0x[\dA-Fa-f]+)\]' + RE_SUFFIX, re.MULTILINE)
 
 # Match complete version string, capture `Additional' version string.
 RE_VERSION = r'Spring [^\(]+ \(([^\)]+)\)[\w\(\) ]*'
@@ -62,7 +62,7 @@ RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
 RE_OLD_VERSION_DETAILS = RE_VERSION_DETAILS
 
 # Match filename of file with debugging symbols, capture module name.
-RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>\w+)_dbg.7z')
+RE_DEBUG_FILENAME = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'_(?P<module>[-\w]+)_dbg.7z')
 
 # Set up application log.
 log = logging.getLogger('stacktrace_translator')
@@ -81,25 +81,6 @@ def fatal(message):
 	raise FatalError(message)   # for client
 
 
-def common_suffix_length(a, b):
-	'''\
-	Compute the length of the common suffix of a and b, considering / and \ equal.
-
-		>>> common_suffix_length('/foo/bar/baz', '\\\\other\\\\bar\\\\baz')
-		8
-		>>> common_suffix_length('bar', 'foo/bar')
-		3
-		>>> common_suffix_length('bar', 'bar')
-		3
-	'''
-	a = a.replace('\\', '/')
-	b = b.replace('\\', '/')
-	min_length = min(len(a), len(b))
-	for i in range(-1, -min_length - 1, -1):
-		if a[i] != b[i]: return -i - 1
-	return min_length
-
-
 def best_matching_module(needle, haystack):
 	'''\
 	Choose the best matching module, based on longest common suffix.
@@ -109,20 +90,26 @@ def best_matching_module(needle, haystack):
 		>>> modules = ['spring.exe', 'AI/Skirmish/NullAI/SkirmishAI.dll']
 		>>> best_matching_module('c:/Program Files/Spring/spring.exe', modules)
 		'spring.exe'
-
-	Unfortunately if the correct module isn't available the closest match can be wrong:
-
-		>>> best_matching_module('c:/Program Files/Spring/AI/Skirmish/UnknownAI/SkirmishAI.dll', modules)
+		>>> best_matching_module('c:/Spring/NullAI/0.0.1/SkirmishAI.dll', modules)
 		'AI/Skirmish/NullAI/SkirmishAI.dll'
+
+	If the correct module isn't available nothing is returned:
+
+		>>> best_matching_module('c:/Program Files/Spring/AI/Skirmish/UnknownAI/0.0.1/SkirmishAI.dll', modules)
 	'''
-	longest_csl = 0
-	best_match = None
+	parts = needle.replace('\\', '/').split('/')
+	if parts[-1] == 'SkirmishAI.dll':
+		needle = '%s/SkirmishAI.dll' % parts[-3]
+	else:
+		needle = parts[-1]
+
+	log.debug('best_matching_module: looking for %s', needle)
 	for module in haystack:
-		csl = common_suffix_length(needle, module)
-		if csl > longest_csl:
-			longest_csl = csl
-			best_match = module
-	return best_match
+		if module.endswith(needle):
+			log.debug('best_matching_module: found %s', module)
+			return module
+	log.debug('best_matching_module: module not found')
+	return None
 
 
 def detect_version_helper(infolog, re_version_lines, re_version_details):
@@ -267,7 +254,12 @@ def translate_module_addresses(module, debugfile, addresses):
 		log.info('\t\t[OK]')
 
 		log.info('\tTranslating addresses for module %s...' % module)
-		addr2line = Popen([ADDR2LINE, '-j', '.text', '-e', tempfile.name], stdin = PIPE, stdout = PIPE, stderr = PIPE)
+		if module.endswith('.dll'):
+			cmd = [ADDR2LINE, '-j', '.text', '-e', tempfile.name]
+		else:
+			cmd = [ADDR2LINE, '-e', tempfile.name]
+		log.debug('\tCommand line: ' + ' '.join(cmd))
+		addr2line = Popen(cmd, stdin = PIPE, stdout = PIPE, stderr = PIPE)
 		if addr2line.poll() == None:
 			stdout, stderr = addr2line.communicate('\n'.join(addresses))
 		else:
@@ -305,6 +297,7 @@ def translate_(module_frames, frame_count, modules):
 			for index, translated_frame in zip(indices, translated_frames):
 				translated_stacktrace[index] = translated_frame
 		else:
+			log.debug('unknown module: %s', module)
 			for i in range(len(indices)):
 				translated_stacktrace[indices[i]] = (module, addrs[i], '??', 0)   # unknown
 
@@ -340,7 +333,7 @@ def translate_stacktrace(infolog):
 
 	Example of a local call:
 
-		>>> translate_stacktrace(file('infolog.txt').read())
+		>>> translate_stacktrace(file('infolog.txt').read())   #doctest:+SKIP
 		[('C:\\Program Files\\Spring\\spring.exe', '0x0080F6F8', 'rts/Rendering/Env/GrassDrawer.cpp', 229),
 		 ('C:\\Program Files\\Spring\\spring.exe', '0x008125DF', 'rts/Rendering/Env/GrassDrawer.cpp', 136),
 		 ('C:\\Program Files\\Spring\\spring.exe', '0x00837E8C', 'rts/Rendering/Env/AdvTreeDrawer.cpp', 54),
@@ -382,6 +375,15 @@ def translate_stacktrace(infolog):
 			buildserv = True
 
 		module_frames, frame_count = collect_stackframes(infolog)
+
+		# Hack to be able to translate symbols from Spring 0.82.6 and 0.82.6.1
+		# These symbols have had 0x400000 subtracted from them (within spring)
+		# module_frames = {'spring.exe': [(0, '0x1234'), (1, '0x2345')]
+		if rev == '0.82.6' or rev == '0.82.6.0' or rev == '0.82.6.1':
+			log.debug('Applying workaround for Spring 0.82.6 and 0.82.6.1')
+			for module, frames in module_frames.iteritems():
+				if re.search(r'spring(-.*)?.exe', module, re.IGNORECASE):
+					module_frames[module] = [(i, hex(int(addr, 16) + 0x400000)) for i, addr in frames]
 
 		modules = collect_modules(config, branch, rev, buildserv)
 
@@ -429,7 +431,7 @@ if __name__ == '__main__':
 	if len(sys.argv) > 1 and sys.argv[1] == '--test':
 		import doctest
 		logging.basicConfig(format='%(message)s')
-		log.setLevel(logging.INFO)
+		log.setLevel(logging.DEBUG)
 		doctest.testmod(optionflags = doctest.NORMALIZE_WHITESPACE + doctest.ELLIPSIS)
 	else:
 		run_xmlrpc_server()

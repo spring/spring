@@ -297,6 +297,8 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 					${myDependLibFiles}
 					${mySourcesDep}
 				COMMAND "${CMAKE_COMMAND}"
+					"-E" "remove_directory" "${myJavaBuildDir}"
+				COMMAND "${CMAKE_COMMAND}"
 					"-E" "make_directory" "${myJavaBuildDir}"
 				COMMAND "${JAVA_COMPILE}"
 					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
@@ -505,6 +507,57 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myGeneratedSourceDirStubFile "${CMAKE_CURRENT_BINARY_DIR}/myGeneratedSourceDir.stub")
 	set_source_files_properties(${myGeneratedSourceDirStubFile} PROPERTIES GENERATED TRUE)
 
+
+	# source file lists (static and generated)
+
+	set(myNativeSources
+		"${myNativeSourceDir}/InterfaceExport.c"
+		"${myNativeSourceDir}/JavaBridge.c"
+		"${myNativeSourceDir}/JniUtil.c"
+		"${myNativeSourceDir}/JvmLocater_common.c"
+		"${myNativeSourceDir}/JvmLocater_solaris.c"
+		"${myNativeSourceDir}/JvmLocater_windows.c"
+		)
+	set(myNativeGeneratedSources
+		"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.c"
+		"${myNativeGeneratedSourceDir}/CallbackJNIBridge.c"
+		"${myNativeGeneratedSourceDir}/EventsJNIBridge.c"
+		)
+	set(myNativeGeneratedHeaders
+		"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
+		"${myNativeGeneratedSourceDir}/CallbackJNIBridge.h"
+		"${myNativeGeneratedSourceDir}/EventsJNIBridge.h"
+		)
+
+	set(myJavaSources
+		"${myJavaSourceDir}/${myPkg}/Util.java"
+		)
+	set(myJavaGeneratedSources
+		"${myJavaGeneratedSourceDir}/${myPkg}/AI.java"
+		"${myJavaGeneratedSourceDir}/${myPkg}/AbstractAI.java"
+		"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
+		"${myJavaGeneratedSourceDir}/${myPkg}/JniAICallback.java"
+		)
+
+	set(myGeneratedSources
+		${myNativeGeneratedSources}
+		${myNativeGeneratedHeaders}
+		${myJavaGeneratedSources}
+		)
+	set_source_files_properties(${myGeneratedSources} PROPERTIES GENERATED TRUE)
+
+
+	# remove all files in the generates sources dir,
+	# that are not generated sources (of this build)
+	file(GLOB_RECURSE allGeneratedSrcFiles "${myGeneratedSourceDir}/*")
+	foreach    (genFile ${allGeneratedSrcFiles})
+		list(FIND myGeneratedSources "${genFile}" isInList)
+		if    (${isInList} EQUAL -1)
+			file(REMOVE "${genFile}")
+		endif ()
+	endforeach (genFile)
+
+
 	add_custom_command(
 		OUTPUT
 			${myGeneratedSourceDirStubFile}
@@ -605,38 +658,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"  ${myTarget}: Generating JNI events wrapper sources ..." VERBATIM
 		)
 
-	set(myNativeSources
-		"${myNativeSourceDir}/InterfaceExport.c"
-		"${myNativeSourceDir}/JavaBridge.c"
-		"${myNativeSourceDir}/JniUtil.c"
-		"${myNativeSourceDir}/JvmLocater_common.c"
-		"${myNativeSourceDir}/JvmLocater_solaris.c"
-		"${myNativeSourceDir}/JvmLocater_windows.c"
-		)
-	set(myNativeGeneratedSources
-		"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.c"
-		"${myNativeGeneratedSourceDir}/CallbackJNIBridge.c"
-		"${myNativeGeneratedSourceDir}/EventsJNIBridge.c"
-		)
-	set_source_files_properties(${myNativeGeneratedSources} PROPERTIES GENERATED TRUE)
-	set(myNativeGeneratedHeaders
-		"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
-		"${myNativeGeneratedSourceDir}/CallbackJNIBridge.h"
-		"${myNativeGeneratedSourceDir}/EventsJNIBridge.h"
-		)
-	set_source_files_properties(${myNativeGeneratedHeaders} PROPERTIES GENERATED TRUE)
-
-	set(myJavaSources
-		"${myJavaSourceDir}/${myPkg}/Util.java"
-		)
-	set(myJavaGeneratedSources
-		"${myJavaGeneratedSourceDir}/${myPkg}/AI.java"
-		"${myJavaGeneratedSourceDir}/${myPkg}/AbstractAI.java"
-		"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
-		"${myJavaGeneratedSourceDir}/${myPkg}/JniAICallback.java"
-		)
-	set_source_files_properties(${myJavaGeneratedSources} PROPERTIES GENERATED TRUE)
-
 	# Locate the manifest file
 	FindManifestFile("${myDir}" myManifestFile)
 	if    (myManifestFile)
@@ -658,6 +679,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	target_link_libraries(${myTarget} streflop)
 	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
+	FixLibName(${myTarget})
 
 
 	# Build the java part
@@ -674,6 +696,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaBuildDir}/${myPkg}/*.class"
+		COMMAND "${CMAKE_COMMAND}"
+			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "make_directory" "${myJavaBuildDir}"
 		COMMAND "${JAVA_COMPILE}" ARGS

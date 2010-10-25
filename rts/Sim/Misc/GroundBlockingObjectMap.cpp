@@ -166,7 +166,7 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool 
 	CSolidObject* q = it->second;
 	it++;
 
-	for (; it != cell.end(); it++) {
+	for (; it != cell.end(); ++it) {
 		CSolidObject* obj = it->second;
 		if (obj->pos.y > p->pos.y) { p = obj; }
 		if (obj->pos.y < q->pos.y) { q = obj; }

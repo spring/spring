@@ -28,7 +28,8 @@ public:
 
 public:
 	CVertexArray(unsigned int maxVerts = 1 << 16);
-	~CVertexArray();
+	virtual ~CVertexArray();
+
 	void Initialize();
 	inline void CheckInitSize(const unsigned int vertexes, const unsigned int strips = 0);
 

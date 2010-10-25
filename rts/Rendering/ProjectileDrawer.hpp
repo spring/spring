@@ -37,9 +37,9 @@ public:
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
-	bool DrawProjectileModel(const CProjectile*, bool);
-	void DrawGroundFlashes(void);
-	void DrawShadowPass(void);
+	bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
+	void DrawGroundFlashes();
+	void DrawShadowPass();
 
 	void LoadWeaponTextures();
 	void UpdateTextures();
@@ -53,36 +53,36 @@ public:
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void RenderProjectileCreated(const CProjectile*);
-	void RenderProjectileDestroyed(const CProjectile*);
+	void RenderProjectileCreated(const CProjectile* projectile);
+	void RenderProjectileDestroyed(const CProjectile* projectile);
 
-	CTextureAtlas* textureAtlas;  //texture atlas for projectiles
-	CTextureAtlas* groundFXAtlas; //texture atlas for ground fx
+	CTextureAtlas* textureAtlas;  ///< texture atlas for projectiles
+	CTextureAtlas* groundFXAtlas; ///< texture atlas for ground fx
 
 	// texture-coordinates for projectiles
 	AtlasedTexture* flaretex;
-	AtlasedTexture* dguntex;            // dgun texture
-	AtlasedTexture* flareprojectiletex; // texture used by flares that trick missiles
-	AtlasedTexture* sbtrailtex;         // default first section of starburst missile trail texture
-	AtlasedTexture* missiletrailtex;    // default first section of missile trail texture
-	AtlasedTexture* muzzleflametex;     // default muzzle flame texture
-	AtlasedTexture* repulsetex;         // texture of impact on repulsor
-	AtlasedTexture* sbflaretex;         // default starburst  missile flare texture
-	AtlasedTexture* missileflaretex;    // default missile flare texture
-	AtlasedTexture* beamlaserflaretex;  // default beam laser flare texture
+	AtlasedTexture* dguntex;            ///< dgun texture
+	AtlasedTexture* flareprojectiletex; ///< texture used by flares that trick missiles
+	AtlasedTexture* sbtrailtex;         ///< default first section of starburst missile trail texture
+	AtlasedTexture* missiletrailtex;    ///< default first section of missile trail texture
+	AtlasedTexture* muzzleflametex;     ///< default muzzle flame texture
+	AtlasedTexture* repulsetex;         ///< texture of impact on repulsor
+	AtlasedTexture* sbflaretex;         ///< default starburst  missile flare texture
+	AtlasedTexture* missileflaretex;    ///< default missile flare texture
+	AtlasedTexture* beamlaserflaretex;  ///< default beam laser flare texture
 	AtlasedTexture* explotex;
 	AtlasedTexture* explofadetex;
 	AtlasedTexture* heatcloudtex;
 	AtlasedTexture* circularthingytex;
-	AtlasedTexture* bubbletex;          // torpedo trail texture
-	AtlasedTexture* geosquaretex;       // unknown use
-	AtlasedTexture* gfxtex;             // nanospray texture
-	AtlasedTexture* projectiletex;      // appears to be unused
-	AtlasedTexture* repulsegfxtex;      // used by repulsor
-	AtlasedTexture* sphereparttex;      // sphere explosion texture
-	AtlasedTexture* torpedotex;         // appears in-game as a 1 texel texture
-	AtlasedTexture* wrecktex;           // smoking explosion part texture
-	AtlasedTexture* plasmatex;          // default plasma texture
+	AtlasedTexture* bubbletex;          ///< torpedo trail texture
+	AtlasedTexture* geosquaretex;       ///< unknown use
+	AtlasedTexture* gfxtex;             ///< nanospray texture
+	AtlasedTexture* projectiletex;      ///< appears to be unused
+	AtlasedTexture* repulsegfxtex;      ///< used by repulsor
+	AtlasedTexture* sphereparttex;      ///< sphere explosion texture
+	AtlasedTexture* torpedotex;         ///< appears in-game as a 1 texel texture
+	AtlasedTexture* wrecktex;           ///< smoking explosion part texture
+	AtlasedTexture* plasmatex;          ///< default plasma texture
 	AtlasedTexture* laserendtex;
 	AtlasedTexture* laserfallofftex;
 	AtlasedTexture* randdotstex;
@@ -98,13 +98,13 @@ public:
 	AtlasedTexture* seismictex;
 
 private:
-	void DrawProjectiles(int, int, int*, bool, bool);
-	void DrawProjectilesSet(std::set<CProjectile*>&, bool, bool);
-	void DrawProjectile(CProjectile*, bool, bool);
-	void DrawProjectilesShadow(int);
-	void DrawProjectileShadow(CProjectile*);
-	void DrawProjectilesSetShadow(std::set<CProjectile*>&);
-	void DrawFlyingPieces(int, int, int*);
+	void DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction);
+	void DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
+	void DrawProjectile(CProjectile* projectile, bool drawReflection, bool drawRefraction);
+	void DrawProjectilesShadow(int modelType);
+	void DrawProjectileShadow(CProjectile* projectile);
+	void DrawProjectilesSetShadow(std::set<CProjectile*>& projectiles);
+	void DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces);
 
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex, int size);
@@ -114,17 +114,18 @@ private:
 	FBO perlinFB;
 	bool drawPerlinTex;
 
-	// projectiles without a model
+	/// projectiles without a model
 	std::set<CProjectile*> renderProjectiles;
-	// projectiles with a model
+	/// projectiles with a model
 	std::vector<IWorldObjectModelRenderer*> modelRenderers;
 
-	// z-sorted set of all projectiles; used to
-	// render particle effects in back-to-front
-	// order
+	/**
+	 * z-sorted set of all projectiles; used to
+	 * render particle effects in back-to-front order
+	 */
 	std::set<CProjectile*, distcmp> zSortedProjectiles;
 };
 
 extern CProjectileDrawer* projectileDrawer;
 
-#endif
+#endif // PROJECTILE_DRAWER_HDR

@@ -346,7 +346,7 @@ void CInMapDraw::Draw(void)
 	glEnable(GL_TEXTURE_2D);
 	va->DrawArrayTC(GL_QUADS); //! draw point markers 
 
-	if (visibleLabels.size() > 0) {
+	if (!visibleLabels.empty()) {
 		font->SetColors(); //! default
 
 		//! draw point labels
@@ -460,8 +460,6 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet)
 			throw netcode::UnpackPacketException("Invalid player number");
 		}
 		playerID = uPlayerID;
-
-		const CPlayer* sender = playerHandler->Player(playerID);
 
 		unsigned char drawType;
 		pckt >> drawType;

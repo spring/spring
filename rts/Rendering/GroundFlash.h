@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GROUNDFLASH_H
-#define GROUNDFLASH_H
+#ifndef GROUND_FLASH_H
+#define GROUND_FLASH_H
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
 
@@ -17,13 +17,12 @@ public:
 
 	CGroundFlash(const float3& p);
 	CGroundFlash();
-	virtual ~CGroundFlash(){};
-	virtual void Draw(){};
-	virtual bool Update(){return false;}; // returns false when it should be deleted
-	virtual void Init(const float3& pos, CUnit *owner){};
+	virtual ~CGroundFlash() {}
+	virtual void Draw() {}
+	/// @return false when it should be deleted
+	virtual bool Update() { return false; }
+	virtual void Init(const float3& pos, CUnit* owner) {}
 
-	//bool alwaysVisible;
-	//float3 pos;
 	float size;
 
 	static CVertexArray* va;
@@ -35,12 +34,14 @@ public:
 	CR_DECLARE(CStandardGroundFlash);
 
 	CStandardGroundFlash();
-	CStandardGroundFlash(const float3& pos, float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& color=float3(1.0f,1.0f,0.7f));
+	CStandardGroundFlash(const float3& pos, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& color = float3(1.0f, 1.0f, 0.7f));
 	~CStandardGroundFlash();
 	void Draw();
-	bool Update(); // returns false when it should be deleted
+	/// @return false when it should be deleted
+	bool Update();
 
-	float3 side1,side2;
+	float3 side1;
+	float3 side2;
 
 	float flashSize;
 	float circleSize;
@@ -54,9 +55,12 @@ public:
 	int ttl;
 };
 
-//a simple groundflash only creating one quad with specified texture
-//also this one sets alwaysVisible=true (because it's used by the seismic effect)
-// so don't use it (or fix it) for things that should be affected by LOS.
+/**
+ * A simple groundflash, only creating one quad with specified texture.
+ * This one also sets alwaysVisible=true, because it is used
+ * by the seismic effect, so do not use it (or fix it)
+ * for things that should be affected by LOS.
+ */
 class CSeismicGroundFlash : public CGroundFlash
 {
 public:
@@ -64,9 +68,11 @@ public:
 	~CSeismicGroundFlash();
 	CSeismicGroundFlash(const float3& pos, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col);
 	void Draw();
-	bool Update(); // returns false when it should be deleted
+	/// @return false when it should be deleted
+	bool Update();
 
-	float3 side1,side2;
+	float3 side1;
+	float3 side2;
 
 	AtlasedTexture* texture;
 	float sizeGrowth;
@@ -76,7 +82,10 @@ public:
 	unsigned char color[4];
 };
 
-//simple groundflash using a texture and a colormap, used in the explosiongenerator
+/**
+ * A simple groundflash, using a texture and a colormap,
+ * used in the explosion-generator
+ */
 class CSimpleGroundFlash : public CGroundFlash
 {
 public:
@@ -85,19 +94,20 @@ public:
 	CSimpleGroundFlash();
 	~CSimpleGroundFlash();
 
-	void Init(const float3& explosionPos, CUnit *owner);
+	void Init(const float3& explosionPos, CUnit* owner);
 	void Draw();
-	bool Update(); // returns false when it should be deleted
+	/// @return false when it should be deleted
+	bool Update();
 
-	float3 side1,side2;
+	float3 side1;
+	float3 side2;
 
 	float sizeGrowth;
 	int ttl;
 	float age, agerate;
 
-	CColorMap *colorMap;
-	GroundFXTexture *texture;
-
+	CColorMap* colorMap;
+	GroundFXTexture* texture;
 };
 
-#endif /* GROUNDFLASH_H */
+#endif /* GROUND_FLASH_H */

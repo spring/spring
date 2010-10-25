@@ -14,8 +14,8 @@ static const float FAR_TREE_DIST_FACTOR = 2.0f;
 class CBaseTreeDrawer
 {
 public:
-	CBaseTreeDrawer(void);
-	virtual ~CBaseTreeDrawer(void);
+	CBaseTreeDrawer();
+	virtual ~CBaseTreeDrawer();
 
 	void Draw(bool drawReflection);
 	virtual void Draw(float treeDistance, bool drawReflection) = 0;
@@ -23,20 +23,20 @@ public:
 	virtual void Update() = 0;
 
 	virtual void ResetPos(const float3& pos) = 0;
-	static CBaseTreeDrawer* GetTreeDrawer(void);
+	static CBaseTreeDrawer* GetTreeDrawer();
 
 	virtual void AddTree(int type, float3 pos, float size) = 0;
 	virtual void DeleteTree(float3 pos) = 0;
+
+	virtual int AddFallingTree(float3 pos, float3 dir, int type);
+	virtual void AddGrass(float3 pos) {};
+	virtual void RemoveGrass(int x, int z) {};
+	virtual void DrawShadowPass();
 
 	std::vector<GLuint> delDispLists;
 
 	float baseTreeDistance;
 	bool drawTrees;
-
-	virtual int AddFallingTree(float3 pos, float3 dir, int type);
-	virtual void AddGrass(float3 pos) {};
-	virtual void RemoveGrass(int x, int z) {};
-	virtual void DrawShadowPass(void);
 };
 
 extern CBaseTreeDrawer* treeDrawer;

@@ -9,9 +9,9 @@
 
 #include "Lua/LuaHandle.h"
 
-
 struct UnitDef;
 struct lua_State;
+
 
 class CKeyAutoBinder : public CLuaHandle
 {
@@ -38,14 +38,14 @@ class CKeyAutoBinder : public CLuaHandle
 	private:
 		class UnitDefHolder {
 			public:
+				UnitDefHolder(int udID, const UnitDef* ud) : udID(udID), ud(ud) {}
 				bool operator<(const UnitDefHolder&) const;
-			public:
+
 				int udID;
 				const UnitDef* ud;
 		};
 
 	friend class CKeyAutoBinder::UnitDefHolder;
 };
-
 
 #endif /* KEY_AUTO_BINDER_H */

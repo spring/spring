@@ -229,8 +229,8 @@ void CCobInstance::RockUnit(const float3& rockDir)
 
 
 // ugly hack to get return value of HitByWeaponId script
-static float weaponHitMod; //fraction of weapondamage to use when hit by weapon
-static void hitByWeaponIdCallback(int retCode, void *p1, void *p2) { weaponHitMod = retCode*0.01f; }
+static float weaponHitMod; ///< fraction of weapondamage to use when hit by weapon
+static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) { weaponHitMod = retCode * 0.01f; }
 
 
 void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage)

@@ -10,6 +10,7 @@
 #include "Game/UI/GuiHandler.h"
 #include "Ground.h"
 #include "HeightLinePalette.h"
+#include "MetalMap.h"
 #include "ReadMap.h"
 #include "MapInfo.h"
 #include "Rendering/IPathDrawer.h"
@@ -130,15 +131,17 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 //todo: this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
 {
-	if(drawLineOfSight){
+	if (drawLineOfSight) {
 		SetDrawMode(drawLos);
 	} else {
 		SetDrawMode(drawNormal);
 	}
-	extraTex=0;
-	highResInfoTexWanted=false;
-	updateTextureState=0;
-	while(!UpdateExtraTexture());
+
+	extraTex = 0;
+	highResInfoTexWanted = false;
+	updateTextureState = 0;
+
+	while (!UpdateExtraTexture());
 }
 
 
@@ -147,42 +150,47 @@ void CBaseGroundDrawer::SetHeightTexture()
 	if (drawMode == drawHeight)
 		DisableExtraTexture();
 	else {
-		SetDrawMode (drawHeight);
+		SetDrawMode(drawHeight);
 
 		highResInfoTexWanted = true;
 		extraTex = 0;
 		updateTextureState = 0;
+
 		while (!UpdateExtraTexture());
 	}
 }
 
 
-void CBaseGroundDrawer::SetMetalTexture(unsigned char* tex, float* extractMap, unsigned char* pal, bool highRes)
+
+void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 {
 	if (drawMode == drawMetal)
 		DisableExtraTexture();
 	else {
-		SetDrawMode (drawMetal);
+		SetDrawMode(drawMetal);
 
 		highResInfoTexWanted = false;
-		extraTex = tex;
-		extraTexPal = pal;
-		extractDepthMap = extractMap;
+		extraTex = map->metalMap;
+		extraTexPal = map->metalPal;
+		extractDepthMap = &map->extractionMap[0];
 		updateTextureState = 0;
+
 		while (!UpdateExtraTexture());
 	}
 }
 
 
-void CBaseGroundDrawer::TogglePathSquaresTexture()
+void CBaseGroundDrawer::TogglePathTraversabilityTexture()
 {
-	if (drawMode == drawPathSquares) {
+	if (drawMode == drawPathTraversability) {
 		DisableExtraTexture();
 	} else {
-		SetDrawMode(drawPathSquares);
+		SetDrawMode(drawPathTraversability);
+
 		extraTex = 0;
 		highResInfoTexWanted = false;
 		updateTextureState = 0;
+
 		while (!UpdateExtraTexture());
 	}
 }
@@ -193,9 +201,11 @@ void CBaseGroundDrawer::TogglePathHeatTexture()
 		DisableExtraTexture();
 	} else {
 		SetDrawMode(drawPathHeat);
+
 		extraTex = 0;
 		highResInfoTexWanted = false;
 		updateTextureState = 0;
+
 		while (!UpdateExtraTexture());
 	}
 }
@@ -209,6 +219,7 @@ void CBaseGroundDrawer::TogglePathCostTexture()
 		extraTex = 0;
 		highResInfoTexWanted = false;
 		updateTextureState = 0;
+
 		while (!UpdateExtraTexture());
 	}
 }
@@ -222,10 +233,12 @@ void CBaseGroundDrawer::ToggleLosTexture()
 		DisableExtraTexture();
 	} else {
 		drawLineOfSight = true;
+
 		SetDrawMode(drawLos);
 		extraTex = 0;
 		highResInfoTexWanted = highResLosTex;
 		updateTextureState = 0;
+
 		while (!UpdateExtraTexture());
 	}
 }
@@ -314,7 +327,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		}
 
 		switch (drawMode) {
-			case drawPathSquares:
+			case drawPathTraversability:
 			case drawPathHeat:
 			case drawPathCost: {
 				pathDrawer->UpdateExtraTexture(drawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));

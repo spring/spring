@@ -293,7 +293,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	{
 		if (buf->data[0] == NETMSG_GAMEDATA)
 		{
-			GameData *data = NULL;
+			GameData* data = NULL;
 			try {
 				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			} catch (netcode::UnpackPacketException &e) {

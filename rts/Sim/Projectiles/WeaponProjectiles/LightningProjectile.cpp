@@ -141,6 +141,7 @@ void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 
 void CLightningProjectile::DependentDied(CObject* o)
 {
-	if (o == weapon)
-		weapon = 0;
+	if (o == weapon) {
+		weapon = NULL;
+	}
 }

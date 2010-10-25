@@ -56,7 +56,7 @@ void DefaultPathDrawer::Draw() const {
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathSquares: {
+		case CBaseGroundDrawer::drawPathTraversability: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {
@@ -65,7 +65,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			if (guihandler->inCommand >= guihandler->commands.size()) {
 				useCurrentBuildOrder = false;
 			}
-			if (guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
+			if (useCurrentBuildOrder && guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
 				useCurrentBuildOrder = false;
 			}
 
@@ -114,9 +114,11 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				{
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
 
+					const CUnitSet& selUnits = selectedUnits.selectedUnits;
+
 					// use the first selected unit, if it has the ability to move
-					if (!selectedUnits.selectedUnits.empty()) {
-						md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+					if (!selUnits.empty()) {
+						md = (*selUnits.begin())->unitDef->movedata;
 					}
 				}
 
@@ -229,7 +231,7 @@ void DefaultPathDrawer::Draw(const CPathManager* pm) const {
 	const std::map<unsigned int, CPathManager::MultiPath*>& pathMap = pm->pathMap;
 	std::map<unsigned int, CPathManager::MultiPath*>::const_iterator pi;
 
-	for (pi = pathMap.begin(); pi != pathMap.end(); pi++) {
+	for (pi = pathMap.begin(); pi != pathMap.end(); ++pi) {
 		const CPathManager::MultiPath* path = pi->second;
 
 		glBegin(GL_LINE_STRIP);

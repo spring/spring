@@ -29,6 +29,20 @@ static jmethodID g_m_urlClassLoader_ctor = NULL;
 static jmethodID g_m_urlClassLoader_findClass = NULL;
 
 
+const char* jniUtil_getJniRetValDescription(const jint retVal) {
+
+	switch (retVal) {
+		case JNI_OK:        { return "JNI_OK - success"; break; }
+		case JNI_ERR:       { return "JNI_ERR - unknown error"; break; }
+		case JNI_EDETACHED: { return "JNI_EDETACHED - thread detached from the VM"; break; }
+		case JNI_EVERSION:  { return "JNI_EVERSION - JNI version error"; break; }
+		case JNI_ENOMEM:    { return "JNI_ENOMEM - not enough (contiguous) memory"; break; }
+		case JNI_EEXIST:    { return "JNI_EEXIST - VM already created"; break; }
+		case JNI_EINVAL:    { return "JNI_EINVAL - invalid arguments"; break; }
+		default:            { return "UNKNOWN - unknown/invalid JNI return value"; break; }
+	}
+}
+
 bool jniUtil_checkException(JNIEnv* env, const char* const errorMsg) {
 
 	if ((*env)->ExceptionCheck(env)) {

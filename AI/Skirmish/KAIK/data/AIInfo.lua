@@ -46,7 +46,7 @@ recommended: use only for *A mods
 
 	{
 		key    = 'url',
-		value  = 'http://spring.clan-sy.com/wiki/AI:KAIK',
+		value  = 'http://springrts.com/wiki/AI:KAIK',
 		desc   = 'URL with more detailed info about the AI',
 	},
 	{

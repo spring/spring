@@ -11,11 +11,10 @@ public:
 	static ProtocolDef* instance();
 	
 	void AddType(const unsigned char id, const int MsgLength);
-	bool HasFixedLength(const unsigned char id) const;
-	bool IsAllowed(const unsigned char id) const;
-	
-	int GetLength(unsigned char id) const;
-	unsigned IsComplete(const unsigned char* const buf, const unsigned bufLength) const;
+
+	int PacketLength(const unsigned char* const buf, const unsigned bufLength) const;
+	bool IsValidLength(const int pktLength, const unsigned bufLength) const;
+	bool IsValidPacket(const unsigned char* const buf, const unsigned bufLength) const;
 
 private:
 	ProtocolDef();

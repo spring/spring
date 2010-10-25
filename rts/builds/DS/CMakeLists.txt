@@ -118,6 +118,7 @@ TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 ### Install the executable
 INSTALL(TARGETS springserver     DESTINATION ${LIBDIR})
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
+SET_TARGET_PROPERTIES(engine-dedicated PROPERTIES OUTPUT_NAME "spring-dedicated")
 
 
 # Only build & install spring-dedicated executable & dependencies

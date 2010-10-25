@@ -21,9 +21,9 @@ class CExpGenSpawnable: public CWorldObject
 {
 	CR_DECLARE(CExpGenSpawnable);
 public:
-	CExpGenSpawnable(): CWorldObject(){ GML_EXPGEN_CHECK() };
-	CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() };
-	virtual ~CExpGenSpawnable() {};
+	CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
+	CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() }
+	virtual ~CExpGenSpawnable() {}
 
 	virtual void Init(const float3& pos, CUnit* owner) = 0;
 };
@@ -145,7 +145,8 @@ public:
 
 	static void OutputProjectileClassInfo();
 
-	void Load(CExplosionGeneratorHandler* loader, const std::string& tag);// throws content_error/runtime_error on errors
+	/// @throws content_error/runtime_error on errors
+	void Load(CExplosionGeneratorHandler* loader, const std::string& tag);
 	void Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir);
 };
 

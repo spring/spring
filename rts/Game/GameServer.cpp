@@ -354,11 +354,24 @@ void CGameServer::UpdatePlayerNumberMap() {
 }
 
 
-void CGameServer::AdjustPlayerNumber(const unsigned char msg, unsigned char &player) {
+bool CGameServer::AdjustPlayerNumber(netcode::RawPacket *buf, int pos, int val) {
+	if (buf->length <= pos) {
+		Message(str(format("Warning: Discarding short packet in demo: ID %d, LEN %d") %buf->data[0] %buf->length));
+		return false;
+	}
 	// spectators watching the demo will offset the demo spectators, compensate for this
-	player = playerNumberMap[player];
-	if (player >= players.size() && player < 250) // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
-		Message(str(format("Warning: Invalid player number in demo msg id %d") %(int)msg));
+	if (val < 0) {
+		unsigned char player = playerNumberMap[buf->data[pos]];
+		if (player >= players.size() && player < 250) { // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
+			Message(str(format("Warning: Discarding packet with invalid player number in demo: ID %d, LEN %d") %buf->data[0] %buf->length));
+			return false;
+		}
+		buf->data[pos] = player;
+	}
+	else {
+		buf->data[pos] = val;
+	}
+	return true;
 }
 
 
@@ -366,6 +379,11 @@ void CGameServer::SendDemoData(const bool skipping)
 {
 	netcode::RawPacket* buf = 0;
 	while ((buf = demoReader->GetData(modGameTime))) {
+		boost::shared_ptr<const RawPacket> rpkt(buf);
+		if (buf->length <= 0) {
+			Message(str(format("Warning: Discarding zero size packet in demo")));
+			continue;
+		}
 		unsigned msgCode = buf->data[0];
 		switch (msgCode) {
 			case NETMSG_NEWFRAME:
@@ -378,7 +396,7 @@ void CGameServer::SendDemoData(const bool skipping)
 					outstandingSyncFrames.push_back(serverframenum);
 				CheckSync();
 #endif
-				Broadcast(boost::shared_ptr<const RawPacket>(buf));
+				Broadcast(rpkt);
 				break;
 			}
 			case NETMSG_AI_STATE_CHANGED: /* many of these messages are not likely to be sent by a spec, but there are cheats */
@@ -398,21 +416,23 @@ void CGameServer::SendDemoData(const bool skipping)
 			case NETMSG_TEAM:
 			case NETMSG_UNREGISTER_NETMSG: {
 				// TODO: more messages may need adjusted player numbers, or maybe there is a better solution
-				AdjustPlayerNumber(msgCode, buf->data[1]);
-				Broadcast(boost::shared_ptr<const RawPacket>(buf));
+				if (!AdjustPlayerNumber(buf, 1))
+					continue;
+				Broadcast(rpkt);
 				break;
 			}
 			case NETMSG_AI_CREATED:
 			case NETMSG_MAPDRAW:
 			case NETMSG_PLAYERNAME: {
-				AdjustPlayerNumber(msgCode, buf->data[2]);
-				Broadcast(boost::shared_ptr<const RawPacket>(buf));
+				if (!AdjustPlayerNumber(buf, 2))
+					continue;
+				Broadcast(rpkt);
 				break;
 			}
 			case NETMSG_CHAT: {
-				AdjustPlayerNumber(msgCode, buf->data[2]);
-				AdjustPlayerNumber(msgCode, buf->data[3]);
-				Broadcast(boost::shared_ptr<const RawPacket>(buf));
+				if (!AdjustPlayerNumber(buf, 2) || !AdjustPlayerNumber(buf, 3))
+					continue;
+				Broadcast(rpkt);
 				break;
 			}
 			case NETMSG_AICOMMAND:
@@ -421,14 +441,16 @@ void CGameServer::SendDemoData(const bool skipping)
 			case NETMSG_LUAMSG:
 			case NETMSG_SELECT:
 			case NETMSG_SYSTEMMSG: {
-				AdjustPlayerNumber(msgCode, buf->data[3]);
-				Broadcast(boost::shared_ptr<const RawPacket>(buf));
+				if (!AdjustPlayerNumber(buf ,3))
+					continue;
+				Broadcast(rpkt);
 				break;
 			}
 			case NETMSG_CREATE_NEWPLAYER: {
-				buf->data[3] = players.size();
+				if (!AdjustPlayerNumber(buf, 3, players.size()))
+					continue;
 				try {
-					netcode::UnpackPacket pckt(boost::shared_ptr<const RawPacket>(buf), 3);
+					netcode::UnpackPacket pckt(rpkt, 3);
 					unsigned char spectator, team, playerNum;
 					std::string name;
 					pckt >> playerNum;
@@ -437,10 +459,11 @@ void CGameServer::SendDemoData(const bool skipping)
 					pckt >> name;
 					AddAdditionalUser(name, "", true); // even though this is a demo, keep the players vector properly updated
 				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Warning: Invalid new player in demo msg: %s", e.err.c_str());
+					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %e.err));
+					continue;
 				}
 
-				Broadcast(boost::shared_ptr<const RawPacket>(buf));
+				Broadcast(rpkt);
 				break;
 			}
 			case NETMSG_GAMEDATA:
@@ -451,7 +474,7 @@ void CGameServer::SendDemoData(const bool skipping)
 				break;
 			}
 			default: {
-				Broadcast(boost::shared_ptr<const RawPacket>(buf));
+				Broadcast(rpkt);
 				break;
 			}
 		}
@@ -679,7 +702,7 @@ void CGameServer::Update()
 
 			medianCpu = 0.0f;
 			medianPing = 0;
-			if (curSpeedCtrl > 0 && cpu.size() > 0) {
+			if (curSpeedCtrl > 0 && !cpu.empty()) {
 				std::sort(cpu.begin(), cpu.end());
 				std::sort(ping.begin(), ping.end());
 
@@ -1559,7 +1582,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find(msgCode);
 	if (toRelay != relayingMessagesMap.end()) {
 		PlayersToForwardMsgvec& toRelaySet = toRelay->second;
-		for (PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); playerToRelay++) {
+		for (PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); ++playerToRelay) {
 			if (*playerToRelay < playersSize)
 				players[*playerToRelay].SendData(packet);
 		}

@@ -11,11 +11,11 @@
 // gives it (STUCK_COUNTER_LIMIT - STUCK_COUNTER_MANEUVER_LIMIT) * 60 seconds to move (longer than UNIT_STUCK_MOVE_DISTANCE (7 sec))
 #define UNIT_STUCK_COUNTER_LIMIT 15
 // stuck maneuver distance should be the movement map res since threat is not really relevant when maneuvering from a stuck pos
-#define UNIT_STUCK_MANEUVER_DISTANCE (THREATRES * 8)
+#define UNIT_STUCK_MANEUVER_DISTANCE (THREATRES * SQUARE_SIZE)
 // the max amount of difference in height there may be at the position to maneuver to (don't retreat into a hole)
 #define UNIT_MAX_MANEUVER_HEIGHT_DIFFERENCE_UP 20
 // minimum of offset between my maxrange and the enemys position before considering moving
-#define UNIT_MIN_MANEUVER_RANGE_DELTA (THREATRES * 8)
+#define UNIT_MIN_MANEUVER_RANGE_DELTA (THREATRES * SQUARE_SIZE)
 // minimum amount to maneuver when getting to max range
 #define UNIT_MIN_MANEUVER_DISTANCE (THREATRES * 4)
 // second requirement, minimum percentage of my range to move when getting to max range (too stop slow long range from dancing around)
@@ -24,7 +24,7 @@
 #define UNIT_MIN_MANEUVER_TIME 15
 
 #define UNIT_DESTINATION_SLACK (THREATRES * 4.0f * 1.4f)
-#define GROUP_DESTINATION_SLACK THREATRES * 8
+#define GROUP_DESTINATION_SLACK THREATRES * SQUARE_SIZE
 #define GROUP_MEDIAN_UNIT_SELECTION_SLACK 10.0f
 
 
@@ -198,16 +198,6 @@ int CAttackGroup::PopStuckUnit() {
 		CUNIT* unit = ai->GetUnit(*it);
 
 		if (unit->stuckCounter > UNIT_STUCK_COUNTER_LIMIT) {
-			// mark it
-			/*
-			SNPRINTF(logMsg, logMsg_maxSize,
-					"stuck %i: %i, dropping from group: %i. isMoving = %i",
-					id, unit->stuckCounter, groupID, isMoving);
-			PRINTF("%s", logMsg);
-			SNPRINTF(logMsg, logMsg_maxSize, "humanName: %s",
-					unit->def()->humanName.c_str());
-			PRINTF("%s", logMsg);
-			*/
 			unit->stuckCounter = 0;
 			units.erase(it);
 			return unit->uid;
@@ -302,15 +292,6 @@ void CAttackGroup::AssignTarget(std::vector<float3> path, float3 position, float
 
 // attack routine (the "find new enemy" part)
 void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
-	/*
-	static const unsigned int logMsg_maxSize = 512;
-	char logMsg[logMsg_maxSize];
-	SNPRINTF(logMsg, logMsg_maxSize,
-			"AG: FindDefenseTarget(), group %i, frame %i, numUnits %i",
-			this->groupID, frameNr, this->units.size());
-	PRINTF("%s", logMsg);
-	*/
-
 	// KLOOTNOTE: numEnemies will be zero if no enemies in LOS or radar when
 	// non-ccb callback used, rely on AttackHandler to pick "global" targets
 	// and on this function for "local" ones
@@ -357,8 +338,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 			isMoving = true;
 			this->pathIterator = 0;
 		}
-	}
-	else {
+	} else {
 		// attempt to path back to base if there are no targets
 		// KLOOTNOTE: this branch is now purposely never taken
 		// (might not be the best idea to leave units lingering
@@ -367,10 +347,11 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 
         pathToTarget.clear();
 		float3 closestBaseSpot = ai->ah->GetClosestBaseSpot(groupPosition);
-		float costToTarget = ai->pather->FindBestPathToRadius(pathToTarget, groupPosition, THREATRES * 8, closestBaseSpot);
+
+		const float costToTarget = ai->pather->FindBestPathToRadius(pathToTarget, groupPosition, THREATRES * SQUARE_SIZE, closestBaseSpot);
 
 		// TODO: GetKBaseMeans() for support of multiple islands/movetypes
-		// TODO: this doesn't need to be to radius
+		// TODO: this doesn't need to be radius
 
 		if (costToTarget == 0 && pathToTarget.size() <= 2) {
 			isMoving = false;
@@ -533,11 +514,16 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 			// maybe include the height parameter in the search? probably not possible
 			// doesn't this mean pathing might happen every second? outer limit should harsher than inner
 			const float3 unitPos = ai->ccb->GetUnitPos(ai->unitIDs[enemySelected]);
-			float dist = ai->pather->FindBestPathToRadius(tempPath, myPos, myRange, unitPos);
+
+
+			//!! TODO:
+			//!!     for deterministic reproduction, should be able to
+			//!!     set the random seed for the RNG's to a fixed value
+			ai->pather->FindBestPathToRadius(tempPath, myPos, myRange, unitPos);
 
 			if (!tempPath.empty()) {
 				const float3& moveHere = tempPath.back();
-				dist = myPos.distance2D(moveHere);
+				const float dist = myPos.distance2D(moveHere);
 
 				// TODO: Penetrators are now broken
 				// is the position between the proposed destination and the
@@ -561,9 +547,6 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 					unit->Move(moveHere);
 				}
 			}
-		}
-		else if (!udef->canfly || myPos.y < (ai->cb->GetElevation(myPos.x, myPos.z) + 25)) {
-			// this unit is an air unit
 		}
 	}
 }

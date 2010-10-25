@@ -49,7 +49,7 @@ extern "C" {
 
 /**
  * [string]
- * example: "http://spring.clan-sy.com/wiki/AI:RAI"
+ * example: "http://springrts.com/wiki/AI:RAI"
  */
 #define SKIRMISH_AI_PROPERTY_URL                     "url"
 
