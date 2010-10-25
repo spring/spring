@@ -37,6 +37,9 @@ PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
 	xsize  = gs->mapx / xscale;
 	zsize  = gs->mapy / zscale;
 
+	maxFlow[fBufferIdx] = 0.0f;
+	maxFlow[bBufferIdx] = 0.0f;
+
 	buffers[fBufferIdx].resize(xsize * zsize, FlowCell());
 	buffers[bBufferIdx].resize(xsize * zsize, FlowCell());
 
@@ -122,6 +125,8 @@ void PathFlowMap::Update() {
 		}
 	}
 
+	maxFlow[fBufferIdx] = 0.0f;
+
 	// swap the buffers
 	fBufferIdx = (fBufferIdx + 1) & 1;
 	bBufferIdx = (bBufferIdx + 1) & 1;
@@ -151,6 +156,8 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	bCell.numObjects   += 1;
 
 	bIndices.insert(cellIdx);
+
+	maxFlow[bBufferIdx] = std::max(maxFlow[bBufferIdx], bCell.flowVector.y);
 }
 
 

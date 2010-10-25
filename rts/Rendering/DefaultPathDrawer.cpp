@@ -24,6 +24,7 @@
 #include "Sim/Path/Default/PathEstimator.h"
 #include "Sim/Path/Default/PathManager.h"
 #include "Sim/Path/Default/PathHeatMap.hpp"
+#include "Sim/Path/Default/PathFlowMap.hpp"
 #undef private
 
 #include "Rendering/GlobalRendering.h"
@@ -157,14 +158,32 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		case CBaseGroundDrawer::drawPathHeat: {
 			const PathHeatMap* phm = pm->pathHeatMap;
 
-			for (int y = starty; y < endy; ++y) {
-				for (int x = 0; x < gs->hmapx; ++x) {
-					const unsigned int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+			for (int ty = starty; ty < endy; ++ty) {
+				for (int tx = 0; tx < gs->hmapx; ++tx) {
+					const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
 
-					texMem[idx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * phm->GetHeatValue(x << 1, y << 1), 32, 255);
-					texMem[idx + CBaseGroundDrawer::COLOR_G] = 32;
-					texMem[idx + CBaseGroundDrawer::COLOR_B] = 32;
-					texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * phm->GetHeatValue(tx << 1, ty << 1), 32, 255);
+					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 32;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 32;
+					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+				}
+			}
+		} break;
+
+		case CBaseGroundDrawer::drawPathFlow: {
+			const PathFlowMap* pfm = pm->pathFlowMap;
+
+			if (pfm->GetMaxFlow() > 0.0f) {
+				for (int ty = starty; ty < endy; ++ty) {
+					for (int tx = 0; tx < gs->hmapx; ++tx) {
+						const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+						const float3& flow = pfm->GetFlowVec(tx << 1, ty << 1);
+
+						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (flow.x * 255);
+						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (flow.y / pfm->GetMaxFlow()) * 255;
+						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (flow.z * 255);
+						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+					}
 				}
 			}
 		} break;
