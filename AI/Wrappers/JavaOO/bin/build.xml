@@ -56,6 +56,11 @@
 			<pathelement path="${src.java}"/>
 			<pathelement path="${src.generated.java}"/>
 		</path>
+		<path id="doc.source.path.id">
+			<path refid="source.path.id"/>
+			<pathelement path="${spring.ai.interface.src.dir}"/>
+			<pathelement path="${spring.ai.interface.src.generated.dir}"/>
+		</path>
 		<path id="class.path.id">
 			<pathelement path="${spring.ai.interface.build.home}/classes"/>
 			<fileset dir="jlib">
@@ -136,7 +141,7 @@
 		<mkdir dir="${doc.dir}"/>
 		<javadoc
 				destdir="${doc.dir}"
-				sourcepathref="source.path.id"
+				sourcepathref="doc.source.path.id"
 				classpathref="class.path.id"
 				Windowtitle="Sprint RTS Java OO AI Wrapper javadoc"/>
 	</target>
