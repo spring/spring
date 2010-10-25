@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef UNITTRACKER_H
-#define UNITTRACKER_H
+#ifndef UNIT_TRACKER_H
+#define UNIT_TRACKER_H
 
 #include <set>
 #include "float3.h"
@@ -22,7 +22,8 @@ class CUnitTracker
 
 		int  GetMode() const;
 		void IncMode();
-		void SetMode(int);
+		/// @param trackMode see enum CUnitTracker::TrackMode
+		void SetMode(int trackMode);
 		enum TrackMode {
 			TrackSingle = 0,
 			TrackAverage,
@@ -31,7 +32,7 @@ class CUnitTracker
 		};
 
 	protected:
-		void NextUnit(void);
+		void NextUnit();
 		void MakeTrackGroup();
 		void CleanTrackGroup();
 		CUnit* GetTrackUnit();
@@ -63,4 +64,4 @@ class CUnitTracker
 
 extern CUnitTracker unitTracker;
 
-#endif /* UNITTRACKER_H */
+#endif /* UNIT_TRACKER_H */

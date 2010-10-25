@@ -497,7 +497,7 @@ int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path,
 				directNode->costFromStart = newCost;
 				directNode->totalCost = newCost + LeastCostEstimateLocal(indexEnd);
 				#ifdef USE_ASSERTIONS
-				assert(indexEnd == ((((unsigned) directNode) - ((unsigned) pathNodeMem)) / sizeof(PathNode)));
+				assert(indexEnd == ((((size_t) directNode) - ((size_t) pathNodeMem)) / sizeof(PathNode)));
 				#endif
 
 				if (directNode->inOpen) {
@@ -648,7 +648,7 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*>
 				directNode->totalCost = newCost + LeastCostEstimateLocal(indexEnd);
 
 				#ifdef USE_ASSERTIONS
-				assert(indexEnd == ((((unsigned) directNode) - ((unsigned) pathNodeMem)) / sizeof(PathNode)));
+				assert(indexEnd == ((((size_t) directNode) - ((size_t) pathNodeMem)) / sizeof(PathNode)));
 				#endif
 
 				if (directNode->inOpen) {
