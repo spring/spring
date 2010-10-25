@@ -46,7 +46,6 @@
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
 CR_REG_METADATA(CGroundMoveType, (
-		CR_MEMBER(baseTurnRate),
 		CR_MEMBER(turnRate),
 		CR_MEMBER(accRate),
 		CR_MEMBER(decRate),
@@ -116,7 +115,6 @@ std::vector<int2> CGroundMoveType::lineTable[LINETABLE_SIZE][LINETABLE_SIZE];
 CGroundMoveType::CGroundMoveType(CUnit* owner):
 	AMoveType(owner),
 
-	baseTurnRate(0.1f),
 	turnRate(0.1f),
 	accRate(0.01f),
 	decRate(0.01f),
@@ -255,7 +253,7 @@ void CGroundMoveType::Update()
 						// over several frames (eg. to maneuver around an
 						// obstacle), which unlike actual immobilization
 						// does not count as an ETA failure
-						etaFailures = std::min(65536, int(etaFailures + 1));
+						etaFailures = std::min(SHORTINT_MAXVALUE, int(etaFailures + 1));
 
 						#if (DEBUG_OUTPUT == 1)
 						logOutput.Print(
@@ -312,7 +310,7 @@ void CGroundMoveType::Update()
 					const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
 					const bool startBreaking = (currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE);
 					const float reqTurnAngle = streflop::acosf(waypointDir.dot(owner->frontdir)) * (180.0f / PI);
-					const float maxTurnAngle = (turnRate / 65536.0f) * 360.0f;
+					const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
 					// If arriving at waypoint, then need to slow down, or may pass it.
 					if (!moreCommands && startBreaking) {
@@ -375,7 +373,7 @@ void CGroundMoveType::SlowUpdate()
 
 	if (progressState == Active) {
 		if (pathId != 0) {
-			if (etaFailures > (65536 / turnRate)) {
+			if (etaFailures > (SHORTINT_MAXVALUE / turnRate)) {
 				// we have a path but are not moving (based on the ETA failure count)
 				#if (DEBUG_OUTPUT == 1)
 				logOutput.Print("[CGMT::SU] unit %i has path %i but %i ETA failures", owner->id, pathId, etaFailures);
@@ -1275,7 +1273,7 @@ void CGroundMoveType::GetNextWaypoint()
 		// and pass it without slowing down)
 		// note that we take the DIAMETER of the circle
 		// to prevent sine-like "snaking" trajectories
-		const float turnFrames = 65536 / turnRate;
+		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
 
 		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
@@ -2083,8 +2081,8 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	const float waypointDirDP = waypointDir2D.dot(owner->frontdir);
 	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
 	const float turnAngleDeg  = streflop::acosf(waypointAngle) * (180.0f / PI);                 // in degrees
-	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                             // in "headings"
-	const float revAngleSpr   = 32768.0f - turnAngleSpr;                                        // 180 deg - angle
+	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                   // in "headings"
+	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                               // 180 deg - angle
 
 	// units start accelerating before finishing the turn, so subtract something
 	const float turnTimeMod   = 5.0f;
