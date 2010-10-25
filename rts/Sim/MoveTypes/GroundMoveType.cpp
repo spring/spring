@@ -311,10 +311,15 @@ void CGroundMoveType::Update()
 
 					const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
 					const bool startBreaking = (currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE);
+					const float reqTurnAngle = streflop::acosf(waypointDir.dot(owner->frontdir)) * (180.0f / PI);
+					const float maxTurnAngle = (turnRate / 65536.0f) * 360.0f;
 
 					// If arriving at waypoint, then need to slow down, or may pass it.
 					if (!moreCommands && startBreaking) {
 						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
+					}
+					if (reqTurnAngle <= 90.0f && reqTurnAngle > maxTurnAngle) {
+						wantedSpeed *= (maxTurnAngle / reqTurnAngle);
 					}
 
 					if (owner->unitDef->turnInPlace) {
@@ -1280,7 +1285,7 @@ void CGroundMoveType::GetNextWaypoint()
 		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
 			return;
 		}
-		if (waypointDir.dot(owner->frontdir) >= 0.99f) {
+		if (currentDistanceToWaypoint > MIN_WAYPOINT_DISTANCE && waypointDir.dot(owner->frontdir) >= 0.99f) {
 			return;
 		}
 	}
