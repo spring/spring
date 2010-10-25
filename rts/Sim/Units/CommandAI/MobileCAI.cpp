@@ -1165,8 +1165,8 @@ void CMobileCAI::IdleCheck(void)
 	}
 }
 
-void CMobileCAI::StopSlowGuard(){
-	if(slowGuard){
+void CMobileCAI::StopSlowGuard() {
+	if (slowGuard) {
 		slowGuard = false;
 		if (owner->maxSpeed)
 			owner->moveType->SetMaxSpeed(owner->maxSpeed);
@@ -1174,13 +1174,13 @@ void CMobileCAI::StopSlowGuard(){
 }
 
 void CMobileCAI::StartSlowGuard(float speed){
-	if(!slowGuard){
+	if (!slowGuard) {
 		slowGuard = true;
-		//speed /= 30;
-		if(owner->maxSpeed >= speed){
-			if(!commandQue.empty()){
+
+		if (owner->maxSpeed >= speed) {
+			if (!commandQue.empty()) {
 				Command currCommand = commandQue.front();
-				if(commandQue.size() <= 1
+				if (commandQue.size() <= 1
 						|| commandQue[1].id != CMD_SET_WANTED_MAX_SPEED
 						|| commandQue[1].params[0] > speed){
 					if (speed > 0)
@@ -1195,12 +1195,10 @@ void CMobileCAI::StartSlowGuard(float speed){
 void CMobileCAI::CalculateCancelDistance()
 {
 	// calculate a rough turn radius
-	// heading is a short, so has 65536 values
-	// t = 65536/turnRate gives number of frames required for a full circle
-	// speed * t / (2*pi) gives turn radius
-	float tmp = (owner->unitDef->speed / GAME_SPEED)
-		* SHORTINT_MAXVALUE / (owner->unitDef->turnRate > 0 ? owner->unitDef->turnRate : 1)
-		/ (2 * PI) + 2*SQUARE_SIZE;
+	const float turnFrames = SPRING_CIRCLE_DIVS / std::max(owner->unitDef->turnRate, 1.0f);
+	const float turnRadius = ((owner->unitDef->speed / GAME_SPEED) * turnFrames) / (PI + PI);
+	const float tmp = turnRadius + (SQUARE_SIZE << 1);
+
 	// clamp it a bit because the units don't have to turn at max speed
-	cancelDistance = std::min(std::max(tmp*tmp, 1024.f), 2048.f);
+	cancelDistance = std::min(std::max(tmp * tmp, 1024.f), 2048.f);
 }
