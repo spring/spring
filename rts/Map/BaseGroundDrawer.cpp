@@ -180,50 +180,30 @@ void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 }
 
 
-void CBaseGroundDrawer::TogglePathTraversabilityTexture()
+void CBaseGroundDrawer::TogglePathTexture(BaseGroundDrawMode mode)
 {
-	if (drawMode == drawPathTraversability) {
-		DisableExtraTexture();
-	} else {
-		SetDrawMode(drawPathTraversability);
+	switch (mode) {
+		case drawPathTraversability:
+		case drawPathHeat:
+		case drawPathFlow:
+		case drawPathCost: {
+			if (drawMode == mode) {
+				DisableExtraTexture();
+			} else {
+				SetDrawMode(mode);
 
-		extraTex = 0;
-		highResInfoTexWanted = false;
-		updateTextureState = 0;
+				extraTex = 0;
+				highResInfoTexWanted = false;
+				updateTextureState = 0;
 
-		while (!UpdateExtraTexture());
+				while (!UpdateExtraTexture());
+			}
+		} break;
+
+		default: {
+		} break;
 	}
 }
-
-void CBaseGroundDrawer::TogglePathHeatTexture()
-{
-	if (drawMode == drawPathHeat) {
-		DisableExtraTexture();
-	} else {
-		SetDrawMode(drawPathHeat);
-
-		extraTex = 0;
-		highResInfoTexWanted = false;
-		updateTextureState = 0;
-
-		while (!UpdateExtraTexture());
-	}
-}
-
-void CBaseGroundDrawer::TogglePathCostTexture()
-{
-	if (drawMode == drawPathCost) {
-		DisableExtraTexture();
-	} else {
-		SetDrawMode(drawPathCost);
-		extraTex = 0;
-		highResInfoTexWanted = false;
-		updateTextureState = 0;
-
-		while (!UpdateExtraTexture());
-	}
-}
-
 
 
 void CBaseGroundDrawer::ToggleLosTexture()
@@ -329,6 +309,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		switch (drawMode) {
 			case drawPathTraversability:
 			case drawPathHeat:
+			case drawPathFlow:
 			case drawPathCost: {
 				pathDrawer->UpdateExtraTexture(drawMode, starty, endy, offset, reinterpret_cast<unsigned char*>(infoTexMem));
 			} break;

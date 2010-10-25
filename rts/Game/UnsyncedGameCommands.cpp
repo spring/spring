@@ -917,19 +917,26 @@ bool CGame::ActionPressed(const Action& action,
 		gd->SetMetalTexture(readmap->metalMap);
 	}
 
+
 	else if (cmd == "showpathtraversability") {
-		gd->TogglePathTraversabilityTexture();
+		gd->TogglePathTexture(CBaseGroundDrawer::drawPathTraversability);
 	}
 	else if (cmd == "showpathheat") {
 		if (gs->cheatEnabled) {
-			gd->TogglePathHeatTexture();
+			gd->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
+		}
+	}
+	else if (cmd == "showpathflow") {
+		if (gs->cheatEnabled) {
+			gd->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
 		}
 	}
 	else if (cmd == "showpathcost") {
 		if (gs->cheatEnabled) {
-			gd->TogglePathCostTexture();
+			gd->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
 		}
 	}
+
 
 	else if (cmd == "togglelos") {
 		gd->ToggleLosTexture();

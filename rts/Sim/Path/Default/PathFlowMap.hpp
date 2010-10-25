@@ -33,6 +33,7 @@ public:
 
 	const float3& GetFlowVec(unsigned int hmx, unsigned int hmz) const;
 	float GetFlowCost(unsigned int x, unsigned int z, const MoveData&, unsigned int opt) const;
+	float GetMaxFlow() const { return maxFlow[fBufferIdx]; }
 
 	unsigned int GetFrontBufferIdx() const { return fBufferIdx; }
 	unsigned int GetBackBufferIdx() const { return bBufferIdx; }
@@ -52,6 +53,8 @@ private:
 	unsigned int bBufferIdx;
 	unsigned int xscale, xsize;
 	unsigned int zscale, zsize;
+
+	float maxFlow[2];
 };
 
 #endif
