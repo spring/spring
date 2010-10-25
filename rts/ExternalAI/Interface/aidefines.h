@@ -20,7 +20,7 @@
 // Therefore, this number will stay the same, if you only change parameters
 // of function pointers, which is why it is only partly representing
 // the real ABI.
-// Files that have ot be included when using this define:
+// Files that have to be included when using this define:
 // * ExternalAI/Interface/ELevelOfSupport.h
 // * ExternalAI/Interface/SSkirmishAILibrary.h
 // * ExternalAI/Interface/SSkirmishAICallback.h
@@ -30,9 +30,9 @@
 // * ExternalAI/Interface/AISCommands.h
 /**
  * Returns the Application Binary Interface version, fail part.
- * If the engine and the AI INterface differ in this,
+ * If the engine and the AI Interface differ in this,
  * the AI Interface will not be used.
- * Changes here usually indicate that struct memebers were
+ * Changes here usually indicate that struct members were
  * added or removed.
  */
 #define AIINTERFACE_ABI_VERSION_FAIL ( \
@@ -50,7 +50,7 @@
  * if they differ only in the warning part of the ABI version.
  * Changes here could indicate that function arguments got changed,
  * which could cause a crash, but it could be unimportant changes
- * like added comments or code reformatting aswell.
+ * like added comments or code reformatting as well.
  */
 #define AIINTERFACE_ABI_VERSION_WARNING ( \
 	  sizeof(int) \
@@ -63,7 +63,7 @@
 	)
 
 /**
- * @brief max skirmish AIs
+ * @brief max Skirmish AIs
  *
  * Defines the maximum number of skirmish AIs.
  * As there can not be more then spring allows teams, this is the upper limit.

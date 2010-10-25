@@ -35,11 +35,11 @@ CUnitTracker::CUnitTracker():
 	trackUnit(0),
 	timeOut(15),
 	lastFollowUnit(0),
-	lastUpdateTime(0),
-	trackPos(500,100,500),
-	trackDir(0,0,1),
-	oldCamDir(1,0,0),
-	oldCamPos(500,500,500)
+	lastUpdateTime(0.0f),
+	trackPos(500.0f, 100.0f, 500.0f),
+	trackDir(0.0f, 0.0f, 1.0f),
+	oldCamDir(1.0f, 0.0f, 0.0f),
+	oldCamPos(500.0f, 500.0f, 500.0f)
 {
 	for (size_t a = 0; a < 32; ++a) {
 		oldUp[a] = UpVector;
@@ -71,14 +71,14 @@ void CUnitTracker::IncMode()
 }
 
 
-void CUnitTracker::SetMode(int m)
+void CUnitTracker::SetMode(int mode)
 {
-	if (m < 0) {
+	if (mode < 0) {
 		trackMode = 0;
-	} else if (m >= TrackModeCount) {
+	} else if (mode >= TrackModeCount) {
 		trackMode = TrackModeCount - 1;
 	} else {
-		trackMode = m;
+		trackMode = mode;
 	}
 	logOutput.Print("TrackMode: %s", modeNames[trackMode]);
 }
@@ -203,7 +203,7 @@ CUnit* CUnitTracker::GetTrackUnit()
 
 float3 CUnitTracker::CalcAveragePos() const
 {
-	float3 p(0,0,0);
+	float3 p(ZeroVector);
 	std::set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
 		p += uh->GetUnitUnsafe(*it)->drawPos;
@@ -236,7 +236,7 @@ float3 CUnitTracker::CalcExtentsPos() const
 
 void CUnitTracker::SetCam()
 {
-	if(firstUpdate){
+	if (firstUpdate) {
 		firstUpdate = false;
 		doRoll = !configHandler->Get("ReflectiveWater", 1);
 	}
@@ -252,18 +252,18 @@ void CUnitTracker::SetCam()
 		lastFollowUnit = 0;
 	}
 
-	if (timeOut > 0){
+	if (timeOut > 0) {
 		//! Transition between 2 targets
 		timeOut++;
-		camera->forward=oldCamDir;
-		camera->pos=oldCamPos;
+		camera->forward = oldCamDir;
+		camera->pos = oldCamPos;
 		if (camHandler->GetCurrentControllerNum() == 0) {
 			CFPSController& fpsCamera = dynamic_cast<CFPSController&>(camHandler->GetCurrentController());
 			fpsCamera.SetDir(oldCamDir);
 			fpsCamera.SetPos(oldCamPos);
 		}
 		if (timeOut > 15) {
-			timeOut=0;
+			timeOut = 0;
 		}
 		camHandler->UpdateCam();
 		camera->Update(false);
@@ -291,11 +291,11 @@ void CUnitTracker::SetCam()
 
 	} else {
 		//! FPS Camera
-		float deltaTime = gs->frameNum + globalRendering->timeOffset - lastUpdateTime;
+		const float deltaTime = gs->frameNum + globalRendering->timeOffset - lastUpdateTime;
 		lastUpdateTime = gs->frameNum + globalRendering->timeOffset;
 
 		float3 modPlanePos(u->drawPos - (u->frontdir * u->radius * 3));
-		float minHeight = ground->GetHeight2(modPlanePos.x,modPlanePos.z) + (u->radius * 2);
+		const float minHeight = ground->GetHeight2(modPlanePos.x, modPlanePos.z) + (u->radius * 2);
 		if (modPlanePos.y < minHeight) {
   			modPlanePos.y = minHeight;
 		}
@@ -316,9 +316,9 @@ void CUnitTracker::SetCam()
 		fpsCamera.SetPos(trackPos);
 
 		if (doRoll) {
-			oldUp[gs->frameNum%32] = u->updir;
-			float3 up(0,0,0);
-			for(int a=0;a<32;++a){
+			oldUp[gs->frameNum % 32] = u->updir;
+			float3 up(ZeroVector);
+			for (size_t a = 0; a < 32; ++a) {
 				up += oldUp[a];
 			}
 			camera->up = up;
