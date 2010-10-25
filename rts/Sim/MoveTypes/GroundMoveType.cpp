@@ -134,7 +134,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	deltaSpeed(0.0f),
 	deltaHeading(0),
 
-	flatFrontDir(1, 0, 0),
+	flatFrontDir(0.0f, 0.0, 1.0f),
 	pathId(0),
 	goalRadius(0),
 
@@ -274,9 +274,9 @@ void CGroundMoveType::Update()
 				}
 
 				// Set direction to waypoint.
-				float3 waypointDir = waypoint - owner->pos;
-					waypointDir.y = 0;
-					waypointDir.SafeNormalize();
+				waypointDir = waypoint - owner->pos;
+				waypointDir.y = 0.0f;
+				waypointDir.SafeNormalize();
 
 				ASSERT_SYNCED_FLOAT3(waypointDir);
 
@@ -654,7 +654,7 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	}
 
 	flatFrontDir = owner->frontdir;
-	flatFrontDir.y = 0;
+	flatFrontDir.y = 0.0f;
 	flatFrontDir.Normalize();
 }
 
@@ -1281,6 +1281,9 @@ void CGroundMoveType::GetNextWaypoint()
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
 
 		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
+			return;
+		}
+		if (waypointDir.dot(owner->frontdir) >= 0.99f) {
 			return;
 		}
 	}
@@ -2110,7 +2113,7 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 	}
 }
 
-bool CGroundMoveType::WantReverse(const float3& waypointDir) const
+bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 {
 	if (!canReverse) {
 		return false;
@@ -2120,7 +2123,7 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir) const
 	const float waypointDist  = waypointDif.Length();                                           // in elmos
 	const float waypointFETA  = (waypointDist / maxSpeed);                                      // in frames (simplistic)
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
-	const float waypointDirDP = waypointDir.dot(owner->frontdir);
+	const float waypointDirDP = waypointDir2D.dot(owner->frontdir);
 	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
 	const float turnAngleDeg  = streflop::acosf(waypointAngle) * (180.0f / PI);                 // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                             // in "headings"
