@@ -9,9 +9,9 @@
 
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
-static const float TWOPI = 2*PI;
-
-#define SHORTINT_MAXVALUE 32768
+static const float TWOPI = 2 * PI;
+static const int SHORTINT_MAXVALUE  = 32768;
+static const int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
 
 #define HEADING_CHECKSUM_1024 0x617a9968
 #define HEADING_CHECKSUM_4096 0x3d51b476

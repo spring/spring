@@ -719,9 +719,7 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
 
-	if (key == "baseTurnRate") {
-		mt->baseTurnRate = value; return true;
-	} else if (key == "turnRate") {
+	if (key == "turnRate") {
 		mt->turnRate = value; return true;
 	} else if (key == "accRate") {
 		mt->accRate = value; return true;
