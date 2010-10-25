@@ -36,7 +36,6 @@ public:
 
 	bool OnSlope(void);
 
-	float baseTurnRate;
 	float turnRate;
 	float accRate;
 	float decRate;
