@@ -122,6 +122,16 @@ void PathFlowMap::Update() {
 
 			bCell.flowVector.x /= flowLen;
 			bCell.flowVector.z /= flowLen;
+
+			// note: if FLOW_DECAY_ENABLED == 1, cells
+			// whose normalized flow-strength is less
+			// than FLOW_EPSILON will also be decayed
+			// (this can be a problem if the range of
+			// unit mass values is very wide and there
+			// are units at both extremes in-game)
+			if (maxFlow[bBufferIdx] > FLOW_EPSILON) {
+				bCell.flowVector.y /= maxFlow[bBufferIdx];
+			}
 		}
 	}
 
