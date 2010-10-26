@@ -6,9 +6,10 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Objects/SolidObject.h"
 
-#define FLOW_EPSILON       0.01f
-#define FLOW_DECAY_ENABLED 0
-#define FLOW_DECAY_FACTOR  0.86f
+#define FLOW_EPSILON        0.01f
+#define FLOW_DECAY_ENABLED  0
+#define FLOW_DECAY_FACTOR   0.86f
+#define FLOW_COST_MULT     32.00f
 
 PathFlowMap* PathFlowMap::GetInstance() {
 	static PathFlowMap* pfm = NULL;
@@ -192,7 +193,7 @@ float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveData& m
 	const float3& pathDir = pathOptDirs[pathOpt];
 
 	const float flowScale = ((flowVec.dot(pathDir) * -1.0f) + 1.0f) * 0.5f;
-	const float flowCost = flowVec.y * flowScale;
+	const float flowCost = (flowVec.y * FLOW_COST_MULT) * flowScale;
 
 	return flowCost;
 }
