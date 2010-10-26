@@ -221,6 +221,7 @@ void CGroundMoveType::Update()
 
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
+	const UnitDef* ud = owner->unitDef;
 
 	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
@@ -309,18 +310,22 @@ void CGroundMoveType::Update()
 
 					const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
 					const bool startBreaking = (currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE);
-					const float reqTurnAngle = streflop::acosf(waypointDir.dot(owner->frontdir)) * (180.0f / PI);
-					const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
 					// If arriving at waypoint, then need to slow down, or may pass it.
 					if (!moreCommands && startBreaking) {
 						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
 					}
-					if (reqTurnAngle <= 90.0f && reqTurnAngle > maxTurnAngle) {
-						wantedSpeed *= (maxTurnAngle / reqTurnAngle);
+					if (waypointDir.SqLength() > 0.1f) {
+						const float reqTurnAngle = streflop::acosf(waypointDir.dot(owner->frontdir)) * (180.0f / PI);
+						const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
+						const float reducedSpeed = (maxSpeed * 2.0f) * (maxTurnAngle / reqTurnAngle);
+
+						if (!wantReverse && reqTurnAngle > maxTurnAngle) {
+							wantedSpeed = std::min(wantedSpeed, std::max(ud->turnInPlaceSpeedLimit / GAME_SPEED, reducedSpeed));
+						}
 					}
 
-					if (owner->unitDef->turnInPlace) {
+					if (ud->turnInPlace) {
 						if (wantReverse) {
 							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot(-owner->frontdir) + 0.1f));
 						} else {
@@ -352,7 +357,7 @@ void CGroundMoveType::Update()
 		idling = (owner->speed.SqLength() < 1.0f);
 		oldPos = owner->pos;
 
-		if (owner->unitDef->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
+		if (ud->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
 			((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			lastTrackUpdate = gs->frameNum;
 			groundDecals->UnitMoved(owner);
@@ -540,13 +545,12 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 				// GetNextWaypoint() often is sufficient prevention
 				// If current waypoint is the last one and it's near,
 				// hit the brakes a bit more.
+				const UnitDef* ud = owner->unitDef;
 				const float finalGoalSqDist = owner->pos.SqDistance2D(goalPos);
-				const float tipSqDist = owner->unitDef->turnInPlaceDistance * owner->unitDef->turnInPlaceDistance;
-				const bool unitdefInPlace = (owner->unitDef->turnInPlace
-						&& (tipSqDist > finalGoalSqDist
-						|| owner->unitDef->turnInPlaceDistance <= 0.0f));
+				const float tipSqDist = ud->turnInPlaceDistance * ud->turnInPlaceDistance;
+				const bool inPlaceTurn = (ud->turnInPlace && (tipSqDist > finalGoalSqDist || ud->turnInPlaceDistance <= 0.0f));
 
-				if (unitdefInPlace || currentSpeed < owner->unitDef->turnInPlaceSpeedLimit / GAME_SPEED) {
+				if (inPlaceTurn || (currentSpeed < ud->turnInPlaceSpeedLimit / GAME_SPEED)) {
 					// keep the turn mostly in-place
 					wSpeed = turnSpeed;
 				} else {
@@ -1279,7 +1283,7 @@ void CGroundMoveType::GetNextWaypoint()
 		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
 			return;
 		}
-		if (currentDistanceToWaypoint > MIN_WAYPOINT_DISTANCE && waypointDir.dot(owner->frontdir) >= 0.99f) {
+		if (currentDistanceToWaypoint > MIN_WAYPOINT_DISTANCE && waypointDir.dot(owner->frontdir) >= 0.995f) {
 			return;
 		}
 	}
