@@ -7,8 +7,9 @@
 import random
 import re
 import sys
+import time
 
-LOG_LINE_PREFIX  = "[b][color=#%s]<%s>[/color][/b]"
+LOG_LINE_PREFIX  = "[b][color=#%s]%s[/color][/b]"
 DEV_NAME_PATTERN = re.compile("<[a-zA-Z0-9\[\]_]*>")
 ## Pattern for pidgin, this is an example line:
 ## (16:07:52) user: hello world!
@@ -39,6 +40,7 @@ def WriteLines(logName, logLines):
 def ProcessLines(lines):
 	random.shuffle(DEV_NAME_COLORS)
 
+	prefix = ""
 	nlines = ""
 	onames = {}
 
@@ -61,12 +63,24 @@ def ProcessLines(lines):
 			onames[oname] = (len(onames), nname)
 
 		npair = onames[oname]
-		color = (npair[0] < len(DEV_NAME_COLORS) and DEV_NAME_COLORS[ npair[0] ]) or "F00F00"
-		nname = npair[1]
-		nline = (LOG_LINE_PREFIX % (color, nname)) + line[match.span()[1]: ] + '\n'
+		color = (npair[0] < len(DEV_NAME_COLORS) and DEV_NAME_COLORS[npair[0]]) or "F00F00"
+		nline = (LOG_LINE_PREFIX % (color, "<" + npair[1] + ">")) + line[match.span()[1]: ] + '\n'
 		nlines += nline
 
-	return nlines
+	gmtime = time.gmtime()
+	pcolor = "000000"
+	prefix += "%s: %d-%d-%d\n" % (((LOG_LINE_PREFIX % (pcolor, "Date")), gmtime[2], gmtime[1], gmtime[0]))
+	prefix += "%s: " % (LOG_LINE_PREFIX % (pcolor, "Present"))
+	knames = onames.keys() 
+
+	for k in xrange(len(knames)):
+		oname = knames[k]
+		npair = onames[oname]
+		color = DEV_NAME_COLORS[npair[0]]
+		prefix += (LOG_LINE_PREFIX % (color, npair[1]))
+		prefix += (((k < len(knames) - 1) and ", ") or "")
+
+	return (prefix + "\n\n" + nlines)
 
 def Main(argc, argv):
 	if (argc == 2):
