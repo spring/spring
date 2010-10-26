@@ -45,14 +45,14 @@ PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
 
 	pathOptDirs.resize(PATH_DIRECTIONS << 1);
 
-	pathOptDirs[PATHOPT_LEFT                ] = float3(-1.0f, 0.0f,  0.0f);
-	pathOptDirs[PATHOPT_RIGHT               ] = float3( 1.0f, 0.0f,  0.0f);
-	pathOptDirs[PATHOPT_UP                  ] = float3( 0.0f, 0.0f, -1.0f);
-	pathOptDirs[PATHOPT_DOWN                ] = float3( 0.0f, 0.0f,  1.0f);
-	pathOptDirs[PATHOPT_LEFT  | PATHOPT_UP  ] = float3(-1.0f, 0.0f, -1.0f) * s;
-	pathOptDirs[PATHOPT_RIGHT | PATHOPT_UP  ] = float3( 1.0f, 0.0f, -1.0f) * s;
-	pathOptDirs[PATHOPT_RIGHT | PATHOPT_DOWN] = float3( 1.0f, 0.0f,  1.0f) * s;
-	pathOptDirs[PATHOPT_LEFT  | PATHOPT_DOWN] = float3(-1.0f, 0.0f,  1.0f) * s;
+	pathOptDirs[PATHOPT_LEFT                ] = float3(+1.0f, 0.0f,  0.0f);
+	pathOptDirs[PATHOPT_RIGHT               ] = float3(-1.0f, 0.0f,  0.0f);
+	pathOptDirs[PATHOPT_UP                  ] = float3( 0.0f, 0.0f, +1.0f);
+	pathOptDirs[PATHOPT_DOWN                ] = float3( 0.0f, 0.0f, -1.0f);
+	pathOptDirs[PATHOPT_LEFT  | PATHOPT_UP  ] = (pathOptDirs[PATHOPT_LEFT ] + pathOptDirs[PATHOPT_UP  ]) * s;
+	pathOptDirs[PATHOPT_RIGHT | PATHOPT_UP  ] = (pathOptDirs[PATHOPT_RIGHT] + pathOptDirs[PATHOPT_UP  ]) * s;
+	pathOptDirs[PATHOPT_RIGHT | PATHOPT_DOWN] = (pathOptDirs[PATHOPT_RIGHT] + pathOptDirs[PATHOPT_DOWN]) * s;
+	pathOptDirs[PATHOPT_LEFT  | PATHOPT_DOWN] = (pathOptDirs[PATHOPT_LEFT ] + pathOptDirs[PATHOPT_DOWN]) * s;
 }
 
 PathFlowMap::~PathFlowMap() {
