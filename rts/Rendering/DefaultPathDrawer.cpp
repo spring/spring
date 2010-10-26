@@ -182,7 +182,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (((flow.x + 1.0f) * 0.5f) * 255);
 						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (((flow.z + 1.0f) * 0.5f) * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (( flow.y /      maxFlow) * 255);
+						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (( flow.y               ) * 255);
 						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
 					}
 				}
