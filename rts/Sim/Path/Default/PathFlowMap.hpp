@@ -18,6 +18,7 @@ public:
 		}
 
 		float3 flowVector;
+		float3 cellCenter; // WS
 
 		unsigned int numObjects;
 	};
@@ -51,8 +52,8 @@ private:
 
 	unsigned int fBufferIdx;
 	unsigned int bBufferIdx;
-	unsigned int xscale, xsize;
-	unsigned int zscale, zsize;
+	unsigned int xscale, xsize, xfact;
+	unsigned int zscale, zsize, zfact;
 
 	float maxFlow[2];
 };

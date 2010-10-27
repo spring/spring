@@ -37,6 +37,8 @@ PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
 	zscale = std::max(1, std::min(gs->mapy, int(scalez)));
 	xsize  = gs->mapx / xscale;
 	zsize  = gs->mapy / zscale;
+	xfact  = SQUARE_SIZE * xscale;
+	zfact  = SQUARE_SIZE * zscale;
 
 	maxFlow[fBufferIdx] = 0.0f;
 	maxFlow[bBufferIdx] = 0.0f;
@@ -54,6 +56,15 @@ PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
 	pathOptDirs[PATHOPT_RIGHT | PATHOPT_UP  ] = (pathOptDirs[PATHOPT_RIGHT] + pathOptDirs[PATHOPT_UP  ]) * s;
 	pathOptDirs[PATHOPT_RIGHT | PATHOPT_DOWN] = (pathOptDirs[PATHOPT_RIGHT] + pathOptDirs[PATHOPT_DOWN]) * s;
 	pathOptDirs[PATHOPT_LEFT  | PATHOPT_DOWN] = (pathOptDirs[PATHOPT_LEFT ] + pathOptDirs[PATHOPT_DOWN]) * s;
+
+	for (unsigned int n = 0; n < xsize * zsize; n++) {
+		const unsigned int x = n % xsize;
+		const unsigned int z = n / xsize;
+		const float3 p = float3((x * xfact) + (xfact >> 1), 0.0f, (z * zfact) + (zfact >> 1));
+
+		buffers[fBufferIdx][n].cellCenter = p;
+		buffers[bBufferIdx][n].cellCenter = p;
+	}
 }
 
 PathFlowMap::~PathFlowMap() {
@@ -160,6 +171,9 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
+	// TODO:
+	//     if in lower-left quadrant of <bCell>, add reduced
+	//     flow to the directly adjacent W, S, SW cells, etc.
 	FlowCell& bCell = bCells[cellIdx];
 
 	bCell.flowVector.x += (o->speed.x);
@@ -175,8 +189,8 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 
 
 unsigned int PathFlowMap::GetCellIdx(const CSolidObject* o) const {
-	const unsigned int xcell = o->pos.x / (SQUARE_SIZE * xscale);
-	const unsigned int zcell = o->pos.z / (SQUARE_SIZE * zscale);
+	const unsigned int xcell = o->pos.x / xfact;
+	const unsigned int zcell = o->pos.z / zfact;
 
 	return (zcell * xsize + xcell);
 }
