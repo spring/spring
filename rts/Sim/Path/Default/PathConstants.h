@@ -27,10 +27,10 @@ const unsigned int LOWRES_PE_BLOCKSIZE = 32;
 const unsigned int SQUARES_TO_UPDATE = 600;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 
-const unsigned int PATH_HEATMAP_XSCALE = 1; // wrt. gs->hmapx
-const unsigned int PATH_HEATMAP_ZSCALE = 1; // wrt. gs->hmapy
-const unsigned int PATH_FLOWMAP_XSCALE = 8; // wrt. gs->mapx
-const unsigned int PATH_FLOWMAP_ZSCALE = 8; // wrt. gs->mapy
+const unsigned int PATH_HEATMAP_XSCALE =  1; // wrt. gs->hmapx
+const unsigned int PATH_HEATMAP_ZSCALE =  1; // wrt. gs->hmapy
+const unsigned int PATH_FLOWMAP_XSCALE = 32; // wrt. gs->mapx
+const unsigned int PATH_FLOWMAP_ZSCALE = 32; // wrt. gs->mapy
 
 const unsigned int PATH_DIRECTIONS = 8;
 const unsigned int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS >> 1;
