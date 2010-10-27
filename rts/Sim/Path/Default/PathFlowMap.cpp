@@ -6,10 +6,11 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Objects/SolidObject.h"
 
-#define FLOW_EPSILON        0.01f
-#define FLOW_DECAY_ENABLED  0
-#define FLOW_DECAY_FACTOR   0.86f
-#define FLOW_COST_MULT     32.00f
+#define FLOW_EPSILON         0.01f
+#define FLOW_DECAY_ENABLED   0
+#define FLOW_DECAY_FACTOR    0.86f
+#define FLOW_COST_MULT      32.00f
+#define FLOW_NGB_PROJECTION  0
 
 PathFlowMap* PathFlowMap::GetInstance() {
 	static PathFlowMap* pfm = NULL;
@@ -171,9 +172,6 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
-	// TODO:
-	//     if in lower-left quadrant of <bCell>, add reduced
-	//     flow to the directly adjacent W, S, SW cells, etc.
 	FlowCell& bCell = bCells[cellIdx];
 
 	bCell.flowVector.x += (o->speed.x);
@@ -182,6 +180,37 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	bCell.numObjects   += 1;
 
 	bIndices.insert(cellIdx);
+
+	#if (FLOW_NGB_PROJECTION == 1)
+	{
+		const unsigned int x = cellIdx % xsize;
+		const unsigned int z = cellIdx / xsize;
+		      unsigned int i = -1U;
+
+		const bool halfSpaces[4] = {
+			(o->pos.x <  bCell.cellCenter.x && x >         0),
+			(o->pos.x >= bCell.cellCenter.x && x < xsize - 1),
+			(o->pos.z <  bCell.cellCenter.z && z >         0),
+			(o->pos.z >= bCell.cellCenter.z && z < zsize - 1),
+		};
+
+		FlowCell* ngbs[3] = {NULL, NULL, NULL};
+
+		if (halfSpaces[0]) {  i = ((z    ) * xsize + (x - 1));  bIndices.insert(i);  ngbs[0] = &bCells[i];  }
+		if (halfSpaces[1]) {  i = ((z    ) * xsize + (x + 1));  bIndices.insert(i);  ngbs[0] = &bCells[i];  }
+		if (halfSpaces[2]) {  i = ((z - 1) * xsize + (x    ));  bIndices.insert(i);  ngbs[1] = &bCells[i];  }
+		if (halfSpaces[3]) {  i = ((z + 1) * xsize + (x    ));  bIndices.insert(i);  ngbs[1] = &bCells[i];  }
+
+		     if (halfSpaces[0] && halfSpaces[2]) {  i = ((z - 1) * xsize + (x - 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
+		else if (halfSpaces[0] && halfSpaces[3]) {  i = ((z + 1) * xsize + (x - 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
+		else if (halfSpaces[1] && halfSpaces[2]) {  i = ((z - 1) * xsize + (x + 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
+		else if (halfSpaces[1] && halfSpaces[3]) {  i = ((z + 1) * xsize + (x + 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
+
+		if (ngbs[0] != NULL) {  ngbs[0]->flowVector += float3(o->speed.x, o->mass * o->mobility->flowMod * 0.666f, o->speed.z);  ngbs[0]->numObjects += 1;  }
+		if (ngbs[1] != NULL) {  ngbs[1]->flowVector += float3(o->speed.x, o->mass * o->mobility->flowMod * 0.666f, o->speed.z);  ngbs[1]->numObjects += 1;  }
+		if (ngbs[2] != NULL) {  ngbs[2]->flowVector += float3(o->speed.x, o->mass * o->mobility->flowMod * 0.333f, o->speed.z);  ngbs[2]->numObjects += 1;  }
+	}
+	#endif
 
 	maxFlow[bBufferIdx] = std::max(maxFlow[bBufferIdx], bCell.flowVector.y);
 }
