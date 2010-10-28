@@ -67,11 +67,6 @@ const char* GetArchPath()
 }
 
 /*
-common java libs location
-/usr/share/java/jna.jar
-*/
-
-/*
  * On Solaris VM choosing is done by the launcher (java.c).
  */
 bool GetJVMPath(const char* jrePath, const char* jvmType,

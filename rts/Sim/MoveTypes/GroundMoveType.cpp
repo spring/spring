@@ -274,7 +274,7 @@ void CGroundMoveType::Update()
 
 				const float3 wpDirInv = -waypointDir;
 				const float3 wpPosTmp = owner->pos + wpDirInv;
-				const bool   wpBehind = (waypointDir.dot(owner->frontdir) < 0.0f);
+				const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
 
 				if (!haveFinalWaypoint) {
 					GetNextWaypoint();
@@ -316,7 +316,7 @@ void CGroundMoveType::Update()
 						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
 					}
 					if (waypointDir.SqLength() > 0.1f) {
-						const float reqTurnAngle = streflop::acosf(waypointDir.dot(owner->frontdir)) * (180.0f / PI);
+						const float reqTurnAngle = streflop::acosf(waypointDir.dot(flatFrontDir)) * (180.0f / PI);
 						const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 						const float reducedSpeed = (maxSpeed * 2.0f) * (maxTurnAngle / reqTurnAngle);
 
@@ -1283,7 +1283,7 @@ void CGroundMoveType::GetNextWaypoint()
 		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
 			return;
 		}
-		if (currentDistanceToWaypoint > MIN_WAYPOINT_DISTANCE && waypointDir.dot(owner->frontdir) >= 0.995f) {
+		if (currentDistanceToWaypoint > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir) >= 0.995f) {
 			return;
 		}
 	}
