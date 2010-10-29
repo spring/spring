@@ -399,7 +399,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	turnRate    = udTable.GetFloat("turnRate",     0.0f);
 	turnInPlace = udTable.GetBool( "turnInPlace",  true);
 	turnInPlaceDistance = udTable.GetFloat("turnInPlaceDistance", 350.f);
-	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", 15.f);
+	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", (speed / GAME_SPEED) * 0.2f);
 
 	const bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	canFireControl = udTable.GetBool("canFireControl", !noAutoFire);

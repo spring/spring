@@ -321,7 +321,7 @@ void CGroundMoveType::Update()
 						const float reducedSpeed = (maxSpeed * 2.0f) * (maxTurnAngle / reqTurnAngle);
 
 						if (!wantReverse && reqTurnAngle > maxTurnAngle) {
-							wantedSpeed = std::min(wantedSpeed, std::max(ud->turnInPlaceSpeedLimit / GAME_SPEED, reducedSpeed));
+							wantedSpeed = std::min(wantedSpeed, std::max(ud->turnInPlaceSpeedLimit, reducedSpeed));
 						}
 					}
 
@@ -550,7 +550,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 				const float tipSqDist = ud->turnInPlaceDistance * ud->turnInPlaceDistance;
 				const bool inPlaceTurn = (ud->turnInPlace && (tipSqDist > finalGoalSqDist || ud->turnInPlaceDistance <= 0.0f));
 
-				if (inPlaceTurn || (currentSpeed < ud->turnInPlaceSpeedLimit / GAME_SPEED)) {
+				if (inPlaceTurn || (currentSpeed < ud->turnInPlaceSpeedLimit)) {
 					// keep the turn mostly in-place
 					wSpeed = turnSpeed;
 				} else {
