@@ -69,8 +69,8 @@ void CThreatMap::PostLoad() {
 	height = ai->cb->GetMapHeight() / THREATRES;
 	area   = width * height;
 
-	threatCellsRaw.resize(area, 0.0f);
-	threatCellsVis.resize(area, 0.0f);
+	threatCellsRaw.resize(area, THREATVAL_BASE);
+	threatCellsVis.resize(area, THREATVAL_BASE);
 
 	threatMapTexID = -1;
 }
@@ -165,8 +165,10 @@ void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float s) {
 			if ((dxSq + dySq - 0.5) <= rangeSq) {
 				// MicroPather cannot deal with negative costs
 				// (which may arise due to floating-point drift)
-				threatCellsRaw[myy * width + myx] = std::max(threatCellsRaw[myy * width + myx] + threat, 0.0f);
-				threatCellsVis[myy * width + myx] = std::max(threatCellsVis[myy * width + myx] + threat, 0.0f);
+				// nor with zero-cost nodes (see MP::SetMapData,
+				// not an additive overlay)
+				threatCellsRaw[myy * width + myx] = std::max(threatCellsRaw[myy * width + myx] + threat, THREATVAL_BASE);
+				threatCellsVis[myy * width + myx] = std::max(threatCellsVis[myy * width + myx] + threat, THREATVAL_BASE);
 
 				currSumThreat += threat;
 			}
@@ -202,33 +204,34 @@ void CThreatMap::Update() {
 	if (threatMapTexID >= 0) {
 		if (currMaxThreat > 0.0f) {
 			for (int i = 0; i < area; i++) {
-				threatCellsVis[i] = threatCellsRaw[i] / currMaxThreat;
+				threatCellsVis[i] = (threatCellsRaw[i] - THREATVAL_BASE) / currMaxThreat;
 			}
 
 			ai->cb->DebugDrawerUpdateOverlayTexture(threatMapTexID, &threatCellsVis[0], 0, 0, width, height);
 		}
 	}
 
-
 	#if (LUA_THREATMAP_DEBUG == 1)
-	std::string luaDataStr;
-	std::stringstream luaDataStream;
-		luaDataStream << "local threatMapArray = GG.AIThreatMap;\n";
+	{
+		std::string luaDataStr;
+		std::stringstream luaDataStream;
+			luaDataStream << "local threatMapArray = GG.AIThreatMap;\n";
 
-	// just copy the entire map
-	for (int i = 0; i < area; i++) {
-		luaDataStream << "threatMapArray[" << i << "]";
-		luaDataStream << " = ";
-		luaDataStream << threatCellsRaw[i];
-		luaDataStream << " / ";
-		luaDataStream << currMaxThreat;
-		luaDataStream << ";\n";
+		// just copy the entire map
+		for (int i = 0; i < area; i++) {
+			luaDataStream << "threatMapArray[" << i << "]";
+			luaDataStream << " = ";
+			luaDataStream << (threatCellsRaw[i] - THREATVAL_BASE);
+			luaDataStream << " / ";
+			luaDataStream << currMaxThreat;
+			luaDataStream << ";\n";
+		}
+
+		luaDataStr = luaDataStream.str();
+
+		ai->cb->CallLuaRules("[AI::KAIK::ThreatMap::Update]", -1, NULL);
+		ai->cb->CallLuaRules(luaDataStr.c_str(), -1, NULL);
 	}
-
-	luaDataStr = luaDataStream.str();
-
-	ai->cb->CallLuaRules("[AI::KAIK::ThreatMap::Update]", -1, NULL);
-	ai->cb->CallLuaRules(luaDataStr.c_str(), -1, NULL);
 	#endif
 }
 
@@ -251,5 +254,5 @@ float CThreatMap::GetEnemyUnitThreat(const EnemyUnit& e) const {
 float CThreatMap::ThreatAtThisPoint(const float3& pos) const {
 	const int z = int(pos.z / (SQUARE_SIZE * THREATRES));
 	const int x = int(pos.x / (SQUARE_SIZE * THREATRES));
-	return threatCellsRaw[z * width + x];
+	return (threatCellsRaw[z * width + x] - THREATVAL_BASE);
 }
