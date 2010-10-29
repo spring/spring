@@ -36,6 +36,7 @@ CGameSetup::CGameSetup()
 	, disableMapDamage(false)
 	, maxSpeed(0.0f)
 	, minSpeed(0.0f)
+	, onlyLocal(false)
 	, hostDemo(false)
 	, numDemoPlayers(0)
 	, gameStartDelay(0)
@@ -380,7 +381,7 @@ bool CGameSetup::Init(const std::string& buf)
 	// Parse
 	TdfParser file(buf.c_str(),buf.size());
 
-	if(!file.SectionExist("GAME"))
+	if (!file.SectionExist("GAME"))
 		return false;
 
 	// Game parameters
@@ -397,6 +398,7 @@ bool CGameSetup::Init(const std::string& buf)
 
 	file.GetTDef(gameStartDelay, (unsigned int) 4, "GAME\\GameStartDelay");
 
+	file.GetDef(onlyLocal,        "0", "GAME\\OnlyLocal");
 	file.GetDef(useLuaGaia,       "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
