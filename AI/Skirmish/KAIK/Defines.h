@@ -60,6 +60,7 @@
 
 // Threatmap / pathfinder resolution
 #define THREATRES                8
+#define THREATVAL_BASE           1.0f
 
 // Maximum Builders helping each factory
 #define MAXBUILDERSPERFACTORY    2
