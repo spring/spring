@@ -13,6 +13,7 @@
 namespace netcode
 {
 class UDPConnection;
+typedef boost::shared_ptr<boost::asio::ip::udp::socket> SocketPtr;
 
 /**
  * @brief Class for handling Connections on an UDPSocket
@@ -30,7 +31,9 @@ public:
 	/**
 	@brief close the socket and DELETE all connections
 	*/
-	~UDPListener();
+	~UDPListener() {}
+
+	bool TryBindSocket(int port, SocketPtr* socket) const;
 	
 	/**
 	@brief Run this from time to time
@@ -63,9 +66,9 @@ private:
 	bool acceptNewConnections;
 	
 	/// Our socket
-	typedef boost::shared_ptr<boost::asio::ip::udp::socket> SocketPtr;
+	/// typedef boost::shared_ptr<boost::asio::ip::udp::socket> SocketPtr;
 	SocketPtr mySocket;
-	
+
 	/// all connections
 	std::list< boost::weak_ptr< UDPConnection> > conn;
 	
