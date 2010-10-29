@@ -204,12 +204,8 @@ void MicroPather::SetMapData(bool* canMoveArray, float* costArray, int mapSizeX,
 	assert(mapSizeY >= 0);
 
 	if (mapSizeY * mapSizeX  > (int) ALLOCATE) {
-		// L("Error: 'mapSizeY * mapSizeX  > ALLOCATE' in pather");
-		// Stop running:
 		assert(!(mapSizeY * mapSizeX  > (int)ALLOCATE));
 	}
-
-	// L("pather: mapSizeX: " << mapSizeX << ", mapSizeY: " << mapSizeY << ", ALLOCATE: " << ALLOCATE);
 
 	// Tournesol: make a fixed offset array
 	// ***
