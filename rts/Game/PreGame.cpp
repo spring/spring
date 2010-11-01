@@ -7,44 +7,44 @@
 #include <SDL_timer.h>
 #include <set>
 #include <cfloat>
-
 #include "mmgr.h"
 
 #include "PreGame.h"
-#include "Game.h"
-#include "GameVersion.h"
-#include "Player.h"
-#include "Sim/Misc/TeamHandler.h"
+
+#include "ClientSetup.h"
 #include "FPUCheck.h"
+#include "Game.h"
+#include "GameData.h"
 #include "GameServer.h"
 #include "GameSetup.h"
-#include "ClientSetup.h"
-#include "GameData.h"
+#include "GameVersion.h"
 #include "LoadScreen.h"
+#include "Player.h"
+#include "PlayerHandler.h"
+#include "TimeProfiler.h"
+#include "UI/InfoConsole.h"
+
+#include "aGui/Gui.h"
+#include "ExternalAI/SkirmishAIHandler.h"
+#include "Rendering/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "ExternalAI/SkirmishAIHandler.h"
-#include "NetProtocol.h"
-#include "Net/RawPacket.h"
-#include "LoadSave/DemoRecorder.h"
-#include "LoadSave/DemoReader.h"
-#include "LoadSave/LoadSaveHandler.h"
-#include "TdfParser.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "Sound/ISound.h"
-#include "Sound/IMusicChannel.h"
-#include "Map/MapInfo.h"
-#include "ConfigHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "Rendering/glFont.h"
-#include "UI/InfoConsole.h"
-#include "aGui/Gui.h"
-#include "Exceptions.h"
-#include "TimeProfiler.h"
-#include "Net/UnpackPacket.h"
-#include "PlayerHandler.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/NetProtocol.h"
+#include "System/TdfParser.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/LoadSave/DemoRecorder.h"
+#include "System/LoadSave/DemoReader.h"
+#include "System/LoadSave/LoadSaveHandler.h"
+#include "System/Net/RawPacket.h"
+#include "System/Net/UnpackPacket.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/IMusicChannel.h"
 
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
@@ -427,24 +427,19 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	}
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);
-	LogObject() << "Using map " << gameSetup->mapName << "\n";
+	LogObject() << "Using map: " << gameSetup->mapName << "\n";
 
-	if (net && net->GetDemoRecorder()) {
-		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
-		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
-	}
 	vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
 	archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 
-	// This MUST be loaded this late, since this executes map Lua code which
-	// may call Spring.GetMapOptions(), which NEEDS gameSetup to be set!
-	if (!mapInfo) {
-		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
-	}
-
-	LogObject() << "Using mod " << gameSetup->modName << "\n";
+	LogObject() << "Using mod: " << gameSetup->modName << "\n";
 	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
 	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
-	LogObject() << "Using mod archive " << modArchive << "\n";
+	LogObject() << "Using mod archive: " << modArchive << "\n";
 	archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
+
+	if (net && net->GetDemoRecorder()) {
+		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
+		LogObject() << "Recording Demo to " << net->GetDemoRecorder()->GetName() << "\n";
+	}
 }

@@ -50,7 +50,7 @@ CArchiveScanner::CArchiveScanner()
 {
 	std::ostringstream file;
 	// the "cache" dir is created in DataDirLocater
-	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCacheV" << INTERNAL_VER << ".lua";
+	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCache.lua";
 	cachefile = file.str();
 	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
 	ReadCacheData(fsh.GetWriteDir() + GetFilename());
@@ -115,7 +115,7 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const LuaTable& arc
 	// (at time of this writing they use name only)
 
 	// NOTE when changing this, this function is used both by the code that
-	// reads ArchiveCacheV#.lua and the code that reads modinfo.lua from the mod.
+	// reads ArchiveCache.lua and the code that reads modinfo.lua from the mod.
 	// so make sure it doesn't keep adding stuff to the name everytime
 	// Spring/unitsync is loaded.
 
@@ -308,7 +308,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 					AddDependency(ai.archiveData.dependencies, "Spring content v1");
 			} else {
 				// neither a map nor a mod: error
-				LogObject() << "Failed to scan " << fullName << " (missing files, could not determine archive type)";
+				logOutput.Print(LOG_ARCHIVESCANNER, "Failed to scan %s (missing modinfo.lua/mapinfo.lua)", fullName.c_str());
 				delete ar;
 
 				// record it as broken, so we don't need to look inside everytime
@@ -339,7 +339,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 			archiveInfo[lcfn] = ai;
 		} else {
-			LogObject() << "Unable to open archive: " << fullName;
+			logOutput.Print(LOG_ARCHIVESCANNER, "Unable to open archive: %s", fullName.c_str());
 		}
 	}
 }
@@ -716,7 +716,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 		for (std::vector<std::string>::const_iterator j = dep.begin(); j != dep.end(); ++j) {
 			if (std::find(ret.begin(), ret.end(), *j) == ret.end()) {
 				// add only if this dependency is not already somewhere
-				// in the chain (which can happen if ArchiveCacheV* has
+				// in the chain (which can happen if ArchiveCache.lua has
 				// not been written yet) so its checksum is not XOR'ed
 				// with the running one multiple times (Get*Checksum())
 				ret.push_back(*j);

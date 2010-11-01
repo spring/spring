@@ -44,6 +44,7 @@ class CEventHandler
 		void GameStart();
 		void GameOver( std::vector<unsigned char> winningAllyTeams );
 		void GamePaused(int playerID, bool paused);
+		void GameFrame(int gameFrame);
 
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
@@ -228,6 +229,7 @@ class CEventHandler
 		EventClientList listGameStart;
 		EventClientList listGameOver;
 		EventClientList listGamePaused;
+		EventClientList listGameFrame;
 		EventClientList listTeamDied;
 		EventClientList listTeamChanged;
 		EventClientList listPlayerChanged;
