@@ -46,8 +46,6 @@ class CLuaUI : public CLuaHandle
 		bool HasCallIn(const string& name);
 		bool UnsyncedUpdateCallIn(const string& name);
 
-		void GameFrame(int frameNum);
-
 		void Shutdown();
 
 		bool HasLayoutButtons();

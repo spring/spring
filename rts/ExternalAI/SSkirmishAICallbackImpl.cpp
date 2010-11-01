@@ -1649,7 +1649,7 @@ EXPORT(const char*) skirmishAiCallback_Map_getName(int skirmishAIId) {
 }
 
 EXPORT(const char*) skirmishAiCallback_Map_getHumanName(int skirmishAIId) {
-	return mapInfo->map.humanName.c_str();
+	return mapInfo->map.description.c_str();
 }
 
 EXPORT(float) skirmishAiCallback_Map_getElevationAt(int skirmishAIId, float x, float z) {

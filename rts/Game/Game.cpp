@@ -1739,9 +1739,7 @@ void CGame::SimFrame() {
 		m_validateAllAllocUnits();
 #endif
 
-	if (luaUI)    { luaUI->GameFrame(gs->frameNum); }
-	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
-	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
+	eventHandler.GameFrame(gs->frameNum);
 
 	gs->frameNum++;
 
@@ -2314,15 +2312,6 @@ void CGame::SelectCycle(const string& command)
 }
 
 
-static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char orig)
-{
-	const float fOrig = (float)orig / 255.0f;
-	float luaVal = tbl.GetFloat(channel, fOrig);
-	luaVal = std::max(0.0f, std::min(1.0f, luaVal));
-	return (unsigned char)(luaVal * 255.0f);
-}
-
-
 //FIXME remove!
 void CGame::ReColorTeams()
 {
@@ -2332,79 +2321,6 @@ void CGame::ReColorTeams()
 		team->origColor[1] = team->color[1];
 		team->origColor[2] = team->color[2];
 		team->origColor[3] = team->color[3];
-	}
-
-	{
-		// scoped so that 'fh' disappears before luaParser uses the file
-		CFileHandler fh("teamcolors.lua", SPRING_VFS_RAW);
-		if (!fh.FileExists()) {
-			return;
-		}
-	}
-
-	LuaParser luaParser("teamcolors.lua", SPRING_VFS_RAW, SPRING_VFS_RAW_FIRST);
-
-	luaParser.AddInt("myPlayer", gu->myPlayerNum);
-
-	luaParser.AddString("modName",      modInfo.humanName);
-	luaParser.AddString("modShortName", modInfo.shortName);
-	luaParser.AddString("modVersion",   modInfo.version);
-
-	luaParser.AddString("mapName",      mapInfo->map.name);
-	luaParser.AddString("mapHumanName", mapInfo->map.humanName);
-
-	luaParser.GetTable("teams");
-	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		luaParser.GetTable(t); {
-			const CTeam* team = teamHandler->Team(t);
-			const unsigned char* color = teamHandler->Team(t)->color;
-			luaParser.AddInt("allyTeam", teamHandler->AllyTeam(t));
-			luaParser.AddBool("gaia",    team->gaia);
-			luaParser.AddInt("leader",   team->leader);
-			luaParser.AddString("side",  team->side);
-			luaParser.GetTable("color"); {
-				luaParser.AddFloat(1, float(color[0]) / 255.0f);
-				luaParser.AddFloat(2, float(color[1]) / 255.0f);
-				luaParser.AddFloat(3, float(color[2]) / 255.0f);
-				luaParser.AddFloat(4, float(color[3]) / 255.0f);
-			}
-			luaParser.EndTable(); // color
-		}
-		luaParser.EndTable(); // team#
-	}
-	luaParser.EndTable(); // teams
-
-	luaParser.GetTable("players");
-	for(int p = 0; p < playerHandler->ActivePlayers(); ++p) {
-		luaParser.GetTable(p); {
-			const CPlayer* player = playerHandler->Player(p);
-			luaParser.AddString("name",     player->name);
-			luaParser.AddInt("team",        player->team);
-			luaParser.AddBool("active",     player->active);
-			luaParser.AddBool("spectating", player->spectator);
-		}
-		luaParser.EndTable(); // player#
-	}
-	luaParser.EndTable(); // players
-
-	if (!luaParser.Execute()) {
-		logOutput.Print("teamcolors.lua: luaParser.Execute() failed\n");
-		return;
-	}
-	LuaTable root = luaParser.GetRoot();
-	if (!root.IsValid()) {
-		logOutput.Print("teamcolors.lua: root table is not valid\n");
-	}
-
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		LuaTable teamTable = root.SubTable(t);
-		if (teamTable.IsValid()) {
-			unsigned char* color = teamHandler->Team(t)->color;
-			color[0] = GetLuaColor(teamTable, 1, color[0]);
-			color[1] = GetLuaColor(teamTable, 2, color[1]);
-			color[2] = GetLuaColor(teamTable, 3, color[2]);
-			// do not adjust color[3] -- alpha
-		}
 	}
 }
 

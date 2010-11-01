@@ -38,6 +38,7 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(GameStart,     MANAGED_BIT);
 	SETUP_EVENT(GameOver,      MANAGED_BIT);
 	SETUP_EVENT(GamePaused,    MANAGED_BIT);
+	SETUP_EVENT(GameFrame,     MANAGED_BIT);
 	SETUP_EVENT(TeamDied,      MANAGED_BIT);
 	SETUP_EVENT(TeamChanged,   MANAGED_BIT);
 	SETUP_EVENT(PlayerChanged, MANAGED_BIT);
@@ -353,6 +354,16 @@ void CEventHandler::GamePaused(int playerID, bool paused)
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listGamePaused[i];
 		ec->GamePaused(playerID, paused);
+	}
+}
+
+
+void CEventHandler::GameFrame(int gameFrame)
+{
+	const int count = listGameFrame.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listGameFrame[i];
+		ec->GameFrame(gameFrame);
 	}
 }
 

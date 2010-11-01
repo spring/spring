@@ -71,7 +71,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "windMin",             wind.GetMinWind());
 	LuaPushNamedNumber(L, "windMax",             wind.GetMaxWind());
 	LuaPushNamedString(L, "mapName",             mi->map.name);
-	LuaPushNamedString(L, "mapHumanName",        mi->map.humanName);
+	LuaPushNamedString(L, "mapHumanName",        mi->map.description); //! deprecated
+	LuaPushNamedString(L, "mapDescription",      mi->map.description);
 	LuaPushNamedNumber(L, "mapX",                readmap->width  / 64);
 	LuaPushNamedNumber(L, "mapY",                readmap->height / 64);
 	LuaPushNamedNumber(L, "mapSizeX",            readmap->width  * SQUARE_SIZE);

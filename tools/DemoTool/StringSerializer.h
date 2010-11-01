@@ -40,7 +40,6 @@ wstringstream& operator<<(wstringstream& str, const DemoFileHeader& header)
 	str<<L"TeamStatSize: " <<header.teamStatSize<<endl;
 	str<<L"TeamStatElemSize: " <<header.teamStatElemSize<<endl;
 	str<<L"TeamStatPeriod: " <<header.teamStatPeriod<<endl;
-	str<<L"WinningAllyTeam: " <<header.winningAllyTeam<<endl;
 	return str;
 }
 
