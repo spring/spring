@@ -68,10 +68,6 @@
 		File "${CONTENT_DIR}\ctrlpanel.txt"
 	${EndIf}
 
-	${IfNot} ${FileExists} "$INSTDIR\teamcolors.lua"
-		File "${CONTENT_DIR}\teamcolors.lua"
-	${EndIf}
-
 	SetOutPath "$INSTDIR\fonts"
 	File "${CONTENT_DIR}\fonts\FreeSansBold.otf"
 

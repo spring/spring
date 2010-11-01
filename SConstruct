@@ -444,7 +444,7 @@ for font in os.listdir('cont/fonts'):
 		Alias('install', inst)
 
 # install some files from root of datadir
-for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'teamcolors.lua']:
+for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt']:
 	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('cont', f))
 	Alias('install', inst)
 
