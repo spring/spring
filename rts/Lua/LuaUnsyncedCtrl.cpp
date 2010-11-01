@@ -863,10 +863,6 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 
 int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 {
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
-
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
 		luaL_error(L, "Incorrect arguments to AssignMouseCursor()");
@@ -899,10 +895,6 @@ int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 
 int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 {
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
-
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
 		luaL_error(L, "Incorrect arguments to ReplaceMouseCursor()");
