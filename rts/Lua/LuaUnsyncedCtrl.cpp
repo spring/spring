@@ -872,10 +872,6 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 
 int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 {
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
-
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
 		luaL_error(L, "Incorrect arguments to AssignMouseCursor()");
@@ -896,22 +892,19 @@ int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 		}
 	}
 
-	if (mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite)) {
-		lua_pushboolean(L, true);
-	} else {
-		lua_pushboolean(L, false);
+	const bool worked = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
+
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, worked);
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 
 int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 {
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
-
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
 		luaL_error(L, "Incorrect arguments to ReplaceMouseCursor()");
@@ -927,9 +920,14 @@ int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 		}
 	}
 
-	lua_pushboolean(L, mouse->ReplaceMouseCursor(oldName, newName, hotSpot));
+	const bool worked = mouse->ReplaceMouseCursor(oldName, newName, hotSpot);
 
-	return 1;
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, worked);
+		return 1;
+	}
+
+	return 0;
 }
 
 /******************************************************************************/
