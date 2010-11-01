@@ -14,7 +14,7 @@ class CSmfMapFile
 {
 public:
 
-	CSmfMapFile(const std::string& mapname);
+	CSmfMapFile(const std::string& mapFileName);
 
 	void ReadMinimap(void* data);
 	/// @return mipsize
