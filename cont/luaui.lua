@@ -12,11 +12,8 @@
 --------------------------------------------------------------------------------
 
 LUAUI_VERSION = "LuaUI v0.3"
-
 LUAUI_DIRNAME = 'LuaUI/'
-
 VFS.DEF_MODE = VFS.RAW_FIRST
-
 local STARTUP_FILENAME = LUAUI_DIRNAME .. 'main.lua'
 
 
@@ -42,7 +39,7 @@ Spring.Echo('Using LUAUI_DIRNAME = ' .. LUAUI_DIRNAME)
 --
 
 do
-  text = VFS.LoadFile(STARTUP_FILENAME, VFS.RAW_ONLY)
+  local text = VFS.LoadFile(STARTUP_FILENAME, VFS.RAW_ONLY)
   if (text == nil) then
     Script.Kill('Failed to load ' .. STARTUP_FILENAME)
   end
