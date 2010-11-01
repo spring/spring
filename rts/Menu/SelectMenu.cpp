@@ -138,6 +138,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	modopts->AddPair("MaxSpeed", 20);
 
 	game->AddPair("IsHost", 1);
+	game->AddPair("OnlyLocal", 1);
 	game->add_name_value("MyPlayerName", playername);
 
 	game->AddPair("NoHelperAIs", configHandler->Get("NoHelperAIs", 0));
