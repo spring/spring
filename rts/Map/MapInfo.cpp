@@ -73,7 +73,7 @@ void CMapInfo::ReadGlobal()
 {
 	const LuaTable topTable = parser->GetRoot();
 
-	map.humanName    = topTable.GetString("description", map.name);
+	map.description  = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
 
 	map.hardness      = std::max(0.001f, topTable.GetFloat("maphardness", 100.0f));
