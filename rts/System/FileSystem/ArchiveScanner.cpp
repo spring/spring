@@ -50,7 +50,7 @@ CArchiveScanner::CArchiveScanner()
 {
 	std::ostringstream file;
 	// the "cache" dir is created in DataDirLocater
-	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCacheV" << INTERNAL_VER << ".lua";
+	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCache.lua";
 	cachefile = file.str();
 	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
 	ReadCacheData(fsh.GetWriteDir() + GetFilename());
