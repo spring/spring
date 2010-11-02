@@ -774,17 +774,15 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-	//FIXME: optimize, so it doesn't alloc a new array
-
-	unsigned char* buf = new unsigned char[xsize*ysize*channels];
-
-	for (int y=0; y < ysize; ++y) {
+	unsigned char tmpPixel[channels];
+	for (int y=0; y < (ysize / 2); ++y) {
 		for (int x=0; x < xsize; ++x) {
-			for (int i=0; i < channels; ++i) {
-				buf[((ysize-1-y)*xsize+x)*channels + i] = mem[((y)*xsize+x)*channels + i];
-			}
+			const int pixelLow  = (((y            ) * xsize) + x) * channels;
+			const int pixelHigh = (((ysize - 1 - y) * xsize) + x) * channels;
+			// copy all channels at once
+			memcpy(tmpPixel,        mem + pixelHigh, channels);
+			memcpy(mem + pixelHigh, mem + pixelLow,  channels);
+			memcpy(mem + pixelLow,  tmpPixel,        channels);
 		}
 	}
-	delete[] mem;
-	mem = buf;
 }
