@@ -60,6 +60,13 @@ void CLoadScreen::Init()
 	//! Increase hang detection trigger threshold, to prevent false positives during load
 	CrashHandler::GameLoading(true);
 
+	mt_loading = configHandler->Get("LoadingMT", true);
+
+	//! Create a Thread that pings the host/server, so it knows that this client is still alive
+	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+
+	game = new CGame(mapName, modName, saveFile);
+
 	//FIXME: remove when LuaLoadScreen was added
 	{
 		const CTeam* team = teamHandler->Team(gu->myTeam);
@@ -75,13 +82,6 @@ void CLoadScreen::Init()
 		if (!mapStartMusic.empty())
 			Channels::BGMusic.Play(mapStartMusic);
 	}
-
-	mt_loading = configHandler->Get("LoadingMT", true);
-
-	//! Create a Thread that pings the host/server, so it knows that this client is still alive
-	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
-
-	game = new CGame(mapName, modName, saveFile);
 
 	try {
 		//! Create the Game Loading Thread
