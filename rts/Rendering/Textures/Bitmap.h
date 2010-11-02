@@ -34,6 +34,7 @@ public:
 #endif // !BITMAP_NO_OPENGL
 
 	void CreateAlpha(unsigned char red,unsigned char green,unsigned char blue);
+	/// @deprecated (Only used by GUI which will be replaced by CEGUI anyway)
 	void SetTransparent(unsigned char red, unsigned char green, unsigned char blue);
 
 	void Renormalize(float3 newCol);

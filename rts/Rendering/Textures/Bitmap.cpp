@@ -465,7 +465,6 @@ void CBitmap::CreateAlpha(unsigned char red, unsigned char green, unsigned char 
 }
 
 
-// Depreciated (Only used by GUI which will be replaced by CEGUI anyway)
 void CBitmap::SetTransparent(unsigned char red, unsigned char green, unsigned char blue)
 {
 	for (unsigned int y = 0; y < xsize; y++) {
