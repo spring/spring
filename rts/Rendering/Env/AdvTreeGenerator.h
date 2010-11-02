@@ -33,8 +33,6 @@ public:
 	void CreateFarView(unsigned char* mem, int dx, int dy, unsigned int displist);
 
 private:
-	void FixAlpha(unsigned char* data);
-	void FixAlpha2(unsigned char* data);
 	void CreateLeaves(const float3& start, const float3& dir, float length, float3& orto1, float3& orto2);
 	void TrunkIterator(const float3& start, const float3& dir, float length, float size, int depth);
 	void DrawTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size);
