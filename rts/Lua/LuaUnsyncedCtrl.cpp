@@ -179,6 +179,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetLosViewColors);
 
 	REGISTER_LUA_CFUNC(Restart);
+	REGISTER_LUA_CFUNC(SetWMIcon);
+	REGISTER_LUA_CFUNC(SetWMCaption);
 
 	REGISTER_LUA_CFUNC(SetUnitDefIcon);
 	REGISTER_LUA_CFUNC(SetUnitDefImage);
@@ -1646,6 +1648,35 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 	lua_pushboolean(L, execOk);
 	return 1;
+}
+
+int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetWMIcon(iconFileName)");
+	}
+
+	const std::string iconFileName = luaL_checkstring(L, 1);
+
+	// iconFileName has to point to a windows BMP file!
+	SDL_WM_SetIcon(SDL_LoadBMP(iconFileName.c_str()), NULL);
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetWMCaption(caption)");
+	}
+
+	const std::string caption = luaL_checkstring(L, 1);
+
+	SDL_WM_SetCaption(caption.c_str(), caption.c_str());
+
+	return 0;
 }
 
 /******************************************************************************/
