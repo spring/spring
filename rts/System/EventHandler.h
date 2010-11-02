@@ -43,6 +43,7 @@ class CEventHandler
 		void GamePreload();
 		void GameStart();
 		void GameOver();
+		void GameFrame(int gameFrame);
 
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
@@ -225,6 +226,7 @@ class CEventHandler
 		EventClientList listGamePreload;
 		EventClientList listGameStart;
 		EventClientList listGameOver;
+		EventClientList listGameFrame;
 		EventClientList listTeamDied;
 		EventClientList listTeamChanged;
 		EventClientList listPlayerChanged;

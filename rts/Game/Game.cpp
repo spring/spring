@@ -3575,9 +3575,7 @@ void CGame::SimFrame() {
 		m_validateAllAllocUnits();
 #endif
 
-	if (luaUI)    { luaUI->GameFrame(gs->frameNum); }
-	if (luaGaia)  { luaGaia->GameFrame(gs->frameNum); }
-	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
+	eventHandler.GameFrame(gs->frameNum);
 
 	gs->frameNum++;
 

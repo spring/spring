@@ -690,38 +690,6 @@ string CLuaHandleSynced::GetSyncData()
 }
 
 
-void CLuaHandleSynced::GameFrame(int frameNumber)
-{
-	if (killMe) {
-		string msg = GetName();
-		if (!killMsg.empty()) {
-			msg += ": " + killMsg;
-		}
-		logOutput.Print("Disabled %s\n", msg.c_str());
-		delete this;
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-
-	int errfunc = SetupTraceback();
-
-	static const LuaHashString cmdStr("GameFrame");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		if (errfunc) lua_pop(L, 1);
-		return;
-	}
-
-	lua_pushnumber(L, frameNumber); // 6 day roll-over
-
-	// call the routine
-	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-
-	return;
-}
-
-
 bool CLuaHandleSynced::SyncedActionFallback(const string& msg, int playerID)
 {
 	string cmd = msg;

@@ -98,6 +98,7 @@ class CLuaHandle : public CEventClient
 		void GamePreload();
 		void GameStart();
 		void GameOver();
+		void GameFrame(int frameNum);
 		void TeamDied(int teamID);
 		void TeamChanged(int teamID);
 		void PlayerChanged(int playerID);

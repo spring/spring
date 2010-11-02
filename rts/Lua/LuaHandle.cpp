@@ -367,6 +367,39 @@ void CLuaHandle::GameOver()
 }
 
 
+void CLuaHandle::GameFrame(int frameNum)
+{
+	if (killMe) {
+		string msg = GetName();
+		if (!killMsg.empty()) {
+			msg += ": " + killMsg;
+		}
+		logOutput.Print("Disabled %s\n", msg.c_str());
+		delete this;
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	int errfunc = SetupTraceback();
+
+	static const LuaHashString cmdStr("GameFrame");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
+		return; // the call is not defined
+	}
+
+	lua_pushnumber(L, frameNum);
+
+	// call the routine
+	RunCallInTraceback(cmdStr, 1, 0, errfunc);
+
+	return;
+}
+
+
 void CLuaHandle::TeamDied(int teamID)
 {
 	LUA_CALL_IN_CHECK(L);

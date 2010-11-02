@@ -63,6 +63,7 @@ class CEventClient
 		virtual void GamePreload();
 		virtual void GameStart();
 		virtual void GameOver();
+		virtual void GameFrame(int gameFrame);
 		virtual void TeamDied(int teamID);
 		virtual void TeamChanged(int teamID);
 		virtual void PlayerChanged(int playerID);
