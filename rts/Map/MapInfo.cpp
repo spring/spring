@@ -33,13 +33,7 @@ CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : map
 		throw content_error("MapInfo: " + parser->GetErrorLog());
 	}
 
-	resRoot = NULL;
-}
-
-void CMapInfo::Load()
-{
-	LuaParser resParser("gamedata/resources.lua",
-	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaParser resParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resParser.Execute()) {
 		logOutput.Print(resParser.GetErrorLog());
 	}
@@ -335,8 +329,7 @@ void CMapInfo::ReadSm3()
 
 void CMapInfo::ReadTerrainTypes()
 {
-	const LuaTable terrTypeTable =
-		parser->GetRoot().SubTable("terrainTypes");
+	const LuaTable terrTypeTable = parser->GetRoot().SubTable("terrainTypes");
 
 	for (int tt = 0; tt < NUM_TERRAIN_TYPES; tt++) {
 		TerrainType& terrType = terrainTypes[tt];
