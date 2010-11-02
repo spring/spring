@@ -85,6 +85,9 @@ public:
 	float maxSpeed;
 	float minSpeed;
 
+	/** if true, this is a non-network game (one local client, eg. when watching a demo) */
+	bool onlyLocal;
+
 	bool hostDemo;
 	std::string demoName;
 	int numDemoPlayers;

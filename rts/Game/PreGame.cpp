@@ -183,14 +183,14 @@ void CPreGame::StartServer(const std::string& setupscript)
 	// (Which is OK, since unitsync does not have map options available either.)
 	setup->LoadStartPositions();
 
-	const std::string modArchive = archiveScanner->ArchiveFromName(setup->modName);
+	const std::string& modArchive = archiveScanner->ArchiveFromName(setup->modName);
+	const std::string& mapArchive = archiveScanner->ArchiveFromName(setup->mapName);
 	startupData->SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
-	const std::string mapArchive = archiveScanner->ArchiveFromName(setup->mapName);
 	startupData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
 
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
-	gameServer = new CGameServer(settings->hostport, (setup->playerStartingData.size() == 1), startupData, setup);
+	gameServer = new CGameServer(settings->hostport, startupData, setup);
 	delete startupData;
 	gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 	good_fpu_control_registers("after CGameServer creation");
@@ -335,6 +335,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			tgame->AddPair("MapName", demoScript->mapName);
 			tgame->AddPair("Gametype", demoScript->modName);
 			tgame->AddPair("Demofile", demoName);
+			tgame->AddPair("OnlyLocal", 1);
 
 			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it)
 			{
@@ -383,9 +384,11 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			}
 			logOutput.Print("Starting GameServer");
 			good_fpu_control_registers("before CGameServer creation");
-			gameServer = new CGameServer(settings->hostport, true, data, tempSetup);
+
+			gameServer = new CGameServer(settings->hostport, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			delete data;
+
 			good_fpu_control_registers("after CGameServer creation");
 			logOutput.Print("GameServer started");
 			break;

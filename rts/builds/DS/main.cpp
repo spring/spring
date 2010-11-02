@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 		}
 
 		data.SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(settings.hostport, false, &data, gameSetup);
+		server = new CGameServer(settings.hostport, &data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
 #ifdef _WIN32

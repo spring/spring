@@ -29,35 +29,48 @@ using namespace boost::asio;
 
 UDPListener::UDPListener(int port)
 {
-	try {
-		SocketPtr temp(new ip::udp::socket(netservice));
+	SocketPtr socket;
 
-		boost::system::error_code err;
-		temp->open(ip::udp::v6(), err); // test v6
-		if (!err)
-		{
-			temp->bind(ip::udp::endpoint(ip::address_v6::any(), port));
-		}
-		else
-		{
-			// fallback to v4
-			temp->open(ip::udp::v4());
-			temp->bind(ip::udp::endpoint(ip::address_v4::any(), port));
-		}
-		boost::asio::socket_base::non_blocking_io command(true);
-		temp->io_control(command);
+	if (TryBindSocket(port, &socket)) {
+		boost::asio::socket_base::non_blocking_io socketCommand(true);
+		socket->io_control(socketCommand);
 
-		mySocket = temp;
+		mySocket = socket;
 		acceptNewConnections = true;
 	}
-	catch(boost::system::system_error &) {
-		handleerror(NULL, "Error: Failed to initialize UDP.\nSpring may already be running.", "Network error", MBF_OK|MBF_EXCL);
+
+	if (!acceptNewConnections) {
+		handleerror(NULL, "[UDPListener] error: unable to bind UDP port.", "Network error", MBF_OK | MBF_EXCL);
+	} else {
+		LogObject() << "[UDPListener] succesfully bound socket on port " << port;
 	}
 }
 
-UDPListener::~UDPListener()
-{
+bool UDPListener::TryBindSocket(int port, SocketPtr* socket) const {
+	bool r = false;
+
+	try {
+		socket->reset(new ip::udp::socket(netservice));
+
+		boost::system::error_code err;
+		(*socket)->open(ip::udp::v6(), err); // test v6
+
+		if (!err) {
+			(*socket)->bind(ip::udp::endpoint(ip::address_v6::any(), port));
+		} else {
+			// fallback to v4
+			(*socket)->open(ip::udp::v4());
+			(*socket)->bind(ip::udp::endpoint(ip::address_v4::any(), port));
+		}
+
+		r = true;
+	} catch (boost::system::system_error&) {
+		socket->reset();
+	}
+
+	return r;
 }
+
 
 void UDPListener::Update()
 {

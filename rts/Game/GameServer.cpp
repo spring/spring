@@ -103,9 +103,9 @@ void SetBoolArg(bool& value, const std::string& str)
 }
 
 
-CGameServer* gameServer=0;
+CGameServer* gameServer = 0;
 
-CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
+CGameServer::CGameServer(int hostport, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
 {
 	assert(setup);
@@ -149,15 +149,17 @@ CGameServer::CGameServer(int hostport, bool onlyLocal, const GameData* const new
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 	whiteListAdditionalPlayers = configHandler->Get("WhiteListAdditionalPlayers", true);
 
-	if (!onlyLocal)
+	if (!setup->onlyLocal) {
 		UDPNet.reset(new netcode::UDPListener(hostport));
+	}
 
-	std::string autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
-	int autohostport = configHandler->Get("AutohostPort", 0);
-	
+	const std::string& autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
+	const int autohostport = configHandler->Get("AutohostPort", 0);
+
 	if (autohostport > 0) {
 		AddAutohostInterface(autohostip, autohostport);
 	}
+
 	rng.Seed(newGameData->GetSetup().length());
 	Message(str( format(ServerStart) %hostport), false);
 
