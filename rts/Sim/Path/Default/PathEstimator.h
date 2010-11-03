@@ -44,7 +44,7 @@ public:
 	 *		name of the corresponding map.
 	 *		Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, unsigned int moveMathOpt, const std::string& cacheFileName, const std::string& map);
+	CPathEstimator(CPathFinder* pathFinder, unsigned int BLOCK_SIZE, const std::string& cacheFileName, const std::string& map);
 	~CPathEstimator();
 
 #if !defined(USE_MMGR)
@@ -161,8 +161,6 @@ private:
 	static const int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS / 2;
 	int2 directionVector[PATH_DIRECTIONS];
 	int directionVertex[PATH_DIRECTIONS];
-
-	unsigned int moveMathOptions;
 
 	float3 start;
 	int2 startBlock, goalBlock;

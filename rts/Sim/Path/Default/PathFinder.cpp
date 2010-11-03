@@ -89,7 +89,7 @@ IPath::SearchResult CPathFinder::GetPath(
 	needPath = true;
 
 	// If exact path is reqired and the goal is blocked, then no search is needed.
-	if (exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
+	if (exactPath && pfDef.GoalIsBlocked(moveData, CMoveMath::BLOCK_STRUCTURE))
 		return IPath::CantGetCloser;
 
 	// If the starting position is a goal position, then no search need to be performed.
@@ -213,7 +213,7 @@ IPath::SearchResult CPathFinder::GetPath(
 // set up the starting point of the search
 IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId, bool synced) {
 	// If exact path is reqired and the goal is blocked, then no search is needed.
-	if (exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
+	if (exactPath && pfDef.GoalIsBlocked(moveData, CMoveMath::BLOCK_STRUCTURE))
 		return IPath::CantGetCloser;
 
 	// Clamp the start position
@@ -358,7 +358,7 @@ bool CPathFinder::TestSquare(
 	}
 
 	const int blockStatus = moveData.moveMath->IsBlocked2(moveData, square.x, square.y);
-	int blockBits = (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN);
+	unsigned int blockBits = CMoveMath::BLOCK_STRUCTURE;
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.

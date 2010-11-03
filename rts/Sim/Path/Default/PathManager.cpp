@@ -20,8 +20,8 @@
 CPathManager::CPathManager(): nextPathId(0)
 {
 	maxResPF = new CPathFinder();
-	medResPE = new CPathEstimator(maxResPF,  8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe",  mapInfo->map.name);
-	lowResPE = new CPathEstimator(maxResPF, 32, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2", mapInfo->map.name);
+	medResPE = new CPathEstimator(maxResPF,  8, "pe",  mapInfo->map.name);
+	lowResPE = new CPathEstimator(maxResPF, 32, "pe2", mapInfo->map.name);
 
 	logOutput.Print("[CPathManager] pathing data checksum: %08x\n", GetPathCheckSum());
 
