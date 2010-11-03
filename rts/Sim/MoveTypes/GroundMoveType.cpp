@@ -1042,17 +1042,18 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			const int ltx = wsx - moveSquareX + (LINETABLE_SIZE / 2);
 			const int lty = wsy - moveSquareY + (LINETABLE_SIZE / 2);
 
+			static const unsigned int blockBits =
+				CMoveMath::BLOCK_STRUCTURE |
+				CMoveMath::BLOCK_MOBILE_BUSY;
+			const MoveData& udMoveData = *owner->unitDef->movedata;
+
 			if (ltx >= 0 && ltx < LINETABLE_SIZE && lty >= 0 && lty < LINETABLE_SIZE) {
 				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
 					const int x = (moveSquareX + li->x) * 2;
 					const int y = (moveSquareY + li->y) * 2;
-					const int blockBits = CMoveMath::BLOCK_STRUCTURE |
-					                      CMoveMath::BLOCK_TERRAIN   |
-					                      CMoveMath::BLOCK_MOBILE_BUSY;
-					const MoveData& moveData = *owner->unitDef->movedata;
 
-					if ((moveData.moveMath->IsBlocked(moveData, x, y) & blockBits) ||
-					    (moveData.moveMath->SpeedMod(moveData, x, y) <= 0.01f)) {
+					if ((udMoveData.moveMath->IsBlocked(udMoveData, x, y) & blockBits) ||
+					    (udMoveData.moveMath->SpeedMod(udMoveData, x, y) <= 0.01f)) {
 
 						// one of the potential avoidance squares is blocked
 						etaFailures++;
@@ -1841,6 +1842,11 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			int nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 			int numIter = 0;
 
+			static const unsigned int blockBits =
+				CMoveMath::BLOCK_STRUCTURE |
+				CMoveMath::BLOCK_MOBILE |
+				CMoveMath::BLOCK_MOBILE_BUSY;
+
 			while ((nwsx * nwsx + nwsy * nwsy) < LINETABLE_SIZE && !haveFinalWaypoint && pathId) {
 				const int ltx = nwsx + LINETABLE_SIZE / 2;
 				const int lty = nwsy + LINETABLE_SIZE / 2;
@@ -1850,11 +1856,8 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 					for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
 						const int x = (moveSquareX + li->x) * 2;
 						const int y = (moveSquareY + li->y) * 2;
-						static const int blockMask =
-							(CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN |
-							CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY);
 
-						if ((movemath->IsBlocked(md, x, y) & blockMask) ||
+						if ((movemath->IsBlocked(md, x, y) & blockBits) ||
 							movemath->SpeedMod(md, x, y) <= 0.01f) {
 							wpOk = false;
 							break;

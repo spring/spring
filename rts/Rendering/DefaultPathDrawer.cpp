@@ -107,18 +107,18 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				}
 			} else {
 				const MoveData* md = NULL;
-
 				const bool showBlockedMap = (gs->cheatEnabled || gu->spectating);
-				const unsigned int blockMask = (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN);
 
 				{
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
 
 					const CUnitSet& selUnits = selectedUnits.selectedUnits;
+					const CUnit* selUnit = NULL;
 
 					// use the first selected unit, if it has the ability to move
 					if (!selUnits.empty()) {
-						md = (*selUnits.begin())->unitDef->movedata;
+						selUnit = *selUnits.begin();
+						md = selUnit->unitDef->movedata;
 					}
 				}
 
@@ -129,7 +129,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						if (md != NULL) {
 							float m = md->moveMath->SpeedMod(*md, x << 1, y << 1);
 
-							if (showBlockedMap && (md->moveMath->IsBlocked2(*md, (x << 1) + 1, (y << 1) + 1) & blockMask)) {
+							if (showBlockedMap && (md->moveMath->IsBlocked2(*md, (x << 1) + 1, (y << 1) + 1) & CMoveMath::BLOCK_STRUCTURE)) {
 								m = 0.0f;
 							}
 

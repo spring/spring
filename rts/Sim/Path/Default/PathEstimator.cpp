@@ -38,14 +38,13 @@ void CPathEstimator::operator delete(void* p, size_t size) { PathAllocator::Free
 
 
 
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, const std::string& cacheFileName, const std::string& map):
+CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::string& cacheFileName, const std::string& map):
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
 	pathFinder(pf),
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
-	moveMathOptions(mmOpt),
 	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
@@ -255,12 +254,11 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 		for (unsigned int x = 1; x < BLOCK_SIZE; x += 2) {
 			const int dx = x - (BLOCK_SIZE >> 1);
 			const int dz = z - (BLOCK_SIZE >> 1);
-			const int mask = CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN;
 			const float speedMod = moveData.moveMath->SpeedMod(moveData, int(lowerX + x), int(lowerZ + z));
 
 			float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
-			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z) & mask) {
+			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE) {
 				cost = std::numeric_limits<float>::infinity();
 			}
 
@@ -750,7 +748,7 @@ void CPathEstimator::ResetSearch() {
  */
 bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::string& map)
 {
-	unsigned int hash = Hash();
+	const unsigned int hash = Hash();
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
@@ -867,7 +865,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
+	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 }
 
 

@@ -16,7 +16,6 @@ public:
 	const static int BLOCK_MOBILE = 2;
 	const static int BLOCK_MOBILE_BUSY = 4;
 	const static int BLOCK_STRUCTURE = 8;
-	const static int BLOCK_TERRAIN = 16;
 
 	// returns a speed-multiplier for given position or data
 	float SpeedMod(const MoveData& moveData, const float3& pos) const;

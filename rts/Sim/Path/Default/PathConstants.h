@@ -21,7 +21,7 @@ const float MIN_ESTIMATE_DISTANCE = 40;
 const float DETAILED_DISTANCE     = 25;
 const float MIN_DETAILED_DISTANCE = 12;
 
-const unsigned int PATHESTIMATOR_VERSION = 44;
+const unsigned int PATHESTIMATOR_VERSION = 45;
 const unsigned int SQUARES_TO_UPDATE = 600;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 
