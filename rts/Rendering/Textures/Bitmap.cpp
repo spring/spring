@@ -8,6 +8,7 @@
 #include <string.h>
 #include <IL/il.h>
 //#include <IL/ilu.h>
+#include <SDL_video.h>
 #include <boost/thread.hpp>
 #include "mmgr.h"
 
@@ -619,6 +620,30 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 	}
 
 	return bm;
+}
+
+
+SDL_Surface* CBitmap::CreateSDLSurface(bool newPixelData) const
+{
+	SDL_Surface* surface = NULL;
+
+	unsigned char* surfData = NULL;
+	if (newPixelData) {
+		// copy pixel data
+		surfData = new unsigned char[xsize * ysize * channels];
+		memcpy(surfData, mem, xsize * ysize * channels);
+	} else {
+		surfData = mem;
+	}
+
+	// This will only work with 24bit RGB and 32bit RGBA pictures
+	surface = SDL_CreateRGBSurfaceFrom(surfData, xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
+	if ((surface == NULL) && newPixelData) {
+		// cleanup when we failed to the create surface
+		delete[] surfData;
+	}
+
+	return surface;
 }
 
 
