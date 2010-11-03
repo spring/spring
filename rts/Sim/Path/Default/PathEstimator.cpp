@@ -45,11 +45,11 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
+	nextOffsetMessageIdx(0),
+	nextCostMessageIdx(0),
 	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
-	nextOffsetMessageIdx(-1),
-	nextCostMessageIdx(-1),
 	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy))
 {
  	pathFinder = pf;
