@@ -44,7 +44,7 @@ public:
 	 *		name of the corresponding map.
 	 *		Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(CPathFinder*, unsigned int blockSize, unsigned int moveMathOpt, const std::string&, const std::string&);
+	CPathEstimator(CPathFinder*, unsigned int blockSize, const std::string& cacheFileName, const std::string& mapFileName);
 	~CPathEstimator();
 
 #if !defined(USE_MMGR)
@@ -140,12 +140,33 @@ private:
 	unsigned int Hash() const;
 
 
+<<<<<<< HEAD:rts/Sim/Path/Default/PathEstimator.h
 
 	int2 mStartBlock;
 	int2 mGoalBlock;
 	int2 mGoalSqrOffset;
 	unsigned int mStartBlockIdx;
 	float mGoalHeuristic;
+=======
+	PathNodeBuffer openBlockBuffer;
+	PathNodeStateBuffer blockStates;
+	PathPriorityQueue openBlocks;													// The priority-queue used to select next block to be searched.
+
+	std::vector<float> vertices;
+	std::list<int> dirtyBlocks;														// List of blocks changed in last search.
+	std::list<SingleBlock> needUpdate;												// Blocks that may need an update due to map changes.
+
+	static const int PATH_DIRECTIONS = 8;
+	static const int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS / 2;
+	int2 directionVector[PATH_DIRECTIONS];
+	int directionVertex[PATH_DIRECTIONS];
+
+	float3 start;
+	int2 startBlock, goalBlock;
+	int startBlocknr;
+	float goalHeuristic;
+	int2 goalSqrOffset;
+>>>>>>> master:rts/Sim/Path/Default/PathEstimator.h
 
 	unsigned int maxBlocksToBeSearched;
 	unsigned int testedBlocks;

@@ -452,68 +452,6 @@ void CAdvTreeGenerator::CreateFarView(unsigned char* mem,int dx,int dy,unsigned 
 	delete[] buf;
 }
 
-void CAdvTreeGenerator::FixAlpha(unsigned char* data)
-{
-	for(int y=0;y<63;++y){
-		for(int x=0;x<512;++x){
-			if(data[((y)*512+x)*4+3]==0){
-				data[((y)*512+x)*4+3]=y*2;
-			} else {
-				data[((y)*512+x)*4+3]=255-y*2;
-			}
-		}
-	}
-	for(int y=0;y<63;++y){
-		for(int x=0;x<512;++x){
-			if(data[((y+64)*512+x)*4+3]==0){
-				data[((y+64)*512+x)*4+3]=y*2;
-			} else {
-				data[((y+64)*512+x)*4+3]=255-y*2;
-			}
-		}
-	}
-	for(int y=0;y<63;++y){
-		for(int x=0;x<512;++x){
-			if(data[((y+128)*512+x)*4+3]==0){
-				data[((y+128)*512+x)*4+3]=y*2;
-			} else {
-				data[((y+128)*512+x)*4+3]=255-y*2;
-			}
-		}
-	}
-}
-
-void CAdvTreeGenerator::FixAlpha2(unsigned char* data)
-{
-	for(int y=0;y<31;++y){
-		for(int x=0;x<256;++x){
-			if(data[((y)*256+x)*4+3]==0){
-				data[((y)*256+x)*4+3]=y*4;
-			} else {
-				data[((y)*256+x)*4+3]=255-y*4;
-			}
-		}
-	}
-	for(int y=0;y<31;++y){
-		for(int x=0;x<256;++x){
-			if(data[((y+32)*256+x)*4+3]==0){
-				data[((y+32)*256+x)*4+3]=y*4;
-			} else {
-				data[((y+32)*256+x)*4+3]=255-y*4;
-			}
-		}
-	}
-	for(int y=0;y<31;++y){
-		for(int x=0;x<256;++x){
-			if(data[((y+64)*256+x)*4+3]==0){
-				data[((y+64)*256+x)*4+3]=y*4;
-			} else {
-				data[((y+64)*256+x)*4+3]=255-y*4;
-			}
-		}
-	}
-}
-
 
 void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, int xsize)
 {
