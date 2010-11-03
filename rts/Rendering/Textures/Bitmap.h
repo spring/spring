@@ -25,24 +25,24 @@ public:
 
 	virtual ~CBitmap();
 
-	void Alloc(int w,int h);
-	bool Load(std::string const& filename, unsigned char defaultAlpha=255);
+	void Alloc(int w, int h);
+	bool Load(std::string const& filename, unsigned char defaultAlpha = 255);
 	bool LoadGrayscale(std::string const& filename);
-	bool Save(std::string const& filename, bool opaque = true);
+	bool Save(std::string const& filename, bool opaque = true) const;
 
 #ifndef BITMAP_NO_OPENGL
-	const GLuint CreateTexture(bool mipmaps=false);
-	const GLuint CreateDDSTexture(GLuint texID = 0);
+	const GLuint CreateTexture(bool mipmaps = false) const;
+	const GLuint CreateDDSTexture(GLuint texID = 0) const;
 #endif // !BITMAP_NO_OPENGL
 
-	void CreateAlpha(unsigned char red,unsigned char green,unsigned char blue);
+	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
 	/// @deprecated (Only used by GUI which will be replaced by CEGUI anyway)
 	void SetTransparent(unsigned char red, unsigned char green, unsigned char blue);
 
 	void Renormalize(float3 newCol);
 	void Blur(int iterations = 1, float weight = 1.0f);
 
-	CBitmap GetRegion(int startx, int starty, int width, int height);
+	CBitmap GetRegion(int startx, int starty, int width, int height) const;
 	/**
 	 * Allocates a new SDL_Surface, and feeds it with the data of this bitmap.
 	 * @param newPixelData
@@ -57,7 +57,7 @@ public:
 	 *   if you do not need it anymore!
 	 */
 	SDL_Surface* CreateSDLSurface(bool newPixelData = false) const;
-	CBitmap CreateMipmapLevel(void);
+	CBitmap CreateMipmapLevel() const;
 
 	unsigned char* mem;
 	int xsize;
@@ -78,7 +78,7 @@ public:
 #endif // !BITMAP_NO_OPENGL
 
 public:
-	CBitmap CreateRescaled(int newx, int newy);
+	CBitmap CreateRescaled(int newx, int newy) const;
 	void ReverseYAxis();
 	void InvertColors();
 	void GrayScale();

@@ -182,7 +182,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	CFileHandler file(filename);
 	if (file.FileExists() == false) {
-		Alloc(1,1);
+		Alloc(1, 1);
 		return false;
 	}
 
@@ -199,7 +199,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
 	ilDisable(IL_ORIGIN_SET);
-	delete [] buffer;
+	delete[] buffer;
 
 	if (success == false) {
 		xsize = 1;
@@ -235,7 +235,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 }
 
 
-bool CBitmap::LoadGrayscale (const std::string& filename)
+bool CBitmap::LoadGrayscale(const std::string& filename)
 {
 	type = BitmapTypeStandardAlpha;
 	channels = 1;
@@ -278,7 +278,7 @@ bool CBitmap::LoadGrayscale (const std::string& filename)
 }
 
 
-bool CBitmap::Save(std::string const& filename, bool opaque)
+bool CBitmap::Save(std::string const& filename, bool opaque) const
 {
 	if (type == BitmapTypeDDS) {
 #ifndef BITMAP_NO_OPENGL
@@ -329,7 +329,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque)
 
 
 #ifndef BITMAP_NO_OPENGL
-const GLuint CBitmap::CreateTexture(bool mipmaps)
+const GLuint CBitmap::CreateTexture(bool mipmaps) const
 {
 	if (type == BitmapTypeDDS) {
 		return CreateDDSTexture();
@@ -375,7 +375,7 @@ const GLuint CBitmap::CreateTexture(bool mipmaps)
 }
 
 
-const GLuint CBitmap::CreateDDSTexture(GLuint texID)
+const GLuint CBitmap::CreateDDSTexture(GLuint texID) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
@@ -600,7 +600,7 @@ void CBitmap::Blur(int iterations, float weight)
 
 
 // Unused
-CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
+CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
 {
 	CBitmap bm;
 
@@ -647,7 +647,7 @@ SDL_Surface* CBitmap::CreateSDLSurface(bool newPixelData) const
 }
 
 
-CBitmap CBitmap::CreateMipmapLevel(void)
+CBitmap CBitmap::CreateMipmapLevel() const
 {
 	CBitmap bm;
 
@@ -677,11 +677,10 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 	}
 
 	return bm;
-
 }
 
 
-CBitmap CBitmap::CreateRescaled(int newx, int newy)
+CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 {
 	CBitmap bm;
 
