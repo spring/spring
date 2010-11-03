@@ -13,6 +13,8 @@
 #endif // !BITMAP_NO_OPENGL
 #include "float3.h"
 
+struct SDL_Surface;
+
 class CBitmap  
 {
 public:
@@ -41,6 +43,20 @@ public:
 	void Blur(int iterations = 1, float weight = 1.0f);
 
 	CBitmap GetRegion(int startx, int starty, int width, int height);
+	/**
+	 * Allocates a new SDL_Surface, and feeds it with the data of this bitmap.
+	 * @param newPixelData
+	 *        if false, the returned struct will have a pointer
+	 *        to the internal pixel data (mem), which means it is only valid
+	 *        as long as mem is not freed, which should only happen
+	 *        when the this bitmap is deleted.
+	 *        If true, an array is allocated with new, and has to be deleted
+	 *        after SDL_FreeSurface() is called.
+	 * Note:
+	 * - You have to free the surface with SDL_FreeSurface(surface)
+	 *   if you do not need it anymore!
+	 */
+	SDL_Surface* CreateSDLSurface(bool newPixelData = false) const;
 	CBitmap CreateMipmapLevel(void);
 
 	unsigned char* mem;
