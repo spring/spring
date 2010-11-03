@@ -25,8 +25,8 @@ CPathManager::CPathManager(): nextPathId(0)
 	pathHeatMap = PathHeatMap::GetInstance();
 
 	maxResPF = new CPathFinder();
-	medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe",  mapInfo->map.name);
-	lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2", mapInfo->map.name);
+	medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+	lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
 	logOutput.Print("[CPathManager] pathing data checksum: %08x\n", GetPathCheckSum());
 

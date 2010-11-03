@@ -39,18 +39,17 @@ void CPathEstimator::operator delete(void* p, size_t size) { PathAllocator::Free
 
 
 
-CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int blockSize, unsigned int mmOpts, const std::string& cacheFileName, const std::string& map):
- 	BLOCK_SIZE(blockSize),
- 	BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE),
- 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
- 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
- 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
- 	moveMathOptions(mmOpts),
- 	nextOffsetMessageIdx(0),
- 	nextCostMessageIdx(0),
- 	pathChecksum(0),
- 	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
- 	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
+CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName):
+	BLOCK_SIZE(BSIZE),
+	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
+	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
+	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
+	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
+	pathChecksum(0),
+	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
+	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
+	nextOffsetMessage(-1),
+	nextCostMessage(-1),
 	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy))
 {
  	pathFinder = pf;
@@ -78,7 +77,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int blockSize, unsigned
 	vertexCosts.resize(moveinfo->moveData.size() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
 
 	// load precalculated data if it exists
-	InitEstimator(cacheFileName, map);
+	InitEstimator(cacheFileName, mapFileName);
 }
 
 CPathEstimator::~CPathEstimator()
@@ -240,12 +239,11 @@ void CPathEstimator::FindOffset(const MoveData& moveData, unsigned int blockX, u
 		for (unsigned int x = 1; x < BLOCK_SIZE; x += 2) {
 			const int dx = x - (BLOCK_SIZE >> 1);
 			const int dz = z - (BLOCK_SIZE >> 1);
-			const int mask = CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN;
 			const float speedMod = moveData.moveMath->SpeedMod(moveData, int(lowerX + x), int(lowerZ + z));
 
 			float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
-			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z) & mask) {
+			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE) {
 				cost = std::numeric_limits<float>::infinity();
 			}
 
@@ -755,7 +753,7 @@ void CPathEstimator::ResetSearch() {
  */
 bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::string& map)
 {
-	unsigned int hash = Hash();
+	const unsigned int hash = Hash();
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
@@ -872,7 +870,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
+	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 }
 
 

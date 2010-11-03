@@ -21,6 +21,7 @@ local postProcFile = 'gamedata/weapondefs_post.lua'
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
 local system = VFS.Include('gamedata/system.lua')
+VFS.Include('gamedata/VFSUtils.lua')
 
 
 --------------------------------------------------------------------------------
@@ -44,7 +45,7 @@ end
 --  Load the TDF weapondef files
 --
 
-local tdfFiles = VFS.DirList('weapons/', '*.tdf')
+local tdfFiles = RecursiveFileSearch('weapons/', '*.tdf') 
 
 for _, filename in ipairs(tdfFiles) do
   local wds, err = TDF.Parse(filename)
@@ -66,7 +67,7 @@ end
 --  (these will override the TDF versions)
 --
 
-local luaFiles = VFS.DirList('weapons/', '*.lua')
+local luaFiles = RecursiveFileSearch('weapons/', '*.lua')
 
 for _, filename in ipairs(luaFiles) do
   local wdEnv = {}

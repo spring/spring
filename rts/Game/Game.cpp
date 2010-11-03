@@ -285,6 +285,9 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
 
 	modInfo.Init(modName.c_str());
+	if (!mapInfo) {
+		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
+	}
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -460,7 +463,6 @@ void CGame::LoadSimulation(const std::string& mapname)
 
 	loadscreen->SetLoadMessage("Parsing Map Information");
 
-	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap(mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 

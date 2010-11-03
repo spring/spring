@@ -20,7 +20,6 @@ public:
 	@param mapName human readable mapname e.g. DeltaSiegeDry
 	*/
 	CMapInfo(const std::string& mapInfoFile, const std::string& mapName);
-	void Load(); // fill in infos
 	~CMapInfo();
 
 	/* The settings are just public members because:

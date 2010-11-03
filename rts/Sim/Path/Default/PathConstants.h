@@ -22,8 +22,10 @@ const float MIN_ESTIMATE_DISTANCE = 64;
 const float MIN_DETAILED_DISTANCE = 32;
 
 const unsigned int PATHESTIMATOR_VERSION = 45;
+
 const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 const unsigned int LOWRES_PE_BLOCKSIZE = 32;
+
 const unsigned int SQUARES_TO_UPDATE = 600;
 const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 
