@@ -38,6 +38,8 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
+#include "Rendering/WindowManagerHelper.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -350,9 +352,7 @@ bool SpringApp::InitWindow(const char* title)
 
 	PrintAvailableResolutions();
 
-	// Sets window manager properties
-	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
-	SDL_WM_SetCaption(title, title);
+	WindowManagerHelper::SetCaption(title);
 
 	if (!SetSDLVideoMode()) {
 		logOutput.Print("Failed to set SDL video mode: %s", SDL_GetError());
