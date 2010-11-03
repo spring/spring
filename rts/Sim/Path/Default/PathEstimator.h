@@ -44,7 +44,7 @@ public:
 	 *		name of the corresponding map.
 	 *		Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(CPathFinder*, unsigned int blockSize, const std::string& cacheFileName, const std::string& mapFileName);
+	CPathEstimator(CPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
 	~CPathEstimator();
 
 #if !defined(USE_MMGR)
