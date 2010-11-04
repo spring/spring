@@ -18,8 +18,8 @@ void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 		if (((icon->channels != 3) && (icon->channels != 4)) 
 #ifdef    WIN32
 			// on windows, the icon has to be 32x32
-			(icon->xsize != 32) ||
-			(icon->ysize != 32) ||
+			|| (icon->xsize != 32)
+			|| (icon->ysize != 32)
 #endif // WIN32
 			) {
 			logOutput.Print("Warning: window-manager icon: Trying to set a window-manager icon with the wrong format.");
