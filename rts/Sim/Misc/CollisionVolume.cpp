@@ -121,8 +121,8 @@ CollisionVolume::CollisionVolume(const std::string& volTypeStr, const float3& sc
 
 void CollisionVolume::Init(float r)
 {
-	// <r> is the object's default RADIUS (not its diameter), so we
-	// need to double it to get the full-length scales
+	// <r> is the object's default RADIUS (not its diameter),
+	// so we need to double it to get the full-length scales
 	Init(float3(r * 2.0f, r * 2.0f, r * 2.0f), ZeroVector, volumeType, testType, primaryAxis);
 }
 
