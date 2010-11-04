@@ -293,8 +293,6 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
 	}
-
-	unitLoader = new CUnitLoader();
 }
 
 CGame::~CGame()
@@ -361,6 +359,7 @@ CGame::~CGame()
 	SafeDelete(shadowHandler);
 	SafeDelete(moveinfo);
 	SafeDelete(unitDefHandler);
+	SafeDelete(unitLoader);
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(vfsHandler);
@@ -385,7 +384,6 @@ CGame::~CGame()
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
 	SafeDelete(cubeMapHandler);
-	SafeDelete(unitLoader);
 }
 
 
@@ -496,6 +494,7 @@ void CGame::LoadSimulation(const std::string& mapname)
 	weaponDefHandler = new CWeaponDefHandler();
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler();
+	unitLoader = new CUnitLoader();
 
 	uh = new CUnitHandler();
 	ph = new CProjectileHandler();
