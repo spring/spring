@@ -44,6 +44,8 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
+#include "Rendering/WindowManagerHelper.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -1659,8 +1661,13 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 
 	const std::string iconFileName = luaL_checkstring(L, 1);
 
-	// iconFileName has to point to a windows BMP file!
-	SDL_WM_SetIcon(SDL_LoadBMP(iconFileName.c_str()), NULL);
+	CBitmap iconTexture;
+	const bool loaded = iconTexture.Load(iconFileName);
+	if (loaded) {
+		WindowManagerHelper::SetIcon(&iconTexture);
+	} else {
+		luaL_error(L, "Failed to load image from file \"%s\"", iconFileName.c_str());
+	}
 
 	return 0;
 }
@@ -1674,7 +1681,7 @@ int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 
 	const std::string caption = luaL_checkstring(L, 1);
 
-	SDL_WM_SetCaption(caption.c_str(), caption.c_str());
+	WindowManagerHelper::SetCaption(caption);
 
 	return 0;
 }

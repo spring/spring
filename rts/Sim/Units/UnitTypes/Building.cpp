@@ -59,5 +59,5 @@ void CBuilding::ForcedMove(const float3& newPos, int facing) {
 	heading = GetHeadingFromFacing(buildFacing);
 	frontdir = GetVectorFromHeading(heading);
 	CUnit::ForcedMove(pos);
-	unitLoader.FlattenGround(this);
+	unitLoader->FlattenGround(this);
 }

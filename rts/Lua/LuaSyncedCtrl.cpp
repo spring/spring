@@ -979,11 +979,11 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	inCreateUnit = true;
 	ASSERT_SYNCED_FLOAT3(pos);
 	ASSERT_SYNCED_PRIMITIVE((int)facing);
-	CUnit* unit = unitLoader.LoadUnit(unitDef, pos, teamID, build, facing, NULL);
+	CUnit* unit = unitLoader->LoadUnit(unitDef, pos, teamID, build, facing, NULL);
 	inCreateUnit = false;
 
 	if (unit) {
-		unitLoader.FlattenGround(unit);
+		unitLoader->FlattenGround(unit);
 		lua_pushnumber(L, unit->id);
 		return 1;
 	}
@@ -1753,15 +1753,18 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	const float xo = luaL_checkfloat(L, 5);
 	const float yo = luaL_checkfloat(L, 6);
 	const float zo = luaL_checkfloat(L, 7);
-	const int vType = luaL_checkint(L,  8);
-	const int tType = luaL_checkint(L,  9);
-	const int pAxis = luaL_checkint(L, 10);
+	const unsigned int vType = luaL_checkint(L,  8);
+	const unsigned int tType = luaL_checkint(L,  9);
+	const unsigned int pAxis = luaL_checkint(L, 10);
 
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
+	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES  ) { return 0; }
+	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { return 0; }
+	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES    ) { return 0; }
 
+	unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
@@ -1807,18 +1810,20 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const float xo  = luaL_checkfloat(L, 10);
 	const float yo  = luaL_checkfloat(L, 11);
 	const float zo  = luaL_checkfloat(L, 12);
-	const int vType = luaL_checkint(L, 13);
-	const int pAxis = luaL_checkint(L, 14);
+	const unsigned int vType = luaL_checkint(L, 13);
+	const unsigned int pAxis = luaL_checkint(L, 14);
+	const unsigned int tType = CollisionVolume::COLVOL_HITTEST_CONT;
 
 	const float3 scales(xs, ys, zs);
 	const float3 offset(xo, yo, zo);
 
+	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { return 0; }
+	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { return 0; }
+
 	if (affectLocal) {
 		// affects this unit only
 		if (enableLocal) {
-			if (argc == 14) {
-				lmp->colvol->Init(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
-			}
+			lmp->colvol->Init(scales, offset, vType, tType, pAxis);
 			lmp->colvol->Enable();
 		} else {
 			lmp->colvol->Disable();
@@ -1828,9 +1833,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	if (affectGlobal) {
 		// affects all future units with this model
 		if (enableGlobal) {
-			if (argc == 14) {
-				omp->colvol->Init(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
-			}
+			omp->colvol->Init(scales, offset, vType, tType, pAxis);
 			omp->colvol->Enable();
 		} else {
 			omp->colvol->Disable();

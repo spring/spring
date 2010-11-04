@@ -228,9 +228,9 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				float3 pos2 = float3(posx, pos.y, posz);
 				const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
 				if (ud) {
-					const CUnit* unit = unitLoader.LoadUnit(ud, pos2, team, false, 0, NULL);
+					const CUnit* unit = unitLoader->LoadUnit(ud, pos2, team, false, 0, NULL);
 					if (unit) {
-						unitLoader.FlattenGround(unit);
+						unitLoader->FlattenGround(unit);
 					}
 				}
 			}
@@ -266,10 +266,10 @@ void CGame::ActionReceived(const Action& action, int playernum)
 						float minposx = minpos.x + x * xsize * SQUARE_SIZE;
 						float minposz = minpos.z + z * zsize * SQUARE_SIZE;
 						const float3 upos(minposx, minpos.y, minposz);
-						const CUnit* unit = unitLoader.LoadUnit(unitDef, upos, team, false, 0, NULL);
+						const CUnit* unit = unitLoader->LoadUnit(unitDef, upos, team, false, 0, NULL);
 
 						if (unit) {
-							unitLoader.FlattenGround(unit);
+							unitLoader->FlattenGround(unit);
 						}
 						--total;
 					}

@@ -14,7 +14,6 @@ struct CollisionVolume
 	CR_DECLARE_STRUCT(CollisionVolume);
 
 	enum COLVOL_SHAPE_TYPES {
-		COLVOL_TYPE_DISABLED  = -1,
 		COLVOL_TYPE_ELLIPSOID =  0,
 		COLVOL_TYPE_CYLINDER  =  1,
 		COLVOL_TYPE_BOX       =  2,

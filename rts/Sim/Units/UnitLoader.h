@@ -33,6 +33,6 @@ protected:
 	void LoadSound(GuiSoundSet& sound);
 };
 
-extern CUnitLoader unitLoader;
+extern CUnitLoader *unitLoader;
 
 #endif /* UNIT_LOADER_H */

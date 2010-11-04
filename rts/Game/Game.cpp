@@ -104,6 +104,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/GroupHandler.h"
+#include "Sim/Units/UnitLoader.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/Weapon.h"
@@ -358,6 +359,7 @@ CGame::~CGame()
 	SafeDelete(shadowHandler);
 	SafeDelete(moveinfo);
 	SafeDelete(unitDefHandler);
+	SafeDelete(unitLoader);
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(vfsHandler);
@@ -492,6 +494,7 @@ void CGame::LoadSimulation(const std::string& mapname)
 	weaponDefHandler = new CWeaponDefHandler();
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler();
+	unitLoader = new CUnitLoader();
 
 	uh = new CUnitHandler();
 	ph = new CProjectileHandler();
