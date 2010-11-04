@@ -23,7 +23,7 @@ struct S3DOVertex {
 
 struct S3DOPrimitive {
 	std::vector<int> vertices;
-	std::vector<float3> normals;		//normals per vertex
+	std::vector<float3> normals; ///< normals per vertex
 	float3 normal;
 	int numVertex;
 	C3DOTextureHandler::UnitTexture* texture;
@@ -36,7 +36,8 @@ struct S3DOPiece: public S3DModelPiece {
 	void SetMinMaxExtends();
 	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
-	void Shatter(float, int, int, const float3&, const float3&) const;
+	void Shatter(float pieceChance, int texType, int team, const float3& pos,
+			const float3& speed) const;
 
 	std::vector<S3DOVertex> vertices;
 	std::vector<S3DOPrimitive> prims;
@@ -83,16 +84,17 @@ public:
 private:
 	void CalcNormals(S3DOPiece* o) const;
 	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim);
-	void GetVertexes(_3DObject* o,S3DOPiece* object);
+	void GetVertexes(_3DObject* o, S3DOPiece* object);
 	std::string GetText(int pos);
 
-	S3DOPiece* LoadPiece(S3DModel*, int, S3DOPiece*, int*);
+	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent,
+			int* numobj);
 
 	std::set<std::string> teamtex;
 
 	int curOffset;
 	unsigned char* fileBuf;
-	void SimStreamRead(void* buf,int length);
+	void SimStreamRead(void* buf, int length);
 };
 
 #endif // SPRING_3DOPARSER_H

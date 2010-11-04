@@ -21,18 +21,18 @@ class IModelDrawer: public CEventClient {
 public:
 	static IModelDrawer* GetInstance();
 
-	IModelDrawer(const std::string&, int, bool);
+	IModelDrawer(const std::string& name, int order, bool synced);
 	virtual ~IModelDrawer();
 	virtual void Draw();
 
 	// NOTE: GML synchronization points
-	virtual void RenderUnitCreated(const CUnit*, int cloaked);
-	virtual void RenderUnitDestroyed(const CUnit*);
-	virtual void RenderUnitCloakChanged(const CUnit*, int cloaked);
-	virtual void RenderFeatureCreated(const CFeature*);
-	virtual void RenderFeatureDestroyed(const CFeature*);
-	virtual void RenderProjectileCreated(const CProjectile*);
-	virtual void RenderProjectileDestroyed(const CProjectile*);
+	virtual void RenderUnitCreated(const CUnit* u, int cloaked);
+	virtual void RenderUnitDestroyed(const CUnit* u);
+	virtual void RenderUnitCloakChanged(const CUnit* u, int cloaked);
+	virtual void RenderFeatureCreated(const CFeature* f);
+	virtual void RenderFeatureDestroyed(const CFeature* f);
+	virtual void RenderProjectileCreated(const CProjectile* p);
+	virtual void RenderProjectileDestroyed(const CProjectile* p);
 
 	virtual bool WantsEvent(const std::string& eventName) {
 		return
@@ -46,8 +46,8 @@ public:
 
 protected:
 	virtual bool LoadModelShaders() { return false; }
-	virtual void PushDrawState(int) {}
-	virtual void PopDrawState(int) {}
+	virtual void PushDrawState(int modelType) {}
+	virtual void PopDrawState(int modelType) {}
 
 	std::map<int, std::vector<Shader::IProgramObject*> > shaders;
 
@@ -59,7 +59,7 @@ protected:
 
 class CModelDrawerFFP: public IModelDrawer {
 public:
-	CModelDrawerFFP(const std::string&, int, bool);
+	CModelDrawerFFP(const std::string& name, int order, bool synced);
 	~CModelDrawerFFP() {}
 };
 
@@ -67,7 +67,7 @@ public:
 
 class CModelDrawerARB: public IModelDrawer {
 public:
-	CModelDrawerARB(const std::string&, int, bool);
+	CModelDrawerARB(const std::string& name, int order, bool synced);
 	~CModelDrawerARB();
 
 protected:
@@ -78,17 +78,17 @@ protected:
 
 class CModelDrawerGLSL: public IModelDrawer {
 public:
-	CModelDrawerGLSL(const std::string&, int, bool);
+	CModelDrawerGLSL(const std::string& name, int order, bool synced);
 	~CModelDrawerGLSL();
 
 protected:
 	bool LoadModelShaders();
-	void PushDrawState(int);
-	void PopDrawState(int);
+	void PushDrawState(int modelType);
+	void PopDrawState(int modelType);
 };
 
 
 
 extern IModelDrawer* modelDrawer;
 
-#endif
+#endif // MODEL_DRAWER_HDR

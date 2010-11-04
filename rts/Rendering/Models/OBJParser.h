@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef OBJPARSER_HDR
-#define OBJPARSER_HDR
+#ifndef OBJ_PARSER_H
+#define OBJ_PARSER_H
 
 #include <map>
 #include "IModelParser.h"
 #include "System/Vec2.h"
 
 struct SOBJTriangle {
-	int vIndices[3];   // index of 1st/2nd/3rd vertex
-	int nIndices[3];   // index of 1st/2nd/3rd normal
-	int tIndices[3];   // index of 1st/2nd/3rd txcoor
+	int vIndices[3]; ///< index of 1st/2nd/3rd vertex
+	int nIndices[3]; ///< index of 1st/2nd/3rd normal
+	int tIndices[3]; ///< index of 1st/2nd/3rd txcoor
 };
 
 struct SOBJPiece: public S3DModelPiece {
@@ -83,14 +83,28 @@ private:
 class LuaTable;
 class COBJParser: public IModelParser {
 public:
-	S3DModel* Load(const std::string&);
+	S3DModel* Load(const std::string& modelFileName);
 
 private:
 	typedef std::map<std::string, SOBJPiece*> PieceMap;
 
-	bool ParseModelData(S3DModel*, const std::string&, const LuaTable&);
-	bool BuildModelPieceTree(S3DModel*, const PieceMap&, const LuaTable&, bool, bool);
-	void BuildModelPieceTreeRec(S3DModel*, SOBJPiece*, const PieceMap&, const LuaTable&, bool, bool);
+	bool ParseModelData(
+			S3DModel* model,
+			const std::string& modelData,
+			const LuaTable& metaData);
+	bool BuildModelPieceTree(
+			S3DModel* model,
+			const PieceMap& pieceMap,
+			const LuaTable& piecesTable,
+			bool globalVertexOffsets,
+			bool localPieceOffsets);
+	void BuildModelPieceTreeRec(
+			S3DModel* model,
+			SOBJPiece* piece,
+			const PieceMap& pieceMap,
+			const LuaTable& pieceTable,
+			bool globalVertexOffsets,
+			bool localPieceOffsets);
 };
 
-#endif
+#endif // OBJ_PARSER_H
