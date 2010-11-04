@@ -104,6 +104,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/GroupHandler.h"
+#include "Sim/Units/UnitLoader.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/Weapon.h"
@@ -292,6 +293,8 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
 	}
+
+	unitLoader = new CUnitLoader();
 }
 
 CGame::~CGame()
@@ -382,6 +385,7 @@ CGame::~CGame()
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
 	SafeDelete(cubeMapHandler);
+	SafeDelete(unitLoader);
 }
 
 

@@ -58,7 +58,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CUnitLoader unitLoader;
+CUnitLoader *unitLoader;
 
 CUnitLoader::CUnitLoader()
 {

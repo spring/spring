@@ -979,11 +979,11 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	inCreateUnit = true;
 	ASSERT_SYNCED_FLOAT3(pos);
 	ASSERT_SYNCED_PRIMITIVE((int)facing);
-	CUnit* unit = unitLoader.LoadUnit(unitDef, pos, teamID, build, facing, NULL);
+	CUnit* unit = unitLoader->LoadUnit(unitDef, pos, teamID, build, facing, NULL);
 	inCreateUnit = false;
 
 	if (unit) {
-		unitLoader.FlattenGround(unit);
+		unitLoader->FlattenGround(unit);
 		lua_pushnumber(L, unit->id);
 		return 1;
 	}
