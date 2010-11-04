@@ -285,7 +285,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	qf->RemoveUnit(unit);
 
 	if (CBuilding* building = dynamic_cast<CBuilding*>(unit)) {
-		unitLoader.RestoreGround(unit);
+		unitLoader->RestoreGround(unit);
 		groundDecals->RemoveBuilding(building, NULL);
 	}
 

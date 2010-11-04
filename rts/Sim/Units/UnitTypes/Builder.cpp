@@ -314,7 +314,7 @@ void CBuilder::Update()
 					}
 					if(curResurrect->resurrectProgress>1){		//resurrect finished
 						curResurrect->UnBlock();
-						CUnit* u = unitLoader.LoadUnit(curResurrect->createdFromUnit, curResurrect->pos,
+						CUnit* u = unitLoader->LoadUnit(curResurrect->createdFromUnit, curResurrect->pos,
 													team, false, curResurrect->buildFacing, this);
 						if (!this->unitDef->canBeAssisted) {
 							u->soloBuilder = this;
@@ -572,7 +572,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature)
 	const UnitDef* unitDef = buildInfo.def;
 	SetBuildStanceToward(buildInfo.pos);
 
-	CUnit* b = unitLoader.LoadUnit(buildInfo.def, buildInfo.pos, team,
+	CUnit* b = unitLoader->LoadUnit(buildInfo.def, buildInfo.pos, team,
 	                               true, buildInfo.buildFacing, this);
 
 	// floating structures don't terraform the seabed

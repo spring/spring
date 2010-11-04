@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef S3OPARSER_H
-#define S3OPARSER_H
+#ifndef S3O_PARSER_H
+#define S3O_PARSER_H
 
 #include <map>
 #include "IModelParser.h"
@@ -29,7 +29,8 @@ struct SS3OPiece: public S3DModelPiece {
 	void SetVertexTangents();
 	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
-	void Shatter(float, int, int, const float3&, const float3&) const;
+	void Shatter(float pieceChance, int texType, int team, const float3& pos,
+			const float3& speed) const;
 
 	std::vector<SS3OVertex> vertices;
 	std::vector<unsigned int> vertexDrawOrder;
@@ -60,4 +61,4 @@ private:
 	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);
 };
 
-#endif /* S3OPARSER_H */
+#endif /* S3O_PARSER_H */

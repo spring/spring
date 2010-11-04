@@ -8,6 +8,7 @@
 #include <string.h>
 #include <IL/il.h>
 //#include <IL/ilu.h>
+#include <SDL_video.h>
 #include <boost/thread.hpp>
 #include "mmgr.h"
 
@@ -181,7 +182,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	CFileHandler file(filename);
 	if (file.FileExists() == false) {
-		Alloc(1,1);
+		Alloc(1, 1);
 		return false;
 	}
 
@@ -198,7 +199,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
 	ilDisable(IL_ORIGIN_SET);
-	delete [] buffer;
+	delete[] buffer;
 
 	if (success == false) {
 		xsize = 1;
@@ -234,7 +235,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 }
 
 
-bool CBitmap::LoadGrayscale (const std::string& filename)
+bool CBitmap::LoadGrayscale(const std::string& filename)
 {
 	type = BitmapTypeStandardAlpha;
 	channels = 1;
@@ -267,6 +268,7 @@ bool CBitmap::LoadGrayscale (const std::string& filename)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
+	delete[] mem;
 	mem = new unsigned char[xsize * ysize];
 	memcpy(mem, ilGetData(), xsize * ysize);
 	
@@ -276,7 +278,7 @@ bool CBitmap::LoadGrayscale (const std::string& filename)
 }
 
 
-bool CBitmap::Save(std::string const& filename, bool opaque)
+bool CBitmap::Save(std::string const& filename, bool opaque) const
 {
 	if (type == BitmapTypeDDS) {
 #ifndef BITMAP_NO_OPENGL
@@ -327,7 +329,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque)
 
 
 #ifndef BITMAP_NO_OPENGL
-const GLuint CBitmap::CreateTexture(bool mipmaps)
+const GLuint CBitmap::CreateTexture(bool mipmaps) const
 {
 	if (type == BitmapTypeDDS) {
 		return CreateDDSTexture();
@@ -373,7 +375,7 @@ const GLuint CBitmap::CreateTexture(bool mipmaps)
 }
 
 
-const GLuint CBitmap::CreateDDSTexture(GLuint texID)
+const GLuint CBitmap::CreateDDSTexture(GLuint texID) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
@@ -465,7 +467,6 @@ void CBitmap::CreateAlpha(unsigned char red, unsigned char green, unsigned char 
 }
 
 
-// Depreciated (Only used by GUI which will be replaced by CEGUI anyway)
 void CBitmap::SetTransparent(unsigned char red, unsigned char green, unsigned char blue)
 {
 	for (unsigned int y = 0; y < xsize; y++) {
@@ -599,7 +600,7 @@ void CBitmap::Blur(int iterations, float weight)
 
 
 // Unused
-CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
+CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
 {
 	CBitmap bm;
 
@@ -622,7 +623,31 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 }
 
 
-CBitmap CBitmap::CreateMipmapLevel(void)
+SDL_Surface* CBitmap::CreateSDLSurface(bool newPixelData) const
+{
+	SDL_Surface* surface = NULL;
+
+	unsigned char* surfData = NULL;
+	if (newPixelData) {
+		// copy pixel data
+		surfData = new unsigned char[xsize * ysize * channels];
+		memcpy(surfData, mem, xsize * ysize * channels);
+	} else {
+		surfData = mem;
+	}
+
+	// This will only work with 24bit RGB and 32bit RGBA pictures
+	surface = SDL_CreateRGBSurfaceFrom(surfData, xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
+	if ((surface == NULL) && newPixelData) {
+		// cleanup when we failed to the create surface
+		delete[] surfData;
+	}
+
+	return surface;
+}
+
+
+CBitmap CBitmap::CreateMipmapLevel() const
 {
 	CBitmap bm;
 
@@ -652,11 +677,10 @@ CBitmap CBitmap::CreateMipmapLevel(void)
 	}
 
 	return bm;
-
 }
 
 
-CBitmap CBitmap::CreateRescaled(int newx, int newy)
+CBitmap CBitmap::CreateRescaled(int newx, int newy) const
 {
 	CBitmap bm;
 
@@ -774,17 +798,15 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-	//FIXME: optimize, so it doesn't alloc a new array
-
-	unsigned char* buf = new unsigned char[xsize*ysize*channels];
-
-	for (int y=0; y < ysize; ++y) {
+	unsigned char tmpPixel[channels];
+	for (int y=0; y < (ysize / 2); ++y) {
 		for (int x=0; x < xsize; ++x) {
-			for (int i=0; i < channels; ++i) {
-				buf[((ysize-1-y)*xsize+x)*channels + i] = mem[((y)*xsize+x)*channels + i];
-			}
+			const int pixelLow  = (((y            ) * xsize) + x) * channels;
+			const int pixelHigh = (((ysize - 1 - y) * xsize) + x) * channels;
+			// copy all channels at once
+			memcpy(tmpPixel,        mem + pixelHigh, channels);
+			memcpy(mem + pixelHigh, mem + pixelLow,  channels);
+			memcpy(mem + pixelLow,  tmpPixel,        channels);
 		}
 	}
-	delete[] mem;
-	mem = buf;
 }
