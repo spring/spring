@@ -79,7 +79,7 @@ void CAICheats::GiveMeEnergy(float amount)
 int CAICheats::CreateUnit(const char* name, float3 pos)
 {
 	if (!OnlyPassiveCheats()) {
-		CUnit* u = unitLoader.LoadUnit(name, pos, ai->GetTeamId(), false, 0, NULL);
+		CUnit* u = unitLoader->LoadUnit(name, pos, ai->GetTeamId(), false, 0, NULL);
 		if (u)
 			return u->id;
 	}
