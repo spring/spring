@@ -423,7 +423,7 @@ void CGame::LoadDefs()
 
 		// run the parser
 		if (!defsParser->Execute()) {
-			throw content_error(defsParser->GetErrorLog());
+			throw content_error("Defs-Parser: " + defsParser->GetErrorLog());
 		}
 		const LuaTable root = defsParser->GetRoot();
 		if (!root.IsValid()) {
