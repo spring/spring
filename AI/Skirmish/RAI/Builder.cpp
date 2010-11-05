@@ -41,7 +41,7 @@ cBuilder::cBuilder(IAICallback* callback, cRAI* global)
 	cb = callback;
 	G = global;
 	UDR = G->UDH;
-	for( map<int,sRAIUnitDef>::iterator iU=UDR->UDR.begin(); iU!=UDR->UDR.end(); iU++ )
+	for( map<int,sRAIUnitDef>::iterator iU=UDR->UDR.begin(); iU!=UDR->UDR.end(); ++iU )
 		if( int(iU->second.ud->wreckName.size()) > 0 )
 			UDRResurrect.insert(srPair(iU->second.ud->wreckName,&iU->second));
 
@@ -58,6 +58,11 @@ cBuilder::cBuilder(IAICallback* callback, cRAI* global)
 	ConMetalRate=0;
 	ConEnergyStorage=0;
 	ConMetalStorage=0;
+	memset(BQ, NULL, BUILD_QUARRY_SIZE);
+	BuilderMetalDebug = 0;
+	BuilderEnergyDebug = 0;
+	ECostLimit = 0;
+	MCostLimit = 0;
 
 	for( int i=0; i<8; i++ )
 		BQSize[i]=0;
@@ -103,7 +108,7 @@ void cBuilder::UnitCreated(const int& unit, UnitInfo *U)
 
 	// Attempts to identify which Build Quarry this new unit belongs to.
 	int iBQIndex=-1;
-	for(int iBQ=0; iBQ<BQSize[0]; iBQ++)
+	for(int iBQ=0; iBQ<BQSize[0]; ++iBQ)
 	{
 		if(	BQ[iBQ]->creationUDID==U->ud->id && BQ[iBQ]->builderID > -1 && G->ValidateUnit(BQ[iBQ]->builderID) && int(cb->GetCurrentUnitCommands(BQ[iBQ]->builderID)->size())>0 )
 		{
@@ -143,7 +148,7 @@ void cBuilder::UnitCreated(const int& unit, UnitInfo *U)
 	if( iBQIndex == -1 ) // This is a bit more thorough check for a human builder
 	{
 		G->ValidateAllUnits();
-		for(map<int,UnitInfo>::iterator iU=G->Units.begin(); iU!=G->Units.end(); iU++)
+		for(map<int,UnitInfo>::iterator iU=G->Units.begin(); iU!=G->Units.end(); ++iU)
 		{
 			if(	cb->GetCurrentUnitCommands(iU->first)->size() > 0 )
 			{
@@ -226,7 +231,7 @@ void cBuilder::UnitFinished(const int& unit, UnitInfo *U)
 	U->udr->CheckBuildOptions();
 	if( U->ud->speed == 0 )
 	{
-		for(map<int,UnitInfo*>::iterator i=UNanos.begin(); i!=UNanos.end(); i++ )
+		for(map<int,UnitInfo*>::iterator i=UNanos.begin(); i!=UNanos.end(); ++i )
 		{
 			if( cb->GetUnitPos(unit).distance2D(cb->GetUnitPos(i->first)) < i->second->ud->buildDistance )
 			{
@@ -239,7 +244,7 @@ void cBuilder::UnitFinished(const int& unit, UnitInfo *U)
 		if( U->udr->IsNano() )
 		{
 			UNanos.insert(cRAI::iupPair(unit,U));
-			for(map<int,UnitInfo*>::iterator i=G->UImmobile.begin(); i!=G->UImmobile.end(); i++ )
+			for(map<int,UnitInfo*>::iterator i=G->UImmobile.begin(); i!=G->UImmobile.end(); ++i )
 			{
 				if( i->first != unit && !i->second->unitBeingBuilt && cb->GetUnitPos(unit).distance2D(cb->GetUnitPos(i->first)) < U->ud->buildDistance )
 				{
@@ -278,10 +283,10 @@ void cBuilder::UnitDestroyed(const int& unit, UnitInfo* U)
 			if( U->udr->IsNano() )
 			{
 				UNanos.erase(unit);
-				for(map<int,UnitInfo*>::iterator i=U->UGuarding.begin(); i!=U->UGuarding.end(); i++ )
+				for(map<int,UnitInfo*>::iterator i=U->UGuarding.begin(); i!=U->UGuarding.end(); ++i )
 					i->second->UGuards.erase(unit);
 			}
-			for(map<int,UnitInfo*>::iterator i=U->UGuards.begin(); i!=U->UGuards.end(); i++ )
+			for(map<int,UnitInfo*>::iterator i=U->UGuards.begin(); i!=U->UGuards.end(); ++i )
 			{
 				i->second->UGuarding.erase(unit);
 //				i->second->UAssist.erase(unit);
@@ -436,7 +441,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				G->CorrectPosition(position);
 				int iS = G->TM->GetSectorIndex(position);
 				set<TerrainMapMobileType*> deletion;
-				for(set<TerrainMapMobileType*>::iterator iM=UDR->RBMobile.begin(); iM!=UDR->RBMobile.end(); iM++)
+				for(set<TerrainMapMobileType*>::iterator iM=UDR->RBMobile.begin(); iM!=UDR->RBMobile.end(); ++iM)
 					if( G->TM->GetAlternativeSector(U->area,iS,*iM)->S->position.distance2D(G->TM->sector[iS].position) < 700.0 )
 						deletion.insert(*iM);
 				while( !deletion.empty() )
@@ -451,7 +456,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				G->CorrectPosition(position);
 				int iS = G->TM->GetSectorIndex(position);
 				set<TerrainMapImmobileType*> deletion;
-				for(set<TerrainMapImmobileType*>::iterator iM=UDR->RBImmobile.begin(); iM!=UDR->RBImmobile.end(); iM++)
+				for(set<TerrainMapImmobileType*>::iterator iM=UDR->RBImmobile.begin(); iM!=UDR->RBImmobile.end(); ++iM)
 					if( G->TM->GetClosestSector(*iM,iS)->position.distance2D(G->TM->sector[iS].position) < 700.0 )
 						deletion.insert(*iM);
 				while( !deletion.empty() )
@@ -721,9 +726,9 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			bool bPrerequisiteOptionsChecked=false;
 			//int iBest=-1;
 			//int Count=0;
-			for(map<int,sRAIUnitDef*>::iterator iP=udr->PrerequisiteOptions.begin(); iP!=udr->PrerequisiteOptions.end() && !bPrerequisiteOptionsChecked; iP++)
+			for(map<int,sRAIUnitDef*>::iterator iP=udr->PrerequisiteOptions.begin(); iP!=udr->PrerequisiteOptions.end() && !bPrerequisiteOptionsChecked; ++iP)
 			{
-				for(set<int>::iterator iU=iP->second->UnitsActive.begin(); iU!=iP->second->UnitsActive.end() && !bPrerequisiteOptionsChecked; iU++ )
+				for(set<int>::iterator iU=iP->second->UnitsActive.begin(); iU!=iP->second->UnitsActive.end() && !bPrerequisiteOptionsChecked; ++iU )
 					if( UBuilder.find(*iU) != UBuilder.end() && UBuilder.find(*iU)->second->BuildQ == 0 && *iU != unit )
 					{
 						if( int(cb->GetCurrentUnitCommands(*iU)->size()) == 0 || cb->GetCurrentUnitCommands(*iU)->front().id == CMD_WAIT )
@@ -816,7 +821,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			int iBest=-1;
 			float3 Pos = cb->GetUnitPos(unit);
 			float3 debPos;
-			for( map<int,float3>::iterator iR=ResDebris.begin(); iR!=ResDebris.end(); iR++ )
+			for( map<int,float3>::iterator iR=ResDebris.begin(); iR!=ResDebris.end(); ++iR )
 			{
 				if( (iBest == -1 || Pos.distance(debPos) > Pos.distance(iR->second)) && G->TM->CanMoveToPos(U->area,iR->second) )
 				{
@@ -888,7 +893,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				int iBest=-1;
 				float3 Pos = cb->GetUnitPos(unit);
 				float3 debPos;
-				for( map<int,float3>::iterator iM=MetalDebris.begin(); iM!=MetalDebris.end(); iM++ )
+				for( map<int,float3>::iterator iM=MetalDebris.begin(); iM!=MetalDebris.end(); ++iM )
 				{
 					if( (iBest == -1 || Pos.distance(debPos) > Pos.distance(iM->second)) && G->TM->CanMoveToPos(U->area,iM->second) )
 					{
@@ -922,7 +927,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				int iBest=-1;
 				float3 Pos = cb->GetUnitPos(unit);
 				float3 debPos;
-				for( map<int,float3>::iterator iE=EnergyDebris.begin(); iE!=EnergyDebris.end(); iE++ )
+				for( map<int,float3>::iterator iE=EnergyDebris.begin(); iE!=EnergyDebris.end(); ++iE )
 				{
 					if( (iBest == -1 || Pos.distance(debPos) > Pos.distance(iE->second)) && G->TM->CanMoveToPos(U->area,iE->second) )
 					{
@@ -953,7 +958,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 		vector<int> build;
 		float3 position = cb->GetUnitPos(unit);
 		G->CorrectPosition(position);
-		for( map<int,sRAIUnitDef*>::iterator iB=U->udr->BuildOptions.begin(); iB!=U->udr->BuildOptions.end(); iB++ )
+		for( map<int,sRAIUnitDef*>::iterator iB=U->udr->BuildOptions.begin(); iB!=U->udr->BuildOptions.end(); ++iB )
 			if( iB->second->CanBeBuilt && BP->CanBeBuiltAt(iB->second,position) )
 				for( int iL=0; iL<iB->second->ListSize; iL++ )
 					if( iB->second->List[iL]->RBL->Name == "Mobile Anti-Land/Air" ||
@@ -1107,7 +1112,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 		}
 		else if( U->group != 0 )
 		{
-			for( map<int,UnitInfo*>::iterator i = U->group->Units.begin(); i != U->group->Units.end(); i++ )
+			for( map<int,UnitInfo*>::iterator i = U->group->Units.begin(); i != U->group->Units.end(); ++i )
 			{
 				if( i->second->BuildQ != 0 )
 				{
@@ -1181,7 +1186,7 @@ bool cBuilder::UBuilderMoveFailed(const int& unit, UnitInfo *U)
 
 void cBuilder::HandleEvent(const IGlobalAI::PlayerCommandEvent *pce)
 {
-	for( vector<int>::const_iterator i=pce->units.begin(); i!=pce->units.end(); i++ )
+	for( vector<int>::const_iterator i=pce->units.begin(); i!=pce->units.end(); ++i )
 	{
 		if( UBuilder.find(*i) != UBuilder.end() )
 		{
@@ -1215,7 +1220,7 @@ void cBuilder::UpdateUDRCost()
 		ECostLimit=9.9e8;
 
 //	*l<<"\n Rechecking Unit Costs and Determining Active BL Options ...";
-	for( map<int,sRAIUnitDef>::iterator i=UDR->UDR.begin(); i!=UDR->UDR.end(); i++ )
+	for( map<int,sRAIUnitDef>::iterator i=UDR->UDR.begin(); i!=UDR->UDR.end(); ++i )
 	{
 		sRAIUnitDef *udr = &i->second;
 		if( udr->MetalPCost < MCostLimit && udr->EnergyPCost < ECostLimit )
@@ -1248,7 +1253,7 @@ void cBuilder::UpdateUDRCost()
 				if( !udr->Disabled && udr->HasPrerequisite && !udr->RBUnitLimit )
 				{
 					bool CanBuildConstructors = false; // only used in determining the cheapest constructor
-					for( map<int,sRAIUnitDef*>::iterator iB=udr->BuildOptions.begin(); iB!=udr->BuildOptions.end(); iB++)
+					for( map<int,sRAIUnitDef*>::iterator iB=udr->BuildOptions.begin(); iB!=udr->BuildOptions.end(); ++iB)
 						if( !iB->second->Disabled && int(iB->second->BuildOptions.size()) > 0 )
 						{
 							CanBuildConstructors = true;
@@ -1375,7 +1380,7 @@ void cBuilder::UpdateKnownFeatures(const int& unit, UnitInfo *U)
 	delete [] F;
 }
 
-void cBuilder::CreateBuildOrders()
+void cBuilder::CreateBuildOrders() const
 {
 
 }
@@ -1523,7 +1528,7 @@ void cBuilder::BQRemove(int index)
 	BQ[BQSize[0]]=sTemp;
 	BQ[index]->index=index;
 
-	for( list<int>::iterator i=BQ[BQSize[0]]->creationID.begin(); i!=BQ[BQSize[0]]->creationID.end(); i++ )
+	for( list<int>::iterator i=BQ[BQSize[0]]->creationID.begin(); i!=BQ[BQSize[0]]->creationID.end(); ++i )
 		if( UConstruction.find(*i) != UConstruction.end() )
 		{
 			if( cb->UnitBeingBuilt(*i) )

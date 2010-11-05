@@ -14,7 +14,7 @@ Action::Action(const std::string& line)
 	: rawline(line)
 {
 	const std::vector<std::string> &words = CSimpleParser::Tokenize(line, 1);
-	if (words.size() > 0) {
+	if (!words.empty()) {
 		command.resize(words[0].length());
 		std::transform(words[0].begin(), words[0].end(), command.begin(), (int (*)(int))tolower);
 	}

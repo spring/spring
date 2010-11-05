@@ -67,7 +67,7 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 
 	const map<string, int>& weaponMap = weaponDefHandler->weaponID;
 	map<string, int>::const_iterator wit;
-	for (wit = weaponMap.begin(); wit != weaponMap.end(); wit++) {
+	for (wit = weaponMap.begin(); wit != weaponMap.end(); ++wit) {
 		const WeaponDef* wd = &weaponDefHandler->weaponDefs[wit->second];
 		if (wd == NULL) {
 	  	continue;

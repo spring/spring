@@ -58,7 +58,7 @@ ResourceSiteExt::ResourceSiteExt(ResourceSite *RSite, IAICallback* callback)
 
 void ResourceSiteExt::CheckBlocked()
 {
-	for( map<int,ResourceSiteExtBO>::iterator iB=BuildOptions.begin(); iB!=BuildOptions.end(); iB++ )
+	for( map<int,ResourceSiteExtBO>::iterator iB=BuildOptions.begin(); iB!=BuildOptions.end(); ++iB )
 	{
 		float3 fBuildSite=cb->ClosestBuildSite(iB->second.udr->ud,S->position,searchRadius,disApart);
 		if( !cb->CanBuildAt(iB->second.udr->ud,fBuildSite) && (unitID == -1 || enemy || ally ) )
@@ -71,7 +71,7 @@ void ResourceSiteExt::CheckBlocked()
 
 void ResourceSiteExt::CheckRanked()
 {
-	for( map<int,ResourceSiteExtBO>::iterator iB=BuildOptions.begin(); iB!=BuildOptions.end(); iB++ )
+	for( map<int,ResourceSiteExtBO>::iterator iB=BuildOptions.begin(); iB!=BuildOptions.end(); ++iB )
 	{
 		if( unitID == -1 ||
 			( S->type == 0 && iB->second.udr->ud->extractsMetal >= 1.5*unitUD->ud->extractsMetal ) ||
@@ -89,7 +89,7 @@ void ResourceSiteExt::CheckRanked()
 
 void ResourceSiteExt::SetRanged(bool inRange)
 {
-	for( map<int,ResourceSiteExtBO>::iterator iB=BuildOptions.begin(); iB!=BuildOptions.end(); iB++ )
+	for( map<int,ResourceSiteExtBO>::iterator iB=BuildOptions.begin(); iB!=BuildOptions.end(); ++iB )
 	{
 		iB->second.RBRanged = !inRange;
 		iB->second.CheckBuild();
@@ -182,7 +182,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 		else if( Resources[iR]->S->type == 1 )
 		{
 			// Units using Geo-Sites can be found in any number of build lists
-			for( map<int,sRAIUnitDef>::iterator iUD=G->UDH->UDR.begin(); iUD!=G->UDH->UDR.end(); iUD++ )
+			for( map<int,sRAIUnitDef>::iterator iUD=G->UDH->UDR.begin(); iUD!=G->UDH->UDR.end(); ++iUD )
 			{
 				if( iUD->second.ud->needGeo && !iUD->second.Disabled && int(iUD->second.PrerequisiteOptions.size()) > 0 )
 				{
@@ -223,7 +223,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 	// Read all movetypes
 	int arraySize = G->TM->mobileType.size();
 	basicArray<TerrainMapMobileType*> MobileTypes(arraySize);
-	for( list<TerrainMapMobileType>::iterator iM=G->TM->mobileType.begin(); iM!=G->TM->mobileType.end(); iM++ )
+	for( list<TerrainMapMobileType>::iterator iM=G->TM->mobileType.begin(); iM!=G->TM->mobileType.end(); ++iM )
 		MobileTypes.push_back(&*iM);
 
 	// Sort them by worst to best, remove unusable movetypes
@@ -289,11 +289,11 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 			pathType = MT->MD->pathType;
 		}
 //*l<<"\n RSL2size="<<RSList2.size()<<" iM="<<iM;
-		for( set<int>::iterator iR1=RSList1.begin(); iR1!=RSList1.end(); iR1++ )
+		for( set<int>::iterator iR1=RSList1.begin(); iR1!=RSList1.end(); ++iR1 )
 			if( iM == -1 || MT->sector[G->TM->GetSectorIndex(Resources[*iR1]->S->position)].area != 0 )
 			{
 //*l<<" r1="<<*iR1;
-				for( set<int>::iterator iR2=RSList2.begin(); iR2!=RSList2.end(); iR2++ )
+				for( set<int>::iterator iR2=RSList2.begin(); iR2!=RSList2.end(); ++iR2 )
 				{
 //*l<<" r2="<<*iR2;
 					dis = Resources[*iR1]->S->GetResourceDistance(Resources[*iR2]->S,pathType);
@@ -350,7 +350,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 		MTPenalty[MT->MD->pathType] = linkCount;
 
 		for( int iR=0; iR<ResourceSize; iR++ )
-			for(map<int,ResourceSiteExt*>::iterator iRL = Resources[iR]->Linked.begin(); iRL != Resources[iR]->Linked.end(); iRL++ )
+			for(map<int,ResourceSiteExt*>::iterator iRL = Resources[iR]->Linked.begin(); iRL != Resources[iR]->Linked.end(); ++iRL )
 				if( iRL->second->S->siteDistance.find(Resources[iR]->S)->second.bestPathType == MT->MD->pathType )
 					linkCount++;
 	}
@@ -410,7 +410,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 			RLI->index = iR;
 			RLI->bestI = -1;
 			RLI->restrictedR.insert(iR);
-			for(map<int,ResourceSiteExt*>::iterator iRL = Resources[iR]->Linked.begin(); iRL != Resources[iR]->Linked.end(); iRL++ )
+			for(map<int,ResourceSiteExt*>::iterator iRL = Resources[iR]->Linked.begin(); iRL != Resources[iR]->Linked.end(); ++iRL )
 				RLI->restrictedR.insert(iRL->first);
 		}
 //	*l<<"\n   Second Link Loading Time 0: "<<(clock()-linkStartClock)/(double)CLOCKS_PER_SEC<<"s";
@@ -453,7 +453,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 							if( RLI->bestI < 0 || RD[RLI->index][iR2] < RD[RLI->index][RLI->bestI] )
 							{
 								acceptLink = true;
-								for(map<int,ResourceSiteExt*>::iterator iRL1 = Resources[RLI->index]->Linked.begin(); iRL1 != Resources[RLI->index]->Linked.end(); iRL1++ )
+								for(map<int,ResourceSiteExt*>::iterator iRL1 = Resources[RLI->index]->Linked.begin(); iRL1 != Resources[RLI->index]->Linked.end(); ++iRL1 )
 								{
 									RSD = &Resources[iR2]->S->siteDistance.find(iRL1->second->S)->second;
 									if( RSD->bestDistance != 0 )
@@ -526,7 +526,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 		}
 //		linkClock2 += clock()-linkClockTemp;
 //		linkClockTemp = clock();
-		for(map<int,ResourceSiteExt*>::iterator iRL1 = Resources[bestRLI->index]->Linked.begin(); iRL1 != Resources[bestRLI->index]->Linked.end(); iRL1++ )
+		for(map<int,ResourceSiteExt*>::iterator iRL1 = Resources[bestRLI->index]->Linked.begin(); iRL1 != Resources[bestRLI->index]->Linked.end(); ++iRL1 )
 		{
 			RSD = &iRL1->second->S->siteDistance.find(Resources[bestRLI->bestI]->S)->second;
 			if( RSD->bestDistance == 0 )
@@ -567,7 +567,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 		{
 //*l<<" size1:"<<Resources[bestRLI->index]->Linked.size();
 			// These are an additional sets of conditions that are not checked until the best has been found
-			for(map<int,ResourceSiteExt*>::iterator iRL1 = Resources[bestRLI->index]->Linked.begin(); iRL1 != Resources[bestRLI->index]->Linked.end(); iRL1++ )
+			for(map<int,ResourceSiteExt*>::iterator iRL1 = Resources[bestRLI->index]->Linked.begin(); iRL1 != Resources[bestRLI->index]->Linked.end(); ++iRL1 )
 			{
 //*l<<" d(L1-B):"<<RD[bestRLI->bestI][iRL1->first];
 				if( RD[bestRLI->bestI][iRL1->first] < RD[bestRLI->bestI][bestRLI->index] )
@@ -581,7 +581,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 			if( bestRLI != 0 )
 			{
 //*l<<" size2:"<<Resources[bestRLI->bestI]->Linked.size();
-				for(map<int,ResourceSiteExt*>::iterator iRLB = Resources[bestRLI->bestI]->Linked.begin(); iRLB != Resources[bestRLI->bestI]->Linked.end(); iRLB++ )
+				for(map<int,ResourceSiteExt*>::iterator iRLB = Resources[bestRLI->bestI]->Linked.begin(); iRLB != Resources[bestRLI->bestI]->Linked.end(); ++iRLB )
 				{
 					RSD = &Resources[bestRLI->index]->S->siteDistance.find(iRLB->second->S)->second;
 					if( RSD->bestDistance == 0 )
@@ -694,11 +694,11 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 	// Setting Linked Distance 2
 	for( int iR=0; iR<ResourceSize; iR++ )
 	{
-		for( map<int,ResourceSiteExt*>::iterator iRL=Resources[iR]->Linked.begin(); iRL!=Resources[iR]->Linked.end(); iRL++ )
+		for( map<int,ResourceSiteExt*>::iterator iRL=Resources[iR]->Linked.begin(); iRL!=Resources[iR]->Linked.end(); ++iRL )
 		{
 			if( Resources[iR]->LinkedD2.find(iRL->first) == Resources[iR]->LinkedD2.end() )
 				Resources[iR]->LinkedD2.insert(irPair(iRL->first,Resources[iRL->first]));
-			for( map<int,ResourceSiteExt*>::iterator iRL2=Resources[iRL->first]->Linked.begin(); iRL2!=Resources[iRL->first]->Linked.end(); iRL2++ )
+			for( map<int,ResourceSiteExt*>::iterator iRL2=Resources[iRL->first]->Linked.begin(); iRL2!=Resources[iRL->first]->Linked.end(); ++iRL2 )
 			{
 				if( iRL2->first != iR && Resources[iR]->LinkedD2.find(iRL2->first) == Resources[iR]->LinkedD2.end() )
 					Resources[iR]->LinkedD2.insert(irPair(iRL2->first,Resources[iRL2->first]));
@@ -735,10 +735,10 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 			}
 
 			*l<<"\n R("<<iR1<<") type="<<Resources[iR1]->S->type<<" Pos(x"<<Resources[iR1]->S->position.x<<",z"<<Resources[iR1]->S->position.z<<") L("<<Resources[iR1]->Linked.size()<<"):";
-			for( map<int,ResourceSiteExt*>::iterator RL=Resources[iR1]->Linked.begin(); RL!=Resources[iR1]->Linked.end(); RL++ )
+			for( map<int,ResourceSiteExt*>::iterator RL=Resources[iR1]->Linked.begin(); RL!=Resources[iR1]->Linked.end(); ++RL )
 				*l<<" "<<RL->first;
 			*l<<"\t B("<<Resources[iR1]->BuildOptions.size()<<"):";
-			for( map<int,ResourceSiteExtBO>::iterator RS=Resources[iR1]->BuildOptions.begin(); RS!=Resources[iR1]->BuildOptions.end(); RS++ )
+			for( map<int,ResourceSiteExtBO>::iterator RS=Resources[iR1]->BuildOptions.begin(); RS!=Resources[iR1]->BuildOptions.end(); ++RS )
 				*l<<" "<<RS->first;
 		}
 }
@@ -866,7 +866,7 @@ ResourceSiteExt* cBuilderPlacement::FindResourceSite(float3& pos, const UnitDef*
 	float fBest=0;
 	int iBest=-1;
 	float distance;
-	for( map<int,ResourceSiteExt*>::iterator iR=RL->begin(); iR!=RL->end(); iR++ )
+	for( map<int,ResourceSiteExt*>::iterator iR=RL->begin(); iR!=RL->end(); ++iR )
 	{
 //*l<<" "<<iR->first;
 		if( iR->second->builderID == -1 &&
@@ -1086,7 +1086,7 @@ bool cBuilderPlacement::FindWeaponPlacement(UnitInfo *U, float3& position)
 
 	int BID = -1;
 	float3 buildPosition;
-	for(map<int,UnitInfo*>::iterator i=G->UImmobile.begin(); i!=G->UImmobile.end(); i++ )
+	for(map<int,UnitInfo*>::iterator i=G->UImmobile.begin(); i!=G->UImmobile.end(); ++i )
 	{
 		buildPosition = cb->GetUnitPos(i->first);
 		if( i->second->udr->WeaponGuardRange == 0 && int(i->second->UDefences.size()) == 0 &&
@@ -1109,7 +1109,7 @@ void cBuilderPlacement::CheckBlockedRList( map<int,ResourceSiteExt*> *RL )
 	if( RL == 0 )
 		RL = &RSAvailable;
 	set<int> deletion;
-	for( map<int,ResourceSiteExt*>::iterator iR=RL->begin(); iR!=RL->end(); iR++ )
+	for( map<int,ResourceSiteExt*>::iterator iR=RL->begin(); iR!=RL->end(); ++iR )
 	{
 		if( iR->second->unitID == -1 )
 			iR->second->CheckBlocked();
@@ -1223,7 +1223,7 @@ void cBuilderPlacement::SetResourceOwner(int RSindex, ResourceSiteExt* RS, int u
 			RSAvailable.insert(irPair(RSindex,RS));
 			RSRemaining.erase(RSindex);
 		}
-		for( map<int,ResourceSiteExt*>::iterator iR=RS->Linked.begin(); iR!=RS->Linked.end(); iR++ )
+		for( map<int,ResourceSiteExt*>::iterator iR=RS->Linked.begin(); iR!=RS->Linked.end(); ++iR )
 		{
 			if( RSAvailable.find(iR->first) == RSAvailable.end() )
 			{
@@ -1231,7 +1231,7 @@ void cBuilderPlacement::SetResourceOwner(int RSindex, ResourceSiteExt* RS, int u
 				RSAvailable.insert(irPair(iR->first,iR->second));
 				RSRemaining.erase(iR->first);
 			}
-			for( map<int,ResourceSiteExt*>::iterator iR2=iR->second->Linked.begin(); iR2!=iR->second->Linked.end(); iR2++ )
+			for( map<int,ResourceSiteExt*>::iterator iR2=iR->second->Linked.begin(); iR2!=iR->second->Linked.end(); ++iR2 )
 			{
 				if( RSAvailable.find(iR2->first) == RSAvailable.end() )
 				{
@@ -1246,7 +1246,7 @@ void cBuilderPlacement::SetResourceOwner(int RSindex, ResourceSiteExt* RS, int u
 	{
 		set<int> RSL;
 		RSL.insert(RSindex);
-		for( map<int,ResourceSiteExt*>::iterator iR=RS->LinkedD2.begin(); iR!=RS->LinkedD2.end(); iR++ )
+		for( map<int,ResourceSiteExt*>::iterator iR=RS->LinkedD2.begin(); iR!=RS->LinkedD2.end(); ++iR )
 		{
 			if( RSAvailable.find(iR->first) != RSAvailable.end() && ( iR->second->unitID == -1 || iR->second->enemy ) )
 				RSL.insert(iR->first);
@@ -1255,7 +1255,7 @@ void cBuilderPlacement::SetResourceOwner(int RSindex, ResourceSiteExt* RS, int u
 		while( int(RSL.size()) > 0 )
 		{
 			found=false;
-			for( map<int,ResourceSiteExt*>::iterator iR=Resources[*RSL.begin()]->LinkedD2.begin(); iR!=Resources[*RSL.begin()]->LinkedD2.end(); iR++ )
+			for( map<int,ResourceSiteExt*>::iterator iR=Resources[*RSL.begin()]->LinkedD2.begin(); iR!=Resources[*RSL.begin()]->LinkedD2.end(); ++iR )
 			{
 				if( Resources[iR->first]->unitID > -1 && !Resources[iR->first]->enemy )
 				{

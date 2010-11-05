@@ -103,7 +103,7 @@ int CAIInterfaceLibrary::GetLoadCount() const {
 	int totalSkirmishAILibraryLoadCount = 0;
 	std::map<const SkirmishAIKey, int>::const_iterator salc;
 	for (salc=skirmishAILoadCount.begin(); salc != skirmishAILoadCount.end();
-			salc++) {
+			++salc) {
 		totalSkirmishAILibraryLoadCount += salc->second;
 	}
 

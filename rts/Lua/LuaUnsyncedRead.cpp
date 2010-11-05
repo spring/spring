@@ -996,7 +996,7 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 	lua_newtable(L);
 	map<int, vector<CUnit*> >::const_iterator mit;
-	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
+	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
 		lua_pushnumber(L, mit->first); // push the UnitDef index
 		lua_newtable(L); {
 			const vector<CUnit*>& v = mit->second;
@@ -1037,7 +1037,7 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 
 	lua_newtable(L);
 	map<int, int>::const_iterator mit;
-	for (mit = countMap.begin(); mit != countMap.end(); mit++) {
+	for (mit = countMap.begin(); mit != countMap.end(); ++mit) {
 		lua_pushnumber(L, mit->first);  // push the UnitDef index
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
 		lua_rawset(L, -3);
@@ -2047,7 +2047,7 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 	lua_newtable(L);
 	map<int, vector<CUnit*> >::const_iterator mit;
-	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
+	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
 		lua_pushnumber(L, mit->first); // push the UnitDef index
 		lua_newtable(L); {
 			const vector<CUnit*>& v = mit->second;
@@ -2094,7 +2094,7 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 	lua_newtable(L);
 	map<int, int>::const_iterator mit;
-	for (mit = countMap.begin(); mit != countMap.end(); mit++) {
+	for (mit = countMap.begin(); mit != countMap.end(); ++mit) {
 		lua_pushnumber(L, mit->first);  // push the UnitDef index
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
 		lua_rawset(L, -3);

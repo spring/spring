@@ -305,7 +305,7 @@ void CHwWinCursor::Finish()
 	int squaresize =  next_power_of_2( std::max(xmaxsize,ymaxsize) );
 
 	//resize images
-	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); it++)
+	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); ++it)
 		resizeImage(&*it,squaresize,squaresize);
 
 	const int riffsize  = 32 + sizeof(AnihStructure) + (frames.size()+2) * 2 * sizeof(DWORD);
@@ -348,7 +348,7 @@ void CHwWinCursor::Finish()
 		dwmem[0] = iconssize+4;		curmem+=4;
 		strcpy((char*)curmem,"fram");	curmem+=4;
 
-		for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); it++) {
+		for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); ++it) {
 			buildIco(curmem,*it);
 			curmem += 2*sizeof(DWORD) + 3*sizeof(WORD)+sizeof(CursorDirectoryHeader)+sizeof(CursorInfoHeader)+squaresize*squaresize*4+squaresize*squaresize/8;
 		}
@@ -382,7 +382,7 @@ void CHwWinCursor::Finish()
 	cursor = (HCURSOR)CreateIconFromResourceEx((PBYTE)mem,totalsize,FALSE,0x00030000,squaresize,squaresize,0);
 
 	delete[] mem;
-	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); it++)
+	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); ++it)
 		delete[] (*it).data;
 	icons.clear();
 
@@ -417,7 +417,7 @@ CHwWinCursor::~CHwWinCursor(void)
 	if (cursor!=NULL)
 		DestroyCursor(cursor);
 
-	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); it++)
+	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); ++it)
 		delete[] (*it).data;
 	icons.clear();
 }
@@ -542,7 +542,7 @@ CHwX11Cursor::CHwX11Cursor(void)
 
 CHwX11Cursor::~CHwX11Cursor(void)
 {
-	for (std::vector<XcursorImage*>::iterator it=cimages.begin() ; it < cimages.end(); it++ )
+	for (std::vector<XcursorImage*>::iterator it=cimages.begin() ; it < cimages.end(); ++it )
 		XcursorImageDestroy(*it);
 	cimages.clear();
 

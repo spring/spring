@@ -751,7 +751,7 @@ void CGame::ClientReadNet()
 									// no controllers left in team
 									//team.active = false;
 									team->leader = -1;
-								} else if (teamPlayers.size() == 0) {
+								} else if (teamPlayers.empty()) {
 									// no human player left in team
 									team->leader = skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer;
 								} else {
