@@ -289,11 +289,11 @@ bool CGame::ActionPressed(const Action& action,
 		const bool cheating           = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
 		const std::vector<std::string> &args = _local_strSpaceTokenize(action.extra);
-		size_t skirmishAIId           = 0; // will only be used if !badArgs
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 		const std::string actionName  = cmd.substr(2);
 
 		if (hasArgs) {
+			size_t skirmishAIId           = 0; // will only be used if !badArgs
 			bool share = false;
 			int teamToKillId         = -1;
 			int teamToReceiveUnitsId = -1;

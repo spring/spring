@@ -63,7 +63,7 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	const map<string, const FeatureDef*>& featureDefs =
 		featureHandler->GetFeatureDefs();
 	map<string, const FeatureDef*>::const_iterator fdIt;
-	for (fdIt = featureDefs.begin(); fdIt != featureDefs.end(); fdIt++) {
+	for (fdIt = featureDefs.begin(); fdIt != featureDefs.end(); ++fdIt) {
 	  const FeatureDef* fd = fdIt->second;
 		if (fd == NULL) {
 	  	continue;

@@ -92,7 +92,7 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 
 	const map<string, int>& udMap = unitDefHandler->unitDefIDsByName;
 	map<string, int>::const_iterator udIt;
-	for (udIt = udMap.begin(); udIt != udMap.end(); udIt++) {
+	for (udIt = udMap.begin(); udIt != udMap.end(); ++udIt) {
 	  const UnitDef* ud = unitDefHandler->GetUnitDefByID(udIt->second);
 		if (ud == NULL) {
 	  	continue;

@@ -663,7 +663,7 @@ void CGameServer::CheckSync()
 #endif
 }
 
-float CGameServer::GetDemoTime() {
+float CGameServer::GetDemoTime() const {
 	return !gameHasStarted ? gameTime : startTime + (float)serverframenum / (float)GAME_SPEED;
 }
 
@@ -1217,7 +1217,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					const bool isLeader_g                    = (teams[fromTeam_g].leader == player);
 					const bool isOwnTeam_g                   = (fromTeam_g == fromTeam);
 					const bool isSpec                        = players[player].spectator;
-					const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
+					const bool hasAIs_g                      = (!myAIsInTeam_g.empty());
 					const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam == teams[fromTeam].teamAllyteam);
 					const char* playerType                   = players[player].GetType();
 					const bool isSinglePlayer                = (players.size() <= 1);
@@ -1280,7 +1280,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 								// no controllers left in team
 								teams[t].active = false;
 								teams[t].leader = -1;
-							} else if (teamPlayers.size() == 0) {
+							} else if (teamPlayers.empty()) {
 								// no human player left in team
 								teams[t].leader = ais[teamAIs[0]].hostPlayer;
 							} else {

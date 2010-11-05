@@ -113,7 +113,12 @@ CReadMap::CReadMap():
 	centernormals(NULL),
 	typemap(NULL),
 	metalMap(NULL),
-	mapChecksum(0)
+	mapChecksum(0),
+	currMaxHeight(0.0),
+	currMinHeight(0.0),
+	maxheight(0.0),
+	height(),
+	width(0)
 {
 	memset(mipHeightmap, 0, sizeof(mipHeightmap));
 }

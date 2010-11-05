@@ -169,7 +169,6 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 		int amount = 1;
 		int team = playerHandler->Player(playernum)->team;
-		int allyteam = -1;
 
 		int amountArgIdx = -1;
 		int teamArgIdx = -1;
@@ -277,6 +276,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 				logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
 			} else {
+				int allyteam = -1;
 				if (teamArgIdx < 0) {
 					team = -1; // default to world features
 					allyteam = -1;

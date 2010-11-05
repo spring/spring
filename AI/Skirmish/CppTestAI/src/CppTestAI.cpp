@@ -53,7 +53,7 @@ int cpptestai::CCppTestAI::HandleEvent(int topic, const void* data) {
 
 			const std::vector<springai::Unit*> friendlyUnits = callback->GetFriendlyUnits();
 			std::string msgText = std::string("Hello Engine (from CppTestA), num my units is ") + IntToString(friendlyUnits.size());
-			if (friendlyUnits.size() > 0) {
+			if (!friendlyUnits.empty()) {
 				springai::Unit* unit = friendlyUnits[0];
 				springai::UnitDef* unitDef = unit->GetDef();
 				std::string unitDefName = unitDef->GetName();

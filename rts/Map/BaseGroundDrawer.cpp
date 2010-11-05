@@ -41,6 +41,11 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	extraTexPal = NULL;
 	extractDepthMap = NULL;
 
+#ifdef USE_GML	
+	multiThreadDrawGroundShadow=0;
+	multiThreadDrawGround=0;
+#endif
+
 	extraTexPBO.Bind();
 	extraTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
 	extraTexPBO.Unbind(false);

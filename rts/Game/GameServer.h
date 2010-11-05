@@ -136,7 +136,7 @@ private:
 	bool AdjustPlayerNumber(netcode::RawPacket *buf, int pos, int val = -1);
 	void UpdatePlayerNumberMap();
 
-	float GetDemoTime();
+	float GetDemoTime() const ;
 
 	/////////////////// game status variables ///////////////////
 
