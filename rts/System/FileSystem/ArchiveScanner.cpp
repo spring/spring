@@ -412,7 +412,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	files.sort();
 
 	// Add all files in sorted order
-	for (std::list<std::string>::iterator i = files.begin(); i != files.end(); i++) {
+	for (std::list<std::string>::iterator i = files.begin(); i != files.end(); ++i) {
 		const unsigned int nameCRC = CRC().Update(i->data(), i->size()).GetDigest();
 		const unsigned fid = ar->FindFile(*i);
 		const unsigned int dataCRC = ar->GetCrc32(fid);

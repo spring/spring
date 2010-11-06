@@ -311,7 +311,7 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location) 
 		}
 	}
 	std::map<std::string,TdfSection*>::const_iterator it;
-	for(it=sectionsptr->begin(); it!=sectionsptr->end(); it++)
+	for(it=sectionsptr->begin(); it!=sectionsptr->end(); ++it)
 	{
 		returnvec.push_back(it->first);
 		StringToLowerInPlace(returnvec.back());

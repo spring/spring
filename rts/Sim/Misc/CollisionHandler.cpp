@@ -255,7 +255,7 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 	float dstNearSq = 1e30f;
 
 	// save the closest intersection
-	for (hitsIt = hits.begin(); hitsIt != hits.end(); hitsIt++) {
+	for (hitsIt = hits.begin(); hitsIt != hits.end(); ++hitsIt) {
 		const CollisionQuery& qTmp = *hitsIt;
 		const float dstSq = (qTmp.p0 - p0).SqLength();
 
@@ -553,7 +553,6 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	}
 
 	float d = (b * b) - (4.0f * a * c);
-	float rd = 0.0f;
 	float dp = 0.0f, rdp = 0.0f;
 
 	// volume-space intersection points
@@ -562,8 +561,8 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 
 	bool b0 = false;
 	bool b1 = false;
-	float r0 = 0.0f, s0 = 0.0f, t0 = 0.0f;
-	float r1 = 0.0f, s1 = 0.0f, t1 = 0.0f;
+	float s0 = 0.0f, t0 = 0.0f;
+	float s1 = 0.0f, t1 = 0.0f;
 
 	// get the length of the ray segment in volume-space
 	const float segLenSq = (pi1 - pi0).SqLength();
@@ -576,6 +575,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			s0 = (p0 - pi0).SqLength();
 			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
 		} else {
+			float rd = 0.0f;
 			rd = fastmath::apxsqrt(d);
 			t0 = (-b - rd) / (2.0f * a);
 			t1 = (-b + rd) / (2.0f * a);
@@ -589,6 +589,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	}
 
 	if (!b0) {
+		float r0 = 0.0f;
 		// p0 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through front cap (plane)
@@ -605,6 +606,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		b0 = (t0 >= 0.0f && r0 <= 1.0f && s0 <= segLenSq);
 	}
 	if (!b1) {
+		float r1 = 0.0f;
 		// p1 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through rear cap (plane)

@@ -116,6 +116,7 @@ CReadMap::CReadMap():
 	mapChecksum(0),
 	currMaxHeight(0.0),
 	currMinHeight(0.0),
+	minheight(0.0),
 	maxheight(0.0),
 	height(),
 	width(0)

@@ -30,7 +30,7 @@ struct S3DOPrimitive {
 };
 
 struct S3DOPiece: public S3DModelPiece {
-	S3DOPiece() { parent = NULL; }
+	S3DOPiece() { parent = NULL; radius = 0; }
 
 	void DrawList() const;
 	void SetMinMaxExtends();

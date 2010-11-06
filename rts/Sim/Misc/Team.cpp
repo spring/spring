@@ -107,8 +107,14 @@ CTeam::CTeam()
   energySent(0),
   energyReceived(0),
   nextHistoryEntry(0),
-  highlight(0.0f)
+  highlight(0.0f),
+  teamNum(0)
 {
+	origColor[0]=0;
+	origColor[1]=0;
+	origColor[2]=0;
+	origColor[3]=0;
+	
 	statHistory.push_back(TeamStatistics());
 	currentStats = &statHistory.back();
 }

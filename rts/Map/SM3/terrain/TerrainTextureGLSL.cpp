@@ -170,7 +170,7 @@ struct ShaderBuilder
 	RenderSetup *renderSetup;
 	TextureUsage texUsage;
 	BufferTexture* buffer;
-	bool ShadowMapping() { return renderSetup->shaderDef.useShadowMapping; }
+	bool ShadowMapping() const { return renderSetup->shaderDef.useShadowMapping; }
 	Shader lastFragmentShader, lastVertexShader; // for debugging
 
 	ShaderBuilder(RenderSetup *rs);
@@ -196,7 +196,7 @@ struct ShaderBuilder
 		TexReq() { coords = units = 0; }
 		GLint coords, units;
 		void GetFromGL();
-		bool Fits(TexReq maxrq) {
+		bool Fits(TexReq maxrq) const {
 			return ((coords <= maxrq.coords) && (units <= maxrq.units));
 		}
 		TexReq operator + (const TexReq& rq) {
@@ -321,6 +321,7 @@ void ShaderBuilder::TexReq::GetFromGL() {
 }
 
 ShaderBuilder::ShaderBuilder(RenderSetup* rs): renderSetup(rs) {
+	shadingMethod = SM_DiffuseSP;
 	buffer = 0;
 }
 
