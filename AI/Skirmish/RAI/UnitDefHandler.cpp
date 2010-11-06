@@ -147,7 +147,7 @@ sRAIUnitDef::sRAIUnitDef(const UnitDef *unitdef, IAICallback* cb, GlobalResource
 	WeaponGuardRange = 0;
 	WeaponEnergyDifference = 0;
 	WeaponMaxEnergyCost = 0;
-	for(std::vector<UnitDef::UnitDefWeapon>::const_iterator iW=ud->weapons.begin(); iW!=ud->weapons.end(); iW++)
+	for(std::vector<UnitDef::UnitDefWeapon>::const_iterator iW=ud->weapons.begin(); iW!=ud->weapons.end(); ++iW)
 	{
 		if( iW->def->reload!=0 )
 		{
@@ -561,7 +561,7 @@ void sRAIUnitDef::SetBestWeaponEff(sWeaponEfficiency *we, int type, float MaxFir
 				fRangeTemp = MaxFiringRange;
 
 			float fValTemp=0;
-			for(std::vector<UnitDef::UnitDefWeapon>::const_iterator iW2=ud->weapons.begin(); iW2!=ud->weapons.end(); iW2++)
+			for(std::vector<UnitDef::UnitDefWeapon>::const_iterator iW2=ud->weapons.begin(); iW2!=ud->weapons.end(); ++iW2)
 			{
 				if( CheckWeaponType(iW,type) )
 				{
@@ -883,7 +883,7 @@ for(map<int,sRAIUnitDef>::iterator iU=UDR.begin(); iU!=UDR.end(); iU++ )
 		UE[i][SHIELD]=0;
 		UE[i][WEAPON]=0;
 		UE[i][WEAPONSEA]=0;
-		for(std::vector<UnitDef::UnitDefWeapon>::const_iterator iW=ud->weapons.begin(); iW!=ud->weapons.end(); iW++)
+		for(std::vector<UnitDef::UnitDefWeapon>::const_iterator iW=ud->weapons.begin(); iW!=ud->weapons.end(); ++iW)
 		{
 			float reload=iW->def->reload;
 			if( reload == 0 )

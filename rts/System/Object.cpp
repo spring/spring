@@ -72,7 +72,7 @@ void CObject::Serialize(creg::ISerializer *s)
 
 void CObject::PostLoad()
 {
-	for (std::list<CObject*>::iterator i=listening.begin();i!=listening.end();i++) {
+	for (std::list<CObject*>::iterator i=listening.begin();i!=listening.end();++i) {
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 		(*i)->listeners.insert((*i)->listeners.end(),this);
 	}
