@@ -394,7 +394,7 @@ void CInMapDraw::MousePress(int x, int y, int button)
 }
 
 
-void CInMapDraw::MouseRelease(int x, int y, int button)
+void CInMapDraw::MouseRelease(int x, int y, int button) const
 {
 }
 

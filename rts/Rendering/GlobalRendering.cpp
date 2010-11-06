@@ -69,6 +69,28 @@ CGlobalRendering::CGlobalRendering() {
 	maxTextureSize = 1024;
 
 	fullScreen = true;
+	dualScreenMiniMapOnLeft = false;
+	dualScreenMode = false;
+	haveGLSL = false;
+	haveARB = false;
+	supportNPOTs = false;
+	haveATI = false;
+	depthBufferBits = false;
+	
+	viewPosX = 0;
+	viewPosY = 0;
+	
+	winSizeX = 0;
+	winSizeY = 0;
+	
+	winPosX = 0;
+	winPosY = 0;
+	
+	screenSizeX = 0;
+	screenSizeY = 0;
+	
+	weightedSpeedFactor = 0.0f;
+	lastFrameStart = 0;
 }
 
 void CGlobalRendering::PostInit() {

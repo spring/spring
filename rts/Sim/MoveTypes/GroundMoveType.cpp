@@ -1083,7 +1083,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			const vector<CSolidObject*> &nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
 
-			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); oi++) {
+			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
 				CSolidObject* o = *oi;
 				CMoveMath* moveMath = moveData->moveMath;
 

@@ -73,11 +73,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
 	CBitmap detailTexBM;
-	CBitmap specularTexBM;
-	CBitmap splatDetailTexBM;
-	CBitmap splatDistrTexBM;
-	CBitmap grassShadingTexBM;
 	CBitmap skyReflectModTexBM;
+	CBitmap grassShadingTexBM;
 
 	detailTex        = 0;
 	shadingTex       = 0;
@@ -89,6 +86,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	skyReflectModTex = 0;
 
 	if (haveSpecularLighting) {
+		CBitmap specularTexBM;
+		CBitmap splatDistrTexBM;
+		CBitmap splatDetailTexBM;
 		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 			// maps wants specular lighting, but no moderation
 			specularTexBM.Alloc(1, 1);

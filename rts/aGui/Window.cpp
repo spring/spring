@@ -13,11 +13,11 @@ Window::Window(const std::string& _title, GuiElement* parent) : GuiElement(paren
 {
 	titleHeight = 0.05f;
 	dragging = false;
-	size[0] = 0.3f;
-	size[1] = 0.3f;
-	
-	pos[0] = 0.2f;
-	pos[1] = 0.2f;
+	for(int i=0; i<2; i++){
+		size[i] = 0.3f;
+		pos[i] = 0.2f;
+		dragPos[i] = 0.0f;
+	}
 }
 
 void Window::AddChild(GuiElement* elem)

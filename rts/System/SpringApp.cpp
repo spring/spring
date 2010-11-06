@@ -118,6 +118,7 @@ SpringApp::SpringApp()
 	depthBufferBits = 24;
 	windowState = 0;
 	windowPosX = windowPosY = 0;
+	ogc = NULL;
 }
 
 /**

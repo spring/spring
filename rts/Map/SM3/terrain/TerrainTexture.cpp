@@ -89,6 +89,8 @@ namespace terrain {
 		lightmap = 0;
 		flatBumpmap = 0;
 		shadowMapParams = 0;
+		optimizeEpsilon = 0.0f;
+		useBumpMaps = false;
 	}
 
 	TerrainTexture::~TerrainTexture ()
@@ -562,7 +564,7 @@ namespace terrain {
 		shaderHandler->BeginTexturing();
 	}
 
-	int TerrainTexture::NumPasses() {
+	int TerrainTexture::NumPasses() const {
 		return maxPasses;
 	}
 

@@ -382,8 +382,8 @@ void CShadowHandler::CalcMinMaxView(void)
 	GetFrustumSide(cam2->leftside, false);
 
 	std::vector<fline>::iterator fli,fli2;
-	for (fli = left.begin(); fli != left.end(); fli++) {
-		for (fli2 = left.begin(); fli2 != left.end(); fli2++) {
+	for (fli = left.begin(); fli != left.end(); ++fli) {
+		for (fli2 = left.begin(); fli2 != left.end(); ++fli2) {
 			if (fli == fli2)
 				continue;
 			if (fli->dir - fli2->dir == 0.0f)
@@ -419,7 +419,7 @@ void CShadowHandler::CalcMinMaxView(void)
 
 	if (!left.empty()) {
 		std::vector<fline>::iterator fli;
-		for (fli = left.begin(); fli != left.end(); fli++) {
+		for (fli = left.begin(); fli != left.end(); ++fli) {
 			if (fli->minz < fli->maxz) {
 				float3 p[5];
 				p[0] = float3(fli->base + fli->dir * fli->minz, 0.0, fli->minz);
@@ -456,7 +456,6 @@ void CShadowHandler::CalcMinMaxView(void)
 //maybe standardize all these things in one place sometime (and maybe one day i should try to understand how i made them work)
 void CShadowHandler::GetFrustumSide(float3& side, bool upside)
 {
-	fline temp;
 
 	// get vector for collision between frustum and horizontal plane
 	float3 b = UpVector.cross(side);
@@ -464,6 +463,7 @@ void CShadowHandler::GetFrustumSide(float3& side, bool upside)
 	if (fabs(b.z) < 0.0001f)
 		b.z = 0.00011f;
 	if (fabs(b.z) > 0.0001f) {
+		fline temp;
 		temp.dir=b.x/b.z;				//set direction to that
 		float3 c=b.cross(side);			//get vector from camera to collision line
 		c.ANormalize();

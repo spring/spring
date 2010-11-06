@@ -145,7 +145,7 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 	}
 }
 
-void CProjectileHandler::PostLoad()
+void CProjectileHandler::PostLoad() const
 {
 }
 

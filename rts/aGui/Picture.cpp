@@ -11,6 +11,7 @@ namespace agui
 
 Picture::Picture(GuiElement* parent) : GuiElement(parent)
 {
+	texture=0;
 }
 
 Picture::~Picture()
