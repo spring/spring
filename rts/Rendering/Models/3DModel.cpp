@@ -242,7 +242,7 @@ float3 LocalModelPiece::GetDirection() const
 }
 
 
-bool LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
+bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
 {
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
