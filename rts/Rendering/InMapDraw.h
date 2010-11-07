@@ -28,7 +28,7 @@ public:
 	void Draw(void);
 
 	void MousePress(int x, int y, int button);
-	void MouseRelease(int x,int y,int button) const;
+	void MouseRelease(int x,int y,int button);
 	void MouseMove(int x, int y, int dx, int dy, int button);
 	bool AllowedMsg(const CPlayer*) const;
 	/** @return playerId */

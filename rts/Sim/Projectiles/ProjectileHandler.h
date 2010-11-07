@@ -47,7 +47,7 @@ public:
 	CProjectileHandler();
 	virtual ~CProjectileHandler();
 	void Serialize(creg::ISerializer* s);
-	void PostLoad() const;
+	void PostLoad();
 
 	inline const ProjectileMapPair* GetMapPairBySyncedID(int id) const {
 		ProjectileMap::const_iterator it = syncedProjectileIDs.find(id);
