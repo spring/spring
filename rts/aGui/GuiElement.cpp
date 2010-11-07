@@ -12,10 +12,9 @@ int GuiElement::screenoffset[2];
 
 GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false), weight(1)
 {
-	for( int i=0; i<2; i++){
-		size[i]=0.0f;
-		pos[i]=0.0f;
-	}
+	size[0] = size[1] = 0.0f;
+	pos[0] = pos[1] = 0.0f;
+
 	if (parent)
 		parent->AddChild(this);
 }

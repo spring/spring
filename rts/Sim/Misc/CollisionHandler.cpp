@@ -552,15 +552,17 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		} break;
 	}
 
-	float d = (b * b) - (4.0f * a * c);
-	float dp = 0.0f, rdp = 0.0f;
-
 	// volume-space intersection points
 	float3 p0 = ZVEC;
 	float3 p1 = ZVEC;
 
 	bool b0 = false;
 	bool b1 = false;
+	float
+		d = (b * b) - (4.0f * a * c),
+		rd = 0.0f, // sqrt(d) or 1/dp
+		dp = 0.0f, // dot(n{0, 1}, dir)
+		ra = 0.0f; // ellipsoid ratio of p{0, 1}
 	float s0 = 0.0f, t0 = 0.0f;
 	float s1 = 0.0f, t1 = 0.0f;
 
@@ -575,7 +577,6 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			s0 = (p0 - pi0).SqLength();
 			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
 		} else {
-			float rd = 0.0f;
 			rd = fastmath::apxsqrt(d);
 			t0 = (-b - rd) / (2.0f * a);
 			t1 = (-b + rd) / (2.0f * a);
@@ -589,38 +590,36 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	}
 
 	if (!b0) {
-		float r0 = 0.0f;
 		// p0 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through front cap (plane)
 		// NOTE: normal n0 and dir should not be orthogonal
 		dp = n0.dot(dir);
-		rdp = (dp != 0.0f)? 1.0f / dp: 0.01f;
+		rd = (dp != 0.0f)? 1.0f / dp: 0.01f;
 
-		t0 = -(n0.dot(pi0) - ahs[pAx]) * rdp;
+		t0 = -(n0.dot(pi0) - ahs[pAx]) * rd;
 		p0 = pi0 + (dir * t0);
 		s0 = (p0 - pi0).SqLength();
-		r0 =
+		ra =
 			(((p0[sAx0] * p0[sAx0]) / ahsq[sAx0]) +
 			 ((p0[sAx1] * p0[sAx1]) / ahsq[sAx1]));
-		b0 = (t0 >= 0.0f && r0 <= 1.0f && s0 <= segLenSq);
+		b0 = (t0 >= 0.0f && ra <= 1.0f && s0 <= segLenSq);
 	}
 	if (!b1) {
-		float r1 = 0.0f;
 		// p1 does not lie on ray segment, or does not fall
 		// between cylinder end-caps: check if segment goes
 		// through rear cap (plane)
 		// NOTE: normal n1 and dir should not be orthogonal
 		dp = n1.dot(dir);
-		rdp = (dp != 0.0f)? 1.0f / dp: 0.01f;
+		rd = (dp != 0.0f)? 1.0f / dp: 0.01f;
 
-		t1 = -(n1.dot(pi0) - ahs[pAx]) * rdp;
+		t1 = -(n1.dot(pi0) - ahs[pAx]) * rd;
 		p1 = pi0 + (dir * t1);
 		s1 = (p1 - pi0).SqLength();
-		r1 =
+		ra =
 			(((p1[sAx0] * p1[sAx0]) / ahsq[sAx0]) +
 			 ((p1[sAx1] * p1[sAx1]) / ahsq[sAx1]));
-		b1 = (t1 >= 0.0f && r1 <= 1.0f && s1 <= segLenSq);
+		b1 = (t1 >= 0.0f && ra <= 1.0f && s1 <= segLenSq);
 	}
 
 	if (q) {
