@@ -173,15 +173,15 @@ namespace
 	// prototype / factory based approach might be better at some point?
 	// for now these singleton filters seem ok. (they are not reentrant tho!)
 
-#define DECLARE_FILTER_EX(name, args, condition, extra) \
+#define DECLARE_FILTER_EX(name, args, condition, extra, init) \
 	struct name ## _Filter : public Filter { \
-		name ## _Filter() : Filter(#name, args) {} \
+		name ## _Filter() : Filter(#name, args) { init; } \
 		bool ShouldIncludeUnit(const CUnit* unit) const { return condition; } \
 		extra \
 	} name ## _filter_instance; \
 
 #define DECLARE_FILTER(name, condition) \
-	DECLARE_FILTER_EX(name, 0, condition, )
+	DECLARE_FILTER_EX(name, 0, condition, ,)
 
 	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0);
 	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != NULL);
@@ -199,21 +199,24 @@ namespace
 		float minRange;
 		void SetParam(int index, const std::string& value) {
 			minRange = atof(value.c_str());
-		}
+		},
+		minRange=0.0f;
 	);
 
 	DECLARE_FILTER_EX(AbsoluteHealth, 1, unit->health > minHealth,
 		float minHealth;
 		void SetParam(int index, const std::string& value) {
 			minHealth = atof(value.c_str());
-		}
+		},
+		minHealth=0.0f;
 	);
 
 	DECLARE_FILTER_EX(RelativeHealth, 1, unit->health / unit->maxHealth > minHealth,
 		float minHealth;
 		void SetParam(int index, const std::string& value) {
 			minHealth = atof(value.c_str()) * 0.01f; // convert from percent
-		}
+		},
+		minHealth=0.0f;
 	);
 
 	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->unitDef->id) != prevTypes.end(),
@@ -224,21 +227,22 @@ namespace
 			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
 				prevTypes.insert((*si)->unitDef->id);
 			}
-		}
+		},
 	);
 
 	DECLARE_FILTER_EX(NameContain, 1, unit->unitDef->humanName.find(name) != std::string::npos,
 		std::string name;
 		void SetParam(int index, const std::string& value) {
 			name = value;
-		}
+		},
 	);
 
 	DECLARE_FILTER_EX(Category, 1, unit->category == cat,
 		unsigned int cat;
 		void SetParam(int index, const std::string& value) {
 			cat = CCategoryHandler::Instance()->GetCategory(value);
-		}
+		},
+		cat=0;
 	);
 
 	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParamsMap.find(param) != unit->modParamsMap.end() &&
@@ -250,7 +254,8 @@ namespace
 				case 0: param = value; break;
 				case 1: wantedValue = atof(value.c_str()); break;
 			}
-		}
+		},
+		wantedValue=0.0f;
 	);
 
 #undef DECLARE_FILTER_EX
