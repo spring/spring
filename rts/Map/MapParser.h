@@ -27,6 +27,7 @@ class MapParser
 
 	private:
 		LuaParser* parser;
+		mutable std::string errorLog;
 };
 
 

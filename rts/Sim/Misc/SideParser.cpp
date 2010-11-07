@@ -47,7 +47,7 @@ bool SideParser::Load()
 	parser.EndTable();
 #endif
 	if (!parser.Execute()) {
-		errorLog = parser.GetErrorLog();
+		errorLog = "Side-Parser: " + parser.GetErrorLog();
 		return false;
 	}
 

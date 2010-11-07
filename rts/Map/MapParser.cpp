@@ -10,7 +10,8 @@
 
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "FileSystem/FileSystem.h"
+#include "System/Util.h"
+#include "System/FileSystem/FileSystem.h"
 
 
 std::string MapParser::GetMapConfigName(const std::string& mapFileName)
@@ -66,12 +67,16 @@ MapParser::~MapParser()
 
 bool MapParser::GetStartPos(int team, float3& pos) const
 {
+	errorLog.clear();
+
 	if (!parser->IsValid()) {
+		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: parser not ready || file not found";
 		return false;
 	}
 	const LuaTable teamsTable = parser->GetRoot().SubTable("teams");
 	const LuaTable posTable = teamsTable.SubTable(team).SubTable("startPos");
 	if (!posTable.IsValid()) {
+		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: " + parser->GetErrorLog();
 		return false;
 	}
 
@@ -85,8 +90,10 @@ bool MapParser::GetStartPos(int team, float3& pos) const
 LuaTable MapParser::GetRoot()
 {
 	if (parser) {
+		errorLog.clear();
 		return parser->GetRoot();
 	} else {
+		errorLog = "Map-Parser: Failed to get parser root node, reason: parser not ready || file not found.";
 		return LuaTable();
 	}
 }
@@ -105,8 +112,8 @@ bool MapParser::IsValid() const
 std::string MapParser::GetErrorLog() const
 {
 	if (parser) {
-		return parser->GetErrorLog();
+		return errorLog;
 	} else {
-		return "could not find file";
+		return "Map-Parser: parser not ready || file not found";
 	}
 }
