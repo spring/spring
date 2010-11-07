@@ -618,10 +618,7 @@ LuaMatHandler::LuaMatHandler()
 	reset3doShader = NULL;
 	setupS3oShader = NULL;
 	resetS3oShader = NULL;
-	for(int i=0;i<2; i++){
-		sunPos[i] = 0.0f;
-		windVel[i] = 0.0f;
-	}
+
 	prevMat = NULL;
 }
 
