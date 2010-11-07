@@ -507,7 +507,7 @@ void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 		int ex = exi;
 		float xtest, xtest2;
 		std::vector<CBFGroundDrawer::fline>::iterator fli;
-		for (fli = groundDrawer->left.begin(); fli != groundDrawer->left.end(); fli++) {
+		for (fli = groundDrawer->left.begin(); fli != groundDrawer->left.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
@@ -519,7 +519,7 @@ void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			if (xtest - extraSize > sx)
 				sx = ((int) xtest) - extraSize;
 		}
-		for (fli = groundDrawer->right.begin(); fli != groundDrawer->right.end(); fli++) {
+		for (fli = groundDrawer->right.begin(); fli != groundDrawer->right.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
