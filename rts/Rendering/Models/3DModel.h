@@ -105,6 +105,7 @@ struct LocalModelPiece
 	unsigned int displist;
 	std::vector<unsigned int> lodDispLists;
 
+
 	void Draw() const;
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
@@ -113,7 +114,7 @@ struct LocalModelPiece
 	float3 GetPos() const;
 	CMatrix44f GetMatrix() const;
 	float3 GetDirection() const;
-	bool GetEmitDirPos(float3 &pos, float3 &dir) const;
+	bool GetEmitDirPos(float3& pos, float3& dir) const;
 };
 
 struct LocalModel

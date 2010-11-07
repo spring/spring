@@ -29,8 +29,8 @@ public:
 class C3DModelLoader
 {
 public:
-	C3DModelLoader(void);
-	~C3DModelLoader(void);
+	C3DModelLoader();
+	~C3DModelLoader();
 
 	void Update();
 	S3DModel* Load3DModel(std::string name, const float3& centerOffset = ZeroVector);
