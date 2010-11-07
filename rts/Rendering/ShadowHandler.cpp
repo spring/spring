@@ -43,6 +43,14 @@ CShadowHandler::CShadowHandler(void)
 	shadowTexture = 0;
 	dummyColorTexture = 0;
 	drawTerrainShadow = true;
+	p17 = 0.0f;
+	p18 = 0.0f;
+	xmid = 0;
+	ymid = 0;
+	x1 = 0.0f;
+	y1 = 0.0f;
+	x2 = 0.0f;
+	y2 = 0.0f;
 
 	if (!tmpFirstInstance && !canUseShadows) {
 		return;
