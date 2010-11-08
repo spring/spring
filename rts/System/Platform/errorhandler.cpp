@@ -28,62 +28,17 @@
 #endif // ifndef DEDICATED
 
 
-#ifndef DEDICATED
-	#include "Game/GameController.h"
 
-class CShowErrorInMainThread : public CGameController
-{
-public:
-	CShowErrorInMainThread(const std::string& msg, const std::string& caption, unsigned int flags, CGameController* origGameController) :
-		msg(msg),
-		caption(caption),
-		flags(flags),
-		origGameController(origGameController)
-	{
-	}
-
-
-	bool Update() {
-		ErrorMessageBox(msg, caption, flags);
-		return true;
-	}
-
-private:
-	std::string msg;
-	std::string caption;
-	unsigned int flags;
-	CGameController* origGameController;
-};
-
-#endif // ifndef DEDICATED
-
-
-void ErrorMessageBox(const std::string msg, const std::string caption, unsigned int flags)
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
 #ifndef DEDICATED
 	if (!(flags & MBF_MAIN)) {
-
-		if (!Threading::IsMainThread()) {
-			CGameController* origGameController = activeController;
-			activeController = new CShowErrorInMainThread(msg, caption, flags, origGameController);
-
-			//! terminate thread
-			throw boost::thread_interrupted();
-		}
-		else {
-			Threading::Error err(caption, msg, flags);
-			Threading::SetThreadError(err);
-			Threading::GetMainThread()->interrupt();
-			throw boost::thread_interrupted();
-		}
-/*
-
 		Threading::Error err(caption, msg, flags);
 		Threading::SetThreadError(err);
 		if (!Threading::IsMainThread()) {
 			Threading::GetMainThread()->interrupt();
 		}
-		throw boost::thread_interrupted();*/
+		throw boost::thread_interrupted();
 	}
 #endif
 
@@ -94,7 +49,6 @@ void ErrorMessageBox(const std::string msg, const std::string caption, unsigned 
 #else
 	globalQuit = true;
 
-	SafeDelete(activeController);
 	SpringApp::Shutdown();
 #endif
 

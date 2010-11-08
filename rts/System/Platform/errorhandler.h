@@ -41,7 +41,7 @@
  *                 - MB_EXCL : Warning
  *                 - MB_INFO : Info
  */
-NO_RETURN_PREFIX void ErrorMessageBox(const std::string msg, const std::string caption, unsigned int flags = MBF_OK) NO_RETURN_POSTFIX;
+NO_RETURN_PREFIX void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK) NO_RETURN_POSTFIX;
 
 
 /**

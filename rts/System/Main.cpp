@@ -52,15 +52,13 @@ void MainFunc(int argc, char** argv, int* ret) {
 		SpringApp app;
 		*ret = app.Run(argc, argv);
 	} CATCH_SPRING_ERRORS
-
-	*ret = -1;
 }
 
 
 
 int Run(int argc, char* argv[])
 {
-	int ret = 0;
+	int ret = -1;
 
 	boost::thread* mainThread = new boost::thread(boost::bind(&MainFunc, argc, argv, &ret));
 	Threading::SetMainThread(mainThread);
