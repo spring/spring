@@ -20,7 +20,7 @@ namespace Threading {
 		return mainThread;
 	}
 
-	void SetThreadError(Error& err) {
+	void SetThreadError(const Error& err) {
 		threadError = new Error(err); //FIXME memory leak!
 	}
 
