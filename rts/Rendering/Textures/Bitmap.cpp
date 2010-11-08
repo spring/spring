@@ -22,7 +22,7 @@
 #include "Bitmap.h"
 #include "bitops.h"
 
-boost::mutex devilMutex; // devil functions, whilst expensive, aren'T thread-save
+boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
 
 static const float blurkernel[9] = {
 	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f,

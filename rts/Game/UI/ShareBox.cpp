@@ -61,8 +61,10 @@ CShareBox::CShareBox()
 
 	metalShare  = 0.0f;
 	energyShare = 0.0f;
-	shareUnits = false;
-	moveBox = false;
+	shareUnits  = false;
+	moveBox     = false;
+	metalMove   = false;
+	energyMove  = false;
 
 	// find a default team to share to that is not gu->myTeam and is not dead.
 	shareTeam = lastShareTeam;

@@ -65,7 +65,7 @@ CSound::~CSound()
 	if (soundThread) {
 		soundThread->join();
 		delete soundThread;
-		soundThread = 0;
+		soundThread = NULL;
 	}
 
 	sounds.clear();
