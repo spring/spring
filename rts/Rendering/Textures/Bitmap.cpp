@@ -798,7 +798,7 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-	unsigned char tmpPixel[channels];
+	unsigned char *tmpPixel = new unsigned char[channels];
 	for (int y=0; y < (ysize / 2); ++y) {
 		for (int x=0; x < xsize; ++x) {
 			const int pixelLow  = (((y            ) * xsize) + x) * channels;
@@ -809,4 +809,5 @@ void CBitmap::ReverseYAxis()
 			memcpy(mem + pixelLow,  tmpPixel,        channels);
 		}
 	}
+	delete [] tmpPixel;
 }
