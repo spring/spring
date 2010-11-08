@@ -61,20 +61,29 @@ private:
 void ErrorMessageBox(const std::string msg, const std::string caption, unsigned int flags)
 {
 #ifndef DEDICATED
-	if (!Threading::IsMainThread()) {
-		CGameController* origGameController = activeController;
-		activeController = new CShowErrorInMainThread(msg, caption, flags, origGameController);
+	if (!(flags & MBF_MAIN)) {
 
-		//! terminate thread
-		throw boost::thread_interrupted();
-	}
-	else {
-		std::string fullmsg = caption + " " + msg;
-		LogObject() << fullmsg; // to give a clue, in case other error handling fails
-		Threading::SetThreadError(fullmsg);
-		Threading::GetMainThread()->interrupt();
+		if (!Threading::IsMainThread()) {
+			CGameController* origGameController = activeController;
+			activeController = new CShowErrorInMainThread(msg, caption, flags, origGameController);
 
-		throw boost::thread_interrupted();
+			//! terminate thread
+			throw boost::thread_interrupted();
+		}
+		else {
+			Threading::Error err(caption, msg, flags);
+			Threading::SetThreadError(err);
+			Threading::GetMainThread()->interrupt();
+			throw boost::thread_interrupted();
+		}
+/*
+
+		Threading::Error err(caption, msg, flags);
+		Threading::SetThreadError(err);
+		if (!Threading::IsMainThread()) {
+			Threading::GetMainThread()->interrupt();
+		}
+		throw boost::thread_interrupted();*/
 	}
 #endif
 
@@ -85,8 +94,8 @@ void ErrorMessageBox(const std::string msg, const std::string caption, unsigned 
 #else
 	globalQuit = true;
 
-	SpringApp::Shutdown();
 	SafeDelete(activeController);
+	SpringApp::Shutdown();
 #endif
 
 	logOutput.SetSubscribersEnabled(false);

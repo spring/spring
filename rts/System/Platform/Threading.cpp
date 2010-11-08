@@ -6,7 +6,7 @@ namespace Threading {
 	static bool haveMainThreadID = false;
 	static boost::thread* mainThread = NULL;
 	static boost::thread::id mainThreadID;
-	static std::runtime_error* threadError = NULL;
+	static Error* threadError = NULL;
 
 	void SetMainThread(boost::thread* mt) {
 		if (!haveMainThreadID) {
@@ -20,11 +20,12 @@ namespace Threading {
 		return mainThread;
 	}
 
-	void SetThreadError(const std::string& s) {
-		threadError = new std::runtime_error(s);
+	void SetThreadError(Error& err) {
+		threadError = new Error(err); //FIXME memory leak!
 	}
-	std::runtime_error GetThreadError() {
-		return threadError ? *threadError : std::runtime_error("Unknown error");
+
+	Error* GetThreadError() {
+		return threadError;
 	}
 
 	bool IsMainThread() {

@@ -6,10 +6,10 @@
 #include <process.h>
 #include <imagehlp.h>
 #include <signal.h>
-#include <SDL.h> // for SDL_Quit
 #include <boost/thread/thread.hpp>
 
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/errorhandler.h"
 
 #include "ConfigHandler.h"
 #include "LogOutput.h"
@@ -247,11 +247,6 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
 
-	// Cleanup.
-	SDL_Quit();
-	logOutput.End();  // Stop writing to log.
-	// FIXME: update closing of demo to new netcode
-
 	// Inform user.
 	char dir[MAX_PATH], msg[MAX_PATH+200];
 	GetCurrentDirectory(sizeof(dir) - 1, dir);
@@ -259,7 +254,7 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 		"Spring has crashed.\n\n"
 		"A stacktrace has been written to:\n"
 		"%s\\infolog.txt", dir);
-	MessageBox(NULL, msg, "Spring: Unhandled exception", 0);
+	ErrorMessageBox(msg, "Spring: Unhandled exception", 0);
 
 	// this seems to silently close the application
 	return EXCEPTION_EXECUTE_HANDLER;

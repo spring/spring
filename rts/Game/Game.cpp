@@ -313,7 +313,6 @@ CGame::~CGame()
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
 	heightMapTexture.Kill();
-	SafeDelete(gameServer);
 
 	eoh->PreDestroy();
 	CEngineOutHandler::Destroy();
@@ -351,7 +350,6 @@ CGame::~CGame()
 	SafeDelete(tooltip);
 	SafeDelete(keyBindings);
 	SafeDelete(keyCodes);
-	ISound::Shutdown();
 	SafeDelete(selectionKeys);
 	SafeDelete(mouse);
 	SafeDelete(camHandler);
@@ -384,6 +382,8 @@ CGame::~CGame()
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
 	SafeDelete(cubeMapHandler);
+
+	game = NULL;
 }
 
 

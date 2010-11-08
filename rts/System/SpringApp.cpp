@@ -20,8 +20,9 @@
 
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
-#include "Game/GameVersion.h"
+#include "Game/GameServer.h"
 #include "Game/GameSetup.h"
+#include "Game/GameVersion.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameController.h"
 #include "Game/PreGame.h"
@@ -221,6 +222,8 @@ bool SpringApp::Initialize()
 	// Initialize Lua GL
 	LuaOpenGL::Init();
 
+	// Sound
+	ISound::Initialize();
 
 	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
 
@@ -1198,11 +1201,13 @@ int SpringApp::Run(int argc, char *argv[])
 			if (!Update())
 				break;
 		} catch (content_error &e) {
+			//FIXME should this really be in here and not the crashhandler???
 			LogObject() << "Caught content exception: " << e.what() << "\n";
 			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
 		}
 	}
 
+	//FIXME this doesn't gets called when the above content_error is catched!!!!!
 #ifdef USE_GML
 	#if GML_ENABLE_SIM
 	gmlKeepRunning=0; // wait for sim to finish
@@ -1229,10 +1234,12 @@ int SpringApp::Run(int argc, char *argv[])
  */
 void SpringApp::Shutdown()
 {
-	delete pregame;	//in case we exit during init
-	CLoadScreen::DeleteInstance(); // FIXME? (see ~CGame)
+	delete pregame;
 	delete game;
+	delete gameServer;
 	delete gameSetup;
+	CLoadScreen::DeleteInstance();
+	ISound::Shutdown();
 	delete font;
 	delete smallFont;
 	CNamedTextures::Kill();
