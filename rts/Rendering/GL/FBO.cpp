@@ -300,13 +300,13 @@ bool FBO::CheckStatus(std::string name)
 			valid = true;
 			return true;
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
-			logOutput.Print("FBO-"+name+": has no images/buffers attached!");
+			logOutput.Print("FBO-"+name+": no/unsupported textures/buffers attached!");
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
-			logOutput.Print("FBO-"+name+": missing a required image/buffer attachment!");
+			logOutput.Print("FBO-"+name+": missing a required texture/buffer attachment!");
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
-			logOutput.Print("FBO-"+name+": has mismatched image/buffer dimensions!");
+			logOutput.Print("FBO-"+name+": has mismatched texture/buffer dimensions!");
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
 			logOutput.Print("FBO-"+name+": colorbuffer attachments have different types!");

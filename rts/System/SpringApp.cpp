@@ -129,7 +129,7 @@ SpringApp::~SpringApp()
 	delete cmdline;
 	delete[] keys;
 
-	creg::System::FreeClasses ();
+	creg::System::FreeClasses();
 }
 
 /**
