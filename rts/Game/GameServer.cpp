@@ -169,7 +169,7 @@ CGameServer::CGameServer(int hostport, const GameData* const newGameData, const 
 	{ // modify and save GameSetup text (remove passwords)
 		TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());
 		TdfParser::TdfSection* root = parser.GetRootSection();
-		for (TdfParser::TdfSection::sectionsMap::iterator it = root->sections.begin(); it != root->sections.end(); ++it) {
+		for (TdfParser::sectionsMap_t::iterator it = root->sections.begin(); it != root->sections.end(); ++it) {
 			if (it->first.substr(0, 6) == "PLAYER")
 				it->second->remove("Password");
 		}
