@@ -77,7 +77,6 @@ private:
 	std::vector<LosTable> lostables;
 
 	CLosTables();
-	int Round(float num);
 	void DrawLine(char* PaintTable, int x,int y,int Size);
 	LosLine OutputLine(int x,int y,int line);
 	void OutputTable(int table);
@@ -223,15 +222,6 @@ void CLosTables::DrawLine(char* PaintTable, int x, int y, int Size)
 			PaintTable[Round(m*y0 + b)+y0*Size] = 1;
 		}
 	}
-}
-
-
-int CLosTables::Round(float Num)
-{
-	if ((Num - (int)Num) < 0.5f)
-		return (int)Num;
-	else
-		return (int)Num+1;
 }
 
 
