@@ -43,8 +43,6 @@
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/Net/RawPacket.h"
 #include "System/Net/UnpackPacket.h"
-#include "System/Sound/ISound.h"
-#include "System/Sound/IMusicChannel.h"
 
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
@@ -69,7 +67,6 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 	{
 		net->InitLocalClient();
 	}
-	ISound::Initialize(); // should have finished until server response arrives
 }
 
 
@@ -77,6 +74,8 @@ CPreGame::~CPreGame()
 {
 	// don't delete infoconsole, its beeing reused by CGame
 	agui::gui->Draw(); // delete leftover gui elements (remove once the gui is drawn ingame)
+
+	pregame = NULL;
 }
 
 void CPreGame::LoadSetupscript(const std::string& script)

@@ -15,6 +15,7 @@
 #define MBF_OK    1
 #define MBF_INFO  2
 #define MBF_EXCL  4
+#define MBF_MAIN  8
 
 #if defined __GNUC__ && (__GNUC__ >= 4)
 	#define NO_RETURN_POSTFIX __attribute__ ((noreturn))
