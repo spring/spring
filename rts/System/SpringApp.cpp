@@ -1022,11 +1022,7 @@ int SpringApp::Sim()
 
 		if(GML_SHARE_LISTS)
 			ogc->WorkerThreadFree();
-	} catch(opengl_error &e) {
-		Threading::SetThreadError(e.what());
-		Threading::GetMainThread()->interrupt();
-		return 0;
-	}
+	} CATCH_SPRING_ERRORS
 
 	return 1;
 }
