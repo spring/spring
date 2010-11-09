@@ -83,37 +83,37 @@ CR_REG_METADATA(CTeam, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTeam::CTeam()
-: isDead(false),
-  gaia(false),
-  metal(0),
-  energy(0),
-  metalPull(0),     prevMetalPull(0),
-  metalIncome(0),   prevMetalIncome(0),
-  metalExpense(0),  prevMetalExpense(0),
-  metalUpkeep(0),   prevMetalUpkeep(0),
-  energyPull(0),    prevEnergyPull(0),
-  energyIncome(0),  prevEnergyIncome(0),
-  energyExpense(0), prevEnergyExpense(0),
-  energyUpkeep(0),  prevEnergyUpkeep(0),
-  metalStorage(1000000),
-  energyStorage(1000000),
-  metalShare(0.99f),
-  energyShare(0.95f),
-  delayedMetalShare(0),
-  delayedEnergyShare(0),
-  metalSent(0),
-  metalReceived(0),
-  energySent(0),
-  energyReceived(0),
-  nextHistoryEntry(0),
-  highlight(0.0f),
-  teamNum(0)
+CTeam::CTeam() :
+	teamNum(-1),
+	isDead(false),
+	gaia(false),
+	metal(0.0f),
+	energy(0.0f),
+	metalPull(0.0f),     prevMetalPull(0.0f),
+	metalIncome(0.0f),   prevMetalIncome(0.0f),
+	metalExpense(0.0f),  prevMetalExpense(0.0f),
+	metalUpkeep(0.0f),   prevMetalUpkeep(0.0f),
+	energyPull(0.0f),    prevEnergyPull(0.0f),
+	energyIncome(0.0f),  prevEnergyIncome(0.0f),
+	energyExpense(0.0f), prevEnergyExpense(0.0f),
+	energyUpkeep(0.0f),  prevEnergyUpkeep(0.0f),
+	metalStorage(1000000),
+	energyStorage(1000000),
+	metalShare(0.99f),
+	energyShare(0.95f),
+	delayedMetalShare(0.0f),
+	delayedEnergyShare(0.0f),
+	metalSent(0.0f),
+	metalReceived(0.0f),
+	energySent(0.0f),
+	energyReceived(0.0f),
+	nextHistoryEntry(0),
+	highlight(0.0f)
 {
-	origColor[0]=0;
-	origColor[1]=0;
-	origColor[2]=0;
-	origColor[3]=0;
+	origColor[0] = 0;
+	origColor[1] = 0;
+	origColor[2] = 0;
+	origColor[3] = 0;
 	
 	statHistory.push_back(TeamStatistics());
 	currentStats = &statHistory.back();
