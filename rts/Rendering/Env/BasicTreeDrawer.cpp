@@ -40,7 +40,7 @@ CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 	std::string fn;
 	CBitmap sprite;
 	CBitmap TexImage;
-	TexImage.Alloc(512,1024);
+	TexImage.Alloc(512,512);
 
 	{
 		fn = "bitmaps/"+treesTable.GetString("gran1", "gran.bmp");
@@ -62,7 +62,7 @@ CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 			throw content_error("texture " + fn + " must be 256x256!");
 		sprite.ReverseYAxis();
 		sprite.SetTransparent(SColor(72,72,72), SColor(33,54,29,0));
-		TexImage.CopySubImage(sprite, 256, 0);
+		TexImage.CopySubImage(sprite, 255, 0);
 	}
 
 	{
@@ -74,7 +74,7 @@ CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 		sprite.ReverseYAxis();
 		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
 		sprite.Tint(tintc);
-		TexImage.CopySubImage(sprite, 0, 256);
+		TexImage.CopySubImage(sprite, 0, 255);
 	}
 
 	{
@@ -86,7 +86,7 @@ CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 		sprite.ReverseYAxis();
 		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
 		sprite.Tint(tintc);
-		TexImage.CopySubImage(sprite, 128, 256);
+		TexImage.CopySubImage(sprite, 127, 255);
 	}
 
 	{
@@ -98,7 +98,7 @@ CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 		sprite.ReverseYAxis();
 		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
 		sprite.Tint(tintc);
-		TexImage.CopySubImage(sprite, 256, 256);
+		TexImage.CopySubImage(sprite, 255, 255);
 	}
 
 	// create mipmapped texture
@@ -161,23 +161,23 @@ inline void DrawTreeVertexFar1(float3 pos, float3 swd, bool enlarge=true) {
 	SetArrayQ(0,0.25f,base);
 	base-=swd;
 	base-=swd;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f,0.5f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f,0.0f,base);
 }
 
 inline void DrawTreeVertexFar2(float3 pos, float3 swd, bool enlarge=true) { 
 	if(enlarge)
 		va->EnlargeArrays(4,0,VA_SIZE_T);
 	float3 base=pos+swd;
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0, 0.5f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.5f,base);
+	SetArrayQ(0, 1.0f,base);
 	base-=swd;
 	base-=swd;
-	SetArrayQ(0.25f,0.5f,base);
+	SetArrayQ(0.25f,1.0f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.25f,0.25f,base);
+	SetArrayQ(0.25f,0.5f,base);
 }
 
 inline void DrawTreeVertexMid1(float3 pos, bool enlarge=true) {
@@ -186,37 +186,37 @@ inline void DrawTreeVertexMid1(float3 pos, bool enlarge=true) {
 	float3 base=pos;
 	base.x+=MAX_TREE_HEIGHT_3;
 
-	SetArrayQ(0,0,base);
+	SetArrayQ(0.0f, 0.0f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0.0f, 0.5f,base);
 	base.x-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f, 0.0f,base);
 
 	base.x+=MAX_TREE_HEIGHT_3;
 	base.z+=MAX_TREE_HEIGHT_3;
-	SetArrayQ(0,0,base);
+	SetArrayQ(0.0f, 0.0f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0.0f, 0.5f,base);
 	base.z-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f, 0.0f,base);
 
 	base.z+=MAX_TREE_HEIGHT_3;
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.y+=MAX_TREE_HEIGHT_25;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f, 0.0f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z-=MAX_TREE_HEIGHT_36;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0.25f,base);
+	SetArrayQ(1.0f, 0.5f,base);
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0,base);
+	SetArrayQ(1.0f, 0.0f,base);
 }
 
 inline void DrawTreeVertexMid2(float3 pos, bool enlarge=true) {
@@ -225,37 +225,37 @@ inline void DrawTreeVertexMid2(float3 pos, bool enlarge=true) {
 	float3 base=pos;
 	base.x+=MAX_TREE_HEIGHT_3;
 
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0.0f,  0.5f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.5f,base);
+	SetArrayQ(0.0f,  1.0f,base);
 	base.x-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.25f,0.5f,base);
+	SetArrayQ(0.25f, 1.0f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.25f,0.25f,base);
+	SetArrayQ(0.25f, 0.5f,base);
 
 	base.x+=MAX_TREE_HEIGHT_3;
 	base.z+=MAX_TREE_HEIGHT_3;
-	SetArrayQ(0.25f,0.25f,base);
+	SetArrayQ(0.25f, 0.5f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0.25f,0.5f,base);
+	SetArrayQ(0.25f, 1.0f,base);
 	base.z-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.5f,0.5f,base);
+	SetArrayQ(0.5f,  1.0f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f,  0.5f,base);
 
 	base.z+=MAX_TREE_HEIGHT_3;
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.y+=MAX_TREE_HEIGHT_3;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z-=MAX_TREE_HEIGHT_36;
-	SetArrayQ(0.5f,0.5f,base);
+	SetArrayQ(0.5f, 1.0f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0.5f,base);
+	SetArrayQ(1.0f, 1.0f,base);
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0.25f,base);
+	SetArrayQ(1.0f, 0.5f,base);
 }
 
 void CBasicTreeSquareDrawer::DrawQuad(int x,int y)
