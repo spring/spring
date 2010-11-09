@@ -29,7 +29,7 @@
 
 #define SIMPLELOG_OUTPUTBUFFER_SIZE 2048
 
-static const char* logFileName = NULL;
+static char* logFileName = NULL;
 static bool useTimeStamps;
 static int logLevel;
 
@@ -103,9 +103,8 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 		int _logLevel, bool append) {
 
 	if (_logFileName != NULL) {
-		// NOTE: this causes a memory leack, as it is never freed.
-		// but it is used till the end of the applications runtime anyway
-		// -> no problem
+		// Note: This causes a memory leack,
+		//       if you do not call simpleLog_release().
 		logFileName = util_allocStrCpy(_logFileName);
 	
 		// delete the logFile, and try writing to it
@@ -151,6 +150,14 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 
 	simpleLog_logL(-1, "[logging started (time-stamps: %s / logLevel: %i)]",
 			useTimeStamps ? "yes" : "no", logLevel);
+}
+
+void simpleLog_release() {
+
+	if (logFileName != NULL) {
+		free(logFileName);
+		logFileName = NULL;
+	}
 }
 
 void simpleLog_logL(int level, const char* fmt, ...) {
