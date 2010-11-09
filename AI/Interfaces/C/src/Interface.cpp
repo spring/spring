@@ -57,7 +57,7 @@ CInterface::CInterface(int interfaceId,
 	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId,
 			AI_INTERFACE_PROPERTY_VERSION);
 
-	simpleLog_log("This is the log-file of the %s version %s",
+	simpleLog_log("This is the log-file of the %s v%s AI Interface",
 			myShortName, myVersion);
 	simpleLog_log("Using read/write data-directory: %s",
 			callback->DataDirs_getWriteableDir(interfaceId));
@@ -131,7 +131,7 @@ int CInterface::UnloadSkirmishAILibrary(
 	T_skirmishAILibs::iterator skirmishAILib = myLoadedSkirmishAILibs.find(spec);
 
 	if (skirmishAI == myLoadedSkirmishAIs.end()) {
-		// to unload AI is not loaded -> no problem, do nothing
+		// to-unload-AI is not loaded -> no problem, do nothing
 	} else {
 		delete skirmishAI->second;
 		myLoadedSkirmishAIs.erase(skirmishAI);
