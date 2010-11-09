@@ -37,11 +37,21 @@ enum SimpleLog_Level {
 
 /**
  * Initializes the log.
+ * Do not forget to release it again, when it is no longer needed.
+ * @see simpleLog_release()
  * @param  logLevel   see enum SimpleLog_Level
  * @param  append     if true, previous content of the file is preserved
  */
 void simpleLog_init(const char* logFileName, bool useTimeStamps,
 		int logLevel, bool append);
+
+/**
+ * Releases the log.
+ * Logging will no longer work after a call of this function,
+ * though you can re-init the log.
+ * @see simpleLog_init()
+ */
+void simpleLog_release();
 
 /**
  * Logs a text message,
