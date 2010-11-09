@@ -399,7 +399,12 @@ bool SpringApp::SetSDLVideoMode()
 
 	FSAA = MultisampleTest();
 
-	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, 32, sdlflags);
+	// screen will be freed by SDL_Quit()
+	// from: http://sdl.beuc.net/sdl.wiki/SDL_SetVideoMode
+	// Note 3: This function should be called in the main thread of your application.
+	// User note 1: Some have found that enabling OpenGL attributes like SDL_GL_STENCIL_SIZE (the stencil buffer size) before the video mode has been set causes the application to simply ignore those attributes, while enabling attributes after the video mode has been set works fine.
+	// User note 2: Also note that, in Windows, setting the video mode resets the current OpenGL context. You must execute again the OpenGL initialization code (set the clear color or the shade model, or reload textures, for example) after calling SDL_SetVideoMode. In Linux, however, it works fine, and the initialization code only needs to be executed after the first call to SDL_SetVideoMode (although there is no harm in executing the initialization code after each call to SDL_SetVideoMode, for example for a multiplatform application). 
+	SDL_Surface* screen = SDL_SetVideoMode(screenWidth, screenHeight, 32, sdlflags);
 	if (!screen) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
@@ -1185,6 +1190,7 @@ int SpringApp::Run(int argc, char *argv[])
 		{
 			SCOPED_TIMER("Input");
 			SDL_Event event;
+
 			while (SDL_PollEvent(&event)) {
 				input.PushEvent(event);
 			}
