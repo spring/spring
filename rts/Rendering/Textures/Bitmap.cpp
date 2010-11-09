@@ -21,6 +21,7 @@
 #include "GlobalUnsynced.h"
 #include "Bitmap.h"
 #include "bitops.h"
+#include "LogOutput.h"
 
 boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
 
