@@ -286,6 +286,9 @@ bool CLoadScreen::Draw()
 			"This program is distributed under the GNU General Public License, see license.html for more info");
 	font->End();
 
+	if (!mt_loading)
+		SDL_GL_SwapBuffers();
+
 	return true;
 }
 
