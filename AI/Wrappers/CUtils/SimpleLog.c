@@ -29,7 +29,9 @@
 
 #define SIMPLELOG_OUTPUTBUFFER_SIZE 2048
 
-static char* logFileName = NULL;
+#define     logFileName_sizeMax 2048
+static bool logFileInitialized = false;
+static char logFileName[logFileName_sizeMax];
 static bool useTimeStamps;
 static int logLevel;
 
@@ -68,7 +70,7 @@ static void simpleLog_out(int level, const char* msg) {
 
 	// try to open the log file
 	FILE* file = NULL;
-	if (logFileName != NULL) {
+	if (logFileInitialized) {
 		file = FOPEN(logFileName, "a");
 	}
 
@@ -103,13 +105,31 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 		int _logLevel, bool append) {
 
 	if (_logFileName != NULL) {
-		// Note: This causes a memory leack,
-		//       if you do not call simpleLog_release().
-		logFileName = util_allocStrCpy(_logFileName);
-	
+		logFileInitialized = false;
+		bool initOk = true;
+		STRCPYS(logFileName, logFileName_sizeMax, _logFileName);
+
+		// make sure the dir of the log file exists
+		char* logFileDir = util_allocStrCpy(logFileName);
+		if (initOk && !util_getParentDir(logFileDir)) {
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed to evaluate the parent dir of the config file: %s",
+					logFileName);
+			initOk = false;
+		}
+
+		if (initOk && !util_makeDir(logFileDir, true)) {
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed to create the parent dir of the config file: %s",
+					logFileDir);
+			initOk = false;
+		}
+
+		free(logFileDir);
+
 		// delete the logFile, and try writing to it
 		FILE* file = NULL;
-		if (logFileName != NULL) {
+		if (initOk && (logFileName != NULL)) {
 			if (append) {
 				file = FOPEN(logFileName, "a");
 			} else {
@@ -127,37 +147,17 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 					logFileName, "We will continue logging to stdout.");
 		}
 
-		// make sure the dir of the log file exists
-		char* logFileDir = util_allocStrCpy(logFileName);
-		if (!util_getParentDir(logFileDir)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed to evaluate the parent dir of the config file: %s",
-					logFileName);
-		} else if (!util_makeDir(logFileDir, true)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed to create the parent dir of the config file: %s",
-					logFileDir);
-		}
-		free(logFileDir);
+		useTimeStamps = _useTimeStamps;
+		logLevel = _logLevel;
+		logFileInitialized = initOk;
 	} else {
 		simpleLog_logL(-1, "No log file name supplied -> logging to stdout and stderr",
 			useTimeStamps ? "yes" : "no", logLevel);
-		logFileName = NULL;
+		logFileInitialized = false;
 	}
-
-	useTimeStamps = _useTimeStamps;
-	logLevel = _logLevel;
 
 	simpleLog_logL(-1, "[logging started (time-stamps: %s / logLevel: %i)]",
 			useTimeStamps ? "yes" : "no", logLevel);
-}
-
-void simpleLog_release() {
-
-	if (logFileName != NULL) {
-		free(logFileName);
-		logFileName = NULL;
-	}
 }
 
 void simpleLog_logL(int level, const char* fmt, ...) {
