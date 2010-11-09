@@ -7,7 +7,8 @@
 
 WeaponDef::~WeaponDef()
 {
-	delete explosionGenerator; explosionGenerator = 0;
+	delete explosionGenerator; explosionGenerator = NULL;
+	delete bounceExplosionGenerator; bounceExplosionGenerator = NULL;
 }
 
 

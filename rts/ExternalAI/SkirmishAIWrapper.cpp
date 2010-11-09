@@ -101,6 +101,9 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 
 		delete callback;
 		callback = NULL;
+
+		delete cheats;
+		cheats = NULL;
 	}
 }
 
