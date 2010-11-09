@@ -218,14 +218,13 @@ void CAILibraryManager::ClearAllInfos() {
 		delete iii->second;
 		iii->second = NULL;
 	}
+	interfaceInfos.clear();
 
 	IAILibraryManager::T_skirmishAIInfos::iterator sai;
 	for (sai = skirmishAIInfos.begin(); sai != skirmishAIInfos.end(); ++sai) {
 		delete sai->second;
 		sai->second = NULL;
 	}
-
-	interfaceInfos.clear();
 	skirmishAIInfos.clear();
 
 	interfaceKeys.clear();
@@ -235,6 +234,7 @@ void CAILibraryManager::ClearAllInfos() {
 CAILibraryManager::~CAILibraryManager() {
 
 	ReleaseEverything();
+	ClearAllInfos();
 }
 
 const IAILibraryManager::T_interfaceSpecs& CAILibraryManager::GetInterfaceKeys() const {

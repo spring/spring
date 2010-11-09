@@ -23,6 +23,7 @@
 static CInterface* myInterface = NULL;
 
 EXPORT(int) initStatic(int interfaceId, const struct SAIInterfaceCallback* callback) {
+
 	if (myInterface == NULL) {
 		myInterface = new CInterface(interfaceId, callback);
 	}
@@ -31,6 +32,7 @@ EXPORT(int) initStatic(int interfaceId, const struct SAIInterfaceCallback* callb
 }
 
 EXPORT(int) releaseStatic() {
+
 	delete myInterface;
 	myInterface = NULL;
 

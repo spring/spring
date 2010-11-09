@@ -49,7 +49,9 @@ CExplosionGeneratorHandler* explGenHandler = NULL;
 // -------------------------------------------------------------------------------
 
 
-ClassAliasList::ClassAliasList() {}
+ClassAliasList::ClassAliasList()
+{
+}
 
 
 void ClassAliasList::Load(const LuaTable& aliasTable)
@@ -146,11 +148,13 @@ CR_BIND_INTERFACE(CExplosionGenerator);
 
 
 CExplosionGenerator::CExplosionGenerator()
-{}
+{
+}
 
 
 CExplosionGenerator::~CExplosionGenerator()
-{}
+{
+}
 
 
 // -------------------------------------------------------------------------------
@@ -161,11 +165,13 @@ CR_BIND_DERIVED(CStdExplosionGenerator, CExplosionGenerator, );
 
 
 CStdExplosionGenerator::CStdExplosionGenerator()
-{}
+{
+}
 
 
 CStdExplosionGenerator::~CStdExplosionGenerator()
-{}
+{
+}
 
 
 void CStdExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& tag)
