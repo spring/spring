@@ -44,8 +44,6 @@ public:
 private:
 	GLuint treetex;
 	int lastListClean;
-
-	void CreateTreeTex(GLuint& texnum,unsigned char* data,int xsize,int ysize);
 };
 
 #endif // __BASIC_TREE_DRAWER_H__

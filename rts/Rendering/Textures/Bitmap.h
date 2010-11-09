@@ -4,16 +4,15 @@
 #define __BITMAP_H__
 
 #include <string>
-// We can not include gl.h here, cause sometimes glew.h has to be included
-// before gl.h, so we have to do this in before including this header.
-//#include <GL/gl.h> // for GLuint, GLenum
-
 #ifndef BITMAP_NO_OPENGL
-#include "nv_dds.h"
+  #include "nv_dds.h"
 #endif // !BITMAP_NO_OPENGL
 #include "float3.h"
+#include "Color.h"
+
 
 struct SDL_Surface;
+
 
 class CBitmap  
 {
@@ -36,13 +35,14 @@ public:
 #endif // !BITMAP_NO_OPENGL
 
 	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
-	/// @deprecated (Only used by GUI which will be replaced by CEGUI anyway)
-	void SetTransparent(unsigned char red, unsigned char green, unsigned char blue);
+	void SetTransparent(const SColor& c, const SColor& trans = SColor(0,0,0,0));
 
 	void Renormalize(float3 newCol);
 	void Blur(int iterations = 1, float weight = 1.0f);
 
 	CBitmap GetRegion(int startx, int starty, int width, int height) const;
+	void CopySubImage(const CBitmap& src, unsigned int x, unsigned int y);
+
 	/**
 	 * Allocates a new SDL_Surface, and feeds it with the data of this bitmap.
 	 * @param newPixelData
@@ -57,7 +57,6 @@ public:
 	 *   if you do not need it anymore!
 	 */
 	SDL_Surface* CreateSDLSurface(bool newPixelData = false) const;
-	CBitmap CreateMipmapLevel() const;
 
 	unsigned char* mem;
 	int xsize;
