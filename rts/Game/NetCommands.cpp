@@ -827,8 +827,9 @@ void CGame::ClientReadNet()
 						} else {
 							// we will end up here for local AIs defined mid-game,
 							// eg. with /aicontrol
+							const std::string aiName = aiData.name + " "; // aiData would be invalid after the next line
 							skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
-							wordCompletion->AddWord(aiData.name + " ", false, false, false);
+							wordCompletion->AddWord(aiName, false, false, false);
 						}
 					} else {
 						SkirmishAIData aiData;
