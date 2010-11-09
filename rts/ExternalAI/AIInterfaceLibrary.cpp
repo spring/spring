@@ -185,7 +185,9 @@ int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
 	skirmishAILoadCount[key]--;
 
 	if (skirmishAILoadCount[key] == 0) {
+		CSkirmishAILibrary* ai = loadedSkirmishAILibraries[key];
 		loadedSkirmishAILibraries.erase(key);
+		delete ai;
 		sAIInterfaceLibrary.unloadSkirmishAILibrary(aiInfo->GetShortName().c_str(), aiInfo->GetVersion().c_str());
 	}
 
