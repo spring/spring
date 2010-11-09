@@ -54,7 +54,7 @@ void ClientSetup::Init(const std::string& setup)
 
 	if (file.SectionExist("OPTIONS"))
 	{
-		TdfParser::MapRef options = file.GetAllValues("OPTIONS");
+		const std::map<std::string, std::string>& options = file.GetAllValues("OPTIONS");
 		for (std::map<std::string,std::string>::const_iterator it = options.begin(); it != options.end(); ++it)
 			configHandler->SetOverlay(it->first, it->second);
 	}

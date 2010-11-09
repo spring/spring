@@ -276,7 +276,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		globalQuit=true;
 	}
 	// if we're still in the game, remove the resign box
-	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+saveBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+cancelBox)){
+	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+saveBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox)){
 		delete this;
 		return;
 	}

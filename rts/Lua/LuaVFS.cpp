@@ -154,6 +154,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 
 	const string filename = lua_tostring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
+		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
 	}
 
@@ -230,6 +231,7 @@ int LuaVFS::LoadFile(lua_State* L, bool synced)
 
 	const string filename = lua_tostring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
+		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
 	}
 
@@ -267,6 +269,7 @@ int LuaVFS::FileExists(lua_State* L, bool synced)
 
 	const string filename = lua_tostring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
+		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
 	}
 
@@ -303,6 +306,7 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 	const string dir = lua_tostring(L, 1);
 	// keep searches within the Spring directory
 	if (!LuaIO::IsSimplePath(dir)) {
+		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
 	}
 	const string pattern = luaL_optstring(L, 2, "*");
@@ -339,6 +343,7 @@ int LuaVFS::SubDirs(lua_State* L, bool synced)
 	const string dir = lua_tostring(L, 1);
 	// keep searches within the Spring directory
 	if (!LuaIO::IsSimplePath(dir)) {
+		// the path may point to a file or dir outside of any data-dir
 //FIXME		return 0;
 	}
 	const string pattern = luaL_optstring(L, 2, "*");
@@ -368,6 +373,7 @@ int LuaVFS::UseArchive(lua_State* L)
 {
 	const string filename = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
+		// the path may point to a file or dir outside of any data-dir
 		//FIXME		return 0;
 	}
 
@@ -411,8 +417,8 @@ int LuaVFS::MapArchive(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	const string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
-	if (!LuaIO::IsSimplePath(filename))
-	{
+	if (!LuaIO::IsSimplePath(filename)) {
+		// the path may point to a file or dir outside of any data-dir
 		//FIXME		return 0;
 	}
 
