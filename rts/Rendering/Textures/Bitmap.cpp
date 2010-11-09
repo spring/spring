@@ -450,35 +450,27 @@ void CBitmap::CreateAlpha(unsigned char red, unsigned char green, unsigned char 
 			aCol[a] = cCol / 255.0f / numCounted;
 		}
 	}
-	for (int y=0; y < ysize; ++y) {
-		for (int x=0; x < xsize; ++x) {
-			const int index = (y*xsize + x) * 4;
-			if ((mem[index + 0] == red) &&
-				(mem[index + 1] == green) &&
-				(mem[index + 2] == blue))
-			{
-				mem[index + 0] = (unsigned char) (aCol.x * 255);
-				mem[index + 1] = (unsigned char) (aCol.y * 255);
-				mem[index + 2] = (unsigned char) (aCol.z * 255);
-				mem[index + 3] = 0;
-			}
-		}
-	}
+
+	SColor c(red, green, blue);
+	SColor a(aCol.x, aCol.y, aCol.z, 0.0f);
+	SetTransparent(c, a);
 }
 
 
-void CBitmap::SetTransparent(unsigned char red, unsigned char green, unsigned char blue)
+void CBitmap::SetTransparent(const SColor& c, const SColor& trans)
 {
-	for (unsigned int y = 0; y < xsize; y++) {
-		for (unsigned int x = 0; x < xsize; x++) {
-			const unsigned int index = (y*xsize + x) * 4;
-			if ((mem[index + 0] == red) &&
-				(mem[index + 1] == green) &&
-				(mem[index + 2] == blue))
-			{
-				// set transparent
-				mem[index + 3] = 0;
-			}
+	if (type != BitmapTypeStandardRGBA) {
+		return;
+	}
+
+	static const uint32_t RGB = 0x00FFFFFF;
+
+	uint32_t* mem_i = reinterpret_cast<uint32_t*>(mem);
+	for (unsigned int y = 0; y < ysize; ++y) {
+		for (unsigned int x = 0; x < xsize; ++x) {
+			if ((*mem_i & RGB) == (c.i & RGB))
+				*mem_i = trans.i;
+			mem_i++;
 		}
 	}
 }
@@ -487,10 +479,7 @@ void CBitmap::SetTransparent(unsigned char red, unsigned char green, unsigned ch
 void CBitmap::Renormalize(float3 newCol)
 {
 	float3 aCol;
-	//	float3 aSpread;
-
 	float3 colorDif;
-	//	float3 spreadMul;
 	for (int a=0; a < 3; ++a) {
 		int cCol = 0;
 		int numCounted = 0;
@@ -506,25 +495,12 @@ void CBitmap::Renormalize(float3 newCol)
 		aCol[a] = cCol / 255.0f / numCounted;
 		cCol /= xsize*ysize;
 		colorDif[a] = newCol[a] - aCol[a];
-
-/*		int spread=0;
-        for(int y=0;y<ysize;++y){
-        for(int x=0;x<xsize;++x){
-        if(mem[(y*xsize+x)*4+3]!=0){
-        int dif=mem[(y*xsize+x)*4+a]-cCol;
-        spread+=abs(dif);
-        }
-        }
-        }
-        aSpread.xyz[a]=spread/255.0f/numCounted;
-        spreadMul.xyz[a]=(float)(newSpread[a]/aSpread[a]);*/
 	}
 	for (int a=0; a < 3; ++a) {
 		for (int y=0; y < ysize; ++y) {
 			for (int x=0; x < xsize; ++x) {
 				const unsigned int index = (y*xsize + x) * 4;
 				float nc = float(mem[index + a]) / 255.0f + colorDif[a];
-				//float r=newCol.xyz[a]+(nc-newCol.xyz[a])*spreadMul.xyz[a];
 				mem[index + a] = (unsigned char) (std::min(255.f, std::max(0.0f, nc*255)));
 			}
 		}
@@ -623,6 +599,27 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
 }
 
 
+void CBitmap::CopySubImage(const CBitmap& src, unsigned int xpos, unsigned int ypos)
+{
+	if (xpos + src.xsize >= xsize || ypos + src.ysize >= ysize) {
+		logOutput.Print("CBitmap::CopySubImage src image doesn't fit into dst");
+		return;
+	}
+
+	if (src.type != BitmapTypeStandardRGBA || type != BitmapTypeStandardRGBA) {
+		return;
+	}
+
+	for (int y=0; y < src.ysize; ++y) {
+		const int pixelDst = (((ypos + y) * xsize) + xpos) * channels;
+		const int pixelSrc = ((y * src.xsize) + 0 ) * channels;
+
+		// copy the whole line
+		memcpy(mem + pixelDst, src.mem + pixelSrc, channels * src.xsize);
+	}
+}
+
+
 SDL_Surface* CBitmap::CreateSDLSurface(bool newPixelData) const
 {
 	SDL_Surface* surface = NULL;
@@ -644,39 +641,6 @@ SDL_Surface* CBitmap::CreateSDLSurface(bool newPixelData) const
 	}
 
 	return surface;
-}
-
-
-CBitmap CBitmap::CreateMipmapLevel() const
-{
-	CBitmap bm;
-
-	delete[] bm.mem;
-	bm.xsize = xsize / 2;
-	bm.ysize = ysize / 2;
-	bm.mem = new unsigned char[bm.xsize*bm.ysize * 4];
-
-	for (int y=0; y < (ysize / 2); ++y) {
-		for (int x=0; x < (xsize / 2); ++x) {
-			float r=0, g=0, b=0, a=0;
-			for (int y2=0; y2 < 2; ++y2) {
-				for (int x2=0; x2 < 2; ++x2) {
-					const int index = ((y*2 + y2)*xsize + x*2 + x2) * 4;
-					r += mem[index + 0];
-					g += mem[index + 1];
-					b += mem[index + 2];
-					a += mem[index + 3];
-				}
-			}
-			const int index = (y*bm.xsize + x) * 4;
-			bm.mem[index]     = (unsigned char) (r / 4);
-			bm.mem[index + 1] = (unsigned char) (g / 4);
-			bm.mem[index + 2] = (unsigned char) (b / 4);
-			bm.mem[index + 3] = (unsigned char) (a / 4);
-		}
-	}
-
-	return bm;
 }
 
 
@@ -798,16 +762,15 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-	unsigned char *tmpPixel = new unsigned char[channels];
+	unsigned char* tmpLine = new unsigned char[channels * xsize];
 	for (int y=0; y < (ysize / 2); ++y) {
-		for (int x=0; x < xsize; ++x) {
-			const int pixelLow  = (((y            ) * xsize) + x) * channels;
-			const int pixelHigh = (((ysize - 1 - y) * xsize) + x) * channels;
-			// copy all channels at once
-			memcpy(tmpPixel,        mem + pixelHigh, channels);
-			memcpy(mem + pixelHigh, mem + pixelLow,  channels);
-			memcpy(mem + pixelLow,  tmpPixel,        channels);
-		}
+		const int pixelLow  = (((y            ) * xsize) + 0) * channels;
+		const int pixelHigh = (((ysize - 1 - y) * xsize) + 0) * channels;
+
+		// copy the whole line
+		memcpy(tmpLine,         mem + pixelHigh, channels * xsize);
+		memcpy(mem + pixelHigh, mem + pixelLow,  channels * xsize);
+		memcpy(mem + pixelLow,  tmpLine,         channels * xsize);
 	}
-	delete [] tmpPixel;
+	delete[] tmpLine;
 }
