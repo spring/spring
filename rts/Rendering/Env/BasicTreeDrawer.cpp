@@ -27,76 +27,86 @@ static const float MAX_TREE_HEIGHT_6=MAX_TREE_HEIGHT*0.6f;
 
 CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 {
-	lastListClean=0;
+	lastListClean = 0;
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
 		logOutput.Print(resourcesParser.GetErrorLog());
 	}
-	
-	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");
 
+	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");
+	const float tintc[3] = {0.6f,0.7f,0.6f};
+
+	std::string fn;
+	CBitmap sprite;
 	CBitmap TexImage;
 	TexImage.Alloc(512,1024);
 
-	CBitmap sprite;
-	std::string fn;
-	const float tintc[3] = {0.6f,0.7f,0.6f};
+	{
+		fn = "bitmaps/"+treesTable.GetString("gran1", "gran.bmp");
 
-	fn = "bitmaps/"+treesTable.GetString("gran1", "gran.bmp");
-	if (!sprite.Load(fn))
-		throw content_error("Could not load tree texture from " + fn);
-	if (sprite.xsize != 256 && sprite.ysize != 256)
-		throw content_error("texture " + fn + " must be 256x256!");
-	sprite.ReverseYAxis();
-	sprite.SetTransparent(SColor(72,72,72), SColor(33,54,29,0));
-	TexImage.CopySubImage(sprite, 0, 0);
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from " + fn);
+		if (sprite.xsize != 256 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 256x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(33,54,29,0));
+		TexImage.CopySubImage(sprite, 0, 0);
+	}
 
-	fn = "bitmaps/"+treesTable.GetString("gran2", "gran2.bmp");
-	if (!sprite.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	if (sprite.xsize != 256 && sprite.ysize != 256)
-		throw content_error("texture " + fn + " must be 256x256!");
-	sprite.ReverseYAxis();
-	sprite.SetTransparent(SColor(72,72,72), SColor(33,54,29,0));
-	TexImage.CopySubImage(sprite, 256, 0);
+	{
+		fn = "bitmaps/"+treesTable.GetString("gran2", "gran2.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 256 && sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 256x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(33,54,29,0));
+		TexImage.CopySubImage(sprite, 256, 0);
+	}
 
-	fn = "bitmaps/"+treesTable.GetString("birch1", "birch1.bmp");
-	if (!sprite.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	if (sprite.xsize != 128 && sprite.ysize != 256)
-		throw content_error("texture " + fn + " must be 128x256!");
-	sprite.ReverseYAxis();
-	sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
-	sprite.Tint(tintc);
-	TexImage.CopySubImage(sprite, 0, 256);
+	{
+		fn = "bitmaps/"+treesTable.GetString("birch1", "birch1.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 128 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 128x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
+		sprite.Tint(tintc);
+		TexImage.CopySubImage(sprite, 0, 256);
+	}
 
-	fn = "bitmaps/"+treesTable.GetString("birch2", "birch2.bmp");
-	if (!sprite.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	if (sprite.xsize != 128 && sprite.ysize != 256)
-		throw content_error("texture " + fn + " must be 128x256!");
-	sprite.ReverseYAxis();
-	sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
-	sprite.Tint(tintc);
-	TexImage.CopySubImage(sprite, 128, 256);
+	{
+		fn = "bitmaps/"+treesTable.GetString("birch2", "birch2.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 128 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 128x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
+		sprite.Tint(tintc);
+		TexImage.CopySubImage(sprite, 128, 256);
+	}
 
-	fn = "bitmaps/"+treesTable.GetString("birch3", "birch3.bmp");
-	if (!sprite.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	if (sprite.xsize != 256 && sprite.ysize != 256)
-		throw content_error("texture " + fn + " must be 256x256!");
-	sprite.ReverseYAxis();
-	sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
-	sprite.Tint(tintc);
-	TexImage.CopySubImage(sprite, 256, 256);
+	{
+		fn = "bitmaps/"+treesTable.GetString("birch3", "birch3.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 256 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 256x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
+		sprite.Tint(tintc);
+		TexImage.CopySubImage(sprite, 256, 256);
+	}
 
 	// create mipmapped texture
 	treetex = TexImage.CreateTexture(true);
 
-	treesX = gs->mapx/TREE_SQUARE_SIZE;
-	treesY = gs->mapy/TREE_SQUARE_SIZE;
-	nTrees = treesX*treesY;
+	treesX = gs->mapx / TREE_SQUARE_SIZE;
+	treesY = gs->mapy / TREE_SQUARE_SIZE;
+	nTrees = treesX * treesY;
 	trees = new TreeSquareStruct[nTrees];
 
 	for (TreeSquareStruct* pTSS = trees; pTSS < trees + nTrees; ++pTSS) {
