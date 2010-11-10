@@ -95,13 +95,17 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 
 	if (piece != NULL && unit->unitDef->usePieceCollisionVolumes && damageFrame == gs->frameNum) {
 		volume = piece->colvol;
-		basePos = piece->GetPos();
+		basePos = piece->GetPos() + volume->GetOffsets();
+		basePos = unit->pos + 
+			unit->rightdir * basePos.x +
+			unit->updir    * basePos.y +
+			unit->frontdir * basePos.z;
 	} else {
 		volume = unit->collisionVolume;
-		basePos = unit->midPos;
+		basePos = unit->midPos + volume->GetOffsets();
 	}
 
-	diffPos = (basePos + volume->GetOffsets()) - expPos;
+	diffPos = basePos - expPos;
 
 	const float volRad = volume->GetBoundingRadius();
 	const float expDist = std::max(diffPos.Length(), volRad + 0.1f);
