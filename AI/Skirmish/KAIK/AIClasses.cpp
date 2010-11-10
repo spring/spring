@@ -1,3 +1,4 @@
+#include <cassert>
 #include <string>
 
 #include "System/Util.h"
@@ -161,25 +162,27 @@ AIClasses::~AIClasses() {
 		for (int i = 0; i < MAX_UNITS; i++) {
 			delete activeUnits[i];
 		}
+
+		delete attackHandler;
+		delete buildupHandler;
+		delete ecoTracker;
+		delete mathHandler;
+		delete pathFinder;
+		delete threatMap;
+		delete unitTable;
+		delete metalMap;
+		delete unitHandler;
+		delete dgunControllerHandler;
+
+		delete commandTracker;
+		delete logHandler;
+		delete luaConfigParser;
 	}
-
-	delete attackHandler;
-	delete buildupHandler;
-	delete ecoTracker;
-	delete mathHandler;
-	delete pathFinder;
-	delete threatMap;
-	delete unitTable;
-	delete metalMap;
-	delete unitHandler;
-	delete dgunControllerHandler;
-
-	delete commandTracker;
-	delete logHandler;
-	delete luaConfigParser;
 }
 
 void AIClasses::Init() {
+	assert(!initialized);
+
 	const std::map<std::string, std::string>& info = callbackHandler->GetMyInfo();
 	const std::map<std::string, std::string>::const_iterator it = info.find("supportedMods");
 	// NOTE: use GetModShortName and GetModVersion()?
@@ -232,7 +235,6 @@ void AIClasses::Init() {
 			j += 1;
 			p  = 0;
 			q  = 0;
-
 		}
 
 		if (!initialized) {
