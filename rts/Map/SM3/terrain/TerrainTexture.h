@@ -124,7 +124,7 @@ namespace terrain {
 
 	struct RenderSetupCollection
 	{
-		RenderSetupCollection () { sortkey=0;currentShaderSetup=0; }
+		RenderSetupCollection () { sortkey=0;currentShaderSetup=0; vertexDataReq=0; }
 		~RenderSetupCollection ();
 
 		std::vector <RenderSetup *> renderSetup;
@@ -174,7 +174,7 @@ namespace terrain {
 		void Load (const TdfParser *parser, Heightmap *heightmap, TQuad *quadTree, const std::vector<QuadMap*>& qmaps, Config *cfg, ILoadCallback *cb, LightingInfo* li);
 		void ReloadShaders (TQuad *quadtree, Config *cfg);
 
-		int NumPasses ();
+		int NumPasses () const;
 
 		void BeginTexturing ();
 		void EndTexturing ();

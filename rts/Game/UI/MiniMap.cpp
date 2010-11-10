@@ -1098,7 +1098,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 		const std::set<CUnit*>& units = unitDrawer->GetUnsortedUnits();
 
-		for (std::set<CUnit*>::const_iterator it = units.begin(); it != units.end(); it++) {
+		for (std::set<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
 			DrawUnit(*it);
 		}
 
@@ -1184,8 +1184,8 @@ void CMiniMap::DrawForReal(bool use_geo)
 	if (!minimap->maximized) {
 		// draw the camera lines
 		std::vector<fline>::iterator fli,fli2;
-		for(fli=left.begin();fli!=left.end();fli++){
-			for(fli2=left.begin();fli2!=left.end();fli2++){
+		for(fli=left.begin();fli!=left.end();++fli){
+			for(fli2=left.begin();fli2!=left.end();++fli2){
 				if(fli==fli2)
 					continue;
 				if(fli->dir - fli2->dir == 0)
@@ -1203,7 +1203,7 @@ void CMiniMap::DrawForReal(bool use_geo)
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(left.size()*2, 0, VA_SIZE_2D0);
-		for(fli = left.begin(); fli != left.end(); fli++) {
+		for(fli = left.begin(); fli != left.end(); ++fli) {
 			if(fli->minz < fli->maxz) {
 				va->AddVertex2dQ0(fli->base + (fli->dir * fli->minz), fli->minz);
 				va->AddVertex2dQ0(fli->base + (fli->dir * fli->maxz), fli->maxz);

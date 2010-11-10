@@ -250,12 +250,12 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 	CMatrix44f mat = u->GetTransformMatrix(true);
 	mat.Translate(u->relMidPos * float3(-1.0f, 0.0f, 1.0f));
 
-	IntersectPieceTreeHelper(u->localmodel->pieces[0], mat, p0, p1, &hits);
+	IntersectPieceTreeHelper(u->localmodel->GetRoot(), mat, p0, p1, &hits);
 
 	float dstNearSq = 1e30f;
 
 	// save the closest intersection
-	for (hitsIt = hits.begin(); hitsIt != hits.end(); hitsIt++) {
+	for (hitsIt = hits.begin(); hitsIt != hits.end(); ++hitsIt) {
 		const CollisionQuery& qTmp = *hitsIt;
 		const float dstSq = (qTmp.p0 - p0).SqLength();
 
@@ -552,18 +552,19 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		} break;
 	}
 
-	float d = (b * b) - (4.0f * a * c);
-	float rd = 0.0f;
-	float dp = 0.0f, rdp = 0.0f;
-
 	// volume-space intersection points
 	float3 p0 = ZVEC;
 	float3 p1 = ZVEC;
 
 	bool b0 = false;
 	bool b1 = false;
-	float r0 = 0.0f, s0 = 0.0f, t0 = 0.0f;
-	float r1 = 0.0f, s1 = 0.0f, t1 = 0.0f;
+	float
+		d = (b * b) - (4.0f * a * c),
+		rd = 0.0f, // sqrt(d) or 1/dp
+		dp = 0.0f, // dot(n{0, 1}, dir)
+		ra = 0.0f; // ellipsoid ratio of p{0, 1}
+	float s0 = 0.0f, t0 = 0.0f;
+	float s1 = 0.0f, t1 = 0.0f;
 
 	// get the length of the ray segment in volume-space
 	const float segLenSq = (pi1 - pi0).SqLength();
@@ -594,15 +595,15 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		// through front cap (plane)
 		// NOTE: normal n0 and dir should not be orthogonal
 		dp = n0.dot(dir);
-		rdp = (dp != 0.0f)? 1.0f / dp: 0.01f;
+		rd = (dp != 0.0f)? 1.0f / dp: 0.01f;
 
-		t0 = -(n0.dot(pi0) - ahs[pAx]) * rdp;
+		t0 = -(n0.dot(pi0) - ahs[pAx]) * rd;
 		p0 = pi0 + (dir * t0);
 		s0 = (p0 - pi0).SqLength();
-		r0 =
+		ra =
 			(((p0[sAx0] * p0[sAx0]) / ahsq[sAx0]) +
 			 ((p0[sAx1] * p0[sAx1]) / ahsq[sAx1]));
-		b0 = (t0 >= 0.0f && r0 <= 1.0f && s0 <= segLenSq);
+		b0 = (t0 >= 0.0f && ra <= 1.0f && s0 <= segLenSq);
 	}
 	if (!b1) {
 		// p1 does not lie on ray segment, or does not fall
@@ -610,15 +611,15 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 		// through rear cap (plane)
 		// NOTE: normal n1 and dir should not be orthogonal
 		dp = n1.dot(dir);
-		rdp = (dp != 0.0f)? 1.0f / dp: 0.01f;
+		rd = (dp != 0.0f)? 1.0f / dp: 0.01f;
 
-		t1 = -(n1.dot(pi0) - ahs[pAx]) * rdp;
+		t1 = -(n1.dot(pi0) - ahs[pAx]) * rd;
 		p1 = pi0 + (dir * t1);
 		s1 = (p1 - pi0).SqLength();
-		r1 =
+		ra =
 			(((p1[sAx0] * p1[sAx0]) / ahsq[sAx0]) +
 			 ((p1[sAx1] * p1[sAx1]) / ahsq[sAx1]));
-		b1 = (t1 >= 0.0f && r1 <= 1.0f && s1 <= segLenSq);
+		b1 = (t1 >= 0.0f && ra <= 1.0f && s1 <= segLenSq);
 	}
 
 	if (q) {

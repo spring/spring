@@ -959,14 +959,11 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					- owner->updir*owner->relMidPos.y
 					- owner->rightdir*owner->relMidPos.x;
 				owner->speed+=dif*(impactSpeed*1.8f);
-				if(impactSpeed > ud->minCollisionSpeed
-					&& ud->minCollisionSpeed >= 0)
-				{
-					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
-						0, ZeroVector);
+
+				if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0) {
+					owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 				}
-				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
-					0, -dif*impactSpeed);
+				u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
 			}
 		}
 	}
@@ -1083,7 +1080,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			const vector<CSolidObject*> &nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
 			vector<CSolidObject*> objectsOnPath;
 
-			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); oi++) {
+			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
 				CSolidObject* o = *oi;
 				CMoveMath* moveMath = moveData->moveMath;
 

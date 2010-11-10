@@ -55,6 +55,8 @@ struct sRAIGroup
 //	UnitInfo* Engineer;
 };
 
+#define SCOUT_POSITON_LIST_SIZE 20
+#define RAI_GROUP_SIZE 25
 class cUnitManager
 {
 public:
@@ -77,7 +79,7 @@ public:
 
 //	bool AssaultScouts;
 
-	sRAIGroup* Group[25];
+	sRAIGroup* Group[RAI_GROUP_SIZE];
 //	sRAIGroup* Commander;
 	int GroupSize;
 private:
@@ -106,11 +108,14 @@ private:
 		int ScoutID;
 		float3 position;
 	};
-	sScoutPosition *SL[20];
+	sScoutPosition *SL[SCOUT_POSITON_LIST_SIZE];
 	int SLSize;
 	struct sScoutUnitInfo
 	{
-		sScoutUnitInfo() { ScoutLocAssigned=false; };
+		sScoutUnitInfo() {
+			ScoutLocAssigned=false; 
+			SL = NULL;
+		};
 		sScoutPosition *SL;
 		bool ScoutLocAssigned;
 	};

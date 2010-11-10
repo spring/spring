@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include "myMath.h"
 #include "float3.h"
 
 
@@ -32,9 +33,9 @@ void CLosMap::AddMapArea(int2 pos, int radius, int amount)
 	const int rr = (radius * radius);
 
 	for (int y = sy; y <= ey; ++y) {
-		const int rrx = rr - ((pos.y - y) * (pos.y - y));
+		const int rrx = rr - Square(pos.y - y);
 		for (int x = sx; x <= ex; ++x) {
-			if (((pos.x - x) * (pos.x - x)) <= rrx) {
+			if (Square(pos.x - x) <= rrx) {
 				map[(y * size.x) + x] += amount;
 			}
 		}
@@ -76,7 +77,6 @@ private:
 	std::vector<LosTable> lostables;
 
 	CLosTables();
-	int Round(float num);
 	void DrawLine(char* PaintTable, int x,int y,int Size);
 	LosLine OutputLine(int x,int y,int line);
 	void OutputTable(int table);
@@ -225,15 +225,6 @@ void CLosTables::DrawLine(char* PaintTable, int x, int y, int Size)
 }
 
 
-int CLosTables::Round(float Num)
-{
-	if ((Num - (int)Num) < 0.5f)
-		return (int)Num;
-	else
-		return (int)Num+1;
-}
-
-
 //////////////////////////////////////////////////////////////////////
 }; // end of anon namespace
 //////////////////////////////////////////////////////////////////////
@@ -243,8 +234,8 @@ void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<i
 {
 	if (radius <= 0) { return; }
 
-	pos.x = std::max(0, std::min(size.x - 1, pos.x));
-	pos.y = std::max(0, std::min(size.y - 1, pos.y));
+	pos.x = Clamp(size.x - 1, 0, pos.x);
+	pos.y = Clamp(size.y - 1, 0, pos.y);
 
 	if ((pos.x - radius < 0) || (pos.x + radius >= size.x) ||
 	    (pos.y - radius < 0) || (pos.y + radius >= size.y)) {

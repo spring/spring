@@ -10,20 +10,20 @@ struct lua_State;
 struct LuaTable {
 public:
 	~LuaTable() {
-		for (std::map<LuaTable*, LuaTable*>::iterator it = TblTblPairs.begin(); it != TblTblPairs.end(); it++) {
+		for (std::map<LuaTable*, LuaTable*>::iterator it = TblTblPairs.begin(); it != TblTblPairs.end(); ++it) {
 			delete it->first;
 			delete it->second;
 		}
-		for (std::map<LuaTable*, std::string>::iterator it = TblStrPairs.begin(); it != TblStrPairs.end(); it++) {
+		for (std::map<LuaTable*, std::string>::iterator it = TblStrPairs.begin(); it != TblStrPairs.end(); ++it) {
 			delete it->first;
 		}
-		for (std::map<LuaTable*, int>::iterator it = TblIntPairs.begin(); it != TblIntPairs.end(); it++) {
+		for (std::map<LuaTable*, int>::iterator it = TblIntPairs.begin(); it != TblIntPairs.end(); ++it) {
 			delete it->first;
 		}
-		for (std::map<std::string, LuaTable*>::iterator it = StrTblPairs.begin(); it != StrTblPairs.end(); it++) {
+		for (std::map<std::string, LuaTable*>::iterator it = StrTblPairs.begin(); it != StrTblPairs.end(); ++it) {
 			delete it->second;
 		}
-		for (std::map<int, LuaTable*>::iterator it = IntTblPairs.begin(); it != IntTblPairs.end(); it++) {
+		for (std::map<int, LuaTable*>::iterator it = IntTblPairs.begin(); it != IntTblPairs.end(); ++it) {
 			delete it->second;
 		}
 	}

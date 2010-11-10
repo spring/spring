@@ -1776,7 +1776,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 				if (unit->unitDef->usePieceCollisionVolumes) {
 					// draw only the piece volumes for less clutter
 					CMatrix44f mat(unit->relMidPos * float3(0.0f, -1.0f, 0.0f));
-					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
+					DrawUnitDebugPieceTree(unit->localmodel->GetRoot(), unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
 				} else {
 					if (!unit->collisionVolume->IsDisabled()) {
 						if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {

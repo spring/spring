@@ -249,7 +249,6 @@ float CGround::GetApproximateHeight(float x, float y) const
 {
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
-
 	xsquare = Clamp(xsquare, 0, gs->mapx - 1);
 	ysquare = Clamp(ysquare, 0, gs->mapy - 1);
 
@@ -266,18 +265,11 @@ float CGround::GetHeight(float x, float y) const
 
 static inline float Interpolate(float x, float y, const float* heightmap)
 {
-	if (x < 1)
-		x = 1;
-	else if (x > float3::maxxpos)
-		x = float3::maxxpos;
+	int sx = int(x) / SQUARE_SIZE;
+	int sy = int(y) / SQUARE_SIZE;
+	sx = Clamp(sx, 0, gs->mapx - 1);
+	sy = Clamp(sy, 0, gs->mapy - 1);
 
-	if (y < 1)
-		y = 1;
-	else if (y > float3::maxzpos)
-		y = float3::maxzpos;
-
-	const int sx = (int) (x / SQUARE_SIZE);
-	const int sy = (int) (y / SQUARE_SIZE);
 	const float dx = (x - sx * SQUARE_SIZE) * (1.0f / SQUARE_SIZE);
 	const float dy = (y - sy * SQUARE_SIZE) * (1.0f / SQUARE_SIZE);
 	const int hs = sx + sy * (gs->mapx + 1);
@@ -312,34 +304,24 @@ float CGround::GetOrigHeight(float x, float y) const
 
 float3& CGround::GetNormal(float x, float y) const
 {
-	if (x < 1.0f)
-		x = 1.0f;
-	else if (x > float3::maxxpos)
-		x = float3::maxxpos;
+	int xsquare = int(x) / SQUARE_SIZE;
+	int ysquare = int(y) / SQUARE_SIZE;
+	xsquare = Clamp(xsquare, 0, gs->mapx - 1);
+	ysquare = Clamp(ysquare, 0, gs->mapy - 1);
 
-	if (y < 1.0f)
-		y = 1.0f;
-	else if (y > float3::maxzpos)
-		y = float3::maxzpos;
-
-	return readmap->centernormals[int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx];
+	return readmap->centernormals[xsquare + ysquare * gs->mapx];
 }
 
 
 float CGround::GetSlope(float x, float y) const
 {
-	if (x < 1.0f)
-		x = 1.0f;
-	else if (x > float3::maxxpos)
-		x = float3::maxxpos;
-
-	if (y < 1.0f)
-		y = 1.0f;
-	else if (y > float3::maxzpos)
-		y = float3::maxzpos;
+	int xhsquare = int(x) / (2 * SQUARE_SIZE);
+	int yhsquare = int(y) / (2 * SQUARE_SIZE);
+	xhsquare = Clamp(xhsquare, 0, gs->hmapx - 1);
+	yhsquare = Clamp(yhsquare, 0, gs->hmapy - 1);
 
 	//return (1.0f - readmap->centernormals[int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx].y);
-	return readmap->slopemap[(int(x) / SQUARE_SIZE) / 2 + (int(y) / SQUARE_SIZE) / 2 * gs->hmapx];
+	return readmap->slopemap[xhsquare + yhsquare * gs->hmapx];
 }
 
 

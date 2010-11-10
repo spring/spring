@@ -8,6 +8,7 @@ UnitInfoPower::UnitInfoPower(int UID, UnitInfo *UI, bool isActive, int listType)
 	active = isActive;
 	importance = 1.0;
 	type = listType;
+	index = 0;
 }
 
 cPowerManager::cPowerManager(IAICallback* callback, cRAI* global)
@@ -46,6 +47,7 @@ cPowerManager::cPowerManager(IAICallback* callback, cRAI* global)
 
 	DebugUnitFinished = 0;
 	DebugUnitDestroyed = 0;
+	UIPLimit = 0;
 }
 
 cPowerManager::~cPowerManager()

@@ -18,7 +18,7 @@ class LuaIO {
 		static int   rename(lua_State* L, const char* oldpath, const char* newpath);
 
 	public:
-		// relative path, with no ..'s
+		/// relative path, with no ..'s
 		static bool IsSimplePath(const std::string& path);
 
 		static bool SafeExecPath(const std::string& path);

@@ -279,18 +279,8 @@ class LuaMatHandler {
 		~LuaMatHandler();
 
 	private:
-		
 		LuaMatBinSet binTypes[LUAMAT_TYPE_COUNT];
-
 		LuaMaterial* prevMat;
-
-	public:
-		// global uniforms
-		GLint   gameFrameExact;
-		GLfloat gameFrame; // extrapolated
-		GLfloat clientTime;
-		GLfloat windVel[3];
-		GLfloat sunPos[3];
 
 	public:
 		static LuaMatHandler handler;

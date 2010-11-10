@@ -95,6 +95,7 @@
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/Misc/ResourceHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -313,7 +314,6 @@ CGame::~CGame()
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
 	heightMapTexture.Kill();
-	SafeDelete(gameServer);
 
 	eoh->PreDestroy();
 	CEngineOutHandler::Destroy();
@@ -351,7 +351,6 @@ CGame::~CGame()
 	SafeDelete(tooltip);
 	SafeDelete(keyBindings);
 	SafeDelete(keyCodes);
-	ISound::Shutdown();
 	SafeDelete(selectionKeys);
 	SafeDelete(mouse);
 	SafeDelete(camHandler);
@@ -360,6 +359,7 @@ CGame::~CGame()
 	SafeDelete(moveinfo);
 	SafeDelete(unitDefHandler);
 	SafeDelete(unitLoader);
+	CResourceHandler::FreeInstance();
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(vfsHandler);
@@ -384,6 +384,8 @@ CGame::~CGame()
 	CCategoryHandler::RemoveInstance();
 	CColorMap::DeleteColormaps();
 	SafeDelete(cubeMapHandler);
+
+	game = NULL;
 }
 
 
@@ -423,7 +425,7 @@ void CGame::LoadDefs()
 
 		// run the parser
 		if (!defsParser->Execute()) {
-			throw content_error(defsParser->GetErrorLog());
+			throw content_error("Defs-Parser: " + defsParser->GetErrorLog());
 		}
 		const LuaTable root = defsParser->GetRoot();
 		if (!root.IsValid()) {
@@ -1919,7 +1921,7 @@ void CGame::MakeMemDump(void)
 	}
 
 	file << "Frame " << gs->frameNum <<"\n";
-	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); usi++) {
+	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
 		CUnit* u = *usi;
 		file << "Unit " << u->id << "\n";
 		file << "  xpos " << u->pos.x << " ypos " << u->pos.y << " zpos " << u->pos.z << "\n";

@@ -68,7 +68,6 @@ typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
 // always provide a long enough buffer
 std::string GetOSDisplayString()
 {
-    ostringstream oss;
     OSVERSIONINFOEX osvi;
     SYSTEM_INFO si;
     PGNSI pGNSI;
@@ -95,6 +94,7 @@ std::string GetOSDisplayString()
     if ( VER_PLATFORM_WIN32_NT==osvi.dwPlatformId &&
             osvi.dwMajorVersion > 4 )
     {
+		ostringstream oss;
         oss << "Microsoft ";
 
         // Test for the specific product.

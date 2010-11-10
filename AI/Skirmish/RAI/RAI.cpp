@@ -70,6 +70,17 @@ cRAI::cRAI()
 	DebugEnemyEnterRadarError=0;
 	DebugEnemyLeaveRadarError=0;
 	eventSize = 0;
+	SWM=0;
+	cb=0;
+	frame=0;
+	memset(eventList, NULL, EVENT_LIST_SIZE);
+	TM=0;
+	RM=0;
+	UM=0;
+	UDH=0;
+	CM=0;
+	B=0;
+	l=0;
 }
 
 cRAI::~cRAI()
@@ -234,7 +245,7 @@ void cRAI::UnitCreated(int unit, int builder)
 
 	if( ud->speed == 0 )
 	{
-		for(map<int,UnitInfo*>::iterator i=UImmobile.begin(); i!=UImmobile.end(); i++ )
+		for(map<int,UnitInfo*>::iterator i=UImmobile.begin(); i!=UImmobile.end(); ++i )
 		{
 			if( U->udr->WeaponGuardRange > 0 && i->second->udr->WeaponGuardRange == 0 && position.distance2D(cb->GetUnitPos(i->first)) < U->udr->WeaponGuardRange )
 			{
@@ -317,9 +328,9 @@ void cRAI::UnitDestroyed(int unit,int attacker)
 	B->BP->UResourceDestroyed(unit,U);
 	if( U->ud->speed == 0 )
 	{
-		for(map<int,UnitInfo*>::iterator i=U->UDefending.begin(); i!=U->UDefending.end(); i++ )
+		for(map<int,UnitInfo*>::iterator i=U->UDefending.begin(); i!=U->UDefending.end(); ++i )
 			i->second->UDefences.erase(unit);
-		for(map<int,UnitInfo*>::iterator i=U->UDefences.begin(); i!=U->UDefences.end(); i++ )
+		for(map<int,UnitInfo*>::iterator i=U->UDefences.begin(); i!=U->UDefences.end(); ++i )
 			i->second->UDefending.erase(unit);
 		UImmobile.erase(unit);
 	}
@@ -552,7 +563,7 @@ void cRAI::UnitDamaged(int unit,int attacker,float damage,float3 dir)
 			}
 		}
 		ValidateUnitList(&U->UGuards);
-		for( map<int,UnitInfo*>::iterator i = U->UGuards.begin(); i != U->UGuards.end(); i++ )
+		for( map<int,UnitInfo*>::iterator i = U->UGuards.begin(); i != U->UGuards.end(); ++i )
 		{
 			if( int(i->second->URepair.size()) == 0 && !IsHumanControled(i->first,i->second) )
 			{
@@ -713,7 +724,7 @@ int cRAI::HandleEvent(int msg,const void* data)
 			}
 			else if( pce->command.id == CMD_SELFD )
 			{
-				for( vector<int>::const_iterator i=pce->units.begin(); i!=pce->units.end(); i++ )
+				for( vector<int>::const_iterator i=pce->units.begin(); i!=pce->units.end(); ++i )
 					UnitDestroyed(*i,-1);
 			}
 		}
@@ -734,7 +745,7 @@ void cRAI::Update()
 	if(!(frame%FUPDATE_POWER))
 	{	// Old Code, ensures a unit won't just go permanently idle, hopefully unnecessary in the future
 		ValidateAllUnits();
-		for(map<int,UnitInfo>::iterator iU=Units.begin(); iU!=Units.end(); iU++)
+		for(map<int,UnitInfo>::iterator iU=Units.begin(); iU!=Units.end(); ++iU)
 			if( !cb->UnitBeingBuilt(iU->first) && !iU->second.AIDisabled && iU->second.udrBL->task > 1 &&
 				frame > iU->second.lastUnitIdleFrame+FUPDATE_UNITS && iU->second.UE == 0 && cb->GetCurrentUnitCommands(iU->first)->size() == 0 )
 			{
@@ -858,7 +869,7 @@ void cRAI::Update()
 				*l<<"\nInitiated=true  Frame="<<frame<<" Metal-Income="<<cb->GetMetalIncome()<<" Energy-Income="<<cb->GetEnergyIncome()<<"\n";
 				UpdateEventRemove(eventList[0]);
 				B->UpdateUDRCost();
-				for(map<int,UnitInfo>::iterator i=Units.begin(); i!=Units.end(); i++ )
+				for(map<int,UnitInfo>::iterator i=Units.begin(); i!=Units.end(); ++i )
 					if( !i->second.AIDisabled  )
 					{
 						if( Units.size() < 10 && i->second.ud->movedata != 0 )
@@ -998,7 +1009,7 @@ float3 cRAI::GetRandomPosition(TerrainMapArea* area)
 	}
 
 	vector<int> Temp;
-	for( map<int,TerrainMapAreaSector*>::iterator iS=area->sector.begin(); iS!=area->sector.end(); iS++ )
+	for( map<int,TerrainMapAreaSector*>::iterator iS=area->sector.begin(); iS!=area->sector.end(); ++iS )
 		Temp.push_back(iS->first);
 	int iS=Temp.at(rand()%int(Temp.size()));
 	Pos.x=TM->sector[iS].position.x - TM->convertStoP/2-1.0 + rand()%(TM->convertStoP-1);
@@ -1030,7 +1041,7 @@ bool cRAI::ValidateUnit(const int& unitID)
 bool cRAI::ValidateUnitList(map<int,UnitInfo*>* UL)
 {
 	int ULsize = UL->size();
-	for(map<int,UnitInfo*>::iterator iU=UL->begin(); iU!=UL->end(); iU++)
+	for(map<int,UnitInfo*>::iterator iU=UL->begin(); iU!=UL->end(); ++iU)
 	{
 		if( !ValidateUnit(iU->first) )
 		{
@@ -1046,7 +1057,7 @@ bool cRAI::ValidateUnitList(map<int,UnitInfo*>* UL)
 
 void cRAI::ValidateAllUnits()
 {
-	for(map<int,UnitInfo>::iterator iU=Units.begin(); iU!=Units.end(); iU++)
+	for(map<int,UnitInfo>::iterator iU=Units.begin(); iU!=Units.end(); ++iU)
 	{
 		if( !ValidateUnit(iU->first) )
 		{

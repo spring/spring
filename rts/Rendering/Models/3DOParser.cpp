@@ -291,7 +291,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 
 void C3DOParser::CalcNormals(S3DOPiece* o) const
 {
-	for (std::vector<S3DOPrimitive>::iterator ps = o->prims.begin(); ps != o->prims.end(); ps++) {
+	for (std::vector<S3DOPrimitive>::iterator ps = o->prims.begin(); ps != o->prims.end(); ++ps) {
 		for (int a = 0; a < ps->numVertex; ++a) {
 			S3DOVertex* vertex = &o->vertices[ps->vertices[a]];
 			float3 vnormal(0.0f, 0.0f, 0.0f);

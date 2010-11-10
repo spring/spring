@@ -20,6 +20,7 @@
 #include <list>
 #include <set>
 #include <cstdio>
+#include <string.h>
 using namespace std;
 
 //#include "GPathfinder.h"
@@ -34,8 +35,9 @@ struct TerrainMapAreaSector
 {
 	TerrainMapAreaSector()
 	{
-		area=0;
-		areaClosest=0;
+		S=NULL;
+		area=NULL;
+		areaClosest=NULL;
 	};
 	// NOTE: some of these values are loaded as they become needed, use GlobalTerrainMap functions
 	TerrainMapSector *S;	// always valid
@@ -53,6 +55,7 @@ struct TerrainMapArea
 		index=areaIUSize;
 		mobileType = TMMobileType;
 		percentOfMap=0.0;
+		areaUsable=0;
 	};
 	bool areaUsable; // Should units of this type be used in this area
 	int index;
@@ -62,7 +65,7 @@ struct TerrainMapArea
 												// NOTE: use GlobalTerrainMap->GetClosestSector: these values are not initalized but are instead loaded as they become needed
 	float percentOfMap; // 0-100
 };
-
+#define MAP_AREA_LIST_SIZE 50
 struct TerrainMapMobileType
 {
 	TerrainMapMobileType()
@@ -71,19 +74,25 @@ struct TerrainMapMobileType
 		sector = 0;
 		areaSize = 0;
 		areaLargest = 0;
-//		PF = 0;
 		udSize = 0;
+		MD = NULL;
+		canFloat = 0;
+		canHover = 0;
+		minElevation = 0.0;
+		maxElevation = 0.0;
+		maxSlope = 0.0;
+		memset(area,NULL,MAP_AREA_LIST_SIZE);
+		
 	};
 	~TerrainMapMobileType()
 	{
-//		delete PF;
 		delete [] sector;
 		for(int i=0; i<areaSize; i++)
 			delete area[i];
 	};
 	bool typeUsable; // Should units of this type be used on this map
 	TerrainMapAreaSector *sector;	// Each MoveType has it's own sector list, GlobalTerrainMap->GetSectorIndex() gives an index
-	TerrainMapArea *area[50];	// Each MoveType has it's own MapArea list
+	TerrainMapArea *area[MAP_AREA_LIST_SIZE];	// Each MoveType has it's own MapArea list
 	TerrainMapArea *areaLargest;// Largest area usable by this type, otherwise = 0
 	int areaSize;
 
@@ -103,6 +112,9 @@ struct TerrainMapSector
 	{
 		percentLand = 0.0;
 		maxSlope = 0.0;
+		maxElevation = 0.0;
+		minElevation = 0.0;
+		isWater = 0;
 	};
 
 	bool isWater;		// (Water = true) (Land = false)
@@ -120,6 +132,12 @@ struct TerrainMapImmobileType
 	TerrainMapImmobileType()
 	{
 		udSize = 0;
+		canFloat = 0;
+		canHover = 0;
+		minElevation = 0.0;
+		maxElevation = 0.0;
+		typeUsable = 0;
+		
 	};
 
 	bool typeUsable; // Should units of this type be used on this map

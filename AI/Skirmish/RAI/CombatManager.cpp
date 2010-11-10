@@ -258,7 +258,7 @@ int cCombatManager::GetClosestEnemy(float3 Pos, UnitInfo* U)
 	sWeaponEfficiency* weTemp;
 	float distance,fTemp;
 	float3 fE;
-	for( map<int,EnemyInfo>::iterator E=G->Enemies.begin(); E!=G->Enemies.end(); E++ )
+	for( map<int,EnemyInfo>::iterator E=G->Enemies.begin(); E!=G->Enemies.end(); ++E )
 	{
 		fE=GetEnemyPosition(E->first,&E->second);
 		if( (weTemp = CanAttack(U,&E->second,fE)) != 0 )
@@ -284,7 +284,7 @@ int cCombatManager::GetClosestThreat(float3 Pos, UnitInfo* U)
 	float distance,fTemp;
 	float3 fE;
 	set<int> deletion;
-	for( map<int,EnemyInfo*>::iterator E=G->EThreat.begin(); E!=G->EThreat.end(); E++ )
+	for( map<int,EnemyInfo*>::iterator E=G->EThreat.begin(); E!=G->EThreat.end(); ++E )
 	{
 		fE=GetEnemyPosition(E->first,E->second);
 		if( E->second->baseThreatFrame > cb->GetCurrentFrame()+3600 ||

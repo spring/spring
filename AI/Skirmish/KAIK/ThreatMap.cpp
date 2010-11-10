@@ -1,3 +1,4 @@
+#include <cassert>
 #include <sstream>
 
 #include "IncExternAI.h"
@@ -69,6 +70,8 @@ void CThreatMap::PostLoad() {
 	height = ai->cb->GetMapHeight() / THREATRES;
 	area   = width * height;
 
+	assert(threatCellsRaw.empty());
+	assert(threatCellsVis.empty());
 	threatCellsRaw.resize(area, THREATVAL_BASE);
 	threatCellsVis.resize(area, THREATVAL_BASE);
 
@@ -101,13 +104,14 @@ void CThreatMap::ToggleVisOverlay() {
 
 
 void CThreatMap::EnemyCreated(int enemyUnitID) {
-	const UnitDef* ud = ai->ccb->GetUnitDef(enemyUnitID);
+	assert(!threatCellsRaw.empty());
+	assert(ai->ccb->GetUnitDef(enemyUnitID) != NULL);
 
 	EnemyUnit enemyUnit;
 		enemyUnit.id     = enemyUnitID;
 		enemyUnit.pos    = ai->ccb->GetUnitPos(enemyUnitID);
 		enemyUnit.threat = GetEnemyUnitThreat(enemyUnit);
-		enemyUnit.range  = (ai->ut->GetMaxRange(ud) + 100.0f) / (SQUARE_SIZE * THREATRES);
+		enemyUnit.range  = (ai->ut->GetMaxRange(ai->ccb->GetUnitDef(enemyUnitID)) + 100.0f) / (SQUARE_SIZE * THREATRES);
 	enemyUnits[enemyUnitID] = enemyUnit;
 
 	AddEnemyUnit(enemyUnit, 1.0f);
@@ -118,6 +122,8 @@ void CThreatMap::EnemyFinished(int enemyUnitID) {
 }
 
 void CThreatMap::EnemyDamaged(int enemyUnitID, int) {
+	assert(!threatCellsRaw.empty());
+
 	std::map<int, EnemyUnit>::iterator it = enemyUnits.find(enemyUnitID);
 
 	if (it != enemyUnits.end()) {
@@ -130,6 +136,7 @@ void CThreatMap::EnemyDamaged(int enemyUnitID, int) {
 }
 
 void CThreatMap::EnemyDestroyed(int enemyUnitID, int) {
+	assert(!threatCellsRaw.empty());
 	std::map<int, EnemyUnit>::const_iterator it = enemyUnits.find(enemyUnitID);
 
 	if (it != enemyUnits.end()) {
@@ -146,6 +153,9 @@ void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float s) {
 	const int posx = int(e.pos.x / (SQUARE_SIZE * THREATRES));
 	const int posy = int(e.pos.z / (SQUARE_SIZE * THREATRES));
 
+	assert(!threatCellsRaw.empty());
+	assert(MAPPOS_IN_BOUNDS(e.pos));
+
 	const float threat = e.threat * s;
 	const float rangeSq = e.range * e.range;
 
@@ -155,7 +165,7 @@ void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float s) {
 		}
 
 		for (int myy = int(posy - e.range); myy < (posy + e.range); myy++) {
-			if (myy < 0 || myx >= height) {
+			if (myy < 0 || myy >= height) {
 				continue;
 			}
 
@@ -163,10 +173,13 @@ void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float s) {
 			const int dySq = (posy - myy) * (posy - myy);
 
 			if ((dxSq + dySq - 0.5) <= rangeSq) {
+				assert((myy * width + myx) < threatCellsRaw.size());
+				assert((myy * width + myx) < threatCellsVis.size());
+
 				// MicroPather cannot deal with negative costs
 				// (which may arise due to floating-point drift)
 				// nor with zero-cost nodes (see MP::SetMapData,
-				// not an additive overlay)
+				// threat is not used as an additive overlay)
 				threatCellsRaw[myy * width + myx] = std::max(threatCellsRaw[myy * width + myx] + threat, THREATVAL_BASE);
 				threatCellsVis[myy * width + myx] = std::max(threatCellsVis[myy * width + myx] + threat, THREATVAL_BASE);
 
@@ -198,7 +211,6 @@ void CThreatMap::Update() {
 
 		currMaxThreat = std::max(currMaxThreat, e.threat);
 	}
-
 
 	// TODO: staggered updates
 	if (threatMapTexID >= 0) {

@@ -113,9 +113,15 @@ CReadMap::CReadMap():
 	centernormals(NULL),
 	typemap(NULL),
 	metalMap(NULL),
+	width(0),
+	height(0),
+	minheight(0.0f),
+	maxheight(0.0f),
+	currMinHeight(0.0f),
+	currMaxHeight(0.0f),
 	mapChecksum(0)
 {
-	memset(mipHeightmap, 0, sizeof(mipHeightmap));
+	memset(mipHeightmap, NULL, sizeof(mipHeightmap));
 }
 
 
@@ -161,8 +167,9 @@ void CReadMap::Initialize()
 	centernormals = new float3[gs->mapx * gs->mapy];
 	centerheightmap = new float[gs->mapx * gs->mapy];
 	mipHeightmap[0] = centerheightmap;
-	for (int i = 1; i < numHeightMipMaps; i++)
+	for (int i = 1; i < numHeightMipMaps; i++) {
 		mipHeightmap[i] = new float[(gs->mapx >> i) * (gs->mapy >> i)];
+	}
 
 	slopemap = new float[gs->hmapx * gs->hmapy];
 	vertexNormals.resize((gs->mapx + 1) * (gs->mapy + 1));

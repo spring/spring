@@ -223,7 +223,6 @@ int CUnitScript::Tick(int deltaTime)
 		struct AnimInfo *ai = *it;
 
 		bool done = false;
-		pieces[ai->piece]->updated = true;
 
 		switch (ai->type) {
 			case AMove:
@@ -413,7 +412,6 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 
 	LocalModelPiece* p = pieces[piece];
 	p->pos[axis] = pieces[piece]->original->offset[axis] + destination;
-	p->updated = true;
 }
 
 
@@ -426,7 +424,6 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 
 	LocalModelPiece* p = pieces[piece];
 	p->rot[axis] = destination;
-	p->updated = true;
 }
 
 
@@ -440,7 +437,6 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 	LocalModelPiece* p = pieces[piece];
 	if (p->visible != visible) {
 		p->visible = visible;
-		p->updated = true;
 	}
 }
 

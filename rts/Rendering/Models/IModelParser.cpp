@@ -27,7 +27,7 @@ C3DModelLoader* modelParser = NULL;
 // C3DModelLoader
 //
 
-C3DModelLoader::C3DModelLoader(void)
+C3DModelLoader::C3DModelLoader()
 {
 	// file-extension should be lowercase
 	AddParser("3do", new C3DOParser());
@@ -36,7 +36,7 @@ C3DModelLoader::C3DModelLoader(void)
 }
 
 
-C3DModelLoader::~C3DModelLoader(void)
+C3DModelLoader::~C3DModelLoader()
 {
 	// delete model cache
 	std::map<std::string, S3DModel*>::iterator ci;
@@ -123,7 +123,7 @@ void C3DModelLoader::Update() {
 
 void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
 {
-	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); di++) {
+	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); ++di) {
 		DeleteChilds(*di);
 	}
 
@@ -168,7 +168,7 @@ LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 	for (unsigned int i = 0; i < model->numobjects; i++) {
 		lmodel->pieces.push_back(new LocalModelPiece);
 	}
-	lmodel->pieces[0]->parent = NULL;
+	lmodel->GetRoot()->parent = NULL;
 
 	int piecenum = 0;
 	CreateLocalModelPieces(model->rootobject, lmodel, &piecenum);
@@ -184,10 +184,9 @@ void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lm
 	lmp.type      =  piece->type;
 	lmp.displist  =  piece->displist;
 	lmp.visible   = !piece->isEmpty;
-	lmp.updated   =  false;
 	lmp.pos       =  piece->offset;
-	lmp.rot       =  float3(0.0f, 0.0f, 0.0f);
-	lmp.colvol    = new CollisionVolume(piece->colvol);
+	lmp.rot       =  ZeroVector;
+	lmp.colvol    =  new CollisionVolume(piece->colvol);
 
 	lmp.childs.reserve(piece->childs.size());
 	for (unsigned int i = 0; i < piece->childs.size(); i++) {
@@ -224,7 +223,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 	o->DrawList();
 	glEndList();
 
-	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); bs++) {
+	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); ++bs) {
 		CreateListsNow(*bs);
 	}
 }

@@ -45,7 +45,7 @@ public:
 	 * @return true if reclaimed
 	 */
 	bool AddBuildPower(float amount, CUnit* builder);
-	void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse);
+	void DoDamage(const DamageArray& damages, const float3& impulse);
 	void Kill(float3& impulse);
 	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);

@@ -82,7 +82,7 @@ CAdvSky::CAdvSky()
 	bool status = fbo.CheckStatus("ADVSKY");
 	FBO::Unbind();
 	if (!status) {
-		throw content_error("");
+		throw content_error("ADVSKY: FBO is unavailable");
 	}
 
 	glGetError();

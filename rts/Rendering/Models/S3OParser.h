@@ -15,7 +15,7 @@ struct SS3OVertex {
 };
 
 struct SS3OPiece: public S3DModelPiece {
-	SS3OPiece() { parent = NULL; }
+	SS3OPiece() { parent = NULL; primitiveType=0; }
 	~SS3OPiece() {
 		vertices.clear();
 		vertexDrawOrder.clear();
@@ -50,7 +50,7 @@ struct SS3OTriangle {
 };
 
 
-enum {S3O_PRIMTYPE_TRIANGLES, S3O_PRIMTYPE_TRIANGLE_STRIP, S3O_PRIMTYPE_QUADS};
+enum {S3O_PRIMTYPE_TRIANGLES = 0, S3O_PRIMTYPE_TRIANGLE_STRIP = 1, S3O_PRIMTYPE_QUADS = 2};
 
 class CS3OParser: public IModelParser
 {

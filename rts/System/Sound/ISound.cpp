@@ -13,8 +13,8 @@
 
 ISound* ISound::singleton = NULL;
 
-void ISound::Initialize() {
-
+void ISound::Initialize()
+{
 	if (singleton == NULL) {
 #ifndef NO_SOUND
 		const bool noSound = configHandler->Get("NoSound", false);
@@ -30,15 +30,16 @@ void ISound::Initialize() {
 	}
 }
 
-void ISound::Shutdown() {
-
+void ISound::Shutdown()
+{
 	ISound* tmpSound = singleton;
 	singleton = NULL;
 	delete tmpSound;
 	tmpSound = NULL;
 }
 
-bool ISound::IsInitialized() {
+bool ISound::IsInitialized()
+{
 	return (singleton != NULL);
 }
 

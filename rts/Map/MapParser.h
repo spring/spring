@@ -28,6 +28,7 @@ class MapParser
 
 	private:
 		LuaParser* parser;
+		mutable std::string errorLog;
 };
 
 #endif // MAP_PARSER_H
