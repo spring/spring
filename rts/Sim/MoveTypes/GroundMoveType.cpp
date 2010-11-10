@@ -959,14 +959,11 @@ void CGroundMoveType::CheckCollisionSkid(void)
 					- owner->updir*owner->relMidPos.y
 					- owner->rightdir*owner->relMidPos.x;
 				owner->speed+=dif*(impactSpeed*1.8f);
-				if(impactSpeed > ud->minCollisionSpeed
-					&& ud->minCollisionSpeed >= 0)
-				{
-					owner->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
-						0, ZeroVector);
+
+				if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0) {
+					owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 				}
-				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
-					0, -dif*impactSpeed);
+				u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
 			}
 		}
 	}

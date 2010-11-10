@@ -227,38 +227,42 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		maxLength += targetUnit->radius * targetBorder;
 	}
 
+
 	// unit at the end of the beam
-	const CUnit* hit = 0;
-	const CFeature* hitfeature = 0;
+	CUnit* hitUnit = NULL;
+	CFeature* hitFeature = NULL;
+	CPlasmaRepulser* hitShield = NULL;
+
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		tryAgain = false;
-		hit = NULL;
+		hitUnit = NULL;
 
+		const CUnit* hitUnitPtr = hitUnit;
+		const CFeature* hitFeaturePtr = hitFeature;
 		float length = helper->TraceRay(
 			curPos,
 			dir,
 			maxLength - curLength,
 			weaponDef->damages[0],
 			owner,
-			hit,
+			hitUnitPtr,
 			collisionFlags,
-			&hitfeature
+			&hitFeaturePtr
 		);
 
-		if (hit && hit->allyteam == owner->allyteam && sweepFire) {
+		if (hitUnit != NULL && hitUnit->allyteam == owner->allyteam && sweepFire) {
 			// never damage friendlies with sweepfire
 			lastFireFrame = 0;
 			return;
 		}
 
 		float3 newDir;
-		CPlasmaRepulser* shieldHit = NULL;
-		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, dir, length, newDir, shieldHit);
+		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, dir, length, newDir, hitShield);
 
 		if (shieldLength < length) {
 			length = shieldLength;
 
-			if (shieldHit->BeamIntercepted(this, damageMul)) {
+			if (hitShield->BeamIntercepted(this, damageMul)) {
 				// repulsed
 				tryAgain = true;
 			}
@@ -291,19 +295,18 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		curLength += length;
 		dir = newDir;
 	}
-	CUnit* hitM = (hit == NULL) ? NULL : uh->units[hit->id];
-	CFeature* hitF = hitfeature ? featureHandler->GetFeature(hitfeature->id) : 0;
 
 	// fix negative damage when hitting big spheres
 	float actualRange = range;
-	if (hit) {
-		if (hit->unitDef->usePieceCollisionVolumes) {
+
+	if (hitUnit) {
+		if (hitUnit->unitDef->usePieceCollisionVolumes) {
 			// getting the actual piece here is probably overdoing it
-			hitM->SetLastAttackedPiece(hit->localmodel->pieces[0], gs->frameNum);
+			hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
 		}
 
 		if (targetBorder > 0) {
-			actualRange += hit->radius * targetBorder;
+			actualRange += hitUnit->radius * targetBorder;
 		}
 	}
 
@@ -342,10 +345,10 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			weaponDef->noExplode || weaponDef->noSelfDamage, /*false*/
 			weaponDef->impactOnly,                           /*false*/
 			weaponDef->explosionGenerator,
-			hitM,
+			hitUnit,
 			dir,
 			weaponDef->id,
-			hitF
+			hitFeature
 		);
 	}
 

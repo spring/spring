@@ -47,7 +47,7 @@ public:
 	float GuiTraceRayFeature(const float3& start, const float3& dir, float length, const CFeature*& feature);
 
 	void DoExplosionDamage(CUnit* unit, const float3& expPos, float expRad, float expSpeed, bool ignoreOwner, CUnit* owner, float edgeEffectiveness, const DamageArray& damages, int weaponId);
-	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, CUnit* owner, const DamageArray& damages);
+	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages);
 	void Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner, bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly, CExplosionGenerator* explosionGraphics, CUnit* hit, const float3& impactDir, int weaponId, CFeature* hitfeature = NULL);
 
 	float TraceRayTeam(const float3& start, const float3& dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude, int allyteam);
