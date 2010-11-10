@@ -84,6 +84,9 @@ FIND_LIBRARY(OPENAL_LIBRARY_RAW
 		soft_oal
 	HINTS
 		$ENV{OPENALDIR}
+		# To find the library in the default source- & build-dir structure
+		# of OpenAL Soft, after a simple "make" (without "make install"):
+		$ENV{OPENALDIR}/build
 	PATH_SUFFIXES
 		lib64
 		lib

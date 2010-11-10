@@ -76,7 +76,7 @@ CArchivePool::CArchivePool(const std::string& name):
 CArchivePool::~CArchivePool(void)
 {
 	std::vector<FileData *>::iterator i = files.begin();
-	for(; i < files.end(); i++) delete *i;
+	for(; i < files.end(); ++i) delete *i;
 }
 
 bool CArchivePool::IsOpen()

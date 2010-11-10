@@ -27,6 +27,7 @@ public:
 
 public:
 	static CLoadScreen* GetInstance() {
+		assert(singleton);
 		return singleton;
 	}
 	static void CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);

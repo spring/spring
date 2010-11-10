@@ -13,7 +13,7 @@ namespace terrain {
 
 		void Init(int bytesize); /// Allocate the buffer
 		void Free(); /// Free the buffer, called by destructor
-		uint GetSize() { return size; } /// returns the vertex buffer size in bytes
+		uint GetSize() const { return size; } /// returns the vertex buffer size in bytes
 
 		void* Bind (); /// returns the pointer that should be passed to glVertexPointer
 		void Unbind (); /// unbind it, so it can be locked again

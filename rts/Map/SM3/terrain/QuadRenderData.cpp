@@ -43,6 +43,7 @@ namespace terrain {
 		: roothm(rhm), rootQMap (rqm)
 	{
 		renderDataAllocates=0;
+		normalDataAllocates=0;
 	}
 
 	RenderDataManager::~RenderDataManager()

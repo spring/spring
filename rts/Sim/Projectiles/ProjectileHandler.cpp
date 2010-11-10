@@ -147,6 +147,7 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 
 void CProjectileHandler::PostLoad()
 {
+	//TODO
 }
 
 

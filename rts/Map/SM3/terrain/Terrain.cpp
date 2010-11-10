@@ -38,6 +38,7 @@ namespace terrain {
 		anisotropicFiltering = 0;
 		forceFallbackTexturing = false;
 		maxLodLevel = 4;
+		useStaticShadow = false;
 	}
 
 
@@ -93,6 +94,7 @@ namespace terrain {
 		textureSetup=0;
 		cacheTexture=0;
 		normalData=0;
+		maxLodValue=0.0f;
 	}
 
 	TQuad::~TQuad ()

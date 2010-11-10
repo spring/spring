@@ -44,7 +44,7 @@ class MTRand_int32 {
 		static bool init;
 
 		// used by gen_state()
-		unsigned int twiddle(unsigned int, unsigned int);
+		unsigned int twiddle(unsigned int, unsigned int) const;
 		// generate new state
 		void gen_state();
 
@@ -58,7 +58,7 @@ class MTRand_int32 {
 
 
 // inline for speed, must therefore reside in header file
-inline unsigned int MTRand_int32::twiddle(unsigned int u, unsigned int v) {
+inline unsigned int MTRand_int32::twiddle(unsigned int u, unsigned int v) const {
 	return (((u & 0x80000000UL) | (v & 0x7FFFFFFFUL)) >> 1) ^ ((v & 1UL)? 0x9908B0DFUL: 0x0UL);
 }
 

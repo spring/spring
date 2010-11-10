@@ -618,6 +618,8 @@ LuaMatHandler::LuaMatHandler()
 	reset3doShader = NULL;
 	setupS3oShader = NULL;
 	resetS3oShader = NULL;
+
+	prevMat = NULL;
 }
 
 

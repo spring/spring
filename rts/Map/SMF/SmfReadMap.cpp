@@ -73,11 +73,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
 	CBitmap detailTexBM;
-	CBitmap specularTexBM;
-	CBitmap splatDetailTexBM;
-	CBitmap splatDistrTexBM;
 	CBitmap grassShadingTexBM;
-	CBitmap skyReflectModTexBM;
 
 	detailTex        = 0;
 	shadingTex       = 0;
@@ -89,6 +85,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	skyReflectModTex = 0;
 
 	if (haveSpecularLighting) {
+		CBitmap specularTexBM;
+		CBitmap skyReflectModTexBM;
 		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 			// maps wants specular lighting, but no moderation
 			specularTexBM.Alloc(1, 1);
@@ -101,6 +99,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		specularTex = specularTexBM.CreateTexture(false);
 
 		if (haveSplatTexture) {
+			CBitmap splatDistrTexBM;
+			CBitmap splatDetailTexBM;
 			// if the map supplies an intensity- and a distribution-texture for
 			// detail-splat blending, the regular detail-texture is not used
 			if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
@@ -507,7 +507,7 @@ void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 		int ex = exi;
 		float xtest, xtest2;
 		std::vector<CBFGroundDrawer::fline>::iterator fli;
-		for (fli = groundDrawer->left.begin(); fli != groundDrawer->left.end(); fli++) {
+		for (fli = groundDrawer->left.begin(); fli != groundDrawer->left.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
@@ -519,7 +519,7 @@ void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			if (xtest - extraSize > sx)
 				sx = ((int) xtest) - extraSize;
 		}
-		for (fli = groundDrawer->right.begin(); fli != groundDrawer->right.end(); fli++) {
+		for (fli = groundDrawer->right.begin(); fli != groundDrawer->right.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 

@@ -31,6 +31,8 @@
 #include "System/Sound/IMusicChannel.h"
 
 
+CLoadScreen* CLoadScreen::singleton = NULL;
+
 /******************************************************************************/
 
 CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile) :
@@ -129,12 +131,15 @@ CLoadScreen::~CLoadScreen()
 
 		activeController = game;
 	}
+
+	if (activeController == this)
+		activeController = NULL;
+
+	singleton = NULL;
 }
 
 
 /******************************************************************************/
-
-CLoadScreen* CLoadScreen::singleton = NULL;
 
 void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 {
@@ -280,6 +285,9 @@ bool CLoadScreen::Draw()
 		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 			"This program is distributed under the GNU General Public License, see license.html for more info");
 	font->End();
+
+	if (!mt_loading)
+		SDL_GL_SwapBuffers();
 
 	return true;
 }

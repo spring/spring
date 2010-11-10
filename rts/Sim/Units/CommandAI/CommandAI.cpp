@@ -714,7 +714,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 
 	if (c.id == CMD_PATROL) {
 		CCommandQueue::iterator ci = commandQue.begin();
-		for (; ci != commandQue.end() && ci->id != CMD_PATROL; ci++) {
+		for (; ci != commandQue.end() && ci->id != CMD_PATROL; ++ci) {
 			// just increment
 		}
 		if (ci == commandQue.end()) {
@@ -1569,7 +1569,7 @@ void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cm
 bool CCommandAI::HasMoreMoveCommands()
 {
 	if (!commandQue.empty()) {
-		for (CCommandQueue::iterator i = (commandQue.begin()++); i != commandQue.end(); i++) {
+		for (CCommandQueue::iterator i = (commandQue.begin()++); i != commandQue.end(); ++i) {
 			const int id = i->id;
 
 			// build commands are no different from reclaim or repair commands

@@ -103,7 +103,7 @@ int CAIInterfaceLibrary::GetLoadCount() const {
 	int totalSkirmishAILibraryLoadCount = 0;
 	std::map<const SkirmishAIKey, int>::const_iterator salc;
 	for (salc=skirmishAILoadCount.begin(); salc != skirmishAILoadCount.end();
-			salc++) {
+			++salc) {
 		totalSkirmishAILibraryLoadCount += salc->second;
 	}
 
@@ -185,7 +185,9 @@ int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
 	skirmishAILoadCount[key]--;
 
 	if (skirmishAILoadCount[key] == 0) {
+		CSkirmishAILibrary* ai = loadedSkirmishAILibraries[key];
 		loadedSkirmishAILibraries.erase(key);
+		delete ai;
 		sAIInterfaceLibrary.unloadSkirmishAILibrary(aiInfo->GetShortName().c_str(), aiInfo->GetVersion().c_str());
 	}
 

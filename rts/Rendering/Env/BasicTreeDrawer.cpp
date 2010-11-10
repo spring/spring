@@ -27,136 +27,87 @@ static const float MAX_TREE_HEIGHT_6=MAX_TREE_HEIGHT*0.6f;
 
 CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
 {
-	lastListClean=0;
+	lastListClean = 0;
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
 		logOutput.Print(resourcesParser.GetErrorLog());
 	}
-	
+
 	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");
-		
+	const float tintc[3] = {0.6f,0.7f,0.6f};
+
+	std::string fn;
+	CBitmap sprite;
 	CBitmap TexImage;
-	std::string fn("bitmaps/"+treesTable.GetString("gran1", "gran.bmp"));
-	if (!TexImage.Load(fn))
-		throw content_error("Could not load tree texture from " + fn);
-	TexImage.ReverseYAxis();
-	//unsigned char gran[1024][512][4];
-	unsigned char (*gran)[512][4]=new unsigned char[1024][512][4];
-	if (TexImage.xsize>1){
-		for(int y=0;y<256;y++){
-			for(int x=0;x<256;x++){
-				if(TexImage.mem[(y*256+x)*4]==72 && TexImage.mem[(y*256+x)*4+1]==72){
-					gran[y][x][0]=33;
-					gran[y][x][1]=54;
-					gran[y][x][2]=29;
-					gran[y][x][3]=0;
-				} else {
-					gran[y][x][0]=TexImage.mem[(y*256+x)*4];
-					gran[y][x][1]=TexImage.mem[(y*256+x)*4+1];
-					gran[y][x][2]=TexImage.mem[(y*256+x)*4+2];
-					gran[y][x][3]=255;
-				}
-			}
-		}
+	TexImage.Alloc(512,512);
+
+	{
+		fn = "bitmaps/"+treesTable.GetString("gran1", "gran.bmp");
+
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from " + fn);
+		if (sprite.xsize != 256 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 256x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(33,54,29,0));
+		TexImage.CopySubImage(sprite, 0, 0);
 	}
 
-	fn = "bitmaps/"+treesTable.GetString("gran2", "gran2.bmp");
-	if (!TexImage.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	TexImage.ReverseYAxis();
-	if (TexImage.xsize>1){
-		for(int y=0;y<256;y++){
-			for(int x=0;x<256;x++){
-				if(TexImage.mem[(y*256+x)*4]==72 && TexImage.mem[(y*256+x)*4+1]==72){
-					gran[y][x+256][0]=33;
-					gran[y][x+256][1]=54;
-					gran[y][x+256][2]=29;
-					gran[y][x+256][3]=0;
-				} else {
-					gran[y][x+256][0]=TexImage.mem[(y*256+x)*4];
-					gran[y][x+256][1]=TexImage.mem[(y*256+x)*4+1];
-					gran[y][x+256][2]=TexImage.mem[(y*256+x)*4+2];
-					gran[y][x+256][3]=255;
-				}
-			}
-		}
+	{
+		fn = "bitmaps/"+treesTable.GetString("gran2", "gran2.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 256 && sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 256x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(33,54,29,0));
+		TexImage.CopySubImage(sprite, 255, 0);
 	}
 
-	fn = "bitmaps/"+treesTable.GetString("birch1", "birch1.bmp");
-	if (!TexImage.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	TexImage.ReverseYAxis();
-	if (TexImage.xsize>1){
-		for(int y=0;y<256;y++){
-			for(int x=0;x<128;x++){
-				if(TexImage.mem[(y*128+x)*4]==72 && TexImage.mem[(y*128+x)*4+1]==72){
-					gran[y+256][x][0]=(unsigned char)(125*0.6f);
-					gran[y+256][x][1]=(unsigned char)(146*0.7f);
-					gran[y+256][x][2]=(unsigned char)(82*0.6f);
-					gran[y+256][x][3]=(unsigned char)(0);
-				} else {
-					gran[y+256][x][0]=(unsigned char)(TexImage.mem[(y*128+x)*4]*0.6f);
-					gran[y+256][x][1]=(unsigned char)(TexImage.mem[(y*128+x)*4+1]*0.7f);
-					gran[y+256][x][2]=(unsigned char)(TexImage.mem[(y*128+x)*4+2]*0.6f);
-					gran[y+256][x][3]=255;
-				}
-			}
-		}
+	{
+		fn = "bitmaps/"+treesTable.GetString("birch1", "birch1.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 128 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 128x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
+		sprite.Tint(tintc);
+		TexImage.CopySubImage(sprite, 0, 255);
 	}
 
-	fn = "bitmaps/"+treesTable.GetString("birch2", "birch2.bmp");
-	if (!TexImage.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	TexImage.ReverseYAxis();
-	if (TexImage.xsize>1){
-		for(int y=0;y<256;y++){
-			for(int x=0;x<128;x++){
-				if(TexImage.mem[(y*128+x)*4]==72 && TexImage.mem[(y*128+x)*4+1]==72){
-					gran[y+256][x+128][0]=(unsigned char)(125*0.6f);
-					gran[y+256][x+128][1]=(unsigned char)(146*0.7f);
-					gran[y+256][x+128][2]=(unsigned char)(82*0.6f);
-					gran[y+256][x+128][3]=0;
-				} else {
-					gran[y+256][x+128][0]=(unsigned char)(TexImage.mem[(y*128+x)*4]*0.6f);
-					gran[y+256][x+128][1]=(unsigned char)(TexImage.mem[(y*128+x)*4+1]*0.7f);
-					gran[y+256][x+128][2]=(unsigned char)(TexImage.mem[(y*128+x)*4+2]*0.6f);
-					gran[y+256][x+128][3]=255;
-				}
-			}
-		}
+	{
+		fn = "bitmaps/"+treesTable.GetString("birch2", "birch2.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 128 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 128x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
+		sprite.Tint(tintc);
+		TexImage.CopySubImage(sprite, 127, 255);
 	}
 
-	fn = "bitmaps/"+treesTable.GetString("birch3", "birch3.bmp");
-	if (!TexImage.Load(fn))
-		throw content_error("Could not load tree texture from file " + fn);
-	TexImage.ReverseYAxis();
-	if (TexImage.xsize>1){
-		for(int y=0;y<256;y++){
-			for(int x=0;x<256;x++){
-				if(TexImage.mem[(y*256+x)*4]==72 && TexImage.mem[(y*256+x)*4+1]==72){
-					gran[y+256][x+256][0]=(unsigned char)(125*0.6f);
-					gran[y+256][x+256][1]=(unsigned char)(146*0.7f);
-					gran[y+256][x+256][2]=(unsigned char)(82*0.6f);
-					gran[y+256][x+256][3]=0;
-				} else {
-					gran[y+256][x+256][0]=(unsigned char)(TexImage.mem[(y*256+x)*4]*0.6f);
-					gran[y+256][x+256][1]=(unsigned char)(TexImage.mem[(y*256+x)*4+1]*0.7f);
-					gran[y+256][x+256][2]=(unsigned char)(TexImage.mem[(y*256+x)*4+2]*0.6f);
-					gran[y+256][x+256][3]=255;
-				}
-			}
-		}
+	{
+		fn = "bitmaps/"+treesTable.GetString("birch3", "birch3.bmp");
+		if (!sprite.Load(fn))
+			throw content_error("Could not load tree texture from file " + fn);
+		if (sprite.xsize != 256 || sprite.ysize != 256)
+			throw content_error("texture " + fn + " must be 256x256!");
+		sprite.ReverseYAxis();
+		sprite.SetTransparent(SColor(72,72,72), SColor(75,102,49,0));
+		sprite.Tint(tintc);
+		TexImage.CopySubImage(sprite, 255, 255);
 	}
 
 	// create mipmapped texture
-	CreateTreeTex(treetex,gran[0][0],512,1024);
-	delete[] gran;
+	treetex = TexImage.CreateTexture(true);
 
-	treesX=gs->mapx/TREE_SQUARE_SIZE;
-	treesY=gs->mapy/TREE_SQUARE_SIZE;
-	nTrees=treesX*treesY;
-	trees=new TreeSquareStruct[nTrees];
+	treesX = gs->mapx / TREE_SQUARE_SIZE;
+	treesY = gs->mapy / TREE_SQUARE_SIZE;
+	nTrees = treesX * treesY;
+	trees = new TreeSquareStruct[nTrees];
 
 	for (TreeSquareStruct* pTSS = trees; pTSS < trees + nTrees; ++pTSS) {
 		pTSS->displist = 0;
@@ -210,23 +161,23 @@ inline void DrawTreeVertexFar1(float3 pos, float3 swd, bool enlarge=true) {
 	SetArrayQ(0,0.25f,base);
 	base-=swd;
 	base-=swd;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f,0.5f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f,0.0f,base);
 }
 
 inline void DrawTreeVertexFar2(float3 pos, float3 swd, bool enlarge=true) { 
 	if(enlarge)
 		va->EnlargeArrays(4,0,VA_SIZE_T);
 	float3 base=pos+swd;
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0, 0.5f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.5f,base);
+	SetArrayQ(0, 1.0f,base);
 	base-=swd;
 	base-=swd;
-	SetArrayQ(0.25f,0.5f,base);
+	SetArrayQ(0.25f,1.0f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.25f,0.25f,base);
+	SetArrayQ(0.25f,0.5f,base);
 }
 
 inline void DrawTreeVertexMid1(float3 pos, bool enlarge=true) {
@@ -235,37 +186,37 @@ inline void DrawTreeVertexMid1(float3 pos, bool enlarge=true) {
 	float3 base=pos;
 	base.x+=MAX_TREE_HEIGHT_3;
 
-	SetArrayQ(0,0,base);
+	SetArrayQ(0.0f, 0.0f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0.0f, 0.5f,base);
 	base.x-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f, 0.0f,base);
 
 	base.x+=MAX_TREE_HEIGHT_3;
 	base.z+=MAX_TREE_HEIGHT_3;
-	SetArrayQ(0,0,base);
+	SetArrayQ(0.0f, 0.0f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0.0f, 0.5f,base);
 	base.z-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f, 0.0f,base);
 
 	base.z+=MAX_TREE_HEIGHT_3;
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.y+=MAX_TREE_HEIGHT_25;
-	SetArrayQ(0.5f,0,base);
+	SetArrayQ(0.5f, 0.0f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z-=MAX_TREE_HEIGHT_36;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0.25f,base);
+	SetArrayQ(1.0f, 0.5f,base);
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0,base);
+	SetArrayQ(1.0f, 0.0f,base);
 }
 
 inline void DrawTreeVertexMid2(float3 pos, bool enlarge=true) {
@@ -274,37 +225,37 @@ inline void DrawTreeVertexMid2(float3 pos, bool enlarge=true) {
 	float3 base=pos;
 	base.x+=MAX_TREE_HEIGHT_3;
 
-	SetArrayQ(0,0.25f,base);
+	SetArrayQ(0.0f,  0.5f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0,0.5f,base);
+	SetArrayQ(0.0f,  1.0f,base);
 	base.x-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.25f,0.5f,base);
+	SetArrayQ(0.25f, 1.0f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.25f,0.25f,base);
+	SetArrayQ(0.25f, 0.5f,base);
 
 	base.x+=MAX_TREE_HEIGHT_3;
 	base.z+=MAX_TREE_HEIGHT_3;
-	SetArrayQ(0.25f,0.25f,base);
+	SetArrayQ(0.25f, 0.5f,base);
 	base.y+=MAX_TREE_HEIGHT;
-	SetArrayQ(0.25f,0.5f,base);
+	SetArrayQ(0.25f, 1.0f,base);
 	base.z-=MAX_TREE_HEIGHT_6;
-	SetArrayQ(0.5f,0.5f,base);
+	SetArrayQ(0.5f,  1.0f,base);
 	base.y-=MAX_TREE_HEIGHT;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f,  0.5f,base);
 
 	base.z+=MAX_TREE_HEIGHT_3;
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.y+=MAX_TREE_HEIGHT_3;
-	SetArrayQ(0.5f,0.25f,base);
+	SetArrayQ(0.5f, 0.5f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z-=MAX_TREE_HEIGHT_36;
-	SetArrayQ(0.5f,0.5f,base);
+	SetArrayQ(0.5f, 1.0f,base);
 	base.x-=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0.5f,base);
+	SetArrayQ(1.0f, 1.0f,base);
 	base.x+=MAX_TREE_HEIGHT_36;
 	base.z+=MAX_TREE_HEIGHT_36;
-	SetArrayQ(1,0.25f,base);
+	SetArrayQ(1.0f, 0.5f,base);
 }
 
 void CBasicTreeSquareDrawer::DrawQuad(int x,int y)
@@ -452,15 +403,6 @@ void CBasicTreeDrawer::Update()
 {
 	GML_STDMUTEX_LOCK(tree); // Update
 
-}
-
-void CBasicTreeDrawer::CreateTreeTex(GLuint& texnum, unsigned char *data, int xsize, int ysize)
-{
-	glGenTextures(1, &texnum);
-	glBindTexture(GL_TEXTURE_2D, texnum);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
 void CBasicTreeDrawer::ResetPos(const float3& pos)

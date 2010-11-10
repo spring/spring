@@ -43,33 +43,32 @@ void MainFunc(int argc, char** argv, int* ret) {
 	set_threadnum(GML_DRAW_THREAD_NUM);
   #if GML_ENABLE_TLS_CHECK
 	if (gmlThreadNumber != GML_DRAW_THREAD_NUM) {
-		handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
+		ErrorMessageBox("Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
   #endif
 #endif
 
-	try  {
-		try {
-			SpringApp app;
-			*ret = app.Run(argc, argv);
-		} CATCH_SPRING_ERRORS
-	} catch (boost::thread_interrupted const&) {
-		handleerror(NULL, Threading::GetThreadError().what(), "Thread error:", MBF_OK | MBF_EXCL);
-	}
-
-	*ret = -1;
+	try {
+		SpringApp app;
+		*ret = app.Run(argc, argv);
+	} CATCH_SPRING_ERRORS
 }
 
 
 
 int Run(int argc, char* argv[])
 {
-	int ret = 0;
+	int ret = -1;
 
 	boost::thread* mainThread = new boost::thread(boost::bind(&MainFunc, argc, argv, &ret));
 	Threading::SetMainThread(mainThread);
 	mainThread->join();
 	delete mainThread;
+
+	//! check if Spring crashed, if so display an error message
+	Threading::Error* err = Threading::GetThreadError();
+	if (err)
+		ErrorMessageBox(err->message, err->caption, err->flags | MBF_MAIN);
 
 	return ret;
 }

@@ -66,16 +66,31 @@ CVertexArray* CGroundFlash::va = NULL;
 CGroundFlash::CGroundFlash(const float3& p)
 	: CExpGenSpawnable()
 {
+	size = 0.0f;
 	pos = p;
 	alwaysVisible = false;
 }
 
 CGroundFlash::CGroundFlash()
 {
+	size = 0.0f;
 }
 
 CStandardGroundFlash::CStandardGroundFlash()
 {
+	ttl = 0;
+	color[0] = 0;
+	color[1] = 0;
+	color[2] = 0;
+	
+	circleAlphaDec = 0.0f;
+	flashAgeSpeed = 0.0f;
+	flashAge = 0.0f;
+	flashAlpha = 0.0f;
+	circleAlpha = 0.0f;
+	circleGrowth = 0.0f;
+	circleSize = 0.0f;
+	flashSize = 0.0f;
 }
 
 CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& col)
@@ -262,6 +277,12 @@ bool CSeismicGroundFlash::Update()
 
 CSimpleGroundFlash::CSimpleGroundFlash()
 {
+	texture = NULL;
+	colorMap = NULL;
+	agerate = 0.0f;
+	age = 0.0f;
+	ttl = 0;
+	sizeGrowth = 0.0f;
 }
 
 CSimpleGroundFlash::~CSimpleGroundFlash()

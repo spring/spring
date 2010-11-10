@@ -751,7 +751,7 @@ void CGame::ClientReadNet()
 									// no controllers left in team
 									//team.active = false;
 									team->leader = -1;
-								} else if (teamPlayers.size() == 0) {
+								} else if (teamPlayers.empty()) {
 									// no human player left in team
 									team->leader = skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer;
 								} else {
@@ -827,8 +827,9 @@ void CGame::ClientReadNet()
 						} else {
 							// we will end up here for local AIs defined mid-game,
 							// eg. with /aicontrol
+							const std::string aiName = aiData.name + " "; // aiData would be invalid after the next line
 							skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
-							wordCompletion->AddWord(aiData.name + " ", false, false, false);
+							wordCompletion->AddWord(aiName, false, false, false);
 						}
 					} else {
 						SkirmishAIData aiData;
@@ -896,7 +897,15 @@ void CGame::ClientReadNet()
 						logOutput.Print("Skirmish AI \"%s\" (ID:%i), which controlled team %i is now dead", aiInstanceName.c_str(), skirmishAIId, aiTeamId);
 					}
 				} else if (newState == SKIRMAISTATE_ALIVE) {
-					logOutput.Print("Skirmish AI %s (ID:%i) took over control of team %i", aiData->name.c_str(), skirmishAIId, aiTeamId);
+					if (isLocal) {
+						// short-name and version of the AI is unsynced data
+						// -> only available on the AI host
+						logOutput.Print("Skirmish AI \"%s\" (ID:%i, Short-Name:\"%s\", Version:\"%s\") took over control of team %i",
+								aiData->name.c_str(), skirmishAIId, aiData->shortName.c_str(), aiData->version.c_str(), aiTeamId);
+					} else {
+						logOutput.Print("Skirmish AI \"%s\" (ID:%i) took over control of team %i",
+								aiData->name.c_str(), skirmishAIId, aiTeamId);
+					}
 				}
 				break;
 			}

@@ -214,7 +214,6 @@ private:
 	IconInfo* icons;
 	unsigned int iconsSize;
 	int iconsCount;
-	int activeIcons;
 
 	std::map<std::string, unsigned int> textureMap; // filename, glTextureID
 

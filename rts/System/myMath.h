@@ -7,6 +7,13 @@
 #include "Vec2.h"
 #include "float3.h"
 
+#ifdef __GNUC__
+#  define _const __attribute__((const))
+#else
+#  define _const 
+#endif
+
+
 #define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
 
 static const float TWOPI = 2 * PI;
@@ -187,49 +194,34 @@ float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
 
-#ifndef __GNUC__
-float Square(const float x);
-#else
-float Square(const float x) __attribute__((const));
-#endif
-
-inline float Square(const float x) { return x * x; }
-
 float smoothstep(const float edge0, const float edge1, const float value);
 float3 smoothstep(const float edge0, const float edge1, float3 vec);
 
 
+float Square(const float x) _const;
+inline float Square(const float x) { return x * x; }
+
+
+int Round(const float f) _const;
+inline int Round(const float f) { return floor(f + 0.5f); }
+
+
 inline float Clamp(const float& v, const float& min, const float& max)
 {
-	if (v > max) {
-		return max;
-	} else if (v < min) {
-		return min;
-	}
-	return v;
+	return std::min(max, std::max(min, v));
 }
 
 template<class T>
 inline T Clamp(const T& v, const T& min, const T& max)
 {
-	if (v > max) {
-		return max;
-	} else if (v < min) {
-		return min;
-	}
-	return v;
+	return v < min ? min : (v > max ? max : v);
 }
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
-#ifndef __GNUC__
-float ClampRad(float f);
-#else
-float ClampRad(float f) __attribute__((const));
-#endif
-
+float ClampRad(float f) _const;
 inline float ClampRad(float f)
 {
 	f = fmod(f, TWOPI);
@@ -256,15 +248,12 @@ inline void ClampRad(float* f)
  * @param f1 float* first compare value
  * @param f2 float* second compare value
  */
-#ifndef __GNUC__
-bool RadsAreEqual(const float f1, const float f2);
-#else
-bool RadsAreEqual(const float f1, const float f2) __attribute__((const));
-#endif
-
+bool RadsAreEqual(const float f1, const float f2) _const;
 inline bool RadsAreEqual(const float f1, const float f2)
 {
 	return (fmod(f1 - f2, TWOPI) == 0.0f);
 }
+
+#undef _const
 
 #endif // MYMATH_H

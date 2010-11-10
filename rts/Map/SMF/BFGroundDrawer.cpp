@@ -315,7 +315,7 @@ inline void CBFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline
 	int xt0, xt1;
 	std::vector<fline>::const_iterator fli;
 
-	for (fli = left.begin(); fli != left.end(); fli++) {
+	for (fli = left.begin(); fli != left.end(); ++fli) {
 		float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
 		xt1 = (int)(xtf + fli->dir * lod);
@@ -328,7 +328,7 @@ inline void CBFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline
 		if (xt0 > xs)
 			xs = xt0;
 	}
-	for (fli = right.begin(); fli != right.end(); fli++) {
+	for (fli = right.begin(); fli != right.end(); ++fli) {
 		float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
 		xt1 = (int)(xtf + fli->dir * lod);
@@ -363,7 +363,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 	//! only process the necessary big squares in the x direction
 	int bigSquareSizeY = bty * bigSquareSize;
-	for (fli = left.begin(); fli != left.end(); fli++) {
+	for (fli = left.begin(); fli != left.end(); ++fli) {
 		x0 = fli->base + fli->dir * bigSquareSizeY;
 		x1 = x0 + fli->dir * bigSquareSize;
 
@@ -375,7 +375,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 		if (x0 > sx)
 			sx = (int) x0;
 	}
-	for (fli = right.begin(); fli != right.end(); fli++) {
+	for (fli = right.begin(); fli != right.end(); ++fli) {
 		x0 = fli->base + fli->dir * bigSquareSizeY + bigSquareSize;
 		x1 = x0 + fli->dir * bigSquareSize;
 
@@ -1505,7 +1505,6 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 
 void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 {
-	fline temp;
 
 	// get vector for collision between frustum and horizontal plane
 	float3 b = UpVector.cross(side);
@@ -1514,6 +1513,7 @@ void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 		b.z = 0.0001f;
 
 	{
+		fline temp;
 		temp.dir = b.x / b.z;      // set direction to that
 		float3 c = b.cross(side);  // get vector from camera to collision line
 		float3 colpoint;           // a point on the collision line
@@ -1546,7 +1546,6 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 	AddFrustumRestraint(cam2->leftside);
 
 	// add restraint for maximum view distance
-	fline temp;
 	float3 side = cam2->forward;
 	float3 camHorizontal = cam2->forward;
 	camHorizontal.y = 0.0f;
@@ -1556,6 +1555,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 	float3 b = UpVector.cross(camHorizontal);
 
 	if (fabs(b.z) > 0.0001f) {
+		fline temp;
 		temp.dir = b.x / b.z;               // set direction to that
 		float3 c = b.cross(camHorizontal);  // get vector from camera to collision line
 		float3 colpoint;                    // a point on the collision line

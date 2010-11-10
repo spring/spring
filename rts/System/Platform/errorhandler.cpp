@@ -28,52 +28,16 @@
 #endif // ifndef DEDICATED
 
 
-#ifndef DEDICATED
-	#include "Game/GameController.h"
 
-class CShowErrorInMainThread : public CGameController
-{
-public:
-	CShowErrorInMainThread(const std::string& msg, const std::string& caption, unsigned int flags, CGameController* origGameController) :
-		msg(msg),
-		caption(caption),
-		flags(flags),
-		origGameController(origGameController)
-	{
-	}
-
-
-	bool Update() {
-		ErrorMessageBox(msg, caption, flags);
-		return true;
-	}
-
-private:
-	std::string msg;
-	std::string caption;
-	unsigned int flags;
-	CGameController* origGameController;
-};
-
-#endif // ifndef DEDICATED
-
-
-void ErrorMessageBox(const std::string msg, const std::string caption, unsigned int flags)
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
 #ifndef DEDICATED
-	if (!Threading::IsMainThread()) {
-		CGameController* origGameController = activeController;
-		activeController = new CShowErrorInMainThread(msg, caption, flags, origGameController);
-
-		//! terminate thread
-		throw boost::thread_interrupted();
-	}
-	else {
-		std::string fullmsg = caption + " " + msg;
-		LogObject() << fullmsg; // to give a clue, in case other error handling fails
-		Threading::SetThreadError(fullmsg);
-		Threading::GetMainThread()->interrupt();
-
+	if (!(flags & MBF_MAIN)) {
+		Threading::Error err(caption, msg, flags);
+		Threading::SetThreadError(err);
+		if (!Threading::IsMainThread()) {
+			Threading::GetMainThread()->interrupt();
+		}
 		throw boost::thread_interrupted();
 	}
 #endif
@@ -86,7 +50,6 @@ void ErrorMessageBox(const std::string msg, const std::string caption, unsigned 
 	globalQuit = true;
 
 	SpringApp::Shutdown();
-	SafeDelete(activeController);
 #endif
 
 	logOutput.SetSubscribersEnabled(false);

@@ -45,7 +45,7 @@ namespace terrain
 	public:
 		TQuad();
 		~TQuad();
-		bool isLeaf () { return childs[0]==0; }
+		bool isLeaf () const { return childs[0]==0; }
 		// sqStart=start in square coordinates
 		// hmStart=start pixel on hm
 		void Build (Heightmap *hm, int2 sqStart, int2 hmStart, int2 quadPos, int w, int depth);
@@ -177,7 +177,7 @@ namespace terrain
 
 		float& at(int x,int y) { return data[y*w+x]; }
 		uchar* GetNormal(int x,int y) { return &normalData[3*(y*w+x)]; }
-		float HeightAt(int x,int y) { return data[y*w+x]; }// * scale + offset; }
+		float HeightAt(int x,int y) const { return data[y*w+x]; }// * scale + offset; }
 
 		int w,h;
 		float *data;
@@ -275,7 +275,7 @@ namespace terrain
 		typedef unsigned short index_t;
 		IndexTable ();
 
-		GLenum IndexType() { return GL_UNSIGNED_SHORT; }
+		GLenum IndexType() const { return GL_UNSIGNED_SHORT; }
 
 		int size[NUM_TABLES];
 		IndexBuffer buffers[NUM_TABLES];

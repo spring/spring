@@ -106,7 +106,7 @@ using namespace std;
 #define FUPDATE_UNITS 900		// 60 seconds, unit is checked for idleness - should never happen, but it does.
 #define FUPDATE_POWER 450		// 15 seconds, all units are checked for on/off or cloak/uncloak tasks
 #define FUPDATE_BUILDLIST 1800	// 600 seconds, redetermines the available build options - half unnecessary since this is also called by events, hence the longer delay
-
+#define EVENT_LIST_SIZE 10000
 class cRAI : public IGlobalAI
 {
 public:
@@ -169,7 +169,7 @@ private:
 	void RemoveLogFile(string relFileName) const;
 	void UpdateEventRemove(UpdateEvent* e);
 	void UpdateEventReorderFirst();
-	UpdateEvent* eventList[10000];
+	UpdateEvent* eventList[EVENT_LIST_SIZE];
 	int eventSize;
 
 	int DebugEnemyEnterLOS;

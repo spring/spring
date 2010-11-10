@@ -280,9 +280,9 @@ namespace nv_dds
                 return m_images[face];
             }
 
-            inline unsigned int get_components() { return m_components; }
-            inline unsigned int get_format() { return m_format; }
-            inline TextureType get_type() { return m_type; }
+            inline unsigned int get_components() const { return m_components; }
+            inline unsigned int get_format() const { return m_format; }
+            inline TextureType get_type() const { return m_type; }
 
             inline bool is_compressed()
             {
@@ -294,9 +294,9 @@ namespace nv_dds
                     return false;
             }
 
-            inline bool is_cubemap() { return (m_type == TextureCubemap); }
-            inline bool is_volume() { return (m_type == Texture3D); }
-            inline bool is_valid() { return m_valid; }
+            inline bool is_cubemap() const { return (m_type == TextureCubemap); }
+            inline bool is_volume() const { return (m_type == Texture3D); }
+            inline bool is_valid() const { return m_valid; }
 
             inline bool is_dword_aligned()
             {
@@ -315,7 +315,7 @@ namespace nv_dds
             inline void swap_endian(void *val);
 
             // calculates 4-byte aligned width of image
-            inline unsigned int get_dword_aligned_linesize(unsigned int width, unsigned int bpp)
+            inline unsigned int get_dword_aligned_linesize(unsigned int width, unsigned int bpp) const
             {
                 return ((width * bpp + 31) & -32) >> 3;
             }

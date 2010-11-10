@@ -1601,7 +1601,7 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 	// push the table
 	lua_newtable(L);
 	map<int, vector<CUnit*> >::const_iterator mit;
-	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); mit++) {
+	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
 		const int unitDefID = mit->first;
 		if (unitDefID < 0) {
 			HSTR_PUSH(L, "unknown");
@@ -3512,7 +3512,7 @@ static int PackCommandQueue(lua_State* L, const CCommandQueue& q, int count)
 
 	int i = 0;
 	CCommandQueue::const_iterator it;
-	for (it = q.begin(); it != q.end(); it++) {
+	for (it = q.begin(); it != q.end(); ++it) {
 		if (i >= count) {
 			break;
 		}
@@ -3752,7 +3752,7 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 	int currentType = -1;
 	int currentCount = 0;
 	CCommandQueue::const_iterator it;
-	for (it = commandQue.begin(); it != commandQue.end(); it++) {
+	for (it = commandQue.begin(); it != commandQue.end(); ++it) {
 		if (it->id < 0) { // a build command
 			const int unitDefID = -(it->id);
 
