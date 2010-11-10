@@ -184,14 +184,14 @@ void SS3OPiece::DrawList() const
 			glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
-			#if (GL_PRIMITIVE_RESTART_NV)
+			#if (defined(GL_PRIMITIVE_RESTART_NV) && !defined(USE_GML))
 			glPrimitiveRestartIndexNV(-1U);
 			glEnableClientState(GL_PRIMITIVE_RESTART_NV);
 			#endif
 
 			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 
-			#if (GL_PRIMITIVE_RESTART_NV)
+			#if (defined(GL_PRIMITIVE_RESTART_NV) && !defined(USE_GML))
 			glDisableClientState(GL_PRIMITIVE_RESTART_NV);
 			#endif
 		} break;
