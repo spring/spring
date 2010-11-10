@@ -95,11 +95,17 @@ void CLightningCannon::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 	dir.Normalize();
 
-	const CUnit* cu = 0;
-	const CFeature* cf = 0;
-	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags, &cf);
-	CUnit* u = (cu == NULL) ? NULL : uh->units[cu->id];
-	CFeature* f = cf ? featureHandler->GetFeature(cf->id) : 0;
+	CUnit* u = NULL;
+	CFeature* f = NULL;
+	float r = 0.0f;
+
+	{
+		const CUnit* cu = NULL;
+		const CFeature* cf = NULL;
+		r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags, &cf);
+		u = const_cast<CUnit*>(cu);
+		f = const_cast<CFeature*>(cf);
+	}
 
 
 	float3 newDir;
@@ -115,7 +121,7 @@ void CLightningCannon::FireImpl()
 
 	if (u) {
 		if (u->unitDef->usePieceCollisionVolumes) {
-			u->SetLastAttackedPiece(u->localmodel->pieces[0], gs->frameNum);
+			u->SetLastAttackedPiece(u->localmodel->GetRoot(), gs->frameNum);
 		}
 	}
 

@@ -7,8 +7,8 @@
 #ifndef BITMAP_NO_OPENGL
   #include "nv_dds.h"
 #endif // !BITMAP_NO_OPENGL
-#include "float3.h"
-#include "Color.h"
+#include "System/float3.h"
+#include "System/Color.h"
 
 
 struct SDL_Surface;

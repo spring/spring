@@ -1,10 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include <algorithm>
+#include <cassert>
 #include <cctype>
-#include <fstream>
-#include <locale>
 #include <stdexcept>
 #include "mmgr.h"
 
@@ -85,12 +83,12 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	int vertexOffset = fp->vertices;
 
 	for (int a = 0; a < fp->numVertices; ++a) {
-		((Vertex*) &buf[vertexOffset])->swap();
+		Vertex* v = reinterpret_cast<Vertex*>(&buf[vertexOffset]);
+			v->swap();
+		SS3OVertex* sv = reinterpret_cast<SS3OVertex*>(&buf[vertexOffset]);
+			sv->normal.ANormalize();
 
-		SS3OVertex* v = (SS3OVertex*) &buf[vertexOffset];
-			v->normal.ANormalize();
-		piece->vertices.push_back(*v);
-
+		piece->vertices.push_back(*sv);
 		vertexOffset += sizeof(Vertex);
 	}
 
@@ -99,20 +97,12 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	int vertexTableOffset = fp->vertexTable;
 
 	for (int a = 0; a < fp->vertexTableSize; ++a) {
-		int vertexDrawIdx = swabdword(*(int*) &buf[vertexTableOffset]);
+		const int vertexDrawIdx = swabdword(*(int*) &buf[vertexTableOffset]);
 
 		piece->vertexDrawOrder.push_back(vertexDrawIdx);
 		vertexTableOffset += sizeof(int);
-
-		// -1 == 0xFFFFFFFF (U)
-		if (vertexDrawIdx == -1 && a != fp->vertexTableSize - 1) {
-			// for triangle strips
-			piece->vertexDrawOrder.push_back(vertexDrawIdx);
-
-			vertexDrawIdx = swabdword(*(int*) &buf[vertexTableOffset]);
-			piece->vertexDrawOrder.push_back(vertexDrawIdx);
-		}
 	}
+
 
 	piece->isEmpty = piece->vertexDrawOrder.empty();
 	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
@@ -191,15 +181,24 @@ void SS3OPiece::DrawList() const
 	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
 
 	switch (primitiveType) {
-		case S3O_PRIMTYPE_TRIANGLES:
+		case S3O_PRIMTYPE_TRIANGLES: {
 			glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
-			break;
-		case S3O_PRIMTYPE_TRIANGLE_STRIP:
+		} break;
+		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
+			#if (GL_PRIMITIVE_RESTART_NV)
+			glPrimitiveRestartIndexNV(-1U);
+			glEnableClientState(GL_PRIMITIVE_RESTART_NV);
+			#endif
+
 			glDrawElements(GL_TRIANGLE_STRIP, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
-			break;
-		case S3O_PRIMTYPE_QUADS:
+
+			#if (GL_PRIMITIVE_RESTART_NV)
+			glDisableClientState(GL_PRIMITIVE_RESTART_NV);
+			#endif
+		} break;
+		case S3O_PRIMTYPE_QUADS: {
 			glDrawElements(GL_QUADS, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
-			break;
+		} break;
 	}
 
 	if (!sTangents.empty()) {
@@ -344,8 +343,7 @@ void SS3OPiece::SetVertexTangents()
 void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const
 {
 	switch (primitiveType) {
-		case 0: {
-			// GL_TRIANGLES
+		case S3O_PRIMTYPE_TRIANGLES: {
 			for (size_t i = 0; i < vertexDrawOrder.size(); i += 3) {
 				if (gu->usRandFloat() > pieceChance)
 					continue;
@@ -360,11 +358,11 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
 			}
 		} break;
-		case 1: {
-			// GL_TRIANGLE_STRIP
-			for (size_t i = 2; i < vertexDrawOrder.size(); i++){
-				if (gu->usRandFloat() > pieceChance)
-					continue;
+		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
+			// vertexDrawOrder can contain end-of-strip markers (-1U)
+			for (size_t i = 2; i < vertexDrawOrder.size(); ) {
+				if (gu->usRandFloat() > pieceChance) { i += 1; continue; }
+				if (vertexDrawOrder[i] == -1) { i += 3; continue; }
 
 				SS3OVertex* verts = new SS3OVertex[4];
 
@@ -374,10 +372,10 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3& 
 				verts[3] = vertices[vertexDrawOrder[i - 0]];
 
 				ph->AddFlyingPiece(texType, team, pos, speed + gu->usRandVector() * 2.0f, verts);
+				i += 1;
 			}
 		} break;
-		case 2: {
-			// GL_QUADS
+		case S3O_PRIMTYPE_QUADS: {
 			for (size_t i = 0; i < vertexDrawOrder.size(); i += 4) {
 				if (gu->usRandFloat() > pieceChance)
 					continue;

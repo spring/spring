@@ -250,7 +250,7 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 	CMatrix44f mat = u->GetTransformMatrix(true);
 	mat.Translate(u->relMidPos * float3(-1.0f, 0.0f, 1.0f));
 
-	IntersectPieceTreeHelper(u->localmodel->pieces[0], mat, p0, p1, &hits);
+	IntersectPieceTreeHelper(u->localmodel->GetRoot(), mat, p0, p1, &hits);
 
 	float dstNearSq = 1e30f;
 

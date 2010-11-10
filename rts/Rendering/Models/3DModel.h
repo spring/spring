@@ -88,7 +88,7 @@ struct LocalModelPiece
 
 	float3 pos;
 	float3 rot; //! in radian
-	bool updated; //FIXME unused?
+
 	bool visible;
 
 	//! MODELTYPE_*
@@ -112,23 +112,24 @@ struct LocalModelPiece
 	void ApplyTransform() const;
 	void GetPiecePosIter(CMatrix44f* mat) const;
 	float3 GetPos() const;
-	CMatrix44f GetMatrix() const;
 	float3 GetDirection() const;
 	bool GetEmitDirPos(float3& pos, float3& dir) const;
+	CMatrix44f GetMatrix() const;
 };
 
 struct LocalModel
 {
-	LocalModel() : type(-1), lodCount(0) {};
+	LocalModel() : type(-1), lodCount(0) {}
 	~LocalModel();
 
 	int type;  //! MODELTYPE_*
-
-	std::vector<LocalModelPiece*> pieces;
 	unsigned int lodCount;
 
-	inline void Draw() const { pieces[0]->Draw(); };
-	inline void DrawLOD(unsigned int lod) const { if (lod <= lodCount) pieces[0]->DrawLOD(lod);};
+	std::vector<LocalModelPiece*> pieces;
+	LocalModelPiece* GetRoot() { return pieces[0]; }
+
+	inline void Draw() const { pieces[0]->Draw(); }
+	inline void DrawLOD(unsigned int lod) const { if (lod <= lodCount) pieces[0]->DrawLOD(lod); }
 	void SetLODCount(unsigned int count);
 
 	//! raw forms, the piecenum must be valid
@@ -136,7 +137,7 @@ struct LocalModel
 	float3 GetRawPiecePos(int piecenum) const;
 	CMatrix44f GetRawPieceMatrix(int piecenum) const;
 	float3 GetRawPieceDirection(int piecenum) const;
-	void GetRawEmitDirPos(int piecenum, float3 &pos, float3 &dir) const;
+	void GetRawEmitDirPos(int piecenum, float3& pos, float3& dir) const;
 };
 
 
