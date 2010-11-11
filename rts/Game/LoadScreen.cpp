@@ -107,11 +107,11 @@ void CLoadScreen::Init()
 
 CLoadScreen::~CLoadScreen()
 {
-	delete gameLoadThread;
+	delete gameLoadThread; gameLoadThread = NULL;
 
 	net->loading = false;
 	netHeartbeatThread->join();
-	delete netHeartbeatThread;
+	delete netHeartbeatThread; netHeartbeatThread = NULL;
 
 	UnloadStartPicture();
 

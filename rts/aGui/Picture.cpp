@@ -4,6 +4,7 @@
 #include "Picture.h"
 
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/GL/myGL.h"
 #include "LogOutput.h"
 
 namespace agui
