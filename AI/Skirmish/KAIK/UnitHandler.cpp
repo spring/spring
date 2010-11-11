@@ -102,6 +102,10 @@ void CUnitHandler::IdleUnitUpdate(int frame) {
 
 						ClearOrder(*i, false);
 
+						// due to the Legacy AI Wrapper inner workings,
+						// the command-queue we fetched above is now invalid,
+						// because it got changed in ClearOrder()
+						myCommands = ai->cb->GetCurrentUnitCommands(builderID);
 						if (!myCommands->empty()) {
 							DecodeOrder(*i, true);
 						} else {
