@@ -104,15 +104,17 @@ void CBuildUp::GetEconState(EconState* es) const {
 	es->mOverflow = (es->mStorage / (es->mIncome + 0.01)) < (STORAGETIME * 2);
 
 	es->eLevelMed = (es->eLevel50 && es->makersOn);
-	es->mLevelLow =
-		es->mLevel50 ||
-		(es->mStall && es->eLevel80) ||
-		(!es->factFeasM && factoryTimer <= 0);
 
 	es->factFeasM =
 		(es->factoryDef != NULL)?
 		ai->math->MFeasibleConstruction(es->builderDef, es->factoryDef):
 		true;
+
+	es->mLevelLow =
+		es->mLevel50 ||
+		(es->mStall && es->eLevel80) ||
+		(!es->factFeasM && factoryTimer <= 0);
+
 	es->factFeasE =
 		(es->factoryDef != NULL)?
 		ai->math->EFeasibleConstruction(es->builderDef, es->factoryDef):
