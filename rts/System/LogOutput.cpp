@@ -67,7 +67,7 @@ static vector<PreInitLogEntry>& preInitLog()
 	return preInitLog;
 }
 
-static std::ofstream* filelog = 0;
+static std::ofstream* filelog = NULL;
 static bool initialized = false;
 
 static const int BUFFER_SIZE = 2048;

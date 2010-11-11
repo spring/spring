@@ -213,7 +213,7 @@ COffscreenGLThread::COffscreenGLThread(boost::function<void()> f) :
 COffscreenGLThread::~COffscreenGLThread()
 {
 	if (thread) thread->join();
-	delete thread;
+	delete thread; thread = NULL;
 }
 
 
