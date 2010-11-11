@@ -5,7 +5,7 @@
 
 #include <string>
 #ifndef BITMAP_NO_OPENGL
-  #include "nv_dds.h"
+	#include "nv_dds.h"
 #endif // !BITMAP_NO_OPENGL
 #include "System/float3.h"
 #include "System/Color.h"
@@ -32,6 +32,9 @@ public:
 #ifndef BITMAP_NO_OPENGL
 	const GLuint CreateTexture(bool mipmaps = false) const;
 	const GLuint CreateDDSTexture(GLuint texID = 0) const;
+#else  // !BITMAP_NO_OPENGL
+	const unsigned int CreateTexture(bool mipmaps = false) const;
+	const unsigned int CreateDDSTexture(unsigned int texID = 0) const;
 #endif // !BITMAP_NO_OPENGL
 
 	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
