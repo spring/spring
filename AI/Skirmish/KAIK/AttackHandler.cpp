@@ -435,7 +435,7 @@ void CAttackHandler::UpdateKMeans(void) {
 		}
 
 		// hack to make it at least 1 unit, should only happen when you have no base
-		if (friendlyPositions.size() < 1) {
+		if (friendlyPositions.empty()) {
 			// it has to be a proper position, unless there are no proper positions
 			// in the latter case, use the position of the unit with ID 0 (?)
 			const CUNIT*   unit    = ai->GetUnit(ai->unitIDs[0]);
