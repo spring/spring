@@ -5,6 +5,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
+#include "Sim/Misc/GlobalSynced.h"
 
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius):
 goal(goalCenter),
@@ -84,11 +85,13 @@ CRangedGoalWithCircularConstraint::CRangedGoalWithCircularConstraint(
 	searchRadiusSq += extraSize;
 }
 
-// tests if a square is inside is the circular constrainted area
+// tests if a square is inside is the circular constrained area
+// defined by the start and goal positions (disabled: this only
+// saves CPU under certain conditions and destroys admissability)
 bool CRangedGoalWithCircularConstraint::WithinConstraints(unsigned int xSquare, unsigned int zSquare) const
 {
 	const int dx = halfWayX - xSquare;
 	const int dz = halfWayZ - zSquare;
 
-	return ((dx * dx + dz * dz) <= searchRadiusSq);
+	return ((gs->frameNum > 0) || ((dx * dx + dz * dz) <= searchRadiusSq));
 }

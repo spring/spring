@@ -12,6 +12,7 @@
 #include "ConfigHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/GL/myGL.h"
 #include "GlobalUnsynced.h"
 #include "LogOutput.h"
 

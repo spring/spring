@@ -20,7 +20,7 @@ CGround::CGround()
 
 CGround::~CGround()
 {
-	delete readmap;
+	delete readmap; readmap = NULL;
 }
 
 void CGround::CheckColSquare(CProjectile* p, int x, int y)
