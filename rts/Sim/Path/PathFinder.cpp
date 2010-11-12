@@ -12,7 +12,6 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "System/LogOutput.h"
 
 #define PATHDEBUG 0
@@ -795,15 +794,15 @@ CPathFinderDef(goal, goalRadius)
 }
 
 
-// tests if a square is inside is the circular constrained area
-// defined by the start and goal positions (disabled: this only
-// saves CPU under certain conditions and destroys admissability)
+/**
+ * Tests if a square is inside is the circular constrainted area.
+ */
 bool CRangedGoalWithCircularConstraint::WithinConstraints(int xSquare, int zSquare) const
 {
 	int dx = halfWayX - xSquare;
 	int dz = halfWayZ - zSquare;
 
-	return ((gs->frameNum > 0) || ((dx * dx + dz * dz) <= searchRadiusSq));
+	return ((dx * dx + dz * dz) <= searchRadiusSq);
 }
 
 void CPathFinder::myPQ::DeleteAll()
