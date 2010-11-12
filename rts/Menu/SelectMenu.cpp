@@ -249,6 +249,7 @@ SelectMenu::~SelectMenu()
 	ShowConnectWindow(false);
 	CleanWindow();
 	delete updWindow;
+	delete mySettings;
 }
 
 bool SelectMenu::Draw()
