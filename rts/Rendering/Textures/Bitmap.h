@@ -9,7 +9,7 @@
 //#include <GL/gl.h> // for GLuint, GLenum
 
 #ifndef BITMAP_NO_OPENGL
-#include "nv_dds.h"
+	#include "nv_dds.h"
 #endif // !BITMAP_NO_OPENGL
 #include "float3.h"
 
@@ -29,8 +29,11 @@ public:
 	bool Save(std::string const& filename, bool opaque = true);
 
 #ifndef BITMAP_NO_OPENGL
-	const GLuint CreateTexture(bool mipmaps=false);
+	const GLuint CreateTexture(bool mipmaps = false);
 	const GLuint CreateDDSTexture(GLuint texID = 0);
+#else  // !BITMAP_NO_OPENGL
+	const unsigned int CreateTexture(bool mipmaps = false) const;
+	const unsigned int CreateDDSTexture(unsigned int texID = 0) const;
 #endif // !BITMAP_NO_OPENGL
 
 	void CreateAlpha(unsigned char red,unsigned char green,unsigned char blue);

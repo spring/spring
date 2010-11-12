@@ -14,6 +14,7 @@
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"
 #include "Exceptions.h"
+#include "Rendering/GL/myGL.h"
 
 using std::string;
 

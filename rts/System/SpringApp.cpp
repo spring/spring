@@ -317,7 +317,8 @@ static bool MultisampleTest(void)
  */
 static bool MultisampleVerify(void)
 {
-	GLint buffers, samples;
+	GLint buffers = 0;
+	GLint samples = 0;
 	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
 	glGetIntegerv(GL_SAMPLES_ARB, &samples);
 	if (buffers && samples) {

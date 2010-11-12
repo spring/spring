@@ -421,6 +421,15 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 	glPopAttrib();
 	return texID;
 }
+#else  // !BITMAP_NO_OPENGL
+
+const unsigned int CBitmap::CreateTexture(bool mipmaps) const {
+	return 0;
+}
+
+const unsigned int CBitmap::CreateDDSTexture(unsigned int texID) const {
+	return 0;
+}
 #endif // !BITMAP_NO_OPENGL
 
 
