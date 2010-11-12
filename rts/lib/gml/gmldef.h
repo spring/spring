@@ -295,6 +295,7 @@
 #undef glUniform3fv
 #undef glUniform4fv
 #undef glMapBufferRange
+#undef glPrimitiveRestartIndexNV
 
 // #####################################################################
 
@@ -586,3 +587,4 @@
 #define glUniform3fv gmlUniform3fv
 #define glUniform4fv gmlUniform4fv
 #define glMapBufferRange gmlMapBufferRange
+#define glPrimitiveRestartIndexNV gmlPrimitiveRestartIndexNV
