@@ -16,6 +16,8 @@
 #  DEVIL_LIBRARIES    - List of libraries when using IL
 #  DEVIL_FOUND        - True if IL is found.
 
+INCLUDE(FindPackageHandleStandardArgs)
+
 IF    (DEVIL_INCLUDE_DIR AND DEVIL_IL_LIBRARY)
 	# Already in cache, be silent
 	SET(DevIL_FIND_QUIETLY TRUE)
