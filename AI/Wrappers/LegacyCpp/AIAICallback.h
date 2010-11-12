@@ -29,6 +29,7 @@ class CAIAICallback : public IAICallback {
 public:
 	CAIAICallback();
 	CAIAICallback(int teamId, const SSkirmishAICallback* sAICallback);
+	~CAIAICallback();
 
 	void SendTextMsg(const char* text, int zone);
 	void SetLastMsgPos(float3 pos);
@@ -265,6 +266,15 @@ private:
 	CCommandQueue** unitCurrentCommandQueues;
 	FeatureDef** featureDefs;
 	int* featureDefFrames;
+
+	static size_t numClbInstances;
+	static float* heightMap;
+	static float* cornersHeightMap;
+	static float* slopeMap;
+	static unsigned short* losMap;
+	static unsigned short* radarMap;
+	static unsigned short* jammerMap;
+	static unsigned char* metalMap;
 };
 
 #endif // _AIAICALLBACK_H

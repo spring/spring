@@ -255,7 +255,12 @@ UnitDef::UnitDef()
 
 UnitDef::~UnitDef()
 {
-	delete movedata;
+	delete movedata; movedata = NULL;
+
+	delete[] yardmaps[0]; yardmaps[0] = NULL;
+	delete[] yardmaps[1]; yardmaps[1] = NULL;
+	delete[] yardmaps[2]; yardmaps[2] = NULL;
+	delete[] yardmaps[3]; yardmaps[3] = NULL;
 }
 
 
