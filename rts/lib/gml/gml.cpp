@@ -993,6 +993,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER3V(Uniform3fv)
 		GML_MAKEHANDLER3V(Uniform4fv)
 		GML_MAKEHANDLER4R(MapBufferRange)
+		GML_MAKEHANDLER1(PrimitiveRestartIndexNV)
 	}
 }
 
