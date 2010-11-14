@@ -54,7 +54,9 @@ private:
 	int neededLosUpdate;
 	std::deque<int> relosUnits;
 
-	float craterTable[10000];
+	static const unsigned int CRATER_TABLE_SIZE = 200;
+
+	float craterTable[CRATER_TABLE_SIZE + 1];
 	float invHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];
 };
 
