@@ -190,6 +190,8 @@ void CBeamLaser::FireImpl(void)
 
 void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 {
+	// fix negative damage when hitting big spheres
+	float actualRange = range;
 	float rangeMod = 1.0f;
 
 	if (dynamic_cast<CBuilding*>(owner) == NULL) {
@@ -228,6 +230,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	}
 
 
+
 	// unit at the end of the beam
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
@@ -235,7 +238,6 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		tryAgain = false;
-		hitUnit = NULL;
 
 		const CUnit* hitUnitPtr = hitUnit;
 		const CFeature* hitFeaturePtr = hitFeature;
@@ -250,6 +252,9 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			&hitFeaturePtr
 		);
 
+		hitUnit = const_cast<CUnit*>(hitUnitPtr);
+		hitFeature = const_cast<CFeature*>(hitFeaturePtr);
+
 		if (hitUnit != NULL && hitUnit->allyteam == owner->allyteam && sweepFire) {
 			// never damage friendlies with sweepfire
 			lastFireFrame = 0;
@@ -261,11 +266,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 		if (shieldLength < length) {
 			length = shieldLength;
-
-			if (hitShield->BeamIntercepted(this, damageMul)) {
-				// repulsed
-				tryAgain = true;
-			}
+			tryAgain = hitShield->BeamIntercepted(this, damageMul); // repulsed
 		}
 
 		hitPos = curPos + dir * length;
@@ -277,27 +278,13 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		if (weaponDef->largeBeamLaser) {
 			new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner, weaponDef);
 		} else {
-			new CBeamLaserProjectile(
-				curPos, hitPos,
-				startAlpha, endAlpha,
-				color, weaponDef->visuals.color2,
-				owner,
-				weaponDef->thickness,
-				weaponDef->corethickness,
-				weaponDef->laserflaresize,
-				weaponDef,
-				weaponDef->visuals.beamttl,
-				weaponDef->visuals.beamdecay
-			);
+			new CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha, color, owner, weaponDef);
 		}
 
 		curPos = hitPos;
 		curLength += length;
 		dir = newDir;
 	}
-
-	// fix negative damage when hitting big spheres
-	float actualRange = range;
 
 	if (hitUnit) {
 		if (hitUnit->unitDef->usePieceCollisionVolumes) {
