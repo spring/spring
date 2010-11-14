@@ -344,10 +344,10 @@ void CMapInfo::ReadTerrainTypes()
 		terrType.shipSpeed  = moveTable.GetFloat("ship",  1.0f);
 
 		// clamps
-		terrType.hardness   = max(0.0f, terrType.hardness);
-		terrType.tankSpeed  = max(0.0f, terrType.tankSpeed);
-		terrType.kbotSpeed  = max(0.0f, terrType.kbotSpeed);
-		terrType.hoverSpeed = max(0.0f, terrType.hoverSpeed);
-		terrType.shipSpeed  = max(0.0f, terrType.shipSpeed);
+		terrType.hardness   = max(0.001f, terrType.hardness);
+		terrType.tankSpeed  = max(0.000f, terrType.tankSpeed);
+		terrType.kbotSpeed  = max(0.000f, terrType.kbotSpeed);
+		terrType.hoverSpeed = max(0.000f, terrType.hoverSpeed);
+		terrType.shipSpeed  = max(0.000f, terrType.shipSpeed);
 	}
 }
