@@ -131,7 +131,7 @@ endif (WIN32)
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options system signals REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
-FIND_PACKAGE(Devil REQUIRED)
+FIND_PACKAGE(DevIL REQUIRED)
 
 ### mingwlibs
 if     (MINGW)
