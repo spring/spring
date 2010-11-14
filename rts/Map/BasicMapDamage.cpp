@@ -33,16 +33,15 @@ CBasicMapDamage::CBasicMapDamage(void)
 	relosSize = 0;
 	neededLosUpdate = 0;
 
-	for (int a = 0; a <= 200; ++a) {
-		float r = a / 200.0f;
-		float d = cos((r - 0.1f) * (PI + 0.3f)) * (1 - r) * (0.5f + 0.5f * cos(std::max(0.0f, r * 3 - 2) * PI));
+	for (int a = 0; a <= CRATER_TABLE_SIZE; ++a) {
+		const float r = a / float(CRATER_TABLE_SIZE);
+		const float d = cos((r - 0.1f) * (PI + 0.3f)) * (1 - r) * (0.5f + 0.5f * cos(std::max(0.0f, r * 3 - 2) * PI));
 		craterTable[a] = d;
 	}
-	for (int a = 201; a < 10000; ++a) {
-		craterTable[a] = 0;
-	}
-	for (int a = 0; a < CMapInfo::NUM_TERRAIN_TYPES; ++a)
+
+	for (int a = 0; a < CMapInfo::NUM_TERRAIN_TYPES; ++a) {
 		invHardness[a] = 1.0f / mapInfo->terrainTypes[a].hardness;
+	}
 
 	mapHardness = mapInfo->map.hardness;
 
@@ -51,7 +50,7 @@ CBasicMapDamage::CBasicMapDamage(void)
 
 CBasicMapDamage::~CBasicMapDamage(void)
 {
-	while(!explosions.empty()){
+	while (!explosions.empty()) {
 		delete explosions.front();
 		explosions.pop_front();
 	}
@@ -80,12 +79,13 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	e->squares.reserve((e->y2 - e->y1 + 1) * (e->x2 - e->x1 + 1));
 
 	const float* heightmap = readmap->GetHeightmap();
-	float baseStrength = -pow(strength, 0.6f) * 3 / mapHardness;
-	float invRadius = 1.0f / radius;
+	const float baseStrength = -pow(strength, 0.6f) * 3 / mapHardness;
+	const float invRadius = 1.0f / radius;
 
 	for (int y = e->y1; y <= e->y2; ++y) {
 		for (int x = e->x1; x <= e->x2; ++x) {
 			CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x);
+
 			// don't change squares with buildings on them here
 			if (so && so->blockHeightChanges) {
 				e->squares.push_back(0);
@@ -93,60 +93,74 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			}
 
 			// calculate the distance and normalize it
-			float dist = pos.distance2D(float3(x * SQUARE_SIZE, 0, y * SQUARE_SIZE));
-			float relDist = dist * invRadius;
+			const float expDist = pos.distance2D(float3(x * SQUARE_SIZE, 0, y * SQUARE_SIZE));
+			const float relDist = std::min(1.0f, expDist * invRadius);
+			const unsigned int tableIdx = relDist * CRATER_TABLE_SIZE;
+
 			float dif =
-				baseStrength * craterTable[int(relDist * 200)] *
+				baseStrength * craterTable[tableIdx] *
 				invHardness[readmap->typemap[(y / 2) * gs->hmapx + x / 2]];
 
-			float prevDif = heightmap[y * (gs->mapx + 1) + x] - readmap->orgheightmap[y * (gs->mapx + 1) + x];
+			// FIXME: compensate for flattened ground under dead buildings
+			const float prevDif =
+				heightmap[y * (gs->mapx + 1) + x] -
+				readmap->orgheightmap[y * (gs->mapx + 1) + x];
 
-			if (prevDif * dif > 0)
+			if (prevDif * dif > 0.0f) {
 				dif /= fabs(prevDif) * 0.1f + 1;
+			}
 
 			e->squares.push_back(dif);
 
-			if (dif < -0.3f && strength > 200)
+			if (dif < -0.3f && strength > 200.0f)
 				treeDrawer->RemoveGrass(x, y);
 		}
 	}
 
 	// calculate how much to offset the buildings in the explosion radius with
 	// (while still keeping the ground under them flat)
-	const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
 	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-		if ((*ui)->blockHeightChanges && (*ui)->isMarkedOnBlockingMap) {
-			CUnit* unit = *ui;
-			float totalDif = 0.0f;
+		CUnit* unit = *ui;
 
-			for (int z = unit->mapPos.y; z < unit->mapPos.y + unit->zsize; z++) {
-				for (int x = unit->mapPos.x; x < unit->mapPos.x + unit->xsize; x++) {
-					// calculate the distance and normalize it
-					float dist = pos.distance2D(float3(x * SQUARE_SIZE, 0, z * SQUARE_SIZE));
-					float relDist = dist * invRadius;
-					float dif =
-						baseStrength * craterTable[int(relDist * 200)] *
-						invHardness[readmap->typemap[(z / 2) * gs->hmapx + x / 2]];
-					float prevDif = heightmap[z * (gs->mapx + 1) + x] - readmap->orgheightmap[z * (gs->mapx + 1) + x];
+		if (!unit->blockHeightChanges) { continue; }
+		if (!unit->isMarkedOnBlockingMap) { continue; }
 
-					if (prevDif * dif > 0)
-						dif /= fabs(prevDif) * 0.1f + 1;
+		float totalDif = 0.0f;
 
-					totalDif += dif;
+		for (int z = unit->mapPos.y; z < unit->mapPos.y + unit->zsize; z++) {
+			for (int x = unit->mapPos.x; x < unit->mapPos.x + unit->xsize; x++) {
+				// calculate the distance and normalize it
+				const float expDist = pos.distance2D(float3(x * SQUARE_SIZE, 0, z * SQUARE_SIZE));
+				const float relDist = std::min(1.0f, expDist * invRadius);
+				const unsigned int tableIdx = relDist * CRATER_TABLE_SIZE;
+
+				float dif =
+					baseStrength * craterTable[tableIdx] *
+					invHardness[readmap->typemap[(z / 2) * gs->hmapx + x / 2]];
+				const float prevDif =
+					heightmap[z * (gs->mapx + 1) + x] -
+					readmap->orgheightmap[z * (gs->mapx + 1) + x];
+
+				if (prevDif * dif > 0.0f) {
+					dif /= fabs(prevDif) * 0.1f + 1;
 				}
-			}
 
-			totalDif /= unit->xsize * unit->zsize;
-			if (totalDif != 0) {
-				ExploBuilding eb;
-				eb.id = (*ui)->id;
-				eb.dif = totalDif;
-				eb.tx1 = unit->mapPos.x;
-				eb.tx2 = unit->mapPos.x + unit->xsize;
-				eb.tz1 = unit->mapPos.y;
-				eb.tz2 = unit->mapPos.y + unit->zsize;
-				e->buildings.push_back(eb);
+				totalDif += dif;
 			}
+		}
+
+		totalDif /= (unit->xsize * unit->zsize);
+
+		if (totalDif != 0.0f) {
+			ExploBuilding eb;
+			eb.id = (*ui)->id;
+			eb.dif = totalDif;
+			eb.tx1 = unit->mapPos.x;
+			eb.tx2 = unit->mapPos.x + unit->xsize;
+			eb.tz1 = unit->mapPos.y;
+			eb.tz2 = unit->mapPos.y + unit->zsize;
+			e->buildings.push_back(eb);
 		}
 	}
 
