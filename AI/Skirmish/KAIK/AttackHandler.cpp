@@ -438,10 +438,15 @@ void CAttackHandler::UpdateKMeans(void) {
 		if (friendlyPositions.empty()) {
 			// it has to be a proper position, unless there are no proper positions
 			// in the latter case, use the position of the unit with ID 0 (?)
-			const CUNIT*   unit    = ai->GetUnit(ai->unitIDs[0]);
-			const UnitDef* unitDef = ai->cb->GetUnitDef(ai->unitIDs[0]);
+			// HOIJUI_NOTE - isn't it simply the first unit in the list?
+			const CUNIT*   unit    = NULL;
+			const UnitDef* unitDef = NULL;
+			if (ai->unitIDs[0] != -1) {
+				unit    = ai->GetUnit(ai->unitIDs[0]);
+				unitDef = ai->cb->GetUnitDef(ai->unitIDs[0]);
+			}
 
-			if (numFriendlies > 0 && unitDef != NULL && unit->owner() == 0) {
+			if (numFriendlies > 0 && unitDef != NULL && unit != NULL && unit->owner() == 0) {
 				friendlyPositions.push_back(unit->pos());
 			} else {
 				// when everything is dead
