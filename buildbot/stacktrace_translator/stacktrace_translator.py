@@ -54,8 +54,8 @@ RE_OLD_VERSION_LINES = [
 ]
 
 # Capture config, branch, rev from `Additional' version string.
-RE_CONFIG = r'(?:\[(?P<config>\w+)\])?'
-RE_BRANCH = r'(?:\{(?P<branch>\w+)\})?'
+RE_CONFIG = r'(?:\[(?P<config>[^\]]+)\])?'
+RE_BRANCH = r'(?:\{(?P<branch>[^\}]+)\})?'
 RE_REV = r'(?P<rev>[0-9.]+(?:-[0-9]+-g[0-9A-Fa-f]+)?)'
 RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
 # Same regex is safe, but can't be used to detect config or branch in old version strings.
