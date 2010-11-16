@@ -76,7 +76,7 @@ void CMapInfo::ReadGlobal()
 	map.humanName    = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
 
-	map.hardness      = std::max(0.001f, topTable.GetFloat("maphardness", 100.0f));
+	map.hardness      = topTable.GetFloat("maphardness", 100.0f);
 	map.notDeformable = topTable.GetBool("notDeformable", false);
 
 	map.gravity = topTable.GetFloat("gravity", 130.0f);
@@ -90,10 +90,10 @@ void CMapInfo::ReadGlobal()
 	map.voidWater = topTable.GetBool("voidWater", false);
 
 	// clamps
-	map.hardness        = max(0.0f, map.hardness);
-	map.tidalStrength   = max(0.0f, map.tidalStrength);
-	map.maxMetal        = max(0.0f, map.maxMetal);
-	map.extractorRadius = max(0.0f, map.extractorRadius);
+	map.hardness        = max(0.001f, map.hardness);
+	map.tidalStrength   = max(0.000f, map.tidalStrength);
+	map.maxMetal        = max(0.000f, map.maxMetal);
+	map.extractorRadius = max(0.000f, map.extractorRadius);
 }
 
 

@@ -47,7 +47,9 @@ public:
 	int neededLosUpdate;
 	std::deque<int> relosUnits;
 
-	float craterTable[10000];
+	static const unsigned int CRATER_TABLE_SIZE = 200;
+
+	float craterTable[CRATER_TABLE_SIZE + 1];
 	float invHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];
 
 	void Explosion(const float3& pos, float strength,float radius);

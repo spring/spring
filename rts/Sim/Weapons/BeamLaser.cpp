@@ -190,6 +190,8 @@ void CBeamLaser::FireImpl(void)
 
 void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 {
+	// fix negative damage when hitting big spheres
+	float actualRange = range;
 	float rangeMod = 1.0f;
 
 	if (dynamic_cast<CBuilding*>(owner) == NULL) {
@@ -228,40 +230,41 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	}
 
 	// unit at the end of the beam
-	const CUnit* hit = 0;
-	const CFeature* hitfeature = 0;
+	CUnit* hitUnit = NULL;
+	CFeature* hitFeature = NULL;
+	CPlasmaRepulser* hitShield = NULL;
+
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		tryAgain = false;
-		hit = NULL;
 
+		const CUnit* hitUnitPtr = hitUnit;
+		const CFeature* hitFeaturePtr = hitFeature;
 		float length = helper->TraceRay(
 			curPos,
 			dir,
 			maxLength - curLength,
 			weaponDef->damages[0],
 			owner,
-			hit,
+			hitUnitPtr,
 			collisionFlags,
-			&hitfeature
+			&hitFeaturePtr
 		);
 
-		if (hit && hit->allyteam == owner->allyteam && sweepFire) {
+		hitUnit = const_cast<CUnit*>(hitUnitPtr);
+		hitFeature = const_cast<CFeature*>(hitFeaturePtr);
+
+		if (hitUnit != NULL && hitUnit->allyteam == owner->allyteam && sweepFire) {
 			// never damage friendlies with sweepfire
 			lastFireFrame = 0;
 			return;
 		}
 
 		float3 newDir;
-		CPlasmaRepulser* shieldHit = NULL;
-		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, dir, length, newDir, shieldHit);
+		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, dir, length, newDir, hitShield);
 
 		if (shieldLength < length) {
 			length = shieldLength;
-
-			if (shieldHit->BeamIntercepted(this, damageMul)) {
-				// repulsed
-				tryAgain = true;
-			}
+			tryAgain = hitShield->BeamIntercepted(this, damageMul); // repulsed
 		}
 
 		hitPos = curPos + dir * length;
@@ -273,37 +276,22 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		if (weaponDef->largeBeamLaser) {
 			new CLargeBeamLaserProjectile(curPos, hitPos, color, weaponDef->visuals.color2, owner, weaponDef);
 		} else {
-			new CBeamLaserProjectile(
-				curPos, hitPos,
-				startAlpha, endAlpha,
-				color, weaponDef->visuals.color2,
-				owner,
-				weaponDef->thickness,
-				weaponDef->corethickness,
-				weaponDef->laserflaresize,
-				weaponDef,
-				weaponDef->visuals.beamttl,
-				weaponDef->visuals.beamdecay
-			);
+			new CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha, color, owner, weaponDef);
 		}
 
 		curPos = hitPos;
 		curLength += length;
 		dir = newDir;
 	}
-	CUnit* hitM = (hit == NULL) ? NULL : uh->units[hit->id];
-	CFeature* hitF = hitfeature ? featureHandler->GetFeature(hitfeature->id) : 0;
 
-	// fix negative damage when hitting big spheres
-	float actualRange = range;
-	if (hit) {
-		if (hit->unitDef->usePieceCollisionVolumes) {
+	if (hitUnit) {
+		if (hitUnit->unitDef->usePieceCollisionVolumes) {
 			// getting the actual piece here is probably overdoing it
-			hitM->SetLastAttackedPiece(hit->localmodel->pieces[0], gs->frameNum);
+			hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
 		}
 
 		if (targetBorder > 0) {
-			actualRange += hit->radius * targetBorder;
+			actualRange += hitUnit->radius * targetBorder;
 		}
 	}
 
@@ -342,10 +330,10 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			weaponDef->noExplode || weaponDef->noSelfDamage, /*false*/
 			weaponDef->impactOnly,                           /*false*/
 			weaponDef->explosionGenerator,
-			hitM,
+			hitUnit,
 			dir,
 			weaponDef->id,
-			hitF
+			hitFeature
 		);
 	}
 
