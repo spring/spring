@@ -119,8 +119,6 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 		const float  maxRange     = ai->cb->GetUnitMaxRange(commanderID);
 
 		bool haveClearShot = true;
-		int numSegments = 0;
-
 
 		AIHCTraceRay rayData;
 		float  rayLen = maxRange * 1.1f;

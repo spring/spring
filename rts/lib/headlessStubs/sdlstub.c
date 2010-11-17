@@ -87,12 +87,15 @@ extern DECLSPEC void SDLCALL SDL_WarpMouse(Uint16 x, Uint16 y) {
 }
 
 extern DECLSPEC int SDLCALL SDL_WM_IconifyWindow() {
+	return 0;
 }
 
 extern DECLSPEC int SDLCALL SDL_EnableUNICODE(int i) {
+	return 0;
 }
 
 extern DECLSPEC int SDLCALL SDL_EnableKeyRepeat(int i, int j) {
+	return 0;
 }
 
 extern DECLSPEC void SDLCALL SDL_SetModState(SDLMod i) {
@@ -117,9 +120,11 @@ extern DECLSPEC void SDLCALL SDL_WM_SetCaption(const char* title, const char* ic
 
 extern DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
 	*value = 0;
+	return 0;
 }
 
 extern DECLSPEC SDL_GrabMode SDLCALL SDL_WM_GrabInput(SDL_GrabMode mode) {
+	return 0;
 }
 
 extern DECLSPEC int SDLCALL SDL_GetWMInfo(void* infostruct) {
@@ -144,6 +149,7 @@ extern DECLSPEC const SDL_version* SDLCALL SDL_Linked_Version() {
 }
 
 extern DECLSPEC int SDLCALL SDL_ShowCursor(int toggle) {
+	return 0;
 }
 
 extern DECLSPEC Uint8 SDLCALL SDL_GetMouseState(int* x, int* y) {

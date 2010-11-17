@@ -2003,7 +2003,7 @@ void AAIMap::SearchMetalSpots()
 	int MaxMetal = 0;
 	int TempMetal = 0;
 	int SpotsFound = 0;
-	int coordx, coordy;
+	int coordx = 0, coordy = 0;
 	float AverageMetal;
 
 	AAIMetalSpot temp;
