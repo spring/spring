@@ -84,7 +84,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 		return;
 	}
 
-	int *fList;
+	int *fList = NULL;
 	int fSize = 0;
 	if( UDGeoResource )
 	{

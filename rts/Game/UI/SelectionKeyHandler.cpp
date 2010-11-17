@@ -56,7 +56,7 @@ void CSelectionKeyHandler::LoadSelectionKeys()
 		bool shift=false;
 		bool control=false;
 		bool alt=false;
-		unsigned char keyname;
+		unsigned char keyname=0;
 
 		while(true){
 			std::string s=ReadToken(key);
