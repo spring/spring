@@ -1904,14 +1904,12 @@ void CGameServer::PushAction(const Action& action)
 			}
 		}
 	}
-#ifdef DEDICATED // we already have a quit command in the client
 	else if (action.command == "kill") {
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
 		isPaused = !isPaused;
 	}
-#endif
 	else {
 		// only forward to players (send over network)
 		CommandMessage msg(action, SERVER_PLAYER);
