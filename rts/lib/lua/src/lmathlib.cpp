@@ -6,11 +6,9 @@
 
 
 #include <stdlib.h>
-
-// Spring
+//SPRING#include <math.h>
 #include "streflop_cond.h"
 #include "System/FastMath.h"
-
 
 #define lmathlib_c
 #define LUA_LIB
@@ -193,16 +191,15 @@ static int math_max (lua_State *L) {
   return 1;
 }
 
-
 static int lua_streflop_random_seed = 0;
 
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
 
-  // SPRING
-  // respect the original lua code that uses rand,
-  // and rand is auto-seeded always with the same value
+//SPRING
+// respect the original lua code that uses rand,
+// and rand is auto-seeded always with the same value
 #ifdef STREFLOP_H
   if (lua_streflop_random_seed == 0) {
     lua_streflop_random_seed = 1;
@@ -213,7 +210,6 @@ static int math_random (lua_State *L) {
 #else
   lua_Number r = 0.0f;
 #endif
-
   switch (lua_gettop(L)) {  /* check number of arguments */
     case 0: {  /* no arguments */
       lua_pushnumber(L, r);  /* Number between 0 and 1 */
@@ -222,7 +218,7 @@ static int math_random (lua_State *L) {
     case 1: {  /* only upper limit */
       int u = luaL_checkint(L, 1);
       luaL_argcheck(L, 1<=u, 1, "interval is empty");
-      lua_pushnumber(L,math:: floor(r*u)+1);  /* int between 1 and `u' */
+      lua_pushnumber(L, math::floor(r*u)+1);  /* int between 1 and `u' */
       break;
     }
     case 2: {  /* lower and upper limits */
@@ -237,10 +233,8 @@ static int math_random (lua_State *L) {
   return 1;
 }
 
-
 static int math_randomseed (lua_State *L) {
-  /* SPRING srand(luaL_checkint(L, 1)); */
-
+//SPRING srand(luaL_checkint(L, 1));
 #ifdef STREFLOP_H
   math::RandomInit(luaL_checkint(L, 1)); // streflop
 #endif
@@ -250,34 +244,34 @@ static int math_randomseed (lua_State *L) {
 
 
 static const luaL_Reg mathlib[] = {
-  {"abs",   math_abs   },
-  {"acos",  math_acos  },
-  {"asin",  math_asin  },
-  {"atan2", math_atan2 },
-  {"atan",  math_atan  },
-  {"ceil",  math_ceil  },
-  {"cosh",  math_cosh  },
-  {"cos",   math_cos   },
-  {"deg",   math_deg   },
-  {"exp",   math_exp   },
-  {"floor", math_floor },
-  {"fmod",  math_fmod  },
-  {"frexp", math_frexp },
-  {"ldexp", math_ldexp },
-  {"log10", math_log10 },
-  {"log",   math_log   },
-  {"max",   math_max   },
-  {"min",   math_min   },
-  {"modf",  math_modf  },
-  {"pow",   math_pow   },
-  {"rad",   math_rad   },
-  {"random",     math_random },
-  {"randomseed", math_randomseed },
-  {"sinh",  math_sinh  },
-  {"sin",   math_sin   },
-  {"sqrt",  math_sqrt  },
-  {"tanh",  math_tanh  },
-  {"tan",   math_tan   },
+  {"abs",   math_abs},
+  {"acos",  math_acos},
+  {"asin",  math_asin},
+  {"atan2", math_atan2},
+  {"atan",  math_atan},
+  {"ceil",  math_ceil},
+  {"cosh",   math_cosh},
+  {"cos",   math_cos},
+  {"deg",   math_deg},
+  {"exp",   math_exp},
+  {"floor", math_floor},
+  {"fmod",   math_fmod},
+  {"frexp", math_frexp},
+  {"ldexp", math_ldexp},
+  {"log10", math_log10},
+  {"log",   math_log},
+  {"max",   math_max},
+  {"min",   math_min},
+  {"modf",   math_modf},
+  {"pow",   math_pow},
+  {"rad",   math_rad},
+  {"random",     math_random},
+  {"randomseed", math_randomseed},
+  {"sinh",   math_sinh},
+  {"sin",   math_sin},
+  {"sqrt",  math_sqrt},
+  {"tanh",   math_tanh},
+  {"tan",   math_tan},
   {NULL, NULL}
 };
 
@@ -289,13 +283,11 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
-
 #ifdef STREFLOP_H
   lua_pushnumber(L, math::SimplePositiveInfinity); // streflop
 #else
   lua_pushnumber(L, HUGE_VAL);
 #endif
-
   lua_setfield(L, -2, "huge");
 #if defined(LUA_COMPAT_MOD)
   lua_getfield(L, -1, "fmod");

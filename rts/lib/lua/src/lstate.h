@@ -92,7 +92,7 @@ typedef struct global_State {
   struct Table *mt[NUM_TAGS];  /* metatables for basic types */
   TString *tmname[TM_N];  /* array with tag-method names */
 
-  /* SPRING additions */
+  //SPRING additions
   lua_Func_fopen  fopen_func;
   lua_Func_popen  popen_func;
   lua_Func_pclose pclose_func;
