@@ -1,0 +1,195 @@
+# patch-lua-5.1.4-2 created 2010-05-14T21:02:40-0300
+# apply to a pristine copy of Lua 5.1.4 with:
+#	wget http://www.lua.org/ftp/lua-5.1.4.tar.gz
+#	tar zxf lua-5.1.4.tar.gz
+#	cd lua-5.1.4/src
+#	wget http://www.lua.org/ftp/patch-lua-5.1.4-2
+#	patch < patch-lua-5.1.4-2
+# use curl -O -R if you don't have wget
+
+--- lcode.c	2007/12/28 15:32:23	2.25.1.3
++++ lcode.c	2009/06/15 14:12:25	2.25.1.4
+@@ -1,5 +1,5 @@
+ /*
+-** $Id: lcode.c,v 2.25.1.3 2007/12/28 15:32:23 roberto Exp $
++** $Id: lcode.c,v 2.25.1.4 2009/06/15 14:12:25 roberto Exp $
+ ** Code generator for Lua
+ ** See Copyright Notice in lua.h
+ */
+@@ -544,15 +544,18 @@
+       pc = NO_JUMP;  /* always true; do nothing */
+       break;
+     }
+-    case VFALSE: {
+-      pc = luaK_jump(fs);  /* always jump */
+-      break;
+-    }
+     case VJMP: {
+       invertjump(fs, e);
+       pc = e->u.s.info;
+       break;
+     }
++    case VFALSE: {
++      if (!hasjumps(e)) {
++        pc = luaK_jump(fs);  /* always jump */
++        break;
++      }
++      /* else go through */
++    }
+     default: {
+       pc = jumponcond(fs, e, 0);
+       break;
+@@ -572,14 +575,17 @@
+       pc = NO_JUMP;  /* always false; do nothing */
+       break;
+     }
+-    case VTRUE: {
+-      pc = luaK_jump(fs);  /* always jump */
+-      break;
+-    }
+     case VJMP: {
+       pc = e->u.s.info;
+       break;
+     }
++    case VTRUE: {
++      if (!hasjumps(e)) {
++        pc = luaK_jump(fs);  /* always jump */
++        break;
++      }
++      /* else go through */
++    }
+     default: {
+       pc = jumponcond(fs, e, 1);
+       break;
+--- ldblib.c	2008/01/21 13:11:21	1.104.1.3
++++ ldblib.c	2009/08/04 18:50:18	1.104.1.4
+@@ -1,5 +1,5 @@
+ /*
+-** $Id: ldblib.c,v 1.104.1.3 2008/01/21 13:11:21 roberto Exp $
++** $Id: ldblib.c,v 1.104.1.4 2009/08/04 18:50:18 roberto Exp $
+ ** Interface from Lua to its debug API
+ ** See Copyright Notice in lua.h
+ */
+@@ -45,6 +45,7 @@
+ 
+ 
+ static int db_getfenv (lua_State *L) {
++  luaL_checkany(L, 1);
+   lua_getfenv(L, 1);
+   return 1;
+ }
+--- liolib.c	2008/01/18 17:47:43	2.73.1.3
++++ liolib.c	2010/05/14 15:33:51	2.73.1.4
+@@ -1,5 +1,5 @@
+ /*
+-** $Id: liolib.c,v 2.73.1.3 2008/01/18 17:47:43 roberto Exp $
++** $Id: liolib.c,v 2.73.1.4 2010/05/14 15:33:51 roberto Exp $
+ ** Standard I/O (and system) library
+ ** See Copyright Notice in lua.h
+ */
+@@ -276,7 +276,10 @@
+     lua_pushnumber(L, d);
+     return 1;
+   }
+-  else return 0;  /* read fails */
++  else {
++    lua_pushnil(L);  /* "result" to be removed */
++    return 0;  /* read fails */
++  }
+ }
+ 
+ 
+--- llex.c	2007/12/27 13:02:25	2.20.1.1
++++ llex.c	2009/11/23 14:58:22	2.20.1.2
+@@ -1,5 +1,5 @@
+ /*
+-** $Id: llex.c,v 2.20.1.1 2007/12/27 13:02:25 roberto Exp $
++** $Id: llex.c,v 2.20.1.2 2009/11/23 14:58:22 roberto Exp $
+ ** Lexical Analyzer
+ ** See Copyright Notice in lua.h
+ */
+@@ -118,8 +118,10 @@
+   lua_State *L = ls->L;
+   TString *ts = luaS_newlstr(L, str, l);
+   TValue *o = luaH_setstr(L, ls->fs->h, ts);  /* entry for `str' */
+-  if (ttisnil(o))
++  if (ttisnil(o)) {
+     setbvalue(o, 1);  /* make sure `str' will not be collected */
++    luaC_checkGC(L);
++  }
+   return ts;
+ }
+ 
+--- loadlib.c	2008/08/06 13:29:28	1.52.1.3
++++ loadlib.c	2009/09/09 13:17:16	1.52.1.4
+@@ -1,5 +1,5 @@
+ /*
+-** $Id: loadlib.c,v 1.52.1.3 2008/08/06 13:29:28 roberto Exp $
++** $Id: loadlib.c,v 1.52.1.4 2009/09/09 13:17:16 roberto Exp $
+ ** Dynamic library loader for Lua
+ ** See Copyright Notice in lua.h
+ **
+@@ -639,7 +639,7 @@
+   lua_pushvalue(L, -1);
+   lua_replace(L, LUA_ENVIRONINDEX);
+   /* create `loaders' table */
+-  lua_createtable(L, 0, sizeof(loaders)/sizeof(loaders[0]) - 1);
++  lua_createtable(L, sizeof(loaders)/sizeof(loaders[0]) - 1, 0);
+   /* fill it with pre-defined loaders */
+   for (i=0; loaders[i] != NULL; i++) {
+     lua_pushcfunction(L, loaders[i]);
+--- lstrlib.c	2008/07/11 17:27:21	1.132.1.4
++++ lstrlib.c	2010/05/14 15:34:19	1.132.1.5
+@@ -1,5 +1,5 @@
+ /*
+-** $Id: lstrlib.c,v 1.132.1.4 2008/07/11 17:27:21 roberto Exp $
++** $Id: lstrlib.c,v 1.132.1.5 2010/05/14 15:34:19 roberto Exp $
+ ** Standard library for string operations and pattern-matching
+ ** See Copyright Notice in lua.h
+ */
+@@ -754,6 +754,7 @@
+ 
+ 
+ static int str_format (lua_State *L) {
++  int top = lua_gettop(L);
+   int arg = 1;
+   size_t sfl;
+   const char *strfrmt = luaL_checklstring(L, arg, &sfl);
+@@ -768,7 +769,8 @@
+     else { /* format item */
+       char form[MAX_FORMAT];  /* to store the format (`%...') */
+       char buff[MAX_ITEM];  /* to store the formatted item */
+-      arg++;
++      if (++arg > top)
++        luaL_argerror(L, arg, "no value");
+       strfrmt = scanformat(L, strfrmt, form);
+       switch (*strfrmt++) {
+         case 'c': {
+--- lvm.c	2007/12/28 15:32:23	2.63.1.3
++++ lvm.c	2009/07/01 21:10:33	2.63.1.4
+@@ -1,5 +1,5 @@
+ /*
+-** $Id: lvm.c,v 2.63.1.3 2007/12/28 15:32:23 roberto Exp $
++** $Id: lvm.c,v 2.63.1.4 2009/07/01 21:10:33 roberto Exp $
+ ** Lua virtual machine
+ ** See Copyright Notice in lua.h
+ */
+@@ -133,6 +133,7 @@
+ 
+ void luaV_settable (lua_State *L, const TValue *t, TValue *key, StkId val) {
+   int loop;
++  TValue temp;
+   for (loop = 0; loop < MAXTAGLOOP; loop++) {
+     const TValue *tm;
+     if (ttistable(t)) {  /* `t' is a table? */
+@@ -152,7 +153,9 @@
+       callTM(L, tm, t, key, val);
+       return;
+     }
+-    t = tm;  /* else repeat with `tm' */ 
++    /* else repeat with `tm' */
++    setobj(L, &temp, tm);  /* avoid pointing inside table (may rehash) */
++    t = &temp;
+   }
+   luaG_runerror(L, "loop in settable");
+ }

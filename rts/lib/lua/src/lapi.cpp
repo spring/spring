@@ -413,16 +413,6 @@ LUA_API const void *lua_topointer (lua_State *L, int idx) {
 }
 
 
-LUA_API const void *lua_metapointer (lua_State *L, int idx) {
-  StkId o = index2adr(L, idx);
-  switch (ttype(o)) {
-    case LUA_TTABLE:    return hvalue(o)->metatable;
-    case LUA_TUSERDATA: return uvalue(o)->metatable;
-    default: return NULL;
-  }
-}
-
-
 
 /*
 ** push functions (C -> stack)
@@ -462,6 +452,7 @@ LUA_API void lua_pushlstring (lua_State *L, const char *s, size_t len) {
 }
 
 
+//SPRING
 LUA_API void lua_pushhstring (lua_State *L,
                               lua_Hash h, const char *s, size_t len) {
   lua_lock(L);
