@@ -43,7 +43,7 @@ AAIBrain::~AAIBrain(void)
 
 AAISector* AAIBrain::GetAttackDest(bool land, bool water)
 {
-	float best_rating = 0, my_rating;
+	float best_rating = 0.0f, my_rating = 0.0f;
 	AAISector *dest = 0, *sector;
 
 	//int side = ai->side-1;

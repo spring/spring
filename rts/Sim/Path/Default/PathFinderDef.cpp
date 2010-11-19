@@ -68,6 +68,8 @@ CRangedGoalWithCircularConstraint::CRangedGoalWithCircularConstraint(
 	unsigned int extraSize):
 	CPathFinderDef(goal, goalRadius)
 {
+	disabled = false;
+
 	// calculate the center and radius of the constrained area
 	const unsigned int startX = start.x / SQUARE_SIZE;
 	const unsigned int startZ = start.z / SQUARE_SIZE;
@@ -87,11 +89,11 @@ CRangedGoalWithCircularConstraint::CRangedGoalWithCircularConstraint(
 
 // tests if a square is inside is the circular constrained area
 // defined by the start and goal positions (disabled: this only
-// saves CPU under certain conditions and destroys admissability)
+// saves CPU under certain conditions and destroys admissibility)
 bool CRangedGoalWithCircularConstraint::WithinConstraints(unsigned int xSquare, unsigned int zSquare) const
 {
 	const int dx = halfWayX - xSquare;
 	const int dz = halfWayZ - zSquare;
 
-	return ((gs->frameNum > 0) || ((dx * dx + dz * dz) <= searchRadiusSq));
+	return (disabled || ((dx * dx + dz * dz) <= searchRadiusSq));
 }

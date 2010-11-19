@@ -489,7 +489,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 				{
 					float3 Pos = cb->GetUnitPos(unit);
 					set<int> best;
-					ResourceSiteExt* RSbest;
+					ResourceSiteExt* RSbest=NULL;
 					for( int iud=UDR->BL[i]->UDefActiveTemp-1; iud>=0; iud-- )
 					{
 						ResourceSiteExt* RS = BP->FindResourceSite(Pos,UDR->BL[i]->UDef[iud]->RUD->ud,U->area);
@@ -1085,7 +1085,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 		{
 			int BestIndex=-1;
 			float3 fPos=cb->GetUnitPos(unit);
-			float BestDis;
+			float BestDis=0.0f;
 			for(int iBQ=0; iBQ<BQSize[0]; iBQ++)
 			{
 				if( BQ[iBQ]->builderID >= 0 && G->TM->CanMoveToPos(U->area,cb->GetUnitPos(BQ[iBQ]->builderID)) )
@@ -1245,8 +1245,8 @@ void cBuilder::UpdateUDRCost()
 		{
 //			*l<<"\n Determining Cheapest for '"<<UDR->BL[iBL]->Name<<"' Build-List ...";
 			sRAIUnitDef *BestLandudr=0,*BestWaterudr=0; // NOTE: the same udr may be selected for both, may also already be enabled
-			float BestLandCost,BestWaterCost;
-			bool BestLandCanBuildConstructors,BestWaterCanBuildConstructors; // only used in determining the cheapest constructor
+			float BestLandCost=0.0f,BestWaterCost=0.0f;
+			bool BestLandCanBuildConstructors=false,BestWaterCanBuildConstructors=false; // only used in determining the cheapest constructor
 			for(int iU=0; iU<UDR->BL[iBL]->UDefSize; iU++)
 			{
 				sRAIUnitDef *udr = UDR->BL[iBL]->UDef[iU]->RUD;

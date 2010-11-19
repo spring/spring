@@ -347,7 +347,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 				(iMT->canFloat && iMT->maxElevation >= sector[iS].maxElevation && !waterIsHarmful && (sector[iS].maxElevation <= 0 || iMT->maxSlope >= sector[iS].maxSlope) ) ||
 				(iMT->maxSlope >= sector[iS].maxSlope && iMT->minElevation <= sector[iS].minElevation && iMT->maxElevation >= sector[iS].maxElevation && (!waterIsHarmful || sector[iS].minElevation >=0 ) ) )
 				sectorsRemaining.insert(iS);
-		int i,iX,iZ,aIndex; // Temp Var.
+		int i,iX,iZ,aIndex = 0; // Temp Var.
 		while( int(sectorsRemaining.size())>0 || int(sectorSearch.size())>0 )
 		{
 			if( int(sectorSearch.size()) > 0 )
@@ -502,7 +502,7 @@ TerrainMapAreaSector* GlobalTerrainMap::GetClosestSector(TerrainMapArea* sourceA
 
 	float3 *destination = &TMSectors[destinationSIndex].S->position;
 	TerrainMapAreaSector* SClosest = 0;
-	float DisClosest;
+	float DisClosest = 0.0f;
 	for( map<int,TerrainMapAreaSector*>::iterator iS=sourceArea->sector.begin(); iS!=sourceArea->sector.end(); ++iS )
 		if( SClosest == 0 || iS->second->S->position.distance(*destination) < DisClosest )
 		{
@@ -529,7 +529,7 @@ TerrainMapSector* GlobalTerrainMap::GetClosestSector(TerrainMapImmobileType* sou
 
 	const float3 *destination = &sector[destinationSIndex].position;
 	TerrainMapSector* SClosest = 0;
-	float DisClosest;
+	float DisClosest = 0.0f;
 	for( map<int,TerrainMapSector*>::iterator iS=sourceIT->sector.begin(); iS!=sourceIT->sector.end(); ++iS )
 		if( SClosest == 0 || iS->second->position.distance(*destination) < DisClosest )
 		{
