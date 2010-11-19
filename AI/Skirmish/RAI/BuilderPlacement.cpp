@@ -131,7 +131,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 	for( int iM=0; iM<MetalSiteLimit && iM<G->RM->RSize[0]; iM++ )
 	{
 		int iBest=-1;
-		float fBest;
+		float fBest=0.0f;
 		for( int iR=0; iR<G->RM->RSize[0]; iR++ )
 		{	// Cycles through only metal-sites
 			if( Seleted.find(iR) == Seleted.end() )
@@ -150,7 +150,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 	for( int iG=0; iG<GeoSiteLimit && iG<G->RM->RSize[1]; iG++ )
 	{
 		int iBest=-1;
-		float fBest;
+		float fBest=0.0f;
 		for( int iR=0; iR<G->RM->RSize[1]; iR++ )
 		{	// Cycles through only geo-sites
 			if( Seleted.find(iR) == Seleted.end() )
@@ -250,7 +250,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 		}
 	}
 
-	TerrainMapMobileType* MT;
+	TerrainMapMobileType* MT=NULL;
 //	for( MobileTypes.begin(); MobileTypes.nextE(MT); )
 //		*l<<"\n  MoveType="<<MT->MD->name<<" pathType="<<MT->MD->pathType;
 
@@ -1172,7 +1172,7 @@ void cBuilderPlacement::UpdateAllyResources()
 int cBuilderPlacement::GetResourceIndex(const int &unit, const UnitDef* ud)
 {
 	int iBest=-1;
-	float fBest;
+	float fBest=0.0f;
 	for( int iR=0; iR<ResourceSize; iR++ )
 	{
 		if(	Resources[iR]->unitID == unit )
