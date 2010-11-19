@@ -461,7 +461,7 @@ IPath::SearchResult CPathEstimator::GetPath(
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 		FinishSearch(moveData, path);
 
-		if (synced) {
+		if (synced && result == IPath::Ok) {
 			// add succesful paths to the cache (NOTE: only when in synced context)
 			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
 		}

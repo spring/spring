@@ -59,15 +59,11 @@ unsigned int CPathManager::RequestPath(
 	float3 sp(startPos); sp.CheckInBounds();
 	float3 gp(goalPos); gp.CheckInBounds();
 
-	// ?
-	// if (sp.x > (gs->mapx * SQUARE_SIZE - 5)) { sp.x = gs->mapx * SQUARE_SIZE - 5; }
-	// if (gp.z > (gs->mapy * SQUARE_SIZE - 5)) { gp.z = gs->mapy * SQUARE_SIZE - 5; }
-
 	// Create an estimator definition.
-	CRangedGoalWithCircularConstraint* rangedGoalPED = new CRangedGoalWithCircularConstraint(sp, gp, goalRadius, 3.0f, 2000);
+	CRangedGoalWithCircularConstraint* pfDef = new CRangedGoalWithCircularConstraint(sp, gp, goalRadius, 3.0f, 2000);
 
 	// Make request.
-	return RequestPath(moveData, sp, gp, rangedGoalPED, caller, synced);
+	return RequestPath(moveData, sp, gp, pfDef, caller, synced);
 }
 
 /*
@@ -87,6 +83,7 @@ unsigned int CPathManager::RequestPath(
 	moveData->tempOwner = caller;
 
 	// Creates a new multipath.
+	IPath::SearchResult result = IPath::Error;
 	MultiPath* newPath = new MultiPath(startPos, pfDef, moveData);
 	newPath->finalGoal = goalPos;
 	newPath->caller = caller;
@@ -102,9 +99,15 @@ unsigned int CPathManager::RequestPath(
 	const float distanceToGoal = pfDef->Heuristic(int(startPos.x / SQUARE_SIZE), int(startPos.z / SQUARE_SIZE));
 
 	if (distanceToGoal < DETAILED_DISTANCE) {
-		// Get a detailed path.
-		IPath::SearchResult result =
-			maxResPF->GetPath(*moveData, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
+		result = maxResPF->GetPath(*moveData, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
+
+		pfDef->DisableConstraint(true);
+
+		// fallback
+		if (result != IPath::Ok) {
+			result = maxResPF->GetPath(*moveData, startPos, *pfDef, newPath->maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
+		}
+
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -113,75 +116,42 @@ unsigned int CPathManager::RequestPath(
 			delete newPath;
 		}
 	} else if (distanceToGoal < ESTIMATE_DISTANCE) {
-		// Get an estimate path.
-		IPath::SearchResult result = medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
+		result = medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
+
+		pfDef->DisableConstraint(true);
+
+		// fallback
+		if (result != IPath::Ok) {
+			result = medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
+		}
+
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-			// Turn a part of it into detailed path.
 			MedRes2MaxRes(*newPath, startPos, ownerId, synced);
-			// Store the path.
 			retValue = Store(newPath);
 		} else {
-			// if we fail see if it can work find a better block to start from
-			float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
-
-			if (sp.x != 0 &&
-				(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
-				((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
-				IPath::SearchResult result = medResPE->GetPath(*moveData, sp, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
-				newPath->searchResult = result;
-
-				if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-					MedRes2MaxRes(*newPath, startPos, ownerId, synced);
-					retValue = Store(newPath);
-				} else {
-					delete newPath;
-				}
-			} else {
-				delete newPath;
-			}
+			delete newPath;
 		}
 	} else {
-		// Get a low-res. estimate path.
-		IPath::SearchResult result = lowResPE->GetPath(*moveData, startPos, *pfDef, newPath->lowResPath, MAX_SEARCHED_NODES_PE, synced);
+		result = lowResPE->GetPath(*moveData, startPos, *pfDef, newPath->lowResPath, MAX_SEARCHED_NODES_PE, synced);
+
+		pfDef->DisableConstraint(true);
+
+		// fallback
+		if (result != IPath::Ok) {
+			result = lowResPE->GetPath(*moveData, startPos, *pfDef, newPath->lowResPath, MAX_SEARCHED_NODES_PE, synced);
+		}
+
 		newPath->searchResult = result;
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-			// Turn a part of it into hi-res. estimate path.
 			LowRes2MedRes(*newPath, startPos, ownerId, synced);
-			// And estimate into detailed.
 			MedRes2MaxRes(*newPath, startPos, ownerId, synced);
 
-			// Store the path.
 			retValue = Store(newPath);
 		} else {
-			// sometimes the 32*32 squares can be wrong (admissibility...) so if it fails to get a path also try with 8*8 squares
-			IPath::SearchResult result = medResPE->GetPath(*moveData, startPos, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
-			newPath->searchResult = result;
-
-			if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-				MedRes2MaxRes(*newPath, startPos, ownerId, synced);
-				retValue = Store(newPath);
-			} else {
-				// 8*8 can also fail rarely, so see if we can find a better 8*8 to start from
-				float3 sp = medResPE->FindBestBlockCenter(moveData, startPos, synced);
-
-				if (sp.x != 0 &&
-					(((int) sp.x) / (SQUARE_SIZE * 8) != ((int) startPos.x) / (SQUARE_SIZE * 8) ||
-					((int) sp.z) / (SQUARE_SIZE * 8) != ((int) startPos.z) / (SQUARE_SIZE * 8))) {
-					IPath::SearchResult result = medResPE->GetPath(*moveData, sp, *pfDef, newPath->medResPath, MAX_SEARCHED_NODES_PE, synced);
-
-					if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-						MedRes2MaxRes(*newPath, startPos, ownerId, synced);
-						retValue = Store(newPath);
-					} else {
-						delete newPath;
-					}
-				} else {
-					delete newPath;
-				}
-			}
+			delete newPath;
 		}
 	}
 
@@ -236,7 +206,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, i
 
 	// Perform the search.
 	// If this is the final improvement of the path, then use the original goal.
-	IPath::SearchResult result;
+	IPath::SearchResult result = IPath::Error;
 
 	if (medResPath.path.empty() && lowResPath.path.empty()) {
 		result = maxResPF->GetPath(*multiPath.moveData, startPos, *multiPath.peDef, maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
@@ -282,7 +252,7 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, i
 
 	// Perform the search.
 	// If there is no estimate2 path left, use original goal.
-	IPath::SearchResult result;
+	IPath::SearchResult result = IPath::Error;
 
 	if (lowResPath.path.empty()) {
 		result = medResPE->GetPath(*multiPath.moveData, startPos, *multiPath.peDef, medResPath, MAX_SEARCHED_NODES_ON_REFINE, synced);

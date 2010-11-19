@@ -9,7 +9,7 @@
 
 class IPath {
 public:
-	virtual ~IPath() {};
+	virtual ~IPath() {}
 
 	enum SearchResult {
 		Ok,
