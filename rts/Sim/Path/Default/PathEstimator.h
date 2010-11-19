@@ -101,9 +101,6 @@ public:
 	 */
 	void Update();
 
-	/// find the best block to use for this pos
-	float3 FindBestBlockCenter(const MoveData*, const float3&, bool);
-
 	/// Return a checksum that can be used to check if every player has the same path data
 	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
 
