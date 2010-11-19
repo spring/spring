@@ -13,6 +13,7 @@ public:
 	virtual ~CPathFinderDef() {}
 
 	virtual bool WithinConstraints(int xSquare, int Square) const { return true; }
+	virtual void DisableConstraint(bool) {}
 
 	bool IsGoal(int xSquare, int zSquare) const;
 	float Heuristic(int xSquare, int zSquare) const;
@@ -33,8 +34,11 @@ public:
 	~CRangedGoalWithCircularConstraint() {}
 
 	bool WithinConstraints(int xSquare, int zSquare) const;
+	void DisableConstraint(bool b) { disabled = b; }
 
 private:
+	bool disabled;
+
 	int halfWayX;
 	int halfWayZ;
 	int searchRadiusSq;
