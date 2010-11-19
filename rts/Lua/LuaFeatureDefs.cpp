@@ -21,14 +21,9 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "System/LogOutput.h"
-#include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
 
 using namespace std;
 
-
-#define TREE_RADIUS 20  // copied from Feature.cpp
 
 
 static ParamMap paramMap;
@@ -342,7 +337,7 @@ static int ModelHeight(lua_State* L, const void* data)
 
 	switch (fd->drawType) {
 		case DRAWTYPE_MODEL: {
-			model = LoadModel(fd);
+			model = fd->LoadModel();
 			height = model? model->height: 0.0f;
 			break;
 		}
@@ -372,7 +367,7 @@ static int ModelRadius(lua_State* L, const void* data)
 
 	switch (fd->drawType) {
 		case DRAWTYPE_MODEL: {
-			model = LoadModel(fd);
+			model = fd->LoadModel();
 			radius = model? model->radius: 0.0f;
 			break;
 		}
@@ -399,7 +394,7 @@ static int ModelRadius(lua_State* L, const void* data)
 	{                                                           \
 		const FeatureDef* fd = ((const FeatureDef*)data);       \
 		if (fd->drawType == DRAWTYPE_MODEL) {                   \
-			const S3DModel* model = LoadModel(fd);              \
+			const S3DModel* model = fd->LoadModel();            \
 			lua_pushnumber(L, model? model -> param : 0.0f);    \
 			return 1;                                           \
 		}                                                       \
