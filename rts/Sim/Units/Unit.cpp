@@ -434,8 +434,10 @@ void CUnit::SetRight(const SyncedFloat3& newDir)
 
 void CUnit::UpdateMidPos()
 {
-	midPos = pos + (frontdir * relMidPos.z) + (updir * relMidPos.y)
-		+ (rightdir * relMidPos.x);
+	midPos = pos +
+		(frontdir * relMidPos.z) +
+		(updir    * relMidPos.y) +
+		(rightdir * relMidPos.x);
 }
 
 

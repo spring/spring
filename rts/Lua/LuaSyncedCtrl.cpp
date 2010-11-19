@@ -1989,27 +1989,29 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const float3 rot(luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3),
-	                 luaL_checkfloat(L, 4));
+
+	const float3 rot(ClampRad(luaL_checkfloat(L, 2)),
+	                 ClampRad(luaL_checkfloat(L, 3)),
+	                 ClampRad(luaL_checkfloat(L, 4)));
+
 	CMatrix44f matrix;
 	matrix.RotateZ(rot.z);
 	matrix.RotateX(rot.x);
 	matrix.RotateY(rot.y);
-	unit->rightdir.x = matrix[ 0];
-	unit->rightdir.y = matrix[ 1];
-	unit->rightdir.z = matrix[ 2];
-	unit->updir.x    = matrix[ 4];
-	unit->updir.y    = matrix[ 5];
-	unit->updir.z    = matrix[ 6];
-	unit->frontdir.x = matrix[ 8];
-	unit->frontdir.y = matrix[ 9];
-	unit->frontdir.z = matrix[10];
 
-	const shortint2 HandP = GetHAndPFromVector(unit->frontdir);
-	unit->heading = HandP.x;
+	unit->rightdir.x = -matrix[ 0];
+	unit->rightdir.y = -matrix[ 1];
+	unit->rightdir.z = -matrix[ 2];
+	unit->updir.x    =  matrix[ 4];
+	unit->updir.y    =  matrix[ 5];
+	unit->updir.z    =  matrix[ 6];
+	unit->frontdir.x =  matrix[ 8];
+	unit->frontdir.y =  matrix[ 9];
+	unit->frontdir.z =  matrix[10];
 
+	unit->heading = GetHeadingFromVector(unit->frontdir.x, unit->frontdir.z);
 	unit->ForcedMove(unit->pos);
+
 	return 0;
 }
 
