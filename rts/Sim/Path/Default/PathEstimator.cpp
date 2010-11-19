@@ -867,35 +867,3 @@ unsigned int CPathEstimator::Hash() const
 {
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + PATHESTIMATOR_VERSION);
 }
-
-
-
-float3 CPathEstimator::FindBestBlockCenter(const MoveData* moveData, const float3& pos, bool synced)
-{
-	CRangedGoalWithCircularConstraint rangedGoal(pos, pos, 0, 0, SQUARE_SIZE * BLOCK_SIZE * SQUARE_SIZE * BLOCK_SIZE * 4);
-	IPath::Path path;
-
-	std::vector<float3> startPositions;
-
-	const int pathType = moveData->pathType;
-	const int xm = (pos.x / (SQUARE_SIZE * BLOCK_SIZE));
-	const int ym = (pos.z / (SQUARE_SIZE * BLOCK_SIZE));
-
-	for (int y = std::max(0, ym - 1); y <= std::min(nbrOfBlocksZ - 1, ym + 1); ++y) {
-		for (int x = std::max(0, xm - 1); x <= std::min(nbrOfBlocksX - 1, xm + 1); ++x) {
-			float3 spos;
-				spos.y = 0.0f;
-				spos.x = blockStates[y * nbrOfBlocksX + x].nodeOffsets[pathType].x * SQUARE_SIZE;
-				spos.z = blockStates[y * nbrOfBlocksX + x].nodeOffsets[pathType].y * SQUARE_SIZE;
-
-			startPositions.push_back(spos);
-		}
-	}
-
-	IPath::SearchResult result = pathFinder->GetPath(*moveData, startPositions, rangedGoal, path, 0, synced);
-
-	if (result == IPath::Ok && !path.path.empty()) {
-		return path.path.back();
-	}
-	return ZeroVector;
-}

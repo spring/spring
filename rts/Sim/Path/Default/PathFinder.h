@@ -74,15 +74,6 @@ public:
 		bool synced
 	);
 
-	IPath::SearchResult GetPath(
-		const MoveData&,
-		const std::vector<float3>&,
-		const CPathFinderDef&,
-		IPath::Path&,
-		int ownerId,
-		bool synced
-	);
-
 
 
 	/**
