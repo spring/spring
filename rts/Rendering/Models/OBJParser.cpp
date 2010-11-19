@@ -47,7 +47,6 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->type = MODELTYPE_OBJ;
 		model->textureType = 0;
 		model->numobjects = 0;
-		model->rootobject = NULL;
 		model->radius = modelTable.GetFloat("radius", 0.0f);
 		model->height = modelTable.GetFloat("height", 0.0f);
 		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
@@ -334,7 +333,7 @@ bool COBJParser::BuildModelPieceTree(
 
 		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
-			model->rootobject = rootPiece;
+			model->SetRootPiece(rootPiece);
 
 			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;
@@ -348,7 +347,7 @@ bool COBJParser::BuildModelPieceTree(
 
 		if (rootPieceIt != pieceMap.end()) {
 			rootPiece = rootPieceIt->second;
-			model->rootobject = rootPiece;
+			model->SetRootPiece(rootPiece);
 
 			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
 			return true;

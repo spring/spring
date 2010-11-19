@@ -32,11 +32,14 @@ CR_REG_METADATA(FeatureDef, (
 		));
 
 
-S3DModel* FeatureDef::LoadModel()
+S3DModel* FeatureDef::LoadModel() const
 {
-	if (model == NULL) {
-		model = modelParser->Load3DModel(modelname);
+	// not exactly kosher, but...
+	FeatureDef* fdef = const_cast<FeatureDef*>(this);
+
+	if (fdef->model == NULL) {
+		fdef->model = modelParser->Load3DModel(modelname);
 	}
 
-	return model;
+	return (fdef->model);
 }

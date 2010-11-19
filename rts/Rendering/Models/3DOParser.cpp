@@ -144,9 +144,9 @@ S3DModel* C3DOParser::Load(const string& name)
 		model->radius = 0.0f;
 		model->height = 0.0f;
 
-	S3DOPiece* rootobj = LoadPiece(model, 0, NULL, &model->numobjects);
+	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numobjects);
 
-	model->rootobject = rootobj;
+	model->SetRootPiece(rootPiece);
 	model->radius =
 		(((model->maxs.x - model->mins.x) * 0.5f) * ((model->maxs.x - model->mins.x) * 0.5f)) +
 		(((model->maxs.y - model->mins.y) * 0.5f) * ((model->maxs.y - model->mins.y) * 0.5f)) +
@@ -341,7 +341,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	S3DOPiece* piece = new S3DOPiece();
 		piece->name = s;
 		piece->parent = parent;
-		piece->displist = 0;
+		piece->dispListID = 0;
 		piece->type = MODELTYPE_3DO;
 
 		piece->mins = DEF_MIN_SIZE;

@@ -29,7 +29,7 @@ struct FeatureDef
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
 		xsize(0), zsize(0) {}
 
-	S3DModel* LoadModel();
+	S3DModel* LoadModel() const;
 	CollisionVolume* collisionVolume;
 
 	std::string myName;
@@ -76,11 +76,5 @@ struct FeatureDef
 
 	std::map<std::string, std::string> customParams;
 };
-
-//not very sweet, but still better than replacing "const FeatureDef" _everywhere_
-inline S3DModel* LoadModel(const FeatureDef* fdef)
-{
-	return const_cast<FeatureDef*>(fdef)->LoadModel();
-}
 
 #endif

@@ -792,10 +792,10 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
                                                      \
 			updir = rightdir.cross(dir);
 
-		#define TRANSFORM_DRAW(mat)                          \
-			glPushMatrix();                                  \
-				glMultMatrixf(mat);                          \
-				glCallList(wp->model->rootobject->displist); \
+		#define TRANSFORM_DRAW(mat)                                \
+			glPushMatrix();                                        \
+				glMultMatrixf(mat);                                \
+				glCallList(wp->model->GetRootPiece()->dispListID); \
 			glPopMatrix();
 
 		switch (wp->GetProjectileType()) {
