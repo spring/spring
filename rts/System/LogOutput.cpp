@@ -295,9 +295,22 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 {
 	GML_STDMUTEX_LOCK(log); // Output
 
+	std::string msg;
+
+#if !defined UNITSYNC && !defined DEDICATED
+	if (gs) {
+		msg += IntToString(gs->frameNum, "[f=%07d] ");
+	}
+#endif
+	if (subsystem.name && *subsystem.name) {
+		msg += ("[" + std::string(subsystem.name) + "] ");
+	}
+
+	msg += str;
+
 	if (!initialized) {
-		ToStdout(subsystem, str);
-		preInitLog().push_back(PreInitLogEntry(&subsystem, str));
+		ToStdout(subsystem, msg);
+		preInitLog().push_back(PreInitLogEntry(&subsystem, msg));
 		return;
 	}
 
@@ -306,14 +319,14 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	// Output to subscribers
 	if (subscribersEnabled) {
 		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
-			(*lsi)->NotifyLogMsg(subsystem, str);
+			(*lsi)->NotifyLogMsg(subsystem, msg);
 		}
 	}
 
 #ifdef _MSC_VER
 	int index = strlen(str.c_str()) - 1;
 	bool newline = ((index < 0) || (str[index] != '\n'));
-	OutputDebugString(str.c_str());
+	OutputDebugString(msg.c_str());
 	if (newline) {
 		OutputDebugString("\n");
 	}
@@ -321,10 +334,10 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 
 
 	if (filelog) {
-		ToFile(subsystem, str);
+		ToFile(subsystem, msg);
 	}
 
-	ToStdout(subsystem, str);
+	ToStdout(subsystem, msg);
 }
 
 
@@ -340,6 +353,7 @@ void CLogOutput::SetLastMsgPos(const float3& pos)
 }
 
 
+
 void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 {
 	GML_STDMUTEX_LOCK(log); // AddSubscriber
@@ -347,13 +361,14 @@ void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 	subscribers.push_back(ls);
 }
 
-
 void CLogOutput::RemoveSubscriber(ILogSubscriber *ls)
 {
 	GML_STDMUTEX_LOCK(log); // RemoveSubscriber
 
 	subscribers.erase(std::find(subscribers.begin(), subscribers.end(), ls));
 }
+
+
 
 void CLogOutput::SetSubscribersEnabled(bool enabled) {
 	subscribersEnabled = enabled;
@@ -363,10 +378,11 @@ bool CLogOutput::IsSubscribersEnabled() const {
 	return subscribersEnabled;
 }
 
+
+
 // ----------------------------------------------------------------------
 // Printing functions
 // ----------------------------------------------------------------------
-
 
 void CLogOutput::Print(CLogSubsystem& subsystem, const char* fmt, ...)
 {
@@ -420,15 +436,14 @@ CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
 	return LOG_DEFAULT;
 }
 
+
+
 void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& message)
 {
 	if (message.empty())
 		return;
 	const bool newline = (message.at(message.size() -1) != '\n');
 
-	if (subsystem.name && *subsystem.name) {
-		std::cout << subsystem.name << ": ";
-	}
 	std::cout << message;
 	if (newline)
 		std::cout << std::endl;
@@ -446,13 +461,6 @@ void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string& messa
 		return;
 	const bool newline = (message.at(message.size() -1) != '\n');
 
-#if !defined UNITSYNC && !defined DEDICATED
-	if (gs) {
-		(*filelog) << IntToString(gs->frameNum, "[%7d] ");
-	}
-#endif
-	if (subsystem.name && *subsystem.name)
-		(*filelog) << subsystem.name << ": ";
 	(*filelog) << message;
 	if (newline)
 		(*filelog) << std::endl;
