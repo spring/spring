@@ -3180,7 +3180,7 @@ int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 	}
 
 	const LocalModelPiece* lmp = lm->pieces[pieceIndex];
-	const CollisionVolume* vol = lmp->colvol;
+	const CollisionVolume* vol = lmp->GetCollisionVolume();
 
 	lua_pushnumber(L, vol->GetScales().x);
 	lua_pushnumber(L, vol->GetScales().y);
@@ -4751,7 +4751,7 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 	lua_newtable(L);
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
-		lua_pushstring(L, lp.name.c_str());
+		lua_pushstring(L, lp.original->name.c_str());
 		lua_pushnumber(L, i + 1);
 		lua_rawset(L, -3);
 	}
@@ -4770,7 +4770,7 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
 		lua_pushnumber(L, i + 1);
-		lua_pushstring(L, lp.name.c_str());
+		lua_pushstring(L, lp.original->name.c_str());
 		lua_rawset(L, -3);
 	}
 	HSTR_PUSH_NUMBER(L, "n", localModel->pieces.size());
@@ -4987,7 +4987,7 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 
 	lua_newtable(L);
 	for (size_t sp = 0; sp < pieces.size(); sp++) {
-		lua_pushstring(L, pieces[sp]->name.c_str());
+		lua_pushstring(L, pieces[sp]->original->name.c_str());
 		lua_pushnumber(L, sp);
 		lua_rawset(L, -3);
 	}

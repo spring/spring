@@ -94,7 +94,7 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	float3 diffPos;
 
 	if (piece != NULL && unit->unitDef->usePieceCollisionVolumes && damageFrame == gs->frameNum) {
-		volume = piece->colvol;
+		volume = piece->GetCollisionVolume();
 		basePos = piece->GetPos() + volume->GetOffsets();
 		basePos = unit->pos + 
 			unit->rightdir * basePos.x +
