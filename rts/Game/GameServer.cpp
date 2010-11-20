@@ -1908,7 +1908,18 @@ void CGameServer::PushAction(const Action& action)
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
-		isPaused = !isPaused;
+		bool newPausedState = isPaused;
+		if (action.extra.empty()) {
+			// if no param is given, toggle paused state
+			newPausedState = !isPaused;
+		} else {
+			// if a param is given, interpret it as "bool setPaused"
+			SetBoolArg(newPausedState, action.extra);
+		}
+		if (newPausedState != isPaused) {
+			// the state changed
+			isPaused = newPausedState;
+		}
 	}
 	else {
 		// only forward to players (send over network)
