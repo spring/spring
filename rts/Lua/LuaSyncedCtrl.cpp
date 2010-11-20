@@ -1823,20 +1823,20 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	if (affectLocal) {
 		// affects this unit only
 		if (enableLocal) {
-			lmp->colvol->Init(scales, offset, vType, tType, pAxis);
-			lmp->colvol->Enable();
+			lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
+			lmp->GetCollisionVolume()->Enable();
 		} else {
-			lmp->colvol->Disable();
+			lmp->GetCollisionVolume()->Disable();
 		}
 	}
 
 	if (affectGlobal) {
 		// affects all future units with this model
 		if (enableGlobal) {
-			omp->colvol->Init(scales, offset, vType, tType, pAxis);
-			omp->colvol->Enable();
+			omp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
+			omp->GetCollisionVolume()->Enable();
 		} else {
-			omp->colvol->Disable();
+			omp->GetCollisionVolume()->Disable();
 		}
 	}
 
