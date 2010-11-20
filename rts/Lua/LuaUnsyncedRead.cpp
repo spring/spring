@@ -1245,6 +1245,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	const int my = luaL_checkint(L, 2);
 	const bool onlyCoords = (lua_isboolean(L, 3) && lua_toboolean(L, 3));
 	const bool useMiniMap = (lua_isboolean(L, 4) && lua_toboolean(L, 4));
+	const bool includeSky = (lua_isboolean(L, 5) && lua_toboolean(L, 5));
 
 	const int wx = mx + globalRendering->viewPosX;
 	const int wy = globalRendering->viewSizeY - 1 - my - globalRendering->viewPosY;
@@ -1295,31 +1296,36 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 	const float badRange = (range - 300.0f);
 	if ((udist > badRange) && (fdist > badRange) && (unit == NULL)) {
-		return 0;
-	}
-
-	if (!onlyCoords) {
-		if (udist > fdist) {
-			unit = NULL;
+		if (includeSky) {
+			lua_pushstring(L, "sky");
 		} else {
-			feature = NULL;
+			return 0;
+		}
+	} else {
+		if (!onlyCoords) {
+			if (udist > fdist) {
+				unit = NULL;
+			} else {
+				feature = NULL;
+			}
+	
+			if (unit != NULL) {
+				lua_pushstring(L, "unit");
+				lua_pushnumber(L, unit->id);
+				return 2;
+			}
+	
+			if (feature != NULL) {
+				lua_pushstring(L, "feature");
+				lua_pushnumber(L, feature->id);
+				return 2;
+			}
 		}
 
-		if (unit != NULL) {
-			lua_pushstring(L, "unit");
-			lua_pushnumber(L, unit->id);
-			return 2;
-		}
-
-		if (feature != NULL) {
-			lua_pushstring(L, "feature");
-			lua_pushnumber(L, feature->id);
-			return 2;
-		}
+		lua_pushstring(L, "ground");
 	}
 
 	const float3 groundPos = pos + (dir * udist);
-	lua_pushstring(L, "ground");
 	lua_newtable(L);
 	lua_pushnumber(L, 1); lua_pushnumber(L, groundPos.x); lua_rawset(L, -3);
 	lua_pushnumber(L, 2); lua_pushnumber(L, groundPos.y); lua_rawset(L, -3);
