@@ -173,7 +173,7 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
 		dlist = displayLists.GetDList(ilist);
 	} else {
-		dlist = localPiece->displist; // set to the default
+		dlist = localPiece->dispListID; // set to the default
 	}
 
 	localPiece->lodDispLists[lod] = dlist;
@@ -289,7 +289,7 @@ static GLuint ParseUnitTexture(const string& texture)
 		if (fd == NULL) {
 			return 0;
 		}
-		model = LoadModel(fd);
+		model = fd->LoadModel();
 	} else {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
 		if (ud == NULL) {

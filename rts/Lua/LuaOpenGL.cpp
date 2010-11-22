@@ -1518,7 +1518,7 @@ int LuaOpenGL::UnitPiece(lua_State* L)
 	}
 	LocalModelPiece* localPiece = localModel->pieces[piece];
 
-	glCallList(localPiece->displist);
+	glCallList(localPiece->dispListID);
 
 	return 0;
 }
@@ -1638,7 +1638,7 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 	if (fd == NULL) {
 		return 0;
 	}
-	const S3DModel* model = LoadModel(fd);
+	const S3DModel* model = fd->LoadModel();
 	if (model == NULL) {
 		return 0;
 	}
@@ -3343,7 +3343,7 @@ static bool ParseUnitTexture(const string& texture)
 		if (fd == NULL) {
 			return false;
 		}
-		model = LoadModel(fd);
+		model = fd->LoadModel();
 	} else {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
 		if (ud == NULL) {

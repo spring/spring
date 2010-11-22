@@ -64,7 +64,7 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* lmp, int f, CUnit* owner, float radius):
 	CProjectile(pos, speed, owner, true, false, true),
 	flags(f),
-	dispList(lmp? lmp->displist: 0),
+	dispList(lmp? lmp->dispListID: 0),
 	omp(NULL),
 	spinAngle(0.0f),
 	alphaThreshold(0.1f),

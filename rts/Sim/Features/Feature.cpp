@@ -108,7 +108,7 @@ void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDef(defName);
 	if (def->drawType == DRAWTYPE_MODEL) {
-		model = LoadModel(def);
+		model = def->LoadModel();
 		height = model->height;
 		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
@@ -158,7 +158,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	noSelect = def->noSelect;
 
 	if (def->drawType == DRAWTYPE_MODEL) {
-		model = LoadModel(def);
+		model = def->LoadModel();
 		if (!model) {
 			logOutput.Print("Features: Couldn't load model for " + defName);
 			SetRadius(0.0f);

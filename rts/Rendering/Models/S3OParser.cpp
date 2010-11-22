@@ -50,7 +50,7 @@ S3DModel* CS3OParser::Load(const std::string& name)
 
 	SS3OPiece* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPiece);
 
-	model->rootobject = rootPiece;
+	model->SetRootPiece(rootPiece);
 	model->radius = header.radius;
 	model->height = header.height;
 

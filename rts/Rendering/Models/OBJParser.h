@@ -17,7 +17,7 @@ struct SOBJPiece: public S3DModelPiece {
 public:
 	SOBJPiece() {
 		parent      = NULL;
-		displist    = 0;
+		dispListID  = 0;
 		isEmpty     = true;
 		type        = MODELTYPE_OBJ;
 		colvol      = NULL;

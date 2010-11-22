@@ -24,25 +24,13 @@ struct LocalModelPiece;
 
 
 struct S3DModelPiece {
-	std::string name;
-	std::vector<S3DModelPiece*> childs;
+	S3DModelPiece(): type(-1) {
+		parent = NULL;
+		colvol = NULL;
 
-	S3DModelPiece* parent;
-
-	bool isEmpty;
-	unsigned int displist;
-
-	//! MODELTYPE_*
-	int type;
-
-	// defaults to a box
-	CollisionVolume* colvol;
-
-	// float3 dir;    // TODO?
-	float3 mins;
-	float3 maxs;
-	float3 offset;    // wrt. parent
-	float3 goffset;   // wrt. root
+		isEmpty = true;
+		dispListID = 0;
+	}
 
 	virtual ~S3DModelPiece();
 	virtual void DrawList() const = 0;
@@ -54,19 +42,50 @@ struct S3DModelPiece {
 	virtual const float3& GetVertexPos(int) const = 0;
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 	void DrawStatic() const;
+
+
+	std::string name;
+	std::vector<S3DModelPiece*> childs;
+
+	S3DModelPiece* parent;
+	CollisionVolume* colvol;
+
+	bool isEmpty;
+	unsigned int dispListID;
+
+	//! MODELTYPE_*
+	int type;
+
+	// float3 dir;    // TODO?
+	float3 mins;
+	float3 maxs;
+	float3 offset;    // wrt. parent
+	float3 goffset;   // wrt. root
 };
 
 
 struct S3DModel
 {
-	int id; //! unsynced ID, starting with 1
+	S3DModel(): id(-1), type(-1), textureType(-1) {
+		numobjects = 0;
 
-	int type;               //! MODELTYPE_*
-	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+		radius = 0.0f;
+		height = 0.0f;
+
+		rootPiece = NULL;
+	}
+
+	inline S3DModelPiece* GetRootPiece() { return rootPiece; }
+	inline void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
+	inline void DrawStatic() const { rootPiece->DrawStatic(); }
 
 	std::string name;
 	std::string tex1;
 	std::string tex2;
+
+	int id;                 //! unsynced ID, starting with 1
+	int type;               //! MODELTYPE_*
+	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
 
 	int numobjects;
 	float radius;
@@ -76,9 +95,7 @@ struct S3DModel
 	float3 maxs;
 	float3 relMidPos;
 
-	S3DModelPiece* rootobject;
-
-	inline void DrawStatic() const { rootobject->DrawStatic(); };
+	S3DModelPiece* rootPiece;
 };
 
 
@@ -102,7 +119,7 @@ struct LocalModelPiece
 	// of the original->colvol
 	CollisionVolume* colvol;
 
-	unsigned int displist;
+	unsigned int dispListID;
 	std::vector<unsigned int> lodDispLists;
 
 	void Draw() const;

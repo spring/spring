@@ -30,9 +30,9 @@ C3DModelLoader* modelParser = NULL;
 C3DModelLoader::C3DModelLoader(void)
 {
 	// file-extension should be lowercase
-	AddParser("3do", new C3DOParser());
-	AddParser("s3o", new CS3OParser());
-	AddParser("obj", new COBJParser());
+	parsers["3do"] = new C3DOParser();
+	parsers["s3o"] = new CS3OParser();
+	parsers["obj"] = new COBJParser();
 }
 
 
@@ -41,8 +41,10 @@ C3DModelLoader::~C3DModelLoader(void)
 	// delete model cache
 	std::map<std::string, S3DModel*>::iterator ci;
 	for (ci = cache.begin(); ci != cache.end(); ++ci) {
-		DeleteChilds(ci->second->rootobject);
-		delete ci->second;
+		S3DModel* model = ci->second;
+
+		DeleteChilds(model->GetRootPiece());
+		delete model;
 	}
 	cache.clear();
 
@@ -61,10 +63,20 @@ C3DModelLoader::~C3DModelLoader(void)
 }
 
 
-void C3DModelLoader::AddParser(const std::string& ext, IModelParser* parser)
-{
-	parsers[ext] = parser;
+
+inline int ModelExtToModelType(const std::string& ext) {
+	if (ext == "3do") { return MODELTYPE_3DO; }
+	if (ext == "s3o") { return MODELTYPE_S3O; }
+	if (ext == "obj") { return MODELTYPE_OBJ; }
+	return -1;
 }
+inline S3DModelPiece* ModelTypeToModelPiece(int type) {
+	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
+	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
+	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
+	return NULL;
+}
+
 
 
 S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffset)
@@ -80,22 +92,36 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 	}
 
 	//! not found in cache, create the model and cache it
-	const std::string fileExt = filesystem.GetExtension(name);
-	std::map<std::string, IModelParser*>::iterator pi = parsers.find(fileExt);
+	const std::string& fileExt = filesystem.GetExtension(name);
+	const std::map<std::string, IModelParser*>::iterator pi = parsers.find(fileExt);
+
 	if (pi != parsers.end()) {
 		IModelParser* p = pi->second;
-		S3DModel* model = p->Load(name);
+		S3DModel* model = NULL;
+		S3DModelPiece* root = NULL;
 
-		model->relMidPos += centerOffset;
+		try {
+			model = p->Load(name);
+			model->relMidPos += centerOffset;
+		} catch (content_error&) {
+			// crash-dummy
+			model = new S3DModel();
+			model->type = ModelExtToModelType(StringToLower(fileExt));
+			model->SetRootPiece(ModelTypeToModelPiece(model->type));
 
-		CreateLists(model->rootobject);
+			logOutput.Print("WARNING: could not load model \"" + name + "\" (missing file?)");
+		}
 
-		cache[name] = model;    //! cache model
+		if ((root = model->GetRootPiece()) != NULL) {
+			CreateLists(root);
+		}
+
+		cache[name] = model;    //! cache the model
 		model->id = cache.size(); //! IDs start with 1
 		return model;
 	}
 
-	logOutput.Print("couldn't find a parser for model named \"" + name + "\"");
+	logOutput.Print("ERROR: could not find a parser for model \"" + name + "\" (unknown format?)");
 	return NULL;
 }
 
@@ -171,7 +197,7 @@ LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 	lmodel->pieces[0]->parent = NULL;
 
 	int piecenum = 0;
-	CreateLocalModelPieces(model->rootobject, lmodel, &piecenum);
+	CreateLocalModelPieces(model->GetRootPiece(), lmodel, &piecenum);
 	return lmodel;
 }
 
@@ -179,15 +205,14 @@ LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
 {
 	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
-	lmp.original  =  piece;
-	lmp.name      =  piece->name;
-	lmp.type      =  piece->type;
-	lmp.displist  =  piece->displist;
-	lmp.visible   = !piece->isEmpty;
-	lmp.updated   =  false;
-	lmp.pos       =  piece->offset;
-	lmp.rot       =  float3(0.0f, 0.0f, 0.0f);
-	lmp.colvol    = new CollisionVolume(piece->colvol);
+	lmp.original   =  piece;
+	lmp.name       =  piece->name;
+	lmp.type       =  piece->type;
+	lmp.dispListID =  piece->dispListID;
+	lmp.visible    = !piece->isEmpty;
+	lmp.pos        =  piece->offset;
+	lmp.rot        =  float3(0.0f, 0.0f, 0.0f);
+	lmp.colvol     =  new CollisionVolume(piece->colvol);
 
 	lmp.childs.reserve(piece->childs.size());
 	for (unsigned int i = 0; i < piece->childs.size(); i++) {
@@ -202,13 +227,13 @@ void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lm
 void C3DModelLoader::FixLocalModel(CUnit* unit)
 {
 	int piecenum = 0;
-	FixLocalModel(unit->model->rootobject, unit->localmodel, &piecenum);
+	FixLocalModel(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
 }
 
 
 void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
 {
-	lmodel->pieces[*piecenum]->displist = model->displist;
+	lmodel->pieces[*piecenum]->dispListID = model->dispListID;
 
 	for (unsigned int i = 0; i < model->childs.size(); i++) {
 		(*piecenum)++;
@@ -219,8 +244,8 @@ void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
-	o->displist = glGenLists(1);
-	glNewList(o->displist, GL_COMPILE);
+	o->dispListID = glGenLists(1);
+	glNewList(o->dispListID, GL_COMPILE);
 	o->DrawList();
 	glEndList();
 
