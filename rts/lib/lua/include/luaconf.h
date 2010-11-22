@@ -352,7 +352,7 @@
 */
 //SPRING
 #undef LUA_COMPAT_LSTR
-//#undef LUA_COMPAT_LSTR		1
+//#define LUA_COMPAT_LSTR		1
 
 /*
 @@ LUA_COMPAT_GFIND controls compatibility with old 'string.gfind' name.
@@ -594,7 +594,6 @@ union luai_Cast { double l_d; long l_l; };
 
 #endif
 
-
 /* }================================================================== */
 
 
@@ -616,7 +615,7 @@ union luai_Cast { double l_d; long l_l; };
 ** compiling as C++ code, with _longjmp/_setjmp when asked to use them,
 ** and with longjmp/setjmp otherwise.
 */
-#if defined(__cplusplus) && !(defined(__GNUC__) && (__GNUC__ == 4)) // FIXME: Some bug in GCC 4.2, 4.3, ... makes try/catch crash
+#if defined(__cplusplus)
 /* C++ exceptions */
 #define LUAI_THROW(L,c)	throw(c)
 #define LUAI_TRY(L,c,a)	try { a } catch(...) \
