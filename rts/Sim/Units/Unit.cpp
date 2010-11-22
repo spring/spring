@@ -1481,6 +1481,9 @@ void CUnit::Init(const CUnit* builder)
 		Block();
 	}
 
+	if (unitDef->windGenerator > 0.0f) {
+		wind.AddUnit(this);
+	}
 
 	isUnderWater = ((pos.y + model->height) < 0.0f);
 	UpdateTerrainType();
@@ -1717,10 +1720,6 @@ void CUnit::FinishedBuilding()
 	}
 
 	ChangeLos(realLosRadius, realAirLosRadius);
-
-	if (unitDef->windGenerator > 0.0f) {
-		wind.AddUnit(this);
-	}
 
 	if (unitDef->activateWhenBuilt) {
 		Activate();
