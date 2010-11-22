@@ -305,11 +305,12 @@ CUnit::~CUnit()
 
 	qf->RemoveUnit(this);
 	loshandler->DelayedFreeInstance(los);
-	los = 0;
+	los = NULL;
 	radarhandler->RemoveUnit(this);
 
 	if (script != &CNullUnitScript::value) {
 		delete script;
+		script = NULL;
 	}
 
 	modelParser->DeleteLocalModel(this);
@@ -1192,9 +1193,9 @@ void CUnit::DoSeismicPing(float pingSize)
 void CUnit::ChangeLos(int l, int airlos)
 {
 	loshandler->FreeInstance(los);
-	los=0;
-	losRadius=l;
-	airLosRadius=airlos;
+	los = NULL;
+	losRadius = l;
+	airLosRadius = airlos;
 	loshandler->MoveUnit(this, false);
 }
 
