@@ -1887,18 +1887,13 @@ void CGameServer::PushAction(const Action& action)
 			}
 		}
 	}
-#ifdef DEDICATED // we already have a quit command in the client
-	else if (action.command == "kill")
-	{
+	else if (action.command == "kill") {
 		quitServer = true;
 	}
-	else if (action.command == "pause")
-	{
+	else if (action.command == "pause") {
 		isPaused = !isPaused;
 	}
-#endif
-	else
-	{
+	else {
 		// only forward to players (send over network)
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
