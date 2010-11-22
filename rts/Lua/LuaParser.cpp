@@ -24,16 +24,6 @@
 #include "Util.h"
 #include "System/myTime.h"
 
-
-#if (LUA_VERSION_NUM < 500)
-#  define LUA_OPEN_LIB(L, lib) lib(L)
-#else
-#  define LUA_OPEN_LIB(L, lib) \
-     lua_pushcfunction((L), lib); \
-     lua_pcall((L), 0, 0, 0);
-#endif
-
-
 LuaParser* LuaParser::currentParser = NULL;
 
 

@@ -68,7 +68,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
   callinErrors(0)
 {
 	L = lua_open();
-	luaopen_debug(L);
+	LUA_OPEN_LIB(L, luaopen_debug);
 }
 
 
