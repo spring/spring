@@ -1,13 +1,6 @@
 Lua-5.1.4 source code modifications:
 
-  1. Patch from Lua-5.1.2 to Lua-5.1.4 has been applied
-     on top of the result from the steps for Lua 5.1.2.
-
-  2. Removed the GZIP'ed files (step 6 below.)
-
-Lua-5.1.2 source code modifications:
-
-  1. Applied the pushhstring patch
+  1. Applied the patch-lua-5.1.4-2.diff patch
 
   2. Moved the following headers from src/ into include/:
      - lua.h
@@ -32,7 +25,7 @@ Lua-5.1.2 source code modifications:
 
   6. Swapped <math.h> includes with "streflop_cond.h" includes  (for sync) 
 
-  6. GZIP'ed the following files:
+  6. removed the following files:
      doc/*
      etc/*
      test/*
@@ -58,3 +51,6 @@ Lua-5.1.2 source code modifications:
         lua_set_system()
         lua_set_remove()
         lua_set_rename()
+        lua_calchash()
+        lua_pushhstring()
+

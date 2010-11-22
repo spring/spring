@@ -151,27 +151,26 @@ LUA_API void  (lua_xmove) (lua_State *from, lua_State *to, int n);
 ** access functions (stack -> C)
 */
 
-LUA_API int             (lua_isnumber)    (lua_State *L, int idx);
-LUA_API int             (lua_isstring)    (lua_State *L, int idx);
+LUA_API int             (lua_isnumber) (lua_State *L, int idx);
+LUA_API int             (lua_isstring) (lua_State *L, int idx);
 LUA_API int             (lua_iscfunction) (lua_State *L, int idx);
-LUA_API int             (lua_isuserdata)  (lua_State *L, int idx);
-LUA_API int             (lua_type)        (lua_State *L, int idx);
-LUA_API const char     *(lua_typename)    (lua_State *L, int tp);
+LUA_API int             (lua_isuserdata) (lua_State *L, int idx);
+LUA_API int             (lua_type) (lua_State *L, int idx);
+LUA_API const char     *(lua_typename) (lua_State *L, int tp);
 
-LUA_API int             (lua_equal)    (lua_State *L, int idx1, int idx2);
-LUA_API int             (lua_rawequal) (lua_State *L, int idx1, int idx2);
-LUA_API int             (lua_lessthan) (lua_State *L, int idx1, int idx2);
+LUA_API int            (lua_equal) (lua_State *L, int idx1, int idx2);
+LUA_API int            (lua_rawequal) (lua_State *L, int idx1, int idx2);
+LUA_API int            (lua_lessthan) (lua_State *L, int idx1, int idx2);
 
-LUA_API lua_Number      (lua_tonumber)    (lua_State *L, int idx);
-LUA_API lua_Integer     (lua_tointeger)   (lua_State *L, int idx);
-LUA_API bool            (lua_toboolean)   (lua_State *L, int idx);
-LUA_API const char     *(lua_tolstring)   (lua_State *L, int idx, size_t *len);
-LUA_API size_t          (lua_objlen)      (lua_State *L, int idx);
+LUA_API lua_Number      (lua_tonumber) (lua_State *L, int idx);
+LUA_API lua_Integer     (lua_tointeger) (lua_State *L, int idx);
+LUA_API bool             (lua_toboolean) (lua_State *L, int idx);
+LUA_API const char     *(lua_tolstring) (lua_State *L, int idx, size_t *len);
+LUA_API size_t          (lua_objlen) (lua_State *L, int idx);
 LUA_API lua_CFunction   (lua_tocfunction) (lua_State *L, int idx);
-LUA_API void           *(lua_touserdata)  (lua_State *L, int idx);
-LUA_API lua_State      *(lua_tothread)    (lua_State *L, int idx);
-LUA_API const void     *(lua_topointer)   (lua_State *L, int idx);
-LUA_API const void     *(lua_metapointer) (lua_State *L, int idx);
+LUA_API void	       *(lua_touserdata) (lua_State *L, int idx);
+LUA_API lua_State      *(lua_tothread) (lua_State *L, int idx);
+LUA_API const void     *(lua_topointer) (lua_State *L, int idx);
 
 
 /*
@@ -185,8 +184,6 @@ LUA_API void  (lua_pushstring) (lua_State *L, const char *s);
 LUA_API const char *(lua_pushvfstring) (lua_State *L, const char *fmt,
                                                       va_list argp);
 LUA_API const char *(lua_pushfstring) (lua_State *L, const char *fmt, ...);
-LUA_API void  (lua_pushhstring) (lua_State *L,
-                                 lua_Hash h, const char *s, size_t l);
 LUA_API void  (lua_pushcclosure) (lua_State *L, lua_CFunction fn, int n);
 LUA_API void  (lua_pushboolean) (lua_State *L, int b);
 LUA_API void  (lua_pushlightuserdata) (lua_State *L, void *p);
@@ -265,8 +262,10 @@ LUA_API void  (lua_concat) (lua_State *L, int n);
 LUA_API lua_Alloc (lua_getallocf) (lua_State *L, void **ud);
 LUA_API void lua_setallocf (lua_State *L, lua_Alloc f, void *ud);
 
-/* for lua_pushhstring() */
+//SPRING
 LUA_API lua_Hash (lua_calchash) (const char *s, size_t l);
+LUA_API void  (lua_pushhstring) (lua_State *L,
+                                 lua_Hash h, const char *s, size_t l);
 
 
 /* 

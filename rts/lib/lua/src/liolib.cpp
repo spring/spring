@@ -1,5 +1,5 @@
 /*
-** $Id: liolib.c,v 2.73.1.3 2008/01/18 17:47:43 roberto Exp $
+** $Id: liolib.c,v 2.73.1.4 2010/05/14 15:33:51 roberto Exp $
 ** Standard I/O (and system) library
 ** See Copyright Notice in lua.h
 */
@@ -119,7 +119,7 @@ static int io_noclose (lua_State *L) {
 */
 static int io_pclose (lua_State *L) {
   FILE **p = tofilep(L);
-  int ok = lua_pclose(L, *p); // FIXME - SPRING L->pclose_func
+  int ok = lua_pclose(L, *p);
   *p = NULL;
   return pushresult(L, ok, NULL);
 }
@@ -174,7 +174,7 @@ static int io_open (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
   FILE **pf = newfile(L);
-  *pf = lua_fopen(L, filename, mode);
+  *pf = lua_fopen(L, filename, mode); //SPRING
   return (*pf == NULL) ? pushresult(L, 0, filename) : 1;
 }
 
@@ -187,7 +187,7 @@ static int io_popen (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
   FILE **pf = newfile(L);
-  *pf = lua_popen(L, filename, mode); // FIXME - SPRING L->popen_func
+  *pf = lua_popen(L, filename, mode);
   return (*pf == NULL) ? pushresult(L, 0, filename) : 1;
 }
 
@@ -214,7 +214,7 @@ static int g_iofile (lua_State *L, int f, const char *mode) {
     const char *filename = lua_tostring(L, 1);
     if (filename) {
       FILE **pf = newfile(L);
-      *pf = lua_fopen(L, filename, mode);
+      *pf = lua_fopen(L, filename, mode); //SPRING
       if (*pf == NULL)
         fileerror(L, 1, filename);
     }
@@ -266,7 +266,7 @@ static int io_lines (lua_State *L) {
   else {
     const char *filename = luaL_checkstring(L, 1);
     FILE **pf = newfile(L);
-    *pf = lua_fopen(L, filename, "r");
+    *pf = lua_fopen(L,filename, "r"); //SPRING
     if (*pf == NULL)
       fileerror(L, 1, filename);
     aux_lines(L, lua_gettop(L), 1);
@@ -288,7 +288,10 @@ static int read_number (lua_State *L, FILE *f) {
     lua_pushnumber(L, d);
     return 1;
   }
-  else return 0;  /* read fails */
+  else {
+    lua_pushnil(L);  /* "result" to be removed */
+    return 0;  /* read fails */
+  }
 }
 
 

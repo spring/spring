@@ -7,7 +7,7 @@
 
 #include <stddef.h>
 
-// Spring
+//SPRING
 #include "System/mmgr.h"
 
 #define lmem_c
