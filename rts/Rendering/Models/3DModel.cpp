@@ -25,7 +25,7 @@ void S3DModelPiece::DrawStatic() const
 {
 	glPushMatrix();
 	glTranslatef(offset.x, offset.y, offset.z);
-	glCallList(displistID);
+	glCallList(dispListID);
 	for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ci++) {
 		(*ci)->DrawStatic();
 	}
