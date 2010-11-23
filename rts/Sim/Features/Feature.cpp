@@ -57,24 +57,24 @@ CR_REG_METADATA(CFeature, (
 
 CFeature::CFeature():
 	isRepairingBeforeResurrect(false),
-	resurrectProgress(0),
-	health(0),
-	reclaimLeft(1),
+	resurrectProgress(0.0f),
+	health(0.0f),
+	reclaimLeft(1.0f),
 	luaDraw(false),
 	noSelect(false),
 	tempNum(0),
 	lastReclaim(0),
-	def(0),
-	collisionVolume(0),
+	def(NULL),
+	collisionVolume(NULL),
 	inUpdateQue(false),
 	drawQuad(-2),
-	finalHeight(0),
+	finalHeight(0.0f),
 	reachedFinalPos(false),
-	myFire(0),
+	myFire(NULL),
 	fireTime(0),
 	emitSmokeTime(0),
-	solidOnTop(0),
-	tempalpha(1)
+	solidOnTop(NULL),
+	tempalpha(1.0f)
 {
 	immobile = true;
 	physicalState = OnGround;

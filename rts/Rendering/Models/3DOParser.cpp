@@ -218,7 +218,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		for(list<int>::iterator vi=orderVert.begin();vi!=orderVert.end();++vi)
 			vertHash=(vertHash+(*vi))*(*vi);
 
-		sp.texture=0;
+		sp.texture=NULL;
 		if(p.OffsetToTextureName!=0)
 		{
 			string texture = GetText(p.OffsetToTextureName);
@@ -229,7 +229,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 			else
 				sp.texture=texturehandler3DO->Get3DOTexture(texture + "00");
 
-			if(sp.texture==0)
+			if(sp.texture==NULL)
 				LogObject() << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
 		} else {
 			char t[50];
