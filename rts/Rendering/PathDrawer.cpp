@@ -35,9 +35,9 @@ void PathDrawer::Draw() const {
 		glPushAttrib(GL_ENABLE_BIT);
 		Draw(pathManager);
 
-		Draw(pathManager->pf);
-		Draw(pathManager->pe);
-		Draw(pathManager->pe2);
+		Draw(pathManager->maxResPF);
+		Draw(pathManager->medResPE);
+		Draw(pathManager->lowResPE);
 		glPopAttrib();
 	}
 	#endif
@@ -62,19 +62,19 @@ void PathDrawer::Draw(const CPathManager* pm) const {
 
 			// draw estimatePath2 (green)
 			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-			for (PathIt pvi = path->estimatedPath2.path.begin(); pvi != path->estimatedPath2.path.end(); pvi++) {
+			for (PathIt pvi = path->lowResPath.path.begin(); pvi != path->lowResPath.path.end(); pvi++) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw estimatePath (blue)
 			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->estimatedPath.path.begin(); pvi != path->estimatedPath.path.end(); pvi++) {
+			for (PathIt pvi = path->medResPath.path.begin(); pvi != path->medResPath.path.end(); pvi++) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw detailPath (red)
 			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->detailedPath.path.begin(); pvi != path->detailedPath.path.end(); pvi++) {
+			for (PathIt pvi = path->maxResPath.path.begin(); pvi != path->maxResPath.path.end(); pvi++) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
@@ -99,12 +99,12 @@ void PathDrawer::Draw(const CPathFinder* pf) const {
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 
-	for (unsigned int idx = 0; idx < pf->openSquareBufferIndex; idx++) {
-		const CPathFinder::OpenSquare* os = &pf->openSquareBuffer[idx];
-		const int2 sqr = os->square;
-		const int square = os->sqr;
+	for (unsigned int idx = 0; idx < pf->openSquareBuffer.GetSize(); idx++) {
+		const PathNode* os = pf->openSquareBuffer.GetNode(idx);
+		const int2 sqr = os->nodePos;
+		const int square = os->nodeNum;
 
-		if (pf->squareState[square].status & CPathFinder::PATHOPT_START)
+		if (pf->squareStates[square].nodeMask & PATHOPT_START)
 			continue;
 
 		float3 p1;
@@ -113,7 +113,7 @@ void PathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int dir = pf->squareState[square].status & CPathFinder::PATHOPT_DIRECTION;
+		const int dir = pf->squareStates[square].nodeMask & PATHOPT_DIRECTION;
 		const int obx = sqr.x - pf->directionVector[dir].x;
 		const int obz = sqr.y - pf->directionVector[dir].y;
 		const int obsquare =  obz * gs->mapx + obx;
@@ -242,23 +242,23 @@ void PathDrawer::Draw(const CPathEstimator* pe) const {
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINES);
 
-	for (unsigned int idx = 0; idx < pe->openBlockBufferIndex; idx++) {
-		const CPathEstimator::OpenBlock* ob = &pe->openBlockBuffer[idx];
-		const int blocknr = ob->blocknr;
+	for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
+		const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
+		const int blocknr = ob->nodeNum;
 
 		float3 p1;
-			p1.x = (pe->blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p1.z = (pe->blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
+			p1.x = (pe->blockStates[blocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
+			p1.z = (pe->blockStates[blocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
 			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
 		float3 p2;
 
-		const int obx = pe->blockState[ob->blocknr].parentBlock.x;
-		const int obz = pe->blockState[ob->blocknr].parentBlock.y;
+		const int obx = pe->blockStates[ob->nodeNum].parentNodePos.x;
+		const int obz = pe->blockStates[ob->nodeNum].parentNodePos.y;
 		const int obblocknr = obz * pe->nbrOfBlocksX + obx;
 
 		if (obblocknr >= 0) {
-			p2.x = (pe->blockState[obblocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
-			p2.z = (pe->blockState[obblocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
+			p2.x = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
+			p2.z = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
 			p2.y = ground->GetHeight(p2.x, p2.z) + 15;
 
 			glVertexf3(p1);
