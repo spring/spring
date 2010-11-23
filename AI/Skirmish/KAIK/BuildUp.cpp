@@ -315,10 +315,10 @@ void CBuildUp::Buildup(int frame) {
 								BuildNow(econState.builderID, CAT_FACTORY, econState.factoryDef);
 							} else {
 								std::stringstream msg;
-									msg << "[CBuildUp::BuildUp()] frame " << frame << "\n";
+									msg << "[CBuildUp::BuildUp()][frame=" << frame << "]\n";
 									msg << "\tbuilder " << econState.builderID << " is currently in limbo";
 									msg << " (total number of idle builders: " << econState.nIdleBuilders << ")\n";
-								L(ai, msg.str());
+								ai->GetLogger()->Log(msg.str());
 							}
 						}
 					}

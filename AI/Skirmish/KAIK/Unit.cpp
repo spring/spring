@@ -165,11 +165,6 @@ bool CUNIT::Build_ClosestSite(const UnitDef* def, const float3& bpos, int separa
 	const int buildFacing = GetBestBuildFacing(bpos);
 	const float3 cpos = ai->cb->ClosestBuildSite(def, bpos, radius, separation, buildFacing);
 
-	// L(ai, "[CUNIT::Build_ClosestSite()] builder: " << uid << ", def: " << def);
-	// L(ai, "\tbpos: <" << bpos.x << ", " << bpos.y << ", " << bpos.z << ">");
-	// L(ai, "\tcpos: <" << cpos.x << ", " << cpos.y << ", " << cpos.z << ">");
-	// L(ai, "\n");
-
 	if (cpos.x != -1.0f) {
 		Build(cpos, def, buildFacing);
 		return true;

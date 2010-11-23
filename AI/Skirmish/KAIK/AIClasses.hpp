@@ -61,7 +61,7 @@ public:
 	CDGunControllerHandler* GetDGunControllerHandler() { return dgunControllerHandler; }
 
 	CCommandTracker* GetCommandTracker() { return commandTracker; }
-	CLogger* GetLogHandler() { return logHandler; }
+	CLogger* GetLogger() { return logHandler; }
 	LuaParser* GetLuaParser() { return luaConfigParser; }
 
 	CUNIT* GetUnit(int id) const {
@@ -114,7 +114,6 @@ private:
 #define dgunConHandler GetDGunControllerHandler()
 
 #define ct GetCommandTracker()
-#define logger GetLogHandler()
 #define luaParser GetLuaParser()
 
 #define unitIDs GetUnitIDs()
