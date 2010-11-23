@@ -20,7 +20,6 @@ public:
 		dispListID  = 0;
 		isEmpty     = true;
 		type        = MODELTYPE_OBJ;
-		colvol      = NULL;
 		mins        = ZeroVector;
 		maxs        = ZeroVector;
 	}

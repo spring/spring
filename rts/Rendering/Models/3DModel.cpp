@@ -50,7 +50,7 @@ LocalModel::~LocalModel()
 {
 	// delete the local piece copies
 	for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); ++pi) {
-		delete (*pi)->colvol;
+		delete (*pi)->GetCollisionVolume();
 		delete (*pi);
 	}
 	pieces.clear();
@@ -202,7 +202,7 @@ float3 LocalModelPiece::GetPos() const
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
 
-	if (type == MODELTYPE_3DO) {
+	if (original->type == MODELTYPE_3DO) {
 		// fix for valkyres
 		const S3DOPiece* p3 = static_cast<S3DOPiece*>(original);
 		if (p3 && (p3->vertices.size() == 2)) {

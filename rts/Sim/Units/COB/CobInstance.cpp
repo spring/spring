@@ -113,7 +113,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 		// Map this piecename to an index in the script's pieceinfo
 		for (cur=0; cur<lp.size(); cur++) {
-			if (lp[cur]->name.compare(scriptname) == 0) {
+			if (lp[cur]->original->name.compare(scriptname) == 0) {
 				break;
 			}
 		}
@@ -121,7 +121,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 		// Not found? Try lowercase
 		if (cur == lp.size()) {
 			for (cur=0; cur<lp.size(); cur++) {
-				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
+				if (StringToLower(lp[cur]->original->name).compare(scriptname) == 0) {
 					break;
 				}
 			}

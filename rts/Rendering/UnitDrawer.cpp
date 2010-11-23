@@ -1718,13 +1718,13 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 	glPushMatrix();
 		glMultMatrixf(mat.m);
 
-		if (p->visible && !p->colvol->IsDisabled()) {
+		if (p->visible && !p->GetCollisionVolume()->IsDisabled()) {
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glLineWidth(2.0f);
 				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
 
-			DrawCollisionVolume(p->colvol, q);
+			DrawCollisionVolume(p->GetCollisionVolume(), q);
 
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glLineWidth(1.0f);

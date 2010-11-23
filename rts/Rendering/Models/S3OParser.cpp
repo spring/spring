@@ -38,7 +38,7 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	S3DModel* model = new S3DModel;
 		model->name = name;
 		model->type = MODELTYPE_S3O;
-		model->numobjects = 0;
+		model->numPieces = 0;
 		model->tex1 = (char*) &fileBuf[header.texture1];
 		model->tex2 = (char*) &fileBuf[header.texture2];
 		model->mins = DEF_MIN_SIZE;
@@ -60,7 +60,7 @@ S3DModel* CS3OParser::Load(const std::string& name)
 
 SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned char* buf, int offset)
 {
-	model->numobjects++;
+	model->numPieces++;
 
 	Piece* fp = (Piece*)&buf[offset];
 	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
@@ -121,7 +121,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		(piece->maxs - piece->goffset) +
 		(piece->mins - piece->goffset);
 
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT);
+	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT));
 
 
 	int childTableOffset = fp->childs;
