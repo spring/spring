@@ -242,10 +242,11 @@ void AAIBuildTable::Init()
 		cb->GetUnitDefList(unitList);
 	}
 
-	// Try to load buildtable, if not possible create new one
+	// Try to load buildtable; if not possible, create a new one
 	if(!LoadBuildTable())
 	{
-		// one more than needed because 0 is dummy object (so UnitDef->id can be used to adress that unit in the array)
+		// one more than needed because 0 is dummy object
+		// (so UnitDef->id can be used to address that unit in the array)
 		units_static.resize(numOfUnits+1);
 		fixed_eff.resize(numOfUnits+1, vector<float>(combat_categories));
 
@@ -671,7 +672,7 @@ void AAIBuildTable::Init()
 			UnitCategory cat;
 			float eff;
 
-			for(int i = 0; i <= numOfUnits; ++i)
+			for(int i = 1; i <= numOfUnits; ++i)
 			{
 				cat = units_static[i].category;
 				eff = 1.5 + 7 * (units_static[i].cost - min_cost)/(max_cost - min_cost);

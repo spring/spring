@@ -1190,6 +1190,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		sub("^.*,[ \t]", "", _arrayType);
 		_arraySizeMaxPaNa = _arrayPaNa "_sizeMax";
 		_arraySizeVar     = _arrayPaNa "_size";
+		_arraySizeRaw     = _arrayPaNa "_raw_size";
 
 		_arrayListVar    = _arrayPaNa "_list";
 		if (_isF3) {
@@ -1233,12 +1234,14 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		}
 		if (!_isRetSize) {
 			declaredVarsCode = "\t\t" _arrayType "* " _arrayPaNa ";" "\n" declaredVarsCode;
+			declaredVarsCode = "\t\t" "int " _arraySizeRaw ";" "\n" declaredVarsCode;
 			if (_isFetching) {
 				declaredVarsCode = "\t\t" "int " _arraySizeMaxPaNa ";" "\n" declaredVarsCode;
 				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeMaxPaNa " = INT_MAX;" "\n";
 				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa " = NULL;" "\n";
 				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " = " myBridgePrefix functionName_m "(" innerParams ");" "\n";
 				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeMaxPaNa " = " _arraySizeVar ";" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeRaw " = " _arraySizeVar ";" "\n";
 				if (_isF3) {
 					conversionCode_pre = conversionCode_pre "\t\t" "if (" _arraySizeVar " % 3 != 0) {" "\n";
 					conversionCode_pre = conversionCode_pre "\t\t\t" "throw std::runtime_error(\"returned AIFloat3 array has incorrect size, should be a multiple of 3.\");" "\n";
@@ -1251,6 +1254,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				if (_isF3) {
 					conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " *= 3;" "\n";
 				}
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeRaw " = " _arraySizeVar ";" "\n";
 			}
 		}
 
@@ -1258,7 +1262,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			conversionCode_post = conversionCode_post "\t\t" _arraySizeVar " = " retVar_out_m ";" "\n";
 			_arraySizeMaxPaNa = _arraySizeVar;
 		} else {
-			conversionCode_pre  = conversionCode_pre  "\t\t" _arrayPaNa " = new " _arrayType "[" _arraySizeVar "];" "\n";
+			conversionCode_pre  = conversionCode_pre  "\t\t" _arrayPaNa " = new " _arrayType "[" _arraySizeRaw "];" "\n";
 		}
 
 		if (_isFetching) {

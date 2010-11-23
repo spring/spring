@@ -99,7 +99,6 @@ sRAIUnitDef::sRAIUnitDef(const UnitDef *unitdef, IAICallback* cb, GlobalResource
 //	*l<<" ud->buildTime="<<ud->buildTime;
 //	*l<<" ud->maxThisUnit="<<ud->maxThisUnit;
 	ListSize=0;
-	SetUnitLimit(ud->maxThisUnit);
 	CanBuild=false;
 	CanBeBuilt=false;
 	HasPrerequisite=false;
@@ -199,6 +198,8 @@ sRAIUnitDef::sRAIUnitDef(const UnitDef *unitdef, IAICallback* cb, GlobalResource
 //		if( iW->def->selfExplode )
 //			Destruct=iW->def;
 	}
+
+	SetUnitLimit(ud->maxThisUnit);
 
 	SetBestWeaponEff(&WeaponLandEff,1,MaxFiringRange);
 	SetBestWeaponEff(&WeaponAirEff,2,MaxFiringRange);
@@ -654,9 +655,9 @@ cRAIUnitDefHandler::cRAIUnitDefHandler(IAICallback* cb, GlobalResourceMap *RM, G
 	*l<<"\n Reading All Unit Definitions (Frame="<<cb->GetCurrentFrame()<<") ...";
 	for( int iud=cb->GetNumUnitDefs()-1; iud>=0; iud-- )
 	{
-		if( udList[iud] == 0 ) // Work-around: War Alien VS Human v1.0 (as well as other possible mods)
+		if( udList[iud] == NULL ) // Work-around: War Alien VS Human v1.0 (as well as other possible mods)
 		{
-			*l<<"\n  WARNING: (unitdef->id="<<iud+1<<") Mod UnitDefList["<<iud<<"] = 0";
+			*l<<"\n  WARNING: (unitdef->id="<<iud+1<<") Mod UnitDefList["<<iud<<"] = NULL";
 			udSize--;
 			udList[iud] = udList[udSize];
 		}
@@ -711,9 +712,9 @@ cRAIUnitDefHandler::cRAIUnitDefHandler(IAICallback* cb, GlobalResourceMap *RM, G
 	for( int iud=0; iud<udSize; iud++ )
 	{
 		const UnitDef* ud=udList[iud];
-		UDR.insert(iuPair(ud->id,*new sRAIUnitDef(ud,cb,RM,TM,EnergyToMetalRatio,l,MaxFiringRange)));
+		UDR.insert(iuPair(ud->id,sRAIUnitDef(ud,cb,RM,TM,EnergyToMetalRatio,l,MaxFiringRange)));
 	}
-	delete [] udList;
+	delete [] udList; udList = NULL;
 
 	*l<<"\n Reading UnitDef Build Options ...";
 	typedef pair<int,sRAIUnitDef*> iupPair; // used to access UDR->BuildOptions & UDR->PrerequisiteOptions

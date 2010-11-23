@@ -11,8 +11,8 @@
 //#include <sys/stat.h>	// mkdir function (linux)
 #include <time.h>		// time(NULL)
 
-static GlobalResourceMap* GRMap=0;
-static GlobalTerrainMap* GTMap=0;
+static GlobalResourceMap* GRMap=NULL;
+static GlobalTerrainMap* GTMap=NULL;
 static int RAIs=0;
 
 namespace std
