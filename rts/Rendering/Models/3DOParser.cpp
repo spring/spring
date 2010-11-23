@@ -138,13 +138,13 @@ S3DModel* C3DOParser::Load(const string& name)
 		model->name = name;
 		model->type = MODELTYPE_3DO;
 		model->textureType = 0;
-		model->numobjects  = 0;
+		model->numPieces  = 0;
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
 		model->radius = 0.0f;
 		model->height = 0.0f;
 
-	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numobjects);
+	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numPieces);
 
 	model->SetRootPiece(rootPiece);
 	model->radius =
@@ -374,7 +374,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 	piece->radius = math::sqrt(radiusSq);
 	piece->relMidPos = cvOffset * 0.5f;
-	piece->colvol = new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT);
+	piece->SetCollisionVolume(new CollisionVolume("box", cvScales, cvOffset * 0.5f, CollisionVolume::COLVOL_HITTEST_CONT));
 
 
 	if (me.OffsetToChildObject > 0) {

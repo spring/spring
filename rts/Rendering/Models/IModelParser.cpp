@@ -103,13 +103,15 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 		try {
 			model = p->Load(name);
 			model->relMidPos += centerOffset;
-		} catch (content_error&) {
+		} catch (const content_error& e) {
 			// crash-dummy
 			model = new S3DModel();
 			model->type = ModelExtToModelType(StringToLower(fileExt));
+			model->numPieces = 1;
 			model->SetRootPiece(ModelTypeToModelPiece(model->type));
+			model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", UpVector * -1.0f, ZeroVector, CollisionVolume::COLVOL_HITTEST_CONT));
 
-			logOutput.Print("WARNING: could not load model \"" + name + "\" (missing file?)");
+			logOutput.Print("WARNING: could not load model \"" + name + "\" (reason: " + e.what() + ")");
 		}
 
 		if ((root = model->GetRootPiece()) != NULL) {
@@ -170,7 +172,6 @@ void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 #endif
 }
 
-
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -185,43 +186,32 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 }
 
 
+
 LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 {
-	LocalModel* lmodel = new LocalModel;
-	lmodel->type = model->type;
-	lmodel->pieces.reserve(model->numobjects);
-
-	for (unsigned int i = 0; i < model->numobjects; i++) {
-		lmodel->pieces.push_back(new LocalModelPiece);
-	}
-	lmodel->GetRoot()->parent = NULL;
+	LocalModel* lmodel = new LocalModel(model);
 
 	int piecenum = 0;
 	CreateLocalModelPieces(model->GetRootPiece(), lmodel, &piecenum);
 	return lmodel;
 }
 
-
 void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
 {
-	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
-	lmp.original   =  piece;
-	lmp.name       =  piece->name;
-	lmp.type       =  piece->type;
-	lmp.dispListID =  piece->dispListID;
-	lmp.visible    = !piece->isEmpty;
-	lmp.pos        =  piece->offset;
-	lmp.rot        =  ZeroVector;
-	lmp.colvol     =  new CollisionVolume(piece->colvol);
+	LocalModelPiece* lmp = lmodel->pieces[*piecenum];
+	lmp->Init(piece);
+	lmp->SetCollisionVolume(new CollisionVolume(piece->GetCollisionVolume()));
 
-	lmp.childs.reserve(piece->childs.size());
 	for (unsigned int i = 0; i < piece->childs.size(); i++) {
 		(*piecenum)++;
-		lmp.childs.push_back(lmodel->pieces[*piecenum]);
-		lmodel->pieces[*piecenum]->parent = &lmp;
+
+		lmp->childs.push_back(lmodel->pieces[*piecenum]);
+		lmodel->pieces[*piecenum]->parent = lmp;
+
 		CreateLocalModelPieces(piece->childs[i], lmodel, piecenum);
 	}
 }
+
 
 
 void C3DModelLoader::FixLocalModel(CUnit* unit)

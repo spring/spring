@@ -72,6 +72,7 @@ static TString *newlstr (lua_State *L, const char *str, size_t l,
 }
 
 
+//SPRING
 static inline lua_Hash calchash(const char *str, size_t l) {
   lua_Hash h = cast(unsigned int, l);  /* seed */
   size_t step = (l>>5)+1;  /* if string is too long, don't hash all its chars */
@@ -83,10 +84,10 @@ static inline lua_Hash calchash(const char *str, size_t l) {
 }
 
 
+//SPRING
 LUA_API lua_Hash lua_calchash(const char *str, size_t l) {
   return calchash(str, l);
 }
-
 
 TString *luaS_newhstr (lua_State *L, lua_Hash h, const char *str, size_t l) {
   GCObject *o;
@@ -104,6 +105,7 @@ TString *luaS_newhstr (lua_State *L, lua_Hash h, const char *str, size_t l) {
 }
 
 
+//SPRING
 TString *luaS_newlstr (lua_State *L, const char *str, size_t l) {
   GCObject *o;
   const lua_Hash h = calchash(str, l);

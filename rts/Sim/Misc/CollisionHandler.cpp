@@ -216,7 +216,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	const float3& p1,
 	std::list<CollisionQuery>* hits)
 {
-	const CollisionVolume* vol = lmp->colvol;
+	const CollisionVolume* vol = lmp->GetCollisionVolume();
 	const float3& offset = vol->GetOffsets();
 
 	mat.Translate(lmp->pos);

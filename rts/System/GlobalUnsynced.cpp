@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 
 #include "GlobalUnsynced.h"
-#include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
@@ -19,8 +18,6 @@
 #include "System/Util.h"
 #include "System/creg/creg_cond.h"
 
-#include <string>
-#include <cassert>
 #include <SDL_timer.h>
 
 
@@ -35,25 +32,23 @@ CGlobalUnsynced* gu;
 CR_BIND(CGlobalUnsynced, );
 
 CR_REG_METADATA(CGlobalUnsynced, (
-				CR_MEMBER(modGameTime),
-				CR_MEMBER(gameTime),
-				CR_MEMBER(startTime),
-				CR_MEMBER(myPlayerNum),
-				CR_MEMBER(myTeam),
-				CR_MEMBER(myAllyTeam),
-				CR_MEMBER(spectating),
-				CR_MEMBER(spectatingFullView),
-				CR_MEMBER(spectatingFullSelect),
-				CR_MEMBER(directControl),
-				CR_MEMBER(usRandSeed),
-				CR_RESERVED(64)
-				));
+	CR_MEMBER(modGameTime),
+	CR_MEMBER(gameTime),
+	CR_MEMBER(startTime),
+	CR_MEMBER(myPlayerNum),
+	CR_MEMBER(myTeam),
+	CR_MEMBER(myAllyTeam),
+	CR_MEMBER(spectating),
+	CR_MEMBER(spectatingFullView),
+	CR_MEMBER(spectatingFullSelect),
+	CR_MEMBER(directControl),
+	CR_MEMBER(usRandSeed),
+	CR_RESERVED(64)
+));
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	boost::uint64_t randnum;
-	randnum = SDL_GetTicks();
-	usRandSeed = randnum & 0xffffffff;
+	usRandSeed = time(NULL) % ((SDL_GetTicks() + 1) * 9007);
 
 	modGameTime = 0;
 	gameTime = 0;
