@@ -229,6 +229,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		maxLength += targetUnit->radius * targetBorder;
 	}
 
+
+
 	// unit at the end of the beam
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
@@ -287,7 +289,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	if (hitUnit) {
 		if (hitUnit->unitDef->usePieceCollisionVolumes) {
 			// getting the actual piece here is probably overdoing it
-			hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
+			hitUnit->SetLastAttackedPiece(hitUnit->localmodel->pieces[0], gs->frameNum);
 		}
 
 		if (targetBorder > 0) {

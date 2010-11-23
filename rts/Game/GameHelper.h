@@ -45,12 +45,9 @@ public:
 	float GuiTraceRay(const float3& start,const float3& dir,float length,const CUnit*& hit,bool useRadar,const CUnit* exclude=NULL);
 	float GuiTraceRayFeature(const float3& start, const float3& dir, float length,const CFeature*& feature);
 
-	void DoExplosionDamage(CUnit*, const float3&, float, float, bool, CUnit*, float, const DamageArray&, int);
-	void DoExplosionDamage(CFeature*, const float3&, float, CUnit*, const DamageArray&);
-	void Explosion(float3 pos, const DamageArray& damages,float radius, float edgeEffectiveness, float explosionSpeed,
-		       CUnit* owner,bool damageGround,float gfxMod,bool ignoreOwner,bool impactOnly,
-		       CExplosionGenerator *explosionGraphics,CUnit *hit, const float3 &impactDir, int weaponId,
-		       CFeature* hitfeature=0);
+	void DoExplosionDamage(CUnit* unit, const float3& expPos, float expRad, float expSpeed, bool ignoreOwner, CUnit* owner, float edgeEffectiveness, const DamageArray& damages, int weaponId);
+	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages);
+	void Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner, bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly, CExplosionGenerator* explosionGraphics, CUnit* hit, const float3& impactDir, int weaponId, CFeature* hitfeature = NULL);
 
 	float TraceRayTeam(const float3& start, const float3& dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude, int allyteam);
 	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, CUnit* exclude);

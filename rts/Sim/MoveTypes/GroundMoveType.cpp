@@ -966,7 +966,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 						0, ZeroVector);
 				}
 				u->DoDamage(DamageArray(impactSpeed*owner->mass*0.2f),
-					0, -dif*impactSpeed);
+					-dif*impactSpeed);
 			}
 		}
 	}
