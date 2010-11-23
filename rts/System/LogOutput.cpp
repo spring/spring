@@ -135,7 +135,9 @@ void CLogOutput::Flush()
 {
 	GML_STDMUTEX_LOCK_NOPROF(log); // Flush
 
-	filelog->flush();
+	if (filelog != NULL) {
+		filelog->flush();
+	}
 }
 
 const std::string& CLogOutput::GetFileName() const
@@ -225,9 +227,7 @@ void CLogOutput::Initialize()
 				(*lsi)->NotifyLogMsg(*(it->subsystem), it->text);
 			}
 		}
-		if (filelog) {
-			ToFile(*it->subsystem, it->text);
-		}
+		ToFile(*it->subsystem, it->text);
 	}
 	preInitLog().clear();
 }
@@ -332,10 +332,7 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	}
 #endif // _MSC_VER
 
-
-	if (filelog) {
-		ToFile(subsystem, msg);
-	}
+	ToFile(subsystem, msg);
 
 	ToStdout(subsystem, msg);
 }
@@ -440,8 +437,10 @@ CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
 
 void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& message)
 {
-	if (message.empty())
+	if (message.empty()) {
 		return;
+	}
+
 	const bool newline = (message.at(message.size() -1) != '\n');
 
 	std::cout << message;
@@ -457,8 +456,10 @@ void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& mes
 
 void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string& message)
 {
-	if (message.empty())
+	if (message.empty() || (filelog == NULL)) {
 		return;
+	}
+
 	const bool newline = (message.at(message.size() -1) != '\n');
 
 	(*filelog) << message;
