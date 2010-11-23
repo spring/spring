@@ -265,7 +265,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				fd->myName = name;
 				fd->mass = 100000;
 				// geothermals have no collision volume at all
-				fd->collisionVolume = 0;
+				fd->collisionVolume = NULL;
 				AddFeatureDef(name, fd);
 			}
 			else {
