@@ -125,9 +125,8 @@ void CMetalMap::Init() {
 	}
 
 	std::stringstream msg;
-	msg << "[CMetalMap::Init()] frame " << frame << "\n";
-	msg << "\tnumber of metal spots found:                    " << NumSpotsFound << "\n";
-	L(ai, msg.str());
+		msg << "[CMetalMap::Init()] number of metal spots found: " << NumSpotsFound << "\n";
+	ai->GetLogger()->Log(msg.str());
 }
 
 

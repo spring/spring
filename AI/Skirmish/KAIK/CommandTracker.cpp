@@ -7,7 +7,7 @@
 CCommandTracker::~CCommandTracker() {
 	std::ofstream fs;
 	std::stringstream ss;
-	std::string s = ai->logger->GetLogName() + ".cmdstats";
+	std::string s = ai->GetLogger()->GetLogName() + ".cmdstats";
 	std::map<int, int>::const_iterator it;
 
 	for (it = cmdsPerFrame.begin(); it != cmdsPerFrame.end(); it++) {
@@ -27,7 +27,7 @@ void CCommandTracker::Update(int currFrame) {
 		const float avgCmdSize       = totalCmdSize / float(totalNumCmds);
 
 		std::stringstream msg;
-			msg << "[CCommandTracker::Update()] frame " << currFrame << "\n";
+			msg << "[CCommandTracker::Update()][frame=" << currFrame << "]\n";
 			msg << "\tnumber of frames registered:                    " << numFrames        << "\n";
 			msg << "\t(avg.) number of commands (registered frames):  " << avgCmdsRegFrames << "\n";
 			msg << "\t(avg.) number of commands (all elapsed frames): " << avgCmdsAllFrames << "\n";
@@ -36,7 +36,7 @@ void CCommandTracker::Update(int currFrame) {
 				<< maxCmdsPerFrame << ", "
 				<< peakCmdFrame    << "\n";
 
-		L(ai, msg.str());
+		ai->GetLogger()->Log(msg.str());
 	}
 }
 

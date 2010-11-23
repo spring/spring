@@ -118,9 +118,9 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 			// one of our (idle) attack units died but
 			// we somehow have lost track of it before
 			std::stringstream msg;
-				msg << "[CAttackHandler::UnitDestroyed()] frame " << (ai->cb->GetCurrentFrame()) << "\n";
+				msg << "[CAttackHandler::UnitDestroyed()][frame=" << ai->cb->GetCurrentFrame() << "]\n";
 				msg << "\tidle attack unit " << unitID << " was destroyed but already erased\n";
-			L(ai, msg.str());
+			ai->GetLogger()->Log(msg.str());
 		}
 	}
 
