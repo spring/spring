@@ -1,5 +1,77 @@
 Spring change log
 
+0.82.7:
+Engine / General:
+ - fix crash due to invalid lastAttacker
+ - do not bind a UDP socket for local games -> allows multiple local instances again sans hassle)
+ - clamp minimum mapHardness to 0.001 to prevent div/0
+ - fix dangling CUnit* (crash for everyone in-game)
+ - prevent memory-leak in LoadGrayscale() if there already was pixel-data
+ - fix some more memory-leaks
+ - prevent equal unsynced random seeds
+ - fix SetUnitRotation
+ - apply damage wrt. impacted piece if usePieceCollisionVolumes == 1
+ - make CBitmap::ReverseYAxis() more efficient
+ - remove excess elements from BasicMapDamage::craterTable
+
+Engine / Logging:
+ - give S3O model name in error message when a texture is missing
+ - print name of widget to infolog.txt before it starts to load
+ - prevent empty content_error messages
+ - catch model content_error exceptions ASAP
+ - unify stdout/infolog output
+
+Engine / Lua:
+ - fix global enviroment pollution in luaui.lua
+ - allow Spring.AssignMouseCursor & Spring.ReplaceMouseCursor from LuaRules, too
+ - Allow loading from subfolders for weapon-def files (tdf and lua)
+ - implement Lua's GameFrame event via the EventHandler
+ - added parameter includeSky to TraceScreenRay
+ - correct `AllowResourceTransfer` params in default gadget handler
+
+Engine / Path-Finder:
+ - fix units-stuck-behind-terrain
+ - fix Godde-III
+ - do not assign extra waypoints to aircraft
+ - decrease ETA-failure response time
+ - keep speed above UnitDef::turnInPlaceSpeedLimit when turning (if turnInPlace==0)
+ - fix units slowing down on negative slopes
+ - set a more reasonable default turnInPlaceSpeedLimit
+ - PFS: remove circular constraint from run-time searches
+
+Engine / Rendering:
+ - fix rendering of tri-stripped S3O's
+ - require GLEW 1.5.1+ because 1.5.0 does not have `glMapBufferRange`
+
+Engine / Auto-Hosts:
+ - builds other then dedicated-server now also support commands "kill" and "pause"
+ - make command `paused` support a parameter (0|1)
+
+Engine / Dedicated-Server:
+ - fix binary name
+
+Engine / Head-Less:
+ - crash fix
+ - remove of "jump depending on uninitialized value"
+
+AI:
+ - LegacyCpp-AIWrapper: fix some memory leaks
+ - KAIK: fix memory corruption (one-character-typo...)
+ - KAIK: clamp costs to 1.0, not to 0.0
+ - KAIK: compile fix for 64bit
+ - KAIK: fix infinite loop
+ - KAIK: do not access invalidated pointer
+ - KAIK: init value before use
+ - KAIK: prevent accessing of array at position -1
+ - KAIK: prevent a crash when enemy unit is out of map bounds
+ - AAI: add version independent config file (by azaremoth) for _The Cursed_ game
+
+Stack-Trace-Translator:
+ - fixed for main binary (.exe, windows)
+
+Installer:
+ - do not check for .Net when installing Zero-K
+
 0.82.6.1:
 Engine / General:
  - prevent false hang detection trigger
