@@ -44,7 +44,7 @@ public:
 	void DependentDied(CObject* o);
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 
-	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature);
+	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitstance);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
 	void StopBuild(bool callScript = true);
 	void SetRepairTarget(CUnit* target);
