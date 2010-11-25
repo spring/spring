@@ -20,7 +20,7 @@
 		${EndIf}
 	!endif
 
-	WriteIniStr "$SMPROGRAMS\${PRODUCT_NAME}\Readme.url" "InternetShortcut" "URL" "$INSTDIR\docs\README.html"
+	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Readme" "$INSTDIR\docs\README.html"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 
 !else
