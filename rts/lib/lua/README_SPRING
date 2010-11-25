@@ -26,6 +26,7 @@ Lua-5.1.4 source code modifications:
   6. Swapped <math.h> includes with "streflop_cond.h" includes  (for sync) 
 
   6. removed the following files:
+     Makefile
      doc/*
      etc/*
      test/*
