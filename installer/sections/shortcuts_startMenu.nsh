@@ -20,10 +20,7 @@
 		${EndIf}
 	!endif
 
-	WriteIniStr "$INSTDIR\Spring.url" "InternetShortcut" "URL" "${PRODUCT_WEB_SITE}"
-	WriteIniStr "$INSTDIR\springfiles.url" "InternetShortcut" "URL" "http://www.springfiles.com"
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk" "$INSTDIR\Spring.url"
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk" "$INSTDIR\springfiles.url"
+	WriteIniStr "$SMPROGRAMS\${PRODUCT_NAME}\Readme.url" "InternetShortcut" "URL" "$INSTDIR\docs\README.html"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 
 !else
