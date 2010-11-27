@@ -19,9 +19,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -420,25 +418,7 @@ void CGroundMoveType::SlowUpdate()
 		owner->pos.y = wh;
 	}
 
-	if (owner->pos != oldSlowUpdatePos) {
-		oldSlowUpdatePos = owner->pos;
-
-		const int newmapSquare = ground->GetSquare(owner->pos);
-		if (newmapSquare != owner->mapSquare) {
-			owner->mapSquare = newmapSquare;
-
-			loshandler->MoveUnit(owner, false);
-			radarhandler->MoveUnit(owner);
-
-		}
-		qf->MovedUnit(owner);
-
-		// submarines aren't always deep enough to be fully
-		// submerged (yet should have the isUnderWater flag
-		// set at all times)
-		const float s = (owner->mobility->subMarine)? 0.5f: 1.0f;
-		owner->isUnderWater = ((owner->pos.y + owner->height * s) < 0.0f);
-	}
+	AMoveType::SlowUpdate();
 }
 
 

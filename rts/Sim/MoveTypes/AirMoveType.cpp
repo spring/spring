@@ -13,12 +13,11 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/COB/UnitScript.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
 
@@ -59,8 +58,6 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(crashAileron),
 		CR_MEMBER(crashElevator),
 		CR_MEMBER(crashRudder),
-
-		CR_MEMBER(oldSlowUpdatePos),
 
 		CR_MEMBER(lines),
 
@@ -113,7 +110,6 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	maxRudder(0.01f),
 	inSupply(0),
 	mySide(1),
-	oldSlowUpdatePos(-1.0f, -1.0f, -1.0f),
 	inefficientAttackTime(0)
 {
 	// force LOS recalculation
@@ -421,30 +417,15 @@ void CAirMoveType::SlowUpdate()
 		owner->currentFuel = std::max(0.0f, owner->currentFuel - (16.0f / GAME_SPEED));
 	}
 
+	// try to handle aircraft getting unlimited height
 	if (owner->pos != oldSlowUpdatePos) {
-		oldSlowUpdatePos = owner->pos;
-
-		// try to handle aircraft getting unlimited height
-		if (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 5 + 100) {
-			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5  + 100;
+		if ((owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z)) > (wantedHeight * 5 + 100)) {
+			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5 + 100;
 		}
-
-		const int newmapSquare = ground->GetSquare(owner->pos);
-
-		if (newmapSquare != owner->mapSquare) {
-			owner->mapSquare = newmapSquare;
-			const float oldlh = owner->losHeight;
-			const float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
-			owner->losHeight = h + 5;
-			loshandler->MoveUnit(owner, false);
-			radarhandler->MoveUnit(owner);
-
-			owner->losHeight = oldlh;
-		}
-
-		qf->MovedUnit(owner);
-		owner->isUnderWater = (owner->pos.y + owner->model->height < 0.0f);
 	}
+
+	// note: NOT AAirMoveType::SlowUpdate
+	AMoveType::SlowUpdate();
 }
 
 

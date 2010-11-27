@@ -10,8 +10,6 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
@@ -740,22 +738,16 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 void CTAAirMoveType::UpdateMoveRate()
 {
-	int curRate;
+	int curRate = 0;
 
 	// currentspeed is not used correctly for vertical movement, so compensate with this hax
 	if ((aircraftState == AIRCRAFT_LANDING) || (aircraftState == AIRCRAFT_TAKEOFF)) {
 		curRate = 1;
-	}
-	else {
-		float curSpeed = owner->speed.Length();
-		curRate = (int) ((curSpeed / maxSpeed) * 3);
+	} else {
+		const float curSpeed = owner->speed.Length();
 
-		if (curRate < 0) {
-			curRate = 0;
-		}
-		if (curRate > 2) {
-			curRate = 2;
-		}
+		curRate = (curSpeed / maxSpeed) * 3;
+		curRate = std::max(0, std::min(curRate, 2));
 	}
 
 	if (curRate != lastMoveRate) {
@@ -962,10 +954,8 @@ void CTAAirMoveType::SlowUpdate()
 		owner->currentFuel = std::max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
 	}
 
-	if (!reservedPad && aircraftState == AIRCRAFT_FLYING
-			&& owner->health < owner->maxHealth * repairBelowHealth) {
-		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(
-				owner, owner->unitDef->minAirBasePower);
+	if (!reservedPad && aircraftState == AIRCRAFT_FLYING && owner->health < owner->maxHealth * repairBelowHealth) {
+		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
 		if (lp) {
 			AddDeathDependence(lp);
@@ -976,43 +966,18 @@ void CTAAirMoveType::SlowUpdate()
 	}
 
 	UpdateMoveRate();
-
-	// Update LOS stuff
-	const int newmapSquare = ground->GetSquare(owner->pos);
-	if (newmapSquare != owner->mapSquare) {
-		const float oldlh = owner->losHeight;
-		const float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
-
-		owner->mapSquare = newmapSquare;
-		owner->losHeight = h + 5;
-
-		loshandler->MoveUnit(owner, false);
-		radarhandler->MoveUnit(owner);
-
-		owner->losHeight = oldlh;
-	}
-
-	qf->MovedUnit(owner);
-	owner->isUnderWater = (owner->pos.y + owner->model->height < 0.0f);
+	// note: NOT AAirMoveType::SlowUpdate
+	AMoveType::SlowUpdate();
 }
 
 /// Returns true if indicated position is a suitable landing spot
 bool CTAAirMoveType::CanLandAt(const float3& pos) const
 {
-	if (dontLand) {
-		return false;
-	}
+	if (dontLand) { return false; }
+	if (!autoLand) { return false; }
+	if (!pos.IsInBounds()) { return false; }
 
-	if (!autoLand) {
-		return false;
-	}
-
-	if (!pos.IsInBounds()) {
-		return false;
-	}
-
-	const float h = ground->GetApproximateHeight(pos.x, pos.z);
-	if ((h < 0) && !(owner -> unitDef -> floater || owner -> unitDef -> canSubmerge)) {
+	if ((ground->GetApproximateHeight(pos.x, pos.z) < 0.0f) && !(owner->unitDef->floater || owner->unitDef->canSubmerge)) {
 		return false;
 	}
 

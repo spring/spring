@@ -40,8 +40,8 @@ public:
 	CUnit* owner;
 
 	float3 goalPos;
-	float3 oldPos;             // owner position at last Update(); only used by GMT
-	float3 oldSlowUpdatePos;   // owner position at last SlowUpdate(); only used by GMT
+	float3 oldPos;             // owner position at last Update()
+	float3 oldSlowUpdatePos;   // owner position at last SlowUpdate()
 
 	float maxSpeed;
 	float maxWantedSpeed;

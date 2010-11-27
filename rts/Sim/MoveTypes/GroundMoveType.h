@@ -27,7 +27,7 @@ public:
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void StopMoving();
 
-	virtual void SetMaxSpeed(float speed);
+	void SetMaxSpeed(float speed);
 
 	void ImpulseAdded(void);
 
@@ -145,7 +145,7 @@ public:
 	static void DeleteLineTable(void);
 
 	void TestNewTerrainSquare(void);
-	virtual void LeaveTransport(void);
+	void LeaveTransport(void);
 
 	void StartSkidding(void);
 	void StartFlying(void);

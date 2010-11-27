@@ -347,7 +347,7 @@ static inline const CUnit* GetCommandUnit(const Command& c, int idx) {
 	}
 
 	if (c.IsAreaCommand()) {
-		return false;
+		return NULL;
 	}
 
 	const CUnit* unit = uh->GetUnit(c.params[idx]);
@@ -453,15 +453,16 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			const CUnit* reclaimeeUnit = GetCommandUnit(c, 0);
 			const CFeature* reclaimeeFeature = NULL;
 
+			if (c.IsAreaCommand()) { return true; }
 			if (!ud->canReclaim) { return false; }
 			if (reclaimeeUnit && !reclaimeeUnit->unitDef->reclaimable) { return false; }
 			if (reclaimeeUnit && !reclaimeeUnit->AllowedReclaim(owner)) { return false; }
 			if (reclaimeeUnit && !reclaimeeUnit->pos.IsInBounds()) { return false; }
 
-			if (reclaimeeUnit == NULL && !c.IsAreaCommand()) {
+			if (reclaimeeUnit == NULL && !c.params.empty()) {
 				const unsigned int reclaimeeFeatureID(c.params[0]);
 
-				if (!c.params.empty() && reclaimeeFeatureID >= uh->MaxUnits()) {
+				if (reclaimeeFeatureID >= uh->MaxUnits()) {
 					reclaimeeFeature = featureHandler->GetFeature(reclaimeeFeatureID - uh->MaxUnits());
 
 					if (reclaimeeFeature && !reclaimeeFeature->def->reclaimable) {
