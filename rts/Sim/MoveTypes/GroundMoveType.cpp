@@ -402,22 +402,6 @@ void CGroundMoveType::SlowUpdate()
 		owner->pos.CheckInBounds();
 	}
 
-	if (!(owner->falling || flying)) {
-		float wh = 0.0f;
-
-		// need the following if the ground changes
-		// height while the unit is standing still
-		if (floatOnWater) {
-			wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-			if (wh == 0.0f) {
-				wh = -owner->unitDef->waterline;
-			}
-		} else {
-			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
-		}
-		owner->pos.y = wh;
-	}
-
 	AMoveType::SlowUpdate();
 }
 
@@ -1971,17 +1955,37 @@ void CGroundMoveType::StartFlying() {
 
 void CGroundMoveType::AdjustPosToWaterLine()
 {
-	float wh = 0.0f;
-	if (floatOnWater) {
-		wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-		if (wh == 0.0f)
-			wh = -owner->unitDef->waterline;
-	} else {
-		wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
-	}
-
 	if (!(owner->falling || flying)) {
+		float wh = 0.0f;
+
+		// need the following if the ground changes
+		// height while the unit is standing still
+		if (floatOnWater) {
+			wh = ground->GetHeight(owner->pos.x, owner->pos.z);
+
+			if (wh == 0.0f) {
+				wh = -owner->unitDef->waterline;
+			}
+		} else {
+			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
+		}
+
 		owner->pos.y = wh;
+		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
+
+		/*
+		const UnitDef* ud = owner->unitDef;
+		const MoveData* md = ud->movedata;
+		const CMoveMath* mm = md->moveMath;
+
+		owner->pos.y = mm->yLevel(owner->pos.x, owner->pos.z);
+
+		if (floatOnWater) {
+			owner->pos.y -= owner->unitDef->waterline;
+		}
+
+		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
+		*/
 	}
 }
 

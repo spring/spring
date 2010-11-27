@@ -51,13 +51,6 @@ AAirMoveType::~AAirMoveType()
 	}
 }
 
-void AAirMoveType::SlowUpdate() {
-	owner->pos.y = owner->unitDef->movedata->moveMath->yLevel(owner->pos.x, owner->pos.z);
-	owner->midPos.y = owner->pos.y + owner->relMidPos.y;
-
-	AMoveType::SlowUpdate();
-}
-
 bool AAirMoveType::UseSmoothMesh() const {
 	if (useSmoothMesh) {
 		const bool onTransportMission =

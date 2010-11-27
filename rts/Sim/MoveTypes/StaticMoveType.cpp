@@ -17,12 +17,14 @@ CR_REG_METADATA(CStaticMoveType,
 void CStaticMoveType::SlowUpdate()
 {
 	// NOTE:
-	//     static buildings don't have any unitDef->moveData, hence we cannot
-	//     call ->movemath->yLevel() here (unlike in AAirMoveType::SlowUpdate)
+	//     static buildings don't have any unitDef->moveData, hence we need
+	//     to get the ground height instead of calling ->moveMath->yLevel()
 	// FIXME: intercept heightmapUpdate events and update buildings y-pos only on-demand!
 	owner->pos.y = ground->GetHeight2(owner->pos.x, owner->pos.z);
+
 	if (owner->floatOnWater && owner->pos.y < -owner->unitDef->waterline) {
 		owner->pos.y = -owner->unitDef->waterline;
 	}
+
 	owner->midPos.y = owner->pos.y + owner->relMidPos.y;
 }
