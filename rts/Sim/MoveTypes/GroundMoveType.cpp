@@ -201,9 +201,9 @@ void CGroundMoveType::Update()
 		return;
 	}
 
-	if (OnSlope() && (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
+	if (OnSlope() && (!floatOnWater || !owner->inWater)) {
 		skidding = true;
-
+	}
 	if (skidding) {
 		UpdateSkid();
 		return;
@@ -681,12 +681,7 @@ void CGroundMoveType::UpdateSkid(void)
 		if (midPos.y < 0.0f)
 			speed *= 0.95f;
 
-		float wh = 0.0f;
-
-		if (floatOnWater)
-			wh = ground->GetHeight(midPos.x, midPos.z);
-		else
-			wh = ground->GetHeight2(midPos.x, midPos.z);
+		const float wh = GetGroundHeight(midPos);
 
 		if (wh > (midPos.y - owner->relMidPos.y)) {
 			flying = false;
@@ -710,7 +705,7 @@ void CGroundMoveType::UpdateSkid(void)
 		const bool onSlope =
 			midPos.IsInBounds() &&
 			(ground->GetSlope(midPos.x, midPos.z) > ud->movedata->maxSlope) &&
-			(!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0.0f);
+			(!floatOnWater || !owner->inWater);
 
 		if (speedf < speedReduction && !onSlope) {
 			// stop skidding
@@ -750,11 +745,7 @@ void CGroundMoveType::UpdateSkid(void)
 			}
 		}
 
-		float wh = 0.0f;
-		if (floatOnWater)
-			wh = ground->GetHeight(pos.x, pos.z);
-		else
-			wh = ground->GetHeight2(pos.x, pos.z);
+		const float wh = GetGroundHeight(pos);
 
 		if ((wh - pos.y) < (speed.y + mapInfo->map.gravity)) {
 			speed.y += mapInfo->map.gravity;
@@ -808,14 +799,9 @@ void CGroundMoveType::UpdateControlledDrop(void)
 		if(midPos.y < 0)
 			speed*=0.90;
 
-		float wh;
+		const float wh = GetGroundHeight(midPos);
 
-		if(floatOnWater)
-			wh = ground->GetHeight(midPos.x, midPos.z);
-		else
-			wh = ground->GetHeight2(midPos.x, midPos.z);
-
-		if(wh > midPos.y-owner->relMidPos.y){
+		if (wh > midPos.y - owner->relMidPos.y) {
 			owner->falling = false;
 			midPos.y = wh + owner->relMidPos.y - speed.y*0.8;
 			owner->script->Landed(); //stop parachute animation
@@ -903,39 +889,40 @@ void CGroundMoveType::CheckCollisionSkid(void)
 			}
 		}
 	}
-	const vector<CFeature*> &nearFeatures=qf->GetFeaturesExact(midPos,owner->radius);
-	for(vector<CFeature*>::const_iterator fi = nearFeatures.begin();
-		fi!=nearFeatures.end();++fi)
-	{
-		CFeature* u=(*fi);
-		if(!u->blocking)
-			continue;
-		float sqDist=(midPos-u->midPos).SqLength();
-		float totRad=owner->radius+u->radius;
-		if(sqDist<totRad*totRad && sqDist!=0){
-			float dist=sqrt(sqDist);
-			float3 dif=midPos-u->midPos;
-			dif/=std::max(dist, 1.f);
-			float impactSpeed = -owner->speed.dot(dif);
-			if(impactSpeed > 0){
-				midPos+=dif*(impactSpeed);
-				pos = midPos - owner->frontdir*owner->relMidPos.z
-					- owner->updir*owner->relMidPos.y
-					- owner->rightdir*owner->relMidPos.x;
-				owner->speed+=dif*(impactSpeed*1.8f);
 
-				if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0) {
-					owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
-				}
-				u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
+	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
+	vector<CFeature*>::const_iterator fi;
+
+	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
+		CFeature* f = *fi;
+
+		if (!f->blocking)
+			continue;
+
+		const float sqDist = (midPos - f->midPos).SqLength();
+		const float totRad = owner->radius + f->radius;
+
+		if ((sqDist >= totRad * totRad) || (sqDist <= 0.0f)) {
+			continue;
+		}
+
+		const float3 dif = (midPos - f->midPos).SafeNormalize();
+		const float impactSpeed = -owner->speed.dot(dif);
+
+		if (impactSpeed > 0.0f) {
+			midPos += dif * impactSpeed;
+			pos = midPos -
+				owner->frontdir * owner->relMidPos.z -
+				owner->updir    * owner->relMidPos.y -
+				owner->rightdir * owner->relMidPos.x;
+			owner->speed += dif * (impactSpeed * 1.8f);
+
+			if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0) {
+				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 			}
+			f->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
 		}
 	}
-}
-
-float CGroundMoveType::GetFlyTime(float3 pos, float3 speed)
-{
-	return 0;
 }
 
 void CGroundMoveType::CalcSkidRot(void)
@@ -956,8 +943,8 @@ void CGroundMoveType::CalcSkidRot(void)
 
 	skidRotPos2 += skidRotSpeed2;
 
-	float cosp = cos(skidRotPos2 * PI * 2.0f);
-	float sinp = sin(skidRotPos2 * PI * 2.0f);
+	const float cosp = cos(skidRotPos2 * PI * 2.0f);
+	const float sinp = sin(skidRotPos2 * PI * 2.0f);
 
 	float3 f1 = skidRotVector * skidRotVector.dot(owner->frontdir);
 	float3 f2 = owner->frontdir - f1;
@@ -1953,21 +1940,29 @@ void CGroundMoveType::StartFlying() {
 }
 
 
+
+float CGroundMoveType::GetGroundHeight(const float3& p) const
+{
+	float h = 0.0f;
+
+	if (floatOnWater) {
+		// in [0, maxHeight]
+		h = ground->GetHeight(p.x, p.z);
+	} else {
+		// in [minHeight, maxHeight]
+		h = ground->GetHeight2(p.x, p.z);
+	}
+
+	return h;
+}
+
 void CGroundMoveType::AdjustPosToWaterLine()
 {
 	if (!(owner->falling || flying)) {
-		float wh = 0.0f;
+		float wh = GetGroundHeight(owner->pos);
 
-		// need the following if the ground changes
-		// height while the unit is standing still
-		if (floatOnWater) {
-			wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-
-			if (wh == 0.0f) {
-				wh = -owner->unitDef->waterline;
-			}
-		} else {
-			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
+		if (floatOnWater && owner->inWater) {
+			wh = -owner->unitDef->waterline;
 		}
 
 		owner->pos.y = wh;
@@ -1980,7 +1975,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 		owner->pos.y = mm->yLevel(owner->pos.x, owner->pos.z);
 
-		if (floatOnWater) {
+		if (floatOnWater && owner->inWater) {
 			owner->pos.y -= owner->unitDef->waterline;
 		}
 
@@ -1991,7 +1986,8 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 bool CGroundMoveType::UpdateDirectControl()
 {
-	bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+	const bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+
 	waypoint = owner->pos;
 	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
 	waypoint.CheckInBounds();

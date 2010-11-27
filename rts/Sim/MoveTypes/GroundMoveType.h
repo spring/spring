@@ -104,9 +104,9 @@ protected:
 	void UpdateSkid(void);
 	void UpdateControlledDrop(void);
 	void CheckCollisionSkid(void);
-	float GetFlyTime(float3 pos, float3 speed);
 	void CalcSkidRot(void);
 
+	float GetGroundHeight(const float3&) const;
 	void AdjustPosToWaterLine();
 	bool UpdateDirectControl();
 	void UpdateOwnerPos(bool);
