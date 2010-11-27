@@ -29,7 +29,6 @@ public:
 	AAirMoveType(CUnit* unit);
 	~AAirMoveType();
 
-	virtual void SlowUpdate();
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() = 0;
 	void ReservePad(CAirBaseHandler::LandingPad* lp);
