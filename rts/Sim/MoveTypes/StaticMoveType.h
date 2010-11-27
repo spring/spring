@@ -10,12 +10,12 @@ class CStaticMoveType : public AMoveType
 	CR_DECLARE(CStaticMoveType);
 
 public:
-	CStaticMoveType(CUnit* unit) : AMoveType(unit){};
-	virtual void StartMoving(float3 pos, float goalRadius){};
-	virtual void StartMoving(float3 pos, float goalRadius, float speed){};
-	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive){};
-	virtual void StopMoving(){};
-	virtual void Update(){};
+	CStaticMoveType(CUnit* unit) : AMoveType(unit) {}
+	void StartMoving(float3 pos, float goalRadius) {}
+	void StartMoving(float3 pos, float goalRadius, float speed) {}
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
+	void StopMoving() {}
+	void Update() {}
 	void SlowUpdate();
 };
 
