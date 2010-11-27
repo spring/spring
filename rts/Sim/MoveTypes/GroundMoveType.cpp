@@ -814,84 +814,88 @@ void CGroundMoveType::CheckCollisionSkid(void)
 	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
 
-	const UnitDef* ud = owner->unitDef;
-	const vector<CUnit*> &nearUnits = qf->GetUnitsExact(midPos, owner->radius);
+	const UnitDef* ownerUD = owner->unitDef;
+	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(midPos, owner->radius);
+	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
 
-	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+	vector<CUnit*>::const_iterator ui;
+	vector<CFeature*>::const_iterator fi;
+
+	for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* u = (*ui);
-		float sqDist = (midPos - u->midPos).SqLength();
-		float totRad = owner->radius + u->radius;
+		const UnitDef* unitUD = owner->unitDef;
 
-		if (sqDist < totRad * totRad && sqDist != 0) {
-			float dist = sqrt(sqDist);
-			float3 dif = midPos - u->midPos;
-			// stop units from reaching escape velocity
-			dif /= std::max(dist, 1.f);
+		const float sqDist = (midPos - u->midPos).SqLength();
+		const float totRad = owner->radius + u->radius;
 
-			if (!u->mobility) {
-				float impactSpeed = -owner->speed.dot(dif);
+		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f)) {
+			continue;
+		}
 
-				if (impactSpeed > 0) {
-					midPos += dif * impactSpeed;
-					pos = midPos -
-						owner->frontdir * owner->relMidPos.z -
-						owner->updir    * owner->relMidPos.y -
-						owner->rightdir * owner->relMidPos.x;
-					owner->speed += dif * (impactSpeed * 1.8f);
+		// stop units from reaching escape velocity
+		const float3 dif = (midPos - u->midPos).SafeNormalize();
 
-					if (impactSpeed > ud->minCollisionSpeed
-						&& ud->minCollisionSpeed >= 0) {
-						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
-					}
-					if (impactSpeed > u->unitDef->minCollisionSpeed
-						&& u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
-					}
+		if (u->mobility == NULL) {
+			const float impactSpeed = -owner->speed.dot(dif);
+
+			if (impactSpeed > 0.0f) {
+				midPos += dif * impactSpeed;
+				pos = midPos -
+					owner->frontdir * owner->relMidPos.z -
+					owner->updir    * owner->relMidPos.y -
+					owner->rightdir * owner->relMidPos.x;
+				owner->speed += dif * (impactSpeed * 1.8f);
+
+				// damage the collider
+				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
+					owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 				}
-			} else {
-				// don't conserve momentum
-				float part = (owner->mass / (owner->mass + u->mass));
-				float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
-
-				if (impactSpeed > 0) {
-					midPos += dif * (impactSpeed * (1 - part) * 2);
-					pos = midPos -
-						owner->frontdir * owner->relMidPos.z -
-						owner->updir    * owner->relMidPos.y -
-						owner->rightdir * owner->relMidPos.x;
-					owner->speed += dif * (impactSpeed * (1 - part) * 2);
-					u->midPos -= dif * (impactSpeed * part * 2);
-					u->pos = u->midPos -
-						u->frontdir * u->relMidPos.z -
-						u->updir    * u->relMidPos.y -
-						u->rightdir * u->relMidPos.x;
-					u->speed -= dif * (impactSpeed * part * 2);
-
-					if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
-						mt->skidding = true;
-					}
-					if (impactSpeed > ud->minCollisionSpeed
-						&& ud->minCollisionSpeed >= 0.0f) {
-						owner->DoDamage(
-							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
-							0, dif * impactSpeed * (owner->mass * (1 - part)));
-					}
-
-					if (impactSpeed > u->unitDef->minCollisionSpeed
-						&& u->unitDef->minCollisionSpeed >= 0.0f) {
-						u->DoDamage(
-							DamageArray(impactSpeed * owner->mass * 0.2f * part),
-							0, dif * -impactSpeed * (u->mass * part));
-					}
-					owner->speed *= 0.9f;
-					u->speed *= 0.9f;
+				// damage the (static) collidee
+				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0) {
+					u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 				}
+			}
+		} else {
+			// don't conserve momentum
+			const float part = (owner->mass / (owner->mass + u->mass));
+			const float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
+
+			if (impactSpeed > 0.0f) {
+				midPos += dif * (impactSpeed * (1 - part) * 2);
+				pos = midPos -
+					owner->frontdir * owner->relMidPos.z -
+					owner->updir    * owner->relMidPos.y -
+					owner->rightdir * owner->relMidPos.x;
+				owner->speed += dif * (impactSpeed * (1 - part) * 2);
+				u->midPos -= dif * (impactSpeed * part * 2);
+				u->pos = u->midPos -
+					u->frontdir * u->relMidPos.z -
+					u->updir    * u->relMidPos.y -
+					u->rightdir * u->relMidPos.x;
+				u->speed -= dif * (impactSpeed * part * 2);
+
+				if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
+					mt->skidding = true;
+				}
+
+				// damage the collider
+				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0.0f) {
+					owner->DoDamage(
+						DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
+						0, dif * impactSpeed * (owner->mass * (1 - part)));
+				}
+				// damage the collidee
+				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0.0f) {
+					u->DoDamage(
+						DamageArray(impactSpeed * owner->mass * 0.2f * part),
+						0, dif * -impactSpeed * (u->mass * part));
+				}
+
+				owner->speed *= 0.9f;
+				u->speed *= 0.9f;
 			}
 		}
 	}
-
-	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
-	vector<CFeature*>::const_iterator fi;
 
 	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
 		CFeature* f = *fi;
@@ -902,7 +906,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 		const float sqDist = (midPos - f->midPos).SqLength();
 		const float totRad = owner->radius + f->radius;
 
-		if ((sqDist >= totRad * totRad) || (sqDist <= 0.0f)) {
+		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f)) {
 			continue;
 		}
 
@@ -917,7 +921,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 				owner->rightdir * owner->relMidPos.x;
 			owner->speed += dif * (impactSpeed * 1.8f);
 
-			if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0) {
+			if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
 				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 			}
 			f->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
