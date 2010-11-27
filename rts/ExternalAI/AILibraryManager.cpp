@@ -186,6 +186,10 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 				// so we can check if one skirmish AI is specified multiple times
 				duplicateSkirmishAIInfoCheck[skirmishAIKey].insert(infoFile.at(0));
+			} else {
+				logOutput.Print("Note: Required AI Interface for Skirmish AI %s %s not found.",
+						skirmishAIInfo->GetShortName().c_str(),
+						skirmishAIInfo->GetVersion().c_str());
 			}
 		}
 	}
