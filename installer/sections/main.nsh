@@ -247,6 +247,8 @@
 	Delete "$INSTDIR\infolog.txt"
 	Delete "$INSTDIR\ext.txt"
 	RmDir "$INSTDIR\demos"
+	RmDir "$INSTDIR\maps"
+	RmDir "$INSTDIR\mods"
 
 	; Demofile file association
 	!insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"
