@@ -382,9 +382,11 @@ void CTAAirMoveType::UpdateFlying()
 	const float gHeight = UseSmoothMesh()?
 		std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z)):
 		ground->GetHeightAboveWater(pos.x, pos.z);
+
 	// are we there yet?
-	const bool closeToGoal = (dir.SqLength2D() < maxDrift * maxDrift)
-			&& (fabs(gHeight - pos.y + wantedHeight) < maxDrift);
+	bool closeToGoal =
+		(dir.SqLength2D() < maxDrift * maxDrift) &&
+		(fabs(gHeight - pos.y + wantedHeight) < maxDrift);
 
 	if (flyState == FLY_ATTACKING) {
 		closeToGoal = (dir.SqLength2D() < 400);
