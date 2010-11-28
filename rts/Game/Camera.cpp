@@ -130,7 +130,7 @@ void CCamera::Update(bool freeze, bool resetUp)
 		cam2->lppScale  = lppScale;
 	}
 
-	const float gndHeight = ground->GetHeight(pos.x, pos.z);
+	const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 	const float rangemod = 1.0f + std::max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
 	const float zNear = (NEAR_PLANE * rangemod);
 	globalRendering->viewRange = MAX_VIEW_RANGE * rangemod;

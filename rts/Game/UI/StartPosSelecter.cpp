@@ -110,9 +110,9 @@ void CStartPosSelecter::Draw()
 
 	for(int a=0;a<10;++a){	//draw start rect restrictions
 		float3 pos1(bx+a*dx,0,by);
-		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		pos1.y=ground->GetHeightAboveWater(pos1.x,pos1.z);
 		float3 pos2(bx+(a+1)*dx,0,by);
-		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+		pos2.y=ground->GetHeightAboveWater(pos2.x,pos2.z);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);
@@ -120,9 +120,9 @@ void CStartPosSelecter::Draw()
 		glVertexf3(pos1+UpVector*100);
 
 		pos1=float3(bx+a*dx,0,by+dy*10);
-		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		pos1.y=ground->GetHeightAboveWater(pos1.x,pos1.z);
 		pos2=float3(bx+(a+1)*dx,0,by+dy*10);
-		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+		pos2.y=ground->GetHeightAboveWater(pos2.x,pos2.z);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);
@@ -130,9 +130,9 @@ void CStartPosSelecter::Draw()
 		glVertexf3(pos1+UpVector*100);
 
 		pos1=float3(bx,0,by+dy*a);
-		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		pos1.y=ground->GetHeightAboveWater(pos1.x,pos1.z);
 		pos2=float3(bx,0,by+dy*(a+1));
-		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+		pos2.y=ground->GetHeightAboveWater(pos2.x,pos2.z);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);
@@ -140,9 +140,9 @@ void CStartPosSelecter::Draw()
 		glVertexf3(pos1+UpVector*100);
 
 		pos1=float3(bx+dx*10,0,by+dy*a);
-		pos1.y=ground->GetHeight(pos1.x,pos1.z);
+		pos1.y=ground->GetHeightAboveWater(pos1.x,pos1.z);
 		pos2=float3(bx+dx*10,0,by+dy*(a+1));
-		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+		pos2.y=ground->GetHeightAboveWater(pos2.x,pos2.z);
 
 		glVertexf3(pos1);
 		glVertexf3(pos2);

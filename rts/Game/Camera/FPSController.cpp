@@ -65,7 +65,7 @@ float3 CFPSController::GetPos()
 		pos.x = max(xMin, min(xMax, pos.x));
 		pos.z = max(zMin, min(zMax, pos.z));
 
-		const float gndHeight = ground->GetHeight(pos.x, pos.z);
+		const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 		const float yMin = gndHeight + 5.0f;
 		const float yMax = 9000.0f;
 		pos.y = max(yMin, min(yMax, pos.y));
@@ -92,7 +92,7 @@ void CFPSController::SetPos(const float3& newPos)
 
 	if (!gu->directControl)
 	{
-		pos.y = ground->GetHeight(pos.x, pos.z) + oldHeight;
+		pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + oldHeight;
 	}
 }
 

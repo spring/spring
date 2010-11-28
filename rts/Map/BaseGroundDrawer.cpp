@@ -401,7 +401,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 								totalLos = inLos + inAir;
 							}
 #ifdef SONAR_JAMMER_MAPS
-							const bool useRadar = (ground->GetHeight2(xPos, zPos) >= 0.0f);
+							const bool useRadar = (ground->GetHeightReal(xPos, zPos) >= 0.0f);
 							const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
 							const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
 #else
