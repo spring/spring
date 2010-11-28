@@ -568,13 +568,13 @@ void CAirMoveType::UpdateFighterAttack()
 	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && frontdir.y > -0.2f && speedf > 2.0f && gs->randFloat() > 0.996f)
 		maneuver = 1;
 
-	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && fabs(frontdir.y) < 0.2f && gs->randFloat() > 0.996f && gHeight + 400 < pos.y) {
+	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && fabs(frontdir.y) < 0.2f && gs->randFloat() > 0.996f && gHeightAW + 400 < pos.y) {
 		maneuver = 2;
 		maneuverSubState = 0;
 	}
 
 	// roll
-	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeight + 60 + fabs(rightdir.y) * 150) {
+	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeightAW + 60 + fabs(rightdir.y) * 150) {
 		const float goalBankDif = goalDotRight + rightdir.y * 0.2f;
 		if (goalBankDif > maxAileron * speedf * 4.0f) {
 			aileron = 1;
@@ -604,7 +604,7 @@ void CAirMoveType::UpdateFighterAttack()
 	}
 
 	// yaw
-	if (pos.y > gHeight + 30) {
+	if (pos.y > gHeightAW + 30) {
 		if (goalDotRight < -maxRudder * speedf) {
 			rudder = -1;
 		} else if (goalDotRight > maxRudder * speedf) {
@@ -806,7 +806,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 		}
 		if (notColliding) {
 			float gHeightAW = ground->GetHeightAboveWater(pos.x + speed.x * 40, pos.z + speed.z * 40);
-			float hdif = std::max(gHeightR, gHeightAW) + wantedHeight - pos.y - frontdir.y * speedf * 20;
+			float hdif = std::max(gHeight, gHeightAW) + wantedHeight - pos.y - frontdir.y * speedf * 20;
 			if (hdif < -(maxElevator * speedf * speedf * 20) && frontdir.y > -maxPitch) {
 				elevator = -1;
 			} else if (hdif > (maxElevator * speedf * speedf * 20) && frontdir.y < maxPitch) {
