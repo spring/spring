@@ -2510,7 +2510,7 @@ void CGuiHandler::ProcessFrontPositions(float3& pos0, float3& pos1)
 		return; // leave it centered
 	}
 	pos0 = pos1 + ((pos0 - pos1) * 0.5f);
-	pos0.y = ground->GetHeight2(pos0.x, pos0.z);
+	pos0.y = ground->GetHeightReal(pos0.x, pos0.z);
 }
 
 
@@ -3346,7 +3346,7 @@ static inline void DrawWeaponArc(const CUnit* unit)
 	             (unit->frontdir * w->relWeaponPos.z) +
 	             (unit->updir    * w->relWeaponPos.y) +
 	             (unit->rightdir * w->relWeaponPos.x);
-	if (pos.y < ground->GetHeight2(pos.x, pos.z)) {
+	if (pos.y < ground->GetHeightReal(pos.x, pos.z)) {
 		// hope that we are underground because we are a
 		// popup weapon and will come above ground later
 		pos = interPos + (UpVector * 10.0f);
@@ -3790,7 +3790,7 @@ void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
 		{ bc[0] * d[7],  bc[1] * d[7],  bc[2] * d[7],  bc[3] },
 	};
 
-	const float groundLevel = ground->GetHeight(camerapos.x, camerapos.z);
+	const float groundLevel = ground->GetHeightAboveWater(camerapos.x, camerapos.z);
 
 	static float spinTime = 0.0f;
 	spinTime = fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
@@ -3902,7 +3902,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 		for(int a=0;a<=40;++a){
 			float3 p(fastmath::cos(a*2*PI/40)*radius,0,fastmath::sin(a*2*PI/40)*radius);
 			p+=pos;
-			p.y=ground->GetHeight(p.x,p.z);
+			p.y=ground->GetHeightAboveWater(p.x,p.z);
 			glVertexf3(p);
 		}
 	glEnd();
@@ -3935,7 +3935,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 	float3 side=forward.cross(UpVector);
 	if(pos1.SqDistance2D(pos2)>maxSize*maxSize){
 		pos2=pos1+side*maxSize;
-		pos2.y=ground->GetHeight(pos2.x,pos2.z);
+		pos2.y=ground->GetHeightAboveWater(pos2.x,pos2.z);
 	}
 
 	glColor4f(0.5f, 1.0f, 0.5f, 0.5f);
@@ -3981,7 +3981,7 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 		const float d = (float)i;
 		p.x = pos1.x + (d * delta.x);
 		p.z = pos1.z + (d * delta.z);
-		p.y = ground->GetHeight(p.x, p.z);
+		p.y = ground->GetHeightAboveWater(p.x, p.z);
 		p.y -= 100.f; glVertexf3(p);
 		p.y += 200.f; glVertexf3(p);
 	}
@@ -4036,10 +4036,10 @@ static void DrawBoxShape(const void* data)
 static void DrawCornerPosts(const float3& pos0, const float3& pos1)
 {
 	const float3 lineVector(0.0f, 128.0f, 0.0f);
-	const float3 corner0(pos0.x, ground->GetHeight(pos0.x, pos0.z), pos0.z);
-	const float3 corner1(pos1.x, ground->GetHeight(pos1.x, pos1.z), pos1.z);
-	const float3 corner2(pos0.x, ground->GetHeight(pos0.x, pos1.z), pos1.z);
-	const float3 corner3(pos1.x, ground->GetHeight(pos1.x, pos0.z), pos0.z);
+	const float3 corner0(pos0.x, ground->GetHeightAboveWater(pos0.x, pos0.z), pos0.z);
+	const float3 corner1(pos1.x, ground->GetHeightAboveWater(pos1.x, pos1.z), pos1.z);
+	const float3 corner2(pos0.x, ground->GetHeightAboveWater(pos0.x, pos1.z), pos1.z);
+	const float3 corner3(pos1.x, ground->GetHeightAboveWater(pos1.x, pos0.z), pos0.z);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
@@ -4242,7 +4242,7 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(color[0], color[1], color[2], 0.9f);
 	glLineWidth(2.0f);
-	const float3 base(pos.x, ground->GetHeight(pos.x, pos.z), pos.z);
+	const float3 base(pos.x, ground->GetHeightAboveWater(pos.x, pos.z), pos.z);
 	glBegin(GL_LINES);
 		glVertexf3(base);
 		glVertexf3(base + float3(0.0f, 128.0f, 0.0f));

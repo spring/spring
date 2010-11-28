@@ -295,7 +295,7 @@ void CUnitTracker::SetCam()
 		lastUpdateTime = gs->frameNum + globalRendering->timeOffset;
 
 		float3 modPlanePos(u->drawPos - (u->frontdir * u->radius * 3));
-		const float minHeight = ground->GetHeight2(modPlanePos.x, modPlanePos.z) + (u->radius * 2);
+		const float minHeight = ground->GetHeightReal(modPlanePos.x, modPlanePos.z) + (u->radius * 2);
 		if (modPlanePos.y < minHeight) {
   			modPlanePos.y = minHeight;
 		}

@@ -219,7 +219,7 @@ void CGameHelper::Explosion(
 	tracefile << expPos.x << " " << damages[0] <<  " " << expRad << "\n";
 #endif
 
-	const float h2 = ground->GetHeight2(expPos.x, expPos.z);
+	const float h2 = ground->GetHeightReal(expPos.x, expPos.z);
 
 	expPos.y = std::max(expPos.y, h2);
 	expRad = std::max(expRad, 1.0f);

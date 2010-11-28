@@ -38,7 +38,7 @@ float3 COverviewController::GetPos()
 	pos.x = gs->mapx * 4.0f;
 	pos.z = gs->mapy * 4.0f;
 	const float height = std::max(pos.x / globalRendering->aspectRatio, pos.z);
-	pos.y = ground->GetHeight(pos.x, pos.z) + (2.5f * height);
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + (2.5f * height);
 	return pos;
 }
 

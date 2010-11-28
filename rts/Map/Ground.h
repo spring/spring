@@ -13,16 +13,16 @@ class CProjectile;
 class CGround
 {
 public:
-	CGround();
-	virtual ~CGround();
+	CGround() {}
+	~CGround();
 
 	float GetSlope(float x, float y) const;
-	/// similar to GetHeight2, but uses nearest filtering instead of interpolating the heightmap
+	/// similar to GetHeightReal, but uses nearest filtering instead of interpolating the heightmap
 	float GetApproximateHeight(float x, float y) const;
 	/// Returns the height at the specified position, cropped to a non-negative value
-	float GetHeight(float x, float y) const;
+	float GetHeightAboveWater(float x, float y) const;
 	/// Returns the real height at the specified position, can be below 0
-	float GetHeight2(float x, float y) const;
+	float GetHeightReal(float x, float y) const;
 	float GetOrigHeight(float x, float y) const;
 	float3& GetNormal(float x, float y) const;
 	float3 GetSmoothNormal(float x, float y) const;

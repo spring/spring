@@ -176,11 +176,11 @@ float3 SmoothController::GetPos()
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
 	height = Clamp(height, 60.0f, maxHeight);
 
-	pos.y = ground->GetHeight(pos.x,pos.z);
+	pos.y = ground->GetHeightAboveWater(pos.x,pos.z);
 	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
 
 	float3 cpos = pos - dir * height;
-	cpos.y = std::max(cpos.y, ground->GetHeight(cpos.x,cpos.z)+5.0f);
+	cpos.y = std::max(cpos.y, ground->GetHeightAboveWater(cpos.x,cpos.z)+5.0f);
 	return cpos;
 }
 
