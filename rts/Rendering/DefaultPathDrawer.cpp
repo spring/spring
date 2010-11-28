@@ -288,7 +288,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		float3 p1;
 			p1.x = sqr.x * SQUARE_SIZE;
 			p1.z = sqr.y * SQUARE_SIZE;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
+			p1.y = ground->GetHeightAboveWater(p1.x, p1.z) + 15;
 		float3 p2;
 
 		const int dir = pf->squareStates[square].nodeMask & PATHOPT_DIRECTION;
@@ -299,7 +299,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		if (obsquare >= 0) {
 			p2.x = obx * SQUARE_SIZE;
 			p2.z = obz * SQUARE_SIZE;
-			p2.y = ground->GetHeight(p2.x, p2.z) + 15;
+			p2.y = ground->GetHeightAboveWater(p2.x, p2.z) + 15;
 
 			glVertexf3(p1);
 			glVertexf3(p2);
@@ -342,7 +342,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			float3 p1;
 			p1.x = (blockState[blocknr].sqrCenter[md->pathType].x) * 8;
 			p1.z = (blockState[blocknr].sqrCenter[md->pathType].y) * 8;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 10;
+			p1.y = ground->GetHeightAboveWater(p1.x, p1.z) + 10;
 
 			glColor3f(1, 1, blue);
 			glVertexf3(p1);
@@ -357,7 +357,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					p2.x = (blockState[obblocknr].sqrCenter[md->pathType].x) * 8;
 					p2.z = (blockState[obblocknr].sqrCenter[md->pathType].y) * 8;
-					p2.y = ground->GetHeight(p2.x, p2.z) + 10;
+					p2.y = ground->GetHeightAboveWater(p2.x, p2.z) + 10;
 
 					int vertexNbr = md->pathType * nbrOfBlocks * PATH_DIRECTION_VERTICES + blocknr * PATH_DIRECTION_VERTICES + directionVertex[dir];
 					float cost = vertex[vertexNbr];
@@ -380,7 +380,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			float3 p1;
 			p1.x = (blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
 			p1.z = (blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 10;
+			p1.y = ground->GetHeightAboveWater(p1.x, p1.z) + 10;
 
 			glColor3f(1, 1, blue);
 			for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
@@ -393,7 +393,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					p2.x = (blockState[obblocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
 					p2.z = (blockState[obblocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-					p2.y = ground->GetHeight(p2.x, p2.z) + 10;
+					p2.y = ground->GetHeightAboveWater(p2.x, p2.z) + 10;
 
 					int vertexNbr = md->pathType * nbrOfBlocks * PATH_DIRECTION_VERTICES + blocknr * PATH_DIRECTION_VERTICES + directionVertex[dir];
 					float cost = vertex[vertexNbr];
@@ -427,7 +427,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 		float3 p1;
 			p1.x = (pe->blockStates[blocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
 			p1.z = (pe->blockStates[blocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
+			p1.y = ground->GetHeightAboveWater(p1.x, p1.z) + 15;
 		float3 p2;
 
 		const int obx = pe->blockStates[ob->nodeNum].parentNodePos.x;
@@ -437,7 +437,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 		if (obblocknr >= 0) {
 			p2.x = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].x) * SQUARE_SIZE;
 			p2.z = (pe->blockStates[obblocknr].nodeOffsets[md->pathType].y) * SQUARE_SIZE;
-			p2.y = ground->GetHeight(p2.x, p2.z) + 15;
+			p2.y = ground->GetHeightAboveWater(p2.x, p2.z) + 15;
 
 			glVertexf3(p1);
 			glVertexf3(p2);
@@ -458,7 +458,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 		float3 p1;
 			p1.x = (ob->block.x * BLOCK_SIZE + pe->blockState[blocknr].sqrCenter[md->pathType].x) * SQUARE_SIZE;
 			p1.z = (ob->block.y * BLOCK_SIZE + pe->blockState[blocknr].sqrCenter[md->pathType].y) * SQUARE_SIZE;
-			p1.y = ground->GetHeight(p1.x, p1.z) + 15;
+			p1.y = ground->GetHeightAboveWater(p1.x, p1.z) + 15;
 
 		if (camera->pos.SqDistance(p1) < 250000) {
 			font->glWorldPrint(p1, 5, "%.0f %.0f", ob->cost, ob->currentCost);

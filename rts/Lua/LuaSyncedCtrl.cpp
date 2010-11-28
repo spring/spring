@@ -1973,9 +1973,9 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 	x = luaL_checkfloat(L, 2);
 	z = luaL_checkfloat(L, 3);
 	if (lua_isboolean(L, 4) && lua_toboolean(L, 4)) {
-		y = ground->GetHeight(x, z);
+		y = ground->GetHeightAboveWater(x, z);
 	} else {
-		y = ground->GetHeight2(x, z);
+		y = ground->GetHeightReal(x, z);
 	}
 	unit->ForcedMove(float3(x, y, z));
 

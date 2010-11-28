@@ -89,7 +89,7 @@ void CTorpedoProjectile::DependentDied(CObject* o)
 
 void CTorpedoProjectile::Collision()
 {
-	if(ground->GetHeight2(pos.x,pos.z)<pos.y+4)
+	if(ground->GetHeightReal(pos.x,pos.z)<pos.y+4)
 		return;
 	CWeaponProjectile::Collision();
 }

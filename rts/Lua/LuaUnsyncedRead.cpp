@@ -1266,7 +1266,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 					return 2;
 				}
 			}
-			const float posY = ground->GetHeight2(pos.x, pos.z);
+			const float posY = ground->GetHeightReal(pos.x, pos.z);
 			lua_pushstring(L, "ground");
 			lua_newtable(L);
 			lua_pushnumber(L, 1); lua_pushnumber(L, pos.x); lua_rawset(L, -3);

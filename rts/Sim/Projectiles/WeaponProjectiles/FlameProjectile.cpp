@@ -58,7 +58,7 @@ CFlameProjectile::~CFlameProjectile(void)
 
 void CFlameProjectile::Collision(void)
 {
-	if (ground->GetHeight2(pos.x, pos.z) < pos.y && weaponDef->waterweapon) {
+	if (ground->GetHeightReal(pos.x, pos.z) < pos.y && weaponDef->waterweapon) {
 		// prevent waterweapons from colliding with water
 		return;
 	}

@@ -1118,7 +1118,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 		}
 	} else if (owner->unitDef->canRestore) {
 		float3 pos(c.params[0], c.params[1], c.params[2]);
-			pos.y = ground->GetHeight2(pos.x, pos.y);
+			pos.y = ground->GetHeightReal(pos.x, pos.y);
 		const float radius = std::min(c.params[3], 200.0f);
 
 		if (f3SqDist(builder->pos, pos) < Square(builder->buildDistance - 1)) {

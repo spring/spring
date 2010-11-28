@@ -6,7 +6,6 @@
 class CGround;
 
 /**
- * This class requires that BaseMesh objects support GetHeight(float x, float y) method.
  * Provides a GetHeight(x, y) of its own that smooths the mesh.
  */
 class SmoothHeightMesh
@@ -29,7 +28,7 @@ public:
 	void MakeSmoothMesh(const CGround* ground);
 
 	float GetHeight(float x, float y);
-	float GetHeight2(float x, float y);
+	float GetHeightAboveWater(float x, float y);
 	float SetHeight(int index, float h);
 	float AddHeight(int index, float h);
 	float SetMaxHeight(int index, float h);

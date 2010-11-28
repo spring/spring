@@ -128,7 +128,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 	std::list<TransportedUnit>::iterator ti;
 	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		CUnit* u = ti->unit;
-		const float gh = ground->GetHeight2(u->pos.x, u->pos.z);
+		const float gh = ground->GetHeightReal(u->pos.x, u->pos.z);
 
 		u->transporter = 0;
 		u->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
@@ -167,7 +167,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 					float3 pos = u->pos;
 					pos.x += gs->randFloat()*2*k - k;
 					pos.z += gs->randFloat()*2*k - k;
-					pos.y = ground->GetHeight2(u->pos.x, u->pos.z);
+					pos.y = ground->GetHeightReal(u->pos.x, u->pos.z);
 					if (qf->GetUnitsExact(pos, u->radius + 2).empty()) {
 						u->pos = pos;
 						break;
@@ -190,7 +190,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 				Command c;
 				c.id = CMD_MOVE;
 				c.params.push_back(pos.x);
-				c.params.push_back(ground->GetHeight(pos.x, pos.z));
+				c.params.push_back(ground->GetHeightAboveWater(pos.x, pos.z));
 				c.params.push_back(pos.z);
 				u->commandAI->GiveCommand(c);
 			}
@@ -403,7 +403,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit *
 	float adjustedYpos = wantedYpos;
 	bool isok = true;
 	if(unit->transporter) { // return unloading altitude
-		wantedYpos = ground->GetHeight2(wantedPos.x, wantedPos.z);
+		wantedYpos = ground->GetHeightReal(wantedPos.x, wantedPos.z);
 		if(unit->unitDef->floater) {
 			if(unit->unitDef->GetAllowedTerrainHeight(wantedYpos) != wantedYpos)
 				isok = false;

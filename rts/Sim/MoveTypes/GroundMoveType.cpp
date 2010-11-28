@@ -1951,10 +1951,10 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 
 	if (floatOnWater) {
 		// in [0, maxHeight]
-		h = ground->GetHeight(p.x, p.z);
+		h = ground->GetHeightAboveWater(p.x, p.z);
 	} else {
 		// in [minHeight, maxHeight]
-		h = ground->GetHeight2(p.x, p.z);
+		h = ground->GetHeightReal(p.x, p.z);
 	}
 
 	return h;

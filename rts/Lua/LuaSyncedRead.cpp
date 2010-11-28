@@ -4375,8 +4375,7 @@ int LuaSyncedRead::GetGroundHeight(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-	// GetHeight2() does not clamp the value to (>= 0)
-	lua_pushnumber(L, ground->GetHeight2(x, z));
+	lua_pushnumber(L, ground->GetHeightReal(x, z));
 	return 1;
 }
 

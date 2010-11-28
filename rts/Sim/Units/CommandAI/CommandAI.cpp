@@ -420,7 +420,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 					// check if attack ground is really attack ground
 					if (!aiOrder && !fromSynced &&
-						fabs(cPos.y - ground->GetHeight2(cPos.x, cPos.z)) > SQUARE_SIZE) {
+						fabs(cPos.y - ground->GetHeightReal(cPos.x, cPos.z)) > SQUARE_SIZE) {
 						return false;
 					}
 				}

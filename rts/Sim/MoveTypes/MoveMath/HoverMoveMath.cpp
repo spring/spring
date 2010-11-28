@@ -47,12 +47,12 @@ Gives a position slightly over ground and water level.
 */
 float CHoverMoveMath::yLevel(int xSquare, int zSquare) const
 {
-	return ground->GetHeight(xSquare*SQUARE_SIZE, zSquare*SQUARE_SIZE) + 10;
+	return ground->GetHeightAboveWater(xSquare*SQUARE_SIZE, zSquare*SQUARE_SIZE) + 10;
 }
 
 
 float CHoverMoveMath::yLevel(const float3& pos) const
 {
-	return ground->GetHeight(pos.x, pos.z) + 10;
+	return ground->GetHeightAboveWater(pos.x, pos.z) + 10;
 }
 
