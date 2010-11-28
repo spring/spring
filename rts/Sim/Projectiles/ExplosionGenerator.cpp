@@ -183,7 +183,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
                                        float radius, CUnit *owner,float gfxMod,
                                        CUnit *hit, const float3 &dir)
 {
-	const float h2 = ground->GetHeight2(pos.x, pos.z);
+	const float h2 = ground->GetHeightReal(pos.x, pos.z);
 	const float height = max(0.0f, pos.y - h2);
 
 	const bool waterExplosion = (h2 < -3.0f);
@@ -773,7 +773,7 @@ void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float
 		return;
 	}
 
-	float h2 = ground->GetHeight2(pos.x, pos.z);
+	float h2 = ground->GetHeightReal(pos.x, pos.z);
 	unsigned int flags = 0;
 
 	if (pos.y - max(0.0f, h2) > 20) flags = SPW_AIR;

@@ -159,7 +159,7 @@ void CFactory::Update()
 			curBuild->pos = buildPos;
 
 			if (curBuild->floatOnWater) {
-				float waterline = ground->GetHeight(buildPos.x, buildPos.z) - curBuild->unitDef->waterline;
+				float waterline = ground->GetHeightAboveWater(buildPos.x, buildPos.z) - curBuild->unitDef->waterline;
 				if (waterline > curBuild->pos.y)
 					curBuild->pos.y = waterline;
 			}
@@ -272,7 +272,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 	for (int a = 0; a < 20; ++a) {
 		float3 testPos = pos + frontdir * r * cos(a * PI / 10) + rightdir * r * sin(a * PI / 10);
-		testPos.y = ground->GetHeight(testPos.x, testPos.z);
+		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (qf->GetSolidsExact(testPos, unit->radius * 1.5f).empty()) {
 			foundPos = testPos;

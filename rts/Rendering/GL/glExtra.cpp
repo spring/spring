@@ -22,7 +22,7 @@ static void defSurfaceCircle(const float3& center, float radius, unsigned int re
 		float3 pos;
 		pos.x = center.x + (fastmath::sin(radians) * radius);
 		pos.z = center.z + (fastmath::cos(radians) * radius);
-		pos.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
+		pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + 5.0f;
 		va->AddVertex0(pos);
 	}
 	va->DrawArray0(GL_LINE_LOOP);
@@ -38,10 +38,10 @@ static void defSurfaceSquare(const float3& center, float xsize, float zsize)
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-		va->AddVertex0(p0.x, ground->GetHeight(p0.x, p0.z), p0.z);
-		va->AddVertex0(p1.x, ground->GetHeight(p1.x, p1.z), p1.z);
-		va->AddVertex0(p2.x, ground->GetHeight(p2.x, p2.z), p2.z);
-		va->AddVertex0(p3.x, ground->GetHeight(p3.x, p3.z), p3.z);
+		va->AddVertex0(p0.x, ground->GetHeightAboveWater(p0.x, p0.z), p0.z);
+		va->AddVertex0(p1.x, ground->GetHeightAboveWater(p1.x, p1.z), p1.z);
+		va->AddVertex0(p2.x, ground->GetHeightAboveWater(p2.x, p2.z), p2.z);
+		va->AddVertex0(p3.x, ground->GetHeightAboveWater(p3.x, p3.z), p3.z);
 	va->DrawArray0(GL_LINE_LOOP);
 }
 
@@ -78,7 +78,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		float cosR = fastmath::cos(radians);
 		pos.x = center.x + (sinR * rad);
 		pos.z = center.z + (cosR * rad);
-		pos.y = ground->GetHeight(pos.x, pos.z);
+		pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 		float heightDiff = (pos.y - center.y)/2;
 		rad -= heightDiff * slope;
 		float adjRadius = weapon ? weapon->GetRange2D(heightDiff*weapon->heightMod) : rad;
@@ -94,7 +94,7 @@ void glBallisticCircle(const float3& center, const float radius,
 			}
 			pos.x = center.x + (sinR * rad);
 			pos.z = center.z + (cosR * rad);
-			float newY = ground->GetHeight(pos.x, pos.z);
+			float newY = ground->GetHeightAboveWater(pos.x, pos.z);
 			ydiff = fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
@@ -102,7 +102,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		}
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);
-		pos.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
+		pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + 5.0f;
 		va->AddVertex0(pos);
 	}
 	va->DrawArray0(GL_LINE_LOOP);

@@ -154,7 +154,7 @@ void CFireBallProjectile::EmitSpark()
 
 void CFireBallProjectile::Collision()
 {
-	if (weaponDef->waterweapon && ground->GetHeight2(pos.x, pos.z) < pos.y) {
+	if (weaponDef->waterweapon && ground->GetHeightReal(pos.x, pos.z) < pos.y) {
 		// make waterweapons not explode in water
 		return;
 	}

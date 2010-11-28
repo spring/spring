@@ -139,7 +139,7 @@ CStarburstProjectile::~CStarburstProjectile(void)
 
 void CStarburstProjectile::Collision()
 {
-	const float h = ground->GetHeight2(pos.x, pos.z);
+	const float h = ground->GetHeightReal(pos.x, pos.z);
 
 	if (weaponDef->waterweapon && h < pos.y) {
 		// prevent impact on water if waterweapon is set

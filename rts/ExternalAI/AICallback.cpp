@@ -1036,9 +1036,9 @@ const unsigned char* CAICallback::GetMetalMap()
 	return readmap->metalMap->metalMap;
 }
 
-float CAICallback::GetElevation(float x,float z)
+float CAICallback::GetElevation(float x, float z)
 {
-	return ground->GetHeight2(x,z);
+	return ground->GetHeightReal(x,z);
 }
 
 

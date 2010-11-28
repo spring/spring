@@ -420,7 +420,7 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		}
 	}
 
-	const float groundheight = ground->GetHeight2(pos.x, pos.z);
+	const float groundheight = ground->GetHeightReal(pos.x, pos.z);
 
 	if (!unitdef->floater || groundheight > 0.0f) {
 		// if we are capable of floating, only test local

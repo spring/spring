@@ -451,7 +451,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 		if (p->checkCol) {
 			// too many projectiles seem to impact the ground before
 			// actually hitting so don't subtract the projectile radius
-			if (ground->GetHeight(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {
+			if (ground->GetHeightAboveWater(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {
 				p->Collision();
 			}
 		}

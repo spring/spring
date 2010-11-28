@@ -166,8 +166,8 @@ void CScriptMoveType::Update()
 	}
 
 	if (trackGround) {
-		const float gndMin =
-			ground->GetHeight2(owner->pos.x, owner->pos.z) + groundOffset;
+		const float gndMin = ground->GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
+
 		if (owner->pos.y <= gndMin) {
 			owner->pos.y = gndMin;
 			owner->speed.y = 0.0f;
