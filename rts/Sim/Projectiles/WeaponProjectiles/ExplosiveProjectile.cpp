@@ -65,17 +65,13 @@ CExplosiveProjectile::CExplosiveProjectile(
 	}
 }
 
-CExplosiveProjectile::~CExplosiveProjectile()
-{
-
-}
-
 void CExplosiveProjectile::Update()
 {
-	if (!luaMoveCtrl) {
-		pos += speed;
-		speed.y += mygravity;
-	}
+//	if (!luaMoveCtrl) {
+//		pos += speed;
+//		speed.y += mygravity;
+//	}
+	CProjectile::Update();
 
 	if (--ttl == 0) {
 		Collision();
@@ -120,19 +116,22 @@ void CExplosiveProjectile::Collision(CUnit *unit)
 
 void CExplosiveProjectile::Draw(void)
 {
-	if (model) { //dont draw if a 3d model has been defined for us
+	if (model) {
+		// don't draw if a 3D model has been defined for us
 		return;
 	}
 
 	inArray = true;
-	unsigned char col[4];
+
+	unsigned char col[4] = {0};
+
 	if (weaponDef->visuals.colorMap) {
 		weaponDef->visuals.colorMap->GetColor(col, curTime);
 	} else {
-		col[0] = int(weaponDef->visuals.color.x * 255);
-		col[1] = int(weaponDef->visuals.color.y * 255);
-		col[2] = int(weaponDef->visuals.color.z * 255);
-		col[3] = int(weaponDef->intensity * 255);
+		col[0] = weaponDef->visuals.color.x * 255;
+		col[1] = weaponDef->visuals.color.y * 255;
+		col[2] = weaponDef->visuals.color.z * 255;
+		col[3] = weaponDef->intensity       * 255;
 	}
 
 	const AtlasedTexture* tex = weaponDef->visuals.texture1;
@@ -141,28 +140,30 @@ void CExplosiveProjectile::Draw(void)
 	const float  separation = weaponDef->visuals.separation;
 	const bool   noGap      = weaponDef->visuals.noGap;
 	const int    stages     = weaponDef->visuals.stages;
-	const float  invStages  = 1.0f / (float)stages;
+	const float  invStages  = 1.0f / stages;
 
 	const float3 ndir = dir * separation * 0.6f;
 
 	va->EnlargeArrays(stages * 4,0, VA_SIZE_TC);
 
-	for (int a = 0; a < stages; ++a) { //! CAUTION: loop count must match EnlargeArrays above
-		const float aDecay = (stages - (a * alphaDecay)) * invStages;
-		col[0] = int(aDecay * col[0]);
-		col[1] = int(aDecay * col[1]);
-		col[2] = int(aDecay * col[2]);
-		col[3] = int(aDecay * col[3]);
+	for (int stage = 0; stage < stages; ++stage) { //! CAUTION: loop count must match EnlargeArrays above
+		const float stageDecay = (stages - (stage * alphaDecay)) * invStages;
+		const float stageSize  = drawRadius * (1.0f - (stage * sizeDecay));
 
-		const float  size  = drawRadius * (1.0f - (a * sizeDecay));
-		const float3 up    = camera->up    * size;
-		const float3 right = camera->right * size;
-		const float3 interPos2 = drawPos - ((noGap)? (ndir * size * a): (ndir * drawRadius * a));
+		const float3 ydirCam  = camera->up    * stageSize;
+		const float3 xdirCam  = camera->right * stageSize;
+		const float3 stageGap = (noGap)? (ndir * stageSize * stage): (ndir * drawRadius * stage);
+		const float3 stagePos = drawPos - stageGap;
 
-		va->AddVertexQTC(interPos2 - right - up, tex->xstart, tex->ystart, col);
-		va->AddVertexQTC(interPos2 + right - up, tex->xend,   tex->ystart, col);
-		va->AddVertexQTC(interPos2 + right + up, tex->xend,   tex->yend,   col);
-		va->AddVertexQTC(interPos2 - right + up, tex->xstart, tex->yend,   col);
+		col[0] = stageDecay * col[0];
+		col[1] = stageDecay * col[1];
+		col[2] = stageDecay * col[2];
+		col[3] = stageDecay * col[3];
+
+		va->AddVertexQTC(stagePos - xdirCam - ydirCam, tex->xstart, tex->ystart, col);
+		va->AddVertexQTC(stagePos + xdirCam - ydirCam, tex->xend,   tex->ystart, col);
+		va->AddVertexQTC(stagePos + xdirCam + ydirCam, tex->xend,   tex->yend,   col);
+		va->AddVertexQTC(stagePos - xdirCam + ydirCam, tex->xstart, tex->yend,   col);
 	}
 }
 
