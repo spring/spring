@@ -15,6 +15,7 @@
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
+#include "FileSystem/FileSystemHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -24,61 +25,6 @@
 #include <set>
 #include <sstream>
 #include <limits.h>
-
-
-void CAILibraryManager::reportError(const char* topic, const char* msg) {
-	handleerror(NULL, msg, topic, MBF_OK | MBF_EXCL);
-}
-void CAILibraryManager::reportError1(const char* topic, const char* msg, const char* arg0) {
-
-	const int MAX_MSG_LENGTH = 511;
-	char s_msg[MAX_MSG_LENGTH + 1];
-	SNPRINTF(s_msg, MAX_MSG_LENGTH, msg, arg0);
-	reportError(topic, s_msg);
-}
-void CAILibraryManager::reportError2(const char* topic, const char* msg, const char* arg0, const char* arg1) {
-
-	const int MAX_MSG_LENGTH = 511;
-	char s_msg[MAX_MSG_LENGTH + 1];
-	SNPRINTF(s_msg, MAX_MSG_LENGTH, msg, arg0, arg1);
-	reportError(topic, s_msg);
-}
-
-std::string CAILibraryManager::extractFileName(const std::string& libFile, bool includeExtension) {
-
-	std::string::size_type firstChar = libFile.find_last_of("/\\");
-	std::string::size_type lastChar = std::string::npos;
-	if (!includeExtension) {
-		lastChar = libFile.find_last_of('.');
-	}
-
-	return libFile.substr(firstChar+1, lastChar - firstChar -1);
-}
-
-
-static std::string noSlashAtEnd(const std::string& dir) {
-
-	std::string resDir = dir;
-
-	char lastChar = dir.at(dir.size()-1);
-	if (lastChar == '/' || lastChar == '\\') {
-		resDir = resDir.substr(0, dir.size()-1);
-	}
-
-	return resDir;
-}
-
-static std::string removeLastPathPart(const std::string& path) {
-
-	std::string resDir = noSlashAtEnd(path);
-
-	const std::string::size_type slashPos = resDir.find_last_of("/\\");
-	if (slashPos != std::string::npos) {
-		resDir = resDir.substr(0, slashPos+1);
-	}
-
-	return resDir;
-}
 
 
 CAILibraryManager::CAILibraryManager() {
@@ -113,9 +59,9 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			CAIInterfaceLibraryInfo* interfaceInfo =
 					new CAIInterfaceLibraryInfo(infoFile.at(0));
 
-			interfaceInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
+			interfaceInfo->SetDataDir(FileSystemHandler::EnsureNoPathSepAtEnd(possibleDataDir));
 			interfaceInfo->SetDataDirCommon(
-					removeLastPathPart(possibleDataDir) + "common");
+					FileSystemHandler::GetParent(possibleDataDir) + "common");
 
 			AIInterfaceKey interfaceKey = interfaceInfo->GetKey();
 
@@ -168,9 +114,9 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			CSkirmishAILibraryInfo* skirmishAIInfo =
 					new CSkirmishAILibraryInfo(infoFile.at(0), optionFileName);
 
-			skirmishAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
+			skirmishAIInfo->SetDataDir(FileSystemHandler::EnsureNoPathSepAtEnd(possibleDataDir));
 			skirmishAIInfo->SetDataDirCommon(
-					removeLastPathPart(possibleDataDir) + "common");
+					FileSystemHandler::GetParent(possibleDataDir) + "common");
 			skirmishAIInfo->SetLuaAI(false);
 
 			SkirmishAIKey aiKey = skirmishAIInfo->GetKey();
