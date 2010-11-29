@@ -7,7 +7,6 @@
 #include <set>
 #include <list>
 #include <cctype>
-using namespace std;
 
 #include "SDL_timer.h"
 #include "SDL_keysym.h"
@@ -60,6 +59,7 @@ using namespace std;
 #include "FileSystem/FileSystem.h"
 #include "Sound/IMusicChannel.h"
 
+using namespace std;
 
 extern boost::uint8_t *keys;
 
