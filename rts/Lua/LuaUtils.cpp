@@ -6,6 +6,7 @@
 #include <cctype>
 #include <zlib.h>
 #include <boost/cstdint.hpp>
+#include <string.h>
 
 #include "mmgr.h"
 
