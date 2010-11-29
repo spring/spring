@@ -48,6 +48,7 @@ def ProcessLines(lines):
 		match = re.search(DEV_NAME_PATTERN, line)
 
 		if (match == None):
+			nlines += line + '\n'
 			continue
 
 		oname = match.group(0)
