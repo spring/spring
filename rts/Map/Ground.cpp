@@ -13,32 +13,55 @@
 #include <assert.h>
 
 
-
 static inline float Interpolate(float x, float y, const float* heightmap)
 {
-	int sx = int(x) / SQUARE_SIZE;
-	int sy = int(y) / SQUARE_SIZE;
-	sx = Clamp(sx, 0, gs->mapx - 1);
-	sy = Clamp(sy, 0, gs->mapy - 1);
+	//! NOTE:
+	//! This isn't a bilinear interpolation. Instead it interpolates
+	//! on the 2 triangles that form the ground quad:
+	//! __________
+	//! |        /|
+	//! | dx+dy / |
+	//! |  <1  /  |
+	//! |     /   |
+	//! |    /    |
+	//! |   /     |
+	//! |  / dx+dy|
+	//! | /   >=1 |
+	//! |/        |
+	//! ----------
 
-	const float dx = (x - sx * SQUARE_SIZE) * (1.0f / SQUARE_SIZE);
-	const float dy = (y - sy * SQUARE_SIZE) * (1.0f / SQUARE_SIZE);
-	const int hs = sx + sy * (gs->mapx + 1);
+	x = Clamp(x, 0.f, float3::maxxpos) / SQUARE_SIZE;
+	y = Clamp(y, 0.f, float3::maxzpos) / SQUARE_SIZE;
+
+	const int isx = int(x);
+	const int isy = int(y);
+	const float dx = x - isx;
+	const float dy = y - isy;
+	const int hs = isx + isy * (gs->mapx + 1);
 
 	if (dx + dy < 1) {
-		const float xdif = (dx) * (heightmap[hs +            1] - heightmap[hs]);
-		const float ydif = (dy) * (heightmap[hs + gs->mapx + 1] - heightmap[hs]);
+		//! top left triangle
+		const float h00 = heightmap[hs                     ];
+		const float h10 = heightmap[hs + 1                 ];
+		const float h01 = heightmap[hs     + (gs->mapx + 1)];
+		const float xdif = (dx) * (h10 - h00);
+		const float ydif = (dy) * (h01 - h00);
 
-		return heightmap[hs] + xdif + ydif;
-	} else {
-		const float xdif = (1.0f - dx) * (heightmap[hs + gs->mapx + 1] - heightmap[hs + 1 + 1 + gs->mapx]);
-		const float ydif = (1.0f - dy) * (heightmap[hs            + 1] - heightmap[hs + 1 + 1 + gs->mapx]);
-
-		return heightmap[hs + 1 + 1 + gs->mapx] + xdif + ydif;
+		return h00 + xdif + ydif;
 	}
+	else {
+		//! bottom right triangle
+		const float h10 = heightmap[hs + 1                 ];
+		const float h11 = heightmap[hs + 1 + (gs->mapx + 1)];
+		const float h01 = heightmap[hs     + (gs->mapx + 1)];
+		const float xdif = (1.0f - dx) * (h01 - h11);
+		const float ydif = (1.0f - dy) * (h10 - h11);
 
+		return h11 + xdif + ydif;
+	}
 	return 0; // can not be reached
 }
+
 
 static inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, int ys)
 {
