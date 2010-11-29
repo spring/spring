@@ -19,6 +19,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
@@ -179,6 +180,8 @@ void UnloadExtensions()
 
 void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data)
 {
+	ScopedTimer timer("Textures::glBuildMipmaps");
+
 	if (globalRendering->compressTextures) {
 		switch ( internalFormat ) {
 			case 4:
