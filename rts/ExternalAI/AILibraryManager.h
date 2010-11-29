@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AILIBRARYMANAGER_H
-#define	_AILIBRARYMANAGER_H
+#ifndef _AI_LIBRARY_MANAGER_H
+#define	_AI_LIBRARY_MANAGER_H
 
 #include "IAILibraryManager.h"
 
@@ -94,12 +94,6 @@ private:
 	void ClearAllInfos();
 
 private:
-	// helper functions
-	static void reportError(const char* topic, const char* msg);
-	static void reportError1(const char* topic, const char* msg, const char* arg0);
-	static void reportError2(const char* topic, const char* msg, const char* arg0, const char* arg1);
-	static void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);
-	static std::string extractFileName(const std::string& libFile, bool includeExtension);
 	/**
 	 * Finds the best fitting interface.
 	 * The short name has to fit perfectly, and the version of the interface
@@ -118,4 +112,4 @@ private:
 			const T_interfaceSpecs& specs);
 };
 
-#endif // _AILIBRARYMANAGER_H
+#endif // _AI_LIBRARY_MANAGER_H
