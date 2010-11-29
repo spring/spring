@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
+#include <cfloat>
 
 #include "ShadowHandler.h"
 #include "Game/Camera.h"
@@ -270,13 +271,16 @@ void CShadowHandler::DrawShadowPasses(void)
 
 void CShadowHandler::SetShadowMapSizeFactors()
 {
-	if (shadowMapSize == 2048) {
+	/*if (shadowMapSize >= 2048) {
 		p17 =  0.01f;
 		p18 = -0.1f;
 	} else {
 		p17 =  0.0025f;
 		p18 = -0.05f;
-	}
+	}*/
+
+	p17 =  FLT_MAX;
+	p18 =  1.0f;
 }
 
 void CShadowHandler::CreateShadows(void)
@@ -323,8 +327,10 @@ void CShadowHandler::CreateShadows(void)
 	const float maxLengthX = (x2 - x1) * 1.5f;
 	const float maxLengthY = (y2 - y1) * 1.5f;
 
-	xmid = 1.0f - (sqrt(fabs(x2)) / (sqrt(fabs(x2)) + sqrt(fabs(x1))));
-	ymid = 1.0f - (sqrt(fabs(y2)) / (sqrt(fabs(y2)) + sqrt(fabs(y1))));
+	//xmid = 1.0f - (sqrt(fabs(x2)) / (sqrt(fabs(x2)) + sqrt(fabs(x1))));
+	//ymid = 1.0f - (sqrt(fabs(y2)) / (sqrt(fabs(y2)) + sqrt(fabs(y1))));
+	xmid = 0.5f;
+	ymid = 0.5f;
 
 	shadowMatrix[ 0] =   cross1.x / maxLengthX;
 	shadowMatrix[ 4] =   cross1.y / maxLengthX;
