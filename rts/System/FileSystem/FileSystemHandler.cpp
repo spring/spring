@@ -178,6 +178,8 @@ std::string FileSystemHandler::StripTrailingSlashes(const std::string& path)
 	while (len > 0) {
 		if (IsPathSeparator(path.at(len - 1))) {
 			--len;
+		} else {
+			break;
 		}
 	}
 
