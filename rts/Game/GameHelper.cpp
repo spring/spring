@@ -1089,24 +1089,21 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 }
 
 
-void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, CUnit* excludeUnit)
+void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
 {
 	const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
+	const int allyTeamId = teamHandler->AllyTeam(teamId);
 
 	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* u = *ui;
 
 		// don't send BuggerOff commands to enemy units
-		bool allied = true;
+		const int uAllyTeamId = u->allyteam;
+		const bool allied = (
+				teamHandler->Ally(uAllyTeamId,  allyTeamId) ||
+				teamHandler->Ally(allyTeamId, uAllyTeamId));
 
-		if (excludeUnit) {
-			const int eAllyTeam = excludeUnit->allyteam;
-			const int uAllyTeam = u->allyteam;
-
-			allied = (teamHandler->Ally(uAllyTeam, eAllyTeam) || teamHandler->Ally(eAllyTeam, uAllyTeam));
-		}
-
-		if (u != excludeUnit && allied && ((!u->unitDef->pushResistant && !u->usingScriptMoveType) || forced)) {
+		if ((u != excludeUnit) && allied && ((!u->unitDef->pushResistant && !u->usingScriptMoveType) || forced)) {
 			u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
 		}
 	}

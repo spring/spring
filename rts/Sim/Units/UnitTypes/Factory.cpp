@@ -137,7 +137,7 @@ void CFactory::Update()
 					unitDef->sounds.build.getVolume(0));
 			}
 		} else {
-			helper->BuggerOff(buildPos - float3(0.01f, 0, 0.02f), radius + 8, true, true, NULL);
+			helper->BuggerOff(buildPos - float3(0.01f, 0, 0.02f), radius + 8, true, true, team, NULL);
 		}
 	}
 
@@ -346,7 +346,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 void CFactory::SlowUpdate(void)
 {
 	if (!transporter)
-		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, NULL);
+		helper->BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, team, NULL);
 	CBuilding::SlowUpdate();
 }
 

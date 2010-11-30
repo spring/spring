@@ -1472,7 +1472,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case BUGGER_OFF: {
 			if (param != 0) {
-				helper->BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f, true, false, NULL);
+				helper->BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f, true, false, unit->team, NULL);
 			}
 			break;
 		}
