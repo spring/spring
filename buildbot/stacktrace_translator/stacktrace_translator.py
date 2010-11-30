@@ -31,7 +31,7 @@ PIDFILE = os.path.expanduser('~/run/stacktrace_translator.pid')
 LISTEN_ADDR = ('', 8000)
 
 # Match common pre- and suffix on infolog lines.
-RE_PREFIX = r'^(\[(f=)?\s*\d+\]\s+)?'
+RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?\s+'
 RE_SUFFIX = '\r?$'
 
 # Match stackframe lines, captures the module name and the address.
