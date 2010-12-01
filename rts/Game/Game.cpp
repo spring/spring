@@ -5081,17 +5081,17 @@ void CGame::ReloadCOB(const string& msg, int player)
 	}
 	const UnitDef* udef = unitDefHandler->GetUnitDefByName(unitName);
 	if (udef==NULL) {
-		logOutput.Print("Unknown unit name");
+		logOutput.Print("Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
 	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr(udef->scriptPath);
 	if (oldScript == NULL) {
-		logOutput.Print("Unknown cob script: %s", udef->scriptPath.c_str());
+		logOutput.Print("Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptPath.c_str());
 		return;
 	}
 	CCobFile* newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
 	if (newScript == NULL) {
-		logOutput.Print("Could not load COB script from: %s", udef->scriptPath.c_str());
+		logOutput.Print("Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptPath.c_str());
 		return;
 	}
 	int count = 0;
