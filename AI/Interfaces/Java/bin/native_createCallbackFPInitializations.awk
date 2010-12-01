@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates the function pointer initializations
 # for the C callbacks; eg:

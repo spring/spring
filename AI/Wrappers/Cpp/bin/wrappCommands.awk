@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates the C++ wrapper classes for the C command structs in:
 # rts/ExternalAI/Interface/AISCommands.h

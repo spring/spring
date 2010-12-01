@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates function impls that can be used in the C callbacks
 # with some little adjustments; eg:
