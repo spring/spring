@@ -51,6 +51,7 @@ int main (int argc, char* argv[])
 	{
 		std::cout << "demotool Usage: " << std::endl;
 		all.print(std::cout);
+		std::cout << "example: demotool myReplay.sdf -d > myReplay_sdf_demotool.txt" << std::endl;
 		return 0;
 	}
 	if (vm.count("demofile"))
@@ -199,12 +200,13 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		delete packet;
 	}
 
+	// how many times did each message appear
 	for (unsigned i = 0; i != trafficCounter.size(); ++i)
 	{
 		if (trafficStats && trafficCounter[i] > 0)
 			std::cout << "Msg " << i << ": " << trafficCounter[i] << std::endl;
 	}
-};
+}
 
 template<typename T>
 void PrintSep(std::ofstream& file, T value)
