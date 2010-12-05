@@ -212,9 +212,9 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, i
 	IPath::SearchResult result = IPath::Error;
 
 	if (medResPath.path.empty() && lowResPath.path.empty()) {
-		result = maxResPF->GetPath(*multiPath.moveData, startPos, *multiPath.peDef, maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
+		result = maxResPF->GetPath(*multiPath.moveData, startPos, *multiPath.peDef, maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 2, true, ownerId, synced);
 	} else {
-		result = maxResPF->GetPath(*multiPath.moveData, startPos, rangedGoalPFD, maxResPath, true, false, MAX_SEARCHED_NODES_PF, true, ownerId, synced);
+		result = maxResPF->GetPath(*multiPath.moveData, startPos, rangedGoalPFD, maxResPath, true, false, MAX_SEARCHED_NODES_PF >> 2, true, ownerId, synced);
 	}
 
 	// If no refined path could be found, set goal as desired goal.
