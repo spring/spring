@@ -616,9 +616,20 @@ void CUnitScript::EmitSfx(int type, int piece)
 				}
 
 				helper->Explosion(
-					pos, weaponDef->damages, weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-					weaponDef->explosionSpeed, unit, true, 1.0f, weaponDef->noSelfDamage, weaponDef->impactOnly, weaponDef->explosionGenerator,
-					NULL, float3(0, 0, 0), weaponDef->id
+					pos,
+					weaponDef->damages,
+					weaponDef->areaOfEffect,
+					weaponDef->edgeEffectiveness,
+					weaponDef->explosionSpeed,
+					unit,
+					true,
+					1.0f,
+					weaponDef->noSelfDamage,
+					weaponDef->impactOnly,
+					weaponDef->explosionGenerator,
+					NULL,
+					ZeroVector,
+					weaponDef->id
 				);
 			}
 		} break;

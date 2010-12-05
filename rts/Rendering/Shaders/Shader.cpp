@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/GL/myGL.h"
-
 #include "Rendering/Shaders/Shader.hpp"
 
 namespace Shader {
@@ -13,23 +12,29 @@ namespace Shader {
 
 	void ARBShaderObject::Compile() {
 		glEnable(type);
-		glBindProgramARB(type, objID);
-		glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, src.size(), src.c_str());
 
-		int errorPos = -1;
-		int isNative =  0;
+		if (glBindProgramARB != NULL) {
+			glBindProgramARB(type, objID);
+			glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, src.size(), src.c_str());
 
-		glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-		glGetProgramivARB(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
+			int errorPos = -1;
+			int isNative =  0;
 
-		log = std::string((const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
-		valid = (errorPos == -1 && isNative != 0);
+			glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
+			glGetProgramivARB(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
 
-		glBindProgramARB(type, 0);
+			log = std::string((const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+			valid = (errorPos == -1 && isNative != 0);
+
+			glBindProgramARB(type, 0);
+		}
+
 		glDisable(type);
 	}
 	void ARBShaderObject::Release() {
-		glDeleteProgramsARB(1, &objID);
+		if (glDeleteProgramsARB != NULL) {
+			glDeleteProgramsARB(1, &objID);
+		}
 	}
 
 
@@ -44,20 +49,25 @@ namespace Shader {
 		int  logStrLen     = 0;
 
 		const GLchar* srcStr = src.c_str();
-		GLint compiled = 0;
 
-		glShaderSource(objID, 1, &srcStr, NULL);
-		glCompileShader(objID);
+		if (glShaderSource != NULL) {
+			glShaderSource(objID, 1, &srcStr, NULL);
+			glCompileShader(objID);
 
-		glGetShaderiv(objID, GL_COMPILE_STATUS, &compiled);
-		glGetShaderInfoLog(objID, 65536, &logStrLen, logStr);
+			GLint compiled = 0;
 
-		valid = bool(compiled);
-		log   = std::string(logStr);
+			glGetShaderiv(objID, GL_COMPILE_STATUS, &compiled);
+			glGetShaderInfoLog(objID, 65536, &logStrLen, logStr);
+
+			valid = bool(compiled);
+			log   = std::string(logStr);
+		}
 	}
 
 	void GLSLShaderObject::Release() {
-		glDeleteShader(objID);
+		if (glDeleteShader != NULL) {
+			glDeleteShader(objID);
+		}
 	}
 
 
@@ -151,25 +161,30 @@ namespace Shader {
 		GLint linked    = 0;
 		GLint validated = 0;
 
-		glLinkProgram(objID);
-		glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
-		// append the link-log
-		log += std::string(logStr);
+		if (glLinkProgram != NULL) {
+			glLinkProgram(objID);
+			glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
+			// append the link-log
+			log += std::string(logStr);
 
-		glValidateProgram(objID);
-		glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
-		// append the validation-log
-		log += std::string(logStr);
+			glValidateProgram(objID);
+			glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
+			// append the validation-log
+			log += std::string(logStr);
 
-		glGetProgramiv(objID, GL_LINK_STATUS,     &linked);
-		glGetProgramiv(objID, GL_VALIDATE_STATUS, &validated);
+			glGetProgramiv(objID, GL_LINK_STATUS,     &linked);
+			glGetProgramiv(objID, GL_VALIDATE_STATUS, &validated);
+		}
 
 		valid = bool(linked) && bool(validated);
 	}
 
 	void GLSLProgramObject::Release() {
 		IProgramObject::Release();
-		glDeleteProgram(objID);
+
+		if (glDeleteProgram != NULL) {
+			glDeleteProgram(objID);
+		}
 	}
 
 	void GLSLProgramObject::AttachShaderObject(const IShaderObject* so) {

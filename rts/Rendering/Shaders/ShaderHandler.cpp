@@ -69,7 +69,6 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(
 
 	po->AttachShaderObject(vso);
 	po->AttachShaderObject(fso);
-
 	po->Link();
 
 	if (!po->IsValid()) {
