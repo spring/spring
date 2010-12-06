@@ -7,9 +7,15 @@
 #include "Vec2.h"
 #include "float3.h"
 
-#define MaxByAbs(a,b) (abs((a)) > abs((b))) ? (a) : (b);
+#ifdef __GNUC__
+	#define _const __attribute__((const))
+#else
+	#define _const 
+#endif
 
-static const float TWOPI = 2 * PI;
+static const float INVPI  = 1.0f / PI;
+static const float TWOPI  = 2.0f * PI;
+static const float HALFPI = 0.5f * PI;
 static const int SHORTINT_MAXVALUE  = 32768;
 static const int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
 
@@ -18,11 +24,11 @@ static const int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
 #define NUM_HEADINGS 4096
 
 #if (NUM_HEADINGS == 1024)
-#  define HEADING_CHECKSUM  HEADING_CHECKSUM_1024
+	#define HEADING_CHECKSUM  HEADING_CHECKSUM_1024
 #elif (NUM_HEADINGS == 4096)
-#  define HEADING_CHECKSUM  HEADING_CHECKSUM_4096
+	#define HEADING_CHECKSUM  HEADING_CHECKSUM_4096
 #else
-#  error "HEADING_CHECKSUM not set, invalid NUM_HEADINGS?"
+	#error "HEADING_CHECKSUM not set, invalid NUM_HEADINGS?"
 #endif
 
 enum FacingMap {
@@ -39,216 +45,71 @@ public:
 };
 
 
-
-//                  F(N=2) = H(-32768 / 32767)
-// 
-//                         ^
-//                         |
-//                         |
-// F(W=3) = H(-16384)  <---o--->  F(E=1) = H(16384)
-//                         |
-//                         |
-//                         v
-// 
-//                  F(S=0) = H(0)
-inline short int GetHeadingFromFacing(int facing)
-{
-	switch (facing) {
-		case FACING_SOUTH: return      0;
-		case FACING_EAST:  return  16384;
-		case FACING_NORTH: return  32767;
-		case FACING_WEST:  return -16384;
-		default: return 0;
-	}
-}
-
-inline int GetFacingFromHeading(short int heading)
-{
-	if (heading >= 0) {
-		if (heading <  8192) { return FACING_SOUTH; }
-		if (heading < 24576) { return FACING_EAST; }
-		return FACING_NORTH;
-	} else {
-		if (heading >=  -8192) { return FACING_SOUTH; }
-		if (heading >= -24576) { return FACING_WEST; }
-		return FACING_NORTH;
-	}
-}
-
-inline float GetHeadingFromVectorF(float dx, float dz)
-{
-	float h = 0.0f;
-
-	if (dz != 0.0f) {
-		float d = dx / dz;
-
-		if (d > 1.0f) {
-			h = (PI * 0.5f) - d / (d * d + 0.28f);
-		} else if (d < -1.0f) {
-			h = -(PI * 0.5f) - d / (d * d + 0.28f);
-		} else {
-			h = d / (1.0f + 0.28f * d * d);
-		}
-
-		if (dz < 0.0f) {
-			if (dx > 0.0f)
-				h += PI;
-			else
-				h -= PI;
-		}
-	} else {
-		if (dx > 0.0f)
-			h = PI * 0.5f;
-		else
-			h = -PI * 0.5f;
-	}
-
-	return h;
-}
-
-inline short int GetHeadingFromVector(float dx, float dz)
-{
-	float h = GetHeadingFromVectorF(dx, dz);
-
-	h *= SHORTINT_MAXVALUE / PI;
-
-	// Prevents h from going beyond SHORTINT_MAXVALUE.
-	// If h goes beyond SHORTINT_MAXVALUE, the following
-	// conversion to a short int crashes.
-	// if (h > SHORTINT_MAXVALUE) h = SHORTINT_MAXVALUE;
-	// return (short int) h;
-
-	int ih = (int) h;
-	if (ih == -SHORTINT_MAXVALUE) {
-		// ih now represents due-north, but the modulo operation
-		// below would cause it to wrap around from -32768 to 0
-		// which means due-south, so add 1
-		ih += 1;
-	}
-	ih %= SHORTINT_MAXVALUE;
-	return (short int) ih;
-}
-
 struct shortint2 {
 	short int x, y;
 };
 
-// vec should be normalized
-inline shortint2 GetHAndPFromVector(const float3& vec)
-{
-	shortint2 ret;
 
-	// Prevents ret.y from going beyond SHORTINT_MAXVALUE.
-	// If h goes beyond SHORTINT_MAXVALUE, the following
-	// conversion to a short int crashes.
-	// this change destroys the whole meaning with using short ints....
-	#if defined BUILDING_AI
-	int iy = (int) (std::asin(vec.y) * (SHORTINT_MAXVALUE / PI));
-	#else
-	int iy = (int) (streflop::asin(vec.y) * (SHORTINT_MAXVALUE / PI));
-	#endif // defined BUILDING_AI
-	iy %= SHORTINT_MAXVALUE;
-	ret.y = (short int) iy;
-	ret.x = GetHeadingFromVector(vec.x, vec.z);
-	return ret;
-}
-
-// vec should be normalized
-inline float2 GetHAndPFromVectorF(const float3& vec)
-{
-	float2 ret;
-
-	#if defined BUILDING_AI
-	ret.y = std::asin(vec.y);
-	#else
-	ret.y = streflop::asin(vec.y);
-	#endif // defined BUILDING_AI
-	ret.x = GetHeadingFromVectorF(vec.x, vec.z);
-	return ret;
-}
-
-inline float3 GetVectorFromHeading(short int heading)
-{
-	float2 v = CMyMath::headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
-	return float3(v.x, 0.0f, v.y);
-}
-
+short int GetHeadingFromFacing(int facing);
+int GetFacingFromHeading(short int heading);
+float GetHeadingFromVectorF(float dx, float dz);
+short int GetHeadingFromVector(float dx, float dz);
+shortint2 GetHAndPFromVector(const float3& vec); // vec should be normalized
+float2 GetHAndPFromVectorF(const float3& vec); // vec should be normalized
+float3 GetVectorFromHeading(short int heading);
 float3 GetVectorFromHAndPExact(short int heading,short int pitch);
 
-inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4)
-{
-	float ni = 1 - i;
-
-	float3 res((p1 * ni * ni * ni) + (p2 * 3 * i * ni * ni) + (p3 * 3 * i * i * ni) + (p4 * i * i * i));
-	return res;
-}
+float3 CalcBeizer(float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4);
 
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
 
+/**
+ * @brief Returns the intersection points of a ray with the map boundary (2d only)
+ * @param start float3 the start point of the line
+ * @param dir float3 direction of the ray
+ * @return <near,far> std::pair<float,float> distance to the intersection points in mulitples of `dir`
+ */
+std::pair<float,float> GetMapBoundaryIntersectionPoints(const float3& start, const float3& dir);
 
-#ifndef __GNUC__
-float Square(const float x);
-#else
-float Square(const float x) __attribute__((const));
-#endif
+/**
+ * @brief clamps a line (start & end points) to the map boundaries
+ * @param start float3 the start point of the line
+ * @param end float3 the end point of the line
+ * @return true if either `end` or `start` was changed
+ */
+bool ClampLineInMap(float3& start, float3& end);
 
-inline float Square(const float x) { return x * x; }
+/**
+ * @brief clamps a ray (just the end point) to the map boundaries
+ * @param start const float3 the start point of the line
+ * @param end float3 the `end` point of the line
+ * @return true if changed
+ */
+bool ClampRayInMap(const float3& start, float3& end);
+
 
 float smoothstep(const float edge0, const float edge1, const float value);
 float3 smoothstep(const float edge0, const float edge1, float3 vec);
 
-
-inline float Clamp(const float& v, const float& min, const float& max)
-{
-	if (v > max) {
-		return max;
-	} else if (v < min) {
-		return min;
-	}
-	return v;
-}
-
-template<class T>
-inline T Clamp(const T& v, const T& min, const T& max)
-{
-	if (v > max) {
-		return max;
-	} else if (v < min) {
-		return min;
-	}
-	return v;
-}
-
-/**
- * @brief Clamps an radian angle between 0 .. 2*pi
- * @param f float* value to clamp
- */
-#ifndef __GNUC__
-float ClampRad(float f);
-#else
-float ClampRad(float f) __attribute__((const));
-#endif
-
-inline float ClampRad(float f)
-{
-	f = fmod(f, TWOPI);
-	if (f < 0.0f) f += TWOPI;
-	return f;
-}
-
+float Square(const float x) _const;
+int Round(const float f) _const;
+float Clamp(const float& v, const float& min, const float& max);
+template<class T> T Clamp(const T& v, const T& min, const T& max);
 
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
-inline void ClampRad(float* f)
-{
-	*f = fmod(*f, TWOPI);
-	if (*f < 0.0f) *f += TWOPI;
-}
+float ClampRad(float f) _const;
 
+
+/**
+ * @brief Clamps an radian angle between 0 .. 2*pi
+ * @param f float* value to clamp
+ */
+void ClampRad(float* f);
 
 
 /**
@@ -256,15 +117,11 @@ inline void ClampRad(float* f)
  * @param f1 float* first compare value
  * @param f2 float* second compare value
  */
-#ifndef __GNUC__
-bool RadsAreEqual(const float f1, const float f2);
-#else
-bool RadsAreEqual(const float f1, const float f2) __attribute__((const));
-#endif
+bool RadsAreEqual(const float f1, const float f2) _const;
 
-inline bool RadsAreEqual(const float f1, const float f2)
-{
-	return (fmod(f1 - f2, TWOPI) == 0.0f);
-}
+
+#include "myMath.inl"
+
+#undef _const
 
 #endif // MYMATH_H
