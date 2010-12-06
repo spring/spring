@@ -9,6 +9,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "System/myMath.h"
 #include <assert.h>
 
 CGround* ground;
@@ -404,11 +405,19 @@ float3 CGround::GetSmoothNormal(float x, float y) const
 
 float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic) const
 {
-	from.CheckInBounds();
-
 	float3 dir(flatdir.x, linear, flatdir.z);
 
-	for (float l = 0.0f; l < length; l += 8.0f) {
+	//! limit the checking to the `in map part` of the line
+	std::pair<float,float> near_far = GetMapBoundaryIntersectionPoints(from, dir*length);
+
+	//! outside of map
+	if (near_far.second < 0.f)
+		return -1;
+
+	const float near = length * std::max(0.f, near_far.first);
+	const float far  = length * std::min(1.f, near_far.second);
+
+	for (float l = near; l < far; l += SQUARE_SIZE) {
 		float3 pos(from + dir*l);
 		pos.y += quadratic * l * l;
 
@@ -416,5 +425,5 @@ float CGround::TrajectoryGroundCol(float3 from, float3 flatdir, float length, fl
 			return l;
 		}
 	}
-	return -1;
+	return -1.f;
 }
