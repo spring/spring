@@ -181,7 +181,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					SetGoal(wantedPos, owner->pos);
 					am->dontCheckCol = true;
 					am->ForceHeading(((CTransportUnit *)owner)->GetLoadUnloadHeading(wantedPos, unit));
-					am->SetWantedAltitude(wantedPos.y - ground->GetHeight(wantedPos.x, wantedPos.z));
+					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1;
 					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
 					if ((owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS)) &&
@@ -326,7 +326,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 					|| tmp.z >= gs->mapy * SQUARE_SIZE - emptyRadius);
 
 			float3 pos = center + delta * radius;
-			pos.y = ground->GetHeight(pos.x, pos.z);
+			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 
 			if (dynamic_cast<const CBuilding *>(unitToUnload)) {
 				pos = helper->Pos2BuildPos(BuildInfo(unitToUnload->unitDef, pos, unitToUnload->buildFacing));
@@ -462,7 +462,7 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
 		while (ti != transport->GetTransportedUnits().end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
 			nextPos += dir*(ti->unit->radius);
-			nextPos.y = ground->GetHeight(nextPos.x, nextPos.z);
+			nextPos.y = ground->GetHeightAboveWater(nextPos.x, nextPos.z);
 
 			// check landing spot is ok for landing on
 			if (!SpotIsClear(nextPos,ti->unit))
@@ -689,7 +689,7 @@ void CTransportCAI::UnloadLand(Command& c)
 			if (am != NULL) {
 				// handle air transports differently
 				SetGoal(pos, owner->pos);
-				am->SetWantedAltitude(pos.y - ground->GetHeight(pos.x, pos.z));
+				am->SetWantedAltitude(pos.y - ground->GetHeightAboveWater(pos.x, pos.z));
 				float unloadHeading = ((CTransportUnit *)owner)->GetLoadUnloadHeading(pos, unit);
 				am->ForceHeading(unloadHeading);
 				am->maxDrift = 1;
@@ -753,7 +753,7 @@ void CTransportCAI::UnloadDrop(Command& c)
 
 		if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
 
-			pos.y = ground->GetHeight(pos.x, pos.z);
+			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 			CUnit* unit = ((CTransportUnit*)owner)->GetTransportedUnits().front().unit;
 			am->maxDrift = 1;
 
@@ -836,7 +836,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 			if (am != NULL) {
 				// lower to ground
 
-				startingDropPos.y = ground->GetHeight(startingDropPos.x,startingDropPos.z);
+				startingDropPos.y = ground->GetHeightAboveWater(startingDropPos.x,startingDropPos.z);
 				const float3 wantedPos = startingDropPos + UpVector * unit->model->height;
 				SetGoal(wantedPos, owner->pos);
 				am->SetWantedAltitude(1);
@@ -850,7 +850,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 				isFirstIteration = false;
 
 				// once at ground
-				if (owner->pos.y - ground->GetHeight(wantedPos.x,wantedPos.z) < 8) {
+				if (owner->pos.y - ground->GetHeightAboveWater(wantedPos.x,wantedPos.z) < 8) {
 
 					// nail it to the ground before it tries jumping up, only to land again...
 					am->SetState(am->AIRCRAFT_LANDED);

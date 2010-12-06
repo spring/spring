@@ -55,7 +55,7 @@ void CUnitTable::PostLoad() {
 
 
 void CUnitTable::ReadModConfig() {
-	L(ai, "[CUnitTable::ReadModConfig()]");
+	ai->GetLogger()->Log("[CUnitTable::ReadModConfig()]");
 
 	std::string cfgFileName = GetModCfgName();
 	std::fstream cfgFile;
@@ -68,13 +68,13 @@ void CUnitTable::ReadModConfig() {
 			msg << "\tparse-error in existing mod configuration file \"";
 			msg << cfgFileName << "\": " << ai->luaParser->GetError();
 
-			L(ai, msg.str());
+			ai->GetLogger()->Log(msg.str());
 			return;
 		} else {
 			msg << "\tparsed existing mod configuration file \"";
 			msg << cfgFileName << "\"";
 
-			L(ai, msg.str());
+			ai->GetLogger()->Log(msg.str());
 		}
 
 		const LuaTable* rootTbl = ai->luaParser->GetRootTbl();
@@ -101,7 +101,7 @@ void CUnitTable::ReadModConfig() {
 				msg.str("");
 				msg << "\t\t.cfg entry \"" << (*it) << "\" does not refer to a valid unit-type";
 
-				L(ai, msg.str());
+				ai->GetLogger()->Log(msg.str());
 				continue;
 			}
 
@@ -119,7 +119,7 @@ void CUnitTable::ReadModConfig() {
 				msg << "\t\tunitDef->id: " << unitDef->id << ", unitDef->name: " << unitDef->name;
 				msg << ", default cat.: " << defUnitCat << ", .cfg cat.: " << cfgUnitCat;
 
-				L(ai, msg.str());
+				ai->GetLogger()->Log(msg.str());
 			}
 
 			/*
@@ -139,7 +139,7 @@ void CUnitTable::ReadModConfig() {
 					{
 						msg.str("");
 						msg << "\t\t\t.cfg unit category (CAT_G_ATTACK) overrides unitType->category (CAT_BUILDER)";
-						L(ai, msg.str());
+						ai->GetLogger()->Log(msg.str());
 					}
 
 					std::vector<int>::iterator vit;
@@ -166,7 +166,7 @@ void CUnitTable::ReadModConfig() {
 			msg << "\twriting new mod configuration file \"";
 			msg << cfgFileName << "\"";
 
-			L(ai, msg.str());
+			ai->GetLogger()->Log(msg.str());
 		}
 
 		cfgFile.open(cfgFileName.c_str(), std::ios::out);
@@ -968,7 +968,7 @@ void CUnitTable::DebugPrint() {
 	if (f == NULL) {
 		msg << "[CUnitTable::DebugPrint()] could not open ";
 		msg << "debug log " << logFileName << " for writing";
-		L(ai, msg.str());
+		ai->GetLogger()->Log(msg.str());
 		return;
 	}
 

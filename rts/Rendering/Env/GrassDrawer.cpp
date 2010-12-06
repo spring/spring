@@ -256,7 +256,7 @@ public:
 				for (int x2 = 0; x2 < grassBlockSize; ++x2) { //!loop over all squares in block
 					if (*gm) {
 						float3 squarePos((xgbsx + 0.5f) * gSSsq, 0.0f, (ygbsy + 0.5f) * gSSsq);
-							squarePos.y = ground->GetHeight2(squarePos.x, squarePos.z);
+							squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z);
 
 						/*if (!camera->InView(squarePos, gSSsq * 2.0f)) { //the QuadField visibility check should be enough
 							// double the radius of the check, grass on the left of
@@ -278,7 +278,7 @@ public:
 								const float dy = (ygbsy + fRand(1)) * gSSsq;
 								const float col = 0.62f;
 
-								float3 pos(dx, ground->GetHeight2(dx, dy), dy);
+								float3 pos(dx, ground->GetHeightReal(dx, dy), dy);
 									pos.y -= ground->GetSlope(dx, dy) * 10.0f + 0.03f;
 
 								glColor3f(col, col, col);
@@ -344,7 +344,7 @@ public:
 
 			if (!grass->va) {
 				grass->va = new CVertexArray;;
-				grass->pos = float3((x + 0.5f) * bMSsq, ground->GetHeight2((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq), (y + 0.5f) * bMSsq);
+				grass->pos = float3((x + 0.5f) * bMSsq, ground->GetHeightReal((x + 0.5f) * bMSsq, (y + 0.5f) * bMSsq), (y + 0.5f) * bMSsq);
 
 				va = grass->va;
 				va->Initialize();
@@ -373,7 +373,7 @@ public:
 								const float dy = (ygbsy + fRand(1)) * gSSsq;
 								const float col = 1.0f;
 
-								float3 pos(dx, ground->GetHeight2(dx, dy) + 0.5f, dy);
+								float3 pos(dx, ground->GetHeightReal(dx, dy) + 0.5f, dy);
 									pos.y -= (ground->GetSlope(dx, dy) * 10.0f + 0.03f);
 
 								va->AddVertexQTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
@@ -661,7 +661,7 @@ void CGrassDrawer::Draw(void)
 
 		if (grassMap[y * gs->mapx / grassSquareSize + x]) {
 			float3 squarePos((x + 0.5f) * gSSsq, 0.0f, (y + 0.5f) * gSSsq);
-				squarePos.y = ground->GetHeight2(squarePos.x, squarePos.z);
+				squarePos.y = ground->GetHeightReal(squarePos.x, squarePos.z);
 			const float3 billboardDirZ = (squarePos - camera->pos).ANormalize();
 			const float3 billboardDirX = (billboardDirZ.cross(UpVector)).ANormalize();
 			const float3 billboardDirY = billboardDirX.cross(billboardDirZ);
@@ -695,7 +695,7 @@ void CGrassDrawer::Draw(void)
 				const float dy = (y + fRand(1)) * gSSsq;
 				const float col = 1.0f;
 
-				float3 pos(dx, ground->GetHeight2(dx, dy) + 0.5f, dy);
+				float3 pos(dx, ground->GetHeightReal(dx, dy) + 0.5f, dy);
 					pos.y -= (ground->GetSlope(dx, dy) * 10.0f + 0.03f);
 
 				if (camera->InView(pos, turfSize * 0.7f)) {

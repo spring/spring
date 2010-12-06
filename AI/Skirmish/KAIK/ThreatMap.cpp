@@ -149,14 +149,21 @@ void CThreatMap::EnemyDestroyed(int enemyUnitID, int) {
 
 
 
-void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float s) {
-	const int posx = int(e.pos.x / (SQUARE_SIZE * THREATRES));
-	const int posy = int(e.pos.z / (SQUARE_SIZE * THREATRES));
+void CThreatMap::AddEnemyUnit(const EnemyUnit& e, const float scale) {
+	const int posx = e.pos.x / (SQUARE_SIZE * THREATRES);
+	const int posy = e.pos.z / (SQUARE_SIZE * THREATRES);
 
 	assert(!threatCellsRaw.empty());
-	assert(MAPPOS_IN_BOUNDS(e.pos));
 
-	const float threat = e.threat * s;
+	if (!MAPPOS_IN_BOUNDS(e.pos)) {
+		std::stringstream msg;
+			msg << "[CThreatMap::AddEnemyUnit][frame=" << ai->cb->GetCurrentFrame() << "][scale=" << scale << "]\n";
+			msg << "\tposition <" << e.pos.x << ", " << e.pos.z << "> of unit " << e.id;
+			msg << " (health " << ai->ccb->GetUnitHealth(e.id) << ") is out-of-bounds\n";
+		ai->GetLogger()->Log(msg.str());
+	}
+
+	const float threat = e.threat * scale;
 	const float rangeSq = e.range * e.range;
 
 	for (int myx = int(posx - e.range); myx < (posx + e.range); myx++) {

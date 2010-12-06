@@ -71,13 +71,13 @@ public:
 	~CTAAirMoveType();
 
 	// MoveType interface
-	virtual void Update();
-	virtual void SlowUpdate();
-	virtual void StartMoving(float3 pos, float goalRadius);
-	virtual void StartMoving(float3 pos, float goalRadius, float speed);
-	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive);
-	virtual void StopMoving();
-	virtual void Idle();
+	void Update();
+	void SlowUpdate();
+	void StartMoving(float3 pos, float goalRadius);
+	void StartMoving(float3 pos, float goalRadius, float speed);
+	void KeepPointingTo(float3 pos, float distance, bool aggressive);
+	void StopMoving();
+	void Idle();
 
 	// Main state handlers
 	void UpdateLanded();

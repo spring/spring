@@ -13,15 +13,17 @@
 #include "mmgr.h"
 
 #include "Rendering/GlobalRendering.h"
-#ifndef BITMAP_NO_OPENGL
-#include "Rendering/GL/myGL.h"
-#endif // !BITMAP_NO_OPENGL
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "GlobalUnsynced.h"
 #include "Bitmap.h"
 #include "bitops.h"
 #include "LogOutput.h"
+
+#ifndef BITMAP_NO_OPENGL
+	#include "Rendering/GL/myGL.h"
+	#include "System/TimeProfiler.h"
+#endif // !BITMAP_NO_OPENGL
 
 boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
 
@@ -137,6 +139,10 @@ void CBitmap::Alloc(int w, int h)
 
 bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 {
+#ifndef BITMAP_NO_OPENGL
+	ScopedTimer timer("Textures::CBitmap::Load");
+#endif
+
 	bool noAlpha = true;
 
 	delete[] mem;
@@ -332,6 +338,10 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #ifndef BITMAP_NO_OPENGL
 const GLuint CBitmap::CreateTexture(bool mipmaps) const
 {
+#ifndef BITMAP_NO_OPENGL
+	ScopedTimer timer("Textures::CBitmap::CreateTexture");
+#endif
+
 	if (type == BitmapTypeDDS) {
 		return CreateDDSTexture();
 	}

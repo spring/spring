@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates a java class in OO style to wrapp the C style
 # JNI based AI Events wrapper interface.

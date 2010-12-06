@@ -195,9 +195,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	}
 
 	if (def->floating) {
-		finalHeight = ground->GetHeight(pos.x, pos.z);
+		finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 	} else {
-		finalHeight = ground->GetHeight2(pos.x, pos.z);
+		finalHeight = ground->GetHeightReal(pos.x, pos.z);
 	}
 
 	if (speed != ZeroVector) {
@@ -423,9 +423,9 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 	// setup finalHeight
 	if (snapToGround) {
 		if (def->floating) {
-			finalHeight = ground->GetHeight(pos.x, pos.z);
+			finalHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 		} else {
-			finalHeight = ground->GetHeight2(pos.x, pos.z);
+			finalHeight = ground->GetHeightReal(pos.x, pos.z);
 		}
 	} else {
 		finalHeight = newPos.y;
@@ -503,7 +503,7 @@ bool CFeature::UpdatePosition()
 			// def->floating is unreliable (true for land unit wrecks),
 			// just assume wrecks always sink even if their "owner" was
 			// a floating object (as is the case for ships anyway)
-			float realGroundHeight = ground->GetHeight2(pos.x, pos.z);
+			float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
 			bool reachedGround = (pos.y <= realGroundHeight);
 
 			if (!reachedGround) {

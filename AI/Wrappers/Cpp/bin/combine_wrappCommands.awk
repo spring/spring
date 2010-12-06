@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates the C functions for wrapping the C command structs in:
 # rts/ExternalAI/Interface/AISCommands.h

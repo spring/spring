@@ -12,9 +12,6 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/AirBaseHandler.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "GlobalUnsynced.h"
@@ -49,11 +46,9 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(isBuilding),
 	CR_MEMBER(rotOffset),
 	CR_MEMBER(lastTrackUpdate),
-	CR_MEMBER(oldPos),
-	CR_MEMBER(oldSlowUpdatePos),
 	CR_MEMBER(scriptNotify),
 	CR_RESERVED(64)
-	));
+));
 
 
 CScriptMoveType::CScriptMoveType(CUnit* owner):
@@ -84,15 +79,15 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	isBuilding(false),
 	rotOffset(0.0f, 0.0f, 0.0f),
 	lastTrackUpdate(0),
-	oldPos(owner ? owner->pos:float3(0,0,0)),
-	oldSlowUpdatePos(oldPos),
 	scriptNotify(0)
 {
 	useHeading = false; // use the transformation matrix instead of heading
 
+	oldPos = owner? owner->pos: ZeroVector;
+	oldSlowUpdatePos = oldPos;
+
 	if (owner) {
-		const UnitDef* unitDef = owner->unitDef;
-		isBuilding = (unitDef->type == "Building");
+		isBuilding = (owner->unitDef->type == "Building");
 	} else {
 		isBuilding = false;
 	}
@@ -135,31 +130,6 @@ inline void CScriptMoveType::CalcDirections()
 }
 
 
-void CScriptMoveType::SlowUpdate()
-{
-	const float3& pos = owner->pos;
-
-	// make sure the unit is in the map
-	// pos.CheckInBounds();
-
-	// don't need the rest if the pos hasn't changed
-	if (pos == oldSlowUpdatePos) {
-		return;
-	}
-	oldSlowUpdatePos = pos;
-
-	const int newmapSquare = ground->GetSquare(pos);
-	if (newmapSquare != owner->mapSquare){
-		owner->mapSquare = newmapSquare;
-
-		loshandler->MoveUnit(owner, false);
-		radarhandler->MoveUnit(owner);
-	}
-	qf->MovedUnit(owner);
-
-	owner->isUnderWater = ((owner->pos.y + owner->model->height) < 0.0f);
-};
-
 
 void CScriptMoveType::CheckNotify()
 {
@@ -196,8 +166,8 @@ void CScriptMoveType::Update()
 	}
 
 	if (trackGround) {
-		const float gndMin =
-			ground->GetHeight2(owner->pos.x, owner->pos.z) + groundOffset;
+		const float gndMin = ground->GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
+
 		if (owner->pos.y <= gndMin) {
 			owner->pos.y = gndMin;
 			owner->speed.y = 0.0f;
@@ -240,7 +210,7 @@ void CScriptMoveType::Update()
 	}
 
 	CheckNotify();
-};
+}
 
 
 void CScriptMoveType::CheckLimits()

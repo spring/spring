@@ -19,9 +19,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/COB/CobInstance.h"
@@ -203,9 +201,9 @@ void CGroundMoveType::Update()
 		return;
 	}
 
-	if (OnSlope() && (!floatOnWater || ground->GetHeight(owner->midPos.x, owner->midPos.z) > 0))
+	if (OnSlope() && (!floatOnWater || !owner->inWater)) {
 		skidding = true;
-
+	}
 	if (skidding) {
 		UpdateSkid();
 		return;
@@ -404,41 +402,7 @@ void CGroundMoveType::SlowUpdate()
 		owner->pos.CheckInBounds();
 	}
 
-	if (!(owner->falling || flying)) {
-		float wh = 0.0f;
-
-		// need the following if the ground changes
-		// height while the unit is standing still
-		if (floatOnWater) {
-			wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-			if (wh == 0.0f) {
-				wh = -owner->unitDef->waterline;
-			}
-		} else {
-			wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
-		}
-		owner->pos.y = wh;
-	}
-
-	if (owner->pos != oldSlowUpdatePos) {
-		oldSlowUpdatePos = owner->pos;
-
-		const int newmapSquare = ground->GetSquare(owner->pos);
-		if (newmapSquare != owner->mapSquare) {
-			owner->mapSquare = newmapSquare;
-
-			loshandler->MoveUnit(owner, false);
-			radarhandler->MoveUnit(owner);
-
-		}
-		qf->MovedUnit(owner);
-
-		// submarines aren't always deep enough to be fully
-		// submerged (yet should have the isUnderWater flag
-		// set at all times)
-		const float s = (owner->mobility->subMarine)? 0.5f: 1.0f;
-		owner->isUnderWater = ((owner->pos.y + owner->height * s) < 0.0f);
-	}
+	AMoveType::SlowUpdate();
 }
 
 
@@ -717,12 +681,7 @@ void CGroundMoveType::UpdateSkid(void)
 		if (midPos.y < 0.0f)
 			speed *= 0.95f;
 
-		float wh = 0.0f;
-
-		if (floatOnWater)
-			wh = ground->GetHeight(midPos.x, midPos.z);
-		else
-			wh = ground->GetHeight2(midPos.x, midPos.z);
+		const float wh = GetGroundHeight(midPos);
 
 		if (wh > (midPos.y - owner->relMidPos.y)) {
 			flying = false;
@@ -746,7 +705,7 @@ void CGroundMoveType::UpdateSkid(void)
 		const bool onSlope =
 			midPos.IsInBounds() &&
 			(ground->GetSlope(midPos.x, midPos.z) > ud->movedata->maxSlope) &&
-			(!floatOnWater || ground->GetHeight(midPos.x, midPos.z) > 0.0f);
+			(!floatOnWater || !owner->inWater);
 
 		if (speedf < speedReduction && !onSlope) {
 			// stop skidding
@@ -786,11 +745,7 @@ void CGroundMoveType::UpdateSkid(void)
 			}
 		}
 
-		float wh = 0.0f;
-		if (floatOnWater)
-			wh = ground->GetHeight(pos.x, pos.z);
-		else
-			wh = ground->GetHeight2(pos.x, pos.z);
+		const float wh = GetGroundHeight(pos);
 
 		if ((wh - pos.y) < (speed.y + mapInfo->map.gravity)) {
 			speed.y += mapInfo->map.gravity;
@@ -844,14 +799,9 @@ void CGroundMoveType::UpdateControlledDrop(void)
 		if(midPos.y < 0)
 			speed*=0.90;
 
-		float wh;
+		const float wh = GetGroundHeight(midPos);
 
-		if(floatOnWater)
-			wh = ground->GetHeight(midPos.x, midPos.z);
-		else
-			wh = ground->GetHeight2(midPos.x, midPos.z);
-
-		if(wh > midPos.y-owner->relMidPos.y){
+		if (wh > midPos.y - owner->relMidPos.y) {
 			owner->falling = false;
 			midPos.y = wh + owner->relMidPos.y - speed.y*0.8;
 			owner->script->Landed(); //stop parachute animation
@@ -864,114 +814,119 @@ void CGroundMoveType::CheckCollisionSkid(void)
 	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
 
-	const UnitDef* ud = owner->unitDef;
-	const vector<CUnit*> &nearUnits = qf->GetUnitsExact(midPos, owner->radius);
+	const UnitDef* ownerUD = owner->unitDef;
+	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(midPos, owner->radius);
+	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
 
-	for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+	vector<CUnit*>::const_iterator ui;
+	vector<CFeature*>::const_iterator fi;
+
+	for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 		CUnit* u = (*ui);
-		float sqDist = (midPos - u->midPos).SqLength();
-		float totRad = owner->radius + u->radius;
+		const UnitDef* unitUD = owner->unitDef;
 
-		if (sqDist < totRad * totRad && sqDist != 0) {
-			float dist = sqrt(sqDist);
-			float3 dif = midPos - u->midPos;
-			// stop units from reaching escape velocity
-			dif /= std::max(dist, 1.f);
+		const float sqDist = (midPos - u->midPos).SqLength();
+		const float totRad = owner->radius + u->radius;
 
-			if (!u->mobility) {
-				float impactSpeed = -owner->speed.dot(dif);
-
-				if (impactSpeed > 0) {
-					midPos += dif * impactSpeed;
-					pos = midPos -
-						owner->frontdir * owner->relMidPos.z -
-						owner->updir    * owner->relMidPos.y -
-						owner->rightdir * owner->relMidPos.x;
-					owner->speed += dif * (impactSpeed * 1.8f);
-
-					if (impactSpeed > ud->minCollisionSpeed
-						&& ud->minCollisionSpeed >= 0) {
-						owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
-					}
-					if (impactSpeed > u->unitDef->minCollisionSpeed
-						&& u->unitDef->minCollisionSpeed >= 0) {
-						u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
-					}
-				}
-			} else {
-				// don't conserve momentum
-				float part = (owner->mass / (owner->mass + u->mass));
-				float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
-
-				if (impactSpeed > 0) {
-					midPos += dif * (impactSpeed * (1 - part) * 2);
-					pos = midPos -
-						owner->frontdir * owner->relMidPos.z -
-						owner->updir    * owner->relMidPos.y -
-						owner->rightdir * owner->relMidPos.x;
-					owner->speed += dif * (impactSpeed * (1 - part) * 2);
-					u->midPos -= dif * (impactSpeed * part * 2);
-					u->pos = u->midPos -
-						u->frontdir * u->relMidPos.z -
-						u->updir    * u->relMidPos.y -
-						u->rightdir * u->relMidPos.x;
-					u->speed -= dif * (impactSpeed * part * 2);
-
-					if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
-						mt->skidding = true;
-					}
-					if (impactSpeed > ud->minCollisionSpeed
-						&& ud->minCollisionSpeed >= 0.0f) {
-						owner->DoDamage(
-							DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
-							0, dif * impactSpeed * (owner->mass * (1 - part)));
-					}
-
-					if (impactSpeed > u->unitDef->minCollisionSpeed
-						&& u->unitDef->minCollisionSpeed >= 0.0f) {
-						u->DoDamage(
-							DamageArray(impactSpeed * owner->mass * 0.2f * part),
-							0, dif * -impactSpeed * (u->mass * part));
-					}
-					owner->speed *= 0.9f;
-					u->speed *= 0.9f;
-				}
-			}
-		}
-	}
-	const vector<CFeature*> &nearFeatures=qf->GetFeaturesExact(midPos,owner->radius);
-	for(vector<CFeature*>::const_iterator fi = nearFeatures.begin();
-		fi!=nearFeatures.end();++fi)
-	{
-		CFeature* u=(*fi);
-		if(!u->blocking)
+		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f)) {
 			continue;
-		float sqDist=(midPos-u->midPos).SqLength();
-		float totRad=owner->radius+u->radius;
-		if(sqDist<totRad*totRad && sqDist!=0){
-			float dist=sqrt(sqDist);
-			float3 dif=midPos-u->midPos;
-			dif/=std::max(dist, 1.f);
-			float impactSpeed = -owner->speed.dot(dif);
-			if(impactSpeed > 0){
-				midPos+=dif*(impactSpeed);
-				pos = midPos - owner->frontdir*owner->relMidPos.z
-					- owner->updir*owner->relMidPos.y
-					- owner->rightdir*owner->relMidPos.x;
-				owner->speed+=dif*(impactSpeed*1.8f);
+		}
 
-				if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0) {
+		// stop units from reaching escape velocity
+		const float3 dif = (midPos - u->midPos).SafeNormalize();
+
+		if (u->mobility == NULL) {
+			const float impactSpeed = -owner->speed.dot(dif);
+
+			if (impactSpeed > 0.0f) {
+				midPos += dif * impactSpeed;
+				pos = midPos -
+					owner->frontdir * owner->relMidPos.z -
+					owner->updir    * owner->relMidPos.y -
+					owner->rightdir * owner->relMidPos.x;
+				owner->speed += dif * (impactSpeed * 1.8f);
+
+				// damage the collider
+				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
 					owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
 				}
-				u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
+				// damage the (static) collidee
+				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0) {
+					u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
+				}
+			}
+		} else {
+			// don't conserve momentum
+			const float part = (owner->mass / (owner->mass + u->mass));
+			const float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
+
+			if (impactSpeed > 0.0f) {
+				midPos += dif * (impactSpeed * (1 - part) * 2);
+				pos = midPos -
+					owner->frontdir * owner->relMidPos.z -
+					owner->updir    * owner->relMidPos.y -
+					owner->rightdir * owner->relMidPos.x;
+				owner->speed += dif * (impactSpeed * (1 - part) * 2);
+				u->midPos -= dif * (impactSpeed * part * 2);
+				u->pos = u->midPos -
+					u->frontdir * u->relMidPos.z -
+					u->updir    * u->relMidPos.y -
+					u->rightdir * u->relMidPos.x;
+				u->speed -= dif * (impactSpeed * part * 2);
+
+				if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
+					mt->skidding = true;
+				}
+
+				// damage the collider
+				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0.0f) {
+					owner->DoDamage(
+						DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
+						0, dif * impactSpeed * (owner->mass * (1 - part)));
+				}
+				// damage the collidee
+				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0.0f) {
+					u->DoDamage(
+						DamageArray(impactSpeed * owner->mass * 0.2f * part),
+						0, dif * -impactSpeed * (u->mass * part));
+				}
+
+				owner->speed *= 0.9f;
+				u->speed *= 0.9f;
 			}
 		}
 	}
-}
 
-float CGroundMoveType::GetFlyTime(float3 pos, float3 speed)
-{
-	return 0;
+	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
+		CFeature* f = *fi;
+
+		if (!f->blocking)
+			continue;
+
+		const float sqDist = (midPos - f->midPos).SqLength();
+		const float totRad = owner->radius + f->radius;
+
+		if ((sqDist >= totRad * totRad) || (sqDist <= 0.01f)) {
+			continue;
+		}
+
+		const float3 dif = (midPos - f->midPos).SafeNormalize();
+		const float impactSpeed = -owner->speed.dot(dif);
+
+		if (impactSpeed > 0.0f) {
+			midPos += dif * impactSpeed;
+			pos = midPos -
+				owner->frontdir * owner->relMidPos.z -
+				owner->updir    * owner->relMidPos.y -
+				owner->rightdir * owner->relMidPos.x;
+			owner->speed += dif * (impactSpeed * 1.8f);
+
+			if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
+				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
+			}
+			f->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
+		}
+	}
 }
 
 void CGroundMoveType::CalcSkidRot(void)
@@ -992,8 +947,8 @@ void CGroundMoveType::CalcSkidRot(void)
 
 	skidRotPos2 += skidRotSpeed2;
 
-	float cosp = cos(skidRotPos2 * PI * 2.0f);
-	float sinp = sin(skidRotPos2 * PI * 2.0f);
+	const float cosp = cos(skidRotPos2 * PI * 2.0f);
+	const float sinp = sin(skidRotPos2 * PI * 2.0f);
 
 	float3 f1 = skidRotVector * skidRotVector.dot(owner->frontdir);
 	float3 f2 = owner->frontdir - f1;
@@ -1560,7 +1515,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner);
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
 			owner->pos += posDelta;
@@ -1650,7 +1605,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner);
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
 			}
 
 			owner->pos += posDelta;
@@ -1989,25 +1944,54 @@ void CGroundMoveType::StartFlying() {
 }
 
 
-void CGroundMoveType::AdjustPosToWaterLine()
+
+float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
-	float wh = 0.0f;
+	float h = 0.0f;
+
 	if (floatOnWater) {
-		wh = ground->GetHeight(owner->pos.x, owner->pos.z);
-		if (wh == 0.0f)
-			wh = -owner->unitDef->waterline;
+		// in [0, maxHeight]
+		h = ground->GetHeightAboveWater(p.x, p.z);
 	} else {
-		wh = ground->GetHeight2(owner->pos.x, owner->pos.z);
+		// in [minHeight, maxHeight]
+		h = ground->GetHeightReal(p.x, p.z);
 	}
 
+	return h;
+}
+
+void CGroundMoveType::AdjustPosToWaterLine()
+{
 	if (!(owner->falling || flying)) {
+		float wh = GetGroundHeight(owner->pos);
+
+		if (floatOnWater && owner->inWater) {
+			wh = -owner->unitDef->waterline;
+		}
+
 		owner->pos.y = wh;
+		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
+
+		/*
+		const UnitDef* ud = owner->unitDef;
+		const MoveData* md = ud->movedata;
+		const CMoveMath* mm = md->moveMath;
+
+		owner->pos.y = mm->yLevel(owner->pos.x, owner->pos.z);
+
+		if (floatOnWater && owner->inWater) {
+			owner->pos.y -= owner->unitDef->waterline;
+		}
+
+		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
+		*/
 	}
 }
 
 bool CGroundMoveType::UpdateDirectControl()
 {
-	bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+	const bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+
 	waypoint = owner->pos;
 	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
 	waypoint.CheckInBounds();

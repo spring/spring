@@ -186,7 +186,7 @@ void CLaserProjectile::Collision(CFeature* feature)
 
 void CLaserProjectile::Collision()
 {
-	if (weaponDef->waterweapon && ground->GetHeight2(pos.x, pos.z) < pos.y) {
+	if (weaponDef->waterweapon && ground->GetHeightReal(pos.x, pos.z) < pos.y) {
 		// prevent impact on water if waterweapon is set
 		return;
 	}

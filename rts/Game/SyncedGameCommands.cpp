@@ -299,7 +299,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 						for (int x = 0; x < squareSize && total > 0; ++x) {
 							float minposx = minpos.x + x * xsize * SQUARE_SIZE;
 							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-							float minposy = ground->GetHeight2(minposx, minposz);
+							float minposy = ground->GetHeightReal(minposx, minposz);
 							const float3 upos(minposx, minposy, minposz);
 
 							CFeature* feature = new CFeature();

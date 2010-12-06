@@ -289,7 +289,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				continue;
 			}
 
-			const float ypos = ground->GetHeight2(mfi[a].pos.x, mfi[a].pos.z);
+			const float ypos = ground->GetHeightReal(mfi[a].pos.x, mfi[a].pos.z);
 			(new CFeature)->Initialize(
 				float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
 				def->second, (short int) mfi[a].rotation,
@@ -458,10 +458,10 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 			float3& fpos = feature->pos;
-			float gh = ground->GetHeight2(fpos.x, fpos.z);
+			float gh = ground->GetHeightReal(fpos.x, fpos.z);
 			float wh = gh;
 			if(feature->def->floating)
-				wh = ground->GetHeight(fpos.x, fpos.z);
+				wh = ground->GetHeightAboveWater(fpos.x, fpos.z);
 			if (fpos.y > wh || fpos.y < gh) {
 				feature->finalHeight = wh;
 				feature->reachedFinalPos = false;

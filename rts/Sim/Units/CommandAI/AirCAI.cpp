@@ -557,7 +557,7 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 			else if (owner->userAttackGround) {
 				// reset the attack position after each run
 				float3 attackPos = pos + (gs->randVector() * radius);
-					attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
+					attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
 
 				owner->AttackGround(attackPos, false);
 				owner->commandShotCount = 0;
@@ -574,7 +574,7 @@ void CAirCAI::ExecuteAreaAttack(Command &c)
 
 			if (enemyUnitIDs.empty()) {
 				float3 attackPos = pos + gs->randVector() * radius;
-				attackPos.y = ground->GetHeight(attackPos.x, attackPos.z);
+				attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
 				owner->AttackGround(attackPos, false);
 			} else {
 				// note: the range of randFloat() is inclusive of 1.0f

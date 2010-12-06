@@ -19,8 +19,8 @@ public:
 
 	CAirMoveType(CUnit* owner);
 	~CAirMoveType();
-	virtual void Update();
-	virtual void SlowUpdate();
+	void Update();
+	void SlowUpdate();
 
 	void UpdateManeuver();
 	void UpdateFighterAttack();
@@ -80,8 +80,6 @@ public:
 	float crashAileron;
 	float crashElevator;
 	float crashRudder;
-
-	float3 oldSlowUpdatePos;
 
 	struct DrawLine {
 		CR_DECLARE_STRUCT(DrawLine);

@@ -616,9 +616,20 @@ void CUnitScript::EmitSfx(int type, int piece)
 				}
 
 				helper->Explosion(
-					pos, weaponDef->damages, weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-					weaponDef->explosionSpeed, unit, true, 1.0f, weaponDef->noSelfDamage, weaponDef->impactOnly, weaponDef->explosionGenerator,
-					NULL, float3(0, 0, 0), weaponDef->id
+					pos,
+					weaponDef->damages,
+					weaponDef->areaOfEffect,
+					weaponDef->edgeEffectiveness,
+					weaponDef->explosionSpeed,
+					unit,
+					true,
+					1.0f,
+					weaponDef->noSelfDamage,
+					weaponDef->impactOnly,
+					weaponDef->explosionGenerator,
+					NULL,
+					ZeroVector,
+					weaponDef->id
 				);
 			}
 		} break;
@@ -928,9 +939,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case HYPOT:
 		return int(hypot((float)p1, (float)p2));
 	case GROUND_HEIGHT:
-		return int(ground->GetHeight(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(ground->GetHeightAboveWater(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case GROUND_WATER_HEIGHT:
-		return int(ground->GetHeight2(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(ground->GetHeightReal(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case BUILD_PERCENT_LEFT:
 		return int((1.0f - unit->buildProgress) * 100);
 
@@ -1404,7 +1415,6 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case INBUILDSTANCE: {
-			//logOutput.Print("buildstance %d", param);
 			unit->inBuildStance = (param != 0);
 			break;
 		}
@@ -1468,7 +1478,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case BUGGER_OFF: {
 			if (param != 0) {
-				helper->BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f, true, false, NULL);
+				helper->BuggerOff(unit->pos + unit->frontdir * unit->radius, unit->radius * 1.5f, true, false, unit->team, NULL);
 			}
 			break;
 		}

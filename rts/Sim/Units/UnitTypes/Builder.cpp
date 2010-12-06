@@ -527,7 +527,7 @@ void CBuilder::StopBuild(bool callScript)
 }
 
 
-bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature)
+bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitstance)
 {
 	StopBuild(false);
 
@@ -572,11 +572,16 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature)
 	const UnitDef* unitDef = buildInfo.def;
 	SetBuildStanceToward(buildInfo.pos);
 
+	if (!inBuildStance) {
+		waitstance = true;
+		return false;
+	}
+
 	CUnit* b = unitLoader->LoadUnit(buildInfo.def, buildInfo.pos, team,
 	                               true, buildInfo.buildFacing, this);
 
 	// floating structures don't terraform the seabed
-	const float groundheight = ground->GetHeight2(b->pos.x, b->pos.z);
+	const float groundheight = ground->GetHeightReal(b->pos.x, b->pos.z);
 	const bool onWater = (unitDef->floater && groundheight <= 0.0f);
 
 	if (mapDamage->disabled || !unitDef->levelGround || onWater ||

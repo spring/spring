@@ -154,7 +154,7 @@ void COrbitController::Orbit()
 	CCamera* cam = camera;
 
 	cam->pos = cen + GetOrbitPos();
-	cam->pos.y = std::max(cam->pos.y, ground->GetHeight2(cam->pos.x, cam->pos.z));
+	cam->pos.y = std::max(cam->pos.y, ground->GetHeightReal(cam->pos.x, cam->pos.z));
 	cam->forward = (cen - cam->pos).ANormalize();
 	cam->up = YVEC;
 }
@@ -173,8 +173,8 @@ void COrbitController::Pan(int rdx, int rdy)
 
 
 	// don't allow orbit center or ourselves to drop below the terrain
-	const float camGH = ground->GetHeight2(cam->pos.x, cam->pos.z);
-	const float cenGH = ground->GetHeight2(cen.x, cen.z);
+	const float camGH = ground->GetHeightReal(cam->pos.x, cam->pos.z);
+	const float cenGH = ground->GetHeightReal(cen.x, cen.z);
 
 	if (cam->pos.y < camGH) {
 		cam->pos.y = camGH;
@@ -230,7 +230,7 @@ void COrbitController::SetPos(const float3& newPos)
 
 	cen.x += dx;
 	cen.z += dz;
-	cen.y = ground->GetHeight2(cen.x, cen.z);
+	cen.y = ground->GetHeightReal(cen.x, cen.z);
 
 	camera->pos.x += dx;
 	camera->pos.z += dz;

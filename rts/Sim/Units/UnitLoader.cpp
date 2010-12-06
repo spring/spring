@@ -106,7 +106,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		pos.z = gs->mapy-1;
 
 	if (!build) {
-		pos.y = ground->GetHeight2(pos.x, pos.z);
+		pos.y = ground->GetHeightReal(pos.x, pos.z);
 		if (ud->floater && pos.y < 0.0f) {
 			// adjust to waterline iif we are submerged
  			pos.y = -ud->waterline;
@@ -342,9 +342,9 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 
 	if (ud->floater) {
 		// restrict our depth to our waterline
-		unit->pos.y = std::max(-ud->waterline, ground->GetHeight2(unit->pos.x, unit->pos.z));
+		unit->pos.y = std::max(-ud->waterline, ground->GetHeightReal(unit->pos.x, unit->pos.z));
 	} else {
-		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
+		unit->pos.y = ground->GetHeightReal(unit->pos.x, unit->pos.z);
 	}
 
 	unit->script = CUnitScriptFactory::CreateScript(ud->scriptPath, unit);
@@ -504,7 +504,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = ground->GetHeight2(unit->pos.x, unit->pos.z);
+	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (!mapDamage->disabled && unitDef->levelGround &&
 		!(unitDef->floater && groundheight <= 0) &&
@@ -533,7 +533,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 void CUnitLoader::RestoreGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = ground->GetHeight2(unit->pos.x, unit->pos.z);
+	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (!mapDamage->disabled && unitDef->levelGround &&
 		!(unitDef->floater && groundheight <= 0) &&

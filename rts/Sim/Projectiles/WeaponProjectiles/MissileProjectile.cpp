@@ -151,7 +151,7 @@ void CMissileProjectile::DependentDied(CObject* o)
 
 void CMissileProjectile::Collision()
 {
-	float h = ground->GetHeight2(pos.x, pos.z);
+	float h = ground->GetHeightReal(pos.x, pos.z);
 
 	if (weaponDef->waterweapon && h < pos.y) {
 		// let waterweapons travel in water

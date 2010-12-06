@@ -6,6 +6,8 @@
 #include "CobInstance.h"
 #include "NullUnitScript.h"
 
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "FileSystem/FileSystem.h"
 #include "LogOutput.h"
 #include "Util.h"
@@ -24,9 +26,8 @@ CUnitScript* CUnitScriptFactory::CreateScript(const std::string& name, CUnit* un
 		CCobFile* file = GCobFileHandler.GetCobFile(name);
 		if (file) {
 			script = new CCobInstance(*file, unit);
-		}
-		else {
-			logOutput.Print("Could not load COB script from: %s", name.c_str());
+		} else {
+			logOutput.Print("Could not load COB script for unit \"%s\" from: %s", unit->unitDef->name.c_str(), name.c_str());
 		}
 	}
 
