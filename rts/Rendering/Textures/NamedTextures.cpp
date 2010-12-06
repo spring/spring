@@ -6,10 +6,11 @@
 #include "NamedTextures.h"
 
 #include "bitops.h"
+#include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
-#include "Bitmap.h"
 #include "System/GlobalUnsynced.h"
+#include "System/TimeProfiler.h"
 #include "System/Vec2.h"
 
 
@@ -78,6 +79,8 @@ bool CNamedTextures::Bind(const string& texName)
 
 bool CNamedTextures::Load(const string& texName, GLuint texID)
 {
+	ScopedTimer timer("Textures::NamedTextures");
+
 	//! strip off the qualifiers
 	string filename = texName;
 	bool border  = false;

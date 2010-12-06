@@ -19,9 +19,6 @@
 	((pos.x >= 0) && (pos.x < ai->cb->GetMapWidth()  * SQUARE_SIZE)  && \
 	 (pos.z >= 0) && (pos.z < ai->cb->GetMapHeight() * SQUARE_SIZE))
 
-// Logger
-#define L(ai, msg)      (ai->logger->Log(msg));
-
 // Shortcuts
 #define GCAT(a)         (ai->ut->GetCategory(a))
 

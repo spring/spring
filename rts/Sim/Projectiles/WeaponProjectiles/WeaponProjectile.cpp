@@ -286,9 +286,9 @@ void CWeaponProjectile::UpdateGroundBounce()
 		float wh = 0;
 
 		if (!weaponDef->waterBounce) {
-			wh = ground->GetHeight2(pos.x, pos.z);
+			wh = ground->GetHeightReal(pos.x, pos.z);
 		} else if (weaponDef->groundBounce) {
-			wh = ground->GetHeight(pos.x, pos.z);
+			wh = ground->GetHeightAboveWater(pos.x, pos.z);
 		}
 
 		if (pos.y < wh) {

@@ -35,22 +35,8 @@
 #include "Exceptions.h"
 #include "FileSystem.h"
 
-std::string StripTrailingSlashes(std::string path)
-{
-	while (!path.empty() && (path.at(path.length()-1) == '\\' || path.at(path.length()-1) == '/')) {
-		path = path.substr(0, path.length()-1);
-	}
-	return path;
-}
-
-/**
- * @brief The global data directory handler instance
- */
 FileSystemHandler* FileSystemHandler::instance = NULL;
 
-/**
- * @brief get the data directory handler instance
- */
 FileSystemHandler& FileSystemHandler::GetInstance()
 {
 	if (!instance) {
@@ -60,9 +46,6 @@ FileSystemHandler& FileSystemHandler::GetInstance()
 	return *instance;
 }
 
-/**
- * @brief initialize the data directory handler
- */
 void FileSystemHandler::Initialize(bool verbose)
 {
 	if (!instance) {
@@ -103,9 +86,6 @@ FileSystemHandler::FileSystemHandler()
 {
 }
 
-/**
- * @brief returns the highest priority writable directory, aka the writedir
- */
 std::string FileSystemHandler::GetWriteDir() const
 {
 	const DataDir* writedir = locater.GetWriteDir();
@@ -113,14 +93,11 @@ std::string FileSystemHandler::GetWriteDir() const
 	return writedir->path;
 }
 
-/**
- * Removes "./" or ".\" from the start of a path string.
- */
-static std::string RemoveLocalPathPrefix(const std::string& path)
+std::string FileSystemHandler::RemoveLocalPathPrefix(const std::string& path)
 {
 	std::string p(path);
 
-	if (p.length() >= 2 && p[0] == '.' && (p[1] == '/' || p[1] == '\\')) {
+	if ((p.length() >= 2) && (p[0] == '.') && IsPathSeparator(p[1])) {
 	    p.erase(0, 2);
 	}
 
@@ -129,35 +106,101 @@ static std::string RemoveLocalPathPrefix(const std::string& path)
 
 bool FileSystemHandler::IsFSRoot(const std::string& p)
 {
-	bool isRootFs = false;
+	bool isFsRoot = false;
 
 #ifdef WIN32
-	isRootFs = (p.length() >= 2 && p[1] == ':' && ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) && (p.length() == 2 || (p.length() == 3 && (p[2] == '\\' || p[2] == '/'))));
+	// examples: "C:\", "C:/", "C:", "c:", "D:"
+	isFsRoot = (p.length() >= 2 && p[1] == ':' &&
+			((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) &&
+			(p.length() == 2 || (p.length() == 3 && IsPathSeparator(p[2]))));
 #else
-	isRootFs = (p.length() == 1 && p[0] == '/');
+	// examples: "/"
+	isFsRoot = (p.length() == 1 && IsNativePathSeparator(p[0]));
 #endif
 
-	return isRootFs;
+	return isFsRoot;
 }
 
-// sPS/cPS (depending on OS): "\\" & '\\' or "/" & '/'
+bool FileSystemHandler::IsPathSeparator(char aChar) {
+	return ((aChar == cPS_WIN32) || (aChar == cPS_POSIX));
+}
+
+bool FileSystemHandler::IsNativePathSeparator(char aChar) {
+	return (aChar == cPS);
+}
+
 bool FileSystemHandler::HasPathSepAtEnd(const std::string& path) {
 
 	bool pathSepAtEnd = false;
 
-	if (!path.empty() && (path[path.size() - 1] == cPS)) {
-		pathSepAtEnd = true;
+	if (!path.empty()) {
+		const char lastChar = path.at(path.size() - 1);
+		if (IsNativePathSeparator(lastChar)) {
+			pathSepAtEnd = true;
+		}
 	}
 
 	return pathSepAtEnd;
 }
+
 void FileSystemHandler::EnsurePathSepAtEnd(std::string& path) {
 
 	if (path.empty()) {
 		path += "."sPS;
-	} else if (path[path.size() - 1] != cPS) {
+	} else if (!HasPathSepAtEnd(path)) {
 		path += cPS;
 	}
+}
+std::string FileSystemHandler::EnsurePathSepAtEnd(const std::string& path) {
+	
+	std::string pathCopy(path);
+	EnsurePathSepAtEnd(pathCopy);
+	return pathCopy;
+}
+
+void FileSystemHandler::EnsureNoPathSepAtEnd(std::string& path) {
+
+	if (HasPathSepAtEnd(path)) {
+		path.resize(path.size() - 1);
+	}
+}
+std::string FileSystemHandler::EnsureNoPathSepAtEnd(const std::string& path) {
+	
+	std::string pathCopy(path);
+	EnsureNoPathSepAtEnd(pathCopy);
+	return pathCopy;
+}
+
+std::string FileSystemHandler::StripTrailingSlashes(const std::string& path)
+{
+	size_t len = path.length();
+
+	while (len > 0) {
+		if (IsPathSeparator(path.at(len - 1))) {
+			--len;
+		} else {
+			break;
+		}
+	}
+
+	return path.substr(0, len);
+}
+
+std::string FileSystemHandler::GetParent(const std::string& path) {
+
+	std::string parent = "";
+
+	EnsureNoPathSepAtEnd(parent);
+
+	static const char* PATH_SEP_REGEX = sPS_WIN32 sPS_POSIX;
+	const std::string::size_type slashPos = path.find_last_of(PATH_SEP_REGEX);
+	if (slashPos == std::string::npos) {
+		parent = "";
+	} else {
+		parent.resize(0, slashPos + 1);
+	}
+
+	return parent;
 }
 
 size_t FileSystemHandler::GetFileSize(const std::string& file)
@@ -176,9 +219,10 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 {
 	std::vector<std::string> matches;
 
-	// if it's an absolute path, don't look for it in the data directories
+	// if it is an absolute path, do not look for it in the data directories
 	if (FileSystemHandler::IsAbsolutePath(dir)) {
-		// pass the directory as second directory argument, so the path gets included in the matches.
+		// pass the directory as second directory argument,
+		// so the path gets included in the matches.
 		FindFilesSingleDir(matches, "", dir, pattern, flags);
 		return matches;
 	}

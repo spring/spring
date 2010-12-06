@@ -65,7 +65,7 @@ if    (PANDOC_FOUND)
 	# generate README.html from README.markdown
 	add_custom_command(
 		OUTPUT "${DOC_BUILD_DIR}/README.html"
-		COMMAND ${PANDOC_BIN} "--from=markdown" "--to=html" "-o" "${DOC_BUILD_DIR}/README.html" "-s" "${CMAKE_SOURCE_DIR}/README.markdown"
+		COMMAND ${PANDOC_BIN} "--from=markdown" "--to=html" "-o" "${DOC_BUILD_DIR}/README.html" "-s" "--variable=pagetitle:Spring RTS game Engine - Readme" "${CMAKE_SOURCE_DIR}/README.markdown"
 		COMMENT "Creating userdocs" VERBATIM
 		DEPENDS "${CMAKE_SOURCE_DIR}/README.markdown"
 	)

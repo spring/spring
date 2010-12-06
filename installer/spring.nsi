@@ -45,7 +45,8 @@ SetCompressor /SOLID /FINAL lzma
 
 ; Finish page
 
-!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\docs\README.html"
+!define MUI_FINISHPAGE_SHOWREADME "http://springrts.com/wiki/Read_Me_First"
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Open $\"Read Me First$\" Website"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\springsettings.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
 !define MUI_FINISHPAGE_TEXT "${PRODUCT_NAME} version ${PRODUCT_VERSION} has been successfully installed or updated from a previous version.  You should configure Spring settings now if this is a fresh installation.  If you did not install spring to C:\Program Files\Spring you will need to point the settings program to the install location."
@@ -157,6 +158,7 @@ Function .onInit
 		; check if we need to exit some processes which may be using unitsync
 		${CheckExecutableRunning} "TASClient.exe" "TASClient"
 		${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
+		IfSilent +2 ; Zero-K installs this silent, so don't check
 		${CheckExecutableRunning} "Zero-K.exe" "Zero-K Lobby"
 		${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
 		${CheckExecutableRunning} "springsettings.exe" "Spring Settings"

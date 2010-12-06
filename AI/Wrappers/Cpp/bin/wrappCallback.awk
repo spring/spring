@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates a C++ class hirarchy to wrapp the C AI Callback.
 # In other words, the output of this file wrapps:

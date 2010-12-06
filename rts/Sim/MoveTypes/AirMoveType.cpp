@@ -13,12 +13,11 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/COB/UnitScript.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
 
@@ -59,8 +58,6 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(crashAileron),
 		CR_MEMBER(crashElevator),
 		CR_MEMBER(crashRudder),
-
-		CR_MEMBER(oldSlowUpdatePos),
 
 		CR_MEMBER(lines),
 
@@ -113,7 +110,6 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	maxRudder(0.01f),
 	inSupply(0),
 	mySide(1),
-	oldSlowUpdatePos(-1.0f, -1.0f, -1.0f),
 	inefficientAttackTime(0)
 {
 	// force LOS recalculation
@@ -421,30 +417,15 @@ void CAirMoveType::SlowUpdate()
 		owner->currentFuel = std::max(0.0f, owner->currentFuel - (16.0f / GAME_SPEED));
 	}
 
+	// try to handle aircraft getting unlimited height
 	if (owner->pos != oldSlowUpdatePos) {
-		oldSlowUpdatePos = owner->pos;
-
-		// try to handle aircraft getting unlimited height
-		if (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z) > wantedHeight * 5 + 100) {
-			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5  + 100;
+		if ((owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z)) > (wantedHeight * 5 + 100)) {
+			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5 + 100;
 		}
-
-		const int newmapSquare = ground->GetSquare(owner->pos);
-
-		if (newmapSquare != owner->mapSquare) {
-			owner->mapSquare = newmapSquare;
-			const float oldlh = owner->losHeight;
-			const float h = owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
-			owner->losHeight = h + 5;
-			loshandler->MoveUnit(owner, false);
-			radarhandler->MoveUnit(owner);
-
-			owner->losHeight = oldlh;
-		}
-
-		qf->MovedUnit(owner);
-		owner->isUnderWater = (owner->pos.y + owner->model->height < 0.0f);
 	}
+
+	// note: NOT AAirMoveType::SlowUpdate
+	AMoveType::SlowUpdate();
 }
 
 
@@ -574,7 +555,7 @@ void CAirMoveType::UpdateFighterAttack()
 	float rudder = 0;
 	float elevator = 0;
 	float engine = 0;
-	float gHeight = ground->GetHeight(pos.x, pos.z);
+	float gHeightAW = ground->GetHeightAboveWater(pos.x, pos.z);
 
 	float goalDotRight = rightdir.dot(goalDir);
 	float goalDotFront = goalDir.dot(frontdir) * 0.5f + 0.501f;
@@ -587,13 +568,13 @@ void CAirMoveType::UpdateFighterAttack()
 	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && frontdir.y > -0.2f && speedf > 2.0f && gs->randFloat() > 0.996f)
 		maneuver = 1;
 
-	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && fabs(frontdir.y) < 0.2f && gs->randFloat() > 0.996f && gHeight + 400 < pos.y) {
+	if (goalDir.dot(frontdir) < -0.2f + inefficientAttackTime * 0.002f && fabs(frontdir.y) < 0.2f && gs->randFloat() > 0.996f && gHeightAW + 400 < pos.y) {
 		maneuver = 2;
 		maneuverSubState = 0;
 	}
 
 	// roll
-	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeight + 60 + fabs(rightdir.y) * 150) {
+	if (speedf > 0.45f && pos.y + owner->speed.y * 60 * fabs(frontdir.y) + std::min(0.0f, float(updir.y)) * 150 > gHeightAW + 60 + fabs(rightdir.y) * 150) {
 		const float goalBankDif = goalDotRight + rightdir.y * 0.2f;
 		if (goalBankDif > maxAileron * speedf * 4.0f) {
 			aileron = 1;
@@ -623,7 +604,7 @@ void CAirMoveType::UpdateFighterAttack()
 	}
 
 	// yaw
-	if (pos.y > gHeight + 30) {
+	if (pos.y > gHeightAW + 30) {
 		if (goalDotRight < -maxRudder * speedf) {
 			rudder = -1;
 		} else if (goalDotRight > maxRudder * speedf) {
@@ -647,8 +628,8 @@ void CAirMoveType::UpdateFighterAttack()
 			elevator = -upside;
 		}
 	} else {
-		const float gHeight2 = ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40);
-		const float hdif = std::max(gHeight, gHeight2) + 60 - pos.y - frontdir.y * speedf * 20;
+		const float gHeightR = ground->GetHeightAboveWater(pos.x + speed.x * 40, pos.z + speed.z * 40);
+		const float hdif = std::max(gHeightR, gHeightAW) + 60 - pos.y - frontdir.y * speedf * 20;
 		float minPitch = 1.0f; // min(1.0f, hdif / (maxElevator * speedf * speedf * 20));
 
 		if (hdif < -(maxElevator * speedf * speedf * 20)) {
@@ -728,13 +709,14 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float aileron = 0.0f;
 	float rudder = 0.0f;
 	float elevator = 0.0f;
+
 	// do not check if the plane can be submerged here, since it'll cause
 	// ground collisions later on
 	float gHeight;
 	if (UseSmoothMesh())
 		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), ground->GetApproximateHeight(pos.x, pos.z));
 	else
-		gHeight = ground->GetHeight(pos.x, pos.z);
+		gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 
 	if (!((gs->frameNum + owner->id) & 3)) {
 		CheckForCollision();
@@ -823,8 +805,8 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 			}
 		}
 		if (notColliding) {
-			float gHeight2 = ground->GetHeight(pos.x + speed.x * 40, pos.z + speed.z * 40);
-			float hdif = std::max(gHeight, gHeight2) + wantedHeight - pos.y - frontdir.y * speedf * 20;
+			float gHeightAW = ground->GetHeightAboveWater(pos.x + speed.x * 40, pos.z + speed.z * 40);
+			float hdif = std::max(gHeight, gHeightAW) + wantedHeight - pos.y - frontdir.y * speedf * 20;
 			if (hdif < -(maxElevator * speedf * speedf * 20) && frontdir.y > -maxPitch) {
 				elevator = -1;
 			} else if (hdif > (maxElevator * speedf * speedf * 20) && frontdir.y < maxPitch) {
@@ -874,9 +856,9 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 
 	float h = 0.0f;
 	if (owner->unitDef->canSubmerge) {
-		h = pos.y - ground->GetHeight2(pos.x, pos.z);
+		h = pos.y - ground->GetHeightReal(pos.x, pos.z);
 	} else {
-		h = pos.y - ground->GetHeight(pos.x, pos.z);
+		h = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
 	if (h > wantedHeight) {
@@ -1004,8 +986,8 @@ void CAirMoveType::UpdateLanding()
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	if (dist < 1.0f) {
-		const float gh = ground->GetHeight(pos.x, pos.z);
-		const float gah = ground->GetHeight2(pos.x, pos.z);
+		const float gh = ground->GetHeightAboveWater(pos.x, pos.z);
+		const float gah = ground->GetHeightReal(pos.x, pos.z);
 		float alt = 0.0f;
 
 		// can we submerge and are we still above water?
@@ -1044,7 +1026,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 		speeddir = speed / speedf;
 	}
 
-	const float gHeight = ground->GetHeight(pos.x, pos.z);
+	const float gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 
 	if (owner->directControl) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
@@ -1192,8 +1174,9 @@ void CAirMoveType::ImpulseAdded(void)
 float3 CAirMoveType::FindLandingPos() const
 {
 	const float3 ret(-1.0f, -1.0f, -1.0f);
+
 	float3 tryPos = owner->pos + owner->speed * owner->speed.Length() / (maxAcc * 3);
-	tryPos.y = ground->GetHeight2(tryPos.x, tryPos.z);
+	tryPos.y = ground->GetHeightReal(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0) && !(owner->unitDef->floater || owner->unitDef->canSubmerge)) {
 		return ret;

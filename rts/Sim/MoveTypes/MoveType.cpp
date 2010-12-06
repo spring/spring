@@ -4,7 +4,10 @@
 #include "mmgr.h"
 
 #include "MoveType.h"
-#include "MoveMath/MoveMath.h"
+#include "Map/Ground.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include <assert.h>
@@ -56,9 +59,9 @@ void AMoveType::SetMaxSpeed(float speed)
 
 void AMoveType::SetWantedMaxSpeed(float speed)
 {
-	if(speed > maxSpeed) {
+	if (speed > maxSpeed) {
 		maxWantedSpeed = maxSpeed;
-	} else if(speed < 0.001f) {
+	} else if (speed < 0.001f) {
 		maxWantedSpeed = 0;
 	} else {
 		maxWantedSpeed = speed;
@@ -71,10 +74,32 @@ void AMoveType::ImpulseAdded(void)
 
 void AMoveType::SlowUpdate()
 {
-	//! note static buildings don't have any unitDef->moveData, that's why CStaticMoveType uses its own method
-	owner->pos.y = owner->unitDef->movedata->moveMath->yLevel(owner->pos.x, owner->pos.z);
-	owner->midPos.y = owner->pos.y + owner->relMidPos.y;
-};
+	if (owner->pos != oldSlowUpdatePos) {
+		oldSlowUpdatePos = owner->pos;
+
+		const int newMapSquare = ground->GetSquare(owner->pos);
+		const float losHeight = owner->losHeight;
+		const bool isAirMoveType = !owner->usingScriptMoveType && owner->unitDef->canfly;
+
+		if (newMapSquare != owner->mapSquare) {
+			owner->mapSquare = newMapSquare;
+
+			if (isAirMoveType) {
+				// temporarily set LOS-height to current altitude for aircraft
+				owner->losHeight = (owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z)) + 5.0f;
+			}
+
+			loshandler->MoveUnit(owner, false);
+			radarhandler->MoveUnit(owner);
+
+			if (isAirMoveType) {
+				owner->losHeight = losHeight;
+			}
+		}
+
+		qf->MovedUnit(owner);
+	}
+}
 
 void AMoveType::LeaveTransport(void)
 {

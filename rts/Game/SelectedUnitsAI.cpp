@@ -442,7 +442,7 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, C
 	float3 pos;
 	pos.x = rightPos.x + (movePos.x * (dir.x / dir.y)) - (movePos.z * (dir.z/dir.y));
 	pos.z = rightPos.z + (movePos.x * (dir.z / dir.y)) + (movePos.z * (dir.x/dir.y));
-	pos.y = ground->GetHeight(pos.x, pos.z);
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 
 	Command c;
 	c.id = command->id;

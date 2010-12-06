@@ -19,6 +19,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
@@ -179,6 +180,8 @@ void UnloadExtensions()
 
 void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data)
 {
+	ScopedTimer timer("Textures::glBuildMipmaps");
+
 	if (globalRendering->compressTextures) {
 		switch ( internalFormat ) {
 			case 4:
@@ -294,7 +297,7 @@ static bool CheckParseErrors(GLenum target, const char* filename, const char* pr
 		"%d (near \"%.30s\") when loading %s-program file %s:\n%s",
 		errorPos, program + errorPos,
 		(target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"),
-		filename, (const char*) errString
+		filename, errString ? (const char*) errString : "(null)"
 	);
 
 	return true;
@@ -319,12 +322,14 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 		throw content_error(c);
 	}
 
-	char* fbuf = new char[file.FileSize()];
-	file.Read(fbuf, file.FileSize());
+	int fSize = file.FileSize();
+	char* fbuf = new char[fSize + 1];
+	file.Read(fbuf, fSize);
+	fbuf[fSize] = '\0';
 
 	glGenProgramsARB(1, &ret);
 	glBindProgramARB(target, ret);
-	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, file.FileSize(), fbuf);
+	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fSize, fbuf);
 
 	if (CheckParseErrors(target, filename, fbuf)) {
 		ret = 0;

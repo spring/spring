@@ -126,6 +126,94 @@ float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
 }
 
 
+/**
+ * How does it works?
+ * We calculate the two intersection points ON the
+ * ray as multiple of `dir` starting from `start`.
+ * So we get 2 scalars, whereupon `near` defines the
+ * new startpoint and `far` defines the new endpoint.
+ *
+ * credits:
+ * http://ompf.org/ray/ray_box.html
+ */
+std::pair<float,float> GetMapBoundaryIntersectionPoints(const float3& start, const float3& dir)
+{
+	float rcpdirx = 1/dir.x;
+	float rcpdirz = 1/dir.z;
+	float l1, l2, far, near;
+
+	//! x component
+	l1	= (0               - start.x) * rcpdirx;
+	l2	= (float3::maxxpos - start.x) * rcpdirx;
+	near	= std::min(l1,l2);
+	far	= std::max(l1,l2);
+
+	//! z component
+	l1	= (0               - start.z) * rcpdirz;
+	l2	= (float3::maxzpos - start.z) * rcpdirz;
+	near	= std::max(std::min(l1,l2), near);
+	far	= std::min(std::max(l1,l2), far);
+
+
+	if (far < 0.f || far < near) {
+		//! outside of boundary
+		return std::pair<float,float>(-1.f,-1.f);
+	}
+	return std::pair<float,float>(near,far);
+}
+
+
+bool ClampLineInMap(float3& start, float3& end)
+{
+	float3 dir(end - start);
+	std::pair<float,float> interp = GetMapBoundaryIntersectionPoints(start, dir);
+	const float& near = interp.first;
+	const float& far  = interp.second;
+
+	if (far < 0.f) {
+		//! outside of map!
+		start = float3(-1,-1,-1);
+		end   = float3(-1,-1,-1);
+		return true;
+	}
+
+	if (far < 1.f || near > 0.f) {
+		end   = start + dir * std::min(far, 1.f);
+		start = start + dir * std::max(near, 0.f);
+
+		//! precision of near,far are limited, so better clamp it afterwards
+		end.CheckInBounds();
+		start.CheckInBounds();
+		return true;
+	}
+	return false;
+}
+
+
+bool ClampRayInMap(const float3& start, float3& end)
+{
+	const float3 dir(end - start);
+	std::pair<float,float> interp = GetMapBoundaryIntersectionPoints(start, dir);
+	const float& near = interp.first;
+	const float& far  = interp.second;
+
+	if (far < 0.f) {
+		//! outside of map!
+		end = start;
+		return true;
+	}
+
+	if (far < 1.f || near > 0.f) {
+		end = start + dir * std::min(far, 1.f);
+
+		//! precision of near,far are limited, so better clamp it afterwards
+		end.CheckInBounds();
+		return true;
+	}
+	return false;
+}
+
+
 float smoothstep(const float edge0, const float edge1, const float value)
 {
 	if (value<=edge0) return 0.0f;

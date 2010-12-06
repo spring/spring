@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script contains common functions that may be used by other scripts.
 # Contains functions suitable for creating Object Oriented wrappers of

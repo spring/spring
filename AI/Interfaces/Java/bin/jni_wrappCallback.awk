@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates a Java class with native/JNI functions,
 # plus their respective native counterparts,

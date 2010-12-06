@@ -61,7 +61,7 @@ float CGroundMoveMath::yLevel(int xSquare, int zSquare) const
 
 float CGroundMoveMath::yLevel(const float3& pos) const
 {
-	return ground->GetHeight2(pos.x, pos.z) + 10;
+	return ground->GetHeightReal(pos.x, pos.z) + 10;
 }
 
 

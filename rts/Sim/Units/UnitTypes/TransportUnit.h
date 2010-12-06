@@ -13,8 +13,8 @@ public:
 	CR_DECLARE_SUB(TransportedUnit);
 
 	CTransportUnit();
-	~CTransportUnit();
-	void PostLoad();
+	~CTransportUnit() {}
+	void PostLoad() {}
 
 	struct TransportedUnit {
 		CR_DECLARE_STRUCT(TransportedUnit);

@@ -116,6 +116,8 @@ C3DOParser::C3DOParser()
 	while (!file.Eof()) {
 		teamtex.insert(StringToLower(parser.GetLine()));
 	}
+
+	fileBuf = NULL;
 }
 
 
@@ -127,11 +129,14 @@ S3DModel* C3DOParser::Load(const string& name)
 	}
 
 	fileBuf = new unsigned char[file.FileSize()];
-	file.Read(fileBuf, file.FileSize());
+	assert(fileBuf);
 
-	if (fileBuf == NULL) {
+	const int readn = file.Read(fileBuf, file.FileSize());
+
+	if (readn == 0) {
 		delete[] fileBuf;
-		throw content_error("Failed to read file " + name);
+		fileBuf = NULL;
+		throw content_error("[3DOParser] Failed to read file " + name);
 	}
 
 	S3DModel* model = new S3DModel;
@@ -159,6 +164,7 @@ S3DModel* C3DOParser::Load(const string& name)
 	model->relMidPos.z = 0.0f; // ?
 
 	delete[] fileBuf;
+	fileBuf = NULL;
 	return model;
 }
 

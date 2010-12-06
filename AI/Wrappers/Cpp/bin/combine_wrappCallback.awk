@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates C functions which call C function pointers in:
 # rts/ExternalAI/Interface/SSkirmishAICallback.h

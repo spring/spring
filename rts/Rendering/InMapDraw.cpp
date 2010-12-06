@@ -526,7 +526,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 
 	float3 pos = constPos;
 	pos.CheckInBounds();
-	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + 2.0f;
 
 	// event clients may process the point
 	// if their owner is allowed to see it
@@ -575,8 +575,8 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 	float3 pos2 = constPos2;
 	pos1.CheckInBounds();
 	pos2.CheckInBounds();
-	pos1.y = ground->GetHeight(pos1.x, pos1.z) + 2.0f;
-	pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
+	pos1.y = ground->GetHeightAboveWater(pos1.x, pos1.z) + 2.0f;
+	pos2.y = ground->GetHeightAboveWater(pos2.x, pos2.z) + 2.0f;
 
 	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_LINE, &pos1, &pos2, NULL)) {
 		return;
@@ -606,7 +606,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 	float3 pos = constPos;
 	pos.CheckInBounds();
-	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
+	pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + 2.0f;
 
 	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, MAPDRAW_ERASE, &pos, NULL, NULL)) {
 		return;

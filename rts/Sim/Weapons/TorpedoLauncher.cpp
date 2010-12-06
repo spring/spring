@@ -78,7 +78,7 @@ bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		if (!(weaponDef->submissile) && unit->unitDef->canfly && unit->pos.y > 0)
 			return false;
 	}
-	if (!(weaponDef->submissile) && ground->GetHeight2(pos.x, pos.z) > 0)
+	if (!(weaponDef->submissile) && ground->GetHeightReal(pos.x, pos.z) > 0)
 		return 0;
 
 	float3 dir = pos-weaponMuzzlePos;

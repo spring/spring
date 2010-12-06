@@ -430,21 +430,22 @@ void CBuilderCAI::SlowUpdate()
 							buildRetries++;
 							owner->moveType->KeepPointingTo(build.pos, builder->buildDistance * 0.7f + radius, false);
 
-							if (builder->StartBuild(build, f) || (buildRetries > 20)) {
+							bool waitstance = false;
+							if (builder->StartBuild(build, f, waitstance) || (buildRetries > 20)) {
 								building = true;
 							}
 							else if (f) {
 								inCommand = false;
 								ReclaimFeature(f);
 							}
-							else {
+							else if (!waitstance) {
 								const float fpSqRadius = (ud->xsize * ud->xsize + ud->zsize * ud->zsize);
 								const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
 
 								// tell everything within the radius of the soon-to-be buildee
 								// to get out of the way; using the model radius is not correct
 								// because this can be shorter than half the footprint diagonal
-								helper->BuggerOff(build.pos, std::max(radius, fpRadius), false, true, NULL);
+								helper->BuggerOff(build.pos, std::max(radius, fpRadius), false, true, owner->team, NULL);
 								NonMoving();
 							}
 						}
@@ -1117,7 +1118,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 		}
 	} else if (owner->unitDef->canRestore) {
 		float3 pos(c.params[0], c.params[1], c.params[2]);
-			pos.y = ground->GetHeight2(pos.x, pos.y);
+			pos.y = ground->GetHeightReal(pos.x, pos.y);
 		const float radius = std::min(c.params[3], 200.0f);
 
 		if (f3SqDist(builder->pos, pos) < Square(builder->buildDistance - 1)) {

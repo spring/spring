@@ -1,4 +1,4 @@
-#!/bin/awk
+#!/usr/bin/awk -f
 #
 # This awk script creates a Java class with one function per event,
 # plus a C wrapper to easily/comfortably call these functions from C.

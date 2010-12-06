@@ -116,7 +116,7 @@ void CFreeController::Update()
 	// adjustment to match the ground slope
 	float autoTiltVel = 0.0f;
 	if (gndLock && (autoTilt > 0.0f)) {
-		const float gndHeight = ground->GetHeight2(pos.x, pos.z);
+		const float gndHeight = ground->GetHeightReal(pos.x, pos.z);
 		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
 			float3 hDir;
 			hDir.y = 0.0f;
@@ -157,7 +157,7 @@ void CFreeController::Update()
 		const float dGrav = (gravity * ft);
 		vel.y += dGrav;
 		if (slide > 0.0f) {
-			const float gndHeight = ground->GetHeight2(pos.x, pos.z);
+			const float gndHeight = ground->GetHeightReal(pos.x, pos.z);
 			if (pos.y < (gndHeight + gndOffset + 1.0f)) {
 				const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z);
 				const float dotVal = gndNormal.y;
@@ -211,7 +211,7 @@ void CFreeController::Update()
 	}
 
 	// setup ground lock
-	const float gndHeight = ground->GetHeight2(pos.x, pos.z);
+	const float gndHeight = ground->GetHeightReal(pos.x, pos.z);
 	if (keys[SDLK_LSHIFT]) {
 		if (ctrlVelY > 0.0f) {
 			gndLock = false;
@@ -342,7 +342,7 @@ void CFreeController::MouseWheelMove(float move)
 
 void CFreeController::SetPos(const float3& newPos)
 {
-	const float h = ground->GetHeight2(newPos.x, newPos.z);
+	const float h = ground->GetHeightReal(newPos.x, newPos.z);
 	const float3 target = float3(newPos.x, h, newPos.z);
 //	const float3 target = newPos;
 	const float yDiff = pos.y - target.y;
@@ -356,7 +356,7 @@ void CFreeController::SetPos(const float3& newPos)
 	CCameraController::SetPos(newPos);
 	pos.y = oldPosY;
 	if (gndOffset != 0.0f) {
-		const float h = ground->GetHeight2(pos.x, pos.z);
+		const float h = ground->GetHeightReal(pos.x, pos.z);
 		const float absH = h + fabsf(gndOffset);
 		if (pos.y < absH) {
 			pos.y = absH;
@@ -388,7 +388,7 @@ float3 CFreeController::SwitchFrom() const
 {
 	const float x = max(0.1f, min(float3::maxxpos - 0.1f, pos.x));
 	const float z = max(0.1f, min(float3::maxzpos - 0.1f, pos.z));
-	return float3(x, ground->GetHeight(x, z) + 5.0f, z);
+	return float3(x, ground->GetHeightAboveWater(x, z) + 5.0f, z);
 }
 
 

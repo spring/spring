@@ -465,7 +465,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		owner->updir    * relWeaponMuzzlePos.y +
 		owner->rightdir * relWeaponMuzzlePos.x;
 
-	if (weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
@@ -502,7 +502,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		owner->updir    * relWeaponMuzzlePos.y +
 		owner->rightdir * relWeaponMuzzlePos.x;
 
-	if (weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
@@ -630,7 +630,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 	relWeaponPos = owner->script->GetPiecePos(weaponPiece);
 
-	if (weaponMuzzlePos.y < ground->GetHeight2(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
+	if (weaponMuzzlePos.y < ground->GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
 		// hope that we are underground because we are a popup weapon and will come above ground later
 		weaponMuzzlePos = owner->pos + UpVector * 10;
 	}
