@@ -12,7 +12,7 @@
 #include "ScriptHandler.h"
 
 
-const std::string SelectionWidget::NoModSelect = "No mod selected";
+const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
 const std::string SelectionWidget::NoScriptSelect = "No script selected";
 
@@ -57,7 +57,7 @@ void SelectionWidget::ShowModList()
 {
 	if (curSelect)
 		return;
-	curSelect = new ListSelectWnd("Select mod");
+	curSelect = new ListSelectWnd("Select game");
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMod, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
