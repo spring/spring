@@ -5,12 +5,13 @@
  * Classes for serialization of registrated class instances
  */
 
-#include "StdAfx.h"
 #include <assert.h>
-#include "mmgr.h"
+
+#include "System/mmgr.h"
 
 #include "VarTypes.h"
-#include "Util.h"
+
+#include "System/Util.h"
 
 using namespace std;
 using namespace creg;
