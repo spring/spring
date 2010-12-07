@@ -896,6 +896,7 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 	SELECT_LUA_STATE();
 
 	if (!SingleState() && L == L_Sim) {
+		boost::recursive_mutex &luadrawmutex = *(L_Draw->luamutex);
 		GML_RECMUTEX_LOCK(luadraw); // Called from Sim, need to lock draw thread during XCall
 
 		const bool prevSynced = GetSynced();

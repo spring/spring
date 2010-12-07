@@ -1164,7 +1164,7 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 0;
@@ -1769,7 +1769,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(group); // SetUnitGroup - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // SetUnitGroup - this mutex is already locked (lua)
 
 	if (!CheckModUICtrl()) {
 		return 0;
