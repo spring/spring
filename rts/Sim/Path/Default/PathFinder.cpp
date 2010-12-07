@@ -274,7 +274,7 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	const int blockStatus = moveData.moveMath->IsBlocked2(moveData, square.x, square.y);
+	const int blockStatus = moveData.moveMath->IsBlocked(moveData, square.x, square.y);
 	unsigned int blockBits = CMoveMath::BLOCK_STRUCTURE;
 
 	// Check if square are out of constraints or blocked by something.
