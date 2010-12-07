@@ -170,8 +170,8 @@ CMoveInfo::CMoveInfo()
 
 
 		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
-		md->xsize = std::max(1, moveTable.GetInt("footprintX",         1)) * 2;
-		md->zsize = std::max(1, moveTable.GetInt("footprintZ", md->xsize)) * 2;
+		md->xsize = std::max(1, moveTable.GetInt("footprintX",         1) * 2);
+		md->zsize = std::max(1, moveTable.GetInt("footprintZ", md->xsize) * 2);
 
 		const unsigned int checksum =
 			(md->xsize        << 16) +
