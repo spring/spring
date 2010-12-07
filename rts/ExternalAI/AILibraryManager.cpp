@@ -308,7 +308,7 @@ CAIInterfaceLibrary* CAILibraryManager::FetchInterface(const AIInterfaceKey& int
 				delete interfaceLib;
 				interfaceLib = NULL;
 			}
-			// storing this for later use, even if it is NULL (faield to init)
+			// storing this for later use, even if it is NULL (failed to init)
 			loadedAIInterfaceLibraries[interfaceKey] = interfaceLib;
 		} else {
 			// unavailable interface requested, returning NULL

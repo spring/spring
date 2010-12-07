@@ -1,9 +1,9 @@
 #include "BuilderPlacement.h"
 #include "LegacyCpp/UnitDef.h"
-//#include "ExternalAI/IAICallback.h"
+#include "LegacyCpp/MoveData.h"
+#include "LegacyCpp/CommandQueue.h"
+
 #include <set>
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/Units/CommandAI/CommandQueue.h"
 #include <time.h>
 
 ResourceSiteExtBO::ResourceSiteExtBO(sRAIUnitDef* UDR )

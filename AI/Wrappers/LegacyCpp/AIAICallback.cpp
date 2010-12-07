@@ -16,22 +16,18 @@
 */
 
 #include "AIAICallback.h"
-#include "UnitDef.h"
 
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
-#include "creg/creg_cond.h"
-#include "Sim/Units/CommandAI/CommandQueue.h"
-#ifdef USING_CREG
-creg::Class* CCommandQueue::GetClass() { return NULL; }
-#endif
-#include "Sim/MoveTypes/MoveInfo.h"
-CIcon::CIcon() {}
-CIcon::~CIcon() {}
-#include "Sim/Features/FeatureDef.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-WeaponDef::~WeaponDef() {}
+// these are all copies from the engine, so we do not have to adjust
+// to each minor change done there
+#include "MoveData.h"
+#include "UnitDef.h"
+#include "WeaponDef.h"
+#include "FeatureDef.h"
+#include "Command.h"
+#include "CommandQueue.h"
 
 #include <string>
 #include <string.h>
@@ -755,7 +751,7 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		}
 
 		if (sAICallback->UnitDef_isMoveDataAvailable(skirmishAIId, unitDefId)) {
-			unitDef->movedata = new MoveData(NULL);
+			unitDef->movedata = new MoveData();
 			unitDef->movedata->maxAcceleration = sAICallback->UnitDef_MoveData_getMaxAcceleration(skirmishAIId, unitDefId);
 			unitDef->movedata->maxBreaking = sAICallback->UnitDef_MoveData_getMaxBreaking(skirmishAIId, unitDefId);
 			unitDef->movedata->maxSpeed = sAICallback->UnitDef_MoveData_getMaxSpeed(skirmishAIId, unitDefId);
@@ -768,7 +764,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 			unitDef->movedata->slopeMod = sAICallback->UnitDef_MoveData_getSlopeMod(skirmishAIId, unitDefId);
 			unitDef->movedata->depthMod = sAICallback->UnitDef_MoveData_getDepthMod(skirmishAIId, unitDefId);
 			unitDef->movedata->pathType = sAICallback->UnitDef_MoveData_getPathType(skirmishAIId, unitDefId);
-			unitDef->movedata->moveMath = 0;
 			unitDef->movedata->crushStrength = sAICallback->UnitDef_MoveData_getCrushStrength(skirmishAIId, unitDefId);
 			unitDef->movedata->moveType = (enum MoveData::MoveType) sAICallback->UnitDef_MoveData_getMoveType(skirmishAIId, unitDefId);
 			unitDef->movedata->moveFamily = (enum MoveData::MoveFamily) sAICallback->UnitDef_MoveData_getMoveFamily(skirmishAIId, unitDefId);

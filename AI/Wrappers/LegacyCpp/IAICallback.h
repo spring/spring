@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef IAICALLBACK_H
-#define IAICALLBACK_H
+#ifndef I_AI_CALLBACK_H
+#define I_AI_CALLBACK_H
 
 #include "ExternalAI/AILegacySupport.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
-#include "float3.h"
+#include "System/float3.h"
 
 #include <string>
 #include <vector>
@@ -430,4 +430,4 @@ public:
 	virtual ~IAICallback() {}
 };
 
-#endif // IAICALLBACK_H
+#endif // I_AI_CALLBACK_H

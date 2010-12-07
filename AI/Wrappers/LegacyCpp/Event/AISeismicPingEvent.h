@@ -21,7 +21,7 @@
 #define _AISEISMICPINGEVENT_H
 
 #include "AIEvent.h"
-#include "float3.h"
+#include "System/float3.h"
 
 class CAISeismicPingEvent : public CAIEvent {
 public:

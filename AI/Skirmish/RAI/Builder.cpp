@@ -1,7 +1,7 @@
 #include "Builder.h"
-#include "Sim/Features/FeatureDef.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Units/CommandAI/CommandQueue.h"
+#include "LegacyCpp/FeatureDef.h"
+#include "LegacyCpp/WeaponDef.h"
+#include "LegacyCpp/CommandQueue.h"
 
 sBuildQuarry::sBuildQuarry(sRAIBuildList *buildlist)
 {
