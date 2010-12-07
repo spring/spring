@@ -915,7 +915,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 			z += ((x == hxsize)? 1: 0);
 			x %= hxsize;
 
-			if ((x * z) >= (hxsize * hzsize)) {
+			if (z >= hzsize) {
 				break;
 			}
 		}
