@@ -38,7 +38,7 @@ float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) cons
 // true if the goal area is "small" and blocked
 bool CPathFinderDef::GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const {
 	const float r0 = SQUARE_SIZE * SQUARE_SIZE * 4.0f;
-	const float r1 = (moveData.size * 0.5f) * (moveData.size * 0.5f) * 1.5f * SQUARE_SIZE * SQUARE_SIZE;
+	const float r1 = (moveData.xsize >> 1) * (moveData.zsize >> 1) * 1.5f * SQUARE_SIZE * SQUARE_SIZE;
 
 	return
 		((sqGoalRadius < r0 || sqGoalRadius <= r1) &&
