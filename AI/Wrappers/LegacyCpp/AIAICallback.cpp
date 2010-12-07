@@ -761,8 +761,8 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 			unitDef->movedata->maxSpeed = sAICallback->UnitDef_MoveData_getMaxSpeed(skirmishAIId, unitDefId);
 			unitDef->movedata->maxTurnRate = sAICallback->UnitDef_MoveData_getMaxTurnRate(skirmishAIId, unitDefId);
 
-			unitDef->movedata->xsize = sAICallback->UnitDef_MoveData_getSize(skirmishAIId, unitDefId); // FIXME
-			unitDef->movedata->zsize = sAICallback->UnitDef_MoveData_getSize(skirmishAIId, unitDefId); // FIXME
+			unitDef->movedata->xsize = sAICallback->UnitDef_MoveData_getXSize(skirmishAIId, unitDefId);
+			unitDef->movedata->zsize = sAICallback->UnitDef_MoveData_getZSize(skirmishAIId, unitDefId);
 			unitDef->movedata->depth = sAICallback->UnitDef_MoveData_getDepth(skirmishAIId, unitDefId);
 			unitDef->movedata->maxSlope = sAICallback->UnitDef_MoveData_getMaxSlope(skirmishAIId, unitDefId);
 			unitDef->movedata->slopeMod = sAICallback->UnitDef_MoveData_getSlopeMod(skirmishAIId, unitDefId);

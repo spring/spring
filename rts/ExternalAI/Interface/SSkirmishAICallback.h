@@ -934,7 +934,9 @@ struct SSkirmishAICallback {
 
 	short             (CALLING_CONV *UnitDef_MoveData_getMaxTurnRate)(int skirmishAIId, int unitDefId);
 
-	int               (CALLING_CONV *UnitDef_MoveData_getSize)(int skirmishAIId, int unitDefId);
+	int               (CALLING_CONV *UnitDef_MoveData_getXSize)(int skirmishAIId, int unitDefId);
+
+	int               (CALLING_CONV *UnitDef_MoveData_getZSize)(int skirmishAIId, int unitDefId);
 
 	float             (CALLING_CONV *UnitDef_MoveData_getDepth)(int skirmishAIId, int unitDefId);
 
