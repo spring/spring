@@ -181,12 +181,17 @@ extern boost::mutex watermutex;
 extern boost::mutex dquemutex;
 extern boost::mutex scarmutex;
 extern boost::mutex trackmutex;
-extern boost::mutex projmutex;
 extern boost::mutex rprojmutex;
 extern boost::mutex rflashmutex;
 extern boost::mutex rpiecemutex;
 extern boost::mutex rfeatmutex;
 extern boost::mutex drawmutex;
+extern boost::mutex recvmutex;
+extern boost::mutex ulbatchmutex;
+extern boost::mutex flbatchmutex;
+extern boost::mutex plbatchmutex;
+extern boost::mutex glbatchmutex;
+extern boost::mutex mlbatchmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -201,11 +206,15 @@ extern boost::recursive_mutex &qnummutex;
 extern boost::recursive_mutex &groupmutex;
 extern boost::recursive_mutex &grpselmutex;
 extern boost::recursive_mutex laycmdmutex;
+extern boost::recursive_mutex luasimmutex;
+extern boost::recursive_mutex luadrawmutex;
+extern boost::recursive_mutex projmutex;
 
 extern gmlMutex simmutex;
 
 #if GML_MUTEX_PROFILER
 #	include "System/TimeProfiler.h"
+#define GML_MUTEX_TYPE(name, type) boost::type::scoped_lock name##lock(name##mutex)
 #	if GML_MUTEX_PROFILE
 #		ifdef _DEBUG
 #			define GML_MTXCMP(a,b) !strcmp(a,b) // comparison of static strings using addresses may not work in debug mode
@@ -217,20 +226,20 @@ extern gmlMutex simmutex;
 			int stc##name=GML_MTXCMP(GML_QUOTE(name),gmlProfMutex);\
 			if(stc##name)\
 				new (st##name) ScopedTimer(GML_QUOTE(name ## line ## Mutex));\
-			boost::type::scoped_lock name##lock(name##mutex);\
+			type;\
 			if(stc##name)\
 				((ScopedTimer *)st##name)->~ScopedTimer()
 #		define GML_PROFMUTEX_LOCK(name, type, line) GML_LINEMUTEX_LOCK(name, type, line)
-#		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, mutex, __LINE__)
-#		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, recursive_mutex, __LINE__)
+#		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, GML_MUTEX_TYPE(name, mutex), __LINE__)
+#		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, GML_MUTEX_TYPE(name, recursive_mutex), __LINE__)
 #	else
 #		define GML_PROFMUTEX_LOCK(name, type)\
 			char st##name[sizeof(ScopedTimer)];\
 			new (st##name) ScopedTimer(GML_QUOTE(name##Mutex));\
-			boost::type::scoped_lock name##lock(name##mutex);\
+			type;\
 			((ScopedTimer *)st##name)->~ScopedTimer()
-#		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, mutex)
-#		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, recursive_mutex)
+#		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, GML_MUTEX_TYPE(name, mutex))
+#		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, GML_MUTEX_TYPE(name, recursive_mutex))
 #	endif
 #else
 #	define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)

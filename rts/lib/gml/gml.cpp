@@ -225,12 +225,17 @@ boost::mutex watermutex;
 boost::mutex dquemutex;
 boost::mutex scarmutex;
 boost::mutex trackmutex;
-boost::mutex projmutex;
 boost::mutex rprojmutex;
 boost::mutex rflashmutex;
 boost::mutex rpiecemutex;
 boost::mutex rfeatmutex;
 boost::mutex drawmutex;
+boost::mutex recvmutex;
+boost::mutex ulbatchmutex;
+boost::mutex flbatchmutex;
+boost::mutex plbatchmutex;
+boost::mutex glbatchmutex;
+boost::mutex mlbatchmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -245,6 +250,9 @@ boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
 boost::recursive_mutex laycmdmutex;
+boost::recursive_mutex luasimmutex;
+boost::recursive_mutex luadrawmutex;
+boost::recursive_mutex projmutex;
 
 gmlMutex simmutex;
 #endif

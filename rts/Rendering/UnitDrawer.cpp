@@ -956,20 +956,19 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 {
 	const bool oldAdvShading = advShading;
+	// don't use shaders if shadows are enabled
+	advShading = advShading && !disableAdvShading;
+
+	if (advShading) {
+		SetupForUnitDrawing();
+		glDisable(GL_ALPHA_TEST);
+	} else {
+		SetupForGhostDrawing();
+	}
+
+	glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
 
 	{
-		// don't use shaders if shadows are enabled
-		advShading = advShading && !disableAdvShading;
-
-		if (advShading) {
-			SetupForUnitDrawing();
-			glDisable(GL_ALPHA_TEST);
-		} else {
-			SetupForGhostDrawing();
-		}
-
-		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
-
 		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -986,10 +985,11 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 		}
 
 		advShading = oldAdvShading;
+
+		// shader rendering
+		DrawCloakedShaderUnits();
 	}
 
-	// shader rendering
-	DrawCloakedShaderUnits();
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
