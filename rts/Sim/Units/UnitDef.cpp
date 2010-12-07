@@ -666,8 +666,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// TA-engine footprint resolution is half of Spring's,
 	// double the values (note that this is done for the
 	// MoveData footprints as well)
-	xsize = std::max(1, udTable.GetInt("footprintX", 1)) * 2;
-	zsize = std::max(1, udTable.GetInt("footprintZ", 1)) * 2;
+	xsize = std::max(1, udTable.GetInt("footprintX", 1) * 2);
+	zsize = std::max(1, udTable.GetInt("footprintZ", 1) * 2);
 
 	needGeo = false;
 
