@@ -2,10 +2,7 @@
 
 #include "DamageArray.h"
 
-#if defined __cplusplus
-#include "DamageArrayHandler.h"
-#endif // __cplusplus
-
+#include "System/creg/creg_cond.h"
 
 #ifdef USING_CREG
 CR_BIND(DamageArray, );
@@ -33,9 +30,6 @@ DamageArray::DamageArray() : paralyzeDamageTime(0),
 			craterMult(1.0f), craterBoost(0.0f),
 			numTypes(1)
 {
-	if (damageArrayHandler) {
-		numTypes = damageArrayHandler->GetNumTypes();
-	}
 	damages = new float[numTypes];
 	for(int a = 0; a < numTypes; ++a) {
 		damages[a] = 1.0f;
@@ -47,9 +41,6 @@ DamageArray::DamageArray(const float mult) : paralyzeDamageTime(0),
 			craterMult(1.0f), craterBoost(0.0f),
 			numTypes(1) 
 {
-	if (damageArrayHandler) {
-		numTypes = damageArrayHandler->GetNumTypes();
-	}
 	damages = new float[numTypes];
 	for(int a = 0; a < numTypes; ++a) {
 		damages[a] = mult;

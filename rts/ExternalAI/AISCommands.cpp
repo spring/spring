@@ -17,7 +17,11 @@ void initSUnitCommand(void* sUnitCommand) {
 
 
 #ifdef __cplusplus
+#ifdef    BUILDING_AI
+#include "LegacyCpp/Command.h"
+#else  // BUILDING_AI
 #include "Sim/Units/CommandAI/Command.h"
+#endif // BUILDING_AI
 
 void freeSUnitCommand(void* sCommandData, int sCommandId) {
 

@@ -1,15 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef IGLOBALAICALLBACK_H
-#define IGLOBALAICALLBACK_H
+#ifndef I_GLOBAL_AI_CALLBACK_H
+#define I_GLOBAL_AI_CALLBACK_H
 
 #include <vector>
 #include <deque>
-#include "float3.h"
-#include "Sim/Units/CommandAI/Command.h"
 
-struct UnitDef;
-struct FeatureDef;
 class IAICheats;
 class IAICallback;
 
@@ -20,12 +16,12 @@ class IAICallback;
 class IGlobalAICallback
 {
 public:
-	virtual IAICallback* GetAICallback()=0;
+	virtual IAICallback* GetAICallback() = 0;
 	/**
 	 * Returns NULL if "/cheat" is not enabled, or there are several players
 	 * in the game
 	 */
-	virtual IAICheats* GetCheatInterface()=0;
+	virtual IAICheats* GetCheatInterface() = 0;
 
 	// use virtual instead of pure virtual,
 	// becuase pur evirtual is not well supported
@@ -36,4 +32,4 @@ public:
 	virtual ~IGlobalAICallback() {}
 };
 
-#endif // IGLOBALAICALLBACK_H
+#endif // I_GLOBAL_AI_CALLBACK_H

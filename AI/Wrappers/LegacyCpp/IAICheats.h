@@ -1,14 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef IAICHEATS_H
-#define IAICHEATS_H
+#ifndef I_AI_CHEATS_H
+#define I_AI_CHEATS_H
 
-#include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
-#include "float3.h"
+#include "Command.h"
 #include "IAICallback.h"
+#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+#include "System/float3.h"
 
 struct UnitDef;
+struct UnitResourceInfo;
 
 class IAICheats
 {
@@ -84,4 +85,4 @@ public:
 	virtual ~IAICheats() {}
 };
 
-#endif // IAICHEATS_H
+#endif // I_AI_CHEATS_H

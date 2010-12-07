@@ -1,9 +1,8 @@
 #include "GResourceMap.h"
 #include "RAI.h"
 #include <set>
-#include "Sim/Features/FeatureDef.h"
+#include "LegacyCpp/FeatureDef.h"
 #include "System/Util.h"
-//#include <time.h>
 #include <stdio.h>
 
 // a metal map block is 0-255 * cb->GetMaxMetal(), extractors are normally built on several

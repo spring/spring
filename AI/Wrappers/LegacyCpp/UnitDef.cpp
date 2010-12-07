@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "UnitDef.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "MoveData.h"
 
 /******************************************************************************/
 
@@ -37,7 +37,6 @@ UnitDef::UnitDefWeapon::UnitDefWeapon(
 UnitDef::UnitDef()
 : valid(true)
 , id(-1)
-, collisionVolume(NULL)
 , decoyDef(NULL)
 , aihint(0)
 , cobID(-1)
@@ -115,7 +114,6 @@ UnitDef::UnitDef()
 , stockpileWeaponDef(NULL)
 , maxWeaponRange(0.0f)
 , maxCoverage(0.0f)
-, buildPic(NULL)
 , canSelfD(true)
 , selfDCountdown(0)
 , canSubmerge(false)

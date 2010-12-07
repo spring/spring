@@ -15,8 +15,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AIAICALLBACK_H
-#define _AIAICALLBACK_H
+#ifndef _AI_AI_CALLBACK_H
+#define _AI_AI_CALLBACK_H
 
 #include "IAICallback.h"
 
@@ -280,4 +280,4 @@ private:
 	static unsigned char* metalMap;
 };
 
-#endif // _AIAICALLBACK_H
+#endif // _AI_AI_CALLBACK_H

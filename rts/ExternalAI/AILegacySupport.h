@@ -3,7 +3,7 @@
 #ifndef AI_LEGACY_SUPPORT_H
 #define AI_LEGACY_SUPPORT_H
 
-#include "float3.h"
+#include "System/float3.h"
 
 #include <string>
 
