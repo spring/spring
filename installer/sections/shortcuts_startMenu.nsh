@@ -20,7 +20,7 @@
 		${EndIf}
 	!endif
 
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Readme" "$INSTDIR\docs\README.html"
+	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Readme.lnk" "$INSTDIR\docs\README.html"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk" "$INSTDIR\uninst.exe"
 
 !else
