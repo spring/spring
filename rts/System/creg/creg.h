@@ -10,7 +10,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "ISerializer.h"
-#include "Sync/SyncedPrimitive.h"
+#include "System/Sync/SyncedPrimitive.h"
 
 namespace creg {
 

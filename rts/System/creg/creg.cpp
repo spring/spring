@@ -5,12 +5,10 @@
  * Classes for serialization of registrated class instances
  */
 
-#include "StdAfx.h"
-
 #include <map>
 #include <string.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 // creg has to be made aware of mmgr explicitly
 #ifdef USE_MMGR
@@ -23,7 +21,8 @@
 # define	operator_delete		::operator delete
 #endif
 
-#include "Util.h"
+#include "System/Util.h"
+
 #include "creg_cond.h"
 
 using namespace creg;
