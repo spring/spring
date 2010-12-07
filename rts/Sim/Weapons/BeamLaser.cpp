@@ -289,6 +289,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	if (hitUnit) {
 		if (hitUnit->unitDef->usePieceCollisionVolumes) {
 			// getting the actual piece here is probably overdoing it
+			// TODO change this if we really need propper flanking bonus support
+			// for beam-lasers
 			hitUnit->SetLastAttackedPiece(hitUnit->localmodel->GetRoot(), gs->frameNum);
 		}
 
