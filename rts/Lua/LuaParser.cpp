@@ -138,7 +138,7 @@ void LuaParser::SetupEnv()
 
 bool LuaParser::Execute()
 {
-	if (L == NULL) {
+	if (!IsValid()) {
 		errorLog = "could not initialize LUA library";
 		return false;
 	}
@@ -241,7 +241,7 @@ LuaTable LuaParser::GetRoot()
 
 void LuaParser::PushParam()
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	if (initDepth > 0) {
 		lua_rawset(L, -3);
 	} else {
@@ -252,7 +252,7 @@ void LuaParser::PushParam()
 
 void LuaParser::GetTable(const string& name, bool overwrite)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 
 	lua_pushstring(L, name.c_str());
 
@@ -274,7 +274,7 @@ void LuaParser::GetTable(const string& name, bool overwrite)
 
 void LuaParser::GetTable(int index, bool overwrite)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 
 	lua_pushnumber(L, index);
 
@@ -296,7 +296,7 @@ void LuaParser::GetTable(int index, bool overwrite)
 
 void LuaParser::EndTable()
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	assert(initDepth > 0);
 	initDepth--;
 	PushParam();
@@ -307,7 +307,7 @@ void LuaParser::EndTable()
 
 void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	if (func == NULL) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushcfunction(L, func);
@@ -317,7 +317,7 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 
 void LuaParser::AddInt(const string& key, int value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushnumber(L, value);
 	PushParam();
@@ -326,7 +326,7 @@ void LuaParser::AddInt(const string& key, int value)
 
 void LuaParser::AddBool(const string& key, bool value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushboolean(L, value);
 	PushParam();
@@ -335,7 +335,7 @@ void LuaParser::AddBool(const string& key, bool value)
 
 void LuaParser::AddFloat(const string& key, float value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushnumber(L, value);
 	PushParam();
@@ -344,7 +344,7 @@ void LuaParser::AddFloat(const string& key, float value)
 
 void LuaParser::AddString(const string& key, const string& value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushstring(L, key.c_str());
 	lua_pushstring(L, value.c_str());
 	PushParam();
@@ -355,7 +355,7 @@ void LuaParser::AddString(const string& key, const string& value)
 
 void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	if (func == NULL) { return; }
 	lua_pushnumber(L, key);
 	lua_pushcfunction(L, func);
@@ -365,7 +365,7 @@ void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 
 void LuaParser::AddInt(int key, int value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -374,7 +374,7 @@ void LuaParser::AddInt(int key, int value)
 
 void LuaParser::AddBool(int key, bool value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushboolean(L, value);
 	PushParam();
@@ -383,7 +383,7 @@ void LuaParser::AddBool(int key, bool value)
 
 void LuaParser::AddFloat(int key, float value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -392,7 +392,7 @@ void LuaParser::AddFloat(int key, float value)
 
 void LuaParser::AddString(int key, const string& value)
 {
-	if ((L == NULL) || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
 	lua_pushstring(L, value.c_str());
 	PushParam();
