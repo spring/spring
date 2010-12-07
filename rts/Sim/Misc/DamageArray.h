@@ -4,7 +4,7 @@
 #define __DAMAGE_ARRAY_H__
 
 #include <algorithm>
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 struct DamageArray
 {
