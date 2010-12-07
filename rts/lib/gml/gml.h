@@ -197,7 +197,7 @@ extern boost::mutex mlbatchmutex;
 extern boost::recursive_mutex unitmutex;
 extern boost::recursive_mutex quadmutex;
 extern boost::recursive_mutex selmutex;
-extern boost::recursive_mutex &luamutex;
+//extern boost::recursive_mutex luamutex;
 extern boost::recursive_mutex featmutex;
 extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex &guimutex;
@@ -206,8 +206,7 @@ extern boost::recursive_mutex &qnummutex;
 extern boost::recursive_mutex &groupmutex;
 extern boost::recursive_mutex &grpselmutex;
 extern boost::recursive_mutex laycmdmutex;
-extern boost::recursive_mutex luasimmutex;
-extern boost::recursive_mutex luadrawmutex;
+//extern boost::recursive_mutex luadrawmutex;
 extern boost::recursive_mutex projmutex;
 
 extern gmlMutex simmutex;

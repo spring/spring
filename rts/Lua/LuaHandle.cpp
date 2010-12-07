@@ -75,8 +75,10 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 
 	SetSynced(false, true);
 	L_Sim = lua_open();
+	L_Sim->luamutex = new boost::recursive_mutex();
 	LUA_OPEN_LIB(L_Sim, luaopen_debug);
 	L_Draw = lua_open();
+	L_Draw->luamutex = new boost::recursive_mutex();
 	LUA_OPEN_LIB(L_Draw, luaopen_debug);
 }
 
@@ -222,9 +224,9 @@ void CLuaHandle::CheckStack()
 	ExecuteFrameEventBatch();
 	ExecuteMiscEventBatch();
 
+	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
 
-	SELECT_LUA_STATE();
 	const int top = lua_gettop(L);
 	if (top != 0) {
 		logOutput.Print("WARNING: %s stack check: top = %i\n", GetName().c_str(), top);
@@ -1604,6 +1606,7 @@ void CLuaHandle::ExecuteProjEventBatch() {
 void CLuaHandle::ExecuteFrameEventBatch() {
 	if(!UseEventBatch()) return;
 
+	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
 	std::vector<int> lgeb;
@@ -1622,6 +1625,7 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 void CLuaHandle::ExecuteMiscEventBatch() {
 	if(!UseEventBatch()) return;
 
+	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteMiscEventBatch
 
 	std::vector<LuaMiscEvent> lmeb;

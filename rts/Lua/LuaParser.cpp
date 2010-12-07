@@ -48,6 +48,7 @@ LuaParser::LuaParser(const string& _fileName,
   lowerCppKeys(true)
 {
 	L = lua_open();
+	L->luamutex = new boost::recursive_mutex();
 
 	if (L != NULL) {
 		SetupEnv();
@@ -69,6 +70,7 @@ LuaParser::LuaParser(const string& _textChunk,
   lowerCppKeys(true)
 {
 	L = lua_open();
+	L->luamutex = new boost::recursive_mutex();
 
 	if (L != NULL) {
 		SetupEnv();

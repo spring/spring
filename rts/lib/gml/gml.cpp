@@ -240,7 +240,7 @@ boost::mutex mlbatchmutex;
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
 boost::recursive_mutex selmutex;
-boost::recursive_mutex &luamutex=selmutex;
+//boost::recursive_mutex luamutex;
 boost::recursive_mutex quadmutex;
 boost::recursive_mutex featmutex;
 boost::recursive_mutex grassmutex;
@@ -250,8 +250,7 @@ boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
 boost::recursive_mutex laycmdmutex;
-boost::recursive_mutex luasimmutex;
-boost::recursive_mutex luadrawmutex;
+//boost::recursive_mutex luadrawmutex;
 boost::recursive_mutex projmutex;
 
 gmlMutex simmutex;

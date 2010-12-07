@@ -3,6 +3,7 @@
 
 
 #include "lua.h"
+#include "lib/lua/src/lstate.h"
 #include "lualib.h"
 #include "lauxlib.h"
 

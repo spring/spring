@@ -165,9 +165,9 @@ struct LuaMiscEvent {
 #if defined(USE_GML) && GML_ENABLE_SIM
 
 #if defined(LUA_SYNCED_ONLY)
-#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(!CLuaHandle::UseDualStates() ? name##mutex : name##drawmutex, !CLuaHandle::UseDualStates() || !Threading::IsSimThread())
+#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(*(L->##name##mutex), true)
 #else
-#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(SingleState() ? name##mutex : name##drawmutex, SingleState() || !SingleState() && !Threading::IsSimThread())
+#define GML_DRCMUTEX_LOCK(name) Threading::RecursiveScopedLock name##lock(*(L->##name##mutex), true)
 #endif
 
 #else
@@ -199,9 +199,9 @@ struct LuaMiscEvent {
 #	if GML_ENABLE_SIM
 #		undef LUA_CALL_IN_CHECK
 #		if DEBUG_LUA
-#			define LUA_CALL_IN_CHECK(L) GML_DRCMUTEX_LOCK(lua); SELECT_LUA_STATE(); GML_CALL_DEBUGGER(); LuaCallInCheck ciCheck((L), __FUNCTION__);
+#			define LUA_CALL_IN_CHECK(L) SELECT_LUA_STATE(); GML_DRCMUTEX_LOCK(lua); GML_CALL_DEBUGGER(); LuaCallInCheck ciCheck((L), __FUNCTION__);
 #		else
-#			define LUA_CALL_IN_CHECK(L) GML_DRCMUTEX_LOCK(lua); SELECT_LUA_STATE(); GML_CALL_DEBUGGER();
+#			define LUA_CALL_IN_CHECK(L) SELECT_LUA_STATE(); GML_DRCMUTEX_LOCK(lua); GML_CALL_DEBUGGER();
 #		endif
 #	endif
 #endif
