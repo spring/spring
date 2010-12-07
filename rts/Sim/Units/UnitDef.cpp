@@ -663,9 +663,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	activateWhenBuilt = udTable.GetBool("activateWhenBuilt", false);
 
-	// TA has only half our res so multiply size with 2
-	xsize = udTable.GetInt("footprintX", 1) * 2;
-	zsize = udTable.GetInt("footprintZ", 1) * 2;
+	// TA-engine footprint resolution is half of Spring's,
+	// double the values (note that this is done for the
+	// MoveData footprints as well)
+	xsize = std::max(1, udTable.GetInt("footprintX", 1)) * 2;
+	zsize = std::max(1, udTable.GetInt("footprintZ", 1)) * 2;
 
 	needGeo = false;
 
@@ -974,15 +976,19 @@ bool UnitDef::IsTerrainHeightOK(const float height) const {
 float UnitDef::GetAllowedTerrainHeight(float height) const {
 	float maxwd = maxWaterDepth;
 	float minwd = minWaterDepth;
-	if(movedata) {
-		if(movedata->moveType == MoveData::Ship_Move)
+
+	if (movedata) {
+		if (movedata->moveType == MoveData::Ship_Move)
 			minwd = movedata->depth;
 		else
 			maxwd = movedata->depth;
 	}
+
 	height = std::min(height, -minwd);
-	if(!floater && !canhover)
+
+	if (!floater && !canhover)
 		height = std::max(-maxwd, height);
+
 	return height;
 }
 

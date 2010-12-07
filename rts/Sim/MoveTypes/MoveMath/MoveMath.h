@@ -28,8 +28,7 @@ public:
 	// tells whether a position is blocked (inaccessable for a given object's movedata)
 	int IsBlocked(const MoveData& moveData, const float3& pos) const;
 	int IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
-	int IsBlocked2(const MoveData& moveData, int xSquare, int zSquare) const;
-
+	
 	// tells whether a given object is blocking the given movedata
 	bool CrushResistant(const MoveData& moveData, const CSolidObject* object) const;
 	bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object) const;
@@ -41,7 +40,7 @@ public:
 	// returns the block-status of a single quare
 	int SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
 
-	virtual ~CMoveMath();
+	virtual ~CMoveMath() {}
 };
 
 #endif

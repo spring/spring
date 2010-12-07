@@ -243,7 +243,7 @@ void CPathEstimator::FindOffset(const MoveData& moveData, unsigned int blockX, u
 
 			float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
-			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE) {
+			if (moveData.moveMath->IsBlocked(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE) {
 				cost = std::numeric_limits<float>::infinity();
 			}
 

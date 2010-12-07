@@ -526,7 +526,8 @@ static int MoveDataTable(lua_State* L, const void* data)
 		default: { HSTR_PUSH_STRING(L, "family", "error"); break; }
 	}
 
-	HSTR_PUSH_NUMBER(L, "size",          md->size);
+	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);
+	HSTR_PUSH_NUMBER(L, "zsize",         md->zsize);
 	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
 	HSTR_PUSH_NUMBER(L, "maxSlope",      md->maxSlope);
 	HSTR_PUSH_NUMBER(L, "slopeMod",      md->slopeMod);
