@@ -20,9 +20,6 @@
 #include "System/FileSystem/CRC.h"
 #include "System/Util.h"
 
-using std::min;
-using std::max;
-
 CR_BIND(MoveData, (0));
 CR_BIND(CMoveInfo, );
 
@@ -32,7 +29,8 @@ CR_REG_METADATA(MoveData, (
 	CR_ENUM_MEMBER(terrainClass),
 	CR_MEMBER(followGround),
 
-	CR_MEMBER(size),
+	CR_MEMBER(xsize),
+	CR_MEMBER(zsize),
 	CR_MEMBER(depth),
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
@@ -172,16 +170,17 @@ CMoveInfo::CMoveInfo()
 
 
 		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
-		// TA has only half our resolution, multiply size by 2
-		md->size = max(2, min(8, moveTable.GetInt("footprintX", 1) * 2));
+		md->xsize = std::max(1, moveTable.GetInt("footprintX",         1)) * 2;
+		md->zsize = std::max(1, moveTable.GetInt("footprintZ", md->xsize)) * 2;
 
 		const unsigned int checksum =
-			(md->size         << 16) +
-			(md->followGround << 4) +
-			(md->subMarine    << 3) +
-			(b2               << 2) +
-			(b1               << 1) +
-			(b0               << 0);
+			(md->xsize        << 16) +
+			(md->zsize        <<  8) +
+			(md->followGround <<  4) +
+			(md->subMarine    <<  3) +
+			(b2               <<  2) +
+			(b1               <<  1) +
+			(b0               <<  0);
 		crc << checksum
 			<< md->maxSlope << md->slopeMod
 			<< md->depth << md->depthMod
