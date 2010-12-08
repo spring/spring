@@ -11,11 +11,11 @@
 	#if !defined USING_CREG
 		#define USING_CREG
 	#endif // !defined USING_CREG
-	#include "creg/creg.h"
+	#include "creg.h"
 #endif // defined BUILDING_AI && !defined USING_CREG
 
 #ifdef NOT_USING_CREG
-#include "creg/ISerializer.h" // prevent some compiler errors
+#include "ISerializer.h" // prevent some compiler errors
 // define all creg preprocessor macros from creg_cond.h to nothing
 #define CR_DECLARE(TCls)
 #define CR_DECLARE_STRUCT(TStr)

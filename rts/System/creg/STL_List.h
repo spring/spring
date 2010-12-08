@@ -3,9 +3,11 @@
 #ifndef CR_LIST_TYPE_IMPL_H
 #define CR_LIST_TYPE_IMPL_H
 
-#include <list>
-
 #include "creg_cond.h"
+
+#ifdef USING_CREG
+
+#include <list>
 
 namespace creg {
 
@@ -47,5 +49,7 @@ namespace creg {
 	};
 };
 
-#endif
+#endif // USING_CREG
+
+#endif // CR_LIST_TYPE_IMPL_H
 

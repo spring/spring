@@ -6,7 +6,6 @@
 	file to append the version string with the SVN revision number.
 */
 
-#include "StdAfx.h"
 #include "GameVersion.h"
 
 #include <cstring>

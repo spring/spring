@@ -5,18 +5,17 @@
  * Classes for serialization of registrated class instances
  */
 
-#include "StdAfx.h"
 #include "creg_cond.h"
 #include "Serializer.h"
-#include "Platform/byteorder.h"
+
 #include <fstream>
 #include <assert.h>
 #include <stdexcept>
 #include <map>
 #include <string.h>
-//#include "LogOutput.h"
 
-#include "Exceptions.h"
+#include "System/Platform/byteorder.h"
+#include "System/Exceptions.h"
 
 using namespace std;
 using namespace creg;

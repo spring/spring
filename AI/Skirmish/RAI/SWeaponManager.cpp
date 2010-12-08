@@ -1,5 +1,5 @@
 #include "SWeaponManager.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "LegacyCpp/WeaponDef.h"
 
 cSWeaponManager::cSWeaponManager(IAICallback* callback, cRAI* global)
 {

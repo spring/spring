@@ -111,6 +111,7 @@ int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) con
 
 	if (moveData.xsize <= SQUARE_SIZE && moveData.zsize <= SQUARE_SIZE) {
 		// only check squares under the footprint-corners and center
+		// (footprints are point-symmetric around <xSquare, zSquare>)
 		ret |= SquareIsBlocked(moveData, xSquare, zSquare);
 		ret |= SquareIsBlocked(moveData, xmin, zmin);
 		ret |= SquareIsBlocked(moveData, xmax, zmin);

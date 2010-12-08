@@ -1,29 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef UNITDEF_H
-#define UNITDEF_H
+#ifndef UNIT_DEF_H
+#define UNIT_DEF_H
 
 #include <string>
 #include <vector>
 #include <map>
 
-#include "Rendering/Icon.h"
-#include "Sim/Misc/GuiSoundSet.h"
 #include "System/float3.h"
 
 
 struct MoveData;
 struct WeaponDef;
-struct S3DModel;
-struct UnitDefImage;
-struct CollisionVolume;
-class CExplosionGenerator;
 
 struct UnitModelDef
 {
-	UnitModelDef(): model(NULL) {}
-
-	S3DModel* model;
+	UnitModelDef() {}
 
 	std::string modelPath;
 	std::string modelName;
@@ -44,8 +36,6 @@ public:
 	std::string humanName;
 	std::string filename;
 	int id;					// unique id for this type of unit
-
-	CollisionVolume* collisionVolume;
 
 	std::string decoyName;
 	const UnitDef* decoyDef;
@@ -184,9 +174,6 @@ public:
 	std::string categoryString;
 
 	std::string buildPicName;
-	mutable UnitDefImage* buildPic;
-
-	mutable CIcon iconType;
 
 	bool canSelfD;
 	int selfDCountdown;
@@ -301,20 +288,6 @@ public:
 
 	unsigned int noChaseCategory;
 
-	struct SoundStruct {
-		GuiSoundSet select;
-		GuiSoundSet ok;
-		GuiSoundSet arrived;
-		GuiSoundSet build;
-		GuiSoundSet repair;
-		GuiSoundSet working;
-		GuiSoundSet underattack;
-		GuiSoundSet cant;
-		GuiSoundSet activate;
-		GuiSoundSet deactivate;
-	};
-	SoundStruct sounds;
-
 	bool leaveTracks;
 	std::string trackTypeName;
 	float trackWidth;
@@ -352,7 +325,6 @@ public:
 	float minAirBasePower;							// min build power for airbases that this aircraft can land on
 
 	std::vector<std::string> sfxExplGenNames;
-	std::vector<CExplosionGenerator*> sfxExplGens;	// list of explosion generators for use in scripts
 
 	std::string pieceTrailCEGTag;					// base tag (eg. "flame") of CEG attached to pieces of exploding units
 	int pieceTrailCEGRange;							// range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
@@ -369,4 +341,4 @@ private:
 	float realBuildTime;
 };
 
-#endif /* UNITDEF_H */
+#endif /* UNIT_DEF_H */

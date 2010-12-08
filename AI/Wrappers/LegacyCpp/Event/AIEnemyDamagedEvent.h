@@ -22,7 +22,7 @@
 #define _AIENEMYDAMAGEDEVENT_H
 
 #include "AIEvent.h"
-#include "float3.h"
+#include "System/float3.h"
 
 class CAIEnemyDamagedEvent : public CAIEvent {
 public:

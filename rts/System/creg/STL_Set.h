@@ -3,6 +3,10 @@
 #ifndef CR_SET_TYPE_IMPL_H
 #define CR_SET_TYPE_IMPL_H
 
+#include "creg_cond.h"
+
+#ifdef USING_CREG
+
 #ifdef _MSC_VER
 	#include <hash_set>
 	#define SPRING_HASH_SET stdext::hash_set
@@ -85,5 +89,7 @@ namespace creg
 	};
 };
 
-#endif
+#endif // USING_CREG
+
+#endif // CR_SET_TYPE_IMPL_H
 

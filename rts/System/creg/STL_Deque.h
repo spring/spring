@@ -3,9 +3,11 @@
 #ifndef CR_DEQUE_TYPE_IMPL_H
 #define CR_DEQUE_TYPE_IMPL_H
 
-#include <deque>
-
 #include "creg_cond.h"
+
+#ifdef USING_CREG
+
+#include <deque>
 
 namespace creg
 {
@@ -19,4 +21,6 @@ namespace creg
 	};
 };
 
-#endif
+#endif // USING_CREG
+
+#endif // CR_DEQUE_TYPE_IMPL_H

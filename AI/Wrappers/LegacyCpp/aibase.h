@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef AIBASE_H
-#define AIBASE_H
+#ifndef AI_BASE_H
+#define AI_BASE_H
 
-#include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Command.h"
+#include "WeaponDef.h"
 
 // Changing these classes or classes being a member of these classes breaks ABI.
 // This also means any engine-side classes not in this list nor being a member
@@ -16,4 +16,4 @@
 	+ sizeof(WeaponDef) \
 	)
 
-#endif // AIBASE_H
+#endif // AI_BASE_H

@@ -15,8 +15,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AIAICHEATS_H
-#define _AIAICHEATS_H
+#ifndef _AI_AI_CHEATS_H
+#define _AI_AI_CHEATS_H
 
 #include "IAICheats.h"
 
@@ -90,4 +90,4 @@ private:
 	void SetCheatsEnabled(bool enable);
 };
 
-#endif // _AIAICHEATS_H
+#endif // _AI_AI_CHEATS_H

@@ -45,13 +45,16 @@ if    (BUILD_${myName}_AIWRAPPER)
 	# Assemble the Legacy C++ AI sources
 	set(mySources
 		"${mySourceDir}/AIAI"
-		"${mySourceDir}/AIGlobalAICallback"
 		"${mySourceDir}/AIAICallback"
 		"${mySourceDir}/AIAICheats"
+		"${mySourceDir}/AIGlobalAICallback"
+		"${mySourceDir}/Command"
+		"${mySourceDir}/CommandQueue"
+		"${mySourceDir}/DamageArray"
+		"${mySourceDir}/MoveData"
 		"${mySourceDir}/UnitDef"
 		"${rts}/ExternalAI/AISCommands"
 		"${rts}/System/float3"
-		"${rts}/Sim/Misc/DamageArray"
 		${ai_common_SRC}
 		)
 
