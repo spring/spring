@@ -5,14 +5,10 @@
 
 #include <map>
 
-#include "System/float3.h"
-#include "Sim/Misc/DamageArray.h"
-#include "Sim/Misc/GuiSoundSet.h"
+#include "DamageArray.h"
 
-struct AtlasedTexture;
-class CColorMap;
-class CExplosionGenerator;
-struct S3DModel;
+#include "System/creg/creg_cond.h"
+#include "System/float3.h"
 
 struct WeaponDef
 {
@@ -130,8 +126,6 @@ public:
 		, heightBoostFactor(0.0f)
 		, proximityPriority(0.0f)
 		, collisionFlags(0)
-		, explosionGenerator(NULL)
-		, bounceExplosionGenerator(NULL)
 		, sweepFire(false)
 		, canAttackGround(false)
 		, cameraShake(0.0f)
@@ -252,8 +246,6 @@ public:
 		, heightBoostFactor(0.0f)
 		, proximityPriority(0.0f)
 		, collisionFlags(0)
-		, explosionGenerator(NULL)
-		, bounceExplosionGenerator(NULL)
 		, sweepFire(false)
 		, canAttackGround(false)
 		, cameraShake(0.0f)
@@ -263,18 +255,13 @@ public:
 		, dynDamageInverted(false)
 	{}
 
-	~WeaponDef();
-
-	S3DModel* LoadModel();
+	~WeaponDef() {}
 
 	std::string name;
 	std::string type;
 	std::string description;
 	std::string filename;
 	std::string cegTag;        ///< tag of CEG that projectiles fired by this weapon should use
-
-	GuiSoundSet firesound;
-	GuiSoundSet soundhit;
 
 	float range;
 	float heightmod;
@@ -373,68 +360,6 @@ public:
 	float dance;              ///< how much the missile will dance
 	float trajectoryHeight;   ///< how high trajectory missiles will try to fly in
 
-	struct Visuals
-	{
-		Visuals()
-			: color(ZeroVector)
-			, color2(ZeroVector)
-			, model(NULL)
-			, colorMap(NULL)
-			, smokeTrail(false)
-			, beamweapon(false)
-			, hardStop(false)
-			, texture1(NULL)
-			, texture2(NULL)
-			, texture3(NULL)
-			, texture4(NULL)
-			, tilelength(0.0f)
-			, scrollspeed(0.0f)
-			, pulseSpeed(0.0f)
-			, beamttl(0)
-			, beamdecay(0.0f)
-			, stages(0)
-			, alphaDecay(0.0f)
-			, sizeDecay(0.0f)
-			, separation(0.0f)
-			, noGap(true)
-			, alwaysVisible(true)
-		{}
-
-		float3 color;
-		float3 color2;
-
-		S3DModel* model;
-		std::string modelName;
-		std::string texNames[4];
-		std::string expGenTag;
-		std::string bounceExpGenTag;
-		CColorMap* colorMap;
-
-		bool smokeTrail;
-		bool beamweapon;
-		/// whether the shot should fade out or stop and contract at max range
-		bool hardStop;
-
-		AtlasedTexture* texture1;
-		AtlasedTexture* texture2;
-		AtlasedTexture* texture3;
-		AtlasedTexture* texture4;
-		float tilelength;
-		float scrollspeed;
-		float pulseSpeed;
-		int beamttl;
-		float beamdecay;
-
-		int stages;
-		float alphaDecay;
-		float sizeDecay;
-		float separation;
-		bool noGap;
-
-		bool alwaysVisible;
-	};
-	Visuals visuals;
-
 	bool largeBeamLaser;
 
 	bool isShield;                   // if the weapon is a shield rather than a weapon
@@ -488,9 +413,6 @@ public:
 	float proximityPriority;     // multiplier for the distance to the target for priority calculations
 
 	unsigned int collisionFlags;
-
-	CExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
-	CExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
 
 	bool sweepFire;
 	bool canAttackGround;

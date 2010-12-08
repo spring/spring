@@ -1,6 +1,3 @@
-// #include "ExternalAI/aibase.h"
-// #include "Sim/Misc/GlobalConstants.h"
-
 #include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"

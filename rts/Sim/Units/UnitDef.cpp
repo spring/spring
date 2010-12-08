@@ -555,6 +555,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	ParseWeaponsTable(weaponsTable);
 
 	canDGun = udTable.GetBool("canDGun", false);
+	needGeo = false;
 
 	extractRange = 0.0f;
 	extractSquare = udTable.GetBool("extractSquare", false);
@@ -594,9 +595,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		type = "Building";
 	}
 
+
 	movedata = NULL;
+
 	if (canmove && !canfly && (type != "Factory")) {
-		string moveclass = StringToLower(udTable.GetString("movementClass", ""));
+		const std::string& moveclass = StringToLower(udTable.GetString("movementClass", ""));
 		movedata = moveinfo->GetMoveDataFromName(moveclass);
 
 		if (!movedata) {
@@ -663,13 +666,12 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	activateWhenBuilt = udTable.GetBool("activateWhenBuilt", false);
 
-	// TA-engine footprint resolution is half of Spring's,
-	// double the values (note that this is done for the
-	// MoveData footprints as well)
-	xsize = std::max(1, udTable.GetInt("footprintX", 1) * 2);
-	zsize = std::max(1, udTable.GetInt("footprintZ", 1) * 2);
-
-	needGeo = false;
+	// footprint sizes are assumed to be expressed in TA-engine units;
+	// Spring's heightmap resolution is double the footprint (yardmap)
+	// resolution, so we scale the values
+	// NOTE that this is done for the MoveData footprints as well
+	xsize = std::max(1, (udTable.GetInt("footprintX", 1) * 2));
+	zsize = std::max(1, (udTable.GetInt("footprintZ", 1) * 2));
 
 	if (speed <= 0.0f) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
@@ -870,9 +872,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 		if (wd->stockpile) {
 			// interceptors have priority
-			if (wd->interceptor        ||
-			    !stockpileWeaponDef ||
-			    !stockpileWeaponDef->interceptor) {
+			if (wd->interceptor || !stockpileWeaponDef || !stockpileWeaponDef->interceptor) {
 				stockpileWeaponDef = wd;
 			}
 		}
@@ -880,69 +880,60 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 }
 
 
-void UnitDef::CreateYardMap(std::string yardmapStr)
+
+void UnitDef::CreateYardMap(std::string yardMapStr)
 {
-	StringToLowerInPlace(yardmapStr);
-
-	const int mw = xsize;
-	const int mh = zsize;
-	const int maxIdx = mw * mh;
-
 	// create the yardmaps for each build-facing
+	// (xsize and zsize are in heightmap units at
+	// this point)
 	for (int u = 0; u < 4; u++) {
-		yardmaps[u].resize(maxIdx);
+		yardmaps[u].resize(xsize * zsize);
 	}
 
-	// Spring resolution's is double that of TA's (so 4 times as much area)
-	unsigned char* originalMap = new unsigned char[maxIdx / 4];
+	const unsigned int hxsize = xsize >> 1;
+	const unsigned int hzsize = zsize >> 1;
 
-	memset(originalMap, 255, maxIdx / 4);
+	std::vector<unsigned char> yardMap(hxsize * hzsize, 255);
 
-	if (!yardmapStr.empty()) {
-		std::string::iterator si = yardmapStr.begin();
+	if (!yardMapStr.empty()) {
+		StringToLowerInPlace(yardMapStr);
 
-		for (int y = 0; y < mh / 2; y++) {
-			for (int x = 0; x < mw / 2; x++) {
+		unsigned int x = 0;
+		unsigned int z = 0;
 
-				if (*si == 'g') needGeo = true;
-				else if (*si == 'c') originalMap[x + y * mw / 2] = 1; // blocking (not walkable, not buildable)
-				else if (*si == 'y') originalMap[x + y * mw / 2] = 0; // non-blocking (walkable, buildable)
-			//	else if (*si == 'o') originalMap[x + y * mw / 2] = 2; // walkable, not buildable?
+		for (unsigned int n = 0; n < yardMapStr.size(); n++) {
+			const unsigned char c = yardMapStr[n];
 
-				// advance one non-space character (matching the column
-				// <x> we have just advanced) in this row, and skip any
-				// spaces
-				do {
-					si++;
-				} while (si != yardmapStr.end() && *si == ' ');
+			if (c == ' ') { continue; }
+			if (c == 'g') { needGeo = true; continue; }
+			if (c == 'c') { yardMap[x + z * hxsize] = 1; }   // blocking (not walkable, not buildable)
+			if (c == 'y') { yardMap[x + z * hxsize] = 0; }   // non-blocking (walkable, buildable)
+		//	if (c == 'o') { yardMap[x + z * hxsize] = 2; }   // walkable, not buildable?
+		//	if (c == 'w') { yardMap[x + z * hxsize] = 3; }   // not walkable, buildable?
 
-				if (si == yardmapStr.end()) {
-					// no more chars for remaining colums in this row
-					break;
-				}
+			x += 1;
+			z += ((x == hxsize)? 1: 0);
+			x %= hxsize;
+
+			if (z >= hzsize) {
+				break;
 			}
-
-			if (si == yardmapStr.end()) {
-				// no more chars for any remaining rows
- 				break;
-			}
- 		}
- 	}
-
-	for (int y = 0; y < mh; y++) {
-		for (int x = 0; x < mw; x++) {
-			int orgIdx = x / 2 + y / 2 * mw / 2;
-			char orgMapChar = originalMap[orgIdx];
-
-			yardmaps[0][         (x + y * mw)                ] = orgMapChar;
-			yardmaps[1][maxIdx - (mh * (x + 1) - (y + 1) + 1)] = orgMapChar;
-			yardmaps[2][maxIdx - (x + y * mw + 1)            ] = orgMapChar;
-			yardmaps[3][          mh * (x + 1) - (y + 1)     ] = orgMapChar;
 		}
 	}
 
-	delete[] originalMap;
+	for (unsigned int z = 0; z < zsize; z++) {
+		for (unsigned int x = 0; x < xsize; x++) {
+			const unsigned int yardMapIdx = (x >> 1) + ((z >> 1) * hxsize);
+			const unsigned char yardMapChar = yardMap[yardMapIdx];
+
+			yardmaps[FACING_SOUTH][                  (x + z * xsize)                ] = yardMapChar;
+			yardmaps[FACING_EAST ][(xsize * zsize) - (zsize * (x + 1) - (z + 1) + 1)] = yardMapChar;
+			yardmaps[FACING_NORTH][(xsize * zsize) - (x + z * xsize + 1)            ] = yardMapChar;
+			yardmaps[FACING_WEST ][                   zsize * (x + 1) - (z + 1)     ] = yardMapChar;
+		}
+	}
 }
+
 
 
 void UnitDef::SetNoCost(bool noCost)

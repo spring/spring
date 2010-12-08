@@ -3,16 +3,13 @@
 #ifndef __COMMAND_QUEUE_H__
 #define __COMMAND_QUEUE_H__
 
-#include "lib/gml/gml.h"
-
 #include <deque>
 #include "Command.h"
 
 /// A wrapper class for std::deque<Command> to keep track of commands
 class CCommandQueue {
 
-	friend class CCommandAI;
-	friend class CFactoryCAI;
+	friend class CAIAICallback; // the C++ AI interface wrapper
 
 	// see CommandAI.cpp for further creg stuff for this class
 	CR_DECLARE(CCommandQueue);
@@ -49,33 +46,23 @@ class CCommandQueue {
 
 		inline void pop_back()
 		{
-			GML_STDMUTEX_LOCK(cai); // pop_back
-
 			queue.pop_back(); 
 		}
 		inline void pop_front()
 		{
-			GML_STDMUTEX_LOCK(cai); // pop_front
-
 			queue.pop_front(); 
 		}
 
 		inline iterator erase(iterator pos)
 		{
-			GML_STDMUTEX_LOCK(cai); // erase
-
 			return queue.erase(pos);
 		}
 		inline iterator erase(iterator first, iterator last)
 		{
-			GML_STDMUTEX_LOCK(cai); // erase
-
 			return queue.erase(first, last);
 		}
 		inline void clear()
 		{
-			GML_STDMUTEX_LOCK(cai); // clear 
-
 			queue.clear(); 
 		}
 
@@ -128,8 +115,6 @@ inline int CCommandQueue::GetNextTag()
 
 inline void CCommandQueue::push_back(const Command& cmd)
 {
-	GML_STDMUTEX_LOCK(cai); // push_back
-
 	queue.push_back(cmd);
 	queue.back().tag = GetNextTag();
 }
@@ -137,8 +122,6 @@ inline void CCommandQueue::push_back(const Command& cmd)
 
 inline void CCommandQueue::push_front(const Command& cmd)
 {
-	GML_STDMUTEX_LOCK(cai); // push_front
-
 	queue.push_front(cmd);
 	queue.front().tag = GetNextTag();
 }
@@ -149,7 +132,6 @@ inline CCommandQueue::iterator CCommandQueue::insert(iterator pos,
 {
 	Command tmpCmd = cmd;
 	tmpCmd.tag = GetNextTag();
-	GML_STDMUTEX_LOCK(cai); // insert
 	return queue.insert(pos, tmpCmd);
 }
 

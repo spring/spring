@@ -1,7 +1,7 @@
 #include "GTerrainMap.h"
 #include "RAI.h"
 #include <set>
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "LegacyCpp/MoveData.h"
 #include "System/Util.h"
 #include "CUtils/Util.h"
 //#include <time.h>

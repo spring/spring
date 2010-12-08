@@ -1,6 +1,6 @@
 #include "UnitDefHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
+#include "LegacyCpp/MoveData.h"
+#include "LegacyCpp/WeaponDef.h"
 
 // ------------------------------------------------------------------------------------------------
 

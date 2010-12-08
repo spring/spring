@@ -574,7 +574,9 @@ EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getMoveType(int sk
 
 EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getMoveFamily(int skirmishAIId, int unitDefId);
 
-EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getSize(int skirmishAIId, int unitDefId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getXSize(int skirmishAIId, int unitDefId);
+
+EXPORT(int              ) skirmishAiCallback_UnitDef_MoveData_getZSize(int skirmishAIId, int unitDefId);
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_MoveData_getDepth(int skirmishAIId, int unitDefId);
 

@@ -2875,8 +2875,12 @@ EXPORT(short) skirmishAiCallback_UnitDef_MoveData_getMaxTurnRate(int skirmishAII
 	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->maxTurnRate;
 }
 
-EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getSize(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->xsize; // FIXME
+EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getXSize(int skirmishAIId, int unitDefId) {
+	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->xsize;
+}
+
+EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getZSize(int skirmishAIId, int unitDefId) {
+	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->zsize;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getDepth(int skirmishAIId, int unitDefId) {
@@ -4762,7 +4766,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_MoveData_getMaxBreaking = &skirmishAiCallback_UnitDef_MoveData_getMaxBreaking;
 	callback->UnitDef_MoveData_getMaxSpeed = &skirmishAiCallback_UnitDef_MoveData_getMaxSpeed;
 	callback->UnitDef_MoveData_getMaxTurnRate = &skirmishAiCallback_UnitDef_MoveData_getMaxTurnRate;
-	callback->UnitDef_MoveData_getSize = &skirmishAiCallback_UnitDef_MoveData_getSize;
+	callback->UnitDef_MoveData_getXSize = &skirmishAiCallback_UnitDef_MoveData_getXSize;
+	callback->UnitDef_MoveData_getZSize = &skirmishAiCallback_UnitDef_MoveData_getZSize;
 	callback->UnitDef_MoveData_getDepth = &skirmishAiCallback_UnitDef_MoveData_getDepth;
 	callback->UnitDef_MoveData_getMaxSlope = &skirmishAiCallback_UnitDef_MoveData_getMaxSlope;
 	callback->UnitDef_MoveData_getSlopeMod = &skirmishAiCallback_UnitDef_MoveData_getSlopeMod;

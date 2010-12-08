@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
 
 class CMoveMath;

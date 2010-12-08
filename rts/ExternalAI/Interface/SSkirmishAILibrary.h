@@ -82,7 +82,7 @@ extern "C" {
 
 
 #include "ELevelOfSupport.h"
-#include "exportdefines.h"
+#include "System/exportdefines.h"
 
 struct SSkirmishAICallback;
 

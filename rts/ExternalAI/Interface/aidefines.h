@@ -5,8 +5,8 @@
  * but also by AIs.
  */
 
-#ifndef _AIDEFINES_H
-#define _AIDEFINES_H
+#ifndef _AI_DEFINES_H
+#define _AI_DEFINES_H
 
 #include "System/maindefines.h"
 #include "System/exportdefines.h"
@@ -43,6 +43,14 @@
 	+ sizeof(struct SAIInterfaceCallback) \
 	+ AIINTERFACE_EVENTS_ABI_VERSION \
 	+ AIINTERFACE_COMMANDS_ABI_VERSION \
+	+ __archBits__   * 10000 \
+	+ sizeof(int)    * 1001 \
+	+ sizeof(char)   * 1002 \
+	+ sizeof(void*)  * 1003 \
+	+ sizeof(size_t) * 1005 \
+	+ sizeof(float)  * 1007 \
+	+ sizeof(short)  * 1011 \
+	+ sizeof(bool)   * 1013 \
 	)
 /**
  * Returns the Application Binary Interface version, warning part.
@@ -53,13 +61,7 @@
  * like added comments or code reformatting as well.
  */
 #define AIINTERFACE_ABI_VERSION_WARNING ( \
-	  sizeof(int) \
-	+ sizeof(char) \
-	+ sizeof(void*) \
-	+ sizeof(size_t) \
-	+ sizeof(float) \
-	+ sizeof(short) \
-	+ sizeof(bool) \
+	  0 \
 	)
 
 /**
@@ -77,4 +79,4 @@
 
 #define SKIRMISH_AI_DATA_DIR "AI/Skirmish"
 
-#endif // _AIDEFINES_H
+#endif // _AI_DEFINES_H

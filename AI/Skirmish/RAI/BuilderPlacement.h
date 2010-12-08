@@ -15,8 +15,6 @@ class cBuilderPlacement;
 using std::map;
 using std::pair;
 using std::set;
-//#include "Sim/Misc/FeatureDef.h"
-//#include "ExternalAI/IAICallback.h"
 
 struct ResourceSiteExtBO
 {
