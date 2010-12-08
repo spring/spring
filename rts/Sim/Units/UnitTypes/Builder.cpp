@@ -577,6 +577,9 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature)
 	const UnitDef* unitDef = buildInfo.def;
 	SetBuildStanceToward(buildInfo.pos);
 
+	if (!inBuildStance)
+		return false;
+
 	CUnit* b = unitLoader.LoadUnit(buildInfo.def, buildInfo.pos, team,
 	                               true, buildInfo.buildFacing, this);
 
