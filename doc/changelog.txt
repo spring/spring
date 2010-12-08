@@ -6,13 +6,18 @@ Engine / General:
  - do not bind a UDP socket for local games -> allows multiple local instances again sans hassle)
  - clamp minimum mapHardness to 0.001 to prevent div/0
  - fix dangling CUnit* (crash for everyone in-game)
+ - fix crash in 3DO Parser
+ - fix bug in CGround::TrajectoryGroundCol with outside map coordinations
  - prevent memory-leak in LoadGrayscale() if there already was pixel-data
  - fix some more memory-leaks
  - prevent equal unsynced random seeds
  - fix SetUnitRotation
+ - fix enemy units responding to bugger off
+ - fix zombie builder after being attacked just at start of construction
  - apply damage wrt. impacted piece if usePieceCollisionVolumes == 1
  - make CBitmap::ReverseYAxis() more efficient
  - remove excess elements from BasicMapDamage::craterTable
+ - rename "mod" to "game" in default menu
 
 Engine / Logging:
  - give S3O model name in error message when a texture is missing
@@ -40,8 +45,10 @@ Engine / Path-Finder:
  - PFS: remove circular constraint from run-time searches
 
 Engine / Rendering:
+ - fix cannon visuals
  - fix rendering of tri-stripped S3O's
  - require GLEW 1.5.1+ because 1.5.0 does not have `glMapBufferRange`
+ - do not crash on shader compilation error
 
 Engine / Auto-Hosts:
  - builds other then dedicated-server now also support commands "kill" and "pause"
@@ -71,6 +78,7 @@ Stack-Trace-Translator:
 
 Installer:
  - do not check for .Net when installing Zero-K
+ - delete all files that were installed
 
 0.82.6.1:
 Engine / General:
