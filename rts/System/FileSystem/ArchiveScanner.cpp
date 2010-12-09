@@ -60,6 +60,7 @@ CArchiveScanner::CArchiveScanner()
 	for (std::vector<std::string>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
 		scanDirs.push_back(*d + "maps");
 		scanDirs.push_back(*d + "base");
+		scanDirs.push_back(*d + "games");
 		scanDirs.push_back(*d + "mods");
 		scanDirs.push_back(*d + "packages");
 	}
