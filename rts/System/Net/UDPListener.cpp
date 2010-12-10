@@ -66,9 +66,9 @@ bool UDPListener::TryBindSocket(const std::string& ip, int port, SocketPtr* sock
 			(*socket)->open(ip::udp::v4());
 
 			if (!ip.empty() && ip != "localhost") {
-				(*socket)->bind(ip::udp::endpoint(ip::address_v4::any(), port));
-			} else {
 				(*socket)->bind(ip::udp::endpoint(ip::address_v4::from_string(ip), port));
+			} else {
+				(*socket)->bind(ip::udp::endpoint(ip::address_v4::any(), port));
 			}
 		}
 
