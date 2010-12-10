@@ -57,7 +57,6 @@ protected:
 	static int globalVars[GLOBAL_VAR_COUNT];
 
 	int unitVars[UNIT_VAR_COUNT];
-	int lastPC;
 
 protected:
 	CUnit* unit;
