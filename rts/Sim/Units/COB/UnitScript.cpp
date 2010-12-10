@@ -77,6 +77,7 @@ CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& piece
 	, hasRockUnit(false)
 	, hasStartBuilding(false)
 	, pieces(pieces)
+	, lastPC(-1)
 {
 	memset(unitVars, int(0), UNIT_VAR_COUNT);
 }
@@ -1415,7 +1416,13 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case INBUILDSTANCE: {
-			unit->inBuildStance = (param != 0);
+			if(unit->inBuildStance != (param != 0)) {
+				unit->inBuildStance = (param != 0);
+				if(unit->inBuildStance && lastPC != gs->frameNum) {
+					lastPC = gs->frameNum;
+					unit->commandAI->SlowUpdate();
+				}
+			}
 			break;
 		}
 		case BUSY: {
