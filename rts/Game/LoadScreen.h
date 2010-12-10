@@ -43,6 +43,7 @@ public:
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
 	int KeyPressed(unsigned short k,bool isRepeat);
 
+	bool mt_loading;
 private:
 	void RandomStartPicture(const std::string& sidePref);
 	void LoadStartPicture(const std::string& picture);
@@ -61,7 +62,6 @@ private:
 	boost::recursive_mutex mutex;
 	boost::thread* netHeartbeatThread;
 	COffscreenGLThread* gameLoadThread;
-	bool mt_loading;
 
 	GLuint startupTexture;
 	float aspectRatio;

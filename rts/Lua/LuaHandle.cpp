@@ -174,6 +174,8 @@ bool CLuaHandle::AddEntriesToTable(lua_State* L, const char* name,
 
 bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 {
+	GML_DRCMUTEX_LOCK(lua); // LoadCode
+
 	lua_settop(L, 0);
 
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
@@ -1444,7 +1446,7 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 void CLuaHandle::ExecuteUnitEventBatch() {
 	if(!UseEventBatch()) return;
 
-	GML_RECMUTEX_LOCK(unit); // ExecuteUnitEventBatch
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteUnitEventBatch
 
 	std::vector<LuaUnitEvent> lueb;
 	{
@@ -1548,7 +1550,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 void CLuaHandle::ExecuteFeatEventBatch() {
 	if(!UseEventBatch()) return;
 
-	GML_RECMUTEX_LOCK(feat); // ExecuteFeatEventBatch
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteFeatEventBatch
 
 	std::vector<LuaFeatEvent> lfeb;
 	{
@@ -1577,7 +1579,7 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 void CLuaHandle::ExecuteProjEventBatch() {
 	if(!UseEventBatch()) return;
 
-	GML_RECMUTEX_LOCK(proj); // ExecuteProjEventBatch
+	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteProjEventBatch
 
 	std::vector<LuaProjEvent> lpeb;
 	{

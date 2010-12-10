@@ -236,6 +236,7 @@ boost::mutex flbatchmutex;
 boost::mutex plbatchmutex;
 boost::mutex glbatchmutex;
 boost::mutex mlbatchmutex;
+boost::mutex cmdmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -254,8 +255,14 @@ boost::recursive_mutex laycmdmutex;
 boost::recursive_mutex projmutex;
 
 gmlMutex simmutex;
+
+#if GML_DEBUG_MUTEX
+boost::mutex lmmutex;
+std::map<std::string, int> lockmaps[33];
+std::map<boost::recursive_mutex *, int> lockmmaps[33];
 #endif
 
+#endif
 // GMLqueue implementation
 gmlQueue::gmlQueue():
 ReadPos(0),WritePos(0),WriteSize(0),Read(0),Write(0),Locked1(FALSE),Locked2(FALSE),Reloc(FALSE),Sync(EXEC_RUN),WasSynced(FALSE),

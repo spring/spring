@@ -300,8 +300,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
-	GML_RECMUTEX_LOCK(sel); // MouseRelease
-
 	if (button > NUM_BUTTONS)
 		return;
 
@@ -321,6 +319,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			activeReceiver = NULL;
 		return;
 	}
+
+	GML_RECMUTEX_LOCK(sel); // MouseRelease
 
 	//! Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
 	//! the latter is determined by the time the mouse was held down:
@@ -600,32 +600,35 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // GetCurrentTooltip - anti deadlock
-	GML_RECMUTEX_LOCK(quad); // GetCurrentTooltip - called from ToolTipConsole::Draw --> MouseHandler::GetCurrentTooltip
-
 	const float range = (globalRendering->viewRange * 1.4f);
-	const CUnit* unit = NULL;
-	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
-	const CFeature* feature = NULL;
-	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
+	float udist;
+	{
+		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCurrentTooltip
+		GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCurrentTooltip
 
-	if ((udist > (range - 300.0f)) &&
-	    (fdist > (range - 300.0f)) && (unit == NULL)) {
-		return "";
-	}
+		const CUnit* unit = NULL;
+		udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
+		const CFeature* feature = NULL;
+		float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
 
-	if (udist > fdist) {
-		unit = NULL;
-	} else {
-		feature = NULL;
-	}
+		if ((udist > (range - 300.0f)) &&
+			(fdist > (range - 300.0f)) && (unit == NULL)) {
+				return "";
+		}
 
-	if (unit) {
-		return CTooltipConsole::MakeUnitString(unit);
-	}
+		if (udist > fdist) {
+			unit = NULL;
+		} else {
+			feature = NULL;
+		}
 
-	if (feature) {
-		return CTooltipConsole::MakeFeatureString(feature);
+		if (unit) {
+			return CTooltipConsole::MakeUnitString(unit);
+		}
+
+		if (feature) {
+			return CTooltipConsole::MakeFeatureString(feature);
+		}
 	}
 
 	const string selTip = selectedUnits.GetTooltip();

@@ -204,11 +204,12 @@ void CUnitHandler::Update()
 
 		if (!toBeRemoved.empty()) {
 			GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
-			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
-			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 			GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
 
 			eventHandler.DeleteSyncedUnits();
+
+			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
+			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 
 			while (!toBeRemoved.empty()) {
 				CUnit* delUnit = toBeRemoved.back();
