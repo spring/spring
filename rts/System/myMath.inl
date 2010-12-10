@@ -143,8 +143,6 @@ inline float Square(const float x)
 	return x * x;
 }
 
-#include <math.h>
-
 inline int Round(const float f)
 {
 	return floor(f + 0.5f);
