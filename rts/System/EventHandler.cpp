@@ -464,6 +464,9 @@ void CEventHandler::Update()
 
 void CEventHandler::ViewResize()
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	const int count = listViewResize.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listViewResize[i];
@@ -513,6 +516,9 @@ DRAW_CALLIN(InMiniMap)
 
 bool CEventHandler::CommandNotify(const Command& cmd)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listCommandNotify.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -527,6 +533,9 @@ bool CEventHandler::CommandNotify(const Command& cmd)
 
 bool CEventHandler::KeyPress(unsigned short key, bool isRepeat)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listKeyPress.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -541,6 +550,9 @@ bool CEventHandler::KeyPress(unsigned short key, bool isRepeat)
 
 bool CEventHandler::KeyRelease(unsigned short key)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listKeyRelease.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -555,6 +567,9 @@ bool CEventHandler::KeyRelease(unsigned short key)
 
 bool CEventHandler::MousePress(int x, int y, int button)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listMousePress.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -572,6 +587,9 @@ bool CEventHandler::MousePress(int x, int y, int button)
 // return a cmd index, or -1
 int CEventHandler::MouseRelease(int x, int y, int button)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	if (mouseOwner == NULL) {
 		return -1;
 	}
@@ -586,6 +604,9 @@ int CEventHandler::MouseRelease(int x, int y, int button)
 
 bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	if (mouseOwner == NULL) {
 		return false;
 	}
@@ -595,6 +616,9 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 
 bool CEventHandler::MouseWheel(bool up, float value)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listMouseWheel.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -608,6 +632,9 @@ bool CEventHandler::MouseWheel(bool up, float value)
 
 bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listMouseWheel.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -621,6 +648,9 @@ bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
 
 bool CEventHandler::IsAbove(int x, int y)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listIsAbove.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -634,6 +664,9 @@ bool CEventHandler::IsAbove(int x, int y)
 
 string CEventHandler::GetTooltip(int x, int y)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listGetTooltip.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -649,6 +682,9 @@ string CEventHandler::GetTooltip(int x, int y)
 
 bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsystem)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	const int count = listAddConsoleLine.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listAddConsoleLine[i];
@@ -660,6 +696,9 @@ bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsy
 
 bool CEventHandler::GroupChanged(int groupID)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	const int count = listGroupChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listGroupChanged[i];
@@ -673,6 +712,9 @@ bool CEventHandler::GroupChanged(int groupID)
 bool CEventHandler::GameSetup(const string& state, bool& ready,
                                   const map<int, string>& playerStates)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listGameSetup.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -689,6 +731,9 @@ string CEventHandler::WorldTooltip(const CUnit* unit,
                                    const CFeature* feature,
                                    const float3* groundPos)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listWorldTooltip.size();
 	for (int i = (count - 1); i >= 0; i--) {
@@ -706,6 +751,9 @@ bool CEventHandler::MapDrawCmd(int playerID, int type,
                                const float3* pos0, const float3* pos1,
                                    const string* label)
 {
+	GML_RECMUTEX_LOCK(unit); //
+	GML_RECMUTEX_LOCK(feat); //
+
 	// reverse order, user has the override
 	const int count = listMapDrawCmd.size();
 	for (int i = (count - 1); i >= 0; i--) {

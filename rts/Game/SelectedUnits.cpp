@@ -556,13 +556,13 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 int CSelectedUnits::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
-
 	// NOTE: the unitDef->aihint value is being ignored
 	int luaCmd;
 	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
 		return luaCmd;
 	}
+
+	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
 
 	// return the default if there are no units selected
 	CUnitSet::const_iterator ui = selectedUnits.begin();

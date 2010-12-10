@@ -1524,9 +1524,6 @@ void CUnit::Init(const CUnit* builder)
 		commandAI->GiveCommand(c);
 		c.params.clear();
 	}
-
-	eventHandler.UnitCreated(this, builder);
-	eoh->UnitCreated(*this, builder);
 }
 
 

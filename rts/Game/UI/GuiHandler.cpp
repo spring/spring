@@ -499,29 +499,32 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 
 void CGuiHandler::LayoutIcons(bool useSelectionPage)
 {
-	GML_RECMUTEX_LOCK(gui); // LayoutIcons - updates inCommand. Called from CGame::Draw --> RunLayoutCommand
-
-	const bool defCmd =
-		(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-		 (defaultCmdMemory >= 0) && (inCommand < 0) &&
-		 ((activeReceiver == this) || (minimap->ProxyMode())));
-
-	const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
-
-	// copy the current command state
-	const bool validInCommand = (activeCmd >= 0) && ((size_t)activeCmd < commands.size());
+	bool defCmd, validInCommand, samePage;
 	CommandDescription cmdDesc;
-	if (validInCommand) {
-		cmdDesc = commands[activeCmd];
-	}
-	const bool samePage = validInCommand && (activePage == FindInCommandPage());
-	useSelectionPage = useSelectionPage && !samePage;
+	{
+		GML_RECMUTEX_LOCK(gui); // LayoutIcons - updates inCommand. Called from CGame::Draw --> RunLayoutCommand
 
-	// reset some of our state
-	inCommand = -1;
-	defaultCmdMemory = -1;
-	commands.clear();
-	forceLayoutUpdate = false;
+		defCmd =
+			(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
+			(defaultCmdMemory >= 0) && (inCommand < 0) &&
+			((activeReceiver == this) || (minimap->ProxyMode())));
+
+		const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
+
+		// copy the current command state
+		validInCommand = (activeCmd >= 0) && ((size_t)activeCmd < commands.size());
+		if (validInCommand) {
+			cmdDesc = commands[activeCmd];
+		}
+		samePage = validInCommand && (activePage == FindInCommandPage());
+		useSelectionPage = useSelectionPage && !samePage;
+
+		// reset some of our state
+		inCommand = -1;
+		defaultCmdMemory = -1;
+		commands.clear();
+		forceLayoutUpdate = false;
+	}
 
 	if (luaUI && luaUI->HasLayoutButtons()) {
 		if (LayoutCustomIcons(useSelectionPage)) {
@@ -535,6 +538,8 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			LoadConfig("ctrlpanel.txt");
 		}
 	}
+
+	GML_RECMUTEX_LOCK(gui); // LayoutIcons
 
 	// get the commands to process
 	CSelectedUnits::AvailableCommandsStruct ac;
@@ -865,19 +870,34 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 }
 
 
-void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
+void CGuiHandler::GiveCommand(Command& cmd, bool fromUser)
 {
-	if (eventHandler.CommandNotify(cmd)) {
-		return;
+	GML_STDMUTEX_LOCK(cmd);
+	commandsToGive.push_back(std::pair<const Command, bool>(cmd, fromUser));
+}
+
+
+void CGuiHandler::GiveCommandsNow() {
+	std::vector< std::pair<Command, bool> > commandsToGiveTemp;
+	{
+		GML_STDMUTEX_LOCK(cmd);
+		commandsToGiveTemp.swap(commandsToGive);
 	}
 
-	selectedUnits.GiveCommand(cmd, fromUser);
+	for(std::vector< std::pair<Command, bool> >::iterator i = commandsToGiveTemp.begin(); i != commandsToGiveTemp.end(); ++i) {
+		const Command& cmd = (*i).first;
+		if (eventHandler.CommandNotify(cmd)) {
+			return;
+		}
 
-	if (gatherMode) {
-		if ((cmd.id == CMD_MOVE) || (cmd.id == CMD_FIGHT)) {
-			Command gatherCmd;
-			gatherCmd.id = CMD_GATHERWAIT;
-			GiveCommand(gatherCmd, false);
+		selectedUnits.GiveCommand(cmd, (*i).second);
+
+		if (gatherMode) {
+			if ((cmd.id == CMD_MOVE) || (cmd.id == CMD_FIGHT)) {
+				Command gatherCmd;
+				gatherCmd.id = CMD_GATHERWAIT;
+				GiveCommand(gatherCmd, false);
+			}
 		}
 	}
 }
@@ -925,10 +945,8 @@ void CGuiHandler::Update()
 {
 	RunLayoutCommands();
 
-	GML_RECMUTEX_LOCK(gui); // Update - updates inCommand
-
 	SetCursorIcon();
-
+	
 	// Notify LuaUI about groups that have changed
 	if (!changedGroups.empty()) {
 		set<int>::const_iterator it;
@@ -938,11 +956,17 @@ void CGuiHandler::Update()
 		changedGroups.clear();
 	}
 
-	if (!invertQueueKey && (needShift && !keys[SDLK_LSHIFT])) {
-		SetShowingMetal(false);
-		inCommand=-1;
-		needShift=false;
+	{
+		GML_RECMUTEX_LOCK(gui); // Update - updates inCommand
+
+		if (!invertQueueKey && (needShift && !keys[SDLK_LSHIFT])) {
+			SetShowingMetal(false);
+			inCommand=-1;
+			needShift=false;
+		}
 	}
+
+	GiveCommandsNow();
 
 	const bool commandsChanged = selectedUnits.CommandsChanged();
 
@@ -1038,44 +1062,45 @@ void CGuiHandler::SetCursorIcon() const
 
 bool CGuiHandler::MousePress(int x, int y, int button)
 {
-	GML_RECMUTEX_LOCK(gui); // MousePress - updates inCommand
+	{
+		GML_RECMUTEX_LOCK(gui); // MousePress - updates inCommand
 
-	if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
-		return false;
-
-	if (button < 0) {
-		// proxied click from the minimap
-		button = -button;
-		activeMousePress=true;
-	}
-	else if (AboveGui(x,y)) {
-		activeMousePress = true;
-		if ((curIconCommand < 0) && !game->hideInterface) {
-			const int iconPos = IconAtPos(x, y);
-			if (iconPos >= 0) {
-				curIconCommand = icons[iconPos].commandsID;
-			}
-		}
-		if (button == SDL_BUTTON_RIGHT)
-			inCommand = defaultCmdMemory = -1;
-		return true;
-	}
-	else if (minimap && minimap->IsAbove(x, y)) {
-		return false; // let the minimap do its job
-	}
-
-	if (inCommand >= 0) {
-		if (invertQueueKey && (button == SDL_BUTTON_RIGHT) &&
-		    !mouse->buttons[SDL_BUTTON_LEFT].pressed) { // for rocker gestures
-			SetShowingMetal(false);
-			inCommand = -1;
-			needShift = false;
+		if (button != SDL_BUTTON_LEFT && button != SDL_BUTTON_RIGHT && button != -SDL_BUTTON_RIGHT && button != -SDL_BUTTON_LEFT)
 			return false;
-		}
-		activeMousePress = true;
-		return true;
-	}
 
+		if (button < 0) {
+			// proxied click from the minimap
+			button = -button;
+			activeMousePress=true;
+		}
+		else if (AboveGui(x,y)) {
+			activeMousePress = true;
+			if ((curIconCommand < 0) && !game->hideInterface) {
+				const int iconPos = IconAtPos(x, y);
+				if (iconPos >= 0) {
+					curIconCommand = icons[iconPos].commandsID;
+				}
+			}
+			if (button == SDL_BUTTON_RIGHT)
+				inCommand = defaultCmdMemory = -1;
+			return true;
+		}
+		else if (minimap && minimap->IsAbove(x, y)) {
+			return false; // let the minimap do its job
+		}
+
+		if (inCommand >= 0) {
+			if (invertQueueKey && (button == SDL_BUTTON_RIGHT) &&
+				!mouse->buttons[SDL_BUTTON_LEFT].pressed) { // for rocker gestures
+					SetShowingMetal(false);
+					inCommand = -1;
+					needShift = false;
+					return false;
+			}
+			activeMousePress = true;
+			return true;
+		}
+	}
 	if (button == SDL_BUTTON_RIGHT) {
 		activeMousePress = true;
 		defaultCmdMemory = GetDefaultCommand(x, y);
@@ -1144,9 +1169,11 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 		Channels::UserInterface.PlaySample(failedSound, 5);
 		return;
 	}
+
 	// if cmd_stop is returned it indicates that no good command could be found
 	if (c.id != CMD_STOP) {
 		GiveCommand(c);
+
 		lastKeySet.Reset();
 	}
 
@@ -1397,7 +1424,7 @@ static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 
 void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rmb)
 {
-	GML_RECMUTEX_LOCK(gui); // RunCustomCommands - called from LuaUnsyncedCtrl::SendCommands
+//	GML_RECMUTEX_LOCK(gui); // RunCustomCommands - called from LuaUnsyncedCtrl::SendCommands
 
 	static int depth = 0;
 	if (depth > 8) {
@@ -1516,42 +1543,46 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 		return -1;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // GetDefaultCommand - anti deadlock
-	GML_RECMUTEX_LOCK(quad); // GetDefaultCommand
+	int cmd_id;
+	{
+		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetDefaultCommand
+		GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetDefaultCommand
 
-	const CUnit* unit = NULL;
-	const CFeature* feature = NULL;
-	if ((ir == minimap) && (minimap->FullProxy())) {
-		unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
-	}
-	else {
-		const float3 camPos = camerapos;
-		const float3 camDir = mousedir;
-		const float viewRange = globalRendering->viewRange*1.4f;
-		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, true);
-		const float dist2 = helper->GuiTraceRayFeature(camPos, camDir, viewRange, feature);
-		const float3 hit = camPos + camDir*dist;
+		const CUnit* unit = NULL;
+		const CFeature* feature = NULL;
+		if ((ir == minimap) && (minimap->FullProxy())) {
+			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
+		}
+		else {
+			const float3 camPos = camerapos;
+			const float3 camDir = mousedir;
+			const float viewRange = globalRendering->viewRange*1.4f;
+			const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, true);
+			const float dist2 = helper->GuiTraceRayFeature(camPos, camDir, viewRange, feature);
+			const float3 hit = camPos + camDir*dist;
 
-		// make sure the ray hit in the map
-		if (unit == NULL && (hit.x < 0.f || hit.x > gs->mapx*SQUARE_SIZE
+			// make sure the ray hit in the map
+			if (unit == NULL && (hit.x < 0.f || hit.x > gs->mapx*SQUARE_SIZE
 				|| hit.z < 0.f || hit.z > gs->mapy*SQUARE_SIZE))
-			return -1;
+				return -1;
 
-		if ((dist > viewRange - 300) && (dist2 > viewRange - 300) && (unit == NULL)) {
-			return -1;
+			if ((dist > viewRange - 300) && (dist2 > viewRange - 300) && (unit == NULL)) {
+				return -1;
+			}
+
+			if (dist > dist2) {
+				unit = NULL;
+			} else {
+				feature = NULL;
+			}
 		}
 
-		if (dist > dist2) {
-			unit = NULL;
-		} else {
-			feature = NULL;
-		}
+		cmd_id = selectedUnits.GetDefaultCmd(unit, feature);
 	}
 
 	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
 
 	// make sure the command is currently available
-	const int cmd_id = selectedUnits.GetDefaultCmd(unit, feature);
 	for (int c = 0; c < (int)commands.size(); c++) {
 		if (cmd_id == commands[c].id) {
 			return c;
@@ -1820,11 +1851,11 @@ bool CGuiHandler::KeyPressed(unsigned short key, bool isRepeat)
 bool CGuiHandler::SetActiveCommand(const Action& action,
                                    const CKeySet& ks, int actionIndex)
 {
-	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand, called by LuaUnsyncedCtrl
-
 	if (ProcessLocalActions(action)) {
 		return true;
 	}
+
+	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand, called by LuaUnsyncedCtrl
 
 	// See if we have a positional icon command
 	int iconCmd = -1;
@@ -2069,8 +2100,6 @@ Command CGuiHandler::GetOrderPreview()
 
 Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool preview, float3& camerapos, float3& mousedir)
 {
-	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
-
 	Command defaultRet;
 	defaultRet.id=CMD_STOP;
 
@@ -2096,6 +2125,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			tempInCommand = GetDefaultCommand(mousex, mousey, camerapos, mousedir);
 		}
 	}
+
+	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
 	if(tempInCommand>=0 && (size_t)tempInCommand<commands.size()){
 		switch(commands[tempInCommand].type){
@@ -3827,13 +3858,6 @@ void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
 
 void CGuiHandler::DrawCentroidCursor()
 {
-	GML_RECMUTEX_LOCK(sel); // DrawCentroidCursor - called From CMouseHandler::DrawCursor
-
-	const CUnitSet& selUnits = selectedUnits.selectedUnits;
-	if (selUnits.size() < 2) {
-		return;
-	}
-
 	int cmd = -1;
 	if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
 		cmd = commands[inCommand].id;
@@ -3859,6 +3883,13 @@ void CGuiHandler::DrawCentroidCursor()
 			return;
 		}
 	} else {
+		return;
+	}
+
+	GML_RECMUTEX_LOCK(sel); // DrawCentroidCursor - called From CMouseHandler::DrawCursor
+
+	const CUnitSet& selUnits = selectedUnits.selectedUnits;
+	if (selUnits.size() < 2) {
 		return;
 	}
 

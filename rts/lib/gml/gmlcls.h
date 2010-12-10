@@ -60,6 +60,7 @@
 #define GML_SHARE_LISTS 1 // use glShareLists to allow opengl calls in sim thread
 #define GML_DRAW_THREAD_NUM 0 // thread number of draw thread
 #define GML_SIM_THREAD_NUM 1 // thread number of sim thread
+#define GML_DEBUG_MUTEX 0 // debugs the mutex locking order
 //#define BOOST_AC_USE_PTHREADS
 
 // memory barriers for different platforms

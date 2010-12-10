@@ -395,6 +395,11 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapname)
 {
+#ifdef USE_GML
+	if(loadscreen->mt_loading)
+		set_threadnum(GML_SIM_THREAD_NUM); // make sure the multithreaded load screen does not conflict with the real draw thread
+#endif
+
 	if (!globalQuit) LoadDefs();
 	if (!globalQuit) LoadSimulation(mapname);
 	if (!globalQuit) LoadRendering();

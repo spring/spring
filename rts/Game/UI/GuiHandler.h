@@ -87,7 +87,8 @@ public:
 	int buildSpacing;
 
 private:
-	void GiveCommand(const Command& cmd, bool fromUser = true) const;
+	void GiveCommand(Command& cmd, bool fromUser = true);
+	void GiveCommandsNow();
 	void LayoutIcons(bool useSelectionPage);
 	bool LayoutCustomIcons(bool useSelectionPage);
 	void ResizeIconArray(unsigned int size);
@@ -222,6 +223,7 @@ private:
 
 	std::vector<std::string> layoutCommands;
 	bool hasLuaUILayoutCommands;
+	std::vector< std::pair<Command, bool> > commandsToGive;
 };
 
 
