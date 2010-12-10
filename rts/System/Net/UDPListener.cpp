@@ -27,11 +27,11 @@ namespace netcode
 {
 using namespace boost::asio;
 
-UDPListener::UDPListener(int port)
+UDPListener::UDPListener(const std::string& ip, int port)
 {
 	SocketPtr socket;
 
-	if (TryBindSocket(port, &socket)) {
+	if (TryBindSocket(ip, port, &socket)) {
 		boost::asio::socket_base::non_blocking_io socketCommand(true);
 		socket->io_control(socketCommand);
 
@@ -46,7 +46,7 @@ UDPListener::UDPListener(int port)
 	}
 }
 
-bool UDPListener::TryBindSocket(int port, SocketPtr* socket) const {
+bool UDPListener::TryBindSocket(const std::string& ip, int port, SocketPtr* socket) const {
 	bool r = false;
 
 	try {
@@ -56,11 +56,20 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket) const {
 		(*socket)->open(ip::udp::v6(), err); // test v6
 
 		if (!err) {
-			(*socket)->bind(ip::udp::endpoint(ip::address_v6::any(), port));
+			if (!ip.empty() && ip != "localhost") {
+				(*socket)->bind(ip::udp::endpoint(ip::address_v6::from_string(ip), port));
+			} else {
+				(*socket)->bind(ip::udp::endpoint(ip::address_v6::any(), port));
+			}
 		} else {
 			// fallback to v4
 			(*socket)->open(ip::udp::v4());
-			(*socket)->bind(ip::udp::endpoint(ip::address_v4::any(), port));
+
+			if (!ip.empty() && ip != "localhost") {
+				(*socket)->bind(ip::udp::endpoint(ip::address_v4::any(), port));
+			} else {
+				(*socket)->bind(ip::udp::endpoint(ip::address_v4::from_string(ip), port));
+			}
 		}
 
 		r = true;

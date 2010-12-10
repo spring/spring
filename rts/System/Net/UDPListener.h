@@ -26,14 +26,14 @@ public:
 	/**
 	@brief Open a socket and make it ready for listening
 	*/
-	UDPListener(int port);
+	UDPListener(const std::string& ip, int port);
 	
 	/**
 	@brief close the socket and DELETE all connections
 	*/
 	~UDPListener() {}
 
-	bool TryBindSocket(int port, SocketPtr* socket) const;
+	bool TryBindSocket(const std::string& ip, int port, SocketPtr* socket) const;
 	
 	/**
 	@brief Run this from time to time

@@ -103,7 +103,7 @@ void SetBoolArg(bool& value, const std::string& str)
 
 CGameServer* gameServer = 0;
 
-CGameServer::CGameServer(int hostport, const GameData* const newGameData, const CGameSetup* const mysetup)
+CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
 {
 	assert(setup);
@@ -147,7 +147,7 @@ CGameServer::CGameServer(int hostport, const GameData* const newGameData, const 
 	whiteListAdditionalPlayers = configHandler->Get("WhiteListAdditionalPlayers", true);
 
 	if (!setup->onlyLocal) {
-		UDPNet.reset(new netcode::UDPListener(hostport));
+		UDPNet.reset(new netcode::UDPListener(hostIP, hostPort));
 	}
 
 	const std::string& autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
@@ -158,7 +158,7 @@ CGameServer::CGameServer(int hostport, const GameData* const newGameData, const 
 	}
 
 	rng.Seed(newGameData->GetSetup().length());
-	Message(str(format(ServerStart) %hostport), false);
+	Message(str(format(ServerStart) %hostPort), false);
 
 	lastTick = spring_gettime();
 
