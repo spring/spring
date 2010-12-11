@@ -1562,7 +1562,8 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 		case MODELTYPE_3DO: {
 			texturehandler3DO->Set3doAtlases();
 		} break;
-		case MODELTYPE_S3O: {
+		case MODELTYPE_S3O:
+		case MODELTYPE_OBJ: {
 			texturehandlerS3O->SetS3oTexture(model->textureType);
 		} break;
 		default: {
