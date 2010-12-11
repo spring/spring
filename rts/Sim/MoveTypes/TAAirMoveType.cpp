@@ -953,9 +953,7 @@ void CTAAirMoveType::Update()
 
 void CTAAirMoveType::SlowUpdate()
 {
-	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0) {
-		owner->currentFuel = std::max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
-	}
+	UpdateFuel();
 
 	if (!reservedPad && aircraftState == AIRCRAFT_FLYING && owner->health < owner->maxHealth * repairBelowHealth) {
 		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);

@@ -413,9 +413,7 @@ void CAirMoveType::HandleCollisions() {
 
 void CAirMoveType::SlowUpdate()
 {
-	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0.0f) {
-		owner->currentFuel = std::max(0.0f, owner->currentFuel - (16.0f / GAME_SPEED));
-	}
+	UpdateFuel();
 
 	// try to handle aircraft getting unlimited height
 	if (owner->pos != oldSlowUpdatePos) {
