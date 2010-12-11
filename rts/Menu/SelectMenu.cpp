@@ -417,7 +417,7 @@ void SelectMenu::CleanWindow() {
 void SelectMenu::DirectConnect(const std::string& addr)
 {
 	configHandler->SetString("address", addr);
-	mySettings->hostip = addr;
+	mySettings->hostIP = addr;
 	mySettings->isHost = false;
 	pregame = new CPreGame(mySettings);
 	agui::gui->RmElement(this);
