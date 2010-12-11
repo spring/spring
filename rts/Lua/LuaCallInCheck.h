@@ -159,8 +159,10 @@ struct LuaMiscEvent {
 #define END_ITERATE_LUA_STATES() if(SingleState() || L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
 #ifndef LUA_SYNCED_ONLY
 #define SELECT_LUA_STATE() lua_State * const L = (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw
+#define SELECT_UNSYNCED_LUA_STATE() lua_State * const L = SingleState() ? L_Sim : L_Draw
 #else
 #define SELECT_LUA_STATE()
+#define SELECT_UNSYNCED_LUA_STATE()
 #endif
 #if defined(USE_GML) && GML_ENABLE_SIM
 
@@ -183,8 +185,10 @@ struct LuaMiscEvent {
 #define END_ITERATE_LUA_STATES()
 #ifndef LUA_SYNCED_ONLY
 #define SELECT_LUA_STATE() lua_State * const L = L_Sim
+#define SELECT_UNSYNCED_LUA_STATE() lua_State * const L = L_Sim
 #else
 #define SELECT_LUA_STATE()
+#define SELECT_UNSYNCED_LUA_STATE()
 #endif
 #define GML_DRCMUTEX_LOCK(name) GML_RECMUTEX_LOCK(name)
 

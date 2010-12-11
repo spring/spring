@@ -794,6 +794,11 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 {
 	SELECT_LUA_STATE();
 
+	if (L != L_Sim)
+		return false;
+
+	GML_THRMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->);
+
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 	if (!lua_istable(L, -1)) {
 		lua_pop(L, 1);
@@ -809,7 +814,9 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 
 bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 {
-	SELECT_LUA_STATE();
+	SELECT_UNSYNCED_LUA_STATE();
+
+	GML_THRMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->);
 
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
 	if (!lua_istable(L, -1)) {
@@ -885,6 +892,8 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 	if (L != L_Sim)
 		return 0;
 
+	GML_THRMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->);
+
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 	const int retval = XCall(L, srcState, funcName);
 	return retval;
@@ -893,19 +902,9 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 
 int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
-	SELECT_LUA_STATE();
+	SELECT_UNSYNCED_LUA_STATE();
 
-	if (!SingleState() && L == L_Sim) {
-		boost::recursive_mutex &luadrawmutex = *(L_Draw->luamutex);
-		GML_RECMUTEX_LOCK(luadraw); // Called from Sim, need to lock draw thread during XCall
-
-		const bool prevSynced = GetSynced();
-		SetSynced(false);
-		unsyncedStr.GetRegistry(L_Draw); // push the UNSYNCED table
-		const int retval = XCall(L_Draw, srcState, funcName);
-		SetSynced(prevSynced);
-		return retval;
-	}
+	GML_THRMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->);
 
 	const bool prevSynced = GetSynced();
 	SetSynced(false);
