@@ -20,6 +20,17 @@
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+/**
+ * Checks at least the stack and creates the cmdStr var.
+ */
+#define LUA_LOBBY_CALL_IN_CHECK(L, stackSize) \
+	LUA_CALL_IN_CHECK(L); \
+	lua_checkstack(L, stackSize); \
+	static const LuaHashString cmdStr(__FUNCTION__); \
+	if (!PushCallIn(cmdStr)) { \
+		return; \
+	}
+
 
 inline LuaLobby* toLuaLobby(lua_State* L, int idx)
 {
@@ -356,12 +367,7 @@ int LuaLobby::KickChannelMember(lua_State *L)
 
 void LuaLobby::DoneConnecting(bool succes, const std::string& err)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushboolean(L, succes);
 	lua_pushstring(L, err.c_str());
@@ -372,12 +378,7 @@ void LuaLobby::DoneConnecting(bool succes, const std::string& err)
 
 void LuaLobby::ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 6);
 
 	lua_pushstring(L, serverVer.c_str());
 	lua_pushstring(L, springVer.c_str());
@@ -390,12 +391,7 @@ void LuaLobby::ServerGreeting(const std::string& serverVer, const std::string& s
 
 void LuaLobby::RegisterDenied(const std::string& reason)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, reason.c_str());
 
@@ -405,12 +401,7 @@ void LuaLobby::RegisterDenied(const std::string& reason)
 
 void LuaLobby::RegisterAccepted()
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 2);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 0, 0);
@@ -418,12 +409,7 @@ void LuaLobby::RegisterAccepted()
 
 void LuaLobby::LoginDenied(const std::string& reason)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, reason.c_str());
 
@@ -433,12 +419,7 @@ void LuaLobby::LoginDenied(const std::string& reason)
 
 void LuaLobby::LoginEnd()
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 2);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 0, 0);
@@ -446,12 +427,7 @@ void LuaLobby::LoginEnd()
 
 void LuaLobby::Aggreement(const std::string& text)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, text.c_str());
 
@@ -461,12 +437,7 @@ void LuaLobby::Aggreement(const std::string& text)
 
 void LuaLobby::Motd(const std::string& text)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, text.c_str());
 
@@ -476,12 +447,7 @@ void LuaLobby::Motd(const std::string& text)
 
 void LuaLobby::ServerMessage(const std::string& text)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, text.c_str());
 
@@ -491,12 +457,7 @@ void LuaLobby::ServerMessage(const std::string& text)
 
 void LuaLobby::ServerMessageBox(const std::string& text, const std::string& url)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushstring(L, text.c_str());
 	lua_pushstring(L, url.c_str());
@@ -507,12 +468,7 @@ void LuaLobby::ServerMessageBox(const std::string& text, const std::string& url)
 
 void LuaLobby::AddUser(const std::string& name, const std::string& country, int cpu)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
 	lua_pushstring(L, name.c_str());
 	lua_pushstring(L, country.c_str());
@@ -524,12 +480,7 @@ void LuaLobby::AddUser(const std::string& name, const std::string& country, int 
 
 void LuaLobby::RemoveUser(const std::string& name)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, name.c_str());
 
@@ -539,12 +490,7 @@ void LuaLobby::RemoveUser(const std::string& name)
 
 void LuaLobby::UserStatusUpdate(const std::string& name, ClientStatus status)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 8);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 8);
 
 	lua_pushstring(L, name.c_str());
 	lua_pushboolean(L, status.away);
@@ -559,12 +505,7 @@ void LuaLobby::UserStatusUpdate(const std::string& name, ClientStatus status)
 
 void LuaLobby::ChannelInfo(const std::string& channel, unsigned users)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushstring(L, channel.c_str());
 	lua_pushnumber(L, users);
@@ -575,12 +516,7 @@ void LuaLobby::ChannelInfo(const std::string& channel, unsigned users)
 
 void LuaLobby::ChannelInfoEnd()
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 2);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 0, 0);
@@ -588,12 +524,7 @@ void LuaLobby::ChannelInfoEnd()
 
 void LuaLobby::Mutelist(const std::string& channel, std::list<std::string> list)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushstring(L, channel.c_str());
 	lua_newtable(L);
@@ -610,12 +541,7 @@ void LuaLobby::Mutelist(const std::string& channel, std::list<std::string> list)
 
 void LuaLobby::Joined(const std::string& channame)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, channame.c_str());
 
@@ -625,12 +551,7 @@ void LuaLobby::Joined(const std::string& channame)
 
 void LuaLobby::ChannelMember(const std::string& channame, const std::string& name, bool joined)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
 	lua_pushstring(L, channame.c_str());
 	lua_pushstring(L, name.c_str());
@@ -642,12 +563,7 @@ void LuaLobby::ChannelMember(const std::string& channame, const std::string& nam
 
 void LuaLobby::ChannelMemberLeft(const std::string& channame, const std::string& name, const std::string& reason)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
 	lua_pushstring(L, channame.c_str());
 	lua_pushstring(L, name.c_str());
@@ -659,12 +575,7 @@ void LuaLobby::ChannelMemberLeft(const std::string& channame, const std::string&
 
 void LuaLobby::JoinFailed(const std::string& channame, const std::string& reason)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushstring(L, channame.c_str());
 	lua_pushstring(L, reason.c_str());
@@ -675,12 +586,7 @@ void LuaLobby::JoinFailed(const std::string& channame, const std::string& reason
 
 void LuaLobby::ChannelMemberKicked(const std::string& channame, const std::string& user, const std::string& reason)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
 	lua_pushstring(L, channame.c_str());
 	lua_pushstring(L, user.c_str());
@@ -692,12 +598,7 @@ void LuaLobby::ChannelMemberKicked(const std::string& channame, const std::strin
 
 void LuaLobby::ChannelTopic(const std::string& channame, const std::string& author, long unsigned time, const std::string& topic)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 6);
 
 	lua_pushstring(L, channame.c_str());
 	lua_pushstring(L, author.c_str());
@@ -710,12 +611,7 @@ void LuaLobby::ChannelTopic(const std::string& channame, const std::string& auth
 
 void LuaLobby::ChannelMessage(const std::string& channel, const std::string& text)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushstring(L, channel.c_str());
 	lua_pushstring(L, text.c_str());
@@ -726,12 +622,7 @@ void LuaLobby::ChannelMessage(const std::string& channel, const std::string& tex
 
 void LuaLobby::Said(const std::string& channel, const std::string& user, const std::string& text)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
 	lua_pushstring(L, channel.c_str());
 	lua_pushstring(L, user.c_str());
@@ -743,12 +634,7 @@ void LuaLobby::Said(const std::string& channel, const std::string& user, const s
 
 void LuaLobby::SaidEx(const std::string& channel, const std::string& user, const std::string& text)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
 	lua_pushstring(L, channel.c_str());
 	lua_pushstring(L, user.c_str());
@@ -760,12 +646,7 @@ void LuaLobby::SaidEx(const std::string& channel, const std::string& user, const
 
 void LuaLobby::SaidPrivate(const std::string& user, const std::string& text)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushstring(L, user.c_str());
 	lua_pushstring(L, text.c_str());
@@ -776,12 +657,7 @@ void LuaLobby::SaidPrivate(const std::string& user, const std::string& text)
 
 void LuaLobby::Disconnected()
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 2);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 0, 0);
@@ -789,12 +665,7 @@ void LuaLobby::Disconnected()
 
 void LuaLobby::NetworkError(const std::string& msg)
 {
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr(__FUNCTION__);
-	if (!PushCallIn(cmdStr)) {
-		return;
-	}
+	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
 	lua_pushstring(L, msg.c_str());
 
