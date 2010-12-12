@@ -141,6 +141,39 @@ static bool isAlliedUnit(int skirmishAIId, const CUnit* unit) {
 	return teamHandler->AlliedTeams(unit->team, skirmishAIId_teamId[skirmishAIId]);
 }
 
+static inline bool unitModParamIsValidId(const CUnit& unit, int modParamId) {
+	return ((size_t)modParamId < unit.modParams.size());
+}
+
+static bool unitModParamIsVisible(int skirmishAIId, const CUnit& unit,
+		int modParamId)
+{
+	const int teamId = skirmishAIId_teamId[skirmishAIId];
+
+	if (unitModParamIsValidId(unit, modParamId)) {
+		const int allyID = teamHandler->AllyTeam(teamId);
+		const int& losStatus = unit.losStatus[allyID];
+
+		int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+
+		if (isAlliedUnit(skirmishAIId, &unit)
+				|| skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+			losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+		} else if (teamHandler->AlliedTeams(unit.team, teamId)) {
+			// ingame alliances
+			losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+		} else if (losStatus & LOS_INLOS) {
+			losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+		} else if (losStatus & LOS_INRADAR) {
+			losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
+		}
+
+		return ((unit.modParams[modParamId].los & losMask) > 0);
+	}
+
+	return false;
+}
+
 static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefId);
@@ -3001,7 +3034,6 @@ EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
 	}
 }
 
-
 EXPORT(int) skirmishAiCallback_Unit_getModParams(int skirmishAIId, int unitId) {
 
 	const CUnit* unit = getUnit(unitId);
@@ -3012,87 +3044,37 @@ EXPORT(int) skirmishAiCallback_Unit_getModParams(int skirmishAIId, int unitId) {
 	}
 }
 
-EXPORT(const char*) skirmishAiCallback_Unit_ModParam_getName(int skirmishAIId, int unitId,
-		int modParamId)
+EXPORT(const char*) skirmishAiCallback_Unit_ModParam_getName(int skirmishAIId,
+		int unitId, int modParamId)
 {
+	const char* name = "";
+
 	const CUnit* unit = getUnit(unitId);
-	const int teamId = skirmishAIId_teamId[skirmishAIId];
-
-	if (unit
-		&& (modParamId >= 0)
-		&& ((size_t)modParamId < unit->modParams.size())
-	) {
-		const int allyID = teamHandler->AllyTeam(teamId);
-		const int& losStatus = unit->losStatus[allyID];
-
-		int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
-
-		if (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-		}
-		else if (teamHandler->AlliedTeams(unit->team, teamId)) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK; //! ingame alliances
-		}
-		else if (losStatus & LOS_INLOS) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
-		}
-		else if (losStatus & LOS_INRADAR) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
-		}
-
-		if (unit->modParams[modParamId].los & losMask) {
-			std::map<std::string, int>::const_iterator mi, mb, me;
-			mb = unit->modParamsMap.begin();
-			me = unit->modParamsMap.end();
-			for (mi = mb; mi != me; ++mi) {
-				if (mi->second == modParamId) {
-					return mi->first.c_str();
-				}
+	if (unit && unitModParamIsVisible(skirmishAIId, *unit, modParamId)) {
+		std::map<std::string, int>::const_iterator mi, mb, me;
+		mb = unit->modParamsMap.begin();
+		me = unit->modParamsMap.end();
+		for (mi = mb; mi != me; ++mi) {
+			if (mi->second == modParamId) {
+				name = mi->first.c_str();
 			}
 		}
 	}
 
-	// not all mod parameter have a name
-	return "";
+	return name;
 }
 
-EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int skirmishAIId, int unitId,
-		int modParamId)
+EXPORT(float) skirmishAiCallback_Unit_ModParam_getValue(int skirmishAIId,
+		int unitId, int modParamId)
 {
+	float value = 0.0f;
+
 	const CUnit* unit = getUnit(unitId);
-	const int teamId = skirmishAIId_teamId[skirmishAIId];
-
-	if (unit
-		&& (modParamId >= 0)
-		&& ((size_t)modParamId < unit->modParams.size())
-	) {
-		const int allyID = teamHandler->AllyTeam(teamId);
-		const int& losStatus = unit->losStatus[allyID];
-
-		int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
-
-		if (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
-		}
-		else if (teamHandler->AlliedTeams(unit->team, teamId)) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK; //! ingame alliances
-		}
-		else if (losStatus & LOS_INLOS) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
-		}
-		else if (losStatus & LOS_INRADAR) {
-			losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
-		}
-
-		const LuaRulesParams::Param param = unit->modParams[modParamId];
-		if (param.los & losMask) {
-			return param.value;
-		} else {
-			return 0.0f;
-		}
-	} else {
-		return 0.0f;
+	if (unit && unitModParamIsVisible(skirmishAIId, *unit, modParamId)) {
+		value = unit->modParams[modParamId].value;
 	}
+
+	return value;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getTeam(int skirmishAIId, int unitId) {

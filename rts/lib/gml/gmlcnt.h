@@ -24,13 +24,31 @@
 
 #include <boost/config.hpp>
 
+// evaluate which locking method to use
+#if   !defined(BOOST_HAS_THREADS)
+	#define GML_THREADS_NO_BOOST_THREADS
+#elif defined(BOOST_AC_USE_PTHREADS)
+	#define GML_THREADS_PTHREADS
+#elif defined( __GNUC__ ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
+	#define defined(GML_THREADS_ATOMIC)
+#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+	#define GML_THREADS_BOOST_INTERLOCK
+#elif defined( __GNUC__ ) && ( __GNUC__ * 100 + __GNUC_MINOR__ >= 401 ) && !defined( __arm__ ) && !defined( __hppa ) && ( !defined( __INTEL_COMPILER ) || defined( __ia64__ ) )
+	#define GML_THREADS_SYNC
+#elif defined(__GLIBCPP__) || defined(__GLIBCXX__)
+	#define GML_THREADS_ATOMICITY
+#elif defined(BOOST_HAS_PTHREADS)
+	#define BOOST_AC_USE_PTHREADS
+	#define GML_THREADS_PTHREADS
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef BOOST_HAS_THREADS
+#if   defined(GML_THREADS_NO_BOOST_THREADS)
 
 typedef long gmlCount;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif defined(BOOST_AC_USE_PTHREADS)
+#elif defined(GML_THREADS_PTHREADS)
 
 #include <pthread.h>
 
@@ -89,7 +107,7 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif defined( __GNUC__ ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
+#elif defined(GML_THREADS_ATOMIC)
 
 class gmlCount {
 public:
@@ -138,7 +156,7 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#elif defined(GML_THREADS_BOOST_INTERLOCK)
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
@@ -172,7 +190,7 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif defined( __GNUC__ ) && ( __GNUC__ * 100 + __GNUC_MINOR__ >= 401 ) && !defined( __arm__ ) && !defined( __hppa ) && ( !defined( __INTEL_COMPILER ) || defined( __ia64__ ) )
+#elif defined(GML_THREADS_SYNC)
 
 #if defined( __ia64__ ) && defined( __INTEL_COMPILER )
 # include <ia64intrin.h>
@@ -204,7 +222,7 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif defined(__GLIBCPP__) || defined(__GLIBCXX__)
+#elif defined(GML_THREADS_ATOMICITY)
 
 #include <bits/atomicity.h>
 
@@ -238,67 +256,6 @@ private:
 
     gmlCount(gmlCount const &);
     gmlCount & operator=(gmlCount const &);
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif defined(BOOST_HAS_PTHREADS)
-
-#  define BOOST_AC_USE_PTHREADS
-
-#include <pthread.h>
-
-class gmlCount {
-private:
-
-    class scoped_lock {
-    public:
-
-        scoped_lock(pthread_mutex_t & m): m_(m) {
-            pthread_mutex_lock(&m_);
-        }
-
-        ~scoped_lock() {
-            pthread_mutex_unlock(&m_);
-        }
-
-    private:
-
-        pthread_mutex_t & m_;
-    };
-
-public:
-
-    explicit gmlCount(long v): value_(v) {
-        pthread_mutex_init(&mutex_, 0);
-    }
-
-    ~gmlCount() {
-        pthread_mutex_destroy(&mutex_);
-    }
-
-    long operator++() {
-        scoped_lock lock(mutex_);
-        return ++value_;
-    }
-
-    long operator--() {
-        scoped_lock lock(mutex_);
-        return --value_;
-    }
-
-    operator long() const {
-        scoped_lock lock(mutex_);
-        return value_;
-    }
-
-    long value_;
-
-private:
-
-    gmlCount(gmlCount const &);
-    gmlCount & operator=(gmlCount const &);
-
-    mutable pthread_mutex_t mutex_;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
