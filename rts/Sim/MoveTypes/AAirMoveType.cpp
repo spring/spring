@@ -4,6 +4,7 @@
 #include "AAirMoveType.h"
 #include "MoveMath/MoveMath.h"
 
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
