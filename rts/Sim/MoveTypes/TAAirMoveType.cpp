@@ -17,9 +17,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "LogOutput.h"
-#include "myMath.h"
-#include "Matrix44f.h"
+#include "System/myMath.h"
+#include "System/Matrix44f.h"
 
 
 CR_BIND_DERIVED(CTAAirMoveType, AAirMoveType, (NULL));
