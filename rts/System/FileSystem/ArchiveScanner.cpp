@@ -440,7 +440,8 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 	LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_BASE);
 
 	if (!p.Execute()) {
-		logOutput.Print("ERROR in " + filename + ": " + p.GetErrorLog());
+		logOutput.Print("Warning: Failed to read archive cache: " + p.GetErrorLog());
+		return;
 	}
 	const LuaTable archiveCache = p.GetRoot();
 	const LuaTable archives = archiveCache.SubTable("archives");
@@ -452,7 +453,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 	}
 
 	for (int i = 1; archives.KeyExists(i); ++i) {
-	  const LuaTable curArchive = archives.SubTable(i);
+		const LuaTable curArchive = archives.SubTable(i);
 		const LuaTable archived = curArchive.SubTable("archivedata");
 		ArchiveInfo ai;
 
