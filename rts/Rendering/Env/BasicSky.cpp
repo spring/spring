@@ -410,10 +410,10 @@ void CBasicSky::Update()
 	switch(updatepart) { // smoothen out the workload across draw frames
 	case 0: {
 		for(int a=0; a<CLOUD_DETAIL; a++) {
-			float fade=(gs->frameNum/(70.0f*(2<<(CLOUD_DETAIL-1-a))));
-			fade-=floor(fade/2)*2;
+			float fade = gs->frameNum / (70.0f * (2<<(CLOUD_DETAIL-1-a)));
+			fade -= floor(fade/2)*2;
 			if(fade>1) {
-				fade=2-fade;
+				fade = 2 - fade;
 				if(!cloudDown[a]) {
 					cloudDown[a]=true;
 					CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
@@ -472,7 +472,7 @@ void CBasicSky::Update()
 			int blend=bm[by&31][31&31], **prcy=prc, *pkernel=kernel;
 			for(int y2=0; y2<cs4a; ++y2, ++prcy, pkernel+=CLOUD_SIZE/4) {
 				int *prcx=(*prcy)+cmcs8a, *pkrn=pkernel;
-				for(int x2=cmcs8a; x2<std::min(CLOUD_SIZE, cs4a+cmcs8a); ++x2)
+				for(int x2=cmcs8a; x2 < std::min(CLOUD_SIZE, cs4a+cmcs8a); ++x2)
 					(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2+cmcs8a], x2<CLOUD_SIZE
 				prcx-=CLOUD_SIZE;
 				for(int x2=std::max(CLOUD_SIZE,cmcs8a); x2<cs4a+cmcs8a; ++x2)
@@ -493,15 +493,22 @@ void CBasicSky::Update()
 		for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
 			cloudThickness[a*4+3]=alphaTransform[rawClouds[0][a]>>7];
 
-		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+3]=alphaTransform[rawClouds[0][0]>>7];
+		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+3] = alphaTransform[rawClouds[0][0]>>7];
 		// next line unused
-		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+0]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+1]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+2]=0;
+		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+0] = 0;
+		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+1] = 0;
+		cloudThickness[CLOUD_SIZE*CLOUD_SIZE*4+2] = 0;
 
-		//create the cloud shading
-		for(int a=0, a4=3; a<CLOUD_SIZE; ++a, a4+=4) {
-			ydif[a]=(int)cloudThickness[(a4+3*CLOUD_SIZE*4)] + cloudThickness[(a4+2*CLOUD_SIZE*4)] + cloudThickness[(a4+1*CLOUD_SIZE*4)] + 
-				cloudThickness[(a4+0*CLOUD_SIZE*4)] - cloudThickness[(a4+(CLOUD_SIZE-1)*CLOUD_SIZE*4)] - 
-				cloudThickness[(a4+CLOUD_SIZE*(CLOUD_SIZE-2)*4)] - cloudThickness[(a4+CLOUD_SIZE*(CLOUD_SIZE-3)*4)];
+		// create the cloud shading
+		for (int a = 0, a4 = 3; a < CLOUD_SIZE; ++a, a4 += 4) {
+			ydif[a] =
+				(int)cloudThickness[(a4+3*CLOUD_SIZE*4)]
+				+    cloudThickness[(a4+2*CLOUD_SIZE*4)]
+				+    cloudThickness[(a4+1*CLOUD_SIZE*4)]
+				+    cloudThickness[(a4+0*CLOUD_SIZE*4)]
+				-    cloudThickness[(a4+(CLOUD_SIZE-1)*CLOUD_SIZE*4)]
+				-    cloudThickness[(a4+CLOUD_SIZE*(CLOUD_SIZE-2)*4)]
+				-    cloudThickness[(a4+CLOUD_SIZE*(CLOUD_SIZE-3)*4)];
 		}
 
 		ydif[0] += cloudThickness[(0+CLOUD_SIZE*(CLOUD_SIZE-3))*4+3] - cloudThickness[0*4+3]*2 + cloudThickness[(0+4*CLOUD_SIZE)*4+3];
@@ -521,11 +528,11 @@ void CBasicSky::Update()
 	}
 	case CLOUD_DETAIL+5: {
 		/*
-		for(int a=0; a<CLOUD_SIZE; ++a) {
-		cloudThickness[((int(48+camera->pos.z*CLOUD_SIZE*0.000025f)%256)*CLOUD_SIZE+a)*4+3]=0;
+		for (int a = 0; a < CLOUD_SIZE; ++a) {
+			cloudThickness[((int(48+camera->pos.z*CLOUD_SIZE*0.000025f)%256)*CLOUD_SIZE+a)*4+3]=0;
 		}
-		for(int a=0; a<CLOUD_SIZE; ++a) {
-		cloudThickness[(a*CLOUD_SIZE+int(gs->frameNum*0.00009f*256+camera->pos.x*CLOUD_SIZE*0.000025f))*4+3]=0;
+		for (int a = 0; a < CLOUD_SIZE; ++a) {
+			cloudThickness[(a*CLOUD_SIZE+int(gs->frameNum*0.00009f*256+camera->pos.x*CLOUD_SIZE*0.000025f))*4+3]=0;
 		}
 		*/
 		glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
