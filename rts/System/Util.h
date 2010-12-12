@@ -75,6 +75,20 @@ static inline std::string FloatToString(float f, const std::string& format = "%f
  */
 bool StringToBool(std::string str);
 
+/// Returns true if str starts with prefix
+bool StringStartsWith(const std::string& str, const char* prefix);
+static inline bool StringStartsWith(const std::string& str, const std::string& prefix)
+{
+	return StringStartsWith(str, prefix.c_str());
+}
+
+/// Returns true if str ends with postfix
+bool StringEndsWith(const std::string& str, const char* postfix);
+static inline bool StringEndsWith(const std::string& str, const std::string& postfix)
+{
+	return StringEndsWith(str, postfix.c_str());
+}
+
 /**
  * @brief Safely delete object by first setting pointer to NULL and then deleting.
  * This way it is guaranteed other objects can not access the object through the
