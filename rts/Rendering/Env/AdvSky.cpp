@@ -472,13 +472,19 @@ void CAdvSky::Update()
 		for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
 			cloudThickness[a]=alphaTransform[rawClouds[0][a]>>7];
 
-		cloudThickness[CLOUD_SIZE*CLOUD_SIZE]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE-1];	//this one is read in one place, so to avoid reading uninitialized mem ...
+		// this one is read in one place, so to avoid reading uninitialized mem ...
+		cloudThickness[CLOUD_SIZE*CLOUD_SIZE] = cloudThickness[CLOUD_SIZE*CLOUD_SIZE-1];
 
-		//create the cloud shading
-		for(int a=0;a<CLOUD_SIZE;++a){
-			ydif[a]=(int)cloudThickness[(a+3*CLOUD_SIZE)] + cloudThickness[(a+2*CLOUD_SIZE)] + cloudThickness[(a+1*CLOUD_SIZE)] + 
-				cloudThickness[(a+0*CLOUD_SIZE)] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-1))] - 
-				cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-2))] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-3))];
+		// create the cloud shading
+		for (int a = 0; a < CLOUD_SIZE; ++a) {
+			ydif[a] =
+				(int)cloudThickness[(a+3*CLOUD_SIZE)]
+				+    cloudThickness[(a+2*CLOUD_SIZE)]
+				+    cloudThickness[(a+1*CLOUD_SIZE)]
+				+    cloudThickness[(a+0*CLOUD_SIZE)]
+				-    cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-1))]
+				-    cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-2))]
+				-    cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-3))];
 		}
 
 		ydif[0] += cloudThickness[0+CLOUD_SIZE*(CLOUD_SIZE-3)] - cloudThickness[0]*2 + cloudThickness[0+4*CLOUD_SIZE];
@@ -497,9 +503,9 @@ void CAdvSky::Update()
 		break;
 	}
 	case CLOUD_DETAIL+5: {
-		int modDensity=(int) ((1-cloudDensity)*256);
-		for(int a=0; a<CLOUD_SIZE*CLOUD_SIZE; ++a){
-			int f=(rawClouds[0][a]>>8)-modDensity;
+		const int modDensity = (int) ((1-cloudDensity)*256);
+		for (int a = 0; a < CLOUD_SIZE*CLOUD_SIZE; ++a) {
+			const int f = (rawClouds[0][a]>>8)-modDensity;
 			cloudTexMem[a*4+3]=std::max(0, std::min(255, f));
 		}
 		break;
