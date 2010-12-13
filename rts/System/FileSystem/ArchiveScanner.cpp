@@ -263,6 +263,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
 		if (ar && ar->IsOpen()) {
 			ArchiveInfo ai;
+			std::string error = "";
 
 			std::string mapfile;
 			bool hasModinfo = false;
@@ -283,9 +284,27 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				} else if (lowerName == "mapinfo.lua") {
 					hasMapinfo = true;
 				}
+
+				const unsigned char metaFileClass = GetMetaFileClass(lowerName);
+				if ((metaFileClass != 0) && !(ar->HasLowReadingCost(fid))) {
+					// is a meta-file and not cheap to read
+					if (metaFileClass == 1) {
+						// 1st class
+						error = "Unpacking/reading cost for meta file " + name
+								+ " is too high, please repack the archive (make sure to use a non-solid algorithm, if applicable)";
+						break;
+					} else if (metaFileClass == 2) {
+						// 2nd class
+						logOutput.Print(LOG_ARCHIVESCANNER,
+								"Warning: Archive %s: The cost for reading a 2nd class meta-file is too high: %s",
+								fullName.c_str(), name.c_str());
+					}
+				}
 			}
 
-			if (hasMapinfo || !mapfile.empty()) {
+			if (!error.empty()) {
+				// we already have an error, no further evaluation required
+			} if (hasMapinfo || !mapfile.empty()) {
 				// it is a map
 				if (hasMapinfo) {
 					ScanArchiveLua(ar, "mapinfo.lua", ai);
@@ -301,7 +320,6 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				}
 				AddDependency(ai.archiveData.dependencies, "Map Helper v1");
 				ai.archiveData.modType = modtype::map;
-				
 			} else if (hasModinfo) {
 				// it is a mod
 				ScanArchiveLua(ar, "modinfo.lua", ai);
@@ -309,7 +327,12 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 					AddDependency(ai.archiveData.dependencies, "Spring content v1");
 			} else {
 				// neither a map nor a mod: error
-				logOutput.Print(LOG_ARCHIVESCANNER, "Failed to scan %s (missing modinfo.lua/mapinfo.lua)", fullName.c_str());
+				error = "missing modinfo.lua/mapinfo.lua";
+			}
+
+			if (!error.empty()) {
+				// for some reason, the archive is marked as broken
+				logOutput.Print(LOG_ARCHIVESCANNER, "Failed to scan %s (%s)", fullName.c_str(), error.c_str());
 				delete ar;
 
 				// record it as broken, so we don't need to look inside everytime
@@ -317,6 +340,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				ba.path = fpath;
 				ba.modified = info.st_mtime;
 				ba.updated = true;
+				ba.problem = error;
 				brokenArchives[lcfn] = ba;
 				return;
 			}
@@ -489,6 +513,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		ba.path = curArchive.GetString("path", "");
 		ba.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
 		ba.updated = false;
+		ba.problem = curArchive.GetString("problem", "unknown");
 
 		std::string lcname = StringToLower(name);
 
@@ -622,6 +647,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 		SafeStr(out, "\t\t\tname = ", bai->first);
 		SafeStr(out, "\t\t\tpath = ", ba.path);
 		fprintf(out, "\t\t\tmodified = \"%u\",\n", ba.modified);
+		SafeStr(out, "\t\t\tproblem = ", ba.problem);
 		fprintf(out, "\t\t},\n");
 	}
 
@@ -849,5 +875,41 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& 
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveDataByArchive(const std::string& archive) const
 {
 	return GetArchiveData(NameFromArchive(archive));
+}
+
+unsigned char CArchiveScanner::GetMetaFileClass(const std::string& filePath) {
+
+	unsigned char metaFileClass = 0;
+
+	const std::string lowerFilePath = StringToLower(filePath);
+	const std::string ext = filesystem.GetExtension(lowerFilePath);
+
+	if (lowerFilePath == "mapinfo.lua") {
+		metaFileClass = 1;
+	} else if (lowerFilePath == "modinfo.lua") {
+		metaFileClass = 1;
+//	} else if ((ext == "smf") || (ext == "sm3")) {
+//		metaFileClass = 1;
+	} else if (lowerFilePath == "luaai.lua") {
+		metaFileClass = 2;
+	} else if (lowerFilePath == "modoptions.lua") {
+		metaFileClass = 2;
+	} else if (lowerFilePath == "engineoptions.lua") {
+		metaFileClass = 2;
+	} else if (lowerFilePath == "validmaps.lua") {
+		metaFileClass = 2;
+	} else if (lowerFilePath == "luaai.lua") {
+		metaFileClass = 2;
+	} else if (lowerFilePath == "luaui.lua") {
+		metaFileClass = 2;
+	} else if (StringStartsWith(lowerFilePath, "sidepics/")) {
+		metaFileClass = 2;
+	} else if (StringStartsWith(lowerFilePath, "gamedata/")) {
+		metaFileClass = 2;
+	} else if (StringStartsWith(lowerFilePath, "units/")) {
+		metaFileClass = 2;
+	}
+
+	return metaFileClass;
 }
 
