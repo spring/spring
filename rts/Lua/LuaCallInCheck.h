@@ -153,6 +153,11 @@ struct LuaMiscEvent {
 #define LUA_MISC_BATCH_PUSH(r,...)
 #endif
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+#define GML_MEASURE_LOCK_TIME(lock) unsigned luatime = SDL_GetTicks(); lock; luatime = SDL_GetTicks() - luatime; if(luatime >= 1) gmlLockTime += luatime
+#else
+#define GML_MEASURE_LOCK_TIME(lock) lock
+#endif
 
 #if DUAL_LUA_STATES
 #define BEGIN_ITERATE_LUA_STATES() lua_State *L_Cur = L_Sim; do { lua_State * const L = L_Cur
@@ -172,8 +177,7 @@ struct LuaMiscEvent {
 #else
 #define GML_DEBUG_LOCK(name)
 #endif
-
-#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_THRMUTEX_LOCK(name,GML_DRAW|GML_SIM,*L->)//Threading::RecursiveScopedLock name##lock(*(L->##name##mutex), true)
+#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 
 #else
 #define GML_DRCMUTEX_LOCK(name)
@@ -190,7 +194,7 @@ struct LuaMiscEvent {
 #define SELECT_LUA_STATE()
 #define SELECT_UNSYNCED_LUA_STATE()
 #endif
-#define GML_DRCMUTEX_LOCK(name) GML_RECMUTEX_LOCK(name)
+#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 
 #endif
 

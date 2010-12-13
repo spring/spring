@@ -692,7 +692,7 @@ void CGameServer::Update()
 						players[a].isReconn = false;
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, curPing));
 					float correctedCpu = players[a].isLocal ? players[a].cpuUsage :
-						std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaDrawTime, 1.0f));
+						std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaLockTime, 1.0f));
 					if (demoReader ? !players[a].isFromDemo : !players[a].spectator) {
 						if (!players[a].isReconn && correctedCpu > refCpu)
 							refCpu = correctedCpu;
@@ -899,7 +899,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					UpdateSpeedControl(speedControl);
 					break;
 				case CUSTOM_DATA_LUADRAWTIME:
-					players[a].luaDrawTime = *((int*)&inbuf[3]);
+					players[a].luaLockTime = *((int*)&inbuf[3]);
 					break;
 				default:
 					Message(str(format("Player %s sent invalid CustomData type %d") %players[a].name %inbuf[2]));

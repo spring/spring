@@ -44,7 +44,7 @@ void CGame::ClientReadNet()
 		if (playing) {
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
 #if defined(USE_GML) && GML_ENABLE_SIM
-			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaDrawTime));
+			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaLockTime));
 #endif
 		} else {
 			// the CPU-load percentage is undefined prior to SimFrame()

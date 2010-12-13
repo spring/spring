@@ -1679,7 +1679,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
-	if (command == "reload" || (DUAL_LUA_STATES && gc->GetMultiThreadLua() >= 4 && command == "update")) {
+	if (command == "reload" || (DUAL_LUA_STATES && gc->GetMultiThreadLua() >= 5 && command == "update")) {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
 			// NOTE: causes a SEGV through RunCallIn()
 			logOutput.Print("Can not reload from within LuaUI, yet");

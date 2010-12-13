@@ -204,7 +204,7 @@ private:
 	unsigned skipLastDraw;
 
 	int speedControl;
-	int luaDrawTime;
+	int luaLockTime;
 	int luaExportSize;
 
 
