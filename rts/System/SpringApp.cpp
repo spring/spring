@@ -1,4 +1,3 @@
-/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
@@ -545,9 +544,7 @@ bool SpringApp::GetDisplayGeometry()
 			case SW_SHOWMAXIMIZED:
 				windowState = 1;
 				break;
-			case SW_SHOWMINIMIZED:
-				windowState = 2;
-				break;
+			case SW_SHOWMINIMIZED: //minimized startup breaks init stuff, so don't store it
 			default:
 				windowState = 0;
 		}
@@ -620,7 +617,8 @@ void SpringApp::RestoreWindowPosition()
 				int wState;
 				switch (windowState) {
 					case 1: wState = SW_SHOWMAXIMIZED; break;
-					case 2: wState = SW_SHOWMINIMIZED; break;
+					//Setting the main-window minimized breaks initialization
+					case 2: // wState = SW_SHOWMINIMIZED; break;
 					default: stateChanged = false;
 				}
 				if (stateChanged) {
