@@ -141,7 +141,7 @@ public:
 		, dynDamageInverted(false)
 	{}
 
-	WeaponDef(DamageArray damages)
+	WeaponDef(const DamageArray& damages)
 		: range(0.0f)
 		, heightmod(0.0f)
 		, accuracy(0.0f)
