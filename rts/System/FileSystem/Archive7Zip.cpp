@@ -106,13 +106,11 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 			const UInt32 folderIndex = db.FileIndexToFolderIndexMap[i];
 			if (folderIndex == ((UInt32)-1)) {
 				// file has no folder assigned
-				fd.unpackSize = f->Size;
+				fd.unpackedSize = f->Size;
+				fd.packedSize   = f->Size;
 			} else {
-				fd.unpackSize = folderUnpackSizes[folderIndex];
-				// same as above, but packed
-				// -> how many bytes have to be read from disc
-				//    to unpack the file
-				//fd.packSize = db.db.PackSizes[folderIndex];
+				fd.unpackedSize = folderUnpackSizes[folderIndex];
+				fd.packedSize   = db.db.PackSizes[folderIndex];
 			}
 
 			StringToLowerInPlace(fileName);
@@ -174,16 +172,22 @@ void CArchive7Zip::FileInfo(unsigned fid, std::string& name, int& size) const
 	size = fileData[fid].size;
 }
 
+
+const size_t CArchive7Zip::COST_LIMIT_UNPACK_OVERSIZE = 32 * 1024;
+const size_t CArchive7Zip::COST_LIMIT_DISC_READ       = 32 * 1024;
+
 bool CArchive7Zip::HasLowReadingCost(unsigned fid) const
 {
 	const FileData& fd = fileData[fid];
-	// The cost is high, if the to be unpacked data is
-	// more then 32KB larger then the file alone.
+	// The cost is high, if the to-be-unpacked data is
+	// more then 32KB larger then the file alone,
+	// and the to-be-read-from-disc data is larger then 32KB.
 	// This should work well for:
 	// * small meta-files in small solid blocks
 	// * big ones in separate solid blocks
 	// * for non-solid archives anyway
-	return ((fd.unpackSize - fd.size) < 32*1024);
+	return (((fd.unpackedSize - fd.size) <= COST_LIMIT_UNPACK_OVERSIZE)
+			|| (fd.packedSize <= COST_LIMIT_DISC_READ));
 }
 
 unsigned CArchive7Zip::GetCrc32(unsigned fid)

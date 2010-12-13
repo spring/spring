@@ -31,23 +31,50 @@ private:
 	Byte *outBuffer;
 	size_t outBufferSize;
 
+	/**
+	 * How much more unpacked data may be allowed in a solid block,
+	 * besides a meta-file.
+	 * @see FileData#size
+	 * @see FileData#unpackedSize
+	 */
+	static const size_t COST_LIMIT_UNPACK_OVERSIZE;
+	/**
+	 * Maximum allowed packed data allowed in a solid block
+	 * that contains a meta-file.
+	 * This is only checked for if the unpack-oversize limit was not met.
+	 * @see FileData#size
+	 * @see FileData#unpackedSize
+	 */
+	static const size_t COST_LIMIT_DISC_READ;
+
 	struct FileData
 	{
 		int fp;
 		/**
 		 * Real/unpacked size of the file in bytes.
-		 * @see #unpackSize
+		 * @see #unpackedSize
+		 * @see #packSize
 		 */
 		int size;
 		std::string origName;
 		unsigned int crc;
 		/**
-		 * How many bytes have to be unpacked to get to this file.
-		 * This either equal to size, or larger, if there are other files
+		 * How many bytes of files have to be unpacked to get to this file.
+		 * This either equal to size, or is larger, if there are other files
 		 * in the same solid block.
 		 * @see #size
+		 * @see #packedSize
 		 */
-		int unpackSize;
+		int unpackedSize;
+		/**
+		 * How many bytes of the archive have to be read
+		 * from disc to get to this file.
+		 * This may be smaller or larger then size,
+		 * and is smaller then or equal to unpackedSize.
+		 * @see #size
+		 * @see #unpackedSize
+		 */
+		int packedSize;
 	};
 	std::vector<FileData> fileData;
 
