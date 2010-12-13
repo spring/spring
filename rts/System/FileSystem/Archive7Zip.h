@@ -22,6 +22,7 @@ public:
 	virtual unsigned NumFiles() const;
 	virtual bool GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer);
 	virtual void FileInfo(unsigned fid, std::string& name, int& size) const;
+	virtual bool HasLowReadingCost(unsigned fid) const;
 	virtual unsigned GetCrc32(unsigned fid);
 
 private:
@@ -33,9 +34,20 @@ private:
 	struct FileData
 	{
 		int fp;
+		/**
+		 * Real/unpacked size of the file in bytes.
+		 * @see #unpackSize
+		 */
 		int size;
 		std::string origName;
 		unsigned int crc;
+		/**
+		 * How many bytes have to be unpacked to get to this file.
+		 * This either equal to size, or larger, if there are other files
+		 * in the same solid block.
+		 * @see #size
+		 */
+		int unpackSize;
 	};
 	std::vector<FileData> fileData;
 
