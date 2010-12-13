@@ -34,6 +34,18 @@ public:
 	unsigned FindFile(const std::string& name) const;
 	virtual bool GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer) = 0;
 	virtual void FileInfo(unsigned fid, std::string& name, int& size) const = 0;
+	/**
+	 * Returns true if the cost of reading the file is in qualitatively relative
+	 * to its file-size.
+	 * This is mainly usefull in the case of solid archives,
+	 * which may make the reading of a single small file over proportionally
+	 * expensive.
+	 * The returned value is usually relative to certain arbitrary chosen
+	 * constants.
+	 * Most implementations may always return true.
+	 * @return true if cost is is ~ relative to its file-size
+	 */
+	virtual bool HasLowReadingCost(unsigned fid) const;
 	virtual unsigned GetCrc32(unsigned fid);
 
 	/// for convenience

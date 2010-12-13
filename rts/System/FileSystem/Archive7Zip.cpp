@@ -84,22 +84,40 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 		return;
 	}
 
+	// In 7zip talk, folders are pack-units (solid blocks),
+	// not related to file-system folders.
+	UInt64 folderUnpackSizes[db.db.NumFolders];
+	for (int fi = 0; fi < db.db.NumFolders; fi++) {
+		folderUnpackSizes[fi] = SzFolder_GetUnpackSize(db.db.Folders + fi);
+	}
+
 	// Get contents of archive and store name->int mapping
 	for (unsigned i = 0; i < db.db.NumFiles; ++i)
 	{
 		CSzFileItem *f = db.db.Files + i;
 		if ((f->Size >= 0) && !f->IsDir) {
-			std::string name = f->Name;
+			std::string fileName = f->Name;
 
 			FileData fd;
-			fd.origName = name;
+			fd.origName = fileName;
 			fd.fp = i;
 			fd.size = f->Size;
 			fd.crc = (f->Size > 0) ? f->FileCRC : 0;
+			const UInt32 folderIndex = db.FileIndexToFolderIndexMap[i];
+			if (folderIndex == ((UInt32)-1)) {
+				// file has no folder assigned
+				fd.unpackSize = f->Size;
+			} else {
+				fd.unpackSize = folderUnpackSizes[folderIndex];
+				// same as above, but packed
+				// -> how many bytes have to be read from disc
+				//    to unpack the file
+				//fd.packSize = db.db.PackSizes[folderIndex];
+			}
 
-			StringToLowerInPlace(name);
+			StringToLowerInPlace(fileName);
 			fileData.push_back(fd);
-			lcNameIndex[name] = fileData.size()-1;
+			lcNameIndex[fileName] = fileData.size()-1;
 		}
 	}
 }
@@ -154,6 +172,18 @@ void CArchive7Zip::FileInfo(unsigned fid, std::string& name, int& size) const
 	assert(fid >= 0 && fid < NumFiles());
 	name = fileData[fid].origName;
 	size = fileData[fid].size;
+}
+
+bool CArchive7Zip::HasLowReadingCost(unsigned fid) const
+{
+	const FileData& fd = fileData[fid];
+	// The cost is high, if the to be unpacked data is
+	// more then 32KB larger then the file alone.
+	// This should work well for:
+	// * small meta-files in small solid blocks
+	// * big ones in separate solid blocks
+	// * for non-solid archives anyway
+	return ((fd.unpackSize - fd.size) < 32*1024);
 }
 
 unsigned CArchive7Zip::GetCrc32(unsigned fid)
