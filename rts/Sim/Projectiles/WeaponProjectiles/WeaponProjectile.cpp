@@ -114,58 +114,14 @@ CWeaponProjectile::~CWeaponProjectile(void)
 
 void CWeaponProjectile::Collision()
 {
-	if (/* !weaponDef->noExplode || gs->frameNum & 1 */ true) {
-		// don't do damage only on odd-numbered frames
-		// for noExplode projectiles (it breaks coldet)
-		float3 impactDir = speed;
-		impactDir.Normalize();
-
-		// Dynamic Damage
-		DamageArray dynDamages;
-		if (weaponDef->dynDamageExp > 0)
-			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages,
-					startpos, pos, (weaponDef->dynDamageRange > 0)
-							? weaponDef->dynDamageRange
-							: weaponDef->range,
-					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-					weaponDef->dynDamageInverted);
-
-		helper->Explosion(
-			pos,
-			(weaponDef->dynDamageExp > 0)? dynDamages: weaponDef->damages,
-			weaponDef->areaOfEffect,
-			weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed,
-			owner(),
-			true,
-			weaponDef->noExplode? 0.3f: 1.0f,
-			weaponDef->noExplode || weaponDef->noSelfDamage,
-			weaponDef->impactOnly,
-			weaponDef->explosionGenerator,
-			0,
-			impactDir,
-			weaponDef->id
-		);
-	}
-
-	if (weaponDef->soundhit.getID(0) > 0) {
-		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
-	}
-
-	if (!weaponDef->noExplode){
-		CProjectile::Collision();
-	} else {
-		if (TraveledRange()) {
-			CProjectile::Collision();
-		}
-	}
-
+	Collision((CFeature*)NULL);
 }
 
 void CWeaponProjectile::Collision(CFeature* feature)
 {
-	if(gs->randFloat() < weaponDef->fireStarter)
+	if (feature && (gs->randFloat() < weaponDef->fireStarter)) {
 		feature->StartFire();
+	}
 
 	if (/* !weaponDef->noExplode || gs->frameNum & 1 */ true) {
 		// don't do damage only on odd-numbered frames
