@@ -30,7 +30,7 @@
 #elif defined(BOOST_AC_USE_PTHREADS)
 	#define GML_THREADS_PTHREADS
 #elif defined( __GNUC__ ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
-	#define defined(GML_THREADS_ATOMIC)
+	#define GML_THREADS_ATOMIC
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 	#define GML_THREADS_BOOST_INTERLOCK
 #elif defined( __GNUC__ ) && ( __GNUC__ * 100 + __GNUC_MINOR__ >= 401 ) && !defined( __arm__ ) && !defined( __hppa ) && ( !defined( __INTEL_COMPILER ) || defined( __ia64__ ) )
