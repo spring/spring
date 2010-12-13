@@ -100,10 +100,10 @@ CLuaHandle::~CLuaHandle()
 
 
 void CLuaHandle::UpdateThreading() {
-	useDualStates = (gc->GetMultiThreadLua() >= 2);
-	singleState = (gc->GetMultiThreadLua() <= 3);
+	useDualStates = (gc->GetMultiThreadLua() >= 3);
+	singleState = (gc->GetMultiThreadLua() <= 4);
 	copyExportTable = false;
-	useEventBatch = singleState && useDualStates;
+	useEventBatch = singleState && (gc->GetMultiThreadLua() >= 2);
 }
 
 

@@ -317,20 +317,15 @@ EXTERN inline int gmlSizeOf(int datatype) {
 
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
-extern unsigned drawCallInTime;
+extern unsigned gmlLockTime;
 extern lua_State *gmlCurrentLuaState;
 class gmlCallDebugger {
 public:
 	bool set;
-	unsigned drawtime;
 	gmlCallDebugger(lua_State *L) { 
 		if(!gmlCurrentLuaState) {
 			gmlCurrentLuaState = L;
 			set=true;
-			if(gmlThreadNumber == 0)
-				drawtime = SDL_GetTicks();
-			else
-				drawtime = 0;
 		} 
 		else 
 			set = false;
@@ -338,18 +333,14 @@ public:
 	~gmlCallDebugger() {
 		if(set) {
 			gmlCurrentLuaState = NULL;
-			if(drawtime) {
-				drawCallInTime += (SDL_GetTicks() - drawtime);
-				drawtime = 0;
-			}
 		}
 	}
-	static unsigned getDrawCallInTime() {
+	static unsigned getLockTime() {
 		extern volatile int gmlMultiThreadSim, gmlStartSim;
 		unsigned ret = 0;
 		if(gmlMultiThreadSim && gmlStartSim)
-			ret = drawCallInTime;
-		drawCallInTime = 0;
+			ret = gmlLockTime;
+		gmlLockTime = 0;
 		return ret;
 	}
 };
